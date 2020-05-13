@@ -2,27 +2,6 @@ language: cpp
 compiler: gcc
 dist: trusty
 
-matrix:
-  include:
-    # Linux
-    # works on Precise and Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-7
-      env:
-        - MATRIX_GCC_EVAL="CC=gcc-7 && CXX=g++-7"
-        - MATRIX_CPPCHECK_EVAL=""
-
-    # MacOS
-    - os: osx
-      osx_image: xcode8
-      env:
-        - MATRIX_EVAL="brew install gcc && CC=gcc-7 && CXX=g++-7"
-
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get update -qq
