@@ -13,7 +13,6 @@ install:
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 90
   # cppcheck
   - sudo apt-get install -qq cppcheck
-  - sudo apt-get install -qq cmake
 
 notifications:
   slack: theoptimisationgroup:tRbj8LtmY5KkuyL8qrQ7UOIQ
