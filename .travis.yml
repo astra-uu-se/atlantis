@@ -23,7 +23,7 @@ script:
   - cd build
   - cmake ..
   - make
-  - ./cbls
+  - ./main
   - cd ..
   - rm -r build
   - cppcheck --quiet --error-exitcode=1 ..
