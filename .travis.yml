@@ -2,6 +2,8 @@ language: cpp
 compiler: gcc
 dist: trusty
 
+
+
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get update -qq
@@ -18,6 +20,11 @@ notifications:
   slack: theoptimisationgroup:tRbj8LtmY5KkuyL8qrQ7UOIQ
 
 script:
-  - g++ main.cpp -std=c++17 -o travis_gcc_cpp17_cppcheck
-  - ./travis_gcc_cpp17_cppcheck
-  - cppcheck --quiet --error-exitcode=1 . 
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make
+  - ./cbls
+  - cd ..
+  - rm -r build
+  - cppcheck --quiet --error-exitcode=1 ..
