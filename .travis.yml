@@ -1,8 +1,8 @@
 # taken from:
 # https://github.com/selyunin/gtest_submodule
+sudo: required
 language: cpp
 compiler: gcc
-dist: xenial
 
 env:
   global:
@@ -17,7 +17,6 @@ env:
 matrix:
   include:
     - os: linux
-      dist: xenial
       sudo: true
       compiler: gcc
       addons:
@@ -35,13 +34,11 @@ matrix:
             - ubuntu-toolchain-r-test
           #   - llvm-toolchain-precise-3.7
 
-before_install:
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - export CMAKE_OPTIONS="${CMAKE_OPTIONS} ${ENV_CMAKE_OPTIONS}"
-  - export CXX_FLAGS="${CXX_FLAGS} ${ENV_CXX_FLAGS}"
-  - sudo apt-get update -qq
-  - CC=gcc-8
-  - CXX=g++-8
+cache: apt
+addons:
+  apt:
+    packages:
+    - libtbb-dev
 
 install:
   # - if [ "$CXX" = "clang++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then export CXX="clang++-8" CC="clang-8"; fi
@@ -67,11 +64,8 @@ script:
   ############################################################################
   # Build main and tests
   ############################################################################
-  - mkdir -p build
-  - cd build
-  - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} .. 
-  - make
-  - ctest
+  - make clean
+  - make test
 
 after_success:
   - echo "SUCCESS"
