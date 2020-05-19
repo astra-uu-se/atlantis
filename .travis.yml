@@ -49,9 +49,9 @@ script:
   ############################################################################
   # Build main and tests
   ############################################################################
-  - mkdir -p build; \
-	- cd build; \
-	- cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
+  - mkdir -p build
+	- cd build
+	- cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..
   - make
   - ctest
 
