@@ -36,6 +36,7 @@ matrix:
             - llvm-toolchain-precise-3.7
 
 before_install:
+  - gcc --version
   - export CMAKE_OPTIONS="${CMAKE_OPTIONS} ${ENV_CMAKE_OPTIONS}"
   - export CXX_FLAGS="${CXX_FLAGS} ${ENV_CXX_FLAGS}"
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
