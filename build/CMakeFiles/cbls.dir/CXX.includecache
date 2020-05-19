@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/domain/intDomain.hpp
+numeric
+-
+utility
+-
+vector
+-
+memory
+-
+algorithm
+-
+variant
+-
+
+/home/frekn832/cbls/src/main.cpp
+iostream
+-
+utility
+-
+vector
+-
+domain/intDomain.hpp
+/home/frekn832/cbls/src/domain/intDomain.hpp
+
