@@ -13,6 +13,7 @@ env:
     - CXX_FLAGS="-std=c++17 -Wall -pedantic -Werror -Wno-variadic-macros -Wno-long-long -Wno-shadow"
     # Misc
     - RUN_TESTS=true
+    - CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_TESTS:BOOL=ON ${ENV_CMAKE_OPTIONS}"
 
 matrix:
   include:
@@ -48,8 +49,11 @@ script:
   ############################################################################
   # Build main and tests
   ############################################################################
-  - make clean
-  - make test
+  - mkdir -p build; \
+	- cd build; \
+	- cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
+  - make
+  - ctest
 
 after_success:
   - echo "SUCCESS"
