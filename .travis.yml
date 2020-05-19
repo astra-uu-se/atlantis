@@ -2,12 +2,12 @@
 # https://github.com/selyunin/gtest_submodule
 language: cpp
 compiler: gcc
-dist: trusty
+dist: xenial
 
 env:
   global:
     # Ubuntu version
-    - LINUX_DIST=trusty
+    - LINUX_DIST=xenial
     - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
     # Global build options and C++ flags
     - CXX_FLAGS="-Wall -pedantic -Werror -Wno-variadic-macros -Wno-long-long -Wno-shadow"
@@ -17,15 +17,17 @@ env:
 matrix:
   include:
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: true
       compiler: gcc
       addons:
         apt:
           packages: &precise_latest_boost_packages
-            - gcc-8
-            - g++-8
-            #- clang-8
+            #- gcc-8
+            #- g++-8
+            #- clang-9
+            #- libstdc++-8-dev
+            #- libc++-8-dev
             - valgrind
             # Misc
             - python-yaml
@@ -37,9 +39,9 @@ matrix:
 
 before_install:
   - gcc --version
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - export CMAKE_OPTIONS="${CMAKE_OPTIONS} ${ENV_CMAKE_OPTIONS}"
   - export CXX_FLAGS="${CXX_FLAGS} ${ENV_CXX_FLAGS}"
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get update -qq
   - CC=gcc-8
   - CXX=g++-8
