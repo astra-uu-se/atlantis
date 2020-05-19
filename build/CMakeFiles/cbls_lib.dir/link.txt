@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcbls_lib.a  CMakeFiles/cbls_lib.dir/src/domain/intDomain.cpp.o
-/usr/bin/ranlib libcbls_lib.a
