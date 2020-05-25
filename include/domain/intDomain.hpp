@@ -98,13 +98,28 @@ struct IntDomain {
         if (value > bounds.back().second) {
             return OutOfBoundsLarge();
         }
-        for (size_t i = 0; i < bounds.size(); i++) {
-            const auto& bound = bounds[i];
-            if (value < bound.first) {
-                return BetweenBounds(i - 1, i);
-            }
+        int left = 0;
+        int right = bounds.size() - 1;
+        int mid;
+        while (left <= right) {
+            mid = left + (right - left) / 2;
+            const auto& bound = bounds[mid];
             if (bound.first <= value && value <= bound.second) {
-                return FoundBound(i);
+                return FoundBound(mid);
+            }
+            if (value < bound.first) {
+                if (mid == left) {
+                    return BetweenBounds(mid - 1, mid);
+                }
+                right = mid - 1;
+                continue;
+            }
+            if (value > bound.second) {
+                if (mid == right) {
+                    return BetweenBounds(mid, mid + 1);
+                }
+                left = mid + 1;
+                continue;
             }
         }
         return OutOfBounds();
