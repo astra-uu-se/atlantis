@@ -9,15 +9,16 @@
 #include <memory>
 #include <algorithm>
 #include <variant>
+#include "base/intSize.hpp"
 
 struct IntDomain {
     // The domain is a vector of ranges where each range has a lower and upper bound
-    int lowerBound;
-    int upperBound;
+    Int lowerBound;
+    Int upperBound;
     // The number of values in the domain
-    unsigned int domainSize;
+    UInt domainSize;
     
-    IntDomain(int lower, int upper)
+    IntDomain(Int lower, Int upper)
         : lowerBound(lower),
           upperBound(upper),
           domainSize(upper - lower + 1) {}
@@ -32,7 +33,7 @@ struct IntDomain {
         domainSize = upperBound - lowerBound + 1;
     }
 
-    inline bool containsValue(int value) const {
+    inline bool containsValue(Int value) const {
         return lowerBound <= value && value <= upperBound;
     }
 };
