@@ -3,6 +3,7 @@
 #include <vector>
 #include "gtest/gtest.h"
 #include "domain/intDomain.hpp"
+#include "base/intSize.hpp"
 #include <bits/stdc++.h> 
 #include <iostream>
 
@@ -41,7 +42,7 @@ protected:
 TEST_F(IntDomainTest, SingleIntDomain) {
     std::uniform_int_distribution<> distribution(INT_MIN + 1, INT_MAX - 1);
     
-    int value = distribution(gen);
+    Int value = distribution(gen);
     IntDomain intDomain = IntDomain(value, value);
     EXPECT_EQ(1, intDomain.domainSize);
     
@@ -61,17 +62,17 @@ TEST_F(IntDomainTest, SingleIntDomain) {
 }
 
 TEST_F(IntDomainTest, IntDomain) {
-    int rangeSize = 10;
+    Int rangeSize = 10;
     std::uniform_int_distribution<> distribution(INT_MIN + 1, INT_MAX - 1 - rangeSize);
     
-    int minValue = distribution(gen);
-    int maxValue = minValue + rangeSize - 1;
+    Int minValue = distribution(gen);
+    Int maxValue = minValue + rangeSize - 1;
 
     IntDomain intDomain = IntDomain(minValue, maxValue);
     
     EXPECT_EQ(rangeSize, intDomain.domainSize);
 
-    for (int value = minValue; value <= maxValue; value++) {    
+    for (Int value = minValue; value <= maxValue; value++) {    
         EXPECT_TRUE(intDomain.containsValue(value));
     }
 
@@ -88,14 +89,14 @@ TEST_F(IntDomainTest, IntDomain) {
 }
 
 TEST_F(IntDomainTest, IntDomainMerge) {
-    int rangeSize = 10;
+    Int rangeSize = 10;
     std::uniform_int_distribution<> distribution(INT_MIN + 1, INT_MAX - 1 - rangeSize);
     
-    int minValue1 = distribution(gen);
-    int maxValue1 = minValue1 + rangeSize - 1;
+    Int minValue1 = distribution(gen);
+    Int maxValue1 = minValue1 + rangeSize - 1;
 
-    int minValue2 = distribution(gen);
-    int maxValue2 = minValue2 + rangeSize - 1;
+    Int minValue2 = distribution(gen);
+    Int maxValue2 = minValue2 + rangeSize - 1;
 
     IntDomain intDomain1 = IntDomain(minValue1, maxValue1);
     EXPECT_EQ(rangeSize, intDomain1.domainSize);
