@@ -8,35 +8,14 @@
 #include <iostream>
 
 // The fixture for testing class IntDomain. From google test primer.
+namespace {
 class IntDomainTest : public ::testing::Test {
 protected:
-    // You can remove any or all of the following functions if its body
-    // is empty.
-
-    IntDomainTest() {
+    virtual void SetUp() {
         std::random_device rd;
         gen = std::mt19937(rd());
-        // You can do set-up work for each test here.
     }
-
-    virtual ~IntDomainTest() {
-        // You can do clean-up work that doesn't throw exceptions here.
-    }
-
-    // If the constructor and destructor are not enough for setting up
-    // and cleaning up each test, you can define the following methods:
-    virtual void SetUp() {
-        // Code here will be called immediately after the constructor (right
-        // before each test).
-    }
-
-    virtual void TearDown() {
-        // Code here will be called immediately after each test (right
-        // before the destructor).
-    }
-
     std::mt19937 gen;
-    // Objects declared here can be used by all tests in the test case for IntDomain.
 };
 
 TEST_F(IntDomainTest, SingleIntDomain) {
@@ -109,3 +88,4 @@ TEST_F(IntDomainTest, IntDomainMerge) {
     EXPECT_EQ(intDomain1.upperBound, std::max(maxValue1, maxValue2));
     EXPECT_EQ(std::max(maxValue1, maxValue2) - std::min(minValue1, minValue2) + 1, intDomain1.domainSize);
 }
+} //namespace
