@@ -10,6 +10,10 @@ build:
 	cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
 	make
 
+submodule:
+	git submodule init
+	git submodule update
+
 test: build
 	cd ${BUILD_DIR}; \
 	ctest
