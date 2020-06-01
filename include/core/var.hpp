@@ -1,10 +1,10 @@
 #pragma once
+#include "core/propagationElement.hpp"
 #include "core/types.hpp"
 
-class Var {
-  protected:
-    Int m_id;
-
-  public:
-   Var(Int t_id);
+class Var : public PropagationElement {
+ protected:
+ public:
+  Var(Int t_id);
+  ~Var();
 };

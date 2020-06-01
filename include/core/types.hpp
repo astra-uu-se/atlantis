@@ -8,3 +8,4 @@ using UInt32 = u_int32_t;
 using UInt = UInt64;
 using Int = int64_t;
 using Timestamp = u_int64_t;
+using Id = u_int64_t;
