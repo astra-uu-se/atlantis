@@ -2,43 +2,46 @@
 
 #include "types.hpp"
 
-struct SavedInt {
-  Int savedValue;
-  Int tmpValue;
-  Timestamp tmpTime;
+class SavedInt {
+  private:
+  Int m_savedValue;
+  Int m_tmpValue;
+  Timestamp m_tmpTime;
 
-  SavedInt(Int initValue, Timestamp initTime)
-      : savedValue(initValue), tmpValue(initValue), tmpTime(initTime) {}
+  public:
+
+  SavedInt(Timestamp initTime, Int initValue)
+      : m_savedValue(initValue), m_tmpValue(initValue), m_tmpTime(initTime) {}
 
   __forceinline Int getValue(Timestamp currentTime) noexcept {
-    return currentTime == tmpTime ? tmpValue : (tmpValue = savedValue);
+    return currentTime == m_tmpTime ? m_tmpValue : (m_tmpValue = m_savedValue);
   }
 
   __forceinline Int peekValue(Timestamp currentTime) noexcept {
-    return currentTime == tmpTime ? tmpValue : savedValue;
+    return currentTime == m_tmpTime ? m_tmpValue : m_savedValue;
   }
 
   __forceinline void setValue(Timestamp currentTime, Int value) noexcept {
-    tmpTime = currentTime;
-    tmpValue = savedValue;
+    m_tmpTime = currentTime;
+    m_tmpValue = m_savedValue;
   }
 
   __forceinline void incValue(Timestamp currentTime, Int inc,
                               bool commit) noexcept {
-    tmpTime = currentTime;
-    if (currentTime == tmpTime) {
-      tmpValue += inc;
+    m_tmpTime = currentTime;
+    if (currentTime == m_tmpTime) {
+      m_tmpValue += inc;
     } else {
-      tmpValue = savedValue + inc;
+      m_tmpValue = m_savedValue + inc;
     }
   }
-  __forceinline void setValueCommit(Int value) noexcept { savedValue = value; }
+  __forceinline void setValueCommit(Int value) noexcept { m_savedValue = value; }
 
-  __forceinline void commit() noexcept { savedValue = tmpValue; }
+  __forceinline void commit() noexcept { m_savedValue = m_tmpValue; }
 
   __forceinline void commitIf(Timestamp currentTime) noexcept {
-    if (tmpTime == currentTime) {
-      savedValue = tmpValue;
+    if (m_tmpTime == currentTime) {
+      m_savedValue = m_tmpValue;
     }
   }
 };

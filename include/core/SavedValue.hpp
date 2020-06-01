@@ -3,33 +3,35 @@
 #include "types.hpp"
 
 template<typename T>
-struct SavedValue {
-  T savedValue;
-  T tmpValue;
-  Timestamp tmpTime;
+class SavedValue {
+  private:
+  T m_savedValue;
+  T m_tmpValue;
+  Timestamp m_tmpTime;
 
-  SavedValue(T initValue, Timestamp initTime)
-      : savedValue(initValue), tmpValue(initValue), tmpTime(initTime) {}
+public:
+ SavedValue(Timestamp initTime, T initValue)
+     : m_savedValue(initValue), m_tmpValue(initValue), m_tmpTime(initTime) {}
 
-  __forceinline T getValue(Timestamp currentTime) noexcept {
-    return currentTime == tmpTime ? tmpValue : (tmpValue = savedValue);
+ __forceinline T getValue(Timestamp currentTime) noexcept {
+   return currentTime == m_tmpTime ? m_tmpValue : (m_tmpValue = m_savedValue);
   }
 
   __forceinline T peekValue(Timestamp currentTime) noexcept {
-    return currentTime == tmpTime ? tmpValue : savedValue;
+    return currentTime == m_tmpTime ? m_tmpValue : m_savedValue;
   }
 
   __forceinline void setValue(Timestamp currentTime, T value) noexcept {
-    tmpTime = currentTime;
-    tmpValue = savedValue;
+    m_tmpTime = currentTime;
+    m_tmpValue = m_savedValue;
   }
-  __forceinline void setValueCommit(T value) noexcept { savedValue = value; }
+  __forceinline void setValueCommit(T value) noexcept { m_savedValue = value; }
 
-  __forceinline void commit() noexcept { savedValue = tmpValue; }
+  __forceinline void commit() noexcept { m_savedValue = m_tmpValue; }
 
   __forceinline void commitIf(Timestamp currentTime) noexcept {
-    if (tmpTime == currentTime) {
-      savedValue = tmpValue;
+    if (m_tmpTime == currentTime) {
+      m_savedValue = m_tmpValue;
     }
   }
 };
