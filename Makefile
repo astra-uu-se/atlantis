@@ -20,7 +20,7 @@ submodule:
 
 test: build
 	cd ${BUILD_DIR}; \
-	ctest
+	ctest -j6 -C Debug -T test --output-on-failure
 
 run: build
 	exec ./${BUILD_DIR}/cbls
