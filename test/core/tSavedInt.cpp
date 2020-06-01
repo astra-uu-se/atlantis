@@ -23,7 +23,7 @@ class SavedIntTest : public ::testing::Test {
  */
 
 TEST_F(SavedIntTest, SavedIntConstructor) {
-  std::uniform_int_distribution<> distribution(INT_MIN, INT_MAX - 1);
+  std::uniform_int_distribution<> distribution(std::numeric_limits<int>::min(), std::numeric_limits<int>::max() - 1);
 
   // Random timestamp
   Timestamp initTime = std::max(0, distribution(gen));
@@ -52,9 +52,9 @@ TEST_F(SavedIntTest, SavedIntConstructor) {
 
 TEST_F(SavedIntTest, SavedIntSetGetValue) {
   // A uniform distribution for the initial value and timestamp
-  std::uniform_int_distribution<> distribution1(INT_MIN, 10000);
+  std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(), 10000);
   // A uniform distribution for the other (next) timestamp
-  std::uniform_int_distribution<> distribution2(10001, INT_MAX);
+  std::uniform_int_distribution<> distribution2(10001, std::numeric_limits<int>::max());
 
   Timestamp initTime = std::max(0, distribution1(gen));
   Int initValue = distribution1(gen);
@@ -82,7 +82,7 @@ TEST_F(SavedIntTest, SavedIntSetGetValue) {
 }
 
 TEST_F(SavedIntTest, SavedIntIncValue) {
-  std::uniform_int_distribution<> distribution(INT_MIN + 10, INT_MAX - 10);
+  std::uniform_int_distribution<> distribution(std::numeric_limits<int>::min() + 10, std::numeric_limits<int>::max() - 10);
 
   Timestamp initTime = std::max(0, distribution(gen));
   Int committedValue = distribution(gen);
@@ -123,8 +123,8 @@ TEST_F(SavedIntTest, SavedIntIncValue) {
 }
 
 TEST_F(SavedIntTest, SavedIntCommitValue) {
-  std::uniform_int_distribution<> distribution1(INT_MIN, 10000);
-  std::uniform_int_distribution<> distribution2(10001, INT_MAX);
+  std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(), 10000);
+  std::uniform_int_distribution<> distribution2(10001, std::numeric_limits<int>::max());
 
   Timestamp initTime = std::max(0, distribution1(gen));
   Int initValue = distribution1(gen);
@@ -141,8 +141,8 @@ TEST_F(SavedIntTest, SavedIntCommitValue) {
 }
 /*
 TEST_F(SavedIntTest, SavedIntCommit) {
-    std::uniform_int_distribution<> distribution1(INT_MIN, 10000);
-    std::uniform_int_distribution<> distribution2(10001, INT_MAX);
+    std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(), 10000);
+    std::uniform_int_distribution<> distribution2(10001, std::numeric_limits<int>::max());
 
     Timestamp initTime = std::max(0, distribution1(gen));
     Int initValue = distribution1(gen);
@@ -169,8 +169,8 @@ TEST_F(SavedIntTest, SavedIntCommit) {
 /*
 
 TEST_F(SavedIntTest, SavedIntCommitIf) {
-    std::uniform_int_distribution<> distribution1(INT_MIN, 10000);
-    std::uniform_int_distribution<> distribution2(10001, INT_MAX);
+    std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(), 10000);
+    std::uniform_int_distribution<> distribution2(10001, std::numeric_limits<int>::max());
 
     Timestamp initTime = std::max(0, distribution1(gen));
     Int initValue = distribution1(gen);
