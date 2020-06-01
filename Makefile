@@ -1,6 +1,10 @@
 export CMAKE_OPTIONS+= -DBUILD_TESTS:BOOL=ON ${ENV_CMAKE_OPTIONS}
 export BUILD_DIR=build
 
+all:
+	make clean
+	make build
+
 clean:
 	rm -r ${BUILD_DIR}
 
