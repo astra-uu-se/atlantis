@@ -12,11 +12,11 @@ class SavedInt {
   SavedInt(Timestamp initTime, Int initValue)
       : m_savedValue(initValue), m_tmpValue(initValue), m_tmpTime(initTime) {}
 
-  inline Int getValue(Timestamp currentTime) noexcept {
-    return currentTime == m_tmpTime ? m_tmpValue : (m_tmpValue = m_savedValue);
-  }
+  // inline Int getResetValue(Timestamp currentTime) noexcept {
+  //   return currentTime == m_tmpTime ? m_tmpValue : (m_tmpValue = m_savedValue);
+  // }
 
-  inline Int peekValue(Timestamp currentTime) noexcept {
+  inline Int getValue(Timestamp currentTime) noexcept {
     return currentTime == m_tmpTime ? m_tmpValue : m_savedValue;
   }
 
@@ -26,12 +26,12 @@ class SavedInt {
   }
 
   inline void incValue(Timestamp currentTime, Int inc) noexcept {
-    m_tmpTime = currentTime;
     if (currentTime == m_tmpTime) {
       m_tmpValue += inc;
     } else {
       m_tmpValue = m_savedValue + inc;
     }
+    m_tmpTime = currentTime;
   }
   inline void commitValue(Int value) noexcept { m_savedValue = value; }
 
