@@ -9,6 +9,6 @@ class IntVar : public Var {
 
  public:
   IntVar() = delete;
-  IntVar(Int t_id);
+  IntVar(Id t_id);
   ~IntVar();
 };
