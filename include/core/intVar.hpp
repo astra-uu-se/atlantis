@@ -1,7 +1,7 @@
 #pragma once
 
-#include "SavedInt.hpp"
-#include "Var.hpp"
+#include "core/savedInt.hpp"
+#include "core/var.hpp"
 
 class IntVar : public Var {
  private: 
