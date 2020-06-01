@@ -37,3 +37,4 @@ build/*
 
 # Misc
 .vscode
+vcode.code-workspace
