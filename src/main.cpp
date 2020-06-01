@@ -1,7 +1,6 @@
 #include <iostream>
 #include <utility>
 #include <vector>
-#include "domain/intDomain.hpp"
 
 int main() 
 {
