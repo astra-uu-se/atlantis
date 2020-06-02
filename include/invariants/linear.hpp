@@ -1,23 +1,32 @@
 #pragma once
 
-#include <vector>
 #include <memory>
+#include <vector>
 
+#include "../core/engine.hpp"
 #include "../core/intVar.hpp"
 #include "../core/invariant.hpp"
 #include "../core/types.hpp"
-#include "../core/engine.hpp"
+
+/**
+ * Invariant for b <- sum(A_i*X_i)
+ *
+ */
 
 class Linear : public Invariant {
  private:
   std::vector<Int> m_A;
   std::vector<std::shared_ptr<IntVar>> m_X;
+  std::shared_ptr<IntVar> m_b;
 
  public:
-  Linear(Engine& e, Id id, std::vector<Int>&& A,
-         std::vector<std::shared_ptr<IntVar>>&& X);
-  ~Linear();
+  Linear(std::vector<Int>&& A, std::vector<std::shared_ptr<IntVar>>&& X,
+         std::shared_ptr<IntVar> b);
+  Linear(Engine& e, std::vector<Int>&& A,
+         std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar> b);
 
-  void notifyIntChanged(Engine& e, Id id, Int oldValue, Int newValue,
-                        Int data) override;
+  ~Linear();
+  void init(Engine& e) override;
+  void notifyIntChanged(Timestamp& t, Engine& e, Id id, Int oldValue,
+                        Int newValue, Int data) override;
 };
