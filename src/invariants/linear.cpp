@@ -25,8 +25,8 @@ void Linear::init(Engine& e) {
   }
 }
 
-void Linear::notifyIntChanged(Timestamp& t, Engine& e, Id id, Int oldValue,
-                              Int newValue, Int data) {
+void Linear::notifyIntChanged(const Timestamp& t, Engine& e, Id id,
+                              Int oldValue, Int newValue, Int data) {
   Int delta = newValue - oldValue;
   if (delta != 0) {
     m_b->incValue(t, delta * data);
@@ -34,4 +34,7 @@ void Linear::notifyIntChanged(Timestamp& t, Engine& e, Id id, Int oldValue,
   }
 }
 
-void Linear::commit(Timestamp& t) { m_b->commitIf(t); }
+void Linear::commit(const Timestamp& t) {
+  this->m_isInvalid = false;
+  m_b->commitIf(t);
+}
