@@ -22,6 +22,7 @@ struct VarId : public Id {
 struct LocalId : public Id {
   LocalId(int i) : Id(i) {}
   LocalId(Id& t_id) : Id(t_id.id) {}
+  LocalId(VarId& t_id) : Id(t_id.id) {}
 };
 struct InvariantId : public Id {
   InvariantId(Id& t_id) : Id(t_id.id) {}
