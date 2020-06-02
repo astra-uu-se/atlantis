@@ -13,5 +13,5 @@ class Engine {
   /**
    * Register that target depends on dependency
    */
-  void registerDependency(Id target, Id dependcy);
+  void registerDependency(Id target, Id dependency);
 };
