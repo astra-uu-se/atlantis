@@ -1,8 +1,8 @@
 #pragma once
-#include "core/propagationElement.hpp"
+#include "core/propagationNode.hpp"
 #include "core/types.hpp"
 
-class Var : public PropagationElement {
+class Var : public PropagationNode {
  protected:
  public:
   Var(Int t_id);

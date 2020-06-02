@@ -1,20 +1,23 @@
 #pragma once
 
-#include "core/propagationElement.hpp"
+#include "core/propagationNode.hpp"
 
 class Engine;  // Forward declaration
 
-class Invariant : public PropagationElement {
+class Invariant : public PropagationNode {
  private:
   /* data */
  protected:
-  Invariant(Id t_id) : PropagationElement(t_id) {}
+  Invariant(Id t_id) : PropagationNode(t_id) {}
 
  public:
   virtual ~Invariant() {}
 
   /**
    * Checklist for initialising an invariant:
+   * 0) We assume that all variables have valid ids (i.e., they have been
+   * registered)
+   *
    * 1) Register the invariant in the engine, this will set the invariants ID by
    * the engine.
    *
@@ -26,7 +29,7 @@ class Invariant : public PropagationElement {
    *
    */
   virtual void init(Engine& e) = 0;
-  virtual void notifyIntChanged(Timestamp& t, Engine& e, Id id, Int oldValue,
-                                Int newValue, Int data) = 0;
-  virtual void commit(Timestamp& t) = 0;
+  virtual void notifyIntChanged(const Timestamp& t, Engine& e, Id id,
+                                Int oldValue, Int newValue, Int data) = 0;
+  virtual void commit(const Timestamp& t) = 0;
 };
