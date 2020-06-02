@@ -30,5 +30,8 @@ void Linear::notifyIntChanged(Timestamp& t, Engine& e, Id id, Int oldValue,
   Int delta = newValue - oldValue;
   if (delta != 0) {
     m_b->incValue(t, delta * data);
+    e.notifyMaybeChanged(m_b->m_id);
   }
 }
+
+void Linear::commit(Timestamp& t) { m_b->commitIf(t); }
