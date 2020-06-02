@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/engine.hpp"
 #include "core/propagationElement.hpp"
 
 class Invariant : public PropagationElement {
@@ -9,5 +10,6 @@ class Invariant : public PropagationElement {
   Invariant(Id t_id) : PropagationElement(t_id) {}
   ~Invariant() {}
 
-  void notifyIntChanged(Engine& e, Id id, Int oldValue, Int newValue, Int data);
+  virtual void notifyIntChanged(Engine& e, Id id, Int oldValue, Int newValue,
+                                Int data) = 0;
 };
