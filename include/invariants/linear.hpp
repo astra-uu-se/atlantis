@@ -27,7 +27,7 @@ class Linear : public Invariant {
 
   ~Linear();
   void init(Engine& e) override;
-  void notifyIntChanged(const Timestamp& t, Engine& e, Id id, Int oldValue,
+  void notifyIntChanged(const Timestamp& t, Engine& e, VarId id, Int oldValue,
                         Int newValue, Int data) override;
   void commit(const Timestamp& t) override;
 };
