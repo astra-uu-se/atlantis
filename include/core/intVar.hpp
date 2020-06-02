@@ -11,7 +11,7 @@ class IntVar : public Var {
 
  public:
   IntVar() : IntVar(Engine::NULL_ID){};
-  IntVar(Id t_id) : Var(id), m_value(0, 0), m_modified(false){};
+  IntVar(Id t_id) : Var(t_id), m_value(0, 0){};
   ~IntVar();
 
   [[gnu::always_inline]] inline Int getNewValue(const Timestamp& t) {
