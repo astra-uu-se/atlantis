@@ -6,10 +6,11 @@
 class Invariant : public PropagationElement {
  private:
   /* data */
- public:
+ protected:
   Invariant(Id t_id) : PropagationElement(t_id) {}
-  ~Invariant() {}
 
-  virtual void notifyIntChanged(Engine& e, Id id, Int oldValue, Int newValue,
-                                Int data) = 0;
+public:
+ virtual ~Invariant() {}
+ virtual void notifyIntChanged(Engine& e, Id id, Int oldValue, Int newValue,
+                               Int data) = 0;
 };
