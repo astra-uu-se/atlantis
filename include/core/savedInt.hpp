@@ -32,11 +32,7 @@ class SavedInt {
   }
 
   [[gnu::always_inline]] inline void incValue(const Timestamp& currentTime, const Int& inc) noexcept {
-    if (currentTime == m_tmpTime) {
-      m_tmpValue += inc;
-    } else {
-      m_tmpValue = m_savedValue + inc;
-    }
+    m_tmpValue = (currentTime == m_tmpTime ? m_tmpValue : m_savedValue) + inc;
     m_tmpTime = currentTime;
   }
   [[gnu::always_inline]] inline void commitValue(Int value) noexcept { m_savedValue = value; }
