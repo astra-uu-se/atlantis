@@ -5,7 +5,8 @@ class PropagationNode {
  public:
   bool m_isInvalid;
   Id m_id;
-  PropagationNode(Id t_id) : m_id(t_id), m_isInvalid(false){};
+  PropagationNode() = delete;
+  PropagationNode(Id t_id) : m_isInvalid(false), m_id(t_id){};
   ~PropagationNode();
   void setId(Id t_id) { m_id = t_id; }
   inline void invalidate() { m_isInvalid = true; }
