@@ -12,6 +12,6 @@ class IntVar : public Var {
   IntVar(Id t_id);
   ~IntVar();
 
-  Int getNewValue(Timestamp& t) { return m_value.getValue(t); }
-  Int getOldValue() { return m_value.getCommittedValue(); }
+  inline Int getNewValue(const Timestamp& t) { return m_value.getValue(t); }
+  inline Int getOldValue() { return m_value.getCommittedValue(); }
 };
