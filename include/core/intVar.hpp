@@ -12,6 +12,6 @@ class IntVar : public Var {
   IntVar(Id t_id);
   ~IntVar();
 
-  inline Int getNewValue(const Timestamp& t) { return m_value.getValue(t); }
-  inline Int getOldValue() { return m_value.getCommittedValue(); }
+  [[gnu::always_inline]] inline Int getNewValue(const Timestamp& t) { return m_value.getValue(t); }
+  [[gnu::always_inline]] inline Int getOldValue() { return m_value.getCommittedValue(); }
 };
