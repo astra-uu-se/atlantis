@@ -25,7 +25,7 @@ void Linear::init(Engine& e) {
   }
 }
 
-void Linear::notifyIntChanged(const Timestamp& t, Engine& e, Id id,
+void Linear::notifyIntChanged(const Timestamp& t, Engine& e,[[maybe_unused]] Id id,
                               Int oldValue, Int newValue, Int data) {
   Int delta = newValue - oldValue;
   if (delta != 0) {
