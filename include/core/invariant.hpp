@@ -8,4 +8,6 @@ class Invariant : public PropagationElement {
  public:
   Invariant(Id t_id) : PropagationElement(t_id) {}
   ~Invariant() {}
+
+  void notifyIntChanged(Engine& e, Id id, Int oldValue, Int newValue, Int data);
 };
