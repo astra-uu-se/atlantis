@@ -17,15 +17,15 @@ Linear::Linear(Engine& e, std::vector<Int>&& A,
 }
 
 void Linear::init(Engine& e) {
-  Id newId = e.registerInvariant(
+  InvariantId newId = e.registerInvariant(
       *this);  // side effect: updates the id of this invariant
   e.registerDefinedVariable(newId, m_b->m_id);
   for (size_t i = 0; i < m_X.size(); i++) {
-    e.registerDependency(newId, m_X[i]->m_id, i, m_A[i]);
+    e.registerDependency(newId, m_X[i]->m_id, LocalId(i), m_A[i]);
   }
 }
 
-void Linear::notifyIntChanged(const Timestamp& t, Engine& e,[[maybe_unused]] Id id,
+void Linear::notifyIntChanged(const Timestamp& t, Engine& e,[[maybe_unused]] VarId id,
                               Int oldValue, Int newValue, Int data) {
   Int delta = newValue - oldValue;
   if (delta != 0) {

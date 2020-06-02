@@ -29,7 +29,7 @@ class Invariant : public PropagationNode {
    *
    */
   virtual void init(Engine& e) = 0;
-  virtual void notifyIntChanged(const Timestamp& t, Engine& e, Id id,
+  virtual void notifyIntChanged(const Timestamp& t, Engine& e, VarId id,
                                 Int oldValue, Int newValue, Int data) = 0;
   virtual void commit(const Timestamp& t) = 0;
 };
