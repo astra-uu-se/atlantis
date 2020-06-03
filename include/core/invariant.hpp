@@ -14,12 +14,14 @@ class Invariant : public PropagationNode {
   virtual ~Invariant() {}
 
   /**
-   * Checklist for initialising an invariant:
-   * 0) We assume that all variables have valid ids (i.e., they have been
+   * Preconditions for initialisation:
+   * 1) The invariant has been registered in an engine and has a valid ID.
+   *
+   * 2) All variables have valid ids (i.e., they have been
    * registered)
    *
-   * 1) Register the invariant in the engine, this will set the invariants ID by
-   * the engine.
+   * Checklist for initialising an invariant:
+   *
    *
    * 2) Register any output variables that are defined by this
    * invariant note that this can throw an exception if such a variable is
