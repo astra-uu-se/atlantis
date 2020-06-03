@@ -11,7 +11,6 @@
 
 class Engine {
  private:
-  
   static const size_t ESTIMATED_NUM_OBJECTS = 1000;
 
   std::vector<std::shared_ptr<IntVar>> m_intVars;
@@ -19,18 +18,24 @@ class Engine {
 
   /**
    * Map from VarID -> InvariantId
-   * 
+   *
    * Maps to nullptr if not defined by any invariant.
    */
   std::vector<InvariantId> m_definingInvariant;
 
-  struct InvariantDependencyData{
+  /**
+   * Map from InvariantId -> list of VarID
+   *
+   * Maps an invariant to all variables it defines.
+   */
+  std::vector<std::vector<VarId>> m_definedVariablesByInvariant;
+
+  struct InvariantDependencyData {
     InvariantId id;
     LocalId localId;
     Int data;
   };
   // Map from VarID -> vector of InvariantID
-  // Todo: this needs a better (clearer) name
   std::vector<std::vector<InvariantDependencyData>> m_listeningInvariants;
 
  public:
@@ -57,8 +62,8 @@ class Engine {
   /**
    * Register that target depends on dependency
    */
-  void registerInvariantDependency(InvariantId to, VarId from,
-                                   LocalId localId, Int data);
+  void registerInvariantDependency(InvariantId to, VarId from, LocalId localId,
+                                   Int data);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
