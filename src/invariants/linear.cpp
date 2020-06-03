@@ -21,7 +21,7 @@ void Linear::init(Engine& e) {
   assert(m_id != Engine::NULL_ID);
   e.registerDefinedVariable(m_id, m_b->m_id);
   for (size_t i = 0; i < m_X.size(); i++) {
-    e.registerDependency(m_id, m_X[i]->m_id, LocalId(i), m_A[i]);
+    e.registerInvariantDependency(m_id, m_X[i]->m_id, LocalId(i), m_A[i]);
   }
 }
 

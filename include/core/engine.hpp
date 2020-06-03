@@ -11,15 +11,24 @@
 
 class Engine {
  private:
+  
   static const size_t ESTIMATED_NUM_OBJECTS = 1000;
 
   std::vector<std::shared_ptr<IntVar>> m_intVars;
   std::vector<std::shared_ptr<Invariant>> m_invariants;
 
   // Map from InvariantID -> vector of VarID
+  // Todo: this needs a better (clearer) name
   std::vector<std::vector<VarId>> m_dependentVariables;
+
+  struct InvariantDependencyData{
+    InvariantId id;
+    LocalId localId;
+    Int data;
+  };
   // Map from VarID -> vector of InvariantID
-  std::vector<std::vector<InvariantId>> m_dependentInvariants;
+  // Todo: this needs a better (clearer) name
+  std::vector<std::vector<InvariantDependencyData>> m_dependentInvariants;
 
  public:
   static const Id NULL_ID;
@@ -45,7 +54,7 @@ class Engine {
   /**
    * Register that target depends on dependency
    */
-  void registerDependency(InvariantId target, VarId dependency, LocalId localId,
+  void registerInvariantDependency(InvariantId target, VarId dependency, LocalId localId,
                           Int data);
 
   /**
