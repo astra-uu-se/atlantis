@@ -17,9 +17,12 @@ class Engine {
   std::vector<std::shared_ptr<IntVar>> m_intVars;
   std::vector<std::shared_ptr<Invariant>> m_invariants;
 
-  // Map from InvariantID -> vector of VarID
-  // Todo: this needs a better (clearer) name
-  std::vector<std::vector<VarId>> m_dependentVariables;
+  /**
+   * Map from VarID -> InvariantId
+   * 
+   * Maps to nullptr if not defined by any invariant.
+   */
+  std::vector<InvariantId> m_definingInvariant;
 
   struct InvariantDependencyData{
     InvariantId id;
@@ -28,7 +31,7 @@ class Engine {
   };
   // Map from VarID -> vector of InvariantID
   // Todo: this needs a better (clearer) name
-  std::vector<std::vector<InvariantDependencyData>> m_dependentInvariants;
+  std::vector<std::vector<InvariantDependencyData>> m_listeningInvariants;
 
  public:
   static const Id NULL_ID;
@@ -54,12 +57,12 @@ class Engine {
   /**
    * Register that target depends on dependency
    */
-  void registerInvariantDependency(InvariantId target, VarId dependency, LocalId localId,
-                          Int data);
+  void registerInvariantDependency(InvariantId to, VarId from,
+                                   LocalId localId, Int data);
 
   /**
-   * Register that source defines variable definedVar. Throws exception if
+   * Register that 'from' defines variable 'to'. Throws exception if
    * already defined.
    */
-  void registerDefinedVariable(InvariantId source, VarId definedVar);
+  void registerDefinedVariable(InvariantId from, VarId to);
 };
