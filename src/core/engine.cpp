@@ -31,7 +31,7 @@ InvariantId Engine::registerInvariant(std::shared_ptr<Invariant> invariantPtr) {
 
 VarId Engine::registerIntVar(std::shared_ptr<IntVar> intVarPtr) {
   m_intVars.push_back(intVarPtr);
-  m_dependentInvariants.push_back(std::vector<InvariantId>());
+  m_dependentInvariants.push_back({});
   assert(m_intVars.size() == m_dependentInvariants.size());
   VarId newId = VarId(m_intVars.size() - 1);
   intVarPtr->setId(newId);
@@ -41,8 +41,11 @@ VarId Engine::registerIntVar(std::shared_ptr<IntVar> intVarPtr) {
 /**
  * Register that target depends on dependency
  */
-void Engine::registerDependency(InvariantId target, VarId dependency,
-                                LocalId localId, Int data) {}
+void Engine::registerInvariantDependency(InvariantId target, VarId dependency,
+                                         LocalId localId, Int data) {
+  m_dependentInvariants.at(dependency)
+      .emplace_back(InvariantDependencyData{target, localId, data});
+}
 
 /**
  * Register that source defines variable definedVar. Throws exception if
