@@ -17,11 +17,11 @@ Linear::Linear(Engine& e, std::vector<Int>&& A,
 }
 
 void Linear::init(Engine& e) {
-  InvariantId newId = e.registerInvariant(
-      *this);  // side effect: updates the id of this invariant
-  e.registerDefinedVariable(newId, m_b->m_id);
+  // Invariant must be registered with the engine before it is initialised.
+  assert(m_id != Engine::NULL_ID);
+  e.registerDefinedVariable(m_id, m_b->m_id);
   for (size_t i = 0; i < m_X.size(); i++) {
-    e.registerDependency(newId, m_X[i]->m_id, LocalId(i), m_A[i]);
+    e.registerDependency(m_id, m_X[i]->m_id, LocalId(i), m_A[i]);
   }
 }
 

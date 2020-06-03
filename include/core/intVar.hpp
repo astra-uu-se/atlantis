@@ -1,17 +1,18 @@
 #pragma once
 
-#include "core/engine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "core/var.hpp"
+
+class Engine;  // Forward declaration
 
 class IntVar : public Var {
  private:
   SavedInt m_value;
 
  public:
-  IntVar() : IntVar(Engine::NULL_ID){};
-  IntVar(Id t_id) : Var(t_id), m_value(0, 0){};
+  IntVar();
+  IntVar(Id t_id);
   ~IntVar();
 
   [[gnu::always_inline]] inline Int getNewValue(const Timestamp& t) {
