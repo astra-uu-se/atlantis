@@ -6,5 +6,5 @@ class Var : public PropagationNode {
  protected:
  public:
   Var(Int t_id);
-  ~Var();
+  ~Var() = default;
 };

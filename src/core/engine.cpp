@@ -59,6 +59,12 @@ VarId Engine::registerIntVar(std::shared_ptr<IntVar> intVarPtr) {
   return newId;
 }
 
+void Engine::registerIntVar(std::vector<std::shared_ptr<IntVar>> intVarPtrs) {
+  for(auto p: intVarPtrs){
+    registerIntVar(p);
+  }
+}
+
 void Engine::registerInvariantDependency(InvariantId to, VarId from,
                                          LocalId localId, Int data) {
   assert(!to.equals(NULL_ID) && !from.equals(NULL_ID));
