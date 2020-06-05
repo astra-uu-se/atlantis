@@ -13,7 +13,7 @@ class IntVar : public Var {
  public:
   IntVar();
   IntVar(Id t_id);
-  ~IntVar();
+  ~IntVar() = default;
 
   [[gnu::always_inline]] inline Int getValue(const Timestamp& t) {
     return m_value.getValue(t);

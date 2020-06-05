@@ -58,9 +58,10 @@ class Engine {
 
   /**
    * Register an intVar in the engine and return its new id.
-   * This also sets the id of the invariant to the new id.
+   * This also sets the id of the variable to the new id.
    */
   VarId registerIntVar(std::shared_ptr<IntVar>);
+  void registerIntVar(std::vector<std::shared_ptr<IntVar>>);
 
   /**
    * Register that target depends on dependency
