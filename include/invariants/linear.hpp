@@ -22,10 +22,10 @@ class Linear : public Invariant {
  public:
   Linear(std::vector<Int>&& A, std::vector<std::shared_ptr<IntVar>>&& X,
          std::shared_ptr<IntVar> b);
-  Linear(Engine& e, std::vector<Int>&& A,
-         std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar> b);
+//   Linear(Engine& e, std::vector<Int>&& A,
+//          std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar> b);
 
-  ~Linear();
+  ~Linear() = default;
   void init(Engine& e) override;
   void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id, Int oldValue,
                         Int newValue, Int data) override;
