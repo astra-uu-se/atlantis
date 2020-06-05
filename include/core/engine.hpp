@@ -29,7 +29,7 @@ class Engine {
    *
    * Maps an invariant to all variables it defines.
    */
-  std::vector<std::vector<VarId>> m_definedVariablesByInvariant;
+  std::vector<std::vector<VarId>> m_variablesDefinedByInvariant;
 
   struct InvariantDependencyData {
     InvariantId id;
