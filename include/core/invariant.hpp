@@ -29,8 +29,13 @@ class Invariant : public PropagationNode {
    *
    * 3) Register dependency to any input variables.
    *
+   * 4) Compute initial state of invariant!
    */
   virtual void init(Engine& e) = 0;
+
+  /**
+   * Precondition: oldValue != newValue
+   */
   virtual void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) = 0;
   virtual void commit(const Timestamp& t) = 0;
