@@ -15,10 +15,10 @@ class IntVar : public Var {
   IntVar(Id t_id);
   ~IntVar();
 
-  [[gnu::always_inline]] inline Int getNewValue(const Timestamp& t) {
+  [[gnu::always_inline]] inline Int getValue(const Timestamp& t) {
     return m_value.getValue(t);
   }
-  [[gnu::always_inline]] inline Int getOldValue() {
+  [[gnu::always_inline]] inline Int getCommittedValue() {
     return m_value.getCommittedValue();
   }
   [[gnu::always_inline]] inline void setNewValue(const Timestamp& timestamp,

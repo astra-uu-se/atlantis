@@ -10,4 +10,5 @@ class PropagationNode {
   ~PropagationNode();
   void setId(Id t_id) { m_id = t_id; }
   inline void invalidate() { m_isInvalid = true; }
+  inline void validate() { m_isInvalid = false; }
 };
