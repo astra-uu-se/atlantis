@@ -38,3 +38,5 @@ build/*
 # Misc
 .vscode
 vcode.code-workspace
+src/main
+src/main.dSYM/*
