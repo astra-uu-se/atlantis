@@ -90,7 +90,7 @@ void Engine::registerInvariantDependency(InvariantId to, VarId from,
   assert(!to.equals(NULL_ID) && !from.equals(NULL_ID));
   m_listeningInvariants.at(from).emplace_back(
       InvariantDependencyData{to, localId, data});
-  m_variablesDefinedByInvariant.push_back({});
+  m_variablesDefinedByInvariant.at(to).push_back(from);
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Registering that invariant " << to << " depends on variable "
