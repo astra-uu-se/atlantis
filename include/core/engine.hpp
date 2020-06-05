@@ -9,6 +9,7 @@
 #include "core/intVar.hpp"
 #include "core/invariant.hpp"
 #include "core/types.hpp"
+#include "core/tracer.hpp"
 
 class Engine {
  private:
@@ -41,6 +42,14 @@ class Engine {
 
   std::queue<VarId> m_modifiedVariables;
 
+  /**
+   * TODO: Delete these
+   * Register an intVar in the engine and return its new id.
+   * This also sets the id of the variable to the new id.
+   */
+  VarId registerIntVar(std::shared_ptr<IntVar>);
+  void registerIntVar(std::vector<std::shared_ptr<IntVar>>);
+
  public:
   static const Id NULL_ID;
   Engine(/* args */);
@@ -56,18 +65,13 @@ class Engine {
    */
   InvariantId registerInvariant(std::shared_ptr<Invariant>);
 
-  /**
-   * Register an intVar in the engine and return its new id.
-   * This also sets the id of the variable to the new id.
-   */
-  VarId registerIntVar(std::shared_ptr<IntVar>);
-  void registerIntVar(std::vector<std::shared_ptr<IntVar>>);
+  std::shared_ptr<IntVar> makeIntVar();
 
-  /**
-   * Register that target depends on dependency
-   */
-  void registerInvariantDependency(InvariantId to, VarId from, LocalId localId,
-                                   Int data);
+      /**
+       * Register that target depends on dependency
+       */
+      void registerInvariantDependency(InvariantId to, VarId from,
+                                       LocalId localId, Int data);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if

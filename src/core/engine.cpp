@@ -46,6 +46,10 @@ InvariantId Engine::registerInvariant(std::shared_ptr<Invariant> invariantPtr) {
   assert(m_invariants.size() == m_variablesDefinedByInvariant.size());
   InvariantId newId = InvariantId(m_invariants.size() - 1);
   invariantPtr->setId(newId);
+#ifdef VERBOSE_TRACE
+#include <iostream>
+  std::cout << "Registering new invariant with id: " << newId << "\n";
+#endif
   return newId;
 }
 
@@ -57,7 +61,22 @@ VarId Engine::registerIntVar(std::shared_ptr<IntVar> intVarPtr) {
   assert(m_intVars.size() == m_definingInvariant.size());
   VarId newId = VarId(m_intVars.size() - 1);
   intVarPtr->setId(newId);
+#ifdef VERBOSE_TRACE
+#include <iostream>
+  std::cout << "Registering new variable with id: " << newId << "\n";
+#endif
   return newId;
+}
+
+std::shared_ptr<IntVar> Engine::makeIntVar() {
+  VarId newId = VarId(m_intVars.size());
+
+  m_intVars.emplace_back(std::make_shared<IntVar>(newId));
+  m_listeningInvariants.push_back({});
+  m_definingInvariant.push_back(InvariantId(NULL_ID));
+  assert(m_intVars.size() == m_listeningInvariants.size());
+  assert(m_intVars.size() == m_definingInvariant.size());
+  return m_intVars.back();
 }
 
 void Engine::registerIntVar(std::vector<std::shared_ptr<IntVar>> intVarPtrs) {
@@ -72,13 +91,22 @@ void Engine::registerInvariantDependency(InvariantId to, VarId from,
   m_listeningInvariants.at(from).emplace_back(
       InvariantDependencyData{to, localId, data});
   m_variablesDefinedByInvariant.push_back({});
+#ifdef VERBOSE_TRACE
+#include <iostream>
+  std::cout << "Registering that invariant " << to << " depends on variable "
+            << from << " with local id " << localId << "\n";
+#endif
 }
 
 void Engine::registerDefinedVariable(InvariantId from, VarId to) {
   assert(!to.equals(NULL_ID) && !from.equals(NULL_ID));
+#ifdef VERBOSE_TRACE
+#include <iostream>
+  std::cout << "Registering that invariant " << from << " defines variable "
+            << to << "\n";
+#endif
   if (m_definingInvariant.at(to).id == NULL_ID.id) {
     m_definingInvariant.at(to) = from;
-    std::cout << m_definingInvariant.at(to) << " " << from << "\n";
     m_variablesDefinedByInvariant.at(from).push_back(to);
   } else {
     throw new VariableAlreadyDefinedException(
