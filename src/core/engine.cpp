@@ -4,8 +4,8 @@
 
 const Id Engine::NULL_ID = Id(0);
 Engine::Engine(/* args */)
-    : m_intVars(0),
-      m_invariants(0),
+    : m_intVars(),
+      m_invariants(),
       m_definingInvariant(),
       m_definedVariablesByInvariant(),
       m_listeningInvariants() {
@@ -49,11 +49,13 @@ VarId Engine::registerIntVar(std::shared_ptr<IntVar> intVarPtr) {
 
 void Engine::registerInvariantDependency(InvariantId to, VarId from,
                                          LocalId localId, Int data) {
+  assert(!to.equals(NULL_ID) && !from.equals(NULL_ID));
   m_listeningInvariants.at(from).emplace_back(
       InvariantDependencyData{to, localId, data});
 }
 
 void Engine::registerDefinedVariable(InvariantId from, VarId to) {
+  assert(!to.equals(NULL_ID) && !from.equals(NULL_ID));
   if (m_definingInvariant[to].id == NULL_ID.id) {
     m_definingInvariant[to] = from;
     m_definedVariablesByInvariant[from].push_back(to);
