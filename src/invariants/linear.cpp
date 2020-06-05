@@ -30,6 +30,9 @@ void Linear::init(Engine& e) {
 #endif
   // precondition: this invariant must be registered with the engine before it is initialised.
   assert(m_id != Engine::NULL_ID);
+
+  Timestamp initTime = 0;
+
   e.registerDefinedVariable(m_id, m_b->m_id);
   for (size_t i = 0; i < m_X.size(); i++) {
     e.registerInvariantDependency(m_id, m_X[i]->m_id, LocalId(i), m_A[i]);
@@ -37,7 +40,7 @@ void Linear::init(Engine& e) {
 
   Int sum = 0;
   for (size_t i = 0; i < m_X.size(); i++) {
-    sum += m_A[i] * m_X[i]->getCommittedValue();
+    sum += m_A[i] * m_X[i]->getValue(initTime);
   }
 #ifdef VERBOSE_TRACE
 #include <iostream>
@@ -45,8 +48,7 @@ void Linear::init(Engine& e) {
             << "\n";
 #endif
   // m_b->commitValue(sum);
-  Timestamp initTime = 0;
-  m_b->setNewValue(initTime, sum);
+  m_b->setValue(initTime, sum);
   e.notifyMaybeChanged(initTime, m_b->m_id);
   this->validate(initTime);
 }

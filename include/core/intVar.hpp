@@ -22,11 +22,11 @@ class IntVar : public Var {
   [[gnu::always_inline]] inline Int getCommittedValue() {
     return m_value.getCommittedValue();
   }
-  [[gnu::always_inline]] inline void setNewValue(const Timestamp& timestamp,
+  [[gnu::always_inline]] inline void setValue(const Timestamp& timestamp,
                                                  Int value) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
-    std::cout << "IntVar(" << m_id << ").setNewValue(" << timestamp << ","
+    std::cout << "IntVar(" << m_id << ").setValue(" << timestamp << ","
               << value << ")"
               << "\n";
 #endif
