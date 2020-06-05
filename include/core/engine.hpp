@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include <memory>
+#include <queue>
 #include <vector>
 
 #include "core/intVar.hpp"
@@ -37,6 +38,8 @@ class Engine {
   };
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantDependencyData>> m_listeningInvariants;
+
+  std::queue<VarId> m_modifiedVariables;
 
  public:
   static const Id NULL_ID;

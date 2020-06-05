@@ -8,7 +8,8 @@ Engine::Engine(/* args */)
       m_invariants(),
       m_definingInvariant(),
       m_definedVariablesByInvariant(),
-      m_listeningInvariants() {
+      m_listeningInvariants(),
+      m_modifiedVariables() {
   m_intVars.reserve(ESTIMATED_NUM_OBJECTS);
   m_invariants.reserve(ESTIMATED_NUM_OBJECTS);
   m_definingInvariant.reserve(ESTIMATED_NUM_OBJECTS);
@@ -27,6 +28,17 @@ Engine::Engine(/* args */)
 }
 
 Engine::~Engine() {}
+
+//---------------------Notificaion---------------------
+void Engine::notifyMaybeChanged(Int id) {
+  // If first time variable is invalidated:
+  if (m_intVars[id]->m_isInvalid) {
+    m_intVars[id]->invalidate();
+    m_modifiedVariables.push(id);
+  }
+}
+
+//---------------------Registration---------------------
 
 InvariantId Engine::registerInvariant(std::shared_ptr<Invariant> invariantPtr) {
   m_invariants.push_back(invariantPtr);
