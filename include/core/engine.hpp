@@ -8,8 +8,8 @@
 
 #include "core/intVar.hpp"
 #include "core/invariant.hpp"
-#include "core/types.hpp"
 #include "core/tracer.hpp"
+#include "core/types.hpp"
 
 class Engine {
  private:
@@ -67,11 +67,11 @@ class Engine {
 
   std::shared_ptr<IntVar> makeIntVar();
 
-      /**
-       * Register that target depends on dependency
-       */
-      void registerInvariantDependency(InvariantId to, VarId from,
-                                       LocalId localId, Int data);
+  /**
+   * Register that Invariant to depends on variable from depends on dependency
+   */
+  void registerInvariantDependency(InvariantId to, VarId from, LocalId localId,
+                                   Int data);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
