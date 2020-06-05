@@ -55,10 +55,14 @@ class Engine {
   Engine(/* args */);
   ~Engine();
 
-  //---------------------Notificaion
-  void notifyMaybeChanged(Int id);
+  //--------------------- Move semantics ---------------------
+  void beginMove(Timestamp& t);
+  void endMove(Timestamp& t);
 
-  //---------------------Registration
+  //--------------------- Notificaion ---------------------
+  void notifyMaybeChanged(const Timestamp& t, Int id);
+
+  //--------------------- Registration ---------------------
   /**
    * Register an invariant in the engine and return its new id.
    * This also sets the id of the invariant to the new id.
