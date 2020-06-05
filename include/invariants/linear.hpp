@@ -16,6 +16,7 @@
 
 class Linear : public Invariant {
  private:
+ // TODO: Linear actually only needs to store m_b!
   std::vector<Int> m_A;
   std::vector<std::shared_ptr<IntVar>> m_X;
   std::shared_ptr<IntVar> m_b;

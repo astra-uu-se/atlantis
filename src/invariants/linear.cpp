@@ -57,7 +57,7 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
   e.notifyMaybeChanged(m_b->m_id);
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "Invariant " << m_id << " notifying output changed to  "
+  std::cout << "Invariant " << m_id << " notifying output changed by  "
             << (newValue - oldValue) * data << "\n";
 #endif
 }
