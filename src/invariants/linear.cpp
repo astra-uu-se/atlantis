@@ -44,9 +44,11 @@ void Linear::init(Engine& e) {
   std::cout << "Invariant " << m_id << " sum was initialised to "<< sum
             << "\n";
 #endif
-  m_b->commitValue(sum);
-  e.notifyMaybeChanged(m_b->m_id);
-  this->validate();
+  // m_b->commitValue(sum);
+  Timestamp initTime = 0;
+  m_b->setNewValue(initTime, sum);
+  e.notifyMaybeChanged(initTime, m_b->m_id);
+  this->validate(initTime);
 }
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
@@ -54,7 +56,7 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
                               Int newValue, Int data) {
   assert(newValue != oldValue);  // precondition
   m_b->incValue(t, (newValue - oldValue) * data);
-  e.notifyMaybeChanged(m_b->m_id);
+  e.notifyMaybeChanged(t, m_b->m_id);
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Invariant " << m_id << " notifying output changed by  "
@@ -63,6 +65,6 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
 }
 
 void Linear::commit(const Timestamp& t) {
-  this->validate();
+  this->validate(t);
   m_b->commitIf(t);
 }
