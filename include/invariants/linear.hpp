@@ -7,6 +7,7 @@
 #include "../core/intVar.hpp"
 #include "../core/invariant.hpp"
 #include "../core/types.hpp"
+#include "../core/tracer.hpp"
 
 /**
  * Invariant for b <- sum(A_i*X_i)
