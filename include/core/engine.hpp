@@ -15,6 +15,8 @@ class Engine {
  private:
   static const size_t ESTIMATED_NUM_OBJECTS = 1000;
 
+  Timestamp m_currentTime;
+
   std::vector<std::shared_ptr<IntVar>> m_intVars;
   std::vector<std::shared_ptr<Invariant>> m_invariants;
 

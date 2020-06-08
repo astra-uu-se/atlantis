@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/tracer.hpp"
 #include "types.hpp"
 
 class SavedInt {
@@ -17,8 +18,12 @@ class SavedInt {
   //   m_savedValue);
   // }
 
-  [[gnu::always_inline]] inline Int getValue(
-      const Timestamp& currentTime) const noexcept {
+  [[gnu::always_inline]] inline const Timestamp& getTimestamp() const {
+    return m_tmpTime;
+  }
+
+  [[gnu::always_inline]] inline Int getValue(const Timestamp& currentTime) const
+      noexcept {
     return currentTime == m_tmpTime ? m_tmpValue : m_savedValue;
   }
 
@@ -36,6 +41,11 @@ class SavedInt {
                                               const Int& inc) noexcept {
     m_tmpValue = (currentTime == m_tmpTime ? m_tmpValue : m_savedValue) + inc;
     m_tmpTime = currentTime;
+#ifdef VERBOSE_TRACE
+#include <iostream>
+    std::cout << "SavedInt.incValue(" << currentTime << "," << inc << ")"
+              << " tmpValue: " << m_tmpValue << "\n";
+#endif
   }
   [[gnu::always_inline]] inline void commitValue(Int value) noexcept {
     m_savedValue = value;

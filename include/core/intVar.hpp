@@ -16,6 +16,9 @@ class IntVar : public Var {
   IntVar(Id t_id);
   ~IntVar() = default;
 
+  [[gnu::always_inline]] inline const Timestamp& getTimestamp() const {
+    return m_value.getTimestamp();
+  }
   [[gnu::always_inline]] inline Int getValue(const Timestamp& t) const {
     return m_value.getValue(t);
   }

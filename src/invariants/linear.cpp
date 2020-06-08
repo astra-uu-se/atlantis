@@ -20,7 +20,7 @@ Linear::Linear(std::vector<Int>&& A, std::vector<std::shared_ptr<IntVar>>&& X,
 //   init(e);
 // }
 
-void Linear::init(Engine& e) {
+void Linear::init(const Timestamp& t, Engine& e) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "initialising invariant " << m_id << "\n";
@@ -29,17 +29,16 @@ void Linear::init(Engine& e) {
   // is initialised.
   assert(m_id != Engine::NULL_ID);
 
-  Timestamp initTime = 0;
-
   e.registerDefinedVariable(m_id, m_b->m_id);
   for (size_t i = 0; i < m_X.size(); i++) {
     e.registerInvariantDependency(m_id, m_X[i]->m_id, LocalId(i), m_A[i]);
   }
 
-  this->recompute(e, initTime);
+  this->recompute(t, e);
+  this->commit(t);
 }
 
-void Linear::recompute(Engine& e, const Timestamp& t) {
+void Linear::recompute(const Timestamp& t, Engine& e) {
   Int sum = 0;
   for (size_t i = 0; i < m_X.size(); i++) {
     sum += m_A[i] * m_X[i]->getValue(t);
@@ -50,7 +49,6 @@ void Linear::recompute(Engine& e, const Timestamp& t) {
 #endif
   m_b->setValue(t, sum);
   e.notifyMaybeChanged(t, m_b->m_id);
-  this->validate(t);
 }
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
