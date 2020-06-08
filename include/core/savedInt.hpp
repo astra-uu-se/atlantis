@@ -18,11 +18,11 @@ class SavedInt {
   // }
 
   [[gnu::always_inline]] inline Int getValue(
-      const Timestamp& currentTime) noexcept {
+      const Timestamp& currentTime) const noexcept {
     return currentTime == m_tmpTime ? m_tmpValue : m_savedValue;
   }
 
-  [[gnu::always_inline]] inline Int getCommittedValue() noexcept {
+  [[gnu::always_inline]] inline Int getCommittedValue() const noexcept {
     return m_savedValue;
   }
 

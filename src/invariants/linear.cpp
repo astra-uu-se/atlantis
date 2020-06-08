@@ -4,31 +4,29 @@
 
 Linear::Linear(std::vector<Int>&& A, std::vector<std::shared_ptr<IntVar>>&& X,
                std::shared_ptr<IntVar> b)
-    : Invariant(Engine::NULL_ID),
-      m_A(std::move(A)),
-      m_X(std::move(X)),
-      m_b(b) {
+    : Invariant(Engine::NULL_ID), m_A(std::move(A)), m_X(std::move(X)), m_b(b) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "constructing invariant"
             << "\n";
 #endif
-      }
+}
 
 // Linear::Linear(Engine& e, std::vector<Int>&& A,
 //                std::vector<std::shared_ptr<IntVar>>&& X,
 //                std::shared_ptr<IntVar> b)
-//     : Invariant(Engine::NULL_ID), m_A(std::move(A)), m_X(std::move(X)), m_b(b) {
+//     : Invariant(Engine::NULL_ID), m_A(std::move(A)), m_X(std::move(X)),
+//     m_b(b) {
 //   init(e);
 // }
 
 void Linear::init(Engine& e) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "initialising invariant " << m_id
-            << "\n";
+  std::cout << "initialising invariant " << m_id << "\n";
 #endif
-  // precondition: this invariant must be registered with the engine before it is initialised.
+  // precondition: this invariant must be registered with the engine before it
+  // is initialised.
   assert(m_id != Engine::NULL_ID);
 
   Timestamp initTime = 0;
@@ -38,19 +36,21 @@ void Linear::init(Engine& e) {
     e.registerInvariantDependency(m_id, m_X[i]->m_id, LocalId(i), m_A[i]);
   }
 
+  this->recompute(e, initTime);
+}
+
+void Linear::recompute(Engine& e, const Timestamp& t) {
   Int sum = 0;
   for (size_t i = 0; i < m_X.size(); i++) {
-    sum += m_A[i] * m_X[i]->getValue(initTime);
+    sum += m_A[i] * m_X[i]->getValue(t);
   }
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "Invariant " << m_id << " sum was initialised to "<< sum
-            << "\n";
+  std::cout << "Invariant " << m_id << " sum was recomputed to " << sum << "\n";
 #endif
-  // m_b->commitValue(sum);
-  m_b->setValue(initTime, sum);
-  e.notifyMaybeChanged(initTime, m_b->m_id);
-  this->validate(initTime);
+  m_b->setValue(t, sum);
+  e.notifyMaybeChanged(t, m_b->m_id);
+  this->validate(t);
 }
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
