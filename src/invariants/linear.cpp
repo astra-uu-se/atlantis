@@ -53,14 +53,14 @@ void Linear::recompute(const Timestamp& t, Engine& e) {
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
                               [[maybe_unused]] LocalId id, Int oldValue,
-                              Int newValue, Int data) {
+                              Int newValue, Int coef) {
   assert(newValue != oldValue);  // precondition
-  m_b->incValue(t, (newValue - oldValue) * data);
+  m_b->incValue(t, (newValue - oldValue) * coef);
   e.notifyMaybeChanged(t, m_b->m_id);
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Invariant " << m_id << " notifying output changed by  "
-            << (newValue - oldValue) * data << "\n";
+            << (newValue - oldValue) * coef << "\n";
 #endif
 }
 
