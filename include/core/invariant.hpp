@@ -40,5 +40,9 @@ class Invariant : public PropagationNode {
    */
   virtual void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) = 0;
+
+  // TODO: This commit is somehow different from other commits as it just
+  // forwards the commit call and validates the node. Maybe remove and let
+  // engine do this by looking at defined variables of invariant...
   virtual void commit(const Timestamp& t, Engine&) = 0;
 };
