@@ -21,10 +21,10 @@ class LinearTest : public ::testing::Test {
     b = e->makeIntVar();
     c = e->makeIntVar();
     d = e->makeIntVar();
-    a->commitValue(1);
-    b->commitValue(2);
-    c->commitValue(3);
-    d->commitValue(4);
+    e->commitValue((Timestamp)0,*a,1);
+    e->commitValue((Timestamp)0,*b,2);
+    e->commitValue((Timestamp)0,*c,3);
+    e->commitValue((Timestamp)0,*d,4);
 
     // d = 1*1+2*10+3*(-20) = 1+20-60 =-39
     linear = std::make_shared<Linear>(
@@ -160,9 +160,9 @@ TEST_F(LinearTest, Commit) {
                            a->getValue(currentTime), 1);
 
   // Commit at wrong timestamp should have no impact
-  linear->commit(currentTime + 1);
+  linear->commit(currentTime + 1, *e);
   EXPECT_EQ(d->getCommittedValue(), -39);
-  linear->commit(currentTime);
+  linear->commit(currentTime, *e);
   EXPECT_EQ(d->getCommittedValue(), 0);
 }
 }  // namespace

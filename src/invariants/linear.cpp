@@ -34,8 +34,8 @@ void Linear::init(const Timestamp& t, Engine& e) {
     e.registerInvariantDependency(m_id, m_X[i]->m_id, LocalId(i), m_A[i]);
   }
 
-  this->recompute(t, e);
-  this->commit(t);
+  recompute(t, e);
+  commit(t, e);
 }
 
 void Linear::recompute(const Timestamp& t, Engine& e) {
@@ -65,7 +65,9 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
 #endif
 }
 
-void Linear::commit(const Timestamp& t) {
-  this->validate(t);
-  m_b->commitIf(t);
+void Linear::commit(const Timestamp& t, Engine& e) {
+  // todo: do nodes validate themself or is it done by engine?
+  // this->validate(t);
+  // Dereference safe as incValue does not retain ptr.
+  e.commitIf(t, *m_b);
 }

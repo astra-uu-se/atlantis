@@ -71,6 +71,10 @@ class Engine {
   void incValue(const Timestamp&, IntVar&, Int inc);
   void setValue(const Timestamp&, IntVar&, Int val);
 
+  void commit(IntVar&); //todo: this feels dangerous, maybe commit should always have a timestamp?
+  void commitIf(const Timestamp&, IntVar&);
+  void commitValue(const Timestamp&, IntVar&, Int val);
+
   //--------------------- Registration ---------------------
   /**
    * Register an invariant in the engine and return its new id.

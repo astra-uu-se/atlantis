@@ -34,11 +34,30 @@ void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, Id id) {
 
 void Engine::setValue(const Timestamp& t, IntVar& v, Int val) {
   v.setValue(t, val);
-  this->notifyMaybeChanged(t, v.m_id);
+  notifyMaybeChanged(t, v.m_id);
 }
+
 void Engine::incValue(const Timestamp& t, IntVar& v, Int inc) {
   v.incValue(t, inc);
-  this->notifyMaybeChanged(t, v.m_id);
+  notifyMaybeChanged(t, v.m_id);
+}
+
+void Engine::commit(IntVar& v) {
+  v.commit();
+  // todo: do something else? like:
+  // v.validate();
+}
+
+void Engine::commitIf(const Timestamp& t, IntVar& v) {
+  v.commitIf(t);
+  // todo: do something else? like:
+  // v.validate();
+}
+
+void Engine::commitValue([[maybe_unused]] const Timestamp& t, IntVar& v, Int val) {
+  v.commitValue(val);
+  // todo: do something else? like:
+  // v.validate();
 }
 
 //---------------------Registration---------------------
@@ -100,8 +119,9 @@ void Engine::registerInvariantDependency(InvariantId dependee, VarId source,
       InvariantDependencyData{dependee, localId, data});
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "Registering that invariant " << dependee << " depends on variable "
-            << source << " with local id " << localId << "\n";
+  std::cout << "Registering that invariant " << dependee
+            << " depends on variable " << source << " with local id " << localId
+            << "\n";
 #endif
 }
 
@@ -117,7 +137,8 @@ void Engine::registerDefinedVariable(VarId dependee, InvariantId source) {
     m_variablesDefinedByInvariant.at(source).push_back(dependee);
   } else {
     throw new VariableAlreadyDefinedException(
-        "Variable " + std::to_string(dependee.id) + " already defined by invariant " +
+        "Variable " + std::to_string(dependee.id) +
+        " already defined by invariant " +
         std::to_string(m_definingInvariant.at(dependee).id));
   }
 }
