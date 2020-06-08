@@ -62,19 +62,33 @@ class Engine {
   void endMove(Timestamp& t);
 
   //--------------------- Notificaion ---------------------
-  void notifyMaybeChanged(const Timestamp& t, Int id);
+  /***
+  * @param t the timestamp when the changed happened
+  * @param id the id of the changed variable
+  */
+  void notifyMaybeChanged(const Timestamp& t, Id id);
 
   //--------------------- Registration ---------------------
   /**
    * Register an invariant in the engine and return its new id.
    * This also sets the id of the invariant to the new id.
+   * @param invariantPtr pointer to the invariant to register 
+   * @return the id of the invariant in the engine.
    */
-  InvariantId registerInvariant(std::shared_ptr<Invariant>);
+  InvariantId registerInvariant(std::shared_ptr<Invariant> invariantPtr);
 
+  /**
+   * Creates an IntVar and registers it to the engine.
+   * @return the created IntVar
+   */
   std::shared_ptr<IntVar> makeIntVar();
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
+   * @param to the invariant that the variable depends on
+   * @param from the depending variable
+   * @param localId the id of the depending variable in the invariant
+   * @param data additioonal data
    */
   void registerInvariantDependency(InvariantId to, VarId from, LocalId localId,
                                    Int data);
@@ -82,6 +96,9 @@ class Engine {
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
    * already defined.
+   * @param from the invariant defining the variable
+   * @param to the variable that is defined by the invariant
+   * @throw if the variable is already defined by an invariant.
    */
   void registerDefinedVariable(InvariantId from, VarId to);
 };
