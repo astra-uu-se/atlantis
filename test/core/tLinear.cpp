@@ -57,7 +57,7 @@ TEST_F(LinearTest, Recompute) {
   EXPECT_EQ(d->getCommittedValue(), -39);
 
   Timestamp newTime = 1;
-  a->setValue(newTime, 40);
+  e->setValue(newTime,*a, 40);
   linear->recompute(newTime, *e);
   EXPECT_EQ(d->getCommittedValue(), -39);
   EXPECT_EQ(d->getValue(newTime), 0);
@@ -73,14 +73,14 @@ TEST_F(LinearTest, NotifyChange) {
   Timestamp time1 = 1;
 
   EXPECT_EQ(a->getValue(time1), 1);
-  a->setValue(time1, 40);
+  e->setValue(time1,*a, 40);
   EXPECT_EQ(a->getCommittedValue(), 1);
   EXPECT_EQ(a->getValue(time1), 40);
   linear->notifyIntChanged(time1, *e, unused, a->getCommittedValue(),
                            a->getValue(time1), 1);
   EXPECT_EQ(d->getValue(time1), 0);  // incremental value of d is 0;
 
-  b->setValue(time1, 0);
+  e->setValue(time1,*b, 0);
   linear->notifyIntChanged(time1, *e, unused, b->getCommittedValue(),
                            b->getValue(time1), 10);
   auto tmpValue = d->getValue(time1);  // incremental value of d is -40;
@@ -92,7 +92,7 @@ TEST_F(LinearTest, NotifyChange) {
   Timestamp time2 = time1 + 1;
 
   EXPECT_EQ(a->getValue(time2), 1);
-  a->setValue(time2, 20);
+  e->setValue(time2,*a, 20);
   EXPECT_EQ(a->getCommittedValue(), 1);
   EXPECT_EQ(a->getValue(time2), 20);
   linear->notifyIntChanged(time2, *e, unused, a->getCommittedValue(),
@@ -118,9 +118,9 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
     EXPECT_EQ(d->getCommittedValue(), -39);  // d is commited by register.
 
     // Set all variables
-    a->setValue(currentTime, distribution(gen));
-    b->setValue(currentTime, distribution(gen));
-    c->setValue(currentTime, distribution(gen));
+    e->setValue(currentTime,*a, distribution(gen));
+    e->setValue(currentTime,*b, distribution(gen));
+    e->setValue(currentTime,*c, distribution(gen));
 
     // notify changes
     if (a->getCommittedValue() != a->getValue(currentTime)) {
@@ -152,8 +152,8 @@ TEST_F(LinearTest, Commit) {
 
   Timestamp currentTime = 1;
 
-  a->setValue(currentTime, 40);
-  b->setValue(currentTime, 2);  // This change is not notified and should not
+  e->setValue(currentTime,*a, 40);
+  e->setValue(currentTime,*b, 2);  // This change is not notified and should not
                                 // have an impact on the commit
 
   linear->notifyIntChanged(currentTime, *e, unused, a->getCommittedValue(),

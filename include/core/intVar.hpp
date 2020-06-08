@@ -1,15 +1,37 @@
 #pragma once
 
 #include "core/savedInt.hpp"
+#include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "core/var.hpp"
-#include "core/tracer.hpp"
 
 class Engine;  // Forward declaration
 
 class IntVar : public Var {
  private:
   SavedInt m_value;
+
+  [[gnu::always_inline]] inline void setValue(const Timestamp& timestamp,
+                                              Int value) {
+#ifdef VERBOSE_TRACE
+#include <iostream>
+    std::cout << "IntVar(" << m_id << ").setValue(" << timestamp << "," << value
+              << ")"
+              << "\n";
+#endif
+    m_value.setValue(timestamp, value);
+  }
+  [[gnu::always_inline]] inline void incValue(const Timestamp& timestamp,
+                                              Int inc) {
+#ifdef VERBOSE_TRACE
+#include <iostream>
+    std::cout << "IntVar(" << m_id << ").incValue(" << timestamp << "," << inc
+              << ")"
+              << "\n";
+#endif
+    m_value.incValue(timestamp, inc);
+  }
+  friend class Engine;
 
  public:
   IntVar();
@@ -25,26 +47,7 @@ class IntVar : public Var {
   [[gnu::always_inline]] inline Int getCommittedValue() const {
     return m_value.getCommittedValue();
   }
-  [[gnu::always_inline]] inline void setValue(const Timestamp& timestamp,
-                                                 Int value) {
-#ifdef VERBOSE_TRACE
-#include <iostream>
-    std::cout << "IntVar(" << m_id << ").setValue(" << timestamp << ","
-              << value << ")"
-              << "\n";
-#endif
-    m_value.setValue(timestamp, value);
-  }
-  [[gnu::always_inline]] inline void incValue(const Timestamp& timestamp,
-                                              Int inc) {
-#ifdef VERBOSE_TRACE
-#include <iostream>
-    std::cout << "IntVar(" << m_id << ").incValue(" << timestamp << "," << inc
-              << ")"
-              << "\n";
-#endif
-    m_value.incValue(timestamp, inc);
-  }
+
   [[gnu::always_inline]] inline void commit() { m_value.commit(); }
   [[gnu::always_inline]] inline void commitValue(Int value) {
 #ifdef VERBOSE_TRACE

@@ -47,7 +47,7 @@ int main() {
   Timestamp timestamp = 0;
   {
     timestamp = 1;
-    a->setValue(timestamp, 2);
+    engine.setValue(timestamp,*a, 2);
     abc->notifyIntChanged(timestamp, engine, 0, 1, 2, 1);
     std::cout << "new value of c: " << c->getValue(timestamp) << "\n";
     acfg->notifyIntChanged(timestamp, engine, 0, a->getCommittedValue(),
@@ -60,7 +60,7 @@ int main() {
   std::cout << "----- timestamp 2 -----\n";
   {
     timestamp = 2;
-    a->setValue(timestamp, 0);
+    engine.setValue(timestamp,*a, 0);
     abc->notifyIntChanged(timestamp, engine, 0, a->getCommittedValue(),
                           a->getValue(timestamp), 1);
     std::cout << "new value of c: " << c->getValue(timestamp) << "\n";
