@@ -16,10 +16,10 @@ class IntVar : public Var {
   IntVar(Id t_id);
   ~IntVar() = default;
 
-  [[gnu::always_inline]] inline Int getValue(const Timestamp& t) {
+  [[gnu::always_inline]] inline Int getValue(const Timestamp& t) const {
     return m_value.getValue(t);
   }
-  [[gnu::always_inline]] inline Int getCommittedValue() {
+  [[gnu::always_inline]] inline Int getCommittedValue() const {
     return m_value.getCommittedValue();
   }
   [[gnu::always_inline]] inline void setValue(const Timestamp& timestamp,
