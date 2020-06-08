@@ -57,10 +57,12 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
   assert(newValue != oldValue);  // precondition
   m_b->incValue(t, (newValue - oldValue) * coef);
   e.notifyMaybeChanged(t, m_b->m_id);
+
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "Invariant " << m_id << " notifying output changed by  "
-            << (newValue - oldValue) * coef << "\n";
+          std::cout
+      << "Invariant " << m_id << " notifying output changed by  "
+      << (newValue - oldValue) * coef << "\n";
 #endif
 }
 

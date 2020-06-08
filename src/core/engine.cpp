@@ -3,14 +3,7 @@
 #include "exceptions/exceptions.hpp"
 
 const Id Engine::NULL_ID = Id(0);
-Engine::Engine(/* args */)
-    : m_currentTime(0),
-      m_intVars(),
-      m_invariants(),
-      m_definingInvariant(),
-      m_variablesDefinedByInvariant(),
-      m_listeningInvariants(),
-      m_modifiedVariables() {
+Engine::Engine(/* args */) : m_currentTime(0) {
   m_intVars.reserve(ESTIMATED_NUM_OBJECTS);
   m_invariants.reserve(ESTIMATED_NUM_OBJECTS);
   m_definingInvariant.reserve(ESTIMATED_NUM_OBJECTS);
@@ -42,15 +35,18 @@ void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, Id id) {
 //---------------------Registration---------------------
 
 InvariantId Engine::registerInvariant(std::shared_ptr<Invariant> invariantPtr) {
+  InvariantId newId = InvariantId(m_invariants.size());
+  invariantPtr->setId(newId);
+
   m_invariants.push_back(invariantPtr);
   m_variablesDefinedByInvariant.push_back({});
   assert(m_invariants.size() == m_variablesDefinedByInvariant.size());
-  InvariantId newId = InvariantId(m_invariants.size() - 1);
-  invariantPtr->setId(newId);
+
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Registering new invariant with id: " << newId << "\n";
 #endif
+
   invariantPtr->init(m_currentTime, *this);
   return newId;
 }
@@ -74,7 +70,7 @@ std::shared_ptr<IntVar> Engine::makeIntVar() {
   VarId newId = VarId(m_intVars.size());
 
   m_intVars.emplace_back(std::make_shared<IntVar>(newId));
-  m_listeningInvariants.push_back({});
+  m_listeningInvariants.push_back({}); // list of invariants that this variable is input to.
   m_definingInvariant.push_back(InvariantId(NULL_ID));
   assert(m_intVars.size() == m_listeningInvariants.size());
   assert(m_intVars.size() == m_definingInvariant.size());
@@ -92,7 +88,6 @@ void Engine::registerInvariantDependency(InvariantId to, VarId from,
   assert(!to.equals(NULL_ID) && !from.equals(NULL_ID));
   m_listeningInvariants.at(from).emplace_back(
       InvariantDependencyData{to, localId, data});
-  m_variablesDefinedByInvariant.at(to).push_back(from);
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Registering that invariant " << to << " depends on variable "
