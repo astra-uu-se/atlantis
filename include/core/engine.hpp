@@ -61,12 +61,15 @@ class Engine {
   void beginMove(Timestamp& t);
   void endMove(Timestamp& t);
 
-  //--------------------- Notificaion ---------------------
+  //--------------------- Notificaion/Modification ---------------------
   /***
   * @param t the timestamp when the changed happened
   * @param id the id of the changed variable
   */
   void notifyMaybeChanged(const Timestamp& t, Id id);
+
+  void incValue(const Timestamp&, IntVar&, Int inc);
+  void setValue(const Timestamp&, IntVar&, Int val);
 
   //--------------------- Registration ---------------------
   /**

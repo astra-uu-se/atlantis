@@ -23,13 +23,22 @@ Engine::Engine(/* args */) : m_currentTime(0) {
 
 Engine::~Engine() {}
 
-//---------------------Notificaion---------------------
+//---------------------Notificaion/Modification---------------------
 void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, Id id) {
   // If first time variable is invalidated:
   if (m_intVars.at(id)->m_isInvalid) {
     m_intVars.at(id)->invalidate(t);
     m_modifiedVariables.push(id);
   }
+}
+
+void Engine::setValue(const Timestamp& t, IntVar& v, Int val) {
+  v.setValue(t, val);
+  this->notifyMaybeChanged(t, v.m_id);
+}
+void Engine::incValue(const Timestamp& t, IntVar& v, Int inc) {
+  v.incValue(t, inc);
+  this->notifyMaybeChanged(t, v.m_id);
 }
 
 //---------------------Registration---------------------
@@ -70,7 +79,8 @@ std::shared_ptr<IntVar> Engine::makeIntVar() {
   VarId newId = VarId(m_intVars.size());
 
   m_intVars.emplace_back(std::make_shared<IntVar>(newId));
-  m_listeningInvariants.push_back({}); // list of invariants that this variable is input to.
+  m_listeningInvariants.push_back(
+      {});  // list of invariants that this variable is input to.
   m_definingInvariant.push_back(InvariantId(NULL_ID));
   assert(m_intVars.size() == m_listeningInvariants.size());
   assert(m_intVars.size() == m_definingInvariant.size());

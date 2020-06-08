@@ -47,22 +47,21 @@ void Linear::recompute(const Timestamp& t, Engine& e) {
 #include <iostream>
   std::cout << "Invariant " << m_id << " sum was recomputed to " << sum << "\n";
 #endif
-  m_b->setValue(t, sum);
-  e.notifyMaybeChanged(t, m_b->m_id);
+  // Dereference safe as incValue does not retain ptr.
+  e.setValue(t, *m_b, sum);
 }
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
                               [[maybe_unused]] LocalId id, Int oldValue,
                               Int newValue, Int coef) {
   assert(newValue != oldValue);  // precondition
-  m_b->incValue(t, (newValue - oldValue) * coef);
-  e.notifyMaybeChanged(t, m_b->m_id);
+  // Dereference safe as incValue does not retain ptr.
+  e.incValue(t, *m_b, (newValue - oldValue) * coef);
 
 #ifdef VERBOSE_TRACE
 #include <iostream>
-          std::cout
-      << "Invariant " << m_id << " notifying output changed by  "
-      << (newValue - oldValue) * coef << "\n";
+  std::cout << "Invariant " << m_id << " notifying output changed by  "
+            << (newValue - oldValue) * coef << "\n";
 #endif
 }
 
