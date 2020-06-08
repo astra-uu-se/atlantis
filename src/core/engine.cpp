@@ -93,31 +93,31 @@ void Engine::registerIntVar(std::vector<std::shared_ptr<IntVar>> intVarPtrs) {
   }
 }
 
-void Engine::registerInvariantDependency(InvariantId to, VarId from,
+void Engine::registerInvariantDependency(InvariantId dependee, VarId dependant,
                                          LocalId localId, Int data) {
-  assert(!to.equals(NULL_ID) && !from.equals(NULL_ID));
-  m_listeningInvariants.at(from).emplace_back(
-      InvariantDependencyData{to, localId, data});
+  assert(!dependee.equals(NULL_ID) && !dependant.equals(NULL_ID));
+  m_listeningInvariants.at(dependant).emplace_back(
+      InvariantDependencyData{dependee, localId, data});
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "Registering that invariant " << to << " depends on variable "
-            << from << " with local id " << localId << "\n";
+  std::cout << "Registering that invariant " << dependee << " depends on variable "
+            << dependant << " with local id " << localId << "\n";
 #endif
 }
 
-void Engine::registerDefinedVariable(InvariantId from, VarId to) {
-  assert(!to.equals(NULL_ID) && !from.equals(NULL_ID));
+void Engine::registerDefinedVariable(VarId dependee, InvariantId dependant) {
+  assert(!dependee.equals(NULL_ID) && !dependant.equals(NULL_ID));
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "Registering that invariant " << from << " defines variable "
-            << to << "\n";
+  std::cout << "Registering that invariant " << dependant << " defines variable "
+            << dependee << "\n";
 #endif
-  if (m_definingInvariant.at(to).id == NULL_ID.id) {
-    m_definingInvariant.at(to) = from;
-    m_variablesDefinedByInvariant.at(from).push_back(to);
+  if (m_definingInvariant.at(dependee).id == NULL_ID.id) {
+    m_definingInvariant.at(dependee) = dependant;
+    m_variablesDefinedByInvariant.at(dependant).push_back(dependee);
   } else {
     throw new VariableAlreadyDefinedException(
-        "Variable " + std::to_string(to.id) + " already defined by invariant " +
-        std::to_string(m_definingInvariant.at(to).id));
+        "Variable " + std::to_string(dependee.id) + " already defined by invariant " +
+        std::to_string(m_definingInvariant.at(dependee).id));
   }
 }

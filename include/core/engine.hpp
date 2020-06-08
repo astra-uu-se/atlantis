@@ -88,20 +88,20 @@ class Engine {
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
-   * @param to the invariant that the variable depends on
-   * @param from the depending variable
+   * @param dependee the invariant that the variable depends on
+   * @param dependant the depending variable
    * @param localId the id of the depending variable in the invariant
    * @param data additioonal data
    */
-  void registerInvariantDependency(InvariantId to, VarId from, LocalId localId,
-                                   Int data);
+  void registerInvariantDependency(InvariantId dependee, VarId dependant,
+                                   LocalId localId, Int data);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
    * already defined.
-   * @param from the invariant defining the variable
-   * @param to the variable that is defined by the invariant
+   * @param dependee the variable that is defined by the invariant
+   * @param dependant the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariable(InvariantId from, VarId to);
+  void registerDefinedVariable(VarId dependee, InvariantId dependant);
 };
