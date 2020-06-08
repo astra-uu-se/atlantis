@@ -93,28 +93,28 @@ void Engine::registerIntVar(std::vector<std::shared_ptr<IntVar>> intVarPtrs) {
   }
 }
 
-void Engine::registerInvariantDependency(InvariantId dependee, VarId dependant,
+void Engine::registerInvariantDependency(InvariantId dependee, VarId source,
                                          LocalId localId, Int data) {
-  assert(!dependee.equals(NULL_ID) && !dependant.equals(NULL_ID));
-  m_listeningInvariants.at(dependant).emplace_back(
+  assert(!dependee.equals(NULL_ID) && !source.equals(NULL_ID));
+  m_listeningInvariants.at(source).emplace_back(
       InvariantDependencyData{dependee, localId, data});
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Registering that invariant " << dependee << " depends on variable "
-            << dependant << " with local id " << localId << "\n";
+            << source << " with local id " << localId << "\n";
 #endif
 }
 
-void Engine::registerDefinedVariable(VarId dependee, InvariantId dependant) {
-  assert(!dependee.equals(NULL_ID) && !dependant.equals(NULL_ID));
+void Engine::registerDefinedVariable(VarId dependee, InvariantId source) {
+  assert(!dependee.equals(NULL_ID) && !source.equals(NULL_ID));
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "Registering that invariant " << dependant << " defines variable "
+  std::cout << "Registering that invariant " << source << " defines variable "
             << dependee << "\n";
 #endif
   if (m_definingInvariant.at(dependee).id == NULL_ID.id) {
-    m_definingInvariant.at(dependee) = dependant;
-    m_variablesDefinedByInvariant.at(dependant).push_back(dependee);
+    m_definingInvariant.at(dependee) = source;
+    m_variablesDefinedByInvariant.at(source).push_back(dependee);
   } else {
     throw new VariableAlreadyDefinedException(
         "Variable " + std::to_string(dependee.id) + " already defined by invariant " +
