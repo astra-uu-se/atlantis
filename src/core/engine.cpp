@@ -31,7 +31,7 @@ Engine::Engine(/* args */)
 Engine::~Engine() {}
 
 //---------------------Notificaion---------------------
-void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, Int id) {
+void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, Id id) {
   // If first time variable is invalidated:
   if (m_intVars.at(id)->m_isInvalid) {
     m_intVars.at(id)->invalidate(t);
