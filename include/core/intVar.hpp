@@ -31,6 +31,20 @@ class IntVar : public Var {
 #endif
     m_value.incValue(timestamp, inc);
   }
+
+  [[gnu::always_inline]] inline void commit() { m_value.commit(); }
+  [[gnu::always_inline]] inline void commitValue(Int value) {
+#ifdef VERBOSE_TRACE
+#include <iostream>
+    std::cout << "IntVar(" << m_id << ").commitValue(" << value << ")"
+              << "\n";
+#endif
+    m_value.commitValue(value);
+  }
+  [[gnu::always_inline]] inline void commitIf(const Timestamp& timestamp) {
+    m_value.commitIf(timestamp);
+  }
+
   friend class Engine;
 
  public:
@@ -46,18 +60,5 @@ class IntVar : public Var {
   }
   [[gnu::always_inline]] inline Int getCommittedValue() const {
     return m_value.getCommittedValue();
-  }
-
-  [[gnu::always_inline]] inline void commit() { m_value.commit(); }
-  [[gnu::always_inline]] inline void commitValue(Int value) {
-#ifdef VERBOSE_TRACE
-#include <iostream>
-    std::cout << "IntVar(" << m_id << ").commitValue(" << value << ")"
-              << "\n";
-#endif
-    m_value.commitValue(value);
-  }
-  [[gnu::always_inline]] inline void commitIf(const Timestamp& timestamp) {
-    m_value.commitIf(timestamp);
   }
 };
