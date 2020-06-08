@@ -27,8 +27,8 @@ class Linear : public Invariant {
 //          std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar> b);
 
   ~Linear() = default;
-  void init(Engine&) override;
-  void recompute(Engine&, const Timestamp&) override;
+  void init(const Timestamp&, Engine&) override;
+  void recompute(const Timestamp&, Engine&) override;
   void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id, Int oldValue,
                         Int newValue, Int data) override;
   void commit(const Timestamp&) override;

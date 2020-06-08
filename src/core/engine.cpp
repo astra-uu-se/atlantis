@@ -4,7 +4,8 @@
 
 const Id Engine::NULL_ID = Id(0);
 Engine::Engine(/* args */)
-    : m_intVars(),
+    : m_currentTime(0),
+      m_intVars(),
       m_invariants(),
       m_definingInvariant(),
       m_variablesDefinedByInvariant(),
@@ -30,7 +31,7 @@ Engine::Engine(/* args */)
 Engine::~Engine() {}
 
 //---------------------Notificaion---------------------
-void Engine::notifyMaybeChanged([[maybe_unused]]const Timestamp& t, Int id) {
+void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, Int id) {
   // If first time variable is invalidated:
   if (m_intVars.at(id)->m_isInvalid) {
     m_intVars.at(id)->invalidate(t);
@@ -50,6 +51,7 @@ InvariantId Engine::registerInvariant(std::shared_ptr<Invariant> invariantPtr) {
 #include <iostream>
   std::cout << "Registering new invariant with id: " << newId << "\n";
 #endif
+  invariantPtr->init(m_currentTime, *this);
   return newId;
 }
 

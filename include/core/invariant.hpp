@@ -31,9 +31,9 @@ class Invariant : public PropagationNode {
    *
    * 4) Compute initial state of invariant!
    */
-  virtual void init(Engine&) = 0;
+  virtual void init(const Timestamp&, Engine&) = 0;
 
-  virtual void recompute(Engine&, const Timestamp&) = 0;
+  virtual void recompute(const Timestamp&, Engine&) = 0;
 
   /**
    * Precondition: oldValue != newValue
