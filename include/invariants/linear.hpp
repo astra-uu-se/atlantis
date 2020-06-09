@@ -17,12 +17,12 @@
 class Linear : public Invariant {
  private:
   std::vector<Int> m_A;
-  std::vector<std::shared_ptr<IntVar>> m_X;
-  std::shared_ptr<IntVar> m_b;
+  std::vector<VarId> m_X;
+  VarId m_b;
 
  public:
-  Linear(std::vector<Int>&& A, std::vector<std::shared_ptr<IntVar>>&& X,
-         std::shared_ptr<IntVar> b);
+  Linear(std::vector<Int>&& A, std::vector<VarId>&& X,
+         VarId b);
 //   Linear(Engine& e, std::vector<Int>&& A,
 //          std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar> b);
 
