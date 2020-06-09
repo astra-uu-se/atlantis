@@ -18,15 +18,43 @@ class Engine {
 
   Timestamp m_currentTime;
 
-  std::vector<std::shared_ptr<IntVar>> m_intVars;
-  std::vector<std::shared_ptr<Invariant>> m_invariants;
-
   PropagationGraph m_propGraph;
 
+  class Store {
+   private:
+    std::vector<std::shared_ptr<IntVar>> m_intVars;
+    std::vector<std::shared_ptr<Invariant>> m_invariants;
+
+   public:
+    Store(size_t estimatedSize, [[maybe_unused]] Id t_nullId) {
+      m_intVars.reserve(estimatedSize);
+      m_invariants.reserve(estimatedSize);
+
+      m_intVars.push_back(nullptr);
+      m_invariants.push_back(nullptr);
+    }
+    inline VarId createIntVar() {
+      VarId newId = VarId(m_intVars.size());
+      m_intVars.emplace_back(std::make_shared<IntVar>(newId));
+      return newId;
+    }
+    inline InvariantId createInvariantFromPtr(std::shared_ptr<Invariant> ptr) {
+      InvariantId newId = InvariantId(m_invariants.size());
+      ptr->setId(newId);
+      m_invariants.push_back(ptr);
+      return newId;
+    }
+    inline IntVar& getIntVar(VarId& v) { return *(m_intVars.at(v.id)); }
+    inline Invariant& getInvariant(InvariantId& i) {
+      return *(m_invariants.at(i.id));
+    }
+  } m_store;
+
+  // std::vector<std::shared_ptr<IntVar>> m_intVars;
+  // std::vector<std::shared_ptr<Invariant>> m_invariants;
+
  public:
-  static const Id NULL_ID;
   Engine(/* args */);
-  ~Engine();
 
   //--------------------- Move semantics ---------------------
   void beginMove(Timestamp& t);
@@ -37,7 +65,7 @@ class Engine {
    * @param t the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  void notifyMaybeChanged(const Timestamp& t, Id id);
+  void notifyMaybeChanged(const Timestamp& t, VarId id);
 
   //--------------------- Variable ---------------------
   void incValue(const Timestamp&, VarId&, Int inc);

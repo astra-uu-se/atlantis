@@ -18,7 +18,7 @@ PropagationGraph::PropagationGraph(size_t expectedSize) {
 PropagationGraph::~PropagationGraph() {}
 
 void PropagationGraph::notifyMaybeChanged([[maybe_unused]] const Timestamp& t,
-                                          Id id) {
+                                          VarId id) {
   //TODO: check validity here?
   // If first time variable is invalidated:
   // if (m_intVars.at(id)->m_isInvalid) {
