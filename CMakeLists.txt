@@ -6,37 +6,49 @@ cmake_minimum_required(VERSION 3.0)
 set(PROJECT_NAME cbls)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Check if microsoft visual code. I have no idea if this works
 if(MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17 /permissive /W4 /w14640 ")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17 /permissive /W4 /w14640 ")
 else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic")
 endif()
 
-# If you want your own include/ directory, set this, and then you can do
-# include_directories(${COMMON_INCLUDES}) in other CMakeLists.txt files.
-# set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
+if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  # If we are debugging then add debugging flag
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 ")
+endif()
 
 #----------------------------------------------------------------------------
 # Define project sources and includes
 #----------------------------------------------------------------------------
+
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
+
+# Set the 'library' name. The library consists of all cpp, hpp, and h files except
+# main in ./src
+set(PROJECT_LIB ${PROJECT_NAME}_lib)
+
+# includes (hpp/h) files are in ./include
 include_directories(${COMMON_INCLUDES})
+
+# Retrieve all cpp, hpp, and h files in ./src
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/src/*.h ${PROJECT_SOURCE_DIR}/src/*.hpp)
+# remove main from the src files
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/main.cpp)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 ################################
 # Normal Libraries & Executables
 ################################
-set(PROJECT_LIB ${PROJECT_NAME}_lib)
+# The src files make up the library
 add_library(${PROJECT_LIB} ${SRC_FILES})
+# The executable is the main file
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp)
-# Key idea: SEPARATE OUT your main() function into its own file so it can be its
-# own executable. Separating out main() means you can add this library to be
-# used elsewhere (e.g linking to the test executable).
 
+# Link the src library with the project
 target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 
 ################################
@@ -47,31 +59,30 @@ target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 
 if (BUILD_TESTS)
-    # This adds another subdirectory, which has 'project(gtest)'.
-    add_subdirectory(ext/googletest)
+  # This adds another subdirectory, which has 'project(gtest)'.
+  add_subdirectory(ext/googletest)
 
-    enable_testing()
+  enable_testing()
 
-    include(CTest)
+  include(CTest)
 
-    # Include the gtest library. gtest_SOURCE_DIR is available due to
-    # 'project(gtest)' above.
-    include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+  # Include the gtest library. gtest_SOURCE_DIR is available due to
+  # 'project(gtest)' above.
+  include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
-    ##############
-    # Unit Tests
-    ##############
-    file(GLOB_RECURSE TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp ${PROJECT_SOURCE_DIR}/test/*.h ${PROJECT_SOURCE_DIR}/test/*.hpp)
-    add_executable(runUnitTests ${TEST_SRC_FILES})
+  ##############
+  # Unit Tests
+  ##############
+  file(GLOB_RECURSE TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp ${PROJECT_SOURCE_DIR}/test/*.h ${PROJECT_SOURCE_DIR}/test/*.hpp)
+  add_executable(runUnitTests ${TEST_SRC_FILES})
 
-    # Standard linking to gtest stuff.
-    target_link_libraries(runUnitTests gtest gtest_main)
+  # Standard linking to gtest stuff.
+  target_link_libraries(runUnitTests gtest gtest_main)
 
-    # Extra linking for the project.
-    target_link_libraries(runUnitTests ${PROJECT_LIB})
+  # Extra linking for the project.
+  target_link_libraries(runUnitTests ${PROJECT_LIB})
 
-    # This is so you can do 'make test' to see all your tests run, instead of
-    # manually running the executable runUnitTests to see those specific tests.
-    add_test(NAME "UnitTests" COMMAND "runUnitTests")
-
+  # This is so you can do 'make test' to see all your tests run, instead of
+  # manually running the executable runUnitTests to see those specific tests.
+  add_test(NAME "UnitTests" COMMAND "runUnitTests")
 endif()
