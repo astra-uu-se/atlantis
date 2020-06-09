@@ -79,10 +79,29 @@ class Engine {
   /**
    * Register an invariant in the engine and return its new id.
    * This also sets the id of the invariant to the new id.
-   * @param invariantPtr pointer to the invariant to register 
-   * @return the id of the invariant in the engine.
+   * @param args the constructor arguments of the invariant
+   * @return the created invariant.
    */
-  InvariantId registerInvariant(std::shared_ptr<Invariant> invariantPtr);
+  template<class T, typename... Args>
+  std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
+  makeInvariant(Args&& ...args) {
+    auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
+  
+    InvariantId newId = InvariantId(m_invariants.size());
+    invariantPtr->setId(newId);
+
+    m_invariants.push_back(invariantPtr);
+    m_variablesDefinedByInvariant.push_back({});
+    assert(m_invariants.size() == m_variablesDefinedByInvariant.size());
+
+  #ifdef VERBOSE_TRACE
+  #include <iostream>
+    std::cout << "Registering new invariant with id: " << newId << "\n";
+  #endif
+
+    invariantPtr->init(m_currentTime, *this);
+    return invariantPtr;
+  }
 
   /**
    * Creates an IntVar and registers it to the engine.
