@@ -62,23 +62,6 @@ void Engine::commitValue([[maybe_unused]] const Timestamp& t, IntVar& v, Int val
 
 //---------------------Registration---------------------
 
-InvariantId Engine::registerInvariant(std::shared_ptr<Invariant> invariantPtr) {
-  InvariantId newId = InvariantId(m_invariants.size());
-  invariantPtr->setId(newId);
-
-  m_invariants.push_back(invariantPtr);
-  m_variablesDefinedByInvariant.push_back({});
-  assert(m_invariants.size() == m_variablesDefinedByInvariant.size());
-
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "Registering new invariant with id: " << newId << "\n";
-#endif
-
-  invariantPtr->init(m_currentTime, *this);
-  return newId;
-}
-
 VarId Engine::registerIntVar(std::shared_ptr<IntVar> intVarPtr) {
   m_intVars.push_back(intVarPtr);
   m_listeningInvariants.push_back({});
