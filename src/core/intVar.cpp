@@ -1,8 +1,9 @@
 #include "core/intVar.hpp"
 
-#include "core/engine.hpp"
+#include "core/types.hpp"
 
-IntVar::IntVar() : IntVar(Engine::NULL_ID) {}
+extern Id NULL_ID;
+IntVar::IntVar() : IntVar(NULL_ID) {}
 IntVar::IntVar(Id t_id) : Var(t_id), m_value(-1, 0) { // todo: We need both a time-zero (when initalisation happens) but also a dummy time.
 #ifdef VERBOSE_TRACE
 #include <iostream>
