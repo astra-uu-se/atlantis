@@ -33,12 +33,12 @@ class Engine {
       m_intVars.push_back(nullptr);
       m_invariants.push_back(nullptr);
     }
-    inline VarId createIntVar() {
+    [[nodiscard]] inline VarId createIntVar() {
       VarId newId = VarId(m_intVars.size());
       m_intVars.emplace_back(std::make_shared<IntVar>(newId));
       return newId;
     }
-    inline InvariantId createInvariantFromPtr(std::shared_ptr<Invariant> ptr) {
+    [[nodiscard]] inline InvariantId createInvariantFromPtr(std::shared_ptr<Invariant> ptr) {
       InvariantId newId = InvariantId(m_invariants.size());
       ptr->setId(newId);
       m_invariants.push_back(ptr);
@@ -90,8 +90,8 @@ class Engine {
   makeInvariant(Args&&... args) {
     auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
-    m_store.createInvariantFromPtr(invariantPtr);
-
+    auto newId = m_store.createInvariantFromPtr(invariantPtr);
+    m_propGraph.registerInvariant(newId);
     invariantPtr->init(m_currentTime, *this);
     return invariantPtr;
   }
