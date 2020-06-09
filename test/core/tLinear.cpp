@@ -27,7 +27,7 @@ class LinearTest : public ::testing::Test {
     e->commitValue((Timestamp)0, d, 4);
 
     // d = 1*1+2*10+3*(-20) = 1+20-60 =-39
-    linear = std::make_shared<Linear>(std::vector<Int>({1, 10, -20}),
+    linear = e->makeInvariant<Linear>(std::vector<Int>({1, 10, -20}),
                                       std::vector<VarId>({a, b, c}), d);
   }
   std::unique_ptr<Engine> e;
@@ -44,13 +44,11 @@ class LinearTest : public ::testing::Test {
  */
 
 TEST_F(LinearTest, Init) {
-  e->registerAndInitInvariant(linear);
   EXPECT_EQ(e->getCommitedValue(d), -39);
   EXPECT_EQ(e->getValue(e->getTimestamp(d), d), -39);
 }
 
 TEST_F(LinearTest, Recompute) {
-  e->registerAndInitInvariant(linear);
 
   EXPECT_EQ(e->getValue(0, d), -39);
   EXPECT_EQ(e->getCommitedValue(d), -39);
@@ -63,7 +61,6 @@ TEST_F(LinearTest, Recompute) {
 }
 
 TEST_F(LinearTest, NotifyChange) {
-  e->registerAndInitInvariant(linear);
 
   EXPECT_EQ(e->getValue(0, d), -39);  // initially the value of d is -39
 
@@ -100,7 +97,6 @@ TEST_F(LinearTest, NotifyChange) {
 }
 
 TEST_F(LinearTest, IncrementalVsRecompute) {
-  e->registerAndInitInvariant(linear);
 
   EXPECT_EQ(e->getValue(0, d), -39);  // initially the value of d is -39
   LocalId unused = -1;
@@ -144,7 +140,6 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
 }
 
 TEST_F(LinearTest, Commit) {
-  e->registerAndInitInvariant(linear);
   EXPECT_EQ(e->getCommitedValue(d), -39);
 
   LocalId unused = -1;
