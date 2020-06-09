@@ -85,22 +85,12 @@ class Engine {
    * @param args the constructor arguments of the invariant
    * @return the created invariant.
    */
-  template<class T, typename... Args>
+  template <class T, typename... Args>
   std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
-  makeInvariant(Args&& ...args) {
+  makeInvariant(Args&&... args) {
     auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
-  
-    InvariantId newId = InvariantId(m_invariants.size());
-    invariantPtr->setId(newId);
 
-    m_invariants.push_back(invariantPtr);
-    m_variablesDefinedByInvariant.push_back({});
-    assert(m_invariants.size() == m_variablesDefinedByInvariant.size());
-
-  #ifdef VERBOSE_TRACE
-  #include <iostream>
-    std::cout << "Registering new invariant with id: " << newId << "\n";
-  #endif
+    m_store.createInvariantFromPtr(invariantPtr);
 
     invariantPtr->init(m_currentTime, *this);
     return invariantPtr;
