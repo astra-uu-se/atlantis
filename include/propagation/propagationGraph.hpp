@@ -38,8 +38,7 @@ class PropagationGraph {
   PropagationGraph(size_t expectedSize);
   ~PropagationGraph();
 
-  // todo: change id to varid?
-  void notifyMaybeChanged(const Timestamp& t, Id id);
+  void notifyMaybeChanged(const Timestamp& t, VarId id);
 
   /**
    * Register an invariant in the propagation graph.
