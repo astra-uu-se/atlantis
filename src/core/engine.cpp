@@ -63,12 +63,11 @@ void Engine::commitValue([[maybe_unused]] const Timestamp& t, VarId& v,
 
 //---------------------Registration---------------------
 
-InvariantId Engine::registerInvariant(std::shared_ptr<Invariant> invariantPtr) {
+InvariantId Engine::registerAndInitInvariant(std::shared_ptr<Invariant> invariantPtr) {
   InvariantId newId = m_store.createInvariantFromPtr(invariantPtr);
-
   m_propGraph.registerInvariant(newId);
-
   invariantPtr->init(m_currentTime, *this);
+
   return newId;
 }
 

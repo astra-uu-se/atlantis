@@ -27,17 +27,17 @@ int main() {
   std::shared_ptr<Linear> abc =
       std::make_shared<Linear>(std::vector<Int>({1, 1}),
                                std::vector<VarId>({a, b}), c);
-  engine.registerInvariant(abc);
+  engine.registerAndInitInvariant(abc);
 
   std::shared_ptr<Linear> def =
       std::make_shared<Linear>(std::vector<Int>({2, 2}),
                                std::vector<VarId>({d, e}), f);
-  engine.registerInvariant(def);
+  engine.registerAndInitInvariant(def);
 
   std::shared_ptr<Linear> acfg = std::make_shared<Linear>(
       std::vector<Int>({3, 2, 1}),
       std::vector<VarId>({a, c, f}), g);
-  engine.registerInvariant(acfg);
+  engine.registerAndInitInvariant(acfg);
   engine.commit(c);
   engine.commit(f);
   engine.commit(g);
