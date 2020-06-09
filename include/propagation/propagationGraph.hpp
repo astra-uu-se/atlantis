@@ -1,5 +1,7 @@
 #pragma once
 
+#include <assert.h>
+
 #include <memory>
 #include <queue>
 #include <vector>
@@ -36,7 +38,7 @@ class PropagationGraph {
   PropagationGraph(size_t expectedSize);
   ~PropagationGraph();
 
-  //todo: change id to varid?
+  // todo: change id to varid?
   void notifyMaybeChanged(const Timestamp& t, Id id);
 
   /**
@@ -57,7 +59,7 @@ class PropagationGraph {
    * @param data additioonal data
    */
   void registerInvariantDependsOnVar(InvariantId dependee, VarId source,
-                                   LocalId localId, Int data);
+                                     LocalId localId, Int data);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
