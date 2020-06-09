@@ -30,7 +30,7 @@ void Linear::init(const Timestamp& t, Engine& e) {
   assert(m_id != Engine::NULL_ID);
 
   e.registerDefinedVariable(m_b->m_id, m_id);
-  for (size_t i = 0; i < m_X.size(); i++) {
+  for (size_t i = 0; i < m_X.size(); ++i) {
     e.registerInvariantDependency(m_id, m_X[i]->m_id, LocalId(i), m_A[i]);
   }
 
@@ -40,7 +40,7 @@ void Linear::init(const Timestamp& t, Engine& e) {
 
 void Linear::recompute(const Timestamp& t, Engine& e) {
   Int sum = 0;
-  for (size_t i = 0; i < m_X.size(); i++) {
+  for (size_t i = 0; i < m_X.size(); ++i) {
     sum += m_A[i] * m_X[i]->getValue(t);
   }
 #ifdef VERBOSE_TRACE
