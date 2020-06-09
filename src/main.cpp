@@ -1,7 +1,7 @@
-#include <core/engine.hpp>
-#include <core/intVar.hpp>
-#include <core/tracer.hpp>
-#include <invariants/linear.hpp>
+#include "core/engine.hpp"
+#include "core/intVar.hpp"
+#include "core/tracer.hpp"
+#include "invariants/linear.hpp"
 #include <iostream>
 #include <utility>
 #include <vector>
