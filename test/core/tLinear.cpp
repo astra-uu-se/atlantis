@@ -109,8 +109,8 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
   std::uniform_int_distribution<> distribution(-100000, 100000);
 
   Timestamp currentTime = 1;
-  for (size_t i = 0; i < 1000; i++) {
-    currentTime++;
+  for (size_t i = 0; i < 1000; ++i) {
+    ++currentTime;
     // Check that we do not accidentally commit
     EXPECT_EQ(a->getCommittedValue(), 1);
     EXPECT_EQ(b->getCommittedValue(), 2);
