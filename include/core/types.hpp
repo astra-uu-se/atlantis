@@ -16,9 +16,11 @@ struct Id {
   Id() = delete;
   Id(size_t i) : id(i) {}
   operator size_t() const { return id; }
-  // We should just overload the == operator but I am too scared to do it.
+  //TODO: We should just overload the == operator but I am too scared to do it.
   inline bool equals(const Id& other) { return id == other.id; }
 };
+
+static Id NULL_ID = Id(0);
 
 struct VarId : public Id {
   VarId(size_t i) : Id(i) {}
