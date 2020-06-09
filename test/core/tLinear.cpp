@@ -44,13 +44,13 @@ class LinearTest : public ::testing::Test {
  */
 
 TEST_F(LinearTest, Init) {
-  e->registerInvariant(linear);
+  e->registerAndInitInvariant(linear);
   EXPECT_EQ(e->getCommitedValue(d), -39);
   EXPECT_EQ(e->getValue(e->getTimestamp(d), d), -39);
 }
 
 TEST_F(LinearTest, Recompute) {
-  e->registerInvariant(linear);
+  e->registerAndInitInvariant(linear);
 
   EXPECT_EQ(e->getValue(0, d), -39);
   EXPECT_EQ(e->getCommitedValue(d), -39);
@@ -63,7 +63,7 @@ TEST_F(LinearTest, Recompute) {
 }
 
 TEST_F(LinearTest, NotifyChange) {
-  e->registerInvariant(linear);
+  e->registerAndInitInvariant(linear);
 
   EXPECT_EQ(e->getValue(0, d), -39);  // initially the value of d is -39
 
@@ -100,7 +100,7 @@ TEST_F(LinearTest, NotifyChange) {
 }
 
 TEST_F(LinearTest, IncrementalVsRecompute) {
-  e->registerInvariant(linear);
+  e->registerAndInitInvariant(linear);
 
   EXPECT_EQ(e->getValue(0, d), -39);  // initially the value of d is -39
   LocalId unused = -1;
@@ -144,7 +144,7 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
 }
 
 TEST_F(LinearTest, Commit) {
-  e->registerInvariant(linear);
+  e->registerAndInitInvariant(linear);
   EXPECT_EQ(e->getCommitedValue(d), -39);
 
   LocalId unused = -1;

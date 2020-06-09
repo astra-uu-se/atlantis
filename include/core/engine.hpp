@@ -50,9 +50,6 @@ class Engine {
     }
   } m_store;
 
-  // std::vector<std::shared_ptr<IntVar>> m_intVars;
-  // std::vector<std::shared_ptr<Invariant>> m_invariants;
-
  public:
   Engine(/* args */);
 
@@ -88,7 +85,7 @@ class Engine {
    * @param invariantPtr pointer to the invariant to register
    * @return the id of the invariant in the engine.
    */
-  InvariantId registerInvariant(std::shared_ptr<Invariant> invariantPtr);
+  InvariantId registerAndInitInvariant(std::shared_ptr<Invariant> invariantPtr);
 
   /**
    * Creates an IntVar and registers it to the engine.
