@@ -10,6 +10,8 @@
 
 class PropagationGraph {
  private:
+  size_t m_numInvariants;
+  size_t m_numVariables;
   /**
    * Map from VarID -> InvariantId
    *
@@ -36,6 +38,15 @@ class PropagationGraph {
   std::vector<Timestamp> m_varsLastCommit;
 
   std::queue<VarId> m_modifiedVariables;
+
+  struct Topology {
+    std::vector<size_t> m_variablePosition;
+    std::vector<size_t> m_invariantPosition;
+
+    PropagationGraph& graph;
+    Topology(PropagationGraph& g) : graph(g) {}
+    void computeTopology();
+  } m_topology;
 
  public:
   PropagationGraph(size_t expectedSize);
