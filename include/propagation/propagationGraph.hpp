@@ -9,7 +9,9 @@
 #include "../core/types.hpp"
 
 class PropagationGraph {
- private:
+ protected:
+  size_t m_numInvariants;
+  size_t m_numVariables;
   /**
    * Map from VarID -> InvariantId
    *
@@ -37,9 +39,20 @@ class PropagationGraph {
 
   std::queue<VarId> m_modifiedVariables;
 
+  struct Topology {
+    std::vector<size_t> m_variablePosition;
+    std::vector<size_t> m_invariantPosition;
+
+    PropagationGraph& graph;
+    Topology(PropagationGraph& g) : graph(g) {}
+    void computeTopology();
+    size_t getPosition(VarId id) { return m_variablePosition.at(id); }
+    size_t getPosition(InvariantId id) { return m_invariantPosition.at(id); }
+  } m_topology;
+
  public:
+  PropagationGraph() : PropagationGraph(1000) {}
   PropagationGraph(size_t expectedSize);
-  ~PropagationGraph();
 
   void notifyMaybeChanged(const Timestamp& t, VarId id);
 
@@ -71,4 +84,22 @@ class PropagationGraph {
    * @throw if the variable is already defined by an invariant.
    */
   void registerDefinedVariable(VarId dependee, InvariantId source);
+
+  void close() { m_topology.computeTopology(); }
+
+  size_t getNumVariables() {
+    return m_numVariables;  //this ignores null var
+  }
+
+  size_t getNumInvariants() {
+    return m_numInvariants;  //this ignores null invariant
+  }
+
+  size_t getTopologicalKey(VarId id){
+    return m_topology.m_variablePosition.at(id);
+  }
+
+  size_t getTopologicalKey(InvariantId id) {
+    return m_topology.m_invariantPosition.at(id);
+  }
 };
