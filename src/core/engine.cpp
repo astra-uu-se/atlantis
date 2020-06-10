@@ -16,12 +16,25 @@ void Engine::open() {
   m_isOpen = true;
 }
 
+void Engine::recomputeAndCommit() {
+  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd(); ++iter) {
+    if ((*iter) == nullptr) {
+      continue;
+    }
+    (*iter)->recompute(m_currentTime, *this);
+    (*iter)->commit(m_currentTime, *this);
+  }
+  for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd(); ++iter) {
+    iter->commit();
+  }
+}
+
 void Engine::close() {
   m_isOpen = false;
   // TODO: topological sort of the propGraph
   
   // compute and initialise all variables and invariants
-  m_store.recomputeAndCommit(m_currentTime, *this);
+  recomputeAndCommit();
 }
 
 //---------------------Notificaion/Modification---------------------

@@ -58,20 +58,22 @@ class Engine {
     inline Invariant& getInvariant(InvariantId& i) {
       return *(m_invariants.at(i.id));
     }
-    inline void recomputeAndCommit(const Timestamp& t, Engine& e) {
-      for (auto invariantPtr : m_invariants) {
-        if (invariantPtr == nullptr) {
-          continue;
-        }
-        invariantPtr->recompute(t, e);
-        invariantPtr->commit(t, e);
-      }
-      for (size_t i = 1; i < m_intVars.size(); ++i) {
-        m_intVars[i].commit();
-      }
+    std::vector<IntVar>::iterator intVarBegin() {
+      return m_intVars.begin();
+    }
+    std::vector<IntVar>::iterator intVarEnd() {
+      return m_intVars.end();
+    }
+    std::vector<std::shared_ptr<Invariant>>::iterator invariantBegin() {
+      return m_invariants.begin();
+    }
+    std::vector<std::shared_ptr<Invariant>>::iterator invariantEnd() {
+      return m_invariants.end();
     }
   } m_store;
 
+
+  void recomputeAndCommit();
  public:
   Engine(/* args */);
 
