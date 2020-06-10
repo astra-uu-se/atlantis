@@ -18,9 +18,7 @@ void Engine::open() {
 
 void Engine::recomputeAndCommit() {
   for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd(); ++iter) {
-    if ((*iter) == nullptr) {
-      continue;
-    }
+    assert((*iter) != nullptr);
     (*iter)->recompute(m_currentTime, *this);
     (*iter)->commit(m_currentTime, *this);
   }
