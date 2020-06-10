@@ -108,24 +108,14 @@ void PropagationGraph::Topology::computeTopology() {
 
   while (!frontier.empty()) {
     VarId currentNode = frontier.front();
-    
-    std::cout << "Exploring Var node " << currentNode << std::endl;
-    
     frontier.pop();
     size_t nodeDepth = m_variablePosition.at(currentNode);
     for (auto dependencyData : graph.m_listeningInvariants.at(currentNode)) {
       InvariantId invariant = dependencyData.id;
-      
-      std::cout << "  Updating dependent invariant " << invariant << std::endl;
-      
       m_invariantPosition.at(invariant) =
           std::max<size_t>(nodeDepth + 1, m_invariantPosition.at(invariant));
       for (auto dependentVariable :
            graph.m_variablesDefinedByInvariant.at(invariant)) {
-        
-
-        std::cout << "    Updating and enqueuing variable " << dependentVariable << std::endl;
-        
         m_variablePosition.at(dependentVariable) = std::max<size_t>(
             nodeDepth + 2, m_variablePosition.at(dependentVariable));
         frontier.push(dependentVariable);
