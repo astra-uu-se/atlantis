@@ -17,18 +17,20 @@ class LinearTest : public ::testing::Test {
     std::random_device rd;
     gen = std::mt19937(rd());
     e = std::make_unique<Engine>();
+    e->open();
     a = e->makeIntVar();
     b = e->makeIntVar();
     c = e->makeIntVar();
     d = e->makeIntVar();
-    e->commitValue((Timestamp)0, a, 1);
-    e->commitValue((Timestamp)0, b, 2);
-    e->commitValue((Timestamp)0, c, 3);
-    e->commitValue((Timestamp)0, d, 4);
+    e->setValue(a, 1);
+    e->setValue(b, 2);
+    e->setValue(c, 3);
+    e->setValue(d, 4);
 
     // d = 1*1+2*10+3*(-20) = 1+20-60 =-39
     linear = e->makeInvariant<Linear>(std::vector<Int>({1, 10, -20}),
                                       std::vector<VarId>({a, b, c}), d);
+    e->close();
   }
   std::unique_ptr<Engine> e;
   VarId a = NULL_ID;

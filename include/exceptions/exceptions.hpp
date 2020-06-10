@@ -1,3 +1,4 @@
+#pragma once
 #include <stdexcept>
 
 class VariableAlreadyDefinedException : public std::runtime_error {
@@ -13,4 +14,19 @@ public:
   /** Destructor.
    */
   ~VariableAlreadyDefinedException() {}
+};
+
+class ModelNotOpenException : public std::runtime_error {
+
+public:
+  /** 
+   * @param msg The error message
+   */
+  explicit 
+  ModelNotOpenException(const std::string& msg) :
+    std::runtime_error(msg) {}
+
+  /** Destructor.
+   */
+  ~ModelNotOpenException() {}
 };

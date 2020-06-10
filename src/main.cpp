@@ -10,6 +10,7 @@ int main() {
   static_assert("C++17");
   std::cout << "hello world!" << std::endl;
   Engine engine;
+  engine.open();
   VarId a = engine.makeIntVar();
   VarId b = engine.makeIntVar();
   VarId c = engine.makeIntVar();
@@ -17,13 +18,13 @@ int main() {
   VarId e = engine.makeIntVar();
   VarId f = engine.makeIntVar();
   VarId g = engine.makeIntVar();
-  engine.commitValue((Timestamp)0, a, 1);
-  engine.commitValue((Timestamp)0, b, 2);
-  engine.commitValue((Timestamp)0, c, 3);
-  engine.commitValue((Timestamp)0, d, 4);
-  engine.commitValue((Timestamp)0, e, 5);
-  engine.commitValue((Timestamp)0, f, 6);
-  engine.commitValue((Timestamp)0, g, 7);
+  engine.setValue(a, 1);
+  engine.setValue(b, 2);
+  engine.setValue(c, 3);
+  engine.setValue(d, 4);
+  engine.setValue(e, 5);
+  engine.setValue(f, 6);
+  engine.setValue(g, 7);
 
   auto abc = engine.makeInvariant<Linear>(std::vector<Int>({1, 1}),
                                           std::vector<VarId>({a, b}), c);
@@ -33,9 +34,7 @@ int main() {
   auto acfg = engine.makeInvariant<Linear>(std::vector<Int>({3, 2, 1}),
                                            std::vector<VarId>({a, c, f}), g);
 
-  engine.commit(c);
-  engine.commit(f);
-  engine.commit(g);
+  engine.close();
   std::cout << "----- end setup -----\n";
 
   std::cout << "----- timestamp 1 -----\n";

@@ -22,7 +22,7 @@ Linear::Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b)
 //   init(e);
 // }
 
-void Linear::init(const Timestamp& t, Engine& e) {
+void Linear::init([[maybe_unused]] const Timestamp& t, Engine& e) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "initialising invariant " << m_id << "\n";
@@ -35,9 +35,6 @@ void Linear::init(const Timestamp& t, Engine& e) {
   for (size_t i = 0; i < m_X.size(); ++i) {
     e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i), m_A[i]);
   }
-
-  recompute(t, e);
-  commit(t, e);
 }
 
 void Linear::recompute(const Timestamp& t, Engine& e) {
