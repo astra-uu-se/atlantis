@@ -46,6 +46,8 @@ class PropagationGraph {
     PropagationGraph& graph;
     Topology(PropagationGraph& g) : graph(g) {}
     void computeTopology();
+    size_t getPosition(VarId id) { return m_variablePosition.at(id); }
+    size_t getPosition(InvariantId id) { return m_invariantPosition.at(id); }
   } m_topology;
 
  public:
