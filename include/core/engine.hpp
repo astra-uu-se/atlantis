@@ -59,13 +59,13 @@ class Engine {
       return *(m_invariants.at(i.id));
     }
     std::vector<IntVar>::iterator intVarBegin() {
-      return m_intVars.begin();
+      return m_intVars.begin()+1;
     }
     std::vector<IntVar>::iterator intVarEnd() {
       return m_intVars.end();
     }
     std::vector<std::shared_ptr<Invariant>>::iterator invariantBegin() {
-      return m_invariants.begin();
+      return m_invariants.begin()+1;
     }
     std::vector<std::shared_ptr<Invariant>>::iterator invariantEnd() {
       return m_invariants.end();
