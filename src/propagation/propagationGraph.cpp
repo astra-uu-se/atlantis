@@ -5,7 +5,8 @@
 #include "exceptions/exceptions.hpp"
 extern Id NULL_ID;
 
-PropagationGraph::PropagationGraph(size_t expectedSize) : m_topology(*this) {
+PropagationGraph::PropagationGraph(size_t expectedSize)
+    : m_numInvariants(0), m_numVariables(0), m_topology(*this) {
   m_definingInvariant.reserve(expectedSize);
   m_variablesDefinedByInvariant.reserve(expectedSize);
   m_listeningInvariants.reserve(expectedSize);
@@ -17,8 +18,6 @@ PropagationGraph::PropagationGraph(size_t expectedSize) : m_topology(*this) {
   m_listeningInvariants.push_back({});
   m_varsLastCommit.push_back(NULL_TIMESTAMP);
 }
-
-PropagationGraph::~PropagationGraph() {}
 
 void PropagationGraph::notifyMaybeChanged([[maybe_unused]] const Timestamp& t,
                                           VarId id) {
@@ -87,8 +86,8 @@ void PropagationGraph::registerDefinedVariable(VarId dependee,
 }
 
 void PropagationGraph::Topology::computeTopology() {
-  m_variablePosition.resize(graph.m_numVariables, 0);
-  m_invariantPosition.resize(graph.m_numInvariants, 0);
+  m_variablePosition.resize(graph.m_numVariables+1, 0);
+  m_invariantPosition.resize(graph.m_numInvariants+1, 0);
 
   // We only keep track of a variable frontier. Invariants are visited on the
   // fly.
@@ -109,14 +108,24 @@ void PropagationGraph::Topology::computeTopology() {
 
   while (!frontier.empty()) {
     VarId currentNode = frontier.front();
+    
+    std::cout << "Exploring Var node " << currentNode << std::endl;
+    
     frontier.pop();
     size_t nodeDepth = m_variablePosition.at(currentNode);
     for (auto dependencyData : graph.m_listeningInvariants.at(currentNode)) {
       InvariantId invariant = dependencyData.id;
+      
+      std::cout << "  Updating dependent invariant " << invariant << std::endl;
+      
       m_invariantPosition.at(invariant) =
           std::max<size_t>(nodeDepth + 1, m_invariantPosition.at(invariant));
       for (auto dependentVariable :
            graph.m_variablesDefinedByInvariant.at(invariant)) {
+        
+
+        std::cout << "    Updating and enqueuing variable " << dependentVariable << std::endl;
+        
         m_variablePosition.at(dependentVariable) = std::max<size_t>(
             nodeDepth + 2, m_variablePosition.at(dependentVariable));
         frontier.push(dependentVariable);
