@@ -25,20 +25,24 @@ class Engine {
 
   class Store {
    private:
-    std::vector<std::shared_ptr<IntVar>> m_intVars;
+    std::vector<IntVar> m_intVars;
+    std::vector<size_t> m_intVarIndexMap;
     std::vector<std::shared_ptr<Invariant>> m_invariants;
 
    public:
     Store(size_t estimatedSize, [[maybe_unused]] Id t_nullId) {
       m_intVars.reserve(estimatedSize);
+      m_intVarIndexMap.reserve(estimatedSize);
       m_invariants.reserve(estimatedSize);
 
-      m_intVars.push_back(nullptr);
+      m_intVars.emplace_back();
+      m_intVarIndexMap.push_back(-1);
       m_invariants.push_back(nullptr);
     }
     [[nodiscard]] inline VarId createIntVar() {
       VarId newId = VarId(m_intVars.size());
-      m_intVars.emplace_back(std::make_shared<IntVar>(newId));
+      m_intVars.emplace_back(newId);
+      m_intVarIndexMap.push_back(newId);
       return newId;
     }
     [[nodiscard]] inline InvariantId createInvariantFromPtr(std::shared_ptr<Invariant> ptr) {
@@ -47,7 +51,10 @@ class Engine {
       m_invariants.push_back(ptr);
       return newId;
     }
-    inline IntVar& getIntVar(VarId& v) { return *(m_intVars.at(v.id)); }
+    inline IntVar& getIntVar(VarId& v) {
+      return m_intVars.at(m_intVarIndexMap.at(v.id));
+    }
+    
     inline Invariant& getInvariant(InvariantId& i) {
       return *(m_invariants.at(i.id));
     }
@@ -59,11 +66,8 @@ class Engine {
         invariantPtr->recompute(t, e);
         invariantPtr->commit(t, e);
       }
-      for (auto intVarPtr : m_intVars) {
-        if (intVarPtr == nullptr) {
-          continue;
-        }
-        intVarPtr->commit();
+      for (size_t i = 1; i < m_intVars.size(); ++i) {
+        m_intVars[i].commit();
       }
     }
   } m_store;
