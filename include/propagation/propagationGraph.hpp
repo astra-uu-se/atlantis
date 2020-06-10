@@ -32,6 +32,9 @@ class PropagationGraph {
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantDependencyData>> m_listeningInvariants;
 
+  // The last time when an intVar was commited to
+  std::vector<Timestamp> m_varsLastCommit;
+
   std::queue<VarId> m_modifiedVariables;
 
  public:
