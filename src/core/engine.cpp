@@ -11,6 +11,19 @@ Engine::Engine()
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
 
+
+void Engine::open() {
+  m_isOpen = true;
+}
+
+void Engine::close() {
+  m_isOpen = false;
+  // TODO: topological sort of the propGraph
+  
+  // compute and initialise all variables and invariants
+  m_store.recomputeAndCommit(m_currentTime, *this);
+}
+
 //---------------------Notificaion/Modification---------------------
 void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, VarId id) {
   // If first time variable is invalidated:
@@ -18,6 +31,11 @@ void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, VarId id) {
     m_store.getIntVar(id).invalidate(t);
     m_propGraph.notifyMaybeChanged(t, id);
   }
+}
+
+void Engine::setValue(VarId& v, Int val) {
+  m_store.getIntVar(v).setValue(m_currentTime, val);
+  notifyMaybeChanged(m_currentTime, v);
 }
 
 void Engine::setValue(const Timestamp& t, VarId& v, Int val) {
@@ -64,6 +82,9 @@ void Engine::commitValue([[maybe_unused]] const Timestamp& t, VarId& v,
 //---------------------Registration---------------------
 
 VarId Engine::makeIntVar() {
+  if (!m_isOpen) {
+    throw new ModelNotOpenException("Cannot make IntVar when store is closed.");
+  }
   VarId newId = m_store.createIntVar();
   m_propGraph.registerVar(newId);
   return newId;

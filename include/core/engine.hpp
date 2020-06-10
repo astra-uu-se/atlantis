@@ -10,6 +10,7 @@
 #include "core/invariant.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
+#include "exceptions/exceptions.hpp"
 #include "propagation/propagationGraph.hpp"
 
 class Engine {
@@ -19,6 +20,8 @@ class Engine {
   Timestamp m_currentTime;
 
   PropagationGraph m_propGraph;
+
+  bool m_isOpen = true;
 
   class Store {
    private:
@@ -48,6 +51,21 @@ class Engine {
     inline Invariant& getInvariant(InvariantId& i) {
       return *(m_invariants.at(i.id));
     }
+    inline void recomputeAndCommit(const Timestamp& t, Engine& e) {
+      for (auto invariantPtr : m_invariants) {
+        if (invariantPtr == nullptr) {
+          continue;
+        }
+        invariantPtr->recompute(t, e);
+        invariantPtr->commit(t, e);
+      }
+      for (auto intVarPtr : m_intVars) {
+        if (intVarPtr == nullptr) {
+          continue;
+        }
+        intVarPtr->commit();
+      }
+    }
   } m_store;
 
  public:
@@ -56,6 +74,9 @@ class Engine {
   //--------------------- Move semantics ---------------------
   void beginMove(Timestamp& t);
   void endMove(Timestamp& t);
+
+  void open();
+  void close();
 
   //--------------------- Notificaion ---------------------
   /***
@@ -66,6 +87,7 @@ class Engine {
 
   //--------------------- Variable ---------------------
   void incValue(const Timestamp&, VarId&, Int inc);
+  void setValue(VarId& v, Int val);
   void setValue(const Timestamp&, VarId&, Int val);
 
   Int getValue(const Timestamp&, VarId&);
@@ -88,6 +110,9 @@ class Engine {
   template <class T, typename... Args>
   std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
   makeInvariant(Args&&... args) {
+    if (!m_isOpen) {
+      throw new ModelNotOpenException("Cannot make invariant when store is closed.");
+    }
     auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
     auto newId = m_store.createInvariantFromPtr(invariantPtr);
