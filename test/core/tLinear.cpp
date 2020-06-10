@@ -9,7 +9,6 @@
 #include "gtest/gtest.h"
 #include "invariants/linear.hpp"
 
-// The fixture for testing class IntDomain. From google test primer.
 namespace {
 class LinearTest : public ::testing::Test {
  protected:

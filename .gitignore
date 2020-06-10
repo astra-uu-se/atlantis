@@ -40,3 +40,5 @@ build/*
 vcode.code-workspace
 src/main
 src/main.dSYM/*
+xcode
+.DS_Store

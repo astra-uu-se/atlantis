@@ -7,7 +7,6 @@
 #include "core/types.hpp"
 #include "gtest/gtest.h"
 
-// The fixture for testing class IntDomain. From google test primer.
 namespace {
 class SavedIntTest : public ::testing::Test {
  protected:
