@@ -104,4 +104,122 @@ TEST_F(PropagationGraphTest, TopologicalSort) {
             pg->getTopologicalKey(InvariantId(3)));
 }
 
+TEST_F(PropagationGraphTest, TopologicalSortLongChain) {
+  pg->registerVar(VarId(1));
+  pg->registerVar(VarId(2));
+  pg->registerVar(VarId(3));
+  pg->registerVar(VarId(4));
+  pg->registerVar(VarId(5));
+  pg->registerVar(VarId(6));
+  pg->registerVar(VarId(7));
+  pg->registerVar(VarId(8));
+  pg->registerInvariant(InvariantId(1));
+  pg->registerInvariant(InvariantId(2));
+  pg->registerInvariant(InvariantId(3));
+  pg->registerInvariant(InvariantId(4));
+  pg->registerInvariant(InvariantId(5));
+  pg->registerInvariant(InvariantId(6));
+  pg->registerInvariant(InvariantId(7));
+
+  Int ignore = 0;
+
+  pg->registerInvariantDependsOnVar(InvariantId(6), VarId(6), ignore, ignore);
+  pg->registerInvariantDependsOnVar(InvariantId(6), VarId(1), ignore, ignore);
+  pg->registerDefinedVariable(VarId(7), InvariantId(6));
+
+
+  pg->registerInvariantDependsOnVar(InvariantId(1), VarId(1), ignore, ignore);
+  pg->registerDefinedVariable(VarId(2), InvariantId(1));
+
+  pg->registerInvariantDependsOnVar(InvariantId(2), VarId(2), ignore, ignore);
+  pg->registerDefinedVariable(VarId(3), InvariantId(2));
+
+  pg->registerInvariantDependsOnVar(InvariantId(3), VarId(3), ignore, ignore);
+  pg->registerDefinedVariable(VarId(4), InvariantId(3));
+
+  pg->registerInvariantDependsOnVar(InvariantId(4), VarId(4), ignore, ignore);
+  pg->registerDefinedVariable(VarId(5), InvariantId(4));
+
+  pg->registerInvariantDependsOnVar(InvariantId(5), VarId(5), ignore, ignore);
+  pg->registerDefinedVariable(VarId(6), InvariantId(5));
+
+  pg->registerInvariantDependsOnVar(InvariantId(7), VarId(7), ignore, ignore);
+  pg->registerDefinedVariable(VarId(8), InvariantId(7));
+
+  EXPECT_NO_THROW(pg->close());
+
+  EXPECT_LT(pg->getTopologicalKey(VarId(1)), pg->getTopologicalKey(VarId(5)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(1)), pg->getTopologicalKey(VarId(6)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(1)), pg->getTopologicalKey(VarId(7)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(1)), pg->getTopologicalKey(VarId(8)));
+
+  EXPECT_LT(pg->getTopologicalKey(VarId(5)), pg->getTopologicalKey(VarId(6)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(5)), pg->getTopologicalKey(VarId(7)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(5)), pg->getTopologicalKey(VarId(8)));
+
+  EXPECT_LT(pg->getTopologicalKey(InvariantId(1)),
+            pg->getTopologicalKey(InvariantId(6)));
+
+  EXPECT_LT(pg->getTopologicalKey(InvariantId(5)),
+            pg->getTopologicalKey(InvariantId(6)));
+
+  EXPECT_LT(pg->getTopologicalKey(InvariantId(1)),
+            pg->getTopologicalKey(InvariantId(7)));
+
+  EXPECT_LT(pg->getTopologicalKey(InvariantId(5)),
+            pg->getTopologicalKey(InvariantId(7)));
+}
+
+TEST_F(PropagationGraphTest, TopologicalSortSimpleChainCycles) {
+  pg->registerVar(VarId(1));
+  pg->registerVar(VarId(2));
+  pg->registerVar(VarId(3));
+  pg->registerVar(VarId(4));
+  pg->registerVar(VarId(5));
+  pg->registerVar(VarId(6));
+  pg->registerVar(VarId(7));
+  pg->registerInvariant(InvariantId(1));
+  pg->registerInvariant(InvariantId(2));
+  pg->registerInvariant(InvariantId(3));
+  pg->registerInvariant(InvariantId(4));
+  pg->registerInvariant(InvariantId(5));
+  pg->registerInvariant(InvariantId(6));
+
+  Int ignore = 0;
+
+  pg->registerInvariantDependsOnVar(InvariantId(1), VarId(1), ignore, ignore);
+  pg->registerDefinedVariable(VarId(2), InvariantId(1));
+  //Cycle 1
+  pg->registerInvariantDependsOnVar(InvariantId(2), VarId(2), ignore, ignore);
+  pg->registerDefinedVariable(VarId(3), InvariantId(2));
+  pg->registerInvariantDependsOnVar(InvariantId(1), VarId(3), ignore, ignore);
+
+  pg->registerInvariantDependsOnVar(InvariantId(3), VarId(3), ignore, ignore);
+  pg->registerDefinedVariable(VarId(4), InvariantId(3));
+  pg->registerInvariantDependsOnVar(InvariantId(4), VarId(4), ignore, ignore);
+  pg->registerDefinedVariable(VarId(5), InvariantId(4));
+  //Cycle2
+  pg->registerInvariantDependsOnVar(InvariantId(5), VarId(5), ignore, ignore);
+  pg->registerDefinedVariable(VarId(6), InvariantId(5));
+  pg->registerInvariantDependsOnVar(InvariantId(4), VarId(6), ignore, ignore);
+
+  pg->registerInvariantDependsOnVar(InvariantId(6), VarId(6), ignore, ignore);
+  pg->registerDefinedVariable(VarId(7), InvariantId(6));
+
+  EXPECT_NO_THROW(pg->close());
+
+  EXPECT_LT(pg->getTopologicalKey(VarId(1)), pg->getTopologicalKey(VarId(2)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(1)), pg->getTopologicalKey(VarId(3)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(1)), pg->getTopologicalKey(VarId(4)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(2)), pg->getTopologicalKey(VarId(4)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(3)), pg->getTopologicalKey(VarId(4)));
+
+  EXPECT_LT(pg->getTopologicalKey(VarId(4)), pg->getTopologicalKey(VarId(5)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(4)), pg->getTopologicalKey(VarId(6)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(4)), pg->getTopologicalKey(VarId(7)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(5)), pg->getTopologicalKey(VarId(7)));
+  EXPECT_LT(pg->getTopologicalKey(VarId(6)), pg->getTopologicalKey(VarId(7)));
+
+}
+
 }  // namespace

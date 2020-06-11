@@ -30,3 +30,16 @@ public:
    */
   ~ModelNotOpenException() {}
 };
+
+class PropagationGraphHasCycles : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit PropagationGraphHasCycles(const std::string& msg)
+      : std::runtime_error(msg) {}
+
+  /** Destructor.
+   */
+  ~PropagationGraphHasCycles() {}
+};

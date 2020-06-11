@@ -44,10 +44,13 @@ class PropagationGraph {
     std::vector<size_t> m_invariantPosition;
 
     PropagationGraph& graph;
+    Topology() = delete;
     Topology(PropagationGraph& g) : graph(g) {}
-    void computeTopologyNoCycles();
-    void computeTopologyWithCycles();
-    void computeTopologyBundleCycles();
+    void computeNoCycles();
+    void computeNoCyclesException();
+    void computeWithCycles();
+    void computeBundleCycles();
+    void computeInvariantFromVariables();
     size_t getPosition(VarId id) { return m_variablePosition.at(id); }
     size_t getPosition(InvariantId id) { return m_invariantPosition.at(id); }
   } m_topology;
@@ -88,8 +91,10 @@ class PropagationGraph {
   void registerDefinedVariable(VarId depends, InvariantId source);
 
   void close() {
-    // m_topology.computeTopologyNoCycles();
-    m_topology.computeTopologyWithCycles();
+    // m_topology.computeNoCycles();
+    // m_topology.computeNoCyclesException();
+    // m_topology.computeWithCycles();
+    m_topology.computeBundleCycles();
     }
 
   size_t getNumVariables() {
