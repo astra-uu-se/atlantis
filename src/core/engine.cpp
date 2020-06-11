@@ -101,11 +101,11 @@ VarId Engine::makeIntVar() {
   return newId;
 }
 
-void Engine::registerInvariantDependsOnVar(InvariantId dependee, VarId source,
+void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
                                            LocalId localId, Int data) {
-  m_propGraph.registerInvariantDependsOnVar(dependee, source, localId, data);
+  m_propGraph.registerInvariantDependsOnVar(dependent, source, localId, data);
 }
 
-void Engine::registerDefinedVariable(VarId dependee, InvariantId source) {
-  m_propGraph.registerDefinedVariable(dependee, source);
+void Engine::registerDefinedVariable(VarId dependent, InvariantId source) {
+  m_propGraph.registerDefinedVariable(dependent, source);
 }

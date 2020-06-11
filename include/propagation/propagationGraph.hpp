@@ -45,7 +45,9 @@ class PropagationGraph {
 
     PropagationGraph& graph;
     Topology(PropagationGraph& g) : graph(g) {}
-    void computeTopology();
+    void computeTopologyNoCycles();
+    void computeTopologyWithCycles();
+    void computeTopologyBundleCycles();
     size_t getPosition(VarId id) { return m_variablePosition.at(id); }
     size_t getPosition(InvariantId id) { return m_invariantPosition.at(id); }
   } m_topology;
@@ -68,24 +70,27 @@ class PropagationGraph {
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
-   * @param dependee the invariant that the variable depends on
+   * @param depends the invariant that the variable depends on
    * @param source the depending variable
    * @param localId the id of the depending variable in the invariant
-   * @param data additioonal data
+   * @param data additional data
    */
-  void registerInvariantDependsOnVar(InvariantId dependee, VarId source,
+  void registerInvariantDependsOnVar(InvariantId depends, VarId source,
                                      LocalId localId, Int data);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
    * already defined.
-   * @param dependee the variable that is defined by the invariant
+   * @param depends the variable that is defined by the invariant
    * @param source the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariable(VarId dependee, InvariantId source);
+  void registerDefinedVariable(VarId depends, InvariantId source);
 
-  void close() { m_topology.computeTopology(); }
+  void close() {
+    // m_topology.computeTopologyNoCycles();
+    m_topology.computeTopologyWithCycles();
+    }
 
   size_t getNumVariables() {
     return m_numVariables;  //this ignores null var

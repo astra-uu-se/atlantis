@@ -51,43 +51,50 @@ void PropagationGraph::registerVar(VarId id) {
   ++m_numVariables;
 }
 
-void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependee,
+void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
                                                      VarId source,
                                                      LocalId localId,
                                                      Int data) {
-  assert(!dependee.equals(NULL_ID) && !source.equals(NULL_ID));
+  assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
   m_listeningInvariants.at(source).emplace_back(
-      InvariantDependencyData{dependee, localId, data});
+      InvariantDependencyData{dependent, localId, data});
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "Registering that invariant " << dependee
+  std::cout << "Registering that invariant " << dependent
             << " depends on variable " << source << " with local id " << localId
             << "\n";
 #endif
 }
 
-void PropagationGraph::registerDefinedVariable(VarId dependee,
+void PropagationGraph::registerDefinedVariable(VarId dependent,
                                                InvariantId source) {
-  assert(!dependee.equals(NULL_ID) && !source.equals(NULL_ID));
+  assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Registering that invariant " << source << " defines variable "
-            << dependee << "\n";
+            << dependent << "\n";
 #endif
-  if (m_definingInvariant.at(dependee).id == NULL_ID.id) {
-    m_definingInvariant.at(dependee) = source;
-    m_variablesDefinedByInvariant.at(source).push_back(dependee);
+  if (m_definingInvariant.at(dependent).id == NULL_ID.id) {
+    m_definingInvariant.at(dependent) = source;
+    m_variablesDefinedByInvariant.at(source).push_back(dependent);
   } else {
     throw new VariableAlreadyDefinedException(
-        "Variable " + std::to_string(dependee.id) +
+        "Variable " + std::to_string(dependent.id) +
         " already defined by invariant " +
-        std::to_string(m_definingInvariant.at(dependee).id));
+        std::to_string(m_definingInvariant.at(dependent).id));
   }
 }
 
-void PropagationGraph::Topology::computeTopology() {
-  m_variablePosition.resize(graph.m_numVariables+1, 0);
-  m_invariantPosition.resize(graph.m_numInvariants+1, 0);
+/**
+ * Assumes that the graph has no cycles. When there are cycles this code does
+ * not terminate.
+ *
+ * Also This implementation is very inefficient, I think it is O(VE+E).  see
+ * https://en.wikipedia.org/wiki/Topological_sorting for better versions.
+ */
+void PropagationGraph::Topology::computeTopologyNoCycles() {
+  m_variablePosition.resize(graph.m_numVariables + 1, 0);
+  m_invariantPosition.resize(graph.m_numInvariants + 1, 0);
 
   // We only keep track of a variable frontier. Invariants are visited on the
   // fly.
@@ -96,7 +103,7 @@ void PropagationGraph::Topology::computeTopology() {
   // Find the top level variables that are not defined by anything.
   // todo: it would be cleaning if we maintained a list of all added varIDs but
   // it is more efficient just to recreated based on the total number.
-  for (size_t i = 0; i < graph.m_numVariables; i++) {
+  for (size_t i = 0; i < graph.m_numVariables+1; i++) {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
@@ -123,3 +130,77 @@ void PropagationGraph::Topology::computeTopology() {
     }
   }
 }
+
+
+/**
+ * Computes a topological sort from a dependency graph with cycles by 
+ * non-deterministically ignoring one edge in each cycle.
+ * This means that there will be an order within cycles.
+ * 
+ * Gives different key-domains to Variables and invariants.
+ * That is, the key of invariants cannot be compared with variables.
+ */
+void PropagationGraph::Topology::computeTopologyWithCycles() {
+
+  std::vector<bool> visited;
+  visited.resize(graph.m_numVariables + 1, false);
+
+  std::vector<size_t> varPosition;
+  varPosition.resize(graph.m_numVariables + 1, 0);
+
+  std::queue<VarId> reverseOrder;
+
+  std::function<void(VarId)> visit = [&](VarId id) {
+    // Mark current node
+    visited.at(id) = true;
+    // for each dependent invariant
+    for (auto dependencyData : graph.m_listeningInvariants.at(id)) {
+      InvariantId invariant = dependencyData.id;
+
+      // for each variable defined by that invariant
+      for (auto dependentVariable :
+           graph.m_variablesDefinedByInvariant.at(invariant)) {
+        if (visited.at(dependentVariable)) {
+          // Ignore nodes that have been visited before
+          // This also breaks cycles.
+          continue;
+        }
+        visit(dependentVariable);
+      }
+    }
+    reverseOrder.push(id);
+  };
+
+  // Call visit on all top variables
+  for (size_t i = 0; i < graph.m_numVariables+1; i++) {
+    if (i == NULL_ID) {  // Skip nullVar if any.
+      continue;
+    }
+    if (graph.m_definingInvariant.at(i).id == NULL_ID) {
+      visit(VarId(i));
+    }
+  }
+
+  m_variablePosition.resize(graph.m_numVariables + 1, 0);
+  while (!reverseOrder.empty()) {
+    m_variablePosition.at(reverseOrder.front()) = reverseOrder.size();
+    reverseOrder.pop();
+  }
+
+  m_invariantPosition.resize(graph.m_numInvariants + 1, 0);
+  for (size_t i = 0; i < graph.m_numInvariants+1; i++) {
+    if (i == NULL_ID) {  // Skip nullVar if any.
+      continue;
+    }
+    InvariantId invariant = InvariantId(i);
+    size_t position = 0;
+    for (auto dependentVariable :
+         graph.m_variablesDefinedByInvariant.at(invariant)) {
+      position =
+          std::max<size_t>(position, m_variablePosition.at(dependentVariable));
+    }
+    m_invariantPosition.at(invariant) = position;
+  }
+}
+
+void PropagationGraph::Topology::computeTopologyBundleCycles() {}
