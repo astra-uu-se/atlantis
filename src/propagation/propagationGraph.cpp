@@ -1,12 +1,13 @@
 #include "propagation/propagationGraph.hpp"
 
 #include <algorithm>
+#include <functional>
 
 #include "exceptions/exceptions.hpp"
 extern Id NULL_ID;
 
 PropagationGraph::PropagationGraph(size_t expectedSize)
-    : m_numInvariants(0), m_numVariables(0), m_topology(*this){
+    : m_numInvariants(0), m_numVariables(0), m_topology(*this) {
   m_definingInvariant.reserve(expectedSize);
   m_variablesDefinedByInvariant.reserve(expectedSize);
   m_listeningInvariants.reserve(expectedSize);
@@ -248,7 +249,7 @@ void PropagationGraph::Topology::computeBundleCycles() {
   tmpMark.resize(graph.m_numVariables + 1, false);
 
   std::function<bool(VarId, VarId)> detectCycle = [&](VarId target,
-                                                        VarId current) {
+                                                      VarId current) {
     if (tmpMark.at(current) || isPartOfCycle.at(target)) {
       return false;
     }
