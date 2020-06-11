@@ -77,9 +77,7 @@ class Engine {
  public:
   Engine(/* args */);
 
-  //--------------------- Move semantics ---------------------
-  void beginMove(Timestamp& t);
-  void endMove(Timestamp& t);
+
 
   void open();
   void close();
@@ -91,6 +89,9 @@ class Engine {
    */
   void notifyMaybeChanged(const Timestamp& t, VarId id);
 
+  //--------------------- Move semantics ---------------------
+  void beginMove(Timestamp& t);
+  void endMove(Timestamp& t);
   //--------------------- Variable ---------------------
   void incValue(const Timestamp&, VarId&, Int inc);
   void setValue(VarId& v, Int val);
@@ -135,20 +136,20 @@ class Engine {
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
-   * @param dependee the invariant that the variable depends on
+   * @param dependent the invariant that the variable depends on
    * @param source the depending variable
    * @param localId the id of the depending variable in the invariant
-   * @param data additioonal data
+   * @param data additional data
    */
-  void registerInvariantDependsOnVar(InvariantId dependee, VarId source,
+  void registerInvariantDependsOnVar(InvariantId dependent, VarId source,
                                      LocalId localId, Int data);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
    * already defined.
-   * @param dependee the variable that is defined by the invariant
+   * @param dependent the variable that is defined by the invariant
    * @param source the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariable(VarId dependee, InvariantId source);
+  void registerDefinedVariable(VarId dependent, InvariantId source);
 };

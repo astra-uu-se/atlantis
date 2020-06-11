@@ -11,13 +11,11 @@ Engine::Engine()
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
 
-
-void Engine::open() {
-  m_isOpen = true;
-}
+void Engine::open() { m_isOpen = true; }
 
 void Engine::recomputeAndCommit() {
-  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd(); ++iter) {
+  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+       ++iter) {
     assert((*iter) != nullptr);
     (*iter)->recompute(m_currentTime, *this);
     (*iter)->commit(m_currentTime, *this);
@@ -29,9 +27,10 @@ void Engine::recomputeAndCommit() {
 
 void Engine::close() {
   m_isOpen = false;
-  // TODO: topological sort of the propGraph
-  
-  // compute and initialise all variables and invariants
+  m_propGraph.close();
+
+  // compute initial values for variables and for (internal datastructure of)
+  // invariants
   recomputeAndCommit();
 }
 
@@ -42,6 +41,15 @@ void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, VarId id) {
     m_store.getIntVar(id).invalidate(t);
     m_propGraph.notifyMaybeChanged(t, id);
   }
+}
+
+//--------------------- Move semantics ---------------------
+void beginMove(Timestamp& t){
+
+}
+
+void endMove(Timestamp& t){
+
 }
 
 void Engine::setValue(VarId& v, Int val) {
