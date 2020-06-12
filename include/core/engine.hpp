@@ -118,7 +118,7 @@ class Engine {
   std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
   makeInvariant(Args&&... args) {
     if (!m_isOpen) {
-      throw new ModelNotOpenException("Cannot make invariant when store is closed.");
+      throw ModelNotOpenException("Cannot make invariant when store is closed.");
     }
     auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
