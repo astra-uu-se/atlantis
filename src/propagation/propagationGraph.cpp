@@ -79,7 +79,7 @@ void PropagationGraph::registerDefinedVariable(VarId dependent,
     m_definingInvariant.at(dependent) = source;
     m_variablesDefinedByInvariant.at(source).push_back(dependent);
   } else {
-    throw new VariableAlreadyDefinedException(
+    throw VariableAlreadyDefinedException(
         "Variable " + std::to_string(dependent.id) +
         " already defined by invariant " +
         std::to_string(m_definingInvariant.at(dependent).id));
@@ -157,7 +157,7 @@ void PropagationGraph::Topology::computeNoCyclesException() {
         if (visited.at(dependentVariable)) {
           continue;
         } else if (tmpVisited.at(dependentVariable)) {
-          throw new PropagationGraphHasCycles(
+          throw PropagationGraphHasCycles(
               "var " + std::to_string(dependentVariable) +
               " is part of cycle.");
         }
