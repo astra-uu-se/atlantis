@@ -27,6 +27,9 @@ class TopDownPropagationGraph : public PropagationGraph {
 
   void notifyMaybeChanged(const Timestamp& t, VarId id) override;
 
+  virtual VarId getNextStableVariable([[maybe_unused]] const Timestamp& t) override;
+
+
   /**
    * Register a variable in the propagation graph.
    */

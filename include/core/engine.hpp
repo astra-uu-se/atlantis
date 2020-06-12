@@ -98,8 +98,11 @@ class Engine {
   void notifyMaybeChanged(const Timestamp& t, VarId id);
 
   //--------------------- Move semantics ---------------------
-  void beginMove(Timestamp& t);
-  void endMove(Timestamp& t);
+  void beginMove();
+  void endMove();
+
+  void propagate();
+
   //--------------------- Variable ---------------------
   void incValue(const Timestamp&, VarId&, Int inc);
   void setValue(VarId& v, Int val);
