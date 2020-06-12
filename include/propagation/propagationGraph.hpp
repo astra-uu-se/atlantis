@@ -26,13 +26,8 @@ class PropagationGraph {
    */
   std::vector<std::vector<VarId>> m_variablesDefinedByInvariant;
 
-  struct InvariantDependencyData {
-    InvariantId id;
-    LocalId localId;
-    Int data;
-  };
   // Map from VarID -> vector of InvariantID
-  std::vector<std::vector<InvariantDependencyData>> m_listeningInvariants;
+  std::vector<std::vector<InvariantId>> m_listeningInvariants;
 
   struct Topology {
     std::vector<size_t> m_variablePosition;
@@ -72,11 +67,8 @@ class PropagationGraph {
    * Register that Invariant to depends on variable from depends on dependency
    * @param depends the invariant that the variable depends on
    * @param source the depending variable
-   * @param localId the id of the depending variable in the invariant
-   * @param data additional data
    */
-  void registerInvariantDependsOnVar(InvariantId depends, VarId source,
-                                     LocalId localId, Int data);
+  void registerInvariantDependsOnVar(InvariantId depends, VarId source);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
@@ -92,17 +84,36 @@ class PropagationGraph {
     // m_topology.computeNoCyclesException();
     // m_topology.computeWithCycles();
     m_topology.computeBundleCycles();
-    }
+  }
+
+  // todo: Maybe there is a better word than "active", like "relevant".
+  // --------------------- Activity ----------------
+  /**
+   * returns true if variable id is relevant for propagation.
+   * Note that this is not the same thing as the variable being modified.
+   */
+  virtual bool isActive([[maybe_unused]] const Timestamp& t,
+                        [[maybe_unused]] VarId id) {
+    return true;
+  }
+  /**
+   * returns true if invariant id is relevant for propagation.
+   * Note that this is not the same thing as the invariant being modified.
+   */
+  virtual bool isActive([[maybe_unused]] const Timestamp& t,
+                        [[maybe_unused]] InvariantId id) {
+    return true;
+  }
 
   size_t getNumVariables() {
-    return m_numVariables;  //this ignores null var
+    return m_numVariables;  // this ignores null var
   }
 
   size_t getNumInvariants() {
-    return m_numInvariants;  //this ignores null invariant
+    return m_numInvariants;  // this ignores null invariant
   }
 
-  size_t getTopologicalKey(VarId id){
+  size_t getTopologicalKey(VarId id) {
     return m_topology.m_variablePosition.at(id);
   }
 

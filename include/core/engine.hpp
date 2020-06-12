@@ -24,6 +24,16 @@ class Engine {
 
   bool m_isOpen = true;
 
+  // I don't think dependency data should be part of the store but rather just
+  // of the engine.
+  struct InvariantDependencyData {
+    InvariantId id;
+    LocalId localId;
+    Int data;
+  };
+  // Map from VarID -> vector of InvariantID
+  std::vector<std::vector<InvariantDependencyData>> m_dependentInvariantData;
+
   class Store {
    private:
     std::vector<IntVar> m_intVars;
@@ -46,7 +56,8 @@ class Engine {
       m_intVarIndexMap.push_back(newId);
       return newId;
     }
-    [[nodiscard]] inline InvariantId createInvariantFromPtr(std::shared_ptr<Invariant> ptr) {
+    [[nodiscard]] inline InvariantId createInvariantFromPtr(
+        std::shared_ptr<Invariant> ptr) {
       InvariantId newId = InvariantId(m_invariants.size());
       ptr->setId(newId);
       m_invariants.push_back(ptr);
@@ -55,30 +66,26 @@ class Engine {
     inline IntVar& getIntVar(VarId& v) {
       return m_intVars.at(m_intVarIndexMap.at(v.id));
     }
-    
+
     inline Invariant& getInvariant(InvariantId& i) {
       return *(m_invariants.at(i.id));
     }
     std::vector<IntVar>::iterator intVarBegin() {
-      return m_intVars.begin()+1;
+      return m_intVars.begin() + 1;
     }
-    std::vector<IntVar>::iterator intVarEnd() {
-      return m_intVars.end();
-    }
+    std::vector<IntVar>::iterator intVarEnd() { return m_intVars.end(); }
     std::vector<std::shared_ptr<Invariant>>::iterator invariantBegin() {
-      return m_invariants.begin()+1;
+      return m_invariants.begin() + 1;
     }
     std::vector<std::shared_ptr<Invariant>>::iterator invariantEnd() {
       return m_invariants.end();
     }
   } m_store;
 
-
   void recomputeAndCommit();
+
  public:
   Engine(/* args */);
-
-
 
   void open();
   void close();
@@ -119,7 +126,8 @@ class Engine {
   std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
   makeInvariant(Args&&... args) {
     if (!m_isOpen) {
-      throw ModelNotOpenException("Cannot make invariant when store is closed.");
+      throw ModelNotOpenException(
+          "Cannot make invariant when store is closed.");
     }
     auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
