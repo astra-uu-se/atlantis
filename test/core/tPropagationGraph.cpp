@@ -8,24 +8,24 @@
 #include "core/types.hpp"
 #include "gtest/gtest.h"
 #include "invariants/linear.hpp"
-#include "propagation/propagationGraph.hpp"
+#include "propagation/topDownPropagationGraph.hpp"
 
 namespace {
 
-class PropagationGraphTest : public ::testing::Test {
+class TopDownPropagationGraphTest : public ::testing::Test {
  protected:
   std::mt19937 gen;
 
-  std::unique_ptr<PropagationGraph> pg;
+  std::unique_ptr<TopDownPropagationGraph> pg;
 
   virtual void SetUp() {
     std::random_device rd;
     gen = std::mt19937(rd());
-    pg = std::make_unique<PropagationGraph>();
+    pg = std::make_unique<TopDownPropagationGraph>();
   }
 };
 
-TEST_F(PropagationGraphTest, RegisterVariable) {
+TEST_F(TopDownPropagationGraphTest, RegisterVariable) {
   pg->registerVar(VarId(1));
   pg->registerVar(VarId(2));
   pg->registerVar(VarId(3));
@@ -35,7 +35,7 @@ TEST_F(PropagationGraphTest, RegisterVariable) {
   EXPECT_EQ(pg->getNumVariables(), 6);
 }
 
-TEST_F(PropagationGraphTest, RegisterInvariant) {
+TEST_F(TopDownPropagationGraphTest, RegisterInvariant) {
   pg->registerInvariant(InvariantId(1));
   pg->registerInvariant(InvariantId(2));
   pg->registerInvariant(InvariantId(3));
@@ -44,7 +44,7 @@ TEST_F(PropagationGraphTest, RegisterInvariant) {
   EXPECT_EQ(pg->getNumInvariants(), 5);
 }
 
-TEST_F(PropagationGraphTest, TopologicalSort) {
+TEST_F(TopDownPropagationGraphTest, TopologicalSort) {
   pg->registerVar(VarId(1));
   pg->registerVar(VarId(2));
   pg->registerVar(VarId(3));
@@ -104,7 +104,7 @@ TEST_F(PropagationGraphTest, TopologicalSort) {
             pg->getTopologicalKey(InvariantId(3)));
 }
 
-TEST_F(PropagationGraphTest, TopologicalSortLongChain) {
+TEST_F(TopDownPropagationGraphTest, TopologicalSortLongChain) {
   pg->registerVar(VarId(1));
   pg->registerVar(VarId(2));
   pg->registerVar(VarId(3));
@@ -170,7 +170,7 @@ TEST_F(PropagationGraphTest, TopologicalSortLongChain) {
             pg->getTopologicalKey(InvariantId(7)));
 }
 
-TEST_F(PropagationGraphTest, TopologicalSortSimpleChainCycles) {
+TEST_F(TopDownPropagationGraphTest, TopologicalSortSimpleChainCycles) {
   pg->registerVar(VarId(1));
   pg->registerVar(VarId(2));
   pg->registerVar(VarId(3));
