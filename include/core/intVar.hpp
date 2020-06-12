@@ -52,6 +52,9 @@ class IntVar : public Var {
   IntVar(Id t_id);
   ~IntVar() = default;
 
+[[gnu::always_inline]] inline bool hasChanged(const Timestamp& t) const {
+    return m_value.getValue(t) == m_value.getCommittedValue();
+  }
   [[gnu::always_inline]] inline const Timestamp& getTimestamp() const {
     return m_value.getTimestamp();
   }

@@ -9,11 +9,23 @@ TopDownPropagationGraph::TopDownPropagationGraph(size_t expectedSize)
 }
 
 void TopDownPropagationGraph::notifyMaybeChanged(const Timestamp& t, VarId id) {
-  if (m_varsLastChange.at(id) == t) {
+  if (m_varsLastChange.at(id) == t || !isActive(t, id)) {
     return;
   }
   m_varsLastChange[id] = t;
+
   m_modifiedVariables.push(id);
+}
+
+VarId TopDownPropagationGraph::getNextStableVariable([
+    [maybe_unused]] const Timestamp& t) {
+  if (m_modifiedVariables.empty()) {
+    return VarId(NULL_ID);
+  }
+  VarId nextVar = m_modifiedVariables.top();
+  m_modifiedVariables.pop();
+  // Due to notifyMaybeChanged, all variables in the queue are "active".
+  return nextVar;
 }
 
 void TopDownPropagationGraph::registerVar(VarId id) {

@@ -47,9 +47,26 @@ void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, VarId id) {
 }
 
 //--------------------- Move semantics ---------------------
-void beginMove([[maybe_unused]] Timestamp& t) {}
+void Engine::beginMove() { ++m_currentTime; }
 
-void endMove([[maybe_unused]] Timestamp& t) {}
+void Engine::endMove() {}
+
+// Propagates at the current internal time of the engine.
+void Engine::propagate() {
+  VarId id = m_propGraph.getNextStableVariable(m_currentTime);
+  while (id.id != NULL_ID) {
+    IntVar& variable = m_store.getIntVar(id);
+    if (variable.hasChanged(m_currentTime)) {
+      for (auto toNotify : m_dependentInvariantData.at(id)) {
+        m_store.getInvariant(toNotify.id)
+            .notifyIntChanged(m_currentTime, *this, toNotify.localId,
+                              variable.getCommittedValue(),
+                              variable.getValue(m_currentTime), toNotify.data);
+      }
+    }
+    id = m_propGraph.getNextStableVariable(m_currentTime);
+  }
+}
 
 void Engine::setValue(VarId& v, Int val) {
   m_store.getIntVar(v).setValue(m_currentTime, val);

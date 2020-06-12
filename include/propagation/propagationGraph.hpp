@@ -105,6 +105,13 @@ class PropagationGraph {
     return true;
   }
 
+  /** 
+   * A stable variable is a variable that has been modified at timestamp t,
+   * but will not be modified again (as all parent nodes are already up to
+   * date).
+   */
+  [[nodiscard]] virtual VarId getNextStableVariable([[maybe_unused]] const Timestamp& t) = 0;
+
   size_t getNumVariables() {
     return m_numVariables;  // this ignores null var
   }
