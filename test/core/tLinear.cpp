@@ -17,14 +17,10 @@ class LinearTest : public ::testing::Test {
     gen = std::mt19937(rd());
     e = std::make_unique<Engine>();
     e->open();
-    a = e->makeIntVar();
-    b = e->makeIntVar();
-    c = e->makeIntVar();
-    d = e->makeIntVar();
-    e->setValue(a, 1);
-    e->setValue(b, 2);
-    e->setValue(c, 3);
-    e->setValue(d, 4);
+    a = e->makeIntVar(1);
+    b = e->makeIntVar(2);
+    c = e->makeIntVar(3);
+    d = e->makeIntVar(4);
 
     // d = 1*1+2*10+3*(-20) = 1+20-60 =-39
     linear = e->makeInvariant<Linear>(std::vector<Int>({1, 10, -20}),
@@ -46,7 +42,7 @@ class LinearTest : public ::testing::Test {
 
 TEST_F(LinearTest, Init) {
   EXPECT_EQ(e->getCommitedValue(d), -39);
-  EXPECT_EQ(e->getValue(e->getTimestamp(d), d), -39);
+  EXPECT_EQ(e->getValue(e->getTmpTimestamp(d), d), -39);
 }
 
 TEST_F(LinearTest, Recompute) {
