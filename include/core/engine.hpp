@@ -3,7 +3,6 @@
 #include <assert.h>
 
 #include <memory>
-#include <queue>
 #include <vector>
 
 #include "core/intVar.hpp"
@@ -13,6 +12,7 @@
 #include "exceptions/exceptions.hpp"
 #include "propagation/propagationGraph.hpp"
 #include "propagation/topDownPropagationGraph.hpp"
+#include "store/store.hpp"
 
 class Engine {
  private:
@@ -34,53 +34,7 @@ class Engine {
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantDependencyData>> m_dependentInvariantData;
 
-  class Store {
-   private:
-    std::vector<IntVar> m_intVars;
-    std::vector<size_t> m_intVarIndexMap;
-    std::vector<std::shared_ptr<Invariant>> m_invariants;
-
-   public:
-    Store(size_t estimatedSize, [[maybe_unused]] Id t_nullId) {
-      m_intVars.reserve(estimatedSize);
-      m_intVarIndexMap.reserve(estimatedSize);
-      m_invariants.reserve(estimatedSize);
-
-      m_intVars.emplace_back();
-      m_intVarIndexMap.push_back(-1);
-      m_invariants.push_back(nullptr);
-    }
-    [[nodiscard]] inline VarId createIntVar() {
-      VarId newId = VarId(m_intVars.size());
-      m_intVars.emplace_back(newId);
-      m_intVarIndexMap.push_back(newId);
-      return newId;
-    }
-    [[nodiscard]] inline InvariantId createInvariantFromPtr(
-        std::shared_ptr<Invariant> ptr) {
-      InvariantId newId = InvariantId(m_invariants.size());
-      ptr->setId(newId);
-      m_invariants.push_back(ptr);
-      return newId;
-    }
-    inline IntVar& getIntVar(VarId& v) {
-      return m_intVars.at(m_intVarIndexMap.at(v.id));
-    }
-
-    inline Invariant& getInvariant(InvariantId& i) {
-      return *(m_invariants.at(i.id));
-    }
-    std::vector<IntVar>::iterator intVarBegin() {
-      return m_intVars.begin() + 1;
-    }
-    std::vector<IntVar>::iterator intVarEnd() { return m_intVars.end(); }
-    std::vector<std::shared_ptr<Invariant>>::iterator invariantBegin() {
-      return m_invariants.begin() + 1;
-    }
-    std::vector<std::shared_ptr<Invariant>>::iterator invariantEnd() {
-      return m_invariants.end();
-    }
-  } m_store;
+  Store m_store;
 
   void recomputeAndCommit();
 
@@ -105,18 +59,21 @@ class Engine {
 
   //--------------------- Variable ---------------------
   void incValue(const Timestamp&, VarId&, Int inc);
-  void setValue(VarId& v, Int val);
-  void setValue(const Timestamp&, VarId&, Int val);
+  void incValue(VarId& v, Int val) { incValue(m_currentTime, v, val); }
 
+  void setValue(const Timestamp&, VarId&, Int val);
+  void setValue(VarId& v, Int val) { setValue(m_currentTime, v, val); }
   Int getValue(const Timestamp&, VarId&);
+  Int getValue(VarId& v) { return getValue(m_currentTime, v); }
+
   Int getCommitedValue(VarId&);
 
-  Timestamp getTimestamp(VarId&);
+  Timestamp getTmpTimestamp(VarId&);
 
   void commit(VarId&);  // todo: this feels dangerous, maybe commit should
                         // always have a timestamp?
   void commitIf(const Timestamp&, VarId&);
-  void commitValue(const Timestamp&, VarId&, Int val);
+  void commitValue(VarId&, Int val);
 
   //--------------------- Registration ---------------------
   /**
@@ -144,7 +101,7 @@ class Engine {
    * Creates an IntVar and registers it to the engine.
    * @return the created IntVar
    */
-  VarId makeIntVar();
+  VarId makeIntVar(Int initValue);
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
@@ -164,4 +121,9 @@ class Engine {
    * @throw if the variable is already defined by an invariant.
    */
   void registerDefinedVariable(VarId dependent, InvariantId source);
+
+
+  const Store& getStore(){
+    return m_store;
+  }
 };

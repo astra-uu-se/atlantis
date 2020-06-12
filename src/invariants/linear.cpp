@@ -67,6 +67,5 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
 void Linear::commit(const Timestamp& t, Engine& e) {
   // todo: do nodes validate themself or is it done by engine?
   // this->validate(t);
-  // Dereference safe as incValue does not retain ptr.
   e.commitIf(t, m_b);
 }
