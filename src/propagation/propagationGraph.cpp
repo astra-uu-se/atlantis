@@ -11,28 +11,11 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
   m_definingInvariant.reserve(expectedSize);
   m_variablesDefinedByInvariant.reserve(expectedSize);
   m_listeningInvariants.reserve(expectedSize);
-  m_varsLastCommit.reserve(expectedSize);
 
   // Initialise nullID
   m_definingInvariant.push_back(InvariantId(NULL_ID));
   m_variablesDefinedByInvariant.push_back({});
   m_listeningInvariants.push_back({});
-  m_varsLastCommit.push_back(NULL_TIMESTAMP);
-}
-
-void PropagationGraph::notifyMaybeChanged([[maybe_unused]] const Timestamp& t,
-                                          VarId id) {
-  // TODO: check validity here?
-  // If first time variable is invalidated:
-  // if (m_intVars.at(id)->m_isInvalid) {
-  // m_intVars.at(id)->invalidate(t);
-  // m_propGraph.notifyMaybeChanged(t, id);
-  // }
-  if (m_varsLastCommit.at(id) == t) {
-    return;
-  }
-  m_varsLastCommit[id] = t;
-  m_modifiedVariables.push(id);
 }
 
 void PropagationGraph::registerInvariant(InvariantId id) {
@@ -45,10 +28,8 @@ void PropagationGraph::registerInvariant(InvariantId id) {
 void PropagationGraph::registerVar(VarId id) {
   assert(id.id == m_listeningInvariants.size());
   assert(id.id == m_definingInvariant.size());
-  assert(id.id == m_varsLastCommit.size());
   m_listeningInvariants.push_back({});
   m_definingInvariant.push_back(InvariantId(NULL_ID));
-  m_varsLastCommit.push_back(NULL_TIMESTAMP);
   ++m_numVariables;
 }
 
@@ -157,9 +138,9 @@ void PropagationGraph::Topology::computeNoCyclesException() {
         if (visited.at(dependentVariable)) {
           continue;
         } else if (tmpVisited.at(dependentVariable)) {
-          throw PropagationGraphHasCycles(
-              "var " + std::to_string(dependentVariable) +
-              " is part of cycle.");
+          throw PropagationGraphHasCycles("var " +
+                                          std::to_string(dependentVariable) +
+                                          " is part of cycle.");
         }
         visit(dependentVariable);
       }

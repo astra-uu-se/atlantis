@@ -34,11 +34,6 @@ class PropagationGraph {
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantDependencyData>> m_listeningInvariants;
 
-  // The last time when an intVar was commited to
-  std::vector<Timestamp> m_varsLastCommit;
-
-  std::queue<VarId> m_modifiedVariables;
-
   struct Topology {
     std::vector<size_t> m_variablePosition;
     std::vector<size_t> m_invariantPosition;
@@ -59,17 +54,19 @@ class PropagationGraph {
   PropagationGraph() : PropagationGraph(1000) {}
   PropagationGraph(size_t expectedSize);
 
-  void notifyMaybeChanged(const Timestamp& t, VarId id);
+  virtual ~PropagationGraph(){};
+
+  virtual void notifyMaybeChanged(const Timestamp& t, VarId id) = 0;
 
   /**
    * Register an invariant in the propagation graph.
    */
-  void registerInvariant(InvariantId);
+  virtual void registerInvariant(InvariantId);
 
   /**
    * Register a variable in the propagation graph.
    */
-  void registerVar(VarId);
+  virtual void registerVar(VarId);
 
   /**
    * Register that Invariant to depends on variable from depends on dependency

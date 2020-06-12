@@ -102,7 +102,7 @@ void Engine::commitValue([[maybe_unused]] const Timestamp& t, VarId& v,
 
 VarId Engine::makeIntVar() {
   if (!m_isOpen) {
-    throw new ModelNotOpenException("Cannot make IntVar when store is closed.");
+    throw ModelNotOpenException("Cannot make IntVar when store is closed.");
   }
   VarId newId = m_store.createIntVar();
   m_propGraph.registerVar(newId);
