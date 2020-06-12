@@ -34,12 +34,9 @@ void PropagationGraph::registerVar(VarId id) {
 }
 
 void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
-                                                     VarId source,
-                                                     LocalId localId,
-                                                     Int data) {
+                                                     VarId source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
-  m_listeningInvariants.at(source).emplace_back(
-      InvariantDependencyData{dependent, localId, data});
+   m_listeningInvariants.at(source).push_back(dependent);
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Registering that invariant " << dependent
@@ -129,8 +126,7 @@ void PropagationGraph::Topology::computeNoCyclesException() {
     // tmp Mark current node
     tmpVisited.at(id) = true;
     // for each dependent invariant
-    for (auto dependencyData : graph.m_listeningInvariants.at(id)) {
-      InvariantId invariant = dependencyData.id;
+    for (auto invariant : graph.m_listeningInvariants.at(id)) {
 
       // for each variable defined by that invariant
       for (auto dependentVariable :
@@ -185,8 +181,7 @@ void PropagationGraph::Topology::computeWithCycles() {
     // Mark current node
     visited.at(id) = true;
     // for each dependent invariant
-    for (auto dependencyData : graph.m_listeningInvariants.at(id)) {
-      InvariantId invariant = dependencyData.id;
+    for (auto invariant : graph.m_listeningInvariants.at(id)) {
 
       // for each variable defined by that invariant
       for (auto dependentVariable :
@@ -236,8 +231,7 @@ void PropagationGraph::Topology::computeBundleCycles() {
     }
     tmpMark.at(current) = true;
     bool inCycle = false;
-    for (auto dependencyData : graph.m_listeningInvariants.at(current)) {
-      InvariantId invariant = dependencyData.id;
+    for (auto invariant : graph.m_listeningInvariants.at(current)) {
       // for each variable defined by that invariant
       for (auto dependentVariable :
            graph.m_variablesDefinedByInvariant.at(invariant)) {
@@ -263,8 +257,7 @@ void PropagationGraph::Topology::computeBundleCycles() {
     m_variablePosition.at(id) = pos;
     tmpMark.at(id) = true;
 
-    for (auto dependencyData : graph.m_listeningInvariants.at(id)) {
-      InvariantId invariant = dependencyData.id;
+    for (auto invariant : graph.m_listeningInvariants.at(id)) {
       // for each variable defined by that invariant
       for (auto dependentVariable :
            graph.m_variablesDefinedByInvariant.at(invariant)) {

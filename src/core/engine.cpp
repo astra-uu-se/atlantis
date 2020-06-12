@@ -9,7 +9,10 @@ Engine::Engine()
       // m_intVars(),
       // m_invariants(),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
-      m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
+      m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {
+  m_dependentInvariantData.reserve(ESTIMATED_NUM_OBJECTS);
+  m_dependentInvariantData.push_back({});
+}
 
 void Engine::open() { m_isOpen = true; }
 
@@ -44,13 +47,9 @@ void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, VarId id) {
 }
 
 //--------------------- Move semantics ---------------------
-void beginMove(Timestamp& t){
+void beginMove([[maybe_unused]] Timestamp& t) {}
 
-}
-
-void endMove(Timestamp& t){
-
-}
+void endMove([[maybe_unused]] Timestamp& t) {}
 
 void Engine::setValue(VarId& v, Int val) {
   m_store.getIntVar(v).setValue(m_currentTime, val);
@@ -106,12 +105,16 @@ VarId Engine::makeIntVar() {
   }
   VarId newId = m_store.createIntVar();
   m_propGraph.registerVar(newId);
+  assert(newId.id == m_dependentInvariantData.size());
+  m_dependentInvariantData.push_back({});
   return newId;
 }
 
 void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
                                            LocalId localId, Int data) {
-  m_propGraph.registerInvariantDependsOnVar(dependent, source, localId, data);
+  m_propGraph.registerInvariantDependsOnVar(dependent, source);
+  m_dependentInvariantData.at(source).emplace_back(
+      InvariantDependencyData{dependent, localId, data});
 }
 
 void Engine::registerDefinedVariable(VarId dependent, InvariantId source) {
