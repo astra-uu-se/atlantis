@@ -12,6 +12,9 @@ class PropagationGraph {
  protected:
   size_t m_numInvariants;
   size_t m_numVariables;
+
+  std::vector<Timestamp> m_variableMark;
+  std::vector<Timestamp> m_invariantMark;
   /**
    * Map from VarID -> InvariantId
    *
