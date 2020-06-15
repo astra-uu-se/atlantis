@@ -1,17 +1,19 @@
 #pragma once
 
-#include "core/propagationNode.hpp"
+#include "core/types.hpp"
 
 class Engine;  // Forward declaration
 
-class Invariant : public PropagationNode {
+class Invariant {
  private:
-  /* data */
  protected:
-  Invariant(Id t_id) : PropagationNode(t_id) {}
+ InvariantId m_id;
+  Invariant(Id t_id) : m_id(t_id) {}
 
  public:
   virtual ~Invariant() {}
+
+  void setId(Id t_id) { m_id = t_id; }
 
   /**
    * Preconditions for initialisation:
