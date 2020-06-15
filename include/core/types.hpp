@@ -11,7 +11,7 @@ using Timestamp = u_int64_t;
 using IdBase = size_t;  // IDs are mainly used for vector lookups, so they must
                         // be of size_t.
 
-static Timestamp NULL_TIMESTAMP = Timestamp(0);
+[[maybe_unused]] static Timestamp NULL_TIMESTAMP = Timestamp(0);
 
 struct Id {
   IdBase id;

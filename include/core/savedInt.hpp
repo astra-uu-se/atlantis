@@ -18,7 +18,7 @@ class SavedInt {
   //   m_savedValue);
   // }
 
-  [[gnu::always_inline]] inline const Timestamp& getTimestamp() const {
+  [[gnu::always_inline]] inline const Timestamp& getTmpTimestamp() const {
     return m_tmpTime;
   }
 

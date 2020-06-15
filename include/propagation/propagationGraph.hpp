@@ -26,18 +26,8 @@ class PropagationGraph {
    */
   std::vector<std::vector<VarId>> m_variablesDefinedByInvariant;
 
-  struct InvariantDependencyData {
-    InvariantId id;
-    LocalId localId;
-    Int data;
-  };
   // Map from VarID -> vector of InvariantID
-  std::vector<std::vector<InvariantDependencyData>> m_listeningInvariants;
-
-  // The last time when an intVar was commited to
-  std::vector<Timestamp> m_varsLastCommit;
-
-  std::queue<VarId> m_modifiedVariables;
+  std::vector<std::vector<InvariantId>> m_listeningInvariants;
 
   struct Topology {
     std::vector<size_t> m_variablePosition;
@@ -59,27 +49,26 @@ class PropagationGraph {
   PropagationGraph() : PropagationGraph(1000) {}
   PropagationGraph(size_t expectedSize);
 
-  void notifyMaybeChanged(const Timestamp& t, VarId id);
+  virtual ~PropagationGraph(){};
+
+  virtual void notifyMaybeChanged(const Timestamp& t, VarId id) = 0;
 
   /**
    * Register an invariant in the propagation graph.
    */
-  void registerInvariant(InvariantId);
+  virtual void registerInvariant(InvariantId);
 
   /**
    * Register a variable in the propagation graph.
    */
-  void registerVar(VarId);
+  virtual void registerVar(VarId);
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
    * @param depends the invariant that the variable depends on
    * @param source the depending variable
-   * @param localId the id of the depending variable in the invariant
-   * @param data additional data
    */
-  void registerInvariantDependsOnVar(InvariantId depends, VarId source,
-                                     LocalId localId, Int data);
+  void registerInvariantDependsOnVar(InvariantId depends, VarId source);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
@@ -95,17 +84,43 @@ class PropagationGraph {
     // m_topology.computeNoCyclesException();
     // m_topology.computeWithCycles();
     m_topology.computeBundleCycles();
-    }
+  }
+
+  // todo: Maybe there is a better word than "active", like "relevant".
+  // --------------------- Activity ----------------
+  /**
+   * returns true if variable id is relevant for propagation.
+   * Note that this is not the same thing as the variable being modified.
+   */
+  virtual bool isActive([[maybe_unused]] const Timestamp& t,
+                        [[maybe_unused]] VarId id) {
+    return true;
+  }
+  /**
+   * returns true if invariant id is relevant for propagation.
+   * Note that this is not the same thing as the invariant being modified.
+   */
+  virtual bool isActive([[maybe_unused]] const Timestamp& t,
+                        [[maybe_unused]] InvariantId id) {
+    return true;
+  }
+
+  /** 
+   * A stable variable is a variable that has been modified at timestamp t,
+   * but will not be modified again (as all parent nodes are already up to
+   * date).
+   */
+  [[nodiscard]] virtual VarId getNextStableVariable([[maybe_unused]] const Timestamp& t) = 0;
 
   size_t getNumVariables() {
-    return m_numVariables;  //this ignores null var
+    return m_numVariables;  // this ignores null var
   }
 
   size_t getNumInvariants() {
-    return m_numInvariants;  //this ignores null invariant
+    return m_numInvariants;  // this ignores null invariant
   }
 
-  size_t getTopologicalKey(VarId id){
+  size_t getTopologicalKey(VarId id) {
     return m_topology.m_variablePosition.at(id);
   }
 
