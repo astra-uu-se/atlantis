@@ -9,7 +9,11 @@ Engine::Engine()
       // m_intVars(),
       // m_invariants(),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
-      m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
+      m_isOpen(false),
+      m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {
+  m_dependentInvariantData.reserve(ESTIMATED_NUM_OBJECTS);
+  m_dependentInvariantData.push_back({});
+}
 
 void Engine::open() { m_isOpen = true; }
 
@@ -36,25 +40,32 @@ void Engine::close() {
 
 //---------------------Notificaion/Modification---------------------
 void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, VarId id) {
-  // If first time variable is invalidated:
-  if (m_store.getIntVar(id).m_isInvalid) {
-    m_store.getIntVar(id).invalidate(t);
-    m_propGraph.notifyMaybeChanged(t, id);
-  }
+  m_propGraph.notifyMaybeChanged(t, id);
 }
 
 //--------------------- Move semantics ---------------------
-void beginMove(Timestamp& t){
+void Engine::beginMove() { ++m_currentTime; }
 
-}
+void Engine::endMove() {}
 
-void endMove(Timestamp& t){
-
-}
-
-void Engine::setValue(VarId& v, Int val) {
-  m_store.getIntVar(v).setValue(m_currentTime, val);
-  notifyMaybeChanged(m_currentTime, v);
+// Propagates at the current internal time of the engine.
+void Engine::propagate() {
+  VarId id = m_propGraph.getNextStableVariable(m_currentTime);
+  while (id.id != NULL_ID) {
+    IntVar& variable = m_store.getIntVar(id);
+    if (variable.hasChanged(m_currentTime)) {
+      for (auto toNotify : m_dependentInvariantData.at(id)) {
+        if (!m_propGraph.isActive(m_currentTime, toNotify.id)) {
+          continue;  // do not notify invariants that are not active.
+        }
+        m_store.getInvariant(toNotify.id)
+            .notifyIntChanged(m_currentTime, *this, toNotify.localId,
+                              variable.getCommittedValue(),
+                              variable.getValue(m_currentTime), toNotify.data);
+      }
+    }
+    id = m_propGraph.getNextStableVariable(m_currentTime);
+  }
 }
 
 void Engine::setValue(const Timestamp& t, VarId& v, Int val) {
@@ -75,8 +86,8 @@ Int Engine::getCommitedValue(VarId& v) {
   return m_store.getIntVar(v).getCommittedValue();
 }
 
-Timestamp Engine::getTimestamp(VarId& v) {
-  return m_store.getIntVar(v).getTimestamp();
+Timestamp Engine::getTmpTimestamp(VarId& v) {
+  return m_store.getIntVar(v).getTmpTimestamp();
 }
 
 void Engine::commit(VarId& v) {
@@ -91,8 +102,7 @@ void Engine::commitIf(const Timestamp& t, VarId& v) {
   // m_store.getIntVar(v).validate();
 }
 
-void Engine::commitValue([[maybe_unused]] const Timestamp& t, VarId& v,
-                         Int val) {
+void Engine::commitValue(VarId& v, Int val) {
   m_store.getIntVar(v).commitValue(val);
   // todo: do something else? like:
   // m_store.getIntVar(v).validate();
@@ -100,18 +110,22 @@ void Engine::commitValue([[maybe_unused]] const Timestamp& t, VarId& v,
 
 //---------------------Registration---------------------
 
-VarId Engine::makeIntVar() {
+VarId Engine::makeIntVar(Int initValue) {
   if (!m_isOpen) {
-    throw new ModelNotOpenException("Cannot make IntVar when store is closed.");
+    throw ModelNotOpenException("Cannot make IntVar when store is closed.");
   }
-  VarId newId = m_store.createIntVar();
+  VarId newId = m_store.createIntVar(initValue);
   m_propGraph.registerVar(newId);
+  assert(newId.id == m_dependentInvariantData.size());
+  m_dependentInvariantData.push_back({});
   return newId;
 }
 
 void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
                                            LocalId localId, Int data) {
-  m_propGraph.registerInvariantDependsOnVar(dependent, source, localId, data);
+  m_propGraph.registerInvariantDependsOnVar(dependent, source);
+  m_dependentInvariantData.at(source).emplace_back(
+      InvariantDependencyData{dependent, localId, data});
 }
 
 void Engine::registerDefinedVariable(VarId dependent, InvariantId source) {
