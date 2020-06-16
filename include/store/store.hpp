@@ -39,7 +39,11 @@ class Store {
     return m_intVars.at(m_intVarIndexMap.at(v.id));
   }
 
-  inline Invariant& getInvariant(InvariantId& i) {
+  inline const IntVar& getConstIntVar(VarId& v) const {
+    return m_intVars.at(m_intVarIndexMap.at(v.id));
+  }
+
+  inline Invariant& getInvariant(InvariantId& i) const {
     return *(m_invariants.at(i.id));
   }
   std::vector<IntVar>::iterator intVarBegin() { return m_intVars.begin() + 1; }
