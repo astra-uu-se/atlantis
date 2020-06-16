@@ -11,7 +11,7 @@
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
 #include "propagation/propagationGraph.hpp"
-#include "propagation/topDownPropagationGraph.hpp"
+#include "propagation/markingTopDownPropagationGraph.hpp"
 #include "store/store.hpp"
 
 class Engine {
@@ -20,7 +20,7 @@ class Engine {
 
   Timestamp m_currentTime;
 
-  TopDownPropagationGraph m_propGraph;
+  MarkingTopDownPropagationGraph m_propGraph;
 
   bool m_isOpen = true;
 
