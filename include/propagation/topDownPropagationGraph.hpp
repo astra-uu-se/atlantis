@@ -4,10 +4,22 @@
 
 #include "propagation/propagationGraph.hpp"
 
+class Engine;  // forward declare
+
 class TopDownPropagationGraph : public PropagationGraph {
  private:
-  // The last time when an intVar was modified to
+  // The last time that a variable was notified as changed.
   std::vector<Timestamp> m_varsLastChange;
+
+  // The last time when a variable was propagated (i.e., returned by the
+  // function getNextStableVariable)
+  std::vector<Timestamp> m_propagatedAt;
+
+  // Shared tmp container for storing a list of variables.  Although this
+  // should be local to each function, there is no need to reallocate all that
+  // space each call.
+  std::vector<VarId> m_tmpVarContainer;
+  std::vector<bool> m_tmpMarkContainer;
 
   struct PriorityCmp {
     Topology& topology;
@@ -25,13 +37,12 @@ class TopDownPropagationGraph : public PropagationGraph {
   TopDownPropagationGraph() : TopDownPropagationGraph(1000) {}
   TopDownPropagationGraph(size_t expectedSize);
 
-  void notifyMaybeChanged(const Timestamp& t, VarId id) override;
+  void notifyMaybeChanged(const Timestamp&, VarId id) override;
 
-  virtual VarId getNextStableVariable([[maybe_unused]] const Timestamp& t) override;
+  void schedulePropagationFor(const Timestamp&, const Engine&, VarId);
 
-
-  /**
-   * Register a variable in the propagation graph.
-   */
+  virtual VarId getNextStableVariable(const Timestamp&) override;
   virtual void registerVar(VarId) override;
+
+  // virtual void registerInvariant(InvariantId) override;
 };

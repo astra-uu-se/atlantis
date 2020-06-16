@@ -30,6 +30,9 @@ class Engine {
     InvariantId id;
     LocalId localId;
     Int data;
+    Timestamp lastNotification;  // todo: unclear if this information is
+                                 // relevant for all types of propagation. If
+                                 // not then move it to a subclass...
   };
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantDependencyData>> m_dependentInvariantData;
@@ -70,6 +73,9 @@ class Engine {
 
   Timestamp getTmpTimestamp(VarId&);
 
+  inline bool hasChanged(const Timestamp& t, VarId& v) const {
+    return m_store.getConstIntVar(v).hasChanged(t);
+  }
   void commit(VarId&);  // todo: this feels dangerous, maybe commit should
                         // always have a timestamp?
   void commitIf(const Timestamp&, VarId&);
@@ -122,8 +128,5 @@ class Engine {
    */
   void registerDefinedVariable(VarId dependent, InvariantId source);
 
-
-  const Store& getStore(){
-    return m_store;
-  }
+  const Store& getStore() { return m_store; }
 };

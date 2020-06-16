@@ -10,11 +10,14 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
     : m_numInvariants(0), m_numVariables(0), m_topology(*this) {
   m_definingInvariant.reserve(expectedSize);
   m_variablesDefinedByInvariant.reserve(expectedSize);
+  m_inputVariables.reserve(expectedSize);
   m_listeningInvariants.reserve(expectedSize);
+
 
   // Initialise nullID
   m_definingInvariant.push_back(InvariantId(NULL_ID));
   m_variablesDefinedByInvariant.push_back({});
+  m_inputVariables.push_back({});
   m_listeningInvariants.push_back({});
 }
 
@@ -22,6 +25,8 @@ void PropagationGraph::registerInvariant(InvariantId id) {
   // Everything must be registered in sequence.
   assert(id.id == m_variablesDefinedByInvariant.size());
   m_variablesDefinedByInvariant.push_back({});
+  assert(id.id == m_inputVariables.size());
+  m_inputVariables.push_back({});
   ++m_numInvariants;
 }
 
@@ -37,6 +42,7 @@ void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
                                                      VarId source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
    m_listeningInvariants.at(source).push_back(dependent);
+   m_inputVariables.at(dependent).push_back(source);
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Registering that invariant " << dependent
@@ -250,8 +256,8 @@ void PropagationGraph::Topology::computeBundleCycles() {
   };
 
   std::function<void(VarId, size_t)> visit = [&](VarId id, size_t pos) {
-    // If position is not 0, then return it
-    if (m_variablePosition.at(id) > pos) {
+    // This ensure that position = max(currentPos, pos)
+    if (m_variablePosition.at(id) >= pos) {
       return;
     }
     m_variablePosition.at(id) = pos;

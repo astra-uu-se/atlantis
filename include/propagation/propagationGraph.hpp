@@ -13,8 +13,6 @@ class PropagationGraph {
   size_t m_numInvariants;
   size_t m_numVariables;
 
-  std::vector<Timestamp> m_variableMark;
-  std::vector<Timestamp> m_invariantMark;
   /**
    * Map from VarID -> InvariantId
    *
@@ -28,6 +26,12 @@ class PropagationGraph {
    * Maps an invariant to all variables it defines.
    */
   std::vector<std::vector<VarId>> m_variablesDefinedByInvariant;
+/**
+   * Map from InvariantId -> list of VarID
+   *
+   * Maps an invariant to all variables it depends on (its inputs).
+   */
+  std::vector<std::vector<VarId>> m_inputVariables;
 
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantId>> m_listeningInvariants;
@@ -108,12 +112,16 @@ class PropagationGraph {
     return true;
   }
 
-  /** 
+  /**
    * A stable variable is a variable that has been modified at timestamp t,
    * but will not be modified again (as all parent nodes are already up to
    * date).
+   *
+   * The variable returned by this method will be considered up to date for the
+   * current timestamp.
    */
-  [[nodiscard]] virtual VarId getNextStableVariable([[maybe_unused]] const Timestamp& t) = 0;
+  [[nodiscard]] virtual VarId getNextStableVariable([
+      [maybe_unused]] const Timestamp& t) = 0;
 
   size_t getNumVariables() {
     return m_numVariables;  // this ignores null var
