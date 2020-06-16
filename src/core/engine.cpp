@@ -48,30 +48,6 @@ void Engine::beginMove() { ++m_currentTime; }
 
 void Engine::endMove() {}
 
-// Propagates at the current internal time of the engine.
-void Engine::propagate() {
-  VarId id = m_propGraph.getNextStableVariable(m_currentTime);
-  while (id.id != NULL_ID) {
-    IntVar& variable = m_store.getIntVar(id);
-    if (variable.hasChanged(m_currentTime)) {
-      for (auto toNotify : m_dependentInvariantData.at(id)) {
-        // If we do multiple "probes" within the same timestamp then the
-        // invariant may already have been notified.
-        // Do not notify invariants that are not active.
-        if (m_currentTime == toNotify.lastNotification ||
-            !m_propGraph.isActive(m_currentTime, toNotify.id)) {
-          continue;
-        }
-        m_store.getInvariant(toNotify.id)
-            .notifyIntChanged(m_currentTime, *this, toNotify.localId,
-                              variable.getCommittedValue(),
-                              variable.getValue(m_currentTime), toNotify.data);
-        toNotify.lastNotification = m_currentTime;
-      }
-    }
-    id = m_propGraph.getNextStableVariable(m_currentTime);
-  }
-}
 
 void Engine::setValue(const Timestamp& t, VarId& v, Int val) {
   m_store.getIntVar(v).setValue(t, val);
@@ -112,6 +88,45 @@ void Engine::commitValue(VarId& v, Int val) {
   // todo: do something else? like:
   // m_store.getIntVar(v).validate();
 }
+
+void Engine::beginQuery(){
+  m_propGraph.clearForPropagation();
+}
+
+void Engine::query(VarId id){
+  m_propGraph.registerForPropagation(m_currentTime, id);
+}
+
+void Engine::endQuery(){
+  m_propGraph.schedulePropagation(m_currentTime, *this);
+  propagate();
+}
+
+// Propagates at the current internal time of the engine.
+void Engine::propagate() {
+  VarId id = m_propGraph.getNextStableVariable(m_currentTime);
+  while (id.id != NULL_ID) {
+    IntVar& variable = m_store.getIntVar(id);
+    if (variable.hasChanged(m_currentTime)) {
+      for (auto toNotify : m_dependentInvariantData.at(id)) {
+        // If we do multiple "probes" within the same timestamp then the
+        // invariant may already have been notified.
+        // Do not notify invariants that are not active.
+        if (m_currentTime == toNotify.lastNotification ||
+            !m_propGraph.isActive(m_currentTime, toNotify.id)) {
+          continue;
+        }
+        m_store.getInvariant(toNotify.id)
+            .notifyIntChanged(m_currentTime, *this, toNotify.localId,
+                              variable.getCommittedValue(),
+                              variable.getValue(m_currentTime), toNotify.data);
+        toNotify.lastNotification = m_currentTime;
+      }
+    }
+    id = m_propGraph.getNextStableVariable(m_currentTime);
+  }
+}
+
 
 //---------------------Registration---------------------
 
