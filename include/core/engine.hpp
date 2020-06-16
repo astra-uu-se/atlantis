@@ -41,6 +41,8 @@ class Engine {
 
   void recomputeAndCommit();
 
+  void propagate();
+
  public:
   Engine(/* args */);
 
@@ -58,7 +60,10 @@ class Engine {
   void beginMove();
   void endMove();
 
-  void propagate();
+
+  void beginQuery();
+  void endQuery();
+  void query(VarId);
 
   //--------------------- Variable ---------------------
   void incValue(const Timestamp&, VarId&, Int inc);

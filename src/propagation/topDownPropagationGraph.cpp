@@ -5,17 +5,23 @@
 TopDownPropagationGraph::TopDownPropagationGraph(size_t expectedSize)
     : PropagationGraph(expectedSize),
       m_modifiedVariables(PriorityCmp(m_topology)) {
-
   m_propagatedAt.reserve(expectedSize);
   m_varsLastChange.reserve(expectedSize);
+  m_varMark.reserve(expectedSize);
+  m_invariantMark.reserve(expectedSize);
+
+  m_variablesToExplore.reserve(expectedSize);
+
   m_tmpVarContainer.reserve(expectedSize);
-  m_tmpMarkContainer.reserve(expectedSize);
+  m_tmpBoolContainer.reserve(expectedSize);
 
   m_varsLastChange.push_back(NULL_TIMESTAMP);
   m_propagatedAt.push_back(NULL_TIMESTAMP);
+  m_varMark.push_back(NULL_TIMESTAMP);
+  m_invariantMark.push_back(NULL_TIMESTAMP);
 
   m_tmpVarContainer.push_back(NULL_ID);
-  m_tmpMarkContainer.push_back(false);
+  m_tmpBoolContainer.push_back(false);
 }
 
 void TopDownPropagationGraph::notifyMaybeChanged(const Timestamp& t, VarId id) {
@@ -25,6 +31,14 @@ void TopDownPropagationGraph::notifyMaybeChanged(const Timestamp& t, VarId id) {
   m_varsLastChange.at(id) = t;
 
   m_modifiedVariables.push(id);
+}
+
+bool TopDownPropagationGraph::isActive(const Timestamp& t, VarId id) {
+  return m_varMark.at(id) == t;
+}
+
+bool TopDownPropagationGraph::isActive(const Timestamp& t, InvariantId id) {
+  return m_invariantMark.at(id) == t;
 }
 
 VarId TopDownPropagationGraph::getNextStableVariable(const Timestamp& t) {
@@ -42,50 +56,61 @@ void TopDownPropagationGraph::registerVar(VarId id) {
   PropagationGraph::registerVar(id);  // call parent implementation
   assert(id.id == m_varsLastChange.size());
   m_varsLastChange.push_back(NULL_TIMESTAMP);
+  assert(id.id == m_propagatedAt.size());
   m_propagatedAt.push_back(NULL_TIMESTAMP);
+  assert(id.id == m_varMark.size());
+  m_varMark.push_back(NULL_TIMESTAMP);
 
   m_tmpVarContainer.push_back(NULL_ID);
-  m_tmpMarkContainer.push_back(false);
+  m_tmpBoolContainer.push_back(false);
 }
 
-// void TopDownPropagationGraph::registerInvariant(InvariantId id) {
-//   PropagationGraph::registerInvariant(id);
-// }
+void TopDownPropagationGraph::registerInvariant(InvariantId id) {
+  PropagationGraph::registerInvariant(id);
+  assert(id.id == m_invariantMark.size());
+  m_invariantMark.push_back(NULL_TIMESTAMP);
+}
+
+void TopDownPropagationGraph::clearForPropagation() {
+  // Clear the queue: we will rebuild it based on registered vars.
+  // Usually the queue is very small at this point so this should be cheap.
+  while (!m_modifiedVariables.empty()) {
+    m_modifiedVariables.pop();
+  }
+
+  m_variablesToExplore.clear();
+}
+
+void TopDownPropagationGraph::registerForPropagation(const Timestamp& t,
+                                                     VarId id) {
+  if (m_propagatedAt.at(id) == t) {
+    return;
+  }
+  m_variablesToExplore.push_back(id);
+}
 
 /**
  * This method expects something else to update m_propagatedAt.at(nextVar)
  * While propagation is happening.
  */
 
-void TopDownPropagationGraph::schedulePropagationFor(const Timestamp& t,
-                                                     const Engine& e,
-                                                     VarId targetVar) {
-  if (m_propagatedAt.at(targetVar) == t) {
-    return;  // noting to do.
-  }
-
-  // Clear the queue: we will rebuild it based on targetVar.
-  // Usually the queue is very small at this point so this should be cheap.
-  while (!m_modifiedVariables.empty()) {
-    m_modifiedVariables.pop();
-  }
+void TopDownPropagationGraph::schedulePropagation(const Timestamp& t,
+                                                  const Engine& e) {
   // If a variable has been visited before (during this call) then do not
   // enqueue it.
-  std::vector<bool>& visited = m_tmpMarkContainer;
+  // Note that we cannot use m_varMark for this, as marked variables can be
+  // requeued during other calls with the same timestamp.
+  std::vector<bool>& visited = m_tmpBoolContainer;
   visited.assign(visited.size(), false);
 
-  std::vector<VarId>& variablesToExplore = m_tmpVarContainer;
-  variablesToExplore.clear();  // clears vector but keeps the allocated size.
-
-  variablesToExplore.push_back(targetVar);
-
-  while (!variablesToExplore.empty()) {
-    VarId currentVar = variablesToExplore.back();
-    variablesToExplore.pop_back();
+  while (!m_variablesToExplore.empty()) {
+    VarId currentVar = m_variablesToExplore.back();
+    m_variablesToExplore.pop_back();
     if (visited.at(currentVar)) {
       continue;  // guessing that it is faster to have multiple occurrences and
                  // skipping, than the filter the insert.
     }
+    m_varMark.at(currentVar) = t;  // currentVar is marked for this timestamp.
     visited.at(currentVar) = true;
     // If the variable has changed, then enqueue it.
     if (e.hasChanged(t, currentVar)) {
@@ -96,9 +121,11 @@ void TopDownPropagationGraph::schedulePropagationFor(const Timestamp& t,
     if (m_propagatedAt.at(currentVar) != t &&
         m_definingInvariant.at(currentVar) != NULL_ID) {
       InvariantId definingInvariant = m_definingInvariant.at(currentVar);
+      m_invariantMark.at(definingInvariant) =
+          t;  // The defining invariant is also marked.
       std::vector<VarId>& inputVars = m_inputVariables.at(definingInvariant);
-      variablesToExplore.insert(variablesToExplore.end(), inputVars.begin(),
-                                inputVars.end());
+      m_variablesToExplore.insert(m_variablesToExplore.end(), inputVars.begin(),
+                                  inputVars.end());
     }
   }
 }

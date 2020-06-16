@@ -92,7 +92,12 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->beginMove();
   engine->setValue(c, -4);
   engine->endMove();
-  engine->propagate();
+  
+  engine->beginQuery();
+  engine->query(d);
+  engine->query(e);
+  engine->query(f);
+  engine->endQuery();
 
   ASSERT_EQ(engine->getValue(d), -5);
   ASSERT_EQ(engine->getValue(e), 5);
