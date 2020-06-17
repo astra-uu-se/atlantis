@@ -42,6 +42,7 @@ class Engine {
   void recomputeAndCommit();
 
   void propagate();
+  void bottomUpPropagate();
 
  public:
   Engine(/* args */);

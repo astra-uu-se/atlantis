@@ -48,7 +48,6 @@ void Engine::beginMove() { ++m_currentTime; }
 
 void Engine::endMove() {}
 
-
 void Engine::setValue(const Timestamp& t, VarId& v, Int val) {
   m_store.getIntVar(v).setValue(t, val);
   notifyMaybeChanged(t, v);
@@ -89,15 +88,13 @@ void Engine::commitValue(VarId& v, Int val) {
   // m_store.getIntVar(v).validate();
 }
 
-void Engine::beginQuery(){
-  m_propGraph.clearForPropagation();
-}
+void Engine::beginQuery() { m_propGraph.clearForPropagation(); }
 
-void Engine::query(VarId id){
+void Engine::query(VarId id) {
   m_propGraph.registerForPropagation(m_currentTime, id);
 }
 
-void Engine::endQuery(){
+void Engine::endQuery() {
   m_propGraph.schedulePropagation(m_currentTime, *this);
   propagate();
 }
@@ -111,7 +108,7 @@ void Engine::propagate() {
       for (auto toNotify : m_dependentInvariantData.at(id)) {
         // If we do multiple "probes" within the same timestamp then the
         // invariant may already have been notified.
-        // Do not notify invariants that are not active.
+        // Also, do not notify invariants that are not active.
         if (m_currentTime == toNotify.lastNotification ||
             !m_propGraph.isActive(m_currentTime, toNotify.id)) {
           continue;
@@ -127,6 +124,97 @@ void Engine::propagate() {
   }
 }
 
+
+// TODO: all of these datastructures should be members.
+// TODO: the lambda functions should be inlined private functions!
+void Engine::bottomUpPropagate() {
+  // TODO: prefill stack with query variables.
+  std::vector<VarId> variableStack;
+  std::vector<InvariantId> invariantStack;
+  std::vector<bool> isUpToDate;
+  std::vector<bool> hasVisited;
+
+  auto setVisisted = [&](VarId v) { hasVisited.at(v) = true; };
+  auto fixpoint = [&](VarId v) { isUpToDate.at(v) = true; };
+  // We expand an invariant by pushing it and its first input variable onto each
+  // stack.
+  auto expandInvariant = [&](InvariantId inv) {
+    VarId nextVar = m_store.getInvariant(inv).nextDependency(m_currentTime);
+    assert(nextVar.id !=
+           NULL_ID);  // Invariant must have at least one dependency, and this
+                      // should be the first (and only) time we expand it
+    variableStack.push_back(nextVar);
+    invariantStack.push_back(inv);
+  };
+
+  auto notifyCurrentInvariant = [&](VarId id) {
+    IntVar variable = m_store.getIntVar(id);
+    m_store.getInvariant(invariantStack.back())
+        .notifyCurrentDependencyChanged(m_currentTime,
+                                        variable.getCommittedValue(),
+                                        variable.getValue(m_currentTime));
+  };
+
+  auto nextVar = [&]() {
+    variableStack.pop_back();
+    VarId nextVar = m_store.getInvariant(invariantStack.back())
+                        .nextDependency(m_currentTime);
+    if (nextVar.id == NULL_ID) {
+      // The invariant has finished propagating, so all defined vars can be
+      // marked as up to date.
+      // Do this with member array of timestamps.
+      for (auto defVar : m_propGraph.variableDefinedBy(invariantStack.back())) {
+        fixpoint(defVar);
+      }
+      invariantStack.pop_back();
+    } else {
+      variableStack.push_back(nextVar);
+    }
+  };
+
+  // recursively expand variables to compute their value.
+  while (!variableStack.empty()) {
+    VarId currentVar = variableStack.back();
+    if (hasVisited.at(currentVar)) {
+      //TODO: dynamic cycle! throw exception: illegal move or illegal initial assignment.
+    }
+    setVisisted(currentVar);
+    // If the variable has not been expanded before, then expand it.
+    if (!isUpToDate.at(currentVar)) {
+      if (m_propGraph.m_definingInvariant.at(currentVar).id != NULL_ID) {
+        // Variable is defined, so expand defining invariant.
+        expandInvariant(m_propGraph.m_definingInvariant.at(currentVar));
+        continue;
+      } else if (hasChanged(m_currentTime, currentVar)) {
+        // variable is not defined, so if it has changed, then we notify the top
+        // invariant.
+        // Note that this must be an input variable.
+        // TODO: just pre-mark all the input variables and remove this case!
+        notifyCurrentInvariant(currentVar);
+        nextVar();
+        continue;
+      } else {
+        continue;
+      }
+    } else if (invariantStack.empty()) {
+      nextVar();  // we are at an output variable!
+    } else {
+      if (hasChanged(m_currentTime, currentVar)) {
+        // Else, if the variable has been marked before and has changed then
+        // just send a notification to top invariant (i.e, the one asking for
+        // its value)
+        notifyCurrentInvariant(currentVar);
+        nextVar();
+        continue;
+      } else {
+        // pop
+        nextVar();
+        continue;
+      }
+    }
+  }
+  // All output variables are up to date!
+}
 
 //---------------------Registration---------------------
 
