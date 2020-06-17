@@ -138,4 +138,8 @@ class PropagationGraph {
   size_t getTopologicalKey(InvariantId id) {
     return m_topology.m_invariantPosition.at(id);
   }
+
+  inline const std::vector<VarId>& variableDefinedBy(InvariantId inv) const{
+    return m_variablesDefinedByInvariant.at(inv);
+  }
 };
