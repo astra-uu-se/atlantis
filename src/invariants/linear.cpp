@@ -2,7 +2,7 @@
 
 #include <vector>
 
-//TODO: invariant should take its true id in the constructor.
+// TODO: invariant should take its true id in the constructor.
 extern Id NULL_ID;
 
 Linear::Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b)
@@ -63,6 +63,11 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
             << (newValue - oldValue) * coef << "\n";
 #endif
 }
+
+VarId Linear::getNextDependency(const Timestamp&) { return NULL_ID; }
+
+void Linear::notifyCurrentDependencyChanged(const Timestamp&, Int oldValue,
+                                            Int newValue) {}
 
 void Linear::commit(const Timestamp& t, Engine& e) {
   // todo: do nodes validate themself or is it done by engine?
