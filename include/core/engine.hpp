@@ -10,8 +10,8 @@
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
-#include "propagation/propagationGraph.hpp"
 #include "propagation/markingTopDownPropagationGraph.hpp"
+#include "propagation/propagationGraph.hpp"
 #include "store/store.hpp"
 
 class Engine {
@@ -60,7 +60,6 @@ class Engine {
   //--------------------- Move semantics ---------------------
   void beginMove();
   void endMove();
-
 
   void beginQuery();
   void endQuery();
@@ -134,5 +133,6 @@ class Engine {
    */
   void registerDefinedVariable(VarId dependent, InvariantId source);
 
-  const Store& getStore() { return m_store; }
+  inline const Store& getStore() { return m_store; }
+  inline const Timestamp& getCurrentTime() { return m_currentTime; }
 };
