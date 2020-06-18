@@ -12,8 +12,8 @@
 class Equal : public Constraint {
  private:
   Int m_a;
-  Int m_b;
   VarId m_x;
+  Int m_b;
   VarId m_y;
 
  public:
