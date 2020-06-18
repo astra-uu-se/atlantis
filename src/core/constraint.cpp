@@ -5,6 +5,6 @@ inline VarId Constraint::getViolationId() {
   return m_violationId;
 }
 
-inline Int Constraint::getViolationCount(Engine& e, Timestamp& t) {
+inline Int Constraint::getViolationCount(Engine& e, [[maybe_unused]] Timestamp& t) {
   return e.getValue(m_violationId);
 }
