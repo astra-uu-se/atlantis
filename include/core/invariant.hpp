@@ -7,7 +7,7 @@ class Engine;  // Forward declaration
 class Invariant {
  private:
  protected:
- InvariantId m_id;
+  InvariantId m_id;
   Invariant(Id t_id) : m_id(t_id) {}
 
  public:
@@ -36,6 +36,11 @@ class Invariant {
   virtual void init(const Timestamp&, Engine&) = 0;
 
   virtual void recompute(const Timestamp&, Engine&) = 0;
+
+  virtual VarId getNextDependency(const Timestamp&) = 0;
+
+  virtual void notifyCurrentDependencyChanged(const Timestamp&, Int oldValue,
+                                               Int newValue) = 0;
 
   /**
    * Precondition: oldValue != newValue

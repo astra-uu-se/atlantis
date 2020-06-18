@@ -139,7 +139,7 @@ void Engine::bottomUpPropagate() {
   // We expand an invariant by pushing it and its first input variable onto each
   // stack.
   auto expandInvariant = [&](InvariantId inv) {
-    VarId nextVar = m_store.getInvariant(inv).nextDependency(m_currentTime);
+    VarId nextVar = m_store.getInvariant(inv).getNextDependency(m_currentTime);
     assert(nextVar.id !=
            NULL_ID);  // Invariant must have at least one dependency, and this
                       // should be the first (and only) time we expand it
@@ -158,7 +158,7 @@ void Engine::bottomUpPropagate() {
   auto nextVar = [&]() {
     variableStack.pop_back();
     VarId nextVar = m_store.getInvariant(invariantStack.back())
-                        .nextDependency(m_currentTime);
+                        .getNextDependency(m_currentTime);
     if (nextVar.id == NULL_ID) {
       // The invariant has finished propagating, so all defined vars can be
       // marked as up to date.
