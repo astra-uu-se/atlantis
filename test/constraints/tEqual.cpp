@@ -100,9 +100,9 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
   for (size_t i = 0; i < 1000; ++i) { 
     ++currentTime;
     // Check that we do not accidentally commit
-    EXPECT_EQ(e->getCommitedValue(x), 2);
-    EXPECT_EQ(e->getCommitedValue(y), 2);
-    EXPECT_EQ(e->getCommitedValue(violationId), 0);  // violationId is commited by register.
+    ASSERT_EQ(e->getCommitedValue(x), 2);
+    ASSERT_EQ(e->getCommitedValue(y), 2);
+    ASSERT_EQ(e->getCommitedValue(violationId), 0);  // violationId is commited by register.
 
     // Set all variables
     e->setValue(currentTime, x, distribution(gen));
@@ -122,7 +122,7 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
     auto tmp = e->getValue(currentTime, violationId);
     equal->recompute(currentTime, *e);
 
-    EXPECT_EQ(tmp, e->getValue(currentTime, violationId));
+    ASSERT_EQ(tmp, e->getValue(currentTime, violationId));
   }
 }
 

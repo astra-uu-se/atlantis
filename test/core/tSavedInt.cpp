@@ -135,7 +135,7 @@ TEST_F(SavedIntTest, SavedIntCommitValue) {
 
   savedInt.commitValue(commitedValue);
 
-  EXPECT_EQ(savedInt.getValue(initTime), initValue);
+  EXPECT_EQ(savedInt.getValue(initTime), initValue); // TODO: shouldn't this be commitedValue?
   EXPECT_EQ(savedInt.getValue(nextTime), commitedValue);
 }
 /*

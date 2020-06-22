@@ -45,7 +45,8 @@ class TopDownPropagationGraph : public PropagationGraph {
   TopDownPropagationGraph(size_t expectedSize);
 
 
-  void close() {
+  virtual void close() override {
+    PropagationGraph::close();
     // m_topology.computeNoCycles();
     // m_topology.computeNoCyclesException();
     // m_topology.computeWithCycles();
