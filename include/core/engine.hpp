@@ -7,6 +7,7 @@
 
 #include "core/intVar.hpp"
 #include "core/invariant.hpp"
+#include "core/constraint.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
@@ -88,7 +89,7 @@ class Engine {
 
   //--------------------- Registration ---------------------
   /**
-   * Register an invariant in the engine and return its new id.
+   * Register an invariant in the engine and return its pointer.
    * This also sets the id of the invariant to the new id.
    * @param args the constructor arguments of the invariant
    * @return the created invariant.
@@ -106,6 +107,28 @@ class Engine {
     m_propGraph.registerInvariant(newId);
     invariantPtr->init(m_currentTime, *this);
     return invariantPtr;
+  }
+
+  //--------------------- Registration ---------------------
+  /**
+   * Register a constriant in the engine and return its pointer.
+   * This also sets the id of the constraint to the new id.
+   * @param args the constructor arguments of the constraint
+   * @return the created constraint.
+   */
+  template <class T, typename... Args>
+  std::enable_if_t<std::is_base_of<Constraint, T>::value, std::shared_ptr<T>>
+  makeConstraint(Args&&... args) {
+    if (!m_isOpen) {
+      throw ModelNotOpenException(
+          "Cannot make invariant when store is closed.");
+    }
+    auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
+
+    auto newId = m_store.createInvariantFromPtr(constraintPtr);
+    m_propGraph.registerInvariant(newId);
+    constraintPtr->init(m_currentTime, *this);
+    return constraintPtr;
   }
 
   /**
