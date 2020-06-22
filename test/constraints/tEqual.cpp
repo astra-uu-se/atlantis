@@ -21,7 +21,6 @@ class EqualTest : public ::testing::Test {
     x = e->makeIntVar(2);
     y = e->makeIntVar(2);
 
-    // violationId = 1*1+2*10+3*(-20) = 1+20-60 =0
     equal = e->makeConstraint<Equal>(violationId, x, y);
     e->close();
   }

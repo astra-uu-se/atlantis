@@ -19,7 +19,6 @@ class Linear : public Invariant {
   std::vector<Int> m_A;
   std::vector<VarId> m_X;
   VarId m_b;
-  SavedInt m_counter;
 
  public:
   Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b);
