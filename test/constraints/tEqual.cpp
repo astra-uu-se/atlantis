@@ -19,10 +19,10 @@ class EqualTest : public ::testing::Test {
     e->open();
     violationId = e->makeIntVar(0);
     x = e->makeIntVar(2);
-    y = e->makeIntVar(4);
+    y = e->makeIntVar(2);
 
     // violationId = 1*1+2*10+3*(-20) = 1+20-60 =0
-    equal = e->makeConstraint<Equal>(violationId, 2, x, 1, y);
+    equal = e->makeConstraint<Equal>(violationId, x, y);
     e->close();
   }
   std::unique_ptr<Engine> e;
@@ -51,7 +51,7 @@ TEST_F(EqualTest, Recompute) {
   e->setValue(newTime, x, 40);
   equal->recompute(newTime, *e);
   EXPECT_EQ(e->getCommitedValue(violationId), 0);
-  EXPECT_EQ(e->getValue(newTime, violationId), 76);
+  EXPECT_EQ(e->getValue(newTime, violationId), 38);
 }
 
 TEST_F(EqualTest, NotifyChange) {
@@ -68,7 +68,7 @@ TEST_F(EqualTest, NotifyChange) {
   EXPECT_EQ(e->getValue(time1, x), 40);
   equal->notifyIntChanged(time1, *e, unused, e->getCommitedValue(x),
                            e->getValue(time1, x), 1);
-  EXPECT_EQ(e->getValue(time1, violationId), 76);  // incremental value of violationId is 0;
+  EXPECT_EQ(e->getValue(time1, violationId), 38);  // incremental value of violationId is 0;
 
   e->setValue(time1, y, 0);
   equal->notifyIntChanged(time1, *e, unused, e->getCommitedValue(y),
@@ -81,13 +81,13 @@ TEST_F(EqualTest, NotifyChange) {
 
   Timestamp time2 = time1 + 1;
 
-  EXPECT_EQ(e->getValue(time2, y), 4);
+  EXPECT_EQ(e->getValue(time2, y), 2);
   e->setValue(time2, y, 20);
-  EXPECT_EQ(e->getCommitedValue(y), 4);
+  EXPECT_EQ(e->getCommitedValue(y), 2);
   EXPECT_EQ(e->getValue(time2, y), 20);
   equal->notifyIntChanged(time2, *e, unused, e->getCommitedValue(y),
                            e->getValue(time2, y), 1);
-  EXPECT_EQ(e->getValue(time2, violationId), 16);  // incremental value of violationId is 0;
+  EXPECT_EQ(e->getValue(time2, violationId), 18);  // incremental value of violationId is 0;
 }
 
 TEST_F(EqualTest, IncrementalVsRecompute) {
@@ -102,7 +102,7 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
     ++currentTime;
     // Check that we do not accidentally commit
     EXPECT_EQ(e->getCommitedValue(x), 2);
-    EXPECT_EQ(e->getCommitedValue(y), 4);
+    EXPECT_EQ(e->getCommitedValue(y), 2);
     EXPECT_EQ(e->getCommitedValue(violationId), 0);  // violationId is commited by register.
 
     // Set all variables
@@ -145,7 +145,7 @@ TEST_F(EqualTest, Commit) {
   equal->commit(currentTime + 1, *e);
   EXPECT_EQ(e->getCommitedValue(violationId), 0);
   equal->commit(currentTime, *e);
-  EXPECT_EQ(e->getCommitedValue(violationId), 78);
+  EXPECT_EQ(e->getCommitedValue(violationId), 38);
 }
 
 }  // namespace

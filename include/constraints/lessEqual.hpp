@@ -17,7 +17,7 @@ class LessEqual : public Constraint {
   VarId m_y;
 
  public:
-  LessEqual(VarId violationId, Int a, VarId x, Int b, VarId y);
+  LessEqual(VarId violationId, VarId x, VarId y);
 //   Linear(Engine& e, std::vector<Int>&& A,
 //          std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar> b);
 

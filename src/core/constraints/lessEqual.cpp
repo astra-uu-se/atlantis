@@ -12,11 +12,9 @@ extern Id NULL_ID;
  * @param b coefficient of y
  * @param y variable of rhs
  */
-LessEqual::LessEqual(VarId violationId, Int a, VarId x, Int b, VarId y)
+LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
   : Constraint(NULL_ID, violationId),
-    m_a(a),
     m_x(x),
-    m_b(b),
     m_y(y) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
@@ -42,8 +40,8 @@ void LessEqual::init([[maybe_unused]] const Timestamp& t, Engine& e) {
   // is initialised.
   assert(m_id != NULL_ID);
   
-  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x), m_a);
-  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(m_y), m_b);
+  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x), 0);
+  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(m_y), 0);
   e.registerDefinedVariable(m_violationId, m_id);
 }
 
@@ -52,13 +50,13 @@ void LessEqual::recompute(const Timestamp& t, Engine& e) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Constraint LessEqual[" << m_id
-            << "] with violation " << std::max((Int) 0, m_a * e.getValue(t, m_x)) << "\n" - m_b * e.getValue(t, m_y);
+            << "] with violation " << std::max((Int) 0, e.getValue(t, m_x)) << "\n" - e.getValue(t, m_y);
 #endif
   // Dereference safe as incValue does not retain ptr.
   e.setValue(
     t,
     m_violationId,
-    std::max((Int) 0, m_a * e.getValue(t, m_x) - m_b * e.getValue(t, m_y))
+    std::max((Int) 0, e.getValue(t, m_x) - e.getValue(t, m_y))
   );
 }
 
@@ -71,13 +69,13 @@ void LessEqual::notifyIntChanged(const Timestamp& t, Engine& e,
   e.setValue(
     t,
     m_violationId,
-    std::max((Int) 0, m_a * e.getValue(t, m_x) - m_b * e.getValue(t, m_y))
+    std::max((Int) 0, e.getValue(t, m_x) - e.getValue(t, m_y))
   );
 
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Constraint LessEqual[" << m_id << "] notifying output changed to "
-            << std::max((Int) 0, m_a * e.getValue(t, m_x)) << "\n" - m_b * e.getValue(t, m_y);
+            << std::max((Int) 0, e.getValue(t, m_x)) << "\n" - e.getValue(t, m_y);
 #endif
 }
 
