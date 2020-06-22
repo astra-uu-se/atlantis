@@ -36,22 +36,6 @@ class PropagationGraph {
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantId>> m_listeningInvariants;
 
-  struct Topology {
-    std::vector<size_t> m_variablePosition;
-    std::vector<size_t> m_invariantPosition;
-
-    PropagationGraph& graph;
-    Topology() = delete;
-    Topology(PropagationGraph& g) : graph(g) {}
-    void computeNoCycles();
-    void computeNoCyclesException();
-    void computeWithCycles();
-    void computeBundleCycles();
-    void computeInvariantFromVariables();
-    size_t getPosition(VarId id) { return m_variablePosition.at(id); }
-    size_t getPosition(InvariantId id) { return m_invariantPosition.at(id); }
-  } m_topology;
-
  public:
   PropagationGraph() : PropagationGraph(1000) {}
   PropagationGraph(size_t expectedSize);
@@ -85,13 +69,6 @@ class PropagationGraph {
    * @throw if the variable is already defined by an invariant.
    */
   void registerDefinedVariable(VarId depends, InvariantId source);
-
-  void close() {
-    // m_topology.computeNoCycles();
-    // m_topology.computeNoCyclesException();
-    // m_topology.computeWithCycles();
-    m_topology.computeBundleCycles();
-  }
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
@@ -130,15 +107,7 @@ class PropagationGraph {
   size_t getNumInvariants() {
     return m_numInvariants;  // this ignores null invariant
   }
-
-  size_t getTopologicalKey(VarId id) {
-    return m_topology.m_variablePosition.at(id);
-  }
-
-  size_t getTopologicalKey(InvariantId id) {
-    return m_topology.m_invariantPosition.at(id);
-  }
-
+  
   inline const std::vector<VarId>& variableDefinedBy(InvariantId inv) const{
     return m_variablesDefinedByInvariant.at(inv);
   }

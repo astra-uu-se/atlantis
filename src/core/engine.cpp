@@ -31,7 +31,6 @@ void Engine::recomputeAndCommit() {
 
 void Engine::close() {
   m_isOpen = false;
-  m_propGraph.close();
 
   // compute initial values for variables and for (internal datastructure of)
   // invariants
