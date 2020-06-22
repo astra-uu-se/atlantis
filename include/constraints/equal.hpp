@@ -11,13 +11,11 @@
 
 class Equal : public Constraint {
  private:
-  Int m_a;
   VarId m_x;
-  Int m_b;
   VarId m_y;
 
  public:
-  Equal(VarId violationId, Int a, VarId x, Int b, VarId y);
+  Equal(VarId violationId, VarId x, VarId y);
 //   Linear(Engine& e, std::vector<Int>&& A,
 //          std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar> b);
 
