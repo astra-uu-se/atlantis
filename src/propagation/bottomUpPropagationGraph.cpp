@@ -15,8 +15,7 @@ BottomUpPropagationGraph::BottomUpPropagationGraph(Engine& e,
   isOnStack.push_back(false);
 }
 
-void BottomUpPropagationGraph::notifyMaybeChanged(const Timestamp&,
-                                                  VarId) {}
+void BottomUpPropagationGraph::notifyMaybeChanged(const Timestamp&, VarId) {}
 
 void BottomUpPropagationGraph::clearForPropagation() {
   variableStack.clear();
@@ -40,7 +39,7 @@ void BottomUpPropagationGraph::propagate() {
     // If the variable is not stable, then expand it.
     if (!isStable(m_engine.getCurrentTime(), currentVar)) {
       if (m_definingInvariant.at(currentVar).id != NULL_ID) {
-        // Variable is defined, so expand defining invariant.
+        // Variable is defined and not stable, so expand defining invariant.
         expandInvariant(m_definingInvariant.at(currentVar));
         continue;
       } else if (m_engine.hasChanged(m_engine.getCurrentTime(), currentVar)) {
@@ -115,6 +114,9 @@ inline void BottomUpPropagationGraph::notifyCurrentInvariant(VarId id) {
           variable.getValue(m_engine.getCurrentTime()));
 }
 
+// TODO: this will push a variable onto the stack even when the variable is
+// stable. The reason for this is that we will then have to notify the top
+// invariant that the variable is stable (in case it has changed).
 inline void BottomUpPropagationGraph::nextVar() {
   popStack();
   VarId nextVar = m_engine.getStore()
@@ -132,14 +134,11 @@ inline void BottomUpPropagationGraph::nextVar() {
     if (isOnStack.at(nextVar)) {
       assert(false);
       // TODO: throw exception.
-      // TODO: do we need to clean up?
+      // TODO: do we need to clean up? I don't think we do!
     }
     pushStack(nextVar);
   }
 }
-
-// VarId BottomUpPropagationGraph::getNextStableVariable(const Timestamp& t) {
-// }
 
 void BottomUpPropagationGraph::registerVar(VarId id) {
   PropagationGraph::registerVar(id);  // call parent implementation
