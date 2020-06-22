@@ -1,8 +1,7 @@
 #include "constraints/equal.hpp"
 
-//TODO: invariant should take its true id in the constructor.
+// TODO: invariant should take its true id in the constructor.
 extern Id NULL_ID;
-
 
 /**
  * Constraint a*x = b*y
@@ -13,9 +12,7 @@ extern Id NULL_ID;
  * @param y variable of rhs
  */
 Equal::Equal(VarId violationId, VarId x, VarId y)
-  : Constraint(NULL_ID, violationId),
-    m_x(x),
-    m_y(y) {
+    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "constructing constraint"
@@ -31,43 +28,58 @@ void Equal::init([[maybe_unused]] const Timestamp& t, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   assert(m_id != NULL_ID);
-  
+
   e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x), 0);
   e.registerInvariantDependsOnVar(m_id, m_y, LocalId(m_y), 0);
   e.registerDefinedVariable(m_violationId, m_id);
 }
 
 void Equal::recompute(const Timestamp& t, Engine& e) {
-  
 #ifdef VERBOSE_TRACE
 #include <iostream>
-  std::cout << "Constraint Equal[" << m_id
-            << "] with violation " << std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)) << "\n";
+  std::cout << "Constraint Equal[" << m_id << "] with violation "
+            << std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)) << "\n";
 #endif
-  // Dereference safe as incValue does not retain ptr.
-  e.setValue(
-    t,
-    m_violationId,
-    std::abs(e.getValue(t, m_x) - e.getValue(t, m_y))
-  );
+  e.setValue(t, m_violationId,
+             std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 void Equal::notifyIntChanged(const Timestamp& t, Engine& e,
-                              [[maybe_unused]] LocalId id, Int oldValue,
-                              Int newValue, [[maybe_unused]] Int coef) {
+                             [[maybe_unused]] LocalId id, Int oldValue,
+                             Int newValue, [[maybe_unused]] Int coef) {
   assert(newValue != oldValue);  // precondition
-  // Dereference safe as incValue does not retain ptr.
-  e.setValue(
-    t,
-    m_violationId,
-    std::abs(e.getValue(t, m_x) - e.getValue(t, m_y))
-  );
+  e.setValue(t, m_violationId,
+             std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Constraint Equal[" << m_id << "] notifying output changed to "
             << std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)) << "\n";
 #endif
+}
+
+VarId Equal::getNextDependency(const Timestamp& t) {
+  m_state.incValue(t, 1);
+  // todo: maybe this can be faster by first checking null and then doing
+  // ==0?m_x:m_y;
+  switch (m_state.getValue(t)) {
+    case 0:
+      return m_x;
+      break;
+    case 1:
+      return m_y;
+      break;
+    default:
+      return NULL_ID;
+  }
+}
+
+void Equal::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e,
+                                           Int oldValue, Int newValue) {
+  assert(m_state.getValue(t) != -1);
+  assert(newValue != oldValue);
+  e.setValue(t, m_violationId,
+             std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 void Equal::commit(const Timestamp& t, Engine& e) {
