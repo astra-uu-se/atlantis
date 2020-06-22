@@ -6,7 +6,11 @@
 extern Id NULL_ID;
 
 Linear::Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b)
-    : Invariant(NULL_ID), m_A(std::move(A)), m_X(std::move(X)), m_b(b) {
+    : Invariant(NULL_ID),
+      m_A(std::move(A)),
+      m_X(std::move(X)),
+      m_b(b),
+      m_counter(NULL_TIMESTAMP, -1) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "constructing invariant"
@@ -48,13 +52,13 @@ void Linear::recompute(const Timestamp& t, Engine& e) {
 #endif
   // Dereference safe as incValue does not retain ptr.
   e.setValue(t, m_b, sum);
+  m_counter.setValue(t, 0);
 }
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
                               [[maybe_unused]] LocalId id, Int oldValue,
                               Int newValue, Int coef) {
   assert(newValue != oldValue);  // precondition
-  // Dereference safe as incValue does not retain ptr.
   e.incValue(t, m_b, (newValue - oldValue) * coef);
 
 #ifdef VERBOSE_TRACE
@@ -64,10 +68,21 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
 #endif
 }
 
-VarId Linear::getNextDependency(const Timestamp&) { return NULL_ID; }
+VarId Linear::getNextDependency(const Timestamp& t) {
+  m_counter.incValue(t, 1);
+  if (static_cast<size_t>(m_counter.getValue(t)) == m_X.size()) {
+    return NULL_ID; // Done
+  } else {
+    return m_X.at(m_counter.getValue(t));
+  }
+}
 
-void Linear::notifyCurrentDependencyChanged(const Timestamp&, Int oldValue,
-                                            Int newValue) {}
+void Linear::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e, Int oldValue,
+                                            Int newValue) {
+  assert(m_counter.getValue(t) != -1);
+  assert(newValue != oldValue);
+  e.incValue(t, m_b, (newValue - oldValue) * m_A.at(m_counter.getValue(t)));
+}
 
 void Linear::commit(const Timestamp& t, Engine& e) {
   // todo: do nodes validate themself or is it done by engine?

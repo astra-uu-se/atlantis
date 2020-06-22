@@ -19,6 +19,7 @@ class Linear : public Invariant {
   std::vector<Int> m_A;
   std::vector<VarId> m_X;
   VarId m_b;
+  SavedInt m_counter;
 
  public:
   Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b);
@@ -30,7 +31,7 @@ class Linear : public Invariant {
   virtual void init(const Timestamp&, Engine&) override;
   virtual void recompute(const Timestamp&, Engine&) override;
   virtual VarId getNextDependency(const Timestamp&) override;
-  virtual void notifyCurrentDependencyChanged(const Timestamp&, Int oldValue,
+  virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e, Int oldValue,
                                               Int newValue) override;
   virtual void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) override;
