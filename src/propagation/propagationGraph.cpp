@@ -13,7 +13,6 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
   m_inputVariables.reserve(expectedSize);
   m_listeningInvariants.reserve(expectedSize);
 
-
   // Initialise nullID
   m_definingInvariant.push_back(InvariantId(NULL_ID));
   m_variablesDefinedByInvariant.push_back({});
@@ -41,8 +40,8 @@ void PropagationGraph::registerVar(VarId id) {
 void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
                                                      VarId source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
-   m_listeningInvariants.at(source).push_back(dependent);
-   m_inputVariables.at(dependent).push_back(source);
+  m_listeningInvariants.at(source).push_back(dependent);
+  m_inputVariables.at(dependent).push_back(source);
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "Registering that invariant " << dependent
@@ -67,5 +66,14 @@ void PropagationGraph::registerDefinedVariable(VarId dependent,
         "Variable " + std::to_string(dependent.id) +
         " already defined by invariant " +
         std::to_string(m_definingInvariant.at(dependent).id));
+  }
+}
+
+void PropagationGraph::close() {
+  m_isInputVar.resize(getNumVariables() + 1);
+  m_isOutputVar.resize(getNumVariables() + 1);
+  for (size_t i = 0; i < getNumVariables() + 1; i++) {
+    m_isOutputVar.at(i) = (m_listeningInvariants.at(i).size() == 0);
+    m_isInputVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
   }
 }

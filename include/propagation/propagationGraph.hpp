@@ -26,7 +26,7 @@ class PropagationGraph {
    * Maps an invariant to all variables it defines.
    */
   std::vector<std::vector<VarId>> m_variablesDefinedByInvariant;
-/**
+  /**
    * Map from InvariantId -> list of VarID
    *
    * Maps an invariant to all variables it depends on (its inputs).
@@ -36,6 +36,9 @@ class PropagationGraph {
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantId>> m_listeningInvariants;
 
+  std::vector<bool> m_isOutputVar;
+  std::vector<bool> m_isInputVar;
+
  public:
   PropagationGraph() : PropagationGraph(1000) {}
   PropagationGraph(size_t expectedSize);
@@ -43,6 +46,12 @@ class PropagationGraph {
   virtual ~PropagationGraph(){};
 
   virtual void notifyMaybeChanged(const Timestamp& t, VarId id) = 0;
+
+  /**
+   * update internal datastructures based on currently registered  variables and
+   * invariants.
+   */
+  virtual void close();
 
   /**
    * Register an invariant in the propagation graph.
@@ -100,15 +109,23 @@ class PropagationGraph {
   [[nodiscard]] virtual VarId getNextStableVariable([
       [maybe_unused]] const Timestamp& t) = 0;
 
-  size_t getNumVariables() {
+ inline size_t getNumVariables() {
     return m_numVariables;  // this ignores null var
   }
 
-  size_t getNumInvariants() {
+  inline size_t getNumInvariants() {
     return m_numInvariants;  // this ignores null invariant
   }
-  
-  inline const std::vector<VarId>& variableDefinedBy(InvariantId inv) const{
+
+  inline bool isOutputVar(VarId id){
+    return m_isOutputVar.at(id);
+  }
+
+  inline bool isInputVar(VarId id){
+    return m_isInputVar.at(id);
+  }
+
+  inline const std::vector<VarId>& variableDefinedBy(InvariantId inv) const {
     return m_variablesDefinedByInvariant.at(inv);
   }
 };

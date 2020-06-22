@@ -5,9 +5,9 @@
 #include <memory>
 #include <vector>
 
+#include "core/constraint.hpp"
 #include "core/intVar.hpp"
 #include "core/invariant.hpp"
-#include "core/constraint.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
@@ -158,4 +158,6 @@ class Engine {
 
   inline const Store& getStore() { return m_store; }
   inline const Timestamp& getCurrentTime() { return m_currentTime; }
+
+  inline BottomUpPropagationGraph& getPropGraph() { return m_propGraph; }
 };

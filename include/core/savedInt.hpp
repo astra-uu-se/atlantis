@@ -49,9 +49,13 @@ class SavedInt {
   }
   [[gnu::always_inline]] inline void commitValue(Int value) noexcept {
     m_savedValue = value;
+    // m_tmpValue = value;  // If we do not update the tmp value, then it is not
+                         // clear what the correct value is at tmp_time.
   }
 
   [[gnu::always_inline]] inline void commit() noexcept {
+    // assert(false);  // todo: do we really want this? Very dangerous to just
+                    // commit regardless of time.
     m_savedValue = m_tmpValue;
   }
 
