@@ -8,7 +8,7 @@ Engine::Engine()
     : m_currentTime(0),
       // m_intVars(),
       // m_invariants(),
-      m_propGraph(ESTIMATED_NUM_OBJECTS),
+      m_propGraph(*this, ESTIMATED_NUM_OBJECTS),
       m_isOpen(false),
       m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {
   m_dependentInvariantData.reserve(ESTIMATED_NUM_OBJECTS);
@@ -95,8 +95,9 @@ void Engine::query(VarId id) {
 }
 
 void Engine::endQuery() {
-  m_propGraph.schedulePropagation(m_currentTime, *this);
-  propagate();
+  // m_propGraph.schedulePropagation(m_currentTime, *this);
+  // propagate();
+  m_propGraph.propagate();
 }
 
 // Propagates at the current internal time of the engine.
@@ -124,7 +125,7 @@ void Engine::propagate() {
   }
 }
 
-
+/*
 // TODO: all of these datastructures should be members.
 // TODO: the lambda functions should be inlined private functions!
 void Engine::bottomUpPropagate() {
@@ -215,6 +216,8 @@ void Engine::bottomUpPropagate() {
   }
   // All output variables are up to date!
 }
+
+*/
 
 //---------------------Registration---------------------
 

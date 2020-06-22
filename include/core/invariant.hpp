@@ -39,7 +39,7 @@ class Invariant {
 
   virtual VarId getNextDependency(const Timestamp&) = 0;
 
-  virtual void notifyCurrentDependencyChanged(const Timestamp&, Int oldValue,
+  virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e, Int oldValue,
                                                Int newValue) = 0;
 
   /**

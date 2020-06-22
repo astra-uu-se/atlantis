@@ -2,58 +2,50 @@
 
 #include <queue>
 
+// #include "core/engine.hpp"
 #include "core/intVar.hpp"
 #include "propagation/propagationGraph.hpp"
-#include "core/engine.hpp"
-// class Engine;  // forward declare
+
+class Engine;  // forward declare
 
 class BottomUpPropagationGraph : public PropagationGraph {
  private:
   std::vector<VarId> variableStack;
   std::vector<InvariantId> invariantStack;
-  std::vector<bool> isUpToDate;
-  std::vector<bool> hasVisited;
+  std::vector<Timestamp> stableAt;  // last timestamp when a VarID was stable
+                                    // (i.e., will not change)
+  std::vector<bool> isOnStack;
 
-  inline void setVisited(VarId v) { hasVisited.at(v) = true; }
-  inline void fixpoint(VarId v) { isUpToDate.at(v) = true; }
+  void pushStack(VarId v);
+  void popStack();
+  void stable(const Timestamp& t, VarId v);
+
+  bool isStable(const Timestamp& t, VarId v);
+
   // We expand an invariant by pushing it and its first input variable onto each
   // stack.
-  inline void expandInvariant(InvariantId inv) {
-    VarId nextVar =
-        m_engine.getStore().getInvariant(inv).getNextDependency(m_engine.getCurrentTime());
-    assert(nextVar.id !=
-           NULL_ID);  // Invariant must have at least one dependency, and this
-                      // should be the first (and only) time we expand it
-    variableStack.push_back(nextVar);
-    invariantStack.push_back(inv);
-  }
+  void expandInvariant(InvariantId inv);
 
-  inline void notifyCurrentInvariant(VarId id) {
-    IntVar variable = m_engine.getStore().getConstIntVar(id);
-    m_engine.getStore()
-        .getInvariant(invariantStack.back())
-        .notifyCurrentDependencyChanged(m_engine.getCurrentTime(),
-                                        variable.getCommittedValue(),
-                                        variable.getValue(m_engine.getCurrentTime()));
-  }
+  void notifyCurrentInvariant(VarId id);
 
-  inline void nextVar() {
-    variableStack.pop_back();
-    VarId nextVar = m_engine.getStore()
-                        .getInvariant(invariantStack.back())
-                        .getNextDependency(m_engine.getCurrentTime());
-    if (nextVar.id == NULL_ID) {
-      // The invariant has finished propagating, so all defined vars can be
-      // marked as up to date.
-      // Do this with member array of timestamps.
-      for (auto defVar : variableDefinedBy(invariantStack.back())) {
-        fixpoint(defVar);
-      }
-      invariantStack.pop_back();
-    } else {
-      variableStack.push_back(nextVar);
+  void nextVar();
+
+  void printVarStack(){
+    std::cout << "Variable stack: [";
+    for( auto id: variableStack){
+      std::cout << id << ", ";
     }
+    std::cout << "]\n";
   }
+
+  void printInvariantStack(){
+    std::cout << "Invariant stack: [";
+    for( auto id: invariantStack){
+      std::cout << id << ", ";
+    }
+    std::cout << "]\n";
+  }
+
   Engine& m_engine;
 
  public:
@@ -61,12 +53,19 @@ class BottomUpPropagationGraph : public PropagationGraph {
   BottomUpPropagationGraph(Engine& e, size_t expectedSize);
 
   void propagate();
-  void clearForQuery();
-  void registerForQuery(VarId);
+  void clearForPropagation();
+  /**
+   * Register than we want to compute the value of v at time t 
+   */
+  void registerForPropagation(const Timestamp& t,VarId v);
 
   virtual void notifyMaybeChanged(const Timestamp& t, VarId id) override;
 
-  // virtual VarId getNextStableVariable(const Timestamp& t) override;
+  [[nodiscard]] virtual VarId getNextStableVariable([
+      [maybe_unused]] const Timestamp& t) override {
+    assert(false);
+    return NULL_ID;
+  }
 
   /**
    * Register a variable in the propagation graph.

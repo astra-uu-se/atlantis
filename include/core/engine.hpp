@@ -10,7 +10,7 @@
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
-#include "propagation/markingTopDownPropagationGraph.hpp"
+#include "propagation/bottomUpPropagationGraph.hpp"
 #include "propagation/propagationGraph.hpp"
 #include "store/store.hpp"
 
@@ -20,7 +20,7 @@ class Engine {
 
   Timestamp m_currentTime;
 
-  MarkingTopDownPropagationGraph m_propGraph;
+  BottomUpPropagationGraph m_propGraph;
 
   bool m_isOpen = true;
 
