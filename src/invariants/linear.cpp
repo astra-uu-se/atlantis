@@ -9,8 +9,7 @@ Linear::Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b)
     : Invariant(NULL_ID),
       m_A(std::move(A)),
       m_X(std::move(X)),
-      m_b(b),
-      m_counter(NULL_TIMESTAMP, -1) {
+      m_b(b) {
 #ifdef VERBOSE_TRACE
 #include <iostream>
   std::cout << "constructing invariant"
@@ -52,7 +51,7 @@ void Linear::recompute(const Timestamp& t, Engine& e) {
 #endif
   // Dereference safe as incValue does not retain ptr.
   e.setValue(t, m_b, sum);
-  m_counter.setValue(t, 0);
+  m_state.setValue(t, -1); // Not clear if we actually need to reset this.
 }
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
@@ -69,19 +68,19 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
 }
 
 VarId Linear::getNextDependency(const Timestamp& t) {
-  m_counter.incValue(t, 1);
-  if (static_cast<size_t>(m_counter.getValue(t)) == m_X.size()) {
+  m_state.incValue(t, 1);
+  if (static_cast<size_t>(m_state.getValue(t)) == m_X.size()) {
     return NULL_ID; // Done
   } else {
-    return m_X.at(m_counter.getValue(t));
+    return m_X.at(m_state.getValue(t));
   }
 }
 
 void Linear::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e, Int oldValue,
                                             Int newValue) {
-  assert(m_counter.getValue(t) != -1);
+  assert(m_state.getValue(t) != -1);
   assert(newValue != oldValue);
-  e.incValue(t, m_b, (newValue - oldValue) * m_A.at(m_counter.getValue(t)));
+  e.incValue(t, m_b, (newValue - oldValue) * m_A.at(m_state.getValue(t)));
 }
 
 void Linear::commit(const Timestamp& t, Engine& e) {

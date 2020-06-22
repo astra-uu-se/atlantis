@@ -1,14 +1,17 @@
 #pragma once
 
+#include "core/savedInt.hpp"
 #include "core/types.hpp"
-
 class Engine;  // Forward declaration
 
 class Invariant {
  private:
  protected:
   InvariantId m_id;
-  Invariant(Id t_id) : m_id(t_id) {}
+  //State used for returning next dependency. Null state is -1 by default
+  SavedInt m_state;
+  Invariant(Id t_id) : m_id(t_id), m_state(NULL_TIMESTAMP, -1) {}
+  Invariant(Id t_id, Int nullState) : m_id(t_id), m_state(NULL_TIMESTAMP, nullState) {}
 
  public:
   virtual ~Invariant() {}
@@ -39,8 +42,8 @@ class Invariant {
 
   virtual VarId getNextDependency(const Timestamp&) = 0;
 
-  virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e, Int oldValue,
-                                               Int newValue) = 0;
+  virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e,
+                                              Int oldValue, Int newValue) = 0;
 
   /**
    * Precondition: oldValue != newValue
