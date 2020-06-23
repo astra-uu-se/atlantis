@@ -58,7 +58,6 @@ TEST_F(TopDownPropagationGraphTest, TopologicalSort) {
   pg->registerInvariant(InvariantId(2));
   pg->registerInvariant(InvariantId(3));
 
-
   // var1 and var2 defines var3 via invariant 1
   pg->registerInvariantDependsOnVar(InvariantId(1), VarId(1));
   pg->registerInvariantDependsOnVar(InvariantId(1), VarId(2));
@@ -120,11 +119,9 @@ TEST_F(TopDownPropagationGraphTest, TopologicalSortLongChain) {
   pg->registerInvariant(InvariantId(6));
   pg->registerInvariant(InvariantId(7));
 
-
   pg->registerInvariantDependsOnVar(InvariantId(6), VarId(6));
   pg->registerInvariantDependsOnVar(InvariantId(6), VarId(1));
   pg->registerDefinedVariable(VarId(7), InvariantId(6));
-
 
   pg->registerInvariantDependsOnVar(InvariantId(1), VarId(1));
   pg->registerDefinedVariable(VarId(2), InvariantId(1));
@@ -183,10 +180,9 @@ TEST_F(TopDownPropagationGraphTest, TopologicalSortSimpleChainCycles) {
   pg->registerInvariant(InvariantId(5));
   pg->registerInvariant(InvariantId(6));
 
-
   pg->registerInvariantDependsOnVar(InvariantId(1), VarId(1));
   pg->registerDefinedVariable(VarId(2), InvariantId(1));
-  //Cycle 1
+  // Cycle 1
   pg->registerInvariantDependsOnVar(InvariantId(2), VarId(2));
   pg->registerDefinedVariable(VarId(3), InvariantId(2));
   pg->registerInvariantDependsOnVar(InvariantId(1), VarId(3));
@@ -195,7 +191,7 @@ TEST_F(TopDownPropagationGraphTest, TopologicalSortSimpleChainCycles) {
   pg->registerDefinedVariable(VarId(4), InvariantId(3));
   pg->registerInvariantDependsOnVar(InvariantId(4), VarId(4));
   pg->registerDefinedVariable(VarId(5), InvariantId(4));
-  //Cycle2
+  // Cycle2
   pg->registerInvariantDependsOnVar(InvariantId(5), VarId(5));
   pg->registerDefinedVariable(VarId(6), InvariantId(5));
   pg->registerInvariantDependsOnVar(InvariantId(4), VarId(6));
@@ -216,7 +212,6 @@ TEST_F(TopDownPropagationGraphTest, TopologicalSortSimpleChainCycles) {
   EXPECT_LT(pg->getTopologicalKey(VarId(4)), pg->getTopologicalKey(VarId(7)));
   EXPECT_LT(pg->getTopologicalKey(VarId(5)), pg->getTopologicalKey(VarId(7)));
   EXPECT_LT(pg->getTopologicalKey(VarId(6)), pg->getTopologicalKey(VarId(7)));
-
 }
 
 }  // namespace

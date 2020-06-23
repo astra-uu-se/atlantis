@@ -104,10 +104,10 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
   for (size_t i = 0; i < 1000; ++i) { 
     ++currentTime;
     // Check that we do not accidentally commit
-    EXPECT_EQ(e->getCommitedValue(a), 1);
-    EXPECT_EQ(e->getCommitedValue(b), 2);
-    EXPECT_EQ(e->getCommitedValue(c), 3);
-    EXPECT_EQ(e->getCommitedValue(d), -39);  // d is commited by register.
+    ASSERT_EQ(e->getCommitedValue(a), 1);
+    ASSERT_EQ(e->getCommitedValue(b), 2);
+    ASSERT_EQ(e->getCommitedValue(c), 3);
+    ASSERT_EQ(e->getCommitedValue(d), -39);  // d is commited by register.
 
     // Set all variables
     e->setValue(currentTime, a, distribution(gen));
@@ -132,7 +132,7 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
     auto tmp = e->getValue(currentTime, d);
     linear->recompute(currentTime, *e);
 
-    EXPECT_EQ(tmp, e->getValue(currentTime, d));
+    ASSERT_EQ(tmp, e->getValue(currentTime, d));
   }
 }
 

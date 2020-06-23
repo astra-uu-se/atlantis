@@ -26,8 +26,6 @@ class EngineTest : public ::testing::Test {
 };
 
 TEST_F(EngineTest, CreateVariablesAndInvariant) {
-
-
   engine->open();
 
   auto a = engine->makeIntVar(1);
@@ -35,8 +33,6 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   auto c = engine->makeIntVar(1);
   auto d = engine->makeIntVar(1);
   auto e = engine->makeIntVar(1);
-
-
 
   // TODO: use some other invariants...
   engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
@@ -51,10 +47,37 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   EXPECT_EQ(engine->getStore().getNumInvariants(), 3);
 }
 
-TEST_F(EngineTest, SimplePropagation) {
-
+TEST_F(EngineTest, RecomputeAndCommit) {
   engine->open();
-  
+
+  auto a = engine->makeIntVar(1);
+  auto b = engine->makeIntVar(1);
+  auto c = engine->makeIntVar(1);
+  auto d = engine->makeIntVar(1);
+  auto e = engine->makeIntVar(1);
+
+  // Register out of dependency order!
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
+                                std::vector<VarId>({c, d}), e);
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
+                                std::vector<VarId>({b, c}), d);
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
+                                std::vector<VarId>({a, b}), c);
+
+  engine->close();
+  // 1+1 = 2 = c
+  // 2+1 = 3 = d
+  // 2+3 = 5 = e
+  EXPECT_EQ(engine->getCommitedValue(a), 1);
+  EXPECT_EQ(engine->getCommitedValue(b), 1);
+  EXPECT_EQ(engine->getCommitedValue(c), 2);
+  EXPECT_EQ(engine->getCommitedValue(d), 3);
+  EXPECT_EQ(engine->getCommitedValue(e), 5);
+}
+
+TEST_F(EngineTest, SimplePropagation) {
+  engine->open();
+
   // 5a+2b+3c -> d
   // b-c -> e
   // a+2e -> f
@@ -62,9 +85,9 @@ TEST_F(EngineTest, SimplePropagation) {
   auto a = engine->makeIntVar(1);
   auto b = engine->makeIntVar(1);
   auto c = engine->makeIntVar(1);
-  auto d = engine->makeIntVar(1);
-  auto e = engine->makeIntVar(1);
-  auto f = engine->makeIntVar(1);
+  auto d = engine->makeIntVar(123);
+  auto e = engine->makeIntVar(123);
+  auto f = engine->makeIntVar(123);
 
   engine->makeInvariant<Linear>(std::vector<Int>({5, 2, 3}),
                                 std::vector<VarId>({a, b, c}), d);
@@ -72,7 +95,6 @@ TEST_F(EngineTest, SimplePropagation) {
                                 std::vector<VarId>({b, c}), e);
   engine->makeInvariant<Linear>(std::vector<Int>({1, 2}),
                                 std::vector<VarId>({a, e}), f);
-
 
   engine->close();
 
@@ -85,19 +107,23 @@ TEST_F(EngineTest, SimplePropagation) {
   ASSERT_EQ(engine->getValue(e), 0);
   ASSERT_EQ(engine->getValue(f), 1);
 
-  //Change c to -4
+  // Change c to -4
   // 5+2-12 -> d = -5
   // 1+4 -> e = 5
   // 1+10 -> f = 11
   engine->beginMove();
   engine->setValue(c, -4);
   engine->endMove();
-  engine->propagate();
+
+  engine->beginQuery();
+  engine->query(d);
+  engine->query(e);
+  engine->query(f);
+  engine->endQuery();
 
   ASSERT_EQ(engine->getValue(d), -5);
   ASSERT_EQ(engine->getValue(e), 5);
   ASSERT_EQ(engine->getValue(f), 11);
-
 }
 
 }  // namespace
