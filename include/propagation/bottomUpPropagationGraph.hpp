@@ -14,11 +14,14 @@ class BottomUpPropagationGraph : public PropagationGraph {
   std::vector<InvariantId> invariantStack;
   std::vector<Timestamp> stableAt;  // last timestamp when a VarID was stable
                                     // (i.e., will not change)
-  std::vector<bool> isOnStack;
+  std::vector<bool> varIsOnStack;
+  std::vector<bool> invariantIsOnStack;
 
-  void pushStack(VarId v);
-  void popStack();
-  void stable(const Timestamp& t, VarId v);
+  void pushVariableStack(VarId v);
+  void popVariableStack();
+  void pushInvariantStack(InvariantId v);
+  void popInvariantStack();
+  void markStable(const Timestamp& t, VarId v);
 
   bool isStable(const Timestamp& t, VarId v);
 
@@ -30,17 +33,17 @@ class BottomUpPropagationGraph : public PropagationGraph {
 
   void visitNextVariable();
 
-  void printVarStack(){
+  void printVarStack() {
     std::cout << "Variable stack: [";
-    for( auto id: variableStack){
+    for (auto id : variableStack) {
       std::cout << id << ", ";
     }
     std::cout << "]\n";
   }
 
-  void printInvariantStack(){
+  void printInvariantStack() {
     std::cout << "Invariant stack: [";
-    for( auto id: invariantStack){
+    for (auto id : invariantStack) {
       std::cout << id << ", ";
     }
     std::cout << "]\n";
@@ -55,9 +58,9 @@ class BottomUpPropagationGraph : public PropagationGraph {
   void propagate();
   void clearForPropagation();
   /**
-   * Register than we want to compute the value of v at time t 
+   * Register than we want to compute the value of v at time t
    */
-  void registerForPropagation(const Timestamp& t,VarId v);
+  void registerForPropagation(const Timestamp& t, VarId v);
 
   virtual void notifyMaybeChanged(const Timestamp& t, VarId id) override;
 

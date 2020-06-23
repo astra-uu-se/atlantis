@@ -66,27 +66,6 @@ void Engine::beginMove() { ++m_currentTime; }
 
 void Engine::endMove() {}
 
-void Engine::setValue(const Timestamp& t, VarId& v, Int val) {
-  m_store.getIntVar(v).setValue(t, val);
-  notifyMaybeChanged(t, v);
-}
-
-void Engine::incValue(const Timestamp& t, VarId& v, Int inc) {
-  m_store.getIntVar(v).incValue(t, inc);
-  notifyMaybeChanged(t, v);
-}
-
-Int Engine::getValue(const Timestamp& t, VarId& v) {
-  return m_store.getIntVar(v).getValue(t);
-}
-
-Int Engine::getCommitedValue(VarId& v) {
-  return m_store.getIntVar(v).getCommittedValue();
-}
-
-Timestamp Engine::getTmpTimestamp(VarId& v) {
-  return m_store.getIntVar(v).getTmpTimestamp();
-}
 
 void Engine::commit(VarId& v) {
   m_store.getIntVar(v).commit();
