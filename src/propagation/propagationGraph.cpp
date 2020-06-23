@@ -42,22 +42,11 @@ void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
   m_listeningInvariants.at(source).push_back(dependent);
   m_inputVariables.at(dependent).push_back(source);
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "Registering that invariant " << dependent
-            << " depends on variable " << source << " with local id " << localId
-            << "\n";
-#endif
 }
 
 void PropagationGraph::registerDefinedVariable(VarId dependent,
                                                InvariantId source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "Registering that invariant " << source << " defines variable "
-            << dependent << "\n";
-#endif
   if (m_definingInvariant.at(dependent).id == NULL_ID.id) {
     m_definingInvariant.at(dependent) = source;
     m_variablesDefinedByInvariant.at(source).push_back(dependent);

@@ -12,21 +12,9 @@ extern Id NULL_ID;
  * @param y variable of rhs
  */
 Equal::Equal(VarId violationId, VarId x, VarId y)
-    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "constructing constraint"
-            << "\n";
-#endif
-}
+    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {}
 
 void Equal::init([[maybe_unused]] const Timestamp& t, Engine& e) {
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "initialising invariant " << m_id << "\n";
-#endif
-  // precondition: this invariant must be registered with the engine before it
-  // is initialised.
   assert(m_id != NULL_ID);
 
   e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x), 0);
@@ -35,11 +23,6 @@ void Equal::init([[maybe_unused]] const Timestamp& t, Engine& e) {
 }
 
 void Equal::recompute(const Timestamp& t, Engine& e) {
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "Constraint Equal[" << m_id << "] with violation "
-            << std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)) << "\n";
-#endif
   e.setValue(t, m_violationId,
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
@@ -50,12 +33,6 @@ void Equal::notifyIntChanged(const Timestamp& t, Engine& e,
   assert(newValue != oldValue);  // precondition
   e.setValue(t, m_violationId,
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
-
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "Constraint Equal[" << m_id << "] notifying output changed to "
-            << std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)) << "\n";
-#endif
 }
 
 VarId Equal::getNextDependency(const Timestamp& t) {

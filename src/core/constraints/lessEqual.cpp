@@ -13,26 +13,9 @@ extern Id NULL_ID;
  */
 LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
     : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "constructing constraint"
-            << "\n";
-#endif
 }
 
-// LessEqual::LessEqual(Engine& e, std::vector<Int>&& A,
-//                std::vector<std::shared_ptr<IntVar>>&& X,
-//                std::shared_ptr<IntVar> b)
-//     : Invariant(Engine::NULL_ID), m_A(std::move(A)), m_X(std::move(X)),
-//     m_b(b) {
-//   init(e);
-// }
-
 void LessEqual::init([[maybe_unused]] const Timestamp& t, Engine& e) {
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "initialising invariant " << m_id << "\n";
-#endif
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   assert(m_id != NULL_ID);
@@ -43,12 +26,6 @@ void LessEqual::init([[maybe_unused]] const Timestamp& t, Engine& e) {
 }
 
 void LessEqual::recompute(const Timestamp& t, Engine& e) {
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "Constraint LessEqual[" << m_id << "] with violation "
-            << std::max((Int)0, e.getValue(t, m_x))
-            << "\n" - e.getValue(t, m_y);
-#endif
   // Dereference safe as incValue does not retain ptr.
   e.setValue(t, m_violationId,
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
@@ -62,14 +39,6 @@ void LessEqual::notifyIntChanged(const Timestamp& t, Engine& e,
   // if y increases and violation is 0, then do nothing
   e.setValue(t, m_violationId,
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
-
-#ifdef VERBOSE_TRACE
-#include <iostream>
-  std::cout << "Constraint LessEqual[" << m_id
-            << "] notifying output changed to "
-            << std::max((Int)0, e.getValue(t, m_x))
-            << "\n" - e.getValue(t, m_y);
-#endif
 }
 
 VarId LessEqual::getNextDependency(const Timestamp& t) {
