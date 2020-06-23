@@ -48,10 +48,10 @@ void BottomUpPropagationGraph::propagate() {
         // TODO: just pre-mark all the input variables as stable when modified
         // in a move and remove this case!
         notifyCurrentInvariant(currentVar);
-        nextVar();
+        visitNextVariable();
         continue;
       } else {
-        nextVar();
+        visitNextVariable();
         continue;
       }
     } else if (invariantStack.empty()) {
@@ -66,11 +66,11 @@ void BottomUpPropagationGraph::propagate() {
         // marked and has changed before pushing it onto the stack? Not clear
         // how much faster that would actually be.
         notifyCurrentInvariant(currentVar);
-        nextVar();
+        visitNextVariable();
         continue;
       } else {
         // pop
-        nextVar();
+        visitNextVariable();
         continue;
       }
     }
@@ -117,7 +117,7 @@ inline void BottomUpPropagationGraph::notifyCurrentInvariant(VarId id) {
 // TODO: this will push a variable onto the stack even when the variable is
 // stable. The reason for this is that we will then have to notify the top
 // invariant that the variable is stable (in case it has changed).
-inline void BottomUpPropagationGraph::nextVar() {
+inline void BottomUpPropagationGraph::visitNextVariable() {
   popStack();
   VarId nextVar = m_engine.getStore()
                       .getInvariant(invariantStack.back())
