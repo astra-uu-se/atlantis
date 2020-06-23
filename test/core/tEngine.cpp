@@ -85,9 +85,9 @@ TEST_F(EngineTest, SimplePropagation) {
   auto a = engine->makeIntVar(1);
   auto b = engine->makeIntVar(1);
   auto c = engine->makeIntVar(1);
-  auto d = engine->makeIntVar(1);
-  auto e = engine->makeIntVar(1);
-  auto f = engine->makeIntVar(1);
+  auto d = engine->makeIntVar(123);
+  auto e = engine->makeIntVar(123);
+  auto f = engine->makeIntVar(123);
 
   engine->makeInvariant<Linear>(std::vector<Int>({5, 2, 3}),
                                 std::vector<VarId>({a, b, c}), d);
