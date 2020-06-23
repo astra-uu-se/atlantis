@@ -45,8 +45,8 @@ void BottomUpPropagationGraph::propagate() {
       } else if (m_engine.hasChanged(m_engine.getCurrentTime(), currentVar)) {
         // The variable is not defined so if it has changed, then we notify the
         // top invariant. Note that this must be an input variable.
-        // TODO: just pre-mark all the input variables as stable and remove this
-        // case!
+        // TODO: just pre-mark all the input variables as stable when modified
+        // in a move and remove this case!
         notifyCurrentInvariant(currentVar);
         nextVar();
         continue;
@@ -58,13 +58,13 @@ void BottomUpPropagationGraph::propagate() {
       popStack();  // we are at an output variable that is already stable. Just
                    // continue!
       continue;
-    } else {
+    } else {  // If stable
       if (m_engine.hasChanged(m_engine.getCurrentTime(), currentVar)) {
-        // Else, if the variable has been marked before and has changed then
-        // just send a notification to top invariant (i.e, the one asking for
-        // its value)
+        // If the variable is stable and has changed then just send a
+        // notification to top invariant (i.e, the one asking for its value)
         // TODO: prevent this case from happening by checking if a variables is
-        // marked and has changed before pushing it onto the stack.
+        // marked and has changed before pushing it onto the stack? Not clear
+        // how much faster that would actually be.
         notifyCurrentInvariant(currentVar);
         nextVar();
         continue;
@@ -123,16 +123,15 @@ inline void BottomUpPropagationGraph::nextVar() {
                       .getInvariant(invariantStack.back())
                       .getNextDependency(m_engine.getCurrentTime());
   if (nextVar.id == NULL_ID) {
-    // The invariant has finished propagating, so all defined vars can be
-    // marked as up to date.
-    // Do this with member array of timestamps.
+    // The top invariant has finished propagating, so all defined vars can be
+    // marked as stable at the current time.
     for (auto defVar : variableDefinedBy(invariantStack.back())) {
       stable(m_engine.getCurrentTime(), defVar);
     }
     invariantStack.pop_back();
   } else {
     if (isOnStack.at(nextVar)) {
-      assert(false);
+      assert(false); // Dynamic cycle!
       // TODO: throw exception.
       // TODO: do we need to clean up? I don't think we do!
     }

@@ -61,8 +61,7 @@ class BottomUpPropagationGraph : public PropagationGraph {
 
   virtual void notifyMaybeChanged(const Timestamp& t, VarId id) override;
 
-  [[nodiscard]] virtual VarId getNextStableVariable([
-      [maybe_unused]] const Timestamp& t) override {
+  [[nodiscard]] virtual VarId getNextStableVariable(const Timestamp&) override {
     assert(false);
     return NULL_ID;
   }
