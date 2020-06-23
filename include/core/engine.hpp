@@ -5,14 +5,14 @@
 #include <memory>
 #include <vector>
 
+#include "core/constraint.hpp"
 #include "core/intVar.hpp"
 #include "core/invariant.hpp"
-#include "core/constraint.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
+#include "propagation/bottomUpPropagationGraph.hpp"
 #include "propagation/propagationGraph.hpp"
-#include "propagation/topDownPropagationGraph.hpp"
 #include "store/store.hpp"
 
 class Engine {
@@ -21,7 +21,7 @@ class Engine {
 
   Timestamp m_currentTime;
 
-  TopDownPropagationGraph m_propGraph;
+  BottomUpPropagationGraph m_propGraph;
 
   bool m_isOpen = true;
 
@@ -31,6 +31,9 @@ class Engine {
     InvariantId id;
     LocalId localId;
     Int data;
+    Timestamp lastNotification;  // todo: unclear if this information is
+                                 // relevant for all types of propagation. If
+                                 // not then move it to a subclass...
   };
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantDependencyData>> m_dependentInvariantData;
@@ -38,6 +41,9 @@ class Engine {
   Store m_store;
 
   void recomputeAndCommit();
+
+  void propagate();
+  void bottomUpPropagate();
 
  public:
   Engine(/* args */);
@@ -56,7 +62,9 @@ class Engine {
   void beginMove();
   void endMove();
 
-  void propagate();
+  void beginQuery();
+  void endQuery();
+  void query(VarId);
 
   //--------------------- Variable ---------------------
   void incValue(const Timestamp&, VarId&, Int inc);
@@ -71,6 +79,9 @@ class Engine {
 
   Timestamp getTmpTimestamp(VarId&);
 
+  inline bool hasChanged(const Timestamp& t, VarId& v) const {
+    return m_store.getConstIntVar(v).hasChanged(t);
+  }
   void commit(VarId&);  // todo: this feels dangerous, maybe commit should
                         // always have a timestamp?
   void commitIf(const Timestamp&, VarId&);
@@ -100,7 +111,7 @@ class Engine {
 
   //--------------------- Registration ---------------------
   /**
-   * Register a constriant in the engine and return its pointer.
+   * Register a constraint in the engine and return its pointer.
    * This also sets the id of the constraint to the new id.
    * @param args the constructor arguments of the constraint
    * @return the created constraint.
@@ -145,8 +156,8 @@ class Engine {
    */
   void registerDefinedVariable(VarId dependent, InvariantId source);
 
+  inline const Store& getStore() { return m_store; }
+  inline const Timestamp& getCurrentTime() { return m_currentTime; }
 
-  const Store& getStore(){
-    return m_store;
-  }
+  inline BottomUpPropagationGraph& getPropGraph() { return m_propGraph; }
 };
