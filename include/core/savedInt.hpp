@@ -41,11 +41,6 @@ class SavedInt {
                                               const Int& inc) noexcept {
     m_tmpValue = (currentTime == m_tmpTime ? m_tmpValue : m_savedValue) + inc;
     m_tmpTime = currentTime;
-#ifdef VERBOSE_TRACE
-#include <iostream>
-    std::cout << "SavedInt.incValue(" << currentTime << "," << inc << ")"
-              << " tmpValue: " << m_tmpValue << "\n";
-#endif
   }
   [[gnu::always_inline]] inline void commitValue(Int value) noexcept {
     m_savedValue = value;
