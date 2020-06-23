@@ -34,7 +34,7 @@ void Linear::recompute(const Timestamp& t, Engine& e) {
   }
   // Dereference safe as incValue does not retain ptr.
   e.setValue(t, m_b, sum);
-  m_state.setValue(t, -1);  // Not clear if we actually need to reset this.
+  // m_state.setValue(t, m_X.size());  // Not clear if we actually need to reset this.
 }
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,

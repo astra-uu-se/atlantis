@@ -8,21 +8,31 @@ BottomUpPropagationGraph::BottomUpPropagationGraph(Engine& e,
   variableStack.reserve(expectedSize);
   invariantStack.reserve(expectedSize);
   stableAt.reserve(expectedSize);
-  isOnStack.reserve(expectedSize);
+  varIsOnStack.reserve(expectedSize);
+  invariantIsOnStack.reserve(expectedSize);
 
   // add null entry.
   stableAt.push_back(NULL_TIMESTAMP);
-  isOnStack.push_back(false);
+  varIsOnStack.push_back(false);
+  invariantIsOnStack.push_back(false);
 }
 
 void BottomUpPropagationGraph::notifyMaybeChanged(const Timestamp&, VarId) {}
 
 void BottomUpPropagationGraph::clearForPropagation() {
+  size_t vsSize = variableStack.capacity();
   variableStack.clear();
+  variableStack.reserve(
+      vsSize);  // The c++ specifications do not say if clear
+                // will keep the reserved size unchanged, so worse case this
+                // will once do the reallocation.
+  size_t isSize = invariantStack.capacity();
   invariantStack.clear();
+  invariantStack.reserve(isSize);
   // stableAt.assign(stableAt.size(), (Timestamp)NULL_TIMESTAMP); // No need to
   // clear due to timestamping!
-  isOnStack.assign(isOnStack.size(), false);
+  varIsOnStack.assign(varIsOnStack.size(), false);
+  invariantIsOnStack.assign(invariantIsOnStack.size(), false);
 }
 void BottomUpPropagationGraph::registerForPropagation(const Timestamp&,
                                                       VarId id) {
@@ -48,15 +58,17 @@ void BottomUpPropagationGraph::propagate() {
         // TODO: just pre-mark all the input variables as stable when modified
         // in a move and remove this case!
         notifyCurrentInvariant(currentVar);
+        markStable(m_engine.getCurrentTime(), currentVar);
         visitNextVariable();
         continue;
       } else {
+        markStable(m_engine.getCurrentTime(), currentVar);
         visitNextVariable();
         continue;
       }
     } else if (invariantStack.empty()) {
-      popStack();  // we are at an output variable that is already stable. Just
-                   // continue!
+      popVariableStack();  // we are at an output variable that is already
+                           // stable. Just continue!
       continue;
     } else {  // If stable
       if (m_engine.hasChanged(m_engine.getCurrentTime(), currentVar)) {
@@ -77,15 +89,35 @@ void BottomUpPropagationGraph::propagate() {
   }
 }
 
-inline void BottomUpPropagationGraph::pushStack(VarId v) {
-  isOnStack.at(v) = true;
+inline void BottomUpPropagationGraph::pushVariableStack(VarId v) {
+  if (varIsOnStack.at(v)) {
+    assert(false);  // Dynamic cycle!
+    // TODO: throw exception.
+    // TODO: do we need to clean up? I don't think we do!
+  }
+  varIsOnStack.at(v) = true;
   variableStack.push_back(v);
 }
-inline void BottomUpPropagationGraph::popStack() {
-  isOnStack.at(variableStack.back()) = false;
+inline void BottomUpPropagationGraph::popVariableStack() {
+  varIsOnStack.at(variableStack.back()) = false;
   variableStack.pop_back();
 }
-inline void BottomUpPropagationGraph::stable(const Timestamp& t, VarId v) {
+
+inline void BottomUpPropagationGraph::pushInvariantStack(InvariantId i) {
+  if (invariantIsOnStack.at(i)) {
+    assert(false);  // Dynamic cycle!
+    // TODO: throw exception.
+    // TODO: do we need to clean up? I don't think we do!
+  }
+  invariantIsOnStack.at(i) = true;
+  invariantStack.push_back(i);
+}
+inline void BottomUpPropagationGraph::popInvariantStack() {
+  invariantIsOnStack.at(invariantStack.back()) = false;
+  invariantStack.pop_back();
+}
+
+inline void BottomUpPropagationGraph::markStable(const Timestamp& t, VarId v) {
   stableAt.at(v) = t;
 }
 
@@ -96,17 +128,18 @@ inline bool BottomUpPropagationGraph::isStable(const Timestamp& t, VarId v) {
 // We expand an invariant by pushing it and its first input variable onto each
 // stack.
 inline void BottomUpPropagationGraph::expandInvariant(InvariantId inv) {
+  // TODO:Check if invariant is already on stack.
   VarId nextVar = m_engine.getStore().getInvariant(inv).getNextDependency(
       m_engine.getCurrentTime());
   assert(nextVar.id !=
          NULL_ID);  // Invariant must have at least one dependency, and this
                     // should be the first (and only) time we expand it
-  pushStack(nextVar);
-  invariantStack.push_back(inv);
+  pushVariableStack(nextVar);
+  pushInvariantStack(inv);
 }
 
 inline void BottomUpPropagationGraph::notifyCurrentInvariant(VarId id) {
-  IntVar variable = m_engine.getStore().getConstIntVar(id);
+  const IntVar variable = m_engine.getStore().getConstIntVar(id);
   m_engine.getStore()
       .getInvariant(invariantStack.back())
       .notifyCurrentDependencyChanged(
@@ -118,7 +151,7 @@ inline void BottomUpPropagationGraph::notifyCurrentInvariant(VarId id) {
 // stable. The reason for this is that we will then have to notify the top
 // invariant that the variable is stable (in case it has changed).
 inline void BottomUpPropagationGraph::visitNextVariable() {
-  popStack();
+  popVariableStack();
   VarId nextVar = m_engine.getStore()
                       .getInvariant(invariantStack.back())
                       .getNextDependency(m_engine.getCurrentTime());
@@ -126,16 +159,11 @@ inline void BottomUpPropagationGraph::visitNextVariable() {
     // The top invariant has finished propagating, so all defined vars can be
     // marked as stable at the current time.
     for (auto defVar : variableDefinedBy(invariantStack.back())) {
-      stable(m_engine.getCurrentTime(), defVar);
+      markStable(m_engine.getCurrentTime(), defVar);
     }
-    invariantStack.pop_back();
+    popInvariantStack();
   } else {
-    if (isOnStack.at(nextVar)) {
-      assert(false); // Dynamic cycle!
-      // TODO: throw exception.
-      // TODO: do we need to clean up? I don't think we do!
-    }
-    pushStack(nextVar);
+    pushVariableStack(nextVar);
   }
 }
 
@@ -143,10 +171,11 @@ void BottomUpPropagationGraph::registerVar(VarId id) {
   PropagationGraph::registerVar(id);  // call parent implementation
   variableStack.push_back(NULL_ID);   // push back just to resize the stack!
   stableAt.push_back(NULL_TIMESTAMP);
-  isOnStack.push_back(false);
+  varIsOnStack.push_back(false);
 }
 
 void BottomUpPropagationGraph::registerInvariant(InvariantId id) {
   PropagationGraph::registerInvariant(id);  // call parent implementation
   invariantStack.push_back(NULL_ID);  // push back just to resize the stack!
+  invariantIsOnStack.push_back(false);
 }

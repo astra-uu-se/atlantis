@@ -58,9 +58,9 @@ VarId LessEqual::getNextDependency(const Timestamp& t) {
 }
 
 void LessEqual::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e,
-                                           Int oldValue, Int newValue) {
+                                           Int, Int) {
   assert(m_state.getValue(t) != -1);
-  assert(newValue != oldValue);
+  // assert(newValue != oldValue);
   e.setValue(t, m_violationId,
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }

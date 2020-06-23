@@ -68,12 +68,12 @@ class Engine {
 
   //--------------------- Variable ---------------------
   void incValue(const Timestamp&, VarId&, Int inc);
-  void incValue(VarId& v, Int val) { incValue(m_currentTime, v, val); }
+  inline void incValue(VarId& v, Int val) { incValue(m_currentTime, v, val); }
 
   void setValue(const Timestamp&, VarId&, Int val);
-  void setValue(VarId& v, Int val) { setValue(m_currentTime, v, val); }
+  inline void setValue(VarId& v, Int val) { setValue(m_currentTime, v, val); }
   Int getValue(const Timestamp&, VarId&);
-  Int getValue(VarId& v) { return getValue(m_currentTime, v); }
+  inline Int getValue(VarId& v) { return getValue(m_currentTime, v); }
 
   Int getCommitedValue(VarId&);
 
@@ -96,20 +96,8 @@ class Engine {
    */
   template <class T, typename... Args>
   std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
-  makeInvariant(Args&&... args) {
-    if (!m_isOpen) {
-      throw ModelNotOpenException(
-          "Cannot make invariant when store is closed.");
-    }
-    auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
+  makeInvariant(Args&&... args);
 
-    auto newId = m_store.createInvariantFromPtr(invariantPtr);
-    m_propGraph.registerInvariant(newId);
-    invariantPtr->init(m_currentTime, *this);
-    return invariantPtr;
-  }
-
-  //--------------------- Registration ---------------------
   /**
    * Register a constraint in the engine and return its pointer.
    * This also sets the id of the constraint to the new id.
@@ -118,18 +106,7 @@ class Engine {
    */
   template <class T, typename... Args>
   std::enable_if_t<std::is_base_of<Constraint, T>::value, std::shared_ptr<T>>
-  makeConstraint(Args&&... args) {
-    if (!m_isOpen) {
-      throw ModelNotOpenException(
-          "Cannot make invariant when store is closed.");
-    }
-    auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
-
-    auto newId = m_store.createInvariantFromPtr(constraintPtr);
-    m_propGraph.registerInvariant(newId);
-    constraintPtr->init(m_currentTime, *this);
-    return constraintPtr;
-  }
+  makeConstraint(Args&&... args);
 
   /**
    * Creates an IntVar and registers it to the engine.
@@ -156,8 +133,64 @@ class Engine {
    */
   void registerDefinedVariable(VarId dependent, InvariantId source);
 
-  inline const Store& getStore() { return m_store; }
-  inline const Timestamp& getCurrentTime() { return m_currentTime; }
+  const Store& getStore();
+  const Timestamp& getCurrentTime();
 
-  inline BottomUpPropagationGraph& getPropGraph() { return m_propGraph; }
+  BottomUpPropagationGraph& getPropGraph();
 };
+
+template <class T, typename... Args>
+std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
+Engine::makeInvariant(Args&&... args) {
+  if (!m_isOpen) {
+    throw ModelNotOpenException("Cannot make invariant when store is closed.");
+  }
+  auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
+
+  auto newId = m_store.createInvariantFromPtr(invariantPtr);
+  m_propGraph.registerInvariant(newId);
+  invariantPtr->init(m_currentTime, *this);
+  return invariantPtr;
+}
+
+template <class T, typename... Args>
+std::enable_if_t<std::is_base_of<Constraint, T>::value, std::shared_ptr<T>>
+Engine::makeConstraint(Args&&... args) {
+  if (!m_isOpen) {
+    throw ModelNotOpenException("Cannot make invariant when store is closed.");
+  }
+  auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
+
+  auto newId = m_store.createInvariantFromPtr(constraintPtr);
+  m_propGraph.registerInvariant(newId);
+  constraintPtr->init(m_currentTime, *this);
+  return constraintPtr;
+}
+
+//--------------------- Inlined functions ---------------------
+
+inline const Store& Engine::getStore() { return m_store; }
+inline const Timestamp& Engine::getCurrentTime() { return m_currentTime; }
+inline BottomUpPropagationGraph& Engine::getPropGraph() { return m_propGraph; }
+
+inline Int Engine::getValue(const Timestamp& t, VarId& v) {
+  return m_store.getIntVar(v).getValue(t);
+}
+
+inline Int Engine::getCommitedValue(VarId& v) {
+  return m_store.getIntVar(v).getCommittedValue();
+}
+
+inline Timestamp Engine::getTmpTimestamp(VarId& v) {
+  return m_store.getIntVar(v).getTmpTimestamp();
+}
+
+inline void Engine::setValue(const Timestamp& t, VarId& v, Int val) {
+  m_store.getIntVar(v).setValue(t, val);
+  notifyMaybeChanged(t, v);
+}
+
+inline void Engine::incValue(const Timestamp& t, VarId& v, Int inc) {
+  m_store.getIntVar(v).incValue(t, inc);
+  notifyMaybeChanged(t, v);
+}
