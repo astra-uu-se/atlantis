@@ -1,5 +1,6 @@
 #include "propagation/topDownPropagationGraph.hpp"
 
+#include <functional>
 
 #include "exceptions/exceptions.hpp"
 
@@ -37,7 +38,6 @@ void TopDownPropagationGraph::registerVar(VarId id) {
   assert(id.id == m_varsLastChange.size());
   m_varsLastChange.push_back(NULL_TIMESTAMP);
 }
-
 
 /**
  * Assumes that the graph has no cycles. When there are cycles this code does
@@ -102,7 +102,6 @@ void TopDownPropagationGraph::Topology::computeNoCyclesException() {
     tmpVisited.at(id) = true;
     // for each dependent invariant
     for (auto invariant : graph.m_listeningInvariants.at(id)) {
-
       // for each variable defined by that invariant
       for (auto dependentVariable :
            graph.m_variablesDefinedByInvariant.at(invariant)) {
@@ -157,7 +156,6 @@ void TopDownPropagationGraph::Topology::computeWithCycles() {
     visited.at(id) = true;
     // for each dependent invariant
     for (auto invariant : graph.m_listeningInvariants.at(id)) {
-
       // for each variable defined by that invariant
       for (auto dependentVariable :
            graph.m_variablesDefinedByInvariant.at(invariant)) {

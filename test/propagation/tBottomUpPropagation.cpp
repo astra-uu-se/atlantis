@@ -72,6 +72,26 @@ TEST_F(BottomUpPropagationTest, SimplePropagate1) {
                            std::vector<VarId>{v1, v2, v3, v4, v5}, v6);
 
   e->close();
+
+  EXPECT_EQ(e->getValue(v4), 0);
+  EXPECT_EQ(e->getValue(v5), 0);
+  EXPECT_EQ(e->getValue(v6), 0);
+
+  e->beginMove();
+  e->setValue(v1, 1);
+  e->setValue(v2, 1);
+  e->setValue(v3, 1);
+  e->endMove();
+
+  e->beginQuery();
+  e->query(v4);
+  e->query(v5);
+  e->query(v6);
+  e->endQuery();
+
+  EXPECT_EQ(e->getValue(v4), 3);
+  EXPECT_EQ(e->getValue(v5), 6);
+  EXPECT_EQ(e->getValue(v6), 12);
 }
 
 }  // namespace
