@@ -23,14 +23,14 @@ void Engine::recomputeAndCommit() {
   bool done = false;
   while (!done) {
     done = true;
-    if(tries++ > m_store.getNumVariables()){
+    if (tries++ > m_store.getNumVariables()) {
       throw FailedToInitialise();
     }
     for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
          ++iter) {
       assert((*iter) != nullptr);
       (*iter)->recompute(m_currentTime, *this);
-      //    (*iter)->commit(m_currentTime, *this);
+      // (*iter)->commit(m_currentTime, *this);
     }
     for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd();
          ++iter) {
@@ -39,6 +39,12 @@ void Engine::recomputeAndCommit() {
         iter->commit();
       }
     }
+  }
+  // We must commit all invariants once everything is stable.
+  // Commiting an invariant will commit any internal datastructure.
+  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+       ++iter) {
+    (*iter)->commit(m_currentTime, *this);
   }
 }
 
