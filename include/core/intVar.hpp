@@ -51,9 +51,10 @@ class IntVar : public Var {
   IntVar();
   IntVar(Id t_id);
   IntVar(Id t_id, Int initValue);
+  IntVar(Id t_id, Int initValue, Int lowerBound, Int upperBound);
   ~IntVar() = default;
 
-[[gnu::always_inline]] inline bool hasChanged(const Timestamp& t) const {
+  [[gnu::always_inline]] inline bool hasChanged(const Timestamp& t) const {
     return m_value.getValue(t) != m_value.getCommittedValue();
   }
   [[gnu::always_inline]] inline const Timestamp& getTmpTimestamp() const {
@@ -64,5 +65,11 @@ class IntVar : public Var {
   }
   [[gnu::always_inline]] inline Int getCommittedValue() const {
     return m_value.getCommittedValue();
+  }
+  [[gnu::always_inline]] inline bool inDomain(Int t_value) const {
+    return m_value.inDomain(t_value);
+  }
+  [[gnu::always_inline]] inline void updateDomain(Int lowerBound, Int upperBound) {
+    m_value.updateDomain(lowerBound, upperBound);
   }
 };
