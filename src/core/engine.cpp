@@ -18,44 +18,28 @@ Engine::Engine()
 void Engine::open() { m_isOpen = true; }
 
 void Engine::recomputeAndCommit() {
-  // TODO: this does not set invariants to correct values, but sets them to
-  // values that we can incrementally make correct by calling propagate
-  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
-       ++iter) {
-    assert((*iter) != nullptr);
-    (*iter)->recompute(m_currentTime, *this);
-    // (*iter)->commit(m_currentTime, *this);
-  }
-  // for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd(); ++iter) {
-  //   iter->commit();
-  // }
-
-  // Todo: create a dedicated propagateAndCommit;
-  m_propGraph.clearForPropagation();
-  for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd(); ++iter) {
-    if (m_propGraph.isInputVar(iter->m_id)) {
-      // TODO: We need to invalidate all input variables, but how?
-      // This forces all input variables to be out of date.
-      // iter->commitIf(m_currentTime);  // Commit the current value if any
-      // Int tmp = iter->getCommittedValue();
-      // iter->commitValue(tmp + 1);          // destroy the commited value.
-      // iter->setValue(tmp, m_currentTime);  // restore the tmp value
+  // TODO: This is a very inefficient way of initialising!
+  size_t tries = 0;
+  bool done = false;
+  while (!done) {
+    done = true;
+    if(tries++ > m_store.getNumVariables()){
+      throw FailedToInitialise();
     }
-    if (m_propGraph.isOutputVar(iter->m_id)) {
-      m_propGraph.registerForPropagation(m_currentTime, iter->m_id);
+    for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+         ++iter) {
+      assert((*iter) != nullptr);
+      (*iter)->recompute(m_currentTime, *this);
+      //    (*iter)->commit(m_currentTime, *this);
+    }
+    for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd();
+         ++iter) {
+      if (iter->hasChanged(m_currentTime)) {
+        done = false;
+        iter->commit();
+      }
     }
   }
-  m_propGraph.propagate();
-  // TODO: not clear if we actually need to commit invariants. We could just as
-  // well call commit on each variable here.
-  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
-       ++iter) {
-    assert((*iter) != nullptr);
-    (*iter)->commit(m_currentTime, *this);
-  }
-   for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd(); ++iter) {
-     iter->commit();
-   }
 }
 
 void Engine::close() {
