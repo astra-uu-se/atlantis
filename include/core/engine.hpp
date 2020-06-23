@@ -111,7 +111,7 @@ class Engine {
 
   //--------------------- Registration ---------------------
   /**
-   * Register a constriant in the engine and return its pointer.
+   * Register a constraint in the engine and return its pointer.
    * This also sets the id of the constraint to the new id.
    * @param args the constructor arguments of the constraint
    * @return the created constraint.
