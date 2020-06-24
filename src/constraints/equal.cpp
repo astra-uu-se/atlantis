@@ -35,7 +35,7 @@ void Equal::notifyIntChanged(Timestamp t, Engine& e,
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-VarId Equal::getNextDependency(Timestamp t) {
+VarId Equal::getNextDependency(Timestamp t, Engine&) {
   m_state.incValue(t, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?m_x:m_y;

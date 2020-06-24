@@ -206,7 +206,7 @@ inline void Engine::incValue(Timestamp t, VarId& v, Int inc) {
 }
 
 inline VarId Engine::getNextDependency(InvariantId inv) {
-  return m_store.getInvariant(inv).getNextDependency(m_currentTime);
+  return m_store.getInvariant(inv).getNextDependency(m_currentTime, *this);
 }
 inline void Engine::notifyCurrentDependencyChanged(InvariantId inv){
   m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime, *this);
