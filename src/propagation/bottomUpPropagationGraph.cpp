@@ -38,63 +38,44 @@ void BottomUpPropagationGraph::registerForPropagation(const Timestamp&,
                                                       VarId id) {
   variableStack.push_back(id);
 }
-void BottomUpPropagationGraph::propagate() {
+void BottomUpPropagationGraph::propagate(const Timestamp& currentTime) {
   // recursively expand variables to compute their value.
   while (!variableStack.empty()) {
-    // std::cout << " ---- \n";
-    // printVarStack();
-    // printInvariantStack();
-
     VarId currentVar = variableStack.back();
     // If the variable is not stable, then expand it.
-    if (!isStable(m_engine.getCurrentTime(), currentVar)) {
+    if (!isStable(currentTime, currentVar)) {
       if (m_definingInvariant.at(currentVar).id != NULL_ID) {
         // Variable is defined and not stable, so expand defining invariant.
         expandInvariant(m_definingInvariant.at(currentVar));
         continue;
-      } else if (m_engine.hasChanged(m_engine.getCurrentTime(), currentVar)) {
-        // The variable is not defined so if it has changed, then we notify the
-        // top invariant. Note that this must be an input variable.
-        // TODO: just pre-mark all the input variables as stable when modified
-        // in a move and remove this case!
-        notifyCurrentInvariant();
-        markStable(m_engine.getCurrentTime(), currentVar);
-        visitNextVariable();
-        continue;
       } else {
-        markStable(m_engine.getCurrentTime(), currentVar);
-        visitNextVariable();
-        continue;
+        markStable(currentTime, currentVar);
+        goto handle_stable_var;  // Don't panic.
       }
     } else if (invariantStack.empty()) {
       popVariableStack();  // we are at an output variable that is already
                            // stable. Just continue!
       continue;
     } else {  // If stable
-      if (m_engine.hasChanged(m_engine.getCurrentTime(), currentVar)) {
+    handle_stable_var:
+      if (m_engine.hasChanged(currentTime, currentVar)) {
         // If the variable is stable and has changed then just send a
         // notification to top invariant (i.e, the one asking for its value)
-        // TODO: prevent this case from happening by checking if a variables is
-        // marked and has changed before pushing it onto the stack? Not clear
-        // how much faster that would actually be.
         notifyCurrentInvariant();
-        visitNextVariable();
+        visitNextVariable(currentTime);
         continue;
       } else {
         // pop
-        visitNextVariable();
+        visitNextVariable(currentTime);
         continue;
       }
     }
   }
 }
 
-
 inline void BottomUpPropagationGraph::pushVariableStack(VarId v) {
   if (varIsOnStack.at(v)) {
-    assert(false);  // Dynamic cycle!
-    // TODO: throw exception.
-    // TODO: do we need to clean up? I don't think we do!
+    throw DynamicCycleException();
   }
   varIsOnStack.at(v) = true;
   variableStack.push_back(v);
@@ -145,14 +126,15 @@ inline void BottomUpPropagationGraph::notifyCurrentInvariant() {
 // TODO: this will push a variable onto the stack even when the variable is
 // stable. The reason for this is that we will then have to notify the top
 // invariant that the variable is stable (in case it has changed).
-inline void BottomUpPropagationGraph::visitNextVariable() {
+inline void BottomUpPropagationGraph::visitNextVariable(
+    const Timestamp& currentTime) {
   popVariableStack();
   VarId nextVar = m_engine.getNextDependency(invariantStack.back());
   if (nextVar.id == NULL_ID) {
     // The top invariant has finished propagating, so all defined vars can be
     // marked as stable at the current time.
     for (auto defVar : variableDefinedBy(invariantStack.back())) {
-      markStable(m_engine.getCurrentTime(), defVar);
+      markStable(currentTime, defVar);
     }
     popInvariantStack();
   } else {
