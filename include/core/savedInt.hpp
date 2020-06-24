@@ -1,17 +1,21 @@
 #pragma once
 
+#include <stdexcept>
+
 #include "core/tracer.hpp"
 #include "types.hpp"
 
 class SavedInt {
  private:
+  Timestamp m_tmpTime;
   Int m_savedValue;
   Int m_tmpValue;
-  Timestamp m_tmpTime;
 
  public:
   SavedInt(const Timestamp& initTime, const Int& initValue)
-      : m_savedValue(initValue), m_tmpValue(initValue), m_tmpTime(initTime) {}
+      : m_tmpTime(initTime),
+        m_savedValue(initValue), 
+        m_tmpValue(initValue) {}
 
   // inline Int getResetValue(const Timestamp& currentTime) noexcept {
   //   return currentTime == m_tmpTime ? m_tmpValue : (m_tmpValue =

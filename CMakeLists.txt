@@ -70,6 +70,10 @@ if (BUILD_TESTS)
   # 'project(gtest)' above.
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
+  # Include the gmock library. gmock_SOURCE_DIR is available due to
+  # 'project(gmock)' above.
+  include_directories(${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
+
   ##############
   # Unit Tests
   ##############
@@ -78,6 +82,8 @@ if (BUILD_TESTS)
 
   # Standard linking to gtest stuff.
   target_link_libraries(runUnitTests gtest gtest_main)
+
+  target_link_libraries(runUnitTests gmock gmock_main)
 
   # Extra linking for the project.
   target_link_libraries(runUnitTests ${PROJECT_LIB})
