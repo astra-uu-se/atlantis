@@ -8,7 +8,6 @@
 #include "core/types.hpp"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "invariants/linear.hpp"
 #include "propagation/topDownPropagationGraph.hpp"
 
 using ::testing::Return;
@@ -26,6 +25,11 @@ class MockInvariantSimple : public Invariant {
   }
 
   MOCK_METHOD(void, recompute, (const Timestamp& timestamp, Engine& engine), (override));
+
+  MOCK_METHOD(VarId, getNextDependency, (const Timestamp&), (override));
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (const Timestamp&, Engine& e,
+                                              Int oldValue, Int newValue), (override));
+
   MOCK_METHOD(
     void, notifyIntChanged, (const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data), (override)
@@ -56,6 +60,9 @@ class MockInvariantAdvanced : public Invariant {
   }
 
   MOCK_METHOD(void, recompute, (const Timestamp& timestamp, Engine& engine), (override));
+  MOCK_METHOD(VarId, getNextDependency, (const Timestamp&), (override));
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (const Timestamp&, Engine& e,
+                                              Int oldValue, Int newValue), (override));
   MOCK_METHOD(
     void, notifyIntChanged, (const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data), (override)
@@ -89,7 +96,10 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   // TODO: use some other invariants...
   auto invariant = engine->makeInvariant<MockInvariantSimple>();
 
-  EXPECT_CALL(*invariant, recompute(0, testing::_))
+  EXPECT_CALL(*invariant, recompute(1, testing::_))
+    .Times(1);
+
+  EXPECT_CALL(*invariant, commit(1, testing::_))
     .Times(1);
 
   ASSERT_TRUE(invariant->m_initialized);
@@ -107,22 +117,28 @@ TEST_F(EngineTest, RecomputeAndCommit) {
     engine->makeIntVar(value);
   }
 
+  Timestamp initialTimestamp = engine->getCurrentTime();
+
   // TODO: use some other invariants...
   auto invariant = engine->makeInvariant<MockInvariantSimple>();
 
-  EXPECT_CALL(*invariant, recompute(0, testing::_))
+  EXPECT_CALL(*invariant, recompute(initialTimestamp, testing::_))
+    .Times(1);
+  
+  EXPECT_CALL(*invariant, commit(initialTimestamp, testing::_))
     .Times(1);
 
   ASSERT_TRUE(invariant->m_initialized);
 
+
   engine->close();
-  EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
-  EXPECT_EQ(engine->getStore().getNumInvariants(), 1);
+
+  ASSERT_EQ(engine->getStore().getNumVariables(), intVarCount);
+  ASSERT_EQ(engine->getStore().getNumInvariants(), 1);
+  ASSERT_EQ(initialTimestamp, engine->getCurrentTime());
 }
 
 TEST_F(EngineTest, SimplePropagation) {
-  engine->open();
-
   engine->open();
   
   VarId output = engine->makeIntVar(0);
@@ -132,24 +148,44 @@ TEST_F(EngineTest, SimplePropagation) {
   
   auto invariant = engine->makeInvariant<MockInvariantAdvanced>(std::vector<VarId>({a, b, c}), output);
   
-  EXPECT_CALL(*invariant, commit(0, testing::_))
+  Timestamp initialTimestamp = engine->getCurrentTime();
+
+  EXPECT_CALL(*invariant, recompute(initialTimestamp, testing::_))
+    .Times(1);
+
+  EXPECT_CALL(*invariant, commit(initialTimestamp, testing::_))
     .Times(1);
 
   engine->close();
 
-  EXPECT_CALL(*invariant, notifyIntChanged(1, testing::_, LocalId(0), 1, -1, 0))
-    .Times(1);
-  EXPECT_CALL(*invariant, notifyIntChanged(1, testing::_, LocalId(1), 2, -2, 1))
-    .Times(1);
-  EXPECT_CALL(*invariant, notifyIntChanged(1, testing::_, LocalId(2), 3, -3, 2))
-    .Times(1);
-
   engine->beginMove();
+  Timestamp moveTimestamp = engine->getCurrentTime();
+  // Timestamp increases when we start a move
+  ASSERT_EQ(moveTimestamp, initialTimestamp + 1);
+
   engine->setValue(a, -1);
   engine->setValue(b, -2);
   engine->setValue(c, -3);
   engine->endMove();
 
+  EXPECT_CALL(*invariant, getNextDependency(moveTimestamp))
+    .WillOnce(Return(a))
+    .WillOnce(Return(b))
+    .WillOnce(Return(c))
+    .WillRepeatedly(Return(NULL_ID));
+
+  EXPECT_CALL(*invariant, notifyCurrentDependencyChanged(moveTimestamp, testing::_, 1, -1))
+    .Times(1);
+  EXPECT_CALL(*invariant, notifyCurrentDependencyChanged(moveTimestamp, testing::_, 2, -2))
+    .Times(1);
+  EXPECT_CALL(*invariant, notifyCurrentDependencyChanged(moveTimestamp, testing::_, 3, -3))
+    .Times(1);
+
+  engine->beginQuery();
+  engine->query(output);
+  engine->endQuery();
+
 }
+
 
 }  // namespace
