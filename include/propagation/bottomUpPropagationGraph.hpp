@@ -31,7 +31,7 @@ class BottomUpPropagationGraph : public PropagationGraph {
   // stack.
   void expandInvariant(InvariantId inv);
   void notifyCurrentInvariant();
-  bool visitNextVariable(Timestamp);
+  bool visitNextVariable();
 
   void printVarStack() {
     std::cout << "Variable stack: [";
