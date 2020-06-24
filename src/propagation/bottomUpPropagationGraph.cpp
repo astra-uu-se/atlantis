@@ -17,7 +17,7 @@ BottomUpPropagationGraph::BottomUpPropagationGraph(Engine& e,
   invariantIsOnStack.push_back(false);
 }
 
-void BottomUpPropagationGraph::notifyMaybeChanged(const Timestamp&, VarId) {}
+void BottomUpPropagationGraph::notifyMaybeChanged(Timestamp, VarId) {}
 
 void BottomUpPropagationGraph::clearForPropagation() {
   size_t vsSize = variableStack.capacity();
@@ -34,11 +34,11 @@ void BottomUpPropagationGraph::clearForPropagation() {
   varIsOnStack.assign(varIsOnStack.size(), false);
   invariantIsOnStack.assign(invariantIsOnStack.size(), false);
 }
-void BottomUpPropagationGraph::registerForPropagation(const Timestamp&,
+void BottomUpPropagationGraph::registerForPropagation(Timestamp,
                                                       VarId id) {
   variableStack.push_back(id);
 }
-void BottomUpPropagationGraph::propagate(const Timestamp& currentTime) {
+void BottomUpPropagationGraph::propagate(Timestamp currentTime) {
   // recursively expand variables to compute their value.
   while (!variableStack.empty()) {
     VarId currentVar = variableStack.back();
@@ -99,11 +99,11 @@ inline void BottomUpPropagationGraph::popInvariantStack() {
   invariantStack.pop_back();
 }
 
-inline void BottomUpPropagationGraph::markStable(const Timestamp& t, VarId v) {
+inline void BottomUpPropagationGraph::markStable(Timestamp t, VarId v) {
   stableAt.at(v) = t;
 }
 
-inline bool BottomUpPropagationGraph::isStable(const Timestamp& t, VarId v) {
+inline bool BottomUpPropagationGraph::isStable(Timestamp t, VarId v) {
   return stableAt.at(v) == t;
 }
 
@@ -127,7 +127,7 @@ inline void BottomUpPropagationGraph::notifyCurrentInvariant() {
 // stable. The reason for this is that we will then have to notify the top
 // invariant that the variable is stable (in case it has changed).
 inline void BottomUpPropagationGraph::visitNextVariable(
-    const Timestamp& currentTime) {
+    Timestamp currentTime) {
   popVariableStack();
   VarId nextVar = m_engine.getNextDependency(invariantStack.back());
   if (nextVar.id == NULL_ID) {

@@ -30,20 +30,20 @@ class MarkingTopDownPropagationGraph : public TopDownPropagationGraph {
  protected:
   friend class Engine;
   void clearForPropagation();
-  void registerForPropagation(const Timestamp&, VarId);
-  void schedulePropagation(const Timestamp&, const Engine&);
+  void registerForPropagation(Timestamp, VarId);
+  void schedulePropagation(Timestamp, const Engine&);
 
  public:
   MarkingTopDownPropagationGraph() : MarkingTopDownPropagationGraph(1000) {}
   MarkingTopDownPropagationGraph(size_t expectedSize);
 
-  // virtual void notifyMaybeChanged(const Timestamp&, VarId id) override;
+  // virtual void notifyMaybeChanged(Timestamp, VarId id) override;
 
-  virtual VarId getNextStableVariable(const Timestamp&) override;
+  virtual VarId getNextStableVariable(Timestamp) override;
   virtual void registerVar(VarId) override;
 
-  virtual bool isActive(const Timestamp&, VarId) override;
-  virtual bool isActive(const Timestamp&, InvariantId) override;
+  virtual bool isActive(Timestamp, VarId) override;
+  virtual bool isActive(Timestamp, InvariantId) override;
 
   virtual void registerInvariant(InvariantId) override;
 };

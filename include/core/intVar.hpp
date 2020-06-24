@@ -13,11 +13,11 @@ class IntVar : public Var {
   Int m_lowerBound;
   Int m_upperBound;
 
-  [[gnu::always_inline]] inline void setValue(const Timestamp& timestamp,
+  [[gnu::always_inline]] inline void setValue(Timestamp timestamp,
                                               Int value) {
     m_value.setValue(timestamp, value);
   }
-  [[gnu::always_inline]] inline void incValue(const Timestamp& timestamp,
+  [[gnu::always_inline]] inline void incValue(Timestamp timestamp,
                                               Int inc) {
     m_value.incValue(timestamp, inc);
   }
@@ -26,7 +26,7 @@ class IntVar : public Var {
   [[gnu::always_inline]] inline void commitValue(Int value) {
     m_value.commitValue(value);
   }
-  [[gnu::always_inline]] inline void commitIf(const Timestamp& timestamp) {
+  [[gnu::always_inline]] inline void commitIf(Timestamp timestamp) {
     m_value.commitIf(timestamp);
   }
 
@@ -38,13 +38,13 @@ class IntVar : public Var {
   IntVar(Id t_id, Int initValue, Int t_lowerBount, Int t_upperBound);
   ~IntVar() = default;
 
-  [[gnu::always_inline]] inline bool hasChanged(const Timestamp& t) const {
+  [[gnu::always_inline]] inline bool hasChanged(Timestamp t) const {
     return m_value.getValue(t) != m_value.getCommittedValue();
   }
-  [[gnu::always_inline]] inline const Timestamp& getTmpTimestamp() const {
+  [[gnu::always_inline]] inline Timestamp getTmpTimestamp() const {
     return m_value.getTmpTimestamp();
   }
-  [[gnu::always_inline]] inline Int getValue(const Timestamp& t) const {
+  [[gnu::always_inline]] inline Int getValue(Timestamp t) const {
     return m_value.getValue(t);
   }
   [[gnu::always_inline]] inline Int getCommittedValue() const {
