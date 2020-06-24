@@ -88,7 +88,7 @@ class Engine {
   void commitValue(VarId&, Int val);
 
   /**
-   * returns the next depenency at the current timestamp.
+   * returns the next dependency at the current timestamp.
    */
   VarId getNextDependency(InvariantId);
 
