@@ -30,12 +30,12 @@ class BottomUpPropagationTest : public ::testing::Test {
 TEST_F(BottomUpPropagationTest, RegisterVariableAndInvariant) {
   e->open();
 
-  auto v1 = e->makeIntVar(0);
-  auto v2 = e->makeIntVar(0);
-  auto v3 = e->makeIntVar(0);
-  auto v4 = e->makeIntVar(0);
-  auto v5 = e->makeIntVar(0);
-  auto v6 = e->makeIntVar(0);
+  auto v1 = e->makeIntVar(0, -100, 100);
+  auto v2 = e->makeIntVar(0, -100, 100);
+  auto v3 = e->makeIntVar(0, -100, 100);
+  auto v4 = e->makeIntVar(0, -100, 100);
+  auto v5 = e->makeIntVar(0, -100, 100);
+  auto v6 = e->makeIntVar(0, -100, 100);
 
   e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1},
                            std::vector<VarId>{v1, v2, v3}, v4);
@@ -55,12 +55,12 @@ TEST_F(BottomUpPropagationTest, RegisterVariableAndInvariant) {
 TEST_F(BottomUpPropagationTest, SimplePropagate1) {
   e->open();
 
-  auto v1 = e->makeIntVar(0);
-  auto v2 = e->makeIntVar(0);
-  auto v3 = e->makeIntVar(0);
-  auto v4 = e->makeIntVar(0);
-  auto v5 = e->makeIntVar(0);
-  auto v6 = e->makeIntVar(0);
+  auto v1 = e->makeIntVar(0, -100, 100);
+  auto v2 = e->makeIntVar(0, -100, 100);
+  auto v3 = e->makeIntVar(0, -100, 100);
+  auto v4 = e->makeIntVar(0, -100, 100);
+  auto v5 = e->makeIntVar(0, -100, 100);
+  auto v6 = e->makeIntVar(0, -100, 100);
 
   e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1},
                            std::vector<VarId>{v1, v2, v3}, v4);
@@ -120,38 +120,38 @@ TEST_F(BottomUpPropagationTest, SimplePropagate1) {
 TEST_F(BottomUpPropagationTest, SimplePropagate2) {
   e->open();
 
-  auto v1 = e->makeIntVar(0);
-  auto v2 = e->makeIntVar(0);
-  auto v3 = e->makeIntVar(0);
-  auto v4 = e->makeIntVar(0);
-  auto v5 = e->makeIntVar(0);
-  auto v6 = e->makeIntVar(0);
+  auto v1 = e->makeIntVar(0, -100, 100);
+  auto v2 = e->makeIntVar(0, -100, 100);
+  auto v3 = e->makeIntVar(0, -100, 100);
+  auto v4 = e->makeIntVar(0, -100, 100);
+  auto v5 = e->makeIntVar(0, -100, 100);
+  auto v6 = e->makeIntVar(0, -100, 100);
 
-  auto v7 = e->makeIntVar(0);
+  auto v7 = e->makeIntVar(0, -200, 200);
   e->makeInvariant<Linear>(std::vector<Int>{1, 2}, std::vector<VarId>{v1, v2},
                            v7);
 
-  auto v8 = e->makeIntVar(0);
+  auto v8 = e->makeIntVar(0, -200, 200);
   e->makeInvariant<Linear>(std::vector<Int>{3, 4}, std::vector<VarId>{v3, v4},
                            v8);
 
-  auto v9 = e->makeIntVar(0);
+  auto v9 = e->makeIntVar(0, -200, 200);
   e->makeInvariant<Linear>(std::vector<Int>{5, 6}, std::vector<VarId>{v5, v6},
                            v9);
 
-  auto v10 = e->makeIntVar(0);
+  auto v10 = e->makeIntVar(0, -600, 600);
   e->makeInvariant<Linear>(std::vector<Int>{1, -1, 2},
                            std::vector<VarId>{v7, v8, v9}, v10);
 
-  auto v11 = e->makeIntVar(0);
+  auto v11 = e->makeIntVar(0, -800, 800);
   e->makeInvariant<Linear>(std::vector<Int>{-3, 4}, std::vector<VarId>{v7, v10},
                            v11);
 
-  auto v12 = e->makeIntVar(0);
+  auto v12 = e->makeIntVar(0, -400, 400);
   e->makeInvariant<Linear>(std::vector<Int>{1, 1}, std::vector<VarId>{v8, v9},
                            v12);
 
-  auto v13 = e->makeIntVar(0);
+  auto v13 = e->makeIntVar(0, -1200, 1200);
   e->makeInvariant<Linear>(std::vector<Int>{10, -10}, std::vector<VarId>{v11, v12},
                            v13);
 

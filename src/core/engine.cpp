@@ -124,11 +124,11 @@ void Engine::propagate() {
 
 //---------------------Registration---------------------
 
-VarId Engine::makeIntVar(Int initValue) {
+VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   if (!m_isOpen) {
     throw ModelNotOpenException("Cannot make IntVar when store is closed.");
   }
-  VarId newId = m_store.createIntVar(initValue);
+  VarId newId = m_store.createIntVar(initValue, lowerBound, upperBound);
   m_propGraph.registerVar(newId);
   assert(newId.id == m_dependentInvariantData.size());
   m_dependentInvariantData.push_back({});

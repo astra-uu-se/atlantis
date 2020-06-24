@@ -12,13 +12,13 @@ int main() {
   std::cout << "hello world!" << std::endl;
   Engine engine;
   engine.open();
-  VarId a = engine.makeIntVar(1);
-  VarId b = engine.makeIntVar(2);
-  VarId c = engine.makeIntVar(3);
-  VarId d = engine.makeIntVar(4);
-  VarId e = engine.makeIntVar(5);
-  VarId f = engine.makeIntVar(6);
-  VarId g = engine.makeIntVar(7);
+  VarId a = engine.makeIntVar(1, 1, 1);
+  VarId b = engine.makeIntVar(2, 2, 2);
+  VarId c = engine.makeIntVar(3, 3, 3);
+  VarId d = engine.makeIntVar(4, 4, 4);
+  VarId e = engine.makeIntVar(5, 5, 5);
+  VarId f = engine.makeIntVar(6, 6, 6);
+  VarId g = engine.makeIntVar(7, 7, 7);
 
   auto abc = engine.makeInvariant<Linear>(std::vector<Int>({1, 1}),
                                           std::vector<VarId>({a, b}), c);

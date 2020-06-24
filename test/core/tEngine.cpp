@@ -88,7 +88,7 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
 
   int intVarCount = 10;
   for (int value = 0; value < intVarCount; ++value) {
-    engine->makeIntVar(value);
+    engine->makeIntVar(value, -100, 100);
   }
 
   // TODO: use some other invariants...
@@ -112,7 +112,7 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 
   int intVarCount = 10;
   for (int value = 0; value < intVarCount; ++value) {
-    engine->makeIntVar(value);
+    engine->makeIntVar(value, -100, 100);
   }
 
   Timestamp initialTimestamp = engine->getCurrentTime();
@@ -139,10 +139,10 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 TEST_F(EngineTest, SimplePropagation) {
   engine->open();
   
-  VarId output = engine->makeIntVar(0);
-  VarId a = engine->makeIntVar(1);
-  VarId b = engine->makeIntVar(2);
-  VarId c = engine->makeIntVar(3);
+  VarId output = engine->makeIntVar(0, -10, 10);
+  VarId a = engine->makeIntVar(1, -10, 10);
+  VarId b = engine->makeIntVar(2, -10, 10);
+  VarId c = engine->makeIntVar(3, -10, 10);
   
   auto invariant = engine->makeInvariant<MockInvariantAdvanced>(std::vector<VarId>({a, b, c}), output);
   

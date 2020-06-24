@@ -33,10 +33,9 @@ class IntVar : public Var {
   friend class Engine;
 
  public:
-  IntVar();
-  IntVar(Id t_id);
-  IntVar(Id t_id, Int initValue);
-  IntVar(Id t_id, Int initValue, Int lowerBound, Int upperBound);
+  IntVar(Int t_lowerBount, Int t_upperBound);
+  IntVar(Id t_id, Int t_lowerBount, Int t_upperBound);
+  IntVar(Id t_id, Int initValue, Int t_lowerBount, Int t_upperBound);
   ~IntVar() = default;
 
   [[gnu::always_inline]] inline bool hasChanged(const Timestamp& t) const {

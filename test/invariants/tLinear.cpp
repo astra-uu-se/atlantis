@@ -17,10 +17,10 @@ class LinearTest : public ::testing::Test {
     gen = std::mt19937(rd());
     e = std::make_unique<Engine>();
     e->open();
-    a = e->makeIntVar(1);
-    b = e->makeIntVar(2);
-    c = e->makeIntVar(3);
-    d = e->makeIntVar(4);
+    a = e->makeIntVar(1, -100, 100);
+    b = e->makeIntVar(2, -100, 100);
+    c = e->makeIntVar(3, -100, 100);
+    d = e->makeIntVar(4, -100, 100);
 
     // d = 1*1+2*10+3*(-20) = 1+20-60 =-39
     linear = e->makeInvariant<Linear>(std::vector<Int>({1, 10, -20}),

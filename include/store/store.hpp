@@ -18,13 +18,13 @@ class Store {
     m_intVarIndexMap.reserve(estimatedSize);
     m_invariants.reserve(estimatedSize);
 
-    m_intVars.emplace_back();
+    m_intVars.emplace_back(0, 0);
     m_intVarIndexMap.push_back(-1);
     m_invariants.push_back(nullptr);
   }
-  [[nodiscard]] inline VarId createIntVar(Int initValue) {
+  [[nodiscard]] inline VarId createIntVar(Int initValue, Int lowerBound, Int upperBound) {
     VarId newId = VarId(m_intVars.size());
-    m_intVars.emplace_back(IntVar(newId, initValue));
+    m_intVars.emplace_back(IntVar(newId, initValue, lowerBound, upperBound));
     m_intVarIndexMap.push_back(newId);
     return newId;
   }

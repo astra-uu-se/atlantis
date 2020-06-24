@@ -16,10 +16,7 @@ class LessEqual : public Constraint {
 
  public:
   LessEqual(VarId violationId, VarId x, VarId y);
-  //   Linear(Engine& e, std::vector<Int>&& A,
-  //          std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar>
-  //          b);
-
+  
   ~LessEqual() = default;
   virtual void init(const Timestamp&, Engine&) override;
   virtual void recompute(const Timestamp&, Engine&) override;

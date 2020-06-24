@@ -122,7 +122,7 @@ class Engine {
    * Creates an IntVar and registers it to the engine.
    * @return the created IntVar
    */
-  VarId makeIntVar(Int initValue);
+  VarId makeIntVar(Int initValue, Int lowerBound, Int upperBound);
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
