@@ -25,10 +25,6 @@ public:
   explicit 
   ModelNotOpenException(const std::string& msg) :
     std::runtime_error(msg) {}
-
-  /** Destructor.
-   */
-  ~ModelNotOpenException() {}
 };
 
 class PropagationGraphHasCycles : public std::runtime_error {
@@ -38,8 +34,13 @@ class PropagationGraphHasCycles : public std::runtime_error {
    */
   explicit PropagationGraphHasCycles(const std::string& msg)
       : std::runtime_error(msg) {}
+};
 
-  /** Destructor.
+class FailedToInitialise : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
    */
-  ~PropagationGraphHasCycles() {}
+  explicit FailedToInitialise()
+      : std::runtime_error("Failed to initialise, possibly due to cycle in invariant graph.") {}
 };

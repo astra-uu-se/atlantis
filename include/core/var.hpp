@@ -1,9 +1,10 @@
 #pragma once
-#include "core/propagationNode.hpp"
 #include "core/types.hpp"
 
-class Var : public PropagationNode {
+class Var {
  protected:
+  VarId m_id;
+
  public:
   Var(Int t_id);
   ~Var() = default;
