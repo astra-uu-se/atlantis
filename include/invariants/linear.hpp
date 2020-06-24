@@ -33,5 +33,5 @@ class Linear : public Invariant {
   virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e) override;
   virtual void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) override;
-  virtual void commit(const Timestamp&, Engine&) override;
+  virtual void commit(Timestamp, Engine&) override;
 };

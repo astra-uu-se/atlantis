@@ -16,14 +16,11 @@ class Equal : public Constraint {
 
  public:
   Equal(VarId violationId, VarId x, VarId y);
-  //   Linear(Engine& e, std::vector<Int>&& A,
-  //          std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar>
-  //          b);
-
+  
   ~Equal() = default;
-  virtual void init(const Timestamp&, Engine&) override;
-  virtual void recompute(const Timestamp&, Engine&) override;
-  virtual void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
+  virtual void init(Timestamp, Engine&) override;
+  virtual void recompute(Timestamp, Engine&) override;
+  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) override;
   virtual void commit(const Timestamp&, Engine&) override;
   virtual VarId getNextDependency(const Timestamp&, Engine&) override;

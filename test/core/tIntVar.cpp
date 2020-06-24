@@ -25,10 +25,13 @@ class IntVarTest : public ::testing::Test {
 TEST_F(IntVarTest, SavedIntConstructor) {
   std::uniform_int_distribution<> distribution(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 
+  Int lowerBound = -10;
+  Int upperBound = 10;
+
   // Random timestamp
   VarId varId = distribution(gen);
 
-  auto intVarNoValue = IntVar(varId);
+  auto intVarNoValue = IntVar(varId, lowerBound, upperBound);
 
   Timestamp timestamp = distribution(gen);
   // The value defaults to 0
@@ -43,23 +46,18 @@ TEST_F(IntVarTest, SavedIntConstructor) {
   // Random inital value
   Int value = distribution(gen);
 
-  auto variablesWithValue = std::vector<IntVar>();
+  IntVar intVarWithValue = IntVar(varId, value, -10, 10);
 
-  variablesWithValue.push_back(IntVar(varId, value));
-  variablesWithValue.push_back(IntVar(varId, value, -10, 10));
-
-  for (auto intVar : variablesWithValue) {
-    ASSERT_EQ(intVar.getValue(timestamp), value);
-    ASSERT_EQ(intVar.getCommittedValue(), value);
-    
-    // default timestamp is zero
-    ASSERT_EQ(intVar.getTmpTimestamp(), -1);
-    
-    ASSERT_FALSE(intVar.hasChanged(timestamp));
-  }
+  ASSERT_EQ(intVarWithValue.getValue(timestamp), value);
+  ASSERT_EQ(intVarWithValue.getCommittedValue(), value);
+  
+  // default timestamp is zero
+  ASSERT_EQ(intVarWithValue.getTmpTimestamp(), -1);
+  
+  ASSERT_FALSE(intVarWithValue.hasChanged(timestamp));
 
   EXPECT_THROW(
-    IntVar(varId, value, 10, 0),
+    IntVar(varId, value, upperBound, lowerBound),
     std::out_of_range
   );
 }
