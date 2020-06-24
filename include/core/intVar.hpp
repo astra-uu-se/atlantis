@@ -50,6 +50,12 @@ class IntVar : public Var {
   [[gnu::always_inline]] inline Int getCommittedValue() const {
     return m_value.getCommittedValue();
   }
+  [[gnu::always_inline]] inline Int getLowerBound() const {
+    return m_lowerBound;
+  }
+  [[gnu::always_inline]] inline Int getUpperBound() const {
+    return m_upperBound;
+  }
   [[gnu::always_inline]] inline bool inDomain(Int t_value) const {
     return m_lowerBound <= t_value && t_value <= m_upperBound;
   }

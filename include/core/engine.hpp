@@ -87,6 +87,14 @@ class Engine {
   void commitIf(Timestamp, VarId&);
   void commitValue(VarId&, Int val);
 
+  inline Int getLowerBound(VarId& v) const {
+    return m_store.getConstIntVar(v).getLowerBound();
+  }
+
+  inline Int getUpperBound(VarId& v) const {
+    return m_store.getConstIntVar(v).getUpperBound();
+  }
+
   /**
    * returns the next dependency at the current timestamp.
    */
