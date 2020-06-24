@@ -20,21 +20,21 @@ class MockInvariantSimple : public Invariant {
 
   MockInvariantSimple() : Invariant(NULL_ID) {}
 
-  void init(Timestamp, Engine&) override {
+  void init(const Timestamp&, Engine&) override {
     m_initialized = true;
   }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (const Timestamp& timestamp, Engine& engine), (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e), (override));
+  MOCK_METHOD(VarId, getNextDependency, (const Timestamp&), (override));
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (const Timestamp&, Engine& e), (override));
 
   MOCK_METHOD(
-    void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id,
+    void, notifyIntChanged, (const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data), (override)
   );
   MOCK_METHOD(
-    void, commit, (Timestamp timestamp, Engine& engine), (override)
+    void, commit, (const Timestamp& timestamp, Engine& engine), (override)
   );
 };
 
@@ -48,7 +48,7 @@ class MockInvariantAdvanced : public Invariant {
   MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
     : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {}
 
-  void init(Timestamp, Engine& e) override {
+  void init(const Timestamp&, Engine& e) override {
     assert(m_id != NULL_ID);
 
     e.registerDefinedVariable(m_output, m_id);
@@ -58,15 +58,15 @@ class MockInvariantAdvanced : public Invariant {
     m_initialized = true;
   }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e), (override));
+  MOCK_METHOD(void, recompute, (const Timestamp& timestamp, Engine& engine), (override));
+  MOCK_METHOD(VarId, getNextDependency, (const Timestamp&), (override));
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (const Timestamp&, Engine& e), (override));
   MOCK_METHOD(
-    void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id,
+    void, notifyIntChanged, (const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data), (override)
   );
   MOCK_METHOD(
-    void, commit, (Timestamp timestamp, Engine& engine), (override)
+    void, commit, (const Timestamp& timestamp, Engine& engine), (override)
   );
 };
 

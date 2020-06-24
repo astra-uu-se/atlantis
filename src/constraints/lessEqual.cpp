@@ -15,7 +15,7 @@ LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
     : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
 }
 
-void LessEqual::init(Timestamp, Engine& e) {
+void LessEqual::init(const Timestamp&, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   assert(m_id != NULL_ID);
@@ -25,13 +25,13 @@ void LessEqual::init(Timestamp, Engine& e) {
   e.registerDefinedVariable(m_violationId, m_id);
 }
 
-void LessEqual::recompute(Timestamp t, Engine& e) {
+void LessEqual::recompute(const Timestamp& t, Engine& e) {
   // Dereference safe as incValue does not retain ptr.
   e.setValue(t, m_violationId,
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void LessEqual::notifyIntChanged(Timestamp t, Engine& e,
+void LessEqual::notifyIntChanged(const Timestamp& t, Engine& e,
                                  LocalId, Int oldValue,
                                  Int newValue, Int) {
   assert(newValue != oldValue);  // precondition
@@ -41,7 +41,7 @@ void LessEqual::notifyIntChanged(Timestamp t, Engine& e,
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-VarId LessEqual::getNextDependency(Timestamp t) {
+VarId LessEqual::getNextDependency(const Timestamp& t) {
   m_state.incValue(t, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?m_x:m_y;
@@ -57,14 +57,14 @@ VarId LessEqual::getNextDependency(Timestamp t) {
   }
 }
 
-void LessEqual::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
+void LessEqual::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   // assert(newValue != oldValue);
   e.setValue(t, m_violationId,
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void LessEqual::commit(Timestamp t, Engine& e) {
+void LessEqual::commit(const Timestamp& t, Engine& e) {
   // todo: do nodes validate themself or is it done by engine?
   // this->validate(t);
   e.commitIf(t, m_violationId);

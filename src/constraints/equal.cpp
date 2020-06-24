@@ -14,7 +14,7 @@ extern Id NULL_ID;
 Equal::Equal(VarId violationId, VarId x, VarId y)
     : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {}
 
-void Equal::init(Timestamp, Engine& e) {
+void Equal::init(const Timestamp&, Engine& e) {
   assert(m_id != NULL_ID);
 
   e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x), 0);
@@ -22,12 +22,12 @@ void Equal::init(Timestamp, Engine& e) {
   e.registerDefinedVariable(m_violationId, m_id);
 }
 
-void Equal::recompute(Timestamp t, Engine& e) {
+void Equal::recompute(const Timestamp& t, Engine& e) {
   e.setValue(t, m_violationId,
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void Equal::notifyIntChanged(Timestamp t, Engine& e,
+void Equal::notifyIntChanged(const Timestamp& t, Engine& e,
                              LocalId, Int oldValue,
                              Int newValue, Int) {
   assert(newValue != oldValue);  // precondition
@@ -35,7 +35,7 @@ void Equal::notifyIntChanged(Timestamp t, Engine& e,
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-VarId Equal::getNextDependency(Timestamp t) {
+VarId Equal::getNextDependency(const Timestamp& t) {
   m_state.incValue(t, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?m_x:m_y;
@@ -51,14 +51,14 @@ VarId Equal::getNextDependency(Timestamp t) {
   }
 }
 
-void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
+void Equal::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   // assert(newValue != oldValue);
   e.setValue(t, m_violationId,
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void Equal::commit(Timestamp t, Engine& e) {
+void Equal::commit(const Timestamp& t, Engine& e) {
   // todo: do nodes validate themself or is it done by engine?
   // this->validate(t);
   e.commitIf(t, m_violationId);

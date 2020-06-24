@@ -35,20 +35,20 @@ class Constraint : public Invariant {
    *
    * 4) Compute initial state of constraint!
    */
-  virtual void init(Timestamp, Engine&) = 0;
+  virtual void init(const Timestamp&, Engine&) = 0;
 
-  virtual void recompute(Timestamp, Engine&) = 0;
+  virtual void recompute(const Timestamp&, Engine&) = 0;
 
   /**
    * Precondition: oldValue != newValue
    */
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
+  virtual void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) = 0;
 
   // TODO: This commit is somehow different from other commits as it just
   // forwards the commit call and validates the node. Maybe remove and let
   // engine do this by looking at defined variables of constraint...
-  virtual void commit(Timestamp t, Engine&) = 0;
+  virtual void commit(const Timestamp& t, Engine&) = 0;
 
   inline VarId getViolationId();
 

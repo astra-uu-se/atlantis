@@ -24,17 +24,17 @@ MarkingTopDownPropagationGraph::MarkingTopDownPropagationGraph(
   m_tmpBoolContainer.push_back(false);
 }
 
-bool MarkingTopDownPropagationGraph::isActive(Timestamp t, VarId id) {
+bool MarkingTopDownPropagationGraph::isActive(const Timestamp& t, VarId id) {
   return m_varMark.at(id) == t;
 }
 
-bool MarkingTopDownPropagationGraph::isActive(Timestamp t,
+bool MarkingTopDownPropagationGraph::isActive(const Timestamp& t,
                                               InvariantId id) {
   return m_invariantMark.at(id) == t;
 }
 
 VarId MarkingTopDownPropagationGraph::getNextStableVariable(
-    Timestamp t) {
+    const Timestamp& t) {
   VarId nextVar = TopDownPropagationGraph::getNextStableVariable(t);
   m_propagatedAt.at(nextVar) = t;
   return nextVar;
@@ -69,7 +69,7 @@ void MarkingTopDownPropagationGraph::clearForPropagation() {
   m_variablesToExplore.clear();
 }
 
-void MarkingTopDownPropagationGraph::registerForPropagation(Timestamp t,
+void MarkingTopDownPropagationGraph::registerForPropagation(const Timestamp& t,
                                                             VarId id) {
   if (m_propagatedAt.at(id) == t) {
     return;
@@ -82,7 +82,7 @@ void MarkingTopDownPropagationGraph::registerForPropagation(Timestamp t,
  * While propagation is happening.
  */
 
-void MarkingTopDownPropagationGraph::schedulePropagation(Timestamp t,
+void MarkingTopDownPropagationGraph::schedulePropagation(const Timestamp& t,
                                                          const Engine& e) {
   // If a variable has been visited before (during this call) then do not
   // enqueue it.
