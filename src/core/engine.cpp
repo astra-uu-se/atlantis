@@ -57,7 +57,7 @@ void Engine::close() {
 }
 
 //---------------------Notificaion/Modification---------------------
-void Engine::notifyMaybeChanged([[maybe_unused]] const Timestamp& t, VarId id) {
+void Engine::notifyMaybeChanged(const Timestamp& t, VarId id) {
   m_propGraph.notifyMaybeChanged(t, id);
 }
 

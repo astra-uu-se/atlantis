@@ -14,7 +14,7 @@ extern Id NULL_ID;
 Equal::Equal(VarId violationId, VarId x, VarId y)
     : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {}
 
-void Equal::init([[maybe_unused]] const Timestamp& t, Engine& e) {
+void Equal::init(const Timestamp&, Engine& e) {
   assert(m_id != NULL_ID);
 
   e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x), 0);
@@ -28,8 +28,8 @@ void Equal::recompute(const Timestamp& t, Engine& e) {
 }
 
 void Equal::notifyIntChanged(const Timestamp& t, Engine& e,
-                             [[maybe_unused]] LocalId id, Int oldValue,
-                             Int newValue, [[maybe_unused]] Int coef) {
+                             LocalId, Int oldValue,
+                             Int newValue, Int) {
   assert(newValue != oldValue);  // precondition
   e.setValue(t, m_violationId,
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));

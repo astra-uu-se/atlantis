@@ -22,8 +22,7 @@ void TopDownPropagationGraph::notifyMaybeChanged(const Timestamp& t, VarId id) {
   m_modifiedVariables.push(id);
 }
 
-VarId TopDownPropagationGraph::getNextStableVariable([
-    [maybe_unused]] const Timestamp& t) {
+VarId TopDownPropagationGraph::getNextStableVariable(const Timestamp&) {
   if (m_modifiedVariables.empty()) {
     return VarId(NULL_ID);
   }
