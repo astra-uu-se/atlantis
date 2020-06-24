@@ -2,6 +2,7 @@
 #include <limits>
 #include <random>
 #include <vector>
+#include <stdexcept>
 
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
@@ -47,6 +48,7 @@ TEST_F(SavedIntTest, SavedIntConstructor) {
   // get the current value at another timestamp. Should still return the
   // initial value (as no other value has been committed)
   EXPECT_EQ(savedInt.getValue(otherTime), value);
+
 }
 
 TEST_F(SavedIntTest, SavedIntSetGetValue) {
@@ -135,79 +137,69 @@ TEST_F(SavedIntTest, SavedIntCommitValue) {
 
   savedInt.commitValue(commitedValue);
 
-  EXPECT_EQ(savedInt.getValue(initTime), initValue);
+  EXPECT_EQ(savedInt.getValue(initTime), initValue); // TODO: shouldn't this be commitedValue?
   EXPECT_EQ(savedInt.getValue(nextTime), commitedValue);
 }
-/*
+
 TEST_F(SavedIntTest, SavedIntCommit) {
-    std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(), 10000);
-    std::uniform_int_distribution<> distribution2(10001, std::numeric_limits<int>::max());
+  std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(), 10000);
+  std::uniform_int_distribution<> distribution2(10001, std::numeric_limits<int>::max());
 
-    Timestamp initTime = std::max(0, distribution1(gen));
-    Int initValue = distribution1(gen);
+  Timestamp initTime = std::max(0, distribution1(gen));
+  Int initValue = distribution1(gen);
 
-    Timestamp nextTime = distribution2(gen);
-    Int commitedValue = distribution2(gen);
+  Timestamp nextTime = distribution2(gen);
+  Int commitedValue = distribution2(gen);
 
-    SavedInt savedInt = SavedInt(initTime, initValue);
+  SavedInt savedInt = SavedInt(initTime, initValue);
 
-    EXPECT_EQ(savedInt.getValue(initTime), initValue);
-    EXPECT_EQ(savedInt.getValue(nextTime), initValue);
+  EXPECT_EQ(savedInt.getValue(initTime), initValue);
+  EXPECT_EQ(savedInt.getValue(nextTime), initValue);
 
-    savedInt.setValue(nextTime, commitedValue);
+  savedInt.setValue(nextTime, commitedValue);
 
-    EXPECT_EQ(savedInt.getValue(initTime), initValue);
-    EXPECT_EQ(savedInt.getValue(nextTime), commitedValue);
+  EXPECT_EQ(savedInt.getValue(initTime), initValue);
+  EXPECT_EQ(savedInt.getValue(nextTime), commitedValue);
 
-    savedInt.commitIf(nextTime);
+  savedInt.commitIf(nextTime);
 
-    //EXPECT_EQ(savedInt.getValue(initTime), commitedValue);
-    //EXPECT_EQ(savedInt.getValue(nextTime), commitedValue);
+  EXPECT_EQ(savedInt.getValue(initTime), commitedValue);
+  EXPECT_EQ(savedInt.getValue(nextTime), commitedValue);
 }
-*/
-/*
 
 TEST_F(SavedIntTest, SavedIntCommitIf) {
-    std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(), 10000);
-    std::uniform_int_distribution<> distribution2(10001, std::numeric_limits<int>::max());
+  std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(), 10000);
+  std::uniform_int_distribution<> distribution2(10001, std::numeric_limits<int>::max());
 
-    Timestamp initTime = std::max(0, distribution1(gen));
-    Int initValue = distribution1(gen);
+  Timestamp initTime = std::max(0, distribution1(gen));
+  Int initValue = distribution1(gen);
 
-    Timestamp nextTime = distribution2(gen);
-    Int value2 = distribution2(gen);
+  Timestamp nextTime = distribution2(gen);
+  Int nextValue = distribution2(gen);
 
-    SavedInt savedInt = SavedInt(initTime, initValue);
+  SavedInt savedInt = SavedInt(initTime, initValue);
 
-    savedInt.commitIf(nextTime);
+  savedInt.commitIf(nextTime);
 
-    EXPECT_EQ(savedInt.getValue(initTime), initValue);
-    EXPECT_EQ(savedInt.getValue(initTime), initValue);
-    EXPECT_EQ(savedInt.getValue(nextTime), initValue);
-    EXPECT_EQ(savedInt.getValue(nextTime), initValue);
+  EXPECT_EQ(savedInt.getValue(initTime), initValue);
+  EXPECT_EQ(savedInt.getValue(nextTime), initValue);
 
-    savedInt.commitIf(initTime);
+  savedInt.commitIf(initTime);
 
-    EXPECT_EQ(savedInt.getValue(initTime), initValue);
-    EXPECT_EQ(savedInt.getValue(initTime), initValue);
-    EXPECT_EQ(savedInt.getValue(nextTime), initValue);
-    EXPECT_EQ(savedInt.getValue(nextTime), initValue);
+  EXPECT_EQ(savedInt.getValue(initTime), initValue);
+  EXPECT_EQ(savedInt.getValue(nextTime), initValue);
 
-    savedInt.setValue(nextTime,value2);
+  savedInt.setValue(nextTime, nextValue);
 
-    savedInt.commitIf(nextTime);
+  savedInt.commitIf(nextTime);
 
-    EXPECT_EQ(savedInt.getValue(initTime), initValue);
-    EXPECT_EQ(savedInt.getValue(initTime), initValue);
-    EXPECT_EQ(savedInt.getValue(nextTime), value2);
-    EXPECT_EQ(savedInt.getValue(nextTime), value2);
+  EXPECT_EQ(savedInt.getValue(initTime), nextValue);
+  EXPECT_EQ(savedInt.getValue(nextTime), nextValue);
 
-    savedInt.commitIf(initTime);
+  savedInt.commitIf(initTime);
 
-    EXPECT_EQ(savedInt.getValue(initTime), value2);
-    EXPECT_EQ(savedInt.getValue(initTime), value2);
-    EXPECT_EQ(savedInt.getValue(nextTime), value2);
-    EXPECT_EQ(savedInt.getValue(nextTime), value2);
+  EXPECT_EQ(savedInt.getValue(initTime), nextValue);
+  EXPECT_EQ(savedInt.getValue(nextTime), nextValue);
 }
-*/
+
 }  // namespace

@@ -2,14 +2,12 @@
 #include <stdexcept>
 
 class VariableAlreadyDefinedException : public std::runtime_error {
-
-public:
-  /** 
+ public:
+  /**
    * @param msg The error message
    */
-  explicit 
-  VariableAlreadyDefinedException(const std::string& msg) :
-    std::runtime_error(msg) {}
+  explicit VariableAlreadyDefinedException(const std::string& msg)
+      : std::runtime_error(msg) {}
 
   /** Destructor.
    */
@@ -17,18 +15,12 @@ public:
 };
 
 class ModelNotOpenException : public std::runtime_error {
-
-public:
-  /** 
+ public:
+  /**
    * @param msg The error message
    */
-  explicit 
-  ModelNotOpenException(const std::string& msg) :
-    std::runtime_error(msg) {}
-
-  /** Destructor.
-   */
-  ~ModelNotOpenException() {}
+  explicit ModelNotOpenException(const std::string& msg)
+      : std::runtime_error(msg) {}
 };
 
 class PropagationGraphHasCycles : public std::runtime_error {
@@ -38,8 +30,18 @@ class PropagationGraphHasCycles : public std::runtime_error {
    */
   explicit PropagationGraphHasCycles(const std::string& msg)
       : std::runtime_error(msg) {}
+};
 
-  /** Destructor.
-   */
-  ~PropagationGraphHasCycles() {}
+class FailedToInitialise : public std::runtime_error {
+ public:
+  explicit FailedToInitialise()
+      : std::runtime_error(
+            "Failed to initialise, possibly due to cycle in invariant graph.") {
+  }
+};
+
+// We do not extend std::runtime_error to keep runtime overhead at a minimum.
+class DynamicCycleException {
+ public:
+  explicit DynamicCycleException() {}
 };
