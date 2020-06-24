@@ -7,10 +7,63 @@
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "invariants/linear.hpp"
 #include "propagation/topDownPropagationGraph.hpp"
 
+using ::testing::Return;
+
 namespace {
+
+class MockInvariantSimple : public Invariant {
+  public:
+  bool m_initialized = false;
+
+  MockInvariantSimple() : Invariant(NULL_ID) {}
+
+  void init(const Timestamp&, Engine&) override {
+    m_initialized = true;
+  }
+
+  MOCK_METHOD(void, recompute, (const Timestamp& timestamp, Engine& engine), (override));
+  MOCK_METHOD(
+    void, notifyIntChanged, (const Timestamp& t, Engine& e, LocalId id,
+                                Int oldValue, Int newValue, Int data), (override)
+  );
+  MOCK_METHOD(
+    void, commit, (const Timestamp& timestamp, Engine& engine), (override)
+  );
+};
+
+class MockInvariantAdvanced : public Invariant {
+  public:
+  bool m_initialized = false;
+  std::vector<VarId> m_inputs;
+  VarId m_output;
+
+
+  MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
+    : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {}
+
+  void init([[maybe_unused]] const Timestamp& t, Engine& e) override {
+    assert(m_id != NULL_ID);
+
+    e.registerDefinedVariable(m_output, m_id);
+    for (size_t i = 0; i < m_inputs.size(); ++i) {
+      e.registerInvariantDependsOnVar(m_id, m_inputs[i], LocalId(i), i);
+    }
+    m_initialized = true;
+  }
+
+  MOCK_METHOD(void, recompute, (const Timestamp& timestamp, Engine& engine), (override));
+  MOCK_METHOD(
+    void, notifyIntChanged, (const Timestamp& t, Engine& e, LocalId id,
+                                Int oldValue, Int newValue, Int data), (override)
+  );
+  MOCK_METHOD(
+    void, commit, (const Timestamp& timestamp, Engine& engine), (override)
+  );
+};
 
 class EngineTest : public ::testing::Test {
  protected:
@@ -28,23 +81,22 @@ class EngineTest : public ::testing::Test {
 TEST_F(EngineTest, CreateVariablesAndInvariant) {
   engine->open();
 
-  auto a = engine->makeIntVar(1);
-  auto b = engine->makeIntVar(1);
-  auto c = engine->makeIntVar(1);
-  auto d = engine->makeIntVar(1);
-  auto e = engine->makeIntVar(1);
+  int intVarCount = 10;
+  for (int value = 0; value < intVarCount; ++value) {
+    engine->makeIntVar(value);
+  }
 
   // TODO: use some other invariants...
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({a, b}), c);
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({b, c}), d);
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({c, d}), e);
+  auto invariant = engine->makeInvariant<MockInvariantSimple>();
+
+  EXPECT_CALL(*invariant, recompute(0, testing::_))
+    .Times(1);
+
+  ASSERT_TRUE(invariant->m_initialized);
 
   engine->close();
-  EXPECT_EQ(engine->getStore().getNumVariables(), 5);
-  EXPECT_EQ(engine->getStore().getNumInvariants(), 3);
+  EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
+  EXPECT_EQ(engine->getStore().getNumInvariants(), 1);
 }
 
 TEST_F(EngineTest, RecomputeAndCommit) {
@@ -78,52 +130,33 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 TEST_F(EngineTest, SimplePropagation) {
   engine->open();
 
-  // 5a+2b+3c -> d
-  // b-c -> e
-  // a+2e -> f
-
-  auto a = engine->makeIntVar(1);
-  auto b = engine->makeIntVar(1);
-  auto c = engine->makeIntVar(1);
-  auto d = engine->makeIntVar(123);
-  auto e = engine->makeIntVar(123);
-  auto f = engine->makeIntVar(123);
-
-  engine->makeInvariant<Linear>(std::vector<Int>({5, 2, 3}),
-                                std::vector<VarId>({a, b, c}), d);
-  engine->makeInvariant<Linear>(std::vector<Int>({1, -1}),
-                                std::vector<VarId>({b, c}), e);
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 2}),
-                                std::vector<VarId>({a, e}), f);
+  engine->open();
+  
+  VarId output = engine->makeIntVar(0);
+  VarId a = engine->makeIntVar(1);
+  VarId b = engine->makeIntVar(2);
+  VarId c = engine->makeIntVar(3);
+  
+  auto invariant = engine->makeInvariant<MockInvariantAdvanced>(std::vector<VarId>({a, b, c}), output);
+  
+  EXPECT_CALL(*invariant, commit(0, testing::_))
+    .Times(1);
 
   engine->close();
 
-  // All variables are initialised to 1:
-  // d = 5+2+3 = 10
-  // e = 1-1 = 0
-  // f = 1+0 = 1
+  EXPECT_CALL(*invariant, notifyIntChanged(1, testing::_, LocalId(0), 1, -1, 0))
+    .Times(1);
+  EXPECT_CALL(*invariant, notifyIntChanged(1, testing::_, LocalId(1), 2, -2, 1))
+    .Times(1);
+  EXPECT_CALL(*invariant, notifyIntChanged(1, testing::_, LocalId(2), 3, -3, 2))
+    .Times(1);
 
-  ASSERT_EQ(engine->getValue(d), 10);
-  ASSERT_EQ(engine->getValue(e), 0);
-  ASSERT_EQ(engine->getValue(f), 1);
-
-  // Change c to -4
-  // 5+2-12 -> d = -5
-  // 1+4 -> e = 5
-  // 1+10 -> f = 11
   engine->beginMove();
-  engine->setValue(c, -4);
+  engine->setValue(a, -1);
+  engine->setValue(b, -2);
+  engine->setValue(c, -3);
   engine->endMove();
 
-  engine->beginQuery();
-  engine->query(d);
-  engine->query(e);
-  engine->query(f);
-  engine->endQuery();
-
-  ASSERT_EQ(engine->getValue(d), -5);
-  ASSERT_EQ(engine->getValue(e), 5);
-  ASSERT_EQ(engine->getValue(f), 11);
 }
 
 }  // namespace
