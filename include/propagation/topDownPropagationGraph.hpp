@@ -53,9 +53,9 @@ class TopDownPropagationGraph : public PropagationGraph {
     m_topology.computeBundleCycles();
   }
 
-  virtual void notifyMaybeChanged(const Timestamp&, VarId id) override;
+  virtual void notifyMaybeChanged(Timestamp, VarId id) override;
 
-  virtual VarId getNextStableVariable(const Timestamp&) override;
+  virtual VarId getNextStableVariable(Timestamp) override;
   virtual void registerVar(VarId) override;
 
     size_t getTopologicalKey(VarId id) {

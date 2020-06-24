@@ -45,7 +45,7 @@ class PropagationGraph {
 
   virtual ~PropagationGraph(){};
 
-  virtual void notifyMaybeChanged(const Timestamp& t, VarId id) = 0;
+  virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
 
   /**
    * update internal datastructures based on currently registered  variables and
@@ -85,7 +85,7 @@ class PropagationGraph {
    * returns true if variable id is relevant for propagation.
    * Note that this is not the same thing as the variable being modified.
    */
-  virtual bool isActive([[maybe_unused]] const Timestamp& t,
+  virtual bool isActive([[maybe_unused]] Timestamp t,
                         [[maybe_unused]] VarId id) {
     return true;
   }
@@ -93,7 +93,7 @@ class PropagationGraph {
    * returns true if invariant id is relevant for propagation.
    * Note that this is not the same thing as the invariant being modified.
    */
-  virtual bool isActive([[maybe_unused]] const Timestamp& t,
+  virtual bool isActive([[maybe_unused]] Timestamp t,
                         [[maybe_unused]] InvariantId id) {
     return true;
   }
@@ -107,7 +107,7 @@ class PropagationGraph {
    * current timestamp.
    */
   [[nodiscard]] virtual VarId getNextStableVariable([
-      [maybe_unused]] const Timestamp& t) = 0;
+      [maybe_unused]] Timestamp t) = 0;
 
  inline size_t getNumVariables() {
     return m_numVariables;  // this ignores null var

@@ -12,21 +12,21 @@ class SavedInt {
   Int m_tmpValue;
 
  public:
-  SavedInt(const Timestamp& initTime, const Int& initValue)
+  SavedInt(Timestamp initTime, const Int& initValue)
       : m_tmpTime(initTime),
         m_savedValue(initValue), 
         m_tmpValue(initValue) {}
 
-  // inline Int getResetValue(const Timestamp& currentTime) noexcept {
+  // inline Int getResetValue(Timestamp currentTime) noexcept {
   //   return currentTime == m_tmpTime ? m_tmpValue : (m_tmpValue =
   //   m_savedValue);
   // }
 
-  [[gnu::always_inline]] inline const Timestamp& getTmpTimestamp() const {
+  [[gnu::always_inline]] inline Timestamp getTmpTimestamp() const {
     return m_tmpTime;
   }
 
-  [[gnu::always_inline]] inline Int getValue(const Timestamp& currentTime) const
+  [[gnu::always_inline]] inline Int getValue(Timestamp currentTime) const
       noexcept {
     return currentTime == m_tmpTime ? m_tmpValue : m_savedValue;
   }
@@ -35,13 +35,13 @@ class SavedInt {
     return m_savedValue;
   }
 
-  [[gnu::always_inline]] inline void setValue(const Timestamp& currentTime,
+  [[gnu::always_inline]] inline void setValue(Timestamp currentTime,
                                               const Int& value) noexcept {
     m_tmpTime = currentTime;
     m_tmpValue = value;
   }
 
-  [[gnu::always_inline]] inline void incValue(const Timestamp& currentTime,
+  [[gnu::always_inline]] inline void incValue(Timestamp currentTime,
                                               const Int& inc) noexcept {
     m_tmpValue = (currentTime == m_tmpTime ? m_tmpValue : m_savedValue) + inc;
     m_tmpTime = currentTime;
@@ -59,7 +59,7 @@ class SavedInt {
   }
 
   [[gnu::always_inline]] inline void commitIf(
-      const Timestamp& currentTime) noexcept {
+      Timestamp currentTime) noexcept {
     if (m_tmpTime == currentTime) {
       m_savedValue = m_tmpValue;
     }
