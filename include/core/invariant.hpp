@@ -40,7 +40,7 @@ class Invariant {
 
   virtual void recompute(const Timestamp&, Engine&) = 0;
 
-  virtual VarId getNextDependency(const Timestamp&) = 0;
+  virtual VarId getNextDependency(const Timestamp&, Engine& e) = 0;
 
   virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e) = 0;
 

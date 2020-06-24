@@ -29,7 +29,7 @@ class Linear : public Invariant {
   ~Linear() = default;
   virtual void init(const Timestamp&, Engine&) override;
   virtual void recompute(const Timestamp&, Engine&) override;
-  virtual VarId getNextDependency(const Timestamp&) override;
+  virtual VarId getNextDependency(const Timestamp&, Engine&) override;
   virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e) override;
   virtual void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) override;
