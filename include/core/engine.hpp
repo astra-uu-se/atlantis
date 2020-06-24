@@ -87,6 +87,16 @@ class Engine {
   void commitIf(const Timestamp&, VarId&);
   void commitValue(VarId&, Int val);
 
+  /**
+   * returns the next depenency at the current timestamp.
+   */
+  VarId getNextDependency(InvariantId);
+
+  /**
+   * Notify an invariant that its current dependency has changed
+   */
+  void notifyCurrentDependencyChanged(InvariantId);
+
   //--------------------- Registration ---------------------
   /**
    * Register an invariant in the engine and return its pointer.
@@ -193,4 +203,11 @@ inline void Engine::setValue(const Timestamp& t, VarId& v, Int val) {
 inline void Engine::incValue(const Timestamp& t, VarId& v, Int inc) {
   m_store.getIntVar(v).incValue(t, inc);
   notifyMaybeChanged(t, v);
+}
+
+inline VarId Engine::getNextDependency(InvariantId inv) {
+  return m_store.getInvariant(inv).getNextDependency(m_currentTime);
+}
+inline void Engine::notifyCurrentDependencyChanged(InvariantId inv){
+  m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime, *this);
 }

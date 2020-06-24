@@ -51,8 +51,7 @@ VarId Equal::getNextDependency(const Timestamp& t) {
   }
 }
 
-void Equal::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e,
-                                           Int, Int) {
+void Equal::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   // assert(newValue != oldValue);
   e.setValue(t, m_violationId,
