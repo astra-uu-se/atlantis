@@ -27,7 +27,5 @@ class Equal : public Constraint {
                                 Int oldValue, Int newValue, Int data) override;
   virtual void commit(const Timestamp&, Engine&) override;
   virtual VarId getNextDependency(const Timestamp&) override;
-  virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e,
-                                              Int oldValue,
-                                              Int newValue) override;
+  virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e) override;
 };

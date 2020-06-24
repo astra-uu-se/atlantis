@@ -34,7 +34,8 @@ void Linear::recompute(const Timestamp& t, Engine& e) {
   }
   // Dereference safe as incValue does not retain ptr.
   e.setValue(t, m_b, sum);
-  // m_state.setValue(t, m_X.size());  // Not clear if we actually need to reset this.
+  // m_state.setValue(t, m_X.size());  // Not clear if we actually need to reset
+  // this.
 }
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
@@ -53,11 +54,12 @@ VarId Linear::getNextDependency(const Timestamp& t) {
   }
 }
 
-void Linear::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e,
-                                            Int oldValue, Int newValue) {
+void Linear::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e) {
   assert(m_state.getValue(t) != -1);
-  assert(newValue != oldValue);
-  e.incValue(t, m_b, (newValue - oldValue) * m_A.at(m_state.getValue(t)));
+  Int idx = m_state.getValue(t);
+  Int delta = e.getValue(m_X.at(idx)) - e.getCommitedValue(m_X.at(idx));
+  assert(delta != 0);  // invariants are only notified when they are changed.
+  e.incValue(t, m_b, delta * m_A.at(idx));
 }
 
 void Linear::commit(const Timestamp& t, Engine& e) {
