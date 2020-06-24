@@ -17,9 +17,9 @@ class EqualTest : public ::testing::Test {
     gen = std::mt19937(rd());
     e = std::make_unique<Engine>();
     e->open();
-    violationId = e->makeIntVar(0);
-    x = e->makeIntVar(2);
-    y = e->makeIntVar(2);
+    x = e->makeIntVar(2, -100, 100);
+    y = e->makeIntVar(2, -100, 100);
+    violationId = e->makeIntVar(0, 0, 200);
 
     equal = e->makeConstraint<Equal>(violationId, x, y);
     e->close();

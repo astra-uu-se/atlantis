@@ -57,7 +57,7 @@ void Engine::close() {
 }
 
 //---------------------Notificaion/Modification---------------------
-void Engine::notifyMaybeChanged(const Timestamp& t, VarId id) {
+void Engine::notifyMaybeChanged(Timestamp t, VarId id) {
   m_propGraph.notifyMaybeChanged(t, id);
 }
 
@@ -73,7 +73,7 @@ void Engine::commit(VarId& v) {
   // m_store.getIntVar(v).validate();
 }
 
-void Engine::commitIf(const Timestamp& t, VarId& v) {
+void Engine::commitIf(Timestamp t, VarId& v) {
   m_store.getIntVar(v).commitIf(t);
   // todo: do something else? like:
   // m_store.getIntVar(v).validate();
@@ -124,11 +124,11 @@ void Engine::propagate() {
 
 //---------------------Registration---------------------
 
-VarId Engine::makeIntVar(Int initValue) {
+VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   if (!m_isOpen) {
     throw ModelNotOpenException("Cannot make IntVar when store is closed.");
   }
-  VarId newId = m_store.createIntVar(initValue);
+  VarId newId = m_store.createIntVar(initValue, lowerBound, upperBound);
   m_propGraph.registerVar(newId);
   assert(newId.id == m_dependentInvariantData.size());
   m_dependentInvariantData.push_back({});

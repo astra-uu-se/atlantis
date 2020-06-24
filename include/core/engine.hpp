@@ -56,7 +56,7 @@ class Engine {
    * @param t the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  void notifyMaybeChanged(const Timestamp& t, VarId id);
+  void notifyMaybeChanged(Timestamp t, VarId id);
 
   //--------------------- Move semantics ---------------------
   void beginMove();
@@ -67,24 +67,24 @@ class Engine {
   void query(VarId);
 
   //--------------------- Variable ---------------------
-  void incValue(const Timestamp&, VarId&, Int inc);
+  void incValue(Timestamp, VarId&, Int inc);
   inline void incValue(VarId& v, Int val) { incValue(m_currentTime, v, val); }
 
-  void setValue(const Timestamp&, VarId&, Int val);
+  void setValue(Timestamp, VarId&, Int val);
   inline void setValue(VarId& v, Int val) { setValue(m_currentTime, v, val); }
-  Int getValue(const Timestamp&, VarId&);
+  Int getValue(Timestamp, VarId&);
   inline Int getValue(VarId& v) { return getValue(m_currentTime, v); }
 
   Int getCommitedValue(VarId&);
 
   Timestamp getTmpTimestamp(VarId&);
 
-  inline bool hasChanged(const Timestamp& t, VarId& v) const {
+  inline bool hasChanged(Timestamp t, VarId& v) const {
     return m_store.getConstIntVar(v).hasChanged(t);
   }
   void commit(VarId&);  // todo: this feels dangerous, maybe commit should
                         // always have a timestamp?
-  void commitIf(const Timestamp&, VarId&);
+  void commitIf(Timestamp, VarId&);
   void commitValue(VarId&, Int val);
 
   /**
@@ -122,7 +122,7 @@ class Engine {
    * Creates an IntVar and registers it to the engine.
    * @return the created IntVar
    */
-  VarId makeIntVar(Int initValue);
+  VarId makeIntVar(Int initValue, Int lowerBound, Int upperBound);
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
@@ -144,7 +144,7 @@ class Engine {
   void registerDefinedVariable(VarId dependent, InvariantId source);
 
   const Store& getStore();
-  const Timestamp& getCurrentTime();
+  Timestamp getCurrentTime();
 
   BottomUpPropagationGraph& getPropGraph();
 };
@@ -180,10 +180,10 @@ Engine::makeConstraint(Args&&... args) {
 //--------------------- Inlined functions ---------------------
 
 inline const Store& Engine::getStore() { return m_store; }
-inline const Timestamp& Engine::getCurrentTime() { return m_currentTime; }
+inline Timestamp Engine::getCurrentTime() { return m_currentTime; }
 inline BottomUpPropagationGraph& Engine::getPropGraph() { return m_propGraph; }
 
-inline Int Engine::getValue(const Timestamp& t, VarId& v) {
+inline Int Engine::getValue(Timestamp t, VarId& v) {
   return m_store.getIntVar(v).getValue(t);
 }
 
@@ -195,12 +195,12 @@ inline Timestamp Engine::getTmpTimestamp(VarId& v) {
   return m_store.getIntVar(v).getTmpTimestamp();
 }
 
-inline void Engine::setValue(const Timestamp& t, VarId& v, Int val) {
+inline void Engine::setValue(Timestamp t, VarId& v, Int val) {
   m_store.getIntVar(v).setValue(t, val);
   notifyMaybeChanged(t, v);
 }
 
-inline void Engine::incValue(const Timestamp& t, VarId& v, Int inc) {
+inline void Engine::incValue(Timestamp t, VarId& v, Int inc) {
   m_store.getIntVar(v).incValue(t, inc);
   notifyMaybeChanged(t, v);
 }
