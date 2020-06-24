@@ -4,12 +4,11 @@
 #include "core/types.hpp"
 
 extern Id NULL_ID;
-IntVar::IntVar() : IntVar(NULL_ID) {}
-IntVar::IntVar(Id t_id)
-    : IntVar(t_id, 0) {}
+IntVar::IntVar(Int t_lowerBound, Int t_upperBound)
+  : IntVar(NULL_ID, t_lowerBound, t_upperBound) {}
 
-IntVar::IntVar(Id t_id, Int initValue)
-    : IntVar(t_id, initValue, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max()) {}
+IntVar::IntVar(Id t_id, Int t_lowerBound, Int t_upperBound)
+    : IntVar(t_id, 0, t_lowerBound, t_upperBound) {}
 
 IntVar::IntVar(Id t_id, Int initValue, Int t_lowerBound, Int t_upperBound)
     : Var(t_id),
