@@ -102,29 +102,22 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
 TEST_F(EngineTest, RecomputeAndCommit) {
   engine->open();
 
-  auto a = engine->makeIntVar(1);
-  auto b = engine->makeIntVar(1);
-  auto c = engine->makeIntVar(1);
-  auto d = engine->makeIntVar(1);
-  auto e = engine->makeIntVar(1);
+  int intVarCount = 10;
+  for (int value = 0; value < intVarCount; ++value) {
+    engine->makeIntVar(value);
+  }
 
-  // Register out of dependency order!
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({c, d}), e);
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({b, c}), d);
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({a, b}), c);
+  // TODO: use some other invariants...
+  auto invariant = engine->makeInvariant<MockInvariantSimple>();
+
+  EXPECT_CALL(*invariant, recompute(0, testing::_))
+    .Times(1);
+
+  ASSERT_TRUE(invariant->m_initialized);
 
   engine->close();
-  // 1+1 = 2 = c
-  // 2+1 = 3 = d
-  // 2+3 = 5 = e
-  EXPECT_EQ(engine->getCommitedValue(a), 1);
-  EXPECT_EQ(engine->getCommitedValue(b), 1);
-  EXPECT_EQ(engine->getCommitedValue(c), 2);
-  EXPECT_EQ(engine->getCommitedValue(d), 3);
-  EXPECT_EQ(engine->getCommitedValue(e), 5);
+  EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
+  EXPECT_EQ(engine->getStore().getNumInvariants(), 1);
 }
 
 TEST_F(EngineTest, SimplePropagation) {
