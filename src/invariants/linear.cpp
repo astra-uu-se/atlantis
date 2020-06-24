@@ -45,7 +45,7 @@ void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
   e.incValue(t, m_b, (newValue - oldValue) * coef);
 }
 
-VarId Linear::getNextDependency(const Timestamp& t) {
+VarId Linear::getNextDependency(const Timestamp& t, Engine& e) {
   m_state.incValue(t, 1);
   if (static_cast<size_t>(m_state.getValue(t)) == m_X.size()) {
     return NULL_ID;  // Done
@@ -57,7 +57,7 @@ VarId Linear::getNextDependency(const Timestamp& t) {
 void Linear::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   Int idx = m_state.getValue(t);
-  Int delta = e.getValue(m_X.at(idx)) - e.getCommitedValue(m_X.at(idx));
+  Int delta = e.getValue(t, m_X.at(idx)) - e.getCommitedValue(m_X.at(idx));
   assert(delta != 0);  // invariants are only notified when they are changed.
   e.incValue(t, m_b, delta * m_A.at(idx));
 }

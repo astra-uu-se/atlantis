@@ -94,7 +94,7 @@ void Engine::query(VarId id) {
 void Engine::endQuery() {
   // m_propGraph.schedulePropagation(m_currentTime, *this);
   // propagate();
-  m_propGraph.propagate();
+  m_propGraph.propagate(m_currentTime);
 }
 
 // Propagates at the current internal time of the engine.

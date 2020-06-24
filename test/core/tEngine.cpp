@@ -26,7 +26,7 @@ class MockInvariantSimple : public Invariant {
 
   MOCK_METHOD(void, recompute, (const Timestamp& timestamp, Engine& engine), (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (const Timestamp&), (override));
+  MOCK_METHOD(VarId, getNextDependency, (const Timestamp&, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentDependencyChanged, (const Timestamp&, Engine& e), (override));
 
   MOCK_METHOD(
@@ -59,7 +59,7 @@ class MockInvariantAdvanced : public Invariant {
   }
 
   MOCK_METHOD(void, recompute, (const Timestamp& timestamp, Engine& engine), (override));
-  MOCK_METHOD(VarId, getNextDependency, (const Timestamp&), (override));
+  MOCK_METHOD(VarId, getNextDependency, (const Timestamp&, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentDependencyChanged, (const Timestamp&, Engine& e), (override));
   MOCK_METHOD(
     void, notifyIntChanged, (const Timestamp& t, Engine& e, LocalId id,
@@ -166,7 +166,7 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->setValue(c, -3);
   engine->endMove();
 
-  EXPECT_CALL(*invariant, getNextDependency(moveTimestamp))
+  EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
     .WillOnce(Return(a))
     .WillOnce(Return(b))
     .WillOnce(Return(c))

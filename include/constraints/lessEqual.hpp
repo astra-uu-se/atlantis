@@ -26,6 +26,6 @@ class LessEqual : public Constraint {
   virtual void notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) override;
   virtual void commit(const Timestamp&, Engine&) override;
-  virtual VarId getNextDependency(const Timestamp&) override;
+  virtual VarId getNextDependency(const Timestamp&, Engine&) override;
   virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e) override;
 };

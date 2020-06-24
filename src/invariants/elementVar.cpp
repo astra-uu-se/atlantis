@@ -35,6 +35,22 @@ void ElementVar::notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
   // e.setValue(t, m_b, m_A.at(newValue));
 }
 
+VarId ElementVar::getNextDependency(const Timestamp& t, Engine& e) {
+  m_state.incValue(t, 1);
+  if (m_state.getValue(t) == 0) {
+    return m_i;
+  } else if (m_state.getValue(t) == 1) {
+    return m_X.at(e.getValue(t, m_i));
+  } else {
+    return NULL_ID;  // Done
+  }
+}
+
+void ElementVar::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e) {
+  assert(m_state.getValue(t) == 0 || m_state.getValue(t) == 1);
+  e.setValue(t, m_b, e.getValue(t, m_X.at(e.getValue(t, m_i))));
+}
+
 void ElementVar::commit(const Timestamp& t, Engine& e) {
   // todo: do nodes validate themself or is it done by engine?
   // this->validate(t);

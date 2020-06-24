@@ -41,7 +41,7 @@ void LessEqual::notifyIntChanged(const Timestamp& t, Engine& e,
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-VarId LessEqual::getNextDependency(const Timestamp& t) {
+VarId LessEqual::getNextDependency(const Timestamp& t, Engine&) {
   m_state.incValue(t, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?m_x:m_y;
