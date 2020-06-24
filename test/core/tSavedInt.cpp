@@ -49,11 +49,6 @@ TEST_F(SavedIntTest, SavedIntConstructor) {
   // initial value (as no other value has been committed)
   EXPECT_EQ(savedInt.getValue(otherTime), value);
 
-  EXPECT_THROW(
-    SavedInt(initTime, value, 10, 0),
-    std::out_of_range
-  );
-
 }
 
 TEST_F(SavedIntTest, SavedIntSetGetValue) {
@@ -187,15 +182,11 @@ TEST_F(SavedIntTest, SavedIntCommitIf) {
   savedInt.commitIf(nextTime);
 
   EXPECT_EQ(savedInt.getValue(initTime), initValue);
-  EXPECT_EQ(savedInt.getValue(initTime), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTime), initValue);
   EXPECT_EQ(savedInt.getValue(nextTime), initValue);
 
   savedInt.commitIf(initTime);
 
   EXPECT_EQ(savedInt.getValue(initTime), initValue);
-  EXPECT_EQ(savedInt.getValue(initTime), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTime), initValue);
   EXPECT_EQ(savedInt.getValue(nextTime), initValue);
 
   savedInt.setValue(nextTime, nextValue);
@@ -203,58 +194,12 @@ TEST_F(SavedIntTest, SavedIntCommitIf) {
   savedInt.commitIf(nextTime);
 
   EXPECT_EQ(savedInt.getValue(initTime), nextValue);
-  EXPECT_EQ(savedInt.getValue(initTime), nextValue);
-  EXPECT_EQ(savedInt.getValue(nextTime), nextValue);
   EXPECT_EQ(savedInt.getValue(nextTime), nextValue);
 
   savedInt.commitIf(initTime);
 
   EXPECT_EQ(savedInt.getValue(initTime), nextValue);
-  EXPECT_EQ(savedInt.getValue(initTime), nextValue);
-  EXPECT_EQ(savedInt.getValue(nextTime), nextValue);
   EXPECT_EQ(savedInt.getValue(nextTime), nextValue);
 }
-
-TEST_F(SavedIntTest, InDomain) {
-    
-  Int lowerBound = -10;
-  Int upperBound = 10;
-  Timestamp timestamp = Timestamp(1);
-  SavedInt savedInt = SavedInt(timestamp, 0, lowerBound, upperBound);
-
-  for (Int value = lowerBound; value <= upperBound; ++value) {
-    EXPECT_TRUE(savedInt.inDomain(value));
-  }
-
-  for (Int value = lowerBound - 1000; value < lowerBound; ++value) {
-    EXPECT_FALSE(savedInt.inDomain(value));
-  }
-
-  for (Int value = upperBound + 1; value < upperBound + 1000; ++value) {
-    EXPECT_FALSE(savedInt.inDomain(value));
-  }
-}
-
-TEST_F(SavedIntTest, UpdateDomain) {  
-  Int initialLowerBound = 0;
-  Int initialUpperBound = 0;
-  
-  Timestamp timestamp = Timestamp(1);
-  SavedInt savedInt = SavedInt(timestamp, 0, initialLowerBound, initialUpperBound);
-
-  for (Int value = 1; value <= 1000; ++value) {
-    EXPECT_FALSE(savedInt.inDomain(-value));
-    EXPECT_FALSE(savedInt.inDomain(value));
-    savedInt.updateDomain(-value, value);
-    EXPECT_TRUE(savedInt.inDomain(-value));
-    EXPECT_TRUE(savedInt.inDomain(value));
-  }
-
-  EXPECT_THROW(
-    savedInt.updateDomain(10, -10),
-    std::out_of_range
-  );
-}
-
 
 }  // namespace

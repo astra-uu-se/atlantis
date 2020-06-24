@@ -10,6 +10,8 @@ class Engine;  // Forward declaration
 class IntVar : public Var {
  private:
   SavedInt m_value;
+  Int m_lowerBound;
+  Int m_upperBound;
 
   [[gnu::always_inline]] inline void setValue(const Timestamp& timestamp,
                                               Int value) {
@@ -50,9 +52,15 @@ class IntVar : public Var {
     return m_value.getCommittedValue();
   }
   [[gnu::always_inline]] inline bool inDomain(Int t_value) const {
-    return m_value.inDomain(t_value);
+    return m_lowerBound <= t_value && t_value <= m_upperBound;
   }
-  [[gnu::always_inline]] inline void updateDomain(Int lowerBound, Int upperBound) {
-    m_value.updateDomain(lowerBound, upperBound);
+  [[gnu::always_inline]] inline void updateDomain(Int t_lowerBound, Int t_upperBound) {
+    if (t_lowerBound > t_upperBound) {
+      throw std::out_of_range(
+        "Lower bound must be smaller than or equal to upper bound"
+      );
+    }
+    m_lowerBound = t_lowerBound;
+    m_upperBound = t_upperBound;
   }
 };
