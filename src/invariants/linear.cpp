@@ -45,7 +45,7 @@ void Linear::notifyIntChanged(Timestamp t, Engine& e,
   e.incValue(t, m_b, (newValue - oldValue) * coef);
 }
 
-VarId Linear::getNextDependency(const Timestamp& t, Engine& e) {
+VarId Linear::getNextDependency(Timestamp t, Engine& e) {
   m_state.incValue(t, 1);
   if (static_cast<size_t>(m_state.getValue(t)) == m_X.size()) {
     return NULL_ID;  // Done
