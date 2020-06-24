@@ -10,7 +10,7 @@ extern Id NULL_ID;
 ElementVar::ElementVar(VarId i, std::vector<VarId>&& X, VarId b)
     : Invariant(NULL_ID), m_i(i), m_X(std::move(X)), m_b(b) {}
 
-void ElementVar::init([[maybe_unused]] const Timestamp& t, Engine& e) {
+void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);
 
   e.registerDefinedVariable(m_b, m_id);
@@ -20,11 +20,11 @@ void ElementVar::init([[maybe_unused]] const Timestamp& t, Engine& e) {
   }
 }
 
-void ElementVar::recompute(const Timestamp& t, Engine& e) {
+void ElementVar::recompute(Timestamp t, Engine& e) {
   e.setValue(t, m_b, e.getValue(t, m_X.at(e.getValue(t, m_i))));
 }
 
-void ElementVar::notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
+void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId id,
                                   Int oldValue, Int newValue, Int) {
   assert(newValue != oldValue);
   if (id.id == LocalId(-1).id) {
@@ -35,7 +35,7 @@ void ElementVar::notifyIntChanged(const Timestamp& t, Engine& e, LocalId id,
   // e.setValue(t, m_b, m_A.at(newValue));
 }
 
-VarId ElementVar::getNextDependency(const Timestamp& t, Engine& e) {
+VarId ElementVar::getNextDependency(Timestamp t, Engine& e) {
   m_state.incValue(t, 1);
   if (m_state.getValue(t) == 0) {
     return m_i;
@@ -46,12 +46,12 @@ VarId ElementVar::getNextDependency(const Timestamp& t, Engine& e) {
   }
 }
 
-void ElementVar::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e) {
+void ElementVar::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) == 0 || m_state.getValue(t) == 1);
   e.setValue(t, m_b, e.getValue(t, m_X.at(e.getValue(t, m_i))));
 }
 
-void ElementVar::commit(const Timestamp& t, Engine& e) {
+void ElementVar::commit(Timestamp t, Engine& e) {
   // todo: do nodes validate themself or is it done by engine?
   // this->validate(t);
   e.commitIf(t, m_b);

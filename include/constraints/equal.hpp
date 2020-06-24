@@ -22,7 +22,7 @@ class Equal : public Constraint {
   virtual void recompute(Timestamp, Engine&) override;
   virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) override;
-  virtual void commit(const Timestamp&, Engine&) override;
-  virtual VarId getNextDependency(const Timestamp&, Engine&) override;
-  virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e) override;
+  virtual void commit(Timestamp, Engine&) override;
+  virtual VarId getNextDependency(Timestamp, Engine&) override;
+  virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
 };
