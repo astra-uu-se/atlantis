@@ -49,7 +49,7 @@ class MockInvariantAdvanced : public Invariant {
   MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
     : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {}
 
-  void init([[maybe_unused]] const Timestamp& t, Engine& e) override {
+  void init(const Timestamp&, Engine& e) override {
     assert(m_id != NULL_ID);
 
     e.registerDefinedVariable(m_output, m_id);

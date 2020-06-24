@@ -15,7 +15,7 @@ LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
     : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
 }
 
-void LessEqual::init([[maybe_unused]] const Timestamp& t, Engine& e) {
+void LessEqual::init(const Timestamp&, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   assert(m_id != NULL_ID);
@@ -32,8 +32,8 @@ void LessEqual::recompute(const Timestamp& t, Engine& e) {
 }
 
 void LessEqual::notifyIntChanged(const Timestamp& t, Engine& e,
-                                 [[maybe_unused]] LocalId id, Int oldValue,
-                                 Int newValue, [[maybe_unused]] Int coef) {
+                                 LocalId, Int oldValue,
+                                 Int newValue, Int) {
   assert(newValue != oldValue);  // precondition
   // if x decreases and violation is 0, then do nothing
   // if y increases and violation is 0, then do nothing

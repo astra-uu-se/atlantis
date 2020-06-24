@@ -16,7 +16,7 @@ Linear::Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b)
 //   init(e);
 // }
 
-void Linear::init([[maybe_unused]] const Timestamp& t, Engine& e) {
+void Linear::init(const Timestamp&, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   assert(m_id != NULL_ID);
@@ -38,7 +38,7 @@ void Linear::recompute(const Timestamp& t, Engine& e) {
 }
 
 void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
-                              [[maybe_unused]] LocalId id, Int oldValue,
+                              LocalId, Int oldValue,
                               Int newValue, Int coef) {
   assert(newValue != oldValue);  // precondition
   e.incValue(t, m_b, (newValue - oldValue) * coef);
