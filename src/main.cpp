@@ -1,4 +1,5 @@
 #include <iostream>
+#include <random>
 #include <utility>
 #include <vector>
 
@@ -30,32 +31,20 @@ int main() {
   engine.close();
   std::cout << "----- end setup -----\n";
 
-  std::cout << "----- timestamp 1 -----\n";
-  Timestamp timestamp = 0;
-  {
-    timestamp = 1;
-    engine.setValue(timestamp, a, 2);
-    abc->notifyIntChanged(timestamp, engine, 0, 1, 2, 1);
-    std::cout << "new value of c: " << engine.getValue(timestamp, c) << "\n";
-    acfg->notifyIntChanged(timestamp, engine, 0, engine.getCommitedValue(a),
-                           engine.getValue(timestamp, a), 3);
-    std::cout << "new value of g: " << engine.getValue(timestamp, g) << "\n";
-    acfg->notifyIntChanged(timestamp, engine, 1, engine.getCommitedValue(c),
-                           engine.getValue(timestamp, c), 2);
-    std::cout << "new value of g: " << engine.getValue(timestamp, g) << "\n";
+  std::random_device rd;
+  std::mt19937 gen = std::mt19937(rd());
+
+  std::uniform_int_distribution<> distribution{-100000, 100000};
+  for (size_t i = 0; i < 1000000; i++) {
+    engine.beginMove();
+    engine.setValue(a, distribution(gen));
+    engine.setValue(c, distribution(gen));
+    engine.endMove();
+
+    engine.beginQuery();
+    engine.query(g);
+    engine.endQuery();
   }
-  std::cout << "----- timestamp 2 -----\n";
-  {
-    timestamp = 2;
-    engine.setValue(timestamp, a, 0);
-    abc->notifyIntChanged(timestamp, engine, 0, engine.getCommitedValue(a),
-                          engine.getValue(timestamp, a), 1);
-    std::cout << "new value of c: " << engine.getValue(timestamp, c) << "\n";
-    acfg->notifyIntChanged(timestamp, engine, 0, engine.getCommitedValue(a),
-                           engine.getValue(timestamp, a), 3);
-    std::cout << "new value of g: " << engine.getValue(timestamp, g) << "\n";
-    acfg->notifyIntChanged(timestamp, engine, 1, engine.getCommitedValue(c),
-                           engine.getValue(timestamp, c), 2);
-    std::cout << "new value of g: " << engine.getValue(timestamp, g) << "\n";
-  }
+
+  std::cout << "----- done -----\n";
 }
