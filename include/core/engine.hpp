@@ -75,7 +75,7 @@ class Engine {
   Int getValue(Timestamp, VarId&);
   inline Int getValue(VarId& v) { return getValue(m_currentTime, v); }
 
-  Int getCommitedValue(VarId&);
+  Int getCommittedValue(VarId&);
 
   Timestamp getTmpTimestamp(VarId&);
 
@@ -195,7 +195,7 @@ inline Int Engine::getValue(Timestamp t, VarId& v) {
   return m_store.getIntVar(v).getValue(t);
 }
 
-inline Int Engine::getCommitedValue(VarId& v) {
+inline Int Engine::getCommittedValue(VarId& v) {
   return m_store.getIntVar(v).getCommittedValue();
 }
 

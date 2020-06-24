@@ -41,19 +41,19 @@ class LinearTest : public ::testing::Test {
  */
 
 TEST_F(LinearTest, Init) {
-  EXPECT_EQ(e->getCommitedValue(d), -39);
+  EXPECT_EQ(e->getCommittedValue(d), -39);
   EXPECT_EQ(e->getValue(e->getTmpTimestamp(d), d), -39);
 }
 
 TEST_F(LinearTest, Recompute) {
 
   EXPECT_EQ(e->getValue(0, d), -39);
-  EXPECT_EQ(e->getCommitedValue(d), -39);
+  EXPECT_EQ(e->getCommittedValue(d), -39);
 
   Timestamp newTime = 1;
   e->setValue(newTime, a, 40);
   linear->recompute(newTime, *e);
-  EXPECT_EQ(e->getCommitedValue(d), -39);
+  EXPECT_EQ(e->getCommittedValue(d), -39);
   EXPECT_EQ(e->getValue(newTime, d), 0);
 }
 
@@ -67,14 +67,14 @@ TEST_F(LinearTest, NotifyChange) {
 
   EXPECT_EQ(e->getValue(time1, a), 1);
   e->setValue(time1, a, 40);
-  EXPECT_EQ(e->getCommitedValue(a), 1);
+  EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time1, a), 40);
-  linear->notifyIntChanged(time1, *e, unused, e->getCommitedValue(a),
+  linear->notifyIntChanged(time1, *e, unused, e->getCommittedValue(a),
                            e->getValue(time1, a), 1);
   EXPECT_EQ(e->getValue(time1, d), 0);  // incremental value of d is 0;
 
   e->setValue(time1, b, 0);
-  linear->notifyIntChanged(time1, *e, unused, e->getCommitedValue(b),
+  linear->notifyIntChanged(time1, *e, unused, e->getCommittedValue(b),
                            e->getValue(time1, b), 10);
   auto tmpValue = e->getValue(time1, d);  // incremental value of d is -40;
 
@@ -86,9 +86,9 @@ TEST_F(LinearTest, NotifyChange) {
 
   EXPECT_EQ(e->getValue(time2, a), 1);
   e->setValue(time2, a, 20);
-  EXPECT_EQ(e->getCommitedValue(a), 1);
+  EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time2, a), 20);
-  linear->notifyIntChanged(time2, *e, unused, e->getCommitedValue(a),
+  linear->notifyIntChanged(time2, *e, unused, e->getCommittedValue(a),
                            e->getValue(time2, a), 1);
   EXPECT_EQ(e->getValue(time2, d), -20);  // incremental value of d is 0;
 }
@@ -104,10 +104,10 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
   for (size_t i = 0; i < 1000; ++i) { 
     ++currentTime;
     // Check that we do not accidentally commit
-    ASSERT_EQ(e->getCommitedValue(a), 1);
-    ASSERT_EQ(e->getCommitedValue(b), 2);
-    ASSERT_EQ(e->getCommitedValue(c), 3);
-    ASSERT_EQ(e->getCommitedValue(d), -39);  // d is commited by register.
+    ASSERT_EQ(e->getCommittedValue(a), 1);
+    ASSERT_EQ(e->getCommittedValue(b), 2);
+    ASSERT_EQ(e->getCommittedValue(c), 3);
+    ASSERT_EQ(e->getCommittedValue(d), -39);  // d is committed by register.
 
     // Set all variables
     e->setValue(currentTime, a, distribution(gen));
@@ -115,16 +115,16 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
     e->setValue(currentTime, c, distribution(gen));
 
     // notify changes
-    if (e->getCommitedValue(a) != e->getValue(currentTime, a)) {
-      linear->notifyIntChanged(currentTime, *e, unused, e->getCommitedValue(a),
+    if (e->getCommittedValue(a) != e->getValue(currentTime, a)) {
+      linear->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(a),
                                e->getValue(currentTime, a), 1);
     }
-    if (e->getCommitedValue(b) != e->getValue(currentTime, b)) {
-      linear->notifyIntChanged(currentTime, *e, unused, e->getCommitedValue(b),
+    if (e->getCommittedValue(b) != e->getValue(currentTime, b)) {
+      linear->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(b),
                                e->getValue(currentTime, b), 10);
     }
-    if (e->getCommitedValue(c) != e->getValue(currentTime, c)) {
-      linear->notifyIntChanged(currentTime, *e, unused, e->getCommitedValue(c),
+    if (e->getCommittedValue(c) != e->getValue(currentTime, c)) {
+      linear->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(c),
                                e->getValue(currentTime, c), -20);
     }
 
@@ -137,7 +137,7 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
 }
 
 TEST_F(LinearTest, Commit) {
-  EXPECT_EQ(e->getCommitedValue(d), -39);
+  EXPECT_EQ(e->getCommittedValue(d), -39);
 
   LocalId unused = -1;
 
@@ -147,13 +147,13 @@ TEST_F(LinearTest, Commit) {
   e->setValue(currentTime, b, 2);  // This change is not notified and should not
                                    // have an impact on the commit
 
-  linear->notifyIntChanged(currentTime, *e, unused, e->getCommitedValue(a),
+  linear->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(a),
                            e->getValue(currentTime, a), 1);
 
   // Commit at wrong timestamp should have no impact
   linear->commit(currentTime + 1, *e);
-  EXPECT_EQ(e->getCommitedValue(d), -39);
+  EXPECT_EQ(e->getCommittedValue(d), -39);
   linear->commit(currentTime, *e);
-  EXPECT_EQ(e->getCommitedValue(d), 0);
+  EXPECT_EQ(e->getCommittedValue(d), 0);
 }
 }  // namespace
