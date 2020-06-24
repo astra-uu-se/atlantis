@@ -16,6 +16,9 @@ class BottomUpPropagationGraph : public PropagationGraph {
   std::vector<bool> varIsOnStack;
   std::vector<bool> invariantIsOnStack;
 
+  bool isCommitting;
+  std::vector<VarId> uncommittedVars;
+
   void pushVariableStack(VarId v);
   void popVariableStack();
   void pushInvariantStack(InvariantId v);
@@ -28,7 +31,7 @@ class BottomUpPropagationGraph : public PropagationGraph {
   // stack.
   void expandInvariant(InvariantId inv);
   void notifyCurrentInvariant();
-  void visitNextVariable(Timestamp);
+  bool visitNextVariable(Timestamp);
 
   void printVarStack() {
     std::cout << "Variable stack: [";
@@ -51,6 +54,8 @@ class BottomUpPropagationGraph : public PropagationGraph {
  public:
   // BottomUpPropagationGraph() : BottomUpPropagationGraph(1000) {}
   BottomUpPropagationGraph(Engine& e, size_t expectedSize);
+
+  void fullPropagateAndCommit(Timestamp);
 
   void propagate(Timestamp);
   void clearForPropagation();

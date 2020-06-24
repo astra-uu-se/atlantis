@@ -17,9 +17,19 @@ BottomUpPropagationGraph::BottomUpPropagationGraph(Engine& e,
   invariantIsOnStack.push_back(false);
 }
 
-void BottomUpPropagationGraph::notifyMaybeChanged(Timestamp, VarId) {}
+void BottomUpPropagationGraph::notifyMaybeChanged(Timestamp t, VarId id) {
+  if (isCommitting && !varIsOnStack.at(id)) {
+    // Is a variable changed while committing and it is currently on the stack,
+    // then we need to remember it for later.
+
+    // TODO: do not push the same variable multiple times by keeping a either
+    // bool flags or making uncommittedVars a set.
+    uncommittedVars.push_back(VarId);
+  }
+}
 
 void BottomUpPropagationGraph::clearForPropagation() {
+  uncommittedVars.clear();
   size_t vsSize = variableStack.capacity();
   variableStack.clear();
   variableStack.reserve(
@@ -29,14 +39,67 @@ void BottomUpPropagationGraph::clearForPropagation() {
   size_t isSize = invariantStack.capacity();
   invariantStack.clear();
   invariantStack.reserve(isSize);
-  // stableAt.assign(stableAt.size(), (Timestamp)NULL_TIMESTAMP); // No need to
-  // clear due to timestamping!
   varIsOnStack.assign(varIsOnStack.size(), false);
   invariantIsOnStack.assign(invariantIsOnStack.size(), false);
 }
 void BottomUpPropagationGraph::registerForPropagation(Timestamp, VarId id) {
   variableStack.push_back(id);
 }
+
+void BottomUpPropagationGraph::fullPropagateAndCommit(Timestamp currentTime) {
+  isCommitting = true;
+  do {
+    // Push all uncommitted vars into the stack;
+    while (!uncommittedVars.empty()) {
+      if (!varIsOnStack.at(uncommittedVars.back()) &&
+          isStable(uncommittedVars.back())) {
+        // do not mark that the variables are on the stack!
+        // doing so may give the incorrect appearance of a cycle.
+        variableStack.push_back(uncommittedVars.back());
+      }
+      uncommittedVars.pop_back();
+    }
+
+    while (!variableStack.empty()) {
+      VarId currentVar = variableStack.back();
+      // If the variable is not stable, then expand it.
+      if (!isStable(currentTime, currentVar)) {
+        if (m_definingInvariant.at(currentVar).id != NULL_ID) {
+          // Variable is defined and not stable, so expand defining invariant.
+          expandInvariant(m_definingInvariant.at(currentVar));
+          continue;
+        } else {
+          markStable(currentTime, currentVar);
+          goto handle_stable_var;  // Don't panic.
+        }
+      } else if (invariantStack.empty()) {
+        popVariableStack();  // we are at an output variable that is already
+                             // stable. Just continue!
+        continue;
+      } else {  // If stable
+      handle_stable_var:
+        if (m_engine.hasChanged(currentTime, currentVar)) {
+          // If the variable is stable and has changed then just send a
+          // notification to top invariant (i.e, the one asking for its value)
+          notifyCurrentInvariant();
+        }
+        bool invariantDone = visitNextVariable(currentTime);
+        if (invariantDone) {
+          // The top invariant has finished propagating, so all defined vars can
+          // be marked as stable at the current time and committed.
+          for (auto defVar : variableDefinedBy(invariantStack.back())) {
+            markStable(currentTime, defVar);
+            m_engine.commitIf(currentTime, defVar);
+          }
+          popInvariantStack();
+        }
+        continue;
+      }
+    }
+  } while (!uncommittedVars.empty());
+  isCommitting = false;
+}
+
 void BottomUpPropagationGraph::propagate(Timestamp currentTime) {
   // recursively expand variables to compute their value.
   while (!variableStack.empty()) {
@@ -62,7 +125,15 @@ void BottomUpPropagationGraph::propagate(Timestamp currentTime) {
         // notification to top invariant (i.e, the one asking for its value)
         notifyCurrentInvariant();
       }
-      visitNextVariable(currentTime);
+      bool invariantDone = visitNextVariable(currentTime);
+      if (invariantDone) {
+        // The top invariant has finished propagating, so all defined vars can
+        // be marked as stable at the current time.
+        for (auto defVar : variableDefinedBy(invariantStack.back())) {
+          markStable(currentTime, defVar);
+        }
+        popInvariantStack();
+      }
       continue;
     }
   }
@@ -118,21 +189,14 @@ inline void BottomUpPropagationGraph::notifyCurrentInvariant() {
   m_engine.notifyCurrentDependencyChanged(invariantStack.back());
 }
 
-// TODO: this will push a variable onto the stack even when the variable is
-// stable. The reason for this is that we will then have to notify the top
-// invariant that the variable is stable (in case it has changed).
-inline void BottomUpPropagationGraph::visitNextVariable(Timestamp currentTime) {
+inline bool BottomUpPropagationGraph::visitNextVariable(Timestamp currentTime) {
   popVariableStack();
   VarId nextVar = m_engine.getNextDependency(invariantStack.back());
   if (nextVar.id == NULL_ID) {
-    // The top invariant has finished propagating, so all defined vars can be
-    // marked as stable at the current time.
-    for (auto defVar : variableDefinedBy(invariantStack.back())) {
-      markStable(currentTime, defVar);
-    }
-    popInvariantStack();
+    return true;  // done with invariant
   } else {
     pushVariableStack(nextVar);
+    return false;  // not done with invariant
   }
 }
 
