@@ -34,8 +34,7 @@ void BottomUpPropagationGraph::clearForPropagation() {
   varIsOnStack.assign(varIsOnStack.size(), false);
   invariantIsOnStack.assign(invariantIsOnStack.size(), false);
 }
-void BottomUpPropagationGraph::registerForPropagation(Timestamp,
-                                                      VarId id) {
+void BottomUpPropagationGraph::registerForPropagation(Timestamp, VarId id) {
   variableStack.push_back(id);
 }
 void BottomUpPropagationGraph::propagate(Timestamp currentTime) {
@@ -62,13 +61,9 @@ void BottomUpPropagationGraph::propagate(Timestamp currentTime) {
         // If the variable is stable and has changed then just send a
         // notification to top invariant (i.e, the one asking for its value)
         notifyCurrentInvariant();
-        visitNextVariable(currentTime);
-        continue;
-      } else {
-        // pop
-        visitNextVariable(currentTime);
-        continue;
       }
+      visitNextVariable(currentTime);
+      continue;
     }
   }
 }
@@ -126,8 +121,7 @@ inline void BottomUpPropagationGraph::notifyCurrentInvariant() {
 // TODO: this will push a variable onto the stack even when the variable is
 // stable. The reason for this is that we will then have to notify the top
 // invariant that the variable is stable (in case it has changed).
-inline void BottomUpPropagationGraph::visitNextVariable(
-    Timestamp currentTime) {
+inline void BottomUpPropagationGraph::visitNextVariable(Timestamp currentTime) {
   popVariableStack();
   VarId nextVar = m_engine.getNextDependency(invariantStack.back());
   if (nextVar.id == NULL_ID) {
