@@ -57,7 +57,7 @@ void BottomUpPropagationGraph::propagate() {
         // top invariant. Note that this must be an input variable.
         // TODO: just pre-mark all the input variables as stable when modified
         // in a move and remove this case!
-        notifyCurrentInvariant(currentVar);
+        notifyCurrentInvariant();
         markStable(m_engine.getCurrentTime(), currentVar);
         visitNextVariable();
         continue;
@@ -77,7 +77,7 @@ void BottomUpPropagationGraph::propagate() {
         // TODO: prevent this case from happening by checking if a variables is
         // marked and has changed before pushing it onto the stack? Not clear
         // how much faster that would actually be.
-        notifyCurrentInvariant(currentVar);
+        notifyCurrentInvariant();
         visitNextVariable();
         continue;
       } else {
@@ -88,6 +88,7 @@ void BottomUpPropagationGraph::propagate() {
     }
   }
 }
+
 
 inline void BottomUpPropagationGraph::pushVariableStack(VarId v) {
   if (varIsOnStack.at(v)) {
@@ -129,8 +130,7 @@ inline bool BottomUpPropagationGraph::isStable(const Timestamp& t, VarId v) {
 // stack.
 inline void BottomUpPropagationGraph::expandInvariant(InvariantId inv) {
   // TODO:Check if invariant is already on stack.
-  VarId nextVar = m_engine.getStore().getInvariant(inv).getNextDependency(
-      m_engine.getCurrentTime());
+  VarId nextVar = m_engine.getNextDependency(inv);
   assert(nextVar.id !=
          NULL_ID);  // Invariant must have at least one dependency, and this
                     // should be the first (and only) time we expand it
@@ -138,13 +138,8 @@ inline void BottomUpPropagationGraph::expandInvariant(InvariantId inv) {
   pushInvariantStack(inv);
 }
 
-inline void BottomUpPropagationGraph::notifyCurrentInvariant(VarId id) {
-  const IntVar variable = m_engine.getStore().getConstIntVar(id);
-  m_engine.getStore()
-      .getInvariant(invariantStack.back())
-      .notifyCurrentDependencyChanged(
-          m_engine.getCurrentTime(), m_engine, variable.getCommittedValue(),
-          variable.getValue(m_engine.getCurrentTime()));
+inline void BottomUpPropagationGraph::notifyCurrentInvariant() {
+  m_engine.notifyCurrentDependencyChanged(invariantStack.back());
 }
 
 // TODO: this will push a variable onto the stack even when the variable is
@@ -152,9 +147,7 @@ inline void BottomUpPropagationGraph::notifyCurrentInvariant(VarId id) {
 // invariant that the variable is stable (in case it has changed).
 inline void BottomUpPropagationGraph::visitNextVariable() {
   popVariableStack();
-  VarId nextVar = m_engine.getStore()
-                      .getInvariant(invariantStack.back())
-                      .getNextDependency(m_engine.getCurrentTime());
+  VarId nextVar = m_engine.getNextDependency(invariantStack.back());
   if (nextVar.id == NULL_ID) {
     // The top invariant has finished propagating, so all defined vars can be
     // marked as stable at the current time.

@@ -42,8 +42,7 @@ class Invariant {
 
   virtual VarId getNextDependency(const Timestamp&) = 0;
 
-  virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e,
-                                              Int oldValue, Int newValue) = 0;
+  virtual void notifyCurrentDependencyChanged(const Timestamp&, Engine& e) = 0;
 
   /**
    * Precondition: oldValue != newValue
