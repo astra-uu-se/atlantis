@@ -5,7 +5,6 @@
 // #include "core/engine.hpp"
 #include "core/intVar.hpp"
 #include "propagation/propagationGraph.hpp"
-
 class Engine;  // forward declare
 
 class BottomUpPropagationGraph : public PropagationGraph {
@@ -29,7 +28,7 @@ class BottomUpPropagationGraph : public PropagationGraph {
   // stack.
   void expandInvariant(InvariantId inv);
 
-  void notifyCurrentInvariant(VarId id);
+  void notifyCurrentInvariant();
 
   void visitNextVariable();
 
