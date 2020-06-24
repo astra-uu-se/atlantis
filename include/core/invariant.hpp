@@ -7,11 +7,13 @@ class Engine;  // Forward declaration
 class Invariant {
  private:
  protected:
+  Timestamp m_lastCommit;
   InvariantId m_id;
-  //State used for returning next dependency. Null state is -1 by default
+  // State used for returning next dependency. Null state is -1 by default
   SavedInt m_state;
-  Invariant(Id t_id) : m_id(t_id), m_state(NULL_TIMESTAMP, -1) {}
-  Invariant(Id t_id, Int nullState) : m_id(t_id), m_state(NULL_TIMESTAMP, nullState) {}
+  Invariant(Id t_id) : m_lastCommit(NULL_TIMESTAMP), m_id(t_id), m_state(NULL_TIMESTAMP, -1) {}
+  Invariant(Id t_id, Int nullState)
+      : m_id(t_id), m_state(NULL_TIMESTAMP, nullState) {}
 
  public:
   virtual ~Invariant() {}
@@ -50,8 +52,5 @@ class Invariant {
   virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) = 0;
 
-  // TODO: This commit is somehow different from other commits as it just
-  // forwards the commit call and validates the node. Maybe remove and let
-  // engine do this by looking at defined variables of invariant...
   virtual void commit(Timestamp t, Engine&) = 0;
 };

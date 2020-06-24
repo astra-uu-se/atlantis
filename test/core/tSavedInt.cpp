@@ -131,14 +131,14 @@ TEST_F(SavedIntTest, SavedIntCommitValue) {
   Int initValue = distribution1(gen);
 
   Timestamp nextTime = distribution2(gen);
-  Int commitedValue = distribution2(gen);
+  Int committedValue = distribution2(gen);
 
   SavedInt savedInt = SavedInt(initTime, initValue);
 
-  savedInt.commitValue(commitedValue);
+  savedInt.commitValue(committedValue);
 
-  EXPECT_EQ(savedInt.getValue(initTime), initValue); // TODO: shouldn't this be commitedValue?
-  EXPECT_EQ(savedInt.getValue(nextTime), commitedValue);
+  EXPECT_EQ(savedInt.getValue(initTime), initValue); // TODO: shouldn't this be committedValue?
+  EXPECT_EQ(savedInt.getValue(nextTime), committedValue);
 }
 
 TEST_F(SavedIntTest, SavedIntCommit) {
@@ -149,22 +149,22 @@ TEST_F(SavedIntTest, SavedIntCommit) {
   Int initValue = distribution1(gen);
 
   Timestamp nextTime = distribution2(gen);
-  Int commitedValue = distribution2(gen);
+  Int committedValue = distribution2(gen);
 
   SavedInt savedInt = SavedInt(initTime, initValue);
 
   EXPECT_EQ(savedInt.getValue(initTime), initValue);
   EXPECT_EQ(savedInt.getValue(nextTime), initValue);
 
-  savedInt.setValue(nextTime, commitedValue);
+  savedInt.setValue(nextTime, committedValue);
 
   EXPECT_EQ(savedInt.getValue(initTime), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTime), commitedValue);
+  EXPECT_EQ(savedInt.getValue(nextTime), committedValue);
 
   savedInt.commitIf(nextTime);
 
-  EXPECT_EQ(savedInt.getValue(initTime), commitedValue);
-  EXPECT_EQ(savedInt.getValue(nextTime), commitedValue);
+  EXPECT_EQ(savedInt.getValue(initTime), committedValue);
+  EXPECT_EQ(savedInt.getValue(nextTime), committedValue);
 }
 
 TEST_F(SavedIntTest, SavedIntCommitIf) {
