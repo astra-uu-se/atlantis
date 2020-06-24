@@ -20,15 +20,15 @@ class BottomUpPropagationGraph : public PropagationGraph {
   void popVariableStack();
   void pushInvariantStack(InvariantId v);
   void popInvariantStack();
-  void markStable(Timestamp t, VarId v);
+  void markStable(const Timestamp& t, VarId v);
 
-  bool isStable(Timestamp t, VarId v);
+  bool isStable(const Timestamp& t, VarId v);
 
   // We expand an invariant by pushing it and its first input variable onto each
   // stack.
   void expandInvariant(InvariantId inv);
   void notifyCurrentInvariant();
-  void visitNextVariable(Timestamp);
+  void visitNextVariable(const Timestamp&);
 
   void printVarStack() {
     std::cout << "Variable stack: [";
@@ -52,16 +52,16 @@ class BottomUpPropagationGraph : public PropagationGraph {
   // BottomUpPropagationGraph() : BottomUpPropagationGraph(1000) {}
   BottomUpPropagationGraph(Engine& e, size_t expectedSize);
 
-  void propagate(Timestamp);
+  void propagate(const Timestamp&);
   void clearForPropagation();
   /**
    * Register than we want to compute the value of v at time t
    */
-  void registerForPropagation(Timestamp t, VarId v);
+  void registerForPropagation(const Timestamp& t, VarId v);
 
-  virtual void notifyMaybeChanged(Timestamp t, VarId id) override;
+  virtual void notifyMaybeChanged(const Timestamp& t, VarId id) override;
 
-  [[nodiscard]] virtual VarId getNextStableVariable(Timestamp) override {
+  [[nodiscard]] virtual VarId getNextStableVariable(const Timestamp&) override {
     assert(false);
     return NULL_ID;
   }

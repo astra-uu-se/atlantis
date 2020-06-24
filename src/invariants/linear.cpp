@@ -16,7 +16,7 @@ Linear::Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b)
 //   init(e);
 // }
 
-void Linear::init(Timestamp, Engine& e) {
+void Linear::init(const Timestamp&, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   assert(m_id != NULL_ID);
@@ -27,7 +27,7 @@ void Linear::init(Timestamp, Engine& e) {
   }
 }
 
-void Linear::recompute(Timestamp t, Engine& e) {
+void Linear::recompute(const Timestamp& t, Engine& e) {
   Int sum = 0;
   for (size_t i = 0; i < m_X.size(); ++i) {
     sum += m_A[i] * e.getValue(t, m_X[i]);
@@ -38,14 +38,14 @@ void Linear::recompute(Timestamp t, Engine& e) {
   // this.
 }
 
-void Linear::notifyIntChanged(Timestamp t, Engine& e,
+void Linear::notifyIntChanged(const Timestamp& t, Engine& e,
                               LocalId, Int oldValue,
                               Int newValue, Int coef) {
   assert(newValue != oldValue);  // precondition
   e.incValue(t, m_b, (newValue - oldValue) * coef);
 }
 
-VarId Linear::getNextDependency(Timestamp t) {
+VarId Linear::getNextDependency(const Timestamp& t) {
   m_state.incValue(t, 1);
   if (static_cast<size_t>(m_state.getValue(t)) == m_X.size()) {
     return NULL_ID;  // Done
@@ -54,7 +54,7 @@ VarId Linear::getNextDependency(Timestamp t) {
   }
 }
 
-void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
+void Linear::notifyCurrentDependencyChanged(const Timestamp& t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   Int idx = m_state.getValue(t);
   Int delta = e.getValue(m_X.at(idx)) - e.getCommitedValue(m_X.at(idx));
@@ -62,7 +62,7 @@ void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   e.incValue(t, m_b, delta * m_A.at(idx));
 }
 
-void Linear::commit(Timestamp t, Engine& e) {
+void Linear::commit(const Timestamp& t, Engine& e) {
   // todo: do nodes validate themself or is it done by engine?
   // this->validate(t);
   e.commitIf(t, m_b);

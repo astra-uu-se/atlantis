@@ -13,7 +13,7 @@ TopDownPropagationGraph::TopDownPropagationGraph(size_t expectedSize)
   m_varsLastChange.push_back(NULL_TIMESTAMP);
 }
 
-void TopDownPropagationGraph::notifyMaybeChanged(Timestamp t, VarId id) {
+void TopDownPropagationGraph::notifyMaybeChanged(const Timestamp& t, VarId id) {
   if (m_varsLastChange.at(id) == t || !isActive(t, id)) {
     return;
   }
@@ -22,7 +22,7 @@ void TopDownPropagationGraph::notifyMaybeChanged(Timestamp t, VarId id) {
   m_modifiedVariables.push(id);
 }
 
-VarId TopDownPropagationGraph::getNextStableVariable(Timestamp) {
+VarId TopDownPropagationGraph::getNextStableVariable(const Timestamp&) {
   if (m_modifiedVariables.empty()) {
     return VarId(NULL_ID);
   }
