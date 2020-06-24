@@ -12,6 +12,7 @@ class PropagationGraph {
  protected:
   size_t m_numInvariants;
   size_t m_numVariables;
+
   /**
    * Map from VarID -> InvariantId
    *
@@ -25,25 +26,18 @@ class PropagationGraph {
    * Maps an invariant to all variables it defines.
    */
   std::vector<std::vector<VarId>> m_variablesDefinedByInvariant;
+  /**
+   * Map from InvariantId -> list of VarID
+   *
+   * Maps an invariant to all variables it depends on (its inputs).
+   */
+  std::vector<std::vector<VarId>> m_inputVariables;
 
   // Map from VarID -> vector of InvariantID
   std::vector<std::vector<InvariantId>> m_listeningInvariants;
 
-  struct Topology {
-    std::vector<size_t> m_variablePosition;
-    std::vector<size_t> m_invariantPosition;
-
-    PropagationGraph& graph;
-    Topology() = delete;
-    Topology(PropagationGraph& g) : graph(g) {}
-    void computeNoCycles();
-    void computeNoCyclesException();
-    void computeWithCycles();
-    void computeBundleCycles();
-    void computeInvariantFromVariables();
-    size_t getPosition(VarId id) { return m_variablePosition.at(id); }
-    size_t getPosition(InvariantId id) { return m_invariantPosition.at(id); }
-  } m_topology;
+  std::vector<bool> m_isOutputVar;
+  std::vector<bool> m_isInputVar;
 
  public:
   PropagationGraph() : PropagationGraph(1000) {}
@@ -52,6 +46,12 @@ class PropagationGraph {
   virtual ~PropagationGraph(){};
 
   virtual void notifyMaybeChanged(const Timestamp& t, VarId id) = 0;
+
+  /**
+   * update internal datastructures based on currently registered  variables and
+   * invariants.
+   */
+  virtual void close();
 
   /**
    * Register an invariant in the propagation graph.
@@ -79,13 +79,6 @@ class PropagationGraph {
    */
   void registerDefinedVariable(VarId depends, InvariantId source);
 
-  void close() {
-    // m_topology.computeNoCycles();
-    // m_topology.computeNoCyclesException();
-    // m_topology.computeWithCycles();
-    m_topology.computeBundleCycles();
-  }
-
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
   /**
@@ -105,26 +98,34 @@ class PropagationGraph {
     return true;
   }
 
-  /** 
+  /**
    * A stable variable is a variable that has been modified at timestamp t,
    * but will not be modified again (as all parent nodes are already up to
    * date).
+   *
+   * The variable returned by this method will be considered up to date for the
+   * current timestamp.
    */
-  [[nodiscard]] virtual VarId getNextStableVariable([[maybe_unused]] const Timestamp& t) = 0;
+  [[nodiscard]] virtual VarId getNextStableVariable([
+      [maybe_unused]] const Timestamp& t) = 0;
 
-  size_t getNumVariables() {
+ inline size_t getNumVariables() {
     return m_numVariables;  // this ignores null var
   }
 
-  size_t getNumInvariants() {
+  inline size_t getNumInvariants() {
     return m_numInvariants;  // this ignores null invariant
   }
 
-  size_t getTopologicalKey(VarId id) {
-    return m_topology.m_variablePosition.at(id);
+  inline bool isOutputVar(VarId id){
+    return m_isOutputVar.at(id);
   }
 
-  size_t getTopologicalKey(InvariantId id) {
-    return m_topology.m_invariantPosition.at(id);
+  inline bool isInputVar(VarId id){
+    return m_isInputVar.at(id);
+  }
+
+  inline const std::vector<VarId>& variableDefinedBy(InvariantId inv) const {
+    return m_variablesDefinedByInvariant.at(inv);
   }
 };
