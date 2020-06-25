@@ -395,7 +395,136 @@ TEST_F(BottomUpPropagationTest, DynamicCommit) {
   EXPECT_EQ(e->getCommittedValue(v3), 10);
   EXPECT_EQ(e->getCommittedValue(idx), 2);
   EXPECT_EQ(e->getCommittedValue(output), 2 * (10));
+}
 
+TEST_F(BottomUpPropagationTest, DynamicCommit2) {
+  e->open();
+
+  auto output = e->makeIntVar(0, -1000, 1000);  // 1
+  auto idx1 = e->makeIntVar(0, 0, 2);           // 2
+
+  auto v11 = e->makeIntVar(11, -100, 1000);  // 3
+  auto v12 = e->makeIntVar(12, -100, 1000);  // 4
+  auto v13 = e->makeIntVar(13, -100, 1000);  // 5
+
+  e->makeInvariant<ElementVar>(idx1, std::vector<VarId>{v11, v12, v13}, output);
+
+  auto idx2 = e->makeIntVar(0, 0, 2);        // 6
+  auto v21 = e->makeIntVar(21, -100, 1000);  // 7
+  auto v22 = e->makeIntVar(22, -100, 1000);  // 8
+  auto v23 = e->makeIntVar(23, -100, 1000);  // 9
+
+  e->makeInvariant<ElementVar>(idx2, std::vector<VarId>{v21, v22, v23}, v11);
+
+  auto idx3 = e->makeIntVar(0, 0, 2);        // 10
+  auto v31 = e->makeIntVar(31, -100, 1000);  // 11
+  auto v32 = e->makeIntVar(32, -100, 1000);
+  auto v33 = e->makeIntVar(33, -100, 1000);
+
+  e->makeInvariant<ElementVar>(idx3, std::vector<VarId>{v31, v32, v33}, v12);
+
+  auto idx4 = e->makeIntVar(0, 0, 2);
+  auto v41 = e->makeIntVar(41, -100, 1000);
+  auto v42 = e->makeIntVar(42, -100, 1000);
+  auto v43 = e->makeIntVar(43, -100, 1000);
+
+  e->makeInvariant<ElementVar>(idx4, std::vector<VarId>{v41, v42, v43}, v13);
+
+  e->close();
+
+  ASSERT_EQ(e->getCommittedValue(output), 21);
+
+  // Make a bunch of probes
+  auto probe = [&]() {
+    std::uniform_int_distribution<> distribution(0, 50);
+    std::uniform_int_distribution<> idx_dist(0, 2);
+    for (size_t i = 0; i < 100; ++i) {
+      Int a2 = distribution(gen);
+      Int b2 = distribution(gen);
+      Int c2 = distribution(gen);
+      Int a3 = distribution(gen);
+      Int b3 = distribution(gen);
+      Int c3 = distribution(gen);
+      Int a4 = distribution(gen);
+      Int b4 = distribution(gen);
+      Int c4 = distribution(gen);
+      Int j1 = idx_dist(gen);
+      Int j2 = idx_dist(gen);
+      Int j3 = idx_dist(gen);
+      Int j4 = idx_dist(gen);
+
+      e->beginMove();
+      e->setValue(idx1, j1);
+
+      e->setValue(v21, a2);
+      e->setValue(v22, b2);
+      e->setValue(v23, c2);
+      e->setValue(idx2, j2);
+
+      e->setValue(v31, a3);
+      e->setValue(v32, b3);
+      e->setValue(v33, c3);
+      e->setValue(idx3, j3);
+
+      e->setValue(v41, a4);
+      e->setValue(v42, b4);
+      e->setValue(v43, c4);
+      e->setValue(idx4, j4);
+      e->endMove();
+
+      e->beginQuery();
+      e->query(output);
+      e->endQuery();
+
+      std::vector<std::vector<Int>> data{std::vector<Int>{a2, b2, c2},
+                                         std::vector<Int>{a3, b3, c3},
+                                         std::vector<Int>{a4, b4, c4}};
+      std::vector<Int> indices{j2, j3, j4};
+      ASSERT_EQ(e->getValue(output), data.at(j1).at(indices.at(j1)));
+    }
+  };
+
+  probe();
+
+  e->beginMove();
+  e->setValue(v32, 132);
+  e->setValue(idx3, 1);
+  e->endMove();
+
+  e->beginCommit();
+  e->query(output);
+  e->endCommit();
+
+  EXPECT_EQ(e->getCommittedValue(v32), 132);
+  EXPECT_EQ(e->getCommittedValue(idx3), 1);
+  EXPECT_EQ(e->getCommittedValue(output), 21);
+
+  // probe();
+
+  e->beginMove();
+  e->setValue(idx1, 1);
+  e->setValue(v43, 143);
+  e->endMove();
+
+  e->beginCommit();
+  e->query(output);
+  e->endCommit();
+
+  EXPECT_EQ(e->getCommittedValue(v32), 132);
+  EXPECT_EQ(e->getCommittedValue(output), 132);
+
+  probe();
+
+  e->beginMove();
+  e->setValue(idx1, 2);
+  e->setValue(idx4, 2);
+  e->endMove();
+
+  e->beginCommit();
+  e->query(output);
+  e->endCommit();
+
+  EXPECT_EQ(e->getCommittedValue(output), 143);
 }
 
 }  // namespace
