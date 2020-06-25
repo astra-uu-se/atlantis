@@ -16,9 +16,6 @@ class BottomUpPropagationGraph : public PropagationGraph {
   std::vector<bool> varIsOnStack;
   std::vector<bool> invariantIsOnStack;
 
-  bool isCommitting;
-  std::vector<VarId> uncommittedVars;
-
   void pushVariableStack(VarId v);
   void popVariableStack();
   void pushInvariantStack(InvariantId v);

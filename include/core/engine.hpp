@@ -66,34 +66,39 @@ class Engine {
   void endQuery();
   void query(VarId);
 
+  void beginCommit();
+  void endCommit();
+
   //--------------------- Variable ---------------------
-  void incValue(Timestamp, VarId&, Int inc);
-  inline void incValue(VarId& v, Int val) { incValue(m_currentTime, v, val); }
+  void incValue(Timestamp, VarId, Int inc);
+  inline void incValue(VarId v, Int val) { incValue(m_currentTime, v, val); }
 
-  void setValue(Timestamp, VarId&, Int val);
-  inline void setValue(VarId& v, Int val) { setValue(m_currentTime, v, val); }
-  Int getValue(Timestamp, VarId&);
-  inline Int getValue(VarId& v) { return getValue(m_currentTime, v); }
+  void setValue(Timestamp, VarId, Int val);
+  inline void setValue(VarId v, Int val) { setValue(m_currentTime, v, val); }
+  Int getValue(Timestamp, VarId);
+  inline Int getValue(VarId v) { return getValue(m_currentTime, v); }
 
-  Int getCommittedValue(VarId&);
+  Int getCommittedValue(VarId);
 
-  Timestamp getTmpTimestamp(VarId&);
+  Timestamp getTmpTimestamp(VarId);
 
-  inline bool hasChanged(Timestamp t, VarId& v) const {
+  inline bool hasChanged(Timestamp t, VarId v) const {
     return m_store.getConstIntVar(v).hasChanged(t);
   }
-  void commit(VarId&);  // todo: this feels dangerous, maybe commit should
-                        // always have a timestamp?
-  void commitIf(Timestamp, VarId&);
-  void commitValue(VarId&, Int val);
+  void commit(VarId);  // todo: this feels dangerous, maybe commit should
+                       // always have a timestamp?
+  void commitIf(Timestamp, VarId);
+  void commitValue(VarId, Int val);
 
-  inline Int getLowerBound(VarId& v) const {
+  inline Int getLowerBound(VarId v) const {
     return m_store.getConstIntVar(v).getLowerBound();
   }
 
-  inline Int getUpperBound(VarId& v) const {
+  inline Int getUpperBound(VarId v) const {
     return m_store.getConstIntVar(v).getUpperBound();
   }
+
+  void commitInvariantIf(Timestamp, InvariantId);
 
   /**
    * returns the next dependency at the current timestamp.
@@ -191,31 +196,46 @@ inline const Store& Engine::getStore() { return m_store; }
 inline Timestamp Engine::getCurrentTime() { return m_currentTime; }
 inline BottomUpPropagationGraph& Engine::getPropGraph() { return m_propGraph; }
 
-inline Int Engine::getValue(Timestamp t, VarId& v) {
+inline Int Engine::getValue(Timestamp t, VarId v) {
   return m_store.getIntVar(v).getValue(t);
 }
 
-inline Int Engine::getCommittedValue(VarId& v) {
+inline Int Engine::getCommittedValue(VarId v) {
   return m_store.getIntVar(v).getCommittedValue();
 }
 
-inline Timestamp Engine::getTmpTimestamp(VarId& v) {
+inline Timestamp Engine::getTmpTimestamp(VarId v) {
   return m_store.getIntVar(v).getTmpTimestamp();
 }
 
-inline void Engine::setValue(Timestamp t, VarId& v, Int val) {
+inline void Engine::setValue(Timestamp t, VarId v, Int val) {
   m_store.getIntVar(v).setValue(t, val);
   notifyMaybeChanged(t, v);
 }
 
-inline void Engine::incValue(Timestamp t, VarId& v, Int inc) {
+inline void Engine::incValue(Timestamp t, VarId v, Int inc) {
   m_store.getIntVar(v).incValue(t, inc);
   notifyMaybeChanged(t, v);
+}
+
+inline void Engine::commit(VarId v) { m_store.getIntVar(v).commit(); }
+
+inline void Engine::commitIf(Timestamp t, VarId v) {
+  m_store.getIntVar(v).commitIf(t);
+}
+
+inline void Engine::commitValue(VarId v, Int val) {
+  m_store.getIntVar(v).commitValue(val);
+}
+
+inline void Engine::commitInvariantIf(Timestamp t, InvariantId id) {
+  m_store.getInvariant(id).commit(t, *this);
 }
 
 inline VarId Engine::getNextDependency(InvariantId inv) {
   return m_store.getInvariant(inv).getNextDependency(m_currentTime, *this);
 }
-inline void Engine::notifyCurrentDependencyChanged(InvariantId inv){
-  m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime, *this);
+inline void Engine::notifyCurrentDependencyChanged(InvariantId inv) {
+  m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime,
+                                                           *this);
 }

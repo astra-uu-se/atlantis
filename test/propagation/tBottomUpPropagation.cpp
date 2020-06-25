@@ -7,6 +7,7 @@
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
+#include "invariants/elementVar.hpp"
 #include "invariants/linear.hpp"
 #include "propagation/bottomUpPropagationGraph.hpp"
 
@@ -152,13 +153,12 @@ TEST_F(BottomUpPropagationTest, SimplePropagate2) {
                            v12);
 
   auto v13 = e->makeIntVar(0, -1200, 1200);
-  e->makeInvariant<Linear>(std::vector<Int>{10, -10}, std::vector<VarId>{v11, v12},
-                           v13);
+  e->makeInvariant<Linear>(std::vector<Int>{10, -10},
+                           std::vector<VarId>{v11, v12}, v13);
 
   e->close();
 
   ASSERT_EQ(e->getValue(v13), 0);
-
 
   std::uniform_int_distribution<> distribution(-10000, 10000);
   for (size_t i = 0; i < 1000; ++i) {
@@ -169,19 +169,17 @@ TEST_F(BottomUpPropagationTest, SimplePropagate2) {
     Int a5 = distribution(gen);
     Int a6 = distribution(gen);
 
-    Int x7 = 1*a1+2*a2;
-    Int x8 = 3*a3+4*a4;
-    Int x9 = 5*a5+6*a6;
+    Int x7 = 1 * a1 + 2 * a2;
+    Int x8 = 3 * a3 + 4 * a4;
+    Int x9 = 5 * a5 + 6 * a6;
 
-    Int x10 = 1*x7-x8+2*x9;
+    Int x10 = 1 * x7 - x8 + 2 * x9;
 
-    Int x11 = -3*x7+4*x10;
+    Int x11 = -3 * x7 + 4 * x10;
 
-    Int x12 = x8+x9;
+    Int x12 = x8 + x9;
 
-
-    Int x13 = 10*x11-10*x12;
-
+    Int x13 = 10 * x11 - 10 * x12;
 
     e->beginMove();
     e->setValue(v1, a1);
@@ -204,6 +202,200 @@ TEST_F(BottomUpPropagationTest, SimplePropagate2) {
     ASSERT_EQ(e->getValue(v12), x12);
     ASSERT_EQ(e->getValue(v13), x13);
   }
+}
+
+TEST_F(BottomUpPropagationTest, QueryInput) {
+  e->open();
+
+  auto v1 = e->makeIntVar(0, -100, 100);
+  auto v2 = e->makeIntVar(0, -100, 100);
+  auto v3 = e->makeIntVar(0, -100, 100);
+  auto v4 = e->makeIntVar(0, -100, 100);
+  auto v5 = e->makeIntVar(0, -100, 100);
+  auto v6 = e->makeIntVar(0, -100, 100);
+
+  e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1},
+                           std::vector<VarId>{v1, v2, v3}, v4);
+
+  e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1, 1},
+                           std::vector<VarId>{v1, v2, v3, v4}, v5);
+
+  e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1, 1, 1},
+                           std::vector<VarId>{v1, v2, v3, v4, v5}, v6);
+
+  e->close();
+
+  e->beginMove();
+  e->setValue(v1, 1);
+  e->setValue(v2, 2);
+  e->endMove();
+
+  e->beginQuery();
+  e->query(v1);
+  e->query(v2);
+  e->query(v3);
+  e->endQuery();
+
+  EXPECT_EQ(e->getValue(v1), 1);
+  EXPECT_EQ(e->getValue(v2), 2);
+  EXPECT_EQ(e->getValue(v3), 0);
+}
+
+TEST_F(BottomUpPropagationTest, SimpleCommit) {
+  e->open();
+
+  auto v1 = e->makeIntVar(0, -100, 100);
+  auto v2 = e->makeIntVar(0, -100, 100);
+  auto v3 = e->makeIntVar(0, -100, 100);
+  auto v4 = e->makeIntVar(0, -100, 100);
+  auto v5 = e->makeIntVar(0, -100, 100);
+  auto v6 = e->makeIntVar(0, -100, 100);
+
+  e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1},
+                           std::vector<VarId>{v1, v2, v3}, v4);
+
+  e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1, 1},
+                           std::vector<VarId>{v1, v2, v3, v4}, v5);
+
+  e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1, 1, 1},
+                           std::vector<VarId>{v1, v2, v3, v4, v5}, v6);
+
+  e->close();
+
+  // Make a bunch of probes
+  std::uniform_int_distribution<> distribution(-10000, 10000);
+  for (size_t i = 0; i < 100; ++i) {
+    Int a = distribution(gen);
+    Int b = distribution(gen);
+    Int c = distribution(gen);
+
+    e->beginMove();
+    e->setValue(v1, a);
+    e->setValue(v2, b);
+    e->setValue(v3, c);
+    e->endMove();
+
+    e->beginQuery();
+    e->query(v4);
+    e->query(v5);
+    e->query(v6);
+    e->endQuery();
+  }
+
+  e->beginMove();
+  e->setValue(v1, 1);
+  e->setValue(v2, 2);
+  e->endMove();
+
+  // todo: current implementation commits all variables but in general we can
+  // only expect that input variables and queried variables get committed (as
+  // committing should be lazy)
+
+  e->beginCommit();
+  e->query(v6);
+  e->endCommit();
+
+  EXPECT_EQ(e->getCommittedValue(v1), 1);
+  EXPECT_EQ(e->getCommittedValue(v2), 2);
+  EXPECT_EQ(e->getCommittedValue(v3), 0);
+
+  EXPECT_EQ(e->getCommittedValue(v6), 4 * (1 + 2 + 0));
+
+  e->beginMove();
+  e->setValue(v1, 0);
+  e->setValue(v2, 0);
+  e->endMove();
+  e->beginCommit();
+  e->query(v6);
+  e->endCommit();
+
+  EXPECT_EQ(e->getCommittedValue(v1), 0);
+  EXPECT_EQ(e->getCommittedValue(v2), 0);
+  EXPECT_EQ(e->getCommittedValue(v3), 0);
+
+  EXPECT_EQ(e->getCommittedValue(v6), 0);
+}
+
+TEST_F(BottomUpPropagationTest, DynamicCommit) {
+  e->open();
+
+  auto v1 = e->makeIntVar(1, -100, 100);
+  auto v2 = e->makeIntVar(2, -100, 100);
+  auto v3 = e->makeIntVar(3, -100, 100);
+  auto v4 = e->makeIntVar(4, -100, 100);
+
+  auto w1 = e->makeIntVar(0, -100, 100);
+  auto w2 = e->makeIntVar(0, -100, 100);
+  auto w3 = e->makeIntVar(0, -100, 100);
+  auto w4 = e->makeIntVar(0, -100, 100);
+
+  auto output = e->makeIntVar(0, -100, 100);
+  auto idx = e->makeIntVar(0, 0, 3);
+
+  e->makeInvariant<ElementVar>(idx, std::vector<VarId>{w1, w2, w3, w4}, output);
+
+  e->makeInvariant<Linear>(std::vector<Int>{2}, std::vector<VarId>{v1}, w1);
+  e->makeInvariant<Linear>(std::vector<Int>{2}, std::vector<VarId>{v2}, w2);
+  e->makeInvariant<Linear>(std::vector<Int>{2}, std::vector<VarId>{v3}, w3);
+  e->makeInvariant<Linear>(std::vector<Int>{2}, std::vector<VarId>{v4}, w4);
+
+  e->close();
+
+  ASSERT_EQ(e->getCommittedValue(output), 2 * 1);
+
+  // Make a bunch of probes
+  auto probe = [&]() {
+    std::uniform_int_distribution<> distribution(-10000, 10000);
+    std::uniform_int_distribution<> idx_dist(0, 3);
+    for (size_t i = 0; i < 100; ++i) {
+      Int a = distribution(gen);
+      Int b = distribution(gen);
+      Int c = distribution(gen);
+      Int d = distribution(gen);
+      Int j = idx_dist(gen);
+
+      e->beginMove();
+      e->setValue(v1, a);
+      e->setValue(v2, b);
+      e->setValue(v3, c);
+      e->setValue(v4, d);
+      e->setValue(idx, j);
+      e->endMove();
+
+      e->beginQuery();
+      e->query(output);
+      e->endQuery();
+      ASSERT_EQ(e->getValue(output), (std::vector<Int>{a, b, c, d}).at(j) * 2);
+    }
+  };
+
+  probe();
+
+  e->beginMove();
+  e->setValue(v3, 10);
+  e->endMove();
+
+  e->beginCommit();
+  e->query(output);
+  e->endCommit();
+
+  EXPECT_EQ(e->getCommittedValue(v3), 10);
+  EXPECT_EQ(e->getCommittedValue(output), 2 * (1));
+
+  probe();
+
+  e->beginMove();
+  e->setValue(idx, 2);
+  e->endMove();
+
+  e->beginCommit();
+  e->query(output);
+  e->endCommit();
+
+  EXPECT_EQ(e->getCommittedValue(v3), 10);
+  EXPECT_EQ(e->getCommittedValue(idx), 2);
+  EXPECT_EQ(e->getCommittedValue(output), 2 * (10));
+
 }
 
 }  // namespace
