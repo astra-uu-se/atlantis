@@ -85,6 +85,13 @@ class Engine {
   inline bool hasChanged(Timestamp t, VarId v) const {
     return m_store.getConstIntVar(v).hasChanged(t);
   }
+
+  bool isPostponed(InvariantId);
+
+  void postpone(InvariantId);
+  void recompute(InvariantId);
+  void recompute(Timestamp, InvariantId);
+
   void commit(VarId);  // todo: this feels dangerous, maybe commit should
                        // always have a timestamp?
   void commitIf(Timestamp, VarId);
@@ -206,6 +213,22 @@ inline Int Engine::getCommittedValue(VarId v) {
 
 inline Timestamp Engine::getTmpTimestamp(VarId v) {
   return m_store.getIntVar(v).getTmpTimestamp();
+}
+
+inline bool Engine::isPostponed(InvariantId id) {
+  return m_store.getInvariant(id).isPostponed();
+}
+
+inline void Engine::postpone(InvariantId id) {
+  return m_store.getInvariant(id).postpone();
+}
+
+inline void Engine::recompute(InvariantId id) {
+  return m_store.getInvariant(id).recompute(m_currentTime, *this);
+}
+
+inline void Engine::recompute(Timestamp t, InvariantId id) {
+  return m_store.getInvariant(id).recompute(t, *this);
 }
 
 inline void Engine::setValue(Timestamp t, VarId v, Int val) {

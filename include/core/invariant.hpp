@@ -7,11 +7,11 @@ class Engine;  // Forward declaration
 class Invariant {
  private:
  protected:
-  Timestamp m_lastCommit;
+  bool m_isPostponed;
   InvariantId m_id;
   // State used for returning next dependency. Null state is -1 by default
   SavedInt m_state;
-  Invariant(Id t_id) : m_lastCommit(NULL_TIMESTAMP), m_id(t_id), m_state(NULL_TIMESTAMP, -1) {}
+  Invariant(Id t_id) : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, -1) {}
   Invariant(Id t_id, Int nullState)
       : m_id(t_id), m_state(NULL_TIMESTAMP, nullState) {}
 
@@ -52,5 +52,13 @@ class Invariant {
   virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
                                 Int oldValue, Int newValue, Int data) = 0;
 
-  virtual void commit(Timestamp t, Engine&) = 0;
+  virtual void commit(Timestamp, Engine&){
+    m_isPostponed = false;
+  };
+  inline void postpone(){
+    m_isPostponed = true;
+  }
+  inline bool isPostponed(){
+    return m_isPostponed;
+  }
 };

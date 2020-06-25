@@ -92,10 +92,10 @@ TEST_F(ElementVarTest, CreateElement) {
   auto invariant = engine->makeInvariant<MockElementVar>(
       idx, std::vector<VarId>{args}, output);
 
-  EXPECT_CALL(*invariant, recompute(engine->getCurrentTime(), testing::_))
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
       .Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(engine->getCurrentTime(), testing::_))
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
       .Times(AtLeast(1));
 
   engine->close();
@@ -119,10 +119,10 @@ TEST_F(ElementVarTest, NotificationsChangeIndex) {
   auto invariant = engine->makeInvariant<MockElementVar>(
       idx, std::vector<VarId>{args}, output);
 
-  EXPECT_CALL(*invariant, recompute(engine->getCurrentTime(), testing::_))
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
       .Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(engine->getCurrentTime(), testing::_))
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
       .Times(AtLeast(1));
 
   engine->close();
