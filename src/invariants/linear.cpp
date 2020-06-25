@@ -63,7 +63,7 @@ void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 }
 
 void Linear::commit(Timestamp t, Engine& e) {
-  // todo: do nodes validate themself or is it done by engine?
-  // this->validate(t);
+  //todo: who commits the output variables?
   e.commitIf(t, m_b);
+  m_isPostponed = false;
 }

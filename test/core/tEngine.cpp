@@ -11,6 +11,7 @@
 #include "propagation/topDownPropagationGraph.hpp"
 
 using ::testing::Return;
+using ::testing::AtLeast;
 
 namespace {
 
@@ -94,11 +95,11 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   // TODO: use some other invariants...
   auto invariant = engine->makeInvariant<MockInvariantSimple>();
 
-  EXPECT_CALL(*invariant, recompute(1, testing::_))
-    .Times(1);
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
+    .Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(1, testing::_))
-    .Times(1);
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
+    .Times(AtLeast(1));
 
   ASSERT_TRUE(invariant->m_initialized);
 
@@ -115,15 +116,13 @@ TEST_F(EngineTest, RecomputeAndCommit) {
     engine->makeIntVar(value, -100, 100);
   }
 
-  Timestamp initialTimestamp = engine->getCurrentTime();
-
   // TODO: use some other invariants...
   auto invariant = engine->makeInvariant<MockInvariantSimple>();
 
-  EXPECT_CALL(*invariant, recompute(initialTimestamp, testing::_))
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
     .Times(1);
   
-  EXPECT_CALL(*invariant, commit(initialTimestamp, testing::_))
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
     .Times(1);
 
   ASSERT_TRUE(invariant->m_initialized);
@@ -133,7 +132,6 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 
   ASSERT_EQ(engine->getStore().getNumVariables(), intVarCount);
   ASSERT_EQ(engine->getStore().getNumInvariants(), 1);
-  ASSERT_EQ(initialTimestamp, engine->getCurrentTime());
 }
 
 TEST_F(EngineTest, SimplePropagation) {
@@ -145,21 +143,17 @@ TEST_F(EngineTest, SimplePropagation) {
   VarId c = engine->makeIntVar(3, -10, 10);
   
   auto invariant = engine->makeInvariant<MockInvariantAdvanced>(std::vector<VarId>({a, b, c}), output);
-  
-  Timestamp initialTimestamp = engine->getCurrentTime();
 
-  EXPECT_CALL(*invariant, recompute(initialTimestamp, testing::_))
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
     .Times(1);
 
-  EXPECT_CALL(*invariant, commit(initialTimestamp, testing::_))
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
     .Times(1);
 
   engine->close();
 
   engine->beginMove();
   Timestamp moveTimestamp = engine->getCurrentTime();
-  // Timestamp increases when we start a move
-  ASSERT_EQ(moveTimestamp, initialTimestamp + 1);
 
   engine->setValue(a, -1);
   engine->setValue(b, -2);

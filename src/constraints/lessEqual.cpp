@@ -12,8 +12,7 @@ extern Id NULL_ID;
  * @param y variable of rhs
  */
 LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
-    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
-}
+    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {}
 
 void LessEqual::init(Timestamp, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
@@ -31,8 +30,7 @@ void LessEqual::recompute(Timestamp t, Engine& e) {
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void LessEqual::notifyIntChanged(Timestamp t, Engine& e,
-                                 LocalId, Int oldValue,
+void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int oldValue,
                                  Int newValue, Int) {
   assert(newValue != oldValue);  // precondition
   // if x decreases and violation is 0, then do nothing
@@ -65,7 +63,6 @@ void LessEqual::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 }
 
 void LessEqual::commit(Timestamp t, Engine& e) {
-  // todo: do nodes validate themself or is it done by engine?
-  // this->validate(t);
+  m_isPostponed = false;
   e.commitIf(t, m_violationId);
 }

@@ -27,8 +27,7 @@ void Equal::recompute(Timestamp t, Engine& e) {
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void Equal::notifyIntChanged(Timestamp t, Engine& e,
-                             LocalId, Int oldValue,
+void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int oldValue,
                              Int newValue, Int) {
   assert(newValue != oldValue);  // precondition
   e.setValue(t, m_violationId,
@@ -59,7 +58,6 @@ void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 }
 
 void Equal::commit(Timestamp t, Engine& e) {
-  // todo: do nodes validate themself or is it done by engine?
-  // this->validate(t);
+  m_isPostponed = false;
   e.commitIf(t, m_violationId);
 }

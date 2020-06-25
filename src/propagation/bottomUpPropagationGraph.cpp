@@ -7,12 +7,14 @@ BottomUpPropagationGraph::BottomUpPropagationGraph(Engine& e,
     : PropagationGraph(expectedSize), m_engine(e) {
   variableStack.reserve(expectedSize);
   invariantStack.reserve(expectedSize);
-  stableAt.reserve(expectedSize);
+  varStableAt.reserve(expectedSize);
+  invariantStableAt.reserve(expectedSize);
   varIsOnStack.reserve(expectedSize);
   invariantIsOnStack.reserve(expectedSize);
 
   // add null entry.
-  stableAt.push_back(NULL_TIMESTAMP);
+  varStableAt.push_back(NULL_TIMESTAMP);
+  invariantStableAt.push_back(NULL_TIMESTAMP);
   varIsOnStack.push_back(false);
   invariantIsOnStack.push_back(false);
 }
@@ -83,7 +85,7 @@ void BottomUpPropagationGraph::propagate(Timestamp currentTime) {
         if (invariantDone) {
           // The top invariant has finished propagating, so all defined vars can
           // be marked as stable at the current time.
-          for (auto defVar : variableDefinedBy(invariantStack.back())) {
+          for (auto defVar : variablesDefinedBy(invariantStack.back())) {
             markStable(currentTime, defVar);
           }
           popInvariantStack();
@@ -91,6 +93,84 @@ void BottomUpPropagationGraph::propagate(Timestamp currentTime) {
         continue;
       }
     }
+  }
+}
+
+void BottomUpPropagationGraph::lazyPropagateAndCommit(Timestamp currentTime) {
+  propagate2(currentTime);
+  for (size_t i = 1; i < m_numVariables + 1; i++) {
+    VarId id = VarId(i);
+    // Commit all variables that were propagated and the input variables.
+    if(isStable(currentTime, id) || isInputVar(id)){
+      commitAndPostpone(currentTime, id);
+    }
+  }
+  for (size_t i = 1; i < m_numInvariants + 1; i++) {
+    InvariantId id = InvariantId(i);
+    if (isStable(currentTime, id)) {
+      // Commit all invariants that were propagated.
+      m_engine.commitInvariantIf(currentTime, id);
+    }
+  }
+}
+
+/**
+ * When we use lazy commit, the propagate algorithm has to perform recomputation
+ */
+void BottomUpPropagationGraph::propagate2(Timestamp currentTime) {
+  // recursively expand variables to compute their value.
+  while (!variableStack.empty()) {
+    VarId currentVar = variableStack.back();
+    // If the variable is not stable, then expand it.
+    if (!isStable(currentTime, currentVar)) {
+      if (m_definingInvariant.at(currentVar).id != NULL_ID) {
+        // Variable is defined and not stable, so expand defining invariant.
+        expandInvariant(m_definingInvariant.at(currentVar));
+        continue;
+      } else {
+        markStable(currentTime, currentVar);
+        // continue;
+        goto handle_stable_var;  // Don't panic.
+      }
+    } else {  // If stable
+    handle_stable_var:
+      if (invariantStack.empty()) {
+        popVariableStack();  // we are at an output variable that is already
+                             // stable. Just continue!
+        continue;
+      } else {
+        if (m_engine.hasChanged(currentTime, currentVar) &&
+            !m_engine.isPostponed(invariantStack.back())) {
+          // If the variable is stable and has changed then just send a
+          // notification to top invariant (i.e, the one asking for its value)
+          // If the top invariant is postponed, then it will be recomputed and
+          // we do not have to notify it.
+          notifyCurrentInvariant();
+        }
+        bool inputDone = visitNextVariable();
+        if (inputDone) {
+          // Input variables are now up to date.
+          // If the invariant was postponed then recompute it.
+          if (m_engine.isPostponed(invariantStack.back())) {
+            // recompute at the current timestamp
+            m_engine.recompute(invariantStack.back());
+          }
+          for (auto defVar : variablesDefinedBy(invariantStack.back())) {
+            markStable(currentTime, defVar);
+          }
+          markStable(currentTime, invariantStack.back());
+          popInvariantStack();
+        }
+        continue;
+      }
+    }
+  }
+}
+
+inline void BottomUpPropagationGraph::commitAndPostpone(Timestamp t, VarId id) {
+  m_engine.commitIf(t, id);
+  for (auto depInvariant : m_listeningInvariants.at(id)) {
+    m_engine.postpone(depInvariant);
   }
 }
 
@@ -121,11 +201,19 @@ inline void BottomUpPropagationGraph::popInvariantStack() {
 }
 
 inline void BottomUpPropagationGraph::markStable(Timestamp t, VarId v) {
-  stableAt.at(v) = t;
+  varStableAt.at(v) = t;
 }
 
 inline bool BottomUpPropagationGraph::isStable(Timestamp t, VarId v) {
-  return stableAt.at(v) == t;
+  return varStableAt.at(v) == t;
+}
+
+inline void BottomUpPropagationGraph::markStable(Timestamp t, InvariantId v) {
+  invariantStableAt.at(v) = t;
+}
+
+inline bool BottomUpPropagationGraph::isStable(Timestamp t, InvariantId v) {
+  return invariantStableAt.at(v) == t;
 }
 
 // We expand an invariant by pushing it and its first input variable onto each
@@ -158,12 +246,13 @@ inline bool BottomUpPropagationGraph::visitNextVariable() {
 void BottomUpPropagationGraph::registerVar(VarId id) {
   PropagationGraph::registerVar(id);  // call parent implementation
   variableStack.push_back(NULL_ID);   // push back just to resize the stack!
-  stableAt.push_back(NULL_TIMESTAMP);
+  varStableAt.push_back(NULL_TIMESTAMP);
   varIsOnStack.push_back(false);
 }
 
 void BottomUpPropagationGraph::registerInvariant(InvariantId id) {
   PropagationGraph::registerInvariant(id);  // call parent implementation
-  invariantStack.push_back(NULL_ID);  // push back just to resize the stack!
+  invariantStack.push_back(NULL_ID);  //  push back just to resize the stack!
+  invariantStableAt.push_back(NULL_TIMESTAMP);
   invariantIsOnStack.push_back(false);
 }
