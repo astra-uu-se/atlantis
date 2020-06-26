@@ -101,7 +101,7 @@ void BottomUpPropagationGraph::lazyPropagateAndCommit(Timestamp currentTime) {
   for (size_t i = 1; i < m_numVariables + 1; i++) {
     VarId id = VarId(i);
     // Commit all variables that were propagated and the input variables.
-    if(isStable(currentTime, id) || isInputVar(id)){
+    if (isStable(currentTime, id) || isInputVar(id)) {
       commitAndPostpone(currentTime, id);
     }
   }
@@ -139,8 +139,8 @@ void BottomUpPropagationGraph::propagate2(Timestamp currentTime) {
                              // stable. Just continue!
         continue;
       } else {
-        if (m_engine.hasChanged(currentTime, currentVar) &&
-            !m_engine.isPostponed(invariantStack.back())) {
+        if (!m_engine.isPostponed(invariantStack.back()) &&
+            m_engine.hasChanged(currentTime, currentVar)) {
           // If the variable is stable and has changed then just send a
           // notification to top invariant (i.e, the one asking for its value)
           // If the top invariant is postponed, then it will be recomputed and
