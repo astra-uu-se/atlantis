@@ -26,7 +26,7 @@ void Engine::recomputeAndCommit() {
     if (tries++ > m_store.getNumVariables()) {
       throw FailedToInitialise();
     }
-    for (autoiter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+    for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
          ++iter) {
       assert((*iter) != nullptr);
       (*iter)->recompute(m_currentTime, *this);
