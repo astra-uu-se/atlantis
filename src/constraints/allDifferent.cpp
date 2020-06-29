@@ -18,10 +18,10 @@ void AllDifferent::init(Timestamp ts, Engine& e) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  for (VarId varId : m_variables) {
-    e.registerInvariantDependsOnVar(m_id, varId, LocalId(varId), 0);
-    lb = std::min(lb, e.getLowerBound(varId));
-    ub = std::max(ub, e.getUpperBound(varId));
+  for (size_t i = 0; i < m_variables.size(); ++i) {
+    lb = std::min(lb, e.getLowerBound(m_variables[i]));
+    ub = std::max(ub, e.getUpperBound(m_variables[i]));
+    e.registerInvariantDependsOnVar(m_id, m_variables[i], LocalId(i), 0);
   }
   assert(ub >= lb);
 
@@ -31,14 +31,6 @@ void AllDifferent::init(Timestamp ts, Engine& e) {
   
   m_offset = lb;
 }
-
-// inline Int AllDifferent::getCount(Timestamp ts, Int overlappingValue) {
-//   return m_counts.at(overlappingValue - m_offset).getValue(ts);
-// }
-
-// inline void AllDifferent::setCount(Timestamp ts, Int overlappingValue, Int newCount) {
-//   m_counts.at(overlappingValue - m_offset).setValue(ts, newCount);
-// }
 
 inline void AllDifferent::increaseCount(Timestamp ts, Engine& e, Int value) {
   Int newCount = m_counts.at(value-m_offset).incValue(ts,1);
@@ -103,8 +95,7 @@ void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 }
 
 void AllDifferent::commit(Timestamp t, Engine&) {
-  for (SavedInt savedInt : m_counts) {
+  for (SavedInt& savedInt : m_counts) {
     savedInt.commitIf(t);
   }
-  // e.commitIf(t, m_violationId);
 }
