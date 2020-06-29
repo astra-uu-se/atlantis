@@ -42,37 +42,29 @@ void AllDifferent::init(Timestamp ts, Engine& e) {
 
 inline void AllDifferent::increaseCount(Timestamp ts, Engine& e, Int value) {
   Int newCount = m_counts.at(value-m_offset).incValue(ts,1);
-    std::cout << "increaseCount @ " << ts << "\n";
-  for(Int i = 0; i < m_counts.size(); ++i){
-    if (m_counts[i].getValue(ts) == 0) {
-      continue;
-    }
-    std::cout << "\t[" <<i+m_offset <<"]: " << m_counts.at(i).getValue(ts) << "\n"; 
-  }
   assert(newCount >= 0);
-  if (newCount < 0 || newCount > m_variables.size()) {
-    std::cout << "\t\n"; 
-  }
-  assert(newCount <= m_variables.size());
+  assert(newCount <= static_cast<Int>(m_variables.size()));
   if(newCount >= 2){
     e.incValue(ts, m_violationId, 1);
   }
 }
 
 inline void AllDifferent::decreaseCount(Timestamp ts, Engine& e, Int value) {
-  Int newCount = m_counts.at(value-m_offset).incValue(ts,-1);
+  Int newCount = m_counts.at(value-m_offset).incValue(ts, -1);
   assert(newCount >= 0);
-  assert(newCount <= m_variables.size());
+  assert(newCount <= static_cast<Int>(m_variables.size()));
   if(newCount >= 1){
     e.incValue(ts, m_violationId, -1);
   }
 }
 
 void AllDifferent::recompute(Timestamp t, Engine& e) {
-  for(auto c: m_counts){
-    c.setValue(t,0);
+  for(SavedInt& c: m_counts){
+    c.setValue(t, 0);
   }
-
+  
+  e.setValue(t, m_violationId, 0);
+  
   for (auto varId : m_variables) {
     increaseCount(t, e, e.getValue(t,varId));
   }
@@ -110,7 +102,7 @@ void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   increaseCount(t, e, newValue);
 }
 
-void AllDifferent::commit(Timestamp t, Engine& e) {
+void AllDifferent::commit(Timestamp t, Engine&) {
   for (SavedInt savedInt : m_counts) {
     savedInt.commitIf(t);
   }

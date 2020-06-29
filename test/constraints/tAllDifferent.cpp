@@ -43,7 +43,7 @@ TEST_F(AllDifferentTest, Init) {
   EXPECT_EQ(e->getCommitedValue(violationId), 1);
   EXPECT_EQ(e->getValue(e->getTmpTimestamp(violationId), violationId), 1);
 }
-
+/*
 TEST_F(AllDifferentTest, Recompute) {
 
   EXPECT_EQ(e->getValue(0, violationId), 1);
