@@ -9,76 +9,89 @@ extern Id NULL_ID;
 AllDifferent::AllDifferent(VarId violationId, std::vector<VarId>&& t_variables)
     : Constraint(NULL_ID, violationId),
       m_variables(std::move(t_variables)),
-      m_overlaps(),
-      m_lowerBound(0),
-      m_upperBound(0) {}
+      m_counts(),
+      m_offset(0)
+       {}
 
 void AllDifferent::init(Timestamp ts, Engine& e) {
   assert(m_id != NULL_ID);
-  m_lowerBound = std::numeric_limits<Int>::max();
-  Int upperBound = std::numeric_limits<Int>::min();
+  Int lb = std::numeric_limits<Int>::max();
+  Int ub = std::numeric_limits<Int>::min();
 
   for (VarId varId : m_variables) {
     e.registerInvariantDependsOnVar(m_id, varId, LocalId(varId), 0);
-    m_lowerBound = std::min(m_lowerBound, e.getLowerBound(varId));
-    upperBound = std::max(upperBound, e.getUpperBound(varId));
+    lb = std::min(lb, e.getLowerBound(varId));
+    ub = std::max(ub, e.getUpperBound(varId));
   }
-  m_overlaps.reserve(upperBound - m_lowerBound);
-  for (Int i = 0; i < upperBound - m_lowerBound; ++i) {
-    m_overlaps.emplace_back(ts, 0);
-  }
+  assert(ub >= lb);
+
+  m_counts.resize(ub-lb+1, SavedInt(ts, 0));
 
   e.registerDefinedVariable(m_violationId, m_id);
+  
+  m_offset = lb;
 }
 
-inline Int AllDifferent::getOverlap(Timestamp ts, Int overlappingValue) {
-  return m_overlaps.at(overlappingValue - m_lowerBound).getValue(ts);
+// inline Int AllDifferent::getCount(Timestamp ts, Int overlappingValue) {
+//   return m_counts.at(overlappingValue - m_offset).getValue(ts);
+// }
+
+// inline void AllDifferent::setCount(Timestamp ts, Int overlappingValue, Int newCount) {
+//   m_counts.at(overlappingValue - m_offset).setValue(ts, newCount);
+// }
+
+inline void AllDifferent::increaseCount(Timestamp ts, Engine& e, Int value) {
+  Int newCount = m_counts.at(value-m_offset).incValue(ts,1);
+    std::cout << "increaseCount @ " << ts << "\n";
+  for(Int i = 0; i < m_counts.size(); ++i){
+    if (m_counts[i].getValue(ts) == 0) {
+      continue;
+    }
+    std::cout << "\t[" <<i+m_offset <<"]: " << m_counts.at(i).getValue(ts) << "\n"; 
+  }
+  assert(newCount >= 0);
+  if (newCount < 0 || newCount > m_variables.size()) {
+    std::cout << "\t\n"; 
+  }
+  assert(newCount <= m_variables.size());
+  if(newCount >= 2){
+    e.incValue(ts, m_violationId, 1);
+  }
 }
 
-inline void AllDifferent::setOverlap(Timestamp ts, Int overlappingValue, Int newOverlap) {
-  m_overlaps.at(overlappingValue - m_lowerBound).setValue(ts, newOverlap);
-}
-
-inline void AllDifferent::increaseOverlap(Timestamp ts, Int overlappingValue, Int delta) {
-  setOverlap(ts, overlappingValue, getOverlap(ts, overlappingValue) + delta);
+inline void AllDifferent::decreaseCount(Timestamp ts, Engine& e, Int value) {
+  Int newCount = m_counts.at(value-m_offset).incValue(ts,-1);
+  assert(newCount >= 0);
+  assert(newCount <= m_variables.size());
+  if(newCount >= 1){
+    e.incValue(ts, m_violationId, -1);
+  }
 }
 
 void AllDifferent::recompute(Timestamp t, Engine& e) {
-  for (auto varId : m_variables) {
-    setOverlap(t, e.getValue(t, varId), 0);
+  for(auto c: m_counts){
+    c.setValue(t,0);
   }
-  Int violation = 0;
+
   for (auto varId : m_variables) {
-    if (getOverlap(t, e.getValue(t, varId)) > 0) {
-      ++violation;
-    }
-    increaseOverlap(t, e.getValue(t, varId), 1);
+    increaseCount(t, e, e.getValue(t,varId));
   }
-  e.setValue(t, m_violationId, violation);
 }
 
 void AllDifferent::notifyIntChanged(Timestamp t, Engine& e,
                              LocalId, Int oldValue,
                              Int newValue, Int) {
-  increaseOverlap(t, oldValue, -1);
-  increaseOverlap(t, newValue, 1);
-  Int delta = (
-    (getOverlap(t, newValue) > 1 ? 1 : 0) -
-    (getOverlap(t, oldValue) > 0 ? 1 : 0)
-  );
-  if (delta == 0) {
-    return;
-  }
-  
-  e.incValue(t, m_violationId, delta);
+  assert(newValue != oldValue);
+  decreaseCount(t, e, oldValue);
+  increaseCount(t, e, newValue);
 }
 
 VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
   m_state.incValue(t, 1);
 
   Int index = m_state.getValue(t);
-  if (0 <= index && index < (Int) m_variables.size()) {
-    return m_variables[index];
+  if (0 <= index && index < static_cast<Int>(m_variables.size())) {
+    return m_variables.at(index);
   }
   return NULL_ID;
 }
@@ -86,29 +99,20 @@ VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
 void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   auto index = m_state.getValue(t);
   assert(0 <= index);
-  assert(index < (Int) m_variables.size());
+  assert(index < static_cast<Int>(m_variables.size()));
   
   VarId varId = m_variables.at(index);
 
   Int oldValue = e.getCommitedValue(varId);
   Int newValue = e.getValue(varId);
 
-  increaseOverlap(t, oldValue, -1);
-  increaseOverlap(t, newValue, 1);
-  Int delta = (
-    (getOverlap(t, newValue) > 1 ? 1 : 0) -
-    (getOverlap(t, oldValue) > 0 ? 1 : 0)
-  );
-  if (delta == 0) {
-    return;
-  }
-  
-  e.incValue(t, m_violationId, delta);
+  decreaseCount(t, e, oldValue);
+  increaseCount(t, e, newValue);
 }
 
 void AllDifferent::commit(Timestamp t, Engine& e) {
-  for (SavedInt savedInt : m_overlaps) {
+  for (SavedInt savedInt : m_counts) {
     savedInt.commitIf(t);
   }
-  e.commitIf(t, m_violationId);
+  // e.commitIf(t, m_violationId);
 }

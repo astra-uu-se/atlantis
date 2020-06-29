@@ -9,16 +9,15 @@
 #include "../core/intVar.hpp"
 #include "../core/tracer.hpp"
 #include "../core/types.hpp"
+#include "../core/savedInt.hpp"
 
 class AllDifferent : public Constraint {
  private:
   std::vector<VarId> m_variables;
-  std::vector<SavedInt> m_overlaps;
-  Int m_lowerBound;
-  Int m_upperBound;
-  Int getOverlap(Timestamp ts, Int overlappingValue);
-  void setOverlap(Timestamp ts, Int overlappingValue, Int newOverlap);
-  void increaseOverlap(Timestamp ts, Int overlappingValue, Int delta);
+  std::vector<SavedInt> m_counts;
+  Int m_offset;
+  void increaseCount(Timestamp ts, Engine& e, Int value);
+  void decreaseCount(Timestamp ts, Engine& e, Int value);
  public:
   AllDifferent(VarId violationId, std::vector<VarId>&& t_variables);
   
