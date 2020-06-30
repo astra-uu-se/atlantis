@@ -7,8 +7,8 @@
 // TODO: invariant should take its true id in the constructor.
 extern Id NULL_ID;
 
-ElementVar::ElementVar(VarId i, std::vector<VarId>&& X, VarId b)
-    : Invariant(NULL_ID), m_i(i), m_X(std::move(X)), m_b(b) {}
+ElementVar::ElementVar(VarId i, std::vector<VarId> X, VarId b)
+    : Invariant(NULL_ID), m_i(i), m_X(X), m_b(b) {}
 
 void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);
@@ -52,7 +52,5 @@ void ElementVar::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 }
 
 void ElementVar::commit(Timestamp t, Engine& e) {
-  // todo: do nodes validate themself or is it done by engine?
-  // this->validate(t);
-  e.commitIf(t, m_b);
+  Invariant::commit(t,e);
 }

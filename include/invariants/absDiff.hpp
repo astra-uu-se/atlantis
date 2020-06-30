@@ -10,25 +10,22 @@
 #include "../core/types.hpp"
 
 /**
- * Invariant for b <- A[i] where A is a vector of constants.
+ * Invariant for c <- |a-b|
  *
  */
 
-class ElementConst : public Invariant {
+class AbsDiff : public Invariant {
  private:
-  VarId m_i;
-  std::vector<Int> m_A;
-  VarId m_b;
+  VarId m_a, m_b, m_c;
 
  public:
-  ElementConst(VarId i, std::vector<Int> A, VarId b);
-  ~ElementConst() = default;
+  AbsDiff(VarId a, VarId b, VarId c);
+  ~AbsDiff() = default;
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp t, Engine& e, LocalId id, Int oldValue,
                         Int newValue, Int data) override;
   virtual VarId getNextDependency(Timestamp, Engine&) override;
-  virtual void notifyCurrentDependencyChanged(Timestamp,
-                                              Engine& e) override;
+  virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
   void commit(Timestamp, Engine&) override;
 };

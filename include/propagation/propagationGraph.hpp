@@ -125,7 +125,7 @@ class PropagationGraph {
     return m_isInputVar.at(id);
   }
 
-  inline const std::vector<VarId>& variableDefinedBy(InvariantId inv) const {
+  inline const std::vector<VarId>& variablesDefinedBy(InvariantId inv) const {
     return m_variablesDefinedByInvariant.at(inv);
   }
 };

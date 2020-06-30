@@ -6,8 +6,8 @@
 #include "../core/engine.hpp"
 #include "../core/intVar.hpp"
 #include "../core/invariant.hpp"
-#include "../core/types.hpp"
 #include "../core/tracer.hpp"
+#include "../core/types.hpp"
 
 /**
  * Invariant for b <- X[i] where X is a vector of VarId.
@@ -21,8 +21,7 @@ class ElementVar : public Invariant {
   VarId m_b;
 
  public:
-  ElementVar(VarId i, std::vector<VarId>&& X,
-         VarId b);
+  ElementVar(VarId i, std::vector<VarId>X, VarId b);
   ~ElementVar() = default;
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;

@@ -36,10 +36,11 @@ class IntVar : public Var {
   IntVar(Int t_lowerBound, Int t_upperBound);
   IntVar(Id t_id, Int t_lowerBound, Int t_upperBound);
   IntVar(Id t_id, Int initValue, Int t_lowerBound, Int t_upperBound);
+  IntVar(Timestamp t, Id t_id, Int initValue, Int t_lowerBound, Int t_upperBound);
   ~IntVar() = default;
 
   [[gnu::always_inline]] inline bool hasChanged(Timestamp t) const {
-    return m_value.getValue(t) != m_value.getCommittedValue();
+    return m_value.hasChanged(t);
   }
   [[gnu::always_inline]] inline Timestamp getTmpTimestamp() const {
     return m_value.getTmpTimestamp();
