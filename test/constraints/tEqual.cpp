@@ -36,19 +36,19 @@ class EqualTest : public ::testing::Test {
  */
 
 TEST_F(EqualTest, Init) {
-  EXPECT_EQ(e->getCommitedValue(violationId), 0);
+  EXPECT_EQ(e->getCommittedValue(violationId), 0);
   EXPECT_EQ(e->getValue(e->getTmpTimestamp(violationId), violationId), 0);
 }
 
 TEST_F(EqualTest, Recompute) {
 
   EXPECT_EQ(e->getValue(0, violationId), 0);
-  EXPECT_EQ(e->getCommitedValue(violationId), 0);
+  EXPECT_EQ(e->getCommittedValue(violationId), 0);
 
   Timestamp newTime = 1;
   e->setValue(newTime, x, 40);
   equal->recompute(newTime, *e);
-  EXPECT_EQ(e->getCommitedValue(violationId), 0);
+  EXPECT_EQ(e->getCommittedValue(violationId), 0);
   EXPECT_EQ(e->getValue(newTime, violationId), 38);
 }
 
@@ -62,14 +62,14 @@ TEST_F(EqualTest, NotifyChange) {
 
   EXPECT_EQ(e->getValue(time1, x), 2);
   e->setValue(time1, x, 40);
-  EXPECT_EQ(e->getCommitedValue(x), 2);
+  EXPECT_EQ(e->getCommittedValue(x), 2);
   EXPECT_EQ(e->getValue(time1, x), 40);
-  equal->notifyIntChanged(time1, *e, unused, e->getCommitedValue(x),
+  equal->notifyIntChanged(time1, *e, unused, e->getCommittedValue(x),
                            e->getValue(time1, x), 1);
   EXPECT_EQ(e->getValue(time1, violationId), 38);  // incremental value of violationId is 0;
 
   e->setValue(time1, y, 0);
-  equal->notifyIntChanged(time1, *e, unused, e->getCommitedValue(y),
+  equal->notifyIntChanged(time1, *e, unused, e->getCommittedValue(y),
                            e->getValue(time1, y), 1);
   auto tmpValue = e->getValue(time1, violationId);  // incremental value of violationId is 40;
 
@@ -81,9 +81,9 @@ TEST_F(EqualTest, NotifyChange) {
 
   EXPECT_EQ(e->getValue(time2, y), 2);
   e->setValue(time2, y, 20);
-  EXPECT_EQ(e->getCommitedValue(y), 2);
+  EXPECT_EQ(e->getCommittedValue(y), 2);
   EXPECT_EQ(e->getValue(time2, y), 20);
-  equal->notifyIntChanged(time2, *e, unused, e->getCommitedValue(y),
+  equal->notifyIntChanged(time2, *e, unused, e->getCommittedValue(y),
                            e->getValue(time2, y), 1);
   EXPECT_EQ(e->getValue(time2, violationId), 18);  // incremental value of violationId is 0;
 }
@@ -99,21 +99,21 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
   for (size_t i = 0; i < 1000; ++i) { 
     ++currentTime;
     // Check that we do not accidentally commit
-    ASSERT_EQ(e->getCommitedValue(x), 2);
-    ASSERT_EQ(e->getCommitedValue(y), 2);
-    ASSERT_EQ(e->getCommitedValue(violationId), 0);  // violationId is commited by register.
+    ASSERT_EQ(e->getCommittedValue(x), 2);
+    ASSERT_EQ(e->getCommittedValue(y), 2);
+    ASSERT_EQ(e->getCommittedValue(violationId), 0);  // violationId is committed by register.
 
     // Set all variables
     e->setValue(currentTime, x, distribution(gen));
     e->setValue(currentTime, y, distribution(gen));
     
     // notify changes
-    if (e->getCommitedValue(x) != e->getValue(currentTime, x)) {
-      equal->notifyIntChanged(currentTime, *e, unused, e->getCommitedValue(x),
+    if (e->getCommittedValue(x) != e->getValue(currentTime, x)) {
+      equal->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(x),
                                e->getValue(currentTime, x), 1);
     }
-    if (e->getCommitedValue(y) != e->getValue(currentTime, y)) {
-      equal->notifyIntChanged(currentTime, *e, unused, e->getCommitedValue(y),
+    if (e->getCommittedValue(y) != e->getValue(currentTime, y)) {
+      equal->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(y),
                                e->getValue(currentTime, y), 1);
     }
     
@@ -126,7 +126,7 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
 }
 
 TEST_F(EqualTest, Commit) {
-  EXPECT_EQ(e->getCommitedValue(violationId), 0);
+  EXPECT_EQ(e->getCommittedValue(violationId), 0);
 
   LocalId unused = -1;
 
@@ -136,14 +136,16 @@ TEST_F(EqualTest, Commit) {
   e->setValue(currentTime, y, 2);  // This change is not notified and should not
                                    // have an impact on the commit
 
-  equal->notifyIntChanged(currentTime, *e, unused, e->getCommitedValue(x),
+  equal->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(x),
                            e->getValue(currentTime, x), 1);
 
-  // Commit at wrong timestamp should have no impact
-  equal->commit(currentTime + 1, *e);
-  EXPECT_EQ(e->getCommitedValue(violationId), 0);
-  equal->commit(currentTime, *e);
-  EXPECT_EQ(e->getCommitedValue(violationId), 38);
+
+  // Committing an invariant does not commit its output!
+  // // Commit at wrong timestamp should have no impact
+  // equal->commit(currentTime + 1, *e);
+  // EXPECT_EQ(e->getCommittedValue(violationId), 0);
+  // equal->commit(currentTime, *e);
+  // EXPECT_EQ(e->getCommittedValue(violationId), 38);
 }
 
 }  // namespace

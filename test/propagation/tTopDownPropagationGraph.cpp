@@ -32,7 +32,7 @@ TEST_F(TopDownPropagationGraphTest, RegisterVariable) {
   pg->registerVar(VarId(4));
   pg->registerVar(VarId(5));
   pg->registerVar(VarId(6));
-  EXPECT_EQ(pg->getNumVariables(), 6);
+  EXPECT_EQ(pg->getNumVariables(), size_t(6));
 }
 
 TEST_F(TopDownPropagationGraphTest, RegisterInvariant) {
@@ -41,7 +41,7 @@ TEST_F(TopDownPropagationGraphTest, RegisterInvariant) {
   pg->registerInvariant(InvariantId(3));
   pg->registerInvariant(InvariantId(4));
   pg->registerInvariant(InvariantId(5));
-  EXPECT_EQ(pg->getNumInvariants(), 5);
+  EXPECT_EQ(pg->getNumInvariants(), size_t(5));
 }
 
 TEST_F(TopDownPropagationGraphTest, TopologicalSort) {
