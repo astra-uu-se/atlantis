@@ -52,7 +52,5 @@ void ElementVar::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 }
 
 void ElementVar::commit(Timestamp t, Engine& e) {
-  // todo: do nodes validate themself or is it done by engine?
-  // this->validate(t);
-  e.commitIf(t, m_b);
+  Invariant::commit(t,e);
 }
