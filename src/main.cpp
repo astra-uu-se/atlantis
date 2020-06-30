@@ -7,9 +7,40 @@
 #include "core/intVar.hpp"
 #include "core/tracer.hpp"
 #include "invariants/linear.hpp"
+
+void test();
+void allIntervals(int);
+
 int main() {
   static_assert("C++17");
   std::cout << "hello world!" << std::endl;
+  test();
+}
+
+void allIntervals(int n) {
+  Engine engine;
+  engine.open();
+
+  // std::vector<VarId> s_vars;
+  // std::vector<VarId> v_vars;
+
+  // for (size_t i = 0; i < n; i++) {
+  //   s_vars.push_back(engine.makeIntVar(i, 0, n - 1));
+  // }
+
+  // for (size_t i = 1; i < n; i++) {
+  //   v_vars.push_back(engine.makeIntVar(i, 0, n - 1));
+  //   engine.makeInvariant<AbsDiff>(s_vars.at(i - 1), s_vars.at(i),
+  //                                 v_vars.back());
+  // }
+
+  // VarId violation = engine.makeIntVar(0,0,n);
+  // engine.makeConstraint<AllDifferent>(violation, v_vars);
+
+  engine.close();
+}
+
+void test() {
   Engine engine;
   engine.open();
   VarId a = engine.makeIntVar(1, 1, 1);
