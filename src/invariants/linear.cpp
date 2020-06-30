@@ -63,7 +63,6 @@ void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 }
 
 void Linear::commit(Timestamp t, Engine& e) {
-  //todo: who commits the output variables?
+  Invariant::commit(t,e);
   e.commitIf(t, m_b);
-  m_isPostponed = false;
 }

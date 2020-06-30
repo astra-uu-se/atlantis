@@ -40,7 +40,7 @@ class IntVar : public Var {
   ~IntVar() = default;
 
   [[gnu::always_inline]] inline bool hasChanged(Timestamp t) const {
-    return m_value.getValue(t) != m_value.getCommittedValue();
+    return m_value.hasChanged(t);
   }
   [[gnu::always_inline]] inline Timestamp getTmpTimestamp() const {
     return m_value.getTmpTimestamp();

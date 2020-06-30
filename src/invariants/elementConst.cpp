@@ -40,6 +40,6 @@ void ElementConst::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 }
 
 void ElementConst::commit(Timestamp t, Engine& e) {
-  m_isPostponed = false;
+  Invariant::commit(t,e);
   e.commitIf(t, m_b);
 }

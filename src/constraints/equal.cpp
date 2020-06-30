@@ -58,6 +58,6 @@ void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 }
 
 void Equal::commit(Timestamp t, Engine& e) {
-  m_isPostponed = false;
+  Invariant::commit(t,e);
   e.commitIf(t, m_violationId);
 }
