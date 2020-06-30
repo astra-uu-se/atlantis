@@ -21,11 +21,7 @@ class Linear : public Invariant {
   VarId m_b;
 
  public:
-  Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b);
-  //   Linear(Engine& e, std::vector<Int>&& A,
-  //          std::vector<std::shared_ptr<IntVar>>&& X, std::shared_ptr<IntVar>
-  //          b);
-
+  Linear(std::vector<Int> A, std::vector<VarId> X, VarId b);
   ~Linear() = default;
   virtual void init(Timestamp, Engine&) override;
   virtual void recompute(Timestamp, Engine&) override;
