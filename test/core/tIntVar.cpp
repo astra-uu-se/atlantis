@@ -38,8 +38,8 @@ TEST_F(IntVarTest, SavedIntConstructor) {
   ASSERT_EQ(intVarNoValue.getValue(timestamp), 0);
   ASSERT_EQ(intVarNoValue.getCommittedValue(), 0);
   
-  // default timestamp is zero
-  ASSERT_EQ(intVarNoValue.getTmpTimestamp(), -1);
+  // default timestamp is NULL_TIMESTAMP
+  ASSERT_EQ(intVarNoValue.getTmpTimestamp(), NULL_TIMESTAMP);
   
   ASSERT_FALSE(intVarNoValue.hasChanged(timestamp));
 
@@ -52,7 +52,7 @@ TEST_F(IntVarTest, SavedIntConstructor) {
   ASSERT_EQ(intVarWithValue.getCommittedValue(), value);
   
   // default timestamp is zero
-  ASSERT_EQ(intVarWithValue.getTmpTimestamp(), -1);
+  ASSERT_EQ(intVarWithValue.getTmpTimestamp(), NULL_TIMESTAMP);
   
   ASSERT_FALSE(intVarWithValue.hasChanged(timestamp));
 

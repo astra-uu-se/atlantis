@@ -40,25 +40,25 @@ class AllDifferentTest : public ::testing::Test {
  */
 
 TEST_F(AllDifferentTest, Init) {
-  EXPECT_EQ(e->getCommitedValue(violationId), 1);
+  EXPECT_EQ(e->getCommittedValue(violationId), 1);
   EXPECT_EQ(e->getValue(e->getTmpTimestamp(violationId), violationId), 1);
 }
 
 TEST_F(AllDifferentTest, Recompute) {
 
   EXPECT_EQ(e->getValue(0, violationId), 1);
-  EXPECT_EQ(e->getCommitedValue(violationId), 1);
+  EXPECT_EQ(e->getCommittedValue(violationId), 1);
 
   Timestamp newTime = 1;
 
   e->setValue(newTime, c, 3);
   allDifferent->recompute(newTime, *e);
-  EXPECT_EQ(e->getCommitedValue(violationId), 1);
+  EXPECT_EQ(e->getCommittedValue(violationId), 1);
   EXPECT_EQ(e->getValue(newTime, violationId), 0);
 
   e->setValue(newTime, a, 2);
   allDifferent->recompute(newTime, *e);
-  EXPECT_EQ(e->getCommitedValue(violationId), 1);
+  EXPECT_EQ(e->getCommittedValue(violationId), 1);
   EXPECT_EQ(e->getValue(newTime, violationId), 1);
 }
 
@@ -72,14 +72,14 @@ TEST_F(AllDifferentTest, NotifyChange) {
 
   EXPECT_EQ(e->getValue(time1, a), 1);
   e->setValue(time1, a, 2);
-  EXPECT_EQ(e->getCommitedValue(a), 1);
+  EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time1, a), 2);
-  allDifferent->notifyIntChanged(time1, *e, unused, e->getCommitedValue(a),
+  allDifferent->notifyIntChanged(time1, *e, unused, e->getCommittedValue(a),
                            e->getValue(time1, a), 1);
   EXPECT_EQ(e->getValue(time1, violationId), 2);
 
   e->setValue(time1, b, 3);
-  allDifferent->notifyIntChanged(time1, *e, unused, e->getCommitedValue(b),
+  allDifferent->notifyIntChanged(time1, *e, unused, e->getCommittedValue(b),
                            e->getValue(time1, b), 1);
   auto tmpValue = e->getValue(time1, violationId);
 
@@ -91,9 +91,9 @@ TEST_F(AllDifferentTest, NotifyChange) {
 
   EXPECT_EQ(e->getValue(time2, b), 2);
   e->setValue(time2, b, 20);
-  EXPECT_EQ(e->getCommitedValue(b), 2);
+  EXPECT_EQ(e->getCommittedValue(b), 2);
   EXPECT_EQ(e->getValue(time2, b), 20);
-  allDifferent->notifyIntChanged(time2, *e, unused, e->getCommitedValue(b),
+  allDifferent->notifyIntChanged(time2, *e, unused, e->getCommittedValue(b),
                            e->getValue(time2, b), 1);
   EXPECT_EQ(e->getValue(time2, violationId), 0);
 }
@@ -110,21 +110,21 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
   for (size_t i = 0; i < 2; ++i) { 
     ++currentTime;
     // Check that we do not accidentally commit
-    ASSERT_EQ(e->getCommitedValue(a), 1);
-    ASSERT_EQ(e->getCommitedValue(b), 2);
-    ASSERT_EQ(e->getCommitedValue(violationId), 1);  // violationId is commited by register.
+    ASSERT_EQ(e->getCommittedValue(a), 1);
+    ASSERT_EQ(e->getCommittedValue(b), 2);
+    ASSERT_EQ(e->getCommittedValue(violationId), 1);  // violationId is commited by register.
 
     // Set all variables
     e->setValue(currentTime, a, distribution(gen));
     e->setValue(currentTime, b, distribution(gen));
     
     // notify changes
-    if (e->getCommitedValue(a) != e->getValue(currentTime, a)) {
-      allDifferent->notifyIntChanged(currentTime, *e, unused, e->getCommitedValue(a),
+    if (e->getCommittedValue(a) != e->getValue(currentTime, a)) {
+      allDifferent->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(a),
                                e->getValue(currentTime, a), 1);
     }
-    if (e->getCommitedValue(b) != e->getValue(currentTime, b)) {
-      allDifferent->notifyIntChanged(currentTime, *e, unused, e->getCommitedValue(b),
+    if (e->getCommittedValue(b) != e->getValue(currentTime, b)) {
+      allDifferent->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(b),
                                e->getValue(currentTime, b), 1);
     }
     

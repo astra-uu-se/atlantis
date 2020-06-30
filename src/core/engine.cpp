@@ -49,6 +49,9 @@ void Engine::recomputeAndCommit() {
 }
 
 void Engine::close() {
+  ++m_currentTime;  // todo: Is it safe to increment time here? What if a user
+                    // tried to change a variable but without a begin move?
+                    // But we should ignore it anyway then...
   m_isOpen = false;
   m_propGraph.close();
   // compute initial values for variables and for (internal datastructure of)
@@ -66,25 +69,6 @@ void Engine::beginMove() { ++m_currentTime; }
 
 void Engine::endMove() {}
 
-
-void Engine::commit(VarId& v) {
-  m_store.getIntVar(v).commit();
-  // todo: do something else? like:
-  // m_store.getIntVar(v).validate();
-}
-
-void Engine::commitIf(Timestamp t, VarId& v) {
-  m_store.getIntVar(v).commitIf(t);
-  // todo: do something else? like:
-  // m_store.getIntVar(v).validate();
-}
-
-void Engine::commitValue(VarId& v, Int val) {
-  m_store.getIntVar(v).commitValue(val);
-  // todo: do something else? like:
-  // m_store.getIntVar(v).validate();
-}
-
 void Engine::beginQuery() { m_propGraph.clearForPropagation(); }
 
 void Engine::query(VarId id) {
@@ -94,8 +78,16 @@ void Engine::query(VarId id) {
 void Engine::endQuery() {
   // m_propGraph.schedulePropagation(m_currentTime, *this);
   // propagate();
-  m_propGraph.propagate(m_currentTime);
+  // m_propGraph.propagate(m_currentTime);
+  m_propGraph.propagate2(m_currentTime);
 }
+
+void Engine::beginCommit() { m_propGraph.clearForPropagation(); }
+
+void Engine::endCommit() { 
+  // m_propGraph.fullPropagateAndCommit(m_currentTime); 
+  m_propGraph.lazyPropagateAndCommit(m_currentTime); 
+  }
 
 // Propagates at the current internal time of the engine.
 void Engine::propagate() {
@@ -128,7 +120,8 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   if (!m_isOpen) {
     throw ModelNotOpenException("Cannot make IntVar when store is closed.");
   }
-  VarId newId = m_store.createIntVar(initValue, lowerBound, upperBound);
+  VarId newId =
+      m_store.createIntVar(m_currentTime, initValue, lowerBound, upperBound);
   m_propGraph.registerVar(newId);
   assert(newId.id == m_dependentInvariantData.size());
   m_dependentInvariantData.push_back({});

@@ -5,16 +5,9 @@
 // TODO: invariant should take its true id in the constructor.
 extern Id NULL_ID;
 
-Linear::Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b)
-    : Invariant(NULL_ID), m_A(std::move(A)), m_X(std::move(X)), m_b(b) {}
+Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
+    : Invariant(NULL_ID), m_A(A), m_X(X), m_b(b) {}
 
-// Linear::Linear(Engine& e, std::vector<Int>&& A,
-//                std::vector<std::shared_ptr<IntVar>>&& X,
-//                std::shared_ptr<IntVar> b)
-//     : Invariant(Engine::NULL_ID), m_A(std::move(A)), m_X(std::move(X)),
-//     m_b(b) {
-//   init(e);
-// }
 
 void Linear::init(Timestamp, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
@@ -57,13 +50,11 @@ VarId Linear::getNextDependency(Timestamp t, Engine&) {
 void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   Int idx = m_state.getValue(t);
-  Int delta = e.getValue(t, m_X.at(idx)) - e.getCommitedValue(m_X.at(idx));
+  Int delta = e.getValue(t, m_X.at(idx)) - e.getCommittedValue(m_X.at(idx));
   assert(delta != 0);  // invariants are only notified when they are changed.
   e.incValue(t, m_b, delta * m_A.at(idx));
 }
 
 void Linear::commit(Timestamp t, Engine& e) {
-  // todo: do nodes validate themself or is it done by engine?
-  // this->validate(t);
-  e.commitIf(t, m_b);
+  Invariant::commit(t,e);
 }
