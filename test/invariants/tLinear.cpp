@@ -150,10 +150,12 @@ TEST_F(LinearTest, Commit) {
   linear->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(a),
                            e->getValue(currentTime, a), 1);
 
-  // Commit at wrong timestamp should have no impact
-  linear->commit(currentTime + 1, *e);
-  EXPECT_EQ(e->getCommittedValue(d), -39);
-  linear->commit(currentTime, *e);
-  EXPECT_EQ(e->getCommittedValue(d), 0);
+
+  // Committing an invariant does not commit its output!
+  // // Commit at wrong timestamp should have no impact
+  // linear->commit(currentTime + 1, *e);
+  // EXPECT_EQ(e->getCommittedValue(d), -39);
+  // linear->commit(currentTime, *e);
+  // EXPECT_EQ(e->getCommittedValue(d), 0);
 }
 }  // namespace

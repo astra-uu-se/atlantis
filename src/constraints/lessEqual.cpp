@@ -64,5 +64,4 @@ void LessEqual::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 
 void LessEqual::commit(Timestamp t, Engine& e) {
   Invariant::commit(t,e);
-  e.commitIf(t, m_violationId);
 }

@@ -43,6 +43,4 @@ void AbsDiff::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   e.setValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 
-void AbsDiff::commit(Timestamp t, Engine& e) {
-
-}
+void AbsDiff::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

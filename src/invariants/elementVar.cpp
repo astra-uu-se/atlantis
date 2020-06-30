@@ -53,5 +53,4 @@ void ElementVar::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 
 void ElementVar::commit(Timestamp t, Engine& e) {
   Invariant::commit(t,e);
-  e.commitIf(t, m_b);
 }

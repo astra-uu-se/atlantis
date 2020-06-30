@@ -26,9 +26,9 @@ void magicSquare(int n) {
   std::vector<std::vector<VarId>> square;
   std::vector<VarId> flat;
 
-  for (size_t i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
     square.push_back(std::vector<VarId>{});
-    for (size_t j = 0; j < n; j++) {
+    for (int j = 0; j < n; j++) {
       auto var = engine.makeIntVar(i*n+j+1, 1, n2);
       square.at(i).push_back(var);
       flat.push_back(var);
@@ -37,7 +37,7 @@ void magicSquare(int n) {
 
   std::vector<VarId> violations;
 
-  for (size_t i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
     /* code */
   }
 
@@ -56,11 +56,11 @@ void allIntervals(int n) {
   // std::vector<VarId> s_vars;
   // std::vector<VarId> v_vars;
 
-  // for (size_t i = 0; i < n; i++) {
+  // for (int i = 0; i < n; i++) {
   //   s_vars.push_back(engine.makeIntVar(i, 0, n - 1));
   // }
 
-  // for (size_t i = 1; i < n; i++) {
+  // for (int i = 1; i < n; i++) {
   //   v_vars.push_back(engine.makeIntVar(i, 0, n - 1));
   //   engine.makeInvariant<AbsDiff>(s_vars.at(i - 1), s_vars.at(i),
   //                                 v_vars.back());
@@ -98,7 +98,7 @@ void test() {
   std::mt19937 gen = std::mt19937(rd());
 
   std::uniform_int_distribution<> distribution{-100000, 100000};
-  for (size_t i = 0; i < 1000000; i++) {
+  for (int i = 0; i < 1000000; i++) {
     engine.beginMove();
     engine.setValue(a, distribution(gen));
     engine.setValue(c, distribution(gen));

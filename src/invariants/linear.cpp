@@ -57,5 +57,4 @@ void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 
 void Linear::commit(Timestamp t, Engine& e) {
   Invariant::commit(t,e);
-  e.commitIf(t, m_b);
 }

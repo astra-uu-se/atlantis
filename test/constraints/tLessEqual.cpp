@@ -171,11 +171,12 @@ TEST_F(LessEqualTest, Commit) {
   lessEqual->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(x),
                            e->getValue(currentTime, x), 1);
 
-  // Commit at wrong timestamp should have no impact
-  lessEqual->commit(currentTime + 1, *e);
-  EXPECT_EQ(e->getCommittedValue(violationId), 0);
-  lessEqual->commit(currentTime, *e);
-  EXPECT_EQ(e->getCommittedValue(violationId), 38);
+  // Committing an invariant does not commit its output!
+  // // Commit at wrong timestamp should have no impact
+  // lessEqual->commit(currentTime + 1, *e);
+  // EXPECT_EQ(e->getCommittedValue(violationId), 0);
+  // lessEqual->commit(currentTime, *e);
+  // EXPECT_EQ(e->getCommittedValue(violationId), 38);
 }
 
 }  // namespace
