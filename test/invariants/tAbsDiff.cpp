@@ -23,21 +23,21 @@ class MockAbsDiff : public AbsDiff {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return real_.recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          return real_.getNextDependency(t, e);
-        });
+    // ON_CALL(*this, getNextDependency)
+    //     .WillByDefault([this](Timestamp t, Engine& e) {
+    //       return real_.getNextDependency(t, e);
+    //     });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          real_.notifyCurrentDependencyChanged(t, e);
-        });
+    // ON_CALL(*this, notifyCurrentDependencyChanged)
+    //     .WillByDefault([this](Timestamp t, Engine& e) {
+    //       real_.notifyCurrentDependencyChanged(t, e);
+    //     });
 
-    ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& e, LocalId id, Int oldValue,
-                              Int newValue, Int data) {
-          real_.notifyIntChanged(t, e, id, oldValue, newValue, data);
-        });
+    // ON_CALL(*this, notifyIntChanged)
+    //     .WillByDefault([this](Timestamp t, Engine& e, LocalId id, Int oldValue,
+    //                           Int newValue, Int data) {
+    //       real_.notifyIntChanged(t, e, id, oldValue, newValue, data);
+    //     });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
       real_.commit(t, e);
@@ -47,14 +47,14 @@ class MockAbsDiff : public AbsDiff {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
-              (override));
+  // MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
+  // MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+  //             (override));
 
-  MOCK_METHOD(void, notifyIntChanged,
-              (Timestamp t, Engine& e, LocalId id, Int oldValue, Int newValue,
-               Int data),
-              (override));
+  // MOCK_METHOD(void, notifyIntChanged,
+  //             (Timestamp t, Engine& e, LocalId id, Int oldValue, Int newValue,
+  //              Int data),
+  //             (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:
@@ -83,10 +83,10 @@ TEST_F(AbsDiffTest, CreateAbsDiff) {
 
   auto invariant = engine->makeInvariant<MockAbsDiff>(a, b, c);
 
-  EXPECT_CALL(*invariant, recompute(engine->getCurrentTime(), testing::_))
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
       .Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(engine->getCurrentTime(), testing::_))
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
       .Times(AtLeast(1));
 
   engine->close();
@@ -103,10 +103,10 @@ TEST_F(AbsDiffTest, Modification) {
 
   auto invariant = engine->makeInvariant<MockAbsDiff>(a, b, c);
 
-  EXPECT_CALL(*invariant, recompute(engine->getCurrentTime(), testing::_))
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
       .Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(engine->getCurrentTime(), testing::_))
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
       .Times(AtLeast(1));
 
   engine->close();
