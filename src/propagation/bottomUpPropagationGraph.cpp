@@ -64,34 +64,27 @@ void BottomUpPropagationGraph::propagate(Timestamp currentTime) {
         // Variable is defined and not stable, so expand defining invariant.
         expandInvariant(m_definingInvariant.at(currentVar));
         continue;
-      } else {
-        markStable(currentTime, currentVar);
-        // continue;
-        goto handle_stable_var;  // Don't panic.
       }
-    } else {  // If stable
-    handle_stable_var:
-      if (invariantStack.empty()) {
-        popVariableStack();  // we are at an output variable that is already
-                             // stable. Just continue!
-        continue;
-      } else {
-        if (m_engine.hasChanged(currentTime, currentVar)) {
-          // If the variable is stable and has changed then just send a
-          // notification to top invariant (i.e, the one asking for its value)
-          notifyCurrentInvariant();
-        }
-        bool invariantDone = visitNextVariable();
-        if (invariantDone) {
-          // The top invariant has finished propagating, so all defined vars can
-          // be marked as stable at the current time.
-          for (auto defVar : variablesDefinedBy(invariantStack.back())) {
-            markStable(currentTime, defVar);
-          }
-          popInvariantStack();
-        }
-        continue;
+      markStable(currentTime, currentVar);
+    }
+    if (invariantStack.empty()) {
+      popVariableStack();  // we are at an output variable that is already
+                           // stable. Just continue!
+      continue;
+    }
+    if (m_engine.hasChanged(currentTime, currentVar)) {
+      // If the variable is stable and has changed then just send a
+      // notification to top invariant (i.e, the one asking for its value)
+      notifyCurrentInvariant();
+    }
+    bool invariantDone = visitNextVariable();
+    if (invariantDone) {
+      // The top invariant has finished propagating, so all defined vars can
+      // be marked as stable at the current time.
+      for (auto defVar : variablesDefinedBy(invariantStack.back())) {
+        markStable(currentTime, defVar);
       }
+      popInvariantStack();
     }
   }
 }
@@ -127,42 +120,35 @@ void BottomUpPropagationGraph::propagate2(Timestamp currentTime) {
         // Variable is defined and not stable, so expand defining invariant.
         expandInvariant(m_definingInvariant.at(currentVar));
         continue;
-      } else {
-        markStable(currentTime, currentVar);
-        // continue;
-        goto handle_stable_var;  // Don't panic.
       }
-    } else {  // If stable
-    handle_stable_var:
-      if (invariantStack.empty()) {
-        popVariableStack();  // we are at an output variable that is already
-                             // stable. Just continue!
-        continue;
-      } else {
-        if (!m_engine.isPostponed(invariantStack.back()) &&
-            m_engine.hasChanged(currentTime, currentVar)) {
-          // If the variable is stable and has changed then send a notification
-          // to top invariant (i.e, the one asking for its value).
-          // If the top invariant is postponed, then it will be recomputed and
-          // we do not have to notify it.
-          notifyCurrentInvariant();
-        }
-        bool inputDone = visitNextVariable();
-        if (inputDone) {
-          // Input variables are now up to date.
-          // If the invariant was postponed then recompute it.
-          if (m_engine.isPostponed(invariantStack.back())) {
-            // recompute at the current timestamp
-            m_engine.recompute(invariantStack.back());
-          }
-          for (auto defVar : variablesDefinedBy(invariantStack.back())) {
-            markStable(currentTime, defVar);
-          }
-          markStable(currentTime, invariantStack.back());
-          popInvariantStack();
-        }
-        continue;
+      markStable(currentTime, currentVar);
+    }
+    if (invariantStack.empty()) {
+      popVariableStack();  // we are at an output variable that is already
+                           // stable. Just continue!
+      continue;
+    }
+    if (!m_engine.isPostponed(invariantStack.back()) &&
+        m_engine.hasChanged(currentTime, currentVar)) {
+      // If the variable is stable and has changed then send a notification
+      // to top invariant (i.e, the one asking for its value).
+      // If the top invariant is postponed, then it will be recomputed and
+      // we do not have to notify it.
+      notifyCurrentInvariant();
+    }
+    bool inputDone = visitNextVariable();
+    if (inputDone) {
+      // Input variables are now up to date.
+      // If the invariant was postponed then recompute it.
+      if (m_engine.isPostponed(invariantStack.back())) {
+        // recompute at the current timestamp
+        m_engine.recompute(invariantStack.back());
       }
+      for (auto defVar : variablesDefinedBy(invariantStack.back())) {
+        markStable(currentTime, defVar);
+      }
+      markStable(currentTime, invariantStack.back());
+      popInvariantStack();
     }
   }
 }
