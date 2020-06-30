@@ -19,9 +19,9 @@ class AllDifferent : public Constraint {
   void increaseCount(Timestamp ts, Engine& e, Int value);
   void decreaseCount(Timestamp ts, Engine& e, Int value);
  public:
-  AllDifferent(VarId violationId, std::vector<VarId>&& t_variables);
+  AllDifferent(VarId violationId, std::vector<VarId> t_variables);
   
-  ~AllDifferent() = default;
+  virtual ~AllDifferent() = default;
   virtual void init(Timestamp, Engine&) override;
   virtual void recompute(Timestamp, Engine&) override;
   virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,

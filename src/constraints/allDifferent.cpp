@@ -6,9 +6,9 @@ extern Id NULL_ID;
 /**
  * @param violationId id for the violationCount
  */
-AllDifferent::AllDifferent(VarId violationId, std::vector<VarId>&& t_variables)
+AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> t_variables)
     : Constraint(NULL_ID, violationId),
-      m_variables(std::move(t_variables)),
+      m_variables(t_variables),
       m_counts(),
       m_offset(0)
        {}

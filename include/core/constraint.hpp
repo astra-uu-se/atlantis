@@ -15,7 +15,7 @@ class Constraint : public Invariant {
 
 
  public:
-  virtual ~Constraint() {}
+  virtual ~Constraint() = default;
 
   /**
    * Preconditions for initialisation:
