@@ -141,8 +141,8 @@ void BottomUpPropagationGraph::propagate2(Timestamp currentTime) {
       } else {
         if (!m_engine.isPostponed(invariantStack.back()) &&
             m_engine.hasChanged(currentTime, currentVar)) {
-          // If the variable is stable and has changed then just send a
-          // notification to top invariant (i.e, the one asking for its value)
+          // If the variable is stable and has changed then send a notification
+          // to top invariant (i.e, the one asking for its value).
           // If the top invariant is postponed, then it will be recomputed and
           // we do not have to notify it.
           notifyCurrentInvariant();
