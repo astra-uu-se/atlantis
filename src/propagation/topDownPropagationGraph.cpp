@@ -70,7 +70,7 @@ void TopDownPropagationGraph::Topology::computeNoCycles() {
     VarId currentNode = frontier.front();
     frontier.pop();
     size_t nodeDepth = m_variablePosition.at(currentNode);
-    for (auto dependencyData : graph.m_listeningInvariants.at(currentNode)) {
+    for (auto &dependencyData : graph.m_listeningInvariants.at(currentNode)) {
       InvariantId invariant = dependencyData.id;
       m_invariantPosition.at(invariant) =
           std::max<size_t>(nodeDepth + 1, m_invariantPosition.at(invariant));

@@ -103,7 +103,7 @@ void Engine::propagate() {
   while (id.id != NULL_ID) {
     IntVar& variable = m_store.getIntVar(id);
     if (variable.hasChanged(m_currentTime)) {
-      for (auto toNotify : m_dependentInvariantData.at(id)) {
+      for (auto &toNotify : m_dependentInvariantData.at(id)) {
         // If we do multiple "probes" within the same timestamp then the
         // invariant may already have been notified.
         // Also, do not notify invariants that are not active.
