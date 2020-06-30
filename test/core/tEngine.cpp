@@ -87,9 +87,9 @@ class EngineTest : public ::testing::Test {
 TEST_F(EngineTest, CreateVariablesAndInvariant) {
   engine->open();
 
-  int intVarCount = 10;
-  for (int value = 0; value < intVarCount; ++value) {
-    engine->makeIntVar(value, -100, 100);
+  size_t intVarCount = 10;
+  for (size_t value = 0; value < intVarCount; ++value) {
+    engine->makeIntVar(value, Int(-100), Int(100));
   }
 
   // TODO: use some other invariants...
@@ -105,14 +105,14 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
 
   engine->close();
   EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
-  EXPECT_EQ(engine->getStore().getNumInvariants(), 1);
+  EXPECT_EQ(engine->getStore().getNumInvariants(), size_t(1));
 }
 
 TEST_F(EngineTest, RecomputeAndCommit) {
   engine->open();
 
-  int intVarCount = 10;
-  for (int value = 0; value < intVarCount; ++value) {
+  size_t intVarCount = 10;
+  for (size_t value = 0; value < intVarCount; ++value) {
     engine->makeIntVar(value, -100, 100);
   }
 
@@ -131,7 +131,7 @@ TEST_F(EngineTest, RecomputeAndCommit) {
   engine->close();
 
   ASSERT_EQ(engine->getStore().getNumVariables(), intVarCount);
-  ASSERT_EQ(engine->getStore().getNumInvariants(), 1);
+  ASSERT_EQ(engine->getStore().getNumInvariants(), size_t(1));
 }
 
 TEST_F(EngineTest, SimplePropagation) {
