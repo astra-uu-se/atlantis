@@ -21,7 +21,7 @@ class ElementConst : public Invariant {
   VarId m_b;
 
  public:
-  ElementConst(VarId i, std::vector<Int>&& A, VarId b);
+  ElementConst(VarId i, std::vector<Int> A, VarId b);
   ~ElementConst() = default;
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;

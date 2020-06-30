@@ -5,16 +5,9 @@
 // TODO: invariant should take its true id in the constructor.
 extern Id NULL_ID;
 
-Linear::Linear(std::vector<Int>&& A, std::vector<VarId>&& X, VarId b)
-    : Invariant(NULL_ID), m_A(std::move(A)), m_X(std::move(X)), m_b(b) {}
+Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
+    : Invariant(NULL_ID), m_A(A), m_X(X), m_b(b) {}
 
-// Linear::Linear(Engine& e, std::vector<Int>&& A,
-//                std::vector<std::shared_ptr<IntVar>>&& X,
-//                std::shared_ptr<IntVar> b)
-//     : Invariant(Engine::NULL_ID), m_A(std::move(A)), m_X(std::move(X)),
-//     m_b(b) {
-//   init(e);
-// }
 
 void Linear::init(Timestamp, Engine& e) {
   // precondition: this invariant must be registered with the engine before it

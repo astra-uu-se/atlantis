@@ -10,11 +10,43 @@
 
 void test();
 void allIntervals(int);
+void magicSquare(int);
 
 int main() {
   static_assert("C++17");
   std::cout << "hello world!" << std::endl;
   test();
+}
+
+void magicSquare(int n) {
+  int n2 = n * n;
+  Engine engine;
+  engine.open();
+
+  std::vector<std::vector<VarId>> square;
+  std::vector<VarId> flat;
+
+  for (size_t i = 0; i < n; i++) {
+    square.push_back(std::vector<VarId>{});
+    for (size_t j = 0; j < n; j++) {
+      auto var = engine.makeIntVar(i*n+j+1, 1, n2);
+      square.at(i).push_back(var);
+      flat.push_back(var);
+    }
+  }
+
+  std::vector<VarId> violations;
+
+  for (size_t i = 0; i < n; i++) {
+    /* code */
+  }
+
+  VarId totalViolation = engine.makeIntVar(0, 0, n2 * n2 * n2 * 1000);
+
+  std::vector<Int> ones{};
+  ones.assign(violations.size(),1);
+  engine.makeInvariant<Linear>(ones, violations, totalViolation);
+  engine.close();
 }
 
 void allIntervals(int n) {

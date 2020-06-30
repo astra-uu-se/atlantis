@@ -5,8 +5,8 @@
 // TODO: invariant should take its true id in the constructor.
 extern Id NULL_ID;
 
-ElementConst::ElementConst(VarId i, std::vector<Int>&& A, VarId b)
-    : Invariant(NULL_ID), m_i(i), m_A(std::move(A)), m_b(b) {}
+ElementConst::ElementConst(VarId i, std::vector<Int> A, VarId b)
+    : Invariant(NULL_ID), m_i(i), m_A(A), m_b(b) {}
 
 void ElementConst::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);
