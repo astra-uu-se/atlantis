@@ -39,7 +39,7 @@ VarId AbsDiff::getNextDependency(Timestamp t, Engine&) {
 }
 
 void AbsDiff::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  assert(m_state.getValue(t) == 0);
+  assert(m_state.getValue(t) <= 2);
   e.setValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 
