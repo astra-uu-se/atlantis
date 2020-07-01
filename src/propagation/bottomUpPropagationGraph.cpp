@@ -159,49 +159,6 @@ inline void BottomUpPropagationGraph::commitAndPostpone(Timestamp t, VarId id) {
     m_engine.postpone(depInvariant);
   }
 }
-
-inline void BottomUpPropagationGraph::pushVariableStack(VarId v) {
-  if (varIsOnStack.at(v)) {
-    throw DynamicCycleException();
-  }
-  varIsOnStack.at(v) = true;
-  variableStack.push_back(v);
-}
-inline void BottomUpPropagationGraph::popVariableStack() {
-  varIsOnStack.at(variableStack.back()) = false;
-  variableStack.pop_back();
-}
-
-inline void BottomUpPropagationGraph::pushInvariantStack(InvariantId i) {
-  if (invariantIsOnStack.at(i)) {
-    assert(false);  // Dynamic cycle!
-    // TODO: throw exception.
-    // TODO: do we need to clean up? I don't think we do!
-  }
-  invariantIsOnStack.at(i) = true;
-  invariantStack.push_back(i);
-}
-inline void BottomUpPropagationGraph::popInvariantStack() {
-  invariantIsOnStack.at(invariantStack.back()) = false;
-  invariantStack.pop_back();
-}
-
-inline void BottomUpPropagationGraph::markStable(Timestamp t, VarId v) {
-  varStableAt.at(v) = t;
-}
-
-inline bool BottomUpPropagationGraph::isStable(Timestamp t, VarId v) {
-  return varStableAt.at(v) == t;
-}
-
-inline void BottomUpPropagationGraph::markStable(Timestamp t, InvariantId v) {
-  invariantStableAt.at(v) = t;
-}
-
-inline bool BottomUpPropagationGraph::isStable(Timestamp t, InvariantId v) {
-  return invariantStableAt.at(v) == t;
-}
-
 // We expand an invariant by pushing it and its first input variable onto each
 // stack.
 inline void BottomUpPropagationGraph::expandInvariant(InvariantId inv) {
