@@ -94,7 +94,8 @@ void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   increaseCount(t, e, newValue);
 }
 
-void AllDifferent::commit(Timestamp t, Engine&) {
+void AllDifferent::commit(Timestamp t, Engine& e) {
+  Invariant::commit(t,e);
   for (SavedInt& savedInt : m_counts) {
     savedInt.commitIf(t);
   }
