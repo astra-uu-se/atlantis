@@ -22,17 +22,17 @@ BottomUpPropagationGraph::BottomUpPropagationGraph(Engine& e,
 void BottomUpPropagationGraph::notifyMaybeChanged(Timestamp, VarId) {}
 
 void BottomUpPropagationGraph::clearForPropagation() {
-  size_t vsSize = variableStack_.capacity();
-  variableStack_.clear();
-  variableStack_.reserve(
-      vsSize);  // The c++ specifications do not say if clear
-                // will keep the reserved size unchanged, so worse case this
-                // will do a reallocation per propagation.
-  size_t isSize = invariantStack_.capacity();
-  invariantStack_.clear();
-  invariantStack_.reserve(isSize);
-  varIsOnStack.assign(varIsOnStack.size(), false);
-  invariantIsOnStack.assign(invariantIsOnStack.size(), false);
+  // size_t vsSize = variableStack_.capacity();
+  // variableStack_.clear();
+  // variableStack_.reserve(
+  //     vsSize);  // The c++ specifications do not say if clear
+  //               // will keep the reserved size unchanged, so worse case this
+  //               // will do a reallocation per propagation.
+  // size_t isSize = invariantStack_.capacity();
+  // invariantStack_.clear();
+  // invariantStack_.reserve(isSize);
+  // varIsOnStack.assign(varIsOnStack.size(), false);
+  // invariantIsOnStack.assign(invariantIsOnStack.size(), false);
 }
 void BottomUpPropagationGraph::registerForPropagation(Timestamp, VarId id) {
   variableStack_[varStackIdx_++] = id;
@@ -180,7 +180,7 @@ inline bool BottomUpPropagationGraph::visitNextVariable() {
   VarId nextVar = m_engine.getNextDependency(peekInvariantStack());
   if (nextVar.id == NULL_ID) {
     return true;  // done with invariant
-  } else {
+  }else {
     pushVariableStack(nextVar);
     return false;  // not done with invariant
   }
