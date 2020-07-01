@@ -20,7 +20,7 @@ int main() {
   // test();
 
   auto t1 = std::chrono::high_resolution_clock::now();
-  int nProbes = allIntervals(10);
+  int nProbes = allIntervals(25);
   auto t2 = std::chrono::high_resolution_clock::now();
 
   auto duration =

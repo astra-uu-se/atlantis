@@ -10,8 +10,10 @@ class Engine;  // forward declare
 
 class BottomUpPropagationGraph : public PropagationGraph {
  private:
-  std::vector<VarId> variableStack;
-  std::vector<InvariantId> invariantStack;
+  std::vector<VarId> variableStack_;
+  size_t varStackIdx_ = 0;
+  std::vector<InvariantId> invariantStack_;
+  size_t invariantStackIdx_ = 0;
   std::vector<Timestamp> varStableAt;  // last timestamp when a VarID was stable
                                     // (i.e., will not change)
   std::vector<Timestamp> invariantStableAt;
@@ -20,8 +22,10 @@ class BottomUpPropagationGraph : public PropagationGraph {
 
   void pushVariableStack(VarId v);
   void popVariableStack();
+  VarId peekVariableStack();
   void pushInvariantStack(InvariantId v);
   void popInvariantStack();
+  InvariantId peekInvariantStack();
   void markStable(Timestamp t, VarId v);
   void markStable(Timestamp t, InvariantId v);
   bool isStable(Timestamp t, VarId v);
@@ -34,22 +38,6 @@ class BottomUpPropagationGraph : public PropagationGraph {
   bool visitNextVariable();
 
   void commitAndPostpone(Timestamp, VarId);
-
-  void printVarStack() {
-    std::cout << "Variable stack: [";
-    for (auto id : variableStack) {
-      std::cout << id << ", ";
-    }
-    std::cout << "]\n";
-  }
-
-  void printInvariantStack() {
-    std::cout << "Invariant stack: [";
-    for (auto id : invariantStack) {
-      std::cout << id << ", ";
-    }
-    std::cout << "]\n";
-  }
 
   Engine& m_engine;
 
@@ -85,29 +73,29 @@ class BottomUpPropagationGraph : public PropagationGraph {
 };
 
 inline void BottomUpPropagationGraph::pushVariableStack(VarId v) {
-  if (varIsOnStack.at(v)) {
-    throw DynamicCycleException();
-  }
   varIsOnStack.at(v) = true;
-  variableStack.push_back(v);
+  variableStack_[varStackIdx_++] = v;
 }
 inline void BottomUpPropagationGraph::popVariableStack() {
-  varIsOnStack.at(variableStack.back()) = false;
-  variableStack.pop_back();
+  varIsOnStack.at(variableStack_[--varStackIdx_]) = false;
+}
+inline VarId BottomUpPropagationGraph::peekVariableStack(){
+  return variableStack_[varStackIdx_-1];
 }
 
 inline void BottomUpPropagationGraph::pushInvariantStack(InvariantId i) {
   if (invariantIsOnStack.at(i)) {
-    assert(false);  // Dynamic cycle!
-    // TODO: throw exception.
-    // TODO: do we need to clean up? I don't think we do!
+    throw DynamicCycleException();
   }
   invariantIsOnStack.at(i) = true;
-  invariantStack.push_back(i);
+  invariantStack_[invariantStackIdx_++] = i;
 }
 inline void BottomUpPropagationGraph::popInvariantStack() {
-  invariantIsOnStack.at(invariantStack.back()) = false;
-  invariantStack.pop_back();
+  invariantIsOnStack.at(invariantStack_[--invariantStackIdx_]) = false;
+}
+
+inline InvariantId BottomUpPropagationGraph::peekInvariantStack(){
+  return invariantStack_[invariantStackIdx_-1];
 }
 
 inline void BottomUpPropagationGraph::markStable(Timestamp t, VarId v) {
