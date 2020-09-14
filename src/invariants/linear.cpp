@@ -16,7 +16,8 @@ void Linear::init(Timestamp, Engine& e) {
 
   e.registerDefinedVariable(m_b, m_id);
   for (size_t i = 0; i < m_X.size(); ++i) {
-    e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i), m_A[i]);
+    LocalId li(i);
+    e.registerInvariantDependsOnVar(m_id, m_X[i], li, m_A[i]);
   }
 }
 
@@ -32,7 +33,7 @@ void Linear::recompute(Timestamp t, Engine& e) {
 }
 
 void Linear::notifyIntChanged(Timestamp t, Engine& e,
-                              LocalId, Int oldValue,
+                              LocalId&, Int oldValue,
                               Int newValue, Int coef) {
   assert(newValue != oldValue);  // precondition
   e.incValue(t, m_b, (newValue - oldValue) * coef);

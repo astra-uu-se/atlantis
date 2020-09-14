@@ -47,10 +47,12 @@ void BottomUpPropagationGraph::fullPropagateAndCommit(Timestamp currentTime) {
   }
   propagate(currentTime);
   for (size_t i = 1; i < m_numVariables + 1; i++) {
-    m_engine.commitIf(currentTime, VarId(i));
+    VarId vi(i);
+    m_engine.commitIf(currentTime, vi);
   }
   for (size_t i = 1; i < m_numInvariants + 1; i++) {
-    m_engine.commitInvariantIf(currentTime, InvariantId(i));
+    InvariantId ii(i);
+    m_engine.commitInvariantIf(currentTime, ii);
   }
 }
 

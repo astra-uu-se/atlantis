@@ -12,14 +12,15 @@ void ElementConst::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);
 
   e.registerDefinedVariable(m_b, m_id);
-  e.registerInvariantDependsOnVar(m_id, m_i, 0, 0);
+  LocalId localId(0);
+  e.registerInvariantDependsOnVar(m_id, m_i, localId, 0);
 }
 
 void ElementConst::recompute(Timestamp t, Engine& e) {
   e.setValue(t, m_b, m_A.at(e.getValue(t, m_i)));
 }
 
-void ElementConst::notifyIntChanged(Timestamp t, Engine& e, LocalId,
+void ElementConst::notifyIntChanged(Timestamp t, Engine& e, LocalId&,
                                     Int oldValue, Int newValue, Int) {
   assert(newValue != oldValue);
   e.setValue(t, m_b, m_A.at(newValue));

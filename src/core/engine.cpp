@@ -60,7 +60,7 @@ void Engine::close() {
 }
 
 //---------------------Notificaion/Modification---------------------
-void Engine::notifyMaybeChanged(Timestamp t, VarId id) {
+void Engine::notifyMaybeChanged(Timestamp t, VarId& id) {
   m_propGraph.notifyMaybeChanged(t, id);
 }
 
@@ -71,7 +71,7 @@ void Engine::endMove() {}
 
 void Engine::beginQuery() { m_propGraph.clearForPropagation(); }
 
-void Engine::query(VarId id) {
+void Engine::query(VarId& id) {
   m_propGraph.registerForPropagation(m_currentTime, id);
 }
 
@@ -128,13 +128,13 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   return newId;
 }
 
-void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
-                                           LocalId localId, Int data) {
+void Engine::registerInvariantDependsOnVar(InvariantId& dependent, VarId& source,
+                                           LocalId& localId, Int data) {
   m_propGraph.registerInvariantDependsOnVar(dependent, source);
   m_dependentInvariantData.at(source).emplace_back(
       InvariantDependencyData{dependent, localId, data, NULL_TIMESTAMP});
 }
 
-void Engine::registerDefinedVariable(VarId dependent, InvariantId source) {
+void Engine::registerDefinedVariable(VarId& dependent, InvariantId& source) {
   m_propGraph.registerDefinedVariable(dependent, source);
 }

@@ -10,17 +10,18 @@ AbsDiff::AbsDiff(VarId a, VarId b, VarId c)
 
 void AbsDiff::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);
-
+  LocalId li0(0);
+  LocalId li1(1);
   e.registerDefinedVariable(m_c, m_id);
-  e.registerInvariantDependsOnVar(m_id, m_a, 0, 0);
-  e.registerInvariantDependsOnVar(m_id, m_b, 1, 0);
+  e.registerInvariantDependsOnVar(m_id, m_a, li0, 0);
+  e.registerInvariantDependsOnVar(m_id, m_b, li1, 0);
 }
 
 void AbsDiff::recompute(Timestamp t, Engine& e) {
   e.setValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 
-void AbsDiff::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int oldValue,
+void AbsDiff::notifyIntChanged(Timestamp t, Engine& e, LocalId&, Int oldValue,
                                Int newValue, Int) {
   assert(newValue != oldValue);
   e.setValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));

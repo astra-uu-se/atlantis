@@ -31,7 +31,7 @@ class MockInvariantSimple : public Invariant {
   MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e), (override));
 
   MOCK_METHOD(
-    void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id,
+    void, notifyIntChanged, (Timestamp t, Engine& e, LocalId& id,
                                 Int oldValue, Int newValue, Int data), (override)
   );
   MOCK_METHOD(
@@ -54,7 +54,8 @@ class MockInvariantAdvanced : public Invariant {
 
     e.registerDefinedVariable(m_output, m_id);
     for (size_t i = 0; i < m_inputs.size(); ++i) {
-      e.registerInvariantDependsOnVar(m_id, m_inputs[i], LocalId(i), i);
+      LocalId li(i);
+      e.registerInvariantDependsOnVar(m_id, m_inputs[i], li, i);
     }
     m_initialized = true;
   }
@@ -63,7 +64,7 @@ class MockInvariantAdvanced : public Invariant {
   MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e), (override));
   MOCK_METHOD(
-    void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id,
+    void, notifyIntChanged, (Timestamp t, Engine& e, LocalId& id,
                                 Int oldValue, Int newValue, Int data), (override)
   );
   MOCK_METHOD(

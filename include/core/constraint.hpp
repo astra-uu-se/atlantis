@@ -42,7 +42,7 @@ class Constraint : public Invariant {
   /**
    * Precondition: oldValue != newValue
    */
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
+  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId& id,
                                 Int oldValue, Int newValue, Int data) = 0;
 
   // TODO: This commit is somehow different from other commits as it just

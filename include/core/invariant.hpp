@@ -49,7 +49,7 @@ class Invariant {
   /**
    * Precondition: oldValue != newValue
    */
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
+  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId& id,
                                 Int oldValue, Int newValue, Int data) = 0;
 
   virtual void commit(Timestamp, Engine&){

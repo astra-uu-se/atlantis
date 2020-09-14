@@ -54,7 +54,7 @@ class MockElementVar : public ElementVar {
               (override));
 
   MOCK_METHOD(void, notifyIntChanged,
-              (Timestamp t, Engine& e, LocalId id, Int oldValue, Int newValue,
+              (Timestamp t, Engine& e, LocalId& id, Int oldValue, Int newValue,
                Int data),
               (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));

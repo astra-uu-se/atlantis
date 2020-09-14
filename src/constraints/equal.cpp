@@ -16,9 +16,11 @@ Equal::Equal(VarId violationId, VarId x, VarId y)
 
 void Equal::init(Timestamp, Engine& e) {
   assert(m_id != NULL_ID);
+  LocalId local_m_x = LocalId(m_x);
+  LocalId local_m_y = LocalId(m_y);
 
-  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x), 0);
-  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(m_y), 0);
+  e.registerInvariantDependsOnVar(m_id, m_x, local_m_x, 0);
+  e.registerInvariantDependsOnVar(m_id, m_y, local_m_y, 0);
   e.registerDefinedVariable(m_violationId, m_id);
 }
 
@@ -27,7 +29,7 @@ void Equal::recompute(Timestamp t, Engine& e) {
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int oldValue,
+void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId&, Int oldValue,
                              Int newValue, Int) {
   assert(newValue != oldValue);  // precondition
   e.setValue(t, m_violationId,

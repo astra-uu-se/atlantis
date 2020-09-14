@@ -13,10 +13,13 @@ ElementVar::ElementVar(VarId i, std::vector<VarId> X, VarId b)
 void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);
 
+  LocalId localId(-1);
+
   e.registerDefinedVariable(m_b, m_id);
-  e.registerInvariantDependsOnVar(m_id, m_i, LocalId(-1), 0);
+  e.registerInvariantDependsOnVar(m_id, m_i, localId, 0);
   for (size_t i = 0; i < m_X.size(); ++i) {
-    e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i), 0);
+    LocalId li(i);
+    e.registerInvariantDependsOnVar(m_id, m_X[i], li, 0);
   }
 }
 
@@ -24,7 +27,7 @@ void ElementVar::recompute(Timestamp t, Engine& e) {
   e.setValue(t, m_b, e.getValue(t, m_X.at(e.getValue(t, m_i))));
 }
 
-void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId id,
+void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId& id,
                                   Int oldValue, Int newValue, Int) {
   assert(newValue != oldValue);
   if (id.id == LocalId(-1).id) {

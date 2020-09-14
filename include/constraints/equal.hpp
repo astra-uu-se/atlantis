@@ -20,7 +20,7 @@ class Equal : public Constraint {
   ~Equal() = default;
   virtual void init(Timestamp, Engine&) override;
   virtual void recompute(Timestamp, Engine&) override;
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
+  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId& id,
                                 Int oldValue, Int newValue, Int data) override;
   virtual void commit(Timestamp, Engine&) override;
   virtual VarId getNextDependency(Timestamp, Engine&) override;
