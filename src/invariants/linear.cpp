@@ -52,7 +52,12 @@ void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   Int idx = m_state.getValue(t);
   Int delta = e.getValue(t, m_X.at(idx)) - e.getCommittedValue(m_X.at(idx));
-  assert(delta != 0);  // invariants are only notified when they are changed.
+  // assert(delta != 0);  // invariants are only notified when they are changed.
+  // Invariants may now be notified even when they are not changed.
+  // If an input is a view that did not change, but the source IntVar changed.
+  if (delta == 0) {
+    return;
+  }
   e.incValue(t, m_b, delta * m_A.at(idx));
 }
 

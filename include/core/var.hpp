@@ -8,4 +8,7 @@ class Var {
  public:
   Var(Int t_id);
   ~Var() = default;
+  VarId getId();
 };
+
+inline VarId Var::getId() { return m_id; }

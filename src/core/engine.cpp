@@ -11,11 +11,62 @@ Engine::Engine()
       m_propGraph(*this, ESTIMATED_NUM_OBJECTS),
       m_isOpen(false),
       m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {
+  m_intVarViewSource.reserve(ESTIMATED_NUM_OBJECTS);
+  m_intVarViewSource.push_back(NULL_ID);
+
+  m_dependantIntVarViews.reserve(ESTIMATED_NUM_OBJECTS);
+  m_dependantIntVarViews.push_back({});
+
   m_dependentInvariantData.reserve(ESTIMATED_NUM_OBJECTS);
   m_dependentInvariantData.push_back({});
 }
 
 void Engine::open() { m_isOpen = true; }
+
+Int Engine::getValue(Timestamp t, VarId& v) {
+  if (v.idType == VarIdType::var) {
+    return m_store.getIntVar(v).getValue(t);
+  }
+  auto& intVarView = m_store.getIntVarView(v);
+  if (intVarView.getTmpTimestamp() == t) {
+    return intVarView.getValue(t);
+  }
+  VarId sourceVarId = m_intVarViewSource.at(v);
+  IntVar sourceVar = m_store.getIntVar(sourceVarId);
+  Timestamp sourceVarTmpTimestamp = sourceVar.getTmpTimestamp();
+  if (sourceVarTmpTimestamp == intVarView.getTmpTimestamp()) {
+    return intVarView.getValue(t);
+  }
+  auto queue = std::make_unique<std::queue<IntVarView*>>();
+  queue->push(&intVarView);
+  
+  auto& current = intVarView;
+  bool partialTraversal = false;
+
+  while (current.getSourceId().idType == VarIdType::view) {
+    current = m_store.getIntVarView(current.getSourceId());
+    // Quick release if current's value is as recent as
+    // the source VarId's value
+    if (current.getTmpTimestamp() == sourceVarTmpTimestamp) {
+      partialTraversal = true;
+      break;
+    }
+    queue->push(&current);
+  }
+
+  Int prevValue = partialTraversal
+    ? current.getValue(t)
+    : sourceVar.getValue(t);
+  
+  while (!queue->empty()) {
+    current = (*queue->front());
+    current.recompute(t, prevValue);
+    prevValue = current.getValue(t);
+    queue->pop();
+  }
+
+  return prevValue;
+}
 
 void Engine::recomputeAndCommit() {
   // TODO: This is a very inefficient way of initialising!
@@ -34,9 +85,22 @@ void Engine::recomputeAndCommit() {
     }
     for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd();
          ++iter) {
-      if (iter->hasChanged(m_currentTime)) {
-        done = false;
-        iter->commit();
+      if (!iter->hasChanged(m_currentTime)) {
+        continue;
+      }
+      done = false;
+      iter->commit();
+      assert(iter->getTmpTimestamp() == m_currentTime);
+      Int value = iter->getCommittedValue();
+      for (VarId& varId : m_dependantIntVarViews.at(iter->getId())) {
+        IntVarView& v = m_store.getIntVarView(varId);
+        auto parentId = v.getSourceId();
+        if (parentId.idType == VarIdType::var) {
+          v.recompute(m_currentTime, value, value);
+          continue;
+        }
+        IntVarView& parent = m_store.getIntVarView(parentId);
+        v.recompute(m_currentTime, parent.getCommittedValue(), parent.getCommittedValue());
       }
     }
   }
@@ -61,7 +125,12 @@ void Engine::close() {
 
 //---------------------Notificaion/Modification---------------------
 void Engine::notifyMaybeChanged(Timestamp t, VarId& id) {
-  m_propGraph.notifyMaybeChanged(t, id);
+  if (id.idType == VarIdType::var) {
+    m_propGraph.notifyMaybeChanged(t, id);
+  } else {
+    m_propGraph.notifyMaybeChanged(t, m_intVarViewSource.at(id));
+  }
+  
 }
 
 //--------------------- Move semantics ---------------------
@@ -72,7 +141,11 @@ void Engine::endMove() {}
 void Engine::beginQuery() { m_propGraph.clearForPropagation(); }
 
 void Engine::query(VarId& id) {
-  m_propGraph.registerForPropagation(m_currentTime, id);
+  if (id.idType == VarIdType::var) {
+    m_propGraph.registerForPropagation(m_currentTime, id);
+  } else {
+    m_propGraph.registerForPropagation(m_currentTime, m_intVarViewSource.at(id));
+  }
 }
 
 void Engine::endQuery() {
@@ -91,26 +164,41 @@ void Engine::endCommit() {
 
 // Propagates at the current internal time of the engine.
 void Engine::propagate() {
-  VarId id = m_propGraph.getNextStableVariable(m_currentTime);
-  while (id.id != NULL_ID) {
+  for (VarId id = m_propGraph.getNextStableVariable(m_currentTime);
+        id != NULL_ID;
+        id = m_propGraph.getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(id);
-    if (variable.hasChanged(m_currentTime)) {
-      for (auto &toNotify : m_dependentInvariantData.at(id)) {
-        // If we do multiple "probes" within the same timestamp then the
-        // invariant may already have been notified.
-        // Also, do not notify invariants that are not active.
-        if (m_currentTime == toNotify.lastNotification ||
-            !m_propGraph.isActive(m_currentTime, toNotify.id)) {
+    assert(id.idType == VarIdType::var);
+    if (!variable.hasChanged(m_currentTime)) {
+      continue;
+    }
+
+    for (auto &toNotify : m_dependentInvariantData.at(id)) {
+      // If we do multiple "probes" within the same timestamp then the
+      // invariant may already have been notified.
+      // Also, do not notify invariants that are not active.
+      if (m_currentTime == toNotify.lastNotification ||
+          !m_propGraph.isActive(m_currentTime, toNotify.id)) {
+        continue;
+      }
+      Int committedValue;
+      Int newValue;
+      if (toNotify.varViewId != NULL_ID) {
+        committedValue = getCommittedValue(toNotify.varViewId);
+        newValue = getValue(m_currentTime, toNotify.varViewId);
+        if (committedValue == newValue) {
           continue;
         }
-        m_store.getInvariant(toNotify.id)
-            .notifyIntChanged(m_currentTime, *this, toNotify.localId,
-                              variable.getCommittedValue(),
-                              variable.getValue(m_currentTime), toNotify.data);
-        toNotify.lastNotification = m_currentTime;
+      } else {
+        committedValue = variable.getCommittedValue();
+        newValue = variable.getValue(m_currentTime);
       }
+      m_store.getInvariant(toNotify.id)
+          .notifyIntChanged(m_currentTime, *this, toNotify.localId,
+                            committedValue,
+                            newValue, toNotify.data);
+      toNotify.lastNotification = m_currentTime;
     }
-    id = m_propGraph.getNextStableVariable(m_currentTime);
   }
 }
 
@@ -123,6 +211,8 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   VarId newId =
       m_store.createIntVar(m_currentTime, initValue, lowerBound, upperBound);
   m_propGraph.registerVar(newId);
+  assert(newId.id == m_dependantIntVarViews.size());
+  m_dependantIntVarViews.push_back({});
   assert(newId.id == m_dependentInvariantData.size());
   m_dependentInvariantData.push_back({});
   return newId;
@@ -130,11 +220,23 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
 
 void Engine::registerInvariantDependsOnVar(InvariantId& dependent, VarId& source,
                                            LocalId& localId, Int data) {
-  m_propGraph.registerInvariantDependsOnVar(dependent, source);
-  m_dependentInvariantData.at(source).emplace_back(
-      InvariantDependencyData{dependent, localId, data, NULL_TIMESTAMP});
+  VarId& s = source.idType == VarIdType::var
+    ? source
+    : m_intVarViewSource.at(source);
+  
+  m_propGraph.registerInvariantDependsOnVar(dependent, s);
+  m_dependentInvariantData.at(s).emplace_back(
+      InvariantDependencyData{
+        dependent,
+        localId,
+        source.idType == VarIdType::view ? source : NULL_ID,
+        data,
+        NULL_TIMESTAMP
+      }
+    );
 }
 
 void Engine::registerDefinedVariable(VarId& dependent, InvariantId& source) {
+  assert(dependent.idType == VarIdType::var);
   m_propGraph.registerDefinedVariable(dependent, source);
 }

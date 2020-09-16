@@ -49,7 +49,7 @@ void magicSquare(int n) {
   engine.close();
 }
 
-void allIntervals(int n) {
+void allIntervals(int) {
   Engine engine;
   engine.open();
 

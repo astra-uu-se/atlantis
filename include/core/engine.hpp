@@ -7,6 +7,7 @@
 
 #include "core/constraint.hpp"
 #include "core/intVar.hpp"
+#include "core/intVarView.hpp"
 #include "core/invariant.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
@@ -25,11 +26,15 @@ class Engine {
 
   bool m_isOpen = true;
 
+  std::vector<VarId> m_intVarViewSource;
+  std::vector<std::vector<VarId>> m_dependantIntVarViews;
+  
   // I don't think dependency data should be part of the store but rather just
   // of the engine.
   struct InvariantDependencyData {
     InvariantId id;
     LocalId localId;
+    VarId varViewId;
     Int data;
     Timestamp lastNotification;  // todo: unclear if this information is
                                  // relevant for all types of propagation. If
@@ -145,6 +150,16 @@ class Engine {
   VarId makeIntVar(Int initValue, Int lowerBound, Int upperBound);
 
   /**
+   * Register an IntVarView in the engine and return its pointer.
+   * This also sets the id of the IntVarView to the new id.
+   * @param args the constructor arguments of the IntVarView
+   * @return the created IntVarView.
+   */
+  template <class T, typename... Args>
+  std::enable_if_t<std::is_base_of<IntVarView, T>::value, std::shared_ptr<T>>
+  makeIntVarView(Args&&... args);
+
+  /**
    * Register that Invariant to depends on variable from depends on dependency
    * @param dependent the invariant that the variable depends on
    * @param source the depending variable
@@ -197,22 +212,77 @@ Engine::makeConstraint(Args&&... args) {
   return constraintPtr;
 }
 
+template <class T, typename... Args>
+std::enable_if_t<std::is_base_of<IntVarView, T>::value, std::shared_ptr<T>>
+Engine::makeIntVarView(Args&&... args) {
+  if (!m_isOpen) {
+    throw ModelNotOpenException("Cannot make IntVarView when store is closed.");
+  }
+  auto intVarViewPtr = std::make_shared<T>(std::forward<Args>(args)...);
+
+  VarId newId = m_store.createIntViewFromPtr(intVarViewPtr);
+  Timestamp t;
+  VarId sourceId = intVarViewPtr->getSourceId();
+  Int sourceVal, sourceCom;
+  if (sourceId.idType == VarIdType::view) {
+    auto& parentVarView = m_store.getIntVarView(sourceId);
+    t = parentVarView.getTmpTimestamp();
+    sourceVal = parentVarView.getValue(t);
+    sourceCom = parentVarView.getCommittedValue();
+    sourceId = m_intVarViewSource.at(sourceId);
+  } else {
+    auto& sourceVar = m_store.getIntVar(sourceId);
+    t = sourceVar.getTmpTimestamp();
+    sourceVal = sourceVar.getValue(t);
+    sourceCom = sourceVar.getCommittedValue();
+  }
+  assert(m_intVarViewSource.size() == newId);
+  m_intVarViewSource.push_back(sourceId);
+  m_dependantIntVarViews.at(sourceId).push_back(newId);
+  intVarViewPtr->init(t, *this, sourceVal, sourceCom);
+  return intVarViewPtr;
+}
+
 //--------------------- Inlined functions ---------------------
 
 inline const Store& Engine::getStore() { return m_store; }
 inline Timestamp Engine::getCurrentTime() { return m_currentTime; }
 inline BottomUpPropagationGraph& Engine::getPropGraph() { return m_propGraph; }
 
-inline Int Engine::getValue(Timestamp t, VarId& v) {
-  return m_store.getIntVar(v).getValue(t);
-}
-
 inline Int Engine::getCommittedValue(VarId& v) {
-  return m_store.getIntVar(v).getCommittedValue();
+  if (v.idType == VarIdType::var) {
+    return m_store.getIntVar(v).getCommittedValue();
+  }
+  auto& intVarView = m_store.getIntVarView(v);
+
+  auto queue = std::make_unique<std::queue<IntVarView*>>();
+  queue->push(&intVarView);
+  
+  auto& current = intVarView;
+  
+  while (current.getSourceId().idType == VarIdType::view) {
+    current = m_store.getIntVarView(current.getSourceId());
+    // Quick release if current's value is as recent as
+    // the source VarId's value
+    queue->push(&current);
+  }
+
+  VarId intVarId = current.getSourceId();
+  Int prevValue = m_store.getIntVar(intVarId).getCommittedValue();
+  
+  while (!queue->empty()) {
+    current = (*queue->front());
+    current.commitValue(prevValue);
+    prevValue = current.getCommittedValue();
+    queue->pop();
+  }
+  return prevValue;
 }
 
 inline Timestamp Engine::getTmpTimestamp(VarId& v) {
-  return m_store.getIntVar(v).getTmpTimestamp();
+  return v.idType == VarIdType::var
+    ? m_store.getIntVar(v).getTmpTimestamp()
+    : m_store.getIntVarView(v).getTmpTimestamp();
 }
 
 inline bool Engine::isPostponed(InvariantId& id) {
@@ -232,23 +302,77 @@ inline void Engine::recompute(Timestamp t, InvariantId& id) {
 }
 
 inline void Engine::setValue(Timestamp t, VarId& v, Int val) {
+  assert(v.idType == VarIdType::var);
   m_store.getIntVar(v).setValue(t, val);
   notifyMaybeChanged(t, v);
 }
 
 inline void Engine::incValue(Timestamp t, VarId& v, Int inc) {
+  assert(v.idType == VarIdType::var);
   m_store.getIntVar(v).incValue(t, inc);
   notifyMaybeChanged(t, v);
 }
 
-inline void Engine::commit(VarId& v) { m_store.getIntVar(v).commit(); }
+inline void Engine::commit(VarId& v) {
+  assert(v.idType == VarIdType::var);
+  IntVar& sourceVar = m_store.getIntVar(v);
+  Timestamp t = sourceVar.getTmpTimestamp();
+  Int val = sourceVar.getCommittedValue();
+  if (sourceVar.getValue(t) == val) {
+    return;
+  }
+  sourceVar.commit();
+  for (auto& viewId : m_dependantIntVarViews.at(v)) {
+    auto& view = m_store.getIntVarView(viewId);
+    VarId parent = view.getSourceId();
+    if (parent.idType == VarIdType::var) {
+      view.recompute(t, val, val);
+      continue;
+    }
+    Int parVal = m_store.getIntVarView(parent).getCommittedValue();
+    view.recompute(t, parVal, parVal);
+  }
+}
 
 inline void Engine::commitIf(Timestamp t, VarId& v) {
-  m_store.getIntVar(v).commitIf(t);
+  assert(v.idType == VarIdType::var);
+  IntVar& sourceVar = m_store.getIntVar(v);
+  if (!sourceVar.hasChanged(t)) {
+    return;
+  }
+  sourceVar.commit();
+  Int val = sourceVar.getCommittedValue();
+  for (auto& viewId : m_dependantIntVarViews.at(v)) {
+    auto& view = m_store.getIntVarView(viewId);
+    VarId parent = view.getSourceId();
+    if (parent.idType == VarIdType::var) {
+      view.recompute(t, val, val);
+      continue;
+    }
+    Int parVal = m_store.getIntVarView(parent).getCommittedValue();
+    view.recompute(t, parVal, parVal);
+  }
 }
 
 inline void Engine::commitValue(VarId& v, Int val) {
-  m_store.getIntVar(v).commitValue(val);
+  assert(v.idType == VarIdType::var);
+  IntVar& sourceVar = m_store.getIntVar(v);
+  if (val != sourceVar.getCommittedValue()) {
+    return;
+  }
+  Timestamp t = sourceVar.getTmpTimestamp();
+  sourceVar.commitValue(val);
+  for (auto& viewId : m_dependantIntVarViews.at(v)) {
+    auto& view = m_store.getIntVarView(viewId);
+    VarId parent = view.getSourceId();
+    if (parent.idType == VarIdType::var) {
+      view.recompute(t, val, val);
+      continue;
+    }
+    Int parVal = m_store.getIntVarView(parent).getCommittedValue();
+    view.recompute(t, parVal, parVal);
+  }
+
 }
 
 inline void Engine::commitInvariantIf(Timestamp t, InvariantId& id) {
