@@ -49,6 +49,8 @@ class Engine {
 
   void propagate();
   void bottomUpPropagate();
+  void recomputeUsingParent(VarId& viewId, IntVar& var);
+  void recomputeUsingParent(IntVarView& view, IntVar& var);
 
  public:
   Engine(/* args */);
@@ -222,7 +224,7 @@ Engine::makeIntVarView(Args&&... args) {
 
   VarId newId = m_store.createIntViewFromPtr(intVarViewPtr);
   Timestamp t;
-  VarId sourceId = intVarViewPtr->getSourceId();
+  VarId sourceId = intVarViewPtr->getParentId();
   Int sourceVal, sourceCom;
   if (sourceId.idType == VarIdType::view) {
     auto& parentVarView = m_store.getIntVarView(sourceId);
@@ -260,14 +262,14 @@ inline Int Engine::getCommittedValue(VarId& v) {
   
   auto& current = intVarView;
   
-  while (current.getSourceId().idType == VarIdType::view) {
-    current = m_store.getIntVarView(current.getSourceId());
+  while (current.getParentId().idType == VarIdType::view) {
+    current = m_store.getIntVarView(current.getParentId());
     // Quick release if current's value is as recent as
     // the source VarId's value
     queue->push(&current);
   }
 
-  VarId intVarId = current.getSourceId();
+  VarId intVarId = current.getParentId();
   Int prevValue = m_store.getIntVar(intVarId).getCommittedValue();
   
   while (!queue->empty()) {
@@ -323,14 +325,7 @@ inline void Engine::commit(VarId& v) {
   }
   sourceVar.commit();
   for (auto& viewId : m_dependantIntVarViews.at(v)) {
-    auto& view = m_store.getIntVarView(viewId);
-    VarId parent = view.getSourceId();
-    if (parent.idType == VarIdType::var) {
-      view.recompute(t, val, val);
-      continue;
-    }
-    Int parVal = m_store.getIntVarView(parent).getCommittedValue();
-    view.recompute(t, parVal, parVal);
+    recomputeUsingParent(viewId, sourceVar);
   }
 }
 
@@ -341,16 +336,8 @@ inline void Engine::commitIf(Timestamp t, VarId& v) {
     return;
   }
   sourceVar.commit();
-  Int val = sourceVar.getCommittedValue();
   for (auto& viewId : m_dependantIntVarViews.at(v)) {
-    auto& view = m_store.getIntVarView(viewId);
-    VarId parent = view.getSourceId();
-    if (parent.idType == VarIdType::var) {
-      view.recompute(t, val, val);
-      continue;
-    }
-    Int parVal = m_store.getIntVarView(parent).getCommittedValue();
-    view.recompute(t, parVal, parVal);
+    recomputeUsingParent(viewId, sourceVar);
   }
 }
 
@@ -360,17 +347,9 @@ inline void Engine::commitValue(VarId& v, Int val) {
   if (val != sourceVar.getCommittedValue()) {
     return;
   }
-  Timestamp t = sourceVar.getTmpTimestamp();
   sourceVar.commitValue(val);
   for (auto& viewId : m_dependantIntVarViews.at(v)) {
-    auto& view = m_store.getIntVarView(viewId);
-    VarId parent = view.getSourceId();
-    if (parent.idType == VarIdType::var) {
-      view.recompute(t, val, val);
-      continue;
-    }
-    Int parVal = m_store.getIntVarView(parent).getCommittedValue();
-    view.recompute(t, parVal, parVal);
+    recomputeUsingParent(viewId, sourceVar);
   }
 
 }

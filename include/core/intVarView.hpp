@@ -17,7 +17,7 @@ class IntVarView : public VarView {
   friend class Engine;
 
  public:
-  IntVarView(const VarId& t_sourceId);
+  IntVarView(const VarId& t_parentId);
   
   virtual ~IntVarView() {};
   

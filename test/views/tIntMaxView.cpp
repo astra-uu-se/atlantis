@@ -25,11 +25,35 @@ class IntMaxViewTest : public ::testing::Test {
     gen = std::mt19937(rd());
     engine = std::make_unique<Engine>();
   }
-  void printVarView(const IntMaxView& v) {
-    std::cout << "IntMaxView[" << v.getMax() << "] {";
-    std::cout << v.getValue(v.getTmpTimestamp());
+  void print(IntMaxView& v) {
+    size_t id = v.getId();
+    size_t p = v.getParentId();
+    std::cout << "IntMaxView[" << id << "] ";
+    std::cout << "max = " << v.getMax();
+    std::cout << " {" << v.getValue(v.getTmpTimestamp());
     std::cout << ", " << v.getCommittedValue();
+    std::cout << "} parent = [" << p << "]\n";
+  }
+  void printVar(VarId& v) {
+    size_t id = v;
+    std::cout << "IntVar[" << id << "] ";
+    std::cout << "{" << engine->getValue(v);
+    std::cout << "," << engine->getCommittedValue(v);
     std::cout << "}\n";
+  }
+  void printView(VarId& v) {
+    size_t id = v;
+    std::cout << "IntView[" << id << "] ";
+    std::cout << "{" << engine->getValue(v);
+    std::cout << "," << engine->getCommittedValue(v);
+    std::cout << "}";
+  }
+  void print(VarId& v) {
+    if (v.idType == VarIdType::var) {
+      printVar(v);
+      return;
+    }
+    printView(v);
   }
 };
 
@@ -56,7 +80,9 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
                                               std::vector<VarId>({a, b}), sum);
   
   std::shared_ptr<IntMaxView> viewOfVar = engine->makeIntVarView<IntMaxView>(sum, 10);
+  print(*viewOfVar);
   std::shared_ptr<IntMaxView> viewOfView = engine->makeIntVarView<IntMaxView>(viewOfVar->getId(), 5);
+  print(*viewOfView);
   VarId viewOfVarId = viewOfVar->getId();
   VarId viewOfViewId = viewOfView->getId();
 
@@ -66,9 +92,9 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   engine->close();
 
   EXPECT_EQ(engine->getValue(sum), Int(40));
-  printVarView(*viewOfVar);
+  print(*viewOfVar);
   EXPECT_EQ(engine->getValue(viewOfVarId), Int(10));
-  printVarView(*viewOfView);
+  print(*viewOfView);
   EXPECT_EQ(engine->getValue(viewOfViewId), Int(5));
 
   engine->beginMove();
@@ -123,6 +149,7 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
                                                std::vector<VarId>({sum1ViewId, sum2ViewId}), sum3);
 
   std::vector<VarId> sum3viewIds;
+  std::vector<std::shared_ptr<IntMaxView>> sum3views;
   sum3viewIds.reserve(10);
   VarId prev = sum3;
   for (size_t i = 0; i < 10; ++i) {
@@ -131,9 +158,10 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
     //   * VarId::view 2+i otherwise
     std::shared_ptr<IntMaxView> varView = engine->makeIntVarView<IntMaxView>(prev, 25 - i);
     sum3viewIds.emplace_back(varView->getId());
+    sum3views.push_back(varView);
     // IntMaxView (VarId::view 3+i)
     prev = varView->getId();
-    printVarView(*varView);
+    print(*(sum3views[i]));
   }
   
   EXPECT_EQ(engine->getCommittedValue(sum1), Int(0));
@@ -159,6 +187,7 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
     //   * min(40, 25) if i = 0,
     //   * min(25-i, sum3viewIds[i-1]) otherwise
     EXPECT_EQ(engine->getCommittedValue(sum3viewIds[i]), Int(25 - i));
+    print(*(sum3views[i]));
   }
 
 
@@ -243,6 +272,7 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
     // should be 25 for the first 6, then
     // [19, 18, 17, 16]
     EXPECT_EQ(engine->getCommittedValue(sum3viewIds[i]), std::min(Int(25 - i), Int(20)));
+    print(*(sum3views[i]));
   }
 
 }

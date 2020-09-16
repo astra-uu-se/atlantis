@@ -21,6 +21,24 @@ Engine::Engine()
   m_dependentInvariantData.push_back({});
 }
 
+inline void Engine::recomputeUsingParent(VarId& viewId, IntVar& var) {
+  assert(viewId.idType == VarIdType::view);
+  return recomputeUsingParent(m_store.getIntVarView(viewId), var);
+}
+
+inline void Engine::recomputeUsingParent(IntVarView& view, IntVar& var) {
+  VarId parentId = view.getParentId();
+  Timestamp t;
+  if (parentId.idType == VarIdType::var) {
+    t = var.getTmpTimestamp();
+    view.recompute(t, var.getValue(t), var.getCommittedValue());
+    return;
+  }
+  IntVarView& parent = m_store.getIntVarView(parentId);
+  t = parent.getTmpTimestamp();
+  view.recompute(t, parent.getValue(t), parent.getCommittedValue());
+}
+
 void Engine::open() { m_isOpen = true; }
 
 Int Engine::getValue(Timestamp t, VarId& v) {
@@ -43,8 +61,8 @@ Int Engine::getValue(Timestamp t, VarId& v) {
   auto& current = intVarView;
   bool partialTraversal = false;
 
-  while (current.getSourceId().idType == VarIdType::view) {
-    current = m_store.getIntVarView(current.getSourceId());
+  while (current.getParentId().idType == VarIdType::view) {
+    current = m_store.getIntVarView(current.getParentId());
     // Quick release if current's value is as recent as
     // the source VarId's value
     if (current.getTmpTimestamp() == sourceVarTmpTimestamp) {
@@ -54,18 +72,18 @@ Int Engine::getValue(Timestamp t, VarId& v) {
     queue->push(&current);
   }
 
-  Int prevValue = partialTraversal
+  Int prevVal = partialTraversal
     ? current.getValue(t)
     : sourceVar.getValue(t);
   
   while (!queue->empty()) {
     current = (*queue->front());
-    current.recompute(t, prevValue);
-    prevValue = current.getValue(t);
+    current.recompute(t, prevVal);
+    prevVal = current.getValue(t);
     queue->pop();
   }
 
-  return prevValue;
+  return prevVal;
 }
 
 void Engine::recomputeAndCommit() {
@@ -91,16 +109,8 @@ void Engine::recomputeAndCommit() {
       done = false;
       iter->commit();
       assert(iter->getTmpTimestamp() == m_currentTime);
-      Int value = iter->getCommittedValue();
-      for (VarId& varId : m_dependantIntVarViews.at(iter->getId())) {
-        IntVarView& v = m_store.getIntVarView(varId);
-        auto parentId = v.getSourceId();
-        if (parentId.idType == VarIdType::var) {
-          v.recompute(m_currentTime, value, value);
-          continue;
-        }
-        IntVarView& parent = m_store.getIntVarView(parentId);
-        v.recompute(m_currentTime, parent.getCommittedValue(), parent.getCommittedValue());
+      for (VarId& viewId : m_dependantIntVarViews.at(iter->getId())) {
+        recomputeUsingParent(viewId, (*iter));
       }
     }
   }
