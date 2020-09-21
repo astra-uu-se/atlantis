@@ -34,7 +34,8 @@ class MockAbsDiff : public AbsDiff {
     //     });
 
     // ON_CALL(*this, notifyIntChanged)
-    //     .WillByDefault([this](Timestamp t, Engine& e, LocalId id, Int oldValue,
+    //     .WillByDefault([this](Timestamp t, Engine& e, LocalId id, Int
+    //     oldValue,
     //                           Int newValue, Int data) {
     //       real_.notifyIntChanged(t, e, id, oldValue, newValue, data);
     //     });
@@ -52,7 +53,8 @@ class MockAbsDiff : public AbsDiff {
   //             (override));
 
   // MOCK_METHOD(void, notifyIntChanged,
-  //             (Timestamp t, Engine& e, LocalId id, Int oldValue, Int newValue,
+  //             (Timestamp t, Engine& e, LocalId id, Int oldValue, Int
+  //             newValue,
   //              Int data),
   //             (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
@@ -83,11 +85,9 @@ TEST_F(AbsDiffTest, CreateAbsDiff) {
 
   auto invariant = engine->makeInvariant<MockAbsDiff>(a, b, c);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-      .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
-      .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 
@@ -103,11 +103,9 @@ TEST_F(AbsDiffTest, Modification) {
 
   auto invariant = engine->makeInvariant<MockAbsDiff>(a, b, c);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-      .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
-      .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 

@@ -21,7 +21,7 @@ class ElementVar : public Invariant {
   VarId m_b;
 
  public:
-  ElementVar(VarId i, std::vector<VarId>X, VarId b);
+  ElementVar(VarId i, std::vector<VarId> X, VarId b);
   ~ElementVar() = default;
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;

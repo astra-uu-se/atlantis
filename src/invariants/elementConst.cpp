@@ -38,6 +38,4 @@ void ElementConst::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   e.setValue(t, m_b, m_A.at(e.getValue(t, m_i)));
 }
 
-void ElementConst::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t,e);
-}
+void ElementConst::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

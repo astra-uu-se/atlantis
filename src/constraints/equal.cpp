@@ -27,7 +27,7 @@ void Equal::recompute(Timestamp t, Engine& e) {
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int ) {
+void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int) {
   e.setValue(t, m_violationId,
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
@@ -55,6 +55,4 @@ void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void Equal::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t,e);
-}
+void Equal::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

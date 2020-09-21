@@ -22,7 +22,8 @@ class Store {
     m_intVarIndexMap.push_back(-1);
     m_invariants.push_back(nullptr);
   }
-  [[nodiscard]] inline VarId createIntVar(Timestamp t, Int initValue, Int lowerBound, Int upperBound) {
+  [[nodiscard]] inline VarId createIntVar(Timestamp t, Int initValue,
+                                          Int lowerBound, Int upperBound) {
     VarId newId = VarId(m_intVars.size());
     m_intVars.emplace_back(IntVar(t, newId, initValue, lowerBound, upperBound));
     m_intVarIndexMap.push_back(newId);
@@ -46,7 +47,9 @@ class Store {
   inline Invariant& getInvariant(InvariantId& i) const {
     return *(m_invariants.at(i.id));
   }
-  inline std::vector<IntVar>::iterator intVarBegin() { return m_intVars.begin() + 1; }
+  inline std::vector<IntVar>::iterator intVarBegin() {
+    return m_intVars.begin() + 1;
+  }
   inline std::vector<IntVar>::iterator intVarEnd() { return m_intVars.end(); }
   inline std::vector<std::shared_ptr<Invariant>>::iterator invariantBegin() {
     return m_invariants.begin() + 1;

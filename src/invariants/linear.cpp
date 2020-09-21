@@ -7,9 +7,8 @@ extern Id NULL_ID;
 
 Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
     : Invariant(NULL_ID), m_A(A), m_X(X), m_localX(), m_b(b) {
-      m_localX.reserve(X.size());
-    }
-
+  m_localX.reserve(X.size());
+}
 
 void Linear::init(Timestamp t, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
@@ -35,9 +34,7 @@ void Linear::recompute(Timestamp t, Engine& e) {
   // this.
 }
 
-void Linear::notifyIntChanged(Timestamp t, Engine& e,
-                              LocalId i,
-                              Int newValue) {
+void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i, Int newValue) {
   e.incValue(t, m_b, (newValue - m_localX.at(i).getValue(t)) * m_A[i]);
   m_localX.at(i).setValue(t, newValue);
 }
@@ -58,11 +55,11 @@ void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   Int delta = e.getValue(t, m_X.at(idx)) - m_localX.at(idx).getValue(t);
   assert(delta != 0);  // invariants are only notified when they are changed.
   e.incValue(t, m_b, delta * m_A.at(idx));
-  m_localX.at(idx).setValue(t,e.getValue(t, m_X.at(idx)));
+  m_localX.at(idx).setValue(t, e.getValue(t, m_X.at(idx)));
 }
 
 void Linear::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t,e);
+  Invariant::commit(t, e);
   for (size_t i = 0; i < m_X.size(); ++i) {
     m_localX.at(i).commitIf(t);
   }
