@@ -39,12 +39,6 @@ class Constraint : public Invariant {
 
   virtual void recompute(Timestamp, Engine&) = 0;
 
-  /**
-   * Precondition: oldValue != newValue
-   */
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
-                                Int oldValue, Int newValue, Int data) = 0;
-
   // TODO: This commit is somehow different from other commits as it just
   // forwards the commit call and validates the node. Maybe remove and let
   // engine do this by looking at defined variables of constraint...

@@ -6,69 +6,63 @@
 #include "core/engine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "propagation/topDownPropagationGraph.hpp"
 
-using ::testing::Return;
 using ::testing::AtLeast;
+using ::testing::Return;
 
 namespace {
 
 class MockInvariantSimple : public Invariant {
-  public:
+ public:
   bool m_initialized = false;
 
   MockInvariantSimple() : Invariant(NULL_ID) {}
 
-  void init(Timestamp, Engine&) override {
-    m_initialized = true;
-  }
+  void init(Timestamp, Engine&) override { m_initialized = true; }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
+              (override));
 
   MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e), (override));
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+              (override));
 
-  MOCK_METHOD(
-    void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id,
-                                Int oldValue, Int newValue, Int data), (override)
-  );
-  MOCK_METHOD(
-    void, commit, (Timestamp timestamp, Engine& engine), (override)
-  );
+  MOCK_METHOD(void, notifyIntChanged,
+              (Timestamp t, Engine& e, LocalId id, Int newValue), (override));
+  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 
 class MockInvariantAdvanced : public Invariant {
-  public:
+ public:
   bool m_initialized = false;
   std::vector<VarId> m_inputs;
   VarId m_output;
 
-
   MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
-    : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {}
+      : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {}
 
   void init(Timestamp, Engine& e) override {
     assert(m_id != NULL_ID);
 
     e.registerDefinedVariable(m_output, m_id);
     for (size_t i = 0; i < m_inputs.size(); ++i) {
-      e.registerInvariantDependsOnVar(m_id, m_inputs[i], LocalId(i), i);
+      e.registerInvariantDependsOnVar(m_id, m_inputs[i], LocalId(i));
     }
     m_initialized = true;
   }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
+              (override));
   MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e), (override));
-  MOCK_METHOD(
-    void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id,
-                                Int oldValue, Int newValue, Int data), (override)
-  );
-  MOCK_METHOD(
-    void, commit, (Timestamp timestamp, Engine& engine), (override)
-  );
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+              (override));
+  MOCK_METHOD(void, notifyIntChanged,
+              (Timestamp t, Engine& e, LocalId id, Int newValue),
+              (override));
+  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 
 class EngineTest : public ::testing::Test {
@@ -95,11 +89,9 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   // TODO: use some other invariants...
   auto invariant = engine->makeInvariant<MockInvariantSimple>();
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-    .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
-    .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   ASSERT_TRUE(invariant->m_initialized);
 
@@ -119,14 +111,11 @@ TEST_F(EngineTest, RecomputeAndCommit) {
   // TODO: use some other invariants...
   auto invariant = engine->makeInvariant<MockInvariantSimple>();
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-    .Times(1);
-  
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
-    .Times(1);
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(1);
+
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(1);
 
   ASSERT_TRUE(invariant->m_initialized);
-
 
   engine->close();
 
@@ -136,19 +125,18 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 
 TEST_F(EngineTest, SimplePropagation) {
   engine->open();
-  
+
   VarId output = engine->makeIntVar(0, -10, 10);
   VarId a = engine->makeIntVar(1, -10, 10);
   VarId b = engine->makeIntVar(2, -10, 10);
   VarId c = engine->makeIntVar(3, -10, 10);
-  
-  auto invariant = engine->makeInvariant<MockInvariantAdvanced>(std::vector<VarId>({a, b, c}), output);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-    .Times(1);
+  auto invariant = engine->makeInvariant<MockInvariantAdvanced>(
+      std::vector<VarId>({a, b, c}), output);
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
-    .Times(1);
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(1);
+
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(1);
 
   engine->close();
 
@@ -161,19 +149,18 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->endMove();
 
   EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
-    .WillOnce(Return(a))
-    .WillOnce(Return(b))
-    .WillOnce(Return(c))
-    .WillRepeatedly(Return(NULL_ID));
+      .WillOnce(Return(a))
+      .WillOnce(Return(b))
+      .WillOnce(Return(c))
+      .WillRepeatedly(Return(NULL_ID));
 
-  EXPECT_CALL(*invariant, notifyCurrentDependencyChanged(moveTimestamp, testing::_))
-    .Times(3);
-  
+  EXPECT_CALL(*invariant,
+              notifyCurrentDependencyChanged(moveTimestamp, testing::_))
+      .Times(3);
+
   engine->beginQuery();
   engine->query(output);
   engine->endQuery();
-
 }
-
 
 }  // namespace
