@@ -109,7 +109,7 @@ class PropagationGraph {
   [[nodiscard]] virtual VarId getNextStableVariable([
       [maybe_unused]] Timestamp t) = 0;
 
- inline size_t getNumVariables() {
+  inline size_t getNumVariables() {
     return m_numVariables;  // this ignores null var
   }
 
@@ -117,13 +117,9 @@ class PropagationGraph {
     return m_numInvariants;  // this ignores null invariant
   }
 
-  inline bool isOutputVar(VarId id){
-    return m_isOutputVar.at(id);
-  }
+  inline bool isOutputVar(VarId id) { return m_isOutputVar.at(id); }
 
-  inline bool isInputVar(VarId id){
-    return m_isInputVar.at(id);
-  }
+  inline bool isInputVar(VarId id) { return m_isInputVar.at(id); }
 
   inline const std::vector<VarId>& variablesDefinedBy(InvariantId inv) const {
     return m_variablesDefinedByInvariant.at(inv);

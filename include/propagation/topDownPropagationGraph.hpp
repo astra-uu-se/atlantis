@@ -44,7 +44,6 @@ class TopDownPropagationGraph : public PropagationGraph {
   TopDownPropagationGraph() : TopDownPropagationGraph(1000) {}
   TopDownPropagationGraph(size_t expectedSize);
 
-
   virtual void close() override {
     PropagationGraph::close();
     // m_topology.computeNoCycles();
@@ -58,12 +57,11 @@ class TopDownPropagationGraph : public PropagationGraph {
   virtual VarId getNextStableVariable(Timestamp) override;
   virtual void registerVar(VarId) override;
 
-    size_t getTopologicalKey(VarId id) {
+  size_t getTopologicalKey(VarId id) {
     return m_topology.m_variablePosition.at(id);
   }
 
   size_t getTopologicalKey(InvariantId id) {
     return m_topology.m_invariantPosition.at(id);
   }
-
 };

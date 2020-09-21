@@ -4,7 +4,10 @@
 
 BottomUpPropagationGraph::BottomUpPropagationGraph(Engine& e,
                                                    size_t expectedSize)
-    : PropagationGraph(expectedSize), m_engine(e), varStackIdx_(0), invariantStackIdx_(0) {
+    : PropagationGraph(expectedSize),
+      m_engine(e),
+      varStackIdx_(0),
+      invariantStackIdx_(0) {
   variableStack_.reserve(expectedSize);
   invariantStack_.reserve(expectedSize);
   varStableAt.reserve(expectedSize);
@@ -180,7 +183,7 @@ inline bool BottomUpPropagationGraph::visitNextVariable() {
   VarId nextVar = m_engine.getNextDependency(peekInvariantStack());
   if (nextVar.id == NULL_ID) {
     return true;  // done with invariant
-  }else {
+  } else {
     pushVariableStack(nextVar);
     return false;  // not done with invariant
   }
@@ -188,7 +191,7 @@ inline bool BottomUpPropagationGraph::visitNextVariable() {
 
 void BottomUpPropagationGraph::registerVar(VarId id) {
   PropagationGraph::registerVar(id);  // call parent implementation
-  variableStack_.push_back(NULL_ID);   // push back just to resize the stack!
+  variableStack_.push_back(NULL_ID);  // push back just to resize the stack!
   varStableAt.push_back(NULL_TIMESTAMP);
   varIsOnStack.push_back(false);
 }
