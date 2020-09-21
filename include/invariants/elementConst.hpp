@@ -28,7 +28,6 @@ class ElementConst : public Invariant {
   void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
                         Int newValue) override;
   virtual VarId getNextDependency(Timestamp, Engine&) override;
-  virtual void notifyCurrentDependencyChanged(Timestamp,
-                                              Engine& e) override;
+  virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
   void commit(Timestamp, Engine&) override;
 };

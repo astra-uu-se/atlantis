@@ -4,8 +4,8 @@
 
 // #include "core/engine.hpp"
 #include "core/intVar.hpp"
-#include "propagation/propagationGraph.hpp"
 #include "exceptions/exceptions.hpp"
+#include "propagation/propagationGraph.hpp"
 class Engine;  // forward declare
 
 class BottomUpPropagationGraph : public PropagationGraph {
@@ -15,7 +15,7 @@ class BottomUpPropagationGraph : public PropagationGraph {
   std::vector<InvariantId> invariantStack_;
   size_t invariantStackIdx_ = 0;
   std::vector<Timestamp> varStableAt;  // last timestamp when a VarID was stable
-                                    // (i.e., will not change)
+                                       // (i.e., will not change)
   std::vector<Timestamp> invariantStableAt;
   std::vector<bool> varIsOnStack;
   std::vector<bool> invariantIsOnStack;
@@ -79,8 +79,8 @@ inline void BottomUpPropagationGraph::pushVariableStack(VarId v) {
 inline void BottomUpPropagationGraph::popVariableStack() {
   varIsOnStack.at(variableStack_[--varStackIdx_]) = false;
 }
-inline VarId BottomUpPropagationGraph::peekVariableStack(){
-  return variableStack_[varStackIdx_-1];
+inline VarId BottomUpPropagationGraph::peekVariableStack() {
+  return variableStack_[varStackIdx_ - 1];
 }
 
 inline void BottomUpPropagationGraph::pushInvariantStack(InvariantId i) {
@@ -94,8 +94,8 @@ inline void BottomUpPropagationGraph::popInvariantStack() {
   invariantIsOnStack.at(invariantStack_[--invariantStackIdx_]) = false;
 }
 
-inline InvariantId BottomUpPropagationGraph::peekInvariantStack(){
-  return invariantStack_[invariantStackIdx_-1];
+inline InvariantId BottomUpPropagationGraph::peekInvariantStack() {
+  return invariantStack_[invariantStackIdx_ - 1];
 }
 
 inline void BottomUpPropagationGraph::markStable(Timestamp t, VarId v) {
@@ -113,5 +113,3 @@ inline void BottomUpPropagationGraph::markStable(Timestamp t, InvariantId v) {
 inline bool BottomUpPropagationGraph::isStable(Timestamp t, InvariantId v) {
   return invariantStableAt.at(v) == t;
 }
-
-

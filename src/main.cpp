@@ -26,7 +26,8 @@ int main() {
   auto duration =
       std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 
-  std::cout << "duration: " <<duration <<"ms\n" << "probes/ms: " << (((double)nProbes)/duration) << std::endl;
+  std::cout << "duration: " << duration << "ms\n"
+            << "probes/ms: " << (((double)nProbes) / duration) << std::endl;
 }
 
 void magicSquare(int n) {

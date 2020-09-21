@@ -28,13 +28,11 @@ bool MarkingTopDownPropagationGraph::isActive(Timestamp t, VarId id) {
   return m_varMark.at(id) == t;
 }
 
-bool MarkingTopDownPropagationGraph::isActive(Timestamp t,
-                                              InvariantId id) {
+bool MarkingTopDownPropagationGraph::isActive(Timestamp t, InvariantId id) {
   return m_invariantMark.at(id) == t;
 }
 
-VarId MarkingTopDownPropagationGraph::getNextStableVariable(
-    Timestamp t) {
+VarId MarkingTopDownPropagationGraph::getNextStableVariable(Timestamp t) {
   VarId nextVar = TopDownPropagationGraph::getNextStableVariable(t);
   m_propagatedAt.at(nextVar) = t;
   return nextVar;

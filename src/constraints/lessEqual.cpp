@@ -60,6 +60,4 @@ void LessEqual::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void LessEqual::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t,e);
-}
+void LessEqual::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
