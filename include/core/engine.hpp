@@ -30,7 +30,6 @@ class Engine {
   struct InvariantDependencyData {
     InvariantId id;
     LocalId localId;
-    Int data;
     Timestamp lastNotification;  // todo: unclear if this information is
                                  // relevant for all types of propagation. If
                                  // not then move it to a subclass...
@@ -152,7 +151,7 @@ class Engine {
    * @param data additional data
    */
   void registerInvariantDependsOnVar(InvariantId dependent, VarId source,
-                                     LocalId localId, Int data);
+                                     LocalId localId);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if

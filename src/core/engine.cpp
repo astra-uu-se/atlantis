@@ -84,10 +84,10 @@ void Engine::endQuery() {
 
 void Engine::beginCommit() { m_propGraph.clearForPropagation(); }
 
-void Engine::endCommit() { 
-  // m_propGraph.fullPropagateAndCommit(m_currentTime); 
-  m_propGraph.lazyPropagateAndCommit(m_currentTime); 
-  }
+void Engine::endCommit() {
+  // m_propGraph.fullPropagateAndCommit(m_currentTime);
+  m_propGraph.lazyPropagateAndCommit(m_currentTime);
+}
 
 // Propagates at the current internal time of the engine.
 void Engine::propagate() {
@@ -95,7 +95,7 @@ void Engine::propagate() {
   while (id.id != NULL_ID) {
     IntVar& variable = m_store.getIntVar(id);
     if (variable.hasChanged(m_currentTime)) {
-      for (auto &toNotify : m_dependentInvariantData.at(id)) {
+      for (auto& toNotify : m_dependentInvariantData.at(id)) {
         // If we do multiple "probes" within the same timestamp then the
         // invariant may already have been notified.
         // Also, do not notify invariants that are not active.
@@ -105,8 +105,7 @@ void Engine::propagate() {
         }
         m_store.getInvariant(toNotify.id)
             .notifyIntChanged(m_currentTime, *this, toNotify.localId,
-                              variable.getCommittedValue(),
-                              variable.getValue(m_currentTime), toNotify.data);
+                              variable.getValue(m_currentTime));
         toNotify.lastNotification = m_currentTime;
       }
     }
@@ -129,10 +128,10 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
 }
 
 void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
-                                           LocalId localId, Int data) {
+                                           LocalId localId) {
   m_propGraph.registerInvariantDependsOnVar(dependent, source);
   m_dependentInvariantData.at(source).emplace_back(
-      InvariantDependencyData{dependent, localId, data, NULL_TIMESTAMP});
+      InvariantDependencyData{dependent, localId, NULL_TIMESTAMP});
 }
 
 void Engine::registerDefinedVariable(VarId dependent, InvariantId source) {

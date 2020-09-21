@@ -12,7 +12,7 @@ void ElementConst::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);
 
   e.registerDefinedVariable(m_b, m_id);
-  e.registerInvariantDependsOnVar(m_id, m_i, 0, 0);
+  e.registerInvariantDependsOnVar(m_id, m_i, 0);
 }
 
 void ElementConst::recompute(Timestamp t, Engine& e) {
@@ -20,8 +20,7 @@ void ElementConst::recompute(Timestamp t, Engine& e) {
 }
 
 void ElementConst::notifyIntChanged(Timestamp t, Engine& e, LocalId,
-                                    Int oldValue, Int newValue, Int) {
-  assert(newValue != oldValue);
+                                    Int newValue) {
   e.setValue(t, m_b, m_A.at(newValue));
 }
 
@@ -39,6 +38,4 @@ void ElementConst::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   e.setValue(t, m_b, m_A.at(e.getValue(t, m_i)));
 }
 
-void ElementConst::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t,e);
-}
+void ElementConst::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

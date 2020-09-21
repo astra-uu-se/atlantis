@@ -1,6 +1,6 @@
 #pragma once
-#include "core/types.hpp"
 #include "core/invariant.hpp"
+#include "core/types.hpp"
 
 class Engine;  // Forward declaration
 
@@ -9,10 +9,7 @@ class Constraint : public Invariant {
  protected:
   VarId m_violationId;
   Constraint(Id t_id, VarId t_violationId)
-    : Invariant(t_id),
-      m_violationId(t_violationId) {}
-
-
+      : Invariant(t_id), m_violationId(t_violationId) {}
 
  public:
   virtual ~Constraint() = default;
@@ -38,12 +35,6 @@ class Constraint : public Invariant {
   virtual void init(Timestamp, Engine&) = 0;
 
   virtual void recompute(Timestamp, Engine&) = 0;
-
-  /**
-   * Precondition: oldValue != newValue
-   */
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
-                                Int oldValue, Int newValue, Int data) = 0;
 
   // TODO: This commit is somehow different from other commits as it just
   // forwards the commit call and validates the node. Maybe remove and let

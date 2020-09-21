@@ -36,10 +36,10 @@ class MockElementVar : public ElementVar {
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& e, LocalId id, Int oldValue,
-                              Int newValue, Int data) {
-          real_.notifyIntChanged(t, e, id, oldValue, newValue, data);
-        });
+        .WillByDefault(
+            [this](Timestamp t, Engine& e, LocalId id, Int newValue) {
+              real_.notifyIntChanged(t, e, id, newValue);
+            });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
       real_.commit(t, e);
@@ -54,9 +54,7 @@ class MockElementVar : public ElementVar {
               (override));
 
   MOCK_METHOD(void, notifyIntChanged,
-              (Timestamp t, Engine& e, LocalId id, Int oldValue, Int newValue,
-               Int data),
-              (override));
+              (Timestamp t, Engine& e, LocalId id, Int newValue), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:
@@ -92,11 +90,9 @@ TEST_F(ElementVarTest, CreateElement) {
   auto invariant = engine->makeInvariant<MockElementVar>(
       idx, std::vector<VarId>{args}, output);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-      .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
-      .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 
@@ -119,11 +115,9 @@ TEST_F(ElementVarTest, NotificationsChangeIndex) {
   auto invariant = engine->makeInvariant<MockElementVar>(
       idx, std::vector<VarId>{args}, output);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-      .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_))
-      .Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 
