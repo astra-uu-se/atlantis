@@ -9,6 +9,7 @@ extern Id NULL_ID;
 AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> t_variables)
     : Constraint(NULL_ID, violationId),
       m_variables(t_variables),
+      m_localValues(),
       m_counts(),
       m_offset(0)
        {}
@@ -21,7 +22,8 @@ void AllDifferent::init(Timestamp ts, Engine& e) {
   for (size_t i = 0; i < m_variables.size(); ++i) {
     lb = std::min(lb, e.getLowerBound(m_variables[i]));
     ub = std::max(ub, e.getUpperBound(m_variables[i]));
-    e.registerInvariantDependsOnVar(m_id, m_variables[i], LocalId(i), 0);
+    e.registerInvariantDependsOnVar(m_id, m_variables[i], LocalId(i));
+    m_localValues.push_back(SavedInt(ts, e.getCommittedValue(m_variables[i])));
   }
   assert(ub >= lb);
 
@@ -57,17 +59,18 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
   
   e.setValue(t, m_violationId, 0);
   
-  for (auto varId : m_variables) {
-    increaseCount(t, e, e.getValue(t,varId));
+  for (size_t i = 0; i < m_variables.size(); ++i) {
+    increaseCount(t, e, e.getValue(t, m_variables[i]));
+    m_localValues[i].setValue(t, e.getValue(t, m_variables[i]));
   }
 }
 
-void AllDifferent::notifyIntChanged(Timestamp t, Engine& e,
-                             LocalId, Int oldValue,
-                             Int newValue, Int) {
+void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id, Int newValue) {
+  Int oldValue = m_localValues.at(id).getValue(t);
   assert(newValue != oldValue);
   decreaseCount(t, e, oldValue);
   increaseCount(t, e, newValue);
+  m_localValues.at(id).setValue(t,newValue);
 }
 
 VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
@@ -87,15 +90,22 @@ void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   
   VarId varId = m_variables.at(index);
 
-  Int oldValue = e.getCommittedValue(varId);
+  Int oldValue = m_localValues.at(index).getValue(t);
   Int newValue = e.getValue(varId);
 
   decreaseCount(t, e, oldValue);
   increaseCount(t, e, newValue);
+
+  m_localValues.at(index).setValue(t,newValue);
 }
 
 void AllDifferent::commit(Timestamp t, Engine& e) {
   Invariant::commit(t,e);
+
+  for(auto& localValue: m_localValues){
+    localValue.commitIf(t);
+  }
+
   for (SavedInt& savedInt : m_counts) {
     savedInt.commitIf(t);
   }

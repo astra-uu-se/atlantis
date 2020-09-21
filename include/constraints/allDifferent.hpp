@@ -14,6 +14,7 @@
 class AllDifferent : public Constraint {
  private:
   std::vector<VarId> m_variables;
+  std::vector<SavedInt> m_localValues;
   std::vector<SavedInt> m_counts;
   Int m_offset;
   void increaseCount(Timestamp ts, Engine& e, Int value);
@@ -24,8 +25,7 @@ class AllDifferent : public Constraint {
   virtual ~AllDifferent() = default;
   virtual void init(Timestamp, Engine&) override;
   virtual void recompute(Timestamp, Engine&) override;
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
-                                Int oldValue, Int newValue, Int data) override;
+  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id, Int newValue) override;
   virtual void commit(Timestamp, Engine&) override;
   virtual VarId getNextDependency(Timestamp, Engine& e) override;
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;

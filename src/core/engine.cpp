@@ -105,8 +105,7 @@ void Engine::propagate() {
         }
         m_store.getInvariant(toNotify.id)
             .notifyIntChanged(m_currentTime, *this, toNotify.localId,
-                              variable.getCommittedValue(),
-                              variable.getValue(m_currentTime), toNotify.data);
+                              variable.getValue(m_currentTime));
         toNotify.lastNotification = m_currentTime;
       }
     }
@@ -129,10 +128,10 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
 }
 
 void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
-                                           LocalId localId, Int data) {
+                                           LocalId localId) {
   m_propGraph.registerInvariantDependsOnVar(dependent, source);
   m_dependentInvariantData.at(source).emplace_back(
-      InvariantDependencyData{dependent, localId, data, NULL_TIMESTAMP});
+      InvariantDependencyData{dependent, localId, NULL_TIMESTAMP});
 }
 
 void Engine::registerDefinedVariable(VarId dependent, InvariantId source) {

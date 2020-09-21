@@ -2,11 +2,11 @@
 #include <random>
 #include <vector>
 
+#include "constraints/equal.hpp"
 #include "core/engine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
-#include "constraints/equal.hpp"
 
 namespace {
 class EqualTest : public ::testing::Test {
@@ -41,7 +41,6 @@ TEST_F(EqualTest, Init) {
 }
 
 TEST_F(EqualTest, Recompute) {
-
   EXPECT_EQ(e->getValue(0, violationId), 0);
   EXPECT_EQ(e->getCommittedValue(violationId), 0);
 
@@ -53,8 +52,8 @@ TEST_F(EqualTest, Recompute) {
 }
 
 TEST_F(EqualTest, NotifyChange) {
-
-  EXPECT_EQ(e->getValue(0, violationId), 0);  // initially the value of violationId is 0
+  EXPECT_EQ(e->getValue(0, violationId),
+            0);  // initially the value of violationId is 0
 
   LocalId unused = -1;
 
@@ -64,14 +63,14 @@ TEST_F(EqualTest, NotifyChange) {
   e->setValue(time1, x, 40);
   EXPECT_EQ(e->getCommittedValue(x), 2);
   EXPECT_EQ(e->getValue(time1, x), 40);
-  equal->notifyIntChanged(time1, *e, unused, e->getCommittedValue(x),
-                           e->getValue(time1, x), 1);
-  EXPECT_EQ(e->getValue(time1, violationId), 38);  // incremental value of violationId is 0;
+  equal->notifyIntChanged(time1, *e, unused, e->getValue(time1, x));
+  EXPECT_EQ(e->getValue(time1, violationId),
+            38);  // incremental value of violationId is 0;
 
   e->setValue(time1, y, 0);
-  equal->notifyIntChanged(time1, *e, unused, e->getCommittedValue(y),
-                           e->getValue(time1, y), 1);
-  auto tmpValue = e->getValue(time1, violationId);  // incremental value of violationId is 40;
+  equal->notifyIntChanged(time1, *e, unused, e->getValue(time1, y));
+  auto tmpValue = e->getValue(
+      time1, violationId);  // incremental value of violationId is 40;
 
   // Incremental computation gives the same result as recomputation
   equal->recompute(time1, *e);
@@ -83,40 +82,41 @@ TEST_F(EqualTest, NotifyChange) {
   e->setValue(time2, y, 20);
   EXPECT_EQ(e->getCommittedValue(y), 2);
   EXPECT_EQ(e->getValue(time2, y), 20);
-  equal->notifyIntChanged(time2, *e, unused, e->getCommittedValue(y),
-                           e->getValue(time2, y), 1);
-  EXPECT_EQ(e->getValue(time2, violationId), 18);  // incremental value of violationId is 0;
+  equal->notifyIntChanged(time2, *e, unused, e->getValue(time2, y));
+  EXPECT_EQ(e->getValue(time2, violationId),
+            18);  // incremental value of violationId is 0;
 }
 
 TEST_F(EqualTest, IncrementalVsRecompute) {
-
-  EXPECT_EQ(e->getValue(0, violationId), 0);  // initially the value of violationId is 0
+  EXPECT_EQ(e->getValue(0, violationId),
+            0);  // initially the value of violationId is 0
   LocalId unused = -1;
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100000, 100000);
 
   Timestamp currentTime = 1;
-  for (size_t i = 0; i < 1000; ++i) { 
+  for (size_t i = 0; i < 1000; ++i) {
     ++currentTime;
     // Check that we do not accidentally commit
     ASSERT_EQ(e->getCommittedValue(x), 2);
     ASSERT_EQ(e->getCommittedValue(y), 2);
-    ASSERT_EQ(e->getCommittedValue(violationId), 0);  // violationId is committed by register.
+    ASSERT_EQ(e->getCommittedValue(violationId),
+              0);  // violationId is committed by register.
 
     // Set all variables
     e->setValue(currentTime, x, distribution(gen));
     e->setValue(currentTime, y, distribution(gen));
-    
+
     // notify changes
     if (e->getCommittedValue(x) != e->getValue(currentTime, x)) {
-      equal->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(x),
-                               e->getValue(currentTime, x), 1);
+      equal->notifyIntChanged(currentTime, *e, unused,
+                              e->getValue(currentTime, x));
     }
     if (e->getCommittedValue(y) != e->getValue(currentTime, y)) {
-      equal->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(y),
-                               e->getValue(currentTime, y), 1);
+      equal->notifyIntChanged(currentTime, *e, unused,
+                              e->getValue(currentTime, y));
     }
-    
+
     // incremental value
     auto tmp = e->getValue(currentTime, violationId);
     equal->recompute(currentTime, *e);
@@ -136,9 +136,7 @@ TEST_F(EqualTest, Commit) {
   e->setValue(currentTime, y, 2);  // This change is not notified and should not
                                    // have an impact on the commit
 
-  equal->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(x),
-                           e->getValue(currentTime, x), 1);
-
+  equal->notifyIntChanged(currentTime, *e, unused, e->getValue(currentTime, x));
 
   // Committing an invariant does not commit its output!
   // // Commit at wrong timestamp should have no impact

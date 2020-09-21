@@ -1,14 +1,14 @@
+#include <algorithm>
 #include <iostream>
 #include <limits>
 #include <random>
 #include <vector>
-#include <algorithm>
 
+#include "constraints/allDifferent.hpp"
 #include "core/engine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
-#include "constraints/allDifferent.hpp"
 
 namespace {
 class AllDifferentTest : public ::testing::Test {
@@ -23,7 +23,8 @@ class AllDifferentTest : public ::testing::Test {
     c = e->makeIntVar(2, -100, 100);
     violationId = e->makeIntVar(0, 0, 3);
 
-    allDifferent = e->makeConstraint<AllDifferent>(violationId, std::vector<VarId>({a, b, c}));
+    allDifferent = e->makeConstraint<AllDifferent>(
+        violationId, std::vector<VarId>({a, b, c}));
     e->close();
   }
   std::unique_ptr<Engine> e;
@@ -45,7 +46,6 @@ TEST_F(AllDifferentTest, Init) {
 }
 
 TEST_F(AllDifferentTest, Recompute) {
-
   EXPECT_EQ(e->getValue(0, violationId), 1);
   EXPECT_EQ(e->getCommittedValue(violationId), 1);
 
@@ -63,10 +63,7 @@ TEST_F(AllDifferentTest, Recompute) {
 }
 
 TEST_F(AllDifferentTest, NotifyChange) {
-
   EXPECT_EQ(e->getValue(0, violationId), 1);
-
-  LocalId unused = -1;
 
   Timestamp time1 = 1;
 
@@ -74,13 +71,11 @@ TEST_F(AllDifferentTest, NotifyChange) {
   e->setValue(time1, a, 2);
   EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time1, a), 2);
-  allDifferent->notifyIntChanged(time1, *e, unused, e->getCommittedValue(a),
-                           e->getValue(time1, a), 1);
+  allDifferent->notifyIntChanged(time1, *e, 0, e->getValue(time1, a));
   EXPECT_EQ(e->getValue(time1, violationId), 2);
 
   e->setValue(time1, b, 3);
-  allDifferent->notifyIntChanged(time1, *e, unused, e->getCommittedValue(b),
-                           e->getValue(time1, b), 1);
+  allDifferent->notifyIntChanged(time1, *e, 1, e->getValue(time1, b));
   auto tmpValue = e->getValue(time1, violationId);
 
   // Incremental computation gives the same result as recomputation
@@ -93,41 +88,39 @@ TEST_F(AllDifferentTest, NotifyChange) {
   e->setValue(time2, b, 20);
   EXPECT_EQ(e->getCommittedValue(b), 2);
   EXPECT_EQ(e->getValue(time2, b), 20);
-  allDifferent->notifyIntChanged(time2, *e, unused, e->getCommittedValue(b),
-                           e->getValue(time2, b), 1);
+  allDifferent->notifyIntChanged(time2, *e, 1, e->getValue(time2, b));
   EXPECT_EQ(e->getValue(time2, violationId), 0);
 }
 
-
 TEST_F(AllDifferentTest, IncrementalVsRecompute) {
-
-  EXPECT_EQ(e->getValue(0, violationId), 1);  // initially the value of violationId is 0
-  LocalId unused = -1;
+  EXPECT_EQ(e->getValue(0, violationId),
+            1);  // initially the value of violationId is 0
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100, 100);
 
   Timestamp currentTime = 1;
-  for (size_t i = 0; i < 2; ++i) { 
+  for (size_t i = 0; i < 2; ++i) {
     ++currentTime;
     // Check that we do not accidentally commit
     ASSERT_EQ(e->getCommittedValue(a), 1);
     ASSERT_EQ(e->getCommittedValue(b), 2);
-    ASSERT_EQ(e->getCommittedValue(violationId), 1);  // violationId is commited by register.
+    ASSERT_EQ(e->getCommittedValue(violationId),
+              1);  // violationId is commited by register.
 
     // Set all variables
     e->setValue(currentTime, a, distribution(gen));
     e->setValue(currentTime, b, distribution(gen));
-    
+
     // notify changes
     if (e->getCommittedValue(a) != e->getValue(currentTime, a)) {
-      allDifferent->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(a),
-                               e->getValue(currentTime, a), 1);
+      allDifferent->notifyIntChanged(currentTime, *e, 0,
+                                     e->getValue(currentTime, a));
     }
     if (e->getCommittedValue(b) != e->getValue(currentTime, b)) {
-      allDifferent->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(b),
-                               e->getValue(currentTime, b), 1);
+      allDifferent->notifyIntChanged(currentTime, *e, 1,
+                                     e->getValue(currentTime, b));
     }
-    
+
     // incremental value
     auto tmp = e->getValue(currentTime, violationId);
     allDifferent->recompute(currentTime, *e);
@@ -138,12 +131,12 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
 
 TEST_F(AllDifferentTest, Commit) {
   /*
-  It is difficult to test the method commit as it only 
-  commits the internal data structures of the constraint. 
-  The internal data structures are (in almost all cases) 
+  It is difficult to test the method commit as it only
+  commits the internal data structures of the constraint.
+  The internal data structures are (in almost all cases)
   private.
   */
- ASSERT_TRUE(true);
+  ASSERT_TRUE(true);
 }
 
 }  // namespace
