@@ -85,18 +85,12 @@ class PropagationGraph {
    * returns true if variable id is relevant for propagation.
    * Note that this is not the same thing as the variable being modified.
    */
-  virtual bool isActive([[maybe_unused]] Timestamp t,
-                        [[maybe_unused]] VarId id) {
-    return true;
-  }
+  virtual bool isActive(Timestamp, VarId) { return true; }
   /**
    * returns true if invariant id is relevant for propagation.
    * Note that this is not the same thing as the invariant being modified.
    */
-  virtual bool isActive([[maybe_unused]] Timestamp t,
-                        [[maybe_unused]] InvariantId id) {
-    return true;
-  }
+  virtual bool isActive(Timestamp, InvariantId) { return true; }
 
   /**
    * A stable variable is a variable that has been modified at timestamp t,

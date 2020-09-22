@@ -29,6 +29,7 @@ class IntVar : public Var {
   }
 
   friend class Engine;
+  friend class PropagationEngine;
 
  public:
   IntVar(Int t_lowerBound, Int t_upperBound);

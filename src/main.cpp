@@ -5,8 +5,9 @@
 #include <vector>
 
 #include "constraints/allDifferent.hpp"
-#include "core/engine.hpp"
 #include "core/intVar.hpp"
+#include "core/engine.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/tracer.hpp"
 #include "invariants/absDiff.hpp"
 #include "invariants/linear.hpp"
@@ -32,7 +33,7 @@ int main() {
 
 void magicSquare(int n) {
   int n2 = n * n;
-  Engine engine;
+  PropagationEngine engine;
   engine.open();
 
   std::vector<std::vector<VarId>> square;
@@ -62,7 +63,7 @@ void magicSquare(int n) {
 }
 
 int allIntervals(int n) {
-  Engine engine;
+  PropagationEngine engine;
   engine.open();
 
   std::vector<VarId> s_vars;
@@ -90,13 +91,13 @@ int allIntervals(int n) {
   int nProbes = 0;
   for (int it = 0; it < 500000; it++) {
     // Probe all swaps
-    for (size_t i = 0; i < n; i++) {
-      for (size_t j = i + 1; j < n; j++) {
+    for (size_t i = 0; i < static_cast<size_t>(n); i++) {
+      for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {
         Int oldI = engine.getValue(s_vars.at(i));
         Int oldJ = engine.getValue(s_vars.at(j));
         engine.beginMove();
-        engine.setValue(s_vars.at(i), oldJ);
-        engine.setValue(s_vars.at(j), oldI);
+        engine.updateValue(s_vars.at(i), oldJ);
+        engine.updateValue(s_vars.at(j), oldI);
         engine.endMove();
 
         engine.beginQuery();
@@ -111,8 +112,8 @@ int allIntervals(int n) {
     Int oldJ = engine.getValue(s_vars.at(j));
     // Perform random swap
     engine.beginMove();
-    engine.setValue(s_vars.at(i), oldJ);
-    engine.setValue(s_vars.at(j), oldI);
+    engine.updateValue(s_vars.at(i), oldJ);
+    engine.updateValue(s_vars.at(j), oldI);
     engine.endMove();
 
     engine.beginCommit();
@@ -125,7 +126,7 @@ int allIntervals(int n) {
 }
 
 void test() {
-  Engine engine;
+  PropagationEngine engine;
   engine.open();
   VarId a = engine.makeIntVar(1, 1, 1);
   VarId b = engine.makeIntVar(2, 2, 2);
@@ -152,8 +153,8 @@ void test() {
   std::uniform_int_distribution<> distribution{-100000, 100000};
   for (int i = 0; i < 1000000; i++) {
     engine.beginMove();
-    engine.setValue(a, distribution(gen));
-    engine.setValue(c, distribution(gen));
+    engine.updateValue(a, distribution(gen));
+    engine.updateValue(c, distribution(gen));
     engine.endMove();
 
     engine.beginQuery();

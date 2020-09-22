@@ -1,8 +1,8 @@
 #include "propagation/bottomUpPropagationGraph.hpp"
 
-#include "core/engine.hpp"
+#include "core/propagationEngine.hpp"
 
-BottomUpPropagationGraph::BottomUpPropagationGraph(Engine& e,
+BottomUpPropagationGraph::BottomUpPropagationGraph(PropagationEngine& e,
                                                    size_t expectedSize)
     : PropagationGraph(expectedSize),
       m_engine(e),

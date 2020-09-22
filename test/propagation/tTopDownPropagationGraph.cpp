@@ -3,7 +3,7 @@
 #include <random>
 #include <vector>
 
-#include "core/engine.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
