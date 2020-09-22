@@ -1,10 +1,12 @@
 #pragma once
 
 #include "core/engine.hpp"
+#include "propagation/bottomUpExplorer.hpp"
 
 class PropagationEngine : public Engine {
  protected:
   BottomUpPropagationGraph m_propGraph;
+  BottomUpExplorer m_bottomUpExplorer;
 
   void recomputeAndCommit();
 

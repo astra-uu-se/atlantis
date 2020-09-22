@@ -54,7 +54,7 @@ void TopDownPropagationGraph::Topology::computeNoCycles() {
   std::queue<VarId> frontier;
 
   // Find the top level variables that are not defined by anything.
-  // todo: it would be cleaning if we maintained a list of all added varIDs but
+  // todo: it would be cleaner if we maintained a list of all added varIDs but
   // it is more efficient just to recreated based on the total number.
   for (size_t i = 0; i < graph.m_numVariables + 1; i++) {
     if (i == NULL_ID) {  // Skip nullVar if any.

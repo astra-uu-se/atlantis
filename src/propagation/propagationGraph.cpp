@@ -4,10 +4,11 @@
 #include <functional>
 
 #include "exceptions/exceptions.hpp"
+#include "topology.cpp"
 extern Id NULL_ID;
 
 PropagationGraph::PropagationGraph(size_t expectedSize)
-    : m_numInvariants(0), m_numVariables(0) {
+    : m_numInvariants(0), m_numVariables(0), m_topology(*this) {
   m_definingInvariant.reserve(expectedSize);
   m_variablesDefinedByInvariant.reserve(expectedSize);
   m_inputVariables.reserve(expectedSize);
@@ -65,4 +66,6 @@ void PropagationGraph::close() {
     m_isOutputVar.at(i) = (m_listeningInvariants.at(i).size() == 0);
     m_isInputVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
   }
+
+  m_topology.computeWithCycles();
 }
