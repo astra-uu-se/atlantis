@@ -56,7 +56,7 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
     c.setValue(t, 0);
   }
 
-  e.setValue(t, m_violationId, 0);
+  e.updateValue(t, m_violationId, 0);
 
   for (size_t i = 0; i < m_variables.size(); ++i) {
     increaseCount(t, e, e.getValue(t, m_variables[i]));

@@ -6,10 +6,12 @@
 #include "core/intVar.hpp"
 #include "exceptions/exceptions.hpp"
 #include "propagation/propagationGraph.hpp"
-class Engine;  // forward declare
+class PropagationEngine;  // forward declare
 
 class BottomUpPropagationGraph : public PropagationGraph {
  private:
+  PropagationEngine& m_engine;
+
   std::vector<VarId> variableStack_;
   size_t varStackIdx_ = 0;
   std::vector<InvariantId> invariantStack_;
@@ -39,11 +41,9 @@ class BottomUpPropagationGraph : public PropagationGraph {
 
   void commitAndPostpone(Timestamp, VarId);
 
-  Engine& m_engine;
-
  public:
   // BottomUpPropagationGraph() : BottomUpPropagationGraph(1000) {}
-  BottomUpPropagationGraph(Engine& e, size_t expectedSize);
+  BottomUpPropagationGraph(PropagationEngine& e, size_t expectedSize);
 
   void fullPropagateAndCommit(Timestamp);
 

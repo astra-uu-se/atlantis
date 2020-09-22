@@ -3,7 +3,7 @@
 #include <random>
 #include <vector>
 
-#include "core/engine.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
@@ -18,12 +18,12 @@ class BottomUpPropagationTest : public ::testing::Test {
   std::mt19937 gen;
 
   BottomUpPropagationGraph* pg;
-  std::unique_ptr<Engine> e;
+  std::unique_ptr<PropagationEngine> e;
 
   virtual void SetUp() {
     std::random_device rd;
     gen = std::mt19937(rd());
-    e = std::make_unique<Engine>();
+    e = std::make_unique<PropagationEngine>();
     pg = &(e->getPropGraph());
   }
 };

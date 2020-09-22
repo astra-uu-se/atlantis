@@ -3,7 +3,7 @@
 #include <random>
 #include <vector>
 
-#include "core/engine.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gmock/gmock.h"
@@ -68,12 +68,12 @@ class EngineTest : public ::testing::Test {
  protected:
   std::mt19937 gen;
 
-  std::unique_ptr<Engine> engine;
+  std::unique_ptr<PropagationEngine> engine;
 
   virtual void SetUp() {
     std::random_device rd;
     gen = std::mt19937(rd());
-    engine = std::make_unique<Engine>();
+    engine = std::make_unique<PropagationEngine>();
   }
 };
 
@@ -142,9 +142,9 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->beginMove();
   Timestamp moveTimestamp = engine->getCurrentTime();
 
-  engine->setValue(a, -1);
-  engine->setValue(b, -2);
-  engine->setValue(c, -3);
+  engine->updateValue(a, -1);
+  engine->updateValue(b, -2);
+  engine->updateValue(c, -3);
   engine->endMove();
 
   EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))

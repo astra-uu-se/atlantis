@@ -21,15 +21,15 @@ void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {
 }
 
 void ElementVar::recompute(Timestamp t, Engine& e) {
-  e.setValue(t, m_b, e.getValue(t, m_X.at(e.getValue(t, m_i))));
+  e.updateValue(t, m_b, e.getValue(t, m_X.at(e.getValue(t, m_i))));
 }
 
 void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId id,
                                   Int newValue) {
   if (id.id == LocalId(-1).id) {
-    e.setValue(t, m_b, e.getValue(t, m_X.at(newValue)));
+    e.updateValue(t, m_b, e.getValue(t, m_X.at(newValue)));
   } else if (id.id == static_cast<IdBase>(e.getValue(t, m_i))) {
-    e.setValue(t, m_b, newValue);
+    e.updateValue(t, m_b, newValue);
   }
   // e.setValue(t, m_b, m_A.at(newValue));
 }
@@ -47,7 +47,7 @@ VarId ElementVar::getNextDependency(Timestamp t, Engine& e) {
 
 void ElementVar::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) == 0 || m_state.getValue(t) == 1);
-  e.setValue(t, m_b, e.getValue(t, m_X.at(e.getValue(t, m_i))));
+  e.updateValue(t, m_b, e.getValue(t, m_X.at(e.getValue(t, m_i))));
 }
 
 void ElementVar::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

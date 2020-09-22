@@ -3,7 +3,7 @@
 #include <random>
 #include <vector>
 
-#include "core/engine.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gmock/gmock.h"
@@ -67,12 +67,12 @@ class AbsDiffTest : public ::testing::Test {
  protected:
   std::mt19937 gen;
 
-  std::unique_ptr<Engine> engine;
+  std::unique_ptr<PropagationEngine> engine;
 
   virtual void SetUp() {
     std::random_device rd;
     gen = std::mt19937(rd());
-    engine = std::make_unique<Engine>();
+    engine = std::make_unique<PropagationEngine>();
   }
 };
 
@@ -112,7 +112,7 @@ TEST_F(AbsDiffTest, Modification) {
   EXPECT_EQ(engine->getValue(c), 200);
 
   engine->beginMove();
-  engine->setValue(a, 0);
+  engine->updateValue(a, 0);
   engine->endMove();
 
   engine->beginQuery();
