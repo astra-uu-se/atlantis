@@ -37,6 +37,7 @@ void BottomUpPropagationGraph::clearForPropagation() {
   // varIsOnStack.assign(varIsOnStack.size(), false);
   // invariantIsOnStack.assign(invariantIsOnStack.size(), false);
 }
+
 void BottomUpPropagationGraph::registerForPropagation(Timestamp, VarId id) {
   variableStack_[varStackIdx_++] = id;
 }

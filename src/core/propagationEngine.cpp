@@ -1,7 +1,7 @@
 #include "core/propagationEngine.hpp"
 
 PropagationEngine::PropagationEngine()
-    : m_propGraph(*this, ESTIMATED_NUM_OBJECTS) {}
+    : m_propGraph(*this, ESTIMATED_NUM_OBJECTS), m_bottomUpExplorer(*this) {}
 
 BottomUpPropagationGraph& PropagationEngine::getPropGraph() {
   return m_propGraph;
@@ -38,10 +38,14 @@ void PropagationEngine::registerDefinedVariable(VarId dependent,
   m_propGraph.registerDefinedVariable(dependent, source);
 }
 
-void PropagationEngine::registerVar(VarId v) { m_propGraph.registerVar(v); }
+void PropagationEngine::registerVar(VarId v) {
+  m_propGraph.registerVar(v);
+  m_bottomUpExplorer.registerVar(v);
+}
 
 void PropagationEngine::registerInvariant(InvariantId i) {
   m_propGraph.registerInvariant(i);
+  m_bottomUpExplorer.registerInvariant(i);
 }
 
 //---------------------Propagation---------------------
