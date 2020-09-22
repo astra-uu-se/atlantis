@@ -19,11 +19,8 @@ void LessEqual::init(Timestamp, Engine& e) {
   // is initialised.
   assert(m_id != NULL_ID);
 
-  LocalId local_m_x = LocalId(m_x);
-  LocalId local_m_y = LocalId(m_y);
-
-  e.registerInvariantDependsOnVar(m_id, m_x, local_m_x, 0);
-  e.registerInvariantDependsOnVar(m_id, m_y, local_m_y, 0);
+  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x));
+  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(m_y));
   e.registerDefinedVariable(m_violationId, m_id);
 }
 
@@ -33,9 +30,7 @@ void LessEqual::recompute(Timestamp t, Engine& e) {
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId&, Int oldValue,
-                                 Int newValue, Int) {
-  assert(newValue != oldValue);  // precondition
+void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int) {
   // if x decreases and violation is 0, then do nothing
   // if y increases and violation is 0, then do nothing
   e.setValue(t, m_violationId,
@@ -65,6 +60,4 @@ void LessEqual::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void LessEqual::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t,e);
-}
+void LessEqual::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

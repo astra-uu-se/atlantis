@@ -18,6 +18,7 @@ class Linear : public Invariant {
  private:
   std::vector<Int> m_A;
   std::vector<VarId> m_X;
+  std::vector<SavedInt> m_localX;
   VarId m_b;
 
  public:
@@ -27,7 +28,7 @@ class Linear : public Invariant {
   virtual void recompute(Timestamp, Engine&) override;
   virtual VarId getNextDependency(Timestamp, Engine&) override;
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId& id,
-                                Int oldValue, Int newValue, Int data) override;
+  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
+                                Int newValue) override;
   virtual void commit(Timestamp, Engine&) override;
 };

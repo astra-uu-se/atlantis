@@ -3,11 +3,11 @@
 #include <random>
 #include <vector>
 
+#include "constraints/lessEqual.hpp"
 #include "core/engine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
-#include "constraints/lessEqual.hpp"
 
 namespace {
 class LessEqualTest : public ::testing::Test {
@@ -42,7 +42,6 @@ TEST_F(LessEqualTest, Init) {
 }
 
 TEST_F(LessEqualTest, Recompute) {
-
   EXPECT_EQ(e->getValue(0, violationId), 0);
   EXPECT_EQ(e->getCommittedValue(violationId), 0);
 
@@ -61,23 +60,22 @@ TEST_F(LessEqualTest, Recompute) {
 }
 
 TEST_F(LessEqualTest, NonViolatingUpdate) {
-
   EXPECT_EQ(e->getValue(0, violationId), 0);
   EXPECT_EQ(e->getCommittedValue(violationId), 0);
 
   Timestamp time;
 
   for (size_t i = 0; i < 10000; ++i) {
-    time = Timestamp(1+i);
-    e->setValue(time, x, 1-i);
+    time = Timestamp(1 + i);
+    e->setValue(time, x, 1 - i);
     lessEqual->recompute(time, *e);
     EXPECT_EQ(e->getCommittedValue(violationId), 0);
     EXPECT_EQ(e->getValue(time, violationId), 0);
   }
 
   for (size_t i = 0; i < 10000; ++i) {
-    time = Timestamp(1+i);
-    e->setValue(time, y, 5+i);
+    time = Timestamp(1 + i);
+    e->setValue(time, y, 5 + i);
     lessEqual->recompute(time, *e);
     EXPECT_EQ(e->getCommittedValue(violationId), 0);
     EXPECT_EQ(e->getValue(time, violationId), 0);
@@ -85,8 +83,8 @@ TEST_F(LessEqualTest, NonViolatingUpdate) {
 }
 
 TEST_F(LessEqualTest, NotifyChange) {
-
-  EXPECT_EQ(e->getValue(0, violationId), 0);  // initially the value of violationId is 0
+  EXPECT_EQ(e->getValue(0, violationId),
+            0);  // initially the value of violationId is 0
 
   LocalId unused = -1;
 
@@ -96,14 +94,14 @@ TEST_F(LessEqualTest, NotifyChange) {
   e->setValue(time1, x, 40);
   EXPECT_EQ(e->getCommittedValue(x), 2);
   EXPECT_EQ(e->getValue(time1, x), 40);
-  lessEqual->notifyIntChanged(time1, *e, unused, e->getCommittedValue(x),
-                           e->getValue(time1, x), 1);
-  EXPECT_EQ(e->getValue(time1, violationId), 38);  // incremental value of violationId is 0;
+  lessEqual->notifyIntChanged(time1, *e, unused, e->getValue(time1, x));
+  EXPECT_EQ(e->getValue(time1, violationId),
+            38);  // incremental value of violationId is 0;
 
   e->setValue(time1, y, 0);
-  lessEqual->notifyIntChanged(time1, *e, unused, e->getCommittedValue(y),
-                           e->getValue(time1, y), 1);
-  auto tmpValue = e->getValue(time1, violationId);  // incremental value of violationId is 40;
+  lessEqual->notifyIntChanged(time1, *e, unused, e->getValue(time1, y));
+  auto tmpValue = e->getValue(
+      time1, violationId);  // incremental value of violationId is 40;
 
   // Incremental computation gives the same result as recomputation
   lessEqual->recompute(time1, *e);
@@ -115,40 +113,41 @@ TEST_F(LessEqualTest, NotifyChange) {
   e->setValue(time2, y, 20);
   EXPECT_EQ(e->getCommittedValue(y), 2);
   EXPECT_EQ(e->getValue(time2, y), 20);
-  lessEqual->notifyIntChanged(time2, *e, unused, e->getCommittedValue(y),
-                           e->getValue(time2, y), 1);
-  EXPECT_EQ(e->getValue(time2, violationId), 0);  // incremental value of violationId is 0;
+  lessEqual->notifyIntChanged(time2, *e, unused, e->getValue(time2, y));
+  EXPECT_EQ(e->getValue(time2, violationId),
+            0);  // incremental value of violationId is 0;
 }
 
 TEST_F(LessEqualTest, IncrementalVsRecompute) {
-
-  EXPECT_EQ(e->getValue(0, violationId), 0);  // initially the value of violationId is 0
+  EXPECT_EQ(e->getValue(0, violationId),
+            0);  // initially the value of violationId is 0
   LocalId unused = -1;
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100000, 100000);
 
   Timestamp currentTime = 1;
-  for (size_t i = 0; i < 1000; ++i) { 
+  for (size_t i = 0; i < 1000; ++i) {
     ++currentTime;
     // Check that we do not accidentally commit
     ASSERT_EQ(e->getCommittedValue(x), 2);
     ASSERT_EQ(e->getCommittedValue(y), 2);
-    ASSERT_EQ(e->getCommittedValue(violationId), 0);  // violationId is committed by register.
+    ASSERT_EQ(e->getCommittedValue(violationId),
+              0);  // violationId is committed by register.
 
     // Set all variables
     e->setValue(currentTime, x, distribution(gen));
     e->setValue(currentTime, y, distribution(gen));
-    
+
     // notify changes
     if (e->getCommittedValue(x) != e->getValue(currentTime, x)) {
-      lessEqual->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(x),
-                               e->getValue(currentTime, x), 1);
+      lessEqual->notifyIntChanged(currentTime, *e, unused,
+                                  e->getValue(currentTime, x));
     }
     if (e->getCommittedValue(y) != e->getValue(currentTime, y)) {
-      lessEqual->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(y),
-                               e->getValue(currentTime, y), 1);
+      lessEqual->notifyIntChanged(currentTime, *e, unused,
+                                  e->getValue(currentTime, y));
     }
-    
+
     // incremental value
     auto tmp = e->getValue(currentTime, violationId);
     lessEqual->recompute(currentTime, *e);
@@ -168,8 +167,8 @@ TEST_F(LessEqualTest, Commit) {
   e->setValue(currentTime, y, 2);  // This change is not notified and should not
                                    // have an impact on the commit
 
-  lessEqual->notifyIntChanged(currentTime, *e, unused, e->getCommittedValue(x),
-                           e->getValue(currentTime, x), 1);
+  lessEqual->notifyIntChanged(currentTime, *e, unused,
+                              e->getValue(currentTime, x));
 
   // Committing an invariant does not commit its output!
   // // Commit at wrong timestamp should have no impact

@@ -1,8 +1,8 @@
 #include <iostream>
 #include <limits>
 #include <random>
-#include <vector>
 #include <stdexcept>
+#include <vector>
 
 #include "core/intVar.hpp"
 #include "core/types.hpp"
@@ -23,7 +23,8 @@ class IntVarTest : public ::testing::Test {
  */
 
 TEST_F(IntVarTest, SavedIntConstructor) {
-  std::uniform_int_distribution<> distribution(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+  std::uniform_int_distribution<> distribution(std::numeric_limits<int>::min(),
+                                               std::numeric_limits<int>::max());
 
   Int lowerBound = -10;
   Int upperBound = 10;
@@ -37,10 +38,10 @@ TEST_F(IntVarTest, SavedIntConstructor) {
   // The value defaults to 0
   ASSERT_EQ(intVarNoValue.getValue(timestamp), 0);
   ASSERT_EQ(intVarNoValue.getCommittedValue(), 0);
-  
+
   // default timestamp is NULL_TIMESTAMP
   ASSERT_EQ(intVarNoValue.getTmpTimestamp(), NULL_TIMESTAMP);
-  
+
   ASSERT_FALSE(intVarNoValue.hasChanged(timestamp));
 
   // Random inital value
@@ -50,20 +51,16 @@ TEST_F(IntVarTest, SavedIntConstructor) {
 
   ASSERT_EQ(intVarWithValue.getValue(timestamp), value);
   ASSERT_EQ(intVarWithValue.getCommittedValue(), value);
-  
+
   // default timestamp is zero
   ASSERT_EQ(intVarWithValue.getTmpTimestamp(), NULL_TIMESTAMP);
-  
+
   ASSERT_FALSE(intVarWithValue.hasChanged(timestamp));
 
-  EXPECT_THROW(
-    IntVar(varId, value, upperBound, lowerBound),
-    std::out_of_range
-  );
+  EXPECT_THROW(IntVar(varId, value, upperBound, lowerBound), std::out_of_range);
 }
 
 TEST_F(IntVarTest, InDomain) {
-    
   Int lowerBound = -10;
   Int upperBound = 10;
   Timestamp timestamp = Timestamp(1);
@@ -82,10 +79,10 @@ TEST_F(IntVarTest, InDomain) {
   }
 }
 
-TEST_F(IntVarTest, UpdateDomain) {  
+TEST_F(IntVarTest, UpdateDomain) {
   Int initialLowerBound = 0;
   Int initialUpperBound = 0;
-  
+
   Timestamp timestamp = Timestamp(1);
   IntVar intVar = IntVar(timestamp, 0, initialLowerBound, initialUpperBound);
 
@@ -97,11 +94,7 @@ TEST_F(IntVarTest, UpdateDomain) {
     EXPECT_TRUE(intVar.inDomain(value));
   }
 
-  EXPECT_THROW(
-    intVar.updateDomain(10, -10),
-    std::out_of_range
-  );
+  EXPECT_THROW(intVar.updateDomain(10, -10), std::out_of_range);
 }
-
 
 }  // namespace

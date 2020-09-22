@@ -167,10 +167,10 @@ void Engine::endQuery() {
 
 void Engine::beginCommit() { m_propGraph.clearForPropagation(); }
 
-void Engine::endCommit() { 
-  // m_propGraph.fullPropagateAndCommit(m_currentTime); 
-  m_propGraph.lazyPropagateAndCommit(m_currentTime); 
-  }
+void Engine::endCommit() {
+  // m_propGraph.fullPropagateAndCommit(m_currentTime);
+  m_propGraph.lazyPropagateAndCommit(m_currentTime);
+}
 
 // Propagates at the current internal time of the engine.
 void Engine::propagate() {
@@ -178,30 +178,19 @@ void Engine::propagate() {
         id != NULL_ID;
         id = m_propGraph.getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(id);
-    assert(id.idType == VarIdType::var);
-    if (!variable.hasChanged(m_currentTime)) {
-      continue;
-    }
-
-    for (auto &toNotify : m_dependentInvariantData.at(id)) {
-      // If we do multiple "probes" within the same timestamp then the
-      // invariant may already have been notified.
-      // Also, do not notify invariants that are not active.
-      if (m_currentTime == toNotify.lastNotification ||
-          !m_propGraph.isActive(m_currentTime, toNotify.id)) {
-        continue;
-      }
-      Int committedValue;
-      Int newValue;
-      if (toNotify.varViewId != NULL_ID) {
-        committedValue = getCommittedValue(toNotify.varViewId);
-        newValue = getValue(m_currentTime, toNotify.varViewId);
-        if (committedValue == newValue) {
+    if (variable.hasChanged(m_currentTime)) {
+      for (auto& toNotify : m_dependentInvariantData.at(id)) {
+        // If we do multiple "probes" within the same timestamp then the
+        // invariant may already have been notified.
+        // Also, do not notify invariants that are not active.
+        if (m_currentTime == toNotify.lastNotification ||
+            !m_propGraph.isActive(m_currentTime, toNotify.id)) {
           continue;
         }
-      } else {
-        committedValue = variable.getCommittedValue();
-        newValue = variable.getValue(m_currentTime);
+        m_store.getInvariant(toNotify.id)
+            .notifyIntChanged(m_currentTime, *this, toNotify.localId,
+                              variable.getValue(m_currentTime));
+        toNotify.lastNotification = m_currentTime;
       }
       m_store.getInvariant(toNotify.id)
           .notifyIntChanged(m_currentTime, *this, toNotify.localId,
@@ -228,22 +217,11 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   return newId;
 }
 
-void Engine::registerInvariantDependsOnVar(InvariantId& dependent, VarId& source,
-                                           LocalId& localId, Int data) {
-  VarId& s = source.idType == VarIdType::var
-    ? source
-    : m_intVarViewSource.at(source);
-  
-  m_propGraph.registerInvariantDependsOnVar(dependent, s);
-  m_dependentInvariantData.at(s).emplace_back(
-      InvariantDependencyData{
-        dependent,
-        localId,
-        source.idType == VarIdType::view ? source : NULL_ID,
-        data,
-        NULL_TIMESTAMP
-      }
-    );
+void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
+                                           LocalId localId) {
+  m_propGraph.registerInvariantDependsOnVar(dependent, source);
+  m_dependentInvariantData.at(source).emplace_back(
+      InvariantDependencyData{dependent, localId, NULL_TIMESTAMP});
 }
 
 void Engine::registerDefinedVariable(VarId& dependent, InvariantId& source) {

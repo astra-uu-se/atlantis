@@ -37,16 +37,18 @@ class SavedInt {
     return m_savedValue;
   }
 
-  [[gnu::always_inline]] inline void setValue(Timestamp currentTime,
-                                              const Int& value) noexcept {
+  [[gnu::always_inline]] inline Int setValue(Timestamp currentTime,
+                                             Int value) noexcept {
     m_tmpTime = currentTime;
     m_tmpValue = value;
+    return m_tmpValue;
   }
 
-  [[gnu::always_inline]] inline void incValue(Timestamp currentTime,
-                                              const Int& inc) noexcept {
+  [[gnu::always_inline]] inline Int incValue(Timestamp currentTime,
+                                             Int inc) noexcept {
     m_tmpValue = (currentTime == m_tmpTime ? m_tmpValue : m_savedValue) + inc;
     m_tmpTime = currentTime;
+    return m_tmpValue;
   }
   [[gnu::always_inline]] inline void commitValue(Int value) noexcept {
     m_savedValue = value;

@@ -168,8 +168,8 @@ class Engine {
    * @param localId the id of the depending variable in the invariant
    * @param data additional data
    */
-  void registerInvariantDependsOnVar(InvariantId& dependent, VarId& source,
-                                     LocalId& localId, Int data);
+  void registerInvariantDependsOnVar(InvariantId dependent, VarId source,
+                                     LocalId localId);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if

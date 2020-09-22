@@ -10,7 +10,7 @@
 #include "../core/types.hpp"
 
 /**
- * Invariant for c <- |a-b|
+ * Invariant for c <== |a-b|
  *
  */
 
@@ -23,8 +23,8 @@ class AbsDiff : public Invariant {
   ~AbsDiff() = default;
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId& id, Int oldValue,
-                        Int newValue, Int data) override;
+  void notifyIntChanged(Timestamp t, Engine& e, LocalId id,
+                        Int newValue) override;
   virtual VarId getNextDependency(Timestamp, Engine&) override;
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
   void commit(Timestamp, Engine&) override;

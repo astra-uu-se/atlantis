@@ -49,8 +49,8 @@ TEST_F(BottomUpPropagationTest, RegisterVariableAndInvariant) {
 
   e->close();
 
-  EXPECT_EQ(pg->getNumInvariants(), 3);
-  EXPECT_EQ(pg->getNumVariables(), 6);
+  EXPECT_EQ(pg->getNumInvariants(), static_cast<size_t>(3));
+  EXPECT_EQ(pg->getNumVariables(), static_cast<size_t>(6));
 }
 
 TEST_F(BottomUpPropagationTest, SimplePropagate1) {
@@ -74,9 +74,9 @@ TEST_F(BottomUpPropagationTest, SimplePropagate1) {
 
   e->close();
 
-  EXPECT_EQ(e->getValue(v4), 0);
-  EXPECT_EQ(e->getValue(v5), 0);
-  EXPECT_EQ(e->getValue(v6), 0);
+  EXPECT_EQ(e->getValue(v4), static_cast<Int>(0));
+  EXPECT_EQ(e->getValue(v5), static_cast<Int>(0));
+  EXPECT_EQ(e->getValue(v6), static_cast<Int>(0));
 
   e->beginMove();
   e->setValue(v1, 1);
@@ -90,9 +90,9 @@ TEST_F(BottomUpPropagationTest, SimplePropagate1) {
   e->query(v6);
   e->endQuery();
 
-  EXPECT_EQ(e->getValue(v4), 3);
-  EXPECT_EQ(e->getValue(v5), 6);
-  EXPECT_EQ(e->getValue(v6), 12);
+  EXPECT_EQ(e->getValue(v4), static_cast<Int>(3));
+  EXPECT_EQ(e->getValue(v5), static_cast<Int>(6));
+  EXPECT_EQ(e->getValue(v6), static_cast<Int>(12));
 
   std::uniform_int_distribution<> distribution(-10000, 10000);
   for (size_t i = 0; i < 1000; ++i) {
@@ -113,8 +113,8 @@ TEST_F(BottomUpPropagationTest, SimplePropagate1) {
     e->endQuery();
 
     ASSERT_EQ(e->getValue(v4), a + b + c);
-    ASSERT_EQ(e->getValue(v5), 2 * (a + b + c));
-    ASSERT_EQ(e->getValue(v6), 4 * (a + b + c));
+    ASSERT_EQ(e->getValue(v5), static_cast<Int>(2) * (a + b + c));
+    ASSERT_EQ(e->getValue(v6), static_cast<Int>(4) * (a + b + c));
   }
 }
 
@@ -158,7 +158,7 @@ TEST_F(BottomUpPropagationTest, SimplePropagate2) {
 
   e->close();
 
-  ASSERT_EQ(e->getValue(v13), 0);
+  ASSERT_EQ(e->getValue(v13), static_cast<Int>(0));
 
   std::uniform_int_distribution<> distribution(-10000, 10000);
   for (size_t i = 0; i < 1000; ++i) {
@@ -236,9 +236,9 @@ TEST_F(BottomUpPropagationTest, QueryInput) {
   e->query(v3);
   e->endQuery();
 
-  EXPECT_EQ(e->getValue(v1), 1);
-  EXPECT_EQ(e->getValue(v2), 2);
-  EXPECT_EQ(e->getValue(v3), 0);
+  EXPECT_EQ(e->getValue(v1), static_cast<Int>(1));
+  EXPECT_EQ(e->getValue(v2), static_cast<Int>(2));
+  EXPECT_EQ(e->getValue(v3), static_cast<Int>(0));
 }
 
 TEST_F(BottomUpPropagationTest, SimpleCommit) {
@@ -295,11 +295,11 @@ TEST_F(BottomUpPropagationTest, SimpleCommit) {
   e->query(v6);
   e->endCommit();
 
-  EXPECT_EQ(e->getCommittedValue(v1), 1);
-  EXPECT_EQ(e->getCommittedValue(v2), 2);
-  EXPECT_EQ(e->getCommittedValue(v3), 0);
+  EXPECT_EQ(e->getCommittedValue(v1), static_cast<Int>(1));
+  EXPECT_EQ(e->getCommittedValue(v2), static_cast<Int>(2));
+  EXPECT_EQ(e->getCommittedValue(v3), static_cast<Int>(0));
 
-  EXPECT_EQ(e->getCommittedValue(v6), 4 * (1 + 2 + 0));
+  EXPECT_EQ(e->getCommittedValue(v6), static_cast<Int>(4 * (1 + 2 + 0)));
 
   e->beginMove();
   e->setValue(v1, 0);
@@ -309,11 +309,11 @@ TEST_F(BottomUpPropagationTest, SimpleCommit) {
   e->query(v6);
   e->endCommit();
 
-  EXPECT_EQ(e->getCommittedValue(v1), 0);
-  EXPECT_EQ(e->getCommittedValue(v2), 0);
-  EXPECT_EQ(e->getCommittedValue(v3), 0);
+  EXPECT_EQ(e->getCommittedValue(v1), static_cast<Int>(0));
+  EXPECT_EQ(e->getCommittedValue(v2), static_cast<Int>(0));
+  EXPECT_EQ(e->getCommittedValue(v3), static_cast<Int>(0));
 
-  EXPECT_EQ(e->getCommittedValue(v6), 0);
+  EXPECT_EQ(e->getCommittedValue(v6), static_cast<Int>(0));
 }
 
 TEST_F(BottomUpPropagationTest, DynamicCommit) {
@@ -341,7 +341,7 @@ TEST_F(BottomUpPropagationTest, DynamicCommit) {
 
   e->close();
 
-  ASSERT_EQ(e->getCommittedValue(output), 2 * 1);
+  ASSERT_EQ(e->getCommittedValue(output), static_cast<Int>(2 * 1));
 
   // Make a bunch of probes
   auto probe = [&]() {
@@ -379,8 +379,8 @@ TEST_F(BottomUpPropagationTest, DynamicCommit) {
   e->query(output);
   e->endCommit();
 
-  EXPECT_EQ(e->getCommittedValue(v3), 10);
-  EXPECT_EQ(e->getCommittedValue(output), 2 * (1));
+  EXPECT_EQ(e->getCommittedValue(v3), static_cast<Int>(10));
+  EXPECT_EQ(e->getCommittedValue(output), static_cast<Int>(2 * (1)));
 
   probe();
 
@@ -392,9 +392,9 @@ TEST_F(BottomUpPropagationTest, DynamicCommit) {
   e->query(output);
   e->endCommit();
 
-  EXPECT_EQ(e->getCommittedValue(v3), 10);
-  EXPECT_EQ(e->getCommittedValue(idx), 2);
-  EXPECT_EQ(e->getCommittedValue(output), 2 * (10));
+  EXPECT_EQ(e->getCommittedValue(v3), static_cast<Int>(10));
+  EXPECT_EQ(e->getCommittedValue(idx), static_cast<Int>(2));
+  EXPECT_EQ(e->getCommittedValue(output), static_cast<Int>(2 * (10)));
 }
 
 TEST_F(BottomUpPropagationTest, DynamicCommit2) {
@@ -432,7 +432,7 @@ TEST_F(BottomUpPropagationTest, DynamicCommit2) {
 
   e->close();
 
-  ASSERT_EQ(e->getCommittedValue(output), 21);
+  ASSERT_EQ(e->getCommittedValue(output), static_cast<Int>(21));
 
   // Make a bunch of probes
   auto probe = [&]() {
@@ -495,9 +495,9 @@ TEST_F(BottomUpPropagationTest, DynamicCommit2) {
   e->query(output);
   e->endCommit();
 
-  EXPECT_EQ(e->getCommittedValue(v32), 132);
-  EXPECT_EQ(e->getCommittedValue(idx3), 1);
-  EXPECT_EQ(e->getCommittedValue(output), 21);
+  EXPECT_EQ(e->getCommittedValue(v32), static_cast<Int>(132));
+  EXPECT_EQ(e->getCommittedValue(idx3), static_cast<Int>(1));
+  EXPECT_EQ(e->getCommittedValue(output), static_cast<Int>(21));
 
   // probe();
 
@@ -510,8 +510,8 @@ TEST_F(BottomUpPropagationTest, DynamicCommit2) {
   e->query(output);
   e->endCommit();
 
-  EXPECT_EQ(e->getCommittedValue(v32), 132);
-  EXPECT_EQ(e->getCommittedValue(output), 132);
+  EXPECT_EQ(e->getCommittedValue(v32), static_cast<Int>(132));
+  EXPECT_EQ(e->getCommittedValue(output), static_cast<Int>(132));
 
   probe();
 
@@ -524,7 +524,7 @@ TEST_F(BottomUpPropagationTest, DynamicCommit2) {
   e->query(output);
   e->endCommit();
 
-  EXPECT_EQ(e->getCommittedValue(output), 143);
+  EXPECT_EQ(e->getCommittedValue(output), static_cast<Int>(143));
 }
 
 }  // namespace

@@ -13,12 +13,10 @@ class IntVar : public Var {
   Int m_lowerBound;
   Int m_upperBound;
 
-  [[gnu::always_inline]] inline void setValue(Timestamp timestamp,
-                                              Int value) {
+  [[gnu::always_inline]] inline void setValue(Timestamp timestamp, Int value) {
     m_value.setValue(timestamp, value);
   }
-  [[gnu::always_inline]] inline void incValue(Timestamp timestamp,
-                                              Int inc) {
+  [[gnu::always_inline]] inline void incValue(Timestamp timestamp, Int inc) {
     m_value.incValue(timestamp, inc);
   }
 
@@ -36,7 +34,8 @@ class IntVar : public Var {
   IntVar(Int t_lowerBound, Int t_upperBound);
   IntVar(Id t_id, Int t_lowerBound, Int t_upperBound);
   IntVar(Id t_id, Int initValue, Int t_lowerBound, Int t_upperBound);
-  IntVar(Timestamp t, Id t_id, Int initValue, Int t_lowerBound, Int t_upperBound);
+  IntVar(Timestamp t, Id t_id, Int initValue, Int t_lowerBound,
+         Int t_upperBound);
   ~IntVar() = default;
 
   [[gnu::always_inline]] inline bool hasChanged(Timestamp t) const {
@@ -60,11 +59,11 @@ class IntVar : public Var {
   [[gnu::always_inline]] inline bool inDomain(Int t_value) const {
     return m_lowerBound <= t_value && t_value <= m_upperBound;
   }
-  [[gnu::always_inline]] inline void updateDomain(Int t_lowerBound, Int t_upperBound) {
+  [[gnu::always_inline]] inline void updateDomain(Int t_lowerBound,
+                                                  Int t_upperBound) {
     if (t_lowerBound > t_upperBound) {
       throw std::out_of_range(
-        "Lower bound must be smaller than or equal to upper bound"
-      );
+          "Lower bound must be smaller than or equal to upper bound");
     }
     m_lowerBound = t_lowerBound;
     m_upperBound = t_upperBound;
