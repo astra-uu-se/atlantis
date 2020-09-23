@@ -48,12 +48,21 @@ class BottomUpExplorer {
 
 public: 
   BottomUpExplorer() = delete;
-  BottomUpExplorer(PropagationEngine& e):m_engine(e){}
+  BottomUpExplorer(PropagationEngine& e, size_t expectedSize);
 
   void registerVar(VarId);
   void registerInvariant(InvariantId);
+  /**
+   * Register than we want to compute the value of v at time t
+   */
+  void registerForPropagation(Timestamp t, VarId v);
+
+  void propagate(Timestamp currentTime);
 };
 
+inline void BottomUpExplorer::registerForPropagation(Timestamp, VarId id) {
+  variableStack_[varStackIdx_++] = id;
+}
 
 inline void BottomUpExplorer::pushVariableStack(VarId v) {
   varIsOnStack.at(v) = true;

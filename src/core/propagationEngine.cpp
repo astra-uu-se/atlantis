@@ -1,11 +1,11 @@
 #include "core/propagationEngine.hpp"
 
 PropagationEngine::PropagationEngine()
-    : m_propGraph(*this, ESTIMATED_NUM_OBJECTS), m_bottomUpExplorer(*this) {}
+    : m_propGraph(ESTIMATED_NUM_OBJECTS),
+      m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
+      m_modifiedVariables(PropagationGraph::PriorityCmp(m_propGraph)) {}
 
-BottomUpPropagationGraph& PropagationEngine::getPropGraph() {
-  return m_propGraph;
-}
+PropagationGraph& PropagationEngine::getPropGraph() { return m_propGraph; }
 
 void PropagationEngine::open() { m_isOpen = true; }
 
@@ -22,7 +22,10 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp t, VarId id) {
-  m_propGraph.notifyMaybeChanged(t, id);
+  if (!isActive(t, id)) {
+    return;
+  }
+  m_modifiedVariables.push(id);
 }
 
 void PropagationEngine::registerInvariantDependsOnVar(InvariantId dependent,
@@ -49,6 +52,16 @@ void PropagationEngine::registerInvariant(InvariantId i) {
 }
 
 //---------------------Propagation---------------------
+
+VarId PropagationEngine::getNextStableVariable(Timestamp) {
+  if (m_modifiedVariables.empty()) {
+    return VarId(NULL_ID);
+  }
+  VarId nextVar = m_modifiedVariables.top();
+  m_modifiedVariables.pop();
+  // Due to notifyMaybeChanged, all variables in the queue are "active".
+  return nextVar;
+}
 
 void PropagationEngine::recomputeAndCommit() {
   // TODO: This is a very inefficient way of initialising!
@@ -85,29 +98,29 @@ void PropagationEngine::beginMove() { ++m_currentTime; }
 
 void PropagationEngine::endMove() {}
 
-void PropagationEngine::beginQuery() { m_propGraph.clearForPropagation(); }
+void PropagationEngine::beginQuery() {}
 
 void PropagationEngine::query(VarId id) {
-  m_propGraph.registerForPropagation(m_currentTime, id);
+  m_bottomUpExplorer.registerForPropagation(m_currentTime, id);
 }
 
 void PropagationEngine::endQuery() {
-  // m_propGraph.schedulePropagation(m_currentTime, *this);
+  // m_bottomUpExplorer.schedulePropagation(m_currentTime, *this);
   // propagate();
-  // m_propGraph.propagate(m_currentTime);
-  m_propGraph.propagate2(m_currentTime);
+  // m_bottomUpExplorer.propagate(m_currentTime);
+  bottomUpPropagate();
 }
 
-void PropagationEngine::beginCommit() { m_propGraph.clearForPropagation(); }
+void PropagationEngine::beginCommit() {}
 
 void PropagationEngine::endCommit() {
-  // m_propGraph.fullPropagateAndCommit(m_currentTime);
-  m_propGraph.lazyPropagateAndCommit(m_currentTime);
+  // Todo: perform top down propagation
+  bottomUpPropagate();
 }
 
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
-  VarId id = m_propGraph.getNextStableVariable(m_currentTime);
+  VarId id = getNextStableVariable(m_currentTime);
   while (id.id != NULL_ID) {
     IntVar& variable = m_store.getIntVar(id);
     if (variable.hasChanged(m_currentTime)) {
@@ -116,7 +129,7 @@ void PropagationEngine::propagate() {
         // invariant may already have been notified.
         // Also, do not notify invariants that are not active.
         if (m_currentTime == toNotify.lastNotification ||
-            !m_propGraph.isActive(m_currentTime, toNotify.id)) {
+            !isActive(m_currentTime, toNotify.id)) {
           continue;
         }
         m_store.getInvariant(toNotify.id)
@@ -125,6 +138,10 @@ void PropagationEngine::propagate() {
         toNotify.lastNotification = m_currentTime;
       }
     }
-    id = m_propGraph.getNextStableVariable(m_currentTime);
+    id = getNextStableVariable(m_currentTime);
   }
+}
+
+void PropagationEngine::bottomUpPropagate() {
+  m_bottomUpExplorer.propagate(m_currentTime);
 }
