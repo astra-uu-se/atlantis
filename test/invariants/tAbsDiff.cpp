@@ -111,7 +111,7 @@ TEST_F(AbsDiffTest, Modification) {
   EXPECT_EQ(engine->getValue(c), 200);
 
   engine->beginMove();
-  engine->updateValue(a, 0);
+  engine->setValue(a, 0);
   engine->endMove();
 
   engine->beginQuery();

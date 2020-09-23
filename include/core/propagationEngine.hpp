@@ -13,6 +13,8 @@ class PropagationEngine : public Engine {
   std::priority_queue<VarId, std::vector<VarId>, PropagationGraph::PriorityCmp>
       m_modifiedVariables;
 
+  std::vector<bool> m_isEnqueued;
+
   void recomputeAndCommit();
 
   void propagate();
@@ -120,4 +122,5 @@ inline void PropagationEngine::notifyCurrentDependencyChanged(InvariantId inv) {
 
 inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
   m_store.getIntVar(v).setValue(t, val);
+  notifyMaybeChanged(t, v);
 }

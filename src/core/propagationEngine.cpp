@@ -3,7 +3,10 @@
 PropagationEngine::PropagationEngine()
     : m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
-      m_modifiedVariables(PropagationGraph::PriorityCmp(m_propGraph)) {}
+      m_modifiedVariables(PropagationGraph::PriorityCmp(m_propGraph)),
+      m_isEnqueued() {
+  m_isEnqueued.push_back(false);  // initialise NULL_ID for indexing
+}
 
 PropagationGraph& PropagationEngine::getPropGraph() { return m_propGraph; }
 
@@ -21,11 +24,12 @@ void PropagationEngine::close() {
 }
 
 //---------------------Registration---------------------
-void PropagationEngine::notifyMaybeChanged(Timestamp t, VarId id) {
-  if (!isActive(t, id)) {
+void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
+  if (m_isEnqueued.at(id)) {
     return;
   }
   m_modifiedVariables.push(id);
+  m_isEnqueued.at(id) = true;
 }
 
 void PropagationEngine::registerInvariantDependsOnVar(InvariantId dependent,
@@ -44,6 +48,7 @@ void PropagationEngine::registerDefinedVariable(VarId dependent,
 void PropagationEngine::registerVar(VarId v) {
   m_propGraph.registerVar(v);
   m_bottomUpExplorer.registerVar(v);
+  m_isEnqueued.push_back(false);
 }
 
 void PropagationEngine::registerInvariant(InvariantId i) {
@@ -59,6 +64,7 @@ VarId PropagationEngine::getNextStableVariable(Timestamp) {
   }
   VarId nextVar = m_modifiedVariables.top();
   m_modifiedVariables.pop();
+  m_isEnqueued.at(nextVar) = false;
   // Due to notifyMaybeChanged, all variables in the queue are "active".
   return nextVar;
 }
@@ -116,6 +122,7 @@ void PropagationEngine::beginCommit() {}
 void PropagationEngine::endCommit() {
   // Todo: perform top down propagation
   bottomUpPropagate();
+  // propagate();
 }
 
 // Propagates at the current internal time of the engine.
@@ -128,8 +135,7 @@ void PropagationEngine::propagate() {
         // If we do multiple "probes" within the same timestamp then the
         // invariant may already have been notified.
         // Also, do not notify invariants that are not active.
-        if (m_currentTime == toNotify.lastNotification ||
-            !isActive(m_currentTime, toNotify.id)) {
+        if (!isActive(m_currentTime, toNotify.id)) {
           continue;
         }
         m_store.getInvariant(toNotify.id)

@@ -96,8 +96,8 @@ int allIntervals(int n) {
         Int oldI = engine.getValue(s_vars.at(i));
         Int oldJ = engine.getValue(s_vars.at(j));
         engine.beginMove();
-        engine.updateValue(s_vars.at(i), oldJ);
-        engine.updateValue(s_vars.at(j), oldI);
+        engine.setValue(s_vars.at(i), oldJ);
+        engine.setValue(s_vars.at(j), oldI);
         engine.endMove();
 
         engine.beginQuery();
@@ -112,8 +112,8 @@ int allIntervals(int n) {
     Int oldJ = engine.getValue(s_vars.at(j));
     // Perform random swap
     engine.beginMove();
-    engine.updateValue(s_vars.at(i), oldJ);
-    engine.updateValue(s_vars.at(j), oldI);
+    engine.setValue(s_vars.at(i), oldJ);
+    engine.setValue(s_vars.at(j), oldI);
     engine.endMove();
 
     engine.beginCommit();
@@ -153,8 +153,8 @@ void test() {
   std::uniform_int_distribution<> distribution{-100000, 100000};
   for (int i = 0; i < 1000000; i++) {
     engine.beginMove();
-    engine.updateValue(a, distribution(gen));
-    engine.updateValue(c, distribution(gen));
+    engine.setValue(a, distribution(gen));
+    engine.setValue(c, distribution(gen));
     engine.endMove();
 
     engine.beginQuery();

@@ -141,9 +141,9 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->beginMove();
   Timestamp moveTimestamp = engine->getCurrentTime();
 
-  engine->updateValue(a, -1);
-  engine->updateValue(b, -2);
-  engine->updateValue(c, -3);
+  engine->setValue(a, -1);
+  engine->setValue(b, -2);
+  engine->setValue(c, -3);
   engine->endMove();
 
   EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))

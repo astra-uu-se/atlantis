@@ -127,7 +127,7 @@ TEST_F(ElementVarTest, NotificationsChangeIndex) {
       .Times(1);
 
   engine->beginMove();
-  engine->updateValue(idx, 5);
+  engine->setValue(idx, 5);
   engine->endMove();
 
   engine->beginQuery();
