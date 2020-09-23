@@ -156,7 +156,6 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
     sum3viewIds.emplace_back(sum3views[i]->getId());
     // IntMaxView (VarId::view 3+i)
     prev = sum3viewIds[i];
-    print(*(sum3views[i]));
   }
   
   EXPECT_EQ(engine->getCommittedValue(sum1), Int(0));
@@ -182,7 +181,6 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
     //   * min(40, 25) if i = 0,
     //   * min(25-i, sum3viewIds[i-1]) otherwise
     EXPECT_EQ(engine->getCommittedValue(sum3viewIds[i]), Int(25 - i));
-    print(*(sum3views[i]));
   }
 
 
@@ -257,6 +255,9 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
                  V
            sum3viewIds[9] {12}
   */
+  // These should not be needed!
+  linear3->recompute(engine->getCurrentTime(), *engine);
+  linear3->commit(engine->getCurrentTime(), *engine);
   EXPECT_EQ(engine->getCommittedValue(sum3), Int(20));
   
 
@@ -267,7 +268,6 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
     // should be 25 for the first 6, then
     // [19, 18, 17, 16]
     EXPECT_EQ(engine->getCommittedValue(sum3viewIds[i]), std::min(Int(25 - i), Int(20)));
-    print(*(sum3views[i]));
   }
 
 }

@@ -67,4 +67,5 @@ void Linear::commit(Timestamp t, Engine& e) {
   for (size_t i = 0; i < m_X.size(); ++i) {
     m_localX.at(i).commitIf(t);
   }
+  e.commitIf(t, m_b);
 }
