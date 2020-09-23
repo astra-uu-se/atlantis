@@ -10,6 +10,6 @@ For example: std::variant
 Or possibly some even smarter way
 */
 
-IntVarView::IntVarView(const VarId& t_parentId)
+IntVarView::IntVarView(const VarId t_parentId)
     : VarView(t_parentId),
       m_savedInt(0, 0) {}

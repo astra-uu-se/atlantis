@@ -80,9 +80,7 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
                                               std::vector<VarId>({a, b}), sum);
   
   std::shared_ptr<IntMaxView> viewOfVar = engine->makeIntVarView<IntMaxView>(sum, 10);
-  print(*viewOfVar);
   std::shared_ptr<IntMaxView> viewOfView = engine->makeIntVarView<IntMaxView>(viewOfVar->getId(), 5);
-  print(*viewOfView);
   VarId viewOfVarId = viewOfVar->getId();
   VarId viewOfViewId = viewOfView->getId();
 
@@ -92,9 +90,7 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   engine->close();
 
   EXPECT_EQ(engine->getValue(sum), Int(40));
-  print(*viewOfVar);
   EXPECT_EQ(engine->getValue(viewOfVarId), Int(10));
-  print(*viewOfView);
   EXPECT_EQ(engine->getValue(viewOfViewId), Int(5));
 
   engine->beginMove();
@@ -156,11 +152,10 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
     // IntMaxView (VarId::view 3+i) depends on
     //   * VarId sum3 if i = 0,
     //   * VarId::view 2+i otherwise
-    std::shared_ptr<IntMaxView> varView = engine->makeIntVarView<IntMaxView>(prev, 25 - i);
-    sum3viewIds.emplace_back(varView->getId());
-    sum3views.push_back(varView);
+    sum3views.emplace_back(engine->makeIntVarView<IntMaxView>(prev, 25 - i));
+    sum3viewIds.emplace_back(sum3views[i]->getId());
     // IntMaxView (VarId::view 3+i)
-    prev = varView->getId();
+    prev = sum3viewIds[i];
     print(*(sum3views[i]));
   }
   
@@ -168,9 +163,9 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
   EXPECT_EQ(engine->getCommittedValue(sum2), Int(0));
   EXPECT_EQ(engine->getCommittedValue(sum1ViewId), Int(0));
   EXPECT_EQ(engine->getCommittedValue(sum2ViewId), Int(0));
-  
-  engine->close();
 
+  engine->close();
+  
   // a + b = 20 + 20 = sum1 = 40
   EXPECT_EQ(engine->getValue(sum1), Int(40));
   // sum1 = 40 -> sum1View = min(20, 40) = 20

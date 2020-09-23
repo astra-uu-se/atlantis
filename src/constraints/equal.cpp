@@ -16,9 +16,6 @@ Equal::Equal(VarId violationId, VarId x, VarId y)
 
 void Equal::init(Timestamp, Engine& e) {
   assert(m_id != NULL_ID);
-  LocalId local_m_x = LocalId(m_x);
-  LocalId local_m_y = LocalId(m_y);
-
   e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x));
   e.registerInvariantDependsOnVar(m_id, m_y, LocalId(m_y));
   e.registerDefinedVariable(m_violationId, m_id);

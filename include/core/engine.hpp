@@ -35,7 +35,6 @@ class Engine {
     InvariantId id;
     LocalId localId;
     VarId varViewId;
-    Int data;
     Timestamp lastNotification;  // todo: unclear if this information is
                                  // relevant for all types of propagation. If
                                  // not then move it to a subclass...
@@ -93,11 +92,11 @@ class Engine {
     return m_store.getConstIntVar(v).hasChanged(t);
   }
 
-  bool isPostponed(InvariantId&);
+  bool isPostponed(InvariantId);
 
-  void postpone(InvariantId&);
-  void recompute(InvariantId&);
-  void recompute(Timestamp, InvariantId&);
+  void postpone(InvariantId);
+  void recompute(InvariantId);
+  void recompute(Timestamp, InvariantId);
 
   void commit(VarId&);  // todo: this feels dangerous, maybe commit should
                        // always have a timestamp?
@@ -112,17 +111,17 @@ class Engine {
     return m_store.getConstIntVar(v).getUpperBound();
   }
 
-  void commitInvariantIf(Timestamp, InvariantId&);
+  void commitInvariantIf(Timestamp, InvariantId);
 
   /**
    * returns the next dependency at the current timestamp.
    */
-  VarId getNextDependency(InvariantId&);
+  VarId getNextDependency(InvariantId);
 
   /**
    * Notify an invariant that its current dependency has changed
    */
-  void notifyCurrentDependencyChanged(InvariantId&);
+  void notifyCurrentDependencyChanged(InvariantId);
 
   //--------------------- Registration ---------------------
   /**
@@ -178,7 +177,7 @@ class Engine {
    * @param source the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariable(VarId& dependent, InvariantId& source);
+  void registerDefinedVariable(VarId& dependent, InvariantId source);
 
   const Store& getStore();
   Timestamp getCurrentTime();
@@ -260,22 +259,18 @@ inline Int Engine::getCommittedValue(VarId& v) {
   auto queue = std::make_unique<std::queue<IntVarView*>>();
   queue->push(&intVarView);
   
-  auto& current = intVarView;
-  
-  while (current.getParentId().idType == VarIdType::view) {
-    current = m_store.getIntVarView(current.getParentId());
+  while (queue->back()->getParentId().idType == VarIdType::view) {
     // Quick release if current's value is as recent as
     // the source VarId's value
-    queue->push(&current);
+    queue->push(&m_store.getIntVarView(queue->back()->getParentId()));
   }
 
-  VarId intVarId = current.getParentId();
+  VarId intVarId = queue->back()->getParentId();
   Int prevValue = m_store.getIntVar(intVarId).getCommittedValue();
   
   while (!queue->empty()) {
-    current = (*queue->front());
-    current.commitValue(prevValue);
-    prevValue = current.getCommittedValue();
+    queue->front()->commitValue(prevValue);
+    prevValue = queue->front()->getCommittedValue();
     queue->pop();
   }
   return prevValue;
@@ -287,19 +282,19 @@ inline Timestamp Engine::getTmpTimestamp(VarId& v) {
     : m_store.getIntVarView(v).getTmpTimestamp();
 }
 
-inline bool Engine::isPostponed(InvariantId& id) {
+inline bool Engine::isPostponed(InvariantId id) {
   return m_store.getInvariant(id).isPostponed();
 }
 
-inline void Engine::postpone(InvariantId& id) {
+inline void Engine::postpone(InvariantId id) {
   return m_store.getInvariant(id).postpone();
 }
 
-inline void Engine::recompute(InvariantId& id) {
+inline void Engine::recompute(InvariantId id) {
   return m_store.getInvariant(id).recompute(m_currentTime, *this);
 }
 
-inline void Engine::recompute(Timestamp t, InvariantId& id) {
+inline void Engine::recompute(Timestamp t, InvariantId id) {
   return m_store.getInvariant(id).recompute(t, *this);
 }
 
@@ -354,14 +349,14 @@ inline void Engine::commitValue(VarId& v, Int val) {
 
 }
 
-inline void Engine::commitInvariantIf(Timestamp t, InvariantId& id) {
+inline void Engine::commitInvariantIf(Timestamp t, InvariantId id) {
   m_store.getInvariant(id).commit(t, *this);
 }
 
-inline VarId Engine::getNextDependency(InvariantId& inv) {
+inline VarId Engine::getNextDependency(InvariantId inv) {
   return m_store.getInvariant(inv).getNextDependency(m_currentTime, *this);
 }
-inline void Engine::notifyCurrentDependencyChanged(InvariantId& inv) {
+inline void Engine::notifyCurrentDependencyChanged(InvariantId inv) {
   m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime,
                                                            *this);
 }

@@ -31,7 +31,7 @@ int main() {
 }
 
 void magicSquare(int n) {
-  int n2 = n * n;
+  size_t n2 = n * n;
   Engine engine;
   engine.open();
 
@@ -90,8 +90,8 @@ int allIntervals(int n) {
   int nProbes = 0;
   for (int it = 0; it < 500000; it++) {
     // Probe all swaps
-    for (size_t i = 0; i < n; i++) {
-      for (size_t j = i + 1; j < n; j++) {
+    for (size_t i = 0; i < size_t(n); i++) {
+      for (size_t j = i + 1; j < size_t(n); j++) {
         Int oldI = engine.getValue(s_vars.at(i));
         Int oldJ = engine.getValue(s_vars.at(j));
         engine.beginMove();
@@ -135,12 +135,12 @@ void test() {
   VarId f = engine.makeIntVar(6, 6, 6);
   VarId g = engine.makeIntVar(7, 7, 7);
 
-  auto abc = engine.makeInvariant<Linear>(std::vector<Int>({1, 1}),
+  engine.makeInvariant<Linear>(std::vector<Int>({1, 1}),
                                           std::vector<VarId>({a, b}), c);
 
-  auto def = engine.makeInvariant<Linear>(std::vector<Int>({2, 2}),
+  engine.makeInvariant<Linear>(std::vector<Int>({2, 2}),
                                           std::vector<VarId>({d, e}), f);
-  auto acfg = engine.makeInvariant<Linear>(std::vector<Int>({3, 2, 1}),
+  engine.makeInvariant<Linear>(std::vector<Int>({3, 2, 1}),
                                            std::vector<VarId>({a, c, f}), g);
 
   engine.close();

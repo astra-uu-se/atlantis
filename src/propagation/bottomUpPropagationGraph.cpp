@@ -86,7 +86,7 @@ void BottomUpPropagationGraph::propagate(Timestamp currentTime) {
     if (invariantDone) {
       // The top invariant has finished propagating, so all defined vars can
       // be marked as stable at the current time.
-      for (auto defVar : variablesDefinedBy(peekInvariantStack())) {
+      for (const auto& defVar : variablesDefinedBy(peekInvariantStack())) {
         markStable(currentTime, defVar);
       }
       popInvariantStack();

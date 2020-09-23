@@ -50,9 +50,12 @@ Int Engine::getValue(Timestamp t, VarId& v) {
     return intVarView.getValue(t);
   }
   VarId sourceVarId = m_intVarViewSource.at(v);
-  IntVar sourceVar = m_store.getIntVar(sourceVarId);
-  Timestamp sourceVarTmpTimestamp = sourceVar.getTmpTimestamp();
-  if (sourceVarTmpTimestamp == intVarView.getTmpTimestamp()) {
+  IntVar& sourceVar = m_store.getIntVar(sourceVarId);
+  if (sourceVar.getTmpTimestamp() != t) {
+    return intVarView.getValue(t);
+  }
+  if (intVarView.getParentId().idType == VarIdType::var) {
+    recomputeUsingParent(intVarView, sourceVar);
     return intVarView.getValue(t);
   }
   auto queue = std::make_unique<std::queue<IntVarView*>>();
@@ -65,7 +68,7 @@ Int Engine::getValue(Timestamp t, VarId& v) {
     current = m_store.getIntVarView(current.getParentId());
     // Quick release if current's value is as recent as
     // the source VarId's value
-    if (current.getTmpTimestamp() == sourceVarTmpTimestamp) {
+    if (current.getTmpTimestamp() == t) {
       partialTraversal = true;
       break;
     }
@@ -178,24 +181,23 @@ void Engine::propagate() {
         id != NULL_ID;
         id = m_propGraph.getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(id);
-    if (variable.hasChanged(m_currentTime)) {
-      for (auto& toNotify : m_dependentInvariantData.at(id)) {
-        // If we do multiple "probes" within the same timestamp then the
-        // invariant may already have been notified.
-        // Also, do not notify invariants that are not active.
-        if (m_currentTime == toNotify.lastNotification ||
-            !m_propGraph.isActive(m_currentTime, toNotify.id)) {
-          continue;
-        }
-        m_store.getInvariant(toNotify.id)
-            .notifyIntChanged(m_currentTime, *this, toNotify.localId,
-                              variable.getValue(m_currentTime));
-        toNotify.lastNotification = m_currentTime;
+    if (!variable.hasChanged(m_currentTime)) {
+      continue;
+    }
+    for (VarId viewId : m_dependantIntVarViews.at(id)) {
+      recomputeUsingParent(viewId, variable);
+    }
+    for (auto& toNotify : m_dependentInvariantData.at(id)) {
+      // If we do multiple "probes" within the same timestamp then the
+      // invariant may already have been notified.
+      // Also, do not notify invariants that are not active.
+      if (m_currentTime == toNotify.lastNotification ||
+          !m_propGraph.isActive(m_currentTime, toNotify.id)) {
+        continue;
       }
       m_store.getInvariant(toNotify.id)
           .notifyIntChanged(m_currentTime, *this, toNotify.localId,
-                            committedValue,
-                            newValue, toNotify.data);
+                            variable.getValue(m_currentTime));
       toNotify.lastNotification = m_currentTime;
     }
   }
@@ -219,12 +221,20 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
 
 void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
                                            LocalId localId) {
+  VarId varId = source.idType == VarIdType::view
+   ? m_intVarViewSource.at(source)
+   : source;
+
+  VarId varViewId = source.idType == VarIdType::view
+   ? source
+   : NULL_ID;
+  
   m_propGraph.registerInvariantDependsOnVar(dependent, source);
-  m_dependentInvariantData.at(source).emplace_back(
-      InvariantDependencyData{dependent, localId, NULL_TIMESTAMP});
+  m_dependentInvariantData.at(varId).emplace_back(
+      InvariantDependencyData{dependent, localId, varViewId, NULL_TIMESTAMP});
 }
 
-void Engine::registerDefinedVariable(VarId& dependent, InvariantId& source) {
+void Engine::registerDefinedVariable(VarId& dependent, InvariantId source) {
   assert(dependent.idType == VarIdType::var);
   m_propGraph.registerDefinedVariable(dependent, source);
 }
