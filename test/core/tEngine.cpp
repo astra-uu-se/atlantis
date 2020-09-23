@@ -8,7 +8,6 @@
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "propagation/topDownPropagationGraph.hpp"
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -160,6 +159,7 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->beginQuery();
   engine->query(output);
   engine->endQuery();
+  std::cout<< "foo";
 }
 
 }  // namespace

@@ -2,11 +2,16 @@
 
 #include "core/engine.hpp"
 #include "propagation/bottomUpExplorer.hpp"
+#include "propagation/propagationGraph.hpp"
 
 class PropagationEngine : public Engine {
  protected:
-  BottomUpPropagationGraph m_propGraph;
+  PropagationGraph m_propGraph;
   BottomUpExplorer m_bottomUpExplorer;
+
+ protected:
+  std::priority_queue<VarId, std::vector<VarId>, PropagationGraph::PriorityCmp>
+      m_modifiedVariables;
 
   void recomputeAndCommit();
 
@@ -26,6 +31,21 @@ class PropagationEngine : public Engine {
    */
   void notifyMaybeChanged(Timestamp t, VarId id);
 
+  // todo: Maybe there is a better word than "active", like "relevant".
+  // --------------------- Activity ----------------
+  /**
+   * returns true if variable id is relevant for propagation.
+   * Note that this is not the same thing as the variable being modified.
+   */
+  bool isActive(Timestamp, VarId) { return true; }
+  /**
+   * returns true if invariant id is relevant for propagation.
+   * Note that this is not the same thing as the invariant being modified.
+   */
+  bool isActive(Timestamp, InvariantId) { return true; }
+
+  [[nodiscard]] VarId getNextStableVariable(Timestamp t);
+
   //--------------------- Move semantics ---------------------
   void beginMove();
   void endMove();
@@ -43,6 +63,10 @@ class PropagationEngine : public Engine {
    * returns the next dependency at the current timestamp.
    */
   VarId getNextDependency(InvariantId);
+
+  InvariantId getDefiningInvariant(VarId);
+
+  const std::vector<VarId>& getVariablesDefinedBy(InvariantId) const;
 
   /**
    * Notify an invariant that its current dependency has changed
@@ -73,8 +97,18 @@ class PropagationEngine : public Engine {
   virtual void registerVar(VarId) override;
   virtual void registerInvariant(InvariantId) override;
 
-  BottomUpPropagationGraph& getPropGraph();
+  PropagationGraph& getPropGraph();
 };
+
+inline InvariantId PropagationEngine::getDefiningInvariant(VarId v) {
+  // Returns NULL_ID is not defined.
+  return m_propGraph.getDefiningInvariant(v);
+}
+
+inline const std::vector<VarId>& PropagationEngine::getVariablesDefinedBy(
+    InvariantId inv) const {
+  return m_propGraph.getVariablesDefinedBy(inv);
+}
 
 inline VarId PropagationEngine::getNextDependency(InvariantId inv) {
   return m_store.getInvariant(inv).getNextDependency(m_currentTime, *this);

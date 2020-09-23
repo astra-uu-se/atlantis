@@ -9,7 +9,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "invariants/absDiff.hpp"
-#include "propagation/topDownPropagationGraph.hpp"
 
 using ::testing::AtLeast;
 using ::testing::Return;

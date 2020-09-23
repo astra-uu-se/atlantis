@@ -11,8 +11,6 @@
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
-#include "propagation/bottomUpPropagationGraph.hpp"
-#include "propagation/propagationGraph.hpp"
 #include "store/store.hpp"
 
 class Engine {
