@@ -49,6 +49,9 @@ class Engine {
   inline void updateValue(VarId v, Int val) {
     updateValue(m_currentTime, v, val);
   }
+
+  virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
+
   Int getValue(Timestamp, VarId);
   inline Int getValue(VarId v) { return getValue(m_currentTime, v); }
 
@@ -144,6 +147,7 @@ Engine::makeInvariant(Args&&... args) {
 
   auto newId = m_store.createInvariantFromPtr(invariantPtr);
   registerInvariant(newId);
+//  std::cout << "Created new invariant with id: " << newId << "\n";
   invariantPtr->init(m_currentTime, *this);
   return invariantPtr;
 }
@@ -158,6 +162,7 @@ Engine::makeConstraint(Args&&... args) {
 
   auto newId = m_store.createInvariantFromPtr(constraintPtr);
   registerInvariant(newId);
+//  std::cout << "Created new Constraint with id: " << newId << "\n";
   constraintPtr->init(m_currentTime, *this);
   return constraintPtr;
 }
@@ -197,10 +202,12 @@ inline void Engine::recompute(Timestamp t, InvariantId id) {
 
 inline void Engine::updateValue(Timestamp t, VarId v, Int val) {
   m_store.getIntVar(v).setValue(t, val);
+  this->notifyMaybeChanged(t, v);
 }
 
 inline void Engine::incValue(Timestamp t, VarId v, Int inc) {
   m_store.getIntVar(v).incValue(t, inc);
+  this->notifyMaybeChanged(t, v);
 }
 
 inline void Engine::commit(VarId v) { m_store.getIntVar(v).commit(); }
