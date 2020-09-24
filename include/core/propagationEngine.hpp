@@ -31,7 +31,7 @@ class PropagationEngine : public Engine {
    * @param t the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  void notifyMaybeChanged(Timestamp t, VarId id);
+  virtual void notifyMaybeChanged(Timestamp t, VarId id) override;
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
