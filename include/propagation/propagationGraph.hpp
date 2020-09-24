@@ -61,7 +61,7 @@ class PropagationGraph {
     PropagationGraph& graph;
     PriorityCmp(PropagationGraph& g) : graph(g) {}
     bool operator()(VarId left, VarId right) {
-      return graph.m_topology.getPosition(left) <
+      return graph.m_topology.getPosition(left) >
              graph.m_topology.getPosition(right);
     }
   };
