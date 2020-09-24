@@ -68,4 +68,5 @@ void PropagationGraph::close() {
   }
 
   m_topology.computeWithCycles();
+//  m_topology.computeNoCycles();
 }
