@@ -25,9 +25,12 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
+  //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
   if (m_isEnqueued.at(id)) {
+    //    std::cout << "\t\t\talready enqueued\n";
     return;
   }
+  //  std::cout << "\t\t\tpushed on stack\n";
   m_modifiedVariables.push(id);
   m_isEnqueued.at(id) = true;
 }
@@ -111,10 +114,9 @@ void PropagationEngine::query(VarId id) {
 }
 
 void PropagationEngine::endQuery() {
-  // m_bottomUpExplorer.schedulePropagation(m_currentTime, *this);
   // propagate();
-  // m_bottomUpExplorer.propagate(m_currentTime);
   bottomUpPropagate();
+  m_bottomUpExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::beginCommit() {}
@@ -127,9 +129,11 @@ void PropagationEngine::endCommit() {
 
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
+  //  std::cout<< "Starting propagation\n";
   VarId id = getNextStableVariable(m_currentTime);
   while (id.id != NULL_ID) {
     IntVar& variable = m_store.getIntVar(id);
+    //    std::cout<< "\tPropagating" << variable << "\n";
     if (variable.hasChanged(m_currentTime)) {
       for (auto& toNotify : m_dependentInvariantData.at(id)) {
         // If we do multiple "probes" within the same timestamp then the
@@ -138,6 +142,7 @@ void PropagationEngine::propagate() {
         if (!isActive(m_currentTime, toNotify.id)) {
           continue;
         }
+        //        std::cout<< "\t\tNotifying invariant:" << toNotify.id << "\n";
         m_store.getInvariant(toNotify.id)
             .notifyIntChanged(m_currentTime, *this, toNotify.localId,
                               variable.getValue(m_currentTime));
@@ -146,6 +151,7 @@ void PropagationEngine::propagate() {
     }
     id = getNextStableVariable(m_currentTime);
   }
+  //  std::cout<< "Propagation done\n";
 }
 
 void PropagationEngine::bottomUpPropagate() {

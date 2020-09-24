@@ -57,12 +57,19 @@ public:
    */
   void registerForPropagation(Timestamp t, VarId v);
 
+  void clearRegisteredVariables();
+
   void propagate(Timestamp currentTime);
 };
 
 inline void BottomUpExplorer::registerForPropagation(Timestamp, VarId id) {
+  // TODO: why not set varIsOnStack.at(v) = true;?
+  // I remember that there was some technical reason but this need to be
+  // documented. Note that this might overflow the stack otherwise.
   variableStack_[varStackIdx_++] = id;
 }
+
+inline void BottomUpExplorer::clearRegisteredVariables() { varStackIdx_ = 0; }
 
 inline void BottomUpExplorer::pushVariableStack(VarId v) {
   varIsOnStack.at(v) = true;
