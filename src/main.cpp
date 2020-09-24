@@ -89,7 +89,7 @@ int allIntervals(int n) {
 
   std::uniform_int_distribution<> distribution{0, n - 1};
   int nProbes = 0;
-  for (int it = 0; it < 500000; it++) {
+  for (int it = 0; it < 50000; it++) {
     // Probe all swaps
     for (size_t i = 0; i < static_cast<size_t>(n); i++) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {
