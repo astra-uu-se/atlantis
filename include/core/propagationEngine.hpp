@@ -1,5 +1,7 @@
 #pragma once
 
+#include <queue>
+
 #include "core/engine.hpp"
 #include "propagation/bottomUpExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
@@ -9,16 +11,23 @@ class PropagationEngine : public Engine {
   PropagationGraph m_propGraph;
   BottomUpExplorer m_bottomUpExplorer;
 
- protected:
   std::priority_queue<VarId, std::vector<VarId>, PropagationGraph::PriorityCmp>
       m_modifiedVariables;
 
   std::vector<bool> m_isEnqueued;
 
+  std::vector<bool> m_varIsOnPropagationPath;
+  std::queue<VarId> m_propagationPathQueue;
+
   void recomputeAndCommit();
+  
+  void clearPropagationQueue();
 
   void propagate();
   void bottomUpPropagate();
+
+  void markPropagationPath();
+  void clearPropagationPath();
 
  public:
   PropagationEngine(/* args */);
@@ -39,12 +48,12 @@ class PropagationEngine : public Engine {
    * returns true if variable id is relevant for propagation.
    * Note that this is not the same thing as the variable being modified.
    */
-  bool isActive(Timestamp, VarId) { return true; }
+  bool isOnPropagationPath(VarId v);
   /**
    * returns true if invariant id is relevant for propagation.
    * Note that this is not the same thing as the invariant being modified.
    */
-  bool isActive(Timestamp, InvariantId) { return true; }
+  bool isOnPropagationPath(Timestamp, InvariantId) { return true; }
 
   [[nodiscard]] VarId getNextStableVariable(Timestamp t);
 

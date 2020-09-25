@@ -1,11 +1,18 @@
 #include "core/propagationEngine.hpp"
 
+#include <queue>
+
 PropagationEngine::PropagationEngine()
     : m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
       m_modifiedVariables(PropagationGraph::PriorityCmp(m_propGraph)),
-      m_isEnqueued() {
+      m_isEnqueued(),
+      m_varIsOnPropagationPath(),
+      m_propagationPathQueue() {
+  m_varIsOnPropagationPath.reserve(ESTIMATED_NUM_OBJECTS);
+
   m_isEnqueued.push_back(false);  // initialise NULL_ID for indexing
+  m_varIsOnPropagationPath.push_back(false);
 }
 
 PropagationGraph& PropagationEngine::getPropGraph() { return m_propGraph; }
@@ -52,6 +59,7 @@ void PropagationEngine::registerVar(VarId v) {
   m_propGraph.registerVar(v);
   m_bottomUpExplorer.registerVar(v);
   m_isEnqueued.push_back(false);
+  m_varIsOnPropagationPath.push_back(false);
 }
 
 void PropagationEngine::registerInvariant(InvariantId i) {
@@ -70,6 +78,13 @@ VarId PropagationEngine::getNextStableVariable(Timestamp) {
   m_isEnqueued.at(nextVar) = false;
   // Due to notifyMaybeChanged, all variables in the queue are "active".
   return nextVar;
+}
+
+void PropagationEngine::clearPropagationQueue() {
+  while (!m_modifiedVariables.empty()) {
+    m_modifiedVariables.pop();
+  }
+  m_isEnqueued.assign(m_isEnqueued.size(), false);
 }
 
 void PropagationEngine::recomputeAndCommit() {
@@ -100,10 +115,16 @@ void PropagationEngine::recomputeAndCommit() {
        ++iter) {
     (*iter)->commit(m_currentTime, *this);
   }
+  clearPropagationQueue();
 }
 
 //--------------------- Move semantics ---------------------
-void PropagationEngine::beginMove() { ++m_currentTime; }
+void PropagationEngine::beginMove() {
+  ++m_currentTime;
+  {  // only needed for bottom up propagation
+    // clearPropagationPath();
+  }
+}
 
 void PropagationEngine::endMove() {}
 
@@ -114,8 +135,14 @@ void PropagationEngine::query(VarId id) {
 }
 
 void PropagationEngine::endQuery() {
-  // propagate();
-  bottomUpPropagate();
+  {  // Top down
+    // propagate();
+  }
+  {  // Bottom up
+     markPropagationPath();
+     bottomUpPropagate();
+  }
+  // We must always clear due to the current version of query()
   m_bottomUpExplorer.clearRegisteredVariables();
 }
 
@@ -127,22 +154,54 @@ void PropagationEngine::endCommit() {
   // propagate();
 }
 
+void PropagationEngine::markPropagationPath() {
+  // We cannot iterate over a priority_queue so we cannot copy it.
+  // TODO: replace priority_queue of m_modifiedVariables with custom queue.
+
+  for (size_t i = 0; i < m_isEnqueued.size(); i++) {
+    if (m_isEnqueued[i]) {
+      m_propagationPathQueue.push(i);
+    }
+  }
+  while (!m_propagationPathQueue.empty()) {
+    VarId currentVar = m_propagationPathQueue.front();
+    m_propagationPathQueue.pop();
+    if (m_varIsOnPropagationPath.at(currentVar)) {
+      continue;
+    }
+    m_varIsOnPropagationPath.at(currentVar) = true;
+    for (auto& depInv : m_dependentInvariantData.at(currentVar)) {
+      for (VarId depVar : m_propGraph.getVariablesDefinedBy(depInv.id)) {
+        if (!m_varIsOnPropagationPath.at(depVar)) {
+          m_propagationPathQueue.push(depVar);
+        }
+      }
+    }
+  }
+}
+
+void PropagationEngine::clearPropagationPath() {
+  m_varIsOnPropagationPath.assign(m_varIsOnPropagationPath.size(), false);
+}
+
+bool PropagationEngine::isOnPropagationPath(VarId id) {
+  return m_varIsOnPropagationPath.at(id);
+}
+
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
-  //  std::cout<< "Starting propagation\n";
+  // std::cout<< "Starting propagation\n";
   VarId id = getNextStableVariable(m_currentTime);
   while (id.id != NULL_ID) {
     IntVar& variable = m_store.getIntVar(id);
-    //    std::cout<< "\tPropagating" << variable << "\n";
+    // std::cout<< "\tPropagating" << variable << "\n";
     if (variable.hasChanged(m_currentTime)) {
       for (auto& toNotify : m_dependentInvariantData.at(id)) {
-        // If we do multiple "probes" within the same timestamp then the
-        // invariant may already have been notified.
         // Also, do not notify invariants that are not active.
-        if (!isActive(m_currentTime, toNotify.id)) {
+        if (!isOnPropagationPath(m_currentTime, toNotify.id)) {
           continue;
         }
-        //        std::cout<< "\t\tNotifying invariant:" << toNotify.id << "\n";
+        // std::cout<< "\t\tNotifying invariant:" << toNotify.id << "\n";
         m_store.getInvariant(toNotify.id)
             .notifyIntChanged(m_currentTime, *this, toNotify.localId,
                               variable.getValue(m_currentTime));
@@ -156,4 +215,5 @@ void PropagationEngine::propagate() {
 
 void PropagationEngine::bottomUpPropagate() {
   m_bottomUpExplorer.propagate(m_currentTime);
+  clearPropagationQueue();
 }

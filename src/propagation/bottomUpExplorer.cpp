@@ -25,6 +25,7 @@ void BottomUpExplorer::expandInvariant(InvariantId inv) {
   if (invariantIsOnStack.at(inv)) {
     throw DynamicCycleException();
   }
+  // TODO: ignore variable if not on propagationPath.
   VarId nextVar = m_engine.getNextDependency(inv);
   assert(nextVar.id !=
          NULL_ID);  // Invariant must have at least one dependency, and this
@@ -40,6 +41,9 @@ void BottomUpExplorer::notifyCurrentInvariant() {
 bool BottomUpExplorer::visitNextVariable() {
   popVariableStack();
   VarId nextVar = m_engine.getNextDependency(peekInvariantStack());
+  while(nextVar != NULL_ID && !m_engine.isOnPropagationPath(nextVar)){
+    nextVar = m_engine.getNextDependency(peekInvariantStack());
+  }
   if (nextVar.id == NULL_ID) {
     return true;  // done with invariant
   } else {

@@ -1,4 +1,5 @@
 #include <functional>
+#include <queue>
 
 #include "exceptions/exceptions.hpp"
 #include "propagation/propagationGraph.hpp"
