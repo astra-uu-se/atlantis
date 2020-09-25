@@ -3,7 +3,6 @@
 #include <assert.h>
 
 #include <memory>
-#include <queue>
 #include <vector>
 
 #include "../core/types.hpp"

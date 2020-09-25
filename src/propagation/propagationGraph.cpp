@@ -21,7 +21,7 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
   m_listeningInvariants.push_back({});
 }
 
-void PropagationGraph::registerInvariant(InvariantId id) {
+void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   // Everything must be registered in sequence.
   assert(id.id == m_variablesDefinedByInvariant.size());
   m_variablesDefinedByInvariant.push_back({});
@@ -30,7 +30,7 @@ void PropagationGraph::registerInvariant(InvariantId id) {
   ++m_numInvariants;
 }
 
-void PropagationGraph::registerVar(VarId id) {
+void PropagationGraph::registerVar([[maybe_unused]] VarId id) {
   assert(id.id == m_listeningInvariants.size());
   assert(id.id == m_definingInvariant.size());
   m_listeningInvariants.push_back({});
