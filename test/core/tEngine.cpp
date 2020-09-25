@@ -35,6 +35,32 @@ class MockInvariantSimple : public Invariant {
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 
+class MockIntVarView : public IntVarView {
+  public:
+   bool m_initialized = false;
+   int recomputeCount;
+   int commitValueCount;
+   MockIntVarView(const VarId parentId) : IntVarView(parentId), recomputeCount(0), commitValueCount(0) {}
+   void init(Timestamp t, Engine&, Int sourceVal, Int sourceCommittedVal) override {
+     m_savedInt.setValue(t, sourceVal);
+     m_savedInt.commitValue(sourceCommittedVal);
+     m_initialized = true;
+   }
+   void recompute(Timestamp t, Int parentVal) {
+    m_savedInt.setValue(t, parentVal);
+    ++recomputeCount;
+   }
+   void recompute(Timestamp t, Int parentVal, Int parentCommittedVal) override {
+    m_savedInt.setValue(t, parentVal);
+    m_savedInt.commitValue(parentCommittedVal);
+    ++recomputeCount;
+   }
+   void commitValue(Int parentVal) override {
+    m_savedInt.commitValue(parentVal);
+    ++commitValueCount;
+   }
+};
+
 class MockInvariantAdvanced : public Invariant {
  public:
   bool m_initialized = false;
@@ -97,6 +123,72 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   engine->close();
   EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
   EXPECT_EQ(engine->getStore().getNumInvariants(), size_t(1));
+}
+
+TEST_F(EngineTest, CreateIntVarViews) {
+  engine->open();
+
+  VarId var = engine->makeIntVar(5, 0, 10);
+
+  std::vector<std::shared_ptr<MockIntVarView>> varViews;
+  for (size_t i = 0; i < 10; ++i) {
+    varViews.push_back(engine->makeIntVarView<MockIntVarView>(
+        i == 0
+          ? var
+          : varViews[i - 1]->getId()
+    ));
+    ASSERT_TRUE(varViews[i]->m_initialized);
+  }
+
+  engine->close();
+
+  for (auto varView : varViews) {
+    EXPECT_EQ(varView->recomputeCount, 0);
+  }
+
+  Int val(10);
+  engine->beginMove();
+  engine->setValue(var, val);
+  engine->endMove();
+  
+  Timestamp t = engine->getTmpTimestamp(var);
+  std::cout << t << "\n";
+
+  for (auto varView : varViews) {
+    EXPECT_EQ(varView->recomputeCount, 0);
+    VarId id = varView->getId();
+    EXPECT_EQ(engine->getValue(t, id), val);
+    EXPECT_EQ(varView->recomputeCount, 1);
+  }
+
+  for (auto varView : varViews) {
+    EXPECT_EQ(varView->recomputeCount, 1);
+  }
+
+  val = Int(0);
+  engine->beginMove();
+  engine->setValue(var, val);
+  engine->endMove();
+  t = engine->getTmpTimestamp(var);
+  std::cout << t << "\n";
+
+  EXPECT_EQ(varViews[varViews.size() - 1]->recomputeCount, 1);
+  VarId lastId = varViews[varViews.size() - 1]->getId();
+  EXPECT_EQ(engine->getValue(t, lastId), val);
+  EXPECT_EQ(varViews[varViews.size() - 1]->recomputeCount, 2);
+
+  for (int i = varViews.size() - 1; i >= 0; --i) {
+    EXPECT_EQ(varViews[i]->recomputeCount, 2);
+    VarId id = varViews[i]->getId();
+    std::cout << id.id << "\n";
+    EXPECT_EQ(engine->getValue(t, id), val);
+    EXPECT_EQ(varViews[i]->recomputeCount, 2);
+  }
+
+  for (auto varView : varViews) {
+    EXPECT_EQ(varView->recomputeCount, 2);
+  }
+
 }
 
 TEST_F(EngineTest, RecomputeAndCommit) {

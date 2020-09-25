@@ -26,13 +26,12 @@ class IntVarView : public VarView {
   Int getCommittedValue() const noexcept;
   Timestamp getTmpTimestamp() const noexcept;
   
-  virtual void init(Timestamp t, Engine& e, const Int& sourceVal, const Int& sourceCommittedVal) = 0;
-  virtual void recompute(Timestamp t, Engine& e) = 0;
-  virtual void recompute(Timestamp t, const Int& sourceVal) = 0;
-  virtual void recompute(Timestamp t, const Int& sourceVal, const Int& sourceCommittedVal) = 0;
+  virtual void init(Timestamp t, Engine& e, Int sourceVal, Int sourceCommittedVal) = 0;
+  virtual void recompute(Timestamp t, Int sourceVal) = 0;
+  virtual void recompute(Timestamp t, Int sourceVal, Int sourceCommittedVal) = 0;
   inline void commit();
   inline void commitIf(Timestamp t);
-  virtual void commitValue(const Int& sourceVal) = 0;
+  virtual void commitValue(Int sourceVal) = 0;
 };
 inline bool IntVarView::hasChanged(Timestamp t) const {
   return m_savedInt.hasChanged(t);

@@ -21,7 +21,7 @@ Engine::Engine()
   m_dependentInvariantData.push_back({});
 }
 
-inline void Engine::recomputeUsingParent(VarId& viewId, IntVar& var) {
+inline void Engine::recomputeUsingParent(VarId viewId, IntVar& var) {
   assert(viewId.idType == VarIdType::view);
   return recomputeUsingParent(m_store.getIntVarView(viewId), var);
 }
@@ -41,7 +41,7 @@ inline void Engine::recomputeUsingParent(IntVarView& view, IntVar& var) {
 
 void Engine::open() { m_isOpen = true; }
 
-Int Engine::getValue(Timestamp t, VarId& v) {
+Int Engine::getValue(Timestamp t, VarId v) {
   if (v.idType == VarIdType::var) {
     return m_store.getIntVar(v).getValue(t);
   }
@@ -61,28 +61,22 @@ Int Engine::getValue(Timestamp t, VarId& v) {
   auto queue = std::make_unique<std::queue<IntVarView*>>();
   queue->push(&intVarView);
   
-  auto& current = intVarView;
-  bool partialTraversal = false;
+  Int prevVal = sourceVar.getValue(t);
 
-  while (current.getParentId().idType == VarIdType::view) {
-    current = m_store.getIntVarView(current.getParentId());
+  while (queue->back()->getParentId().idType == VarIdType::view) {
+    IntVarView& current = m_store.getIntVarView(queue->back()->getParentId());
     // Quick release if current's value is as recent as
     // the source VarId's value
     if (current.getTmpTimestamp() == t) {
-      partialTraversal = true;
+      prevVal = current.getValue(t);
       break;
     }
     queue->push(&current);
   }
-
-  Int prevVal = partialTraversal
-    ? current.getValue(t)
-    : sourceVar.getValue(t);
   
   while (!queue->empty()) {
-    current = (*queue->front());
-    current.recompute(t, prevVal);
-    prevVal = current.getValue(t);
+    queue->front()->recompute(t, prevVal);
+    prevVal = queue->front()->getValue(t);
     queue->pop();
   }
 
@@ -112,7 +106,7 @@ void Engine::recomputeAndCommit() {
       done = false;
       iter->commit();
       assert(iter->getTmpTimestamp() == m_currentTime);
-      for (VarId& viewId : m_dependantIntVarViews.at(iter->getId())) {
+      for (VarId viewId : m_dependantIntVarViews.at(iter->getId())) {
         recomputeUsingParent(viewId, (*iter));
       }
     }
@@ -137,7 +131,7 @@ void Engine::close() {
 }
 
 //---------------------Notificaion/Modification---------------------
-void Engine::notifyMaybeChanged(Timestamp t, VarId& id) {
+void Engine::notifyMaybeChanged(Timestamp t, VarId id) {
   if (id.idType == VarIdType::var) {
     m_propGraph.notifyMaybeChanged(t, id);
   } else {
@@ -153,7 +147,7 @@ void Engine::endMove() {}
 
 void Engine::beginQuery() { m_propGraph.clearForPropagation(); }
 
-void Engine::query(VarId& id) {
+void Engine::query(VarId id) {
   if (id.idType == VarIdType::var) {
     m_propGraph.registerForPropagation(m_currentTime, id);
   } else {
@@ -234,7 +228,7 @@ void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
       InvariantDependencyData{dependent, localId, varViewId, NULL_TIMESTAMP});
 }
 
-void Engine::registerDefinedVariable(VarId& dependent, InvariantId source) {
+void Engine::registerDefinedVariable(VarId dependent, InvariantId source) {
   assert(dependent.idType == VarIdType::var);
   m_propGraph.registerDefinedVariable(dependent, source);
 }

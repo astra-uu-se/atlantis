@@ -19,11 +19,10 @@ class IntMaxView : public IntVarView {
   
   inline Int getMax() const;
 
-  inline void init(Timestamp t, Engine& e, const Int& parentVal, const Int& parentCommittedVal) override;
-  inline void recompute(Timestamp t, Engine& e) override;
-  inline void recompute(Timestamp t, const Int& parentVal, const Int& parentCommittedVal) override;
-  inline void recompute(Timestamp t, const Int& parentVal) override;
-  inline void commitValue(const Int& parentVal) override;
+  void init(Timestamp t, Engine& e, Int parentVal, Int parentCommittedVal) override;
+  void recompute(Timestamp t, Int parentVal, Int parentCommittedVal) override;
+  void recompute(Timestamp t, Int parentVal) override;
+  void commitValue(Int parentVal) override;
 };
 
 inline Int IntMaxView::getMax() const {

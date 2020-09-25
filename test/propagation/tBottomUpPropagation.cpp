@@ -527,4 +527,48 @@ TEST_F(BottomUpPropagationTest, DynamicCommit2) {
   EXPECT_EQ(e->getCommittedValue(output), static_cast<Int>(143));
 }
 
+TEST_F(BottomUpPropagationTest, TallTree) {
+  e->open();
+
+  auto vA1 = e->makeIntVar(1, -100, 1000);  // 1
+  auto vA2 = e->makeIntVar(2, -100, 1000);  // 2
+  auto vA3 = e->makeIntVar(3, -100, 1000);  // 3
+  auto sumA = e->makeIntVar(0, -1000, 1000);  // 4
+
+  e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1},
+                           std::vector<VarId>{vA1, vA2, vA3}, sumA);
+
+  auto vB1 = e->makeIntVar(1, -100, 1000);  // 5
+  auto vB2 = e->makeIntVar(2, -100, 1000);  // 6
+  auto vB3 = e->makeIntVar(3, -100, 1000);  // 7
+  auto sumB = e->makeIntVar(0, -1000, 1000);  // 8
+
+  e->makeInvariant<Linear>(std::vector<Int>{1, 1, 1},
+                           std::vector<VarId>{vB1, vB2, vB3}, sumB);
+
+  auto output = e->makeIntVar(0, -1000, 1000);  // 9
+
+  e->makeInvariant<Linear>(std::vector<Int>{1,1},
+                           std::vector<VarId>{sumA, sumB}, output);
+
+  e->close();
+
+  ASSERT_EQ(e->getCommittedValue(output), static_cast<Int>(12));
+
+  // Make a bunch of probes
+  
+  e->beginMove();
+  e->setValue(vA1, 10);
+  e->setValue(vB1, 10);
+  e->endMove();
+
+  e->beginCommit();
+  e->query(output);
+  e->endCommit();
+
+  EXPECT_EQ(e->getCommittedValue(sumA), static_cast<Int>(15));
+  EXPECT_EQ(e->getCommittedValue(sumB), static_cast<Int>(15));
+  EXPECT_EQ(e->getCommittedValue(output), static_cast<Int>(30));
+}
+
 }  // namespace

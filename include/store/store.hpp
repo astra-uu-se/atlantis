@@ -46,15 +46,15 @@ class Store {
     m_intVarViews.push_back(ptr);
     return newId;
   }
-  inline IntVar& getIntVar(VarId& v) {
+  inline IntVar& getIntVar(VarId v) {
     return m_intVars.at(m_intVarIndexMap.at(v.id));
   }
 
-  inline const IntVar& getConstIntVar(VarId& v) const {
+  inline const IntVar& getConstIntVar(VarId v) const {
     return m_intVars.at(m_intVarIndexMap.at(v.id));
   }
 
-  inline IntVarView& getIntVarView(const VarId& i) const {
+  inline IntVarView& getIntVarView(const VarId i) const {
     return *(m_intVarViews.at(i.id));
   }
 

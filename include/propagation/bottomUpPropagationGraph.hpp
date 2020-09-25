@@ -10,10 +10,11 @@ class Engine;  // forward declare
 
 class BottomUpPropagationGraph : public PropagationGraph {
  private:
-  std::vector<VarId> variableStack_;
+  Engine& m_engine;
   size_t varStackIdx_ = 0;
-  std::vector<InvariantId> invariantStack_;
   size_t invariantStackIdx_ = 0;
+  std::vector<VarId> variableStack_;
+  std::vector<InvariantId> invariantStack_;
   std::vector<Timestamp> varStableAt;  // last timestamp when a VarID was stable
                                        // (i.e., will not change)
   std::vector<Timestamp> invariantStableAt;
@@ -39,7 +40,7 @@ class BottomUpPropagationGraph : public PropagationGraph {
 
   void commitAndPostpone(Timestamp, VarId);
 
-  Engine& m_engine;
+  
 
  public:
   // BottomUpPropagationGraph() : BottomUpPropagationGraph(1000) {}
@@ -73,6 +74,7 @@ class BottomUpPropagationGraph : public PropagationGraph {
 };
 
 inline void BottomUpPropagationGraph::pushVariableStack(VarId v) {
+  assert(v.idType == VarIdType::var);
   varIsOnStack.at(v) = true;
   variableStack_[varStackIdx_++] = v;
 }

@@ -12,7 +12,7 @@ class SavedInt {
   Int m_tmpValue;
 
  public:
-  SavedInt(Timestamp initTime, const Int& initValue)
+  SavedInt(Timestamp initTime, const Int initValue)
       : m_tmpTime(initTime), m_savedValue(initValue), m_tmpValue(initValue) {}
 
   // inline Int getResetValue(Timestamp currentTime) noexcept {

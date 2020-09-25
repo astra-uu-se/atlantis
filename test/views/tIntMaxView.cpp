@@ -34,21 +34,21 @@ class IntMaxViewTest : public ::testing::Test {
     std::cout << ", " << v.getCommittedValue();
     std::cout << "} parent = [" << p << "]\n";
   }
-  void printVar(VarId& v) {
+  void printVar(VarId v) {
     size_t id = v;
     std::cout << "IntVar[" << id << "] ";
     std::cout << "{" << engine->getValue(v);
     std::cout << "," << engine->getCommittedValue(v);
     std::cout << "}\n";
   }
-  void printView(VarId& v) {
+  void printView(VarId v) {
     size_t id = v;
     std::cout << "IntView[" << id << "] ";
     std::cout << "{" << engine->getValue(v);
     std::cout << "," << engine->getCommittedValue(v);
     std::cout << "}";
   }
-  void print(VarId& v) {
+  void print(VarId v) {
     if (v.idType == VarIdType::var) {
       printVar(v);
       return;
@@ -60,7 +60,7 @@ class IntMaxViewTest : public ::testing::Test {
 TEST_F(IntMaxViewTest, CreateIntMaxView) {
   engine->open();
 
-  const VarId& var = engine->makeIntVar(100, 0, 100);
+  const VarId var = engine->makeIntVar(100, 0, 100);
   std::shared_ptr<IntMaxView> viewOfVar = engine->makeIntVarView<IntMaxView>(var, 50);
   std::shared_ptr<IntMaxView> viewOfView = engine->makeIntVarView<IntMaxView>(viewOfVar->getId(), 25);
 
@@ -255,12 +255,10 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
                  V
            sum3viewIds[9] {12}
   */
-  // These should not be needed!
-  linear3->recompute(engine->getCurrentTime(), *engine);
-  linear3->commit(engine->getCurrentTime(), *engine);
+  // These two lines should not be needed!
+  
   EXPECT_EQ(engine->getCommittedValue(sum3), Int(20));
   
-
   for (size_t i = 0; i < sum3viewIds.size(); ++i) {
     // IntMaxView sum3viewIds[i] = 
     //   * min(20, 25) if i = 0,
