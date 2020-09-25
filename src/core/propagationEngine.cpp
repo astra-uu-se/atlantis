@@ -122,7 +122,7 @@ void PropagationEngine::recomputeAndCommit() {
 void PropagationEngine::beginMove() {
   ++m_currentTime;
   {  // only needed for bottom up propagation
-    // clearPropagationPath();
+    clearPropagationPath();
   }
 }
 
