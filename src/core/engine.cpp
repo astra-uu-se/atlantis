@@ -224,7 +224,7 @@ void Engine::registerInvariantDependsOnVar(InvariantId dependent, VarId source,
    ? source
    : NULL_ID;
   
-  m_propGraph.registerInvariantDependsOnVar(dependent, source);
+  m_propGraph.registerInvariantDependsOnVar(dependent, varId);
   m_dependentInvariantData.at(varId).emplace_back(
       InvariantDependencyData{dependent, localId, varViewId, NULL_TIMESTAMP});
 }

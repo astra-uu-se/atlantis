@@ -152,8 +152,7 @@ TEST_F(EngineTest, CreateIntVarViews) {
   engine->endMove();
   
   Timestamp t = engine->getTmpTimestamp(var);
-  std::cout << t << "\n";
-
+  
   for (auto varView : varViews) {
     EXPECT_EQ(varView->recomputeCount, 0);
     VarId id = varView->getId();
@@ -170,8 +169,7 @@ TEST_F(EngineTest, CreateIntVarViews) {
   engine->setValue(var, val);
   engine->endMove();
   t = engine->getTmpTimestamp(var);
-  std::cout << t << "\n";
-
+  
   EXPECT_EQ(varViews[varViews.size() - 1]->recomputeCount, 1);
   VarId lastId = varViews[varViews.size() - 1]->getId();
   EXPECT_EQ(engine->getValue(t, lastId), val);
@@ -180,7 +178,6 @@ TEST_F(EngineTest, CreateIntVarViews) {
   for (int i = varViews.size() - 1; i >= 0; --i) {
     EXPECT_EQ(varViews[i]->recomputeCount, 2);
     VarId id = varViews[i]->getId();
-    std::cout << id.id << "\n";
     EXPECT_EQ(engine->getValue(t, id), val);
     EXPECT_EQ(varViews[i]->recomputeCount, 2);
   }

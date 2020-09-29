@@ -25,36 +25,6 @@ class IntMaxViewTest : public ::testing::Test {
     gen = std::mt19937(rd());
     engine = std::make_unique<Engine>();
   }
-  void print(IntMaxView& v) {
-    size_t id = v.getId();
-    size_t p = v.getParentId();
-    std::cout << "IntMaxView[" << id << "] ";
-    std::cout << "max = " << v.getMax();
-    std::cout << " {" << v.getValue(v.getTmpTimestamp());
-    std::cout << ", " << v.getCommittedValue();
-    std::cout << "} parent = [" << p << "]\n";
-  }
-  void printVar(VarId v) {
-    size_t id = v;
-    std::cout << "IntVar[" << id << "] ";
-    std::cout << "{" << engine->getValue(v);
-    std::cout << "," << engine->getCommittedValue(v);
-    std::cout << "}\n";
-  }
-  void printView(VarId v) {
-    size_t id = v;
-    std::cout << "IntView[" << id << "] ";
-    std::cout << "{" << engine->getValue(v);
-    std::cout << "," << engine->getCommittedValue(v);
-    std::cout << "}";
-  }
-  void print(VarId v) {
-    if (v.idType == VarIdType::var) {
-      printVar(v);
-      return;
-    }
-    printView(v);
-  }
 };
 
 TEST_F(IntMaxViewTest, CreateIntMaxView) {
