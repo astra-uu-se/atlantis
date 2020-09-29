@@ -38,6 +38,7 @@ void BottomUpPropagationGraph::clearForPropagation() {
   // invariantIsOnStack.assign(invariantIsOnStack.size(), false);
 }
 void BottomUpPropagationGraph::registerForPropagation(Timestamp, VarId id) {
+  assert(id.idType == VarIdType::var);
   variableStack_[varStackIdx_++] = id;
 }
 
@@ -159,6 +160,7 @@ void BottomUpPropagationGraph::propagate2(Timestamp currentTime) {
 }
 
 inline void BottomUpPropagationGraph::commitAndPostpone(Timestamp t, VarId id) {
+  assert(id.idType == VarIdType::var);
   m_engine.commitIf(t, id);
   for (auto depInvariant : m_listeningInvariants.at(id)) {
     m_engine.postpone(depInvariant);
@@ -172,6 +174,7 @@ inline void BottomUpPropagationGraph::expandInvariant(InvariantId inv) {
   assert(nextVar.id !=
          NULL_ID);  // Invariant must have at least one dependency, and this
                     // should be the first (and only) time we expand it
+  assert(nextVar.idType == VarIdType::var);
   pushVariableStack(nextVar);
   pushInvariantStack(inv);
 }
@@ -183,6 +186,7 @@ inline void BottomUpPropagationGraph::notifyCurrentInvariant() {
 inline bool BottomUpPropagationGraph::visitNextVariable() {
   popVariableStack();
   VarId nextVar = m_engine.getNextDependency(peekInvariantStack());
+  assert(nextVar.idType == VarIdType::var);
   if (nextVar.id == NULL_ID) {
     return true;  // done with invariant
   } else {
@@ -192,6 +196,7 @@ inline bool BottomUpPropagationGraph::visitNextVariable() {
 }
 
 void BottomUpPropagationGraph::registerVar(VarId id) {
+  assert(id.idType == VarIdType::var);
   PropagationGraph::registerVar(id);  // call parent implementation
   variableStack_.push_back(NULL_ID);  // push back just to resize the stack!
   varStableAt.push_back(NULL_TIMESTAMP);

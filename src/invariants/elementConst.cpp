@@ -6,7 +6,9 @@
 extern Id NULL_ID;
 
 ElementConst::ElementConst(VarId i, std::vector<Int> A, VarId b)
-    : Invariant(NULL_ID), m_i(i), m_A(A), m_b(b) {}
+    : Invariant(NULL_ID), m_i(i), m_A(A), m_b(b) {
+  assert(b.idType == VarIdType::var);
+}
 
 void ElementConst::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);

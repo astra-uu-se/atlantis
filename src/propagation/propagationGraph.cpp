@@ -30,6 +30,7 @@ void PropagationGraph::registerInvariant(InvariantId id) {
 }
 
 void PropagationGraph::registerVar(VarId id) {
+  assert(id.idType == VarIdType::var);
   assert(id.id == m_listeningInvariants.size());
   assert(id.id == m_definingInvariant.size());
   m_listeningInvariants.push_back({});
@@ -39,6 +40,7 @@ void PropagationGraph::registerVar(VarId id) {
 
 void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
                                                      VarId source) {
+  assert(source.idType == VarIdType::var);
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
   m_listeningInvariants.at(source).push_back(dependent);
   m_inputVariables.at(dependent).push_back(source);
@@ -46,6 +48,7 @@ void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
 
 void PropagationGraph::registerDefinedVariable(VarId dependent,
                                                InvariantId source) {
+  assert(dependent.idType == VarIdType::var);
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
   if (m_definingInvariant.at(dependent).id == NULL_ID.id) {
     m_definingInvariant.at(dependent) = source;

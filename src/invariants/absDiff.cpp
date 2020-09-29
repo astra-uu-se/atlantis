@@ -6,7 +6,9 @@
 extern Id NULL_ID;
 
 AbsDiff::AbsDiff(VarId a, VarId b, VarId c)
-    : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {}
+    : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {
+  assert(c.idType == VarIdType::var);
+}
 
 void AbsDiff::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);

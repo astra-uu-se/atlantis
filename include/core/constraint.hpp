@@ -1,6 +1,7 @@
 #pragma once
 #include "core/invariant.hpp"
 #include "core/types.hpp"
+#include <assert.h>
 
 class Engine;  // Forward declaration
 
@@ -9,7 +10,9 @@ class Constraint : public Invariant {
  protected:
   VarId m_violationId;
   Constraint(Id t_id, VarId t_violationId)
-      : Invariant(t_id), m_violationId(t_violationId) {}
+      : Invariant(t_id), m_violationId(t_violationId) {
+    assert(t_violationId.idType == VarIdType::var);
+  }
 
  public:
   virtual ~Constraint() = default;

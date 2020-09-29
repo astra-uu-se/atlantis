@@ -25,6 +25,7 @@ MarkingTopDownPropagationGraph::MarkingTopDownPropagationGraph(
 }
 
 bool MarkingTopDownPropagationGraph::isActive(Timestamp t, VarId id) {
+  assert(id.idType == VarIdType::var);
   return m_varMark.at(id) == t;
 }
 
@@ -34,11 +35,13 @@ bool MarkingTopDownPropagationGraph::isActive(Timestamp t, InvariantId id) {
 
 VarId MarkingTopDownPropagationGraph::getNextStableVariable(Timestamp t) {
   VarId nextVar = TopDownPropagationGraph::getNextStableVariable(t);
+  assert(nextVar.idType == VarIdType::var);
   m_propagatedAt.at(nextVar) = t;
   return nextVar;
 }
 
 void MarkingTopDownPropagationGraph::registerVar(VarId id) {
+  assert(id.idType == VarIdType::var);
   TopDownPropagationGraph::registerVar(id);  // call parent implementation
   assert(id.id == m_varsLastChange.size());
   m_varsLastChange.push_back(NULL_TIMESTAMP);
@@ -69,6 +72,7 @@ void MarkingTopDownPropagationGraph::clearForPropagation() {
 
 void MarkingTopDownPropagationGraph::registerForPropagation(Timestamp t,
                                                             VarId id) {
+  assert(id.idType == VarIdType::var);
   if (m_propagatedAt.at(id) == t) {
     return;
   }

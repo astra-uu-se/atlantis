@@ -7,6 +7,7 @@ extern Id NULL_ID;
 
 Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
     : Invariant(NULL_ID), m_A(A), m_X(X), m_localX(), m_b(b) {
+  assert(b.idType == VarIdType::var);
   m_localX.reserve(X.size());
 }
 

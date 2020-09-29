@@ -28,6 +28,7 @@ class Store {
   [[nodiscard]] inline VarId createIntVar(Timestamp t, Int initValue,
                                           Int lowerBound, Int upperBound) {
     VarId newId = VarId(m_intVars.size());
+    assert(newId.idType == VarIdType::var);
     m_intVars.emplace_back(IntVar(t, newId, initValue, lowerBound, upperBound));
     m_intVarIndexMap.push_back(newId);
     return newId;
@@ -42,20 +43,24 @@ class Store {
   [[nodiscard]] inline VarId createIntViewFromPtr(
       std::shared_ptr<IntVarView> ptr) {
     VarId newId = VarId(m_intVarViews.size(), VarIdType::view);
+    assert(newId.idType == VarIdType::view);
     ptr->setId(newId);
     m_intVarViews.push_back(ptr);
     return newId;
   }
   inline IntVar& getIntVar(VarId v) {
+    assert(v.idType == VarIdType::var);
     return m_intVars.at(m_intVarIndexMap.at(v.id));
   }
 
   inline const IntVar& getConstIntVar(VarId v) const {
+    assert(v.idType == VarIdType::var);
     return m_intVars.at(m_intVarIndexMap.at(v.id));
   }
 
-  inline IntVarView& getIntVarView(const VarId i) const {
-    return *(m_intVarViews.at(i.id));
+  inline IntVarView& getIntVarView(const VarId v) const {
+    assert(v.idType == VarIdType::view);
+    return *(m_intVarViews.at(v.id));
   }
 
   inline Invariant& getInvariant(InvariantId& i) const {

@@ -8,7 +8,9 @@
 extern Id NULL_ID;
 
 ElementVar::ElementVar(VarId i, std::vector<VarId> X, VarId b)
-    : Invariant(NULL_ID), m_i(i), m_X(X), m_b(b) {}
+    : Invariant(NULL_ID), m_i(i), m_X(X), m_b(b) {
+  assert(b.idType == VarIdType::var);
+}
 
 void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);

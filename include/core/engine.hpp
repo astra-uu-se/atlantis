@@ -222,6 +222,7 @@ Engine::makeIntVarView(Args&&... args) {
   auto intVarViewPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
   VarId newId = m_store.createIntViewFromPtr(intVarViewPtr);
+  assert(newId.idType == VarIdType::view);
   Timestamp t;
   VarId sourceId = intVarViewPtr->getParentId();
   Int sourceVal, sourceCom;
@@ -237,6 +238,7 @@ Engine::makeIntVarView(Args&&... args) {
     sourceVal = sourceVar.getValue(t);
     sourceCom = sourceVar.getCommittedValue();
   }
+  assert(sourceId.idType == VarIdType::var);
   assert(m_intVarViewSource.size() == newId);
   m_intVarViewSource.push_back(sourceId);
   m_dependantIntVarViews.at(sourceId).push_back(newId);

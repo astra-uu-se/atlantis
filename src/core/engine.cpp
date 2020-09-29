@@ -205,6 +205,7 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   }
   VarId newId =
       m_store.createIntVar(m_currentTime, initValue, lowerBound, upperBound);
+  assert(newId.idType == VarIdType::var);
   m_propGraph.registerVar(newId);
   assert(newId.id == m_dependantIntVarViews.size());
   m_dependantIntVarViews.push_back({});

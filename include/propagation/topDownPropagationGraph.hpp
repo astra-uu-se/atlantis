@@ -23,7 +23,10 @@ class TopDownPropagationGraph : public PropagationGraph {
     void computeWithCycles();
     void computeBundleCycles();
     void computeInvariantFromVariables();
-    size_t getPosition(VarId id) { return m_variablePosition.at(id); }
+    size_t getPosition(VarId id) {
+      assert(id.idType == VarIdType::var);
+      return m_variablePosition.at(id);
+    }
     size_t getPosition(InvariantId id) { return m_invariantPosition.at(id); }
   } m_topology;
 
@@ -32,6 +35,8 @@ class TopDownPropagationGraph : public PropagationGraph {
     PriorityCmp(Topology& t) : topology(t) {}
 
     bool operator()(VarId left, VarId right) {
+      assert(left.idType == VarIdType::var);
+      assert(right.idType == VarIdType::var);
       return topology.getPosition(left) < topology.getPosition(right);
     }
   };
@@ -58,6 +63,7 @@ class TopDownPropagationGraph : public PropagationGraph {
   virtual void registerVar(VarId) override;
 
   size_t getTopologicalKey(VarId id) {
+    assert(id.idType == VarIdType::var);
     return m_topology.m_variablePosition.at(id);
   }
 

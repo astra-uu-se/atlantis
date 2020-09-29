@@ -101,10 +101,12 @@ inline InvariantId BottomUpPropagationGraph::peekInvariantStack() {
 }
 
 inline void BottomUpPropagationGraph::markStable(Timestamp t, VarId v) {
+  assert(v.idType == VarIdType::var);
   varStableAt.at(v) = t;
 }
 
 inline bool BottomUpPropagationGraph::isStable(Timestamp t, VarId v) {
+  assert(v.idType == VarIdType::var);
   return varStableAt.at(v) == t;
 }
 

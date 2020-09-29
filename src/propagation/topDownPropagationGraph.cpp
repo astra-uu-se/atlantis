@@ -14,6 +14,7 @@ TopDownPropagationGraph::TopDownPropagationGraph(size_t expectedSize)
 }
 
 void TopDownPropagationGraph::notifyMaybeChanged(Timestamp t, VarId id) {
+  assert(id.idType == VarIdType::var);
   if (m_varsLastChange.at(id) == t || !isActive(t, id)) {
     return;
   }
@@ -33,6 +34,7 @@ VarId TopDownPropagationGraph::getNextStableVariable(Timestamp) {
 }
 
 void TopDownPropagationGraph::registerVar(VarId id) {
+  assert(id.idType == VarIdType::var);
   PropagationGraph::registerVar(id);  // call parent implementation
   assert(id.id == m_varsLastChange.size());
   m_varsLastChange.push_back(NULL_TIMESTAMP);
