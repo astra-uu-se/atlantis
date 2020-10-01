@@ -42,3 +42,5 @@ src/main
 src/main.dSYM/*
 xcode
 .DS_Store
+.idea
+cmake-build-debug

@@ -165,7 +165,10 @@ void PropagationEngine::beginCommit() {}
 
 void PropagationEngine::endCommit() {
   // Todo: perform top down propagation
-  bottomUpPropagate();
+  {  // Bottom up
+     markPropagationPath();
+     bottomUpPropagate();
+  }
   // propagate();
 }
 
