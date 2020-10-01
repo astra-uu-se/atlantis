@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <vector>
+#include <queue>
 
 #include "core/constraint.hpp"
 #include "core/intVar.hpp"
