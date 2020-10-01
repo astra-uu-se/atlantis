@@ -40,6 +40,8 @@ class Engine {
   std::vector<std::vector<InvariantDependencyData>> m_dependentInvariantData;
 
   Store m_store;
+  void recomputeUsingParent(VarId viewId, IntVar& sourceVar);
+  void recomputeUsingParent(IntVarView& view, IntVar& sourceVar);
 
  public:
   Engine(/* args */);

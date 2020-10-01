@@ -19,6 +19,7 @@ class BottomUpExplorer {
 
   std::vector<VarId> variableStack_;
   size_t varStackIdx_ = 0;
+  std::vector<InvariantId> invariantStack_;
   size_t invariantStackIdx_ = 0;
   std::vector<Timestamp> varStableAt;  // last timestamp when a VarID was
                                        // stable (i.e., will not change)

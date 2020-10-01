@@ -4,7 +4,7 @@
 #include <random>
 #include <vector>
 
-#include "core/engine.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gmock/gmock.h"
@@ -18,12 +18,12 @@ class IntMaxViewTest : public ::testing::Test {
  protected:
   std::mt19937 gen;
 
-  std::unique_ptr<Engine> engine;
+  std::unique_ptr<PropagationEngine> engine;
 
   virtual void SetUp() {
     std::random_device rd;
     gen = std::mt19937(rd());
-    engine = std::make_unique<Engine>();
+    engine = std::make_unique<PropagationEngine>();
   }
 };
 
@@ -64,8 +64,8 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   EXPECT_EQ(engine->getValue(viewOfViewId), Int(5));
 
   engine->beginMove();
-  engine->setValue(a, 1);
-  engine->setValue(b, 1);
+  engine->updateValue(a, 1);
+  engine->updateValue(b, 1);
   engine->endMove();
 
   engine->beginQuery();
@@ -155,10 +155,10 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
 
 
   engine->beginMove();
-  engine->setValue(a, 5);
-  engine->setValue(b, 5);
-  engine->setValue(c, 5);
-  engine->setValue(d, 5);
+  engine->updateValue(a, 5);
+  engine->updateValue(b, 5);
+  engine->updateValue(c, 5);
+  engine->updateValue(d, 5);
   engine->endMove();
 
   engine->beginCommit();

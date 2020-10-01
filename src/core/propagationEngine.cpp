@@ -45,13 +45,21 @@ void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
 void PropagationEngine::registerInvariantDependsOnVar(InvariantId dependent,
                                                       VarId source,
                                                       LocalId localId) {
-  m_propGraph.registerInvariantDependsOnVar(dependent, source);
-  m_dependentInvariantData.at(source).emplace_back(
-      InvariantDependencyData{dependent, localId, NULL_TIMESTAMP});
+  VarId varId = source.idType == VarIdType::var
+    ? source
+    : m_intVarViewSource.at(source);
+  VarId viewId = source.idType == VarIdType::var
+    ? NULL_ID
+    : source;
+  
+  m_propGraph.registerInvariantDependsOnVar(dependent, varId);
+  m_dependentInvariantData.at(varId).emplace_back(
+      InvariantDependencyData{dependent, localId, viewId, NULL_TIMESTAMP});
 }
 
 void PropagationEngine::registerDefinedVariable(VarId dependent,
                                                 InvariantId source) {
+  assert(dependent.idType == VarIdType::var);
   m_propGraph.registerDefinedVariable(dependent, source);
 }
 
