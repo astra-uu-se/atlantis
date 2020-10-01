@@ -5,8 +5,9 @@
 #include <vector>
 
 #include "constraints/allDifferent.hpp"
-#include "core/engine.hpp"
 #include "core/intVar.hpp"
+#include "core/engine.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/tracer.hpp"
 #include "invariants/absDiff.hpp"
 #include "invariants/linear.hpp"
@@ -32,7 +33,7 @@ int main() {
 
 void magicSquare(int n) {
   int n2 = n * n;
-  Engine engine;
+  PropagationEngine engine;
   engine.open();
 
   std::vector<std::vector<VarId>> square;
@@ -62,7 +63,7 @@ void magicSquare(int n) {
 }
 
 int allIntervals(int n) {
-  Engine engine;
+  PropagationEngine engine;
   engine.open();
 
   std::vector<VarId> s_vars;
@@ -88,10 +89,10 @@ int allIntervals(int n) {
 
   std::uniform_int_distribution<> distribution{0, n - 1};
   int nProbes = 0;
-  for (int it = 0; it < 500000; it++) {
+  for (int it = 0; it < 50000; it++) {
     // Probe all swaps
-    for (size_t i = 0; i < n; i++) {
-      for (size_t j = i + 1; j < n; j++) {
+    for (size_t i = 0; i < static_cast<size_t>(n); i++) {
+      for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {
         Int oldI = engine.getValue(s_vars.at(i));
         Int oldJ = engine.getValue(s_vars.at(j));
         engine.beginMove();
@@ -125,7 +126,7 @@ int allIntervals(int n) {
 }
 
 void test() {
-  Engine engine;
+  PropagationEngine engine;
   engine.open();
   VarId a = engine.makeIntVar(1, 1, 1);
   VarId b = engine.makeIntVar(2, 2, 2);

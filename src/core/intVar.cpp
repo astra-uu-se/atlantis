@@ -26,3 +26,12 @@ IntVar::IntVar(Timestamp t, Id t_id, Int initValue, Int t_lowerBound,
         "Lower bound must be smaller than or equal to upper bound");
   }
 }
+
+std::ostream& operator<<(std::ostream& out, IntVar const& var) {
+  out << "IntVar(id: " << var.m_id;
+  out << ",c: " << var.m_value.getCommittedValue();
+  out << ",t: " << var.m_value.getValue(var.m_value.getTmpTimestamp());
+  out << ",ts: " << var.m_value.getTmpTimestamp();
+  out << ")";
+  return out;
+}
