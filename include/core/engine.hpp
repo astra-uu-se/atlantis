@@ -12,17 +12,13 @@
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
-#include "propagation/bottomUpPropagationGraph.hpp"
-#include "propagation/propagationGraph.hpp"
 #include "store/store.hpp"
 
 class Engine {
- private:
+ protected:
   static const size_t ESTIMATED_NUM_OBJECTS = 1000;
 
   Timestamp m_currentTime;
-
-  BottomUpPropagationGraph m_propGraph;
 
   bool m_isOpen = true;
 
@@ -44,43 +40,25 @@ class Engine {
 
   Store m_store;
 
-  void recomputeAndCommit();
-
-  void propagate();
-  void bottomUpPropagate();
-  void recomputeUsingParent(VarId viewId, IntVar& var);
-  void recomputeUsingParent(IntVarView& view, IntVar& var);
-
  public:
   Engine(/* args */);
 
-  void open();
-  void close();
+  virtual ~Engine() = default;
 
-  //--------------------- Notificaion ---------------------
-  /***
-   * @param t the timestamp when the changed happened
-   * @param id the id of the changed variable
-   */
-  void notifyMaybeChanged(Timestamp t, VarId id);
-
-  //--------------------- Move semantics ---------------------
-  void beginMove();
-  void endMove();
-
-  void beginQuery();
-  void endQuery();
-  void query(VarId);
-
-  void beginCommit();
-  void endCommit();
+  virtual void open() = 0;
+  virtual void close() = 0;
 
   //--------------------- Variable ---------------------
   void incValue(Timestamp, VarId, Int inc);
   inline void incValue(VarId v, Int val) { incValue(m_currentTime, v, val); }
 
-  void setValue(Timestamp, VarId, Int val);
-  inline void setValue(VarId v, Int val) { setValue(m_currentTime, v, val); }
+  void updateValue(Timestamp, VarId, Int val);
+  inline void updateValue(VarId v, Int val) {
+    updateValue(m_currentTime, v, val);
+  }
+
+  virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
+
   Int getValue(Timestamp, VarId);
   inline Int getValue(VarId v) { return getValue(m_currentTime, v); }
 
@@ -112,16 +90,6 @@ class Engine {
   }
 
   void commitInvariantIf(Timestamp, InvariantId);
-
-  /**
-   * returns the next dependency at the current timestamp.
-   */
-  VarId getNextDependency(InvariantId);
-
-  /**
-   * Notify an invariant that its current dependency has changed
-   */
-  void notifyCurrentDependencyChanged(InvariantId);
 
   //--------------------- Registration ---------------------
   /**
@@ -167,8 +135,8 @@ class Engine {
    * @param localId the id of the depending variable in the invariant
    * @param data additional data
    */
-  void registerInvariantDependsOnVar(InvariantId dependent, VarId source,
-                                     LocalId localId);
+  virtual void registerInvariantDependsOnVar(InvariantId dependent,
+                                             VarId source, LocalId localId) = 0;
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
@@ -177,12 +145,13 @@ class Engine {
    * @param source the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariable(VarId dependent, InvariantId source);
+  virtual void registerDefinedVariable(VarId dependent, InvariantId source) = 0;
+
+  virtual void registerVar(VarId) = 0;
+  virtual void registerInvariant(InvariantId) = 0;
 
   const Store& getStore();
   Timestamp getCurrentTime();
-
-  BottomUpPropagationGraph& getPropGraph();
 };
 
 template <class T, typename... Args>
@@ -194,7 +163,8 @@ Engine::makeInvariant(Args&&... args) {
   auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
   auto newId = m_store.createInvariantFromPtr(invariantPtr);
-  m_propGraph.registerInvariant(newId);
+  registerInvariant(newId);
+//  std::cout << "Created new invariant with id: " << newId << "\n";
   invariantPtr->init(m_currentTime, *this);
   return invariantPtr;
 }
@@ -208,7 +178,8 @@ Engine::makeConstraint(Args&&... args) {
   auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
   auto newId = m_store.createInvariantFromPtr(constraintPtr);
-  m_propGraph.registerInvariant(newId);
+  registerInvariant(newId);
+//  std::cout << "Created new Constraint with id: " << newId << "\n";
   constraintPtr->init(m_currentTime, *this);
   return constraintPtr;
 }
@@ -250,7 +221,6 @@ Engine::makeIntVarView(Args&&... args) {
 
 inline const Store& Engine::getStore() { return m_store; }
 inline Timestamp Engine::getCurrentTime() { return m_currentTime; }
-inline BottomUpPropagationGraph& Engine::getPropGraph() { return m_propGraph; }
 
 inline Int Engine::getCommittedValue(VarId v) {
   if (v.idType == VarIdType::var) {
@@ -300,16 +270,16 @@ inline void Engine::recompute(Timestamp t, InvariantId id) {
   return m_store.getInvariant(id).recompute(t, *this);
 }
 
-inline void Engine::setValue(Timestamp t, VarId v, Int val) {
+inline void Engine::updateValue(Timestamp t, VarId v, Int val) {
   assert(v.idType == VarIdType::var);
   m_store.getIntVar(v).setValue(t, val);
-  notifyMaybeChanged(t, v);
+  this->notifyMaybeChanged(t, v);
 }
 
 inline void Engine::incValue(Timestamp t, VarId v, Int inc) {
   assert(v.idType == VarIdType::var);
   m_store.getIntVar(v).incValue(t, inc);
-  notifyMaybeChanged(t, v);
+  this->notifyMaybeChanged(t, v);
 }
 
 inline void Engine::commit(VarId v) {
@@ -353,16 +323,4 @@ inline void Engine::commitValue(VarId v, Int val) {
 
 inline void Engine::commitInvariantIf(Timestamp t, InvariantId id) {
   m_store.getInvariant(id).commit(t, *this);
-}
-
-inline VarId Engine::getNextDependency(InvariantId inv) {
-  VarId varId = m_store.getInvariant(inv).getNextDependency(m_currentTime, *this);
-  if (varId.idType == VarIdType::var) {
-    return varId;
-  }
-  return m_intVarViewSource.at(varId);
-}
-inline void Engine::notifyCurrentDependencyChanged(InvariantId inv) {
-  m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime,
-                                                           *this);
 }

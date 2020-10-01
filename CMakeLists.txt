@@ -3,6 +3,7 @@
 
 cmake_minimum_required(VERSION 3.0)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PROJECT_NAME cbls)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
@@ -35,7 +36,7 @@ set(PROJECT_LIB ${PROJECT_NAME}_lib)
 include_directories(${COMMON_INCLUDES})
 
 # Retrieve all cpp, hpp, and h files in ./src
-file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/src/*.h ${PROJECT_SOURCE_DIR}/src/*.hpp)
+file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/include/*.h ${PROJECT_SOURCE_DIR}/include/*.hpp)
 # remove main from the src files
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/main.cpp)
 

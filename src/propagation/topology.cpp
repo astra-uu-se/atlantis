@@ -1,8 +1,8 @@
-#include "propagation/topDownPropagationGraph.hpp"
-
 #include <functional>
+#include <queue>
 
 #include "exceptions/exceptions.hpp"
+<<<<<<< HEAD:src/propagation/topDownPropagationGraph.cpp
 
 TopDownPropagationGraph::TopDownPropagationGraph(size_t expectedSize)
     : PropagationGraph(expectedSize),
@@ -86,11 +86,14 @@ void TopDownPropagationGraph::Topology::computeNoCycles() {
   }
 }
 
+=======
+#include "propagation/propagationGraph.hpp"
+>>>>>>> develop:src/propagation/topology.cpp
 /**
  * Throws an exception if the graph has cycles.
  * Uses different key-domains for variables and invariants.
  */
-void TopDownPropagationGraph::Topology::computeNoCyclesException() {
+void PropagationGraph::Topology::computeNoCycles() {
   std::vector<bool> tmpVisited;
   std::vector<bool> visited;
   tmpVisited.resize(graph.m_numVariables + 1, false);
@@ -146,7 +149,7 @@ void TopDownPropagationGraph::Topology::computeNoCyclesException() {
  * Gives different key-domains to Variables and invariants.
  * That is, the key of invariants cannot be compared with variables.
  */
-void TopDownPropagationGraph::Topology::computeWithCycles() {
+void PropagationGraph::Topology::computeWithCycles() {
   std::vector<bool> visited;
   visited.resize(graph.m_numVariables + 1, false);
 
@@ -189,89 +192,11 @@ void TopDownPropagationGraph::Topology::computeWithCycles() {
   computeInvariantFromVariables();
 }
 
-void TopDownPropagationGraph::Topology::computeBundleCycles() {
-  m_variablePosition.resize(graph.m_numVariables + 1, 0);
-
-  std::vector<bool> isPartOfCycle;
-  isPartOfCycle.resize(graph.m_numVariables + 1, false);
-
-  std::vector<bool> tmpMark;
-  tmpMark.resize(graph.m_numVariables + 1, false);
-
-  std::function<bool(VarId, VarId)> detectCycle = [&](VarId target,
-                                                      VarId current) {
-    if (tmpMark.at(current) || isPartOfCycle.at(target)) {
-      return false;
-    }
-    tmpMark.at(current) = true;
-    bool inCycle = false;
-    for (auto invariant : graph.m_listeningInvariants.at(current)) {
-      // for each variable defined by that invariant
-      for (auto dependentVariable :
-           graph.m_variablesDefinedByInvariant.at(invariant)) {
-        if (dependentVariable.id == target.id) {
-          isPartOfCycle.at(target) = true;
-          inCycle = true;
-        } else {
-          inCycle |= detectCycle(target, dependentVariable);
-        }
-      }
-    }
-    isPartOfCycle.at(current) = isPartOfCycle.at(current) || inCycle;
-    // Remove mark from node so that it can be visited in different recursion.
-    tmpMark.at(current) = false;
-    return inCycle;
-  };
-
-  std::function<void(VarId, size_t)> visit = [&](VarId id, size_t pos) {
-    // This ensure that position = max(currentPos, pos)
-    if (m_variablePosition.at(id) >= pos) {
-      return;
-    }
-    m_variablePosition.at(id) = pos;
-    tmpMark.at(id) = true;
-
-    for (auto invariant : graph.m_listeningInvariants.at(id)) {
-      // for each variable defined by that invariant
-      for (auto dependentVariable :
-           graph.m_variablesDefinedByInvariant.at(invariant)) {
-        if (!tmpMark.at(dependentVariable)) {
-          size_t nextPos = pos + ((isPartOfCycle.at(id) &&
-                                           isPartOfCycle.at(dependentVariable)
-                                       ? 0
-                                       : 1));
-          visit(dependentVariable, nextPos);
-        }
-      }
-    }
-    tmpMark.at(id) = false;
-    return;
-  };
-
-  for (size_t i = 0; i < graph.m_numVariables + 1; i++) {
-    if (i == NULL_ID) {  // Skip nullVar if any.
-      continue;
-    }
-    detectCycle(VarId(i), VarId(i));
-  }
-
-  // Call visit on all top variables
-  for (size_t i = 0; i < graph.m_numVariables + 1; i++) {
-    if (i == NULL_ID) {  // Skip nullVar if any.
-      continue;
-    }
-    if (graph.m_definingInvariant.at(i).id == NULL_ID) {
-      visit(VarId(i), 1);
-    }
-  }
-  computeInvariantFromVariables();
-}
-
 /**
  * Computes a topology from the current topology of variables.
  * Notes that this gives different key-domains to Variables and invariants.
  */
-void TopDownPropagationGraph::Topology::computeInvariantFromVariables() {
+void PropagationGraph::Topology::computeInvariantFromVariables() {
   m_invariantPosition.resize(graph.m_numInvariants + 1, 0);
   for (size_t i = 0; i < graph.m_numInvariants + 1; i++) {
     if (i == NULL_ID) {  // Skip nullVar if any.

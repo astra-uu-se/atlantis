@@ -22,13 +22,13 @@ void Equal::init(Timestamp, Engine& e) {
 }
 
 void Equal::recompute(Timestamp t, Engine& e) {
-  e.setValue(t, m_violationId,
-             std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+  e.updateValue(t, m_violationId,
+                std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int) {
-  e.setValue(t, m_violationId,
-             std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+  e.updateValue(t, m_violationId,
+                std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 VarId Equal::getNextDependency(Timestamp t, Engine&) {
@@ -50,8 +50,8 @@ VarId Equal::getNextDependency(Timestamp t, Engine&) {
 void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   // assert(newValue != oldValue);
-  e.setValue(t, m_violationId,
-             std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+  e.updateValue(t, m_violationId,
+                std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 void Equal::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

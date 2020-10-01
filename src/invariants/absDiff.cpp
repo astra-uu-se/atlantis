@@ -20,11 +20,11 @@ void AbsDiff::init([[maybe_unused]] Timestamp t, Engine& e) {
 }
 
 void AbsDiff::recompute(Timestamp t, Engine& e) {
-  e.setValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
+  e.updateValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 
 void AbsDiff::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int) {
-  e.setValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
+  e.updateValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 
 VarId AbsDiff::getNextDependency(Timestamp t, Engine&) {
@@ -41,7 +41,7 @@ VarId AbsDiff::getNextDependency(Timestamp t, Engine&) {
 
 void AbsDiff::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) <= 2);
-  e.setValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
+  e.updateValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 
 void AbsDiff::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
