@@ -214,6 +214,7 @@ Engine::makeIntVarView(Args&&... args) {
   }
   assert(sourceId.idType == VarIdType::var);
   assert(m_intVarViewSource.size() == newId);
+  assert(m_dependantIntVarViews.size() >= sourceId);
   m_intVarViewSource.push_back(sourceId);
   m_dependantIntVarViews.at(sourceId).push_back(newId);
   intVarViewPtr->init(t, *this, sourceVal, sourceCom);
@@ -224,6 +225,10 @@ Engine::makeIntVarView(Args&&... args) {
 
 inline const Store& Engine::getStore() { return m_store; }
 inline Timestamp Engine::getCurrentTime() { return m_currentTime; }
+
+inline void Engine::recomputeUsingParent(VarId viewId, IntVar& variable) {
+  recomputeUsingParent(m_store.getIntVarView(viewId), variable);
+}
 
 inline Int Engine::getCommittedValue(VarId v) {
   if (v.idType == VarIdType::var) {

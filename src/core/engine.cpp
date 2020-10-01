@@ -84,5 +84,7 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   registerVar(newId);
   assert(newId.id == m_dependentInvariantData.size());
   m_dependentInvariantData.push_back({});
+  assert(newId.id == m_dependantIntVarViews.size());
+  m_dependantIntVarViews.push_back({});
   return newId;
 }

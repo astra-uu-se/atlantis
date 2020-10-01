@@ -30,6 +30,7 @@ void BottomUpExplorer::expandInvariant(InvariantId inv) {
   assert(nextVar.id !=
          NULL_ID);  // Invariant must have at least one dependency, and this
                     // should be the first (and only) time we expand it
+  assert(nextVar.idType == VarIdType::var);
   pushVariableStack(nextVar);
   pushInvariantStack(inv);
 }

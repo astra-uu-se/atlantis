@@ -161,27 +161,26 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
   engine->updateValue(d, 5);
   engine->endMove();
 
+  EXPECT_EQ(engine->getValue(a), Int(5));
+  EXPECT_EQ(engine->getValue(b), Int(5));
+  EXPECT_EQ(engine->getValue(c), Int(5));
+  EXPECT_EQ(engine->getValue(d), Int(5));
+
   engine->beginCommit();
-  engine->query(sum1ViewId);
-  engine->query(sum2ViewId);
+  engine->query(sum1);
+  engine->query(sum2);
   engine->query(sum3);
-  engine->query(sum3viewIds[9]);
   engine->endCommit();
 
-  EXPECT_EQ(engine->getCommittedValue(a), Int(5));
-  EXPECT_EQ(engine->getCommittedValue(b), Int(5));
-  EXPECT_EQ(engine->getCommittedValue(c), Int(5));
-  EXPECT_EQ(engine->getCommittedValue(d), Int(5));
-
   // a + b = 5 + 5 = sum1 = 10
-  EXPECT_EQ(engine->getCommittedValue(sum1), Int(10));
+  EXPECT_EQ(engine->getValue(sum1), Int(10));
   // c + d = 5 + 5 = sum2 = 10
-  EXPECT_EQ(engine->getCommittedValue(sum2), Int(10));
+  EXPECT_EQ(engine->getValue(sum2), Int(10));
 
   // sum1 = 10 -> sum1View = min(20, 10) = 10
-  EXPECT_EQ(engine->getCommittedValue(sum1ViewId), Int(10));
+  EXPECT_EQ(engine->getValue(sum1ViewId), Int(10));
   // sum2 = 10 -> sum2View = min(20, 10) = 10
-  EXPECT_EQ(engine->getCommittedValue(sum2ViewId), Int(10));
+  EXPECT_EQ(engine->getValue(sum2ViewId), Int(10));
   
 
   // sum3 = sum1view + sum2view = 10 + 19 = 20
@@ -227,7 +226,7 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
   */
   // These two lines should not be needed!
   
-  EXPECT_EQ(engine->getCommittedValue(sum3), Int(20));
+  EXPECT_EQ(engine->getValue(sum3), Int(20));
   
   for (size_t i = 0; i < sum3viewIds.size(); ++i) {
     // IntMaxView sum3viewIds[i] = 
@@ -235,7 +234,7 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
     //   * min(25-i, sum3viewIds[i-1]) otherwise
     // should be 25 for the first 6, then
     // [19, 18, 17, 16]
-    EXPECT_EQ(engine->getCommittedValue(sum3viewIds[i]), std::min(Int(25 - i), Int(20)));
+    EXPECT_EQ(engine->getValue(sum3viewIds[i]), std::min(Int(25 - i), Int(20)));
   }
 
 }

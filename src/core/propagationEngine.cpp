@@ -32,11 +32,7 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
-  //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
-  if (m_isEnqueued.at(id)) {
-    //    std::cout << "\t\t\talready enqueued\n";
-    return;
-  }
+  assert(id.idType == VarIdType::var);
   //  std::cout << "\t\t\tpushed on stack\n";
   m_modifiedVariables.push(id);
   m_isEnqueued.at(id) = true;
@@ -64,8 +60,11 @@ void PropagationEngine::registerDefinedVariable(VarId dependent,
 }
 
 void PropagationEngine::registerVar(VarId v) {
-  m_propGraph.registerVar(v);
-  m_bottomUpExplorer.registerVar(v);
+  VarId varId = v.idType == VarIdType::var
+    ? v
+    : m_intVarViewSource.at(v);
+  m_propGraph.registerVar(varId);
+  m_bottomUpExplorer.registerVar(varId);
   m_isEnqueued.push_back(false);
   m_varIsOnPropagationPath.push_back(false);
 }
@@ -111,9 +110,14 @@ void PropagationEngine::recomputeAndCommit() {
     }
     for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd();
          ++iter) {
-      if (iter->hasChanged(m_currentTime)) {
-        done = false;
-        iter->commit();
+      if (!iter->hasChanged(m_currentTime)) {
+        continue;
+      }
+      done = false;
+      iter->commit();
+      assert(iter->getTmpTimestamp() == m_currentTime);
+      for (VarId viewId : m_dependantIntVarViews.at(iter->getId())) {
+        recomputeUsingParent(viewId, (*iter));
       }
     }
   }
@@ -139,7 +143,10 @@ void PropagationEngine::endMove() {}
 void PropagationEngine::beginQuery() {}
 
 void PropagationEngine::query(VarId id) {
-  m_bottomUpExplorer.registerForPropagation(m_currentTime, id);
+  m_bottomUpExplorer.registerForPropagation(
+    m_currentTime,
+    id.idType == VarIdType::var ? id : m_intVarViewSource.at(id)
+  );
 }
 
 void PropagationEngine::endQuery() {
@@ -180,6 +187,7 @@ void PropagationEngine::markPropagationPath() {
     m_varIsOnPropagationPath.at(currentVar) = true;
     for (auto& depInv : m_dependentInvariantData.at(currentVar)) {
       for (VarId depVar : m_propGraph.getVariablesDefinedBy(depInv.id)) {
+        assert(depVar.idType == VarIdType::var);
         if (!m_varIsOnPropagationPath.at(depVar)) {
           m_propagationPathQueue.push(depVar);
         }
@@ -199,24 +207,29 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
   // std::cout<< "Starting propagation\n";
-  VarId id = getNextStableVariable(m_currentTime);
-  while (id.id != NULL_ID) {
+  
+  for (VarId id = getNextStableVariable(m_currentTime);
+        id.id != NULL_ID;
+        id = getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(id);
     // std::cout<< "\tPropagating" << variable << "\n";
-    if (variable.hasChanged(m_currentTime)) {
-      for (auto& toNotify : m_dependentInvariantData.at(id)) {
-        // Also, do not notify invariants that are not active.
-        if (!isOnPropagationPath(m_currentTime, toNotify.id)) {
-          continue;
-        }
-        // std::cout<< "\t\tNotifying invariant:" << toNotify.id << "\n";
-        m_store.getInvariant(toNotify.id)
-            .notifyIntChanged(m_currentTime, *this, toNotify.localId,
-                              variable.getValue(m_currentTime));
-        toNotify.lastNotification = m_currentTime;
-      }
+    if (!variable.hasChanged(m_currentTime)) {
+      continue;
     }
-    id = getNextStableVariable(m_currentTime);
+    for (auto viewId : m_dependantIntVarViews.at(id)) {
+      recomputeUsingParent(viewId, variable);
+    }
+    for (auto& toNotify : m_dependentInvariantData.at(id)) {
+      // Also, do not notify invariants that are not active.
+      if (!isOnPropagationPath(m_currentTime, toNotify.id)) {
+        continue;
+      }
+      // std::cout<< "\t\tNotifying invariant:" << toNotify.id << "\n";
+      m_store.getInvariant(toNotify.id)
+          .notifyIntChanged(m_currentTime, *this, toNotify.localId,
+                            variable.getValue(m_currentTime));
+      toNotify.lastNotification = m_currentTime;
+    }
   }
   //  std::cout<< "Propagation done\n";
 }

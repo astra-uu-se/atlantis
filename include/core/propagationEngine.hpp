@@ -122,7 +122,10 @@ inline const std::vector<VarId>& PropagationEngine::getVariablesDefinedBy(
 }
 
 inline VarId PropagationEngine::getNextDependency(InvariantId inv) {
-  return m_store.getInvariant(inv).getNextDependency(m_currentTime, *this);
+  VarId id = m_store.getInvariant(inv).getNextDependency(m_currentTime, *this);
+  return id.idType == VarIdType::var
+    ? id
+    : m_intVarViewSource.at(id);
 }
 inline void PropagationEngine::notifyCurrentDependencyChanged(InvariantId inv) {
   m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime,
@@ -130,6 +133,7 @@ inline void PropagationEngine::notifyCurrentDependencyChanged(InvariantId inv) {
 }
 
 inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
+  assert(v.idType == VarIdType::var);
   m_store.getIntVar(v).setValue(t, val);
   notifyMaybeChanged(t, v);
 }
