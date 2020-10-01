@@ -56,7 +56,7 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
     c.setValue(t, 0);
   }
 
-  e.setValue(t, m_violationId, 0);
+  e.updateValue(t, m_violationId, 0);
 
   for (size_t i = 0; i < m_variables.size(); ++i) {
     increaseCount(t, e, e.getValue(t, m_variables[i]));
@@ -67,7 +67,8 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
 void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id,
                                     Int newValue) {
   Int oldValue = m_localValues.at(id).getValue(t);
-  assert(newValue != oldValue);
+  assert(newValue != oldValue); // Actually this assert is wrong and should be replaced by an if(...) return;
+                                // Only keeping it becuase it helps catch bugs before we have an example with cycles.
   decreaseCount(t, e, oldValue);
   increaseCount(t, e, newValue);
   m_localValues.at(id).setValue(t, newValue);

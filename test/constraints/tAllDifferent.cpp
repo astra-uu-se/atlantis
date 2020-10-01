@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "constraints/allDifferent.hpp"
-#include "core/engine.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
@@ -16,7 +16,7 @@ class AllDifferentTest : public ::testing::Test {
   virtual void SetUp() {
     std::random_device rd;
     gen = std::mt19937(rd());
-    e = std::make_unique<Engine>();
+    e = std::make_unique<PropagationEngine>();
     e->open();
     a = e->makeIntVar(1, -100, 100);
     b = e->makeIntVar(2, -100, 100);
@@ -27,7 +27,7 @@ class AllDifferentTest : public ::testing::Test {
         violationId, std::vector<VarId>({a, b, c}));
     e->close();
   }
-  std::unique_ptr<Engine> e;
+  std::unique_ptr<PropagationEngine> e;
   VarId violationId = NULL_ID;
   VarId a = NULL_ID;
   VarId b = NULL_ID;
@@ -51,12 +51,12 @@ TEST_F(AllDifferentTest, Recompute) {
 
   Timestamp newTime = 1;
 
-  e->setValue(newTime, c, 3);
+  e->updateValue(newTime, c, 3);
   allDifferent->recompute(newTime, *e);
   EXPECT_EQ(e->getCommittedValue(violationId), 1);
   EXPECT_EQ(e->getValue(newTime, violationId), 0);
 
-  e->setValue(newTime, a, 2);
+  e->updateValue(newTime, a, 2);
   allDifferent->recompute(newTime, *e);
   EXPECT_EQ(e->getCommittedValue(violationId), 1);
   EXPECT_EQ(e->getValue(newTime, violationId), 1);
@@ -68,13 +68,13 @@ TEST_F(AllDifferentTest, NotifyChange) {
   Timestamp time1 = 1;
 
   EXPECT_EQ(e->getValue(time1, a), 1);
-  e->setValue(time1, a, 2);
+  e->updateValue(time1, a, 2);
   EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time1, a), 2);
   allDifferent->notifyIntChanged(time1, *e, 0, e->getValue(time1, a));
   EXPECT_EQ(e->getValue(time1, violationId), 2);
 
-  e->setValue(time1, b, 3);
+  e->updateValue(time1, b, 3);
   allDifferent->notifyIntChanged(time1, *e, 1, e->getValue(time1, b));
   auto tmpValue = e->getValue(time1, violationId);
 
@@ -85,7 +85,7 @@ TEST_F(AllDifferentTest, NotifyChange) {
   Timestamp time2 = time1 + 1;
 
   EXPECT_EQ(e->getValue(time2, b), 2);
-  e->setValue(time2, b, 20);
+  e->updateValue(time2, b, 20);
   EXPECT_EQ(e->getCommittedValue(b), 2);
   EXPECT_EQ(e->getValue(time2, b), 20);
   allDifferent->notifyIntChanged(time2, *e, 1, e->getValue(time2, b));
@@ -108,8 +108,8 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
               1);  // violationId is commited by register.
 
     // Set all variables
-    e->setValue(currentTime, a, distribution(gen));
-    e->setValue(currentTime, b, distribution(gen));
+    e->updateValue(currentTime, a, distribution(gen));
+    e->updateValue(currentTime, b, distribution(gen));
 
     // notify changes
     if (e->getCommittedValue(a) != e->getValue(currentTime, a)) {

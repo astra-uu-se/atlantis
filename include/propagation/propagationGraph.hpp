@@ -3,7 +3,6 @@
 #include <assert.h>
 
 #include <memory>
-#include <queue>
 #include <vector>
 
 #include "../core/types.hpp"
@@ -39,29 +38,52 @@ class PropagationGraph {
   std::vector<bool> m_isOutputVar;
   std::vector<bool> m_isInputVar;
 
+  struct Topology {
+    std::vector<size_t> m_variablePosition;
+    std::vector<size_t> m_invariantPosition;
+
+    PropagationGraph& graph;
+    Topology() = delete;
+    Topology(PropagationGraph& g) : graph(g) {}
+    void computeNoCycles();
+    void computeWithCycles();
+    void computeInvariantFromVariables();
+    inline size_t getPosition(VarId id) { return m_variablePosition.at(id); }
+    inline size_t getPosition(InvariantId id) {
+      return m_invariantPosition.at(id);
+    }
+  } m_topology;
+
+  friend class PropagationEngine;
+
+  struct PriorityCmp {
+    PropagationGraph& graph;
+    PriorityCmp(PropagationGraph& g) : graph(g) {}
+    bool operator()(VarId left, VarId right) {
+      return graph.m_topology.getPosition(left) >
+             graph.m_topology.getPosition(right);
+    }
+  };
+
  public:
   PropagationGraph() : PropagationGraph(1000) {}
   PropagationGraph(size_t expectedSize);
-
-  virtual ~PropagationGraph(){};
-
-  virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
 
   /**
    * update internal datastructures based on currently registered  variables and
    * invariants.
    */
-  virtual void close();
+  void close();
 
   /**
    * Register an invariant in the propagation graph.
    */
-  virtual void registerInvariant(InvariantId);
+  void registerInvariant(InvariantId);
 
   /**
    * Register a variable in the propagation graph.
    */
-  virtual void registerVar(VarId);
+  void registerVar(VarId);
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
@@ -79,36 +101,6 @@ class PropagationGraph {
    */
   void registerDefinedVariable(VarId depends, InvariantId source);
 
-  // todo: Maybe there is a better word than "active", like "relevant".
-  // --------------------- Activity ----------------
-  /**
-   * returns true if variable id is relevant for propagation.
-   * Note that this is not the same thing as the variable being modified.
-   */
-  virtual bool isActive([[maybe_unused]] Timestamp t,
-                        [[maybe_unused]] VarId id) {
-    return true;
-  }
-  /**
-   * returns true if invariant id is relevant for propagation.
-   * Note that this is not the same thing as the invariant being modified.
-   */
-  virtual bool isActive([[maybe_unused]] Timestamp t,
-                        [[maybe_unused]] InvariantId id) {
-    return true;
-  }
-
-  /**
-   * A stable variable is a variable that has been modified at timestamp t,
-   * but will not be modified again (as all parent nodes are already up to
-   * date).
-   *
-   * The variable returned by this method will be considered up to date for the
-   * current timestamp.
-   */
-  [[nodiscard]] virtual VarId getNextStableVariable([
-      [maybe_unused]] Timestamp t) = 0;
-
   inline size_t getNumVariables() {
     return m_numVariables;  // this ignores null var
   }
@@ -121,7 +113,13 @@ class PropagationGraph {
 
   inline bool isInputVar(VarId id) { return m_isInputVar.at(id); }
 
-  inline const std::vector<VarId>& variablesDefinedBy(InvariantId inv) const {
+  inline InvariantId getDefiningInvariant(VarId v) {
+    // Returns NULL_ID is not defined.
+    return m_definingInvariant.at(v);
+  }
+
+  inline const std::vector<VarId>& getVariablesDefinedBy(
+      InvariantId inv) const {
     return m_variablesDefinedByInvariant.at(inv);
   }
 };
