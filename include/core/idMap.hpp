@@ -8,7 +8,7 @@
 // TODO: do template specialisation for when T is also an ID so that NULL_ID is
 // then the default pushed into the stack and delete the default constructors
 // for IDs
-template <typename T, typename I>
+template <typename I, typename T>
 class IdMap {
  private:
   std::vector<T> m_vector;

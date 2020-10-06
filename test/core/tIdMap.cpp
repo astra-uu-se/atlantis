@@ -22,7 +22,7 @@ class IdMapTest : public ::testing::Test {
  */
 
 TEST_F(IdMapTest, ID2IDtest) {
-  IdMap<VarId, InvariantId> invToVar(10000);
+  IdMap<InvariantId, VarId> invToVar(10000);
 
   InvariantId id1(1);
   InvariantId id2(2);
