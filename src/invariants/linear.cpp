@@ -29,7 +29,7 @@ void Linear::recompute(Timestamp t, Engine& e) {
     m_localX.at(i).commitValue(e.getCommittedValue(m_X[i]));
     m_localX.at(i).setValue(t, e.getValue(m_X[i]));
   }
-  e.setValue(t, m_b, sum);
+  e.updateValue(t, m_b, sum);
   // m_state.setValue(t, m_X.size());  // Not clear if we actually need to reset
   // this.
 }

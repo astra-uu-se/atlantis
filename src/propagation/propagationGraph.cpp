@@ -4,10 +4,11 @@
 #include <functional>
 
 #include "exceptions/exceptions.hpp"
+#include "topology.cpp"
 extern Id NULL_ID;
 
 PropagationGraph::PropagationGraph(size_t expectedSize)
-    : m_numInvariants(0), m_numVariables(0) {
+    : m_numInvariants(0), m_numVariables(0), m_topology(*this) {
   m_definingInvariant.reserve(expectedSize);
   m_variablesDefinedByInvariant.reserve(expectedSize);
   m_inputVariables.reserve(expectedSize);
@@ -20,7 +21,7 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
   m_listeningInvariants.push_back({});
 }
 
-void PropagationGraph::registerInvariant(InvariantId id) {
+void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   // Everything must be registered in sequence.
   assert(id.id == m_variablesDefinedByInvariant.size());
   m_variablesDefinedByInvariant.push_back({});
@@ -29,7 +30,7 @@ void PropagationGraph::registerInvariant(InvariantId id) {
   ++m_numInvariants;
 }
 
-void PropagationGraph::registerVar(VarId id) {
+void PropagationGraph::registerVar([[maybe_unused]] VarId id) {
   assert(id.id == m_listeningInvariants.size());
   assert(id.id == m_definingInvariant.size());
   m_listeningInvariants.push_back({});
@@ -65,4 +66,7 @@ void PropagationGraph::close() {
     m_isOutputVar.at(i) = (m_listeningInvariants.at(i).size() == 0);
     m_isInputVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
   }
+
+  m_topology.computeWithCycles();
+//  m_topology.computeNoCycles();
 }
