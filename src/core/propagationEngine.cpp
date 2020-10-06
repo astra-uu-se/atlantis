@@ -158,6 +158,7 @@ void PropagationEngine::endQuery() {
      bottomUpPropagate();
   }
   // We must always clear due to the current version of query()
+  // TODO: Why must we always clear again?
   m_bottomUpExplorer.clearRegisteredVariables();
 }
 
@@ -170,6 +171,8 @@ void PropagationEngine::endCommit() {
      bottomUpPropagate();
   }
   // propagate();
+  // TODO: Do we need to clear here? We supposedly need to clear in Query at least...
+  m_bottomUpExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::markPropagationPath() {
