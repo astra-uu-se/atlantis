@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../core/types.hpp"
+#include "core/idMap.hpp"
 
 class PropagationGraph {
  protected:
@@ -17,23 +18,23 @@ class PropagationGraph {
    *
    * Maps to nullptr if not defined by any invariant.
    */
-  std::vector<InvariantId> m_definingInvariant;
+  IdMap<VarId, InvariantId> m_definingInvariant;
 
   /**
    * Map from InvariantId -> list of VarID
    *
    * Maps an invariant to all variables it defines.
    */
-  std::vector<std::vector<VarId>> m_variablesDefinedByInvariant;
+  IdMap<InvariantId, std::vector<VarId>> m_variablesDefinedByInvariant;
   /**
    * Map from InvariantId -> list of VarID
    *
    * Maps an invariant to all variables it depends on (its inputs).
    */
-  std::vector<std::vector<VarId>> m_inputVariables;
+  IdMap<InvariantId, std::vector<VarId>> m_inputVariables;
 
   // Map from VarID -> vector of InvariantID
-  std::vector<std::vector<InvariantId>> m_listeningInvariants;
+  IdMap<InvariantId, std::vector<InvariantId>> m_listeningInvariants;
 
   std::vector<bool> m_isOutputVar;
   std::vector<bool> m_isInputVar;
