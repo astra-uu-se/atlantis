@@ -35,19 +35,19 @@ TEST_F(IdMapTest, ID2IDtest) {
   VarId data4(14);
   invToVar.register_idx(id1);
   invToVar.register_idx(id2);
-  invToVar.at(id2) = data2;
-  EXPECT_EQ(invToVar.at(id2), data2);
+  invToVar[id2] = data2;
+  EXPECT_EQ(invToVar[id2], data2);
   invToVar.register_idx(id3);
   invToVar.register_idx(id4);
-  invToVar.at(id1) = data1;
-  invToVar.at(id2) = data1;  // intentional
-  invToVar.at(id3) = data3;
-  invToVar.at(id4) = data4;
+  invToVar[id1] = data1;
+  invToVar[id2] = data1;  // intentional
+  invToVar[id3] = data3;
+  invToVar[id4] = data4;
 
-  EXPECT_EQ(invToVar.at(id1), data1);
-  EXPECT_EQ(invToVar.at(id2), data1);  // intentional
-  EXPECT_EQ(invToVar.at(id3), data3);
-  EXPECT_EQ(invToVar.at(id4), data4);
+  EXPECT_EQ(invToVar[id1], data1);
+  EXPECT_EQ(invToVar[id2], data1);  // intentional
+  EXPECT_EQ(invToVar[id3], data3);
+  EXPECT_EQ(invToVar[id4], data4);
 }
 
 TEST_F(IdMapTest, ID2Vectortest) {
@@ -60,10 +60,10 @@ TEST_F(IdMapTest, ID2Vectortest) {
   // values to store
   varToVector.register_idx(id1);
   varToVector.register_idx(id2);
-  varToVector.at(id2).push_back(VarId(21));
-  varToVector.at(id2).push_back(VarId(22));
-  EXPECT_EQ(varToVector.at(id2).size(), 2);
-  EXPECT_EQ(varToVector.at(id1).size(), 0);
+  varToVector[id2].push_back(VarId(21));
+  varToVector[id2].push_back(VarId(22));
+  EXPECT_EQ(varToVector[id2].size(), 2);
+  EXPECT_EQ(varToVector[id1].size(), 0);
 }
 
 }  // namespace
