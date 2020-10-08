@@ -28,7 +28,7 @@ class IdMap {
     if (static_cast<size_t>(idx.id) != m_vector.size() + 1) {
       throw OutOfOrderIndexRegistration();
     }
-    m_vector.push_back(T());
+    m_vector.emplace_back(T());
   }
 
   void print() {

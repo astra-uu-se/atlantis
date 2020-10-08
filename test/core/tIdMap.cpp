@@ -50,4 +50,20 @@ TEST_F(IdMapTest, ID2IDtest) {
   EXPECT_EQ(invToVar.at(id4), data4);
 }
 
+TEST_F(IdMapTest, ID2Vectortest) {
+  IdMap<VarId, std::vector<VarId>> varToVector(10000);
+
+  VarId id1(1);
+  VarId id2(2);
+  VarId id3(3);
+  VarId id4(4);
+  // values to store
+  varToVector.register_idx(id1);
+  varToVector.register_idx(id2);
+  varToVector.at(id2).push_back(VarId(21));
+  varToVector.at(id2).push_back(VarId(22));
+  EXPECT_EQ(varToVector.at(id2).size(), 2);
+  EXPECT_EQ(varToVector.at(id1).size(), 0);
+}
+
 }  // namespace
