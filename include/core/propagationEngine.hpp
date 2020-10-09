@@ -8,6 +8,10 @@
 #include "propagation/propagationGraph.hpp"
 
 class PropagationEngine : public Engine {
+ public:
+  enum class PropagationMode { TOP_DOWN, BOTTOM_UP, MIXED };
+  PropagationMode mode;
+
  protected:
   size_t m_numVariables;
 
@@ -23,7 +27,7 @@ class PropagationEngine : public Engine {
   std::queue<VarId> m_propagationPathQueue;
 
   void recomputeAndCommit();
-  
+
   void clearPropagationQueue();
 
   void propagate();
