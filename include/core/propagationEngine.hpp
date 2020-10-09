@@ -24,7 +24,7 @@ class PropagationEngine : public Engine {
   std::queue<VarId> m_propagationPathQueue;
 
   void recomputeAndCommit();
-  
+
   void clearPropagationQueue();
 
   void propagate();
