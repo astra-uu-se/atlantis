@@ -7,6 +7,10 @@
 #include "propagation/propagationGraph.hpp"
 
 class PropagationEngine : public Engine {
+ public:
+  enum class PropagationMode { TOP_DOWN, BOTTOM_UP, MIXED };
+  PropagationMode mode;
+
  protected:
   PropagationGraph m_propGraph;
   BottomUpExplorer m_bottomUpExplorer;
