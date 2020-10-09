@@ -33,24 +33,6 @@ void AllDifferent::init(Timestamp ts, Engine& e) {
   m_offset = lb;
 }
 
-inline void AllDifferent::increaseCount(Timestamp ts, Engine& e, Int value) {
-  Int newCount = m_counts.at(value - m_offset).incValue(ts, 1);
-  assert(newCount >= 0);
-  assert(newCount <= static_cast<Int>(m_variables.size()));
-  if (newCount >= 2) {
-    e.incValue(ts, m_violationId, 1);
-  }
-}
-
-inline void AllDifferent::decreaseCount(Timestamp ts, Engine& e, Int value) {
-  Int newCount = m_counts.at(value - m_offset).incValue(ts, -1);
-  assert(newCount >= 0);
-  assert(newCount <= static_cast<Int>(m_variables.size()));
-  if (newCount >= 1) {
-    e.incValue(ts, m_violationId, -1);
-  }
-}
-
 void AllDifferent::recompute(Timestamp t, Engine& e) {
   for (SavedInt& c : m_counts) {
     c.setValue(t, 0);
