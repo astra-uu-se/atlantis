@@ -3,7 +3,8 @@
 #include <queue>
 
 PropagationEngine::PropagationEngine()
-    : m_propGraph(ESTIMATED_NUM_OBJECTS),
+    : mode(PropagationMode::TOP_DOWN),
+      m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
       m_modifiedVariables(PropagationGraph::PriorityCmp(m_propGraph)),
       m_isEnqueued(),
@@ -131,16 +132,25 @@ void PropagationEngine::endMove() {}
 void PropagationEngine::beginQuery() {}
 
 void PropagationEngine::query(VarId id) {
+  if (mode == PropagationMode::TOP_DOWN) {
+    return;
+  }
   m_bottomUpExplorer.registerForPropagation(m_currentTime, id);
 }
 
 void PropagationEngine::endQuery() {
-  {  // Top down
-    // propagate();
-  }
-  {  // Bottom up
-     markPropagationPath();
-     bottomUpPropagate();
+  switch (mode) {
+    case PropagationMode::TOP_DOWN:
+      propagate();
+      break;
+    case PropagationMode::BOTTOM_UP:
+      markPropagationPath();
+      bottomUpPropagate();
+      break;
+    case PropagationMode::MIXED:
+      markPropagationPath();
+      bottomUpPropagate();
+      break;
   }
   // We must always clear due to the current version of query()
   m_bottomUpExplorer.clearRegisteredVariables();
@@ -149,9 +159,20 @@ void PropagationEngine::endQuery() {
 void PropagationEngine::beginCommit() {}
 
 void PropagationEngine::endCommit() {
-  // Todo: perform top down propagation
-  bottomUpPropagate();
-  // propagate();
+  switch (mode) {
+    case PropagationMode::TOP_DOWN:
+      propagate();
+      break;
+    case PropagationMode::BOTTOM_UP:
+      markPropagationPath();
+      bottomUpPropagate();
+      break;
+    case PropagationMode::MIXED:
+      propagate();
+      break;
+  }
+  // We must always clear due to the current version of query()
+  m_bottomUpExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::markPropagationPath() {
