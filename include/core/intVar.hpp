@@ -71,6 +71,6 @@ class IntVar : public Var {
     m_lowerBound = t_lowerBound;
     m_upperBound = t_upperBound;
   }
-  
-  friend std::ostream& operator<< (std::ostream &out, IntVar const& var);
+
+  friend std::ostream& operator<<(std::ostream& out, IntVar const& var);
 };
