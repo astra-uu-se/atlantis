@@ -46,7 +46,7 @@ class BottomUpExplorer {
 
   void commitAndPostpone(Timestamp, VarId);
 
-public: 
+ public:
   BottomUpExplorer() = delete;
   BottomUpExplorer(PropagationEngine& e, size_t expectedSize);
 
