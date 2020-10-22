@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "constraints/allDifferent.hpp"
-#include "core/intVar.hpp"
 #include "core/engine.hpp"
+#include "core/intVar.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/tracer.hpp"
 #include "invariants/absDiff.hpp"

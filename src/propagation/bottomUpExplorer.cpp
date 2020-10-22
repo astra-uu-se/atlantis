@@ -42,7 +42,7 @@ void BottomUpExplorer::notifyCurrentInvariant() {
 bool BottomUpExplorer::visitNextVariable() {
   popVariableStack();
   VarId nextVar = m_engine.getNextDependency(peekInvariantStack());
-  while(nextVar != NULL_ID && !m_engine.isOnPropagationPath(nextVar)){
+  while (nextVar != NULL_ID && !m_engine.isOnPropagationPath(nextVar)) {
     nextVar = m_engine.getNextDependency(peekInvariantStack());
   }
   if (nextVar.id == NULL_ID) {

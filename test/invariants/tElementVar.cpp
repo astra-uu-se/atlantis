@@ -120,11 +120,26 @@ TEST_F(ElementVarTest, NotificationsChangeIndex) {
 
   engine->close();
 
-  EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(3);
+  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(0);
+    EXPECT_CALL(*invariant,
+                notifyIntChanged(testing::_, testing::_, testing::_, 5))
+        .Times(1);
+  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(3);
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(1);
 
-  EXPECT_CALL(*invariant,
-              notifyCurrentDependencyChanged(testing::_, testing::_))
-      .Times(1);
+    EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, testing::_,
+                                             testing::_))
+        .Times(0);
+  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
+  }
 
   engine->beginMove();
   engine->setValue(idx, 5);

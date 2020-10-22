@@ -3,7 +3,8 @@
 #include <queue>
 
 PropagationEngine::PropagationEngine()
-    : m_propGraph(ESTIMATED_NUM_OBJECTS),
+    : mode(PropagationMode::TOP_DOWN),
+      m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
       m_modifiedVariables(PropagationGraph::PriorityCmp(m_propGraph)),
       m_isEnqueued(),
@@ -41,13 +42,10 @@ void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
 void PropagationEngine::registerInvariantDependsOnVar(InvariantId dependent,
                                                       VarId source,
                                                       LocalId localId) {
-  VarId varId = source.idType == VarIdType::var
-    ? source
-    : m_intVarViewSource.at(source);
-  VarId viewId = source.idType == VarIdType::var
-    ? NULL_ID
-    : source;
-  
+  VarId varId =
+      source.idType == VarIdType::var ? source : m_intVarViewSource.at(source);
+  VarId viewId = source.idType == VarIdType::var ? NULL_ID : source;
+
   m_propGraph.registerInvariantDependsOnVar(dependent, varId);
   m_dependentInvariantData.at(varId).emplace_back(
       InvariantDependencyData{dependent, localId, viewId, NULL_TIMESTAMP});
@@ -60,9 +58,7 @@ void PropagationEngine::registerDefinedVariable(VarId dependent,
 }
 
 void PropagationEngine::registerVar(VarId v) {
-  VarId varId = v.idType == VarIdType::var
-    ? v
-    : m_intVarViewSource.at(v);
+  VarId varId = v.idType == VarIdType::var ? v : m_intVarViewSource.at(v);
   m_propGraph.registerVar(varId);
   m_bottomUpExplorer.registerVar(varId);
   m_isEnqueued.push_back(false);
@@ -143,33 +139,50 @@ void PropagationEngine::endMove() {}
 void PropagationEngine::beginQuery() {}
 
 void PropagationEngine::query(VarId id) {
+  if (mode == PropagationMode::TOP_DOWN) {
+    return;
+  }
   m_bottomUpExplorer.registerForPropagation(
-    m_currentTime,
-    id.idType == VarIdType::var ? id : m_intVarViewSource.at(id)
-  );
+      m_currentTime,
+      id.idType == VarIdType::var ? id : m_intVarViewSource.at(id));
 }
 
 void PropagationEngine::endQuery() {
-  {  // Top down
-    // propagate();
-  }
-  {  // Bottom up
-     markPropagationPath();
-     bottomUpPropagate();
+  switch (mode) {
+    case PropagationMode::TOP_DOWN:
+      propagate();
+      break;
+    case PropagationMode::BOTTOM_UP:
+      markPropagationPath();
+      bottomUpPropagate();
+      break;
+    case PropagationMode::MIXED:
+      markPropagationPath();
+      bottomUpPropagate();
+      break;
   }
   // We must always clear due to the current version of query()
+  // TODO: Why must we always clear again?
   m_bottomUpExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::beginCommit() {}
 
 void PropagationEngine::endCommit() {
-  // Todo: perform top down propagation
-  {  // Bottom up
-     markPropagationPath();
-     bottomUpPropagate();
+  switch (mode) {
+    case PropagationMode::TOP_DOWN:
+      propagate();
+      break;
+    case PropagationMode::BOTTOM_UP:
+      markPropagationPath();
+      bottomUpPropagate();
+      break;
+    case PropagationMode::MIXED:
+      propagate();
+      break;
   }
-  // propagate();
+  // We must always clear due to the current version of query()
+  m_bottomUpExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::markPropagationPath() {
@@ -210,10 +223,9 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
   // std::cout<< "Starting propagation\n";
-  
-  for (VarId id = getNextStableVariable(m_currentTime);
-        id.id != NULL_ID;
-        id = getNextStableVariable(m_currentTime)) {
+
+  for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID;
+       id = getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(id);
     // std::cout<< "\tPropagating" << variable << "\n";
     if (!variable.hasChanged(m_currentTime)) {

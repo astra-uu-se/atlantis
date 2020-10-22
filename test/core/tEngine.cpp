@@ -235,20 +235,31 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->setValue(c, -3);
   engine->endMove();
 
-  EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
-      .WillOnce(Return(a))
-      .WillOnce(Return(b))
-      .WillOnce(Return(c))
-      .WillRepeatedly(Return(NULL_ID));
+  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
+        .Times(0);
 
-  EXPECT_CALL(*invariant,
-              notifyCurrentDependencyChanged(moveTimestamp, testing::_))
-      .Times(3);
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(moveTimestamp, testing::_))
+        .Times(0);
+  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
+        .WillOnce(Return(a))
+        .WillOnce(Return(b))
+        .WillOnce(Return(c))
+        .WillRepeatedly(Return(NULL_ID));
+
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(moveTimestamp, testing::_))
+        .Times(3);
+  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
+  }
 
   engine->beginQuery();
   engine->query(output);
   engine->endQuery();
-  std::cout<< "foo";
+  std::cout << "foo";
 }
 
 }  // namespace
