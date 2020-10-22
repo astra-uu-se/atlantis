@@ -15,7 +15,7 @@
 
 class Engine {
  protected:
-  static const size_t ESTIMATED_NUM_OBJECTS = 1000;
+  static const size_t ESTIMATED_NUM_OBJECTS = 1;
 
   Timestamp m_currentTime;
 
