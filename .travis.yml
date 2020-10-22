@@ -1,8 +1,9 @@
 # taken from:
 # https://github.com/selyunin/gtest_submodule
-sudo: required
 language: cpp
 compiler: gcc
+os: linux
+dist: xenial
 
 env:
   global:
@@ -14,10 +15,9 @@ env:
     # Misc
     - RUN_TESTS=true
 
-matrix:
+jobs:
   include:
     - os: linux
-      sudo: true
       compiler: gcc
       addons:
         apt:
@@ -60,3 +60,4 @@ script:
 
 after_success:
   - echo "SUCCESS"
+  - ./runBenchmarks
