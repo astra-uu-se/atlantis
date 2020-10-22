@@ -189,7 +189,7 @@ void PropagationEngine::markPropagationPath() {
   // We cannot iterate over a priority_queue so we cannot copy it.
   // TODO: replace priority_queue of m_modifiedVariables with custom queue.
 
-  for (size_t i = 0; i < m_isEnqueued.size(); i++) {
+  for (size_t i = 0; i < m_isEnqueued.size(); ++i) {
     if (m_isEnqueued[i]) {
       m_propagationPathQueue.push(i);
     }

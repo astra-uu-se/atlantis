@@ -132,21 +132,21 @@ class Engine {
   makeIntVarView(Args&&... args);
 
   /**
-   * Register that Invariant to depends on variable from depends on dependency
+   * Register that an invariant depends on a variable. i.e. that a variable
+   * is an input to the invariant.
    * @param dependent the invariant that the variable depends on
    * @param source the depending variable
    * @param localId the id of the depending variable in the invariant
-   * @param data additional data
    */
   virtual void registerInvariantDependsOnVar(InvariantId dependent,
                                              VarId source, LocalId localId) = 0;
 
   /**
-   * Register that 'from' defines variable 'to'. Throws exception if
-   * already defined.
+   * Register that a variable depends on a invariant. i.e. that
+   * the invariant defines the variable.
    * @param dependent the variable that is defined by the invariant
    * @param source the invariant defining the variable
-   * @throw if the variable is already defined by an invariant.
+   * @throw if the variable already depends on an invariant.
    */
   virtual void registerDefinedVariable(VarId dependent, InvariantId source) = 0;
 

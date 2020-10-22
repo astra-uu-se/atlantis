@@ -224,7 +224,6 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
                  V
            sum3viewIds[9] {12}
   */
-  // These two lines should not be needed!
   
   EXPECT_EQ(engine->getValue(sum3), Int(20));
   

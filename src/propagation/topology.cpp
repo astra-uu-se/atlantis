@@ -38,7 +38,7 @@ void PropagationGraph::Topology::computeNoCycles() {
   };
 
   // Call visit on all top variables
-  for (size_t i = 0; i < graph.m_numVariables + 1; i++) {
+  for (size_t i = 0; i < graph.m_numVariables + 1; ++i) {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
@@ -89,7 +89,7 @@ void PropagationGraph::Topology::computeWithCycles() {
   };
 
   // Call visit on all top variables
-  for (size_t i = 0; i < graph.m_numVariables + 1; i++) {
+  for (size_t i = 0; i < graph.m_numVariables + 1; ++i) {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
@@ -112,7 +112,7 @@ void PropagationGraph::Topology::computeWithCycles() {
  */
 void PropagationGraph::Topology::computeInvariantFromVariables() {
   m_invariantPosition.resize(graph.m_numInvariants + 1, 0);
-  for (size_t i = 0; i < graph.m_numInvariants + 1; i++) {
+  for (size_t i = 0; i < graph.m_numInvariants + 1; ++i) {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }

@@ -65,7 +65,7 @@ void PropagationGraph::registerDefinedVariable(VarId dependent,
 void PropagationGraph::close() {
   m_isInputVar.resize(getNumVariables() + 1);
   m_isOutputVar.resize(getNumVariables() + 1);
-  for (size_t i = 0; i < getNumVariables() + 1; i++) {
+  for (size_t i = 0; i < getNumVariables() + 1; ++i) {
     m_isOutputVar.at(i) = (m_listeningInvariants.at(i).size() == 0);
     m_isInputVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
   }
