@@ -93,7 +93,8 @@ if (BUILD_TESTS)
   # This is so you can do 'make test' to see all your tests run, instead of
   # manually running the executable runUnitTests to see those specific tests.
   add_test(NAME "UnitTests" COMMAND "runUnitTests")
-elseif (BUILD_BENCHMARKS)
+endif()
+if (BUILD_BENCHMARKS)
   # This adds another subdirectory, which has 'project(gtest)'.
   set(BENCHMARK_ENABLE_TESTING off)
   add_subdirectory(ext/benchmark)
@@ -106,4 +107,10 @@ elseif (BUILD_BENCHMARKS)
 
   # Link to benchmark
   target_link_libraries(runBenchmarks benchmark::benchmark)
+
+  # Link to project wide benchmark main.
+  target_link_libraries(runBenchmarks benchmark::benchmark_main)
+
+  # Link to cbls_lib
+  target_link_libraries(runBenchmarks ${PROJECT_LIB})
 endif()
