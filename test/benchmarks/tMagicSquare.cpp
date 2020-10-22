@@ -1,16 +1,23 @@
-#include <benchmark/benchmark.h>
-
+#include <algorithm>
 #include <constraints/allDifferent.hpp>
 #include <constraints/equal.hpp>
 #include <core/propagationEngine.hpp>
 #include <invariants/absDiff.hpp>
 #include <invariants/linear.hpp>
 #include <iostream>
+#include <limits>
 #include <random>
 #include <utility>
 #include <vector>
 
-class MagicSquare : public benchmark::Fixture {
+#include "constraints/allDifferent.hpp"
+#include "core/propagationEngine.hpp"
+#include "core/savedInt.hpp"
+#include "core/types.hpp"
+#include "gtest/gtest.h"
+
+namespace {
+class MagicSquareTest : public ::testing::Test {
  public:
   std::unique_ptr<PropagationEngine> engine;
   std::vector<std::vector<VarId>> square;
@@ -23,9 +30,9 @@ class MagicSquare : public benchmark::Fixture {
 
   VarId totalViolation = NULL_ID;
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp() {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(0);
+    n = 3;
     int n2 = n * n;
     gen = std::mt19937(rd());
 
@@ -123,36 +130,51 @@ class MagicSquare : public benchmark::Fixture {
     engine->close();
   }
 
-  void TearDown(const ::benchmark::State& state) {
+  void TearDown() {
     square.clear();
     flat.clear();
   }
 };
 
-BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
-  int probes = 0;
-  for (auto _ : st) {
-    for (size_t i = 0; i < static_cast<size_t>(n * n); i++) {
-      for (size_t j = i + 1; j < static_cast<size_t>(n * n); j++) {
-        Int oldI = engine->getCommittedValue(flat.at(i));
-        Int oldJ = engine->getCommittedValue(flat.at(j));
-        engine->beginMove();
-        engine->setValue(flat.at(i), oldJ);
-        engine->setValue(flat.at(j), oldI);
-        engine->endMove();
+/**
+ *  Testing constructor
+ */
 
-        engine->beginQuery();
-        engine->query(totalViolation);
-        engine->endQuery();
-
-        ++probes;
-      }
+void printSquare(MagicSquareTest& test) {
+  for (size_t i = 0; i < static_cast<size_t>(test.n); i++) {
+    for (size_t j = 0; j < static_cast<size_t>(test.n); j++) {
+      std::cout << test.engine->getValue(test.square.at(i).at(j)) << " ";
     }
+    std::cout << "\n";
   }
-  st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_REGISTER_F(MagicSquare, probing_all_swap)
-    ->Unit(benchmark::kMillisecond)
-    ->DenseRange(3, 15);
+TEST_F(MagicSquareTest, Probing) {
+  printSquare(*this);
+  for (size_t i = 0; i < static_cast<size_t>(n * n); i++) {
+    for (size_t j = i + 1; j < static_cast<size_t>(n * n); j++) {
+      Int oldI = engine->getCommittedValue(flat.at(i));
+      Int oldJ = engine->getCommittedValue(flat.at(j));
+      engine->beginMove();
+      engine->setValue(flat.at(i), oldJ);
+      engine->setValue(flat.at(j), oldI);
+      engine->endMove();
+
+      engine->beginQuery();
+      engine->query(totalViolation);
+      engine->endQuery();
+    }
+  }
+  
+  printSquare(*this);
+
+  std::vector<int> occurrences;
+  occurrences.resize(flat.size(), 0);
+  for (size_t i = 0; i < static_cast<size_t>(n * n); i++) {
+    occurrences.at(engine->getValue(flat.at(i))-1)++;
+  }
+  for (int count : occurrences) {
+    EXPECT_EQ(count, 1);
+  }
+}
+}  // namespace
