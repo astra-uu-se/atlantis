@@ -58,9 +58,7 @@ script:
   - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..
   - make
   - ctest
-  - echo ${PWD}
 
 after_success:
   - echo "SUCCESS"
-  - echo ${PWD}
   - ./runBenchmarks
