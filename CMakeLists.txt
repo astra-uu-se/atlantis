@@ -27,7 +27,7 @@ endif()
 #----------------------------------------------------------------------------
 
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
-
+set(GOOGLETEST_PATH ${PROJECT_SOURCE_DIR}/ext/googletest)
 # Set the 'library' name. The library consists of all cpp, hpp, and h files except
 # main in ./src
 set(PROJECT_LIB ${PROJECT_NAME}_lib)
@@ -58,10 +58,11 @@ target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 
 # Options. Turn on with 'cmake -Dmyvarname=ON'.
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
+option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
 
 if (BUILD_TESTS)
   # This adds another subdirectory, which has 'project(gtest)'.
-  add_subdirectory(ext/googletest)
+  add_subdirectory(GOOGLETEST_PATH)
 
   enable_testing()
 
@@ -92,4 +93,17 @@ if (BUILD_TESTS)
   # This is so you can do 'make test' to see all your tests run, instead of
   # manually running the executable runUnitTests to see those specific tests.
   add_test(NAME "UnitTests" COMMAND "runUnitTests")
+elseif (BUILD_BENCHMARKS)
+  # This adds another subdirectory, which has 'project(gtest)'.
+  set(BENCHMARK_ENABLE_TESTING off)
+  add_subdirectory(ext/benchmark)
+
+  ##############
+  # Benchmarks
+  ##############
+  file(GLOB_RECURSE BENCHMARK_SRC_FILES ${PROJECT_SOURCE_DIR}/benchmark/*.cpp ${PROJECT_SOURCE_DIR}/benchmark/*.h ${PROJECT_SOURCE_DIR}/benchmark/*.hpp)
+  add_executable(runBenchmarks ${BENCHMARK_SRC_FILES})
+
+  # Link to benchmark
+  target_link_libraries(runBenchmarks benchmark::benchmark)
 endif()
