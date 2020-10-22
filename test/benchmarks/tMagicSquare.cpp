@@ -176,5 +176,7 @@ TEST_F(MagicSquareTest, Probing) {
   for (int count : occurrences) {
     EXPECT_EQ(count, 1);
   }
+
+  // TODO: Manually compute all violations and compate with totalViolation.
 }
 }  // namespace
