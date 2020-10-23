@@ -76,7 +76,7 @@ void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   VarId varId = m_variables.at(index);
 
   Int oldValue = m_localValues.at(index).getValue(t);
-  Int newValue = e.getValue(varId);
+  Int newValue = e.getNewValue(varId);
 
   decreaseCount(t, e, oldValue);
   increaseCount(t, e, newValue);
