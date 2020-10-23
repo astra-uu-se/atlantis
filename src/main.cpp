@@ -93,8 +93,8 @@ int allIntervals(int n) {
     // Probe all swaps
     for (size_t i = 0; i < static_cast<size_t>(n); i++) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {
-        Int oldI = engine.getValue(s_vars.at(i));
-        Int oldJ = engine.getValue(s_vars.at(j));
+        Int oldI = engine.getNewValue(s_vars.at(i));
+        Int oldJ = engine.getNewValue(s_vars.at(j));
         engine.beginMove();
         engine.setValue(s_vars.at(i), oldJ);
         engine.setValue(s_vars.at(j), oldI);
@@ -108,8 +108,8 @@ int allIntervals(int n) {
     }
     int i = distribution(gen);
     int j = distribution(gen);
-    Int oldI = engine.getValue(s_vars.at(i));
-    Int oldJ = engine.getValue(s_vars.at(j));
+    Int oldI = engine.getNewValue(s_vars.at(i));
+    Int oldJ = engine.getNewValue(s_vars.at(j));
     // Perform random swap
     engine.beginMove();
     engine.setValue(s_vars.at(i), oldJ);

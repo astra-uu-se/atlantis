@@ -143,7 +143,7 @@ class MagicSquareTest : public ::testing::Test {
 void printSquare(MagicSquareTest& test) {
   for (size_t i = 0; i < static_cast<size_t>(test.n); i++) {
     for (size_t j = 0; j < static_cast<size_t>(test.n); j++) {
-      std::cout << test.engine->getValue(test.square.at(i).at(j)) << " ";
+      std::cout << test.engine->getNewValue(test.square.at(i).at(j)) << " ";
     }
     std::cout << "\n";
   }
@@ -171,7 +171,7 @@ TEST_F(MagicSquareTest, Probing) {
   std::vector<int> occurrences;
   occurrences.resize(flat.size(), 0);
   for (size_t i = 0; i < static_cast<size_t>(n * n); i++) {
-    occurrences.at(engine->getValue(flat.at(i))-1)++;
+    occurrences.at(engine->getNewValue(flat.at(i))-1)++;
   }
   for (int count : occurrences) {
     EXPECT_EQ(count, 1);

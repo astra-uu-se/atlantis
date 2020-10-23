@@ -95,7 +95,7 @@ TEST_F(ElementVarTest, CreateElement) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getValue(output), 3);
+  EXPECT_EQ(engine->getNewValue(output), 3);
 }
 
 TEST_F(ElementVarTest, NotificationsChangeIndex) {

@@ -53,7 +53,7 @@ class Engine {
   virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
 
   Int getValue(Timestamp, VarId);
-  inline Int getValue(VarId v) { return getValue(m_currentTime, v); }
+  inline Int getNewValue(VarId v) { return getValue(m_currentTime, v); }
 
   Int getCommittedValue(VarId);
 
