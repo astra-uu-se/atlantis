@@ -54,14 +54,14 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   VarId viewOfVarId = viewOfVar->getId();
   VarId viewOfViewId = viewOfView->getId();
 
-  EXPECT_EQ(engine->getValue(viewOfVarId), Int(0));
-  EXPECT_EQ(engine->getValue(viewOfViewId), Int(0));
-  
+  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(0));
+  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(0));
+
   engine->close();
 
-  EXPECT_EQ(engine->getValue(sum), Int(40));
-  EXPECT_EQ(engine->getValue(viewOfVarId), Int(10));
-  EXPECT_EQ(engine->getValue(viewOfViewId), Int(5));
+  EXPECT_EQ(engine->getNewValue(sum), Int(40));
+  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(10));
+  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(5));
 
   engine->beginMove();
   engine->updateValue(a, 1);
@@ -72,11 +72,9 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   engine->query(sum);
   engine->endQuery();
 
-
-  EXPECT_EQ(engine->getValue(sum), Int(2));
-  EXPECT_EQ(engine->getValue(viewOfViewId), Int(2));
-  EXPECT_EQ(engine->getValue(viewOfVarId), Int(2));
-
+  EXPECT_EQ(engine->getNewValue(sum), Int(2));
+  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(2));
+  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(2));
 }
 
 TEST_F(IntMaxViewTest, PropagateIntVarViews) {
@@ -136,16 +134,16 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
   engine->close();
   
   // a + b = 20 + 20 = sum1 = 40
-  EXPECT_EQ(engine->getValue(sum1), Int(40));
+  EXPECT_EQ(engine->getNewValue(sum1), Int(40));
   // sum1 = 40 -> sum1View = min(20, 40) = 20
-  EXPECT_EQ(engine->getValue(sum1ViewId), Int(20));
+  EXPECT_EQ(engine->getNewValue(sum1ViewId), Int(20));
   // c + d = 20 + 20 = sum2 = 40
-  EXPECT_EQ(engine->getValue(sum2), Int(40));
+  EXPECT_EQ(engine->getNewValue(sum2), Int(40));
   // sum2 = 40 -> sum2View = min(20, 40) = 20
-  EXPECT_EQ(engine->getValue(sum2ViewId), Int(20));
+  EXPECT_EQ(engine->getNewValue(sum2ViewId), Int(20));
   // sum3 = sum1view + sum2view = 20 + 20 = 40
-  EXPECT_EQ(engine->getValue(sum3), Int(40));
-  
+  EXPECT_EQ(engine->getNewValue(sum3), Int(40));
+
   for (size_t i = 0; i < 10; ++i) {
     // IntMaxView sum3viewIds[i] = 
     //   * min(40, 25) if i = 0,
@@ -161,10 +159,10 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
   engine->updateValue(d, 5);
   engine->endMove();
 
-  EXPECT_EQ(engine->getValue(a), Int(5));
-  EXPECT_EQ(engine->getValue(b), Int(5));
-  EXPECT_EQ(engine->getValue(c), Int(5));
-  EXPECT_EQ(engine->getValue(d), Int(5));
+  EXPECT_EQ(engine->getNewValue(a), Int(5));
+  EXPECT_EQ(engine->getNewValue(b), Int(5));
+  EXPECT_EQ(engine->getNewValue(c), Int(5));
+  EXPECT_EQ(engine->getNewValue(d), Int(5));
 
   engine->beginCommit();
   engine->query(sum1);
@@ -173,15 +171,14 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
   engine->endCommit();
 
   // a + b = 5 + 5 = sum1 = 10
-  EXPECT_EQ(engine->getValue(sum1), Int(10));
+  EXPECT_EQ(engine->getNewValue(sum1), Int(10));
   // c + d = 5 + 5 = sum2 = 10
-  EXPECT_EQ(engine->getValue(sum2), Int(10));
+  EXPECT_EQ(engine->getNewValue(sum2), Int(10));
 
   // sum1 = 10 -> sum1View = min(20, 10) = 10
-  EXPECT_EQ(engine->getValue(sum1ViewId), Int(10));
+  EXPECT_EQ(engine->getNewValue(sum1ViewId), Int(10));
   // sum2 = 10 -> sum2View = min(20, 10) = 10
-  EXPECT_EQ(engine->getValue(sum2ViewId), Int(10));
-  
+  EXPECT_EQ(engine->getNewValue(sum2ViewId), Int(10));
 
   // sum3 = sum1view + sum2view = 10 + 19 = 20
   // sum1viewId = VarId::view 1
@@ -224,16 +221,17 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
                  V
            sum3viewIds[9] {12}
   */
-  
-  EXPECT_EQ(engine->getValue(sum3), Int(20));
-  
+
+  EXPECT_EQ(engine->getNewValue(sum3), Int(20));
+
   for (size_t i = 0; i < sum3viewIds.size(); ++i) {
     // IntMaxView sum3viewIds[i] = 
     //   * min(20, 25) if i = 0,
     //   * min(25-i, sum3viewIds[i-1]) otherwise
     // should be 25 for the first 6, then
     // [19, 18, 17, 16]
-    EXPECT_EQ(engine->getValue(sum3viewIds[i]), std::min(Int(25 - i), Int(20)));
+    EXPECT_EQ(engine->getNewValue(sum3viewIds[i]),
+              std::min(Int(25 - i), Int(20)));
   }
 
 }
