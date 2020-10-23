@@ -30,13 +30,14 @@ class MagicSquareTest : public ::testing::Test {
 
   VarId totalViolation = NULL_ID;
 
+  int magicSum = 0;
   void SetUp() {
     engine = std::make_unique<PropagationEngine>();
     n = 3;
     int n2 = n * n;
     gen = std::mt19937(rd());
 
-    int magicSum = (n * n * (n * n + 1) / 2) / n;
+    magicSum = (n * n * (n * n + 1) / 2) / n;
 
     distribution = std::uniform_int_distribution<>{0, n2 - 1};
 
@@ -149,8 +150,31 @@ void printSquare(MagicSquareTest& test) {
   }
 }
 
+int computeTotalViolaton(MagicSquareTest& test) {
+  int totalViol = 0;
+  for (size_t i = 0; i < static_cast<size_t>(test.n); i++) {
+    int rowSum = 0;
+    int colSum = 0;
+    for (size_t j = 0; j < static_cast<size_t>(test.n); j++) {
+      rowSum += test.engine->getNewValue(test.square.at(i).at(j));
+      colSum += test.engine->getNewValue(test.square.at(j).at(i));
+    }
+    totalViol += std::abs(rowSum - test.magicSum);
+    totalViol += std::abs(colSum - test.magicSum);
+  }
+  int downDiagSum = 0;
+  int upDiagSum = 0;
+  for (size_t i = 0; i < static_cast<size_t>(test.n); i++) {
+    downDiagSum += test.engine->getNewValue(test.square.at(i).at(i));
+    upDiagSum += test.engine->getNewValue(test.square.at(test.n - i - 1).at(i));
+  }
+
+  totalViol += std::abs(downDiagSum - test.magicSum);
+  totalViol += std::abs(upDiagSum - test.magicSum);
+  return totalViol;
+}
+
 TEST_F(MagicSquareTest, Probing) {
-  printSquare(*this);
   for (size_t i = 0; i < static_cast<size_t>(n * n); i++) {
     for (size_t j = i + 1; j < static_cast<size_t>(n * n); j++) {
       Int oldI = engine->getCommittedValue(flat.at(i));
@@ -163,10 +187,59 @@ TEST_F(MagicSquareTest, Probing) {
       engine->beginQuery();
       engine->query(totalViolation);
       engine->endQuery();
+
+      int totalViol = computeTotalViolaton(*this);
+
+      EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
     }
   }
-  
-  printSquare(*this);
+
+  std::vector<int> occurrences;
+  occurrences.resize(flat.size(), 0);
+  for (size_t i = 0; i < static_cast<size_t>(n * n); i++) {
+    occurrences.at(engine->getNewValue(flat.at(i)) - 1)++;
+  }
+  for (int count : occurrences) {
+    EXPECT_EQ(count, 1);
+  }
+}
+
+TEST_F(MagicSquareTest, ProbeAndCommit) {
+  for (size_t c = 0; c < 10; c++) {
+    for (size_t i = 0; i < static_cast<size_t>(n * n); i++) {
+      for (size_t j = i + 1; j < static_cast<size_t>(n * n); j++) {
+        Int oldI = engine->getCommittedValue(flat.at(i));
+        Int oldJ = engine->getCommittedValue(flat.at(j));
+        engine->beginMove();
+        engine->setValue(flat.at(i), oldJ);
+        engine->setValue(flat.at(j), oldI);
+        engine->endMove();
+
+        engine->beginQuery();
+        engine->query(totalViolation);
+        engine->endQuery();
+
+        int totalViol = computeTotalViolaton(*this);
+
+        EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
+      }
+    }
+    int i = distribution(gen);
+    int j = distribution(gen);
+    Int oldI = engine->getCommittedValue(flat.at(i));
+    Int oldJ = engine->getCommittedValue(flat.at(j));
+    // Perform random swap
+    engine->beginMove();
+    engine->setValue(flat.at(i), oldJ);
+    engine->setValue(flat.at(j), oldI);
+    engine->endMove();
+
+    engine->beginQuery();
+    engine->query(totalViolation);
+    engine->endQuery();
+    int totalViol = computeTotalViolaton(*this);
+    EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
+  }
 
   std::vector<int> occurrences;
   occurrences.resize(flat.size(), 0);
@@ -176,7 +249,6 @@ TEST_F(MagicSquareTest, Probing) {
   for (int count : occurrences) {
     EXPECT_EQ(count, 1);
   }
-
-  // TODO: Manually compute all violations and compate with totalViolation.
 }
+
 }  // namespace
