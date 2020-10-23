@@ -17,7 +17,7 @@
 
 class Engine {
  protected:
-  static const size_t ESTIMATED_NUM_OBJECTS = 1000;
+  static const size_t ESTIMATED_NUM_OBJECTS = 1;
 
   Timestamp m_currentTime;
 
@@ -63,7 +63,7 @@ class Engine {
   virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
 
   Int getValue(Timestamp, VarId);
-  inline Int getValue(VarId v) { return getValue(m_currentTime, v); }
+  inline Int getNewValue(VarId v) { return getValue(m_currentTime, v); }
 
   Int getCommittedValue(VarId);
 
