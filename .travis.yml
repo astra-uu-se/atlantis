@@ -58,7 +58,11 @@ script:
   - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..
   - make
   - ctest
+  - cd ..
 
 after_success:
   - echo "SUCCESS"
-  - ./runBenchmarks
+  ############################################################################
+  # Run benchmarks and post to slack
+  ############################################################################
+  - sh slack-benchmark.sh
