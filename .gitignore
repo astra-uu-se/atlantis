@@ -45,3 +45,4 @@ xcode
 .idea
 cmake-build-debug 
 cmake-build-release 
+benchmark-data.json
