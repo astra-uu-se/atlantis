@@ -53,11 +53,11 @@ class IdMap {
 
   inline void assign_all(T value) { m_vector.assign(m_vector.size(), value); }
 
-  void print() {
-    for (auto foo : m_vector) {
-      std::cout << foo << "\n";
-    }
-  }
+  inline size_t size() const { return m_vector.size(); }
+  typedef typename std::vector<T>::iterator iterator;
+
+  inline iterator begin() { return m_vector.begin(); }
+  inline iterator end() { return m_vector.end(); }
 };
 
 template <typename I>
