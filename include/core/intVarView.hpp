@@ -15,7 +15,8 @@ class IntVarView : public VarView {
   // SavedInt m_savedInt;
 
   friend class Engine;
-  Engine& m_engine;
+  Engine* m_engine;  // TODO: a raw pointer might be the best option here as
+                     // views lifetime depend on engine and not vice-versa.
 
  public:
   IntVarView(const VarId t_parentId) : VarView(t_parentId) {}
@@ -24,7 +25,6 @@ class IntVarView : public VarView {
 
   virtual ~IntVarView() = default;
 
-  virtual bool hasChanged(Timestamp t) = 0;
   virtual Int getValue(Timestamp t) = 0;
   virtual Int getCommittedValue() = 0;
   virtual Timestamp getTmpTimestamp() = 0;

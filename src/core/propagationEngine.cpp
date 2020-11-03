@@ -42,14 +42,15 @@ void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
 void PropagationEngine::registerInvariantDependsOnVar(InvariantId dependent,
                                                       VarId source,
                                                       LocalId localId) {
-  m_propGraph.registerInvariantDependsOnVar(dependent, source);
-  m_dependentInvariantData[source].emplace_back(
+  auto sourceId = getSourceId(source);
+  m_propGraph.registerInvariantDependsOnVar(dependent, sourceId);
+  m_dependentInvariantData[sourceId].emplace_back(
       InvariantDependencyData{dependent, localId, NULL_TIMESTAMP});
 }
 
 void PropagationEngine::registerDefinedVariable(VarId dependent,
                                                 InvariantId source) {
-  m_propGraph.registerDefinedVariable(dependent, source);
+  m_propGraph.registerDefinedVariable(getSourceId(dependent), source);
 }
 
 void PropagationEngine::registerVar(VarId v) {
