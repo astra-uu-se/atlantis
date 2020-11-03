@@ -109,6 +109,16 @@ class Engine {
   makeInvariant(Args&&... args);
 
   /**
+   * Register an IntVarView in the engine and return its pointer.
+   * This also sets the id of the IntVarView to the new id.
+   * @param args the constructor arguments of the IntVarView
+   * @return the created IntVarView.
+   */
+  template <class T, typename... Args>
+  std::enable_if_t<std::is_base_of<IntVarView, T>::value, std::shared_ptr<T>>
+  makeIntVarView(Args&&... args);
+
+  /**
    * Register a constraint in the engine and return its pointer.
    * This also sets the id of the constraint to the new id.
    * @param args the constructor arguments of the constraint
@@ -166,6 +176,21 @@ Engine::makeInvariant(Args&&... args) {
 }
 
 template <class T, typename... Args>
+std::enable_if_t<std::is_base_of<IntVarView, T>::value, std::shared_ptr<T>>
+Engine::makeIntVarView(Args&&... args) {
+  if (!m_isOpen) {
+    throw ModelNotOpenException("Cannot make intVarView when store is closed.");
+  }
+  auto viewPtr = std::make_shared<T>(std::forward<Args>(args)...);
+
+  auto newId = m_store.createIntVarViewFromPtr(viewPtr);
+  // We don't actually register views as they are invisible to propagation.
+
+  viewPtr->init(newId, *this);
+  return viewPtr;
+}
+
+template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<Constraint, T>::value, std::shared_ptr<T>>
 Engine::makeConstraint(Args&&... args) {
   if (!m_isOpen) {
@@ -174,7 +199,7 @@ Engine::makeConstraint(Args&&... args) {
   auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
   auto newId = m_store.createInvariantFromPtr(constraintPtr);
-  registerInvariant(newId);
+  registerInvariant(newId);  // A constraint is a type of invariant.
   //  std::cout << "Created new Constraint with id: " << newId << "\n";
   constraintPtr->init(m_currentTime, *this);
   return constraintPtr;

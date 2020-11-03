@@ -2,7 +2,7 @@
 #include "core/types.hpp"
 #include "core/var.hpp"
 
-class VarView : Var {
+class VarView : public Var {
  protected:
   VarId m_parentId;
 

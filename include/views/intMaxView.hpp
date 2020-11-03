@@ -16,7 +16,7 @@ class IntMaxView : public IntVarView {
   IntMaxView(const VarId t_parentId, Int t_max)
       : IntVarView(t_parentId), m_max(t_max) {}
 
-  void init(Engine& e) override;
+  void init(VarId, Engine& e) override;
 
   Int getValue(Timestamp t) override;
   Int getCommittedValue() override;

@@ -35,7 +35,7 @@ class Store {
     return newId;
   }
 
-  [[nodiscard]] inline InvariantId createIntVarViewFromPtr(
+  [[nodiscard]] inline VarId createIntVarViewFromPtr(
       std::shared_ptr<IntVarView> ptr) {
     VarId newId = VarId(m_intViews.size() + 1, VarIdType::view);
     ptr->setId(newId);
