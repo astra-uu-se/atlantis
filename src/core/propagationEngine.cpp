@@ -171,6 +171,19 @@ void PropagationEngine::endCommit() {
   }
   // We must always clear due to the current version of query()
   m_bottomUpExplorer.clearRegisteredVariables();
+
+  // Todo: This just commits everything and can be very inefficient, instead
+  // commit during propagation.
+
+  // Commit all variables:
+  for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd(); ++iter) {
+    iter->commit();
+  }
+  // Commit all invariants:
+  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+       ++iter) {
+    (*iter)->commit(m_currentTime, *this);
+  }
 }
 
 void PropagationEngine::markPropagationPath() {
@@ -211,27 +224,26 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
-  // std::cout<< "Starting propagation\n";
+  std::cout << "Starting propagation\n";
   VarId id = getNextStableVariable(m_currentTime);
   while (id.id != NULL_ID) {
     IntVar& variable = m_store.getIntVar(id);
-    // std::cout<< "\tPropagating" << variable << "\n";
+    std::cout << "\tPropagating" << variable << "\n";
     if (variable.hasChanged(m_currentTime)) {
       for (auto& toNotify : m_dependentInvariantData[id]) {
         // Also, do not notify invariants that are not active.
         if (!isOnPropagationPath(m_currentTime, toNotify.id)) {
           continue;
         }
-        // std::cout<< "\t\tNotifying invariant:" << toNotify.id << "\n";
+        std::cout << "\t\tNotifying invariant:" << toNotify.id << "\n";
         m_store.getInvariant(toNotify.id)
-            .notifyIntChanged(m_currentTime, *this, toNotify.localId,
-                              variable.getValue(m_currentTime));
+            .notifyIntChanged(m_currentTime, *this, toNotify.localId);
         toNotify.lastNotification = m_currentTime;
       }
     }
     id = getNextStableVariable(m_currentTime);
   }
-  //  std::cout<< "Propagation done\n";
+  std::cout << "Propagation done\n";
 }
 
 void PropagationEngine::bottomUpPropagate() {
