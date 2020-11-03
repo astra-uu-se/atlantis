@@ -7,6 +7,7 @@
 
 #include "core/constraint.hpp"
 #include "core/intVar.hpp"
+#include "core/intVarView.hpp"
 #include "core/invariant.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
@@ -42,6 +43,13 @@ class Engine {
   virtual void close() = 0;
 
   //--------------------- Variable ---------------------
+
+  inline VarId getSouceId(VarId id) {
+    return id.idType == VarIdType::var
+               ? id
+               : m_store.getIntVarView(id)->getSourceId();
+  }
+
   void incValue(Timestamp, VarId, Int inc);
   inline void incValue(VarId v, Int val) { incValue(m_currentTime, v, val); }
 

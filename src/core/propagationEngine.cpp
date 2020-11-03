@@ -135,7 +135,7 @@ void PropagationEngine::query(VarId id) {
   if (mode == PropagationMode::TOP_DOWN) {
     return;
   }
-  m_bottomUpExplorer.registerForPropagation(m_currentTime, id);
+  m_bottomUpExplorer.registerForPropagation(m_currentTime, getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
