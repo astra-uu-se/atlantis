@@ -132,7 +132,8 @@ inline const std::vector<VarId>& PropagationEngine::getVariablesDefinedBy(
 }
 
 inline VarId PropagationEngine::getNextDependency(InvariantId inv) {
-  return m_store.getInvariant(inv).getNextDependency(m_currentTime, *this);
+  return getSourceId(
+      m_store.getInvariant(inv).getNextDependency(m_currentTime, *this));
 }
 inline void PropagationEngine::notifyCurrentDependencyChanged(InvariantId inv) {
   m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime,
