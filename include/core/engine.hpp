@@ -44,10 +44,13 @@ class Engine {
 
   //--------------------- Variable ---------------------
 
-  inline VarId getSouceId(VarId id) {
+  inline VarId getSourceId(VarId id) {
+    // Todo: This recursively traverses up the view tree and gets the source id.
+    //       we could instead just store the source somewhere once and for
+    //       all. Just add a IdMap to engine!
     return id.idType == VarIdType::var
                ? id
-               : m_store.getIntVarView(id)->getSourceId();
+               : getSourceId(m_store.getIntVarView(id).getParentId());
   }
 
   void incValue(Timestamp, VarId, Int inc);
@@ -63,13 +66,15 @@ class Engine {
   Int getValue(Timestamp, VarId);
   inline Int getNewValue(VarId v) { return getValue(m_currentTime, v); }
 
+  Int getIntViewValue(Timestamp, VarId);
+
   Int getCommittedValue(VarId);
+
+  Int getIntViewCommittedValue(VarId);
 
   Timestamp getTmpTimestamp(VarId);
 
-  inline bool hasChanged(Timestamp t, VarId v) const {
-    return m_store.getConstIntVar(v).hasChanged(t);
-  }
+  Int getIntViewTmpTimestamp(VarId);
 
   bool isPostponed(InvariantId);
 
@@ -181,15 +186,36 @@ inline const Store& Engine::getStore() { return m_store; }
 inline Timestamp Engine::getCurrentTime() { return m_currentTime; }
 
 inline Int Engine::getValue(Timestamp t, VarId v) {
+  if (v.idType == VarIdType::view) {
+    return getIntViewValue(t, v);
+  }
   return m_store.getIntVar(v).getValue(t);
 }
 
+inline Int Engine::getIntViewValue(Timestamp t, VarId v) {
+  return m_store.getIntVarView(v).getValue(t);
+}
+
 inline Int Engine::getCommittedValue(VarId v) {
+  if (v.idType == VarIdType::view) {
+    return getIntViewCommittedValue(v);
+  }
   return m_store.getIntVar(v).getCommittedValue();
 }
 
+inline Int Engine::getIntViewCommittedValue(VarId v) {
+  return m_store.getIntVarView(v).getCommittedValue();
+}
+
 inline Timestamp Engine::getTmpTimestamp(VarId v) {
+  if (v.idType == VarIdType::view) {
+    return getIntViewTmpTimestamp(v);
+  }
   return m_store.getIntVar(v).getTmpTimestamp();
+}
+
+inline Int Engine::getIntViewTmpTimestamp(VarId v) {
+  return m_store.getIntVarView(v).getTmpTimestamp();
 }
 
 inline bool Engine::isPostponed(InvariantId id) {

@@ -14,12 +14,11 @@ class IntMaxView : public IntVarView {
   
  public:
   IntMaxView(const VarId t_parentId, Int t_max)
-      : m_max(t_max), IntVarView(t_parentId) {}
+      : IntVarView(t_parentId), m_max(t_max) {}
 
-   void init(Engine& e) override;
-   
-   bool hasChanged(Timestamp t) override;
-   Int getValue(Timestamp t) override;
-   Int getCommittedValue() override;
-   Timestamp getTmpTimestamp() override;
+  void init(Engine& e) override;
+
+  Int getValue(Timestamp t) override;
+  Int getCommittedValue() override;
+  Timestamp getTmpTimestamp() override;
 };

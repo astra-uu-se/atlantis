@@ -7,7 +7,7 @@ class VarView : Var {
   VarId m_parentId;
 
  public:
-  VarView(const VarId t_parentId) : m_parentId(t_parentId) {
+  VarView(const VarId t_parentId) : Var(NULL_ID), m_parentId(t_parentId) {
     m_id.idType = VarIdType::view;
   }
   virtual ~VarView() = default;

@@ -12,13 +12,17 @@ class Store {
 
   IdMap<InvariantId, std::shared_ptr<Invariant>> m_invariants;
 
+  IdMap<VarId, std::shared_ptr<IntVarView>> m_intViews;
+
  public:
   Store(size_t estimatedSize, [[maybe_unused]] Id t_nullId)
-      : m_intVars(estimatedSize), m_invariants(estimatedSize) {}
+      : m_intVars(estimatedSize),
+        m_invariants(estimatedSize),
+        m_intViews(estimatedSize) {}
 
   [[nodiscard]] inline VarId createIntVar(Timestamp t, Int initValue,
                                           Int lowerBound, Int upperBound) {
-    VarId newId = VarId(m_intVars.size() + 1);
+    VarId newId = VarId(m_intVars.size() + 1, VarIdType::var);
     m_intVars.register_idx(newId,
                            IntVar(t, newId, initValue, lowerBound, upperBound));
     return newId;
@@ -30,11 +34,25 @@ class Store {
     m_invariants.register_idx(newId, ptr);
     return newId;
   }
+
+  [[nodiscard]] inline InvariantId createIntVarViewFromPtr(
+      std::shared_ptr<IntVarView> ptr) {
+    VarId newId = VarId(m_intViews.size() + 1, VarIdType::view);
+    ptr->setId(newId);
+    m_intViews.register_idx(newId, ptr);
+    return newId;
+  }
+
   inline IntVar& getIntVar(VarId v) { return m_intVars[v]; }
 
   inline const IntVar& getConstIntVar(VarId v) const { return m_intVars.at(v); }
 
-  inline Invariant& getInvariant(InvariantId& i) {
+  inline IntVarView& getIntVarView(VarId i) {
+    assert(i.idType == VarIdType::view);
+    return *(m_intViews[i.id]);
+  }
+
+  inline Invariant& getInvariant(InvariantId i) {
     return *(m_invariants[i.id]);
   }
   inline std::vector<IntVar>::iterator intVarBegin() {
