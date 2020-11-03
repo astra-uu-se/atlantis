@@ -21,7 +21,7 @@ class IntVarView : public VarView {
  public:
   IntVarView(const VarId t_parentId) : VarView(t_parentId) {}
 
-  virtual void init(Engine& e) = 0;
+  virtual void init(VarId, Engine&) = 0;
 
   virtual ~IntVarView() = default;
 

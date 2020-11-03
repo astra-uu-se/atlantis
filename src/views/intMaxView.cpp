@@ -15,4 +15,7 @@ Timestamp IntMaxView::getTmpTimestamp() {
   return m_engine->getTmpTimestamp(m_parentId);
 }
 
-void IntMaxView::init(Engine& e) { m_engine = &e; }
+void IntMaxView::init(VarId id, Engine& e) {
+  m_id = id;
+  m_engine = &e;
+}

@@ -23,9 +23,9 @@ class BottomUpExplorer {
   size_t invariantStackIdx_ = 0;
   IdMap<VarId, Timestamp> varStableAt;  // last timestamp when a VarID was
                                         // stable (i.e., will not change)
-  IdMap<VarId, Timestamp> invariantStableAt;
+  IdMap<InvariantId, Timestamp> invariantStableAt;
   IdMap<VarId, bool> varIsOnStack;
-  IdMap<VarId, bool> invariantIsOnStack;
+  IdMap<InvariantId, bool> invariantIsOnStack;
 
   void pushVariableStack(VarId v);
   void popVariableStack();
