@@ -15,10 +15,10 @@ class Store {
  public:
   Store(size_t estimatedSize, [[maybe_unused]] Id t_nullId)
       : m_intVars(estimatedSize), m_invariants(estimatedSize) {}
- 
+
   [[nodiscard]] inline VarId createIntVar(Timestamp t, Int initValue,
                                           Int lowerBound, Int upperBound) {
-    VarId newId = VarId(m_intVars.size()+1);
+    VarId newId = VarId(m_intVars.size() + 1);
     m_intVars.register_idx(newId,
                            IntVar(t, newId, initValue, lowerBound, upperBound));
     return newId;
