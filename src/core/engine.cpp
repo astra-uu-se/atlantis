@@ -8,8 +8,7 @@ Engine::Engine()
     : m_currentTime(NULL_TIMESTAMP + 1),
       m_isOpen(false),
       m_dependentInvariantData(ESTIMATED_NUM_OBJECTS),
-      m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {
-}
+      m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
 
 //---------------------Registration---------------------
 
