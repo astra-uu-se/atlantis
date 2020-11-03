@@ -20,7 +20,7 @@ class PropagationGraph {
   IdMap<VarId, InvariantId> m_definingInvariant;
 
   /**
-   * Map from InvariantId -> list of VarID
+   * Map from InvariantId -> list of VarId
    *
    * Maps an invariant to all variables it defines.
    */

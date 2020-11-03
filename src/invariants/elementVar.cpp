@@ -24,11 +24,12 @@ void ElementVar::recompute(Timestamp t, Engine& e) {
   e.updateValue(t, m_b, e.getValue(t, m_X.at(e.getValue(t, m_i))));
 }
 
-void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId id,
-                                  Int newValue) {
+void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
   if (id.id == LocalId(-1).id) {
+    auto newValue = e.getValue(t, m_i);
     e.updateValue(t, m_b, e.getValue(t, m_X.at(newValue)));
   } else if (id.id == static_cast<IdBase>(e.getValue(t, m_i))) {
+    auto newValue = e.getValue(t, m_X[id]);
     e.updateValue(t, m_b, newValue);
   }
   // e.setValue(t, m_b, m_A.at(newValue));

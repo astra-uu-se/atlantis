@@ -34,7 +34,8 @@ void Linear::recompute(Timestamp t, Engine& e) {
   // this.
 }
 
-void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i, Int newValue) {
+void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
+  auto newValue = e.getValue(t, m_X[i]);
   e.incValue(t, m_b, (newValue - m_localX.at(i).getValue(t)) * m_A[i]);
   m_localX.at(i).setValue(t, newValue);
 }

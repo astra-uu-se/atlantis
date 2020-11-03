@@ -46,13 +46,13 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
   }
 }
 
-void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id,
-                                    Int newValue) {
+void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
   Int oldValue = m_localValues.at(id).getValue(t);
+  auto newValue = e.getValue(t, m_variables[id]);
   assert(newValue !=
          oldValue);  // Actually this assert is wrong and should be replaced by
-                     // an if(...) return; Only keeping it becuase it helps
-                     // catch bugs before we have an example with cycles.
+                     // an if(new == old) return; Only keeping it becuase it
+                     // helps catch bugs before we have an example with cycles.
   decreaseCount(t, e, oldValue);
   increaseCount(t, e, newValue);
   m_localValues.at(id).setValue(t, newValue);
