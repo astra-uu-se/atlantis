@@ -3,8 +3,8 @@
 #include <queue>
 
 PropagationEngine::PropagationEngine()
-    : m_numVariables(0),
-      mode(PropagationMode::TOP_DOWN),
+    : mode(PropagationMode::TOP_DOWN),
+      m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
       m_modifiedVariables(PropagationGraph::PriorityCmp(m_propGraph)),
