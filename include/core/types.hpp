@@ -16,28 +16,31 @@ enum VarIdType { var, view };
 
 struct Id {
   IdBase id;
-  Id() = delete;
+  Id() : id(0) {}
   Id(size_t i) : id(i) {}
   operator size_t() const { return id; }
   // TODO: We should just overload the == operator but I am too scared to do it.
   inline bool equals(const Id& other) { return id == other.id; }
 };
 
-static Id NULL_ID = Id(0);
+static Id NULL_ID = Id();
 
 struct VarId : public Id {
   VarIdType idType;
+  VarId() : Id(), idType(VarIdType::var) {}
   VarId(size_t i, VarIdType t) : Id(i), idType(t) {}
   VarId(size_t i) : VarId(i, VarIdType::var) {}
   VarId(Id& t_id, VarIdType t) : Id(t_id.id), idType(t) {}
   VarId(Id& t_id) : VarId(t_id, VarIdType::var) {}
 };
 struct LocalId : public Id {
+  LocalId() : Id() {}
   LocalId(size_t i) : Id(i) {}
   LocalId(Id& t_id) : Id(t_id.id) {}
   LocalId(VarId& t_id) : Id(t_id.id) {}
 };
 struct InvariantId : public Id {
+  InvariantId() : Id() {}
   InvariantId(size_t i) : Id(i) {}
   InvariantId(Id& t_id) : Id(t_id.id) {}
 };

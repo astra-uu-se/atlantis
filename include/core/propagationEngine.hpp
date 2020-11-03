@@ -3,6 +3,7 @@
 #include <queue>
 
 #include "core/engine.hpp"
+#include "core/idMap.hpp"
 #include "propagation/bottomUpExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
 
@@ -12,15 +13,17 @@ class PropagationEngine : public Engine {
   PropagationMode mode;
 
  protected:
+  size_t m_numVariables;
+
   PropagationGraph m_propGraph;
   BottomUpExplorer m_bottomUpExplorer;
 
   std::priority_queue<VarId, std::vector<VarId>, PropagationGraph::PriorityCmp>
       m_modifiedVariables;
 
-  std::vector<bool> m_isEnqueued;
+  IdMap<VarId, bool> m_isEnqueued;
 
-  std::vector<bool> m_varIsOnPropagationPath;
+  IdMap<VarId, bool> m_varIsOnPropagationPath;
   std::queue<VarId> m_propagationPathQueue;
 
   void recomputeAndCommit();

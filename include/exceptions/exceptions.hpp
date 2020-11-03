@@ -45,3 +45,9 @@ class DynamicCycleException {
  public:
   explicit DynamicCycleException() {}
 };
+
+// We do not extend std::runtime_error to keep runtime overhead at a minimum.
+class OutOfOrderIndexRegistration {
+ public:
+  explicit OutOfOrderIndexRegistration() {}
+};
