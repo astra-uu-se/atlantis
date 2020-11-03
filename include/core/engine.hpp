@@ -1,11 +1,11 @@
 #pragma once
 
-#include <assert.h>
-
+#include <cassert>
 #include <memory>
 #include <vector>
 
 #include "core/constraint.hpp"
+#include "core/idMap.hpp"
 #include "core/intVar.hpp"
 #include "core/intVarView.hpp"
 #include "core/invariant.hpp"
@@ -30,7 +30,7 @@ class Engine {
                                  // not then move it to a subclass...
   };
   // Map from VarID -> vector of InvariantID
-  std::vector<std::vector<InvariantDependencyData>> m_dependentInvariantData;
+  IdMap<VarId, std::vector<InvariantDependencyData>> m_dependentInvariantData;
 
   Store m_store;
 

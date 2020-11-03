@@ -3,18 +3,14 @@
 #include <queue>
 
 PropagationEngine::PropagationEngine()
-    : mode(PropagationMode::TOP_DOWN),
+    : m_numVariables(0),
+      mode(PropagationMode::TOP_DOWN),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
       m_modifiedVariables(PropagationGraph::PriorityCmp(m_propGraph)),
-      m_isEnqueued(),
-      m_varIsOnPropagationPath(),
-      m_propagationPathQueue() {
-  m_varIsOnPropagationPath.reserve(ESTIMATED_NUM_OBJECTS);
-
-  m_isEnqueued.push_back(false);  // initialise NULL_ID for indexing
-  m_varIsOnPropagationPath.push_back(false);
-}
+      m_isEnqueued(ESTIMATED_NUM_OBJECTS),
+      m_varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
+      m_propagationPathQueue() {}
 
 PropagationGraph& PropagationEngine::getPropGraph() { return m_propGraph; }
 
@@ -34,20 +30,20 @@ void PropagationEngine::close() {
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
   //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
-  if (m_isEnqueued.at(id)) {
+  if (m_isEnqueued.get(id)) {
     //    std::cout << "\t\t\talready enqueued\n";
     return;
   }
   //  std::cout << "\t\t\tpushed on stack\n";
   m_modifiedVariables.push(id);
-  m_isEnqueued.at(id) = true;
+  m_isEnqueued.set(id, true);
 }
 
 void PropagationEngine::registerInvariantDependsOnVar(InvariantId dependent,
                                                       VarId source,
                                                       LocalId localId) {
   m_propGraph.registerInvariantDependsOnVar(dependent, source);
-  m_dependentInvariantData.at(source).emplace_back(
+  m_dependentInvariantData[source].emplace_back(
       InvariantDependencyData{dependent, localId, NULL_TIMESTAMP});
 }
 
@@ -57,10 +53,11 @@ void PropagationEngine::registerDefinedVariable(VarId dependent,
 }
 
 void PropagationEngine::registerVar(VarId v) {
+  m_numVariables++;
   m_propGraph.registerVar(v);
   m_bottomUpExplorer.registerVar(v);
-  m_isEnqueued.push_back(false);
-  m_varIsOnPropagationPath.push_back(false);
+  m_isEnqueued.register_idx(v, false);
+  m_varIsOnPropagationPath.register_idx(v, false);
 }
 
 void PropagationEngine::registerInvariant(InvariantId i) {
@@ -76,7 +73,7 @@ VarId PropagationEngine::getNextStableVariable(Timestamp) {
   }
   VarId nextVar = m_modifiedVariables.top();
   m_modifiedVariables.pop();
-  m_isEnqueued.at(nextVar) = false;
+  m_isEnqueued.set(nextVar, false);
   // Due to notifyMaybeChanged, all variables in the queue are "active".
   return nextVar;
 }
@@ -85,7 +82,7 @@ void PropagationEngine::clearPropagationQueue() {
   while (!m_modifiedVariables.empty()) {
     m_modifiedVariables.pop();
   }
-  m_isEnqueued.assign(m_isEnqueued.size(), false);
+  m_isEnqueued.assign_all(false);
 }
 
 void PropagationEngine::recomputeAndCommit() {
@@ -179,21 +176,23 @@ void PropagationEngine::markPropagationPath() {
   // We cannot iterate over a priority_queue so we cannot copy it.
   // TODO: replace priority_queue of m_modifiedVariables with custom queue.
 
-  for (size_t i = 0; i < m_isEnqueued.size(); i++) {
-    if (m_isEnqueued[i]) {
+  // TODO: This is a bit of a hack since we know that all existing IDs are
+  // between 1 and m_numVariables (inclusive).
+  for (size_t i = 1; i <= m_numVariables; i++) {
+    if (m_isEnqueued.get(i)) {
       m_propagationPathQueue.push(i);
     }
   }
   while (!m_propagationPathQueue.empty()) {
     VarId currentVar = m_propagationPathQueue.front();
     m_propagationPathQueue.pop();
-    if (m_varIsOnPropagationPath.at(currentVar)) {
+    if (m_varIsOnPropagationPath.get(currentVar)) {
       continue;
     }
-    m_varIsOnPropagationPath.at(currentVar) = true;
+    m_varIsOnPropagationPath.set(currentVar, true);
     for (auto& depInv : m_dependentInvariantData.at(currentVar)) {
       for (VarId depVar : m_propGraph.getVariablesDefinedBy(depInv.id)) {
-        if (!m_varIsOnPropagationPath.at(depVar)) {
+        if (!m_varIsOnPropagationPath.get(depVar)) {
           m_propagationPathQueue.push(depVar);
         }
       }
@@ -202,11 +201,11 @@ void PropagationEngine::markPropagationPath() {
 }
 
 void PropagationEngine::clearPropagationPath() {
-  m_varIsOnPropagationPath.assign(m_varIsOnPropagationPath.size(), false);
+  m_varIsOnPropagationPath.assign_all(false);
 }
 
 bool PropagationEngine::isOnPropagationPath(VarId id) {
-  return m_varIsOnPropagationPath.at(id);
+  return m_varIsOnPropagationPath.get(id);
 }
 
 // Propagates at the current internal time of the engine.
@@ -217,7 +216,7 @@ void PropagationEngine::propagate() {
     IntVar& variable = m_store.getIntVar(id);
     // std::cout<< "\tPropagating" << variable << "\n";
     if (variable.hasChanged(m_currentTime)) {
-      for (auto& toNotify : m_dependentInvariantData.at(id)) {
+      for (auto& toNotify : m_dependentInvariantData[id]) {
         // Also, do not notify invariants that are not active.
         if (!isOnPropagationPath(m_currentTime, toNotify.id)) {
           continue;

@@ -7,9 +7,8 @@ extern Id NULL_ID;
 Engine::Engine()
     : m_currentTime(NULL_TIMESTAMP + 1),
       m_isOpen(false),
+      m_dependentInvariantData(ESTIMATED_NUM_OBJECTS),
       m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {
-  m_dependentInvariantData.reserve(ESTIMATED_NUM_OBJECTS);
-  m_dependentInvariantData.push_back({});
 }
 
 //---------------------Registration---------------------
@@ -21,7 +20,6 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   VarId newId =
       m_store.createIntVar(m_currentTime, initValue, lowerBound, upperBound);
   registerVar(newId);
-  assert(newId.id == m_dependentInvariantData.size());
-  m_dependentInvariantData.push_back({});
+  m_dependentInvariantData.register_idx(newId);
   return newId;
 }
