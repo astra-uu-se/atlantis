@@ -32,8 +32,8 @@ class PropagationGraph {
    */
   IdMap<InvariantId, std::vector<VarId>> m_inputVariables;
 
-  // Map from VarID -> vector of InvariantID
-  IdMap<InvariantId, std::vector<InvariantId>> m_listeningInvariants;
+  // Map from VarId -> vector of InvariantId
+  IdMap<VarId, std::vector<InvariantId>> m_listeningInvariants;
 
   std::vector<bool> m_isOutputVar;
   std::vector<bool> m_isInputVar;
