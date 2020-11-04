@@ -1,8 +1,9 @@
 # taken from:
 # https://github.com/selyunin/gtest_submodule
-sudo: required
 language: cpp
 compiler: gcc
+os: linux
+dist: xenial
 
 env:
   global:
@@ -13,11 +14,11 @@ env:
     - CXX_FLAGS="-std=c++17 -Wall -pedantic -Werror -Wno-variadic-macros -Wno-long-long -Wno-shadow"
     # Misc
     - RUN_TESTS=true
+    - RUN_BENCHMARKS=true
 
-matrix:
+jobs:
   include:
     - os: linux
-      sudo: true
       compiler: gcc
       addons:
         apt:
@@ -32,7 +33,7 @@ cache: apt
 
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - export CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_TESTS:BOOL=ON  ${ENV_CMAKE_OPTIONS}"
+  - export CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=ON ${ENV_CMAKE_OPTIONS}"
   - export CXX_FLAGS="${CXX_FLAGS} ${ENV_CXX_FLAGS}"
   - sudo apt-get update -qq
   - CC=gcc-8
@@ -60,6 +61,11 @@ script:
   - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..
   - make
   - ctest
+  - cd ..
 
 after_success:
   - echo "SUCCESS"
+  ############################################################################
+  # Run benchmarks and post to slack
+  ############################################################################
+  - bash slack-benchmark.sh
