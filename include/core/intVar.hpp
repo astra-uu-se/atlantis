@@ -35,31 +35,33 @@ class IntVar : public Var {
 
  public:
   IntVar(Int t_lowerBound, Int t_upperBound);
-  IntVar(Id t_id, Int t_lowerBound, Int t_upperBound);
-  IntVar(Id t_id, Int initValue, Int t_lowerBound, Int t_upperBound);
-  IntVar(Timestamp t, Id t_id, Int initValue, Int t_lowerBound,
+  IntVar(VarId t_id, Int t_lowerBound, Int t_upperBound);
+  IntVar(VarId t_id, Int initValue, Int t_lowerBound, Int t_upperBound);
+  IntVar(Timestamp t, VarId t_id, Int initValue, Int t_lowerBound,
          Int t_upperBound);
   ~IntVar() = default;
 
-  [[gnu::always_inline]] inline bool hasChanged(Timestamp t) const {
+  [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
+      Timestamp t) const {
     return m_value.hasChanged(t);
   }
-  [[gnu::always_inline]] inline Timestamp getTmpTimestamp() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
+      const {
     return m_value.getTmpTimestamp();
   }
-  [[gnu::always_inline]] inline Int getValue(Timestamp t) const {
+  [[gnu::always_inline]] [[nodiscard]] inline Int getValue(Timestamp t) const {
     return m_value.getValue(t);
   }
-  [[gnu::always_inline]] inline Int getCommittedValue() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Int getCommittedValue() const {
     return m_value.getCommittedValue();
   }
-  [[gnu::always_inline]] inline Int getLowerBound() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Int getLowerBound() const {
     return m_lowerBound;
   }
-  [[gnu::always_inline]] inline Int getUpperBound() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Int getUpperBound() const {
     return m_upperBound;
   }
-  [[gnu::always_inline]] inline bool inDomain(Int t_value) const {
+  [[gnu::always_inline]] [[nodiscard]] inline bool inDomain(Int t_value) const {
     return m_lowerBound <= t_value && t_value <= m_upperBound;
   }
   [[gnu::always_inline]] inline void updateDomain(Int t_lowerBound,

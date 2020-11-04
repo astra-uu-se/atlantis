@@ -19,11 +19,9 @@ class IntView : public View {
                      // views lifetime depend on engine and not vice-versa.
 
  public:
-  IntView(const VarId t_parentId) : View(t_parentId) {}
+  explicit IntView(VarId t_parentId) : View(t_parentId), m_engine(nullptr) {}
 
   virtual void init(VarId, Engine&) = 0;
-
-  virtual ~IntView() = default;
 
   virtual Int getValue(Timestamp t) = 0;
   virtual Int getCommittedValue() = 0;
