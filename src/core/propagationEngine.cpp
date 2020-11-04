@@ -177,7 +177,7 @@ void PropagationEngine::endCommit() {
 
   // Commit all variables:
   for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd(); ++iter) {
-    iter->commit();
+    iter->commitIf(m_currentTime);
   }
   // Commit all invariants:
   for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
