@@ -13,12 +13,14 @@ class Store {
   IdMap<InvariantId, std::shared_ptr<Invariant>> m_invariants;
 
   IdMap<VarId, std::shared_ptr<IntVarView>> m_intViews;
+  IdMap<VarId, VarId> m_intViewSourceId;
 
  public:
   Store(size_t estimatedSize, [[maybe_unused]] Id t_nullId)
       : m_intVars(estimatedSize),
         m_invariants(estimatedSize),
-        m_intViews(estimatedSize) {}
+        m_intViews(estimatedSize),
+        m_intViewSourceId(estimatedSize) {}
 
   [[nodiscard]] inline VarId createIntVar(Timestamp t, Int initValue,
                                           Int lowerBound, Int upperBound) {
@@ -40,6 +42,12 @@ class Store {
     VarId newId = VarId(m_intViews.size() + 1, VarIdType::view);
     ptr->setId(newId);
     m_intViews.register_idx(newId, ptr);
+
+    VarId parentId = ptr->getParentId();
+    VarId source = parentId.idType == VarIdType::var
+                       ? parentId
+                       : m_intViewSourceId[parentId];
+    m_intViewSourceId.register_idx(newId, source);
     return newId;
   }
 
@@ -50,6 +58,11 @@ class Store {
   inline IntVarView& getIntVarView(VarId i) {
     assert(i.idType == VarIdType::view);
     return *(m_intViews[i.id]);
+  }
+
+  inline VarId getIntVarViewSourceId(VarId v) {
+    assert(v.idType == VarIdType::view);
+    return m_intViewSourceId[v];
   }
 
   inline Invariant& getInvariant(InvariantId i) {

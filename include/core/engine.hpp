@@ -45,12 +45,8 @@ class Engine {
   //--------------------- Variable ---------------------
 
   inline VarId getSourceId(VarId id) {
-    // Todo: This recursively traverses up the view tree and gets the source id.
-    //       we could instead just store the source somewhere once and for
-    //       all. Just add a IdMap to engine!
-    return id.idType == VarIdType::var
-               ? id
-               : getSourceId(m_store.getIntVarView(id).getParentId());
+    return id.idType == VarIdType::var ? id : m_store.getIntVarViewSourceId(id);
+    // getSourceId(m_store.getIntVarView(id).getParentId());
   }
 
   void incValue(Timestamp, VarId, Int inc);
