@@ -62,6 +62,11 @@ class Queens : public benchmark::Fixture {
     gen = std::mt19937(rd());
 
     distribution = std::uniform_int_distribution<>{0, n - 1};
+    std::cout << "Init done Queens: ";
+    for(auto q: queens){
+      std::cout << engine->getCommittedValue(q) << ", ";
+    }
+    std::cout << "\n";
   }
 
   void TearDown(const ::benchmark::State& state) {
@@ -113,9 +118,87 @@ BENCHMARK_DEFINE_F(Queens, probing_all_swap)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-//
+BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
+  
+  std::cout << "Bench start Queens: ";
+  for(auto q: queens){
+    std::cout << engine->getCommittedValue(q) << ", ";
+  }
+  std::cout << "\n";
+  
+  int it = 0;
 
-BENCHMARK_REGISTER_F(Queens, probing_single_swap)->DenseRange(5, 30, 5);
-BENCHMARK_REGISTER_F(Queens, probing_all_swap)
-    ->Unit(benchmark::kMillisecond)
-    ->DenseRange(5, 30, 5);
+  std::vector<Int> tabu;
+  tabu.assign(n, 0);
+  Int tenure = n / 2;
+
+  for (auto _ : st) {
+    while (it < 10000) {
+      size_t bestI = 0;
+      size_t bestJ = 0;
+      Int bestViol = n;
+      for (size_t i = 0; i < static_cast<size_t>(n); i++) {
+        for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {
+          if (tabu[i] > it && tabu[j] > it) {
+            continue;
+          }
+          Int oldI = engine->getCommittedValue(queens.at(i));
+          Int oldJ = engine->getCommittedValue(queens.at(j));
+          engine->beginMove();
+          engine->setValue(queens.at(i), oldJ);
+          engine->setValue(queens.at(j), oldI);
+          engine->endMove();
+
+          engine->beginQuery();
+          engine->query(total_violation);
+          engine->endQuery();
+          
+          Int newValue =engine->getNewValue(total_violation);
+          if (newValue <= bestViol) {
+            bestViol = newValue;
+            bestI = i;
+            bestJ = j;
+          }
+        }
+      }
+      
+      std::cout << " pre commit Queens: ";
+      for(auto q: queens){
+        std::cout << engine->getCommittedValue(q) << ", ";
+      }
+      std::cout << "\n";
+
+      Int oldI = engine->getCommittedValue(queens.at(bestI));
+      Int oldJ = engine->getCommittedValue(queens.at(bestJ));
+      engine->beginMove();
+      engine->setValue(queens.at(bestI), oldJ);
+      engine->setValue(queens.at(bestJ), oldI);
+      engine->endMove();
+
+      engine->beginCommit();
+      engine->query(total_violation);
+      engine->endCommit();
+
+      tabu[bestI] = it + tenure;
+      tabu[bestJ] = it + tenure;
+      
+      std::cout << "Queens: ";
+      for(auto q: queens){
+        std::cout << engine->getCommittedValue(q) << ", ";
+      }
+      std::cout << "\n";
+
+      std::cout << "it: " << it << " viol: " << bestViol << "\n";
+      it++;
+    }
+  }
+}
+
+  //
+
+// BENCHMARK_REGISTER_F(Queens, probing_single_swap)->DenseRange(5, 30, 5);
+// BENCHMARK_REGISTER_F(Queens, probing_all_swap)
+//     ->Unit(benchmark::kMillisecond)
+//     ->DenseRange(5, 30, 5);
+
+BENCHMARK_REGISTER_F(Queens, solve)->DenseRange(5, 30, 5);
