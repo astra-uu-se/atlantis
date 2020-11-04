@@ -236,7 +236,7 @@ inline Timestamp Engine::getTmpTimestamp(VarId v) {
 }
 
 inline Int Engine::getIntViewTmpTimestamp(VarId v) {
-  return m_store.getIntView(v).getTmpTimestamp();
+  return getTmpTimestamp(m_store.getIntViewSourceId(v));
 }
 
 inline bool Engine::isPostponed(InvariantId id) {

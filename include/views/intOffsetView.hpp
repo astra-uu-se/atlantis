@@ -8,13 +8,13 @@
 #include "../core/intView.hpp"
 #include "../core/types.hpp"
 
-class IntMaxView : public IntView {
+class IntOffsetView : public IntView {
  private:
-  Int m_max;
-  
+  Int m_offset;
+
  public:
-  IntMaxView(const VarId t_parentId, Int t_max)
-      : IntView(t_parentId), m_max(t_max) {}
+  IntOffsetView(const VarId t_parentId, Int t_offset)
+      : IntView(t_parentId), m_offset(t_offset) {}
 
   Int getValue(Timestamp t) override;
   Int getCommittedValue() override;
