@@ -29,8 +29,8 @@ class MockInvariantSimple : public Invariant {
   MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged,
-              (Timestamp t, Engine& e, LocalId id, Int newValue), (override));
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+              (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 
@@ -58,8 +58,8 @@ class MockInvariantAdvanced : public Invariant {
   MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
               (override));
-  MOCK_METHOD(void, notifyIntChanged,
-              (Timestamp t, Engine& e, LocalId id, Int newValue), (override));
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+              (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 

@@ -4,25 +4,21 @@
 #include "core/propagationEngine.hpp"
 
 BottomUpExplorer::BottomUpExplorer(PropagationEngine& e, size_t expectedSize)
-    : m_engine(e), varStackIdx_(0), invariantStackIdx_(0) {
+    : m_engine(e),
+      varStackIdx_(0),
+      invariantStackIdx_(0),
+      varStableAt(expectedSize),
+      invariantStableAt(expectedSize),
+      varIsOnStack(expectedSize),
+      invariantIsOnStack(expectedSize) {
   variableStack_.reserve(expectedSize);
   invariantStack_.reserve(expectedSize);
-  varStableAt.reserve(expectedSize);
-  invariantStableAt.reserve(expectedSize);
-  varIsOnStack.reserve(expectedSize);
-  invariantIsOnStack.reserve(expectedSize);
-
-  // add null entry.
-  varStableAt.push_back(NULL_TIMESTAMP);
-  invariantStableAt.push_back(NULL_TIMESTAMP);
-  varIsOnStack.push_back(false);
-  invariantIsOnStack.push_back(false);
 }
 
 // We expand an invariant by pushing it and its first input variable onto each
 // stack.
 void BottomUpExplorer::expandInvariant(InvariantId inv) {
-  if (invariantIsOnStack.at(inv)) {
+  if (invariantIsOnStack.get(inv)) {
     throw DynamicCycleException();
   }
   // TODO: ignore variable if not on propagationPath.
@@ -52,16 +48,16 @@ bool BottomUpExplorer::visitNextVariable() {
   }
 }
 
-void BottomUpExplorer::registerVar(VarId) {
+void BottomUpExplorer::registerVar(VarId id) {
   variableStack_.push_back(NULL_ID);  // push back just to resize the stack!
-  varStableAt.push_back(NULL_TIMESTAMP);
-  varIsOnStack.push_back(false);
+  varStableAt.register_idx(id);
+  varIsOnStack.register_idx(id, false);
 }
 
-void BottomUpExplorer::registerInvariant(InvariantId) {
+void BottomUpExplorer::registerInvariant(InvariantId id) {
   invariantStack_.push_back(NULL_ID);  //  push back just to resize the stack!
-  invariantStableAt.push_back(NULL_TIMESTAMP);
-  invariantIsOnStack.push_back(false);
+  invariantStableAt.register_idx(id);
+  invariantIsOnStack.register_idx(id, false);
 }
 
 void BottomUpExplorer::propagate(Timestamp currentTime) {

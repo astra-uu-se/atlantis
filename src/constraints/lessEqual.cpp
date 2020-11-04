@@ -30,7 +30,7 @@ void LessEqual::recompute(Timestamp t, Engine& e) {
                 std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
-void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int) {
+void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
   // if x decreases and violation is 0, then do nothing
   // if y increases and violation is 0, then do nothing
   e.updateValue(t, m_violationId,
