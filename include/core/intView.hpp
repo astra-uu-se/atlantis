@@ -20,12 +20,14 @@ class IntView : public View {
 
  public:
   IntView(const VarId t_parentId) : View(t_parentId) {}
-
-  virtual void init(VarId, Engine&) = 0;
-
   virtual ~IntView() = default;
+
+  void init(VarId id, Engine& e) {
+    m_id = id;
+    m_engine = &e;
+  }
+
 
   virtual Int getValue(Timestamp t) = 0;
   virtual Int getCommittedValue() = 0;
-  virtual Timestamp getTmpTimestamp() = 0;
 };
