@@ -20,7 +20,7 @@ void AbsDiff::recompute(Timestamp t, Engine& e) {
   e.updateValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 
-void AbsDiff::notifyIntChanged(Timestamp t, Engine& e, LocalId, Int) {
+void AbsDiff::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
   e.updateValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 

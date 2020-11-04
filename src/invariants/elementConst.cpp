@@ -19,8 +19,8 @@ void ElementConst::recompute(Timestamp t, Engine& e) {
   e.updateValue(t, m_b, m_A.at(e.getValue(t, m_i)));
 }
 
-void ElementConst::notifyIntChanged(Timestamp t, Engine& e, LocalId,
-                                    Int newValue) {
+void ElementConst::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
+  auto newValue = e.getValue(t, m_i);
   e.updateValue(t, m_b, m_A.at(newValue));
 }
 

@@ -90,7 +90,7 @@ TEST_F(AbsDiffTest, CreateAbsDiff) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getValue(c), 200);
+  EXPECT_EQ(engine->getNewValue(c), 200);
 }
 
 TEST_F(AbsDiffTest, Modification) {
@@ -108,7 +108,7 @@ TEST_F(AbsDiffTest, Modification) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getValue(c), 200);
+  EXPECT_EQ(engine->getNewValue(c), 200);
 
   engine->beginMove();
   engine->setValue(a, 0);
@@ -118,7 +118,7 @@ TEST_F(AbsDiffTest, Modification) {
   engine->query(c);
   engine->endQuery();
 
-  EXPECT_EQ(engine->getValue(c), 100);
+  EXPECT_EQ(engine->getNewValue(c), 100);
 }
 
 }  // namespace

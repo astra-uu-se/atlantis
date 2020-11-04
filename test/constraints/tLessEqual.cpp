@@ -94,12 +94,12 @@ TEST_F(LessEqualTest, NotifyChange) {
   e->updateValue(time1, x, 40);
   EXPECT_EQ(e->getCommittedValue(x), 2);
   EXPECT_EQ(e->getValue(time1, x), 40);
-  lessEqual->notifyIntChanged(time1, *e, unused, e->getValue(time1, x));
+  lessEqual->notifyIntChanged(time1, *e, unused);
   EXPECT_EQ(e->getValue(time1, violationId),
             38);  // incremental value of violationId is 0;
 
   e->updateValue(time1, y, 0);
-  lessEqual->notifyIntChanged(time1, *e, unused, e->getValue(time1, y));
+  lessEqual->notifyIntChanged(time1, *e, unused);
   auto tmpValue = e->getValue(
       time1, violationId);  // incremental value of violationId is 40;
 
@@ -113,7 +113,7 @@ TEST_F(LessEqualTest, NotifyChange) {
   e->updateValue(time2, y, 20);
   EXPECT_EQ(e->getCommittedValue(y), 2);
   EXPECT_EQ(e->getValue(time2, y), 20);
-  lessEqual->notifyIntChanged(time2, *e, unused, e->getValue(time2, y));
+  lessEqual->notifyIntChanged(time2, *e, unused);
   EXPECT_EQ(e->getValue(time2, violationId),
             0);  // incremental value of violationId is 0;
 }
@@ -140,12 +140,10 @@ TEST_F(LessEqualTest, IncrementalVsRecompute) {
 
     // notify changes
     if (e->getCommittedValue(x) != e->getValue(currentTime, x)) {
-      lessEqual->notifyIntChanged(currentTime, *e, unused,
-                                  e->getValue(currentTime, x));
+      lessEqual->notifyIntChanged(currentTime, *e, unused);
     }
     if (e->getCommittedValue(y) != e->getValue(currentTime, y)) {
-      lessEqual->notifyIntChanged(currentTime, *e, unused,
-                                  e->getValue(currentTime, y));
+      lessEqual->notifyIntChanged(currentTime, *e, unused);
     }
 
     // incremental value
@@ -167,8 +165,7 @@ TEST_F(LessEqualTest, Commit) {
   e->updateValue(currentTime, y, 2);  // This change is not notified and should
                                       // not have an impact on the commit
 
-  lessEqual->notifyIntChanged(currentTime, *e, unused,
-                              e->getValue(currentTime, x));
+  lessEqual->notifyIntChanged(currentTime, *e, unused);
 
   // Committing an invariant does not commit its output!
   // // Commit at wrong timestamp should have no impact

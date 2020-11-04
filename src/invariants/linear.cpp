@@ -27,14 +27,15 @@ void Linear::recompute(Timestamp t, Engine& e) {
   for (size_t i = 0; i < m_X.size(); ++i) {
     sum += m_A[i] * e.getValue(t, m_X[i]);
     m_localX.at(i).commitValue(e.getCommittedValue(m_X[i]));
-    m_localX.at(i).setValue(t, e.getValue(m_X[i]));
+    m_localX.at(i).setValue(t, e.getValue(t, m_X[i]));
   }
   e.updateValue(t, m_b, sum);
   // m_state.setValue(t, m_X.size());  // Not clear if we actually need to reset
   // this.
 }
 
-void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i, Int newValue) {
+void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
+  auto newValue = e.getValue(t, m_X[i]);
   e.incValue(t, m_b, (newValue - m_localX.at(i).getValue(t)) * m_A[i]);
   m_localX.at(i).setValue(t, newValue);
 }
@@ -53,7 +54,9 @@ void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   Int idx = m_state.getValue(t);
   // Int delta = e.getValue(t, m_X.at(idx)) - e.getCommittedValue(m_X.at(idx));
   Int delta = e.getValue(t, m_X.at(idx)) - m_localX.at(idx).getValue(t);
-  assert(delta != 0);  // invariants are only notified when they are changed.
+  if(delta == 0){
+    return; // Because of views, invariants can be notified when the source changed but the view didn't.
+  }
   e.incValue(t, m_b, delta * m_A.at(idx));
   m_localX.at(idx).setValue(t, e.getValue(t, m_X.at(idx)));
 }

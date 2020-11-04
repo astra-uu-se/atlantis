@@ -47,7 +47,10 @@ install:
   - ${CXX} -v
 
 notifications:
-  slack: theoptimisationgroup:tRbj8LtmY5KkuyL8qrQ7UOIQ
+  slack:
+    rooms:
+      secure: YClrVV8BO/9Rh4c9ZBqN2Z0ER2D3JzJNgXV8EIImtL+py4P8kMebgX5Fgj8v5A/jH3GweGmKByMriqKmfbfI7Uy4vWR5pR6loRfV0gTF35O5tZR39OkwPiwMxYggaVY7ZFOudkUD21ZD2qznTQYr9IuKyH48lnLKDIumiY/1w6XI/KCa/0kq1Vt0PCvKJb8NvCZLBUNFL1GkJyNFoufWP0shrPuiewR6pUsJl9GmfwR89croGHIPljZ7HTNS21riYvKc0HKkzI4Us4aBfmhBTaH4NIFFFqankmacCDLG5QI/ACXRD4j6F9Ma3NKmtFaMDiwjOxpM0x/d1VYeEdA4V4pVZpPv7N4cLNHCZwNUWzkXj98l+xbWZIS+O06xpOxNMc4rVmpUcqVggBtPAXcy3a2tbV7xp5N2VNQUuenCLycmx2GomIUYXhK/d1j7UjApu9tVu/7RJ0EwzE4Sri0knQsqxgluKd+1+l9/isbmTMB8aZZAmCGKifoGoEp0G9FfnMQeIVp64YOWUeSnSO3aqk/mhMcnhRW3Df80URBlEfblSEqawCI8FL6M6tts5JO3Y4FVju5SUgOxhGP74ugFkq8/X+5Mrwqqrg6a25Hmr09eJ5FmR0C8p4fOJreiOof+VVa+4xET+9dXw1H8DrTwEk0ja5E2nZLdoNhxeKHARh8=
+  
 
 script:
   ############################################################################

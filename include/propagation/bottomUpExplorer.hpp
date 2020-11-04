@@ -1,10 +1,10 @@
 #pragma once
 
-#include <assert.h>
-
+#include <cassert>
 #include <memory>
 #include <vector>
 
+#include "core/idMap.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
@@ -21,11 +21,11 @@ class BottomUpExplorer {
   size_t varStackIdx_ = 0;
   std::vector<InvariantId> invariantStack_;
   size_t invariantStackIdx_ = 0;
-  std::vector<Timestamp> varStableAt;  // last timestamp when a VarID was
-                                       // stable (i.e., will not change)
-  std::vector<Timestamp> invariantStableAt;
-  std::vector<bool> varIsOnStack;
-  std::vector<bool> invariantIsOnStack;
+  IdMap<VarId, Timestamp> varStableAt;  // last timestamp when a VarID was
+                                        // stable (i.e., will not change)
+  IdMap<InvariantId, Timestamp> invariantStableAt;
+  IdMap<VarId, bool> varIsOnStack;
+  IdMap<InvariantId, bool> invariantIsOnStack;
 
   void pushVariableStack(VarId v);
   void popVariableStack();
@@ -72,25 +72,25 @@ inline void BottomUpExplorer::registerForPropagation(Timestamp, VarId id) {
 inline void BottomUpExplorer::clearRegisteredVariables() { varStackIdx_ = 0; }
 
 inline void BottomUpExplorer::pushVariableStack(VarId v) {
-  varIsOnStack.at(v) = true;
+  varIsOnStack.set(v, true);
   variableStack_[varStackIdx_++] = v;
 }
 inline void BottomUpExplorer::popVariableStack() {
-  varIsOnStack.at(variableStack_[--varStackIdx_]) = false;
+  varIsOnStack.set(variableStack_[--varStackIdx_], false);
 }
 inline VarId BottomUpExplorer::peekVariableStack() {
   return variableStack_[varStackIdx_ - 1];
 }
 
 inline void BottomUpExplorer::pushInvariantStack(InvariantId i) {
-  if (invariantIsOnStack.at(i)) {
+  if (invariantIsOnStack.get(i)) {
     throw DynamicCycleException();
   }
-  invariantIsOnStack.at(i) = true;
+  invariantIsOnStack.set(i, true);
   invariantStack_[invariantStackIdx_++] = i;
 }
 inline void BottomUpExplorer::popInvariantStack() {
-  invariantIsOnStack.at(invariantStack_[--invariantStackIdx_]) = false;
+  invariantIsOnStack.set(invariantStack_[--invariantStackIdx_], false);
 }
 
 inline InvariantId BottomUpExplorer::peekInvariantStack() {
@@ -98,7 +98,7 @@ inline InvariantId BottomUpExplorer::peekInvariantStack() {
 }
 
 inline void BottomUpExplorer::markStable(Timestamp t, VarId v) {
-  varStableAt.at(v) = t;
+  varStableAt[v] = t;
 }
 
 inline bool BottomUpExplorer::isStable(Timestamp t, VarId v) {
@@ -106,7 +106,7 @@ inline bool BottomUpExplorer::isStable(Timestamp t, VarId v) {
 }
 
 inline void BottomUpExplorer::markStable(Timestamp t, InvariantId v) {
-  invariantStableAt.at(v) = t;
+  invariantStableAt[v] = t;
 }
 
 inline bool BottomUpExplorer::isStable(Timestamp t, InvariantId v) {
