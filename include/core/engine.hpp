@@ -84,11 +84,29 @@ class Engine {
   void commitValue(VarId, Int val);
 
   inline Int getLowerBound(VarId v) const {
+    if (v.idType == VarIdType::view) {
+      return getIntViewLowerBound(v);
+    }
+    assert(v.idType == VarIdType::var);
     return m_store.getConstIntVar(v).getLowerBound();
   }
 
+  inline Int getIntViewLowerBound(VarId v) const {
+    assert(v.idType == VarIdType::view);
+    return m_store.getConstIntView(v)->getLowerBound();
+  }
+
   inline Int getUpperBound(VarId v) const {
+    if (v.idType == VarIdType::view) {
+      return getIntViewUpperBound(v);
+    }
+    assert(v.idType == VarIdType::var);
     return m_store.getConstIntVar(v).getUpperBound();
+  }
+
+  inline Int getIntViewUpperBound(VarId v) const {
+    assert(v.idType == VarIdType::view);
+    return m_store.getConstIntView(v)->getUpperBound();
   }
 
   void commitInvariantIf(Timestamp, InvariantId);
