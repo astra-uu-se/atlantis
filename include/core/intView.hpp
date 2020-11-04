@@ -27,7 +27,6 @@ class IntView : public View {
     m_engine = &e;
   }
 
-
   virtual Int getValue(Timestamp t) = 0;
   virtual Int getCommittedValue() = 0;
   virtual Int getLowerBound() = 0;

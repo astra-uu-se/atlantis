@@ -49,7 +49,7 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
 void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
   Int oldValue = m_localValues.at(id).getValue(t);
   auto newValue = e.getValue(t, m_variables[id]);
-  if(newValue == oldValue){
+  if (newValue == oldValue) {
     return;
   }
   decreaseCount(t, e, oldValue);

@@ -244,7 +244,7 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
   std::vector<int> occurrences;
   occurrences.resize(flat.size(), 0);
   for (size_t i = 0; i < static_cast<size_t>(n * n); i++) {
-    occurrences.at(engine->getNewValue(flat.at(i))-1)++;
+    occurrences.at(engine->getNewValue(flat.at(i)) - 1)++;
   }
   for (int count : occurrences) {
     EXPECT_EQ(count, 1);
