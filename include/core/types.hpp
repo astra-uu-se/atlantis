@@ -7,7 +7,7 @@ using UInt64 = u_int64_t;
 using UInt32 = u_int32_t;
 using UInt = UInt64;
 using Int = int64_t;
-using Timestamp = u_int64_t;
+using Timestamp = UInt;
 using IdBase = size_t;  // IDs are mainly used for vector lookups, so they must
                         // be of size_t.
 enum VarIdType { var, view };
