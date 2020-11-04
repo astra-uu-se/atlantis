@@ -1,12 +1,13 @@
 #pragma once
 
-#include <assert.h>
-
+#include <cassert>
 #include <memory>
 #include <vector>
 
 #include "core/constraint.hpp"
+#include "core/idMap.hpp"
 #include "core/intVar.hpp"
+#include "core/intVarView.hpp"
 #include "core/invariant.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
@@ -29,7 +30,7 @@ class Engine {
                                  // not then move it to a subclass...
   };
   // Map from VarID -> vector of InvariantID
-  std::vector<std::vector<InvariantDependencyData>> m_dependentInvariantData;
+  IdMap<VarId, std::vector<InvariantDependencyData>> m_dependentInvariantData;
 
   Store m_store;
 
@@ -42,6 +43,16 @@ class Engine {
   virtual void close() = 0;
 
   //--------------------- Variable ---------------------
+
+  inline VarId getSourceId(VarId id) {
+    // Todo: This recursively traverses up the view tree and gets the source id.
+    //       we could instead just store the source somewhere once and for
+    //       all. Just add a IdMap to engine!
+    return id.idType == VarIdType::var
+               ? id
+               : getSourceId(m_store.getIntVarView(id).getParentId());
+  }
+
   void incValue(Timestamp, VarId, Int inc);
   inline void incValue(VarId v, Int val) { incValue(m_currentTime, v, val); }
 
@@ -55,13 +66,15 @@ class Engine {
   Int getValue(Timestamp, VarId);
   inline Int getNewValue(VarId v) { return getValue(m_currentTime, v); }
 
+  Int getIntViewValue(Timestamp, VarId);
+
   Int getCommittedValue(VarId);
+
+  Int getIntViewCommittedValue(VarId);
 
   Timestamp getTmpTimestamp(VarId);
 
-  inline bool hasChanged(Timestamp t, VarId v) const {
-    return m_store.getConstIntVar(v).hasChanged(t);
-  }
+  Int getIntViewTmpTimestamp(VarId);
 
   bool isPostponed(InvariantId);
 
@@ -94,6 +107,16 @@ class Engine {
   template <class T, typename... Args>
   std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
   makeInvariant(Args&&... args);
+
+  /**
+   * Register an IntVarView in the engine and return its pointer.
+   * This also sets the id of the IntVarView to the new id.
+   * @param args the constructor arguments of the IntVarView
+   * @return the created IntVarView.
+   */
+  template <class T, typename... Args>
+  std::enable_if_t<std::is_base_of<IntVarView, T>::value, std::shared_ptr<T>>
+  makeIntVarView(Args&&... args);
 
   /**
    * Register a constraint in the engine and return its pointer.
@@ -153,6 +176,21 @@ Engine::makeInvariant(Args&&... args) {
 }
 
 template <class T, typename... Args>
+std::enable_if_t<std::is_base_of<IntVarView, T>::value, std::shared_ptr<T>>
+Engine::makeIntVarView(Args&&... args) {
+  if (!m_isOpen) {
+    throw ModelNotOpenException("Cannot make intVarView when store is closed.");
+  }
+  auto viewPtr = std::make_shared<T>(std::forward<Args>(args)...);
+
+  auto newId = m_store.createIntVarViewFromPtr(viewPtr);
+  // We don't actually register views as they are invisible to propagation.
+
+  viewPtr->init(newId, *this);
+  return viewPtr;
+}
+
+template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<Constraint, T>::value, std::shared_ptr<T>>
 Engine::makeConstraint(Args&&... args) {
   if (!m_isOpen) {
@@ -161,7 +199,7 @@ Engine::makeConstraint(Args&&... args) {
   auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
   auto newId = m_store.createInvariantFromPtr(constraintPtr);
-  registerInvariant(newId);
+  registerInvariant(newId);  // A constraint is a type of invariant.
   //  std::cout << "Created new Constraint with id: " << newId << "\n";
   constraintPtr->init(m_currentTime, *this);
   return constraintPtr;
@@ -173,15 +211,36 @@ inline const Store& Engine::getStore() { return m_store; }
 inline Timestamp Engine::getCurrentTime() { return m_currentTime; }
 
 inline Int Engine::getValue(Timestamp t, VarId v) {
+  if (v.idType == VarIdType::view) {
+    return getIntViewValue(t, v);
+  }
   return m_store.getIntVar(v).getValue(t);
 }
 
+inline Int Engine::getIntViewValue(Timestamp t, VarId v) {
+  return m_store.getIntVarView(v).getValue(t);
+}
+
 inline Int Engine::getCommittedValue(VarId v) {
+  if (v.idType == VarIdType::view) {
+    return getIntViewCommittedValue(v);
+  }
   return m_store.getIntVar(v).getCommittedValue();
 }
 
+inline Int Engine::getIntViewCommittedValue(VarId v) {
+  return m_store.getIntVarView(v).getCommittedValue();
+}
+
 inline Timestamp Engine::getTmpTimestamp(VarId v) {
+  if (v.idType == VarIdType::view) {
+    return getIntViewTmpTimestamp(v);
+  }
   return m_store.getIntVar(v).getTmpTimestamp();
+}
+
+inline Int Engine::getIntViewTmpTimestamp(VarId v) {
+  return m_store.getIntVarView(v).getTmpTimestamp();
 }
 
 inline bool Engine::isPostponed(InvariantId id) {

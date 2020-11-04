@@ -71,11 +71,11 @@ TEST_F(AllDifferentTest, NotifyChange) {
   e->updateValue(time1, a, 2);
   EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time1, a), 2);
-  allDifferent->notifyIntChanged(time1, *e, 0, e->getValue(time1, a));
+  allDifferent->notifyIntChanged(time1, *e, 0);
   EXPECT_EQ(e->getValue(time1, violationId), 2);
 
   e->updateValue(time1, b, 3);
-  allDifferent->notifyIntChanged(time1, *e, 1, e->getValue(time1, b));
+  allDifferent->notifyIntChanged(time1, *e, 1);
   auto tmpValue = e->getValue(time1, violationId);
 
   // Incremental computation gives the same result as recomputation
@@ -88,7 +88,7 @@ TEST_F(AllDifferentTest, NotifyChange) {
   e->updateValue(time2, b, 20);
   EXPECT_EQ(e->getCommittedValue(b), 2);
   EXPECT_EQ(e->getValue(time2, b), 20);
-  allDifferent->notifyIntChanged(time2, *e, 1, e->getValue(time2, b));
+  allDifferent->notifyIntChanged(time2, *e, 1);
   EXPECT_EQ(e->getValue(time2, violationId), 0);
 }
 
@@ -113,12 +113,10 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
 
     // notify changes
     if (e->getCommittedValue(a) != e->getValue(currentTime, a)) {
-      allDifferent->notifyIntChanged(currentTime, *e, 0,
-                                     e->getValue(currentTime, a));
+      allDifferent->notifyIntChanged(currentTime, *e, 0);
     }
     if (e->getCommittedValue(b) != e->getValue(currentTime, b)) {
-      allDifferent->notifyIntChanged(currentTime, *e, 1,
-                                     e->getValue(currentTime, b));
+      allDifferent->notifyIntChanged(currentTime, *e, 1);
     }
 
     // incremental value

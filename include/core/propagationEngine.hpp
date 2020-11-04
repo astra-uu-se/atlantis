@@ -3,6 +3,7 @@
 #include <queue>
 
 #include "core/engine.hpp"
+#include "core/idMap.hpp"
 #include "propagation/bottomUpExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
 
@@ -12,15 +13,17 @@ class PropagationEngine : public Engine {
   PropagationMode mode;
 
  protected:
+  size_t m_numVariables;
+
   PropagationGraph m_propGraph;
   BottomUpExplorer m_bottomUpExplorer;
 
   std::priority_queue<VarId, std::vector<VarId>, PropagationGraph::PriorityCmp>
       m_modifiedVariables;
 
-  std::vector<bool> m_isEnqueued;
+  IdMap<VarId, bool> m_isEnqueued;
 
-  std::vector<bool> m_varIsOnPropagationPath;
+  IdMap<VarId, bool> m_varIsOnPropagationPath;
   std::queue<VarId> m_propagationPathQueue;
 
   void recomputeAndCommit();
@@ -81,6 +84,9 @@ class PropagationEngine : public Engine {
 
   InvariantId getDefiningInvariant(VarId);
 
+  // This function is used by propagation, which is unaware of views.
+  inline bool hasChanged(Timestamp t, VarId v) const;
+
   const std::vector<VarId>& getVariablesDefinedBy(InvariantId) const;
 
   /**
@@ -126,14 +132,21 @@ inline const std::vector<VarId>& PropagationEngine::getVariablesDefinedBy(
 }
 
 inline VarId PropagationEngine::getNextDependency(InvariantId inv) {
-  return m_store.getInvariant(inv).getNextDependency(m_currentTime, *this);
+  return getSourceId(
+      m_store.getInvariant(inv).getNextDependency(m_currentTime, *this));
 }
 inline void PropagationEngine::notifyCurrentDependencyChanged(InvariantId inv) {
   m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime,
                                                            *this);
 }
 
+inline bool PropagationEngine::hasChanged(Timestamp t, VarId v) const {
+  assert(v.idType != VarIdType::view);
+  return m_store.getConstIntVar(v).hasChanged(t);
+}
+
 inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
+  assert(v.idType != VarIdType::view);
   m_store.getIntVar(v).setValue(t, val);
   notifyMaybeChanged(t, v);
 }

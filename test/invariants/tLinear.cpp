@@ -65,11 +65,11 @@ TEST_F(LinearTest, NotifyChange) {
   e->updateValue(time1, a, 40);
   EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time1, a), 40);
-  linear->notifyIntChanged(time1, *e, 0, e->getValue(time1, a));
+  linear->notifyIntChanged(time1, *e, 0);
   EXPECT_EQ(e->getValue(time1, d), 0);  // incremental value of d is 0;
 
   e->updateValue(time1, b, 0);
-  linear->notifyIntChanged(time1, *e, 1, e->getValue(time1, b));
+  linear->notifyIntChanged(time1, *e, 1);
   auto tmpValue = e->getValue(time1, d);  // incremental value of d is -40;
 
   // Incremental computation gives the same result as recomputation
@@ -82,7 +82,7 @@ TEST_F(LinearTest, NotifyChange) {
   e->updateValue(time2, a, 20);
   EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time2, a), 20);
-  linear->notifyIntChanged(time2, *e, 0, e->getValue(time2, a));
+  linear->notifyIntChanged(time2, *e, 0);
   EXPECT_EQ(e->getValue(time2, d), -20);  // incremental value of d is 0;
 }
 
@@ -107,13 +107,13 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
 
     // notify changes
     if (e->getCommittedValue(a) != e->getValue(currentTime, a)) {
-      linear->notifyIntChanged(currentTime, *e, 0, e->getValue(currentTime, a));
+      linear->notifyIntChanged(currentTime, *e, 0);
     }
     if (e->getCommittedValue(b) != e->getValue(currentTime, b)) {
-      linear->notifyIntChanged(currentTime, *e, 1, e->getValue(currentTime, b));
+      linear->notifyIntChanged(currentTime, *e, 1);
     }
     if (e->getCommittedValue(c) != e->getValue(currentTime, c)) {
-      linear->notifyIntChanged(currentTime, *e, 2, e->getValue(currentTime, c));
+      linear->notifyIntChanged(currentTime, *e, 2);
     }
 
     // incremental value
@@ -133,7 +133,7 @@ TEST_F(LinearTest, Commit) {
   e->updateValue(currentTime, b, 2);  // This change is not notified and should
                                       // not have an impact on the commit
 
-  linear->notifyIntChanged(currentTime, *e, 0, e->getValue(currentTime, a));
+  linear->notifyIntChanged(currentTime, *e, 0);
 
   // Committing an invariant does not commit its output!
   // // Commit at wrong timestamp should have no impact
