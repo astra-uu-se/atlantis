@@ -30,4 +30,6 @@ class IntView : public View {
 
   virtual Int getValue(Timestamp t) = 0;
   virtual Int getCommittedValue() = 0;
+  virtual Int getLowerBound() = 0;
+  virtual Int getUpperBound() = 0;
 };

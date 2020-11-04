@@ -10,3 +10,11 @@ Int IntOffsetView::getValue(Timestamp t) {
 Int IntOffsetView::getCommittedValue() {
   return m_offset + m_engine->getCommittedValue(m_parentId);
 }
+
+Int IntOffsetView::getLowerBound() {
+  return m_offset + m_engine->getLowerBound(m_parentId);
+}
+
+Int IntOffsetView::getUpperBound() {
+  return m_offset + m_engine->getUpperBound(m_parentId);
+}

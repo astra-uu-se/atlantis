@@ -18,4 +18,6 @@ class IntOffsetView : public IntView {
 
   Int getValue(Timestamp t) override;
   Int getCommittedValue() override;
+  Int getLowerBound() override;
+  Int getUpperBound() override;
 };
