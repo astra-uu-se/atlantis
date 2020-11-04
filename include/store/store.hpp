@@ -12,7 +12,7 @@ class Store {
 
   IdMap<InvariantId, std::shared_ptr<Invariant>> m_invariants;
 
-  IdMap<VarId, std::shared_ptr<IntVarView>> m_intViews;
+  IdMap<VarId, std::shared_ptr<IntView>> m_intViews;
   IdMap<VarId, VarId> m_intViewSourceId;
 
  public:
@@ -37,8 +37,8 @@ class Store {
     return newId;
   }
 
-  [[nodiscard]] inline VarId createIntVarViewFromPtr(
-      std::shared_ptr<IntVarView> ptr) {
+  [[nodiscard]] inline VarId createIntViewFromPtr(
+      std::shared_ptr<IntView> ptr) {
     VarId newId = VarId(m_intViews.size() + 1, VarIdType::view);
     ptr->setId(newId);
     m_intViews.register_idx(newId, ptr);
@@ -55,12 +55,12 @@ class Store {
 
   inline const IntVar& getConstIntVar(VarId v) const { return m_intVars.at(v); }
 
-  inline IntVarView& getIntVarView(VarId i) {
+  inline IntView& getIntView(VarId i) {
     assert(i.idType == VarIdType::view);
     return *(m_intViews[i.id]);
   }
 
-  inline VarId getIntVarViewSourceId(VarId v) {
+  inline VarId getIntViewSourceId(VarId v) {
     assert(v.idType == VarIdType::view);
     return m_intViewSourceId[v];
   }

@@ -7,7 +7,7 @@
 #include "core/constraint.hpp"
 #include "core/idMap.hpp"
 #include "core/intVar.hpp"
-#include "core/intVarView.hpp"
+#include "core/intView.hpp"
 #include "core/invariant.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
@@ -45,8 +45,8 @@ class Engine {
   //--------------------- Variable ---------------------
 
   inline VarId getSourceId(VarId id) {
-    return id.idType == VarIdType::var ? id : m_store.getIntVarViewSourceId(id);
-    // getSourceId(m_store.getIntVarView(id).getParentId());
+    return id.idType == VarIdType::var ? id : m_store.getIntViewSourceId(id);
+    // getSourceId(m_store.getIntView(id).getParentId());
   }
 
   void incValue(Timestamp, VarId, Int inc);
@@ -105,14 +105,14 @@ class Engine {
   makeInvariant(Args&&... args);
 
   /**
-   * Register an IntVarView in the engine and return its pointer.
-   * This also sets the id of the IntVarView to the new id.
-   * @param args the constructor arguments of the IntVarView
-   * @return the created IntVarView.
+   * Register an IntView in the engine and return its pointer.
+   * This also sets the id of the IntView to the new id.
+   * @param args the constructor arguments of the IntView
+   * @return the created IntView.
    */
   template <class T, typename... Args>
-  std::enable_if_t<std::is_base_of<IntVarView, T>::value, std::shared_ptr<T>>
-  makeIntVarView(Args&&... args);
+  std::enable_if_t<std::is_base_of<IntView, T>::value, std::shared_ptr<T>>
+  makeIntView(Args&&... args);
 
   /**
    * Register a constraint in the engine and return its pointer.
@@ -172,14 +172,14 @@ Engine::makeInvariant(Args&&... args) {
 }
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<IntVarView, T>::value, std::shared_ptr<T>>
-Engine::makeIntVarView(Args&&... args) {
+std::enable_if_t<std::is_base_of<IntView, T>::value, std::shared_ptr<T>>
+Engine::makeIntView(Args&&... args) {
   if (!m_isOpen) {
-    throw ModelNotOpenException("Cannot make intVarView when store is closed.");
+    throw ModelNotOpenException("Cannot make intView when store is closed.");
   }
   auto viewPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
-  auto newId = m_store.createIntVarViewFromPtr(viewPtr);
+  auto newId = m_store.createIntViewFromPtr(viewPtr);
   // We don't actually register views as they are invisible to propagation.
 
   viewPtr->init(newId, *this);
@@ -214,7 +214,7 @@ inline Int Engine::getValue(Timestamp t, VarId v) {
 }
 
 inline Int Engine::getIntViewValue(Timestamp t, VarId v) {
-  return m_store.getIntVarView(v).getValue(t);
+  return m_store.getIntView(v).getValue(t);
 }
 
 inline Int Engine::getCommittedValue(VarId v) {
@@ -225,7 +225,7 @@ inline Int Engine::getCommittedValue(VarId v) {
 }
 
 inline Int Engine::getIntViewCommittedValue(VarId v) {
-  return m_store.getIntVarView(v).getCommittedValue();
+  return m_store.getIntView(v).getCommittedValue();
 }
 
 inline Timestamp Engine::getTmpTimestamp(VarId v) {
@@ -236,7 +236,7 @@ inline Timestamp Engine::getTmpTimestamp(VarId v) {
 }
 
 inline Int Engine::getIntViewTmpTimestamp(VarId v) {
-  return m_store.getIntVarView(v).getTmpTimestamp();
+  return m_store.getIntView(v).getTmpTimestamp();
 }
 
 inline bool Engine::isPostponed(InvariantId id) {

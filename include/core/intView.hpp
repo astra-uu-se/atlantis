@@ -6,11 +6,11 @@
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "core/var.hpp"
-#include "core/varView.hpp"
+#include "core/view.hpp"
 
 class Engine;  // Forward declaration
 
-class IntVarView : public VarView {
+class IntView : public View {
  protected:
   // SavedInt m_savedInt;
 
@@ -19,14 +19,13 @@ class IntVarView : public VarView {
                      // views lifetime depend on engine and not vice-versa.
 
  public:
-  IntVarView(const VarId t_parentId) : VarView(t_parentId) {}
+  IntView(const VarId t_parentId) : View(t_parentId) {}
 
   virtual void init(VarId, Engine&) = 0;
 
-  virtual ~IntVarView() = default;
+  virtual ~IntView() = default;
 
   virtual Int getValue(Timestamp t) = 0;
   virtual Int getCommittedValue() = 0;
   virtual Timestamp getTmpTimestamp() = 0;
-
 };

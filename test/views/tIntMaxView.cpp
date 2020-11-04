@@ -32,9 +32,9 @@ TEST_F(IntMaxViewTest, CreateIntMaxView) {
 
   const VarId var = engine->makeIntVar(10, 0, 10);
   std::shared_ptr<IntMaxView> viewOfVar =
-      engine->makeIntVarView<IntMaxView>(var, 25);
+      engine->makeIntView<IntMaxView>(var, 25);
   std::shared_ptr<IntMaxView> viewOfView =
-      engine->makeIntVarView<IntMaxView>(viewOfVar->getId(), 50);
+      engine->makeIntView<IntMaxView>(viewOfVar->getId(), 50);
 
   EXPECT_EQ(viewOfVar->getCommittedValue(), Int(25));
   EXPECT_EQ(viewOfView->getCommittedValue(), Int(50));
@@ -52,9 +52,9 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
                                               std::vector<VarId>({a, b}), sum);
 
   std::shared_ptr<IntMaxView> viewOfVar =
-      engine->makeIntVarView<IntMaxView>(sum, 10);
+      engine->makeIntView<IntMaxView>(sum, 10);
   std::shared_ptr<IntMaxView> viewOfView =
-      engine->makeIntVarView<IntMaxView>(viewOfVar->getId(), 15);
+      engine->makeIntView<IntMaxView>(viewOfVar->getId(), 15);
   VarId viewOfVarId = viewOfVar->getId();
   VarId viewOfViewId = viewOfView->getId();
 
@@ -81,7 +81,7 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(15));
 }
 
-TEST_F(IntMaxViewTest, PropagateIntVarViews) {
+TEST_F(IntMaxViewTest, PropagateIntViews) {
   engine->open();
   auto a = engine->makeIntVar(20, -100, 100);    // VarId 1
   auto b = engine->makeIntVar(20, -100, 100);    // VarId 2
@@ -103,10 +103,10 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
 
   // IntMaxView (VarId::view 1) depends on VarId sum1=3
   std::shared_ptr<IntMaxView> sum1View =
-      engine->makeIntVarView<IntMaxView>(sum1, 45);
+      engine->makeIntView<IntMaxView>(sum1, 45);
   // IntMaxView (VarId::view 2) depends on VarId sum2=6
   std::shared_ptr<IntMaxView> sum2View =
-      engine->makeIntVarView<IntMaxView>(sum2, 20);
+      engine->makeIntView<IntMaxView>(sum2, 20);
 
   // IntMaxView (VarId::view 1)
   VarId sum1ViewId = sum1View->getId();
@@ -127,7 +127,7 @@ TEST_F(IntMaxViewTest, PropagateIntVarViews) {
     // IntMaxView (VarId::view 3+i) depends on
     //   * VarId sum3 if i = 0,
     //   * VarId::view 3+i-1 otherwise
-    sum3views.emplace_back(engine->makeIntVarView<IntMaxView>(prev, 80 + i));
+    sum3views.emplace_back(engine->makeIntView<IntMaxView>(prev, 80 + i));
     sum3viewIds.emplace_back(sum3views[i]->getId());
     // IntMaxView (VarId::view 3+i)
     prev = sum3viewIds[i];
