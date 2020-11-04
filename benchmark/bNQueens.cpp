@@ -194,4 +194,4 @@ BENCHMARK_REGISTER_F(Queens, probing_all_swap)
     ->Unit(benchmark::kMillisecond)
     ->Range(5, 1000);
 
-BENCHMARK_REGISTER_F(Queens, solve)->DenseRange(50, 500, 50);
+BENCHMARK_REGISTER_F(Queens, solve)->DenseRange(50, 400, 50);
