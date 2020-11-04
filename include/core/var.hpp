@@ -6,6 +6,6 @@ class Var {
   VarId m_id;
 
  public:
-  Var(Int t_id);
+  explicit Var(VarId t_id);
   ~Var() = default;
 };

@@ -8,10 +8,6 @@ class VariableAlreadyDefinedException : public std::runtime_error {
    */
   explicit VariableAlreadyDefinedException(const std::string& msg)
       : std::runtime_error(msg) {}
-
-  /** Destructor.
-   */
-  ~VariableAlreadyDefinedException() {}
 };
 
 class ModelNotOpenException : public std::runtime_error {
@@ -41,13 +37,13 @@ class FailedToInitialise : public std::runtime_error {
 };
 
 // We do not extend std::runtime_error to keep runtime overhead at a minimum.
-class DynamicCycleException {
+class DynamicCycleException : public std::exception {
  public:
-  explicit DynamicCycleException() {}
+  explicit DynamicCycleException() = default;
 };
 
 // We do not extend std::runtime_error to keep runtime overhead at a minimum.
-class OutOfOrderIndexRegistration {
+class OutOfOrderIndexRegistration : public std::exception {
  public:
-  explicit OutOfOrderIndexRegistration() {}
+  explicit OutOfOrderIndexRegistration() = default;
 };

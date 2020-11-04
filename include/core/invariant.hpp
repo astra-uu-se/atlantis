@@ -11,13 +11,13 @@ class Invariant {
   InvariantId m_id;
   // State used for returning next dependency. Null state is -1 by default
   SavedInt m_state;
-  Invariant(Id t_id)
+  explicit Invariant(Id t_id)
       : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, -1) {}
   Invariant(Id t_id, Int nullState)
-      : m_id(t_id), m_state(NULL_TIMESTAMP, nullState) {}
+      : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, nullState) {}
 
  public:
-  virtual ~Invariant() {}
+  virtual ~Invariant() = default;
 
   void setId(Id t_id) { m_id = t_id; }
 
@@ -51,5 +51,5 @@ class Invariant {
 
   virtual void commit(Timestamp, Engine&) { m_isPostponed = false; };
   inline void postpone() { m_isPostponed = true; }
-  inline bool isPostponed() { return m_isPostponed; }
+  [[nodiscard]] inline bool isPostponed() const { return m_isPostponed; }
 };

@@ -15,7 +15,7 @@ class IdMap {
   std::vector<T> m_vector;
 
  public:
-  IdMap(size_t reservedSize) {
+  explicit IdMap(size_t reservedSize) {
     static_assert(std::is_base_of<Id, I>::value,
                   "The index must be a subclass of id");
     m_vector.reserve(reservedSize);
@@ -53,7 +53,7 @@ class IdMap {
 
   inline void assign_all(T value) { m_vector.assign(m_vector.size(), value); }
 
-  inline size_t size() const { return m_vector.size(); }
+  [[nodiscard]] inline size_t size() const { return m_vector.size(); }
   typedef typename std::vector<T>::iterator iterator;
 
   inline iterator begin() { return m_vector.begin(); }
@@ -66,7 +66,7 @@ class IdMap<I, bool> {
   std::vector<bool> m_vector;
 
  public:
-  IdMap(size_t reservedSize) {
+  explicit IdMap(size_t reservedSize) {
     static_assert(std::is_base_of<Id, I>::value,
                   "The index must be a subclass of id");
     m_vector.reserve(reservedSize);

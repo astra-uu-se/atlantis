@@ -1,9 +1,5 @@
 #include "core/engine.hpp"
 
-#include "exceptions/exceptions.hpp"
-
-extern Id NULL_ID;
-
 Engine::Engine()
     : m_currentTime(NULL_TIMESTAMP + 1),
       m_isOpen(false),
