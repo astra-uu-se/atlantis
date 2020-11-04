@@ -170,7 +170,40 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->beginQuery();
   engine->query(output);
   engine->endQuery();
-  std::cout << "foo";
+}
+
+TEST_F(EngineTest, SimpleCommit) {
+  engine->open();
+
+  VarId output = engine->makeIntVar(0, -10, 10);
+  VarId a = engine->makeIntVar(1, -10, 10);
+  VarId b = engine->makeIntVar(2, -10, 10);
+  VarId c = engine->makeIntVar(3, -10, 10);
+
+  auto invariant = engine->makeInvariant<MockInvariantAdvanced>(
+      std::vector<VarId>({a, b, c}), output);
+
+  engine->close();
+
+  engine->beginMove();
+  engine->setValue(a, -1);
+  engine->setValue(b, -2);
+  engine->setValue(c, -3);
+  engine->endMove();
+  engine->beginQuery();
+  engine->query(output);
+  engine->endQuery();
+
+  engine->beginMove();
+  engine->setValue(a, 0);
+  engine->endMove();
+  engine->beginCommit();
+  engine->query(output);
+  engine->endCommit();
+
+  EXPECT_EQ(engine->getCommittedValue(a), 0);
+  EXPECT_EQ(engine->getCommittedValue(b), 2);
+  EXPECT_EQ(engine->getCommittedValue(c), 3);
 }
 
 }  // namespace
