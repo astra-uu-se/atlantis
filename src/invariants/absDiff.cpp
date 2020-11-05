@@ -1,7 +1,5 @@
 #include "invariants/absDiff.hpp"
 
-#include <vector>
-
 // TODO: invariant should take its true id in the constructor.
 extern Id NULL_ID;
 
@@ -9,7 +7,7 @@ AbsDiff::AbsDiff(VarId a, VarId b, VarId c)
     : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {}
 
 void AbsDiff::init([[maybe_unused]] Timestamp t, Engine& e) {
-  assert(m_id != NULL_ID);
+  assert(!m_id.equals(NULL_ID));
 
   e.registerDefinedVariable(m_c, m_id);
   e.registerInvariantDependsOnVar(m_id, m_a, 0);

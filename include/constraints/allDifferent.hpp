@@ -23,13 +23,12 @@ class AllDifferent : public Constraint {
  public:
   AllDifferent(VarId violationId, std::vector<VarId> t_variables);
 
-  virtual ~AllDifferent() = default;
-  virtual void init(Timestamp, Engine&) override;
-  virtual void recompute(Timestamp, Engine&) override;
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
-  virtual void commit(Timestamp, Engine&) override;
-  virtual VarId getNextDependency(Timestamp, Engine& e) override;
-  virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
+  void init(Timestamp, Engine&) override;
+  void recompute(Timestamp, Engine&) override;
+  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
+  void commit(Timestamp, Engine&) override;
+  VarId getNextDependency(Timestamp, Engine& e) override;
+  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
 };
 
 inline void AllDifferent::increaseCount(Timestamp ts, Engine& e, Int value) {

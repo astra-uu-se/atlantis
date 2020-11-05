@@ -30,11 +30,10 @@ class BottomUpExplorer {
   void pushVariableStack(VarId v);
   void popVariableStack();
   VarId peekVariableStack();
-  void pushInvariantStack(InvariantId v);
+  void pushInvariantStack(InvariantId);
   void popInvariantStack();
   InvariantId peekInvariantStack();
   void markStable(Timestamp t, VarId v);
-  void markStable(Timestamp t, InvariantId v);
   bool isStable(Timestamp t, VarId v);
   bool isStable(Timestamp t, InvariantId v);
 
@@ -43,8 +42,6 @@ class BottomUpExplorer {
   void expandInvariant(InvariantId inv);
   void notifyCurrentInvariant();
   bool visitNextVariable();
-
-  void commitAndPostpone(Timestamp, VarId);
 
  public:
   BottomUpExplorer() = delete;
@@ -55,7 +52,7 @@ class BottomUpExplorer {
   /**
    * Register than we want to compute the value of v at time t
    */
-  void registerForPropagation(Timestamp t, VarId v);
+  void registerForPropagation(Timestamp, VarId);
 
   void clearRegisteredVariables();
 
@@ -103,10 +100,6 @@ inline void BottomUpExplorer::markStable(Timestamp t, VarId v) {
 
 inline bool BottomUpExplorer::isStable(Timestamp t, VarId v) {
   return varStableAt.at(v) == t;
-}
-
-inline void BottomUpExplorer::markStable(Timestamp t, InvariantId v) {
-  invariantStableAt[v] = t;
 }
 
 inline bool BottomUpExplorer::isStable(Timestamp t, InvariantId v) {

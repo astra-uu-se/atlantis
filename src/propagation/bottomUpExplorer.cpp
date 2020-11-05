@@ -49,13 +49,13 @@ bool BottomUpExplorer::visitNextVariable() {
 }
 
 void BottomUpExplorer::registerVar(VarId id) {
-  variableStack_.push_back(NULL_ID);  // push back just to resize the stack!
+  variableStack_.emplace_back(NULL_ID);  // push back just to resize the stack!
   varStableAt.register_idx(id);
   varIsOnStack.register_idx(id, false);
 }
 
 void BottomUpExplorer::registerInvariant(InvariantId id) {
-  invariantStack_.push_back(NULL_ID);  //  push back just to resize the stack!
+  invariantStack_.emplace_back(NULL_ID);  // push back just to resize the stack!
   invariantStableAt.register_idx(id);
   invariantIsOnStack.register_idx(id, false);
 }

@@ -116,7 +116,7 @@ void PropagationGraph::Topology::computeInvariantFromVariables() {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
-    InvariantId invariant = InvariantId(i);
+    auto invariant = InvariantId(i);
     size_t position = 0;
     for (auto dependentVariable :
          graph.m_variablesDefinedByInvariant.at(invariant)) {

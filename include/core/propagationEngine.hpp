@@ -39,15 +39,15 @@ class PropagationEngine : public Engine {
  public:
   PropagationEngine(/* args */);
 
-  virtual void open() override;
-  virtual void close() override;
+  void open() override;
+  void close() override;
 
   //--------------------- Notificaion ---------------------
   /***
    * @param t the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  virtual void notifyMaybeChanged(Timestamp t, VarId id) override;
+  void notifyMaybeChanged(Timestamp t, VarId id) override;
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
@@ -60,7 +60,7 @@ class PropagationEngine : public Engine {
    * returns true if invariant id is relevant for propagation.
    * Note that this is not the same thing as the invariant being modified.
    */
-  bool isOnPropagationPath(Timestamp, InvariantId) { return true; }
+  static bool isOnPropagationPath(Timestamp, InvariantId) { return true; }
 
   [[nodiscard]] VarId getNextStableVariable(Timestamp t);
 
@@ -85,9 +85,10 @@ class PropagationEngine : public Engine {
   InvariantId getDefiningInvariant(VarId);
 
   // This function is used by propagation, which is unaware of views.
-  inline bool hasChanged(Timestamp t, VarId v) const;
+  [[nodiscard]] inline bool hasChanged(Timestamp t, VarId v) const;
 
-  const std::vector<VarId>& getVariablesDefinedBy(InvariantId) const;
+  [[nodiscard]] const std::vector<VarId>& getVariablesDefinedBy(
+      InvariantId) const;
 
   /**
    * Notify an invariant that its current dependency has changed
@@ -101,9 +102,8 @@ class PropagationEngine : public Engine {
    * @param localId the id of the depending variable in the invariant
    * @param data additional data
    */
-  virtual void registerInvariantDependsOnVar(InvariantId dependent,
-                                             VarId source,
-                                             LocalId localId) override;
+  void registerInvariantDependsOnVar(InvariantId dependent, VarId source,
+                                     LocalId localId) override;
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
@@ -112,11 +112,10 @@ class PropagationEngine : public Engine {
    * @param source the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  virtual void registerDefinedVariable(VarId dependent,
-                                       InvariantId source) override;
+  void registerDefinedVariable(VarId dependent, InvariantId source) override;
 
-  virtual void registerVar(VarId) override;
-  virtual void registerInvariant(InvariantId) override;
+  void registerVar(VarId) override;
+  void registerInvariant(InvariantId) override;
 
   PropagationGraph& getPropGraph();
 };

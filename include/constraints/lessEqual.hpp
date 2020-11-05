@@ -17,11 +17,10 @@ class LessEqual : public Constraint {
  public:
   LessEqual(VarId violationId, VarId x, VarId y);
 
-  ~LessEqual() = default;
-  virtual void init(Timestamp, Engine&) override;
-  virtual void recompute(Timestamp, Engine&) override;
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
-  virtual void commit(Timestamp, Engine&) override;
-  virtual VarId getNextDependency(Timestamp, Engine&) override;
-  virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
+  void init(Timestamp, Engine&) override;
+  void recompute(Timestamp, Engine&) override;
+  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
+  void commit(Timestamp, Engine&) override;
+  VarId getNextDependency(Timestamp, Engine&) override;
+  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
 };

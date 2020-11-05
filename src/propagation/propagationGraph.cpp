@@ -1,12 +1,5 @@
 #include "propagation/propagationGraph.hpp"
 
-#include <algorithm>
-#include <functional>
-
-#include "exceptions/exceptions.hpp"
-#include "topology.cpp"
-extern Id NULL_ID;
-
 PropagationGraph::PropagationGraph(size_t expectedSize)
     : m_numInvariants(0),
       m_numVariables(0),
@@ -54,7 +47,7 @@ void PropagationGraph::close() {
   m_isInputVar.resize(getNumVariables() + 1);
   m_isOutputVar.resize(getNumVariables() + 1);
   for (size_t i = 1; i < getNumVariables() + 1; i++) {
-    m_isOutputVar.at(i) = (m_listeningInvariants.at(i).size() == 0);
+    m_isOutputVar.at(i) = (m_listeningInvariants.at(i).empty());
     m_isInputVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
   }
 

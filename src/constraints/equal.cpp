@@ -1,7 +1,6 @@
 #include "constraints/equal.hpp"
 
 // TODO: invariant should take its true id in the constructor.
-extern Id NULL_ID;
 
 /**
  * Constraint a*x = b*y
@@ -39,10 +38,8 @@ VarId Equal::getNextDependency(Timestamp t, Engine&) {
   switch (m_state.getValue(t)) {
     case 0:
       return m_x;
-      break;
     case 1:
       return m_y;
-      break;
     default:
       return NULL_ID;
   }

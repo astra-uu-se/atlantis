@@ -25,9 +25,6 @@ class Engine {
   struct InvariantDependencyData {
     InvariantId id;
     LocalId localId;
-    Timestamp lastNotification;  // todo: unclear if this information is
-                                 // relevant for all types of propagation. If
-                                 // not then move it to a subclass...
   };
   // Map from VarID -> vector of InvariantID
   IdMap<VarId, std::vector<InvariantDependencyData>> m_dependentInvariantData;
@@ -74,7 +71,6 @@ class Engine {
 
   bool isPostponed(InvariantId);
 
-  void postpone(InvariantId);
   void recompute(InvariantId);
   void recompute(Timestamp, InvariantId);
 
@@ -83,7 +79,7 @@ class Engine {
   void commitIf(Timestamp, VarId);
   void commitValue(VarId, Int val);
 
-  inline Int getLowerBound(VarId v) const {
+  [[nodiscard]] inline Int getLowerBound(VarId v) const {
     if (v.idType == VarIdType::view) {
       return getIntViewLowerBound(v);
     }
@@ -91,12 +87,12 @@ class Engine {
     return m_store.getConstIntVar(v).getLowerBound();
   }
 
-  inline Int getIntViewLowerBound(VarId v) const {
+  [[nodiscard]] inline Int getIntViewLowerBound(VarId v) const {
     assert(v.idType == VarIdType::view);
     return m_store.getConstIntView(v)->getLowerBound();
   }
 
-  inline Int getUpperBound(VarId v) const {
+  [[nodiscard]] inline Int getUpperBound(VarId v) const {
     if (v.idType == VarIdType::view) {
       return getIntViewUpperBound(v);
     }
@@ -104,7 +100,7 @@ class Engine {
     return m_store.getConstIntVar(v).getUpperBound();
   }
 
-  inline Int getIntViewUpperBound(VarId v) const {
+  [[nodiscard]] inline Int getIntViewUpperBound(VarId v) const {
     assert(v.idType == VarIdType::view);
     return m_store.getConstIntView(v)->getUpperBound();
   }
@@ -171,7 +167,7 @@ class Engine {
   virtual void registerInvariant(InvariantId) = 0;
 
   const Store& getStore();
-  Timestamp getCurrentTime();
+  [[nodiscard]] Timestamp getCurrentTime() const;
 };
 
 template <class T, typename... Args>
@@ -222,7 +218,7 @@ Engine::makeConstraint(Args&&... args) {
 //--------------------- Inlined functions ---------------------
 
 inline const Store& Engine::getStore() { return m_store; }
-inline Timestamp Engine::getCurrentTime() { return m_currentTime; }
+inline Timestamp Engine::getCurrentTime() const { return m_currentTime; }
 
 inline Int Engine::getValue(Timestamp t, VarId v) {
   if (v.idType == VarIdType::view) {
@@ -259,10 +255,6 @@ inline Int Engine::getIntViewTmpTimestamp(VarId v) {
 
 inline bool Engine::isPostponed(InvariantId id) {
   return m_store.getInvariant(id).isPostponed();
-}
-
-inline void Engine::postpone(InvariantId id) {
-  return m_store.getInvariant(id).postpone();
 }
 
 inline void Engine::recompute(InvariantId id) {

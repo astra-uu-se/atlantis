@@ -12,36 +12,6 @@ class Constraint : public Invariant {
       : Invariant(t_id), m_violationId(t_violationId) {}
 
  public:
-  virtual ~Constraint() = default;
-
-  /**
-   * Preconditions for initialisation:
-   * 1) The constraint has been registered in an engine and has a valid ID.
-   *
-   * 2) All variables have valid ids (i.e., they have been
-   * registered)
-   *
-   * Checklist for initialising an constraint:
-   *
-   *
-   * 2) Register any output variables that are defined by this
-   * constraint note that this can throw an exception if such a variable is
-   * already defined.
-   *
-   * 3) Register dependency to any input variables.
-   *
-   * 4) Compute initial state of constraint!
-   */
-  virtual void init(Timestamp, Engine&) = 0;
-
-  virtual void recompute(Timestamp, Engine&) = 0;
-
-  // TODO: This commit is somehow different from other commits as it just
-  // forwards the commit call and validates the node. Maybe remove and let
-  // engine do this by looking at defined variables of constraint...
-  virtual void commit(Timestamp t, Engine&) = 0;
-
   inline VarId getViolationId();
-
   inline Int getViolationCount(Engine& e, Timestamp& t);
 };
