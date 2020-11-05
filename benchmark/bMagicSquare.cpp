@@ -155,4 +155,4 @@ BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
 
 BENCHMARK_REGISTER_F(MagicSquare, probing_all_swap)
     ->Unit(benchmark::kMillisecond)
-    ->DenseRange(3, 15);
+    ->DenseRange(3, 10);

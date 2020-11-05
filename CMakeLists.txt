@@ -20,8 +20,6 @@ endif()
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   # If we are debugging then add debugging flag
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 ")
-else()
-  add_definitions(-DNDEBUG)
 endif()
 
 #----------------------------------------------------------------------------
@@ -63,6 +61,7 @@ option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
 
 if (BUILD_TESTS)
+  message(WARNING "Building tests")
   # This adds another subdirectory, which has 'project(gtest)'.
   add_subdirectory(ext/googletest)
 
@@ -97,8 +96,9 @@ if (BUILD_TESTS)
   add_test(NAME "UnitTests" COMMAND "runUnitTests")
 endif()
 if (BUILD_BENCHMARKS)
+  message(WARNING "Building benchmark")
   # This adds another subdirectory, which has 'project(gtest)'.
-  set(BENCHMARK_ENABLE_TESTING off)
+  set(BENCHMARK_ENABLE_TESTING OFF)
   add_subdirectory(ext/benchmark)
 
   ##############
