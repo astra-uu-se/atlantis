@@ -62,7 +62,7 @@ class Store {
     return *(m_intViews[i.id]);
   }
 
-  inline const std::shared_ptr<IntView> getConstIntView(VarId i) const {
+  [[nodiscard]] inline std::shared_ptr<IntView> getConstIntView(VarId i) const {
     assert(i.idType == VarIdType::view);
     return (m_intViews.at(i.id));
   }

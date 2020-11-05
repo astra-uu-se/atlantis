@@ -67,8 +67,6 @@ class Engine {
 
   Timestamp getTmpTimestamp(VarId);
 
-  Int getIntViewTmpTimestamp(VarId);
-
   bool isPostponed(InvariantId);
 
   void recompute(InvariantId);
@@ -244,13 +242,9 @@ inline Int Engine::getIntViewCommittedValue(VarId v) {
 
 inline Timestamp Engine::getTmpTimestamp(VarId v) {
   if (v.idType == VarIdType::view) {
-    return getIntViewTmpTimestamp(v);
+    return m_store.getIntVar(m_store.getIntViewSourceId(v)).getTmpTimestamp();
   }
   return m_store.getIntVar(v).getTmpTimestamp();
-}
-
-inline Int Engine::getIntViewTmpTimestamp(VarId v) {
-  return getTmpTimestamp(m_store.getIntViewSourceId(v));
 }
 
 inline bool Engine::isPostponed(InvariantId id) {
