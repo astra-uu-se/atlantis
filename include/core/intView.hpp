@@ -20,7 +20,6 @@ class IntView : public View {
 
  public:
   explicit IntView(VarId t_parentId) : View(t_parentId), m_engine(nullptr) {}
-  virtual ~IntView() = default;
 
   void init(VarId id, Engine& e) {
     m_id = id;
