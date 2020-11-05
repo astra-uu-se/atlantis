@@ -42,6 +42,27 @@ TEST_F(IntMaxViewTest, CreateIntMaxView) {
   engine->close();
 }
 
+TEST_F(IntMaxViewTest, ComputeBounds) {
+  engine->open();
+  auto a = engine->makeIntVar(20, -100, 100);
+  auto b = engine->makeIntVar(20, -100, 100);
+
+  std::shared_ptr<IntMaxView> va = engine->makeIntView<IntMaxView>(a, 10);
+  std::shared_ptr<IntMaxView> vb = engine->makeIntView<IntMaxView>(b, 200);
+
+  EXPECT_EQ(engine->getLowerBound(va->getId()), Int(-100));
+  EXPECT_EQ(engine->getLowerBound(vb->getId()), Int(-100));
+  EXPECT_EQ(engine->getUpperBound(va->getId()), Int(10));
+  EXPECT_EQ(engine->getUpperBound(vb->getId()), Int(100));
+
+  engine->close();
+
+  EXPECT_EQ(engine->getLowerBound(va->getId()), Int(-100));
+  EXPECT_EQ(engine->getLowerBound(vb->getId()), Int(-100));
+  EXPECT_EQ(engine->getUpperBound(va->getId()), Int(10));
+  EXPECT_EQ(engine->getUpperBound(vb->getId()), Int(100));
+}
+
 TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   engine->open();
   auto a = engine->makeIntVar(20, -100, 100);
