@@ -61,6 +61,7 @@ option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
 
 if (BUILD_TESTS)
+  message(WARNING "Building tests")
   # This adds another subdirectory, which has 'project(gtest)'.
   add_subdirectory(ext/googletest)
 
@@ -95,8 +96,9 @@ if (BUILD_TESTS)
   add_test(NAME "UnitTests" COMMAND "runUnitTests")
 endif()
 if (BUILD_BENCHMARKS)
+  message(WARNING "Building benchmark")
   # This adds another subdirectory, which has 'project(gtest)'.
-  set(BENCHMARK_ENABLE_TESTING off)
+  set(BENCHMARK_ENABLE_TESTING OFF)
   add_subdirectory(ext/benchmark)
 
   ##############
