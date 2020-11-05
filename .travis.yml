@@ -58,7 +58,7 @@ script:
   ############################################################################
   - mkdir -p build
   - cd build
-  - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..
+  - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} -DCMAKE_BUILD_TYPE=Debug ..
   - make
   - ctest
   - cd ..
@@ -68,4 +68,8 @@ after_success:
   ############################################################################
   # Run benchmarks and post to slack
   ############################################################################
+  - cd build
+  - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} -DCMAKE_BUILD_TYPE=Release ..
+  - make
+  - cd ..
   - bash slack-benchmark.sh
