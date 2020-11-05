@@ -8,13 +8,14 @@ dist: xenial
 env:
   global:
     # Ubuntu version
-    - LINUX_DIST=xenial
-    - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
+    - LINUX_DIST: "xenial"
+    - DEPS_DIR: "${TRAVIS_BUILD_DIR}/deps"
     # Global build options and C++ flags
-    - CXX_FLAGS="-std=c++17 -Wall -pedantic -Werror -Wno-variadic-macros -Wno-long-long -Wno-shadow"
+    - CXX_FLAGS: "-std=c++17 -Wall -pedantic -Werror -Wno-variadic-macros -Wno-long-long -Wno-shadow"
     # Misc
-    - RUN_TESTS=true
-    - RUN_BENCHMARKS=true
+    - RUN_TESTS: "true"
+    - RUN_BENCHMARKS: "true"
+    - secure: "xXWekf2zu61FZPLuFG8wuD91azv4+5A3podFs2I2jLUZj17o2Rf6U7N2/0E4hrtltBqOjpZHBS0z/D0vjNh2x0ZVEZLbA8lq/2smPRGbsVEUXXZH0kRTGK9flRH6+zbzlZ7vvPOGG6XSvZa9HF9skj9FLVgoqppjqQRIOSgPNLPtdtqODPdPJj5NHVsbo5esMn56Xg/rN4EZ68T5UkfpKC5zUK3PjFLxdg8fHBCKolJb5oTPLHWZhB8Y4Y/0Uk/iuV+fLE3U5sU158686egprgncXfBz+BOji2caluR9ac9m5kr+iGwXab3MaJMIZ+kmdO0wNyZ1i9ydmG0CCGHmXpdrNnZO5zvXicP5z32hMZagsBo0zZR6CVZ7M9MXTvJwRiJtLviPGooyL9xxpgGt3zKiUwA/TPXKNBLM8C4NcKFtEKEYNw5oV9s3SiFX+mo0t8C/GpWy7g0+IDD+75CKQeCoc50Xsd0uwa0/p3VGgta731OxYgbtgKrRujVuZIx+NKz2lGkEH3RTHNRuQJO4sKmuEVU7K73+fvVsh/2NPDGtuicjoWfHRiSaAhgWPSyVwSEoxqdNVzr96omHjo3MriSRIJs0ZFIdc4FSGpEb6VyZpDw1JtHIC+uShqKp567x/50XRnZNQHIveWivJbaYKfHL5/CpjQ0vEU9pqfIkcYY="
 
 jobs:
   include:

@@ -23,4 +23,4 @@ HEADER="Build <$TRAVIS_BUILD_WEB_URL|#$TRAVIS_BUILD_NUMBER> (<$GIT_LINK|$GIT_COM
 BENCHMARK_DATA=`$BENCHMARK`
 echo "{\"text\":\"${HEADER}\n\`\`\`${BENCHMARK_DATA}\`\`\`\"}" >> $BENCHMARK_FILE
 BENCHMARK_FILE_PATH=`realpath $BENCHMARK_FILE`
-curl -X POST -H 'Content-type: application/json' --data-binary "@$BENCHMARK_FILE_PATH" https://hooks.slack.com/services/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
+curl -X POST -H 'Content-type: application/json' --data-binary "@$BENCHMARK_FILE_PATH" $SLACK_WEBHOOK
