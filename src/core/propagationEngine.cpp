@@ -162,6 +162,10 @@ void PropagationEngine::endCommit() {
     case PropagationMode::BOTTOM_UP:
       markPropagationPath();
       bottomUpPropagate();
+      // BUG: Variables that are not dynamically defining the queries variables
+      // will not be properly updated: they should be marked as changed until
+      // committed but this does not happen.
+      // TODO: create test case to catch this bug.
       break;
     case PropagationMode::MIXED:
       propagate();
