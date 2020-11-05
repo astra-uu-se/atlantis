@@ -24,9 +24,9 @@ class AllInterval : public benchmark::Fixture {
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(0);
-    
+
     // TODO: why is this printed multiple times per test?
-    //std::cout << n << "\n";
+    // std::cout << n << "\n";
     engine->open();
 
     for (int i = 0; i < n; i++) {
@@ -36,7 +36,7 @@ class AllInterval : public benchmark::Fixture {
     for (int i = 1; i < n; i++) {
       v_vars.push_back(engine->makeIntVar(i, 0, n - 1));
       engine->makeInvariant<AbsDiff>(s_vars.at(i - 1), s_vars.at(i),
-                                    v_vars.back());
+                                     v_vars.back());
     }
 
     violation = engine->makeIntVar(0, 0, n);
@@ -52,7 +52,6 @@ class AllInterval : public benchmark::Fixture {
   void TearDown(const ::benchmark::State& state) {
     s_vars.clear();
     v_vars.clear();
-    
   }
 };
 
@@ -124,8 +123,8 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
 }
 //
 
- BENCHMARK_REGISTER_F(AllInterval, probing_single_swap)->DenseRange(5, 30, 5);
- BENCHMARK_REGISTER_F(AllInterval, probing_all_swap)
-     ->Unit(benchmark::kMillisecond)
-     ->DenseRange(5, 30, 5);
+BENCHMARK_REGISTER_F(AllInterval, probing_single_swap)->DenseRange(5, 30, 5);
+BENCHMARK_REGISTER_F(AllInterval, probing_all_swap)
+    ->Unit(benchmark::kMillisecond)
+    ->DenseRange(5, 30, 5);
 BENCHMARK_REGISTER_F(AllInterval, commit_single_swap)->DenseRange(5, 30, 5);

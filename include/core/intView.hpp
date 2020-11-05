@@ -21,9 +21,13 @@ class IntView : public View {
  public:
   explicit IntView(VarId t_parentId) : View(t_parentId), m_engine(nullptr) {}
 
-  virtual void init(VarId, Engine&) = 0;
+  void init(VarId id, Engine& e) {
+    m_id = id;
+    m_engine = &e;
+  }
 
   virtual Int getValue(Timestamp t) = 0;
   virtual Int getCommittedValue() = 0;
-  virtual Timestamp getTmpTimestamp() = 0;
+  virtual Int getLowerBound() = 0;
+  virtual Int getUpperBound() = 0;
 };
