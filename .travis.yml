@@ -33,7 +33,9 @@ cache: apt
 
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - export CMAKE_OPTIONS="${CMAKE_OPTIONS} -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=ON ${ENV_CMAKE_OPTIONS}"
+  - export CMAKE_OPTIONS="${CMAKE_OPTIONS} ${ENV_CMAKE_OPTIONS}"
+  - export GTEST_FLAGS="-DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=OFF -DCMAKE_BUILD_TYPE=Debug"
+  - export GBENCH_FLAGS="-DBUILD_TESTS:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_BUILD_TYPE=Release"
   - export CXX_FLAGS="${CXX_FLAGS} ${ENV_CXX_FLAGS}"
   - sudo apt-get update -qq
   - CC=gcc-8
@@ -58,7 +60,7 @@ script:
   ############################################################################
   - mkdir -p build
   - cd build
-  - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} -DCMAKE_BUILD_TYPE=Debug ..
+  - cmake ${CMAKE_OPTIONS} ${GTEST_FLAGS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS}  ..
   - make
   - ctest
   - cd ..
@@ -69,7 +71,7 @@ after_success:
   # Run benchmarks and post to slack
   ############################################################################
   - cd build
-  - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} -DCMAKE_BUILD_TYPE=Release ..
+  - cmake ${CMAKE_OPTIONS} ${GBENCH_FLAGS}  -DCMAKE_CXX_FLAGS=${CXX_FLAGS}  ..
   - make
   - cd ..
   - bash slack-benchmark.sh
