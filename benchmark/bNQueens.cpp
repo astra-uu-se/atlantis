@@ -189,9 +189,9 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
 
 //
 
-BENCHMARK_REGISTER_F(Queens, probing_single_swap)->Range(5, 30000);
+BENCHMARK_REGISTER_F(Queens, probing_single_swap)->Range(5, 5000);
 BENCHMARK_REGISTER_F(Queens, probing_all_swap)
     ->Unit(benchmark::kMillisecond)
     ->Range(5, 1000);
 
-BENCHMARK_REGISTER_F(Queens, solve)->DenseRange(50, 400, 50);
+BENCHMARK_REGISTER_F(Queens, solve)->DenseRange(50, 150, 50);
