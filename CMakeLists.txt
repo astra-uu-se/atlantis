@@ -20,8 +20,6 @@ endif()
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   # If we are debugging then add debugging flag
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 ")
-else()
-  add_definitions(-DNDEBUG)
 endif()
 
 #----------------------------------------------------------------------------
