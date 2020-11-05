@@ -20,20 +20,23 @@ class SavedInt {
   //   m_savedValue);
   // }
 
-  [[gnu::always_inline]] inline bool hasChanged(Timestamp t) const {
+  [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
+      Timestamp t) const {
     return m_tmpTime == t && m_savedValue != m_tmpValue;
   }
 
-  [[gnu::always_inline]] inline Timestamp getTmpTimestamp() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
+      const {
     return m_tmpTime;
   }
 
-  [[gnu::always_inline]] inline Int getValue(
+  [[gnu::always_inline]] [[nodiscard]] inline Int getValue(
       Timestamp currentTime) const noexcept {
     return currentTime == m_tmpTime ? m_tmpValue : m_savedValue;
   }
 
-  [[gnu::always_inline]] inline Int getCommittedValue() const noexcept {
+  [[gnu::always_inline]] [[nodiscard]] inline Int getCommittedValue()
+      const noexcept {
     return m_savedValue;
   }
 

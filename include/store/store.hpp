@@ -30,15 +30,15 @@ class Store {
     return newId;
   }
   [[nodiscard]] inline InvariantId createInvariantFromPtr(
-      std::shared_ptr<Invariant> ptr) {
-    InvariantId newId = InvariantId(m_invariants.size() + 1);
+      const std::shared_ptr<Invariant>& ptr) {
+    auto newId = InvariantId(m_invariants.size() + 1);
     ptr->setId(newId);
     m_invariants.register_idx(newId, ptr);
     return newId;
   }
 
   [[nodiscard]] inline VarId createIntViewFromPtr(
-      std::shared_ptr<IntView> ptr) {
+      const std::shared_ptr<IntView>& ptr) {
     VarId newId = VarId(m_intViews.size() + 1, VarIdType::view);
     ptr->setId(newId);
     m_intViews.register_idx(newId, ptr);
@@ -53,7 +53,9 @@ class Store {
 
   inline IntVar& getIntVar(VarId v) { return m_intVars[v]; }
 
-  inline const IntVar& getConstIntVar(VarId v) const { return m_intVars.at(v); }
+  [[nodiscard]] inline const IntVar& getConstIntVar(VarId v) const {
+    return m_intVars.at(v);
+  }
 
   inline IntView& getIntView(VarId i) {
     assert(i.idType == VarIdType::view);
@@ -84,7 +86,11 @@ class Store {
     return m_invariants.end();
   }
 
-  inline size_t getNumVariables() const { return m_intVars.size(); }
+  [[nodiscard]] inline size_t getNumVariables() const {
+    return m_intVars.size();
+  }
 
-  inline size_t getNumInvariants() const { return m_invariants.size(); }
+  [[nodiscard]] inline size_t getNumInvariants() const {
+    return m_invariants.size();
+  }
 };

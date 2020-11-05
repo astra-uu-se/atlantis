@@ -1,12 +1,15 @@
 #include "invariants/linear.hpp"
 
-#include <vector>
+#include <utility>
 
 // TODO: invariant should take its true id in the constructor.
-extern Id NULL_ID;
 
 Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
-    : Invariant(NULL_ID), m_A(A), m_X(X), m_localX(), m_b(b) {
+    : Invariant(NULL_ID),
+      m_A(std::move(A)),
+      m_X(std::move(X)),
+      m_localX(),
+      m_b(b) {
   m_localX.reserve(X.size());
 }
 
@@ -18,7 +21,7 @@ void Linear::init(Timestamp t, Engine& e) {
   e.registerDefinedVariable(m_b, m_id);
   for (size_t i = 0; i < m_X.size(); ++i) {
     e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i));
-    m_localX.push_back(SavedInt(t, e.getCommittedValue(m_X[i])));
+    m_localX.emplace_back(t, e.getCommittedValue(m_X[i]));
   }
 }
 
@@ -55,8 +58,7 @@ void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   // Int delta = e.getValue(t, m_X.at(idx)) - e.getCommittedValue(m_X.at(idx));
   Int delta = e.getValue(t, m_X.at(idx)) - m_localX.at(idx).getValue(t);
   if (delta == 0) {
-    return;  // Because of views, invariants can be notified when the source
-             // changed but the view didn't.
+    return;
   }
   e.incValue(t, m_b, delta * m_A.at(idx));
   m_localX.at(idx).setValue(t, e.getValue(t, m_X.at(idx)));

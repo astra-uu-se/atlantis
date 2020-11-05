@@ -1,20 +1,14 @@
 #include <chrono>
 #include <iostream>
 #include <random>
-#include <utility>
-#include <vector>
 
 #include "constraints/allDifferent.hpp"
-#include "core/engine.hpp"
-#include "core/intVar.hpp"
 #include "core/propagationEngine.hpp"
-#include "core/tracer.hpp"
 #include "invariants/absDiff.hpp"
 #include "invariants/linear.hpp"
 
 void test();
 int allIntervals(int);
-void magicSquare(int);
 
 int main() {
   static_assert("C++17");
@@ -29,37 +23,6 @@ int main() {
 
   std::cout << "duration: " << duration << "ms\n"
             << "probes/ms: " << (((double)nProbes) / duration) << std::endl;
-}
-
-void magicSquare(int n) {
-  int n2 = n * n;
-  PropagationEngine engine;
-  engine.open();
-
-  std::vector<std::vector<VarId>> square;
-  std::vector<VarId> flat;
-
-  for (int i = 0; i < n; i++) {
-    square.push_back(std::vector<VarId>{});
-    for (int j = 0; j < n; j++) {
-      auto var = engine.makeIntVar(i * n + j + 1, 1, n2);
-      square.at(i).push_back(var);
-      flat.push_back(var);
-    }
-  }
-
-  std::vector<VarId> violations;
-
-  for (int i = 0; i < n; i++) {
-    /* code */
-  }
-
-  VarId totalViolation = engine.makeIntVar(0, 0, n2 * n2 * n2 * 1000);
-
-  std::vector<Int> ones{};
-  ones.assign(violations.size(), 1);
-  engine.makeInvariant<Linear>(ones, violations, totalViolation);
-  engine.close();
 }
 
 int allIntervals(int n) {

@@ -1,20 +1,19 @@
 #include "constraints/allDifferent.hpp"
 
 // TODO: invariant should take its true id in the constructor.
-extern Id NULL_ID;
 
 /**
  * @param violationId id for the violationCount
  */
 AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> t_variables)
     : Constraint(NULL_ID, violationId),
-      m_variables(t_variables),
+      m_variables(std::move(t_variables)),
       m_localValues(),
       m_counts(),
       m_offset(0) {}
 
 void AllDifferent::init(Timestamp ts, Engine& e) {
-  assert(m_id != NULL_ID);
+  assert(!m_id.equals(NULL_ID));
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
@@ -22,11 +21,11 @@ void AllDifferent::init(Timestamp ts, Engine& e) {
     lb = std::min(lb, e.getLowerBound(m_variables[i]));
     ub = std::max(ub, e.getUpperBound(m_variables[i]));
     e.registerInvariantDependsOnVar(m_id, m_variables[i], LocalId(i));
-    m_localValues.push_back(SavedInt(ts, e.getCommittedValue(m_variables[i])));
+    m_localValues.emplace_back(ts, e.getCommittedValue(m_variables[i]));
   }
   assert(ub >= lb);
 
-  m_counts.resize(ub - lb + 1, SavedInt(ts, 0));
+  m_counts.resize(static_cast<unsigned long>(ub - lb + 1), SavedInt(ts, 0));
 
   e.registerDefinedVariable(m_violationId, m_id);
 
@@ -60,17 +59,17 @@ void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
 VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
   m_state.incValue(t, 1);
 
-  Int index = m_state.getValue(t);
-  if (0 <= index && index < static_cast<Int>(m_variables.size())) {
+  auto index = static_cast<size_t>(m_state.getValue(t));
+  if (0 <= index && index < m_variables.size()) {
     return m_variables.at(index);
   }
   return NULL_ID;
 }
 
 void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  auto index = m_state.getValue(t);
+  auto index = static_cast<size_t>(m_state.getValue(t));
   assert(0 <= index);
-  assert(index < static_cast<Int>(m_variables.size()));
+  assert(index < m_variables.size());
 
   VarId varId = m_variables.at(index);
 

@@ -44,7 +44,7 @@ class PropagationGraph {
 
     PropagationGraph& graph;
     Topology() = delete;
-    Topology(PropagationGraph& g) : graph(g) {}
+    explicit Topology(PropagationGraph& g) : graph(g) {}
     void computeNoCycles();
     void computeWithCycles();
     void computeInvariantFromVariables();
@@ -58,7 +58,7 @@ class PropagationGraph {
 
   struct PriorityCmp {
     PropagationGraph& graph;
-    PriorityCmp(PropagationGraph& g) : graph(g) {}
+    explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
     bool operator()(VarId left, VarId right) {
       return graph.m_topology.getPosition(left) >
              graph.m_topology.getPosition(right);
@@ -67,7 +67,7 @@ class PropagationGraph {
 
  public:
   PropagationGraph() : PropagationGraph(1000) {}
-  PropagationGraph(size_t expectedSize);
+  explicit PropagationGraph(size_t expectedSize);
 
   /**
    * update internal datastructures based on currently registered  variables and
@@ -101,11 +101,11 @@ class PropagationGraph {
    */
   void registerDefinedVariable(VarId depends, InvariantId source);
 
-  inline size_t getNumVariables() {
+  [[nodiscard]] inline size_t getNumVariables() const {
     return m_numVariables;  // this ignores null var
   }
 
-  inline size_t getNumInvariants() {
+  [[nodiscard]] inline size_t getNumInvariants() const {
     return m_numInvariants;  // this ignores null invariant
   }
 
@@ -118,7 +118,7 @@ class PropagationGraph {
     return m_definingInvariant.at(v);
   }
 
-  inline const std::vector<VarId>& getVariablesDefinedBy(
+  [[nodiscard]] inline const std::vector<VarId>& getVariablesDefinedBy(
       InvariantId inv) const {
     return m_variablesDefinedByInvariant.at(inv);
   }
