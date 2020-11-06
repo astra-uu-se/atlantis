@@ -68,7 +68,6 @@ if (BUILD_TESTS)
 
   enable_testing()
 
-  include(ctest)
   include(GoogleTest)
 
   set_target_properties(gtest PROPERTIES FOLDER ext)
