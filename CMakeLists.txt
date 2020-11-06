@@ -68,7 +68,12 @@ if (BUILD_TESTS)
 
   enable_testing()
 
-  include(CTest)
+  include(GoogleTest)
+
+  set_target_properties(gtest PROPERTIES FOLDER ext)
+  set_target_properties(gtest_main PROPERTIES FOLDER ext)
+  set_target_properties(gmock PROPERTIES FOLDER ext)
+  set_target_properties(gmock_main PROPERTIES FOLDER ext)
 
   # Include the gtest library. gtest_SOURCE_DIR is available due to
   # 'project(gtest)' above.
@@ -94,7 +99,15 @@ if (BUILD_TESTS)
 
   # This is so you can do 'make test' to see all your tests run, instead of
   # manually running the executable runUnitTests to see those specific tests.
-  add_test(NAME "UnitTests" COMMAND "runUnitTests")
+  # add_test(NAME "UnitTests" COMMAND "runUnitTests")
+
+  gtest_discover_tests(runUnitTests
+        # set a working directory so your project root so that you can find test data via paths relative to the project root
+        WORKING_DIRECTORY ${PROJECT_DIR}
+        PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
+    )
+  set_target_properties(runUnitTests PROPERTIES FOLDER tests)
+
 endif()
 if (BUILD_BENCHMARKS)
   message(WARNING "Building benchmark")
