@@ -60,7 +60,7 @@ VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
   m_state.incValue(t, 1);
 
   auto index = static_cast<size_t>(m_state.getValue(t));
-  if (0 <= index && index < m_variables.size()) {
+  if (index < m_variables.size()) {
     return m_variables.at(index);
   }
   return NULL_ID;
@@ -68,7 +68,6 @@ VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
 
 void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   auto index = static_cast<size_t>(m_state.getValue(t));
-  assert(0 <= index);
   assert(index < m_variables.size());
 
   VarId varId = m_variables.at(index);
