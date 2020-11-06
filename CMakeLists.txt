@@ -61,6 +61,7 @@ target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 # Options. Turn on with 'cmake -Dmyvarname=ON'.
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
+option(BENCHMARK_ENABLE_TESTING "Build GTEST for GBENCHMARK" OFF)
 
 if (BUILD_TESTS)
   # This adds another subdirectory, which has 'project(gtest)'.
@@ -98,7 +99,6 @@ if (BUILD_TESTS)
 endif()
 if (BUILD_BENCHMARKS)
   # This adds another subdirectory, which has 'project(gtest)'.
-  set(BENCHMARK_ENABLE_TESTING off)
   add_subdirectory(ext/benchmark)
 
   ##############
