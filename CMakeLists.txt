@@ -66,6 +66,8 @@ if (BUILD_TESTS)
   # This adds another subdirectory, which has 'project(gtest)'.
   add_subdirectory(ext/googletest)
 
+  include(CTest)
+
   enable_testing()
 
   include(GoogleTest)
