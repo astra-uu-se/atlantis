@@ -8,6 +8,7 @@
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "invariants/linear.hpp"
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -185,6 +186,26 @@ TEST_F(EngineTest, SimpleCommit) {
 
   engine->close();
 
+  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(0);
+  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+        .WillOnce(Return(a))
+        .WillOnce(Return(b))
+        .WillOnce(Return(c))
+        .WillRepeatedly(Return(NULL_ID));
+
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(3);
+  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
+  }
+
   engine->beginMove();
   engine->setValue(a, -1);
   engine->setValue(b, -2);
@@ -193,6 +214,26 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->beginQuery();
   engine->query(output);
   engine->endQuery();
+
+  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(0);
+  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+        .WillOnce(Return(a))
+        .WillOnce(Return(b))
+        .WillOnce(Return(c))
+        .WillRepeatedly(Return(NULL_ID));
+
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(1);
+  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
+  }
 
   engine->beginMove();
   engine->setValue(a, 0);
@@ -204,6 +245,55 @@ TEST_F(EngineTest, SimpleCommit) {
   EXPECT_EQ(engine->getCommittedValue(a), 0);
   EXPECT_EQ(engine->getCommittedValue(b), 2);
   EXPECT_EQ(engine->getCommittedValue(c), 3);
+}
+
+TEST_F(EngineTest, DelayedCommit) {
+  engine->open();
+
+  VarId a = engine->makeIntVar(1, -10, 10);
+  VarId b = engine->makeIntVar(1, -10, 10);
+  VarId c = engine->makeIntVar(1, -10, 10);
+  VarId d = engine->makeIntVar(1, -10, 10);
+  VarId e = engine->makeIntVar(1, -10, 10);
+  VarId f = engine->makeIntVar(1, -10, 10);
+  VarId g = engine->makeIntVar(1, -10, 10);
+
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
+                                std::vector<VarId>({a, b}), c);
+
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
+                                std::vector<VarId>({c, d}), e);
+
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
+                                std::vector<VarId>({c, f}), g);
+
+  engine->close();
+  // 1+1 = c = 2
+  // c+1 = e = 3
+  // c+1 = g = 3
+  EXPECT_EQ(engine->getCommittedValue(c), 2);
+  EXPECT_EQ(engine->getCommittedValue(e), 3);
+  EXPECT_EQ(engine->getCommittedValue(g), 3);
+
+  engine->beginMove();
+  engine->setValue(a, 2);
+  engine->endMove();
+
+  engine->beginCommit();
+  engine->query(e);
+  engine->endCommit();
+
+  EXPECT_EQ(engine->getCommittedValue(e), 4);
+
+  engine->beginMove();
+  engine->setValue(d, 0);
+  engine->endMove();
+
+  engine->beginCommit();
+  engine->query(g);
+  engine->endCommit();
+
+  EXPECT_EQ(engine->getCommittedValue(g), 4);
 }
 
 }  // namespace
