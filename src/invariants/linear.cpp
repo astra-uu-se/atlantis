@@ -10,7 +10,8 @@ Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
       m_X(std::move(X)),
       m_localX(),
       m_b(b) {
-  m_localX.reserve(X.size());
+  m_localX.reserve(m_X.size());
+  m_modifiedVariables.resize(m_X.size(), false);
 }
 
 void Linear::init(Timestamp t, Engine& e) {
@@ -35,12 +36,25 @@ void Linear::recompute(Timestamp t, Engine& e) {
   e.updateValue(t, m_b, sum);
   // m_state.setValue(t, m_X.size());  // Not clear if we actually need to reset
   // this.
+  m_modifiedVariables.assign(m_modifiedVariables.size(), false);
+}
+
+void Linear::compute(Timestamp t, Engine& e) {
+  Int inc = 0;
+  for (size_t i = 0; i < m_modifiedVariables.size(); ++i) {
+    if (!m_modifiedVariables[i]) {
+      continue;
+    }
+    inc += m_A[i] * (e.getValue(t, m_X.at(i)) - e.getCommittedValue(m_X.at(i)));
+  }
+  m_modifiedVariables.assign(m_modifiedVariables.size(), false);
+  e.incValue(t, m_b, inc);
 }
 
 void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
-  auto newValue = e.getValue(t, m_X[i]);
-  e.incValue(t, m_b, (newValue - m_localX.at(i).getValue(t)) * m_A[i]);
-  m_localX.at(i).setValue(t, newValue);
+  m_modifiedVariables[i] = true;
+  e.notifyMaybeChanged(t, m_b);
+  //e.incValue(t, m_b, (newValue - m_localX.at(i).getValue(t)) * m_A[i]);
 }
 
 VarId Linear::getNextDependency(Timestamp t, Engine&) {

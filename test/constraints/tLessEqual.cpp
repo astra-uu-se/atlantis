@@ -95,11 +95,13 @@ TEST_F(LessEqualTest, NotifyChange) {
   EXPECT_EQ(e->getCommittedValue(x), 2);
   EXPECT_EQ(e->getValue(time1, x), 40);
   lessEqual->notifyIntChanged(time1, *e, unused);
+  lessEqual->compute(time1, *e);
   EXPECT_EQ(e->getValue(time1, violationId),
             38);  // incremental value of violationId is 0;
 
   e->updateValue(time1, y, 0);
   lessEqual->notifyIntChanged(time1, *e, unused);
+  lessEqual->compute(time1, *e);
   auto tmpValue = e->getValue(
       time1, violationId);  // incremental value of violationId is 40;
 
@@ -114,6 +116,7 @@ TEST_F(LessEqualTest, NotifyChange) {
   EXPECT_EQ(e->getCommittedValue(y), 2);
   EXPECT_EQ(e->getValue(time2, y), 20);
   lessEqual->notifyIntChanged(time2, *e, unused);
+  lessEqual->compute(time2, *e);
   EXPECT_EQ(e->getValue(time2, violationId),
             0);  // incremental value of violationId is 0;
 }
@@ -145,7 +148,7 @@ TEST_F(LessEqualTest, IncrementalVsRecompute) {
     if (e->getCommittedValue(y) != e->getValue(currentTime, y)) {
       lessEqual->notifyIntChanged(currentTime, *e, unused);
     }
-
+    lessEqual->compute(currentTime, *e);
     // incremental value
     auto tmp = e->getValue(currentTime, violationId);
     lessEqual->recompute(currentTime, *e);

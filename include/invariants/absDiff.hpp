@@ -21,6 +21,7 @@ class AbsDiff : public Invariant {
  public:
   AbsDiff(VarId a, VarId b, VarId c);
   void init(Timestamp, Engine&) override;
+  void compute(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
   VarId getNextDependency(Timestamp, Engine&) override;

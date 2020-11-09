@@ -10,12 +10,16 @@ AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> t_variables)
       m_variables(std::move(t_variables)),
       m_localValues(),
       m_counts(),
-      m_offset(0) {}
+      m_localViolation(NULL_TIMESTAMP, 0),
+      m_offset(0) {
+  m_modifiedVariables.resize(m_variables.size(), false);
+}
 
 void AllDifferent::init(Timestamp ts, Engine& e) {
   assert(!m_id.equals(NULL_ID));
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
+  m_localViolation.setValue(ts, 0);
 
   for (size_t i = 0; i < m_variables.size(); ++i) {
     lb = std::min(lb, e.getLowerBound(m_variables[i]));
@@ -32,10 +36,16 @@ void AllDifferent::init(Timestamp ts, Engine& e) {
   m_offset = lb;
 }
 
+void AllDifferent::compute(Timestamp t, Engine& e) {
+  e.updateValue(t, m_violationId, m_localViolation.getValue(t));
+}
+
 void AllDifferent::recompute(Timestamp t, Engine& e) {
   for (SavedInt& c : m_counts) {
     c.setValue(t, 0);
   }
+
+  m_localViolation.setValue(t, 0);
 
   e.updateValue(t, m_violationId, 0);
 
@@ -43,6 +53,7 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
     increaseCount(t, e, e.getValue(t, m_variables[i]));
     m_localValues[i].setValue(t, e.getValue(t, m_variables[i]));
   }
+  e.updateValue(t, m_violationId, m_localViolation.getValue(t));
 }
 
 void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
@@ -51,9 +62,13 @@ void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
   if (newValue == oldValue) {
     return;
   }
+  Int oldViolation = m_localViolation.getValue(t);
   decreaseCount(t, e, oldValue);
   increaseCount(t, e, newValue);
   m_localValues.at(id).setValue(t, newValue);
+  if (m_localViolation.getValue(t) != oldViolation) {
+    e.notifyMaybeChanged(t, m_violationId);
+  }
 }
 
 VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
@@ -77,6 +92,7 @@ void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
 
   decreaseCount(t, e, oldValue);
   increaseCount(t, e, newValue);
+  e.updateValue(t, m_violationId, m_localViolation.getValue(t));
 
   m_localValues.at(index).setValue(t, newValue);
 }
@@ -91,4 +107,6 @@ void AllDifferent::commit(Timestamp t, Engine& e) {
   for (SavedInt& savedInt : m_counts) {
     savedInt.commitIf(t);
   }
+
+  m_localViolation.commitIf(t);
 }
