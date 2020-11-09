@@ -66,12 +66,10 @@ TEST_F(LinearTest, NotifyChange) {
   EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time1, a), 40);
   linear->notifyIntChanged(time1, *e, 0);
-  linear->compute(time1, *e);
   EXPECT_EQ(e->getValue(time1, d), 0);  // incremental value of d is 0;
 
   e->updateValue(time1, b, 0);
   linear->notifyIntChanged(time1, *e, 1);
-  linear->compute(time1, *e);
   auto tmpValue = e->getValue(time1, d);  // incremental value of d is -40;
 
   // Incremental computation gives the same result as recomputation
@@ -85,7 +83,6 @@ TEST_F(LinearTest, NotifyChange) {
   EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time2, a), 20);
   linear->notifyIntChanged(time2, *e, 0);
-  linear->compute(time2, *e);
   EXPECT_EQ(e->getValue(time2, d), -20);  // incremental value of d is 0;
 }
 
@@ -118,7 +115,7 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
     if (e->getCommittedValue(c) != e->getValue(currentTime, c)) {
       linear->notifyIntChanged(currentTime, *e, 2);
     }
-    linear->compute(currentTime, *e);
+
     // incremental value
     auto tmp = e->getValue(currentTime, d);
     linear->recompute(currentTime, *e);

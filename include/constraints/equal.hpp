@@ -18,7 +18,6 @@ class Equal : public Constraint {
   Equal(VarId violationId, VarId x, VarId y);
 
   void init(Timestamp, Engine&) override;
-  void compute(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
   void commit(Timestamp, Engine&) override;

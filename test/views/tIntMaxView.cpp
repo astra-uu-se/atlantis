@@ -65,41 +65,41 @@ TEST_F(IntMaxViewTest, ComputeBounds) {
 
 TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   engine->open();
-  auto a = engine->makeIntVar(1, -100, 100);
-  auto b = engine->makeIntVar(1, -100, 100);
+  auto a = engine->makeIntVar(20, -100, 100);
+  auto b = engine->makeIntVar(20, -100, 100);
   auto sum = engine->makeIntVar(0, -100, 100);
 
   auto linear = engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
                                               std::vector<VarId>({a, b}), sum);
 
   std::shared_ptr<IntMaxView> viewOfVar =
-      engine->makeIntView<IntMaxView>(sum, 5);
+      engine->makeIntView<IntMaxView>(sum, 10);
   std::shared_ptr<IntMaxView> viewOfView =
-      engine->makeIntView<IntMaxView>(viewOfVar->getId(), 10);
+      engine->makeIntView<IntMaxView>(viewOfVar->getId(), 15);
   VarId viewOfVarId = viewOfVar->getId();
   VarId viewOfViewId = viewOfView->getId();
 
-  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(5));
-  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(10));
+  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(10));
+  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(15));
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(sum), Int(2));
-  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(5));
-  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(10));
+  EXPECT_EQ(engine->getNewValue(sum), Int(40));
+  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(40));
+  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(40));
 
   engine->beginMove();
-  engine->updateValue(a, 4);
-  engine->updateValue(b, 4);
+  engine->updateValue(a, 1);
+  engine->updateValue(b, 1);
   engine->endMove();
 
   engine->beginQuery();
   engine->query(sum);
   engine->endQuery();
 
-  EXPECT_EQ(engine->getNewValue(sum), Int(8));
-  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(8));
-  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(10));
+  EXPECT_EQ(engine->getNewValue(sum), Int(2));
+  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(10));
+  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(15));
 }
 
 TEST_F(IntMaxViewTest, PropagateIntViews) {

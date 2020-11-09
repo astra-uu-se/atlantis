@@ -23,7 +23,6 @@ class ElementConst : public Invariant {
  public:
   ElementConst(VarId i, std::vector<Int> A, VarId b);
   void init(Timestamp, Engine&) override;
-  void compute(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
   VarId getNextDependency(Timestamp, Engine&) override;
