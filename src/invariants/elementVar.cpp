@@ -9,30 +9,26 @@ void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(m_id != NULL_ID);
 
   e.registerDefinedVariable(m_b, m_id);
-  e.registerInvariantDependsOnVar(m_id, m_i, LocalId(m_X.size()));
+  e.registerInvariantDependsOnVar(m_id, m_i, LocalId(-1));
   for (size_t i = 0; i < m_X.size(); ++i) {
     e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i));
   }
-}
-
-void ElementVar::compute(Timestamp t, Engine& e) {
-  e.updateValue(
-      t, m_b,
-      e.getValue(t, m_X.at(static_cast<unsigned long>(e.getValue(t, m_i)))));
 }
 
 void ElementVar::recompute(Timestamp t, Engine& e) {
   e.updateValue(
       t, m_b,
       e.getValue(t, m_X.at(static_cast<unsigned long>(e.getValue(t, m_i)))));
-  m_modifiedVariables.assign(m_X.size(), false);
 }
 
 void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
-  if (id.id == LocalId(m_X.size()).id) {
-    e.notifyMaybeChanged(t, m_b);
+  if (id.id == LocalId(-1).id) {
+    auto newValue = e.getValue(t, m_i);
+    e.updateValue(t, m_b,
+                  e.getValue(t, m_X.at(static_cast<unsigned long>(newValue))));
   } else if (id.id == static_cast<IdBase>(e.getValue(t, m_i))) {
-    e.notifyMaybeChanged(t, m_b);
+    auto newValue = e.getValue(t, m_X[id]);
+    e.updateValue(t, m_b, newValue);
   }
   // e.setValue(t, m_b, m_A.at(newValue));
 }

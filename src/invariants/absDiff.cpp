@@ -14,16 +14,12 @@ void AbsDiff::init([[maybe_unused]] Timestamp t, Engine& e) {
   e.registerInvariantDependsOnVar(m_id, m_b, 1);
 }
 
-void AbsDiff::compute(Timestamp t, Engine& e) {
-  e.updateValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
-}
-
 void AbsDiff::recompute(Timestamp t, Engine& e) {
   e.updateValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 
 void AbsDiff::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  e.notifyMaybeChanged(t, m_c);
+  e.updateValue(t, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
 }
 
 VarId AbsDiff::getNextDependency(Timestamp t, Engine&) {

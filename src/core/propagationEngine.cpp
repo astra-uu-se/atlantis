@@ -26,7 +26,7 @@ void PropagationEngine::close() {
 }
 
 //---------------------Registration---------------------
-void PropagationEngine::notifyMaybeChanged(Timestamp t, VarId id) {
+void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
   //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
   if (m_isEnqueued.get(id)) {
     //    std::cout << "\t\t\talready enqueued\n";
@@ -117,18 +117,13 @@ void PropagationEngine::recomputeAndCommit() {
 
 //--------------------- Move semantics ---------------------
 void PropagationEngine::beginMove() {
-  assert(!m_isMoving);
-  m_isMoving = true;
   ++m_currentTime;
   {  // only needed for bottom up propagation
     clearPropagationPath();
   }
 }
 
-void PropagationEngine::endMove() {
-  assert(m_isMoving);
-  m_isMoving = false;
-}
+void PropagationEngine::endMove() {}
 
 void PropagationEngine::beginQuery() {}
 
@@ -232,28 +227,23 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
   //  std::cout << "Starting propagation\n";
-  for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID; id = getNextStableVariable(m_currentTime)) {
+  VarId id = getNextStableVariable(m_currentTime);
+  while (id.id != NULL_ID) {
     IntVar& variable = m_store.getIntVar(id);
     //    std::cout << "\tPropagating" << variable << "\n";
-    InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
-    if (definingInvariant != NULL_ID) {
-      m_store.getInvariant(definingInvariant).compute(m_currentTime, *this);
-    }
-
-    if (!variable.hasChanged(m_currentTime)) {
-      continue;
-    }
-
-    for (auto& toNotify : m_dependentInvariantData[id]) {
-      // Also, do not notify invariants that are not active.
-      if (!isOnPropagationPath(m_currentTime, toNotify.id)) {
-        continue;
+    if (variable.hasChanged(m_currentTime)) {
+      for (auto& toNotify : m_dependentInvariantData[id]) {
+        // Also, do not notify invariants that are not active.
+        if (!isOnPropagationPath(m_currentTime, toNotify.id)) {
+          continue;
+        }
+        //        std::cout << "\t\tNotifying invariant:" << toNotify.id <<
+        //        "\n";
+        m_store.getInvariant(toNotify.id)
+            .notifyIntChanged(m_currentTime, *this, toNotify.localId);
       }
-      //        std::cout << "\t\tNotifying invariant:" << toNotify.id <<
-      //        "\n";
-      m_store.getInvariant(toNotify.id)
-          .notifyIntChanged(m_currentTime, *this, toNotify.localId);
     }
+    id = getNextStableVariable(m_currentTime);
   }
   //  std::cout << "Propagation done\n";
 }

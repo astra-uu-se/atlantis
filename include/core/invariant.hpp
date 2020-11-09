@@ -1,5 +1,5 @@
 #pragma once
-#include <vector>
+
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 class Engine;  // Forward declaration
@@ -11,11 +11,10 @@ class Invariant {
   InvariantId m_id;
   // State used for returning next dependency. Null state is -1 by default
   SavedInt m_state;
-  std::vector<bool> m_modifiedVariables;
   explicit Invariant(Id t_id)
-      : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, -1), m_modifiedVariables() {}
+      : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, -1) {}
   Invariant(Id t_id, Int nullState)
-      : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, nullState), m_modifiedVariables() {}
+      : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, nullState) {}
 
  public:
   virtual ~Invariant() = default;
@@ -43,8 +42,6 @@ class Invariant {
   virtual void init(Timestamp, Engine&) = 0;
 
   virtual void recompute(Timestamp, Engine&) = 0;
-
-  virtual void compute(Timestamp, Engine&) = 0;
 
   virtual VarId getNextDependency(Timestamp, Engine& e) = 0;
 

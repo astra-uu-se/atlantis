@@ -23,11 +23,6 @@ void LessEqual::init(Timestamp, Engine& e) {
   e.registerDefinedVariable(m_violationId, m_id);
 }
 
-void LessEqual::compute(Timestamp t, Engine& e) {
-  e.updateValue(t, m_violationId,
-                std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
-}
-
 void LessEqual::recompute(Timestamp t, Engine& e) {
   // Dereference safe as incValue does not retain ptr.
   e.updateValue(t, m_violationId,
@@ -37,7 +32,8 @@ void LessEqual::recompute(Timestamp t, Engine& e) {
 void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
   // if x decreases and violation is 0, then do nothing
   // if y increases and violation is 0, then do nothing
-  e.notifyMaybeChanged(t, m_violationId);
+  e.updateValue(t, m_violationId,
+                std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 VarId LessEqual::getNextDependency(Timestamp t, Engine&) {

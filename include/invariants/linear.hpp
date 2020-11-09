@@ -25,7 +25,6 @@ class Linear : public Invariant {
   Linear(std::vector<Int> A, std::vector<VarId> X, VarId b);
 
   void init(Timestamp, Engine&) override;
-  void compute(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   VarId getNextDependency(Timestamp, Engine&) override;
   void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;

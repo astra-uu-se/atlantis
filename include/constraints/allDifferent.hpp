@@ -16,7 +16,6 @@ class AllDifferent : public Constraint {
   std::vector<VarId> m_variables;
   std::vector<SavedInt> m_localValues;
   std::vector<SavedInt> m_counts;
-  SavedInt m_localViolation;
   Int m_offset;
   void increaseCount(Timestamp ts, Engine& e, Int value);
   void decreaseCount(Timestamp ts, Engine& e, Int value);
@@ -25,7 +24,6 @@ class AllDifferent : public Constraint {
   AllDifferent(VarId violationId, std::vector<VarId> t_variables);
 
   void init(Timestamp, Engine&) override;
-  void compute(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
   void commit(Timestamp, Engine&) override;
@@ -38,7 +36,7 @@ inline void AllDifferent::increaseCount(Timestamp ts, Engine& e, Int value) {
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
   if (newCount >= 2) {
-    m_localViolation.incValue(ts, 1);
+    e.incValue(ts, m_violationId, 1);
   }
 }
 
@@ -47,6 +45,6 @@ inline void AllDifferent::decreaseCount(Timestamp ts, Engine& e, Int value) {
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
   if (newCount >= 1) {
-    m_localViolation.incValue(ts, -1);
+    e.incValue(ts, m_violationId, -1);
   }
 }

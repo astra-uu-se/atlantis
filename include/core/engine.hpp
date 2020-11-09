@@ -21,7 +21,6 @@ class Engine {
   Timestamp m_currentTime;
 
   bool m_isOpen = true;
-  bool m_isMoving = false;
 
   struct InvariantDependencyData {
     InvariantId id;
@@ -51,15 +50,14 @@ class Engine {
   inline void incValue(VarId v, Int val) { incValue(m_currentTime, v, val); }
 
   void updateValue(Timestamp, VarId, Int val);
-  
-  inline void updateValue(VarId v, Int val) { updateValue(m_currentTime, v, val); }
+  inline void updateValue(VarId v, Int val) {
+    updateValue(m_currentTime, v, val);
+  }
 
   virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
 
   Int getValue(Timestamp, VarId);
-  inline Int getNewValue(VarId v) {
-    return getValue(m_currentTime, v);
-  }
+  inline Int getNewValue(VarId v) { return getValue(m_currentTime, v); }
 
   Int getIntViewValue(Timestamp, VarId);
 
@@ -263,16 +261,12 @@ inline void Engine::recompute(Timestamp t, InvariantId id) {
 
 inline void Engine::updateValue(Timestamp t, VarId v, Int val) {
   m_store.getIntVar(v).setValue(t, val);
-  if (m_isMoving) {
-    notifyMaybeChanged(m_currentTime, v);
-  }
+  this->notifyMaybeChanged(t, v);
 }
 
 inline void Engine::incValue(Timestamp t, VarId v, Int inc) {
   m_store.getIntVar(v).incValue(t, inc);
-  if (m_isMoving) {
-    notifyMaybeChanged(m_currentTime, v);
-  }
+  this->notifyMaybeChanged(t, v);
 }
 
 inline void Engine::commit(VarId v) { m_store.getIntVar(v).commit(); }
