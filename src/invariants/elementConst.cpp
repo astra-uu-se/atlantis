@@ -12,13 +12,16 @@ void ElementConst::init([[maybe_unused]] Timestamp t, Engine& e) {
   e.registerInvariantDependsOnVar(m_id, m_i, 0);
 }
 
+void ElementConst::compute(Timestamp t, Engine& e) {
+  e.updateValue(t, m_b, m_A.at(static_cast<unsigned long>(e.getValue(t, m_i))));
+}
+
 void ElementConst::recompute(Timestamp t, Engine& e) {
   e.updateValue(t, m_b, m_A.at(static_cast<unsigned long>(e.getValue(t, m_i))));
 }
 
 void ElementConst::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  auto newValue = e.getValue(t, m_i);
-  e.updateValue(t, m_b, m_A.at(static_cast<unsigned long>(newValue)));
+  e.notifyMaybeChanged(t, m_b);
 }
 
 VarId ElementConst::getNextDependency(Timestamp t, Engine&) {

@@ -21,14 +21,18 @@ void Equal::init(Timestamp, Engine& e) {
   e.registerDefinedVariable(m_violationId, m_id);
 }
 
+void Equal::compute(Timestamp t, Engine& e) {
+  e.updateValue(t, m_violationId,
+                std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+}
+
 void Equal::recompute(Timestamp t, Engine& e) {
   e.updateValue(t, m_violationId,
                 std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  e.updateValue(t, m_violationId,
-                std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+  e.notifyMaybeChanged(t, m_violationId);
 }
 
 VarId Equal::getNextDependency(Timestamp t, Engine&) {
