@@ -20,7 +20,11 @@ endif()
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   # If we are debugging then add debugging flag
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 ")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g0 -O3 -DNDEBUG ")
 endif()
+
+message("${CMAKE_BUILD_TYPE}")
 
 #----------------------------------------------------------------------------
 # Define project sources and includes
@@ -112,7 +116,6 @@ if (BUILD_TESTS)
 
 endif()
 if (BUILD_BENCHMARKS)
-  message(WARNING "Building benchmark")
   # This adds another subdirectory, which has 'project(gtest)'.
   add_subdirectory(ext/benchmark)
 
