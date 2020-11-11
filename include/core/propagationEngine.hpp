@@ -37,14 +37,13 @@ class PropagationEngine : public Engine {
   void clearPropagationPath();
 
   /**
- * Register that 'from' defines variable 'to'. Throws exception if
- * already defined.
- * @param dependent the variable that is defined by the invariant
- * @param source the invariant defining the variable
- * @throw if the variable is already defined by an invariant.
- */
+   * Register that 'from' defines variable 'to'. Throws exception if
+   * already defined.
+   * @param dependent the variable that is defined by the invariant
+   * @param source the invariant defining the variable
+   * @throw if the variable is already defined by an invariant.
+   */
   void registerDefinedVariable(VarId dependent, InvariantId source) override;
-
 
  public:
   PropagationEngine(/* args */);
@@ -115,8 +114,6 @@ class PropagationEngine : public Engine {
    */
   void registerInvariantDependsOnVar(InvariantId dependent, VarId source,
                                      LocalId localId) override;
-
-
 
   void registerVar(VarId) override;
   void registerInvariant(InvariantId) override;

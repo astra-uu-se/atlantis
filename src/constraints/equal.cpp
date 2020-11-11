@@ -12,7 +12,8 @@
  */
 Equal::Equal(VarId violationId, VarId x, VarId y)
     : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
-  m_modifiedVars.resize(1,false);
+  //  m_modifiedVars.resize(1,false);
+  m_modifiedVars.reserve(1);
 }
 
 void Equal::init(Timestamp, Engine& e) {
@@ -20,7 +21,7 @@ void Equal::init(Timestamp, Engine& e) {
 
   e.registerInvariantDependsOnVar(m_id, m_x, LocalId(0));
   e.registerInvariantDependsOnVar(m_id, m_y, LocalId(0));
-  registerDefinedVariable(e,m_violationId);
+  registerDefinedVariable(e, m_violationId);
 }
 
 void Equal::recompute(Timestamp t, Engine& e) {

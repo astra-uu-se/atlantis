@@ -11,7 +11,8 @@ AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> t_variables)
       m_localValues(),
       m_counts(),
       m_offset(0) {
-  m_modifiedVars.resize(m_variables.size(), false);
+  //  m_modifiedVars.resize(m_variables.size(), false);
+  m_modifiedVars.reserve(m_variables.size());
 }
 
 void AllDifferent::init(Timestamp ts, Engine& e) {

@@ -9,13 +9,58 @@ class Engine;  // Forward declaration
 class Invariant {
  private:
  protected:
+  class NotificationQueue {
+   public:
+    void reserve(size_t size) {
+      // This function should only be called during setup and need not be
+      // efficient
+      queue.resize(size + 1);
+      init();
+    }
+
+    void push(LocalId id) {
+      if (queue[id + 1] != id.id + 1) {
+        return;
+      }
+      queue[id + 1] = head;
+      head = id + 1;
+    }
+
+    LocalId pop() {
+      auto current = LocalId(head - 1);
+      std::swap(head, queue[head]);
+      return current;
+    }
+
+    size_t size() { return queue.size() - 1; }
+
+    bool hasNext() { return head != 0; }
+
+    NotificationQueue() : head(0), queue() {
+      // Note that a index 0 is the null index and LocalId(0) will map to
+      // index 1.
+      queue.push_back(0);
+    }
+
+   private:
+    size_t head;
+    std::vector<size_t> queue;
+
+    void init() {
+      for (size_t i = 0; i < queue.size(); ++i) {
+        queue[i] = i;
+      }
+    }
+  };
+
   bool m_isPostponed;
   InvariantId m_id;
   // State used for returning next dependency. Null state is -1 by default
   SavedInt m_state;
 
   bool m_isModified;
-  std::vector<bool> m_modifiedVars;
+  //  std::vector<bool> m_modifiedVars;
+  NotificationQueue m_modifiedVars;
 
   VarId m_primaryOutput;
   std::vector<VarId> m_outputVars;
