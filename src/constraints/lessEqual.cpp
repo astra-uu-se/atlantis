@@ -22,7 +22,7 @@ void LessEqual::init(Timestamp, Engine& e) {
 
   e.registerInvariantDependsOnVar(m_id, m_x, LocalId(0));
   e.registerInvariantDependsOnVar(m_id, m_y, LocalId(0));
-  e.registerDefinedVariable(m_violationId, m_id);
+  registerDefinedVariable(e, m_violationId);
 }
 
 void LessEqual::recompute(Timestamp t, Engine& e) {

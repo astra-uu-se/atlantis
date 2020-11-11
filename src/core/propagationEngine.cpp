@@ -26,10 +26,18 @@ void PropagationEngine::close() {
 }
 
 //---------------------Registration---------------------
-void PropagationEngine::notifyMaybeChanged(Timestamp t, VarId id) {
-  if (!hasChanged(t, id)) {
+void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
+  //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
+  if (m_isEnqueued.get(id)) {
+    //    std::cout << "\t\t\talready enqueued\n";
     return;
   }
+  //  std::cout << "\t\t\tpushed on stack\n";
+  m_modifiedVariables.push(id);
+  m_isEnqueued.set(id, true);
+}
+
+void PropagationEngine::queueForPropagation(Timestamp, VarId id){
   //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
   if (m_isEnqueued.get(id)) {
     //    std::cout << "\t\t\talready enqueued\n";
@@ -234,19 +242,25 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
-  //  std::cout << "Starting propagation\n";
+  const bool debug = false;
+  if(debug) {
+    std::cout << "Starting propagation\n";
+  }
   for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID;
        id = getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(id);
-    //    std::cout << "\tPropagating" << variable << "\n";
+
     InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
+
     if (definingInvariant != NULL_ID) {
       m_store.getInvariant(definingInvariant).compute(m_currentTime, *this);
     }
-
+    if(debug) {
+      std::cout << "\tPropagating " << variable << "\n";
+      std::cout << "\t\tDepends on invariant: " << definingInvariant << "\n";
+    }
     if (!variable.hasChanged(m_currentTime)) {
-      assert(false);
-      continue;  // Should never happen
+      continue;
     }
 
     for (auto& toNotify : m_dependentInvariantData[id]) {
@@ -254,12 +268,15 @@ void PropagationEngine::propagate() {
       if (!isOnPropagationPath(m_currentTime, toNotify.id)) {
         continue;
       }
-      //        std::cout << "\t\tNotifying invariant:" << toNotify.id <<
-      //        "\n";
-      m_store.getInvariant(toNotify.id).notify(toNotify.localId);
+      if(debug) {
+        std::cout << "\t\tNotifying invariant:" << toNotify.id << "\n";
+      }
+      m_store.getInvariant(toNotify.id).notify(m_currentTime, *this, toNotify.localId);
     }
   }
-  //  std::cout << "Propagation done\n";
+  if(debug) {
+    std::cout << "Propagation done\n";
+  }
 }
 
 void PropagationEngine::bottomUpPropagate() {

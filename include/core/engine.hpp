@@ -43,6 +43,15 @@ class Engine {
     updateValue(m_currentTime, v, val);
   }
 
+  /**
+ * Register that 'from' defines variable 'to'. Throws exception if
+ * already defined.
+ * @param dependent the variable that is defined by the invariant
+ * @param source the invariant defining the variable
+ * @throw if the variable is already defined by an invariant.
+ */
+  virtual void registerDefinedVariable(VarId dependent, InvariantId source) = 0;
+
   friend class Invariant;
 
  public:
@@ -60,6 +69,7 @@ class Engine {
     // getSourceId(m_store.getIntView(id).getParentId());
   }
 
+  virtual void queueForPropagation(Timestamp t, VarId id) = 0;
   virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
 
   Int getValue(Timestamp, VarId);
@@ -158,14 +168,7 @@ class Engine {
   virtual void registerInvariantDependsOnVar(InvariantId dependent,
                                              VarId source, LocalId localId) = 0;
 
-  /**
-   * Register that 'from' defines variable 'to'. Throws exception if
-   * already defined.
-   * @param dependent the variable that is defined by the invariant
-   * @param source the invariant defining the variable
-   * @throw if the variable is already defined by an invariant.
-   */
-  virtual void registerDefinedVariable(VarId dependent, InvariantId source) = 0;
+
 
   virtual void registerVar(VarId) = 0;
   virtual void registerInvariant(InvariantId) = 0;

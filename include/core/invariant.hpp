@@ -14,6 +14,7 @@ class Invariant {
   // State used for returning next dependency. Null state is -1 by default
   SavedInt m_state;
 
+  bool m_isModified;
   std::vector<bool> m_modifiedVars;
 
   VarId m_primaryOutput;
@@ -24,6 +25,7 @@ class Invariant {
       : m_isPostponed(false),
         m_id(t_id),
         m_state(NULL_TIMESTAMP, nullState),
+        m_isModified(false),
         m_modifiedVars(),
         m_outputVars() {}
 
@@ -65,7 +67,7 @@ class Invariant {
 
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) = 0;
 
-  void notify(LocalId id) { m_modifiedVars[id] = true; }
+  void notify(Timestamp t, Engine& e, LocalId id);
 
   void compute(Timestamp t, Engine& e);
 

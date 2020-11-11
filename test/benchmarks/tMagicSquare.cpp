@@ -189,6 +189,7 @@ TEST_F(MagicSquareTest, Probing) {
       engine->endQuery();
 
       int totalViol = computeTotalViolaton(*this);
+//      printSquare(*this);
 
       EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
     }

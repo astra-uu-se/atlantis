@@ -2,6 +2,17 @@
 
 #include "core/propagationEngine.hpp"
 
+void Invariant::notify(Timestamp t, Engine& e,LocalId id){
+  m_modifiedVars[id] = true;
+  if(!m_isModified){
+    e.queueForPropagation(t,m_primaryOutput);
+    for(VarId outId: m_outputVars){
+      e.queueForPropagation(t,outId);
+    }
+  }
+  m_isModified = true;
+}
+
 void Invariant::compute(Timestamp t, Engine& e) {
   assert(m_modifiedVars.size() > 0);
   assert(m_primaryOutput != NULL_ID);
@@ -11,11 +22,7 @@ void Invariant::compute(Timestamp t, Engine& e) {
       m_modifiedVars[i] = false;  // reset
     }
   }
-
-  e.notifyMaybeChanged(t, m_primaryOutput);
-  for (VarId output : m_outputVars) {
-    e.notifyMaybeChanged(t, output);
-  }
+  m_isModified = false;
 }
 
 void Invariant::registerDefinedVariable(Engine& e, VarId v) {
