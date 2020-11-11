@@ -42,7 +42,9 @@ class MockInvariantAdvanced : public Invariant {
   VarId m_output;
 
   MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
-      : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {}
+      : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {
+    m_modifiedVars.resize(m_inputs.size(), false);
+  }
 
   void init(Timestamp, Engine& e) override {
     assert(m_id != NULL_ID);
