@@ -10,8 +10,8 @@ AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> t_variables)
       m_variables(std::move(t_variables)),
       m_localValues(),
       m_counts(),
-      m_offset(0){
-  m_modifiedVars.resize(m_variables.size(),false);
+      m_offset(0) {
+  m_modifiedVars.resize(m_variables.size(), false);
 }
 
 void AllDifferent::init(Timestamp ts, Engine& e) {
@@ -39,7 +39,7 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
     c.setValue(t, 0);
   }
 
-  e.updateValue(t, m_violationId, 0);
+  updateValue(t, e, m_violationId, 0);
 
   for (size_t i = 0; i < m_variables.size(); ++i) {
     increaseCount(t, e, e.getValue(t, m_variables[i]));

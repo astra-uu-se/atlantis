@@ -36,7 +36,7 @@ inline void AllDifferent::increaseCount(Timestamp ts, Engine& e, Int value) {
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
   if (newCount >= 2) {
-    e.incValue(ts, m_violationId, 1);
+    incValue(ts, e, m_violationId, 1);
   }
 }
 
@@ -45,6 +45,6 @@ inline void AllDifferent::decreaseCount(Timestamp ts, Engine& e, Int value) {
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
   if (newCount >= 1) {
-    e.incValue(ts, m_violationId, -1);
+    incValue(ts, e, m_violationId, -1);
   }
 }

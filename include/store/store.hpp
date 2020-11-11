@@ -6,6 +6,7 @@
 #include "core/engine.hpp"
 #include "core/intVar.hpp"
 #include "core/invariant.hpp"
+
 class Store {
  private:
   IdMap<VarId, IntVar> m_intVars;

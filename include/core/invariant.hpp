@@ -1,9 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
-
-#include <vector>
 class Engine;  // Forward declaration
 
 class Invariant {
@@ -19,15 +19,20 @@ class Invariant {
   VarId m_primaryOutput;
   std::vector<VarId> m_outputVars;
 
-  explicit Invariant(Id t_id)
-      : Invariant(t_id, -1){}
+  explicit Invariant(Id t_id) : Invariant(t_id, -1) {}
   Invariant(Id t_id, Int nullState)
-      : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, nullState), m_modifiedVars(), m_outputVars() {
-  }
+      : m_isPostponed(false),
+        m_id(t_id),
+        m_state(NULL_TIMESTAMP, nullState),
+        m_modifiedVars(),
+        m_outputVars() {}
 
   void registerDefinedVariable(Engine& e, VarId v);
 
   virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id) = 0;
+
+  void updateValue(Timestamp t, Engine& e, VarId id, Int val);
+  void incValue(Timestamp t, Engine& e, VarId id, Int val);
 
  public:
   virtual ~Invariant() = default;
@@ -60,10 +65,7 @@ class Invariant {
 
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) = 0;
 
-
-  void notify(LocalId id){
-    m_modifiedVars[id] = true;
-  }
+  void notify(LocalId id) { m_modifiedVars[id] = true; }
 
   void compute(Timestamp t, Engine& e);
 

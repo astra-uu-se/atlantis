@@ -8,11 +8,13 @@
 #include "core/idMap.hpp"
 #include "core/intVar.hpp"
 #include "core/intView.hpp"
-#include "core/invariant.hpp"
+//#include "core/invariant.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
 #include "store/store.hpp"
+
+class Invariant;
 
 class Engine {
  protected:
@@ -37,7 +39,9 @@ class Engine {
 
   void updateValue(Timestamp, VarId, Int val);
 
-  inline void updateValue(VarId v, Int val) { updateValue(m_currentTime, v, val); }
+  inline void updateValue(VarId v, Int val) {
+    updateValue(m_currentTime, v, val);
+  }
 
   friend class Invariant;
 
@@ -59,9 +63,7 @@ class Engine {
   virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
 
   Int getValue(Timestamp, VarId);
-  inline Int getNewValue(VarId v) {
-    return getValue(m_currentTime, v);
-  }
+  inline Int getNewValue(VarId v) { return getValue(m_currentTime, v); }
 
   Int getIntViewValue(Timestamp, VarId);
 

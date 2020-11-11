@@ -19,7 +19,7 @@ void Linear::init(Timestamp t, Engine& e) {
   // is initialised.
   assert(m_id != NULL_ID);
 
-  registerDefinedVariable(e,m_b);
+  registerDefinedVariable(e, m_b);
   for (size_t i = 0; i < m_X.size(); ++i) {
     e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i));
     m_localX.emplace_back(t, e.getCommittedValue(m_X[i]));
@@ -33,14 +33,14 @@ void Linear::recompute(Timestamp t, Engine& e) {
     m_localX.at(i).commitValue(e.getCommittedValue(m_X[i]));
     m_localX.at(i).setValue(t, e.getValue(t, m_X[i]));
   }
-  e.updateValue(t, m_b, sum);
+  updateValue(t, e, m_b, sum);
   // m_state.setValue(t, m_X.size());  // Not clear if we actually need to reset
   // this.
 }
 
 void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
   auto newValue = e.getValue(t, m_X[i]);
-  e.incValue(t, m_b, (newValue - m_localX.at(i).getValue(t)) * m_A[i]);
+  incValue(t, e, m_b, (newValue - m_localX.at(i).getValue(t)) * m_A[i]);
   m_localX.at(i).setValue(t, newValue);
 }
 
@@ -61,7 +61,7 @@ void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   if (delta == 0) {
     return;
   }
-  e.incValue(t, m_b, delta * m_A.at(idx));
+  incValue(t, e, m_b, delta * m_A.at(idx));
   m_localX.at(idx).setValue(t, e.getValue(t, m_X.at(idx)));
 }
 
