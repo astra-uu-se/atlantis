@@ -37,7 +37,7 @@ void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
   m_isEnqueued.set(id, true);
 }
 
-void PropagationEngine::queueForPropagation(Timestamp, VarId id){
+void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
   //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
   if (m_isEnqueued.get(id)) {
     //    std::cout << "\t\t\talready enqueued\n";
@@ -243,7 +243,7 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
   const bool debug = false;
-  if(debug) {
+  if (debug) {
     std::cout << "Starting propagation\n";
   }
   for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID;
@@ -255,7 +255,7 @@ void PropagationEngine::propagate() {
     if (definingInvariant != NULL_ID) {
       m_store.getInvariant(definingInvariant).compute(m_currentTime, *this);
     }
-    if(debug) {
+    if (debug) {
       std::cout << "\tPropagating " << variable << "\n";
       std::cout << "\t\tDepends on invariant: " << definingInvariant << "\n";
     }
@@ -264,13 +264,14 @@ void PropagationEngine::propagate() {
     }
 
     for (auto& toNotify : m_dependentInvariantData[id]) {
-      if(debug) {
+      if (debug) {
         std::cout << "\t\tNotifying invariant:" << toNotify.id << "\n";
       }
-      m_store.getInvariant(toNotify.id).notify(m_currentTime, *this, toNotify.localId);
+      m_store.getInvariant(toNotify.id)
+          .notify(m_currentTime, *this, toNotify.localId);
     }
   }
-  if(debug) {
+  if (debug) {
     std::cout << "Propagation done\n";
   }
 }

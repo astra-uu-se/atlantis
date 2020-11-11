@@ -4,7 +4,8 @@
 
 ElementConst::ElementConst(VarId i, std::vector<Int> A, VarId b)
     : Invariant(NULL_ID), m_i(i), m_A(std::move(A)), m_b(b) {
-  m_modifiedVars.resize(1, false);
+  //  m_modifiedVars.resize(1, false);
+  m_modifiedVars.reserve(1);
 }
 
 void ElementConst::init([[maybe_unused]] Timestamp t, Engine& e) {

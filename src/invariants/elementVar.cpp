@@ -4,7 +4,8 @@
 
 ElementVar::ElementVar(VarId i, std::vector<VarId> X, VarId b)
     : Invariant(NULL_ID), m_i(i), m_X(std::move(X)), m_b(b) {
-  m_modifiedVars.resize(1, false);
+  //  m_modifiedVars.resize(1, false);
+  m_modifiedVars.reserve(1);
 }
 
 void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {

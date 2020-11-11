@@ -12,7 +12,8 @@
  */
 LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
     : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
-  m_modifiedVars.resize(1,false);
+  //  m_modifiedVars.resize(1,false);
+  m_modifiedVars.reserve(1);
 }
 
 void LessEqual::init(Timestamp, Engine& e) {

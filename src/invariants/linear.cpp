@@ -11,7 +11,8 @@ Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
       m_localX(),
       m_b(b) {
   m_localX.reserve(m_X.size());
-  m_modifiedVars.resize(m_X.size());
+  //  m_modifiedVars.resize(m_X.size());
+  m_modifiedVars.reserve(m_X.size());
 }
 
 void Linear::init(Timestamp t, Engine& e) {
