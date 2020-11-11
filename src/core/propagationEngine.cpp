@@ -27,7 +27,7 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp t, VarId id) {
-  if(!hasChanged(t,id)){
+  if (!hasChanged(t, id)) {
     return;
   }
   //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
@@ -235,7 +235,8 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
   //  std::cout << "Starting propagation\n";
-  for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID; id = getNextStableVariable(m_currentTime)) {
+  for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID;
+       id = getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(id);
     //    std::cout << "\tPropagating" << variable << "\n";
     InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
@@ -245,7 +246,7 @@ void PropagationEngine::propagate() {
 
     if (!variable.hasChanged(m_currentTime)) {
       assert(false);
-      continue; // Should never happen
+      continue;  // Should never happen
     }
 
     for (auto& toNotify : m_dependentInvariantData[id]) {
@@ -255,8 +256,7 @@ void PropagationEngine::propagate() {
       }
       //        std::cout << "\t\tNotifying invariant:" << toNotify.id <<
       //        "\n";
-      m_store.getInvariant(toNotify.id)
-          .notify(toNotify.localId);
+      m_store.getInvariant(toNotify.id).notify(toNotify.localId);
     }
   }
   //  std::cout << "Propagation done\n";
