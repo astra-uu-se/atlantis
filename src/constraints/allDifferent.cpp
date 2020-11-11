@@ -10,7 +10,9 @@ AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> t_variables)
       m_variables(std::move(t_variables)),
       m_localValues(),
       m_counts(),
-      m_offset(0) {}
+      m_offset(0){
+  m_modifiedVars.resize(m_variables.size(),false);
+}
 
 void AllDifferent::init(Timestamp ts, Engine& e) {
   assert(!m_id.equals(NULL_ID));
@@ -27,7 +29,7 @@ void AllDifferent::init(Timestamp ts, Engine& e) {
 
   m_counts.resize(static_cast<unsigned long>(ub - lb + 1), SavedInt(ts, 0));
 
-  e.registerDefinedVariable(m_violationId, m_id);
+  registerDefinedVariable(e, m_violationId);
 
   m_offset = lb;
 }

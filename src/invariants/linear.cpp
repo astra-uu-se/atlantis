@@ -10,7 +10,8 @@ Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
       m_X(std::move(X)),
       m_localX(),
       m_b(b) {
-  m_localX.reserve(X.size());
+  m_localX.reserve(m_X.size());
+  m_modifiedVars.resize(m_X.size());
 }
 
 void Linear::init(Timestamp t, Engine& e) {
@@ -18,7 +19,7 @@ void Linear::init(Timestamp t, Engine& e) {
   // is initialised.
   assert(m_id != NULL_ID);
 
-  e.registerDefinedVariable(m_b, m_id);
+  registerDefinedVariable(e,m_b);
   for (size_t i = 0; i < m_X.size(); ++i) {
     e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i));
     m_localX.emplace_back(t, e.getCommittedValue(m_X[i]));

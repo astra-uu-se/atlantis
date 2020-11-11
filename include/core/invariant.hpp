@@ -2,6 +2,8 @@
 
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
+
+#include <vector>
 class Engine;  // Forward declaration
 
 class Invariant {
@@ -11,10 +13,21 @@ class Invariant {
   InvariantId m_id;
   // State used for returning next dependency. Null state is -1 by default
   SavedInt m_state;
+
+  std::vector<bool> m_modifiedVars;
+
+  VarId m_primaryOutput;
+  std::vector<VarId> m_outputVars;
+
   explicit Invariant(Id t_id)
-      : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, -1) {}
+      : Invariant(t_id, -1){}
   Invariant(Id t_id, Int nullState)
-      : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, nullState) {}
+      : m_isPostponed(false), m_id(t_id), m_state(NULL_TIMESTAMP, nullState), m_modifiedVars(), m_outputVars() {
+  }
+
+  void registerDefinedVariable(Engine& e, VarId v);
+
+  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id) = 0;
 
  public:
   virtual ~Invariant() = default;
@@ -47,7 +60,12 @@ class Invariant {
 
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) = 0;
 
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id) = 0;
+
+  void notify(LocalId id){
+    m_modifiedVars[id] = true;
+  }
+
+  void compute(Timestamp t, Engine& e);
 
   virtual void commit(Timestamp, Engine&) { m_isPostponed = false; };
   inline void postpone() { m_isPostponed = true; }
