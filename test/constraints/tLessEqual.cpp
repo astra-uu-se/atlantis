@@ -161,9 +161,9 @@ TEST_F(LessEqualTest, Commit) {
 
   Timestamp currentTime = 1;
 
-  e->updateValue(currentTime, x, 40);
-  e->updateValue(currentTime, y, 2);  // This change is not notified and should
-                                      // not have an impact on the commit
+  e->setValue(currentTime, x, 40);
+  e->setValue(currentTime, y, 2);  // This change is not notified and should
+                                   // not have an impact on the commit
 
   lessEqual->notifyIntChanged(currentTime, *e, unused);
 

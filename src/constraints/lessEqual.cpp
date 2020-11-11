@@ -11,15 +11,17 @@
  * @param y variable of rhs
  */
 LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
-    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {}
+    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
+  m_modifiedVars.resize(1,false);
+}
 
 void LessEqual::init(Timestamp, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   assert(m_id != NULL_ID);
 
-  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x));
-  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(m_y));
+  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(0));
+  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(0));
   e.registerDefinedVariable(m_violationId, m_id);
 }
 
