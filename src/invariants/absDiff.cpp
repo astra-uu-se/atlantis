@@ -4,14 +4,16 @@
 extern Id NULL_ID;
 
 AbsDiff::AbsDiff(VarId a, VarId b, VarId c)
-    : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {}
+    : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {
+  m_modifiedVars.resize(1,false);
+}
 
 void AbsDiff::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(!m_id.equals(NULL_ID));
 
-  e.registerDefinedVariable(m_c, m_id);
+  registerDefinedVariable(e, m_c);
   e.registerInvariantDependsOnVar(m_id, m_a, 0);
-  e.registerInvariantDependsOnVar(m_id, m_b, 1);
+  e.registerInvariantDependsOnVar(m_id, m_b, 0);
 }
 
 void AbsDiff::recompute(Timestamp t, Engine& e) {
