@@ -112,9 +112,9 @@ class Invariant {
 
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) = 0;
 
-  void notify(Timestamp t, Engine& e, LocalId id);
+  virtual void notify(Timestamp t, Engine& e, LocalId id);
 
-  void compute(Timestamp t, Engine& e);
+  virtual void compute(Timestamp t, Engine& e);
 
   virtual void commit(Timestamp, Engine&) { m_isPostponed = false; };
   inline void postpone() { m_isPostponed = true; }
