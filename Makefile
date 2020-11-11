@@ -1,4 +1,4 @@
-export CMAKE_OPTIONS+= -DBUILD_TESTS:BOOL=ON ${ENV_CMAKE_OPTIONS}
+export CMAKE_OPTIONS+= ${ENV_CMAKE_OPTIONS}
 export BUILD_DIR=build
 
 all:
@@ -12,6 +12,18 @@ build:
 	mkdir -p ${BUILD_DIR}; \
 	cd ${BUILD_DIR}; \
 	cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
+	make
+
+tests:
+	mkdir -p ${BUILD_DIR}; \
+	cd ${BUILD_DIR}; \
+	cmake ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS:BOOL=ON -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
+	make
+
+benchmarks:
+	mkdir -p ${BUILD_DIR}; \
+	cd ${BUILD_DIR}; \
+	cmake ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
 	make
 
 submodule:
