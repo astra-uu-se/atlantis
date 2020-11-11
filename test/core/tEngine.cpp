@@ -49,7 +49,7 @@ class MockInvariantAdvanced : public Invariant {
   void init(Timestamp, Engine& e) override {
     assert(m_id != NULL_ID);
 
-    e.registerDefinedVariable(m_output, m_id);
+    registerDefinedVariable(e, m_output);
     for (size_t i = 0; i < m_inputs.size(); ++i) {
       e.registerInvariantDependsOnVar(m_id, m_inputs[i], LocalId(i));
     }
