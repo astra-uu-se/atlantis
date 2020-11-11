@@ -264,10 +264,6 @@ void PropagationEngine::propagate() {
     }
 
     for (auto& toNotify : m_dependentInvariantData[id]) {
-      // Also, do not notify invariants that are not active.
-      if (!isOnPropagationPath(m_currentTime, toNotify.id)) {
-        continue;
-      }
       if(debug) {
         std::cout << "\t\tNotifying invariant:" << toNotify.id << "\n";
       }
