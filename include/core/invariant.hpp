@@ -9,36 +9,38 @@ class Engine;  // Forward declaration
 class Invariant {
  private:
  protected:
+  /**
+   * A simple queue structure of a fixed length to hold what input
+   * variables that have been updated.
+   */
   class NotificationQueue {
    public:
     void reserve(size_t size) {
       // This function should only be called during setup and need not be
       // efficient
-      queue.resize(size + 1);
+      queue.resize(size);
       init();
     }
 
     void push(LocalId id) {
-      if (queue[id + 1] != id.id + 1) {
+      if (queue[id] != id.id) {
         return;
       }
-      queue[id + 1] = head;
-      head = id + 1;
+      queue[id] = head;
+      head = id;
     }
 
     LocalId pop() {
-      auto current = LocalId(head - 1);
+      auto current = LocalId(head);
       std::swap(head, queue[head]);
       return current;
     }
 
-    size_t size() { return queue.size() - 1; }
+    size_t size() { return queue.size(); }
 
-    bool hasNext() { return head != 0; }
+    bool hasNext() { return head < queue.size(); }
 
     NotificationQueue() : head(0), queue() {
-      // Note that a index 0 is the null index and LocalId(0) will map to
-      // index 1.
       queue.push_back(0);
     }
 
@@ -50,6 +52,7 @@ class Invariant {
       for (size_t i = 0; i < queue.size(); ++i) {
         queue[i] = i;
       }
+      head = queue.size();
     }
   };
 
@@ -58,7 +61,6 @@ class Invariant {
   // State used for returning next dependency. Null state is -1 by default
   SavedInt m_state;
 
-  bool m_isModified;
   //  std::vector<bool> m_modifiedVars;
   NotificationQueue m_modifiedVars;
 
@@ -70,15 +72,34 @@ class Invariant {
       : m_isPostponed(false),
         m_id(t_id),
         m_state(NULL_TIMESTAMP, nullState),
-        m_isModified(false),
         m_modifiedVars(),
         m_outputVars() {}
 
+  /**
+   * Register to the engine that variable is defined by the invariant.
+   * @param e the engine
+   * @param v the id of the variable that is defined by the invariant.
+   */
   void registerDefinedVariable(Engine& e, VarId v);
 
+  /**
+   * Used in Top-Down (Input-to-Output) propagation to notify that a 
+   * variable local to the invariant has had its value changed. This 
+   * method is called for each variable that was marked as modified 
+   * in notify.
+   * @param t the current timestamp
+   * @param e the engine
+   * @param id the local id of the variable.
+   */
   virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id) = 0;
 
+  /**
+   * Updates the value of variable without queueing it for propagation
+   */
   void updateValue(Timestamp t, Engine& e, VarId id, Int val);
+  /**
+   * Increases the value of variable without queueing it for propagation
+   */
   void incValue(Timestamp t, Engine& e, VarId id, Int val);
 
  public:
@@ -108,15 +129,37 @@ class Invariant {
 
   virtual void recompute(Timestamp, Engine&) = 0;
 
+  /**
+   * Used in Output-to-Input propagation to get the next input variable,
+   * the next dependency, to visit.
+   */
   virtual VarId getNextDependency(Timestamp, Engine& e) = 0;
 
+  /**
+   * Used in bottom-up (Output-to-Input) propagation to notify to the
+   * invariant that the current dependency (the last dependency given by 
+   * getNextDependency) has had its value changed.
+   */
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) = 0;
 
-  void notify(Timestamp t, Engine& e, LocalId id);
+  /**
+   * Used in the Top-Down (Input-to-Output) propagation to notify that an
+   * input variable has had its value changed.
+   */
+  void notify(LocalId id);
 
+  /**
+   * Used in the Top-Down (Input-to-Output) propagation when the invariant
+   * has been notified of all modified input variables (dependencies) and
+   * the primary and non-primary output variables (dependants) are to be
+   * computed.
+   */
   void compute(Timestamp t, Engine& e);
 
   virtual void commit(Timestamp, Engine&) { m_isPostponed = false; };
   inline void postpone() { m_isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return m_isPostponed; }
+
+  inline VarId getPrimaryOutput() { return m_primaryOutput; }
+  void queueNonPrimaryOutputVarsForPropagation(Timestamp t, Engine& e);
 };
