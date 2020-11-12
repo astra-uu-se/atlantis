@@ -18,7 +18,8 @@ class PropagationEngine : public Engine {
   PropagationGraph m_propGraph;
   BottomUpExplorer m_bottomUpExplorer;
 
-  std::priority_queue<size_t, std::vector<size_t>, PropagationGraph::PriorityCmp>
+  std::priority_queue<VarIdBase, std::vector<VarIdBase>,
+                      PropagationGraph::PriorityCmp>
       m_modifiedVariables;
 
   IdMap<VarId, bool> m_isEnqueued;
