@@ -272,7 +272,7 @@ void PropagationEngine::propagate() {
         std::cout << "\t\tNotifying invariant:" << toNotify.id << "\n";
       }
       Invariant& invariant = m_store.getInvariant(toNotify.id);
-      invariant.notify(m_currentTime, *this, toNotify.localId);
+      invariant.notify(toNotify.localId);
       queueForPropagation(m_currentTime, invariant.getPrimaryOutput());
     }
   }
