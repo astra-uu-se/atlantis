@@ -257,14 +257,14 @@ void PropagationEngine::propagate() {
       if (id == defInv.getPrimaryOutput()) {
         defInv.compute(m_currentTime, *this);
         defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
+        if (!variable.hasChanged(m_currentTime)) {
+          continue;
+        }
       }
     }
     if (debug) {
       std::cout << "\tPropagating " << variable << "\n";
       std::cout << "\t\tDepends on invariant: " << definingInvariant << "\n";
-    }
-    if (!variable.hasChanged(m_currentTime)) {
-      continue;
     }
 
     for (auto& toNotify : m_dependentInvariantData[id]) {
