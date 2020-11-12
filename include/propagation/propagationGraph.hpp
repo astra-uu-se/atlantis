@@ -17,23 +17,23 @@ class PropagationGraph {
    *
    * Maps to nullptr if not defined by any invariant.
    */
-  IdMap<VarId, InvariantId> m_definingInvariant;
+  IdMap<VarIdBase, InvariantId> m_definingInvariant;
 
   /**
    * Map from InvariantId -> list of VarId
    *
    * Maps an invariant to all variables it defines.
    */
-  IdMap<InvariantId, std::vector<VarId>> m_variablesDefinedByInvariant;
+  IdMap<InvariantId, std::vector<VarIdBase>> m_variablesDefinedByInvariant;
   /**
    * Map from InvariantId -> list of VarId
    *
    * Maps an invariant to all variables it depends on (its inputs).
    */
-  IdMap<InvariantId, std::vector<VarId>> m_inputVariables;
+  IdMap<InvariantId, std::vector<VarIdBase>> m_inputVariables;
 
   // Map from VarId -> vector of InvariantId
-  IdMap<VarId, std::vector<InvariantId>> m_listeningInvariants;
+  IdMap<VarIdBase, std::vector<InvariantId>> m_listeningInvariants;
 
   std::vector<bool> m_isOutputVar;
   std::vector<bool> m_isInputVar;
@@ -61,7 +61,7 @@ class PropagationGraph {
   struct PriorityCmp {
     PropagationGraph& graph;
     explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
-    bool operator()(VarId left, VarId right) {
+    bool operator()(VarIdBase left, VarIdBase right) {
       return graph.m_topology.getPosition(left) >
              graph.m_topology.getPosition(right);
     }
@@ -85,14 +85,14 @@ class PropagationGraph {
   /**
    * Register a variable in the propagation graph.
    */
-  void registerVar(VarId);
+  void registerVar(VarIdBase);
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
    * @param depends the invariant that the variable depends on
    * @param source the depending variable
    */
-  void registerInvariantDependsOnVar(InvariantId depends, VarId source);
+  void registerInvariantDependsOnVar(InvariantId depends, VarIdBase source);
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
@@ -101,7 +101,7 @@ class PropagationGraph {
    * @param source the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariable(VarId depends, InvariantId source);
+  void registerDefinedVariable(VarIdBase depends, InvariantId source);
 
   [[nodiscard]] inline size_t getNumVariables() const {
     return m_numVariables;  // this ignores null var
@@ -111,16 +111,16 @@ class PropagationGraph {
     return m_numInvariants;  // this ignores null invariant
   }
 
-  inline bool isOutputVar(VarId id) { return m_isOutputVar.at(id); }
+  inline bool isOutputVar(VarIdBase id) { return m_isOutputVar.at(id); }
 
-  inline bool isInputVar(VarId id) { return m_isInputVar.at(id); }
+  inline bool isInputVar(VarIdBase id) { return m_isInputVar.at(id); }
 
-  inline InvariantId getDefiningInvariant(VarId v) {
+  inline InvariantId getDefiningInvariant(VarIdBase v) {
     // Returns NULL_ID is not defined.
     return m_definingInvariant.at(v);
   }
 
-  [[nodiscard]] inline const std::vector<VarId>& getVariablesDefinedBy(
+  [[nodiscard]] inline const std::vector<VarIdBase>& getVariablesDefinedBy(
       InvariantId inv) const {
     return m_variablesDefinedByInvariant.at(inv);
   }

@@ -18,7 +18,7 @@ class PropagationEngine : public Engine {
   PropagationGraph m_propGraph;
   BottomUpExplorer m_bottomUpExplorer;
 
-  std::priority_queue<VarId, std::vector<VarId>, PropagationGraph::PriorityCmp>
+  std::priority_queue<size_t, std::vector<size_t>, PropagationGraph::PriorityCmp>
       m_modifiedVariables;
 
   IdMap<VarId, bool> m_isEnqueued;
@@ -97,7 +97,7 @@ class PropagationEngine : public Engine {
   // This function is used by propagation, which is unaware of views.
   [[nodiscard]] inline bool hasChanged(Timestamp t, VarId v) const;
 
-  [[nodiscard]] const std::vector<VarId>& getVariablesDefinedBy(
+  [[nodiscard]] const std::vector<VarIdBase>& getVariablesDefinedBy(
       InvariantId) const;
 
   /**
@@ -126,7 +126,7 @@ inline InvariantId PropagationEngine::getDefiningInvariant(VarId v) {
   return m_propGraph.getDefiningInvariant(v);
 }
 
-inline const std::vector<VarId>& PropagationEngine::getVariablesDefinedBy(
+inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
     InvariantId inv) const {
   return m_propGraph.getVariablesDefinedBy(inv);
 }

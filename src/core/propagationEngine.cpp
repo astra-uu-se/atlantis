@@ -81,7 +81,7 @@ VarId PropagationEngine::getNextStableVariable(Timestamp) {
   if (m_modifiedVariables.empty()) {
     return VarId(NULL_ID);
   }
-  VarId nextVar = m_modifiedVariables.top();
+  VarId nextVar(m_modifiedVariables.top());
   m_modifiedVariables.pop();
   m_isEnqueued.set(nextVar, false);
   // Due to notifyMaybeChanged, all variables in the queue are "active".
@@ -223,7 +223,7 @@ void PropagationEngine::markPropagationPath() {
     }
     m_varIsOnPropagationPath.set(currentVar, true);
     for (auto& depInv : m_dependentInvariantData.at(currentVar)) {
-      for (VarId depVar : m_propGraph.getVariablesDefinedBy(depInv.id)) {
+      for (VarIdBase depVar : m_propGraph.getVariablesDefinedBy(depInv.id)) {
         if (!m_varIsOnPropagationPath.get(depVar)) {
           m_propagationPathQueue.push(depVar);
         }
