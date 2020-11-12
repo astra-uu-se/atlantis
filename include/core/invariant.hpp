@@ -57,7 +57,6 @@ class Invariant {
   // State used for returning next dependency. Null state is -1 by default
   SavedInt m_state;
 
-  bool m_isModified;
   //  std::vector<bool> m_modifiedVars;
   NotificationQueue m_modifiedVars;
 
@@ -69,7 +68,6 @@ class Invariant {
       : m_isPostponed(false),
         m_id(t_id),
         m_state(NULL_TIMESTAMP, nullState),
-        m_isModified(false),
         m_modifiedVars(),
         m_outputVars() {}
 
@@ -118,4 +116,6 @@ class Invariant {
   virtual void commit(Timestamp, Engine&) { m_isPostponed = false; };
   inline void postpone() { m_isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return m_isPostponed; }
+
+  inline VarId getPrimaryOutput() { return m_primaryOutput; }
 };
