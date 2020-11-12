@@ -123,7 +123,7 @@ class MagicSquare : public benchmark::Fixture {
     engine->close();
   }
 
-  void TearDown(const ::benchmark::State& state) {
+  void TearDown(const ::benchmark::State&) {
     square.clear();
     flat.clear();
   }

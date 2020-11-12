@@ -62,8 +62,8 @@ TEST_F(IdMapTest, ID2Vectortest) {
   varToVector.register_idx(id2);
   varToVector[id2].push_back(VarId(21));
   varToVector[id2].push_back(VarId(22));
-  EXPECT_EQ(varToVector[id2].size(), 2);
-  EXPECT_EQ(varToVector[id1].size(), 0);
+  EXPECT_EQ(varToVector[id2].size(), size_t(2));
+  EXPECT_EQ(varToVector[id1].size(), size_t(0));
 }
 
 }  // namespace
