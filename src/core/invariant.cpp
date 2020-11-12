@@ -2,19 +2,8 @@
 
 #include "core/propagationEngine.hpp"
 
-// void Invariant::notify(Timestamp t, Engine& e, LocalId id) {
-//   m_modifiedVars.push(id);
-
-//   if (!m_isModified) {
-//     e.queueForPropagation(t, m_primaryOutput);
-//     for (VarId outId : m_outputVars) {
-//       e.queueForPropagation(t, outId);
-//     }
-//   }
-//   m_isModified = true;
-// }
 void Invariant::notify(Timestamp t, Engine& e, LocalId id) {
-  this->notifyIntChanged(t, e, id);
+  m_modifiedVars.push(id);
 
   if (!m_isModified) {
     e.queueForPropagation(t, m_primaryOutput);
@@ -25,22 +14,15 @@ void Invariant::notify(Timestamp t, Engine& e, LocalId id) {
   m_isModified = true;
 }
 
-// void Invariant::compute(Timestamp t, Engine& e) {
-//   assert(m_modifiedVars.size() > 0);
-//   assert(m_primaryOutput != NULL_ID);
-
-//   while (m_modifiedVars.hasNext()) {
-//     // don't turn this into a for loop...
-//     LocalId toNotify = m_modifiedVars.pop();
-//     this->notifyIntChanged(t, e, toNotify);
-//   }
-
-//   m_isModified = false;
-// }
-
 void Invariant::compute(Timestamp t, Engine& e) {
   assert(m_modifiedVars.size() > 0);
   assert(m_primaryOutput != NULL_ID);
+
+  while (m_modifiedVars.hasNext()) {
+    // don't turn this into a for loop...
+    LocalId toNotify = m_modifiedVars.pop();
+    this->notifyIntChanged(t, e, toNotify);
+  }
 
   m_isModified = false;
 }
