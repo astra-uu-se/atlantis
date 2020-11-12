@@ -36,6 +36,9 @@ void Invariant::incValue(Timestamp t, Engine& e, VarId id, Int val) {
 
 void Invariant::queueNonPrimaryOutputVarsForPropagation(Timestamp t, Engine& e) {
   for (VarId outputVarId : m_outputVars) {
+    if (!e.hasChanged(t, outputVarId)) {
+      continue;
+    }
     e.queueForPropagation(t, outputVarId);
   }
 }

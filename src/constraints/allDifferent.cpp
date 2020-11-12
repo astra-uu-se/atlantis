@@ -42,10 +42,12 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
 
   updateValue(t, e, m_violationId, 0);
 
+  Int violInc = 0;
   for (size_t i = 0; i < m_variables.size(); ++i) {
-    increaseCount(t, e, e.getValue(t, m_variables[i]));
+    violInc += increaseCount(t, e.getValue(t, m_variables[i]));
     m_localValues[i].setValue(t, e.getValue(t, m_variables[i]));
   }
+  incValue(t, e, m_violationId, violInc);
 }
 
 void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
@@ -54,9 +56,10 @@ void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
   if (newValue == oldValue) {
     return;
   }
-  decreaseCount(t, e, oldValue);
-  increaseCount(t, e, newValue);
+  signed char dec = decreaseCount(t,oldValue);
+  signed char inc = increaseCount(t,newValue);
   m_localValues.at(id).setValue(t, newValue);
+  incValue(t, e, m_violationId, static_cast<Int>(dec+inc));
 }
 
 VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
@@ -78,10 +81,10 @@ void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   Int oldValue = m_localValues.at(index).getValue(t);
   Int newValue = e.getNewValue(varId);
 
-  decreaseCount(t, e, oldValue);
-  increaseCount(t, e, newValue);
-
+  signed char dec = decreaseCount(t,oldValue);
+  signed char inc = increaseCount(t,newValue);
   m_localValues.at(index).setValue(t, newValue);
+  incValue(t, e, m_violationId, static_cast<Int>(dec+inc));
 }
 
 void AllDifferent::commit(Timestamp t, Engine& e) {
