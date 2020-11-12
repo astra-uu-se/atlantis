@@ -48,8 +48,8 @@ class PropagationGraph {
     void computeNoCycles();
     void computeWithCycles();
     void computeInvariantFromVariables();
-    inline size_t getPosition(VarId id) { return m_variablePosition[id]; }
-    inline size_t getPosition(InvariantId id) {
+    inline size_t getVarPosition(size_t id) { return m_variablePosition[id]; }
+    inline size_t getInvariantPosition(InvariantId id) {
       return m_invariantPosition.at(id);
     }
   } m_topology;
@@ -60,8 +60,8 @@ class PropagationGraph {
     PropagationGraph& graph;
     explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
     bool operator()(size_t left, size_t right) {
-      return graph.m_topology.getPosition(left) >
-             graph.m_topology.getPosition(right);
+      return graph.m_topology.getVarPosition(left) >
+             graph.m_topology.getVarPosition(right);
     }
   };
 
