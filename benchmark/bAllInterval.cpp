@@ -49,7 +49,7 @@ class AllInterval : public benchmark::Fixture {
     distribution = std::uniform_int_distribution<>{0, n - 1};
   }
 
-  void TearDown(const ::benchmark::State& state) {
+  void TearDown(const ::benchmark::State&) {
     s_vars.clear();
     v_vars.clear();
   }
