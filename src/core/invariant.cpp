@@ -33,3 +33,9 @@ void Invariant::updateValue(Timestamp t, Engine& e, VarId id, Int val) {
 void Invariant::incValue(Timestamp t, Engine& e, VarId id, Int val) {
   e.incValue(t, id, val);
 }
+
+void Invariant::queueNonPrimaryOutputVarsForPropagation(Timestamp t, Engine& e) {
+  for (VarId outputVarId : m_outputVars) {
+    e.queueForPropagation(t, outputVarId);
+  }
+}

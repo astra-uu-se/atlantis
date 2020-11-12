@@ -118,4 +118,5 @@ class Invariant {
   [[nodiscard]] inline bool isPostponed() const { return m_isPostponed; }
 
   inline VarId getPrimaryOutput() { return m_primaryOutput; }
+  void queueNonPrimaryOutputVarsForPropagation(Timestamp t, Engine& e);
 };
