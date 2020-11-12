@@ -81,7 +81,7 @@ VarId PropagationEngine::getNextStableVariable(Timestamp) {
   if (m_modifiedVariables.empty()) {
     return VarId(NULL_ID);
   }
-  VarId nextVar = m_modifiedVariables.top();
+  VarId nextVar(m_modifiedVariables.top());
   m_modifiedVariables.pop();
   m_isEnqueued.set(nextVar, false);
   // Due to notifyMaybeChanged, all variables in the queue are "active".
