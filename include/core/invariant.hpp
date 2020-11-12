@@ -14,31 +14,29 @@ class Invariant {
     void reserve(size_t size) {
       // This function should only be called during setup and need not be
       // efficient
-      queue.resize(size + 1);
+      queue.resize(size);
       init();
     }
 
     void push(LocalId id) {
-      if (queue[id + 1] != id.id + 1) {
+      if (queue[id] != id.id) {
         return;
       }
-      queue[id + 1] = head;
-      head = id + 1;
+      queue[id] = head;
+      head = id;
     }
 
     LocalId pop() {
-      auto current = LocalId(head - 1);
+      auto current = LocalId(head);
       std::swap(head, queue[head]);
       return current;
     }
 
-    size_t size() { return queue.size() - 1; }
+    size_t size() { return queue.size(); }
 
-    bool hasNext() { return head != 0; }
+    bool hasNext() { return head < queue.size(); }
 
     NotificationQueue() : head(0), queue() {
-      // Note that a index 0 is the null index and LocalId(0) will map to
-      // index 1.
       queue.push_back(0);
     }
 
@@ -50,6 +48,7 @@ class Invariant {
       for (size_t i = 0; i < queue.size(); ++i) {
         queue[i] = i;
       }
+      head = queue.size();
     }
   };
 
