@@ -48,7 +48,7 @@ class PropagationGraph {
     void computeNoCycles();
     void computeWithCycles();
     void computeInvariantFromVariables();
-    inline size_t getPosition(VarId id) { return m_variablePosition.at(id); }
+    inline size_t getPosition(VarId id) { return m_variablePosition[id]; }
     inline size_t getPosition(InvariantId id) {
       return m_invariantPosition.at(id);
     }

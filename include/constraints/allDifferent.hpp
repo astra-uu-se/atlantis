@@ -17,8 +17,8 @@ class AllDifferent : public Constraint {
   std::vector<SavedInt> m_localValues;
   std::vector<SavedInt> m_counts;
   Int m_offset;
-  void increaseCount(Timestamp ts, Engine& e, Int value);
-  void decreaseCount(Timestamp ts, Engine& e, Int value);
+  signed char increaseCount(Timestamp ts, Int value);
+  signed char decreaseCount(Timestamp ts, Int value);
 
  public:
   AllDifferent(VarId violationId, std::vector<VarId> t_variables);
@@ -31,20 +31,22 @@ class AllDifferent : public Constraint {
   void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
 };
 
-inline void AllDifferent::increaseCount(Timestamp ts, Engine& e, Int value) {
+inline signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
   Int newCount = m_counts.at(value - m_offset).incValue(ts, 1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
-  if (newCount >= 2) {
-    incValue(ts, e, m_violationId, 1);
-  }
+//  if (newCount >= 2) {
+//    incValue(ts, e, m_violationId, 1);
+//  }
+  return newCount >= 2 ? 1:0;
 }
 
-inline void AllDifferent::decreaseCount(Timestamp ts, Engine& e, Int value) {
+inline signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
   Int newCount = m_counts.at(value - m_offset).incValue(ts, -1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
-  if (newCount >= 1) {
-    incValue(ts, e, m_violationId, -1);
-  }
+//  if (newCount >= 1) {
+//    incValue(ts, e, m_violationId, -1);
+//  }
+  return newCount >= 1 ? -1:0;
 }
