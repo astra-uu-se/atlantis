@@ -26,8 +26,7 @@ class Invariant {
       if (queue[id] != id.id) {
         return;
       }
-      queue[id] = head;
-      head = id;
+      std::swap<size_t>(queue[id], head);
     }
 
     LocalId pop() {
