@@ -253,7 +253,11 @@ void PropagationEngine::propagate() {
     InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
 
     if (definingInvariant != NULL_ID) {
-      m_store.getInvariant(definingInvariant).compute(m_currentTime, *this);
+      Invariant& defInv = m_store.getInvariant(definingInvariant);
+      if (id == defInv.getPrimaryOutput()) {
+        defInv.compute(m_currentTime, *this);
+        defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
+      }
     }
     if (debug) {
       std::cout << "\tPropagating " << variable << "\n";
