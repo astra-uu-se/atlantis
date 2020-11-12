@@ -43,6 +43,8 @@ class Engine {
     updateValue(m_currentTime, v, val);
   }
 
+  inline bool hasChanged(Timestamp, VarId);
+
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
    * already defined.
@@ -224,6 +226,10 @@ Engine::makeConstraint(Args&&... args) {
 
 inline const Store& Engine::getStore() { return m_store; }
 inline Timestamp Engine::getCurrentTime() const { return m_currentTime; }
+
+inline bool Engine::hasChanged(Timestamp t, VarId v) {
+  return m_store.getIntVar(v).hasChanged(t);
+}
 
 inline Int Engine::getValue(Timestamp t, VarId v) {
   if (v.idType == VarIdType::view) {

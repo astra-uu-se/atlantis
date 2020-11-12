@@ -23,11 +23,11 @@ class Invariant {
     }
 
     void push(LocalId id) {
-      if (queue[id] != id.id) {
-        return;
+      if (queue[id] == id.id) {
+        std::swap(queue[id], head);
       }
-      queue[id] = head;
-      head = id;
+      // queue[id] = head;
+      // head = id;
     }
 
     LocalId pop() {
