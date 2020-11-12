@@ -2,7 +2,7 @@
 
 #include "core/propagationEngine.hpp"
 
-void Invariant::notify(Timestamp t, Engine& e, LocalId id) {
+void Invariant::notify(LocalId id) {
   m_modifiedVars.push(id);
 }
 
