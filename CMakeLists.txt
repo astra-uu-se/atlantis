@@ -66,7 +66,6 @@ option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark'
 option(BENCHMARK_ENABLE_TESTING "Build GTEST for GBENCHMARK" OFF)
 
 if (BUILD_TESTS)
-  message(WARNING "Building tests")
   # This adds another subdirectory, which has 'project(gtest)'.
   add_subdirectory(ext/googletest)
 
