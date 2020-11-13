@@ -242,7 +242,7 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
-  const bool debug = false;
+  const bool debug = true;
   if (debug) {
     std::cout << "Starting propagation\n";
   }
@@ -255,9 +255,10 @@ void PropagationEngine::propagate() {
     if (definingInvariant != NULL_ID) {
       Invariant& defInv = m_store.getInvariant(definingInvariant);
       if (id == defInv.getPrimaryOutput()) {
+        Int oldValue = variable.getValue(m_currentTime);
         defInv.compute(m_currentTime, *this);
         defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
-        if (!variable.hasChanged(m_currentTime)) {
+        if (oldValue == variable.getValue(m_currentTime)) {
           continue;
         }
       }
@@ -268,6 +269,12 @@ void PropagationEngine::propagate() {
     }
 
     for (auto& toNotify : m_dependentInvariantData[id]) {
+      if(toNotify.id == definingInvariant.id){
+        if (debug) {
+          std::cout << "\t\tIgnoring cyclic notification:" << toNotify.id << "\n";
+        }
+        continue; // don't notify in case of dynamic cycle, should never make a difference
+      }
       if (debug) {
         std::cout << "\t\tNotifying invariant:" << toNotify.id << "\n";
       }
