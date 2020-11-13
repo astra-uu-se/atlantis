@@ -43,6 +43,7 @@ src/main.dSYM/*
 xcode
 .DS_Store
 .idea
-cmake-build-debug 
+cmake-build-debug
+cmake-build-debug-coverage 
 cmake-build-release 
 benchmark-data.json
