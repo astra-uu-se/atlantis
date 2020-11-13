@@ -56,10 +56,10 @@ void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
   if (newValue == oldValue) {
     return;
   }
-  signed char dec = decreaseCount(t,oldValue);
-  signed char inc = increaseCount(t,newValue);
+  signed char dec = decreaseCount(t, oldValue);
+  signed char inc = increaseCount(t, newValue);
   m_localValues.at(id).setValue(t, newValue);
-  incValue(t, e, m_violationId, static_cast<Int>(dec+inc));
+  incValue(t, e, m_violationId, static_cast<Int>(dec + inc));
 }
 
 VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
@@ -81,10 +81,10 @@ void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   Int oldValue = m_localValues.at(index).getValue(t);
   Int newValue = e.getNewValue(varId);
 
-  signed char dec = decreaseCount(t,oldValue);
-  signed char inc = increaseCount(t,newValue);
+  signed char dec = decreaseCount(t, oldValue);
+  signed char inc = increaseCount(t, newValue);
   m_localValues.at(index).setValue(t, newValue);
-  incValue(t, e, m_violationId, static_cast<Int>(dec+inc));
+  incValue(t, e, m_violationId, static_cast<Int>(dec + inc));
 }
 
 void AllDifferent::commit(Timestamp t, Engine& e) {

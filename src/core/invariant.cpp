@@ -2,9 +2,7 @@
 
 #include "core/propagationEngine.hpp"
 
-void Invariant::notify(LocalId id) {
-  m_modifiedVars.push(id);
-}
+void Invariant::notify(LocalId id) { m_modifiedVars.push(id); }
 
 void Invariant::compute(Timestamp t, Engine& e) {
   assert(m_modifiedVars.size() > 0);
@@ -34,7 +32,8 @@ void Invariant::incValue(Timestamp t, Engine& e, VarId id, Int val) {
   e.incValue(t, id, val);
 }
 
-void Invariant::queueNonPrimaryOutputVarsForPropagation(Timestamp t, Engine& e) {
+void Invariant::queueNonPrimaryOutputVarsForPropagation(Timestamp t,
+                                                        Engine& e) {
   for (VarId outputVarId : m_outputVars) {
     if (!e.hasChanged(t, outputVarId)) {
       continue;

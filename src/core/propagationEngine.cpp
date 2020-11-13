@@ -248,8 +248,10 @@ void PropagationEngine::propagate() {
   std::cout << "Starting propagation\n";
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
-  std::vector<std::unordered_map<size_t,Int>> notificationCount(m_store.getNumInvariants());
+  std::vector<std::unordered_map<size_t, Int>> notificationCount(
+      m_store.getNumInvariants());
 #endif
+
   for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID;
        id = getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(id);
@@ -272,6 +274,7 @@ void PropagationEngine::propagate() {
           std::cout << "\t\tVariable did not change after compute: ignoring."
                     << "\n";
 #endif
+
           continue;
         }
       }
@@ -282,27 +285,30 @@ void PropagationEngine::propagate() {
 #ifdef PROPAGATION_DEBUG
         std::cout << "\t\tIgnoring cyclic notification:" << toNotify.id << "\n";
 #endif
-        continue;  // don't notify in case of dynamic cycle, should never make a
-                   // difference
+        continue;
       }
       Invariant& invariant = m_store.getInvariant(toNotify.id);
+
 #ifdef PROPAGATION_DEBUG
       std::cout << "\t\tNotifying invariant:" << toNotify.id
                 << " with localId: " << toNotify.localId << "\n";
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
-      notificationCount.at(toNotify.id.id -1)[variable.m_id.id] = notificationCount.at(toNotify.id.id -1)[variable.m_id.id] + 1;
+      notificationCount.at(toNotify.id.id - 1)[variable.m_id.id] =
+          notificationCount.at(toNotify.id.id - 1)[variable.m_id.id] + 1;
 #endif
+
       invariant.notify(toNotify.localId);
       queueForPropagation(m_currentTime, invariant.getPrimaryOutput());
     }
   }
+
 #ifdef PROPAGATION_DEBUG_COUNTING
   std::cout << "Printing notification counts\n";
   for (int i = 0; i < notificationCount.size(); ++i) {
-    std::cout << "\tInvariant "<< i+1 << "\n";
-    for(auto [k, v] : notificationCount.at(i)){
-      std::cout << "\t\tVarId(" << k << "): " << v <<"\n";
+    std::cout << "\tInvariant " << i + 1 << "\n";
+    for (auto [k, v] : notificationCount.at(i)) {
+      std::cout << "\t\tVarId(" << k << "): " << v << "\n";
     }
   }
 #endif
