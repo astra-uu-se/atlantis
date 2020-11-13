@@ -242,15 +242,24 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
-  const bool debug = true;
-  if (debug) {
-    std::cout << "Starting propagation\n";
-  }
+//#define PROPAGATION_DEBUG
+//#define PROPAGATION_DEBUG_COUNTING
+#ifdef PROPAGATION_DEBUG
+  std::cout << "Starting propagation\n";
+#endif
+#ifdef PROPAGATION_DEBUG_COUNTING
+  std::vector<std::unordered_map<size_t,Int>> notificationCount(m_store.getNumInvariants());
+#endif
   for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID;
        id = getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(id);
 
     InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
+
+#ifdef PROPAGATION_DEBUG
+    std::cout << "\tPropagating " << variable << "\n";
+    std::cout << "\t\tDepends on invariant: " << definingInvariant << "\n";
+#endif
 
     if (definingInvariant != NULL_ID) {
       Invariant& defInv = m_store.getInvariant(definingInvariant);
@@ -259,33 +268,47 @@ void PropagationEngine::propagate() {
         defInv.compute(m_currentTime, *this);
         defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
         if (oldValue == variable.getValue(m_currentTime)) {
+#ifdef PROPAGATION_DEBUG
+          std::cout << "\t\tVariable did not change after compute: ignoring."
+                    << "\n";
+#endif
           continue;
         }
       }
     }
-    if (debug) {
-      std::cout << "\tPropagating " << variable << "\n";
-      std::cout << "\t\tDepends on invariant: " << definingInvariant << "\n";
-    }
 
     for (auto& toNotify : m_dependentInvariantData[id]) {
-      if(toNotify.id == definingInvariant.id){
-        if (debug) {
-          std::cout << "\t\tIgnoring cyclic notification:" << toNotify.id << "\n";
-        }
-        continue; // don't notify in case of dynamic cycle, should never make a difference
-      }
-      if (debug) {
-        std::cout << "\t\tNotifying invariant:" << toNotify.id << "\n";
+      if (toNotify.id == definingInvariant.id) {
+#ifdef PROPAGATION_DEBUG
+        std::cout << "\t\tIgnoring cyclic notification:" << toNotify.id << "\n";
+#endif
+        continue;  // don't notify in case of dynamic cycle, should never make a
+                   // difference
       }
       Invariant& invariant = m_store.getInvariant(toNotify.id);
+#ifdef PROPAGATION_DEBUG
+      std::cout << "\t\tNotifying invariant:" << toNotify.id
+                << " with localId: " << toNotify.localId << "\n";
+#endif
+#ifdef PROPAGATION_DEBUG_COUNTING
+      notificationCount.at(toNotify.id.id -1)[variable.m_id.id] = notificationCount.at(toNotify.id.id -1)[variable.m_id.id] + 1;
+#endif
       invariant.notify(toNotify.localId);
       queueForPropagation(m_currentTime, invariant.getPrimaryOutput());
     }
   }
-  if (debug) {
-    std::cout << "Propagation done\n";
+#ifdef PROPAGATION_DEBUG_COUNTING
+  std::cout << "Printing notification counts\n";
+  for (int i = 0; i < notificationCount.size(); ++i) {
+    std::cout << "\tInvariant "<< i+1 << "\n";
+    for(auto [k, v] : notificationCount.at(i)){
+      std::cout << "\t\tVarId(" << k << "): " << v <<"\n";
+    }
   }
+#endif
+#ifdef PROPAGATION_DEBUG
+  std::cout << "Propagation done\n";
+#endif
 }
 
 void PropagationEngine::bottomUpPropagate() {

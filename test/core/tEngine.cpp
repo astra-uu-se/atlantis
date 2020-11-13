@@ -448,6 +448,19 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
 
     EXPECT_EQ(engine->getNewValue(output), 13);
   }
+  {
+    engine->beginMove();
+    engine->setValue(i2, 1);
+    engine->setValue(i3, 0);
+    engine->setValue(base, 2);
+    engine->endMove();
+
+    engine->beginCommit();
+    engine->query(output);
+    engine->endCommit();
+
+    EXPECT_EQ(engine->getNewValue(output), 13);
+  }
 }
 
 }  // namespace
