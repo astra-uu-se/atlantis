@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
 
-#include <constraints/allDifferent.hpp>
+#include <constraints/lessEqual.hpp>
 #include <core/propagationEngine.hpp>
 #include <invariants/elementConst.hpp>
 #include <invariants/elementVar.hpp>
@@ -28,6 +28,9 @@ class TSPTW : public benchmark::Fixture {
   int n;
   const int MAX_TIME = 100000;
 
+  std::vector<VarId> violation;
+  VarId totalViolation;
+
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(0);
@@ -38,7 +41,7 @@ class TSPTW : public benchmark::Fixture {
     for (int i = 0; i < n; ++i) {
       dist.push_back(std::vector<Int>());
       for (int j = 0; j < n; ++j) {
-        dist[i].push_back(1);
+        dist[i].push_back(i * j);
       }
     }
 
@@ -47,6 +50,7 @@ class TSPTW : public benchmark::Fixture {
       timeToPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalTime.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
+      violation.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
     }
 
     // Ignore index 0
@@ -69,7 +73,13 @@ class TSPTW : public benchmark::Fixture {
     totalDist = engine->makeIntVar(0, 0, MAX_TIME);
     engine->makeInvariant<Linear>(timeToPrev, totalDist);
 
-    // TODO: add time window constraints.
+    VarId leqConst = engine->makeIntVar(100, 100, 100);
+    for (int i = 0; i < n; i++) {
+      engine->makeConstraint<LessEqual>(violation[i], arrivalTime[i], leqConst);
+    }
+
+    totalViolation = engine->makeIntVar(0, 0, MAX_TIME * n);
+    engine->makeInvariant<Linear>(violation, totalViolation);
 
     engine->close();
 
@@ -84,6 +94,7 @@ class TSPTW : public benchmark::Fixture {
     arrivalPrev.clear();
     arrivalTime.clear();
     dist.clear();
+    violation.clear();
   }
 };
 
@@ -106,6 +117,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
 
         engine->beginQuery();
         engine->query(totalDist);
+        engine->query(totalViolation);
         engine->endQuery();
         ++probes;
       }

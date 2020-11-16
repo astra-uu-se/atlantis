@@ -1,7 +1,7 @@
 #include "core/propagationEngine.hpp"
 
 PropagationEngine::PropagationEngine()
-    : mode(PropagationMode::BOTTOM_UP),
+    : mode(PropagationMode::TOP_DOWN),
       m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
@@ -250,7 +250,7 @@ bool PropagationEngine::isOnPropagationPath(VarId id) {
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
 //#define PROPAGATION_DEBUG
-//#define PROPAGATION_DEBUG_COUNTING
+// #define PROPAGATION_DEBUG_COUNTING
 #ifdef PROPAGATION_DEBUG
   std::cout << "Starting propagation\n";
 #endif

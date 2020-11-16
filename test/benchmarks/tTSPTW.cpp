@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <constraints/allDifferent.hpp>
+#include <constraints/lessEqual.hpp>
 #include <constraints/equal.hpp>
 #include <core/propagationEngine.hpp>
 #include <invariants/elementConst.hpp>
@@ -35,9 +35,12 @@ class TSPTWTest : public ::testing::Test {
   int n;
   const int MAX_TIME = 100000;
 
+  std::vector<VarId> violation;
+  VarId totalViolation;
+
   void SetUp() {
     engine = std::make_unique<PropagationEngine>();
-    n = 10;
+    n = 30;
 
     // std::cout << n << "\n";
     engine->open();
@@ -54,14 +57,17 @@ class TSPTWTest : public ::testing::Test {
       timeToPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalTime.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
+      violation.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
     }
 
+    // Ignore index 0
     for (int i = 1; i < n; i++) {
       // timeToPrev[i] = dist[i][pred[i]]
       engine->makeInvariant<ElementConst>(pred[i], dist[i], timeToPrev[i]);
       // arrivalPrev[i] = arrivalTime[pred[i]]
     }
 
+    // Ignore index 0
     for (int i = 1; i < n; i++) {
       // arrivalPrev[i] = arrivalTime[pred[i]]
       engine->makeInvariant<ElementVar>(pred[i], arrivalTime, arrivalPrev[i]);
@@ -74,7 +80,13 @@ class TSPTWTest : public ::testing::Test {
     totalDist = engine->makeIntVar(0, 0, MAX_TIME);
     engine->makeInvariant<Linear>(timeToPrev, totalDist);
 
-    // TODO: add time window constraints.
+    VarId leqConst = engine->makeIntVar(100, 100, 100);
+    for (int i = 0; i < n; i++) {
+      engine->makeConstraint<LessEqual>(violation[i], arrivalTime[i], leqConst);
+    }
+
+    totalViolation = engine->makeIntVar(0, 0, MAX_TIME * n);
+    engine->makeInvariant<Linear>(violation, totalViolation);
 
     engine->close();
 
@@ -89,6 +101,7 @@ class TSPTWTest : public ::testing::Test {
     arrivalPrev.clear();
     arrivalTime.clear();
     dist.clear();
+    violation.clear();
   }
 };
 
@@ -112,6 +125,7 @@ TEST_F(TSPTWTest, Probing) {
 
       engine->beginQuery();
       engine->query(totalDist);
+      engine->query(totalViolation);
       engine->endQuery();
     }
   }
