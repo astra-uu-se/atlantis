@@ -127,6 +127,14 @@ inline InvariantId PropagationEngine::getDefiningInvariant(VarId v) {
   return m_propGraph.getDefiningInvariant(v);
 }
 
+inline void PropagationEngine::clearPropagationPath() {
+  m_varIsOnPropagationPath.assign_all(false);
+}
+
+inline bool PropagationEngine::isOnPropagationPath(VarId id) {
+  return m_varIsOnPropagationPath.get(id);
+}
+
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
     InvariantId inv) const {
   return m_propGraph.getVariablesDefinedBy(inv);
