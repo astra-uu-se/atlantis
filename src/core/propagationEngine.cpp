@@ -156,7 +156,9 @@ void PropagationEngine::endQuery() {
       propagate();
       break;
     case PropagationMode::BOTTOM_UP:
-      markPropagationPathAndEmptyModifiedVariables();
+      // If marking is removed the restore the clearPropagationQueue in
+      // bottomUpPropagate().
+      markPropagationPathAndEmptyModifiedVariables(); 
       bottomUpPropagate();
       break;
     case PropagationMode::MIXED:
@@ -239,14 +241,6 @@ void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
   }
 }
 
-void PropagationEngine::clearPropagationPath() {
-  m_varIsOnPropagationPath.assign_all(false);
-}
-
-bool PropagationEngine::isOnPropagationPath(VarId id) {
-  return m_varIsOnPropagationPath.get(id);
-}
-
 // Propagates at the current internal time of the engine.
 void PropagationEngine::propagate() {
 //#define PROPAGATION_DEBUG
@@ -326,5 +320,5 @@ void PropagationEngine::propagate() {
 
 void PropagationEngine::bottomUpPropagate() {
   m_bottomUpExplorer.propagate(m_currentTime);
-  //  clearPropagationQueue();
+  // clearPropagationQueue();
 }
