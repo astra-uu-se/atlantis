@@ -34,7 +34,7 @@ class PropagationEngine : public Engine {
   void propagate();
   void bottomUpPropagate();
 
-  void markPropagationPath();
+  void markPropagationPathAndEmptyModifiedVariables();
   void clearPropagationPath();
 
   /**
