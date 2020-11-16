@@ -1,0 +1,120 @@
+#include <benchmark/benchmark.h>
+
+#include <constraints/allDifferent.hpp>
+#include <core/propagationEngine.hpp>
+#include <invariants/elementConst.hpp>
+#include <invariants/elementVar.hpp>
+#include <invariants/linear.hpp>
+#include <iostream>
+#include <random>
+#include <utility>
+#include <vector>
+#include <views/intOffsetView.hpp>
+
+class TSPTW : public benchmark::Fixture {
+ public:
+  std::unique_ptr<PropagationEngine> engine;
+  std::vector<VarId> pred;
+  std::vector<VarId> timeToPrev;
+  std::vector<VarId> arrivalPrev;
+  std::vector<VarId> arrivalTime;
+  std::vector<std::vector<Int>> dist;
+  VarId totalDist;
+
+  std::random_device rd;
+  std::mt19937 gen;
+
+  std::uniform_int_distribution<> distribution;
+  int n;
+  const int MAX_TIME = 100000;
+
+  void SetUp(const ::benchmark::State& state) {
+    engine = std::make_unique<PropagationEngine>();
+    n = state.range(0);
+
+    // std::cout << n << "\n";
+    engine->open();
+
+    for (int i = 0; i < n; ++i) {
+      dist.push_back(std::vector<Int>());
+      for (int j = 0; j < n; ++j) {
+        dist[i].push_back(1);
+      }
+    }
+
+    for (int i = 0; i < n; i++) {
+      pred.emplace_back(engine->makeIntVar((i + 1) % n, 0, n - 1));
+      timeToPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
+      arrivalTime.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
+      arrivalPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
+    }
+
+    // Ignore index 0
+    for (int i = 1; i < n; i++) {
+      // timeToPrev[i] = dist[i][pred[i]]
+      engine->makeInvariant<ElementConst>(pred[i], dist[i], timeToPrev[i]);
+      // arrivalPrev[i] = arrivalTime[pred[i]]
+    }
+
+    // Ignore index 0
+    for (int i = 1; i < n; i++) {
+      // arrivalPrev[i] = arrivalTime[pred[i]]
+      engine->makeInvariant<ElementVar>(pred[i], arrivalTime, arrivalPrev[i]);
+      // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
+      engine->makeInvariant<Linear>(
+          std::vector<VarId>({arrivalPrev[i], timeToPrev[i]}), arrivalTime[i]);
+    }
+
+    // totalDist = sum(timeToPrev)
+    totalDist = engine->makeIntVar(0, 0, MAX_TIME);
+    engine->makeInvariant<Linear>(timeToPrev, totalDist);
+
+    // TODO: add time window constraints.
+
+    engine->close();
+
+    gen = std::mt19937(rd());
+
+    distribution = std::uniform_int_distribution<>{0, n - 1};
+  }
+
+  void TearDown(const ::benchmark::State&) {
+    pred.clear();
+    timeToPrev.clear();
+    arrivalPrev.clear();
+    arrivalTime.clear();
+    dist.clear();
+  }
+};
+
+BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
+  Int probes = 0;
+  for (auto _ : st) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        if (i == j || engine->getCommittedValue(pred[i]) == j) {
+          continue;
+        }
+        engine->beginMove();
+        engine->setValue(pred[i],
+                         engine->getCommittedValue(
+                             pred[engine->getCommittedValue(pred[i])]));
+        engine->setValue(pred[j], engine->getCommittedValue(pred[i]));
+        engine->setValue(pred[engine->getCommittedValue(pred[i])],
+                         engine->getCommittedValue(pred[j]));
+        engine->endMove();
+
+        engine->beginQuery();
+        engine->query(totalDist);
+        engine->endQuery();
+        ++probes;
+      }
+    }
+  }
+  st.counters["probes_per_second"] =
+      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+}
+
+BENCHMARK_REGISTER_F(TSPTW, probe_all_relocate)
+    ->DenseRange(10, 100, 10)
+    ->Unit(benchmark::kMillisecond);

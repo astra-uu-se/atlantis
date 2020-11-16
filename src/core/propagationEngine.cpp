@@ -1,7 +1,7 @@
 #include "core/propagationEngine.hpp"
 
 PropagationEngine::PropagationEngine()
-    : mode(PropagationMode::TOP_DOWN),
+    : mode(PropagationMode::BOTTOM_UP),
       m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
@@ -156,11 +156,11 @@ void PropagationEngine::endQuery() {
       propagate();
       break;
     case PropagationMode::BOTTOM_UP:
-      markPropagationPath();
+      markPropagationPathAndEmptyModifiedVariables();
       bottomUpPropagate();
       break;
     case PropagationMode::MIXED:
-      markPropagationPath();
+      markPropagationPathAndEmptyModifiedVariables();
       bottomUpPropagate();
       break;
   }
@@ -176,7 +176,7 @@ void PropagationEngine::endCommit() {
       propagate();
       break;
     case PropagationMode::BOTTOM_UP:
-      markPropagationPath();
+      markPropagationPathAndEmptyModifiedVariables();
       bottomUpPropagate();
       // BUG: Variables that are not dynamically defining the queries variables
       // will not be properly updated: they should be marked as changed until
@@ -204,17 +204,24 @@ void PropagationEngine::endCommit() {
   }
 }
 
-void PropagationEngine::markPropagationPath() {
+void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
   // We cannot iterate over a priority_queue so we cannot copy it.
   // TODO: replace priority_queue of m_modifiedVariables with custom queue.
 
   // TODO: This is a bit of a hack since we know that all existing IDs are
   // between 1 and m_numVariables (inclusive).
-  for (size_t i = 1; i <= m_numVariables; i++) {
-    if (m_isEnqueued.get(i)) {
-      m_propagationPathQueue.push(i);
-    }
+  //  for (size_t i = 1; i <= m_numVariables; i++) {
+  //    if (m_isEnqueued.get(i)) {
+  //      m_propagationPathQueue.push(i);
+  //    }
+  //  }
+  while (!m_modifiedVariables.empty()) {
+    auto id = m_modifiedVariables.top();
+    m_isEnqueued.set(id, false);
+    m_propagationPathQueue.push(id);
+    m_modifiedVariables.pop();
   }
+
   while (!m_propagationPathQueue.empty()) {
     VarId currentVar = m_propagationPathQueue.front();
     m_propagationPathQueue.pop();
@@ -319,5 +326,5 @@ void PropagationEngine::propagate() {
 
 void PropagationEngine::bottomUpPropagate() {
   m_bottomUpExplorer.propagate(m_currentTime);
-  clearPropagationQueue();
+  //  clearPropagationQueue();
 }
