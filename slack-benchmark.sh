@@ -1,10 +1,9 @@
 #! /bin/bash
-BENCHMARK=./build/runBenchmarks
-if [ ! -f "$BENCHMARK" ]; then
+if [ ! -f ./build/runBenchmarks ]; then
   exit 1
 fi
 if [ -z "$TRAVIS_BUILD_NUMBER" ]; then
-  exit 1
+  SLACK_WEBHOOK="https://hooks.slack.com/services/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"
 fi
 # Get Commit
 GIT_COMMIT=`git branch -v | grep \* | sed 's/\(\S*\s*\)\(([^)]*)\)*\S*\s*\([0-9a-z]*\).*/\3/'`
@@ -18,6 +17,5 @@ GIT_USER=`git show --quiet --pretty=format:%an`
 GIT_PREV_REVISION=`git log --skip=1 --max-count=1 | grep commit | sed 's/\s*commit\s*\([0-9a-z]*\).*/\1/'`
 GIT_PREV_REVISION=${GIT_PREV_REVISION:0:12}
 GIT_LINK="https://github.com/$GIT_REPO/compare/$GIT_PREV_REVISION...$GIT_REVISION"
-BENCHMARK_DATA=`$BENCHMARK`
 HEADER="Build <$TRAVIS_BUILD_WEB_URL|#$TRAVIS_BUILD_NUMBER> (<$GIT_LINK|$GIT_COMMIT>) $GIT_REPO@$GIT_BRANCH by $GIT_USER" > $BENCHMARK_FILE
-echo "${BENCHMARK_DATA}" | python3 slack-formatter.py --header="${HEADER}" --webhook="${SLACK_WEBHOOK}"
+./build/runBenchmarks | python3 slack-formatter.py --header="${HEADER}" --webhook="${SLACK_WEBHOOK}"

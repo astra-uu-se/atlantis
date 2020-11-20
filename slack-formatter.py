@@ -64,7 +64,7 @@ class SlackFormatter:
                 )
             else:
                 benchmark = "```" + benchmark + "```"
-            json = '{{"text":"' + benchmark + '"}}'
+            json = '{"text":"' + benchmark + '"}'
             self.logger.debug(benchmark)
             data = json.encode('utf-8')
             req = request.Request(
@@ -77,7 +77,7 @@ class SlackFormatter:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING)
-    flags = ["header", "output", "webhook"]
+    flags = ["header", "webhook"]
     if not stdin.isatty():
         text = stdin.read()
     else:
@@ -88,9 +88,5 @@ if __name__ == "__main__":
         flag = '--' + f +'='
         argument = next((n[len(flag):] for n in argv if n.startswith(flag)), None)
         arguments[f] = argument
-
-    if arguments['output'] is not None:
-        arguments['output'] = path.realpath(arguments['output'])
-
     slack_formatter = SlackFormatter(text, arguments)
     slack_formatter.send_to_slack()    
