@@ -172,6 +172,10 @@ TEST_F(EngineTest, SimplePropagation) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
+  for (size_t id = 0; id < 3; ++id) {
+    EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(id))).Times(1);
+  }
+
   engine->beginQuery();
   engine->query(output);
   engine->endQuery();
@@ -187,6 +191,9 @@ TEST_F(EngineTest, SimpleCommit) {
 
   auto invariant = engine->makeInvariant<MockInvariantAdvanced>(
       std::vector<VarId>({a, b, c}), output);
+
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 
@@ -215,6 +222,11 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->setValue(b, -2);
   engine->setValue(c, -3);
   engine->endMove();
+
+  for (size_t id = 0; id < 3; ++id) {
+    EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(id))).Times(1);
+  }
+
   engine->beginQuery();
   engine->query(output);
   engine->endQuery();
@@ -242,6 +254,9 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->beginMove();
   engine->setValue(a, 0);
   engine->endMove();
+
+  EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(0))).Times(1);
+
   engine->beginCommit();
   engine->query(output);
   engine->endCommit();
