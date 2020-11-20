@@ -60,12 +60,11 @@ class SlackFormatter:
         for i, benchmark in enumerate(self.benchmarks):
             if self.arguments.get('header', None) is not None and i == 0:
                 benchmark = (
-                    self.arguments['header'] +
-                    f"\n```" + '\n'.join(self.header) + f"\n{benchmark}```"
+                    self.arguments['header'] + "\n```" + '\n'.join(self.header) + "\n" + benchmark + "```"
                 )
             else:
-                benchmark = f"```{benchmark}```"
-            json = f'{{"text":"{benchmark}"}}'
+                benchmark = "```" + benchmark + "```"
+            json = '{{"text":"' + benchmark + '"}}'
             self.logger.debug(benchmark)
             data = json.encode('utf-8')
             req = request.Request(
@@ -86,7 +85,7 @@ if __name__ == "__main__":
     
     arguments = {f:None for f in flags}
     for f in flags:
-        flag = f'--{f}='
+        flag = '--' + f +'='
         argument = next((n[len(flag):] for n in argv if n.startswith(flag)), None)
         arguments[f] = argument
 
