@@ -3,7 +3,7 @@ if [ ! -f ./build/runBenchmarks ]; then
   exit 1
 fi
 if [ -z "$TRAVIS_BUILD_NUMBER" ]; then
-  SLACK_WEBHOOK="https://hooks.slack.com/services/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"
+  exit 1
 fi
 # Get Commit
 GIT_COMMIT=`git branch -v | grep \* | sed 's/\(\S*\s*\)\(([^)]*)\)*\S*\s*\([0-9a-z]*\).*/\3/'`
