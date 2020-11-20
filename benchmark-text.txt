@@ -1,0 +1,53 @@
+-----------------------------------------------------------------------------
+Benchmark                                   Time             CPU   Iterations
+-----------------------------------------------------------------------------
+AllInterval/probing_single_swap/5         175 ns          175 ns      4071773
+AllInterval/probing_single_swap/10        213 ns          213 ns      3286954
+AllInterval/probing_single_swap/15        213 ns          213 ns      3206201
+AllInterval/probing_single_swap/20        219 ns          219 ns      3192349
+AllInterval/probing_single_swap/25        232 ns          232 ns      3134280
+AllInterval/probing_single_swap/30        227 ns          227 ns      3071085
+AllInterval/probing_all_swap/5          0.001 ms        0.001 ms       502616 probes_per_second=7.30909M/s
+AllInterval/probing_all_swap/10         0.007 ms        0.007 ms        93918 probes_per_second=6.08164M/s
+AllInterval/probing_all_swap/15         0.018 ms        0.018 ms        38022 probes_per_second=5.76386M/s
+AllInterval/probing_all_swap/20         0.034 ms        0.034 ms        20619 probes_per_second=5.62152M/s
+AllInterval/probing_all_swap/25         0.056 ms        0.056 ms        12518 probes_per_second=5.36436M/s
+AllInterval/probing_all_swap/30         0.082 ms        0.082 ms         8655 probes_per_second=5.30348M/s
+AllInterval/commit_single_swap/5          221 ns          221 ns      3327626 seconds_per_commit=221.158ns
+AllInterval/commit_single_swap/10         324 ns          324 ns      2113550 seconds_per_commit=323.858ns
+AllInterval/commit_single_swap/15         413 ns          413 ns      1655747 seconds_per_commit=412.823ns
+AllInterval/commit_single_swap/20         429 ns          429 ns      1437949 seconds_per_commit=429.085ns
+AllInterval/commit_single_swap/25         450 ns          450 ns      1529359 seconds_per_commit=450.193ns
+AllInterval/commit_single_swap/30         490 ns          490 ns      1440796 seconds_per_commit=490.26ns
+MagicSquare/probing_all_swap/3          0.013 ms        0.013 ms        54521 probes_per_second=2.83193M/s
+MagicSquare/probing_all_swap/4          0.044 ms        0.044 ms        16542 probes_per_second=2.73963M/s
+MagicSquare/probing_all_swap/5          0.105 ms        0.105 ms         6719 probes_per_second=2.8464M/s
+MagicSquare/probing_all_swap/6          0.210 ms        0.210 ms         3309 probes_per_second=2.99549M/s
+MagicSquare/probing_all_swap/7          0.397 ms        0.397 ms         1754 probes_per_second=2.96141M/s
+MagicSquare/probing_all_swap/8          0.667 ms        0.667 ms         1017 probes_per_second=3.02213M/s
+MagicSquare/probing_all_swap/9           1.06 ms         1.06 ms          647 probes_per_second=3.06569M/s
+MagicSquare/probing_all_swap/10          1.60 ms         1.60 ms          427 probes_per_second=3.08616M/s
+Queens/probing_single_swap/5              223 ns          223 ns      3031765
+Queens/probing_single_swap/8              233 ns          233 ns      2997383
+Queens/probing_single_swap/64             250 ns          250 ns      2761901
+Queens/probing_single_swap/512            312 ns          312 ns      2176766
+Queens/probing_single_swap/4096           420 ns          420 ns      1625960
+Queens/probing_single_swap/5000           526 ns          526 ns       971278
+Queens/probing_all_swap/5               0.002 ms        0.002 ms       320275 probes_per_second=4.5769M/s
+Queens/probing_all_swap/8               0.006 ms        0.006 ms       118889 probes_per_second=4.88801M/s
+Queens/probing_all_swap/64              0.428 ms        0.428 ms         1621 probes_per_second=4.71126M/s
+Queens/probing_all_swap/512              30.4 ms         30.4 ms           24 probes_per_second=4.30521M/s
+Queens/probing_all_swap/1000              166 ms          166 ms            4 probes_per_second=3.00525M/s
+Queens/solve/50                         0.991 ns        0.991 ns    651352737 it=50 it_per_s=77.4819/s probes_per_s=87.6987k/s solved=1
+Queens/solve/100                         1.16 ns         1.16 ns    532851491 it=94 it_per_s=152.478/s probes_per_s=737.274k/s solved=1
+Queens/solve/150                         2.85 ns         2.85 ns    181082283 it=144 it_per_s=278.916/s probes_per_s=3.08185M/s solved=1
+TSPTW/probe_all_relocate/10             0.235 ms        0.235 ms         2971 probes_per_second=341.042k/s
+TSPTW/probe_all_relocate/20              4.02 ms         4.02 ms          181 probes_per_second=89.5176k/s
+TSPTW/probe_all_relocate/30              19.5 ms         19.5 ms           37 probes_per_second=43.0265k/s
+TSPTW/probe_all_relocate/40              61.8 ms         61.8 ms           11 probes_per_second=24.5848k/s
+TSPTW/probe_all_relocate/50               152 ms          152 ms            5 probes_per_second=15.8239k/s
+TSPTW/probe_all_relocate/60               315 ms          315 ms            2 probes_per_second=11.0307k/s
+TSPTW/probe_all_relocate/70               597 ms          597 ms            1 probes_per_second=7.97445k/s
+TSPTW/probe_all_relocate/80              1054 ms         1054 ms            1 probes_per_second=5.9202k/s
+TSPTW/probe_all_relocate/90              1694 ms         1694 ms            1 probes_per_second=4.6756k/s
+TSPTW/probe_all_relocate/100             2581 ms         2581 ms            1 probes_per_second=3.7975k/s
