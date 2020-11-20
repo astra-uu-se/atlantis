@@ -30,7 +30,7 @@ jobs:
           sources: &precise_latest_boost_sources
             - ubuntu-toolchain-r-test
           packages:
-            - python3.7
+            - python3
 
 cache: apt
 
