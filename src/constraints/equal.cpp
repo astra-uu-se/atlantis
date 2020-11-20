@@ -11,24 +11,27 @@
  * @param y variable of rhs
  */
 Equal::Equal(VarId violationId, VarId x, VarId y)
-    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {}
+    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
+  //  m_modifiedVars.resize(1,false);
+  m_modifiedVars.reserve(1);
+}
 
 void Equal::init(Timestamp, Engine& e) {
   assert(m_id != NULL_ID);
 
-  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x));
-  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(m_y));
-  e.registerDefinedVariable(m_violationId, m_id);
+  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(0));
+  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(0));
+  registerDefinedVariable(e, m_violationId);
 }
 
 void Equal::recompute(Timestamp t, Engine& e) {
-  e.updateValue(t, m_violationId,
-                std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+  updateValue(t, e, m_violationId,
+              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  e.updateValue(t, m_violationId,
-                std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+  updateValue(t, e, m_violationId,
+              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 VarId Equal::getNextDependency(Timestamp t, Engine&) {
@@ -48,8 +51,8 @@ VarId Equal::getNextDependency(Timestamp t, Engine&) {
 void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   // assert(newValue != oldValue);
-  e.updateValue(t, m_violationId,
-                std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+  updateValue(t, e, m_violationId,
+              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 void Equal::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

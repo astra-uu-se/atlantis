@@ -26,12 +26,18 @@ struct Id {
 static Id NULL_ID = Id();
 
 struct InvariantId;  // forward declare
-struct VarId : public Id {
+struct VarIdBase : public Id {
+  VarIdBase() : Id() {}
+  VarIdBase(size_t i) : Id(i) {}
+  VarIdBase(Id& t_id) : Id(t_id.id) {}
+  VarIdBase(InvariantId&) = delete;
+};
+struct VarId : public VarIdBase {
   VarIdType idType;
-  VarId() : Id(), idType(VarIdType::var) {}
-  VarId(size_t i, VarIdType t) : Id(i), idType(t) {}
+  VarId() : VarIdBase(), idType(VarIdType::var) {}
+  VarId(size_t i, VarIdType t) : VarIdBase(i), idType(t) {}
   VarId(size_t i) : VarId(i, VarIdType::var) {}
-  VarId(Id& t_id, VarIdType t) : Id(t_id.id), idType(t) {}
+  VarId(Id& t_id, VarIdType t) : VarIdBase(t_id.id), idType(t) {}
   VarId(Id& t_id) : VarId(t_id, VarIdType::var) {}
   VarId(InvariantId&) = delete;
 };
@@ -46,6 +52,7 @@ struct InvariantId : public Id {
   InvariantId() : Id() {}
   InvariantId(size_t i) : Id(i) {}
   InvariantId(Id& t_id) : Id(t_id.id) {}
+  InvariantId(VarIdBase&) = delete;
   InvariantId(VarId&) = delete;
   InvariantId(LocalId&) = delete;
 };

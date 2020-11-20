@@ -89,8 +89,8 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(40));
 
   engine->beginMove();
-  engine->updateValue(a, 1);
-  engine->updateValue(b, 1);
+  engine->setValue(a, 1);
+  engine->setValue(b, 1);
   engine->endMove();
 
   engine->beginQuery();
@@ -185,10 +185,10 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   }
 
   engine->beginMove();
-  engine->updateValue(a, 5);
-  engine->updateValue(b, 5);
-  engine->updateValue(c, 5);
-  engine->updateValue(d, 5);
+  engine->setValue(a, 5);
+  engine->setValue(b, 5);
+  engine->setValue(c, 5);
+  engine->setValue(d, 5);
   engine->endMove();
 
   EXPECT_EQ(engine->getNewValue(a), Int(5));

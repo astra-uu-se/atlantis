@@ -141,7 +141,7 @@ class MagicSquareTest : public ::testing::Test {
  *  Testing constructor
  */
 
-void printSquare(MagicSquareTest& test) {
+[[maybe_unused]] void printSquare(MagicSquareTest& test) {
   for (size_t i = 0; i < static_cast<size_t>(test.n); i++) {
     for (size_t j = 0; j < static_cast<size_t>(test.n); j++) {
       std::cout << test.engine->getNewValue(test.square.at(i).at(j)) << " ";
@@ -189,6 +189,7 @@ TEST_F(MagicSquareTest, Probing) {
       engine->endQuery();
 
       int totalViol = computeTotalViolaton(*this);
+      //      printSquare(*this);
 
       EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
     }

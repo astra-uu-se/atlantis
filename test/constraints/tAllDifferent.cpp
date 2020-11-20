@@ -51,12 +51,12 @@ TEST_F(AllDifferentTest, Recompute) {
 
   Timestamp newTime = 1;
 
-  e->updateValue(newTime, c, 3);
+  e->setValue(newTime, c, 3);
   allDifferent->recompute(newTime, *e);
   EXPECT_EQ(e->getCommittedValue(violationId), 1);
   EXPECT_EQ(e->getValue(newTime, violationId), 0);
 
-  e->updateValue(newTime, a, 2);
+  e->setValue(newTime, a, 2);
   allDifferent->recompute(newTime, *e);
   EXPECT_EQ(e->getCommittedValue(violationId), 1);
   EXPECT_EQ(e->getValue(newTime, violationId), 1);
@@ -68,13 +68,13 @@ TEST_F(AllDifferentTest, NotifyChange) {
   Timestamp time1 = 1;
 
   EXPECT_EQ(e->getValue(time1, a), 1);
-  e->updateValue(time1, a, 2);
+  e->setValue(time1, a, 2);
   EXPECT_EQ(e->getCommittedValue(a), 1);
   EXPECT_EQ(e->getValue(time1, a), 2);
   allDifferent->notifyIntChanged(time1, *e, 0);
   EXPECT_EQ(e->getValue(time1, violationId), 2);
 
-  e->updateValue(time1, b, 3);
+  e->setValue(time1, b, 3);
   allDifferent->notifyIntChanged(time1, *e, 1);
   auto tmpValue = e->getValue(time1, violationId);
 
@@ -85,7 +85,7 @@ TEST_F(AllDifferentTest, NotifyChange) {
   Timestamp time2 = time1 + 1;
 
   EXPECT_EQ(e->getValue(time2, b), 2);
-  e->updateValue(time2, b, 20);
+  e->setValue(time2, b, 20);
   EXPECT_EQ(e->getCommittedValue(b), 2);
   EXPECT_EQ(e->getValue(time2, b), 20);
   allDifferent->notifyIntChanged(time2, *e, 1);
@@ -108,8 +108,8 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
               1);  // violationId is commited by register.
 
     // Set all variables
-    e->updateValue(currentTime, a, distribution(gen));
-    e->updateValue(currentTime, b, distribution(gen));
+    e->setValue(currentTime, a, distribution(gen));
+    e->setValue(currentTime, b, distribution(gen));
 
     // notify changes
     if (e->getCommittedValue(a) != e->getValue(currentTime, a)) {

@@ -49,7 +49,7 @@ class AllInterval : public benchmark::Fixture {
     distribution = std::uniform_int_distribution<>{0, n - 1};
   }
 
-  void TearDown(const ::benchmark::State& state) {
+  void TearDown(const ::benchmark::State&) {
     s_vars.clear();
     v_vars.clear();
   }
@@ -74,7 +74,7 @@ BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
 }
 
 BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
-  int probes = 0;
+  Int probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); i++) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {

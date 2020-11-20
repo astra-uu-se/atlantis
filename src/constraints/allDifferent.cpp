@@ -10,7 +10,10 @@ AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> t_variables)
       m_variables(std::move(t_variables)),
       m_localValues(),
       m_counts(),
-      m_offset(0) {}
+      m_offset(0) {
+  //  m_modifiedVars.resize(m_variables.size(), false);
+  m_modifiedVars.reserve(m_variables.size());
+}
 
 void AllDifferent::init(Timestamp ts, Engine& e) {
   assert(!m_id.equals(NULL_ID));
@@ -27,7 +30,7 @@ void AllDifferent::init(Timestamp ts, Engine& e) {
 
   m_counts.resize(static_cast<unsigned long>(ub - lb + 1), SavedInt(ts, 0));
 
-  e.registerDefinedVariable(m_violationId, m_id);
+  registerDefinedVariable(e, m_violationId);
 
   m_offset = lb;
 }
@@ -37,12 +40,14 @@ void AllDifferent::recompute(Timestamp t, Engine& e) {
     c.setValue(t, 0);
   }
 
-  e.updateValue(t, m_violationId, 0);
+  updateValue(t, e, m_violationId, 0);
 
+  Int violInc = 0;
   for (size_t i = 0; i < m_variables.size(); ++i) {
-    increaseCount(t, e, e.getValue(t, m_variables[i]));
+    violInc += increaseCount(t, e.getValue(t, m_variables[i]));
     m_localValues[i].setValue(t, e.getValue(t, m_variables[i]));
   }
+  incValue(t, e, m_violationId, violInc);
 }
 
 void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
@@ -51,9 +56,10 @@ void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
   if (newValue == oldValue) {
     return;
   }
-  decreaseCount(t, e, oldValue);
-  increaseCount(t, e, newValue);
+  signed char dec = decreaseCount(t, oldValue);
+  signed char inc = increaseCount(t, newValue);
   m_localValues.at(id).setValue(t, newValue);
+  incValue(t, e, m_violationId, static_cast<Int>(dec + inc));
 }
 
 VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
@@ -75,10 +81,10 @@ void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   Int oldValue = m_localValues.at(index).getValue(t);
   Int newValue = e.getNewValue(varId);
 
-  decreaseCount(t, e, oldValue);
-  increaseCount(t, e, newValue);
-
+  signed char dec = decreaseCount(t, oldValue);
+  signed char inc = increaseCount(t, newValue);
   m_localValues.at(index).setValue(t, newValue);
+  incValue(t, e, m_violationId, static_cast<Int>(dec + inc));
 }
 
 void AllDifferent::commit(Timestamp t, Engine& e) {

@@ -64,7 +64,7 @@ class Queens : public benchmark::Fixture {
     distribution = std::uniform_int_distribution<>{0, n - 1};
   }
 
-  void TearDown(const ::benchmark::State& state) {
+  void TearDown(const ::benchmark::State&) {
     queens.clear();
     q_offset_minus.clear();
     q_offset_plus.clear();

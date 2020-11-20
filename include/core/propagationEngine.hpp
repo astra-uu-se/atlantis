@@ -18,7 +18,8 @@ class PropagationEngine : public Engine {
   PropagationGraph m_propGraph;
   BottomUpExplorer m_bottomUpExplorer;
 
-  std::priority_queue<VarId, std::vector<VarId>, PropagationGraph::PriorityCmp>
+  std::priority_queue<VarIdBase, std::vector<VarIdBase>,
+                      PropagationGraph::PriorityCmp>
       m_modifiedVariables;
 
   IdMap<VarId, bool> m_isEnqueued;
@@ -33,8 +34,17 @@ class PropagationEngine : public Engine {
   void propagate();
   void bottomUpPropagate();
 
-  void markPropagationPath();
+  void markPropagationPathAndEmptyModifiedVariables();
   void clearPropagationPath();
+
+  /**
+   * Register that 'from' defines variable 'to'. Throws exception if
+   * already defined.
+   * @param dependent the variable that is defined by the invariant
+   * @param source the invariant defining the variable
+   * @throw if the variable is already defined by an invariant.
+   */
+  void registerDefinedVariable(VarId dependent, InvariantId source) override;
 
  public:
   PropagationEngine(/* args */);
@@ -48,6 +58,7 @@ class PropagationEngine : public Engine {
    * @param id the id of the changed variable
    */
   void notifyMaybeChanged(Timestamp t, VarId id) override;
+  void queueForPropagation(Timestamp t, VarId id) override;
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
@@ -87,7 +98,7 @@ class PropagationEngine : public Engine {
   // This function is used by propagation, which is unaware of views.
   [[nodiscard]] inline bool hasChanged(Timestamp t, VarId v) const;
 
-  [[nodiscard]] const std::vector<VarId>& getVariablesDefinedBy(
+  [[nodiscard]] const std::vector<VarIdBase>& getVariablesDefinedBy(
       InvariantId) const;
 
   /**
@@ -105,15 +116,6 @@ class PropagationEngine : public Engine {
   void registerInvariantDependsOnVar(InvariantId dependent, VarId source,
                                      LocalId localId) override;
 
-  /**
-   * Register that 'from' defines variable 'to'. Throws exception if
-   * already defined.
-   * @param dependent the variable that is defined by the invariant
-   * @param source the invariant defining the variable
-   * @throw if the variable is already defined by an invariant.
-   */
-  void registerDefinedVariable(VarId dependent, InvariantId source) override;
-
   void registerVar(VarId) override;
   void registerInvariant(InvariantId) override;
 
@@ -125,7 +127,15 @@ inline InvariantId PropagationEngine::getDefiningInvariant(VarId v) {
   return m_propGraph.getDefiningInvariant(v);
 }
 
-inline const std::vector<VarId>& PropagationEngine::getVariablesDefinedBy(
+inline void PropagationEngine::clearPropagationPath() {
+  m_varIsOnPropagationPath.assign_all(false);
+}
+
+inline bool PropagationEngine::isOnPropagationPath(VarId id) {
+  return m_varIsOnPropagationPath.get(id);
+}
+
+inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
     InvariantId inv) const {
   return m_propGraph.getVariablesDefinedBy(inv);
 }
