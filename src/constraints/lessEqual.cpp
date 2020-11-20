@@ -11,29 +11,32 @@
  * @param y variable of rhs
  */
 LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
-    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {}
+    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
+  //  m_modifiedVars.resize(1,false);
+  m_modifiedVars.reserve(1);
+}
 
 void LessEqual::init(Timestamp, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   assert(m_id != NULL_ID);
 
-  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(m_x));
-  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(m_y));
-  e.registerDefinedVariable(m_violationId, m_id);
+  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(0));
+  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(0));
+  registerDefinedVariable(e, m_violationId);
 }
 
 void LessEqual::recompute(Timestamp t, Engine& e) {
   // Dereference safe as incValue does not retain ptr.
-  e.updateValue(t, m_violationId,
-                std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
+  updateValue(t, e, m_violationId,
+              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
   // if x decreases and violation is 0, then do nothing
   // if y increases and violation is 0, then do nothing
-  e.updateValue(t, m_violationId,
-                std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
+  updateValue(t, e, m_violationId,
+              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 VarId LessEqual::getNextDependency(Timestamp t, Engine&) {
@@ -53,8 +56,8 @@ VarId LessEqual::getNextDependency(Timestamp t, Engine&) {
 void LessEqual::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   // assert(newValue != oldValue);
-  e.updateValue(t, m_violationId,
-                std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
+  updateValue(t, e, m_violationId,
+              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
 
 void LessEqual::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

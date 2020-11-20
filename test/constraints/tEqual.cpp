@@ -45,7 +45,7 @@ TEST_F(EqualTest, Recompute) {
   EXPECT_EQ(e->getCommittedValue(violationId), 0);
 
   Timestamp newTime = 1;
-  e->updateValue(newTime, x, 40);
+  e->setValue(newTime, x, 40);
   equal->recompute(newTime, *e);
   EXPECT_EQ(e->getCommittedValue(violationId), 0);
   EXPECT_EQ(e->getValue(newTime, violationId), 38);
@@ -60,14 +60,14 @@ TEST_F(EqualTest, NotifyChange) {
   Timestamp time1 = 1;
 
   EXPECT_EQ(e->getValue(time1, x), 2);
-  e->updateValue(time1, x, 40);
+  e->setValue(time1, x, 40);
   EXPECT_EQ(e->getCommittedValue(x), 2);
   EXPECT_EQ(e->getValue(time1, x), 40);
   equal->notifyIntChanged(time1, *e, unused);
   EXPECT_EQ(e->getValue(time1, violationId),
             38);  // incremental value of violationId is 0;
 
-  e->updateValue(time1, y, 0);
+  e->setValue(time1, y, 0);
   equal->notifyIntChanged(time1, *e, unused);
   auto tmpValue = e->getValue(
       time1, violationId);  // incremental value of violationId is 40;
@@ -79,7 +79,7 @@ TEST_F(EqualTest, NotifyChange) {
   Timestamp time2 = time1 + 1;
 
   EXPECT_EQ(e->getValue(time2, y), 2);
-  e->updateValue(time2, y, 20);
+  e->setValue(time2, y, 20);
   EXPECT_EQ(e->getCommittedValue(y), 2);
   EXPECT_EQ(e->getValue(time2, y), 20);
   equal->notifyIntChanged(time2, *e, unused);
@@ -104,8 +104,8 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
               0);  // violationId is committed by register.
 
     // Set all variables
-    e->updateValue(currentTime, x, distribution(gen));
-    e->updateValue(currentTime, y, distribution(gen));
+    e->setValue(currentTime, x, distribution(gen));
+    e->setValue(currentTime, y, distribution(gen));
 
     // notify changes
     if (e->getCommittedValue(x) != e->getValue(currentTime, x)) {
@@ -130,9 +130,9 @@ TEST_F(EqualTest, Commit) {
 
   Timestamp currentTime = 1;
 
-  e->updateValue(currentTime, x, 40);
-  e->updateValue(currentTime, y, 2);  // This change is not notified and should
-                                      // not have an impact on the commit
+  e->setValue(currentTime, x, 40);
+  e->setValue(currentTime, y, 2);  // This change is not notified and should
+                                   // not have an impact on the commit
 
   equal->notifyIntChanged(currentTime, *e, unused);
 

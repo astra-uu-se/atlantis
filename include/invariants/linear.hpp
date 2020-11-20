@@ -22,6 +22,8 @@ class Linear : public Invariant {
   VarId m_b;
 
  public:
+  Linear(std::vector<VarId> X, VarId b)
+      : Linear(std::vector<Int>(X.size(), 1), X, b) {}
   Linear(std::vector<Int> A, std::vector<VarId> X, VarId b);
 
   void init(Timestamp, Engine&) override;

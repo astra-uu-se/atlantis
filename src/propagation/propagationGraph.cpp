@@ -16,20 +16,20 @@ void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   ++m_numInvariants;
 }
 
-void PropagationGraph::registerVar([[maybe_unused]] VarId id) {
+void PropagationGraph::registerVar([[maybe_unused]] VarIdBase id) {
   m_listeningInvariants.register_idx(id);
   m_definingInvariant.register_idx(id);
   ++m_numVariables;
 }
 
 void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
-                                                     VarId source) {
+                                                     VarIdBase source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
   m_listeningInvariants[source].push_back(dependent);
   m_inputVariables[dependent].push_back(source);
 }
 
-void PropagationGraph::registerDefinedVariable(VarId dependent,
+void PropagationGraph::registerDefinedVariable(VarIdBase dependent,
                                                InvariantId source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
   if (m_definingInvariant.at(dependent).id == NULL_ID.id) {

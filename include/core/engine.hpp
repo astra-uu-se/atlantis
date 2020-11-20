@@ -8,11 +8,13 @@
 #include "core/idMap.hpp"
 #include "core/intVar.hpp"
 #include "core/intView.hpp"
-#include "core/invariant.hpp"
+//#include "core/invariant.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
 #include "store/store.hpp"
+
+class Invariant;
 
 class Engine {
  protected:
@@ -21,6 +23,7 @@ class Engine {
   Timestamp m_currentTime;
 
   bool m_isOpen = true;
+  bool m_isMoving = false;
 
   struct InvariantDependencyData {
     InvariantId id;
@@ -30,6 +33,28 @@ class Engine {
   IdMap<VarId, std::vector<InvariantDependencyData>> m_dependentInvariantData;
 
   Store m_store;
+
+  void incValue(Timestamp, VarId, Int inc);
+  inline void incValue(VarId v, Int val) { incValue(m_currentTime, v, val); }
+
+  void updateValue(Timestamp, VarId, Int val);
+
+  inline void updateValue(VarId v, Int val) {
+    updateValue(m_currentTime, v, val);
+  }
+
+  inline bool hasChanged(Timestamp, VarId);
+
+  /**
+   * Register that 'from' defines variable 'to'. Throws exception if
+   * already defined.
+   * @param dependent the variable that is defined by the invariant
+   * @param source the invariant defining the variable
+   * @throw if the variable is already defined by an invariant.
+   */
+  virtual void registerDefinedVariable(VarId dependent, InvariantId source) = 0;
+
+  friend class Invariant;
 
  public:
   Engine(/* args */);
@@ -46,14 +71,7 @@ class Engine {
     // getSourceId(m_store.getIntView(id).getParentId());
   }
 
-  void incValue(Timestamp, VarId, Int inc);
-  inline void incValue(VarId v, Int val) { incValue(m_currentTime, v, val); }
-
-  void updateValue(Timestamp, VarId, Int val);
-  inline void updateValue(VarId v, Int val) {
-    updateValue(m_currentTime, v, val);
-  }
-
+  virtual void queueForPropagation(Timestamp t, VarId id) = 0;
   virtual void notifyMaybeChanged(Timestamp t, VarId id) = 0;
 
   Int getValue(Timestamp, VarId);
@@ -152,15 +170,6 @@ class Engine {
   virtual void registerInvariantDependsOnVar(InvariantId dependent,
                                              VarId source, LocalId localId) = 0;
 
-  /**
-   * Register that 'from' defines variable 'to'. Throws exception if
-   * already defined.
-   * @param dependent the variable that is defined by the invariant
-   * @param source the invariant defining the variable
-   * @throw if the variable is already defined by an invariant.
-   */
-  virtual void registerDefinedVariable(VarId dependent, InvariantId source) = 0;
-
   virtual void registerVar(VarId) = 0;
   virtual void registerInvariant(InvariantId) = 0;
 
@@ -218,6 +227,10 @@ Engine::makeConstraint(Args&&... args) {
 inline const Store& Engine::getStore() { return m_store; }
 inline Timestamp Engine::getCurrentTime() const { return m_currentTime; }
 
+inline bool Engine::hasChanged(Timestamp t, VarId v) {
+  return m_store.getIntVar(v).hasChanged(t);
+}
+
 inline Int Engine::getValue(Timestamp t, VarId v) {
   if (v.idType == VarIdType::view) {
     return getIntViewValue(t, v);
@@ -261,12 +274,10 @@ inline void Engine::recompute(Timestamp t, InvariantId id) {
 
 inline void Engine::updateValue(Timestamp t, VarId v, Int val) {
   m_store.getIntVar(v).setValue(t, val);
-  this->notifyMaybeChanged(t, v);
 }
 
 inline void Engine::incValue(Timestamp t, VarId v, Int inc) {
   m_store.getIntVar(v).incValue(t, inc);
-  this->notifyMaybeChanged(t, v);
 }
 
 inline void Engine::commit(VarId v) { m_store.getIntVar(v).commit(); }

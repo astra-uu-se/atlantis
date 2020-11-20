@@ -8,7 +8,9 @@
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "invariants/elementVar.hpp"
 #include "invariants/linear.hpp"
+#include "views/intOffsetView.hpp"
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -42,12 +44,14 @@ class MockInvariantAdvanced : public Invariant {
   VarId m_output;
 
   MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
-      : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {}
+      : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {
+    m_modifiedVars.reserve(m_inputs.size());
+  }
 
   void init(Timestamp, Engine& e) override {
     assert(m_id != NULL_ID);
 
-    e.registerDefinedVariable(m_output, m_id);
+    registerDefinedVariable(e, m_output);
     for (size_t i = 0; i < m_inputs.size(); ++i) {
       e.registerInvariantDependsOnVar(m_id, m_inputs[i], LocalId(i));
     }
@@ -168,6 +172,10 @@ TEST_F(EngineTest, SimplePropagation) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
+  for (size_t id = 0; id < 3; ++id) {
+    EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(id))).Times(1);
+  }
+
   engine->beginQuery();
   engine->query(output);
   engine->endQuery();
@@ -183,6 +191,9 @@ TEST_F(EngineTest, SimpleCommit) {
 
   auto invariant = engine->makeInvariant<MockInvariantAdvanced>(
       std::vector<VarId>({a, b, c}), output);
+
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 
@@ -211,6 +222,11 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->setValue(b, -2);
   engine->setValue(c, -3);
   engine->endMove();
+
+  for (size_t id = 0; id < 3; ++id) {
+    EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(id))).Times(1);
+  }
+
   engine->beginQuery();
   engine->query(output);
   engine->endQuery();
@@ -238,6 +254,9 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->beginMove();
   engine->setValue(a, 0);
   engine->endMove();
+
+  EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(0))).Times(1);
+
   engine->beginCommit();
   engine->query(output);
   engine->endCommit();
@@ -294,6 +313,169 @@ TEST_F(EngineTest, DelayedCommit) {
   engine->endCommit();
 
   EXPECT_EQ(engine->getCommittedValue(g), 4);
+}
+
+TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
+  /*
+int: base = 1;
+array[1..3] of var -100..100: x;
+array[1..3] of 0..3: idx = [0,1,2];
+array[0..3] of var int: y = array1d(0..3,[base, x[1] + 1, x[2] + 2,x[3] + 3]);
+var int: out;
+constraint forall(i in 1..3)(x[i] = y[idx[i]]);
+constraint out = sum(x);
+  */
+  engine->open();
+
+  VarId x1 = engine->makeIntVar(1, -100, 100);
+  VarId x2 = engine->makeIntVar(1, -100, 100);
+  VarId x3 = engine->makeIntVar(1, -100, 100);
+  VarId base = engine->makeIntVar(1, -10, 10);
+  VarId i1 = engine->makeIntVar(0, 0, 3);
+  VarId i2 = engine->makeIntVar(1, 0, 3);
+  VarId i3 = engine->makeIntVar(2, 0, 3);
+  VarId output = engine->makeIntVar(2, 0, 3);
+
+  VarId viewPlus1 = engine->makeIntView<IntOffsetView>(x1, 1)->getId();
+  VarId viewPlus2 = engine->makeIntView<IntOffsetView>(x2, 2)->getId();
+  VarId viewPlus3 = engine->makeIntView<IntOffsetView>(x3, 3)->getId();
+
+  engine->makeInvariant<ElementVar>(
+      i1, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x1);
+  engine->makeInvariant<ElementVar>(
+      i2, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x2);
+  engine->makeInvariant<ElementVar>(
+      i3, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x3);
+
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1, 1}),
+                                std::vector<VarId>({x1, x2, x3}), output);
+
+  engine->close();
+
+  EXPECT_EQ(engine->getCommittedValue(output), 7);
+
+  {
+    engine->beginMove();
+    engine->setValue(i1, 3);
+    engine->setValue(i2, 0);
+    engine->endMove();
+
+    engine->beginQuery();
+    engine->query(output);
+    engine->endQuery();
+
+    EXPECT_EQ(engine->getNewValue(output), 10);
+  }
+
+  {
+    engine->beginMove();
+    engine->setValue(base, 3);
+    engine->endMove();
+
+    engine->beginQuery();
+    engine->query(output);
+    engine->endQuery();
+
+    EXPECT_EQ(engine->getNewValue(output), 13);
+  }
+
+  {
+    engine->beginMove();
+    engine->setValue(i1, 2);
+    engine->setValue(i2, 3);
+    engine->setValue(i3, 0);
+    engine->setValue(base, 4);
+    engine->endMove();
+
+    engine->beginQuery();
+    engine->query(output);
+    engine->endQuery();
+
+    EXPECT_EQ(engine->getNewValue(output), 20);
+  }
+}
+
+TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
+  engine->open();
+
+  VarId x1 = engine->makeIntVar(1, -100, 100);
+  VarId x2 = engine->makeIntVar(1, -100, 100);
+  VarId x3 = engine->makeIntVar(1, -100, 100);
+  VarId base = engine->makeIntVar(1, -10, 10);
+  VarId i1 = engine->makeIntVar(0, 0, 3);
+  VarId i2 = engine->makeIntVar(1, 0, 3);
+  VarId i3 = engine->makeIntVar(2, 0, 3);
+  VarId output = engine->makeIntVar(2, 0, 3);
+
+  VarId viewPlus1 = engine->makeIntView<IntOffsetView>(x1, 1)->getId();
+  VarId viewPlus2 = engine->makeIntView<IntOffsetView>(x2, 2)->getId();
+  VarId viewPlus3 = engine->makeIntView<IntOffsetView>(x3, 3)->getId();
+
+  engine->makeInvariant<ElementVar>(
+      i1, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x1);
+  engine->makeInvariant<ElementVar>(
+      i2, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x2);
+  engine->makeInvariant<ElementVar>(
+      i3, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x3);
+
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1, 1}),
+                                std::vector<VarId>({x1, x2, x3}), output);
+
+  engine->close();
+
+  EXPECT_EQ(engine->getCommittedValue(output), 7);
+
+  {
+    engine->beginMove();
+    engine->setValue(i1, 3);
+    engine->setValue(i2, 0);
+    engine->endMove();
+
+    engine->beginCommit();
+    engine->query(output);
+    engine->endCommit();
+
+    EXPECT_EQ(engine->getNewValue(output), 10);
+  }
+
+  {
+    engine->beginMove();
+    engine->setValue(base, 3);
+    engine->endMove();
+
+    engine->beginQuery();
+    engine->query(output);
+    engine->endQuery();
+
+    EXPECT_EQ(engine->getNewValue(output), 16);
+  }
+
+  {
+    engine->beginMove();
+    engine->setValue(i2, 1);
+    engine->setValue(i3, 0);
+    engine->setValue(base, 2);
+    engine->endMove();
+
+    engine->beginQuery();
+    engine->query(output);
+    engine->endQuery();
+
+    EXPECT_EQ(engine->getNewValue(output), 13);
+  }
+  {
+    engine->beginMove();
+    engine->setValue(i2, 1);
+    engine->setValue(i3, 0);
+    engine->setValue(base, 2);
+    engine->endMove();
+
+    engine->beginCommit();
+    engine->query(output);
+    engine->endCommit();
+
+    EXPECT_EQ(engine->getNewValue(output), 13);
+  }
 }
 
 }  // namespace
