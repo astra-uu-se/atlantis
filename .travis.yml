@@ -29,6 +29,8 @@ jobs:
             # - clang-8
           sources: &precise_latest_boost_sources
             - ubuntu-toolchain-r-test
+          packages:
+            - python3.7
 
 cache: apt
 
