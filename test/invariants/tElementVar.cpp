@@ -18,45 +18,47 @@ namespace {
 class MockElementVar : public ElementVar {
  public:
   MockElementVar(VarId i, std::vector<VarId>&& X, VarId b)
-      : ElementVar(i, std::vector<VarId>{X}, b),
-        real_(i, std::vector<VarId>{X}, b) {
-    ON_CALL(*this, recompute)
+      : ElementVar(i, std::vector<VarId>{X}, b) {
+    ON_CALL(*this, init)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return real_.recompute(timestamp, engine);
+          ElementVar::init(timestamp, engine);
         });
-    ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          return real_.getNextDependency(t, e);
-        });
+          ON_CALL(*this, recompute)
+              .WillByDefault([this](Timestamp timestamp, Engine& engine) {
+                return ElementVar::recompute(timestamp, engine);
+              });
+          ON_CALL(*this, getNextDependency)
+              .WillByDefault([this](Timestamp t, Engine& e) {
+                return ElementVar::getNextDependency(t, e);
+              });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          real_.notifyCurrentDependencyChanged(t, e);
-        });
+          ON_CALL(*this, notifyCurrentDependencyChanged)
+              .WillByDefault([this](Timestamp t, Engine& e) {
+                ElementVar::notifyCurrentDependencyChanged(t, e);
+              });
 
-    ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
-          real_.notifyIntChanged(t, e, id);
-        });
+          ON_CALL(*this, notifyIntChanged)
+              .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
+                ElementVar::notifyIntChanged(t, e, id);
+              });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
-      real_.commit(t, e);
-    });
+          ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
+            ElementVar::commit(t, e);
+          });
   }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
+MOCK_METHOD(void, init, (Timestamp timestamp, Engine& engine), (override));
+MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
-              (override));
+MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
+MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+            (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
-              (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+            (override));
+MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
- private:
-  ElementVar real_;
+private:
 };
 
 class ElementVarTest : public ::testing::Test {
