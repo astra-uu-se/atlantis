@@ -17,30 +17,30 @@ namespace {
 
 class MockAbsDiff : public AbsDiff {
  public:
-  MockAbsDiff(VarId a, VarId b, VarId c) : AbsDiff(a, b, c), real_(a, b, c) {
+  MockAbsDiff(VarId a, VarId b, VarId c) : AbsDiff(a, b, c) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return real_.recompute(timestamp, engine);
+          AbsDiff::recompute(timestamp, engine);
         });
     // ON_CALL(*this, getNextDependency)
     //     .WillByDefault([this](Timestamp t, Engine& e) {
-    //       return real_.getNextDependency(t, e);
+    //       return AbsDiff::getNextDependency(t, e);
     //     });
 
     // ON_CALL(*this, notifyCurrentDependencyChanged)
     //     .WillByDefault([this](Timestamp t, Engine& e) {
-    //       real_.notifyCurrentDependencyChanged(t, e);
+    //       AbsDiff::notifyCurrentDependencyChanged(t, e);
     //     });
 
     // ON_CALL(*this, notifyIntChanged)
     //     .WillByDefault([this](Timestamp t, Engine& e, LocalId id, Int
     //     oldValue,
     //                           Int newValue, Int data) {
-    //       real_.notifyIntChanged(t, e, id, oldValue, newValue, data);
+    //       AbsDiff::notifyIntChanged(t, e, id, oldValue, newValue, data);
     //     });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
-      real_.commit(t, e);
+      AbsDiff::commit(t, e);
     });
   }
 
@@ -58,8 +58,6 @@ class MockAbsDiff : public AbsDiff {
   //             (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
- private:
-  AbsDiff real_;
 };
 
 class AbsDiffTest : public ::testing::Test {
