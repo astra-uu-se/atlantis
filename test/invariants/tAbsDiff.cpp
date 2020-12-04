@@ -17,45 +17,46 @@ namespace {
 
 class MockAbsDiff : public AbsDiff {
  public:
-  MockAbsDiff(VarId a, VarId b, VarId c) : AbsDiff(a, b, c) {
+  bool m_initialized = false;
+
+  void init(Timestamp timestamp, Engine& engine) override {
+    m_initialized = true;
+    AbsDiff::init(timestamp, engine);
+  }
+
+  MockAbsDiff(VarId a, VarId b, VarId c)
+      : AbsDiff(a, b, c) {
     ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          AbsDiff::recompute(timestamp, engine);
+      .WillByDefault([this](Timestamp timestamp, Engine& engine) {
+        AbsDiff::recompute(timestamp, engine);
+      });
+    ON_CALL(*this, getNextDependency)
+        .WillByDefault([this](Timestamp t, Engine& e) {
+          return AbsDiff::getNextDependency(t, e);
         });
-    // ON_CALL(*this, getNextDependency)
-    //     .WillByDefault([this](Timestamp t, Engine& e) {
-    //       return AbsDiff::getNextDependency(t, e);
-    //     });
 
-    // ON_CALL(*this, notifyCurrentDependencyChanged)
-    //     .WillByDefault([this](Timestamp t, Engine& e) {
-    //       AbsDiff::notifyCurrentDependencyChanged(t, e);
-    //     });
-
-    // ON_CALL(*this, notifyIntChanged)
-    //     .WillByDefault([this](Timestamp t, Engine& e, LocalId id, Int
-    //     oldValue,
-    //                           Int newValue, Int data) {
-    //       AbsDiff::notifyIntChanged(t, e, id, oldValue, newValue, data);
-    //     });
-
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
-      AbsDiff::commit(t, e);
-    });
+    ON_CALL(*this, notifyCurrentDependencyChanged)
+        .WillByDefault([this](Timestamp t, Engine& e) {
+          AbsDiff::notifyCurrentDependencyChanged(t, e);
+        });
+    ON_CALL(*this, notifyIntChanged)
+        .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
+          AbsDiff::notifyIntChanged(t, e, id);
+        });
+    ON_CALL(*this, commit)
+      .WillByDefault([this](Timestamp t, Engine& e) {
+        AbsDiff::commit(t, e);
+      });
   }
 
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
+  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+              (override));
 
-  // MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  // MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
-  //             (override));
-
-  // MOCK_METHOD(void, notifyIntChanged,
-  //             (Timestamp t, Engine& e, LocalId id, Int oldValue, Int
-  //             newValue,
-  //              Int data),
-  //             (override));
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+              (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
 };
@@ -104,6 +105,8 @@ TEST_F(AbsDiffTest, Modification) {
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
+  EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, testing::_)).Times(AtLeast(1));
+
   engine->close();
 
   EXPECT_EQ(engine->getNewValue(c), 200);
@@ -117,6 +120,56 @@ TEST_F(AbsDiffTest, Modification) {
   engine->endQuery();
 
   EXPECT_EQ(engine->getNewValue(c), 100);
+}
+
+TEST_F(AbsDiffTest, Notifications) {
+  engine->open();
+
+  VarId a = engine->makeIntVar(-10, -100, 100);
+  VarId b = engine->makeIntVar(10, -100, 100);
+
+  VarId output = engine->makeIntVar(0, 0, 200);
+
+  auto invariant = engine->makeInvariant<MockAbsDiff>(
+      a, b, output);
+
+  EXPECT_TRUE(invariant->m_initialized);
+  
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+
+  engine->close();
+  
+  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(0);
+    EXPECT_CALL(*invariant,
+                notifyIntChanged(testing::_, testing::_, testing::_))
+        .Times(1);
+  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    EXPECT_CALL(*invariant,
+                getNextDependency(testing::_, testing::_)).Times(3);
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(1);
+
+    EXPECT_CALL(*invariant,
+                notifyIntChanged(testing::_, testing::_, testing::_))
+        .Times(0);
+  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
+  }
+
+  engine->beginMove();
+  engine->setValue(a, 0);
+  engine->endMove();
+
+  engine->beginQuery();
+  engine->query(output);
+  engine->endQuery();
 }
 
 }  // namespace
