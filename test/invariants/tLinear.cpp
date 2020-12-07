@@ -65,6 +65,14 @@ private:
 
 class LinearTest : public ::testing::Test {
  protected:
+  std::unique_ptr<PropagationEngine> engine;
+  VarId a = NULL_ID;
+  VarId b = NULL_ID;
+  VarId c = NULL_ID;
+  VarId d = NULL_ID;
+  std::shared_ptr<Linear> linear;
+  std::mt19937 gen;
+
   virtual void SetUp() {
     std::random_device rd;
     gen = std::mt19937(rd());
@@ -80,13 +88,64 @@ class LinearTest : public ::testing::Test {
                                       std::vector<VarId>({a, b, c}), d);
     engine->close();
   }
-  std::unique_ptr<PropagationEngine> engine;
-  VarId a = NULL_ID;
-  VarId b = NULL_ID;
-  VarId c = NULL_ID;
-  VarId d = NULL_ID;
-  std::shared_ptr<Linear> linear;
-  std::mt19937 gen;
+ 
+  void testNotifications(PropagationEngine::PropagationMode propMode) {
+    engine->open();
+
+    std::vector<VarId> args{};
+    int numArgs = 10;
+    Int sum = 0;
+    for (Int value = 1; value <= numArgs; ++value) {
+      args.push_back(engine->makeIntVar(value, 1, numArgs));
+      sum += value;
+    }
+
+    VarId output = engine->makeIntVar(-10, -100, numArgs*numArgs);
+
+    auto invariant = engine->makeInvariant<MockLinear>(
+        std::vector<VarId>{args}, output);
+
+    
+    EXPECT_TRUE(invariant->m_initialized);
+
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+
+    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+
+    engine->mode = propMode;
+    
+    engine->close();
+    
+    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant,
+                  notifyCurrentDependencyChanged(testing::_, testing::_))
+          .Times(0);
+      EXPECT_CALL(*invariant,
+                  notifyIntChanged(testing::_, testing::_, testing::_))
+          .Times(1);
+    } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+      EXPECT_CALL(*invariant,
+                  getNextDependency(testing::_, testing::_)).Times(numArgs + 1);
+      EXPECT_CALL(*invariant,
+                  notifyCurrentDependencyChanged(testing::_, testing::_))
+          .Times(1);
+
+      EXPECT_CALL(*invariant,
+                  notifyIntChanged(testing::_, testing::_, testing::_))
+          .Times(0);
+    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+      EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
+    }
+
+    engine->beginMove();
+    engine->setValue(args[0], 5);
+    engine->endMove();
+
+    engine->beginQuery();
+    engine->query(output);
+    engine->endQuery();
+  }
 };
 
 /**
@@ -223,59 +282,12 @@ TEST_F(LinearTest, CreateLinear) {
   EXPECT_EQ(engine->getNewValue(output), sum);
 }
 
-TEST_F(LinearTest, Notifications) {
-  engine->open();
+TEST_F(LinearTest, NotificationsTopDown) {
+  testNotifications(PropagationEngine::PropagationMode::TOP_DOWN);
+}
 
-  std::vector<VarId> args{};
-  int numArgs = 10;
-  Int sum = 0;
-  for (Int value = 1; value <= numArgs; ++value) {
-    args.push_back(engine->makeIntVar(value, 1, numArgs));
-    sum += value;
-  }
-
-  VarId output = engine->makeIntVar(-10, -100, numArgs*numArgs);
-
-  auto invariant = engine->makeInvariant<MockLinear>(
-      std::vector<VarId>{args}, output);
-
-  
-  EXPECT_TRUE(invariant->m_initialized);
-
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
-
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
-
-  engine->close();
-  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
-    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
-    EXPECT_CALL(*invariant,
-                notifyCurrentDependencyChanged(testing::_, testing::_))
-        .Times(0);
-    EXPECT_CALL(*invariant,
-                notifyIntChanged(testing::_, testing::_, testing::_))
-        .Times(1);
-  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
-    EXPECT_CALL(*invariant,
-                getNextDependency(testing::_, testing::_)).Times(numArgs + 1);
-    EXPECT_CALL(*invariant,
-                notifyCurrentDependencyChanged(testing::_, testing::_))
-        .Times(1);
-
-    EXPECT_CALL(*invariant,
-                notifyIntChanged(testing::_, testing::_, testing::_))
-        .Times(0);
-  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
-    EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
-  }
-
-  engine->beginMove();
-  engine->setValue(args[0], 5);
-  engine->endMove();
-
-  engine->beginQuery();
-  engine->query(output);
-  engine->endQuery();
+TEST_F(LinearTest, NotificationsBottomUp) {
+  testNotifications(PropagationEngine::PropagationMode::BOTTOM_UP);
 }
 
 }  // namespace
