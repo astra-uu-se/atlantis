@@ -25,6 +25,9 @@ void PropagationGraph::registerVar([[maybe_unused]] VarIdBase id) {
 void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
                                                      VarIdBase source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
+  if (m_definingInvariant[source] == dependent) {
+    return;
+  }
   m_listeningInvariants[source].push_back(dependent);
   m_inputVariables[dependent].push_back(source);
 }
@@ -32,15 +35,14 @@ void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
 void PropagationGraph::registerDefinedVariable(VarIdBase dependent,
                                                InvariantId source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
-  if (m_definingInvariant.at(dependent).id == NULL_ID.id) {
-    m_definingInvariant[dependent] = source;
-    m_variablesDefinedByInvariant[source].push_back(dependent);
-  } else {
+  if (m_definingInvariant.at(dependent).id != NULL_ID.id) {
     throw VariableAlreadyDefinedException(
         "Variable " + std::to_string(dependent.id) +
         " already defined by invariant " +
         std::to_string(m_definingInvariant.at(dependent).id));
   }
+  m_definingInvariant[dependent] = source;
+  m_variablesDefinedByInvariant[source].push_back(dependent);
 }
 
 void PropagationGraph::close() {
