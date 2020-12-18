@@ -26,6 +26,11 @@ void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
                                                      VarIdBase source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
   if (m_definingInvariant[source] == dependent) {
+    // If the dependent invariant defines the source variable (the source
+    // variable depends on the dependent invariant), then do nothing.
+    // This check was previously done during propagation, but has been
+    // moved here for speed reasons.
+    // This behaviour should be logged as a warning when it occurs.
     return;
   }
   m_listeningInvariants[source].push_back(dependent);
