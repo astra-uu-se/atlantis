@@ -46,6 +46,23 @@ void PropagationGraph::registerDefinedVariable(VarIdBase dependent,
         " already defined by invariant " +
         std::to_string(m_definingInvariant.at(dependent).id));
   }
+  Int index = -1;
+  for (size_t i = 0; i < m_listeningInvariants[dependent].size(); ++i) {
+    if (m_listeningInvariants[dependent][i] == source) {
+      index = i;
+      break;
+    }
+  }
+  if (index >= 0) {
+    // If the source invariant depends on the  dependent variable, then
+    // remove that dependency.
+    // This check was previously done during propagation, but has been
+    // moved here for speed reasons.
+    // This behaviour should be logged as a warning when it occurs.
+    m_listeningInvariants[dependent].erase(
+      m_listeningInvariants[dependent].begin() + index
+    );
+  }
   m_definingInvariant[dependent] = source;
   m_variablesDefinedByInvariant[source].push_back(dependent);
 }
