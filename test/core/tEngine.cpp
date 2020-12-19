@@ -316,15 +316,6 @@ TEST_F(EngineTest, DelayedCommit) {
 }
 
 TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
-  /*
-int: base = 1;
-array[1..3] of var -100..100: x;
-array[1..3] of 0..3: idx = [0,1,2];
-array[0..3] of var int: y = array1d(0..3,[base, x[1] + 1, x[2] + 2,x[3] + 3]);
-var int: out;
-constraint forall(i in 1..3)(x[i] = y[idx[i]]);
-constraint out = sum(x);
-  */
   engine->open();
 
   VarId x1 = engine->makeIntVar(1, -100, 100);

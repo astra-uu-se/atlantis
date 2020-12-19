@@ -272,13 +272,6 @@ TEST_F(LessEqualTest, Commit) {
                                    // not have an impact on the commit
 
   lessEqual->notifyIntChanged(currentTime, *engine, unused);
-
-  // Committing an invariant does not commit its output!
-  // // Commit at wrong timestamp should have no impact
-  // lessEqual->commit(currentTime + 1, *engine);
-  // EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-  // lessEqual->commit(currentTime, *engine);
-  // EXPECT_EQ(engine->getCommittedValue(violationId), 38);
 }
 
 TEST_F(LessEqualTest, CreateLessEqual) {

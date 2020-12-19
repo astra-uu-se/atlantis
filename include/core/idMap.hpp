@@ -35,8 +35,6 @@ class IdMap {
     return m_vector[i - 1];
   }
 
-  // inline void push_back(T data) { m_vector.push_back(data); }
-
   inline void register_idx(I idx) {
     if (static_cast<size_t>(idx.id) != m_vector.size() + 1) {
       throw OutOfOrderIndexRegistration();

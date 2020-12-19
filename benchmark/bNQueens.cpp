@@ -33,7 +33,7 @@ class Queens : public benchmark::Fixture {
     // std::cout << n << "\n";
     engine->open();
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
       VarId q = engine->makeIntVar(i, 0, n - 1);
       queens.push_back(q);
       q_offset_minus.push_back(
@@ -92,8 +92,8 @@ BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(Queens, probing_all_swap)(benchmark::State& st) {
   int probes = 0;
   for (auto _ : st) {
-    for (size_t i = 0; i < static_cast<size_t>(n); i++) {
-      for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {
+    for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
+      for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
         Int oldI = engine->getCommittedValue(queens.at(i));
         Int oldJ = engine->getCommittedValue(queens.at(j));
         engine->beginMove();
@@ -186,8 +186,6 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
   //  }
   //  std::cout << "\n";
 }
-
-//
 
 BENCHMARK_REGISTER_F(Queens, probing_single_swap)->Range(5, 5000);
 BENCHMARK_REGISTER_F(Queens, probing_all_swap)

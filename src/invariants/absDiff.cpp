@@ -1,11 +1,9 @@
 #include "invariants/absDiff.hpp"
 
-// TODO: invariant should take its true id in the constructor.
 extern Id NULL_ID;
 
 AbsDiff::AbsDiff(VarId a, VarId b, VarId c)
     : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {
-  //  m_modifiedVars.resize(1, false);
   m_modifiedVars.reserve(1);
 }
 

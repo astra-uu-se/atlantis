@@ -42,10 +42,9 @@ bool BottomUpExplorer::visitNextVariable() {
   }
   if (nextVar.id == NULL_ID) {
     return true;  // done with invariant
-  } else {
-    pushVariableStack(nextVar);
-    return false;  // not done with invariant
   }
+  pushVariableStack(nextVar);
+  return false;  // not done with invariant
 }
 
 void BottomUpExplorer::registerVar(VarId id) {

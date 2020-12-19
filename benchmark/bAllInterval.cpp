@@ -29,11 +29,11 @@ class AllInterval : public benchmark::Fixture {
     // std::cout << n << "\n";
     engine->open();
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
       s_vars.push_back(engine->makeIntVar(i, 0, n - 1));
     }
 
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < n; ++i) {
       v_vars.push_back(engine->makeIntVar(i, 0, n - 1));
       engine->makeInvariant<AbsDiff>(s_vars.at(i - 1), s_vars.at(i),
                                      v_vars.back());
@@ -76,8 +76,8 @@ BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
-    for (size_t i = 0; i < static_cast<size_t>(n); i++) {
-      for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {
+    for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
+      for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
         Int oldI = engine->getCommittedValue(s_vars.at(i));
         Int oldJ = engine->getCommittedValue(s_vars.at(j));
         engine->beginMove();

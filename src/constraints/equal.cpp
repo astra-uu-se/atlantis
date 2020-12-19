@@ -1,7 +1,5 @@
 #include "constraints/equal.hpp"
 
-// TODO: invariant should take its true id in the constructor.
-
 /**
  * Constraint a*x = b*y
  * @param violationId id for the violationCount
@@ -12,7 +10,6 @@
  */
 Equal::Equal(VarId violationId, VarId x, VarId y)
     : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
-  //  m_modifiedVars.resize(1,false);
   m_modifiedVars.reserve(1);
 }
 
@@ -50,7 +47,6 @@ VarId Equal::getNextDependency(Timestamp t, Engine&) {
 
 void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) != -1);
-  // assert(newValue != oldValue);
   updateValue(t, e, m_violationId,
               std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }

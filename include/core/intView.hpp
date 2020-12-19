@@ -12,8 +12,6 @@ class Engine;  // Forward declaration
 
 class IntView : public View {
  protected:
-  // SavedInt m_savedInt;
-
   friend class Engine;
   Engine* m_engine;  // TODO: a raw pointer might be the best option here as
                      // views lifetime depend on engine and not vice-versa.

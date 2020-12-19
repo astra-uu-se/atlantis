@@ -12,8 +12,7 @@ int allIntervals(int);
 
 int main() {
   static_assert("C++17");
-  // test();
-
+  
   auto t1 = std::chrono::high_resolution_clock::now();
   int nProbes = allIntervals(25);
   auto t2 = std::chrono::high_resolution_clock::now();
@@ -32,11 +31,11 @@ int allIntervals(int n) {
   std::vector<VarId> s_vars;
   std::vector<VarId> v_vars;
 
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; ++i) {
     s_vars.push_back(engine.makeIntVar(i, 0, n - 1));
   }
 
-  for (int i = 1; i < n; i++) {
+  for (int i = 1; i < n; ++i) {
     v_vars.push_back(engine.makeIntVar(i, 0, n - 1));
     engine.makeInvariant<AbsDiff>(s_vars.at(i - 1), s_vars.at(i),
                                   v_vars.back());
@@ -52,10 +51,10 @@ int allIntervals(int n) {
 
   std::uniform_int_distribution<> distribution{0, n - 1};
   int nProbes = 0;
-  for (int it = 0; it < 50000; it++) {
+  for (int it = 0; it < 50000; ++it) {
     // Probe all swaps
-    for (size_t i = 0; i < static_cast<size_t>(n); i++) {
-      for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {
+    for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
+      for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
         Int oldI = engine.getNewValue(s_vars.at(i));
         Int oldJ = engine.getNewValue(s_vars.at(j));
         engine.beginMove();
@@ -114,7 +113,7 @@ void test() {
   std::mt19937 gen = std::mt19937(rd());
 
   std::uniform_int_distribution<> distribution{-100000, 100000};
-  for (int i = 0; i < 1000000; i++) {
+  for (int i = 0; i < 1000000; ++i) {
     engine.beginMove();
     engine.setValue(a, distribution(gen));
     engine.setValue(c, distribution(gen));

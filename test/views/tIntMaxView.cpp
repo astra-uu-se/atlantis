@@ -104,38 +104,31 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
 
 TEST_F(IntMaxViewTest, PropagateIntViews) {
   engine->open();
-  auto a = engine->makeIntVar(20, -100, 100);    // VarId 1
-  auto b = engine->makeIntVar(20, -100, 100);    // VarId 2
-  auto sum1 = engine->makeIntVar(0, -100, 100);  // VarId 3
+  auto a = engine->makeIntVar(20, -100, 100);
+  auto b = engine->makeIntVar(20, -100, 100);
+  auto sum1 = engine->makeIntVar(0, -100, 100);
   // a + b = sum1
-  auto c = engine->makeIntVar(20, -100, 100);    // VarId 4
-  auto d = engine->makeIntVar(20, -100, 100);    // VarId 5
-  auto sum2 = engine->makeIntVar(0, -100, 100);  // VarId 6
+  auto c = engine->makeIntVar(20, -100, 100);
+  auto d = engine->makeIntVar(20, -100, 100);
+  auto sum2 = engine->makeIntVar(0, -100, 100);
   // c + d = sum2
-  auto sum3 = engine->makeIntVar(0, -100, 100);  // VarId 7
+  auto sum3 = engine->makeIntVar(0, -100, 100);
   // sum1 + sum2 = sum2
 
-  // InvariantId 1 depends on VarIds {a, b} = {1, 2}
   auto linear1 = engine->makeInvariant<Linear>(
       std::vector<Int>({1, 1}), std::vector<VarId>({a, b}), sum1);
-  // InvariantId 2 depends on VarIds {c, d} = {3, 4}
+  
   auto linear2 = engine->makeInvariant<Linear>(
       std::vector<Int>({1, 1}), std::vector<VarId>({c, d}), sum2);
 
-  // IntMaxView (VarId::view 1) depends on VarId sum1=3
   std::shared_ptr<IntMaxView> sum1View =
       engine->makeIntView<IntMaxView>(sum1, 45);
-  // IntMaxView (VarId::view 2) depends on VarId sum2=6
   std::shared_ptr<IntMaxView> sum2View =
       engine->makeIntView<IntMaxView>(sum2, 20);
 
-  // IntMaxView (VarId::view 1)
   VarId sum1ViewId = sum1View->getId();
-  // IntMaxView (VarId::view 2)
   VarId sum2ViewId = sum2View->getId();
 
-  // InvariantId 3 depends on VarId::views {sum1ViewId, sum2ViewId} = {1, 2}
-  // that in turn depend on {sum1, sum2} = {3, 6}
   auto linear3 = engine->makeInvariant<Linear>(
       std::vector<Int>({1, 1}), std::vector<VarId>({sum1ViewId, sum2ViewId}),
       sum3);
@@ -145,12 +138,8 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   sum3viewIds.reserve(10);
   VarId prev = sum3;
   for (size_t i = 0; i < 10; ++i) {
-    // IntMaxView (VarId::view 3+i) depends on
-    //   * VarId sum3 if i = 0,
-    //   * VarId::view 3+i-1 otherwise
     sum3views.emplace_back(engine->makeIntView<IntMaxView>(prev, 80 + i));
     sum3viewIds.emplace_back(sum3views[i]->getId());
-    // IntMaxView (VarId::view 3+i)
     prev = sum3viewIds[i];
   }
 
@@ -173,9 +162,6 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   EXPECT_EQ(engine->getNewValue(sum3), Int(85));
 
   for (size_t i = 0; i < 10; ++i) {
-    // IntMaxView sum3viewIds[i] =
-    //   * max(85, 80) if i = 0,
-    //   * max(80+i, sum3viewIds[i-1]) otherwise
     if (i == 0) {
       EXPECT_EQ(engine->getCommittedValue(sum3viewIds[i]), Int(85));
     } else {
@@ -213,46 +199,6 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   EXPECT_EQ(engine->getCommittedValue(sum2ViewId), Int(20));
 
   // sum3 = sum1view + sum2view = 45 + 20 = 65
-  // sum1viewId = VarId::view 1
-  // sum1viewId = VarId::view 2
-
-  // It looks as if the third invariant calculating sum3
-  // is neither committed after endMove nor endCommit.
-  // The value for sum1View and sum2view have changed,
-  // but not sum3.
-  /* Sketch of invariant graph:
-     Ids are in braces {}
-
-   a {1}      b {2}   c {3}      d {4}
-   |          |       |          |
- __V__________V_    __V__________V_
-|    Linear     |  |    Linear     |
-|      {1}      |  |      {2}      |
-|_______________|  |_______________|
-            |          |
-            V          V
-          sum1 {5}   sum2 {6}
-            |          |
-            V          V
-     sum1view {1}   sum2view {2}
-            |          |
-          __V__________V_
-         |    Linear     |
-         |      {3}      |
-         |_______________|
-                 |
-                 V
-               sum3 {7}   <----- This does not get calculated
-                 |
-                 V
-           sum3viewIds[0] {3}
-                 |
-                 V
-                ...
-                 |
-                 V
-           sum3viewIds[9] {12}
-  */
 
   EXPECT_EQ(engine->getCommittedValue(sum3), Int(65));
 
