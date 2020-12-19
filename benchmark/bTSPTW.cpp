@@ -34,7 +34,7 @@ class TSPTW : public benchmark::Fixture {
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(0);
-
+    
     // std::cout << n << "\n";
     engine->open();
 
@@ -45,7 +45,7 @@ class TSPTW : public benchmark::Fixture {
       }
     }
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
       pred.emplace_back(engine->makeIntVar((i + 1) % n, 0, n - 1));
       timeToPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalTime.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
@@ -54,14 +54,14 @@ class TSPTW : public benchmark::Fixture {
     }
 
     // Ignore index 0
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < n; ++i) {
       // timeToPrev[i] = dist[i][pred[i]]
       engine->makeInvariant<ElementConst>(pred[i], dist[i], timeToPrev[i]);
       // arrivalPrev[i] = arrivalTime[pred[i]]
     }
 
     // Ignore index 0
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < n; ++i) {
       // arrivalPrev[i] = arrivalTime[pred[i]]
       engine->makeInvariant<ElementVar>(pred[i], arrivalTime, arrivalPrev[i]);
       // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
@@ -74,7 +74,7 @@ class TSPTW : public benchmark::Fixture {
     engine->makeInvariant<Linear>(timeToPrev, totalDist);
 
     VarId leqConst = engine->makeIntVar(100, 100, 100);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
       engine->makeConstraint<LessEqual>(violation[i], arrivalTime[i], leqConst);
     }
 
@@ -101,8 +101,8 @@ class TSPTW : public benchmark::Fixture {
 BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
         if (i == j || engine->getCommittedValue(pred[i]) == j) {
           continue;
         }

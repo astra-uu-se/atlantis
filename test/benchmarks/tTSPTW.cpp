@@ -52,7 +52,7 @@ class TSPTWTest : public ::testing::Test {
       }
     }
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
       pred.emplace_back(engine->makeIntVar((i + 1) % n, 0, n - 1));
       timeToPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalTime.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
@@ -61,14 +61,14 @@ class TSPTWTest : public ::testing::Test {
     }
 
     // Ignore index 0
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < n; ++i) {
       // timeToPrev[i] = dist[i][pred[i]]
       engine->makeInvariant<ElementConst>(pred[i], dist[i], timeToPrev[i]);
       // arrivalPrev[i] = arrivalTime[pred[i]]
     }
 
     // Ignore index 0
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < n; ++i) {
       // arrivalPrev[i] = arrivalTime[pred[i]]
       engine->makeInvariant<ElementVar>(pred[i], arrivalTime, arrivalPrev[i]);
       // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
@@ -81,7 +81,7 @@ class TSPTWTest : public ::testing::Test {
     engine->makeInvariant<Linear>(timeToPrev, totalDist);
 
     VarId leqConst = engine->makeIntVar(100, 100, 100);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
       engine->makeConstraint<LessEqual>(violation[i], arrivalTime[i], leqConst);
     }
 
@@ -110,8 +110,8 @@ class TSPTWTest : public ::testing::Test {
  */
 
 TEST_F(TSPTWTest, Probing) {
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
       if (i == j || engine->getCommittedValue(pred[i]) == j) {
         continue;
       }

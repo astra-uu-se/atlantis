@@ -8,7 +8,6 @@
 #include "core/idMap.hpp"
 #include "core/intVar.hpp"
 #include "core/intView.hpp"
-//#include "core/invariant.hpp"
 #include "core/tracer.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"

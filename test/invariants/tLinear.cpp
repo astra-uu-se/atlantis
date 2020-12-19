@@ -246,13 +246,6 @@ TEST_F(LinearTest, Commit) {
                                    // not have an impact on the commit
 
   linear->notifyIntChanged(currentTime, *engine, 0);
-
-  // Committing an invariant does not commit its output!
-  // // Commit at wrong timestamp should have no impact
-  // linear->commit(currentTime + 1, *engine);
-  // EXPECT_EQ(engine->getCommittedValue(d), -39);
-  // linear->commit(currentTime, *engine);
-  // EXPECT_EQ(engine->getCommittedValue(d), 0);
 }
 
 TEST_F(LinearTest, CreateLinear) {

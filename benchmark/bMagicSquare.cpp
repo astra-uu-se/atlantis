@@ -37,9 +37,9 @@ class MagicSquare : public benchmark::Fixture {
 
     VarId magicSumVar = engine->makeIntVar(magicSum, magicSum, magicSum);
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
       square.push_back(std::vector<VarId>{});
-      for (int j = 0; j < n; j++) {
+      for (int j = 0; j < n; ++j) {
         auto var = engine->makeIntVar(i * n + j + 1, 1, n2);
         square.at(i).push_back(var);
         flat.push_back(var);
@@ -48,18 +48,11 @@ class MagicSquare : public benchmark::Fixture {
 
     std::vector<VarId> violations;
 
-    // All different is implied by initial assignment + swap moves.
-    // {
-    //   VarId allDiffViol = engine->makeIntVar(0, 0, n2);
-    //   violations.push_back(allDiffViol);
-    //   engine->makeConstraint<AllDifferent>(allDiffViol, flat);
-    // }
-
     {
       // Row
       std::vector<Int> ones{};
       ones.assign(n, 1);
-      for (int i = 0; i < n; i++) {
+      for (int i = 0; i < n; ++i) {
         VarId rowSum = engine->makeIntVar(0, 0, n2 * n);
         VarId rowViol = engine->makeIntVar(0, 0, n2 * n);
 
@@ -73,11 +66,11 @@ class MagicSquare : public benchmark::Fixture {
       // Column
       std::vector<Int> ones{};
       ones.assign(n, 1);
-      for (int i = 0; i < n; i++) {
+      for (int i = 0; i < n; ++i) {
         VarId colSum = engine->makeIntVar(0, 0, n2 * n);
         VarId colViol = engine->makeIntVar(0, 0, n2 * n);
         std::vector<VarId> col{};
-        for (int j = 0; j < n; j++) {
+        for (int j = 0; j < n; ++j) {
           col.push_back(square.at(j).at(i));
         }
         engine->makeInvariant<Linear>(ones, col, colSum);
@@ -93,7 +86,7 @@ class MagicSquare : public benchmark::Fixture {
       VarId downDiagSum = engine->makeIntVar(0, 0, n2 * n);
       VarId downDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
-      for (int j = 0; j < n; j++) {
+      for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(j).at(j));
       }
       engine->makeInvariant<Linear>(ones, diag, downDiagSum);
@@ -108,7 +101,7 @@ class MagicSquare : public benchmark::Fixture {
       VarId upDiagSum = engine->makeIntVar(0, 0, n2 * n);
       VarId upDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
-      for (int j = 0; j < n; j++) {
+      for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(n - j - 1).at(j));
       }
       engine->makeInvariant<Linear>(ones, diag, upDiagSum);
@@ -132,8 +125,8 @@ class MagicSquare : public benchmark::Fixture {
 BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
   int probes = 0;
   for (auto _ : st) {
-    for (size_t i = 0; i < static_cast<size_t>(n * n); i++) {
-      for (size_t j = i + 1; j < static_cast<size_t>(n * n); j++) {
+    for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
+      for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
         Int oldI = engine->getCommittedValue(flat.at(i));
         Int oldJ = engine->getCommittedValue(flat.at(j));
         engine->beginMove();
