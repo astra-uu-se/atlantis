@@ -282,12 +282,6 @@ void PropagationEngine::propagate() {
     }
 
     for (auto& toNotify : m_dependentInvariantData[id]) {
-      if (toNotify.id == definingInvariant.id) {
-#ifdef PROPAGATION_DEBUG
-        logDebug("\t\tIgnoring cyclic notification:" << toNotify.id);
-#endif
-        continue;
-      }
       Invariant& invariant = m_store.getInvariant(toNotify.id);
 
 #ifdef PROPAGATION_DEBUG
