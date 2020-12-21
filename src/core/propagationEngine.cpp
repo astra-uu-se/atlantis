@@ -246,7 +246,8 @@ void PropagationEngine::propagate() {
 //#define PROPAGATION_DEBUG
 // #define PROPAGATION_DEBUG_COUNTING
 #ifdef PROPAGATION_DEBUG
-  std::cout << "Starting propagation\n";
+  setLogLevel(debug);
+  logDebug("Starting propagation");
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
   std::vector<std::unordered_map<size_t, Int>> notificationCount(
@@ -260,8 +261,8 @@ void PropagationEngine::propagate() {
     InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
 
 #ifdef PROPAGATION_DEBUG
-    std::cout << "\tPropagating " << variable << "\n";
-    std::cout << "\t\tDepends on invariant: " << definingInvariant << "\n";
+    logDebug("\tPropagating " << variable);
+    logDebug("\t\tDepends on invariant: " << definingInvariant);
 #endif
 
     if (definingInvariant != NULL_ID) {
@@ -272,8 +273,7 @@ void PropagationEngine::propagate() {
         defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
         if (oldValue == variable.getValue(m_currentTime)) {
 #ifdef PROPAGATION_DEBUG
-          std::cout << "\t\tVariable did not change after compute: ignoring."
-                    << "\n";
+          logDebug("\t\tVariable did not change after compute: ignoring.");
 #endif
 
           continue;
@@ -285,8 +285,8 @@ void PropagationEngine::propagate() {
       Invariant& invariant = m_store.getInvariant(toNotify.id);
 
 #ifdef PROPAGATION_DEBUG
-      std::cout << "\t\tNotifying invariant:" << toNotify.id
-                << " with localId: " << toNotify.localId << "\n";
+      logDebug("\t\tNotifying invariant:" << toNotify.id
+                << " with localId: " << toNotify.localId);
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
       notificationCount.at(toNotify.id.id - 1)[variable.m_id.id] =
@@ -299,16 +299,16 @@ void PropagationEngine::propagate() {
   }
 
 #ifdef PROPAGATION_DEBUG_COUNTING
-  std::cout << "Printing notification counts\n";
+  logDebug("Printing notification counts");
   for (int i = 0; i < notificationCount.size(); ++i) {
-    std::cout << "\tInvariant " << i + 1 << "\n";
+    logDebug("\tInvariant " << i + 1);
     for (auto [k, v] : notificationCount.at(i)) {
-      std::cout << "\t\tVarId(" << k << "): " << v << "\n";
+      logDebug("\t\tVarId(" << k << "): " << v);
     }
   }
 #endif
 #ifdef PROPAGATION_DEBUG
-  std::cout << "Propagation done\n";
+  logDebug("Propagation done\n");
 #endif
 }
 
