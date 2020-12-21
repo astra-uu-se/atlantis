@@ -2,6 +2,7 @@
 
 #include <queue>
 
+#include "misc/logging.hpp"
 #include "core/engine.hpp"
 #include "core/idMap.hpp"
 #include "propagation/bottomUpExplorer.hpp"
