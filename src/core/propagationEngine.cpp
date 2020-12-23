@@ -27,23 +27,23 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
-  //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
+  // logDebug("\t\t\tMaybe changed: " << m_store.getIntVar(id));
   if (m_isEnqueued.get(id)) {
-    //    std::cout << "\t\t\talready enqueued\n";
+    // logDebug("\t\t\talready enqueued");
     return;
   }
-  //  std::cout << "\t\t\tpushed on stack\n";
+  // logDebug("\t\t\tpushed on stack");
   m_modifiedVariables.push(id);
   m_isEnqueued.set(id, true);
 }
 
 void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
-  //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
+  // logDebug("\t\t\tMaybe changed: " << m_store.getIntVar(id));
   if (m_isEnqueued.get(id)) {
-    //    std::cout << "\t\t\talready enqueued\n";
+    // logDebug("\t\t\talready enqueued");
     return;
   }
-  //  std::cout << "\t\t\tpushed on stack\n";
+  // logDebug("\t\t\tpushed on stack");
   m_modifiedVariables.push(id);
   m_isEnqueued.set(id, true);
 }
