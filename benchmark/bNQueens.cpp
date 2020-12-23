@@ -30,7 +30,7 @@ class Queens : public benchmark::Fixture {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(0);
 
-    // std::cout << n << "\n";
+    logDebug(n);
     engine->open();
 
     for (int i = 0; i < n; ++i) {
@@ -69,6 +69,15 @@ class Queens : public benchmark::Fixture {
     q_offset_minus.clear();
     q_offset_plus.clear();
   }
+
+  std::string instanceToString() {
+    std::string str = "Queens: ";
+    for(auto q: queens){
+      str += engine->getCommittedValue(q) + ", ";
+    }
+    return str;
+  } 
+
 };
 
 BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {
@@ -180,11 +189,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
   st.counters["probes_per_s"] =
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
   st.counters["solved"] = benchmark::Counter(done);
-  //  std::cout << "Queens: ";
-  //  for(auto q: queens){
-  //    std::cout << engine->getCommittedValue(q) << ", ";
-  //  }
-  //  std::cout << "\n";
+  logDebug(instanceToString());
 }
 
 BENCHMARK_REGISTER_F(Queens, probing_single_swap)->Range(5, 5000);

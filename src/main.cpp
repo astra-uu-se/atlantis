@@ -7,12 +7,14 @@
 #include "invariants/absDiff.hpp"
 #include "invariants/linear.hpp"
 
+
 void test();
 int allIntervals(int);
 
 int main() {
   static_assert("C++17");
-  
+  setLogLevel(info);
+
   auto t1 = std::chrono::high_resolution_clock::now();
   int nProbes = allIntervals(25);
   auto t2 = std::chrono::high_resolution_clock::now();
@@ -81,8 +83,7 @@ int allIntervals(int n) {
     engine.beginCommit();
     engine.query(violation);
     engine.endCommit();
-    // std::cout << "Violation: " << engine.getCommittedValue(violation) <<
-    // "\n";
+    logDebug("Violation: " << engine.getCommittedValue(violation));
   }
   return nProbes;
 }
@@ -107,7 +108,7 @@ void test() {
                                            std::vector<VarId>({a, c, f}), g);
 
   engine.close();
-  std::cout << "----- end setup -----\n";
+  logInfo("----- end setup -----");
 
   std::random_device rd;
   std::mt19937 gen = std::mt19937(rd());
@@ -124,5 +125,5 @@ void test() {
     engine.endQuery();
   }
 
-  std::cout << "----- done -----\n";
+  logInfo("----- done -----");
 }

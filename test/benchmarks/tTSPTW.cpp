@@ -42,7 +42,7 @@ class TSPTWTest : public ::testing::Test {
     engine = std::make_unique<PropagationEngine>();
     n = 30;
 
-    // std::cout << n << "\n";
+    logInfo(n);
     engine->open();
 
     for (int i = 0; i < n; ++i) {

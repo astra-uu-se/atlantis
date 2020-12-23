@@ -95,9 +95,11 @@ class IdMap<I, bool> {
     m_vector.assign(m_vector.size(), value);
   }
 
-  void print() {
+  std::string toString() {
+    std::string str = "";
     for (auto foo : m_vector) {
-      std::cout << foo << "\n";
+      str += foo + "\n";
     }
+    return str;
   }
 };

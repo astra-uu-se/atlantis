@@ -12,6 +12,7 @@
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
 #include "store/store.hpp"
+#include "misc/logging.hpp"
 
 class Invariant;
 
@@ -186,7 +187,7 @@ Engine::makeInvariant(Args&&... args) {
 
   auto newId = m_store.createInvariantFromPtr(invariantPtr);
   registerInvariant(newId);
-  //  std::cout << "Created new invariant with id: " << newId << "\n";
+  logDebug("Created new invariant with id: " << newId);
   invariantPtr->init(m_currentTime, *this);
   return invariantPtr;
 }
@@ -216,7 +217,7 @@ Engine::makeConstraint(Args&&... args) {
 
   auto newId = m_store.createInvariantFromPtr(constraintPtr);
   registerInvariant(newId);  // A constraint is a type of invariant.
-  //  std::cout << "Created new Constraint with id: " << newId << "\n";
+  logDebug("Created new Constraint with id: " << newId);
   constraintPtr->init(m_currentTime, *this);
   return constraintPtr;
 }

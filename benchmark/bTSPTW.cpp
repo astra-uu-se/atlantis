@@ -35,7 +35,7 @@ class TSPTW : public benchmark::Fixture {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(0);
     
-    // std::cout << n << "\n";
+    logDebug(n);
     engine->open();
 
     for (int i = 0; i < n; ++i) {

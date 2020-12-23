@@ -26,7 +26,7 @@ class AllInterval : public benchmark::Fixture {
     n = state.range(0);
 
     // TODO: why is this printed multiple times per test?
-    // std::cout << n << "\n";
+    logDebug(n);
     engine->open();
 
     for (int i = 0; i < n; ++i) {
