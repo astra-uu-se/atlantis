@@ -26,8 +26,6 @@ class Invariant {
       if (queue[id] == id.id) {
         std::swap(queue[id], head);
       }
-      // queue[id] = head;
-      // head = id;
     }
 
     LocalId pop() {

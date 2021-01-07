@@ -9,8 +9,6 @@
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
 
-// #include "core/propagationEngine.hpp"
-
 // Forward declare PropagationEngine
 class PropagationEngine;
 

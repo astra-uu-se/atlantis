@@ -1,6 +1,5 @@
 #include "views/intOffsetView.hpp"
 
-// TODO: invariant should take its true id in the constructor.
 extern Id NULL_ID;
 
 Int IntOffsetView::getValue(Timestamp t) {
