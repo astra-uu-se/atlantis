@@ -30,10 +30,10 @@ class Queens : public benchmark::Fixture {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(0);
 
-    // std::cout << n << "\n";
+    logDebug(n);
     engine->open();
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
       VarId q = engine->makeIntVar(i, 0, n - 1);
       queens.push_back(q);
       q_offset_minus.push_back(
@@ -69,6 +69,15 @@ class Queens : public benchmark::Fixture {
     q_offset_minus.clear();
     q_offset_plus.clear();
   }
+
+  std::string instanceToString() {
+    std::string str = "Queens: ";
+    for(auto q: queens){
+      str += engine->getCommittedValue(q) + ", ";
+    }
+    return str;
+  } 
+
 };
 
 BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {
@@ -92,8 +101,8 @@ BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(Queens, probing_all_swap)(benchmark::State& st) {
   int probes = 0;
   for (auto _ : st) {
-    for (size_t i = 0; i < static_cast<size_t>(n); i++) {
-      for (size_t j = i + 1; j < static_cast<size_t>(n); j++) {
+    for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
+      for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
         Int oldI = engine->getCommittedValue(queens.at(i));
         Int oldJ = engine->getCommittedValue(queens.at(j));
         engine->beginMove();
@@ -180,14 +189,8 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
   st.counters["probes_per_s"] =
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
   st.counters["solved"] = benchmark::Counter(done);
-  //  std::cout << "Queens: ";
-  //  for(auto q: queens){
-  //    std::cout << engine->getCommittedValue(q) << ", ";
-  //  }
-  //  std::cout << "\n";
+  logDebug(instanceToString());
 }
-
-//
 
 BENCHMARK_REGISTER_F(Queens, probing_single_swap)->Range(5, 5000);
 BENCHMARK_REGISTER_F(Queens, probing_all_swap)

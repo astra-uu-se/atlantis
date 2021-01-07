@@ -27,23 +27,23 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
-  //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
+  // logDebug("\t\t\tMaybe changed: " << m_store.getIntVar(id));
   if (m_isEnqueued.get(id)) {
-    //    std::cout << "\t\t\talready enqueued\n";
+    // logDebug("\t\t\talready enqueued");
     return;
   }
-  //  std::cout << "\t\t\tpushed on stack\n";
+  // logDebug("\t\t\tpushed on stack");
   m_modifiedVariables.push(id);
   m_isEnqueued.set(id, true);
 }
 
 void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
-  //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
+  // logDebug("\t\t\tMaybe changed: " << m_store.getIntVar(id));
   if (m_isEnqueued.get(id)) {
-    //    std::cout << "\t\t\talready enqueued\n";
+    // logDebug("\t\t\talready enqueued");
     return;
   }
-  //  std::cout << "\t\t\tpushed on stack\n";
+  // logDebug("\t\t\tpushed on stack");
   m_modifiedVariables.push(id);
   m_isEnqueued.set(id, true);
 }
@@ -131,9 +131,8 @@ void PropagationEngine::beginMove() {
   assert(!m_isMoving);
   m_isMoving = true;
   ++m_currentTime;
-  {  // only needed for bottom up propagation
-    clearPropagationPath();
-  }
+  // only needed for bottom up propagation
+  clearPropagationPath();
 }
 
 void PropagationEngine::endMove() {
@@ -209,14 +208,6 @@ void PropagationEngine::endCommit() {
 void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
   // We cannot iterate over a priority_queue so we cannot copy it.
   // TODO: replace priority_queue of m_modifiedVariables with custom queue.
-
-  // TODO: This is a bit of a hack since we know that all existing IDs are
-  // between 1 and m_numVariables (inclusive).
-  //  for (size_t i = 1; i <= m_numVariables; i++) {
-  //    if (m_isEnqueued.get(i)) {
-  //      m_propagationPathQueue.push(i);
-  //    }
-  //  }
   while (!m_modifiedVariables.empty()) {
     auto id = m_modifiedVariables.top();
     m_isEnqueued.set(id, false);
@@ -314,5 +305,4 @@ void PropagationEngine::propagate() {
 
 void PropagationEngine::bottomUpPropagate() {
   m_bottomUpExplorer.propagate(m_currentTime);
-  // clearPropagationQueue();
 }
