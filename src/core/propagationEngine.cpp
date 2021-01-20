@@ -27,23 +27,23 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
-  //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
+  // logDebug("\t\t\tMaybe changed: " << m_store.getIntVar(id));
   if (m_isEnqueued.get(id)) {
-    //    std::cout << "\t\t\talready enqueued\n";
+    // logDebug("\t\t\talready enqueued");
     return;
   }
-  //  std::cout << "\t\t\tpushed on stack\n";
+  // logDebug("\t\t\tpushed on stack");
   m_modifiedVariables.push(id);
   m_isEnqueued.set(id, true);
 }
 
 void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
-  //  std::cout << "\t\t\tMaybe changed: " << m_store.getIntVar(id) << "\n";
+  // logDebug("\t\t\tMaybe changed: " << m_store.getIntVar(id));
   if (m_isEnqueued.get(id)) {
-    //    std::cout << "\t\t\talready enqueued\n";
+    // logDebug("\t\t\talready enqueued");
     return;
   }
-  //  std::cout << "\t\t\tpushed on stack\n";
+  // logDebug("\t\t\tpushed on stack");
   m_modifiedVariables.push(id);
   m_isEnqueued.set(id, true);
 }
@@ -131,9 +131,8 @@ void PropagationEngine::beginMove() {
   assert(!m_isMoving);
   m_isMoving = true;
   ++m_currentTime;
-  {  // only needed for bottom up propagation
-    clearPropagationPath();
-  }
+  // only needed for bottom up propagation
+  clearPropagationPath();
 }
 
 void PropagationEngine::endMove() {
@@ -209,14 +208,6 @@ void PropagationEngine::endCommit() {
 void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
   // We cannot iterate over a priority_queue so we cannot copy it.
   // TODO: replace priority_queue of m_modifiedVariables with custom queue.
-
-  // TODO: This is a bit of a hack since we know that all existing IDs are
-  // between 1 and m_numVariables (inclusive).
-  //  for (size_t i = 1; i <= m_numVariables; i++) {
-  //    if (m_isEnqueued.get(i)) {
-  //      m_propagationPathQueue.push(i);
-  //    }
-  //  }
   while (!m_modifiedVariables.empty()) {
     auto id = m_modifiedVariables.top();
     m_isEnqueued.set(id, false);
@@ -246,7 +237,8 @@ void PropagationEngine::propagate() {
 //#define PROPAGATION_DEBUG
 // #define PROPAGATION_DEBUG_COUNTING
 #ifdef PROPAGATION_DEBUG
-  std::cout << "Starting propagation\n";
+  setLogLevel(debug);
+  logDebug("Starting propagation");
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
   std::vector<std::unordered_map<size_t, Int>> notificationCount(
@@ -260,8 +252,8 @@ void PropagationEngine::propagate() {
     InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
 
 #ifdef PROPAGATION_DEBUG
-    std::cout << "\tPropagating " << variable << "\n";
-    std::cout << "\t\tDepends on invariant: " << definingInvariant << "\n";
+    logDebug("\tPropagating " << variable);
+    logDebug("\t\tDepends on invariant: " << definingInvariant);
 #endif
 
     if (definingInvariant != NULL_ID) {
@@ -272,8 +264,7 @@ void PropagationEngine::propagate() {
         defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
         if (oldValue == variable.getValue(m_currentTime)) {
 #ifdef PROPAGATION_DEBUG
-          std::cout << "\t\tVariable did not change after compute: ignoring."
-                    << "\n";
+          logDebug("\t\tVariable did not change after compute: ignoring.");
 #endif
 
           continue;
@@ -282,17 +273,11 @@ void PropagationEngine::propagate() {
     }
 
     for (auto& toNotify : m_dependentInvariantData[id]) {
-      if (toNotify.id == definingInvariant.id) {
-#ifdef PROPAGATION_DEBUG
-        std::cout << "\t\tIgnoring cyclic notification:" << toNotify.id << "\n";
-#endif
-        continue;
-      }
       Invariant& invariant = m_store.getInvariant(toNotify.id);
 
 #ifdef PROPAGATION_DEBUG
-      std::cout << "\t\tNotifying invariant:" << toNotify.id
-                << " with localId: " << toNotify.localId << "\n";
+      logDebug("\t\tNotifying invariant:" << toNotify.id
+                << " with localId: " << toNotify.localId);
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
       notificationCount.at(toNotify.id.id - 1)[variable.m_id.id] =
@@ -305,20 +290,19 @@ void PropagationEngine::propagate() {
   }
 
 #ifdef PROPAGATION_DEBUG_COUNTING
-  std::cout << "Printing notification counts\n";
+  logDebug("Printing notification counts");
   for (int i = 0; i < notificationCount.size(); ++i) {
-    std::cout << "\tInvariant " << i + 1 << "\n";
+    logDebug("\tInvariant " << i + 1);
     for (auto [k, v] : notificationCount.at(i)) {
-      std::cout << "\t\tVarId(" << k << "): " << v << "\n";
+      logDebug("\t\tVarId(" << k << "): " << v);
     }
   }
 #endif
 #ifdef PROPAGATION_DEBUG
-  std::cout << "Propagation done\n";
+  logDebug("Propagation done\n");
 #endif
 }
 
 void PropagationEngine::bottomUpPropagate() {
   m_bottomUpExplorer.propagate(m_currentTime);
-  // clearPropagationQueue();
 }
