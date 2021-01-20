@@ -1,6 +1,17 @@
 # cbls
 CBLS solver
 
+## Building
+The project is built using cmake, but a `Makefile` is used to simplify the execution of cmake.
+
+### First time
+- `make submodule` to initialise the submodules (used for testing and benchmarking).
+- `make` to build
+- `make run` to see if things are working.
+
+### Setup dev environment
+The project should now be importable as a cmake project.
+
 
 ## Before making public
 Make sure to purge files from git history that may have contrained tokens, such as travis.yml
