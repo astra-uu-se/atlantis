@@ -35,8 +35,6 @@ class IdMap {
     return m_vector[i - 1];
   }
 
-  // inline void push_back(T data) { m_vector.push_back(data); }
-
   inline void register_idx(I idx) {
     if (static_cast<size_t>(idx.id) != m_vector.size() + 1) {
       throw OutOfOrderIndexRegistration();
@@ -97,9 +95,11 @@ class IdMap<I, bool> {
     m_vector.assign(m_vector.size(), value);
   }
 
-  void print() {
+  std::string toString() {
+    std::string str = "";
     for (auto foo : m_vector) {
-      std::cout << foo << "\n";
+      str += foo + "\n";
     }
+    return str;
   }
 };

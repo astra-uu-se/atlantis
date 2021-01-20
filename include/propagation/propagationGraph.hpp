@@ -6,6 +6,7 @@
 
 #include "../core/types.hpp"
 #include "core/idMap.hpp"
+#include "../misc/logging.hpp"
 
 class PropagationGraph {
  protected:

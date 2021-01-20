@@ -1,12 +1,10 @@
 #! /bin/bash
-BENCHMARK=./build/runBenchmarks
-if [ ! -f "$BENCHMARK" ]; then
+if [ ! -f ./build/runBenchmarks ]; then
   exit 1
 fi
 if [ -z "$TRAVIS_BUILD_NUMBER" ]; then
   exit 1
 fi
-BENCHMARK_FILE="benchmark-data.json"
 # Get Commit
 GIT_COMMIT=`git branch -v | grep \* | sed 's/\(\S*\s*\)\(([^)]*)\)*\S*\s*\([0-9a-z]*\).*/\3/'`
 GIT_REVISION=`git branch -v --abbrev=12 | grep \* | sed 's/\(\S*\s*\)\(([^)]*)\)*\S*\s*\([0-9a-z]*\).*/\3/'`
@@ -20,7 +18,4 @@ GIT_PREV_REVISION=`git log --skip=1 --max-count=1 | grep commit | sed 's/\s*comm
 GIT_PREV_REVISION=${GIT_PREV_REVISION:0:12}
 GIT_LINK="https://github.com/$GIT_REPO/compare/$GIT_PREV_REVISION...$GIT_REVISION"
 HEADER="Build <$TRAVIS_BUILD_WEB_URL|#$TRAVIS_BUILD_NUMBER> (<$GIT_LINK|$GIT_COMMIT>) $GIT_REPO@$GIT_BRANCH by $GIT_USER" > $BENCHMARK_FILE
-BENCHMARK_DATA=`$BENCHMARK`
-echo "{\"text\":\"${HEADER}\n\`\`\`${BENCHMARK_DATA}\`\`\`\"}" >> $BENCHMARK_FILE
-BENCHMARK_FILE_PATH=`realpath $BENCHMARK_FILE`
-curl -X POST -H 'Content-type: application/json' --data-binary "@$BENCHMARK_FILE_PATH" $SLACK_WEBHOOK
+./build/runBenchmarks | python3 slack-formatter.py --header="${HEADER}" --webhook="${SLACK_WEBHOOK}"

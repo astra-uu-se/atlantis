@@ -35,9 +35,6 @@ inline signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
   Int newCount = m_counts.at(value - m_offset).incValue(ts, 1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
-//  if (newCount >= 2) {
-//    incValue(ts, e, m_violationId, 1);
-//  }
   return newCount >= 2 ? 1:0;
 }
 
@@ -45,8 +42,5 @@ inline signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
   Int newCount = m_counts.at(value - m_offset).incValue(ts, -1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
-//  if (newCount >= 1) {
-//    incValue(ts, e, m_violationId, -1);
-//  }
   return newCount >= 1 ? -1:0;
 }

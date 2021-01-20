@@ -15,11 +15,6 @@ class SavedInt {
   SavedInt(Timestamp initTime, const Int& initValue)
       : m_tmpTime(initTime), m_savedValue(initValue), m_tmpValue(initValue) {}
 
-  // inline Int getResetValue(Timestamp currentTime) noexcept {
-  //   return currentTime == m_tmpTime ? m_tmpValue : (m_tmpValue =
-  //   m_savedValue);
-  // }
-
   [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
       Timestamp t) const {
     return m_tmpTime == t && m_savedValue != m_tmpValue;
@@ -55,12 +50,11 @@ class SavedInt {
   }
   [[gnu::always_inline]] inline void commitValue(Int value) noexcept {
     m_savedValue = value;
-    // m_tmpValue = value;  // If we do not update the tmp value, then it is not
     // clear what the correct value is at tmp_time.
   }
 
   [[gnu::always_inline]] inline void commit() noexcept {
-    // assert(false);  // todo: do we really want this? Very dangerous to just
+    // todo: do we really want this? Very dangerous to just
     // commit regardless of time.
     m_savedValue = m_tmpValue;
   }

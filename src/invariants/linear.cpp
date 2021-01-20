@@ -2,8 +2,6 @@
 
 #include <utility>
 
-// TODO: invariant should take its true id in the constructor.
-
 Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
     : Invariant(NULL_ID),
       m_A(std::move(A)),
@@ -11,7 +9,6 @@ Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
       m_localX(),
       m_b(b) {
   m_localX.reserve(m_X.size());
-  //  m_modifiedVars.resize(m_X.size());
   m_modifiedVars.reserve(m_X.size());
 }
 
@@ -35,8 +32,6 @@ void Linear::recompute(Timestamp t, Engine& e) {
     m_localX.at(i).setValue(t, e.getValue(t, m_X[i]));
   }
   updateValue(t, e, m_b, sum);
-  // m_state.setValue(t, m_X.size());  // Not clear if we actually need to reset
-  // this.
 }
 
 void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
@@ -57,7 +52,6 @@ VarId Linear::getNextDependency(Timestamp t, Engine&) {
 void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   Int idx = m_state.getValue(t);
-  // Int delta = e.getValue(t, m_X.at(idx)) - e.getCommittedValue(m_X.at(idx));
   Int delta = e.getValue(t, m_X.at(idx)) - m_localX.at(idx).getValue(t);
   if (delta == 0) {
     return;
