@@ -7,6 +7,7 @@
 #include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
+#include "rapidcheck/gtest.h"
 
 namespace {
 class SavedIntTest : public ::testing::Test {
@@ -211,6 +212,31 @@ TEST_F(SavedIntTest, SavedIntCommitIf) {
 
   EXPECT_EQ(savedInt.getValue(initTime), nextValue);
   EXPECT_EQ(savedInt.getValue(nextTime), nextValue);
+}
+
+RC_GTEST_FIXTURE_PROP(SavedIntTest,
+              checkConstructorValue,
+              (Timestamp initTime, Int initValue, Timestamp anyTime)) {
+  auto savedInt = SavedInt(initTime, initValue);
+  RC_ASSERT(savedInt.getValue(anyTime) == initValue);
+}
+
+RC_GTEST_FIXTURE_PROP(SavedIntTest,
+              checkSetValue,
+              (Timestamp initTime, Int initValue, Timestamp currentTime, Int value)) {
+  auto savedInt = SavedInt(initTime, initValue);
+  savedInt.setValue(currentTime, value);
+  if (initTime != currentTime) {
+    RC_ASSERT(savedInt.getValue(initTime) == initValue);
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(SavedIntTest,
+              checkCommittedValue,
+              (Timestamp initTime, Int initValue, Timestamp currentTime, Int value)) {
+  auto savedInt = SavedInt(initTime, initValue);
+  savedInt.setValue(currentTime, value);
+  RC_ASSERT(savedInt.getValue(currentTime) == value);
 }
 
 }  // namespace

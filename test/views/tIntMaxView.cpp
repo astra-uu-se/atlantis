@@ -9,6 +9,7 @@
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "rapidcheck/gtest.h"
 #include "invariants/linear.hpp"
 #include "views/intMaxView.hpp"
 
@@ -26,6 +27,17 @@ class IntMaxViewTest : public ::testing::Test {
     engine = std::make_unique<PropagationEngine>();
   }
 };
+
+RC_GTEST_FIXTURE_PROP(IntMaxViewTest,
+                      shouldAlwaysBeMax,
+                      (Int a, Int b)) {
+  if (!engine->isOpen()) {
+    engine->open();
+  }
+  VarId varId = engine->makeIntVar(a, a, a);
+  std::shared_ptr<IntMaxView> view = engine->makeIntView<IntMaxView>(varId, b);
+  RC_ASSERT(view->getCommittedValue() == std::max(a, b));
+}
 
 TEST_F(IntMaxViewTest, CreateIntMaxView) {
   engine->open();
