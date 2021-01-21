@@ -4,3 +4,6 @@
 [submodule "ext/benchmark"]
 	path = ext/benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "ext/rapidcheck"]
+	path = ext/rapidcheck
+	url = https://github.com/emil-e/rapidcheck.git
