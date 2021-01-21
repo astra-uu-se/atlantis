@@ -8,6 +8,7 @@
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "rapidcheck/gtest.h"
 #include "invariants/linear.hpp"
 
 using ::testing::AtLeast;
@@ -70,6 +71,9 @@ class LinearTest : public ::testing::Test {
   VarId b = NULL_ID;
   VarId c = NULL_ID;
   VarId d = NULL_ID;
+  Int aCoef = 1;
+  Int bCoef = 10;
+  Int cCoef = -20;
   std::shared_ptr<Linear> linear;
   std::mt19937 gen;
 
@@ -84,7 +88,7 @@ class LinearTest : public ::testing::Test {
     d = engine->makeIntVar(4, -100, 100);
 
     // d = 1*1+2*10+3*(-20) = 1+20-60 =-39
-    linear = engine->makeInvariant<Linear>(std::vector<Int>({1, 10, -20}),
+    linear = engine->makeInvariant<Linear>(std::vector<Int>({aCoef, bCoef, cCoef}),
                                       std::vector<VarId>({a, b, c}), d);
     engine->close();
   }
@@ -147,6 +151,25 @@ class LinearTest : public ::testing::Test {
     engine->endQuery();
   }
 };
+
+RC_GTEST_FIXTURE_PROP(LinearTest,
+                      shouldAlwaysBeSum,
+                      (Int aVal, Int bVal, Int cVal)) {
+  engine->beginMove();
+  engine->setValue(a, aVal);
+  engine->setValue(b, bVal);
+  engine->setValue(c, cVal);
+  engine->endMove();
+
+  engine->beginCommit();
+  engine->query(d);
+  engine->endCommit();
+
+  RC_ASSERT(
+      engine->getCommittedValue(d) == 
+      aCoef * aVal + bCoef * bVal + cCoef * cVal
+  );
+}
 
 /**
  *  Testing constructor
