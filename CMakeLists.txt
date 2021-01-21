@@ -68,6 +68,9 @@ option(BENCHMARK_ENABLE_TESTING "Build GTEST for GBENCHMARK" OFF)
 if (BUILD_TESTS)
   # This adds another subdirectory, which has 'project(gtest)'.
   add_subdirectory(ext/googletest)
+  add_subdirectory(ext/rapidcheck)
+  add_subdirectory(ext/rapidcheck/extras/gtest)
+  add_subdirectory(ext/rapidcheck/extras/gmock)
 
   include(CTest)
 
@@ -98,6 +101,8 @@ if (BUILD_TESTS)
   target_link_libraries(runUnitTests gtest gtest_main)
 
   target_link_libraries(runUnitTests gmock gmock_main)
+  
+  target_link_libraries(runUnitTests rapidcheck rapidcheck_gtest rapidcheck_gmock)
 
   # Extra linking for the project.
   target_link_libraries(runUnitTests ${PROJECT_LIB})
