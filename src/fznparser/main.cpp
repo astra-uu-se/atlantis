@@ -1,0 +1,27 @@
+#include <iostream>
+#include "antlr4-runtime.h"
+#include "FlatZincLexer.h"
+#include "FlatZincParser.h"
+
+using namespace fznparser;
+using namespace antlr4;
+
+int main() {
+  // std::ifstream stream;
+  // stream.open("input.fzn");
+  ANTLRInputStream input("var int: x; solve satisfy;");
+
+  FlatZincLexer lexer(&input);
+  CommonTokenStream tokens(&lexer);
+
+  tokens.fill();
+  for (auto token : tokens.getTokens()) {
+    std::cout << token->toString() << std::endl;
+  }
+
+  FlatZincParser parser(&tokens);
+  tree::ParseTree* tree = parser.model();
+
+  std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
+  return 0;
+}
