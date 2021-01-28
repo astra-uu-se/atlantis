@@ -27,6 +27,8 @@ jobs:
             - gcc-8
             - g++-8
             - python3
+            - libantlr4-runtime-dev 
+            - libantlr4-runtime4.7.2
             # - clang-8
           sources: &precise_latest_boost_sources
             - ubuntu-toolchain-r-test
@@ -47,6 +49,7 @@ install:
   # - if [ "$CXX" = "clang++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then export CXX="clang++-8" CC="clang-8"; fi
   - echo ${PATH}
   - echo ${CXX}
+  - apt-cache search libantlr4-runtime4
   - ${CXX} --version
   - ${CXX} -v
 
