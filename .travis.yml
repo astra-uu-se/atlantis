@@ -27,6 +27,8 @@ jobs:
             - gcc-8
             - g++-8
             - python3
+            - libantlr4-runtime-dev 
+            - libantlr4-runtime4.8
             # - clang-8
           sources: &precise_latest_boost_sources
             - ubuntu-toolchain-r-test
