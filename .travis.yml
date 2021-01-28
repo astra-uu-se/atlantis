@@ -40,7 +40,7 @@ before_install:
   - export GBENCH_FLAGS="-DBUILD_TESTS:BOOL=OFF -BENCHMARK_ENABLE_TESTING:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_BUILD_TYPE=Release"
   - export CXX_FLAGS="${CXX_FLAGS} ${ENV_CXX_FLAGS}"
   - sudo apt-get update -qq
-  - sudo apt-get install libantlr4-runtime-dev libantlr4-runtime4.8
+  - sudo apt-get -y install uuid-dev # for antlr runtime.
   - CC=gcc-8
   - CXX=g++-8
 
