@@ -67,6 +67,15 @@ script:
   - make
   - ctest
   - cd ..
+  - cd src/fznparser
+  - mkdir -p build
+  - cd build
+  - cmake ..
+  - make
+  - ./demo
+  - cd ../../..
+
+
 
 after_success:
   - echo "SUCCESS"
