@@ -1,23 +1,19 @@
 grammar FlatZinc;
 
-
-
 model :
-  // ( predicateItem )*
-  // ( parDeclItem )*
+  ( predicateItem )*
+  ( parDeclItem )*
   ( varDeclItem )*
-  // ( constraintItem )*
+  ( constraintItem )*
   solveItem
 ;
 
-// Predicate items
+// ===== Predicate items
 predicateItem : 'predicate' Identifier '(' predParam ( ',' predParam )* ')' ';' ;
 
 predParam : predParamType ':' Identifier ;
 
-
-// Identifier : ('a'..'z'|'A'..'Z')('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
-
+// ===== Identifiers 
 basicParType : 'bool'
                    | 'int'
                    | 'float'
@@ -38,7 +34,8 @@ basicVarType : 'var' basicParType
 
 arrayVarType : 'array' '[' indexSet ']' 'of' basicVarType ;
 
-indexSet : '1' '..' IntLiteral ;
+// indexSet : '1' '..' IntLiteral ;
+indexSet : IntLiteral '..' IntLiteral ;
 
 basicPredParamType : basicParType
                           | basicVarType
@@ -64,7 +61,8 @@ basicLiteralExpr : boolLiteral
     ;
 
 basicExpr : basicLiteralExpr
-              | VarParIdentifier
+              // | VarParIdentifier
+    | Identifier
     ;
 
 expr       : basicExpr
@@ -76,13 +74,13 @@ parExpr   : basicLiteralExpr
     ;
 
 
-// Boolean literals
+// ===== Boolean literals
 boolLiteral : 'false'
                  | 'true'
     ;
 
 
-// Set literals
+// ===== Set literals
 setLiteral : '{' IntLiteral (',' IntLiteral )* '}'
                 | IntLiteral '..' IntLiteral
                 | '{' FloatLiteral ( ',' FloatLiteral )* '}'
@@ -93,29 +91,32 @@ arrayLiteral : '[' basicExpr ( ',' basicExpr )* ']' ;
 
 parArrayLiteral : '[' basicLiteralExpr (',' basicLiteralExpr )* ']' ;
 
-// Parameter declarations
+// ===== Parameter declarations
 
-parDeclItem : parType ':' VarParIdentifier '=' parExpr ';' ;
+parDeclItem : parType ':' Identifier '=' parExpr ';' ;
+// parDeclItem : parType ':' VarParIdentifier '=' parExpr ';' ;
 
-// Variable declarations
+// ===== Variable declarations
 
-varDeclItem : basicVarType ':' VarParIdentifier annotations ( '=' basicExpr )? ';'
-                  | arrayVarType ':' VarParIdentifier annotations '=' arrayLiteral ';'
+// varDeclItem : basicVarType ':' VarParIdentifier annotations ( '=' basicExpr )? ';'
+                  // | arrayVarType ':' VarParIdentifier annotations '=' arrayLiteral ';'
+varDeclItem : basicVarType ':' Identifier annotations ( '=' basicExpr )? ';'
+                  | arrayVarType ':' Identifier annotations '=' arrayLiteral ';'
     ;
 
 
-// Constraint items
+// ===== Constraint items
 
 constraintItem : 'constraint' Identifier '(' expr (',' expr)* ')' annotations ';' ;
 
-// Solve item
+// ===== Solve item
 
 solveItem : 'solve' annotations 'satisfy' ';'
                | 'solve' annotations 'minimize' basicExpr ';'
                | 'solve' annotations 'maximize' basicExpr ';'
     ;
 
-// Annotations
+// ===== Annotations
 
 annotations : ( '::' annotation )* ;
 
@@ -128,32 +129,27 @@ annExpr   : basicAnnExpr
     ;
 
 basicAnnExpr   : basicLiteralExpr
-                    | stringLiteral
+                   | stringLiteral
                     | annotation
     ;
 
-stringLiteral : '"' StringContents '"' ;
 
-//Lexer Rules
-
-VarParIdentifier : [A-Za-z_][A-Za-z0-9_]* ;
-// Identifiers
+// ===== Lexer 
 Identifier : [A-Za-z][A-Za-z0-9_]* ;
 
+// VarParIdentifier : [A-Za-z_][A-Za-z0-9_]* ;
 
-// Integer literals
 IntLiteral : [-]?[0-9]+
-                // | [-]?0x[0-9A-Fa-f]+
-                // | [-]?0o[0-7]+
+                | [-]? '0x' [0-9A-Fa-f]+
+                | [-]? '0o' [0-7]+
     ;
 
-// Float literals
 FloatLiteral : [-]?[0-9]+.[0-9]+
                   | [-]?[0-9]+.[0-9]+[Ee][-+]?[0-9]+
                   | [-]?[0-9]+[Ee][-+]?[0-9]+
     ;
 
-// StringContents : ([^"\n\] | \[^\n(])* ;
-StringContents :   ~('"')+  ;
+WS : [ \t\r\n]+ -> skip;
 
-WS : (' ' | '\t' | '\n' |'\r\n' )+  -> skip;
+stringLiteral: StringLiteral ;
+StringLiteral :  '"' ~('"')+ '"' ;

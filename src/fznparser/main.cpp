@@ -7,9 +7,10 @@ using namespace fznparser;
 using namespace antlr4;
 
 int main() {
-  // std::ifstream stream;
-  // stream.open("input.fzn");
-  ANTLRInputStream input("var int: x; solve satisfy;");
+  std::ifstream stream;
+  stream.open("../fzn_examples/input.fzn");
+  // ANTLRInputStream input("var int: x; solve satisfy;");
+  ANTLRInputStream input(stream);
 
   FlatZincLexer lexer(&input);
   CommonTokenStream tokens(&lexer);
