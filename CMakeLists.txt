@@ -43,8 +43,8 @@ include_directories(${COMMON_INCLUDES})
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/include/*.h ${PROJECT_SOURCE_DIR}/include/*.hpp)
 # remove main from the src files
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/main.cpp)
-# remove parser main from the src files
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/main.cpp)
+# remove fznparser files from the src files
+list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/*)
 
 
 ################################
