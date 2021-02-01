@@ -22,5 +22,5 @@ int main() {
   int x = visitor.visitModel(tree);
   std::cout << x << std::endl;
 
-  return 1;
+  return 0;
 }
