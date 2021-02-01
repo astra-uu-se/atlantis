@@ -25,25 +25,25 @@ parType : basicParType
     ;
 
 basicVarType : 'var' basicParType
-                   | 'var' IntLiteral '..' IntLiteral
-                   | 'var' '{' IntLiteral (',' IntLiteral )* '}'
+                   | 'var' intLiteral '..' intLiteral
+                   | 'var' '{' intLiteral (',' intLiteral )* '}'
                    | 'var' FloatLiteral '..' FloatLiteral
-                   | 'var' 'set' 'of' IntLiteral '..' IntLiteral
-                   | 'var' 'set' 'of' '{' IntLiteral (',' IntLiteral)* '}'
+                   | 'var' 'set' 'of' intLiteral '..' intLiteral
+                   | 'var' 'set' 'of' '{' intLiteral (',' intLiteral)* '}'
     ;
 
 arrayVarType : 'array' '[' indexSet ']' 'of' basicVarType ;
 
-// indexSet : '1' '..' IntLiteral ;
-indexSet : IntLiteral '..' IntLiteral ;
+indexSet : One '..' intLiteral ;
+// indexSet : intLiteral '..' intLiteral ;
 
 basicPredParamType : basicParType
                           | basicVarType
-                          | IntLiteral '..' IntLiteral
+                          | intLiteral '..' intLiteral
                           | FloatLiteral '..' FloatLiteral
-                          | '{' IntLiteral (',' IntLiteral )* '}'
-                          | 'set' 'of' IntLiteral '..' IntLiteral
-                          | 'set' 'of' '{'   IntLiteral (IntLiteral ',')* '}'
+                          | '{' intLiteral (',' intLiteral )* '}'
+                          | 'set' 'of' intLiteral '..' intLiteral
+                          | 'set' 'of' '{'   intLiteral (intLiteral ',')* '}'
     ;
 
 predParamType : basicPredParamType
@@ -55,7 +55,7 @@ predIndexSet : indexSet
     ;
 
 basicLiteralExpr : boolLiteral
-                       | IntLiteral
+                       | intLiteral
                        | FloatLiteral
                        | setLiteral
     ;
@@ -81,8 +81,8 @@ boolLiteral : 'false'
 
 
 // ===== Set literals
-setLiteral : '{' IntLiteral (',' IntLiteral )* '}'
-                | IntLiteral '..' IntLiteral
+setLiteral : '{' intLiteral (',' intLiteral )* '}'
+                | intLiteral '..' intLiteral
                 | '{' FloatLiteral ( ',' FloatLiteral )* '}'
                 | FloatLiteral '..' FloatLiteral
     ;
@@ -139,10 +139,16 @@ Identifier : [A-Za-z][A-Za-z0-9_]* ;
 
 // VarParIdentifier : [A-Za-z_][A-Za-z0-9_]* ;
 
+
+One : '1';
+
 IntLiteral : [-]?[0-9]+
                 | [-]? '0x' [0-9A-Fa-f]+
                 | [-]? '0o' [0-7]+
     ;
+
+intLiteral : IntLiteral | One;
+
 
 FloatLiteral : [-]?[0-9]+.[0-9]+
                   | [-]?[0-9]+.[0-9]+[Ee][-+]?[0-9]+
@@ -153,3 +159,4 @@ WS : [ \t\r\n]+ -> skip;
 
 stringLiteral: StringLiteral ;
 StringLiteral :  '"' ~('"')+ '"' ;
+
