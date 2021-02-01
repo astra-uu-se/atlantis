@@ -28,12 +28,16 @@ find_package(ANTLR REQUIRED)
 
 # Call macro to add lexer and grammar to your build dependencies.
 antlr_target(Sample FlatZinc.g4
-             PACKAGE fznparser)
+  PACKAGE fznparser
+  VISITOR)
 
 # include generated files in project environment
 include_directories(${ANTLR_Sample_OUTPUT_DIR})
 
 # add generated grammar to demo binary target
 add_executable(demo main.cpp
+                    FznVisitor.cpp
                ${ANTLR_Sample_CXX_OUTPUTS})
 target_link_libraries(demo antlr4_static)
+
+
