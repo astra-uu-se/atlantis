@@ -19,8 +19,22 @@ int main() {
   FlatZincParser::ModelContext* tree = parser.model();
 
   FznVisitor visitor;
-  int x = visitor.visitModel(tree);
-  std::cout << x << std::endl;
+  Model m = visitor.visitModel(tree);
+
+  std::cout << "Parameters:" << std::endl;
+  for (auto p : m._parameters) {
+   std::cout << p._name;
+  }
+
+  std::cout << "Variables:" << std::endl;
+  for (auto v : m._variables) {
+   std::cout << v._name << std::endl;
+  }
+
+  std::cout << "Constraints:" << std::endl;
+  for (auto c : m._constraints) {
+   std::cout << c._name << std::endl;
+  }
 
   return 0;
 }
