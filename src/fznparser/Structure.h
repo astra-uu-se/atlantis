@@ -2,40 +2,50 @@
 #include <vector>
 
 using namespace std;
+enum Type {intVar, boolVar};
 
-class Parameter {
-public:
-  Parameter(string name);
+class Domain {
+  public:
+    Domain(int lb, int ub);
+    Domain();
 
-  string _name;
-private:
+    bool _undefined;
+    Type _type;
+    int _lb;
+    int _ub;
+};
+
+class Annotation {
+  public:
+    Annotation();
 };
 
 class Variable {
-public:
-  Variable(string name);
+  public:
+    Variable(string name, Domain domain, vector<Annotation> annotations);
 
-  string _name;
-private:
+    string _name;
+    vector<Annotation> _annotations;
+    Domain _domain;
+
 };
 
-class Constraint {
-public:
-  Constraint(string name);
 
-  string _name;
-private:
+
+class Constraint {
+  public:
+    Constraint(string name);
+
+    string _name;
+    vector<Variable*> _varRefs;
 };
 
 
 class Model {
-public:
-  Model(vector<Parameter> parameters,
-        vector<Variable> variables,
-        vector<Constraint> constraints);
+  public:
+    Model(vector<Variable> variables,
+          vector<Constraint> constraints);
 
-  vector<Parameter> _parameters;
-  vector<Variable> _variables;
-  vector<Constraint> _constraints;
-private:
+    vector<Variable> _variables;
+    vector<Constraint> _constraints;
 };

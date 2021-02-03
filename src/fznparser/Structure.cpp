@@ -2,21 +2,35 @@
 
 using namespace std;
 
-Parameter::Parameter(string name) {
-  _name = name;
+Domain::Domain(int lb, int ub) {
+  _undefined = false;
+  _lb = lb;
+  _ub = ub;
 };
-Variable::Variable(string name) {
+Domain::Domain() {
+  _undefined = true;
+  _lb = 0;
+  _ub = 0;
+}
+
+Annotation::Annotation() {
+ 
+}
+
+
+Variable::Variable(string name, Domain domain, vector<Annotation> annotations) {
   _name = name;
+  _domain = domain;
+  _annotations = annotations;
 };
+
 Constraint::Constraint(string name) {
   _name = name;
 };
 
-Model::Model(vector<Parameter> parameters,
-             vector<Variable> variables,
+Model::Model(vector<Variable> variables,
              vector<Constraint> constraints) {
 
-  _parameters = parameters;
   _variables = variables;
   _constraints = constraints;
 };

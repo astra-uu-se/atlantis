@@ -1,5 +1,5 @@
 #include <iostream>
-#include "antlr4-runtime.h"
+// #include "antlr4-runtime.h"
 #include "FlatZincLexer.h"
 #include "FlatZincParser.h"
 #include "FznVisitor.h"
@@ -20,11 +20,6 @@ int main() {
 
   FznVisitor visitor;
   Model m = visitor.visitModel(tree);
-
-  std::cout << "Parameters:" << std::endl;
-  for (auto p : m._parameters) {
-   std::cout << p._name;
-  }
 
   std::cout << "Variables:" << std::endl;
   for (auto v : m._variables) {
