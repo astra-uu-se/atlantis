@@ -2,15 +2,37 @@
 
 using namespace std;
 
-Domain::Domain(int lb, int ub) {
+Domain::Domain() {
+  _undefined = true;
+}
+// int Domain::getLb() {
+//   return -1;
+// }
+// int Domain::getUb() {
+//   return -1;
+// }
+IntDomain::IntDomain() {
+  _undefined = true;
+}
+IntDomain::IntDomain(int lb, int ub) {
   _undefined = false;
   _lb = lb;
   _ub = ub;
-};
-Domain::Domain() {
+}
+int IntDomain::getLb() {
+  return _lb;
+}
+int IntDomain::getUb() {
+  return _ub;
+}
+BoolDomain::BoolDomain() {
   _undefined = true;
-  _lb = 0;
-  _ub = 0;
+}
+int BoolDomain::getLb() {
+  return false;
+}
+int BoolDomain::getUb() {
+  return true;
 }
 
 Annotation::Annotation() {
@@ -18,7 +40,7 @@ Annotation::Annotation() {
 }
 
 
-Variable::Variable(string name, Domain domain, vector<Annotation> annotations) {
+Variable::Variable(string name, std::shared_ptr<Domain> domain, vector<Annotation> annotations) {
   _name = name;
   _domain = domain;
   _annotations = annotations;
@@ -28,8 +50,8 @@ Constraint::Constraint(string name) {
   _name = name;
 };
 
-Model::Model(vector<Variable> variables,
-             vector<Constraint> constraints) {
+Model::Model(std::vector<std::shared_ptr<Variable>> variables,
+             std::vector<std::shared_ptr<Constraint>> constraints) {
 
   _variables = variables;
   _constraints = constraints;

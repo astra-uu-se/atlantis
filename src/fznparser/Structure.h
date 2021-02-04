@@ -1,16 +1,35 @@
 #include <string>
 #include <vector>
+#include <memory>
 
-using namespace std;
-enum Type {intVar, boolVar};
+// Kolla sort och GC
+// using namespace std;
+// Do i care about the type of a variable?
 
 class Domain {
   public:
-    Domain(int lb, int ub);
     Domain();
-
+    virtual int getLb() = 0;
+    virtual int getUb() = 0;
     bool _undefined;
-    Type _type;
+};
+
+class BoolDomain : public Domain {
+  public:
+    BoolDomain();
+
+    int getLb();
+    int getUb();
+};
+
+class IntDomain : public Domain {
+  public:
+    IntDomain();
+    IntDomain(int lb, int ub);
+
+    int getLb();
+    int getUb();
+
     int _lb;
     int _ub;
 };
@@ -20,32 +39,41 @@ class Annotation {
     Annotation();
 };
 
+// Klass för arrayVariable eller bara array av Variables?
+// Ska Variables ha referenser till constraints?
 class Variable {
   public:
-    Variable(string name, Domain domain, vector<Annotation> annotations);
+    Variable(std::string name, std::shared_ptr<Domain> domain, std::vector<Annotation> annotations);
 
-    string _name;
-    vector<Annotation> _annotations;
-    Domain _domain;
-
+    std::string _name;
+    std::shared_ptr<Domain> _domain;
+    std::vector<Annotation> _annotations;
 };
 
-
-
+// Smart Pointers
 class Constraint {
   public:
-    Constraint(string name);
+    Constraint(std::string name);
 
-    string _name;
-    vector<Variable*> _varRefs;
+    std::string _name;
+    std::vector<Variable*> _varRefs;
+    std::vector<Annotation> _annotations;
 };
 
+class IntDiv : public Constraint {
+  public:
+    // Figure out how to get the reference here if we create this inside visitor.
+    // Raw pointers, rimligt här? Pga cykler.
+    // Kolla upp optional klass
+    Variable* a;
+    Variable* b;
+    Variable* c;
+};
 
 class Model {
   public:
-    Model(vector<Variable> variables,
-          vector<Constraint> constraints);
-
-    vector<Variable> _variables;
-    vector<Constraint> _constraints;
+    Model(std::vector<std::shared_ptr<Variable>> variables,
+          std::vector<std::shared_ptr<Constraint>> constraints);
+    std::vector<std::shared_ptr<Variable>> _variables;
+    std::vector<std::shared_ptr<Constraint>> _constraints;
 };

@@ -9,7 +9,7 @@ using namespace antlr4;
 
 int main() {
   std::ifstream stream;
-  stream.open("../fzn_examples/alldiff.fzn");
+  stream.open("../fzn_examples/input.fzn");
   ANTLRInputStream input(stream);
 
   FlatZincLexer lexer(&input);
@@ -23,12 +23,8 @@ int main() {
 
   std::cout << "Variables:" << std::endl;
   for (auto v : m._variables) {
-   std::cout << v._name << std::endl;
-  }
-
-  std::cout << "Constraints:" << std::endl;
-  for (auto c : m._constraints) {
-   std::cout << c._name << std::endl;
+   std::cout << v->_domain->getLb() << std::endl;
+   std::cout << v->_domain->getUb() << std::endl;
   }
 
   return 0;
