@@ -61,6 +61,7 @@ antlrcpp::Any FznVisitor::visitBasicVarType(
   }
 
   if (ctx->set()) {
+  // TODO: Är detta okej eller ska jag använda make_shared?
     std::set<int> s;
     for (auto i : ctx->set()->intLiteral()) {
       s.insert(stoi(i->getText()));
@@ -74,7 +75,15 @@ antlrcpp::Any FznVisitor::visitBasicVarType(
 
 antlrcpp::Any FznVisitor::visitAnnotations(
     FlatZincParser::AnnotationsContext *ctx) {
+  // TODO: Är detta okej eller ska jag använda make_shared?
   std::vector<Annotation> annotations;
-  annotations.push_back(Annotation());
+  for (auto a : ctx->annotation()) {
+    annotations.push_back(visitAnnotation(a));
+  }
   return annotations;
+}
+
+antlrcpp::Any FznVisitor::visitAnnotation(
+    FlatZincParser::AnnotationContext *ctx) {
+  return Annotation(ctx->Identifier()->getText());
 }

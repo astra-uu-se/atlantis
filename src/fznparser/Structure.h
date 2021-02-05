@@ -39,6 +39,8 @@ class IntDomain : public Domain {
 class Annotation {
  public:
   Annotation();
+  Annotation(std::string name);
+  std::string _name;
 };
 
 // Klass för arrayVariable eller bara array av Variables?

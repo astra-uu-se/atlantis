@@ -24,6 +24,7 @@ int main() {
   for (auto v : m._variables) {
     std::cout << v->_domain->getLb() << std::endl;
     std::cout << v->_domain->getUb() << std::endl;
+    std::cout << v->_annotations[0]._name << std::endl;
   }
 
   return 0;

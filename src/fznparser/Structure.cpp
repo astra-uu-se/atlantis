@@ -15,7 +15,6 @@ IntDomain::IntDomain(std::set<int> set) {
   _set = set;
   _lb = *(set.begin());
   _ub = *(set.rbegin());
-
 }
 int IntDomain::getLb() { return _lb; }
 int IntDomain::getUb() { return _ub; }
@@ -24,6 +23,7 @@ int BoolDomain::getLb() { return false; }
 int BoolDomain::getUb() { return true; }
 
 Annotation::Annotation() {}
+Annotation::Annotation(std::string name) { _name = name; }
 
 Variable::Variable(string name, std::shared_ptr<Domain> domain,
                    vector<Annotation> annotations) {
