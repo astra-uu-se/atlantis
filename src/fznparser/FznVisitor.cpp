@@ -42,7 +42,6 @@ antlrcpp::Any FznVisitor::visitConstraintItem(
 
 antlrcpp::Any FznVisitor::visitBasicVarType(
     FlatZincParser::BasicVarTypeContext *ctx) {
-  // Basic Types - No Domains
   if (ctx->basicParType()) {
     if (ctx->basicParType()->getText() == "bool") {
       return static_cast<std::shared_ptr<Domain>>(
@@ -54,11 +53,19 @@ antlrcpp::Any FznVisitor::visitBasicVarType(
     }
   }
 
-  if (ctx->intLiteral()[0]) {
-    int lb = stoi(ctx->intLiteral()[0]->getText());
-    int ub = stoi(ctx->intLiteral()[1]->getText());
-    std::shared_ptr<Domain> domain = std::make_shared<IntDomain>(lb, ub);
-    return domain;
+  if (ctx->intRange()) {
+    int lb = stoi(ctx->intRange()->intLiteral()[0]->getText());
+    int ub = stoi(ctx->intRange()->intLiteral()[1]->getText());
+    return static_cast<std::shared_ptr<Domain>>(
+        std::make_shared<IntDomain>(lb, ub));
+  }
+
+  if (ctx->set()) {
+    std::set<int> s;
+    for (auto i : ctx->set()->intLiteral()) {
+      s.insert(stoi(i->getText()));
+    }
+    return static_cast<std::shared_ptr<Domain>>(std::make_shared<IntDomain>(s));
   }
 
   std::cout << "Parsed unimplemented domain." << std::endl;

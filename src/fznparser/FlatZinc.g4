@@ -25,12 +25,16 @@ parType : basicParType
     ;
 
 basicVarType : 'var' basicParType
-                   | 'var' intLiteral '..' intLiteral
-                   | 'var' '{' intLiteral (',' intLiteral )* '}'
-                   | 'var' FloatLiteral '..' FloatLiteral
-                   | 'var' 'set' 'of' intLiteral '..' intLiteral
-                   | 'var' 'set' 'of' '{' intLiteral (',' intLiteral)* '}'
+                   | 'var' intRange
+                   | 'var' set
+                   | 'var' floatRange
+                   | 'var' 'set' 'of' intRange
+                   | 'var' 'set' 'of' set
     ;
+
+intRange : intLiteral '..' intLiteral ;
+set:  '{' intLiteral (',' intLiteral )* '}' ;
+floatRange : FloatLiteral '..' FloatLiteral ;
 
 arrayVarType : 'array' '[' indexSet ']' 'of' basicVarType ;
 

@@ -1,18 +1,17 @@
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
-// Kolla sort och GC
-// using namespace std;
-// Do i care about the type of a variable?
+// Kolla sort och GlobalCardinality
 
-// Domän kan vara set!
 class Domain {
  public:
   Domain();
   virtual int getLb() = 0;
   virtual int getUb() = 0;
-  bool _undefined;
+  bool defined();
+  bool _defined;
 };
 
 class BoolDomain : public Domain {
@@ -26,6 +25,7 @@ class BoolDomain : public Domain {
 class IntDomain : public Domain {
  public:
   IntDomain();
+  IntDomain(std::set<int> set);
   IntDomain(int lb, int ub);
 
   int getLb() override;
@@ -33,6 +33,7 @@ class IntDomain : public Domain {
 
   int _lb;
   int _ub;
+  std::set<int> _set;
 };
 
 class Annotation {
