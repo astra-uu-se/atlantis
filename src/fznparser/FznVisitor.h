@@ -4,13 +4,11 @@
 
 using namespace fznparser;
 
-
-class  FznVisitor : FlatZincBaseVisitor {
-public:
+class FznVisitor : FlatZincBaseVisitor {
+ public:
   antlrcpp::Any visitModel(FlatZincParser::ModelContext *ctx);
   antlrcpp::Any visitVarDeclItem(FlatZincParser::VarDeclItemContext *ctx);
   antlrcpp::Any visitConstraintItem(FlatZincParser::ConstraintItemContext *ctx);
   antlrcpp::Any visitBasicVarType(FlatZincParser::BasicVarTypeContext *ctx);
   antlrcpp::Any visitAnnotations(FlatZincParser::AnnotationsContext *ctx);
 };
-

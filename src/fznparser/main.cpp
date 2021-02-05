@@ -1,5 +1,4 @@
 #include <iostream>
-// #include "antlr4-runtime.h"
 #include "FlatZincLexer.h"
 #include "FlatZincParser.h"
 #include "FznVisitor.h"
@@ -23,8 +22,8 @@ int main() {
 
   std::cout << "Variables:" << std::endl;
   for (auto v : m._variables) {
-   std::cout << v->_domain->getLb() << std::endl;
-   std::cout << v->_domain->getUb() << std::endl;
+    std::cout << v->_domain->getLb() << std::endl;
+    std::cout << v->_domain->getUb() << std::endl;
   }
 
   return 0;

@@ -1,8 +1,8 @@
 #include "FznVisitor.h"
+
 #include <vector>
 
 antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
-
   std::vector<std::shared_ptr<Variable>> variables;
   for (auto variable : ctx->varDeclItem()) {
     std::shared_ptr<Variable> v = visitVarDeclItem(variable);
@@ -20,33 +20,37 @@ antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
   return m;
 }
 
-
-antlrcpp::Any FznVisitor::visitVarDeclItem(FlatZincParser::VarDeclItemContext *ctx) {
+antlrcpp::Any FznVisitor::visitVarDeclItem(
+    FlatZincParser::VarDeclItemContext *ctx) {
   std::string name = ctx->Identifier()->getText();
   std::vector<Annotation> annotations = visitAnnotations(ctx->annotations());
 
   if (ctx->basicVarType()) {
     std::shared_ptr<Domain> domain = visitBasicVarType(ctx->basicVarType());
-    return(std::make_shared<Variable>(name, domain, annotations));
+    return (std::make_shared<Variable>(name, domain, annotations));
   }
   // TODO: Array Variable Declaration
-  return(std::make_shared<Variable>(name, std::make_shared<IntDomain>(), annotations));
+  return (std::make_shared<Variable>(name, std::make_shared<IntDomain>(),
+                                     annotations));
 }
 
-antlrcpp::Any FznVisitor::visitConstraintItem(FlatZincParser::ConstraintItemContext *ctx) {
+antlrcpp::Any FznVisitor::visitConstraintItem(
+    FlatZincParser::ConstraintItemContext *ctx) {
   std::string name = ctx->Identifier()->getText();
   return std::make_shared<Constraint>(name);
 }
 
-antlrcpp::Any FznVisitor::visitBasicVarType(FlatZincParser::BasicVarTypeContext *ctx) {
+antlrcpp::Any FznVisitor::visitBasicVarType(
+    FlatZincParser::BasicVarTypeContext *ctx) {
   // Basic Types - No Domains
   if (ctx->basicParType()) {
     if (ctx->basicParType()->getText() == "bool") {
-      std::shared_ptr<Domain> domain = std::make_shared<BoolDomain>();
-      return domain;
-    } if (ctx->basicParType()->getText() == "int") {
-      std::shared_ptr<Domain> domain = std::make_shared<IntDomain>();
-      return domain;
+      return static_cast<std::shared_ptr<Domain>>(
+          std::make_shared<BoolDomain>());
+    }
+    if (ctx->basicParType()->getText() == "int") {
+      return static_cast<std::shared_ptr<Domain>>(
+          std::make_shared<IntDomain>());
     }
   }
 
@@ -61,7 +65,8 @@ antlrcpp::Any FznVisitor::visitBasicVarType(FlatZincParser::BasicVarTypeContext 
   return std::make_shared<IntDomain>();
 }
 
-antlrcpp::Any FznVisitor::visitAnnotations(FlatZincParser::AnnotationsContext *ctx) {
+antlrcpp::Any FznVisitor::visitAnnotations(
+    FlatZincParser::AnnotationsContext *ctx) {
   std::vector<Annotation> annotations;
   annotations.push_back(Annotation());
   return annotations;
