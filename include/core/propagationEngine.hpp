@@ -53,6 +53,8 @@ class PropagationEngine : public Engine {
   void open() override;
   void close() override;
 
+  void setPropagationMode(PropagationMode m);
+
   //--------------------- Notificaion ---------------------
   /***
    * @param t the timestamp when the changed happened
@@ -159,4 +161,9 @@ inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
   assert(v.idType != VarIdType::view);
   m_store.getIntVar(v).setValue(t, val);
   notifyMaybeChanged(t, v);
+}
+
+inline void PropagationEngine::setPropagationMode(PropagationMode m) {
+  assert(m_isOpen);
+  mode = m;
 }
