@@ -1,4 +1,3 @@
-// #include "antlr4-runtime.h"
 #include "FlatZincBaseVisitor.h"
 #include "Structure.h"
 
@@ -12,4 +11,5 @@ class FznVisitor : FlatZincBaseVisitor {
   antlrcpp::Any visitBasicVarType(FlatZincParser::BasicVarTypeContext *ctx);
   antlrcpp::Any visitAnnotations(FlatZincParser::AnnotationsContext *ctx);
   antlrcpp::Any visitAnnotation(FlatZincParser::AnnotationContext *ctx);
+  antlrcpp::Any visitExpr(FlatZincParser::ExprContext *ctx);
 };

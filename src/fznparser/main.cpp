@@ -20,11 +20,10 @@ int main() {
   FznVisitor visitor;
   Model m = visitor.visitModel(tree);
 
-  std::cout << "Variables:" << std::endl;
-  for (auto v : m._variables) {
-    std::cout << v->_domain->getLb() << std::endl;
-    std::cout << v->_domain->getUb() << std::endl;
-    std::cout << v->_annotations[0]._name << std::endl;
+  std::cout << "Constraint:" << std::endl;
+  for (auto c : m._constraints) {
+    std::cout << c->_name << std::endl;
+    c->print();
   }
 
   return 0;

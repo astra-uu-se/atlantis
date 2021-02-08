@@ -1,8 +1,9 @@
+#include <iostream>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-
 // Kolla sort och GlobalCardinality
 
 class Domain {
@@ -45,6 +46,15 @@ class Annotation {
 
 // Klass för arrayVariable eller bara array av Variables?
 // Ska Variables ha referenser till constraints?
+
+class Expression {
+ public:
+  Expression();
+  Expression(std::string name, bool isId);
+  bool _isId;
+  std::string _name;
+};
+
 class Variable {
  public:
   Variable(std::string name, std::shared_ptr<Domain> domain,
@@ -55,10 +65,22 @@ class Variable {
   std::vector<Annotation> _annotations;
 };
 
-// Smart Pointers
+class ConstraintItem {
+ public:
+  ConstraintItem();
+  ConstraintItem(std::string name, std::vector<Expression> expressions,
+                 std::vector<Annotation> annotations);
+  std::string _name;
+  std::vector<Expression> _expressions;
+  std::vector<Annotation> _annotations;
+};
+
 class Constraint {
  public:
+  Constraint();
   Constraint(std::string name);
+  virtual void print();
+
 
   std::string _name;
   std::vector<Variable*> _varRefs;
@@ -67,18 +89,25 @@ class Constraint {
 
 class IntDiv : public Constraint {
  public:
+  IntDiv(Variable* a, Variable* b, Variable* c,
+         std::vector<Annotation> annotations);
+  void print() override;
   // Figure out how to get the reference here if we create this inside visitor.
   // Raw pointers, rimligt här? Pga cykler.
   // Kolla upp optional klass
-  Variable* a;
-  Variable* b;
-  Variable* c;
+  Variable* _a;
+  Variable* _b;
+  Variable* _c;
+  std::vector<Annotation> _annotations;
 };
 
 class Model {
  public:
-  Model(std::vector<std::shared_ptr<Variable>> variables,
+  Model(std::map<std::string, std::shared_ptr<Variable>> variables,
         std::vector<std::shared_ptr<Constraint>> constraints);
-  std::vector<std::shared_ptr<Variable>> _variables;
+  std::map<std::string, std::shared_ptr<Variable>> _variables;
   std::vector<std::shared_ptr<Constraint>> _constraints;
+  static std::shared_ptr<Constraint> createConstraint(
+      ConstraintItem ci,
+      std::map<std::string, std::shared_ptr<Variable>> variables);
 };
