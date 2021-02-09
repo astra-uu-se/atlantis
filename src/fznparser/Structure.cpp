@@ -47,37 +47,37 @@ ConstraintItem::ConstraintItem(std::string name,
   _annotations = annotations;
 }
 
-Constraint::Constraint(string name) { _name = name; };
 Constraint::Constraint(){};
-void Constraint::print() {std::cout << "Nothing to print\n";}
+void Constraint::print() { std::cout << "Nothing to print\n"; }
 
-IntDiv::IntDiv(Variable* a, Variable* b, Variable* c, std::vector<Annotation> annotations) {
-  _a = a;
-  _b = b;
-  _c = c;
-  _annotations = annotations;
+IntDiv::IntDiv(ConstraintItem constraintItem) {
+  _constraintItem = constraintItem;
+  _name = constraintItem._name;
+}
+void IntDiv::init(std::map<std::string, std::shared_ptr<Variable>> variables) {
+  _a = (variables.find(_constraintItem._expressions[0]._name))->second.get();
+  _b = (variables.find(_constraintItem._expressions[1]._name))->second.get();
+  _c = (variables.find(_constraintItem._expressions[2]._name))->second.get();
 }
 void IntDiv::print() {
+  std::cout << _name << std::endl;
   std::cout << _a->_name << std::endl;
   std::cout << _b->_name << std::endl;
   std::cout << _c->_name << std::endl;
 }
 
-Model::Model(std::map<std::string, std::shared_ptr<Variable>> variables,
-             std::vector<std::shared_ptr<Constraint>> constraints) {
-  _variables = variables;
-  _constraints = constraints;
-};
-
-std::shared_ptr<Constraint> Model::createConstraint(
-    ConstraintItem ci,
-    std::map<std::string, std::shared_ptr<Variable>> variables) {
-  if (ci._name == "int_div") {
-    Variable* a = (variables.find(ci._expressions[0]._name))->second.get();
-    Variable* b = (variables.find(ci._expressions[1]._name))->second.get();
-    Variable* c = (variables.find(ci._expressions[2]._name))->second.get();
-    return std::make_shared<IntDiv>(a, b, c, ci._annotations);
+Model::Model(){};
+void Model::init() {
+  for (auto constraint : _constraints) {
+    constraint->init(_variables);
   }
-
-  return std::make_shared<Constraint>();
+}
+void Model::addVariable(std::shared_ptr<Variable> variable) {
+  _variables.insert(std::pair<std::string, std::shared_ptr<Variable>>(
+      variable->_name, variable));
+}
+void Model::addConstraint(ConstraintItem constraintItem) {
+  if (constraintItem._name == "int_div") {
+    _constraints.push_back(std::make_shared<IntDiv>(constraintItem));
+  }
 }

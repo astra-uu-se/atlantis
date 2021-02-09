@@ -3,20 +3,13 @@
 #include <vector>
 
 antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
-  std::map<std::string, std::shared_ptr<Variable>> variables;
+  Model m = Model();
   for (auto variable : ctx->varDeclItem()) {
-    std::shared_ptr<Variable> v = visitVarDeclItem(variable);
-    variables.insert(
-        std::pair<std::string, std::shared_ptr<Variable>>(v->_name, v));
+    m.addVariable(visitVarDeclItem(variable));
   }
-
-  std::vector<std::shared_ptr<Constraint>> constraints;
-  for (auto ci : ctx->constraintItem()) {
-    constraints.push_back(
-        Model::createConstraint(visitConstraintItem(ci), variables));
+  for (auto constraintItem : ctx->constraintItem()) {
+    m.addConstraint(visitConstraintItem(constraintItem));
   }
-
-  Model m = Model(variables, constraints);
   return m;
 }
 
@@ -59,7 +52,6 @@ antlrcpp::Any FznVisitor::visitBasicVarType(
     for (auto i : ctx->set()->intLiteral()) {
       s.insert(stoi(i->getText()));
     }
-    // TODO: Verify move.
     return static_cast<std::shared_ptr<Domain>>(std::make_shared<IntDomain>(s));
   }
 

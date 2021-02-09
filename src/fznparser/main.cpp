@@ -1,4 +1,5 @@
 #include <iostream>
+
 #include "FlatZincLexer.h"
 #include "FlatZincParser.h"
 #include "FznVisitor.h"
@@ -19,10 +20,10 @@ int main() {
 
   FznVisitor visitor;
   Model m = visitor.visitModel(tree);
+  m.init();
 
   std::cout << "Constraint:" << std::endl;
   for (auto c : m._constraints) {
-    std::cout << c->_name << std::endl;
     c->print();
   }
 

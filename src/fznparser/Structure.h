@@ -78,36 +78,31 @@ class ConstraintItem {
 class Constraint {
  public:
   Constraint();
-  Constraint(std::string name);
-  virtual void print();
+  virtual void print() = 0;
+  virtual void init(
+      std::map<std::string, std::shared_ptr<Variable>> variables) = 0;
 
-
+  ConstraintItem _constraintItem;
   std::string _name;
-  std::vector<Variable*> _varRefs;
-  std::vector<Annotation> _annotations;
 };
 
 class IntDiv : public Constraint {
  public:
-  IntDiv(Variable* a, Variable* b, Variable* c,
-         std::vector<Annotation> annotations);
+  IntDiv(ConstraintItem constraintItem);
   void print() override;
-  // Figure out how to get the reference here if we create this inside visitor.
-  // Raw pointers, rimligt här? Pga cykler.
-  // Kolla upp optional klass
+  void init(
+      std::map<std::string, std::shared_ptr<Variable>> variables) override;
   Variable* _a;
   Variable* _b;
   Variable* _c;
-  std::vector<Annotation> _annotations;
 };
 
 class Model {
  public:
-  Model(std::map<std::string, std::shared_ptr<Variable>> variables,
-        std::vector<std::shared_ptr<Constraint>> constraints);
+  Model();
   std::map<std::string, std::shared_ptr<Variable>> _variables;
   std::vector<std::shared_ptr<Constraint>> _constraints;
-  static std::shared_ptr<Constraint> createConstraint(
-      ConstraintItem ci,
-      std::map<std::string, std::shared_ptr<Variable>> variables);
+  void init();
+  void addVariable(std::shared_ptr<Variable> v);
+  void addConstraint(ConstraintItem ci);
 };
