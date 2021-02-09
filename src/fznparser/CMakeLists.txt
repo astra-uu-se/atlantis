@@ -37,8 +37,10 @@ include_directories(${ANTLR_Sample_OUTPUT_DIR})
 
 # add generated grammar to demo binary target
 add_executable(demo main.cpp
+                    structure.cpp
+                    model.cpp
+                    constraint.cpp
                     FznVisitor.cpp
-                    Structure.cpp
                ${ANTLR_Sample_CXX_OUTPUTS})
 target_link_libraries(demo antlr4_static)
 

@@ -1,5 +1,6 @@
+#pragma once
 #include "FlatZincBaseVisitor.h"
-#include "Structure.h"
+#include "model.hpp"
 
 using namespace fznparser;
 

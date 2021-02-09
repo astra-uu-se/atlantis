@@ -3,6 +3,7 @@
 #include "FlatZincLexer.h"
 #include "FlatZincParser.h"
 #include "FznVisitor.h"
+#include "model.hpp"
 
 using namespace fznparser;
 using namespace antlr4;
