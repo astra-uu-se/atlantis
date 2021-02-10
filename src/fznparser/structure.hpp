@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-
 class Domain {
  public:
   Domain();
@@ -53,17 +52,17 @@ class Expression {
 
 class Node {
  public:
-  virtual std::vector<std::shared_ptr<Node>> getNext() = 0;
-    virtual ~Node() = default;
+  virtual std::vector<Node*> getNext() = 0;
+  virtual ~Node() = default;
 };
 
 class Variable : public Node {
  public:
   Variable(std::string name, std::shared_ptr<Domain> domain,
            std::vector<Annotation> annotations);
-  std::vector<std::shared_ptr<Node>> getNext() override;
+  std::vector<Node*> getNext() override;
 
-  std::vector<std::shared_ptr<Node>> _constraints;
+  std::vector<Node*> _constraints;
   std::string _name;
   std::shared_ptr<Domain> _domain;
   std::vector<Annotation> _annotations;

@@ -17,7 +17,7 @@ void Model::addConstraint(ConstraintItem constraintItem) {
 }
 bool Model::hasCycle() {
   for (auto n_pair : _variables) {
-    auto n = n_pair.second;
+    auto n = n_pair.second.get();
     if (!n->getNext().empty()) {
       for (auto m : n->getNext()) {
         if (!m->getNext().empty()) {
@@ -26,7 +26,7 @@ bool Model::hasCycle() {
             std::cout << m << std::endl;
             std::cout << n << std::endl;
             std::cout << o << std::endl;
-            if (o.get() == n.get()) {
+            if (o == n) {
               return true;
             }
           }

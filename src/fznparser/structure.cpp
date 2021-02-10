@@ -35,6 +35,4 @@ Variable::Variable(std::string name, std::shared_ptr<Domain> domain,
   _domain = domain;
   _annotations = annotations;
 }
-std::vector<std::shared_ptr<Node>> Variable::getNext() {
-  return _constraints;
-}
+std::vector<Node*> Variable::getNext() { return _constraints; }
