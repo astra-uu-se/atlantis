@@ -1,6 +1,5 @@
 #include "model.hpp"
 
-
 Model::Model(){};
 void Model::init() {
   for (auto constraint : _constraints) {
@@ -9,10 +8,31 @@ void Model::init() {
 }
 void Model::addVariable(std::shared_ptr<Variable> variable) {
   _variables.insert(std::pair<std::string, std::shared_ptr<Variable>>(
-      variable->_name, variable));
+                      variable->_name, variable));
 }
 void Model::addConstraint(ConstraintItem constraintItem) {
   if (constraintItem._name == "int_div") {
     _constraints.push_back(std::make_shared<IntDiv>(constraintItem));
   }
+}
+bool Model::hasCycle() {
+  for (auto n_pair : _variables) {
+    auto n = n_pair.second;
+    if (!n->getNext().empty()) {
+      for (auto m : n->getNext()) {
+        if (!m->getNext().empty()) {
+          for (auto o : m->getNext()) {
+            std::cout << "Testing:" << std::endl;
+            std::cout << m << std::endl;
+            std::cout << n << std::endl;
+            std::cout << o << std::endl;
+            if (o.get() == n.get()) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+  }
+  return false;
 }

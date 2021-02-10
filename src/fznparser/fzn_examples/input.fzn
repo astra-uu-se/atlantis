@@ -1,5 +1,5 @@
 var int: a_try:: output_var;
 var int: b_try:: output_var;
 var int: c_try:: output_var;
-constraint int_div(a_try, b_try, c_try);
+constraint int_div(a_try, a_try, c_try);
 solve  satisfy;

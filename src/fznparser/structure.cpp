@@ -1,7 +1,5 @@
 #include "structure.hpp"
 
-using namespace std;
-
 Domain::Domain() { _defined = false; }
 bool Domain::defined() { return _defined; }
 IntDomain::IntDomain() { _defined = false; }
@@ -32,8 +30,11 @@ Expression::Expression(std::string name, bool isId) {
 }
 
 Variable::Variable(std::string name, std::shared_ptr<Domain> domain,
-                   vector<Annotation> annotations) {
+                   std::vector<Annotation> annotations) {
   _name = name;
   _domain = domain;
   _annotations = annotations;
-};
+}
+std::vector<std::shared_ptr<Node>> Variable::getNext() {
+  return _constraints;
+}

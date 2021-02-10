@@ -17,4 +17,5 @@ class Model {
   void init();
   void addVariable(std::shared_ptr<Variable> v);
   void addConstraint(ConstraintItem ci);
+  bool hasCycle();
 };
