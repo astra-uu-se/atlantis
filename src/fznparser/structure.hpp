@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+class Constraint;
+
 class Domain {
  public:
   Domain();
@@ -61,8 +63,12 @@ class Variable : public Node {
   Variable(std::string name, std::shared_ptr<Domain> domain,
            std::vector<Annotation> annotations);
   std::vector<Node*> getNext() override;
+  void defineBy(Node* constraint);
+  void addConstraint(Node* constraint);
 
-  std::vector<Node*> _constraints;
+  bool _isDefined;
+  Node* _definedBy;
+  std::vector<Node*> _nextConstraints;
   std::string _name;
   std::shared_ptr<Domain> _domain;
   std::vector<Annotation> _annotations;

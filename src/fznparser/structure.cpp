@@ -34,5 +34,13 @@ Variable::Variable(std::string name, std::shared_ptr<Domain> domain,
   _name = name;
   _domain = domain;
   _annotations = annotations;
+  _isDefined = false;
 }
-std::vector<Node*> Variable::getNext() { return _constraints; }
+void Variable::defineBy(Node* constraint) {
+  _isDefined = true;
+  _definedBy = constraint;
+}
+void Variable::addConstraint(Node* constraint) {
+  _nextConstraints.push_back(constraint);
+}
+std::vector<Node*> Variable::getNext() { return _nextConstraints; }

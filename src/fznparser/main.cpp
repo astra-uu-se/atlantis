@@ -23,10 +23,6 @@ int main() {
   Model m = visitor.visitModel(tree);
   m.init();
 
-  std::cout << "Constraint:" << std::endl;
-  for (auto c : m._constraints) {
-    c->print();
-  }
   if (m.hasCycle()) {
     std::cout << "Has Cycle\n";
   } else {

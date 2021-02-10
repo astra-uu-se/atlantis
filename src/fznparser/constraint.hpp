@@ -1,4 +1,3 @@
-#pragma once
 #include <iostream>
 #include <map>
 #include <memory>
@@ -17,19 +16,22 @@ class ConstraintItem {
   std::vector<Annotation> _annotations;
 };
 
-class Constraint : public Node
-{
+class Constraint : public Node {
  public:
   Constraint();
-  virtual void print() = 0;
   virtual void init(
       const std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
-  virtual Variable* getVariable(
-      const std::map<std::string, std::shared_ptr<Variable>>& variables, std::string name);
-    virtual ~Constraint() = default;
+  virtual ~Constraint() = default;
+  virtual std::vector<Node*> getNext();
 
+ protected:
+  void defineVariable(Variable* variable);
+  virtual Variable* getVariable(
+      const std::map<std::string, std::shared_ptr<Variable>>& variables,
+      std::string name);
   ConstraintItem _constraintItem;
   std::string _name;
+  std::vector<Node*> _next;
 };
 
 /* int_div(var int: a, var int: b, var int: c)
@@ -39,33 +41,11 @@ class Constraint : public Node
 class IntDiv : public Constraint {
  public:
   IntDiv(ConstraintItem constraintItem);
-  void print() override;
-  void init(
-      const std::map<std::string, std::shared_ptr<Variable>>& variables) override;
-  std::vector<Node*> getNext() override;
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
   Variable* _a;
   Variable* _b;
   Variable* _c;
-  std::vector<Node*> _next;
-};
-/* array_var_int_element(var int: b, array [int] of var int: as, var int: c)
-** Defines: c
-** Depends: b (statically), as (dynamically)
-*/
-class ArrayVarIntElement : public Constraint {
- public:
-  ArrayVarIntElement(ConstraintItem constraintItem);
-  void init(
-      const std::map<std::string, std::shared_ptr<Variable>>& variables) override;
-};
-/* int_plus(var int: a, var int: b, var int: c)
-** Defines: any
-*/
-class IntPlus : public Constraint {
- public:
-  IntPlus(ConstraintItem constraintItem);
-  void init(
-      const std::map<std::string, std::shared_ptr<Variable>>& variables) override;
 };
 /* int_max(var int: a, var int: b, var int: c)
 ** Defines: c
@@ -74,8 +54,33 @@ class IntPlus : public Constraint {
 class IntMax : public Constraint {
  public:
   IntMax(ConstraintItem constraintItem);
-  void init(
-      const std::map<std::string, std::shared_ptr<Variable>>& variables) override;
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
+  Variable* _a;
+  Variable* _b;
+  Variable* _c;
+};
+/* int_plus(var int: a, var int: b, var int: c)
+** Defines: any
+*/
+class IntPlus : public Constraint {
+ public:
+  IntPlus(ConstraintItem constraintItem);
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
+  Variable* _a;
+  Variable* _b;
+  Variable* _c;
+};
+/* array_var_int_element(var int: b, array [int] of var int: as, var int: c)
+** Defines: c
+** Depends: b (statically), as (dynamically)
+*/
+class ArrayVarIntElement : public Constraint {
+ public:
+  ArrayVarIntElement(ConstraintItem constraintItem);
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
 };
 /* global_cardinality(array [int] of var int: x,
 **                           array [int] of int: cover,

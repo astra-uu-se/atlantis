@@ -13,6 +13,10 @@ void Model::addVariable(std::shared_ptr<Variable> variable) {
 void Model::addConstraint(ConstraintItem constraintItem) {
   if (constraintItem._name == "int_div") {
     _constraints.push_back(std::make_shared<IntDiv>(constraintItem));
+  } else if (constraintItem._name == "int_max") {
+    _constraints.push_back(std::make_shared<IntMax>(constraintItem));
+  } else if (constraintItem._name == "int_plus") {
+    _constraints.push_back(std::make_shared<IntPlus>(constraintItem));
   }
 }
 bool Model::hasCycle() {
