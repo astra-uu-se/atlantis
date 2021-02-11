@@ -10,19 +10,18 @@ ConstraintItem::ConstraintItem(std::string name,
   _annotations = annotations;
 }
 
-
 /********************* Constraint **************************/
 Constraint::Constraint() {}
 
 Variable* Constraint::getVariable(
     const std::map<std::string, std::shared_ptr<Variable>>& variables,
     std::string name) {
+  assert(variables.find(name) != variables.end());
   return variables.find(name)->second.get();
 }
 
-std::vector<Node*> Constraint::getNext() {
-  return _next;
-}
+std::vector<Node*> Constraint::getNext() { return _next; }
+
 void Constraint::defineVariable(Variable* variable) {
   _next.push_back(variable);
   variable->defineBy(this);

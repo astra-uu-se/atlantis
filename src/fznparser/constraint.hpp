@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cassert>
 
 #include "structure.hpp"
 
