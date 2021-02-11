@@ -21,10 +21,18 @@ antlrcpp::Any FznVisitor::visitVarDeclItem(
   if (ctx->basicVarType()) {
     std::shared_ptr<Domain> domain = visitBasicVarType(ctx->basicVarType());
     return (std::make_shared<Variable>(name, domain, annotations));
+  } else if (ctx->arrayVarType()) {
+    std::shared_ptr<Domain> domain = visitArrayVarType(ctx->arrayVarType());
+    Expression expression = visitArrayLiteral(ctx->arrayLiteral());
+    return std::make_shared<Variable>(name, domain, annotations, expression);
   }
-  // TODO: Array Variable Declaration
   return (std::make_shared<Variable>(name, std::make_shared<IntDomain>(),
                                      annotations));
+}
+
+antlrcpp::Any FznVisitor::visitArrayVarType(
+    FlatZincParser::ArrayVarTypeContext *ctx) {
+  return static_cast<std::shared_ptr<Domain>>(std::make_shared<IntDomain>());
 }
 
 antlrcpp::Any FznVisitor::visitBasicVarType(
@@ -87,7 +95,23 @@ antlrcpp::Any FznVisitor::visitConstraintItem(
 
 antlrcpp::Any FznVisitor::visitExpr(FlatZincParser::ExprContext *ctx) {
   if (auto b = ctx->basicExpr()) {
-    if (b->Identifier()) return Expression(b->Identifier()->getText(), true);
+    if (b->Identifier()) {
+      return Expression(b->Identifier()->getText(), true);
+    }
+  } if (auto c = ctx->arrayLiteral()) {
+    return visitArrayLiteral(c);
   }
   return Expression();
+}
+
+antlrcpp::Any FznVisitor::visitArrayLiteral(
+    FlatZincParser::ArrayLiteralContext *ctx) {
+  Expression ax;
+  ax._isId = false;
+  for (auto c : ctx->basicExpr()) {
+    if (c->Identifier()) {
+      ax.addExpression(Expression(c->Identifier()->getText(), true));
+    }
+  }
+  return ax;
 }

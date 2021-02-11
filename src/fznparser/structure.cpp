@@ -28,7 +28,18 @@ Expression::Expression(std::string name, bool isId) {
   _name = name;
   _isId = isId;
 }
+void Expression::addExpression(Expression expression) {
+  _expressions.push_back(expression);
+}
 
+Variable::Variable(std::string name, std::shared_ptr<Domain> domain,
+                   std::vector<Annotation> annotations, Expression expression) {
+  _name = name;
+  _domain = domain;
+  _annotations = annotations;
+  _isDefined = false;
+  _expression = expression;
+}
 Variable::Variable(std::string name, std::shared_ptr<Domain> domain,
                    std::vector<Annotation> annotations) {
   _name = name;
@@ -40,9 +51,7 @@ void Variable::defineBy(Node* constraint) {
   _isDefined = true;
   _definedBy = constraint;
 }
-bool Variable::isDefined() {
-  return _isDefined;
-}
+bool Variable::isDefined() { return _isDefined; }
 void Variable::addConstraint(Node* constraint) {
   _nextConstraints.push_back(constraint);
 }

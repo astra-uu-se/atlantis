@@ -19,6 +19,9 @@ Variable* Constraint::getVariable(
   assert(variables.find(name) != variables.end());
   return variables.find(name)->second.get();
 }
+Expression Constraint::getExpression(int n) {
+  return _constraintItem._expressions[n];
+}
 
 std::vector<Node*> Constraint::getNext() { return _next; }
 
@@ -73,4 +76,43 @@ void IntPlus::init(
   defineVariable(_a);
   _b->addConstraint(this);
   _c->addConstraint(this);
+}
+
+/********************* GlobalCardinality ******************************/
+GlobalCardinality::GlobalCardinality(ConstraintItem constraintItem) {
+  _constraintItem = constraintItem;
+  _name = constraintItem._name;
+}
+void GlobalCardinality::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  //TODO: Factor out this.
+  if (getExpression(0)._isId) {
+    for (auto v : getVariable(variables, getExpression(0)._name)
+                      ->_expression._expressions) {
+      x.push_back(getVariable(variables, v._name));
+    }
+  } else {
+    for (auto v : getExpression(0)._expressions) {
+      x.push_back(getVariable(variables, v._name));
+    }
+  }
+  cover = getVariable(variables, getExpression(1)._name);
+
+  if (getExpression(2)._isId) {
+    for (auto v : getVariable(variables, getExpression(2)._name)
+                      ->_expression._expressions) {
+      counts.push_back(getVariable(variables, v._name));
+    }
+  } else {
+    for (auto v : getExpression(2)._expressions) {
+      counts.push_back(getVariable(variables, v._name));
+    }
+  }
+
+  for (auto v : x) {
+    v->addConstraint(this);
+  }
+  for (auto v : counts) {
+    defineVariable(v);
+  }
 }

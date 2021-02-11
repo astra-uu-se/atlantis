@@ -1,5 +1,12 @@
-var int: a_try:: output_var;
-var int: b_try:: output_var;
-var int: c_try:: output_var;
-constraint int_div(a_try, a_try, c_try);
+var int: a:: output_var;
+var int: b:: output_var;
+var int: c:: output_var;
+var int: d:: output_var;
+var int: e:: output_var;
+var int: f:: output_var;
+array [1..3] of var int: x = [a, b, c];
+array [1..3] of var int: cover = [1,2,3];
+array [1..3] of var int: counts = [d, e, f];
+constraint int_div(a, e, f);
+constraint global_cardinality(x, cover, counts);
 solve  satisfy;

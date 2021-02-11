@@ -50,27 +50,32 @@ class Expression {
   Expression(std::string name, bool isId);
   bool _isId;
   std::string _name;
+  void addExpression(Expression expression);
+  std::vector<Expression> _expressions;
 };
 
 class Node {
  public:
   virtual std::vector<Node*> getNext() = 0;
   virtual ~Node() = default;
+  std::string _name;
 };
 
 class Variable : public Node {
  public:
   Variable(std::string name, std::shared_ptr<Domain> domain,
            std::vector<Annotation> annotations);
+  Variable(std::string name, std::shared_ptr<Domain> domain,
+           std::vector<Annotation> annotations, Expression expression);
   std::vector<Node*> getNext() override;
   void defineBy(Node* constraint);
   void addConstraint(Node* constraint);
   bool isDefined();
 
+  Expression _expression;
   bool _isDefined;
   Node* _definedBy;
   std::vector<Node*> _nextConstraints;
-  std::string _name;
   std::shared_ptr<Domain> _domain;
   std::vector<Annotation> _annotations;
 };

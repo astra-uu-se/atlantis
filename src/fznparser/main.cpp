@@ -24,9 +24,9 @@ int main() {
   m.init();
 
   if (m.hasCycle()) {
-    std::cout << "Has Cycle\n";
+    std::cout << "FOUND CYCLE\n";
   } else {
-    std::cout << "Does not have cycles\n";
+    std::cout << "No cycle found\n";
   }
 
   return 0;
