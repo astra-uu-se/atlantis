@@ -18,4 +18,5 @@ class Model {
   void addVariable(std::shared_ptr<Variable> v);
   void addConstraint(ConstraintItem ci);
   bool hasCycle();
+  bool hasCycleAux(std::map<Node*, bool> visited, Node* n);
 };

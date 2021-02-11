@@ -22,21 +22,18 @@ void Model::addConstraint(ConstraintItem constraintItem) {
 bool Model::hasCycle() {
   for (auto n_pair : _variables) {
     auto n = n_pair.second.get();
-    if (!n->getNext().empty()) {
-      for (auto m : n->getNext()) {
-        if (!m->getNext().empty()) {
-          for (auto o : m->getNext()) {
-            std::cout << "Testing:" << std::endl;
-            std::cout << m << std::endl;
-            std::cout << n << std::endl;
-            std::cout << o << std::endl;
-            if (o == n) {
-              return true;
-            }
-          }
-        }
-      }
+    if (!n->isDefined() && !n->getNext().empty()) {
+      std::map<Node*, bool> visited;
+      if (hasCycleAux(visited, n)) return true;
     }
+  }
+  return false;
+}
+bool Model::hasCycleAux(std::map<Node*, bool> visited, Node* n) {
+  if (visited.count(n)) return true;
+  visited.insert(std::pair<Node*, bool>(n, true));
+  for (auto m : n->getNext()) {
+    if (hasCycleAux(visited, m)) return true;
   }
   return false;
 }

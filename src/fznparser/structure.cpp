@@ -40,6 +40,9 @@ void Variable::defineBy(Node* constraint) {
   _isDefined = true;
   _definedBy = constraint;
 }
+bool Variable::isDefined() {
+  return _isDefined;
+}
 void Variable::addConstraint(Node* constraint) {
   _nextConstraints.push_back(constraint);
 }

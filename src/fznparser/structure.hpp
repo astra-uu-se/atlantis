@@ -65,6 +65,7 @@ class Variable : public Node {
   std::vector<Node*> getNext() override;
   void defineBy(Node* constraint);
   void addConstraint(Node* constraint);
+  bool isDefined();
 
   bool _isDefined;
   Node* _definedBy;
