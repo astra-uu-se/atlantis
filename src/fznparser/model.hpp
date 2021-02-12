@@ -7,8 +7,6 @@
 #include <memory>
 #include <vector>
 
-// Kolla sort och GlobalCardinality
-
 class Model {
  public:
   Model();

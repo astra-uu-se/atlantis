@@ -27,6 +27,8 @@ class Constraint : public Node {
 
  protected:
   Expression getExpression(int n);
+  std::vector<Variable*> getArrayVariable(
+      const std::map<std::string, std::shared_ptr<Variable>>& variables, int n);
   void defineVariable(Variable* variable);
   virtual Variable* getVariable(
       const std::map<std::string, std::shared_ptr<Variable>>& variables,
@@ -94,7 +96,7 @@ class GlobalCardinality : public Constraint {
   GlobalCardinality(ConstraintItem constraintItem);
   void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
       override;
-  std::vector<Variable*> x;
-  Variable* cover;
-  std::vector<Variable*> counts;
+  std::vector<Variable*> _x;
+  Variable* _cover;
+  std::vector<Variable*> _counts;
 };

@@ -20,7 +20,25 @@ Variable* Constraint::getVariable(
   return variables.find(name)->second.get();
 }
 Expression Constraint::getExpression(int n) {
+  assert(n < _constraintItem._expressions.size());
   return _constraintItem._expressions[n];
+}
+// TODO: Clean up for readability
+// TODO: Consider what happens when this is called on non-array.
+std::vector<Variable*> Constraint::getArrayVariable(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables, int n) {
+  std::vector<Variable*> x;
+  if (getExpression(n)._isId) {
+    for (auto v : getVariable(variables, getExpression(n)._name)
+                      ->_expression._expressions) {
+      x.push_back(getVariable(variables, v._name));
+    }
+  } else {
+    for (auto v : getExpression(n)._expressions) {
+      x.push_back(getVariable(variables, v._name));
+    }
+  }
+  return x;
 }
 
 std::vector<Node*> Constraint::getNext() { return _next; }
@@ -85,34 +103,14 @@ GlobalCardinality::GlobalCardinality(ConstraintItem constraintItem) {
 }
 void GlobalCardinality::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  //TODO: Factor out this.
-  if (getExpression(0)._isId) {
-    for (auto v : getVariable(variables, getExpression(0)._name)
-                      ->_expression._expressions) {
-      x.push_back(getVariable(variables, v._name));
-    }
-  } else {
-    for (auto v : getExpression(0)._expressions) {
-      x.push_back(getVariable(variables, v._name));
-    }
-  }
-  cover = getVariable(variables, getExpression(1)._name);
+  _x = getArrayVariable(variables, 0);
+  _cover = getVariable(variables, getExpression(1)._name);
+  _counts = getArrayVariable(variables, 2);
 
-  if (getExpression(2)._isId) {
-    for (auto v : getVariable(variables, getExpression(2)._name)
-                      ->_expression._expressions) {
-      counts.push_back(getVariable(variables, v._name));
-    }
-  } else {
-    for (auto v : getExpression(2)._expressions) {
-      counts.push_back(getVariable(variables, v._name));
-    }
-  }
-
-  for (auto v : x) {
+  for (auto v : _x) {
     v->addConstraint(this);
   }
-  for (auto v : counts) {
+  for (auto v : _counts) {
     defineVariable(v);
   }
 }
