@@ -12,6 +12,10 @@ ConstraintItem::ConstraintItem(std::string name,
 
 /********************* Constraint **************************/
 Constraint::Constraint() {}
+Constraint::Constraint(ConstraintItem constraintItem) {
+  _constraintItem = constraintItem;
+  _name = constraintItem._name;
+}
 
 Variable* Constraint::getVariable(
     const std::map<std::string, std::shared_ptr<Variable>>& variables,
@@ -49,10 +53,6 @@ void Constraint::defineVariable(Variable* variable) {
 }
 
 /********************* IntDiv ******************************/
-IntDiv::IntDiv(ConstraintItem constraintItem) {
-  _constraintItem = constraintItem;
-  _name = constraintItem._name;
-}
 void IntDiv::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _a = getVariable(variables, _constraintItem._expressions[0]._name);
@@ -65,10 +65,6 @@ void IntDiv::init(
 }
 
 /********************* IntMax ******************************/
-IntMax::IntMax(ConstraintItem constraintItem) {
-  _constraintItem = constraintItem;
-  _name = constraintItem._name;
-}
 void IntMax::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _a = getVariable(variables, _constraintItem._expressions[0]._name);
@@ -81,10 +77,6 @@ void IntMax::init(
 }
 
 /********************* IntPlus ******************************/
-IntPlus::IntPlus(ConstraintItem constraintItem) {
-  _constraintItem = constraintItem;
-  _name = constraintItem._name;
-}
 void IntPlus::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _a = getVariable(variables, _constraintItem._expressions[0]._name);
@@ -97,12 +89,9 @@ void IntPlus::init(
 }
 
 /********************* GlobalCardinality ******************************/
-GlobalCardinality::GlobalCardinality(ConstraintItem constraintItem) {
-  _constraintItem = constraintItem;
-  _name = constraintItem._name;
-}
 void GlobalCardinality::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  // [a, b, 3] -> [a, b]
   _x = getArrayVariable(variables, 0);
   _cover = getVariable(variables, getExpression(1)._name);
   _counts = getArrayVariable(variables, 2);
@@ -113,4 +102,6 @@ void GlobalCardinality::init(
   for (auto v : _counts) {
     defineVariable(v);
   }
+  // Skriv om till count och en mindre version av sig själv?
+  // Har vi en cykel och kan den undvikas?
 }

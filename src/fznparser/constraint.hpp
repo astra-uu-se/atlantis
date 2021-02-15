@@ -20,6 +20,7 @@ class ConstraintItem {
 class Constraint : public Node {
  public:
   Constraint();
+  Constraint(ConstraintItem constraintItem);
   virtual void init(
       const std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
   virtual ~Constraint() = default;
@@ -43,7 +44,7 @@ class Constraint : public Node {
 */
 class IntDiv : public Constraint {
  public:
-  IntDiv(ConstraintItem constraintItem);
+  IntDiv(ConstraintItem constraintItem) : Constraint(constraintItem){};
   void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
       override;
   Variable* _a;
@@ -56,7 +57,7 @@ class IntDiv : public Constraint {
 */
 class IntMax : public Constraint {
  public:
-  IntMax(ConstraintItem constraintItem);
+  IntMax(ConstraintItem constraintItem) : Constraint(constraintItem){};
   void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
       override;
   Variable* _a;
@@ -68,7 +69,7 @@ class IntMax : public Constraint {
 */
 class IntPlus : public Constraint {
  public:
-  IntPlus(ConstraintItem constraintItem);
+  IntPlus(ConstraintItem constraintItem) : Constraint(constraintItem){};
   void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
       override;
   Variable* _a;
@@ -81,7 +82,8 @@ class IntPlus : public Constraint {
 */
 class ArrayVarIntElement : public Constraint {
  public:
-  ArrayVarIntElement(ConstraintItem constraintItem);
+  ArrayVarIntElement(ConstraintItem constraintItem)
+      : Constraint(constraintItem){};
   void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
       override;
 };
@@ -93,7 +95,8 @@ class ArrayVarIntElement : public Constraint {
 */
 class GlobalCardinality : public Constraint {
  public:
-  GlobalCardinality(ConstraintItem constraintItem);
+  GlobalCardinality(ConstraintItem constraintItem)
+      : Constraint(constraintItem){};
   void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
       override;
   std::vector<Variable*> _x;
