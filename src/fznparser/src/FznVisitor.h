@@ -14,5 +14,5 @@ class FznVisitor : FlatZincBaseVisitor {
   antlrcpp::Any visitAnnotation(FlatZincParser::AnnotationContext *ctx);
   antlrcpp::Any visitExpr(FlatZincParser::ExprContext *ctx);
   antlrcpp::Any visitArrayLiteral(FlatZincParser::ArrayLiteralContext *ctx);
-  antlrcpp::Any visitArrayVarType(FlatZincParser::ArrayVarTypeContext *ctx);
+  // antlrcpp::Any visitArrayVarType(FlatZincParser::ArrayVarTypeContext *ctx);
 };

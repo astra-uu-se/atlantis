@@ -1,3 +1,5 @@
+set(PROJECT_NAME fznparser)
+project(${PROJECT_NAME} LANGUAGES CXX)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -7,7 +9,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.7 FATAL_ERROR)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # compiler must be 11 or 14
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # required if linking to static library
 add_definitions(-DANTLR4CPP_STATIC)
@@ -35,12 +37,13 @@ antlr_target(Sample FlatZinc.g4
 # include generated files in project environment
 include_directories(${ANTLR_Sample_OUTPUT_DIR})
 
+
 # add generated grammar to demo binary target
-add_executable(demo main.cpp
-                    structure.cpp
-                    model.cpp
-                    constraint.cpp
-                    FznVisitor.cpp
+add_executable(demo src/main.cpp
+                    src/structure.cpp
+                    src/model.cpp
+                    src/constraint.cpp
+                    src/FznVisitor.cpp
                ${ANTLR_Sample_CXX_OUTPUTS})
 target_link_libraries(demo antlr4_static)
 
