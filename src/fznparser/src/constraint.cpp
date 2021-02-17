@@ -1,26 +1,24 @@
 #include "constraint.hpp"
 
 /********************* Constraint Item *********************/
-ConstraintItem::ConstraintItem() {}
-ConstraintItem::ConstraintItem(std::string name,
+ConstraintBox::ConstraintBox() {}
+ConstraintBox::ConstraintBox(std::string name,
                                std::vector<Expression> expressions,
                                std::vector<Annotation> annotations) {
   _name = name;
   _expressions = expressions;
   _annotations = annotations;
 }
-void ConstraintItem::init(std::map<std::string, std::shared_ptr<Item>>& items) {
+void ConstraintBox::prepare(std::map<std::string, std::shared_ptr<Item>>& items) {
   for (auto e : _expressions) {
     if (items.find(e.getName()) == items.end()) {
       if (e.isArray()) {  // Create new entry for literal array.
         std::vector<Annotation> ann;
         auto av =
             std::make_shared<ArrayVariable>(e.getName(), ann, e._elements);
-        av->init(items);
         items.insert(std::pair<std::string, std::shared_ptr<Item>>(
             av->getName(), static_cast<std::shared_ptr<Item>>(av)));
       } else if (!e.isId()) {
-
         auto p = std::make_shared<Parameter>(e.getName());
         items.insert(std::pair<std::string, std::shared_ptr<Item>>(
             p->getName(), static_cast<std::shared_ptr<Item>>(p)));
@@ -31,14 +29,14 @@ void ConstraintItem::init(std::map<std::string, std::shared_ptr<Item>>& items) {
 
 /********************* Constraint **************************/
 Constraint::Constraint() {}
-Constraint::Constraint(ConstraintItem constraintItem) {
-  _constraintItem = constraintItem;
-  _name = constraintItem._name;
+Constraint::Constraint(ConstraintBox constraintBox) {
+  _constraintBox = constraintBox;
+  _name = constraintBox._name;
 }
 
 Expression Constraint::getExpression(int n) {
-  assert(n < _constraintItem._expressions.size());
-  return _constraintItem._expressions[n];
+  assert(n < _constraintBox._expressions.size());
+  return _constraintBox._expressions[n];
 }
 
 std::vector<Node*> Constraint::getNext() { return _defines; }
@@ -99,9 +97,9 @@ void IntDiv::init(std::map<std::string, std::shared_ptr<Item>>& items) {
 // /********************* IntMax ******************************/
 // void IntMax::init(
 //     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-//   _a = getVariable(variables, _constraintItem._expressions[0]._name);
-//   _b = getVariable(variables, _constraintItem._expressions[1]._name);
-//   _c = getVariable(variables, _constraintItem._expressions[2]._name);
+//   _a = getVariable(variables, _constraintBox._expressions[0]._name);
+//   _b = getVariable(variables, _constraintBox._expressions[1]._name);
+//   _c = getVariable(variables, _constraintBox._expressions[2]._name);
 
 //   defineVariable(_c);
 //   _a->addConstraint(this);
@@ -111,11 +109,26 @@ void IntDiv::init(std::map<std::string, std::shared_ptr<Item>>& items) {
 // /********************* IntPlus ******************************/
 // void IntPlus::init(
 //     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-//   _a = getVariable(variables, _constraintItem._expressions[0]._name);
-//   _b = getVariable(variables, _constraintItem._expressions[1]._name);
-//   _c = getVariable(variables, _constraintItem._expressions[2]._name);
+//   _a = getVariable(variables, _constraintBox._expressions[0]._name);
+//   _b = getVariable(variables, _constraintBox._expressions[1]._name);
+//   _c = getVariable(variables, _constraintBox._expressions[2]._name);
 
 //   defineVariable(_a);
 //   _b->addConstraint(this);
 //   _c->addConstraint(this);
 // }
+/*
+ * int_lin_eq
+ * (array [int] of int: as,
+ * array [int] of var int: bs,
+ * int: c)
+ *   */
+void IntLinEq::init(std::map<std::string, std::shared_ptr<Item>>& items) {
+  _as = getArrayVariable(items, 0);
+  _bs = getArrayVariable(items, 1);
+  _c = getSingleVariable(items, 2);
+
+  defineVariable(_bs);
+  // _b->addConstraint(this);
+  // _c->addConstraint(this);
+}

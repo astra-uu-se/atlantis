@@ -27,18 +27,22 @@ void Model::addItem(std::shared_ptr<Item> item) {
 //   }
 // }
 
-void Model::addConstraint(ConstraintItem constraintItem) {
-  constraintItem.init(_items);
-  if (constraintItem._name == "int_div") {
-    _constraints.push_back(std::make_shared<IntDiv>(constraintItem));
+void Model::addConstraint(ConstraintBox constraintBox) {
+  if (constraintBox._name == "int_div") {
+    constraintBox.prepare(_items);
+    _constraints.push_back(std::make_shared<IntDiv>(constraintBox));
 
-  // } else if (constraintItem._name == "int_max") {
-  //   _constraints.push_back(std::make_shared<IntMax>(constraintItem));
-  // } else if (constraintItem._name == "int_plus") {
-  //   _constraints.push_back(std::make_shared<IntPlus>(constraintItem));
-  // } else if (constraintItem._name == "global_cardinality") {
-  } else if (constraintItem._name == "global_cardinality") {
-    _constraints.push_back(std::make_shared<GlobalCardinality>(constraintItem));
+  // } else if (constraintBox._name == "int_max") {
+  //   _constraints.push_back(std::make_shared<IntMax>(constraintBox));
+  // } else if (constraintBox._name == "int_plus") {
+  //   _constraints.push_back(std::make_shared<IntPlus>(constraintBox));
+  // } else if (constraintBox._name == "global_cardinality") {
+  } else if (constraintBox._name == "global_cardinality") {
+    constraintBox.prepare(_items);
+    _constraints.push_back(std::make_shared<GlobalCardinality>(constraintBox));
+  } else if (constraintBox._name == "int_lin_eq") {
+    constraintBox.prepare(_items);
+    _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
   }
   // }
 }
@@ -59,4 +63,10 @@ bool Model::hasCycleAux(std::map<Node*, bool> visited, Node* n) {
     if (hasCycleAux(visited, m)) return true;
   }
   return false;
+}
+
+void Model::printNode(std::string name) {
+  assert(_items.find(name) != _items.end());
+  Node *node = _items.find(name)->second.get();
+  std::cout << node->getLabel() << std::endl;
 }

@@ -16,8 +16,9 @@ class Model {
   void addItem(std::shared_ptr<Item> v);
   // Item* getItem(std::string name);
   // Item* getParam(std::string name);
-  void addConstraint(ConstraintItem ci);
+  void addConstraint(ConstraintBox constraintBox);
   bool hasCycle();
+  void printNode(std::string name);
 
  private:
   bool hasCycleAux(std::map<Node*, bool> visited, Node* n);

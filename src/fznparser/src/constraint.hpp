@@ -7,12 +7,12 @@
 
 #include "structure.hpp"
 
-class ConstraintItem {
+class ConstraintBox {
  public:
-  ConstraintItem();
-  ConstraintItem(std::string name, std::vector<Expression> expressions,
+  ConstraintBox();
+  ConstraintBox(std::string name, std::vector<Expression> expressions,
                  std::vector<Annotation> annotations);
-  void init(std::map<std::string, std::shared_ptr<Item>>& items);
+  void prepare(std::map<std::string, std::shared_ptr<Item>>& items);
   std::string _name;
   std::vector<Expression> _expressions;
   std::vector<Annotation> _annotations;
@@ -22,17 +22,19 @@ class Constraint : public Node {
  public:
   Constraint();
   virtual ~Constraint() = default;
-  Constraint(ConstraintItem constraintItem);
+  Constraint(ConstraintBox constraintBox);
   virtual void init(std::map<std::string, std::shared_ptr<Item>>& items) = 0;
   virtual std::vector<Node*> getNext() override;
   std::string getLabel() override;
 
   void defineVariable(Variable* variable);
   Expression getExpression(int n);
-  ArrayVariable* getArrayVariable(std::map<std::string, std::shared_ptr<Item>> items, int n);
-  SingleVariable* getSingleVariable(std::map<std::string, std::shared_ptr<Item>> items, int n);
+  ArrayVariable* getArrayVariable(
+      std::map<std::string, std::shared_ptr<Item>> items, int n);
+  SingleVariable* getSingleVariable(
+      std::map<std::string, std::shared_ptr<Item>> items, int n);
   std::string _name;
-  ConstraintItem _constraintItem;
+  ConstraintBox _constraintBox;
   std::vector<Node*> _defines;
 };
 
@@ -44,8 +46,8 @@ class Constraint : public Node {
 */
 class GlobalCardinality : public Constraint {
  public:
-  GlobalCardinality(ConstraintItem constraintItem)
-      : Constraint(constraintItem){};
+  GlobalCardinality(ConstraintBox constraintBox)
+      : Constraint(constraintBox){};
   void init(std::map<std::string, std::shared_ptr<Item>>& items) override;
   ArrayVariable* _x;
   SingleVariable* _cover;
@@ -58,10 +60,8 @@ class GlobalCardinality : public Constraint {
 */
 class IntDiv : public Constraint {
  public:
-  IntDiv(ConstraintItem constraintItem) : Constraint(constraintItem){};
-  void init(std::map<std::string, std::shared_ptr<Item>>&
-  items)
-      override;
+  IntDiv(ConstraintBox constraintBox) : Constraint(constraintBox){};
+  void init(std::map<std::string, std::shared_ptr<Item>>& items) override;
   SingleVariable* _a;
   SingleVariable* _b;
   SingleVariable* _c;
@@ -72,7 +72,7 @@ class IntDiv : public Constraint {
 */
 // class IntMax : public Constraint {
 //  public:
-//   IntMax(ConstraintItem constraintItem) : Constraint(constraintItem){};
+//   IntMax(ConstraintBox constraintBox) : Constraint(constraintBox){};
 //   void init(const std::map<std::string, std::shared_ptr<Variable>>&
 //   variables)
 //       override;
@@ -85,7 +85,7 @@ class IntDiv : public Constraint {
 */
 // class IntPlus : public Constraint {
 //  public:
-//   IntPlus(ConstraintItem constraintItem) : Constraint(constraintItem){};
+//   IntPlus(ConstraintBox constraintBox) : Constraint(constraintBox){};
 //   void init(const std::map<std::string, std::shared_ptr<Variable>>&
 //   variables)
 //       override;
@@ -99,9 +99,17 @@ class IntDiv : public Constraint {
 */
 // class ArrayVarIntElement : public Constraint {
 //  public:
-//   ArrayVarIntElement(ConstraintItem constraintItem)
-//       : Constraint(constraintItem){};
+//   ArrayVarIntElement(ConstraintBox constraintBox)
+//       : Constraint(constraintBox){};
 //   void init(const std::map<std::string, std::shared_ptr<Variable>>&
 //   variables)
 //       override;
 // };
+class IntLinEq : public Constraint {
+ public:
+  IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox){};
+  void init(std::map<std::string, std::shared_ptr<Item>>& items) override;
+  ArrayVariable* _as;
+  ArrayVariable* _bs;
+  SingleVariable* _c;
+};

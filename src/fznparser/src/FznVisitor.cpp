@@ -80,7 +80,7 @@ antlrcpp::Any FznVisitor::visitConstraintItem(
   for (auto exp : ctx->expr()) {
     expressions.push_back(visitExpr(exp));
   }
-  return ConstraintItem(name, expressions,
+  return ConstraintBox(name, expressions,
                         visitAnnotations(ctx->annotations()));
 }
 
