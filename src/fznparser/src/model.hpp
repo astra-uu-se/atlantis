@@ -6,16 +6,17 @@
 
 #include "constraint.hpp"
 #include "structure.hpp"
+#include "variable.hpp"
 
 class Model {
  public:
   Model();
-  std::map<std::string, std::shared_ptr<Item>> _items;
+  std::map<std::string, std::shared_ptr<Variable>> _variables;
   std::vector<std::shared_ptr<Constraint>> _constraints;
   void init();
-  void addItem(std::shared_ptr<Item> v);
-  // Item* getItem(std::string name);
-  // Item* getParam(std::string name);
+  void addVariable(std::shared_ptr<Variable> v);
+  // Variable* getVariable(std::string name);
+  // Variable* getParam(std::string name);
   void addConstraint(ConstraintBox constraintBox);
   bool hasCycle();
   void printNode(std::string name);

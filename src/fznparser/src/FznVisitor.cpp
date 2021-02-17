@@ -4,7 +4,7 @@
 antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
   Model m = Model();
   for (auto item : ctx->varDeclItem()) {
-      m.addItem(visitVarDeclItem(item));
+      m.addVariable(visitVarDeclItem(item));
   }
   for (auto constraintItem : ctx->constraintItem()) {
     m.addConstraint(visitConstraintItem(constraintItem));
@@ -19,10 +19,10 @@ antlrcpp::Any FznVisitor::visitVarDeclItem(
 
   if (ctx->basicVarType()) {
     std::shared_ptr<Domain> domain = visitBasicVarType(ctx->basicVarType());
-    return static_cast<std::shared_ptr<Item>>(std::make_shared<SingleVariable>(name, annotations, domain));
+    return static_cast<std::shared_ptr<Variable>>(std::make_shared<SingleVariable>(name, annotations, domain));
   } else {//if (ctx->arrayVarType()) {
     std::vector<Expression> elements = visitArrayLiteral(ctx->arrayLiteral());
-    return static_cast<std::shared_ptr<Item>>(std::make_shared<ArrayVariable>(name, annotations, elements));
+    return static_cast<std::shared_ptr<Variable>>(std::make_shared<ArrayVariable>(name, annotations, elements));
   }
 }
 

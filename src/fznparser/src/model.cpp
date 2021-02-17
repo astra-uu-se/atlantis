@@ -2,34 +2,34 @@
 
 Model::Model(){};
 void Model::init() {
-  for (auto item : _items) {
-    item.second.get()->init(_items);
+  for (auto item : _variables) {
+    item.second.get()->init(_variables);
   }
   for (auto constraint : _constraints) {
-    constraint->init(_items);
+    constraint->init(_variables);
   }
 }
-void Model::addItem(std::shared_ptr<Item> item) {
-  _items.insert(std::pair<std::string, std::shared_ptr<Item>>(
+void Model::addVariable(std::shared_ptr<Variable> item) {
+  _variables.insert(std::pair<std::string, std::shared_ptr<Variable>>(
       item->getName(), item));
 }
-// Item* Model::getItem(std::string name) {
-//   assert(_items.find(name) != _items.end());
-//   return _items.find(name)->second.get();
+// Variable* Model::getVariable(std::string name) {
+//   assert(_variables.find(name) != _variables.end());
+//   return _variables.find(name)->second.get();
 // }
 
-// Item* Model::getParam(std::string name) {
-//   if (_items.find(name) != _items.end()) {
-//     return _items.find(name)->second.get();
+// Variable* Model::getParam(std::string name) {
+//   if (_variables.find(name) != _variables.end()) {
+//     return _variables.find(name)->second.get();
 //   } else {
-//     addItem(std::make_shared<Parameter>(name));
-//     return _items.find(name)->second.get();
+//     addVariable(std::make_shared<Parameter>(name));
+//     return _variables.find(name)->second.get();
 //   }
 // }
 
 void Model::addConstraint(ConstraintBox constraintBox) {
   if (constraintBox._name == "int_div") {
-    constraintBox.prepare(_items);
+    constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<IntDiv>(constraintBox));
 
   // } else if (constraintBox._name == "int_max") {
@@ -38,16 +38,16 @@ void Model::addConstraint(ConstraintBox constraintBox) {
   //   _constraints.push_back(std::make_shared<IntPlus>(constraintBox));
   // } else if (constraintBox._name == "global_cardinality") {
   } else if (constraintBox._name == "global_cardinality") {
-    constraintBox.prepare(_items);
+    constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<GlobalCardinality>(constraintBox));
   } else if (constraintBox._name == "int_lin_eq") {
-    constraintBox.prepare(_items);
+    constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
   }
   // }
 }
 bool Model::hasCycle() {
-  for (auto n_pair : _items) {
+  for (auto n_pair : _variables) {
     std::cout << "Starting...\n";
     auto n = n_pair.second.get();
     std::map<Node*, bool> visited;
@@ -66,7 +66,7 @@ bool Model::hasCycleAux(std::map<Node*, bool> visited, Node* n) {
 }
 
 void Model::printNode(std::string name) {
-  assert(_items.find(name) != _items.end());
-  Node *node = _items.find(name)->second.get();
+  assert(_variables.find(name) != _variables.end());
+  Node *node = _variables.find(name)->second.get();
   std::cout << node->getLabel() << std::endl;
 }
