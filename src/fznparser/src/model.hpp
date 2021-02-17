@@ -19,6 +19,7 @@ class Model {
   // Variable* getParam(std::string name);
   void addConstraint(ConstraintBox constraintBox);
   bool hasCycle();
+  void tweak();
   void printNode(std::string name);
 
  private:

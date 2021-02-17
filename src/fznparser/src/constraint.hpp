@@ -12,7 +12,7 @@ class ConstraintBox {
  public:
   ConstraintBox();
   ConstraintBox(std::string name, std::vector<Expression> expressions,
-                 std::vector<Annotation> annotations);
+                std::vector<Annotation> annotations);
   void prepare(std::map<std::string, std::shared_ptr<Variable>>& variables);
   std::string _name;
   std::vector<Expression> _expressions;
@@ -24,9 +24,11 @@ class Constraint : public Node {
   Constraint();
   virtual ~Constraint() = default;
   Constraint(ConstraintBox constraintBox);
-  virtual void init(const std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
-  virtual std::vector<Node*> getNext() override;
+  virtual void init(
+      const std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
+  virtual std::set<Node*> getNext() override;
   std::string getLabel() override;
+  virtual void tweak();
 
   void defineVariable(Variable* variable);
   void unDefineVariable(Variable* variable);
@@ -39,7 +41,7 @@ class Constraint : public Node {
       std::map<std::string, std::shared_ptr<Variable>> variables, int n);
   std::string _name;
   ConstraintBox _constraintBox;
-  std::vector<Node*> _defines;
+  std::set<Node*> _defines;
 };
 
 /* global_cardinality(       array [int] of var int: x,
@@ -50,9 +52,9 @@ class Constraint : public Node {
 */
 class GlobalCardinality : public Constraint {
  public:
-  GlobalCardinality(ConstraintBox constraintBox)
-      : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables) override;
+  GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox){};
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
   ArrayVariable* _x;
   SingleVariable* _cover;
   ArrayVariable* _counts;
@@ -65,7 +67,8 @@ class GlobalCardinality : public Constraint {
 class IntDiv : public Constraint {
  public:
   IntDiv(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables) override;
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
   SingleVariable* _a;
   SingleVariable* _b;
   SingleVariable* _c;
@@ -77,8 +80,7 @@ class IntDiv : public Constraint {
 class IntMax : public Constraint {
  public:
   IntMax(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>&
-  variables)
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
       override;
   Variable* _a;
   Variable* _b;
@@ -90,9 +92,13 @@ class IntMax : public Constraint {
 class IntPlus : public Constraint {
  public:
   IntPlus(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>&
-  variables)
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
       override;
+
+  void defineArg(int n);
+  void tweak() override;
+
+    int _state = 0;
   SingleVariable* _a;
   SingleVariable* _b;
   SingleVariable* _c;
@@ -112,7 +118,9 @@ class IntPlus : public Constraint {
 class IntLinEq : public Constraint {
  public:
   IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables) override;
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
+
   ArrayVariable* _as;
   ArrayVariable* _bs;
   SingleVariable* _c;

@@ -7,22 +7,26 @@ class Variable : public Node {
   Variable() = default;
   Variable(std::string name, std::vector<Annotation> annotations);
   virtual ~Variable() = default;
-
-  virtual void addConstraint(Node* constraint) = 0;
-  std::vector<Node*> getNext() = 0;
-  virtual std::string getName() { return _name; };
-  virtual std::string getLabel() { return _name; };
-  virtual bool isDefinable() = 0;
   virtual void init(
       std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
+
+  virtual void addConstraint(Node* constraint) = 0;
+  virtual void removeConstraint(Node* constraint) = 0;
+  virtual void defineBy(Node* constraint) = 0;
+  virtual void removeDefinition() = 0;
+
+  virtual bool isDefined() { return _isDefined; };
+  virtual bool isDefinable() { return _isDefinable; };
+  std::set<Node*> getNext() = 0;
+  virtual std::string getName() { return _name; };
+  virtual std::string getLabel() { return _name; };
 
   std::string _name;
   bool _isDefinable;
   bool _isDefined;
   Node* _definedBy;
   std::vector<Annotation> _annotations;
-  void defineBy(Node* constraint);
-  std::vector<Node*> _nextConstraints;
+  std::set<Node*> _nextConstraints;
 };
 
 class SingleVariable : public Variable {
@@ -33,13 +37,14 @@ class SingleVariable : public Variable {
       : Variable(name, annotations) {
     _domain = domain;
   };
-
-  std::vector<Node*> getNext() override;
-  bool isDefinable() override { return _isDefinable; };
-  void addConstraint(Node* constraint) override;
-  bool isDefined();
   void init(
-      std::map<std::string, std::shared_ptr<Variable>>& variables) override;
+      std::map<std::string, std::shared_ptr<Variable>>& variables) override{};
+
+  std::set<Node*> getNext() override { return _nextConstraints; };
+  void addConstraint(Node* constraint) override;
+  void removeConstraint(Node* constraint) override;
+  void defineBy(Node* constraint) override;
+  void removeDefinition() override;
 
   std::shared_ptr<Domain> _domain;
 };
@@ -51,12 +56,15 @@ class ArrayVariable : public Variable {
       : Variable(name, annotations) {
     _expressions = expressions;
   };
-  ArrayVariable(std::string name, std::vector<Expression> expressions);
-  bool isDefinable() override { return false; };
   void init(
       std::map<std::string, std::shared_ptr<Variable>>& variables) override;
-  std::vector<Node*> getNext() override;
+
+  std::set<Node*> getNext() override;
   void addConstraint(Node* constraint) override;
+  void removeConstraint(Node* constraint) override;
+  void defineBy(Node* constraint) override;
+  void removeDefinition() override;
+
   std::vector<Expression> _expressions;
   std::vector<Variable*> _elements;
 };
@@ -67,11 +75,10 @@ class Parameter : public SingleVariable {
   void init(
       std::map<std::string, std::shared_ptr<Variable>>& variables) override;
 
-  std::vector<Node*> getNext() override;
-  std::string getName() override;
-  std::string getLabel() override;
-  bool isDefinable() override;
-  void addConstraint(Node* constraint) override;
-
-  std::string _value;
+  std::set<Node*> getNext() override;
+  bool isDefinable() override { return false; };
+  void addConstraint(Node* constraint) override{};
+  void removeConstraint(Node* constraint) override{};
+  void defineBy(Node* constraint) override{};
+  void removeDefinition() override{};
 };

@@ -10,7 +10,7 @@ using namespace antlr4;
 
 int main() {
   std::ifstream stream;
-  stream.open("fzn_examples/alldiff.fzn");
+  stream.open("fzn_examples/test.fzn");
   ANTLRInputStream input(stream);
 
   FlatZincLexer lexer(&input);
@@ -22,6 +22,14 @@ int main() {
   FznVisitor visitor;
   Model m = visitor.visitModel(tree);
   m.init();
+
+  if (m.hasCycle()) {
+    std::cout << "FOUND CYCLE\n";
+  } else {
+    std::cout << "No cycle found\n";
+  }
+  m.tweak();
+  std::cout << "=====TWEAKING=====" << std::endl;
 
   if (m.hasCycle()) {
     std::cout << "FOUND CYCLE\n";

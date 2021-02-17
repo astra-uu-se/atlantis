@@ -67,7 +67,7 @@ class Node {
  public:
   Node() = default;
   virtual ~Node() = default;
-  virtual std::vector<Node*> getNext() = 0;
+  virtual std::set<Node*> getNext() = 0;
   virtual std::string getLabel() = 0;
 };
 

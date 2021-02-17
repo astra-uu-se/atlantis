@@ -40,8 +40,9 @@ Expression Constraint::getExpression(int n) {
   return _constraintBox._expressions[n];
 }
 
-std::vector<Node*> Constraint::getNext() { return _defines; }
+std::set<Node*> Constraint::getNext() { return _defines; }
 std::string Constraint::getLabel() { return _name; }
+void Constraint::tweak() {}
 
 SingleVariable* Constraint::getSingleVariable(
     std::map<std::string, std::shared_ptr<Variable>> variables, int n) {
@@ -60,17 +61,18 @@ ArrayVariable* Constraint::getArrayVariable(
 }
 
 void Constraint::defineVariable(Variable* variable) {
-  _defines.push_back(variable);
+  _defines.insert(variable);
   variable->defineBy(this);
 }
 void Constraint::unDefineVariable(Variable* variable) {
-  // variable->removeDefinition();
+  _defines.erase(variable);
+  variable->removeDefinition();
 }
 void Constraint::addDependency(Variable* variable) {
   variable->addConstraint(this);
 }
 void Constraint::removeDependency(Variable* variable) {
-  // variable->removeConstraint(this);
+  variable->removeConstraint(this);
 }
 
 /********************* GlobalCardinality ******************************/
@@ -80,49 +82,75 @@ void GlobalCardinality::init(
   _cover = getSingleVariable(variables, 1);
   _counts = getArrayVariable(variables, 2);
 
-  _x->addConstraint(this);
+  addDependency(_x);
   defineVariable(_counts);
   // Skriv om till count och en mindre version av sig själv?
   // Har vi en cykel och kan den undvikas?
 }
 /********************* IntDiv ******************************/
-void IntDiv::init(const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+void IntDiv::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _a = getSingleVariable(variables, 0);
   _b = getSingleVariable(variables, 1);
   _c = getSingleVariable(variables, 2);
 
   defineVariable(_a);
-  _b->addConstraint(this);
-  _c->addConstraint(this);
+  addDependency(_b);
+  addDependency(_c);
 }
 /********************* IntMax ******************************/
-void IntMax::init(const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+void IntMax::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _a = getSingleVariable(variables, 0);
   _b = getSingleVariable(variables, 1);
   _c = getSingleVariable(variables, 2);
 
   defineVariable(_a);
-  _b->addConstraint(this);
-  _c->addConstraint(this);
+  addDependency(_b);
+  addDependency(_c);
 }
 
 /********************* IntPlus ******************************/
-void IntPlus::init(const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+void IntPlus::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _a = getSingleVariable(variables, 0);
   _b = getSingleVariable(variables, 1);
   _c = getSingleVariable(variables, 2);
 
   defineVariable(_a);
-  _b->addConstraint(this);
-  _c->addConstraint(this);
+  addDependency(_b);
+  addDependency(_c);
 }
+void IntPlus::tweak() { defineArg(_state + 1 % 3); }
+void IntPlus::defineArg(int n) {
+  removeDependency(_a);
+  removeDependency(_b);
+  removeDependency(_c);
+  unDefineVariable(_a);
+  unDefineVariable(_b);
+  unDefineVariable(_c);
+  switch (n) {
+    case 0:
+      defineVariable(_a);
+      addDependency(_b);
+      addDependency(_c);
+    case 1:
+      defineVariable(_b);
+      addDependency(_c);
+      addDependency(_a);
+    case 2:
+      defineVariable(_c);
+      addDependency(_a);
+      addDependency(_b);
+  }
+}
+
 /********************* IntLinEq ******************************/
-void IntLinEq::init(const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+void IntLinEq::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _as = getArrayVariable(variables, 0);
   _bs = getArrayVariable(variables, 1);
   _c = getSingleVariable(variables, 2);
 
   defineVariable(_bs);
-  // _b->addConstraint(this);
-  // _c->addConstraint(this);
 }

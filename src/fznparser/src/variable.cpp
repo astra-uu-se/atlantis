@@ -1,25 +1,28 @@
 #include "variable.hpp"
-
-
 Variable::Variable(std::string name, std::vector<Annotation> annotations) {
   _name = name;
   _annotations = annotations;
   _isDefined = false;
 }
 
-void Variable::defineBy(Node* constraint) {
-  _isDefined = true;
-  _definedBy = constraint;
-}
-bool SingleVariable::isDefined() { return _isDefined; }
+/*******************SINGLEVARIABLE****************************/
 void SingleVariable::addConstraint(Node* constraint) {
-  _nextConstraints.push_back(constraint);
+  _nextConstraints.insert(constraint);
 }
-std::vector<Node*> SingleVariable::getNext() { return _nextConstraints; }
-
-void SingleVariable::init(std::map<std::string, std::shared_ptr<Variable>>& variables) {}
-
-void ArrayVariable::init(std::map<std::string, std::shared_ptr<Variable>>& variables) {
+void SingleVariable::removeConstraint(Node* constraint) {
+  _nextConstraints.erase(constraint);
+}
+void SingleVariable::defineBy(Node* constraint) {
+  _definedBy = constraint;
+  _isDefined = true;
+}
+void SingleVariable::removeDefinition() {
+  _definedBy = nullptr;
+  _isDefined = false;
+}
+/*******************ARRAYVARIABLE****************************/
+void ArrayVariable::init(
+    std::map<std::string, std::shared_ptr<Variable>>& variables) {
   for (auto e : _expressions) {
     auto name = e.getName();
     if (e.isId()) {
@@ -30,8 +33,8 @@ void ArrayVariable::init(std::map<std::string, std::shared_ptr<Variable>>& varia
         _elements.push_back(variables.find(name)->second.get());
       } else {
         auto p = std::make_shared<Parameter>(name);
-        variables.insert(std::pair<std::string, std::shared_ptr<Variable>>(
-            name, p));
+        variables.insert(
+            std::pair<std::string, std::shared_ptr<Variable>>(name, p));
         ;
         _elements.push_back(p.get());
       }
@@ -39,10 +42,10 @@ void ArrayVariable::init(std::map<std::string, std::shared_ptr<Variable>>& varia
   }
 }
 
-std::vector<Node*> ArrayVariable::getNext() {
-  std::vector<Node*> nodes;
+std::set<Node*> ArrayVariable::getNext() {
+  std::set<Node*> nodes;
   for (Node* e : _elements) {
-    nodes.push_back(static_cast<Node*>(e));
+    nodes.insert(static_cast<Node*>(e));
   }
   return nodes;
 }
@@ -52,15 +55,27 @@ void ArrayVariable::addConstraint(Node* constraint) {
     e->addConstraint(constraint);
   }
 }
+void ArrayVariable::removeConstraint(Node* constraint) {
+  for (auto e : _elements) {
+    e->removeConstraint(constraint);
+  }
+}
+void ArrayVariable::defineBy(Node* constraint) {
+  for (auto e : _elements) {
+    e->defineBy(constraint);
+  }
+}
+void ArrayVariable::removeDefinition() {
+  for (auto e : _elements) {
+    e->removeDefinition();
+  }
+}
 
-Parameter::Parameter(std::string value) { _value = value; }
-void Parameter::init(std::map<std::string, std::shared_ptr<Variable>>& variables) {}
-std::vector<Node*> Parameter::getNext() {
-  std::vector<Node*> s;
+/*******************PARAMETER****************************/
+Parameter::Parameter(std::string value) { _name = value; }
+void Parameter::init(
+    std::map<std::string, std::shared_ptr<Variable>>& variables) {}
+std::set<Node*> Parameter::getNext() {
+  std::set<Node*> s;
   return s;
 }
-std::string Parameter::getLabel() {
-  return _value;}
-std::string Parameter::getName() { return _value;}
-bool Parameter::isDefinable() { return false;}
-void Parameter::addConstraint(Node *constraint) {}

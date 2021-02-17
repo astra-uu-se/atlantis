@@ -13,30 +13,13 @@ void Model::addVariable(std::shared_ptr<Variable> item) {
   _variables.insert(std::pair<std::string, std::shared_ptr<Variable>>(
       item->getName(), item));
 }
-// Variable* Model::getVariable(std::string name) {
-//   assert(_variables.find(name) != _variables.end());
-//   return _variables.find(name)->second.get();
-// }
-
-// Variable* Model::getParam(std::string name) {
-//   if (_variables.find(name) != _variables.end()) {
-//     return _variables.find(name)->second.get();
-//   } else {
-//     addVariable(std::make_shared<Parameter>(name));
-//     return _variables.find(name)->second.get();
-//   }
-// }
-
 void Model::addConstraint(ConstraintBox constraintBox) {
   if (constraintBox._name == "int_div") {
     constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<IntDiv>(constraintBox));
-
-  // } else if (constraintBox._name == "int_max") {
-  //   _constraints.push_back(std::make_shared<IntMax>(constraintBox));
-  // } else if (constraintBox._name == "int_plus") {
-  //   _constraints.push_back(std::make_shared<IntPlus>(constraintBox));
-  // } else if (constraintBox._name == "global_cardinality") {
+  } else if (constraintBox._name == "int_plus") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<IntPlus>(constraintBox));
   } else if (constraintBox._name == "global_cardinality") {
     constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<GlobalCardinality>(constraintBox));
@@ -44,7 +27,6 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
   }
-  // }
 }
 bool Model::hasCycle() {
   for (auto n_pair : _variables) {
@@ -69,4 +51,10 @@ void Model::printNode(std::string name) {
   assert(_variables.find(name) != _variables.end());
   Node *node = _variables.find(name)->second.get();
   std::cout << node->getLabel() << std::endl;
+}
+
+void Model::tweak() {
+  for (auto c : _constraints) {
+    c->tweak();
+  }
 }
