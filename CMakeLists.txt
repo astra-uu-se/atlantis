@@ -46,7 +46,8 @@ list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/main.cpp)
 # remove fznparser files from the src files
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/main.cpp)
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/FznVisitor.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/Structure.cpp)
+list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/structure.cpp)
+list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/variable.cpp)
 
 
 ################################
