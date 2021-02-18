@@ -74,6 +74,19 @@ void Constraint::addDependency(Variable* variable) {
 void Constraint::removeDependency(Variable* variable) {
   variable->removeConstraint(this);
 }
+/********************* ThreeSVarConstraint ******************************/
+void ThreeSVarConstraint::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  _a = getSingleVariable(variables, 0);
+  _b = getSingleVariable(variables, 1);
+  _c = getSingleVariable(variables, 2);
+}
+void ThreeSVarConstraint::define() {
+  defineVariable(_c);
+  addDependency(_a);
+  addDependency(_b);
+}
+
 
 /********************* GlobalCardinality ******************************/
 void GlobalCardinality::init(
@@ -81,46 +94,20 @@ void GlobalCardinality::init(
   _x = getArrayVariable(variables, 0);
   _cover = getSingleVariable(variables, 1);
   _counts = getArrayVariable(variables, 2);
-
-  addDependency(_x);
-  defineVariable(_counts);
   // Skriv om till count och en mindre version av sig själv?
   // Har vi en cykel och kan den undvikas?
 }
+void GlobalCardinality::define() {
+  addDependency(_x);
+  defineVariable(_counts);
+}
 /********************* IntDiv ******************************/
-void IntDiv::init(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _a = getSingleVariable(variables, 0);
-  _b = getSingleVariable(variables, 1);
-  _c = getSingleVariable(variables, 2);
-
+void IntDiv::define() {
   defineVariable(_a);
   addDependency(_b);
   addDependency(_c);
 }
-/********************* IntMax ******************************/
-void IntMax::init(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _a = getSingleVariable(variables, 0);
-  _b = getSingleVariable(variables, 1);
-  _c = getSingleVariable(variables, 2);
-
-  defineVariable(_a);
-  addDependency(_b);
-  addDependency(_c);
-}
-
 /********************* IntPlus ******************************/
-void IntPlus::init(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _a = getSingleVariable(variables, 0);
-  _b = getSingleVariable(variables, 1);
-  _c = getSingleVariable(variables, 2);
-
-  defineVariable(_a);
-  addDependency(_b);
-  addDependency(_c);
-}
 void IntPlus::tweak() { defineArg(_state + 1 % 3); }
 void IntPlus::defineArg(int n) {
   removeDependency(_a);

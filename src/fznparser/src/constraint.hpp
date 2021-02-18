@@ -29,6 +29,7 @@ class Constraint : public Node {
   virtual std::set<Node*> getNext() override;
   std::string getLabel() override;
   virtual void tweak();
+  virtual void define();
 
   void defineVariable(Variable* variable);
   void unDefineVariable(Variable* variable);
@@ -44,6 +45,18 @@ class Constraint : public Node {
   std::set<Node*> _defines;
 };
 
+class ThreeSVarConstraint : public Constraint {
+ public:
+  ThreeSVarConstraint(ConstraintBox constraintBox)
+      : Constraint(constraintBox){};
+  virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
+                        variables) override;
+  virtual void define() override;
+  SingleVariable* _a;
+  SingleVariable* _b;
+  SingleVariable* _c;
+};
+
 /* global_cardinality(       array [int] of var int: x,
 **                           array [int] of int: cover,
 **                           array [int] of var int: counts)
@@ -53,55 +66,39 @@ class Constraint : public Node {
 class GlobalCardinality : public Constraint {
  public:
   GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
+  virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
+                        variables) override;
+  void define() override;
   ArrayVariable* _x;
   SingleVariable* _cover;
   ArrayVariable* _counts;
 };
-
 /* int_div(var int: a, var int: b, var int: c)
 ** Defines: a
 ** Depends: b, c
 */
-class IntDiv : public Constraint {
+class IntDiv : public ThreeSVarConstraint {
  public:
-  IntDiv(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
-  SingleVariable* _a;
-  SingleVariable* _b;
-  SingleVariable* _c;
+  IntDiv(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
+  void define() override;
 };
 /* int_max(var int: a, var int: b, var int: c)
 ** Defines: c
 ** Depends: a, b
 */
-class IntMax : public Constraint {
+class IntMax : public ThreeSVarConstraint {
  public:
-  IntMax(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
-  Variable* _a;
-  Variable* _b;
-  Variable* _c;
+  IntMax(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
 };
 /* int_plus(var int: a, var int: b, var int: c)
 ** Defines: any
 */
-class IntPlus : public Constraint {
+class IntPlus : public ThreeSVarConstraint {
  public:
-  IntPlus(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
-
+  IntPlus(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
   void defineArg(int n);
   void tweak() override;
-
-    int _state = 0;
-  SingleVariable* _a;
-  SingleVariable* _b;
-  SingleVariable* _c;
+  int _state = 0;
 };
 /* array_var_int_element(var int: b, array [int] of var int: as, var int: c)
 ** Defines: c
