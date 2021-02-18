@@ -29,7 +29,7 @@ class Constraint : public Node {
   virtual std::set<Node*> getNext() override;
   std::string getLabel() override;
   virtual void tweak();
-  virtual void define();
+  virtual void define() = 0;
 
   void defineVariable(Variable* variable);
   void unDefineVariable(Variable* variable);
@@ -117,6 +117,8 @@ class IntLinEq : public Constraint {
   IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox){};
   void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
       override;
+    void define() override;
+
 
   ArrayVariable* _as;
   ArrayVariable* _bs;

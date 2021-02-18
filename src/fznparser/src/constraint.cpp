@@ -108,7 +108,7 @@ void IntDiv::define() {
   addDependency(_c);
 }
 /********************* IntPlus ******************************/
-void IntPlus::tweak() { defineArg(_state + 1 % 3); }
+void IntPlus::tweak() { defineArg((_state++ + 1) % 3);  }
 void IntPlus::defineArg(int n) {
   removeDependency(_a);
   removeDependency(_b);
@@ -116,19 +116,23 @@ void IntPlus::defineArg(int n) {
   unDefineVariable(_a);
   unDefineVariable(_b);
   unDefineVariable(_c);
+
   switch (n) {
     case 0:
-      defineVariable(_a);
+      defineVariable(_c);
+      addDependency(_a);
       addDependency(_b);
-      addDependency(_c);
+      break;
     case 1:
       defineVariable(_b);
       addDependency(_c);
       addDependency(_a);
+      break;
     case 2:
-      defineVariable(_c);
-      addDependency(_a);
+      defineVariable(_a);
       addDependency(_b);
+      addDependency(_c);
+      break;
   }
 }
 
@@ -138,6 +142,7 @@ void IntLinEq::init(
   _as = getArrayVariable(variables, 0);
   _bs = getArrayVariable(variables, 1);
   _c = getSingleVariable(variables, 2);
-
+}
+void IntLinEq::define(){
   defineVariable(_bs);
 }

@@ -23,5 +23,5 @@ class Model {
   void printNode(std::string name);
 
  private:
-  bool hasCycleAux(std::map<Node*, bool> visited, Node* n);
+  bool hasCycleAux(std::set<Node*> visited, Node* n, std::set<Node*>& done);
 };

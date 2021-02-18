@@ -36,6 +36,14 @@ int main() {
   } else {
     std::cout << "No cycle found\n";
   }
+  m.tweak();
+  std::cout << "=====TWEAKING=====" << std::endl;
+
+  if (m.hasCycle()) {
+    std::cout << "FOUND CYCLE\n";
+  } else {
+    std::cout << "No cycle found\n";
+  }
 
   return 0;
 }
