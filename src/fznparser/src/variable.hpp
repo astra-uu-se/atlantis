@@ -27,6 +27,7 @@ class Variable : public Node {
   Node* _definedBy;
   std::vector<Annotation> _annotations;
   std::set<Node*> _nextConstraints;
+  // std::set<Node*> _potentialConstraints;
 };
 
 class SingleVariable : public Variable {

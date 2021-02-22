@@ -45,9 +45,10 @@ class IntDomain : public Domain {
 class Annotation {
  public:
   Annotation();
-  Annotation(std::string name);
+  Annotation(std::string name, std::string variableName);
   bool definesVar();
   std::string _name;
+  std::string _variableName;
   bool _definesVar;
 };
 

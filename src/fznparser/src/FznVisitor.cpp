@@ -1,10 +1,11 @@
 #include "FznVisitor.h"
+
 #include <vector>
 
 antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
   Model m = Model();
   for (auto item : ctx->varDeclItem()) {
-      m.addVariable(visitVarDeclItem(item));
+    m.addVariable(visitVarDeclItem(item));
   }
   for (auto constraintItem : ctx->constraintItem()) {
     m.addConstraint(visitConstraintItem(constraintItem));
@@ -19,10 +20,12 @@ antlrcpp::Any FznVisitor::visitVarDeclItem(
 
   if (ctx->basicVarType()) {
     std::shared_ptr<Domain> domain = visitBasicVarType(ctx->basicVarType());
-    return static_cast<std::shared_ptr<Variable>>(std::make_shared<SingleVariable>(name, annotations, domain));
-  } else {//if (ctx->arrayVarType()) {
+    return static_cast<std::shared_ptr<Variable>>(
+        std::make_shared<SingleVariable>(name, annotations, domain));
+  } else {  // if (ctx->arrayVarType()) {
     std::vector<Expression> elements = visitArrayLiteral(ctx->arrayLiteral());
-    return static_cast<std::shared_ptr<Variable>>(std::make_shared<ArrayVariable>(name, annotations, elements));
+    return static_cast<std::shared_ptr<Variable>>(
+        std::make_shared<ArrayVariable>(name, annotations, elements));
   }
 }
 
@@ -70,7 +73,13 @@ antlrcpp::Any FznVisitor::visitAnnotations(
 antlrcpp::Any FznVisitor::visitAnnotation(
     // TODO: Get rest of annotation info.
     FlatZincParser::AnnotationContext *ctx) {
-  return Annotation(ctx->Identifier()->getText());
+  std::string variableName;
+  if (ctx->Identifier()->getText() == "defines_var") {
+    variableName = ctx->annExpr()[0]->getText();
+  } else {
+    variableName = "";
+  }
+  return Annotation(ctx->Identifier()->getText(), variableName);
 }
 
 antlrcpp::Any FznVisitor::visitConstraintItem(
@@ -80,8 +89,7 @@ antlrcpp::Any FznVisitor::visitConstraintItem(
   for (auto exp : ctx->expr()) {
     expressions.push_back(visitExpr(exp));
   }
-  return ConstraintBox(name, expressions,
-                        visitAnnotations(ctx->annotations()));
+  return ConstraintBox(name, expressions, visitAnnotations(ctx->annotations()));
 }
 
 antlrcpp::Any FznVisitor::visitExpr(FlatZincParser::ExprContext *ctx) {
@@ -97,7 +105,6 @@ antlrcpp::Any FznVisitor::visitExpr(FlatZincParser::ExprContext *ctx) {
   std::cout << "Parsed something wrong" << std::endl;
   return Expression();
 }
-
 
 antlrcpp::Any FznVisitor::visitArrayLiteral(
     FlatZincParser::ArrayLiteralContext *ctx) {

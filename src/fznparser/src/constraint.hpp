@@ -14,7 +14,8 @@ class ConstraintBox {
   ConstraintBox(std::string name, std::vector<Expression> expressions,
                 std::vector<Annotation> annotations);
   void prepare(std::map<std::string, std::shared_ptr<Variable>>& variables);
-  bool annotationDefinesVar();
+  bool hasDefineAnnotation();
+  std::string getAnnotationVariableName();
   std::string _name;
   std::vector<Expression> _expressions;
   std::vector<Annotation> _annotations;
@@ -36,16 +37,22 @@ class Constraint : public Node {
   void unDefineVariable(Variable* variable);
   void addDependency(Variable* variable);
   void removeDependency(Variable* variable);
-  bool annotationDefinesVar();
+  bool hasDefineAnnotation();
+  Variable* annotationDefineVariable();
   Expression getExpression(int n);
   ArrayVariable* getArrayVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables, int n);
   SingleVariable* getSingleVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables, int n);
+  Variable* getAnnotationVariable(
+      std::map<std::string, std::shared_ptr<Variable>> variables);
+
   std::string _name;
   ConstraintBox _constraintBox;
   std::set<Node*> _defines;
   std::set<Variable*> _variables;
+  bool _hasDefineAnnotation;
+  Variable* _annotationDefineVariable;
 };
 
 class ThreeSVarConstraint : public Constraint {

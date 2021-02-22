@@ -21,11 +21,12 @@ int BoolDomain::getLb() { return false; }
 int BoolDomain::getUb() { return true; }
 
 Annotation::Annotation() {}
-Annotation::Annotation(std::string name) {
+Annotation::Annotation(std::string name, std::string variableName) {
   _name = name;
 
   if (name == "defines_var") {
     _definesVar = true;
+    _variableName = variableName;
   } else {
     _definesVar = false;
   }

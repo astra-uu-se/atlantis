@@ -27,13 +27,21 @@ void ConstraintBox::prepare(
   }
 }
 
-bool ConstraintBox::annotationDefinesVar() {
+bool ConstraintBox::hasDefineAnnotation() {
   for (auto a : _annotations) {
     if (a.definesVar()) {
       return true;
     }
   }
   return false;
+}
+std::string ConstraintBox::getAnnotationVariableName() {
+  for (auto annotation : _annotations) {
+    if (annotation._definesVar) {
+      return annotation._variableName;
+    }
+  }
+  return "";
 }
 
 /********************* Constraint **************************/
@@ -66,12 +74,20 @@ ArrayVariable* Constraint::getArrayVariable(
   Variable* s = variables.find(name)->second.get();
   return dynamic_cast<ArrayVariable*>(s);
 }
+Variable* Constraint::getAnnotationVariable(
+    std::map<std::string, std::shared_ptr<Variable>> variables) {
+  std::string name = _constraintBox.getAnnotationVariableName();
+
+  assert(variables.find(name) != variables.end());
+  return variables.find(name)->second.get();
+}
 
 void Constraint::defineVariable(Variable* variable) {
   _defines.insert(variable);
   variable->defineBy(this);
 }
 void Constraint::unDefineVariable(Variable* variable) {
+  assert(variable->_definedBy == this);
   _defines.erase(variable);
   variable->removeDefinition();
 }
@@ -83,13 +99,13 @@ void Constraint::removeDependency(Variable* variable) {
 }
 void Constraint::clearVariables() {
   for (auto v : _variables) {
-    unDefineVariable(v);
+    if (v->_definedBy == this) {
+      unDefineVariable(v);
+    }
     removeDependency(v);
   }
 }
-bool Constraint::annotationDefinesVar() {
-  return _constraintBox.annotationDefinesVar();
-}
+bool Constraint::hasDefineAnnotation() { return _hasDefineAnnotation; }
 /********************* ThreeSVarConstraint ******************************/
 void ThreeSVarConstraint::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
@@ -99,6 +115,9 @@ void ThreeSVarConstraint::init(
   _variables.insert(_a);
   _variables.insert(_b);
   _variables.insert(_c);
+  if (_constraintBox.hasDefineAnnotation()) {
+    _annotationDefineVariable = getAnnotationVariable(variables);
+  }
 }
 void ThreeSVarConstraint::makeOneWay() {
   defineVariable(_c);

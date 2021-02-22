@@ -13,6 +13,7 @@ void SingleVariable::removeConstraint(Node* constraint) {
   _nextConstraints.erase(constraint);
 }
 void SingleVariable::defineBy(Node* constraint) {
+  assert(!_isDefined);
   _definedBy = constraint;
   _isDefined = true;
 }

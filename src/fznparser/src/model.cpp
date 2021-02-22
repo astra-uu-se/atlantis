@@ -23,7 +23,7 @@ void Model::findStructure() {
 one-way constraints. */
 void Model::defineAnnotated() {
   for (auto c : _constraints) {
-    if (c->annotationDefinesVar()) {
+    if (c->hasDefineAnnotation()) {
       c->makeOneWay();
     }
   }
