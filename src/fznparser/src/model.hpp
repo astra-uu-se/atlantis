@@ -17,6 +17,9 @@ class Model {
   bool hasCycle();
   void findStructure();
   void defineAnnotated();
+  void defineFrom(Variable* variable);
+  void defineFromObjective();
+  Variable* getObjective();
   void tweak();
   void printNode(std::string name);
   void addVariable(std::shared_ptr<Variable> v);

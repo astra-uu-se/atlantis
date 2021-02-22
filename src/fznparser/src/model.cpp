@@ -13,7 +13,7 @@ void Model::init() {
 
 void Model::findStructure() {
   defineAnnotated();
-  // traverseObjectiveDefine();
+  defineFromObjective();
   // defineWithFunctional();
   // defineWithAny();
   // removeCycles();
@@ -28,6 +28,26 @@ void Model::defineAnnotated() {
     }
   }
 }
+
+void Model::defineFrom(Variable* variable) {
+  for (auto constraint : variable->_potentialDefiners) {
+    if (constraint->_defines.empty()) {
+      constraint->forceOneWay(variable);
+      for (auto v : constraint->_variables) {
+        if (v != variable) {
+          defineFrom(v);
+        }
+      }
+      break;
+    }
+  }
+}
+void Model::defineFromObjective() {
+  Variable* objective = getObjective();
+  return defineFrom(objective);
+}
+Variable* Model::getObjective() { return _variables.find("a")->second.get(); }
+
 int Model::definedCount() {
   int n = 0;
   for (auto v : _variables) {
