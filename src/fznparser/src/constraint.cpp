@@ -106,6 +106,14 @@ void Constraint::clearVariables() {
   }
 }
 bool Constraint::hasDefineAnnotation() { return _hasDefineAnnotation; }
+void Constraint::defineByAnnotation() {
+  defineVariable(_annotationDefineVariable);
+  for (auto variable : _variables) {
+    if (variable != _annotationDefineVariable) {
+      addDependency(variable);
+    }
+  }
+}
 /********************* ThreeSVarConstraint ******************************/
 void ThreeSVarConstraint::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
@@ -117,6 +125,7 @@ void ThreeSVarConstraint::init(
   _variables.insert(_c);
   if (_constraintBox.hasDefineAnnotation()) {
     _annotationDefineVariable = getAnnotationVariable(variables);
+    _hasDefineAnnotation = true;
   }
 }
 void ThreeSVarConstraint::makeOneWay() {

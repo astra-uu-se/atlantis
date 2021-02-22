@@ -24,17 +24,6 @@ int main() {
   Statistics s = Statistics(&m);
   m.init();
   m.findStructure();
-
   s.checkCycles();
-
-  m.tweak();
-  std::cout << "=====TWEAKING=====" << std::endl;
-
-  s.checkCycles();
-  m.tweak();
-  std::cout << "=====TWEAKING=====" << std::endl;
-
-  s.checkCycles();
-
   return 0;
 }

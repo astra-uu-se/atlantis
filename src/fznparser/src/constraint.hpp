@@ -46,6 +46,7 @@ class Constraint : public Node {
       std::map<std::string, std::shared_ptr<Variable>> variables, int n);
   Variable* getAnnotationVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables);
+  void defineByAnnotation();
 
   std::string _name;
   ConstraintBox _constraintBox;

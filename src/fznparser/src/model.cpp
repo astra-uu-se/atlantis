@@ -24,7 +24,7 @@ one-way constraints. */
 void Model::defineAnnotated() {
   for (auto c : _constraints) {
     if (c->hasDefineAnnotation()) {
-      c->makeOneWay();
+      c->defineByAnnotation();
     }
   }
 }
