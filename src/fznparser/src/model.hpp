@@ -14,13 +14,14 @@ class Model {
   std::map<std::string, std::shared_ptr<Variable>> _variables;
   std::vector<std::shared_ptr<Constraint>> _constraints;
   void init();
-  void addVariable(std::shared_ptr<Variable> v);
-  // Variable* getVariable(std::string name);
-  // Variable* getParam(std::string name);
-  void addConstraint(ConstraintBox constraintBox);
   bool hasCycle();
+  void findStructure();
+  void defineAnnotated();
   void tweak();
   void printNode(std::string name);
+  void addVariable(std::shared_ptr<Variable> v);
+  void addConstraint(ConstraintBox constraintBox);
+  int definedCount();
 
  private:
   bool hasCycleAux(std::set<Node*> visited, Node* n, std::set<Node*>& done);

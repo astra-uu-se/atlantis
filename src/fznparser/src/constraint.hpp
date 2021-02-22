@@ -10,10 +10,11 @@
 
 class ConstraintBox {
  public:
-  ConstraintBox();
+  ConstraintBox() = default;
   ConstraintBox(std::string name, std::vector<Expression> expressions,
                 std::vector<Annotation> annotations);
   void prepare(std::map<std::string, std::shared_ptr<Variable>>& variables);
+  bool annotationDefinesVar();
   std::string _name;
   std::vector<Expression> _expressions;
   std::vector<Annotation> _annotations;
@@ -21,7 +22,6 @@ class ConstraintBox {
 
 class Constraint : public Node {
  public:
-  Constraint();
   virtual ~Constraint() = default;
   Constraint(ConstraintBox constraintBox);
   virtual void init(
@@ -29,12 +29,14 @@ class Constraint : public Node {
   virtual std::set<Node*> getNext() override;
   std::string getLabel() override;
   virtual void tweak();
-  virtual void define() = 0;
+  virtual void makeOneWay() = 0;
 
+  void clearVariables();
   void defineVariable(Variable* variable);
   void unDefineVariable(Variable* variable);
   void addDependency(Variable* variable);
   void removeDependency(Variable* variable);
+  bool annotationDefinesVar();
   Expression getExpression(int n);
   ArrayVariable* getArrayVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables, int n);
@@ -43,6 +45,7 @@ class Constraint : public Node {
   std::string _name;
   ConstraintBox _constraintBox;
   std::set<Node*> _defines;
+  std::set<Variable*> _variables;
 };
 
 class ThreeSVarConstraint : public Constraint {
@@ -51,7 +54,7 @@ class ThreeSVarConstraint : public Constraint {
       : Constraint(constraintBox){};
   virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
                         variables) override;
-  virtual void define() override;
+  void makeOneWay() override;
   SingleVariable* _a;
   SingleVariable* _b;
   SingleVariable* _c;
@@ -68,7 +71,7 @@ class GlobalCardinality : public Constraint {
   GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox){};
   virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
                         variables) override;
-  void define() override;
+  void makeOneWay() override;
   ArrayVariable* _x;
   SingleVariable* _cover;
   ArrayVariable* _counts;
@@ -80,15 +83,7 @@ class GlobalCardinality : public Constraint {
 class IntDiv : public ThreeSVarConstraint {
  public:
   IntDiv(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
-  void define() override;
-};
-/* int_max(var int: a, var int: b, var int: c)
-** Defines: c
-** Depends: a, b
-*/
-class IntMax : public ThreeSVarConstraint {
- public:
-  IntMax(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
+  void makeOneWay() override;
 };
 /* int_plus(var int: a, var int: b, var int: c)
 ** Defines: any
@@ -112,15 +107,24 @@ class IntPlus : public ThreeSVarConstraint {
 //   variables)
 //       override;
 // };
-class IntLinEq : public Constraint {
- public:
-  IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
-    void define() override;
+// class IntLinEq : public Constraint {
+//  public:
+//   IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox){};
+//   void init(const std::map<std::string, std::shared_ptr<Variable>>&
+//   variables)
+//       override;
+//   void defineTarget() override;
 
+//   ArrayVariable* _as;
+//   ArrayVariable* _bs;
+//   SingleVariable* _c;
+// };
 
-  ArrayVariable* _as;
-  ArrayVariable* _bs;
-  SingleVariable* _c;
-};
+/* int_max(var int: a, var int: b, var int: c)
+** Defines: c
+** Depends: a, b
+*/
+// class IntMax : public ThreeSVarConstraint {
+//  public:
+//   IntMax(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
+// };

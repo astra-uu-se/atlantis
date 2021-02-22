@@ -46,7 +46,9 @@ class Annotation {
  public:
   Annotation();
   Annotation(std::string name);
+  bool definesVar();
   std::string _name;
+  bool _definesVar;
 };
 
 class Expression {
@@ -70,4 +72,3 @@ class Node {
   virtual std::set<Node*> getNext() = 0;
   virtual std::string getLabel() = 0;
 };
-

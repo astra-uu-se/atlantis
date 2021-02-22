@@ -7,9 +7,37 @@ void Model::init() {
   }
   for (auto constraint : _constraints) {
     constraint->init(_variables);
-    constraint->define();
+    // constraint->makeOneWay();
   }
 }
+
+void Model::findStructure() {
+  defineAnnotated();
+  // traverseObjectiveDefine();
+  // defineWithFunctional();
+  // defineWithAny();
+  // removeCycles();
+}
+
+/* All constraints annotated with defines_var in the FlatZinc model are made
+one-way constraints. */
+void Model::defineAnnotated() {
+  for (auto c : _constraints) {
+    if (c->annotationDefinesVar()) {
+      c->makeOneWay();
+    }
+  }
+}
+int Model::definedCount() {
+  int n = 0;
+  for (auto v : _variables) {
+    if (v.second->isDefined()) {
+      n++;
+    }
+  }
+  return n;
+}
+
 void Model::addVariable(std::shared_ptr<Variable> item) {
   _variables.insert(
       std::pair<std::string, std::shared_ptr<Variable>>(item->getName(), item));
@@ -24,11 +52,12 @@ void Model::addConstraint(ConstraintBox constraintBox) {
   } else if (constraintBox._name == "global_cardinality") {
     constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<GlobalCardinality>(constraintBox));
-  } else if (constraintBox._name == "int_lin_eq") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
+    // } else if (constraintBox._name == "int_lin_eq") {
+    // constraintBox.prepare(_variables);
+    // _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
   }
 }
+
 bool Model::hasCycle() {
   std::set<Node*> done;
   for (auto n_pair : _variables) {

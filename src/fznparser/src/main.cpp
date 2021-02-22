@@ -3,7 +3,7 @@
 #include "FlatZincLexer.h"
 #include "FlatZincParser.h"
 #include "FznVisitor.h"
-#include "model.hpp"
+#include "statistics.hpp"
 
 using namespace fznparser;
 using namespace antlr4;
@@ -21,29 +21,20 @@ int main() {
 
   FznVisitor visitor;
   Model m = visitor.visitModel(tree);
+  Statistics s = Statistics(&m);
   m.init();
+  m.findStructure();
 
-  if (m.hasCycle()) {
-    std::cout << "FOUND CYCLE\n";
-  } else {
-    std::cout << "No cycle found\n";
-  }
+  s.checkCycles();
+
   m.tweak();
   std::cout << "=====TWEAKING=====" << std::endl;
 
-  if (m.hasCycle()) {
-    std::cout << "FOUND CYCLE\n";
-  } else {
-    std::cout << "No cycle found\n";
-  }
+  s.checkCycles();
   m.tweak();
   std::cout << "=====TWEAKING=====" << std::endl;
 
-  if (m.hasCycle()) {
-    std::cout << "FOUND CYCLE\n";
-  } else {
-    std::cout << "No cycle found\n";
-  }
+  s.checkCycles();
 
   return 0;
 }

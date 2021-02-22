@@ -1,7 +1,6 @@
 #include "constraint.hpp"
 
 /********************* ConstraintBox *********************/
-ConstraintBox::ConstraintBox() {}
 ConstraintBox::ConstraintBox(std::string name,
                              std::vector<Expression> expressions,
                              std::vector<Annotation> annotations) {
@@ -28,8 +27,16 @@ void ConstraintBox::prepare(
   }
 }
 
+bool ConstraintBox::annotationDefinesVar() {
+  for (auto a : _annotations) {
+    if (a.definesVar()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /********************* Constraint **************************/
-Constraint::Constraint() {}
 Constraint::Constraint(ConstraintBox constraintBox) {
   _constraintBox = constraintBox;
   _name = constraintBox._name;
@@ -74,19 +81,30 @@ void Constraint::addDependency(Variable* variable) {
 void Constraint::removeDependency(Variable* variable) {
   variable->removeConstraint(this);
 }
+void Constraint::clearVariables() {
+  for (auto v : _variables) {
+    unDefineVariable(v);
+    removeDependency(v);
+  }
+}
+bool Constraint::annotationDefinesVar() {
+  return _constraintBox.annotationDefinesVar();
+}
 /********************* ThreeSVarConstraint ******************************/
 void ThreeSVarConstraint::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _a = getSingleVariable(variables, 0);
   _b = getSingleVariable(variables, 1);
   _c = getSingleVariable(variables, 2);
+  _variables.insert(_a);
+  _variables.insert(_b);
+  _variables.insert(_c);
 }
-void ThreeSVarConstraint::define() {
+void ThreeSVarConstraint::makeOneWay() {
   defineVariable(_c);
   addDependency(_a);
   addDependency(_b);
 }
-
 
 /********************* GlobalCardinality ******************************/
 void GlobalCardinality::init(
@@ -94,28 +112,26 @@ void GlobalCardinality::init(
   _x = getArrayVariable(variables, 0);
   _cover = getSingleVariable(variables, 1);
   _counts = getArrayVariable(variables, 2);
+  _variables.insert(_x);
+  _variables.insert(_cover);
+  _variables.insert(_counts);
   // Skriv om till count och en mindre version av sig själv?
   // Har vi en cykel och kan den undvikas?
 }
-void GlobalCardinality::define() {
+void GlobalCardinality::makeOneWay() {
   addDependency(_x);
   defineVariable(_counts);
 }
 /********************* IntDiv ******************************/
-void IntDiv::define() {
+void IntDiv::makeOneWay() {
   defineVariable(_a);
   addDependency(_b);
   addDependency(_c);
 }
 /********************* IntPlus ******************************/
-void IntPlus::tweak() { defineArg((_state++ + 1) % 3);  }
+void IntPlus::tweak() { defineArg((_state++ + 1) % 3); }
 void IntPlus::defineArg(int n) {
-  removeDependency(_a);
-  removeDependency(_b);
-  removeDependency(_c);
-  unDefineVariable(_a);
-  unDefineVariable(_b);
-  unDefineVariable(_c);
+  clearVariables();
 
   switch (n) {
     case 0:
@@ -137,12 +153,12 @@ void IntPlus::defineArg(int n) {
 }
 
 /********************* IntLinEq ******************************/
-void IntLinEq::init(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _as = getArrayVariable(variables, 0);
-  _bs = getArrayVariable(variables, 1);
-  _c = getSingleVariable(variables, 2);
-}
-void IntLinEq::define(){
-  defineVariable(_bs);
-}
+// void IntLinEq::init(
+//     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+//   _as = getArrayVariable(variables, 0);
+//   _bs = getArrayVariable(variables, 1);
+//   _c = getSingleVariable(variables, 2);
+// }
+// void IntLinEq::defineTarget(){
+//   defineVariable(_bs);
+// }

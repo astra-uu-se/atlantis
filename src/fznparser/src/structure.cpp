@@ -21,7 +21,16 @@ int BoolDomain::getLb() { return false; }
 int BoolDomain::getUb() { return true; }
 
 Annotation::Annotation() {}
-Annotation::Annotation(std::string name) { _name = name; }
+Annotation::Annotation(std::string name) {
+  _name = name;
+
+  if (name == "defines_var") {
+    _definesVar = true;
+  } else {
+    _definesVar = false;
+  }
+}
+bool Annotation::definesVar() { return _definesVar; }
 
 Expression::Expression() {}
 Expression::Expression(std::string name, bool isId) {
@@ -29,7 +38,8 @@ Expression::Expression(std::string name, bool isId) {
   _isId = isId;
   _isArray = false;
 }
-Expression::Expression(std::string name, std::vector<Expression> elements, bool isId) {
+Expression::Expression(std::string name, std::vector<Expression> elements,
+                       bool isId) {
   _name = name;
   _isId = isId;
   _elements = elements;
