@@ -21,6 +21,9 @@ void SingleVariable::removeDefinition() {
   _definedBy = nullptr;
   _isDefined = false;
 }
+void SingleVariable::addPotentialDefiner(Constraint* constraint) {
+  _potentialDefiners.insert(constraint);
+}
 /*******************ARRAYVARIABLE****************************/
 void ArrayVariable::init(
     std::map<std::string, std::shared_ptr<Variable>>& variables) {
@@ -69,6 +72,11 @@ void ArrayVariable::defineBy(Node* constraint) {
 void ArrayVariable::removeDefinition() {
   for (auto e : _elements) {
     e->removeDefinition();
+  }
+}
+void ArrayVariable::addPotentialDefiner(Constraint* constraint) {
+  for (auto e : _elements) {
+    e->addPotentialDefiner(constraint);
   }
 }
 

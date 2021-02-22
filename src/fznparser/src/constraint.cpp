@@ -114,15 +114,30 @@ void Constraint::defineByAnnotation() {
     }
   }
 }
+void Constraint::forceOneWay(Variable* variable) {
+  clearVariables();
+  defineVariable(variable);
+  for (auto v : _variables) {
+    if (variable != v) {
+      addDependency(v);
+    }
+  }
+}
 /********************* ThreeSVarConstraint ******************************/
 void ThreeSVarConstraint::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _a = getSingleVariable(variables, 0);
   _b = getSingleVariable(variables, 1);
   _c = getSingleVariable(variables, 2);
-  _variables.insert(_a);
-  _variables.insert(_b);
-  _variables.insert(_c);
+
+  _variables.push_back(_a);
+  _variables.push_back(_b);
+  _variables.push_back(_c);
+
+  _a->addPotentialDefiner(this);
+  _b->addPotentialDefiner(this);
+  _c->addPotentialDefiner(this);
+
   if (_constraintBox.hasDefineAnnotation()) {
     _annotationDefineVariable = getAnnotationVariable(variables);
     _hasDefineAnnotation = true;
@@ -140,9 +155,12 @@ void GlobalCardinality::init(
   _x = getArrayVariable(variables, 0);
   _cover = getSingleVariable(variables, 1);
   _counts = getArrayVariable(variables, 2);
-  _variables.insert(_x);
-  _variables.insert(_cover);
-  _variables.insert(_counts);
+  _variables.push_back(_x);
+  _variables.push_back(_cover);
+  _variables.push_back(_counts);
+  _x->addPotentialDefiner(this);
+  _cover->addPotentialDefiner(this);
+  _counts->addPotentialDefiner(this);
   // Skriv om till count och en mindre version av sig själv?
   // Har vi en cykel och kan den undvikas?
 }
@@ -157,28 +175,7 @@ void IntDiv::makeOneWay() {
   addDependency(_c);
 }
 /********************* IntPlus ******************************/
-void IntPlus::tweak() { defineArg((_state++ + 1) % 3); }
-void IntPlus::defineArg(int n) {
-  clearVariables();
-
-  switch (n) {
-    case 0:
-      defineVariable(_c);
-      addDependency(_a);
-      addDependency(_b);
-      break;
-    case 1:
-      defineVariable(_b);
-      addDependency(_c);
-      addDependency(_a);
-      break;
-    case 2:
-      defineVariable(_a);
-      addDependency(_b);
-      addDependency(_c);
-      break;
-  }
-}
+void IntPlus::tweak() { forceOneWay(_variables[(_state++ + 1) % 3]); }
 
 /********************* IntLinEq ******************************/
 // void IntLinEq::init(

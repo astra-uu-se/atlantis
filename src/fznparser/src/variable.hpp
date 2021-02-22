@@ -14,6 +14,7 @@ class Variable : public Node {
   virtual void removeConstraint(Node* constraint) = 0;
   virtual void defineBy(Node* constraint) = 0;
   virtual void removeDefinition() = 0;
+  virtual void addPotentialDefiner(Constraint* constraint) = 0;
 
   virtual bool isDefined() { return _isDefined; };
   virtual bool isDefinable() { return _isDefinable; };
@@ -27,7 +28,7 @@ class Variable : public Node {
   Node* _definedBy;
   std::vector<Annotation> _annotations;
   std::set<Node*> _nextConstraints;
-  // std::set<Node*> _potentialConstraints;
+  std::set<Constraint*> _potentialDefiners;
 };
 
 class SingleVariable : public Variable {
@@ -46,6 +47,7 @@ class SingleVariable : public Variable {
   void removeConstraint(Node* constraint) override;
   void defineBy(Node* constraint) override;
   void removeDefinition() override;
+  void addPotentialDefiner(Constraint* constraint) override;
 
   std::shared_ptr<Domain> _domain;
 };
@@ -65,6 +67,7 @@ class ArrayVariable : public Variable {
   void removeConstraint(Node* constraint) override;
   void defineBy(Node* constraint) override;
   void removeDefinition() override;
+  void addPotentialDefiner(Constraint* constraint) override;
 
   std::vector<Expression> _expressions;
   std::vector<Variable*> _elements;
@@ -82,4 +85,5 @@ class Parameter : public SingleVariable {
   void removeConstraint(Node* constraint) override{};
   void defineBy(Node* constraint) override{};
   void removeDefinition() override{};
+  void addPotentialDefiner(Constraint* constraint) override{};
 };

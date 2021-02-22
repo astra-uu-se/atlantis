@@ -47,11 +47,12 @@ class Constraint : public Node {
   Variable* getAnnotationVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables);
   void defineByAnnotation();
+  void forceOneWay(Variable* variable);
 
   std::string _name;
   ConstraintBox _constraintBox;
   std::set<Node*> _defines;
-  std::set<Variable*> _variables;
+  std::vector<Variable*> _variables;
   bool _hasDefineAnnotation;
   Variable* _annotationDefineVariable;
 };
@@ -99,8 +100,7 @@ class IntDiv : public ThreeSVarConstraint {
 class IntPlus : public ThreeSVarConstraint {
  public:
   IntPlus(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
-  void defineArg(int n);
-  void tweak() override;
+  void tweak();
   int _state = 0;
 };
 /* array_var_int_element(var int: b, array [int] of var int: as, var int: c)
