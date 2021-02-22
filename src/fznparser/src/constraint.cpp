@@ -48,6 +48,7 @@ std::string ConstraintBox::getAnnotationVariableName() {
 Constraint::Constraint(ConstraintBox constraintBox) {
   _constraintBox = constraintBox;
   _name = constraintBox._name;
+  _uniqueTarget = true;
 }
 
 Expression Constraint::getExpression(int n) {

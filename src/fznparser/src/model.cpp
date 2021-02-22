@@ -14,13 +14,11 @@ void Model::init() {
 void Model::findStructure() {
   defineAnnotated();
   defineFromObjective();
-  // defineWithFunctional();
-  // defineWithAny();
+  defineUnique();
+  defineRest();
   // removeCycles();
 }
 
-/* All constraints annotated with defines_var in the FlatZinc model are made
-one-way constraints. */
 void Model::defineAnnotated() {
   for (auto c : _constraints) {
     if (c->hasDefineAnnotation()) {
@@ -43,10 +41,39 @@ void Model::defineFrom(Variable* variable) {
   }
 }
 void Model::defineFromObjective() {
-  Variable* objective = getObjective();
-  return defineFrom(objective);
+  if (false) {
+    Variable* objective = getObjective();
+    defineFrom(objective);
+  }
 }
 Variable* Model::getObjective() { return _variables.find("a")->second.get(); }
+
+void Model::defineUnique() {
+  for (auto item : _variables) {
+    auto variable = item.second.get();
+    if (!variable->isDefined()) {
+      for (auto constraint : variable->_potentialDefiners) {
+        if (constraint->_uniqueTarget && constraint->_defines.empty()) {
+          constraint->forceOneWay(variable);
+          break;
+        }
+      }
+    }
+  }
+}
+void Model::defineRest() {
+  for (auto item : _variables) {
+    auto variable = item.second.get();
+    if (!variable->isDefined()) {
+      for (auto constraint : variable->_potentialDefiners) {
+        if (constraint->_defines.empty()) {
+          constraint->forceOneWay(variable);
+          break;
+        }
+      }
+    }
+  }
+}
 
 int Model::definedCount() {
   int n = 0;

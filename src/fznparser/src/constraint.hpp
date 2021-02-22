@@ -32,6 +32,7 @@ class Constraint : public Node {
   virtual void tweak();
   virtual void makeOneWay() = 0;
 
+  void makeSoft();
   void clearVariables();
   void defineVariable(Variable* variable);
   void unDefineVariable(Variable* variable);
@@ -55,6 +56,7 @@ class Constraint : public Node {
   std::vector<Variable*> _variables;
   bool _hasDefineAnnotation;
   Variable* _annotationDefineVariable;
+  bool _uniqueTarget;
 };
 
 class ThreeSVarConstraint : public Constraint {
@@ -77,7 +79,9 @@ class ThreeSVarConstraint : public Constraint {
 */
 class GlobalCardinality : public Constraint {
  public:
-  GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox){};
+  GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox) {
+    _uniqueTarget = false;
+  };
   virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
                         variables) override;
   void makeOneWay() override;
@@ -99,7 +103,9 @@ class IntDiv : public ThreeSVarConstraint {
 */
 class IntPlus : public ThreeSVarConstraint {
  public:
-  IntPlus(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
+  IntPlus(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox) {
+    _uniqueTarget = false;
+  };
   void tweak();
   int _state = 0;
 };

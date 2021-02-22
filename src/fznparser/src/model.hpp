@@ -19,6 +19,8 @@ class Model {
   void defineAnnotated();
   void defineFrom(Variable* variable);
   void defineFromObjective();
+  void defineUnique();
+  void defineRest();
   Variable* getObjective();
   void tweak();
   void printNode(std::string name);
