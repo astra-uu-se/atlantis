@@ -11,6 +11,8 @@ void Statistics::checkCycles() {
 }
 
 void Statistics::countDefinedVariables() {
+  std::cout << "Total amount of variables is: ";
+  std::cout << _model->variableCount() << std::endl;
   std::cout << "Amount of defined variables is: ";
   std::cout << _model->definedCount() << std::endl;
 }

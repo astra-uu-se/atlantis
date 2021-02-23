@@ -17,6 +17,7 @@ class Model {
   bool hasCycle();
   void findStructure();
   void defineAnnotated();
+  void defineImplicit();
   void defineFrom(Variable* variable);
   void defineFromObjective();
   void defineUnique();
@@ -26,6 +27,7 @@ class Model {
   void addVariable(std::shared_ptr<Variable> v);
   void addConstraint(ConstraintBox constraintBox);
   int definedCount();
+  int variableCount();
   void removeCycle(std::set<Node*> visited);
   void removeCycles();
 

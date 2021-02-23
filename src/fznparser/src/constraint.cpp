@@ -141,6 +141,19 @@ void IntPlus::configureVariables() {
   _b->addPotentialDefiner(this);
   _c->addPotentialDefiner(this);
 }
+/********************* TwoSVarConstraint ******************************/
+void TwoSVarConstraint::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  _a = getSingleVariable(variables, 0);
+  _b = getSingleVariable(variables, 1);
+
+  _variables.push_back(_a);
+  _variables.push_back(_b);
+
+  configureVariables();
+  checkAnnotations(variables);
+}
+void TwoSVarConstraint::configureVariables() { _b->addPotentialDefiner(this); }
 /********************* GlobalCardinality ******************************/
 void GlobalCardinality::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
@@ -161,7 +174,29 @@ void IntLinEq::init(
     _variables.push_back(variable);
     variable->addPotentialDefiner(this);  // Here we need to check if as[v] = 1
   }
-
   checkAnnotations(variables);
   // We potentially need to remove _bs from variables.
+}
+/********************* AllDifferent ******************************/
+void AllDifferent::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  _x = getArrayVariable(variables, 0);  // Parameter
+  for (auto variable : _x->elements()) {
+    _variables.push_back(variable);
+    variable->addPotentialDefiner(this);
+  }
+  checkAnnotations(variables);
+}
+bool AllDifferent::canBeImplicit() {
+  for (auto variable : _variables) {
+    if (variable->isDefined()) {
+      return false;
+    }
+  }
+  return true;
+}
+void AllDifferent::makeImplicit() {
+  for (auto variable : _variables) {
+    defineVariable(variable);
+  }
 }

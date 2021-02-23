@@ -19,6 +19,7 @@ class Variable : public Node {
   virtual void removeDefinition() = 0;
   virtual void addPotentialDefiner(Constraint* constraint) = 0;
 
+  virtual int count() { return 0; };
   virtual bool isDefined() { return _isDefined; };
   virtual bool isDefinable() { return _isDefinable; };
   virtual std::string getName() { return _name; };
@@ -54,6 +55,7 @@ class SingleVariable : public Variable {
   void defineBy(Node* constraint) override;
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
+  int count() override { return 1; };
 
  private:
   std::shared_ptr<Domain> _domain;
@@ -95,4 +97,5 @@ class Parameter : public SingleVariable {
   void defineBy(Node* constraint) override{};
   void removeDefinition() override{};
   void addPotentialDefiner(Constraint* constraint) override{};
+  int count() override { return 0; };
 };

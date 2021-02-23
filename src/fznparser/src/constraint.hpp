@@ -24,8 +24,8 @@ class Constraint : public Node {
   void makeOneWayByAnnotation();
   void makeOneWay(Variable* variable);
   void makeSoft();
-  void makeImplicit();
-  bool canBeImplicit();
+  virtual void makeImplicit();
+  virtual bool canBeImplicit();
   bool definesNone();
   bool uniqueTarget();
   bool hasDefineAnnotation();
@@ -71,24 +71,6 @@ class ThreeSVarConstraint : public Constraint {
   SingleVariable* _b;
   SingleVariable* _c;
 };
-
-/* global_cardinality(       array [int] of var int: x,
-**                           array [int] of int: cover,
-**                           array [int] of var int: counts)
-** Defines: all of counts
-** Depends: x
-*/
-class GlobalCardinality : public Constraint {
- public:
-  GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox) {
-    _uniqueTarget = false;
-  };
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
-  ArrayVariable* _x;
-  ArrayVariable* _cover;
-  ArrayVariable* _counts;
-};
 /* int_div(var int: a, var int: b, var int: c)
 ** Defines: a
 ** Depends: b, c
@@ -108,6 +90,37 @@ class IntPlus : public ThreeSVarConstraint {
   };
   void configureVariables() override;
 };
+class TwoSVarConstraint : public Constraint {
+ public:
+  TwoSVarConstraint(ConstraintBox constraintBox) : Constraint(constraintBox){};
+  virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
+                        variables) override;
+  virtual void configureVariables();
+  SingleVariable* _a;
+  SingleVariable* _b;
+};
+class IntAbs : public TwoSVarConstraint {
+ public:
+  IntAbs(ConstraintBox constraintBox) : TwoSVarConstraint(constraintBox){};
+};
+
+/* global_cardinality(       array [int] of var int: x,
+**                           array [int] of int: cover,
+**                           array [int] of var int: counts)
+** Defines: all of counts
+** Depends: x
+*/
+class GlobalCardinality : public Constraint {
+ public:
+  GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox) {
+    _uniqueTarget = false;
+  };
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
+  ArrayVariable* _x;
+  ArrayVariable* _cover;
+  ArrayVariable* _counts;
+};
 
 class IntLinEq : public Constraint {
  public:
@@ -119,4 +132,15 @@ class IntLinEq : public Constraint {
   ArrayVariable* _as;
   ArrayVariable* _bs;
   SingleVariable* _c;
+};
+class AllDifferent : public Constraint {
+ public:
+  AllDifferent(ConstraintBox constraintBox) : Constraint(constraintBox) {
+    _uniqueTarget = false;
+  };
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
+  bool canBeImplicit() override;
+  void makeImplicit() override;
+  ArrayVariable* _x;
 };

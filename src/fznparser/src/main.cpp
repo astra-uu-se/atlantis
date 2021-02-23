@@ -24,5 +24,6 @@ int main() {
   Statistics s = Statistics(&m);
   m.init();
   m.findStructure();
+  s.countDefinedVariables();
   return 0;
 }

@@ -12,6 +12,7 @@ void Model::init() {
 
 void Model::findStructure() {
   defineAnnotated();
+  defineImplicit();
   defineFromObjective();
   defineUnique();
   defineRest();
@@ -22,6 +23,13 @@ void Model::defineAnnotated() {
   for (auto c : _constraints) {
     if (c->hasDefineAnnotation()) {
       c->makeOneWayByAnnotation();
+    }
+  }
+}
+void Model::defineImplicit() {
+  for (auto c : _constraints) {
+    if (c->canBeImplicit()) {
+      c->makeImplicit();
     }
   }
 }
@@ -74,6 +82,13 @@ void Model::defineRest() {
   }
 }
 
+int Model::variableCount() {
+  int n = 0;
+  for (auto v : _variables) {
+    n += v.second->count();
+  }
+  return n;
+}
 int Model::definedCount() {
   int n = 0;
   for (auto v : _variables) {
@@ -101,6 +116,12 @@ void Model::addConstraint(ConstraintBox constraintBox) {
   } else if (constraintBox._name == "int_lin_eq") {
     constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
+  } else if (constraintBox._name == "int_abs") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<IntAbs>(constraintBox));
+  } else if (constraintBox._name == "fzn_all_different_int") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<AllDifferent>(constraintBox));
   }
 }
 
