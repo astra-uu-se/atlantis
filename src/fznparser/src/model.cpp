@@ -28,9 +28,9 @@ void Model::defineAnnotated() {
 
 void Model::defineFrom(Variable* variable) {
   for (auto constraint : variable->_potentialDefiners) {
-    if (constraint->_defines.empty()) {
+    if (constraint->definesNone()) {
       constraint->makeOneWay(variable);
-      for (auto v : constraint->_variables) {
+      for (auto v : constraint->variables()) {
         if (v != variable) {
           defineFrom(v);
         }
@@ -52,7 +52,7 @@ void Model::defineUnique() {
     auto variable = item.second.get();
     if (!variable->isDefined()) {
       for (auto constraint : variable->_potentialDefiners) {
-        if (constraint->_uniqueTarget && constraint->_defines.empty()) {
+        if (constraint->uniqueTarget() && constraint->definesNone()) {
           constraint->makeOneWay(variable);
           break;
         }
@@ -65,7 +65,7 @@ void Model::defineRest() {
     auto variable = item.second.get();
     if (!variable->isDefined()) {
       for (auto constraint : variable->_potentialDefiners) {
-        if (constraint->_defines.empty()) {
+        if (constraint->definesNone()) {
           constraint->makeOneWay(variable);
           break;
         }
@@ -132,7 +132,7 @@ bool Model::hasCycleAux(std::set<Node*> visited, Node* n,
 void Model::removeCycle(std::set<Node*> visited) {
   for (auto node : visited) {
     if (node->breakCycle()) {
-      break;
+      return;
     }
   }
 }
@@ -142,7 +142,7 @@ void Model::removeCycles() {
   while (hasCycle()) {
     std::cout << "Cycle found...Removing" << std::endl;
   }
-  std::cout << "Done! No more cycles." << std::endl;
+  std::cout << "Done! No cycles." << std::endl;
 }
 
 void Model::printNode(std::string name) {

@@ -5,21 +5,9 @@
 #include <string>
 #include <vector>
 
+#include "constraintbox.hpp"
 #include "structure.hpp"
 #include "variable.hpp"
-
-class ConstraintBox {
- public:
-  ConstraintBox() = default;
-  ConstraintBox(std::string name, std::vector<Expression> expressions,
-                std::vector<Annotation> annotations);
-  void prepare(std::map<std::string, std::shared_ptr<Variable>>& variables);
-  bool hasDefineAnnotation();
-  std::string getAnnotationVariableName();
-  std::string _name;
-  std::vector<Expression> _expressions;
-  std::vector<Annotation> _annotations;
-};
 
 class Constraint : public Node {
  public:
@@ -27,27 +15,34 @@ class Constraint : public Node {
   Constraint(ConstraintBox constraintBox);
   virtual void init(
       const std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
+
   virtual std::set<Node*> getNext() override;
   std::string getLabel() override;
   bool breakCycle() override;
 
+  void defineByAnnotation();
+  void makeOneWay(Variable* variable);
   void makeSoft();
-  void clearVariables();
-  void defineVariable(Variable* variable);
-  void unDefineVariable(Variable* variable);
-  void addDependency(Variable* variable);
-  void removeDependency(Variable* variable);
+  bool definesNone();
+  bool uniqueTarget();
   bool hasDefineAnnotation();
-  Variable* annotationDefineVariable();
-  Expression getExpression(int n);
+  std::vector<Variable*> variables();
+
+ protected:
   ArrayVariable* getArrayVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables, int n);
   SingleVariable* getSingleVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables, int n);
   Variable* getAnnotationVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables);
-  void defineByAnnotation();
-  void makeOneWay(Variable* variable);
+  Expression getExpression(int n);
+  Variable* annotationDefineVariable();
+
+  void defineVariable(Variable* variable);
+  void unDefineVariable(Variable* variable);
+  void addDependency(Variable* variable);
+  void removeDependency(Variable* variable);
+  void clearVariables();
 
   std::string _name;
   ConstraintBox _constraintBox;
