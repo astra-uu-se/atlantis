@@ -5,6 +5,9 @@ Constraint::Constraint(ConstraintBox constraintBox) {
   _constraintBox = constraintBox;
   _name = constraintBox._name;
   _uniqueTarget = true;
+  _implicit = false;
+  _canBeImplicit = false;
+  _hasDefineAnnotation = false;
 }
 
 Expression Constraint::getExpression(int n) {
@@ -71,9 +74,17 @@ void Constraint::clearVariables() {
     }
     removeDependency(variable);
   }
+  assert(_defines.empty());
 }
 bool Constraint::hasDefineAnnotation() { return _hasDefineAnnotation; }
-void Constraint::defineByAnnotation() {
+void Constraint::checkAnnotations(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  if (_constraintBox.hasDefineAnnotation()) {
+    _annotationDefineVariable = getAnnotationVariable(variables);
+    _hasDefineAnnotation = true;
+  }
+}
+void Constraint::makeOneWayByAnnotation() {
   defineVariable(_annotationDefineVariable);
   for (auto variable : _variables) {
     if (variable != _annotationDefineVariable) {
@@ -82,6 +93,7 @@ void Constraint::defineByAnnotation() {
   }
 }
 void Constraint::makeOneWay(Variable* variable) {
+  assert(std::count(_variables.begin(), _variables.end(), variable));
   clearVariables();
   defineVariable(variable);
   for (auto v : _variables) {
@@ -90,13 +102,15 @@ void Constraint::makeOneWay(Variable* variable) {
     }
   }
 }
-void Constraint::makeSoft() {
-  // Remove dependencies?? Maybe just trigger a bool isSoft instead? and check
-  // it in getNext()
-  for (auto var : _defines) {
-    var->removeDefinition();
+void Constraint::makeSoft() { clearVariables(); }
+
+bool Constraint::canBeImplicit() { return _canBeImplicit; }
+void Constraint::makeImplicit() {
+  assert(_canBeImplicit);
+  _implicit = true;
+  for (auto variable : _variables) {
+    defineVariable(variable);
   }
-  _defines.clear();
 }
 
 bool Constraint::definesNone() { return _defines.empty(); }
@@ -112,12 +126,9 @@ void ThreeSVarConstraint::init(
   _variables.push_back(_a);
   _variables.push_back(_b);
   _variables.push_back(_c);
-  configureVariables();
 
-  if (_constraintBox.hasDefineAnnotation()) {
-    _annotationDefineVariable = getAnnotationVariable(variables);
-    _hasDefineAnnotation = true;
-  }
+  configureVariables();
+  checkAnnotations(variables);
 }
 void ThreeSVarConstraint::configureVariables() {
   _c->addPotentialDefiner(this);
@@ -141,3 +152,16 @@ void GlobalCardinality::init(
   _counts->addPotentialDefiner(this);
 }
 /********************* IntLinEq ******************************/
+void IntLinEq::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  _as = getArrayVariable(variables, 0);  // Parameter
+  _bs = getArrayVariable(variables, 1);
+  _c = getSingleVariable(variables, 2);  // Parameter
+  for (auto variable : _bs->elements()) {
+    _variables.push_back(variable);
+    variable->addPotentialDefiner(this);  // Here we need to check if as[v] = 1
+  }
+
+  checkAnnotations(variables);
+  // We potentially need to remove _bs from variables.
+}

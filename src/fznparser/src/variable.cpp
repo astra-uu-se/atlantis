@@ -79,6 +79,7 @@ void ArrayVariable::addPotentialDefiner(Constraint* constraint) {
     e->addPotentialDefiner(constraint);
   }
 }
+std::vector<Variable*> ArrayVariable::elements() { return _elements; }
 
 /*******************PARAMETER****************************/
 Parameter::Parameter(std::string value) { _name = value; }

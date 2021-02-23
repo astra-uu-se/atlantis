@@ -21,7 +21,7 @@ void Model::findStructure() {
 void Model::defineAnnotated() {
   for (auto c : _constraints) {
     if (c->hasDefineAnnotation()) {
-      c->defineByAnnotation();
+      c->makeOneWayByAnnotation();
     }
   }
 }
@@ -98,9 +98,9 @@ void Model::addConstraint(ConstraintBox constraintBox) {
   } else if (constraintBox._name == "global_cardinality") {
     constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<GlobalCardinality>(constraintBox));
-    // } else if (constraintBox._name == "int_lin_eq") {
-    // constraintBox.prepare(_variables);
-    // _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
+  } else if (constraintBox._name == "int_lin_eq") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
   }
 }
 

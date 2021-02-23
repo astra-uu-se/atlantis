@@ -75,6 +75,7 @@ class ArrayVariable : public Variable {
   void defineBy(Node* constraint) override;
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
+  std::vector<Variable*> elements();
 
  private:
   std::vector<Expression> _expressions;

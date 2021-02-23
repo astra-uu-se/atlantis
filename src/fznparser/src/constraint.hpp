@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <map>
@@ -18,11 +19,13 @@ class Constraint : public Node {
 
   virtual std::set<Node*> getNext() override;
   std::string getLabel() override;
-  bool breakCycle() override;
+  virtual bool breakCycle() override;
 
-  void defineByAnnotation();
+  void makeOneWayByAnnotation();
   void makeOneWay(Variable* variable);
   void makeSoft();
+  void makeImplicit();
+  bool canBeImplicit();
   bool definesNone();
   bool uniqueTarget();
   bool hasDefineAnnotation();
@@ -37,6 +40,8 @@ class Constraint : public Node {
       std::map<std::string, std::shared_ptr<Variable>> variables);
   Expression getExpression(int n);
   Variable* annotationDefineVariable();
+  void checkAnnotations(
+      const std::map<std::string, std::shared_ptr<Variable>>& variables);
 
   void defineVariable(Variable* variable);
   void unDefineVariable(Variable* variable);
@@ -51,6 +56,8 @@ class Constraint : public Node {
   bool _hasDefineAnnotation;
   Variable* _annotationDefineVariable;
   bool _uniqueTarget;
+  bool _implicit;
+  bool _canBeImplicit;
 };
 
 class ThreeSVarConstraint : public Constraint {
@@ -76,8 +83,8 @@ class GlobalCardinality : public Constraint {
   GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
   };
-  virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
-                        variables) override;
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
   ArrayVariable* _x;
   ArrayVariable* _cover;
   ArrayVariable* _counts;
@@ -100,4 +107,16 @@ class IntPlus : public ThreeSVarConstraint {
     _uniqueTarget = false;
   };
   void configureVariables() override;
+};
+
+class IntLinEq : public Constraint {
+ public:
+  IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox) {
+    _uniqueTarget = false;
+  };
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
+  ArrayVariable* _as;
+  ArrayVariable* _bs;
+  SingleVariable* _c;
 };
