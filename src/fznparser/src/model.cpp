@@ -27,7 +27,7 @@ void Model::defineAnnotated() {
 }
 
 void Model::defineFrom(Variable* variable) {
-  for (auto constraint : variable->_potentialDefiners) {
+  for (auto constraint : variable->potentialDefiners()) {
     if (constraint->definesNone()) {
       constraint->makeOneWay(variable);
       for (auto v : constraint->variables()) {
@@ -51,7 +51,7 @@ void Model::defineUnique() {
   for (auto item : _variables) {
     auto variable = item.second.get();
     if (!variable->isDefined()) {
-      for (auto constraint : variable->_potentialDefiners) {
+      for (auto constraint : variable->potentialDefiners()) {
         if (constraint->uniqueTarget() && constraint->definesNone()) {
           constraint->makeOneWay(variable);
           break;
@@ -64,7 +64,7 @@ void Model::defineRest() {
   for (auto item : _variables) {
     auto variable = item.second.get();
     if (!variable->isDefined()) {
-      for (auto constraint : variable->_potentialDefiners) {
+      for (auto constraint : variable->potentialDefiners()) {
         if (constraint->definesNone()) {
           constraint->makeOneWay(variable);
           break;

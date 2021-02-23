@@ -54,7 +54,7 @@ void Constraint::defineVariable(Variable* variable) {
   variable->defineBy(this);
 }
 void Constraint::unDefineVariable(Variable* variable) {
-  assert(variable->_definedBy == this);
+  assert(variable->definedBy() == this);
   _defines.erase(variable);
   variable->removeDefinition();
 }
@@ -65,11 +65,11 @@ void Constraint::removeDependency(Variable* variable) {
   variable->removeConstraint(this);
 }
 void Constraint::clearVariables() {
-  for (auto v : _variables) {
-    if (v->_definedBy == this) {
-      unDefineVariable(v);
+  for (auto variable : _variables) {
+    if (variable->definedBy() == this) {
+      unDefineVariable(variable);
     }
-    removeDependency(v);
+    removeDependency(variable);
   }
 }
 bool Constraint::hasDefineAnnotation() { return _hasDefineAnnotation; }

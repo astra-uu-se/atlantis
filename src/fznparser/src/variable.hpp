@@ -10,6 +10,9 @@ class Variable : public Node {
   virtual void init(
       std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
 
+  virtual std::string getLabel() override { return _name; };
+  bool breakCycle() override { return false; };
+
   virtual void addConstraint(Node* constraint) = 0;
   virtual void removeConstraint(Node* constraint) = 0;
   virtual void defineBy(Node* constraint) = 0;
@@ -18,11 +21,13 @@ class Variable : public Node {
 
   virtual bool isDefined() { return _isDefined; };
   virtual bool isDefinable() { return _isDefinable; };
-  // std::set<Node*> getNext() = 0;
   virtual std::string getName() { return _name; };
-  virtual std::string getLabel() override { return _name; };
-  bool breakCycle() override { return false; };
+  virtual Node* definedBy() { return _definedBy; };
+  virtual std::set<Constraint*> potentialDefiners() {
+    return _potentialDefiners;
+  };
 
+ protected:
   std::string _name;
   bool _isDefinable;
   bool _isDefined;
@@ -50,6 +55,7 @@ class SingleVariable : public Variable {
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
 
+ private:
   std::shared_ptr<Domain> _domain;
 };
 
@@ -70,6 +76,7 @@ class ArrayVariable : public Variable {
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
 
+ private:
   std::vector<Expression> _expressions;
   std::vector<Variable*> _elements;
 };
