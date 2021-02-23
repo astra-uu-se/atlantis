@@ -7,7 +7,6 @@ void Model::init() {
   }
   for (auto constraint : _constraints) {
     constraint->init(_variables);
-    // constraint->makeOneWay();
   }
 }
 
@@ -16,7 +15,7 @@ void Model::findStructure() {
   defineFromObjective();
   defineUnique();
   defineRest();
-  // removeCycles();
+  removeCycles();
 }
 
 void Model::defineAnnotated() {
@@ -30,7 +29,7 @@ void Model::defineAnnotated() {
 void Model::defineFrom(Variable* variable) {
   for (auto constraint : variable->_potentialDefiners) {
     if (constraint->_defines.empty()) {
-      constraint->forceOneWay(variable);
+      constraint->makeOneWay(variable);
       for (auto v : constraint->_variables) {
         if (v != variable) {
           defineFrom(v);
@@ -54,7 +53,7 @@ void Model::defineUnique() {
     if (!variable->isDefined()) {
       for (auto constraint : variable->_potentialDefiners) {
         if (constraint->_uniqueTarget && constraint->_defines.empty()) {
-          constraint->forceOneWay(variable);
+          constraint->makeOneWay(variable);
           break;
         }
       }
@@ -67,7 +66,7 @@ void Model::defineRest() {
     if (!variable->isDefined()) {
       for (auto constraint : variable->_potentialDefiners) {
         if (constraint->_defines.empty()) {
-          constraint->forceOneWay(variable);
+          constraint->makeOneWay(variable);
           break;
         }
       }
@@ -119,7 +118,10 @@ bool Model::hasCycleAux(std::set<Node*> visited, Node* n,
                         std::set<Node*>& done) {
   if (done.count(n)) return false;
   std::cout << "Node: " << n->getLabel() << std::endl;
-  if (visited.count(n)) return true;
+  if (visited.count(n)) {
+    removeCycle(visited);
+    return true;
+  }
   visited.insert(n);
   for (auto m : n->getNext()) {
     if (hasCycleAux(visited, m, done)) return true;
@@ -127,15 +129,24 @@ bool Model::hasCycleAux(std::set<Node*> visited, Node* n,
   done.insert(visited.begin(), visited.end());
   return false;
 }
+void Model::removeCycle(std::set<Node*> visited) {
+  for (auto node : visited) {
+    if (node->breakCycle()) {
+      break;
+    }
+  }
+}
+
+void Model::removeCycles() {
+  std::cout << "Looking for Cycles..." << std::endl;
+  while (hasCycle()) {
+    std::cout << "Cycle found...Removing" << std::endl;
+  }
+  std::cout << "Done! No more cycles." << std::endl;
+}
 
 void Model::printNode(std::string name) {
   assert(_variables.find(name) != _variables.end());
   Node* node = _variables.find(name)->second.get();
   std::cout << node->getLabel() << std::endl;
-}
-
-void Model::tweak() {
-  for (auto c : _constraints) {
-    c->tweak();
-  }
 }

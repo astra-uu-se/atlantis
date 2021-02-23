@@ -29,8 +29,7 @@ class Constraint : public Node {
       const std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
   virtual std::set<Node*> getNext() override;
   std::string getLabel() override;
-  virtual void tweak();
-  virtual void makeOneWay() = 0;
+  bool breakCycle() override;
 
   void makeSoft();
   void clearVariables();
@@ -48,11 +47,11 @@ class Constraint : public Node {
   Variable* getAnnotationVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables);
   void defineByAnnotation();
-  void forceOneWay(Variable* variable);
+  void makeOneWay(Variable* variable);
 
   std::string _name;
   ConstraintBox _constraintBox;
-  std::set<Node*> _defines;
+  std::set<Variable*> _defines;
   std::vector<Variable*> _variables;
   bool _hasDefineAnnotation;
   Variable* _annotationDefineVariable;
@@ -65,7 +64,7 @@ class ThreeSVarConstraint : public Constraint {
       : Constraint(constraintBox){};
   virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
                         variables) override;
-  void makeOneWay() override;
+  virtual void configureVariables();
   SingleVariable* _a;
   SingleVariable* _b;
   SingleVariable* _c;
@@ -84,9 +83,8 @@ class GlobalCardinality : public Constraint {
   };
   virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
                         variables) override;
-  void makeOneWay() override;
   ArrayVariable* _x;
-  SingleVariable* _cover;
+  ArrayVariable* _cover;
   ArrayVariable* _counts;
 };
 /* int_div(var int: a, var int: b, var int: c)
@@ -96,7 +94,7 @@ class GlobalCardinality : public Constraint {
 class IntDiv : public ThreeSVarConstraint {
  public:
   IntDiv(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
-  void makeOneWay() override;
+  void configureVariables() override;
 };
 /* int_plus(var int: a, var int: b, var int: c)
 ** Defines: any
@@ -106,39 +104,5 @@ class IntPlus : public ThreeSVarConstraint {
   IntPlus(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox) {
     _uniqueTarget = false;
   };
-  void tweak();
-  int _state = 0;
+  void configureVariables() override;
 };
-/* array_var_int_element(var int: b, array [int] of var int: as, var int: c)
-** Defines: c
-** Depends: b (statically), as (dynamically)
-*/
-// class ArrayVarIntElement : public Constraint {
-//  public:
-//   ArrayVarIntElement(ConstraintBox constraintBox)
-//       : Constraint(constraintBox){};
-//   void init(const std::map<std::string, std::shared_ptr<Variable>>&
-//   variables)
-//       override;
-// };
-// class IntLinEq : public Constraint {
-//  public:
-//   IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox){};
-//   void init(const std::map<std::string, std::shared_ptr<Variable>>&
-//   variables)
-//       override;
-//   void defineTarget() override;
-
-//   ArrayVariable* _as;
-//   ArrayVariable* _bs;
-//   SingleVariable* _c;
-// };
-
-/* int_max(var int: a, var int: b, var int: c)
-** Defines: c
-** Depends: a, b
-*/
-// class IntMax : public ThreeSVarConstraint {
-//  public:
-//   IntMax(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
-// };

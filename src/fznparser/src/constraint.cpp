@@ -56,9 +56,19 @@ Expression Constraint::getExpression(int n) {
   return _constraintBox._expressions[n];
 }
 
-std::set<Node*> Constraint::getNext() { return _defines; }
+std::set<Node*> Constraint::getNext() {
+  std::set<Node*> defines;
+  for (auto var : _defines) {
+    defines.insert(var);
+  }
+  return defines;
+}
 std::string Constraint::getLabel() { return _name; }
-void Constraint::tweak() {}
+
+bool Constraint::breakCycle() {
+  makeSoft();
+  return true;
+}
 
 SingleVariable* Constraint::getSingleVariable(
     std::map<std::string, std::shared_ptr<Variable>> variables, int n) {
@@ -115,7 +125,7 @@ void Constraint::defineByAnnotation() {
     }
   }
 }
-void Constraint::forceOneWay(Variable* variable) {
+void Constraint::makeOneWay(Variable* variable) {
   clearVariables();
   defineVariable(variable);
   for (auto v : _variables) {
@@ -123,6 +133,14 @@ void Constraint::forceOneWay(Variable* variable) {
       addDependency(v);
     }
   }
+}
+void Constraint::makeSoft() {
+  // Remove dependencies?? Maybe just trigger a bool isSoft instead? and check
+  // it in getNext()
+  for (auto var : _defines) {
+    var->removeDefinition();
+  }
+  _defines.clear();
 }
 /********************* ThreeSVarConstraint ******************************/
 void ThreeSVarConstraint::init(
@@ -134,57 +152,32 @@ void ThreeSVarConstraint::init(
   _variables.push_back(_a);
   _variables.push_back(_b);
   _variables.push_back(_c);
-
-  _a->addPotentialDefiner(this);
-  _b->addPotentialDefiner(this);
-  _c->addPotentialDefiner(this);
+  configureVariables();
 
   if (_constraintBox.hasDefineAnnotation()) {
     _annotationDefineVariable = getAnnotationVariable(variables);
     _hasDefineAnnotation = true;
   }
 }
-void ThreeSVarConstraint::makeOneWay() {
-  defineVariable(_c);
-  addDependency(_a);
-  addDependency(_b);
+void ThreeSVarConstraint::configureVariables() {
+  _c->addPotentialDefiner(this);
 }
-
+/********************* IntDiv ******************************/
+void IntDiv::configureVariables() { _a->addPotentialDefiner(this); }
+/********************* IntPlus ******************************/
+void IntPlus::configureVariables() {
+  _a->addPotentialDefiner(this);
+  _b->addPotentialDefiner(this);
+  _c->addPotentialDefiner(this);
+}
 /********************* GlobalCardinality ******************************/
 void GlobalCardinality::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _x = getArrayVariable(variables, 0);
-  _cover = getSingleVariable(variables, 1);
+  _cover = getArrayVariable(variables, 1);  // Parameter
   _counts = getArrayVariable(variables, 2);
   _variables.push_back(_x);
-  _variables.push_back(_cover);
   _variables.push_back(_counts);
-  _x->addPotentialDefiner(this);
-  _cover->addPotentialDefiner(this);
   _counts->addPotentialDefiner(this);
-  // Skriv om till count och en mindre version av sig själv?
-  // Har vi en cykel och kan den undvikas?
 }
-void GlobalCardinality::makeOneWay() {
-  addDependency(_x);
-  defineVariable(_counts);
-}
-/********************* IntDiv ******************************/
-void IntDiv::makeOneWay() {
-  defineVariable(_a);
-  addDependency(_b);
-  addDependency(_c);
-}
-/********************* IntPlus ******************************/
-void IntPlus::tweak() { forceOneWay(_variables[(_state++ + 1) % 3]); }
-
 /********************* IntLinEq ******************************/
-// void IntLinEq::init(
-//     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-//   _as = getArrayVariable(variables, 0);
-//   _bs = getArrayVariable(variables, 1);
-//   _c = getSingleVariable(variables, 2);
-// }
-// void IntLinEq::defineTarget(){
-//   defineVariable(_bs);
-// }

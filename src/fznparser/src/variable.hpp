@@ -18,9 +18,10 @@ class Variable : public Node {
 
   virtual bool isDefined() { return _isDefined; };
   virtual bool isDefinable() { return _isDefinable; };
-  std::set<Node*> getNext() = 0;
+  // std::set<Node*> getNext() = 0;
   virtual std::string getName() { return _name; };
-  virtual std::string getLabel() { return _name; };
+  virtual std::string getLabel() override { return _name; };
+  bool breakCycle() override { return false; };
 
   std::string _name;
   bool _isDefinable;

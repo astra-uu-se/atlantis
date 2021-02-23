@@ -22,11 +22,12 @@ class Model {
   void defineUnique();
   void defineRest();
   Variable* getObjective();
-  void tweak();
   void printNode(std::string name);
   void addVariable(std::shared_ptr<Variable> v);
   void addConstraint(ConstraintBox constraintBox);
   int definedCount();
+  void removeCycle(std::set<Node*> visited);
+  void removeCycles();
 
  private:
   bool hasCycleAux(std::set<Node*> visited, Node* n, std::set<Node*>& done);
