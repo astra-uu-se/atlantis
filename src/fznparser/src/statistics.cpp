@@ -11,8 +11,19 @@ void Statistics::checkCycles() {
 }
 
 void Statistics::countDefinedVariables() {
-  std::cout << "Total amount of variables is: ";
-  std::cout << _model->variableCount() << std::endl;
-  std::cout << "Amount of defined variables is: ";
+  std::cout << "Amount of defined (non-array) variables is:\t";
   std::cout << _model->definedCount() << std::endl;
+  std::cout << "Total amount of (non-array) variables is:\t";
+  std::cout << _model->variableCount() << std::endl;
+}
+
+void Statistics::variablesDefinedBy() {
+  for (auto v : _model->_variables) {
+    auto variable = v.second.get();
+    if (variable->isDefined()) {
+      std::cout << "Variable: " << variable->getLabel();
+      std::cout << "\tDefined by: " << variable->definedBy()->getLabel()
+                << std::endl;
+    }
+  }
 }

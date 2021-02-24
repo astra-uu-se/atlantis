@@ -76,7 +76,14 @@ void Constraint::clearVariables() {
   }
   assert(_defines.empty());
 }
-bool Constraint::hasDefineAnnotation() { return _hasDefineAnnotation; }
+bool Constraint::canDefineByAnnotation() {
+  if (_hasDefineAnnotation) {
+    if (_annotationDefineVariable->isDefinable()) {
+      return true;
+    }
+  }
+  return false;
+}
 void Constraint::checkAnnotations(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   if (_constraintBox.hasDefineAnnotation()) {
@@ -196,6 +203,30 @@ bool AllDifferent::canBeImplicit() {
   return true;
 }
 void AllDifferent::makeImplicit() {
+  for (auto variable : _variables) {
+    defineVariable(variable);
+  }
+}
+/********************* Inverse ******************************/
+void Inverse::init(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  _x = getArrayVariable(variables, 0);
+  _y = getArrayVariable(variables, 1);
+  _variables.push_back(_x);
+  _variables.push_back(_y);
+  _x->addPotentialDefiner(this);
+  _y->addPotentialDefiner(this);
+  checkAnnotations(variables);
+}
+bool Inverse::canBeImplicit() {
+  for (auto arrayVariable : _variables) {
+    if (!arrayVariable->isDefinable()) {
+      return false;
+    }
+  }
+  return true;
+}
+void Inverse::makeImplicit() {
   for (auto variable : _variables) {
     defineVariable(variable);
   }

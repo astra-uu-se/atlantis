@@ -28,7 +28,7 @@ class Constraint : public Node {
   virtual bool canBeImplicit();
   bool definesNone();
   bool uniqueTarget();
-  bool hasDefineAnnotation();
+  bool canDefineByAnnotation();
   std::vector<Variable*> variables();
 
  protected:
@@ -143,4 +143,16 @@ class AllDifferent : public Constraint {
   bool canBeImplicit() override;
   void makeImplicit() override;
   ArrayVariable* _x;
+};
+class Inverse : public Constraint {
+ public:
+  Inverse(ConstraintBox constraintBox) : Constraint(constraintBox) {
+    _uniqueTarget = false;
+  };
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
+  bool canBeImplicit() override;
+  void makeImplicit() override;
+  ArrayVariable* _x;
+  ArrayVariable* _y;
 };

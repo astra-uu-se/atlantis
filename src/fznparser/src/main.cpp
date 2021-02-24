@@ -10,7 +10,7 @@ using namespace antlr4;
 
 int main() {
   std::ifstream stream;
-  stream.open("fzn_examples/alldiff.fzn");
+  stream.open("fzn_examples/test.fzn");
   ANTLRInputStream input(stream);
 
   FlatZincLexer lexer(&input);
@@ -24,6 +24,7 @@ int main() {
   Statistics s = Statistics(&m);
   m.init();
   m.findStructure();
+  s.variablesDefinedBy();
   s.countDefinedVariables();
   return 0;
 }

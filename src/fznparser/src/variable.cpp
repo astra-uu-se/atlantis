@@ -68,6 +68,8 @@ void ArrayVariable::defineBy(Node* constraint) {
   for (auto e : _elements) {
     e->defineBy(constraint);
   }
+  _definedBy = constraint;
+  _isDefined = true;
 }
 void ArrayVariable::removeDefinition() {
   for (auto e : _elements) {
@@ -75,14 +77,26 @@ void ArrayVariable::removeDefinition() {
   }
 }
 void ArrayVariable::addPotentialDefiner(Constraint* constraint) {
-  for (auto e : _elements) {
-    e->addPotentialDefiner(constraint);
-  }
+  _potentialDefiners.insert(constraint);
 }
 std::vector<Variable*> ArrayVariable::elements() { return _elements; }
 
+bool ArrayVariable::isDefinable() {
+  if (_isDefined) return false;
+  for (auto e : _elements) {
+    if (!e->isDefinable()) {
+      return false;
+    }
+  }
+  return true;
+}
+std::string ArrayVariable::getLabel() { return "(array) " + _name; }
+
 /*******************PARAMETER****************************/
-Parameter::Parameter(std::string value) { _name = value; }
+Parameter::Parameter(std::string value) {
+  _name = value;
+  _isDefined = false;
+}
 void Parameter::init(
     std::map<std::string, std::shared_ptr<Variable>>& variables) {}
 std::set<Node*> Parameter::getNext() {

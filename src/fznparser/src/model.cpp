@@ -11,8 +11,8 @@ void Model::init() {
 }
 
 void Model::findStructure() {
-  defineAnnotated();
   defineImplicit();
+  defineAnnotated();
   defineFromObjective();
   defineUnique();
   defineRest();
@@ -21,44 +21,50 @@ void Model::findStructure() {
 
 void Model::defineAnnotated() {
   for (auto c : _constraints) {
-    if (c->hasDefineAnnotation()) {
+    if (c->canDefineByAnnotation()) {  // Also checks that target is not defined
       c->makeOneWayByAnnotation();
     }
   }
 }
 void Model::defineImplicit() {
   for (auto c : _constraints) {
-    if (c->canBeImplicit()) {
+    if (c->canBeImplicit()) {  // Also checks that target is not defined
       c->makeImplicit();
     }
   }
 }
 
 void Model::defineFrom(Variable* variable) {
-  for (auto constraint : variable->potentialDefiners()) {
-    if (constraint->definesNone()) {
-      constraint->makeOneWay(variable);
-      for (auto v : constraint->variables()) {
-        if (v != variable) {
-          defineFrom(v);
+  std::cout << "Defining from..." << variable->getLabel() << std::endl;
+
+  if (variable->isDefinable()) {
+    for (auto constraint : variable->potentialDefiners()) {
+      if (constraint->definesNone()) {
+        constraint->makeOneWay(variable);
+        for (auto v : constraint->variables()) {
+          if (v != variable) {
+            defineFrom(v);
+          }
         }
+        break;
       }
-      break;
     }
   }
 }
 void Model::defineFromObjective() {
-  if (false) {
+  if (true) {
     Variable* objective = getObjective();
     defineFrom(objective);
   }
 }
-Variable* Model::getObjective() { return _variables.find("a")->second.get(); }
+Variable* Model::getObjective() {
+  return _variables.find("X_INTRODUCED_0_")->second.get();
+}
 
 void Model::defineUnique() {
   for (auto item : _variables) {
     auto variable = item.second.get();
-    if (!variable->isDefined()) {
+    if (variable->isDefinable()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->uniqueTarget() && constraint->definesNone()) {
           constraint->makeOneWay(variable);
@@ -71,7 +77,7 @@ void Model::defineUnique() {
 void Model::defineRest() {
   for (auto item : _variables) {
     auto variable = item.second.get();
-    if (!variable->isDefined()) {
+    if (variable->isDefinable()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->definesNone()) {
           constraint->makeOneWay(variable);
@@ -93,7 +99,7 @@ int Model::definedCount() {
   int n = 0;
   for (auto v : _variables) {
     if (v.second->isDefined()) {
-      n++;
+      n += v.second->count();
     }
   }
   return n;
@@ -122,6 +128,9 @@ void Model::addConstraint(ConstraintBox constraintBox) {
   } else if (constraintBox._name == "fzn_all_different_int") {
     constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<AllDifferent>(constraintBox));
+  } else if (constraintBox._name == "inverse") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<Inverse>(constraintBox));
   }
 }
 

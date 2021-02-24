@@ -18,20 +18,20 @@ class Variable : public Node {
   virtual void defineBy(Node* constraint) = 0;
   virtual void removeDefinition() = 0;
   virtual void addPotentialDefiner(Constraint* constraint) = 0;
+  virtual bool isDefinable() = 0;
 
   virtual int count() { return 0; };
   virtual bool isDefined() { return _isDefined; };
-  virtual bool isDefinable() { return _isDefinable; };
   virtual std::string getName() { return _name; };
   virtual Node* definedBy() { return _definedBy; };
   virtual std::set<Constraint*> potentialDefiners() {
     return _potentialDefiners;
   };
 
+  bool _isDefined;
+
  protected:
   std::string _name;
-  bool _isDefinable;
-  bool _isDefined;
   Node* _definedBy;
   std::vector<Annotation> _annotations;
   std::set<Node*> _nextConstraints;
@@ -56,6 +56,7 @@ class SingleVariable : public Variable {
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
   int count() override { return 1; };
+  bool isDefinable() override { return !_isDefined; };
 
  private:
   std::shared_ptr<Domain> _domain;
@@ -78,6 +79,8 @@ class ArrayVariable : public Variable {
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
   std::vector<Variable*> elements();
+  bool isDefinable() override;
+  std::string getLabel() override;
 
  private:
   std::vector<Expression> _expressions;
