@@ -4,6 +4,9 @@ Variable::Variable(std::string name, std::vector<Annotation> annotations) {
   _annotations = annotations;
   _isDefined = false;
 }
+bool Variable::compareDomain(Variable* v1, Variable* v2) {
+  return v1->domainSize() > v2->domainSize();
+}
 
 /*******************SINGLEVARIABLE****************************/
 void SingleVariable::addConstraint(Node* constraint) {
@@ -24,6 +27,7 @@ void SingleVariable::removeDefinition() {
 void SingleVariable::addPotentialDefiner(Constraint* constraint) {
   _potentialDefiners.insert(constraint);
 }
+int SingleVariable::domainSize() { return _domain->size(); }
 /*******************ARRAYVARIABLE****************************/
 void ArrayVariable::init(VariableMap& variables) {
   for (auto e : _expressions) {
@@ -89,6 +93,14 @@ bool ArrayVariable::isDefinable() {
 }
 std::string ArrayVariable::getLabel() { return "[array] " + _name; }
 
+int ArrayVariable::domainSize() {
+  int n = 0;
+  for (auto variable : _elements) {
+    n += variable->domainSize();
+  }
+  return n;
+}
+
 /*******************PARAMETER****************************/
 Parameter::Parameter(std::string value) {
   _name = value;
@@ -99,6 +111,7 @@ std::set<Node*> Parameter::getNext() {
   std::set<Node*> s;
   return s;
 }
+int Parameter::domainSize() { return 0; }
 
 /*******************VARIABLEMAP****************************/
 void VariableMap::add(std::shared_ptr<Variable> variable) {

@@ -13,33 +13,38 @@ class Item;
 
 class Domain {
  public:
-  Domain();
-  virtual int getLb() = 0;
-  virtual int getUb() = 0;
-  bool defined();
+  Domain() = default;
+  ~Domain() = default;
+  virtual int size();
+
+ protected:
   bool _defined;
 };
 
 class BoolDomain : public Domain {
  public:
-  BoolDomain();
+  BoolDomain() = default;
+  int size() override;
+};
 
-  int getLb() override;
-  int getUb() override;
+class IntSetDomain : public Domain {
+ public:
+  IntSetDomain(std::set<int> set);
+  int size() override;
+
+ private:
+  std::set<int> _set;
 };
 
 class IntDomain : public Domain {
  public:
   IntDomain();
-  IntDomain(std::set<int> set);
   IntDomain(int lb, int ub);
+  int size() override;
 
-  int getLb() override;
-  int getUb() override;
-
+ private:
   int _lb;
   int _ub;
-  std::set<int> _set;
 };
 
 class Annotation {

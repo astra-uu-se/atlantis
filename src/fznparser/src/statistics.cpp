@@ -13,7 +13,8 @@ void Statistics::variablesDefinedBy() {
   for (auto variable : _model->variables()) {
     if (variable->isDefined()) {
       std::cout << "Variable: " << variable->getLabel();
-      std::cout << "\tDefined by: " << variable->definedBy()->getLabel()
+      std::cout << "\tDomain size: " << variable->domainSize();
+      std::cout << "\t\tDefined by: " << variable->definedBy()->getLabel()
                 << std::endl;
     }
   }

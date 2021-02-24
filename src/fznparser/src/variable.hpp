@@ -10,6 +10,8 @@ class Variable : public Node {
   virtual ~Variable() = default;
   virtual void init(VariableMap& variables) = 0;
 
+  static bool compareDomain(Variable* v1, Variable* v2);
+
   virtual std::string getLabel() override { return _name; };
   bool breakCycle() override { return false; };
 
@@ -19,6 +21,7 @@ class Variable : public Node {
   virtual void removeDefinition() = 0;
   virtual void addPotentialDefiner(Constraint* constraint) = 0;
   virtual bool isDefinable() = 0;
+  virtual int domainSize() = 0;
 
   virtual int count() { return 0; };
   virtual bool isDefined() { return _isDefined; };
@@ -56,6 +59,7 @@ class SingleVariable : public Variable {
   void addPotentialDefiner(Constraint* constraint) override;
   int count() override { return 1; };
   bool isDefinable() override { return !_isDefined; };
+  int domainSize() override;
 
  private:
   std::shared_ptr<Domain> _domain;
@@ -79,6 +83,7 @@ class ArrayVariable : public Variable {
   std::vector<Variable*> elements();
   bool isDefinable() override;
   std::string getLabel() override;
+  int domainSize() override;
 
  private:
   std::vector<Expression> _expressions;
@@ -98,6 +103,7 @@ class Parameter : public SingleVariable {
   void removeDefinition() override{};
   void addPotentialDefiner(Constraint* constraint) override{};
   int count() override { return 0; };
+  int domainSize() override;
 };
 
 class VariableMap {

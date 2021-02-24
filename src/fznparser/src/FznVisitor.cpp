@@ -54,7 +54,8 @@ antlrcpp::Any FznVisitor::visitBasicVarType(
     for (auto i : ctx->set()->intLiteral()) {
       s.insert(stoi(i->getText()));
     }
-    return static_cast<std::shared_ptr<Domain>>(std::make_shared<IntDomain>(s));
+    return static_cast<std::shared_ptr<Domain>>(
+        std::make_shared<IntSetDomain>(s));
   }
 
   std::cout << "Parsed unimplemented domain." << std::endl;

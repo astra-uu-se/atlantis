@@ -19,6 +19,7 @@ class Model {
   int definedCount();
   int variableCount();
   std::vector<Variable*> variables();
+  std::vector<Variable*> domSortVariables();
 
  private:
   void defineAnnotated();

@@ -10,8 +10,12 @@ void Model::init() {
   }
 }
 
-std::vector<Variable*> Model::variables() {  // Inefficient to recreate array
-  return _variables.getArray();
+std::vector<Variable*> Model::variables() { return _variables.getArray(); }
+std::vector<Variable*> Model::domSortVariables() {
+  std::vector<Variable*> sorted =
+      variables();  // Inefficient to sort every time
+  std::sort(sorted.begin(), sorted.end(), Variable::compareDomain);
+  return sorted;
 }
 
 void Model::findStructure() {
@@ -63,7 +67,7 @@ void Model::defineFromObjective() {
 Variable* Model::getObjective() { return _variables.find("X_INTRODUCED_0_"); }
 
 void Model::defineUnique() {
-  for (auto variable : variables()) {
+  for (auto variable : domSortVariables()) {
     if (variable->isDefinable()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->uniqueTarget() && constraint->definesNone()) {
@@ -75,7 +79,7 @@ void Model::defineUnique() {
   }
 }
 void Model::defineRest() {
-  for (auto variable : variables()) {
+  for (auto variable : domSortVariables()) {
     if (variable->isDefinable()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->definesNone()) {

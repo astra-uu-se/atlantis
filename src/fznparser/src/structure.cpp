@@ -1,24 +1,17 @@
 #include "structure.hpp"
+#define MAX_DOMAIN_SIZE 1000000
 
-Domain::Domain() { _defined = false; }
-bool Domain::defined() { return _defined; }
+int Domain::size() { return 0; }
+int BoolDomain::size() { return 2; }
 IntDomain::IntDomain() { _defined = false; }
 IntDomain::IntDomain(int lb, int ub) {
   _defined = true;
   _lb = lb;
   _ub = ub;
 }
-IntDomain::IntDomain(std::set<int> set) {
-  _defined = true;
-  _set = set;
-  _lb = *(set.begin());
-  _ub = *(set.rbegin());
-}
-int IntDomain::getLb() { return _lb; }
-int IntDomain::getUb() { return _ub; }
-BoolDomain::BoolDomain() { _defined = false; }
-int BoolDomain::getLb() { return false; }
-int BoolDomain::getUb() { return true; }
+int IntDomain::size() { return _defined ? _ub - _lb : MAX_DOMAIN_SIZE; }
+IntSetDomain::IntSetDomain(std::set<int> set) { _set = set; }
+int IntSetDomain::size() { return _set.size(); }
 
 Annotation::Annotation() {}
 Annotation::Annotation(std::string name, std::string variableName) {
