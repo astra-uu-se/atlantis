@@ -11,26 +11,27 @@
 class Model {
  public:
   Model();
-  std::map<std::string, std::shared_ptr<Variable>> _variables;
-  std::vector<std::shared_ptr<Constraint>> _constraints;
   void init();
-  bool hasCycle();
   void findStructure();
+  void printNode(std::string name);
+  void addVariable(std::shared_ptr<Variable> v);
+  void addConstraint(ConstraintBox constraintBox);
+  int definedCount();
+  int variableCount();
+  std::vector<Variable*> variables();
+
+ private:
   void defineAnnotated();
   void defineImplicit();
   void defineFrom(Variable* variable);
   void defineFromObjective();
   void defineUnique();
   void defineRest();
-  Variable* getObjective();
-  void printNode(std::string name);
-  void addVariable(std::shared_ptr<Variable> v);
-  void addConstraint(ConstraintBox constraintBox);
-  int definedCount();
-  int variableCount();
-  void removeCycle(std::set<Node*> visited);
-  void removeCycles();
-
- private:
+  bool hasCycle();
   bool hasCycleAux(std::set<Node*> visited, Node* n, std::set<Node*>& done);
+  void removeCycles();
+  void removeCycle(std::set<Node*> visited);
+  Variable* getObjective();
+  VariableMap _variables;
+  std::vector<std::shared_ptr<Constraint>> _constraints;
 };

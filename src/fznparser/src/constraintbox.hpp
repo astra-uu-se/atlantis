@@ -7,7 +7,7 @@ class ConstraintBox {
   ConstraintBox() = default;
   ConstraintBox(std::string name, std::vector<Expression> expressions,
                 std::vector<Annotation> annotations);
-  void prepare(std::map<std::string, std::shared_ptr<Variable>>& variables);
+  void prepare(VariableMap& variables);
   bool hasDefineAnnotation();
   std::string getAnnotationVariableName();
   std::string _name;

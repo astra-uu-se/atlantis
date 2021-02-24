@@ -27,29 +27,21 @@ bool Constraint::breakCycle() {
   return true;
 }
 
-SingleVariable* Constraint::getSingleVariable(
-    std::map<std::string, std::shared_ptr<Variable>> variables, int n) {
+SingleVariable* Constraint::getSingleVariable(VariableMap& variableMap, int n) {
   assert(!getExpression(n).isArray());
   std::string name = getExpression(n).getName();
-
-  assert(variables.find(name) != variables.end());
-  Variable* s = variables.find(name)->second.get();
+  Variable* s = variableMap.find(name);
   return dynamic_cast<SingleVariable*>(s);
 }
-ArrayVariable* Constraint::getArrayVariable(
-    std::map<std::string, std::shared_ptr<Variable>> variables, int n) {
+ArrayVariable* Constraint::getArrayVariable(VariableMap& variableMap, int n) {
   // assert(getExpression(n).isArray()); TODO: Figure out why not works
   std::string name = getExpression(n).getName();
-  assert(variables.find(name) != variables.end());
-  Variable* s = variables.find(name)->second.get();
+  Variable* s = variableMap.find(name);
   return dynamic_cast<ArrayVariable*>(s);
 }
-Variable* Constraint::getAnnotationVariable(
-    std::map<std::string, std::shared_ptr<Variable>> variables) {
+Variable* Constraint::getAnnotationVariable(VariableMap& variableMap) {
   std::string name = _constraintBox.getAnnotationVariableName();
-
-  assert(variables.find(name) != variables.end());
-  return variables.find(name)->second.get();
+  return variableMap.find(name);
 }
 
 void Constraint::defineVariable(Variable* variable) {
@@ -84,10 +76,9 @@ bool Constraint::canDefineByAnnotation() {
   }
   return false;
 }
-void Constraint::checkAnnotations(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+void Constraint::checkAnnotations(VariableMap& variableMap) {
   if (_constraintBox.hasDefineAnnotation()) {
-    _annotationDefineVariable = getAnnotationVariable(variables);
+    _annotationDefineVariable = getAnnotationVariable(variableMap);
     _hasDefineAnnotation = true;
   }
 }
@@ -123,18 +114,16 @@ bool Constraint::definesNone() { return _defines.empty(); }
 bool Constraint::uniqueTarget() { return _uniqueTarget; }
 std::vector<Variable*> Constraint::variables() { return _variables; }
 
-void Constraint::init(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  loadVariables(variables);
+void Constraint::init(VariableMap& variableMap) {
+  loadVariables(variableMap);
   configureVariables();
-  checkAnnotations(variables);
+  checkAnnotations(variableMap);
 }
 /********************* ThreeSVarConstraint ******************************/
-void ThreeSVarConstraint::loadVariables(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _variables.push_back(getSingleVariable(variables, 0));
-  _variables.push_back(getSingleVariable(variables, 1));
-  _variables.push_back(getSingleVariable(variables, 2));
+void ThreeSVarConstraint::loadVariables(VariableMap& variableMap) {
+  _variables.push_back(getSingleVariable(variableMap, 0));
+  _variables.push_back(getSingleVariable(variableMap, 1));
+  _variables.push_back(getSingleVariable(variableMap, 2));
 }
 void ThreeSVarConstraint::configureVariables() {
   _variables[2]->addPotentialDefiner(this);
@@ -148,30 +137,27 @@ void IntPlus::configureVariables() {
   _variables[2]->addPotentialDefiner(this);
 }
 /********************* TwoSVarConstraint ******************************/
-void TwoSVarConstraint::loadVariables(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _variables.push_back(getSingleVariable(variables, 0));
-  _variables.push_back(getSingleVariable(variables, 1));
+void TwoSVarConstraint::loadVariables(VariableMap& variableMap) {
+  _variables.push_back(getSingleVariable(variableMap, 0));
+  _variables.push_back(getSingleVariable(variableMap, 1));
 }
 void TwoSVarConstraint::configureVariables() {
   _variables[1]->addPotentialDefiner(this);
 }
 /********************* GlobalCardinality ******************************/
-void GlobalCardinality::loadVariables(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _cover = getArrayVariable(variables, 1);               // Parameter
-  _variables.push_back(getArrayVariable(variables, 0));  // x
-  _variables.push_back(getArrayVariable(variables, 2));  // counts
+void GlobalCardinality::loadVariables(VariableMap& variableMap) {
+  _cover = getArrayVariable(variableMap, 1);               // Parameter
+  _variables.push_back(getArrayVariable(variableMap, 0));  // x
+  _variables.push_back(getArrayVariable(variableMap, 2));  // counts
 }
 void GlobalCardinality::configureVariables() {
   _variables[2]->addPotentialDefiner(this);
 }
 /********************* IntLinEq ******************************/
-void IntLinEq::loadVariables(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _as = getArrayVariable(variables, 0);  // Parameter
-  _bs = getArrayVariable(variables, 1);
-  _c = getSingleVariable(variables, 2);  // Parameter
+void IntLinEq::loadVariables(VariableMap& variableMap) {
+  _as = getArrayVariable(variableMap, 0);  // Parameter
+  _bs = getArrayVariable(variableMap, 1);
+  _c = getSingleVariable(variableMap, 2);  // Parameter
   for (auto variable : _bs->elements()) {
     _variables.push_back(variable);
   }
@@ -198,9 +184,8 @@ bool IntLinEq::canBeImplicit() {
   return true;
 }
 /********************* AllDifferent ******************************/
-void AllDifferent::loadVariables(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _x = getArrayVariable(variables, 0);  // Parameter
+void AllDifferent::loadVariables(VariableMap& variableMap) {
+  _x = getArrayVariable(variableMap, 0);  // Parameter
   for (auto variable : _x->elements()) {
     _variables.push_back(variable);
   }
@@ -219,10 +204,9 @@ bool AllDifferent::canBeImplicit() {
   return true;
 }
 /********************* Inverse ******************************/
-void Inverse::loadVariables(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _variables.push_back(getArrayVariable(variables, 0));
-  _variables.push_back(getArrayVariable(variables, 1));
+void Inverse::loadVariables(VariableMap& variableMap) {
+  _variables.push_back(getArrayVariable(variableMap, 0));
+  _variables.push_back(getArrayVariable(variableMap, 1));
 }
 void Inverse::configureVariables() {
   _variables[0]->addPotentialDefiner(this);
@@ -243,22 +227,20 @@ void Inverse::makeImplicit() {
 }
 
 /********************* Element ******************************/
-void Element::loadVariables(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _variables.push_back(getSingleVariable(variables, 0));
+void Element::loadVariables(VariableMap& variableMap) {
+  _variables.push_back(getSingleVariable(variableMap, 0));
   // Not sure what the second argument does.
-  _variables.push_back(getArrayVariable(variables, 2));
-  _variables.push_back(getSingleVariable(variables, 3));
+  _variables.push_back(getArrayVariable(variableMap, 2));
+  _variables.push_back(getSingleVariable(variableMap, 3));
 }
 void Element::configureVariables() {
   _variables[0]->addPotentialDefiner(this);
   _variables[1]->addPotentialDefiner(this);
 }
 /********************* Circuit ******************************/
-void Circuit::loadVariables(
-    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+void Circuit::loadVariables(VariableMap& variableMap) {
   // Not sure what the first argument does.
-  _x = getArrayVariable(variables, 1);
+  _x = getArrayVariable(variableMap, 1);
   for (auto variable : _x->elements()) {
     _variables.push_back(variable);
   }

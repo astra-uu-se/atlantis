@@ -2,12 +2,16 @@
 
 Model::Model(){};
 void Model::init() {
-  for (auto item : _variables) {
-    item.second.get()->init(_variables);
+  for (auto variable : variables()) {
+    variable->init(_variables);
   }
   for (auto constraint : _constraints) {
     constraint->init(_variables);
   }
+}
+
+std::vector<Variable*> Model::variables() {  // Inefficient to recreate array
+  return _variables.getArray();
 }
 
 void Model::findStructure() {
@@ -56,13 +60,10 @@ void Model::defineFromObjective() {
     defineFrom(objective);
   }
 }
-Variable* Model::getObjective() {
-  return _variables.find("X_INTRODUCED_0_")->second.get();
-}
+Variable* Model::getObjective() { return _variables.find("X_INTRODUCED_0_"); }
 
 void Model::defineUnique() {
-  for (auto item : _variables) {
-    auto variable = item.second.get();
+  for (auto variable : variables()) {
     if (variable->isDefinable()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->uniqueTarget() && constraint->definesNone()) {
@@ -74,8 +75,7 @@ void Model::defineUnique() {
   }
 }
 void Model::defineRest() {
-  for (auto item : _variables) {
-    auto variable = item.second.get();
+  for (auto variable : variables()) {
     if (variable->isDefinable()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->definesNone()) {
@@ -89,47 +89,45 @@ void Model::defineRest() {
 
 int Model::variableCount() {
   int n = 0;
-  for (auto v : _variables) {
-    n += v.second->count();
+  for (auto variable : variables()) {
+    n += variable->count();
   }
   return n;
 }
 int Model::definedCount() {
   int n = 0;
-  for (auto v : _variables) {
-    if (v.second->isDefined()) {
-      n += v.second->count();
+  for (auto variable : variables()) {
+    if (variable->isDefined()) {
+      n += variable->count();
     }
   }
   return n;
 }
 
-void Model::addVariable(std::shared_ptr<Variable> item) {
-  _variables.insert(
-      std::pair<std::string, std::shared_ptr<Variable>>(item->getName(), item));
+void Model::addVariable(std::shared_ptr<Variable> variable) {
+  _variables.add(variable);
 }
 
 bool Model::hasCycle() {
   std::set<Node*> done;
-  for (auto n_pair : _variables) {
+  for (auto node : variables()) {
     std::cout << "Starting...\n";
-    auto n = n_pair.second.get();
     std::set<Node*> visited;
-    if (hasCycleAux(visited, n, done)) return true;
+    if (hasCycleAux(visited, node, done)) return true;
   }
   return false;
 }
-bool Model::hasCycleAux(std::set<Node*> visited, Node* n,
+bool Model::hasCycleAux(std::set<Node*> visited, Node* node,
                         std::set<Node*>& done) {
-  if (done.count(n)) return false;
-  std::cout << "Node: " << n->getLabel() << std::endl;
-  if (visited.count(n)) {
+  if (done.count(node)) return false;
+  std::cout << "Node: " << node->getLabel() << std::endl;
+  if (visited.count(node)) {
     removeCycle(visited);
     return true;
   }
-  visited.insert(n);
-  for (auto m : n->getNext()) {
-    if (hasCycleAux(visited, m, done)) return true;
+  visited.insert(node);
+  for (auto next : node->getNext()) {
+    if (hasCycleAux(visited, next, done)) return true;
   }
   done.insert(visited.begin(), visited.end());
   return false;
@@ -151,8 +149,7 @@ void Model::removeCycles() {
 }
 
 void Model::printNode(std::string name) {
-  assert(_variables.find(name) != _variables.end());
-  Node* node = _variables.find(name)->second.get();
+  Node* node = _variables.find(name);
   std::cout << node->getLabel() << std::endl;
 }
 

@@ -1,14 +1,14 @@
 #pragma once
 
 #include "structure.hpp"
+class VariableMap;
 
 class Variable : public Node {
  public:
   Variable() = default;
   Variable(std::string name, std::vector<Annotation> annotations);
   virtual ~Variable() = default;
-  virtual void init(
-      std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
+  virtual void init(VariableMap& variables) = 0;
 
   virtual std::string getLabel() override { return _name; };
   bool breakCycle() override { return false; };
@@ -46,8 +46,7 @@ class SingleVariable : public Variable {
       : Variable(name, annotations) {
     _domain = domain;
   };
-  void init(
-      std::map<std::string, std::shared_ptr<Variable>>& variables) override{};
+  void init(VariableMap& variables) override{};
 
   std::set<Node*> getNext() override { return _nextConstraints; };
   void addConstraint(Node* constraint) override;
@@ -69,8 +68,7 @@ class ArrayVariable : public Variable {
       : Variable(name, annotations) {
     _expressions = expressions;
   };
-  void init(
-      std::map<std::string, std::shared_ptr<Variable>>& variables) override;
+  void init(VariableMap& variables) override;
 
   std::set<Node*> getNext() override;
   void addConstraint(Node* constraint) override;
@@ -90,8 +88,7 @@ class ArrayVariable : public Variable {
 class Parameter : public SingleVariable {
  public:
   Parameter(std::string value);
-  void init(
-      std::map<std::string, std::shared_ptr<Variable>>& variables) override;
+  void init(VariableMap& variables) override;
 
   std::set<Node*> getNext() override;
   bool isDefinable() override { return false; };
@@ -101,4 +98,18 @@ class Parameter : public SingleVariable {
   void removeDefinition() override{};
   void addPotentialDefiner(Constraint* constraint) override{};
   int count() override { return 0; };
+};
+
+class VariableMap {
+ public:
+  VariableMap() = default;
+  virtual ~VariableMap() = default;
+  void add(std::shared_ptr<Variable> variable);
+  Variable* find(std::string name);
+  bool exists(std::string name);
+  std::vector<Variable*> getArray();
+
+ private:
+  std::vector<Variable*> _variableArray;
+  std::map<std::string, std::shared_ptr<Variable>> _variables;
 };

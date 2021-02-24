@@ -25,20 +25,17 @@ void SingleVariable::addPotentialDefiner(Constraint* constraint) {
   _potentialDefiners.insert(constraint);
 }
 /*******************ARRAYVARIABLE****************************/
-void ArrayVariable::init(
-    std::map<std::string, std::shared_ptr<Variable>>& variables) {
+void ArrayVariable::init(VariableMap& variables) {
   for (auto e : _expressions) {
     auto name = e.getName();
     if (e.isId()) {
-      assert(variables.find(name) != variables.end());
-      _elements.push_back(variables.find(name)->second.get());
+      _elements.push_back(variables.find(name));
     } else {
-      if (variables.find(name) != variables.end()) {
-        _elements.push_back(variables.find(name)->second.get());
+      if (variables.exists(name)) {
+        _elements.push_back(variables.find(name));
       } else {
         auto p = std::make_shared<Parameter>(name);
-        variables.insert(
-            std::pair<std::string, std::shared_ptr<Variable>>(name, p));
+        variables.add(p);
         ;
         _elements.push_back(p.get());
       }
@@ -90,16 +87,30 @@ bool ArrayVariable::isDefinable() {
   }
   return true;
 }
-std::string ArrayVariable::getLabel() { return "(array) " + _name; }
+std::string ArrayVariable::getLabel() { return "[array] " + _name; }
 
 /*******************PARAMETER****************************/
 Parameter::Parameter(std::string value) {
   _name = value;
   _isDefined = false;
 }
-void Parameter::init(
-    std::map<std::string, std::shared_ptr<Variable>>& variables) {}
+void Parameter::init(VariableMap& variables) {}
 std::set<Node*> Parameter::getNext() {
   std::set<Node*> s;
   return s;
 }
+
+/*******************VARIABLEMAP****************************/
+void VariableMap::add(std::shared_ptr<Variable> variable) {
+  _variables.insert(std::pair<std::string, std::shared_ptr<Variable>>(
+      variable->getName(), variable));
+  _variableArray.push_back(variable.get());
+}
+Variable* VariableMap::find(std::string name) {
+  assert(_variables.find(name) != _variables.end());
+  return _variables.find(name)->second.get();
+}
+bool VariableMap::exists(std::string name) {
+  return (_variables.find(name) != _variables.end());
+}
+std::vector<Variable*> VariableMap::getArray() { return _variableArray; }
