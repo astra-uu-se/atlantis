@@ -144,7 +144,6 @@ class AllDifferent : public Constraint {
                          variables) override;
   void configureVariables() override;
   bool canBeImplicit() override;
-  void makeImplicit() override;
 
  private:
   ArrayVariable* _x;
@@ -167,4 +166,15 @@ class Element : public Constraint {
   void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
                          variables) override;
   void configureVariables() override;
+};
+class Circuit : public Constraint {
+ public:
+  Circuit(ConstraintBox constraintBox) : Constraint(constraintBox){};
+  void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
+                         variables) override;
+  void configureVariables() override;
+  bool canBeImplicit() override;
+
+ private:
+  ArrayVariable* _x;
 };

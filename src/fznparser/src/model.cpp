@@ -181,5 +181,8 @@ void Model::addConstraint(ConstraintBox constraintBox) {
   } else if (constraintBox._name == "gecode_int_element") {
     constraintBox.prepare(_variables);
     _constraints.push_back(std::make_shared<Element>(constraintBox));
+  } else if (constraintBox._name == "gecode_circuit") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<Circuit>(constraintBox));
   }
 }

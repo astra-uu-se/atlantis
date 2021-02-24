@@ -218,11 +218,6 @@ bool AllDifferent::canBeImplicit() {
   }
   return true;
 }
-void AllDifferent::makeImplicit() {
-  for (auto variable : _variables) {
-    defineVariable(variable);
-  }
-}
 /********************* Inverse ******************************/
 void Inverse::loadVariables(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
@@ -258,4 +253,26 @@ void Element::loadVariables(
 void Element::configureVariables() {
   _variables[0]->addPotentialDefiner(this);
   _variables[1]->addPotentialDefiner(this);
+}
+/********************* Circuit ******************************/
+void Circuit::loadVariables(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  // Not sure what the first argument does.
+  _x = getArrayVariable(variables, 1);
+  for (auto variable : _x->elements()) {
+    _variables.push_back(variable);
+  }
+}
+void Circuit::configureVariables() {
+  for (auto variable : _variables) {
+    variable->addPotentialDefiner(this);
+  }
+}
+bool Circuit::canBeImplicit() {
+  for (auto variable : _variables) {
+    if (variable->isDefined()) {
+      return false;
+    }
+  }
+  return true;
 }
