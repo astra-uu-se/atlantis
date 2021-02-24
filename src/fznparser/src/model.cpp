@@ -11,11 +11,11 @@ void Model::init() {
 }
 
 void Model::findStructure() {
-  defineImplicit();
-  defineAnnotated();
+  // defineImplicit();
+  // defineAnnotated();
   defineFromObjective();
-  defineUnique();
-  defineRest();
+  // defineUnique();
+  // defineRest();
   removeCycles();
 }
 
@@ -35,8 +35,7 @@ void Model::defineImplicit() {
 }
 
 void Model::defineFrom(Variable* variable) {
-  std::cout << "Defining from..." << variable->getLabel() << std::endl;
-
+  // std::cout << "Defining from..." << variable->getLabel() << std::endl;
   if (variable->isDefinable()) {
     for (auto constraint : variable->potentialDefiners()) {
       if (constraint->definesNone()) {

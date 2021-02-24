@@ -178,8 +178,11 @@ void IntLinEq::loadVariables(
   // We potentially need to remove _bs from variables.
 }
 void IntLinEq::configureVariables() {
-  for (auto variable : _bs->elements()) {
-    variable->addPotentialDefiner(this);  // Here we need to check if as[v] = 1
+  for (int i = 0; i < _as->elements().size(); i++) {
+    std::string coefficient = _as->elements()[i]->getName();
+    if (coefficient == "1" || coefficient == "-1") {
+      _bs->elements()[i]->addPotentialDefiner(this);
+    }
   }
 }
 /********************* AllDifferent ******************************/
