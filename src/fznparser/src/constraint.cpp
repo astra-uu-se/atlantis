@@ -5,8 +5,6 @@ Constraint::Constraint(ConstraintBox constraintBox) {
   _constraintBox = constraintBox;
   _name = constraintBox._name;
   _uniqueTarget = true;
-  _implicit = false;
-  _canBeImplicit = false;
   _hasDefineAnnotation = false;
 }
 
@@ -31,6 +29,7 @@ bool Constraint::breakCycle() {
 
 SingleVariable* Constraint::getSingleVariable(
     std::map<std::string, std::shared_ptr<Variable>> variables, int n) {
+  assert(!getExpression(n).isArray());
   std::string name = getExpression(n).getName();
 
   assert(variables.find(name) != variables.end());
@@ -39,6 +38,7 @@ SingleVariable* Constraint::getSingleVariable(
 }
 ArrayVariable* Constraint::getArrayVariable(
     std::map<std::string, std::shared_ptr<Variable>> variables, int n) {
+  // assert(getExpression(n).isArray()); TODO: Figure out why not works
   std::string name = getExpression(n).getName();
   assert(variables.find(name) != variables.end());
   Variable* s = variables.find(name)->second.get();
@@ -111,10 +111,9 @@ void Constraint::makeOneWay(Variable* variable) {
 }
 void Constraint::makeSoft() { clearVariables(); }
 
-bool Constraint::canBeImplicit() { return _canBeImplicit; }
+bool Constraint::canBeImplicit() { return false; }
 void Constraint::makeImplicit() {
-  assert(_canBeImplicit);
-  _implicit = true;
+  assert(canBeImplicit());
   for (auto variable : _variables) {
     defineVariable(variable);
   }
@@ -231,4 +230,17 @@ void Inverse::makeImplicit() {
   for (auto variable : _variables) {
     defineVariable(variable);
   }
+}
+
+/********************* Element ******************************/
+void Element::loadVariables(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  _variables.push_back(getSingleVariable(variables, 0));
+  // Not sure what the second argument does.
+  _variables.push_back(getArrayVariable(variables, 2));
+  _variables.push_back(getSingleVariable(variables, 3));
+}
+void Element::configureVariables() {
+  _variables[0]->addPotentialDefiner(this);
+  _variables[1]->addPotentialDefiner(this);
 }

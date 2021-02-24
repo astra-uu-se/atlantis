@@ -58,8 +58,6 @@ class Constraint : public Node {
   bool _hasDefineAnnotation;
   Variable* _annotationDefineVariable;
   bool _uniqueTarget;
-  bool _implicit;
-  bool _canBeImplicit;
 };
 
 class ThreeSVarConstraint : public Constraint {
@@ -117,6 +115,8 @@ class GlobalCardinality : public Constraint {
   void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
                          variables) override;
   void configureVariables() override;
+
+ private:
   ArrayVariable* _cover;
 };
 
@@ -128,6 +128,8 @@ class IntLinEq : public Constraint {
   void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
                          variables) override;
   void configureVariables() override;
+
+ private:
   ArrayVariable* _as;
   ArrayVariable* _bs;
   SingleVariable* _c;
@@ -142,6 +144,8 @@ class AllDifferent : public Constraint {
   void configureVariables() override;
   bool canBeImplicit() override;
   void makeImplicit() override;
+
+ private:
   ArrayVariable* _x;
 };
 class Inverse : public Constraint {
@@ -154,4 +158,12 @@ class Inverse : public Constraint {
   void configureVariables() override;
   bool canBeImplicit() override;
   void makeImplicit() override;
+};
+
+class Element : public Constraint {
+ public:
+  Element(ConstraintBox constraintBox) : Constraint(constraintBox){};
+  void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
+                         variables) override;
+  void configureVariables() override;
 };

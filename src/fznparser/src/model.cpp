@@ -109,30 +109,6 @@ void Model::addVariable(std::shared_ptr<Variable> item) {
   _variables.insert(
       std::pair<std::string, std::shared_ptr<Variable>>(item->getName(), item));
 }
-void Model::addConstraint(ConstraintBox constraintBox) {
-  if (constraintBox._name == "int_div") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<IntDiv>(constraintBox));
-  } else if (constraintBox._name == "int_plus") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<IntPlus>(constraintBox));
-  } else if (constraintBox._name == "global_cardinality") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<GlobalCardinality>(constraintBox));
-  } else if (constraintBox._name == "int_lin_eq") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
-  } else if (constraintBox._name == "int_abs") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<IntAbs>(constraintBox));
-  } else if (constraintBox._name == "fzn_all_different_int") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<AllDifferent>(constraintBox));
-  } else if (constraintBox._name == "inverse") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<Inverse>(constraintBox));
-  }
-}
 
 bool Model::hasCycle() {
   std::set<Node*> done;
@@ -179,4 +155,32 @@ void Model::printNode(std::string name) {
   assert(_variables.find(name) != _variables.end());
   Node* node = _variables.find(name)->second.get();
   std::cout << node->getLabel() << std::endl;
+}
+
+void Model::addConstraint(ConstraintBox constraintBox) {
+  if (constraintBox._name == "int_div") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<IntDiv>(constraintBox));
+  } else if (constraintBox._name == "int_plus") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<IntPlus>(constraintBox));
+  } else if (constraintBox._name == "global_cardinality") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<GlobalCardinality>(constraintBox));
+  } else if (constraintBox._name == "int_lin_eq") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
+  } else if (constraintBox._name == "int_abs") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<IntAbs>(constraintBox));
+  } else if (constraintBox._name == "fzn_all_different_int") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<AllDifferent>(constraintBox));
+  } else if (constraintBox._name == "inverse") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<Inverse>(constraintBox));
+  } else if (constraintBox._name == "gecode_int_element") {
+    constraintBox.prepare(_variables);
+    _constraints.push_back(std::make_shared<Element>(constraintBox));
+  }
 }
