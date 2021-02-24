@@ -14,8 +14,7 @@ class Constraint : public Node {
  public:
   virtual ~Constraint() = default;
   Constraint(ConstraintBox constraintBox);
-  virtual void init(
-      const std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
+  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables);
 
   virtual std::set<Node*> getNext() override;
   std::string getLabel() override;
@@ -32,6 +31,9 @@ class Constraint : public Node {
   std::vector<Variable*> variables();
 
  protected:
+  virtual void loadVariables(
+      const std::map<std::string, std::shared_ptr<Variable>>& variables) = 0;
+  virtual void configureVariables() = 0;
   ArrayVariable* getArrayVariable(
       std::map<std::string, std::shared_ptr<Variable>> variables, int n);
   SingleVariable* getSingleVariable(
@@ -64,12 +66,10 @@ class ThreeSVarConstraint : public Constraint {
  public:
   ThreeSVarConstraint(ConstraintBox constraintBox)
       : Constraint(constraintBox){};
-  virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
-                        variables) override;
-  virtual void configureVariables();
-  SingleVariable* _a;
-  SingleVariable* _b;
-  SingleVariable* _c;
+  virtual void loadVariables(
+      const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
+  virtual void configureVariables() override;
 };
 /* int_div(var int: a, var int: b, var int: c)
 ** Defines: a
@@ -93,11 +93,10 @@ class IntPlus : public ThreeSVarConstraint {
 class TwoSVarConstraint : public Constraint {
  public:
   TwoSVarConstraint(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  virtual void init(const std::map<std::string, std::shared_ptr<Variable>>&
-                        variables) override;
-  virtual void configureVariables();
-  SingleVariable* _a;
-  SingleVariable* _b;
+  virtual void loadVariables(
+      const std::map<std::string, std::shared_ptr<Variable>>& variables)
+      override;
+  virtual void configureVariables() override;
 };
 class IntAbs : public TwoSVarConstraint {
  public:
@@ -115,11 +114,10 @@ class GlobalCardinality : public Constraint {
   GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
   };
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
-  ArrayVariable* _x;
+  void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
+                         variables) override;
+  void configureVariables() override;
   ArrayVariable* _cover;
-  ArrayVariable* _counts;
 };
 
 class IntLinEq : public Constraint {
@@ -127,8 +125,9 @@ class IntLinEq : public Constraint {
   IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
   };
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
+  void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
+                         variables) override;
+  void configureVariables() override;
   ArrayVariable* _as;
   ArrayVariable* _bs;
   SingleVariable* _c;
@@ -138,8 +137,9 @@ class AllDifferent : public Constraint {
   AllDifferent(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
   };
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
+  void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
+                         variables) override;
+  void configureVariables() override;
   bool canBeImplicit() override;
   void makeImplicit() override;
   ArrayVariable* _x;
@@ -149,10 +149,9 @@ class Inverse : public Constraint {
   Inverse(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
   };
-  void init(const std::map<std::string, std::shared_ptr<Variable>>& variables)
-      override;
+  void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
+                         variables) override;
+  void configureVariables() override;
   bool canBeImplicit() override;
   void makeImplicit() override;
-  ArrayVariable* _x;
-  ArrayVariable* _y;
 };

@@ -123,76 +123,78 @@ void Constraint::makeImplicit() {
 bool Constraint::definesNone() { return _defines.empty(); }
 bool Constraint::uniqueTarget() { return _uniqueTarget; }
 std::vector<Variable*> Constraint::variables() { return _variables; }
-/********************* ThreeSVarConstraint ******************************/
-void ThreeSVarConstraint::init(
+
+void Constraint::init(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _a = getSingleVariable(variables, 0);
-  _b = getSingleVariable(variables, 1);
-  _c = getSingleVariable(variables, 2);
-
-  _variables.push_back(_a);
-  _variables.push_back(_b);
-  _variables.push_back(_c);
-
+  loadVariables(variables);
   configureVariables();
   checkAnnotations(variables);
+}
+/********************* ThreeSVarConstraint ******************************/
+void ThreeSVarConstraint::loadVariables(
+    const std::map<std::string, std::shared_ptr<Variable>>& variables) {
+  _variables.push_back(getSingleVariable(variables, 0));
+  _variables.push_back(getSingleVariable(variables, 1));
+  _variables.push_back(getSingleVariable(variables, 2));
 }
 void ThreeSVarConstraint::configureVariables() {
-  _c->addPotentialDefiner(this);
+  _variables[2]->addPotentialDefiner(this);
 }
 /********************* IntDiv ******************************/
-void IntDiv::configureVariables() { _a->addPotentialDefiner(this); }
+void IntDiv::configureVariables() { _variables[0]->addPotentialDefiner(this); }
 /********************* IntPlus ******************************/
 void IntPlus::configureVariables() {
-  _a->addPotentialDefiner(this);
-  _b->addPotentialDefiner(this);
-  _c->addPotentialDefiner(this);
+  _variables[0]->addPotentialDefiner(this);
+  _variables[1]->addPotentialDefiner(this);
+  _variables[2]->addPotentialDefiner(this);
 }
 /********************* TwoSVarConstraint ******************************/
-void TwoSVarConstraint::init(
+void TwoSVarConstraint::loadVariables(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _a = getSingleVariable(variables, 0);
-  _b = getSingleVariable(variables, 1);
-
-  _variables.push_back(_a);
-  _variables.push_back(_b);
-
-  configureVariables();
-  checkAnnotations(variables);
+  _variables.push_back(getSingleVariable(variables, 0));
+  _variables.push_back(getSingleVariable(variables, 1));
 }
-void TwoSVarConstraint::configureVariables() { _b->addPotentialDefiner(this); }
+void TwoSVarConstraint::configureVariables() {
+  _variables[1]->addPotentialDefiner(this);
+}
 /********************* GlobalCardinality ******************************/
-void GlobalCardinality::init(
+void GlobalCardinality::loadVariables(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _x = getArrayVariable(variables, 0);
-  _cover = getArrayVariable(variables, 1);  // Parameter
-  _counts = getArrayVariable(variables, 2);
-  _variables.push_back(_x);
-  _variables.push_back(_counts);
-  _counts->addPotentialDefiner(this);
+  _cover = getArrayVariable(variables, 1);               // Parameter
+  _variables.push_back(getArrayVariable(variables, 0));  // x
+  _variables.push_back(getArrayVariable(variables, 2));  // counts
+}
+void GlobalCardinality::configureVariables() {
+  _variables[2]->addPotentialDefiner(this);
 }
 /********************* IntLinEq ******************************/
-void IntLinEq::init(
+void IntLinEq::loadVariables(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _as = getArrayVariable(variables, 0);  // Parameter
   _bs = getArrayVariable(variables, 1);
   _c = getSingleVariable(variables, 2);  // Parameter
   for (auto variable : _bs->elements()) {
     _variables.push_back(variable);
-    variable->addPotentialDefiner(this);  // Here we need to check if as[v] = 1
   }
-  checkAnnotations(variables);
   // We potentially need to remove _bs from variables.
 }
+void IntLinEq::configureVariables() {
+  for (auto variable : _bs->elements()) {
+    variable->addPotentialDefiner(this);  // Here we need to check if as[v] = 1
+  }
+}
 /********************* AllDifferent ******************************/
-void AllDifferent::init(
+void AllDifferent::loadVariables(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
   _x = getArrayVariable(variables, 0);  // Parameter
   for (auto variable : _x->elements()) {
     _variables.push_back(variable);
+  }
+}
+void AllDifferent::configureVariables() {
+  for (auto variable : _variables) {
     variable->addPotentialDefiner(this);
   }
-  checkAnnotations(variables);
 }
 bool AllDifferent::canBeImplicit() {
   for (auto variable : _variables) {
@@ -208,15 +210,14 @@ void AllDifferent::makeImplicit() {
   }
 }
 /********************* Inverse ******************************/
-void Inverse::init(
+void Inverse::loadVariables(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {
-  _x = getArrayVariable(variables, 0);
-  _y = getArrayVariable(variables, 1);
-  _variables.push_back(_x);
-  _variables.push_back(_y);
-  _x->addPotentialDefiner(this);
-  _y->addPotentialDefiner(this);
-  checkAnnotations(variables);
+  _variables.push_back(getArrayVariable(variables, 0));
+  _variables.push_back(getArrayVariable(variables, 1));
+}
+void Inverse::configureVariables() {
+  _variables[0]->addPotentialDefiner(this);
+  _variables[0]->addPotentialDefiner(this);
 }
 bool Inverse::canBeImplicit() {
   for (auto arrayVariable : _variables) {
