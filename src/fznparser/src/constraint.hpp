@@ -128,6 +128,7 @@ class IntLinEq : public Constraint {
   void loadVariables(const std::map<std::string, std::shared_ptr<Variable>>&
                          variables) override;
   void configureVariables() override;
+  bool canBeImplicit() override;
 
  private:
   ArrayVariable* _as;

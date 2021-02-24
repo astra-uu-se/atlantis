@@ -185,6 +185,18 @@ void IntLinEq::configureVariables() {
     }
   }
 }
+bool IntLinEq::canBeImplicit() {
+  for (int i = 0; i < _as->elements().size(); i++) {
+    std::string coefficient = _as->elements()[i]->getName();
+    if (!(coefficient == "1" || coefficient == "-1")) {
+      return false;
+    }
+    if (!_bs->elements()[i]->isDefinable()) {
+      return false;
+    }
+  }
+  return true;
+}
 /********************* AllDifferent ******************************/
 void AllDifferent::loadVariables(
     const std::map<std::string, std::shared_ptr<Variable>>& variables) {

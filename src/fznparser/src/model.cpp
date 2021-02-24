@@ -11,11 +11,11 @@ void Model::init() {
 }
 
 void Model::findStructure() {
-  // defineImplicit();
-  // defineAnnotated();
+  defineImplicit();
+  defineAnnotated();
   defineFromObjective();
-  // defineUnique();
-  // defineRest();
+  defineUnique();
+  defineRest();
   removeCycles();
 }
 
