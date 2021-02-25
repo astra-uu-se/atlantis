@@ -50,7 +50,10 @@ void Model::defineFrom(Variable* variable) {
     for (auto constraint : variable->potentialDefiners()) {
       if (constraint->definesNone()) {
         constraint->makeOneWay(variable);
-        for (auto v : constraint->variables()) {
+        // Sort by domain size
+        std::vector<Variable*> next = constraint->variables();
+        std::sort(next.begin(), next.end(), Variable::compareDomain);
+        for (auto v : next) {
           if (v != variable) {
             defineFrom(v);
           }
@@ -143,7 +146,7 @@ void Model::removeCycle(std::set<Node*> visited) {
   Node* nodeToRemove = nullptr;
   for (auto node : visited) {
     if (auto v = dynamic_cast<Variable*>(node)) {
-      if (v->domainSize() < smallestDomain) {
+      if (v->domainSize() < smallestDomain) {  // Check ties
         nodeToRemove = v->definedBy();
         smallestDomain = v->domainSize();
       }
