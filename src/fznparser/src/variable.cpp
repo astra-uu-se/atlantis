@@ -119,7 +119,7 @@ void VariableMap::add(std::shared_ptr<Variable> variable) {
       variable->getName(), variable));
   _variableArray.push_back(variable.get());
 }
-Variable* VariableMap::find(std::string name) {
+Variable* VariableMap::find(const std::string name) const {
   assert(_variables.find(name) != _variables.end());
   return _variables.find(name)->second.get();
 }

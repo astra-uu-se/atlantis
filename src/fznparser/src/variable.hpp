@@ -111,7 +111,7 @@ class VariableMap {
   VariableMap() = default;
   virtual ~VariableMap() = default;
   void add(std::shared_ptr<Variable> variable);
-  Variable* find(std::string name);
+  Variable* find(std::string name) const;
   bool exists(std::string name);
   std::vector<Variable*> getArray();
 

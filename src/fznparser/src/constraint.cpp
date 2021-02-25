@@ -27,19 +27,21 @@ bool Constraint::breakCycle() {
   return true;
 }
 
-SingleVariable* Constraint::getSingleVariable(VariableMap& variableMap, int n) {
+SingleVariable* Constraint::getSingleVariable(const VariableMap& variableMap,
+                                              int n) {
   assert(!getExpression(n).isArray());
   std::string name = getExpression(n).getName();
   Variable* s = variableMap.find(name);
   return dynamic_cast<SingleVariable*>(s);
 }
-ArrayVariable* Constraint::getArrayVariable(VariableMap& variableMap, int n) {
+ArrayVariable* Constraint::getArrayVariable(const VariableMap& variableMap,
+                                            int n) {
   // assert(getExpression(n).isArray()); TODO: Figure out why not works
   std::string name = getExpression(n).getName();
   Variable* s = variableMap.find(name);
   return dynamic_cast<ArrayVariable*>(s);
 }
-Variable* Constraint::getAnnotationVariable(VariableMap& variableMap) {
+Variable* Constraint::getAnnotationVariable(const VariableMap& variableMap) {
   std::string name = _constraintBox.getAnnotationVariableName();
   return variableMap.find(name);
 }
@@ -76,7 +78,7 @@ bool Constraint::canDefineByAnnotation() {
   }
   return false;
 }
-void Constraint::checkAnnotations(VariableMap& variableMap) {
+void Constraint::checkAnnotations(const VariableMap& variableMap) {
   if (_constraintBox.hasDefineAnnotation()) {
     _annotationDefineVariable = getAnnotationVariable(variableMap);
     _hasDefineAnnotation = true;
@@ -114,13 +116,13 @@ bool Constraint::definesNone() { return _defines.empty(); }
 bool Constraint::uniqueTarget() { return _uniqueTarget; }
 std::vector<Variable*> Constraint::variables() { return _variables; }
 
-void Constraint::init(VariableMap& variableMap) {
+void Constraint::init(const VariableMap& variableMap) {
   loadVariables(variableMap);
   configureVariables();
   checkAnnotations(variableMap);
 }
 /********************* ThreeSVarConstraint ******************************/
-void ThreeSVarConstraint::loadVariables(VariableMap& variableMap) {
+void ThreeSVarConstraint::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
   _variables.push_back(getSingleVariable(variableMap, 1));
   _variables.push_back(getSingleVariable(variableMap, 2));
@@ -137,7 +139,7 @@ void IntPlus::configureVariables() {
   _variables[2]->addPotentialDefiner(this);
 }
 /********************* TwoSVarConstraint ******************************/
-void TwoSVarConstraint::loadVariables(VariableMap& variableMap) {
+void TwoSVarConstraint::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
   _variables.push_back(getSingleVariable(variableMap, 1));
 }
@@ -145,7 +147,7 @@ void TwoSVarConstraint::configureVariables() {
   _variables[1]->addPotentialDefiner(this);
 }
 /********************* GlobalCardinality ******************************/
-void GlobalCardinality::loadVariables(VariableMap& variableMap) {
+void GlobalCardinality::loadVariables(const VariableMap& variableMap) {
   _cover = getArrayVariable(variableMap, 1);               // Parameter
   _variables.push_back(getArrayVariable(variableMap, 0));  // x
   _variables.push_back(getArrayVariable(variableMap, 2));  // counts
@@ -154,7 +156,7 @@ void GlobalCardinality::configureVariables() {
   _variables[2]->addPotentialDefiner(this);
 }
 /********************* IntLinEq ******************************/
-void IntLinEq::loadVariables(VariableMap& variableMap) {
+void IntLinEq::loadVariables(const VariableMap& variableMap) {
   _as = getArrayVariable(variableMap, 0);  // Parameter
   _bs = getArrayVariable(variableMap, 1);
   _c = getSingleVariable(variableMap, 2);  // Parameter
@@ -184,7 +186,7 @@ bool IntLinEq::canBeImplicit() {
   return true;
 }
 /********************* AllDifferent ******************************/
-void AllDifferent::loadVariables(VariableMap& variableMap) {
+void AllDifferent::loadVariables(const VariableMap& variableMap) {
   _x = getArrayVariable(variableMap, 0);  // Parameter
   for (auto variable : _x->elements()) {
     _variables.push_back(variable);
@@ -204,7 +206,7 @@ bool AllDifferent::canBeImplicit() {
   return true;
 }
 /********************* Inverse ******************************/
-void Inverse::loadVariables(VariableMap& variableMap) {
+void Inverse::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getArrayVariable(variableMap, 0));
   _variables.push_back(getArrayVariable(variableMap, 1));
 }
@@ -227,7 +229,7 @@ void Inverse::makeImplicit() {
 }
 
 /********************* Element ******************************/
-void Element::loadVariables(VariableMap& variableMap) {
+void Element::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
   // Not sure what the second argument does.
   _variables.push_back(getArrayVariable(variableMap, 2));
@@ -238,7 +240,7 @@ void Element::configureVariables() {
   _variables[1]->addPotentialDefiner(this);
 }
 /********************* Circuit ******************************/
-void Circuit::loadVariables(VariableMap& variableMap) {
+void Circuit::loadVariables(const VariableMap& variableMap) {
   // Not sure what the first argument does.
   _x = getArrayVariable(variableMap, 1);
   for (auto variable : _x->elements()) {
