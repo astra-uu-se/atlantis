@@ -12,7 +12,7 @@ class Variable : public Node {
 
   static bool compareDomain(Variable* v1, Variable* v2);
 
-  virtual std::string getLabel() override { return _name; };
+  std::string getLabel() override { return _name; };
   bool breakCycle() override { return false; };
 
   virtual void addConstraint(Node* constraint) = 0;

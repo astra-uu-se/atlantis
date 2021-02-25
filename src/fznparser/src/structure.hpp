@@ -62,8 +62,8 @@ class Expression {
   Expression();
   Expression(std::string name, bool isId);
   Expression(std::string name, std::vector<Expression>, bool isId);
-  bool isId() { return _isId; };
-  bool isArray() { return _isArray; };
+  bool isId() { return _isId; }
+  bool isArray() { return _isArray; }
   std::string getName();
   bool _isId;
   bool _isArray;

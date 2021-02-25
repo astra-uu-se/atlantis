@@ -1,6 +1,8 @@
 #include "model.hpp"
 
-Model::Model(){};
+#include <limits>
+
+Model::Model() {}
 void Model::init() {
   for (auto variable : variables()) {
     variable->init(_variables);
@@ -20,10 +22,10 @@ std::vector<Variable*> Model::domSortVariables() {
 
 void Model::findStructure() {
   defineImplicit();
+  defineRest();
   defineAnnotated();
   defineFromObjective();
   defineUnique();
-  defineRest();
   removeCycles();
 }
 
@@ -64,7 +66,7 @@ void Model::defineFromObjective() {
     defineFrom(objective);
   }
 }
-Variable* Model::getObjective() { return _variables.find("X_INTRODUCED_0_"); }
+Variable* Model::getObjective() { return _variables.find("x"); }
 
 void Model::defineUnique() {
   for (auto variable : domSortVariables()) {
@@ -137,11 +139,17 @@ bool Model::hasCycleAux(std::set<Node*> visited, Node* node,
   return false;
 }
 void Model::removeCycle(std::set<Node*> visited) {
+  unsigned int smallestDomain = -1;  // Förmodligen inte så bra
+  Node* nodeToRemove = nullptr;
   for (auto node : visited) {
-    if (node->breakCycle()) {
-      return;
+    if (auto v = dynamic_cast<Variable*>(node)) {
+      if (v->domainSize() < smallestDomain) {
+        nodeToRemove = v->definedBy();
+        smallestDomain = v->domainSize();
+      }
     }
   }
+  assert(nodeToRemove->breakCycle());
 }
 
 void Model::removeCycles() {

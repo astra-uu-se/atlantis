@@ -153,7 +153,7 @@ void GlobalCardinality::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getArrayVariable(variableMap, 2));  // counts
 }
 void GlobalCardinality::configureVariables() {
-  _variables[2]->addPotentialDefiner(this);
+  _variables[1]->addPotentialDefiner(this);
 }
 /********************* IntLinEq ******************************/
 void IntLinEq::loadVariables(const VariableMap& variableMap) {
@@ -221,11 +221,6 @@ bool Inverse::canBeImplicit() {
     }
   }
   return true;
-}
-void Inverse::makeImplicit() {
-  for (auto variable : _variables) {
-    defineVariable(variable);
-  }
 }
 
 /********************* Element ******************************/

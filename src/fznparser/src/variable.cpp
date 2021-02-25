@@ -40,7 +40,6 @@ void ArrayVariable::init(VariableMap& variables) {
       } else {
         auto p = std::make_shared<Parameter>(name);
         variables.add(p);
-        ;
         _elements.push_back(p.get());
       }
     }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -17,9 +18,9 @@ class Constraint : public Node {
   Constraint(ConstraintBox constraintBox);
   void init(const VariableMap& variables);
 
-  virtual std::set<Node*> getNext() override;
+  std::set<Node*> getNext() override;
   std::string getLabel() override;
-  virtual bool breakCycle() override;
+  bool breakCycle() override;
 
   void makeOneWayByAnnotation();
   void makeOneWay(Variable* variable);
@@ -59,9 +60,9 @@ class Constraint : public Node {
 class ThreeSVarConstraint : public Constraint {
  public:
   ThreeSVarConstraint(ConstraintBox constraintBox)
-      : Constraint(constraintBox){};
-  virtual void loadVariables(const VariableMap& variables) override;
-  virtual void configureVariables() override;
+      : Constraint(constraintBox) {}
+  void loadVariables(const VariableMap& variables) override;
+  void configureVariables() override;
 };
 /* int_div(var int: a, var int: b, var int: c)
 ** Defines: a
@@ -69,7 +70,7 @@ class ThreeSVarConstraint : public Constraint {
 */
 class IntDiv : public ThreeSVarConstraint {
  public:
-  IntDiv(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox){};
+  IntDiv(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox) {}
   void configureVariables() override;
 };
 /* int_plus(var int: a, var int: b, var int: c)
@@ -79,18 +80,18 @@ class IntPlus : public ThreeSVarConstraint {
  public:
   IntPlus(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox) {
     _uniqueTarget = false;
-  };
+  }
   void configureVariables() override;
 };
 class TwoSVarConstraint : public Constraint {
  public:
-  TwoSVarConstraint(ConstraintBox constraintBox) : Constraint(constraintBox){};
-  virtual void loadVariables(const VariableMap& variables) override;
-  virtual void configureVariables() override;
+  TwoSVarConstraint(ConstraintBox constraintBox) : Constraint(constraintBox) {}
+  void loadVariables(const VariableMap& variables) override;
+  void configureVariables() override;
 };
 class IntAbs : public TwoSVarConstraint {
  public:
-  IntAbs(ConstraintBox constraintBox) : TwoSVarConstraint(constraintBox){};
+  IntAbs(ConstraintBox constraintBox) : TwoSVarConstraint(constraintBox) {}
 };
 
 /* global_cardinality(       array [int] of var int: x,
@@ -103,7 +104,7 @@ class GlobalCardinality : public Constraint {
  public:
   GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
-  };
+  }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
 
@@ -115,7 +116,7 @@ class IntLinEq : public Constraint {
  public:
   IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
-  };
+  }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeImplicit() override;
@@ -129,7 +130,7 @@ class AllDifferent : public Constraint {
  public:
   AllDifferent(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
-  };
+  }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeImplicit() override;
@@ -141,22 +142,21 @@ class Inverse : public Constraint {
  public:
   Inverse(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
-  };
+  }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeImplicit() override;
-  void makeImplicit() override;
 };
 
 class Element : public Constraint {
  public:
-  Element(ConstraintBox constraintBox) : Constraint(constraintBox){};
+  Element(ConstraintBox constraintBox) : Constraint(constraintBox) {}
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
 };
 class Circuit : public Constraint {
  public:
-  Circuit(ConstraintBox constraintBox) : Constraint(constraintBox){};
+  Circuit(ConstraintBox constraintBox) : Constraint(constraintBox) {}
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeImplicit() override;
