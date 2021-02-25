@@ -4,6 +4,9 @@
 
 antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
   Model m = Model();
+  for (auto item : ctx->parDeclItem()) {
+    m.addVariable(visitParDeclItem(item));
+  }
   for (auto item : ctx->varDeclItem()) {
     m.addVariable(visitVarDeclItem(item));
   }
@@ -11,6 +14,22 @@ antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
     m.addConstraint(visitConstraintItem(constraintItem));
   }
   return m;
+}
+antlrcpp::Any FznVisitor::visitParDeclItem(
+    FlatZincParser::ParDeclItemContext *ctx) {
+  std::string name = ctx->Identifier()->getText();
+
+  if (!ctx->parType()->indexSet()) {
+    std::string value = ctx->parExpr()->getText();  // Value is discarded
+    return static_cast<std::shared_ptr<Variable>>(
+        std::make_shared<Parameter>(name, value));
+  } else {  // if (ctx->arrayVarType()) {
+    std::vector<Expression> elements =
+        visitParArrayLiteral(ctx->parExpr()->parArrayLiteral());
+    std::vector<Annotation> annotations;
+    return static_cast<std::shared_ptr<Variable>>(
+        std::make_shared<ArrayVariable>(name, annotations, elements));
+  }
 }
 
 antlrcpp::Any FznVisitor::visitVarDeclItem(
@@ -116,6 +135,14 @@ antlrcpp::Any FznVisitor::visitArrayLiteral(
     } else {
       ab.push_back(Expression(c->getText(), false));
     }
+  }
+  return ab;
+}
+antlrcpp::Any FznVisitor::visitParArrayLiteral(
+    FlatZincParser::ParArrayLiteralContext *ctx) {
+  std::vector<Expression> ab;
+  for (auto c : ctx->basicLiteralExpr()) {
+    ab.push_back(Expression(c->getText(), false));
   }
   return ab;
 }

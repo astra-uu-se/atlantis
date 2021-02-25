@@ -90,9 +90,9 @@ class ArrayVariable : public Variable {
   std::vector<Variable*> _elements;
 };
 
-class Parameter : public SingleVariable {
+class Literal : public SingleVariable {
  public:
-  Parameter(std::string value);
+  Literal(std::string value);
   void init(VariableMap& variables) override;
 
   std::set<Node*> getNext() override;
@@ -104,6 +104,15 @@ class Parameter : public SingleVariable {
   void addPotentialDefiner(Constraint* constraint) override{};
   int count() override { return 0; };
   int domainSize() override;
+};
+class Parameter : public Literal {
+ public:
+  Parameter(std::string name, std::string value) : Literal(name) {
+    _value = value;
+  };
+
+ private:
+  std::string _value;
 };
 
 class VariableMap {

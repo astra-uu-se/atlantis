@@ -1,7 +1,7 @@
 #include "structure.hpp"
-#define MAX_DOMAIN_SIZE 1000000
+#define MAX_DOMAIN_SIZE 2147483647
 
-int Domain::size() { return 0; }
+int Domain::size() { return MAX_DOMAIN_SIZE; }
 int BoolDomain::size() { return 2; }
 IntDomain::IntDomain() { _defined = false; }
 IntDomain::IntDomain(int lb, int ub) {

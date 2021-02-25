@@ -38,7 +38,7 @@ void ArrayVariable::init(VariableMap& variables) {
       if (variables.exists(name)) {
         _elements.push_back(variables.find(name));
       } else {
-        auto p = std::make_shared<Parameter>(name);
+        auto p = std::make_shared<Literal>(name);
         variables.add(p);
         _elements.push_back(p.get());
       }
@@ -101,16 +101,16 @@ int ArrayVariable::domainSize() {
 }
 
 /*******************PARAMETER****************************/
-Parameter::Parameter(std::string value) {
+Literal::Literal(std::string value) {
   _name = value;
   _isDefined = false;
 }
-void Parameter::init(VariableMap& variables) {}
-std::set<Node*> Parameter::getNext() {
+void Literal::init(VariableMap& variables) {}
+std::set<Node*> Literal::getNext() {
   std::set<Node*> s;
   return s;
 }
-int Parameter::domainSize() { return 0; }
+int Literal::domainSize() { return 0; }
 
 /*******************VARIABLEMAP****************************/
 void VariableMap::add(std::shared_ptr<Variable> variable) {

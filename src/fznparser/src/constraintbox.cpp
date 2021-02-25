@@ -16,7 +16,7 @@ void ConstraintBox::prepare(VariableMap& variables) {
             std::make_shared<ArrayVariable>(e.getName(), ann, e._elements);
         variables.add(av);
       } else if (!e.isId()) {
-        auto p = std::make_shared<Parameter>(e.getName());
+        auto p = std::make_shared<Literal>(e.getName());
         variables.add(p);
       }
     }

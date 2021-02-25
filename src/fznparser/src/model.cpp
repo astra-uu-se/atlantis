@@ -66,7 +66,7 @@ void Model::defineFromObjective() {
     defineFrom(objective);
   }
 }
-Variable* Model::getObjective() { return _variables.find("x"); }
+Variable* Model::getObjective() { return _variables.find("X_INTRODUCED_0_"); }
 
 void Model::defineUnique() {
   for (auto variable : domSortVariables()) {
