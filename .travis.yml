@@ -72,9 +72,8 @@ script:
   - cd build
   - cmake ..
   - make
-  - cd ..
-  - build/demo
-  - cd ../..
+  - ./demo
+  - cd ../../..
 
 
 
