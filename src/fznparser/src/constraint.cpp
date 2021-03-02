@@ -20,7 +20,12 @@ std::set<Node*> Constraint::getNext() {
   }
   return defines;
 }
-std::string Constraint::getLabel() { return _name; }
+std::string Constraint::getLabel() {
+  if (_implicit) {
+    return "(implicit) " + _name;
+  }
+  return _name;
+}
 
 bool Constraint::breakCycle() {
   makeSoft();
@@ -110,6 +115,7 @@ void Constraint::makeImplicit() {
   for (auto variable : _variables) {
     defineVariable(variable);
   }
+  _implicit = true;
 }
 
 bool Constraint::definesNone() { return _defines.empty(); }

@@ -55,6 +55,7 @@ class Constraint : public Node {
   bool _hasDefineAnnotation;
   Variable* _annotationDefineVariable;
   bool _uniqueTarget;
+  bool _implicit = false;
 };
 
 class ThreeSVarConstraint : public Constraint {
