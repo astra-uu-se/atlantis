@@ -33,7 +33,7 @@ jobs:
 
 stages:
   - name: after_script
-    if: branch = fix/benchmark-develop
+    if: branch IN (develop, master, fix/benchmark-develop)
 
 cache: apt
 
