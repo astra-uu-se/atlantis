@@ -33,7 +33,7 @@ jobs:
 
 stages:
   - name: after_script
-    if: branch ~= /^(develop|master)$/
+    if: branch = develop OR branch = master OR branch = fix/benchmark-develop
 
 cache: apt
 
