@@ -33,7 +33,7 @@ jobs:
 
 stages:
   - name: after_script
-    if: branch IN (develop, master)
+    if: branch ~= /^(develop|master)$/
 
 cache: apt
 
