@@ -33,7 +33,7 @@ jobs:
 
 stages:
   - name: after_script
-    if: branch = develop
+    if: branch = fix/benchmark-develop
 
 cache: apt
 
@@ -80,6 +80,7 @@ after_script:
   # - make
   # - cd ..
   # - bash slack-benchmark.sh
+  - echo "after_script"
 
 after_success:
   - echo "SUCCESS"
