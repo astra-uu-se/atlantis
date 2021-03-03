@@ -31,6 +31,10 @@ jobs:
           sources: &precise_latest_boost_sources
             - ubuntu-toolchain-r-test
 
+stages:
+  - name: after_script
+    if: branch = develop
+
 cache: apt
 
 before_install:
@@ -67,8 +71,7 @@ script:
   - ctest
   - cd ..
 
-after_success:
-  - echo "SUCCESS"
+after_script:
   ############################################################################
   # Run benchmarks and post to slack
   ############################################################################
@@ -77,3 +80,6 @@ after_success:
   # - make
   # - cd ..
   # - bash slack-benchmark.sh
+
+after_success:
+  - echo "SUCCESS"
