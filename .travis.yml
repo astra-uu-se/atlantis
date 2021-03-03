@@ -31,10 +31,6 @@ jobs:
           sources: &precise_latest_boost_sources
             - ubuntu-toolchain-r-test
 
-stages:
-  - name: after_script
-    if: branch = develop OR branch = master
-
 cache: apt
 
 before_install:
@@ -75,12 +71,12 @@ after_script:
   ############################################################################
   # Run benchmarks and post to slack
   ############################################################################
-  # - cd build
-  # - cmake ${CMAKE_OPTIONS} ${GBENCH_FLAGS}  -DCMAKE_CXX_FLAGS=${CXX_FLAGS}  ..
-  # - make
-  # - cd ..
-  # - bash slack-benchmark.sh
-  - echo "after_script"
+  # - if [ "$TRAVIS_BRANCH" = "master" -o "$TRAVIS_BRANCH" = "develop" ]; then cd build; fi
+  # - if [ "$TRAVIS_BRANCH" = "master" -o "$TRAVIS_BRANCH" = "develop" ]; then cmake ${CMAKE_OPTIONS} ${GBENCH_FLAGS}  -DCMAKE_CXX_FLAGS=${CXX_FLAGS}  ..; fi
+  # - if [ "$TRAVIS_BRANCH" = "master" -o "$TRAVIS_BRANCH" = "develop" ]; then make; fi
+  # - if [ "$TRAVIS_BRANCH" = "master" -o "$TRAVIS_BRANCH" = "develop" ]; then cd ..; fi
+  # - if [ "$TRAVIS_BRANCH" = "master" -o "$TRAVIS_BRANCH" = "develop" ]; then bash slack-benchmark.sh; fi
+  - if [ "$TRAVIS_BRANCH" = "master" -o "$TRAVIS_BRANCH" = "develop" ]; then echo "after_script"; fi
 
 after_success:
   - echo "SUCCESS"
