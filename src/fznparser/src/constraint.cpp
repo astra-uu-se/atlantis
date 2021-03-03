@@ -127,6 +127,8 @@ void Constraint::init(const VariableMap& variableMap) {
   configureVariables();
   checkAnnotations(variableMap);
 }
+
+Domain Constraint::imposedDomain() { return _imposedDomain; }
 /********************* ThreeSVarConstraint ******************************/
 void ThreeSVarConstraint::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));

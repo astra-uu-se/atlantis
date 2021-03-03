@@ -17,16 +17,18 @@ class Variable : public Node {
 
   virtual void addConstraint(Node* constraint) = 0;
   virtual void removeConstraint(Node* constraint) = 0;
-  virtual void defineBy(Node* constraint) = 0;
+  virtual void defineBy(Constraint* constraint) = 0;
   virtual void removeDefinition() = 0;
   virtual void addPotentialDefiner(Constraint* constraint) = 0;
   virtual bool isDefinable() = 0;
   virtual int domainSize() = 0;
+  virtual Domain imposedDomain();
+  virtual void imposeDomain(Domain domain);
 
   virtual int count() { return 0; };
   virtual bool isDefined() { return _isDefined; };
   virtual std::string getName() { return _name; };
-  virtual Node* definedBy() { return _definedBy; };
+  virtual Constraint* definedBy() { return _definedBy; };
   virtual std::set<Constraint*> potentialDefiners() {
     return _potentialDefiners;
   };
@@ -34,8 +36,9 @@ class Variable : public Node {
   bool _isDefined;
 
  protected:
+  Domain _imposedDomain;
   std::string _name;
-  Node* _definedBy;
+  Constraint* _definedBy;
   std::vector<Annotation> _annotations;
   std::set<Node*> _nextConstraints;
   std::set<Constraint*> _potentialDefiners;
@@ -54,7 +57,7 @@ class SingleVariable : public Variable {
   std::set<Node*> getNext() override { return _nextConstraints; };
   void addConstraint(Node* constraint) override;
   void removeConstraint(Node* constraint) override;
-  void defineBy(Node* constraint) override;
+  void defineBy(Constraint* constraint) override;
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
   int count() override { return 1; };
@@ -62,7 +65,7 @@ class SingleVariable : public Variable {
   int domainSize() override;
 
  private:
-  std::shared_ptr<Domain> _domain;
+  std::shared_ptr<Domain> _domain;  // Why pointer?
 };
 
 class ArrayVariable : public Variable {
@@ -77,7 +80,7 @@ class ArrayVariable : public Variable {
   std::set<Node*> getNext() override;
   void addConstraint(Node* constraint) override;
   void removeConstraint(Node* constraint) override;
-  void defineBy(Node* constraint) override;
+  void defineBy(Constraint* constraint) override;
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
   std::vector<Variable*> elements();
@@ -99,7 +102,7 @@ class Literal : public SingleVariable {
   bool isDefinable() override { return false; };
   void addConstraint(Node* constraint) override{};
   void removeConstraint(Node* constraint) override{};
-  void defineBy(Node* constraint) override{};
+  void defineBy(Constraint* constraint) override{};
   void removeDefinition() override{};
   void addPotentialDefiner(Constraint* constraint) override{};
   int count() override { return 0; };

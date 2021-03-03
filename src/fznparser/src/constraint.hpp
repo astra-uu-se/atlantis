@@ -31,6 +31,7 @@ class Constraint : public Node {
   virtual bool canBeImplicit();
   virtual void makeImplicit();
   std::vector<Variable*> variables();
+  Domain imposedDomain();
 
  protected:
   virtual void loadVariables(const VariableMap& variables) = 0;
@@ -48,6 +49,7 @@ class Constraint : public Node {
   void removeDependency(Variable* variable);
   void clearVariables();
 
+  Domain _imposedDomain;
   std::string _name;
   ConstraintBox _constraintBox;
   std::set<Variable*> _defines;

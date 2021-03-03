@@ -21,10 +21,10 @@ std::vector<Variable*> Model::domSortVariables() {
 }
 
 void Model::findStructure() {
+  // defineFromObjective();
   defineImplicit();
   defineRest();
   defineAnnotated();
-  defineFromObjective();
   defineUnique();
   removeCycles();
 }
@@ -69,7 +69,7 @@ void Model::defineFromObjective() {
     defineFrom(objective);
   }
 }
-Variable* Model::getObjective() { return _variables.find("X_INTRODUCED_0_"); }
+Variable* Model::getObjective() { return _variables.find("obj"); }
 
 void Model::defineUnique() {
   for (auto variable : domSortVariables()) {

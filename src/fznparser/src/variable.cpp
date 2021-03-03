@@ -7,6 +7,8 @@ Variable::Variable(std::string name, std::vector<Annotation> annotations) {
 bool Variable::compareDomain(Variable* v1, Variable* v2) {
   return v1->domainSize() > v2->domainSize();
 }
+Domain Variable::imposedDomain() { return _imposedDomain; }
+void Variable::imposeDomain(Domain domain) { _imposedDomain = domain; }
 
 /*******************SINGLEVARIABLE****************************/
 void SingleVariable::addConstraint(Node* constraint) {
@@ -15,7 +17,7 @@ void SingleVariable::addConstraint(Node* constraint) {
 void SingleVariable::removeConstraint(Node* constraint) {
   _nextConstraints.erase(constraint);
 }
-void SingleVariable::defineBy(Node* constraint) {
+void SingleVariable::defineBy(Constraint* constraint) {
   assert(!_isDefined);
   _definedBy = constraint;
   _isDefined = true;
@@ -64,7 +66,7 @@ void ArrayVariable::removeConstraint(Node* constraint) {
     e->removeConstraint(constraint);
   }
 }
-void ArrayVariable::defineBy(Node* constraint) {
+void ArrayVariable::defineBy(Constraint* constraint) {
   for (auto e : _elements) {
     e->defineBy(constraint);
   }
