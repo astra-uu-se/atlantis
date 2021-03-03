@@ -77,15 +77,17 @@ script:
 
 
 
-after_success:
-  - echo "SUCCESS"
+after_script:
   ############################################################################
   # Run benchmarks and post to slack
   ############################################################################
-  # - rm -r build
-  # - mkdir -p build
-  - cd build
-  - cmake ${CMAKE_OPTIONS} ${GBENCH_FLAGS}  -DCMAKE_CXX_FLAGS=${CXX_FLAGS}  ..
-  - make
-  - cd ..
-  - bash slack-benchmark.sh
+  - if [ "$TRAVIS_BRANCH" = "master" -o "$TRAVIS_BRANCH" = "develop" ]; then
+        cd build;
+        cmake ${CMAKE_OPTIONS} ${GBENCH_FLAGS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..;
+        make;
+        cd ..;
+        bash slack-benchmark.sh;
+    fi
+
+after_success:
+  - echo "SUCCESS"
