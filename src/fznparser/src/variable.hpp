@@ -19,6 +19,7 @@ class Variable : public Node {
   virtual void defineBy(Constraint* constraint) = 0;
   virtual void removeDefinition() = 0;
   virtual void addPotentialDefiner(Constraint* constraint) = 0;
+  virtual void removePotentialDefiner(Constraint* constraint) = 0;
   virtual bool isDefinable() = 0;
   virtual int domainSize() = 0;
   virtual int upperBound() = 0;
@@ -26,6 +27,7 @@ class Variable : public Node {
   virtual int imposedDomainSize() = 0;
   virtual void imposeDomain(Domain* domain) = 0;
   virtual bool imposedDomain() { return _hasImposedDomain; }
+  virtual int length() { return 1; }
 
   virtual int count() { return 0; };
   virtual bool isDefined() { return _isDefined; };
@@ -62,6 +64,7 @@ class SingleVariable : public Variable {
   void defineBy(Constraint* constraint) override;
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
+  void removePotentialDefiner(Constraint* constraint) override;
   int count() override { return 1; };
   bool isDefinable() override { return !_isDefined; };
   int imposedDomainSize() override;
@@ -82,6 +85,7 @@ class ArrayVariable : public Variable {
       : Variable(name, annotations) {
     _expressions = expressions;
   };
+  ArrayVariable(std::vector<Variable*> elements);
   void init(VariableMap& variables) override;
 
   std::set<Node*> getNext() override;
@@ -91,6 +95,7 @@ class ArrayVariable : public Variable {
   void defineNotDefinedBy(Constraint* constraint);
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
+  void removePotentialDefiner(Constraint* constraint) override;
   std::vector<Variable*> elements();
   bool isDefinable() override;
   std::string getLabel() override;
@@ -99,6 +104,8 @@ class ArrayVariable : public Variable {
   int domainSize() override;
   int lowerBound() override;
   int upperBound() override;
+  int length() override;
+  Variable* getElement(int n);
 
  private:
   std::vector<Expression> _expressions;
@@ -117,6 +124,7 @@ class Literal : public SingleVariable {
   void defineBy(Constraint* constraint) override{};
   void removeDefinition() override{};
   void addPotentialDefiner(Constraint* constraint) override{};
+  void removePotentialDefiner(Constraint* constraint) override{};
   int count() override { return 0; };
   void imposeDomain(Domain* domain) override{};
   int imposedDomainSize() override { return 0; }

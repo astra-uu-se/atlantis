@@ -7,6 +7,8 @@ class Statistics {
   void countDefinedVariables();
   void variablesDefinedBy();
   void cyclesRemoved();
+  void allStats();
+  void constraints();
 
   Model* _model;
 };

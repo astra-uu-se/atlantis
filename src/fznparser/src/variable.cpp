@@ -31,6 +31,9 @@ void SingleVariable::removeDefinition() {
 void SingleVariable::addPotentialDefiner(Constraint* constraint) {
   _potentialDefiners.insert(constraint);
 }
+void SingleVariable::removePotentialDefiner(Constraint* constraint) {
+  _potentialDefiners.erase(constraint);
+}
 int SingleVariable::imposedDomainSize() { return _imposedDomain->size(); }
 void SingleVariable::imposeDomain(Domain* domain) {
   _imposedDomain = domain;
@@ -41,6 +44,16 @@ int SingleVariable::lowerBound() { return _domain->lowerBound(); }
 int SingleVariable::upperBound() { return _domain->upperBound(); }
 
 /*******************ARRAYVARIABLE****************************/
+ArrayVariable::ArrayVariable(std::vector<Variable*> elements) {
+  std::string name = "";
+
+  for (auto e : elements) {
+    name = name + e->getLabel();
+  }
+  _elements = elements;
+  _name = name;
+  _isDefined = false;
+}
 void ArrayVariable::init(VariableMap& variables) {
   for (auto e : _expressions) {
     auto name = e.getName();
@@ -96,9 +109,13 @@ void ArrayVariable::removeDefinition() {
   for (auto e : _elements) {
     e->removeDefinition();
   }
+  _isDefined = false;
 }
 void ArrayVariable::addPotentialDefiner(Constraint* constraint) {
   _potentialDefiners.insert(constraint);
+}
+void ArrayVariable::removePotentialDefiner(Constraint* constraint) {
+  _potentialDefiners.erase(constraint);
 }
 std::vector<Variable*> ArrayVariable::elements() { return _elements; }
 
@@ -150,6 +167,8 @@ int ArrayVariable::upperBound() {
   }
   return n;
 }
+int ArrayVariable::length() { return _elements.size(); }
+Variable* ArrayVariable::getElement(int n) { return _elements[n]; }
 
 /*******************LITERAL****************************/
 Literal::Literal(std::string value) {

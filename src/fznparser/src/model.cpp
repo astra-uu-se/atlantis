@@ -11,6 +11,15 @@ void Model::init() {
     constraint->init(_variables);
   }
 }
+void Model::split() {
+  // for (int i = 0; i < _constraints.size(); i++) {
+  if (_constraints[0]->split(2, _variables, _constraints)) {
+    std::cout << "HELLO" << std::endl;
+
+    _constraints.erase(_constraints.begin() + 0);
+  }
+  // }
+}
 void Model::setObjective(std::string objective) { _objective = objective; }
 
 std::vector<Variable*> Model::variables() { return _variables.getArray(); }
@@ -22,11 +31,11 @@ std::vector<Variable*> Model::domSortVariables() {
 }
 
 void Model::findStructure() {
-  // defineImplicit();
-  // defineAnnotated();
+  defineImplicit();
+  defineAnnotated();
   defineFromObjective();
-  // defineUnique();
-  // defineRest();
+  defineUnique();
+  defineRest();
   removeCycles();
 }
 

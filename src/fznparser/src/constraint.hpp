@@ -15,6 +15,7 @@
 class Constraint : public Node {
  public:
   virtual ~Constraint() = default;
+  Constraint();
   Constraint(ConstraintBox constraintBox);
   void init(const VariableMap& variables);
 
@@ -34,6 +35,11 @@ class Constraint : public Node {
   std::vector<Variable*> variables();
   std::vector<Variable*> variablesSorted();
   virtual void imposeDomain(Variable* variable) {}
+  virtual bool split(int index, VariableMap& variables,
+                     std::vector<std::shared_ptr<Constraint>>& constraints) {
+    return false;
+  }
+  void cleanse();
 
  protected:
   virtual void loadVariables(const VariableMap& variables) = 0;
@@ -111,6 +117,10 @@ class GlobalCardinality : public Constraint {
   GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
   }
+  GlobalCardinality(ArrayVariable* x, ArrayVariable* cover,
+                    ArrayVariable* counts);
+  bool split(int index, VariableMap& variables,
+             std::vector<std::shared_ptr<Constraint>>& constraints) override;
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeOneWay(Variable* variable) override;
@@ -118,7 +128,9 @@ class GlobalCardinality : public Constraint {
   void makeImplicit() override;
 
  private:
-  ArrayVariable* _cover;
+  ArrayVariable* _x;
+  ArrayVariable* _cover;  // const array
+  ArrayVariable* _counts;
 };
 
 class IntLinEq : public Constraint {

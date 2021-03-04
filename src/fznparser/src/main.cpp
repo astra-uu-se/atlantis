@@ -25,8 +25,10 @@ int main(int argc, char* argv[]) {
   m.init();
   m.setObjective(argv[2]);
   m.findStructure();
-  s.variablesDefinedBy();
-  s.countDefinedVariables();
-  s.cyclesRemoved();
+  s.allStats();
+  m.split();
+  m.findStructure();
+  s.allStats();
+  // s.constraints();
   return 0;
 }

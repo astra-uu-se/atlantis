@@ -1,9 +1,15 @@
 #include "constraint.hpp"
 
+#include <memory>
+
 #include "structure.hpp"
 #include "variable.hpp"
 
 /********************* Constraint **************************/
+Constraint::Constraint() {
+  _uniqueTarget = true;
+  _hasDefineAnnotation = false;
+}
 Constraint::Constraint(ConstraintBox constraintBox) {
   _constraintBox = constraintBox;
   _name = constraintBox._name;
@@ -111,6 +117,12 @@ void Constraint::makeOneWay(Variable* variable) {
     }
   }
 }
+void Constraint::cleanse() {
+  clearVariables();
+  for (auto variable : _variables) {
+    variable->removePotentialDefiner(this);
+  }
+}
 void Constraint::makeSoft() { clearVariables(); }
 
 bool Constraint::canBeImplicit() { return false; }
@@ -171,9 +183,11 @@ void TwoSVarConstraint::configureVariables() {
 }
 /********************* GlobalCardinality ******************************/
 void GlobalCardinality::loadVariables(const VariableMap& variableMap) {
-  _cover = getArrayVariable(variableMap, 1);               // Parameter
-  _variables.push_back(getArrayVariable(variableMap, 0));  // x
-  _variables.push_back(getArrayVariable(variableMap, 2));  // counts
+  _x = getArrayVariable(variableMap, 0);
+  _cover = getArrayVariable(variableMap, 1);
+  _counts = getArrayVariable(variableMap, 2);
+  _variables.push_back(_x);       // x
+  _variables.push_back(_counts);  // counts
 }
 void GlobalCardinality::configureVariables() {
   _variables[1]->addPotentialDefiner(this);
@@ -200,6 +214,61 @@ void GlobalCardinality::makeImplicit() {
     v->defineNotDefinedBy(this);
   }
   _implicit = true;
+}
+
+bool GlobalCardinality::split(
+    int index, VariableMap& variables,
+    std::vector<std::shared_ptr<Constraint>>& constraints) {
+  cleanse();
+  std::vector<Variable*> lCoverElements;
+  std::vector<Variable*> lCountsElements;
+  std::vector<Variable*> rCoverElements;
+  std::vector<Variable*> rCountsElements;
+
+  for (int i = 0; i < _cover->length(); i++) {
+    if (i < index) {
+      lCoverElements.push_back(_cover->getElement(i));
+      lCountsElements.push_back(_counts->getElement(i));
+    } else {
+      rCoverElements.push_back(_cover->getElement(i));
+      rCountsElements.push_back(_counts->getElement(i));
+    }
+  }
+
+  auto leftCover = std::make_shared<ArrayVariable>(lCoverElements);
+  auto leftCounts = std::make_shared<ArrayVariable>(lCountsElements);
+  auto rightCover = std::make_shared<ArrayVariable>(rCoverElements);
+  auto rightCounts = std::make_shared<ArrayVariable>(rCountsElements);
+
+  std::string name = "test";
+  std::vector<Annotation> annotations;
+  std::vector<Expression> expressions;
+  auto test = std::make_shared<ArrayVariable>(name, annotations, expressions);
+  variables.add(test);
+  variables.add(leftCover);
+  variables.add(leftCounts);
+  variables.add(rightCover);
+  variables.add(rightCounts);
+
+  auto leftGC = std::make_shared<GlobalCardinality>(_x, leftCover.get(),
+                                                    leftCounts.get());
+  auto rightGC = std::make_shared<GlobalCardinality>(_x, rightCover.get(),
+                                                     rightCounts.get());
+  constraints.push_back(leftGC);
+  constraints.push_back(rightGC);
+
+  return true;
+}
+
+GlobalCardinality::GlobalCardinality(ArrayVariable* x, ArrayVariable* cover,
+                                     ArrayVariable* counts) {
+  _name = "global_cardinality";
+  _x = x;
+  _cover = cover;
+  _counts = counts;
+  _variables.push_back(_x);
+  _variables.push_back(_counts);
+  configureVariables();
 }
 /********************* IntLinEq ******************************/
 void IntLinEq::loadVariables(const VariableMap& variableMap) {

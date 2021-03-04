@@ -22,7 +22,17 @@ void Statistics::variablesDefinedBy() {
     }
   }
 }
+void Statistics::constraints() {
+  for (auto constraint : _model->_constraints) {
+    std::cout << constraint->getLabel() << std::endl;
+  }
+}
 
 void Statistics::cyclesRemoved() {
   std::cout << "Cycles removed: " << _model->cyclesRemoved() << std::endl;
+}
+void Statistics::allStats() {
+  variablesDefinedBy();
+  countDefinedVariables();
+  cyclesRemoved();
 }
