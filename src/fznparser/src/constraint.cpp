@@ -1,5 +1,6 @@
 #include "constraint.hpp"
 
+#include "structure.hpp"
 #include "variable.hpp"
 
 /********************* Constraint **************************/
@@ -103,6 +104,7 @@ void Constraint::makeOneWay(Variable* variable) {
   assert(std::count(_variables.begin(), _variables.end(), variable));
   clearVariables();
   defineVariable(variable);
+  imposeDomain(variable);
   for (auto v : _variables) {
     if (variable != v) {
       addDependency(v);
@@ -135,7 +137,6 @@ void Constraint::init(const VariableMap& variableMap) {
   checkAnnotations(variableMap);
 }
 
-Domain Constraint::imposedDomain() { return _imposedDomain; }
 /********************* ThreeSVarConstraint ******************************/
 void ThreeSVarConstraint::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
@@ -147,6 +148,13 @@ void ThreeSVarConstraint::configureVariables() {
 }
 /********************* IntDiv ******************************/
 void IntDiv::configureVariables() { _variables[0]->addPotentialDefiner(this); }
+void IntDiv::imposeDomain(Variable* variable) {
+  int lowerBound = _variables[1]->lowerBound();
+  int upperBound = _variables[1]->upperBound();
+
+  _imposedDomain = std::make_shared<IntDomain>(lowerBound, upperBound);
+  variable->imposeDomain(_imposedDomain.get());
+}
 /********************* IntPlus ******************************/
 void IntPlus::configureVariables() {
   _variables[0]->addPotentialDefiner(this);

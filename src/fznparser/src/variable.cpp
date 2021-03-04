@@ -1,4 +1,9 @@
 #include "variable.hpp"
+
+#include <string>
+#define MAX_DOMAIN_SIZE 2147483647
+#define MIN_DOMAIN_SIZE -2147483647
+
 Variable::Variable(std::string name, std::vector<Annotation> annotations) {
   _name = name;
   _annotations = annotations;
@@ -7,8 +12,6 @@ Variable::Variable(std::string name, std::vector<Annotation> annotations) {
 bool Variable::compareDomain(Variable* v1, Variable* v2) {
   return v1->domainSize() > v2->domainSize();
 }
-Domain Variable::imposedDomain() { return _imposedDomain; }
-void Variable::imposeDomain(Domain domain) { _imposedDomain = domain; }
 /*******************SINGLEVARIABLE****************************/
 void SingleVariable::addConstraint(Node* constraint) {
   _nextConstraints.insert(constraint);
@@ -28,7 +31,15 @@ void SingleVariable::removeDefinition() {
 void SingleVariable::addPotentialDefiner(Constraint* constraint) {
   _potentialDefiners.insert(constraint);
 }
+int SingleVariable::imposedDomainSize() { return _imposedDomain->size(); }
+void SingleVariable::imposeDomain(Domain* domain) {
+  _imposedDomain = domain;
+  _hasImposedDomain = true;
+}
 int SingleVariable::domainSize() { return _domain->size(); }
+int SingleVariable::lowerBound() { return _domain->lowerBound(); }
+int SingleVariable::upperBound() { return _domain->upperBound(); }
+
 /*******************ARRAYVARIABLE****************************/
 void ArrayVariable::init(VariableMap& variables) {
   for (auto e : _expressions) {
@@ -109,8 +120,38 @@ int ArrayVariable::domainSize() {
   }
   return n;
 }
+int ArrayVariable::imposedDomainSize() {
+  int n = 0;
+  for (auto variable : _elements) {
+    n += variable->imposedDomainSize();
+  }
+  return n;
+}
+void ArrayVariable::imposeDomain(Domain* domain) {
+  for (auto variable : _elements) {
+    variable->imposeDomain(domain);
+  }
+}
+int ArrayVariable::lowerBound() {
+  int n = MAX_DOMAIN_SIZE;
+  for (auto variable : _elements) {
+    if (variable->lowerBound() < n) {
+      n = variable->lowerBound();
+    }
+  }
+  return n;
+}
+int ArrayVariable::upperBound() {
+  int n = MIN_DOMAIN_SIZE;
+  for (auto variable : _elements) {
+    if (variable->upperBound() > n) {
+      n = variable->upperBound();
+    }
+  }
+  return n;
+}
 
-/*******************PARAMETER****************************/
+/*******************LITERAL****************************/
 Literal::Literal(std::string value) {
   _name = value;
   _isDefined = false;
@@ -120,7 +161,12 @@ std::set<Node*> Literal::getNext() {
   std::set<Node*> s;
   return s;
 }
-int Literal::domainSize() { return 0; }
+int Literal::lowerBound() { return std::stoi(_name); }
+int Literal::upperBound() { return std::stoi(_name); }
+
+/*******************PARAMETER****************************/
+int Parameter::lowerBound() { return std::stoi(_value); }
+int Parameter::upperBound() { return std::stoi(_value); }
 
 /*******************VARIABLEMAP****************************/
 void VariableMap::add(std::shared_ptr<Variable> variable) {

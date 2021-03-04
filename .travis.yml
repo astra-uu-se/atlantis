@@ -72,7 +72,7 @@ script:
   - cd build
   - cmake ..
   - make
-  - ./demo ../fzn-examples/tsptw-eq.fzn obj
+  - ./demo ../fzn_examples/tsptw-eq.fzn obj
   - cd ../../..
 
 

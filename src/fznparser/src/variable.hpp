@@ -21,8 +21,11 @@ class Variable : public Node {
   virtual void addPotentialDefiner(Constraint* constraint) = 0;
   virtual bool isDefinable() = 0;
   virtual int domainSize() = 0;
-  virtual Domain imposedDomain();
-  virtual void imposeDomain(Domain domain);
+  virtual int upperBound() = 0;
+  virtual int lowerBound() = 0;
+  virtual int imposedDomainSize() = 0;
+  virtual void imposeDomain(Domain* domain) = 0;
+  virtual bool imposedDomain() { return _hasImposedDomain; }
 
   virtual int count() { return 0; };
   virtual bool isDefined() { return _isDefined; };
@@ -35,7 +38,7 @@ class Variable : public Node {
   bool _isDefined;
 
  protected:
-  Domain _imposedDomain;
+  bool _hasImposedDomain = false;
   std::string _name;
   Constraint* _definedBy;
   std::vector<Annotation> _annotations;
@@ -61,10 +64,15 @@ class SingleVariable : public Variable {
   void addPotentialDefiner(Constraint* constraint) override;
   int count() override { return 1; };
   bool isDefinable() override { return !_isDefined; };
+  int imposedDomainSize() override;
+  void imposeDomain(Domain* domain) override;
   int domainSize() override;
+  int lowerBound() override;
+  int upperBound() override;
 
  private:
-  std::shared_ptr<Domain> _domain;  // Why pointer?
+  Domain* _imposedDomain;
+  std::shared_ptr<Domain> _domain;
 };
 
 class ArrayVariable : public Variable {
@@ -86,7 +94,11 @@ class ArrayVariable : public Variable {
   std::vector<Variable*> elements();
   bool isDefinable() override;
   std::string getLabel() override;
+  int imposedDomainSize() override;
+  void imposeDomain(Domain* domain) override;
   int domainSize() override;
+  int lowerBound() override;
+  int upperBound() override;
 
  private:
   std::vector<Expression> _expressions;
@@ -106,13 +118,19 @@ class Literal : public SingleVariable {
   void removeDefinition() override{};
   void addPotentialDefiner(Constraint* constraint) override{};
   int count() override { return 0; };
-  int domainSize() override;
+  void imposeDomain(Domain* domain) override{};
+  int imposedDomainSize() override { return 0; }
+  int domainSize() override { return 0; }
+  int lowerBound() override;
+  int upperBound() override;
 };
 class Parameter : public Literal {
  public:
   Parameter(std::string name, std::string value) : Literal(name) {
     _value = value;
   };
+  int lowerBound() override;
+  int upperBound() override;
 
  private:
   std::string _value;

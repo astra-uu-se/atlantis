@@ -33,7 +33,7 @@ class Constraint : public Node {
   virtual void makeImplicit();
   std::vector<Variable*> variables();
   std::vector<Variable*> variablesSorted();
-  Domain imposedDomain();
+  virtual void imposeDomain(Variable* variable) {}
 
  protected:
   virtual void loadVariables(const VariableMap& variables) = 0;
@@ -51,7 +51,7 @@ class Constraint : public Node {
   void removeDependency(Variable* variable);
   void clearVariables();
 
-  Domain _imposedDomain;
+  std::shared_ptr<Domain> _imposedDomain;
   std::string _name;
   ConstraintBox _constraintBox;
   std::set<Variable*> _defines;
@@ -77,6 +77,7 @@ class IntDiv : public ThreeSVarConstraint {
  public:
   IntDiv(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox) {}
   void configureVariables() override;
+  void imposeDomain(Variable* variable) override;
 };
 /* int_plus(var int: a, var int: b, var int: c)
 ** Defines: any

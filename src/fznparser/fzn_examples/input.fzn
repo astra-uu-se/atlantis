@@ -1,11 +1,5 @@
-var int: a:: output_var;
-var int: b:: output_var;
-var int: c:: output_var;
-var int: d:: output_var;
-var int: e:: output_var;
-var int: f:: output_var;
-array [1..3] of var int: x = [a, b, c];
-array [1..3] of var int: counts = [d, e, f];
-constraint int_div(a,e,a);
-constraint global_cardinality(x, [1,2,3], counts);
+var 0..5: a:: output_var;
+var 7..100: b:: output_var;
+var 12..35: c:: output_var;
+constraint int_div(a,b,c);
 solve  satisfy;

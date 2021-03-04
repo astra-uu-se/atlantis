@@ -16,6 +16,8 @@ class Domain {
   Domain() = default;
   ~Domain() = default;
   virtual int size();
+  virtual int lowerBound() = 0;
+  virtual int upperBound() = 0;
 
  protected:
   bool _defined;
@@ -25,12 +27,16 @@ class BoolDomain : public Domain {
  public:
   BoolDomain() = default;
   int size() override;
+  int lowerBound() override;
+  int upperBound() override;
 };
 
 class IntSetDomain : public Domain {
  public:
   IntSetDomain(std::set<int> set);
   int size() override;
+  int lowerBound() override;
+  int upperBound() override;
 
  private:
   std::set<int> _set;
@@ -41,6 +47,8 @@ class IntDomain : public Domain {
   IntDomain();
   IntDomain(int lb, int ub);
   int size() override;
+  int lowerBound() override;
+  int upperBound() override;
 
  private:
   int _lb;

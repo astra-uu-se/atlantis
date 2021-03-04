@@ -2,8 +2,6 @@
 
 #include <limits>
 
-#include "structure.hpp"
-
 Model::Model() {}
 void Model::init() {
   for (auto variable : variables()) {
