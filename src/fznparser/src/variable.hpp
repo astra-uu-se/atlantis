@@ -14,7 +14,6 @@ class Variable : public Node {
 
   std::string getLabel() override { return _name; };
   bool breakCycle() override { return false; };
-
   virtual void addConstraint(Node* constraint) = 0;
   virtual void removeConstraint(Node* constraint) = 0;
   virtual void defineBy(Constraint* constraint) = 0;
@@ -81,6 +80,7 @@ class ArrayVariable : public Variable {
   void addConstraint(Node* constraint) override;
   void removeConstraint(Node* constraint) override;
   void defineBy(Constraint* constraint) override;
+  void defineNotDefinedBy(Constraint* constraint);
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
   std::vector<Variable*> elements();

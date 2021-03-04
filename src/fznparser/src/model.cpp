@@ -21,11 +21,11 @@ std::vector<Variable*> Model::domSortVariables() {
 }
 
 void Model::findStructure() {
-  // defineFromObjective();
-  defineImplicit();
-  defineRest();
-  defineAnnotated();
-  defineUnique();
+  defineFromObjective();
+  // defineImplicit();
+  // defineRest();
+  // defineAnnotated();
+  // defineUnique();
   removeCycles();
 }
 
@@ -44,16 +44,39 @@ void Model::defineImplicit() {
   }
 }
 
+void Model::defineFromWithImplicit(Variable* variable) {
+  if (variable->isDefinable()) {
+    std::cout << "is definable" << std::endl;
+
+    for (auto constraint : variable->potentialDefiners()) {
+      std::cout << constraint->canBeOneWay(variable) << std::endl;
+      std::cout << constraint->getLabel() << std::endl;
+
+      if (constraint->canBeImplicit()) {
+        std::cout << "can be implicit" << std::endl;
+        constraint->makeImplicit();
+        return;
+
+      } else if (constraint->canBeOneWay(variable) &&
+                 constraint->definesNone()) {
+        std::cout << "can be one way" << std::endl;
+        constraint->makeOneWay(variable);
+        for (auto v : constraint->variablesSorted()) {
+          if (v != variable) {
+            defineFrom(v);
+          }
+        }
+        break;
+      }
+    }
+  }
+}
 void Model::defineFrom(Variable* variable) {
-  // std::cout << "Defining from..." << variable->getLabel() << std::endl;
   if (variable->isDefinable()) {
     for (auto constraint : variable->potentialDefiners()) {
       if (constraint->definesNone()) {
         constraint->makeOneWay(variable);
-        // Sort by domain size
-        std::vector<Variable*> next = constraint->variables();
-        std::sort(next.begin(), next.end(), Variable::compareDomain);
-        for (auto v : next) {
+        for (auto v : constraint->variablesSorted()) {
           if (v != variable) {
             defineFrom(v);
           }
@@ -66,10 +89,10 @@ void Model::defineFrom(Variable* variable) {
 void Model::defineFromObjective() {
   if (true) {
     Variable* objective = getObjective();
-    defineFrom(objective);
+    defineFromWithImplicit(objective);
   }
 }
-Variable* Model::getObjective() { return _variables.find("obj"); }
+Variable* Model::getObjective() { return _variables.find("counts"); }
 
 void Model::defineUnique() {
   for (auto variable : domSortVariables()) {
@@ -118,30 +141,29 @@ void Model::addVariable(std::shared_ptr<Variable> variable) {
 }
 
 bool Model::hasCycle() {
-  std::set<Node*> done;
   for (auto node : variables()) {
     std::cout << "Starting...\n";
-    std::set<Node*> visited;
-    if (hasCycleAux(visited, node, done)) return true;
+    std::vector<Node*> visited;
+    if (hasCycleAux(visited, node)) return true;
   }
   return false;
 }
-bool Model::hasCycleAux(std::set<Node*> visited, Node* node,
-                        std::set<Node*>& done) {
-  if (done.count(node)) return false;
+bool Model::hasCycleAux(std::vector<Node*> visited, Node* node) {
   std::cout << "Node: " << node->getLabel() << std::endl;
-  if (visited.count(node)) {
+  if (std::count(visited.begin(), visited.end(), node)) {
+    std::cout << "Cycle found...Removing" << std::endl;
+    visited.erase(visited.begin(),
+                  std::find(visited.begin(), visited.end(), node));
     removeCycle(visited);
     return true;
   }
-  visited.insert(node);
+  visited.push_back(node);
   for (auto next : node->getNext()) {
-    if (hasCycleAux(visited, next, done)) return true;
+    if (hasCycleAux(visited, next)) return true;
   }
-  done.insert(visited.begin(), visited.end());
   return false;
 }
-void Model::removeCycle(std::set<Node*> visited) {
+void Model::removeCycle(std::vector<Node*> visited) {
   unsigned int smallestDomain = -1;  // Förmodligen inte så bra
   Node* nodeToRemove = nullptr;
   for (auto node : visited) {
@@ -153,12 +175,12 @@ void Model::removeCycle(std::set<Node*> visited) {
     }
   }
   assert(nodeToRemove->breakCycle());
+  std::cout << "Node: " << nodeToRemove->getLabel() << " removed." << std::endl;
 }
 
 void Model::removeCycles() {
   std::cout << "Looking for Cycles..." << std::endl;
   while (hasCycle()) {
-    std::cout << "Cycle found...Removing" << std::endl;
   }
   std::cout << "Done! No cycles." << std::endl;
 }

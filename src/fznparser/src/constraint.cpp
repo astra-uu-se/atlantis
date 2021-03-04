@@ -1,5 +1,7 @@
 #include "constraint.hpp"
 
+#include "variable.hpp"
+
 /********************* Constraint **************************/
 Constraint::Constraint(ConstraintBox constraintBox) {
   _constraintBox = constraintBox;
@@ -121,6 +123,11 @@ void Constraint::makeImplicit() {
 bool Constraint::definesNone() { return _defines.empty(); }
 bool Constraint::uniqueTarget() { return _uniqueTarget; }
 std::vector<Variable*> Constraint::variables() { return _variables; }
+std::vector<Variable*> Constraint::variablesSorted() {
+  std::vector<Variable*> next = variables();
+  std::sort(next.begin(), next.end(), Variable::compareDomain);
+  return next;
+}
 
 void Constraint::init(const VariableMap& variableMap) {
   loadVariables(variableMap);
@@ -162,6 +169,29 @@ void GlobalCardinality::loadVariables(const VariableMap& variableMap) {
 }
 void GlobalCardinality::configureVariables() {
   _variables[1]->addPotentialDefiner(this);
+}
+bool GlobalCardinality::canBeOneWay(Variable* variable) {
+  if (variable != _variables[1]) {
+    return false;
+  }
+  return _variables[1]->isDefinable();
+}
+bool GlobalCardinality::canBeImplicit() {
+  for (auto variable : _variables) {
+    if (variable->isDefined()) {
+      return false;
+    }
+  }
+  return true;
+}
+void GlobalCardinality::makeImplicit() {
+  assert(canBeImplicit());
+  for (auto variable : _variables) {
+    _defines.insert(variable);
+    auto v = dynamic_cast<ArrayVariable*>(variable);
+    v->defineNotDefinedBy(this);
+  }
+  _implicit = true;
 }
 /********************* IntLinEq ******************************/
 void IntLinEq::loadVariables(const VariableMap& variableMap) {

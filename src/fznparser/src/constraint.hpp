@@ -24,6 +24,7 @@ class Constraint : public Node {
 
   void makeOneWayByAnnotation();
   void makeOneWay(Variable* variable);
+  virtual bool canBeOneWay(Variable* variable) { return true; }
   void makeSoft();
   bool definesNone();
   bool uniqueTarget();
@@ -31,6 +32,7 @@ class Constraint : public Node {
   virtual bool canBeImplicit();
   virtual void makeImplicit();
   std::vector<Variable*> variables();
+  std::vector<Variable*> variablesSorted();
   Domain imposedDomain();
 
  protected:
@@ -110,6 +112,9 @@ class GlobalCardinality : public Constraint {
   }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
+  bool canBeOneWay(Variable* variable) override;
+  bool canBeImplicit() override;
+  void makeImplicit() override;
 
  private:
   ArrayVariable* _cover;

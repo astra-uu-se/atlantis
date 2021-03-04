@@ -9,7 +9,6 @@ bool Variable::compareDomain(Variable* v1, Variable* v2) {
 }
 Domain Variable::imposedDomain() { return _imposedDomain; }
 void Variable::imposeDomain(Domain domain) { _imposedDomain = domain; }
-
 /*******************SINGLEVARIABLE****************************/
 void SingleVariable::addConstraint(Node* constraint) {
   _nextConstraints.insert(constraint);
@@ -69,6 +68,15 @@ void ArrayVariable::removeConstraint(Node* constraint) {
 void ArrayVariable::defineBy(Constraint* constraint) {
   for (auto e : _elements) {
     e->defineBy(constraint);
+  }
+  _definedBy = constraint;
+  _isDefined = true;
+}
+void ArrayVariable::defineNotDefinedBy(Constraint* constraint) {
+  for (auto e : _elements) {
+    if (!e->isDefined()) {
+      e->defineBy(constraint);
+    }
   }
   _definedBy = constraint;
   _isDefined = true;

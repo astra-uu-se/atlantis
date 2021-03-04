@@ -25,13 +25,14 @@ class Model {
   void defineAnnotated();
   void defineImplicit();
   void defineFrom(Variable* variable);
+  void defineFromWithImplicit(Variable* variable);
   void defineFromObjective();
   void defineUnique();
   void defineRest();
   bool hasCycle();
-  bool hasCycleAux(std::set<Node*> visited, Node* n, std::set<Node*>& done);
+  bool hasCycleAux(std::vector<Node*> visited, Node* n);
   void removeCycles();
-  void removeCycle(std::set<Node*> visited);
+  void removeCycle(std::vector<Node*> visited);
   Variable* getObjective();
   VariableMap _variables;
   std::vector<std::shared_ptr<Constraint>> _constraints;
