@@ -1,4 +1,4 @@
-#include "max2.hpp"
+#include "invariants/max2.hpp"
 
 extern Id NULL_ID;
 
