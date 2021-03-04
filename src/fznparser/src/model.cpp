@@ -2,6 +2,8 @@
 
 #include <limits>
 
+#include "structure.hpp"
+
 Model::Model() {}
 void Model::init() {
   for (auto variable : variables()) {
@@ -11,6 +13,7 @@ void Model::init() {
     constraint->init(_variables);
   }
 }
+void Model::setObjective(std::string objective) { _objective = objective; }
 
 std::vector<Variable*> Model::variables() { return _variables.getArray(); }
 std::vector<Variable*> Model::domSortVariables() {
@@ -21,11 +24,11 @@ std::vector<Variable*> Model::domSortVariables() {
 }
 
 void Model::findStructure() {
-  defineFromObjective();
   // defineImplicit();
-  // defineRest();
   // defineAnnotated();
+  defineFromObjective();
   // defineUnique();
+  // defineRest();
   removeCycles();
 }
 
@@ -74,7 +77,7 @@ void Model::defineFromWithImplicit(Variable* variable) {
 void Model::defineFrom(Variable* variable) {
   if (variable->isDefinable()) {
     for (auto constraint : variable->potentialDefiners()) {
-      if (constraint->definesNone()) {
+      if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
         constraint->makeOneWay(variable);
         for (auto v : constraint->variablesSorted()) {
           if (v != variable) {
@@ -92,7 +95,7 @@ void Model::defineFromObjective() {
     defineFromWithImplicit(objective);
   }
 }
-Variable* Model::getObjective() { return _variables.find("counts"); }
+Variable* Model::getObjective() { return _variables.find(_objective); }
 
 void Model::defineUnique() {
   for (auto variable : domSortVariables()) {
@@ -176,6 +179,7 @@ void Model::removeCycle(std::vector<Node*> visited) {
   }
   assert(nodeToRemove->breakCycle());
   std::cout << "Node: " << nodeToRemove->getLabel() << " removed." << std::endl;
+  _cyclesRemoved += 1;
 }
 
 void Model::removeCycles() {

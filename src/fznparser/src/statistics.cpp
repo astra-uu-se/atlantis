@@ -19,3 +19,7 @@ void Statistics::variablesDefinedBy() {
     }
   }
 }
+
+void Statistics::cyclesRemoved() {
+  std::cout << "Cycles removed: " << _model->cyclesRemoved() << std::endl;
+}

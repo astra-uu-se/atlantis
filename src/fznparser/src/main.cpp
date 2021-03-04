@@ -8,9 +8,9 @@
 using namespace fznparser;
 using namespace antlr4;
 
-int main() {
+int main(int argc, char* argv[]) {
   std::ifstream stream;
-  stream.open("../fzn_examples/gc_cycle.fzn");
+  stream.open(argv[1]);
   ANTLRInputStream input(stream);
 
   FlatZincLexer lexer(&input);
@@ -23,8 +23,10 @@ int main() {
   Model m = visitor.visitModel(tree);
   Statistics s = Statistics(&m);
   m.init();
+  m.setObjective(argv[2]);
   m.findStructure();
   s.variablesDefinedBy();
   s.countDefinedVariables();
+  s.cyclesRemoved();
   return 0;
 }

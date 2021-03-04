@@ -20,6 +20,8 @@ class Model {
   int variableCount();
   std::vector<Variable*> variables();
   std::vector<Variable*> domSortVariables();
+  int cyclesRemoved() { return _cyclesRemoved; }
+  void setObjective(std::string);
 
  private:
   void defineAnnotated();
@@ -36,4 +38,6 @@ class Model {
   Variable* getObjective();
   VariableMap _variables;
   std::vector<std::shared_ptr<Constraint>> _constraints;
+  int _cyclesRemoved = 0;
+  std::string _objective;
 };
