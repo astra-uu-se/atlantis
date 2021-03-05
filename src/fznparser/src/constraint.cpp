@@ -219,6 +219,8 @@ void GlobalCardinality::makeImplicit() {
 bool GlobalCardinality::split(
     int index, VariableMap& variables,
     std::vector<std::shared_ptr<Constraint>>& constraints) {
+  assert(0 < index && index < _cover->length());
+
   cleanse();
   std::vector<Variable*> lCoverElements;
   std::vector<Variable*> lCountsElements;
@@ -235,25 +237,18 @@ bool GlobalCardinality::split(
     }
   }
 
-  auto leftCover = std::make_shared<ArrayVariable>(lCoverElements);
-  auto leftCounts = std::make_shared<ArrayVariable>(lCountsElements);
-  auto rightCover = std::make_shared<ArrayVariable>(rCoverElements);
-  auto rightCounts = std::make_shared<ArrayVariable>(rCountsElements);
+  ArrayVariable* leftCover = dynamic_cast<ArrayVariable*>(
+      variables.add(std::make_shared<ArrayVariable>(lCoverElements)));
+  ArrayVariable* leftCounts = dynamic_cast<ArrayVariable*>(
+      variables.add(std::make_shared<ArrayVariable>(lCountsElements)));
+  ArrayVariable* rightCover = dynamic_cast<ArrayVariable*>(
+      variables.add(std::make_shared<ArrayVariable>(rCoverElements)));
+  ArrayVariable* rightCounts = dynamic_cast<ArrayVariable*>(
+      variables.add(std::make_shared<ArrayVariable>(rCountsElements)));
 
-  std::string name = "test";
-  std::vector<Annotation> annotations;
-  std::vector<Expression> expressions;
-  auto test = std::make_shared<ArrayVariable>(name, annotations, expressions);
-  variables.add(test);
-  variables.add(leftCover);
-  variables.add(leftCounts);
-  variables.add(rightCover);
-  variables.add(rightCounts);
-
-  auto leftGC = std::make_shared<GlobalCardinality>(_x, leftCover.get(),
-                                                    leftCounts.get());
-  auto rightGC = std::make_shared<GlobalCardinality>(_x, rightCover.get(),
-                                                     rightCounts.get());
+  auto leftGC = std::make_shared<GlobalCardinality>(_x, leftCover, leftCounts);
+  auto rightGC =
+      std::make_shared<GlobalCardinality>(_x, rightCover, rightCounts);
   constraints.push_back(leftGC);
   constraints.push_back(rightGC);
 

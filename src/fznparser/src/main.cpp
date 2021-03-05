@@ -29,6 +29,6 @@ int main(int argc, char* argv[]) {
   m.split();
   m.findStructure();
   s.allStats();
-  // s.constraints();
+  s.constraints();
   return 0;
 }

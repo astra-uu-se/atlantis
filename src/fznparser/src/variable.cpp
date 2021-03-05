@@ -45,11 +45,14 @@ int SingleVariable::upperBound() { return _domain->upperBound(); }
 
 /*******************ARRAYVARIABLE****************************/
 ArrayVariable::ArrayVariable(std::vector<Variable*> elements) {
-  std::string name = "";
+  std::string name = "[";
 
   for (auto e : elements) {
     name = name + e->getLabel();
+    name = name + ",";
   }
+  name = name.substr(0, name.size() - 1);
+  name = name + "]";
   _elements = elements;
   _name = name;
   _isDefined = false;
@@ -188,10 +191,13 @@ int Parameter::lowerBound() { return std::stoi(_value); }
 int Parameter::upperBound() { return std::stoi(_value); }
 
 /*******************VARIABLEMAP****************************/
-void VariableMap::add(std::shared_ptr<Variable> variable) {
-  _variables.insert(std::pair<std::string, std::shared_ptr<Variable>>(
-      variable->getName(), variable));
-  _variableArray.push_back(variable.get());
+Variable* VariableMap::add(std::shared_ptr<Variable> variable) {
+  if (!exists(variable->getName())) {
+    _variables.insert(std::pair<std::string, std::shared_ptr<Variable>>(
+        variable->getName(), variable));
+    _variableArray.push_back(variable.get());
+  }
+  return find(variable->getName());
 }
 Variable* VariableMap::find(const std::string name) const {
   assert(_variables.find(name) != _variables.end());
