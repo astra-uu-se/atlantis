@@ -50,6 +50,7 @@ list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/structure.cpp
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/variable.cpp)
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/statistics.cpp)
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/constraintbox.cpp)
+list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/maps.cpp)
 
 
 ################################

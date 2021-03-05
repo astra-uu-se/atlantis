@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "constraintbox.hpp"
+#include "maps.hpp"
 #include "structure.hpp"
 #include "variable.hpp"
 
@@ -36,7 +37,7 @@ class Constraint : public Node {
   std::vector<Variable*> variablesSorted();
   virtual void imposeDomain(Variable* variable) {}
   virtual bool split(int index, VariableMap& variables,
-                     std::vector<std::shared_ptr<Constraint>>& constraints) {
+                     ConstraintMap& constraints) {
     return false;
   }
   void cleanse();
@@ -93,6 +94,7 @@ class IntPlus : public ThreeSVarConstraint {
   IntPlus(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox) {
     _uniqueTarget = false;
   }
+  void imposeDomain(Variable* variable) override;
   void configureVariables() override;
 };
 class TwoSVarConstraint : public Constraint {
@@ -120,7 +122,7 @@ class GlobalCardinality : public Constraint {
   GlobalCardinality(ArrayVariable* x, ArrayVariable* cover,
                     ArrayVariable* counts);
   bool split(int index, VariableMap& variables,
-             std::vector<std::shared_ptr<Constraint>>& constraints) override;
+             ConstraintMap& constraints) override;
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeOneWay(Variable* variable) override;

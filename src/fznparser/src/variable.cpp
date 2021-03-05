@@ -1,6 +1,7 @@
 #include "variable.hpp"
 
 #include <string>
+
 #define MAX_DOMAIN_SIZE 2147483647
 #define MIN_DOMAIN_SIZE -2147483647
 
@@ -189,21 +190,3 @@ int Literal::upperBound() { return std::stoi(_name); }
 /*******************PARAMETER****************************/
 int Parameter::lowerBound() { return std::stoi(_value); }
 int Parameter::upperBound() { return std::stoi(_value); }
-
-/*******************VARIABLEMAP****************************/
-Variable* VariableMap::add(std::shared_ptr<Variable> variable) {
-  if (!exists(variable->getName())) {
-    _variables.insert(std::pair<std::string, std::shared_ptr<Variable>>(
-        variable->getName(), variable));
-    _variableArray.push_back(variable.get());
-  }
-  return find(variable->getName());
-}
-Variable* VariableMap::find(const std::string name) const {
-  assert(_variables.find(name) != _variables.end());
-  return _variables.find(name)->second.get();
-}
-bool VariableMap::exists(std::string name) {
-  return (_variables.find(name) != _variables.end());
-}
-std::vector<Variable*> VariableMap::getArray() { return _variableArray; }

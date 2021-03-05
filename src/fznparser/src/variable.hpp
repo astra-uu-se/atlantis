@@ -1,6 +1,8 @@
 #pragma once
 
+#include "maps.hpp"
 #include "structure.hpp"
+
 class VariableMap;
 
 class Variable : public Node {
@@ -142,18 +144,4 @@ class Parameter : public Literal {
 
  private:
   std::string _value;
-};
-
-class VariableMap {
- public:
-  VariableMap() = default;
-  virtual ~VariableMap() = default;
-  Variable* add(std::shared_ptr<Variable> variable);
-  Variable* find(std::string name) const;
-  bool exists(std::string name);
-  std::vector<Variable*> getArray();
-
- private:
-  std::vector<Variable*> _variableArray;
-  std::map<std::string, std::shared_ptr<Variable>> _variables;
 };

@@ -23,7 +23,7 @@ void Statistics::variablesDefinedBy() {
   }
 }
 void Statistics::constraints() {
-  for (auto constraint : _model->_constraints) {
+  for (auto constraint : _model->constraints()) {
     std::cout << constraint->getLabel() << std::endl;
   }
 }

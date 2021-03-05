@@ -173,6 +173,23 @@ void IntPlus::configureVariables() {
   _variables[1]->addPotentialDefiner(this);
   _variables[2]->addPotentialDefiner(this);
 }
+void IntPlus::imposeDomain(Variable* variable) {
+  int lowerBound;
+  int upperBound;
+  if (variable == _variables[0]) {
+    lowerBound = _variables[2]->lowerBound() - _variables[1]->upperBound();
+    upperBound = _variables[2]->upperBound() - _variables[1]->lowerBound();
+  } else if (variable == _variables[1]) {
+    lowerBound = _variables[2]->lowerBound() - _variables[0]->upperBound();
+    upperBound = _variables[2]->upperBound() - _variables[0]->lowerBound();
+  } else if (variable == _variables[2]) {
+    lowerBound = _variables[0]->lowerBound() + _variables[1]->lowerBound();
+    upperBound = _variables[0]->upperBound() + _variables[1]->upperBound();
+  }
+
+  _imposedDomain = std::make_shared<IntDomain>(lowerBound, upperBound);
+  variable->imposeDomain(_imposedDomain.get());
+}
 /********************* TwoSVarConstraint ******************************/
 void TwoSVarConstraint::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
@@ -216,12 +233,12 @@ void GlobalCardinality::makeImplicit() {
   _implicit = true;
 }
 
-bool GlobalCardinality::split(
-    int index, VariableMap& variables,
-    std::vector<std::shared_ptr<Constraint>>& constraints) {
+bool GlobalCardinality::split(int index, VariableMap& variables,
+                              ConstraintMap& constraints) {
   assert(0 < index && index < _cover->length());
 
   cleanse();
+
   std::vector<Variable*> lCoverElements;
   std::vector<Variable*> lCountsElements;
   std::vector<Variable*> rCoverElements;
@@ -237,20 +254,18 @@ bool GlobalCardinality::split(
     }
   }
 
-  ArrayVariable* leftCover = dynamic_cast<ArrayVariable*>(
+  ArrayVariable* lCover = dynamic_cast<ArrayVariable*>(
       variables.add(std::make_shared<ArrayVariable>(lCoverElements)));
-  ArrayVariable* leftCounts = dynamic_cast<ArrayVariable*>(
+  ArrayVariable* lCounts = dynamic_cast<ArrayVariable*>(
       variables.add(std::make_shared<ArrayVariable>(lCountsElements)));
-  ArrayVariable* rightCover = dynamic_cast<ArrayVariable*>(
+  ArrayVariable* rCover = dynamic_cast<ArrayVariable*>(
       variables.add(std::make_shared<ArrayVariable>(rCoverElements)));
-  ArrayVariable* rightCounts = dynamic_cast<ArrayVariable*>(
+  ArrayVariable* rCounts = dynamic_cast<ArrayVariable*>(
       variables.add(std::make_shared<ArrayVariable>(rCountsElements)));
 
-  auto leftGC = std::make_shared<GlobalCardinality>(_x, leftCover, leftCounts);
-  auto rightGC =
-      std::make_shared<GlobalCardinality>(_x, rightCover, rightCounts);
-  constraints.push_back(leftGC);
-  constraints.push_back(rightGC);
+  constraints.add(std::make_shared<GlobalCardinality>(_x, lCover, lCounts));
+  constraints.add(std::make_shared<GlobalCardinality>(_x, rCover, rCounts));
+  constraints.remove(this);
 
   return true;
 }

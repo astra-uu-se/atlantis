@@ -1,5 +1,5 @@
 var 0..5: a:: output_var;
 var 7..100: b:: output_var;
 var 12..35: c:: output_var;
-constraint int_div(a,b,c);
+constraint int_plus(a,b,c);
 solve  satisfy;

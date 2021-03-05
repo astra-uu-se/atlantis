@@ -2,24 +2,27 @@
 
 #include <limits>
 
+#include "maps.hpp"
+
 Model::Model() {}
 void Model::init() {
   for (auto variable : variables()) {
     variable->init(_variables);
   }
-  for (auto constraint : _constraints) {
+  for (auto constraint : constraints()) {
     constraint->init(_variables);
   }
 }
 void Model::split() {
-  if (_constraints[0]->split(1, _variables, _constraints)) {
+  if (constraints()[0]->split(1, _variables, _constraints)) {
     std::cout << "HELLO" << std::endl;
-
-    _constraints.erase(_constraints.begin() + 0);
   }
 }
 void Model::setObjective(std::string objective) { _objective = objective; }
 
+std::vector<Constraint*> Model::constraints() {
+  return _constraints.getArray();
+}
 std::vector<Variable*> Model::variables() { return _variables.getArray(); }
 std::vector<Variable*> Model::domSortVariables() {
   std::vector<Variable*> sorted =
@@ -38,14 +41,14 @@ void Model::findStructure() {
 }
 
 void Model::defineAnnotated() {
-  for (auto c : _constraints) {
+  for (auto c : constraints()) {
     if (c->canDefineByAnnotation()) {  // Also checks that target is not defined
       c->makeOneWayByAnnotation();
     }
   }
 }
 void Model::defineImplicit() {
-  for (auto c : _constraints) {
+  for (auto c : constraints()) {
     if (c->canBeImplicit()) {  // Also checks that target is not defined
       c->makeImplicit();
     }
@@ -200,32 +203,24 @@ void Model::printNode(std::string name) {
 }
 
 void Model::addConstraint(ConstraintBox constraintBox) {
+  constraintBox.prepare(_variables);
   if (constraintBox._name == "int_div") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<IntDiv>(constraintBox));
+    _constraints.add(std::make_shared<IntDiv>(constraintBox));
   } else if (constraintBox._name == "int_plus") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<IntPlus>(constraintBox));
+    _constraints.add(std::make_shared<IntPlus>(constraintBox));
   } else if (constraintBox._name == "global_cardinality") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<GlobalCardinality>(constraintBox));
+    _constraints.add(std::make_shared<GlobalCardinality>(constraintBox));
   } else if (constraintBox._name == "int_lin_eq") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<IntLinEq>(constraintBox));
+    _constraints.add(std::make_shared<IntLinEq>(constraintBox));
   } else if (constraintBox._name == "int_abs") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<IntAbs>(constraintBox));
+    _constraints.add(std::make_shared<IntAbs>(constraintBox));
   } else if (constraintBox._name == "fzn_all_different_int") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<AllDifferent>(constraintBox));
+    _constraints.add(std::make_shared<AllDifferent>(constraintBox));
   } else if (constraintBox._name == "inverse") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<Inverse>(constraintBox));
+    _constraints.add(std::make_shared<Inverse>(constraintBox));
   } else if (constraintBox._name == "gecode_int_element") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<Element>(constraintBox));
+    _constraints.add(std::make_shared<Element>(constraintBox));
   } else if (constraintBox._name == "gecode_circuit") {
-    constraintBox.prepare(_variables);
-    _constraints.push_back(std::make_shared<Circuit>(constraintBox));
+    _constraints.add(std::make_shared<Circuit>(constraintBox));
   }
 }

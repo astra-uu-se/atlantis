@@ -5,8 +5,12 @@
 #include <vector>
 
 #include "constraint.hpp"
+#include "maps.hpp"
 #include "structure.hpp"
 #include "variable.hpp"
+
+class VariableMap;
+class ConstraintMap;
 
 class Model {
  public:
@@ -18,13 +22,12 @@ class Model {
   void addConstraint(ConstraintBox constraintBox);
   int definedCount();
   int variableCount();
+  std::vector<Constraint*> constraints();
   std::vector<Variable*> variables();
   std::vector<Variable*> domSortVariables();
   int cyclesRemoved() { return _cyclesRemoved; }
   void setObjective(std::string);
   void split();
-
-  std::vector<std::shared_ptr<Constraint>> _constraints;
 
  private:
   void defineAnnotated();
@@ -40,6 +43,7 @@ class Model {
   void removeCycle(std::vector<Node*> visited);
   Variable* getObjective();
   VariableMap _variables;
+  ConstraintMap _constraints;
   int _cyclesRemoved = 0;
   std::string _objective;
 };
