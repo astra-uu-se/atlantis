@@ -31,7 +31,6 @@ antlrcpp::Any FznVisitor::visitParDeclItem(
         std::make_shared<ArrayVariable>(name, annotations, elements));
   }
 }
-
 antlrcpp::Any FznVisitor::visitVarDeclItem(
     FlatZincParser::VarDeclItemContext *ctx) {
   std::string name = ctx->Identifier()->getText();
@@ -47,7 +46,6 @@ antlrcpp::Any FznVisitor::visitVarDeclItem(
         std::make_shared<ArrayVariable>(name, annotations, elements));
   }
 }
-
 antlrcpp::Any FznVisitor::visitBasicVarType(
     FlatZincParser::BasicVarTypeContext *ctx) {
   if (ctx->basicParType()) {
@@ -77,10 +75,9 @@ antlrcpp::Any FznVisitor::visitBasicVarType(
         std::make_shared<IntSetDomain>(s));
   }
 
-  std::cout << "Parsed unimplemented domain." << std::endl;
-  return std::make_shared<IntDomain>();
+  std::cerr << "File contains domains currently not supported." << std::endl;
+  exit(0);
 }
-
 antlrcpp::Any FznVisitor::visitAnnotations(
     FlatZincParser::AnnotationsContext *ctx) {
   std::vector<Annotation> annotations;
@@ -89,9 +86,7 @@ antlrcpp::Any FznVisitor::visitAnnotations(
   }
   return annotations;
 }
-
 antlrcpp::Any FznVisitor::visitAnnotation(
-    // TODO: Get rest of annotation info.
     FlatZincParser::AnnotationContext *ctx) {
   std::string variableName;
   if (ctx->Identifier()->getText() == "defines_var") {
@@ -101,7 +96,6 @@ antlrcpp::Any FznVisitor::visitAnnotation(
   }
   return Annotation(ctx->Identifier()->getText(), variableName);
 }
-
 antlrcpp::Any FznVisitor::visitConstraintItem(
     FlatZincParser::ConstraintItemContext *ctx) {
   std::string name = ctx->Identifier()->getText();
@@ -111,7 +105,6 @@ antlrcpp::Any FznVisitor::visitConstraintItem(
   }
   return ConstraintBox(name, expressions, visitAnnotations(ctx->annotations()));
 }
-
 antlrcpp::Any FznVisitor::visitExpr(FlatZincParser::ExprContext *ctx) {
   if (auto b = ctx->basicExpr()) {
     if (b->Identifier()) {
@@ -125,7 +118,6 @@ antlrcpp::Any FznVisitor::visitExpr(FlatZincParser::ExprContext *ctx) {
   std::cout << "Parsed something wrong" << std::endl;
   return Expression();
 }
-
 antlrcpp::Any FznVisitor::visitArrayLiteral(
     FlatZincParser::ArrayLiteralContext *ctx) {
   std::vector<Expression> ab;
