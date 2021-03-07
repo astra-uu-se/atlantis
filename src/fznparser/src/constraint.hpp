@@ -47,10 +47,10 @@ class Constraint : public Node {
  protected:
   virtual void loadVariables(const VariableMap& variables) = 0;
   virtual void configureVariables() = 0;
-  ArrayVariable* getArrayVariable(const VariableMap& variables, int n);
-  SingleVariable* getSingleVariable(const VariableMap& variables, int n);
+  ArrayVariable* getArrayVariable(const VariableMap& variables, Int n);
+  SingleVariable* getSingleVariable(const VariableMap& variables, Int n);
   Variable* getAnnotationVariable(const VariableMap& variables);
-  Expression getExpression(int n);
+  Expression getExpression(Int n);
   Variable* annotationDefineVariable();
   void checkAnnotations(const VariableMap& variables);
 

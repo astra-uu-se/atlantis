@@ -1,6 +1,9 @@
 #include "FznVisitor.h"
 
+#include <cstdint>
 #include <vector>
+
+using Int = int64_t;
 
 antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
   Model m = Model();
@@ -60,22 +63,26 @@ antlrcpp::Any FznVisitor::visitBasicVarType(
   }
 
   if (ctx->intRange()) {
-    int lb = stoi(ctx->intRange()->intLiteral()[0]->getText());
-    int ub = stoi(ctx->intRange()->intLiteral()[1]->getText());
+    Int l = std::numeric_limits<Int>::max();
+    Int u = std::numeric_limits<Int>::min();
+
+    Int lb = stol(ctx->intRange()->intLiteral()[0]->getText());
+    Int ub = stol(ctx->intRange()->intLiteral()[1]->getText());
+
     return static_cast<std::shared_ptr<Domain>>(
         std::make_shared<IntDomain>(lb, ub));
   }
 
   if (ctx->set()) {
-    std::set<int> s;
+    std::set<Int> s;
     for (auto i : ctx->set()->intLiteral()) {
-      s.insert(stoi(i->getText()));
+      s.insert(stol(i->getText()));
     }
     return static_cast<std::shared_ptr<Domain>>(
         std::make_shared<IntSetDomain>(s));
   }
 
-  std::cerr << "File contains domains currently not supported." << std::endl;
+  std::cerr << "Domain not supported: " + ctx->getText() << std::endl;
   exit(0);
 }
 antlrcpp::Any FznVisitor::visitAnnotations(

@@ -17,7 +17,7 @@ Constraint::Constraint(ConstraintBox constraintBox) {
   _uniqueTarget = true;
   _hasDefineAnnotation = false;
 }
-Expression Constraint::getExpression(int n) {
+Expression Constraint::getExpression(Int n) {
   assert(n < _constraintBox._expressions.size());
   return _constraintBox._expressions[n];
 }
@@ -35,6 +35,8 @@ std::string Constraint::getLabel() {
     name = "(implicit) " + name;
   } else if (_invariant) {
     name = "(invariant) " + name;
+  } else {
+    name = "(soft) " + name;
   }
   return name;
 }
@@ -43,14 +45,14 @@ bool Constraint::breakCycle() {
   return true;
 }
 SingleVariable* Constraint::getSingleVariable(const VariableMap& variableMap,
-                                              int n) {
+                                              Int n) {
   assert(!getExpression(n).isArray());
   std::string name = getExpression(n).getName();
   Variable* s = variableMap.find(name);
   return dynamic_cast<SingleVariable*>(s);
 }
 ArrayVariable* Constraint::getArrayVariable(const VariableMap& variableMap,
-                                            int n) {
+                                            Int n) {
   // assert(getExpression(n).isArray()); TODO: Figure out why not works
   std::string name = getExpression(n).getName();
   Variable* s = variableMap.find(name);
@@ -165,8 +167,8 @@ void ThreeSVarConstraint::configureVariables() {
 /********************* IntDiv ******************************/
 void IntDiv::configureVariables() { _variables[0]->addPotentialDefiner(this); }
 void IntDiv::imposeDomain(Variable* variable) {
-  int lowerBound = _variables[1]->lowerBound();
-  int upperBound = _variables[1]->upperBound();
+  Int lowerBound = _variables[1]->lowerBound();
+  Int upperBound = _variables[1]->upperBound();
 
   _imposedDomain = std::make_shared<IntDomain>(lowerBound, upperBound);
   variable->imposeDomain(_imposedDomain.get());
@@ -178,8 +180,8 @@ void IntPlus::configureVariables() {
   _variables[2]->addPotentialDefiner(this);
 }
 void IntPlus::imposeDomain(Variable* variable) {
-  int lowerBound;
-  int upperBound;
+  Int lowerBound;
+  Int upperBound;
   if (variable == _variables[0]) {
     lowerBound = _variables[2]->lowerBound() - _variables[1]->upperBound();
     upperBound = _variables[2]->upperBound() - _variables[1]->lowerBound();

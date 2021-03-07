@@ -37,7 +37,7 @@ void SingleVariable::addPotentialDefiner(Constraint* constraint) {
 void SingleVariable::removePotentialDefiner(Constraint* constraint) {
   _potentialDefiners.erase(constraint);
 }
-int SingleVariable::imposedDomainSize() { return _imposedDomain->size(); }
+Int SingleVariable::imposedDomainSize() { return _imposedDomain->size(); }
 void SingleVariable::imposeDomain(Domain* domain) {
   _imposedDomain = domain;
   _hasImposedDomain = true;
@@ -47,9 +47,9 @@ void SingleVariable::unImposeDomain() {
   _imposedDomain = nullptr;
   _hasImposedDomain = false;
 }
-int SingleVariable::domainSize() { return _domain->size(); }
-int SingleVariable::lowerBound() { return _domain->lowerBound(); }
-int SingleVariable::upperBound() { return _domain->upperBound(); }
+Int SingleVariable::domainSize() { return _domain->size(); }
+Int SingleVariable::lowerBound() { return _domain->lowerBound(); }
+Int SingleVariable::upperBound() { return _domain->upperBound(); }
 /*******************ARRAYVARIABLE****************************/
 ArrayVariable::ArrayVariable(std::vector<Variable*> elements) {
   std::string name = "[";
@@ -136,15 +136,15 @@ bool ArrayVariable::isDefinable() {
   return true;
 }
 std::string ArrayVariable::getLabel() { return "[array] " + _name; }
-int ArrayVariable::domainSize() {
-  int n = 0;
+Int ArrayVariable::domainSize() {
+  Int n = 0;
   for (auto variable : _elements) {
     n += variable->domainSize();
   }
   return n;
 }
-int ArrayVariable::imposedDomainSize() {
-  int n = 0;
+Int ArrayVariable::imposedDomainSize() {
+  Int n = 0;
   for (auto variable : _elements) {
     n += variable->imposedDomainSize();
   }
@@ -160,8 +160,8 @@ void ArrayVariable::unImposeDomain() {
     variable->unImposeDomain();
   }
 }
-int ArrayVariable::lowerBound() {
-  int n = MAX_DOMAIN_SIZE;
+Int ArrayVariable::lowerBound() {
+  Int n = std::numeric_limits<Int>::max();
   for (auto variable : _elements) {
     if (variable->lowerBound() < n) {
       n = variable->lowerBound();
@@ -169,8 +169,8 @@ int ArrayVariable::lowerBound() {
   }
   return n;
 }
-int ArrayVariable::upperBound() {
-  int n = MIN_DOMAIN_SIZE;
+Int ArrayVariable::upperBound() {
+  Int n = std::numeric_limits<Int>::max();
   for (auto variable : _elements) {
     if (variable->upperBound() > n) {
       n = variable->upperBound();
@@ -178,8 +178,8 @@ int ArrayVariable::upperBound() {
   }
   return n;
 }
-int ArrayVariable::length() { return _elements.size(); }
-Variable* ArrayVariable::getElement(int n) { return _elements[n]; }
+Int ArrayVariable::length() { return _elements.size(); }
+Variable* ArrayVariable::getElement(Int n) { return _elements[n]; }
 /*******************LITERAL****************************/
 Literal::Literal(std::string value) {
   _name = value;
@@ -190,8 +190,8 @@ std::set<Node*> Literal::getNext() {
   std::set<Node*> s;
   return s;
 }
-int Literal::lowerBound() { return std::stoi(_name); }
-int Literal::upperBound() { return std::stoi(_name); }
+Int Literal::lowerBound() { return std::stoi(_name); }
+Int Literal::upperBound() { return std::stoi(_name); }
 /*******************PARAMETER****************************/
-int Parameter::lowerBound() { return std::stoi(_value); }
-int Parameter::upperBound() { return std::stoi(_value); }
+Int Parameter::lowerBound() { return std::stoi(_value); }
+Int Parameter::upperBound() { return std::stoi(_value); }

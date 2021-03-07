@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
   m.init();
   // m.setObjective(argv[2]);
   m.findStructure();
-  s.allStats(false);
+  s.allStats(true);
   // m.split();
   return 0;
 }

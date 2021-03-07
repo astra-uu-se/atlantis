@@ -10,14 +10,15 @@
 class Constraint;
 class Model;
 class Item;
+using Int = int64_t;
 
 class Domain {
  public:
   Domain() = default;
   ~Domain() = default;
-  virtual int size();
-  virtual int lowerBound() = 0;
-  virtual int upperBound() = 0;
+  virtual Int size();
+  virtual Int lowerBound() = 0;
+  virtual Int upperBound() = 0;
 
  protected:
   bool _defined;
@@ -26,33 +27,33 @@ class Domain {
 class BoolDomain : public Domain {
  public:
   BoolDomain() = default;
-  int size() override;
-  int lowerBound() override;
-  int upperBound() override;
+  Int size() override;
+  Int lowerBound() override;
+  Int upperBound() override;
 };
 
 class IntSetDomain : public Domain {
  public:
-  IntSetDomain(std::set<int> set);
-  int size() override;
-  int lowerBound() override;
-  int upperBound() override;
+  IntSetDomain(std::set<Int> set);
+  Int size() override;
+  Int lowerBound() override;
+  Int upperBound() override;
 
  private:
-  std::set<int> _set;
+  std::set<Int> _set;
 };
 
 class IntDomain : public Domain {
  public:
   IntDomain();
-  IntDomain(int lb, int ub);
-  int size() override;
-  int lowerBound() override;
-  int upperBound() override;
+  IntDomain(Int lb, Int ub);
+  Int size() override;
+  Int lowerBound() override;
+  Int upperBound() override;
 
  private:
-  int _lb;
-  int _ub;
+  Int _lb;
+  Int _ub;
 };
 
 class Annotation {
