@@ -91,7 +91,7 @@ setLiteral : '{' intLiteral (',' intLiteral )* '}'
                 | FloatLiteral '..' FloatLiteral
     ;
 
-arrayLiteral : '[' basicExpr ( ',' basicExpr )* ']' ;
+arrayLiteral : '[' (basicExpr ( ',' basicExpr )*)? ']' ;
 
 parArrayLiteral : '[' basicLiteralExpr (',' basicLiteralExpr )* ']' ;
 
