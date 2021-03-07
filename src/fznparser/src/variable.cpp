@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "maps.hpp"
+
 #define MAX_DOMAIN_SIZE 2147483647
 #define MIN_DOMAIN_SIZE -2147483647
 
@@ -40,10 +42,14 @@ void SingleVariable::imposeDomain(Domain* domain) {
   _imposedDomain = domain;
   _hasImposedDomain = true;
 }
+void SingleVariable::unImposeDomain() {
+  assert(_hasImposedDomain);
+  _imposedDomain = nullptr;
+  _hasImposedDomain = false;
+}
 int SingleVariable::domainSize() { return _domain->size(); }
 int SingleVariable::lowerBound() { return _domain->lowerBound(); }
 int SingleVariable::upperBound() { return _domain->upperBound(); }
-
 /*******************ARRAYVARIABLE****************************/
 ArrayVariable::ArrayVariable(std::vector<Variable*> elements) {
   std::string name = "[";
@@ -74,7 +80,6 @@ void ArrayVariable::init(VariableMap& variables) {
     }
   }
 }
-
 std::set<Node*> ArrayVariable::getNext() {
   std::set<Node*> nodes;
   for (Node* e : _elements) {
@@ -82,7 +87,6 @@ std::set<Node*> ArrayVariable::getNext() {
   }
   return nodes;
 }
-
 void ArrayVariable::addConstraint(Node* constraint) {
   for (auto e : _elements) {
     e->addConstraint(constraint);
@@ -122,7 +126,6 @@ void ArrayVariable::removePotentialDefiner(Constraint* constraint) {
   _potentialDefiners.erase(constraint);
 }
 std::vector<Variable*> ArrayVariable::elements() { return _elements; }
-
 bool ArrayVariable::isDefinable() {
   if (_isDefined) return false;
   for (auto e : _elements) {
@@ -133,7 +136,6 @@ bool ArrayVariable::isDefinable() {
   return true;
 }
 std::string ArrayVariable::getLabel() { return "[array] " + _name; }
-
 int ArrayVariable::domainSize() {
   int n = 0;
   for (auto variable : _elements) {
@@ -151,6 +153,11 @@ int ArrayVariable::imposedDomainSize() {
 void ArrayVariable::imposeDomain(Domain* domain) {
   for (auto variable : _elements) {
     variable->imposeDomain(domain);
+  }
+}
+void ArrayVariable::unImposeDomain() {
+  for (auto variable : _elements) {
+    variable->unImposeDomain();
   }
 }
 int ArrayVariable::lowerBound() {
@@ -173,7 +180,6 @@ int ArrayVariable::upperBound() {
 }
 int ArrayVariable::length() { return _elements.size(); }
 Variable* ArrayVariable::getElement(int n) { return _elements[n]; }
-
 /*******************LITERAL****************************/
 Literal::Literal(std::string value) {
   _name = value;
@@ -186,7 +192,6 @@ std::set<Node*> Literal::getNext() {
 }
 int Literal::lowerBound() { return std::stoi(_name); }
 int Literal::upperBound() { return std::stoi(_name); }
-
 /*******************PARAMETER****************************/
 int Parameter::lowerBound() { return std::stoi(_value); }
 int Parameter::upperBound() { return std::stoi(_value); }

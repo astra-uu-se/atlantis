@@ -1,5 +1,7 @@
 #include "constraintbox.hpp"
 
+#include "maps.hpp"
+
 ConstraintBox::ConstraintBox(std::string name,
                              std::vector<Expression> expressions,
                              std::vector<Annotation> annotations) {
@@ -22,7 +24,6 @@ void ConstraintBox::prepare(VariableMap& variables) {
     }
   }
 }
-
 bool ConstraintBox::hasDefineAnnotation() {
   for (auto a : _annotations) {
     if (a.definesVar()) {

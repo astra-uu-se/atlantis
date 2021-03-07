@@ -19,6 +19,7 @@ class Constraint : public Node {
   Constraint();
   Constraint(ConstraintBox constraintBox);
   void init(const VariableMap& variables);
+  std::string getName();
 
   std::set<Node*> getNext() override;
   std::string getLabel() override;
@@ -35,12 +36,13 @@ class Constraint : public Node {
   virtual void makeImplicit();
   std::vector<Variable*> variables();
   std::vector<Variable*> variablesSorted();
-  virtual void imposeDomain(Variable* variable) {}
   virtual bool split(int index, VariableMap& variables,
                      ConstraintMap& constraints) {
     return false;
   }
-  void cleanse();
+
+  bool isImplicit() { return _implicit; }
+  bool isInvariant() { return _invariant; }
 
  protected:
   virtual void loadVariables(const VariableMap& variables) = 0;
@@ -57,6 +59,9 @@ class Constraint : public Node {
   void addDependency(Variable* variable);
   void removeDependency(Variable* variable);
   void clearVariables();
+  void cleanse();
+
+  virtual void imposeDomain(Variable* variable) {}
 
   std::shared_ptr<Domain> _imposedDomain;
   std::string _name;
@@ -67,6 +72,15 @@ class Constraint : public Node {
   Variable* _annotationDefineVariable;
   bool _uniqueTarget;
   bool _implicit = false;
+  bool _invariant = false;
+};
+
+class NonFunctionalConstraint : public Constraint {
+ public:
+  NonFunctionalConstraint(ConstraintBox constraintBox)
+      : Constraint(constraintBox) {}
+  void loadVariables(const VariableMap& variables) override {}
+  void configureVariables() override {}
 };
 
 class ThreeSVarConstraint : public Constraint {

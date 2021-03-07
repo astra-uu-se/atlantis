@@ -22,13 +22,11 @@ int main(int argc, char* argv[]) {
   FznVisitor visitor;
   Model m = visitor.visitModel(tree);
   Statistics s = Statistics(&m);
+
   m.init();
-  m.setObjective(argv[2]);
+  // m.setObjective(argv[2]);
   m.findStructure();
-  s.allStats();
-  m.split();
-  m.findStructure();
-  s.allStats();
-  s.constraints();
+  s.allStats(false);
+  // m.split();
   return 0;
 }

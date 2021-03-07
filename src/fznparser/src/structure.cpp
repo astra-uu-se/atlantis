@@ -19,7 +19,6 @@ IntSetDomain::IntSetDomain(std::set<int> set) { _set = set; }
 int IntSetDomain::size() { return _set.size(); }
 int IntSetDomain::lowerBound() { return *_set.lower_bound(MIN_DOMAIN_SIZE); }
 int IntSetDomain::upperBound() { return *_set.upper_bound(MAX_DOMAIN_SIZE); }
-
 Annotation::Annotation() {}
 Annotation::Annotation(std::string name, std::string variableName) {
   _name = name;
@@ -32,7 +31,6 @@ Annotation::Annotation(std::string name, std::string variableName) {
   }
 }
 bool Annotation::definesVar() { return _definesVar; }
-
 Expression::Expression() {}
 Expression::Expression(std::string name, bool isId) {
   _name = name;

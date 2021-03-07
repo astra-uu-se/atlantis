@@ -17,9 +17,7 @@ bool VariableMap::exists(std::string name) {
   return (_variables.find(name) != _variables.end());
 }
 std::vector<Variable*> VariableMap::getArray() { return _variableArray; }
-
 /****************************CONSTRAINTMAP**********************/
-
 void ConstraintMap::add(std::shared_ptr<Constraint> constraint) {
   assert(!exists(constraint.get()));
   _constraints.insert(std::pair<Constraint*, std::shared_ptr<Constraint>>(

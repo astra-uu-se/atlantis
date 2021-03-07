@@ -1,6 +1,7 @@
 #include "constraint.hpp"
 
 #include <memory>
+#include <string>
 
 #include "structure.hpp"
 #include "variable.hpp"
@@ -16,12 +17,10 @@ Constraint::Constraint(ConstraintBox constraintBox) {
   _uniqueTarget = true;
   _hasDefineAnnotation = false;
 }
-
 Expression Constraint::getExpression(int n) {
   assert(n < _constraintBox._expressions.size());
   return _constraintBox._expressions[n];
 }
-
 std::set<Node*> Constraint::getNext() {
   std::set<Node*> defines;
   for (auto var : _defines) {
@@ -29,18 +28,20 @@ std::set<Node*> Constraint::getNext() {
   }
   return defines;
 }
+std::string Constraint::getName() { return _name; }
 std::string Constraint::getLabel() {
+  std::string name = _name;
   if (_implicit) {
-    return "(implicit) " + _name;
+    name = "(implicit) " + name;
+  } else if (_invariant) {
+    name = "(invariant) " + name;
   }
-  return _name;
+  return name;
 }
-
 bool Constraint::breakCycle() {
   makeSoft();
   return true;
 }
-
 SingleVariable* Constraint::getSingleVariable(const VariableMap& variableMap,
                                               int n) {
   assert(!getExpression(n).isArray());
@@ -59,7 +60,6 @@ Variable* Constraint::getAnnotationVariable(const VariableMap& variableMap) {
   std::string name = _constraintBox.getAnnotationVariableName();
   return variableMap.find(name);
 }
-
 void Constraint::defineVariable(Variable* variable) {
   _defines.insert(variable);
   variable->defineBy(this);
@@ -67,6 +67,9 @@ void Constraint::defineVariable(Variable* variable) {
 void Constraint::unDefineVariable(Variable* variable) {
   assert(variable->definedBy() == this);
   _defines.erase(variable);
+  if (variable->hasImposedDomain()) {
+    variable->unImposeDomain();
+  }
   variable->removeDefinition();
 }
 void Constraint::addDependency(Variable* variable) {
@@ -105,6 +108,7 @@ void Constraint::makeOneWayByAnnotation() {
       addDependency(variable);
     }
   }
+  _invariant = true;
 }
 void Constraint::makeOneWay(Variable* variable) {
   assert(std::count(_variables.begin(), _variables.end(), variable));
@@ -116,6 +120,7 @@ void Constraint::makeOneWay(Variable* variable) {
       addDependency(v);
     }
   }
+  _invariant = true;
 }
 void Constraint::cleanse() {
   clearVariables();
@@ -123,8 +128,10 @@ void Constraint::cleanse() {
     variable->removePotentialDefiner(this);
   }
 }
-void Constraint::makeSoft() { clearVariables(); }
-
+void Constraint::makeSoft() {
+  clearVariables();
+  _invariant = false;
+}
 bool Constraint::canBeImplicit() { return false; }
 void Constraint::makeImplicit() {
   assert(canBeImplicit());
@@ -133,7 +140,6 @@ void Constraint::makeImplicit() {
   }
   _implicit = true;
 }
-
 bool Constraint::definesNone() { return _defines.empty(); }
 bool Constraint::uniqueTarget() { return _uniqueTarget; }
 std::vector<Variable*> Constraint::variables() { return _variables; }
@@ -142,13 +148,11 @@ std::vector<Variable*> Constraint::variablesSorted() {
   std::sort(next.begin(), next.end(), Variable::compareDomain);
   return next;
 }
-
 void Constraint::init(const VariableMap& variableMap) {
   loadVariables(variableMap);
   configureVariables();
   checkAnnotations(variableMap);
 }
-
 /********************* ThreeSVarConstraint ******************************/
 void ThreeSVarConstraint::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
@@ -232,7 +236,6 @@ void GlobalCardinality::makeImplicit() {
   }
   _implicit = true;
 }
-
 bool GlobalCardinality::split(int index, VariableMap& variables,
                               ConstraintMap& constraints) {
   assert(0 < index && index < _cover->length());
@@ -269,7 +272,6 @@ bool GlobalCardinality::split(int index, VariableMap& variables,
 
   return true;
 }
-
 GlobalCardinality::GlobalCardinality(ArrayVariable* x, ArrayVariable* cover,
                                      ArrayVariable* counts) {
   _name = "global_cardinality";
@@ -347,7 +349,6 @@ bool Inverse::canBeImplicit() {
   }
   return true;
 }
-
 /********************* Element ******************************/
 void Element::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "maps.hpp"
 #include "structure.hpp"
 
 class VariableMap;
@@ -28,7 +27,8 @@ class Variable : public Node {
   virtual int lowerBound() = 0;
   virtual int imposedDomainSize() = 0;
   virtual void imposeDomain(Domain* domain) = 0;
-  virtual bool imposedDomain() { return _hasImposedDomain; }
+  virtual void unImposeDomain() = 0;
+  bool hasImposedDomain() { return _hasImposedDomain; }
   virtual int length() { return 1; }
 
   virtual int count() { return 0; };
@@ -71,6 +71,7 @@ class SingleVariable : public Variable {
   bool isDefinable() override { return !_isDefined; };
   int imposedDomainSize() override;
   void imposeDomain(Domain* domain) override;
+  void unImposeDomain() override;
   int domainSize() override;
   int lowerBound() override;
   int upperBound() override;
@@ -103,6 +104,7 @@ class ArrayVariable : public Variable {
   std::string getLabel() override;
   int imposedDomainSize() override;
   void imposeDomain(Domain* domain) override;
+  void unImposeDomain() override;
   int domainSize() override;
   int lowerBound() override;
   int upperBound() override;
@@ -129,6 +131,7 @@ class Literal : public SingleVariable {
   void removePotentialDefiner(Constraint* constraint) override{};
   int count() override { return 0; };
   void imposeDomain(Domain* domain) override{};
+  void unImposeDomain() override{};
   int imposedDomainSize() override { return 0; }
   int domainSize() override { return 0; }
   int lowerBound() override;

@@ -1,38 +1,60 @@
 #include "statistics.hpp"
 
 Statistics::Statistics(Model* model) { _model = model; }
-
-void Statistics::countDefinedVariables() {
-  std::cout << "Defined variable count:\t";
+void Statistics::countDefinedVariables(bool labels) {
+  std::cout << "=========VARIABLES=========" << std::endl;
+  if (labels) {
+    variablesDefinedBy();
+  }
+  std::cout << "===========================" << std::endl;
+  std::cout << "Defined:\t";
   std::cout << _model->definedCount() << std::endl;
-  std::cout << "Total amount of variables:\t";
+  std::cout << "Total:\t\t";
   std::cout << _model->variableCount() << std::endl;
+  std::cout << "===========================" << std::endl;
 }
-
 void Statistics::variablesDefinedBy() {
   for (auto variable : _model->variables()) {
     if (variable->isDefined()) {
       std::cout << "Var: " << variable->getLabel();
-      std::cout << "\tDomain size: " << variable->domainSize();
-      if (variable->imposedDomain()) {
-        std::cout << "\tImposed Domain size: " << variable->imposedDomainSize();
+      std::cout << "\tDS: " << variable->domainSize();
+      if (variable->hasImposedDomain()) {
+        std::cout << "\tIDS: " << variable->imposedDomainSize();
       }
-      std::cout << "\t\tDefined by: " << variable->definedBy()->getLabel()
+      std::cout << "\t[" << variable->definedBy()->getLabel() << "]"
                 << std::endl;
     }
   }
 }
-void Statistics::constraints() {
+void Statistics::constraints(bool labels) {
+  std::cout << "========CONSTRAINTS========" << std::endl;
+  int total = 0;
+  int invariant = 0;
+  int implicit = 0;
   for (auto constraint : _model->constraints()) {
-    std::cout << constraint->getLabel() << std::endl;
+    total++;
+    if (constraint->isImplicit()) {
+      implicit++;
+    } else if (constraint->isInvariant()) {
+      invariant++;
+    }
+    if (labels) {
+      std::cout << constraint->getLabel() << std::endl;
+    }
   }
+  std::cout << "===========================" << std::endl;
+  std::cout << "Invariants:\t" << invariant << std::endl;
+  std::cout << "Implicit:\t" << implicit << std::endl;
+  std::cout << "Soft:\t\t" << total - invariant - implicit << std::endl;
+  std::cout << "Total:\t\t" << total << std::endl;
+  std::cout << "===========================" << std::endl;
 }
-
 void Statistics::cyclesRemoved() {
   std::cout << "Cycles removed: " << _model->cyclesRemoved() << std::endl;
+  std::cout << "===========================" << std::endl;
 }
-void Statistics::allStats() {
-  variablesDefinedBy();
-  countDefinedVariables();
+void Statistics::allStats(bool labels) {
   cyclesRemoved();
+  countDefinedVariables(labels);
+  constraints(labels);
 }

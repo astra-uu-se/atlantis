@@ -4,11 +4,11 @@
 class Statistics {
  public:
   Statistics(Model* model);
-  void countDefinedVariables();
+  void countDefinedVariables(bool labels);
   void variablesDefinedBy();
   void cyclesRemoved();
-  void allStats();
-  void constraints();
+  void allStats(bool labels);
+  void constraints(bool labels);
 
   Model* _model;
 };

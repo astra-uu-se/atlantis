@@ -15,6 +15,7 @@ class VariableMap {
   Variable* find(std::string name) const;
   bool exists(std::string name);
   std::vector<Variable*> getArray();
+  Variable* first() { return *_variableArray.begin(); }
 
  private:
   std::vector<Variable*> _variableArray;

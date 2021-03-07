@@ -1,8 +1,11 @@
-#include "model.hpp"
+#include "constraint.hpp"
+#define TRACK false
+#include <unistd.h>
 
 #include <limits>
 
 #include "maps.hpp"
+#include "model.hpp"
 
 Model::Model() {}
 void Model::init() {
@@ -14,12 +17,12 @@ void Model::init() {
   }
 }
 void Model::split() {
+  std::string name = constraints()[0]->getLabel();
   if (constraints()[0]->split(1, _variables, _constraints)) {
-    std::cout << "HELLO" << std::endl;
+    std::cout << "SPLITTING: " << name << std::endl;
   }
 }
 void Model::setObjective(std::string objective) { _objective = objective; }
-
 std::vector<Constraint*> Model::constraints() {
   return _constraints.getArray();
 }
@@ -30,16 +33,14 @@ std::vector<Variable*> Model::domSortVariables() {
   std::sort(sorted.begin(), sorted.end(), Variable::compareDomain);
   return sorted;
 }
-
 void Model::findStructure() {
-  defineImplicit();
   defineAnnotated();
   defineFromObjective();
   defineUnique();
   defineRest();
+  defineImplicit();
   removeCycles();
 }
-
 void Model::defineAnnotated() {
   for (auto c : constraints()) {
     if (c->canDefineByAnnotation()) {  // Also checks that target is not defined
@@ -54,23 +55,14 @@ void Model::defineImplicit() {
     }
   }
 }
-
 void Model::defineFromWithImplicit(Variable* variable) {
   if (variable->isDefinable()) {
-    std::cout << "is definable" << std::endl;
-
     for (auto constraint : variable->potentialDefiners()) {
-      std::cout << constraint->canBeOneWay(variable) << std::endl;
-      std::cout << constraint->getLabel() << std::endl;
-
       if (constraint->canBeImplicit()) {
-        std::cout << "can be implicit" << std::endl;
         constraint->makeImplicit();
         return;
-
       } else if (constraint->canBeOneWay(variable) &&
                  constraint->definesNone()) {
-        std::cout << "can be one way" << std::endl;
         constraint->makeOneWay(variable);
         for (auto v : constraint->variablesSorted()) {
           if (v != variable) {
@@ -103,8 +95,8 @@ void Model::defineFromObjective() {
     defineFromWithImplicit(objective);
   }
 }
-Variable* Model::getObjective() { return _variables.find(_objective); }
 
+Variable* Model::getObjective() { return _variables.first(); }
 void Model::defineUnique() {
   for (auto variable : domSortVariables()) {
     if (variable->isDefinable()) {
@@ -129,7 +121,6 @@ void Model::defineRest() {
     }
   }
 }
-
 int Model::variableCount() {
   int n = 0;
   for (auto variable : variables()) {
@@ -146,33 +137,8 @@ int Model::definedCount() {
   }
   return n;
 }
-
 void Model::addVariable(std::shared_ptr<Variable> variable) {
   _variables.add(variable);
-}
-
-bool Model::hasCycle() {
-  for (auto node : variables()) {
-    std::cout << "Starting...\n";
-    std::vector<Node*> visited;
-    if (hasCycleAux(visited, node)) return true;
-  }
-  return false;
-}
-bool Model::hasCycleAux(std::vector<Node*> visited, Node* node) {
-  std::cout << "Node: " << node->getLabel() << std::endl;
-  if (std::count(visited.begin(), visited.end(), node)) {
-    std::cout << "Cycle found...Removing" << std::endl;
-    visited.erase(visited.begin(),
-                  std::find(visited.begin(), visited.end(), node));
-    removeCycle(visited);
-    return true;
-  }
-  visited.push_back(node);
-  for (auto next : node->getNext()) {
-    if (hasCycleAux(visited, next)) return true;
-  }
-  return false;
 }
 void Model::removeCycle(std::vector<Node*> visited) {
   unsigned int smallestDomain = -1;  // Förmodligen inte så bra
@@ -186,22 +152,58 @@ void Model::removeCycle(std::vector<Node*> visited) {
     }
   }
   assert(nodeToRemove->breakCycle());
-  std::cout << "Node: " << nodeToRemove->getLabel() << " removed." << std::endl;
+  std::cout << (TRACK ? "Node: " + nodeToRemove->getLabel() + " removed." + "\n"
+                      : "");
   _cyclesRemoved += 1;
 }
-
 void Model::removeCycles() {
-  std::cout << "Looking for Cycles..." << std::endl;
-  while (hasCycle()) {
+  std::cout << (TRACK ? "Looking for Cycles...\n" : "");
+  std::vector<Node*> cycle;
+  while (true) {
+    cycle = hasCycle();
+    if (cycle.size() > 0) {
+      removeCycle(cycle);
+    } else {
+      break;
+    }
   }
-  std::cout << "Done! No cycles." << std::endl;
+  std::cout << (TRACK ? "Done! No cycles.\n" : "");
+}
+
+std::vector<Node*> Model::hasCycle() {
+  std::set<Node*> visited;
+  std::vector<Node*> stack;
+  for (auto node : variables()) {
+    if (hasCycleAux(visited, stack, node)) {
+      return stack;
+    }
+  }
+  assert(stack.size() == 0);
+  return stack;
+}
+
+bool Model::hasCycleAux(std::set<Node*>& visited, std::vector<Node*>& stack,
+                        Node* node) {
+  stack.push_back(node);
+  if (!visited.count(node)) {
+    visited.insert(node);
+    for (auto next : node->getNext()) {
+      if ((visited.count(next) == 0) && hasCycleAux(visited, stack, next)) {
+        return true;
+      } else if (std::count(stack.begin(), stack.end(), next)) {
+        stack.erase(stack.begin(), std::find(stack.begin(), stack.end(), next));
+        return true;
+      }
+    }
+  }
+  stack.pop_back();
+  return false;
 }
 
 void Model::printNode(std::string name) {
   Node* node = _variables.find(name);
   std::cout << node->getLabel() << std::endl;
 }
-
 void Model::addConstraint(ConstraintBox constraintBox) {
   constraintBox.prepare(_variables);
   if (constraintBox._name == "int_div") {
@@ -222,5 +224,7 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<Element>(constraintBox));
   } else if (constraintBox._name == "gecode_circuit") {
     _constraints.add(std::make_shared<Circuit>(constraintBox));
+  } else {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   }
 }
