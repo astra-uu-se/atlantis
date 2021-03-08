@@ -23,7 +23,7 @@ constraint int_abs(X_INTRODUCED_11_,X_INTRODUCED_12_):: defines_var(X_INTRODUCED
 constraint int_abs(X_INTRODUCED_13_,X_INTRODUCED_14_):: defines_var(X_INTRODUCED_14_);
 constraint int_abs(X_INTRODUCED_15_,X_INTRODUCED_16_):: defines_var(X_INTRODUCED_16_);
 constraint fzn_all_different_int(X_INTRODUCED_17_);
-constraint fzn_all_different_int(x);
+constraint fzn_all_different_int(x) :: implicit;
 constraint int_lin_eq([1,-1,-1],[X_INTRODUCED_0_,X_INTRODUCED_1_,X_INTRODUCED_7_],0):: defines_var(X_INTRODUCED_7_);
 constraint int_lin_eq([1,-1,-1],[X_INTRODUCED_1_,X_INTRODUCED_2_,X_INTRODUCED_9_],0):: defines_var(X_INTRODUCED_9_);
 constraint int_lin_eq([1,-1,-1],[X_INTRODUCED_2_,X_INTRODUCED_3_,X_INTRODUCED_11_],0):: defines_var(X_INTRODUCED_11_);

@@ -33,6 +33,7 @@ class Constraint : public Node {
   bool uniqueTarget();
   bool canDefineByAnnotation();
   virtual bool canBeImplicit();
+  bool shouldBeImplicit();
   virtual void makeImplicit();
   std::vector<Variable*> variables();
   std::vector<Variable*> variablesSorted();
@@ -64,12 +65,12 @@ class Constraint : public Node {
 
   virtual void imposeDomain(Variable* variable) {}
 
-  std::shared_ptr<Domain> _imposedDomain;
   std::string _name;
   ConstraintBox _constraintBox;
   std::set<Variable*> _defines;
   std::vector<Variable*> _variables;
   bool _hasDefineAnnotation;
+  bool _shouldBeImplicit = false;
   Variable* _annotationDefineVariable;
   bool _uniqueTarget;
   bool _implicit = false;
@@ -86,10 +87,12 @@ class NonFunctionalConstraint : public Constraint {
 
 class ThreeSVarConstraint : public Constraint {
  public:
-  ThreeSVarConstraint(ConstraintBox constraintBox)
-      : Constraint(constraintBox) {}
+  ThreeSVarConstraint(ConstraintBox constraintBox) : Constraint(constraintBox) {
+    _imposedDomain = std::make_shared<IntDomain>();
+  }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
+  std::shared_ptr<IntDomain> _imposedDomain;
 };
 /* int_div(var int: a, var int: b, var int: c)
 ** Defines: a

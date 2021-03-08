@@ -6,15 +6,15 @@ Int Domain::size() { return std::numeric_limits<Int>::max() - 1; }
 Int BoolDomain::size() { return 2; }
 Int BoolDomain::lowerBound() { return 0; }
 Int BoolDomain::upperBound() { return 1; }
-IntDomain::IntDomain() { _defined = false; }
+IntDomain::IntDomain() {
+  _lb = std::numeric_limits<Int>::min() + 1;
+  _ub = std::numeric_limits<Int>::max() - 1;
+}
 IntDomain::IntDomain(Int lb, Int ub) {
-  _defined = true;
   _lb = lb;
   _ub = ub;
 }
-Int IntDomain::size() {
-  return _defined ? _ub - _lb : std::numeric_limits<Int>::max() - 1;
-}
+Int IntDomain::size() { return _ub - _lb; }
 Int IntDomain::lowerBound() { return _lb; }
 Int IntDomain::upperBound() { return _ub; }
 IntSetDomain::IntSetDomain(std::set<Int> set) { _set = set; }

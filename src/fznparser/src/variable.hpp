@@ -22,14 +22,14 @@ class Variable : public Node {
   virtual void addPotentialDefiner(Constraint* constraint) = 0;
   virtual void removePotentialDefiner(Constraint* constraint) = 0;
   virtual bool isDefinable() = 0;
+  virtual Int length() { return 1; }
+
   virtual Int domainSize() = 0;
   virtual Int upperBound() = 0;
   virtual Int lowerBound() = 0;
-  virtual Int imposedDomainSize() = 0;
   virtual void imposeDomain(Domain* domain) = 0;
   virtual void unImposeDomain() = 0;
   bool hasImposedDomain() { return _hasImposedDomain; }
-  virtual Int length() { return 1; }
 
   virtual Int count() { return 0; };
   virtual Int definedCount() { return 0; };
@@ -71,7 +71,6 @@ class SingleVariable : public Variable {
   void removePotentialDefiner(Constraint* constraint) override;
   Int count() override { return 1; };
   bool isDefinable() override { return !_isDefined; };
-  Int imposedDomainSize() override;
   void imposeDomain(Domain* domain) override;
   void unImposeDomain() override;
   Int domainSize() override;
@@ -105,7 +104,6 @@ class ArrayVariable : public Variable {
   std::vector<Variable*> elements();
   bool isDefinable() override;
   std::string getLabel() override;
-  Int imposedDomainSize() override;
   void imposeDomain(Domain* domain) override;
   void unImposeDomain() override;
   Int domainSize() override;
@@ -136,7 +134,6 @@ class Literal : public SingleVariable {
   Int count() override { return 0; };
   void imposeDomain(Domain* domain) override{};
   void unImposeDomain() override{};
-  Int imposedDomainSize() override { return 0; }
   Int domainSize() override { return 0; }
   Int lowerBound() override;
   Int upperBound() override;

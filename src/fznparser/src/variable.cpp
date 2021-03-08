@@ -37,7 +37,6 @@ void SingleVariable::addPotentialDefiner(Constraint* constraint) {
 void SingleVariable::removePotentialDefiner(Constraint* constraint) {
   _potentialDefiners.erase(constraint);
 }
-Int SingleVariable::imposedDomainSize() { return _imposedDomain->size(); }
 void SingleVariable::imposeDomain(Domain* domain) {
   _imposedDomain = domain;
   _hasImposedDomain = true;
@@ -47,9 +46,17 @@ void SingleVariable::unImposeDomain() {
   _imposedDomain = nullptr;
   _hasImposedDomain = false;
 }
-Int SingleVariable::domainSize() { return _domain->size(); }
-Int SingleVariable::lowerBound() { return _domain->lowerBound(); }
-Int SingleVariable::upperBound() { return _domain->upperBound(); }
+Int SingleVariable::domainSize() {
+  return hasImposedDomain() ? _imposedDomain->size() : _domain->size();
+}
+Int SingleVariable::lowerBound() {
+  return hasImposedDomain() ? _imposedDomain->lowerBound()
+                            : _domain->lowerBound();
+}
+Int SingleVariable::upperBound() {
+  return hasImposedDomain() ? _imposedDomain->upperBound()
+                            : _domain->upperBound();
+}
 /*******************ARRAYVARIABLE****************************/
 ArrayVariable::ArrayVariable(std::vector<Variable*> elements) {
   std::string name = "[";
@@ -140,13 +147,6 @@ Int ArrayVariable::domainSize() {
   Int n = 0;
   for (auto variable : _elements) {
     n += variable->domainSize();
-  }
-  return n;
-}
-Int ArrayVariable::imposedDomainSize() {
-  Int n = 0;
-  for (auto variable : _elements) {
-    n += variable->imposedDomainSize();
   }
   return n;
 }

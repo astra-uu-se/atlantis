@@ -30,6 +30,7 @@ class ConstraintMap {
   bool exists(Constraint* constraint);
   void remove(Constraint* constraint);
   std::vector<Constraint*> getArray();
+  Int size() { return _constraintArray.size(); }
 
  private:
   std::vector<Constraint*> _constraintArray;

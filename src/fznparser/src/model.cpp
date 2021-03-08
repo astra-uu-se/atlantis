@@ -22,7 +22,6 @@ void Model::split() {
     std::cout << "SPLITTING: " << name << std::endl;
   }
 }
-void Model::setObjective(std::string objective) { _objective = objective; }
 std::vector<Constraint*> Model::constraints() {
   return _constraints.getArray();
 }
@@ -35,10 +34,10 @@ std::vector<Variable*> Model::domSortVariables() {
 }
 void Model::findStructure() {
   defineImplicit();
-  defineRest();
-  defineFromObjective();
   defineAnnotated();
+  defineFromObjective();
   defineUnique();
+  defineRest();
   removeCycles();
 }
 void Model::defineAnnotated() {
@@ -50,12 +49,31 @@ void Model::defineAnnotated() {
 }
 void Model::defineImplicit() {
   for (auto c : constraints()) {
-    if (c->canBeImplicit()) {  // Also checks that target is not defined
+    if (c->canBeImplicit() &&
+        c->shouldBeImplicit()) {  // Also checks that target is not defined
       c->makeImplicit();
     }
   }
 }
 void Model::defineFromWithImplicit(Variable* variable) {
+  if (variable->isDefinable()) {
+    for (auto constraint : variable->potentialDefiners()) {
+      if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
+        constraint->makeOneWay(variable);
+        for (auto v : constraint->variablesSorted()) {
+          if (v != variable) {
+            defineFromWithImplicit(v);
+          }
+        }
+        break;
+      } else if (constraint->canBeImplicit()) {
+        constraint->makeImplicit();
+        return;
+      }
+    }
+  }
+}
+void Model::defineFromWithImplicit2(Variable* variable) {
   if (variable->isDefinable()) {
     for (auto constraint : variable->potentialDefiners()) {
       if (constraint->canBeImplicit()) {
@@ -66,7 +84,7 @@ void Model::defineFromWithImplicit(Variable* variable) {
         constraint->makeOneWay(variable);
         for (auto v : constraint->variablesSorted()) {
           if (v != variable) {
-            defineFrom(v);
+            defineFromWithImplicit2(v);
           }
         }
         break;
@@ -90,12 +108,12 @@ void Model::defineFrom(Variable* variable) {
   }
 }
 void Model::defineFromObjective() {
-  if (true) {
-    Variable* objective = getObjective();
-    defineFromWithImplicit(objective);
+  if (_objective) {
+    defineFromWithImplicit(_objective);
+  } else {
+    std::cerr << "No objective exists\n";
   }
 }
-Variable* Model::getObjective() { return _variables.first(); }
 void Model::defineUnique() {
   for (auto variable : domSortVariables()) {
     if (variable->isDefinable()) {
@@ -139,19 +157,22 @@ int Model::definedCount() {
 void Model::addVariable(std::shared_ptr<Variable> variable) {
   _variables.add(variable);
 }
+void Model::addObjective(std::string objective) {
+  _objective = _variables.find(objective);
+}
 void Model::removeCycle(std::vector<Node*> visited) {
   Int smallestDomain = std::numeric_limits<Int>::max();
   Constraint* nodeToRemove = nullptr;
   for (auto node : visited) {
     if (auto v = dynamic_cast<Variable*>(node)) {
-      if (v->imposedDomainSize() <= smallestDomain) {
-        if (v->imposedDomainSize() < smallestDomain) {
+      if (v->domainSize() <= smallestDomain) {
+        if (v->domainSize() < smallestDomain) {
           nodeToRemove = v->definedBy();
-          smallestDomain = v->imposedDomainSize();
+          smallestDomain = v->domainSize();
         } else {
           if (v->definedBy()->defInVarCount() > nodeToRemove->defInVarCount()) {
             nodeToRemove = v->definedBy();
-            smallestDomain = v->imposedDomainSize();
+            smallestDomain = v->domainSize();
           }
         }
       }
@@ -212,6 +233,7 @@ void Model::printNode(std::string name) {
 }
 void Model::addConstraint(ConstraintBox constraintBox) {
   constraintBox.prepare(_variables);
+  constraintBox.setId(_constraints.size() + 1);
   if (constraintBox._name == "int_div") {
     _constraints.add(std::make_shared<IntDiv>(constraintBox));
   } else if (constraintBox._name == "int_plus") {

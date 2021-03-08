@@ -38,6 +38,7 @@ std::string Constraint::getLabel() {
   } else {
     name = "(soft) " + name;
   }
+  name = name + " #" + std::to_string(_constraintBox._id);
   return name;
 }
 bool Constraint::breakCycle() {
@@ -102,6 +103,9 @@ void Constraint::checkAnnotations(const VariableMap& variableMap) {
     _annotationDefineVariable = getAnnotationVariable(variableMap);
     _hasDefineAnnotation = true;
   }
+  if (_constraintBox.hasImplicitAnnotation()) {
+    _shouldBeImplicit = true;
+  }
 }
 void Constraint::makeOneWayByAnnotation() {
   defineVariable(_annotationDefineVariable);
@@ -135,6 +139,8 @@ void Constraint::makeSoft() {
   _invariant = false;
 }
 bool Constraint::canBeImplicit() { return false; }
+bool Constraint::shouldBeImplicit() { return _shouldBeImplicit; }
+
 void Constraint::makeImplicit() {
   assert(canBeImplicit());
   for (auto variable : _variables) {
@@ -176,10 +182,8 @@ void ThreeSVarConstraint::configureVariables() {
 /********************* IntDiv ******************************/
 void IntDiv::configureVariables() { _variables[0]->addPotentialDefiner(this); }
 void IntDiv::imposeDomain(Variable* variable) {
-  Int lowerBound = _variables[1]->lowerBound();
-  Int upperBound = _variables[1]->upperBound();
-
-  _imposedDomain = std::make_shared<IntDomain>(lowerBound, upperBound);
+  _imposedDomain->setLower(_variables[1]->lowerBound());
+  _imposedDomain->setUpper(_variables[1]->upperBound());
   variable->imposeDomain(_imposedDomain.get());
 }
 /********************* IntPlus ******************************/
@@ -189,20 +193,22 @@ void IntPlus::configureVariables() {
   _variables[2]->addPotentialDefiner(this);
 }
 void IntPlus::imposeDomain(Variable* variable) {
-  Int lowerBound;
-  Int upperBound;
-  if (variable == _variables[0]) {
-    lowerBound = _variables[2]->lowerBound() - _variables[1]->upperBound();
-    upperBound = _variables[2]->upperBound() - _variables[1]->lowerBound();
-  } else if (variable == _variables[1]) {
-    lowerBound = _variables[2]->lowerBound() - _variables[0]->upperBound();
-    upperBound = _variables[2]->upperBound() - _variables[0]->lowerBound();
-  } else if (variable == _variables[2]) {
-    lowerBound = _variables[0]->lowerBound() + _variables[1]->lowerBound();
-    upperBound = _variables[0]->upperBound() + _variables[1]->upperBound();
+  if (variable == _variables[0]) {  // a = c - b
+    _imposedDomain->setLower(_variables[2]->lowerBound() -
+                             _variables[1]->upperBound());
+    _imposedDomain->setUpper(_variables[2]->upperBound() -
+                             _variables[1]->lowerBound());
+  } else if (variable == _variables[1]) {  // b = c - a
+    _imposedDomain->setLower(_variables[2]->lowerBound() -
+                             _variables[0]->upperBound());
+    _imposedDomain->setUpper(_variables[2]->upperBound() -
+                             _variables[0]->lowerBound());
+  } else if (variable == _variables[2]) {  // c = a + b
+    _imposedDomain->setLower(_variables[0]->lowerBound() +
+                             _variables[1]->lowerBound());
+    _imposedDomain->setUpper(_variables[0]->upperBound() +
+                             _variables[1]->upperBound());
   }
-
-  _imposedDomain = std::make_shared<IntDomain>(lowerBound, upperBound);
   variable->imposeDomain(_imposedDomain.get());
 }
 /********************* TwoSVarConstraint ******************************/

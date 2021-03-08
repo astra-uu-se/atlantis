@@ -19,7 +19,7 @@ void Statistics::variablesDefinedBy() {
       std::cout << "Var: " << variable->getLabel();
       std::cout << "\tDS: " << variable->domainSize();
       if (variable->hasImposedDomain()) {
-        std::cout << "\tIDS: " << variable->imposedDomainSize();
+        std::cout << "\t(imposed)";
       }
       std::cout << "\t[" << variable->definedBy()->getLabel() << "]"
                 << std::endl;

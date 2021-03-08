@@ -24,6 +24,14 @@ void ConstraintBox::prepare(VariableMap& variables) {
     }
   }
 }
+bool ConstraintBox::hasImplicitAnnotation() {
+  for (auto a : _annotations) {
+    if (a._name == "implicit") {
+      return true;
+    }
+  }
+  return false;
+}
 bool ConstraintBox::hasDefineAnnotation() {
   for (auto a : _annotations) {
     if (a.definesVar()) {
@@ -40,3 +48,4 @@ std::string ConstraintBox::getAnnotationVariableName() {
   }
   return "";
 }
+void ConstraintBox::setId(Int id) { _id = id; }

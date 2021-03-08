@@ -50,6 +50,8 @@ class IntDomain : public Domain {
   Int size() override;
   Int lowerBound() override;
   Int upperBound() override;
+  void setLower(Int lb) { _lb = lb; }
+  void setUpper(Int ub) { _ub = ub; }
 
  private:
   Int _lb;

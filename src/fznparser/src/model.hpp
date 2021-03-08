@@ -19,13 +19,13 @@ class Model {
   void printNode(std::string name);
   void addVariable(std::shared_ptr<Variable> v);
   void addConstraint(ConstraintBox constraintBox);
+  void addObjective(std::string objective);
   int definedCount();
   int variableCount();
   std::vector<Constraint*> constraints();
   std::vector<Variable*> variables();
   std::vector<Variable*> domSortVariables();
   int cyclesRemoved() { return _cyclesRemoved; }
-  void setObjective(std::string);
   void split();
 
  private:
@@ -33,6 +33,7 @@ class Model {
   void defineImplicit();
   void defineFrom(Variable* variable);
   void defineFromWithImplicit(Variable* variable);
+  void defineFromWithImplicit2(Variable* variable);
   void defineFromObjective();
   void defineUnique();
   void defineRest();
@@ -41,9 +42,8 @@ class Model {
                    Node* n);
   void removeCycles();
   void removeCycle(std::vector<Node*> visited);
-  Variable* getObjective();
   VariableMap _variables;
   ConstraintMap _constraints;
   int _cyclesRemoved = 0;
-  std::string _objective;
+  Variable* _objective = nullptr;
 };

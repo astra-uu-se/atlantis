@@ -16,6 +16,13 @@ antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
   for (auto constraintItem : ctx->constraintItem()) {
     m.addConstraint(visitConstraintItem(constraintItem));
   }
+  if (auto b = ctx->solveItem()->basicExpr()) {
+    if (b->Identifier()) {
+      m.addObjective(b->Identifier()->getText());
+    } else if (auto ble = b->basicLiteralExpr()) {
+      std::cerr << "Objective is literal expression\n";
+    }
+  }
   return m;
 }
 antlrcpp::Any FznVisitor::visitParDeclItem(
