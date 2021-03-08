@@ -12,6 +12,7 @@ class PropagationEngine : public Engine {
  public:
   enum class PropagationMode { TOP_DOWN, BOTTOM_UP, MIXED };
   PropagationMode mode;
+  const bool m_useMarkingForBottomUp;
 
  protected:
   size_t m_numVariables;
@@ -30,7 +31,7 @@ class PropagationEngine : public Engine {
 
   void recomputeAndCommit();
 
-  void clearPropagationQueue();
+  void emptyModifiedVariables();
 
   void propagate();
   void bottomUpPropagate();
@@ -135,7 +136,7 @@ inline void PropagationEngine::clearPropagationPath() {
 }
 
 inline bool PropagationEngine::isOnPropagationPath(VarId id) {
-  return m_varIsOnPropagationPath.get(id);
+  return !m_useMarkingForBottomUp || m_varIsOnPropagationPath.get(id);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(

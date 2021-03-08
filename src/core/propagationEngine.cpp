@@ -1,7 +1,8 @@
 #include "core/propagationEngine.hpp"
 
 PropagationEngine::PropagationEngine()
-    : mode(PropagationMode::TOP_DOWN),
+    : mode(PropagationMode::BOTTOM_UP),
+      m_useMarkingForBottomUp(true),
       m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
@@ -88,7 +89,7 @@ VarId PropagationEngine::getNextStableVariable(Timestamp) {
   return nextVar;
 }
 
-void PropagationEngine::clearPropagationQueue() {
+void PropagationEngine::emptyModifiedVariables() {
   while (!m_modifiedVariables.empty()) {
     m_modifiedVariables.pop();
   }
@@ -123,7 +124,7 @@ void PropagationEngine::recomputeAndCommit() {
        ++iter) {
     (*iter)->commit(m_currentTime, *this);
   }
-  clearPropagationQueue();
+  emptyModifiedVariables();
 }
 
 //--------------------- Move semantics ---------------------
@@ -155,13 +156,19 @@ void PropagationEngine::endQuery() {
       propagate();
       break;
     case PropagationMode::BOTTOM_UP:
-      // If marking is removed the restore the clearPropagationQueue in
-      // bottomUpPropagate().
-      markPropagationPathAndEmptyModifiedVariables(); 
+      if (m_useMarkingForBottomUp) {
+        markPropagationPathAndEmptyModifiedVariables();
+      } else {
+        emptyModifiedVariables();
+      }
       bottomUpPropagate();
       break;
     case PropagationMode::MIXED:
-      markPropagationPathAndEmptyModifiedVariables();
+      if (m_useMarkingForBottomUp) {
+        markPropagationPathAndEmptyModifiedVariables();
+      } else {
+        emptyModifiedVariables();
+      }
       bottomUpPropagate();
       break;
   }
@@ -177,7 +184,11 @@ void PropagationEngine::endCommit() {
       propagate();
       break;
     case PropagationMode::BOTTOM_UP:
-      markPropagationPathAndEmptyModifiedVariables();
+      if (m_useMarkingForBottomUp) {
+        markPropagationPathAndEmptyModifiedVariables();
+      } else {
+        emptyModifiedVariables();
+      }
       bottomUpPropagate();
       // BUG: Variables that are not dynamically defining the queries variables
       // will not be properly updated: they should be marked as changed until
@@ -276,8 +287,8 @@ void PropagationEngine::propagate() {
       Invariant& invariant = m_store.getInvariant(toNotify.id);
 
 #ifdef PROPAGATION_DEBUG
-      logDebug("\t\tNotifying invariant:" << toNotify.id
-                << " with localId: " << toNotify.localId);
+      logDebug("\t\tNotifying invariant:" << toNotify.id << " with localId: "
+                                          << toNotify.localId);
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
       notificationCount.at(toNotify.id.id - 1)[variable.m_id.id] =
