@@ -24,12 +24,11 @@ class MockAbsDiff : public AbsDiff {
     AbsDiff::init(timestamp, engine);
   }
 
-  MockAbsDiff(VarId a, VarId b, VarId c)
-      : AbsDiff(a, b, c) {
+  MockAbsDiff(VarId a, VarId b, VarId c) : AbsDiff(a, b, c) {
     ON_CALL(*this, recompute)
-      .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-        AbsDiff::recompute(timestamp, engine);
-      });
+        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
+          AbsDiff::recompute(timestamp, engine);
+        });
     ON_CALL(*this, getNextDependency)
         .WillByDefault([this](Timestamp t, Engine& e) {
           return AbsDiff::getNextDependency(t, e);
@@ -43,10 +42,9 @@ class MockAbsDiff : public AbsDiff {
         .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
           AbsDiff::notifyIntChanged(t, e, id);
         });
-    ON_CALL(*this, commit)
-      .WillByDefault([this](Timestamp t, Engine& e) {
-        AbsDiff::commit(t, e);
-      });
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
+      AbsDiff::commit(t, e);
+    });
   }
 
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
@@ -58,7 +56,6 @@ class MockAbsDiff : public AbsDiff {
   MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
               (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
-
 };
 
 class AbsDiffTest : public ::testing::Test {
@@ -81,21 +78,22 @@ class AbsDiffTest : public ::testing::Test {
 
     VarId output = engine->makeIntVar(0, 0, 200);
 
-    auto invariant = engine->makeInvariant<MockAbsDiff>(
-        a, b, output);
+    auto invariant = engine->makeInvariant<MockAbsDiff>(a, b, output);
 
     EXPECT_TRUE(invariant->m_initialized);
-    
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
+        .Times(AtLeast(1));
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->mode = propMode;
-    
+
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+          .Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(0);
@@ -103,8 +101,8 @@ class AbsDiffTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
-      EXPECT_CALL(*invariant,
-                  getNextDependency(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+          .Times(3);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(1);
@@ -113,7 +111,7 @@ class AbsDiffTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(0);
     } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
-      EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
+      EXPECT_EQ(0, 1);  // TODO: define the test case.
     }
 
     engine->beginMove();
@@ -124,7 +122,6 @@ class AbsDiffTest : public ::testing::Test {
     engine->query(output);
     engine->endQuery();
   }
-
 };
 
 TEST_F(AbsDiffTest, CreateAbsDiff) {
@@ -158,8 +155,15 @@ TEST_F(AbsDiffTest, Modification) {
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, testing::_)).Times(AtLeast(1));
-
+  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    EXPECT_CALL(*invariant,
+                notifyIntChanged(testing::_, testing::_, testing::_))
+        .Times(AtLeast(1));
+  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    EXPECT_EQ(0, 1);  // TODO: define the test case.
+  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    EXPECT_EQ(0, 1);  // TODO: define the test case.
+  }
   engine->close();
 
   EXPECT_EQ(engine->getNewValue(c), 200);

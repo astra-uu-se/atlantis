@@ -173,7 +173,15 @@ TEST_F(EngineTest, SimplePropagation) {
   }
 
   for (size_t id = 0; id < 3; ++id) {
-    EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(id))).Times(1);
+    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+      EXPECT_CALL(*invariant,
+                  notifyIntChanged(testing::_, testing::_, LocalId(id)))
+          .Times(1);
+    } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+      EXPECT_EQ(0, 1);  // TODO: define the test case for BOTTOM_UP.
+    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+      EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
+    }
   }
 
   engine->beginQuery();
@@ -224,7 +232,9 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endMove();
 
   for (size_t id = 0; id < 3; ++id) {
-    EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(id))).Times(1);
+    EXPECT_CALL(*invariant,
+                notifyIntChanged(testing::_, testing::_, LocalId(id)))
+        .Times(1);
   }
 
   engine->beginQuery();
@@ -255,7 +265,8 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->setValue(a, 0);
   engine->endMove();
 
-  EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(0))).Times(1);
+  EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(0)))
+      .Times(1);
 
   engine->beginCommit();
   engine->query(output);
