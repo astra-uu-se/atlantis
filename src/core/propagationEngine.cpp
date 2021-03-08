@@ -1,7 +1,7 @@
 #include "core/propagationEngine.hpp"
 
 PropagationEngine::PropagationEngine()
-    : mode(PropagationMode::BOTTOM_UP),
+    : mode(PropagationMode::TOP_DOWN),
       m_useMarkingForBottomUp(true),
       m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
