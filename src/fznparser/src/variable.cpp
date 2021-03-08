@@ -180,6 +180,13 @@ Int ArrayVariable::upperBound() {
 }
 Int ArrayVariable::length() { return _elements.size(); }
 Variable* ArrayVariable::getElement(Int n) { return _elements[n]; }
+Int ArrayVariable::definedCount() {
+  Int c = 0;
+  for (auto e : elements()) {
+    c += e->definedCount();
+  }
+  return c;
+}
 /*******************LITERAL****************************/
 Literal::Literal(std::string value) {
   _name = value;

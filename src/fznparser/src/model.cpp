@@ -34,11 +34,11 @@ std::vector<Variable*> Model::domSortVariables() {
   return sorted;
 }
 void Model::findStructure() {
-  defineAnnotated();
-  defineFromObjective();
-  defineUnique();
-  defineRest();
   defineImplicit();
+  defineRest();
+  defineFromObjective();
+  defineAnnotated();
+  defineUnique();
   removeCycles();
 }
 void Model::defineAnnotated() {
@@ -95,7 +95,6 @@ void Model::defineFromObjective() {
     defineFromWithImplicit(objective);
   }
 }
-
 Variable* Model::getObjective() { return _variables.first(); }
 void Model::defineUnique() {
   for (auto variable : domSortVariables()) {
@@ -141,13 +140,20 @@ void Model::addVariable(std::shared_ptr<Variable> variable) {
   _variables.add(variable);
 }
 void Model::removeCycle(std::vector<Node*> visited) {
-  unsigned int smallestDomain = -1;  // Förmodligen inte så bra
-  Node* nodeToRemove = nullptr;
+  Int smallestDomain = std::numeric_limits<Int>::max();
+  Constraint* nodeToRemove = nullptr;
   for (auto node : visited) {
     if (auto v = dynamic_cast<Variable*>(node)) {
-      if (v->domainSize() < smallestDomain) {  // Check ties
-        nodeToRemove = v->definedBy();
-        smallestDomain = v->domainSize();
+      if (v->imposedDomainSize() <= smallestDomain) {
+        if (v->imposedDomainSize() < smallestDomain) {
+          nodeToRemove = v->definedBy();
+          smallestDomain = v->imposedDomainSize();
+        } else {
+          if (v->definedBy()->defInVarCount() > nodeToRemove->defInVarCount()) {
+            nodeToRemove = v->definedBy();
+            smallestDomain = v->imposedDomainSize();
+          }
+        }
       }
     }
   }

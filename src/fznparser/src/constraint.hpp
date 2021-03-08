@@ -43,6 +43,7 @@ class Constraint : public Node {
 
   bool isImplicit() { return _implicit; }
   bool isInvariant() { return _invariant; }
+  Int defInVarCount();
 
  protected:
   virtual void loadVariables(const VariableMap& variables) = 0;

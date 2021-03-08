@@ -32,6 +32,7 @@ class Variable : public Node {
   virtual Int length() { return 1; }
 
   virtual Int count() { return 0; };
+  virtual Int definedCount() { return 0; };
   virtual bool isDefined() { return _isDefined; };
   virtual std::string getName() { return _name; };
   virtual Constraint* definedBy() { return _definedBy; };
@@ -57,6 +58,7 @@ class SingleVariable : public Variable {
                  std::shared_ptr<Domain> domain)
       : Variable(name, annotations) {
     _domain = domain;
+    _imposedDomain = domain.get();
   };
   void init(VariableMap& variables) override{};
 
@@ -75,6 +77,7 @@ class SingleVariable : public Variable {
   Int domainSize() override;
   Int lowerBound() override;
   Int upperBound() override;
+  Int definedCount() override { return _isDefined ? 1 : 0; }
 
  private:
   Domain* _imposedDomain;
@@ -110,6 +113,7 @@ class ArrayVariable : public Variable {
   Int upperBound() override;
   Int length() override;
   Variable* getElement(Int n);
+  Int definedCount() override;
 
  private:
   std::vector<Expression> _expressions;

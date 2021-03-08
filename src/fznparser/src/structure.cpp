@@ -2,7 +2,7 @@
 
 #include <limits>
 
-Int Domain::size() { return std::numeric_limits<Int>::max(); }
+Int Domain::size() { return std::numeric_limits<Int>::max() - 1; }
 Int BoolDomain::size() { return 2; }
 Int BoolDomain::lowerBound() { return 0; }
 Int BoolDomain::upperBound() { return 1; }
@@ -13,14 +13,14 @@ IntDomain::IntDomain(Int lb, Int ub) {
   _ub = ub;
 }
 Int IntDomain::size() {
-  return _defined ? _ub - _lb : std::numeric_limits<Int>::max();
+  return _defined ? _ub - _lb : std::numeric_limits<Int>::max() - 1;
 }
 Int IntDomain::lowerBound() { return _lb; }
 Int IntDomain::upperBound() { return _ub; }
 IntSetDomain::IntSetDomain(std::set<Int> set) { _set = set; }
 Int IntSetDomain::size() { return _set.size(); }
 Int IntSetDomain::lowerBound() {
-  return *_set.lower_bound(std::numeric_limits<Int>::max());
+  return *_set.lower_bound(std::numeric_limits<Int>::min());
 }
 Int IntSetDomain::upperBound() {
   return *_set.upper_bound(std::numeric_limits<Int>::max());

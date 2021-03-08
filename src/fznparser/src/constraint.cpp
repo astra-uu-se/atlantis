@@ -142,6 +142,15 @@ void Constraint::makeImplicit() {
   }
   _implicit = true;
 }
+Int Constraint::defInVarCount() {
+  Int defInVarCount = 0;
+  for (auto v : _variables) {
+    if (_defines.count(v) == 0) {
+      defInVarCount += v->definedCount();
+    }
+  }
+  return defInVarCount;
+}
 bool Constraint::definesNone() { return _defines.empty(); }
 bool Constraint::uniqueTarget() { return _uniqueTarget; }
 std::vector<Variable*> Constraint::variables() { return _variables; }
