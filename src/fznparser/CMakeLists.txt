@@ -48,6 +48,7 @@ add_executable(demo src/main.cpp
                     src/constraintbox.cpp
                     src/FznVisitor.cpp
                     src/maps.cpp
+                    src/structure_scheme_1.cpp
                ${ANTLR_Sample_CXX_OUTPUTS})
 target_link_libraries(demo antlr4_static)
 

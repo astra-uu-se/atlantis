@@ -49,12 +49,12 @@ void Statistics::constraints(bool labels) {
   std::cout << "Total:\t\t" << total << std::endl;
   std::cout << "===========================" << std::endl;
 }
-void Statistics::cyclesRemoved() {
-  std::cout << "Cycles removed: " << _model->cyclesRemoved() << std::endl;
-  std::cout << "===========================" << std::endl;
-}
+// void Statistics::cyclesRemoved() {
+//   std::cout << "Cycles removed: " << _model->cyclesRemoved() << std::endl;
+//   std::cout << "===========================" << std::endl;
+// }
 void Statistics::allStats(bool labels) {
-  cyclesRemoved();
+  // cyclesRemoved();
   countDefinedVariables(labels);
   constraints(labels);
 }

@@ -34,4 +34,4 @@ void ConstraintMap::remove(Constraint* constraint) {
       std::find(_constraintArray.begin(), _constraintArray.end(), constraint);
   _constraintArray.erase(it);
 }
-std::vector<Constraint*> ConstraintMap::getArray() { return _constraintArray; }
+std::vector<Constraint*> ConstraintMap::getVector() { return _constraintArray; }

@@ -1,11 +1,11 @@
-#include "constraint.hpp"
-#define TRACK false
+#include "model.hpp"
+
 #include <unistd.h>
 
 #include <limits>
 
+#include "constraint.hpp"
 #include "maps.hpp"
-#include "model.hpp"
 
 Model::Model() {}
 void Model::init() {
@@ -23,7 +23,7 @@ void Model::split() {
   }
 }
 std::vector<Constraint*> Model::constraints() {
-  return _constraints.getArray();
+  return _constraints.getVector();
 }
 std::vector<Variable*> Model::variables() { return _variables.getArray(); }
 std::vector<Variable*> Model::domSortVariables() {
@@ -31,127 +31,6 @@ std::vector<Variable*> Model::domSortVariables() {
       variables();  // Inefficient to sort every time
   std::sort(sorted.begin(), sorted.end(), Variable::compareDomain);
   return sorted;
-}
-void Model::findStructure() {
-  // defineImplicit();
-  defineAnnotated();
-  defineFromObjective();
-  defineUnique();
-  defineRest();
-  defineByImplicit();
-  removeCycles();
-}
-void Model::defineAnnotated() {
-  for (auto c : constraints()) {
-    if (c->canDefineByAnnotation()) {  // Also checks that target is not defined
-      c->makeOneWayByAnnotation();
-    }
-  }
-}
-void Model::defineImplicit() {
-  for (auto c : constraints()) {
-    if (c->canBeImplicit() &&  // Also checks that target is not defined
-        c->shouldBeImplicit()) {
-      c->makeImplicit();
-    }
-  }
-}
-// Kolla domänens utveckling först
-void Model::defineFromWithImplicit(Variable* variable) {
-  if (variable->isDefinable()) {
-    for (auto constraint : variable->potentialDefiners()) {
-      if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
-        constraint->makeOneWay(variable);
-        for (auto v : constraint->variablesSorted()) {
-          if (v != variable) {
-            defineFromWithImplicit(v);
-          }
-        }
-        break;
-      } else if (constraint->canBeImplicit()) {
-        constraint->makeImplicit();
-        return;
-      }
-    }
-  }
-}
-void Model::defineFromWithImplicit2(Variable* variable) {
-  if (variable->isDefinable()) {
-    for (auto constraint : variable->potentialDefiners()) {
-      if (constraint->canBeImplicit()) {
-        constraint->makeImplicit();
-        return;
-      } else if (constraint->canBeOneWay(variable) &&
-                 constraint->definesNone()) {
-        constraint->makeOneWay(variable);
-        for (auto v : constraint->variablesSorted()) {
-          if (v != variable) {
-            defineFromWithImplicit2(v);
-          }
-        }
-        break;
-      }
-    }
-  }
-}
-void Model::defineFrom(Variable* variable) {
-  if (variable->isDefinable()) {
-    for (auto constraint : variable->potentialDefiners()) {
-      if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
-        constraint->makeOneWay(variable);
-        for (auto v : constraint->variablesSorted()) {
-          if (v != variable) {
-            defineFrom(v);
-          }
-        }
-        break;
-      }
-    }
-  }
-}
-void Model::defineFromObjective() {
-  if (_objective) {
-    defineFromWithImplicit(_objective);
-  } else {
-    std::cerr << "No objective exists\n";
-  }
-}
-void Model::defineUnique() {
-  for (auto variable : domSortVariables()) {
-    if (variable->isDefinable()) {
-      for (auto constraint : variable->potentialDefiners()) {
-        if (constraint->canBeOneWay(variable) && constraint->uniqueTarget() &&
-            constraint->definesNone()) {
-          constraint->makeOneWay(variable);
-          break;
-        }
-      }
-    }
-  }
-}
-void Model::defineRest() {
-  for (auto variable : domSortVariables()) {
-    if (variable->isDefinable()) {
-      for (auto constraint : variable->potentialDefiners()) {
-        if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
-          constraint->makeOneWay(variable);
-          break;
-        }
-      }
-    }
-  }
-}
-void Model::defineByImplicit() {
-  for (auto variable : domSortVariables()) {
-    if (variable->isDefinable()) {
-      for (auto constraint : variable->potentialDefiners()) {
-        if (constraint->canBeImplicit()) {
-          constraint->makeImplicit();
-          break;
-        }
-      }
-    }
-  }
 }
 
 int Model::variableCount() {
@@ -176,73 +55,6 @@ void Model::addVariable(std::shared_ptr<Variable> variable) {
 void Model::addObjective(std::string objective) {
   _objective = _variables.find(objective);
 }
-void Model::removeCycle(std::vector<Node*> visited) {
-  Int smallestDomain = std::numeric_limits<Int>::max();
-  Constraint* nodeToRemove = nullptr;
-  for (auto node : visited) {
-    if (auto v = dynamic_cast<Variable*>(node)) {
-      if (v->domainSize() <= smallestDomain) {
-        if (v->domainSize() < smallestDomain) {
-          nodeToRemove = v->definedBy();
-          smallestDomain = v->domainSize();
-        } else {
-          if (v->definedBy()->defInVarCount() > nodeToRemove->defInVarCount()) {
-            nodeToRemove = v->definedBy();
-            smallestDomain = v->domainSize();
-          }
-        }
-      }
-    }
-  }
-  assert(nodeToRemove->breakCycle());
-  std::cout << (TRACK ? "Node: " + nodeToRemove->getLabel() + " removed." + "\n"
-                      : "");
-  _cyclesRemoved += 1;
-}
-void Model::removeCycles() {
-  std::cout << (TRACK ? "Looking for Cycles...\n" : "");
-  std::vector<Node*> cycle;
-  while (true) {
-    cycle = hasCycle();
-    if (cycle.size() > 0) {
-      removeCycle(cycle);
-    } else {
-      break;
-    }
-  }
-  std::cout << (TRACK ? "Done! No cycles.\n" : "");
-}
-
-std::vector<Node*> Model::hasCycle() {
-  std::set<Node*> visited;
-  std::vector<Node*> stack;
-  for (auto node : variables()) {
-    if (hasCycleAux(visited, stack, node)) {
-      return stack;
-    }
-  }
-  assert(stack.size() == 0);
-  return stack;
-}
-
-bool Model::hasCycleAux(std::set<Node*>& visited, std::vector<Node*>& stack,
-                        Node* node) {
-  stack.push_back(node);
-  if (!visited.count(node)) {
-    visited.insert(node);
-    for (auto next : node->getNext()) {
-      if ((visited.count(next) == 0) && hasCycleAux(visited, stack, next)) {
-        return true;
-      } else if (std::count(stack.begin(), stack.end(), next)) {
-        stack.erase(stack.begin(), std::find(stack.begin(), stack.end(), next));
-        return true;
-      }
-    }
-  }
-  stack.pop_back();
-  return false;
-}
-
 void Model::printNode(std::string name) {
   Node* node = _variables.find(name);
   std::cout << node->getLabel() << std::endl;

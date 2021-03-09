@@ -4,6 +4,7 @@
 #include "FlatZincParser.h"
 #include "FznVisitor.h"
 #include "statistics.hpp"
+#include "structure_scheme_1.hpp"
 
 using namespace fznparser;
 using namespace antlr4;
@@ -24,9 +25,10 @@ int main(int argc, char* argv[]) {
   Statistics s = Statistics(&m);
 
   m.init();
-  // m.setObjective(argv[2]);
-  m.findStructure();
+
+  StructureScheme1 ss1 = StructureScheme1(&m);
+
+  ss1.findStructure();
   s.allStats(true);
-  // m.split();
   return 0;
 }

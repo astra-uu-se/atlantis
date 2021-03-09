@@ -6,7 +6,7 @@ class Statistics {
   Statistics(Model* model);
   void countDefinedVariables(bool labels);
   void variablesDefinedBy();
-  void cyclesRemoved();
+  // void cyclesRemoved();
   void allStats(bool labels);
   void constraints(bool labels);
 
