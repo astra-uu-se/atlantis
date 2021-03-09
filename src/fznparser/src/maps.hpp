@@ -5,6 +5,7 @@
 #include "structure.hpp"
 #include "variable.hpp"
 
+// Lägg till soft constraint lista
 class Variable;
 
 class VariableMap {

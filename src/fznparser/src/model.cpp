@@ -33,11 +33,12 @@ std::vector<Variable*> Model::domSortVariables() {
   return sorted;
 }
 void Model::findStructure() {
-  defineImplicit();
+  // defineImplicit();
   defineAnnotated();
   defineFromObjective();
   defineUnique();
   defineRest();
+  defineByImplicit();
   removeCycles();
 }
 void Model::defineAnnotated() {
@@ -49,12 +50,13 @@ void Model::defineAnnotated() {
 }
 void Model::defineImplicit() {
   for (auto c : constraints()) {
-    if (c->canBeImplicit() &&
-        c->shouldBeImplicit()) {  // Also checks that target is not defined
+    if (c->canBeImplicit() &&  // Also checks that target is not defined
+        c->shouldBeImplicit()) {
       c->makeImplicit();
     }
   }
 }
+// Kolla domänens utveckling först
 void Model::defineFromWithImplicit(Variable* variable) {
   if (variable->isDefinable()) {
     for (auto constraint : variable->potentialDefiners()) {
@@ -118,7 +120,8 @@ void Model::defineUnique() {
   for (auto variable : domSortVariables()) {
     if (variable->isDefinable()) {
       for (auto constraint : variable->potentialDefiners()) {
-        if (constraint->uniqueTarget() && constraint->definesNone()) {
+        if (constraint->canBeOneWay(variable) && constraint->uniqueTarget() &&
+            constraint->definesNone()) {
           constraint->makeOneWay(variable);
           break;
         }
@@ -130,7 +133,7 @@ void Model::defineRest() {
   for (auto variable : domSortVariables()) {
     if (variable->isDefinable()) {
       for (auto constraint : variable->potentialDefiners()) {
-        if (constraint->definesNone()) {
+        if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
           constraint->makeOneWay(variable);
           break;
         }
@@ -138,6 +141,19 @@ void Model::defineRest() {
     }
   }
 }
+void Model::defineByImplicit() {
+  for (auto variable : domSortVariables()) {
+    if (variable->isDefinable()) {
+      for (auto constraint : variable->potentialDefiners()) {
+        if (constraint->canBeImplicit()) {
+          constraint->makeImplicit();
+          break;
+        }
+      }
+    }
+  }
+}
+
 int Model::variableCount() {
   int n = 0;
   for (auto variable : variables()) {

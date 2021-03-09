@@ -27,7 +27,7 @@ class Constraint : public Node {
 
   void makeOneWayByAnnotation();
   void makeOneWay(Variable* variable);
-  virtual bool canBeOneWay(Variable* variable) { return true; }
+  virtual bool canBeOneWay(Variable* variable) { return _canBeOneWay; }
   void makeSoft();
   bool definesNone();
   bool uniqueTarget();
@@ -45,6 +45,8 @@ class Constraint : public Node {
   bool isImplicit() { return _implicit; }
   bool isInvariant() { return _invariant; }
   Int defInVarCount();
+
+  void refreshImpose();
 
  protected:
   virtual void loadVariables(const VariableMap& variables) = 0;
@@ -75,6 +77,7 @@ class Constraint : public Node {
   bool _uniqueTarget;
   bool _implicit = false;
   bool _invariant = false;
+  bool _canBeOneWay = true;
 };
 
 class NonFunctionalConstraint : public Constraint {
@@ -88,11 +91,11 @@ class NonFunctionalConstraint : public Constraint {
 class ThreeSVarConstraint : public Constraint {
  public:
   ThreeSVarConstraint(ConstraintBox constraintBox) : Constraint(constraintBox) {
-    _imposedDomain = std::make_shared<IntDomain>();
+    _outputDomain = std::make_shared<IntDomain>();
   }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
-  std::shared_ptr<IntDomain> _imposedDomain;
+  std::shared_ptr<IntDomain> _outputDomain;
 };
 /* int_div(var int: a, var int: b, var int: c)
 ** Defines: a
@@ -157,12 +160,15 @@ class IntLinEq : public Constraint {
  public:
   IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
+    _outputDomain = std::make_shared<IntDomain>();
   }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeImplicit() override;
+  void imposeDomain(Variable* variable) override;
 
  private:
+  std::shared_ptr<IntDomain> _outputDomain;
   ArrayVariable* _as;
   ArrayVariable* _bs;
   SingleVariable* _c;
@@ -171,6 +177,7 @@ class AllDifferent : public Constraint {
  public:
   AllDifferent(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
+    _canBeOneWay = false;
   }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;

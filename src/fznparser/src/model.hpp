@@ -37,6 +37,7 @@ class Model {
   void defineFromObjective();
   void defineUnique();
   void defineRest();
+  void defineByImplicit();
   std::vector<Node*> hasCycle();
   bool hasCycleAux(std::set<Node*>& visited, std::vector<Node*>& stack,
                    Node* n);

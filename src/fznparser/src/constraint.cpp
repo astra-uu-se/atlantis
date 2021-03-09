@@ -109,6 +109,7 @@ void Constraint::checkAnnotations(const VariableMap& variableMap) {
 }
 void Constraint::makeOneWayByAnnotation() {
   defineVariable(_annotationDefineVariable);
+  imposeDomain(_annotationDefineVariable);
   for (auto variable : _variables) {
     if (variable != _annotationDefineVariable) {
       addDependency(variable);
@@ -170,6 +171,11 @@ void Constraint::init(const VariableMap& variableMap) {
   configureVariables();
   checkAnnotations(variableMap);
 }
+void Constraint::refreshImpose() {
+  for (auto variable : _defines) {
+    imposeDomain(variable);
+  }
+}
 /********************* ThreeSVarConstraint ******************************/
 void ThreeSVarConstraint::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
@@ -182,9 +188,14 @@ void ThreeSVarConstraint::configureVariables() {
 /********************* IntDiv ******************************/
 void IntDiv::configureVariables() { _variables[0]->addPotentialDefiner(this); }
 void IntDiv::imposeDomain(Variable* variable) {
-  _imposedDomain->setLower(_variables[1]->lowerBound());
-  _imposedDomain->setUpper(_variables[1]->upperBound());
-  variable->imposeDomain(_imposedDomain.get());
+  _outputDomain->setLower(_variables[1]->lowerBound());
+  _outputDomain->setUpper(_variables[1]->upperBound());
+  variable->imposeDomain(_outputDomain.get());
+
+  for (auto node : variable->getNext()) {
+    auto constraint = dynamic_cast<Constraint*>(node);
+    constraint->refreshImpose();
+  }
 }
 /********************* IntPlus ******************************/
 void IntPlus::configureVariables() {
@@ -194,22 +205,27 @@ void IntPlus::configureVariables() {
 }
 void IntPlus::imposeDomain(Variable* variable) {
   if (variable == _variables[0]) {  // a = c - b
-    _imposedDomain->setLower(_variables[2]->lowerBound() -
-                             _variables[1]->upperBound());
-    _imposedDomain->setUpper(_variables[2]->upperBound() -
-                             _variables[1]->lowerBound());
+    _outputDomain->setLower(_variables[2]->lowerBound() -
+                            _variables[1]->upperBound());
+    _outputDomain->setUpper(_variables[2]->upperBound() -
+                            _variables[1]->lowerBound());
   } else if (variable == _variables[1]) {  // b = c - a
-    _imposedDomain->setLower(_variables[2]->lowerBound() -
-                             _variables[0]->upperBound());
-    _imposedDomain->setUpper(_variables[2]->upperBound() -
-                             _variables[0]->lowerBound());
+    _outputDomain->setLower(_variables[2]->lowerBound() -
+                            _variables[0]->upperBound());
+    _outputDomain->setUpper(_variables[2]->upperBound() -
+                            _variables[0]->lowerBound());
   } else if (variable == _variables[2]) {  // c = a + b
-    _imposedDomain->setLower(_variables[0]->lowerBound() +
-                             _variables[1]->lowerBound());
-    _imposedDomain->setUpper(_variables[0]->upperBound() +
-                             _variables[1]->upperBound());
+    _outputDomain->setLower(_variables[0]->lowerBound() +
+                            _variables[1]->lowerBound());
+    _outputDomain->setUpper(_variables[0]->upperBound() +
+                            _variables[1]->upperBound());
   }
-  variable->imposeDomain(_imposedDomain.get());
+  variable->imposeDomain(_outputDomain.get());
+
+  for (auto node : variable->getNext()) {
+    auto constraint = dynamic_cast<Constraint*>(node);
+    constraint->refreshImpose();
+  }
 }
 /********************* TwoSVarConstraint ******************************/
 void TwoSVarConstraint::loadVariables(const VariableMap& variableMap) {
@@ -328,6 +344,34 @@ bool IntLinEq::canBeImplicit() {
     }
   }
   return true;
+}
+void IntLinEq::imposeDomain(Variable* variable) {
+  // TODO: Verify this whole function
+  auto it = std::find(_variables.begin(), _variables.end(), variable);
+  Int n = it - _variables.begin();
+  Int outCo = stol(_as->elements()[n]->getName());
+  Int lb = 0;
+  Int ub = 0;
+  for (int i = 0; i < _as->elements().size(); i++) {
+    if (i == n) {
+      continue;
+    }
+    Int co = stol(_as->elements()[i]->getName());
+    co = -outCo * co;
+    lb += co < 0 ? co * _variables[i]->upperBound()
+                 : co * _variables[i]->lowerBound();
+    ub += co < 0 ? co * _variables[i]->lowerBound()
+                 : co * _variables[i]->upperBound();
+  }
+  _outputDomain->setLower(lb);
+  _outputDomain->setUpper(ub);
+
+  variable->imposeDomain(_outputDomain.get());
+
+  for (auto node : variable->getNext()) {
+    auto constraint = dynamic_cast<Constraint*>(node);
+    constraint->refreshImpose();
+  }
 }
 /********************* AllDifferent ******************************/
 void AllDifferent::loadVariables(const VariableMap& variableMap) {
