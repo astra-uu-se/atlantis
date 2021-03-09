@@ -78,6 +78,8 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<Inverse>(constraintBox));
   } else if (constraintBox._name == "gecode_int_element") {
     _constraints.add(std::make_shared<Element>(constraintBox));
+  } else if (constraintBox._name == "gecode_circuit") {
+    _constraints.add(std::make_shared<Circuit>(constraintBox));
   } else if (constraintBox._name == "int_le") {
     _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   } else if (constraintBox._name == "int_lin_le") {

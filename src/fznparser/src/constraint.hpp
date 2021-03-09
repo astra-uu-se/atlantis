@@ -45,8 +45,9 @@ class Constraint : public Node {
   bool isImplicit() { return _implicit; }
   bool isInvariant() { return _invariant; }
   Int defInVarCount();
-
   void refreshImpose();
+  void imposeNext(Variable* variable);
+  void imposeAndPropagate(Variable* variable);
 
  protected:
   virtual void loadVariables(const VariableMap& variables) = 0;
@@ -88,127 +89,10 @@ class NonFunctionalConstraint : public Constraint {
   void configureVariables() override {}
 };
 
-class ThreeSVarConstraint : public Constraint {
- public:
-  ThreeSVarConstraint(ConstraintBox constraintBox) : Constraint(constraintBox) {
-    _outputDomain = std::make_shared<IntDomain>();
-  }
-  void loadVariables(const VariableMap& variables) override;
-  void configureVariables() override;
-  std::shared_ptr<IntDomain> _outputDomain;
-};
-/* int_div(var int: a, var int: b, var int: c)
-** Defines: a
-** Depends: b, c
-*/
-class IntDiv : public ThreeSVarConstraint {
- public:
-  IntDiv(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox) {}
-  void configureVariables() override;
-  void imposeDomain(Variable* variable) override;
-};
-/* int_plus(var int: a, var int: b, var int: c)
-** Defines: any
-*/
-class IntPlus : public ThreeSVarConstraint {
- public:
-  IntPlus(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox) {
-    _uniqueTarget = false;
-  }
-  void imposeDomain(Variable* variable) override;
-  void configureVariables() override;
-};
-class TwoSVarConstraint : public Constraint {
- public:
-  TwoSVarConstraint(ConstraintBox constraintBox) : Constraint(constraintBox) {}
-  void loadVariables(const VariableMap& variables) override;
-  void configureVariables() override;
-};
-class IntAbs : public TwoSVarConstraint {
- public:
-  IntAbs(ConstraintBox constraintBox) : TwoSVarConstraint(constraintBox) {}
-};
-
-/* global_cardinality(       array [int] of var int: x,
-**                           array [int] of int: cover,
-**                           array [int] of var int: counts)
-** Defines: all of counts
-** Depends: x
-*/
-class GlobalCardinality : public Constraint {
- public:
-  GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox) {
-    _uniqueTarget = false;
-  }
-  GlobalCardinality(ArrayVariable* x, ArrayVariable* cover,
-                    ArrayVariable* counts);
-  bool split(int index, VariableMap& variables,
-             ConstraintMap& constraints) override;
-  void loadVariables(const VariableMap& variables) override;
-  void configureVariables() override;
-  bool canBeOneWay(Variable* variable) override;
-  bool canBeImplicit() override;
-  void makeImplicit() override;
-
- private:
-  ArrayVariable* _x;
-  ArrayVariable* _cover;  // const array
-  ArrayVariable* _counts;
-};
-
-class IntLinEq : public Constraint {
- public:
-  IntLinEq(ConstraintBox constraintBox) : Constraint(constraintBox) {
-    _uniqueTarget = false;
-    _outputDomain = std::make_shared<IntDomain>();
-  }
-  void loadVariables(const VariableMap& variables) override;
-  void configureVariables() override;
-  bool canBeImplicit() override;
-  void imposeDomain(Variable* variable) override;
-
- private:
-  std::shared_ptr<IntDomain> _outputDomain;
-  ArrayVariable* _as;
-  ArrayVariable* _bs;
-  SingleVariable* _c;
-};
-class AllDifferent : public Constraint {
- public:
-  AllDifferent(ConstraintBox constraintBox) : Constraint(constraintBox) {
-    _uniqueTarget = false;
-    _canBeOneWay = false;
-  }
-  void loadVariables(const VariableMap& variables) override;
-  void configureVariables() override;
-  bool canBeImplicit() override;
-
- private:
-  ArrayVariable* _x;
-};
-class Inverse : public Constraint {
- public:
-  Inverse(ConstraintBox constraintBox) : Constraint(constraintBox) {
-    _uniqueTarget = false;
-  }
-  void loadVariables(const VariableMap& variables) override;
-  void configureVariables() override;
-  bool canBeImplicit() override;
-};
-
-class Element : public Constraint {
- public:
-  Element(ConstraintBox constraintBox) : Constraint(constraintBox) {}
-  void loadVariables(const VariableMap& variables) override;
-  void configureVariables() override;
-};
-class Circuit : public Constraint {
- public:
-  Circuit(ConstraintBox constraintBox) : Constraint(constraintBox) {}
-  void loadVariables(const VariableMap& variables) override;
-  void configureVariables() override;
-  bool canBeImplicit() override;
-
- private:
-  ArrayVariable* _x;
-};
+#include "constraints/alldifferent.hpp"
+#include "constraints/circuit.hpp"
+#include "constraints/element.hpp"
+#include "constraints/global_cardinality.hpp"
+#include "constraints/int_lin_eq.hpp"
+#include "constraints/integer_simple.hpp"
+#include "constraints/inverse.hpp"

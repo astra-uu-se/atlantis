@@ -109,7 +109,7 @@ void Constraint::checkAnnotations(const VariableMap& variableMap) {
 }
 void Constraint::makeOneWayByAnnotation() {
   defineVariable(_annotationDefineVariable);
-  imposeDomain(_annotationDefineVariable);
+  imposeAndPropagate(_annotationDefineVariable);
   for (auto variable : _variables) {
     if (variable != _annotationDefineVariable) {
       addDependency(variable);
@@ -121,7 +121,7 @@ void Constraint::makeOneWay(Variable* variable) {
   assert(std::count(_variables.begin(), _variables.end(), variable));
   clearVariables();
   defineVariable(variable);
-  imposeDomain(variable);
+  imposeAndPropagate(variable);
   for (auto v : _variables) {
     if (variable != v) {
       addDependency(v);
@@ -141,7 +141,6 @@ void Constraint::makeSoft() {
 }
 bool Constraint::canBeImplicit() { return false; }
 bool Constraint::shouldBeImplicit() { return _shouldBeImplicit; }
-
 void Constraint::makeImplicit() {
   assert(canBeImplicit());
   for (auto variable : _variables) {
@@ -176,269 +175,13 @@ void Constraint::refreshImpose() {
     imposeDomain(variable);
   }
 }
-/********************* ThreeSVarConstraint ******************************/
-void ThreeSVarConstraint::loadVariables(const VariableMap& variableMap) {
-  _variables.push_back(getSingleVariable(variableMap, 0));
-  _variables.push_back(getSingleVariable(variableMap, 1));
-  _variables.push_back(getSingleVariable(variableMap, 2));
-}
-void ThreeSVarConstraint::configureVariables() {
-  _variables[2]->addPotentialDefiner(this);
-}
-/********************* IntDiv ******************************/
-void IntDiv::configureVariables() { _variables[0]->addPotentialDefiner(this); }
-void IntDiv::imposeDomain(Variable* variable) {
-  _outputDomain->setLower(_variables[1]->lowerBound());
-  _outputDomain->setUpper(_variables[1]->upperBound());
-  variable->imposeDomain(_outputDomain.get());
-
+void Constraint::imposeNext(Variable* variable) {
   for (auto node : variable->getNext()) {
     auto constraint = dynamic_cast<Constraint*>(node);
     constraint->refreshImpose();
   }
 }
-/********************* IntPlus ******************************/
-void IntPlus::configureVariables() {
-  _variables[0]->addPotentialDefiner(this);
-  _variables[1]->addPotentialDefiner(this);
-  _variables[2]->addPotentialDefiner(this);
-}
-void IntPlus::imposeDomain(Variable* variable) {
-  if (variable == _variables[0]) {  // a = c - b
-    _outputDomain->setLower(_variables[2]->lowerBound() -
-                            _variables[1]->upperBound());
-    _outputDomain->setUpper(_variables[2]->upperBound() -
-                            _variables[1]->lowerBound());
-  } else if (variable == _variables[1]) {  // b = c - a
-    _outputDomain->setLower(_variables[2]->lowerBound() -
-                            _variables[0]->upperBound());
-    _outputDomain->setUpper(_variables[2]->upperBound() -
-                            _variables[0]->lowerBound());
-  } else if (variable == _variables[2]) {  // c = a + b
-    _outputDomain->setLower(_variables[0]->lowerBound() +
-                            _variables[1]->lowerBound());
-    _outputDomain->setUpper(_variables[0]->upperBound() +
-                            _variables[1]->upperBound());
-  }
-  variable->imposeDomain(_outputDomain.get());
-
-  for (auto node : variable->getNext()) {
-    auto constraint = dynamic_cast<Constraint*>(node);
-    constraint->refreshImpose();
-  }
-}
-/********************* TwoSVarConstraint ******************************/
-void TwoSVarConstraint::loadVariables(const VariableMap& variableMap) {
-  _variables.push_back(getSingleVariable(variableMap, 0));
-  _variables.push_back(getSingleVariable(variableMap, 1));
-}
-void TwoSVarConstraint::configureVariables() {
-  _variables[1]->addPotentialDefiner(this);
-}
-/********************* GlobalCardinality ******************************/
-void GlobalCardinality::loadVariables(const VariableMap& variableMap) {
-  _x = getArrayVariable(variableMap, 0);
-  _cover = getArrayVariable(variableMap, 1);
-  _counts = getArrayVariable(variableMap, 2);
-  _variables.push_back(_x);       // x
-  _variables.push_back(_counts);  // counts
-}
-void GlobalCardinality::configureVariables() {
-  _variables[1]->addPotentialDefiner(this);
-}
-bool GlobalCardinality::canBeOneWay(Variable* variable) {
-  if (variable != _variables[1]) {
-    return false;
-  }
-  return _variables[1]->isDefinable();
-}
-bool GlobalCardinality::canBeImplicit() {
-  for (auto variable : _variables) {
-    if (variable->isDefined()) {
-      return false;
-    }
-  }
-  return true;
-}
-void GlobalCardinality::makeImplicit() {
-  assert(canBeImplicit());
-  for (auto variable : _variables) {
-    _defines.insert(variable);
-    auto v = dynamic_cast<ArrayVariable*>(variable);
-    v->defineNotDefinedBy(this);
-  }
-  _implicit = true;
-}
-bool GlobalCardinality::split(int index, VariableMap& variables,
-                              ConstraintMap& constraints) {
-  assert(0 < index && index < _cover->length());
-
-  cleanse();
-
-  std::vector<Variable*> lCoverElements;
-  std::vector<Variable*> lCountsElements;
-  std::vector<Variable*> rCoverElements;
-  std::vector<Variable*> rCountsElements;
-
-  for (int i = 0; i < _cover->length(); i++) {
-    if (i < index) {
-      lCoverElements.push_back(_cover->getElement(i));
-      lCountsElements.push_back(_counts->getElement(i));
-    } else {
-      rCoverElements.push_back(_cover->getElement(i));
-      rCountsElements.push_back(_counts->getElement(i));
-    }
-  }
-
-  ArrayVariable* lCover = dynamic_cast<ArrayVariable*>(
-      variables.add(std::make_shared<ArrayVariable>(lCoverElements)));
-  ArrayVariable* lCounts = dynamic_cast<ArrayVariable*>(
-      variables.add(std::make_shared<ArrayVariable>(lCountsElements)));
-  ArrayVariable* rCover = dynamic_cast<ArrayVariable*>(
-      variables.add(std::make_shared<ArrayVariable>(rCoverElements)));
-  ArrayVariable* rCounts = dynamic_cast<ArrayVariable*>(
-      variables.add(std::make_shared<ArrayVariable>(rCountsElements)));
-
-  constraints.add(std::make_shared<GlobalCardinality>(_x, lCover, lCounts));
-  constraints.add(std::make_shared<GlobalCardinality>(_x, rCover, rCounts));
-  constraints.remove(this);
-
-  return true;
-}
-GlobalCardinality::GlobalCardinality(ArrayVariable* x, ArrayVariable* cover,
-                                     ArrayVariable* counts) {
-  _name = "global_cardinality";
-  _x = x;
-  _cover = cover;
-  _counts = counts;
-  _variables.push_back(_x);
-  _variables.push_back(_counts);
-  configureVariables();
-}
-/********************* IntLinEq ******************************/
-void IntLinEq::loadVariables(const VariableMap& variableMap) {
-  _as = getArrayVariable(variableMap, 0);  // Parameter
-  _bs = getArrayVariable(variableMap, 1);
-  _c = getSingleVariable(variableMap, 2);  // Parameter
-  for (auto variable : _bs->elements()) {
-    _variables.push_back(variable);
-  }
-  // We potentially need to remove _bs from variables.
-}
-void IntLinEq::configureVariables() {
-  for (int i = 0; i < _as->elements().size(); i++) {
-    std::string coefficient = _as->elements()[i]->getName();
-    if (coefficient == "1" || coefficient == "-1") {
-      _bs->elements()[i]->addPotentialDefiner(this);
-    }
-  }
-}
-bool IntLinEq::canBeImplicit() {
-  for (int i = 0; i < _as->elements().size(); i++) {
-    std::string coefficient = _as->elements()[i]->getName();
-    if (!(coefficient == "1" || coefficient == "-1")) {
-      return false;
-    }
-    if (!_bs->elements()[i]->isDefinable()) {
-      return false;
-    }
-  }
-  return true;
-}
-void IntLinEq::imposeDomain(Variable* variable) {
-  // TODO: Verify this whole function
-  auto it = std::find(_variables.begin(), _variables.end(), variable);
-  Int n = it - _variables.begin();
-  Int outCo = stol(_as->elements()[n]->getName());
-  Int lb = 0;
-  Int ub = 0;
-  for (int i = 0; i < _as->elements().size(); i++) {
-    if (i == n) {
-      continue;
-    }
-    Int co = stol(_as->elements()[i]->getName());
-    co = -outCo * co;
-    lb += co < 0 ? co * _variables[i]->upperBound()
-                 : co * _variables[i]->lowerBound();
-    ub += co < 0 ? co * _variables[i]->lowerBound()
-                 : co * _variables[i]->upperBound();
-  }
-  _outputDomain->setLower(lb);
-  _outputDomain->setUpper(ub);
-
-  variable->imposeDomain(_outputDomain.get());
-
-  for (auto node : variable->getNext()) {
-    auto constraint = dynamic_cast<Constraint*>(node);
-    constraint->refreshImpose();
-  }
-}
-/********************* AllDifferent ******************************/
-void AllDifferent::loadVariables(const VariableMap& variableMap) {
-  _x = getArrayVariable(variableMap, 0);  // Parameter
-  for (auto variable : _x->elements()) {
-    _variables.push_back(variable);
-  }
-}
-void AllDifferent::configureVariables() {
-  for (auto variable : _variables) {
-    variable->addPotentialDefiner(this);
-  }
-}
-bool AllDifferent::canBeImplicit() {
-  for (auto variable : _variables) {
-    if (variable->isDefined()) {
-      return false;
-    }
-  }
-  return true;
-}
-/********************* Inverse ******************************/
-void Inverse::loadVariables(const VariableMap& variableMap) {
-  _variables.push_back(getArrayVariable(variableMap, 0));
-  _variables.push_back(getArrayVariable(variableMap, 1));
-}
-void Inverse::configureVariables() {
-  _variables[0]->addPotentialDefiner(this);
-  _variables[0]->addPotentialDefiner(this);
-}
-bool Inverse::canBeImplicit() {
-  for (auto arrayVariable : _variables) {
-    if (!arrayVariable->isDefinable()) {
-      return false;
-    }
-  }
-  return true;
-}
-/********************* Element ******************************/
-void Element::loadVariables(const VariableMap& variableMap) {
-  _variables.push_back(getSingleVariable(variableMap, 0));
-  // Not sure what the second argument does.
-  _variables.push_back(getArrayVariable(variableMap, 2));
-  _variables.push_back(getSingleVariable(variableMap, 3));
-}
-void Element::configureVariables() {
-  _variables[0]->addPotentialDefiner(this);
-  _variables[1]->addPotentialDefiner(this);
-}
-/********************* Circuit ******************************/
-void Circuit::loadVariables(const VariableMap& variableMap) {
-  // Not sure what the first argument does.
-  _x = getArrayVariable(variableMap, 1);
-  for (auto variable : _x->elements()) {
-    _variables.push_back(variable);
-  }
-}
-void Circuit::configureVariables() {
-  for (auto variable : _variables) {
-    variable->addPotentialDefiner(this);
-  }
-}
-bool Circuit::canBeImplicit() {
-  for (auto variable : _variables) {
-    if (variable->isDefined()) {
-      return false;
-    }
-  }
-  return true;
+void Constraint::imposeAndPropagate(Variable* variable) {
+  imposeDomain(variable);
+  imposeNext(variable);
 }

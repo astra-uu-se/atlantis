@@ -1,4 +1,7 @@
 set(PROJECT_NAME fznparser)
+# Set the 'library' name. The library consists of all cpp, hpp, and h files except
+# main in ./src
+set(PROJECT_LIB ${PROJECT_NAME}_lib)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 set(CMAKE_BUILD_TYPE Debug)
@@ -37,19 +40,15 @@ antlr_target(Sample FlatZinc.g4
 # include generated files in project environment
 include_directories(${ANTLR_Sample_OUTPUT_DIR})
 
+# Retrieve all cpp, hpp, and h files in ./src
+file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/src/*.h ${PROJECT_SOURCE_DIR}/src/*.hpp)
+# remove main from the src files
+list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/main.cpp)
+
+# The src files make up the library
+add_library(${PROJECT_LIB} ${SRC_FILES})
 
 # add generated grammar to demo binary target
-add_executable(demo src/main.cpp
-                    src/structure.cpp
-                    src/model.cpp
-                    src/constraint.cpp
-                    src/variable.cpp
-                    src/statistics.cpp
-                    src/constraintbox.cpp
-                    src/FznVisitor.cpp
-                    src/maps.cpp
-                    src/structure_scheme_1.cpp
+add_executable(${PROJECT_NAME} src/main.cpp
                ${ANTLR_Sample_CXX_OUTPUTS})
-target_link_libraries(demo antlr4_static)
-
-
+target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB} antlr4_static)
