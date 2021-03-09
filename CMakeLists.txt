@@ -43,18 +43,9 @@ include_directories(${COMMON_INCLUDES})
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/include/*.h ${PROJECT_SOURCE_DIR}/include/*.hpp)
 # remove main from the src files
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/main.cpp)
-# remove fznparser files from the src files
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/main.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/FznVisitor.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/structure.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/variable.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/statistics.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/constraintbox.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/constraint.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/maps.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/model.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/fznparser/src/structure_scheme_1.cpp)
 
+# remove fznparser files from the src files
+list(FILTER SRC_FILES EXCLUDE REGEX ${PROJECT_SOURCE_DIR}/src/fznparser/*)
 
 ################################
 # Normal Libraries & Executables
