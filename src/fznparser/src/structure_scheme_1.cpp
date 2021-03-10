@@ -4,7 +4,7 @@
 void StructureScheme1::findStructure() {
   defineByImplicit();
   defineImplicit();
-  defineAnnotated();
+  defineAnnotated();  // Ignores if the constraintobject actually can define.
   defineFromObjective();
   defineUnique();
   defineRest();

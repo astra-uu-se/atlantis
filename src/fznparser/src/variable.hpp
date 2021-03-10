@@ -1,8 +1,8 @@
-#pragma once
-
-#include "structure.hpp"
+#ifndef __VARIABLE_HPP_INCLUDED__
+#define __VARIABLE_HPP_INCLUDED__
 
 class VariableMap;
+#include "structure.hpp"
 
 class Variable : public Node {
  public:
@@ -15,8 +15,8 @@ class Variable : public Node {
 
   std::string getLabel() override { return _name; };
   bool breakCycle() override { return false; };
-  virtual void addConstraint(Node* constraint) = 0;
-  virtual void removeConstraint(Node* constraint) = 0;
+  virtual void addConstraint(Constraint* constraint) = 0;
+  virtual void removeConstraint(Constraint* constraint) = 0;
   virtual void defineBy(Constraint* constraint) = 0;
   virtual void removeDefinition() = 0;
   virtual void addPotentialDefiner(Constraint* constraint) = 0;
@@ -39,6 +39,7 @@ class Variable : public Node {
   virtual std::set<Constraint*> potentialDefiners() {
     return _potentialDefiners;
   };
+  virtual std::set<Constraint*> getNextConstraints() = 0;
 
   bool _isDefined;
 
@@ -47,7 +48,7 @@ class Variable : public Node {
   std::string _name;
   Constraint* _definedBy = nullptr;
   std::vector<Annotation> _annotations;
-  std::set<Node*> _nextConstraints;
+  std::set<Constraint*> _nextConstraints;
   std::set<Constraint*> _potentialDefiners;
 };
 
@@ -62,9 +63,9 @@ class SingleVariable : public Variable {
   };
   void init(VariableMap& variables) override{};
 
-  std::set<Node*> getNext() override { return _nextConstraints; };
-  void addConstraint(Node* constraint) override;
-  void removeConstraint(Node* constraint) override;
+  std::set<Node*> getNext() override;
+  void addConstraint(Constraint* constraint) override;
+  void removeConstraint(Constraint* constraint) override;
   void defineBy(Constraint* constraint) override;
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
@@ -77,6 +78,7 @@ class SingleVariable : public Variable {
   Int lowerBound() override;
   Int upperBound() override;
   Int definedCount() override { return _isDefined ? 1 : 0; }
+  std::set<Constraint*> getNextConstraints() override;
 
  private:
   Domain* _imposedDomain;
@@ -94,8 +96,8 @@ class ArrayVariable : public Variable {
   void init(VariableMap& variables) override;
 
   std::set<Node*> getNext() override;
-  void addConstraint(Node* constraint) override;
-  void removeConstraint(Node* constraint) override;
+  void addConstraint(Constraint* constraint) override;
+  void removeConstraint(Constraint* constraint) override;
   void defineBy(Constraint* constraint) override;
   void defineNotDefinedBy(Constraint* constraint);
   void removeDefinition() override;
@@ -112,6 +114,7 @@ class ArrayVariable : public Variable {
   Int length() override;
   Variable* getElement(Int n);
   Int definedCount() override;
+  std::set<Constraint*> getNextConstraints() override;
 
  private:
   std::vector<Expression> _expressions;
@@ -125,8 +128,8 @@ class Literal : public SingleVariable {
 
   std::set<Node*> getNext() override;
   bool isDefinable() override { return false; };
-  void addConstraint(Node* constraint) override{};
-  void removeConstraint(Node* constraint) override{};
+  void addConstraint(Constraint* constraint) override{};
+  void removeConstraint(Constraint* constraint) override{};
   void defineBy(Constraint* constraint) override{};
   void removeDefinition() override{};
   void addPotentialDefiner(Constraint* constraint) override{};
@@ -137,6 +140,7 @@ class Literal : public SingleVariable {
   Int domainSize() override { return 0; }
   Int lowerBound() override;
   Int upperBound() override;
+  std::set<Constraint*> getNextConstraints() override;
 };
 class Parameter : public Literal {
  public:
@@ -149,3 +153,7 @@ class Parameter : public Literal {
  private:
   std::string _value;
 };
+
+#include "constraint.hpp"
+#include "maps.hpp"
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __STATISTICS_HPP_INCLUDED__
+#define __STATISTICS_HPP_INCLUDED__
 #include "model.hpp"
 
 class Statistics {
@@ -12,3 +13,5 @@ class Statistics {
 
   Model* _model;
 };
+
+#endif

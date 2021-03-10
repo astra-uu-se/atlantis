@@ -1,4 +1,6 @@
-#pragma once
+#ifndef __FZN_VISITOR_H_INCLUDED__
+#define __FZN_VISITOR_H_INCLUDED__
+
 #include "FlatZincBaseVisitor.h"
 #include "model.hpp"
 
@@ -19,3 +21,5 @@ class FznVisitor : FlatZincBaseVisitor {
       FlatZincParser::ParArrayLiteralContext *ctx);
   // antlrcpp::Any visitArrayVarType(FlatZincParser::ArrayVarTypeContext *ctx);
 };
+
+#endif

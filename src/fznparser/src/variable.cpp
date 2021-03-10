@@ -2,8 +2,6 @@
 
 #include <string>
 
-#include "maps.hpp"
-
 #define MAX_DOMAIN_SIZE 2147483647
 #define MIN_DOMAIN_SIZE -2147483647
 
@@ -16,10 +14,10 @@ bool Variable::compareDomain(Variable* v1, Variable* v2) {
   return v1->domainSize() > v2->domainSize();
 }
 /*******************SINGLEVARIABLE****************************/
-void SingleVariable::addConstraint(Node* constraint) {
+void SingleVariable::addConstraint(Constraint* constraint) {
   _nextConstraints.insert(constraint);
 }
-void SingleVariable::removeConstraint(Node* constraint) {
+void SingleVariable::removeConstraint(Constraint* constraint) {
   _nextConstraints.erase(constraint);
 }
 void SingleVariable::defineBy(Constraint* constraint) {
@@ -56,6 +54,16 @@ Int SingleVariable::lowerBound() {
 Int SingleVariable::upperBound() {
   return hasImposedDomain() ? _imposedDomain->upperBound()
                             : _domain->upperBound();
+}
+std::set<Node*> SingleVariable::getNext() {
+  std::set<Node*> next;
+  for (auto c : _nextConstraints) {
+    next.insert(static_cast<Node*>(c));
+  }
+  return next;
+}
+std::set<Constraint*> SingleVariable::getNextConstraints() {
+  return _nextConstraints;
 }
 /*******************ARRAYVARIABLE****************************/
 ArrayVariable::ArrayVariable(std::vector<Variable*> elements) {
@@ -94,12 +102,21 @@ std::set<Node*> ArrayVariable::getNext() {
   }
   return nodes;
 }
-void ArrayVariable::addConstraint(Node* constraint) {
+std::set<Constraint*> ArrayVariable::getNextConstraints() {
+  std::set<Constraint*> next;
+  for (auto e : elements()) {
+    for (auto c : e->getNextConstraints()) {
+      next.insert(c);
+    }
+  }
+  return next;
+}
+void ArrayVariable::addConstraint(Constraint* constraint) {
   for (auto e : _elements) {
     e->addConstraint(constraint);
   }
 }
-void ArrayVariable::removeConstraint(Node* constraint) {
+void ArrayVariable::removeConstraint(Constraint* constraint) {
   for (auto e : _elements) {
     e->removeConstraint(constraint);
   }
@@ -195,6 +212,10 @@ Literal::Literal(std::string value) {
 void Literal::init(VariableMap& variables) {}
 std::set<Node*> Literal::getNext() {
   std::set<Node*> s;
+  return s;
+}
+std::set<Constraint*> Literal::getNextConstraints() {
+  std::set<Constraint*> s;
   return s;
 }
 Int Literal::lowerBound() { return std::stoi(_name); }

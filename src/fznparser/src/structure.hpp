@@ -1,4 +1,6 @@
-#pragma once
+#ifndef __STRUCTURE_HPP_INCLUDED__
+#define __STRUCTURE_HPP_INCLUDED__
+
 #include <cassert>
 #include <iostream>
 #include <map>
@@ -90,3 +92,5 @@ class Node {
   virtual std::string getLabel() = 0;
   virtual bool breakCycle() = 0;
 };
+
+#endif

@@ -1,15 +1,10 @@
-#pragma once
+#ifndef __MODEL_HPP_INCLUDED__
+#define __MODEL_HPP_INCLUDED__
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "constraint.hpp"
-#include "maps.hpp"
-#include "structure.hpp"
-#include "variable.hpp"
-
-class VariableMap;
-class ConstraintMap;
 
 class Model {
  public:
@@ -32,3 +27,5 @@ class Model {
   ConstraintMap _constraints;
   Variable* _objective = nullptr;
 };
+
+#endif

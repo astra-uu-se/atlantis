@@ -1,7 +1,6 @@
-#pragma once
-
+#ifndef __STRUCTURE_SCHEME_1_HPP_INCLUDED__
+#define __STRUCTURE_SCHEME_1_HPP_INCLUDED__
 #include "model.hpp"
-#include "structure.hpp"
 #include "variable.hpp"
 
 class StructureScheme1 {
@@ -30,3 +29,5 @@ class StructureScheme1 {
   Model* _m;
   int _cyclesRemoved = 0;
 };
+
+#endif

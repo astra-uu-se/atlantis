@@ -1,19 +1,10 @@
-#pragma once
-#include "structure.hpp"
-#include "variable.hpp"
+#ifndef __CONSTRAINTBOX_HPP_INCLUDED__
+#define __CONSTRAINTBOX_HPP_INCLUDED__
+#include <cstdint>
+#include <string>
+#include <vector>
 
-class ConstraintBox {
- public:
-  ConstraintBox() = default;
-  ConstraintBox(std::string name, std::vector<Expression> expressions,
-                std::vector<Annotation> annotations);
-  void prepare(VariableMap& variables);
-  bool hasDefineAnnotation();
-  bool hasImplicitAnnotation();
-  std::string getAnnotationVariableName();
-  void setId(Int id);
-  Int _id;
-  std::string _name;
-  std::vector<Expression> _expressions;
-  std::vector<Annotation> _annotations;
-};
+#include "maps.hpp"
+#include "structure.hpp"
+
+#endif

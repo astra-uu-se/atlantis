@@ -1,11 +1,9 @@
+
 #include "model.hpp"
 
 #include <unistd.h>
 
 #include <limits>
-
-#include "constraint.hpp"
-#include "maps.hpp"
 
 Model::Model() {}
 void Model::init() {
@@ -103,8 +101,8 @@ void Model::addConstraint(ConstraintBox constraintBox) {
   } else if (constraintBox._name == "bool_lt") {
     _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   } else {
-    // std::cerr << "Constraint not supported: " + constraintBox._name
-    //           << std::endl;
+    std::cerr << "Constraint not supported: " + constraintBox._name
+              << std::endl;
     _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   }
 }

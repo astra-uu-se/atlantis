@@ -1,4 +1,6 @@
-#pragma once
+#ifndef __CONSTRAINT_HPP_INCLUDED__
+#define __CONSTRAINT_HPP_INCLUDED__
+
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -8,10 +10,29 @@
 #include <string>
 #include <vector>
 
-#include "constraintbox.hpp"
-#include "maps.hpp"
 #include "structure.hpp"
-#include "variable.hpp"
+class Variable;
+class ArrayVariable;
+class SingleVariable;
+class ConstraintBox;
+class VariableMap;
+class ConstraintMap;
+
+class ConstraintBox {
+ public:
+  ConstraintBox() = default;
+  ConstraintBox(std::string name, std::vector<Expression> expressions,
+                std::vector<Annotation> annotations);
+  void prepare(VariableMap& variables);
+  bool hasDefineAnnotation();
+  bool hasImplicitAnnotation();
+  std::string getAnnotationVariableName();
+  void setId(Int id);
+  Int _id;
+  std::string _name;
+  std::vector<Expression> _expressions;
+  std::vector<Annotation> _annotations;
+};
 
 class Constraint : public Node {
  public:
@@ -85,7 +106,9 @@ class Constraint : public Node {
 class NonFunctionalConstraint : public Constraint {
  public:
   NonFunctionalConstraint(ConstraintBox constraintBox)
-      : Constraint(constraintBox) {}
+      : Constraint(constraintBox) {
+    bool _canBeOneWay = false;
+  }
   void loadVariables(const VariableMap& variables) override {}
   void configureVariables() override {}
 };
@@ -97,3 +120,6 @@ class NonFunctionalConstraint : public Constraint {
 #include "constraints/int_lin_eq.hpp"
 #include "constraints/integer_simple.hpp"
 #include "constraints/inverse.hpp"
+#include "variable.hpp"
+
+#endif

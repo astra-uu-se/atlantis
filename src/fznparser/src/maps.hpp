@@ -1,12 +1,17 @@
-#pragma once
+#ifndef __MAPS_HPP_INCLUDED__
+#define __MAPS_HPP_INCLUDED__
 
 #include <algorithm>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
 
-#include "structure.hpp"
-#include "variable.hpp"
+class Constraint;
 
 // Lägg till soft constraint lista
-class Variable;
+#include "structure.hpp"
+#include "variable.hpp"
 
 class VariableMap {
  public:
@@ -37,3 +42,5 @@ class ConstraintMap {
   std::vector<Constraint*> _constraintArray;
   std::map<Constraint*, std::shared_ptr<Constraint>> _constraints;
 };
+
+#endif
