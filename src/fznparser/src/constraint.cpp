@@ -121,13 +121,13 @@ void Constraint::makeOneWay(Variable* variable) {
   assert(std::count(_variables.begin(), _variables.end(), variable));
   clearVariables();
   defineVariable(variable);
-  imposeAndPropagate(variable);
   for (auto v : _variables) {
     if (variable != v) {
       addDependency(v);
     }
   }
   _invariant = true;
+  imposeAndPropagate(variable);
 }
 void Constraint::cleanse() {
   clearVariables();
@@ -136,6 +136,16 @@ void Constraint::cleanse() {
   }
 }
 void Constraint::makeSoft() {
+  for (auto variable : _defines) {
+    variable->unImposeDomain();
+    for (auto node : variable->getNext()) {
+      auto constraint = dynamic_cast<Constraint*>(node);
+      assert(constraint);
+      std::set<Constraint*> visited;
+      constraint->refreshAndPropagate(visited);
+    }
+  }
+
   clearVariables();
   _invariant = false;
 }
@@ -143,10 +153,12 @@ bool Constraint::canBeImplicit() { return false; }
 bool Constraint::shouldBeImplicit() { return _shouldBeImplicit; }
 void Constraint::makeImplicit() {
   assert(canBeImplicit());
+
   for (auto variable : _variables) {
     defineVariable(variable);
   }
   _implicit = true;
+  _invariant = false;
 }
 Int Constraint::defInVarCount() {
   Int defInVarCount = 0;
@@ -170,18 +182,30 @@ void Constraint::init(const VariableMap& variableMap) {
   configureVariables();
   checkAnnotations(variableMap);
 }
-void Constraint::refreshImpose() {
+void Constraint::refreshNext(std::set<Constraint*>& visited) {
   for (auto variable : _defines) {
-    imposeDomain(variable);
-  }
-}
-void Constraint::imposeNext(Variable* variable) {
-  for (auto node : variable->getNext()) {
-    auto constraint = dynamic_cast<Constraint*>(node);
-    constraint->refreshImpose();
+    for (auto node : variable->getNext()) {
+      auto constraint = dynamic_cast<Constraint*>(node);
+      constraint->refreshAndPropagate(visited);
+    }
   }
 }
 void Constraint::imposeAndPropagate(Variable* variable) {
-  imposeDomain(variable);
-  imposeNext(variable);
+  std::set<Constraint*> visited;
+  visited.insert(this);
+  if (imposeDomain(variable)) {
+    for (auto node : variable->getNext()) {
+      auto constraint = dynamic_cast<Constraint*>(node);
+      assert(constraint);
+      constraint->refreshAndPropagate(visited);
+    }
+  }
+}
+
+void Constraint::refreshAndPropagate(std::set<Constraint*>& visited) {
+  if (visited.count(this)) return;
+  if (isInvariant() && refreshDomain()) {
+    visited.insert(this);
+    refreshNext(visited);
+  }
 }

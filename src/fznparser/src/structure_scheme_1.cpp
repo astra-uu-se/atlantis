@@ -2,13 +2,22 @@
 #define TRACK true
 
 void StructureScheme1::findStructure() {
+  defineByImplicit();
   defineImplicit();
   defineAnnotated();
   defineFromObjective();
   defineUnique();
   defineRest();
-  defineByImplicit();
   removeCycles();
+  updateDomains();
+}
+void StructureScheme1::updateDomains() {
+  for (auto constraint : _m->constraints()) {
+    if (constraint->isInvariant()) {
+      std::set<Constraint*> visited;
+      constraint->refreshAndPropagate(visited);
+    }
+  }
 }
 void StructureScheme1::defineAnnotated() {
   for (auto c : _m->constraints()) {
@@ -103,6 +112,7 @@ void StructureScheme1::defineRest() {
     if (variable->isDefinable()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
+          std::cout << constraint->getLabel() << std::endl;
           constraint->makeOneWay(variable);
           break;
         }
@@ -116,6 +126,7 @@ void StructureScheme1::defineByImplicit() {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->canBeImplicit()) {
           constraint->makeImplicit();
+          std::cout << constraint->getLabel() << std::endl;
           break;
         }
       }

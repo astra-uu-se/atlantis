@@ -45,7 +45,7 @@ class Variable : public Node {
  protected:
   bool _hasImposedDomain = false;
   std::string _name;
-  Constraint* _definedBy;
+  Constraint* _definedBy = nullptr;
   std::vector<Annotation> _annotations;
   std::set<Node*> _nextConstraints;
   std::set<Constraint*> _potentialDefiners;

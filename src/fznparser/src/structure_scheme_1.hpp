@@ -24,6 +24,7 @@ class StructureScheme1 {
   void removeCycles();
   void removeCycle(std::vector<Node*> visited);
   int cyclesRemoved() { return _cyclesRemoved; }
+  void updateDomains();
 
  private:
   Model* _m;

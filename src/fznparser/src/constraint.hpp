@@ -45,9 +45,12 @@ class Constraint : public Node {
   bool isImplicit() { return _implicit; }
   bool isInvariant() { return _invariant; }
   Int defInVarCount();
-  void refreshImpose();
-  void imposeNext(Variable* variable);
-  void imposeAndPropagate(Variable* variable);
+
+  virtual bool imposeDomain(Variable* variable) { return false; }
+  virtual bool refreshDomain() { return false; }
+  void refreshNext(std::set<Constraint*>& visisted);
+  virtual void imposeAndPropagate(Variable* variable);
+  virtual void refreshAndPropagate(std::set<Constraint*>& visisted);
 
  protected:
   virtual void loadVariables(const VariableMap& variables) = 0;
@@ -65,8 +68,6 @@ class Constraint : public Node {
   void removeDependency(Variable* variable);
   void clearVariables();
   void cleanse();
-
-  virtual void imposeDomain(Variable* variable) {}
 
   std::string _name;
   ConstraintBox _constraintBox;

@@ -10,7 +10,9 @@ class IntLinEq : public Constraint {
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeImplicit() override;
-  void imposeDomain(Variable* variable) override;
+  bool imposeDomain(Variable* variable) override;
+  bool refreshDomain() override;
+  std::pair<Int, Int> getBounds(Variable* variable);
 
  private:
   std::shared_ptr<IntDomain> _outputDomain;

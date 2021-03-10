@@ -20,9 +20,13 @@ class GlobalCardinality : public Constraint {
   bool canBeOneWay(Variable* variable) override;
   bool canBeImplicit() override;
   void makeImplicit() override;
-  void imposeDomain();
+  void imposeAndPropagate(Variable* variable) override;
+  void refreshAndPropagate(std::set<Constraint*>& visited) override;
+  std::pair<Int, Int> getBounds(Int n);
+  void initDomains();
 
  private:
+  std::vector<std::shared_ptr<IntDomain>> _outputDomains;
   ArrayVariable* _x;
   ArrayVariable* _cover;  // const array
   ArrayVariable* _counts;
