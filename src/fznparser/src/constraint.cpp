@@ -80,7 +80,7 @@ void Constraint::removeDependency(Variable* variable) {
 }
 void Constraint::clearVariables() {
   for (auto variable : _variables) {
-    if (variable->definedBy() == this) {
+    if (variable->isDefined() && variable->definedBy() == this) {
       unDefineVariable(variable);
     }
     removeDependency(variable);

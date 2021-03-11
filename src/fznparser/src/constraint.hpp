@@ -44,7 +44,7 @@ class Constraint : public Node {
 
   std::set<Node*> getNext() override;
   std::string getLabel() override;
-  bool breakCycle() override;
+  bool breakCycle();
 
   void makeOneWayByAnnotation();
   void makeOneWay(Variable* variable);

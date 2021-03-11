@@ -1,6 +1,22 @@
 #include "statistics.hpp"
 
 Statistics::Statistics(Model* model) { _model = model; }
+int Statistics::variableCount() {
+  int n = 0;
+  for (auto variable : _model->variables()) {
+    n += variable->count();
+  }
+  return n;
+}
+int Statistics::definedCount() {
+  int n = 0;
+  for (auto variable : _model->variables()) {
+    if (variable->isDefined()) {
+      n += variable->count();
+    }
+  }
+  return n;
+}
 void Statistics::countDefinedVariables(bool labels) {
   std::cout << "=========VARIABLES=========" << std::endl;
   if (labels) {
@@ -8,9 +24,9 @@ void Statistics::countDefinedVariables(bool labels) {
   }
   std::cout << "===========================" << std::endl;
   std::cout << "Defined:\t";
-  std::cout << _model->definedCount() << std::endl;
+  std::cout << definedCount() << std::endl;
   std::cout << "Total:\t\t";
-  std::cout << _model->variableCount() << std::endl;
+  std::cout << variableCount() << std::endl;
   std::cout << "===========================" << std::endl;
 }
 void Statistics::variablesDefinedBy() {

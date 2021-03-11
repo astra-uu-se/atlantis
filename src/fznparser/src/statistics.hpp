@@ -10,6 +10,8 @@ class Statistics {
   // void cyclesRemoved();
   void allStats(bool labels);
   void constraints(bool labels);
+  int variableCount();
+  int definedCount();
 
   Model* _model;
 };

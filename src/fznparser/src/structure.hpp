@@ -90,7 +90,6 @@ class Node {
   virtual ~Node() = default;
   virtual std::set<Node*> getNext() = 0;
   virtual std::string getLabel() = 0;
-  virtual bool breakCycle() = 0;
 };
 
 #endif

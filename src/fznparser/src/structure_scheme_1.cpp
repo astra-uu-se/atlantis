@@ -89,7 +89,7 @@ void StructureScheme1::defineFrom(Variable* variable) {
 }
 void StructureScheme1::defineFromObjective() {
   if (_m->objective()) {
-    defineFromWithImplicit(_m->objective());
+    defineFromWithImplicit(_m->objective().value());
   } else {
     std::cerr << "No objective exists\n";
   }

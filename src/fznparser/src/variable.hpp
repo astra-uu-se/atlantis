@@ -9,12 +9,11 @@ class Variable : public Node {
   Variable() = default;
   Variable(std::string name, std::vector<Annotation> annotations);
   virtual ~Variable() = default;
-  virtual void init(VariableMap& variables) = 0;
+  virtual void init(VariableMap& variables){};
 
   static bool compareDomain(Variable* v1, Variable* v2);
 
   std::string getLabel() override { return _name; };
-  bool breakCycle() override { return false; };
   virtual void addConstraint(Constraint* constraint) = 0;
   virtual void removeConstraint(Constraint* constraint) = 0;
   virtual void defineBy(Constraint* constraint) = 0;
@@ -29,24 +28,21 @@ class Variable : public Node {
   virtual Int lowerBound() = 0;
   virtual void imposeDomain(Domain* domain) = 0;
   virtual void unImposeDomain() = 0;
-  bool hasImposedDomain() { return _hasImposedDomain; }
+  virtual bool hasImposedDomain() = 0;
 
   virtual Int count() { return 0; };
   virtual Int definedCount() { return 0; };
-  virtual bool isDefined() { return _isDefined; };
+  virtual bool isDefined() { return _definedBy.has_value(); };
   virtual std::string getName() { return _name; };
-  virtual Constraint* definedBy() { return _definedBy; };
+  virtual Constraint* definedBy() { return _definedBy.value(); };
   virtual std::set<Constraint*> potentialDefiners() {
     return _potentialDefiners;
   };
   virtual std::set<Constraint*> getNextConstraints() = 0;
 
-  bool _isDefined;
-
  protected:
-  bool _hasImposedDomain = false;
   std::string _name;
-  Constraint* _definedBy = nullptr;
+  std::optional<Constraint*> _definedBy;
   std::vector<Annotation> _annotations;
   std::set<Constraint*> _nextConstraints;
   std::set<Constraint*> _potentialDefiners;
@@ -57,10 +53,7 @@ class SingleVariable : public Variable {
   SingleVariable() = default;
   SingleVariable(std::string name, std::vector<Annotation> annotations,
                  std::shared_ptr<Domain> domain)
-      : Variable(name, annotations) {
-    _domain = domain;
-    _imposedDomain = domain.get();
-  };
+      : Variable{name, annotations}, _domain{domain} {};
   void init(VariableMap& variables) override{};
 
   std::set<Node*> getNext() override;
@@ -70,18 +63,21 @@ class SingleVariable : public Variable {
   void removeDefinition() override;
   void addPotentialDefiner(Constraint* constraint) override;
   void removePotentialDefiner(Constraint* constraint) override;
-  Int count() override { return 1; };
-  bool isDefinable() override { return !_isDefined; };
+  Int count() override { return 1; }
+  bool isDefinable() override {
+    return !_definedBy.has_value();
+  }  // TODO: Change
   void imposeDomain(Domain* domain) override;
   void unImposeDomain() override;
+  bool hasImposedDomain() override { return _imposedDomain.has_value(); }
   Int domainSize() override;
   Int lowerBound() override;
   Int upperBound() override;
-  Int definedCount() override { return _isDefined ? 1 : 0; }
+  Int definedCount() override { return _definedBy.has_value() ? 1 : 0; }
   std::set<Constraint*> getNextConstraints() override;
 
  private:
-  Domain* _imposedDomain;
+  std::optional<Domain*> _imposedDomain;
   std::shared_ptr<Domain> _domain;
 };
 
@@ -115,6 +111,7 @@ class ArrayVariable : public Variable {
   Variable* getElement(Int n);
   Int definedCount() override;
   std::set<Constraint*> getNextConstraints() override;
+  bool hasImposedDomain() override { return false; }
 
  private:
   std::vector<Expression> _expressions;
@@ -141,6 +138,7 @@ class Literal : public SingleVariable {
   Int lowerBound() override;
   Int upperBound() override;
   std::set<Constraint*> getNextConstraints() override;
+  bool hasImposedDomain() override { return false; }
 };
 class Parameter : public Literal {
  public:

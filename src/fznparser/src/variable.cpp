@@ -2,13 +2,9 @@
 
 #include <string>
 
-#define MAX_DOMAIN_SIZE 2147483647
-#define MIN_DOMAIN_SIZE -2147483647
-
 Variable::Variable(std::string name, std::vector<Annotation> annotations) {
   _name = name;
   _annotations = annotations;
-  _isDefined = false;
 }
 bool Variable::compareDomain(Variable* v1, Variable* v2) {
   return v1->domainSize() > v2->domainSize();
@@ -21,14 +17,10 @@ void SingleVariable::removeConstraint(Constraint* constraint) {
   _nextConstraints.erase(constraint);
 }
 void SingleVariable::defineBy(Constraint* constraint) {
-  assert(!_isDefined);
-  _definedBy = constraint;
-  _isDefined = true;
+  assert(!_definedBy.has_value());
+  _definedBy.emplace(constraint);
 }
-void SingleVariable::removeDefinition() {
-  _definedBy = nullptr;
-  _isDefined = false;
-}
+void SingleVariable::removeDefinition() { _definedBy.reset(); }
 void SingleVariable::addPotentialDefiner(Constraint* constraint) {
   _potentialDefiners.insert(constraint);
 }
@@ -36,23 +28,21 @@ void SingleVariable::removePotentialDefiner(Constraint* constraint) {
   _potentialDefiners.erase(constraint);
 }
 void SingleVariable::imposeDomain(Domain* domain) {
-  _imposedDomain = domain;
-  _hasImposedDomain = true;
+  _imposedDomain.emplace(domain);
 }
 void SingleVariable::unImposeDomain() {
-  assert(_hasImposedDomain);
-  _imposedDomain = nullptr;
-  _hasImposedDomain = false;
+  assert(hasImposedDomain());
+  _imposedDomain.reset();
 }
 Int SingleVariable::domainSize() {
-  return hasImposedDomain() ? _imposedDomain->size() : _domain->size();
+  return hasImposedDomain() ? _imposedDomain.value()->size() : _domain->size();
 }
 Int SingleVariable::lowerBound() {
-  return hasImposedDomain() ? _imposedDomain->lowerBound()
+  return hasImposedDomain() ? _imposedDomain.value()->lowerBound()
                             : _domain->lowerBound();
 }
 Int SingleVariable::upperBound() {
-  return hasImposedDomain() ? _imposedDomain->upperBound()
+  return hasImposedDomain() ? _imposedDomain.value()->upperBound()
                             : _domain->upperBound();
 }
 std::set<Node*> SingleVariable::getNext() {
@@ -77,7 +67,6 @@ ArrayVariable::ArrayVariable(std::vector<Variable*> elements) {
   name = name + "]";
   _elements = elements;
   _name = name;
-  _isDefined = false;
 }
 void ArrayVariable::init(VariableMap& variables) {
   for (auto e : _expressions) {
@@ -125,8 +114,7 @@ void ArrayVariable::defineBy(Constraint* constraint) {
   for (auto e : _elements) {
     e->defineBy(constraint);
   }
-  _definedBy = constraint;
-  _isDefined = true;
+  _definedBy.emplace(constraint);
 }
 void ArrayVariable::defineNotDefinedBy(Constraint* constraint) {
   for (auto e : _elements) {
@@ -134,14 +122,13 @@ void ArrayVariable::defineNotDefinedBy(Constraint* constraint) {
       e->defineBy(constraint);
     }
   }
-  _definedBy = constraint;
-  _isDefined = true;
+  _definedBy.emplace(constraint);
 }
 void ArrayVariable::removeDefinition() {
   for (auto e : _elements) {
     e->removeDefinition();
   }
-  _isDefined = false;
+  _definedBy.reset();
 }
 void ArrayVariable::addPotentialDefiner(Constraint* constraint) {
   _potentialDefiners.insert(constraint);
@@ -151,7 +138,7 @@ void ArrayVariable::removePotentialDefiner(Constraint* constraint) {
 }
 std::vector<Variable*> ArrayVariable::elements() { return _elements; }
 bool ArrayVariable::isDefinable() {
-  if (_isDefined) return false;
+  if (_definedBy.has_value()) return false;
   for (auto e : _elements) {
     if (!e->isDefinable()) {
       return false;
@@ -205,10 +192,7 @@ Int ArrayVariable::definedCount() {
   return c;
 }
 /*******************LITERAL****************************/
-Literal::Literal(std::string value) {
-  _name = value;
-  _isDefined = false;
-}
+Literal::Literal(std::string value) { _name = value; }
 void Literal::init(VariableMap& variables) {}
 std::set<Node*> Literal::getNext() {
   std::set<Node*> s;

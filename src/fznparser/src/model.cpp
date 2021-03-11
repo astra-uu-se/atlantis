@@ -31,31 +31,11 @@ std::vector<Variable*> Model::domSortVariables() {
   return sorted;
 }
 
-int Model::variableCount() {
-  int n = 0;
-  for (auto variable : variables()) {
-    n += variable->count();
-  }
-  return n;
-}
-int Model::definedCount() {
-  int n = 0;
-  for (auto variable : variables()) {
-    if (variable->isDefined()) {
-      n += variable->count();
-    }
-  }
-  return n;
-}
 void Model::addVariable(std::shared_ptr<Variable> variable) {
   _variables.add(variable);
 }
 void Model::addObjective(std::string objective) {
   _objective = _variables.find(objective);
-}
-void Model::printNode(std::string name) {
-  Node* node = _variables.find(name);
-  std::cout << node->getLabel() << std::endl;
 }
 void Model::addConstraint(ConstraintBox constraintBox) {
   constraintBox.prepare(_variables);
