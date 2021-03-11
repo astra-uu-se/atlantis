@@ -11,10 +11,12 @@ void IntLinEq::loadVariables(const VariableMap& variableMap) {
   for (auto variable : _bs->elements()) {
     _variables.push_back(variable);
   }
-  // We potentially need to remove _bs from variables.
 }
 void IntLinEq::configureVariables() {
   for (int i = 0; i < _as->elements().size(); i++) {
+    if (!_bs->elements()[i]->isDefinable()) {
+      continue;
+    }
     std::string coefficient = _as->elements()[i]->getName();
     if (coefficient == "1" || coefficient == "-1") {
       _bs->elements()[i]->addPotentialDefiner(this);
@@ -36,14 +38,14 @@ bool IntLinEq::canBeImplicit() {
 bool IntLinEq::imposeDomain(Variable* variable) {
   std::cout << "====================" << std::endl;
   std::cout << "SETTING DOMAIN" << std::endl;
-  std::cout << this->getLabel() << std::endl;
-  std::cout << "VAR: " << (*_defines.begin())->getLabel() << std::endl;
+  std::cout << this->getName() << std::endl;
+  std::cout << "VAR: " << (*_defines.begin())->getName() << std::endl;
   auto bounds = getBounds(variable);
   std::cout << "====================" << std::endl;
   _outputDomain->setLower(bounds.first);
   _outputDomain->setUpper(bounds.second);
   variable->imposeDomain(_outputDomain.get());
-  std::cout << "SET VAR: " << (*_defines.begin())->getLabel() << std::endl;
+  std::cout << "SET VAR: " << (*_defines.begin())->getName() << std::endl;
   std::cout << "TO:" << std::endl;
   std::cout << "LB: " << bounds.first << std::endl;
   std::cout << "UB: " << bounds.second << std::endl;
@@ -53,8 +55,8 @@ bool IntLinEq::imposeDomain(Variable* variable) {
 }
 bool IntLinEq::refreshDomain() {
   std::cout << "REFRESHING DOMAIN" << std::endl;
-  std::cout << this->getLabel() << std::endl;
-  std::cout << (*_defines.begin())->getLabel() << std::endl;
+  std::cout << this->getName() << std::endl;
+  std::cout << "VAR: " << (*_defines.begin())->getName() << std::endl;
 
   auto bounds = getBounds(*_defines.begin());
   std::cout << "====================" << std::endl;
@@ -68,7 +70,7 @@ bool IntLinEq::refreshDomain() {
 }
 std::pair<Int, Int> IntLinEq::getBounds(Variable* variable) {
   for (auto v : _bs->elements()) {
-    std::cout << v->getLabel() << std::endl;
+    std::cout << v->getName() << std::endl;
     std::cout << "LB: " << v->lowerBound() << std::endl;
     std::cout << "UB: " << v->upperBound() << std::endl;
   }

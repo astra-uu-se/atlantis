@@ -12,10 +12,11 @@ class Model {
   Model();
   void init();
   void addVariable(std::shared_ptr<Variable> v);
+  void addVariable(std::shared_ptr<ArrayVariable> v);
   void addConstraint(ConstraintBox constraintBox);
   void addObjective(std::string objective);
   std::vector<Constraint*> constraints();
-  std::vector<Variable*> variables();
+  VariableMap& varMap();
   std::vector<Variable*> domSortVariables();
   void split();
   std::optional<Variable*> objective() { return _objective; }

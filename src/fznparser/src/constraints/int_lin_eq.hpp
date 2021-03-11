@@ -18,5 +18,5 @@ class IntLinEq : public Constraint {
   std::shared_ptr<IntDomain> _outputDomain;
   ArrayVariable* _as;
   ArrayVariable* _bs;
-  SingleVariable* _c;
+  Variable* _c;
 };

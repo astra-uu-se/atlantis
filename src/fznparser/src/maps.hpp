@@ -18,14 +18,18 @@ class VariableMap {
   VariableMap() = default;
   virtual ~VariableMap() = default;
   Variable* add(std::shared_ptr<Variable> variable);
+  ArrayVariable* add(std::shared_ptr<ArrayVariable> variable);
   Variable* find(std::string name) const;
+  ArrayVariable* findArray(std::string name) const;
   bool exists(std::string name);
-  std::vector<Variable*> getArray();
-  Variable* first() { return *_variableArray.begin(); }
+  std::vector<Variable*> variables();
+  std::vector<ArrayVariable*> arrays();
 
  private:
-  std::vector<Variable*> _variableArray;
+  std::vector<Variable*> _variableVector;
+  std::vector<ArrayVariable*> _arrayVector;
   std::map<std::string, std::shared_ptr<Variable>> _variables;
+  std::map<std::string, std::shared_ptr<ArrayVariable>> _arrayVariables;
 };
 
 class ConstraintMap {

@@ -89,7 +89,7 @@ class Node {
   Node() = default;
   virtual ~Node() = default;
   virtual std::set<Node*> getNext() = 0;
-  virtual std::string getLabel() = 0;
+  virtual std::string getName() = 0;
 };
 
 #endif

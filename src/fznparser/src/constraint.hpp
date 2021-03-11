@@ -13,7 +13,6 @@
 #include "structure.hpp"
 class Variable;
 class ArrayVariable;
-class SingleVariable;
 class ConstraintBox;
 class VariableMap;
 class ConstraintMap;
@@ -39,20 +38,19 @@ class Constraint : public Node {
   virtual ~Constraint() = default;
   Constraint();
   Constraint(ConstraintBox constraintBox);
-  void init(const VariableMap& variables);
-  std::string getName();
+  virtual void init(const VariableMap& variables);
+  std::string getName() override;
 
   std::set<Node*> getNext() override;
-  std::string getLabel() override;
   bool breakCycle();
 
-  void makeOneWayByAnnotation();
-  void makeOneWay(Variable* variable);
-  virtual bool canBeOneWay(Variable* variable) { return _canBeOneWay; }
+  std::optional<Variable*> annotationTarget();
+  virtual void unDefine(Variable* variable) { makeSoft(); }
+  virtual void define(Variable* variable);
+  virtual bool canDefine(Variable* variable) { return _canBeOneWay; }
   void makeSoft();
   bool definesNone();
   bool uniqueTarget();
-  bool canDefineByAnnotation();
   virtual bool canBeImplicit();
   bool shouldBeImplicit();
   virtual void makeImplicit();
@@ -67,6 +65,7 @@ class Constraint : public Node {
   bool isInvariant() { return _invariant; }
   Int defInVarCount();
 
+  virtual bool allTargetsFree() { return false; }
   virtual bool imposeDomain(Variable* variable) { return false; }
   virtual bool refreshDomain() { return false; }
   void refreshNext(std::set<Constraint*>& visisted);
@@ -77,27 +76,26 @@ class Constraint : public Node {
   virtual void loadVariables(const VariableMap& variables) = 0;
   virtual void configureVariables() = 0;
   ArrayVariable* getArrayVariable(const VariableMap& variables, Int n);
-  SingleVariable* getSingleVariable(const VariableMap& variables, Int n);
+  Variable* getSingleVariable(const VariableMap& variables, Int n);
   Variable* getAnnotationVariable(const VariableMap& variables);
   Expression getExpression(Int n);
-  Variable* annotationDefineVariable();
   void checkAnnotations(const VariableMap& variables);
 
+  void redefineVariable(Variable* variable);
   void defineVariable(Variable* variable);
   void unDefineVariable(Variable* variable);
   void addDependency(Variable* variable);
   void removeDependency(Variable* variable);
-  void clearVariables();
+  virtual void clearVariables();
   void cleanse();
 
   std::string _name;
   ConstraintBox _constraintBox;
   std::set<Variable*> _defines;
   std::vector<Variable*> _variables;
-  bool _hasDefineAnnotation;
+  std::optional<Variable*> _annotationTarget;
   bool _shouldBeImplicit = false;
-  Variable* _annotationDefineVariable;
-  bool _uniqueTarget;
+  bool _uniqueTarget = true;
   bool _implicit = false;
   bool _invariant = false;
   bool _canBeOneWay = true;
@@ -109,17 +107,18 @@ class NonFunctionalConstraint : public Constraint {
       : Constraint(constraintBox) {
     bool _canBeOneWay = false;
   }
+  void init(const VariableMap& variables) override {}
   void loadVariables(const VariableMap& variables) override {}
   void configureVariables() override {}
 };
 
-#include "constraints/alldifferent.hpp"
-#include "constraints/circuit.hpp"
-#include "constraints/element.hpp"
+// #include "constraints/alldifferent.hpp"
+// #include "constraints/circuit.hpp"
+// #include "constraints/element.hpp"
 #include "constraints/global_cardinality.hpp"
 #include "constraints/int_lin_eq.hpp"
 #include "constraints/integer_simple.hpp"
-#include "constraints/inverse.hpp"
+// #include "constraints/inverse.hpp"
 #include "variable.hpp"
 
 #endif

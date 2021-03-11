@@ -2,57 +2,58 @@
 
 #include <string>
 
-Variable::Variable(std::string name, std::vector<Annotation> annotations) {
-  _name = name;
-  _annotations = annotations;
-}
 bool Variable::compareDomain(Variable* v1, Variable* v2) {
   return v1->domainSize() > v2->domainSize();
 }
 /*******************SINGLEVARIABLE****************************/
-void SingleVariable::addConstraint(Constraint* constraint) {
+void Variable::addNextConstraint(Constraint* constraint) {
   _nextConstraints.insert(constraint);
 }
-void SingleVariable::removeConstraint(Constraint* constraint) {
+void Variable::removeNextConstraint(Constraint* constraint) {
   _nextConstraints.erase(constraint);
 }
-void SingleVariable::defineBy(Constraint* constraint) {
+void Variable::defineBy(Constraint* constraint) {
   assert(!_definedBy.has_value());
   _definedBy.emplace(constraint);
 }
-void SingleVariable::removeDefinition() { _definedBy.reset(); }
-void SingleVariable::addPotentialDefiner(Constraint* constraint) {
+void Variable::removeDefinition() { _definedBy.reset(); }
+void Variable::addPotentialDefiner(Constraint* constraint) {
+  assert(isDefinable());
   _potentialDefiners.insert(constraint);
 }
-void SingleVariable::removePotentialDefiner(Constraint* constraint) {
+void Variable::removePotentialDefiner(Constraint* constraint) {
+  assert(isDefinable());
+  assert(_potentialDefiners.count(constraint));
   _potentialDefiners.erase(constraint);
 }
-void SingleVariable::imposeDomain(Domain* domain) {
-  _imposedDomain.emplace(domain);
-}
-void SingleVariable::unImposeDomain() {
+void Variable::imposeDomain(Domain* domain) { _imposedDomain.emplace(domain); }
+void Variable::unImposeDomain() {
   assert(hasImposedDomain());
   _imposedDomain.reset();
+  std::set<Constraint*> visited;
+  for (auto c : _nextConstraints) {
+    c->refreshAndPropagate(visited);
+  }
 }
-Int SingleVariable::domainSize() {
+Int Variable::domainSize() {
   return hasImposedDomain() ? _imposedDomain.value()->size() : _domain->size();
 }
-Int SingleVariable::lowerBound() {
+Int Variable::lowerBound() {
   return hasImposedDomain() ? _imposedDomain.value()->lowerBound()
                             : _domain->lowerBound();
 }
-Int SingleVariable::upperBound() {
+Int Variable::upperBound() {
   return hasImposedDomain() ? _imposedDomain.value()->upperBound()
                             : _domain->upperBound();
 }
-std::set<Node*> SingleVariable::getNext() {
+std::set<Node*> Variable::getNext() {
   std::set<Node*> next;
   for (auto c : _nextConstraints) {
     next.insert(static_cast<Node*>(c));
   }
   return next;
 }
-std::set<Constraint*> SingleVariable::getNextConstraints() {
+std::set<Constraint*> Variable::getNextConstraints() {
   return _nextConstraints;
 }
 /*******************ARRAYVARIABLE****************************/
@@ -60,7 +61,7 @@ ArrayVariable::ArrayVariable(std::vector<Variable*> elements) {
   std::string name = "[";
 
   for (auto e : elements) {
-    name = name + e->getLabel();
+    name = name + e->getName();
     name = name + ",";
   }
   name = name.substr(0, name.size() - 1);
@@ -84,126 +85,10 @@ void ArrayVariable::init(VariableMap& variables) {
     }
   }
 }
-std::set<Node*> ArrayVariable::getNext() {
-  std::set<Node*> nodes;
-  for (Node* e : _elements) {
-    nodes.insert(static_cast<Node*>(e));
-  }
-  return nodes;
-}
-std::set<Constraint*> ArrayVariable::getNextConstraints() {
-  std::set<Constraint*> next;
-  for (auto e : elements()) {
-    for (auto c : e->getNextConstraints()) {
-      next.insert(c);
-    }
-  }
-  return next;
-}
-void ArrayVariable::addConstraint(Constraint* constraint) {
-  for (auto e : _elements) {
-    e->addConstraint(constraint);
-  }
-}
-void ArrayVariable::removeConstraint(Constraint* constraint) {
-  for (auto e : _elements) {
-    e->removeConstraint(constraint);
-  }
-}
-void ArrayVariable::defineBy(Constraint* constraint) {
-  for (auto e : _elements) {
-    e->defineBy(constraint);
-  }
-  _definedBy.emplace(constraint);
-}
-void ArrayVariable::defineNotDefinedBy(Constraint* constraint) {
-  for (auto e : _elements) {
-    if (!e->isDefined()) {
-      e->defineBy(constraint);
-    }
-  }
-  _definedBy.emplace(constraint);
-}
-void ArrayVariable::removeDefinition() {
-  for (auto e : _elements) {
-    e->removeDefinition();
-  }
-  _definedBy.reset();
-}
-void ArrayVariable::addPotentialDefiner(Constraint* constraint) {
-  _potentialDefiners.insert(constraint);
-}
-void ArrayVariable::removePotentialDefiner(Constraint* constraint) {
-  _potentialDefiners.erase(constraint);
-}
 std::vector<Variable*> ArrayVariable::elements() { return _elements; }
-bool ArrayVariable::isDefinable() {
-  if (_definedBy.has_value()) return false;
-  for (auto e : _elements) {
-    if (!e->isDefinable()) {
-      return false;
-    }
-  }
-  return true;
-}
-std::string ArrayVariable::getLabel() { return "[array] " + _name; }
-Int ArrayVariable::domainSize() {
-  Int n = 0;
-  for (auto variable : _elements) {
-    n += variable->domainSize();
-  }
-  return n;
-}
-void ArrayVariable::imposeDomain(Domain* domain) {
-  for (auto variable : _elements) {
-    variable->imposeDomain(domain);
-  }
-}
-void ArrayVariable::unImposeDomain() {
-  for (auto variable : _elements) {
-    variable->unImposeDomain();
-  }
-}
-Int ArrayVariable::lowerBound() {
-  Int n = std::numeric_limits<Int>::max();
-  for (auto variable : _elements) {
-    if (variable->lowerBound() < n) {
-      n = variable->lowerBound();
-    }
-  }
-  return n;
-}
-Int ArrayVariable::upperBound() {
-  Int n = std::numeric_limits<Int>::max();
-  for (auto variable : _elements) {
-    if (variable->upperBound() > n) {
-      n = variable->upperBound();
-    }
-  }
-  return n;
-}
-Int ArrayVariable::length() { return _elements.size(); }
 Variable* ArrayVariable::getElement(Int n) { return _elements[n]; }
-Int ArrayVariable::definedCount() {
-  Int c = 0;
-  for (auto e : elements()) {
-    c += e->definedCount();
-  }
-  return c;
-}
 /*******************LITERAL****************************/
-Literal::Literal(std::string value) { _name = value; }
-void Literal::init(VariableMap& variables) {}
-std::set<Node*> Literal::getNext() {
-  std::set<Node*> s;
-  return s;
-}
-std::set<Constraint*> Literal::getNextConstraints() {
-  std::set<Constraint*> s;
-  return s;
-}
-Int Literal::lowerBound() { return std::stoi(_name); }
-Int Literal::upperBound() { return std::stoi(_name); }
-/*******************PARAMETER****************************/
+Int Literal::lowerBound() { return std::stoi(_valuename); }
+Int Literal::upperBound() { return std::stoi(_valuename); }
 Int Parameter::lowerBound() { return std::stoi(_value); }
 Int Parameter::upperBound() { return std::stoi(_value); }

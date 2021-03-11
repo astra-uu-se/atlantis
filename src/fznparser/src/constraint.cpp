@@ -4,15 +4,11 @@
 #include <string>
 
 /********************* Constraint **************************/
-Constraint::Constraint() {
-  _uniqueTarget = true;
-  _hasDefineAnnotation = false;
-}
+Constraint::Constraint() { _uniqueTarget = true; }
 Constraint::Constraint(ConstraintBox constraintBox) {
   _constraintBox = constraintBox;
   _name = constraintBox._name;
   _uniqueTarget = true;
-  _hasDefineAnnotation = false;
 }
 Expression Constraint::getExpression(Int n) {
   assert(n < _constraintBox._expressions.size());
@@ -25,8 +21,7 @@ std::set<Node*> Constraint::getNext() {
   }
   return defines;
 }
-std::string Constraint::getName() { return _name; }
-std::string Constraint::getLabel() {
+std::string Constraint::getName() {
   std::string name = _name;
   if (_implicit) {
     name = "(implicit) " + name;
@@ -42,28 +37,33 @@ bool Constraint::breakCycle() {
   makeSoft();
   return true;
 }
-SingleVariable* Constraint::getSingleVariable(const VariableMap& variableMap,
-                                              Int n) {
+Variable* Constraint::getSingleVariable(const VariableMap& variableMap, Int n) {
   assert(!getExpression(n).isArray());
   std::string name = getExpression(n).getName();
-  Variable* s = variableMap.find(name);
-  return dynamic_cast<SingleVariable*>(s);
+  return variableMap.find(name);
 }
 ArrayVariable* Constraint::getArrayVariable(const VariableMap& variableMap,
                                             Int n) {
   // assert(getExpression(n).isArray()); TODO: Figure out why not works
   std::string name = getExpression(n).getName();
-  Variable* s = variableMap.find(name);
-  return dynamic_cast<ArrayVariable*>(s);
+  return variableMap.findArray(name);
 }
 Variable* Constraint::getAnnotationVariable(const VariableMap& variableMap) {
   std::string name = _constraintBox.getAnnotationVariableName();
-  return variableMap.find(name);
+  return variableMap.find(name);  // TODO: can this be an array?
+}
+
+void Constraint::redefineVariable(Variable* variable) {
+  if (variable->isDefined()) {
+    variable->definedBy()->unDefine(variable);
+  }
+  defineVariable(variable);
 }
 void Constraint::defineVariable(Variable* variable) {
   _defines.insert(variable);
   variable->defineBy(this);
 }
+
 void Constraint::unDefineVariable(Variable* variable) {
   assert(variable->definedBy() == this);
   _defines.erase(variable);
@@ -73,10 +73,10 @@ void Constraint::unDefineVariable(Variable* variable) {
   variable->removeDefinition();
 }
 void Constraint::addDependency(Variable* variable) {
-  variable->addConstraint(this);
+  variable->addNextConstraint(this);
 }
 void Constraint::removeDependency(Variable* variable) {
-  variable->removeConstraint(this);
+  variable->removeNextConstraint(this);
 }
 void Constraint::clearVariables() {
   for (auto variable : _variables) {
@@ -87,34 +87,18 @@ void Constraint::clearVariables() {
   }
   assert(_defines.empty());
 }
-bool Constraint::canDefineByAnnotation() {
-  if (_hasDefineAnnotation) {
-    if (_annotationDefineVariable->isDefinable()) {
-      return true;
-    }
-  }
-  return false;
+std::optional<Variable*> Constraint::annotationTarget() {
+  return _annotationTarget;
 }
 void Constraint::checkAnnotations(const VariableMap& variableMap) {
   if (_constraintBox.hasDefineAnnotation()) {
-    _annotationDefineVariable = getAnnotationVariable(variableMap);
-    _hasDefineAnnotation = true;
+    _annotationTarget.emplace(getAnnotationVariable(variableMap));
   }
   if (_constraintBox.hasImplicitAnnotation()) {
     _shouldBeImplicit = true;
   }
 }
-void Constraint::makeOneWayByAnnotation() {
-  defineVariable(_annotationDefineVariable);
-  imposeAndPropagate(_annotationDefineVariable);
-  for (auto variable : _variables) {
-    if (variable != _annotationDefineVariable) {
-      addDependency(variable);
-    }
-  }
-  _invariant = true;
-}
-void Constraint::makeOneWay(Variable* variable) {
+void Constraint::define(Variable* variable) {
   assert(std::count(_variables.begin(), _variables.end(), variable));
   clearVariables();
   defineVariable(variable);
@@ -148,6 +132,7 @@ bool Constraint::canBeImplicit() { return false; }
 bool Constraint::shouldBeImplicit() { return _shouldBeImplicit; }
 void Constraint::makeImplicit() {
   assert(canBeImplicit());
+  std::cout << this->getName() << std::endl;
 
   for (auto variable : _variables) {
     defineVariable(variable);
@@ -159,7 +144,9 @@ Int Constraint::defInVarCount() {
   Int defInVarCount = 0;
   for (auto v : _variables) {
     if (_defines.count(v) == 0) {
-      defInVarCount += v->definedCount();
+      if (v->isDefined()) {
+        defInVarCount++;
+      }
     }
   }
   return defInVarCount;

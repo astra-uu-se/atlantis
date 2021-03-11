@@ -2,43 +2,97 @@
 
 #include <memory>
 
+GlobalCardinality::GlobalCardinality(ArrayVariable* x, ArrayVariable* cover,
+                                     ArrayVariable* counts) {
+  // TODO: Add #id
+  _name = "global_cardinality";
+  _x = x;
+  _cover = cover;
+  _counts = counts;
+  configureVariables();
+}
 void GlobalCardinality::loadVariables(const VariableMap& variableMap) {
   _x = getArrayVariable(variableMap, 0);
   _cover = getArrayVariable(variableMap, 1);
   _counts = getArrayVariable(variableMap, 2);
-  _variables.push_back(_x);       // x
-  _variables.push_back(_counts);  // counts
+  // _variables.push_back(_x);       // x
+  // _variables.push_back(_counts);  // counts
   initDomains();
 }
 void GlobalCardinality::configureVariables() {
-  _variables[1]->addPotentialDefiner(this);
-}
-bool GlobalCardinality::canBeOneWay(Variable* variable) {
-  if (variable != _variables[1]) {
-    return false;
+  for (auto var : _counts->elements()) {
+    if (var->isDefinable()) {
+      var->addPotentialDefiner(this);
+    }
   }
-  return _variables[1]->isDefinable();
 }
-bool GlobalCardinality::canBeImplicit() {
-  for (auto variable : _variables) {
-    if (variable->isDefined()) {
+bool GlobalCardinality::canDefine(Variable* variable) {
+  assert(variable->isDefinable());
+  for (auto var : _counts->elements()) {
+    if (var == variable) {
+      return true;
+    }
+  }
+  return false;
+}
+void GlobalCardinality::define(Variable* variable) {
+  assert(canDefine(variable));
+  defineVariable(variable);
+  for (auto v : _x->elements()) {
+    addDependency(v);
+  }
+  _invariant = true;
+  imposeAndPropagate(variable);
+}
+void GlobalCardinality::unDefine(Variable* variable) {
+  unDefineVariable(variable);
+  if (_defines.empty()) {
+    makeSoft();
+  }
+}
+bool GlobalCardinality::canBeImplicit() { return true; }
+bool GlobalCardinality::allTargetsFree() {
+  for (auto var : _counts->elements()) {
+    if (var->isDefined()) {
+      return false;
+    }
+  }
+  for (auto var : _x->elements()) {
+    if (var->isDefined()) {
       return false;
     }
   }
   return true;
 }
 void GlobalCardinality::makeImplicit() {
-  assert(canBeImplicit());
-  for (auto variable : _variables) {
-    _defines.insert(variable);
-    auto v = dynamic_cast<ArrayVariable*>(variable);
-    v->defineNotDefinedBy(this);
+  clearVariables();
+  for (auto var : _x->elements()) {
+    redefineVariable(var);
+  }
+  for (auto var : _counts->elements()) {
+    redefineVariable(var);
   }
   _implicit = true;
 }
+void GlobalCardinality::clearVariables() {
+  for (auto variable : _counts->elements()) {
+    if (variable->isDefined() && variable->definedBy() == this) {
+      unDefineVariable(variable);
+    }
+    removeDependency(variable);
+  }
+  for (auto variable : _x->elements()) {
+    if (variable->isDefined() && variable->definedBy() == this) {
+      unDefineVariable(variable);
+    }
+    removeDependency(variable);
+  }
+  assert(_defines.empty());
+}
+
 bool GlobalCardinality::split(int index, VariableMap& variables,
                               ConstraintMap& constraints) {
-  assert(0 < index && index < _cover->length());
+  assert(0 < index && index < _cover->size());
 
   cleanse();
 
@@ -47,7 +101,7 @@ bool GlobalCardinality::split(int index, VariableMap& variables,
   std::vector<Variable*> rCoverElements;
   std::vector<Variable*> rCountsElements;
 
-  for (int i = 0; i < _cover->length(); i++) {
+  for (int i = 0; i < _cover->size(); i++) {
     if (i < index) {
       lCoverElements.push_back(_cover->getElement(i));
       lCountsElements.push_back(_counts->getElement(i));
@@ -71,17 +125,6 @@ bool GlobalCardinality::split(int index, VariableMap& variables,
   constraints.remove(this);
 
   return true;
-}
-GlobalCardinality::GlobalCardinality(ArrayVariable* x, ArrayVariable* cover,
-                                     ArrayVariable* counts) {
-  // TODO: Add #id
-  _name = "global_cardinality";
-  _x = x;
-  _cover = cover;
-  _counts = counts;
-  _variables.push_back(_x);
-  _variables.push_back(_counts);
-  configureVariables();
 }
 
 void GlobalCardinality::imposeAndPropagate(Variable* _) {

@@ -17,13 +17,17 @@ class GlobalCardinality : public Constraint {
              ConstraintMap& constraints) override;
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
-  bool canBeOneWay(Variable* variable) override;
+  bool canDefine(Variable* variable) override;
+  void define(Variable* variable) override;
+  bool allTargetsFree() override;
   bool canBeImplicit() override;
   void makeImplicit() override;
   void imposeAndPropagate(Variable* variable) override;
   void refreshAndPropagate(std::set<Constraint*>& visited) override;
   std::pair<Int, Int> getBounds(Int n);
   void initDomains();
+  void clearVariables() override;
+  void unDefine(Variable* variable) override;
 
  private:
   std::vector<std::shared_ptr<IntDomain>> _outputDomains;

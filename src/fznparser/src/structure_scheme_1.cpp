@@ -2,17 +2,17 @@
 #define TRACK true
 
 void StructureScheme1::findStructure() {
-  defineByImplicit();
-  defineImplicit();
+  // defineByImplicit();
   defineAnnotated();  // Ignores if the constraintobject actually can define.
   defineFromObjective();
   defineUnique();
   defineRest();
+  defineImplicit();
   removeCycles();
   updateDomains();
 }
 void StructureScheme1::updateDomains() {
-  for (auto constraint : _m->constraints()) {
+  for (auto constraint : _m->constraints()) {  // _m->conMap.functional()
     if (constraint->isInvariant()) {
       std::set<Constraint*> visited;
       constraint->refreshAndPropagate(visited);
@@ -21,8 +21,9 @@ void StructureScheme1::updateDomains() {
 }
 void StructureScheme1::defineAnnotated() {
   for (auto c : _m->constraints()) {
-    if (c->canDefineByAnnotation()) {  // Also checks that target is not defined
-      c->makeOneWayByAnnotation();
+    if (c->annotationTarget().has_value() &&
+        !c->annotationTarget().value()->isDefined()) {
+      c->define(c->annotationTarget().value());
     }
   }
 }
@@ -36,10 +37,10 @@ void StructureScheme1::defineImplicit() {
 }
 // Kolla domänens utveckling först
 void StructureScheme1::defineFromWithImplicit(Variable* variable) {
-  if (variable->isDefinable()) {
+  if (variable->isDefinable() && !variable->isDefined()) {
     for (auto constraint : variable->potentialDefiners()) {
-      if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
-        constraint->makeOneWay(variable);
+      if (constraint->canDefine(variable) && constraint->definesNone()) {
+        constraint->define(variable);
         for (auto v : constraint->variablesSorted()) {
           if (v != variable) {
             defineFromWithImplicit(v);
@@ -53,30 +54,11 @@ void StructureScheme1::defineFromWithImplicit(Variable* variable) {
     }
   }
 }
-void StructureScheme1::defineFromWithImplicit2(Variable* variable) {
-  if (variable->isDefinable()) {
-    for (auto constraint : variable->potentialDefiners()) {
-      if (constraint->canBeImplicit()) {
-        constraint->makeImplicit();
-        return;
-      } else if (constraint->canBeOneWay(variable) &&
-                 constraint->definesNone()) {
-        constraint->makeOneWay(variable);
-        for (auto v : constraint->variablesSorted()) {
-          if (v != variable) {
-            defineFromWithImplicit2(v);
-          }
-        }
-        break;
-      }
-    }
-  }
-}
 void StructureScheme1::defineFrom(Variable* variable) {
   if (variable->isDefinable()) {
     for (auto constraint : variable->potentialDefiners()) {
-      if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
-        constraint->makeOneWay(variable);
+      if (constraint->canDefine(variable) && constraint->definesNone()) {
+        constraint->define(variable);
         for (auto v : constraint->variablesSorted()) {
           if (v != variable) {
             defineFrom(v);
@@ -88,7 +70,7 @@ void StructureScheme1::defineFrom(Variable* variable) {
   }
 }
 void StructureScheme1::defineFromObjective() {
-  if (_m->objective()) {
+  if (_m->objective().has_value()) {
     defineFromWithImplicit(_m->objective().value());
   } else {
     std::cerr << "No objective exists\n";
@@ -96,11 +78,11 @@ void StructureScheme1::defineFromObjective() {
 }
 void StructureScheme1::defineUnique() {
   for (auto variable : _m->domSortVariables()) {
-    if (variable->isDefinable()) {
+    if (variable->isDefinable() && !variable->isDefined()) {
       for (auto constraint : variable->potentialDefiners()) {
-        if (constraint->canBeOneWay(variable) && constraint->uniqueTarget() &&
+        if (constraint->canDefine(variable) && constraint->uniqueTarget() &&
             constraint->definesNone()) {
-          constraint->makeOneWay(variable);
+          constraint->define(variable);
           break;
         }
       }
@@ -109,11 +91,11 @@ void StructureScheme1::defineUnique() {
 }
 void StructureScheme1::defineRest() {
   for (auto variable : _m->domSortVariables()) {
-    if (variable->isDefinable()) {
+    if (variable->isDefinable() && !variable->isDefined()) {
       for (auto constraint : variable->potentialDefiners()) {
-        if (constraint->canBeOneWay(variable) && constraint->definesNone()) {
-          std::cout << constraint->getLabel() << std::endl;
-          constraint->makeOneWay(variable);
+        if (constraint->canDefine(variable) && constraint->definesNone()) {
+          std::cout << constraint->getName() << std::endl;
+          constraint->define(variable);
           break;
         }
       }
@@ -122,11 +104,11 @@ void StructureScheme1::defineRest() {
 }
 void StructureScheme1::defineByImplicit() {
   for (auto variable : _m->domSortVariables()) {
-    if (variable->isDefinable()) {
+    if (variable->isDefinable() && !variable->isDefined()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->canBeImplicit()) {
           constraint->makeImplicit();
-          std::cout << constraint->getLabel() << std::endl;
+          std::cout << constraint->getName() << std::endl;
           break;
         }
       }
@@ -153,7 +135,7 @@ void StructureScheme1::removeCycle(std::vector<Node*> visited) {
     }
   }
   assert(nodeToRemove->breakCycle());
-  std::cout << (TRACK ? "Node: " + nodeToRemove->getLabel() + " removed." + "\n"
+  std::cout << (TRACK ? "Node: " + nodeToRemove->getName() + " removed." + "\n"
                       : "");
   _cyclesRemoved += 1;
 }
@@ -174,7 +156,7 @@ void StructureScheme1::removeCycles() {
 std::vector<Node*> StructureScheme1::hasCycle() {
   std::set<Node*> visited;
   std::vector<Node*> stack;
-  for (auto node : _m->variables()) {
+  for (auto node : _m->varMap().variables()) {
     if (hasCycleAux(visited, stack, node)) {
       return stack;
     }

@@ -1,5 +1,6 @@
 #include "FznVisitor.h"
 
+#include <any>
 #include <cstdint>
 #include <vector>
 
@@ -8,10 +9,10 @@ using Int = int64_t;
 antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
   Model m = Model();
   for (auto item : ctx->parDeclItem()) {
-    m.addVariable(visitParDeclItem(item));
+    visitParDeclItem(item, m);
   }
   for (auto item : ctx->varDeclItem()) {
-    m.addVariable(visitVarDeclItem(item));
+    visitVarDeclItem(item, m);
   }
   for (auto constraintItem : ctx->constraintItem()) {
     m.addConstraint(visitConstraintItem(constraintItem));
@@ -25,36 +26,43 @@ antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
   }
   return m;
 }
+
 antlrcpp::Any FznVisitor::visitParDeclItem(
-    FlatZincParser::ParDeclItemContext *ctx) {
+    FlatZincParser::ParDeclItemContext *ctx, Model &m) {
   std::string name = ctx->Identifier()->getText();
 
   if (!ctx->parType()->indexSet()) {
     std::string value = ctx->parExpr()->getText();  // Value is discarded
-    return static_cast<std::shared_ptr<Variable>>(
-        std::make_shared<Parameter>(name, value));
+    // return static_cast<std::shared_ptr<Variable>>(
+    //     std::make_shared<Parameter>(name, value));
+    m.addVariable(std::make_shared<Parameter>(name, value));
   } else {  // if (ctx->arrayVarType()) {
     std::vector<Expression> elements =
         visitParArrayLiteral(ctx->parExpr()->parArrayLiteral());
     std::vector<Annotation> annotations;
-    return static_cast<std::shared_ptr<Variable>>(
-        std::make_shared<ArrayVariable>(name, annotations, elements));
+    // return static_cast<std::shared_ptr<Variable>>(
+    //     std::make_shared<ArrayVariable>(name, annotations, elements));
+    m.addVariable(std::make_shared<ArrayVariable>(name, annotations, elements));
   }
+  return 0;
 }
 antlrcpp::Any FznVisitor::visitVarDeclItem(
-    FlatZincParser::VarDeclItemContext *ctx) {
+    FlatZincParser::VarDeclItemContext *ctx, Model &m) {
   std::string name = ctx->Identifier()->getText();
   std::vector<Annotation> annotations = visitAnnotations(ctx->annotations());
 
   if (ctx->basicVarType()) {
     std::shared_ptr<Domain> domain = visitBasicVarType(ctx->basicVarType());
-    return static_cast<std::shared_ptr<Variable>>(
-        std::make_shared<SingleVariable>(name, annotations, domain));
+    // return static_cast<std::shared_ptr<Variable>>(
+    //     std::make_shared<SingleVariable>(name, annotations, domain));
+    m.addVariable(std::make_shared<Variable>(name, annotations, domain));
   } else {  // if (ctx->arrayVarType()) {
     std::vector<Expression> elements = visitArrayLiteral(ctx->arrayLiteral());
-    return static_cast<std::shared_ptr<Variable>>(
-        std::make_shared<ArrayVariable>(name, annotations, elements));
+    // return static_cast<std::shared_ptr<Variable>>(
+    //     std::make_shared<ArrayVariable>(name, annotations, elements));
+    m.addVariable(std::make_shared<ArrayVariable>(name, annotations, elements));
   }
+  return 0;
 }
 antlrcpp::Any FznVisitor::visitBasicVarType(
     FlatZincParser::BasicVarTypeContext *ctx) {

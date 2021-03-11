@@ -3,16 +3,16 @@
 Statistics::Statistics(Model* model) { _model = model; }
 int Statistics::variableCount() {
   int n = 0;
-  for (auto variable : _model->variables()) {
-    n += variable->count();
+  for (auto variable : _model->varMap().variables()) {
+    n++;
   }
   return n;
 }
 int Statistics::definedCount() {
   int n = 0;
-  for (auto variable : _model->variables()) {
+  for (auto variable : _model->varMap().variables()) {
     if (variable->isDefined()) {
-      n += variable->count();
+      n++;
     }
   }
   return n;
@@ -30,14 +30,14 @@ void Statistics::countDefinedVariables(bool labels) {
   std::cout << "===========================" << std::endl;
 }
 void Statistics::variablesDefinedBy() {
-  for (auto variable : _model->variables()) {
+  for (auto variable : _model->varMap().variables()) {
     if (variable->isDefined()) {
-      std::cout << "Var: " << variable->getLabel();
+      std::cout << "Var: " << variable->getName();
       std::cout << "\tDS: " << variable->domainSize();
       if (variable->hasImposedDomain()) {
         std::cout << "\t(imposed)";
       }
-      std::cout << "\t[" << variable->definedBy()->getLabel() << "]"
+      std::cout << "\t[" << variable->definedBy()->getName() << "]"
                 << std::endl;
     }
   }
@@ -55,7 +55,7 @@ void Statistics::constraints(bool labels) {
       invariant++;
     }
     if (labels) {
-      std::cout << constraint->getLabel() << std::endl;
+      std::cout << constraint->getName() << std::endl;
     }
   }
   std::cout << "===========================" << std::endl;
