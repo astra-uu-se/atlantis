@@ -5,7 +5,7 @@ void Inverse::loadVariables(const VariableMap& variableMap) {
 }
 void Inverse::configureVariables() {
   _variables[0]->addPotentialDefiner(this);
-  _variables[0]->addPotentialDefiner(this);
+  _variables[0]->addPotentialDefiner(this);  // hmm
 }
 bool Inverse::canBeImplicit() {
   for (auto arrayVariable : _variables) {

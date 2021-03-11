@@ -112,8 +112,8 @@ class NonFunctionalConstraint : public Constraint {
   void configureVariables() override {}
 };
 
-// #include "constraints/alldifferent.hpp"
-// #include "constraints/circuit.hpp"
+#include "constraints/alldifferent.hpp"
+#include "constraints/circuit.hpp"
 // #include "constraints/element.hpp"
 #include "constraints/global_cardinality.hpp"
 #include "constraints/int_lin_eq.hpp"

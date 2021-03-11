@@ -47,22 +47,22 @@ void Model::addConstraint(ConstraintBox constraintBox) {
   constraintBox.setId(_constraints.size() + 1);
   if (constraintBox._name == "int_div") {
     _constraints.add(std::make_shared<IntDiv>(constraintBox));
-    // } else if (constraintBox._name == "int_plus") {
-    // _constraints.add(std::make_shared<IntPlus>(constraintBox));
+  } else if (constraintBox._name == "int_plus") {
+    _constraints.add(std::make_shared<IntPlus>(constraintBox));
   } else if (constraintBox._name == "global_cardinality") {
     _constraints.add(std::make_shared<GlobalCardinality>(constraintBox));
   } else if (constraintBox._name == "int_lin_eq") {
     _constraints.add(std::make_shared<IntLinEq>(constraintBox));
-    // } else if (constraintBox._name == "int_abs") {
-    //   _constraints.add(std::make_shared<IntAbs>(constraintBox));
-    // } else if (constraintBox._name == "fzn_all_different_int") {
-    //   _constraints.add(std::make_shared<AllDifferent>(constraintBox));
+  } else if (constraintBox._name == "int_abs") {
+    _constraints.add(std::make_shared<IntAbs>(constraintBox));
+  } else if (constraintBox._name == "fzn_all_different_int") {
+    _constraints.add(std::make_shared<AllDifferent>(constraintBox));
     // } else if (constraintBox._name == "inverse") {
     //   _constraints.add(std::make_shared<Inverse>(constraintBox));
     // } else if (constraintBox._name == "gecode_int_element") {
     //   _constraints.add(std::make_shared<Element>(constraintBox));
-    // } else if (constraintBox._name == "gecode_circuit") {
-    //   _constraints.add(std::make_shared<Circuit>(constraintBox));
+  } else if (constraintBox._name == "gecode_circuit") {
+    _constraints.add(std::make_shared<Circuit>(constraintBox));
     // } else if (constraintBox._name == "int_le") {
     //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
     // } else if (constraintBox._name == "int_lin_le") {
@@ -86,8 +86,8 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     // } else if (constraintBox._name == "bool_lt") {
     //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   } else {
-    std::cerr << "Constraint not supported: " + constraintBox._name
-              << std::endl;
+    // std::cerr << "Constraint not supported: " + constraintBox._name
+    //           << std::endl;
     _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   }
 }

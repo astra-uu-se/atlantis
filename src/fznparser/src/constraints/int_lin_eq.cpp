@@ -14,12 +14,11 @@ void IntLinEq::loadVariables(const VariableMap& variableMap) {
 }
 void IntLinEq::configureVariables() {
   for (int i = 0; i < _as->elements().size(); i++) {
-    if (!_bs->elements()[i]->isDefinable()) {
-      continue;
-    }
-    std::string coefficient = _as->elements()[i]->getName();
-    if (coefficient == "1" || coefficient == "-1") {
-      _bs->elements()[i]->addPotentialDefiner(this);
+    if (_bs->elements()[i]->isDefinable()) {
+      std::string coefficient = _as->elements()[i]->getName();
+      if (coefficient == "1" || coefficient == "-1") {
+        _bs->elements()[i]->addPotentialDefiner(this);
+      }
     }
   }
 }
@@ -29,8 +28,8 @@ bool IntLinEq::canBeImplicit() {
     if (!(coefficient == "1" || coefficient == "-1")) {
       return false;
     }
-    if (!_bs->elements()[i]->isDefinable()) {
-      return false;
+    if (!_bs->elements()[i]->isDefinable() || _bs->elements()[i]->isDefined()) {
+      return false;  // TODO: Maybe allow things to be not definable
     }
   }
   return true;

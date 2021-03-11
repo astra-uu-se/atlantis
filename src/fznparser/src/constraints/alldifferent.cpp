@@ -8,7 +8,9 @@ void AllDifferent::loadVariables(const VariableMap& variableMap) {
 }
 void AllDifferent::configureVariables() {
   for (auto variable : _variables) {
-    variable->addPotentialDefiner(this);
+    if (variable->isDefinable()) {
+      variable->addPotentialDefiner(this);
+    }
   }
 }
 bool AllDifferent::canBeImplicit() {

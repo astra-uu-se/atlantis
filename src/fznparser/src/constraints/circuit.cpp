@@ -9,7 +9,9 @@ void Circuit::loadVariables(const VariableMap& variableMap) {
 }
 void Circuit::configureVariables() {
   for (auto variable : _variables) {
-    variable->addPotentialDefiner(this);
+    if (variable->isDefinable()) {
+      variable->addPotentialDefiner(this);
+    }
   }
 }
 bool Circuit::canBeImplicit() {
