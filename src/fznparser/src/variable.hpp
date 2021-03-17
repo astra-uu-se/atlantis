@@ -89,6 +89,8 @@ class ArrayVariable {
   std::string getName() { return _name; }
   Variable* getElement(Int n);
   Int size() { return _elements.size(); }
+  bool contains(Variable* variable);
+  bool noneDefined();
 
  private:
   std::vector<Expression> _expressions;

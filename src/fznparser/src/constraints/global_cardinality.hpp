@@ -11,10 +11,6 @@ class GlobalCardinality : public Constraint {
   GlobalCardinality(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
   }
-  GlobalCardinality(ArrayVariable* x, ArrayVariable* cover,
-                    ArrayVariable* counts);
-  bool split(int index, VariableMap& variables,
-             ConstraintMap& constraints) override;
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canDefine(Variable* variable) override;
@@ -26,7 +22,6 @@ class GlobalCardinality : public Constraint {
   void refreshAndPropagate(std::set<Constraint*>& visited) override;
   std::pair<Int, Int> getBounds(Int n);
   void initDomains();
-  void clearVariables() override;
   void unDefine(Variable* variable) override;
 
  private:

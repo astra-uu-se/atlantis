@@ -21,6 +21,17 @@ class IntDiv : public ThreeSVarConstraint {
   bool imposeDomain(Variable* variable) override;
   bool refreshDomain() override;
 };
+/* int_max(var int: a, var int: b, var int: c)
+** Defines: c
+** Depends: a, b
+*/
+class IntMax : public ThreeSVarConstraint {
+ public:
+  IntMax(ConstraintBox constraintBox) : ThreeSVarConstraint(constraintBox) {}
+  void configureVariables() override;
+  // bool imposeDomain(Variable* variable) override;
+  // bool refreshDomain() override;
+};
 /* int_plus(var int: a, var int: b, var int: c)
 ** Defines: any
 */

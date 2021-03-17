@@ -3,11 +3,11 @@
 
 void StructureScheme1::findStructure() {
   // defineByImplicit();
+  defineImplicit();
   defineAnnotated();  // Ignores if the constraintobject actually can define.
   defineFromObjective();
   defineUnique();
   defineRest();
-  defineImplicit();
   removeCycles();
   updateDomains();
 }

@@ -16,12 +16,6 @@ void Model::init() {
     constraint->init(_variables);
   }
 }
-void Model::split() {
-  std::string name = constraints()[0]->getName();
-  if (constraints()[0]->split(1, _variables, _constraints)) {
-    std::cout << "SPLITTING: " << name << std::endl;
-  }
-}
 std::vector<Constraint*> Model::constraints() {
   return _constraints.getVector();
 }
@@ -55,12 +49,14 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<IntLinEq>(constraintBox));
   } else if (constraintBox._name == "int_abs") {
     _constraints.add(std::make_shared<IntAbs>(constraintBox));
+  } else if (constraintBox._name == "int_max") {
+    _constraints.add(std::make_shared<IntMax>(constraintBox));
   } else if (constraintBox._name == "fzn_all_different_int") {
     _constraints.add(std::make_shared<AllDifferent>(constraintBox));
-    // } else if (constraintBox._name == "inverse") {
-    //   _constraints.add(std::make_shared<Inverse>(constraintBox));
-    // } else if (constraintBox._name == "gecode_int_element") {
-    //   _constraints.add(std::make_shared<Element>(constraintBox));
+  } else if (constraintBox._name == "inverse") {
+    _constraints.add(std::make_shared<Inverse>(constraintBox));
+  } else if (constraintBox._name == "gecode_int_element") {
+    _constraints.add(std::make_shared<Element>(constraintBox));
   } else if (constraintBox._name == "gecode_circuit") {
     _constraints.add(std::make_shared<Circuit>(constraintBox));
     // } else if (constraintBox._name == "int_le") {

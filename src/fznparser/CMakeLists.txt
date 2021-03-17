@@ -45,8 +45,6 @@ file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp  ${PROJECT_SOURCE_DI
 # remove main from the src files
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/main.cpp)
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/FznVisitor.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/constraints/element.cpp)
-list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/constraints/inverse.cpp)
 
 # The src files make up the library
 add_library(${PROJECT_LIB} ${SRC_FILES})

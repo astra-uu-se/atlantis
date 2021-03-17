@@ -65,12 +65,25 @@ void Statistics::constraints(bool labels) {
   std::cout << "Total:\t\t" << total << std::endl;
   std::cout << "===========================" << std::endl;
 }
-// void Statistics::cyclesRemoved() {
-//   std::cout << "Cycles removed: " << _model->cyclesRemoved() << std::endl;
-//   std::cout << "===========================" << std::endl;
-// }
 void Statistics::allStats(bool labels) {
-  // cyclesRemoved();
   countDefinedVariables(labels);
   constraints(labels);
+  // width();
+}
+void Statistics::width() {
+  // assert(_model->hasNoCycles());
+  int w = 0;
+  for (Node* v : _model->varMap().variables()) {
+    width_aux(v, 1, w);
+  }
+  for (Node* c : _model->constraints()) {
+    width_aux(c, 1, w);
+  }
+  std::cout << "Width of graph: " << w << std::endl;
+}
+void Statistics::width_aux(Node* node, int x, int& w) {
+  if (x > w) w = x;
+  for (auto n : node->getNext()) {
+    width_aux(n, x + 1, w);
+  }
 }

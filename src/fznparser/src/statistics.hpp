@@ -7,11 +7,12 @@ class Statistics {
   Statistics(Model* model);
   void countDefinedVariables(bool labels);
   void variablesDefinedBy();
-  // void cyclesRemoved();
   void allStats(bool labels);
   void constraints(bool labels);
   int variableCount();
   int definedCount();
+  void width();
+  void width_aux(Node* node, int x, int& w);
 
   Model* _model;
 };

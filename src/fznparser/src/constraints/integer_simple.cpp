@@ -32,6 +32,26 @@ bool IntDiv::refreshDomain() {
   }
   return false;
 }
+/********************* IntMax ******************************/
+// TODO: Does not correctly calculate domain
+void IntMax::configureVariables() {
+  if (_variables[2]->isDefinable()) {
+    _variables[2]->addPotentialDefiner(this);
+  }
+}
+// bool IntMax::imposeDomain(Variable* variable) {
+//   _outputDomain->setLower(_variables[1]->lowerBound());
+//   _outputDomain->setUpper(_variables[1]->upperBound());
+//   variable->imposeDomain(_outputDomain.get());
+//   return true;
+// }
+// bool IntMax::refreshDomain() {
+//   if (_outputDomain->lowerBound() != _variables[1]->lowerBound() ||
+//       _outputDomain->upperBound() != _variables[1]->upperBound()) {
+//     return imposeDomain((*_defines.begin()));
+//   }
+//   return false;
+// }
 /********************* IntPlus ******************************/
 void IntPlus::configureVariables() {
   for (int i = 0; i <= 2; i++) {

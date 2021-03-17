@@ -87,6 +87,22 @@ void ArrayVariable::init(VariableMap& variables) {
 }
 std::vector<Variable*> ArrayVariable::elements() { return _elements; }
 Variable* ArrayVariable::getElement(Int n) { return _elements[n]; }
+bool ArrayVariable::contains(Variable* variable) {
+  for (auto var : _elements) {
+    if (var == variable) {
+      return true;
+    }
+  }
+  return false;
+}
+bool ArrayVariable::noneDefined() {
+  for (auto var : _elements) {
+    if (var->isDefined()) {
+      return false;
+    }
+  }
+  return true;
+}
 /*******************LITERAL****************************/
 Int Literal::lowerBound() { return std::stoi(_valuename); }
 Int Literal::upperBound() { return std::stoi(_valuename); }

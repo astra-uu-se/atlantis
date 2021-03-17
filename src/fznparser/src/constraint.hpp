@@ -87,6 +87,8 @@ class Constraint : public Node {
   void addDependency(Variable* variable);
   void removeDependency(Variable* variable);
   virtual void clearVariables();
+  void removeDependencies();
+  void removeDefinitions();
   void cleanse();
 
   std::string _name;
@@ -114,11 +116,11 @@ class NonFunctionalConstraint : public Constraint {
 
 #include "constraints/alldifferent.hpp"
 #include "constraints/circuit.hpp"
-// #include "constraints/element.hpp"
+#include "constraints/element.hpp"
 #include "constraints/global_cardinality.hpp"
 #include "constraints/int_lin_eq.hpp"
 #include "constraints/integer_simple.hpp"
-// #include "constraints/inverse.hpp"
+#include "constraints/inverse.hpp"
 #include "variable.hpp"
 
 #endif

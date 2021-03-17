@@ -18,7 +18,6 @@ class Model {
   std::vector<Constraint*> constraints();
   VariableMap& varMap();
   std::vector<Variable*> domSortVariables();
-  void split();
   std::optional<Variable*> objective() { return _objective; }
 
  private:

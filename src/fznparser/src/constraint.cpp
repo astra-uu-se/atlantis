@@ -52,7 +52,6 @@ Variable* Constraint::getAnnotationVariable(const VariableMap& variableMap) {
   std::string name = _constraintBox.getAnnotationVariableName();
   return variableMap.find(name);  // TODO: can this be an array?
 }
-
 void Constraint::redefineVariable(Variable* variable) {
   if (variable->isDefined()) {
     variable->definedBy()->unDefine(variable);
@@ -63,7 +62,6 @@ void Constraint::defineVariable(Variable* variable) {
   _defines.insert(variable);
   variable->defineBy(this);
 }
-
 void Constraint::unDefineVariable(Variable* variable) {
   assert(variable->definedBy() == this);
   _defines.erase(variable);
@@ -78,13 +76,21 @@ void Constraint::addDependency(Variable* variable) {
 void Constraint::removeDependency(Variable* variable) {
   variable->removeNextConstraint(this);
 }
-void Constraint::clearVariables() {
+void Constraint::removeDependencies() {
+  for (auto variable : _variables) {
+    removeDependency(variable);
+  }
+}
+void Constraint::removeDefinitions() {
   for (auto variable : _variables) {
     if (variable->isDefined() && variable->definedBy() == this) {
       unDefineVariable(variable);
     }
-    removeDependency(variable);
   }
+}
+void Constraint::clearVariables() {
+  removeDependencies();
+  removeDefinitions();
   assert(_defines.empty());
 }
 std::optional<Variable*> Constraint::annotationTarget() {
@@ -110,21 +116,16 @@ void Constraint::define(Variable* variable) {
   _invariant = true;
   imposeAndPropagate(variable);
 }
-void Constraint::cleanse() {
-  clearVariables();
-  for (auto variable : _variables) {
-    variable->removePotentialDefiner(this);
-  }
-}
 void Constraint::makeSoft() {
   for (auto variable : _defines) {
-    variable->unImposeDomain();
-    for (auto constraint : variable->getNextConstraints()) {
-      std::set<Constraint*> visited;
-      constraint->refreshAndPropagate(visited);
+    if (variable->hasImposedDomain()) {
+      variable->unImposeDomain();
+      for (auto constraint : variable->getNextConstraints()) {
+        std::set<Constraint*> visited;
+        constraint->refreshAndPropagate(visited);
+      }
     }
   }
-
   clearVariables();
   _invariant = false;
 }
@@ -132,10 +133,9 @@ bool Constraint::canBeImplicit() { return false; }
 bool Constraint::shouldBeImplicit() { return _shouldBeImplicit; }
 void Constraint::makeImplicit() {
   assert(canBeImplicit());
-  std::cout << this->getName() << std::endl;
-
+  clearVariables();
   for (auto variable : _variables) {
-    defineVariable(variable);
+    redefineVariable(variable);
   }
   _implicit = true;
   _invariant = false;
@@ -183,7 +183,6 @@ void Constraint::imposeAndPropagate(Variable* variable) {
     }
   }
 }
-
 void Constraint::refreshAndPropagate(std::set<Constraint*>& visited) {
   if (visited.count(this)) return;
   if (isInvariant() && refreshDomain()) {
@@ -191,7 +190,6 @@ void Constraint::refreshAndPropagate(std::set<Constraint*>& visited) {
     refreshNext(visited);
   }
 }
-
 ConstraintBox::ConstraintBox(std::string name,
                              std::vector<Expression> expressions,
                              std::vector<Annotation> annotations) {
