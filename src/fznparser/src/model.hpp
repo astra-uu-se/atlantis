@@ -11,7 +11,6 @@ class Model {
  public:
   Model();
   void init();
-  void reset();
   void addVariable(std::shared_ptr<Variable> v);
   void addVariable(std::shared_ptr<ArrayVariable> v);
   void addConstraint(ConstraintBox constraintBox);

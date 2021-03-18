@@ -59,7 +59,6 @@ class Constraint : public Node {
   virtual void makeImplicit();
   std::vector<Variable*> variables();
   std::vector<Variable*> variablesSorted();
-  void reset(const VariableMap& variables);
 
   bool isImplicit() { return _implicit; }
   bool isInvariant() { return _invariant; }
