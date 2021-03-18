@@ -44,6 +44,7 @@ class Constraint : public Node {
 
   std::set<Node*> getNext() override;
   bool breakCycle();
+  bool breakCycleWithBan();
 
   std::optional<Variable*> annotationTarget();
   virtual void unDefine(Variable* variable) { makeSoft(); }

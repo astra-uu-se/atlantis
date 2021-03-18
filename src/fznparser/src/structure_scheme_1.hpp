@@ -10,6 +10,9 @@ class StructureScheme1 {
   void scheme1();
   void scheme2();
   void scheme3();
+  void scheme4();
+  void scheme5();
+  void scheme6();
   void clear();
   void defineAnnotated();
   void defineImplicit();
@@ -22,8 +25,8 @@ class StructureScheme1 {
   std::vector<Node*> hasCycle();
   bool hasCycleAux(std::set<Node*>& visited, std::vector<Node*>& stack,
                    Node* n);
-  void removeCycles();
-  void removeCycle(std::vector<Node*> visited);
+  void removeCycles(bool ban);
+  void removeCycle(std::vector<Node*> visited, bool ban);
   int cyclesRemoved() { return _cyclesRemoved; }
   void updateDomains();
   void defineLeastUsed();

@@ -8,27 +8,61 @@ void StructureScheme1::scheme1() {
   defineFromObjective();
   defineUnique();
   defineRest();
-  removeCycles();
+  removeCycles(false);
   updateDomains();
 }
 
 void StructureScheme1::scheme2() {
   defineFromObjective();
   defineLeastUsed();
-  removeCycles();
+  removeCycles(false);
   updateDomains();
 }
 void StructureScheme1::scheme3() {
-  /*
-  ** STEP1: Define by annotation and remove from consideration
-  ** STEP2: Define greedily.
-  ** STEP3: Remove cycles and remove definition from consideration.
-  ** STEP4: Repeat steps 2 & 3.
-  */
   defineFromObjective();
   defineUnique();
   defineRest();
-  // removeCyclesAndBan();
+  while (hasCycle().size()) {
+    removeCycles(true);
+    updateDomains();
+    defineFromObjective();
+    defineUnique();
+    defineRest();
+  }
+}
+void StructureScheme1::scheme4() {
+  defineFromObjective();
+  defineLeastUsed();
+  while (hasCycle().size()) {
+    removeCycles(true);
+    updateDomains();
+    defineFromObjective();
+    defineLeastUsed();
+  }
+}
+void StructureScheme1::scheme5() {
+  defineAnnotated();
+  defineFromObjective();
+  defineUnique();
+  defineRest();
+  while (hasCycle().size()) {
+    removeCycles(true);
+    updateDomains();
+    defineFromObjective();
+    defineUnique();
+    defineRest();
+  }
+}
+void StructureScheme1::scheme6() {
+  defineAnnotated();
+  defineFromObjective();
+  defineLeastUsed();
+  while (hasCycle().size()) {
+    removeCycles(true);
+    updateDomains();
+    defineFromObjective();
+    defineLeastUsed();
+  }
 }
 void StructureScheme1::clear() {
   for (auto constraint : _m->constraints()) {
@@ -145,7 +179,7 @@ void StructureScheme1::defineByImplicit() {
   }
 }
 
-void StructureScheme1::removeCycle(std::vector<Node*> visited) {
+void StructureScheme1::removeCycle(std::vector<Node*> visited, bool ban) {
   Int smallestDomain = std::numeric_limits<Int>::max();
   Constraint* nodeToRemove = nullptr;
   for (auto node : visited) {
@@ -163,18 +197,22 @@ void StructureScheme1::removeCycle(std::vector<Node*> visited) {
       }
     }
   }
-  assert(nodeToRemove->breakCycle());
+  if (ban) {
+    assert(nodeToRemove->breakCycleWithBan());
+  } else {
+    assert(nodeToRemove->breakCycle());
+  }
   std::cout << (TRACK ? "Node: " + nodeToRemove->getName() + " removed." + "\n"
                       : "");
   _cyclesRemoved += 1;
 }
-void StructureScheme1::removeCycles() {
+void StructureScheme1::removeCycles(bool ban) {
   std::cout << (TRACK ? "Looking for Cycles...\n" : "");
   std::vector<Node*> cycle;
   while (true) {
     cycle = hasCycle();
     if (cycle.size() > 0) {
-      removeCycle(cycle);
+      removeCycle(cycle, ban);
     } else {
       break;
     }

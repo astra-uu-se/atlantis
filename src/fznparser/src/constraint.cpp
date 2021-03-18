@@ -37,6 +37,13 @@ bool Constraint::breakCycle() {
   makeSoft();
   return true;
 }
+bool Constraint::breakCycleWithBan() {
+  for (auto v : _defines) {
+    v->removePotentialDefiner(this);
+  }
+  makeSoft();
+  return true;
+}
 Variable* Constraint::getSingleVariable(const VariableMap& variableMap, Int n) {
   assert(!getExpression(n).isArray());
   std::string name = getExpression(n).getName();
