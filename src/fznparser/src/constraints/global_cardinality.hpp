@@ -15,7 +15,6 @@ class GlobalCardinality : public Constraint {
   void configureVariables() override;
   bool canDefine(Variable* variable) override;
   void define(Variable* variable) override;
-  bool allTargetsFree() override;
   bool canBeImplicit() override;
   void makeImplicit() override;
   void imposeAndPropagate(Variable* variable) override;

@@ -52,6 +52,16 @@ Variable* Constraint::getAnnotationVariable(const VariableMap& variableMap) {
   std::string name = _constraintBox.getAnnotationVariableName();
   return variableMap.find(name);  // TODO: can this be an array?
 }
+
+bool Constraint::allVariablesFree() {
+  for (auto v : _variables) {
+    if (v->isDefined()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void Constraint::redefineVariable(Variable* variable) {
   if (variable->isDefined()) {
     variable->definedBy()->unDefine(variable);
@@ -211,6 +221,18 @@ void ConstraintBox::prepare(VariableMap& variables) {
       }
     }
   }
+}
+bool Constraint::defines(Variable* variable) {
+  if (_defines.count(variable)) return true;
+  return false;
+}
+bool ConstraintBox::hasIgnoreCycleAnnotation() {
+  for (auto a : _annotations) {
+    if (a._name == "ignore_cycle") {
+      return true;
+    }
+  }
+  return false;
 }
 bool ConstraintBox::hasImplicitAnnotation() {
   for (auto a : _annotations) {

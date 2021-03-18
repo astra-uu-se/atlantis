@@ -20,6 +20,16 @@ std::vector<Constraint*> Model::constraints() {
   return _constraints.getVector();
 }
 VariableMap& Model::varMap() { return _variables; }
+
+// Smaller first
+//
+std::vector<Variable*> Model::potDefSortVariables() {
+  std::vector<Variable*> sorted =
+      varMap().variables();  // Inefficient to sort every time
+  std::sort(sorted.begin(), sorted.end(), Variable::comparePotentialDefiners);
+  return sorted;
+}
+// Bigger first
 std::vector<Variable*> Model::domSortVariables() {
   std::vector<Variable*> sorted =
       varMap().variables();  // Inefficient to sort every time

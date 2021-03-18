@@ -10,16 +10,7 @@ class Element : public Constraint {
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   std::set<Node*> getNext() override;
-
-  // bool canDefine(Variable* variable) override;
-  // void define(Variable* variable) override;
-  // void unDefine(Variable* variable) override;
-  // bool allTargetsFree() override;
-  // bool canBeImplicit() override;
-  // void makeImplicit() override;
-  // void initDomains();
-  // Variable* _index;
+  void checkAnnotations(const VariableMap& variableMap) override;
   ArrayVariable* _values;
-  // Variable* _out;
-  bool _allowDynamicCycles = true;
+  bool _allowDynamicCycles = false;
 };

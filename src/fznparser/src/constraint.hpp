@@ -25,6 +25,7 @@ class ConstraintBox {
   void prepare(VariableMap& variables);
   bool hasDefineAnnotation();
   bool hasImplicitAnnotation();
+  bool hasIgnoreCycleAnnotation();
   std::string getAnnotationVariableName();
   void setId(Int id);
   Int _id;
@@ -48,6 +49,7 @@ class Constraint : public Node {
   virtual void unDefine(Variable* variable) { makeSoft(); }
   virtual void define(Variable* variable);
   virtual bool canDefine(Variable* variable) { return _canBeOneWay; }
+  bool defines(Variable* variable);
   void makeSoft();
   bool definesNone();
   bool uniqueTarget();
@@ -65,7 +67,7 @@ class Constraint : public Node {
   bool isInvariant() { return _invariant; }
   Int defInVarCount();
 
-  virtual bool allTargetsFree() { return false; }
+  virtual bool allVariablesFree();
   virtual bool imposeDomain(Variable* variable) { return false; }
   virtual bool refreshDomain() { return false; }
   void refreshNext(std::set<Constraint*>& visisted);
@@ -79,7 +81,7 @@ class Constraint : public Node {
   Variable* getSingleVariable(const VariableMap& variables, Int n);
   Variable* getAnnotationVariable(const VariableMap& variables);
   Expression getExpression(Int n);
-  void checkAnnotations(const VariableMap& variables);
+  virtual void checkAnnotations(const VariableMap& variables);
 
   void redefineVariable(Variable* variable);
   void defineVariable(Variable* variable);

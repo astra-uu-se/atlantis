@@ -56,6 +56,3 @@ void Inverse::unDefine(Variable* variable) {
   }
 }
 bool Inverse::canBeImplicit() { return true; }
-bool Inverse::allTargetsFree() {
-  return (_invf->noneDefined() && _f->noneDefined());
-}

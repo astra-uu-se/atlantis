@@ -12,6 +12,7 @@ class Variable : public Node {
       : _name{name}, _annotations{annotations}, _domain{domain} {};
 
   static bool compareDomain(Variable* v1, Variable* v2);
+  static bool comparePotentialDefiners(Variable* v1, Variable* v2);
 
   std::string getName() override { return _name; }
   std::set<Node*> getNext() override;

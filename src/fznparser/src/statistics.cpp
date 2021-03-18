@@ -1,5 +1,7 @@
 #include "statistics.hpp"
 
+#include <iostream>
+
 Statistics::Statistics(Model* model) { _model = model; }
 int Statistics::variableCount() {
   int n = 0;
@@ -18,6 +20,7 @@ int Statistics::definedCount() {
   return n;
 }
 void Statistics::countDefinedVariables(bool labels) {
+  std::cout << "===========================" << std::endl;
   std::cout << "=========VARIABLES=========" << std::endl;
   if (labels) {
     variablesDefinedBy();
@@ -42,6 +45,16 @@ void Statistics::variablesDefinedBy() {
     }
   }
 }
+int Statistics::countSoft() {
+  int soft = 0;
+  for (auto constraint : _model->constraints()) {
+    if (constraint->isImplicit() || constraint->isInvariant()) {
+      continue;
+    }
+    soft++;
+  }
+  return soft;
+}
 void Statistics::constraints(bool labels) {
   std::cout << "========CONSTRAINTS========" << std::endl;
   int total = 0;
@@ -65,25 +78,116 @@ void Statistics::constraints(bool labels) {
   std::cout << "Total:\t\t" << total << std::endl;
   std::cout << "===========================" << std::endl;
 }
+
 void Statistics::allStats(bool labels) {
   countDefinedVariables(labels);
   constraints(labels);
-  // width();
+  matchingAnnotations(labels);
+  // width(labels);
 }
-void Statistics::width() {
+void Statistics::width(bool labels) {
   // assert(_model->hasNoCycles());
+  std::cout << "===========WIDTH===========" << std::endl;
+  std::cout << "===========================" << std::endl;
+  int annotations = 0;
   int w = 0;
+  std::vector<Node*> visited;
+  std::vector<Node*> result;
   for (Node* v : _model->varMap().variables()) {
-    width_aux(v, 1, w);
+    width_aux(result, visited, v, 1, w);
   }
   for (Node* c : _model->constraints()) {
-    width_aux(c, 1, w);
+    width_aux(result, visited, c, 1, w);
   }
+  // Node* v = _model->varMap().variables()[0];
+  // width_aux(result, visited, v, 1, w);
   std::cout << "Width of graph: " << w << std::endl;
-}
-void Statistics::width_aux(Node* node, int x, int& w) {
-  if (x > w) w = x;
-  for (auto n : node->getNext()) {
-    width_aux(n, x + 1, w);
+  std::cout << "===========================" << std::endl;
+
+  if (labels) {
+    std::cout << "Longest path: " << std::endl;
+    for (auto n : result) {
+      std::cout << n->getName() << std::endl;
+    }
+    std::cout << "===========================" << std::endl;
   }
+}
+void Statistics::matchingAnnotations(bool labels) {
+  std::cout << "========ANNOTATIONS========" << std::endl;
+  int annotations = 0;
+  int matching = 0;
+  for (auto constraint : _model->constraints()) {
+    if (constraint->annotationTarget().has_value()) {
+      annotations++;
+      if (constraint->defines(constraint->annotationTarget().value())) {
+        matching++;
+        if (labels) {
+          std::cout << constraint->getName() << " fulfills define annotation."
+                    << std::endl;
+        }
+      }
+    }
+  }
+  std::cout << "===========================" << std::endl;
+  std::cout << "Annotations:\t" << annotations << std::endl;
+  std::cout << "Matching:\t" << matching << std::endl;
+  std::cout << "===========================" << std::endl;
+}
+void Statistics::width_aux(std::vector<Node*>& result,
+                           std::vector<Node*> visited, Node* node, int x,
+                           int& w) {
+  visited.push_back(node);
+  if (x > w) {
+    w = x;
+    result = visited;
+  }
+  for (auto n : node->getNext()) {
+    width_aux(result, visited, n, x + 1, w);
+  }
+}
+
+std::optional<double> Statistics::matchingAnnotationsScore() {
+  int annotations = 0;
+  int matching = 0;
+  for (auto constraint : _model->constraints()) {
+    if (constraint->annotationTarget().has_value()) {
+      annotations++;
+      if (constraint->defines(constraint->annotationTarget().value())) {
+        matching++;
+      }
+    }
+  }
+  if (annotations > 0) {
+    return matching / (double)annotations;
+  }
+  return {};
+}
+std::optional<double> Statistics::variableScore() {
+  int vc = variableCount();
+  if (vc > 0) {
+    return definedCount() / (double)vc;
+  }
+  return {};
+}
+std::optional<double> Statistics::constraintScore() {
+  if (_model->constraints().size() > 0) {
+    return (_model->constraints().size() - countSoft()) /
+           (double)_model->constraints().size();
+  }
+  return {};
+}
+double Statistics::score() {
+  int i = 0;
+  double tot = 0;
+  std::vector<std::optional<double>> scores;
+  scores.push_back(matchingAnnotationsScore());
+  scores.push_back(variableScore());
+  scores.push_back(constraintScore());
+  for (auto s : scores) {
+    if (s.has_value()) {
+      i++;
+      tot += s.value();
+    }
+  }
+  return (i > 0 ? tot / i : -1);
 }

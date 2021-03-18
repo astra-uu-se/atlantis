@@ -5,6 +5,10 @@
 bool Variable::compareDomain(Variable* v1, Variable* v2) {
   return v1->domainSize() > v2->domainSize();
 }
+
+bool Variable::comparePotentialDefiners(Variable* v1, Variable* v2) {
+  return v1->potentialDefiners().size() < v2->potentialDefiners().size();
+}
 /*******************SINGLEVARIABLE****************************/
 void Variable::addNextConstraint(Constraint* constraint) {
   _nextConstraints.insert(constraint);

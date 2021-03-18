@@ -1,15 +1,45 @@
 #include "structure_scheme_1.hpp"
-#define TRACK true
+#define TRACK false
 
-void StructureScheme1::findStructure() {
+void StructureScheme1::scheme1() {
   // defineByImplicit();
-  defineImplicit();
-  defineAnnotated();  // Ignores if the constraintobject actually can define.
+  // defineImplicit();
+  // defineAnnotated();
   defineFromObjective();
   defineUnique();
   defineRest();
   removeCycles();
   updateDomains();
+}
+
+void StructureScheme1::scheme2() {
+  defineFromObjective();
+  defineLeastUsed();
+  removeCycles();
+  updateDomains();
+}
+void StructureScheme1::scheme3() {
+  /*
+  ** STEP1: Define by annotation and remove from consideration
+  ** STEP2: Define greedily.
+  ** STEP3: Remove cycles and remove definition from consideration.
+  ** STEP4: Repeat steps 2 & 3.
+  */
+  defineFromObjective();
+  defineUnique();
+  defineRest();
+  // removeCyclesAndBan();
+}
+void StructureScheme1::clear() {
+  for (auto constraint : _m->constraints()) {
+    constraint->makeSoft();
+  }
+  for (auto var : _m->varMap().variables()) {
+    assert(!var->isDefined());
+  }
+  // for (auto var : _m->varMap().variables()) {
+  //   var->removeDefinition();
+  // }
 }
 void StructureScheme1::updateDomains() {
   for (auto constraint : _m->constraints()) {  // _m->conMap.functional()
@@ -29,8 +59,7 @@ void StructureScheme1::defineAnnotated() {
 }
 void StructureScheme1::defineImplicit() {
   for (auto c : _m->constraints()) {
-    if (c->canBeImplicit() &&  // Also checks that target is not defined
-        c->shouldBeImplicit()) {
+    if (c->canBeImplicit() && c->shouldBeImplicit()) {
       c->makeImplicit();
     }
   }
@@ -47,7 +76,8 @@ void StructureScheme1::defineFromWithImplicit(Variable* variable) {
           }
         }
         break;
-      } else if (constraint->canBeImplicit()) {
+      } else if (constraint->canBeImplicit() &&
+                 constraint->allVariablesFree()) {
         constraint->makeImplicit();
         return;
       }
@@ -94,7 +124,6 @@ void StructureScheme1::defineRest() {
     if (variable->isDefinable() && !variable->isDefined()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->canDefine(variable) && constraint->definesNone()) {
-          std::cout << constraint->getName() << std::endl;
           constraint->define(variable);
           break;
         }
@@ -181,4 +210,17 @@ bool StructureScheme1::hasCycleAux(std::set<Node*>& visited,
   }
   stack.pop_back();
   return false;
+}
+
+void StructureScheme1::defineLeastUsed() {
+  for (auto var : _m->potDefSortVariables()) {
+    if (!var->isDefined()) {
+      for (auto con : var->potentialDefiners()) {
+        if (con->definesNone()) {  // Add better prio
+          con->define(var);
+          break;
+        }
+      }
+    }
+  }
 }

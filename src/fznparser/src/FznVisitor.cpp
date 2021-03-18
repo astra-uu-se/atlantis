@@ -97,8 +97,7 @@ antlrcpp::Any FznVisitor::visitBasicVarType(
         std::make_shared<IntSetDomain>(s));
   }
 
-  std::cerr << "Domain not supported: " + ctx->getText() << std::endl;
-  exit(0);
+  throw "Domain not supported";
 }
 antlrcpp::Any FznVisitor::visitAnnotations(
     FlatZincParser::AnnotationsContext *ctx) {

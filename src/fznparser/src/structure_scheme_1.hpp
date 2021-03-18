@@ -7,12 +7,14 @@ class StructureScheme1 {
  public:
   StructureScheme1(Model* m) { _m = m; }
 
-  void findStructure();
+  void scheme1();
+  void scheme2();
+  void scheme3();
+  void clear();
   void defineAnnotated();
   void defineImplicit();
   void defineFrom(Variable* variable);
   void defineFromWithImplicit(Variable* variable);
-  void defineFromWithImplicit2(Variable* variable);
   void defineFromObjective();
   void defineUnique();
   void defineRest();
@@ -24,6 +26,7 @@ class StructureScheme1 {
   void removeCycle(std::vector<Node*> visited);
   int cyclesRemoved() { return _cyclesRemoved; }
   void updateDomains();
+  void defineLeastUsed();
 
  private:
   Model* _m;

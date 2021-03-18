@@ -18,6 +18,7 @@ class Model {
   std::vector<Constraint*> constraints();
   VariableMap& varMap();
   std::vector<Variable*> domSortVariables();
+  std::vector<Variable*> potDefSortVariables();
   std::optional<Variable*> objective() { return _objective; }
 
  private:

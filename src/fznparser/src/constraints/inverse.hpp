@@ -16,7 +16,6 @@ class Inverse : public Constraint {
   bool canDefine(Variable* variable) override;
   void define(Variable* variable) override;
   void unDefine(Variable* variable) override;
-  bool allTargetsFree() override;
   bool canBeImplicit() override;
   ArrayVariable* _f;
   ArrayVariable* _invf;

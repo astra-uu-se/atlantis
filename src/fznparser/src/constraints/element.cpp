@@ -1,15 +1,21 @@
 #include "element.hpp"
 
+// element(var int: idx,int: idxoffset,array [int] of var int: x,var int: c);
 void Element::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
-  // Not sure what the second argument does.
-  _values = getArrayVariable(variableMap, 2);
   _variables.push_back(getSingleVariable(variableMap, 3));
+  _values = getArrayVariable(variableMap, 2);
   for (auto v : _values->elements()) {
     _variables.push_back(v);
   }
 }
-void Element::configureVariables() { _variables[0]->addPotentialDefiner(this); }
+void Element::configureVariables() {
+  for (int i = 0; i <= 1; i++) {
+    if (_variables[i]->isDefinable()) {
+      _variables[i]->addPotentialDefiner(this);
+    }
+  }
+}
 
 std::set<Node*> Element::getNext() {
   std::set<Node*> defines;
@@ -24,4 +30,16 @@ std::set<Node*> Element::getNext() {
     defines.insert(var);
   }
   return defines;
+}
+
+void Element::checkAnnotations(const VariableMap& variableMap) {
+  if (_constraintBox.hasDefineAnnotation()) {
+    _annotationTarget.emplace(getAnnotationVariable(variableMap));
+  }
+  if (_constraintBox.hasImplicitAnnotation()) {
+    _shouldBeImplicit = true;
+  }
+  if (_constraintBox.hasIgnoreCycleAnnotation()) {
+    _allowDynamicCycles = true;
+  }
 }

@@ -42,9 +42,6 @@ void GlobalCardinality::unDefine(Variable* variable) {
   }
 }
 bool GlobalCardinality::canBeImplicit() { return true; }
-bool GlobalCardinality::allTargetsFree() {
-  return (_x->noneDefined() && _counts->noneDefined());
-}
 void GlobalCardinality::makeImplicit() {
   clearVariables();
   for (auto var : _x->elements()) {
