@@ -133,6 +133,13 @@ void Constraint::define(Variable* variable) {
   _invariant = true;
   imposeAndPropagate(variable);
 }
+void Constraint::reset(const VariableMap& variables) {
+  _defines.clear();
+  _variables.clear();
+  _implicit = false;
+  _invariant = false;
+  init(variables);
+}
 void Constraint::makeSoft() {
   for (auto variable : _defines) {
     if (variable->hasImposedDomain()) {

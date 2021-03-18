@@ -16,6 +16,14 @@ void Model::init() {
     constraint->init(_variables);
   }
 }
+void Model::reset() {
+  for (auto variable : varMap().variables()) {
+    variable->reset();
+  }
+  for (auto constraint : constraints()) {
+    constraint->reset(_variables);
+  }
+}
 std::vector<Constraint*> Model::constraints() {
   return _constraints.getVector();
 }

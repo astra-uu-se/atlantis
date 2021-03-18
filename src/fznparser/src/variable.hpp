@@ -38,6 +38,7 @@ class Variable : public Node {
   virtual Int lowerBound();
   virtual Int upperBound();
   virtual std::set<Constraint*> getNextConstraints();
+  void reset();
 
  private:
   std::optional<Domain*> _imposedDomain;

@@ -7,6 +7,7 @@ class StructureScheme1 {
  public:
   StructureScheme1(Model* m) { _m = m; }
 
+  void scheme(int n);
   void scheme1();
   void scheme2();
   void scheme3();

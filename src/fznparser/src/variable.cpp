@@ -60,6 +60,14 @@ std::set<Node*> Variable::getNext() {
 std::set<Constraint*> Variable::getNextConstraints() {
   return _nextConstraints;
 }
+void Variable::reset() {
+  if (hasImposedDomain()) {
+    unImposeDomain();
+  }
+  removeDefinition();
+  _nextConstraints.clear();
+  _potentialDefiners.clear();
+}
 /*******************ARRAYVARIABLE****************************/
 ArrayVariable::ArrayVariable(std::vector<Variable*> elements) {
   std::string name = "[";

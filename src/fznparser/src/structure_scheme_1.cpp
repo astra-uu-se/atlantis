@@ -1,6 +1,28 @@
 #include "structure_scheme_1.hpp"
 #define TRACK false
 
+void StructureScheme1::scheme(int n) {
+  switch (n) {
+    case 0:
+      scheme1();
+      break;
+    case 1:
+      scheme2();
+      break;
+    case 2:
+      scheme3();
+      break;
+    case 3:
+      scheme4();
+      break;
+    case 4:
+      scheme5();
+      break;
+    case 5:
+      scheme6();
+      break;
+  }
+}
 void StructureScheme1::scheme1() {
   // defineByImplicit();
   // defineImplicit();
