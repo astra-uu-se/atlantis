@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
       StructureScheme1 ss1 = StructureScheme1(&m);
 
       ss1.scheme1();
-      if (s.score() == 0) continue;
+      if (s.score() <= 0) continue;
       count++;
       tot1 += s.score();
       std::cout << "Score1: " << s.score() << std::endl;
@@ -93,12 +93,12 @@ int main(int argc, char* argv[]) {
   tot4 = tot4 / count;
   tot5 = tot5 / count;
   tot6 = tot6 / count;
-  std::cout << "Total Score1:" << tot1 << std::endl;
-  std::cout << "Total Score2:" << tot2 << std::endl;
-  std::cout << "Total Score3:" << tot3 << std::endl;
-  std::cout << "Total Score4:" << tot4 << std::endl;
-  std::cout << "Total Score5:" << tot5 << std::endl;
-  std::cout << "Total Score6:" << tot6 << std::endl;
+  std::cout << "Total Score1: " << tot1 << std::endl;
+  std::cout << "Total Score2: " << tot2 << std::endl;
+  std::cout << "Total Score3: " << tot3 << std::endl;
+  std::cout << "Total Score4: " << tot4 << std::endl;
+  std::cout << "Total Score5: " << tot5 << std::endl;
+  std::cout << "Total Score6: " << tot6 << std::endl;
 
   return 0;
 }

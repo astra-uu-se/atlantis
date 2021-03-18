@@ -189,5 +189,5 @@ double Statistics::score() {
       tot += s.value();
     }
   }
-  return (i > 0 ? tot / i : -1);
+  return 100 * (i > 0 ? tot / i : -1);
 }

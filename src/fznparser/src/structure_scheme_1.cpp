@@ -137,7 +137,7 @@ void StructureScheme1::defineFromObjective() {
   if (_m->objective().has_value()) {
     defineFromWithImplicit(_m->objective().value());
   } else {
-    std::cerr << "No objective exists\n";
+    // std::cerr << "No objective exists\n";
   }
 }
 void StructureScheme1::defineUnique() {
