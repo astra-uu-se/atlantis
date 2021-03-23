@@ -62,13 +62,9 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
     
-    - name: Publish Image
-      id: docker-push
-      run: docker push $REPOSITORY_URL/$IMAGE_NAME
-
     - uses: act10ns/slack@v1
       with:
         status: ${{ job.status }}
         steps: ${{ toJson(steps) }}
-        channel: '#workflows'
+        channel: '#build'
       if: always()
