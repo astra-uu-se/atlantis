@@ -21,12 +21,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: act10ns/slack@v1.2.2
-      with:
-        status: starting
-        channel: '#workflows'
-      if: always()
-    
     - name: Checkout
       uses: actions/checkout@v2
 
