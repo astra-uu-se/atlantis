@@ -9,6 +9,8 @@ env:
   CXX_FLAGS: -std=c++17 -Wall -pedantic -Werror -Wno-variadic-macros -Wno-long-long -Wno-shadow
   RUN_TESTS: true
   RUN_BENCHMARKS: true
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
 
 jobs:
   build:
@@ -19,7 +21,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: act10ns/slack@v1.2.2
+      with:
+        status: starting
+        channel: '#workflows'
+      if: always()
+    
+    - name: Checkout
+      uses: actions/checkout@v2
 
     - name: Install
       shell: bash
@@ -52,3 +61,14 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
+    
+    - name: Publish Image
+      id: docker-push
+      run: docker push $REPOSITORY_URL/$IMAGE_NAME
+
+    - uses: act10ns/slack@v1
+      with:
+        status: ${{ job.status }}
+        steps: ${{ toJson(steps) }}
+        channel: '#workflows'
+      if: always()
