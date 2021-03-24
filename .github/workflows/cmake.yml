@@ -12,6 +12,8 @@ env:
   RUN_TESTS: true
   RUN_BENCHMARKS: true
   SLACK_WEBHOOK_BUILD: ${{ secrets.SLACK_WEBHOOK_BUILD }}
+  CC: gcc-8
+  CXX: g++-8
 
 
 jobs:
@@ -35,7 +37,7 @@ jobs:
 
     - name: Install
       shell: bash
-      run: sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; sudo apt-get install gcc-8 g++-8 python3; sudo apt-get update -qq; CC=gcc-8; CXX=g++-8
+      run: sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; sudo apt-get install gcc-8 g++-8 python3; sudo apt-get update -qq;
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
