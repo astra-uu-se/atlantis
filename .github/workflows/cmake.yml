@@ -82,4 +82,4 @@ jobs:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: bash slack-benchmark.sh;
+      run: chmod +x ./slack-benchmark.sh; ./slack-benchmark.sh;
