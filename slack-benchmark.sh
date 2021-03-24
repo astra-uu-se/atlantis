@@ -18,4 +18,4 @@ GIT_PREV_REVISION=`git log --skip=1 --max-count=1 | grep commit | sed 's/\s*comm
 GIT_PREV_REVISION=${GIT_PREV_REVISION:0:12}
 GIT_LINK="https://github.com/$GIT_REPO/compare/$GIT_PREV_REVISION...$GIT_REVISION"
 HEADER="Build <$TRAVIS_BUILD_WEB_URL|#$TRAVIS_BUILD_NUMBER> (<$GIT_LINK|$GIT_COMMIT>) $GIT_REPO@$GIT_BRANCH by $GIT_USER" > $BENCHMARK_FILE
-./build/runBenchmarks | python3 slack-formatter.py --header="${HEADER}" --webhook="${SLACK_WEBHOOK_BENCH}"
+./build/runBenchmarks | python3 slack-formatter.py --header="${HEADER}" --webhook="${SLACK_WEBHOOK_URL}"
