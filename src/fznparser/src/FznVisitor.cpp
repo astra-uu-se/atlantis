@@ -24,6 +24,7 @@ antlrcpp::Any FznVisitor::visitModel(FlatZincParser::ModelContext *ctx) {
       std::cerr << "Objective is literal expression\n";
     }
   }
+  m.init();
   return m;
 }
 

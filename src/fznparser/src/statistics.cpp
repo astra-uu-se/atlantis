@@ -1,6 +1,7 @@
 #include "statistics.hpp"
 
 #include <iostream>
+#include <string>
 
 Statistics::Statistics(Model* model) { _model = model; }
 int Statistics::variableCount() {
@@ -85,11 +86,10 @@ void Statistics::allStats(bool labels) {
   matchingAnnotations(labels);
   // width(labels);
 }
-void Statistics::width(bool labels) {
+int Statistics::width(bool labels) {
   // assert(_model->hasNoCycles());
-  std::cout << "===========WIDTH===========" << std::endl;
-  std::cout << "===========================" << std::endl;
-  int annotations = 0;
+  // std::cout << "===========WIDTH===========" << std::endl;
+  // std::cout << "===========================" << std::endl;
   int w = 0;
   std::vector<Node*> visited;
   std::vector<Node*> result;
@@ -101,8 +101,8 @@ void Statistics::width(bool labels) {
   }
   // Node* v = _model->varMap().variables()[0];
   // width_aux(result, visited, v, 1, w);
-  std::cout << "Width of graph: " << w << std::endl;
-  std::cout << "===========================" << std::endl;
+  // std::cout << "Width of graph: " << w << std::endl;
+  // std::cout << "===========================" << std::endl;
 
   if (labels) {
     std::cout << "Longest path: " << std::endl;
@@ -111,6 +111,7 @@ void Statistics::width(bool labels) {
     }
     std::cout << "===========================" << std::endl;
   }
+  return w;
 }
 void Statistics::matchingAnnotations(bool labels) {
   std::cout << "========ANNOTATIONS========" << std::endl;
@@ -158,20 +159,20 @@ std::optional<double> Statistics::matchingAnnotationsScore() {
     }
   }
   if (annotations > 0) {
-    return matching / (double)annotations;
+    return 100 * matching / (double)annotations;
   }
   return {};
 }
 std::optional<double> Statistics::variableScore() {
   int vc = variableCount();
   if (vc > 0) {
-    return definedCount() / (double)vc;
+    return 100 * definedCount() / (double)vc;
   }
   return {};
 }
 std::optional<double> Statistics::constraintScore() {
   if (_model->constraints().size() > 0) {
-    return (_model->constraints().size() - countSoft()) /
+    return 100 * (_model->constraints().size() - countSoft()) /
            (double)_model->constraints().size();
   }
   return {};
@@ -189,5 +190,30 @@ double Statistics::score() {
       tot += s.value();
     }
   }
-  return 100 * (i > 0 ? tot / i : -1);
+  return (i > 0 ? tot / i : -1);
+}
+void Statistics::header() {
+  std::cout << "\t\tVarScore\tInvScore\tAnnScore\tWidth" << std::endl;
+  line();
+}
+void Statistics::line() {
+  std::cout
+      << "\t--------------------------------------------------------------"
+      << std::endl;
+}
+void Statistics::row(int i) {
+  std::cout << "Scheme: " << i << "\t"
+            << (variableScore() ? std::to_string(variableScore().value()) + "%"
+                                : "-")
+            << "\t"
+            << (constraintScore()
+                    ? std::to_string(constraintScore().value()) + "%"
+                    : "-")
+            << "\t"
+            << (matchingAnnotationsScore()
+                    ? std::to_string(matchingAnnotationsScore().value()) + "%"
+                    : "-")
+            << "\t" << width(false)
+
+            << "\t" << std::endl;
 }

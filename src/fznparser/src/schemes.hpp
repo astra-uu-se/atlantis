@@ -3,9 +3,9 @@
 #include "model.hpp"
 #include "variable.hpp"
 
-class StructureScheme1 {
+class Schemes {
  public:
-  StructureScheme1(Model* m) { _m = m; }
+  Schemes(Model* m) { _m = m; }
 
   void scheme(int n);
   void scheme1();
