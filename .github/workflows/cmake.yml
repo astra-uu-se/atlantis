@@ -11,8 +11,10 @@ env:
   SLACK_WEBHOOK_BUILD: ${{ secrets.SLACK_WEBHOOK_BUILD }}
   SLACK_WEBHOOK_BENCH: ${{ secrets.SLACK_WEBHOOK_BENCH }}
   CMAKE_OPTIONS: ""
-  GTEST_FLAGS: -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=OFF -DCMAKE_BUILD_TYPE=Debug
-  GBENCH_FLAGS: -DBUILD_TESTS:BOOL=OFF -BENCHMARK_ENABLE_TESTING:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_BUILD_TYPE=Release
+  GTEST_BUILD_TYPE: Debug
+  GBENCH_BUILD_TYPE: Release
+  GTEST_FLAGS: -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=OFF -DCMAKE_BUILD_TYPE=${{ env.GTEST_BUILD_TYPE }}
+  GBENCH_FLAGS: -DBUILD_TESTS:BOOL=OFF -BENCHMARK_ENABLE_TESTING:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_BUILD_TYPE=${{ env.GBENCH_BUILD_TYPE }}
 
 jobs:
   Test:
@@ -35,11 +37,21 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{ github.workspace }}/build
 
+    - name: Configure CMake
+      # Use a bash shell so we can use the same syntax for environment variable
+      # access regardless of the host operating system
+      shell: bash
+      working-directory: ${{github.workspace}}/build
+      # Note the current convention is to use the -S and -B options here to specify source 
+      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$GTEST_BUILD_TYPE; make
+
     - name: Build
       working-directory: ${{ github.workspace }}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake ${{ env.CMAKE_OPTIONS }} ${{ env.GTEST_FLAGS }} -DCMAKE_CXX_FLAGS=${{ env.CXX_FLAGS }}  ..
+      run: cmake $CMAKE_OPTIONS $GTEST_FLAGS -DCMAKE_CXX_FLAGS=$CXX_FLAGS ..
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
@@ -72,10 +84,20 @@ jobs:
     - name: Create Build Environment
       run: cmake -E make_directory ${{ github.workspace }}/build
 
+    - name: Configure CMake
+      # Use a bash shell so we can use the same syntax for environment variable
+      # access regardless of the host operating system
+      shell: bash
+      working-directory: ${{github.workspace}}/build
+      # Note the current convention is to use the -S and -B options here to specify source 
+      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$GBENCH_BUILD_TYPE; make
+
     - name: Build
       working-directory: ${{ github.workspace }}/build
       shell: bash
-      run: cmake ${{ env.CMAKE_OPTIONS }} ${{ env.GBENCH_FLAGS }} -DCMAKE_CXX_FLAGS=${{ env.CXX_FLAGS}} ..
+      run: cmake $CMAKE_OPTIONS $GBENCH_FLAGS -DCMAKE_CXX_FLAGS=$CXX_FLAGS ..
 
     - name: Benchmark
       working-directory: ${{github.workspace}}/build
