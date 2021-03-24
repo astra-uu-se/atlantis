@@ -5,12 +5,12 @@ on: [push]
 env:
   BUILD_TYPE: Release
   DEPS_DIR: ${{ github.workspace }}/deps
-  CXX_FLAGS: "-std=c++17 -Wall -pedantic -Werror -Wno-variadic-macros -Wno-long-long -Wno-shadow ${ENV_CXX_FLAGS}"
+  CXX_FLAGS: -std=c++17 -Wall -pedantic -Werror -Wno-variadic-macros -Wno-long-long -Wno-shadow
   RUN_TESTS: true
   RUN_BENCHMARKS: true
   SLACK_WEBHOOK_BUILD: ${{ secrets.SLACK_WEBHOOK_BUILD }}
   SLACK_WEBHOOK_BENCH: ${{ secrets.SLACK_WEBHOOK_BENCH }}
-  CMAKE_OPTIONS: "${CMAKE_OPTIONS} ${ENV_CMAKE_OPTIONS}"
+  CMAKE_OPTIONS: ""
   GTEST_FLAGS: -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=OFF -DCMAKE_BUILD_TYPE=Debug
   GBENCH_FLAGS: -DBUILD_TESTS:BOOL=OFF -BENCHMARK_ENABLE_TESTING:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_BUILD_TYPE=Release
 
