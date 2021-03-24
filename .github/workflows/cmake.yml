@@ -7,21 +7,15 @@ env:
   GTEST_BUILD_TYPE: Debug
   DEPS_DIR: ${{github.workspace}}/deps
   CXX_FLAGS: -std=c++17 -Wall -pedantic -Werror -Wno-variadic-macros -Wno-long-long -Wno-shadow
-  GTEST_FLAGS: -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=OFF -DCMAKE_BUILD_TYPE=Debug
   GBENCH_FLAGS: -DBUILD_TESTS:BOOL=OFF -BENCHMARK_ENABLE_TESTING:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_BUILD_TYPE=Release
   RUN_TESTS: true
   RUN_BENCHMARKS: true
-  SLACK_WEBHOOK_BUILD: ${{ secrets.SLACK_WEBHOOK_BUILD }}
   CC: gcc-8
   CXX: g++-8
 
 
 jobs:
-  build:
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  install:
     runs-on: ubuntu-latest
 
     steps:
@@ -35,7 +29,7 @@ jobs:
       with:
         cmake-version: '3.10.x'
 
-    - name: Install
+    - name: apt-get
       shell: bash
       run: sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; sudo apt-get install gcc-8 g++-8 python3; sudo apt-get update -qq;
 
@@ -44,11 +38,17 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
 
+  build:
+    runs-on: ubuntu-latest
+    needs: [install]
+    env:
+      CMAKE_FLAGS: -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=OFF -DCMAKE_BUILD_TYPE=Debug
+    steps:
     - name: Build
       working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake $CMAKE_OPTIONS $GTEST_FLAGS -DCMAKE_CXX_FLAGS=$CXX_FLAGS  ..; make
+      run: cmake $CMAKE_OPTIONS $CMAKE_FLAGS -DCMAKE_CXX_FLAGS=$CXX_FLAGS  ..; make
 
     - name: Test
       working-directory: ${{github.workspace}}/build
@@ -62,4 +62,6 @@ jobs:
         status: ${{ job.status }}
         steps: ${{ toJson(steps) }}
         channel: '#build'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD }}
       if: always()
