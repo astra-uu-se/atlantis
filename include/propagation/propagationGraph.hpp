@@ -39,6 +39,36 @@ class PropagationGraph {
   std::vector<bool> m_isOutputVar;
   std::vector<bool> m_isInputVar;
 
+  struct Topology {
+    std::vector<size_t> m_variablePosition;
+    std::vector<size_t> m_invariantPosition;
+
+    PropagationGraph& graph;
+    Topology() = delete;
+    explicit Topology(PropagationGraph& g) : graph(g) {}
+    void computeNoCycles();
+    void computeWithCycles();
+    void computeInvariantFromVariables();
+    inline size_t getPosition(VarIdBase id) {
+      return m_variablePosition[id.id];
+    }
+    inline size_t getPosition(InvariantId id) {
+      return m_invariantPosition.at(id);
+    }
+  } m_topology;
+
+  friend class PropagationEngine;
+
+  struct PriorityCmp {
+    PropagationGraph& graph;
+    explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
+    bool operator()(VarIdBase left, VarIdBase right) {
+      return graph.m_topology.getPosition(left) >
+             graph.m_topology.getPosition(right);
+    }
+  };
+
+  // TODO: Move into its own file:
   class PropagationQueue {
    private:
     struct ListNode {
@@ -121,35 +151,9 @@ class PropagationGraph {
   };
 
   PropagationQueue m_propagationQueue;
-
-  struct Topology {
-    std::vector<size_t> m_variablePosition;
-    std::vector<size_t> m_invariantPosition;
-
-    PropagationGraph& graph;
-    Topology() = delete;
-    explicit Topology(PropagationGraph& g) : graph(g) {}
-    void computeNoCycles();
-    void computeWithCycles();
-    void computeInvariantFromVariables();
-    inline size_t getPosition(VarIdBase id) {
-      return m_variablePosition[id.id];
-    }
-    inline size_t getPosition(InvariantId id) {
-      return m_invariantPosition.at(id);
-    }
-  } m_topology;
-
-  friend class PropagationEngine;
-
-  struct PriorityCmp {
-    PropagationGraph& graph;
-    explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
-    bool operator()(VarIdBase left, VarIdBase right) {
-      return graph.m_topology.getPosition(left) >
-             graph.m_topology.getPosition(right);
-    }
-  };
+  // std::priority_queue<VarIdBase, std::vector<VarIdBase>,
+  //                     PropagationGraph::PriorityCmp>
+  //     m_propagationQueue;
 
  public:
   PropagationGraph() : PropagationGraph(1000) {}
