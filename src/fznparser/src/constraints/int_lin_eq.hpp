@@ -7,6 +7,8 @@ class IntLinEq : public Constraint {
     _uniqueTarget = false;
     _outputDomain = std::make_shared<IntDomain>();
   }
+  static Int maxDomain(int coef, Variable* variable);
+  static Int minDomain(int coef, Variable* variable);
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeImplicit() override;
@@ -16,6 +18,7 @@ class IntLinEq : public Constraint {
 
  private:
   std::shared_ptr<IntDomain> _outputDomain;
+  std::vector<Int> _asv;
   ArrayVariable* _as;
   ArrayVariable* _bs;
   Variable* _c;

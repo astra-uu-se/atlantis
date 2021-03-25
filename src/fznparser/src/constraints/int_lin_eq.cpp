@@ -1,7 +1,6 @@
 #include "int_lin_eq.hpp"
 
-#include <unistd.h>
-
+#include <string>
 #include <utility>
 
 void IntLinEq::loadVariables(const VariableMap& variableMap) {
@@ -13,8 +12,8 @@ void IntLinEq::loadVariables(const VariableMap& variableMap) {
   }
 }
 void IntLinEq::configureVariables() {
-  // _outputDomain = std::make_shared<IntDomain>();
   for (int i = 0; i < _as->elements().size(); i++) {
+    _asv.push_back(std::stol(_as->elements()[i]->getName()));
     if (_bs->elements()[i]->isDefinable()) {
       std::string coefficient = _as->elements()[i]->getName();
       if (coefficient == "1" || coefficient == "-1") {
@@ -51,27 +50,39 @@ bool IntLinEq::refreshDomain() {
   return false;
 }
 std::pair<Int, Int> IntLinEq::getBounds(Variable* variable) {
-  Int n = 0;
-  for (auto v : _bs->elements()) {
-    if (v == variable) break;
-    n++;
-  }
-  assert(n < _bs->elements().size());
-
-  Int outCo = stol(_as->elements()[n]->getName());
   Int lb = 0;
   Int ub = 0;
-  for (int i = 0; i < _as->elements().size(); i++) {
-    if (i == n) {
-      continue;
-    }
-    Int co = stol(_as->elements()[i]->getName());
-    co = -outCo * co;
-    lb += (co < 0 ? co * _bs->elements()[i]->upperBound()
-                  : co * _bs->elements()[i]->lowerBound());
-    ub += (co < 0 ? co * _bs->elements()[i]->lowerBound()
-                  : co * _bs->elements()[i]->upperBound());
+  Int i = 0;
+  for (auto v : _bs->elements()) {
+    if (v == variable) break;
+    i++;
   }
+  assert(i < _bs->elements().size());
+  if (_asv[i] < 0) {
+    for (int j = 0; j < _bs->elements().size(); j++) {
+      if (j == i) continue;
+      ub += maxDomain(_asv[j], _bs->elements()[j]);
+      lb += minDomain(_asv[j], _bs->elements()[j]);
+    }
+  } else {
+    for (int j = 0; j < _bs->elements().size(); j++) {
+      if (j == i) continue;
+      ub += minDomain(_asv[j], _bs->elements()[j]);
+      lb += maxDomain(_asv[j], _bs->elements()[j]);
+    }
+  }
+  lb = -1 * _asv[i] * (lb - std::stol(_c->getName()));
+  ub = -1 * _asv[i] * (ub - std::stol(_c->getName()));
+  std::cout << "lb: " << lb << std::endl;
+  std::cout << "ub: " << ub << std::endl;
 
-  return std::make_pair(0, 10);
+  return std::make_pair(lb, ub);
+}
+Int IntLinEq::maxDomain(int coef, Variable* variable) {
+  if (coef <= 0) return coef * variable->lowerBound();
+  return coef * variable->upperBound();
+}
+Int IntLinEq::minDomain(int coef, Variable* variable) {
+  if (coef >= 0) return coef * variable->lowerBound();
+  return coef * variable->upperBound();
 }
