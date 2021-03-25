@@ -42,6 +42,8 @@ class Constraint : public Node {
   virtual void init(const VariableMap& variables);
   std::string getName() override;
 
+  static bool sort(Constraint* c1, Constraint* c2);
+
   std::set<Node*> getNext() override;
   bool breakCycle();
   bool breakCycleWithBan();

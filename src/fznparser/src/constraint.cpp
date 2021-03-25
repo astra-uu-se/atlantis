@@ -33,6 +33,14 @@ std::string Constraint::getName() {
   name = name + " #" + std::to_string(_constraintBox._id);
   return name;
 }
+
+bool Constraint::sort(Constraint* c1, Constraint* c2) {
+  if (c1->_variables.size() == c2->_variables.size()) {
+    return c1->getName() > c2->getName();
+  }
+  return c1->_variables.size() > c2->_variables.size();
+}
+
 bool Constraint::breakCycle() {
   makeSoft();
   return true;
@@ -137,7 +145,7 @@ void Constraint::makeSoft() {
   for (auto variable : _defines) {
     if (variable->hasImposedDomain()) {
       variable->unImposeDomain();
-      for (auto constraint : variable->getNextConstraints()) {
+      for (auto constraint : variable->getNextSorted()) {
         std::set<Constraint*> visited;
         constraint->refreshAndPropagate(visited);
       }
@@ -145,6 +153,7 @@ void Constraint::makeSoft() {
   }
   clearVariables();
   _invariant = false;
+  _implicit = false;
 }
 bool Constraint::canBeImplicit() { return false; }
 bool Constraint::shouldBeImplicit() { return _shouldBeImplicit; }
@@ -177,14 +186,14 @@ std::vector<Variable*> Constraint::variablesSorted() {
   return next;
 }
 void Constraint::init(const VariableMap& variableMap) {
+  _variables.clear();
   loadVariables(variableMap);
   configureVariables();
   checkAnnotations(variableMap);
 }
 void Constraint::refreshNext(std::set<Constraint*>& visited) {
   for (auto variable : _defines) {
-    for (auto node : variable->getNext()) {
-      auto constraint = dynamic_cast<Constraint*>(node);
+    for (auto constraint : variable->getNextSorted()) {
       constraint->refreshAndPropagate(visited);
     }
   }
@@ -193,8 +202,7 @@ void Constraint::imposeAndPropagate(Variable* variable) {
   std::set<Constraint*> visited;
   visited.insert(this);
   if (imposeDomain(variable)) {
-    for (auto node : variable->getNext()) {
-      auto constraint = dynamic_cast<Constraint*>(node);
+    for (auto constraint : variable->getNextSorted()) {
       assert(constraint);
       constraint->refreshAndPropagate(visited);
     }

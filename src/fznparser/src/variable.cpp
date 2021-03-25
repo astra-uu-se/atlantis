@@ -1,5 +1,6 @@
 #include "variable.hpp"
 
+#include <algorithm>
 #include <string>
 
 bool Variable::compareDomain(Variable* v1, Variable* v2) {
@@ -30,6 +31,14 @@ void Variable::removePotentialDefiner(Constraint* constraint) {
   assert(_potentialDefiners.count(constraint));
   _potentialDefiners.erase(constraint);
 }
+std::vector<Constraint*> Variable::potentialDefinersSorted() {
+  std::vector<Constraint*> sorted;
+  for (auto c : _potentialDefiners) {
+    sorted.push_back(c);
+  }
+  std::sort(sorted.begin(), sorted.end(), Constraint::sort);
+  return sorted;
+}
 void Variable::imposeDomain(Domain* domain) { _imposedDomain.emplace(domain); }
 void Variable::unImposeDomain() {
   assert(hasImposedDomain());
@@ -56,6 +65,14 @@ std::set<Node*> Variable::getNext() {
     next.insert(static_cast<Node*>(c));
   }
   return next;
+}
+std::vector<Constraint*> Variable::getNextSorted() {
+  std::vector<Constraint*> sorted;
+  for (auto n : _nextConstraints) {
+    sorted.push_back(n);
+  }
+  std::sort(sorted.begin(), sorted.end(), Constraint::sort);
+  return sorted;
 }
 std::set<Constraint*> Variable::getNextConstraints() {
   return _nextConstraints;

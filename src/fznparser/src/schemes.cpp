@@ -1,29 +1,8 @@
 #include "schemes.hpp"
 #define TRACK false
 
-void Schemes::scheme(int n) {
-  switch (n) {
-    case 0:
-      scheme1();
-      break;
-    case 1:
-      scheme2();
-      break;
-    case 2:
-      scheme3();
-      break;
-    case 3:
-      scheme4();
-      break;
-    case 4:
-      scheme5();
-      break;
-    case 5:
-      scheme6();
-      break;
-  }
-}
 void Schemes::scheme1() {
+  reset();
   // defineByImplicit();
   // defineImplicit();
   // defineAnnotated();
@@ -33,14 +12,15 @@ void Schemes::scheme1() {
   removeCycles(false);
   updateDomains();
 }
-
 void Schemes::scheme2() {
+  reset();
   defineFromObjective();
   defineLeastUsed();
   removeCycles(false);
   updateDomains();
 }
 void Schemes::scheme3() {
+  reset();
   defineFromObjective();
   defineUnique();
   defineRest();
@@ -53,6 +33,7 @@ void Schemes::scheme3() {
   }
 }
 void Schemes::scheme4() {
+  reset();
   defineFromObjective();
   defineLeastUsed();
   while (hasCycle().size()) {
@@ -63,6 +44,7 @@ void Schemes::scheme4() {
   }
 }
 void Schemes::scheme5() {
+  reset();
   defineAnnotated();
   defineFromObjective();
   defineUnique();
@@ -76,6 +58,7 @@ void Schemes::scheme5() {
   }
 }
 void Schemes::scheme6() {
+  reset();
   defineAnnotated();
   defineFromObjective();
   defineLeastUsed();
@@ -86,16 +69,15 @@ void Schemes::scheme6() {
     defineLeastUsed();
   }
 }
-void Schemes::clear() {
+void Schemes::reset() {
   for (auto constraint : _m->constraints()) {
     constraint->makeSoft();
+    constraint->init(_m->varMap());
   }
   for (auto var : _m->varMap().variables()) {
+    assert(!var->hasImposedDomain());
     assert(!var->isDefined());
   }
-  // for (auto var : _m->varMap().variables()) {
-  //   var->removeDefinition();
-  // }
 }
 void Schemes::updateDomains() {
   for (auto constraint : _m->constraints()) {  // _m->conMap.functional()
@@ -108,7 +90,8 @@ void Schemes::updateDomains() {
 void Schemes::defineAnnotated() {
   for (auto c : _m->constraints()) {
     if (c->annotationTarget().has_value() &&
-        !c->annotationTarget().value()->isDefined()) {
+        !c->annotationTarget().value()->isDefined() &&
+        (c->annotationTarget().value()->potentialDefiners().count(c) > 0)) {
       c->define(c->annotationTarget().value());
     }
   }
@@ -120,10 +103,9 @@ void Schemes::defineImplicit() {
     }
   }
 }
-// Kolla domänens utveckling först
 void Schemes::defineFromWithImplicit(Variable* variable) {
   if (variable->isDefinable() && !variable->isDefined()) {
-    for (auto constraint : variable->potentialDefiners()) {
+    for (auto constraint : variable->potentialDefinersSorted()) {
       if (constraint->canDefine(variable) && constraint->definesNone()) {
         constraint->define(variable);
         for (auto v : constraint->variablesSorted()) {
@@ -142,7 +124,7 @@ void Schemes::defineFromWithImplicit(Variable* variable) {
 }
 void Schemes::defineFrom(Variable* variable) {
   if (variable->isDefinable()) {
-    for (auto constraint : variable->potentialDefiners()) {
+    for (auto constraint : variable->potentialDefinersSorted()) {
       if (constraint->canDefine(variable) && constraint->definesNone()) {
         constraint->define(variable);
         for (auto v : constraint->variablesSorted()) {
@@ -165,7 +147,7 @@ void Schemes::defineFromObjective() {
 void Schemes::defineUnique() {
   for (auto variable : _m->domSortVariables()) {
     if (variable->isDefinable() && !variable->isDefined()) {
-      for (auto constraint : variable->potentialDefiners()) {
+      for (auto constraint : variable->potentialDefinersSorted()) {
         if (constraint->canDefine(variable) && constraint->uniqueTarget() &&
             constraint->definesNone()) {
           constraint->define(variable);
@@ -178,7 +160,7 @@ void Schemes::defineUnique() {
 void Schemes::defineRest() {
   for (auto variable : _m->domSortVariables()) {
     if (variable->isDefinable() && !variable->isDefined()) {
-      for (auto constraint : variable->potentialDefiners()) {
+      for (auto constraint : variable->potentialDefinersSorted()) {
         if (constraint->canDefine(variable) && constraint->definesNone()) {
           constraint->define(variable);
           break;
@@ -190,7 +172,7 @@ void Schemes::defineRest() {
 void Schemes::defineByImplicit() {
   for (auto variable : _m->domSortVariables()) {
     if (variable->isDefinable() && !variable->isDefined()) {
-      for (auto constraint : variable->potentialDefiners()) {
+      for (auto constraint : variable->potentialDefinersSorted()) {
         if (constraint->canBeImplicit()) {
           constraint->makeImplicit();
           std::cout << constraint->getName() << std::endl;
@@ -200,7 +182,6 @@ void Schemes::defineByImplicit() {
     }
   }
 }
-
 void Schemes::removeCycle(std::vector<Node*> visited, bool ban) {
   Int smallestDomain = std::numeric_limits<Int>::max();
   Constraint* nodeToRemove = nullptr;
@@ -241,7 +222,6 @@ void Schemes::removeCycles(bool ban) {
   }
   std::cout << (TRACK ? "Done! No cycles.\n" : "");
 }
-
 std::vector<Node*> Schemes::hasCycle() {
   std::set<Node*> visited;
   std::vector<Node*> stack;
@@ -253,7 +233,6 @@ std::vector<Node*> Schemes::hasCycle() {
   assert(stack.size() == 0);
   return stack;
 }
-
 bool Schemes::hasCycleAux(std::set<Node*>& visited, std::vector<Node*>& stack,
                           Node* node) {
   stack.push_back(node);
@@ -275,7 +254,7 @@ bool Schemes::hasCycleAux(std::set<Node*>& visited, std::vector<Node*>& stack,
 void Schemes::defineLeastUsed() {
   for (auto var : _m->potDefSortVariables()) {
     if (!var->isDefined()) {
-      for (auto con : var->potentialDefiners()) {
+      for (auto con : var->potentialDefinersSorted()) {
         if (con->definesNone()) {  // Add better prio
           con->define(var);
           break;

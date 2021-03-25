@@ -13,6 +13,7 @@ void IntLinEq::loadVariables(const VariableMap& variableMap) {
   }
 }
 void IntLinEq::configureVariables() {
+  _outputDomain = std::make_shared<IntDomain>();
   for (int i = 0; i < _as->elements().size(); i++) {
     if (_bs->elements()[i]->isDefinable()) {
       std::string coefficient = _as->elements()[i]->getName();

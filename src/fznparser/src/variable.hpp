@@ -16,6 +16,7 @@ class Variable : public Node {
 
   std::string getName() override { return _name; }
   std::set<Node*> getNext() override;
+  std::vector<Constraint*> getNextSorted();
 
   void addNextConstraint(Constraint* constraint);
   void removeNextConstraint(Constraint* constraint);
@@ -32,6 +33,7 @@ class Variable : public Node {
   void addPotentialDefiner(Constraint* constraint);
   void removePotentialDefiner(Constraint* constraint);
   std::set<Constraint*> potentialDefiners() { return _potentialDefiners; }
+  std::vector<Constraint*> potentialDefinersSorted();
 
   virtual bool isDefinable() { return true; }
   virtual Int domainSize();
@@ -39,14 +41,15 @@ class Variable : public Node {
   virtual Int upperBound();
   virtual std::set<Constraint*> getNextConstraints();
   void reset();
+  void clearPotentialDefiners() { _potentialDefiners.clear(); }
 
  private:
   std::optional<Domain*> _imposedDomain;
-  std::shared_ptr<Domain> _domain;
+  const std::shared_ptr<Domain> _domain;
   std::optional<Constraint*> _definedBy;
   std::set<Constraint*> _nextConstraints;
   std::set<Constraint*> _potentialDefiners;
-  std::string _name;
+  const std::string _name;
   std::vector<Annotation> _annotations;
 };
 

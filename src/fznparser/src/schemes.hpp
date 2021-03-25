@@ -7,14 +7,13 @@ class Schemes {
  public:
   Schemes(Model* m) { _m = m; }
 
-  void scheme(int n);
   void scheme1();
   void scheme2();
   void scheme3();
   void scheme4();
   void scheme5();
   void scheme6();
-  void clear();
+  void reset();
   void defineAnnotated();
   void defineImplicit();
   void defineFrom(Variable* variable);

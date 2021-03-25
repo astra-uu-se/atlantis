@@ -5,9 +5,10 @@
 class Statistics {
  public:
   Statistics(Model* model);
-  void header();
-  void row(int i);
-  void line();
+  std::string header();
+  std::string row(int i);
+  std::string line();
+  std::string count();
   void countDefinedVariables(bool labels);
   void variablesDefinedBy();
   void allStats(bool labels);
@@ -15,6 +16,7 @@ class Statistics {
   int countSoft();
   int variableCount();
   int definedCount();
+  int annotationCount();
   int width(bool labels);
   void width_aux(std::vector<Node*>& result, std::vector<Node*> visited,
                  Node* node, int x, int& w);

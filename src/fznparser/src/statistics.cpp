@@ -1,6 +1,8 @@
 #include "statistics.hpp"
 
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 Statistics::Statistics(Model* model) { _model = model; }
@@ -147,6 +149,16 @@ void Statistics::width_aux(std::vector<Node*>& result,
   }
 }
 
+int Statistics::annotationCount() {
+  int annotations = 0;
+  for (auto c : _model->constraints()) {
+    if (c->annotationTarget().has_value()) {
+      annotations++;
+    }
+  }
+  return annotations;
+}
+
 std::optional<double> Statistics::matchingAnnotationsScore() {
   int annotations = 0;
   int matching = 0;
@@ -192,28 +204,48 @@ double Statistics::score() {
   }
   return (i > 0 ? tot / i : -1);
 }
-void Statistics::header() {
-  std::cout << "\t\tVarScore\tInvScore\tAnnScore\tWidth" << std::endl;
+std::string Statistics::header() {
+  std::stringstream s;
+  s << "\t\tVarScore\tInvScore\tAnnScore\tWidth" << std::endl;
   line();
+  return s.str();
 }
-void Statistics::line() {
-  std::cout
-      << "\t--------------------------------------------------------------"
-      << std::endl;
-}
-void Statistics::row(int i) {
-  std::cout << "Scheme: " << i << "\t"
-            << (variableScore() ? std::to_string(variableScore().value()) + "%"
-                                : "-")
-            << "\t"
-            << (constraintScore()
-                    ? std::to_string(constraintScore().value()) + "%"
-                    : "-")
-            << "\t"
-            << (matchingAnnotationsScore()
-                    ? std::to_string(matchingAnnotationsScore().value()) + "%"
-                    : "-")
-            << "\t" << width(false)
 
-            << "\t" << std::endl;
+std::string Statistics::line() {
+  std::stringstream s;
+  s << "----------------------------------------------------------------------"
+    << std::endl;
+  return s.str();
+}
+std::string Statistics::count() {
+  std::stringstream s;
+  s << "Count:\t\t" << variableCount() << "\t\t" << _model->constraints().size()
+    << "\t\t" << annotationCount() << "\t\t-" << std::endl;
+  return s.str();
+}
+std::string Statistics::row(int i) {
+  std::stringstream s;
+  s << "Scheme " << i << ":\t";
+  if (variableScore()) {
+    s << std::fixed << std::setprecision(2) << variableScore().value()
+      << "%\t\t";
+  } else {
+    s << "\t-\t";
+  }
+  if (constraintScore()) {
+    s << std::fixed << std::setprecision(2) << constraintScore().value()
+      << "%\t\t";
+  } else {
+    s << "\t-\t";
+  }
+  if (matchingAnnotationsScore()) {
+    s << std::fixed << std::setprecision(2)
+      << matchingAnnotationsScore().value() << "%\t\t";
+  } else {
+    s << "\t-\t";
+  }
+  // s << width(false)
+
+  s << std::endl;
+  return s.str();
 }
