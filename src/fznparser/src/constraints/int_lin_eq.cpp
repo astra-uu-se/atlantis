@@ -73,9 +73,6 @@ std::pair<Int, Int> IntLinEq::getBounds(Variable* variable) {
   }
   lb = -1 * _asv[i] * (lb - std::stol(_c->getName()));
   ub = -1 * _asv[i] * (ub - std::stol(_c->getName()));
-  std::cout << "lb: " << lb << std::endl;
-  std::cout << "ub: " << ub << std::endl;
-
   return std::make_pair(lb, ub);
 }
 Int IntLinEq::maxDomain(int coef, Variable* variable) {

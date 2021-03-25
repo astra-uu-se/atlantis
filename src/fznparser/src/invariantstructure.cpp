@@ -23,5 +23,5 @@ void InvariantStructure::run() {
   s << _stats.count();
   s << _stats.line();
   std::cout << s.str();
-  _stats.allStats(true);
+  // _stats.allStats(true);
 }

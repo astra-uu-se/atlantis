@@ -89,23 +89,15 @@ void Statistics::allStats(bool labels) {
   // width(labels);
 }
 int Statistics::width(bool labels) {
-  // assert(_model->hasNoCycles());
-  // std::cout << "===========WIDTH===========" << std::endl;
-  // std::cout << "===========================" << std::endl;
   int w = 0;
   std::vector<Node*> visited;
   std::vector<Node*> result;
-  for (Node* v : _model->varMap().variables()) {
+  for (Variable* v : _model->varMap().variables()) {
     width_aux(result, visited, v, 1, w);
   }
   for (Node* c : _model->constraints()) {
     width_aux(result, visited, c, 1, w);
   }
-  // Node* v = _model->varMap().variables()[0];
-  // width_aux(result, visited, v, 1, w);
-  // std::cout << "Width of graph: " << w << std::endl;
-  // std::cout << "===========================" << std::endl;
-
   if (labels) {
     std::cout << "Longest path: " << std::endl;
     for (auto n : result) {
@@ -244,7 +236,7 @@ std::string Statistics::row(int i) {
   } else {
     s << "\t-\t";
   }
-  // s << width(false)
+  s << width(false);
 
   s << std::endl;
   return s.str();
