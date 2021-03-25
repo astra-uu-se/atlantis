@@ -52,6 +52,9 @@ class IdMap {
   inline void assign_all(T value) { m_vector.assign(m_vector.size(), value); }
 
   [[nodiscard]] inline size_t size() const { return m_vector.size(); }
+  [[nodiscard]] inline bool has_idx(I idx){
+    return static_cast<size_t>(idx.id) <= m_vector.size();
+  }
   typedef typename std::vector<T>::iterator iterator;
 
   inline iterator begin() { return m_vector.begin(); }
