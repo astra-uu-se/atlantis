@@ -173,7 +173,11 @@ TEST_F(EngineTest, SimplePropagation) {
   }
 
   for (size_t id = 0; id < 3; ++id) {
-    EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(id))).Times(1);
+    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+      EXPECT_CALL(*invariant,
+                  notifyIntChanged(testing::_, testing::_, LocalId(id)))
+          .Times(1);
+    }
   }
 
   engine->beginQuery();
@@ -224,7 +228,11 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endMove();
 
   for (size_t id = 0; id < 3; ++id) {
-    EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(id))).Times(1);
+    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+      EXPECT_CALL(*invariant,
+                  notifyIntChanged(testing::_, testing::_, LocalId(id)))
+          .Times(1);
+    }
   }
 
   engine->beginQuery();
@@ -232,6 +240,10 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endQuery();
 
   if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    EXPECT_CALL(*invariant,
+                notifyIntChanged(testing::_, testing::_, LocalId(0)))
+        .Times(1);
+
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
 
     EXPECT_CALL(*invariant,
@@ -254,8 +266,6 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->beginMove();
   engine->setValue(a, 0);
   engine->endMove();
-
-  EXPECT_CALL(*invariant, notifyIntChanged(testing::_, testing::_, LocalId(0))).Times(1);
 
   engine->beginCommit();
   engine->query(output);
