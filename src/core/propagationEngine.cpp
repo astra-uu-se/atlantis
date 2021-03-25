@@ -5,7 +5,7 @@ PropagationEngine::PropagationEngine()
       m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
-      m_modifiedVariables(PropagationGraph::PriorityCmp(m_propGraph)),
+      // m_propGraph.m_propagationQueue(PropagationGraph::PriorityCmp(m_propGraph)),
       m_isEnqueued(ESTIMATED_NUM_OBJECTS),
       m_varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
       m_propagationPathQueue() {}
@@ -19,7 +19,11 @@ void PropagationEngine::close() {
                     // tried to change a variable but without a begin move?
                     // But we should ignore it anyway then...
   m_isOpen = false;
-  m_propGraph.close();
+  try {
+    m_propGraph.close();
+  } catch (std::exception e){
+    std::cout<< "foo";
+  }
   // compute initial values for variables and for (internal datastructure of)
   // invariants
   recomputeAndCommit();
@@ -33,7 +37,7 @@ void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
     return;
   }
   // logDebug("\t\t\tpushed on stack");
-  m_modifiedVariables.push(id);
+  m_propGraph.m_propagationQueue.push(id);
   m_isEnqueued.set(id, true);
 }
 
@@ -44,7 +48,7 @@ void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
     return;
   }
   // logDebug("\t\t\tpushed on stack");
-  m_modifiedVariables.push(id);
+  m_propGraph.m_propagationQueue.push(id);
   m_isEnqueued.set(id, true);
 }
 
@@ -78,19 +82,19 @@ void PropagationEngine::registerInvariant(InvariantId i) {
 //---------------------Propagation---------------------
 
 VarId PropagationEngine::getNextStableVariable(Timestamp) {
-  if (m_modifiedVariables.empty()) {
+  if (m_propGraph.m_propagationQueue.empty()) {
     return VarId(NULL_ID);
   }
-  VarId nextVar(m_modifiedVariables.top());
-  m_modifiedVariables.pop();
+  VarId nextVar(m_propGraph.m_propagationQueue.top());
+  m_propGraph.m_propagationQueue.pop();
   m_isEnqueued.set(nextVar, false);
   // Due to notifyMaybeChanged, all variables in the queue are "active".
   return nextVar;
 }
 
 void PropagationEngine::clearPropagationQueue() {
-  while (!m_modifiedVariables.empty()) {
-    m_modifiedVariables.pop();
+  while (!m_propGraph.m_propagationQueue.empty()) {
+    m_propGraph.m_propagationQueue.pop();
   }
   m_isEnqueued.assign_all(false);
 }
@@ -207,12 +211,13 @@ void PropagationEngine::endCommit() {
 
 void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
   // We cannot iterate over a priority_queue so we cannot copy it.
-  // TODO: replace priority_queue of m_modifiedVariables with custom queue.
-  while (!m_modifiedVariables.empty()) {
-    auto id = m_modifiedVariables.top();
+  // TODO: replace priority_queue of m_propGraph.m_propagationQueue with custom
+  // queue.
+  while (!m_propGraph.m_propagationQueue.empty()) {
+    auto id = m_propGraph.m_propagationQueue.top();
     m_isEnqueued.set(id, false);
     m_propagationPathQueue.push(id);
-    m_modifiedVariables.pop();
+    m_propGraph.m_propagationQueue.pop();
   }
 
   while (!m_propagationPathQueue.empty()) {
