@@ -81,31 +81,11 @@ void Statistics::constraints(bool labels) {
   std::cout << "Total:\t\t" << total << std::endl;
   std::cout << "===========================" << std::endl;
 }
-
 void Statistics::allStats(bool labels) {
   countDefinedVariables(labels);
   constraints(labels);
   matchingAnnotations(labels);
   // width(labels);
-}
-int Statistics::width(bool labels) {
-  int w = 0;
-  std::vector<Node*> visited;
-  std::vector<Node*> result;
-  for (Variable* v : _model->varMap().variables()) {
-    width_aux(result, visited, v, 1, w);
-  }
-  for (Node* c : _model->constraints()) {
-    width_aux(result, visited, c, 1, w);
-  }
-  if (labels) {
-    std::cout << "Longest path: " << std::endl;
-    for (auto n : result) {
-      std::cout << n->getName() << std::endl;
-    }
-    std::cout << "===========================" << std::endl;
-  }
-  return w;
 }
 void Statistics::matchingAnnotations(bool labels) {
   std::cout << "========ANNOTATIONS========" << std::endl;
@@ -127,6 +107,26 @@ void Statistics::matchingAnnotations(bool labels) {
   std::cout << "Annotations:\t" << annotations << std::endl;
   std::cout << "Matching:\t" << matching << std::endl;
   std::cout << "===========================" << std::endl;
+}
+int Statistics::width(bool labels) {
+  int w = 0;
+  std::vector<Node*> visited;
+  std::vector<Node*> result;
+  int n = 0;
+  for (Variable* v : _model->varMap().variables()) {
+    if (!v->isDefined()) width_aux(result, visited, v, 1, w);
+  }
+  for (Constraint* c : _model->constraints()) {
+    if (c->isImplicit()) width_aux(result, visited, c, 1, w);
+  }
+  if (labels) {
+    std::cout << "Longest path: " << std::endl;
+    for (auto n : result) {
+      std::cout << n->getName() << std::endl;
+    }
+    std::cout << "===========================" << std::endl;
+  }
+  return w;
 }
 void Statistics::width_aux(std::vector<Node*>& result,
                            std::vector<Node*> visited, Node* node, int x,

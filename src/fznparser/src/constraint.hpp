@@ -121,7 +121,8 @@ class NonFunctionalConstraint : public Constraint {
 #include "constraints/element.hpp"
 #include "constraints/global_cardinality.hpp"
 #include "constraints/int_lin_eq.hpp"
-#include "constraints/integer_simple.hpp"
+#include "constraints/integer_simple_2.hpp"
+#include "constraints/integer_simple_3.hpp"
 #include "constraints/inverse.hpp"
 #include "variable.hpp"
 

@@ -26,6 +26,9 @@ int main(int argc, char* argv[]) {
       InvariantStructure is = InvariantStructure(m);
       is.run();
       std::cout << "FILE: " << argv[i] << std::endl;
+      std::cout << "-----------------------------------------------------------"
+                   "-----------"
+                << std::endl;
     } catch (char const* msg) {
       std::cerr << msg << std::endl;
     }
