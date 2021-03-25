@@ -9,7 +9,7 @@ class Element : public Constraint {
   Element(ConstraintBox constraintBox) : Constraint(constraintBox) {}
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
-  std::set<Node*> getNext() override;
+  std::vector<Node*> getNext() override;
   void checkAnnotations(const VariableMap& variableMap) override;
   ArrayVariable* _values;
   bool _allowDynamicCycles = false;

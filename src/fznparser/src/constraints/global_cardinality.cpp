@@ -63,8 +63,7 @@ void GlobalCardinality::imposeAndPropagate(Variable* variable) {
       _outputDomains[i]->setLower(bounds.first);
       _outputDomains[i]->setUpper(bounds.second);
       _counts->elements()[i]->imposeDomain(_outputDomains[i].get());
-      for (auto node : _counts->elements()[i]->getNext()) {
-        auto constraint = dynamic_cast<Constraint*>(node);
+      for (auto constraint : _counts->elements()[i]->getNextConstraint()) {
         assert(constraint);
         constraint->refreshAndPropagate(visited);
       }
@@ -81,8 +80,7 @@ void GlobalCardinality::refreshAndPropagate(std::set<Constraint*>& visited) {
       continue;
     }
     _outputDomains[i]->setUpper(bounds.second);
-    for (auto node : _counts->elements()[i]->getNext()) {
-      auto constraint = dynamic_cast<Constraint*>(node);
+    for (auto constraint : _counts->elements()[i]->getNextConstraint()) {
       assert(constraint);
       constraint->refreshAndPropagate(visited);
     }

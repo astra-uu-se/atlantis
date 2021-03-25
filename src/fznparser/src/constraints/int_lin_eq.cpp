@@ -13,7 +13,7 @@ void IntLinEq::loadVariables(const VariableMap& variableMap) {
   }
 }
 void IntLinEq::configureVariables() {
-  _outputDomain = std::make_shared<IntDomain>();
+  // _outputDomain = std::make_shared<IntDomain>();
   for (int i = 0; i < _as->elements().size(); i++) {
     if (_bs->elements()[i]->isDefinable()) {
       std::string coefficient = _as->elements()[i]->getName();
@@ -72,5 +72,6 @@ std::pair<Int, Int> IntLinEq::getBounds(Variable* variable) {
     ub += (co < 0 ? co * _bs->elements()[i]->lowerBound()
                   : co * _bs->elements()[i]->upperBound());
   }
-  return std::make_pair(lb, ub);
+
+  return std::make_pair(0, 10);
 }

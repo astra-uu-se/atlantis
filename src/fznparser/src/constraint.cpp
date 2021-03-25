@@ -1,5 +1,6 @@
 #include "constraint.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <string>
 
@@ -14,11 +15,19 @@ Expression Constraint::getExpression(Int n) {
   assert(n < _constraintBox._expressions.size());
   return _constraintBox._expressions[n];
 }
-std::set<Node*> Constraint::getNext() {
-  std::set<Node*> defines;
-  for (auto var : _defines) {
-    defines.insert(var);
+std::vector<Node*> Constraint::getNext() {
+  std::vector<Node*> sorted;
+  for (auto var : getNextVariable()) {
+    sorted.push_back(static_cast<Node*>(var));
   }
+  return sorted;
+}
+std::vector<Variable*> Constraint::getNextVariable() {
+  std::vector<Variable*> defines;
+  for (auto var : _defines) {
+    defines.push_back(var);
+  }
+  std::sort(defines.begin(), defines.end(), Variable::compareDomain);
   return defines;
 }
 std::string Constraint::getName() {
@@ -145,7 +154,7 @@ void Constraint::makeSoft() {
   for (auto variable : _defines) {
     if (variable->hasImposedDomain()) {
       variable->unImposeDomain();
-      for (auto constraint : variable->getNextSorted()) {
+      for (auto constraint : variable->getNextConstraint()) {
         std::set<Constraint*> visited;
         constraint->refreshAndPropagate(visited);
       }
@@ -192,8 +201,8 @@ void Constraint::init(const VariableMap& variableMap) {
   checkAnnotations(variableMap);
 }
 void Constraint::refreshNext(std::set<Constraint*>& visited) {
-  for (auto variable : _defines) {
-    for (auto constraint : variable->getNextSorted()) {
+  for (auto variable : getNextVariable()) {
+    for (auto constraint : variable->getNextConstraint()) {
       constraint->refreshAndPropagate(visited);
     }
   }
@@ -202,7 +211,7 @@ void Constraint::imposeAndPropagate(Variable* variable) {
   std::set<Constraint*> visited;
   visited.insert(this);
   if (imposeDomain(variable)) {
-    for (auto constraint : variable->getNextSorted()) {
+    for (auto constraint : variable->getNextConstraint()) {
       assert(constraint);
       constraint->refreshAndPropagate(visited);
     }

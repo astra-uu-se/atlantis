@@ -4,10 +4,16 @@
 #include <string>
 
 bool Variable::compareDomain(Variable* v1, Variable* v2) {
+  if (v1->domainSize() == v2->domainSize()) {
+    return v1->getName() > v2->getName();
+  }
   return v1->domainSize() > v2->domainSize();
 }
 
 bool Variable::comparePotentialDefiners(Variable* v1, Variable* v2) {
+  if (v1->potentialDefiners().size() == v2->potentialDefiners().size()) {
+    return v1->getName() > v2->getName();
+  }
   return v1->potentialDefiners().size() < v2->potentialDefiners().size();
 }
 /*******************SINGLEVARIABLE****************************/
@@ -31,7 +37,10 @@ void Variable::removePotentialDefiner(Constraint* constraint) {
   assert(_potentialDefiners.count(constraint));
   _potentialDefiners.erase(constraint);
 }
-std::vector<Constraint*> Variable::potentialDefinersSorted() {
+bool Variable::hasPotentialDefiner(Constraint* constraint) {
+  return _potentialDefiners.count(constraint);
+}
+std::vector<Constraint*> Variable::potentialDefiners() {
   std::vector<Constraint*> sorted;
   for (auto c : _potentialDefiners) {
     sorted.push_back(c);
@@ -59,23 +68,20 @@ Int Variable::upperBound() {
   return hasImposedDomain() ? _imposedDomain.value()->upperBound()
                             : _domain->upperBound();
 }
-std::set<Node*> Variable::getNext() {
-  std::set<Node*> next;
-  for (auto c : _nextConstraints) {
-    next.insert(static_cast<Node*>(c));
+std::vector<Node*> Variable::getNext() {
+  std::vector<Node*> next;
+  for (auto c : getNextConstraint()) {
+    next.push_back(static_cast<Node*>(c));
   }
   return next;
 }
-std::vector<Constraint*> Variable::getNextSorted() {
+std::vector<Constraint*> Variable::getNextConstraint() {
   std::vector<Constraint*> sorted;
   for (auto n : _nextConstraints) {
     sorted.push_back(n);
   }
   std::sort(sorted.begin(), sorted.end(), Constraint::sort);
   return sorted;
-}
-std::set<Constraint*> Variable::getNextConstraints() {
-  return _nextConstraints;
 }
 void Variable::reset() {
   if (hasImposedDomain()) {

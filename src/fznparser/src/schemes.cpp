@@ -59,9 +59,9 @@ void Schemes::scheme5() {
 }
 void Schemes::scheme6() {
   reset();
+  defineLeastUsed();
   defineAnnotated();
   defineFromObjective();
-  defineLeastUsed();
   while (hasCycle().size()) {
     removeCycles(true);
     updateDomains();
@@ -91,7 +91,7 @@ void Schemes::defineAnnotated() {
   for (auto c : _m->constraints()) {
     if (c->annotationTarget().has_value() &&
         !c->annotationTarget().value()->isDefined() &&
-        (c->annotationTarget().value()->potentialDefiners().count(c) > 0)) {
+        (c->annotationTarget().value()->hasPotentialDefiner(c))) {
       c->define(c->annotationTarget().value());
     }
   }
@@ -105,7 +105,7 @@ void Schemes::defineImplicit() {
 }
 void Schemes::defineFromWithImplicit(Variable* variable) {
   if (variable->isDefinable() && !variable->isDefined()) {
-    for (auto constraint : variable->potentialDefinersSorted()) {
+    for (auto constraint : variable->potentialDefiners()) {
       if (constraint->canDefine(variable) && constraint->definesNone()) {
         constraint->define(variable);
         for (auto v : constraint->variablesSorted()) {
@@ -124,7 +124,7 @@ void Schemes::defineFromWithImplicit(Variable* variable) {
 }
 void Schemes::defineFrom(Variable* variable) {
   if (variable->isDefinable()) {
-    for (auto constraint : variable->potentialDefinersSorted()) {
+    for (auto constraint : variable->potentialDefiners()) {
       if (constraint->canDefine(variable) && constraint->definesNone()) {
         constraint->define(variable);
         for (auto v : constraint->variablesSorted()) {
@@ -147,7 +147,7 @@ void Schemes::defineFromObjective() {
 void Schemes::defineUnique() {
   for (auto variable : _m->domSortVariables()) {
     if (variable->isDefinable() && !variable->isDefined()) {
-      for (auto constraint : variable->potentialDefinersSorted()) {
+      for (auto constraint : variable->potentialDefiners()) {
         if (constraint->canDefine(variable) && constraint->uniqueTarget() &&
             constraint->definesNone()) {
           constraint->define(variable);
@@ -160,7 +160,7 @@ void Schemes::defineUnique() {
 void Schemes::defineRest() {
   for (auto variable : _m->domSortVariables()) {
     if (variable->isDefinable() && !variable->isDefined()) {
-      for (auto constraint : variable->potentialDefinersSorted()) {
+      for (auto constraint : variable->potentialDefiners()) {
         if (constraint->canDefine(variable) && constraint->definesNone()) {
           constraint->define(variable);
           break;
@@ -172,7 +172,7 @@ void Schemes::defineRest() {
 void Schemes::defineByImplicit() {
   for (auto variable : _m->domSortVariables()) {
     if (variable->isDefinable() && !variable->isDefined()) {
-      for (auto constraint : variable->potentialDefinersSorted()) {
+      for (auto constraint : variable->potentialDefiners()) {
         if (constraint->canBeImplicit()) {
           constraint->makeImplicit();
           std::cout << constraint->getName() << std::endl;
@@ -254,7 +254,7 @@ bool Schemes::hasCycleAux(std::set<Node*>& visited, std::vector<Node*>& stack,
 void Schemes::defineLeastUsed() {
   for (auto var : _m->potDefSortVariables()) {
     if (!var->isDefined()) {
-      for (auto con : var->potentialDefinersSorted()) {
+      for (auto con : var->potentialDefiners()) {
         if (con->definesNone()) {  // Add better prio
           con->define(var);
           break;

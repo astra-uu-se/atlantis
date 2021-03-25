@@ -44,7 +44,8 @@ class Constraint : public Node {
 
   static bool sort(Constraint* c1, Constraint* c2);
 
-  std::set<Node*> getNext() override;
+  std::vector<Node*> getNext() override;
+  std::vector<Variable*> getNextVariable();
   bool breakCycle();
   bool breakCycleWithBan();
 

@@ -15,8 +15,8 @@ class Variable : public Node {
   static bool comparePotentialDefiners(Variable* v1, Variable* v2);
 
   std::string getName() override { return _name; }
-  std::set<Node*> getNext() override;
-  std::vector<Constraint*> getNextSorted();
+  std::vector<Node*> getNext() override;
+  virtual std::vector<Constraint*> getNextConstraint();
 
   void addNextConstraint(Constraint* constraint);
   void removeNextConstraint(Constraint* constraint);
@@ -32,14 +32,13 @@ class Variable : public Node {
 
   void addPotentialDefiner(Constraint* constraint);
   void removePotentialDefiner(Constraint* constraint);
-  std::set<Constraint*> potentialDefiners() { return _potentialDefiners; }
-  std::vector<Constraint*> potentialDefinersSorted();
+  bool hasPotentialDefiner(Constraint* constraint);
+  std::vector<Constraint*> potentialDefiners();
 
   virtual bool isDefinable() { return true; }
   virtual Int domainSize();
   virtual Int lowerBound();
   virtual Int upperBound();
-  virtual std::set<Constraint*> getNextConstraints();
   void reset();
   void clearPotentialDefiners() { _potentialDefiners.clear(); }
 

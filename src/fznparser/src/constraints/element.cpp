@@ -17,19 +17,20 @@ void Element::configureVariables() {
   }
 }
 
-std::set<Node*> Element::getNext() {
-  std::set<Node*> defines;
-  bool b = false;
-  if (_variables[0]->isDefined()) {
-    b = dynamic_cast<Circuit*>(_variables[0]->definedBy());
-  }
-  if (_allowDynamicCycles && b) {
-    return defines;
+std::vector<Node*> Element::getNext() {
+  std::vector<Variable*> defines;
+  std::vector<Node*> sorted;
+  if (_allowDynamicCycles) {
+    return sorted;
   }
   for (auto var : _defines) {
-    defines.insert(var);
+    defines.push_back(var);
   }
-  return defines;
+  std::sort(defines.begin(), defines.end(), Variable::compareDomain);
+  for (auto var : defines) {
+    sorted.push_back(var);
+  }
+  return sorted;
 }
 
 void Element::checkAnnotations(const VariableMap& variableMap) {
