@@ -9,7 +9,7 @@ using namespace fznparser;
 using namespace antlr4;
 
 int main(int argc, char* argv[]) {
-  for (int i = 1; i < 100; i++) {
+  for (int i = 1; i < argc; i++) {
     try {
       std::ifstream stream;
       stream.open(argv[i]);
