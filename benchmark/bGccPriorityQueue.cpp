@@ -1,3 +1,4 @@
+/*
 #include <benchmark/benchmark.h>
 
 #include <iostream>
@@ -44,8 +45,10 @@ class GccPriorityQueue : public benchmark::Fixture {
 BENCHMARK_DEFINE_F(GccPriorityQueue, push_min)(benchmark::State& st) {
   size_t pushes = 0;
   for (auto _ : st) {
-      std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>
-          queue = std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
+      std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>> queue =
+std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
       ;
     for (size_t i = 0; i < queueSize; ++i) {
       queue->push(i);
@@ -60,8 +63,10 @@ BENCHMARK_DEFINE_F(GccPriorityQueue, push_min)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(GccPriorityQueue, push_max)(benchmark::State& st) {
   size_t pushes = 0;
   for (auto _ : st) {
-    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>
-          queue = std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
+    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>> queue =
+std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
       ;
     for (size_t i = 0; i < queueSize; ++i) {
       queue->push(i);
@@ -76,8 +81,10 @@ BENCHMARK_DEFINE_F(GccPriorityQueue, push_max)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(GccPriorityQueue, push_random)(benchmark::State& st) {
   size_t pushes = 0;
   for (auto _ : st) {
-    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>
-          queue = std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
+    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>> queue =
+std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
       ;
     for (size_t i = 0; i < queueSize; ++i) {
       queue->push(i);
@@ -92,8 +99,10 @@ BENCHMARK_DEFINE_F(GccPriorityQueue, push_random)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(GccPriorityQueue, pop_min)(benchmark::State& st) {
   size_t pops = 0;
   for (auto _ : st) {
-    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>
-          queue = std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
+    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>> queue =
+std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
       ;
     st.PauseTiming();
     for (size_t i = 0; i < queueSize; ++i) {
@@ -113,8 +122,10 @@ BENCHMARK_DEFINE_F(GccPriorityQueue, pop_min)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(GccPriorityQueue, pop_max)(benchmark::State& st) {
   size_t pops = 0;
   for (auto _ : st) {
-    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>
-          queue = std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
+    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>> queue =
+std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
       ;
     st.PauseTiming();
     for (size_t i = 0; i < queueSize; ++i) {
@@ -134,14 +145,16 @@ BENCHMARK_DEFINE_F(GccPriorityQueue, pop_max)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(GccPriorityQueue, pop_random)(benchmark::State& st) {
   size_t pops = 0;
   for (auto _ : st) {
-    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>
-          queue = std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp, __gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
+    std::unique_ptr<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>> queue =
+std::make_unique<__gnu_pbds::priority_queue<size_t, PriorityCmp,
+__gnu_pbds::thin_heap_tag>>(PriorityCmp(order))
       ;
     st.PauseTiming();
     for (size_t i = 0; i < queueSize; ++i) {
       queue->push(i);
       order[i] = distribution(gen);
-      
+
     }
     st.ResumeTiming();
     while (queue->size() > 0) {
@@ -158,11 +171,13 @@ static void CustomArguments(benchmark::internal::Benchmark* b) {
       b->Arg(i);
   }
 }
-/*
+
 BENCHMARK_REGISTER_F(GccPriorityQueue, push_min)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(GccPriorityQueue, push_max)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(GccPriorityQueue, push_random)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(GccPriorityQueue, pop_min)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(GccPriorityQueue, pop_max)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(GccPriorityQueue, pop_random)->Apply(CustomArguments);
-//*/
+//
+
+*/
