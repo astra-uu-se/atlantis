@@ -283,3 +283,18 @@ std::string ConstraintBox::getAnnotationVariableName() {
   return "";
 }
 void ConstraintBox::setId(Int id) { _id = id; }
+
+bool SimpleConstraint::imposeDomain(Variable* var) {
+  _outputDomain->setLower(calculateDomain(var).first);
+  _outputDomain->setUpper(calculateDomain(var).second);
+  var->imposeDomain(_outputDomain.get());
+  return true;
+}
+bool SimpleConstraint::refreshDomain() {
+  auto bounds = calculateDomain(*_defines.begin());
+  if (_outputDomain->lowerBound() != bounds.first ||
+      _outputDomain->upperBound() != bounds.second) {
+    return imposeDomain((*_defines.begin()));
+  }
+  return false;
+}

@@ -4,12 +4,13 @@
 
 class InvariantStructure {
  public:
-  InvariantStructure(Model m)
-      : _model(m), _stats(Statistics(&_model)), _schemes(Schemes(&_model)) {}
+  InvariantStructure(Model m, std::string args);
   void run();
 
  private:
   Model _model;
   Statistics _stats;
   Schemes _schemes;
+  bool _allStats = false;
+  bool _fullStats = false;
 };

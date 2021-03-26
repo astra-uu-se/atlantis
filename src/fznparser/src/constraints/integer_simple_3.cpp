@@ -12,20 +12,6 @@ void ThreeSVarConstraint::configureVariables() {
     _variables[2]->addPotentialDefiner(this);
   }
 }
-bool ThreeSVarConstraint::imposeDomain(Variable* var) {
-  _outputDomain->setLower(calculateDomain(var).first);
-  _outputDomain->setUpper(calculateDomain(var).second);
-  var->imposeDomain(_outputDomain.get());
-  return true;
-}
-bool ThreeSVarConstraint::refreshDomain() {
-  auto bounds = calculateDomain(*_defines.begin());
-  if (_outputDomain->lowerBound() != bounds.first ||
-      _outputDomain->upperBound() != bounds.second) {
-    return imposeDomain((*_defines.begin()));
-  }
-  return false;
-}
 void IntDiv::configureVariables() {
   if (_variables[0]->isDefinable()) {
     _variables[0]->addPotentialDefiner(this);

@@ -1,18 +1,12 @@
 #pragma once
 #include "../constraint.hpp"
 
-class ThreeSVarConstraint : public Constraint {
+class ThreeSVarConstraint : public SimpleConstraint {
  public:
-  ThreeSVarConstraint(ConstraintBox constraintBox) : Constraint(constraintBox) {
-    _outputDomain = std::make_shared<IntDomain>();
-  }
+  ThreeSVarConstraint(ConstraintBox constraintBox)
+      : SimpleConstraint(constraintBox) {}
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
-  bool imposeDomain(Variable* variable) override;
-  bool refreshDomain() override;
-
-  virtual std::pair<Int, Int> calculateDomain(Variable* variable) = 0;
-  std::shared_ptr<IntDomain> _outputDomain;
 };
 /* int_div(var int: a, var int: b, var int: c)
 ** Defines: a

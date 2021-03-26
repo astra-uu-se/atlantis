@@ -9,7 +9,13 @@ using namespace fznparser;
 using namespace antlr4;
 
 int main(int argc, char* argv[]) {
-  for (int i = 1; i < argc; i++) {
+  int start = 1;
+  std::string args;
+  if (argv[start][0] == '-') {
+    args = argv[start];
+    start++;
+  }
+  for (int i = start; i < argc; i++) {
     try {
       std::ifstream stream;
       stream.open(argv[i]);
@@ -23,7 +29,7 @@ int main(int argc, char* argv[]) {
 
       FznVisitor visitor;
       Model m = visitor.visitModel(tree);
-      InvariantStructure is = InvariantStructure(m);
+      InvariantStructure is = InvariantStructure(m, args);
       is.run();
       std::cout << "FILE: " << argv[i] << std::endl;
       std::cout << "-----------------------------------------------------------"

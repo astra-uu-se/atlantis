@@ -1,6 +1,19 @@
 #include "invariantstructure.hpp"
 
 #include <sstream>
+InvariantStructure::InvariantStructure(Model m, std::string args)
+    : _model(m), _stats(Statistics(&_model)), _schemes(Schemes(&_model)) {
+  std::set<char> argset;
+  for (auto l : args) {
+    argset.insert(l);
+  }
+  if (argset.count('f')) {
+    _fullStats = true;
+  }
+  if (argset.count('a')) {
+    _allStats = true;
+  }
+}
 
 void InvariantStructure::run() {
   std::stringstream s;
@@ -23,5 +36,5 @@ void InvariantStructure::run() {
   s << _stats.count();
   s << _stats.line();
   std::cout << s.str();
-  _stats.allStats(true);
+  if (_allStats) _stats.allStats(_fullStats);
 }

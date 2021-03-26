@@ -116,6 +116,17 @@ class NonFunctionalConstraint : public Constraint {
   void configureVariables() override {}
 };
 
+class SimpleConstraint : public Constraint {
+ public:
+  SimpleConstraint(ConstraintBox constraintBox) : Constraint(constraintBox) {
+    _outputDomain = std::make_shared<IntDomain>();
+  }
+  bool imposeDomain(Variable* variable) override;
+  bool refreshDomain() override;
+  virtual std::pair<Int, Int> calculateDomain(Variable* variable) = 0;
+  std::shared_ptr<IntDomain> _outputDomain;
+};
+
 #include "constraints/alldifferent.hpp"
 #include "constraints/circuit.hpp"
 #include "constraints/element.hpp"

@@ -69,31 +69,31 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<Element>(constraintBox));
   } else if (constraintBox._name == "gecode_circuit") {
     _constraints.add(std::make_shared<Circuit>(constraintBox));
-    // } else if (constraintBox._name == "int_le") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "int_lin_le") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "int_lin_ne") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "int_lt") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "int_ne") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "set_in") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "array_bool_xor") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "bool_clause") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "bool_le") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "bool_lin_le") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-    // } else if (constraintBox._name == "bool_lt") {
-    //   _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
-  } else {
-    // std::cerr << "Constraint not supported: " + constraintBox._name
-    //           << std::endl;
+  } else if (constraintBox._name == "int_le") {
     _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "int_lin_le") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "int_lin_ne") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "int_lt") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "int_ne") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "set_in") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "array_bool_xor") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "bool_clause") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "bool_le") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "bool_lin_le") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else if (constraintBox._name == "bool_lt") {
+    _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
+  } else {
+    std::cerr << "Constraint not supported: " + constraintBox._name
+              << std::endl;
+    // _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   }
 }

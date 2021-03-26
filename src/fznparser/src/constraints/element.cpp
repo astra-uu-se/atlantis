@@ -10,10 +10,8 @@ void Element::loadVariables(const VariableMap& variableMap) {
   }
 }
 void Element::configureVariables() {
-  for (int i = 0; i <= 1; i++) {
-    if (_variables[i]->isDefinable()) {
-      _variables[i]->addPotentialDefiner(this);
-    }
+  if (_variables[1]->isDefinable()) {
+    _variables[1]->addPotentialDefiner(this);
   }
 }
 

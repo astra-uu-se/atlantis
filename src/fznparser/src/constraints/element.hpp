@@ -6,9 +6,7 @@
 */
 class Element : public Constraint {
  public:
-  Element(ConstraintBox constraintBox) : Constraint(constraintBox) {
-    _uniqueTarget = false;
-  }
+  Element(ConstraintBox constraintBox) : Constraint(constraintBox) {}
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   std::vector<Node*> getNext() override;
