@@ -11,9 +11,13 @@ using namespace antlr4;
 int main(int argc, char* argv[]) {
   int start = 1;
   std::string args;
-  if (argv[start][0] == '-') {
+  if (argc > 1 && argv[start][0] == '-') {
     args = argv[start];
     start++;
+  }
+  if (argc < 1 + start) {
+    std::cerr << "Not enough arguments." << std::endl;
+    exit(1);
   }
   for (int i = start; i < argc; i++) {
     try {

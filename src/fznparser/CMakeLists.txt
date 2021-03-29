@@ -33,7 +33,7 @@ set(ANTLR_EXECUTABLE ${PROJECT_SOURCE_DIR}/thirdparty/antlr/antlr-4.9.1-complete
 find_package(ANTLR REQUIRED)
 
 # Call macro to add lexer and grammar to your build dependencies.
-antlr_target(Sample FlatZinc.g4
+antlr_target(Sample ${PROJECT_SOURCE_DIR}/src/FlatZinc.g4
   PACKAGE fznparser
   VISITOR)
 
