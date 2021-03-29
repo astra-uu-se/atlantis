@@ -61,6 +61,14 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<IntAbs>(constraintBox));
   } else if (constraintBox._name == "int_max") {
     _constraints.add(std::make_shared<IntMax>(constraintBox));
+  } else if (constraintBox._name == "int_min") {
+    _constraints.add(std::make_shared<IntMin>(constraintBox));
+  } else if (constraintBox._name == "int_mod") {
+    _constraints.add(std::make_shared<IntMod>(constraintBox));
+  } else if (constraintBox._name == "int_pow") {
+    _constraints.add(std::make_shared<IntPow>(constraintBox));
+  } else if (constraintBox._name == "int_times") {
+    _constraints.add(std::make_shared<IntTimes>(constraintBox));
   } else if (constraintBox._name == "fzn_all_different_int") {
     _constraints.add(std::make_shared<AllDifferent>(constraintBox));
   } else if (constraintBox._name == "inverse") {
@@ -69,6 +77,10 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<Element>(constraintBox));
   } else if (constraintBox._name == "gecode_circuit") {
     _constraints.add(std::make_shared<Circuit>(constraintBox));
+  } else if (constraintBox._name == "array_int_maximum") {
+    _constraints.add(std::make_shared<ArrayIntMaximum>(constraintBox));
+  } else if (constraintBox._name == "array_int_minimum") {
+    _constraints.add(std::make_shared<ArrayIntMinimum>(constraintBox));
   } else if (constraintBox._name == "int_le") {
     _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   } else if (constraintBox._name == "int_lin_le") {

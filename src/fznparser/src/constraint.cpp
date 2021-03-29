@@ -50,15 +50,13 @@ bool Constraint::sort(Constraint* c1, Constraint* c2) {
   return c1->_variables.size() > c2->_variables.size();
 }
 
-bool Constraint::breakCycle() {
-  makeSoft();
+bool Constraint::breakCycle(Variable* variable) {
+  unDefine(variable);
   return true;
 }
-bool Constraint::breakCycleWithBan() {
-  for (auto v : _defines) {
-    v->removePotentialDefiner(this);
-  }
-  makeSoft();
+bool Constraint::breakCycleWithBan(Variable* variable) {
+  variable->removePotentialDefiner(this);
+  unDefine(variable);
   return true;
 }
 Variable* Constraint::getSingleVariable(const VariableMap& variableMap, Int n) {
@@ -193,6 +191,16 @@ std::vector<Variable*> Constraint::variablesSorted() {
   std::vector<Variable*> next = variables();
   std::sort(next.begin(), next.end(), Variable::compareDomain);
   return next;
+}
+std::vector<Variable*> Constraint::dependencies() {
+  assert(isInvariant() || isImplicit());
+  std::vector<Variable*> depends;
+  for (auto var : variablesSorted()) {
+    if (!_defines.count(var)) {
+      depends.push_back(var);
+    }
+  }
+  return depends;
 }
 void Constraint::init(const VariableMap& variableMap) {
   _variables.clear();

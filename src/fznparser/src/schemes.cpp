@@ -184,16 +184,20 @@ void Schemes::defineByImplicit() {
 }
 void Schemes::removeCycle(std::vector<Node*> visited, bool ban) {
   Int smallestDomain = std::numeric_limits<Int>::max();
-  Constraint* nodeToRemove = nullptr;
+  Constraint* consToRemove = nullptr;
+  Variable* varToRemove = nullptr;
+
   for (auto node : visited) {
     if (auto v = dynamic_cast<Variable*>(node)) {
       if (v->domainSize() <= smallestDomain) {
         if (v->domainSize() < smallestDomain) {
-          nodeToRemove = v->definedBy();
+          varToRemove = v;
+          consToRemove = v->definedBy();
           smallestDomain = v->domainSize();
         } else {
-          if (v->definedBy()->defInVarCount() > nodeToRemove->defInVarCount()) {
-            nodeToRemove = v->definedBy();
+          if (v->definedBy()->defInVarCount() > consToRemove->defInVarCount()) {
+            varToRemove = v;
+            consToRemove = v->definedBy();
             smallestDomain = v->domainSize();
           }
         }
@@ -201,11 +205,11 @@ void Schemes::removeCycle(std::vector<Node*> visited, bool ban) {
     }
   }
   if (ban) {
-    assert(nodeToRemove->breakCycleWithBan());
+    assert(consToRemove->breakCycleWithBan(varToRemove));
   } else {
-    assert(nodeToRemove->breakCycle());
+    assert(consToRemove->breakCycle(varToRemove));
   }
-  std::cout << (TRACK ? "Node: " + nodeToRemove->getName() + " removed." + "\n"
+  std::cout << (TRACK ? "Node: " + consToRemove->getName() + " removed." + "\n"
                       : "");
   _cyclesRemoved += 1;
 }

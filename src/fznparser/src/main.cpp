@@ -32,9 +32,7 @@ int main(int argc, char* argv[]) {
       InvariantStructure is = InvariantStructure(m, args);
       is.run();
       std::cout << "FILE: " << argv[i] << std::endl;
-      std::cout << "-----------------------------------------------------------"
-                   "-----------"
-                << std::endl;
+      is.line();
     } catch (char const* msg) {
       std::cerr << msg << std::endl;
     }

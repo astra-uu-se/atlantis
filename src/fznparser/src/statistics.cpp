@@ -2,6 +2,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <ostream>
 #include <sstream>
 #include <string>
 
@@ -9,7 +10,7 @@ Statistics::Statistics(Model* model) { _model = model; }
 int Statistics::variableCount() {
   int n = 0;
   for (auto variable : _model->varMap().variables()) {
-    n++;
+    if (variable->isDefinable()) n++;
   }
   return n;
 }
@@ -198,46 +199,159 @@ double Statistics::score() {
 }
 std::string Statistics::header() {
   std::stringstream s;
-  s << "\t\tVarScore\tInvScore\tAnnScore\tWidth" << std::endl;
+  s << "\t\tVarSco\tInvSco\tAnnSco\tWidth\tIn #\tAvInfl\tMaxInfl\tOut "
+       "#\tAvDep\tMaxDep\tNbSize"
+    << std::endl;
   line();
   return s.str();
 }
 
 std::string Statistics::line() {
   std::stringstream s;
-  s << "----------------------------------------------------------------------"
+  s << "-----------------------------------------------------------------------"
+       "--------------------------------"
     << std::endl;
   return s.str();
 }
 std::string Statistics::count() {
   std::stringstream s;
-  s << "Count:\t\t" << variableCount() << "\t\t" << _model->constraints().size()
-    << "\t\t" << annotationCount() << "\t\t-" << std::endl;
+  s << "Variables: " << variableCount() << std::endl
+    << "Constraints: " << _model->constraints().size() << std::endl
+    << "Annotations: " << annotationCount() << std::endl;
   return s.str();
 }
 std::string Statistics::row(int i) {
   std::stringstream s;
   s << "Scheme " << i << ":\t";
   if (variableScore()) {
-    s << std::fixed << std::setprecision(2) << variableScore().value()
-      << "%\t\t";
+    s << std::fixed << std::setprecision(2) << variableScore().value() << "\t";
   } else {
-    s << "\t-\t";
+    s << "-\t";
   }
   if (constraintScore()) {
     s << std::fixed << std::setprecision(2) << constraintScore().value()
-      << "%\t\t";
+      << "\t";
   } else {
-    s << "\t-\t";
+    s << "-\t";
   }
   if (matchingAnnotationsScore()) {
     s << std::fixed << std::setprecision(2)
-      << matchingAnnotationsScore().value() << "%\t\t";
+      << matchingAnnotationsScore().value() << "\t";
   } else {
-    s << "\t-\t";
+    s << "-\t";
   }
   s << width(false);
+  s << "\t" << std::fixed << std::setprecision(2) << inputVars().size();
+  s << "\t" << std::fixed << std::setprecision(2) << averageInfluence();
+  s << "\t" << std::fixed << std::setprecision(2) << maxInfluence();
+  s << "\t" << std::fixed << std::setprecision(2) << outputVars().size();
+  s << "\t" << std::fixed << std::setprecision(2) << averageDependency();
+  s << "\t" << std::fixed << std::setprecision(2) << maxDependency();
+  s << "\t" << std::fixed << std::setprecision(2) << neighbourhoodSize();
 
   s << std::endl;
   return s.str();
+}
+
+int Statistics::influence(Variable* variable) {
+  int influence = 0;
+  std::set<Variable*> visited;
+  influenceAux(influence, visited, variable);
+  return influence;
+}
+void Statistics::influenceAux(int& influence, std::set<Variable*>& visited,
+                              Variable* variable) {
+  if (visited.count(variable)) return;
+  influence++;
+  visited.insert(variable);
+  for (auto constraint : variable->getNextConstraint()) {
+    for (auto var : constraint->getNextVariable()) {
+      influenceAux(influence, visited, var);
+    }
+  }
+}
+double Statistics::averageInfluence() {
+  int totalInfluence = 0;
+  for (auto var : _model->varMap().variables()) {
+    if (!var->isDefined()) {
+      totalInfluence += influence(var);
+    }
+  }
+  return 100 * (double)totalInfluence /
+         ((variableCount() - definedCount()) * (variableCount()));
+}
+
+double Statistics::maxInfluence() {
+  int maxInfluence = 0;
+  for (auto var : _model->varMap().variables()) {
+    if (!var->isDefined()) {
+      int newInfluence = influence(var);
+      if (newInfluence > maxInfluence) {
+        maxInfluence = newInfluence;
+      }
+    }
+  }
+  return 100 * (double)maxInfluence / (variableCount());
+}
+std::vector<Variable*> Statistics::inputVars() {
+  std::vector<Variable*> inputVars;
+  for (auto var : _model->varMap().variables()) {
+    if (!var->isDefined() && var->isDefinable()) {
+      inputVars.push_back(var);
+    }
+  }
+  return inputVars;
+}
+std::vector<Variable*> Statistics::outputVars() {
+  std::vector<Variable*> outputVars;
+  for (auto var : _model->varMap().variables()) {
+    if (var->isDefined() && var->getNext().empty()) {
+      outputVars.push_back(var);
+    }
+  }
+  return outputVars;
+}
+int Statistics::dependency(Variable* variable) {
+  int dependency = 0;
+  std::set<Variable*> visited;
+  dependencyAux(dependency, visited, variable);
+  return dependency;
+}
+void Statistics::dependencyAux(int& dependency, std::set<Variable*>& visited,
+                               Variable* variable) {
+  if (visited.count(variable)) return;
+  dependency++;
+  visited.insert(variable);
+
+  if (variable->isDefined()) {
+    for (auto var : variable->definedBy()->dependencies()) {
+      dependencyAux(dependency, visited, var);
+    }
+  }
+}
+double Statistics::averageDependency() {
+  int totalDependency = 0;
+  for (auto var : outputVars()) {
+    totalDependency += dependency(var);
+  }
+  return 100 * (double)totalDependency /
+         (outputVars().size() * (variableCount()));
+}
+
+double Statistics::maxDependency() {
+  int maxDependency = 0;
+  for (auto var : outputVars()) {
+    int newDependency = dependency(var);
+    if (newDependency > maxDependency) {
+      maxDependency = newDependency;
+    }
+  }
+  return 100 * (double)maxDependency / (variableCount());
+}
+int Statistics::neighbourhoodSize() {
+  int nbhd = 0;
+  for (auto var : inputVars()) {
+    nbhd += var->domainSize();
+  }
+  return nbhd;
 }

@@ -6,6 +6,7 @@ class InvariantStructure {
  public:
   InvariantStructure(Model m, std::string args);
   void run();
+  void line() { _stats.line(); }
 
  private:
   Model _model;

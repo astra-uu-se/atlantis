@@ -27,6 +27,20 @@ class Statistics {
   std::optional<double> variableScore();
   std::optional<double> constraintScore();
 
+  int influence(Variable* variable);
+  void influenceAux(int& influence, std::set<Variable*>& visited,
+                    Variable* variable);
+  double averageInfluence();
+  double maxInfluence();
+  int dependency(Variable* variable);
+  void dependencyAux(int& dependency, std::set<Variable*>& visited,
+                     Variable* variable);
+  double averageDependency();
+  double maxDependency();
+  std::vector<Variable*> outputVars();
+  std::vector<Variable*> inputVars();
+  int neighbourhoodSize();
+
   Model* _model;
 };
 

@@ -28,14 +28,31 @@ std::pair<Int, Int> IntDiv::calculateDomain(Variable* _) {
 
   return std::make_pair(lb, ub);
 }
-void IntMax::configureVariables() {
-  if (_variables[2]->isDefinable()) {
-    _variables[2]->addPotentialDefiner(this);
-  }
-}
 std::pair<Int, Int> IntMax::calculateDomain(Variable* _) {
   Int lb = std::max(_variables[0]->lowerBound(), _variables[1]->lowerBound());
   Int ub = std::max(_variables[0]->upperBound(), _variables[1]->upperBound());
+  return std::make_pair(lb, ub);
+}
+std::pair<Int, Int> IntMin::calculateDomain(Variable* _) {
+  Int lb = std::min(_variables[0]->lowerBound(), _variables[1]->lowerBound());
+  Int ub = std::min(_variables[0]->upperBound(), _variables[1]->upperBound());
+  return std::make_pair(lb, ub);
+}
+std::pair<Int, Int> IntMod::calculateDomain(Variable* _) {
+  Int lb = std::max(_variables[0]->lowerBound(), _variables[1]->lowerBound());
+  Int ub = std::min(_variables[0]->upperBound(), _variables[1]->upperBound());
+  return std::make_pair(lb, ub);
+}
+std::pair<Int, Int> IntPow::calculateDomain(Variable* _) {}
+std::pair<Int, Int> IntTimes::calculateDomain(Variable* _) {
+  std::vector<Int> exs;
+  exs.push_back(_variables[0]->lowerBound() * _variables[1]->lowerBound());
+  exs.push_back(_variables[0]->upperBound() * _variables[1]->upperBound());
+  exs.push_back(_variables[0]->upperBound() * _variables[1]->lowerBound());
+  exs.push_back(_variables[0]->lowerBound() * _variables[1]->upperBound());
+  Int lb = *std::min_element(exs.begin(), exs.end());
+  Int ub = *std::max_element(exs.begin(), exs.end());
+
   return std::make_pair(lb, ub);
 }
 void IntPlus::configureVariables() {

@@ -46,8 +46,8 @@ class Constraint : public Node {
 
   std::vector<Node*> getNext() override;
   std::vector<Variable*> getNextVariable();
-  bool breakCycle();
-  bool breakCycleWithBan();
+  bool breakCycle(Variable* variable);
+  bool breakCycleWithBan(Variable* variable);
 
   std::optional<Variable*> annotationTarget();
   virtual void unDefine(Variable* variable) { makeSoft(); }
@@ -62,6 +62,7 @@ class Constraint : public Node {
   virtual void makeImplicit();
   std::vector<Variable*> variables();
   std::vector<Variable*> variablesSorted();
+  std::vector<Variable*> dependencies();
 
   bool isImplicit() { return _implicit; }
   bool isInvariant() { return _invariant; }
@@ -128,6 +129,7 @@ class SimpleConstraint : public Constraint {
 };
 
 #include "constraints/alldifferent.hpp"
+#include "constraints/array.hpp"
 #include "constraints/circuit.hpp"
 #include "constraints/element.hpp"
 #include "constraints/global_cardinality.hpp"
