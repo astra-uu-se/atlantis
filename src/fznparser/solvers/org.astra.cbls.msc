@@ -1,0 +1,12 @@
+{
+    "executable": "/home/max/Desktop/cbls/src/fznparser/build/fznparser",
+    "id": "org.astra.cbls",
+    "isGUIApplication": false,
+    "mznlib": "astra-cbls",
+    "name": "Astra CBLS",
+    "needsSolns2Out": false,
+    "stdFlags": [
+    ],
+    "supportsMzn": false,
+    "version": "1.0.0"
+}
