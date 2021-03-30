@@ -15,7 +15,7 @@ class Model {
   void addVariable(std::shared_ptr<ArrayVariable> v);
   void addConstraint(ConstraintBox constraintBox);
   void addObjective(std::string objective);
-  std::vector<Constraint*> constraints();
+  const std::vector<Constraint*>& constraints();
   VariableMap& varMap();
   std::vector<Variable*> domSortVariables();
   std::vector<Variable*> potDefSortVariables();

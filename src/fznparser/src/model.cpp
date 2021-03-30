@@ -16,7 +16,7 @@ void Model::init() {
     constraint->init(_variables);
   }
 }
-std::vector<Constraint*> Model::constraints() {
+const std::vector<Constraint*>& Model::constraints() {
   return _constraints.getVector();
 }
 VariableMap& Model::varMap() { return _variables; }

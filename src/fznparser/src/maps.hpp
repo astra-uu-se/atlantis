@@ -16,7 +16,7 @@ class Constraint;
 class VariableMap {
  public:
   VariableMap() = default;
-  virtual ~VariableMap() = default;
+  ~VariableMap() = default;
   Variable* add(std::shared_ptr<Variable> variable);
   ArrayVariable* add(std::shared_ptr<ArrayVariable> variable);
   Variable* find(std::string name) const;
@@ -35,7 +35,7 @@ class VariableMap {
 class ConstraintMap {
  public:
   ConstraintMap() = default;
-  virtual ~ConstraintMap() = default;
+  ~ConstraintMap() = default;
   void add(std::shared_ptr<Constraint> constraint);
   bool exists(Constraint* constraint);
   void remove(Constraint* constraint);
