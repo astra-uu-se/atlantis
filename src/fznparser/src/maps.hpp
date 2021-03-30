@@ -39,7 +39,7 @@ class ConstraintMap {
   void add(std::shared_ptr<Constraint> constraint);
   bool exists(Constraint* constraint);
   void remove(Constraint* constraint);
-  std::vector<Constraint*> getVector();
+  const std::vector<Constraint*>& getVector();
   Int size() { return _constraintArray.size(); }
 
  private:
