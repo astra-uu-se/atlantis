@@ -1,5 +1,9 @@
-var 0..5: a:: output_var;
-var 7..100: b:: output_var;
-var 12..35: c:: output_var;
-constraint int_plus(a,b,c);
+array [1..3] of int: y = [1,-30,7];
+var bool: a;
+var bool: b;
+var bool: c;
+var int: d;
+array [1..3] of var int: x = [a,b,c];
+
+constraint bool_lin_eq(y, x, d);
 solve  satisfy;

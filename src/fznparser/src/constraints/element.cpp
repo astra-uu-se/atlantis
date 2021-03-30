@@ -1,21 +1,26 @@
 #include "element.hpp"
 
-// element(var int: idx,int: idxoffset,array [int] of var int: x,var int: c);
+// element(var int: idx, array [int] of var int: x,var int: c);
 void Element::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
-  _variables.push_back(getSingleVariable(variableMap, 3));
-  _values = getArrayVariable(variableMap, 2);
-  for (auto v : _values->elements()) {
-    _variables.push_back(v);
-  }
+  _variables.push_back(getSingleVariable(variableMap, 2));
+  _values = getArrayVariable(variableMap, 1);
 }
 void Element::configureVariables() {
   if (_variables[1]->isDefinable()) {
     _variables[1]->addPotentialDefiner(this);
   }
 }
+void VarElement::loadVariables(const VariableMap& variableMap) {
+  _variables.push_back(getSingleVariable(variableMap, 0));
+  _variables.push_back(getSingleVariable(variableMap, 2));
+  _values = getArrayVariable(variableMap, 1);
+  for (auto v : _values->elements()) {
+    _variables.push_back(v);
+  }
+}
 
-std::vector<Node*> Element::getNext() {
+std::vector<Node*> VarElement::getNext() {
   std::vector<Variable*> defines;
   std::vector<Node*> sorted;
   if (_allowDynamicCycles) {
@@ -31,7 +36,7 @@ std::vector<Node*> Element::getNext() {
   return sorted;
 }
 
-void Element::checkAnnotations(const VariableMap& variableMap) {
+void VarElement::checkAnnotations(const VariableMap& variableMap) {
   if (_constraintBox.hasDefineAnnotation()) {
     _annotationTarget.emplace(getAnnotationVariable(variableMap));
   }

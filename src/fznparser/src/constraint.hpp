@@ -130,6 +130,7 @@ class SimpleConstraint : public Constraint {
 
 #include "constraints/alldifferent.hpp"
 #include "constraints/array.hpp"
+#include "constraints/bool.hpp"
 #include "constraints/circuit.hpp"
 #include "constraints/element.hpp"
 #include "constraints/global_cardinality.hpp"
@@ -137,6 +138,7 @@ class SimpleConstraint : public Constraint {
 #include "constraints/integer_simple_2.hpp"
 #include "constraints/integer_simple_3.hpp"
 #include "constraints/inverse.hpp"
+// #include "constraints/set.hpp"
 #include "variable.hpp"
 
 #endif

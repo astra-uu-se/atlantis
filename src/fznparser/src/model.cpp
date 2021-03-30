@@ -53,8 +53,6 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<IntDiv>(constraintBox));
   } else if (constraintBox._name == "int_plus") {
     _constraints.add(std::make_shared<IntPlus>(constraintBox));
-  } else if (constraintBox._name == "global_cardinality") {
-    _constraints.add(std::make_shared<GlobalCardinality>(constraintBox));
   } else if (constraintBox._name == "int_lin_eq") {
     _constraints.add(std::make_shared<IntLinEq>(constraintBox));
   } else if (constraintBox._name == "int_abs") {
@@ -69,18 +67,46 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<IntPow>(constraintBox));
   } else if (constraintBox._name == "int_times") {
     _constraints.add(std::make_shared<IntTimes>(constraintBox));
-  } else if (constraintBox._name == "fzn_all_different_int") {
-    _constraints.add(std::make_shared<AllDifferent>(constraintBox));
-  } else if (constraintBox._name == "inverse") {
-    _constraints.add(std::make_shared<Inverse>(constraintBox));
-  } else if (constraintBox._name == "gecode_int_element") {
+  } else if (constraintBox._name == "array_var_int_element") {
+    _constraints.add(std::make_shared<VarElement>(constraintBox));
+  } else if (constraintBox._name == "array_int_element") {
     _constraints.add(std::make_shared<Element>(constraintBox));
-  } else if (constraintBox._name == "gecode_circuit") {
-    _constraints.add(std::make_shared<Circuit>(constraintBox));
+  } else if (constraintBox._name == "array_bool_element") {
+    _constraints.add(std::make_shared<BoolElement>(constraintBox));
+  } else if (constraintBox._name == "array_var_bool_element") {
+    _constraints.add(std::make_shared<VarBoolElement>(constraintBox));
   } else if (constraintBox._name == "array_int_maximum") {
     _constraints.add(std::make_shared<ArrayIntMaximum>(constraintBox));
   } else if (constraintBox._name == "array_int_minimum") {
     _constraints.add(std::make_shared<ArrayIntMinimum>(constraintBox));
+  } else if (constraintBox._name == "array_bool_and") {
+    _constraints.add(std::make_shared<ArrayBoolAnd>(constraintBox));
+  } else if (constraintBox._name == "array_bool_or") {
+    _constraints.add(std::make_shared<ArrayBoolOr>(constraintBox));
+  } else if (constraintBox._name == "bool2int") {
+    _constraints.add(std::make_shared<Bool2Int>(constraintBox));
+  } else if (constraintBox._name == "bool_and") {
+    _constraints.add(std::make_shared<BoolAnd>(constraintBox));
+  } else if (constraintBox._name == "bool_eq") {
+    _constraints.add(std::make_shared<BoolEq>(constraintBox));
+  } else if (constraintBox._name == "bool_lin_eq") {
+    _constraints.add(std::make_shared<BoolLinEq>(constraintBox));
+  } else if (constraintBox._name == "bool_not") {
+    _constraints.add(std::make_shared<BoolNot>(constraintBox));
+  } else if (constraintBox._name == "bool_or") {
+    _constraints.add(std::make_shared<BoolOr>(constraintBox));
+  } else if (constraintBox._name == "bool_xor") {
+    _constraints.add(std::make_shared<BoolXor>(constraintBox));
+    // } else if (constraintBox._name == "set_in_reif") {
+    //   _constraints.add(std::make_shared<SetInReif>(constraintBox));
+  } else if (constraintBox._name == "fzn_global_cardinality") {
+    _constraints.add(std::make_shared<GlobalCardinality>(constraintBox));
+  } else if (constraintBox._name == "fzn_circuit") {
+    _constraints.add(std::make_shared<Circuit>(constraintBox));
+  } else if (constraintBox._name == "fzn_all_different_int") {
+    _constraints.add(std::make_shared<AllDifferent>(constraintBox));
+  } else if (constraintBox._name == "fzn_inverse") {
+    _constraints.add(std::make_shared<Inverse>(constraintBox));
   } else if (constraintBox._name == "int_le") {
     _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   } else if (constraintBox._name == "int_lin_le") {
