@@ -4,7 +4,11 @@
 
 class Statistics {
  public:
-  Statistics(Model* model);
+  Statistics() = default;
+  Statistics(Model* model, bool ignoreDynamicCycles) {
+    _model = model;
+    _ignoreDynamicCycles = ignoreDynamicCycles;
+  };
   std::string header();
   std::string row(int i);
   std::string line();
@@ -42,6 +46,7 @@ class Statistics {
   int neighbourhoodSize();
 
   Model* _model;
+  bool _ignoreDynamicCycles;
 };
 
 #endif

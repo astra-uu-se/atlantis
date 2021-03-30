@@ -19,9 +19,7 @@ class VarElement : public Element {
  public:
   VarElement(ConstraintBox constraintBox) : Element(constraintBox) {}
   void loadVariables(const VariableMap& variables) override;
-  std::vector<Node*> getNext() override;
-  void checkAnnotations(const VariableMap& variableMap) override;
-  bool _allowDynamicCycles = false;  // Move this?
+  bool isIndexVar(Node* node);
 };
 
 class VarBoolElement : public VarElement {

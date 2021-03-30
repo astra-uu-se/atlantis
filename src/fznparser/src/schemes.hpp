@@ -5,7 +5,11 @@
 
 class Schemes {
  public:
-  Schemes(Model* m) { _m = m; }
+  Schemes() = default;
+  Schemes(Model* m, bool ignoreDynamicCycles) {
+    _m = m;
+    _ignoreDynamicCycles = ignoreDynamicCycles;
+  }
 
   void scheme1();
   void scheme2();
@@ -23,6 +27,7 @@ class Schemes {
   void defineRest();
   void defineByImplicit();
   std::vector<Node*> hasCycle();
+  std::vector<Node*> checkDynamicCycle(std::vector<Node*> stack);
   bool hasCycleAux(std::set<Node*>& visited, std::vector<Node*>& stack,
                    Node* n);
   void removeCycles(bool ban);
@@ -34,6 +39,7 @@ class Schemes {
  private:
   Model* _m;
   int _cyclesRemoved = 0;
+  bool _ignoreDynamicCycles = false;
 };
 
 #endif

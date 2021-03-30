@@ -6,7 +6,6 @@
 #include <sstream>
 #include <string>
 
-Statistics::Statistics(Model* model) { _model = model; }
 int Statistics::variableCount() {
   int n = 0;
   for (auto variable : _model->varMap().variables()) {
@@ -200,7 +199,7 @@ double Statistics::score() {
 std::string Statistics::header() {
   std::stringstream s;
   s << "\t\tVarSco\tInvSco\tAnnSco\tWidth\tIn #\tAvInfl\tMaxInfl\tOut "
-       "#\tAvDep\tMaxDep\tNbSize"
+       "#\tAvDep\tMaxDep\tNbSum"
     << std::endl;
   line();
   return s.str();
@@ -240,7 +239,11 @@ std::string Statistics::row(int i) {
   } else {
     s << "-\t";
   }
-  s << width(false);
+  if (!_ignoreDynamicCycles) {
+    s << width(false);
+  } else {
+    s << "-";
+  }
   s << "\t" << std::fixed << std::setprecision(2) << inputVars().size();
   s << "\t" << std::fixed << std::setprecision(2) << averageInfluence();
   s << "\t" << std::fixed << std::setprecision(2) << maxInfluence();
@@ -261,7 +264,7 @@ int Statistics::influence(Variable* variable) {
 }
 void Statistics::influenceAux(int& influence, std::set<Variable*>& visited,
                               Variable* variable) {
-  if (visited.count(variable)) return;
+  if (visited.count(variable) || !variable->isDefinable()) return;
   influence++;
   visited.insert(variable);
   for (auto constraint : variable->getNextConstraint()) {
@@ -319,7 +322,7 @@ int Statistics::dependency(Variable* variable) {
 }
 void Statistics::dependencyAux(int& dependency, std::set<Variable*>& visited,
                                Variable* variable) {
-  if (visited.count(variable)) return;
+  if (visited.count(variable) || !variable->isDefinable()) return;
   dependency++;
   visited.insert(variable);
 

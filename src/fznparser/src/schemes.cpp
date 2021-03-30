@@ -231,7 +231,11 @@ std::vector<Node*> Schemes::hasCycle() {
   std::vector<Node*> stack;
   for (auto node : _m->varMap().variables()) {
     if (hasCycleAux(visited, stack, node)) {
-      return stack;
+      if (_ignoreDynamicCycles) {
+        return checkDynamicCycle(stack);
+      } else {
+        return stack;
+      }
     }
   }
   assert(stack.size() == 0);
@@ -266,4 +270,18 @@ void Schemes::defineLeastUsed() {
       }
     }
   }
+}
+
+std::vector<Node*> Schemes::checkDynamicCycle(std::vector<Node*> stack) {
+  if (auto e = dynamic_cast<VarElement*>(stack.front())) {
+    if (e->isIndexVar(stack.back())) return stack;
+  }
+  for (auto node : stack) {
+    for (auto next : node->getNext()) {
+      if (auto e = dynamic_cast<VarElement*>(next)) {
+        if (e->isIndexVar(node)) return stack;
+      }
+    }
+  }
+  return std::vector<Node*>();
 }

@@ -12,6 +12,7 @@ class InvariantStructure {
   Model _model;
   Statistics _stats;
   Schemes _schemes;
-  bool _allStats = false;
-  bool _fullStats = false;
+  bool _allStats;
+  bool _fullStats;
+  bool _ignoreDynamicCycles;
 };

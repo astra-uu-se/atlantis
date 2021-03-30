@@ -27,5 +27,5 @@ constraint int_lin_eq([1,-1,-1],[X_INTRODUCED_1_,X_INTRODUCED_2_,X_INTRODUCED_9_
 constraint int_lin_eq([1,-1,-1],[X_INTRODUCED_2_,X_INTRODUCED_3_,X_INTRODUCED_11_],0):: defines_var(X_INTRODUCED_11_);
 constraint int_lin_eq([1,-1,-1],[X_INTRODUCED_3_,X_INTRODUCED_4_,X_INTRODUCED_13_],0):: defines_var(X_INTRODUCED_13_);
 constraint int_lin_eq([-1,1,-1],[X_INTRODUCED_4_,X_INTRODUCED_5_,X_INTRODUCED_15_],0):: defines_var(X_INTRODUCED_15_);
-constraint inverse(x,X_INTRODUCED_17_);
+constraint fzn_inverse(x,X_INTRODUCED_17_);
 solve  satisfy;

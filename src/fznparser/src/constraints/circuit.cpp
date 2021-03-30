@@ -2,7 +2,7 @@
 
 void Circuit::loadVariables(const VariableMap& variableMap) {
   // Not sure what the first argument does.
-  _x = getArrayVariable(variableMap, 1);
+  _x = getArrayVariable(variableMap, 0);
   for (auto variable : _x->elements()) {
     _variables.push_back(variable);
   }

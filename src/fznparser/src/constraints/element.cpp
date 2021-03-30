@@ -20,30 +20,4 @@ void VarElement::loadVariables(const VariableMap& variableMap) {
   }
 }
 
-std::vector<Node*> VarElement::getNext() {
-  std::vector<Variable*> defines;
-  std::vector<Node*> sorted;
-  if (_allowDynamicCycles) {
-    return sorted;
-  }
-  for (auto var : _defines) {
-    defines.push_back(var);
-  }
-  std::sort(defines.begin(), defines.end(), Variable::compareDomain);
-  for (auto var : defines) {
-    sorted.push_back(var);
-  }
-  return sorted;
-}
-
-void VarElement::checkAnnotations(const VariableMap& variableMap) {
-  if (_constraintBox.hasDefineAnnotation()) {
-    _annotationTarget.emplace(getAnnotationVariable(variableMap));
-  }
-  if (_constraintBox.hasImplicitAnnotation()) {
-    _shouldBeImplicit = true;
-  }
-  if (_constraintBox.hasIgnoreCycleAnnotation()) {
-    _allowDynamicCycles = true;
-  }
-}
+bool VarElement::isIndexVar(Node* node) { return (node == _variables[0]); }
