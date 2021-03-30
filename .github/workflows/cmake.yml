@@ -98,4 +98,4 @@ jobs:
     - name: Run (fznparser)
       working-directory: ${{github.workspace}}/src/fznparser/build
       shell: bash
-      run: ./fznparser ../fzn_examples/tsptw-eq.fzn
+      run: ./fznparser ../fzn_examples/tsptw-eq-small.fzn
