@@ -183,6 +183,7 @@ static void CustomArguments(benchmark::internal::Benchmark* b) {
   }
 }
 
+///*
 BENCHMARK_REGISTER_F(PrioQueue, initVar)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(PrioQueue, push_min)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(PrioQueue, push_max)->Apply(CustomArguments);
@@ -190,3 +191,4 @@ BENCHMARK_REGISTER_F(PrioQueue, push_random)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(PrioQueue, pop_min)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(PrioQueue, pop_max)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(PrioQueue, pop_random)->Apply(CustomArguments);
+//*/
