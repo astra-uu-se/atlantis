@@ -53,16 +53,6 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest
     
-    - name: Slack
-      uses: act10ns/slack@v1
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD }}
-      with:
-        status: ${{ job.status }}
-        steps: ${{ toJson(steps) }}
-        channel: '#build'
-      if: always()
-    
     - name: Create Benchmark Environment
       if: contains(env.BENCHMARK_BRANCHES, github.ref)
       run: rm -rf ${{github.workspace}}/build; cmake -E make_directory ${{github.workspace}}/build
@@ -99,3 +89,13 @@ jobs:
       working-directory: ${{github.workspace}}/src/fznparser/build
       shell: bash
       run: ./fznparser ../fzn_examples/tsptw-eq-small.fzn
+
+    - name: Slack
+      uses: act10ns/slack@v1
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD }}
+      with:
+        status: ${{ job.status }}
+        steps: ${{ toJson(steps) }}
+        channel: '#build'
+      if: always()
