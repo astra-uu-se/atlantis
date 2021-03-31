@@ -52,27 +52,6 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest
-    
-    - name: Create Benchmark Environment
-      if: contains(env.BENCHMARK_BRANCHES, github.ref)
-      run: rm -rf ${{github.workspace}}/build; cmake -E make_directory ${{github.workspace}}/build
-
-    - name: Build Benchmarks
-      working-directory: ${{github.workspace}}/build
-      if: contains(env.BENCHMARK_BRANCHES, github.ref)
-      env:
-        CMAKE_FLAGS: -DBUILD_TESTS:BOOL=OFF -BENCHMARK_ENABLE_TESTING:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_BUILD_TYPE=Release
-      shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake $CMAKE_OPTIONS $CMAKE_FLAGS -DCMAKE_CXX_FLAGS=$CXX_FLAGS  ..; make
-
-    - name: Run Benchmarks
-      if: contains(env.BENCHMARK_BRANCHES, github.ref)
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
-      shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: chmod +x ./slack-benchmark.sh; ./slack-benchmark.sh;
 
     - name: Create Build Environment (fznparser)
       # Some projects don't allow in-source building, so create a separate build directory
@@ -99,3 +78,24 @@ jobs:
         steps: ${{ toJson(steps) }}
         channel: '#build'
       if: always()
+    
+    - name: Create Benchmark Environment
+      if: contains(env.BENCHMARK_BRANCHES, github.ref)
+      run: rm -rf ${{github.workspace}}/build; cmake -E make_directory ${{github.workspace}}/build
+
+    - name: Build Benchmarks
+      working-directory: ${{github.workspace}}/build
+      if: contains(env.BENCHMARK_BRANCHES, github.ref)
+      env:
+        CMAKE_FLAGS: -DBUILD_TESTS:BOOL=OFF -BENCHMARK_ENABLE_TESTING:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_BUILD_TYPE=Release
+      shell: bash
+      # Execute the build.  You can specify a specific target with "--target <NAME>"
+      run: cmake $CMAKE_OPTIONS $CMAKE_FLAGS -DCMAKE_CXX_FLAGS=$CXX_FLAGS  ..; make
+
+    - name: Run Benchmarks
+      if: contains(env.BENCHMARK_BRANCHES, github.ref)
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
+      shell: bash
+      # Execute the build.  You can specify a specific target with "--target <NAME>"
+      run: chmod +x ./slack-benchmark.sh; ./slack-benchmark.sh;
