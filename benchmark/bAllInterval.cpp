@@ -121,8 +121,8 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
   st.counters["seconds_per_commit"] = benchmark::Counter(
       commits, benchmark::Counter::kIsRate | benchmark::Counter::kInvert);
 }
-/*
 
+///*
 BENCHMARK_REGISTER_F(AllInterval, probing_single_swap)->DenseRange(5, 30, 5);
 BENCHMARK_REGISTER_F(AllInterval, probing_all_swap)
     ->Unit(benchmark::kMillisecond)
