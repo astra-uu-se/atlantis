@@ -1,7 +1,7 @@
 #pragma once
 
+#include <array>
 #include <memory>
-#include <vector>
 
 #include "../core/engine.hpp"
 #include "../core/intVar.hpp"
@@ -23,7 +23,7 @@
 class IfThenElse : public Invariant {
  private:
   VarId m_b;
-  std::vector<VarId> m_xy;
+  std::array<VarId, 2> m_xy;
   VarId m_z;
 
  public:
