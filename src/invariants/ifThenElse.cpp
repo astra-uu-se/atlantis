@@ -1,7 +1,7 @@
 #include "invariants/ifThenElse.hpp"
 
-IfThenElse::IfThenElse(VarId x, VarId y, VarId b, VarId z)
-    : Invariant(NULL_ID), m_xy({x, y}), m_b(b), m_z(z) {
+IfThenElse::IfThenElse(VarId b, VarId x, VarId y, VarId z)
+    : Invariant(NULL_ID), m_b(b), m_xy({x, y}), m_z(z) {
   m_modifiedVars.reserve(1);
 }
 
@@ -9,9 +9,9 @@ void IfThenElse::init([[maybe_unused]] Timestamp t, Engine& e) {
   assert(!m_id.equals(NULL_ID));
 
   registerDefinedVariable(e, m_z);
+  e.registerInvariantDependsOnVar(m_id, m_b, 0);
   e.registerInvariantDependsOnVar(m_id, m_xy[0], 0);
   e.registerInvariantDependsOnVar(m_id, m_xy[1], 0);
-  e.registerInvariantDependsOnVar(m_id, m_b, 0);
 }
 
 // Non-branching implementation of the sign function

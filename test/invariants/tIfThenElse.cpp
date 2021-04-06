@@ -24,8 +24,8 @@ class MockIfThenElse : public IfThenElse {
     IfThenElse::init(timestamp, e);
   }
 
-  MockIfThenElse(VarId x, VarId y, VarId b, VarId z)
-      : IfThenElse(x, y, b, z) {
+  MockIfThenElse(VarId b, VarId x, VarId y, VarId z)
+      : IfThenElse(b, x, y, z) {
           ON_CALL(*this, recompute)
               .WillByDefault([this](Timestamp timestamp, Engine& engine) {
                 return IfThenElse::recompute(timestamp, engine);
@@ -79,12 +79,12 @@ class IfThenElseTest : public ::testing::Test {
     engine->open();
 
     std::vector<VarId> args{};
+    VarId b = engine->makeIntVar(0, -100, 100);
     VarId x = engine->makeIntVar(0, 0, 4);
     VarId y = engine->makeIntVar(5, 5, 9);
-    VarId b = engine->makeIntVar(0, -100, 100);
     VarId z = engine->makeIntVar(3, 0, 9);
 
-    auto invariant = engine->makeInvariant<MockIfThenElse>(x, y, b, z);
+    auto invariant = engine->makeInvariant<MockIfThenElse>(b, x, y, z);
 
     EXPECT_TRUE(invariant->m_initialized);
 
@@ -130,17 +130,17 @@ class IfThenElseTest : public ::testing::Test {
 TEST_F(IfThenElseTest, CreateElement) {
   engine->open();
 
-  
+
   std::vector<VarId> args{};
+  VarId b = engine->makeIntVar(0, -100, 100);
   VarId x = engine->makeIntVar(0, 0, 4);
   VarId y = engine->makeIntVar(5, 5, 9);
-  VarId b = engine->makeIntVar(0, -100, 100);
   VarId z = engine->makeIntVar(3, 0, 9);
 
-  auto invariant = engine->makeInvariant<MockIfThenElse>(x, y, b, z);
+  auto invariant = engine->makeInvariant<MockIfThenElse>(b, x, y, z);
 
   EXPECT_TRUE(invariant->m_initialized);
-  
+
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
