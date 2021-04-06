@@ -34,17 +34,15 @@ void IfThenElse::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
   );
 }
 
-VarId IfThenElse::getNextDependency(Timestamp t, Engine&) {
+VarId IfThenElse::getNextDependency(Timestamp t, Engine& e) {
   m_state.incValue(t, 1);
-  auto val = m_state.getValue(t);
-  switch (val) {
-    case 0:
-      return m_b;
-    case 1: // return variable x at index 0
-    case 2: // return variable y at index 1
-      return m_xy.at(val - 1);
-    default:
-      return NULL_ID;
+  if (m_state.getValue(t) == 0) {
+    return m_b;
+  } else if (m_state.getValue(t) == 1) {
+    auto val = e.getValue(t, m_b);
+    return m_xy.at(std::max(0, (0 < val) - (val < 0)));
+  } else {
+    return NULL_ID; // Done
   }
 }
 
