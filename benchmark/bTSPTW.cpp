@@ -127,6 +127,8 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
+///*
 BENCHMARK_REGISTER_F(TSPTW, probe_all_relocate)
     ->DenseRange(10, 100, 10)
     ->Unit(benchmark::kMillisecond);
+//*/
