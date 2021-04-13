@@ -1,5 +1,5 @@
-#ifndef __STRUCTURE_SCHEME_1_HPP_INCLUDED__
-#define __STRUCTURE_SCHEME_1_HPP_INCLUDED__
+#pragma once
+
 #include "model.hpp"
 #include "variable.hpp"
 
@@ -11,13 +11,18 @@ class Schemes {
     _ignoreDynamicCycles = ignoreDynamicCycles;
   }
 
+  std::string name();
   void scheme1();
   void scheme2();
   void scheme3();
   void scheme4();
   void scheme5();
   void scheme6();
+  void scheme7();
+  void scheme8();
+  void random();
   void reset();
+  void defineRandom();
   void defineAnnotated();
   void defineImplicit();
   void defineFrom(Variable* variable);
@@ -37,9 +42,8 @@ class Schemes {
   void defineLeastUsed();
 
  private:
+  std::string _name;
   Model* _m;
   int _cyclesRemoved = 0;
   bool _ignoreDynamicCycles = false;
 };
-
-#endif

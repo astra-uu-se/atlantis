@@ -1,73 +1,113 @@
 #include "schemes.hpp"
+
+#include <algorithm>
 #define TRACK false
 
+std::string Schemes::name() { return _name; }
+
 void Schemes::scheme1() {
+  _name = "OscNoAnn";
   reset();
-  // defineByImplicit();
-  // defineImplicit();
-  // defineAnnotated();
   defineFromObjective();
   defineUnique();
   defineRest();
+  defineImplicit();
   removeCycles(false);
   updateDomains();
 }
 void Schemes::scheme2() {
+  _name = "LUsedNoAnn";
   reset();
-  defineFromObjective();
   defineLeastUsed();
   removeCycles(false);
   updateDomains();
 }
 void Schemes::scheme3() {
+  _name = "OscRepNoAnn";
   reset();
   defineFromObjective();
   defineUnique();
   defineRest();
+  defineImplicit();
   while (hasCycle().size()) {
     removeCycles(true);
     updateDomains();
     defineFromObjective();
     defineUnique();
     defineRest();
+    defineImplicit();
   }
 }
 void Schemes::scheme4() {
+  _name = "LUsedRepNoAnn";
   reset();
-  defineFromObjective();
   defineLeastUsed();
   while (hasCycle().size()) {
     removeCycles(true);
     updateDomains();
-    defineFromObjective();
     defineLeastUsed();
   }
 }
 void Schemes::scheme5() {
+  _name = "Osc\t";
   reset();
   defineAnnotated();
   defineFromObjective();
   defineUnique();
   defineRest();
+  defineImplicit();
+  removeCycles(false);
+  updateDomains();
+}
+void Schemes::scheme6() {
+  _name = "LUsed\t";
+  reset();
+  defineAnnotated();
+  defineLeastUsed();
+  removeCycles(false);
+  updateDomains();
+}
+void Schemes::scheme7() {
+  _name = "OscRep\t";
+  reset();
+  defineAnnotated();
+  defineFromObjective();
+  defineUnique();
+  defineRest();
+  defineImplicit();
   while (hasCycle().size()) {
     removeCycles(true);
     updateDomains();
+    defineAnnotated();
     defineFromObjective();
     defineUnique();
     defineRest();
+    defineImplicit();
   }
 }
-void Schemes::scheme6() {
+void Schemes::scheme8() {
+  _name = "LUsedRep:";
   reset();
-  defineLeastUsed();
   defineAnnotated();
-  defineFromObjective();
+  defineLeastUsed();
   while (hasCycle().size()) {
     removeCycles(true);
     updateDomains();
-    defineFromObjective();
+    defineAnnotated();
     defineLeastUsed();
   }
+}
+
+void Schemes::random() {
+  _name = "Random\t:";
+  reset();
+  defineRandom();
+  while (hasCycle().size()) {
+    removeCycles(true);
+    updateDomains();
+    defineRandom();
+  }
+  _m->reportDomainChange();
 }
 void Schemes::reset() {
   for (auto constraint : _m->constraints()) {
@@ -78,6 +118,8 @@ void Schemes::reset() {
     assert(!var->hasImposedDomain());
     assert(!var->isDefined());
   }
+  _m->reportDomainChange();
+  _m->reportPotDefChange();
 }
 void Schemes::updateDomains() {
   for (auto constraint : _m->constraints()) {  // _m->conMap.functional()
@@ -86,6 +128,7 @@ void Schemes::updateDomains() {
       constraint->refreshAndPropagate(visited);
     }
   }
+  _m->reportDomainChange();
 }
 void Schemes::defineAnnotated() {
   for (auto c : _m->constraints()) {
@@ -95,13 +138,15 @@ void Schemes::defineAnnotated() {
       c->define(c->annotationTarget().value());
     }
   }
+  _m->reportDomainChange();
 }
 void Schemes::defineImplicit() {
   for (auto c : _m->constraints()) {
-    if (c->canBeImplicit() && c->shouldBeImplicit()) {
+    if (c->canBeImplicit() && c->allVariablesFree()) {
       c->makeImplicit();
     }
   }
+  _m->reportDomainChange();
 }
 void Schemes::defineFromWithImplicit(Variable* variable) {
   if (variable->isDefinable() && !variable->isDefined()) {
@@ -121,9 +166,10 @@ void Schemes::defineFromWithImplicit(Variable* variable) {
       }
     }
   }
+  _m->reportDomainChange();
 }
 void Schemes::defineFrom(Variable* variable) {
-  if (variable->isDefinable()) {
+  if (variable->isDefinable() && !variable->isDefined()) {
     for (auto constraint : variable->potentialDefiners()) {
       if (constraint->canDefine(variable) && constraint->definesNone()) {
         constraint->define(variable);
@@ -136,13 +182,15 @@ void Schemes::defineFrom(Variable* variable) {
       }
     }
   }
+  _m->reportDomainChange();
 }
 void Schemes::defineFromObjective() {
   if (_m->objective().has_value()) {
-    defineFromWithImplicit(_m->objective().value());
+    defineFrom(_m->objective().value());
   } else {
     // std::cerr << "No objective exists\n";
   }
+  _m->reportDomainChange();
 }
 void Schemes::defineUnique() {
   for (auto variable : _m->domSortVariables()) {
@@ -156,6 +204,7 @@ void Schemes::defineUnique() {
       }
     }
   }
+  _m->reportDomainChange();
 }
 void Schemes::defineRest() {
   for (auto variable : _m->domSortVariables()) {
@@ -168,6 +217,7 @@ void Schemes::defineRest() {
       }
     }
   }
+  _m->reportDomainChange();
 }
 void Schemes::defineByImplicit() {
   for (auto variable : _m->domSortVariables()) {
@@ -181,6 +231,7 @@ void Schemes::defineByImplicit() {
       }
     }
   }
+  _m->reportDomainChange();
 }
 void Schemes::removeCycle(std::vector<Node*> visited, bool ban) {
   Int smallestDomain = std::numeric_limits<Int>::max();
@@ -224,6 +275,7 @@ void Schemes::removeCycles(bool ban) {
       break;
     }
   }
+  if (ban) _m->reportPotDefChange();
   std::cout << (TRACK ? "Done! No cycles.\n" : "");
 }
 std::vector<Node*> Schemes::hasCycle() {
@@ -263,10 +315,30 @@ void Schemes::defineLeastUsed() {
   for (auto var : _m->potDefSortVariables()) {
     if (!var->isDefined()) {
       for (auto con : var->potentialDefiners()) {
-        if (con->definesNone()) {  // Add better prio
+        if (con->definesNone() && con->canDefine(var)) {  // Add better prio
           con->define(var);
-          break;
+        } else if (con->canBeImplicit() && con->allVariablesFree()) {
+          con->makeImplicit();
         }
+        break;
+      }
+    }
+  }
+}
+void Schemes::defineRandom() {
+  std::vector<Variable*> vars = _m->domSortVariables();
+  std::random_shuffle(vars.begin(), vars.end());
+  for (auto v : vars) {
+    if (!v->isDefined()) {
+      std::vector<Constraint*> cns = v->potentialDefiners();
+      std::random_shuffle(cns.begin(), cns.end());
+      for (auto con : cns) {
+        if (con->definesNone() && con->canDefine(v)) {  // Add better prio
+          con->define(v);
+        } else if (con->canBeImplicit() && con->allVariablesFree()) {
+          con->makeImplicit();
+        }
+        break;
       }
     }
   }
@@ -283,5 +355,10 @@ std::vector<Node*> Schemes::checkDynamicCycle(std::vector<Node*> stack) {
       }
     }
   }
-  return std::vector<Node*>();
+  for (auto node : stack) {
+    if (dynamic_cast<VarElement*>(node)) {
+      return std::vector<Node*>();
+    }
+  }
+  return stack;
 }
