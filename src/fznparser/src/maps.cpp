@@ -32,6 +32,28 @@ bool VariableMap::exists(std::string name) {
 }
 std::vector<Variable*> VariableMap::variables() { return _variableVector; }
 std::vector<ArrayVariable*> VariableMap::arrays() { return _arrayVector; }
+
+void VariableMap::reportDomainChange() { _changedDomain = true; }
+void VariableMap::reportPotDefChange() { _changedPotDef = true; }
+
+const std::vector<Variable*>& VariableMap::domSort() {
+  if (_changedDomain) {
+    std::sort(_domainSorted.begin(), _domainSorted.end(),
+              Variable::compareDomain);
+  }
+  _changedDomain = false;
+  return _domainSorted;
+}
+
+const std::vector<Variable*>& VariableMap::potDefSort() {
+  if (_changedPotDef) {
+    std::sort(_domainSorted.begin(), _domainSorted.end(),
+              Variable::comparePotentialDefiners);
+  }
+  _changedPotDef = false;
+  return _potDefSorted;
+}
+
 /****************************CONSTRAINTMAP**********************/
 void ConstraintMap::add(std::shared_ptr<Constraint> constraint) {
   assert(!exists(constraint.get()));

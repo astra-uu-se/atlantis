@@ -1,5 +1,4 @@
-#ifndef __MAPS_HPP_INCLUDED__
-#define __MAPS_HPP_INCLUDED__
+#pragma once
 
 #include <algorithm>
 #include <cstdint>
@@ -16,7 +15,6 @@ class Constraint;
 class VariableMap {
  public:
   VariableMap() = default;
-  ~VariableMap() = default;
   Variable* add(std::shared_ptr<Variable> variable);
   ArrayVariable* add(std::shared_ptr<ArrayVariable> variable);
   Variable* find(std::string name) const;
@@ -25,17 +23,27 @@ class VariableMap {
   std::vector<Variable*> variables();
   std::vector<ArrayVariable*> arrays();
 
+  const std::vector<Variable*>& domSort();
+  const std::vector<Variable*>& potDefSort();
+
+  void reportDomainChange();
+  void reportPotDefChange();
+
  private:
+  std::vector<Variable*> _domainSorted;
+  std::vector<Variable*> _potDefSorted;
   std::vector<Variable*> _variableVector;
   std::vector<ArrayVariable*> _arrayVector;
   std::map<std::string, std::shared_ptr<Variable>> _variables;
   std::map<std::string, std::shared_ptr<ArrayVariable>> _arrayVariables;
+
+  bool _changedDomain = true;
+  bool _changedPotDef = true;
 };
 
 class ConstraintMap {
  public:
   ConstraintMap() = default;
-  ~ConstraintMap() = default;
   void add(std::shared_ptr<Constraint> constraint);
   bool exists(Constraint* constraint);
   void remove(Constraint* constraint);
@@ -46,5 +54,3 @@ class ConstraintMap {
   std::vector<Constraint*> _constraintArray;
   std::map<Constraint*, std::shared_ptr<Constraint>> _constraints;
 };
-
-#endif
