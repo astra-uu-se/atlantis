@@ -1,6 +1,4 @@
-#ifndef __CONSTRAINT_HPP_INCLUDED__
-#define __CONSTRAINT_HPP_INCLUDED__
-
+#pragma once
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -36,7 +34,6 @@ class ConstraintBox {
 
 class Constraint : public Node {
  public:
-  virtual ~Constraint() = default;
   Constraint();
   Constraint(ConstraintBox constraintBox);
   virtual void init(const VariableMap& variables);
@@ -138,7 +135,6 @@ class SimpleConstraint : public Constraint {
 #include "constraints/integer_simple_2.hpp"
 #include "constraints/integer_simple_3.hpp"
 #include "constraints/inverse.hpp"
-// #include "constraints/set.hpp"
+#include "constraints/reified.hpp"
+#include "constraints/set.hpp"
 #include "variable.hpp"
-
-#endif

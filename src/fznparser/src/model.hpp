@@ -1,5 +1,5 @@
-#ifndef __MODEL_HPP_INCLUDED__
-#define __MODEL_HPP_INCLUDED__
+#pragma once
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -9,7 +9,7 @@
 
 class Model {
  public:
-  Model();
+  Model() = default;
   void init();
   void addVariable(std::shared_ptr<Variable> v);
   void addVariable(std::shared_ptr<ArrayVariable> v);
@@ -17,14 +17,14 @@ class Model {
   void addObjective(std::string objective);
   const std::vector<Constraint*>& constraints();
   VariableMap& varMap();
-  std::vector<Variable*> domSortVariables();
-  std::vector<Variable*> potDefSortVariables();
+  const std::vector<Variable*>& domSortVariables();
+  const std::vector<Variable*>& potDefSortVariables();
   std::optional<Variable*> objective() { return _objective; }
+  void reportDomainChange() { _variables.reportDomainChange(); }
+  void reportPotDefChange() { _variables.reportPotDefChange(); }
 
  private:
   VariableMap _variables;
   ConstraintMap _constraints;
   std::optional<Variable*> _objective;
 };
-
-#endif

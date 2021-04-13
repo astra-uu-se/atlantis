@@ -1,4 +1,5 @@
 #pragma once
+
 #include "../constraint.hpp"
 /* global_cardinality(       array [int] of var int: x,
 **                           array [int] of int: cover,

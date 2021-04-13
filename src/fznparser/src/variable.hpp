@@ -1,5 +1,4 @@
-#ifndef __VARIABLE_HPP_INCLUDED__
-#define __VARIABLE_HPP_INCLUDED__
+#pragma once
 
 class VariableMap;
 #include "structure.hpp"
@@ -105,4 +104,3 @@ class ArrayVariable {
 
 #include "constraint.hpp"
 #include "maps.hpp"
-#endif

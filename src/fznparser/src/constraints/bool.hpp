@@ -1,4 +1,5 @@
 #pragma once
+
 #include "../constraint.hpp"
 class BoolArrayConstraint : public Constraint {
  public:

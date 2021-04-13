@@ -1,12 +1,9 @@
 #pragma once
+
 #include "../constraint.hpp"
 
 /*
 ** element(index, values, out);
-** At this point, the allowance of dynamic cycles simply overrides "getNext"
-** such that traversal breaks here. This is not desired if traversal
-** originates from the index variable. I also might want to have separate
-** classes for _var_ versions.
 */
 class Element : public Constraint {
  public:
