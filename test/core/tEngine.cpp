@@ -10,6 +10,7 @@
 #include "gtest/gtest.h"
 #include "invariants/elementVar.hpp"
 #include "invariants/linear.hpp"
+#include "invariants/minSparse.hpp"
 #include "views/intOffsetView.hpp"
 
 using ::testing::AtLeast;
@@ -101,6 +102,75 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   engine->close();
   EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
   EXPECT_EQ(engine->getStore().getNumInvariants(), size_t(1));
+}
+
+TEST_F(EngineTest, ThisTestShouldNotBeHere) {
+  // Move this test into a tMinSparse file.
+  // I just had to do some quick test and was too lazy to do this propperly.
+  engine->open();
+
+  size_t intVarCount = 10;
+  std::vector<VarId> X;
+  for (size_t value = 0; value < intVarCount; ++value) {
+    X.push_back(engine->makeIntVar(value, Int(-100), Int(100)));
+  }
+
+  VarId min = engine->makeIntVar(100, Int(-100), Int(100));
+  // TODO: use some other invariants...
+  auto invariant = engine->makeInvariant<MinSparse>(X, min);
+
+  engine->close();
+  EXPECT_EQ(engine->getCommittedValue(min), 0);
+  engine->beginMove();
+  engine->setValue(X[0], 5);
+  engine->setValue(X[1], 5);
+  engine->endMove();
+
+  engine->beginQuery();
+  engine->query(min);
+  engine->endQuery();
+
+  EXPECT_EQ(engine->getNewValue(min), 2);
+
+  engine->beginMove();
+  engine->setValue(X[3], -1);
+  engine->setValue(X[1], 5);
+  engine->endMove();
+
+  engine->beginQuery();
+  engine->query(min);
+  engine->endQuery();
+
+  EXPECT_EQ(engine->getNewValue(min), -1);
+
+  engine->beginMove();
+  engine->setValue(X[0], 1);
+  engine->endMove();
+
+  engine->beginQuery();
+  engine->query(min);
+  engine->endQuery();
+
+  EXPECT_EQ(engine->getNewValue(min), 1);
+
+  engine->beginMove();
+  engine->setValue(X[0], 1);
+  engine->endMove();
+
+  engine->beginCommit();
+  engine->query(min);
+  engine->endCommit();
+  EXPECT_EQ(engine->getNewValue(min), 1);
+
+  engine->beginMove();
+  engine->setValue(X[0], 0);
+  engine->endMove();
+
+  engine->beginCommit();
+  engine->query(min);
+  engine->endCommit();
+
+  EXPECT_EQ(engine->getNewValue(min), 0);
 }
 
 TEST_F(EngineTest, RecomputeAndCommit) {
