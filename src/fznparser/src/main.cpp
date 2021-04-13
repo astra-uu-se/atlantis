@@ -11,6 +11,9 @@ using namespace antlr4;
 int main(int argc, char* argv[]) {
   int start = 1;
   std::string args;
+  if (argc > 1 && argv[start][1] == '-') {
+    start++;
+  }
   if (argc > 1 && argv[start][0] == '-') {
     args = argv[start];
     start++;

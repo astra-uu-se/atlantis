@@ -1,5 +1,4 @@
-#ifndef __STRUCTURE_HPP_INCLUDED__
-#define __STRUCTURE_HPP_INCLUDED__
+#pragma once
 
 #include <cassert>
 #include <iostream>
@@ -91,5 +90,3 @@ class Node {
   virtual std::vector<Node*> getNext() = 0;
   virtual std::string getName() = 0;
 };
-
-#endif
