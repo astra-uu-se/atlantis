@@ -7,7 +7,6 @@
 
 #include "maps.hpp"
 
-Model::Model() {}
 void Model::init() {
   for (auto av : varMap().arrays()) {
     av->init(_variables);
@@ -23,18 +22,12 @@ VariableMap& Model::varMap() { return _variables; }
 
 // Smaller first
 //
-std::vector<Variable*> Model::potDefSortVariables() {
-  std::vector<Variable*> sorted =
-      varMap().variables();  // Inefficient to sort every time
-  std::sort(sorted.begin(), sorted.end(), Variable::comparePotentialDefiners);
-  return sorted;
+const std::vector<Variable*>& Model::potDefSortVariables() {
+  return _variables.potDefSort();
 }
 // Bigger first
-std::vector<Variable*> Model::domSortVariables() {
-  std::vector<Variable*> sorted =
-      varMap().variables();  // Inefficient to sort every time
-  std::sort(sorted.begin(), sorted.end(), Variable::compareDomain);
-  return sorted;
+const std::vector<Variable*>& Model::domSortVariables() {
+  return _variables.domSort();
 }
 
 void Model::addVariable(std::shared_ptr<Variable> variable) {
@@ -67,6 +60,8 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<IntPow>(constraintBox));
   } else if (constraintBox._name == "int_times") {
     _constraints.add(std::make_shared<IntTimes>(constraintBox));
+  } else if (constraintBox._name == "int_eq") {
+    _constraints.add(std::make_shared<IntEq>(constraintBox));
   } else if (constraintBox._name == "array_var_int_element") {
     _constraints.add(std::make_shared<VarElement>(constraintBox));
   } else if (constraintBox._name == "array_int_element") {
@@ -97,8 +92,8 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<BoolOr>(constraintBox));
   } else if (constraintBox._name == "bool_xor") {
     _constraints.add(std::make_shared<BoolXor>(constraintBox));
-    // } else if (constraintBox._name == "set_in_reif") {
-    //   _constraints.add(std::make_shared<SetInReif>(constraintBox));
+  } else if (constraintBox._name == "set_in_reif") {
+    _constraints.add(std::make_shared<SetInReif>(constraintBox));
   } else if (constraintBox._name == "fzn_global_cardinality") {
     _constraints.add(std::make_shared<GlobalCardinality>(constraintBox));
   } else if (constraintBox._name == "fzn_circuit") {
@@ -107,6 +102,26 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<AllDifferent>(constraintBox));
   } else if (constraintBox._name == "fzn_inverse") {
     _constraints.add(std::make_shared<Inverse>(constraintBox));
+  } else if (constraintBox._name == "int_eq_reif") {
+    _constraints.add(std::make_shared<IntEqReif>(constraintBox));
+  } else if (constraintBox._name == "int_le_reif") {
+    _constraints.add(std::make_shared<IntLeReif>(constraintBox));
+  } else if (constraintBox._name == "int_lin_eq_reif") {
+    _constraints.add(std::make_shared<IntLinEqReif>(constraintBox));
+  } else if (constraintBox._name == "int_lin_le_reif") {
+    _constraints.add(std::make_shared<IntLinLeReif>(constraintBox));
+  } else if (constraintBox._name == "int_lin_ne_reif") {
+    _constraints.add(std::make_shared<IntLinNeReif>(constraintBox));
+  } else if (constraintBox._name == "int_lt_reif") {
+    _constraints.add(std::make_shared<IntLtReif>(constraintBox));
+  } else if (constraintBox._name == "int_ne_reif") {
+    _constraints.add(std::make_shared<IntNeReif>(constraintBox));
+  } else if (constraintBox._name == "bool_eq_reif") {
+    _constraints.add(std::make_shared<BoolEqReif>(constraintBox));
+  } else if (constraintBox._name == "bool_le_reif") {
+    _constraints.add(std::make_shared<BoolLeReif>(constraintBox));
+  } else if (constraintBox._name == "bool_lt_reif") {
+    _constraints.add(std::make_shared<BoolLtReif>(constraintBox));
   } else if (constraintBox._name == "int_le") {
     _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   } else if (constraintBox._name == "int_lin_le") {
