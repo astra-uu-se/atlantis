@@ -1,6 +1,7 @@
 #include "integer_simple_3.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 void ThreeSVarConstraint::loadVariables(const VariableMap& variableMap) {
   _variables.push_back(getSingleVariable(variableMap, 0));
@@ -43,7 +44,18 @@ std::pair<Int, Int> IntMod::calculateDomain(Variable* _) {
   Int ub = std::min(_variables[0]->upperBound(), _variables[1]->upperBound());
   return std::make_pair(lb, ub);
 }
-std::pair<Int, Int> IntPow::calculateDomain(Variable* _) {}
+std::pair<Int, Int> IntPow::calculateDomain(Variable* _) {
+  Int lb = static_cast<Int>(
+      std::pow(_variables[0]->lowerBound(), _variables[1]->lowerBound()));
+  Int ub = static_cast<Int>(
+      std::pow(_variables[0]->upperBound(), _variables[1]->upperBound()));
+  ub = std::max(ub, static_cast<Int>(std::pow(_variables[0]->lowerBound(),
+                                              _variables[1]->upperBound())));
+  ub =
+      std::max(ub, static_cast<Int>(std::pow(_variables[0]->lowerBound(),
+                                             _variables[1]->upperBound() - 1)));
+  return std::make_pair(lb, ub);
+}
 std::pair<Int, Int> IntTimes::calculateDomain(Variable* _) {
   std::vector<Int> exs;
   exs.push_back(_variables[0]->lowerBound() * _variables[1]->lowerBound());
