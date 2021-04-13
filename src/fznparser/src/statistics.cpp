@@ -196,9 +196,51 @@ double Statistics::score() {
   }
   return (i > 0 ? tot / i : -1);
 }
+std::string Statistics::info() {
+  std::stringstream s;
+  s << line();
+  s << "Information" << std::endl;
+  s << line();
+  s << "VarSco:\t\t";
+  s << "Variable Score is the percentage of variables that are defined by an"
+       "invariant or an implicit constraints."
+    << std::endl;
+  s << "InvSco:\t\t";
+  s << "Invariant Score is the percentage of constraints that are either "
+       "invariants or implicit constraints."
+    << std::endl;
+  s << "AnnSco:\t\t";
+  s << "Annotation Score is the percentage of constraints with a defines_var "
+       "annotation"
+       "that define the targeted variable."
+    << std::endl;
+  s << "Height:\t\t";
+  s << "Height is the length of the longest path in the graph."
+       "(Not available when dynamic cycles are allowed.)"
+    << std::endl;
+  s << "In #:\t\t";
+  s << "The amount of (definable) variables that are not defined." << std::endl;
+  s << "Out #:\t\t";
+  s << "The amount of (definable) variables that are defined and that are not "
+       "input to another constraint."
+    << std::endl;
+  s << "Influence:\t";
+  s << "Influence (average and max) is the percentage of variables that are "
+       "children to an input variable."
+    << std::endl;
+  s << "Dependency:\t";
+  s << "Dependency (average and max) is the percentage of variables that are "
+       "ancestors to an output variable."
+    << std::endl;
+  s << "NbSum:\t\t";
+  s << "The sum of the domains of the input variables." << std::endl;
+
+  s << line();
+  return s.str();
+}
 std::string Statistics::header() {
   std::stringstream s;
-  s << "\t\tVarSco\tInvSco\tAnnSco\tWidth\tIn #\tAvInfl\tMaxInfl\tOut "
+  s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tHeight\tIn #\tAvInfl\tMaxInfl\tOut "
        "#\tAvDep\tMaxDep\tNbSum"
     << std::endl;
   line();
@@ -219,9 +261,9 @@ std::string Statistics::count() {
     << "Annotations: " << annotationCount() << std::endl;
   return s.str();
 }
-std::string Statistics::row(int i) {
+std::string Statistics::row() {
   std::stringstream s;
-  s << "Scheme " << i << ":\t";
+  s << "\t";
   if (variableScore()) {
     s << std::fixed << std::setprecision(2) << variableScore().value() << "\t";
   } else {
@@ -240,7 +282,7 @@ std::string Statistics::row(int i) {
     s << "-\t";
   }
   if (!_ignoreDynamicCycles) {
-    s << width(false);
+    s << 0;  // width(false);
   } else {
     s << "-";
   }
@@ -276,7 +318,7 @@ void Statistics::influenceAux(int& influence, std::set<Variable*>& visited,
 double Statistics::averageInfluence() {
   int totalInfluence = 0;
   for (auto var : _model->varMap().variables()) {
-    if (!var->isDefined()) {
+    if (!var->isDefined() || var->definedBy()->isImplicit()) {
       totalInfluence += influence(var);
     }
   }

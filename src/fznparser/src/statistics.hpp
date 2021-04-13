@@ -1,5 +1,5 @@
-#ifndef __STATISTICS_HPP_INCLUDED__
-#define __STATISTICS_HPP_INCLUDED__
+#pragma once
+
 #include "model.hpp"
 
 class Statistics {
@@ -10,9 +10,10 @@ class Statistics {
     _ignoreDynamicCycles = ignoreDynamicCycles;
   };
   std::string header();
-  std::string row(int i);
+  std::string row();
   std::string line();
   std::string count();
+  std::string info();
   void countDefinedVariables(bool labels);
   void variablesDefinedBy();
   void allStats(bool labels);
@@ -48,5 +49,3 @@ class Statistics {
   Model* _model;
   bool _ignoreDynamicCycles;
 };
-
-#endif
