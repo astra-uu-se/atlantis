@@ -52,7 +52,23 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest
-    
+
+    - name: Create Build Environment (fznparser)
+      # Some projects don't allow in-source building, so create a separate build directory
+      # We'll use this as our working directory for all subsequent commands
+      run: cmake -E make_directory ${{github.workspace}}/src/fznparser/build
+
+    - name: Build (fznparser)
+      working-directory: ${{github.workspace}}/src/fznparser/build
+      shell: bash
+      # Execute the build.  You can specify a specific target with "--target <NAME>"
+      run: cmake $CMAKE_OPTIONS $CMAKE_FLAGS -DCMAKE_CXX_FLAGS=$CXX_FLAGS  ..; make
+
+    - name: Run (fznparser)
+      working-directory: ${{github.workspace}}/src/fznparser/build
+      shell: bash
+      run: ./fznparser ../fzn_examples/tsptw-eq-small.fzn
+
     - name: Slack
       uses: act10ns/slack@v1
       env:
@@ -83,19 +99,3 @@ jobs:
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: chmod +x ./slack-benchmark.sh; ./slack-benchmark.sh;
-
-    - name: Create Build Environment (fznparser)
-      # Some projects don't allow in-source building, so create a separate build directory
-      # We'll use this as our working directory for all subsequent commands
-      run: cmake -E make_directory ${{github.workspace}}/src/fznparser/build
-
-    - name: Build (fznparser)
-      working-directory: ${{github.workspace}}/src/fznparser/build
-      shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake $CMAKE_OPTIONS $CMAKE_FLAGS -DCMAKE_CXX_FLAGS=$CXX_FLAGS  ..; make
-
-    - name: Run (fznparser)
-      working-directory: ${{github.workspace}}/src/fznparser/build
-      shell: bash
-      run: ./fznparser ../fzn_examples/tsptw-eq-small.fzn
