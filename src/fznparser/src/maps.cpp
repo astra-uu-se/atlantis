@@ -37,6 +37,8 @@ void VariableMap::reportDomainChange() { _changedDomain = true; }
 void VariableMap::reportPotDefChange() { _changedPotDef = true; }
 
 const std::vector<Variable*>& VariableMap::domSort() {
+  if (_domainSorted.size() != _variableVector.size())
+    _domainSorted = variables();
   if (_changedDomain) {
     std::sort(_domainSorted.begin(), _domainSorted.end(),
               Variable::compareDomain);
@@ -46,6 +48,8 @@ const std::vector<Variable*>& VariableMap::domSort() {
 }
 
 const std::vector<Variable*>& VariableMap::potDefSort() {
+  if (_potDefSorted.size() != _variableVector.size())
+    _potDefSorted = variables();
   if (_changedPotDef) {
     std::sort(_domainSorted.begin(), _domainSorted.end(),
               Variable::comparePotentialDefiners);

@@ -11,11 +11,17 @@ InvariantStructure::InvariantStructure(Model m, std::string args) : _model(m) {
   _ignoreDynamicCycles = argset.count('c') > 0;
   _info = argset.count('i') > 0;
   _small = argset.count('s') > 0;
+  _noStats = argset.count('n') > 0;
   _stats = Statistics(&_model, _ignoreDynamicCycles);
   _schemes = Schemes(&_model, _ignoreDynamicCycles);
 }
 
 void InvariantStructure::run() {
+  if (_noStats) {
+    _schemes.scheme1();
+    _stats.allStats(false);
+    return;
+  }
   if (_small) {
     runSmall();
     return;

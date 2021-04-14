@@ -20,4 +20,5 @@ class InvariantStructure {
   bool _ignoreDynamicCycles;
   bool _info;
   bool _small;
+  bool _noStats;
 };
