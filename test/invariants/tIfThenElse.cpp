@@ -11,6 +11,7 @@
 #include "invariants/ifThenElse.hpp"
 
 using ::testing::AtLeast;
+using ::testing::AtMost;
 using ::testing::Return;
 
 namespace {
@@ -100,7 +101,7 @@ class IfThenElseTest : public ::testing::Test {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
-          .Times(0);
+          .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
@@ -112,7 +113,7 @@ class IfThenElseTest : public ::testing::Test {
 
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
-          .Times(0);
+          .Times(AtMost(1));
     } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }

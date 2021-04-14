@@ -11,8 +11,10 @@
 #include "invariants/absDiff.hpp"
 
 using ::testing::AtLeast;
+using ::testing::AtMost;
 using ::testing::Exactly;
 using ::testing::Return;
+using ::testing::AnyNumber;
 
 namespace {
 
@@ -97,7 +99,7 @@ class AbsDiffTest : public ::testing::Test {
           .Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
-          .Times(0);
+          .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
@@ -110,7 +112,7 @@ class AbsDiffTest : public ::testing::Test {
 
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
-          .Times(0);
+          .Times(AtMost(1));
     } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
@@ -160,6 +162,9 @@ TEST_F(AbsDiffTest, Modification) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, testing::_))
         .Times(AtLeast(1));
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(AnyNumber());
   } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
         .Times(AtLeast(2));
