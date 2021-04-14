@@ -36,7 +36,11 @@ void Linear::recompute(Timestamp t, Engine& e) {
 
 void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
   auto newValue = e.getValue(t, m_X[i]);
-  incValue(t, e, m_b, (newValue - m_localX.at(i).getValue(t)) * m_A[i]);
+  Int delta = newValue - m_localX.at(i).getValue(t);
+  if (delta == 0) {
+    return;
+  }
+  incValue(t, e, m_b, delta * m_A.at(i));
   m_localX.at(i).setValue(t, newValue);
 }
 
@@ -52,12 +56,7 @@ VarId Linear::getNextDependency(Timestamp t, Engine&) {
 void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   Int idx = m_state.getValue(t);
-  Int delta = e.getValue(t, m_X.at(idx)) - m_localX.at(idx).getValue(t);
-  if (delta == 0) {
-    return;
-  }
-  incValue(t, e, m_b, delta * m_A.at(idx));
-  m_localX.at(idx).setValue(t, e.getValue(t, m_X.at(idx)));
+  notifyIntChanged(t, e, idx);
 }
 
 void Linear::commit(Timestamp t, Engine& e) {

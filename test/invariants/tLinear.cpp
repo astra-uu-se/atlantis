@@ -8,8 +8,8 @@
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "rapidcheck/gtest.h"
 #include "invariants/linear.hpp"
+#include "rapidcheck/gtest.h"
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -27,41 +27,42 @@ class MockLinear : public Linear {
 
   MockLinear(std::vector<VarId>&& X, VarId b)
       : Linear(std::vector<VarId>{X}, b) {
-          ON_CALL(*this, recompute)
-              .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-                return Linear::recompute(timestamp, engine);
-              });
-          ON_CALL(*this, getNextDependency)
-              .WillByDefault([this](Timestamp t, Engine& e) {
-                return Linear::getNextDependency(t, e);
-              });
+    ON_CALL(*this, recompute)
+        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
+          return Linear::recompute(timestamp, engine);
+        });
+    ON_CALL(*this, getNextDependency)
+        .WillByDefault([this](Timestamp t, Engine& e) {
+          return Linear::getNextDependency(t, e);
+        });
 
-          ON_CALL(*this, notifyCurrentDependencyChanged)
-              .WillByDefault([this](Timestamp t, Engine& e) {
-                Linear::notifyCurrentDependencyChanged(t, e);
-              });
+    ON_CALL(*this, notifyCurrentDependencyChanged)
+        .WillByDefault([this](Timestamp t, Engine& e) {
+          Linear::notifyCurrentDependencyChanged(t, e);
+        });
 
-          ON_CALL(*this, notifyIntChanged)
-              .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
-                Linear::notifyIntChanged(t, e, id);
-              });
+    ON_CALL(*this, notifyIntChanged)
+        .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
+          Linear::notifyIntChanged(t, e, id);
+        });
 
-          ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
-            Linear::commit(t, e);
-          });
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
+      Linear::commit(t, e);
+    });
   }
 
-MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
+              (override));
 
-MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
-            (override));
+  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+              (override));
 
-MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
-            (override));
-MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+              (override));
+  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
-private:
+ private:
 };
 
 class LinearTest : public ::testing::Test {
@@ -88,11 +89,12 @@ class LinearTest : public ::testing::Test {
     d = engine->makeIntVar(4, -100, 100);
 
     // d = 1*1+2*10+3*(-20) = 1+20-60 =-39
-    linear = engine->makeInvariant<Linear>(std::vector<Int>({aCoef, bCoef, cCoef}),
+    linear =
+        engine->makeInvariant<Linear>(std::vector<Int>({aCoef, bCoef, cCoef}),
                                       std::vector<VarId>({a, b, c}), d);
     engine->close();
   }
- 
+
   void testNotifications(PropagationEngine::PropagationMode propMode) {
     engine->open();
 
@@ -104,24 +106,25 @@ class LinearTest : public ::testing::Test {
       sum += value;
     }
 
-    VarId output = engine->makeIntVar(-10, -100, numArgs*numArgs);
+    VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
 
-    auto invariant = engine->makeInvariant<MockLinear>(
-        std::vector<VarId>{args}, output);
+    auto invariant =
+        engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
 
-    
     EXPECT_TRUE(invariant->m_initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
+        .Times(AtLeast(1));
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->mode = propMode;
-    
+
     engine->close();
-    
+
     if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+          .Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(0);
@@ -129,15 +132,11 @@ class LinearTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
-      EXPECT_CALL(*invariant,
-                  getNextDependency(testing::_, testing::_)).Times(numArgs + 1);
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+          .Times(numArgs + 1);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(1);
-
-      EXPECT_CALL(*invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
-          .Times(0);
     } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
@@ -152,8 +151,7 @@ class LinearTest : public ::testing::Test {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(LinearTest,
-                      shouldAlwaysBeSum,
+RC_GTEST_FIXTURE_PROP(LinearTest, shouldAlwaysBeSum,
                       (Int aVal, Int bVal, Int cVal)) {
   engine->beginMove();
   engine->setValue(a, aVal);
@@ -165,10 +163,8 @@ RC_GTEST_FIXTURE_PROP(LinearTest,
   engine->query(d);
   engine->endCommit();
 
-  RC_ASSERT(
-      engine->getCommittedValue(d) == 
-      aCoef * aVal + bCoef * bVal + cCoef * cVal
-  );
+  RC_ASSERT(engine->getCommittedValue(d) ==
+            aCoef * aVal + bCoef * bVal + cCoef * cVal);
 }
 
 /**
@@ -233,7 +229,8 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
     ASSERT_EQ(engine->getCommittedValue(a), 1);
     ASSERT_EQ(engine->getCommittedValue(b), 2);
     ASSERT_EQ(engine->getCommittedValue(c), 3);
-    ASSERT_EQ(engine->getCommittedValue(d), -39);  // d is committed by register.
+    ASSERT_EQ(engine->getCommittedValue(d),
+              -39);  // d is committed by register.
 
     // Set all variables
     engine->setValue(currentTime, a, distribution(gen));
@@ -265,8 +262,9 @@ TEST_F(LinearTest, Commit) {
   Timestamp currentTime = 1;
 
   engine->setValue(currentTime, a, 40);
-  engine->setValue(currentTime, b, 2);  // This change is not notified and should
-                                   // not have an impact on the commit
+  engine->setValue(currentTime, b,
+                   2);  // This change is not notified and should
+                        // not have an impact on the commit
 
   linear->notifyIntChanged(currentTime, *engine, 0);
 }
@@ -282,13 +280,13 @@ TEST_F(LinearTest, CreateLinear) {
     sum += value;
   }
 
-  VarId output = engine->makeIntVar(-10, -100, numArgs*numArgs);
+  VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
 
-  auto invariant = engine->makeInvariant<MockLinear>(
-      std::vector<VarId>{args}, output);
+  auto invariant =
+      engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
 
   EXPECT_TRUE(invariant->m_initialized);
-  
+
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
