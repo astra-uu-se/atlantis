@@ -39,7 +39,6 @@ class Saved {
 
   [[gnu::always_inline]] inline void commitValue(T value) noexcept {
     m_savedValue = value;
-    // clear what the correct value is at tmp_time.
   }
 
   [[gnu::always_inline]] inline void commitIf(Timestamp currentTime) noexcept {

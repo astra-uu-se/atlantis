@@ -33,7 +33,7 @@ class MinSparse : public Invariant {
           : prev(NULL_TIMESTAMP, nullptr),
             next(NULL_TIMESTAMP, nullptr),
             priority(NULL_TIMESTAMP, 0) {}
-      void commitIf(Timestamp t) {
+      inline void commitIf(Timestamp t) {
         prev.commitIf(t);
         next.commitIf(t);
         priority.commitIf(t);
@@ -68,9 +68,11 @@ class MinSparse : public Invariant {
         return;  // No change.
       }
 
+      Int oldValue = m_list[idx].priority.get(t);
+      m_list[idx].priority.set(t, newValue);
+
       DoublyLinkedNode* currentHead = head.get(t);
       if (newValue <= currentHead->priority.get(t)) {
-        m_list[idx].priority.set(t, newValue);
         if (currentHead == &m_list[idx]) {
           return;
         }
@@ -84,20 +86,19 @@ class MinSparse : public Invariant {
 
       DoublyLinkedNode* currentTail = tail.get(t);
       if (newValue >= currentTail->priority.get(t)) {
-        m_list[idx].priority.set(t, newValue);
         if (currentTail == &m_list[idx]) {
           return;
         }
+        // make idx the new current tail.
         currentTail->next.set(t, &m_list[idx]);
         unlink(t, idx);
         m_list[idx].prev.set(t, currentTail);
         tail.set(t, &m_list[idx]);
         return;
       }
-      Int oldPrio = m_list[idx].priority.get(t);
-      m_list[idx].priority.set(t, newValue);
 
-      if (oldPrio < newValue) {
+      // Check if position is unchanged.
+      if (oldValue < newValue) {
         if (newValue <= m_list[idx].next.get(t)->priority.get(t)) {
           return;
         }
@@ -107,14 +108,15 @@ class MinSparse : public Invariant {
         }
       }
 
-      if(&m_list[idx] == head.get(t)) {
+      // idx was head/tail and will move, so update the head/tail.
+      if (&m_list[idx] == head.get(t)) {
         head.set(t, head.get(t)->next.get(t));
       }
-      if(&m_list[idx] == tail.get(t)) {
+      if (&m_list[idx] == tail.get(t)) {
         tail.set(t, tail.get(t)->prev.get(t));
       }
 
-      if (oldPrio < newValue) {
+      if (oldValue < newValue) {
         // Value increased: insert to the right
         DoublyLinkedNode* current = m_list[idx].next.get(t);
         unlink(t, idx);
