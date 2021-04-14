@@ -68,11 +68,9 @@ class MinSparse : public Invariant {
         return;  // No change.
       }
 
-      Int oldValue = m_list[idx].priority.get(t);
-      m_list[idx].priority.set(t, newValue);
-
-      DoublyLinkedNode* currentHead = head.get(t);
+            DoublyLinkedNode* currentHead = head.get(t);
       if (newValue <= currentHead->priority.get(t)) {
+        m_list[idx].priority.set(t, newValue);
         if (currentHead == &m_list[idx]) {
           return;
         }
@@ -86,6 +84,7 @@ class MinSparse : public Invariant {
 
       DoublyLinkedNode* currentTail = tail.get(t);
       if (newValue >= currentTail->priority.get(t)) {
+        m_list[idx].priority.set(t, newValue);
         if (currentTail == &m_list[idx]) {
           return;
         }
@@ -96,6 +95,9 @@ class MinSparse : public Invariant {
         tail.set(t, &m_list[idx]);
         return;
       }
+
+      Int oldValue = m_list[idx].priority.get(t);
+      m_list[idx].priority.set(t, newValue);
 
       // Check if position is unchanged.
       if (oldValue < newValue) {
