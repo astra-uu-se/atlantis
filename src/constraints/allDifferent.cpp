@@ -70,18 +70,9 @@ VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
 }
 
 void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  auto index = static_cast<size_t>(m_state.getValue(t));
-  assert(index < m_variables.size());
-
-  VarId varId = m_variables.at(index);
-
-  Int oldValue = m_localValues.at(index).getValue(t);
-  Int newValue = e.getNewValue(varId);
-
-  signed char dec = decreaseCount(t, oldValue);
-  signed char inc = increaseCount(t, newValue);
-  m_localValues.at(index).setValue(t, newValue);
-  incValue(t, e, m_violationId, static_cast<Int>(dec + inc));
+  auto id = static_cast<size_t>(m_state.getValue(t));
+  assert(id < m_variables.size());
+  notifyIntChanged(t, e, id);
 }
 
 void AllDifferent::commit(Timestamp t, Engine& e) {

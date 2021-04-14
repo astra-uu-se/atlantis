@@ -20,8 +20,7 @@ void IfThenElse::recompute(Timestamp t, Engine& e) {
 }
 
 void IfThenElse::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  auto newValue = e.getValue(t, m_b);
-  updateValue(t, e, m_z, e.getValue(t, m_xy[1 - (newValue == 0)]));
+  notifyCurrentDependencyChanged(t, e);
 }
 
 VarId IfThenElse::getNextDependency(Timestamp t, Engine& e) {

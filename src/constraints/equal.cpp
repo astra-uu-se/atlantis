@@ -46,7 +46,6 @@ VarId Equal::getNextDependency(Timestamp t, Engine&) {
 }
 
 void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  assert(m_state.getValue(t) != -1);
   updateValue(t, e, m_violationId,
               std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
 }
