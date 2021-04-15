@@ -30,7 +30,7 @@ void LessEqual::recompute(Timestamp t, Engine& e) {
 }
 
 void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  notifyCurrentDependencyChanged(t, e);
+  recompute(t, e);
 }
 
 VarId LessEqual::getNextDependency(Timestamp t, Engine&) {
@@ -48,10 +48,7 @@ VarId LessEqual::getNextDependency(Timestamp t, Engine&) {
 }
 
 void LessEqual::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  // if x decreases and violation is 0, then do nothing
-  // if y increases and violation is 0, then do nothing
-  updateValue(t, e, m_violationId,
-              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
+  recompute(t, e);
 }
 
 void LessEqual::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
