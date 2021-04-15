@@ -22,7 +22,7 @@ void ElementVar::recompute(Timestamp t, Engine& e) {
 }
 
 void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  notifyCurrentDependencyChanged(t, e);
+  recompute(t, e);
 }
 
 VarId ElementVar::getNextDependency(Timestamp t, Engine& e) {
@@ -37,9 +37,7 @@ VarId ElementVar::getNextDependency(Timestamp t, Engine& e) {
 }
 
 void ElementVar::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  updateValue(
-      t, e, m_b,
-      e.getValue(t, m_X.at(static_cast<unsigned long>(e.getValue(t, m_i)))));
+  recompute(t, e);
 }
 
 void ElementVar::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
