@@ -9,12 +9,12 @@
 #include "../core/tracer.hpp"
 #include "../core/types.hpp"
 
-class Or : public Constraint {
+class Exists : public Constraint {
  private:
   std::vector<VarId> m_X;
 
  public:
-  Or(VarId violationId, std::vector<VarId> X);
+  Exists(VarId violationId, std::vector<VarId> X);
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
