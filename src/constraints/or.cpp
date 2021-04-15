@@ -33,11 +33,7 @@ void Or::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
   if (newValue < e.getValue(t, m_violationId)) {
     updateValue(t, e, m_violationId, newValue);
   } else {
-    Int min = e.getValue(t, m_X.front());
-    for (size_t j = 1; j < m_X.size(); ++j) {
-      min = std::min(min, e.getValue(t, m_X[j]));
-    }
-    updateValue(t, e, m_violationId, min);
+    recompute(t, e);
   }
 }
 
@@ -53,17 +49,7 @@ VarId Or::getNextDependency(Timestamp t, Engine&) {
 void Or::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
   assert(m_state.getValue(t) != -1);
   Int idx = m_state.getValue(t);
-  auto newValue = e.getValue(t, m_X[idx]);
-
-  if (newValue < e.getValue(t, m_violationId)) {
-    incValue(t, e, m_violationId, newValue);
-  } else {
-    Int min = e.getValue(t, m_X.front());
-    for (size_t i = 1; i < m_X.size(); ++i) {
-      min = std::min(min, e.getValue(t, m_X[i]));
-    }
-    updateValue(t, e, m_violationId, min);
-  }
+  notifyIntChanged(t, e, idx);
 }
 
 void Or::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
