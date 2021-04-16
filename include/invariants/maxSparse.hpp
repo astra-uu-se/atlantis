@@ -19,7 +19,7 @@
  *
  */
 
-class MinSparse : public Invariant {
+class MaxSparse : public Invariant {
  private:
   std::vector<VarId> m_X;
   VarId m_b;
@@ -27,7 +27,7 @@ class MinSparse : public Invariant {
   PriorityList m_localPriority;
 
  public:
-  MinSparse(std::vector<VarId> X, VarId b);
+  MaxSparse(std::vector<VarId> X, VarId b);
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
