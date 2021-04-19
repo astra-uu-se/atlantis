@@ -37,6 +37,16 @@ class Saved {
     return m_tmpValue;
   }
 
+  [[gnu::always_inline]] inline void init(Timestamp currentTime, T value) noexcept {
+    init(currentTime, value, value);
+  }
+
+  [[gnu::always_inline]] inline void init(Timestamp currentTime, T savedValue, T tmpValue) noexcept {
+    m_tmpTime = currentTime;
+    m_savedValue = savedValue;
+    m_tmpValue = tmpValue;
+  }
+
   [[gnu::always_inline]] inline void commitValue(T value) noexcept {
     m_savedValue = value;
   }
