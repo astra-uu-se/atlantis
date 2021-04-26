@@ -2,8 +2,9 @@
 
 extern Id NULL_ID;
 
-Max2::Max2(VarId a, VarId b, VarId c) : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {
-    m_modifiedVars.reserve(1);
+Max2::Max2(VarId a, VarId b, VarId c)
+    : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {
+  m_modifiedVars.reserve(1);
 }
 
 void Max2::init([[maybe_unused]] Timestamp t, Engine& e) {
@@ -19,7 +20,7 @@ void Max2::recompute(Timestamp t, Engine& e) {
 }
 
 void Max2::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  updateValue(t, e, m_c, std::max(e.getValue(t, m_a),  e.getValue(t, m_b)));
+  recompute(t, e);
 }
 
 VarId Max2::getNextDependency(Timestamp t, Engine&) {
@@ -34,10 +35,6 @@ VarId Max2::getNextDependency(Timestamp t, Engine&) {
   }
 }
 
-
 void Max2::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  assert(m_state.getValue(t) <= 2);
-  updateValue(t, e, m_c, std::max(e.getValue(t, m_a), e.getValue(t, m_b)));
+  recompute(t, e);
 }
-
-void Max2::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
