@@ -10,11 +10,11 @@
 #include "gtest/gtest.h"
 #include "invariants/absDiff.hpp"
 
+using ::testing::AnyNumber;
 using ::testing::AtLeast;
 using ::testing::AtMost;
 using ::testing::Exactly;
 using ::testing::Return;
-using ::testing::AnyNumber;
 
 namespace {
 
@@ -114,7 +114,7 @@ class AbsDiffTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
-      EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
+      EXPECT_EQ(0, 1);  // TODO: define the test case.
     }
 
     engine->beginMove();
