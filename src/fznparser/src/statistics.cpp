@@ -13,10 +13,17 @@ int Statistics::variableCount() {
   }
   return n;
 }
+int Statistics::noPotDefCount() {
+  int n = 0;
+  for (auto variable : _model->varMap().variables()) {
+    if (variable->isDefinable() && !variable->orgPotDefSize()) n++;
+  }
+  return n;
+}
 int Statistics::definedCount() {
   int n = 0;
   for (auto variable : _model->varMap().variables()) {
-    if (variable->isDefined()) {
+    if (variable->isDefined() && variable->isDefinable()) {
       n++;
     }
   }
@@ -27,6 +34,8 @@ void Statistics::countDefinedVariables(bool labels) {
   std::cout << "=========VARIABLES=========" << std::endl;
   if (labels) {
     variablesDefinedBy();
+    std::cout << "===========================" << std::endl;
+    freeVariables();
   }
   std::cout << "===========================" << std::endl;
   std::cout << "Defined:\t";
@@ -42,9 +51,22 @@ void Statistics::variablesDefinedBy() {
       std::cout << "\tDS: " << variable->domainSize();
       if (variable->hasImposedDomain()) {
         std::cout << "\t(imposed)";
+        if (variable->hasEnlargedDomain()) {
+          std::cout << "(>)";
+        }
       }
       std::cout << "\t[" << variable->definedBy()->getName() << "]"
                 << std::endl;
+    }
+  }
+}
+void Statistics::freeVariables() {
+  for (auto variable : _model->varMap().variables()) {
+    if (!variable->isDefined() && variable->isDefinable()) {
+      std::cout << "Var: " << variable->getName();
+      std::cout << "\tDS: " << variable->domainSize();
+      std::cout << "\tPot. Def:" << variable->orgPotDefSize();
+      std::cout << std::endl;
     }
   }
 }
@@ -169,6 +191,7 @@ std::optional<double> Statistics::matchingAnnotationsScore() {
 }
 std::optional<double> Statistics::variableScore() {
   int vc = variableCount();
+  vc -= noPotDefCount();
   if (vc > 0) {
     return 100 * definedCount() / (double)vc;
   }
@@ -240,8 +263,8 @@ std::string Statistics::info() {
 }
 std::string Statistics::header() {
   std::stringstream s;
-  s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tHeight\tIn #\tAvInfl\tMaxInfl\tOut "
-       "#\tAvDep\tMaxDep\tNbSum"
+  s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tHeight\tIn #\tOut "
+       "#\tNbSum\tEnlDoms"
     << std::endl;
   line();
   return s.str();
@@ -287,12 +310,13 @@ std::string Statistics::row() {
     s << "-";
   }
   s << "\t" << std::fixed << std::setprecision(2) << inputVars().size();
-  s << "\t" << std::fixed << std::setprecision(2) << averageInfluence();
-  s << "\t" << std::fixed << std::setprecision(2) << maxInfluence();
+  // s << "\t" << std::fixed << std::setprecision(2) << averageInfluence();
+  // s << "\t" << std::fixed << std::setprecision(2) << maxInfluence();
   s << "\t" << std::fixed << std::setprecision(2) << outputVars().size();
-  s << "\t" << std::fixed << std::setprecision(2) << averageDependency();
-  s << "\t" << std::fixed << std::setprecision(2) << maxDependency();
+  // s << "\t" << std::fixed << std::setprecision(2) << averageDependency();
+  // s << "\t" << std::fixed << std::setprecision(2) << maxDependency();
   s << "\t" << std::fixed << std::setprecision(2) << neighbourhoodSize();
+  s << "\t" << enlargedDomains();
 
   s << std::endl;
   return s.str();
@@ -399,4 +423,12 @@ int Statistics::neighbourhoodSize() {
     nbhd += var->domainSize();
   }
   return nbhd;
+}
+
+int Statistics::enlargedDomains() {
+  int count = 0;
+  for (auto var : _model->varMap().variables()) {
+    if (var->hasEnlargedDomain()) count++;
+  }
+  return count;
 }

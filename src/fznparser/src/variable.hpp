@@ -25,6 +25,7 @@ class Variable : public Node {
   void imposeDomain(Domain* domain);
   void unImposeDomain();
   bool hasImposedDomain() { return _imposedDomain.has_value(); }
+  bool hasEnlargedDomain();
 
   Constraint* definedBy() { return _definedBy.value(); }
   bool isDefined() { return _definedBy.has_value(); }
@@ -40,6 +41,7 @@ class Variable : public Node {
   virtual Int upperBound();
   void reset();
   void clearPotentialDefiners() { _potentialDefiners.clear(); }
+  Int orgPotDefSize() { return _orgPotentialDefiners.size(); }
 
  private:
   std::optional<Domain*> _imposedDomain;
@@ -47,6 +49,7 @@ class Variable : public Node {
   std::optional<Constraint*> _definedBy;
   std::set<Constraint*> _nextConstraints;
   std::set<Constraint*> _potentialDefiners;
+  std::set<Constraint*> _orgPotentialDefiners;
   const std::string _name;
   std::vector<Annotation> _annotations;
 };

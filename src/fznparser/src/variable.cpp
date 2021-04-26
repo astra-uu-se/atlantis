@@ -31,6 +31,7 @@ void Variable::removeDefinition() { _definedBy.reset(); }
 void Variable::addPotentialDefiner(Constraint* constraint) {
   assert(isDefinable());
   _potentialDefiners.insert(constraint);
+  _orgPotentialDefiners.insert(constraint);
 }
 void Variable::removePotentialDefiner(Constraint* constraint) {
   assert(isDefinable());
@@ -67,6 +68,9 @@ Int Variable::lowerBound() {
 Int Variable::upperBound() {
   return hasImposedDomain() ? _imposedDomain.value()->upperBound()
                             : _domain->upperBound();
+}
+bool Variable::hasEnlargedDomain() {
+  return hasImposedDomain() && _imposedDomain.value()->size() > _domain->size();
 }
 std::vector<Node*> Variable::getNext() {
   std::vector<Node*> next;

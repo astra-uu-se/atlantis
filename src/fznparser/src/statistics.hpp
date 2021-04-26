@@ -16,12 +16,15 @@ class Statistics {
   std::string info();
   void countDefinedVariables(bool labels);
   void variablesDefinedBy();
+  void freeVariables();
   void allStats(bool labels);
   void constraints(bool labels);
   int countSoft();
   int variableCount();
+  int noPotDefCount();
   int definedCount();
   int annotationCount();
+  int enlargedDomains();
   int width(bool labels);
   void width_aux(std::vector<Node*>& result, std::vector<Node*> visited,
                  Node* node, int x, int& w);

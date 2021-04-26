@@ -1,13 +1,12 @@
-var 1..3: i;
-var 0..5: y;
-var 0..5: a;
-var 0..5: b;
-var 0..5: c;
-var int: o;
-var 0..5: p;
-array [1..3] of var int: x = [a,b,c];
+var int: a;
+var int: b;
+var int: c;
+var int: d;
+var int: e;
+var int: f;
+var int: obj;
 
-constraint array_var_int_element(i,x,o);
-constraint int_times(o,y,b);
-constraint int_times(o,b,p);
-solve  satisfy;
+constraint int_plus(a,b,c);
+constraint int_times(d,e,f);
+constraint int_max(c,f,obj);
+solve minimize obj;
