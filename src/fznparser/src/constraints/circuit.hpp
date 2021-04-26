@@ -15,3 +15,8 @@ class Circuit : public Constraint {
  private:
   ArrayVariable* _x;
 };
+
+class SubCircuit : public Circuit {
+ public:
+  SubCircuit(ConstraintBox constraintBox) : Circuit(constraintBox) {}
+};

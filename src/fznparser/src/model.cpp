@@ -98,6 +98,8 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<GlobalCardinality>(constraintBox));
   } else if (constraintBox._name == "fzn_circuit") {
     _constraints.add(std::make_shared<Circuit>(constraintBox));
+  } else if (constraintBox._name == "fzn_subcircuit") {
+    _constraints.add(std::make_shared<SubCircuit>(constraintBox));
   } else if (constraintBox._name == "fzn_all_different_int") {
     _constraints.add(std::make_shared<AllDifferent>(constraintBox));
   } else if (constraintBox._name == "fzn_inverse") {
