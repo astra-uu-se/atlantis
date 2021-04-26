@@ -25,5 +25,4 @@ class Max2 : public Invariant {
   void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
   VarId getNextDependency(Timestamp, Engine&) override;
   void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
-  void commit(Timestamp, Engine&) override;
 };
