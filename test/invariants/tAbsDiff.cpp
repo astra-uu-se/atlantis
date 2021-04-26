@@ -10,7 +10,10 @@
 #include "gtest/gtest.h"
 #include "invariants/absDiff.hpp"
 
+using ::testing::AnyNumber;
 using ::testing::AtLeast;
+using ::testing::AtMost;
+using ::testing::Exactly;
 using ::testing::Return;
 
 namespace {
@@ -96,7 +99,7 @@ class AbsDiffTest : public ::testing::Test {
           .Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
-          .Times(0);
+          .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
@@ -109,7 +112,7 @@ class AbsDiffTest : public ::testing::Test {
 
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
-          .Times(0);
+          .Times(AtMost(1));
     } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case.
     }
@@ -159,11 +162,17 @@ TEST_F(AbsDiffTest, Modification) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, testing::_))
         .Times(AtLeast(1));
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(AnyNumber());
   } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
-    EXPECT_EQ(0, 1);  // TODO: define the test case.
-  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
-    EXPECT_EQ(0, 1);  // TODO: define the test case.
+    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+        .Times(AtLeast(2));
+    EXPECT_CALL(*invariant,
+                notifyCurrentDependencyChanged(testing::_, testing::_))
+        .Times(Exactly(1));
   }
+
   engine->close();
 
   EXPECT_EQ(engine->getNewValue(c), 200);

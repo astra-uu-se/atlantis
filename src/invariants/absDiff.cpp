@@ -20,7 +20,7 @@ void AbsDiff::recompute(Timestamp t, Engine& e) {
 }
 
 void AbsDiff::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  updateValue(t, e, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
+  recompute(t, e);
 }
 
 VarId AbsDiff::getNextDependency(Timestamp t, Engine&) {
@@ -36,8 +36,7 @@ VarId AbsDiff::getNextDependency(Timestamp t, Engine&) {
 }
 
 void AbsDiff::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  assert(m_state.getValue(t) <= 2);
-  updateValue(t, e, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
+  recompute(t, e);
 }
 
 void AbsDiff::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
