@@ -27,8 +27,7 @@ void Equal::recompute(Timestamp t, Engine& e) {
 }
 
 void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  updateValue(t, e, m_violationId,
-              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+  recompute(t, e);
 }
 
 VarId Equal::getNextDependency(Timestamp t, Engine&) {
@@ -46,9 +45,7 @@ VarId Equal::getNextDependency(Timestamp t, Engine&) {
 }
 
 void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  assert(m_state.getValue(t) != -1);
-  updateValue(t, e, m_violationId,
-              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+  recompute(t, e);
 }
 
 void Equal::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }

@@ -21,11 +21,14 @@ void BottomUpExplorer::expandInvariant(InvariantId inv) {
   if (invariantIsOnStack.get(inv)) {
     throw DynamicCycleException();
   }
-  // TODO: ignore variable if not on propagationPath.
   VarId nextVar = m_engine.getNextDependency(inv);
-  assert(nextVar.id !=
-         NULL_ID);  // Invariant must have at least one dependency, and this
-                    // should be the first (and only) time we expand it
+  // Ignore var if it is not on propagation path.
+  while (nextVar != NULL_ID && !m_engine.isOnPropagationPath(nextVar)) {
+    nextVar = m_engine.getNextDependency(inv);
+  }
+  if (nextVar.id == NULL_ID) {
+    return;
+  }
   pushVariableStack(nextVar);
   pushInvariantStack(inv);
 }
@@ -63,14 +66,23 @@ void BottomUpExplorer::propagate(Timestamp currentTime) {
   // recursively expand variables to compute their value.
   while (varStackIdx_ > 0) {
     VarId currentVar = peekVariableStack();
+
     // If the variable is not stable, then expand it.
     if (!isStable(currentTime, currentVar)) {
-      if (m_engine.getDefiningInvariant(currentVar) != NULL_ID) {
-        // Variable is defined and not stable, so expand defining invariant.
+      // Variable will become stable as it is either not defined or we now
+      // expand its invariant. Note that expandInvariant may can sometimes not
+      // push a new invariant nor a new variable on the stack, so we must mark
+      // the variable as stable before we expand it as this otherwise results in
+      // an infinite loop.
+      markStable(currentTime, currentVar);
+      // If the variable is not on the propagation path then ignore it.
+      if (m_engine.isOnPropagationPath(currentVar) &&
+          m_engine.getDefiningInvariant(currentVar) != NULL_ID) {
+        // Variable is defined, on propagation path, and not stable, so expand
+        // defining invariant.
         expandInvariant(m_engine.getDefiningInvariant(currentVar));
         continue;
       }
-      markStable(currentTime, currentVar);
     }
     if (invariantStackIdx_ == 0) {
       popVariableStack();  // we are at an output variable that is already

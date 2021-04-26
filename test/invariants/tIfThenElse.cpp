@@ -8,47 +8,47 @@
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "invariants/elementConst.hpp"
+#include "invariants/ifThenElse.hpp"
 
 using ::testing::AtLeast;
-using ::testing::Return;
 using ::testing::AtMost;
+using ::testing::Return;
 
 namespace {
 
-class MockElementConst : public ElementConst {
+class MockIfThenElse : public IfThenElse {
  public:
   bool m_initialized = false;
 
   void init(Timestamp timestamp, Engine& e) override {
     m_initialized = true;
-    ElementConst::init(timestamp, e);
+    IfThenElse::init(timestamp, e);
   }
 
-  MockElementConst(VarId i, std::vector<Int>&& X, VarId b)
-      : ElementConst(i, std::vector<Int>{X}, b) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return ElementConst::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          return ElementConst::getNextDependency(t, e);
-        });
+  MockIfThenElse(VarId b, VarId x, VarId y, VarId z)
+      : IfThenElse(b, x, y, z) {
+          ON_CALL(*this, recompute)
+              .WillByDefault([this](Timestamp timestamp, Engine& engine) {
+                return IfThenElse::recompute(timestamp, engine);
+              });
+          ON_CALL(*this, getNextDependency)
+              .WillByDefault([this](Timestamp t, Engine& e) {
+                return IfThenElse::getNextDependency(t, e);
+              });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          ElementConst::notifyCurrentDependencyChanged(t, e);
-        });
+          ON_CALL(*this, notifyCurrentDependencyChanged)
+              .WillByDefault([this](Timestamp t, Engine& e) {
+                IfThenElse::notifyCurrentDependencyChanged(t, e);
+              });
 
-    ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
-          ElementConst::notifyIntChanged(t, e, id);
-        });
+          ON_CALL(*this, notifyIntChanged)
+              .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
+                IfThenElse::notifyIntChanged(t, e, id);
+              });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
-      ElementConst::commit(t, e);
-    });
+          ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
+            IfThenElse::commit(t, e);
+          });
   }
 
 MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
@@ -64,7 +64,7 @@ MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 private:
 };
 
-class ElementConstTest : public ::testing::Test {
+class IfThenElseTest : public ::testing::Test {
  protected:
   std::mt19937 gen;
 
@@ -79,19 +79,14 @@ class ElementConstTest : public ::testing::Test {
   void testNotifications(PropagationEngine::PropagationMode propMode) {
     engine->open();
 
-    std::vector<Int> args{};
-    int numArgs = 10;
-    for (Int value = 0; value < numArgs; ++value) {
-      args.push_back(value);
-    }
+    std::vector<VarId> args{};
+    VarId b = engine->makeIntVar(0, -100, 100);
+    VarId x = engine->makeIntVar(0, 0, 4);
+    VarId y = engine->makeIntVar(5, 5, 9);
+    VarId z = engine->makeIntVar(3, 0, 9);
 
-    VarId idx = engine->makeIntVar(0, 0, numArgs - 1);
+    auto invariant = engine->makeInvariant<MockIfThenElse>(b, x, y, z);
 
-    VarId output = engine->makeIntVar(-10, -100, 100);
-
-    auto invariant = engine->makeInvariant<MockElementConst>(
-        idx, std::vector<Int>{args}, output);
-    
     EXPECT_TRUE(invariant->m_initialized);
 
     EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
@@ -111,7 +106,7 @@ class ElementConstTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(2);
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(3);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(1);
@@ -124,30 +119,26 @@ class ElementConstTest : public ::testing::Test {
     }
 
     engine->beginMove();
-    engine->setValue(idx, 5);
+    engine->setValue(b, 5);
     engine->endMove();
 
     engine->beginQuery();
-    engine->query(output);
+    engine->query(z);
     engine->endQuery();
   }
 };
 
-TEST_F(ElementConstTest, CreateElement) {
+TEST_F(IfThenElseTest, CreateElement) {
   engine->open();
 
-  std::vector<Int> args{};
-  int numArgs = 10;
-  for (Int value = 0; value < numArgs; ++value) {
-    args.push_back(value);
-  }
 
-  VarId idx = engine->makeIntVar(3, 0, numArgs - 1);
+  std::vector<VarId> args{};
+  VarId b = engine->makeIntVar(0, -100, 100);
+  VarId x = engine->makeIntVar(0, 0, 4);
+  VarId y = engine->makeIntVar(5, 5, 9);
+  VarId z = engine->makeIntVar(3, 0, 9);
 
-  VarId output = engine->makeIntVar(-10, -100, 100);
-
-  auto invariant = engine->makeInvariant<MockElementConst>(
-      idx, std::vector<Int>{args}, output);
+  auto invariant = engine->makeInvariant<MockIfThenElse>(b, x, y, z);
 
   EXPECT_TRUE(invariant->m_initialized);
 
@@ -157,14 +148,14 @@ TEST_F(ElementConstTest, CreateElement) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(output), 3);
+  EXPECT_EQ(engine->getNewValue(z), 0);
 }
 
-TEST_F(ElementConstTest, NotificationsTopDown) {
+TEST_F(IfThenElseTest, NotificationsTopDown) {
   testNotifications(PropagationEngine::PropagationMode::TOP_DOWN);
 }
 
-TEST_F(ElementConstTest, NotificationsBottomUp) {
+TEST_F(IfThenElseTest, NotificationsBottomUp) {
   testNotifications(PropagationEngine::PropagationMode::BOTTOM_UP);
 }
 
