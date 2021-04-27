@@ -2,9 +2,9 @@
 
 #include <queue>
 
-#include "misc/logging.hpp"
 #include "core/engine.hpp"
 #include "core/idMap.hpp"
+#include "misc/logging.hpp"
 #include "propagation/bottomUpExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
 
@@ -12,7 +12,7 @@ class PropagationEngine : public Engine {
  public:
   enum class PropagationMode { TOP_DOWN, BOTTOM_UP, MIXED };
   PropagationMode mode;
-  const bool m_useMarkingForBottomUp;
+  const bool m_useMarkingForBottomUp = true;
 
  protected:
   size_t m_numVariables;
