@@ -126,6 +126,8 @@ class Engine {
 
   void commitInvariantIf(Timestamp, InvariantId);
 
+  void commitInvariant(InvariantId);
+
   //--------------------- Registration ---------------------
   /**
    * Register an invariant in the engine and return its pointer.
@@ -295,4 +297,8 @@ inline void Engine::commitValue(VarId v, Int val) {
 
 inline void Engine::commitInvariantIf(Timestamp t, InvariantId id) {
   m_store.getInvariant(id).commit(t, *this);
+}
+
+inline void Engine::commitInvariant(InvariantId id) {
+  m_store.getInvariant(id).commit(m_currentTime, *this);
 }

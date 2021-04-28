@@ -426,57 +426,51 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
 
   EXPECT_EQ(engine->getCommittedValue(output), 7);
 
-  {
-    engine->beginMove();
-    engine->setValue(i1, 3);
-    engine->setValue(i2, 0);
-    engine->endMove();
+  
+  engine->beginMove();
+  engine->setValue(i1, 3);
+  engine->setValue(i2, 0);
+  engine->endMove();
 
-    engine->beginCommit();
-    engine->query(output);
-    engine->endCommit();
+  engine->beginCommit();
+  engine->query(output);
+  engine->endCommit();
 
-    EXPECT_EQ(engine->getNewValue(output), 10);
-  }
+  EXPECT_EQ(engine->getNewValue(output), 10);
+  
+  engine->beginMove();
+  engine->setValue(base, 3);
+  engine->endMove();
 
-  {
-    engine->beginMove();
-    engine->setValue(base, 3);
-    engine->endMove();
+  engine->beginQuery();
+  engine->query(output);
+  engine->endQuery();
 
-    engine->beginQuery();
-    engine->query(output);
-    engine->endQuery();
+  EXPECT_EQ(engine->getNewValue(output), 16);
+  
+  engine->beginMove();
+  engine->setValue(i2, 1);
+  engine->setValue(i3, 0);
+  engine->setValue(base, 2);
+  engine->endMove();
 
-    EXPECT_EQ(engine->getNewValue(output), 16);
-  }
+  engine->beginQuery();
+  engine->query(output);
+  engine->endQuery();
 
-  {
-    engine->beginMove();
-    engine->setValue(i2, 1);
-    engine->setValue(i3, 0);
-    engine->setValue(base, 2);
-    engine->endMove();
+  EXPECT_EQ(engine->getNewValue(output), 13);
+  
+  engine->beginMove();
+  engine->setValue(i2, 1);
+  engine->setValue(i3, 0);
+  engine->setValue(base, 2);
+  engine->endMove();
 
-    engine->beginQuery();
-    engine->query(output);
-    engine->endQuery();
+  engine->beginCommit();
+  engine->query(output);
+  engine->endCommit();
 
-    EXPECT_EQ(engine->getNewValue(output), 13);
-  }
-  {
-    engine->beginMove();
-    engine->setValue(i2, 1);
-    engine->setValue(i3, 0);
-    engine->setValue(base, 2);
-    engine->endMove();
-
-    engine->beginCommit();
-    engine->query(output);
-    engine->endCommit();
-
-    EXPECT_EQ(engine->getNewValue(output), 13);
-  }
+  EXPECT_EQ(engine->getNewValue(output), 13);
 }
 
 }  // namespace

@@ -54,6 +54,7 @@ class BottomUpExplorer {
 
   void clearRegisteredVariables();
 
+  template<bool DoCommit>
   void propagate(Timestamp currentTime);
 };
 
@@ -102,4 +103,55 @@ inline bool BottomUpExplorer::isStable(Timestamp t, VarId v) {
 
 inline bool BottomUpExplorer::isStable(Timestamp t, InvariantId v) {
   return invariantStableAt.at(v) == t;
+}
+
+template<bool DoCommit>
+void BottomUpExplorer::propagate(Timestamp currentTime) {
+  // recursively expand variables to compute their value.
+  while (varStackIdx_ > 0) {
+    VarId currentVar = peekVariableStack();
+
+    // If the variable is not stable, then expand it.
+    if (!isStable(currentTime, currentVar)) {
+      // Variable will become stable as it is either not defined or we now
+      // expand its invariant. Note that expandInvariant may can sometimes not
+      // push a new invariant nor a new variable on the stack, so we must mark
+      // the variable as stable before we expand it as this otherwise results in
+      // an infinite loop.
+      markStable(currentTime, currentVar);
+      // If the variable is not on the propagation path then ignore it.
+      if (m_engine.isOnPropagationPath(currentVar) &&
+          m_engine.getDefiningInvariant(currentVar) != NULL_ID) {
+        // Variable is defined, on propagation path, and not stable, so expand
+        // defining invariant.
+        expandInvariant(m_engine.getDefiningInvariant(currentVar));
+        continue;
+      }
+    }
+    if (invariantStackIdx_ == 0) {
+      popVariableStack();  // we are at an output variable that is already
+                           // stable. Just continue!
+      continue;
+    }
+    if (m_engine.hasChanged(currentTime, currentVar)) {
+      // If the variable is stable and has changed then just send a
+      // notification to top invariant (i.e, the one asking for its value)
+      notifyCurrentInvariant();
+    }
+    bool invariantDone = visitNextVariable();
+    if (invariantDone) {
+      if constexpr (DoCommit) {
+        m_engine.commitInvariant(peekInvariantStack());
+      }
+      // The top invariant has finished propagating, so all defined vars can
+      // be marked as stable at the current time.
+      for (auto defVar : m_engine.getVariablesDefinedBy(peekInvariantStack())) {
+        markStable(currentTime, defVar);
+        if constexpr (DoCommit) {
+          m_engine.commit(defVar);
+        }
+      }
+      popInvariantStack();
+    }
+  }
 }
