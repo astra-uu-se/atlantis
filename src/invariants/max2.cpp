@@ -1,5 +1,7 @@
 #include "invariants/max2.hpp"
 
+extern Id NULL_ID;
+
 Max2::Max2(VarId a, VarId b, VarId c)
     : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {
   m_modifiedVars.reserve(1);
@@ -21,12 +23,16 @@ void Max2::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
   recompute(t, e);
 }
 
-VarId Max2::getNextDependency(Timestamp t, Engine& e) {
+VarId Max2::getNextDependency(Timestamp t, Engine&) {
   m_state.incValue(t, 1);
-  if (m_state.getValue(t) == 0) {
-    return e.getValue(t, m_a) >= e.getValue(t, m_b) ? m_a : m_b;
+  switch (m_state.getValue(t)) {
+    case 0:
+      return m_a;
+    case 1:
+      return m_b;
+    default:
+      return NULL_ID;
   }
-  return NULL_ID;
 }
 
 void Max2::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
