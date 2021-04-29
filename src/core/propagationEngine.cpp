@@ -255,7 +255,7 @@ template void PropagationEngine::propagate<false>();
 // Propagates at the current internal time of the engine.
 template <bool DoCommit>
 void PropagationEngine::propagate() {
-#define PROPAGATION_DEBUG
+// #define PROPAGATION_DEBUG
 // #define PROPAGATION_DEBUG_COUNTING
 #ifdef PROPAGATION_DEBUG
   setLogLevel(debug);
@@ -266,11 +266,12 @@ void PropagationEngine::propagate() {
       m_store.getNumInvariants());
 #endif
 
-  for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID;
-       id = getNextStableVariable(m_currentTime)) {
-    IntVar& variable = m_store.getIntVar(id);
+  for (VarId stableVarId = getNextStableVariable(m_currentTime);
+       stableVarId.id != NULL_ID;
+       stableVarId = getNextStableVariable(m_currentTime)) {
+    IntVar& variable = m_store.getIntVar(stableVarId);
 
-    InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
+    InvariantId definingInvariant = m_propGraph.getDefiningInvariant(stableVarId);
 
 #ifdef PROPAGATION_DEBUG
     logDebug("\tPropagating " << variable);
@@ -279,7 +280,7 @@ void PropagationEngine::propagate() {
 
     if (definingInvariant != NULL_ID) {
       Invariant& defInv = m_store.getInvariant(definingInvariant);
-      if (id == defInv.getPrimaryOutput()) {
+      if (stableVarId == defInv.getPrimaryOutput()) {
         Int oldValue = variable.getValue(m_currentTime);
         defInv.compute(m_currentTime, *this);
         defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
@@ -296,10 +297,10 @@ void PropagationEngine::propagate() {
     }
 
     if constexpr (DoCommit) {
-      commitIf(m_currentTime, id);
+      commitIf(m_currentTime, stableVarId);
     }
 
-    for (auto& toNotify : m_dependentInvariantData[id]) {
+    for (auto& toNotify : m_dependentInvariantData[stableVarId]) {
       Invariant& invariant = m_store.getInvariant(toNotify.id);
 
 #ifdef PROPAGATION_DEBUG
