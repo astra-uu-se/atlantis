@@ -247,3 +247,82 @@ void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
     }
   }
 }
+
+template void PropagationEngine::propagate<true>();
+template void PropagationEngine::propagate<false>();
+
+// Propagates at the current internal time of the engine.
+template <bool DoCommit>
+void PropagationEngine::propagate() {
+//#define PROPAGATION_DEBUG
+// #define PROPAGATION_DEBUG_COUNTING
+#ifdef PROPAGATION_DEBUG
+  setLogLevel(debug);
+  logDebug("Starting propagation");
+#endif
+#ifdef PROPAGATION_DEBUG_COUNTING
+  std::vector<std::unordered_map<size_t, Int>> notificationCount(
+      m_store.getNumInvariants());
+#endif
+
+  for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID;
+       id = getNextStableVariable(m_currentTime)) {
+    IntVar& variable = m_store.getIntVar(id);
+
+    InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
+
+#ifdef PROPAGATION_DEBUG
+    logDebug("\tPropagating " << variable);
+    logDebug("\t\tDepends on invariant: " << definingInvariant);
+#endif
+
+    if (definingInvariant != NULL_ID) {
+      Invariant& defInv = m_store.getInvariant(definingInvariant);
+      if (id == defInv.getPrimaryOutput()) {
+        Int oldValue = variable.getValue(m_currentTime);
+        defInv.compute(m_currentTime, *this);
+        defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
+        if (oldValue == variable.getValue(m_currentTime)) {
+#ifdef PROPAGATION_DEBUG
+          logDebug("\t\tVariable did not change after compute: ignoring.");
+#endif
+
+          continue;
+        }
+      }
+    }
+
+    if constexpr (DoCommit) {
+      commitIf(m_currentTime, id);
+    }
+
+    for (auto& toNotify : m_dependentInvariantData[id]) {
+      Invariant& invariant = m_store.getInvariant(toNotify.id);
+
+#ifdef PROPAGATION_DEBUG
+      logDebug("\t\tNotifying invariant:" << toNotify.id << " with localId: "
+                                          << toNotify.localId);
+#endif
+#ifdef PROPAGATION_DEBUG_COUNTING
+      notificationCount.at(toNotify.id.id - 1)[variable.m_id.id] =
+          notificationCount.at(toNotify.id.id - 1)[variable.m_id.id] + 1;
+#endif
+
+      invariant.notify(toNotify.localId);
+      queueForPropagation(m_currentTime, invariant.getPrimaryOutput());
+    }
+  }
+
+#ifdef PROPAGATION_DEBUG_COUNTING
+  logDebug("Printing notification counts");
+  for (int i = 0; i < notificationCount.size(); ++i) {
+    logDebug("\tInvariant " << i + 1);
+    for (auto [k, v] : notificationCount.at(i)) {
+      logDebug("\t\tVarId(" << k << "): " << v);
+    }
+  }
+#endif
+#ifdef PROPAGATION_DEBUG
+  logDebug("Propagation done\n");
+#endif
+}
