@@ -4,10 +4,9 @@
 #include <vector>
 
 #include "../core/engine.hpp"
-#include "../variables/intVar.hpp"
-#include "../invariants/invariant.hpp"
-
 #include "../core/types.hpp"
+#include "../invariants/invariant.hpp"
+#include "../variables/intVar.hpp"
 
 /**
  * Invariant for c <== |a-b|

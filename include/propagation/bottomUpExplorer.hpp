@@ -4,7 +4,6 @@
 #include <memory>
 #include <vector>
 
-
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
 #include "utils/idMap.hpp"
