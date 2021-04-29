@@ -4,12 +4,11 @@
 #include <memory>
 #include <vector>
 
-#include "../core/constraint.hpp"
 #include "../core/engine.hpp"
-#include "../core/intVar.hpp"
-#include "../core/savedInt.hpp"
-#include "../core/tracer.hpp"
 #include "../core/types.hpp"
+#include "../variables/intVar.hpp"
+#include "../variables/savedInt.hpp"
+#include "constraint.hpp"
 
 class AllDifferent : public Constraint {
  private:
@@ -35,12 +34,12 @@ inline signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
   Int newCount = m_counts.at(value - m_offset).incValue(ts, 1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
-  return newCount >= 2 ? 1:0;
+  return newCount >= 2 ? 1 : 0;
 }
 
 inline signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
   Int newCount = m_counts.at(value - m_offset).incValue(ts, -1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(m_variables.size()));
-  return newCount >= 1 ? -1:0;
+  return newCount >= 1 ? -1 : 0;
 }

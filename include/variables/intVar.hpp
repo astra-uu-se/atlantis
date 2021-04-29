@@ -2,10 +2,9 @@
 
 #include <iostream>
 
-#include "core/savedInt.hpp"
-#include "core/tracer.hpp"
 #include "core/types.hpp"
-#include "core/var.hpp"
+#include "variables/savedInt.hpp"
+#include "variables/var.hpp"
 
 class Engine;  // Forward declaration
 

@@ -4,10 +4,10 @@
 #include <memory>
 #include <vector>
 
-#include "core/idMap.hpp"
-#include "core/tracer.hpp"
+
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
+#include "utils/idMap.hpp"
 
 // Forward declare PropagationEngine
 class PropagationEngine;
