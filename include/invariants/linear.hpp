@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "../core/engine.hpp"
-#include "../core/intVar.hpp"
-#include "../core/invariant.hpp"
-#include "../core/tracer.hpp"
+#include "../variables/intVar.hpp"
+#include "../invariants/invariant.hpp"
+
 #include "../core/types.hpp"
 
 /**

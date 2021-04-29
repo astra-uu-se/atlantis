@@ -12,9 +12,9 @@
 
 #include "constraints/allDifferent.hpp"
 #include "core/propagationEngine.hpp"
-#include "core/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
+#include "variables/savedInt.hpp"
 
 namespace {
 class MagicSquareTest : public ::testing::Test {
@@ -145,7 +145,8 @@ class MagicSquareTest : public ::testing::Test {
   std::string str = "\n";
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
     for (size_t j = 0; j < static_cast<size_t>(test.n); ++j) {
-      str += test.engine->getNewValue(test.square.at(i).at(j)) + " ";
+      str += std::to_string(test.engine->getNewValue(test.square.at(i).at(j))) +
+             " ";
     }
     str += "\n";
   }

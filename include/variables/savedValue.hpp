@@ -2,8 +2,7 @@
 
 #include <stdexcept>
 
-#include "core/tracer.hpp"
-#include "types.hpp"
+#include "core/types.hpp"
 
 template <class T>
 class Saved {
@@ -37,11 +36,13 @@ class Saved {
     return m_tmpValue;
   }
 
-  [[gnu::always_inline]] inline void init(Timestamp currentTime, T value) noexcept {
+  [[gnu::always_inline]] inline void init(Timestamp currentTime,
+                                          T value) noexcept {
     init(currentTime, value, value);
   }
 
-  [[gnu::always_inline]] inline void init(Timestamp currentTime, T savedValue, T tmpValue) noexcept {
+  [[gnu::always_inline]] inline void init(Timestamp currentTime, T savedValue,
+                                          T tmpValue) noexcept {
     m_tmpTime = currentTime;
     m_savedValue = savedValue;
     m_tmpValue = tmpValue;
