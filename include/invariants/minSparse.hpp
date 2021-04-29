@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "../core/engine.hpp"
-#include "../core/priorityList.hpp"
 #include "../core/types.hpp"
 #include "../invariants/invariant.hpp"
+#include "../utils/priorityList.hpp"
 #include "../variables/intVar.hpp"
 #include "../variables/savedValue.hpp"
 
