@@ -210,14 +210,15 @@ void PropagationEngine::endCommit() {
   // commit during propagation.
 
   // Commit all variables:
-  for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd(); ++iter) {
-    iter->commitIf(m_currentTime);
-  }
-  // Commit all invariants:
-  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
-       ++iter) {
-    (*iter)->commit(m_currentTime, *this);
-  }
+  // for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd();
+  // ++iter) {
+  //   iter->commitIf(m_currentTime);
+  // }
+  // // Commit all invariants:
+  // for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+  //      ++iter) {
+  //   (*iter)->commit(m_currentTime, *this);
+  // }
 }
 
 void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
@@ -254,7 +255,7 @@ template void PropagationEngine::propagate<false>();
 // Propagates at the current internal time of the engine.
 template <bool DoCommit>
 void PropagationEngine::propagate() {
-//#define PROPAGATION_DEBUG
+#define PROPAGATION_DEBUG
 // #define PROPAGATION_DEBUG_COUNTING
 #ifdef PROPAGATION_DEBUG
   setLogLevel(debug);
@@ -286,8 +287,10 @@ void PropagationEngine::propagate() {
 #ifdef PROPAGATION_DEBUG
           logDebug("\t\tVariable did not change after compute: ignoring.");
 #endif
-
           continue;
+        }
+        if constexpr (DoCommit) {
+          defInv.commit(m_currentTime, *this);
         }
       }
     }
