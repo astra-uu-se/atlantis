@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "../core/engine.hpp"
-
 #include "../core/types.hpp"
 #include "../variables/intVar.hpp"
 #include "constraint.hpp"

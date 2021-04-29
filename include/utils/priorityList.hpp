@@ -4,9 +4,9 @@
 #include <memory>
 #include <vector>
 
+#include "../core/types.hpp"
 #include "../variables/intVar.hpp"
 #include "../variables/savedValue.hpp"
-#include "../core/types.hpp"
 
 class PriorityList {
  private:
@@ -66,7 +66,7 @@ class PriorityList {
     head.init(NULL_TIMESTAMP, &m_list[0]);
     tail.init(NULL_TIMESTAMP, &m_list[size - 1]);
   }
-  
+
   size_t size() { return m_list.size(); }
   Int getMinPriority(Timestamp t) { return head.get(t)->priority.get(t); }
   Int getMaxPriority(Timestamp t) { return tail.get(t)->priority.get(t); }
@@ -177,7 +177,8 @@ class PriorityList {
     size_t s = 0;
     bool first = true;
     Int minPrio = head.get(t)->priority.get(t);
-    for (Saved<DoublyLinkedNode*> cur = head; cur.get(t) != nullptr; cur = cur.get(t)->next) {
+    for (Saved<DoublyLinkedNode*> cur = head; cur.get(t) != nullptr;
+         cur = cur.get(t)->next) {
       ++s;
       if (first) {
         prevPrio = cur.get(t)->priority.get(t);
@@ -189,11 +190,12 @@ class PriorityList {
       }
     }
     assert(size() == s);
-    
+
     s = 0;
     first = true;
     Int maxPrio = tail.get(t)->priority.get(t);
-    for (Saved<DoublyLinkedNode*> cur = tail; cur.get(t) != nullptr; cur = cur.get(t)->prev) {
+    for (Saved<DoublyLinkedNode*> cur = tail; cur.get(t) != nullptr;
+         cur = cur.get(t)->prev) {
       ++s;
       if (first) {
         prevPrio = cur.get(t)->priority.get(t);
@@ -206,12 +208,12 @@ class PriorityList {
     }
     assert(size() == s);
 
-    for (Saved<DoublyLinkedNode*> cur = head; cur.get(t) != nullptr; cur = cur.get(t)->next) {
+    for (Saved<DoublyLinkedNode*> cur = head; cur.get(t) != nullptr;
+         cur = cur.get(t)->next) {
       if (cur.get(t)->next.get(t) == nullptr) {
         continue;
       }
       assert(cur.get(t) == cur.get(t)->next.get(t)->prev.get(t));
     }
-
   }
 };

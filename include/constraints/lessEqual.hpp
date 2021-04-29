@@ -3,11 +3,10 @@
 #include <memory>
 #include <vector>
 
-#include "constraint.hpp"
 #include "../core/engine.hpp"
-#include "../variables/intVar.hpp"
-
 #include "../core/types.hpp"
+#include "../variables/intVar.hpp"
+#include "constraint.hpp"
 
 class LessEqual : public Constraint {
  private:
