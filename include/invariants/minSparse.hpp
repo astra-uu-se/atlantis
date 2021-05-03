@@ -6,24 +6,27 @@
 #include "../core/engine.hpp"
 #include "../core/types.hpp"
 #include "../invariants/invariant.hpp"
+#include "../utils/priorityList.hpp"
 #include "../variables/intVar.hpp"
+#include "../variables/savedValue.hpp"
 
 /**
- * Invariant for b <- sum(A_i*X_i)
+ * Invariant for b <- min(X)
+ * This version of min should be used when the domain of the variables
+ * in X is large compared to the number of variables in X, and/or
+ * when few elements in X are expected to take the same value.
  *
  */
 
-class Linear : public Invariant {
+class MinSparse : public Invariant {
  private:
-  std::vector<Int> m_A;
   std::vector<VarId> m_X;
-  std::vector<SavedInt> m_localX;
   VarId m_b;
 
+  PriorityList m_localPriority;
+
  public:
-  Linear(std::vector<VarId> X, VarId b)
-      : Linear(std::vector<Int>(X.size(), 1), X, b) {}
-  Linear(std::vector<Int> A, std::vector<VarId> X, VarId b);
+  MinSparse(std::vector<VarId> X, VarId b);
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;

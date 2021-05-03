@@ -3,10 +3,10 @@
 #include <queue>
 
 #include "core/engine.hpp"
-#include "core/idMap.hpp"
 #include "misc/logging.hpp"
 #include "propagation/bottomUpExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
+#include "utils/idMap.hpp"
 
 class PropagationEngine : public Engine {
  public:

@@ -1,6 +1,6 @@
 #pragma once
-#include "core/invariant.hpp"
 #include "core/types.hpp"
+#include "invariants/invariant.hpp"
 
 class Engine;  // Forward declaration
 

@@ -1,4 +1,4 @@
-#include "core/intVar.hpp"
+#include "variables/intVar.hpp"
 
 IntVar::IntVar(Int t_lowerBound, Int t_upperBound)
     : IntVar(NULL_ID, t_lowerBound, t_upperBound) {}

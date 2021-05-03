@@ -4,7 +4,7 @@
 
 #include "constraints/equal.hpp"
 #include "core/propagationEngine.hpp"
-#include "core/savedInt.hpp"
+#include "variables/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"

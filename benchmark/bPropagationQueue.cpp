@@ -169,7 +169,11 @@ static void CustomArguments(benchmark::internal::Benchmark* b) {
   }
 }
 
-///*
+// These benchmarks are not models, but mainly to test the performance
+// of the PropagationQueue data structure (they typically don't need
+// to be benchmarked)
+
+/*
 BENCHMARK_REGISTER_F(PropQueue, initVar)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(PropQueue, push_min)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(PropQueue, push_max)->Apply(CustomArguments);

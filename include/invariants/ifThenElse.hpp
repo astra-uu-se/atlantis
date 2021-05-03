@@ -4,10 +4,9 @@
 #include <memory>
 
 #include "../core/engine.hpp"
-#include "../core/intVar.hpp"
-#include "../core/invariant.hpp"
-#include "../core/tracer.hpp"
 #include "../core/types.hpp"
+#include "../invariants/invariant.hpp"
+#include "../variables/intVar.hpp"
 
 // NOTE:
 // This is Python syntax and does not come naturally to me
