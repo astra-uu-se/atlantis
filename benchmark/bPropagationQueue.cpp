@@ -169,8 +169,8 @@ static void CustomArguments(benchmark::internal::Benchmark* b) {
   }
 }
 
-// These benchmarks are not models, but mainly to test the performance
-// of the PropagationQueue data structure (they typically don't need
+// This benchmark is not a model, but mainly to test the performance
+// of the PropagationQueue data structure (it typically does not need
 // to be benchmarked)
 
 /*
