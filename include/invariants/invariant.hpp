@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "core/savedInt.hpp"
 #include "core/types.hpp"
+#include "variables/savedInt.hpp"
 class Engine;  // Forward declaration
 
 class Invariant {
@@ -38,9 +38,7 @@ class Invariant {
 
     bool hasNext() { return head < queue.size(); }
 
-    NotificationQueue() : head(0), queue() {
-      queue.push_back(0);
-    }
+    NotificationQueue() : head(0), queue() { queue.push_back(0); }
 
    private:
     size_t head;
@@ -81,9 +79,9 @@ class Invariant {
   void registerDefinedVariable(Engine& e, VarId v);
 
   /**
-   * Used in Top-Down (Input-to-Output) propagation to notify that a 
-   * variable local to the invariant has had its value changed. This 
-   * method is called for each variable that was marked as modified 
+   * Used in Top-Down (Input-to-Output) propagation to notify that a
+   * variable local to the invariant has had its value changed. This
+   * method is called for each variable that was marked as modified
    * in notify.
    * @param t the current timestamp
    * @param e the engine
@@ -135,7 +133,7 @@ class Invariant {
 
   /**
    * Used in bottom-up (Output-to-Input) propagation to notify to the
-   * invariant that the current dependency (the last dependency given by 
+   * invariant that the current dependency (the last dependency given by
    * getNextDependency) has had its value changed.
    */
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) = 0;

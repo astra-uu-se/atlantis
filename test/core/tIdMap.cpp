@@ -4,8 +4,8 @@
 #include <stdexcept>
 #include <vector>
 
-#include "core/idMap.hpp"
 #include "gtest/gtest.h"
+#include "utils/idMap.hpp"
 
 namespace {
 class IdMapTest : public ::testing::Test {

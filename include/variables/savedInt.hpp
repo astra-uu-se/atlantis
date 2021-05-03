@@ -2,8 +2,7 @@
 
 #include <stdexcept>
 
-#include "core/tracer.hpp"
-#include "types.hpp"
+#include "core/types.hpp"
 
 class SavedInt {
  private:

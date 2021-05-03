@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "core/savedInt.hpp"
+#include "variables/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
 #include "rapidcheck/gtest.h"

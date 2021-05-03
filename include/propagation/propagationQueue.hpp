@@ -4,11 +4,11 @@
 #include <vector>
 
 #include "../core/types.hpp"
-#include "core/idMap.hpp"
 #include "../misc/logging.hpp"
+#include "utils/idMap.hpp"
 
 class PropagationQueue {
-  private:
+ private:
   struct ListNode {
     size_t priority;
     VarIdBase id;
@@ -21,7 +21,7 @@ class PropagationQueue {
   ListNode* head;
   ListNode* tail;
 
-  public:
+ public:
   PropagationQueue() : m_priorityNodes(0), head(nullptr), tail(nullptr) {}
 
   // vars must be initialised in order.

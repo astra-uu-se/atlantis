@@ -72,12 +72,11 @@ class Queens : public benchmark::Fixture {
 
   std::string instanceToString() {
     std::string str = "Queens: ";
-    for(auto q: queens){
-      str += engine->getCommittedValue(q) + ", ";
+    for (auto q : queens) {
+      str += std::to_string(engine->getCommittedValue(q)) + ", ";
     }
     return str;
-  } 
-
+  }
 };
 
 BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {

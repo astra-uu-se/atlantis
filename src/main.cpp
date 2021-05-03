@@ -7,7 +7,6 @@
 #include "invariants/absDiff.hpp"
 #include "invariants/linear.hpp"
 
-
 void test();
 int allIntervals(int);
 

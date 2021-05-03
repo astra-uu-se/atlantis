@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "../core/engine.hpp"
-#include "../core/intVar.hpp"
-#include "../core/intView.hpp"
 #include "../core/types.hpp"
+#include "../variables/intVar.hpp"
+#include "../views/intView.hpp"
 
 class IntMaxView : public IntView {
  private:
