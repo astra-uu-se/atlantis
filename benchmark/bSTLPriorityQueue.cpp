@@ -183,7 +183,11 @@ static void CustomArguments(benchmark::internal::Benchmark* b) {
   }
 }
 
-///*
+// This benchmark is not a model, but mainly to test the performance
+// of the PriorityQueue data structure (it typically does not need
+// to be benchmarked)
+
+/*
 BENCHMARK_REGISTER_F(PrioQueue, initVar)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(PrioQueue, push_min)->Apply(CustomArguments);
 BENCHMARK_REGISTER_F(PrioQueue, push_max)->Apply(CustomArguments);
