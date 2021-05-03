@@ -1,12 +1,11 @@
 #pragma once
 #include <memory>
 
-#include "core/intVar.hpp"
-#include "core/savedInt.hpp"
-#include "core/tracer.hpp"
 #include "core/types.hpp"
-#include "core/var.hpp"
-#include "core/view.hpp"
+#include "variables/intVar.hpp"
+#include "variables/savedInt.hpp"
+#include "variables/var.hpp"
+#include "views/view.hpp"
 
 class Engine;  // Forward declaration
 

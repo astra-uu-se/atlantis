@@ -5,10 +5,10 @@
 
 #include "constraints/lessThan.hpp"
 #include "core/propagationEngine.hpp"
-#include "core/savedInt.hpp"
 #include "core/types.hpp"
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "variables/savedInt.hpp"
 
 using ::testing::AtLeast;
 using ::testing::AtMost;
@@ -27,41 +27,42 @@ class MockLessThan : public LessThan {
 
   MockLessThan(VarId violationId, VarId a, VarId b)
       : LessThan(violationId, a, b) {
-          ON_CALL(*this, recompute)
-              .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-                return LessThan::recompute(timestamp, engine);
-              });
-          ON_CALL(*this, getNextDependency)
-              .WillByDefault([this](Timestamp t, Engine& engine) {
-                return LessThan::getNextDependency(t, engine);
-              });
+    ON_CALL(*this, recompute)
+        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
+          return LessThan::recompute(timestamp, engine);
+        });
+    ON_CALL(*this, getNextDependency)
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          return LessThan::getNextDependency(t, engine);
+        });
 
-          ON_CALL(*this, notifyCurrentDependencyChanged)
-              .WillByDefault([this](Timestamp t, Engine& engine) {
-                LessThan::notifyCurrentDependencyChanged(t, engine);
-              });
+    ON_CALL(*this, notifyCurrentDependencyChanged)
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          LessThan::notifyCurrentDependencyChanged(t, engine);
+        });
 
-          ON_CALL(*this, notifyIntChanged)
-              .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-                LessThan::notifyIntChanged(t, engine, id);
-              });
+    ON_CALL(*this, notifyIntChanged)
+        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
+          LessThan::notifyIntChanged(t, engine, id);
+        });
 
-          ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-            LessThan::commit(t, engine);
-          });
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
+      LessThan::commit(t, engine);
+    });
   }
 
-MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
+              (override));
 
-MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
-            (override));
+  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
+              (override));
 
-MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
-            (override));
-MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
+              (override));
+  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
-private:
+ private:
 };
 
 class LessThanTest : public ::testing::Test {
@@ -94,12 +95,12 @@ class LessThanTest : public ::testing::Test {
 
     VarId viol = engine->makeIntVar(0, 0, 200);
 
-    auto invariant = engine->makeInvariant<MockLessThan>(
-        viol, a, b);
+    auto invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
 
     EXPECT_TRUE(invariant->m_initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
+        .Times(AtLeast(1));
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
@@ -108,7 +109,8 @@ class LessThanTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+          .Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(AtMost(1));
@@ -116,8 +118,8 @@ class LessThanTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
-      EXPECT_CALL(*invariant,
-                  getNextDependency(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+          .Times(3);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(1);
@@ -145,7 +147,8 @@ class LessThanTest : public ::testing::Test {
 
 TEST_F(LessThanTest, Init) {
   EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(violationId), violationId), 1);
+  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(violationId), violationId),
+            1);
 }
 
 TEST_F(LessThanTest, Recompute) {
@@ -196,16 +199,18 @@ TEST_F(LessThanTest, NotifyChange) {
 
   Timestamp time1 = 1;
 
-  EXPECT_EQ(engine->getValue(time1, x), 2); // Variable has not changed.
+  EXPECT_EQ(engine->getValue(time1, x), 2);  // Variable has not changed.
   engine->setValue(time1, x, 40);
   EXPECT_EQ(engine->getCommittedValue(x), 2);
   EXPECT_EQ(engine->getValue(time1, x), 40);
-  lessThan->notifyIntChanged(time1, *engine, unused); // Runs recompute internally
+  lessThan->notifyIntChanged(time1, *engine,
+                             unused);  // Runs recompute internally
   EXPECT_EQ(engine->getValue(time1, violationId), 39);
 
   engine->setValue(time1, y, 0);
-  lessThan->notifyIntChanged(time1, *engine, unused); // Runs recompute internally
-  auto tmpValue = engine->getValue(time1, violationId); // 41
+  lessThan->notifyIntChanged(time1, *engine,
+                             unused);  // Runs recompute internally
+  auto tmpValue = engine->getValue(time1, violationId);  // 41
 
   // Incremental computation gives the same result as recomputation
   lessThan->recompute(time1, *engine);
@@ -265,8 +270,9 @@ TEST_F(LessThanTest, Commit) {
   Timestamp currentTime = 1;
 
   engine->setValue(currentTime, x, 40);
-  engine->setValue(currentTime, y, 2);  // This change is not notified and should
-                                   // not have an impact on the commit
+  engine->setValue(currentTime, y,
+                   2);  // This change is not notified and should
+                        // not have an impact on the commit
 
   lessThan->notifyIntChanged(currentTime, *engine, unused);
 }
@@ -279,8 +285,7 @@ TEST_F(LessThanTest, CreateLessThan) {
 
   VarId viol = engine->makeIntVar(0, 0, 201);
 
-  auto invariant = engine->makeInvariant<MockLessThan>(
-      viol, a, b);
+  auto invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
 
   EXPECT_TRUE(invariant->m_initialized);
 

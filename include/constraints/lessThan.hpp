@@ -3,11 +3,10 @@
 #include <memory>
 #include <vector>
 
-#include "../core/constraint.hpp"
 #include "../core/engine.hpp"
-#include "../core/intVar.hpp"
-#include "../core/tracer.hpp"
 #include "../core/types.hpp"
+#include "../variables/intVar.hpp"
+#include "constraint.hpp"
 
 class LessThan : public Constraint {
  private:
