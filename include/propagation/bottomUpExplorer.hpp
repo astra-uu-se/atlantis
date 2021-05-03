@@ -53,6 +53,7 @@ class BottomUpExplorer {
 
   void clearRegisteredVariables();
 
+  template <bool DoCommit>
   void propagate(Timestamp currentTime);
 };
 

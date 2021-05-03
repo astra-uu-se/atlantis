@@ -29,7 +29,10 @@ class PropagationEngine : public Engine {
 
   void emptyModifiedVariables();
 
+  template <bool DoCommit>
   void propagate();
+
+  template <bool DoCommit>
   void bottomUpPropagate();
 
   void markPropagationPathAndEmptyModifiedVariables();
@@ -163,4 +166,9 @@ inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
 inline void PropagationEngine::setPropagationMode(PropagationMode m) {
   assert(m_isOpen);
   mode = m;
+}
+
+template <bool DoCommit>
+inline void PropagationEngine::bottomUpPropagate() {
+  m_bottomUpExplorer.propagate<DoCommit>(m_currentTime);
 }
