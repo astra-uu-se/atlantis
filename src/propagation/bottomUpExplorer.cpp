@@ -62,6 +62,10 @@ void BottomUpExplorer::registerInvariant(InvariantId id) {
   invariantIsOnStack.register_idx(id, false);
 }
 
+template void BottomUpExplorer::propagate<true>(Timestamp currentTime);
+template void BottomUpExplorer::propagate<false>(Timestamp currentTime);
+
+template <bool DoCommit>
 void BottomUpExplorer::propagate(Timestamp currentTime) {
   // recursively expand variables to compute their value.
   while (varStackIdx_ > 0) {
@@ -96,10 +100,16 @@ void BottomUpExplorer::propagate(Timestamp currentTime) {
     }
     bool invariantDone = visitNextVariable();
     if (invariantDone) {
+      if constexpr (DoCommit) {
+        m_engine.commitInvariant(peekInvariantStack());
+      }
       // The top invariant has finished propagating, so all defined vars can
       // be marked as stable at the current time.
       for (auto defVar : m_engine.getVariablesDefinedBy(peekInvariantStack())) {
         markStable(currentTime, defVar);
+        if constexpr (DoCommit) {
+          m_engine.commit(defVar);
+        }
       }
       popInvariantStack();
     }

@@ -156,7 +156,7 @@ void PropagationEngine::query(VarId id) {
 void PropagationEngine::endQuery() {
   switch (mode) {
     case PropagationMode::TOP_DOWN:
-      propagate();
+      propagate<false>();
       break;
     case PropagationMode::BOTTOM_UP:
       if (m_useMarkingForBottomUp) {
@@ -164,7 +164,7 @@ void PropagationEngine::endQuery() {
       } else {
         emptyModifiedVariables();
       }
-      bottomUpPropagate();
+      bottomUpPropagate<false>();
       break;
     case PropagationMode::MIXED:
       if (m_useMarkingForBottomUp) {
@@ -172,7 +172,7 @@ void PropagationEngine::endQuery() {
       } else {
         emptyModifiedVariables();
       }
-      bottomUpPropagate();
+      bottomUpPropagate<false>();
       break;
   }
   // We must always clear due to the current version of query()
@@ -184,7 +184,7 @@ void PropagationEngine::beginCommit() {}
 void PropagationEngine::endCommit() {
   switch (mode) {
     case PropagationMode::TOP_DOWN:
-      propagate();
+      propagate<true>();
       break;
     case PropagationMode::BOTTOM_UP:
       if (m_useMarkingForBottomUp) {
@@ -192,31 +192,33 @@ void PropagationEngine::endCommit() {
       } else {
         emptyModifiedVariables();
       }
-      bottomUpPropagate();
+      bottomUpPropagate<true>();
       // BUG: Variables that are not dynamically defining the queries variables
       // will not be properly updated: they should be marked as changed until
       // committed but this does not happen.
       // TODO: create test case to catch this bug.
       break;
     case PropagationMode::MIXED:
-      propagate();
+      propagate<true>();
       break;
   }
   // We must always clear due to the current version of query()
   m_bottomUpExplorer.clearRegisteredVariables();
 
+  return;
   // Todo: This just commits everything and can be very inefficient, instead
   // commit during propagation.
 
   // Commit all variables:
-  for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd(); ++iter) {
-    iter->commitIf(m_currentTime);
-  }
-  // Commit all invariants:
-  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
-       ++iter) {
-    (*iter)->commit(m_currentTime, *this);
-  }
+  // for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd();
+  // ++iter) {
+  //   iter->commitIf(m_currentTime);
+  // }
+  // // Commit all invariants:
+  // for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+  //      ++iter) {
+  //   (*iter)->commit(m_currentTime, *this);
+  // }
 }
 
 void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
@@ -247,9 +249,13 @@ void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
   }
 }
 
+template void PropagationEngine::propagate<true>();
+template void PropagationEngine::propagate<false>();
+
 // Propagates at the current internal time of the engine.
+template <bool DoCommit>
 void PropagationEngine::propagate() {
-//#define PROPAGATION_DEBUG
+// #define PROPAGATION_DEBUG
 // #define PROPAGATION_DEBUG_COUNTING
 #ifdef PROPAGATION_DEBUG
   setLogLevel(debug);
@@ -260,11 +266,12 @@ void PropagationEngine::propagate() {
       m_store.getNumInvariants());
 #endif
 
-  for (VarId id = getNextStableVariable(m_currentTime); id.id != NULL_ID;
-       id = getNextStableVariable(m_currentTime)) {
-    IntVar& variable = m_store.getIntVar(id);
+  for (VarId stableVarId = getNextStableVariable(m_currentTime);
+       stableVarId.id != NULL_ID;
+       stableVarId = getNextStableVariable(m_currentTime)) {
+    IntVar& variable = m_store.getIntVar(stableVarId);
 
-    InvariantId definingInvariant = m_propGraph.getDefiningInvariant(id);
+    InvariantId definingInvariant = m_propGraph.getDefiningInvariant(stableVarId);
 
 #ifdef PROPAGATION_DEBUG
     logDebug("\tPropagating " << variable);
@@ -273,7 +280,7 @@ void PropagationEngine::propagate() {
 
     if (definingInvariant != NULL_ID) {
       Invariant& defInv = m_store.getInvariant(definingInvariant);
-      if (id == defInv.getPrimaryOutput()) {
+      if (stableVarId == defInv.getPrimaryOutput()) {
         Int oldValue = variable.getValue(m_currentTime);
         defInv.compute(m_currentTime, *this);
         defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
@@ -281,13 +288,19 @@ void PropagationEngine::propagate() {
 #ifdef PROPAGATION_DEBUG
           logDebug("\t\tVariable did not change after compute: ignoring.");
 #endif
-
           continue;
+        }
+        if constexpr (DoCommit) {
+          defInv.commit(m_currentTime, *this);
         }
       }
     }
 
-    for (auto& toNotify : m_dependentInvariantData[id]) {
+    if constexpr (DoCommit) {
+      commitIf(m_currentTime, stableVarId);
+    }
+
+    for (auto& toNotify : m_dependentInvariantData[stableVarId]) {
       Invariant& invariant = m_store.getInvariant(toNotify.id);
 
 #ifdef PROPAGATION_DEBUG
@@ -316,8 +329,4 @@ void PropagationEngine::propagate() {
 #ifdef PROPAGATION_DEBUG
   logDebug("Propagation done\n");
 #endif
-}
-
-void PropagationEngine::bottomUpPropagate() {
-  m_bottomUpExplorer.propagate(m_currentTime);
 }
