@@ -4,10 +4,9 @@
 #include <vector>
 
 #include "../core/engine.hpp"
-#include "../core/intVar.hpp"
-#include "../core/invariant.hpp"
-#include "../core/tracer.hpp"
 #include "../core/types.hpp"
+#include "../invariants/invariant.hpp"
+#include "../variables/intVar.hpp"
 
 /**
  * Invariant for b <- A[i] where A is a vector of constants.

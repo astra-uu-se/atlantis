@@ -1,4 +1,4 @@
-#include "core/invariant.hpp"
+#include "invariants/invariant.hpp"
 
 #include "core/propagationEngine.hpp"
 

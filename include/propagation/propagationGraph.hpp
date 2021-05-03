@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "../core/types.hpp"
-#include "core/idMap.hpp"
 #include "../misc/logging.hpp"
 #include "propagationQueue.hpp"
+#include "utils/idMap.hpp"
 
 class PropagationGraph {
  protected:
@@ -68,7 +68,6 @@ class PropagationGraph {
              graph.m_topology.getPosition(right);
     }
   };
-
 
   PropagationQueue m_propagationQueue;
   // std::priority_queue<VarIdBase, std::vector<VarIdBase>,

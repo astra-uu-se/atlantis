@@ -4,15 +4,14 @@
 #include <memory>
 #include <vector>
 
-#include "core/constraint.hpp"
-#include "core/idMap.hpp"
-#include "core/intVar.hpp"
-#include "core/intView.hpp"
-#include "core/tracer.hpp"
+#include "constraints/constraint.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
-#include "store/store.hpp"
 #include "misc/logging.hpp"
+#include "store/store.hpp"
+#include "utils/idMap.hpp"
+#include "variables/intVar.hpp"
+#include "views/intView.hpp"
 
 class Invariant;
 

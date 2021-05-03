@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "core/intVar.hpp"
+#include "variables/intVar.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
 

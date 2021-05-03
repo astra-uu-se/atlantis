@@ -4,12 +4,11 @@
 #include <vector>
 
 #include "../core/engine.hpp"
-#include "../core/intVar.hpp"
-#include "../core/invariant.hpp"
-#include "../core/savedValue.hpp"
-#include "../core/tracer.hpp"
 #include "../core/types.hpp"
-#include "../core/priorityList.hpp"
+#include "../invariants/invariant.hpp"
+#include "../utils/priorityList.hpp"
+#include "../variables/intVar.hpp"
+#include "../variables/savedValue.hpp"
 
 /**
  * Invariant for b <- min(X)

@@ -26,7 +26,8 @@ void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
                                                      VarIdBase source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
   if (m_definingInvariant[source] == dependent) {
-    logWarning("The dependent invariant (" << dependent << ") already "
+    logWarning("The dependent invariant ("
+               << dependent << ") already "
                << "defines the source variable (" << source << "); "
                << "ignoring (selft-cyclic) dependency.");
     return;
@@ -53,8 +54,7 @@ void PropagationGraph::registerDefinedVariable(VarIdBase dependent,
   }
   if (index >= 0) {
     m_listeningInvariants[dependent].erase(
-      m_listeningInvariants[dependent].begin() + index
-    );
+        m_listeningInvariants[dependent].begin() + index);
     logWarning("The (self-cyclic) dependency that the source invariant "
                << "(" << source << ") depends on the dependent "
                << "variable (" << source << ") was removed.");
