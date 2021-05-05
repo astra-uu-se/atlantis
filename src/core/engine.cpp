@@ -1,5 +1,7 @@
 #include "core/engine.hpp"
 
+#include "variables/intVar.hpp"
+
 Engine::Engine()
     : m_currentTime(NULL_TIMESTAMP + 1),
       m_isOpen(false),
