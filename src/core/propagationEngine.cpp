@@ -1,5 +1,7 @@
 #include "core/propagationEngine.hpp"
 
+#include <iostream>
+
 PropagationEngine::PropagationEngine()
     : mode(PropagationMode::TOP_DOWN),
       m_numVariables(0),

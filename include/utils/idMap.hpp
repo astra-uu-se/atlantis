@@ -1,6 +1,5 @@
 #pragma once
 #include <cassert>
-#include <iostream>
 #include <vector>
 
 #include "core/types.hpp"
@@ -98,11 +97,11 @@ class IdMap<I, bool> {
     m_vector.assign(m_vector.size(), value);
   }
 
-  std::string toString() {
-    std::string str = "";
-    for (auto foo : m_vector) {
-      str += foo + "\n";
-    }
-    return str;
-  }
+  // std::string toString() {
+  //   std::string str = "";
+  //   for (auto foo : m_vector) {
+  //     str += foo + "\n";
+  //   }
+  //   return str;
+  // }
 };

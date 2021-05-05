@@ -4,11 +4,13 @@
 #include <memory>
 #include <vector>
 
-#include "../core/engine.hpp"
 #include "../core/types.hpp"
 #include "../variables/intVar.hpp"
-#include "../variables/savedInt.hpp"
+// #include "../variables/savedInt.hpp"
 #include "constraint.hpp"
+
+class SavedInt;  // forward declare
+class Engine;
 
 class AllDifferent : public Constraint {
  private:

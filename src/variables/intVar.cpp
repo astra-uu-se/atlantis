@@ -1,5 +1,7 @@
 #include "variables/intVar.hpp"
 
+#include <iostream>
+
 IntVar::IntVar(Int t_lowerBound, Int t_upperBound)
     : IntVar(NULL_ID, t_lowerBound, t_upperBound) {}
 

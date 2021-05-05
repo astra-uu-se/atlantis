@@ -1,5 +1,7 @@
 #include "propagation/propagationGraph.hpp"
 
+#include <iostream>
+
 PropagationGraph::PropagationGraph(size_t expectedSize)
     : m_numInvariants(0),
       m_numVariables(0),
