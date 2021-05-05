@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iostream>
-
 #include "core/types.hpp"
 #include "variables/savedInt.hpp"
 #include "variables/var.hpp"

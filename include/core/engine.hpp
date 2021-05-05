@@ -3,6 +3,7 @@
 #include <cassert>
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "constraints/constraint.hpp"
 #include "core/types.hpp"

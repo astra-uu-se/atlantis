@@ -1,6 +1,6 @@
 #include <functional>
 #include <queue>
-
+#include <iostream>
 #include "exceptions/exceptions.hpp"
 #include "propagation/propagationGraph.hpp"
 /**
