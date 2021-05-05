@@ -71,7 +71,7 @@ void PropagationGraph::close() {
     m_isInputVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
   }
 
-  m_topology.computeWithCycles();
+  m_topology.computeLayersWithCycles();
   // Reset propagation queue data structure.
   // TODO: Be sure that this does not cause a memeory leak...
   m_propagationQueue = PropagationQueue();
