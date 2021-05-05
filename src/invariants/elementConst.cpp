@@ -1,5 +1,7 @@
 #include "invariants/elementConst.hpp"
 
+#include "core/engine.hpp"
+
 ElementConst::ElementConst(VarId i, std::vector<Int> A, VarId b)
     : Invariant(NULL_ID), m_i(i), m_A(std::move(A)), m_b(b) {
   m_modifiedVars.reserve(1);
