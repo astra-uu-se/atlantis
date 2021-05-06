@@ -1,7 +1,7 @@
 #include "core/propagationEngine.hpp"
 
 PropagationEngine::PropagationEngine()
-    : m_mode(PropagationMode::INPUT_TO_OUTPUT),
+    : mode(PropagationMode::TOP_DOWN),
       m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
@@ -24,10 +24,6 @@ void PropagationEngine::close() {
   } catch (std::exception e) {
     std::cout << "foo";
   }
-  if (m_mode == PropagationMode::OUTPUT_TO_INPUT) {
-    m_bottomUpExplorer.populateAncestors();
-  }
-
   // compute initial values for variables and for (internal datastructure of)
   // invariants
   recomputeAndCommit();
@@ -151,18 +147,18 @@ void PropagationEngine::endMove() {
 void PropagationEngine::beginQuery() {}
 
 void PropagationEngine::query(VarId id) {
-  if (m_mode == PropagationMode::INPUT_TO_OUTPUT) {
+  if (mode == PropagationMode::TOP_DOWN) {
     return;
   }
   m_bottomUpExplorer.registerForPropagation(m_currentTime, getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
-  switch (m_mode) {
-    case PropagationMode::INPUT_TO_OUTPUT:
+  switch (mode) {
+    case PropagationMode::TOP_DOWN:
       propagate<false>();
       break;
-    case PropagationMode::OUTPUT_TO_INPUT:
+    case PropagationMode::BOTTOM_UP:
       if (m_useMarkingForBottomUp) {
         markPropagationPathAndEmptyModifiedVariables();
       } else {
@@ -186,11 +182,11 @@ void PropagationEngine::endQuery() {
 void PropagationEngine::beginCommit() {}
 
 void PropagationEngine::endCommit() {
-  switch (m_mode) {
-    case PropagationMode::INPUT_TO_OUTPUT:
+  switch (mode) {
+    case PropagationMode::TOP_DOWN:
       propagate<true>();
       break;
-    case PropagationMode::OUTPUT_TO_INPUT:
+    case PropagationMode::BOTTOM_UP:
       if (m_useMarkingForBottomUp) {
         markPropagationPathAndEmptyModifiedVariables();
       } else {
