@@ -84,7 +84,7 @@ class EqualTest : public ::testing::Test {
     engine->close();
   }
 
-  void testNotifications(PropagationEngine::PropagationMode propMode, bool doCommit) {
+  void testNotifications(PropagationEngine::PropagationMode propMode) {
     engine->open();
 
     VarId a = engine->makeIntVar(5, -100, 100);
@@ -101,11 +101,11 @@ class EqualTest : public ::testing::Test {
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-    engine->setPropagationMode(propMode);
+    engine->mode = propMode;
 
     engine->close();
 
-    if (engine->getPropagationMode() == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
@@ -113,25 +113,17 @@ class EqualTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->getPropagationMode() == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      if (doCommit) {
-        EXPECT_CALL(*invariant,
-                  getNextDependency(testing::_, testing::_)).Times(0);
-        EXPECT_CALL(*invariant,
-                    notifyCurrentDependencyChanged(testing::_, testing::_))
-            .Times(1);
-      } else {
-        EXPECT_CALL(*invariant,
+    } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+      EXPECT_CALL(*invariant,
                   getNextDependency(testing::_, testing::_)).Times(3);
-        EXPECT_CALL(*invariant,
-                    notifyCurrentDependencyChanged(testing::_, testing::_))
-            .Times(1);
+      EXPECT_CALL(*invariant,
+                  notifyCurrentDependencyChanged(testing::_, testing::_))
+          .Times(1);
 
-        EXPECT_CALL(*invariant,
-                    notifyIntChanged(testing::_, testing::_, testing::_))
-            .Times(0);
-      }
-    } else if (engine->getPropagationMode() == PropagationEngine::PropagationMode::MIXED) {
+      EXPECT_CALL(*invariant,
+                  notifyIntChanged(testing::_, testing::_, testing::_))
+          .Times(0);
+    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
@@ -139,15 +131,9 @@ class EqualTest : public ::testing::Test {
     engine->setValue(a, 0);
     engine->endMove();
 
-    if (doCommit) {
-      engine->beginCommit();
-      engine->query(viol);
-      engine->endCommit();
-    } else {
-      engine->beginQuery();
-      engine->query(viol);
-      engine->endQuery();
-    }
+    engine->beginQuery();
+    engine->query(viol);
+    engine->endQuery();
   }
 };
 
@@ -287,19 +273,11 @@ TEST_F(EqualTest, CreateEqual) {
 }
 
 TEST_F(EqualTest, NotificationsTopDown) {
-  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT, false);
-}
-
-TEST_F(EqualTest, NotificationsTopDownCommit) {
-  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT, true);
+  testNotifications(PropagationEngine::PropagationMode::TOP_DOWN);
 }
 
 TEST_F(EqualTest, NotificationsBottomUp) {
-  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT, false);
-}
-
-TEST_F(EqualTest, NotificationsBottomUpCommit) {
-  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT, true);
+  testNotifications(PropagationEngine::PropagationMode::BOTTOM_UP);
 }
 
 }  // namespace

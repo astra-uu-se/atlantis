@@ -7,10 +7,7 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
       m_variablesDefinedByInvariant(expectedSize),
       m_inputVariables(expectedSize),
       m_listeningInvariants(expectedSize),
-      m_topology(*this) {
-        m_decisionVariables;
-        m_outputVariables;
-      }
+      m_topology(*this) {}
 
 void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   // Everything must be registered in sequence.
@@ -67,17 +64,11 @@ void PropagationGraph::registerDefinedVariable(VarIdBase dependent,
 }
 
 void PropagationGraph::close() {
-  m_isDecisionVar.resize(getNumVariables() + 1);
+  m_isInputVar.resize(getNumVariables() + 1);
   m_isOutputVar.resize(getNumVariables() + 1);
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
     m_isOutputVar.at(i) = (m_listeningInvariants.at(i).empty());
-    m_isDecisionVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
-    if (m_isOutputVar.at(i)) {
-      m_outputVariables.push_back(i);
-    }
-    if (m_isDecisionVar.at(i)) {
-      m_decisionVariables.push_back(i);
-    }
+    m_isInputVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
   }
 
   m_topology.computeWithCycles();
