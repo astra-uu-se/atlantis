@@ -94,7 +94,7 @@ class LinearTest : public ::testing::Test {
     engine->close();
   }
  
-  void testNotifications(PropagationEngine::PropagationMode propMode) {
+  void testNotifications(PropagationEngine::PropagationMode propMode, bool doCommit) {
     engine->open();
 
     std::vector<VarId> args{};
@@ -117,11 +117,11 @@ class LinearTest : public ::testing::Test {
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-    engine->mode = propMode;
+    engine->setPropagationMode(propMode);
     
     engine->close();
     
-    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    if (engine->getPropagationMode() == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
@@ -129,7 +129,7 @@ class LinearTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    } else if (engine->getPropagationMode() == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
       EXPECT_CALL(*invariant,
                   getNextDependency(testing::_, testing::_)).Times(numArgs + 1);
       EXPECT_CALL(*invariant,
@@ -139,7 +139,7 @@ class LinearTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    } else if (engine->getPropagationMode() == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
@@ -147,9 +147,15 @@ class LinearTest : public ::testing::Test {
     engine->setValue(args[0], 5);
     engine->endMove();
 
-    engine->beginQuery();
-    engine->query(output);
-    engine->endQuery();
+    if (doCommit) {
+      engine->beginCommit();
+      engine->query(output);
+      engine->endCommit();
+    } else {
+      engine->beginQuery();
+      engine->query(output);
+      engine->endQuery();
+    }
   }
 };
 
@@ -300,11 +306,13 @@ TEST_F(LinearTest, CreateLinear) {
 }
 
 TEST_F(LinearTest, NotificationsTopDown) {
-  testNotifications(PropagationEngine::PropagationMode::TOP_DOWN);
+  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT, false);
+  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT, true);
 }
 
 TEST_F(LinearTest, NotificationsBottomUp) {
-  testNotifications(PropagationEngine::PropagationMode::BOTTOM_UP);
+  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT, false);
+  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT, true);
 }
 
 }  // namespace

@@ -24,6 +24,10 @@ class BottomUpExplorer {
   IdMap<VarId, bool> varIsOnStack;
   IdMap<InvariantId, bool> invariantIsOnStack;
 
+  IdMap<VarIdBase, std::unordered_set<size_t>> m_decisionVarAncestor;
+  std::vector<VarIdBase> m_committedAncestors;
+
+  void populateCommittedAncestors(Timestamp);
   void pushVariableStack(VarId v);
   void popVariableStack();
   VarId peekVariableStack();
@@ -36,14 +40,19 @@ class BottomUpExplorer {
 
   // We expand an invariant by pushing it and its first input variable onto
   // each stack.
+  template<bool DoCommit>
   void expandInvariant(InvariantId inv);
+  void expandInvariantCommit(InvariantId inv);
+  void expandInvariantProbe(InvariantId inv);
   void notifyCurrentInvariant();
+  template<bool DoCommit>
   bool visitNextVariable();
 
  public:
   BottomUpExplorer() = delete;
   BottomUpExplorer(PropagationEngine& e, size_t expectedSize);
 
+  void populateAncestors();
   void registerVar(VarId);
   void registerInvariant(InvariantId);
   /**
