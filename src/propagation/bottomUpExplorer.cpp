@@ -10,14 +10,79 @@ BottomUpExplorer::BottomUpExplorer(PropagationEngine& e, size_t expectedSize)
       varStableAt(expectedSize),
       invariantStableAt(expectedSize),
       varIsOnStack(expectedSize),
-      invariantIsOnStack(expectedSize) {
+      invariantIsOnStack(expectedSize),
+      m_decisionVarAncestor(expectedSize) {
   variableStack_.reserve(expectedSize);
   invariantStack_.reserve(expectedSize);
 }
 
+void BottomUpExplorer::populateAncestors() {
+  std::vector<bool> varVisited(m_engine.getNumVariables() + 1);
+  std::deque<IdBase> stack(m_engine.getNumVariables() + 1);
+
+  for (IdBase idx = 1; idx <= m_engine.getNumVariables(); ++idx) {
+    m_decisionVarAncestor.register_idx(idx);
+    m_decisionVarAncestor[idx].clear();
+    m_decisionVarAncestor[idx].reserve(
+        m_engine.getDecisionVariables().size());
+  }
+
+  varVisited.resize(m_engine.getNumVariables() + 1);
+
+  for (const VarIdBase decisionVar : m_engine.getDecisionVariables()) {
+    std::fill(varVisited.begin(), varVisited.end(), NULL_ID);
+    stack.clear();
+    stack.push_back(decisionVar);
+    varVisited[decisionVar] = true;
+
+    while (stack.size() > 0) {
+      const VarIdBase id = stack.back();
+      stack.pop_back();
+      m_decisionVarAncestor[id].emplace(decisionVar);
+      
+      for (InvariantId invariantId : m_engine.getInvariantsDefinedBy(IdBase(id))) {
+        for (VarIdBase outputVar : m_engine.getVariablesDefinedBy(invariantId)) {
+          if (!varVisited[outputVar]) {
+            varVisited[outputVar] = true;
+            stack.push_back(outputVar);
+          }
+        }
+      }
+    }
+  }
+}
+
+void BottomUpExplorer::populateCommittedAncestors(Timestamp t) {
+  m_committedAncestors.clear();
+  m_committedAncestors.reserve(
+      m_engine.getDecisionVariables().size());
+  
+  for (VarIdBase decisionVar : m_engine.getDecisionVariables()) {
+    if (m_engine.getTmpTimestamp(decisionVar) == t) {
+      m_committedAncestors.push_back(decisionVar);
+    }
+  }
+}
+
 // We expand an invariant by pushing it and its first input variable onto each
 // stack.
-void BottomUpExplorer::expandInvariant(InvariantId inv) {
+void BottomUpExplorer::expandInvariantCommit(InvariantId inv) {
+  if (invariantIsOnStack.get(inv)) {
+    throw DynamicCycleException();
+  }
+  for (VarIdBase varId : m_engine.getInputVariables(inv)) {
+    for (VarIdBase decisionVar : m_committedAncestors) {
+      if (m_decisionVarAncestor[varId].find(decisionVar) != m_decisionVarAncestor[varId].end()) {
+        pushVariableStack(varId);
+        break;
+      }
+    }
+  }
+  
+  pushInvariantStack(inv);
+}
+
+void BottomUpExplorer::expandInvariantProbe(InvariantId inv) {
   if (invariantIsOnStack.get(inv)) {
     throw DynamicCycleException();
   }
@@ -33,11 +98,30 @@ void BottomUpExplorer::expandInvariant(InvariantId inv) {
   pushInvariantStack(inv);
 }
 
+template void BottomUpExplorer::expandInvariant<true>(InvariantId inv);
+template void BottomUpExplorer::expandInvariant<false>(InvariantId inv);
+
+template <bool DoCommit>
+void BottomUpExplorer::expandInvariant(InvariantId inv) {
+  if constexpr(DoCommit) {
+    expandInvariantCommit(inv);
+  } else {
+    expandInvariantProbe(inv);
+  }
+}
+
 void BottomUpExplorer::notifyCurrentInvariant() {
   m_engine.notifyCurrentDependencyChanged(peekInvariantStack());
 }
 
+template bool BottomUpExplorer::visitNextVariable<true>();
+template bool BottomUpExplorer::visitNextVariable<false>();
+
+template <bool DoCommit>
 bool BottomUpExplorer::visitNextVariable() {
+  if constexpr(DoCommit) {
+    return true;
+  }
   popVariableStack();
   VarId nextVar = m_engine.getNextDependency(peekInvariantStack());
   while (nextVar != NULL_ID && !m_engine.isOnPropagationPath(nextVar)) {
@@ -67,6 +151,9 @@ template void BottomUpExplorer::propagate<false>(Timestamp currentTime);
 
 template <bool DoCommit>
 void BottomUpExplorer::propagate(Timestamp currentTime) {
+  if constexpr(DoCommit) {
+    populateCommittedAncestors(currentTime);
+  }
   // recursively expand variables to compute their value.
   while (varStackIdx_ > 0) {
     VarId currentVar = peekVariableStack();
@@ -84,7 +171,7 @@ void BottomUpExplorer::propagate(Timestamp currentTime) {
           m_engine.getDefiningInvariant(currentVar) != NULL_ID) {
         // Variable is defined, on propagation path, and not stable, so expand
         // defining invariant.
-        expandInvariant(m_engine.getDefiningInvariant(currentVar));
+        expandInvariant<DoCommit>(m_engine.getDefiningInvariant(currentVar));
         continue;
       }
     }
@@ -98,7 +185,7 @@ void BottomUpExplorer::propagate(Timestamp currentTime) {
       // notification to top invariant (i.e, the one asking for its value)
       notifyCurrentInvariant();
     }
-    bool invariantDone = visitNextVariable();
+    bool invariantDone = visitNextVariable<DoCommit>();
     if (invariantDone) {
       if constexpr (DoCommit) {
         m_engine.commitInvariant(peekInvariantStack());
