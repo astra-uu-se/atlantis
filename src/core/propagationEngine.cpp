@@ -4,7 +4,7 @@ PropagationEngine::PropagationEngine()
     : m_mode(PropagationMode::INPUT_TO_OUTPUT),
       m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
-      m_bottomUpExplorer(*this, ESTIMATED_NUM_OBJECTS),
+      m_outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
       // m_propGraph.m_propagationQueue(PropagationGraph::PriorityCmp(m_propGraph)),
       m_isEnqueued(ESTIMATED_NUM_OBJECTS),
       m_varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
@@ -25,7 +25,7 @@ void PropagationEngine::close() {
     std::cout << "foo";
   }
   if (m_mode == PropagationMode::OUTPUT_TO_INPUT) {
-    m_bottomUpExplorer.populateAncestors();
+    m_outputToInputExplorer.populateAncestors();
   }
 
   // compute initial values for variables and for (internal datastructure of)
@@ -73,14 +73,14 @@ void PropagationEngine::registerDefinedVariable(VarId dependent,
 void PropagationEngine::registerVar(VarId v) {
   m_numVariables++;
   m_propGraph.registerVar(v);
-  m_bottomUpExplorer.registerVar(v);
+  m_outputToInputExplorer.registerVar(v);
   m_isEnqueued.register_idx(v, false);
   m_varIsOnPropagationPath.register_idx(v, false);
 }
 
 void PropagationEngine::registerInvariant(InvariantId i) {
   m_propGraph.registerInvariant(i);
-  m_bottomUpExplorer.registerInvariant(i);
+  m_outputToInputExplorer.registerInvariant(i);
 }
 
 //---------------------Propagation---------------------
@@ -139,7 +139,7 @@ void PropagationEngine::beginMove() {
   assert(!m_isMoving);
   m_isMoving = true;
   ++m_currentTime;
-  // only needed for bottom up propagation
+  // only needed for output-to-input propagation
   clearPropagationPath();
 }
 
@@ -154,7 +154,7 @@ void PropagationEngine::query(VarId id) {
   if (m_mode == PropagationMode::INPUT_TO_OUTPUT) {
     return;
   }
-  m_bottomUpExplorer.registerForPropagation(m_currentTime, getSourceId(id));
+  m_outputToInputExplorer.registerForPropagation(m_currentTime, getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
@@ -163,24 +163,16 @@ void PropagationEngine::endQuery() {
       propagate<false>();
       break;
     case PropagationMode::OUTPUT_TO_INPUT:
-      if (m_useMarkingForBottomUp) {
-        markPropagationPathAndEmptyModifiedVariables();
-      } else {
-        emptyModifiedVariables();
-      }
-      bottomUpPropagate<false>();
+      emptyModifiedVariables();
+      outputToInputePropagate<true>();
       break;
     case PropagationMode::MIXED:
-      if (m_useMarkingForBottomUp) {
-        markPropagationPathAndEmptyModifiedVariables();
-      } else {
-        emptyModifiedVariables();
-      }
-      bottomUpPropagate<false>();
+      markPropagationPathAndEmptyModifiedVariables();
+      outputToInputePropagate<false>();
       break;
   }
   // We must always clear due to the current version of query()
-  m_bottomUpExplorer.clearRegisteredVariables();
+  m_outputToInputExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::beginCommit() {}
@@ -191,12 +183,12 @@ void PropagationEngine::endCommit() {
       propagate<true>();
       break;
     case PropagationMode::OUTPUT_TO_INPUT:
-      if (m_useMarkingForBottomUp) {
+      if (m_useMarkingForOutputToInput) {
         markPropagationPathAndEmptyModifiedVariables();
       } else {
         emptyModifiedVariables();
       }
-      bottomUpPropagate<true>();
+      outputToInputePropagate<true>();
       // BUG: Variables that are not dynamically defining the queries variables
       // will not be properly updated: they should be marked as changed until
       // committed but this does not happen.
@@ -207,7 +199,7 @@ void PropagationEngine::endCommit() {
       break;
   }
   // We must always clear due to the current version of query()
-  m_bottomUpExplorer.clearRegisteredVariables();
+  m_outputToInputExplorer.clearRegisteredVariables();
 
   return;
   // Todo: This just commits everything and can be very inefficient, instead
