@@ -10,9 +10,58 @@ BottomUpExplorer::BottomUpExplorer(PropagationEngine& e, size_t expectedSize)
       varStableAt(expectedSize),
       invariantStableAt(expectedSize),
       varIsOnStack(expectedSize),
-      invariantIsOnStack(expectedSize) {
+      invariantIsOnStack(expectedSize),
+      m_decisionVarAncestor(expectedSize) {
   variableStack_.reserve(expectedSize);
   invariantStack_.reserve(expectedSize);
+}
+
+void BottomUpExplorer::populateAncestors() {
+  std::vector<bool> varVisited(m_engine.getNumVariables() + 1);
+  std::deque<IdBase> stack(m_engine.getNumVariables() + 1);
+
+  for (IdBase idx = 1; idx <= m_engine.getNumVariables(); ++idx) {
+    m_decisionVarAncestor.register_idx(idx);
+    m_decisionVarAncestor[idx].clear();
+    m_decisionVarAncestor[idx].reserve(
+        m_engine.getDecisionVariables().size());
+  }
+
+  varVisited.resize(m_engine.getNumVariables() + 1);
+
+  for (const VarIdBase decisionVar : m_engine.getDecisionVariables()) {
+    std::fill(varVisited.begin(), varVisited.end(), NULL_ID);
+    stack.clear();
+    stack.push_back(decisionVar);
+    varVisited[decisionVar] = true;
+
+    while (stack.size() > 0) {
+      const VarIdBase id = stack.back();
+      stack.pop_back();
+      m_decisionVarAncestor[id].emplace(decisionVar);
+      
+      for (InvariantId invariantId : m_engine.getInvariantsDefinedBy(IdBase(id))) {
+        for (VarIdBase outputVar : m_engine.getVariablesDefinedBy(invariantId)) {
+          if (!varVisited[outputVar]) {
+            varVisited[outputVar] = true;
+            stack.push_back(outputVar);
+          }
+        }
+      }
+    }
+  }
+}
+
+void BottomUpExplorer::populateModifiedAncestors(Timestamp t) {
+  m_modifiedAncestors.clear();
+  m_modifiedAncestors.reserve(
+      m_engine.getDecisionVariables().size());
+  
+  for (VarIdBase decisionVar : m_engine.getDecisionVariables()) {
+    if (m_engine.hasChanged(t, decisionVar)) {
+      m_modifiedAncestors.push_back(decisionVar);
+    }
+  }
 }
 
 // We expand an invariant by pushing it and its first input variable onto each
@@ -67,6 +116,9 @@ template void BottomUpExplorer::propagate<false>(Timestamp currentTime);
 
 template <bool DoCommit>
 void BottomUpExplorer::propagate(Timestamp currentTime) {
+  if constexpr(DoCommit) {
+    populateCommittedAncestors(currentTime);
+  }
   // recursively expand variables to compute their value.
   while (varStackIdx_ > 0) {
     VarId currentVar = peekVariableStack();
