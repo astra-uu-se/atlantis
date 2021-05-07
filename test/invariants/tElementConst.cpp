@@ -98,11 +98,11 @@ class ElementConstTest : public ::testing::Test {
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-    engine->mode = propMode;
+    engine->setPropagationMode(propMode);
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    if (engine->getPropagationMode() == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
@@ -110,7 +110,7 @@ class ElementConstTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    } else if (engine->getPropagationMode() == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(2);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
@@ -119,7 +119,7 @@ class ElementConstTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    } else if (engine->getPropagationMode() == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
@@ -160,12 +160,12 @@ TEST_F(ElementConstTest, CreateElement) {
   EXPECT_EQ(engine->getNewValue(output), 3);
 }
 
-TEST_F(ElementConstTest, NotificationsTopDown) {
-  testNotifications(PropagationEngine::PropagationMode::TOP_DOWN);
+TEST_F(ElementConstTest, NotificationsInputToOutput) {
+  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
-TEST_F(ElementConstTest, NotificationsBottomUp) {
-  testNotifications(PropagationEngine::PropagationMode::BOTTOM_UP);
+TEST_F(ElementConstTest, NotificationsOutputToInput) {
+  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 
 }  // namespace

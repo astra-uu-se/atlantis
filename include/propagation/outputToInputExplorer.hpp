@@ -11,7 +11,7 @@
 // Forward declare PropagationEngine
 class PropagationEngine;
 
-class BottomUpExplorer {
+class OutputToInputExplorer {
   PropagationEngine& m_engine;
 
   std::vector<VarId> variableStack_;
@@ -27,6 +27,12 @@ class BottomUpExplorer {
   IdMap<VarIdBase, std::unordered_set<size_t>> m_decisionVarAncestor;
   std::vector<VarIdBase> m_modifiedAncestors;
 
+  template <bool OutputToInputMarking>
+  void preprocessVarStack(Timestamp);
+  
+  template <bool OutputToInputMarking>
+  bool isUpToDate(VarIdBase);
+  
   void populateModifiedAncestors(Timestamp);
   void pushVariableStack(VarId v);
   void popVariableStack();
@@ -40,13 +46,17 @@ class BottomUpExplorer {
 
   // We expand an invariant by pushing it and its first input variable onto
   // each stack.
+  template <bool OutputToInputMarking>
   void expandInvariant(InvariantId inv);
+  
   void notifyCurrentInvariant();
+  
+  template <bool OutputToInputMarking>
   bool visitNextVariable();
 
  public:
-  BottomUpExplorer() = delete;
-  BottomUpExplorer(PropagationEngine& e, size_t expectedSize);
+  OutputToInputExplorer() = delete;
+  OutputToInputExplorer(PropagationEngine& e, size_t expectedSize);
 
   void populateAncestors();
   void registerVar(VarId);
@@ -58,53 +68,53 @@ class BottomUpExplorer {
 
   void clearRegisteredVariables();
 
-  template <bool DoCommit>
+  template <bool OutputToInputMarking>
   void propagate(Timestamp currentTime);
 };
 
-inline void BottomUpExplorer::registerForPropagation(Timestamp, VarId id) {
+inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
   // TODO: why not set varIsOnStack.at(v) = true;?
   // I remember that there was some technical reason but this need to be
   // documented. Note that this might overflow the stack otherwise.
   variableStack_[varStackIdx_++] = id;
 }
 
-inline void BottomUpExplorer::clearRegisteredVariables() { varStackIdx_ = 0; }
+inline void OutputToInputExplorer::clearRegisteredVariables() { varStackIdx_ = 0; }
 
-inline void BottomUpExplorer::pushVariableStack(VarId v) {
+inline void OutputToInputExplorer::pushVariableStack(VarId v) {
   varIsOnStack.set(v, true);
   variableStack_[varStackIdx_++] = v;
 }
-inline void BottomUpExplorer::popVariableStack() {
+inline void OutputToInputExplorer::popVariableStack() {
   varIsOnStack.set(variableStack_[--varStackIdx_], false);
 }
-inline VarId BottomUpExplorer::peekVariableStack() {
+inline VarId OutputToInputExplorer::peekVariableStack() {
   return variableStack_[varStackIdx_ - 1];
 }
 
-inline void BottomUpExplorer::pushInvariantStack(InvariantId i) {
+inline void OutputToInputExplorer::pushInvariantStack(InvariantId i) {
   if (invariantIsOnStack.get(i)) {
     throw DynamicCycleException();
   }
   invariantIsOnStack.set(i, true);
   invariantStack_[invariantStackIdx_++] = i;
 }
-inline void BottomUpExplorer::popInvariantStack() {
+inline void OutputToInputExplorer::popInvariantStack() {
   invariantIsOnStack.set(invariantStack_[--invariantStackIdx_], false);
 }
 
-inline InvariantId BottomUpExplorer::peekInvariantStack() {
+inline InvariantId OutputToInputExplorer::peekInvariantStack() {
   return invariantStack_[invariantStackIdx_ - 1];
 }
 
-inline void BottomUpExplorer::markStable(Timestamp t, VarId v) {
+inline void OutputToInputExplorer::markStable(Timestamp t, VarId v) {
   varStableAt[v] = t;
 }
 
-inline bool BottomUpExplorer::isStable(Timestamp t, VarId v) {
+inline bool OutputToInputExplorer::isStable(Timestamp t, VarId v) {
   return varStableAt.at(v) == t;
 }
 
-inline bool BottomUpExplorer::isStable(Timestamp t, InvariantId v) {
+inline bool OutputToInputExplorer::isStable(Timestamp t, InvariantId v) {
   return invariantStableAt.at(v) == t;
 }

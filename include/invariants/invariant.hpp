@@ -79,7 +79,7 @@ class Invariant {
   void registerDefinedVariable(Engine& e, VarId v);
 
   /**
-   * Used in Top-Down (Input-to-Output) propagation to notify that a
+   * Used in Input-to-Output propagation to notify that a
    * variable local to the invariant has had its value changed. This
    * method is called for each variable that was marked as modified
    * in notify.
@@ -132,20 +132,20 @@ class Invariant {
   virtual VarId getNextDependency(Timestamp, Engine& e) = 0;
 
   /**
-   * Used in bottom-up (Output-to-Input) propagation to notify to the
+   * Used in Output-to-Input propagation to notify to the
    * invariant that the current dependency (the last dependency given by
    * getNextDependency) has had its value changed.
    */
   virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) = 0;
 
   /**
-   * Used in the Top-Down (Input-to-Output) propagation to notify that an
+   * Used in the Input-to-Output propagation to notify that an
    * input variable has had its value changed.
    */
   void notify(LocalId id);
 
   /**
-   * Used in the Top-Down (Input-to-Output) propagation when the invariant
+   * Used in the Input-to-Output propagation when the invariant
    * has been notified of all modified input variables (dependencies) and
    * the primary and non-primary output variables (dependants) are to be
    * computed.

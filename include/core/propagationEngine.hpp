@@ -4,21 +4,21 @@
 
 #include "core/engine.hpp"
 #include "misc/logging.hpp"
-#include "propagation/bottomUpExplorer.hpp"
+#include "propagation/outputToInputExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
 #include "utils/idMap.hpp"
 
 class PropagationEngine : public Engine {
  public:
   enum class PropagationMode { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT, MIXED };
-  const bool m_useMarkingForBottomUp = true;
+  const bool m_useMarkingForOutputToInput = true;
 
  protected:
   PropagationMode m_mode;
   size_t m_numVariables;
 
   PropagationGraph m_propGraph;
-  BottomUpExplorer m_bottomUpExplorer;
+  OutputToInputExplorer m_outputToInputExplorer;
 
   IdMap<VarId, bool> m_isEnqueued;
 
@@ -33,7 +33,7 @@ class PropagationEngine : public Engine {
   void propagate();
 
   template <bool DoCommit>
-  void bottomUpPropagate();
+  void outputToInputePropagate();
 
   void markPropagationPathAndEmptyModifiedVariables();
   void clearPropagationPath();
@@ -112,7 +112,7 @@ class PropagationEngine : public Engine {
   [[nodiscard]] const std::vector<VarIdBase>& getVariablesDefinedBy(
       InvariantId) const;
 
-  [[nodiscard]] const std::vector<InvariantId>& getInvariantsDefinedBy(
+  [[nodiscard]] const std::vector<InvariantId>& getListeningInvariants(
       VarId) const;
 
   /**
@@ -154,7 +154,7 @@ inline void PropagationEngine::clearPropagationPath() {
 }
 
 inline bool PropagationEngine::isOnPropagationPath(VarId id) {
-  return !m_useMarkingForBottomUp || m_varIsOnPropagationPath.get(id);
+  return m_varIsOnPropagationPath.get(id);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
@@ -162,9 +162,9 @@ inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
   return m_propGraph.getVariablesDefinedBy(inv);
 }
 
-inline const std::vector<InvariantId>& PropagationEngine::getInvariantsDefinedBy(
+inline const std::vector<InvariantId>& PropagationEngine::getListeningInvariants(
     VarId id) const {
-  return m_propGraph.getInvariantsDefinedBy(id);
+  return m_propGraph.getListeningInvariants(id);
 }
 
 inline VarId PropagationEngine::getNextDependency(InvariantId inv) {
@@ -214,6 +214,6 @@ inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(Invari
 }
 
 template <bool DoCommit>
-inline void PropagationEngine::bottomUpPropagate() {
-  m_bottomUpExplorer.propagate<DoCommit>(m_currentTime);
+inline void PropagationEngine::outputToInputePropagate() {
+  m_outputToInputExplorer.propagate<DoCommit>(m_currentTime);
 }
