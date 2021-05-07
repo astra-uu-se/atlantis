@@ -24,6 +24,10 @@ class BottomUpExplorer {
   IdMap<VarId, bool> varIsOnStack;
   IdMap<InvariantId, bool> invariantIsOnStack;
 
+  IdMap<VarIdBase, std::unordered_set<size_t>> m_decisionVarAncestor;
+  std::vector<VarIdBase> m_modifiedAncestors;
+
+  void populateModifiedAncestors(Timestamp);
   void pushVariableStack(VarId v);
   void popVariableStack();
   VarId peekVariableStack();
@@ -44,6 +48,7 @@ class BottomUpExplorer {
   BottomUpExplorer() = delete;
   BottomUpExplorer(PropagationEngine& e, size_t expectedSize);
 
+  void populateAncestors();
   void registerVar(VarId);
   void registerInvariant(InvariantId);
   /**
