@@ -53,7 +53,7 @@ class OutputToInputExplorer {
 
   void clearRegisteredVariables();
 
-  template <bool DoCommit>
+  template <bool OutputToInputMarking>
   void propagate(Timestamp currentTime);
 };
 
