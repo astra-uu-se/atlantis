@@ -32,7 +32,7 @@ class PropagationEngine : public Engine {
   template <bool DoCommit>
   void propagate();
 
-  template <bool DoCommit>
+  template <bool OutputToInputMarking>
   void outputToInputePropagate();
 
   void markPropagationPathAndEmptyModifiedVariables();
@@ -213,7 +213,7 @@ inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(Invari
   return m_propGraph.getInputVariables(inv);
 }
 
-template <bool DoCommit>
+template <bool OutputToInputMarking>
 inline void PropagationEngine::outputToInputePropagate() {
-  m_outputToInputExplorer.propagate<DoCommit>(m_currentTime);
+  m_outputToInputExplorer.propagate<OutputToInputMarking>(m_currentTime);
 }
