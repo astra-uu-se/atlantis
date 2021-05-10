@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <memory>
+#include <unordered_set>
 #include <vector>
 
 #include "core/types.hpp"
@@ -29,10 +30,10 @@ class OutputToInputExplorer {
 
   template <bool OutputToInputMarking>
   void preprocessVarStack(Timestamp);
-  
+
   template <bool OutputToInputMarking>
   bool isUpToDate(VarIdBase);
-  
+
   void populateModifiedAncestors(Timestamp);
   void pushVariableStack(VarId v);
   void popVariableStack();
@@ -48,9 +49,9 @@ class OutputToInputExplorer {
   // each stack.
   template <bool OutputToInputMarking>
   void expandInvariant(InvariantId inv);
-  
+
   void notifyCurrentInvariant();
-  
+
   template <bool OutputToInputMarking>
   bool visitNextVariable();
 
@@ -79,7 +80,9 @@ inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
   variableStack_[varStackIdx_++] = id;
 }
 
-inline void OutputToInputExplorer::clearRegisteredVariables() { varStackIdx_ = 0; }
+inline void OutputToInputExplorer::clearRegisteredVariables() {
+  varStackIdx_ = 0;
+}
 
 inline void OutputToInputExplorer::pushVariableStack(VarId v) {
   varIsOnStack.set(v, true);

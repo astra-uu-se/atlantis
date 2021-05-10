@@ -1,19 +1,22 @@
 #pragma once
 
 #include <cassert>
-#include <memory>
+#include <string>
 #include <vector>
 
-#include "constraints/constraint.hpp"
+// #include "constraints/constraint.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
 #include "misc/logging.hpp"
 #include "store/store.hpp"
 #include "utils/idMap.hpp"
-#include "variables/intVar.hpp"
-#include "views/intView.hpp"
+// #include "variables/intVar.hpp"
+// #include "views/intView.hpp"
 
+class IntVar;
+class IntView;
 class Invariant;
+class Constraint;
 
 class Engine {
  protected:

@@ -3,7 +3,6 @@
 #include <memory>
 #include <vector>
 
-#include "core/engine.hpp"
 #include "invariants/invariant.hpp"
 #include "utils/idMap.hpp"
 #include "variables/intVar.hpp"

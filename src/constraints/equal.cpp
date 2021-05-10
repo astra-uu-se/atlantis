@@ -1,5 +1,7 @@
 #include "constraints/equal.hpp"
 
+#include "core/engine.hpp"
+
 /**
  * Constraint a*x = b*y
  * @param violationId id for the violationCount

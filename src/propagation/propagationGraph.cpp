@@ -1,5 +1,8 @@
 #include "propagation/propagationGraph.hpp"
 
+#include <algorithm>
+#include <iostream>
+
 PropagationGraph::PropagationGraph(size_t expectedSize)
     : m_numInvariants(0),
       m_numVariables(0),
@@ -8,9 +11,9 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
       m_inputVariables(expectedSize),
       m_listeningInvariants(expectedSize),
       m_topology(*this) {
-        m_decisionVariables;
-        m_outputVariables;
-      }
+  // m_decisionVariables;
+  // m_outputVariables;
+}
 
 void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   // Everything must be registered in sequence.
