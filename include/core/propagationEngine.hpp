@@ -14,7 +14,7 @@ class PropagationEngine : public Engine {
   const bool m_useMarkingForOutputToInput = true;
 
  protected:
-  PropagationMode mode;
+  PropagationMode m_mode;
   size_t m_numVariables;
 
   PropagationGraph m_propGraph;
@@ -165,7 +165,7 @@ inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
 
 inline void PropagationEngine::setPropagationMode(PropagationMode m) {
   assert(m_isOpen);
-  mode = m;
+  m_mode = m;
 }
 
 template <bool OutputToInputMarking>

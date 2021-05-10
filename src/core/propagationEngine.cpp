@@ -3,7 +3,7 @@
 #include <iostream>
 
 PropagationEngine::PropagationEngine()
-    : mode(PropagationMode::INPUT_TO_OUTPUT),
+    : m_mode(PropagationMode::INPUT_TO_OUTPUT),
       m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
@@ -149,14 +149,14 @@ void PropagationEngine::endMove() {
 void PropagationEngine::beginQuery() {}
 
 void PropagationEngine::query(VarId id) {
-  if (mode == PropagationMode::INPUT_TO_OUTPUT) {
+  if (m_mode == PropagationMode::INPUT_TO_OUTPUT) {
     return;
   }
   m_outputToInputExplorer.registerForPropagation(m_currentTime, getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
-  switch (mode) {
+  switch (m_mode) {
     case PropagationMode::INPUT_TO_OUTPUT:
       propagate<false>();
       break;
@@ -184,7 +184,7 @@ void PropagationEngine::endQuery() {
 void PropagationEngine::beginCommit() {}
 
 void PropagationEngine::endCommit() {
-  switch (mode) {
+  switch (m_mode) {
     case PropagationMode::INPUT_TO_OUTPUT:
       propagate<true>();
       break;
