@@ -78,8 +78,9 @@ void PropagationGraph::close() {
   // Reset propagation queue data structure.
   // TODO: Be sure that this does not cause a memeory leak...
   // m_propagationQueue = PropagationQueue();
-  size_t numLayers = *std::max_element(m_topology.m_variablePosition.begin(),
-                                       m_topology.m_variablePosition.end());
+  size_t numLayers =
+      1 + *std::max_element(m_topology.m_variablePosition.begin(),
+                            m_topology.m_variablePosition.end());
   m_propagationQueue.init(getNumVariables(), numLayers);
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
     VarIdBase id = VarIdBase(i);
