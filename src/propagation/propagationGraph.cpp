@@ -1,5 +1,6 @@
 #include "propagation/propagationGraph.hpp"
 
+#include <algorithm>
 #include <iostream>
 
 PropagationGraph::PropagationGraph(size_t expectedSize)
@@ -73,7 +74,7 @@ void PropagationGraph::close() {
     m_isInputVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
   }
 
-  m_topology.computeLayersWithCycles();
+  m_topology.computeWithCycles();
   // Reset propagation queue data structure.
   // TODO: Be sure that this does not cause a memeory leak...
   m_propagationQueue = PropagationQueue();
