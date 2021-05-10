@@ -301,11 +301,11 @@ TEST_F(LinearTest, CreateLinear) {
   EXPECT_EQ(engine->getNewValue(output), sum);
 }
 
-TEST_F(LinearTest, NotificationsTopDown) {
+TEST_F(LinearTest, NotificationsInputToOutput) {
   testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
-TEST_F(LinearTest, NotificationsBottomUp) {
+TEST_F(LinearTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 

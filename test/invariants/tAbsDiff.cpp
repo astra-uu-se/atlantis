@@ -188,11 +188,11 @@ TEST_F(AbsDiffTest, Modification) {
   EXPECT_EQ(engine->getNewValue(c), 100);
 }
 
-TEST_F(AbsDiffTest, NotificationsTopDown) {
+TEST_F(AbsDiffTest, NotificationsInputToOutput) {
   testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
-TEST_F(AbsDiffTest, NotificationsBottomUp) {
+TEST_F(AbsDiffTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 

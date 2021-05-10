@@ -151,11 +151,11 @@ TEST_F(IfThenElseTest, CreateElement) {
   EXPECT_EQ(engine->getNewValue(z), 0);
 }
 
-TEST_F(IfThenElseTest, NotificationsTopDown) {
+TEST_F(IfThenElseTest, NotificationsInputToOutput) {
   testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
-TEST_F(IfThenElseTest, NotificationsBottomUp) {
+TEST_F(IfThenElseTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 

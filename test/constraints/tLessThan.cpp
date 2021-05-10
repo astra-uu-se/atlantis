@@ -298,11 +298,11 @@ TEST_F(LessThanTest, CreateLessThan) {
   EXPECT_EQ(engine->getNewValue(viol), 6);
 }
 
-TEST_F(LessThanTest, NotificationsTopDown) {
+TEST_F(LessThanTest, NotificationsInputToOutput) {
   testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
-TEST_F(LessThanTest, NotificationsBottomUp) {
+TEST_F(LessThanTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 
