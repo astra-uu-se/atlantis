@@ -19,7 +19,11 @@ class PropagationQueue {
  public:
   PropagationQueue() : m_priorityNodes(0), head(nullptr), tail(nullptr) {}
 
-  void init() {}
+  void init(int, int) {
+    m_priorityNodes = IdMap<VarIdBase, std::unique_ptr<ListNode>>(0);
+    head = nullptr;
+    tail = nullptr;
+  }
 
   // vars must be initialised in order.
   void initVar(VarIdBase id, size_t priority) {
