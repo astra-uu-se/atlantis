@@ -102,7 +102,7 @@ class ElementConstTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
@@ -110,7 +110,7 @@ class ElementConstTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    } else if (engine->mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(2);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
@@ -161,11 +161,11 @@ TEST_F(ElementConstTest, CreateElement) {
 }
 
 TEST_F(ElementConstTest, NotificationsTopDown) {
-  testNotifications(PropagationEngine::PropagationMode::TOP_DOWN);
+  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
 TEST_F(ElementConstTest, NotificationsBottomUp) {
-  testNotifications(PropagationEngine::PropagationMode::BOTTOM_UP);
+  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 
 }  // namespace

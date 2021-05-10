@@ -4,21 +4,21 @@
 
 #include "core/engine.hpp"
 #include "misc/logging.hpp"
-#include "propagation/bottomUpExplorer.hpp"
+#include "propagation/outputToInputExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
 #include "utils/idMap.hpp"
 
 class PropagationEngine : public Engine {
  public:
-  enum class PropagationMode { TOP_DOWN, BOTTOM_UP, MIXED };
-  PropagationMode mode;
-  const bool m_useMarkingForBottomUp = true;
+  enum class PropagationMode { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT, MIXED };
+  const bool m_useMarkingForOutputToInput = true;
 
  protected:
+  PropagationMode mode;
   size_t m_numVariables;
 
   PropagationGraph m_propGraph;
-  BottomUpExplorer m_bottomUpExplorer;
+  OutputToInputExplorer m_outputToInputExplorer;
 
   IdMap<VarId, bool> m_isEnqueued;
 
@@ -32,8 +32,8 @@ class PropagationEngine : public Engine {
   template <bool DoCommit>
   void propagate();
 
-  template <bool DoCommit>
-  void bottomUpPropagate();
+  template <bool OutputToInputMarking>
+  void outputToInputPropagate();
 
   void markPropagationPathAndEmptyModifiedVariables();
   void clearPropagationPath();
@@ -135,7 +135,7 @@ inline void PropagationEngine::clearPropagationPath() {
 }
 
 inline bool PropagationEngine::isOnPropagationPath(VarId id) {
-  return !m_useMarkingForBottomUp || m_varIsOnPropagationPath.get(id);
+  return !m_useMarkingForOutputToInput || m_varIsOnPropagationPath.get(id);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
@@ -168,7 +168,7 @@ inline void PropagationEngine::setPropagationMode(PropagationMode m) {
   mode = m;
 }
 
-template <bool DoCommit>
-inline void PropagationEngine::bottomUpPropagate() {
-  m_bottomUpExplorer.propagate<DoCommit>(m_currentTime);
+template <bool OutputToInputMarking>
+inline void PropagationEngine::outputToInputPropagate() {
+  m_outputToInputExplorer.propagate<OutputToInputMarking>(m_currentTime);
 }
