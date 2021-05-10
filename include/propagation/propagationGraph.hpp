@@ -47,7 +47,6 @@ class PropagationGraph {
     explicit Topology(PropagationGraph& g) : graph(g) {}
     void computeNoCycles();
     void computeWithCycles();
-    void computeLayersWithCycles();
     void computeInvariantFromVariables();
     inline size_t getPosition(VarIdBase id) {
       return m_variablePosition[id.id];

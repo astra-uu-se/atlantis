@@ -1,22 +1,16 @@
 #pragma once
 #include <cassert>
-#include <memory>
 #include <vector>
 
 #include "../core/types.hpp"
 #include "../misc/logging.hpp"
 #include "utils/idMap.hpp"
+#include "utils/propagationListNode.hpp"
 
 class PropagationQueue {
- private:
-  struct ListNode {
-    size_t priority;
-    VarIdBase id;
-    ListNode* next;
-    ListNode(VarIdBase t_id, size_t t_priority)
-        : priority(t_priority), id(t_id), next(nullptr) {}
-  };
+  typedef PropagationListNode ListNode;
 
+ private:
   IdMap<VarIdBase, std::unique_ptr<ListNode>> m_priorityNodes;
   ListNode* head;
   ListNode* tail;
