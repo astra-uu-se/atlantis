@@ -1,5 +1,8 @@
 #include "variables/intVar.hpp"
 
+#include <iostream>
+#include <stdexcept>
+
 IntVar::IntVar(Int t_lowerBound, Int t_upperBound)
     : IntVar(NULL_ID, t_lowerBound, t_upperBound) {}
 
@@ -20,6 +23,15 @@ IntVar::IntVar(Timestamp t, VarId t_id, Int initValue, Int t_lowerBound,
     throw std::out_of_range(
         "Lower bound must be smaller than or equal to upper bound");
   }
+}
+
+void IntVar::updateDomain(Int t_lowerBound, Int t_upperBound) {
+  if (t_lowerBound > t_upperBound) {
+    throw std::out_of_range(
+        "Lower bound must be smaller than or equal to upper bound");
+  }
+  m_lowerBound = t_lowerBound;
+  m_upperBound = t_upperBound;
 }
 
 std::ostream& operator<<(std::ostream& out, IntVar const& var) {

@@ -221,14 +221,14 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->setValue(c, -3);
   engine->endMove();
 
-  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+  if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
         .Times(0);
 
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(moveTimestamp, testing::_))
         .Times(0);
-  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+  } else if (engine-> mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
@@ -238,12 +238,12 @@ TEST_F(EngineTest, SimplePropagation) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(moveTimestamp, testing::_))
         .Times(3);
-  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+  } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -271,13 +271,13 @@ TEST_F(EngineTest, SimpleCommit) {
 
   engine->close();
 
-  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+  if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
 
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(0);
-  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+  } else if (engine-> mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
@@ -287,7 +287,7 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(3);
-  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+  } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
@@ -298,7 +298,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endMove();
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -309,7 +309,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->query(output);
   engine->endQuery();
 
-  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+  if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
@@ -319,7 +319,7 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(0);
-  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+  } else if (engine-> mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
@@ -329,7 +329,7 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(1);
-  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+  } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 

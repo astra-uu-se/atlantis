@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cassert>
-#include <memory>
 #include <vector>
 
 #include "../core/types.hpp"
@@ -38,7 +36,7 @@ class PropagationGraph {
   IdMap<VarIdBase, std::vector<InvariantId>> m_listeningInvariants;
 
   std::vector<bool> m_isOutputVar;
-  std::vector<bool> m_isInputVar;
+  std::vector<bool> m_isDecisionVar;
 
   struct Topology {
     std::vector<size_t> m_variablePosition;
@@ -120,7 +118,7 @@ class PropagationGraph {
 
   inline bool isOutputVar(VarIdBase id) { return m_isOutputVar.at(id); }
 
-  inline bool isInputVar(VarIdBase id) { return m_isInputVar.at(id); }
+  inline bool isDecisionVar(VarIdBase id) { return m_isDecisionVar.at(id); }
 
   inline InvariantId getDefiningInvariant(VarIdBase v) {
     // Returns NULL_ID is not defined.

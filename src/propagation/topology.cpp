@@ -1,4 +1,5 @@
 #include <functional>
+#include <iostream>
 #include <queue>
 
 #include "exceptions/exceptions.hpp"
