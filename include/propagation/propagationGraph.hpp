@@ -69,8 +69,8 @@ class PropagationGraph {
     }
   };
 
-  // PropagationQueue m_propagationQueue;
-  LayeredPropagationQueue m_propagationQueue;
+  PropagationQueue m_propagationQueue;
+  // LayeredPropagationQueue m_propagationQueue;
   // std::priority_queue<VarIdBase, std::vector<VarIdBase>,
   //                     PropagationGraph::PriorityCmp>
   //     m_propagationQueue;

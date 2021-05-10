@@ -38,8 +38,9 @@ class LayeredPropagationQueue {
     m_priorities[id].next = nullptr;
   }
 
-  bool empty() { return m_currentLayer == m_queue.size(); }
-  void push(VarIdBase id) {
+  inline bool empty() { return m_currentLayer == m_queue.size(); }
+
+  inline void push(VarIdBase id) {
     ListNode& node = m_priorities[id];
     if (node.next != nullptr) {
       return;  // already enqueued
@@ -48,7 +49,8 @@ class LayeredPropagationQueue {
     m_queue[node.priority] = &node;
     m_currentLayer = std::min(m_currentLayer, node.priority);
   }
-  VarIdBase pop() {
+
+  inline VarIdBase pop() {
     ListNode* top = m_queue[m_currentLayer];
     m_queue[m_currentLayer] = top->next;
     top->next = nullptr;
@@ -58,5 +60,6 @@ class LayeredPropagationQueue {
     }
     return top->id;
   }
-  VarIdBase top() { return m_queue[m_currentLayer]->id; }
+
+  inline VarIdBase top() { return m_queue[m_currentLayer]->id; }
 };
