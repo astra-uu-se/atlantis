@@ -15,6 +15,9 @@ class PropagationEngine : public Engine {
 
  protected:
   PropagationMode m_mode;
+ public:
+  const PropagationMode& mode = m_mode;
+ protected:
   size_t m_numVariables;
 
   PropagationGraph m_propGraph;
