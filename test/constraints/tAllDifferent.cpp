@@ -273,11 +273,11 @@ TEST_F(AllDifferentTest, CreateAllDifferent) {
   EXPECT_EQ(engine->getNewValue(viol), numArgs - 1);
 }
 
-TEST_F(AllDifferentTest, NotificationsTopDown) {
+TEST_F(AllDifferentTest, NotificationsInputToOutput) {
   testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
-TEST_F(AllDifferentTest, NotificationsBottomUp) {
+TEST_F(AllDifferentTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 

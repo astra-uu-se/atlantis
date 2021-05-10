@@ -272,11 +272,11 @@ TEST_F(EqualTest, CreateEqual) {
   EXPECT_EQ(engine->getNewValue(viol), 5);
 }
 
-TEST_F(EqualTest, NotificationsTopDown) {
+TEST_F(EqualTest, NotificationsInputToOutput) {
   testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
-TEST_F(EqualTest, NotificationsBottomUp) {
+TEST_F(EqualTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 

@@ -160,11 +160,11 @@ TEST_F(ElementConstTest, CreateElement) {
   EXPECT_EQ(engine->getNewValue(output), 3);
 }
 
-TEST_F(ElementConstTest, NotificationsTopDown) {
+TEST_F(ElementConstTest, NotificationsInputToOutput) {
   testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
-TEST_F(ElementConstTest, NotificationsBottomUp) {
+TEST_F(ElementConstTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 
