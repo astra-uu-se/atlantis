@@ -1,5 +1,7 @@
 #include "constraints/lessThan.hpp"
 
+#include "core/engine.hpp"
+
 /**
  * Constraint x < y
  * @param violationId id for the violationCount

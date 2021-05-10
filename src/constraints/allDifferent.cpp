@@ -1,5 +1,7 @@
 #include "constraints/allDifferent.hpp"
 
+#include "core/engine.hpp"
+#include "variables/savedInt.hpp"
 /**
  * @param violationId id for the violationCount
  */
