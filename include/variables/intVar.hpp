@@ -1,7 +1,6 @@
 #pragma once
 
-#include <iostream>
-
+#include <iosfwd>
 #include "core/types.hpp"
 #include "variables/savedInt.hpp"
 #include "variables/var.hpp"
@@ -63,15 +62,8 @@ class IntVar : public Var {
   [[gnu::always_inline]] [[nodiscard]] inline bool inDomain(Int t_value) const {
     return m_lowerBound <= t_value && t_value <= m_upperBound;
   }
-  [[gnu::always_inline]] inline void updateDomain(Int t_lowerBound,
-                                                  Int t_upperBound) {
-    if (t_lowerBound > t_upperBound) {
-      throw std::out_of_range(
-          "Lower bound must be smaller than or equal to upper bound");
-    }
-    m_lowerBound = t_lowerBound;
-    m_upperBound = t_upperBound;
-  }
+  void updateDomain(Int t_lowerBound,
+                                                  Int t_upperBound);
 
   friend std::ostream& operator<<(std::ostream& out, IntVar const& var);
 };

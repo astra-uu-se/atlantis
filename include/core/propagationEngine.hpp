@@ -15,6 +15,11 @@ class PropagationEngine : public Engine {
 
  protected:
   PropagationMode m_mode;
+
+ public:
+  const PropagationMode& mode = m_mode;
+
+ protected:
   size_t m_numVariables;
 
   PropagationGraph m_propGraph;
@@ -33,7 +38,7 @@ class PropagationEngine : public Engine {
   void propagate();
 
   template <bool OutputToInputMarking>
-  void outputToInputePropagate();
+  void outputToInputPropagate();
 
   void markPropagationPathAndEmptyModifiedVariables();
   void clearPropagationPath();
@@ -162,8 +167,8 @@ inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
   return m_propGraph.getVariablesDefinedBy(inv);
 }
 
-inline const std::vector<InvariantId>& PropagationEngine::getListeningInvariants(
-    VarId id) const {
+inline const std::vector<InvariantId>&
+PropagationEngine::getListeningInvariants(VarId id) const {
   return m_propGraph.getListeningInvariants(id);
 }
 
@@ -190,14 +195,17 @@ inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
   notifyMaybeChanged(t, v);
 }
 
-inline void PropagationEngine::setPropagationMode(PropagationEngine::PropagationMode m) {
+inline void PropagationEngine::setPropagationMode(
+    PropagationEngine::PropagationMode m) {
   if (!m_isOpen) {
-    throw ModelNotOpenException("Cannot set propagation mode when model is closed");
+    throw ModelNotOpenException(
+        "Cannot set propagation mode when model is closed");
   }
   m_mode = m;
 }
 
-inline PropagationEngine::PropagationMode PropagationEngine::getPropagationMode() {
+inline PropagationEngine::PropagationMode
+PropagationEngine::getPropagationMode() {
   return m_mode;
 }
 
@@ -209,11 +217,12 @@ inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables() {
   return m_propGraph.m_outputVariables;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(InvariantId inv) {
+inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
+    InvariantId inv) {
   return m_propGraph.getInputVariables(inv);
 }
 
 template <bool OutputToInputMarking>
-inline void PropagationEngine::outputToInputePropagate() {
+inline void PropagationEngine::outputToInputPropagate() {
   m_outputToInputExplorer.propagate<OutputToInputMarking>(m_currentTime);
 }

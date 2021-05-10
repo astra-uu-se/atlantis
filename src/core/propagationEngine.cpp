@@ -1,5 +1,7 @@
 #include "core/propagationEngine.hpp"
 
+#include <iostream>
+
 PropagationEngine::PropagationEngine()
     : m_mode(PropagationMode::INPUT_TO_OUTPUT),
       m_numVariables(0),
@@ -154,7 +156,8 @@ void PropagationEngine::query(VarId id) {
   if (m_mode == PropagationMode::INPUT_TO_OUTPUT) {
     return;
   }
-  m_outputToInputExplorer.registerForPropagation(m_currentTime, getSourceId(id));
+  m_outputToInputExplorer.registerForPropagation(m_currentTime,
+                                                 getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
@@ -164,11 +167,11 @@ void PropagationEngine::endQuery() {
       break;
     case PropagationMode::OUTPUT_TO_INPUT:
       emptyModifiedVariables();
-      outputToInputePropagate<true>();
+      outputToInputPropagate<true>();
       break;
     case PropagationMode::MIXED:
       markPropagationPathAndEmptyModifiedVariables();
-      outputToInputePropagate<false>();
+      outputToInputPropagate<false>();
       break;
   }
   // We must always clear due to the current version of query()
@@ -188,7 +191,7 @@ void PropagationEngine::endCommit() {
       } else {
         emptyModifiedVariables();
       }
-      outputToInputePropagate<true>();
+      outputToInputPropagate<true>();
       // BUG: Variables that are not dynamically defining the queries variables
       // will not be properly updated: they should be marked as changed until
       // committed but this does not happen.
@@ -267,7 +270,8 @@ void PropagationEngine::propagate() {
        stableVarId = getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(stableVarId);
 
-    InvariantId definingInvariant = m_propGraph.getDefiningInvariant(stableVarId);
+    InvariantId definingInvariant =
+        m_propGraph.getDefiningInvariant(stableVarId);
 
 #ifdef PROPAGATION_DEBUG
     logDebug("\tPropagating " << variable);

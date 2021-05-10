@@ -3,11 +3,11 @@
 #include <memory>
 #include <vector>
 
-#include "../core/engine.hpp"
 #include "../core/types.hpp"
 #include "../variables/intVar.hpp"
 #include "constraint.hpp"
 
+class Engine;
 class Equal : public Constraint {
  private:
   VarId m_x;

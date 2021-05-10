@@ -3,7 +3,8 @@
 
 #include "core/propagationEngine.hpp"
 
-OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e, size_t expectedSize)
+OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
+                                             size_t expectedSize)
     : m_engine(e),
       varStackIdx_(0),
       invariantStackIdx_(0),
@@ -23,8 +24,7 @@ void OutputToInputExplorer::populateAncestors() {
   for (IdBase idx = 1; idx <= m_engine.getNumVariables(); ++idx) {
     m_decisionVarAncestor.register_idx(idx);
     m_decisionVarAncestor[idx].clear();
-    m_decisionVarAncestor[idx].reserve(
-        m_engine.getDecisionVariables().size());
+    m_decisionVarAncestor[idx].reserve(m_engine.getDecisionVariables().size());
   }
 
   varVisited.resize(m_engine.getNumVariables() + 1);
@@ -39,9 +39,11 @@ void OutputToInputExplorer::populateAncestors() {
       const VarIdBase id = stack.back();
       stack.pop_back();
       m_decisionVarAncestor[id].emplace(decisionVar);
-      
-      for (InvariantId invariantId : m_engine.getListeningInvariants(IdBase(id))) {
-        for (VarIdBase outputVar : m_engine.getVariablesDefinedBy(invariantId)) {
+
+      for (InvariantId invariantId :
+           m_engine.getListeningInvariants(IdBase(id))) {
+        for (VarIdBase outputVar :
+             m_engine.getVariablesDefinedBy(invariantId)) {
           if (!varVisited[outputVar]) {
             varVisited[outputVar] = true;
             stack.push_back(outputVar);
@@ -56,9 +58,10 @@ template bool OutputToInputExplorer::isUpToDate<true>(VarIdBase id);
 template bool OutputToInputExplorer::isUpToDate<false>(VarIdBase id);
 template <bool OutputToInputMarking>
 bool OutputToInputExplorer::isUpToDate(VarIdBase id) {
-  if constexpr(OutputToInputMarking) {
+  if constexpr (OutputToInputMarking) {
     for (const size_t ancestor : m_modifiedAncestors) {
-      if (m_decisionVarAncestor.at(id).find(ancestor) != m_decisionVarAncestor.at(id).end()) {
+      if (m_decisionVarAncestor.at(id).find(ancestor) !=
+          m_decisionVarAncestor.at(id).end()) {
         return false;
       }
     }
@@ -68,8 +71,10 @@ bool OutputToInputExplorer::isUpToDate(VarIdBase id) {
   }
 }
 
-template void OutputToInputExplorer::preprocessVarStack<false>(Timestamp currentTime);
-template void OutputToInputExplorer::preprocessVarStack<true>(Timestamp currentTime);
+template void OutputToInputExplorer::preprocessVarStack<false>(
+    Timestamp currentTime);
+template void OutputToInputExplorer::preprocessVarStack<true>(
+    Timestamp currentTime);
 template <bool OutputToInputMarking>
 void OutputToInputExplorer::preprocessVarStack(Timestamp currentTime) {
   size_t newStackSize = 0;
@@ -87,9 +92,8 @@ void OutputToInputExplorer::preprocessVarStack(Timestamp currentTime) {
 
 void OutputToInputExplorer::populateModifiedAncestors(Timestamp t) {
   m_modifiedAncestors.clear();
-  m_modifiedAncestors.reserve(
-      m_engine.getDecisionVariables().size());
-  
+  m_modifiedAncestors.reserve(m_engine.getDecisionVariables().size());
+
   for (VarIdBase decisionVar : m_engine.getDecisionVariables()) {
     if (m_engine.hasChanged(t, decisionVar)) {
       m_modifiedAncestors.push_back(decisionVar);
@@ -114,7 +118,7 @@ void OutputToInputExplorer::expandInvariant(InvariantId inv) {
   while (nextVar != NULL_ID && isUpToDate<OutputToInputMarking>(nextVar)) {
     nextVar = m_engine.getNextDependency(inv);
   }
-  
+
   if (nextVar.id == NULL_ID) {
     return;
   }
@@ -160,7 +164,7 @@ template void OutputToInputExplorer::propagate<false>(Timestamp currentTime);
 
 template <bool OutputToInputMarking>
 void OutputToInputExplorer::propagate(Timestamp currentTime) {
-  if constexpr(OutputToInputMarking) {
+  if constexpr (OutputToInputMarking) {
     populateModifiedAncestors(currentTime);
   }
   preprocessVarStack<OutputToInputMarking>(currentTime);
@@ -176,8 +180,9 @@ void OutputToInputExplorer::propagate(Timestamp currentTime) {
       // the variable as stable before we expand it as this otherwise results in
       // an infinite loop.
       markStable(currentTime, currentVar);
-      // Variable must be on 
-      expandInvariant<OutputToInputMarking>(m_engine.getDefiningInvariant(currentVar));
+      // Variable must be on
+      expandInvariant<OutputToInputMarking>(
+          m_engine.getDefiningInvariant(currentVar));
       continue;
     }
     if (invariantStackIdx_ == 0) {
