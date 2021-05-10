@@ -123,7 +123,7 @@ class LinearTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(*invariant,
@@ -132,7 +132,7 @@ class LinearTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    } else if (engine->mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(numArgs + 1);
       EXPECT_CALL(*invariant,
@@ -302,11 +302,11 @@ TEST_F(LinearTest, CreateLinear) {
 }
 
 TEST_F(LinearTest, NotificationsTopDown) {
-  testNotifications(PropagationEngine::PropagationMode::TOP_DOWN);
+  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
 TEST_F(LinearTest, NotificationsBottomUp) {
-  testNotifications(PropagationEngine::PropagationMode::BOTTOM_UP);
+  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 
 }  // namespace

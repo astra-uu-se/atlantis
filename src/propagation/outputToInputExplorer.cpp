@@ -1,9 +1,9 @@
 
-#include "propagation/bottomUpExplorer.hpp"
+#include "propagation/outputToInputExplorer.hpp"
 
 #include "core/propagationEngine.hpp"
 
-BottomUpExplorer::BottomUpExplorer(PropagationEngine& e, size_t expectedSize)
+OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e, size_t expectedSize)
     : m_engine(e),
       varStackIdx_(0),
       invariantStackIdx_(0),
@@ -17,7 +17,7 @@ BottomUpExplorer::BottomUpExplorer(PropagationEngine& e, size_t expectedSize)
 
 // We expand an invariant by pushing it and its first input variable onto each
 // stack.
-void BottomUpExplorer::expandInvariant(InvariantId inv) {
+void OutputToInputExplorer::expandInvariant(InvariantId inv) {
   if (invariantIsOnStack.get(inv)) {
     throw DynamicCycleException();
   }
@@ -33,11 +33,11 @@ void BottomUpExplorer::expandInvariant(InvariantId inv) {
   pushInvariantStack(inv);
 }
 
-void BottomUpExplorer::notifyCurrentInvariant() {
+void OutputToInputExplorer::notifyCurrentInvariant() {
   m_engine.notifyCurrentDependencyChanged(peekInvariantStack());
 }
 
-bool BottomUpExplorer::visitNextVariable() {
+bool OutputToInputExplorer::visitNextVariable() {
   popVariableStack();
   VarId nextVar = m_engine.getNextDependency(peekInvariantStack());
   while (nextVar != NULL_ID && !m_engine.isOnPropagationPath(nextVar)) {
@@ -50,23 +50,23 @@ bool BottomUpExplorer::visitNextVariable() {
   return false;  // not done with invariant
 }
 
-void BottomUpExplorer::registerVar(VarId id) {
+void OutputToInputExplorer::registerVar(VarId id) {
   variableStack_.emplace_back(NULL_ID);  // push back just to resize the stack!
   varStableAt.register_idx(id);
   varIsOnStack.register_idx(id, false);
 }
 
-void BottomUpExplorer::registerInvariant(InvariantId id) {
+void OutputToInputExplorer::registerInvariant(InvariantId id) {
   invariantStack_.emplace_back(NULL_ID);  // push back just to resize the stack!
   invariantStableAt.register_idx(id);
   invariantIsOnStack.register_idx(id, false);
 }
 
-template void BottomUpExplorer::propagate<true>(Timestamp currentTime);
-template void BottomUpExplorer::propagate<false>(Timestamp currentTime);
+template void OutputToInputExplorer::propagate<true>(Timestamp currentTime);
+template void OutputToInputExplorer::propagate<false>(Timestamp currentTime);
 
 template <bool DoCommit>
-void BottomUpExplorer::propagate(Timestamp currentTime) {
+void OutputToInputExplorer::propagate(Timestamp currentTime) {
   // recursively expand variables to compute their value.
   while (varStackIdx_ > 0) {
     VarId currentVar = peekVariableStack();

@@ -94,7 +94,7 @@ class AbsDiffTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(*invariant,
@@ -103,7 +103,7 @@ class AbsDiffTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+    } else if (engine->mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(3);
       EXPECT_CALL(*invariant,
@@ -158,14 +158,14 @@ TEST_F(AbsDiffTest, Modification) {
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-  if (engine->mode == PropagationEngine::PropagationMode::TOP_DOWN) {
+  if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, testing::_))
         .Times(AtLeast(1));
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(AnyNumber());
-  } else if (engine->mode == PropagationEngine::PropagationMode::BOTTOM_UP) {
+  } else if (engine->mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
         .Times(AtLeast(2));
     EXPECT_CALL(*invariant,
@@ -189,11 +189,11 @@ TEST_F(AbsDiffTest, Modification) {
 }
 
 TEST_F(AbsDiffTest, NotificationsTopDown) {
-  testNotifications(PropagationEngine::PropagationMode::TOP_DOWN);
+  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
 }
 
 TEST_F(AbsDiffTest, NotificationsBottomUp) {
-  testNotifications(PropagationEngine::PropagationMode::BOTTOM_UP);
+  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 
 }  // namespace
