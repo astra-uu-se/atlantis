@@ -19,6 +19,8 @@ class PropagationQueue {
  public:
   PropagationQueue() : m_priorityNodes(0), head(nullptr), tail(nullptr) {}
 
+  void init() {}
+
   // vars must be initialised in order.
   void initVar(VarIdBase id, size_t priority) {
     assert(!m_priorityNodes.has_idx(id));
