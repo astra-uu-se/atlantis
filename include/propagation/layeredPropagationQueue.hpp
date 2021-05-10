@@ -51,6 +51,7 @@ class LayeredPropagationQueue {
   VarIdBase pop() {
     ListNode* top = m_queue[m_currentLayer];
     m_queue[m_currentLayer] = top->next;
+    top->next = nullptr;
     while (m_currentLayer < m_queue.size() &&
            m_queue[m_currentLayer] == &m_dummy) {
       ++m_currentLayer;
