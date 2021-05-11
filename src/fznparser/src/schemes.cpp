@@ -97,6 +97,42 @@ void Schemes::scheme8() {
     defineLeastUsed();
   }
 }
+void Schemes::scheme9() {
+  _name = "ImpPrio\t";
+  reset();
+  defineImplicit();
+  defineAnnotated();
+  defineFromObjective();
+  defineUnique();
+  defineRest();
+  while (hasCycle().size()) {
+    removeCycles(true);
+    updateDomains();
+    defineImplicit();
+    defineAnnotated();
+    defineFromObjective();
+    defineUnique();
+    defineRest();
+  }
+}
+void Schemes::scheme10() {
+  _name = "AnnImp\t";
+  reset();
+  defineAnnotated();
+  defineImplicit();
+  defineFromObjective();
+  defineUnique();
+  defineRest();
+  while (hasCycle().size()) {
+    removeCycles(true);
+    updateDomains();
+    defineAnnotated();
+    defineImplicit();
+    defineFromObjective();
+    defineUnique();
+    defineRest();
+  }
+}
 
 void Schemes::random() {
   _name = "Random\t:";

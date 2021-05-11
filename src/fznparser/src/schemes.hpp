@@ -20,6 +20,8 @@ class Schemes {
   void scheme6();
   void scheme7();
   void scheme8();
+  void scheme9();
+  void scheme10();
   void random();
   void reset();
   void defineRandom();

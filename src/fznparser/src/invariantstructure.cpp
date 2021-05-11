@@ -67,6 +67,14 @@ void InvariantStructure::run() {
   s << _schemes.name();
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);
+  _schemes.scheme9();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+  _schemes.scheme10();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
   s << _stats.line();
   s << _stats.count();
   s << _stats.line();
