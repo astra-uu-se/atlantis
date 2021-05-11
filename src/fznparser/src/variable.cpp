@@ -70,7 +70,8 @@ Int Variable::upperBound() {
                             : _domain->upperBound();
 }
 bool Variable::hasEnlargedDomain() {
-  return hasImposedDomain() && _imposedDomain.value()->size() > _domain->size();
+  return hasImposedDomain() &&
+         (_imposedDomain.value()->size() > _domain->size());
 }
 std::vector<Node*> Variable::getNext() {
   std::vector<Node*> next;

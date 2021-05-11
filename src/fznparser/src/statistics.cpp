@@ -34,9 +34,12 @@ void Statistics::countDefinedVariables(bool labels) {
   std::cout << "===========================" << std::endl;
   std::cout << "=========VARIABLES=========" << std::endl;
   if (labels) {
-    variablesDefinedBy();
-    std::cout << "===========================" << std::endl;
+    // variablesDefinedBy();
+    // std::cout << "===========================" << std::endl;
+    std::cout << "=========BAD=========" << std::endl;
     freeVariables();
+    std::cout << "=========ENLARGED=========" << std::endl;
+    enlDomVariables();
   }
   std::cout << "===========================" << std::endl;
   std::cout << "Defined:\t";
@@ -63,10 +66,23 @@ void Statistics::variablesDefinedBy() {
 }
 void Statistics::freeVariables() {
   for (auto variable : _model->varMap().variables()) {
-    if (!variable->isDefined() && variable->isDefinable()) {
+    if (!variable->isDefined() && variable->isDefinable() &&
+        !variable->noPotDef()) {
       std::cout << "Var: " << variable->getName();
       std::cout << "\tDS: " << variable->domainSize();
       std::cout << "\tPot. Def:" << variable->orgPotDefSize();
+      std::cout << std::endl;
+    }
+  }
+}
+void Statistics::enlDomVariables() {
+  for (auto variable : _model->varMap().variables()) {
+    if (variable->hasEnlargedDomain()) {
+      std::cout << "Var: " << variable->getName();
+      std::cout << "\tDS: " << variable->domainSize();
+      std::cout << "\tORG: " << variable->_domain->size();
+      std::cout << "\tPot. Def: " << variable->orgPotDefSize();
+      std::cout << "\tDefined by: " << variable->definedBy()->getName();
       std::cout << std::endl;
     }
   }
@@ -145,7 +161,15 @@ void Statistics::constraints(bool labels) {
       invariant++;
     }
     if (labels) {
-      std::cout << constraint->getName() << std::endl;
+      if (constraint->isFunctional() && !constraint->isInvariant()) {
+        bool functional = false;
+        for (auto var : constraint->variables()) {
+          if (var->hasPotentialDefiner(constraint)) functional = true;
+        }
+        if (functional) {
+          std::cout << constraint->getName() << std::endl;
+        }
+      }
     }
   }
   std::cout << "===========================" << std::endl;
@@ -171,10 +195,11 @@ void Statistics::matchingAnnotations(bool labels) {
       annotations++;
       if (constraint->defines(constraint->annotationTarget().value())) {
         matching++;
-        if (labels) {
-          std::cout << constraint->getName() << " fulfills define annotation."
-                    << std::endl;
-        }
+        // if (labels) {
+        //   std::cout << constraint->getName() << " fulfills define
+        //   annotation."
+        //             << std::endl;
+        // }
       } else {
         if (labels) {
           std::cout << constraint->getName() << " should define "

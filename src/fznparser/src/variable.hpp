@@ -44,9 +44,10 @@ class Variable : public Node {
   Int orgPotDefSize() { return _orgPotentialDefiners.size(); }
   bool noPotDef() { return _orgPotentialDefiners.size() == 0; }
 
- private:
   std::optional<Domain*> _imposedDomain;
   const std::shared_ptr<Domain> _domain;
+
+ private:
   std::optional<Constraint*> _definedBy;
   std::set<Constraint*> _nextConstraints;
   std::set<Constraint*> _potentialDefiners;

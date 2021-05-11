@@ -17,6 +17,7 @@ class Statistics {
   void countDefinedVariables(bool labels);
   void variablesDefinedBy();
   void freeVariables();
+  void enlDomVariables();
   void allStats(bool labels);
   void constraints(bool labels);
   int countImplicit();
