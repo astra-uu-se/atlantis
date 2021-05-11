@@ -42,6 +42,7 @@ class Variable : public Node {
   void reset();
   void clearPotentialDefiners() { _potentialDefiners.clear(); }
   Int orgPotDefSize() { return _orgPotentialDefiners.size(); }
+  bool noPotDef() { return _orgPotentialDefiners.size() == 0; }
 
  private:
   std::optional<Domain*> _imposedDomain;

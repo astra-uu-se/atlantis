@@ -16,10 +16,11 @@ int Statistics::variableCount() {
 int Statistics::noPotDefCount() {
   int n = 0;
   for (auto variable : _model->varMap().variables()) {
-    if (variable->isDefinable() && !variable->orgPotDefSize()) n++;
+    if (variable->isDefinable() && variable->noPotDef()) n++;
   }
   return n;
 }
+
 int Statistics::definedCount() {
   int n = 0;
   for (auto variable : _model->varMap().variables()) {
@@ -97,8 +98,15 @@ int Statistics::countSoft() {
 int Statistics::countOnlySoft() {
   int soft = 0;
   for (auto constraint : _model->constraints()) {
-    if (constraint->isPotImplicit() || constraint->isFunctional()) {
+    if (constraint->isPotImplicit()) {
       continue;
+    }
+    if (constraint->isFunctional()) {
+      bool functional = false;
+      for (auto var : constraint->variables()) {
+        if (var->hasPotentialDefiner(constraint)) functional = true;
+      }
+      if (functional) continue;
     }
     soft++;
   }
@@ -111,8 +119,14 @@ int Statistics::countBadSoft() {
     if (constraint->isImplicit() || constraint->isInvariant()) {
       continue;
     }
-    if (constraint->isPotImplicit() || constraint->isFunctional()) {
+    if (constraint->isPotImplicit()) {
       soft++;
+    } else if (constraint->isFunctional()) {
+      bool functional = false;
+      for (auto var : constraint->variables()) {
+        if (var->hasPotentialDefiner(constraint)) functional = true;
+      }
+      if (functional) soft++;
     }
   }
   return soft;
@@ -160,6 +174,12 @@ void Statistics::matchingAnnotations(bool labels) {
         if (labels) {
           std::cout << constraint->getName() << " fulfills define annotation."
                     << std::endl;
+        }
+      } else {
+        if (labels) {
+          std::cout << constraint->getName() << " should define "
+                    << constraint->annotationTarget().value()->getName()
+                    << " but doesn't." << std::endl;
         }
       }
     }
