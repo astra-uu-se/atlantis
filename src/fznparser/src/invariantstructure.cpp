@@ -79,7 +79,7 @@ void InvariantStructure::runSmall() {
   s << _stats.line();
   s << _stats.header();
   s << _stats.line();
-  _schemes.scheme1();
+  _schemes.scheme7();
   s << _schemes.name();
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);

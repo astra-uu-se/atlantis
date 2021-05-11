@@ -284,7 +284,8 @@ std::string Statistics::info() {
   s << "In #:\t\t";
   s << "The amount of (definable) variables that are not defined." << std::endl;
   s << "Out #:\t\t";
-  s << "The amount of (definable) variables that are defined and that are not "
+  s << "The amount of (definable) variables that are defined and that are "
+       "not "
        "input to another constraint."
     << std::endl;
   s << "Influence:\t";
@@ -303,7 +304,7 @@ std::string Statistics::info() {
 }
 std::string Statistics::header() {
   std::stringstream s;
-  s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tHeight\tIn #\tOut "
+  s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tImp\tHeight\tIn #\tOut "
        "#\tNbSum\tEnlDoms"
     << std::endl;
   line();
@@ -312,7 +313,8 @@ std::string Statistics::header() {
 
 std::string Statistics::line() {
   std::stringstream s;
-  s << "-----------------------------------------------------------------------"
+  s << "---------------------------------------------------------------------"
+       "--"
        "--------------------------------"
     << std::endl;
   return s.str();
