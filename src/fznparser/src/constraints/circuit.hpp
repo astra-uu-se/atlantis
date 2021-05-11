@@ -6,11 +6,12 @@ class Circuit : public Constraint {
  public:
   Circuit(ConstraintBox constraintBox) : Constraint(constraintBox) {
     _uniqueTarget = false;
-    _canBeOneWay = false;  // Is this correct?
   }
   void loadVariables(const VariableMap& variables) override;
   void configureVariables() override;
   bool canBeImplicit() override;
+  bool isFunctional() override { return false; }
+  bool isPotImplicit() override { return true; }
 
  private:
   ArrayVariable* _x;

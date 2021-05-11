@@ -162,7 +162,6 @@ void Constraint::makeSoft() {
   _invariant = false;
   _implicit = false;
 }
-bool Constraint::canBeImplicit() { return false; }
 bool Constraint::shouldBeImplicit() { return _shouldBeImplicit; }
 void Constraint::makeImplicit() {
   assert(canBeImplicit());

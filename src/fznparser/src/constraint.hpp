@@ -49,12 +49,14 @@ class Constraint : public Node {
   std::optional<Variable*> annotationTarget();
   virtual void unDefine(Variable* variable) { makeSoft(); }
   virtual void define(Variable* variable);
-  virtual bool canDefine(Variable* variable) { return _canBeOneWay; }
+  virtual bool canDefine(Variable* variable) { return true; }
+  virtual bool isFunctional() { return true; }
+  virtual bool isPotImplicit() { return false; }
+  virtual bool canBeImplicit() { return false; };
   bool defines(Variable* variable);
   void makeSoft();
   bool definesNone();
   bool uniqueTarget();
-  virtual bool canBeImplicit();
   bool shouldBeImplicit();
   virtual void makeImplicit();
   std::vector<Variable*> variables();
@@ -100,18 +102,16 @@ class Constraint : public Node {
   bool _uniqueTarget = true;
   bool _implicit = false;
   bool _invariant = false;
-  bool _canBeOneWay = true;
 };
 
 class NonFunctionalConstraint : public Constraint {
  public:
   NonFunctionalConstraint(ConstraintBox constraintBox)
-      : Constraint(constraintBox) {
-    bool _canBeOneWay = false;
-  }
+      : Constraint(constraintBox) {}
   void init(const VariableMap& variables) override {}
   void loadVariables(const VariableMap& variables) override {}
   void configureVariables() override {}
+  bool isFunctional() override { return true; }
 };
 
 class SimpleConstraint : public Constraint {

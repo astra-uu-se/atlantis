@@ -80,6 +80,36 @@ int Statistics::countSoft() {
   }
   return soft;
 }
+int Statistics::countOnlySoft() {
+  int soft = 0;
+  for (auto constraint : _model->constraints()) {
+    std::cout << constraint->getName() << std::endl;
+
+    if (constraint->isPotImplicit() || constraint->isFunctional()) {
+      std::cout << "true" << std::endl;
+      std::cout << constraint->canBeImplicit() << std::endl;
+      std::cout << constraint->isFunctional() << std::endl;
+
+      continue;
+    }
+    soft++;
+  }
+  return soft;
+}
+
+int Statistics::countBadSoft() {
+  int soft = 0;
+  for (auto constraint : _model->constraints()) {
+    if (constraint->isImplicit() || constraint->isInvariant()) {
+      continue;
+    }
+    if (constraint->isPotImplicit() || constraint->isFunctional()) {
+      soft++;
+    }
+  }
+  return soft;
+}
+
 void Statistics::constraints(bool labels) {
   std::cout << "========CONSTRAINTS========" << std::endl;
   int total = 0;
@@ -199,8 +229,9 @@ std::optional<double> Statistics::variableScore() {
 }
 std::optional<double> Statistics::constraintScore() {
   if (_model->constraints().size() > 0) {
-    return 100 * (_model->constraints().size() - countSoft()) /
-           (double)_model->constraints().size();
+    return 100 *
+           (_model->constraints().size() - countOnlySoft() - countBadSoft()) /
+           ((double)_model->constraints().size() - countOnlySoft());
   }
   return {};
 }

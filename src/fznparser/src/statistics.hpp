@@ -20,6 +20,8 @@ class Statistics {
   void allStats(bool labels);
   void constraints(bool labels);
   int countSoft();
+  int countBadSoft();
+  int countOnlySoft();
   int variableCount();
   int noPotDefCount();
   int definedCount();

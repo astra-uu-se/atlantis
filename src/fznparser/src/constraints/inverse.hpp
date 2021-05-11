@@ -17,6 +17,7 @@ class Inverse : public Constraint {
   void define(Variable* variable) override;
   void unDefine(Variable* variable) override;
   bool canBeImplicit() override;
+  bool isPotImplicit() override { return true; }
   ArrayVariable* _f;
   ArrayVariable* _invf;
   std::optional<ArrayVariable*> _out;

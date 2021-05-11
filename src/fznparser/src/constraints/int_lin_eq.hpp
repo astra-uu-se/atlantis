@@ -12,6 +12,7 @@ class IntLinEq : public Constraint {
   bool canBeImplicit() override;
   bool imposeDomain(Variable* variable) override;
   bool refreshDomain() override;
+  bool isPotImplicit() override { return true; }
 
  private:
   static Int maxDomain(int coef, Variable* variable);
