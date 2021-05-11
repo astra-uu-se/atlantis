@@ -70,6 +70,20 @@ void Statistics::freeVariables() {
     }
   }
 }
+int Statistics::countPotImplicit() {
+  int imp = 0;
+  for (auto constraint : _model->constraints()) {
+    if (constraint->isPotImplicit()) imp++;
+  }
+  return imp;
+}
+int Statistics::countImplicit() {
+  int imp = 0;
+  for (auto constraint : _model->constraints()) {
+    if (constraint->isImplicit()) imp++;
+  }
+  return imp;
+}
 int Statistics::countSoft() {
   int soft = 0;
   for (auto constraint : _model->constraints()) {
@@ -330,6 +344,7 @@ std::string Statistics::row() {
   } else {
     s << "-\t";
   }
+  s << countImplicit() << "/" << countPotImplicit() << "\t";
   if (!_ignoreDynamicCycles) {
     s << 0;  // width(false);
   } else {

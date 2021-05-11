@@ -19,6 +19,8 @@ class Statistics {
   void freeVariables();
   void allStats(bool labels);
   void constraints(bool labels);
+  int countImplicit();
+  int countPotImplicit();
   int countSoft();
   int countBadSoft();
   int countOnlySoft();
