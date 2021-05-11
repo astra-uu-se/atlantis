@@ -49,7 +49,7 @@ class Constraint : public Node {
   std::optional<Variable*> annotationTarget();
   virtual void unDefine(Variable* variable) { makeSoft(); }
   virtual void define(Variable* variable);
-  virtual bool canDefine(Variable* variable) { return true; }
+  virtual bool canDefine(Variable* variable) { return isFunctional(); }
   virtual bool isFunctional() { return true; }
   virtual bool isPotImplicit() { return false; }
   virtual bool canBeImplicit() { return false; };
