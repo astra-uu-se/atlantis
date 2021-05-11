@@ -20,6 +20,11 @@ void GlobalCardinality::configureVariables() {
       var->addPotentialDefiner(this);
     }
   }
+  for (auto var : _x->elements()) {
+    if (var->isDefinable()) {
+      var->addPotentialDefiner(this);
+    }
+  }
 }
 bool GlobalCardinality::canDefine(Variable* variable) {
   assert(variable->isDefinable());
@@ -45,10 +50,10 @@ bool GlobalCardinality::canBeImplicit() { return true; }
 void GlobalCardinality::makeImplicit() {
   clearVariables();
   for (auto var : _x->elements()) {
-    redefineVariable(var);
+    if (var->isDefinable()) redefineVariable(var);
   }
   for (auto var : _counts->elements()) {
-    redefineVariable(var);
+    if (var->isDefinable()) redefineVariable(var);
   }
   _implicit = true;
 }

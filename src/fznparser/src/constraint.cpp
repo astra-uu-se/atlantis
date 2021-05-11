@@ -167,7 +167,9 @@ void Constraint::makeImplicit() {
   assert(canBeImplicit());
   clearVariables();
   for (auto variable : _variables) {
-    redefineVariable(variable);
+    if (variable->isDefinable()) {
+      redefineVariable(variable);
+    }
   }
   _implicit = true;
   _invariant = false;
