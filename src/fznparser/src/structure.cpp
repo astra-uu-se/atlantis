@@ -14,7 +14,7 @@ IntDomain::IntDomain(Int lb, Int ub) {
   _lb = lb;
   _ub = ub;
 }
-Int IntDomain::size() { return _ub - _lb; }
+Int IntDomain::size() { return _ub - _lb + 1; }
 Int IntDomain::lowerBound() { return _lb; }
 Int IntDomain::upperBound() { return _ub; }
 IntSetDomain::IntSetDomain(std::set<Int> set) { _set = set; }
