@@ -31,6 +31,10 @@ void InvariantStructure::run() {
   s << _stats.line();
   s << _stats.header();
   s << _stats.line();
+  _schemes.random();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
   _schemes.scheme1();
   s << _schemes.name();
   s << _stats.row();
@@ -60,10 +64,6 @@ void InvariantStructure::run() {
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);
   _schemes.scheme8();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.random();
   s << _schemes.name();
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);

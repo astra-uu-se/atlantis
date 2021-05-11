@@ -111,7 +111,7 @@ class NonFunctionalConstraint : public Constraint {
   void init(const VariableMap& variables) override {}
   void loadVariables(const VariableMap& variables) override {}
   void configureVariables() override {}
-  bool isFunctional() override { return true; }
+  bool isFunctional() override { return false; }
 };
 
 class SimpleConstraint : public Constraint {

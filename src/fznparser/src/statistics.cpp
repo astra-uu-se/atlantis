@@ -84,12 +84,10 @@ int Statistics::countOnlySoft() {
   int soft = 0;
   for (auto constraint : _model->constraints()) {
     std::cout << constraint->getName() << std::endl;
+    std::cout << constraint->isPotImplicit() << std::endl;
+    std::cout << constraint->isFunctional() << std::endl;
 
     if (constraint->isPotImplicit() || constraint->isFunctional()) {
-      std::cout << "true" << std::endl;
-      std::cout << constraint->canBeImplicit() << std::endl;
-      std::cout << constraint->isFunctional() << std::endl;
-
       continue;
     }
     soft++;
@@ -138,6 +136,7 @@ void Statistics::allStats(bool labels) {
   constraints(labels);
   matchingAnnotations(labels);
   // width(labels);
+  std::cout << line() << std::endl;
 }
 void Statistics::matchingAnnotations(bool labels) {
   std::cout << "========ANNOTATIONS========" << std::endl;
