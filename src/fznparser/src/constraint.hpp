@@ -55,7 +55,7 @@ class Constraint : public Node {
   virtual bool canBeImplicit() { return false; };
   bool defines(Variable* variable);
   void makeSoft();
-  bool definesNone();
+  virtual bool notFull();
   bool uniqueTarget();
   bool shouldBeImplicit();
   virtual void makeImplicit();

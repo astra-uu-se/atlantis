@@ -185,7 +185,7 @@ Int Constraint::defInVarCount() {
   }
   return defInVarCount;
 }
-bool Constraint::definesNone() { return _defines.empty(); }
+bool Constraint::notFull() { return _defines.empty(); }
 bool Constraint::uniqueTarget() { return _uniqueTarget; }
 std::vector<Variable*> Constraint::variables() { return _variables; }
 std::vector<Variable*> Constraint::variablesSorted() {

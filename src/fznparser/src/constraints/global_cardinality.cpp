@@ -105,3 +105,4 @@ void GlobalCardinality::initDomains() {
   for (auto _ : _counts->elements())
     _outputDomains.push_back(std::make_shared<IntDomain>());
 }
+bool notFull() { return true; }

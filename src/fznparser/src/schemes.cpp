@@ -151,7 +151,7 @@ void Schemes::defineImplicit() {
 void Schemes::defineFromWithImplicit(Variable* variable) {
   if (variable->isDefinable() && !variable->isDefined()) {
     for (auto constraint : variable->potentialDefiners()) {
-      if (constraint->canDefine(variable) && constraint->definesNone()) {
+      if (constraint->canDefine(variable) && constraint->notFull()) {
         constraint->define(variable);
         for (auto v : constraint->variablesSorted()) {
           if (v != variable) {
@@ -171,7 +171,7 @@ void Schemes::defineFromWithImplicit(Variable* variable) {
 void Schemes::defineFrom(Variable* variable) {
   if (variable->isDefinable() && !variable->isDefined()) {
     for (auto constraint : variable->potentialDefiners()) {
-      if (constraint->canDefine(variable) && constraint->definesNone()) {
+      if (constraint->canDefine(variable) && constraint->notFull()) {
         constraint->define(variable);
         for (auto v : constraint->variablesSorted()) {
           if (v != variable) {
@@ -197,7 +197,7 @@ void Schemes::defineUnique() {
     if (variable->isDefinable() && !variable->isDefined()) {
       for (auto constraint : variable->potentialDefiners()) {
         if (constraint->canDefine(variable) && constraint->uniqueTarget() &&
-            constraint->definesNone()) {
+            constraint->notFull()) {
           constraint->define(variable);
           break;
         }
@@ -210,7 +210,7 @@ void Schemes::defineRest() {
   for (auto variable : _m->domSortVariables()) {
     if (variable->isDefinable() && !variable->isDefined()) {
       for (auto constraint : variable->potentialDefiners()) {
-        if (constraint->canDefine(variable) && constraint->definesNone()) {
+        if (constraint->canDefine(variable) && constraint->notFull()) {
           constraint->define(variable);
           break;
         }
@@ -315,7 +315,7 @@ void Schemes::defineLeastUsed() {
   for (auto var : _m->potDefSortVariables()) {
     if (!var->isDefined()) {
       for (auto con : var->potentialDefiners()) {
-        if (con->definesNone() && con->canDefine(var)) {  // Add better prio
+        if (con->notFull() && con->canDefine(var)) {  // Add better prio
           con->define(var);
         } else if (con->canBeImplicit() && con->allVariablesFree()) {
           con->makeImplicit();
@@ -333,7 +333,7 @@ void Schemes::defineRandom() {
       std::vector<Constraint*> cns = v->potentialDefiners();
       std::random_shuffle(cns.begin(), cns.end());
       for (auto con : cns) {
-        if (con->definesNone() && con->canDefine(v)) {  // Add better prio
+        if (con->notFull() && con->canDefine(v)) {  // Add better prio
           con->define(v);
         } else if (con->canBeImplicit() && con->allVariablesFree()) {
           con->makeImplicit();

@@ -24,6 +24,7 @@ class GlobalCardinality : public Constraint {
   std::pair<Int, Int> getBounds(Int n);
   void initDomains();
   void unDefine(Variable* variable) override;
+  bool notFull() override { return true; }
 
  private:
   std::vector<std::shared_ptr<IntDomain>> _outputDomains;
