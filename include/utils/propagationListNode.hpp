@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../core/types.hpp"
-
 struct PropagationListNode {
   size_t priority;
   VarIdBase id;

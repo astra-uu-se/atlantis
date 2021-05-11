@@ -1,12 +1,11 @@
 #pragma once
 
-#include <memory>
+
 #include <vector>
 
-#include "../core/engine.hpp"
-#include "../core/types.hpp"
-#include "../invariants/invariant.hpp"
-#include "../variables/intVar.hpp"
+#include "core/engine.hpp"
+#include "core/types.hpp"
+#include "invariants/invariant.hpp"
 
 /**
  * Invariant for b <- X[i] where X is a vector of VarId.

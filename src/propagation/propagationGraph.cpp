@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include "misc/logging.hpp"
 
 PropagationGraph::PropagationGraph(size_t expectedSize)
     : m_numInvariants(0),
