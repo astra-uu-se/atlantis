@@ -1,19 +1,12 @@
 #include <algorithm>
 #include <constraints/lessEqual.hpp>
-#include <constraints/equal.hpp>
 #include <core/propagationEngine.hpp>
 #include <invariants/elementConst.hpp>
 #include <invariants/elementVar.hpp>
 #include <invariants/linear.hpp>
-#include <iostream>
-#include <limits>
 #include <random>
-#include <utility>
 #include <vector>
 
-#include "constraints/allDifferent.hpp"
-#include "core/propagationEngine.hpp"
-#include "variables/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
 
@@ -46,7 +39,7 @@ class TSPTWTest : public ::testing::Test {
     engine->open();
 
     for (int i = 0; i < n; ++i) {
-      dist.push_back(std::vector<Int>());
+      dist.emplace_back(std::vector<Int>());
       for (int j = 0; j < n; ++j) {
         dist[i].push_back(1);
       }

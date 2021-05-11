@@ -1,13 +1,10 @@
-#include <iostream>
 #include <limits>
 #include <memory>
 #include <random>
 #include <vector>
 
 #include "core/propagationEngine.hpp"
-#include "variables/savedInt.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "rapidcheck/gtest.h"
 #include "invariants/linear.hpp"

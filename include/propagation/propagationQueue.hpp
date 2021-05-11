@@ -1,10 +1,8 @@
 #pragma once
 #include <cassert>
 #include <memory>
-#include <vector>
 
-#include "../core/types.hpp"
-#include "../misc/logging.hpp"
+#include "core/types.hpp"
 #include "utils/idMap.hpp"
 #include "utils/propagationListNode.hpp"
 

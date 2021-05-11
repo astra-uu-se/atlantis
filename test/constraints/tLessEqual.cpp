@@ -1,11 +1,9 @@
-#include <iostream>
 #include <limits>
 #include <random>
 #include <vector>
 
 #include "constraints/lessEqual.hpp"
 #include "core/propagationEngine.hpp"
-#include "variables/savedInt.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"

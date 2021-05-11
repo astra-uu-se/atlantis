@@ -1,8 +1,6 @@
 #include <algorithm>
-#include <constraints/allDifferent.hpp>
 #include <constraints/equal.hpp>
 #include <core/propagationEngine.hpp>
-#include <invariants/absDiff.hpp>
 #include <invariants/linear.hpp>
 #include <iostream>
 #include <limits>
@@ -10,11 +8,8 @@
 #include <utility>
 #include <vector>
 
-#include "constraints/allDifferent.hpp"
-#include "core/propagationEngine.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
-#include "variables/savedInt.hpp"
 
 namespace {
 class MagicSquareTest : public ::testing::Test {
