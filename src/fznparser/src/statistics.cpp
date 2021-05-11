@@ -83,10 +83,6 @@ int Statistics::countSoft() {
 int Statistics::countOnlySoft() {
   int soft = 0;
   for (auto constraint : _model->constraints()) {
-    std::cout << constraint->getName() << std::endl;
-    std::cout << constraint->isPotImplicit() << std::endl;
-    std::cout << constraint->isFunctional() << std::endl;
-
     if (constraint->isPotImplicit() || constraint->isFunctional()) {
       continue;
     }
