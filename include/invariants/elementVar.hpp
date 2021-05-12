@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <vector>
 
 #include "core/engine.hpp"
@@ -14,9 +13,9 @@
 
 class ElementVar : public Invariant {
  private:
-  VarId m_i;
-  std::vector<VarId> m_X;
-  VarId m_b;
+  VarId _i;
+  std::vector<VarId> _X;
+  VarId _b;
 
  public:
   ElementVar(VarId i, std::vector<VarId> X, VarId b);

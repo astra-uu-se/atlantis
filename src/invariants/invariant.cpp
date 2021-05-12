@@ -2,26 +2,26 @@
 
 #include "core/propagationEngine.hpp"
 
-void Invariant::notify(LocalId id) { m_modifiedVars.push(id); }
+void Invariant::notify(LocalId id) { _modifiedVars.push(id); }
 
 void Invariant::compute(Timestamp t, Engine& e) {
-  assert(m_modifiedVars.size() > 0);
-  assert(m_primaryOutput != NULL_ID);
+  assert(_modifiedVars.size() > 0);
+  assert(_primaryOutput != NULL_ID);
 
-  while (m_modifiedVars.hasNext()) {
+  while (_modifiedVars.hasNext()) {
     // don't turn this into a for loop...
-    LocalId toNotify = m_modifiedVars.pop();
+    LocalId toNotify = _modifiedVars.pop();
     this->notifyIntChanged(t, e, toNotify);
   }
 }
 
 void Invariant::registerDefinedVariable(Engine& e, VarId v) {
-  if (m_primaryOutput == NULL_ID) {
-    m_primaryOutput = v;
+  if (_primaryOutput == NULL_ID) {
+    _primaryOutput = v;
   } else {
-    m_outputVars.push_back(v);
+    _outputVars.push_back(v);
   }
-  e.registerDefinedVariable(v, m_id);
+  e.registerDefinedVariable(v, _id);
 }
 
 void Invariant::updateValue(Timestamp t, Engine& e, VarId id, Int val) {
@@ -34,7 +34,7 @@ void Invariant::incValue(Timestamp t, Engine& e, VarId id, Int val) {
 
 void Invariant::queueNonPrimaryOutputVarsForPropagation(Timestamp t,
                                                         Engine& e) {
-  for (VarId outputVarId : m_outputVars) {
+  for (VarId outputVarId : _outputVars) {
     if (!e.hasChanged(t, outputVarId)) {
       continue;
     }

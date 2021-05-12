@@ -19,9 +19,9 @@
 
 class IfThenElse : public Invariant {
  private:
-  VarId m_b;
-  std::array<VarId, 2> m_xy;
-  VarId m_z;
+  VarId _b;
+  std::array<VarId, 2> _xy;
+  VarId _z;
 
  public:
   IfThenElse(VarId b, VarId x, VarId y, VarId z);

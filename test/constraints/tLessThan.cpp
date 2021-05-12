@@ -16,10 +16,10 @@ namespace {
 
 class MockLessThan : public LessThan {
  public:
-  bool m_initialized = false;
+  bool initialized = false;
 
   void init(Timestamp timestamp, Engine& engine) override {
-    m_initialized = true;
+    initialized = true;
     LessThan::init(timestamp, engine);
   }
 
@@ -95,7 +95,7 @@ class LessThanTest : public ::testing::Test {
 
     auto invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
 
-    EXPECT_TRUE(invariant->m_initialized);
+    EXPECT_TRUE(invariant->initialized);
 
     EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
         .Times(AtLeast(1));
@@ -106,7 +106,7 @@ class LessThanTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(*invariant,
@@ -115,7 +115,8 @@ class LessThanTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine-> mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+    } else if (engine->mode ==
+               PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(3);
       EXPECT_CALL(*invariant,
@@ -125,7 +126,7 @@ class LessThanTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
+    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
@@ -285,7 +286,7 @@ TEST_F(LessThanTest, CreateLessThan) {
 
   auto invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
 
-  EXPECT_TRUE(invariant->m_initialized);
+  EXPECT_TRUE(invariant->initialized);
 
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 

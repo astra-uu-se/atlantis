@@ -1,24 +1,24 @@
 #include "invariants/elementVar.hpp"
 
 ElementVar::ElementVar(VarId i, std::vector<VarId> X, VarId b)
-    : Invariant(NULL_ID), m_i(i), m_X(std::move(X)), m_b(b) {
-  m_modifiedVars.reserve(1);
+    : Invariant(NULL_ID), _i(i), _X(std::move(X)), _b(b) {
+  _modifiedVars.reserve(1);
 }
 
 void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {
-  assert(m_id != NULL_ID);
+  assert(_id != NULL_ID);
 
-  registerDefinedVariable(e, m_b);
-  e.registerInvariantDependsOnVar(m_id, m_i, LocalId(0));
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(0));
+  registerDefinedVariable(e, _b);
+  e.registerInvariantDependsOnVar(_id, _i, LocalId(0));
+  for (size_t i = 0; i < _X.size(); ++i) {
+    e.registerInvariantDependsOnVar(_id, _X[i], LocalId(0));
   }
 }
 
 void ElementVar::recompute(Timestamp t, Engine& e) {
   updateValue(
-      t, e, m_b,
-      e.getValue(t, m_X.at(static_cast<unsigned long>(e.getValue(t, m_i)))));
+      t, e, _b,
+      e.getValue(t, _X.at(static_cast<unsigned long>(e.getValue(t, _i)))));
 }
 
 void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
@@ -26,11 +26,11 @@ void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
 }
 
 VarId ElementVar::getNextDependency(Timestamp t, Engine& e) {
-  m_state.incValue(t, 1);
-  if (m_state.getValue(t) == 0) {
-    return m_i;
-  } else if (m_state.getValue(t) == 1) {
-    return m_X.at(static_cast<unsigned long>(e.getValue(t, m_i)));
+  _state.incValue(t, 1);
+  if (_state.getValue(t) == 0) {
+    return _i;
+  } else if (_state.getValue(t) == 1) {
+    return _X.at(static_cast<unsigned long>(e.getValue(t, _i)));
   } else {
     return NULL_ID;  // Done
   }

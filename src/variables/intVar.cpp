@@ -3,42 +3,42 @@
 #include <iostream>
 #include <stdexcept>
 
-IntVar::IntVar(Int t_lowerBound, Int t_upperBound)
-    : IntVar(NULL_ID, t_lowerBound, t_upperBound) {}
+IntVar::IntVar(Int lowerBound, Int upperBound)
+    : IntVar(NULL_ID, lowerBound, upperBound) {}
 
-IntVar::IntVar(VarId t_id, Int t_lowerBound, Int t_upperBound)
-    : IntVar(t_id, 0, t_lowerBound, t_upperBound) {}
+IntVar::IntVar(VarId id, Int lowerBound, Int upperBound)
+    : IntVar(id, 0, lowerBound, upperBound) {}
 
-IntVar::IntVar(VarId t_id, Int initValue, Int t_lowerBound, Int t_upperBound)
-    : IntVar(NULL_TIMESTAMP, t_id, initValue, t_lowerBound, t_upperBound) {}
+IntVar::IntVar(VarId id, Int initValue, Int lowerBound, Int upperBound)
+    : IntVar(NULL_TIMESTAMP, id, initValue, lowerBound, upperBound) {}
 
-IntVar::IntVar(Timestamp t, VarId t_id, Int initValue, Int t_lowerBound,
-               Int t_upperBound)
-    : Var(t_id),
-      m_value(t, initValue),  // todo: We need both a time-zero (when
-                              // initialisation happens) but also a dummy time.
-      m_lowerBound(t_lowerBound),
-      m_upperBound(t_upperBound) {
-  if (t_lowerBound > t_upperBound) {
+IntVar::IntVar(Timestamp t, VarId id, Int initValue, Int lowerBound,
+               Int upperBound)
+    : Var(id),
+      _value(t, initValue),  // todo: We need both a time-zero (when
+                             // initialisation happens) but also a dummy time.
+      _lowerBound(lowerBound),
+      _upperBound(upperBound) {
+  if (lowerBound > upperBound) {
     throw std::out_of_range(
         "Lower bound must be smaller than or equal to upper bound");
   }
 }
 
-void IntVar::updateDomain(Int t_lowerBound, Int t_upperBound) {
-  if (t_lowerBound > t_upperBound) {
+void IntVar::updateDomain(Int lowerBound, Int upperBound) {
+  if (lowerBound > upperBound) {
     throw std::out_of_range(
         "Lower bound must be smaller than or equal to upper bound");
   }
-  m_lowerBound = t_lowerBound;
-  m_upperBound = t_upperBound;
+  _lowerBound = lowerBound;
+  _upperBound = upperBound;
 }
 
 std::ostream& operator<<(std::ostream& out, IntVar const& var) {
-  out << "IntVar(id: " << var.m_id.id;
-  out << ",c: " << var.m_value.getCommittedValue();
-  out << ",t: " << var.m_value.getValue(var.m_value.getTmpTimestamp());
-  out << ",ts: " << var.m_value.getTmpTimestamp();
+  out << "IntVar(id: " << var._id.id;
+  out << ",c: " << var._value.getCommittedValue();
+  out << ",t: " << var._value.getValue(var._value.getTmpTimestamp());
+  out << ",ts: " << var._value.getTmpTimestamp();
   out << ")";
   return out;
 }

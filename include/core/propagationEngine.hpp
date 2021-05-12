@@ -10,22 +10,24 @@
 class PropagationEngine : public Engine {
  public:
   enum class PropagationMode { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT, MIXED };
-  const bool m_useMarkingForOutputToInput = true;
+  const bool _useMarkingForOutputToInput = true;
 
  protected:
-  PropagationMode m_mode;
+  PropagationMode _mode;
+
  public:
-  const PropagationMode& mode = m_mode;
+  const PropagationMode& mode = _mode;
+
  protected:
-  size_t m_numVariables;
+  size_t _numVariables;
 
-  PropagationGraph m_propGraph;
-  OutputToInputExplorer m_outputToInputExplorer;
+  PropagationGraph _propGraph;
+  OutputToInputExplorer _outputToInputExplorer;
 
-  IdMap<VarId, bool> m_isEnqueued;
+  IdMap<VarId, bool> _isEnqueued;
 
-  IdMap<VarId, bool> m_varIsOnPropagationPath;
-  std::queue<VarId> m_propagationPathQueue;
+  IdMap<VarId, bool> _varIsOnPropagationPath;
+  std::queue<VarId> _propagationPathQueue;
 
   void recomputeAndCommit();
 
@@ -84,7 +86,7 @@ class PropagationEngine : public Engine {
   void beginMove();
   void endMove();
   void setValue(Timestamp, VarId, Int val);
-  inline void setValue(VarId v, Int val) { setValue(m_currentTime, v, val); }
+  inline void setValue(VarId v, Int val) { setValue(_currentTime, v, val); }
 
   void beginQuery();
   void endQuery();
@@ -129,48 +131,47 @@ class PropagationEngine : public Engine {
 
 inline InvariantId PropagationEngine::getDefiningInvariant(VarId v) {
   // Returns NULL_ID is not defined.
-  return m_propGraph.getDefiningInvariant(v);
+  return _propGraph.getDefiningInvariant(v);
 }
 
 inline void PropagationEngine::clearPropagationPath() {
-  m_varIsOnPropagationPath.assign_all(false);
+  _varIsOnPropagationPath.assign_all(false);
 }
 
 inline bool PropagationEngine::isOnPropagationPath(VarId id) {
-  return !m_useMarkingForOutputToInput || m_varIsOnPropagationPath.get(id);
+  return !_useMarkingForOutputToInput || _varIsOnPropagationPath.get(id);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
     InvariantId inv) const {
-  return m_propGraph.getVariablesDefinedBy(inv);
+  return _propGraph.getVariablesDefinedBy(inv);
 }
 
 inline VarId PropagationEngine::getNextDependency(InvariantId inv) {
   return getSourceId(
-      m_store.getInvariant(inv).getNextDependency(m_currentTime, *this));
+      _store.getInvariant(inv).getNextDependency(_currentTime, *this));
 }
 inline void PropagationEngine::notifyCurrentDependencyChanged(InvariantId inv) {
-  m_store.getInvariant(inv).notifyCurrentDependencyChanged(m_currentTime,
-                                                           *this);
+  _store.getInvariant(inv).notifyCurrentDependencyChanged(_currentTime, *this);
 }
 
 inline bool PropagationEngine::hasChanged(Timestamp t, VarId v) const {
   assert(v.idType != VarIdType::view);
-  return m_store.getConstIntVar(v).hasChanged(t);
+  return _store.getConstIntVar(v).hasChanged(t);
 }
 
 inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
   assert(v.idType != VarIdType::view);
-  m_store.getIntVar(v).setValue(t, val);
+  _store.getIntVar(v).setValue(t, val);
   notifyMaybeChanged(t, v);
 }
 
 inline void PropagationEngine::setPropagationMode(PropagationMode m) {
-  assert(m_isOpen);
-  m_mode = m;
+  assert(_isOpen);
+  _mode = m;
 }
 
 template <bool OutputToInputMarking>
 inline void PropagationEngine::outputToInputPropagate() {
-  m_outputToInputExplorer.propagate<OutputToInputMarking>(m_currentTime);
+  _outputToInputExplorer.propagate<OutputToInputMarking>(_currentTime);
 }

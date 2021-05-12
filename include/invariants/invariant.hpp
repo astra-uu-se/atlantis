@@ -7,7 +7,6 @@
 class Engine;  // Forward declaration
 
 class Invariant {
- private:
  protected:
   /**
    * A simple queue structure of a fixed length to hold what input
@@ -52,24 +51,24 @@ class Invariant {
     }
   };
 
-  bool m_isPostponed;
-  InvariantId m_id;
+  bool _isPostponed;
+  InvariantId _id;
   // State used for returning next dependency. Null state is -1 by default
-  SavedInt m_state;
+  SavedInt _state;
 
-  //  std::vector<bool> m_modifiedVars;
-  NotificationQueue m_modifiedVars;
+  //  std::vector<bool> _modifiedVars;
+  NotificationQueue _modifiedVars;
 
-  VarId m_primaryOutput;
-  std::vector<VarId> m_outputVars;
+  VarId _primaryOutput;
+  std::vector<VarId> _outputVars;
 
-  explicit Invariant(Id t_id) : Invariant(t_id, -1) {}
-  Invariant(Id t_id, Int nullState)
-      : m_isPostponed(false),
-        m_id(t_id),
-        m_state(NULL_TIMESTAMP, nullState),
-        m_modifiedVars(),
-        m_outputVars() {}
+  explicit Invariant(Id id) : Invariant(id, -1) {}
+  Invariant(Id id, Int nullState)
+      : _isPostponed(false),
+        _id(id),
+        _state(NULL_TIMESTAMP, nullState),
+        _modifiedVars(),
+        _outputVars() {}
 
   /**
    * Register to the engine that variable is defined by the invariant.
@@ -101,7 +100,7 @@ class Invariant {
  public:
   virtual ~Invariant() = default;
 
-  void setId(Id t_id) { m_id = t_id; }
+  void setId(Id id) { _id = id; }
 
   /**
    * Preconditions for initialisation:
@@ -152,10 +151,10 @@ class Invariant {
    */
   void compute(Timestamp t, Engine& e);
 
-  virtual void commit(Timestamp, Engine&) { m_isPostponed = false; };
-  inline void postpone() { m_isPostponed = true; }
-  [[nodiscard]] inline bool isPostponed() const { return m_isPostponed; }
+  virtual void commit(Timestamp, Engine&) { _isPostponed = false; };
+  inline void postpone() { _isPostponed = true; }
+  [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 
-  inline VarId getPrimaryOutput() { return m_primaryOutput; }
+  inline VarId getPrimaryOutput() { return _primaryOutput; }
   void queueNonPrimaryOutputVarsForPropagation(Timestamp t, Engine& e);
 };

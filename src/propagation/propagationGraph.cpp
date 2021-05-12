@@ -2,90 +2,90 @@
 
 #include <algorithm>
 #include <iostream>
+
 #include "misc/logging.hpp"
 
 PropagationGraph::PropagationGraph(size_t expectedSize)
-    : m_numInvariants(0),
-      m_numVariables(0),
-      m_definingInvariant(expectedSize),
-      m_variablesDefinedByInvariant(expectedSize),
-      m_inputVariables(expectedSize),
-      m_listeningInvariants(expectedSize),
-      m_topology(*this) {}
+    : _numInvariants(0),
+      _numVariables(0),
+      _definingInvariant(expectedSize),
+      _variablesDefinedByInvariant(expectedSize),
+      _inputVariables(expectedSize),
+      _listeningInvariants(expectedSize),
+      _topology(*this) {}
 
 void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   // Everything must be registered in sequence.
-  m_variablesDefinedByInvariant.register_idx(id);
-  m_inputVariables.register_idx(id);
-  ++m_numInvariants;
+  _variablesDefinedByInvariant.register_idx(id);
+  _inputVariables.register_idx(id);
+  ++_numInvariants;
 }
 
 void PropagationGraph::registerVar([[maybe_unused]] VarIdBase id) {
-  m_listeningInvariants.register_idx(id);
-  m_definingInvariant.register_idx(id);
-  ++m_numVariables;
+  _listeningInvariants.register_idx(id);
+  _definingInvariant.register_idx(id);
+  ++_numVariables;
 }
 
 void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
                                                      VarIdBase source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
-  if (m_definingInvariant[source] == dependent) {
+  if (_definingInvariant[source] == dependent) {
     logWarning("The dependent invariant ("
                << dependent << ") already "
                << "defines the source variable (" << source << "); "
                << "ignoring (selft-cyclic) dependency.");
     return;
   }
-  m_listeningInvariants[source].push_back(dependent);
-  m_inputVariables[dependent].push_back(source);
+  _listeningInvariants[source].push_back(dependent);
+  _inputVariables[dependent].push_back(source);
 }
 
 void PropagationGraph::registerDefinedVariable(VarIdBase dependent,
                                                InvariantId source) {
   assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
-  if (m_definingInvariant.at(dependent).id != NULL_ID.id) {
+  if (_definingInvariant.at(dependent).id != NULL_ID.id) {
     throw VariableAlreadyDefinedException(
         "Variable " + std::to_string(dependent.id) +
         " already defined by invariant " +
-        std::to_string(m_definingInvariant.at(dependent).id));
+        std::to_string(_definingInvariant.at(dependent).id));
   }
   Int index = -1;
-  for (size_t i = 0; i < m_listeningInvariants[dependent].size(); ++i) {
-    if (m_listeningInvariants[dependent][i] == source) {
+  for (size_t i = 0; i < _listeningInvariants[dependent].size(); ++i) {
+    if (_listeningInvariants[dependent][i] == source) {
       index = i;
       break;
     }
   }
   if (index >= 0) {
-    m_listeningInvariants[dependent].erase(
-        m_listeningInvariants[dependent].begin() + index);
+    _listeningInvariants[dependent].erase(
+        _listeningInvariants[dependent].begin() + index);
     logWarning("The (self-cyclic) dependency that the source invariant "
                << "(" << source << ") depends on the dependent "
                << "variable (" << source << ") was removed.");
   }
-  m_definingInvariant[dependent] = source;
-  m_variablesDefinedByInvariant[source].push_back(dependent);
+  _definingInvariant[dependent] = source;
+  _variablesDefinedByInvariant[source].push_back(dependent);
 }
 
 void PropagationGraph::close() {
-  m_isDecisionVar.resize(getNumVariables() + 1);
-  m_isOutputVar.resize(getNumVariables() + 1);
+  _isDecisionVar.resize(getNumVariables() + 1);
+  _isOutputVar.resize(getNumVariables() + 1);
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
-    m_isOutputVar.at(i) = (m_listeningInvariants.at(i).empty());
-    m_isDecisionVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
+    _isOutputVar.at(i) = (_listeningInvariants.at(i).empty());
+    _isDecisionVar.at(i) = (_definingInvariant.at(i) == NULL_ID);
   }
 
-  m_topology.computeLayersWithCycles();
+  _topology.computeLayersWithCycles();
   // Reset propagation queue data structure.
   // TODO: Be sure that this does not cause a memeory leak...
-  // m_propagationQueue = PropagationQueue();
-  size_t numLayers =
-      1 + *std::max_element(m_topology.m_variablePosition.begin(),
-                            m_topology.m_variablePosition.end());
-  m_propagationQueue.init(getNumVariables(), numLayers);
+  // _propagationQueue = PropagationQueue();
+  size_t numLayers = 1 + *std::max_element(_topology.variablePosition.begin(),
+                                           _topology.variablePosition.end());
+  _propagationQueue.init(getNumVariables(), numLayers);
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
     VarIdBase id = VarIdBase(i);
-    m_propagationQueue.initVar(id, m_topology.getPosition(id));
+    _propagationQueue.initVar(id, _topology.getPosition(id));
   }
-  //  m_topology.computeNoCycles();
+  // _topology.computeNoCycles();
 }

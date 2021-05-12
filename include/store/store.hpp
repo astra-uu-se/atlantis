@@ -10,89 +10,87 @@
 
 class Store {
  private:
-  IdMap<VarId, IntVar> m_intVars;
+  IdMap<VarId, IntVar> _intVars;
 
-  IdMap<InvariantId, std::shared_ptr<Invariant>> m_invariants;
+  IdMap<InvariantId, std::shared_ptr<Invariant>> _invariants;
 
-  IdMap<VarId, std::shared_ptr<IntView>> m_intViews;
-  IdMap<VarId, VarId> m_intViewSourceId;
+  IdMap<VarId, std::shared_ptr<IntView>> _intViews;
+  IdMap<VarId, VarId> _intViewSourceId;
 
  public:
-  Store(size_t estimatedSize, [[maybe_unused]] Id t_nullId)
-      : m_intVars(estimatedSize),
-        m_invariants(estimatedSize),
-        m_intViews(estimatedSize),
-        m_intViewSourceId(estimatedSize) {}
+  Store(size_t estimatedSize, [[maybe_unused]] Id nullId)
+      : _intVars(estimatedSize),
+        _invariants(estimatedSize),
+        _intViews(estimatedSize),
+        _intViewSourceId(estimatedSize) {}
 
   [[nodiscard]] inline VarId createIntVar(Timestamp t, Int initValue,
                                           Int lowerBound, Int upperBound) {
-    VarId newId = VarId(m_intVars.size() + 1, VarIdType::var);
-    m_intVars.register_idx(newId,
-                           IntVar(t, newId, initValue, lowerBound, upperBound));
+    VarId newId = VarId(_intVars.size() + 1, VarIdType::var);
+    _intVars.register_idx(newId,
+                          IntVar(t, newId, initValue, lowerBound, upperBound));
     return newId;
   }
   [[nodiscard]] inline InvariantId createInvariantFromPtr(
       const std::shared_ptr<Invariant>& ptr) {
-    auto newId = InvariantId(m_invariants.size() + 1);
+    auto newId = InvariantId(_invariants.size() + 1);
     ptr->setId(newId);
-    m_invariants.register_idx(newId, ptr);
+    _invariants.register_idx(newId, ptr);
     return newId;
   }
 
   [[nodiscard]] inline VarId createIntViewFromPtr(
       const std::shared_ptr<IntView>& ptr) {
-    VarId newId = VarId(m_intViews.size() + 1, VarIdType::view);
+    VarId newId = VarId(_intViews.size() + 1, VarIdType::view);
     ptr->setId(newId);
-    m_intViews.register_idx(newId, ptr);
+    _intViews.register_idx(newId, ptr);
 
     VarId parentId = ptr->getParentId();
     VarId source = parentId.idType == VarIdType::var
                        ? parentId
-                       : m_intViewSourceId[parentId];
-    m_intViewSourceId.register_idx(newId, source);
+                       : _intViewSourceId[parentId];
+    _intViewSourceId.register_idx(newId, source);
     return newId;
   }
 
-  inline IntVar& getIntVar(VarId v) { return m_intVars[v]; }
+  inline IntVar& getIntVar(VarId v) { return _intVars[v]; }
 
   [[nodiscard]] inline const IntVar& getConstIntVar(VarId v) const {
-    return m_intVars.at(v);
+    return _intVars.at(v);
   }
 
   inline IntView& getIntView(VarId i) {
     assert(i.idType == VarIdType::view);
-    return *(m_intViews[i.id]);
+    return *(_intViews[i.id]);
   }
 
   [[nodiscard]] inline std::shared_ptr<IntView> getConstIntView(VarId i) const {
     assert(i.idType == VarIdType::view);
-    return (m_intViews.at(i.id));
+    return (_intViews.at(i.id));
   }
 
   inline VarId getIntViewSourceId(VarId v) {
     assert(v.idType == VarIdType::view);
-    return m_intViewSourceId[v];
+    return _intViewSourceId[v];
   }
 
-  inline Invariant& getInvariant(InvariantId i) {
-    return *(m_invariants[i.id]);
-  }
+  inline Invariant& getInvariant(InvariantId i) { return *(_invariants[i.id]); }
   inline std::vector<IntVar>::iterator intVarBegin() {
-    return m_intVars.begin();
+    return _intVars.begin();
   }
-  inline std::vector<IntVar>::iterator intVarEnd() { return m_intVars.end(); }
+  inline std::vector<IntVar>::iterator intVarEnd() { return _intVars.end(); }
   inline std::vector<std::shared_ptr<Invariant>>::iterator invariantBegin() {
-    return m_invariants.begin();
+    return _invariants.begin();
   }
   inline std::vector<std::shared_ptr<Invariant>>::iterator invariantEnd() {
-    return m_invariants.end();
+    return _invariants.end();
   }
 
   [[nodiscard]] inline size_t getNumVariables() const {
-    return m_intVars.size();
+    return _intVars.size();
   }
 
   [[nodiscard]] inline size_t getNumInvariants() const {
-    return m_invariants.size();
+    return _invariants.size();
   }
 };

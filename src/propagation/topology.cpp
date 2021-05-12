@@ -11,8 +11,8 @@
 void PropagationGraph::Topology::computeNoCycles() {
   std::vector<bool> tmpVisited;
   std::vector<bool> visited;
-  tmpVisited.resize(graph.m_numVariables + 1, false);
-  visited.resize(graph.m_numVariables + 1, false);
+  tmpVisited.resize(graph._numVariables + 1, false);
+  visited.resize(graph._numVariables + 1, false);
 
   std::queue<VarId> reverseOrder;
 
@@ -20,10 +20,10 @@ void PropagationGraph::Topology::computeNoCycles() {
     // tmp Mark current node
     tmpVisited.at(id) = true;
     // for each dependent invariant
-    for (auto invariant : graph.m_listeningInvariants.at(id)) {
+    for (auto invariant : graph._listeningInvariants.at(id)) {
       // for each variable defined by that invariant
       for (auto dependentVariable :
-           graph.m_variablesDefinedByInvariant.at(invariant)) {
+           graph._variablesDefinedByInvariant.at(invariant)) {
         if (visited.at(dependentVariable)) {
           continue;
         }
@@ -40,18 +40,18 @@ void PropagationGraph::Topology::computeNoCycles() {
   };
 
   // Call visit on all top variables
-  for (size_t i = 0; i < graph.m_numVariables + 1; ++i) {
+  for (size_t i = 0; i < graph._numVariables + 1; ++i) {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
-    if (graph.m_definingInvariant.at(i).id == NULL_ID) {
+    if (graph._definingInvariant.at(i).id == NULL_ID) {
       visit(VarId(i));
     }
   }
 
-  m_variablePosition.resize(graph.m_numVariables + 1, 0);
+  variablePosition.resize(graph._numVariables + 1, 0);
   while (!reverseOrder.empty()) {
-    m_variablePosition.at(reverseOrder.front()) = reverseOrder.size();
+    variablePosition.at(reverseOrder.front()) = reverseOrder.size();
     reverseOrder.pop();
   }
   computeInvariantFromVariables();
@@ -67,7 +67,7 @@ void PropagationGraph::Topology::computeNoCycles() {
  */
 void PropagationGraph::Topology::computeWithCycles() {
   std::vector<bool> visited;
-  visited.resize(graph.m_numVariables + 1, false);
+  visited.resize(graph._numVariables + 1, false);
 
   std::queue<VarId> reverseOrder;
 
@@ -75,10 +75,10 @@ void PropagationGraph::Topology::computeWithCycles() {
     // Mark current node
     visited.at(id) = true;
     // for each dependent invariant
-    for (auto invariant : graph.m_listeningInvariants.at(id)) {
+    for (auto invariant : graph._listeningInvariants.at(id)) {
       // for each variable defined by that invariant
       for (auto dependentVariable :
-           graph.m_variablesDefinedByInvariant.at(invariant)) {
+           graph._variablesDefinedByInvariant.at(invariant)) {
         if (visited.at(dependentVariable)) {
           // Ignore nodes that have been visited before
           // This also breaks cycles.
@@ -91,18 +91,18 @@ void PropagationGraph::Topology::computeWithCycles() {
   };
 
   // Call visit on all top variables
-  for (size_t i = 0; i < graph.m_numVariables + 1; ++i) {
+  for (size_t i = 0; i < graph._numVariables + 1; ++i) {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
-    if (graph.m_definingInvariant.at(i).id == NULL_ID) {
+    if (graph._definingInvariant.at(i).id == NULL_ID) {
       visit(VarId(i));
     }
   }
 
-  m_variablePosition.resize(graph.m_numVariables + 1, 0);
+  variablePosition.resize(graph._numVariables + 1, 0);
   while (!reverseOrder.empty()) {
-    m_variablePosition.at(reverseOrder.front()) = reverseOrder.size();
+    variablePosition.at(reverseOrder.front()) = reverseOrder.size();
     reverseOrder.pop();
   }
   computeInvariantFromVariables();
@@ -121,10 +121,10 @@ void PropagationGraph::Topology::computeWithCycles() {
  */
 void PropagationGraph::Topology::computeLayersWithCycles() {
   std::vector<bool> visited;
-  visited.resize(graph.m_numVariables + 1, false);
+  visited.resize(graph._numVariables + 1, false);
 
   std::vector<int> position;
-  position.resize(graph.m_numVariables + 1, 0);
+  position.resize(graph._numVariables + 1, 0);
 
   std::queue<VarId> reverseOrder;
 
@@ -134,10 +134,10 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
     position.at(id) = depth;
     // std::cout << "Visiting " << id << " at depth " << depth << std::endl;
     // for each dependent invariant
-    for (auto invariant : graph.m_listeningInvariants.at(id)) {
+    for (auto invariant : graph._listeningInvariants.at(id)) {
       // for each variable defined by that invariant
       for (auto dependentVariable :
-           graph.m_variablesDefinedByInvariant.at(invariant)) {
+           graph._variablesDefinedByInvariant.at(invariant)) {
         if (visited.at(dependentVariable)) {
           // Ignore nodes that have been visited before
           // This also breaks cycles.
@@ -160,13 +160,13 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
   };
 
   // Call visit on all top variables
-  for (size_t i = 0; i < graph.m_numVariables + 1; ++i) {
+  for (size_t i = 0; i < graph._numVariables + 1; ++i) {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
 
-    visited.assign(graph.m_numVariables + 1, false);
-    if (graph.m_definingInvariant.at(i).id == NULL_ID) {
+    visited.assign(graph._numVariables + 1, false);
+    if (graph._definingInvariant.at(i).id == NULL_ID) {
       visit(VarId(i), 0);
     }
   }
@@ -177,9 +177,9 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
   // }
   // std::vector<int> count;
   // count.resize(max+1, 0);
-  m_variablePosition.resize(graph.m_numVariables + 1, 0);
-  for (size_t i = 0; i < graph.m_numVariables + 1; ++i) {
-    m_variablePosition.at(i) = position.at(i);
+  variablePosition.resize(graph._numVariables + 1, 0);
+  for (size_t i = 0; i < graph._numVariables + 1; ++i) {
+    variablePosition.at(i) = position.at(i);
     // count.at(position.at(i))++;
   }
 
@@ -194,18 +194,18 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
  * Notes that this gives different key-domains to Variables and invariants.
  */
 void PropagationGraph::Topology::computeInvariantFromVariables() {
-  m_invariantPosition.resize(graph.m_numInvariants + 1, 0);
-  for (size_t i = 0; i < graph.m_numInvariants + 1; ++i) {
+  invariantPosition.resize(graph._numInvariants + 1, 0);
+  for (size_t i = 0; i < graph._numInvariants + 1; ++i) {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
     auto invariant = InvariantId(i);
     size_t position = 0;
     for (auto dependentVariable :
-         graph.m_variablesDefinedByInvariant.at(invariant)) {
+         graph._variablesDefinedByInvariant.at(invariant)) {
       position =
-          std::max<size_t>(position, m_variablePosition.at(dependentVariable));
+          std::max<size_t>(position, variablePosition.at(dependentVariable));
     }
-    m_invariantPosition.at(invariant) = position;
+    invariantPosition.at(invariant) = position;
   }
 }

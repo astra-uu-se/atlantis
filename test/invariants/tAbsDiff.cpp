@@ -19,10 +19,10 @@ namespace {
 
 class MockAbsDiff : public AbsDiff {
  public:
-  bool m_initialized = false;
+  bool initialized = false;
 
   void init(Timestamp timestamp, Engine& engine) override {
-    m_initialized = true;
+    initialized = true;
     AbsDiff::init(timestamp, engine);
   }
 
@@ -82,7 +82,7 @@ class AbsDiffTest : public ::testing::Test {
 
     auto invariant = engine->makeInvariant<MockAbsDiff>(a, b, output);
 
-    EXPECT_TRUE(invariant->m_initialized);
+    EXPECT_TRUE(invariant->initialized);
 
     EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
         .Times(AtLeast(1));
@@ -102,7 +102,8 @@ class AbsDiffTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+    } else if (engine->mode ==
+               PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(3);
       EXPECT_CALL(*invariant,
@@ -164,7 +165,8 @@ TEST_F(AbsDiffTest, Modification) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(AnyNumber());
-  } else if (engine->mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else if (engine->mode ==
+             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
         .Times(AtLeast(2));
     EXPECT_CALL(*invariant,

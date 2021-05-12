@@ -9,38 +9,38 @@
 
 class PropagationGraph {
  protected:
-  size_t m_numInvariants;
-  size_t m_numVariables;
+  size_t _numInvariants;
+  size_t _numVariables;
 
   /**
    * Map from VarID -> InvariantId
    *
    * Maps to nullptr if not defined by any invariant.
    */
-  IdMap<VarIdBase, InvariantId> m_definingInvariant;
+  IdMap<VarIdBase, InvariantId> _definingInvariant;
 
   /**
    * Map from InvariantId -> list of VarId
    *
    * Maps an invariant to all variables it defines.
    */
-  IdMap<InvariantId, std::vector<VarIdBase>> m_variablesDefinedByInvariant;
+  IdMap<InvariantId, std::vector<VarIdBase>> _variablesDefinedByInvariant;
   /**
    * Map from InvariantId -> list of VarId
    *
    * Maps an invariant to all variables it depends on (its inputs).
    */
-  IdMap<InvariantId, std::vector<VarIdBase>> m_inputVariables;
+  IdMap<InvariantId, std::vector<VarIdBase>> _inputVariables;
 
   // Map from VarId -> vector of InvariantId
-  IdMap<VarIdBase, std::vector<InvariantId>> m_listeningInvariants;
+  IdMap<VarIdBase, std::vector<InvariantId>> _listeningInvariants;
 
-  std::vector<bool> m_isOutputVar;
-  std::vector<bool> m_isDecisionVar;
+  std::vector<bool> _isOutputVar;
+  std::vector<bool> _isDecisionVar;
 
   struct Topology {
-    std::vector<size_t> m_variablePosition;
-    std::vector<size_t> m_invariantPosition;
+    std::vector<size_t> variablePosition;
+    std::vector<size_t> invariantPosition;
 
     PropagationGraph& graph;
     Topology() = delete;
@@ -49,13 +49,11 @@ class PropagationGraph {
     void computeWithCycles();
     void computeLayersWithCycles();
     void computeInvariantFromVariables();
-    inline size_t getPosition(VarIdBase id) {
-      return m_variablePosition[id.id];
-    }
+    inline size_t getPosition(VarIdBase id) { return variablePosition[id.id]; }
     inline size_t getPosition(InvariantId id) {
-      return m_invariantPosition.at(id);
+      return invariantPosition.at(id);
     }
-  } m_topology;
+  } _topology;
 
   friend class PropagationEngine;
 
@@ -63,16 +61,16 @@ class PropagationGraph {
     PropagationGraph& graph;
     explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
     bool operator()(VarIdBase left, VarIdBase right) {
-      return graph.m_topology.getPosition(left) >
-             graph.m_topology.getPosition(right);
+      return graph._topology.getPosition(left) >
+             graph._topology.getPosition(right);
     }
   };
 
-  PropagationQueue m_propagationQueue;
-  // LayeredPropagationQueue m_propagationQueue;
+  PropagationQueue _propagationQueue;
+  // LayeredPropagationQueue _propagationQueue;
   // std::priority_queue<VarIdBase, std::vector<VarIdBase>,
   //                     PropagationGraph::PriorityCmp>
-  //     m_propagationQueue;
+  // _propagationQueue;
 
  public:
   PropagationGraph() : PropagationGraph(1000) {}
@@ -111,24 +109,24 @@ class PropagationGraph {
   void registerDefinedVariable(VarIdBase depends, InvariantId source);
 
   [[nodiscard]] inline size_t getNumVariables() const {
-    return m_numVariables;  // this ignores null var
+    return _numVariables;  // this ignores null var
   }
 
   [[nodiscard]] inline size_t getNumInvariants() const {
-    return m_numInvariants;  // this ignores null invariant
+    return _numInvariants;  // this ignores null invariant
   }
 
-  inline bool isOutputVar(VarIdBase id) { return m_isOutputVar.at(id); }
+  inline bool isOutputVar(VarIdBase id) { return _isOutputVar.at(id); }
 
-  inline bool isDecisionVar(VarIdBase id) { return m_isDecisionVar.at(id); }
+  inline bool isDecisionVar(VarIdBase id) { return _isDecisionVar.at(id); }
 
   inline InvariantId getDefiningInvariant(VarIdBase v) {
     // Returns NULL_ID is not defined.
-    return m_definingInvariant.at(v);
+    return _definingInvariant.at(v);
   }
 
   [[nodiscard]] inline const std::vector<VarIdBase>& getVariablesDefinedBy(
       InvariantId inv) const {
-    return m_variablesDefinedByInvariant.at(inv);
+    return _variablesDefinedByInvariant.at(inv);
   }
 };

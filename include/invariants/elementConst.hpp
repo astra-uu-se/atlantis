@@ -17,9 +17,9 @@ class Invariant;
 
 class ElementConst : public Invariant {
  private:
-  VarId m_i;
-  std::vector<Int> m_A;
-  VarId m_b;
+  VarId _i;
+  std::vector<Int> _A;
+  VarId _b;
 
  public:
   ElementConst(VarId i, std::vector<Int> A, VarId b);

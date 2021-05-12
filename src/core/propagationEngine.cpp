@@ -3,26 +3,26 @@
 #include <iostream>
 
 PropagationEngine::PropagationEngine()
-    : m_mode(PropagationMode::INPUT_TO_OUTPUT),
-      m_numVariables(0),
-      m_propGraph(ESTIMATED_NUM_OBJECTS),
-      m_outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
-      // m_propGraph.m_propagationQueue(PropagationGraph::PriorityCmp(m_propGraph)),
-      m_isEnqueued(ESTIMATED_NUM_OBJECTS),
-      m_varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
-      m_propagationPathQueue() {}
+    : _mode(PropagationMode::INPUT_TO_OUTPUT),
+      _numVariables(0),
+      _propGraph(ESTIMATED_NUM_OBJECTS),
+      _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
+      // _propGraph._propagationQueue(PropagationGraph::PriorityCmp(_propGraph)),
+      _isEnqueued(ESTIMATED_NUM_OBJECTS),
+      _varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
+      _propagationPathQueue() {}
 
-PropagationGraph& PropagationEngine::getPropGraph() { return m_propGraph; }
+PropagationGraph& PropagationEngine::getPropGraph() { return _propGraph; }
 
-void PropagationEngine::open() { m_isOpen = true; }
+void PropagationEngine::open() { _isOpen = true; }
 
 void PropagationEngine::close() {
-  ++m_currentTime;  // todo: Is it safe to increment time here? What if a user
-                    // tried to change a variable but without a begin move?
-                    // But we should ignore it anyway then...
-  m_isOpen = false;
+  ++_currentTime;  // todo: Is it safe to increment time here? What if a user
+                   // tried to change a variable but without a begin move?
+                   // But we should ignore it anyway then...
+  _isOpen = false;
   try {
-    m_propGraph.close();
+    _propGraph.close();
   } catch (std::exception e) {
     std::cout << "foo";
   }
@@ -33,72 +33,72 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
-  // logDebug("\t\t\tMaybe changed: " << m_store.getIntVar(id));
-  if (m_isEnqueued.get(id)) {
+  // logDebug("\t\t\tMaybe changed: " << _store.getIntVar(id));
+  if (_isEnqueued.get(id)) {
     // logDebug("\t\t\talready enqueued");
     return;
   }
   // logDebug("\t\t\tpushed on stack");
-  m_propGraph.m_propagationQueue.push(id);
-  m_isEnqueued.set(id, true);
+  _propGraph._propagationQueue.push(id);
+  _isEnqueued.set(id, true);
 }
 
 void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
-  // logDebug("\t\t\tMaybe changed: " << m_store.getIntVar(id));
-  if (m_isEnqueued.get(id)) {
+  // logDebug("\t\t\tMaybe changed: " << _store.getIntVar(id));
+  if (_isEnqueued.get(id)) {
     // logDebug("\t\t\talready enqueued");
     return;
   }
   // logDebug("\t\t\tpushed on stack");
-  m_propGraph.m_propagationQueue.push(id);
-  m_isEnqueued.set(id, true);
+  _propGraph._propagationQueue.push(id);
+  _isEnqueued.set(id, true);
 }
 
 void PropagationEngine::registerInvariantDependsOnVar(InvariantId dependent,
                                                       VarId source,
                                                       LocalId localId) {
   auto sourceId = getSourceId(source);
-  m_propGraph.registerInvariantDependsOnVar(dependent, sourceId);
-  m_dependentInvariantData[sourceId].emplace_back(
+  _propGraph.registerInvariantDependsOnVar(dependent, sourceId);
+  _dependentInvariantData[sourceId].emplace_back(
       InvariantDependencyData{dependent, localId});
 }
 
 void PropagationEngine::registerDefinedVariable(VarId dependent,
                                                 InvariantId source) {
-  m_propGraph.registerDefinedVariable(getSourceId(dependent), source);
+  _propGraph.registerDefinedVariable(getSourceId(dependent), source);
 }
 
 void PropagationEngine::registerVar(VarId v) {
-  m_numVariables++;
-  m_propGraph.registerVar(v);
-  m_outputToInputExplorer.registerVar(v);
-  m_isEnqueued.register_idx(v, false);
-  m_varIsOnPropagationPath.register_idx(v, false);
+  _numVariables++;
+  _propGraph.registerVar(v);
+  _outputToInputExplorer.registerVar(v);
+  _isEnqueued.register_idx(v, false);
+  _varIsOnPropagationPath.register_idx(v, false);
 }
 
 void PropagationEngine::registerInvariant(InvariantId i) {
-  m_propGraph.registerInvariant(i);
-  m_outputToInputExplorer.registerInvariant(i);
+  _propGraph.registerInvariant(i);
+  _outputToInputExplorer.registerInvariant(i);
 }
 
 //---------------------Propagation---------------------
 
 VarId PropagationEngine::getNextStableVariable(Timestamp) {
-  if (m_propGraph.m_propagationQueue.empty()) {
+  if (_propGraph._propagationQueue.empty()) {
     return VarId(NULL_ID);
   }
-  VarId nextVar(m_propGraph.m_propagationQueue.top());
-  m_propGraph.m_propagationQueue.pop();
-  m_isEnqueued.set(nextVar, false);
+  VarId nextVar(_propGraph._propagationQueue.top());
+  _propGraph._propagationQueue.pop();
+  _isEnqueued.set(nextVar, false);
   // Due to notifyMaybeChanged, all variables in the queue are "active".
   return nextVar;
 }
 
 void PropagationEngine::emptyModifiedVariables() {
-  while (!m_propGraph.m_propagationQueue.empty()) {
-    m_propGraph.m_propagationQueue.pop();
+  while (!_propGraph._propagationQueue.empty()) {
+    _propGraph._propagationQueue.pop();
   }
-  m_isEnqueued.assign_all(false);
+  _isEnqueued.assign_all(false);
 }
 
 void PropagationEngine::recomputeAndCommit() {
@@ -107,17 +107,16 @@ void PropagationEngine::recomputeAndCommit() {
   bool done = false;
   while (!done) {
     done = true;
-    if (tries++ > m_store.getNumVariables()) {
+    if (tries++ > _store.getNumVariables()) {
       throw FailedToInitialise();
     }
-    for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+    for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
          ++iter) {
       assert((*iter) != nullptr);
-      (*iter)->recompute(m_currentTime, *this);
+      (*iter)->recompute(_currentTime, *this);
     }
-    for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd();
-         ++iter) {
-      if (iter->hasChanged(m_currentTime)) {
+    for (auto iter = _store.intVarBegin(); iter != _store.intVarEnd(); ++iter) {
+      if (iter->hasChanged(_currentTime)) {
         done = false;
         iter->commit();
       }
@@ -125,43 +124,43 @@ void PropagationEngine::recomputeAndCommit() {
   }
   // We must commit all invariants once everything is stable.
   // Commiting an invariant will commit any internal datastructure.
-  for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+  for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
        ++iter) {
-    (*iter)->commit(m_currentTime, *this);
+    (*iter)->commit(_currentTime, *this);
   }
   emptyModifiedVariables();
 }
 
 //--------------------- Move semantics ---------------------
 void PropagationEngine::beginMove() {
-  assert(!m_isMoving);
-  m_isMoving = true;
-  ++m_currentTime;
+  assert(!_isMoving);
+  _isMoving = true;
+  ++_currentTime;
   // only needed for bottom up propagation
   clearPropagationPath();
 }
 
 void PropagationEngine::endMove() {
-  assert(m_isMoving);
-  m_isMoving = false;
+  assert(_isMoving);
+  _isMoving = false;
 }
 
 void PropagationEngine::beginQuery() {}
 
 void PropagationEngine::query(VarId id) {
-  if (m_mode == PropagationMode::INPUT_TO_OUTPUT) {
+  if (_mode == PropagationMode::INPUT_TO_OUTPUT) {
     return;
   }
-  m_outputToInputExplorer.registerForPropagation(m_currentTime, getSourceId(id));
+  _outputToInputExplorer.registerForPropagation(_currentTime, getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
-  switch (m_mode) {
+  switch (_mode) {
     case PropagationMode::INPUT_TO_OUTPUT:
       propagate<false>();
       break;
     case PropagationMode::OUTPUT_TO_INPUT:
-      if (m_useMarkingForOutputToInput) {
+      if (_useMarkingForOutputToInput) {
         markPropagationPathAndEmptyModifiedVariables();
       } else {
         emptyModifiedVariables();
@@ -169,7 +168,7 @@ void PropagationEngine::endQuery() {
       outputToInputPropagate<false>();
       break;
     case PropagationMode::MIXED:
-      if (m_useMarkingForOutputToInput) {
+      if (_useMarkingForOutputToInput) {
         markPropagationPathAndEmptyModifiedVariables();
       } else {
         emptyModifiedVariables();
@@ -178,18 +177,18 @@ void PropagationEngine::endQuery() {
       break;
   }
   // We must always clear due to the current version of query()
-  m_outputToInputExplorer.clearRegisteredVariables();
+  _outputToInputExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::beginCommit() {}
 
 void PropagationEngine::endCommit() {
-  switch (m_mode) {
+  switch (_mode) {
     case PropagationMode::INPUT_TO_OUTPUT:
       propagate<true>();
       break;
     case PropagationMode::OUTPUT_TO_INPUT:
-      if (m_useMarkingForOutputToInput) {
+      if (_useMarkingForOutputToInput) {
         markPropagationPathAndEmptyModifiedVariables();
       } else {
         emptyModifiedVariables();
@@ -205,46 +204,46 @@ void PropagationEngine::endCommit() {
       break;
   }
   // We must always clear due to the current version of query()
-  m_outputToInputExplorer.clearRegisteredVariables();
+  _outputToInputExplorer.clearRegisteredVariables();
 
   return;
   // Todo: This just commits everything and can be very inefficient, instead
   // commit during propagation.
 
   // Commit all variables:
-  // for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd();
+  // for (auto iter = _store.intVarBegin(); iter != _store.intVarEnd();
   // ++iter) {
-  //   iter->commitIf(m_currentTime);
+  //   iter->commitIf(_currentTime);
   // }
   // // Commit all invariants:
-  // for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
+  // for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
   //      ++iter) {
-  //   (*iter)->commit(m_currentTime, *this);
+  //   (*iter)->commit(_currentTime, *this);
   // }
 }
 
 void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
   // We cannot iterate over a priority_queue so we cannot copy it.
-  // TODO: replace priority_queue of m_propGraph.m_propagationQueue with custom
+  // TODO: replace priority_queue of _propGraph._propagationQueue with custom
   // queue.
-  while (!m_propGraph.m_propagationQueue.empty()) {
-    auto id = m_propGraph.m_propagationQueue.top();
-    m_isEnqueued.set(id, false);
-    m_propagationPathQueue.push(id);
-    m_propGraph.m_propagationQueue.pop();
+  while (!_propGraph._propagationQueue.empty()) {
+    auto id = _propGraph._propagationQueue.top();
+    _isEnqueued.set(id, false);
+    _propagationPathQueue.push(id);
+    _propGraph._propagationQueue.pop();
   }
 
-  while (!m_propagationPathQueue.empty()) {
-    VarId currentVar = m_propagationPathQueue.front();
-    m_propagationPathQueue.pop();
-    if (m_varIsOnPropagationPath.get(currentVar)) {
+  while (!_propagationPathQueue.empty()) {
+    VarId currentVar = _propagationPathQueue.front();
+    _propagationPathQueue.pop();
+    if (_varIsOnPropagationPath.get(currentVar)) {
       continue;
     }
-    m_varIsOnPropagationPath.set(currentVar, true);
-    for (auto& depInv : m_dependentInvariantData.at(currentVar)) {
-      for (VarIdBase depVar : m_propGraph.getVariablesDefinedBy(depInv.id)) {
-        if (!m_varIsOnPropagationPath.get(depVar)) {
-          m_propagationPathQueue.push(depVar);
+    _varIsOnPropagationPath.set(currentVar, true);
+    for (auto& depInv : _dependentInvariantData.at(currentVar)) {
+      for (VarIdBase depVar : _propGraph.getVariablesDefinedBy(depInv.id)) {
+        if (!_varIsOnPropagationPath.get(depVar)) {
+          _propagationPathQueue.push(depVar);
         }
       }
     }
@@ -265,15 +264,16 @@ void PropagationEngine::propagate() {
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
   std::vector<std::unordered_map<size_t, Int>> notificationCount(
-      m_store.getNumInvariants());
+      _store.getNumInvariants());
 #endif
 
-  for (VarId stableVarId = getNextStableVariable(m_currentTime);
+  for (VarId stableVarId = getNextStableVariable(_currentTime);
        stableVarId.id != NULL_ID;
-       stableVarId = getNextStableVariable(m_currentTime)) {
-    IntVar& variable = m_store.getIntVar(stableVarId);
+       stableVarId = getNextStableVariable(_currentTime)) {
+    IntVar& variable = _store.getIntVar(stableVarId);
 
-    InvariantId definingInvariant = m_propGraph.getDefiningInvariant(stableVarId);
+    InvariantId definingInvariant =
+        _propGraph.getDefiningInvariant(stableVarId);
 
 #ifdef PROPAGATION_DEBUG
     logDebug("\tPropagating " << variable);
@@ -281,41 +281,41 @@ void PropagationEngine::propagate() {
 #endif
 
     if (definingInvariant != NULL_ID) {
-      Invariant& defInv = m_store.getInvariant(definingInvariant);
+      Invariant& defInv = _store.getInvariant(definingInvariant);
       if (stableVarId == defInv.getPrimaryOutput()) {
-        Int oldValue = variable.getValue(m_currentTime);
-        defInv.compute(m_currentTime, *this);
-        defInv.queueNonPrimaryOutputVarsForPropagation(m_currentTime, *this);
-        if (oldValue == variable.getValue(m_currentTime)) {
+        Int oldValue = variable.getValue(_currentTime);
+        defInv.compute(_currentTime, *this);
+        defInv.queueNonPrimaryOutputVarsForPropagation(_currentTime, *this);
+        if (oldValue == variable.getValue(_currentTime)) {
 #ifdef PROPAGATION_DEBUG
           logDebug("\t\tVariable did not change after compute: ignoring.");
 #endif
           continue;
         }
         if constexpr (DoCommit) {
-          defInv.commit(m_currentTime, *this);
+          defInv.commit(_currentTime, *this);
         }
       }
     }
 
     if constexpr (DoCommit) {
-      commitIf(m_currentTime, stableVarId);
+      commitIf(_currentTime, stableVarId);
     }
 
-    for (auto& toNotify : m_dependentInvariantData[stableVarId]) {
-      Invariant& invariant = m_store.getInvariant(toNotify.id);
+    for (auto& toNotify : _dependentInvariantData[stableVarId]) {
+      Invariant& invariant = _store.getInvariant(toNotify.id);
 
 #ifdef PROPAGATION_DEBUG
       logDebug("\t\tNotifying invariant:" << toNotify.id << " with localId: "
                                           << toNotify.localId);
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
-      notificationCount.at(toNotify.id.id - 1)[variable.m_id.id] =
-          notificationCount.at(toNotify.id.id - 1)[variable.m_id.id] + 1;
+      notificationCount.at(toNotify.id.id - 1)[variable._id.id] =
+          notificationCount.at(toNotify.id.id - 1)[variable._id.id] + 1;
 #endif
 
       invariant.notify(toNotify.localId);
-      queueForPropagation(m_currentTime, invariant.getPrimaryOutput());
+      queueForPropagation(_currentTime, invariant.getPrimaryOutput());
     }
   }
 

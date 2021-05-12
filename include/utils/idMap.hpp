@@ -11,95 +11,93 @@
 template <typename I, typename T>
 class IdMap {
  private:
-  std::vector<T> m_vector;
+  std::vector<T> _vector;
 
  public:
   explicit IdMap(size_t reservedSize) {
     static_assert(std::is_base_of<Id, I>::value,
                   "The index must be a subclass of id");
-    m_vector.reserve(reservedSize);
+    _vector.reserve(reservedSize);
   }
 
   inline T& operator[](I idx) {
     auto i = static_cast<Id>(idx).id;
     assert(i > 0);
-    assert(i <= m_vector.size());
-    return m_vector[i - 1];
+    assert(i <= _vector.size());
+    return _vector[i - 1];
   }
 
   inline const T& at(I idx) const {
     auto i = static_cast<Id>(idx).id;
     assert(i > 0);
-    assert(i <= m_vector.size());
-    return m_vector[i - 1];
+    assert(i <= _vector.size());
+    return _vector[i - 1];
   }
 
   inline void register_idx(I idx) {
-    if (static_cast<size_t>(idx.id) != m_vector.size() + 1) {
+    if (static_cast<size_t>(idx.id) != _vector.size() + 1) {
       throw OutOfOrderIndexRegistration();
     }
-    m_vector.emplace_back(T());
+    _vector.emplace_back(T());
   }
 
   inline void register_idx(I idx, T initValue) {
-    if (static_cast<size_t>(idx.id) != m_vector.size() + 1) {
+    if (static_cast<size_t>(idx.id) != _vector.size() + 1) {
       throw OutOfOrderIndexRegistration();
     }
-    m_vector.emplace_back(initValue);
+    _vector.emplace_back(initValue);
   }
 
-  inline void assign_all(T value) { m_vector.assign(m_vector.size(), value); }
+  inline void assign_all(T value) { _vector.assign(_vector.size(), value); }
 
-  [[nodiscard]] inline size_t size() const { return m_vector.size(); }
+  [[nodiscard]] inline size_t size() const { return _vector.size(); }
   [[nodiscard]] inline bool has_idx(I idx) {
-    return static_cast<size_t>(idx.id) <= m_vector.size();
+    return static_cast<size_t>(idx.id) <= _vector.size();
   }
   typedef typename std::vector<T>::iterator iterator;
 
-  inline iterator begin() { return m_vector.begin(); }
-  inline iterator end() { return m_vector.end(); }
+  inline iterator begin() { return _vector.begin(); }
+  inline iterator end() { return _vector.end(); }
 };
 
 template <typename I>
 class IdMap<I, bool> {
  private:
-  std::vector<bool> m_vector;
+  std::vector<bool> _vector;
 
  public:
   explicit IdMap(size_t reservedSize) {
     static_assert(std::is_base_of<Id, I>::value,
                   "The index must be a subclass of id");
-    m_vector.reserve(reservedSize);
+    _vector.reserve(reservedSize);
   }
 
   inline bool get(I idx) const {
     auto i = static_cast<Id>(idx).id;
     assert(i > 0);
-    assert(i <= m_vector.size());
-    return m_vector[i - 1];
+    assert(i <= _vector.size());
+    return _vector[i - 1];
   }
 
   inline void set(I idx, bool value) {
     auto i = static_cast<Id>(idx).id;
     assert(i > 0);
-    assert(i <= m_vector.size());
-    m_vector[i - 1] = value;
+    assert(i <= _vector.size());
+    _vector[i - 1] = value;
   }
 
   inline void register_idx(I idx, bool initValue) {
-    if (static_cast<size_t>(idx.id) != m_vector.size() + 1) {
+    if (static_cast<size_t>(idx.id) != _vector.size() + 1) {
       throw OutOfOrderIndexRegistration();
     }
-    m_vector.emplace_back(initValue);
+    _vector.emplace_back(initValue);
   }
 
-  inline void assign_all(bool value) {
-    m_vector.assign(m_vector.size(), value);
-  }
+  inline void assign_all(bool value) { _vector.assign(_vector.size(), value); }
 
   // std::string toString() {
   //   std::string str = "";
-  //   for (auto foo : m_vector) {
+  //   for (auto foo : _vector) {
   //     str += foo + "\n";
   //   }
   //   return str;
