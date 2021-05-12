@@ -39,20 +39,22 @@ class MockInvariantSimple : public Invariant {
 class MockInvariantAdvanced : public Invariant {
  public:
   bool _initialized = false;
-  std::vector<VarId> inputs;
+  std::vector<VarId> parameters;
   VarId output;
 
-  MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
-      : Invariant(NULL_ID), inputs(std::move(t_inputs)), output(t_output) {
-    _modifiedVars.reserve(inputs.size());
+  MockInvariantAdvanced(std::vector<VarId>&& t_parameters, VarId t_output)
+      : Invariant(NULL_ID),
+        parameters(std::move(t_parameters)),
+        output(t_output) {
+    _modifiedVars.reserve(parameters.size());
   }
 
   void init(Timestamp, Engine& engine) override {
     assert(_id != NULL_ID);
 
     registerDefinedVariable(engine, output);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      engine.registerInvariantParameter(_id, inputs[i], LocalId(i));
+    for (size_t i = 0; i < parameters.size(); ++i) {
+      engine.registerInvariantParameter(_id, parameters[i], LocalId(i));
     }
     _initialized = true;
   }

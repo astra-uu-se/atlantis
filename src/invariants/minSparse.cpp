@@ -1,38 +1,41 @@
 #include "invariants/minSparse.hpp"
 
-MinSparse::MinSparse(std::vector<VarId> X, VarId b)
-    : Invariant(NULL_ID), _X(X), _b(b), _localPriority(X.size()) {
-  _modifiedVars.reserve(_X.size());
+MinSparse::MinSparse(std::vector<VarId> varArray, VarId y)
+    : Invariant(NULL_ID),
+      _varArray(varArray),
+      _y(y),
+      _localPriority(varArray.size()) {
+  _modifiedVars.reserve(_varArray.size());
 }
 
 void MinSparse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(engine, _b);
-  for (size_t i = 0; i < _X.size(); ++i) {
-    engine.registerInvariantParameter(_id, _X[i], LocalId(i));
+  registerDefinedVariable(engine, _y);
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    engine.registerInvariantParameter(_id, _varArray[i], LocalId(i));
   }
 }
 
 void MinSparse::recompute(Timestamp ts, Engine& engine) {
-  for (size_t i = 0; i < _X.size(); ++i) {
-    _localPriority.updatePriority(ts, i, engine.getValue(ts, _X[i]));
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    _localPriority.updatePriority(ts, i, engine.getValue(ts, _varArray[i]));
   }
-  updateValue(ts, engine, _b, _localPriority.getMinPriority(ts));
+  updateValue(ts, engine, _y, _localPriority.getMinPriority(ts));
 }
 
 void MinSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
-  auto newValue = engine.getValue(ts, _X[id]);
+  auto newValue = engine.getValue(ts, _varArray[id]);
   _localPriority.updatePriority(ts, id, newValue);
-  updateValue(ts, engine, _b, _localPriority.getMinPriority(ts));
+  updateValue(ts, engine, _y, _localPriority.getMinPriority(ts));
 }
 
 VarId MinSparse::getNextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
-  if (static_cast<size_t>(_state.getValue(ts)) == _X.size()) {
+  if (static_cast<size_t>(_state.getValue(ts)) == _varArray.size()) {
     return NULL_ID;  // Done
   } else {
-    return _X.at(_state.getValue(ts));
+    return _varArray.at(_state.getValue(ts));
   }
 }
 

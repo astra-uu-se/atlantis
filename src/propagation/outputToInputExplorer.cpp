@@ -16,8 +16,8 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
   _invariantStack.reserve(expectedSize);
 }
 
-// We expand an invariant by pushing it and its first input variable onto each
-// stack.
+// We expand an invariant by pushing it and its first parameter variable onto
+// each stack.
 void OutputToInputExplorer::expandInvariant(InvariantId inv) {
   if (_invariantIsOnStack.get(inv)) {
     throw DynamicCycleException();

@@ -6,16 +6,16 @@
 class Engine;
 
 /**
- * Invariant for c <== |a-b|
+ * Invariant for absDiff <== |x-y|
  *
  */
 
 class AbsDiff : public Invariant {
  private:
-  VarId _a, _b, _c;
+  VarId _x, _y, _absDiff;
 
  public:
-  AbsDiff(VarId a, VarId b, VarId c);
+  AbsDiff(VarId x, VarId y, VarId absDiff);
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;
