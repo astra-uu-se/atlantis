@@ -21,7 +21,7 @@ class Engine {
  protected:
   static const size_t ESTIMATED_NUM_OBJECTS = 1;
 
-  Timestamp _currentTime;
+  Timestamp _currentTimestamp;
 
   bool _isOpen = true;
   bool _isMoving = false;
@@ -36,12 +36,14 @@ class Engine {
   Store _store;
 
   void incValue(Timestamp, VarId, Int inc);
-  inline void incValue(VarId id, Int val) { incValue(_currentTime, id, val); }
+  inline void incValue(VarId id, Int val) {
+    incValue(_currentTimestamp, id, val);
+  }
 
   void updateValue(Timestamp, VarId, Int val);
 
   inline void updateValue(VarId id, Int val) {
-    updateValue(_currentTime, id, val);
+    updateValue(_currentTimestamp, id, val);
   }
 
   inline bool hasChanged(Timestamp, VarId);
@@ -80,7 +82,7 @@ class Engine {
   virtual void notifyMaybeChanged(Timestamp, VarId) = 0;
 
   Int getValue(Timestamp, VarId);
-  inline Int getNewValue(VarId id) { return getValue(_currentTime, id); }
+  inline Int getNewValue(VarId id) { return getValue(_currentTimestamp, id); }
 
   Int getIntViewValue(Timestamp, VarId);
 
@@ -180,7 +182,7 @@ class Engine {
   virtual void registerInvariant(InvariantId) = 0;
 
   const Store& getStore();
-  [[nodiscard]] Timestamp getCurrentTime() const;
+  [[nodiscard]] Timestamp getCurrentTimestamp() const;
 };
 
 template <class T, typename... Args>
@@ -194,7 +196,7 @@ Engine::makeInvariant(Args&&... args) {
   auto newId = _store.createInvariantFromPtr(invariantPtr);
   registerInvariant(newId);
   logDebug("Created new invariant with id: " << newId);
-  invariantPtr->init(_currentTime, *this);
+  invariantPtr->init(_currentTimestamp, *this);
   return invariantPtr;
 }
 
@@ -224,14 +226,16 @@ Engine::makeConstraint(Args&&... args) {
   auto newId = _store.createInvariantFromPtr(constraintPtr);
   registerInvariant(newId);  // A constraint is a type of invariant.
   logDebug("Created new Constraint with id: " << newId);
-  constraintPtr->init(_currentTime, *this);
+  constraintPtr->init(_currentTimestamp, *this);
   return constraintPtr;
 }
 
 //--------------------- Inlined functions ---------------------
 
 inline const Store& Engine::getStore() { return _store; }
-inline Timestamp Engine::getCurrentTime() const { return _currentTime; }
+inline Timestamp Engine::getCurrentTimestamp() const {
+  return _currentTimestamp;
+}
 
 inline bool Engine::hasChanged(Timestamp ts, VarId id) {
   return _store.getIntVar(id).hasChanged(ts);
@@ -271,7 +275,7 @@ inline bool Engine::isPostponed(InvariantId id) {
 }
 
 inline void Engine::recompute(InvariantId id) {
-  return _store.getInvariant(id).recompute(_currentTime, *this);
+  return _store.getInvariant(id).recompute(_currentTimestamp, *this);
 }
 
 inline void Engine::recompute(Timestamp ts, InvariantId id) {
@@ -301,5 +305,5 @@ inline void Engine::commitInvariantIf(Timestamp ts, InvariantId id) {
 }
 
 inline void Engine::commitInvariant(InvariantId id) {
-  _store.getInvariant(id).commit(_currentTime, *this);
+  _store.getInvariant(id).commit(_currentTimestamp, *this);
 }

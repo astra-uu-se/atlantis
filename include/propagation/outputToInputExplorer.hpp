@@ -45,7 +45,7 @@ class OutputToInputExplorer {
   void registerVar(VarId);
   void registerInvariant(InvariantId);
   /**
-   * Register than we want to compute the value of v at time ts
+   * Register than we want to compute the value of v at timestamp ts
    */
   void registerForPropagation(Timestamp, VarId);
 

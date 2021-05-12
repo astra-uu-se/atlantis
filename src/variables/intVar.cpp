@@ -15,8 +15,9 @@ IntVar::IntVar(VarId id, Int initValue, Int lowerBound, Int upperBound)
 IntVar::IntVar(Timestamp ts, VarId id, Int initValue, Int lowerBound,
                Int upperBound)
     : Var(id),
-      _value(ts, initValue),  // todo: We need both a time-zero (when
-                              // initialisation happens) but also a dummy time.
+      _value(ts,
+             initValue),  // todo: We need both a timestamp-zero (when
+                          // initialisation happens) but also a dummy timestamp.
       _lowerBound(lowerBound),
       _upperBound(upperBound) {
   if (lowerBound > upperBound) {

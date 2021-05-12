@@ -63,23 +63,25 @@ void OutputToInputExplorer::registerInvariant(InvariantId id) {
   _invariantIsOnStack.register_idx(id, false);
 }
 
-template void OutputToInputExplorer::propagate<true>(Timestamp currentTime);
-template void OutputToInputExplorer::propagate<false>(Timestamp currentTime);
+template void OutputToInputExplorer::propagate<true>(
+    Timestamp currentTimestamp);
+template void OutputToInputExplorer::propagate<false>(
+    Timestamp currentTimestamp);
 
 template <bool DoCommit>
-void OutputToInputExplorer::propagate(Timestamp currentTime) {
+void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
   // recursively expand variables to compute their value.
   while (_varStackIdx > 0) {
     VarId currentVar = peekVariableStack();
 
     // If the variable is not stable, then expand it.
-    if (!isStable(currentTime, currentVar)) {
+    if (!isStable(currentTimestamp, currentVar)) {
       // Variable will become stable as it is either not defined or we now
       // expand its invariant. Note that expandInvariant may can sometimes not
       // push a new invariant nor a new variable on the stack, so we must mark
       // the variable as stable before we expand it as this otherwise results in
       // an infinite loop.
-      markStable(currentTime, currentVar);
+      markStable(currentTimestamp, currentVar);
       // If the variable is not on the propagation path then ignore it.
       if (_engine.isOnPropagationPath(currentVar) &&
           _engine.getDefiningInvariant(currentVar) != NULL_ID) {
@@ -94,7 +96,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTime) {
                            // stable. Just continue!
       continue;
     }
-    if (_engine.hasChanged(currentTime, currentVar)) {
+    if (_engine.hasChanged(currentTimestamp, currentVar)) {
       // If the variable is stable and has changed then just send a
       // notification to top invariant (i.e, the one asking for its value)
       notifyCurrentInvariant();
@@ -105,9 +107,9 @@ void OutputToInputExplorer::propagate(Timestamp currentTime) {
         _engine.commitInvariant(peekInvariantStack());
       }
       // The top invariant has finished propagating, so all defined vars can
-      // be marked as stable at the current time.
+      // be marked as stable at the current timestamp.
       for (auto defVar : _engine.getVariablesDefinedBy(peekInvariantStack())) {
-        markStable(currentTime, defVar);
+        markStable(currentTimestamp, defVar);
         if constexpr (DoCommit) {
           _engine.commit(defVar);
         }
