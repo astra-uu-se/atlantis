@@ -1,5 +1,5 @@
 #include "invariants/linear.hpp"
-
+#include "core/engine.hpp"
 #include <utility>
 
 Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
