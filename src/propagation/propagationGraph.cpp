@@ -69,11 +69,11 @@ void PropagationGraph::registerDefinedVariable(VarIdBase varId,
 }
 
 void PropagationGraph::close() {
-  _isDecisionVar.resize(getNumVariables() + 1);
+  _isInputVar.resize(getNumVariables() + 1);
   _isOutputVar.resize(getNumVariables() + 1);
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
     _isOutputVar.at(i) = (_listeningInvariants.at(i).empty());
-    _isDecisionVar.at(i) = (_definingInvariant.at(i) == NULL_ID);
+    _isInputVar.at(i) = (_definingInvariant.at(i) == NULL_ID);
   }
 
   _topology.computeLayersWithCycles();
