@@ -28,7 +28,7 @@ class PropagationGraph {
   /**
    * Map from InvariantId -> list of VarId
    *
-   * Maps an invariant to all variable parameters on (its inputs).
+   * Maps an invariant to all its variable parameters.
    */
   IdMap<InvariantId, std::vector<VarIdBase>> _variableParameters;
 
