@@ -75,10 +75,14 @@ void PropagationGraph::close() {
     m_isDecisionVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
   }
 
-  m_topology.computeWithCycles();
+  m_topology.computeLayersWithCycles();
   // Reset propagation queue data structure.
   // TODO: Be sure that this does not cause a memeory leak...
-  m_propagationQueue = PropagationQueue();
+  // m_propagationQueue = PropagationQueue();
+  size_t numLayers =
+      1 + *std::max_element(m_topology.m_variablePosition.begin(),
+                            m_topology.m_variablePosition.end());
+  m_propagationQueue.init(getNumVariables(), numLayers);
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
     VarIdBase id = VarIdBase(i);
     m_propagationQueue.initVar(id, m_topology.getPosition(id));
