@@ -87,7 +87,9 @@ class PropagationEngine : public Engine {
   void beginMove();
   void endMove();
   void setValue(Timestamp, VarId, Int val);
-  inline void setValue(VarId id, Int val) { setValue(_currentTime, id, val); }
+  inline void setValue(VarId id, Int val) {
+    setValue(_currentTimestamp, id, val);
+  }
 
   void beginQuery();
   void endQuery();
@@ -149,10 +151,11 @@ inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
 
 inline VarId PropagationEngine::getNextParameter(InvariantId id) {
   return getSourceId(
-      _store.getInvariant(id).getNextParameter(_currentTime, *this));
+      _store.getInvariant(id).getNextParameter(_currentTimestamp, *this));
 }
 inline void PropagationEngine::notifyCurrentParameterChanged(InvariantId id) {
-  _store.getInvariant(id).notifyCurrentParameterChanged(_currentTime, *this);
+  _store.getInvariant(id).notifyCurrentParameterChanged(_currentTimestamp,
+                                                        *this);
 }
 
 inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {
@@ -173,5 +176,5 @@ inline void PropagationEngine::setPropagationMode(PropagationMode m) {
 
 template <bool OutputToInputMarking>
 inline void PropagationEngine::outputToInputPropagate() {
-  _outputToInputExplorer.propagate<OutputToInputMarking>(_currentTime);
+  _outputToInputExplorer.propagate<OutputToInputMarking>(_currentTimestamp);
 }

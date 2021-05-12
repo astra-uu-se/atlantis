@@ -213,7 +213,7 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->close();
 
   engine->beginMove();
-  Timestamp moveTimestamp = engine->getCurrentTime();
+  Timestamp moveTimestamp = engine->getCurrentTimestamp();
 
   engine->setValue(a, -1);
   engine->setValue(b, -2);

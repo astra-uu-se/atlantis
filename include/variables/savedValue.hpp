@@ -5,43 +5,46 @@
 template <class T>
 class Saved {
  private:
-  Timestamp _tmpTime;
+  Timestamp _tmpTimestamp;
   T _savedValue;
   T _tmpValue;
 
  public:
-  Saved(Timestamp initTime, T initValue)
-      : _tmpTime(initTime), _savedValue(initValue), _tmpValue(initValue) {}
+  Saved(Timestamp initTimestamp, T initValue)
+      : _tmpTimestamp(initTimestamp),
+        _savedValue(initValue),
+        _tmpValue(initValue) {}
 
   [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
       Timestamp ts) const {
-    return _tmpTime == ts && _savedValue != _tmpValue;
+    return _tmpTimestamp == ts && _savedValue != _tmpValue;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
       const {
-    return _tmpTime;
+    return _tmpTimestamp;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline T get(
-      Timestamp currentTime) const noexcept {
-    return currentTime == _tmpTime ? _tmpValue : _savedValue;
+      Timestamp currentTimestamp) const noexcept {
+    return currentTimestamp == _tmpTimestamp ? _tmpValue : _savedValue;
   }
 
-  [[gnu::always_inline]] inline T set(Timestamp currentTime, T value) noexcept {
-    _tmpTime = currentTime;
+  [[gnu::always_inline]] inline T set(Timestamp currentTimestamp,
+                                      T value) noexcept {
+    _tmpTimestamp = currentTimestamp;
     _tmpValue = value;
     return _tmpValue;
   }
 
-  [[gnu::always_inline]] inline void init(Timestamp currentTime,
+  [[gnu::always_inline]] inline void init(Timestamp currentTimestamp,
                                           T value) noexcept {
-    init(currentTime, value, value);
+    init(currentTimestamp, value, value);
   }
 
-  [[gnu::always_inline]] inline void init(Timestamp currentTime, T savedValue,
-                                          T tmpValue) noexcept {
-    _tmpTime = currentTime;
+  [[gnu::always_inline]] inline void init(Timestamp currentTimestamp,
+                                          T savedValue, T tmpValue) noexcept {
+    _tmpTimestamp = currentTimestamp;
     _savedValue = savedValue;
     _tmpValue = tmpValue;
   }
@@ -50,8 +53,9 @@ class Saved {
     _savedValue = value;
   }
 
-  [[gnu::always_inline]] inline void commitIf(Timestamp currentTime) noexcept {
-    if (_tmpTime == currentTime) {
+  [[gnu::always_inline]] inline void commitIf(
+      Timestamp currentTimestamp) noexcept {
+    if (_tmpTimestamp == currentTimestamp) {
       _savedValue = _tmpValue;
     }
   }

@@ -4,27 +4,29 @@
 
 class SavedInt {
  private:
-  Timestamp _tmpTime;
+  Timestamp _tmpTimestamp;
   Int _savedValue;
   Int _tmpValue;
 
  public:
-  SavedInt(Timestamp initTime, const Int& initValue)
-      : _tmpTime(initTime), _savedValue(initValue), _tmpValue(initValue) {}
+  SavedInt(Timestamp initTimestamp, const Int& initValue)
+      : _tmpTimestamp(initTimestamp),
+        _savedValue(initValue),
+        _tmpValue(initValue) {}
 
   [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
       Timestamp ts) const {
-    return _tmpTime == ts && _savedValue != _tmpValue;
+    return _tmpTimestamp == ts && _savedValue != _tmpValue;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
       const {
-    return _tmpTime;
+    return _tmpTimestamp;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline Int getValue(
-      Timestamp currentTime) const noexcept {
-    return currentTime == _tmpTime ? _tmpValue : _savedValue;
+      Timestamp currentTimestamp) const noexcept {
+    return currentTimestamp == _tmpTimestamp ? _tmpValue : _savedValue;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline Int getCommittedValue()
@@ -32,32 +34,34 @@ class SavedInt {
     return _savedValue;
   }
 
-  [[gnu::always_inline]] inline Int setValue(Timestamp currentTime,
+  [[gnu::always_inline]] inline Int setValue(Timestamp currentTimestamp,
                                              Int value) noexcept {
-    _tmpTime = currentTime;
+    _tmpTimestamp = currentTimestamp;
     _tmpValue = value;
     return _tmpValue;
   }
 
-  [[gnu::always_inline]] inline Int incValue(Timestamp currentTime,
+  [[gnu::always_inline]] inline Int incValue(Timestamp currentTimestamp,
                                              Int inc) noexcept {
-    _tmpValue = (currentTime == _tmpTime ? _tmpValue : _savedValue) + inc;
-    _tmpTime = currentTime;
+    _tmpValue =
+        (currentTimestamp == _tmpTimestamp ? _tmpValue : _savedValue) + inc;
+    _tmpTimestamp = currentTimestamp;
     return _tmpValue;
   }
   [[gnu::always_inline]] inline void commitValue(Int value) noexcept {
     _savedValue = value;
-    // clear what the correct value is at tmp_time.
+    // clear what the correct value is at _tmpTimestamp.
   }
 
   [[gnu::always_inline]] inline void commit() noexcept {
     // todo: do we really want this? Very dangerous to just
-    // commit regardless of time.
+    // commit regardless of timestamp.
     _savedValue = _tmpValue;
   }
 
-  [[gnu::always_inline]] inline void commitIf(Timestamp currentTime) noexcept {
-    if (_tmpTime == currentTime) {
+  [[gnu::always_inline]] inline void commitIf(
+      Timestamp currentTimestamp) noexcept {
+    if (_tmpTimestamp == currentTimestamp) {
       _savedValue = _tmpValue;
     }
   }

@@ -172,22 +172,22 @@ TEST_F(LessEqualTest, NonViolatingUpdate) {
   EXPECT_EQ(engine->getValue(0, violationId), 0);
   EXPECT_EQ(engine->getCommittedValue(violationId), 0);
 
-  Timestamp time;
+  Timestamp timestamp;
 
   for (size_t i = 0; i < 10000; ++i) {
-    time = Timestamp(1 + i);
-    engine->setValue(time, x, 1 - i);
-    lessEqual->recompute(time, *engine);
+    timestamp = Timestamp(1 + i);
+    engine->setValue(timestamp, x, 1 - i);
+    lessEqual->recompute(timestamp, *engine);
     EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-    EXPECT_EQ(engine->getValue(time, violationId), 0);
+    EXPECT_EQ(engine->getValue(timestamp, violationId), 0);
   }
 
   for (size_t i = 0; i < 10000; ++i) {
-    time = Timestamp(1 + i);
-    engine->setValue(time, y, 5 + i);
-    lessEqual->recompute(time, *engine);
+    timestamp = Timestamp(1 + i);
+    engine->setValue(timestamp, y, 5 + i);
+    lessEqual->recompute(timestamp, *engine);
     EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-    EXPECT_EQ(engine->getValue(time, violationId), 0);
+    EXPECT_EQ(engine->getValue(timestamp, violationId), 0);
   }
 }
 
@@ -234,9 +234,9 @@ TEST_F(LessEqualTest, IncrementalVsRecompute) {
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100000, 100000);
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
   for (size_t i = 0; i < 1000; ++i) {
-    ++currentTime;
+    ++currentTimestamp;
     // Check that we do not accidentally commit
     ASSERT_EQ(engine->getCommittedValue(x), 2);
     ASSERT_EQ(engine->getCommittedValue(y), 2);
@@ -244,22 +244,22 @@ TEST_F(LessEqualTest, IncrementalVsRecompute) {
               0);  // violationId is committed by register.
 
     // Set all variables
-    engine->setValue(currentTime, x, distribution(gen));
-    engine->setValue(currentTime, y, distribution(gen));
+    engine->setValue(currentTimestamp, x, distribution(gen));
+    engine->setValue(currentTimestamp, y, distribution(gen));
 
     // notify changes
-    if (engine->getCommittedValue(x) != engine->getValue(currentTime, x)) {
-      lessEqual->notifyIntChanged(currentTime, *engine, unused);
+    if (engine->getCommittedValue(x) != engine->getValue(currentTimestamp, x)) {
+      lessEqual->notifyIntChanged(currentTimestamp, *engine, unused);
     }
-    if (engine->getCommittedValue(y) != engine->getValue(currentTime, y)) {
-      lessEqual->notifyIntChanged(currentTime, *engine, unused);
+    if (engine->getCommittedValue(y) != engine->getValue(currentTimestamp, y)) {
+      lessEqual->notifyIntChanged(currentTimestamp, *engine, unused);
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTime, violationId);
-    lessEqual->recompute(currentTime, *engine);
+    auto tmp = engine->getValue(currentTimestamp, violationId);
+    lessEqual->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->getValue(currentTime, violationId));
+    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, violationId));
   }
 }
 
@@ -268,14 +268,14 @@ TEST_F(LessEqualTest, Commit) {
 
   LocalId unused = -1;
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
 
-  engine->setValue(currentTime, x, 40);
-  engine->setValue(currentTime, y,
+  engine->setValue(currentTimestamp, x, 40);
+  engine->setValue(currentTimestamp, y,
                    2);  // This change is not notified and should
                         // not have an impact on the commit
 
-  lessEqual->notifyIntChanged(currentTime, *engine, unused);
+  lessEqual->notifyIntChanged(currentTimestamp, *engine, unused);
 }
 
 TEST_F(LessEqualTest, CreateLessEqual) {

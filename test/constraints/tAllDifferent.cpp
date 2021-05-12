@@ -162,17 +162,17 @@ TEST_F(AllDifferentTest, Recompute) {
   EXPECT_EQ(engine->getValue(0, violationId), 1);
   EXPECT_EQ(engine->getCommittedValue(violationId), 1);
 
-  Timestamp newTime = 1;
+  Timestamp newTimestamp = 1;
 
-  engine->setValue(newTime, c, 3);
-  allDifferent->recompute(newTime, *engine);
+  engine->setValue(newTimestamp, c, 3);
+  allDifferent->recompute(newTimestamp, *engine);
   EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-  EXPECT_EQ(engine->getValue(newTime, violationId), 0);
+  EXPECT_EQ(engine->getValue(newTimestamp, violationId), 0);
 
-  engine->setValue(newTime, a, 2);
-  allDifferent->recompute(newTime, *engine);
+  engine->setValue(newTimestamp, a, 2);
+  allDifferent->recompute(newTimestamp, *engine);
   EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-  EXPECT_EQ(engine->getValue(newTime, violationId), 1);
+  EXPECT_EQ(engine->getValue(newTimestamp, violationId), 1);
 }
 
 TEST_F(AllDifferentTest, NotifyChange) {
@@ -211,9 +211,9 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100, 100);
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
   for (size_t i = 0; i < 2; ++i) {
-    ++currentTime;
+    ++currentTimestamp;
     // Check that we do not accidentally commit
     ASSERT_EQ(engine->getCommittedValue(a), 1);
     ASSERT_EQ(engine->getCommittedValue(b), 2);
@@ -221,22 +221,22 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
               1);  // violationId is commited by register.
 
     // Set all variables
-    engine->setValue(currentTime, a, distribution(gen));
-    engine->setValue(currentTime, b, distribution(gen));
+    engine->setValue(currentTimestamp, a, distribution(gen));
+    engine->setValue(currentTimestamp, b, distribution(gen));
 
     // notify changes
-    if (engine->getCommittedValue(a) != engine->getValue(currentTime, a)) {
-      allDifferent->notifyIntChanged(currentTime, *engine, 0);
+    if (engine->getCommittedValue(a) != engine->getValue(currentTimestamp, a)) {
+      allDifferent->notifyIntChanged(currentTimestamp, *engine, 0);
     }
-    if (engine->getCommittedValue(b) != engine->getValue(currentTime, b)) {
-      allDifferent->notifyIntChanged(currentTime, *engine, 1);
+    if (engine->getCommittedValue(b) != engine->getValue(currentTimestamp, b)) {
+      allDifferent->notifyIntChanged(currentTimestamp, *engine, 1);
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTime, violationId);
-    allDifferent->recompute(currentTime, *engine);
+    auto tmp = engine->getValue(currentTimestamp, violationId);
+    allDifferent->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->getValue(currentTime, violationId));
+    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, violationId));
   }
 }
 

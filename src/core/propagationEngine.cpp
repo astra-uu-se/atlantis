@@ -17,9 +17,9 @@ PropagationGraph& PropagationEngine::getPropGraph() { return _propGraph; }
 void PropagationEngine::open() { _isOpen = true; }
 
 void PropagationEngine::close() {
-  ++_currentTime;  // todo: Is it safe to increment time here? What if a user
-                   // tried to change a variable but without a begin move?
-                   // But we should ignore it anyway then...
+  ++_currentTimestamp;  // todo: Is it safe to increment the timestamp here?
+                        // What if a user tried to change a variable but without
+                        // a begin move? But we should ignore it anyway then...
   _isOpen = false;
   try {
     _propGraph.close();
@@ -113,10 +113,10 @@ void PropagationEngine::recomputeAndCommit() {
     for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
          ++iter) {
       assert((*iter) != nullptr);
-      (*iter)->recompute(_currentTime, *this);
+      (*iter)->recompute(_currentTimestamp, *this);
     }
     for (auto iter = _store.intVarBegin(); iter != _store.intVarEnd(); ++iter) {
-      if (iter->hasChanged(_currentTime)) {
+      if (iter->hasChanged(_currentTimestamp)) {
         done = false;
         iter->commit();
       }
@@ -126,7 +126,7 @@ void PropagationEngine::recomputeAndCommit() {
   // Commiting an invariant will commit any internal datastructure.
   for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
        ++iter) {
-    (*iter)->commit(_currentTime, *this);
+    (*iter)->commit(_currentTimestamp, *this);
   }
   emptyModifiedVariables();
 }
@@ -135,7 +135,7 @@ void PropagationEngine::recomputeAndCommit() {
 void PropagationEngine::beginMove() {
   assert(!_isMoving);
   _isMoving = true;
-  ++_currentTime;
+  ++_currentTimestamp;
   // only needed for bottom up propagation
   clearPropagationPath();
 }
@@ -151,7 +151,8 @@ void PropagationEngine::query(VarId id) {
   if (_mode == PropagationMode::INPUT_TO_OUTPUT) {
     return;
   }
-  _outputToInputExplorer.registerForPropagation(_currentTime, getSourceId(id));
+  _outputToInputExplorer.registerForPropagation(_currentTimestamp,
+                                                getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
@@ -213,12 +214,12 @@ void PropagationEngine::endCommit() {
   // Commit all variables:
   // for (auto iter = _store.intVarBegin(); iter != _store.intVarEnd();
   // ++iter) {
-  //   iter->commitIf(_currentTime);
+  //   iter->commitIf(_currentTimestamp);
   // }
   // // Commit all invariants:
   // for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
   //      ++iter) {
-  //   (*iter)->commit(_currentTime, *this);
+  //   (*iter)->commit(_currentTimestamp, *this);
   // }
 }
 
@@ -253,7 +254,7 @@ void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
 template void PropagationEngine::propagate<true>();
 template void PropagationEngine::propagate<false>();
 
-// Propagates at the current internal time of the engine.
+// Propagates at the current internal timestamp of the engine.
 template <bool DoCommit>
 void PropagationEngine::propagate() {
 // #define PROPAGATION_DEBUG
@@ -267,9 +268,9 @@ void PropagationEngine::propagate() {
       _store.getNumInvariants());
 #endif
 
-  for (VarId stableVarId = getNextStableVariable(_currentTime);
+  for (VarId stableVarId = getNextStableVariable(_currentTimestamp);
        stableVarId.id != NULL_ID;
-       stableVarId = getNextStableVariable(_currentTime)) {
+       stableVarId = getNextStableVariable(_currentTimestamp)) {
     IntVar& variable = _store.getIntVar(stableVarId);
 
     InvariantId definingInvariant =
@@ -283,23 +284,24 @@ void PropagationEngine::propagate() {
     if (definingInvariant != NULL_ID) {
       Invariant& defInv = _store.getInvariant(definingInvariant);
       if (stableVarId == defInv.getPrimaryDefinedVar()) {
-        Int oldValue = variable.getValue(_currentTime);
-        defInv.compute(_currentTime, *this);
-        defInv.queueNonPrimaryDefinedVarsForPropagation(_currentTime, *this);
-        if (oldValue == variable.getValue(_currentTime)) {
+        Int oldValue = variable.getValue(_currentTimestamp);
+        defInv.compute(_currentTimestamp, *this);
+        defInv.queueNonPrimaryDefinedVarsForPropagation(_currentTimestamp,
+                                                        *this);
+        if (oldValue == variable.getValue(_currentTimestamp)) {
 #ifdef PROPAGATION_DEBUG
           logDebug("\t\tVariable did not change after compute: ignoring.");
 #endif
           continue;
         }
         if constexpr (DoCommit) {
-          defInv.commit(_currentTime, *this);
+          defInv.commit(_currentTimestamp, *this);
         }
       }
     }
 
     if constexpr (DoCommit) {
-      commitIf(_currentTime, stableVarId);
+      commitIf(_currentTimestamp, stableVarId);
     }
 
     for (auto& toNotify : _listeningInvariantData[stableVarId]) {
@@ -315,7 +317,7 @@ void PropagationEngine::propagate() {
 #endif
 
       invariant.notify(toNotify.localId);
-      queueForPropagation(_currentTime, invariant.getPrimaryDefinedVar());
+      queueForPropagation(_currentTimestamp, invariant.getPrimaryDefinedVar());
     }
   }
 

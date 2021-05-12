@@ -151,11 +151,11 @@ TEST_F(EqualTest, Recompute) {
   EXPECT_EQ(engine->getValue(0, violationId), 0);
   EXPECT_EQ(engine->getCommittedValue(violationId), 0);
 
-  Timestamp newTime = 1;
-  engine->setValue(newTime, x, 40);
-  equal->recompute(newTime, *engine);
+  Timestamp newTimestamp = 1;
+  engine->setValue(newTimestamp, x, 40);
+  equal->recompute(newTimestamp, *engine);
   EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-  EXPECT_EQ(engine->getValue(newTime, violationId), 38);
+  EXPECT_EQ(engine->getValue(newTimestamp, violationId), 38);
 }
 
 TEST_F(EqualTest, NotifyChange) {
@@ -201,9 +201,9 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100000, 100000);
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
   for (size_t i = 0; i < 1000; ++i) {
-    ++currentTime;
+    ++currentTimestamp;
     // Check that we do not accidentally commit
     ASSERT_EQ(engine->getCommittedValue(x), 2);
     ASSERT_EQ(engine->getCommittedValue(y), 2);
@@ -211,22 +211,22 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
               0);  // violationId is committed by register.
 
     // Set all variables
-    engine->setValue(currentTime, x, distribution(gen));
-    engine->setValue(currentTime, y, distribution(gen));
+    engine->setValue(currentTimestamp, x, distribution(gen));
+    engine->setValue(currentTimestamp, y, distribution(gen));
 
     // notify changes
-    if (engine->getCommittedValue(x) != engine->getValue(currentTime, x)) {
-      equal->notifyIntChanged(currentTime, *engine, unused);
+    if (engine->getCommittedValue(x) != engine->getValue(currentTimestamp, x)) {
+      equal->notifyIntChanged(currentTimestamp, *engine, unused);
     }
-    if (engine->getCommittedValue(y) != engine->getValue(currentTime, y)) {
-      equal->notifyIntChanged(currentTime, *engine, unused);
+    if (engine->getCommittedValue(y) != engine->getValue(currentTimestamp, y)) {
+      equal->notifyIntChanged(currentTimestamp, *engine, unused);
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTime, violationId);
-    equal->recompute(currentTime, *engine);
+    auto tmp = engine->getValue(currentTimestamp, violationId);
+    equal->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->getValue(currentTime, violationId));
+    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, violationId));
   }
 }
 
@@ -235,20 +235,20 @@ TEST_F(EqualTest, Commit) {
 
   LocalId unused = -1;
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
 
-  engine->setValue(currentTime, x, 40);
-  engine->setValue(currentTime, y,
+  engine->setValue(currentTimestamp, x, 40);
+  engine->setValue(currentTimestamp, y,
                    2);  // This change is not notified and should
                         // not have an impact on the commit
 
-  equal->notifyIntChanged(currentTime, *engine, unused);
+  equal->notifyIntChanged(currentTimestamp, *engine, unused);
 
   // Committing an invariant does not commit its output!
   // // Commit at wrong timestamp should have no impact
-  // equal->commit(currentTime + 1, *engine);
+  // equal->commit(currentTimestamp + 1, *engine);
   // EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-  // equal->commit(currentTime, *engine);
+  // equal->commit(currentTimestamp, *engine);
   // EXPECT_EQ(engine->getCommittedValue(violationId), 38);
 }
 

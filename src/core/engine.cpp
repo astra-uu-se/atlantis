@@ -3,7 +3,7 @@
 #include "variables/intVar.hpp"
 
 Engine::Engine()
-    : _currentTime(NULL_TIMESTAMP + 1),
+    : _currentTimestamp(NULL_TIMESTAMP + 1),
       _isOpen(false),
       _listeningInvariantData(ESTIMATED_NUM_OBJECTS),
       _store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
@@ -15,7 +15,7 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
     throw ModelNotOpenException("Cannot make IntVar when store is closed.");
   }
   VarId newId =
-      _store.createIntVar(_currentTime, initValue, lowerBound, upperBound);
+      _store.createIntVar(_currentTimestamp, initValue, lowerBound, upperBound);
   registerVar(newId);
   _listeningInvariantData.register_idx(newId);
   return newId;
