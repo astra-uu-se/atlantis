@@ -35,7 +35,7 @@ void Linear::recompute(Timestamp ts, Engine& engine) {
 void Linear::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
   auto newValue = engine.getValue(ts, _X[id]);
   incValue(ts, engine, _b, (newValue - _localX.at(id).getValue(ts)) * _A[id]);
-  _localX.at(i).setValue(ts, newValue);
+  _localX.at(id).setValue(ts, newValue);
 }
 
 VarId Linear::getNextDependency(Timestamp ts, Engine&) {
