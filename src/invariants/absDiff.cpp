@@ -1,5 +1,6 @@
 #include "invariants/absDiff.hpp"
 
+#include "core/engine.hpp"
 extern Id NULL_ID;
 
 AbsDiff::AbsDiff(VarId a, VarId b, VarId c)

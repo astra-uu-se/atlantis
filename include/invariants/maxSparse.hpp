@@ -1,14 +1,11 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 
-#include "../core/engine.hpp"
-#include "../core/types.hpp"
-#include "../invariants/invariant.hpp"
-#include "../utils/priorityList.hpp"
-#include "../variables/intVar.hpp"
-#include "../variables/savedValue.hpp"
+#include "core/engine.hpp"
+#include "core/types.hpp"
+#include "invariants/invariant.hpp"
+#include "utils/priorityList.hpp"
 
 /**
  * Invariant for b <- min(X)
