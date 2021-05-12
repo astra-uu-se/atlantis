@@ -3,9 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "../core/types.hpp"
-#include "../variables/intVar.hpp"
-#include "../views/intView.hpp"
+#include "views/intView.hpp"
 
 class IntOffsetView : public IntView {
  private:

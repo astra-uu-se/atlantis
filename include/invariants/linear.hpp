@@ -1,12 +1,12 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 
-#include "../core/engine.hpp"
-#include "../core/types.hpp"
-#include "../invariants/invariant.hpp"
-#include "../variables/intVar.hpp"
+
+#include "core/types.hpp"
+#include "invariants/invariant.hpp"
+
+class Engine;
 
 /**
  * Invariant for b <- sum(A_i*X_i)
