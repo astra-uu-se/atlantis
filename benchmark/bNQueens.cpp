@@ -191,7 +191,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
   logDebug(instanceToString());
 }
 
-///*
+/*
 BENCHMARK_REGISTER_F(Queens, probing_single_swap)->Range(5, 5000);
 BENCHMARK_REGISTER_F(Queens, probing_all_swap)
     ->Unit(benchmark::kMillisecond)

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <limits>
 #include <random>
 #include <vector>
@@ -9,7 +8,6 @@
 #include "gtest/gtest.h"
 #include "invariants/linear.hpp"
 #include "rapidcheck/gtest.h"
-#include "variables/savedInt.hpp"
 
 using ::testing::AtLeast;
 using ::testing::AtMost;

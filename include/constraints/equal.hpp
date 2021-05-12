@@ -1,10 +1,8 @@
 #pragma once
 
-#include <memory>
-#include <vector>
 
-#include "../core/types.hpp"
-#include "../variables/intVar.hpp"
+#include "core/types.hpp"
+#include "variables/intVar.hpp"
 #include "constraint.hpp"
 
 class Engine;

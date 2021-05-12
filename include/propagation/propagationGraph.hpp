@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "../core/types.hpp"
-#include "../misc/logging.hpp"
+#include "core/types.hpp"
+#include "layeredPropagationQueue.hpp"
 #include "propagationQueue.hpp"
 #include "utils/idMap.hpp"
 
@@ -50,6 +50,7 @@ class PropagationGraph {
     explicit Topology(PropagationGraph& g) : graph(g) {}
     void computeNoCycles();
     void computeWithCycles();
+    void computeLayersWithCycles();
     void computeInvariantFromVariables();
     inline size_t getPosition(VarIdBase id) {
       return m_variablePosition[id.id];
@@ -71,6 +72,7 @@ class PropagationGraph {
   };
 
   PropagationQueue m_propagationQueue;
+  // LayeredPropagationQueue m_propagationQueue;
   // std::priority_queue<VarIdBase, std::vector<VarIdBase>,
   //                     PropagationGraph::PriorityCmp>
   //     m_propagationQueue;
