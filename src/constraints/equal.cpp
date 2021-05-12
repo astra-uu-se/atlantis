@@ -15,28 +15,28 @@ Equal::Equal(VarId violationId, VarId x, VarId y)
   _modifiedVars.reserve(1);
 }
 
-void Equal::init(Timestamp, Engine& e) {
+void Equal::init(Timestamp, Engine& engine) {
   assert(_id != NULL_ID);
 
-  e.registerInvariantDependsOnVar(_id, _x, LocalId(0));
-  e.registerInvariantDependsOnVar(_id, _y, LocalId(0));
-  registerDefinedVariable(e, _violationId);
+  engine.registerInvariantDependsOnVar(_id, _x, LocalId(0));
+  engine.registerInvariantDependsOnVar(_id, _y, LocalId(0));
+  registerDefinedVariable(engine, _violationId);
 }
 
-void Equal::recompute(Timestamp t, Engine& e) {
-  updateValue(t, e, _violationId,
-              std::abs(e.getValue(t, _x) - e.getValue(t, _y)));
+void Equal::recompute(Timestamp ts, Engine& engine) {
+  updateValue(ts, engine, _violationId,
+              std::abs(engine.getValue(ts, _x) - engine.getValue(ts, _y)));
 }
 
-void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void Equal::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId Equal::getNextDependency(Timestamp t, Engine&) {
-  _state.incValue(t, 1);
+VarId Equal::getNextDependency(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
-  // ==0?_x:_y;
-  switch (_state.getValue(t)) {
+  // ==0?m_x:m_y;
+  switch (_state.getValue(ts)) {
     case 0:
       return _x;
     case 1:
@@ -46,8 +46,10 @@ VarId Equal::getNextDependency(Timestamp t, Engine&) {
   }
 }
 
-void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void Equal::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void Equal::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void Equal::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

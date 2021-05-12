@@ -27,8 +27,8 @@ class IfThenElse : public Invariant {
   IfThenElse(VarId b, VarId x, VarId y, VarId z);
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
   VarId getNextDependency(Timestamp, Engine&) override;
-  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
+  void notifyCurrentDependencyChanged(Timestamp, Engine&) override;
   void commit(Timestamp, Engine&) override;
 };

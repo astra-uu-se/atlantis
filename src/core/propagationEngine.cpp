@@ -68,17 +68,17 @@ void PropagationEngine::registerDefinedVariable(VarId dependent,
   _propGraph.registerDefinedVariable(getSourceId(dependent), source);
 }
 
-void PropagationEngine::registerVar(VarId v) {
+void PropagationEngine::registerVar(VarId id) {
   _numVariables++;
-  _propGraph.registerVar(v);
-  _outputToInputExplorer.registerVar(v);
-  _isEnqueued.register_idx(v, false);
-  _varIsOnPropagationPath.register_idx(v, false);
+  _propGraph.registerVar(id);
+  _outputToInputExplorer.registerVar(id);
+  _isEnqueued.register_idx(id, false);
+  _varIsOnPropagationPath.register_idx(id, false);
 }
 
-void PropagationEngine::registerInvariant(InvariantId i) {
-  _propGraph.registerInvariant(i);
-  _outputToInputExplorer.registerInvariant(i);
+void PropagationEngine::registerInvariant(InvariantId id) {
+  _propGraph.registerInvariant(id);
+  _outputToInputExplorer.registerInvariant(id);
 }
 
 //---------------------Propagation---------------------

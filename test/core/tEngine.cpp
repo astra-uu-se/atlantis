@@ -25,16 +25,15 @@ class MockInvariantSimple : public Invariant {
 
   void init(Timestamp, Engine&) override { _initialized = true; }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
+  MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
 
   MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine&),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
               (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
 };
 
 class MockInvariantAdvanced : public Invariant {
@@ -48,24 +47,23 @@ class MockInvariantAdvanced : public Invariant {
     _modifiedVars.reserve(inputs.size());
   }
 
-  void init(Timestamp, Engine& e) override {
+  void init(Timestamp, Engine& engine) override {
     assert(_id != NULL_ID);
 
-    registerDefinedVariable(e, output);
+    registerDefinedVariable(engine, output);
     for (size_t i = 0; i < inputs.size(); ++i) {
-      e.registerInvariantDependsOnVar(_id, inputs[i], LocalId(i));
+      engine.registerInvariantDependsOnVar(_id, inputs[i], LocalId(i));
     }
     _initialized = true;
   }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
+  MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
   MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine&),
               (override));
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
               (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
 };
 
 class EngineTest : public ::testing::Test {

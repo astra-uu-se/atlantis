@@ -24,11 +24,11 @@ class Store {
         _intViews(estimatedSize),
         _intViewSourceId(estimatedSize) {}
 
-  [[nodiscard]] inline VarId createIntVar(Timestamp t, Int initValue,
+  [[nodiscard]] inline VarId createIntVar(Timestamp ts, Int initValue,
                                           Int lowerBound, Int upperBound) {
     VarId newId = VarId(_intVars.size() + 1, VarIdType::var);
     _intVars.register_idx(newId,
-                          IntVar(t, newId, initValue, lowerBound, upperBound));
+                          IntVar(ts, newId, initValue, lowerBound, upperBound));
     return newId;
   }
   [[nodiscard]] inline InvariantId createInvariantFromPtr(
@@ -53,28 +53,31 @@ class Store {
     return newId;
   }
 
-  inline IntVar& getIntVar(VarId v) { return _intVars[v]; }
+  inline IntVar& getIntVar(VarId id) { return _intVars[id]; }
 
-  [[nodiscard]] inline const IntVar& getConstIntVar(VarId v) const {
-    return _intVars.at(v);
+  [[nodiscard]] inline const IntVar& getConstIntVar(VarId id) const {
+    return _intVars.at(id);
   }
 
-  inline IntView& getIntView(VarId i) {
-    assert(i.idType == VarIdType::view);
-    return *(_intViews[i.id]);
+  inline IntView& getIntView(VarId id) {
+    assert(id.idType == VarIdType::view);
+    return *(_intViews[id.id]);
   }
 
-  [[nodiscard]] inline std::shared_ptr<IntView> getConstIntView(VarId i) const {
-    assert(i.idType == VarIdType::view);
-    return (_intViews.at(i.id));
+  [[nodiscard]] inline std::shared_ptr<IntView> getConstIntView(
+      VarId id) const {
+    assert(id.idType == VarIdType::view);
+    return (_intViews.at(id.id));
   }
 
-  inline VarId getIntViewSourceId(VarId v) {
-    assert(v.idType == VarIdType::view);
-    return _intViewSourceId[v];
+  inline VarId getIntViewSourceId(VarId id) {
+    assert(id.idType == VarIdType::view);
+    return _intViewSourceId[id];
   }
 
-  inline Invariant& getInvariant(InvariantId i) { return *(_invariants[i.id]); }
+  inline Invariant& getInvariant(InvariantId id) {
+    return *(_invariants[id.id]);
+  }
   inline std::vector<IntVar>::iterator intVarBegin() {
     return _intVars.begin();
   }

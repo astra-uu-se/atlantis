@@ -30,22 +30,22 @@ class MockLessEqual : public LessEqual {
           return LessEqual::recompute(timestamp, engine);
         });
     ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return LessEqual::getNextDependency(t, engine);
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          return LessEqual::getNextDependency(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          LessEqual::notifyCurrentDependencyChanged(t, engine);
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          LessEqual::notifyCurrentDependencyChanged(ts, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          LessEqual::notifyIntChanged(t, engine, id);
+        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
+          LessEqual::notifyIntChanged(ts, engine, id);
         });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      LessEqual::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
+      LessEqual::commit(ts, engine);
     });
   }
 
@@ -56,8 +56,8 @@ class MockLessEqual : public LessEqual {
   MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyIntChanged,
+              (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:

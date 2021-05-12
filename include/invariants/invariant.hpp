@@ -72,30 +72,31 @@ class Invariant {
 
   /**
    * Register to the engine that variable is defined by the invariant.
-   * @param e the engine
-   * @param v the id of the variable that is defined by the invariant.
+   * @param engine the engine
+   * @param id the id of the variable that is defined by the invariant.
    */
-  void registerDefinedVariable(Engine& e, VarId v);
+  void registerDefinedVariable(Engine& engine, VarId id);
 
   /**
    * Used in Input-to-Output propagation to notify that a
    * variable local to the invariant has had its value changed. This
    * method is called for each variable that was marked as modified
    * in notify.
-   * @param t the current timestamp
-   * @param e the engine
-   * @param id the local id of the variable.
+   * @param ts the current timestamp
+   * @param engine the engine
+   * @param localId the local id of the variable.
    */
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id) = 0;
+  virtual void notifyIntChanged(Timestamp ts, Engine& engine,
+                                LocalId localId) = 0;
 
   /**
    * Updates the value of variable without queueing it for propagation
    */
-  void updateValue(Timestamp t, Engine& e, VarId id, Int val);
+  void updateValue(Timestamp ts, Engine& engine, VarId id, Int val);
   /**
    * Increases the value of variable without queueing it for propagation
    */
-  void incValue(Timestamp t, Engine& e, VarId id, Int val);
+  void incValue(Timestamp ts, Engine& engine, VarId id, Int val);
 
  public:
   virtual ~Invariant() = default;
@@ -106,7 +107,7 @@ class Invariant {
    * Preconditions for initialisation:
    * 1) The invariant has been registered in an engine and has a valid ID.
    *
-   * 2) All variables have valid ids (i.e., they have been
+   * 2) All variables have valid ids (i.engine., they have been
    * registered)
    *
    * Checklist for initialising an invariant:
@@ -128,20 +129,20 @@ class Invariant {
    * Used in Output-to-Input propagation to get the next input variable,
    * the next dependency, to visit.
    */
-  virtual VarId getNextDependency(Timestamp, Engine& e) = 0;
+  virtual VarId getNextDependency(Timestamp, Engine&) = 0;
 
   /**
    * Used in Output-to-Input propagation to notify to the
    * invariant that the current dependency (the last dependency given by
    * getNextDependency) has had its value changed.
    */
-  virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) = 0;
+  virtual void notifyCurrentDependencyChanged(Timestamp, Engine&) = 0;
 
   /**
    * Used in the Input-to-Output propagation to notify that an
    * input variable has had its value changed.
    */
-  void notify(LocalId id);
+  void notify(LocalId);
 
   /**
    * Used in the Input-to-Output propagation when the invariant
@@ -149,12 +150,12 @@ class Invariant {
    * the primary and non-primary output variables (dependants) are to be
    * computed.
    */
-  void compute(Timestamp t, Engine& e);
+  void compute(Timestamp, Engine&);
 
   virtual void commit(Timestamp, Engine&) { _isPostponed = false; };
   inline void postpone() { _isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 
   inline VarId getPrimaryOutput() { return _primaryOutput; }
-  void queueNonPrimaryOutputVarsForPropagation(Timestamp t, Engine& e);
+  void queueNonPrimaryOutputVarsForPropagation(Timestamp ts, Engine& engine);
 };

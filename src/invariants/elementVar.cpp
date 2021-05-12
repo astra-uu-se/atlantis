@@ -5,39 +5,42 @@ ElementVar::ElementVar(VarId i, std::vector<VarId> X, VarId b)
   _modifiedVars.reserve(1);
 }
 
-void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {
+void ElementVar::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   assert(_id != NULL_ID);
 
-  registerDefinedVariable(e, _b);
-  e.registerInvariantDependsOnVar(_id, _i, LocalId(0));
+  registerDefinedVariable(engine, _b);
+  engine.registerInvariantDependsOnVar(_id, _i, LocalId(0));
   for (size_t i = 0; i < _X.size(); ++i) {
-    e.registerInvariantDependsOnVar(_id, _X[i], LocalId(0));
+    engine.registerInvariantDependsOnVar(_id, _X[i], LocalId(0));
   }
 }
 
-void ElementVar::recompute(Timestamp t, Engine& e) {
+void ElementVar::recompute(Timestamp ts, Engine& engine) {
   updateValue(
-      t, e, _b,
-      e.getValue(t, _X.at(static_cast<unsigned long>(e.getValue(t, _i)))));
+      ts, engine, _b,
+      engine.getValue(
+          ts, _X.at(static_cast<unsigned long>(engine.getValue(ts, _i)))));
 }
 
-void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void ElementVar::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId ElementVar::getNextDependency(Timestamp t, Engine& e) {
-  _state.incValue(t, 1);
-  if (_state.getValue(t) == 0) {
+VarId ElementVar::getNextDependency(Timestamp ts, Engine& engine) {
+  _state.incValue(ts, 1);
+  if (_state.getValue(ts) == 0) {
     return _i;
-  } else if (_state.getValue(t) == 1) {
-    return _X.at(static_cast<unsigned long>(e.getValue(t, _i)));
+  } else if (_state.getValue(ts) == 1) {
+    return _X.at(static_cast<unsigned long>(engine.getValue(ts, _i)));
   } else {
     return NULL_ID;  // Done
   }
 }
 
-void ElementVar::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void ElementVar::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void ElementVar::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void ElementVar::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

@@ -31,22 +31,22 @@ class MockAllDifferent : public AllDifferent {
           return AllDifferent::recompute(timestamp, engine);
         });
     ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return AllDifferent::getNextDependency(t, engine);
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          return AllDifferent::getNextDependency(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          AllDifferent::notifyCurrentDependencyChanged(t, engine);
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          AllDifferent::notifyCurrentDependencyChanged(ts, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          AllDifferent::notifyIntChanged(t, engine, id);
+        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
+          AllDifferent::notifyIntChanged(ts, engine, id);
         });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      AllDifferent::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
+      AllDifferent::commit(ts, engine);
     });
   }
 
@@ -57,8 +57,8 @@ class MockAllDifferent : public AllDifferent {
   MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyIntChanged,
+              (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:

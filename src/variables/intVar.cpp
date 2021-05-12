@@ -12,11 +12,11 @@ IntVar::IntVar(VarId id, Int lowerBound, Int upperBound)
 IntVar::IntVar(VarId id, Int initValue, Int lowerBound, Int upperBound)
     : IntVar(NULL_TIMESTAMP, id, initValue, lowerBound, upperBound) {}
 
-IntVar::IntVar(Timestamp t, VarId id, Int initValue, Int lowerBound,
+IntVar::IntVar(Timestamp ts, VarId id, Int initValue, Int lowerBound,
                Int upperBound)
     : Var(id),
-      _value(t, initValue),  // todo: We need both a time-zero (when
-                             // initialisation happens) but also a dummy time.
+      _value(ts, initValue),  // todo: We need both a time-zero (when
+                              // initialisation happens) but also a dummy time.
       _lowerBound(lowerBound),
       _upperBound(upperBound) {
   if (lowerBound > upperBound) {
@@ -37,7 +37,7 @@ void IntVar::updateDomain(Int lowerBound, Int upperBound) {
 std::ostream& operator<<(std::ostream& out, IntVar const& var) {
   out << "IntVar(id: " << var._id.id;
   out << ",c: " << var._value.getCommittedValue();
-  out << ",t: " << var._value.getValue(var._value.getTmpTimestamp());
+  out << ",ts: " << var._value.getValue(var._value.getTmpTimestamp());
   out << ",ts: " << var._value.getTmpTimestamp();
   out << ")";
   return out;

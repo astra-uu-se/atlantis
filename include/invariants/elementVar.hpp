@@ -21,8 +21,8 @@ class ElementVar : public Invariant {
   ElementVar(VarId i, std::vector<VarId> X, VarId b);
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
   VarId getNextDependency(Timestamp, Engine&) override;
-  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
+  void notifyCurrentDependencyChanged(Timestamp, Engine&) override;
   void commit(Timestamp, Engine&) override;
 };
