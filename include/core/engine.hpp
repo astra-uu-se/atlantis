@@ -31,7 +31,8 @@ class Engine {
     LocalId localId;
   };
   // Map from VarID -> vector of InvariantID
-  IdMap<VarId, std::vector<InvariantDependencyData>> _dependentInvariantData;
+  IdMap<VarIdBase, std::vector<InvariantDependencyData>>
+      _dependentInvariantData;
 
   Store _store;
 

@@ -24,10 +24,10 @@ class PropagationEngine : public Engine {
   PropagationGraph _propGraph;
   OutputToInputExplorer _outputToInputExplorer;
 
-  IdMap<VarId, bool> _isEnqueued;
+  IdMap<VarIdBase, bool> _isEnqueued;
 
-  IdMap<VarId, bool> _varIsOnPropagationPath;
-  std::queue<VarId> _propagationPathQueue;
+  IdMap<VarIdBase, bool> _varIsOnPropagationPath;
+  std::queue<VarIdBase> _propagationPathQueue;
 
   void recomputeAndCommit();
 

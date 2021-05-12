@@ -16,10 +16,10 @@ class OutputToInputExplorer {
   size_t _varStackIdx = 0;
   std::vector<InvariantId> _invariantStack;
   size_t _invariantStackIdx = 0;
-  IdMap<VarId, Timestamp> _varStableAt;  // last timestamp when a VarID was
-                                         // stable (i.e., will not change)
+  IdMap<VarIdBase, Timestamp> _varStableAt;  // last timestamp when a VarID was
+                                             // stable (i.e., will not change)
   IdMap<InvariantId, Timestamp> _invariantStableAt;
-  IdMap<VarId, bool> _varIsOnStack;
+  IdMap<VarIdBase, bool> _varIsOnStack;
   IdMap<InvariantId, bool> _invariantIsOnStack;
 
   void pushVariableStack(VarId);
@@ -28,8 +28,8 @@ class OutputToInputExplorer {
   void pushInvariantStack(InvariantId);
   void popInvariantStack();
   InvariantId peekInvariantStack();
-  void markStable(Timestamp, VarId);
-  bool isStable(Timestamp, VarId);
+  void markStable(Timestamp, VarIdBase);
+  bool isStable(Timestamp, VarIdBase);
   bool isStable(Timestamp, InvariantId);
 
   // We expand an invariant by pushing it and its first input variable onto
@@ -92,11 +92,11 @@ inline InvariantId OutputToInputExplorer::peekInvariantStack() {
   return _invariantStack[_invariantStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::markStable(Timestamp ts, VarId id) {
+inline void OutputToInputExplorer::markStable(Timestamp ts, VarIdBase id) {
   _varStableAt[id] = ts;
 }
 
-inline bool OutputToInputExplorer::isStable(Timestamp ts, VarId id) {
+inline bool OutputToInputExplorer::isStable(Timestamp ts, VarIdBase id) {
   return _varStableAt.at(id) == ts;
 }
 
