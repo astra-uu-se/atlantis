@@ -9,7 +9,7 @@ class Engine;  // Forward declaration
 class Invariant {
  protected:
   /**
-   * A simple queue structure of a fixed length to hold what input
+   * A simple queue structure of a fixed length to hold what parameter
    * variables that have been updated.
    */
   class NotificationQueue {
@@ -140,7 +140,7 @@ class Invariant {
 
   /**
    * Used in the Input-to-Output propagation to notify that an
-   * input variable has had its value changed.
+   * input variable, parameter, has had its value changed.
    */
   void notify(LocalId);
 

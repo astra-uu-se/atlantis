@@ -7,18 +7,18 @@
 #include "invariants/invariant.hpp"
 
 /**
- * Invariant for b <- X[i] where X is a vector of VarId.
+ * Invariant for y <- varArray[index] where varArray is a vector of VarId.
  *
  */
 
 class ElementVar : public Invariant {
  private:
-  VarId _i;
-  std::vector<VarId> _X;
-  VarId _b;
+  VarId _index;
+  std::vector<VarId> _varArray;
+  VarId _y;
 
  public:
-  ElementVar(VarId i, std::vector<VarId> X, VarId b);
+  ElementVar(VarId index, std::vector<VarId> varArray, VarId y);
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;

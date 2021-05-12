@@ -2,21 +2,22 @@
 
 #include "core/engine.hpp"
 
-ElementConst::ElementConst(VarId i, std::vector<Int> A, VarId b)
-    : Invariant(NULL_ID), _i(i), _A(std::move(A)), _b(b) {
+ElementConst::ElementConst(VarId index, std::vector<Int> array, VarId y)
+    : Invariant(NULL_ID), _index(index), _array(std::move(array)), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void ElementConst::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   assert(_id != NULL_ID);
 
-  registerDefinedVariable(engine, _b);
-  engine.registerInvariantParameter(_id, _i, 0);
+  registerDefinedVariable(engine, _y);
+  engine.registerInvariantParameter(_id, _index, 0);
 }
 
 void ElementConst::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _b,
-              _A.at(static_cast<unsigned long>(engine.getValue(ts, _i))));
+  updateValue(
+      ts, engine, _y,
+      _array.at(static_cast<unsigned long>(engine.getValue(ts, _index))));
 }
 
 void ElementConst::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
@@ -26,7 +27,7 @@ void ElementConst::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
 VarId ElementConst::getNextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   if (_state.getValue(ts) == 0) {
-    return _i;
+    return _index;
   } else {
     return NULL_ID;  // Done
   }

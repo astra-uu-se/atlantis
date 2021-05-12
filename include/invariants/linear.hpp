@@ -8,21 +8,21 @@
 class Engine;
 
 /**
- * Invariant for b <- sum(A_i*X_i)
+ * Invariant for y <- sum(coeffs_i*varArray_i)
  *
  */
 
 class Linear : public Invariant {
  private:
-  std::vector<Int> _A;
-  std::vector<VarId> _X;
-  std::vector<SavedInt> _localX;
-  VarId _b;
+  std::vector<Int> _coeffs;
+  std::vector<VarId> _varArray;
+  std::vector<SavedInt> _localVarArray;
+  VarId _y;
 
  public:
-  Linear(std::vector<VarId> X, VarId b)
-      : Linear(std::vector<Int>(X.size(), 1), X, b) {}
-  Linear(std::vector<Int> A, std::vector<VarId> X, VarId b);
+  Linear(std::vector<VarId> varArray, VarId y)
+      : Linear(std::vector<Int>(varArray.size(), 1), varArray, y) {}
+  Linear(std::vector<Int> coeffs, std::vector<VarId> varArray, VarId y);
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;

@@ -3,11 +3,9 @@
 #include "core/engine.hpp"
 
 /**
- * Constraint a*x <= b*y
+ * Constraint x <= y
  * @param violationId id for the violationCount
- * @param a coefficient of x
  * @param x variable of lhs
- * @param b coefficient of y
  * @param y variable of rhs
  */
 LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
