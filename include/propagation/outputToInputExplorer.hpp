@@ -72,10 +72,7 @@ class OutputToInputExplorer {
 };
 
 inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
-  // TODO: why not set varIsOnStack.at(v) = true;?
-  // I remember that there was some technical reason but this need to be
-  // documented. Note that this might overflow the stack otherwise.
-  variableStack_[varStackIdx_++] = id;
+  pushVariableStack(id);
 }
 
 inline void OutputToInputExplorer::clearRegisteredVariables() {
