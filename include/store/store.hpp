@@ -10,12 +10,12 @@
 
 class Store {
  private:
-  IdMap<VarId, IntVar> _intVars;
+  IdMap<VarIdBase, IntVar> _intVars;
 
   IdMap<InvariantId, std::shared_ptr<Invariant>> _invariants;
 
-  IdMap<VarId, std::shared_ptr<IntView>> _intViews;
-  IdMap<VarId, VarId> _intViewSourceId;
+  IdMap<VarIdBase, std::shared_ptr<IntView>> _intViews;
+  IdMap<VarIdBase, VarId> _intViewSourceId;
 
  public:
   Store(size_t estimatedSize, [[maybe_unused]] Id nullId)
