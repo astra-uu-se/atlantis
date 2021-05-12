@@ -12,8 +12,8 @@ void AbsDiff::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   assert(!_id.equals(NULL_ID));
 
   registerDefinedVariable(engine, _c);
-  engine.registerInvariantDependsOnVar(_id, _a, 0);
-  engine.registerInvariantDependsOnVar(_id, _b, 0);
+  engine.registerInvariantParameter(_id, _a, 0);
+  engine.registerInvariantParameter(_id, _b, 0);
 }
 
 void AbsDiff::recompute(Timestamp ts, Engine& engine) {
@@ -25,7 +25,7 @@ void AbsDiff::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId AbsDiff::getNextDependency(Timestamp ts, Engine&) {
+VarId AbsDiff::getNextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   switch (_state.getValue(ts)) {
     case 0:
@@ -37,7 +37,7 @@ VarId AbsDiff::getNextDependency(Timestamp ts, Engine&) {
   }
 }
 
-void AbsDiff::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+void AbsDiff::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
   recompute(ts, engine);
 }
 

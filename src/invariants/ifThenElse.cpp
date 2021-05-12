@@ -9,9 +9,9 @@ void IfThenElse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   assert(!_id.equals(NULL_ID));
 
   registerDefinedVariable(engine, _z);
-  engine.registerInvariantDependsOnVar(_id, _b, 0);
-  engine.registerInvariantDependsOnVar(_id, _xy[0], 0);
-  engine.registerInvariantDependsOnVar(_id, _xy[1], 0);
+  engine.registerInvariantParameter(_id, _b, 0);
+  engine.registerInvariantParameter(_id, _xy[0], 0);
+  engine.registerInvariantParameter(_id, _xy[1], 0);
 }
 
 void IfThenElse::recompute(Timestamp ts, Engine& engine) {
@@ -23,7 +23,7 @@ void IfThenElse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId IfThenElse::getNextDependency(Timestamp ts, Engine& engine) {
+VarId IfThenElse::getNextParameter(Timestamp ts, Engine& engine) {
   _state.incValue(ts, 1);
   auto state = _state.getValue(ts);
   if (state == 0) {
@@ -36,7 +36,7 @@ VarId IfThenElse::getNextDependency(Timestamp ts, Engine& engine) {
   }
 }
 
-void IfThenElse::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+void IfThenElse::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
   recompute(ts, engine);
 }
 

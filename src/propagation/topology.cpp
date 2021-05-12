@@ -19,20 +19,19 @@ void PropagationGraph::Topology::computeNoCycles() {
   std::function<void(VarId)> visit = [&](VarId id) {
     // tmp Mark current node
     tmpVisited.at(id) = true;
-    // for each dependent invariant
+    // for each invariant id is parameter to
     for (auto invariant : graph._listeningInvariants.at(id)) {
       // for each variable defined by that invariant
-      for (auto dependentVariable :
+      for (auto definedVariable :
            graph._variablesDefinedByInvariant.at(invariant)) {
-        if (visited.at(dependentVariable)) {
+        if (visited.at(definedVariable)) {
           continue;
         }
-        if (tmpVisited.at(dependentVariable)) {
-          throw PropagationGraphHasCycles("var " +
-                                          std::to_string(dependentVariable) +
-                                          " is part of cycle.");
+        if (tmpVisited.at(definedVariable)) {
+          throw PropagationGraphHasCycles(
+              "var " + std::to_string(definedVariable) + " is part of cycle.");
         }
-        visit(dependentVariable);
+        visit(definedVariable);
       }
     }
     visited.at(id) = true;
@@ -74,17 +73,17 @@ void PropagationGraph::Topology::computeWithCycles() {
   std::function<void(VarId)> visit = [&](VarId id) {
     // Mark current node
     visited.at(id) = true;
-    // for each dependent invariant
+    // for each invariant id is a parameter to
     for (auto invariant : graph._listeningInvariants.at(id)) {
       // for each variable defined by that invariant
-      for (auto dependentVariable :
+      for (auto definedVariable :
            graph._variablesDefinedByInvariant.at(invariant)) {
-        if (visited.at(dependentVariable)) {
+        if (visited.at(definedVariable)) {
           // Ignore nodes that have been visited before
           // This also breaks cycles.
           continue;
         }
-        visit(dependentVariable);
+        visit(definedVariable);
       }
     }
     reverseOrder.push(id);
@@ -133,28 +132,28 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
     visited.at(id) = true;
     position.at(id) = depth;
     // std::cout << "Visiting " << id << " at depth " << depth << std::endl;
-    // for each dependent invariant
+    // for each invariant id is a parameter to
     for (auto invariant : graph._listeningInvariants.at(id)) {
       // for each variable defined by that invariant
-      for (auto dependentVariable :
+      for (auto definedVariable :
            graph._variablesDefinedByInvariant.at(invariant)) {
-        if (visited.at(dependentVariable)) {
+        if (visited.at(definedVariable)) {
           // Ignore nodes that have been visited before
           // This also breaks cycles.
-          // std::cout << "Variable " << dependentVariable
+          // std::cout << "Variable " << definedVariable
           //           << " has already been visitied in this recursion"
           //           << std::endl;
           continue;
         }
-        if (position.at(dependentVariable) > depth) {
+        if (position.at(definedVariable) > depth) {
           // Ignore variable that is already at a lower level.
-          // std::cout << "Variable " << dependentVariable
+          // std::cout << "Variable " << definedVariable
           //           << " is already at depth " <<
-          //           position.at(dependentVariable)
+          //           position.at(definedVariable)
           //           << std::endl;
           continue;
         }
-        visit(dependentVariable, depth + 1);
+        visit(definedVariable, depth + 1);
       }
     }
   };
@@ -201,10 +200,10 @@ void PropagationGraph::Topology::computeInvariantFromVariables() {
     }
     auto invariant = InvariantId(i);
     size_t position = 0;
-    for (auto dependentVariable :
+    for (auto definedVariable :
          graph._variablesDefinedByInvariant.at(invariant)) {
       position =
-          std::max<size_t>(position, variablePosition.at(dependentVariable));
+          std::max<size_t>(position, variablePosition.at(definedVariable));
     }
     invariantPosition.at(invariant) = position;
   }

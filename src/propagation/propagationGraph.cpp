@@ -10,14 +10,14 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
       _numVariables(0),
       _definingInvariant(expectedSize),
       _variablesDefinedByInvariant(expectedSize),
-      _inputVariables(expectedSize),
+      _variableParameters(expectedSize),
       _listeningInvariants(expectedSize),
       _topology(*this) {}
 
 void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   // Everything must be registered in sequence.
   _variablesDefinedByInvariant.register_idx(id);
-  _inputVariables.register_idx(id);
+  _variableParameters.register_idx(id);
   ++_numInvariants;
 }
 
@@ -27,45 +27,45 @@ void PropagationGraph::registerVar([[maybe_unused]] VarIdBase id) {
   ++_numVariables;
 }
 
-void PropagationGraph::registerInvariantDependsOnVar(InvariantId dependent,
-                                                     VarIdBase source) {
-  assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
-  if (_definingInvariant[source] == dependent) {
-    logWarning("The dependent invariant ("
-               << dependent << ") already "
-               << "defines the source variable (" << source << "); "
-               << "ignoring (selft-cyclic) dependency.");
+void PropagationGraph::registerInvariantParameter(InvariantId invariantId,
+                                                  VarIdBase varId) {
+  assert(!invariantId.equals(NULL_ID) && !varId.equals(NULL_ID));
+  if (_definingInvariant[varId] == invariantId) {
+    logWarning("The invariant (" << invariantId << ") already "
+                                 << "defines the varId variable (" << varId
+                                 << "); "
+                                 << "ignoring (selft-cyclic) dependency.");
     return;
   }
-  _listeningInvariants[source].push_back(dependent);
-  _inputVariables[dependent].push_back(source);
+  _listeningInvariants[varId].push_back(invariantId);
+  _variableParameters[invariantId].push_back(varId);
 }
 
-void PropagationGraph::registerDefinedVariable(VarIdBase dependent,
-                                               InvariantId source) {
-  assert(!dependent.equals(NULL_ID) && !source.equals(NULL_ID));
-  if (_definingInvariant.at(dependent).id != NULL_ID.id) {
+void PropagationGraph::registerDefinedVariable(VarIdBase varId,
+                                               InvariantId invariantId) {
+  assert(!varId.equals(NULL_ID) && !invariantId.equals(NULL_ID));
+  if (_definingInvariant.at(varId).id != NULL_ID.id) {
     throw VariableAlreadyDefinedException(
-        "Variable " + std::to_string(dependent.id) +
+        "Variable " + std::to_string(varId.id) +
         " already defined by invariant " +
-        std::to_string(_definingInvariant.at(dependent).id));
+        std::to_string(_definingInvariant.at(varId).id));
   }
   Int index = -1;
-  for (size_t i = 0; i < _listeningInvariants[dependent].size(); ++i) {
-    if (_listeningInvariants[dependent][i] == source) {
+  for (size_t i = 0; i < _listeningInvariants[varId].size(); ++i) {
+    if (_listeningInvariants[varId][i] == invariantId) {
       index = i;
       break;
     }
   }
   if (index >= 0) {
-    _listeningInvariants[dependent].erase(
-        _listeningInvariants[dependent].begin() + index);
-    logWarning("The (self-cyclic) dependency that the source invariant "
-               << "(" << source << ") depends on the dependent "
-               << "variable (" << source << ") was removed.");
+    _listeningInvariants[varId].erase(_listeningInvariants[varId].begin() +
+                                      index);
+    logWarning("The (self-cyclic) dependency that the invariant "
+               << "(" << invariantId << ") depends on the parameter "
+               << "variable (" << invariantId << ") was removed.");
   }
-  _definingInvariant[dependent] = source;
-  _variablesDefinedByInvariant[source].push_back(dependent);
+  _definingInvariant[varId] = invariantId;
+  _variablesDefinedByInvariant[invariantId].push_back(varId);
 }
 
 void PropagationGraph::close() {

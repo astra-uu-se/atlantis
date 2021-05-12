@@ -22,10 +22,10 @@ void OutputToInputExplorer::expandInvariant(InvariantId inv) {
   if (_invariantIsOnStack.get(inv)) {
     throw DynamicCycleException();
   }
-  VarId nextVar = _engine.getNextDependency(inv);
+  VarId nextVar = _engine.getNextParameter(inv);
   // Ignore var if it is not on propagation path.
   while (nextVar != NULL_ID && !_engine.isOnPropagationPath(nextVar)) {
-    nextVar = _engine.getNextDependency(inv);
+    nextVar = _engine.getNextParameter(inv);
   }
   if (nextVar.id == NULL_ID) {
     return;
@@ -35,14 +35,14 @@ void OutputToInputExplorer::expandInvariant(InvariantId inv) {
 }
 
 void OutputToInputExplorer::notifyCurrentInvariant() {
-  _engine.notifyCurrentDependencyChanged(peekInvariantStack());
+  _engine.notifyCurrentParameterChanged(peekInvariantStack());
 }
 
 bool OutputToInputExplorer::visitNextVariable() {
   popVariableStack();
-  VarId nextVar = _engine.getNextDependency(peekInvariantStack());
+  VarId nextVar = _engine.getNextParameter(peekInvariantStack());
   while (nextVar != NULL_ID && !_engine.isOnPropagationPath(nextVar)) {
-    nextVar = _engine.getNextDependency(peekInvariantStack());
+    nextVar = _engine.getNextParameter(peekInvariantStack());
   }
   if (nextVar.id == NULL_ID) {
     return true;  // done with invariant

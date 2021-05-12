@@ -54,18 +54,18 @@ void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
   _isEnqueued.set(id, true);
 }
 
-void PropagationEngine::registerInvariantDependsOnVar(InvariantId dependent,
-                                                      VarId source,
-                                                      LocalId localId) {
-  auto sourceId = getSourceId(source);
-  _propGraph.registerInvariantDependsOnVar(dependent, sourceId);
-  _dependentInvariantData[sourceId].emplace_back(
-      InvariantDependencyData{dependent, localId});
+void PropagationEngine::registerInvariantParameter(InvariantId invariantId,
+                                                   VarId parameterId,
+                                                   LocalId localId) {
+  auto sourceId = getSourceId(parameterId);
+  _propGraph.registerInvariantParameter(invariantId, sourceId);
+  _listeningInvariantData[sourceId].emplace_back(
+      ListeningInvariantData{invariantId, localId});
 }
 
-void PropagationEngine::registerDefinedVariable(VarId dependent,
-                                                InvariantId source) {
-  _propGraph.registerDefinedVariable(getSourceId(dependent), source);
+void PropagationEngine::registerDefinedVariable(VarId varId,
+                                                InvariantId invariantId) {
+  _propGraph.registerDefinedVariable(getSourceId(varId), invariantId);
 }
 
 void PropagationEngine::registerVar(VarId id) {
@@ -240,7 +240,7 @@ void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
       continue;
     }
     _varIsOnPropagationPath.set(currentVar, true);
-    for (auto& depInv : _dependentInvariantData.at(currentVar)) {
+    for (auto& depInv : _listeningInvariantData.at(currentVar)) {
       for (VarIdBase depVar : _propGraph.getVariablesDefinedBy(depInv.id)) {
         if (!_varIsOnPropagationPath.get(depVar)) {
           _propagationPathQueue.push(depVar);
@@ -302,7 +302,7 @@ void PropagationEngine::propagate() {
       commitIf(_currentTime, stableVarId);
     }
 
-    for (auto& toNotify : _dependentInvariantData[stableVarId]) {
+    for (auto& toNotify : _listeningInvariantData[stableVarId]) {
       Invariant& invariant = _store.getInvariant(toNotify.id);
 
 #ifdef PROPAGATION_DEBUG

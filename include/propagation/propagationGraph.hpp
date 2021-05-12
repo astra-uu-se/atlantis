@@ -28,9 +28,9 @@ class PropagationGraph {
   /**
    * Map from InvariantId -> list of VarId
    *
-   * Maps an invariant to all variables it depends on (its inputs).
+   * Maps an invariant to all variable parameters on (its inputs).
    */
-  IdMap<InvariantId, std::vector<VarIdBase>> _inputVariables;
+  IdMap<InvariantId, std::vector<VarIdBase>> _variableParameters;
 
   // Map from VarId -> vector of InvariantId
   IdMap<VarIdBase, std::vector<InvariantId>> _listeningInvariants;
@@ -93,20 +93,20 @@ class PropagationGraph {
   void registerVar(VarIdBase);
 
   /**
-   * Register that Invariant to depends on variable from depends on dependency
-   * @param depends the invariant that the variable depends on
-   * @param source the depending variable
+   * Register that parameterId is a parameter of invariantId
+   * @param invariantId the invariant
+   * @param parameterId the variable parameter
    */
-  void registerInvariantDependsOnVar(InvariantId depends, VarIdBase source);
+  void registerInvariantParameter(InvariantId invariantId,
+                                  VarIdBase parameterId);
 
   /**
-   * Register that 'from' defines variable 'to'. Throws exception if
-   * already defined.
-   * @param depends the variable that is defined by the invariant
-   * @param source the invariant defining the variable
+   * Register that source functionally defines varId
+   * @param varId the variable that is defined by the invariant
+   * @param invriant the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariable(VarIdBase depends, InvariantId source);
+  void registerDefinedVariable(VarIdBase varId, InvariantId invariant);
 
   [[nodiscard]] inline size_t getNumVariables() const {
     return _numVariables;  // this ignores null var
