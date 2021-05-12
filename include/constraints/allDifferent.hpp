@@ -1,13 +1,11 @@
 #pragma once
 
 #include <cassert>
-#include <limits>
-#include <memory>
 #include <vector>
 
-#include "../core/types.hpp"
-#include "../variables/intVar.hpp"
-// #include "../variables/savedInt.hpp"
+#include "core/types.hpp"
+#include "variables/intVar.hpp"
+// #include "variables/savedInt.hpp"
 #include "constraint.hpp"
 
 class SavedInt;  // forward declare

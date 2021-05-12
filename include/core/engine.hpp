@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cassert>
-#include <string>
 #include <vector>
 
 // #include "constraints/constraint.hpp"
@@ -66,8 +65,8 @@ class Engine {
   virtual void open() = 0;
   virtual void close() = 0;
 
-  inline bool isOpen() noexcept { return m_isOpen; }
-  inline bool isMoving() noexcept { return m_isMoving; }
+  inline bool isOpen() const noexcept { return m_isOpen; }
+  inline bool isMoving() const noexcept { return m_isMoving; }
 
   //--------------------- Variable ---------------------
 

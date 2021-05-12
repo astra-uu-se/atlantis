@@ -1,12 +1,10 @@
 #pragma once
 
 #include <cassert>
-#include <memory>
 #include <vector>
 
-#include "../core/types.hpp"
-#include "../variables/intVar.hpp"
-#include "../variables/savedValue.hpp"
+
+#include "variables/savedValue.hpp"
 
 class PriorityList {
  private:

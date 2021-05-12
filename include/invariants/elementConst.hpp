@@ -2,10 +2,10 @@
 
 #include <vector>
 
-// #include "../core/engine.hpp"
-#include "../core/types.hpp"
-#include "../invariants/invariant.hpp"
-// #include "../variables/intVar.hpp"
+// #include "core/engine.hpp"
+#include "core/types.hpp"
+#include "invariants/invariant.hpp"
+// #include "variables/intVar.hpp"
 
 class Engine;
 class Invariant;

@@ -3,7 +3,6 @@
 #include <queue>
 
 #include "core/engine.hpp"
-#include "misc/logging.hpp"
 #include "propagation/outputToInputExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
 #include "utils/idMap.hpp"

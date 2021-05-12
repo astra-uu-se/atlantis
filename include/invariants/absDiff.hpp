@@ -1,12 +1,9 @@
 #pragma once
 
-#include <memory>
-#include <vector>
+#include "core/types.hpp"
+#include "invariants/invariant.hpp"
 
-#include "../core/engine.hpp"
-#include "../core/types.hpp"
-#include "../invariants/invariant.hpp"
-#include "../variables/intVar.hpp"
+class Engine;
 
 /**
  * Invariant for c <== |a-b|
