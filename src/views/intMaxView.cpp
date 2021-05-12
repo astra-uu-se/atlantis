@@ -1,8 +1,8 @@
 #include "views/intMaxView.hpp"
 
 #include "core/engine.hpp"
-Int IntMaxView::getValue(Timestamp t) {
-  return std::max<Int>(_max, _engine->getValue(t, _parentId));
+Int IntMaxView::getValue(Timestamp ts) {
+  return std::max<Int>(_max, _engine->getValue(ts, _parentId));
 }
 
 Int IntMaxView::getCommittedValue() {

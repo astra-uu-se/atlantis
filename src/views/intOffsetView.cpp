@@ -4,8 +4,8 @@
 
 extern Id NULL_ID;
 
-Int IntOffsetView::getValue(Timestamp t) {
-  return _offset + _engine->getValue(t, _parentId);
+Int IntOffsetView::getValue(Timestamp ts) {
+  return _offset + _engine->getValue(ts, _parentId);
 }
 
 Int IntOffsetView::getCommittedValue() {

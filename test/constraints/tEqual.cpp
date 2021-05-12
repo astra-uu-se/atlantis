@@ -27,22 +27,22 @@ class MockEqual : public Equal {
           return Equal::recompute(timestamp, engine);
         });
     ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return Equal::getNextDependency(t, engine);
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          return Equal::getNextDependency(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          Equal::notifyCurrentDependencyChanged(t, engine);
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          Equal::notifyCurrentDependencyChanged(ts, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          Equal::notifyIntChanged(t, engine, id);
+        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
+          Equal::notifyIntChanged(ts, engine, id);
         });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      Equal::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
+      Equal::commit(ts, engine);
     });
   }
 
@@ -53,8 +53,8 @@ class MockEqual : public Equal {
   MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyIntChanged,
+              (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:

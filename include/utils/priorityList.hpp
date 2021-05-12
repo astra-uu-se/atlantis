@@ -15,10 +15,10 @@ class PriorityList {
         : prev(NULL_TIMESTAMP, nullptr),
           next(NULL_TIMESTAMP, nullptr),
           priority(NULL_TIMESTAMP, 0) {}
-    inline void commitIf(Timestamp t) {
-      prev.commitIf(t);
-      next.commitIf(t);
-      priority.commitIf(t);
+    inline void commitIf(Timestamp ts) {
+      prev.commitIf(ts);
+      next.commitIf(ts);
+      priority.commitIf(ts);
     }
   };
 
@@ -26,19 +26,19 @@ class PriorityList {
   Saved<DoublyLinkedNode*> _head;
   Saved<DoublyLinkedNode*> _tail;
 
-  inline void unlink(Timestamp t, size_t idx) {
-    DoublyLinkedNode* prev = _list[idx].prev.get(t);
-    DoublyLinkedNode* next = _list[idx].next.get(t);
+  inline void unlink(Timestamp ts, size_t idx) {
+    DoublyLinkedNode* prev = _list[idx].prev.get(ts);
+    DoublyLinkedNode* next = _list[idx].next.get(ts);
     if (prev != nullptr) {
       // idx.prev.next = idx.next
-      prev->next.set(t, next);
+      prev->next.set(ts, next);
     }
     if (next != nullptr) {
       // idx.next.prev = idx.prev
-      next->prev.set(t, prev);
+      next->prev.set(ts, prev);
     }
-    _list[idx].prev.set(t, nullptr);
-    _list[idx].next.set(t, nullptr);
+    _list[idx].prev.set(ts, nullptr);
+    _list[idx].next.set(ts, nullptr);
   }
 
  public:
@@ -65,107 +65,107 @@ class PriorityList {
   }
 
   size_t size() { return _list.size(); }
-  Int getMinPriority(Timestamp t) { return _head.get(t)->priority.get(t); }
-  Int getMaxPriority(Timestamp t) { return _tail.get(t)->priority.get(t); }
+  Int getMinPriority(Timestamp ts) { return _head.get(ts)->priority.get(ts); }
+  Int getMaxPriority(Timestamp ts) { return _tail.get(ts)->priority.get(ts); }
 
-  void updatePriority(Timestamp t, size_t idx, Int newValue) {
-    if (_list[idx].priority.get(t) == newValue) {
+  void updatePriority(Timestamp ts, size_t idx, Int newValue) {
+    if (_list[idx].priority.get(ts) == newValue) {
       return;  // No change.
     }
 
-    Int oldValue = _list[idx].priority.get(t);
+    Int oldValue = _list[idx].priority.get(ts);
 
-    DoublyLinkedNode* currentHead = _head.get(t);
-    DoublyLinkedNode* currentTail = _tail.get(t);
+    DoublyLinkedNode* currentHead = _head.get(ts);
+    DoublyLinkedNode* currentTail = _tail.get(ts);
 
-    if (newValue <= currentHead->priority.get(t)) {
-      _list[idx].priority.set(t, newValue);
+    if (newValue <= currentHead->priority.get(ts)) {
+      _list[idx].priority.set(ts, newValue);
       if (currentHead == &_list[idx]) {
         return;
       }
       // idx was _tail and will move, so update the _tail.
-      if (&_list[idx] == currentTail && currentTail->prev.get(t) != nullptr) {
-        _tail.set(t, currentTail->prev.get(t));
+      if (&_list[idx] == currentTail && currentTail->prev.get(ts) != nullptr) {
+        _tail.set(ts, currentTail->prev.get(ts));
       }
       // make idx the new current _head.
-      currentHead->prev.set(t, &_list[idx]);
-      unlink(t, idx);
-      _list[idx].next.set(t, currentHead);
-      _head.set(t, &_list[idx]);
+      currentHead->prev.set(ts, &_list[idx]);
+      unlink(ts, idx);
+      _list[idx].next.set(ts, currentHead);
+      _head.set(ts, &_list[idx]);
       return;
     }
 
-    if (newValue >= currentTail->priority.get(t)) {
-      _list[idx].priority.set(t, newValue);
+    if (newValue >= currentTail->priority.get(ts)) {
+      _list[idx].priority.set(ts, newValue);
       if (currentTail == &_list[idx]) {
         return;
       }
       // idx was _head and will move, so update the _head.
-      if (&_list[idx] == currentHead && currentHead->next.get(t) != nullptr) {
-        _head.set(t, currentHead->next.get(t));
+      if (&_list[idx] == currentHead && currentHead->next.get(ts) != nullptr) {
+        _head.set(ts, currentHead->next.get(ts));
       }
       // make idx the new current _tail.
-      currentTail->next.set(t, &_list[idx]);
-      unlink(t, idx);
-      _list[idx].prev.set(t, currentTail);
-      _tail.set(t, &_list[idx]);
+      currentTail->next.set(ts, &_list[idx]);
+      unlink(ts, idx);
+      _list[idx].prev.set(ts, currentTail);
+      _tail.set(ts, &_list[idx]);
       return;
     }
 
-    _list[idx].priority.set(t, newValue);
+    _list[idx].priority.set(ts, newValue);
     // Check if position is unchanged.
     if (oldValue < newValue) {
-      if (newValue <= _list[idx].next.get(t)->priority.get(t)) {
+      if (newValue <= _list[idx].next.get(ts)->priority.get(ts)) {
         return;
       }
     } else {
-      if (newValue >= _list[idx].prev.get(t)->priority.get(t)) {
+      if (newValue >= _list[idx].prev.get(ts)->priority.get(ts)) {
         return;
       }
     }
 
     // idx was _head/_tail and will move, so update the _head/_tail.
-    if (&_list[idx] == currentHead && currentHead->next.get(t) != nullptr) {
-      _head.set(t, currentHead->next.get(t));
+    if (&_list[idx] == currentHead && currentHead->next.get(ts) != nullptr) {
+      _head.set(ts, currentHead->next.get(ts));
     }
-    if (&_list[idx] == currentTail && currentTail->prev.get(t) != nullptr) {
-      _tail.set(t, currentTail->prev.get(t));
+    if (&_list[idx] == currentTail && currentTail->prev.get(ts) != nullptr) {
+      _tail.set(ts, currentTail->prev.get(ts));
     }
 
     if (oldValue < newValue) {
       // Value increased: insert to the right
-      DoublyLinkedNode* current = _list[idx].next.get(t);
-      unlink(t, idx);
-      while (newValue > current->priority.get(t)) {
-        current = current->next.get(t);
+      DoublyLinkedNode* current = _list[idx].next.get(ts);
+      unlink(ts, idx);
+      while (newValue > current->priority.get(ts)) {
+        current = current->next.get(ts);
       }
       // Insert before current
-      _list[idx].next.set(t, current);
-      _list[idx].prev.set(t, current->prev.get(t));
-      current->prev.get(t)->next.set(t, &_list[idx]);
-      current->prev.set(t, &_list[idx]);
+      _list[idx].next.set(ts, current);
+      _list[idx].prev.set(ts, current->prev.get(ts));
+      current->prev.get(ts)->next.set(ts, &_list[idx]);
+      current->prev.set(ts, &_list[idx]);
     } else {
       // Value decreased: insert to the left
-      DoublyLinkedNode* current = _list[idx].prev.get(t);
-      unlink(t, idx);
-      while (newValue < current->priority.get(t)) {
-        current = current->prev.get(t);
+      DoublyLinkedNode* current = _list[idx].prev.get(ts);
+      unlink(ts, idx);
+      while (newValue < current->priority.get(ts)) {
+        current = current->prev.get(ts);
       }
       // Insert after current
-      _list[idx].prev.set(t, current);
-      _list[idx].next.set(t, current->next.get(t));
-      current->next.get(t)->prev.set(t, &_list[idx]);
-      current->next.set(t, &_list[idx]);
+      _list[idx].prev.set(ts, current);
+      _list[idx].next.set(ts, current->next.get(ts));
+      current->next.get(ts)->prev.set(ts, &_list[idx]);
+      current->next.set(ts, &_list[idx]);
     }
   }
 
-  void commitIf(Timestamp t) {
+  void commitIf(Timestamp ts) {
     for (auto& node : _list) {
-      node.commitIf(t);
+      node.commitIf(ts);
     }
   }
 
-  void sanity(Timestamp t) {
+  void sanity(Timestamp ts) {
     if (size() == 0) {
       return;
     }
@@ -173,44 +173,44 @@ class PriorityList {
 
     size_t s = 0;
     bool first = true;
-    Int minPrio = _head.get(t)->priority.get(t);
-    for (Saved<DoublyLinkedNode*> cur = _head; cur.get(t) != nullptr;
-         cur = cur.get(t)->next) {
+    Int minPrio = _head.get(ts)->priority.get(ts);
+    for (Saved<DoublyLinkedNode*> cur = _head; cur.get(ts) != nullptr;
+         cur = cur.get(ts)->next) {
       ++s;
       if (first) {
-        prevPrio = cur.get(t)->priority.get(t);
+        prevPrio = cur.get(ts)->priority.get(ts);
         assert(minPrio == prevPrio);
         first = false;
       } else {
-        assert(prevPrio <= cur.get(t)->priority.get(t));
-        prevPrio = cur.get(t)->priority.get(t);
+        assert(prevPrio <= cur.get(ts)->priority.get(ts));
+        prevPrio = cur.get(ts)->priority.get(ts);
       }
     }
     assert(size() == s);
 
     s = 0;
     first = true;
-    Int maxPrio = _tail.get(t)->priority.get(t);
-    for (Saved<DoublyLinkedNode*> cur = _tail; cur.get(t) != nullptr;
-         cur = cur.get(t)->prev) {
+    Int maxPrio = _tail.get(ts)->priority.get(ts);
+    for (Saved<DoublyLinkedNode*> cur = _tail; cur.get(ts) != nullptr;
+         cur = cur.get(ts)->prev) {
       ++s;
       if (first) {
-        prevPrio = cur.get(t)->priority.get(t);
+        prevPrio = cur.get(ts)->priority.get(ts);
         assert(maxPrio == prevPrio);
         first = false;
       } else {
-        assert(prevPrio >= cur.get(t)->priority.get(t));
-        prevPrio = cur.get(t)->priority.get(t);
+        assert(prevPrio >= cur.get(ts)->priority.get(ts));
+        prevPrio = cur.get(ts)->priority.get(ts);
       }
     }
     assert(size() == s);
 
-    for (Saved<DoublyLinkedNode*> cur = _head; cur.get(t) != nullptr;
-         cur = cur.get(t)->next) {
-      if (cur.get(t)->next.get(t) == nullptr) {
+    for (Saved<DoublyLinkedNode*> cur = _head; cur.get(ts) != nullptr;
+         cur = cur.get(ts)->next) {
+      if (cur.get(ts)->next.get(ts) == nullptr) {
         continue;
       }
-      assert(cur.get(t) == cur.get(t)->next.get(t)->prev.get(t));
+      assert(cur.get(ts) == cur.get(ts)->next.get(ts)->prev.get(ts));
     }
   }
 };

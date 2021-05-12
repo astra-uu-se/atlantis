@@ -14,8 +14,8 @@ class Saved {
       : _tmpTime(initTime), _savedValue(initValue), _tmpValue(initValue) {}
 
   [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
-      Timestamp t) const {
-    return _tmpTime == t && _savedValue != _tmpValue;
+      Timestamp ts) const {
+    return _tmpTime == ts && _savedValue != _tmpValue;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()

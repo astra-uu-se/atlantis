@@ -45,11 +45,12 @@ class PropagationEngine : public Engine {
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
    * already defined.
-   * @param dependent the variable that is defined by the invariant
-   * @param source the invariant defining the variable
+   * @param definedVarId the variable that is defined by the invariant
+   * @param invariantId the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariable(VarId dependent, InvariantId source) override;
+  void registerDefinedVariable(VarId definedVarId,
+                               InvariantId invariantId) override;
 
  public:
   PropagationEngine(/* args */);
@@ -57,15 +58,15 @@ class PropagationEngine : public Engine {
   void open() override;
   void close() override;
 
-  void setPropagationMode(PropagationMode m);
+  void setPropagationMode(PropagationMode);
 
   //--------------------- Notificaion ---------------------
   /***
-   * @param t the timestamp when the changed happened
+   * @param ts the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  void notifyMaybeChanged(Timestamp t, VarId id) override;
-  void queueForPropagation(Timestamp t, VarId id) override;
+  void notifyMaybeChanged(Timestamp ts, VarId id) override;
+  void queueForPropagation(Timestamp, VarId) override;
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
@@ -73,20 +74,20 @@ class PropagationEngine : public Engine {
    * returns true if variable id is relevant for propagation.
    * Note that this is not the same thing as the variable being modified.
    */
-  bool isOnPropagationPath(VarId v);
+  bool isOnPropagationPath(VarId);
   /**
    * returns true if invariant id is relevant for propagation.
    * Note that this is not the same thing as the invariant being modified.
    */
   static bool isOnPropagationPath(Timestamp, InvariantId) { return true; }
 
-  [[nodiscard]] VarId getNextStableVariable(Timestamp t);
+  [[nodiscard]] VarId getNextStableVariable(Timestamp);
 
   //--------------------- Move semantics ---------------------
   void beginMove();
   void endMove();
   void setValue(Timestamp, VarId, Int val);
-  inline void setValue(VarId v, Int val) { setValue(_currentTime, v, val); }
+  inline void setValue(VarId id, Int val) { setValue(_currentTime, id, val); }
 
   void beginQuery();
   void endQuery();
@@ -103,7 +104,7 @@ class PropagationEngine : public Engine {
   InvariantId getDefiningInvariant(VarId);
 
   // This function is used by propagation, which is unaware of views.
-  [[nodiscard]] inline bool hasChanged(Timestamp t, VarId v) const;
+  [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
 
   [[nodiscard]] const std::vector<VarIdBase>& getVariablesDefinedBy(
       InvariantId) const;
@@ -115,13 +116,12 @@ class PropagationEngine : public Engine {
 
   /**
    * Register that Invariant to depends on variable from depends on dependency
-   * @param dependent the invariant that the variable depends on
-   * @param source the depending variable
+   * @param dependentInvariant the invariant that the variable depends on
+   * @param sourceVar the depending variable
    * @param localId the id of the depending variable in the invariant
-   * @param data additional data
    */
-  void registerInvariantDependsOnVar(InvariantId dependent, VarId source,
-                                     LocalId localId) override;
+  void registerInvariantDependsOnVar(InvariantId dependentInvariant,
+                                     VarId sourceVar, LocalId localId) override;
 
   void registerVar(VarId) override;
   void registerInvariant(InvariantId) override;
@@ -129,9 +129,9 @@ class PropagationEngine : public Engine {
   PropagationGraph& getPropGraph();
 };
 
-inline InvariantId PropagationEngine::getDefiningInvariant(VarId v) {
+inline InvariantId PropagationEngine::getDefiningInvariant(VarId id) {
   // Returns NULL_ID is not defined.
-  return _propGraph.getDefiningInvariant(v);
+  return _propGraph.getDefiningInvariant(id);
 }
 
 inline void PropagationEngine::clearPropagationPath() {
@@ -143,27 +143,27 @@ inline bool PropagationEngine::isOnPropagationPath(VarId id) {
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
-    InvariantId inv) const {
-  return _propGraph.getVariablesDefinedBy(inv);
+    InvariantId id) const {
+  return _propGraph.getVariablesDefinedBy(id);
 }
 
-inline VarId PropagationEngine::getNextDependency(InvariantId inv) {
+inline VarId PropagationEngine::getNextDependency(InvariantId id) {
   return getSourceId(
-      _store.getInvariant(inv).getNextDependency(_currentTime, *this));
+      _store.getInvariant(id).getNextDependency(_currentTime, *this));
 }
-inline void PropagationEngine::notifyCurrentDependencyChanged(InvariantId inv) {
-  _store.getInvariant(inv).notifyCurrentDependencyChanged(_currentTime, *this);
-}
-
-inline bool PropagationEngine::hasChanged(Timestamp t, VarId v) const {
-  assert(v.idType != VarIdType::view);
-  return _store.getConstIntVar(v).hasChanged(t);
+inline void PropagationEngine::notifyCurrentDependencyChanged(InvariantId id) {
+  _store.getInvariant(id).notifyCurrentDependencyChanged(_currentTime, *this);
 }
 
-inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
-  assert(v.idType != VarIdType::view);
-  _store.getIntVar(v).setValue(t, val);
-  notifyMaybeChanged(t, v);
+inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {
+  assert(id.idType != VarIdType::view);
+  return _store.getConstIntVar(id).hasChanged(ts);
+}
+
+inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
+  assert(id.idType != VarIdType::view);
+  _store.getIntVar(id).setValue(ts, val);
+  notifyMaybeChanged(ts, id);
 }
 
 inline void PropagationEngine::setPropagationMode(PropagationMode m) {

@@ -7,32 +7,36 @@ ElementConst::ElementConst(VarId i, std::vector<Int> A, VarId b)
   _modifiedVars.reserve(1);
 }
 
-void ElementConst::init([[maybe_unused]] Timestamp t, Engine& e) {
+void ElementConst::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   assert(_id != NULL_ID);
 
-  registerDefinedVariable(e, _b);
-  e.registerInvariantDependsOnVar(_id, _i, 0);
+  registerDefinedVariable(engine, _b);
+  engine.registerInvariantDependsOnVar(_id, _i, 0);
 }
 
-void ElementConst::recompute(Timestamp t, Engine& e) {
-  updateValue(t, e, _b, _A.at(static_cast<unsigned long>(e.getValue(t, _i))));
+void ElementConst::recompute(Timestamp ts, Engine& engine) {
+  updateValue(ts, engine, _b,
+              _A.at(static_cast<unsigned long>(engine.getValue(ts, _i))));
 }
 
-void ElementConst::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void ElementConst::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId ElementConst::getNextDependency(Timestamp t, Engine&) {
-  _state.incValue(t, 1);
-  if (_state.getValue(t) == 0) {
+VarId ElementConst::getNextDependency(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
+  if (_state.getValue(ts) == 0) {
     return _i;
   } else {
     return NULL_ID;  // Done
   }
 }
 
-void ElementConst::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void ElementConst::notifyCurrentDependencyChanged(Timestamp ts,
+                                                  Engine& engine) {
+  recompute(ts, engine);
 }
 
-void ElementConst::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void ElementConst::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

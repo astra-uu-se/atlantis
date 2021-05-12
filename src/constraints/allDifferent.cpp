@@ -14,77 +14,78 @@ AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> variables)
   _modifiedVars.reserve(_variables.size());
 }
 
-void AllDifferent::init(Timestamp ts, Engine& e) {
+void AllDifferent::init(Timestamp ts, Engine& engine) {
   assert(!_id.equals(NULL_ID));
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
   for (size_t i = 0; i < _variables.size(); ++i) {
-    lb = std::min(lb, e.getLowerBound(_variables[i]));
-    ub = std::max(ub, e.getUpperBound(_variables[i]));
-    e.registerInvariantDependsOnVar(_id, _variables[i], LocalId(i));
-    _localValues.emplace_back(ts, e.getCommittedValue(_variables[i]));
+    lb = std::min(lb, engine.getLowerBound(_variables[i]));
+    ub = std::max(ub, engine.getUpperBound(_variables[i]));
+    engine.registerInvariantDependsOnVar(_id, _variables[i], LocalId(i));
+    _localValues.emplace_back(ts, engine.getCommittedValue(_variables[i]));
   }
   assert(ub >= lb);
 
   _counts.resize(static_cast<unsigned long>(ub - lb + 1), SavedInt(ts, 0));
 
-  registerDefinedVariable(e, _violationId);
+  registerDefinedVariable(engine, _violationId);
 
   _offset = lb;
 }
 
-void AllDifferent::recompute(Timestamp t, Engine& e) {
+void AllDifferent::recompute(Timestamp ts, Engine& engine) {
   for (SavedInt& c : _counts) {
-    c.setValue(t, 0);
+    c.setValue(ts, 0);
   }
 
-  updateValue(t, e, _violationId, 0);
+  updateValue(ts, engine, _violationId, 0);
 
   Int violInc = 0;
   for (size_t i = 0; i < _variables.size(); ++i) {
-    violInc += increaseCount(t, e.getValue(t, _variables[i]));
-    _localValues[i].setValue(t, e.getValue(t, _variables[i]));
+    violInc += increaseCount(ts, engine.getValue(ts, _variables[i]));
+    _localValues[i].setValue(ts, engine.getValue(ts, _variables[i]));
   }
-  incValue(t, e, _violationId, violInc);
+  incValue(ts, engine, _violationId, violInc);
 }
 
-void AllDifferent::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
-  Int oldValue = _localValues.at(id).getValue(t);
-  auto newValue = e.getValue(t, _variables[id]);
+void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
+  Int oldValue = _localValues.at(id).getValue(ts);
+  auto newValue = engine.getValue(ts, _variables[id]);
   if (newValue == oldValue) {
     return;
   }
-  signed char dec = decreaseCount(t, oldValue);
-  signed char inc = increaseCount(t, newValue);
-  _localValues.at(id).setValue(t, newValue);
-  incValue(t, e, _violationId, static_cast<Int>(dec + inc));
+  signed char dec = decreaseCount(ts, oldValue);
+  signed char inc = increaseCount(ts, newValue);
+  _localValues.at(id).setValue(ts, newValue);
+  incValue(ts, engine, _violationId, static_cast<Int>(dec + inc));
 }
 
-VarId AllDifferent::getNextDependency(Timestamp t, Engine&) {
-  _state.incValue(t, 1);
+VarId AllDifferent::getNextDependency(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
 
-  auto index = static_cast<size_t>(_state.getValue(t));
+  auto index = static_cast<size_t>(_state.getValue(ts));
   if (index < _variables.size()) {
     return _variables.at(index);
   }
   return NULL_ID;
 }
 
-void AllDifferent::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  auto id = static_cast<size_t>(_state.getValue(t));
+void AllDifferent::notifyCurrentDependencyChanged(Timestamp ts,
+                                                  Engine& engine) {
+  auto id = static_cast<size_t>(_state.getValue(ts));
   assert(id < _variables.size());
-  notifyIntChanged(t, e, id);
+  notifyIntChanged(ts, engine, id);
 }
 
-void AllDifferent::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t, e);
+void AllDifferent::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
 
   for (auto& localValue : _localValues) {
-    localValue.commitIf(t);
+    localValue.commitIf(ts);
   }
 
   for (SavedInt& savedInt : _counts) {
-    savedInt.commitIf(t);
+    savedInt.commitIf(ts);
   }
 }

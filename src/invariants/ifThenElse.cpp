@@ -5,39 +5,41 @@ IfThenElse::IfThenElse(VarId b, VarId x, VarId y, VarId z)
   _modifiedVars.reserve(1);
 }
 
-void IfThenElse::init([[maybe_unused]] Timestamp t, Engine& e) {
+void IfThenElse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(e, _z);
-  e.registerInvariantDependsOnVar(_id, _b, 0);
-  e.registerInvariantDependsOnVar(_id, _xy[0], 0);
-  e.registerInvariantDependsOnVar(_id, _xy[1], 0);
+  registerDefinedVariable(engine, _z);
+  engine.registerInvariantDependsOnVar(_id, _b, 0);
+  engine.registerInvariantDependsOnVar(_id, _xy[0], 0);
+  engine.registerInvariantDependsOnVar(_id, _xy[1], 0);
 }
 
-void IfThenElse::recompute(Timestamp t, Engine& e) {
-  auto b = e.getValue(t, _b);
-  updateValue(t, e, _z, e.getValue(t, _xy[1 - (b == 0)]));
+void IfThenElse::recompute(Timestamp ts, Engine& engine) {
+  auto b = engine.getValue(ts, _b);
+  updateValue(ts, engine, _z, engine.getValue(ts, _xy[1 - (b == 0)]));
 }
 
-void IfThenElse::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void IfThenElse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId IfThenElse::getNextDependency(Timestamp t, Engine& e) {
-  _state.incValue(t, 1);
-  auto state = _state.getValue(t);
+VarId IfThenElse::getNextDependency(Timestamp ts, Engine& engine) {
+  _state.incValue(ts, 1);
+  auto state = _state.getValue(ts);
   if (state == 0) {
     return _b;
   } else if (state == 1) {
-    auto b = e.getValue(t, _b);
+    auto b = engine.getValue(ts, _b);
     return _xy[1 - (b == 0)];
   } else {
     return NULL_ID;  // Done
   }
 }
 
-void IfThenElse::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void IfThenElse::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void IfThenElse::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void IfThenElse::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

@@ -13,31 +13,32 @@ LessThan::LessThan(VarId violationId, VarId x, VarId y)
   _modifiedVars.reserve(1);
 }
 
-void LessThan::init(Timestamp, Engine& e) {
+void LessThan::init(Timestamp, Engine& engine) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   assert(_id != NULL_ID);
 
-  e.registerInvariantDependsOnVar(_id, _x, LocalId(0));
-  e.registerInvariantDependsOnVar(_id, _y, LocalId(0));
-  registerDefinedVariable(e, _violationId);
+  engine.registerInvariantDependsOnVar(_id, _x, LocalId(0));
+  engine.registerInvariantDependsOnVar(_id, _y, LocalId(0));
+  registerDefinedVariable(engine, _violationId);
 }
 
-void LessThan::recompute(Timestamp t, Engine& e) {
+void LessThan::recompute(Timestamp ts, Engine& engine) {
   // Dereference safe as incValue does not retain ptr.
-  updateValue(t, e, _violationId,
-              std::max((Int)0, e.getValue(t, _x) - e.getValue(t, _y) + 1));
+  updateValue(
+      ts, engine, _violationId,
+      std::max((Int)0, engine.getValue(ts, _x) - engine.getValue(ts, _y) + 1));
 }
 
-void LessThan::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void LessThan::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId LessThan::getNextDependency(Timestamp t, Engine&) {
-  _state.incValue(t, 1);
+VarId LessThan::getNextDependency(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?_x:_y;
-  switch (_state.getValue(t)) {
+  switch (_state.getValue(ts)) {
     case 0:
       return _x;
     case 1:
@@ -47,8 +48,10 @@ VarId LessThan::getNextDependency(Timestamp t, Engine&) {
   }
 }
 
-void LessThan::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void LessThan::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void LessThan::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void LessThan::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

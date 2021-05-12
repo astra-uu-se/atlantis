@@ -13,5 +13,5 @@ class Constraint : public Invariant {
 
  public:
   inline VarId getViolationId();
-  inline Int getViolationCount(Engine& e, Timestamp& t);
+  inline Int getViolationCount(Engine&, Timestamp&);
 };

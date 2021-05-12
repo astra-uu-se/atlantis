@@ -28,7 +28,7 @@ class MaxSparse : public Invariant {
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   VarId getNextDependency(Timestamp, Engine&) override;
-  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
+  void notifyCurrentDependencyChanged(Timestamp, Engine&) override;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;
 };

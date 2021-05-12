@@ -14,12 +14,12 @@ class IntView : public View {
  public:
   explicit IntView(VarId parentId) : View(parentId), _engine(nullptr) {}
 
-  void init(VarId id, Engine& e) {
+  void init(VarId id, Engine& engine) {
     _id = id;
-    _engine = &e;
+    _engine = &engine;
   }
 
-  virtual Int getValue(Timestamp t) = 0;
+  virtual Int getValue(Timestamp) = 0;
   virtual Int getCommittedValue() = 0;
   virtual Int getLowerBound() = 0;
   virtual Int getUpperBound() = 0;

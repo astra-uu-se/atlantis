@@ -19,9 +19,9 @@ class MockElementVar : public ElementVar {
  public:
   bool initialized = false;
 
-  void init(Timestamp timestamp, Engine& e) override {
+  void init(Timestamp timestamp, Engine& engine) override {
     initialized = true;
-    ElementVar::init(timestamp, e);
+    ElementVar::init(timestamp, engine);
   }
 
   MockElementVar(VarId i, std::vector<VarId>&& X, VarId b)
@@ -31,22 +31,22 @@ class MockElementVar : public ElementVar {
           return ElementVar::recompute(timestamp, engine);
         });
     ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          return ElementVar::getNextDependency(t, e);
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          return ElementVar::getNextDependency(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          ElementVar::notifyCurrentDependencyChanged(t, e);
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          ElementVar::notifyCurrentDependencyChanged(ts, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
-          ElementVar::notifyIntChanged(t, e, id);
+        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
+          ElementVar::notifyIntChanged(ts, engine, id);
         });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
-      ElementVar::commit(t, e);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
+      ElementVar::commit(ts, engine);
     });
   }
 
@@ -54,11 +54,11 @@ class MockElementVar : public ElementVar {
               (override));
 
   MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyIntChanged,
+              (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:

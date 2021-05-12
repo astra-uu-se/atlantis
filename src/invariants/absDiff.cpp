@@ -8,25 +8,26 @@ AbsDiff::AbsDiff(VarId a, VarId b, VarId c)
   _modifiedVars.reserve(1);
 }
 
-void AbsDiff::init([[maybe_unused]] Timestamp t, Engine& e) {
+void AbsDiff::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(e, _c);
-  e.registerInvariantDependsOnVar(_id, _a, 0);
-  e.registerInvariantDependsOnVar(_id, _b, 0);
+  registerDefinedVariable(engine, _c);
+  engine.registerInvariantDependsOnVar(_id, _a, 0);
+  engine.registerInvariantDependsOnVar(_id, _b, 0);
 }
 
-void AbsDiff::recompute(Timestamp t, Engine& e) {
-  updateValue(t, e, _c, std::abs(e.getValue(t, _a) - e.getValue(t, _b)));
+void AbsDiff::recompute(Timestamp ts, Engine& engine) {
+  updateValue(ts, engine, _c,
+              std::abs(engine.getValue(ts, _a) - engine.getValue(ts, _b)));
 }
 
-void AbsDiff::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void AbsDiff::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId AbsDiff::getNextDependency(Timestamp t, Engine&) {
-  _state.incValue(t, 1);
-  switch (_state.getValue(t)) {
+VarId AbsDiff::getNextDependency(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
+  switch (_state.getValue(ts)) {
     case 0:
       return _a;
     case 1:
@@ -36,8 +37,10 @@ VarId AbsDiff::getNextDependency(Timestamp t, Engine&) {
   }
 }
 
-void AbsDiff::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void AbsDiff::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void AbsDiff::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void AbsDiff::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}
