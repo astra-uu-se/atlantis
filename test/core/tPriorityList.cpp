@@ -22,7 +22,6 @@ class PriorityListTest : public ::testing::Test {
   void updateForward(Timestamp ts, PriorityList &priorityList, Int offset) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
       priorityList.updatePriority(ts, idx, idx + 1 + offset);
-      priorityList.sanity(ts);
     }
   }
 
@@ -32,14 +31,12 @@ class PriorityListTest : public ::testing::Test {
   void updateBackwards(Timestamp ts, PriorityList &priorityList, Int offset) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
       priorityList.updatePriority(ts, idx, priorityList.size() - idx + offset);
-      priorityList.sanity(ts);
     }
   }
 
   void updateUniform(Timestamp ts, PriorityList &priorityList) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
       priorityList.updatePriority(ts, idx, Int(ts));
-      priorityList.sanity(ts);
     }
   }
 };
@@ -52,7 +49,6 @@ TEST_F(PriorityListTest, Constructor) {
   for (size_t size = 0; size < 100; ++size) {
     PriorityList priorityList(size);
     EXPECT_EQ(priorityList.size(), size);
-    priorityList.sanity(0);
   }
 }
 
@@ -108,7 +104,6 @@ TEST_F(PriorityListTest, RandomUpdatePriority) {
       minPriority = std::min(newValue, minPriority);
       maxPriority = std::max(newValue, maxPriority);
       priorityList.updatePriority(ts, idx, newValue);
-      priorityList.sanity(ts);
     }
 
     EXPECT_EQ(priorityList.getMinPriority(ts), minPriority);
