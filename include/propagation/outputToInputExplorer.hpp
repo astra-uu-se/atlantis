@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cassert>
-#include <memory>
 #include <vector>
 
 #include "core/types.hpp"

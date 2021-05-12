@@ -2,8 +2,7 @@
 
 #include <vector>
 
-#include "../core/types.hpp"
-#include "../misc/logging.hpp"
+#include "core/types.hpp"
 #include "layeredPropagationQueue.hpp"
 #include "propagationQueue.hpp"
 #include "utils/idMap.hpp"
