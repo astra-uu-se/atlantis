@@ -59,8 +59,8 @@ class Invariant {
   //  std::vector<bool> _modifiedVars;
   NotificationQueue _modifiedVars;
 
-  VarId _primaryOutput;
-  std::vector<VarId> _outputVars;
+  VarId _primaryDefinedVar;
+  std::vector<VarId> _definedVars;
 
   explicit Invariant(Id id) : Invariant(id, -1) {}
   Invariant(Id id, Int nullState)
@@ -68,7 +68,7 @@ class Invariant {
         _id(id),
         _state(NULL_TIMESTAMP, nullState),
         _modifiedVars(),
-        _outputVars() {}
+        _primaryDefinedVar() {}
 
   /**
    * Register to the engine that variable is defined by the invariant.
@@ -113,11 +113,11 @@ class Invariant {
    * Checklist for initialising an invariant:
    *
    *
-   * 2) Register any output variables that are defined by this
-   * invariant note that this can throw an exception if such a variable is
-   * already defined.
+   * 2) Register all defined variables that are defined by this
+   * invariant. note that this can throw an exception if such a variable is
+   * already defined by another invariant.
    *
-   * 3) Register any input variables as parameters.
+   * 3) Register all variable parameters.
    *
    * 4) Compute initial state of invariant!
    */
@@ -126,8 +126,8 @@ class Invariant {
   virtual void recompute(Timestamp, Engine&) = 0;
 
   /**
-   * Used in Output-to-Input propagation to get the next input variable,
-   * the next parameter, to visit.
+   * Used in Output-to-Input propagation to get the next parameter variable to
+   * visit.
    */
   virtual VarId getNextParameter(Timestamp, Engine&) = 0;
 
@@ -140,14 +140,14 @@ class Invariant {
 
   /**
    * Used in the Input-to-Output propagation to notify that an
-   * input variable, parameter, has had its value changed.
+   * parameter variable has had its value changed.
    */
   void notify(LocalId);
 
   /**
    * Used in the Input-to-Output propagation when the invariant
-   * has been notified of all modified parameters (input variables) and
-   * the primary and non-primary output variables (defined variables) are to be
+   * has been notified of all modified parameter variables and
+   * the primary and non-primary defined variables are to be
    * computed.
    */
   void compute(Timestamp, Engine&);
@@ -156,6 +156,6 @@ class Invariant {
   inline void postpone() { _isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 
-  inline VarId getPrimaryOutput() { return _primaryOutput; }
-  void queueNonPrimaryOutputVarsForPropagation(Timestamp ts, Engine& engine);
+  inline VarId getPrimaryDefinedVar() { return _primaryDefinedVar; }
+  void queueNonPrimaryDefinedVarsForPropagation(Timestamp ts, Engine& engine);
 };

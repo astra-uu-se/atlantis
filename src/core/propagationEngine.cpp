@@ -282,10 +282,10 @@ void PropagationEngine::propagate() {
 
     if (definingInvariant != NULL_ID) {
       Invariant& defInv = _store.getInvariant(definingInvariant);
-      if (stableVarId == defInv.getPrimaryOutput()) {
+      if (stableVarId == defInv.getPrimaryDefinedVar()) {
         Int oldValue = variable.getValue(_currentTime);
         defInv.compute(_currentTime, *this);
-        defInv.queueNonPrimaryOutputVarsForPropagation(_currentTime, *this);
+        defInv.queueNonPrimaryDefinedVarsForPropagation(_currentTime, *this);
         if (oldValue == variable.getValue(_currentTime)) {
 #ifdef PROPAGATION_DEBUG
           logDebug("\t\tVariable did not change after compute: ignoring.");
@@ -315,7 +315,7 @@ void PropagationEngine::propagate() {
 #endif
 
       invariant.notify(toNotify.localId);
-      queueForPropagation(_currentTime, invariant.getPrimaryOutput());
+      queueForPropagation(_currentTime, invariant.getPrimaryDefinedVar());
     }
   }
 

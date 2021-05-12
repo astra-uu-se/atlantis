@@ -6,7 +6,7 @@ void Invariant::notify(LocalId id) { _modifiedVars.push(id); }
 
 void Invariant::compute(Timestamp ts, Engine& engine) {
   assert(_modifiedVars.size() > 0);
-  assert(_primaryOutput != NULL_ID);
+  assert(_primaryDefinedVar != NULL_ID);
 
   while (_modifiedVars.hasNext()) {
     // don'ts turn this into a for loop...
@@ -16,10 +16,10 @@ void Invariant::compute(Timestamp ts, Engine& engine) {
 }
 
 void Invariant::registerDefinedVariable(Engine& engine, VarId id) {
-  if (_primaryOutput == NULL_ID) {
-    _primaryOutput = id;
+  if (_primaryDefinedVar == NULL_ID) {
+    _primaryDefinedVar = id;
   } else {
-    _outputVars.push_back(id);
+    _definedVars.push_back(id);
   }
   engine.registerDefinedVariable(id, _id);
 }
@@ -32,12 +32,12 @@ void Invariant::incValue(Timestamp ts, Engine& engine, VarId id, Int val) {
   engine.incValue(ts, id, val);
 }
 
-void Invariant::queueNonPrimaryOutputVarsForPropagation(Timestamp ts,
-                                                        Engine& engine) {
-  for (VarId outputVarId : _outputVars) {
-    if (!engine.hasChanged(ts, outputVarId)) {
+void Invariant::queueNonPrimaryDefinedVarsForPropagation(Timestamp ts,
+                                                         Engine& engine) {
+  for (VarId definedVarId : _definedVars) {
+    if (!engine.hasChanged(ts, definedVarId)) {
       continue;
     }
-    engine.queueForPropagation(ts, outputVarId);
+    engine.queueForPropagation(ts, definedVarId);
   }
 }
