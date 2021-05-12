@@ -1,15 +1,15 @@
 #pragma once
 
+#include "constraint.hpp"
 #include "core/types.hpp"
 #include "variables/intVar.hpp"
-#include "constraint.hpp"
 
 class Engine;
 
 class LessThan : public Constraint {
  private:
-  VarId m_x;
-  VarId m_y;
+  VarId _x;
+  VarId _y;
 
  public:
   LessThan(VarId violationId, VarId x, VarId y);

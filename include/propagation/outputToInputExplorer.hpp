@@ -10,17 +10,17 @@
 class PropagationEngine;
 
 class OutputToInputExplorer {
-  PropagationEngine& m_engine;
+  PropagationEngine& _engine;
 
-  std::vector<VarId> variableStack_;
-  size_t varStackIdx_ = 0;
-  std::vector<InvariantId> invariantStack_;
-  size_t invariantStackIdx_ = 0;
-  IdMap<VarId, Timestamp> varStableAt;  // last timestamp when a VarID was
-                                        // stable (i.e., will not change)
-  IdMap<InvariantId, Timestamp> invariantStableAt;
-  IdMap<VarId, bool> varIsOnStack;
-  IdMap<InvariantId, bool> invariantIsOnStack;
+  std::vector<VarId> _variableStack;
+  size_t _varStackIdx = 0;
+  std::vector<InvariantId> _invariantStack;
+  size_t _invariantStackIdx = 0;
+  IdMap<VarId, Timestamp> _varStableAt;  // last timestamp when a VarID was
+                                         // stable (i.e., will not change)
+  IdMap<InvariantId, Timestamp> _invariantStableAt;
+  IdMap<VarId, bool> _varIsOnStack;
+  IdMap<InvariantId, bool> _invariantIsOnStack;
 
   void pushVariableStack(VarId v);
   void popVariableStack();
@@ -56,48 +56,50 @@ class OutputToInputExplorer {
 };
 
 inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
-  // TODO: why not set varIsOnStack.at(v) = true;?
+  // TODO: why not set _varIsOnStack.at(v) = true;?
   // I remember that there was some technical reason but this need to be
   // documented. Note that this might overflow the stack otherwise.
-  variableStack_[varStackIdx_++] = id;
+  _variableStack[_varStackIdx++] = id;
 }
 
-inline void OutputToInputExplorer::clearRegisteredVariables() { varStackIdx_ = 0; }
+inline void OutputToInputExplorer::clearRegisteredVariables() {
+  _varStackIdx = 0;
+}
 
 inline void OutputToInputExplorer::pushVariableStack(VarId v) {
-  varIsOnStack.set(v, true);
-  variableStack_[varStackIdx_++] = v;
+  _varIsOnStack.set(v, true);
+  _variableStack[_varStackIdx++] = v;
 }
 inline void OutputToInputExplorer::popVariableStack() {
-  varIsOnStack.set(variableStack_[--varStackIdx_], false);
+  _varIsOnStack.set(_variableStack[--_varStackIdx], false);
 }
 inline VarId OutputToInputExplorer::peekVariableStack() {
-  return variableStack_[varStackIdx_ - 1];
+  return _variableStack[_varStackIdx - 1];
 }
 
 inline void OutputToInputExplorer::pushInvariantStack(InvariantId i) {
-  if (invariantIsOnStack.get(i)) {
+  if (_invariantIsOnStack.get(i)) {
     throw DynamicCycleException();
   }
-  invariantIsOnStack.set(i, true);
-  invariantStack_[invariantStackIdx_++] = i;
+  _invariantIsOnStack.set(i, true);
+  _invariantStack[_invariantStackIdx++] = i;
 }
 inline void OutputToInputExplorer::popInvariantStack() {
-  invariantIsOnStack.set(invariantStack_[--invariantStackIdx_], false);
+  _invariantIsOnStack.set(_invariantStack[--_invariantStackIdx], false);
 }
 
 inline InvariantId OutputToInputExplorer::peekInvariantStack() {
-  return invariantStack_[invariantStackIdx_ - 1];
+  return _invariantStack[_invariantStackIdx - 1];
 }
 
 inline void OutputToInputExplorer::markStable(Timestamp t, VarId v) {
-  varStableAt[v] = t;
+  _varStableAt[v] = t;
 }
 
 inline bool OutputToInputExplorer::isStable(Timestamp t, VarId v) {
-  return varStableAt.at(v) == t;
+  return _varStableAt.at(v) == t;
 }
 
 inline bool OutputToInputExplorer::isStable(Timestamp t, InvariantId v) {
-  return invariantStableAt.at(v) == t;
+  return _invariantStableAt.at(v) == t;
 }

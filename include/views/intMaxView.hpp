@@ -7,11 +7,10 @@
 
 class IntMaxView : public IntView {
  private:
-  Int m_max;
+  Int _max;
 
  public:
-  IntMaxView(const VarId t_parentId, Int t_max)
-      : IntView(t_parentId), m_max(t_max) {}
+  IntMaxView(const VarId parentId, Int max) : IntView(parentId), _max(max) {}
 
   Int getValue(Timestamp t) override;
   Int getCommittedValue() override;

@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <vector>
 
 #include "core/engine.hpp"
@@ -18,10 +17,10 @@
 
 class MinSparse : public Invariant {
  private:
-  std::vector<VarId> m_X;
-  VarId m_b;
+  std::vector<VarId> _X;
+  VarId _b;
 
-  PriorityList m_localPriority;
+  PriorityList _localPriority;
 
  public:
   MinSparse(std::vector<VarId> X, VarId b);

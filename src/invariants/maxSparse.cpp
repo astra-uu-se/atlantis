@@ -1,46 +1,46 @@
 #include "invariants/maxSparse.hpp"
 
 MaxSparse::MaxSparse(std::vector<VarId> X, VarId b)
-    : Invariant(NULL_ID), m_X(X), m_b(b), m_localPriority(X.size()) {
-  m_modifiedVars.reserve(m_X.size());
+    : Invariant(NULL_ID), _X(X), _b(b), _localPriority(X.size()) {
+  _modifiedVars.reserve(_X.size());
 }
 
 void MaxSparse::init([[maybe_unused]] Timestamp t, Engine& e) {
-  assert(!m_id.equals(NULL_ID));
+  assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(e, m_b);
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i));
+  registerDefinedVariable(e, _b);
+  for (size_t i = 0; i < _X.size(); ++i) {
+    e.registerInvariantDependsOnVar(_id, _X[i], LocalId(i));
   }
 }
 
 void MaxSparse::recompute(Timestamp t, Engine& e) {
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    m_localPriority.updatePriority(t, i, e.getValue(t, m_X[i]));
+  for (size_t i = 0; i < _X.size(); ++i) {
+    _localPriority.updatePriority(t, i, e.getValue(t, _X[i]));
   }
-  updateValue(t, e, m_b, m_localPriority.getMaxPriority(t));
+  updateValue(t, e, _b, _localPriority.getMaxPriority(t));
 }
 
 void MaxSparse::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
-  auto newValue = e.getValue(t, m_X[i]);
-  m_localPriority.updatePriority(t, i, newValue);
-  updateValue(t, e, m_b, m_localPriority.getMaxPriority(t));
+  auto newValue = e.getValue(t, _X[i]);
+  _localPriority.updatePriority(t, i, newValue);
+  updateValue(t, e, _b, _localPriority.getMaxPriority(t));
 }
 
 VarId MaxSparse::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
-  if (static_cast<size_t>(m_state.getValue(t)) == m_X.size()) {
+  _state.incValue(t, 1);
+  if (static_cast<size_t>(_state.getValue(t)) == _X.size()) {
     return NULL_ID;  // Done
   } else {
-    return m_X.at(m_state.getValue(t));
+    return _X.at(_state.getValue(t));
   }
 }
 
 void MaxSparse::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  notifyIntChanged(t, e, m_state.getValue(t));
+  notifyIntChanged(t, e, _state.getValue(t));
 }
 
 void MaxSparse::commit(Timestamp t, Engine& e) {
   Invariant::commit(t, e);
-  m_localPriority.commitIf(t);
+  _localPriority.commitIf(t);
 }

@@ -11,24 +11,24 @@
  * @param y variable of rhs
  */
 LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
-    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
-  m_modifiedVars.reserve(1);
+    : Constraint(NULL_ID, violationId), _x(x), _y(y) {
+  _modifiedVars.reserve(1);
 }
 
 void LessEqual::init(Timestamp, Engine& e) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
-  assert(m_id != NULL_ID);
+  assert(_id != NULL_ID);
 
-  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(0));
-  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(0));
-  registerDefinedVariable(e, m_violationId);
+  e.registerInvariantDependsOnVar(_id, _x, LocalId(0));
+  e.registerInvariantDependsOnVar(_id, _y, LocalId(0));
+  registerDefinedVariable(e, _violationId);
 }
 
 void LessEqual::recompute(Timestamp t, Engine& e) {
   // Dereference safe as incValue does not retain ptr.
-  updateValue(t, e, m_violationId,
-              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y)));
+  updateValue(t, e, _violationId,
+              std::max((Int)0, e.getValue(t, _x) - e.getValue(t, _y)));
 }
 
 void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
@@ -36,14 +36,14 @@ void LessEqual::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
 }
 
 VarId LessEqual::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
+  _state.incValue(t, 1);
   // todo: maybe this can be faster by first checking null and then doing
-  // ==0?m_x:m_y;
-  switch (m_state.getValue(t)) {
+  // ==0?_x:_y;
+  switch (_state.getValue(t)) {
     case 0:
-      return m_x;
+      return _x;
     case 1:
-      return m_y;
+      return _y;
     default:
       return NULL_ID;
   }

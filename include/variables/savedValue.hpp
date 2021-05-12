@@ -1,38 +1,37 @@
 #pragma once
 
-
 #include "core/types.hpp"
 
 template <class T>
 class Saved {
  private:
-  Timestamp m_tmpTime;
-  T m_savedValue;
-  T m_tmpValue;
+  Timestamp _tmpTime;
+  T _savedValue;
+  T _tmpValue;
 
  public:
   Saved(Timestamp initTime, T initValue)
-      : m_tmpTime(initTime), m_savedValue(initValue), m_tmpValue(initValue) {}
+      : _tmpTime(initTime), _savedValue(initValue), _tmpValue(initValue) {}
 
   [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
       Timestamp t) const {
-    return m_tmpTime == t && m_savedValue != m_tmpValue;
+    return _tmpTime == t && _savedValue != _tmpValue;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
       const {
-    return m_tmpTime;
+    return _tmpTime;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline T get(
       Timestamp currentTime) const noexcept {
-    return currentTime == m_tmpTime ? m_tmpValue : m_savedValue;
+    return currentTime == _tmpTime ? _tmpValue : _savedValue;
   }
 
   [[gnu::always_inline]] inline T set(Timestamp currentTime, T value) noexcept {
-    m_tmpTime = currentTime;
-    m_tmpValue = value;
-    return m_tmpValue;
+    _tmpTime = currentTime;
+    _tmpValue = value;
+    return _tmpValue;
   }
 
   [[gnu::always_inline]] inline void init(Timestamp currentTime,
@@ -42,18 +41,18 @@ class Saved {
 
   [[gnu::always_inline]] inline void init(Timestamp currentTime, T savedValue,
                                           T tmpValue) noexcept {
-    m_tmpTime = currentTime;
-    m_savedValue = savedValue;
-    m_tmpValue = tmpValue;
+    _tmpTime = currentTime;
+    _savedValue = savedValue;
+    _tmpValue = tmpValue;
   }
 
   [[gnu::always_inline]] inline void commitValue(T value) noexcept {
-    m_savedValue = value;
+    _savedValue = value;
   }
 
   [[gnu::always_inline]] inline void commitIf(Timestamp currentTime) noexcept {
-    if (m_tmpTime == currentTime) {
-      m_savedValue = m_tmpValue;
+    if (_tmpTime == currentTime) {
+      _savedValue = _tmpValue;
     }
   }
 };

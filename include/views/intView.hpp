@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "core/types.hpp"
 #include "views/view.hpp"
 
@@ -9,15 +8,15 @@ class Engine;  // Forward declaration
 class IntView : public View {
  protected:
   friend class Engine;
-  Engine* m_engine;  // TODO: a raw pointer might be the best option here as
-                     // views lifetime depend on engine and not vice-versa.
+  Engine* _engine;  // TODO: a raw pointer might be the best option here as
+                    // views lifetime depend on engine and not vice-versa.
 
  public:
-  explicit IntView(VarId t_parentId) : View(t_parentId), m_engine(nullptr) {}
+  explicit IntView(VarId parentId) : View(parentId), _engine(nullptr) {}
 
   void init(VarId id, Engine& e) {
-    m_id = id;
-    m_engine = &e;
+    _id = id;
+    _engine = &e;
   }
 
   virtual Int getValue(Timestamp t) = 0;

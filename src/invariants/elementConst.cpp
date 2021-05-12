@@ -3,20 +3,19 @@
 #include "core/engine.hpp"
 
 ElementConst::ElementConst(VarId i, std::vector<Int> A, VarId b)
-    : Invariant(NULL_ID), m_i(i), m_A(std::move(A)), m_b(b) {
-  m_modifiedVars.reserve(1);
+    : Invariant(NULL_ID), _i(i), _A(std::move(A)), _b(b) {
+  _modifiedVars.reserve(1);
 }
 
 void ElementConst::init([[maybe_unused]] Timestamp t, Engine& e) {
-  assert(m_id != NULL_ID);
+  assert(_id != NULL_ID);
 
-  registerDefinedVariable(e, m_b);
-  e.registerInvariantDependsOnVar(m_id, m_i, 0);
+  registerDefinedVariable(e, _b);
+  e.registerInvariantDependsOnVar(_id, _i, 0);
 }
 
 void ElementConst::recompute(Timestamp t, Engine& e) {
-  updateValue(t, e, m_b,
-              m_A.at(static_cast<unsigned long>(e.getValue(t, m_i))));
+  updateValue(t, e, _b, _A.at(static_cast<unsigned long>(e.getValue(t, _i))));
 }
 
 void ElementConst::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
@@ -24,9 +23,9 @@ void ElementConst::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
 }
 
 VarId ElementConst::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
-  if (m_state.getValue(t) == 0) {
-    return m_i;
+  _state.incValue(t, 1);
+  if (_state.getValue(t) == 0) {
+    return _i;
   } else {
     return NULL_ID;  // Done
   }

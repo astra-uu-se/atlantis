@@ -17,10 +17,10 @@
 
 class MaxSparse : public Invariant {
  private:
-  std::vector<VarId> m_X;
-  VarId m_b;
+  std::vector<VarId> _X;
+  VarId _b;
 
-  PriorityList m_localPriority;
+  PriorityList _localPriority;
 
  public:
   MaxSparse(std::vector<VarId> X, VarId b);

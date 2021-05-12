@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "core/propagationEngine.hpp"
-
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -20,11 +19,11 @@ namespace {
 
 class MockInvariantSimple : public Invariant {
  public:
-  bool m_initialized = false;
+  bool _initialized = false;
 
   MockInvariantSimple() : Invariant(NULL_ID) {}
 
-  void init(Timestamp, Engine&) override { m_initialized = true; }
+  void init(Timestamp, Engine&) override { _initialized = true; }
 
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
@@ -40,23 +39,23 @@ class MockInvariantSimple : public Invariant {
 
 class MockInvariantAdvanced : public Invariant {
  public:
-  bool m_initialized = false;
-  std::vector<VarId> m_inputs;
-  VarId m_output;
+  bool _initialized = false;
+  std::vector<VarId> inputs;
+  VarId output;
 
   MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
-      : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {
-    m_modifiedVars.reserve(m_inputs.size());
+      : Invariant(NULL_ID), inputs(std::move(t_inputs)), output(t_output) {
+    _modifiedVars.reserve(inputs.size());
   }
 
   void init(Timestamp, Engine& e) override {
-    assert(m_id != NULL_ID);
+    assert(_id != NULL_ID);
 
-    registerDefinedVariable(e, m_output);
-    for (size_t i = 0; i < m_inputs.size(); ++i) {
-      e.registerInvariantDependsOnVar(m_id, m_inputs[i], LocalId(i));
+    registerDefinedVariable(e, output);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      e.registerInvariantDependsOnVar(_id, inputs[i], LocalId(i));
     }
-    m_initialized = true;
+    _initialized = true;
   }
 
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
@@ -97,7 +96,7 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-  ASSERT_TRUE(invariant->m_initialized);
+  ASSERT_TRUE(invariant->_initialized);
 
   engine->close();
   EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
@@ -188,7 +187,7 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(1);
 
-  ASSERT_TRUE(invariant->m_initialized);
+  ASSERT_TRUE(invariant->_initialized);
 
   engine->close();
 
@@ -221,14 +220,15 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->setValue(c, -3);
   engine->endMove();
 
-  if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
         .Times(0);
 
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(moveTimestamp, testing::_))
         .Times(0);
-  } else if (engine-> mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else if (engine->mode ==
+             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
@@ -238,12 +238,12 @@ TEST_F(EngineTest, SimplePropagation) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(moveTimestamp, testing::_))
         .Times(3);
-  } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
+  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -271,13 +271,14 @@ TEST_F(EngineTest, SimpleCommit) {
 
   engine->close();
 
-  if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
 
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(0);
-  } else if (engine-> mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else if (engine->mode ==
+             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
@@ -287,7 +288,7 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(3);
-  } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
+  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
@@ -298,7 +299,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endMove();
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -309,7 +310,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->query(output);
   engine->endQuery();
 
-  if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
@@ -319,7 +320,8 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(0);
-  } else if (engine-> mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else if (engine->mode ==
+             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
@@ -329,7 +331,7 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(1);
-  } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
+  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
@@ -496,7 +498,6 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
 
   EXPECT_EQ(engine->getCommittedValue(output), 7);
 
-  
   engine->beginMove();
   engine->setValue(i1, 3);
   engine->setValue(i2, 0);
@@ -507,7 +508,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endCommit();
 
   EXPECT_EQ(engine->getNewValue(output), 10);
-  
+
   engine->beginMove();
   engine->setValue(base, 3);
   engine->endMove();
@@ -517,7 +518,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endQuery();
 
   EXPECT_EQ(engine->getNewValue(output), 16);
-  
+
   engine->beginMove();
   engine->setValue(i2, 1);
   engine->setValue(i3, 0);
@@ -529,7 +530,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endQuery();
 
   EXPECT_EQ(engine->getNewValue(output), 13);
-  
+
   engine->beginMove();
   engine->setValue(i2, 1);
   engine->setValue(i3, 0);

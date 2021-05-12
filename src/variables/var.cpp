@@ -1,3 +1,3 @@
 #include "variables/var.hpp"
 
-Var::Var(VarId t_id) : m_id(t_id) {}
+Var::Var(VarId id) : _id(id) {}

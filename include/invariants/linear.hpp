@@ -2,7 +2,6 @@
 
 #include <vector>
 
-
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 
@@ -15,10 +14,10 @@ class Engine;
 
 class Linear : public Invariant {
  private:
-  std::vector<Int> m_A;
-  std::vector<VarId> m_X;
-  std::vector<SavedInt> m_localX;
-  VarId m_b;
+  std::vector<Int> _A;
+  std::vector<VarId> _X;
+  std::vector<SavedInt> _localX;
+  VarId _b;
 
  public:
   Linear(std::vector<VarId> X, VarId b)
