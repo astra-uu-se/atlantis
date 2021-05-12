@@ -17,7 +17,7 @@ void Linear::init(Timestamp ts, Engine& engine) {
 
   registerDefinedVariable(engine, _b);
   for (size_t i = 0; i < _X.size(); ++i) {
-    engine.registerInvariantDependsOnVar(_id, _X[i], LocalId(i));
+    engine.registerInvariantParameter(_id, _X[i], LocalId(i));
     _localX.emplace_back(ts, engine.getCommittedValue(_X[i]));
   }
 }
@@ -38,7 +38,7 @@ void Linear::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
   _localX.at(id).setValue(ts, newValue);
 }
 
-VarId Linear::getNextDependency(Timestamp ts, Engine&) {
+VarId Linear::getNextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   if (static_cast<size_t>(_state.getValue(ts)) == _X.size()) {
     return NULL_ID;  // Done
@@ -47,7 +47,7 @@ VarId Linear::getNextDependency(Timestamp ts, Engine&) {
   }
 }
 
-void Linear::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+void Linear::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
   assert(_state.getValue(ts) != -1);
   notifyIntChanged(ts, engine, _state.getValue(ts));
 }

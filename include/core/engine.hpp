@@ -26,13 +26,12 @@ class Engine {
   bool _isOpen = true;
   bool _isMoving = false;
 
-  struct InvariantDependencyData {
+  struct ListeningInvariantData {
     InvariantId id;
     LocalId localId;
   };
   // Map from VarID -> vector of InvariantID
-  IdMap<VarIdBase, std::vector<InvariantDependencyData>>
-      _dependentInvariantData;
+  IdMap<VarIdBase, std::vector<ListeningInvariantData>> _listeningInvariantData;
 
   Store _store;
 
@@ -169,14 +168,13 @@ class Engine {
   VarId makeIntVar(Int initValue, Int lowerBound, Int upperBound);
 
   /**
-   * Register that Invariant to depends on variable from depends on dependency
-   * @param dependent the invariant that the variable depends on
-   * @param source the depending variable
-   * @param localId the id of the depending variable in the invariant
-   * @param data additional data
+   * Register that a variable is a parameter to an invariant.
+   * @param invariantId the invariant
+   * @param varId the parameter
+   * @param localId the id of the parameter in the invariant
    */
-  virtual void registerInvariantDependsOnVar(InvariantId dependent,
-                                             VarId source, LocalId localId) = 0;
+  virtual void registerInvariantParameter(InvariantId invariantId, VarId varId,
+                                          LocalId localId) = 0;
 
   virtual void registerVar(VarId) = 0;
   virtual void registerInvariant(InvariantId) = 0;

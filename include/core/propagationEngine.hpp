@@ -97,9 +97,9 @@ class PropagationEngine : public Engine {
   void endCommit();
 
   /**
-   * returns the next dependency at the current timestamp.
+   * returns the next parameter at the current timestamp.
    */
-  VarId getNextDependency(InvariantId);
+  VarId getNextParameter(InvariantId);
 
   InvariantId getDefiningInvariant(VarId);
 
@@ -110,18 +110,18 @@ class PropagationEngine : public Engine {
       InvariantId) const;
 
   /**
-   * Notify an invariant that its current dependency has changed
+   * Notify an invariant that its current parameter has changed
    */
-  void notifyCurrentDependencyChanged(InvariantId);
+  void notifyCurrentParameterChanged(InvariantId);
 
   /**
-   * Register that Invariant to depends on variable from depends on dependency
-   * @param dependentInvariant the invariant that the variable depends on
-   * @param sourceVar the depending variable
-   * @param localId the id of the depending variable in the invariant
+   * Register that a variable is a parameter to an invariant
+   * @param invariantId the invariant
+   * @param parameterId the id of the variable
+   * @param localId the id of the variable in the invariant
    */
-  void registerInvariantDependsOnVar(InvariantId dependentInvariant,
-                                     VarId sourceVar, LocalId localId) override;
+  void registerInvariantParameter(InvariantId invariantId, VarId parameterId,
+                                  LocalId localId) override;
 
   void registerVar(VarId) override;
   void registerInvariant(InvariantId) override;
@@ -147,12 +147,12 @@ inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
   return _propGraph.getVariablesDefinedBy(id);
 }
 
-inline VarId PropagationEngine::getNextDependency(InvariantId id) {
+inline VarId PropagationEngine::getNextParameter(InvariantId id) {
   return getSourceId(
-      _store.getInvariant(id).getNextDependency(_currentTime, *this));
+      _store.getInvariant(id).getNextParameter(_currentTime, *this));
 }
-inline void PropagationEngine::notifyCurrentDependencyChanged(InvariantId id) {
-  _store.getInvariant(id).notifyCurrentDependencyChanged(_currentTime, *this);
+inline void PropagationEngine::notifyCurrentParameterChanged(InvariantId id) {
+  _store.getInvariant(id).notifyCurrentParameterChanged(_currentTime, *this);
 }
 
 inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {

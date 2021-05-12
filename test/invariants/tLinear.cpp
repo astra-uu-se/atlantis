@@ -30,14 +30,14 @@ class MockLinear : public Linear {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return Linear::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextDependency)
+    ON_CALL(*this, getNextParameter)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return Linear::getNextDependency(ts, engine);
+          return Linear::getNextParameter(ts, engine);
         });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
+    ON_CALL(*this, notifyCurrentParameterChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          Linear::notifyCurrentDependencyChanged(ts, engine);
+          Linear::notifyCurrentParameterChanged(ts, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
@@ -53,8 +53,8 @@ class MockLinear : public Linear {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
+  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine& engine),
               (override));
 
   MOCK_METHOD(void, notifyIntChanged,
@@ -122,20 +122,20 @@ class LinearTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+                  notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else if (engine->mode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
           .Times(numArgs + 1);
       EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+                  notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,

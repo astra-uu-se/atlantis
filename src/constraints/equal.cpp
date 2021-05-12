@@ -18,8 +18,8 @@ Equal::Equal(VarId violationId, VarId x, VarId y)
 void Equal::init(Timestamp, Engine& engine) {
   assert(_id != NULL_ID);
 
-  engine.registerInvariantDependsOnVar(_id, _x, LocalId(0));
-  engine.registerInvariantDependsOnVar(_id, _y, LocalId(0));
+  engine.registerInvariantParameter(_id, _x, LocalId(0));
+  engine.registerInvariantParameter(_id, _y, LocalId(0));
   registerDefinedVariable(engine, _violationId);
 }
 
@@ -32,7 +32,7 @@ void Equal::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId Equal::getNextDependency(Timestamp ts, Engine&) {
+VarId Equal::getNextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?m_x:m_y;
@@ -46,7 +46,7 @@ VarId Equal::getNextDependency(Timestamp ts, Engine&) {
   }
 }
 
-void Equal::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+void Equal::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
   recompute(ts, engine);
 }
 

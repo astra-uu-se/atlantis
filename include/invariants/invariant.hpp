@@ -53,7 +53,7 @@ class Invariant {
 
   bool _isPostponed;
   InvariantId _id;
-  // State used for returning next dependency. Null state is -1 by default
+  // State used for returning next parameter. Null state is -1 by default
   SavedInt _state;
 
   //  std::vector<bool> _modifiedVars;
@@ -117,7 +117,7 @@ class Invariant {
    * invariant note that this can throw an exception if such a variable is
    * already defined.
    *
-   * 3) Register dependency to any input variables.
+   * 3) Register any input variables as parameters.
    *
    * 4) Compute initial state of invariant!
    */
@@ -127,16 +127,16 @@ class Invariant {
 
   /**
    * Used in Output-to-Input propagation to get the next input variable,
-   * the next dependency, to visit.
+   * the next parameter, to visit.
    */
-  virtual VarId getNextDependency(Timestamp, Engine&) = 0;
+  virtual VarId getNextParameter(Timestamp, Engine&) = 0;
 
   /**
    * Used in Output-to-Input propagation to notify to the
-   * invariant that the current dependency (the last dependency given by
-   * getNextDependency) has had its value changed.
+   * invariant that the current parameter (the last parameter given by
+   * getNextParameter) has had its value changed.
    */
-  virtual void notifyCurrentDependencyChanged(Timestamp, Engine&) = 0;
+  virtual void notifyCurrentParameterChanged(Timestamp, Engine&) = 0;
 
   /**
    * Used in the Input-to-Output propagation to notify that an
@@ -146,8 +146,8 @@ class Invariant {
 
   /**
    * Used in the Input-to-Output propagation when the invariant
-   * has been notified of all modified input variables (dependencies) and
-   * the primary and non-primary output variables (dependants) are to be
+   * has been notified of all modified parameters (input variables) and
+   * the primary and non-primary output variables (defined variables) are to be
    * computed.
    */
   void compute(Timestamp, Engine&);

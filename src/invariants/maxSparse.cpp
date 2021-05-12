@@ -10,7 +10,7 @@ void MaxSparse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
   registerDefinedVariable(engine, _b);
   for (size_t i = 0; i < _X.size(); ++i) {
-    engine.registerInvariantDependsOnVar(_id, _X[i], LocalId(i));
+    engine.registerInvariantParameter(_id, _X[i], LocalId(i));
   }
 }
 
@@ -27,7 +27,7 @@ void MaxSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
   updateValue(ts, engine, _b, _localPriority.getMaxPriority(ts));
 }
 
-VarId MaxSparse::getNextDependency(Timestamp ts, Engine&) {
+VarId MaxSparse::getNextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   if (static_cast<size_t>(_state.getValue(ts)) == _X.size()) {
     return NULL_ID;  // Done
@@ -36,7 +36,7 @@ VarId MaxSparse::getNextDependency(Timestamp ts, Engine&) {
   }
 }
 
-void MaxSparse::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+void MaxSparse::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
   notifyIntChanged(ts, engine, _state.getValue(ts));
 }
 

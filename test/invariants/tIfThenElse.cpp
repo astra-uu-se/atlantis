@@ -29,14 +29,14 @@ class MockIfThenElse : public IfThenElse {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return IfThenElse::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextDependency)
+    ON_CALL(*this, getNextParameter)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return IfThenElse::getNextDependency(ts, engine);
+          return IfThenElse::getNextParameter(ts, engine);
         });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
+    ON_CALL(*this, notifyCurrentParameterChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          IfThenElse::notifyCurrentDependencyChanged(ts, engine);
+          IfThenElse::notifyCurrentParameterChanged(ts, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
@@ -52,8 +52,8 @@ class MockIfThenElse : public IfThenElse {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
+  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine& engine),
               (override));
 
   MOCK_METHOD(void, notifyIntChanged,
@@ -98,20 +98,20 @@ class IfThenElseTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+                  notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else if (engine->mode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
           .Times(3);
       EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+                  notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,

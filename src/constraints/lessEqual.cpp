@@ -20,8 +20,8 @@ void LessEqual::init(Timestamp, Engine& engine) {
   // is initialised.
   assert(_id != NULL_ID);
 
-  engine.registerInvariantDependsOnVar(_id, _x, LocalId(0));
-  engine.registerInvariantDependsOnVar(_id, _y, LocalId(0));
+  engine.registerInvariantParameter(_id, _x, LocalId(0));
+  engine.registerInvariantParameter(_id, _y, LocalId(0));
   registerDefinedVariable(engine, _violationId);
 }
 
@@ -36,7 +36,7 @@ void LessEqual::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId LessEqual::getNextDependency(Timestamp ts, Engine&) {
+VarId LessEqual::getNextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?m_x:m_y;
@@ -50,7 +50,7 @@ VarId LessEqual::getNextDependency(Timestamp ts, Engine&) {
   }
 }
 
-void LessEqual::notifyCurrentDependencyChanged(Timestamp ts, Engine& engine) {
+void LessEqual::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
   recompute(ts, engine);
 }
 
