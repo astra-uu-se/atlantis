@@ -6,7 +6,7 @@
 std::string Schemes::name() { return _name; }
 
 void Schemes::scheme1() {
-  _name = "OscNoAnn";
+  _name = "OscNA";
   reset();
   defineFromObjective();
   defineUnique();
@@ -16,14 +16,14 @@ void Schemes::scheme1() {
   updateDomains();
 }
 void Schemes::scheme2() {
-  _name = "LUsedNoAnn";
+  _name = "LUNA";
   reset();
   defineLeastUsed();
   removeCycles(false);
   updateDomains();
 }
 void Schemes::scheme3() {
-  _name = "OscRepNoAnn";
+  _name = "OscRepNA";
   reset();
   defineFromObjective();
   defineUnique();
@@ -39,7 +39,7 @@ void Schemes::scheme3() {
   }
 }
 void Schemes::scheme4() {
-  _name = "LUsedRepNoAnn";
+  _name = "LURepNA";
   reset();
   defineLeastUsed();
   while (hasCycle().size()) {
@@ -60,7 +60,7 @@ void Schemes::scheme5() {
   updateDomains();
 }
 void Schemes::scheme6() {
-  _name = "LUsed\t";
+  _name = "LU\t";
   reset();
   defineAnnotated();
   defineLeastUsed();
@@ -86,7 +86,7 @@ void Schemes::scheme7() {
   }
 }
 void Schemes::scheme8() {
-  _name = "LUsedRep:";
+  _name = "LURep:";
   reset();
   defineAnnotated();
   defineLeastUsed();
@@ -131,6 +131,28 @@ void Schemes::scheme10() {
     defineFromObjective();
     defineUnique();
     defineRest();
+  }
+}
+void Schemes::annOnly() {
+  _name = "AnnOnly\t";
+  reset();
+  defineAnnotated();
+  while (hasCycle().size()) {
+    removeCycles(true);
+    updateDomains();
+    defineAnnotated();
+  }
+}
+void Schemes::annImp() {
+  _name = "AnnImpOnly\t";
+  reset();
+  defineAnnotated();
+  defineImplicit();
+  while (hasCycle().size()) {
+    removeCycles(true);
+    updateDomains();
+    defineAnnotated();
+    defineImplicit();
   }
 }
 

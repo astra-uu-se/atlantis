@@ -23,6 +23,8 @@ class Schemes {
   void scheme9();
   void scheme10();
   void random();
+  void annOnly();
+  void annImp();
   void reset();
   void defineRandom();
   void defineAnnotated();
