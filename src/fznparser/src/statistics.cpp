@@ -263,7 +263,8 @@ std::optional<double> Statistics::matchingAnnotationsScore() {
   for (auto constraint : _model->constraints()) {
     if (constraint->annotationTarget().has_value()) {
       annotations++;
-      if (constraint->defines(constraint->annotationTarget().value())) {
+      if (constraint->defines(constraint->annotationTarget().value()) &&
+          constraint->isInvariant()) {
         matching++;
       }
     }
@@ -364,8 +365,6 @@ std::string Statistics::header() {
 std::string Statistics::line() {
   std::stringstream s;
   s << "---------------------------------------------------------------------"
-       "--"
-       "--------------------------------"
     << std::endl;
   return s.str();
 }
