@@ -13,7 +13,8 @@ InvariantStructure::InvariantStructure(Model m, std::string args) : _model(m) {
   _small = argset.count('s') > 0;
   _noStats = argset.count('n') > 0;
   _latex = argset.count('l') > 0;
-  _stats = Statistics(&_model, _ignoreDynamicCycles);
+  _noWidth = argset.count('w') > 0;
+  _stats = Statistics(&_model, _ignoreDynamicCycles, _noWidth);
   _schemes = Schemes(&_model, _ignoreDynamicCycles);
 }
 

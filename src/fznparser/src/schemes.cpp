@@ -6,7 +6,7 @@
 std::string Schemes::name() { return _name; }
 
 void Schemes::scheme1() {
-  _name = "OscNA";
+  _name = "OscNA\t";
   reset();
   defineFromObjective();
   defineUnique();
@@ -16,7 +16,7 @@ void Schemes::scheme1() {
   updateDomains();
 }
 void Schemes::scheme2() {
-  _name = "LUNA";
+  _name = "LUNA\t";
   reset();
   defineLeastUsed();
   removeCycles(false);
@@ -39,7 +39,7 @@ void Schemes::scheme3() {
   }
 }
 void Schemes::scheme4() {
-  _name = "LURepNA";
+  _name = "LURepNA\t";
   reset();
   defineLeastUsed();
   while (hasCycle().size()) {
@@ -86,7 +86,7 @@ void Schemes::scheme7() {
   }
 }
 void Schemes::scheme8() {
-  _name = "LURep:";
+  _name = "LURep\t";
   reset();
   defineAnnotated();
   defineLeastUsed();
@@ -98,7 +98,7 @@ void Schemes::scheme8() {
   }
 }
 void Schemes::scheme9() {
-  _name = "ImpAnnOsc\t";
+  _name = "ImpAnnOsc";
   reset();
   defineImplicit();
   defineAnnotated();
@@ -116,7 +116,7 @@ void Schemes::scheme9() {
   }
 }
 void Schemes::scheme10() {
-  _name = "AnnImpOsc\t";
+  _name = "AnnImpOsc";
   reset();
   defineAnnotated();
   defineImplicit();
@@ -144,7 +144,7 @@ void Schemes::annOnly() {
   }
 }
 void Schemes::annImp() {
-  _name = "AnnImpOnly\t";
+  _name = "AnnImpOnly";
   reset();
   defineAnnotated();
   defineImplicit();
@@ -157,7 +157,7 @@ void Schemes::annImp() {
 }
 
 void Schemes::random() {
-  _name = "Random\t:";
+  _name = "Random\t";
   reset();
   defineRandom();
   while (hasCycle().size()) {

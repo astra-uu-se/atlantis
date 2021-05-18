@@ -5,9 +5,10 @@
 class Statistics {
  public:
   Statistics() = default;
-  Statistics(Model* model, bool ignoreDynamicCycles) {
+  Statistics(Model* model, bool ignoreDynamicCycles, bool noWidth) {
     _model = model;
     _ignoreDynamicCycles = ignoreDynamicCycles;
+    _noWidth = noWidth;
   };
   std::string header();
   std::string row();
@@ -60,4 +61,5 @@ class Statistics {
 
   Model* _model;
   bool _ignoreDynamicCycles;
+  bool _noWidth;
 };

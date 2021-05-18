@@ -22,5 +22,6 @@ class InvariantStructure {
   bool _info;
   bool _small;
   bool _noStats;
+  bool _noWidth;
   bool _latex;
 };

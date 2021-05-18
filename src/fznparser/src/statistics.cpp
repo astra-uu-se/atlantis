@@ -407,9 +407,8 @@ std::string Statistics::latexRow() {
     s << "- & ";
   }
   s << countImplicit() << "/" << countPotImplicit() << " & ";
-  if (!_ignoreDynamicCycles) {
-    // s << width(false);
-    s << "-";
+  if (!_ignoreDynamicCycles && !_noWidth) {
+    s << width(false);
   } else {
     s << "-";
   }
@@ -447,8 +446,8 @@ std::string Statistics::row() {
     s << "-\t";
   }
   s << countImplicit() << "/" << countPotImplicit() << "\t";
-  if (!_ignoreDynamicCycles) {
-    s << 0;  // width(false);
+  if (!_ignoreDynamicCycles && !_noWidth) {
+    s << width(false);
   } else {
     s << "-";
   }
