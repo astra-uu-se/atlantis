@@ -8,6 +8,7 @@ class InvariantStructure {
  public:
   InvariantStructure(Model m, std::string args);
   void run();
+  void runLatex();
   void runSmall();
   void line() { _stats.line(); }
 
@@ -21,4 +22,5 @@ class InvariantStructure {
   bool _info;
   bool _small;
   bool _noStats;
+  bool _latex;
 };

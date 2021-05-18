@@ -347,6 +347,14 @@ std::string Statistics::info() {
   s << line();
   return s.str();
 }
+std::string Statistics::latexHeader() {
+  std::stringstream s;
+  s << "Scheme & VarSco & InvSco & AnnSco & Imp & Height & In # & Out "
+       "# & NbSum & EnlDoms \\\\"
+    << std::endl
+    << "\\hline" << std::endl;
+  return s.str();
+}
 std::string Statistics::header() {
   std::stringstream s;
   s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tImp\tHeight\tIn #\tOut "
@@ -364,11 +372,61 @@ std::string Statistics::line() {
     << std::endl;
   return s.str();
 }
+std::string Statistics::latexCount() {
+  std::stringstream s;
+  s << "Vars: "
+    << " & " << variableCount() << " & "
+    << "Cons: "
+    << " & " << _model->constraints().size() << " & "
+    << "Anns: "
+    << " & " << annotationCount() << "& & & & " << std::endl;
+  return s.str();
+}
 std::string Statistics::count() {
   std::stringstream s;
   s << "Variables: " << variableCount() << std::endl
     << "Constraints: " << _model->constraints().size() << std::endl
     << "Annotations: " << annotationCount() << std::endl;
+  return s.str();
+}
+std::string Statistics::latexRow() {
+  std::stringstream s;
+  s << " & ";
+  if (variableScore()) {
+    s << std::fixed << std::setprecision(2) << variableScore().value() << " & ";
+  } else {
+    s << "- & ";
+  }
+  if (constraintScore()) {
+    s << std::fixed << std::setprecision(2) << constraintScore().value()
+      << " & ";
+  } else {
+    s << "- & ";
+  }
+  if (matchingAnnotationsScore()) {
+    s << std::fixed << std::setprecision(2)
+      << matchingAnnotationsScore().value() << " & ";
+  } else {
+    s << "- & ";
+  }
+  s << countImplicit() << "/" << countPotImplicit() << " & ";
+  if (!_ignoreDynamicCycles) {
+    // s << width(false);
+    s << "-";
+  } else {
+    s << "-";
+  }
+  s << " & " << std::fixed << std::setprecision(2) << inputVars().size();
+  // s << " & " << std::fixed << std::setprecision(2) << averageInfluence();
+  // s << " & " << std::fixed << std::setprecision(2) << maxInfluence();
+  s << " & " << std::fixed << std::setprecision(2) << outputVars().size();
+  // s << " & " << std::fixed << std::setprecision(2) << averageDependency();
+  // s << " & " << std::fixed << std::setprecision(2) << maxDependency();
+  s << " & " << std::fixed << std::setprecision(2) << neighbourhoodSize();
+  s << " & " << enlargedDomains();
+  s << "\\\\";
+
+  s << std::endl;
   return s.str();
 }
 std::string Statistics::row() {

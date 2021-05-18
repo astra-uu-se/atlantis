@@ -12,11 +12,64 @@ InvariantStructure::InvariantStructure(Model m, std::string args) : _model(m) {
   _info = argset.count('i') > 0;
   _small = argset.count('s') > 0;
   _noStats = argset.count('n') > 0;
+  _latex = argset.count('l') > 0;
   _stats = Statistics(&_model, _ignoreDynamicCycles);
   _schemes = Schemes(&_model, _ignoreDynamicCycles);
 }
 
+void InvariantStructure::runLatex() {
+  std::stringstream s;
+  s << _stats.latexHeader();
+  _schemes.random();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme1();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme2();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme3();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme4();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme5();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme6();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme7();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme8();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme9();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.scheme10();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.annOnly();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  _schemes.annImp();
+  s << _schemes.name();
+  s << _stats.latexRow();
+  s << "\\hline" << std::endl;
+  s << "\\hline" << std::endl;
+  s << _stats.latexCount();
+  std::cout << s.str();
+}
+
 void InvariantStructure::run() {
+  if (_latex) {
+    runLatex();
+    return;
+  }
   if (_noStats) {
     _schemes.scheme1();
     _stats.allStats(false);
@@ -72,6 +125,14 @@ void InvariantStructure::run() {
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);
   _schemes.scheme10();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+  _schemes.annOnly();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+  _schemes.annImp();
   s << _schemes.name();
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);

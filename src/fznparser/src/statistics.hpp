@@ -14,6 +14,10 @@ class Statistics {
   std::string line();
   std::string count();
   std::string info();
+  std::string latexHeader();
+  std::string latexRow();
+  std::string latexCount();
+
   void countDefinedVariables(bool labels);
   void variablesDefinedBy();
   void freeVariables();

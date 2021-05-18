@@ -38,8 +38,8 @@ int main(int argc, char* argv[]) {
       Model m = visitor.visitModel(tree);
       InvariantStructure is = InvariantStructure(m, args);
       is.run();
-      std::cout << "FILE: " << argv[i] << std::endl;
-      is.line();
+      // std::cout << "FILE: " << argv[i] << std::endl;
+      // is.line();
     } catch (char const* msg) {
       std::cerr << msg << std::endl;
     }
