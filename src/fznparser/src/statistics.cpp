@@ -349,17 +349,14 @@ std::string Statistics::info() {
 }
 std::string Statistics::latexHeader() {
   std::stringstream s;
-  s << "Scheme & VarSco & InvSco & AnnSco & Imp & Height & In # & Out "
-       "# & NbSum & EnlDoms \\\\"
+  s << "Scheme & VarSco & InvSco & AnnSco & Imp & Height & Free # \\\\"
     << std::endl
     << "\\hline" << std::endl;
   return s.str();
 }
 std::string Statistics::header() {
   std::stringstream s;
-  s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tImp\tHeight\tIn #\tOut "
-       "#\tNbSum\tEnlDoms"
-    << std::endl;
+  s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tImp\tHeight\tFree #" << std::endl;
   line();
   return s.str();
 }
@@ -419,11 +416,11 @@ std::string Statistics::latexRow() {
   s << " & " << std::fixed << std::setprecision(2) << inputVars().size();
   // s << " & " << std::fixed << std::setprecision(2) << averageInfluence();
   // s << " & " << std::fixed << std::setprecision(2) << maxInfluence();
-  s << " & " << std::fixed << std::setprecision(2) << outputVars().size();
+  // s << " & " << std::fixed << std::setprecision(2) << outputVars().size();
   // s << " & " << std::fixed << std::setprecision(2) << averageDependency();
   // s << " & " << std::fixed << std::setprecision(2) << maxDependency();
-  s << " & " << std::fixed << std::setprecision(2) << neighbourhoodSize();
-  s << " & " << enlargedDomains();
+  // s << " & " << std::fixed << std::setprecision(2) << neighbourhoodSize();
+  // s << " & " << enlargedDomains();
   s << "\\\\";
 
   s << std::endl;
@@ -458,11 +455,11 @@ std::string Statistics::row() {
   s << "\t" << std::fixed << std::setprecision(2) << inputVars().size();
   // s << "\t" << std::fixed << std::setprecision(2) << averageInfluence();
   // s << "\t" << std::fixed << std::setprecision(2) << maxInfluence();
-  s << "\t" << std::fixed << std::setprecision(2) << outputVars().size();
+  // s << "\t" << std::fixed << std::setprecision(2) << outputVars().size();
   // s << "\t" << std::fixed << std::setprecision(2) << averageDependency();
   // s << "\t" << std::fixed << std::setprecision(2) << maxDependency();
-  s << "\t" << std::fixed << std::setprecision(2) << neighbourhoodSize();
-  s << "\t" << enlargedDomains();
+  // s << "\t" << std::fixed << std::setprecision(2) << neighbourhoodSize();
+  // s << "\t" << enlargedDomains();
 
   s << std::endl;
   return s.str();

@@ -98,7 +98,7 @@ void Schemes::scheme8() {
   }
 }
 void Schemes::scheme9() {
-  _name = "ImpPrio\t";
+  _name = "ImpAnnOsc\t";
   reset();
   defineImplicit();
   defineAnnotated();
@@ -116,7 +116,7 @@ void Schemes::scheme9() {
   }
 }
 void Schemes::scheme10() {
-  _name = "AnnImp\t";
+  _name = "AnnImpOsc\t";
   reset();
   defineAnnotated();
   defineImplicit();
