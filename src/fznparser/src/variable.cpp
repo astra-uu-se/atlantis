@@ -49,6 +49,18 @@ std::vector<Constraint*> Variable::potentialDefiners() {
   std::sort(sorted.begin(), sorted.end(), Constraint::sort);
   return sorted;
 }
+bool Variable::noPotDef() {
+  if (_orgPotentialDefiners.size() == 0) return true;
+  for (auto constraint : _orgPotentialDefiners) {
+    if (constraint->annotationTarget() &&
+        constraint->annotationTarget().value() != this) {
+      continue;
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
 void Variable::imposeDomain(Domain* domain) { _imposedDomain.emplace(domain); }
 void Variable::unImposeDomain() {
   assert(hasImposedDomain());
