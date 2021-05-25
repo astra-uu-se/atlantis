@@ -53,6 +53,8 @@ class Constraint : public Node {
   virtual bool isFunctional() { return true; }
   virtual bool isPotImplicit() { return false; }
   virtual bool canBeImplicit() { return false; };
+  bool onlyWrongAnnTarget();
+  bool annDefines(Variable* var);
   bool defines(Variable* variable);
   void makeSoft();
   virtual bool notFull();

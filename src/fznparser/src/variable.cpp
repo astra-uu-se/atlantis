@@ -61,6 +61,12 @@ bool Variable::noPotDef() {
   }
   return true;
 }
+bool Variable::hasDefinedAnn() {
+  for (auto ann : _annotations) {
+    if (ann._name == "is_defined_var") return true;
+  }
+  return false;
+}
 void Variable::imposeDomain(Domain* domain) { _imposedDomain.emplace(domain); }
 void Variable::unImposeDomain() {
   assert(hasImposedDomain());

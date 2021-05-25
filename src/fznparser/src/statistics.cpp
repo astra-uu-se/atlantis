@@ -114,7 +114,7 @@ int Statistics::countSoft() {
 int Statistics::countOnlySoft() {
   int soft = 0;
   for (auto constraint : _model->constraints()) {
-    if (constraint->isPotImplicit()) {
+    if (constraint->isPotImplicit() && !constraint->onlyWrongAnnTarget()) {
       continue;
     }
     if (constraint->isFunctional()) {
@@ -122,7 +122,7 @@ int Statistics::countOnlySoft() {
       for (auto var : constraint->variables()) {
         if (var->hasPotentialDefiner(constraint)) functional = true;
       }
-      if (functional) continue;
+      if (functional && !constraint->onlyWrongAnnTarget()) continue;
     }
     soft++;
   }
@@ -135,14 +135,14 @@ int Statistics::countBadSoft() {
     if (constraint->isImplicit() || constraint->isInvariant()) {
       continue;
     }
-    if (constraint->isPotImplicit()) {
+    if (constraint->isPotImplicit() && !constraint->onlyWrongAnnTarget()) {
       soft++;
     } else if (constraint->isFunctional()) {
       bool functional = false;
       for (auto var : constraint->variables()) {
         if (var->hasPotentialDefiner(constraint)) functional = true;
       }
-      if (functional) soft++;
+      if (functional && !constraint->onlyWrongAnnTarget()) soft++;
     }
   }
   return soft;
@@ -161,12 +161,15 @@ void Statistics::constraints(bool labels) {
       invariant++;
     }
     if (labels) {
+      if (constraint->isImplicit()) {
+        std::cout << constraint->getName() << std::endl;
+      }
       if (constraint->isFunctional() && !constraint->isInvariant()) {
         bool functional = false;
         for (auto var : constraint->variables()) {
           if (var->hasPotentialDefiner(constraint)) functional = true;
         }
-        if (functional) {
+        if (functional && !constraint->onlyWrongAnnTarget()) {
           std::cout << constraint->getName() << std::endl;
         }
       }

@@ -187,6 +187,21 @@ Int Constraint::defInVarCount() {
 }
 bool Constraint::notFull() { return _defines.empty(); }
 bool Constraint::uniqueTarget() { return _uniqueTarget; }
+bool Constraint::onlyWrongAnnTarget() {
+  for (auto var : _variables) {
+    if (var->hasPotentialDefiner(this)) {
+      if (var->hasDefinedAnn() && !annDefines(var)) {
+        continue;
+      } else {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+bool Constraint::annDefines(Variable* var) {
+  return annotationTarget().has_value() && (annotationTarget().value() == var);
+}
 std::vector<Variable*> Constraint::variables() { return _variables; }
 std::vector<Variable*> Constraint::variablesSorted() {
   std::vector<Variable*> next = variables();

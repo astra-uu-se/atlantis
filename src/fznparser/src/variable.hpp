@@ -29,6 +29,7 @@ class Variable : public Node {
 
   Constraint* definedBy() { return _definedBy.value(); }
   bool isDefined() { return _definedBy.has_value(); }
+  bool hasDefinedAnn();
 
   void addPotentialDefiner(Constraint* constraint);
   void removePotentialDefiner(Constraint* constraint);
