@@ -102,8 +102,6 @@ void Model::addConstraint(ConstraintBox constraintBox) {
     _constraints.add(std::make_shared<SubCircuit>(constraintBox));
   } else if (constraintBox._name == "fzn_all_different_int") {
     _constraints.add(std::make_shared<AllDifferent>(constraintBox));
-  } else if (constraintBox._name == "fzn_inverse") {
-    _constraints.add(std::make_shared<Inverse>(constraintBox));
   } else if (constraintBox._name == "int_eq_reif") {
     _constraints.add(std::make_shared<IntEqReif>(constraintBox));
   } else if (constraintBox._name == "int_le_reif") {
@@ -149,6 +147,5 @@ void Model::addConstraint(ConstraintBox constraintBox) {
   } else {
     std::cerr << "Constraint not supported: " + constraintBox._name
               << std::endl;
-    // _constraints.add(std::make_shared<NonFunctionalConstraint>(constraintBox));
   }
 }

@@ -136,7 +136,6 @@ class SimpleConstraint : public Constraint {
 #include "constraints/int_lin_eq.hpp"
 #include "constraints/integer_simple_2.hpp"
 #include "constraints/integer_simple_3.hpp"
-#include "constraints/inverse.hpp"
 #include "constraints/reified.hpp"
 #include "constraints/set.hpp"
 #include "variable.hpp"
