@@ -4,9 +4,8 @@
 #include "constraints/equal.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "variables/savedInt.hpp"
+#include "gmock/gmock.h"
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -22,43 +21,43 @@ class MockEqual : public Equal {
     Equal::init(timestamp, engine);
   }
 
-  MockEqual(VarId violationId, VarId a, VarId b) : Equal(violationId, a, b) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return Equal::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return Equal::getNextDependency(t, engine);
-        });
+  MockEqual(VarId violationId, VarId a, VarId b)
+      : Equal(violationId, a, b) {
+          ON_CALL(*this, recompute)
+              .WillByDefault([this](Timestamp timestamp, Engine& engine) {
+                return Equal::recompute(timestamp, engine);
+              });
+          ON_CALL(*this, getNextDependency)
+              .WillByDefault([this](Timestamp t, Engine& engine) {
+                return Equal::getNextDependency(t, engine);
+              });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          Equal::notifyCurrentDependencyChanged(t, engine);
-        });
+          ON_CALL(*this, notifyCurrentDependencyChanged)
+              .WillByDefault([this](Timestamp t, Engine& engine) {
+                Equal::notifyCurrentDependencyChanged(t, engine);
+              });
 
-    ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          Equal::notifyIntChanged(t, engine, id);
-        });
+          ON_CALL(*this, notifyIntChanged)
+              .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
+                Equal::notifyIntChanged(t, engine, id);
+              });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      Equal::commit(t, engine);
-    });
+          ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
+            Equal::commit(t, engine);
+          });
   }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
+MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
-              (override));
+MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
+MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
+            (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
-              (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
+            (override));
+MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
- private:
+private:
 };
 
 class EqualTest : public ::testing::Test {
@@ -91,12 +90,12 @@ class EqualTest : public ::testing::Test {
 
     VarId viol = engine->makeIntVar(0, 0, 200);
 
-    auto invariant = engine->makeInvariant<MockEqual>(viol, a, b);
+    auto invariant = engine->makeInvariant<MockEqual>(
+        viol, a, b);
 
     EXPECT_TRUE(invariant->m_initialized);
-
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
+    
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
@@ -104,19 +103,17 @@ class EqualTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(0);
+    if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode ==
-               PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(3);
+    } else if (engine-> mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+      EXPECT_CALL(*invariant,
+                  getNextDependency(testing::_, testing::_)).Times(3);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(1);
@@ -124,7 +121,7 @@ class EqualTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(0);
-    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
@@ -144,8 +141,7 @@ class EqualTest : public ::testing::Test {
 
 TEST_F(EqualTest, Init) {
   EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(violationId), violationId),
-            0);
+  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(violationId), violationId), 0);
 }
 
 TEST_F(EqualTest, Recompute) {
@@ -239,9 +235,8 @@ TEST_F(EqualTest, Commit) {
   Timestamp currentTime = 1;
 
   engine->setValue(currentTime, x, 40);
-  engine->setValue(currentTime, y,
-                   2);  // This change is not notified and should
-                        // not have an impact on the commit
+  engine->setValue(currentTime, y, 2);  // This change is not notified and should
+                                   // not have an impact on the commit
 
   equal->notifyIntChanged(currentTime, *engine, unused);
 
@@ -261,10 +256,11 @@ TEST_F(EqualTest, CreateEqual) {
 
   VarId viol = engine->makeIntVar(0, 0, 200);
 
-  auto invariant = engine->makeInvariant<MockEqual>(viol, a, b);
+  auto invariant = engine->makeInvariant<MockEqual>(
+      viol, a, b);
 
   EXPECT_TRUE(invariant->m_initialized);
-
+  
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
