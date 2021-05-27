@@ -1,6 +1,5 @@
 #pragma once
 
-#include <unordered_set>
 #include <vector>
 
 #include "core/types.hpp"
@@ -23,17 +22,7 @@ class OutputToInputExplorer {
   IdMap<VarIdBase, bool> _varIsOnStack;
   IdMap<InvariantId, bool> _invariantIsOnStack;
 
-  IdMap<VarIdBase, std::unordered_set<size_t>> m_decisionVarAncestor;
-  std::vector<VarIdBase> m_modifiedAncestors;
-
-  template <bool OutputToInputMarking>
-  void preprocessVarStack(Timestamp);
-
-  template <bool OutputToInputMarking>
-  bool isUpToDate(VarIdBase);
-
-  void populateModifiedAncestors(Timestamp);
-  void pushVariableStack(VarId v);
+  void pushVariableStack(VarId);
   void popVariableStack();
   VarId peekVariableStack();
   void pushInvariantStack(InvariantId);
@@ -45,19 +34,14 @@ class OutputToInputExplorer {
 
   // We expand an invariant by pushing it and its first parameter variable onto
   // each stack.
-  template <bool OutputToInputMarking>
-  void expandInvariant(InvariantId inv);
-
+  void expandInvariant(InvariantId);
   void notifyCurrentInvariant();
-
-  template <bool OutputToInputMarking>
   bool visitNextVariable();
 
  public:
   OutputToInputExplorer() = delete;
   OutputToInputExplorer(PropagationEngine& engine, size_t expectedSize);
 
-  void populateAncestors();
   void registerVar(VarId);
   void registerInvariant(InvariantId);
   /**
@@ -72,11 +56,14 @@ class OutputToInputExplorer {
 };
 
 inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
-  pushVariableStack(id);
+  // TODO: why not set _varIsOnStack.at(v) = true;?
+  // I remember that there was some technical reason but this need to be
+  // documented. Note that this might overflow the stack otherwise.
+  _variableStack[_varStackIdx++] = id;
 }
 
 inline void OutputToInputExplorer::clearRegisteredVariables() {
-  varStackIdx_ = 0;
+  _varStackIdx = 0;
 }
 
 inline void OutputToInputExplorer::pushVariableStack(VarId id) {

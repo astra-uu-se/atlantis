@@ -10,7 +10,6 @@
 #include "invariants/elementVar.hpp"
 #include "invariants/linear.hpp"
 #include "invariants/minSparse.hpp"
-#include "variables/savedInt.hpp"
 #include "views/intOffsetView.hpp"
 
 using ::testing::AtLeast;
