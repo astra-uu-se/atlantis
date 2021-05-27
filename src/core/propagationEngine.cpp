@@ -26,8 +26,8 @@ void PropagationEngine::close() {
   } catch (std::exception e) {
     std::cout << "foo";
   }
-  if (_mode == PropagationMode::OUTPUT_TO_INPUT) {
-    _outputToInputExplorer.populateAncestors();
+  if (m_mode == PropagationMode::OUTPUT_TO_INPUT) {
+    m_outputToInputExplorer.populateAncestors();
   }
 
   // compute initial values for variables and for (internal datastructure of)

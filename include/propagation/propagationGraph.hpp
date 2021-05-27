@@ -38,8 +38,8 @@ class PropagationGraph {
   std::vector<bool> _isOutputVar;
   std::vector<bool> _isInputVar;
 
-  std::vector<VarIdBase> _inputVariables;
-  std::vector<VarIdBase> _outputVariables;
+  std::vector<VarIdBase> m_decisionVariables;
+  std::vector<VarIdBase> m_outputVariables;
 
   struct Topology {
     std::vector<size_t> variablePosition;
@@ -123,9 +123,9 @@ class PropagationGraph {
 
   inline bool isInputVar(VarIdBase id) { return _isInputVar.at(id); }
 
-  inline InvariantId getDefiningInvariant(VarIdBase id) {
+  inline InvariantId getDefiningInvariant(VarIdBase v) {
     // Returns NULL_ID is not defined.
-    return _definingInvariant.at(id);
+    return _definingInvariant.at(v);
   }
 
   [[nodiscard]] inline const std::vector<VarIdBase>& getVariablesDefinedBy(
@@ -135,11 +135,11 @@ class PropagationGraph {
 
   [[nodiscard]] inline const std::vector<InvariantId>& getListeningInvariants(
       VarId id) const {
-    return _listeningInvariants.at(id);
+    return m_listeningInvariants.at(id);
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& getParameters(
+  [[nodiscard]] inline const std::vector<VarIdBase>& getInputVariables(
       InvariantId inv) {
-    return _variableParameters.at(inv);
+    return m_inputVariables.at(inv);
   }
 };
