@@ -16,17 +16,108 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
   _invariantStack.reserve(expectedSize);
 }
 
-// We expand an invariant by pushing it and its first parameter variable onto
-// each stack.
+void OutputToInputExplorer::populateAncestors() {
+  std::vector<bool> varVisited(m_engine.getNumVariables() + 1);
+  std::deque<IdBase> stack(m_engine.getNumVariables() + 1);
+
+  for (IdBase idx = 1; idx <= m_engine.getNumVariables(); ++idx) {
+    m_decisionVarAncestor.register_idx(idx);
+    m_decisionVarAncestor[idx].clear();
+    m_decisionVarAncestor[idx].reserve(m_engine.getDecisionVariables().size());
+  }
+
+  varVisited.resize(m_engine.getNumVariables() + 1);
+
+  for (const VarIdBase decisionVar : m_engine.getDecisionVariables()) {
+    std::fill(varVisited.begin(), varVisited.end(), NULL_ID);
+    stack.clear();
+    stack.push_back(decisionVar);
+    varVisited[decisionVar] = true;
+
+    while (stack.size() > 0) {
+      const VarIdBase id = stack.back();
+      stack.pop_back();
+      m_decisionVarAncestor[id].emplace(decisionVar);
+
+      for (InvariantId invariantId :
+           m_engine.getListeningInvariants(IdBase(id))) {
+        for (VarIdBase outputVar :
+             m_engine.getVariablesDefinedBy(invariantId)) {
+          if (!varVisited[outputVar]) {
+            varVisited[outputVar] = true;
+            stack.push_back(outputVar);
+          }
+        }
+      }
+    }
+  }
+}
+
+template bool OutputToInputExplorer::isUpToDate<true>(VarIdBase id);
+template bool OutputToInputExplorer::isUpToDate<false>(VarIdBase id);
+template <bool OutputToInputMarking>
+bool OutputToInputExplorer::isUpToDate(VarIdBase id) {
+  if constexpr (OutputToInputMarking) {
+    for (const size_t ancestor : m_modifiedAncestors) {
+      if (m_decisionVarAncestor.at(id).find(ancestor) !=
+          m_decisionVarAncestor.at(id).end()) {
+        return false;
+      }
+    }
+    return true;
+  } else {
+    return !m_engine.isOnPropagationPath(id);
+  }
+}
+
+template void OutputToInputExplorer::preprocessVarStack<false>(
+    Timestamp currentTime);
+template void OutputToInputExplorer::preprocessVarStack<true>(
+    Timestamp currentTime);
+template <bool OutputToInputMarking>
+void OutputToInputExplorer::preprocessVarStack(Timestamp currentTime) {
+  size_t newStackSize = 0;
+  for (size_t s = 0; s < varStackIdx_; ++s) {
+    if (!isUpToDate<OutputToInputMarking>(variableStack_[s])) {
+      variableStack_[newStackSize] = variableStack_[s];
+      ++newStackSize;
+    } else {
+      varIsOnStack.set(variableStack_[s], false);
+      markStable(currentTime, variableStack_[s]);
+    }
+    varStackIdx_ = newStackSize;
+  }
+}
+
+void OutputToInputExplorer::populateModifiedAncestors(Timestamp t) {
+  m_modifiedAncestors.clear();
+  m_modifiedAncestors.reserve(m_engine.getDecisionVariables().size());
+
+  for (VarIdBase decisionVar : m_engine.getDecisionVariables()) {
+    if (m_engine.hasChanged(t, decisionVar)) {
+      m_modifiedAncestors.push_back(decisionVar);
+    }
+  }
+}
+
+template void OutputToInputExplorer::expandInvariant<true>(InvariantId inv);
+template void OutputToInputExplorer::expandInvariant<false>(InvariantId inv);
+
+// We expand an invariant by pushing it and its first input variable onto each
+// stack.
+template <bool OutputToInputMarking>
 void OutputToInputExplorer::expandInvariant(InvariantId inv) {
-  if (_invariantIsOnStack.get(inv)) {
+  if (inv == NULL_ID) {
+    return;
+  }
+  if (invariantIsOnStack.get(inv)) {
     throw DynamicCycleException();
   }
-  VarId nextVar = _engine.getNextParameter(inv);
-  // Ignore var if it is not on propagation path.
-  while (nextVar != NULL_ID && !_engine.isOnPropagationPath(nextVar)) {
-    nextVar = _engine.getNextParameter(inv);
+  VarId nextVar = m_engine.getNextDependency(inv);
+  while (nextVar != NULL_ID && isUpToDate<OutputToInputMarking>(nextVar)) {
+    nextVar = m_engine.getNextDependency(inv);
   }
+
   if (nextVar.id == NULL_ID) {
     return;
   }
@@ -38,11 +129,15 @@ void OutputToInputExplorer::notifyCurrentInvariant() {
   _engine.notifyCurrentParameterChanged(peekInvariantStack());
 }
 
+template bool OutputToInputExplorer::visitNextVariable<true>();
+template bool OutputToInputExplorer::visitNextVariable<false>();
+
+template <bool OutputToInputMarking>
 bool OutputToInputExplorer::visitNextVariable() {
   popVariableStack();
-  VarId nextVar = _engine.getNextParameter(peekInvariantStack());
-  while (nextVar != NULL_ID && !_engine.isOnPropagationPath(nextVar)) {
-    nextVar = _engine.getNextParameter(peekInvariantStack());
+  VarId nextVar = m_engine.getNextDependency(peekInvariantStack());
+  while (nextVar != NULL_ID && isUpToDate<OutputToInputMarking>(nextVar)) {
+    nextVar = m_engine.getNextDependency(peekInvariantStack());
   }
   if (nextVar.id == NULL_ID) {
     return true;  // done with invariant
@@ -68,8 +163,12 @@ template void OutputToInputExplorer::propagate<true>(
 template void OutputToInputExplorer::propagate<false>(
     Timestamp currentTimestamp);
 
-template <bool DoCommit>
-void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
+template <bool OutputToInputMarking>
+void OutputToInputExplorer::propagate(Timestamp currentTime) {
+  if constexpr (OutputToInputMarking) {
+    populateModifiedAncestors(currentTime);
+  }
+  preprocessVarStack<OutputToInputMarking>(currentTime);
   // recursively expand variables to compute their value.
   while (_varStackIdx > 0) {
     VarId currentVar = peekVariableStack();
@@ -81,15 +180,11 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       // push a new invariant nor a new variable on the stack, so we must mark
       // the variable as stable before we expand it as this otherwise results in
       // an infinite loop.
-      markStable(currentTimestamp, currentVar);
-      // If the variable is not on the propagation path then ignore it.
-      if (_engine.isOnPropagationPath(currentVar) &&
-          _engine.getDefiningInvariant(currentVar) != NULL_ID) {
-        // Variable is defined, on propagation path, and not stable, so expand
-        // defining invariant.
-        expandInvariant(_engine.getDefiningInvariant(currentVar));
-        continue;
-      }
+      markStable(currentTime, currentVar);
+      // Variable must be on
+      expandInvariant<OutputToInputMarking>(
+          m_engine.getDefiningInvariant(currentVar));
+      continue;
     }
     if (_invariantStackIdx == 0) {
       popVariableStack();  // we are at an output variable that is already
@@ -101,18 +196,12 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       // notification to top invariant (i.e, the one asking for its value)
       notifyCurrentInvariant();
     }
-    bool invariantDone = visitNextVariable();
+    bool invariantDone = visitNextVariable<OutputToInputMarking>();
     if (invariantDone) {
-      if constexpr (DoCommit) {
-        _engine.commitInvariant(peekInvariantStack());
-      }
       // The top invariant has finished propagating, so all defined vars can
-      // be marked as stable at the current timestamp.
-      for (auto defVar : _engine.getVariablesDefinedBy(peekInvariantStack())) {
-        markStable(currentTimestamp, defVar);
-        if constexpr (DoCommit) {
-          _engine.commit(defVar);
-        }
+      // be marked as stable at the current time.
+      for (auto defVar : m_engine.getVariablesDefinedBy(peekInvariantStack())) {
+        markStable(currentTime, defVar);
       }
       popInvariantStack();
     }

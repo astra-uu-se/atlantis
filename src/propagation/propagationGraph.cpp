@@ -74,6 +74,12 @@ void PropagationGraph::close() {
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
     _isOutputVar.at(i) = (_listeningInvariants.at(i).empty());
     _isInputVar.at(i) = (_definingInvariant.at(i) == NULL_ID);
+    if (m_isOutputVar.at(i)) {
+      m_outputVariables.push_back(i);
+    }
+    if (m_isDecisionVar.at(i)) {
+      m_decisionVariables.push_back(i);
+    }
   }
 
   _topology.computeLayersWithCycles();
