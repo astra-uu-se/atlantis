@@ -101,9 +101,9 @@ class PropagationEngine : public Engine {
   size_t getNumVariables();
   size_t getNumInvariants();
 
-  [[nodiscard]] const std::vector<VarIdBase>& getDecisionVariables();
+  [[nodiscard]] const std::vector<VarIdBase>& getInputVariables();
   [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables();
-  [[nodiscard]] const std::vector<VarIdBase>& getInputVariables(InvariantId);
+  [[nodiscard]] const std::vector<VarIdBase>& getParameters(InvariantId);
 
   /**
    * returns the next parameter at the current timestamp.
@@ -142,15 +142,14 @@ class PropagationEngine : public Engine {
 };
 
 inline size_t PropagationEngine::getNumVariables() {
-  return m_propGraph.getNumVariables();
+  return _propGraph.getNumVariables();
 }
 
 inline size_t PropagationEngine::getNumInvariants() {
-  return m_propGraph.getNumInvariants();
+  return _propGraph.getNumInvariants();
 }
 
-inline InvariantId PropagationEngine::getDefiningInvariant(VarId v) {
-  // Returns NULL_ID is not defined.
+inline InvariantId PropagationEngine::getDefiningInvariant(VarId id) {
   return _propGraph.getDefiningInvariant(id);
 }
 
@@ -159,7 +158,7 @@ inline void PropagationEngine::clearPropagationPath() {
 }
 
 inline bool PropagationEngine::isOnPropagationPath(VarId id) {
-  return m_varIsOnPropagationPath.get(id);
+  return _varIsOnPropagationPath.get(id);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
@@ -169,7 +168,7 @@ inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
 
 inline const std::vector<InvariantId>&
 PropagationEngine::getListeningInvariants(VarId id) const {
-  return m_propGraph.getListeningInvariants(id);
+  return _propGraph.getListeningInvariants(id);
 }
 
 inline VarId PropagationEngine::getNextParameter(InvariantId id) {
@@ -186,44 +185,35 @@ inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {
   return _store.getConstIntVar(id).hasChanged(ts);
 }
 
-inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
-  assert(v.idType != VarIdType::view);
-  if (!m_propGraph.isDecisionVar(v)) {
-    throw VariableIsNotDecisionVariable();
-  }
-  m_store.getIntVar(v).setValue(t, val);
-  notifyMaybeChanged(t, v);
 inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
   assert(id.idType != VarIdType::view);
+  if (!_propGraph.isInputVar(id)) {
+    throw VariableIsNotInputVariable();
+  }
   _store.getIntVar(id).setValue(ts, val);
   notifyMaybeChanged(ts, id);
 }
 
 inline void PropagationEngine::setPropagationMode(
     PropagationEngine::PropagationMode m) {
-  if (!m_isOpen) {
+  if (!_isOpen) {
     throw ModelNotOpenException(
         "Cannot set propagation mode when model is closed");
   }
-  m_mode = m;
+  _mode = m;
 }
 
-inline PropagationEngine::PropagationMode
-PropagationEngine::getPropagationMode() {
-  return m_mode;
-}
-
-inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
-  return m_propGraph.m_decisionVariables;
+inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables() {
+  return _propGraph._inputVariables;
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables() {
-  return m_propGraph.m_outputVariables;
+  return _propGraph._outputVariables;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
+inline const std::vector<VarIdBase>& PropagationEngine::getParameters(
     InvariantId inv) {
-  return m_propGraph.getInputVariables(inv);
+  return _propGraph.getParameters(inv);
 }
 
 template <bool OutputToInputMarking>
