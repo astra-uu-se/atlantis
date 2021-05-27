@@ -23,8 +23,8 @@ class OutputToInputExplorer {
   IdMap<VarIdBase, bool> _varIsOnStack;
   IdMap<InvariantId, bool> _invariantIsOnStack;
 
-  IdMap<VarIdBase, std::unordered_set<size_t>> _inputAncestor;
-  std::vector<VarIdBase> _modifiedInputs;
+  IdMap<VarIdBase, std::unordered_set<size_t>> m_decisionVarAncestor;
+  std::vector<VarIdBase> m_modifiedAncestors;
 
   template <bool OutputToInputMarking>
   void preprocessVarStack(Timestamp);
@@ -76,7 +76,7 @@ inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
 }
 
 inline void OutputToInputExplorer::clearRegisteredVariables() {
-  _varStackIdx = 0;
+  varStackIdx_ = 0;
 }
 
 inline void OutputToInputExplorer::pushVariableStack(VarId id) {
