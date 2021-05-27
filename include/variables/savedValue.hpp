@@ -20,8 +20,7 @@ class Saved {
     return _tmpTimestamp == ts && _savedValue != _tmpValue;
   }
 
-  [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
-      const {
+  [[gnu::always_inline]] [[nodiscard]] inline Timestamp tmpTimestamp() const {
     return _tmpTimestamp;
   }
 

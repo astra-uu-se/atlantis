@@ -81,7 +81,7 @@ class PropagationEngine : public Engine {
    */
   static bool isOnPropagationPath(Timestamp, InvariantId) { return true; }
 
-  [[nodiscard]] VarId getNextStableVariable(Timestamp);
+  [[nodiscard]] VarId nextStableVariable(Timestamp);
 
   //--------------------- Move semantics ---------------------
   void beginMove();
@@ -98,27 +98,27 @@ class PropagationEngine : public Engine {
   void beginCommit();
   void endCommit();
 
-  size_t getNumVariables();
-  size_t getNumInvariants();
+  size_t numVariables();
+  size_t numInvariants();
 
-  [[nodiscard]] const std::vector<VarIdBase>& getInputVariables();
-  [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables();
-  [[nodiscard]] const std::vector<VarIdBase>& getParameters(InvariantId);
+  [[nodiscard]] const std::vector<VarIdBase>& inputVariables();
+  [[nodiscard]] const std::vector<VarIdBase>& outputVariables();
+  [[nodiscard]] const std::vector<VarIdBase>& parameters(InvariantId);
 
   /**
    * returns the next parameter at the current timestamp.
    */
-  VarId getNextParameter(InvariantId);
+  VarId nextParameter(InvariantId);
 
-  InvariantId getDefiningInvariant(VarId);
+  InvariantId definingInvariant(VarId);
 
   // This function is used by propagation, which is unaware of views.
   [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
 
-  [[nodiscard]] const std::vector<VarIdBase>& getVariablesDefinedBy(
+  [[nodiscard]] const std::vector<VarIdBase>& variablesDefinedBy(
       InvariantId) const;
 
-  [[nodiscard]] const std::vector<InvariantId>& getListeningInvariants(
+  [[nodiscard]] const std::vector<InvariantId>& listeningInvariants(
       VarId) const;
 
   /**
@@ -138,19 +138,19 @@ class PropagationEngine : public Engine {
   void registerVar(VarId) override;
   void registerInvariant(InvariantId) override;
 
-  PropagationGraph& getPropGraph();
+  PropagationGraph& propGraph();
 };
 
-inline size_t PropagationEngine::getNumVariables() {
-  return _propGraph.getNumVariables();
+inline size_t PropagationEngine::numVariables() {
+  return _propGraph.numVariables();
 }
 
-inline size_t PropagationEngine::getNumInvariants() {
-  return _propGraph.getNumInvariants();
+inline size_t PropagationEngine::numInvariants() {
+  return _propGraph.numInvariants();
 }
 
-inline InvariantId PropagationEngine::getDefiningInvariant(VarId id) {
-  return _propGraph.getDefiningInvariant(id);
+inline InvariantId PropagationEngine::definingInvariant(VarId id) {
+  return _propGraph.definingInvariant(id);
 }
 
 inline void PropagationEngine::clearPropagationPath() {
@@ -161,28 +161,26 @@ inline bool PropagationEngine::isOnPropagationPath(VarId id) {
   return _varIsOnPropagationPath.get(id);
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
+inline const std::vector<VarIdBase>& PropagationEngine::variablesDefinedBy(
     InvariantId id) const {
-  return _propGraph.getVariablesDefinedBy(id);
+  return _propGraph.variablesDefinedBy(id);
 }
 
-inline const std::vector<InvariantId>&
-PropagationEngine::getListeningInvariants(VarId id) const {
-  return _propGraph.getListeningInvariants(id);
+inline const std::vector<InvariantId>& PropagationEngine::listeningInvariants(
+    VarId id) const {
+  return _propGraph.listeningInvariants(id);
 }
 
-inline VarId PropagationEngine::getNextParameter(InvariantId id) {
-  return getSourceId(
-      _store.getInvariant(id).getNextParameter(_currentTimestamp, *this));
+inline VarId PropagationEngine::nextParameter(InvariantId id) {
+  return sourceId(_store.invariant(id).nextParameter(_currentTimestamp, *this));
 }
 inline void PropagationEngine::notifyCurrentParameterChanged(InvariantId id) {
-  _store.getInvariant(id).notifyCurrentParameterChanged(_currentTimestamp,
-                                                        *this);
+  _store.invariant(id).notifyCurrentParameterChanged(_currentTimestamp, *this);
 }
 
 inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {
   assert(id.idType != VarIdType::view);
-  return _store.getConstIntVar(id).hasChanged(ts);
+  return _store.constIntVar(id).hasChanged(ts);
 }
 
 inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
@@ -190,7 +188,7 @@ inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
   if (!_propGraph.isInputVar(id)) {
     throw VariableIsNotInputVariable();
   }
-  _store.getIntVar(id).setValue(ts, val);
+  _store.intVar(id).setValue(ts, val);
   notifyMaybeChanged(ts, id);
 }
 
@@ -203,17 +201,17 @@ inline void PropagationEngine::setPropagationMode(
   _mode = m;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables() {
+inline const std::vector<VarIdBase>& PropagationEngine::inputVariables() {
   return _propGraph._inputVariables;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables() {
+inline const std::vector<VarIdBase>& PropagationEngine::outputVariables() {
   return _propGraph._outputVariables;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getParameters(
+inline const std::vector<VarIdBase>& PropagationEngine::parameters(
     InvariantId inv) {
-  return _propGraph.getParameters(inv);
+  return _propGraph.parameters(inv);
 }
 
 template <bool OutputToInputMarking>

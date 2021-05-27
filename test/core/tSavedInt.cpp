@@ -34,24 +34,24 @@ TEST_F(SavedIntTest, SavedIntConstructor) {
   SavedInt savedInt = SavedInt(initTimestamp, value);
 
   // Get the current value at the initial timestamp return the initial value
-  EXPECT_EQ(savedInt.getValue(initTimestamp), value);
+  EXPECT_EQ(savedInt.value(initTimestamp), value);
 
   // get at the current value at the initial timestamp. Returns the initial
   // value
-  EXPECT_EQ(savedInt.getValue(initTimestamp), value);
+  EXPECT_EQ(savedInt.value(initTimestamp), value);
 
   Timestamp otherTimestamp = std::max(0, distribution(gen));
   // Get the current value at another timestamp.
   // Should still return the initial value (as no other value has been
   // committed)
-  EXPECT_EQ(savedInt.getValue(otherTimestamp), value);
+  EXPECT_EQ(savedInt.value(otherTimestamp), value);
 
   // get the current value at another timestamp. Should still return the
   // initial value (as no other value has been committed)
-  EXPECT_EQ(savedInt.getValue(otherTimestamp), value);
+  EXPECT_EQ(savedInt.value(otherTimestamp), value);
 }
 
-TEST_F(SavedIntTest, SavedIntSetGetValue) {
+TEST_F(SavedIntTest, SavedIntSetValue) {
   // A uniform distribution for the initial value and timestamp
   std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(),
                                                 10000);
@@ -72,16 +72,16 @@ TEST_F(SavedIntTest, SavedIntSetGetValue) {
   savedInt.setValue(nextTimestamp, nextValue);
 
   // The value at the initial timestamp is still the initial value
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
+  EXPECT_EQ(savedInt.value(initTimestamp), initValue);
   // The value at the next timestamp is now the next value
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
+  EXPECT_EQ(savedInt.value(nextTimestamp), nextValue);
 
   Timestamp otherTimestamp = distribution2(gen);
   while (otherTimestamp == nextTimestamp) {
     otherTimestamp = distribution2(gen);
   }
   // The value for any timestamp except nextTimestamp is still the initial value
-  EXPECT_EQ(savedInt.getValue(otherTimestamp), initValue);
+  EXPECT_EQ(savedInt.value(otherTimestamp), initValue);
 }
 
 TEST_F(SavedIntTest, SavedIntIncValue) {
@@ -108,8 +108,8 @@ TEST_F(SavedIntTest, SavedIntIncValue) {
     //   saved
     savedInt.incValue(nextTimestamp, increment);
 
-    EXPECT_EQ(savedInt.getValue(initTimestamp), committedValue);
-    EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
+    EXPECT_EQ(savedInt.value(initTimestamp), committedValue);
+    EXPECT_EQ(savedInt.value(nextTimestamp), nextValue);
 
     // Not the same timestamp as init timestamp, increment will be based on:
     //   tmp
@@ -121,9 +121,9 @@ TEST_F(SavedIntTest, SavedIntIncValue) {
       otherTimestamp = distribution(gen);
     }
     // Any timestamp except nextTimestamp returns the committed value.
-    EXPECT_EQ(savedInt.getValue(otherTimestamp), committedValue);
+    EXPECT_EQ(savedInt.value(otherTimestamp), committedValue);
     // nextTimestamp returns the twice incremented value
-    EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue + increment);
+    EXPECT_EQ(savedInt.value(nextTimestamp), nextValue + increment);
   }
 }
 
@@ -143,9 +143,9 @@ TEST_F(SavedIntTest, SavedIntCommitValue) {
 
   savedInt.commitValue(committedValue);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp),
+  EXPECT_EQ(savedInt.value(initTimestamp),
             initValue);  // TODO: shouldn't this be committedValue?
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), committedValue);
+  EXPECT_EQ(savedInt.value(nextTimestamp), committedValue);
 }
 
 TEST_F(SavedIntTest, SavedIntCommit) {
@@ -162,18 +162,18 @@ TEST_F(SavedIntTest, SavedIntCommit) {
 
   SavedInt savedInt = SavedInt(initTimestamp, initValue);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), initValue);
+  EXPECT_EQ(savedInt.value(initTimestamp), initValue);
+  EXPECT_EQ(savedInt.value(nextTimestamp), initValue);
 
   savedInt.setValue(nextTimestamp, committedValue);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), committedValue);
+  EXPECT_EQ(savedInt.value(initTimestamp), initValue);
+  EXPECT_EQ(savedInt.value(nextTimestamp), committedValue);
 
   savedInt.commitIf(nextTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), committedValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), committedValue);
+  EXPECT_EQ(savedInt.value(initTimestamp), committedValue);
+  EXPECT_EQ(savedInt.value(nextTimestamp), committedValue);
 }
 
 TEST_F(SavedIntTest, SavedIntCommitIf) {
@@ -192,32 +192,32 @@ TEST_F(SavedIntTest, SavedIntCommitIf) {
 
   savedInt.commitIf(nextTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), initValue);
+  EXPECT_EQ(savedInt.value(initTimestamp), initValue);
+  EXPECT_EQ(savedInt.value(nextTimestamp), initValue);
 
   savedInt.commitIf(initTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), initValue);
+  EXPECT_EQ(savedInt.value(initTimestamp), initValue);
+  EXPECT_EQ(savedInt.value(nextTimestamp), initValue);
 
   savedInt.setValue(nextTimestamp, nextValue);
 
   savedInt.commitIf(nextTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), nextValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
+  EXPECT_EQ(savedInt.value(initTimestamp), nextValue);
+  EXPECT_EQ(savedInt.value(nextTimestamp), nextValue);
 
   savedInt.commitIf(initTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), nextValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
+  EXPECT_EQ(savedInt.value(initTimestamp), nextValue);
+  EXPECT_EQ(savedInt.value(nextTimestamp), nextValue);
 }
 
 RC_GTEST_FIXTURE_PROP(SavedIntTest, checkConstructorValue,
                       (Timestamp initTimestamp, Int initValue,
                        Timestamp anyTimestamp)) {
   auto savedInt = SavedInt(initTimestamp, initValue);
-  RC_ASSERT(savedInt.getValue(anyTimestamp) == initValue);
+  RC_ASSERT(savedInt.value(anyTimestamp) == initValue);
 }
 
 RC_GTEST_FIXTURE_PROP(SavedIntTest, checkSetValue,
@@ -226,7 +226,7 @@ RC_GTEST_FIXTURE_PROP(SavedIntTest, checkSetValue,
   auto savedInt = SavedInt(initTimestamp, initValue);
   savedInt.setValue(currentTimestamp, value);
   if (initTimestamp != currentTimestamp) {
-    RC_ASSERT(savedInt.getValue(initTimestamp) == initValue);
+    RC_ASSERT(savedInt.value(initTimestamp) == initValue);
   }
 }
 
@@ -235,7 +235,7 @@ RC_GTEST_FIXTURE_PROP(SavedIntTest, checkCommittedValue,
                        Timestamp currentTimestamp, Int value)) {
   auto savedInt = SavedInt(initTimestamp, initValue);
   savedInt.setValue(currentTimestamp, value);
-  RC_ASSERT(savedInt.getValue(currentTimestamp) == value);
+  RC_ASSERT(savedInt.value(currentTimestamp) == value);
 }
 
 }  // namespace

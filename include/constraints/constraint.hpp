@@ -12,6 +12,6 @@ class Constraint : public Invariant {
       : Invariant(id), _violationId(violationId) {}
 
  public:
-  inline VarId getViolationId();
-  inline Int getViolationCount(Engine&, Timestamp&);
+  inline VarId violationId();
+  inline Int violationCount(Engine&, Timestamp&);
 };

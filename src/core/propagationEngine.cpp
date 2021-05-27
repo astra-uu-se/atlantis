@@ -12,7 +12,7 @@ PropagationEngine::PropagationEngine()
       _varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
       _propagationPathQueue() {}
 
-PropagationGraph& PropagationEngine::getPropGraph() { return _propGraph; }
+PropagationGraph& PropagationEngine::propGraph() { return _propGraph; }
 
 void PropagationEngine::open() { _isOpen = true; }
 
@@ -37,7 +37,7 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
-  // logDebug("\t\t\tMaybe changed: " << _store.getIntVar(id));
+  // logDebug("\t\t\tMaybe changed: " << _store.intVar(id));
   if (_isEnqueued.get(id)) {
     // logDebug("\t\t\talready enqueued");
     return;
@@ -48,7 +48,7 @@ void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
 }
 
 void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
-  // logDebug("\t\t\tMaybe changed: " << _store.getIntVar(id));
+  // logDebug("\t\t\tMaybe changed: " << _store.intVar(id));
   if (_isEnqueued.get(id)) {
     // logDebug("\t\t\talready enqueued");
     return;
@@ -61,15 +61,15 @@ void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
 void PropagationEngine::registerInvariantParameter(InvariantId invariantId,
                                                    VarId parameterId,
                                                    LocalId localId) {
-  auto sourceId = getSourceId(parameterId);
-  _propGraph.registerInvariantParameter(invariantId, sourceId);
-  _listeningInvariantData[sourceId].emplace_back(
+  auto sId = sourceId(parameterId);
+  _propGraph.registerInvariantParameter(invariantId, sId);
+  _listeningInvariantData[sId].emplace_back(
       ListeningInvariantData{invariantId, localId});
 }
 
 void PropagationEngine::registerDefinedVariable(VarId varId,
                                                 InvariantId invariantId) {
-  _propGraph.registerDefinedVariable(getSourceId(varId), invariantId);
+  _propGraph.registerDefinedVariable(sourceId(varId), invariantId);
 }
 
 void PropagationEngine::registerVar(VarId id) {
@@ -87,7 +87,7 @@ void PropagationEngine::registerInvariant(InvariantId id) {
 
 //---------------------Propagation---------------------
 
-VarId PropagationEngine::getNextStableVariable(Timestamp) {
+VarId PropagationEngine::nextStableVariable(Timestamp) {
   if (_propGraph._propagationQueue.empty()) {
     return VarId(NULL_ID);
   }
@@ -111,7 +111,7 @@ void PropagationEngine::recomputeAndCommit() {
   bool done = false;
   while (!done) {
     done = true;
-    if (tries++ > _store.getNumVariables()) {
+    if (tries++ > _store.numVariables()) {
       throw FailedToInitialise();
     }
     for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
@@ -156,7 +156,7 @@ void PropagationEngine::query(VarId id) {
     return;
   }
   _outputToInputExplorer.registerForPropagation(_currentTimestamp,
-                                                getSourceId(id));
+                                                sourceId(id));
 }
 
 void PropagationEngine::endQuery() {
@@ -238,7 +238,7 @@ void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
     }
     _varIsOnPropagationPath.set(currentVar, true);
     for (auto& depInv : _listeningInvariantData.at(currentVar)) {
-      for (VarIdBase depVar : _propGraph.getVariablesDefinedBy(depInv.id)) {
+      for (VarIdBase depVar : _propGraph.variablesDefinedBy(depInv.id)) {
         if (!_varIsOnPropagationPath.get(depVar)) {
           _propagationPathQueue.push(depVar);
         }
@@ -261,16 +261,15 @@ void PropagationEngine::propagate() {
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
   std::vector<std::unordered_map<size_t, Int>> notificationCount(
-      _store.getNumInvariants());
+      _store.numInvariants());
 #endif
 
-  for (VarId stableVarId = getNextStableVariable(_currentTimestamp);
+  for (VarId stableVarId = nextStableVariable(_currentTimestamp);
        stableVarId.id != NULL_ID;
-       stableVarId = getNextStableVariable(_currentTimestamp)) {
-    IntVar& variable = _store.getIntVar(stableVarId);
+       stableVarId = nextStableVariable(_currentTimestamp)) {
+    IntVar& variable = _store.intVar(stableVarId);
 
-    InvariantId definingInvariant =
-        _propGraph.getDefiningInvariant(stableVarId);
+    InvariantId definingInvariant = _propGraph.definingInvariant(stableVarId);
 
 #ifdef PROPAGATION_DEBUG
     logDebug("\tPropagating " << variable);
@@ -278,13 +277,13 @@ void PropagationEngine::propagate() {
 #endif
 
     if (definingInvariant != NULL_ID) {
-      Invariant& defInv = _store.getInvariant(definingInvariant);
-      if (stableVarId == defInv.getPrimaryDefinedVar()) {
-        Int oldValue = variable.getValue(_currentTimestamp);
+      Invariant& defInv = _store.invariant(definingInvariant);
+      if (stableVarId == defInv.primaryDefinedVar()) {
+        Int oldValue = variable.value(_currentTimestamp);
         defInv.compute(_currentTimestamp, *this);
         defInv.queueNonPrimaryDefinedVarsForPropagation(_currentTimestamp,
                                                         *this);
-        if (oldValue == variable.getValue(_currentTimestamp)) {
+        if (oldValue == variable.value(_currentTimestamp)) {
 #ifdef PROPAGATION_DEBUG
           logDebug("\t\tVariable did not change after compute: ignoring.");
 #endif
@@ -301,7 +300,7 @@ void PropagationEngine::propagate() {
     }
 
     for (auto& toNotify : _listeningInvariantData[stableVarId]) {
-      Invariant& invariant = _store.getInvariant(toNotify.id);
+      Invariant& invariant = _store.invariant(toNotify.id);
 
 #ifdef PROPAGATION_DEBUG
       logDebug("\t\tNotifying invariant:" << toNotify.id << " with localId: "
@@ -313,7 +312,7 @@ void PropagationEngine::propagate() {
 #endif
 
       invariant.notify(toNotify.localId);
-      queueForPropagation(_currentTimestamp, invariant.getPrimaryDefinedVar());
+      queueForPropagation(_currentTimestamp, invariant.primaryDefinedVar());
     }
   }
 

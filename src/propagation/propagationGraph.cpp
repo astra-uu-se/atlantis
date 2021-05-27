@@ -10,14 +10,14 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
       _numVariables(0),
       _definingInvariant(expectedSize),
       _variablesDefinedByInvariant(expectedSize),
-      _variableParameters(expectedSize),
+      _parameters(expectedSize),
       _listeningInvariants(expectedSize),
       _topology(*this) {}
 
 void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   // Everything must be registered in sequence.
   _variablesDefinedByInvariant.register_idx(id);
-  _variableParameters.register_idx(id);
+  _parameters.register_idx(id);
   ++_numInvariants;
 }
 
@@ -38,7 +38,7 @@ void PropagationGraph::registerInvariantParameter(InvariantId invariantId,
     return;
   }
   _listeningInvariants[varId].push_back(invariantId);
-  _variableParameters[invariantId].push_back(varId);
+  _parameters[invariantId].push_back(varId);
 }
 
 void PropagationGraph::registerDefinedVariable(VarIdBase varId,
@@ -69,9 +69,9 @@ void PropagationGraph::registerDefinedVariable(VarIdBase varId,
 }
 
 void PropagationGraph::close() {
-  _isInputVar.resize(getNumVariables() + 1);
-  _isOutputVar.resize(getNumVariables() + 1);
-  for (size_t i = 1; i < getNumVariables() + 1; ++i) {
+  _isInputVar.resize(numVariables() + 1);
+  _isOutputVar.resize(numVariables() + 1);
+  for (size_t i = 1; i < numVariables() + 1; ++i) {
     _isOutputVar.at(i) = (_listeningInvariants.at(i).empty());
     _isInputVar.at(i) = (_definingInvariant.at(i) == NULL_ID);
     if (_isOutputVar.at(i)) {
@@ -88,10 +88,10 @@ void PropagationGraph::close() {
   // _propagationQueue = PropagationQueue();
   size_t numLayers = 1 + *std::max_element(_topology.variablePosition.begin(),
                                            _topology.variablePosition.end());
-  _propagationQueue.init(getNumVariables(), numLayers);
-  for (size_t i = 1; i < getNumVariables() + 1; ++i) {
+  _propagationQueue.init(numVariables(), numLayers);
+  for (size_t i = 1; i < numVariables() + 1; ++i) {
     VarIdBase id = VarIdBase(i);
-    _propagationQueue.initVar(id, _topology.getPosition(id));
+    _propagationQueue.initVar(id, _topology.position(id));
   }
   // _topology.computeNoCycles();
 }

@@ -22,7 +22,7 @@ class ElementVar : public Invariant {
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;
-  VarId getNextParameter(Timestamp, Engine&) override;
+  VarId nextParameter(Timestamp, Engine&) override;
   void notifyCurrentParameterChanged(Timestamp, Engine&) override;
   void commit(Timestamp, Engine&) override;
 };

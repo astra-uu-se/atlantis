@@ -4,18 +4,18 @@
 
 extern Id NULL_ID;
 
-Int IntOffsetView::getValue(Timestamp ts) {
-  return _offset + _engine->getValue(ts, _parentId);
+Int IntOffsetView::value(Timestamp ts) {
+  return _offset + _engine->value(ts, _parentId);
 }
 
-Int IntOffsetView::getCommittedValue() {
-  return _offset + _engine->getCommittedValue(_parentId);
+Int IntOffsetView::committedValue() {
+  return _offset + _engine->committedValue(_parentId);
 }
 
-Int IntOffsetView::getLowerBound() {
-  return _offset + _engine->getLowerBound(_parentId);
+Int IntOffsetView::lowerBound() {
+  return _offset + _engine->lowerBound(_parentId);
 }
 
-Int IntOffsetView::getUpperBound() {
-  return _offset + _engine->getUpperBound(_parentId);
+Int IntOffsetView::upperBound() {
+  return _offset + _engine->upperBound(_parentId);
 }

@@ -30,9 +30,9 @@ class MockLinear : public Linear {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return Linear::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextParameter)
+    ON_CALL(*this, nextParameter)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return Linear::getNextParameter(ts, engine);
+          return Linear::nextParameter(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentParameterChanged)
@@ -53,7 +53,7 @@ class MockLinear : public Linear {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextParameter, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine& engine),
               (override));
 
@@ -122,8 +122,7 @@ class LinearTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
-          .Times(0);
+      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(AtMost(1));
@@ -132,7 +131,7 @@ class LinearTest : public ::testing::Test {
           .Times(1);
     } else if (engine->mode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
+      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_))
           .Times(numArgs + 1);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
@@ -167,7 +166,7 @@ RC_GTEST_FIXTURE_PROP(LinearTest, shouldAlwaysBeSum,
   engine->query(d);
   engine->endCommit();
 
-  RC_ASSERT(engine->getCommittedValue(d) ==
+  RC_ASSERT(engine->committedValue(d) ==
             aCoef * aVal + bCoef * bVal + cCoef * cVal);
 }
 
@@ -176,53 +175,53 @@ RC_GTEST_FIXTURE_PROP(LinearTest, shouldAlwaysBeSum,
  */
 
 TEST_F(LinearTest, Init) {
-  EXPECT_EQ(engine->getCommittedValue(d), -39);
-  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(d), d), -39);
+  EXPECT_EQ(engine->committedValue(d), -39);
+  EXPECT_EQ(engine->value(engine->tmpTimestamp(d), d), -39);
 }
 
 TEST_F(LinearTest, Recompute) {
-  EXPECT_EQ(engine->getValue(0, d), -39);
-  EXPECT_EQ(engine->getCommittedValue(d), -39);
+  EXPECT_EQ(engine->value(0, d), -39);
+  EXPECT_EQ(engine->committedValue(d), -39);
 
   Timestamp newTimestamp = 1;
   engine->setValue(newTimestamp, a, 40);
   linear->recompute(newTimestamp, *engine);
-  EXPECT_EQ(engine->getCommittedValue(d), -39);
-  EXPECT_EQ(engine->getValue(newTimestamp, d), 0);
+  EXPECT_EQ(engine->committedValue(d), -39);
+  EXPECT_EQ(engine->value(newTimestamp, d), 0);
 }
 
 TEST_F(LinearTest, NotifyChange) {
-  EXPECT_EQ(engine->getValue(0, d), -39);  // initially the value of d is -39
+  EXPECT_EQ(engine->value(0, d), -39);  // initially the value of d is -39
 
   Timestamp time1 = 1;
 
-  EXPECT_EQ(engine->getValue(time1, a), 1);
+  EXPECT_EQ(engine->value(time1, a), 1);
   engine->setValue(time1, a, 40);
-  EXPECT_EQ(engine->getCommittedValue(a), 1);
-  EXPECT_EQ(engine->getValue(time1, a), 40);
+  EXPECT_EQ(engine->committedValue(a), 1);
+  EXPECT_EQ(engine->value(time1, a), 40);
   linear->notifyIntChanged(time1, *engine, 0);
-  EXPECT_EQ(engine->getValue(time1, d), 0);  // incremental value of d is 0;
+  EXPECT_EQ(engine->value(time1, d), 0);  // incremental value of d is 0;
 
   engine->setValue(time1, b, 0);
   linear->notifyIntChanged(time1, *engine, 1);
-  auto tmpValue = engine->getValue(time1, d);  // incremental value of d is -40;
+  auto tmpValue = engine->value(time1, d);  // incremental value of d is -40;
 
   // Incremental computation gives the same result as recomputation
   linear->recompute(time1, *engine);
-  EXPECT_EQ(engine->getValue(time1, d), tmpValue);
+  EXPECT_EQ(engine->value(time1, d), tmpValue);
 
   Timestamp time2 = time1 + 1;
 
-  EXPECT_EQ(engine->getValue(time2, a), 1);
+  EXPECT_EQ(engine->value(time2, a), 1);
   engine->setValue(time2, a, 20);
-  EXPECT_EQ(engine->getCommittedValue(a), 1);
-  EXPECT_EQ(engine->getValue(time2, a), 20);
+  EXPECT_EQ(engine->committedValue(a), 1);
+  EXPECT_EQ(engine->value(time2, a), 20);
   linear->notifyIntChanged(time2, *engine, 0);
-  EXPECT_EQ(engine->getValue(time2, d), -20);  // incremental value of d is 0;
+  EXPECT_EQ(engine->value(time2, d), -20);  // incremental value of d is 0;
 }
 
 TEST_F(LinearTest, IncrementalVsRecompute) {
-  EXPECT_EQ(engine->getValue(0, d), -39);  // initially the value of d is -39
+  EXPECT_EQ(engine->value(0, d), -39);  // initially the value of d is -39
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100000, 100000);
 
@@ -230,10 +229,10 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
   for (size_t i = 0; i < 1000; ++i) {
     ++currentTimestamp;
     // Check that we do not accidentally commit
-    ASSERT_EQ(engine->getCommittedValue(a), 1);
-    ASSERT_EQ(engine->getCommittedValue(b), 2);
-    ASSERT_EQ(engine->getCommittedValue(c), 3);
-    ASSERT_EQ(engine->getCommittedValue(d),
+    ASSERT_EQ(engine->committedValue(a), 1);
+    ASSERT_EQ(engine->committedValue(b), 2);
+    ASSERT_EQ(engine->committedValue(c), 3);
+    ASSERT_EQ(engine->committedValue(d),
               -39);  // d is committed by register.
 
     // Set all variables
@@ -242,26 +241,26 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
     engine->setValue(currentTimestamp, c, distribution(gen));
 
     // notify changes
-    if (engine->getCommittedValue(a) != engine->getValue(currentTimestamp, a)) {
+    if (engine->committedValue(a) != engine->value(currentTimestamp, a)) {
       linear->notifyIntChanged(currentTimestamp, *engine, 0);
     }
-    if (engine->getCommittedValue(b) != engine->getValue(currentTimestamp, b)) {
+    if (engine->committedValue(b) != engine->value(currentTimestamp, b)) {
       linear->notifyIntChanged(currentTimestamp, *engine, 1);
     }
-    if (engine->getCommittedValue(c) != engine->getValue(currentTimestamp, c)) {
+    if (engine->committedValue(c) != engine->value(currentTimestamp, c)) {
       linear->notifyIntChanged(currentTimestamp, *engine, 2);
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTimestamp, d);
+    auto tmp = engine->value(currentTimestamp, d);
     linear->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, d));
+    ASSERT_EQ(tmp, engine->value(currentTimestamp, d));
   }
 }
 
 TEST_F(LinearTest, Commit) {
-  EXPECT_EQ(engine->getCommittedValue(d), -39);
+  EXPECT_EQ(engine->committedValue(d), -39);
 
   Timestamp currentTimestamp = 1;
 
@@ -297,7 +296,7 @@ TEST_F(LinearTest, CreateLinear) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(output), sum);
+  EXPECT_EQ(engine->newValue(output), sum);
 }
 
 TEST_F(LinearTest, NotificationsInputToOutput) {

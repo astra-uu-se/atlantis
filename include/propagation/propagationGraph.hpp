@@ -30,7 +30,7 @@ class PropagationGraph {
    *
    * Maps an invariant to all its variable parameters.
    */
-  IdMap<InvariantId, std::vector<VarIdBase>> _variableParameters;
+  IdMap<InvariantId, std::vector<VarIdBase>> _parameters;
 
   // Map from VarId -> vector of InvariantId
   IdMap<VarIdBase, std::vector<InvariantId>> _listeningInvariants;
@@ -52,10 +52,8 @@ class PropagationGraph {
     void computeWithCycles();
     void computeLayersWithCycles();
     void computeInvariantFromVariables();
-    inline size_t getPosition(VarIdBase id) { return variablePosition[id.id]; }
-    inline size_t getPosition(InvariantId id) {
-      return invariantPosition.at(id);
-    }
+    inline size_t position(VarIdBase id) { return variablePosition[id.id]; }
+    inline size_t position(InvariantId id) { return invariantPosition.at(id); }
   } _topology;
 
   friend class PropagationEngine;
@@ -64,8 +62,7 @@ class PropagationGraph {
     PropagationGraph& graph;
     explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
     bool operator()(VarIdBase left, VarIdBase right) {
-      return graph._topology.getPosition(left) >
-             graph._topology.getPosition(right);
+      return graph._topology.position(left) > graph._topology.position(right);
     }
   };
 
@@ -111,11 +108,11 @@ class PropagationGraph {
    */
   void registerDefinedVariable(VarIdBase varId, InvariantId invariant);
 
-  [[nodiscard]] inline size_t getNumVariables() const {
+  [[nodiscard]] inline size_t numVariables() const {
     return _numVariables;  // this ignores null var
   }
 
-  [[nodiscard]] inline size_t getNumInvariants() const {
+  [[nodiscard]] inline size_t numInvariants() const {
     return _numInvariants;  // this ignores null invariant
   }
 
@@ -123,23 +120,23 @@ class PropagationGraph {
 
   inline bool isInputVar(VarIdBase id) { return _isInputVar.at(id); }
 
-  inline InvariantId getDefiningInvariant(VarIdBase id) {
+  inline InvariantId definingInvariant(VarIdBase id) {
     // Returns NULL_ID is not defined.
     return _definingInvariant.at(id);
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& getVariablesDefinedBy(
+  [[nodiscard]] inline const std::vector<VarIdBase>& variablesDefinedBy(
       InvariantId inv) const {
     return _variablesDefinedByInvariant.at(inv);
   }
 
-  [[nodiscard]] inline const std::vector<InvariantId>& getListeningInvariants(
+  [[nodiscard]] inline const std::vector<InvariantId>& listeningInvariants(
       VarId id) const {
     return _listeningInvariants.at(id);
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& getParameters(
+  [[nodiscard]] inline const std::vector<VarIdBase>& parameters(
       InvariantId inv) {
-    return _variableParameters.at(inv);
+    return _parameters.at(inv);
   }
 };

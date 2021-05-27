@@ -29,9 +29,9 @@ class MockLessEqual : public LessEqual {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return LessEqual::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextParameter)
+    ON_CALL(*this, nextParameter)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return LessEqual::getNextParameter(ts, engine);
+          return LessEqual::nextParameter(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentParameterChanged)
@@ -52,7 +52,7 @@ class MockLessEqual : public LessEqual {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextParameter, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine& engine),
               (override));
 
@@ -107,8 +107,7 @@ class LessEqualTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
-          .Times(0);
+      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(AtMost(1));
@@ -117,8 +116,7 @@ class LessEqualTest : public ::testing::Test {
           .Times(1);
     } else if (engine->mode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
-          .Times(3);
+      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(3);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(1);
@@ -145,32 +143,31 @@ class LessEqualTest : public ::testing::Test {
  */
 
 TEST_F(LessEqualTest, Init) {
-  EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(violationId), violationId),
-            0);
+  EXPECT_EQ(engine->committedValue(violationId), 0);
+  EXPECT_EQ(engine->value(engine->tmpTimestamp(violationId), violationId), 0);
 }
 
 TEST_F(LessEqualTest, Recompute) {
-  EXPECT_EQ(engine->getValue(0, violationId), 0);
-  EXPECT_EQ(engine->getCommittedValue(violationId), 0);
+  EXPECT_EQ(engine->value(0, violationId), 0);
+  EXPECT_EQ(engine->committedValue(violationId), 0);
 
   Timestamp time1 = 1;
   Timestamp time2 = time1 + 1;
 
   engine->setValue(time1, x, 40);
   lessEqual->recompute(time1, *engine);
-  EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-  EXPECT_EQ(engine->getValue(time1, violationId), 38);
+  EXPECT_EQ(engine->committedValue(violationId), 0);
+  EXPECT_EQ(engine->value(time1, violationId), 38);
 
   engine->setValue(time2, y, 20);
   lessEqual->recompute(time2, *engine);
-  EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-  EXPECT_EQ(engine->getValue(time2, violationId), 0);
+  EXPECT_EQ(engine->committedValue(violationId), 0);
+  EXPECT_EQ(engine->value(time2, violationId), 0);
 }
 
 TEST_F(LessEqualTest, NonViolatingUpdate) {
-  EXPECT_EQ(engine->getValue(0, violationId), 0);
-  EXPECT_EQ(engine->getCommittedValue(violationId), 0);
+  EXPECT_EQ(engine->value(0, violationId), 0);
+  EXPECT_EQ(engine->committedValue(violationId), 0);
 
   Timestamp timestamp;
 
@@ -178,57 +175,57 @@ TEST_F(LessEqualTest, NonViolatingUpdate) {
     timestamp = Timestamp(1 + i);
     engine->setValue(timestamp, x, 1 - i);
     lessEqual->recompute(timestamp, *engine);
-    EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-    EXPECT_EQ(engine->getValue(timestamp, violationId), 0);
+    EXPECT_EQ(engine->committedValue(violationId), 0);
+    EXPECT_EQ(engine->value(timestamp, violationId), 0);
   }
 
   for (size_t i = 0; i < 10000; ++i) {
     timestamp = Timestamp(1 + i);
     engine->setValue(timestamp, y, 5 + i);
     lessEqual->recompute(timestamp, *engine);
-    EXPECT_EQ(engine->getCommittedValue(violationId), 0);
-    EXPECT_EQ(engine->getValue(timestamp, violationId), 0);
+    EXPECT_EQ(engine->committedValue(violationId), 0);
+    EXPECT_EQ(engine->value(timestamp, violationId), 0);
   }
 }
 
 TEST_F(LessEqualTest, NotifyChange) {
-  EXPECT_EQ(engine->getValue(0, violationId),
+  EXPECT_EQ(engine->value(0, violationId),
             0);  // initially the value of violationId is 0
 
   LocalId unused = -1;
 
   Timestamp time1 = 1;
 
-  EXPECT_EQ(engine->getValue(time1, x), 2);
+  EXPECT_EQ(engine->value(time1, x), 2);
   engine->setValue(time1, x, 40);
-  EXPECT_EQ(engine->getCommittedValue(x), 2);
-  EXPECT_EQ(engine->getValue(time1, x), 40);
+  EXPECT_EQ(engine->committedValue(x), 2);
+  EXPECT_EQ(engine->value(time1, x), 40);
   lessEqual->notifyIntChanged(time1, *engine, unused);
-  EXPECT_EQ(engine->getValue(time1, violationId),
+  EXPECT_EQ(engine->value(time1, violationId),
             38);  // incremental value of violationId is 0;
 
   engine->setValue(time1, y, 0);
   lessEqual->notifyIntChanged(time1, *engine, unused);
-  auto tmpValue = engine->getValue(
+  auto tmpValue = engine->value(
       time1, violationId);  // incremental value of violationId is 40;
 
   // Incremental computation gives the same result as recomputation
   lessEqual->recompute(time1, *engine);
-  EXPECT_EQ(engine->getValue(time1, violationId), tmpValue);
+  EXPECT_EQ(engine->value(time1, violationId), tmpValue);
 
   Timestamp time2 = time1 + 1;
 
-  EXPECT_EQ(engine->getValue(time2, y), 2);
+  EXPECT_EQ(engine->value(time2, y), 2);
   engine->setValue(time2, y, 20);
-  EXPECT_EQ(engine->getCommittedValue(y), 2);
-  EXPECT_EQ(engine->getValue(time2, y), 20);
+  EXPECT_EQ(engine->committedValue(y), 2);
+  EXPECT_EQ(engine->value(time2, y), 20);
   lessEqual->notifyIntChanged(time2, *engine, unused);
-  EXPECT_EQ(engine->getValue(time2, violationId),
+  EXPECT_EQ(engine->value(time2, violationId),
             0);  // incremental value of violationId is 0;
 }
 
 TEST_F(LessEqualTest, IncrementalVsRecompute) {
-  EXPECT_EQ(engine->getValue(0, violationId),
+  EXPECT_EQ(engine->value(0, violationId),
             0);  // initially the value of violationId is 0
   LocalId unused = -1;
   // todo: not clear if we actually want to deal with overflows...
@@ -238,9 +235,9 @@ TEST_F(LessEqualTest, IncrementalVsRecompute) {
   for (size_t i = 0; i < 1000; ++i) {
     ++currentTimestamp;
     // Check that we do not accidentally commit
-    ASSERT_EQ(engine->getCommittedValue(x), 2);
-    ASSERT_EQ(engine->getCommittedValue(y), 2);
-    ASSERT_EQ(engine->getCommittedValue(violationId),
+    ASSERT_EQ(engine->committedValue(x), 2);
+    ASSERT_EQ(engine->committedValue(y), 2);
+    ASSERT_EQ(engine->committedValue(violationId),
               0);  // violationId is committed by register.
 
     // Set all variables
@@ -248,23 +245,23 @@ TEST_F(LessEqualTest, IncrementalVsRecompute) {
     engine->setValue(currentTimestamp, y, distribution(gen));
 
     // notify changes
-    if (engine->getCommittedValue(x) != engine->getValue(currentTimestamp, x)) {
+    if (engine->committedValue(x) != engine->value(currentTimestamp, x)) {
       lessEqual->notifyIntChanged(currentTimestamp, *engine, unused);
     }
-    if (engine->getCommittedValue(y) != engine->getValue(currentTimestamp, y)) {
+    if (engine->committedValue(y) != engine->value(currentTimestamp, y)) {
       lessEqual->notifyIntChanged(currentTimestamp, *engine, unused);
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTimestamp, violationId);
+    auto tmp = engine->value(currentTimestamp, violationId);
     lessEqual->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, violationId));
+    ASSERT_EQ(tmp, engine->value(currentTimestamp, violationId));
   }
 }
 
 TEST_F(LessEqualTest, Commit) {
-  EXPECT_EQ(engine->getCommittedValue(violationId), 0);
+  EXPECT_EQ(engine->committedValue(violationId), 0);
 
   LocalId unused = -1;
 
@@ -296,7 +293,7 @@ TEST_F(LessEqualTest, CreateLessEqual) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(viol), 5);
+  EXPECT_EQ(engine->newValue(viol), 5);
 }
 
 TEST_F(LessEqualTest, NotificationsInputToOutput) {
