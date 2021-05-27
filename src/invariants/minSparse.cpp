@@ -19,28 +19,28 @@ void MinSparse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
 void MinSparse::recompute(Timestamp ts, Engine& engine) {
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    _localPriority.updatePriority(ts, i, engine.getValue(ts, _varArray[i]));
+    _localPriority.updatePriority(ts, i, engine.value(ts, _varArray[i]));
   }
-  updateValue(ts, engine, _y, _localPriority.getMinPriority(ts));
+  updateValue(ts, engine, _y, _localPriority.minPriority(ts));
 }
 
 void MinSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
-  auto newValue = engine.getValue(ts, _varArray[id]);
+  auto newValue = engine.value(ts, _varArray[id]);
   _localPriority.updatePriority(ts, id, newValue);
-  updateValue(ts, engine, _y, _localPriority.getMinPriority(ts));
+  updateValue(ts, engine, _y, _localPriority.minPriority(ts));
 }
 
-VarId MinSparse::getNextParameter(Timestamp ts, Engine&) {
+VarId MinSparse::nextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
-  if (static_cast<size_t>(_state.getValue(ts)) == _varArray.size()) {
+  if (static_cast<size_t>(_state.value(ts)) == _varArray.size()) {
     return NULL_ID;  // Done
   } else {
-    return _varArray.at(_state.getValue(ts));
+    return _varArray.at(_state.value(ts));
   }
 }
 
 void MinSparse::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
-  notifyIntChanged(ts, engine, _state.getValue(ts));
+  notifyIntChanged(ts, engine, _state.value(ts));
 }
 
 void MinSparse::commit(Timestamp ts, Engine& engine) {

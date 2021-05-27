@@ -73,24 +73,24 @@ class Engine {
 
   //--------------------- Variable ---------------------
 
-  inline VarId getSourceId(VarId id) {
-    return id.idType == VarIdType::var ? id : _store.getIntViewSourceId(id);
-    // getSourceId(_store.getIntView(id).getParentId());
+  inline VarId sourceId(VarId id) {
+    return id.idType == VarIdType::var ? id : _store.intViewSourceId(id);
+    // sourceId(_store.intView(id).parantId());
   }
 
   virtual void queueForPropagation(Timestamp, VarId) = 0;
   virtual void notifyMaybeChanged(Timestamp, VarId) = 0;
 
-  Int getValue(Timestamp, VarId);
-  inline Int getNewValue(VarId id) { return getValue(_currentTimestamp, id); }
+  Int value(Timestamp, VarId);
+  inline Int newValue(VarId id) { return value(_currentTimestamp, id); }
 
-  Int getIntViewValue(Timestamp, VarId);
+  Int intViewValue(Timestamp, VarId);
 
-  Int getCommittedValue(VarId);
+  Int committedValue(VarId);
 
-  Int getIntViewCommittedValue(VarId);
+  Int intViewCommittedValue(VarId);
 
-  Timestamp getTmpTimestamp(VarId);
+  Timestamp tmpTimestamp(VarId);
 
   bool isPostponed(InvariantId);
 
@@ -102,30 +102,30 @@ class Engine {
   void commitIf(Timestamp, VarId);
   void commitValue(VarId, Int val);
 
-  [[nodiscard]] inline Int getLowerBound(VarId id) const {
+  [[nodiscard]] inline Int lowerBound(VarId id) const {
     if (id.idType == VarIdType::view) {
-      return getIntViewLowerBound(id);
+      return intViewLowerBound(id);
     }
     assert(id.idType == VarIdType::var);
-    return _store.getConstIntVar(id).getLowerBound();
+    return _store.constIntVar(id).lowerBound();
   }
 
-  [[nodiscard]] inline Int getIntViewLowerBound(VarId id) const {
+  [[nodiscard]] inline Int intViewLowerBound(VarId id) const {
     assert(id.idType == VarIdType::view);
-    return _store.getConstIntView(id)->getLowerBound();
+    return _store.constIntView(id)->lowerBound();
   }
 
-  [[nodiscard]] inline Int getUpperBound(VarId id) const {
+  [[nodiscard]] inline Int upperBound(VarId id) const {
     if (id.idType == VarIdType::view) {
-      return getIntViewUpperBound(id);
+      return intViewUpperBound(id);
     }
     assert(id.idType == VarIdType::var);
-    return _store.getConstIntVar(id).getUpperBound();
+    return _store.constIntVar(id).upperBound();
   }
 
-  [[nodiscard]] inline Int getIntViewUpperBound(VarId id) const {
+  [[nodiscard]] inline Int intViewUpperBound(VarId id) const {
     assert(id.idType == VarIdType::view);
-    return _store.getConstIntView(id)->getUpperBound();
+    return _store.constIntView(id)->upperBound();
   }
 
   void commitInvariantIf(Timestamp, InvariantId);
@@ -181,8 +181,8 @@ class Engine {
   virtual void registerVar(VarId) = 0;
   virtual void registerInvariant(InvariantId) = 0;
 
-  const Store& getStore();
-  [[nodiscard]] Timestamp getCurrentTimestamp() const;
+  const Store& store();
+  [[nodiscard]] Timestamp currentTimestamp() const;
 };
 
 template <class T, typename... Args>
@@ -232,78 +232,76 @@ Engine::makeConstraint(Args&&... args) {
 
 //--------------------- Inlined functions ---------------------
 
-inline const Store& Engine::getStore() { return _store; }
-inline Timestamp Engine::getCurrentTimestamp() const {
-  return _currentTimestamp;
-}
+inline const Store& Engine::store() { return _store; }
+inline Timestamp Engine::currentTimestamp() const { return _currentTimestamp; }
 
 inline bool Engine::hasChanged(Timestamp ts, VarId id) {
-  return _store.getIntVar(id).hasChanged(ts);
+  return _store.intVar(id).hasChanged(ts);
 }
 
-inline Int Engine::getValue(Timestamp ts, VarId id) {
+inline Int Engine::value(Timestamp ts, VarId id) {
   if (id.idType == VarIdType::view) {
-    return getIntViewValue(ts, id);
+    return intViewValue(ts, id);
   }
-  return _store.getIntVar(id).getValue(ts);
+  return _store.intVar(id).value(ts);
 }
 
-inline Int Engine::getIntViewValue(Timestamp ts, VarId id) {
-  return _store.getIntView(id).getValue(ts);
+inline Int Engine::intViewValue(Timestamp ts, VarId id) {
+  return _store.intView(id).value(ts);
 }
 
-inline Int Engine::getCommittedValue(VarId id) {
+inline Int Engine::committedValue(VarId id) {
   if (id.idType == VarIdType::view) {
-    return getIntViewCommittedValue(id);
+    return intViewCommittedValue(id);
   }
-  return _store.getIntVar(id).getCommittedValue();
+  return _store.intVar(id).committedValue();
 }
 
-inline Int Engine::getIntViewCommittedValue(VarId id) {
-  return _store.getIntView(id).getCommittedValue();
+inline Int Engine::intViewCommittedValue(VarId id) {
+  return _store.intView(id).committedValue();
 }
 
-inline Timestamp Engine::getTmpTimestamp(VarId id) {
+inline Timestamp Engine::tmpTimestamp(VarId id) {
   if (id.idType == VarIdType::view) {
-    return _store.getIntVar(_store.getIntViewSourceId(id)).getTmpTimestamp();
+    return _store.intVar(_store.intViewSourceId(id)).tmpTimestamp();
   }
-  return _store.getIntVar(id).getTmpTimestamp();
+  return _store.intVar(id).tmpTimestamp();
 }
 
 inline bool Engine::isPostponed(InvariantId id) {
-  return _store.getInvariant(id).isPostponed();
+  return _store.invariant(id).isPostponed();
 }
 
 inline void Engine::recompute(InvariantId id) {
-  return _store.getInvariant(id).recompute(_currentTimestamp, *this);
+  return _store.invariant(id).recompute(_currentTimestamp, *this);
 }
 
 inline void Engine::recompute(Timestamp ts, InvariantId id) {
-  return _store.getInvariant(id).recompute(ts, *this);
+  return _store.invariant(id).recompute(ts, *this);
 }
 
 inline void Engine::updateValue(Timestamp ts, VarId id, Int val) {
-  _store.getIntVar(id).setValue(ts, val);
+  _store.intVar(id).setValue(ts, val);
 }
 
 inline void Engine::incValue(Timestamp ts, VarId id, Int inc) {
-  _store.getIntVar(id).incValue(ts, inc);
+  _store.intVar(id).incValue(ts, inc);
 }
 
-inline void Engine::commit(VarId id) { _store.getIntVar(id).commit(); }
+inline void Engine::commit(VarId id) { _store.intVar(id).commit(); }
 
 inline void Engine::commitIf(Timestamp ts, VarId id) {
-  _store.getIntVar(id).commitIf(ts);
+  _store.intVar(id).commitIf(ts);
 }
 
 inline void Engine::commitValue(VarId id, Int val) {
-  _store.getIntVar(id).commitValue(val);
+  _store.intVar(id).commitValue(val);
 }
 
 inline void Engine::commitInvariantIf(Timestamp ts, InvariantId id) {
-  _store.getInvariant(id).commit(ts, *this);
+  _store.invariant(id).commit(ts, *this);
 }
 
 inline void Engine::commitInvariant(InvariantId id) {
-  _store.getInvariant(id).commit(_currentTimestamp, *this);
+  _store.invariant(id).commit(_currentTimestamp, *this);
 }

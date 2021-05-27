@@ -20,10 +20,10 @@ void AllDifferent::init(Timestamp ts, Engine& engine) {
   Int ub = std::numeric_limits<Int>::min();
 
   for (size_t i = 0; i < _variables.size(); ++i) {
-    lb = std::min(lb, engine.getLowerBound(_variables[i]));
-    ub = std::max(ub, engine.getUpperBound(_variables[i]));
+    lb = std::min(lb, engine.lowerBound(_variables[i]));
+    ub = std::max(ub, engine.upperBound(_variables[i]));
     engine.registerInvariantParameter(_id, _variables[i], LocalId(i));
-    _localValues.emplace_back(ts, engine.getCommittedValue(_variables[i]));
+    _localValues.emplace_back(ts, engine.committedValue(_variables[i]));
   }
   assert(ub >= lb);
 
@@ -43,15 +43,15 @@ void AllDifferent::recompute(Timestamp ts, Engine& engine) {
 
   Int violInc = 0;
   for (size_t i = 0; i < _variables.size(); ++i) {
-    violInc += increaseCount(ts, engine.getValue(ts, _variables[i]));
-    _localValues[i].setValue(ts, engine.getValue(ts, _variables[i]));
+    violInc += increaseCount(ts, engine.value(ts, _variables[i]));
+    _localValues[i].setValue(ts, engine.value(ts, _variables[i]));
   }
   incValue(ts, engine, _violationId, violInc);
 }
 
 void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
-  Int oldValue = _localValues.at(id).getValue(ts);
-  auto newValue = engine.getValue(ts, _variables[id]);
+  Int oldValue = _localValues.at(id).value(ts);
+  auto newValue = engine.value(ts, _variables[id]);
   if (newValue == oldValue) {
     return;
   }
@@ -61,10 +61,10 @@ void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
   incValue(ts, engine, _violationId, static_cast<Int>(dec + inc));
 }
 
-VarId AllDifferent::getNextParameter(Timestamp ts, Engine&) {
+VarId AllDifferent::nextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
 
-  auto index = static_cast<size_t>(_state.getValue(ts));
+  auto index = static_cast<size_t>(_state.value(ts));
   if (index < _variables.size()) {
     return _variables.at(index);
   }
@@ -72,7 +72,7 @@ VarId AllDifferent::getNextParameter(Timestamp ts, Engine&) {
 }
 
 void AllDifferent::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
-  auto id = static_cast<size_t>(_state.getValue(ts));
+  auto id = static_cast<size_t>(_state.value(ts));
   assert(id < _variables.size());
   notifyIntChanged(ts, engine, id);
 }

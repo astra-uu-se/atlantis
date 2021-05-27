@@ -37,9 +37,9 @@ void IntVar::updateDomain(Int lowerBound, Int upperBound) {
 
 std::ostream& operator<<(std::ostream& out, IntVar const& var) {
   out << "IntVar(id: " << var._id.id;
-  out << ",c: " << var._value.getCommittedValue();
-  out << ",ts: " << var._value.getValue(var._value.getTmpTimestamp());
-  out << ",ts: " << var._value.getTmpTimestamp();
+  out << ",c: " << var._value.committedValue();
+  out << ",ts: " << var._value.value(var._value.tmpTimestamp());
+  out << ",ts: " << var._value.tmpTimestamp();
   out << ")";
   return out;
 }

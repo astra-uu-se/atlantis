@@ -23,18 +23,18 @@ void Equal::init(Timestamp, Engine& engine) {
 
 void Equal::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _violationId,
-              std::abs(engine.getValue(ts, _x) - engine.getValue(ts, _y)));
+              std::abs(engine.value(ts, _x) - engine.value(ts, _y)));
 }
 
 void Equal::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId Equal::getNextParameter(Timestamp ts, Engine&) {
+VarId Equal::nextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?m_x:m_y;
-  switch (_state.getValue(ts)) {
+  switch (_state.value(ts)) {
     case 0:
       return _x;
     case 1:

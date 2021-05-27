@@ -15,18 +15,17 @@ void ElementConst::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 }
 
 void ElementConst::recompute(Timestamp ts, Engine& engine) {
-  updateValue(
-      ts, engine, _y,
-      _array.at(static_cast<unsigned long>(engine.getValue(ts, _index))));
+  updateValue(ts, engine, _y,
+              _array.at(static_cast<unsigned long>(engine.value(ts, _index))));
 }
 
 void ElementConst::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId ElementConst::getNextParameter(Timestamp ts, Engine&) {
+VarId ElementConst::nextParameter(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
-  if (_state.getValue(ts) == 0) {
+  if (_state.value(ts) == 0) {
     return _index;
   } else {
     return NULL_ID;  // Done

@@ -31,9 +31,9 @@ class MockElementConst : public ElementConst {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return ElementConst::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextParameter)
+    ON_CALL(*this, nextParameter)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return ElementConst::getNextParameter(ts, engine);
+          return ElementConst::nextParameter(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentParameterChanged)
@@ -54,7 +54,7 @@ class MockElementConst : public ElementConst {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextParameter, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine& engine),
               (override));
 
@@ -105,8 +105,7 @@ class ElementConstTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
-          .Times(0);
+      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(AtMost(1));
@@ -115,8 +114,7 @@ class ElementConstTest : public ::testing::Test {
           .Times(1);
     } else if (engine->mode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
-          .Times(2);
+      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(2);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(1);
@@ -162,7 +160,7 @@ TEST_F(ElementConstTest, CreateElement) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(output), 3);
+  EXPECT_EQ(engine->newValue(output), 3);
 }
 
 TEST_F(ElementConstTest, NotificationsInputToOutput) {
