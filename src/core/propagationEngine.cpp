@@ -26,10 +26,6 @@ void PropagationEngine::close() {
   } catch (std::exception e) {
     std::cout << "foo";
   }
-  if (m_mode == PropagationMode::OUTPUT_TO_INPUT) {
-    m_outputToInputExplorer.populateAncestors();
-  }
-
   // compute initial values for variables and for (internal datastructure of)
   // invariants
   recomputeAndCommit();
@@ -165,11 +161,19 @@ void PropagationEngine::endQuery() {
       propagate<false>();
       break;
     case PropagationMode::OUTPUT_TO_INPUT:
-      emptyModifiedVariables();
-      outputToInputPropagate<true>();
+      if (_useMarkingForOutputToInput) {
+        markPropagationPathAndEmptyModifiedVariables();
+      } else {
+        emptyModifiedVariables();
+      }
+      outputToInputPropagate<false>();
       break;
     case PropagationMode::MIXED:
-      markPropagationPathAndEmptyModifiedVariables();
+      if (_useMarkingForOutputToInput) {
+        markPropagationPathAndEmptyModifiedVariables();
+      } else {
+        emptyModifiedVariables();
+      }
       outputToInputPropagate<false>();
       break;
   }
