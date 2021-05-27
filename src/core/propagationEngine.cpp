@@ -26,6 +26,10 @@ void PropagationEngine::close() {
   } catch (std::exception e) {
     std::cout << "foo";
   }
+  if (m_mode == PropagationMode::OUTPUT_TO_INPUT) {
+    m_outputToInputExplorer.populateAncestors();
+  }
+
   // compute initial values for variables and for (internal datastructure of)
   // invariants
   recomputeAndCommit();
@@ -137,7 +141,7 @@ void PropagationEngine::beginMove() {
   assert(!m_isMoving);
   m_isMoving = true;
   ++m_currentTime;
-  // only needed for bottom up propagation
+  // only needed for output-to-input propagation
   clearPropagationPath();
 }
 
@@ -152,7 +156,8 @@ void PropagationEngine::query(VarId id) {
   if (m_mode == PropagationMode::INPUT_TO_OUTPUT) {
     return;
   }
-  m_outputToInputExplorer.registerForPropagation(m_currentTime, getSourceId(id));
+  m_outputToInputExplorer.registerForPropagation(m_currentTime,
+                                                 getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
@@ -161,19 +166,11 @@ void PropagationEngine::endQuery() {
       propagate<false>();
       break;
     case PropagationMode::OUTPUT_TO_INPUT:
-      if (m_useMarkingForOutputToInput) {
-        markPropagationPathAndEmptyModifiedVariables();
-      } else {
-        emptyModifiedVariables();
-      }
-      outputToInputPropagate<false>();
+      emptyModifiedVariables();
+      outputToInputPropagate<true>();
       break;
     case PropagationMode::MIXED:
-      if (m_useMarkingForOutputToInput) {
-        markPropagationPathAndEmptyModifiedVariables();
-      } else {
-        emptyModifiedVariables();
-      }
+      markPropagationPathAndEmptyModifiedVariables();
       outputToInputPropagate<false>();
       break;
   }
@@ -273,7 +270,8 @@ void PropagationEngine::propagate() {
        stableVarId = getNextStableVariable(m_currentTime)) {
     IntVar& variable = m_store.getIntVar(stableVarId);
 
-    InvariantId definingInvariant = m_propGraph.getDefiningInvariant(stableVarId);
+    InvariantId definingInvariant =
+        m_propGraph.getDefiningInvariant(stableVarId);
 
 #ifdef PROPAGATION_DEBUG
     logDebug("\tPropagating " << variable);
