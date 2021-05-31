@@ -34,8 +34,6 @@ void Statistics::countDefinedVariables(bool labels) {
   std::cout << "===========================" << std::endl;
   std::cout << "=========VARIABLES=========" << std::endl;
   if (labels) {
-    // variablesDefinedBy();
-    // std::cout << "===========================" << std::endl;
     std::cout << "=========BAD=========" << std::endl;
     freeVariables();
     std::cout << "=========ENLARGED=========" << std::endl;
@@ -213,10 +211,8 @@ void Statistics::matchingAnnotations(bool labels) {
 }
 int Statistics::height() {
   int h = 0;
-  std::map<Node*, int> visited;
   int x = 0;
-  int vars = 0;
-  int cons = 0;
+  std::map<Node*, int> visited;
   for (Variable* v : _model->varMap().variables()) {
     if (!v->isDefined() && v->isDefinable()) {
       height_aux(visited, v, 1, h);
@@ -428,12 +424,6 @@ std::string Statistics::latexRow() {
     s << "-";
   }
   s << " & " << std::fixed << std::setprecision(2) << inputVars().size();
-  // s << " & " << std::fixed << std::setprecision(2) << averageInfluence();
-  // s << " & " << std::fixed << std::setprecision(2) << maxInfluence();
-  // s << " & " << std::fixed << std::setprecision(2) << outputVars().size();
-  // s << " & " << std::fixed << std::setprecision(2) << averageDependency();
-  // s << " & " << std::fixed << std::setprecision(2) << maxDependency();
-  // s << " & " << std::fixed << std::setprecision(2) << neighbourhoodSize();
   s << " & " << enlargedDomains() << " (" << enlargedDomainSum() << ")";
   s << "\\\\";
 
@@ -467,57 +457,10 @@ std::string Statistics::row() {
     s << "-";
   }
   s << "\t" << std::fixed << std::setprecision(2) << inputVars().size();
-  // s << "\t" << std::fixed << std::setprecision(2) << averageInfluence();
-  // s << "\t" << std::fixed << std::setprecision(2) << maxInfluence();
-  // s << "\t" << std::fixed << std::setprecision(2) << outputVars().size();
-  // s << "\t" << std::fixed << std::setprecision(2) << averageDependency();
-  // s << "\t" << std::fixed << std::setprecision(2) << maxDependency();
-  // s << "\t" << std::fixed << std::setprecision(2) << neighbourhoodSize();
   s << "\t" << enlargedDomains() << " (" << enlargedDomainSum() << ")";
 
   s << std::endl;
   return s.str();
-}
-
-int Statistics::influence(Variable* variable) {
-  int influence = 0;
-  std::set<Variable*> visited;
-  influenceAux(influence, visited, variable);
-  return influence;
-}
-void Statistics::influenceAux(int& influence, std::set<Variable*>& visited,
-                              Variable* variable) {
-  if (visited.count(variable) || !variable->isDefinable()) return;
-  influence++;
-  visited.insert(variable);
-  for (auto constraint : variable->getNextConstraint()) {
-    for (auto var : constraint->getNextVariable()) {
-      influenceAux(influence, visited, var);
-    }
-  }
-}
-double Statistics::averageInfluence() {
-  int totalInfluence = 0;
-  for (auto var : _model->varMap().variables()) {
-    if (!var->isDefined() || var->definedBy()->isImplicit()) {
-      totalInfluence += influence(var);
-    }
-  }
-  return 100 * (double)totalInfluence /
-         ((variableCount() - definedCount()) * (variableCount()));
-}
-
-double Statistics::maxInfluence() {
-  int maxInfluence = 0;
-  for (auto var : _model->varMap().variables()) {
-    if (!var->isDefined()) {
-      int newInfluence = influence(var);
-      if (newInfluence > maxInfluence) {
-        maxInfluence = newInfluence;
-      }
-    }
-  }
-  return 100 * (double)maxInfluence / (variableCount());
 }
 std::vector<Variable*> Statistics::inputVars() {
   std::vector<Variable*> inputVars;
@@ -536,43 +479,6 @@ std::vector<Variable*> Statistics::outputVars() {
     }
   }
   return outputVars;
-}
-int Statistics::dependency(Variable* variable) {
-  int dependency = 0;
-  std::set<Variable*> visited;
-  dependencyAux(dependency, visited, variable);
-  return dependency;
-}
-void Statistics::dependencyAux(int& dependency, std::set<Variable*>& visited,
-                               Variable* variable) {
-  if (visited.count(variable) || !variable->isDefinable()) return;
-  dependency++;
-  visited.insert(variable);
-
-  if (variable->isDefined()) {
-    for (auto var : variable->definedBy()->dependencies()) {
-      dependencyAux(dependency, visited, var);
-    }
-  }
-}
-double Statistics::averageDependency() {
-  int totalDependency = 0;
-  for (auto var : outputVars()) {
-    totalDependency += dependency(var);
-  }
-  return 100 * (double)totalDependency /
-         (outputVars().size() * (variableCount()));
-}
-
-double Statistics::maxDependency() {
-  int maxDependency = 0;
-  for (auto var : outputVars()) {
-    int newDependency = dependency(var);
-    if (newDependency > maxDependency) {
-      maxDependency = newDependency;
-    }
-  }
-  return 100 * (double)maxDependency / (variableCount());
 }
 int Statistics::neighbourhoodSize() {
   int nbhd = 0;
