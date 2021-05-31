@@ -10,7 +10,6 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
       invariantStackIdx_(0),
       varStableAt(expectedSize),
       invariantStableAt(expectedSize),
-      varIsOnStack(expectedSize),
       invariantIsOnStack(expectedSize),
       m_decisionVarAncestor(expectedSize) {
   variableStack_.reserve(expectedSize);
@@ -21,13 +20,16 @@ void OutputToInputExplorer::populateAncestors() {
   std::vector<bool> varVisited(m_engine.getNumVariables() + 1);
   std::deque<IdBase> stack(m_engine.getNumVariables() + 1);
 
+  size_t expectedSize = m_engine.getDecisionVariables().size();
   for (IdBase idx = 1; idx <= m_engine.getNumVariables(); ++idx) {
-    m_decisionVarAncestor.register_idx(idx);
+    if (m_decisionVarAncestor.size() < idx) {
+      m_decisionVarAncestor.register_idx(idx);
+    }
+    if (m_decisionVarAncestor[idx].size() < expectedSize) {
+      m_decisionVarAncestor[idx].reserve(expectedSize);
+    }
     m_decisionVarAncestor[idx].clear();
-    m_decisionVarAncestor[idx].reserve(m_engine.getDecisionVariables().size());
   }
-
-  varVisited.resize(m_engine.getNumVariables() + 1);
 
   for (const VarIdBase decisionVar : m_engine.getDecisionVariables()) {
     std::fill(varVisited.begin(), varVisited.end(), NULL_ID);
@@ -59,7 +61,7 @@ template bool OutputToInputExplorer::isUpToDate<false>(VarIdBase id);
 template <bool OutputToInputMarking>
 bool OutputToInputExplorer::isUpToDate(VarIdBase id) {
   if constexpr (OutputToInputMarking) {
-    for (const size_t ancestor : m_modifiedAncestors) {
+    for (const size_t ancestor : m_engine.getModifiedDecisionVariables()) {
       if (m_decisionVarAncestor.at(id).find(ancestor) !=
           m_decisionVarAncestor.at(id).end()) {
         return false;
@@ -83,21 +85,9 @@ void OutputToInputExplorer::preprocessVarStack(Timestamp currentTime) {
       variableStack_[newStackSize] = variableStack_[s];
       ++newStackSize;
     } else {
-      varIsOnStack.set(variableStack_[s], false);
       markStable(currentTime, variableStack_[s]);
     }
     varStackIdx_ = newStackSize;
-  }
-}
-
-void OutputToInputExplorer::populateModifiedAncestors(Timestamp t) {
-  m_modifiedAncestors.clear();
-  m_modifiedAncestors.reserve(m_engine.getDecisionVariables().size());
-
-  for (VarIdBase decisionVar : m_engine.getDecisionVariables()) {
-    if (m_engine.hasChanged(t, decisionVar)) {
-      m_modifiedAncestors.push_back(decisionVar);
-    }
   }
 }
 
@@ -150,7 +140,6 @@ bool OutputToInputExplorer::visitNextVariable() {
 void OutputToInputExplorer::registerVar(VarId id) {
   variableStack_.emplace_back(NULL_ID);  // push back just to resize the stack!
   varStableAt.register_idx(id);
-  varIsOnStack.register_idx(id, false);
 }
 
 void OutputToInputExplorer::registerInvariant(InvariantId id) {
@@ -164,9 +153,6 @@ template void OutputToInputExplorer::propagate<false>(Timestamp currentTime);
 
 template <bool OutputToInputMarking>
 void OutputToInputExplorer::propagate(Timestamp currentTime) {
-  if constexpr (OutputToInputMarking) {
-    populateModifiedAncestors(currentTime);
-  }
   preprocessVarStack<OutputToInputMarking>(currentTime);
   // recursively expand variables to compute their value.
   while (varStackIdx_ > 0) {

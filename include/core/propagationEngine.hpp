@@ -29,6 +29,8 @@ class PropagationEngine : public Engine {
   IdMap<VarId, bool> m_varIsOnPropagationPath;
   std::queue<VarId> m_propagationPathQueue;
 
+  std::unordered_set<size_t> m_modifiedDecisionVariables;
+
   void recomputeAndCommit();
 
   void emptyModifiedVariables();
@@ -100,6 +102,8 @@ class PropagationEngine : public Engine {
   size_t getNumInvariants();
 
   [[nodiscard]] const std::vector<VarIdBase>& getDecisionVariables();
+  [[nodiscard]] const std::unordered_set<size_t>&
+  getModifiedDecisionVariables();
   [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables();
   [[nodiscard]] const std::vector<VarIdBase>& getInputVariables(InvariantId);
 
@@ -190,7 +194,15 @@ inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
   if (!m_propGraph.isDecisionVar(v)) {
     throw VariableIsNotDecisionVariable();
   }
-  m_store.getIntVar(v).setValue(t, val);
+  IntVar& var = m_store.getIntVar(v);
+  var.setValue(t, val);
+
+  if (var.hasChanged(t)) {
+    m_modifiedDecisionVariables.emplace(v);
+  } else {
+    m_modifiedDecisionVariables.erase(v);
+  }
+
   notifyMaybeChanged(t, v);
 }
 
@@ -221,7 +233,17 @@ inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
   return m_propGraph.getInputVariables(inv);
 }
 
+inline const std::unordered_set<size_t>&
+PropagationEngine::getModifiedDecisionVariables() {
+  return m_modifiedDecisionVariables;
+}
+
 template <bool OutputToInputMarking>
-inline void PropagationEngine::outputToInputPropagate() {
-  m_outputToInputExplorer.propagate<OutputToInputMarking>(m_currentTime);
+inline void PropagationEngine::propagate() {
+  if constexpr (OutputToInputMarking) {
+    emptyModifiedVariables();
+  } else {
+    markPropagationPathAndEmptyModifiedVariables();
+  }
+  m_outputToInputExplorer.probe<OutputToInputMarking>(m_currentTime);
 }

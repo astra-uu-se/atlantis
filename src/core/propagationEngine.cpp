@@ -103,6 +103,7 @@ void PropagationEngine::emptyModifiedVariables() {
     m_propGraph.m_propagationQueue.pop();
   }
   m_isEnqueued.assign_all(false);
+  m_modifiedDecisionVariables.clear();
 }
 
 void PropagationEngine::recomputeAndCommit() {
@@ -166,11 +167,9 @@ void PropagationEngine::endQuery() {
       propagate<false>();
       break;
     case PropagationMode::OUTPUT_TO_INPUT:
-      emptyModifiedVariables();
       outputToInputPropagate<true>();
       break;
     case PropagationMode::MIXED:
-      markPropagationPathAndEmptyModifiedVariables();
       outputToInputPropagate<false>();
       break;
   }
@@ -181,28 +180,22 @@ void PropagationEngine::endQuery() {
 void PropagationEngine::beginCommit() {}
 
 void PropagationEngine::endCommit() {
-  switch (m_mode) {
-    case PropagationMode::INPUT_TO_OUTPUT:
-      propagate<true>();
-      break;
-    case PropagationMode::OUTPUT_TO_INPUT:
-      if (m_useMarkingForOutputToInput) {
-        markPropagationPathAndEmptyModifiedVariables();
-      } else {
-        emptyModifiedVariables();
-      }
-      outputToInputPropagate<true>();
-      // BUG: Variables that are not dynamically defining the queries variables
-      // will not be properly updated: they should be marked as changed until
-      // committed but this does not happen.
-      // TODO: create test case to catch this bug.
-      break;
-    case PropagationMode::MIXED:
-      propagate<true>();
-      break;
+  for (VarIdBase varId : getDecisionVariables()) {
+    if (m_modifiedDecisionVariables.find(varId) !=
+        m_modifiedDecisionVariables.end()) {
+      assert(m_store.getIntVar(varId).hasChanged(m_currentTime));
+    } else {
+      assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
+    }
   }
+  propagate<true>();
   // We must always clear due to the current version of query()
   m_outputToInputExplorer.clearRegisteredVariables();
+
+  for (size_t varId : m_modifiedDecisionVariables) {
+    assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
+  }
+  m_modifiedDecisionVariables.clear();
 
   return;
   // Todo: This just commits everything and can be very inefficient, instead
