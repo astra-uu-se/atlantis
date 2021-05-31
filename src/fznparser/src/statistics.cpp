@@ -228,15 +228,15 @@ int Statistics::height() {
 
 void Statistics::height_aux(std::map<Node*, int>& visited, Node* node, int x,
                             int& h) {
+  if (auto var = dynamic_cast<Variable*>(node)) {
+    if (!var->isDefinable()) {
+      return;
+    }
+  }
   if (x > h) h = x;
   if (visited.find(node) == visited.end()) {
     visited.insert(std::pair<Node*, int>(node, x));
     for (auto n : node->getNext()) {
-      if (auto var = dynamic_cast<Variable*>(n)) {
-        if (!var->isDefinable()) {
-          return;
-        }
-      }
       height_aux(visited, n, x + 1, h);
     }
     return;
@@ -244,11 +244,6 @@ void Statistics::height_aux(std::map<Node*, int>& visited, Node* node, int x,
   if (x > visited.find(node)->second) {
     visited.find(node)->second = x;
     for (auto n : node->getNext()) {
-      if (auto var = dynamic_cast<Variable*>(n)) {
-        if (!var->isDefinable()) {
-          return;
-        }
-      }
       height_aux(visited, n, x + 1, h);
     }
   }
