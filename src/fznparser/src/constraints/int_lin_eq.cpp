@@ -29,6 +29,11 @@ bool IntLinEq::canBeImplicit() {
       return false;
     }
   }
+  for (auto var : _variables) {
+    if (!var->_domain->isContinuous()) {
+      return false;
+    }
+  }
   return true;
 }
 bool IntLinEq::imposeDomain(Variable* variable) {
