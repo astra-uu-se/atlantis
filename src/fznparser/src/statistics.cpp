@@ -297,21 +297,6 @@ std::optional<double> Statistics::constraintScore() {
   }
   return {};
 }
-double Statistics::score() {
-  int i = 0;
-  double tot = 0;
-  std::vector<std::optional<double>> scores;
-  scores.push_back(matchingAnnotationsScore());
-  scores.push_back(variableScore());
-  scores.push_back(constraintScore());
-  for (auto s : scores) {
-    if (s.has_value()) {
-      i++;
-      tot += s.value();
-    }
-  }
-  return (i > 0 ? tot / i : -1);
-}
 std::string Statistics::info() {
   std::stringstream s;
   s << line();
