@@ -186,7 +186,6 @@ void Statistics::allStats(bool labels) {
   countDefinedVariables(labels);
   constraints(labels);
   matchingAnnotations(labels);
-  // width(labels);
   std::cout << line() << std::endl;
 }
 void Statistics::matchingAnnotations(bool labels) {
@@ -198,11 +197,6 @@ void Statistics::matchingAnnotations(bool labels) {
       annotations++;
       if (constraint->defines(constraint->annotationTarget().value())) {
         matching++;
-        // if (labels) {
-        //   std::cout << constraint->getName() << " fulfills define
-        //   annotation."
-        //             << std::endl;
-        // }
       } else {
         if (labels) {
           std::cout << constraint->getName() << " should define "
@@ -217,36 +211,50 @@ void Statistics::matchingAnnotations(bool labels) {
   std::cout << "Matching:\t" << matching << std::endl;
   std::cout << "===========================" << std::endl;
 }
-int Statistics::width(bool labels) {
-  int w = 0;
-  std::vector<Node*> visited;
-  std::vector<Node*> result;
-  int n = 0;
+int Statistics::height() {
+  int h = 0;
+  std::map<Node*, int> visited;
+  int x = 0;
+  int vars = 0;
+  int cons = 0;
   for (Variable* v : _model->varMap().variables()) {
-    if (!v->isDefined()) width_aux(result, visited, v, 1, w);
+    if (!v->isDefined() && v->isDefinable()) {
+      height_aux(visited, v, 1, h);
+    }
   }
   for (Constraint* c : _model->constraints()) {
-    if (c->isImplicit()) width_aux(result, visited, c, 1, w);
-  }
-  if (labels) {
-    std::cout << "Longest path: " << std::endl;
-    for (auto n : result) {
-      std::cout << n->getName() << std::endl;
+    if (c->isImplicit()) {
+      height_aux(visited, c, 1, h);
     }
-    std::cout << "===========================" << std::endl;
   }
-  return w;
+  return h;
 }
-void Statistics::width_aux(std::vector<Node*>& result,
-                           std::vector<Node*> visited, Node* node, int x,
-                           int& w) {
-  visited.push_back(node);
-  if (x > w) {
-    w = x;
-    result = visited;
+
+void Statistics::height_aux(std::map<Node*, int>& visited, Node* node, int x,
+                            int& h) {
+  if (x > h) h = x;
+  if (visited.find(node) == visited.end()) {
+    visited.insert(std::pair<Node*, int>(node, x));
+    for (auto n : node->getNext()) {
+      if (auto var = dynamic_cast<Variable*>(n)) {
+        if (!var->isDefinable()) {
+          return;
+        }
+      }
+      height_aux(visited, n, x + 1, h);
+    }
+    return;
   }
-  for (auto n : node->getNext()) {
-    width_aux(result, visited, n, x + 1, w);
+  if (x > visited.find(node)->second) {
+    visited.find(node)->second = x;
+    for (auto n : node->getNext()) {
+      if (auto var = dynamic_cast<Variable*>(n)) {
+        if (!var->isDefinable()) {
+          return;
+        }
+      }
+      height_aux(visited, n, x + 1, h);
+    }
   }
 }
 
@@ -353,14 +361,16 @@ std::string Statistics::info() {
 }
 std::string Statistics::latexHeader() {
   std::stringstream s;
-  s << "Scheme & VarSco & InvSco & AnnSco & Imp & Height & Free # \\\\"
+  s << "Scheme & VarSco & InvSco & AnnSco & Imp & Height & Free # & EnlDom "
+       "(Sum)\\\\"
     << std::endl
     << "\\hline" << std::endl;
   return s.str();
 }
 std::string Statistics::header() {
   std::stringstream s;
-  s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tImp\tHeight\tFree #" << std::endl;
+  s << "Scheme\t\tVarSco\tInvSco\tAnnSco\tImp\tHeight\tFree #\t EnlDom (Sum)"
+    << std::endl;
   line();
   return s.str();
 }
@@ -375,15 +385,18 @@ std::string Statistics::latexCount() {
   std::stringstream s;
   s << "Vars: "
     << " & " << variableCount() << " & "
+    << "Definable: "
+    << " & " << variableCount() - noPotDefCount() << " & "
     << "Cons: "
     << " & " << _model->constraints().size() << " & "
     << "Anns: "
-    << " & " << annotationCount() << "& & & & " << std::endl;
+    << " & " << annotationCount() << "& & & " << std::endl;
   return s.str();
 }
 std::string Statistics::count() {
   std::stringstream s;
   s << "Variables: " << variableCount() << std::endl
+    << "Definable: " << variableCount() - noPotDefCount() << std::endl
     << "Constraints: " << _model->constraints().size() << std::endl
     << "Annotations: " << annotationCount() << std::endl;
   return s.str();
@@ -410,7 +423,7 @@ std::string Statistics::latexRow() {
   }
   s << countImplicit() << "/" << countPotImplicit() << " & ";
   if (!_ignoreDynamicCycles && !_noWidth) {
-    s << width(false);
+    s << height();
   } else {
     s << "-";
   }
@@ -421,7 +434,7 @@ std::string Statistics::latexRow() {
   // s << " & " << std::fixed << std::setprecision(2) << averageDependency();
   // s << " & " << std::fixed << std::setprecision(2) << maxDependency();
   // s << " & " << std::fixed << std::setprecision(2) << neighbourhoodSize();
-  // s << " & " << enlargedDomains();
+  s << " & " << enlargedDomains() << " (" << enlargedDomainSum() << ")";
   s << "\\\\";
 
   s << std::endl;
@@ -449,7 +462,7 @@ std::string Statistics::row() {
   }
   s << countImplicit() << "/" << countPotImplicit() << "\t";
   if (!_ignoreDynamicCycles && !_noWidth) {
-    s << width(false);
+    s << height();
   } else {
     s << "-";
   }
@@ -460,7 +473,7 @@ std::string Statistics::row() {
   // s << "\t" << std::fixed << std::setprecision(2) << averageDependency();
   // s << "\t" << std::fixed << std::setprecision(2) << maxDependency();
   // s << "\t" << std::fixed << std::setprecision(2) << neighbourhoodSize();
-  // s << "\t" << enlargedDomains();
+  s << "\t" << enlargedDomains() << " (" << enlargedDomainSum() << ")";
 
   s << std::endl;
   return s.str();
@@ -572,7 +585,18 @@ int Statistics::neighbourhoodSize() {
 int Statistics::enlargedDomains() {
   int count = 0;
   for (auto var : _model->varMap().variables()) {
-    if (var->hasEnlargedDomain()) count++;
+    if (var->hasEnlargedDomain()) {
+      count++;
+    }
   }
   return count;
+}
+int Statistics::enlargedDomainSum() {
+  int sum = 0;
+  for (auto var : _model->varMap().variables()) {
+    if (var->hasEnlargedDomain()) {
+      sum += var->_imposedDomain.value()->size() - var->_domain->size();
+    }
+  }
+  return sum;
 }

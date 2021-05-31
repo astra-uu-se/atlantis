@@ -24,36 +24,43 @@ void InvariantStructure::runLatex() {
   _schemes.random();
   s << _schemes.name();
   s << _stats.latexRow();
+
   _schemes.annOnly();
   s << _schemes.name();
   s << _stats.latexRow();
+
   _schemes.annImp();
   s << _schemes.name();
   s << _stats.latexRow();
+
   _schemes.scheme1();
   s << _schemes.name();
   s << _stats.latexRow();
+
   _schemes.scheme2();
   s << _schemes.name();
   s << _stats.latexRow();
+
   _schemes.scheme5();
   s << _schemes.name();
   s << _stats.latexRow();
+
   _schemes.scheme6();
   s << _schemes.name();
   s << _stats.latexRow();
+
   _schemes.scheme7();
   s << _schemes.name();
   s << _stats.latexRow();
-  _schemes.scheme8();
-  s << _schemes.name();
-  s << _stats.latexRow();
-  _schemes.scheme9();
-  s << _schemes.name();
-  s << _stats.latexRow();
+
   _schemes.scheme10();
   s << _schemes.name();
   s << _stats.latexRow();
+
+  _schemes.scheme9();
+  s << _schemes.name();
+  s << _stats.latexRow();
+
   s << "\\hline" << std::endl;
   s << "\\hline" << std::endl;
   s << _stats.latexCount();
@@ -79,58 +86,57 @@ void InvariantStructure::run() {
   s << _stats.line();
   s << _stats.header();
   s << _stats.line();
+
   _schemes.random();
   s << _schemes.name();
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme1();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme2();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme3();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme4();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme5();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme6();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme7();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme8();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme9();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
-  _schemes.scheme10();
-  s << _schemes.name();
-  s << _stats.row();
-  if (_allStats) _stats.allStats(_fullStats);
+
   _schemes.annOnly();
   s << _schemes.name();
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);
+
   _schemes.annImp();
   s << _schemes.name();
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);
+
+  _schemes.scheme1();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+
+  _schemes.scheme2();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+
+  _schemes.scheme5();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+
+  _schemes.scheme6();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+
+  _schemes.scheme7();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+
+  _schemes.scheme10();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+
+  _schemes.scheme9();
+  s << _schemes.name();
+  s << _stats.row();
+  if (_allStats) _stats.allStats(_fullStats);
+
   s << _stats.line();
   s << _stats.count();
   s << _stats.line();
@@ -143,7 +149,7 @@ void InvariantStructure::runSmall() {
   s << _stats.line();
   s << _stats.header();
   s << _stats.line();
-  _schemes.scheme7();
+  _schemes.random();
   s << _schemes.name();
   s << _stats.row();
   if (_allStats) _stats.allStats(_fullStats);

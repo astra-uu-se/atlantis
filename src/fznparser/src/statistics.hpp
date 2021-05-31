@@ -35,9 +35,9 @@ class Statistics {
   int definedCount();
   int annotationCount();
   int enlargedDomains();
-  int width(bool labels);
-  void width_aux(std::vector<Node*>& result, std::vector<Node*> visited,
-                 Node* node, int x, int& w);
+  int enlargedDomainSum();
+  int height();
+  void height_aux(std::map<Node*, int>& visited, Node* node, int x, int& h);
   void matchingAnnotations(bool labels);
 
   double score();
