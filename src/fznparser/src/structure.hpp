@@ -20,6 +20,7 @@ class Domain {
   virtual Int size();
   virtual Int lowerBound() = 0;
   virtual Int upperBound() = 0;
+  virtual bool isContinuous() { return true; };
 
  protected:
   bool _defined;
@@ -39,6 +40,7 @@ class IntSetDomain : public Domain {
   Int size() override;
   Int lowerBound() override;
   Int upperBound() override;
+  bool isContinuous() override { return false; };
 
  private:
   std::set<Int> _set;
