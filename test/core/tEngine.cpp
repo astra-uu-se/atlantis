@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "core/propagationEngine.hpp"
-
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

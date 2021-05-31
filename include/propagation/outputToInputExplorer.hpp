@@ -20,11 +20,9 @@ class OutputToInputExplorer {
   IdMap<VarId, Timestamp> varStableAt;  // last timestamp when a VarID was
                                         // stable (i.e., will not change)
   IdMap<InvariantId, Timestamp> invariantStableAt;
-  IdMap<VarId, bool> varIsOnStack;
   IdMap<InvariantId, bool> invariantIsOnStack;
 
   IdMap<VarIdBase, std::unordered_set<size_t>> m_decisionVarAncestor;
-  std::vector<VarIdBase> m_modifiedAncestors;
 
   template <bool OutputToInputMarking>
   void preprocessVarStack(Timestamp);
@@ -32,7 +30,6 @@ class OutputToInputExplorer {
   template <bool OutputToInputMarking>
   bool isUpToDate(VarIdBase);
 
-  void populateModifiedAncestors(Timestamp);
   void pushVariableStack(VarId v);
   void popVariableStack();
   VarId peekVariableStack();
@@ -80,12 +77,9 @@ inline void OutputToInputExplorer::clearRegisteredVariables() {
 }
 
 inline void OutputToInputExplorer::pushVariableStack(VarId v) {
-  varIsOnStack.set(v, true);
   variableStack_[varStackIdx_++] = v;
 }
-inline void OutputToInputExplorer::popVariableStack() {
-  varIsOnStack.set(variableStack_[--varStackIdx_], false);
-}
+inline void OutputToInputExplorer::popVariableStack() { --varStackIdx_; }
 inline VarId OutputToInputExplorer::peekVariableStack() {
   return variableStack_[varStackIdx_ - 1];
 }
