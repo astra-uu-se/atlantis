@@ -29,9 +29,9 @@ class MockLessThan : public LessThan {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return LessThan::recompute(timestamp, engine);
         });
-    ON_CALL(*this, nextParameter)
+    ON_CALL(*this, getNextParameter)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return LessThan::nextParameter(ts, engine);
+          return LessThan::getNextParameter(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentParameterChanged)
@@ -52,7 +52,7 @@ class MockLessThan : public LessThan {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, nextParameter, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine& engine),
               (override));
 
@@ -107,7 +107,8 @@ class LessThanTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
+          .Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(AtMost(1));
@@ -116,7 +117,8 @@ class LessThanTest : public ::testing::Test {
           .Times(1);
     } else if (engine->mode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
+          .Times(3);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(1);
@@ -143,31 +145,32 @@ class LessThanTest : public ::testing::Test {
  */
 
 TEST_F(LessThanTest, Init) {
-  EXPECT_EQ(engine->committedValue(violationId), 1);
-  EXPECT_EQ(engine->value(engine->tmpTimestamp(violationId), violationId), 1);
+  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
+  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(violationId), violationId),
+            1);
 }
 
 TEST_F(LessThanTest, Recompute) {
-  EXPECT_EQ(engine->value(0, violationId), 1);
-  EXPECT_EQ(engine->committedValue(violationId), 1);
+  EXPECT_EQ(engine->getValue(0, violationId), 1);
+  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
 
   Timestamp time1 = 1;
   Timestamp time2 = time1 + 1;
 
   engine->setValue(time1, x, 40);
   lessThan->recompute(time1, *engine);
-  EXPECT_EQ(engine->committedValue(violationId), 1);
-  EXPECT_EQ(engine->value(time1, violationId), 39);
+  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
+  EXPECT_EQ(engine->getValue(time1, violationId), 39);
 
   engine->setValue(time2, y, 20);
   lessThan->recompute(time2, *engine);
-  EXPECT_EQ(engine->committedValue(violationId), 1);
-  EXPECT_EQ(engine->value(time2, violationId), 0);
+  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
+  EXPECT_EQ(engine->getValue(time2, violationId), 0);
 }
 
 TEST_F(LessThanTest, NonViolatingUpdate) {
-  EXPECT_EQ(engine->value(0, violationId), 1);
-  EXPECT_EQ(engine->committedValue(violationId), 1);
+  EXPECT_EQ(engine->getValue(0, violationId), 1);
+  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
 
   Timestamp timestamp;
 
@@ -175,55 +178,55 @@ TEST_F(LessThanTest, NonViolatingUpdate) {
     timestamp = Timestamp(1 + i);
     engine->setValue(timestamp, x, 1 - i);
     lessThan->recompute(timestamp, *engine);
-    EXPECT_EQ(engine->committedValue(violationId), 1);
-    EXPECT_EQ(engine->value(timestamp, violationId), 0);
+    EXPECT_EQ(engine->getCommittedValue(violationId), 1);
+    EXPECT_EQ(engine->getValue(timestamp, violationId), 0);
   }
 
   for (size_t i = 0; i < 10000; ++i) {
     timestamp = Timestamp(1 + i);
     engine->setValue(timestamp, y, 5 + i);
     lessThan->recompute(timestamp, *engine);
-    EXPECT_EQ(engine->committedValue(violationId), 1);
-    EXPECT_EQ(engine->value(timestamp, violationId), 0);
+    EXPECT_EQ(engine->getCommittedValue(violationId), 1);
+    EXPECT_EQ(engine->getValue(timestamp, violationId), 0);
   }
 }
 
 TEST_F(LessThanTest, NotifyChange) {
-  EXPECT_EQ(engine->value(0, violationId), 1);
+  EXPECT_EQ(engine->getValue(0, violationId), 1);
 
   LocalId unused = -1;
 
   Timestamp time1 = 1;
 
-  EXPECT_EQ(engine->value(time1, x), 2);  // Variable has not changed.
+  EXPECT_EQ(engine->getValue(time1, x), 2);  // Variable has not changed.
   engine->setValue(time1, x, 40);
-  EXPECT_EQ(engine->committedValue(x), 2);
-  EXPECT_EQ(engine->value(time1, x), 40);
+  EXPECT_EQ(engine->getCommittedValue(x), 2);
+  EXPECT_EQ(engine->getValue(time1, x), 40);
   lessThan->notifyIntChanged(time1, *engine,
                              unused);  // Runs recompute internally
-  EXPECT_EQ(engine->value(time1, violationId), 39);
+  EXPECT_EQ(engine->getValue(time1, violationId), 39);
 
   engine->setValue(time1, y, 0);
   lessThan->notifyIntChanged(time1, *engine,
                              unused);  // Runs recompute internally
-  auto tmpValue = engine->value(time1, violationId);  // 41
+  auto tmpValue = engine->getValue(time1, violationId);  // 41
 
   // Incremental computation gives the same result as recomputation
   lessThan->recompute(time1, *engine);
-  EXPECT_EQ(engine->value(time1, violationId), tmpValue);
+  EXPECT_EQ(engine->getValue(time1, violationId), tmpValue);
   EXPECT_EQ(tmpValue, 41);
 
   Timestamp time2 = time1 + 1;
-  EXPECT_EQ(engine->value(time2, y), 2);
+  EXPECT_EQ(engine->getValue(time2, y), 2);
   engine->setValue(time2, y, 20);
-  EXPECT_EQ(engine->committedValue(y), 2);
-  EXPECT_EQ(engine->value(time2, y), 20);
+  EXPECT_EQ(engine->getCommittedValue(y), 2);
+  EXPECT_EQ(engine->getValue(time2, y), 20);
   lessThan->notifyIntChanged(time2, *engine, unused);
-  EXPECT_EQ(engine->value(time2, violationId), 0);
+  EXPECT_EQ(engine->getValue(time2, violationId), 0);
 }
 
 TEST_F(LessThanTest, IncrementalVsRecompute) {
-  EXPECT_EQ(engine->value(0, violationId),
+  EXPECT_EQ(engine->getValue(0, violationId),
             1);  // initially the value of violationId is 1
   LocalId unused = -1;
   // todo: not clear if we actually want to deal with overflows...
@@ -233,9 +236,9 @@ TEST_F(LessThanTest, IncrementalVsRecompute) {
   for (size_t i = 0; i < 1000; ++i) {
     ++currentTimestamp;
     // Check that we do not accidentally commit
-    ASSERT_EQ(engine->committedValue(x), 2);
-    ASSERT_EQ(engine->committedValue(y), 2);
-    ASSERT_EQ(engine->committedValue(violationId),
+    ASSERT_EQ(engine->getCommittedValue(x), 2);
+    ASSERT_EQ(engine->getCommittedValue(y), 2);
+    ASSERT_EQ(engine->getCommittedValue(violationId),
               1);  // violationId is committed by register.
 
     // Set all variables
@@ -243,23 +246,23 @@ TEST_F(LessThanTest, IncrementalVsRecompute) {
     engine->setValue(currentTimestamp, y, distribution(gen));
 
     // notify changes
-    if (engine->committedValue(x) != engine->value(currentTimestamp, x)) {
+    if (engine->getCommittedValue(x) != engine->getValue(currentTimestamp, x)) {
       lessThan->notifyIntChanged(currentTimestamp, *engine, unused);
     }
-    if (engine->committedValue(y) != engine->value(currentTimestamp, y)) {
+    if (engine->getCommittedValue(y) != engine->getValue(currentTimestamp, y)) {
       lessThan->notifyIntChanged(currentTimestamp, *engine, unused);
     }
 
     // incremental value
-    auto tmp = engine->value(currentTimestamp, violationId);
+    auto tmp = engine->getValue(currentTimestamp, violationId);
     lessThan->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->value(currentTimestamp, violationId));
+    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, violationId));
   }
 }
 
 TEST_F(LessThanTest, Commit) {
-  EXPECT_EQ(engine->committedValue(violationId), 1);
+  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
 
   LocalId unused = -1;
 
@@ -291,7 +294,7 @@ TEST_F(LessThanTest, CreateLessThan) {
 
   engine->close();
 
-  EXPECT_EQ(engine->newValue(viol), 6);
+  EXPECT_EQ(engine->getNewValue(viol), 6);
 }
 
 TEST_F(LessThanTest, NotificationsInputToOutput) {

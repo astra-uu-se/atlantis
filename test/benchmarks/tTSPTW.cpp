@@ -105,15 +105,15 @@ class TSPTWTest : public ::testing::Test {
 TEST_F(TSPTWTest, Probing) {
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      if (i == j || engine->committedValue(pred[i]) == j) {
+      if (i == j || engine->getCommittedValue(pred[i]) == j) {
         continue;
       }
       engine->beginMove();
-      engine->setValue(pred[i], engine->committedValue(
-                                    pred[engine->committedValue(pred[i])]));
-      engine->setValue(pred[j], engine->committedValue(pred[i]));
-      engine->setValue(pred[engine->committedValue(pred[i])],
-                       engine->committedValue(pred[j]));
+      engine->setValue(pred[i], engine->getCommittedValue(
+                                    pred[engine->getCommittedValue(pred[i])]));
+      engine->setValue(pred[j], engine->getCommittedValue(pred[i]));
+      engine->setValue(pred[engine->getCommittedValue(pred[i])],
+                       engine->getCommittedValue(pred[j]));
       engine->endMove();
 
       engine->beginQuery();

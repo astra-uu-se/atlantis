@@ -19,8 +19,8 @@ class IntView : public View {
     _engine = &engine;
   }
 
-  virtual Int value(Timestamp) = 0;
-  virtual Int committedValue() = 0;
-  virtual Int lowerBound() = 0;
-  virtual Int upperBound() = 0;
+  virtual Int getValue(Timestamp) = 0;
+  virtual Int getCommittedValue() = 0;
+  virtual Int getLowerBound() = 0;
+  virtual Int getUpperBound() = 0;
 };

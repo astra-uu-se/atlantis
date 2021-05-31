@@ -36,8 +36,10 @@ class Queens : public benchmark::Fixture {
     for (int i = 0; i < n; ++i) {
       VarId q = engine->makeIntVar(i, 0, n - 1);
       queens.push_back(q);
-      q_offset_minus.push_back(engine->makeIntView<IntOffsetView>(q, -i)->id());
-      q_offset_plus.push_back(engine->makeIntView<IntOffsetView>(q, i)->id());
+      q_offset_minus.push_back(
+          engine->makeIntView<IntOffsetView>(q, -i)->getId());
+      q_offset_plus.push_back(
+          engine->makeIntView<IntOffsetView>(q, i)->getId());
     }
 
     violation1 = engine->makeIntVar(0, 0, n);
@@ -71,7 +73,7 @@ class Queens : public benchmark::Fixture {
   std::string instanceToString() {
     std::string str = "Queens: ";
     for (auto q : queens) {
-      str += std::to_string(engine->committedValue(q)) + ", ";
+      str += std::to_string(engine->getCommittedValue(q)) + ", ";
     }
     return str;
   }
@@ -81,8 +83,8 @@ BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {
   for (auto _ : st) {
     int i = distribution(gen);
     int j = distribution(gen);
-    Int oldI = engine->committedValue(queens.at(i));
-    Int oldJ = engine->committedValue(queens.at(j));
+    Int oldI = engine->getCommittedValue(queens.at(i));
+    Int oldJ = engine->getCommittedValue(queens.at(j));
     // Perform random swap
     engine->beginMove();
     engine->setValue(queens.at(i), oldJ);
@@ -100,8 +102,8 @@ BENCHMARK_DEFINE_F(Queens, probing_all_swap)(benchmark::State& st) {
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
-        Int oldI = engine->committedValue(queens.at(i));
-        Int oldJ = engine->committedValue(queens.at(j));
+        Int oldI = engine->getCommittedValue(queens.at(i));
+        Int oldJ = engine->getCommittedValue(queens.at(j));
         engine->beginMove();
         engine->setValue(queens.at(i), oldJ);
         engine->setValue(queens.at(j), oldI);
@@ -138,8 +140,8 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
           if (tabu[i] > it && tabu[j] > it) {
             continue;
           }
-          Int oldI = engine->committedValue(queens.at(i));
-          Int oldJ = engine->committedValue(queens.at(j));
+          Int oldI = engine->getCommittedValue(queens.at(i));
+          Int oldJ = engine->getCommittedValue(queens.at(j));
           engine->beginMove();
           engine->setValue(queens.at(i), oldJ);
           engine->setValue(queens.at(j), oldI);
@@ -151,7 +153,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
 
           ++probes;
 
-          Int newValue = engine->newValue(total_violation);
+          Int newValue = engine->getNewValue(total_violation);
           if (newValue <= bestViol) {
             bestViol = newValue;
             bestI = i;
@@ -160,8 +162,8 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
         }
       }
 
-      Int oldI = engine->committedValue(queens.at(bestI));
-      Int oldJ = engine->committedValue(queens.at(bestJ));
+      Int oldI = engine->getCommittedValue(queens.at(bestI));
+      Int oldJ = engine->getCommittedValue(queens.at(bestJ));
       engine->beginMove();
       engine->setValue(queens.at(bestI), oldJ);
       engine->setValue(queens.at(bestJ), oldI);

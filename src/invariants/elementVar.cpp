@@ -17,20 +17,21 @@ void ElementVar::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
 void ElementVar::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _y,
-              engine.value(ts, _varArray.at(static_cast<unsigned long>(
-                                   engine.value(ts, _index)))));
+              engine.getValue(ts, _varArray.at(static_cast<unsigned long>(
+                                      engine.getValue(ts, _index)))));
 }
 
 void ElementVar::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId ElementVar::nextParameter(Timestamp ts, Engine& engine) {
+VarId ElementVar::getNextParameter(Timestamp ts, Engine& engine) {
   _state.incValue(ts, 1);
-  if (_state.value(ts) == 0) {
+  if (_state.getValue(ts) == 0) {
     return _index;
-  } else if (_state.value(ts) == 1) {
-    return _varArray.at(static_cast<unsigned long>(engine.value(ts, _index)));
+  } else if (_state.getValue(ts) == 1) {
+    return _varArray.at(
+        static_cast<unsigned long>(engine.getValue(ts, _index)));
   } else {
     return NULL_ID;  // Done
   }

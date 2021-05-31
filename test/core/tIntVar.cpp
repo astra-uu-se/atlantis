@@ -3,9 +3,9 @@
 #include <stdexcept>
 #include <vector>
 
+#include "variables/intVar.hpp"
 #include "core/types.hpp"
 #include "gtest/gtest.h"
-#include "variables/intVar.hpp"
 
 namespace {
 class IntVarTest : public ::testing::Test {
@@ -35,11 +35,11 @@ TEST_F(IntVarTest, SavedIntConstructor) {
 
   Timestamp timestamp = distribution(gen);
   // The value defaults to 0
-  ASSERT_EQ(intVarNoValue.value(timestamp), 0);
-  ASSERT_EQ(intVarNoValue.committedValue(), 0);
+  ASSERT_EQ(intVarNoValue.getValue(timestamp), 0);
+  ASSERT_EQ(intVarNoValue.getCommittedValue(), 0);
 
   // default timestamp is NULL_TIMESTAMP
-  ASSERT_EQ(intVarNoValue.tmpTimestamp(), NULL_TIMESTAMP);
+  ASSERT_EQ(intVarNoValue.getTmpTimestamp(), NULL_TIMESTAMP);
 
   ASSERT_FALSE(intVarNoValue.hasChanged(timestamp));
 
@@ -48,11 +48,11 @@ TEST_F(IntVarTest, SavedIntConstructor) {
 
   IntVar intVarWithValue = IntVar(varId, value, -10, 10);
 
-  ASSERT_EQ(intVarWithValue.value(timestamp), value);
-  ASSERT_EQ(intVarWithValue.committedValue(), value);
+  ASSERT_EQ(intVarWithValue.getValue(timestamp), value);
+  ASSERT_EQ(intVarWithValue.getCommittedValue(), value);
 
   // default timestamp is zero
-  ASSERT_EQ(intVarWithValue.tmpTimestamp(), NULL_TIMESTAMP);
+  ASSERT_EQ(intVarWithValue.getTmpTimestamp(), NULL_TIMESTAMP);
 
   ASSERT_FALSE(intVarWithValue.hasChanged(timestamp));
 

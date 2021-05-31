@@ -65,8 +65,8 @@ class PriorityList {
   }
 
   size_t size() { return _list.size(); }
-  Int minPriority(Timestamp ts) { return _head.get(ts)->priority.get(ts); }
-  Int maxPriority(Timestamp ts) { return _tail.get(ts)->priority.get(ts); }
+  Int getMinPriority(Timestamp ts) { return _head.get(ts)->priority.get(ts); }
+  Int getMaxPriority(Timestamp ts) { return _tail.get(ts)->priority.get(ts); }
 
   void updatePriority(Timestamp ts, size_t idx, Int newValue) {
     if (_list[idx].priority.get(ts) == newValue) {

@@ -19,16 +19,17 @@ class SavedInt {
     return _tmpTimestamp == ts && _savedValue != _tmpValue;
   }
 
-  [[gnu::always_inline]] [[nodiscard]] inline Timestamp tmpTimestamp() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
+      const {
     return _tmpTimestamp;
   }
 
-  [[gnu::always_inline]] [[nodiscard]] inline Int value(
+  [[gnu::always_inline]] [[nodiscard]] inline Int getValue(
       Timestamp currentTimestamp) const noexcept {
     return currentTimestamp == _tmpTimestamp ? _tmpValue : _savedValue;
   }
 
-  [[gnu::always_inline]] [[nodiscard]] inline Int committedValue()
+  [[gnu::always_inline]] [[nodiscard]] inline Int getCommittedValue()
       const noexcept {
     return _savedValue;
   }

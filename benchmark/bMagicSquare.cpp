@@ -127,8 +127,8 @@ BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
-        Int oldI = engine->committedValue(flat.at(i));
-        Int oldJ = engine->committedValue(flat.at(j));
+        Int oldI = engine->getCommittedValue(flat.at(i));
+        Int oldJ = engine->getCommittedValue(flat.at(j));
         engine->beginMove();
         engine->setValue(flat.at(i), oldJ);
         engine->setValue(flat.at(j), oldI);

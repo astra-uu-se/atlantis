@@ -43,19 +43,20 @@ class IntVar : public Var {
       Timestamp ts) const {
     return _value.hasChanged(ts);
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Timestamp tmpTimestamp() const {
-    return _value.tmpTimestamp();
+  [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
+      const {
+    return _value.getTmpTimestamp();
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Int value(Timestamp ts) const {
-    return _value.value(ts);
+  [[gnu::always_inline]] [[nodiscard]] inline Int getValue(Timestamp ts) const {
+    return _value.getValue(ts);
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Int committedValue() const {
-    return _value.committedValue();
+  [[gnu::always_inline]] [[nodiscard]] inline Int getCommittedValue() const {
+    return _value.getCommittedValue();
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Int lowerBound() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Int getLowerBound() const {
     return _lowerBound;
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Int upperBound() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Int getUpperBound() const {
     return _upperBound;
   }
   [[gnu::always_inline]] [[nodiscard]] inline bool inDomain(Int value) const {

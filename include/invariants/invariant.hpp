@@ -129,12 +129,12 @@ class Invariant {
    * Used in Output-to-Input propagation to get the next parameter variable to
    * visit.
    */
-  virtual VarId nextParameter(Timestamp, Engine&) = 0;
+  virtual VarId getNextParameter(Timestamp, Engine&) = 0;
 
   /**
    * Used in Output-to-Input propagation to notify to the
    * invariant that the current parameter (the last parameter given by
-   * nextParameter) has had its value changed.
+   * getNextParameter) has had its value changed.
    */
   virtual void notifyCurrentParameterChanged(Timestamp, Engine&) = 0;
 
@@ -156,6 +156,6 @@ class Invariant {
   inline void postpone() { _isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 
-  inline VarId primaryDefinedVar() { return _primaryDefinedVar; }
+  inline VarId getPrimaryDefinedVar() { return _primaryDefinedVar; }
   void queueNonPrimaryDefinedVarsForPropagation(Timestamp ts, Engine& engine);
 };
