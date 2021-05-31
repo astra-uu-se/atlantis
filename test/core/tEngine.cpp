@@ -28,7 +28,7 @@ class MockInvariantSimple : public Invariant {
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
 
-  MOCK_METHOD(VarId, nextParameter, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine&),
               (override));
 
@@ -61,7 +61,7 @@ class MockInvariantAdvanced : public Invariant {
   }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
-  MOCK_METHOD(VarId, nextParameter, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine&),
               (override));
   MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
@@ -100,8 +100,8 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   ASSERT_TRUE(invariant->_initialized);
 
   engine->close();
-  EXPECT_EQ(engine->store().numVariables(), intVarCount);
-  EXPECT_EQ(engine->store().numInvariants(), size_t(1));
+  EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
+  EXPECT_EQ(engine->getStore().getNumInvariants(), size_t(1));
 }
 
 TEST_F(EngineTest, ThisTestShouldNotBeHere) {
@@ -120,7 +120,7 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   auto invariant = engine->makeInvariant<MinSparse>(X, min);
 
   engine->close();
-  EXPECT_EQ(engine->committedValue(min), 0);
+  EXPECT_EQ(engine->getCommittedValue(min), 0);
   engine->beginMove();
   engine->setValue(X[0], 5);
   engine->setValue(X[1], 5);
@@ -130,7 +130,7 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   engine->query(min);
   engine->endQuery();
 
-  EXPECT_EQ(engine->newValue(min), 2);
+  EXPECT_EQ(engine->getNewValue(min), 2);
 
   engine->beginMove();
   engine->setValue(X[3], -1);
@@ -141,7 +141,7 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   engine->query(min);
   engine->endQuery();
 
-  EXPECT_EQ(engine->newValue(min), -1);
+  EXPECT_EQ(engine->getNewValue(min), -1);
 
   engine->beginMove();
   engine->setValue(X[0], 1);
@@ -151,7 +151,7 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   engine->query(min);
   engine->endQuery();
 
-  EXPECT_EQ(engine->newValue(min), 1);
+  EXPECT_EQ(engine->getNewValue(min), 1);
 
   engine->beginMove();
   engine->setValue(X[0], 1);
@@ -160,7 +160,7 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   engine->beginCommit();
   engine->query(min);
   engine->endCommit();
-  EXPECT_EQ(engine->newValue(min), 1);
+  EXPECT_EQ(engine->getNewValue(min), 1);
 
   engine->beginMove();
   engine->setValue(X[0], 0);
@@ -170,7 +170,7 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   engine->query(min);
   engine->endCommit();
 
-  EXPECT_EQ(engine->newValue(min), 0);
+  EXPECT_EQ(engine->getNewValue(min), 0);
 }
 
 TEST_F(EngineTest, RecomputeAndCommit) {
@@ -192,8 +192,8 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 
   engine->close();
 
-  ASSERT_EQ(engine->store().numVariables(), intVarCount);
-  ASSERT_EQ(engine->store().numInvariants(), size_t(1));
+  ASSERT_EQ(engine->getStore().getNumVariables(), intVarCount);
+  ASSERT_EQ(engine->getStore().getNumInvariants(), size_t(1));
 }
 
 TEST_F(EngineTest, SimplePropagation) {
@@ -214,7 +214,7 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->close();
 
   engine->beginMove();
-  Timestamp moveTimestamp = engine->currentTimestamp();
+  Timestamp moveTimestamp = engine->getCurrentTimestamp();
 
   engine->setValue(a, -1);
   engine->setValue(b, -2);
@@ -222,14 +222,15 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->endMove();
 
   if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, nextParameter(moveTimestamp, testing::_)).Times(0);
+    EXPECT_CALL(*invariant, getNextParameter(moveTimestamp, testing::_))
+        .Times(0);
 
     EXPECT_CALL(*invariant,
                 notifyCurrentParameterChanged(moveTimestamp, testing::_))
         .Times(0);
   } else if (engine->mode ==
              PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, nextParameter(moveTimestamp, testing::_))
+    EXPECT_CALL(*invariant, getNextParameter(moveTimestamp, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
@@ -272,14 +273,14 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->close();
 
   if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_)).Times(0);
 
     EXPECT_CALL(*invariant,
                 notifyCurrentParameterChanged(testing::_, testing::_))
         .Times(0);
   } else if (engine->mode ==
              PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_))
+    EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
@@ -315,14 +316,14 @@ TEST_F(EngineTest, SimpleCommit) {
                 notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
 
-    EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_)).Times(0);
 
     EXPECT_CALL(*invariant,
                 notifyCurrentParameterChanged(testing::_, testing::_))
         .Times(0);
   } else if (engine->mode ==
              PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_))
+    EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
@@ -343,9 +344,9 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->query(output);
   engine->endCommit();
 
-  EXPECT_EQ(engine->committedValue(a), 0);
-  EXPECT_EQ(engine->committedValue(b), 2);
-  EXPECT_EQ(engine->committedValue(c), 3);
+  EXPECT_EQ(engine->getCommittedValue(a), 0);
+  EXPECT_EQ(engine->getCommittedValue(b), 2);
+  EXPECT_EQ(engine->getCommittedValue(c), 3);
 }
 
 TEST_F(EngineTest, DelayedCommit) {
@@ -372,9 +373,9 @@ TEST_F(EngineTest, DelayedCommit) {
   // 1+1 = c = 2
   // c+1 = e = 3
   // c+1 = g = 3
-  EXPECT_EQ(engine->committedValue(c), 2);
-  EXPECT_EQ(engine->committedValue(e), 3);
-  EXPECT_EQ(engine->committedValue(g), 3);
+  EXPECT_EQ(engine->getCommittedValue(c), 2);
+  EXPECT_EQ(engine->getCommittedValue(e), 3);
+  EXPECT_EQ(engine->getCommittedValue(g), 3);
 
   engine->beginMove();
   engine->setValue(a, 2);
@@ -384,7 +385,7 @@ TEST_F(EngineTest, DelayedCommit) {
   engine->query(e);
   engine->endCommit();
 
-  EXPECT_EQ(engine->committedValue(e), 4);
+  EXPECT_EQ(engine->getCommittedValue(e), 4);
 
   engine->beginMove();
   engine->setValue(d, 0);
@@ -394,7 +395,7 @@ TEST_F(EngineTest, DelayedCommit) {
   engine->query(g);
   engine->endCommit();
 
-  EXPECT_EQ(engine->committedValue(g), 4);
+  EXPECT_EQ(engine->getCommittedValue(g), 4);
 }
 
 TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
@@ -409,9 +410,9 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
   VarId i3 = engine->makeIntVar(2, 0, 3);
   VarId output = engine->makeIntVar(2, 0, 3);
 
-  VarId viewPlus1 = engine->makeIntView<IntOffsetView>(x1, 1)->id();
-  VarId viewPlus2 = engine->makeIntView<IntOffsetView>(x2, 2)->id();
-  VarId viewPlus3 = engine->makeIntView<IntOffsetView>(x3, 3)->id();
+  VarId viewPlus1 = engine->makeIntView<IntOffsetView>(x1, 1)->getId();
+  VarId viewPlus2 = engine->makeIntView<IntOffsetView>(x2, 2)->getId();
+  VarId viewPlus3 = engine->makeIntView<IntOffsetView>(x3, 3)->getId();
 
   engine->makeInvariant<ElementVar>(
       i1, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x1);
@@ -425,7 +426,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
 
   engine->close();
 
-  EXPECT_EQ(engine->committedValue(output), 7);
+  EXPECT_EQ(engine->getCommittedValue(output), 7);
 
   {
     engine->beginMove();
@@ -437,7 +438,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
     engine->query(output);
     engine->endQuery();
 
-    EXPECT_EQ(engine->newValue(output), 10);
+    EXPECT_EQ(engine->getNewValue(output), 10);
   }
 
   {
@@ -449,7 +450,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
     engine->query(output);
     engine->endQuery();
 
-    EXPECT_EQ(engine->newValue(output), 13);
+    EXPECT_EQ(engine->getNewValue(output), 13);
   }
 
   {
@@ -464,7 +465,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
     engine->query(output);
     engine->endQuery();
 
-    EXPECT_EQ(engine->newValue(output), 20);
+    EXPECT_EQ(engine->getNewValue(output), 20);
   }
 }
 
@@ -480,9 +481,9 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   VarId i3 = engine->makeIntVar(2, 0, 3);
   VarId output = engine->makeIntVar(2, 0, 3);
 
-  VarId viewPlus1 = engine->makeIntView<IntOffsetView>(x1, 1)->id();
-  VarId viewPlus2 = engine->makeIntView<IntOffsetView>(x2, 2)->id();
-  VarId viewPlus3 = engine->makeIntView<IntOffsetView>(x3, 3)->id();
+  VarId viewPlus1 = engine->makeIntView<IntOffsetView>(x1, 1)->getId();
+  VarId viewPlus2 = engine->makeIntView<IntOffsetView>(x2, 2)->getId();
+  VarId viewPlus3 = engine->makeIntView<IntOffsetView>(x3, 3)->getId();
 
   engine->makeInvariant<ElementVar>(
       i1, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x1);
@@ -496,7 +497,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
 
   engine->close();
 
-  EXPECT_EQ(engine->committedValue(output), 7);
+  EXPECT_EQ(engine->getCommittedValue(output), 7);
 
   engine->beginMove();
   engine->setValue(i1, 3);
@@ -507,7 +508,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->query(output);
   engine->endCommit();
 
-  EXPECT_EQ(engine->newValue(output), 10);
+  EXPECT_EQ(engine->getNewValue(output), 10);
 
   engine->beginMove();
   engine->setValue(base, 3);
@@ -517,7 +518,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->query(output);
   engine->endQuery();
 
-  EXPECT_EQ(engine->newValue(output), 16);
+  EXPECT_EQ(engine->getNewValue(output), 16);
 
   engine->beginMove();
   engine->setValue(i2, 1);
@@ -529,7 +530,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->query(output);
   engine->endQuery();
 
-  EXPECT_EQ(engine->newValue(output), 13);
+  EXPECT_EQ(engine->getNewValue(output), 13);
 
   engine->beginMove();
   engine->setValue(i2, 1);
@@ -541,7 +542,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->query(output);
   engine->endCommit();
 
-  EXPECT_EQ(engine->newValue(output), 13);
+  EXPECT_EQ(engine->getNewValue(output), 13);
 }
 
 }  // namespace

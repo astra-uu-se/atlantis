@@ -34,7 +34,7 @@ class TSPTW : public benchmark::Fixture {
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(0);
-
+    
     logDebug(n);
     engine->open();
 
@@ -103,15 +103,16 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
   for (auto _ : st) {
     for (int i = 0; i < n; ++i) {
       for (int j = 0; j < n; ++j) {
-        if (i == j || engine->committedValue(pred[i]) == j) {
+        if (i == j || engine->getCommittedValue(pred[i]) == j) {
           continue;
         }
         engine->beginMove();
-        engine->setValue(pred[i], engine->committedValue(
-                                      pred[engine->committedValue(pred[i])]));
-        engine->setValue(pred[j], engine->committedValue(pred[i]));
-        engine->setValue(pred[engine->committedValue(pred[i])],
-                         engine->committedValue(pred[j]));
+        engine->setValue(pred[i],
+                         engine->getCommittedValue(
+                             pred[engine->getCommittedValue(pred[i])]));
+        engine->setValue(pred[j], engine->getCommittedValue(pred[i]));
+        engine->setValue(pred[engine->getCommittedValue(pred[i])],
+                         engine->getCommittedValue(pred[j]));
         engine->endMove();
 
         engine->beginQuery();

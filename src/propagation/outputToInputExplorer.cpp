@@ -18,18 +18,18 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
 }
 
 void OutputToInputExplorer::populateAncestors() {
-  std::vector<bool> varVisited(_engine.numVariables() + 1);
-  std::deque<IdBase> stack(_engine.numVariables() + 1);
+  std::vector<bool> varVisited(_engine.getNumVariables() + 1);
+  std::deque<IdBase> stack(_engine.getNumVariables() + 1);
 
-  for (IdBase idx = 1; idx <= _engine.numVariables(); ++idx) {
+  for (IdBase idx = 1; idx <= _engine.getNumVariables(); ++idx) {
     _inputAncestor.register_idx(idx);
     _inputAncestor[idx].clear();
-    _inputAncestor[idx].reserve(_engine.inputVariables().size());
+    _inputAncestor[idx].reserve(_engine.getInputVariables().size());
   }
 
-  varVisited.resize(_engine.numVariables() + 1);
+  varVisited.resize(_engine.getNumVariables() + 1);
 
-  for (const VarIdBase inputVar : _engine.inputVariables()) {
+  for (const VarIdBase inputVar : _engine.getInputVariables()) {
     std::fill(varVisited.begin(), varVisited.end(), NULL_ID);
     stack.clear();
     stack.push_back(inputVar);
@@ -40,8 +40,9 @@ void OutputToInputExplorer::populateAncestors() {
       stack.pop_back();
       _inputAncestor[id].emplace(inputVar);
 
-      for (InvariantId invariantId : _engine.listeningInvariants(IdBase(id))) {
-        for (VarIdBase outputVar : _engine.variablesDefinedBy(invariantId)) {
+      for (InvariantId invariantId :
+           _engine.getListeningInvariants(IdBase(id))) {
+        for (VarIdBase outputVar : _engine.getVariablesDefinedBy(invariantId)) {
           if (!varVisited[outputVar]) {
             varVisited[outputVar] = true;
             stack.push_back(outputVar);
@@ -89,9 +90,9 @@ void OutputToInputExplorer::preprocessVarStack(Timestamp currentTimestamp) {
 
 void OutputToInputExplorer::populateModifiedAncestors(Timestamp t) {
   _modifiedInputs.clear();
-  _modifiedInputs.reserve(_engine.inputVariables().size());
+  _modifiedInputs.reserve(_engine.getInputVariables().size());
 
-  for (VarIdBase inputVar : _engine.inputVariables()) {
+  for (VarIdBase inputVar : _engine.getInputVariables()) {
     if (_engine.hasChanged(t, inputVar)) {
       _modifiedInputs.push_back(inputVar);
     }
@@ -111,9 +112,9 @@ void OutputToInputExplorer::expandInvariant(InvariantId inv) {
   if (_invariantIsOnStack.get(inv)) {
     throw DynamicCycleException();
   }
-  VarId nextVar = _engine.nextParameter(inv);
+  VarId nextVar = _engine.getNextParameter(inv);
   while (nextVar != NULL_ID && isUpToDate<OutputToInputMarking>(nextVar)) {
-    nextVar = _engine.nextParameter(inv);
+    nextVar = _engine.getNextParameter(inv);
   }
 
   if (nextVar.id == NULL_ID) {
@@ -133,9 +134,9 @@ template bool OutputToInputExplorer::visitNextVariable<false>();
 template <bool OutputToInputMarking>
 bool OutputToInputExplorer::visitNextVariable() {
   popVariableStack();
-  VarId nextVar = _engine.nextParameter(peekInvariantStack());
+  VarId nextVar = _engine.getNextParameter(peekInvariantStack());
   while (nextVar != NULL_ID && isUpToDate<OutputToInputMarking>(nextVar)) {
-    nextVar = _engine.nextParameter(peekInvariantStack());
+    nextVar = _engine.getNextParameter(peekInvariantStack());
   }
   if (nextVar.id == NULL_ID) {
     return true;  // done with invariant
@@ -181,7 +182,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       markStable(currentTimestamp, currentVar);
       // Variable must be on
       expandInvariant<OutputToInputMarking>(
-          _engine.definingInvariant(currentVar));
+          _engine.getDefiningInvariant(currentVar));
       continue;
     }
     if (_invariantStackIdx == 0) {
@@ -198,7 +199,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
     if (invariantDone) {
       // The top invariant has finished propagating, so all defined vars can
       // be marked as stable at the current time.
-      for (auto defVar : _engine.variablesDefinedBy(peekInvariantStack())) {
+      for (auto defVar : _engine.getVariablesDefinedBy(peekInvariantStack())) {
         markStable(currentTimestamp, defVar);
       }
       popInvariantStack();

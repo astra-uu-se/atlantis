@@ -30,9 +30,9 @@ class MockIfThenElse : public IfThenElse {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return IfThenElse::recompute(timestamp, engine);
         });
-    ON_CALL(*this, nextParameter)
+    ON_CALL(*this, getNextParameter)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return IfThenElse::nextParameter(ts, engine);
+          return IfThenElse::getNextParameter(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentParameterChanged)
@@ -53,7 +53,7 @@ class MockIfThenElse : public IfThenElse {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, nextParameter, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine& engine),
               (override));
 
@@ -99,7 +99,8 @@ class IfThenElseTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
+          .Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(AtMost(1));
@@ -108,7 +109,8 @@ class IfThenElseTest : public ::testing::Test {
           .Times(1);
     } else if (engine->mode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, nextParameter(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
+          .Times(3);
       EXPECT_CALL(*invariant,
                   notifyCurrentParameterChanged(testing::_, testing::_))
           .Times(1);
@@ -149,7 +151,7 @@ TEST_F(IfThenElseTest, CreateElement) {
 
   engine->close();
 
-  EXPECT_EQ(engine->newValue(z), 0);
+  EXPECT_EQ(engine->getNewValue(z), 0);
 }
 
 TEST_F(IfThenElseTest, NotificationsInputToOutput) {

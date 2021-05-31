@@ -140,8 +140,8 @@ class MagicSquareTest : public ::testing::Test {
   std::string str = "\n";
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
     for (size_t j = 0; j < static_cast<size_t>(test.n); ++j) {
-      str +=
-          std::to_string(test.engine->newValue(test.square.at(i).at(j))) + " ";
+      str += std::to_string(test.engine->getNewValue(test.square.at(i).at(j))) +
+             " ";
     }
     str += "\n";
   }
@@ -154,8 +154,8 @@ int computeTotalViolaton(MagicSquareTest& test) {
     int rowSum = 0;
     int colSum = 0;
     for (size_t j = 0; j < static_cast<size_t>(test.n); ++j) {
-      rowSum += test.engine->newValue(test.square.at(i).at(j));
-      colSum += test.engine->newValue(test.square.at(j).at(i));
+      rowSum += test.engine->getNewValue(test.square.at(i).at(j));
+      colSum += test.engine->getNewValue(test.square.at(j).at(i));
     }
     totalViol += std::abs(rowSum - test.magicSum);
     totalViol += std::abs(colSum - test.magicSum);
@@ -163,8 +163,8 @@ int computeTotalViolaton(MagicSquareTest& test) {
   int downDiagSum = 0;
   int upDiagSum = 0;
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
-    downDiagSum += test.engine->newValue(test.square.at(i).at(i));
-    upDiagSum += test.engine->newValue(test.square.at(test.n - i - 1).at(i));
+    downDiagSum += test.engine->getNewValue(test.square.at(i).at(i));
+    upDiagSum += test.engine->getNewValue(test.square.at(test.n - i - 1).at(i));
   }
 
   totalViol += std::abs(downDiagSum - test.magicSum);
@@ -175,8 +175,8 @@ int computeTotalViolaton(MagicSquareTest& test) {
 TEST_F(MagicSquareTest, Probing) {
   for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
     for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
-      Int oldI = engine->committedValue(flat.at(i));
-      Int oldJ = engine->committedValue(flat.at(j));
+      Int oldI = engine->getCommittedValue(flat.at(i));
+      Int oldJ = engine->getCommittedValue(flat.at(j));
       engine->beginMove();
       engine->setValue(flat.at(i), oldJ);
       engine->setValue(flat.at(j), oldI);
@@ -189,14 +189,14 @@ TEST_F(MagicSquareTest, Probing) {
       int totalViol = computeTotalViolaton(*this);
       logDebug(squareToString(*this));
 
-      EXPECT_EQ(totalViol, engine->newValue(totalViolation));
+      EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
     }
   }
 
   std::vector<int> occurrences;
   occurrences.resize(flat.size(), 0);
   for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
-    occurrences.at(engine->newValue(flat.at(i)) - 1)++;
+    occurrences.at(engine->getNewValue(flat.at(i)) - 1)++;
   }
   for (int count : occurrences) {
     EXPECT_EQ(count, 1);
@@ -207,8 +207,8 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
   for (size_t c = 0; c < 10; ++c) {
     for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
-        Int oldI = engine->committedValue(flat.at(i));
-        Int oldJ = engine->committedValue(flat.at(j));
+        Int oldI = engine->getCommittedValue(flat.at(i));
+        Int oldJ = engine->getCommittedValue(flat.at(j));
         engine->beginMove();
         engine->setValue(flat.at(i), oldJ);
         engine->setValue(flat.at(j), oldI);
@@ -220,13 +220,13 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
 
         int totalViol = computeTotalViolaton(*this);
 
-        EXPECT_EQ(totalViol, engine->newValue(totalViolation));
+        EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
       }
     }
     int i = distribution(gen);
     int j = distribution(gen);
-    Int oldI = engine->committedValue(flat.at(i));
-    Int oldJ = engine->committedValue(flat.at(j));
+    Int oldI = engine->getCommittedValue(flat.at(i));
+    Int oldJ = engine->getCommittedValue(flat.at(j));
     // Perform random swap
     engine->beginMove();
     engine->setValue(flat.at(i), oldJ);
@@ -237,13 +237,13 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
     engine->query(totalViolation);
     engine->endQuery();
     int totalViol = computeTotalViolaton(*this);
-    EXPECT_EQ(totalViol, engine->newValue(totalViolation));
+    EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
   }
 
   std::vector<int> occurrences;
   occurrences.resize(flat.size(), 0);
   for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
-    occurrences.at(engine->newValue(flat.at(i)) - 1)++;
+    occurrences.at(engine->getNewValue(flat.at(i)) - 1)++;
   }
   for (int count : occurrences) {
     EXPECT_EQ(count, 1);

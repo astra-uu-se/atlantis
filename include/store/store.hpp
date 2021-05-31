@@ -45,7 +45,7 @@ class Store {
     ptr->setId(newId);
     _intViews.register_idx(newId, ptr);
 
-    VarId parentId = ptr->parantId();
+    VarId parentId = ptr->getParentId();
     VarId source = parentId.idType == VarIdType::var
                        ? parentId
                        : _intViewSourceId[parentId];
@@ -53,28 +53,31 @@ class Store {
     return newId;
   }
 
-  inline IntVar& intVar(VarId id) { return _intVars[id]; }
+  inline IntVar& getIntVar(VarId id) { return _intVars[id]; }
 
-  [[nodiscard]] inline const IntVar& constIntVar(VarId id) const {
+  [[nodiscard]] inline const IntVar& getConstIntVar(VarId id) const {
     return _intVars.at(id);
   }
 
-  inline IntView& intView(VarId id) {
+  inline IntView& getIntView(VarId id) {
     assert(id.idType == VarIdType::view);
     return *(_intViews[id.id]);
   }
 
-  [[nodiscard]] inline std::shared_ptr<IntView> constIntView(VarId id) const {
+  [[nodiscard]] inline std::shared_ptr<IntView> getConstIntView(
+      VarId id) const {
     assert(id.idType == VarIdType::view);
     return (_intViews.at(id.id));
   }
 
-  inline VarId intViewSourceId(VarId id) {
+  inline VarId getIntViewSourceId(VarId id) {
     assert(id.idType == VarIdType::view);
     return _intViewSourceId[id];
   }
 
-  inline Invariant& invariant(InvariantId id) { return *(_invariants[id.id]); }
+  inline Invariant& getInvariant(InvariantId id) {
+    return *(_invariants[id.id]);
+  }
   inline std::vector<IntVar>::iterator intVarBegin() {
     return _intVars.begin();
   }
@@ -86,9 +89,11 @@ class Store {
     return _invariants.end();
   }
 
-  [[nodiscard]] inline size_t numVariables() const { return _intVars.size(); }
+  [[nodiscard]] inline size_t getNumVariables() const {
+    return _intVars.size();
+  }
 
-  [[nodiscard]] inline size_t numInvariants() const {
+  [[nodiscard]] inline size_t getNumInvariants() const {
     return _invariants.size();
   }
 };

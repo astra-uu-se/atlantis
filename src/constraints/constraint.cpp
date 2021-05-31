@@ -2,8 +2,8 @@
 
 #include "core/engine.hpp"
 
-inline VarId Constraint::violationId() { return _violationId; }
+inline VarId Constraint::getViolationId() { return _violationId; }
 
-inline Int Constraint::violationCount(Engine& engine, Timestamp& ts) {
-  return engine.value(ts, _violationId);
+inline Int Constraint::getViolationCount(Engine& engine, Timestamp& ts) {
+  return engine.getValue(ts, _violationId);
 }
