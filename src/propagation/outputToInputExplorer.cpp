@@ -32,7 +32,7 @@ void OutputToInputExplorer::populateAncestors() {
   }
 
   for (const VarIdBase decisionVar : m_engine.getDecisionVariables()) {
-    std::fill(varVisited.begin(), varVisited.end(), NULL_ID);
+    std::fill(varVisited.begin(), varVisited.end(), false);
     stack.clear();
     stack.push_back(decisionVar);
     varVisited[decisionVar] = true;
@@ -191,4 +191,5 @@ void OutputToInputExplorer::propagate(Timestamp currentTime) {
       popInvariantStack();
     }
   }
+  clearRegisteredVariables();
 }

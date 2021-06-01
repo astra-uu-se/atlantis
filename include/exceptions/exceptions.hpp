@@ -19,6 +19,15 @@ class ModelNotOpenException : public std::runtime_error {
       : std::runtime_error(msg) {}
 };
 
+class QueryingException : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit QueryingException(const std::string& msg)
+      : std::runtime_error(msg) {}
+};
+
 class PropagationGraphHasCycles : public std::runtime_error {
  public:
   /**
@@ -49,6 +58,6 @@ class OutOfOrderIndexRegistration : public std::exception {
 };
 
 class VariableIsNotDecisionVariable : public std::exception {
-  public:
-   explicit VariableIsNotDecisionVariable() = default;
+ public:
+  explicit VariableIsNotDecisionVariable() = default;
 };
