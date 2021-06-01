@@ -121,7 +121,8 @@ class LinearTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode ==
+        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(*invariant,
@@ -130,7 +131,7 @@ class LinearTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode ==
+    } else if (engine->propagationMode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(numArgs + 1);
@@ -141,7 +142,8 @@ class LinearTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    } else if (engine->propagationMode ==
+               PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 

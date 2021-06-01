@@ -13,10 +13,10 @@ class PropagationEngine : public Engine {
   const bool m_useMarkingForOutputToInput = true;
 
  protected:
-  PropagationMode m_mode;
+  PropagationMode m_propagationMode;
 
  public:
-  const PropagationMode& mode = m_mode;
+  const PropagationMode& propagationMode = m_propagationMode;
 
  protected:
   size_t m_numVariables;
@@ -30,6 +30,7 @@ class PropagationEngine : public Engine {
   std::queue<VarId> m_propagationPathQueue;
 
   std::unordered_set<size_t> m_modifiedDecisionVariables;
+  Timestamp m_decisionVariablesModifiedAt;
 
   void recomputeAndCommit();
 
@@ -197,6 +198,11 @@ inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
   IntVar& var = m_store.getIntVar(v);
   var.setValue(t, val);
 
+  if (t != m_decisionVariablesModifiedAt) {
+    m_decisionVariablesModifiedAt = t;
+    m_modifiedDecisionVariables.clear();
+  }
+
   if (var.hasChanged(t)) {
     m_modifiedDecisionVariables.emplace(v);
   } else {
@@ -212,12 +218,12 @@ inline void PropagationEngine::setPropagationMode(
     throw ModelNotOpenException(
         "Cannot set propagation mode when model is closed");
   }
-  m_mode = m;
+  m_propagationMode = m;
 }
 
 inline PropagationEngine::PropagationMode
 PropagationEngine::getPropagationMode() {
-  return m_mode;
+  return m_propagationMode;
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
@@ -235,15 +241,16 @@ inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
 
 inline const std::unordered_set<size_t>&
 PropagationEngine::getModifiedDecisionVariables() {
+  assert(m_currentTime == m_decisionVariablesModifiedAt);
   return m_modifiedDecisionVariables;
 }
 
 template <bool OutputToInputMarking>
-inline void PropagationEngine::propagate() {
+inline void PropagationEngine::outputToInputPropagate() {
   if constexpr (OutputToInputMarking) {
     emptyModifiedVariables();
   } else {
     markPropagationPathAndEmptyModifiedVariables();
   }
-  m_outputToInputExplorer.probe<OutputToInputMarking>(m_currentTime);
+  m_outputToInputExplorer.propagate<OutputToInputMarking>(m_currentTime);
 }

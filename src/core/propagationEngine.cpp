@@ -3,20 +3,28 @@
 #include <iostream>
 
 PropagationEngine::PropagationEngine()
-    : m_mode(PropagationMode::INPUT_TO_OUTPUT),
+    : m_propagationMode(PropagationMode::INPUT_TO_OUTPUT),
       m_numVariables(0),
       m_propGraph(ESTIMATED_NUM_OBJECTS),
       m_outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
       // m_propGraph.m_propagationQueue(PropagationGraph::PriorityCmp(m_propGraph)),
       m_isEnqueued(ESTIMATED_NUM_OBJECTS),
       m_varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
-      m_propagationPathQueue() {}
+      m_propagationPathQueue(),
+      m_modifiedDecisionVariables(),
+      m_decisionVariablesModifiedAt(NULL_TIMESTAMP) {}
 
 PropagationGraph& PropagationEngine::getPropGraph() { return m_propGraph; }
 
-void PropagationEngine::open() { m_isOpen = true; }
+void PropagationEngine::open() {
+  assert(!m_isOpen);
+  assert(m_currentOperation == Operation::NONE);
+
+  m_isOpen = true;
+}
 
 void PropagationEngine::close() {
+  assert(m_isOpen);
   ++m_currentTime;  // todo: Is it safe to increment time here? What if a user
                     // tried to change a variable but without a begin move?
                     // But we should ignore it anyway then...
@@ -26,13 +34,24 @@ void PropagationEngine::close() {
   } catch (std::exception e) {
     std::cout << "foo";
   }
-  if (m_mode == PropagationMode::OUTPUT_TO_INPUT) {
+  if (m_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
     m_outputToInputExplorer.populateAncestors();
   }
 
   // compute initial values for variables and for (internal datastructure of)
   // invariants
+  for (VarIdBase varId : getDecisionVariables()) {
+    if (m_modifiedDecisionVariables.find(varId) !=
+        m_modifiedDecisionVariables.end()) {
+      assert(m_store.getIntVar(varId).hasChanged(m_currentTime));
+    } else {
+      assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
+    }
+  }
   recomputeAndCommit();
+  for (size_t varId : m_modifiedDecisionVariables) {
+    assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
+  }
 }
 
 //---------------------Registration---------------------
@@ -103,7 +122,6 @@ void PropagationEngine::emptyModifiedVariables() {
     m_propGraph.m_propagationQueue.pop();
   }
   m_isEnqueued.assign_all(false);
-  m_modifiedDecisionVariables.clear();
 }
 
 void PropagationEngine::recomputeAndCommit() {
@@ -139,30 +157,41 @@ void PropagationEngine::recomputeAndCommit() {
 
 //--------------------- Move semantics ---------------------
 void PropagationEngine::beginMove() {
-  assert(!m_isMoving);
-  m_isMoving = true;
+  assert(!m_isOpen);
+  assert(m_currentOperation == Operation::NONE);
+  m_currentOperation = Operation::MOVE;
   ++m_currentTime;
   // only needed for output-to-input propagation
   clearPropagationPath();
+  // m_outputToInputExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::endMove() {
-  assert(m_isMoving);
-  m_isMoving = false;
+  assert(m_currentOperation == Operation::MOVE);
+  m_currentOperation = Operation::NONE;
 }
 
-void PropagationEngine::beginQuery() {}
+void PropagationEngine::beginQuery() {
+  assert(!m_isOpen);
+  assert(m_currentOperation == Operation::NONE);
+  m_currentOperation = Operation::QUERY;
+  // m_outputToInputExplorer.clearRegisteredVariables();
+}
 
 void PropagationEngine::query(VarId id) {
-  if (m_mode == PropagationMode::INPUT_TO_OUTPUT) {
-    return;
+  assert(m_currentOperation != Operation::NONE &&
+         m_currentOperation != Operation::PROCESSING);
+
+  if (m_propagationMode != PropagationMode::INPUT_TO_OUTPUT) {
+    m_outputToInputExplorer.registerForPropagation(m_currentTime,
+                                                   getSourceId(id));
   }
-  m_outputToInputExplorer.registerForPropagation(m_currentTime,
-                                                 getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
-  switch (m_mode) {
+  assert(m_currentOperation == Operation::QUERY);
+  m_currentOperation = Operation::PROCESSING;
+  switch (m_propagationMode) {
     case PropagationMode::INPUT_TO_OUTPUT:
       propagate<false>();
       break;
@@ -173,44 +202,39 @@ void PropagationEngine::endQuery() {
       outputToInputPropagate<false>();
       break;
   }
+  m_currentOperation = Operation::NONE;
   // We must always clear due to the current version of query()
+}
+
+void PropagationEngine::beginCommit() {
+  assert(!m_isOpen);
+  assert(m_currentOperation == Operation::NONE);
+  m_currentOperation = Operation::COMMIT;
   m_outputToInputExplorer.clearRegisteredVariables();
 }
 
-void PropagationEngine::beginCommit() {}
-
 void PropagationEngine::endCommit() {
-  for (VarIdBase varId : getDecisionVariables()) {
-    if (m_modifiedDecisionVariables.find(varId) !=
-        m_modifiedDecisionVariables.end()) {
-      assert(m_store.getIntVar(varId).hasChanged(m_currentTime));
-    } else {
-      assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
-    }
-  }
-  propagate<true>();
-  // We must always clear due to the current version of query()
-  m_outputToInputExplorer.clearRegisteredVariables();
+  assert(m_currentOperation == Operation::COMMIT);
+  m_currentOperation = Operation::PROCESSING;
 
+  // Assert that if decision variables is modified, then it is
+  // in the set of modified decision variables
+  for (VarIdBase varId : getDecisionVariables()) {
+    assert((m_modifiedDecisionVariables.find(varId) !=
+            m_modifiedDecisionVariables.end()) ==
+           m_store.getIntVar(varId).hasChanged(m_currentTime));
+  }
+
+  propagate<true>();
+
+  // Assert that all decision variables that used to be changed
+  // have now been updated and are no longer considered
+  // modified.
   for (size_t varId : m_modifiedDecisionVariables) {
     assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
   }
-  m_modifiedDecisionVariables.clear();
 
-  return;
-  // Todo: This just commits everything and can be very inefficient, instead
-  // commit during propagation.
-
-  // Commit all variables:
-  // for (auto iter = m_store.intVarBegin(); iter != m_store.intVarEnd();
-  // ++iter) {
-  //   iter->commitIf(m_currentTime);
-  // }
-  // // Commit all invariants:
-  // for (auto iter = m_store.invariantBegin(); iter != m_store.invariantEnd();
-  //      ++iter) {
-  //   (*iter)->commit(m_currentTime, *this);
-  // }
+  m_currentOperation = Operation::NONE;
 }
 
 void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
