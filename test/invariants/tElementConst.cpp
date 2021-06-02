@@ -114,8 +114,7 @@ class ElementConstTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->propagationMode ==
-               PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+    } else {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(2);
       EXPECT_CALL(*invariant,
@@ -125,9 +124,6 @@ class ElementConstTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine->propagationMode ==
-               PropagationEngine::PropagationMode::MIXED) {
-      EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
     engine->beginMove();
@@ -173,6 +169,10 @@ TEST_F(ElementConstTest, NotificationsInputToOutput) {
 
 TEST_F(ElementConstTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+}
+
+TEST_F(ElementConstTest, NotificationsMixed) {
+  testNotifications(PropagationEngine::PropagationMode::MIXED);
 }
 
 }  // namespace

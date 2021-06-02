@@ -3,6 +3,7 @@
 #include <queue>
 
 #include "core/engine.hpp"
+#include "exceptions/exceptions.hpp"
 #include "propagation/outputToInputExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
 #include "utils/idMap.hpp"
@@ -34,7 +35,7 @@ class PropagationEngine : public Engine {
 
   void recomputeAndCommit();
 
-  void emptyModifiedVariables();
+  void clearPropagationQueue();
 
   template <bool DoCommit>
   void propagate();
@@ -42,7 +43,7 @@ class PropagationEngine : public Engine {
   template <bool OutputToInputMarking>
   void outputToInputPropagate();
 
-  void markPropagationPathAndEmptyModifiedVariables();
+  void markPropagationPathAndClearPropagationQueue();
   void clearPropagationPath();
 
   /**
@@ -215,7 +216,7 @@ inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
 inline void PropagationEngine::setPropagationMode(
     PropagationEngine::PropagationMode m) {
   if (!m_isOpen) {
-    throw ModelNotOpenException(
+    throw EngineOpenException(
         "Cannot set propagation mode when model is closed");
   }
   m_propagationMode = m;
@@ -248,9 +249,9 @@ PropagationEngine::getModifiedDecisionVariables() {
 template <bool OutputToInputMarking>
 inline void PropagationEngine::outputToInputPropagate() {
   if constexpr (OutputToInputMarking) {
-    emptyModifiedVariables();
+    clearPropagationQueue();
   } else {
-    markPropagationPathAndEmptyModifiedVariables();
+    markPropagationPathAndClearPropagationQueue();
   }
   m_outputToInputExplorer.propagate<OutputToInputMarking>(m_currentTime);
 }

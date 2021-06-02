@@ -229,8 +229,7 @@ TEST_F(EngineTest, SimplePropagation) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(moveTimestamp, testing::_))
         .Times(0);
-  } else if (engine->propagationMode ==
-             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else {
     EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
@@ -240,9 +239,6 @@ TEST_F(EngineTest, SimplePropagation) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(moveTimestamp, testing::_))
         .Times(3);
-  } else if (engine->propagationMode ==
-             PropagationEngine::PropagationMode::MIXED) {
-    EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
   for (size_t id = 0; id < 3; ++id) {
@@ -282,8 +278,7 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(0);
-  } else if (engine->propagationMode ==
-             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
@@ -293,9 +288,6 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(3);
-  } else if (engine->propagationMode ==
-             PropagationEngine::PropagationMode::MIXED) {
-    EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
   engine->beginMove();
@@ -339,9 +331,6 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(1);
-  } else if (engine->propagationMode ==
-             PropagationEngine::PropagationMode::MIXED) {
-    EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
   engine->beginMove();
