@@ -18,7 +18,7 @@ PropagationGraph& PropagationEngine::getPropGraph() { return m_propGraph; }
 
 void PropagationEngine::open() {
   assert(!m_isOpen);
-  assert(m_currentOperation == Operation::NONE);
+  assert(m_engineState == EngineState::NONE);
 
   m_isOpen = true;
 }
@@ -158,8 +158,8 @@ void PropagationEngine::recomputeAndCommit() {
 //--------------------- Move semantics ---------------------
 void PropagationEngine::beginMove() {
   assert(!m_isOpen);
-  assert(m_currentOperation == Operation::NONE);
-  m_currentOperation = Operation::MOVE;
+  assert(m_engineState == EngineState::NONE);
+  m_engineState = EngineState::MOVE;
   ++m_currentTime;
   // only needed for output-to-input propagation
   clearPropagationPath();
@@ -167,20 +167,20 @@ void PropagationEngine::beginMove() {
 }
 
 void PropagationEngine::endMove() {
-  assert(m_currentOperation == Operation::MOVE);
-  m_currentOperation = Operation::NONE;
+  assert(m_engineState == EngineState::MOVE);
+  m_engineState = EngineState::NONE;
 }
 
 void PropagationEngine::beginQuery() {
   assert(!m_isOpen);
-  assert(m_currentOperation == Operation::NONE);
-  m_currentOperation = Operation::QUERY;
+  assert(m_engineState == EngineState::NONE);
+  m_engineState = EngineState::QUERY;
   // m_outputToInputExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::query(VarId id) {
-  assert(m_currentOperation != Operation::NONE &&
-         m_currentOperation != Operation::PROCESSING);
+  assert(m_engineState != EngineState::NONE &&
+         m_engineState != EngineState::PROCESSING);
 
   if (m_propagationMode != PropagationMode::INPUT_TO_OUTPUT) {
     m_outputToInputExplorer.registerForPropagation(m_currentTime,
@@ -189,8 +189,8 @@ void PropagationEngine::query(VarId id) {
 }
 
 void PropagationEngine::endQuery() {
-  assert(m_currentOperation == Operation::QUERY);
-  m_currentOperation = Operation::PROCESSING;
+  assert(m_engineState == EngineState::QUERY);
+  m_engineState = EngineState::PROCESSING;
   switch (m_propagationMode) {
     case PropagationMode::INPUT_TO_OUTPUT:
       propagate<false>();
@@ -202,20 +202,20 @@ void PropagationEngine::endQuery() {
       outputToInputPropagate<false>();
       break;
   }
-  m_currentOperation = Operation::NONE;
+  m_engineState = EngineState::NONE;
   // We must always clear due to the current version of query()
 }
 
 void PropagationEngine::beginCommit() {
   assert(!m_isOpen);
-  assert(m_currentOperation == Operation::NONE);
-  m_currentOperation = Operation::COMMIT;
+  assert(m_engineState == EngineState::NONE);
+  m_engineState = EngineState::COMMIT;
   m_outputToInputExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::endCommit() {
-  assert(m_currentOperation == Operation::COMMIT);
-  m_currentOperation = Operation::PROCESSING;
+  assert(m_engineState == EngineState::COMMIT);
+  m_engineState = EngineState::PROCESSING;
 
   // Assert that if decision variables is modified, then it is
   // in the set of modified decision variables
@@ -234,7 +234,7 @@ void PropagationEngine::endCommit() {
     assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
   }
 
-  m_currentOperation = Operation::NONE;
+  m_engineState = EngineState::NONE;
 }
 
 void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
