@@ -19,7 +19,7 @@ class Constraint;
 
 class Engine {
  protected:
-  enum class Operation { NONE, QUERY, MOVE, COMMIT, PROCESSING };
+  enum class EngineState { NONE, QUERY, MOVE, COMMIT, PROCESSING };
 
   static const size_t ESTIMATED_NUM_OBJECTS = 1;
 
@@ -27,7 +27,7 @@ class Engine {
 
   bool m_isOpen = true;
 
-  Operation m_currentOperation = Operation::NONE;
+  EngineState m_engineState = EngineState::NONE;
 
   struct InvariantDependencyData {
     InvariantId id;
@@ -70,7 +70,7 @@ class Engine {
 
   inline bool isOpen() const noexcept { return m_isOpen; }
   inline bool isMoving() const noexcept {
-    return m_currentOperation == Operation::MOVE;
+    return m_engineState == EngineState::MOVE;
   }
 
   //--------------------- Variable ---------------------
