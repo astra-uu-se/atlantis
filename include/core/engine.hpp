@@ -19,7 +19,13 @@ class Constraint;
 
 class Engine {
  protected:
-  enum class EngineState { NONE, QUERY, MOVE, COMMIT, PROCESSING };
+  enum class EngineState {
+    IDLE,
+    BEGIN_QUERY,
+    BEGIN_MOVE,
+    BEGIN_COMMIT,
+    PROCESSING
+  };
 
   static const size_t ESTIMATED_NUM_OBJECTS = 1;
 
@@ -27,7 +33,7 @@ class Engine {
 
   bool m_isOpen = true;
 
-  EngineState m_engineState = EngineState::NONE;
+  EngineState m_engineState = EngineState::IDLE;
 
   struct InvariantDependencyData {
     InvariantId id;
@@ -70,7 +76,7 @@ class Engine {
 
   inline bool isOpen() const noexcept { return m_isOpen; }
   inline bool isMoving() const noexcept {
-    return m_engineState == EngineState::MOVE;
+    return m_engineState == EngineState::BEGIN_MOVE;
   }
 
   //--------------------- Variable ---------------------
@@ -192,7 +198,7 @@ template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
 Engine::makeInvariant(Args&&... args) {
   if (!m_isOpen) {
-    throw ModelNotOpenException("Cannot make invariant when store is closed.");
+    throw EngineOpenException("Cannot make invariant when store is closed.");
   }
   auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
@@ -207,7 +213,7 @@ template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<IntView, T>::value, std::shared_ptr<T>>
 Engine::makeIntView(Args&&... args) {
   if (!m_isOpen) {
-    throw ModelNotOpenException("Cannot make intView when store is closed.");
+    throw EngineOpenException("Cannot make intView when store is closed.");
   }
   auto viewPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
@@ -222,7 +228,7 @@ template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<Constraint, T>::value, std::shared_ptr<T>>
 Engine::makeConstraint(Args&&... args) {
   if (!m_isOpen) {
-    throw ModelNotOpenException("Cannot make invariant when store is closed.");
+    throw EngineOpenException("Cannot make invariant when store is closed.");
   }
   auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
 

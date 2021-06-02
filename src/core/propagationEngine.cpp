@@ -17,21 +17,27 @@ PropagationEngine::PropagationEngine()
 PropagationGraph& PropagationEngine::getPropGraph() { return m_propGraph; }
 
 void PropagationEngine::open() {
-  assert(!m_isOpen);
-  assert(m_engineState == EngineState::NONE);
-
+  if (m_isOpen) {
+    throw EngineOpenException("Engine already open.");
+  }
+  if (m_engineState != EngineState::IDLE) {
+    throw EngineStateException("Engine must be idle before opening.");
+  }
   m_isOpen = true;
 }
 
 void PropagationEngine::close() {
-  assert(m_isOpen);
+  if (!m_isOpen) {
+    throw EngineOpenException("Engine already closed.");
+  }
+
   ++m_currentTime;  // todo: Is it safe to increment time here? What if a user
                     // tried to change a variable but without a begin move?
                     // But we should ignore it anyway then...
   m_isOpen = false;
   try {
     m_propGraph.close();
-  } catch (std::exception e) {
+  } catch (std::exception const& e) {
     std::cout << "foo";
   }
   if (m_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
@@ -41,15 +47,15 @@ void PropagationEngine::close() {
   // compute initial values for variables and for (internal datastructure of)
   // invariants
   for (VarIdBase varId : getDecisionVariables()) {
-    if (m_modifiedDecisionVariables.find(varId) !=
-        m_modifiedDecisionVariables.end()) {
-      assert(m_store.getIntVar(varId).hasChanged(m_currentTime));
-    } else {
-      assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
-    }
+    // Assert that if decision variable varId is modified,
+    // then it is in the set of modified decision variables
+    assert(m_store.getIntVar(varId).hasChanged(m_currentTime) ==
+           (m_modifiedDecisionVariables.find(varId) !=
+            m_modifiedDecisionVariables.end()));
   }
   recomputeAndCommit();
   for (size_t varId : m_modifiedDecisionVariables) {
+    // assert that decision variable varId is no longer modified.
     assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
   }
 }
@@ -117,7 +123,7 @@ VarId PropagationEngine::getNextStableVariable(Timestamp) {
   return nextVar;
 }
 
-void PropagationEngine::emptyModifiedVariables() {
+void PropagationEngine::clearPropagationQueue() {
   while (!m_propGraph.m_propagationQueue.empty()) {
     m_propGraph.m_propagationQueue.pop();
   }
@@ -152,14 +158,18 @@ void PropagationEngine::recomputeAndCommit() {
        ++iter) {
     (*iter)->commit(m_currentTime, *this);
   }
-  emptyModifiedVariables();
+  clearPropagationQueue();
 }
 
 //--------------------- Move semantics ---------------------
 void PropagationEngine::beginMove() {
-  assert(!m_isOpen);
-  assert(m_engineState == EngineState::NONE);
-  m_engineState = EngineState::MOVE;
+  if (m_isOpen) {
+    throw EngineOpenException("Engine must be closed when beginning a move.");
+  }
+  if (m_engineState != EngineState::IDLE) {
+    throw EngineStateException("Engine must be idle when beginning a move.");
+  }
+  m_engineState = EngineState::BEGIN_MOVE;
   ++m_currentTime;
   // only needed for output-to-input propagation
   clearPropagationPath();
@@ -167,21 +177,29 @@ void PropagationEngine::beginMove() {
 }
 
 void PropagationEngine::endMove() {
-  assert(m_engineState == EngineState::MOVE);
-  m_engineState = EngineState::NONE;
+  if (m_engineState == EngineState::IDLE) {
+    throw EngineStateException(
+        "Engine must have begun a move before ending it.");
+  }
+  m_engineState = EngineState::IDLE;
 }
 
 void PropagationEngine::beginQuery() {
-  assert(!m_isOpen);
-  assert(m_engineState == EngineState::NONE);
-  m_engineState = EngineState::QUERY;
-  // m_outputToInputExplorer.clearRegisteredVariables();
+  if (m_isOpen) {
+    throw EngineOpenException("Engine must be closed when beginning a query.");
+  }
+  if (m_engineState != EngineState::IDLE) {
+    throw EngineStateException("Engine must be idle when beginning a query.");
+  }
+  m_engineState = EngineState::BEGIN_QUERY;
 }
 
 void PropagationEngine::query(VarId id) {
-  assert(m_engineState != EngineState::NONE &&
-         m_engineState != EngineState::PROCESSING);
-
+  if (m_engineState == EngineState::IDLE ||
+      m_engineState == EngineState::PROCESSING) {
+    throw EngineStateException(
+        "Engine must have begon an operation before querying.");
+  }
   if (m_propagationMode != PropagationMode::INPUT_TO_OUTPUT) {
     m_outputToInputExplorer.registerForPropagation(m_currentTime,
                                                    getSourceId(id));
@@ -189,55 +207,72 @@ void PropagationEngine::query(VarId id) {
 }
 
 void PropagationEngine::endQuery() {
-  assert(m_engineState == EngineState::QUERY);
-  m_engineState = EngineState::PROCESSING;
-  switch (m_propagationMode) {
-    case PropagationMode::INPUT_TO_OUTPUT:
-      propagate<false>();
-      break;
-    case PropagationMode::OUTPUT_TO_INPUT:
-      outputToInputPropagate<true>();
-      break;
-    case PropagationMode::MIXED:
-      outputToInputPropagate<false>();
-      break;
+  if (m_engineState != EngineState::BEGIN_QUERY) {
+    throw EngineStateException(
+        "Engine must have begun a query before ending it.");
   }
-  m_engineState = EngineState::NONE;
-  // We must always clear due to the current version of query()
+  m_engineState = EngineState::PROCESSING;
+  try {
+    switch (m_propagationMode) {
+      case PropagationMode::INPUT_TO_OUTPUT:
+        propagate<false>();
+        break;
+      case PropagationMode::OUTPUT_TO_INPUT:
+        outputToInputPropagate<true>();
+        break;
+      case PropagationMode::MIXED:
+        outputToInputPropagate<false>();
+        break;
+    }
+    m_engineState = EngineState::IDLE;
+  } catch (std::exception const& e) {
+    m_engineState = EngineState::IDLE;
+    throw e;
+  }
 }
 
 void PropagationEngine::beginCommit() {
-  assert(!m_isOpen);
-  assert(m_engineState == EngineState::NONE);
-  m_engineState = EngineState::COMMIT;
+  if (m_isOpen) {
+    throw EngineOpenException("Engine must be closed when beginning a commit.");
+  }
+  if (m_engineState != EngineState::IDLE) {
+    throw EngineStateException("Engine must be idle when beginning a commit.");
+  }
+  m_engineState = EngineState::BEGIN_COMMIT;
   m_outputToInputExplorer.clearRegisteredVariables();
 }
 
 void PropagationEngine::endCommit() {
-  assert(m_engineState == EngineState::COMMIT);
+  if (m_engineState != EngineState::BEGIN_COMMIT) {
+    throw EngineStateException(
+        "Engine must have begun a commit before ending it.");
+  }
+
   m_engineState = EngineState::PROCESSING;
 
-  // Assert that if decision variables is modified, then it is
-  // in the set of modified decision variables
-  for (VarIdBase varId : getDecisionVariables()) {
-    assert((m_modifiedDecisionVariables.find(varId) !=
-            m_modifiedDecisionVariables.end()) ==
-           m_store.getIntVar(varId).hasChanged(m_currentTime));
+  try {
+    for (VarIdBase varId : getDecisionVariables()) {
+      // Assert that if decision variable varId is modified,
+      // then it is in the set of modified decision variables
+      assert(m_store.getIntVar(varId).hasChanged(m_currentTime) ==
+             (m_modifiedDecisionVariables.find(varId) !=
+              m_modifiedDecisionVariables.end()));
+    }
+
+    propagate<true>();
+
+    for (size_t varId : m_modifiedDecisionVariables) {
+      // assert that decision variable varId is no longer modified.
+      assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
+    }
+    m_engineState = EngineState::IDLE;
+  } catch (std::exception const& e) {
+    m_engineState = EngineState::IDLE;
+    throw e;
   }
-
-  propagate<true>();
-
-  // Assert that all decision variables that used to be changed
-  // have now been updated and are no longer considered
-  // modified.
-  for (size_t varId : m_modifiedDecisionVariables) {
-    assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
-  }
-
-  m_engineState = EngineState::NONE;
 }
 
-void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
+void PropagationEngine::markPropagationPathAndClearPropagationQueue() {
   // We cannot iterate over a priority_queue so we cannot copy it.
   // TODO: replace priority_queue of m_propGraph.m_propagationQueue with custom
   // queue.
