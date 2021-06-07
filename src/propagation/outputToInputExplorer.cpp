@@ -87,8 +87,8 @@ void OutputToInputExplorer::preprocessVarStack(Timestamp currentTime) {
     } else {
       markStable(currentTime, variableStack_[s]);
     }
-    varStackIdx_ = newStackSize;
   }
+  varStackIdx_ = newStackSize;
 }
 
 template void OutputToInputExplorer::expandInvariant<true>(InvariantId inv);
