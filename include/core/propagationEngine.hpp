@@ -165,6 +165,7 @@ inline void PropagationEngine::clearPropagationPath() {
 }
 
 inline bool PropagationEngine::isOnPropagationPath(VarId id) {
+  assert(m_propagationMode != PropagationMode::OUTPUT_TO_INPUT);
   return m_varIsOnPropagationPath.get(id);
 }
 
