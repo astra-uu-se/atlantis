@@ -3,6 +3,7 @@
 #include <queue>
 
 #include "core/engine.hpp"
+#include "core/hashes.hpp"
 #include "exceptions/exceptions.hpp"
 #include "propagation/outputToInputExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
@@ -30,7 +31,7 @@ class PropagationEngine : public Engine {
   IdMap<VarId, bool> m_varIsOnPropagationPath;
   std::queue<VarId> m_propagationPathQueue;
 
-  std::unordered_set<size_t> m_modifiedDecisionVariables;
+  std::unordered_set<VarIdBase> m_modifiedDecisionVariables;
   Timestamp m_decisionVariablesModifiedAt;
 
   void recomputeAndCommit();
@@ -104,7 +105,7 @@ class PropagationEngine : public Engine {
   size_t getNumInvariants();
 
   [[nodiscard]] const std::vector<VarIdBase>& getDecisionVariables();
-  [[nodiscard]] const std::unordered_set<size_t>&
+  [[nodiscard]] const std::unordered_set<VarIdBase>&
   getModifiedDecisionVariables();
   [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables();
   [[nodiscard]] const std::vector<VarIdBase>& getInputVariables(InvariantId);
@@ -240,7 +241,7 @@ inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
   return m_propGraph.getInputVariables(inv);
 }
 
-inline const std::unordered_set<size_t>&
+inline const std::unordered_set<VarIdBase>&
 PropagationEngine::getModifiedDecisionVariables() {
   assert(m_currentTime == m_decisionVariablesModifiedAt);
   return m_modifiedDecisionVariables;
