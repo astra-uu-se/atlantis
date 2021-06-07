@@ -20,14 +20,11 @@ void OutputToInputExplorer::populateAncestors() {
   std::vector<bool> varVisited(m_engine.getNumVariables() + 1);
   std::deque<IdBase> stack(m_engine.getNumVariables() + 1);
 
-  size_t expectedSize = m_engine.getDecisionVariables().size();
   for (IdBase idx = 1; idx <= m_engine.getNumVariables(); ++idx) {
     if (m_decisionVarAncestor.size() < idx) {
       m_decisionVarAncestor.register_idx(idx);
     }
-    if (m_decisionVarAncestor[idx].size() < expectedSize) {
-      m_decisionVarAncestor[idx].reserve(expectedSize);
-    }
+
     m_decisionVarAncestor[idx].clear();
   }
 
