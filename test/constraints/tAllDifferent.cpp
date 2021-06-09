@@ -8,7 +8,6 @@
 #include "core/types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "variables/savedInt.hpp"
 
 using ::testing::AtLeast;
 using ::testing::AtMost;

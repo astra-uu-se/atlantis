@@ -8,7 +8,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "invariants/elementConst.hpp"
-#include "variables/savedInt.hpp"
 
 using ::testing::AtLeast;
 using ::testing::AtMost;
