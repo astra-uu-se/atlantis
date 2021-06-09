@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+
 #include "misc/logging.hpp"
 
 PropagationGraph::PropagationGraph(size_t expectedSize)
@@ -11,10 +12,7 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
       m_variablesDefinedByInvariant(expectedSize),
       m_inputVariables(expectedSize),
       m_listeningInvariants(expectedSize),
-      m_topology(*this) {
-  // m_decisionVariables;
-  // m_outputVariables;
-}
+      m_topology(*this) {}
 
 void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   // Everything must be registered in sequence.

@@ -8,7 +8,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "invariants/absDiff.hpp"
-#include "variables/savedInt.hpp"
 
 using ::testing::AnyNumber;
 using ::testing::AtLeast;

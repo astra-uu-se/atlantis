@@ -63,7 +63,6 @@ class PropagationEngine : public Engine {
   void close() override;
 
   void setPropagationMode(PropagationMode m);
-  PropagationMode getPropagationMode();
 
   //--------------------- Notificaion ---------------------
   /***
@@ -222,11 +221,6 @@ inline void PropagationEngine::setPropagationMode(
         "Cannot set propagation mode when model is closed");
   }
   m_propagationMode = m;
-}
-
-inline PropagationEngine::PropagationMode
-PropagationEngine::getPropagationMode() {
-  return m_propagationMode;
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
