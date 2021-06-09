@@ -13,7 +13,7 @@ void MinSparse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
   registerDefinedVariable(engine, _y);
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    engine.registerInvariantParameter(_id, _varArray[i], LocalId(i));
+    engine.registerInvariantInput(_id, _varArray[i], LocalId(i));
   }
 }
 
@@ -30,7 +30,7 @@ void MinSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
   updateValue(ts, engine, _y, _localPriority.getMinPriority(ts));
 }
 
-VarId MinSparse::getNextParameter(Timestamp ts, Engine&) {
+VarId MinSparse::getNextInput(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   if (static_cast<size_t>(_state.getValue(ts)) == _varArray.size()) {
     return NULL_ID;  // Done
@@ -39,7 +39,7 @@ VarId MinSparse::getNextParameter(Timestamp ts, Engine&) {
   }
 }
 
-void MinSparse::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
+void MinSparse::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
   notifyIntChanged(ts, engine, _state.getValue(ts));
 }
 

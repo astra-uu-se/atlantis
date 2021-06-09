@@ -18,8 +18,8 @@ void LessThan::init(Timestamp, Engine& engine) {
   // is initialised.
   assert(_id != NULL_ID);
 
-  engine.registerInvariantParameter(_id, _x, LocalId(0));
-  engine.registerInvariantParameter(_id, _y, LocalId(0));
+  engine.registerInvariantInput(_id, _x, LocalId(0));
+  engine.registerInvariantInput(_id, _y, LocalId(0));
   registerDefinedVariable(engine, _violationId);
 }
 
@@ -34,7 +34,7 @@ void LessThan::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId LessThan::getNextParameter(Timestamp ts, Engine&) {
+VarId LessThan::getNextInput(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?_x:_y;
@@ -48,7 +48,7 @@ VarId LessThan::getNextParameter(Timestamp ts, Engine&) {
   }
 }
 
-void LessThan::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
+void LessThan::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
   recompute(ts, engine);
 }
 

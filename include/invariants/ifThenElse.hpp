@@ -10,7 +10,7 @@
 // This is Python syntax and does not come naturally to me
 // Seeing IfThenElse(x1, x2, x3, x4) I would assume that
 // It would represent x4 = (if x1 then x2 else x3) (as the name of
-// invariant suggests). I strongly propone reordering of parameter
+// invariant suggests). I strongly propone reordering of input
 // variables
 /**
  * Invariant for z <- if b = 0 then x else y
@@ -28,7 +28,7 @@ class IfThenElse : public Invariant {
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;
-  VarId getNextParameter(Timestamp, Engine&) override;
-  void notifyCurrentParameterChanged(Timestamp, Engine&) override;
+  VarId getNextInput(Timestamp, Engine&) override;
+  void notifyCurrentInputChanged(Timestamp, Engine&) override;
   void commit(Timestamp, Engine&) override;
 };

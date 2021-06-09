@@ -16,16 +16,16 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
   _invariantStack.reserve(expectedSize);
 }
 
-// We expand an invariant by pushing it and its first parameter variable onto
+// We expand an invariant by pushing it and its first input variable onto
 // each stack.
 void OutputToInputExplorer::expandInvariant(InvariantId inv) {
   if (_invariantIsOnStack.get(inv)) {
     throw DynamicCycleException();
   }
-  VarId nextVar = _engine.getNextParameter(inv);
+  VarId nextVar = _engine.getNextInput(inv);
   // Ignore var if it is not on propagation path.
   while (nextVar != NULL_ID && !_engine.isOnPropagationPath(nextVar)) {
-    nextVar = _engine.getNextParameter(inv);
+    nextVar = _engine.getNextInput(inv);
   }
   if (nextVar.id == NULL_ID) {
     return;
@@ -35,14 +35,14 @@ void OutputToInputExplorer::expandInvariant(InvariantId inv) {
 }
 
 void OutputToInputExplorer::notifyCurrentInvariant() {
-  _engine.notifyCurrentParameterChanged(peekInvariantStack());
+  _engine.notifyCurrentInputChanged(peekInvariantStack());
 }
 
 bool OutputToInputExplorer::visitNextVariable() {
   popVariableStack();
-  VarId nextVar = _engine.getNextParameter(peekInvariantStack());
+  VarId nextVar = _engine.getNextInput(peekInvariantStack());
   while (nextVar != NULL_ID && !_engine.isOnPropagationPath(nextVar)) {
-    nextVar = _engine.getNextParameter(peekInvariantStack());
+    nextVar = _engine.getNextInput(peekInvariantStack());
   }
   if (nextVar.id == NULL_ID) {
     return true;  // done with invariant

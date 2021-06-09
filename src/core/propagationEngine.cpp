@@ -54,11 +54,10 @@ void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
   _isEnqueued.set(id, true);
 }
 
-void PropagationEngine::registerInvariantParameter(InvariantId invariantId,
-                                                   VarId parameterId,
-                                                   LocalId localId) {
-  auto sourceId = getSourceId(parameterId);
-  _propGraph.registerInvariantParameter(invariantId, sourceId);
+void PropagationEngine::registerInvariantInput(InvariantId invariantId,
+                                               VarId inputId, LocalId localId) {
+  auto sourceId = getSourceId(inputId);
+  _propGraph.registerInvariantInput(invariantId, sourceId);
   _listeningInvariantData[sourceId].emplace_back(
       ListeningInvariantData{invariantId, localId});
 }

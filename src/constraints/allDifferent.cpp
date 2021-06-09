@@ -22,7 +22,7 @@ void AllDifferent::init(Timestamp ts, Engine& engine) {
   for (size_t i = 0; i < _variables.size(); ++i) {
     lb = std::min(lb, engine.getLowerBound(_variables[i]));
     ub = std::max(ub, engine.getUpperBound(_variables[i]));
-    engine.registerInvariantParameter(_id, _variables[i], LocalId(i));
+    engine.registerInvariantInput(_id, _variables[i], LocalId(i));
     _localValues.emplace_back(ts, engine.getCommittedValue(_variables[i]));
   }
   assert(ub >= lb);
@@ -61,7 +61,7 @@ void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
   incValue(ts, engine, _violationId, static_cast<Int>(dec + inc));
 }
 
-VarId AllDifferent::getNextParameter(Timestamp ts, Engine&) {
+VarId AllDifferent::getNextInput(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
 
   auto index = static_cast<size_t>(_state.getValue(ts));
@@ -71,7 +71,7 @@ VarId AllDifferent::getNextParameter(Timestamp ts, Engine&) {
   return NULL_ID;
 }
 
-void AllDifferent::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
+void AllDifferent::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
   auto id = static_cast<size_t>(_state.getValue(ts));
   assert(id < _variables.size());
   notifyIntChanged(ts, engine, id);
