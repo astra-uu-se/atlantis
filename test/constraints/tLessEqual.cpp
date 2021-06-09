@@ -29,14 +29,14 @@ class MockLessEqual : public LessEqual {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return LessEqual::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextParameter)
+    ON_CALL(*this, getNextInput)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return LessEqual::getNextParameter(ts, engine);
+          return LessEqual::getNextInput(ts, engine);
         });
 
-    ON_CALL(*this, notifyCurrentParameterChanged)
+    ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          LessEqual::notifyCurrentParameterChanged(ts, engine);
+          LessEqual::notifyCurrentInputChanged(ts, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
@@ -52,8 +52,8 @@ class MockLessEqual : public LessEqual {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine& engine),
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
   MOCK_METHOD(void, notifyIntChanged,
@@ -107,20 +107,16 @@ class LessEqualTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
-          .Times(0);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentParameterChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else if (engine->mode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
-          .Times(3);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentParameterChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,

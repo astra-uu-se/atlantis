@@ -170,13 +170,13 @@ class Engine {
   VarId makeIntVar(Int initValue, Int lowerBound, Int upperBound);
 
   /**
-   * Register that a variable is a parameter to an invariant.
+   * Register that a variable is a input to an invariant.
    * @param invariantId the invariant
-   * @param varId the parameter
-   * @param localId the id of the parameter in the invariant
+   * @param varId the input
+   * @param localId the id of the input in the invariant
    */
-  virtual void registerInvariantParameter(InvariantId invariantId, VarId varId,
-                                          LocalId localId) = 0;
+  virtual void registerInvariantInput(InvariantId invariantId, VarId varId,
+                                      LocalId localId) = 0;
 
   virtual void registerVar(VarId) = 0;
   virtual void registerInvariant(InvariantId) = 0;

@@ -32,7 +32,7 @@ class OutputToInputExplorer {
   bool isStable(Timestamp, VarIdBase);
   bool isStable(Timestamp, InvariantId);
 
-  // We expand an invariant by pushing it and its first parameter variable onto
+  // We expand an invariant by pushing it and its first input variable onto
   // each stack.
   void expandInvariant(InvariantId);
   void notifyCurrentInvariant();

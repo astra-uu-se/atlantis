@@ -9,7 +9,7 @@ class Engine;  // Forward declaration
 class Invariant {
  protected:
   /**
-   * A simple queue structure of a fixed length to hold what parameter
+   * A simple queue structure of a fixed length to hold what input
    * variables that have been updated.
    */
   class NotificationQueue {
@@ -53,7 +53,7 @@ class Invariant {
 
   bool _isPostponed;
   InvariantId _id;
-  // State used for returning next parameter. Null state is -1 by default
+  // State used for returning next input. Null state is -1 by default
   SavedInt _state;
 
   //  std::vector<bool> _modifiedVars;
@@ -117,7 +117,7 @@ class Invariant {
    * invariant. note that this can throw an exception if such a variable is
    * already defined by another invariant.
    *
-   * 3) Register all variable parameters.
+   * 3) Register all variable inputs.
    *
    * 4) Compute initial state of invariant!
    */
@@ -126,27 +126,27 @@ class Invariant {
   virtual void recompute(Timestamp, Engine&) = 0;
 
   /**
-   * Used in Output-to-Input propagation to get the next parameter variable to
+   * Used in Output-to-Input propagation to get the next input variable to
    * visit.
    */
-  virtual VarId getNextParameter(Timestamp, Engine&) = 0;
+  virtual VarId getNextInput(Timestamp, Engine&) = 0;
 
   /**
    * Used in Output-to-Input propagation to notify to the
-   * invariant that the current parameter (the last parameter given by
-   * getNextParameter) has had its value changed.
+   * invariant that the current input (the last input given by
+   * getNextInput) has had its value changed.
    */
-  virtual void notifyCurrentParameterChanged(Timestamp, Engine&) = 0;
+  virtual void notifyCurrentInputChanged(Timestamp, Engine&) = 0;
 
   /**
    * Used in the Input-to-Output propagation to notify that an
-   * parameter variable has had its value changed.
+   * input variable has had its value changed.
    */
   void notify(LocalId);
 
   /**
    * Used in the Input-to-Output propagation when the invariant
-   * has been notified of all modified parameter variables and
+   * has been notified of all modified input variables and
    * the primary and non-primary defined variables are to be
    * computed.
    */

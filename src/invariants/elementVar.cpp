@@ -9,9 +9,9 @@ void ElementVar::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   assert(_id != NULL_ID);
 
   registerDefinedVariable(engine, _y);
-  engine.registerInvariantParameter(_id, _index, LocalId(0));
+  engine.registerInvariantInput(_id, _index, LocalId(0));
   for (size_t index = 0; index < _varArray.size(); ++index) {
-    engine.registerInvariantParameter(_id, _varArray[index], LocalId(0));
+    engine.registerInvariantInput(_id, _varArray[index], LocalId(0));
   }
 }
 
@@ -25,7 +25,7 @@ void ElementVar::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId ElementVar::getNextParameter(Timestamp ts, Engine& engine) {
+VarId ElementVar::getNextInput(Timestamp ts, Engine& engine) {
   _state.incValue(ts, 1);
   if (_state.getValue(ts) == 0) {
     return _index;
@@ -37,7 +37,7 @@ VarId ElementVar::getNextParameter(Timestamp ts, Engine& engine) {
   }
 }
 
-void ElementVar::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
+void ElementVar::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
   recompute(ts, engine);
 }
 

@@ -99,9 +99,9 @@ class PropagationEngine : public Engine {
   void endCommit();
 
   /**
-   * returns the next parameter at the current timestamp.
+   * returns the next input at the current timestamp.
    */
-  VarId getNextParameter(InvariantId);
+  VarId getNextInput(InvariantId);
 
   InvariantId getDefiningInvariant(VarId);
 
@@ -112,18 +112,18 @@ class PropagationEngine : public Engine {
       InvariantId) const;
 
   /**
-   * Notify an invariant that its current parameter has changed
+   * Notify an invariant that its current input has changed
    */
-  void notifyCurrentParameterChanged(InvariantId);
+  void notifyCurrentInputChanged(InvariantId);
 
   /**
-   * Register that a variable is a parameter to an invariant
+   * Register that a variable is a input to an invariant
    * @param invariantId the invariant
-   * @param parameterId the id of the variable
+   * @param inputId the id of the variable
    * @param localId the id of the variable in the invariant
    */
-  void registerInvariantParameter(InvariantId invariantId, VarId parameterId,
-                                  LocalId localId) override;
+  void registerInvariantInput(InvariantId invariantId, VarId inputId,
+                              LocalId localId) override;
 
   void registerVar(VarId) override;
   void registerInvariant(InvariantId) override;
@@ -149,13 +149,12 @@ inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
   return _propGraph.getVariablesDefinedBy(id);
 }
 
-inline VarId PropagationEngine::getNextParameter(InvariantId id) {
+inline VarId PropagationEngine::getNextInput(InvariantId id) {
   return getSourceId(
-      _store.getInvariant(id).getNextParameter(_currentTimestamp, *this));
+      _store.getInvariant(id).getNextInput(_currentTimestamp, *this));
 }
-inline void PropagationEngine::notifyCurrentParameterChanged(InvariantId id) {
-  _store.getInvariant(id).notifyCurrentParameterChanged(_currentTimestamp,
-                                                        *this);
+inline void PropagationEngine::notifyCurrentInputChanged(InvariantId id) {
+  _store.getInvariant(id).notifyCurrentInputChanged(_currentTimestamp, *this);
 }
 
 inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {

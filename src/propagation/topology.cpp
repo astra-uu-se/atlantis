@@ -19,7 +19,7 @@ void PropagationGraph::Topology::computeNoCycles() {
   std::function<void(VarId)> visit = [&](VarId id) {
     // tmp Mark current node
     tmpVisited.at(id) = true;
-    // for each invariant id is parameter to
+    // for each invariant id is input to
     for (auto invariant : graph._listeningInvariants.at(id)) {
       // for each variable defined by that invariant
       for (auto definedVariable :
@@ -73,7 +73,7 @@ void PropagationGraph::Topology::computeWithCycles() {
   std::function<void(VarId)> visit = [&](VarId id) {
     // Mark current node
     visited.at(id) = true;
-    // for each invariant id is a parameter to
+    // for each invariant id is a input to
     for (auto invariant : graph._listeningInvariants.at(id)) {
       // for each variable defined by that invariant
       for (auto definedVariable :
@@ -132,7 +132,7 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
     visited.at(id) = true;
     position.at(id) = depth;
     // std::cout << "Visiting " << id << " at depth " << depth << std::endl;
-    // for each invariant id is a parameter to
+    // for each invariant id is a input to
     for (auto invariant : graph._listeningInvariants.at(id)) {
       // for each variable defined by that invariant
       for (auto definedVariable :

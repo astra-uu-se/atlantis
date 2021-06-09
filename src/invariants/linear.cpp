@@ -21,7 +21,7 @@ void Linear::init(Timestamp ts, Engine& engine) {
 
   registerDefinedVariable(engine, _y);
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    engine.registerInvariantParameter(_id, _varArray[i], LocalId(i));
+    engine.registerInvariantInput(_id, _varArray[i], LocalId(i));
     _localVarArray.emplace_back(ts, engine.getCommittedValue(_varArray[i]));
   }
 }
@@ -43,7 +43,7 @@ void Linear::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
   _localVarArray.at(id).setValue(ts, newValue);
 }
 
-VarId Linear::getNextParameter(Timestamp ts, Engine&) {
+VarId Linear::getNextInput(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   if (static_cast<size_t>(_state.getValue(ts)) == _varArray.size()) {
     return NULL_ID;  // Done
@@ -52,7 +52,7 @@ VarId Linear::getNextParameter(Timestamp ts, Engine&) {
   }
 }
 
-void Linear::notifyCurrentParameterChanged(Timestamp ts, Engine& engine) {
+void Linear::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
   assert(_state.getValue(ts) != -1);
   notifyIntChanged(ts, engine, _state.getValue(ts));
 }

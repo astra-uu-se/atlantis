@@ -31,14 +31,14 @@ class MockAbsDiff : public AbsDiff {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           AbsDiff::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextParameter)
+    ON_CALL(*this, getNextInput)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return AbsDiff::getNextParameter(ts, engine);
+          return AbsDiff::getNextInput(ts, engine);
         });
 
-    ON_CALL(*this, notifyCurrentParameterChanged)
+    ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          AbsDiff::notifyCurrentParameterChanged(ts, engine);
+          AbsDiff::notifyCurrentInputChanged(ts, engine);
         });
     ON_CALL(*this, notifyIntChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
@@ -51,8 +51,8 @@ class MockAbsDiff : public AbsDiff {
 
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
-  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine& engine),
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
   MOCK_METHOD(void, notifyIntChanged,
@@ -94,20 +94,16 @@ class AbsDiffTest : public ::testing::Test {
     engine->close();
 
     if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
-          .Times(0);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentParameterChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else if (engine->mode ==
                PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
-          .Times(3);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentParameterChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,
@@ -162,15 +158,13 @@ TEST_F(AbsDiffTest, Modification) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, testing::_))
         .Times(AtLeast(1));
-    EXPECT_CALL(*invariant,
-                notifyCurrentParameterChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(AnyNumber());
   } else if (engine->mode ==
              PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
+    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
         .Times(AtLeast(2));
-    EXPECT_CALL(*invariant,
-                notifyCurrentParameterChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(Exactly(1));
   }
 

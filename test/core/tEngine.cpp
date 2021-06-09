@@ -27,8 +27,8 @@ class MockInvariantSimple : public Invariant {
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
 
-  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine&),
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine&),
               (override));
 
   MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
@@ -39,29 +39,27 @@ class MockInvariantSimple : public Invariant {
 class MockInvariantAdvanced : public Invariant {
  public:
   bool _initialized = false;
-  std::vector<VarId> parameters;
+  std::vector<VarId> inputs;
   VarId output;
 
-  MockInvariantAdvanced(std::vector<VarId>&& t_parameters, VarId t_output)
-      : Invariant(NULL_ID),
-        parameters(std::move(t_parameters)),
-        output(t_output) {
-    _modifiedVars.reserve(parameters.size());
+  MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
+      : Invariant(NULL_ID), inputs(std::move(t_inputs)), output(t_output) {
+    _modifiedVars.reserve(inputs.size());
   }
 
   void init(Timestamp, Engine& engine) override {
     assert(_id != NULL_ID);
 
     registerDefinedVariable(engine, output);
-    for (size_t i = 0; i < parameters.size(); ++i) {
-      engine.registerInvariantParameter(_id, parameters[i], LocalId(i));
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      engine.registerInvariantInput(_id, inputs[i], LocalId(i));
     }
     _initialized = true;
   }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
-  MOCK_METHOD(VarId, getNextParameter, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentParameterChanged, (Timestamp, Engine&),
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine&),
               (override));
   MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
               (override));
@@ -221,22 +219,21 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->endMove();
 
   if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, getNextParameter(moveTimestamp, testing::_))
-        .Times(0);
+    EXPECT_CALL(*invariant, getNextInput(moveTimestamp, testing::_)).Times(0);
 
     EXPECT_CALL(*invariant,
-                notifyCurrentParameterChanged(moveTimestamp, testing::_))
+                notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(0);
   } else if (engine->mode ==
              PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, getNextParameter(moveTimestamp, testing::_))
+    EXPECT_CALL(*invariant, getNextInput(moveTimestamp, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
     EXPECT_CALL(*invariant,
-                notifyCurrentParameterChanged(moveTimestamp, testing::_))
+                notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(3);
   } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
@@ -272,21 +269,19 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->close();
 
   if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentParameterChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
   } else if (engine->mode ==
              PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
+    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentParameterChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(3);
   } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
@@ -315,21 +310,19 @@ TEST_F(EngineTest, SimpleCommit) {
                 notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
 
-    EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentParameterChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
   } else if (engine->mode ==
              PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, getNextParameter(testing::_, testing::_))
+    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentParameterChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(1);
   } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.

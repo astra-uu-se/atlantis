@@ -28,15 +28,15 @@ class PropagationGraph {
   /**
    * Map from InvariantId -> list of VarId
    *
-   * Maps an invariant to all its variable parameters.
+   * Maps an invariant to all its variable inputs.
    */
-  IdMap<InvariantId, std::vector<VarIdBase>> _variableParameters;
+  IdMap<InvariantId, std::vector<VarIdBase>> _variableInputs;
 
   // Map from VarId -> vector of InvariantId
   IdMap<VarIdBase, std::vector<InvariantId>> _listeningInvariants;
 
-  std::vector<bool> _isOutputVar;
-  std::vector<bool> _isInputVar;
+  std::vector<bool> _isObjectiveVar;
+  std::vector<bool> _isDecisionVar;
 
   struct Topology {
     std::vector<size_t> variablePosition;
@@ -93,12 +93,11 @@ class PropagationGraph {
   void registerVar(VarIdBase);
 
   /**
-   * Register that parameterId is a parameter of invariantId
+   * Register that inputId is a input of invariantId
    * @param invariantId the invariant
-   * @param parameterId the variable parameter
+   * @param inputId the variable input
    */
-  void registerInvariantParameter(InvariantId invariantId,
-                                  VarIdBase parameterId);
+  void registerInvariantInput(InvariantId invariantId, VarIdBase inputId);
 
   /**
    * Register that source functionally defines varId
@@ -116,9 +115,9 @@ class PropagationGraph {
     return _numInvariants;  // this ignores null invariant
   }
 
-  inline bool isOutputVar(VarIdBase id) { return _isOutputVar.at(id); }
+  inline bool isObjectiveVar(VarIdBase id) { return _isObjectiveVar.at(id); }
 
-  inline bool isInputVar(VarIdBase id) { return _isInputVar.at(id); }
+  inline bool isDecisionVar(VarIdBase id) { return _isDecisionVar.at(id); }
 
   inline InvariantId getDefiningInvariant(VarIdBase v) {
     // Returns NULL_ID is not defined.
