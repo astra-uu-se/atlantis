@@ -28,10 +28,24 @@ class Queens : public benchmark::Fixture {
 
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(0);
+    n = state.range(1);
 
     logDebug(n);
     engine->open();
+
+    switch (state.range(0)) {
+      case 0:
+        engine->setPropagationMode(
+            PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+        break;
+      case 1:
+        engine->setPropagationMode(PropagationEngine::PropagationMode::MIXED);
+        break;
+      case 2:
+        engine->setPropagationMode(
+            PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+        break;
+    }
 
     for (int i = 0; i < n; ++i) {
       VarId q = engine->makeIntVar(i, 0, n - 1);
@@ -192,10 +206,18 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
 }
 
 /*
-BENCHMARK_REGISTER_F(Queens, probing_single_swap)->Range(5, 5000);
+static void arguments(benchmark::internal::Benchmark* benchmark) {
+  for (int n = 50; n <= 50; n += 50) {
+    for (int mode = 0; mode <= 2; ++mode) {
+      benchmark->Args({mode, n});
+    }
+  }
+}
+
+BENCHMARK_REGISTER_F(Queens, probing_single_swap)->Ranges({{0, 2}, {5, 5000}});
 BENCHMARK_REGISTER_F(Queens, probing_all_swap)
     ->Unit(benchmark::kMillisecond)
-    ->Range(5, 1000);
+    ->Ranges({{0, 2}, {5, 1000}});
 
-BENCHMARK_REGISTER_F(Queens, solve)->DenseRange(50, 100, 50);
+BENCHMARK_REGISTER_F(Queens, solve)->Apply(arguments);
 //*/
