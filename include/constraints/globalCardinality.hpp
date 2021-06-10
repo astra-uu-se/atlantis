@@ -12,18 +12,18 @@
 class SavedInt;  // forward declare
 class Engine;
 
-template <bool IsClosed>
 class GlobalCardinality : public Constraint {
  private:
-  std::vector<VarId> _variables;
-  std::vector<Int> _cover;
-  std::vector<Int> _lowerBound;
-  std::vector<Int> _upperBound;
-  std::vector<SavedInt> _localValues;
-  SavedInt _excess;
-  SavedInt _shortage;
-  std::vector<SavedInt> _counts;
-  Int _offset;
+  std::vector<VarId> m_variables;
+  std::vector<Int> m_cover;
+  std::vector<Int> m_lowerBound;
+  std::vector<Int> m_upperBound;
+  std::vector<SavedInt> m_localValues;
+  SavedInt m_excess;
+  SavedInt m_shortage;
+  std::vector<SavedInt> m_counts;
+  Int m_offset;
+  Int m_closed;  // closed = 0 designates that GCC is closed, else 1
   signed char increaseCount(Timestamp ts, Int value);
   signed char decreaseCount(Timestamp ts, Int value);
 
@@ -31,49 +31,45 @@ class GlobalCardinality : public Constraint {
   GlobalCardinality(VarId violationId, std::vector<VarId> t_variables,
                     std::vector<Int> cover, std::vector<Int> t_counts);
   GlobalCardinality(VarId violationId, std::vector<VarId> t_variables,
+                    std::vector<Int> cover, std::vector<Int> t_counts,
+                    bool closed);
+  GlobalCardinality(VarId violationId, std::vector<VarId> t_variables,
                     std::vector<Int> cover, std::vector<Int> lowerBound,
                     std::vector<Int> upperBound);
+  GlobalCardinality(VarId violationId, std::vector<VarId> t_variables,
+                    std::vector<Int> cover, std::vector<Int> lowerBound,
+                    std::vector<Int> upperBound, bool closed);
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
   void commit(Timestamp, Engine&) override;
-  VarId getNextInput(Timestamp, Engine& e) override;
-  void notifyCurrentInputChanged(Timestamp, Engine& e) override;
+  VarId getNextDependency(Timestamp, Engine& e) override;
+  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
 };
 
-template <bool IsClosed>
-inline signed char GlobalCardinality<IsClosed>::increaseCount(Timestamp ts,
-                                                              Int value) {
-  size_t pos = static_cast<size_t>(
-      std::max<Int>(0, std::min(Int(_lowerBound.size()) - 1, value - _offset)));
-  if constexpr (!IsClosed) {
-    if (_lowerBound.at(pos) < 0) {
-      return 0;
-    }
-  }
-  Int newCount = _counts.at(pos).incValue(ts, 1);
+inline signed char GlobalCardinality::increaseCount(Timestamp ts, Int value) {
+  size_t pos = static_cast<size_t>(std::max<Int>(
+      0, std::min(Int(m_lowerBound.size()) - 1, value - m_offset)));
+  Int newCount = m_counts.at(pos).incValue(ts, 1);
   assert(newCount >= 0);
-  assert(newCount <= static_cast<Int>(_variables.size()));
-  return newCount > _upperBound.at(pos)
-             ? 1
-             : (newCount > _lowerBound.at(pos) ? 0 : -1);
+  assert(newCount <= static_cast<Int>(m_variables.size()));
+  return m_lowerBound.at(pos) < 0
+             ? 0
+             : (newCount > m_upperBound.at(pos)
+                    ? 1
+                    : (newCount > m_lowerBound.at(pos) ? 0 : -1));
 }
 
-template <bool IsClosed>
-inline signed char GlobalCardinality<IsClosed>::decreaseCount(Timestamp ts,
-                                                              Int value) {
-  size_t pos = static_cast<size_t>(
-      std::max<Int>(0, std::min(Int(_lowerBound.size()) - 1, value - _offset)));
-  if constexpr (!IsClosed) {
-    if (_lowerBound.at(pos) < 0) {
-      return 0;
-    }
-  }
-  Int newCount = _counts.at(pos).incValue(ts, -1);
+inline signed char GlobalCardinality::decreaseCount(Timestamp ts, Int value) {
+  size_t pos = static_cast<size_t>(std::max<Int>(
+      0, std::min(Int(m_lowerBound.size()) - 1, value - m_offset)));
+  Int newCount = m_counts.at(pos).incValue(ts, -1);
   assert(newCount >= 0);
-  assert(newCount <= static_cast<Int>(_variables.size()));
-  return newCount < _lowerBound.at(pos)
-             ? 1
-             : (newCount < _upperBound.at(pos) ? 0 : -1);
+  assert(newCount <= static_cast<Int>(m_variables.size()));
+  return m_lowerBound.at(pos) < 0
+             ? 0
+             : (newCount < m_lowerBound.at(pos)
+                    ? 1
+                    : (newCount < m_upperBound.at(pos) ? 0 : -1));
 }
