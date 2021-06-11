@@ -97,9 +97,6 @@ class LessEqualTest : public ::testing::Test {
 
     EXPECT_TRUE(invariant->initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
-
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);

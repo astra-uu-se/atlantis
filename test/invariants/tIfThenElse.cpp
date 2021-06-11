@@ -49,8 +49,7 @@ class MockIfThenElse : public IfThenElse {
     });
   }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
+MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
 
   MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
@@ -60,7 +59,7 @@ class MockIfThenElse : public IfThenElse {
               (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
- private:
+private:
 };
 
 class IfThenElseTest : public ::testing::Test {
@@ -88,8 +87,7 @@ class IfThenElseTest : public ::testing::Test {
 
     EXPECT_TRUE(invariant->initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
@@ -113,7 +111,7 @@ class IfThenElseTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+    } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
       EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
@@ -129,6 +127,7 @@ class IfThenElseTest : public ::testing::Test {
 
 TEST_F(IfThenElseTest, CreateElement) {
   engine->open();
+
 
   std::vector<VarId> args{};
   VarId b = engine->makeIntVar(0, -100, 100);

@@ -235,12 +235,12 @@ TEST_F(EngineTest, SimplePropagation) {
     EXPECT_CALL(*invariant,
                 notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(3);
-  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+  } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -283,7 +283,7 @@ TEST_F(EngineTest, SimpleCommit) {
 
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(3);
-  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+  } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
@@ -294,7 +294,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endMove();
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -305,7 +305,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->query(output);
   engine->endQuery();
 
-  if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
@@ -324,7 +324,7 @@ TEST_F(EngineTest, SimpleCommit) {
 
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(1);
-  } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
+  } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
     EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
   }
 
@@ -491,6 +491,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
 
   EXPECT_EQ(engine->getCommittedValue(output), 7);
 
+  
   engine->beginMove();
   engine->setValue(i1, 3);
   engine->setValue(i2, 0);
@@ -501,7 +502,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endCommit();
 
   EXPECT_EQ(engine->getNewValue(output), 10);
-
+  
   engine->beginMove();
   engine->setValue(base, 3);
   engine->endMove();
@@ -511,7 +512,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endQuery();
 
   EXPECT_EQ(engine->getNewValue(output), 16);
-
+  
   engine->beginMove();
   engine->setValue(i2, 1);
   engine->setValue(i3, 0);
@@ -523,7 +524,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endQuery();
 
   EXPECT_EQ(engine->getNewValue(output), 13);
-
+  
   engine->beginMove();
   engine->setValue(i2, 1);
   engine->setValue(i3, 0);
