@@ -48,7 +48,7 @@ class OutputToInputExplorer {
   void notifyCurrentInvariant();
 
   template <bool OutputToInputMarking>
-  bool visitNextVariable();
+  bool pushNextInputVariable();
 
  public:
   OutputToInputExplorer() = delete;

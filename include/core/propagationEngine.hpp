@@ -3,10 +3,10 @@
 #include <queue>
 
 #include "core/engine.hpp"
-#include "core/hashes.hpp"
 #include "exceptions/exceptions.hpp"
 #include "propagation/outputToInputExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
+#include "utils/hashes.hpp"
 #include "utils/idMap.hpp"
 
 class PropagationEngine : public Engine {
@@ -194,21 +194,22 @@ inline bool PropagationEngine::hasChanged(Timestamp t, VarId v) const {
 
 inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
   assert(v.idType != VarIdType::view);
-  if (!m_propGraph.isDecisionVar(v)) {
-    throw VariableIsNotDecisionVariable();
-  }
+  assert(m_propGraph.isDecisionVar(v));
+
   IntVar& var = m_store.getIntVar(v);
   var.setValue(t, val);
 
-  if (t != m_decisionVariablesModifiedAt) {
-    m_decisionVariablesModifiedAt = t;
-    m_modifiedDecisionVariables.clear();
-  }
+  if (m_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
+    if (t != m_decisionVariablesModifiedAt) {
+      m_decisionVariablesModifiedAt = t;
+      m_modifiedDecisionVariables.clear();
+    }
 
-  if (var.hasChanged(t)) {
-    m_modifiedDecisionVariables.emplace(v);
-  } else {
-    m_modifiedDecisionVariables.erase(v);
+    if (var.hasChanged(t)) {
+      m_modifiedDecisionVariables.emplace(v);
+    } else {
+      m_modifiedDecisionVariables.erase(v);
+    }
   }
 
   notifyMaybeChanged(t, v);
@@ -217,7 +218,7 @@ inline void PropagationEngine::setValue(Timestamp t, VarId v, Int val) {
 inline void PropagationEngine::setPropagationMode(
     PropagationEngine::PropagationMode m) {
   if (!m_isOpen) {
-    throw EngineOpenException(
+    throw EngineClosedException(
         "Cannot set propagation mode when model is closed");
   }
   m_propagationMode = m;
@@ -245,8 +246,10 @@ PropagationEngine::getModifiedDecisionVariables() {
 template <bool OutputToInputMarking>
 inline void PropagationEngine::outputToInputPropagate() {
   if constexpr (OutputToInputMarking) {
+    assert(propagationMode == PropagationMode::OUTPUT_TO_INPUT);
     clearPropagationQueue();
   } else {
+    assert(propagationMode == PropagationMode::MIXED);
     markPropagationPathAndClearPropagationQueue();
   }
   m_outputToInputExplorer.propagate<OutputToInputMarking>(m_currentTime);
