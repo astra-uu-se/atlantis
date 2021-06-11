@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+
 #include "misc/logging.hpp"
 
 PropagationGraph::PropagationGraph(size_t expectedSize)
@@ -73,6 +74,12 @@ void PropagationGraph::close() {
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
     m_isOutputVar.at(i) = (m_listeningInvariants.at(i).empty());
     m_isDecisionVar.at(i) = (m_definingInvariant.at(i) == NULL_ID);
+    if (m_isOutputVar.at(i)) {
+      m_outputVariables.push_back(i);
+    }
+    if (m_isDecisionVar.at(i)) {
+      m_decisionVariables.push_back(i);
+    }
   }
 
   m_topology.computeLayersWithCycles();

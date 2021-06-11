@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include <vector>
 
 #include "core/types.hpp"
@@ -19,8 +20,15 @@ class OutputToInputExplorer {
   IdMap<VarId, Timestamp> varStableAt;  // last timestamp when a VarID was
                                         // stable (i.e., will not change)
   IdMap<InvariantId, Timestamp> invariantStableAt;
-  IdMap<VarId, bool> varIsOnStack;
   IdMap<InvariantId, bool> invariantIsOnStack;
+
+  IdMap<VarIdBase, std::unordered_set<VarIdBase>> m_decisionVarAncestor;
+
+  template <bool OutputToInputMarking>
+  void preprocessVarStack(Timestamp);
+
+  template <bool OutputToInputMarking>
+  bool isUpToDate(VarIdBase);
 
   void pushVariableStack(VarId v);
   void popVariableStack();
@@ -34,14 +42,19 @@ class OutputToInputExplorer {
 
   // We expand an invariant by pushing it and its first input variable onto
   // each stack.
+  template <bool OutputToInputMarking>
   void expandInvariant(InvariantId inv);
+
   void notifyCurrentInvariant();
-  bool visitNextVariable();
+
+  template <bool OutputToInputMarking>
+  bool pushNextInputVariable();
 
  public:
   OutputToInputExplorer() = delete;
   OutputToInputExplorer(PropagationEngine& e, size_t expectedSize);
 
+  void populateAncestors();
   void registerVar(VarId);
   void registerInvariant(InvariantId);
   /**
@@ -56,21 +69,17 @@ class OutputToInputExplorer {
 };
 
 inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
-  // TODO: why not set varIsOnStack.at(v) = true;?
-  // I remember that there was some technical reason but this need to be
-  // documented. Note that this might overflow the stack otherwise.
-  variableStack_[varStackIdx_++] = id;
+  pushVariableStack(id);
 }
 
-inline void OutputToInputExplorer::clearRegisteredVariables() { varStackIdx_ = 0; }
+inline void OutputToInputExplorer::clearRegisteredVariables() {
+  varStackIdx_ = 0;
+}
 
 inline void OutputToInputExplorer::pushVariableStack(VarId v) {
-  varIsOnStack.set(v, true);
   variableStack_[varStackIdx_++] = v;
 }
-inline void OutputToInputExplorer::popVariableStack() {
-  varIsOnStack.set(variableStack_[--varStackIdx_], false);
-}
+inline void OutputToInputExplorer::popVariableStack() { --varStackIdx_; }
 inline VarId OutputToInputExplorer::peekVariableStack() {
   return variableStack_[varStackIdx_ - 1];
 }

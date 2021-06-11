@@ -10,8 +10,8 @@
 #include "invariants/elementConst.hpp"
 
 using ::testing::AtLeast;
-using ::testing::Return;
 using ::testing::AtMost;
+using ::testing::Return;
 
 namespace {
 
@@ -50,17 +50,18 @@ class MockElementConst : public ElementConst {
     });
   }
 
-MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
+              (override));
 
-MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
-            (override));
+  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+              (override));
 
-MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
-            (override));
-MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+              (override));
+  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
-private:
+ private:
 };
 
 class ElementConstTest : public ::testing::Test {
@@ -90,10 +91,11 @@ class ElementConstTest : public ::testing::Test {
 
     auto invariant = engine->makeInvariant<MockElementConst>(
         idx, std::vector<Int>{args}, output);
-    
+
     EXPECT_TRUE(invariant->m_initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
+        .Times(AtLeast(1));
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
@@ -101,16 +103,19 @@ class ElementConstTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine-> mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+    if (engine->propagationMode ==
+        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+          .Times(0);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine-> mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(2);
+    } else {
+      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+          .Times(2);
       EXPECT_CALL(*invariant,
                   notifyCurrentDependencyChanged(testing::_, testing::_))
           .Times(1);
@@ -118,8 +123,6 @@ class ElementConstTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
-      EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
     engine->beginMove();
@@ -165,6 +168,10 @@ TEST_F(ElementConstTest, NotificationsInputToOutput) {
 
 TEST_F(ElementConstTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+}
+
+TEST_F(ElementConstTest, NotificationsMixed) {
+  testNotifications(PropagationEngine::PropagationMode::MIXED);
 }
 
 }  // namespace

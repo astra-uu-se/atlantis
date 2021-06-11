@@ -23,11 +23,25 @@ class AllInterval : public benchmark::Fixture {
 
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(0);
+    n = state.range(1);
 
     // TODO: why is this printed multiple times per test?
     logDebug(n);
     engine->open();
+
+    switch (state.range(0)) {
+      case 0:
+        engine->setPropagationMode(
+            PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+        break;
+      case 1:
+        engine->setPropagationMode(PropagationEngine::PropagationMode::MIXED);
+        break;
+      case 2:
+        engine->setPropagationMode(
+            PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+        break;
+    }
 
     for (int i = 0; i < n; ++i) {
       s_vars.push_back(engine->makeIntVar(i, 0, n - 1));
@@ -56,6 +70,7 @@ class AllInterval : public benchmark::Fixture {
 };
 
 BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
+  Int probes = 0;
   for (auto _ : st) {
     int i = distribution(gen);
     int j = distribution(gen);
@@ -70,7 +85,10 @@ BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
     engine->beginQuery();
     engine->query(violation);
     engine->endQuery();
+    ++probes;
   }
+  st.counters["probes_per_second"] =
+      benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
@@ -123,9 +141,23 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
 }
 
 ///*
-BENCHMARK_REGISTER_F(AllInterval, probing_single_swap)->DenseRange(5, 30, 5);
+static void arguments(benchmark::internal::Benchmark* benchmark) {
+  for (int n = 10; n <= 30; n += 10) {
+    for (int mode = 0; mode <= 2; ++mode) {
+      benchmark->Args({mode, n});
+    }
+  }
+}
+
+static void commitArguments(benchmark::internal::Benchmark* benchmark) {
+  for (int n = 10; n <= 30; n += 10) {
+    benchmark->Args({0, n});
+  }
+}
+
+BENCHMARK_REGISTER_F(AllInterval, probing_single_swap)->Apply(arguments);
 BENCHMARK_REGISTER_F(AllInterval, probing_all_swap)
     ->Unit(benchmark::kMillisecond)
-    ->DenseRange(5, 30, 5);
-BENCHMARK_REGISTER_F(AllInterval, commit_single_swap)->DenseRange(5, 30, 5);
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(AllInterval, commit_single_swap)->Apply(commitArguments);
 //*/

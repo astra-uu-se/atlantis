@@ -93,7 +93,8 @@ class AbsDiffTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode ==
+        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(*invariant,
@@ -102,7 +103,7 @@ class AbsDiffTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+    } else {
       EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
           .Times(3);
       EXPECT_CALL(*invariant,
@@ -112,8 +113,6 @@ class AbsDiffTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
-      EXPECT_EQ(0, 1);  // TODO: define the test case.
     }
 
     engine->beginMove();
@@ -157,14 +156,16 @@ TEST_F(AbsDiffTest, Modification) {
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-  if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode ==
+      PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, testing::_))
         .Times(AtLeast(1));
     EXPECT_CALL(*invariant,
                 notifyCurrentDependencyChanged(testing::_, testing::_))
         .Times(AnyNumber());
-  } else if (engine->mode == PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else if (engine->propagationMode ==
+             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
         .Times(AtLeast(2));
     EXPECT_CALL(*invariant,
@@ -193,6 +194,10 @@ TEST_F(AbsDiffTest, NotificationsInputToOutput) {
 
 TEST_F(AbsDiffTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+}
+
+TEST_F(AbsDiffTest, NotificationsMixed) {
+  testNotifications(PropagationEngine::PropagationMode::MIXED);
 }
 
 }  // namespace
