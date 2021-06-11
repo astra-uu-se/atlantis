@@ -117,12 +117,11 @@ void OutputToInputExplorer::notifyCurrentInvariant() {
   m_engine.notifyCurrentDependencyChanged(peekInvariantStack());
 }
 
-template bool OutputToInputExplorer::visitNextVariable<true>();
-template bool OutputToInputExplorer::visitNextVariable<false>();
+template bool OutputToInputExplorer::pushNextInputVariable<true>();
+template bool OutputToInputExplorer::pushNextInputVariable<false>();
 
 template <bool OutputToInputMarking>
-bool OutputToInputExplorer::visitNextVariable() {
-  popVariableStack();
+bool OutputToInputExplorer::pushNextInputVariable() {
   VarId nextVar = m_engine.getNextDependency(peekInvariantStack());
   while (nextVar != NULL_ID && isUpToDate<OutputToInputMarking>(nextVar)) {
     nextVar = m_engine.getNextDependency(peekInvariantStack());
@@ -158,19 +157,21 @@ void OutputToInputExplorer::propagate(Timestamp currentTime) {
     // If the variable is not stable, then expand it.
     if (!isStable(currentTime, currentVar)) {
       // Variable will become stable as it is either not defined or we now
-      // expand its invariant. Note that expandInvariant may can sometimes not
+      // expand its invariant. Note that expandInvariant may sometimes not
       // push a new invariant nor a new variable on the stack, so we must mark
       // the variable as stable before we expand it as this otherwise results in
       // an infinite loop.
       markStable(currentTime, currentVar);
-      // Variable must be on
+      // The variable is upToDate and stable: expand its defining invariant.
       expandInvariant<OutputToInputMarking>(
           m_engine.getDefiningInvariant(currentVar));
       continue;
     }
+    // currentVar is done: pop it from the stack.
+    popVariableStack();
     if (invariantStackIdx_ == 0) {
-      popVariableStack();  // we are at an output variable that is already
-                           // stable. Just continue!
+      // we are at an output variable that is already
+      // stable. Just continue!
       continue;
     }
     if (m_engine.hasChanged(currentTime, currentVar)) {
@@ -178,7 +179,8 @@ void OutputToInputExplorer::propagate(Timestamp currentTime) {
       // notification to top invariant (i.e, the one asking for its value)
       notifyCurrentInvariant();
     }
-    bool invariantDone = visitNextVariable<OutputToInputMarking>();
+    // push the next input variable of the top invariant
+    bool invariantDone = pushNextInputVariable<OutputToInputMarking>();
     if (invariantDone) {
       // The top invariant has finished propagating, so all defined vars can
       // be marked as stable at the current time.

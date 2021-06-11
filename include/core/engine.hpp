@@ -19,13 +19,7 @@ class Constraint;
 
 class Engine {
  protected:
-  enum class EngineState {
-    IDLE,
-    BEGIN_QUERY,
-    BEGIN_MOVE,
-    BEGIN_COMMIT,
-    PROCESSING
-  };
+  enum class EngineState { IDLE, QUERY, MOVE, COMMIT, PROCESSING };
 
   static const size_t ESTIMATED_NUM_OBJECTS = 1;
 
@@ -76,7 +70,7 @@ class Engine {
 
   inline bool isOpen() const noexcept { return m_isOpen; }
   inline bool isMoving() const noexcept {
-    return m_engineState == EngineState::BEGIN_MOVE;
+    return m_engineState == EngineState::MOVE;
   }
 
   //--------------------- Variable ---------------------
@@ -198,7 +192,7 @@ template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
 Engine::makeInvariant(Args&&... args) {
   if (!m_isOpen) {
-    throw EngineOpenException("Cannot make invariant when store is closed.");
+    throw EngineClosedException("Cannot make invariant when store is closed.");
   }
   auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
@@ -213,7 +207,7 @@ template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<IntView, T>::value, std::shared_ptr<T>>
 Engine::makeIntView(Args&&... args) {
   if (!m_isOpen) {
-    throw EngineOpenException("Cannot make intView when store is closed.");
+    throw EngineClosedException("Cannot make intView when store is closed.");
   }
   auto viewPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
@@ -228,7 +222,7 @@ template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<Constraint, T>::value, std::shared_ptr<T>>
 Engine::makeConstraint(Args&&... args) {
   if (!m_isOpen) {
-    throw EngineOpenException("Cannot make invariant when store is closed.");
+    throw EngineClosedException("Cannot make invariant when store is closed.");
   }
   auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
 

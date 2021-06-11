@@ -19,6 +19,15 @@ class EngineOpenException : public std::runtime_error {
       : std::runtime_error(msg) {}
 };
 
+class EngineClosedException : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit EngineClosedException(const std::string& msg)
+      : std::runtime_error(msg) {}
+};
+
 class EngineStateException : public std::runtime_error {
  public:
   /**

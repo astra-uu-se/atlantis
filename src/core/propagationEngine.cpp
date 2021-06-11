@@ -28,7 +28,7 @@ void PropagationEngine::open() {
 
 void PropagationEngine::close() {
   if (!m_isOpen) {
-    throw EngineOpenException("Engine already closed.");
+    throw EngineClosedException("Engine already closed.");
   }
 
   ++m_currentTime;  // todo: Is it safe to increment time here? What if a user
@@ -163,43 +163,33 @@ void PropagationEngine::recomputeAndCommit() {
 
 //--------------------- Move semantics ---------------------
 void PropagationEngine::beginMove() {
-  if (m_isOpen) {
-    throw EngineOpenException("Engine must be closed when beginning a move.");
-  }
-  if (m_engineState != EngineState::IDLE) {
-    throw EngineStateException("Engine must be idle when beginning a move.");
-  }
-  m_engineState = EngineState::BEGIN_MOVE;
+  assert(!m_isOpen);
+  assert(m_engineState == EngineState::IDLE);
+
   ++m_currentTime;
-  // only needed for output-to-input propagation
-  clearPropagationPath();
-  // m_outputToInputExplorer.clearRegisteredVariables();
+  if (m_propagationMode == PropagationMode::MIXED) {
+    clearPropagationPath();
+  }
+
+  m_engineState = EngineState::MOVE;
 }
 
 void PropagationEngine::endMove() {
-  if (m_engineState == EngineState::IDLE) {
-    throw EngineStateException(
-        "Engine must have begun a move before ending it.");
-  }
+  assert(m_engineState == EngineState::MOVE);
   m_engineState = EngineState::IDLE;
 }
 
 void PropagationEngine::beginQuery() {
-  if (m_isOpen) {
-    throw EngineOpenException("Engine must be closed when beginning a query.");
-  }
-  if (m_engineState != EngineState::IDLE) {
-    throw EngineStateException("Engine must be idle when beginning a query.");
-  }
-  m_engineState = EngineState::BEGIN_QUERY;
+  assert(!m_isOpen);
+  assert(m_engineState == EngineState::IDLE);
+  m_engineState = EngineState::QUERY;
 }
 
 void PropagationEngine::query(VarId id) {
-  if (m_engineState == EngineState::IDLE ||
-      m_engineState == EngineState::PROCESSING) {
-    throw EngineStateException(
-        "Engine must have begon an operation before querying.");
-  }
+  assert(!m_isOpen);
+  assert(m_engineState != EngineState::IDLE &&
+         m_engineState != EngineState::PROCESSING);
+
   if (m_propagationMode != PropagationMode::INPUT_TO_OUTPUT) {
     m_outputToInputExplorer.registerForPropagation(m_currentTime,
                                                    getSourceId(id));
@@ -207,10 +197,8 @@ void PropagationEngine::query(VarId id) {
 }
 
 void PropagationEngine::endQuery() {
-  if (m_engineState != EngineState::BEGIN_QUERY) {
-    throw EngineStateException(
-        "Engine must have begun a query before ending it.");
-  }
+  assert(m_engineState == EngineState::QUERY);
+
   m_engineState = EngineState::PROCESSING;
   try {
     switch (m_propagationMode) {
@@ -232,38 +220,36 @@ void PropagationEngine::endQuery() {
 }
 
 void PropagationEngine::beginCommit() {
-  if (m_isOpen) {
-    throw EngineOpenException("Engine must be closed when beginning a commit.");
-  }
-  if (m_engineState != EngineState::IDLE) {
-    throw EngineStateException("Engine must be idle when beginning a commit.");
-  }
-  m_engineState = EngineState::BEGIN_COMMIT;
+  assert(!m_isOpen);
+  assert(m_engineState == EngineState::IDLE);
+
   m_outputToInputExplorer.clearRegisteredVariables();
+
+  m_engineState = EngineState::COMMIT;
 }
 
 void PropagationEngine::endCommit() {
-  if (m_engineState != EngineState::BEGIN_COMMIT) {
-    throw EngineStateException(
-        "Engine must have begun a commit before ending it.");
-  }
+  assert(m_engineState == EngineState::COMMIT);
 
   m_engineState = EngineState::PROCESSING;
 
   try {
-    for (VarIdBase varId : getDecisionVariables()) {
-      // Assert that if decision variable varId is modified,
-      // then it is in the set of modified decision variables
-      assert(m_store.getIntVar(varId).hasChanged(m_currentTime) ==
-             (m_modifiedDecisionVariables.find(varId) !=
-              m_modifiedDecisionVariables.end()));
+    if (m_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
+      for (VarIdBase varId : getDecisionVariables()) {
+        // Assert that if decision variable varId is modified,
+        // then it is in the set of modified decision variables
+        assert(m_store.getIntVar(varId).hasChanged(m_currentTime) ==
+               (m_modifiedDecisionVariables.find(varId) !=
+                m_modifiedDecisionVariables.end()));
+      }
     }
 
     propagate<true>();
-
-    for (size_t varId : m_modifiedDecisionVariables) {
-      // assert that decision variable varId is no longer modified.
-      assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
+    if (m_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
+      for (size_t varId : m_modifiedDecisionVariables) {
+        // assert that decision variable varId is no longer modified.
+        assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
+      }
     }
     m_engineState = EngineState::IDLE;
   } catch (std::exception const& e) {
