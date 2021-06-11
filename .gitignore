@@ -51,3 +51,4 @@ benchmark-data.json
 # benchmark tmp plot files
 /tmp.json
 /tmp-*.json
+/plots
