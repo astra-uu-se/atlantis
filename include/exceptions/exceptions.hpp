@@ -10,12 +10,30 @@ class VariableAlreadyDefinedException : public std::runtime_error {
       : std::runtime_error(msg) {}
 };
 
-class ModelNotOpenException : public std::runtime_error {
+class EngineOpenException : public std::runtime_error {
  public:
   /**
    * @param msg The error message
    */
-  explicit ModelNotOpenException(const std::string& msg)
+  explicit EngineOpenException(const std::string& msg)
+      : std::runtime_error(msg) {}
+};
+
+class EngineClosedException : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit EngineClosedException(const std::string& msg)
+      : std::runtime_error(msg) {}
+};
+
+class EngineStateException : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit EngineStateException(const std::string& msg)
       : std::runtime_error(msg) {}
 };
 
@@ -26,6 +44,14 @@ class PropagationGraphHasCycles : public std::runtime_error {
    */
   explicit PropagationGraphHasCycles(const std::string& msg)
       : std::runtime_error(msg) {}
+};
+
+class BadEngineState : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit BadEngineState(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 class FailedToInitialise : public std::runtime_error {
@@ -46,4 +72,9 @@ class DynamicCycleException : public std::exception {
 class OutOfOrderIndexRegistration : public std::exception {
  public:
   explicit OutOfOrderIndexRegistration() = default;
+};
+
+class VariableIsNotDecisionVariable : public std::exception {
+ public:
+  explicit VariableIsNotDecisionVariable() = default;
 };
