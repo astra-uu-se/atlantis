@@ -70,6 +70,7 @@ class AllInterval : public benchmark::Fixture {
 };
 
 BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
+  Int probes = 0;
   for (auto _ : st) {
     int i = distribution(gen);
     int j = distribution(gen);
@@ -84,7 +85,10 @@ BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
     engine->beginQuery();
     engine->query(violation);
     engine->endQuery();
+    ++probes;
   }
+  st.counters["probes_per_second"] =
+      benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
