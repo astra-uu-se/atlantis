@@ -143,7 +143,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
 
 ///*
 static void arguments(benchmark::internal::Benchmark* b) {
-  for (int i = 10; i <= 100; i += 30) {
+  for (int i = 10; i <= 100; i += 10) {
     for (int mode = 0; mode <= 2; ++mode) {
       b->Args({mode, i});
     }

@@ -3,7 +3,6 @@
 #include <cassert>
 #include <vector>
 
-
 #include "variables/savedValue.hpp"
 
 class PriorityList {
@@ -166,6 +165,7 @@ class PriorityList {
     }
   }
 
+#ifndef NDEBUG
   void sanity(Timestamp t) {
     if (size() == 0) {
       return;
@@ -214,4 +214,5 @@ class PriorityList {
       assert(cur.get(t) == cur.get(t)->next.get(t)->prev.get(t));
     }
   }
+#endif
 };

@@ -142,7 +142,7 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
 
 ///*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int n = 10; n <= 30; n += 10) {
+  for (int n = 5; n <= 30; n += 5) {
     for (int mode = 0; mode <= 2; ++mode) {
       benchmark->Args({mode, n});
     }

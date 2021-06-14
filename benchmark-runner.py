@@ -2,65 +2,66 @@ import logging
 from re import S
 from sys import argv
 from os import path
-import matplotlib
-matplotlib.use('tkagg')
-import matplotlib.pyplot as plt
 import json
 
-
-def int_to_propagation_mode(value):
-    if value == 0:
-        return 'i2o'
-    elif value == 1:
-        return 'mixed'
-    elif value == 2:
-        return 'o2i'
-    return ''
-
-
-def propagation_mode_to_marker(mode):
-    if mode == 'i2o':
-        return 'o'
-    elif mode == 'mixed':
-        return 'v'
-    elif mode == 'o2i':
-        return '*'
-    return ''
-
-
-class PlotFormatter:
+class BenchmarkRunner:
     def __init__(self, arguments):
-        self.logger = logging.getLogger('PlotFormatter')
+        self.logger = logging.getLogger('BenchmarkRunner')
+        self.logger.debug(arguments)
         self.arguments = self.process_arguments(arguments)
         
         json_data = self.retrieve_json()
         self.benchmarks = self.retrieve_benchmarks(json_data)
 
     def process_arguments(self, arguments):
-        if len(arguments.get('input', [])) == 0:
-            raise Exception(f"No input file given.")
-
-        for json_file_path in arguments.get('input', []):
-            if json_file_path is None or not path.isfile(json_file_path):
-                raise Exception(f"file {json_file_path} does not exists")
-
-        if arguments.get('save_plots') != True:
-            return arguments
-
-        if arguments.get('output_dir', None) is None or not path.isdir(arguments['output_dir']):
-            raise Exception("Output directory does not exist")
+        if arguments.get('num_runs', None) is None:
+            raise Exception("num_runs not set.")
         
-        if len(arguments.get('file_prefix', '')) > 0:
-            arguments['file_prefix'] = arguments['file_prefix'] + '-'
-        else:
-            arguments['file_prefix'] = ''
+        try:
+            num_runs = int(arguments['num_runs'])
+            if num_runs <= 0:
+                raise ValueError("")
+        except ValueError:
+            raise Exception('num_runs must be a positive integer')
 
-        if len(arguments.get('file_suffix', '')) > 0:
-            arguments['file_suffix'] = '-' + arguments['file_suffix']
-        else:
-            arguments['file_suffix'] = ''
+        if arguments.get('output', None) is None:
+            raise Exception("No output file given.")
         
-        return arguments
+        dirname, filename = path.split(arguments['output'])
+        if not path.isdir(dirname):
+            raise Exception(f"Directory {dirname} does not exist.")
+
+        if len(filename) is None:
+            raise Exception(f"Cannot save to a directory.")
+
+        filename, extension = path.splitext(filename)
+
+        arguments['dirname'] = dirname
+        arguments['filename'] = filename
+        arguments['extension'] = extension
+
+    def run_benchmarks(self):
+        run_benchmarks = path.join(
+            path.dirname(path.realpath(__file__)),
+            'build',
+            'runBenchmarks'
+        )
+
+        for run in range(1, self.arguments['num_runs'] + 1):
+            filename = path.join(
+              arguments['dirname'],
+              f"{arguments['filename']}-{run}{arguments['extension']}"
+            )
+        process = run(
+            args=[
+                '--benchmark_format=json',
+                f'--benchmark_out={filename}',
+                f'--benchmark_repetitions={num_runs}'
+            ],
+            returncode=0
+        )
+            
+        
 
     def retrieve_json(self):
         json_data = []
@@ -73,9 +74,7 @@ class PlotFormatter:
     def retrieve_benchmarks(self, json_data):
         benchmark_instances = dict()
         for tuple in zip(self.arguments.get('input'), json_data):
-            benchmark_instances[tuple[0]] = self.benchmark_avarage(
-                self.parse_json_instance(tuple[1])
-            )
+            benchmark_instances[tuple[0]] = self.parse_json_instance(tuple[1])
         
         return self.merge_benchmark_instances(benchmark_instances)
 
@@ -120,44 +119,26 @@ class PlotFormatter:
 
         return processed_benchmarks
 
-    def benchmark_avarage(self, benchmarks):
-        for models in benchmarks.values():
-            for modes in models.values():
-                for propagation_mode, instances in modes.items():
-                    averages = []
-                    for instance in sorted({instance for instance, _ in instances}):
-                        pbs = list((pbs for i, pbs in instances if i == instance))
-                        self.logger.debug(f'{sum(pbs)} / {len(pbs)}')
-
-                        average_instance = (instance, sum(pbs) / len(pbs))
-                        self.logger.debug(average_instance)
-
-                        averages.append(
-                            average_instance
-                        )
-                    modes[propagation_mode] = averages
-                    self.logger.debug(modes[propagation_mode])
-        return benchmarks
-
     def merge_benchmark_instances(self, benchmark_instances):
-        merged_benchmarks = dict()
+        merged_instances = dict()
         for file_name, benchmarks in benchmark_instances.items():
             file_name = path.splitext(file_name)[0]
             for problem_name, models in benchmarks.items():
-                if problem_name not in merged_benchmarks:
-                    merged_benchmarks[problem_name] = dict()
+                if problem_name not in merged_instances:
+                    merged_instances[problem_name] = dict()
 
-                for model, modes in models.items():
-                    if model not in merged_benchmarks[problem_name]:
-                        merged_benchmarks[problem_name][model] = dict()
-                    for propagation_mode, benchmarks in modes.items():
-                        if propagation_mode not in merged_benchmarks[problem_name][model]:
-                            merged_benchmarks[problem_name][model][propagation_mode] = dict()
+                for model_name, modes in models.items():
+                    if model_name not in merged_instances[problem_name]:
+                        merged_instances[problem_name][model_name] = dict()
+                    for mode_name, benchmarks in modes.items():
+                        if mode_name not in merged_instances[problem_name][model_name]:
+                            merged_instances[problem_name][model_name][mode_name] = dict()
                         
-                        if file_name not in merged_benchmarks[problem_name][model][propagation_mode]:
-                            merged_benchmarks[problem_name][model][propagation_mode][file_name] = benchmarks
+                        if file_name not in merged_instances[problem_name][model_name][mode_name]:
+                            merged_instances[problem_name][model_name][mode_name][file_name] = benchmarks
 
-        return merged_benchmarks
+        self.logger.debug(merged_instances)
+        return merged_instances
 
     def plot_benchmarks(self):
         for models in self.benchmarks.values():
@@ -254,37 +235,18 @@ if __name__ == "__main__":
 
     arguments = {
         # key: default value
-        'output_dir': 'plots',
-        'file_prefix': '',
-        'file_suffix': ''
+        'num_runs': '10',
+        'output': 'benchmark-json/tmp.json',
     }
-    bool_flags = ['save_plots']
-    multiple = ['input', ['tmp.json']]
-
+    
     for f in arguments.keys():
         flag = f'{flag_prefix}{f}{flag_splitter}'
         argument = next((n[len(flag):] for n in argv if n.startswith(flag)), None)
         if argument is None:
             continue
         arguments[f] = argument
-    
-    for f in bool_flags:
-        flag = f'{flag_prefix}{f}'
-        arguments[f] = any((n.startswith(flag) for n in argv))
-    
-    for f in multiple:
-        flag = f'{flag_prefix}{f}{flag_splitter}'
-        index, argument = next(
-            ((i, n[len(flag):]) for i, n in enumerate(argv) if n.startswith(flag)),
-            (-1, None)
-        )
-        if argument is None:
-            continue
-        arguments[f] = [argument]
-        for i in range(index + 1, len(argv)):
-            if argv[i].startswith(flag_prefix):
-                break
-            arguments[f].append(argv[i])
 
-    plot_formatter = PlotFormatter(arguments)
-    plot_formatter.plot_benchmarks()
+    benchmark_runner = BenchmarkRunner(arguments)
+    benchmark_runner.run_benchmarks()
+    benchmark_runner.average()
+    benchmark_runner.save()
