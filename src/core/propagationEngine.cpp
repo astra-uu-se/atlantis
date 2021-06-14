@@ -44,6 +44,7 @@ void PropagationEngine::close() {
     m_outputToInputExplorer.populateAncestors();
   }
 
+#ifndef NDEBUG
   // compute initial values for variables and for (internal datastructure of)
   // invariants
   for (VarIdBase varId : getDecisionVariables()) {
@@ -53,11 +54,14 @@ void PropagationEngine::close() {
            (m_modifiedDecisionVariables.find(varId) !=
             m_modifiedDecisionVariables.end()));
   }
+#endif
   recomputeAndCommit();
+#ifndef NDEBUG
   for (size_t varId : m_modifiedDecisionVariables) {
     // assert that decision variable varId is no longer modified.
     assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
   }
+#endif
 }
 
 //---------------------Registration---------------------
@@ -234,6 +238,7 @@ void PropagationEngine::endCommit() {
   m_engineState = EngineState::PROCESSING;
 
   try {
+#ifndef NDEBUG
     if (m_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
       for (VarIdBase varId : getDecisionVariables()) {
         // Assert that if decision variable varId is modified,
@@ -243,14 +248,17 @@ void PropagationEngine::endCommit() {
                 m_modifiedDecisionVariables.end()));
       }
     }
+#endif
 
     propagate<true>();
+#ifndef NDEBUG
     if (m_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
       for (size_t varId : m_modifiedDecisionVariables) {
         // assert that decision variable varId is no longer modified.
         assert(!m_store.getIntVar(varId).hasChanged(m_currentTime));
       }
     }
+#endif
     m_engineState = EngineState::IDLE;
   } catch (std::exception const& e) {
     m_engineState = EngineState::IDLE;

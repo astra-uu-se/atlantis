@@ -16,11 +16,18 @@ class PriorityListTest : public ::testing::Test {
   }
   std::mt19937 gen;
 
+  void testSanity([[maybe_unused]] PriorityList &p,
+                  [[maybe_unused]] Timestamp t) {
+#ifndef NDEBUG
+    p.sanity(t);
+#endif
+  }
+
   void updateForward(Timestamp t, PriorityList &p) { updateForward(t, p, 0); }
   void updateForward(Timestamp t, PriorityList &p, Int offset) {
     for (size_t idx = 0; idx < p.size(); ++idx) {
       p.updatePriority(t, idx, idx + 1 + offset);
-      p.sanity(t);
+      testSanity(p, t);
     }
   }
 
@@ -30,14 +37,14 @@ class PriorityListTest : public ::testing::Test {
   void updateBackwards(Timestamp t, PriorityList &p, Int offset) {
     for (size_t idx = 0; idx < p.size(); ++idx) {
       p.updatePriority(t, idx, p.size() - idx + offset);
-      p.sanity(t);
+      testSanity(p, t);
     }
   }
 
   void updateUniform(Timestamp t, PriorityList &p) {
     for (size_t idx = 0; idx < p.size(); ++idx) {
       p.updatePriority(t, idx, Int(t));
-      p.sanity(t);
+      testSanity(p, t);
     }
   }
 };
@@ -50,7 +57,7 @@ TEST_F(PriorityListTest, Constructor) {
   for (size_t size = 0; size < 100; ++size) {
     PriorityList p(size);
     EXPECT_EQ(p.size(), size);
-    p.sanity(0);
+    testSanity(p, 0);
   }
 }
 
@@ -106,7 +113,7 @@ TEST_F(PriorityListTest, RandomUpdatePriority) {
       minPriority = std::min(newValue, minPriority);
       maxPriority = std::max(newValue, maxPriority);
       p.updatePriority(t, idx, newValue);
-      p.sanity(t);
+      testSanity(p, t);
     }
 
     EXPECT_EQ(p.getMinPriority(t), minPriority);
