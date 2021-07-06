@@ -67,16 +67,16 @@ jobs:
       if: always()
     
     - name: Create Benchmark Environment
-      if: contains(env.BENCHMARK_BRANCHES, github.ref)
+      #if: contains(env.BENCHMARK_BRANCHES, github.ref)
       run: rm -rf ${{github.workspace}}/build; cmake -E make_directory ${{github.workspace}}/build
 
     - name: Install Google Benchark
-      if: contains(env.BENCHMARK_BRANCHES, github.ref)
+      #if: contains(env.BENCHMARK_BRANCHES, github.ref)
       run: sudo make submodule-install-benchmark
 
     - name: Build Benchmarks
       working-directory: ${{github.workspace}}/build
-      if: contains(env.BENCHMARK_BRANCHES, github.ref)
+      #if: contains(env.BENCHMARK_BRANCHES, github.ref)
       env:
         CMAKE_FLAGS: -DBUILD_TESTS:BOOL=OFF -BENCHMARK_ENABLE_TESTING:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_BUILD_TYPE=Release
       shell: bash
@@ -84,7 +84,7 @@ jobs:
       run: cmake $CMAKE_OPTIONS $CMAKE_FLAGS -DCMAKE_CXX_FLAGS=$CXX_FLAGS  ..; make
 
     - name: Run Benchmarks
-      if: contains(env.BENCHMARK_BRANCHES, github.ref)
+      #if: contains(env.BENCHMARK_BRANCHES, github.ref)
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
       shell: bash
