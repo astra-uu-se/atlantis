@@ -27,6 +27,14 @@ benchmarks:
 	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
 	$(MAKE)
 
+submodule-update-googletest:
+	git submodule init ${MKFILE_PATH}ext/googletest
+	git submodule update ${MKFILE_PATH}ext/googletest
+
+submodule-update-benchmark:
+	git submodule init ${MKFILE_PATH}ext/benchmark
+	git submodule update ${MKFILE_PATH}ext/benchmark
+
 submodule-update:
 	git submodule init
 	git submodule update
@@ -35,20 +43,19 @@ submodule-update-remote:
 	git submodule init
 	git submodule update --remote --merge
 
-submodule-googletest:
+submodule-install-googletest: submodule-update-googletest
 	mkdir -p ${MKFILE_PATH}ext/googletest/build
 	cd ${MKFILE_PATH}ext/googletest/build; \
 	$(CMAKE) -DCMAKE_BUILD_TYPE=Release ..; \
 	sudo $(MAKE) install;
-	
 
-submodule-benchmark:
+submodule-install-benchmark: submodule-update-googletest submodule-update-benchmark
 	mkdir -p ${MKFILE_PATH}ext/benchmark/build
 	cd ${MKFILE_PATH}ext/benchmark/build; \
 	$(CMAKE) -DCMAKE_BUILD_TYPE=Release -DGOOGLETEST_PATH:STRING=${MKFILE_PATH}ext/googletest ..; \
 	sudo $(MAKE) install;
 
-submodule-install: submodule-update submodule-googletest submodule-benchmark
+submodule-install: submodule-install-googletest submodule-install-benchmark
 
 test: build
 	cd ${BUILD_DIR}; \
