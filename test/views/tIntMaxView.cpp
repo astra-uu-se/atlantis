@@ -1,3 +1,6 @@
+#include <gtest/gtest.h>
+#include <rapidcheck/gtest.h>
+
 #include <limits>
 #include <memory>
 #include <random>
@@ -5,8 +8,6 @@
 
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gtest/gtest.h"
-#include "rapidcheck/gtest.h"
 #include "invariants/linear.hpp"
 #include "views/intMaxView.hpp"
 
@@ -25,9 +26,7 @@ class IntMaxViewTest : public ::testing::Test {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(IntMaxViewTest,
-                      shouldAlwaysBeMax,
-                      (Int a, Int b)) {
+RC_GTEST_FIXTURE_PROP(IntMaxViewTest, shouldAlwaysBeMax, (Int a, Int b)) {
   if (!engine->isOpen()) {
     engine->open();
   }
@@ -126,7 +125,7 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
 
   auto linear1 = engine->makeInvariant<Linear>(
       std::vector<Int>({1, 1}), std::vector<VarId>({a, b}), sum1);
-  
+
   auto linear2 = engine->makeInvariant<Linear>(
       std::vector<Int>({1, 1}), std::vector<VarId>({c, d}), sum2);
 

@@ -67,21 +67,20 @@ option(BENCHMARK_ENABLE_TESTING "Build GTEST for GBENCHMARK" OFF)
 
 if (BUILD_TESTS)
   # This adds another subdirectory, which has 'project(gtest)'.
-  add_subdirectory(ext/googletest)
-  add_subdirectory(ext/rapidcheck)
-  add_subdirectory(ext/rapidcheck/extras/gtest)
-  add_subdirectory(ext/rapidcheck/extras/gmock)
+  find_package(GTest REQUIRED)
+  
+  include_directories(${GTEST_INCLUDE_DIR})
+  include_directories(${GTEST_INCLUDE_DIRS})
+
+  include(GoogleTest)
+
+  add_subdirectory(${PROJECT_SOURCE_DIR}/ext/rapidcheck)
+  add_subdirectory(${PROJECT_SOURCE_DIR}/ext/rapidcheck/extras/gtest)
+  add_subdirectory(${PROJECT_SOURCE_DIR}/ext/rapidcheck/extras/gmock)
 
   include(CTest)
 
   enable_testing()
-
-  include(GoogleTest)
-
-  set_target_properties(gtest PROPERTIES FOLDER ext)
-  set_target_properties(gtest_main PROPERTIES FOLDER ext)
-  set_target_properties(gmock PROPERTIES FOLDER ext)
-  set_target_properties(gmock_main PROPERTIES FOLDER ext)
 
   # Include the gtest library. gtest_SOURCE_DIR is available due to
   # 'project(gtest)' above.
@@ -97,12 +96,15 @@ if (BUILD_TESTS)
   file(GLOB_RECURSE TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp ${PROJECT_SOURCE_DIR}/test/*.h ${PROJECT_SOURCE_DIR}/test/*.hpp)
   add_executable(runUnitTests ${TEST_SRC_FILES})
 
+  link_directories(runUnitTests PUBLIC ${GTEST_LIBRARY_DIRS})
   # Standard linking to gtest stuff.
   target_link_libraries(runUnitTests gtest gtest_main)
 
   target_link_libraries(runUnitTests gmock gmock_main)
   
   target_link_libraries(runUnitTests rapidcheck rapidcheck_gtest rapidcheck_gmock)
+
+  TARGET_LINK_LIBRARIES(runUnitTests -lpthread -lm)
 
   # Extra linking for the project.
   target_link_libraries(runUnitTests ${PROJECT_LIB})
@@ -111,17 +113,14 @@ if (BUILD_TESTS)
   # manually running the executable runUnitTests to see those specific tests.
   # add_test(NAME "UnitTests" COMMAND "runUnitTests")
 
-  gtest_discover_tests(runUnitTests
-        # set a working directory so your project root so that you can find test data via paths relative to the project root
-        WORKING_DIRECTORY ${PROJECT_DIR}
-        PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
-    )
   set_target_properties(runUnitTests PROPERTIES FOLDER tests)
 
 endif()
 if (BUILD_BENCHMARKS)
   # This adds another subdirectory, which has 'project(gtest)'.
-  add_subdirectory(ext/benchmark)
+  find_package(benchmark REQUIRED)
+
+  include_directories(${BENCHMARK_INCLUDE_DIR})
 
   ##############
   # Benchmarks
