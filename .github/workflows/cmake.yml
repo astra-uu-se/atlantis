@@ -33,8 +33,8 @@ jobs:
       shell: bash
       run: sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; sudo apt-get install gcc-8 g++-8 python3; sudo apt-get update -qq;
 
-    - name: submodule-install
-      run: sudo make submodule-install
+    - name: Install GoogleTest
+      run: sudo make submodule-install-googletest
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
@@ -69,6 +69,10 @@ jobs:
     - name: Create Benchmark Environment
       if: contains(env.BENCHMARK_BRANCHES, github.ref)
       run: rm -rf ${{github.workspace}}/build; cmake -E make_directory ${{github.workspace}}/build
+
+    - name: Install Google Benchark
+      if: contains(env.BENCHMARK_BRANCHES, github.ref)
+      run: sudo make submodule-install-benchmark
 
     - name: Build Benchmarks
       working-directory: ${{github.workspace}}/build
