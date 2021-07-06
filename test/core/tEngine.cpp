@@ -1,12 +1,13 @@
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <limits>
 #include <random>
 #include <vector>
 
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "invariants/elementVar.hpp"
 #include "invariants/linear.hpp"
 #include "invariants/minSparse.hpp"
@@ -495,7 +496,6 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
 
   EXPECT_EQ(engine->getCommittedValue(output), 7);
 
-  
   engine->beginMove();
   engine->setValue(i1, 3);
   engine->setValue(i2, 0);
@@ -506,7 +506,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endCommit();
 
   EXPECT_EQ(engine->getNewValue(output), 10);
-  
+
   engine->beginMove();
   engine->setValue(base, 3);
   engine->endMove();
@@ -516,7 +516,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endQuery();
 
   EXPECT_EQ(engine->getNewValue(output), 16);
-  
+
   engine->beginMove();
   engine->setValue(i2, 1);
   engine->setValue(i3, 0);
@@ -528,7 +528,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endQuery();
 
   EXPECT_EQ(engine->getNewValue(output), 13);
-  
+
   engine->beginMove();
   engine->setValue(i2, 1);
   engine->setValue(i3, 0);
