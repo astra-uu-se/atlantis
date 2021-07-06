@@ -1,6 +1,6 @@
 export CMAKE_OPTIONS+= ${ENV_CMAKE_OPTIONS}
 
-CMAKE=/usr/bin/cmake
+CMAKE=$(shell which cmake)
 MKFILE_PATH := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR=${MKFILE_PATH}build
 
@@ -40,6 +40,7 @@ submodule-googletest:
 	cd ${MKFILE_PATH}ext/googletest/build; \
 	$(CMAKE) -DCMAKE_BUILD_TYPE=Release ..; \
 	sudo $(MAKE) install;
+	
 
 submodule-benchmark:
 	mkdir -p ${MKFILE_PATH}ext/benchmark/build
