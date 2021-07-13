@@ -3,32 +3,61 @@
 #include <iostream>
 
 PropagationEngine::PropagationEngine()
-    : _mode(PropagationMode::INPUT_TO_OUTPUT),
+    : _propagationMode(PropagationMode::INPUT_TO_OUTPUT),
       _numVariables(0),
       _propGraph(ESTIMATED_NUM_OBJECTS),
       _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
       // _propGraph._propagationQueue(PropagationGraph::PriorityCmp(_propGraph)),
       _isEnqueued(ESTIMATED_NUM_OBJECTS),
       _varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
-      _propagationPathQueue() {}
+      _propagationPathQueue(),
+      _modifiedDecisionVariables(),
+      _decisionVariablesModifiedAt(NULL_TIMESTAMP) {}
 
 PropagationGraph& PropagationEngine::getPropGraph() { return _propGraph; }
 
-void PropagationEngine::open() { _isOpen = true; }
+void PropagationEngine::open() {
+  if (_isOpen) {
+    throw EngineOpenException("Engine already open.");
+  }
+  if (_engineState != EngineState::IDLE) {
+    throw EngineStateException("Engine must be idle before opening.");
+  }
+  _isOpen = true;
+}
 
 void PropagationEngine::close() {
-  ++_currentTimestamp;  // todo: Is it safe to increment the timestamp here?
-                        // What if a user tried to change a variable but without
-                        // a begin move? But we should ignore it anyway then...
+  if (!_isOpen) {
+    throw EngineClosedException("Engine already closed.");
+  }
+
+  ++_currentTimestamp;  // todo: Is it safe to increment time here? What if a
+                        // user tried to change a variable but without a begin
+                        // move? But we should ignore it anyway then...
   _isOpen = false;
   try {
     _propGraph.close();
-  } catch (std::exception e) {
+  } catch (std::exception const& e) {
     std::cout << "foo";
   }
+  if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
+    _outputToInputExplorer.populateAncestors();
+  }
+
   // compute initial values for variables and for (internal datastructure of)
   // invariants
+  for (VarIdBase varId : getDecisionVariables()) {
+    // Assert that if decision variable varId is modified,
+    // then it is in the set of modified decision variables
+    assert(_store.getIntVar(varId).hasChanged(_currentTimestamp) ==
+           (_modifiedDecisionVariables.find(varId) !=
+            _modifiedDecisionVariables.end()));
+  }
   recomputeAndCommit();
+  for (size_t varId : _modifiedDecisionVariables) {
+    // assert that decsion variable varId is no longer modified.
+    assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));
+  }
 }
 
 //---------------------Registration---------------------
@@ -93,7 +122,7 @@ VarId PropagationEngine::getNextStableVariable(Timestamp) {
   return nextVar;
 }
 
-void PropagationEngine::emptyModifiedVariables() {
+void PropagationEngine::clearPropagationQueue() {
   while (!_propGraph._propagationQueue.empty()) {
     _propGraph._propagationQueue.pop();
   }
@@ -127,102 +156,107 @@ void PropagationEngine::recomputeAndCommit() {
        ++iter) {
     (*iter)->commit(_currentTimestamp, *this);
   }
-  emptyModifiedVariables();
+  clearPropagationQueue();
 }
 
 //--------------------- Move semantics ---------------------
 void PropagationEngine::beginMove() {
-  assert(!_isMoving);
-  _isMoving = true;
+  assert(!_isOpen);
+  assert(_engineState == EngineState::IDLE);
+
   ++_currentTimestamp;
-  // only needed for bottom up propagation
-  clearPropagationPath();
+  if (_propagationMode == PropagationMode::MIXED) {
+    clearPropagationPath();
+  }
+
+  _engineState = EngineState::MOVE;
 }
 
 void PropagationEngine::endMove() {
-  assert(_isMoving);
-  _isMoving = false;
+  assert(_engineState == EngineState::MOVE);
+  _engineState = EngineState::IDLE;
 }
 
-void PropagationEngine::beginQuery() {}
+void PropagationEngine::beginQuery() {
+  assert(!_isOpen);
+  assert(_engineState == EngineState::IDLE);
+  _engineState = EngineState::QUERY;
+}
 
 void PropagationEngine::query(VarId id) {
-  if (_mode == PropagationMode::INPUT_TO_OUTPUT) {
-    return;
+  assert(!_isOpen);
+  assert(_engineState != EngineState::IDLE &&
+         _engineState != EngineState::PROCESSING);
+
+  if (_propagationMode != PropagationMode::INPUT_TO_OUTPUT) {
+    _outputToInputExplorer.registerForPropagation(_currentTimestamp,
+                                                  getSourceId(id));
   }
-  _outputToInputExplorer.registerForPropagation(_currentTimestamp,
-                                                getSourceId(id));
 }
 
 void PropagationEngine::endQuery() {
-  switch (_mode) {
-    case PropagationMode::INPUT_TO_OUTPUT:
-      propagate<false>();
-      break;
-    case PropagationMode::OUTPUT_TO_INPUT:
-      if (_useMarkingForOutputToInput) {
-        markPropagationPathAndEmptyModifiedVariables();
-      } else {
-        emptyModifiedVariables();
-      }
-      outputToInputPropagate<false>();
-      break;
-    case PropagationMode::MIXED:
-      if (_useMarkingForOutputToInput) {
-        markPropagationPathAndEmptyModifiedVariables();
-      } else {
-        emptyModifiedVariables();
-      }
-      outputToInputPropagate<false>();
-      break;
+  assert(_engineState == EngineState::QUERY);
+
+  _engineState = EngineState::PROCESSING;
+  try {
+    switch (_propagationMode) {
+      case PropagationMode::INPUT_TO_OUTPUT:
+        propagate<false>();
+        break;
+      case PropagationMode::OUTPUT_TO_INPUT:
+        outputToInputPropagate<true>();
+        break;
+      case PropagationMode::MIXED:
+        outputToInputPropagate<false>();
+        break;
+    }
+    _engineState = EngineState::IDLE;
+  } catch (std::exception const& e) {
+    _engineState = EngineState::IDLE;
+    throw e;
   }
-  // We must always clear due to the current version of query()
-  _outputToInputExplorer.clearRegisteredVariables();
 }
 
-void PropagationEngine::beginCommit() {}
+void PropagationEngine::beginCommit() {
+  assert(!_isOpen);
+  assert(_engineState == EngineState::IDLE);
+
+  _outputToInputExplorer.clearRegisteredVariables();
+
+  _engineState = EngineState::COMMIT;
+}
 
 void PropagationEngine::endCommit() {
-  switch (_mode) {
-    case PropagationMode::INPUT_TO_OUTPUT:
-      propagate<true>();
-      break;
-    case PropagationMode::OUTPUT_TO_INPUT:
-      if (_useMarkingForOutputToInput) {
-        markPropagationPathAndEmptyModifiedVariables();
-      } else {
-        emptyModifiedVariables();
+  assert(_engineState == EngineState::COMMIT);
+
+  _engineState = EngineState::PROCESSING;
+
+  try {
+    if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
+      for (VarIdBase varId : getDecisionVariables()) {
+        // Assert that if decision variable varId is modified,
+        // then it is in the set of modified decision variables
+        assert(_store.getIntVar(varId).hasChanged(_currentTimestamp) ==
+               (_modifiedDecisionVariables.find(varId) !=
+                _modifiedDecisionVariables.end()));
       }
-      outputToInputPropagate<true>();
-      // BUG: Variables that are not dynamically defining the queries variables
-      // will not be properly updated: they should be marked as changed until
-      // committed but this does not happen.
-      // TODO: create test case to catch this bug.
-      break;
-    case PropagationMode::MIXED:
-      propagate<true>();
-      break;
+    }
+
+    propagate<true>();
+    if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
+      for (size_t varId : _modifiedDecisionVariables) {
+        // assert that decsion variable varId is no longer modified.
+        assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));
+      }
+    }
+    _engineState = EngineState::IDLE;
+  } catch (std::exception const& e) {
+    _engineState = EngineState::IDLE;
+    throw e;
   }
-  // We must always clear due to the current version of query()
-  _outputToInputExplorer.clearRegisteredVariables();
-
-  return;
-  // Todo: This just commits everything and can be very inefficient, instead
-  // commit during propagation.
-
-  // Commit all variables:
-  // for (auto iter = _store.intVarBegin(); iter != _store.intVarEnd();
-  // ++iter) {
-  //   iter->commitIf(_currentTimestamp);
-  // }
-  // // Commit all invariants:
-  // for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
-  //      ++iter) {
-  //   (*iter)->commit(_currentTimestamp, *this);
-  // }
 }
 
-void PropagationEngine::markPropagationPathAndEmptyModifiedVariables() {
+void PropagationEngine::markPropagationPathAndClearPropagationQueue() {
   // We cannot iterate over a priority_queue so we cannot copy it.
   // TODO: replace priority_queue of _propGraph._propagationQueue with custom
   // queue.

@@ -33,10 +33,24 @@ class TSPTW : public benchmark::Fixture {
 
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(0);
-    
+    n = state.range(1);
+
     logDebug(n);
     engine->open();
+
+    switch (state.range(0)) {
+      case 0:
+        engine->setPropagationMode(
+            PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+        break;
+      case 1:
+        engine->setPropagationMode(PropagationEngine::PropagationMode::MIXED);
+        break;
+      case 2:
+        engine->setPropagationMode(
+            PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+        break;
+    }
 
     for (int i = 0; i < n; ++i) {
       dist.push_back(std::vector<Int>());
@@ -128,7 +142,15 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
 }
 
 ///*
+static void arguments(benchmark::internal::Benchmark* b) {
+  for (int i = 10; i <= 100; i += 30) {
+    for (int mode = 0; mode <= 2; ++mode) {
+      b->Args({mode, i});
+    }
+  }
+}
+
 BENCHMARK_REGISTER_F(TSPTW, probe_all_relocate)
-    ->DenseRange(10, 100, 10)
+    ->Apply(arguments)
     ->Unit(benchmark::kMillisecond);
 //*/

@@ -25,7 +25,8 @@ class MagicSquare : public benchmark::Fixture {
 
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(0);
+
+    n = state.range(1);
     int n2 = n * n;
     gen = std::mt19937(rd());
 
@@ -34,6 +35,20 @@ class MagicSquare : public benchmark::Fixture {
     distribution = std::uniform_int_distribution<>{0, n2 - 1};
 
     engine->open();
+
+    switch (state.range(0)) {
+      case 0:
+        engine->setPropagationMode(
+            PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+        break;
+      case 1:
+        engine->setPropagationMode(PropagationEngine::PropagationMode::MIXED);
+        break;
+      case 2:
+        engine->setPropagationMode(
+            PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+        break;
+    }
 
     VarId magicSumVar = engine->makeIntVar(magicSum, magicSum, magicSum);
 
@@ -147,7 +162,15 @@ BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
 }
 
 ///*
+static void arguments(benchmark::internal::Benchmark* benchmark) {
+  for (int n = 4; n <= 10; n += 2) {
+    for (int mode = 0; mode <= 2; ++mode) {
+      benchmark->Args({mode, n});
+    }
+  }
+}
+
 BENCHMARK_REGISTER_F(MagicSquare, probing_all_swap)
     ->Unit(benchmark::kMillisecond)
-    ->DenseRange(3, 10);
+    ->Apply(arguments);
 //*/

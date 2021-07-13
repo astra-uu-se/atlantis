@@ -47,3 +47,8 @@ cmake-build-debug
 cmake-build-debug-coverage 
 cmake-build-release 
 benchmark-data.json
+
+# benchmark tmp plot files
+/tmp.json
+/tmp-*.json
+/plots

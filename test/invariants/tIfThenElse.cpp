@@ -29,37 +29,37 @@ class MockIfThenElse : public IfThenElse {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return IfThenElse::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextInput)
-        .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return IfThenElse::getNextInput(ts, engine);
-        });
+    ON_CALL(*this, getNextInput).WillByDefault([this](Timestamp t, Engine& e) {
+      return IfThenElse::getNextInput(t, e);
+    });
 
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp ts, Engine& engine) {
-          IfThenElse::notifyCurrentInputChanged(ts, engine);
+        .WillByDefault([this](Timestamp t, Engine& e) {
+          IfThenElse::notifyCurrentInputChanged(t, e);
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          IfThenElse::notifyIntChanged(ts, engine, id);
+        .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
+          IfThenElse::notifyIntChanged(t, e, id);
         });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
-      IfThenElse::commit(ts, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
+      IfThenElse::commit(t, e);
     });
   }
 
-MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
-
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
+  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged,
-              (Timestamp ts, Engine& engine, LocalId id), (override));
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
+              (override));
+
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+              (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
-private:
+ private:
 };
 
 class IfThenElseTest : public ::testing::Test {
@@ -87,7 +87,8 @@ class IfThenElseTest : public ::testing::Test {
 
     EXPECT_TRUE(invariant->initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
+        .Times(AtLeast(1));
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
@@ -95,15 +96,15 @@ class IfThenElseTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode ==
+        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode ==
-               PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+    } else {
       EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
@@ -111,8 +112,6 @@ class IfThenElseTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
-      EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
     engine->beginMove();
@@ -127,7 +126,6 @@ class IfThenElseTest : public ::testing::Test {
 
 TEST_F(IfThenElseTest, CreateElement) {
   engine->open();
-
 
   std::vector<VarId> args{};
   VarId b = engine->makeIntVar(0, -100, 100);
@@ -154,6 +152,10 @@ TEST_F(IfThenElseTest, NotificationsInputToOutput) {
 
 TEST_F(IfThenElseTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+}
+
+TEST_F(IfThenElseTest, NotificationsMixed) {
+  testNotifications(PropagationEngine::PropagationMode::MIXED);
 }
 
 }  // namespace

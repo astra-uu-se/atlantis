@@ -12,7 +12,7 @@ Engine::Engine()
 
 VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   if (!_isOpen) {
-    throw ModelNotOpenException("Cannot make IntVar when store is closed.");
+    throw EngineClosedException("Cannot make IntVar when store is closed.");
   }
   VarId newId =
       _store.createIntVar(_currentTimestamp, initValue, lowerBound, upperBound);

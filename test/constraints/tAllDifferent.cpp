@@ -6,8 +6,8 @@
 #include "constraints/allDifferent.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using ::testing::AtLeast;
 using ::testing::AtMost;
@@ -24,45 +24,45 @@ class MockAllDifferent : public AllDifferent {
     AllDifferent::init(timestamp, engine);
   }
 
-  MockAllDifferent(VarId violationId, std::vector<VarId>&& variables)
-      : AllDifferent(violationId, std::vector<VarId>{variables}) {
+  MockAllDifferent(VarId violationId, std::vector<VarId>&& t_variables)
+      : AllDifferent(violationId, std::vector<VarId>{t_variables}) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return AllDifferent::recompute(timestamp, engine);
         });
     ON_CALL(*this, getNextInput)
-        .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return AllDifferent::getNextInput(ts, engine);
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          return AllDifferent::getNextInput(t, engine);
         });
 
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp ts, Engine& engine) {
-          AllDifferent::notifyCurrentInputChanged(ts, engine);
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          AllDifferent::notifyCurrentInputChanged(t, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          AllDifferent::notifyIntChanged(ts, engine, id);
+        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
+          AllDifferent::notifyIntChanged(t, engine, id);
         });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
-      AllDifferent::commit(ts, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
+      AllDifferent::commit(t, engine);
     });
   }
 
-MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
+              (override));
 
   MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged,
-              (Timestamp ts, Engine& engine, LocalId id), (override));
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
+              (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
-private:
+ private:
 };
-
 
 class AllDifferentTest : public ::testing::Test {
  protected:
@@ -100,10 +100,13 @@ class AllDifferentTest : public ::testing::Test {
 
     VarId viol = engine->makeIntVar(0, 0, numArgs);
 
-    auto invariant = engine->makeInvariant<MockAllDifferent>(
-        viol, std::vector<VarId>{args});
+    auto invariant =
+        engine->makeInvariant<MockAllDifferent>(viol, std::vector<VarId>{args});
 
     EXPECT_TRUE(invariant->initialized);
+
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
+        .Times(AtLeast(1));
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
@@ -111,15 +114,15 @@ class AllDifferentTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode ==
+        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode ==
-               PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+    } else {
       EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
           .Times(numArgs + 1);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
@@ -128,8 +131,6 @@ class AllDifferentTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
-    } else if (engine-> mode == PropagationEngine::PropagationMode::MIXED) {
-      EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
     engine->beginMove();
@@ -148,7 +149,8 @@ class AllDifferentTest : public ::testing::Test {
 
 TEST_F(AllDifferentTest, Init) {
   EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(violationId), violationId), 1);
+  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(violationId), violationId),
+            1);
 }
 
 TEST_F(AllDifferentTest, Recompute) {
@@ -254,8 +256,8 @@ TEST_F(AllDifferentTest, CreateAllDifferent) {
 
   VarId viol = engine->makeIntVar(0, 0, numArgs);
 
-  auto invariant = engine->makeInvariant<MockAllDifferent>(
-      viol, std::vector<VarId>{args});
+  auto invariant =
+      engine->makeInvariant<MockAllDifferent>(viol, std::vector<VarId>{args});
 
   EXPECT_TRUE(invariant->initialized);
 
@@ -274,6 +276,10 @@ TEST_F(AllDifferentTest, NotificationsInputToOutput) {
 
 TEST_F(AllDifferentTest, NotificationsOutputToInput) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+}
+
+TEST_F(AllDifferentTest, NotificationsMixed) {
+  testNotifications(PropagationEngine::PropagationMode::MIXED);
 }
 
 }  // namespace

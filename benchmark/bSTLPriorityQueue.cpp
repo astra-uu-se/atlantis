@@ -182,17 +182,17 @@ BENCHMARK_DEFINE_F(PrioQueue, pop_random)(benchmark::State& st) {
 // to be benchmarked)
 
 /*
-static void CustomArguments(benchmark::internal::Benchmark* b) {
-  for (size_t i = 5000; i <= 5000; i *= 10) {
+static void arguments(benchmark::internal::Benchmark* b) {
+  for (int i = 5000; i <= 5000; i *= 10) {
     b->Arg(i);
   }
 }
 
-BENCHMARK_REGISTER_F(PrioQueue, initVar)->Apply(CustomArguments);
-BENCHMARK_REGISTER_F(PrioQueue, push_min)->Apply(CustomArguments);
-BENCHMARK_REGISTER_F(PrioQueue, push_max)->Apply(CustomArguments);
-BENCHMARK_REGISTER_F(PrioQueue, push_random)->Apply(CustomArguments);
-BENCHMARK_REGISTER_F(PrioQueue, pop_min)->Apply(CustomArguments);
-BENCHMARK_REGISTER_F(PrioQueue, pop_max)->Apply(CustomArguments);
-BENCHMARK_REGISTER_F(PrioQueue, pop_random)->Apply(CustomArguments);
+BENCHMARK_REGISTER_F(PrioQueue, initVar)->Apply(arguments);
+BENCHMARK_REGISTER_F(PrioQueue, push_min)->Apply(arguments);
+BENCHMARK_REGISTER_F(PrioQueue, push_max)->Apply(arguments);
+BENCHMARK_REGISTER_F(PrioQueue, push_random)->Apply(arguments);
+BENCHMARK_REGISTER_F(PrioQueue, pop_min)->Apply(arguments);
+BENCHMARK_REGISTER_F(PrioQueue, pop_max)->Apply(arguments);
+BENCHMARK_REGISTER_F(PrioQueue, pop_random)->Apply(arguments);
 //*/

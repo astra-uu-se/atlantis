@@ -27,22 +27,22 @@ class MockEqual : public Equal {
           return Equal::recompute(timestamp, engine);
         });
     ON_CALL(*this, getNextInput)
-        .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return Equal::getNextInput(ts, engine);
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          return Equal::getNextInput(t, engine);
         });
 
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp ts, Engine& engine) {
-          Equal::notifyCurrentInputChanged(ts, engine);
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          Equal::notifyCurrentInputChanged(t, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          Equal::notifyIntChanged(ts, engine, id);
+        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
+          Equal::notifyIntChanged(t, engine, id);
         });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
-      Equal::commit(ts, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
+      Equal::commit(t, engine);
     });
   }
 
@@ -53,8 +53,8 @@ class MockEqual : public Equal {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged,
-              (Timestamp ts, Engine& engine, LocalId id), (override));
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
+              (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:
@@ -94,21 +94,24 @@ class EqualTest : public ::testing::Test {
 
     EXPECT_TRUE(invariant->initialized);
 
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
+        .Times(AtLeast(1));
+
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
 
     engine->close();
 
-    if (engine->mode == PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode ==
+        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
-    } else if (engine->mode ==
-               PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+    } else {
       EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
@@ -116,8 +119,6 @@ class EqualTest : public ::testing::Test {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(0);
-    } else if (engine->mode == PropagationEngine::PropagationMode::MIXED) {
-      EXPECT_EQ(0, 1);  // TODO: define the test case for mixed mode.
     }
 
     engine->beginMove();
@@ -271,6 +272,10 @@ TEST_F(EqualTest, NotificationsInputToOutput) {
 }
 
 TEST_F(EqualTest, NotificationsOutputToInput) {
+  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+}
+
+TEST_F(EqualTest, NotificationsMixed) {
   testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
 }
 
