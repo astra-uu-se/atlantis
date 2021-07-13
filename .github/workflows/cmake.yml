@@ -41,7 +41,6 @@ jobs:
         if_false: 'OFF'
 
     - name: Build
-      uses: steps.buildBenchmarksFlag
       working-directory: ${{github.workspace}}/build
       env:
         CMAKE_FLAGS: -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}} -DCMAKE_BUILD_TYPE=Debug
