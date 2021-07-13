@@ -9,9 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Check if microsoft visual code. I have no idea if this works
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17 /permissive /W4 /w14640 ")
+  add_compile_options(/std:c++17 /permissive /W4 /w14640)
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic")
+  add_compile_options(-std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic)
 endif()
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
