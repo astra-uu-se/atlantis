@@ -3,8 +3,10 @@
 #include <queue>
 
 #include "core/engine.hpp"
+#include "exceptions/exceptions.hpp"
 #include "propagation/outputToInputExplorer.hpp"
 #include "propagation/propagationGraph.hpp"
+#include "utils/hashes.hpp"
 #include "utils/idMap.hpp"
 
 class PropagationEngine : public Engine {
@@ -13,10 +15,10 @@ class PropagationEngine : public Engine {
   const bool _useMarkingForOutputToInput = true;
 
  protected:
-  PropagationMode _mode;
+  PropagationMode _propagationMode;
 
  public:
-  const PropagationMode& mode = _mode;
+  const PropagationMode& propagationMode = _propagationMode;
 
  protected:
   size_t _numVariables;
@@ -29,9 +31,12 @@ class PropagationEngine : public Engine {
   IdMap<VarIdBase, bool> _varIsOnPropagationPath;
   std::queue<VarIdBase> _propagationPathQueue;
 
+  std::unordered_set<VarIdBase> _modifiedDecisionVariables;
+  Timestamp _decisionVariablesModifiedAt;
+
   void recomputeAndCommit();
 
-  void emptyModifiedVariables();
+  void clearPropagationQueue();
 
   template <bool DoCommit>
   void propagate();
@@ -39,7 +44,7 @@ class PropagationEngine : public Engine {
   template <bool OutputToInputMarking>
   void outputToInputPropagate();
 
-  void markPropagationPathAndEmptyModifiedVariables();
+  void markPropagationPathAndClearPropagationQueue();
   void clearPropagationPath();
 
   /**
@@ -98,6 +103,15 @@ class PropagationEngine : public Engine {
   void beginCommit();
   void endCommit();
 
+  size_t getNumVariables();
+  size_t getNumInvariants();
+
+  [[nodiscard]] const std::vector<VarIdBase>& getDecisionVariables();
+  [[nodiscard]] const std::unordered_set<VarIdBase>&
+  getModifiedDecisionVariables();
+  [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables();
+  [[nodiscard]] const std::vector<VarIdBase>& getInputVariables(InvariantId);
+
   /**
    * returns the next input at the current timestamp.
    */
@@ -110,6 +124,9 @@ class PropagationEngine : public Engine {
 
   [[nodiscard]] const std::vector<VarIdBase>& getVariablesDefinedBy(
       InvariantId) const;
+
+  [[nodiscard]] const std::vector<InvariantId>& getListeningInvariants(
+      VarId) const;
 
   /**
    * Notify an invariant that its current input has changed
@@ -131,6 +148,14 @@ class PropagationEngine : public Engine {
   PropagationGraph& getPropGraph();
 };
 
+inline size_t PropagationEngine::getNumVariables() {
+  return _propGraph.getNumVariables();
+}
+
+inline size_t PropagationEngine::getNumInvariants() {
+  return _propGraph.getNumInvariants();
+}
+
 inline InvariantId PropagationEngine::getDefiningInvariant(VarId id) {
   // Returns NULL_ID is not defined.
   return _propGraph.getDefiningInvariant(id);
@@ -141,12 +166,18 @@ inline void PropagationEngine::clearPropagationPath() {
 }
 
 inline bool PropagationEngine::isOnPropagationPath(VarId id) {
-  return !_useMarkingForOutputToInput || _varIsOnPropagationPath.get(id);
+  assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT);
+  return _varIsOnPropagationPath.get(id);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
     InvariantId id) const {
   return _propGraph.getVariablesDefinedBy(id);
+}
+
+inline const std::vector<InvariantId>&
+PropagationEngine::getListeningInvariants(VarId id) const {
+  return _propGraph.getListeningInvariants(id);
 }
 
 inline VarId PropagationEngine::getNextInput(InvariantId id) {
@@ -164,16 +195,63 @@ inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {
 
 inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
   assert(id.idType != VarIdType::view);
-  _store.getIntVar(id).setValue(ts, val);
+  assert(_propGraph.isDecisionVar(id));
+
+  IntVar& var = _store.getIntVar(id);
+  var.setValue(ts, val);
+
+  if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
+    if (ts != _decisionVariablesModifiedAt) {
+      _decisionVariablesModifiedAt = ts;
+      _modifiedDecisionVariables.clear();
+    }
+
+    if (var.hasChanged(ts)) {
+      _modifiedDecisionVariables.emplace(id);
+    } else {
+      _modifiedDecisionVariables.erase(id);
+    }
+  }
+
   notifyMaybeChanged(ts, id);
 }
 
-inline void PropagationEngine::setPropagationMode(PropagationMode m) {
-  assert(_isOpen);
-  _mode = m;
+inline void PropagationEngine::setPropagationMode(
+    PropagationEngine::PropagationMode m) {
+  if (!_isOpen) {
+    throw EngineClosedException(
+        "Cannot set propagation mode when model is closed");
+  }
+  _propagationMode = m;
+}
+
+inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
+  return _propGraph._decisionVariables;
+}
+
+inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables() {
+  return _propGraph._outputVariables;
+}
+
+inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
+    InvariantId id) {
+  return _propGraph.getInputVariables(id);
+}
+
+inline const std::unordered_set<VarIdBase>&
+PropagationEngine::getModifiedDecisionVariables() {
+  assert(_currentTimestamp == _decisionVariablesModifiedAt);
+  return _modifiedDecisionVariables;
 }
 
 template <bool OutputToInputMarking>
 inline void PropagationEngine::outputToInputPropagate() {
+  if constexpr (OutputToInputMarking) {
+    assert(propagationMode == PropagationMode::OUTPUT_TO_INPUT);
+    clearPropagationQueue();
+  } else {
+    assert(propagationMode == PropagationMode::MIXED);
+    markPropagationPathAndClearPropagationQueue();
+  }
   _outputToInputExplorer.propagate<OutputToInputMarking>(_currentTimestamp);
 }

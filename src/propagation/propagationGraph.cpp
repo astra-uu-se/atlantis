@@ -10,14 +10,14 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
       _numVariables(0),
       _definingInvariant(expectedSize),
       _variablesDefinedByInvariant(expectedSize),
-      _variableInputs(expectedSize),
+      _inputVariables(expectedSize),
       _listeningInvariants(expectedSize),
       _topology(*this) {}
 
 void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
   // Everything must be registered in sequence.
   _variablesDefinedByInvariant.register_idx(id);
-  _variableInputs.register_idx(id);
+  _inputVariables.register_idx(id);
   ++_numInvariants;
 }
 
@@ -38,7 +38,7 @@ void PropagationGraph::registerInvariantInput(InvariantId invariantId,
     return;
   }
   _listeningInvariants[varId].push_back(invariantId);
-  _variableInputs[invariantId].push_back(varId);
+  _inputVariables[invariantId].push_back(varId);
 }
 
 void PropagationGraph::registerDefinedVariable(VarIdBase varId,
@@ -74,6 +74,12 @@ void PropagationGraph::close() {
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
     _isObjectiveVar.at(i) = (_listeningInvariants.at(i).empty());
     _isDecisionVar.at(i) = (_definingInvariant.at(i) == NULL_ID);
+    if (_isObjectiveVar.at(i)) {
+      _outputVariables.push_back(i);
+    }
+    if (_isDecisionVar.at(i)) {
+      _decisionVariables.push_back(i);
+    }
   }
 
   _topology.computeLayersWithCycles();
