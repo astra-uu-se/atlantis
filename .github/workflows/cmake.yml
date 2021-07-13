@@ -26,8 +26,11 @@ jobs:
       with:
         cmake-version: '3.20.*'
       shell: bash
-      run:
-        cmake --version
+      
+
+    - name: Cmake Version
+      shell: bash
+      run: cmake --version
 
     - name: apt-get
       shell: bash
