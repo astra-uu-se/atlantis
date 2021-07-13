@@ -38,7 +38,7 @@ jobs:
       with:
         cond: contains(env.BENCHMARK_BRANCHES, github.ref)
         if_true: 'ON'
-        if_false: 'OFF'
+        if_false: 'ON'
 
     - name: Create build Folder
       working-directory: ${{github.workspace}}
@@ -71,7 +71,7 @@ jobs:
       if: always()
     
     - name: Run Benchmarks
-      #if: contains(env.BENCHMARK_BRANCHES, github.ref)
+      if: ${{ steps.buildBenchmarksFlag.outputs.value == 'ON' }}
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
       shell: bash
