@@ -18,11 +18,11 @@ namespace {
 
 class MockElementVar : public ElementVar {
  public:
-  bool m_initialized = false;
+  bool initialized = false;
 
-  void init(Timestamp timestamp, Engine& e) override {
-    m_initialized = true;
-    ElementVar::init(timestamp, e);
+  void init(Timestamp timestamp, Engine& engine) override {
+    initialized = true;
+    ElementVar::init(timestamp, engine);
   }
 
   MockElementVar(VarId i, std::vector<VarId>&& X, VarId b)
@@ -31,14 +31,13 @@ class MockElementVar : public ElementVar {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return ElementVar::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          return ElementVar::getNextDependency(t, e);
-        });
+    ON_CALL(*this, getNextInput).WillByDefault([this](Timestamp t, Engine& e) {
+      return ElementVar::getNextInput(t, e);
+    });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
+    ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp t, Engine& e) {
-          ElementVar::notifyCurrentDependencyChanged(t, e);
+          ElementVar::notifyCurrentInputChanged(t, e);
         });
 
     ON_CALL(*this, notifyIntChanged)
@@ -54,8 +53,8 @@ class MockElementVar : public ElementVar {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
               (override));
 
   MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
@@ -93,7 +92,7 @@ class ElementVarTest : public ::testing::Test {
     auto invariant = engine->makeInvariant<MockElementVar>(
         idx, std::vector<VarId>{args}, output);
 
-    EXPECT_TRUE(invariant->m_initialized);
+    EXPECT_TRUE(invariant->initialized);
 
     EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
         .Times(AtLeast(1));
@@ -106,19 +105,15 @@ class ElementVarTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(0);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(3);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,
@@ -152,7 +147,7 @@ TEST_F(ElementVarTest, CreateElement) {
   auto invariant = engine->makeInvariant<MockElementVar>(
       idx, std::vector<VarId>{args}, output);
 
-  EXPECT_TRUE(invariant->m_initialized);
+  EXPECT_TRUE(invariant->initialized);
 
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 

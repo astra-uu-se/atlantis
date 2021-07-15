@@ -1,59 +1,62 @@
 #pragma once
 
-
 #include "core/types.hpp"
 
 template <class T>
 class Saved {
  private:
-  Timestamp m_tmpTime;
-  T m_savedValue;
-  T m_tmpValue;
+  Timestamp _tmpTimestamp;
+  T _savedValue;
+  T _tmpValue;
 
  public:
-  Saved(Timestamp initTime, T initValue)
-      : m_tmpTime(initTime), m_savedValue(initValue), m_tmpValue(initValue) {}
+  Saved(Timestamp initTimestamp, T initValue)
+      : _tmpTimestamp(initTimestamp),
+        _savedValue(initValue),
+        _tmpValue(initValue) {}
 
   [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
-      Timestamp t) const {
-    return m_tmpTime == t && m_savedValue != m_tmpValue;
+      Timestamp ts) const {
+    return _tmpTimestamp == ts && _savedValue != _tmpValue;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
       const {
-    return m_tmpTime;
+    return _tmpTimestamp;
   }
 
   [[gnu::always_inline]] [[nodiscard]] inline T get(
-      Timestamp currentTime) const noexcept {
-    return currentTime == m_tmpTime ? m_tmpValue : m_savedValue;
+      Timestamp currentTimestamp) const noexcept {
+    return currentTimestamp == _tmpTimestamp ? _tmpValue : _savedValue;
   }
 
-  [[gnu::always_inline]] inline T set(Timestamp currentTime, T value) noexcept {
-    m_tmpTime = currentTime;
-    m_tmpValue = value;
-    return m_tmpValue;
+  [[gnu::always_inline]] inline T set(Timestamp currentTimestamp,
+                                      T value) noexcept {
+    _tmpTimestamp = currentTimestamp;
+    _tmpValue = value;
+    return _tmpValue;
   }
 
-  [[gnu::always_inline]] inline void init(Timestamp currentTime,
+  [[gnu::always_inline]] inline void init(Timestamp currentTimestamp,
                                           T value) noexcept {
-    init(currentTime, value, value);
+    init(currentTimestamp, value, value);
   }
 
-  [[gnu::always_inline]] inline void init(Timestamp currentTime, T savedValue,
-                                          T tmpValue) noexcept {
-    m_tmpTime = currentTime;
-    m_savedValue = savedValue;
-    m_tmpValue = tmpValue;
+  [[gnu::always_inline]] inline void init(Timestamp currentTimestamp,
+                                          T savedValue, T tmpValue) noexcept {
+    _tmpTimestamp = currentTimestamp;
+    _savedValue = savedValue;
+    _tmpValue = tmpValue;
   }
 
   [[gnu::always_inline]] inline void commitValue(T value) noexcept {
-    m_savedValue = value;
+    _savedValue = value;
   }
 
-  [[gnu::always_inline]] inline void commitIf(Timestamp currentTime) noexcept {
-    if (m_tmpTime == currentTime) {
-      m_savedValue = m_tmpValue;
+  [[gnu::always_inline]] inline void commitIf(
+      Timestamp currentTimestamp) noexcept {
+    if (_tmpTimestamp == currentTimestamp) {
+      _savedValue = _tmpValue;
     }
   }
 };

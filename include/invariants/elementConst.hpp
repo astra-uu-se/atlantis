@@ -11,22 +11,22 @@ class Engine;
 class Invariant;
 
 /**
- * Invariant for b <- A[i] where A is a vector of constants.
+ * Invariant for y <- array[index] where array is a vector of constants.
  *
  */
 
 class ElementConst : public Invariant {
  private:
-  VarId m_i;
-  std::vector<Int> m_A;
-  VarId m_b;
+  VarId _index;
+  std::vector<Int> _array;
+  VarId _y;
 
  public:
-  ElementConst(VarId i, std::vector<Int> A, VarId b);
+  ElementConst(VarId index, std::vector<Int> array, VarId y);
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
-  VarId getNextDependency(Timestamp, Engine&) override;
-  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
+  VarId getNextInput(Timestamp, Engine&) override;
+  void notifyCurrentInputChanged(Timestamp, Engine&) override;
   void commit(Timestamp, Engine&) override;
 };

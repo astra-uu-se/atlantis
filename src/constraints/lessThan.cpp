@@ -9,46 +9,49 @@
  * @param y variable of rhs
  */
 LessThan::LessThan(VarId violationId, VarId x, VarId y)
-    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
-  m_modifiedVars.reserve(1);
+    : Constraint(NULL_ID, violationId), _x(x), _y(y) {
+  _modifiedVars.reserve(1);
 }
 
-void LessThan::init(Timestamp, Engine& e) {
+void LessThan::init(Timestamp, Engine& engine) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
-  assert(m_id != NULL_ID);
+  assert(_id != NULL_ID);
 
-  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(0));
-  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(0));
-  registerDefinedVariable(e, m_violationId);
+  engine.registerInvariantInput(_id, _x, LocalId(0));
+  engine.registerInvariantInput(_id, _y, LocalId(0));
+  registerDefinedVariable(engine, _violationId);
 }
 
-void LessThan::recompute(Timestamp t, Engine& e) {
+void LessThan::recompute(Timestamp ts, Engine& engine) {
   // Dereference safe as incValue does not retain ptr.
-  updateValue(t, e, m_violationId,
-              std::max((Int)0, e.getValue(t, m_x) - e.getValue(t, m_y) + 1));
+  updateValue(
+      ts, engine, _violationId,
+      std::max((Int)0, engine.getValue(ts, _x) - engine.getValue(ts, _y) + 1));
 }
 
-void LessThan::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void LessThan::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId LessThan::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
+VarId LessThan::getNextInput(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
-  // ==0?m_x:m_y;
-  switch (m_state.getValue(t)) {
+  // ==0?_x:_y;
+  switch (_state.getValue(ts)) {
     case 0:
-      return m_x;
+      return _x;
     case 1:
-      return m_y;
+      return _y;
     default:
       return NULL_ID;
   }
 }
 
-void LessThan::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void LessThan::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void LessThan::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void LessThan::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

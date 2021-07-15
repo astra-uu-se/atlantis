@@ -1,46 +1,49 @@
 #include "invariants/minSparse.hpp"
 
-MinSparse::MinSparse(std::vector<VarId> X, VarId b)
-    : Invariant(NULL_ID), m_X(X), m_b(b), m_localPriority(X.size()) {
-  m_modifiedVars.reserve(m_X.size());
+MinSparse::MinSparse(std::vector<VarId> varArray, VarId y)
+    : Invariant(NULL_ID),
+      _varArray(varArray),
+      _y(y),
+      _localPriority(varArray.size()) {
+  _modifiedVars.reserve(_varArray.size());
 }
 
-void MinSparse::init([[maybe_unused]] Timestamp t, Engine& e) {
-  assert(!m_id.equals(NULL_ID));
+void MinSparse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+  assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(e, m_b);
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i));
+  registerDefinedVariable(engine, _y);
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    engine.registerInvariantInput(_id, _varArray[i], LocalId(i));
   }
 }
 
-void MinSparse::recompute(Timestamp t, Engine& e) {
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    m_localPriority.updatePriority(t, i, e.getValue(t, m_X[i]));
+void MinSparse::recompute(Timestamp ts, Engine& engine) {
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    _localPriority.updatePriority(ts, i, engine.getValue(ts, _varArray[i]));
   }
-  updateValue(t, e, m_b, m_localPriority.getMinPriority(t));
+  updateValue(ts, engine, _y, _localPriority.getMinPriority(ts));
 }
 
-void MinSparse::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
-  auto newValue = e.getValue(t, m_X[i]);
-  m_localPriority.updatePriority(t, i, newValue);
-  updateValue(t, e, m_b, m_localPriority.getMinPriority(t));
+void MinSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
+  auto newValue = engine.getValue(ts, _varArray[id]);
+  _localPriority.updatePriority(ts, id, newValue);
+  updateValue(ts, engine, _y, _localPriority.getMinPriority(ts));
 }
 
-VarId MinSparse::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
-  if (static_cast<size_t>(m_state.getValue(t)) == m_X.size()) {
+VarId MinSparse::getNextInput(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
+  if (static_cast<size_t>(_state.getValue(ts)) == _varArray.size()) {
     return NULL_ID;  // Done
   } else {
-    return m_X.at(m_state.getValue(t));
+    return _varArray.at(_state.getValue(ts));
   }
 }
 
-void MinSparse::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  notifyIntChanged(t, e, m_state.getValue(t));
+void MinSparse::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
+  notifyIntChanged(ts, engine, _state.getValue(ts));
 }
 
-void MinSparse::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t, e);
-  m_localPriority.commitIf(t);
+void MinSparse::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+  _localPriority.commitIf(ts);
 }

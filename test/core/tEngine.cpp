@@ -20,53 +20,51 @@ namespace {
 
 class MockInvariantSimple : public Invariant {
  public:
-  bool m_initialized = false;
+  bool _initialized = false;
 
   MockInvariantSimple() : Invariant(NULL_ID) {}
 
-  void init(Timestamp, Engine&) override { m_initialized = true; }
+  void init(Timestamp, Engine&) override { _initialized = true; }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
+  MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
+
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine&),
               (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
               (override));
-
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
-              (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
 };
 
 class MockInvariantAdvanced : public Invariant {
  public:
-  bool m_initialized = false;
-  std::vector<VarId> m_inputs;
-  VarId m_output;
+  bool _initialized = false;
+  std::vector<VarId> inputs;
+  VarId output;
 
   MockInvariantAdvanced(std::vector<VarId>&& t_inputs, VarId t_output)
-      : Invariant(NULL_ID), m_inputs(std::move(t_inputs)), m_output(t_output) {
-    m_modifiedVars.reserve(m_inputs.size());
+      : Invariant(NULL_ID), inputs(std::move(t_inputs)), output(t_output) {
+    _modifiedVars.reserve(inputs.size());
   }
 
-  void init(Timestamp, Engine& e) override {
-    assert(m_id != NULL_ID);
+  void init(Timestamp, Engine& engine) override {
+    assert(_id != NULL_ID);
 
-    registerDefinedVariable(e, m_output);
-    for (size_t i = 0; i < m_inputs.size(); ++i) {
-      e.registerInvariantDependsOnVar(m_id, m_inputs[i], LocalId(i));
+    registerDefinedVariable(engine, output);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      engine.registerInvariantInput(_id, inputs[i], LocalId(i));
     }
-    m_initialized = true;
+    _initialized = true;
   }
 
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
+  MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine&),
               (override));
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
               (override));
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
-              (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
 };
 
 class EngineTest : public ::testing::Test {
@@ -97,7 +95,7 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-  ASSERT_TRUE(invariant->m_initialized);
+  ASSERT_TRUE(invariant->_initialized);
 
   engine->close();
   EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
@@ -188,7 +186,7 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(1);
 
-  ASSERT_TRUE(invariant->m_initialized);
+  ASSERT_TRUE(invariant->_initialized);
 
   engine->close();
 
@@ -214,7 +212,7 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->close();
 
   engine->beginMove();
-  Timestamp moveTimestamp = engine->getCurrentTime();
+  Timestamp moveTimestamp = engine->getCurrentTimestamp();
 
   engine->setValue(a, -1);
   engine->setValue(b, -2);
@@ -223,21 +221,20 @@ TEST_F(EngineTest, SimplePropagation) {
 
   if (engine->propagationMode ==
       PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
-        .Times(0);
+    EXPECT_CALL(*invariant, getNextInput(moveTimestamp, testing::_)).Times(0);
 
     EXPECT_CALL(*invariant,
-                notifyCurrentDependencyChanged(moveTimestamp, testing::_))
+                notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(0);
   } else {
-    EXPECT_CALL(*invariant, getNextDependency(moveTimestamp, testing::_))
+    EXPECT_CALL(*invariant, getNextInput(moveTimestamp, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
     EXPECT_CALL(*invariant,
-                notifyCurrentDependencyChanged(moveTimestamp, testing::_))
+                notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(3);
   }
 
@@ -273,20 +270,18 @@ TEST_F(EngineTest, SimpleCommit) {
 
   if (engine->propagationMode ==
       PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentDependencyChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
   } else {
-    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentDependencyChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(3);
   }
 
@@ -315,21 +310,19 @@ TEST_F(EngineTest, SimpleCommit) {
                 notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
 
-    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentDependencyChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
   } else if (engine->propagationMode ==
              PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentDependencyChanged(testing::_, testing::_))
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(1);
   }
 

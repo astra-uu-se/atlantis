@@ -17,28 +17,27 @@ class PriorityListTest : public ::testing::Test {
   }
   std::mt19937 gen;
 
-  void updateForward(Timestamp t, PriorityList &p) { updateForward(t, p, 0); }
-  void updateForward(Timestamp t, PriorityList &p, Int offset) {
-    for (size_t idx = 0; idx < p.size(); ++idx) {
-      p.updatePriority(t, idx, idx + 1 + offset);
-      p.sanity(t);
+  void updateForward(Timestamp ts, PriorityList &priorityList) {
+    updateForward(ts, priorityList, 0);
+  }
+  void updateForward(Timestamp ts, PriorityList &priorityList, Int offset) {
+    for (size_t idx = 0; idx < priorityList.size(); ++idx) {
+      priorityList.updatePriority(ts, idx, idx + 1 + offset);
     }
   }
 
-  void updateBackwards(Timestamp t, PriorityList &p) {
-    updateBackwards(t, p, 0);
+  void updateBackwards(Timestamp ts, PriorityList &priorityList) {
+    updateBackwards(ts, priorityList, 0);
   }
-  void updateBackwards(Timestamp t, PriorityList &p, Int offset) {
-    for (size_t idx = 0; idx < p.size(); ++idx) {
-      p.updatePriority(t, idx, p.size() - idx + offset);
-      p.sanity(t);
+  void updateBackwards(Timestamp ts, PriorityList &priorityList, Int offset) {
+    for (size_t idx = 0; idx < priorityList.size(); ++idx) {
+      priorityList.updatePriority(ts, idx, priorityList.size() - idx + offset);
     }
   }
 
-  void updateUniform(Timestamp t, PriorityList &p) {
-    for (size_t idx = 0; idx < p.size(); ++idx) {
-      p.updatePriority(t, idx, Int(t));
-      p.sanity(t);
+  void updateUniform(Timestamp ts, PriorityList &priorityList) {
+    for (size_t idx = 0; idx < priorityList.size(); ++idx) {
+      priorityList.updatePriority(ts, idx, Int(ts));
     }
   }
 };
@@ -49,45 +48,44 @@ class PriorityListTest : public ::testing::Test {
 
 TEST_F(PriorityListTest, Constructor) {
   for (size_t size = 0; size < 100; ++size) {
-    PriorityList p(size);
-    EXPECT_EQ(p.size(), size);
-    p.sanity(0);
+    PriorityList priorityList(size);
+    EXPECT_EQ(priorityList.size(), size);
   }
 }
 
 TEST_F(PriorityListTest, SimpleUpdatePriority) {
   size_t size = 100;
-  Timestamp t;
-  PriorityList p(size);
+  Timestamp ts;
+  PriorityList priorityList(size);
 
-  for (t = 1; t < 10; ++t) {
-    updateForward(t, p);
-    EXPECT_EQ(p.getMinPriority(t), 1);
-    EXPECT_EQ(p.getMaxPriority(t), 100);
+  for (ts = 1; ts < 10; ++ts) {
+    updateForward(ts, priorityList);
+    EXPECT_EQ(priorityList.getMinPriority(ts), 1);
+    EXPECT_EQ(priorityList.getMaxPriority(ts), 100);
   }
-  for (t = 1; t < 10; ++t) {
-    updateBackwards(t, p);
-    EXPECT_EQ(p.getMinPriority(t), 1);
-    EXPECT_EQ(p.getMaxPriority(t), 100);
+  for (ts = 1; ts < 10; ++ts) {
+    updateBackwards(ts, priorityList);
+    EXPECT_EQ(priorityList.getMinPriority(ts), 1);
+    EXPECT_EQ(priorityList.getMaxPriority(ts), 100);
   }
-  for (t = 1; t < 10; ++t) {
-    updateUniform(t, p);
-    EXPECT_EQ(p.getMinPriority(t), Int(t));
-    EXPECT_EQ(p.getMaxPriority(t), Int(t));
+  for (ts = 1; ts < 10; ++ts) {
+    updateUniform(ts, priorityList);
+    EXPECT_EQ(priorityList.getMinPriority(ts), Int(ts));
+    EXPECT_EQ(priorityList.getMaxPriority(ts), Int(ts));
   }
 
-  for (t = 1; t < 10; ++t) {
-    updateForward(t, p);
-    EXPECT_EQ(p.getMinPriority(t), 1);
-    EXPECT_EQ(p.getMaxPriority(t), 100);
+  for (ts = 1; ts < 10; ++ts) {
+    updateForward(ts, priorityList);
+    EXPECT_EQ(priorityList.getMinPriority(ts), 1);
+    EXPECT_EQ(priorityList.getMaxPriority(ts), 100);
 
-    updateBackwards(t, p);
-    EXPECT_EQ(p.getMinPriority(t), 1);
-    EXPECT_EQ(p.getMaxPriority(t), 100);
+    updateBackwards(ts, priorityList);
+    EXPECT_EQ(priorityList.getMinPriority(ts), 1);
+    EXPECT_EQ(priorityList.getMaxPriority(ts), 100);
 
-    updateUniform(t, p);
-    EXPECT_EQ(p.getMinPriority(t), Int(t));
-    EXPECT_EQ(p.getMaxPriority(t), Int(t));
+    updateUniform(ts, priorityList);
+    EXPECT_EQ(priorityList.getMinPriority(ts), Int(ts));
+    EXPECT_EQ(priorityList.getMaxPriority(ts), Int(ts));
   }
 }
 
@@ -95,45 +93,44 @@ TEST_F(PriorityListTest, RandomUpdatePriority) {
   setLogLevel(debug);
   for (size_t n = 0; n < 1000; ++n) {
     size_t size = 100;
-    Timestamp t = 1;
+    Timestamp ts = 1;
     std::uniform_int_distribution<> distribution(
         std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 
-    PriorityList p(size);
+    PriorityList priorityList(size);
     Int minPriority = std::numeric_limits<int>::max();
     Int maxPriority = std::numeric_limits<int>::min();
     for (size_t idx = 0; idx < 100; ++idx) {
       Int newValue = distribution(gen);
       minPriority = std::min(newValue, minPriority);
       maxPriority = std::max(newValue, maxPriority);
-      p.updatePriority(t, idx, newValue);
-      p.sanity(t);
+      priorityList.updatePriority(ts, idx, newValue);
     }
 
-    EXPECT_EQ(p.getMinPriority(t), minPriority);
-    EXPECT_EQ(p.getMaxPriority(t), maxPriority);
+    EXPECT_EQ(priorityList.getMinPriority(ts), minPriority);
+    EXPECT_EQ(priorityList.getMaxPriority(ts), maxPriority);
   }
 }
 
 TEST_F(PriorityListTest, CommitIf) {
   size_t size = 100;
-  PriorityList p(size);
-  Timestamp t = 1;
+  PriorityList priorityList(size);
+  Timestamp ts = 1;
 
-  updateForward(t, p, Int(t));
-  p.commitIf(t);
-  EXPECT_EQ(p.getMinPriority(t), 1 + Int(t));
-  EXPECT_EQ(p.getMaxPriority(t), 100 + Int(t));
-  EXPECT_EQ(p.getMinPriority(t + 1), 1 + Int(t));
-  EXPECT_EQ(p.getMaxPriority(t + 1), 100 + Int(t));
+  updateForward(ts, priorityList, Int(ts));
+  priorityList.commitIf(ts);
+  EXPECT_EQ(priorityList.getMinPriority(ts), 1 + Int(ts));
+  EXPECT_EQ(priorityList.getMaxPriority(ts), 100 + Int(ts));
+  EXPECT_EQ(priorityList.getMinPriority(ts + 1), 1 + Int(ts));
+  EXPECT_EQ(priorityList.getMaxPriority(ts + 1), 100 + Int(ts));
 
-  for (t = 2; t < 10; ++t) {
-    updateForward(t, p, Int(t));
-    EXPECT_EQ(p.getMinPriority(t), 1 + Int(t));
-    EXPECT_EQ(p.getMaxPriority(t), 100 + Int(t));
-    p.commitIf(t);
-    EXPECT_EQ(p.getMinPriority(t + 1), 1 + Int(t));
-    EXPECT_EQ(p.getMaxPriority(t + 1), 100 + Int(t));
+  for (ts = 2; ts < 10; ++ts) {
+    updateForward(ts, priorityList, Int(ts));
+    EXPECT_EQ(priorityList.getMinPriority(ts), 1 + Int(ts));
+    EXPECT_EQ(priorityList.getMaxPriority(ts), 100 + Int(ts));
+    priorityList.commitIf(ts);
+    EXPECT_EQ(priorityList.getMinPriority(ts + 1), 1 + Int(ts));
+    EXPECT_EQ(priorityList.getMaxPriority(ts + 1), 100 + Int(ts));
   }
 }
 
