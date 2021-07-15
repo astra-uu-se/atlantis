@@ -83,12 +83,12 @@ inline VarId OutputToInputExplorer::peekVariableStack() {
   return _variableStack[_varStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::pushInvariantStack(InvariantId id) {
-  if (_invariantIsOnStack.get(id)) {
+inline void OutputToInputExplorer::pushInvariantStack(InvariantId invariantId) {
+  if (_invariantIsOnStack.get(invariantId)) {
     throw DynamicCycleException();
   }
-  _invariantIsOnStack.set(id, true);
-  _invariantStack[_invariantStackIdx++] = id;
+  _invariantIsOnStack.set(invariantId, true);
+  _invariantStack[_invariantStackIdx++] = invariantId;
 }
 inline void OutputToInputExplorer::popInvariantStack() {
   _invariantIsOnStack.set(_invariantStack[--_invariantStackIdx], false);
@@ -106,6 +106,7 @@ inline bool OutputToInputExplorer::isStable(Timestamp ts, VarIdBase id) {
   return _varStableAt.at(id) == ts;
 }
 
-inline bool OutputToInputExplorer::isStable(Timestamp ts, InvariantId id) {
-  return _invariantStableAt.at(id) == ts;
+inline bool OutputToInputExplorer::isStable(Timestamp ts,
+                                            InvariantId invariantId) {
+  return _invariantStableAt.at(invariantId) == ts;
 }

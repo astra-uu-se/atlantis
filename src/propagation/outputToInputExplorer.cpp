@@ -93,23 +93,23 @@ template void OutputToInputExplorer::expandInvariant<false>(InvariantId);
 // We expand an invariant by pushing it and its first input variable onto each
 // stack.
 template <bool OutputToInputMarking>
-void OutputToInputExplorer::expandInvariant(InvariantId id) {
-  if (id == NULL_ID) {
+void OutputToInputExplorer::expandInvariant(InvariantId invariantId) {
+  if (invariantId == NULL_ID) {
     return;
   }
-  if (_invariantIsOnStack.get(id)) {
+  if (_invariantIsOnStack.get(invariantId)) {
     throw DynamicCycleException();
   }
-  VarId nextVar = _engine.getNextInput(id);
+  VarId nextVar = _engine.getNextInput(invariantId);
   while (nextVar != NULL_ID && isUpToDate<OutputToInputMarking>(nextVar)) {
-    nextVar = _engine.getNextInput(id);
+    nextVar = _engine.getNextInput(invariantId);
   }
 
   if (nextVar.id == NULL_ID) {
     return;
   }
   pushVariableStack(nextVar);
-  pushInvariantStack(id);
+  pushInvariantStack(invariantId);
 }
 
 void OutputToInputExplorer::notifyCurrentInvariant() {
@@ -137,10 +137,10 @@ void OutputToInputExplorer::registerVar(VarId id) {
   _varStableAt.register_idx(id);
 }
 
-void OutputToInputExplorer::registerInvariant(InvariantId id) {
+void OutputToInputExplorer::registerInvariant(InvariantId invariantId) {
   _invariantStack.emplace_back(NULL_ID);  // push back just to resize the stack!
-  _invariantStableAt.register_idx(id);
-  _invariantIsOnStack.register_idx(id, false);
+  _invariantStableAt.register_idx(invariantId);
+  _invariantIsOnStack.register_idx(invariantId, false);
 }
 
 template void OutputToInputExplorer::propagate<true>(

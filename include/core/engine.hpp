@@ -29,7 +29,7 @@ class Engine {
 
   EngineState _engineState = EngineState::IDLE;
   struct ListeningInvariantData {
-    InvariantId id;
+    InvariantId invariantId;
     LocalId localId;
   };
   // Map from VarID -> vector of InvariantID
@@ -274,16 +274,16 @@ inline Timestamp Engine::getTmpTimestamp(VarId id) {
   return _store.getIntVar(id).getTmpTimestamp();
 }
 
-inline bool Engine::isPostponed(InvariantId id) {
-  return _store.getInvariant(id).isPostponed();
+inline bool Engine::isPostponed(InvariantId invariantId) {
+  return _store.getInvariant(invariantId).isPostponed();
 }
 
-inline void Engine::recompute(InvariantId id) {
-  return _store.getInvariant(id).recompute(_currentTimestamp, *this);
+inline void Engine::recompute(InvariantId invariantId) {
+  return _store.getInvariant(invariantId).recompute(_currentTimestamp, *this);
 }
 
-inline void Engine::recompute(Timestamp ts, InvariantId id) {
-  return _store.getInvariant(id).recompute(ts, *this);
+inline void Engine::recompute(Timestamp ts, InvariantId invariantId) {
+  return _store.getInvariant(invariantId).recompute(ts, *this);
 }
 
 inline void Engine::updateValue(Timestamp ts, VarId id, Int val) {
@@ -304,10 +304,10 @@ inline void Engine::commitValue(VarId id, Int val) {
   _store.getIntVar(id).commitValue(val);
 }
 
-inline void Engine::commitInvariantIf(Timestamp ts, InvariantId id) {
-  _store.getInvariant(id).commit(ts, *this);
+inline void Engine::commitInvariantIf(Timestamp ts, InvariantId invariantId) {
+  _store.getInvariant(invariantId).commit(ts, *this);
 }
 
-inline void Engine::commitInvariant(InvariantId id) {
-  _store.getInvariant(id).commit(_currentTimestamp, *this);
+inline void Engine::commitInvariant(InvariantId invariantId) {
+  _store.getInvariant(invariantId).commit(_currentTimestamp, *this);
 }

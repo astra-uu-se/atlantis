@@ -75,8 +75,8 @@ class Store {
     return _intViewSourceId[id];
   }
 
-  inline Invariant& getInvariant(InvariantId id) {
-    return *(_invariants[id.id]);
+  inline Invariant& getInvariant(InvariantId invariantId) {
+    return *(_invariants[invariantId.id]);
   }
   inline std::vector<IntVar>::iterator intVarBegin() {
     return _intVars.begin();
