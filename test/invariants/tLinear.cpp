@@ -18,11 +18,11 @@ namespace {
 
 class MockLinear : public Linear {
  public:
-  bool m_initialized = false;
+  bool initialized = false;
 
-  void init(Timestamp timestamp, Engine& e) override {
-    m_initialized = true;
-    Linear::init(timestamp, e);
+  void init(Timestamp timestamp, Engine& engine) override {
+    initialized = true;
+    Linear::init(timestamp, engine);
   }
 
   MockLinear(std::vector<VarId>&& X, VarId b)
@@ -31,35 +31,35 @@ class MockLinear : public Linear {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return Linear::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          return Linear::getNextDependency(t, e);
+    ON_CALL(*this, getNextInput)
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          return Linear::getNextInput(ts, engine);
         });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          Linear::notifyCurrentDependencyChanged(t, e);
+    ON_CALL(*this, notifyCurrentInputChanged)
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          Linear::notifyCurrentInputChanged(ts, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
-          Linear::notifyIntChanged(t, e, id);
+        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
+          Linear::notifyIntChanged(ts, engine, id);
         });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
-      Linear::commit(t, e);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
+      Linear::commit(ts, engine);
     });
   }
 
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyIntChanged,
+              (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:
@@ -111,7 +111,7 @@ class LinearTest : public ::testing::Test {
     auto invariant =
         engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
 
-    EXPECT_TRUE(invariant->m_initialized);
+    EXPECT_TRUE(invariant->initialized);
 
     EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
         .Times(AtLeast(1));
@@ -124,19 +124,16 @@ class LinearTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(0);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
           .Times(numArgs + 1);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,
@@ -183,11 +180,11 @@ TEST_F(LinearTest, Recompute) {
   EXPECT_EQ(engine->getValue(0, d), -39);
   EXPECT_EQ(engine->getCommittedValue(d), -39);
 
-  Timestamp newTime = 1;
-  engine->setValue(newTime, a, 40);
-  linear->recompute(newTime, *engine);
+  Timestamp newTimestamp = 1;
+  engine->setValue(newTimestamp, a, 40);
+  linear->recompute(newTimestamp, *engine);
   EXPECT_EQ(engine->getCommittedValue(d), -39);
-  EXPECT_EQ(engine->getValue(newTime, d), 0);
+  EXPECT_EQ(engine->getValue(newTimestamp, d), 0);
 }
 
 TEST_F(LinearTest, NotifyChange) {
@@ -225,9 +222,9 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100000, 100000);
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
   for (size_t i = 0; i < 1000; ++i) {
-    ++currentTime;
+    ++currentTimestamp;
     // Check that we do not accidentally commit
     ASSERT_EQ(engine->getCommittedValue(a), 1);
     ASSERT_EQ(engine->getCommittedValue(b), 2);
@@ -236,40 +233,40 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
               -39);  // d is committed by register.
 
     // Set all variables
-    engine->setValue(currentTime, a, distribution(gen));
-    engine->setValue(currentTime, b, distribution(gen));
-    engine->setValue(currentTime, c, distribution(gen));
+    engine->setValue(currentTimestamp, a, distribution(gen));
+    engine->setValue(currentTimestamp, b, distribution(gen));
+    engine->setValue(currentTimestamp, c, distribution(gen));
 
     // notify changes
-    if (engine->getCommittedValue(a) != engine->getValue(currentTime, a)) {
-      linear->notifyIntChanged(currentTime, *engine, 0);
+    if (engine->getCommittedValue(a) != engine->getValue(currentTimestamp, a)) {
+      linear->notifyIntChanged(currentTimestamp, *engine, 0);
     }
-    if (engine->getCommittedValue(b) != engine->getValue(currentTime, b)) {
-      linear->notifyIntChanged(currentTime, *engine, 1);
+    if (engine->getCommittedValue(b) != engine->getValue(currentTimestamp, b)) {
+      linear->notifyIntChanged(currentTimestamp, *engine, 1);
     }
-    if (engine->getCommittedValue(c) != engine->getValue(currentTime, c)) {
-      linear->notifyIntChanged(currentTime, *engine, 2);
+    if (engine->getCommittedValue(c) != engine->getValue(currentTimestamp, c)) {
+      linear->notifyIntChanged(currentTimestamp, *engine, 2);
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTime, d);
-    linear->recompute(currentTime, *engine);
+    auto tmp = engine->getValue(currentTimestamp, d);
+    linear->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->getValue(currentTime, d));
+    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, d));
   }
 }
 
 TEST_F(LinearTest, Commit) {
   EXPECT_EQ(engine->getCommittedValue(d), -39);
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
 
-  engine->setValue(currentTime, a, 40);
-  engine->setValue(currentTime, b,
+  engine->setValue(currentTimestamp, a, 40);
+  engine->setValue(currentTimestamp, b,
                    2);  // This change is not notified and should
                         // not have an impact on the commit
 
-  linear->notifyIntChanged(currentTime, *engine, 0);
+  linear->notifyIntChanged(currentTimestamp, *engine, 0);
 }
 
 TEST_F(LinearTest, CreateLinear) {
@@ -288,7 +285,7 @@ TEST_F(LinearTest, CreateLinear) {
   auto invariant =
       engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
 
-  EXPECT_TRUE(invariant->m_initialized);
+  EXPECT_TRUE(invariant->initialized);
 
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 

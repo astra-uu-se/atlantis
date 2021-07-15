@@ -11,14 +11,14 @@ class LayeredPropagationQueue {
   typedef PropagationListNode ListNode;
 
  private:
-  ListNode m_dummy;
-  std::vector<ListNode> m_priorities;
-  std::vector<ListNode*> m_queue;
-  size_t m_currentLayer;
+  ListNode _dummy;
+  std::vector<ListNode> _priorities;
+  std::vector<ListNode*> _queue;
+  size_t _currentLayer;
 
  public:
-  LayeredPropagationQueue() : m_dummy(NULL_ID, 123), m_priorities(), m_queue() {
-    m_dummy.next = &m_dummy;
+  LayeredPropagationQueue() : _dummy(NULL_ID, 123), _priorities(), _queue() {
+    _dummy.next = &_dummy;
   }
   // This implementation does not allow copying as this requires special care
   // for repointing all pointers.
@@ -27,39 +27,38 @@ class LayeredPropagationQueue {
   LayeredPropagationQueue& operator=(const LayeredPropagationQueue&) = delete;
 
   void init(int numVariables, int numLayers) {
-    m_priorities.resize(numVariables + 1);
-    m_queue.resize(numLayers, &m_dummy);
-    m_currentLayer = m_queue.size();
+    _priorities.resize(numVariables + 1);
+    _queue.resize(numLayers, &_dummy);
+    _currentLayer = _queue.size();
   }
 
   void initVar(VarIdBase id, size_t priority) {
-    m_priorities[id].id = id;
-    m_priorities[id].priority = priority;
-    m_priorities[id].next = nullptr;
+    _priorities[id].id = id;
+    _priorities[id].priority = priority;
+    _priorities[id].next = nullptr;
   }
 
-  inline bool empty() { return m_currentLayer == m_queue.size(); }
+  inline bool empty() { return _currentLayer == _queue.size(); }
 
   inline void push(VarIdBase id) {
-    ListNode& node = m_priorities[id];
+    ListNode& node = _priorities[id];
     if (node.next != nullptr) {
       return;  // already enqueued
     }
-    node.next = m_queue[node.priority];
-    m_queue[node.priority] = &node;
-    m_currentLayer = std::min(m_currentLayer, node.priority);
+    node.next = _queue[node.priority];
+    _queue[node.priority] = &node;
+    _currentLayer = std::min(_currentLayer, node.priority);
   }
 
   inline VarIdBase pop() {
-    ListNode* top = m_queue[m_currentLayer];
-    m_queue[m_currentLayer] = top->next;
+    ListNode* top = _queue[_currentLayer];
+    _queue[_currentLayer] = top->next;
     top->next = nullptr;
-    while (m_currentLayer < m_queue.size() &&
-           m_queue[m_currentLayer] == &m_dummy) {
-      ++m_currentLayer;
+    while (_currentLayer < _queue.size() && _queue[_currentLayer] == &_dummy) {
+      ++_currentLayer;
     }
     return top->id;
   }
 
-  inline VarIdBase top() { return m_queue[m_currentLayer]->id; }
+  inline VarIdBase top() { return _queue[_currentLayer]->id; }
 };

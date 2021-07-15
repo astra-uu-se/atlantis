@@ -17,10 +17,10 @@ namespace {
 
 class MockLessThan : public LessThan {
  public:
-  bool m_initialized = false;
+  bool initialized = false;
 
   void init(Timestamp timestamp, Engine& engine) override {
-    m_initialized = true;
+    initialized = true;
     LessThan::init(timestamp, engine);
   }
 
@@ -30,35 +30,35 @@ class MockLessThan : public LessThan {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return LessThan::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return LessThan::getNextDependency(t, engine);
+    ON_CALL(*this, getNextInput)
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          return LessThan::getNextInput(ts, engine);
         });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          LessThan::notifyCurrentDependencyChanged(t, engine);
+    ON_CALL(*this, notifyCurrentInputChanged)
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          LessThan::notifyCurrentInputChanged(ts, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          LessThan::notifyIntChanged(t, engine, id);
+        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
+          LessThan::notifyIntChanged(ts, engine, id);
         });
 
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      LessThan::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
+      LessThan::commit(ts, engine);
     });
   }
 
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyIntChanged,
+              (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:
@@ -96,7 +96,7 @@ class LessThanTest : public ::testing::Test {
 
     auto invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
 
-    EXPECT_TRUE(invariant->m_initialized);
+    EXPECT_TRUE(invariant->initialized);
 
     EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
         .Times(AtLeast(1));
@@ -109,19 +109,15 @@ class LessThanTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(0);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(3);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,
@@ -171,22 +167,22 @@ TEST_F(LessThanTest, NonViolatingUpdate) {
   EXPECT_EQ(engine->getValue(0, violationId), 1);
   EXPECT_EQ(engine->getCommittedValue(violationId), 1);
 
-  Timestamp time;
+  Timestamp timestamp;
 
   for (size_t i = 0; i < 10000; ++i) {
-    time = Timestamp(1 + i);
-    engine->setValue(time, x, 1 - i);
-    lessThan->recompute(time, *engine);
+    timestamp = Timestamp(1 + i);
+    engine->setValue(timestamp, x, 1 - i);
+    lessThan->recompute(timestamp, *engine);
     EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-    EXPECT_EQ(engine->getValue(time, violationId), 0);
+    EXPECT_EQ(engine->getValue(timestamp, violationId), 0);
   }
 
   for (size_t i = 0; i < 10000; ++i) {
-    time = Timestamp(1 + i);
-    engine->setValue(time, y, 5 + i);
-    lessThan->recompute(time, *engine);
+    timestamp = Timestamp(1 + i);
+    engine->setValue(timestamp, y, 5 + i);
+    lessThan->recompute(timestamp, *engine);
     EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-    EXPECT_EQ(engine->getValue(time, violationId), 0);
+    EXPECT_EQ(engine->getValue(timestamp, violationId), 0);
   }
 }
 
@@ -231,9 +227,9 @@ TEST_F(LessThanTest, IncrementalVsRecompute) {
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100000, 100000);
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
   for (size_t i = 0; i < 1000; ++i) {
-    ++currentTime;
+    ++currentTimestamp;
     // Check that we do not accidentally commit
     ASSERT_EQ(engine->getCommittedValue(x), 2);
     ASSERT_EQ(engine->getCommittedValue(y), 2);
@@ -241,22 +237,22 @@ TEST_F(LessThanTest, IncrementalVsRecompute) {
               1);  // violationId is committed by register.
 
     // Set all variables
-    engine->setValue(currentTime, x, distribution(gen));
-    engine->setValue(currentTime, y, distribution(gen));
+    engine->setValue(currentTimestamp, x, distribution(gen));
+    engine->setValue(currentTimestamp, y, distribution(gen));
 
     // notify changes
-    if (engine->getCommittedValue(x) != engine->getValue(currentTime, x)) {
-      lessThan->notifyIntChanged(currentTime, *engine, unused);
+    if (engine->getCommittedValue(x) != engine->getValue(currentTimestamp, x)) {
+      lessThan->notifyIntChanged(currentTimestamp, *engine, unused);
     }
-    if (engine->getCommittedValue(y) != engine->getValue(currentTime, y)) {
-      lessThan->notifyIntChanged(currentTime, *engine, unused);
+    if (engine->getCommittedValue(y) != engine->getValue(currentTimestamp, y)) {
+      lessThan->notifyIntChanged(currentTimestamp, *engine, unused);
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTime, violationId);
-    lessThan->recompute(currentTime, *engine);
+    auto tmp = engine->getValue(currentTimestamp, violationId);
+    lessThan->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->getValue(currentTime, violationId));
+    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, violationId));
   }
 }
 
@@ -265,14 +261,14 @@ TEST_F(LessThanTest, Commit) {
 
   LocalId unused = -1;
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
 
-  engine->setValue(currentTime, x, 40);
-  engine->setValue(currentTime, y,
+  engine->setValue(currentTimestamp, x, 40);
+  engine->setValue(currentTimestamp, y,
                    2);  // This change is not notified and should
                         // not have an impact on the commit
 
-  lessThan->notifyIntChanged(currentTime, *engine, unused);
+  lessThan->notifyIntChanged(currentTimestamp, *engine, unused);
 }
 
 TEST_F(LessThanTest, CreateLessThan) {
@@ -285,7 +281,7 @@ TEST_F(LessThanTest, CreateLessThan) {
 
   auto invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
 
-  EXPECT_TRUE(invariant->m_initialized);
+  EXPECT_TRUE(invariant->initialized);
 
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 

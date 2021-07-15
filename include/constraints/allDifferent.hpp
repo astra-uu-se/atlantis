@@ -13,34 +13,34 @@ class Engine;
 
 class AllDifferent : public Constraint {
  private:
-  std::vector<VarId> m_variables;
-  std::vector<SavedInt> m_localValues;
-  std::vector<SavedInt> m_counts;
-  Int m_offset;
+  std::vector<VarId> _variables;
+  std::vector<SavedInt> _localValues;
+  std::vector<SavedInt> _counts;
+  Int _offset;
   signed char increaseCount(Timestamp ts, Int value);
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  AllDifferent(VarId violationId, std::vector<VarId> t_variables);
+  AllDifferent(VarId violationId, std::vector<VarId> variables);
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;
-  VarId getNextDependency(Timestamp, Engine& e) override;
-  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
+  VarId getNextInput(Timestamp, Engine&) override;
+  void notifyCurrentInputChanged(Timestamp, Engine&) override;
 };
 
 inline signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
-  Int newCount = m_counts.at(value - m_offset).incValue(ts, 1);
+  Int newCount = _counts.at(value - _offset).incValue(ts, 1);
   assert(newCount >= 0);
-  assert(newCount <= static_cast<Int>(m_variables.size()));
+  assert(newCount <= static_cast<Int>(_variables.size()));
   return newCount >= 2 ? 1 : 0;
 }
 
 inline signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
-  Int newCount = m_counts.at(value - m_offset).incValue(ts, -1);
+  Int newCount = _counts.at(value - _offset).incValue(ts, -1);
   assert(newCount >= 0);
-  assert(newCount <= static_cast<Int>(m_variables.size()));
+  assert(newCount <= static_cast<Int>(_variables.size()));
   return newCount >= 1 ? -1 : 0;
 }

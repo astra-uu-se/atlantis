@@ -1,46 +1,49 @@
 #include "invariants/maxSparse.hpp"
 
-MaxSparse::MaxSparse(std::vector<VarId> X, VarId b)
-    : Invariant(NULL_ID), m_X(X), m_b(b), m_localPriority(X.size()) {
-  m_modifiedVars.reserve(m_X.size());
+MaxSparse::MaxSparse(std::vector<VarId> varArray, VarId y)
+    : Invariant(NULL_ID),
+      _varArray(varArray),
+      _y(y),
+      _localPriority(varArray.size()) {
+  _modifiedVars.reserve(_varArray.size());
 }
 
-void MaxSparse::init([[maybe_unused]] Timestamp t, Engine& e) {
-  assert(!m_id.equals(NULL_ID));
+void MaxSparse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+  assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(e, m_b);
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i));
+  registerDefinedVariable(engine, _y);
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    engine.registerInvariantInput(_id, _varArray[i], LocalId(i));
   }
 }
 
-void MaxSparse::recompute(Timestamp t, Engine& e) {
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    m_localPriority.updatePriority(t, i, e.getValue(t, m_X[i]));
+void MaxSparse::recompute(Timestamp ts, Engine& engine) {
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    _localPriority.updatePriority(ts, i, engine.getValue(ts, _varArray[i]));
   }
-  updateValue(t, e, m_b, m_localPriority.getMaxPriority(t));
+  updateValue(ts, engine, _y, _localPriority.getMaxPriority(ts));
 }
 
-void MaxSparse::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
-  auto newValue = e.getValue(t, m_X[i]);
-  m_localPriority.updatePriority(t, i, newValue);
-  updateValue(t, e, m_b, m_localPriority.getMaxPriority(t));
+void MaxSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
+  auto newValue = engine.getValue(ts, _varArray[id]);
+  _localPriority.updatePriority(ts, id, newValue);
+  updateValue(ts, engine, _y, _localPriority.getMaxPriority(ts));
 }
 
-VarId MaxSparse::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
-  if (static_cast<size_t>(m_state.getValue(t)) == m_X.size()) {
+VarId MaxSparse::getNextInput(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
+  if (static_cast<size_t>(_state.getValue(ts)) == _varArray.size()) {
     return NULL_ID;  // Done
   } else {
-    return m_X.at(m_state.getValue(t));
+    return _varArray.at(_state.getValue(ts));
   }
 }
 
-void MaxSparse::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  notifyIntChanged(t, e, m_state.getValue(t));
+void MaxSparse::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
+  notifyIntChanged(ts, engine, _state.getValue(ts));
 }
 
-void MaxSparse::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t, e);
-  m_localPriority.commitIf(t);
+void MaxSparse::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+  _localPriority.commitIf(ts);
 }

@@ -3,51 +3,51 @@
 #include "core/engine.hpp"
 
 /**
- * Constraint a*x = b*y
+ * Constraint x = y
  * @param violationId id for the violationCount
- * @param a coefficient of x
  * @param x variable of lhs
- * @param b coefficient of y
  * @param y variable of rhs
  */
 Equal::Equal(VarId violationId, VarId x, VarId y)
-    : Constraint(NULL_ID, violationId), m_x(x), m_y(y) {
-  m_modifiedVars.reserve(1);
+    : Constraint(NULL_ID, violationId), _x(x), _y(y) {
+  _modifiedVars.reserve(1);
 }
 
-void Equal::init(Timestamp, Engine& e) {
-  assert(m_id != NULL_ID);
+void Equal::init(Timestamp, Engine& engine) {
+  assert(_id != NULL_ID);
 
-  e.registerInvariantDependsOnVar(m_id, m_x, LocalId(0));
-  e.registerInvariantDependsOnVar(m_id, m_y, LocalId(0));
-  registerDefinedVariable(e, m_violationId);
+  engine.registerInvariantInput(_id, _x, LocalId(0));
+  engine.registerInvariantInput(_id, _y, LocalId(0));
+  registerDefinedVariable(engine, _violationId);
 }
 
-void Equal::recompute(Timestamp t, Engine& e) {
-  updateValue(t, e, m_violationId,
-              std::abs(e.getValue(t, m_x) - e.getValue(t, m_y)));
+void Equal::recompute(Timestamp ts, Engine& engine) {
+  updateValue(ts, engine, _violationId,
+              std::abs(engine.getValue(ts, _x) - engine.getValue(ts, _y)));
 }
 
-void Equal::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void Equal::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId Equal::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
+VarId Equal::getNextInput(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
-  // ==0?m_x:m_y;
-  switch (m_state.getValue(t)) {
+  // ==0?_x:_y;
+  switch (_state.getValue(ts)) {
     case 0:
-      return m_x;
+      return _x;
     case 1:
-      return m_y;
+      return _y;
     default:
       return NULL_ID;
   }
 }
 
-void Equal::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void Equal::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void Equal::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void Equal::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

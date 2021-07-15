@@ -1,43 +1,46 @@
 #include "invariants/elementVar.hpp"
 
-ElementVar::ElementVar(VarId i, std::vector<VarId> X, VarId b)
-    : Invariant(NULL_ID), m_i(i), m_X(std::move(X)), m_b(b) {
-  m_modifiedVars.reserve(1);
+ElementVar::ElementVar(VarId index, std::vector<VarId> varArray, VarId y)
+    : Invariant(NULL_ID), _index(index), _varArray(std::move(varArray)), _y(y) {
+  _modifiedVars.reserve(1);
 }
 
-void ElementVar::init([[maybe_unused]] Timestamp t, Engine& e) {
-  assert(m_id != NULL_ID);
+void ElementVar::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+  assert(_id != NULL_ID);
 
-  registerDefinedVariable(e, m_b);
-  e.registerInvariantDependsOnVar(m_id, m_i, LocalId(0));
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(0));
+  registerDefinedVariable(engine, _y);
+  engine.registerInvariantInput(_id, _index, LocalId(0));
+  for (size_t index = 0; index < _varArray.size(); ++index) {
+    engine.registerInvariantInput(_id, _varArray[index], LocalId(0));
   }
 }
 
-void ElementVar::recompute(Timestamp t, Engine& e) {
-  updateValue(
-      t, e, m_b,
-      e.getValue(t, m_X.at(static_cast<unsigned long>(e.getValue(t, m_i)))));
+void ElementVar::recompute(Timestamp ts, Engine& engine) {
+  updateValue(ts, engine, _y,
+              engine.getValue(ts, _varArray.at(static_cast<unsigned long>(
+                                      engine.getValue(ts, _index)))));
 }
 
-void ElementVar::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void ElementVar::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId ElementVar::getNextDependency(Timestamp t, Engine& e) {
-  m_state.incValue(t, 1);
-  if (m_state.getValue(t) == 0) {
-    return m_i;
-  } else if (m_state.getValue(t) == 1) {
-    return m_X.at(static_cast<unsigned long>(e.getValue(t, m_i)));
+VarId ElementVar::getNextInput(Timestamp ts, Engine& engine) {
+  _state.incValue(ts, 1);
+  if (_state.getValue(ts) == 0) {
+    return _index;
+  } else if (_state.getValue(ts) == 1) {
+    return _varArray.at(
+        static_cast<unsigned long>(engine.getValue(ts, _index)));
   } else {
     return NULL_ID;  // Done
   }
 }
 
-void ElementVar::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void ElementVar::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void ElementVar::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void ElementVar::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

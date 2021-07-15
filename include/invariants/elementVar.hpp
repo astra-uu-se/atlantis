@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <vector>
 
 #include "core/engine.hpp"
@@ -8,22 +7,22 @@
 #include "invariants/invariant.hpp"
 
 /**
- * Invariant for b <- X[i] where X is a vector of VarId.
+ * Invariant for y <- varArray[index] where varArray is a vector of VarId.
  *
  */
 
 class ElementVar : public Invariant {
  private:
-  VarId m_i;
-  std::vector<VarId> m_X;
-  VarId m_b;
+  VarId _index;
+  std::vector<VarId> _varArray;
+  VarId _y;
 
  public:
-  ElementVar(VarId i, std::vector<VarId> X, VarId b);
+  ElementVar(VarId index, std::vector<VarId> varArray, VarId y);
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
-  VarId getNextDependency(Timestamp, Engine&) override;
-  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
+  VarId getNextInput(Timestamp, Engine&) override;
+  void notifyCurrentInputChanged(Timestamp, Engine&) override;
   void commit(Timestamp, Engine&) override;
 };
