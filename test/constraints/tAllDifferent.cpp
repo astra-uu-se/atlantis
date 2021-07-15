@@ -1,3 +1,6 @@
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <algorithm>
 #include <limits>
 #include <random>
@@ -6,8 +9,6 @@
 #include "constraints/allDifferent.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 using ::testing::AtLeast;
 using ::testing::AtMost;

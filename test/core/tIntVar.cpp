@@ -1,11 +1,12 @@
+#include <gtest/gtest.h>
+
 #include <limits>
 #include <random>
 #include <stdexcept>
 #include <vector>
 
-#include "variables/intVar.hpp"
 #include "core/types.hpp"
-#include "gtest/gtest.h"
+#include "variables/intVar.hpp"
 
 namespace {
 class IntVarTest : public ::testing::Test {
