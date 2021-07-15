@@ -1,38 +1,45 @@
 export CMAKE_OPTIONS+= ${ENV_CMAKE_OPTIONS}
-export BUILD_DIR=build
 
-all:
-	make clean
-	make build
+CMAKE=$(shell which cmake)
+MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+BUILD_DIR=${MKFILE_PATH}build
 
+.PHONY: clean
 clean:
-	rm -r ${BUILD_DIR}
+	rm -rf ${BUILD_DIR}
 
+.PHONY: build
 build:
-	mkdir -p ${BUILD_DIR}; \
+	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; \
-	cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
-	make
+	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release ..; \
+	$(MAKE)
 
-tests:
-	mkdir -p ${BUILD_DIR}; \
+.PHONY: build-tests
+build-tests:
+	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; \
-	cmake ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS:BOOL=ON -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
-	make
+	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS:BOOL=ON ..; \
+	$(MAKE)
 
-benchmarks:
-	mkdir -p ${BUILD_DIR}; \
+.PHONY: build-benchmarks
+build-benchmarks:
+	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; \
-	cmake ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS:BOOL=ON -DCMAKE_CXX_FLAGS=${CXX_FLAGS} ..; \
-	make
+	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS:BOOL=ON ..; \
+	$(MAKE)
 
-submodule:
-	git submodule init
-	git submodule update
-
-test: build
-	cd ${BUILD_DIR}; \
-	ctest -j6 -C Debug -T test --output-on-failure
-
+.PHONY: run
 run: build
-	exec ./${BUILD_DIR}/cbls
+	exec ${BUILD_DIR}/cbls
+
+.PHONY: run-tests
+run-tests: build-tests
+	exec ${BUILD_DIR}/runUnitTests
+
+.PHONY: run-benchmarks
+run-benchmarks: build-benchmarks
+	exec ${BUILD_DIR}/runBenchmarks
+
+.PHONY: all
+all: clean build build-tests build-benchmarks

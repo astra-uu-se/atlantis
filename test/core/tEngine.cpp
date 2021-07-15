@@ -1,12 +1,13 @@
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <limits>
 #include <random>
 #include <vector>
 
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "invariants/elementVar.hpp"
 #include "invariants/linear.hpp"
 #include "invariants/minSparse.hpp"

@@ -1,11 +1,12 @@
 
+#include <gtest/gtest.h>
+#include <rapidcheck/gtest.h>
+
 #include <limits>
 #include <random>
 #include <vector>
 
 #include "core/types.hpp"
-#include "gtest/gtest.h"
-#include "rapidcheck/gtest.h"
 #include "variables/savedInt.hpp"
 
 namespace {
@@ -213,29 +214,29 @@ TEST_F(SavedIntTest, SavedIntCommitIf) {
   EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
 }
 
-RC_GTEST_FIXTURE_PROP(SavedIntTest, checkConstructorValue,
-                      (Timestamp initTimestamp, Int initValue,
-                       Timestamp anyTimestamp)) {
-  auto savedInt = SavedInt(initTimestamp, initValue);
-  RC_ASSERT(savedInt.getValue(anyTimestamp) == initValue);
+RC_GTEST_FIXTURE_PROP(SavedIntTest,
+              checkConstructorValue,
+              (Timestamp initTime, Int initValue, Timestamp anyTime)) {
+  auto savedInt = SavedInt(initTime, initValue);
+  RC_ASSERT(savedInt.getValue(anyTime) == initValue);
 }
 
-RC_GTEST_FIXTURE_PROP(SavedIntTest, checkSetValue,
-                      (Timestamp initTimestamp, Int initValue,
-                       Timestamp currentTimestamp, Int value)) {
-  auto savedInt = SavedInt(initTimestamp, initValue);
-  savedInt.setValue(currentTimestamp, value);
-  if (initTimestamp != currentTimestamp) {
-    RC_ASSERT(savedInt.getValue(initTimestamp) == initValue);
+RC_GTEST_FIXTURE_PROP(SavedIntTest,
+              checkSetValue,
+              (Timestamp initTime, Int initValue, Timestamp currentTime, Int value)) {
+  auto savedInt = SavedInt(initTime, initValue);
+  savedInt.setValue(currentTime, value);
+  if (initTime != currentTime) {
+    RC_ASSERT(savedInt.getValue(initTime) == initValue);
   }
 }
 
-RC_GTEST_FIXTURE_PROP(SavedIntTest, checkCommittedValue,
-                      (Timestamp initTimestamp, Int initValue,
-                       Timestamp currentTimestamp, Int value)) {
-  auto savedInt = SavedInt(initTimestamp, initValue);
-  savedInt.setValue(currentTimestamp, value);
-  RC_ASSERT(savedInt.getValue(currentTimestamp) == value);
+RC_GTEST_FIXTURE_PROP(SavedIntTest,
+              checkCommittedValue,
+              (Timestamp initTime, Int initValue, Timestamp currentTime, Int value)) {
+  auto savedInt = SavedInt(initTime, initValue);
+  savedInt.setValue(currentTime, value);
+  RC_ASSERT(savedInt.getValue(currentTime) == value);
 }
 
 }  // namespace
