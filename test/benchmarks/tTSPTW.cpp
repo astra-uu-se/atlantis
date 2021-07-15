@@ -1,3 +1,5 @@
+#include <gtest/gtest.h>
+
 #include <algorithm>
 #include <constraints/lessEqual.hpp>
 #include <core/propagationEngine.hpp>
@@ -8,7 +10,6 @@
 #include <vector>
 
 #include "core/types.hpp"
-#include "gtest/gtest.h"
 
 namespace {
 class TSPTWTest : public ::testing::Test {

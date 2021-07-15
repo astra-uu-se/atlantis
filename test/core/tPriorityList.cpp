@@ -1,9 +1,10 @@
+#include <gtest/gtest.h>
+
 #include <limits>
 #include <random>
 #include <vector>
 
 #include "core/types.hpp"
-#include "gtest/gtest.h"
 #include "misc/logging.hpp"
 #include "utils/priorityList.hpp"
 
