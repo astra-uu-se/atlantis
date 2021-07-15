@@ -14,10 +14,11 @@ PropagationGraph::PropagationGraph(size_t expectedSize)
       _listeningInvariants(expectedSize),
       _topology(*this) {}
 
-void PropagationGraph::registerInvariant([[maybe_unused]] InvariantId id) {
+void PropagationGraph::registerInvariant(
+    [[maybe_unused]] InvariantId invariantId) {
   // Everything must be registered in sequence.
-  _variablesDefinedByInvariant.register_idx(id);
-  _inputVariables.register_idx(id);
+  _variablesDefinedByInvariant.register_idx(invariantId);
+  _inputVariables.register_idx(invariantId);
   ++_numInvariants;
 }
 

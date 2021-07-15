@@ -171,8 +171,8 @@ inline bool PropagationEngine::isOnPropagationPath(VarId id) {
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
-    InvariantId id) const {
-  return _propGraph.getVariablesDefinedBy(id);
+    InvariantId invariantId) const {
+  return _propGraph.getVariablesDefinedBy(invariantId);
 }
 
 inline const std::vector<InvariantId>&
@@ -180,12 +180,14 @@ PropagationEngine::getListeningInvariants(VarId id) const {
   return _propGraph.getListeningInvariants(id);
 }
 
-inline VarId PropagationEngine::getNextInput(InvariantId id) {
+inline VarId PropagationEngine::getNextInput(InvariantId invariantId) {
   return getSourceId(
-      _store.getInvariant(id).getNextInput(_currentTimestamp, *this));
+      _store.getInvariant(invariantId).getNextInput(_currentTimestamp, *this));
 }
-inline void PropagationEngine::notifyCurrentInputChanged(InvariantId id) {
-  _store.getInvariant(id).notifyCurrentInputChanged(_currentTimestamp, *this);
+inline void PropagationEngine::notifyCurrentInputChanged(
+    InvariantId invariantId) {
+  _store.getInvariant(invariantId)
+      .notifyCurrentInputChanged(_currentTimestamp, *this);
 }
 
 inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {
@@ -217,12 +219,12 @@ inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
 }
 
 inline void PropagationEngine::setPropagationMode(
-    PropagationEngine::PropagationMode m) {
+    PropagationEngine::PropagationMode propMode) {
   if (!_isOpen) {
     throw EngineClosedException(
         "Cannot set propagation mode when model is closed");
   }
-  _propagationMode = m;
+  _propagationMode = propMode;
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
@@ -234,8 +236,8 @@ inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables() {
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
-    InvariantId id) {
-  return _propGraph.getInputVariables(id);
+    InvariantId invariantId) {
+  return _propGraph.getInputVariables(invariantId);
 }
 
 inline const std::unordered_set<VarIdBase>&

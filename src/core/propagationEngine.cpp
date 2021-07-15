@@ -7,7 +7,6 @@ PropagationEngine::PropagationEngine()
       _numVariables(0),
       _propGraph(ESTIMATED_NUM_OBJECTS),
       _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
-      // _propGraph._propagationQueue(PropagationGraph::PriorityCmp(_propGraph)),
       _isEnqueued(ESTIMATED_NUM_OBJECTS),
       _varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
       _propagationPathQueue(),
@@ -44,8 +43,7 @@ void PropagationEngine::close() {
     _outputToInputExplorer.populateAncestors();
   }
 
-  // compute initial values for variables and for (internal datastructure of)
-  // invariants
+#ifndef NDEBUG
   for (VarIdBase varId : getDecisionVariables()) {
     // Assert that if decision variable varId is modified,
     // then it is in the set of modified decision variables
@@ -53,11 +51,18 @@ void PropagationEngine::close() {
            (_modifiedDecisionVariables.find(varId) !=
             _modifiedDecisionVariables.end()));
   }
+#endif
+
+  // compute initial values for variables and for (internal datastructure of)
+  // invariants
   recomputeAndCommit();
+
+#ifndef NDEBUG
   for (size_t varId : _modifiedDecisionVariables) {
     // assert that decsion variable varId is no longer modified.
     assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));
   }
+#endif
 }
 
 //---------------------Registration---------------------
@@ -104,9 +109,9 @@ void PropagationEngine::registerVar(VarId id) {
   _varIsOnPropagationPath.register_idx(id, false);
 }
 
-void PropagationEngine::registerInvariant(InvariantId id) {
-  _propGraph.registerInvariant(id);
-  _outputToInputExplorer.registerInvariant(id);
+void PropagationEngine::registerInvariant(InvariantId invariantId) {
+  _propGraph.registerInvariant(invariantId);
+  _outputToInputExplorer.registerInvariant(invariantId);
 }
 
 //---------------------Propagation---------------------
@@ -232,6 +237,7 @@ void PropagationEngine::endCommit() {
   _engineState = EngineState::PROCESSING;
 
   try {
+#ifndef NDEBUG
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
       for (VarIdBase varId : getDecisionVariables()) {
         // Assert that if decision variable varId is modified,
@@ -241,14 +247,18 @@ void PropagationEngine::endCommit() {
                 _modifiedDecisionVariables.end()));
       }
     }
+#endif
 
     propagate<true>();
+
+#ifndef NDEBUG
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
       for (size_t varId : _modifiedDecisionVariables) {
         // assert that decsion variable varId is no longer modified.
         assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));
       }
     }
+#endif
     _engineState = EngineState::IDLE;
   } catch (std::exception const& e) {
     _engineState = EngineState::IDLE;
@@ -274,10 +284,11 @@ void PropagationEngine::markPropagationPathAndClearPropagationQueue() {
       continue;
     }
     _varIsOnPropagationPath.set(currentVar, true);
-    for (auto& depInv : _listeningInvariantData.at(currentVar)) {
-      for (VarIdBase depVar : _propGraph.getVariablesDefinedBy(depInv.id)) {
-        if (!_varIsOnPropagationPath.get(depVar)) {
-          _propagationPathQueue.push(depVar);
+    for (auto& listeningInv : _listeningInvariantData.at(currentVar)) {
+      for (VarIdBase definedVar :
+           _propGraph.getVariablesDefinedBy(listeningInv.invariantId)) {
+        if (!_varIsOnPropagationPath.get(definedVar)) {
+          _propagationPathQueue.push(definedVar);
         }
       }
     }
@@ -338,15 +349,18 @@ void PropagationEngine::propagate() {
     }
 
     for (auto& toNotify : _listeningInvariantData[stableVarId]) {
-      Invariant& invariant = _store.getInvariant(toNotify.id);
+      Invariant& invariant = _store.getInvariant(toNotify.invariantId);
 
 #ifdef PROPAGATION_DEBUG
-      logDebug("\t\tNotifying invariant:" << toNotify.id << " with localId: "
+      logDebug("\t\tNotifying invariant:" << toNotify.invariantId
+                                          << " with localId: "
                                           << toNotify.localId);
 #endif
 #ifdef PROPAGATION_DEBUG_COUNTING
-      notificationCount.at(toNotify.id.id - 1)[variable._id.id] =
-          notificationCount.at(toNotify.id.id - 1)[variable._id.id] + 1;
+      notificationCount.at(toNotify.invariantId.id - 1)[variable.getId().id] =
+          notificationCount.at(toNotify.invariantId.id -
+                               1)[variable.getId().id] +
+          1;
 #endif
 
       invariant.notify(toNotify.localId);

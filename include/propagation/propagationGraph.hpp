@@ -53,8 +53,8 @@ class PropagationGraph {
     void computeLayersWithCycles();
     void computeInvariantFromVariables();
     inline size_t getPosition(VarIdBase id) { return variablePosition[id.id]; }
-    inline size_t getPosition(InvariantId id) {
-      return invariantPosition.at(id);
+    inline size_t getPosition(InvariantId invariantId) {
+      return invariantPosition.at(invariantId);
     }
   } _topology;
 
@@ -128,8 +128,8 @@ class PropagationGraph {
   }
 
   [[nodiscard]] inline const std::vector<VarIdBase>& getVariablesDefinedBy(
-      InvariantId id) const {
-    return _variablesDefinedByInvariant.at(id);
+      InvariantId invariantId) const {
+    return _variablesDefinedByInvariant.at(invariantId);
   }
 
   [[nodiscard]] inline const std::vector<InvariantId>& getListeningInvariants(
@@ -138,7 +138,7 @@ class PropagationGraph {
   }
 
   [[nodiscard]] inline const std::vector<VarIdBase>& getInputVariables(
-      InvariantId id) {
-    return _inputVariables.at(id);
+      InvariantId invariantId) {
+    return _inputVariables.at(invariantId);
   }
 };
