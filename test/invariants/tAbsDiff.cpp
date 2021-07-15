@@ -1,12 +1,13 @@
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <limits>
 #include <random>
 #include <vector>
 
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "invariants/absDiff.hpp"
 
 using ::testing::AnyNumber;

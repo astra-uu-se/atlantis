@@ -1,11 +1,12 @@
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <random>
 #include <vector>
 
 #include "constraints/equal.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 using ::testing::AtLeast;
 using ::testing::Return;

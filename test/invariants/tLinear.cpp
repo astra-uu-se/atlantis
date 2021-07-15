@@ -1,13 +1,14 @@
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <rapidcheck/gtest.h>
+
 #include <limits>
 #include <random>
 #include <vector>
 
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "invariants/linear.hpp"
-#include "rapidcheck/gtest.h"
 
 using ::testing::AtLeast;
 using ::testing::AtMost;

@@ -1,7 +1,4 @@
-# Taken from
-# https://github.com/gujans/travis-gtest-cmake-example/blob/master/CMakeLists.txt
-
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.20)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PROJECT_NAME cbls)
@@ -12,9 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Check if microsoft visual code. I have no idea if this works
 if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17 /permissive /W4 /w14640 ")
+  add_compile_options(/std:c++17 /permissive /W4 /w14640)
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic")
+  add_compile_options(-std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic)
 endif()
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -31,7 +28,6 @@ message("${CMAKE_BUILD_TYPE}")
 #----------------------------------------------------------------------------
 
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
-set(GOOGLETEST_PATH ${PROJECT_SOURCE_DIR}/ext/googletest)
 # Set the 'library' name. The library consists of all cpp, hpp, and h files except
 # main in ./src
 set(PROJECT_LIB ${PROJECT_NAME}_lib)
@@ -56,40 +52,46 @@ add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp)
 # Link the src library with the project
 target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 
-################################
-# Testing
-################################
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 # Options. Turn on with 'cmake -Dmyvarname=ON'.
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
-option(BENCHMARK_ENABLE_TESTING "Build GTEST for GBENCHMARK" OFF)
+
+if (BUILD_TESTS OR BUILD_BENCHMARKS)
+  include(FetchContent)
+endif()
 
 if (BUILD_TESTS)
-  # This adds another subdirectory, which has 'project(gtest)'.
-  add_subdirectory(ext/googletest)
-  add_subdirectory(ext/rapidcheck)
-  add_subdirectory(ext/rapidcheck/extras/gtest)
-  add_subdirectory(ext/rapidcheck/extras/gmock)
+  ################################
+  # Testing
+  ################################
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.10.x
+  )
+  
+  # For Windows: Prevent overriding the parent project's compiler/linker settings
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+  # Required for rapidcheck
+  set(RC_ENABLE_GTEST ON CACHE BOOL "Rapidcheck GTest Support" FORCE)
+  set(RC_ENABLE_GMOCK ON CACHE BOOL "Rapidcheck GMock Support" FORCE)
+  set(RC_ENABLE_BOOST ON CACHE BOOL "Rapidcheck Boost Support" FORCE)
+  set(RC_ENABLE_RTTI  ON CACHE BOOL "Rapidcheck RTTI Support"  FORCE)
+
+  FetchContent_Declare(rapidcheck
+    GIT_REPOSITORY https://github.com/emil-e/rapidcheck.git
+    GIT_TAG 33d15a858e3125f5af61a655f390f1cbc2f272ba
+  )
+
+  FetchContent_MakeAvailable(googletest rapidcheck)
 
   include(CTest)
 
   enable_testing()
-
-  include(GoogleTest)
-
-  set_target_properties(gtest PROPERTIES FOLDER ext)
-  set_target_properties(gtest_main PROPERTIES FOLDER ext)
-  set_target_properties(gmock PROPERTIES FOLDER ext)
-  set_target_properties(gmock_main PROPERTIES FOLDER ext)
-
-  # Include the gtest library. gtest_SOURCE_DIR is available due to
-  # 'project(gtest)' above.
-  include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-
-  # Include the gmock library. gmock_SOURCE_DIR is available due to
-  # 'project(gmock)' above.
-  include_directories(${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
 
   ##############
   # Unit Tests
@@ -97,44 +99,48 @@ if (BUILD_TESTS)
   file(GLOB_RECURSE TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp ${PROJECT_SOURCE_DIR}/test/*.h ${PROJECT_SOURCE_DIR}/test/*.hpp)
   add_executable(runUnitTests ${TEST_SRC_FILES})
 
-  # Standard linking to gtest stuff.
-  target_link_libraries(runUnitTests gtest gtest_main)
-
-  target_link_libraries(runUnitTests gmock gmock_main)
-  
-  target_link_libraries(runUnitTests rapidcheck rapidcheck_gtest rapidcheck_gmock)
-
-  # Extra linking for the project.
-  target_link_libraries(runUnitTests ${PROJECT_LIB})
+  # Standard linking to gtest, gmock, and rapidcheck.
+  target_link_libraries(
+    runUnitTests
+    gtest
+    gtest_main
+    gmock
+    gmock_main
+    rapidcheck_gtest
+    rapidcheck_gmock
+    Threads::Threads
+    -lm
+    ${PROJECT_LIB}
+  )
 
   # This is so you can do 'make test' to see all your tests run, instead of
   # manually running the executable runUnitTests to see those specific tests.
   # add_test(NAME "UnitTests" COMMAND "runUnitTests")
 
-  gtest_discover_tests(runUnitTests
-        # set a working directory so your project root so that you can find test data via paths relative to the project root
-        WORKING_DIRECTORY ${PROJECT_DIR}
-        PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
-    )
   set_target_properties(runUnitTests PROPERTIES FOLDER tests)
 
 endif()
 if (BUILD_BENCHMARKS)
-  # This adds another subdirectory, which has 'project(gtest)'.
-  add_subdirectory(ext/benchmark)
-
-  ##############
+  ################################
   # Benchmarks
-  ##############
+  ################################
+  FetchContent_Declare(googlebenchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG e451e50e9b8af453f076dec10bd6890847f1624e)
+
+  FetchContent_MakeAvailable(googlebenchmark)
+
   file(GLOB_RECURSE BENCHMARK_SRC_FILES ${PROJECT_SOURCE_DIR}/benchmark/*.cpp ${PROJECT_SOURCE_DIR}/benchmark/*.h ${PROJECT_SOURCE_DIR}/benchmark/*.hpp)
+  
   add_executable(runBenchmarks ${BENCHMARK_SRC_FILES})
 
   # Link to benchmark
-  target_link_libraries(runBenchmarks benchmark::benchmark)
-
-  # Link to project wide benchmark main.
-  target_link_libraries(runBenchmarks benchmark::benchmark_main)
-
-  # Link to cbls_lib
-  target_link_libraries(runBenchmarks ${PROJECT_LIB})
+  target_link_libraries(
+    runBenchmarks
+    benchmark::benchmark
+    benchmark::benchmark_main
+    Threads::Threads
+    -lm
+    ${PROJECT_LIB}
+  )
 endif()
