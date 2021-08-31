@@ -61,12 +61,7 @@ option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark'
 
 if (BUILD_TESTS OR BUILD_BENCHMARKS)
   include(FetchContent)
-endif()
-
-if (BUILD_TESTS)
-  ################################
-  # Testing
-  ################################
+  # Google Test is required for testing and benchmarking
   FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
@@ -75,6 +70,12 @@ if (BUILD_TESTS)
   
   # For Windows: Prevent overriding the parent project's compiler/linker settings
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
+
+if (BUILD_TESTS)
+  ################################
+  # Testing
+  ################################
 
   # Required for rapidcheck
   set(RC_ENABLE_GTEST ON CACHE BOOL "Rapidcheck GTest Support" FORCE)
@@ -128,7 +129,7 @@ if (BUILD_BENCHMARKS)
     GIT_REPOSITORY https://github.com/google/benchmark.git
     GIT_TAG e451e50e9b8af453f076dec10bd6890847f1624e)
 
-  FetchContent_MakeAvailable(googlebenchmark)
+  FetchContent_MakeAvailable(googletest googlebenchmark)
 
   file(GLOB_RECURSE BENCHMARK_SRC_FILES ${PROJECT_SOURCE_DIR}/benchmark/*.cpp ${PROJECT_SOURCE_DIR}/benchmark/*.h ${PROJECT_SOURCE_DIR}/benchmark/*.hpp)
   
