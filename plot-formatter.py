@@ -1,5 +1,5 @@
 import logging
-from re import S
+import re
 from sys import argv
 from os import path
 import matplotlib
@@ -86,57 +86,74 @@ class PlotFormatter:
         
         processed_benchmarks = dict()
         for benchmark in benchmarks:
+            if 'name' not in benchmark:
+                continue
+            
+            name = benchmark['name']
+
+            if "aggregate_name" in name:
+                if name["aggregate_name"] != 'mean':
+                    continue
+            elif any((b.get("aggregate_name", "") == 'mean' for b in benchmarks if b.get('name', "") == name)):
+                continue
+
             probes_per_second = benchmark.get('probes_per_second', None)
             if probes_per_second is None:
                 continue
             
-            name_parts = benchmark.get('name', benchmark.get('run_name', '')).split('/')
-
+            name_parts = name.split('/')
 
             if len(name_parts) < 1:
                 continue
+
+            propagation_mode_name_index = -1
+
+            for i, name in enumerate(name_parts):
+                if bool(re.search(r'^\d+$', name)) and len(int_to_propagation_mode(int(name))) > 0:
+                    propagation_mode_name_index = i
+                    propagation_mode_name = int_to_propagation_mode(int(name))
+                    break
             
-            try:
-                propagation_mode = int_to_propagation_mode(int(name_parts[-2]))
-            except ValueError:
-                propagation_mode = int_to_propagation_mode(0)
-                name_parts.insert(len(name_parts) - 1, 0)
-            
+            if propagation_mode_name_index < 0:
+                continue
+
             try:
                 instance = int(name_parts[-1])
             except ValueError:
                 continue
             
-            d = processed_benchmarks
-            for part in name_parts[:-2]:
-                if part not in d:
-                    d[part] = dict()
-                d = d[part]
+            model_name = name_parts[0]
+            method_name = "/".join(
+                name_parts[1:propagation_mode_name_index] + name_parts[propagation_mode_name_index+1:-1]
+            )
             
-            if propagation_mode not in d:
-                d[propagation_mode] = []
+            if model_name not in processed_benchmarks:
+                processed_benchmarks[model_name] = dict()
+            if method_name not in processed_benchmarks[model_name]:
+                processed_benchmarks[model_name][method_name] = dict()
+            if propagation_mode_name not in processed_benchmarks[model_name][method_name]:
+                processed_benchmarks[model_name][method_name][propagation_mode_name] = []
             
-            d[propagation_mode].append((instance, probes_per_second))
-
+            processed_benchmarks[model_name][method_name][propagation_mode_name].append((instance, probes_per_second))
+            
         return processed_benchmarks
 
     def benchmark_avarage(self, benchmarks):
-        for models in benchmarks.values():
-            for modes in models.values():
-                for propagation_mode, instances in modes.items():
+        for methods in benchmarks.values():
+            for propagation_modes in methods.values():
+                for propagation_mode, instances in propagation_modes.items():
                     averages = []
                     for instance in sorted({instance for instance, _ in instances}):
-                        pbs = list((pbs for i, pbs in instances if i == instance))
-                        self.logger.debug(f'{sum(pbs)} / {len(pbs)}')
+                        probes_per_second = list((pbs for i, pbs in instances if i == instance))
 
-                        average_instance = (instance, sum(pbs) / len(pbs))
-                        self.logger.debug(average_instance)
+                        if len(probes_per_second) == 1:
+                            averages.append((instance, probes_per_second[0]))
+                            continue
 
-                        averages.append(
-                            average_instance
-                        )
-                    modes[propagation_mode] = averages
-                    self.logger.debug(modes[propagation_mode])
+                        average_instance = (instance, sum(probes_per_second) / len(probes_per_second))
+                        
+                        averages.append(average_instance)
+                    propagation_modes[propagation_mode] = averages
         return benchmarks
 
     def merge_benchmark_instances(self, benchmark_instances):
@@ -248,7 +265,7 @@ class PlotFormatter:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.INFO)
     flag_prefix = '--'
     flag_splitter = '='
 
