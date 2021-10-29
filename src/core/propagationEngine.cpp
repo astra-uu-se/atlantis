@@ -34,8 +34,18 @@ void PropagationEngine::close() {
                         // user tried to change a variable but without a begin
                         // move? But we should ignore it anyway then...
   _isOpen = false;
+  std::vector<VarIdBase> decisionVariables(_store.getNumVariables());
+  for (size_t varId = 1; varId < _store.getNumVariables(); ++varId) {
+    if (_propGraph.getDefiningInvariant(varId) == NULL_ID) {
+      IntVar var = _store.getIntVar(varId);
+      if (var.getLowerBound() < var.getUpperBound()) {
+        decisionVariables.push_back(varId);
+      }
+    }
+  }
   try {
-    _propGraph.close();
+    _propGraph.close(decisionVariables);
+
   } catch (std::exception const& e) {
     std::cout << "foo";
   }

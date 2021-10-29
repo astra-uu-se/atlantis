@@ -69,17 +69,20 @@ void PropagationGraph::registerDefinedVariable(VarIdBase varId,
   _variablesDefinedByInvariant[invariantId].push_back(varId);
 }
 
-void PropagationGraph::close() {
-  _isDecisionVar.resize(getNumVariables() + 1);
+void PropagationGraph::close(std::vector<VarIdBase>& decisionVariables) {
+  _decisionVariables = std::move(decisionVariables);
+  _isDecisionVar.resize(getNumVariables() + 1, false);
+
+  for (VarIdBase id : _decisionVariables) {
+    _isDecisionVar.at(id) = true;
+    assert(_definingInvariant.at(id) == NULL_ID);
+  }
+
   _isObjectiveVar.resize(getNumVariables() + 1);
-  for (size_t i = 1; i < getNumVariables() + 1; ++i) {
-    _isObjectiveVar.at(i) = (_listeningInvariants.at(i).empty());
-    _isDecisionVar.at(i) = (_definingInvariant.at(i) == NULL_ID);
-    if (_isObjectiveVar.at(i)) {
-      _outputVariables.push_back(i);
-    }
-    if (_isDecisionVar.at(i)) {
-      _decisionVariables.push_back(i);
+  for (size_t id = 1; id < getNumVariables() + 1; ++id) {
+    _isObjectiveVar.at(id) = (_listeningInvariants.at(id).empty());
+    if (_isObjectiveVar.at(id)) {
+      _outputVariables.push_back(id);
     }
   }
 

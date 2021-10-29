@@ -83,7 +83,7 @@ class PropagationGraph {
    * update internal datastructures based on currently registered  variables and
    * invariants.
    */
-  void close();
+  void close(std::vector<VarIdBase>& decisionVariables);
 
   /**
    * Register an invariant in the propagation graph.
