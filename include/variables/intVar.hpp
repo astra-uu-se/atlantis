@@ -59,6 +59,9 @@ class IntVar : public Var {
   [[gnu::always_inline]] [[nodiscard]] inline Int getUpperBound() const {
     return _upperBound;
   }
+  [[gnu::always_inline]] [[nodiscard]] inline Int isFixed() const {
+    return _lowerBound == _upperBound;
+  }
   [[gnu::always_inline]] [[nodiscard]] inline bool inDomain(Int value) const {
     return _lowerBound <= value && value <= _upperBound;
   }
