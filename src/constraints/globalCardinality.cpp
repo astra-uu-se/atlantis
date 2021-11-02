@@ -5,159 +5,182 @@
 /**
  * @param violationId id for the violationCount
  */
-GlobalCardinality::GlobalCardinality(VarId violationId,
-                                     std::vector<VarId> t_variables,
-                                     std::vector<Int> cover,
-                                     std::vector<Int> t_counts)
+template GlobalCardinality<true>::GlobalCardinality(
+    VarId violationId, std::vector<VarId> t_variables, std::vector<Int> cover,
+    std::vector<Int> t_counts);
+template GlobalCardinality<false>::GlobalCardinality(
+    VarId violationId, std::vector<VarId> t_variables, std::vector<Int> cover,
+    std::vector<Int> t_counts);
+template <bool IsClosed>
+GlobalCardinality<IsClosed>::GlobalCardinality(VarId violationId,
+                                               std::vector<VarId> t_variables,
+                                               std::vector<Int> cover,
+                                               std::vector<Int> t_counts)
     : GlobalCardinality(violationId, t_variables, cover, t_counts, t_counts) {}
 
-GlobalCardinality::GlobalCardinality(VarId violationId,
-                                     std::vector<VarId> t_variables,
-                                     std::vector<Int> cover,
-                                     std::vector<Int> t_counts, bool closed)
-    : GlobalCardinality(violationId, t_variables, cover, t_counts, t_counts,
-                        closed) {}
-
-GlobalCardinality::GlobalCardinality(VarId violationId,
-                                     std::vector<VarId> t_variables,
-                                     std::vector<Int> cover,
-                                     std::vector<Int> lowerBound,
-                                     std::vector<Int> upperBound)
-    : GlobalCardinality(violationId, t_variables, cover, lowerBound, upperBound,
-                        false) {}
-
-GlobalCardinality::GlobalCardinality(VarId violationId,
-                                     std::vector<VarId> t_variables,
-                                     std::vector<Int> cover,
-                                     std::vector<Int> lowerBound,
-                                     std::vector<Int> upperBound, bool closed)
+template GlobalCardinality<true>::GlobalCardinality(
+    VarId violationId, std::vector<VarId> t_variables, std::vector<Int> cover,
+    std::vector<Int> lowerBound, std::vector<Int> upperBound);
+template GlobalCardinality<false>::GlobalCardinality(
+    VarId violationId, std::vector<VarId> t_variables, std::vector<Int> cover,
+    std::vector<Int> lowerBound, std::vector<Int> upperBound);
+template <bool IsClosed>
+GlobalCardinality<IsClosed>::GlobalCardinality(VarId violationId,
+                                               std::vector<VarId> t_variables,
+                                               std::vector<Int> cover,
+                                               std::vector<Int> lowerBound,
+                                               std::vector<Int> upperBound)
     : Constraint(NULL_ID, violationId),
-      m_variables(std::move(t_variables)),
-      m_cover(std::move(cover)),
-      m_lowerBound(),
-      m_upperBound(),
-      m_localValues(),
-      m_excess(NULL_TIMESTAMP, 0),
-      m_shortage(NULL_TIMESTAMP, 0),
-      m_counts(),
-      m_offset(0) {
-  m_closed = closed ? 0 : 1;
-  m_modifiedVars.reserve(m_variables.size());
+      _variables(std::move(t_variables)),
+      _cover(std::move(cover)),
+      _lowerBound(),
+      _upperBound(),
+      _localValues(),
+      _excess(NULL_TIMESTAMP, 0),
+      _shortage(NULL_TIMESTAMP, 0),
+      _counts(),
+      _offset(0) {
+  _modifiedVars.reserve(_variables.size());
   assert(lowerBound.size() == upperBound.size() &&
-         lowerBound.size() == m_cover.size());
+         lowerBound.size() == _cover.size());
 
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  for (Int val : m_cover) {
+  for (Int val : _cover) {
     lb = std::min(lb, val);
     ub = std::max(ub, val);
   }
 
   assert(ub >= lb);
 
-  if (closed) {
-    m_lowerBound.resize(static_cast<unsigned long>(ub - lb + 1), 0);
-    m_upperBound.resize(static_cast<unsigned long>(ub - lb + 1), 0);
-    m_offset = lb;
+  if constexpr (IsClosed) {
+    _lowerBound.resize(static_cast<unsigned long>(ub - lb + 3), 0);
+    _upperBound.resize(static_cast<unsigned long>(ub - lb + 3), 0);
   } else {
-    m_lowerBound.resize(static_cast<unsigned long>(ub - lb + 3), -1);
-    m_upperBound.resize(static_cast<unsigned long>(ub - lb + 3), -1);
-    m_offset = lb - 1;
+    _lowerBound.resize(static_cast<unsigned long>(ub - lb + 3), -1);
+    _upperBound.resize(static_cast<unsigned long>(ub - lb + 3), -1);
   }
+  _offset = lb - 1;
 
-  for (size_t i = 0; i < m_cover.size(); ++i) {
-    m_lowerBound[m_cover[i] - m_offset] = lowerBound[i];
-    m_upperBound[m_cover[i] - m_offset] = upperBound[i];
+  for (size_t i = 0; i < _cover.size(); ++i) {
+    assert(lowerBound[i] >= 0);
+    assert(lowerBound[i] <= upperBound[i]);
+    _lowerBound[_cover[i] - _offset] = lowerBound[i];
+    _upperBound[_cover[i] - _offset] = upperBound[i];
   }
 }
 
-void GlobalCardinality::init(Timestamp ts, Engine& e) {
-  m_counts.resize(m_lowerBound.size(), SavedInt(ts, 0));
+template void GlobalCardinality<true>::init(Timestamp, Engine&);
+template void GlobalCardinality<false>::init(Timestamp, Engine&);
+template <bool IsClosed>
+void GlobalCardinality<IsClosed>::init(Timestamp ts, Engine& e) {
+  _counts.resize(_lowerBound.size(), SavedInt(ts, 0));
 
-  assert(!m_id.equals(NULL_ID));
+  assert(!_id.equals(NULL_ID));
 
-  for (size_t i = 0; i < m_variables.size(); ++i) {
-    e.registerInvariantDependsOnVar(m_id, m_variables[i], LocalId(i));
-    m_localValues.emplace_back(ts, e.getCommittedValue(m_variables[i]));
+  for (size_t i = 0; i < _variables.size(); ++i) {
+    e.registerInvariantInput(_id, _variables[i], LocalId(i));
+    _localValues.emplace_back(ts, e.getCommittedValue(_variables[i]));
   }
 
-  registerDefinedVariable(e, m_violationId);
+  registerDefinedVariable(e, _violationId);
 }
 
-void GlobalCardinality::recompute(Timestamp t, Engine& e) {
-  for (SavedInt& c : m_counts) {
-    c.setValue(t, 0);
+template void GlobalCardinality<true>::recompute(Timestamp, Engine&);
+template void GlobalCardinality<false>::recompute(Timestamp, Engine&);
+template <bool IsClosed>
+void GlobalCardinality<IsClosed>::recompute(Timestamp ts, Engine& e) {
+  for (SavedInt& c : _counts) {
+    c.setValue(ts, 0);
   }
 
-  for (size_t i = 0; i < m_variables.size(); ++i) {
-    increaseCount(t, e.getValue(t, m_variables[i]));
-    m_localValues[i].setValue(t, e.getValue(t, m_variables[i]));
+  for (size_t i = 0; i < _variables.size(); ++i) {
+    increaseCount(ts, e.getValue(ts, _variables[i]));
+    _localValues[i].setValue(ts, e.getValue(ts, _variables[i]));
   }
 
   Int excess = 0;
   Int shortage = 0;
-  for (Int val : m_cover) {
-    if (m_counts.at(val - m_offset).getValue(t) <
-        m_lowerBound.at(val - m_offset)) {
-      shortage += m_lowerBound.at(val - m_offset) -
-                  m_counts.at(val - m_offset).getValue(t);
-    } else if (m_upperBound.at(val - m_offset) <
-               m_counts.at(val - m_offset).getValue(t)) {
-      excess += m_counts.at(val - m_offset).getValue(t) -
-                m_upperBound.at(val - m_offset);
+  for (Int val : _cover) {
+    if (_counts.at(val - _offset).getValue(ts) <
+        _lowerBound.at(val - _offset)) {
+      shortage += _lowerBound.at(val - _offset) -
+                  _counts.at(val - _offset).getValue(ts);
+    } else if (_upperBound.at(val - _offset) <
+               _counts.at(val - _offset).getValue(ts)) {
+      excess += _counts.at(val - _offset).getValue(ts) -
+                _upperBound.at(val - _offset);
     }
   }
 
-  m_excess.setValue(t, excess);
-  m_shortage.setValue(t, shortage);
+  _excess.setValue(ts, excess);
+  _shortage.setValue(ts, shortage);
 
-  updateValue(t, e, m_violationId, std::max(excess, shortage));
+  updateValue(ts, e, _violationId, std::max(excess, shortage));
 }
 
-void GlobalCardinality::notifyIntChanged(Timestamp t, Engine& e, LocalId id) {
-  Int oldValue = m_localValues.at(id).getValue(t);
-  Int newValue = e.getValue(t, m_variables[id]);
+template void GlobalCardinality<true>::notifyIntChanged(Timestamp, Engine&,
+                                                        LocalId);
+template void GlobalCardinality<false>::notifyIntChanged(Timestamp, Engine&,
+                                                         LocalId);
+template <bool IsClosed>
+void GlobalCardinality<IsClosed>::notifyIntChanged(Timestamp ts, Engine& e,
+                                                   LocalId id) {
+  Int oldValue = _localValues.at(id).getValue(ts);
+  Int newValue = e.getValue(ts, _variables[id]);
   if (newValue == oldValue) {
     return;
   }
-  signed char dec = decreaseCount(t, oldValue);
-  signed char inc = increaseCount(t, newValue);
-  m_localValues.at(id).setValue(t, newValue);
-  m_excess.incValue(t, (dec < 0 ? dec : 0) + (inc > 0 ? inc : 0));
-  m_shortage.incValue(t, (dec > 0 ? dec : 0) + (inc < 0 ? inc : 0));
+  signed char dec = decreaseCount(ts, oldValue);
+  signed char inc = increaseCount(ts, newValue);
+  _localValues.at(id).setValue(ts, newValue);
+  _excess.incValue(ts, (dec < 0 ? dec : 0) + (inc > 0 ? inc : 0));
+  _shortage.incValue(ts, (dec > 0 ? dec : 0) + (inc < 0 ? inc : 0));
 
-  updateValue(t, e, m_violationId,
-              std::max(m_excess.getValue(t), m_shortage.getValue(t)));
+  updateValue(ts, e, _violationId,
+              std::max(_excess.getValue(ts), _shortage.getValue(ts)));
 }
 
-VarId GlobalCardinality::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
+template VarId GlobalCardinality<true>::getNextInput(Timestamp, Engine&);
+template VarId GlobalCardinality<false>::getNextInput(Timestamp, Engine&);
+template <bool IsClosed>
+VarId GlobalCardinality<IsClosed>::getNextInput(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
 
-  auto index = static_cast<size_t>(m_state.getValue(t));
-  if (index < m_variables.size()) {
-    return m_variables.at(index);
+  auto index = static_cast<size_t>(_state.getValue(ts));
+  if (index < _variables.size()) {
+    return _variables.at(index);
   }
   return NULL_ID;
 }
 
-void GlobalCardinality::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  auto id = static_cast<size_t>(m_state.getValue(t));
-  assert(id < m_variables.size());
-  notifyIntChanged(t, e, id);
+template void GlobalCardinality<true>::notifyCurrentInputChanged(Timestamp,
+                                                                 Engine&);
+template void GlobalCardinality<false>::notifyCurrentInputChanged(Timestamp,
+                                                                  Engine&);
+template <bool IsClosed>
+void GlobalCardinality<IsClosed>::notifyCurrentInputChanged(Timestamp ts,
+                                                            Engine& e) {
+  auto id = static_cast<size_t>(_state.getValue(ts));
+  assert(id < _variables.size());
+  notifyIntChanged(ts, e, id);
 }
 
-void GlobalCardinality::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t, e);
+template void GlobalCardinality<true>::commit(Timestamp, Engine&);
+template void GlobalCardinality<false>::commit(Timestamp, Engine&);
+template <bool IsClosed>
+void GlobalCardinality<IsClosed>::commit(Timestamp ts, Engine& e) {
+  Invariant::commit(ts, e);
 
-  m_excess.commitIf(t);
-  m_shortage.commitIf(t);
+  _excess.commitIf(ts);
+  _shortage.commitIf(ts);
 
-  for (auto& localValue : m_localValues) {
-    localValue.commitIf(t);
+  for (auto& localValue : _localValues) {
+    localValue.commitIf(ts);
   }
 
-  for (SavedInt& savedInt : m_counts) {
-    savedInt.commitIf(t);
+  for (SavedInt& savedInt : _counts) {
+    savedInt.commitIf(ts);
   }
 }
