@@ -1,9 +1,35 @@
 {
-  "bElementVarTree": {
-    "argumentOrder": [
+  "AllInterval": {
+    "yscale": "log",
+    "model_name": "All-Interval Series"
+  },
+  "Queens": {
+    "model_name": "N-Queens",
+    "yscale": "log",
+    "argument_order": [
       "PROPAGATION_MODE",
-      "Graph depth",
-      "Element argument count"
+      "Number of queens"
+    ]
+  },
+  "MagicSquare": {
+    "model_name": "Magic Square",
+    "yscale": "log"
+  },
+  "TSPTW": {
+    "yscale": "log",
+    "argument_order": [
+      "PROPAGATION_MODE",
+      "Number of locations"
+    ]
+  },
+  "bElementLinearTree": {
+    "model_name": "Element Binary Tree",
+    "yscale": "log",
+    "argument_order": [
+      "PROPAGATION_MODE",
+      "IGNORE",
+      "Tree Count",
+      "Tree Height"
     ]
   }
 }
