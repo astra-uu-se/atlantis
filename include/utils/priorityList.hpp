@@ -166,7 +166,7 @@ class PriorityList {
   }
 
 #ifndef NDEBUG
-  void sanity(Timestamp t) {
+  void sanity(Timestamp ts) {
     if (size() == 0) {
       return;
     }
@@ -174,44 +174,44 @@ class PriorityList {
 
     size_t s = 0;
     bool first = true;
-    Int minPrio = head.get(t)->priority.get(t);
-    for (Saved<DoublyLinkedNode*> cur = head; cur.get(t) != nullptr;
-         cur = cur.get(t)->next) {
+    Int minPrio = _head.get(ts)->priority.get(ts);
+    for (Saved<DoublyLinkedNode*> cur = _head; cur.get(ts) != nullptr;
+         cur = cur.get(ts)->next) {
       ++s;
       if (first) {
-        prevPrio = cur.get(t)->priority.get(t);
+        prevPrio = cur.get(ts)->priority.get(ts);
         assert(minPrio == prevPrio);
         first = false;
       } else {
-        assert(prevPrio <= cur.get(t)->priority.get(t));
-        prevPrio = cur.get(t)->priority.get(t);
+        assert(prevPrio <= cur.get(ts)->priority.get(ts));
+        prevPrio = cur.get(ts)->priority.get(ts);
       }
     }
     assert(size() == s);
 
     s = 0;
     first = true;
-    Int maxPrio = tail.get(t)->priority.get(t);
-    for (Saved<DoublyLinkedNode*> cur = tail; cur.get(t) != nullptr;
-         cur = cur.get(t)->prev) {
+    Int maxPrio = _tail.get(ts)->priority.get(ts);
+    for (Saved<DoublyLinkedNode*> cur = _tail; cur.get(ts) != nullptr;
+         cur = cur.get(ts)->prev) {
       ++s;
       if (first) {
-        prevPrio = cur.get(t)->priority.get(t);
+        prevPrio = cur.get(ts)->priority.get(ts);
         assert(maxPrio == prevPrio);
         first = false;
       } else {
-        assert(prevPrio >= cur.get(t)->priority.get(t));
-        prevPrio = cur.get(t)->priority.get(t);
+        assert(prevPrio >= cur.get(ts)->priority.get(ts));
+        prevPrio = cur.get(ts)->priority.get(ts);
       }
     }
     assert(size() == s);
 
-    for (Saved<DoublyLinkedNode*> cur = head; cur.get(t) != nullptr;
-         cur = cur.get(t)->next) {
-      if (cur.get(t)->next.get(t) == nullptr) {
+    for (Saved<DoublyLinkedNode*> cur = _head; cur.get(ts) != nullptr;
+         cur = cur.get(ts)->next) {
+      if (cur.get(ts)->next.get(ts) == nullptr) {
         continue;
       }
-      assert(cur.get(t) == cur.get(t)->next.get(t)->prev.get(t));
+      assert(cur.get(ts) == cur.get(ts)->next.get(ts)->prev.get(ts));
     }
   }
 #endif
