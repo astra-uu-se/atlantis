@@ -163,7 +163,7 @@ BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
 
 ///*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int n = 3; n <= 10; n += 1) {
+  for (int n = 4; n <= 10; n += 2) {
     for (int mode = 0; mode <= 2; ++mode) {
       benchmark->Args({mode, n});
     }
