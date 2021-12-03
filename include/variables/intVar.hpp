@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iosfwd>
+
 #include "core/types.hpp"
 #include "variables/savedInt.hpp"
 #include "variables/var.hpp"
@@ -9,61 +10,59 @@ class Engine;  // Forward declaration
 
 class IntVar : public Var {
  private:
-  SavedInt m_value;
-  Int m_lowerBound;
-  Int m_upperBound;
+  SavedInt _value;
+  Int _lowerBound;
+  Int _upperBound;
 
   [[gnu::always_inline]] inline void setValue(Timestamp timestamp, Int value) {
-    m_value.setValue(timestamp, value);
+    _value.setValue(timestamp, value);
   }
   [[gnu::always_inline]] inline void incValue(Timestamp timestamp, Int inc) {
-    m_value.incValue(timestamp, inc);
+    _value.incValue(timestamp, inc);
   }
 
-  [[gnu::always_inline]] inline void commit() { m_value.commit(); }
+  [[gnu::always_inline]] inline void commit() { _value.commit(); }
   [[gnu::always_inline]] inline void commitValue(Int value) {
-    m_value.commitValue(value);
+    _value.commitValue(value);
   }
   [[gnu::always_inline]] inline void commitIf(Timestamp timestamp) {
-    m_value.commitIf(timestamp);
+    _value.commitIf(timestamp);
   }
 
   friend class Engine;
   friend class PropagationEngine;
 
  public:
-  IntVar(Int t_lowerBound, Int t_upperBound);
-  IntVar(VarId t_id, Int t_lowerBound, Int t_upperBound);
-  IntVar(VarId t_id, Int initValue, Int t_lowerBound, Int t_upperBound);
-  IntVar(Timestamp t, VarId t_id, Int initValue, Int t_lowerBound,
-         Int t_upperBound);
+  IntVar(Int lowerBound, Int upperBound);
+  IntVar(VarId id, Int lowerBound, Int upperBound);
+  IntVar(VarId id, Int initValue, Int lowerBound, Int upperBound);
+  IntVar(Timestamp ts, VarId id, Int initValue, Int lowerBound, Int upperBound);
   ~IntVar() = default;
 
   [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
-      Timestamp t) const {
-    return m_value.hasChanged(t);
+      Timestamp ts) const {
+    return _value.hasChanged(ts);
   }
   [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
       const {
-    return m_value.getTmpTimestamp();
+    return _value.getTmpTimestamp();
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Int getValue(Timestamp t) const {
-    return m_value.getValue(t);
+  [[gnu::always_inline]] [[nodiscard]] inline Int getValue(Timestamp ts) const {
+    return _value.getValue(ts);
   }
   [[gnu::always_inline]] [[nodiscard]] inline Int getCommittedValue() const {
-    return m_value.getCommittedValue();
+    return _value.getCommittedValue();
   }
   [[gnu::always_inline]] [[nodiscard]] inline Int getLowerBound() const {
-    return m_lowerBound;
+    return _lowerBound;
   }
   [[gnu::always_inline]] [[nodiscard]] inline Int getUpperBound() const {
-    return m_upperBound;
+    return _upperBound;
   }
-  [[gnu::always_inline]] [[nodiscard]] inline bool inDomain(Int t_value) const {
-    return m_lowerBound <= t_value && t_value <= m_upperBound;
+  [[gnu::always_inline]] [[nodiscard]] inline bool inDomain(Int value) const {
+    return _lowerBound <= value && value <= _upperBound;
   }
-  void updateDomain(Int t_lowerBound,
-                                                  Int t_upperBound);
+  void updateDomain(Int lowerBound, Int upperBound);
 
   friend std::ostream& operator<<(std::ostream& out, IntVar const& var);
 };

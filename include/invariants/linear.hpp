@@ -2,33 +2,32 @@
 
 #include <vector>
 
-
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 
 class Engine;
 
 /**
- * Invariant for b <- sum(A_i*X_i)
+ * Invariant for y <- sum(coeffs_i*varArray_i)
  *
  */
 
 class Linear : public Invariant {
  private:
-  std::vector<Int> m_A;
-  std::vector<VarId> m_X;
-  std::vector<SavedInt> m_localX;
-  VarId m_b;
+  std::vector<Int> _coeffs;
+  std::vector<VarId> _varArray;
+  std::vector<SavedInt> _localVarArray;
+  VarId _y;
 
  public:
-  Linear(std::vector<VarId> X, VarId b)
-      : Linear(std::vector<Int>(X.size(), 1), X, b) {}
-  Linear(std::vector<Int> A, std::vector<VarId> X, VarId b);
+  Linear(std::vector<VarId> varArray, VarId y)
+      : Linear(std::vector<Int>(varArray.size(), 1), varArray, y) {}
+  Linear(std::vector<Int> coeffs, std::vector<VarId> varArray, VarId y);
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  VarId getNextDependency(Timestamp, Engine&) override;
-  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
+  VarId getNextInput(Timestamp, Engine&) override;
+  void notifyCurrentInputChanged(Timestamp, Engine&) override;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;
 };

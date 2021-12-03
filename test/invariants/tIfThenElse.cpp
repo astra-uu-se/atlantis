@@ -1,12 +1,13 @@
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <limits>
 #include <random>
 #include <vector>
 
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "invariants/ifThenElse.hpp"
 
 using ::testing::AtLeast;
@@ -17,11 +18,11 @@ namespace {
 
 class MockIfThenElse : public IfThenElse {
  public:
-  bool m_initialized = false;
+  bool initialized = false;
 
-  void init(Timestamp timestamp, Engine& e) override {
-    m_initialized = true;
-    IfThenElse::init(timestamp, e);
+  void init(Timestamp timestamp, Engine& engine) override {
+    initialized = true;
+    IfThenElse::init(timestamp, engine);
   }
 
   MockIfThenElse(VarId b, VarId x, VarId y, VarId z) : IfThenElse(b, x, y, z) {
@@ -29,14 +30,13 @@ class MockIfThenElse : public IfThenElse {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return IfThenElse::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextDependency)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          return IfThenElse::getNextDependency(t, e);
-        });
+    ON_CALL(*this, getNextInput).WillByDefault([this](Timestamp t, Engine& e) {
+      return IfThenElse::getNextInput(t, e);
+    });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
+    ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp t, Engine& e) {
-          IfThenElse::notifyCurrentDependencyChanged(t, e);
+          IfThenElse::notifyCurrentInputChanged(t, e);
         });
 
     ON_CALL(*this, notifyIntChanged)
@@ -52,8 +52,8 @@ class MockIfThenElse : public IfThenElse {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& e),
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
               (override));
 
   MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
@@ -86,7 +86,7 @@ class IfThenElseTest : public ::testing::Test {
 
     auto invariant = engine->makeInvariant<MockIfThenElse>(b, x, y, z);
 
-    EXPECT_TRUE(invariant->m_initialized);
+    EXPECT_TRUE(invariant->initialized);
 
     EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
         .Times(AtLeast(1));
@@ -99,19 +99,15 @@ class IfThenElseTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(0);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(3);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,
@@ -140,7 +136,7 @@ TEST_F(IfThenElseTest, CreateElement) {
 
   auto invariant = engine->makeInvariant<MockIfThenElse>(b, x, y, z);
 
-  EXPECT_TRUE(invariant->m_initialized);
+  EXPECT_TRUE(invariant->initialized);
 
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 

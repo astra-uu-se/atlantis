@@ -7,7 +7,6 @@
 class Engine;  // Forward declaration
 
 class Invariant {
- private:
  protected:
   /**
    * A simple queue structure of a fixed length to hold what input
@@ -52,72 +51,73 @@ class Invariant {
     }
   };
 
-  bool m_isPostponed;
-  InvariantId m_id;
-  // State used for returning next dependency. Null state is -1 by default
-  SavedInt m_state;
+  bool _isPostponed;
+  InvariantId _id;
+  // State used for returning next input. Null state is -1 by default
+  SavedInt _state;
 
-  //  std::vector<bool> m_modifiedVars;
-  NotificationQueue m_modifiedVars;
+  //  std::vector<bool> _modifiedVars;
+  NotificationQueue _modifiedVars;
 
-  VarId m_primaryOutput;
-  std::vector<VarId> m_outputVars;
+  VarId _primaryDefinedVar;
+  std::vector<VarId> _definedVars;
 
-  explicit Invariant(Id t_id) : Invariant(t_id, -1) {}
-  Invariant(Id t_id, Int nullState)
-      : m_isPostponed(false),
-        m_id(t_id),
-        m_state(NULL_TIMESTAMP, nullState),
-        m_modifiedVars(),
-        m_outputVars() {}
+  explicit Invariant(Id id) : Invariant(id, -1) {}
+  Invariant(Id id, Int nullState)
+      : _isPostponed(false),
+        _id(id),
+        _state(NULL_TIMESTAMP, nullState),
+        _modifiedVars(),
+        _primaryDefinedVar() {}
 
   /**
    * Register to the engine that variable is defined by the invariant.
-   * @param e the engine
-   * @param v the id of the variable that is defined by the invariant.
+   * @param engine the engine
+   * @param id the id of the variable that is defined by the invariant.
    */
-  void registerDefinedVariable(Engine& e, VarId v);
+  void registerDefinedVariable(Engine& engine, VarId id);
 
   /**
    * Used in Input-to-Output propagation to notify that a
    * variable local to the invariant has had its value changed. This
    * method is called for each variable that was marked as modified
    * in notify.
-   * @param t the current timestamp
-   * @param e the engine
-   * @param id the local id of the variable.
+   * @param ts the current timestamp
+   * @param engine the engine
+   * @param localId the local id of the variable.
    */
-  virtual void notifyIntChanged(Timestamp t, Engine& e, LocalId id) = 0;
+  virtual void notifyIntChanged(Timestamp ts, Engine& engine,
+                                LocalId localId) = 0;
 
   /**
    * Updates the value of variable without queueing it for propagation
    */
-  void updateValue(Timestamp t, Engine& e, VarId id, Int val);
+  void updateValue(Timestamp ts, Engine& engine, VarId id, Int val);
   /**
    * Increases the value of variable without queueing it for propagation
    */
-  void incValue(Timestamp t, Engine& e, VarId id, Int val);
+  void incValue(Timestamp ts, Engine& engine, VarId id, Int val);
 
  public:
   virtual ~Invariant() = default;
 
-  void setId(Id t_id) { m_id = t_id; }
+  void setId(Id id) { _id = id; }
 
   /**
    * Preconditions for initialisation:
    * 1) The invariant has been registered in an engine and has a valid ID.
    *
-   * 2) All variables have valid ids (i.e., they have been
+   * 2) All variables have valid ids (i.engine., they have been
    * registered)
    *
    * Checklist for initialising an invariant:
    *
    *
-   * 2) Register any output variables that are defined by this
-   * invariant note that this can throw an exception if such a variable is
-   * already defined.
+   * 2) Register all defined variables that are defined by this
+   * invariant. note that this can throw an exception if such a variable is
+   * already defined by another invariant.
    *
-   * 3) Register dependency to any input variables.
+   * 3) Register all variable inputs.
    *
    * 4) Compute initial state of invariant!
    */
@@ -126,36 +126,36 @@ class Invariant {
   virtual void recompute(Timestamp, Engine&) = 0;
 
   /**
-   * Used in Output-to-Input propagation to get the next input variable,
-   * the next dependency, to visit.
+   * Used in Output-to-Input propagation to get the next input variable to
+   * visit.
    */
-  virtual VarId getNextDependency(Timestamp, Engine& e) = 0;
+  virtual VarId getNextInput(Timestamp, Engine&) = 0;
 
   /**
    * Used in Output-to-Input propagation to notify to the
-   * invariant that the current dependency (the last dependency given by
-   * getNextDependency) has had its value changed.
+   * invariant that the current input (the last input given by
+   * getNextInput) has had its value changed.
    */
-  virtual void notifyCurrentDependencyChanged(Timestamp, Engine& e) = 0;
+  virtual void notifyCurrentInputChanged(Timestamp, Engine&) = 0;
 
   /**
    * Used in the Input-to-Output propagation to notify that an
    * input variable has had its value changed.
    */
-  void notify(LocalId id);
+  void notify(LocalId);
 
   /**
    * Used in the Input-to-Output propagation when the invariant
-   * has been notified of all modified input variables (dependencies) and
-   * the primary and non-primary output variables (dependants) are to be
+   * has been notified of all modified input variables and
+   * the primary and non-primary defined variables are to be
    * computed.
    */
-  void compute(Timestamp t, Engine& e);
+  void compute(Timestamp, Engine&);
 
-  virtual void commit(Timestamp, Engine&) { m_isPostponed = false; };
-  inline void postpone() { m_isPostponed = true; }
-  [[nodiscard]] inline bool isPostponed() const { return m_isPostponed; }
+  virtual void commit(Timestamp, Engine&) { _isPostponed = false; };
+  inline void postpone() { _isPostponed = true; }
+  [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 
-  inline VarId getPrimaryOutput() { return m_primaryOutput; }
-  void queueNonPrimaryOutputVarsForPropagation(Timestamp t, Engine& e);
+  inline VarId getPrimaryDefinedVar() { return _primaryDefinedVar; }
+  void queueNonPrimaryDefinedVarsForPropagation(Timestamp ts, Engine& engine);
 };

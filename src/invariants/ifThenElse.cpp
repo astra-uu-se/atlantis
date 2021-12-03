@@ -1,43 +1,45 @@
 #include "invariants/ifThenElse.hpp"
 
 IfThenElse::IfThenElse(VarId b, VarId x, VarId y, VarId z)
-    : Invariant(NULL_ID), m_b(b), m_xy({x, y}), m_z(z) {
-  m_modifiedVars.reserve(1);
+    : Invariant(NULL_ID), _b(b), _xy({x, y}), _z(z) {
+  _modifiedVars.reserve(1);
 }
 
-void IfThenElse::init([[maybe_unused]] Timestamp t, Engine& e) {
-  assert(!m_id.equals(NULL_ID));
+void IfThenElse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+  assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(e, m_z);
-  e.registerInvariantDependsOnVar(m_id, m_b, 0);
-  e.registerInvariantDependsOnVar(m_id, m_xy[0], 0);
-  e.registerInvariantDependsOnVar(m_id, m_xy[1], 0);
+  registerDefinedVariable(engine, _z);
+  engine.registerInvariantInput(_id, _b, 0);
+  engine.registerInvariantInput(_id, _xy[0], 0);
+  engine.registerInvariantInput(_id, _xy[1], 0);
 }
 
-void IfThenElse::recompute(Timestamp t, Engine& e) {
-  auto b = e.getValue(t, m_b);
-  updateValue(t, e, m_z, e.getValue(t, m_xy[1 - (b == 0)]));
+void IfThenElse::recompute(Timestamp ts, Engine& engine) {
+  auto b = engine.getValue(ts, _b);
+  updateValue(ts, engine, _z, engine.getValue(ts, _xy[1 - (b == 0)]));
 }
 
-void IfThenElse::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void IfThenElse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId IfThenElse::getNextDependency(Timestamp t, Engine& e) {
-  m_state.incValue(t, 1);
-  auto state = m_state.getValue(t);
+VarId IfThenElse::getNextInput(Timestamp ts, Engine& engine) {
+  _state.incValue(ts, 1);
+  auto state = _state.getValue(ts);
   if (state == 0) {
-    return m_b;
+    return _b;
   } else if (state == 1) {
-    auto b = e.getValue(t, m_b);
-    return m_xy[1 - (b == 0)];
+    auto b = engine.getValue(ts, _b);
+    return _xy[1 - (b == 0)];
   } else {
     return NULL_ID;  // Done
   }
 }
 
-void IfThenElse::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void IfThenElse::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void IfThenElse::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void IfThenElse::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

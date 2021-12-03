@@ -3,41 +3,44 @@
 #include "core/engine.hpp"
 extern Id NULL_ID;
 
-AbsDiff::AbsDiff(VarId a, VarId b, VarId c)
-    : Invariant(NULL_ID), m_a(a), m_b(b), m_c(c) {
-  m_modifiedVars.reserve(1);
+AbsDiff::AbsDiff(VarId x, VarId y, VarId absDiff)
+    : Invariant(NULL_ID), _x(x), _y(y), _absDiff(absDiff) {
+  _modifiedVars.reserve(1);
 }
 
-void AbsDiff::init([[maybe_unused]] Timestamp t, Engine& e) {
-  assert(!m_id.equals(NULL_ID));
+void AbsDiff::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+  assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(e, m_c);
-  e.registerInvariantDependsOnVar(m_id, m_a, 0);
-  e.registerInvariantDependsOnVar(m_id, m_b, 0);
+  registerDefinedVariable(engine, _absDiff);
+  engine.registerInvariantInput(_id, _x, 0);
+  engine.registerInvariantInput(_id, _y, 0);
 }
 
-void AbsDiff::recompute(Timestamp t, Engine& e) {
-  updateValue(t, e, m_c, std::abs(e.getValue(t, m_a) - e.getValue(t, m_b)));
+void AbsDiff::recompute(Timestamp ts, Engine& engine) {
+  updateValue(ts, engine, _absDiff,
+              std::abs(engine.getValue(ts, _x) - engine.getValue(ts, _y)));
 }
 
-void AbsDiff::notifyIntChanged(Timestamp t, Engine& e, LocalId) {
-  recompute(t, e);
+void AbsDiff::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+  recompute(ts, engine);
 }
 
-VarId AbsDiff::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
-  switch (m_state.getValue(t)) {
+VarId AbsDiff::getNextInput(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
+  switch (_state.getValue(ts)) {
     case 0:
-      return m_a;
+      return _x;
     case 1:
-      return m_b;
+      return _y;
     default:
       return NULL_ID;
   }
 }
 
-void AbsDiff::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  recompute(t, e);
+void AbsDiff::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
+  recompute(ts, engine);
 }
 
-void AbsDiff::commit(Timestamp t, Engine& e) { Invariant::commit(t, e); }
+void AbsDiff::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+}

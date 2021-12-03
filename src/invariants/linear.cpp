@@ -1,62 +1,65 @@
 #include "invariants/linear.hpp"
-#include "core/engine.hpp"
+
 #include <utility>
+
+#include "core/engine.hpp"
 
 Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId b)
     : Invariant(NULL_ID),
-      m_A(std::move(A)),
-      m_X(std::move(X)),
-      m_localX(),
-      m_b(b) {
-  m_localX.reserve(m_X.size());
-  m_modifiedVars.reserve(m_X.size());
+      _coeffs(std::move(A)),
+      _varArray(std::move(X)),
+      _localVarArray(),
+      _y(b) {
+  _localVarArray.reserve(_varArray.size());
+  _modifiedVars.reserve(_varArray.size());
 }
 
-void Linear::init(Timestamp t, Engine& e) {
+void Linear::init(Timestamp ts, Engine& engine) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
-  assert(m_id != NULL_ID);
+  assert(_id != NULL_ID);
 
-  registerDefinedVariable(e, m_b);
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    e.registerInvariantDependsOnVar(m_id, m_X[i], LocalId(i));
-    m_localX.emplace_back(t, e.getCommittedValue(m_X[i]));
+  registerDefinedVariable(engine, _y);
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    engine.registerInvariantInput(_id, _varArray[i], LocalId(i));
+    _localVarArray.emplace_back(ts, engine.getCommittedValue(_varArray[i]));
   }
 }
 
-void Linear::recompute(Timestamp t, Engine& e) {
+void Linear::recompute(Timestamp ts, Engine& engine) {
   Int sum = 0;
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    sum += m_A[i] * e.getValue(t, m_X[i]);
-    m_localX.at(i).commitValue(e.getCommittedValue(m_X[i]));
-    m_localX.at(i).setValue(t, e.getValue(t, m_X[i]));
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    sum += _coeffs[i] * engine.getValue(ts, _varArray[i]);
+    _localVarArray.at(i).commitValue(engine.getCommittedValue(_varArray[i]));
+    _localVarArray.at(i).setValue(ts, engine.getValue(ts, _varArray[i]));
   }
-  updateValue(t, e, m_b, sum);
+  updateValue(ts, engine, _y, sum);
 }
 
-void Linear::notifyIntChanged(Timestamp t, Engine& e, LocalId i) {
-  auto newValue = e.getValue(t, m_X[i]);
-  incValue(t, e, m_b, (newValue - m_localX.at(i).getValue(t)) * m_A[i]);
-  m_localX.at(i).setValue(t, newValue);
+void Linear::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
+  auto newValue = engine.getValue(ts, _varArray[id]);
+  incValue(ts, engine, _y,
+           (newValue - _localVarArray.at(id).getValue(ts)) * _coeffs[id]);
+  _localVarArray.at(id).setValue(ts, newValue);
 }
 
-VarId Linear::getNextDependency(Timestamp t, Engine&) {
-  m_state.incValue(t, 1);
-  if (static_cast<size_t>(m_state.getValue(t)) == m_X.size()) {
+VarId Linear::getNextInput(Timestamp ts, Engine&) {
+  _state.incValue(ts, 1);
+  if (static_cast<size_t>(_state.getValue(ts)) == _varArray.size()) {
     return NULL_ID;  // Done
   } else {
-    return m_X.at(m_state.getValue(t));
+    return _varArray.at(_state.getValue(ts));
   }
 }
 
-void Linear::notifyCurrentDependencyChanged(Timestamp t, Engine& e) {
-  assert(m_state.getValue(t) != -1);
-  notifyIntChanged(t, e, m_state.getValue(t));
+void Linear::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
+  assert(_state.getValue(ts) != -1);
+  notifyIntChanged(ts, engine, _state.getValue(ts));
 }
 
-void Linear::commit(Timestamp t, Engine& e) {
-  Invariant::commit(t, e);
-  for (size_t i = 0; i < m_X.size(); ++i) {
-    m_localX.at(i).commitIf(t);
+void Linear::commit(Timestamp ts, Engine& engine) {
+  Invariant::commit(ts, engine);
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    _localVarArray.at(i).commitIf(ts);
   }
 }

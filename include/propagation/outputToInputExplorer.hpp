@@ -11,18 +11,18 @@
 class PropagationEngine;
 
 class OutputToInputExplorer {
-  PropagationEngine& m_engine;
+  PropagationEngine& _engine;
 
-  std::vector<VarId> variableStack_;
-  size_t varStackIdx_ = 0;
-  std::vector<InvariantId> invariantStack_;
-  size_t invariantStackIdx_ = 0;
-  IdMap<VarId, Timestamp> varStableAt;  // last timestamp when a VarID was
-                                        // stable (i.e., will not change)
-  IdMap<InvariantId, Timestamp> invariantStableAt;
-  IdMap<InvariantId, bool> invariantIsOnStack;
+  std::vector<VarId> _variableStack;
+  size_t _varStackIdx = 0;
+  std::vector<InvariantId> _invariantStack;
+  size_t _invariantStackIdx = 0;
+  IdMap<VarIdBase, Timestamp> _varStableAt;  // last timestamp when a VarID was
+                                             // stable (i.e., will not change)
+  IdMap<InvariantId, Timestamp> _invariantStableAt;
+  IdMap<InvariantId, bool> _invariantIsOnStack;
 
-  IdMap<VarIdBase, std::unordered_set<VarIdBase>> m_decisionVarAncestor;
+  IdMap<VarIdBase, std::unordered_set<VarIdBase>> _decisionVarAncestor;
 
   template <bool OutputToInputMarking>
   void preprocessVarStack(Timestamp);
@@ -30,21 +30,20 @@ class OutputToInputExplorer {
   template <bool OutputToInputMarking>
   bool isUpToDate(VarIdBase);
 
-  void pushVariableStack(VarId v);
+  void pushVariableStack(VarId);
   void popVariableStack();
   VarId peekVariableStack();
   void pushInvariantStack(InvariantId);
   void popInvariantStack();
   InvariantId peekInvariantStack();
-  void markStable(Timestamp t, VarId v);
-  bool isStable(Timestamp t, VarId v);
-  bool isStable(Timestamp t, InvariantId v);
+  void markStable(Timestamp, VarIdBase);
+  bool isStable(Timestamp, VarIdBase);
+  bool isStable(Timestamp, InvariantId);
 
   // We expand an invariant by pushing it and its first input variable onto
   // each stack.
   template <bool OutputToInputMarking>
-  void expandInvariant(InvariantId inv);
-
+  void expandInvariant(InvariantId);
   void notifyCurrentInvariant();
 
   template <bool OutputToInputMarking>
@@ -52,20 +51,20 @@ class OutputToInputExplorer {
 
  public:
   OutputToInputExplorer() = delete;
-  OutputToInputExplorer(PropagationEngine& e, size_t expectedSize);
+  OutputToInputExplorer(PropagationEngine& engine, size_t expectedSize);
 
   void populateAncestors();
   void registerVar(VarId);
   void registerInvariant(InvariantId);
   /**
-   * Register than we want to compute the value of v at time t
+   * Register than we want to compute the value of v at timestamp ts
    */
   void registerForPropagation(Timestamp, VarId);
 
   void clearRegisteredVariables();
 
   template <bool OutputToInputMarking>
-  void propagate(Timestamp currentTime);
+  void propagate(Timestamp);
 };
 
 inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
@@ -73,40 +72,41 @@ inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
 }
 
 inline void OutputToInputExplorer::clearRegisteredVariables() {
-  varStackIdx_ = 0;
+  _varStackIdx = 0;
 }
 
-inline void OutputToInputExplorer::pushVariableStack(VarId v) {
-  variableStack_[varStackIdx_++] = v;
+inline void OutputToInputExplorer::pushVariableStack(VarId id) {
+  _variableStack[_varStackIdx++] = id;
 }
-inline void OutputToInputExplorer::popVariableStack() { --varStackIdx_; }
+inline void OutputToInputExplorer::popVariableStack() { --_varStackIdx; }
 inline VarId OutputToInputExplorer::peekVariableStack() {
-  return variableStack_[varStackIdx_ - 1];
+  return _variableStack[_varStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::pushInvariantStack(InvariantId i) {
-  if (invariantIsOnStack.get(i)) {
+inline void OutputToInputExplorer::pushInvariantStack(InvariantId invariantId) {
+  if (_invariantIsOnStack.get(invariantId)) {
     throw DynamicCycleException();
   }
-  invariantIsOnStack.set(i, true);
-  invariantStack_[invariantStackIdx_++] = i;
+  _invariantIsOnStack.set(invariantId, true);
+  _invariantStack[_invariantStackIdx++] = invariantId;
 }
 inline void OutputToInputExplorer::popInvariantStack() {
-  invariantIsOnStack.set(invariantStack_[--invariantStackIdx_], false);
+  _invariantIsOnStack.set(_invariantStack[--_invariantStackIdx], false);
 }
 
 inline InvariantId OutputToInputExplorer::peekInvariantStack() {
-  return invariantStack_[invariantStackIdx_ - 1];
+  return _invariantStack[_invariantStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::markStable(Timestamp t, VarId v) {
-  varStableAt[v] = t;
+inline void OutputToInputExplorer::markStable(Timestamp ts, VarIdBase id) {
+  _varStableAt[id] = ts;
 }
 
-inline bool OutputToInputExplorer::isStable(Timestamp t, VarId v) {
-  return varStableAt.at(v) == t;
+inline bool OutputToInputExplorer::isStable(Timestamp ts, VarIdBase id) {
+  return _varStableAt.at(id) == ts;
 }
 
-inline bool OutputToInputExplorer::isStable(Timestamp t, InvariantId v) {
-  return invariantStableAt.at(v) == t;
+inline bool OutputToInputExplorer::isStable(Timestamp ts,
+                                            InvariantId invariantId) {
+  return _invariantStableAt.at(invariantId) == ts;
 }

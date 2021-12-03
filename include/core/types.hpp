@@ -34,9 +34,9 @@ struct VarIdBase : public Id {
 struct VarId : public VarIdBase {
   VarIdType idType;
   VarId() : VarIdBase(), idType(VarIdType::var) {}
-  VarId(size_t i, VarIdType t) : VarIdBase(i), idType(t) {}
+  VarId(size_t i, VarIdType type) : VarIdBase(i), idType(type) {}
   VarId(size_t i) : VarId(i, VarIdType::var) {}
-  VarId(Id& t_id, VarIdType t) : VarIdBase(t_id.id), idType(t) {}
+  VarId(Id& t_id, VarIdType type) : VarIdBase(t_id.id), idType(type) {}
   VarId(Id& t_id) : VarId(t_id, VarIdType::var) {}
   VarId(InvariantId&) = delete;
 };
