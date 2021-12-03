@@ -10,29 +10,29 @@ class PropagationQueue {
   typedef PropagationListNode ListNode;
 
  private:
-  IdMap<VarIdBase, std::unique_ptr<ListNode>> m_priorityNodes;
+  IdMap<VarIdBase, std::unique_ptr<ListNode>> _priorityNodes;
   ListNode* head;
   ListNode* tail;
 
  public:
-  PropagationQueue() : m_priorityNodes(0), head(nullptr), tail(nullptr) {}
+  PropagationQueue() : _priorityNodes(0), head(nullptr), tail(nullptr) {}
 
   void init(int, int) {
-    m_priorityNodes = IdMap<VarIdBase, std::unique_ptr<ListNode>>(0);
+    _priorityNodes = IdMap<VarIdBase, std::unique_ptr<ListNode>>(0);
     head = nullptr;
     tail = nullptr;
   }
 
   // vars must be initialised in order.
   void initVar(VarIdBase id, size_t priority) {
-    assert(!m_priorityNodes.has_idx(id));
-    m_priorityNodes.register_idx(id);
-    m_priorityNodes[id] = std::make_unique<ListNode>(id, priority);
+    assert(!_priorityNodes.has_idx(id));
+    _priorityNodes.register_idx(id);
+    _priorityNodes[id] = std::make_unique<ListNode>(id, priority);
   }
 
   bool empty() { return head == nullptr; }
   void push(VarIdBase id) {
-    ListNode* toInsert = m_priorityNodes[id].get();
+    ListNode* toInsert = _priorityNodes[id].get();
     if (toInsert->next != nullptr || tail == toInsert) {
       return;  // id is already is list
     }

@@ -1,3 +1,6 @@
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include <algorithm>
 #include <limits>
 #include <random>
@@ -6,8 +9,6 @@
 #include "constraints/allDifferent.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 using ::testing::AtLeast;
 using ::testing::AtMost;
@@ -17,10 +18,10 @@ namespace {
 
 class MockAllDifferent : public AllDifferent {
  public:
-  bool m_initialized = false;
+  bool initialized = false;
 
   void init(Timestamp timestamp, Engine& engine) override {
-    m_initialized = true;
+    initialized = true;
     AllDifferent::init(timestamp, engine);
   }
 
@@ -30,14 +31,14 @@ class MockAllDifferent : public AllDifferent {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return AllDifferent::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextDependency)
+    ON_CALL(*this, getNextInput)
         .WillByDefault([this](Timestamp t, Engine& engine) {
-          return AllDifferent::getNextDependency(t, engine);
+          return AllDifferent::getNextInput(t, engine);
         });
 
-    ON_CALL(*this, notifyCurrentDependencyChanged)
+    ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine) {
-          AllDifferent::notifyCurrentDependencyChanged(t, engine);
+          AllDifferent::notifyCurrentInputChanged(t, engine);
         });
 
     ON_CALL(*this, notifyIntChanged)
@@ -53,8 +54,8 @@ class MockAllDifferent : public AllDifferent {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextDependency, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentDependencyChanged, (Timestamp, Engine& engine),
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
   MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
@@ -103,7 +104,7 @@ class AllDifferentTest : public ::testing::Test {
     auto invariant =
         engine->makeInvariant<MockAllDifferent>(viol, std::vector<VarId>{args});
 
-    EXPECT_TRUE(invariant->m_initialized);
+    EXPECT_TRUE(invariant->initialized);
 
     EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
         .Times(AtLeast(1));
@@ -116,19 +117,16 @@ class AllDifferentTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
-          .Times(0);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextDependency(testing::_, testing::_))
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
           .Times(numArgs + 1);
-      EXPECT_CALL(*invariant,
-                  notifyCurrentDependencyChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,
@@ -160,17 +158,17 @@ TEST_F(AllDifferentTest, Recompute) {
   EXPECT_EQ(engine->getValue(0, violationId), 1);
   EXPECT_EQ(engine->getCommittedValue(violationId), 1);
 
-  Timestamp newTime = 1;
+  Timestamp newTimestamp = 1;
 
-  engine->setValue(newTime, c, 3);
-  allDifferent->recompute(newTime, *engine);
+  engine->setValue(newTimestamp, c, 3);
+  allDifferent->recompute(newTimestamp, *engine);
   EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-  EXPECT_EQ(engine->getValue(newTime, violationId), 0);
+  EXPECT_EQ(engine->getValue(newTimestamp, violationId), 0);
 
-  engine->setValue(newTime, a, 2);
-  allDifferent->recompute(newTime, *engine);
+  engine->setValue(newTimestamp, a, 2);
+  allDifferent->recompute(newTimestamp, *engine);
   EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-  EXPECT_EQ(engine->getValue(newTime, violationId), 1);
+  EXPECT_EQ(engine->getValue(newTimestamp, violationId), 1);
 }
 
 TEST_F(AllDifferentTest, NotifyChange) {
@@ -209,9 +207,9 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100, 100);
 
-  Timestamp currentTime = 1;
+  Timestamp currentTimestamp = 1;
   for (size_t i = 0; i < 2; ++i) {
-    ++currentTime;
+    ++currentTimestamp;
     // Check that we do not accidentally commit
     ASSERT_EQ(engine->getCommittedValue(a), 1);
     ASSERT_EQ(engine->getCommittedValue(b), 2);
@@ -219,22 +217,22 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
               1);  // violationId is commited by register.
 
     // Set all variables
-    engine->setValue(currentTime, a, distribution(gen));
-    engine->setValue(currentTime, b, distribution(gen));
+    engine->setValue(currentTimestamp, a, distribution(gen));
+    engine->setValue(currentTimestamp, b, distribution(gen));
 
     // notify changes
-    if (engine->getCommittedValue(a) != engine->getValue(currentTime, a)) {
-      allDifferent->notifyIntChanged(currentTime, *engine, 0);
+    if (engine->getCommittedValue(a) != engine->getValue(currentTimestamp, a)) {
+      allDifferent->notifyIntChanged(currentTimestamp, *engine, 0);
     }
-    if (engine->getCommittedValue(b) != engine->getValue(currentTime, b)) {
-      allDifferent->notifyIntChanged(currentTime, *engine, 1);
+    if (engine->getCommittedValue(b) != engine->getValue(currentTimestamp, b)) {
+      allDifferent->notifyIntChanged(currentTimestamp, *engine, 1);
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTime, violationId);
-    allDifferent->recompute(currentTime, *engine);
+    auto tmp = engine->getValue(currentTimestamp, violationId);
+    allDifferent->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->getValue(currentTime, violationId));
+    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, violationId));
   }
 }
 
@@ -262,7 +260,7 @@ TEST_F(AllDifferentTest, CreateAllDifferent) {
   auto invariant =
       engine->makeInvariant<MockAllDifferent>(viol, std::vector<VarId>{args});
 
-  EXPECT_TRUE(invariant->m_initialized);
+  EXPECT_TRUE(invariant->initialized);
 
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 

@@ -3,20 +3,20 @@
 #include "variables/intVar.hpp"
 
 Engine::Engine()
-    : m_currentTime(NULL_TIMESTAMP + 1),
-      m_isOpen(false),
-      m_dependentInvariantData(ESTIMATED_NUM_OBJECTS),
-      m_store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
+    : _currentTimestamp(NULL_TIMESTAMP + 1),
+      _isOpen(false),
+      _listeningInvariantData(ESTIMATED_NUM_OBJECTS),
+      _store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
 
 //---------------------Registration---------------------
 
 VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
-  if (!m_isOpen) {
+  if (!_isOpen) {
     throw EngineClosedException("Cannot make IntVar when store is closed.");
   }
   VarId newId =
-      m_store.createIntVar(m_currentTime, initValue, lowerBound, upperBound);
+      _store.createIntVar(_currentTimestamp, initValue, lowerBound, upperBound);
   registerVar(newId);
-  m_dependentInvariantData.register_idx(newId);
+  _listeningInvariantData.register_idx(newId);
   return newId;
 }

@@ -3,9 +3,9 @@
 
 class Var {
  protected:
-  VarId m_id;
+  VarId _id;
 
  public:
-  explicit Var(VarId t_id);
+  explicit Var(VarId);
   ~Var() = default;
 };

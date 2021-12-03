@@ -4,14 +4,14 @@
 
 class View : public Var {
  protected:
-  VarId m_parentId;
+  VarId _parentId;
 
  public:
-  explicit View(VarId t_parentId) : Var(NULL_ID), m_parentId(t_parentId) {
-    m_id.idType = VarIdType::view;
+  explicit View(VarId parentId) : Var(NULL_ID), _parentId(parentId) {
+    _id.idType = VarIdType::view;
   }
   virtual ~View() = default;
-  inline void setId(const VarId t_id) { m_id.id = t_id.id; }
-  [[nodiscard]] inline VarId getId() const { return m_id; };
-  [[nodiscard]] inline VarId getParentId() const { return m_parentId; }
+  inline void setId(const VarId id) { _id.id = id.id; }
+  [[nodiscard]] inline VarId getId() const { return _id; };
+  [[nodiscard]] inline VarId getParentId() const { return _parentId; }
 };

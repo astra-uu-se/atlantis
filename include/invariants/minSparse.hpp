@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <vector>
 
 #include "core/engine.hpp"
@@ -9,27 +8,27 @@
 #include "utils/priorityList.hpp"
 
 /**
- * Invariant for b <- min(X)
+ * Invariant for y <- min(varArray)
  * This version of min should be used when the domain of the variables
- * in X is large compared to the number of variables in X, and/or
- * when few elements in X are expected to take the same value.
+ * in varArray is large compared to the number of variables in varArray, and/or
+ * when few elements in varArray are expected to take the same value.
  *
  */
 
 class MinSparse : public Invariant {
  private:
-  std::vector<VarId> m_X;
-  VarId m_b;
+  std::vector<VarId> _varArray;
+  VarId _y;
 
-  PriorityList m_localPriority;
+  PriorityList _localPriority;
 
  public:
-  MinSparse(std::vector<VarId> X, VarId b);
+  MinSparse(std::vector<VarId> varArray, VarId y);
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  VarId getNextDependency(Timestamp, Engine&) override;
-  void notifyCurrentDependencyChanged(Timestamp, Engine& e) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
+  VarId getNextInput(Timestamp, Engine&) override;
+  void notifyCurrentInputChanged(Timestamp, Engine&) override;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;
 };
