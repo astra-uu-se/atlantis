@@ -13,7 +13,7 @@ def int_to_propagation_mode(value):
     if value == 0:
         return 'i2o'
     elif value == 1:
-        return 'mixed'
+        return 'o2i with i2o marking'
     elif value == 2:
         return 'o2i'
     return ''
@@ -22,7 +22,7 @@ def int_to_propagation_mode(value):
 def propagation_mode_to_marker(mode):
     if mode == 'i2o':
         return 'o'
-    elif mode == 'mixed':
+    elif mode == 'o2i with i2o marking':
         return 'v'
     elif mode == 'o2i':
         return '*'
@@ -324,7 +324,7 @@ class PlotFormatter:
 
         arguments = [int(a) for a in name_parts[2:]]
 
-        prop_mode_index =  next((i for i, val in enumerate(self.settings.get(model_name, dict()).get('argumentOrder', [])) if val == 'PROPAGATION_MODE'), 0)
+        prop_mode_index =  next((i for i, val in enumerate(self.settings.get(model_name, dict()).get('agument_order', [])) if val == 'PROPAGATION_MODE'), 0)
         propagation_mode = int(arguments[prop_mode_index])
 
         identifier = '/'.join(name_parts[1:prop_mode_index+2] + name_parts[prop_mode_index+3:-1])
@@ -370,7 +370,7 @@ class PlotFormatter:
 
         for i, (problem_name, model_collection) in enumerate(problem_collection):
             for model in model_collection.models.values():
-                settings = self.settings.get(model.name, dict()).get('argumentOrder', [])
+                settings = self.settings.get(model.name, dict()).get('agument_order', [])
                 if "PROPAGATION_MODE" not in settings:
                     settings.insert(0, "PROPAGATION_MODE")
 
@@ -381,8 +381,10 @@ class PlotFormatter:
                         for i in range(max(len(arguments), len(settings))):
                             if len(arguments) <= i:
                                 continue
-                            if len(settings) <= i:
+                            elif len(settings) <= i:
                                 label_entries.append(arguments[i])
+                            elif settings[i] == "IGNORE":
+                                continue
                             elif settings[i] == "PROPAGATION_MODE":
                                 continue
                             else:
@@ -423,34 +425,42 @@ class PlotFormatter:
     def plot_model_collection_no_compare(self):
         for problem_name, model_collections in self.problem_collection.model_collections.items():
             for model in model_collections.models.values():
-                settings = self.settings.get(model.name, dict()).get('argumentOrder', [])
-                if "PROPAGATION_MODE" not in settings:
-                    settings.insert(0, "PROPAGATION_MODE")
+                settings = self.settings.get(model.name, dict())
+                argument_order = settings.get('agument_order', [])
+
+                if "PROPAGATION_MODE" not in argument_order:
+                    argument_order.insert(0, "PROPAGATION_MODE")
 
                 for method in model.methods.values():
 
                     for propagation_mode_collection in method.propagation_mode_collection.values():
                         arguments = propagation_mode_collection.arguments
 
-                        label_entries = [model.name, method.name]
-                        for i in range(max(len(arguments), len(settings))):
+                        label_entries = [
+                            settings.get('model_name', model.name),
+                            settings.get('method_name', method.name)
+                        ]
+                        for i in range(max(len(arguments), len(argument_order)) - 1):
                             if len(arguments) <= i:
                                 continue
-                            if len(settings) <= i:
+                            elif len(argument_order) <= i:
                                 label_entries.append(arguments[i])
-                            elif settings[i] == "PROPAGATION_MODE":
+                            elif argument_order[i] == "IGNORE":
+                                continue
+                            elif argument_order[i] == "PROPAGATION_MODE":
                                 continue
                             else:
-                                label_entries.append(f'{settings[i]}: {arguments[i]}')
+                                label_entries.append(f'{argument_order[i]}: {arguments[i]}')
                         
-                        plt.title(' - '.join(label_entries))
+                        plt.title(' - '.join(map(str, label_entries)))
                         
-                        if len(settings) <= 1:
+                        if len(argument_order) <= 1:
                             plt.xlabel(f'n')
                         else:
-                            plt.xlabel(settings[-1])
+                            plt.xlabel(argument_order[-1])
 
                         plt.ylabel(f'probes/s')
+                        plt.yscale(settings.get('yscale', 'linear'))
                         
                         xticks = set()
 
@@ -466,6 +476,12 @@ class PlotFormatter:
                     
                         plt.xticks(list(sorted(xticks)))
                         plt.legend()
+
+                        if 'figure_text' in settings:
+                            figure_text = settings['figure_text']
+                            for i in range(len(arguments)):
+                                figure_text = figure_text.replace(f'{{{i}}}', str(arguments[i]))
+                            plt.figtext(0.5, 0.01, figure_text, wrap=True, horizontalalignment='center', fontsize=10)
                         
                         if self.save_plot('-'.join([model.name] + propagation_mode_collection.identifier.split('/'))):
                             plt.clf()
