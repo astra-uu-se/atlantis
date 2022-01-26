@@ -90,6 +90,7 @@ void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
 
 void PropagationEngine::registerInvariantInput(InvariantId invariantId,
                                                VarId inputId, LocalId localId) {
+  assert(localId < _store.getInvariant(invariantId).notifiableVarsSize());
   auto sourceId = getSourceId(inputId);
   _propGraph.registerInvariantInput(invariantId, sourceId);
   _listeningInvariantData[sourceId].emplace_back(
