@@ -55,12 +55,19 @@ target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+include(FetchContent)
+FetchContent_Declare(
+  fznparser
+  GIT_REPOSITORY git@github.com:astra-uu-se/fznparser.git
+  GIT_TAG develop
+)
+FetchContent_MakeAvailable(fznparser)
+
 # Options. Turn on with 'cmake -Dmyvarname=ON'.
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
 
 if (BUILD_TESTS OR BUILD_BENCHMARKS)
-  include(FetchContent)
   # Google Test is required for testing and benchmarking
   FetchContent_Declare(
     googletest
