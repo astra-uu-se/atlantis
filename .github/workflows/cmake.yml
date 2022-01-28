@@ -45,6 +45,9 @@ jobs:
       run: mkdir -p build
 
     - name: Build
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       working-directory: ${{github.workspace}}/build
       env:
         CMAKE_FLAGS: >
