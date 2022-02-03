@@ -46,9 +46,6 @@ add_library(${PROJECT_LIB} ${SRC_FILES})
 # The executable is the main file
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp)
 
-# Link the src library with the project
-target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_LIB})
-
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
@@ -56,9 +53,16 @@ include(FetchContent)
 FetchContent_Declare(
         fznparser
         GIT_REPOSITORY git@github.com:astra-uu-se/fznparser.git
-        GIT_TAG 37ffe211fac4b4690854ce7809e0fe22ac505a8c
+        GIT_TAG 7a3e60b78ceb310570f0e4994b419ed2c8fa4d9a
 )
-FetchContent_MakeAvailable(fznparser)
+FetchContent_Declare(
+        cxxopts
+        GIT_REPOSITORY https://github.com/jarro2783/cxxopts
+        GIT_TAG v3.0.0
+)
+
+FetchContent_MakeAvailable(cxxopts fznparser)
+
 
 # includes (hpp/h) files are in ./include
 target_include_directories(${PROJECT_LIB}
@@ -67,7 +71,10 @@ target_include_directories(${PROJECT_LIB}
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
-target_link_libraries(${PROJECT_LIB} PRIVATE fznparser::fznparser)
+target_link_libraries(${PROJECT_LIB} PUBLIC fznparser::fznparser)
+
+# Link the src library with the project
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts)
 
 # Options. Turn on with 'cmake -Dmyvarname=ON'.
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
