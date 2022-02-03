@@ -55,3 +55,6 @@ struct InvariantId : public Id {
   InvariantId(VarId&) = delete;
   InvariantId(LocalId&) = delete;
 };
+
+enum class PropagationMode { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT };
+enum class OutputToInputMarkingMode { NONE, TOPOLOGICAL_SORT, MARK_SWEEP };

@@ -38,15 +38,21 @@ class MagicSquare : public benchmark::Fixture {
 
     switch (state.range(0)) {
       case 0:
-        engine->setPropagationMode(
-            PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+        engine->setPropagationMode(PropagationMode::INPUT_TO_OUTPUT);
         break;
       case 1:
-        engine->setPropagationMode(PropagationEngine::PropagationMode::MIXED);
+        engine->setPropagationMode(PropagationMode::OUTPUT_TO_INPUT);
+        engine->setOutputToInputMarkingMode(OutputToInputMarkingMode::NONE);
         break;
       case 2:
-        engine->setPropagationMode(
-            PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+        engine->setPropagationMode(PropagationMode::OUTPUT_TO_INPUT);
+        engine->setOutputToInputMarkingMode(
+            OutputToInputMarkingMode::MARK_SWEEP);
+        break;
+      case 3:
+        engine->setPropagationMode(PropagationMode::OUTPUT_TO_INPUT);
+        engine->setOutputToInputMarkingMode(
+            OutputToInputMarkingMode::TOPOLOGICAL_SORT);
         break;
     }
 
@@ -164,7 +170,7 @@ BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
 ///*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int n = 4; n <= 10; n += 2) {
-    for (int mode = 0; mode <= 2; ++mode) {
+    for (int mode = 0; mode <= 3; ++mode) {
       benchmark->Args({mode, n});
     }
   }

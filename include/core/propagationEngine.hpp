@@ -11,14 +11,16 @@
 
 class PropagationEngine : public Engine {
  public:
-  enum class PropagationMode { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT, MIXED };
   const bool _useMarkingForOutputToInput = true;
 
  protected:
   PropagationMode _propagationMode;
+  OutputToInputMarkingMode _outputToInputMarkingMode;
 
  public:
   const PropagationMode& propagationMode = _propagationMode;
+  const OutputToInputMarkingMode& outputToInputMarkingMode =
+      _outputToInputMarkingMode;
 
  protected:
   size_t _numVariables;
@@ -41,7 +43,7 @@ class PropagationEngine : public Engine {
   template <bool DoCommit>
   void propagate();
 
-  template <bool OutputToInputMarking>
+  template <OutputToInputMarkingMode MarkingMode>
   void outputToInputPropagate();
 
   void markPropagationPathAndClearPropagationQueue();
@@ -64,6 +66,7 @@ class PropagationEngine : public Engine {
   void close() override;
 
   void setPropagationMode(PropagationMode);
+  void setOutputToInputMarkingMode(OutputToInputMarkingMode);
 
   //--------------------- Notificaion ---------------------
   /***
@@ -166,7 +169,9 @@ inline void PropagationEngine::clearPropagationPath() {
 }
 
 inline bool PropagationEngine::isOnPropagationPath(VarId id) {
-  assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT);
+  assert(_propagationMode == PropagationMode::INPUT_TO_OUTPUT ||
+         _outputToInputMarkingMode ==
+             OutputToInputMarkingMode::TOPOLOGICAL_SORT);
   return _varIsOnPropagationPath.get(id);
 }
 
@@ -218,13 +223,21 @@ inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
   notifyMaybeChanged(ts, id);
 }
 
-inline void PropagationEngine::setPropagationMode(
-    PropagationEngine::PropagationMode propMode) {
+inline void PropagationEngine::setPropagationMode(PropagationMode propMode) {
   if (!_isOpen) {
     throw EngineClosedException(
         "Cannot set propagation mode when model is closed");
   }
   _propagationMode = propMode;
+}
+
+inline void PropagationEngine::setOutputToInputMarkingMode(
+    OutputToInputMarkingMode markingMode) {
+  if (!_isOpen) {
+    throw EngineClosedException(
+        "Cannot set output-to-input marking mode when model is closed");
+  }
+  _outputToInputMarkingMode = markingMode;
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
@@ -246,14 +259,14 @@ PropagationEngine::getModifiedDecisionVariables() {
   return _modifiedDecisionVariables;
 }
 
-template <bool OutputToInputMarking>
+template <OutputToInputMarkingMode MarkingMode>
 inline void PropagationEngine::outputToInputPropagate() {
-  if constexpr (OutputToInputMarking) {
-    assert(propagationMode == PropagationMode::OUTPUT_TO_INPUT);
+  assert(propagationMode == PropagationMode::OUTPUT_TO_INPUT);
+  if constexpr (MarkingMode == OutputToInputMarkingMode::MARK_SWEEP) {
     clearPropagationQueue();
-  } else {
-    assert(propagationMode == PropagationMode::MIXED);
+  } else if constexpr (MarkingMode ==
+                       OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
     markPropagationPathAndClearPropagationQueue();
   }
-  _outputToInputExplorer.propagate<OutputToInputMarking>(_currentTimestamp);
+  _outputToInputExplorer.propagate<MarkingMode>(_currentTimestamp);
 }

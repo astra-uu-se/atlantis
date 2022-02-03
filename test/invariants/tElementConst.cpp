@@ -77,7 +77,8 @@ class ElementConstTest : public ::testing::Test {
     engine = std::make_unique<PropagationEngine>();
   }
 
-  void testNotifications(PropagationEngine::PropagationMode propMode) {
+  void testNotifications(PropagationMode propMode,
+                         OutputToInputMarkingMode markingMode) {
     engine->open();
 
     std::vector<Int> args{};
@@ -101,11 +102,11 @@ class ElementConstTest : public ::testing::Test {
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
+    engine->setOutputToInputMarkingMode(markingMode);
 
     engine->close();
 
-    if (engine->propagationMode ==
-        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
@@ -160,15 +161,23 @@ TEST_F(ElementConstTest, CreateElement) {
 }
 
 TEST_F(ElementConstTest, NotificationsInputToOutput) {
-  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+  testNotifications(PropagationMode::INPUT_TO_OUTPUT,
+                    OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(ElementConstTest, NotificationsOutputToInput) {
-  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+TEST_F(ElementConstTest, NotificationsOutputToInputNone) {
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
+                    OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(ElementConstTest, NotificationsMixed) {
-  testNotifications(PropagationEngine::PropagationMode::MIXED);
+TEST_F(ElementConstTest, NotificationsOutputToInputMarkSweep) {
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
+                    OutputToInputMarkingMode::MARK_SWEEP);
+}
+
+TEST_F(ElementConstTest, NotificationsOutputToInputTopologicalSort) {
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
+                    OutputToInputMarkingMode::TOPOLOGICAL_SORT);
 }
 
 }  // namespace

@@ -219,8 +219,7 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->setValue(c, -3);
   engine->endMove();
 
-  if (engine->propagationMode ==
-      PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant, getNextInput(moveTimestamp, testing::_)).Times(0);
 
     EXPECT_CALL(*invariant,
@@ -239,8 +238,7 @@ TEST_F(EngineTest, SimplePropagation) {
   }
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->propagationMode ==
-        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -268,8 +266,7 @@ TEST_F(EngineTest, SimpleCommit) {
 
   engine->close();
 
-  if (engine->propagationMode ==
-      PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
 
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
@@ -292,8 +289,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endMove();
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->propagationMode ==
-        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -304,8 +300,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->query(output);
   engine->endQuery();
 
-  if (engine->propagationMode ==
-      PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
@@ -314,8 +309,7 @@ TEST_F(EngineTest, SimpleCommit) {
 
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
-  } else if (engine->propagationMode ==
-             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else if (engine->propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))

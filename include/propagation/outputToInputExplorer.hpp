@@ -24,10 +24,10 @@ class OutputToInputExplorer {
 
   IdMap<VarIdBase, std::unordered_set<VarIdBase>> _decisionVarAncestor;
 
-  template <bool OutputToInputMarking>
+  template <OutputToInputMarkingMode MarkingMode>
   void preprocessVarStack(Timestamp);
 
-  template <bool OutputToInputMarking>
+  template <OutputToInputMarkingMode MarkingMode>
   bool isUpToDate(VarIdBase);
 
   void pushVariableStack(VarId);
@@ -42,11 +42,11 @@ class OutputToInputExplorer {
 
   // We expand an invariant by pushing it and its first input variable onto
   // each stack.
-  template <bool OutputToInputMarking>
+  template <OutputToInputMarkingMode MarkingMode>
   void expandInvariant(InvariantId);
   void notifyCurrentInvariant();
 
-  template <bool OutputToInputMarking>
+  template <OutputToInputMarkingMode MarkingMode>
   bool pushNextInputVariable();
 
  public:
@@ -63,7 +63,7 @@ class OutputToInputExplorer {
 
   void clearRegisteredVariables();
 
-  template <bool OutputToInputMarking>
+  template <OutputToInputMarkingMode MarkingMode>
   void propagate(Timestamp);
 };
 
