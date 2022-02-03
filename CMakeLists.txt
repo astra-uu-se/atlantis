@@ -32,9 +32,6 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 # main in ./src
 set(PROJECT_LIB ${PROJECT_NAME}_lib)
 
-# includes (hpp/h) files are in ./include
-include_directories(${COMMON_INCLUDES})
-
 # Retrieve all cpp, hpp, and h files in ./src
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/include/*.h ${PROJECT_SOURCE_DIR}/include/*.hpp)
 # remove main from the src files
@@ -50,17 +47,33 @@ add_library(${PROJECT_LIB} ${SRC_FILES})
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp)
 
 # Link the src library with the project
-target_link_libraries(${PROJECT_NAME} ${PROJECT_LIB})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_LIB})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+
+include(FetchContent)
+FetchContent_Declare(
+        fznparser
+        GIT_REPOSITORY git@github.com:astra-uu-se/fznparser.git
+        GIT_TAG 37ffe211fac4b4690854ce7809e0fe22ac505a8c
+)
+FetchContent_MakeAvailable(fznparser)
+
+# includes (hpp/h) files are in ./include
+target_include_directories(${PROJECT_LIB}
+        PRIVATE
+          ${COMMON_INCLUDES}
+        PUBLIC
+        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
+target_link_libraries(${PROJECT_LIB} PRIVATE fznparser::fznparser)
 
 # Options. Turn on with 'cmake -Dmyvarname=ON'.
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
 
 if (BUILD_TESTS OR BUILD_BENCHMARKS)
-  include(FetchContent)
   # Google Test is required for testing and benchmarking
   FetchContent_Declare(
     googletest
