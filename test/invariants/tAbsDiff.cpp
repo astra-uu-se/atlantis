@@ -73,7 +73,8 @@ class AbsDiffTest : public ::testing::Test {
     engine = std::make_unique<PropagationEngine>();
   }
 
-  void testNotifications(PropagationEngine::PropagationMode propMode) {
+  void testNotifications(PropagationMode propMode,
+                         OutputToInputMarkingMode markingMode) {
     engine->open();
 
     VarId a = engine->makeIntVar(-10, -100, 100);
@@ -91,11 +92,11 @@ class AbsDiffTest : public ::testing::Test {
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
+    engine->setOutputToInputMarkingMode(markingMode);
 
     engine->close();
 
-    if (engine->propagationMode ==
-        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
@@ -153,15 +154,13 @@ TEST_F(AbsDiffTest, Modification) {
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-  if (engine->propagationMode ==
-      PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant,
                 notifyIntChanged(testing::_, testing::_, testing::_))
         .Times(AtLeast(1));
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(AnyNumber());
-  } else if (engine->propagationMode ==
-             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else if (engine->propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
         .Times(AtLeast(2));
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
@@ -184,15 +183,23 @@ TEST_F(AbsDiffTest, Modification) {
 }
 
 TEST_F(AbsDiffTest, NotificationsInputToOutput) {
-  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+  testNotifications(PropagationMode::INPUT_TO_OUTPUT,
+                    OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(AbsDiffTest, NotificationsOutputToInput) {
-  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+TEST_F(AbsDiffTest, NotificationsOutputToInputNone) {
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
+                    OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(AbsDiffTest, NotificationsMixed) {
-  testNotifications(PropagationEngine::PropagationMode::MIXED);
+TEST_F(AbsDiffTest, NotificationsOutputToInputMarkSweep) {
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
+                    OutputToInputMarkingMode::MARK_SWEEP);
+}
+
+TEST_F(AbsDiffTest, NotificationsOutputToInputTopologicalSort) {
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
+                    OutputToInputMarkingMode::TOPOLOGICAL_SORT);
 }
 
 }  // namespace

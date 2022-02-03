@@ -52,11 +52,15 @@ void OutputToInputExplorer::populateAncestors() {
   }
 }
 
-template bool OutputToInputExplorer::isUpToDate<true>(VarIdBase id);
-template bool OutputToInputExplorer::isUpToDate<false>(VarIdBase id);
-template <bool OutputToInputMarking>
+template bool OutputToInputExplorer::isUpToDate<OutputToInputMarkingMode::NONE>(
+    VarIdBase id);
+template bool OutputToInputExplorer::isUpToDate<
+    OutputToInputMarkingMode::MARK_SWEEP>(VarIdBase id);
+template bool OutputToInputExplorer::isUpToDate<
+    OutputToInputMarkingMode::TOPOLOGICAL_SORT>(VarIdBase id);
+template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::isUpToDate(VarIdBase id) {
-  if constexpr (OutputToInputMarking) {
+  if constexpr (MarkingMode == OutputToInputMarkingMode::MARK_SWEEP) {
     for (const size_t ancestor : _engine.getModifiedDecisionVariables()) {
       if (_decisionVarAncestor.at(id).find(ancestor) !=
           _decisionVarAncestor.at(id).end()) {
@@ -64,20 +68,25 @@ bool OutputToInputExplorer::isUpToDate(VarIdBase id) {
       }
     }
     return true;
-  } else {
+  } else if constexpr (MarkingMode ==
+                       OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
     return !_engine.isOnPropagationPath(id);
+  } else {
+    return false;
   }
 }
 
-template void OutputToInputExplorer::preprocessVarStack<false>(
-    Timestamp currentTimestamp);
-template void OutputToInputExplorer::preprocessVarStack<true>(
-    Timestamp currentTimestamp);
-template <bool OutputToInputMarking>
+template void OutputToInputExplorer::preprocessVarStack<
+    OutputToInputMarkingMode::NONE>(Timestamp currentTimestamp);
+template void OutputToInputExplorer::preprocessVarStack<
+    OutputToInputMarkingMode::MARK_SWEEP>(Timestamp currentTimestamp);
+template void OutputToInputExplorer::preprocessVarStack<
+    OutputToInputMarkingMode::TOPOLOGICAL_SORT>(Timestamp currentTimestamp);
+template <OutputToInputMarkingMode MarkingMode>
 void OutputToInputExplorer::preprocessVarStack(Timestamp currentTimestamp) {
   size_t newStackSize = 0;
   for (size_t s = 0; s < _varStackIdx; ++s) {
-    if (!isUpToDate<OutputToInputMarking>(_variableStack[s])) {
+    if (!isUpToDate<MarkingMode>(_variableStack[s])) {
       _variableStack[newStackSize] = _variableStack[s];
       ++newStackSize;
     } else {
@@ -87,12 +96,15 @@ void OutputToInputExplorer::preprocessVarStack(Timestamp currentTimestamp) {
   _varStackIdx = newStackSize;
 }
 
-template void OutputToInputExplorer::expandInvariant<true>(InvariantId);
-template void OutputToInputExplorer::expandInvariant<false>(InvariantId);
-
+template void OutputToInputExplorer::expandInvariant<
+    OutputToInputMarkingMode::NONE>(InvariantId);
+template void OutputToInputExplorer::expandInvariant<
+    OutputToInputMarkingMode::MARK_SWEEP>(InvariantId);
+template void OutputToInputExplorer::expandInvariant<
+    OutputToInputMarkingMode::TOPOLOGICAL_SORT>(InvariantId);
 // We expand an invariant by pushing it and its first input variable onto each
 // stack.
-template <bool OutputToInputMarking>
+template <OutputToInputMarkingMode MarkingMode>
 void OutputToInputExplorer::expandInvariant(InvariantId invariantId) {
   if (invariantId == NULL_ID) {
     return;
@@ -101,7 +113,7 @@ void OutputToInputExplorer::expandInvariant(InvariantId invariantId) {
     throw DynamicCycleException();
   }
   VarId nextVar = _engine.getNextInput(invariantId);
-  while (nextVar != NULL_ID && isUpToDate<OutputToInputMarking>(nextVar)) {
+  while (nextVar != NULL_ID && isUpToDate<MarkingMode>(nextVar)) {
     nextVar = _engine.getNextInput(invariantId);
   }
 
@@ -116,13 +128,17 @@ void OutputToInputExplorer::notifyCurrentInvariant() {
   _engine.notifyCurrentInputChanged(peekInvariantStack());
 }
 
-template bool OutputToInputExplorer::pushNextInputVariable<true>();
-template bool OutputToInputExplorer::pushNextInputVariable<false>();
+template bool
+OutputToInputExplorer::pushNextInputVariable<OutputToInputMarkingMode::NONE>();
+template bool OutputToInputExplorer::pushNextInputVariable<
+    OutputToInputMarkingMode::MARK_SWEEP>();
+template bool OutputToInputExplorer::pushNextInputVariable<
+    OutputToInputMarkingMode::TOPOLOGICAL_SORT>();
 
-template <bool OutputToInputMarking>
+template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::pushNextInputVariable() {
   VarId nextVar = _engine.getNextInput(peekInvariantStack());
-  while (nextVar != NULL_ID && isUpToDate<OutputToInputMarking>(nextVar)) {
+  while (nextVar != NULL_ID && isUpToDate<MarkingMode>(nextVar)) {
     nextVar = _engine.getNextInput(peekInvariantStack());
   }
   if (nextVar.id == NULL_ID) {
@@ -143,14 +159,16 @@ void OutputToInputExplorer::registerInvariant(InvariantId invariantId) {
   _invariantIsOnStack.register_idx(invariantId, false);
 }
 
-template void OutputToInputExplorer::propagate<true>(
+template void OutputToInputExplorer::propagate<OutputToInputMarkingMode::NONE>(
     Timestamp currentTimestamp);
-template void OutputToInputExplorer::propagate<false>(
-    Timestamp currentTimestamp);
+template void OutputToInputExplorer::propagate<
+    OutputToInputMarkingMode::MARK_SWEEP>(Timestamp currentTimestamp);
+template void OutputToInputExplorer::propagate<
+    OutputToInputMarkingMode::TOPOLOGICAL_SORT>(Timestamp currentTimestamp);
 
-template <bool OutputToInputMarking>
+template <OutputToInputMarkingMode MarkingMode>
 void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
-  preprocessVarStack<OutputToInputMarking>(currentTimestamp);
+  preprocessVarStack<MarkingMode>(currentTimestamp);
   // recursively expand variables to compute their value.
   while (_varStackIdx > 0) {
     VarId currentVarId = peekVariableStack();
@@ -164,8 +182,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       // an infinite loop.
       markStable(currentTimestamp, currentVarId);
       // The variable is upToDate and stable: expand its defining invariant.
-      expandInvariant<OutputToInputMarking>(
-          _engine.getDefiningInvariant(currentVarId));
+      expandInvariant<MarkingMode>(_engine.getDefiningInvariant(currentVarId));
       continue;
     }
     // currentVarId is done: pop it from the stack.
@@ -181,7 +198,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       notifyCurrentInvariant();
     }
     // push the next input variable of the top invariant
-    bool invariantDone = pushNextInputVariable<OutputToInputMarking>();
+    bool invariantDone = pushNextInputVariable<MarkingMode>();
     if (invariantDone) {
       // The top invariant has finished propagating, so all defined vars can
       // be marked as stable at the current time.
