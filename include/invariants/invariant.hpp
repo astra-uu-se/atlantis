@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <vector>
 
 #include "core/types.hpp"
@@ -22,13 +23,14 @@ class Invariant {
     }
 
     void push(LocalId id) {
+      assert(id < queue.size());
       if (queue[id] == id.id) {
         std::swap(queue[id], head);
       }
     }
 
     LocalId pop() {
-      auto current = LocalId(head);
+      LocalId current(head);
       std::swap(head, queue[head]);
       return current;
     }
@@ -100,6 +102,11 @@ class Invariant {
 
  public:
   virtual ~Invariant() = default;
+
+  /**
+   * The total number of notifiable variables.
+   */
+  size_t notifiableVarsSize() { return _modifiedVars.size(); }
 
   void setId(Id id) { _id = id; }
 
