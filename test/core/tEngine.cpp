@@ -392,18 +392,18 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
   VarId i1 = engine->makeIntVar(0, 0, 3);
   VarId i2 = engine->makeIntVar(1, 0, 3);
   VarId i3 = engine->makeIntVar(2, 0, 3);
-  VarId output = engine->makeIntVar(2, 0, 3);
+  VarId output = engine->makeIntVar(2, -300, 300);
 
-  VarId viewPlus1 = engine->makeIntView<IntOffsetView>(x1, 1)->getId();
-  VarId viewPlus2 = engine->makeIntView<IntOffsetView>(x2, 2)->getId();
-  VarId viewPlus3 = engine->makeIntView<IntOffsetView>(x3, 3)->getId();
+  VarId x1Plus1 = engine->makeIntView<IntOffsetView>(x1, 1)->getId();
+  VarId x2Plus2 = engine->makeIntView<IntOffsetView>(x2, 2)->getId();
+  VarId x3Plus3 = engine->makeIntView<IntOffsetView>(x3, 3)->getId();
 
   engine->makeInvariant<ElementVar>(
-      i1, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x1);
+      i1, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}), x1);
   engine->makeInvariant<ElementVar>(
-      i2, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x2);
+      i2, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}), x2);
   engine->makeInvariant<ElementVar>(
-      i3, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x3);
+      i3, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}), x3);
 
   engine->makeInvariant<Linear>(std::vector<Int>({1, 1, 1}),
                                 std::vector<VarId>({x1, x2, x3}), output);
@@ -422,6 +422,14 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
     engine->query(output);
     engine->endQuery();
 
+    EXPECT_EQ(engine->getNewValue(base), 1);
+    EXPECT_EQ(engine->getNewValue(i1), 3);
+    EXPECT_EQ(engine->getNewValue(i2), 0);
+    EXPECT_EQ(engine->getNewValue(i3), 2);
+    EXPECT_EQ(engine->getNewValue(x1), 6);  // x1 = x3plus3 = x3 + 3
+    EXPECT_EQ(engine->getNewValue(x2), 1);  // x2 = base = 1
+    EXPECT_EQ(engine->getNewValue(x3), 3);  // x3 = x2plus2 = x2 + 2
+
     EXPECT_EQ(engine->getNewValue(output), 10);
   }
 
@@ -433,6 +441,14 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
     engine->beginQuery();
     engine->query(output);
     engine->endQuery();
+
+    EXPECT_EQ(engine->getNewValue(base), 3);
+    EXPECT_EQ(engine->getNewValue(i1), 0);
+    EXPECT_EQ(engine->getNewValue(i2), 1);
+    EXPECT_EQ(engine->getNewValue(i3), 2);
+    EXPECT_EQ(engine->getNewValue(x1), 3);  // x1 = base = 3
+    EXPECT_EQ(engine->getNewValue(x2), 4);  // x2 = x1plus1 = x1 + 1
+    EXPECT_EQ(engine->getNewValue(x3), 6);  // x3 = x2plus2 = x2 + 2
 
     EXPECT_EQ(engine->getNewValue(output), 13);
   }
@@ -492,6 +508,14 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->query(output);
   engine->endCommit();
 
+  EXPECT_EQ(engine->getNewValue(base), 1);
+  EXPECT_EQ(engine->getNewValue(i1), 3);
+  EXPECT_EQ(engine->getNewValue(i2), 0);
+  EXPECT_EQ(engine->getNewValue(i3), 2);
+  EXPECT_EQ(engine->getNewValue(x1), 6);  // x1 = x3plus3 = x3 + 3
+  EXPECT_EQ(engine->getNewValue(x2), 1);  // x2 = base = 1
+  EXPECT_EQ(engine->getNewValue(x3), 3);  // x3 = x2plus2 = x2 + 2
+
   EXPECT_EQ(engine->getNewValue(output), 10);
 
   engine->beginMove();
@@ -502,6 +526,13 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->query(output);
   engine->endQuery();
 
+  EXPECT_EQ(engine->getNewValue(base), 3);
+  EXPECT_EQ(engine->getNewValue(i1), 3);
+  EXPECT_EQ(engine->getNewValue(i2), 0);
+  EXPECT_EQ(engine->getNewValue(i3), 2);
+  EXPECT_EQ(engine->getNewValue(x1), 8);  // x1 = x3plus3 = x3 + 3
+  EXPECT_EQ(engine->getNewValue(x2), 3);  // x2 = base = 1
+  EXPECT_EQ(engine->getNewValue(x3), 5);  // x3 = x2plus2 = x2 + 2
   EXPECT_EQ(engine->getNewValue(output), 16);
 
   engine->beginMove();

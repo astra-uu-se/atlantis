@@ -22,7 +22,7 @@ void AllDifferent::init(Timestamp ts, Engine& engine) {
   for (size_t i = 0; i < _variables.size(); ++i) {
     lb = std::min(lb, engine.getLowerBound(_variables[i]));
     ub = std::max(ub, engine.getUpperBound(_variables[i]));
-    engine.registerInvariantInput(_id, _variables[i], LocalId(i));
+    engine.registerInvariantInput(_id, _variables[i], i);
     _localValues.emplace_back(ts, engine.getCommittedValue(_variables[i]));
   }
   assert(ub >= lb);
