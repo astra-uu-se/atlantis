@@ -9,65 +9,73 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-    - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.9
-      with:
-        cmake-version: '3.20.*'
+      - name: Setup SSH Keys and known_hosts
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
 
-    - name: Install Dependencies
-      shell: bash
-      run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
-        sudo apt-get install gcc-8 g++-8 python3; \
-        sudo apt-get update -qq;
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.9
+        with:
+          cmake-version: "3.20.*"
 
-    - name: Set Benchmarks Flag
-      uses: haya14busa/action-cond@v1
-      id: buildBenchmarksFlag
-      with:
-        cond: ${{ contains(env.BENCHMARK_BRANCHES, github.ref) }}
-        if_true: 'ON'
-        if_false: 'OFF'
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
+          sudo apt-get install gcc-8 g++-8 python3; \
+          sudo apt-get update -qq;
 
-    - name: Create build Folder
-      working-directory: ${{github.workspace}}
-      shell: bash
-      run: mkdir -p build
+      - name: Set Benchmarks Flag
+        uses: haya14busa/action-cond@v1
+        id: buildBenchmarksFlag
+        with:
+          cond: ${{ contains(env.BENCHMARK_BRANCHES, github.ref) }}
+          if_true: "ON"
+          if_false: "OFF"
 
-    - name: Build
-      working-directory: ${{github.workspace}}/build
-      env:
-        CMAKE_FLAGS: >
-          -DBUILD_TESTS:BOOL=ON
-          -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}}
-          -DCMAKE_BUILD_TYPE=Release
-      shell: bash
-      run: cmake $CMAKE_FLAGS ..; make
+      - name: Create build Folder
+        working-directory: ${{github.workspace}}
+        shell: bash
+        run: mkdir -p build
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      # Execute tests defined by the CMake configuration.  
-      run: ctest
-    
-    - name: Slack
-      if: always()
-      uses: act10ns/slack@v1
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD }}
-      with:
-        status: ${{ job.status }}
-        steps: ${{ toJson(steps) }}
-        channel: '#build'
-    
-    - name: Run Benchmarks
-      if: ${{ steps.buildBenchmarksFlag.outputs.value == 'ON' }}
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
-      shell: bash
-      run: chmod +x ./slack-benchmark.sh; ./slack-benchmark.sh;
+      - name: Build
+        working-directory: ${{github.workspace}}/build
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          CMAKE_FLAGS: >
+            -DBUILD_TESTS:BOOL=ON
+            -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}}
+            -DCMAKE_BUILD_TYPE=Release
+        shell: bash
+        run: cmake $CMAKE_FLAGS ..; make
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        shell: bash
+        # Execute tests defined by the CMake configuration.
+        run: ctest
+
+      - name: Slack
+        if: always()
+        uses: act10ns/slack@v1
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD }}
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: "#build"
+
+      - name: Run Benchmarks
+        if: ${{ steps.buildBenchmarksFlag.outputs.value == 'ON' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
+        shell: bash
+        run: chmod +x ./slack-benchmark.sh; ./slack-benchmark.sh;
