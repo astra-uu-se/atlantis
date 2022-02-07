@@ -67,11 +67,10 @@ void invariantgraph::InvariantGraph::applyConstraint(
 Int invariantgraph::InvariantGraph::totalViolationsUpperBound(
     Engine& engine) const {
   return std::transform_reduce(
-      violationVars.begin(), violationVars.end(), 0,
+      violationVars.begin(), violationVars.end(), 0, std::plus<>(),
       [this, &engine](auto node) {
         return engine.getUpperBound(engineVariables.at(node));
-      },
-      std::plus<>());
+      });
 }
 
 std::vector<VarId> invariantgraph::InvariantGraph::getViolationVariables()
