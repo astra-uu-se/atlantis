@@ -55,8 +55,8 @@ void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
   if (newValue == oldValue) {
     return;
   }
-  signed char dec = decreaseCount(ts, oldValue);
-  signed char inc = increaseCount(ts, newValue);
+  const signed char dec = decreaseCount(ts, oldValue);
+  const signed char inc = increaseCount(ts, newValue);
   _localValues.at(id).setValue(ts, newValue);
   incValue(ts, engine, _violationId, static_cast<Int>(dec + inc));
 }
@@ -64,7 +64,7 @@ void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
 VarId AllDifferent::getNextInput(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
 
-  auto index = static_cast<size_t>(_state.getValue(ts));
+  const size_t index = static_cast<size_t>(_state.getValue(ts));
   if (index < _variables.size()) {
     return _variables.at(index);
   }
@@ -72,9 +72,9 @@ VarId AllDifferent::getNextInput(Timestamp ts, Engine&) {
 }
 
 void AllDifferent::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  auto id = static_cast<size_t>(_state.getValue(ts));
-  assert(id < _variables.size());
-  notifyIntChanged(ts, engine, id);
+  const size_t index = static_cast<size_t>(_state.getValue(ts));
+  assert(index < _variables.size());
+  notifyIntChanged(ts, engine, index);
 }
 
 void AllDifferent::commit(Timestamp ts, Engine& engine) {

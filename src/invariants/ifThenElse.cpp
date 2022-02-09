@@ -15,7 +15,7 @@ void IfThenElse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 }
 
 void IfThenElse::recompute(Timestamp ts, Engine& engine) {
-  auto b = engine.getValue(ts, _b);
+  const Int b = engine.getValue(ts, _b);
   updateValue(ts, engine, _z, engine.getValue(ts, _xy[1 - (b == 0)]));
 }
 
@@ -25,11 +25,11 @@ void IfThenElse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
 
 VarId IfThenElse::getNextInput(Timestamp ts, Engine& engine) {
   _state.incValue(ts, 1);
-  auto state = _state.getValue(ts);
+  const Int state = _state.getValue(ts);
   if (state == 0) {
     return _b;
   } else if (state == 1) {
-    auto b = engine.getValue(ts, _b);
+    const Int b = engine.getValue(ts, _b);
     return _xy[1 - (b == 0)];
   } else {
     return NULL_ID;  // Done
