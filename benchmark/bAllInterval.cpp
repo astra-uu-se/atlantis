@@ -72,10 +72,10 @@ class AllInterval : public benchmark::Fixture {
 BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
-    int i = distribution(gen);
-    int j = distribution(gen);
-    Int oldI = engine->getCommittedValue(inputVars.at(i));
-    Int oldJ = engine->getCommittedValue(inputVars.at(j));
+    const int i = distribution(gen);
+    const int j = distribution(gen);
+    const Int oldI = engine->getCommittedValue(inputVars.at(i));
+    const Int oldJ = engine->getCommittedValue(inputVars.at(j));
     // Perform random swap
     engine->beginMove();
     engine->setValue(inputVars.at(i), oldJ);
@@ -96,8 +96,8 @@ BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
-        Int oldI = engine->getCommittedValue(inputVars.at(i));
-        Int oldJ = engine->getCommittedValue(inputVars.at(j));
+        const Int oldI = engine->getCommittedValue(inputVars.at(i));
+        const Int oldJ = engine->getCommittedValue(inputVars.at(j));
         engine->beginMove();
         engine->setValue(inputVars.at(i), oldJ);
         engine->setValue(inputVars.at(j), oldI);
@@ -118,11 +118,10 @@ BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
   int commits = 0;
   for (auto _ : st) {
-    int i = distribution(gen);
-    int j = distribution(gen);
-
-    Int oldI = engine->getCommittedValue(inputVars.at(i));
-    Int oldJ = engine->getCommittedValue(inputVars.at(j));
+    const int i = distribution(gen);
+    const int j = distribution(gen);
+    const Int oldI = engine->getCommittedValue(inputVars.at(i));
+    const Int oldJ = engine->getCommittedValue(inputVars.at(j));
     // Perform random swap
     engine->beginMove();
     engine->setValue(inputVars.at(i), oldJ);

@@ -17,8 +17,8 @@
 
 class MaxSparse : public Invariant {
  private:
-  std::vector<VarId> _varArray;
-  VarId _y;
+  const std::vector<VarId> _varArray;
+  const VarId _y;
 
   PriorityList _localPriority;
 

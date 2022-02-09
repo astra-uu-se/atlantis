@@ -10,10 +10,10 @@ class IntMaxView : public IntView {
   Int _max;
 
  public:
-  IntMaxView(const VarId parentId, Int max) : IntView(parentId), _max(max) {}
+  IntMaxView(VarId parentId, Int max) : IntView(parentId), _max(max) {}
 
-  Int getValue(Timestamp) override;
-  Int getCommittedValue() override;
-  Int getLowerBound() override;
-  Int getUpperBound() override;
+  Int getValue(Timestamp) const override;
+  Int getCommittedValue() const override;
+  Int getLowerBound() const override;
+  Int getUpperBound() const override;
 };

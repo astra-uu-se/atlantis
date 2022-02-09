@@ -8,8 +8,8 @@ class Engine;
 
 class LessEqual : public Constraint {
  private:
-  VarId _x;
-  VarId _y;
+  const VarId _x;
+  const VarId _y;
 
  public:
   LessEqual(VarId violationId, VarId x, VarId y);

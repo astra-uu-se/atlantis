@@ -79,7 +79,7 @@ class PropagationEngine : public Engine {
    * returns true if variable id is relevant for propagation.
    * Note that this is not the same thing as the variable being modified.
    */
-  bool isOnPropagationPath(VarId);
+  bool isOnPropagationPath(VarId) const;
   /**
    * returns true if invariant id is relevant for propagation.
    * Note that this is not the same thing as the invariant being modified.
@@ -106,11 +106,12 @@ class PropagationEngine : public Engine {
   size_t getNumVariables();
   size_t getNumInvariants();
 
-  [[nodiscard]] const std::vector<VarIdBase>& getDecisionVariables();
+  [[nodiscard]] const std::vector<VarIdBase>& getDecisionVariables() const;
   [[nodiscard]] const std::unordered_set<VarIdBase>&
-  getModifiedDecisionVariables();
-  [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables();
-  [[nodiscard]] const std::vector<VarIdBase>& getInputVariables(InvariantId);
+  getModifiedDecisionVariables() const;
+  [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables() const;
+  [[nodiscard]] const std::vector<VarIdBase>& getInputVariables(
+      InvariantId) const;
 
   /**
    * returns the next input at the current timestamp.
@@ -165,7 +166,7 @@ inline void PropagationEngine::clearPropagationPath() {
   _varIsOnPropagationPath.assign_all(false);
 }
 
-inline bool PropagationEngine::isOnPropagationPath(VarId id) {
+inline bool PropagationEngine::isOnPropagationPath(VarId id) const {
   assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT);
   return _varIsOnPropagationPath.get(id);
 }
@@ -227,21 +228,23 @@ inline void PropagationEngine::setPropagationMode(
   _propagationMode = propMode;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
+inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables()
+    const {
   return _propGraph._decisionVariables;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables() {
+inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables()
+    const {
   return _propGraph._outputVariables;
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
-    InvariantId invariantId) {
+    InvariantId invariantId) const {
   return _propGraph.getInputVariables(invariantId);
 }
 
 inline const std::unordered_set<VarIdBase>&
-PropagationEngine::getModifiedDecisionVariables() {
+PropagationEngine::getModifiedDecisionVariables() const {
   assert(_currentTimestamp == _decisionVariablesModifiedAt);
   return _modifiedDecisionVariables;
 }

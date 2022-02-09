@@ -35,9 +35,9 @@ class Invariant {
       return current;
     }
 
-    size_t size() { return queue.size(); }
+    size_t size() const { return queue.size(); }
 
-    bool hasNext() { return head < queue.size(); }
+    bool hasNext() const { return head < queue.size(); }
 
     NotificationQueue() : head(0), queue() { queue.push_back(0); }
 
@@ -163,6 +163,6 @@ class Invariant {
   inline void postpone() { _isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 
-  inline VarId getPrimaryDefinedVar() { return _primaryDefinedVar; }
+  inline VarId getPrimaryDefinedVar() const { return _primaryDefinedVar; }
   void queueNonPrimaryDefinedVarsForPropagation(Timestamp ts, Engine& engine);
 };

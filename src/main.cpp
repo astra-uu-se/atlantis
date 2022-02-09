@@ -14,9 +14,9 @@ int main() {
   static_assert("C++17");
   setLogLevel(info);
 
-  auto t1 = std::chrono::high_resolution_clock::now();
+  const auto t1 = std::chrono::high_resolution_clock::now();
   int nProbes = allIntervals(25);
-  auto t2 = std::chrono::high_resolution_clock::now();
+  const auto t2 = std::chrono::high_resolution_clock::now();
 
   auto duration =
       std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
@@ -69,10 +69,10 @@ int allIntervals(int n) {
         ++nProbes;
       }
     }
-    int i = distribution(gen);
-    int j = distribution(gen);
-    Int oldI = engine.getNewValue(s_vars.at(i));
-    Int oldJ = engine.getNewValue(s_vars.at(j));
+    const int i = distribution(gen);
+    const int j = distribution(gen);
+    const Int oldI = engine.getNewValue(s_vars.at(i));
+    const Int oldJ = engine.getNewValue(s_vars.at(j));
     // Perform random swap
     engine.beginMove();
     engine.setValue(s_vars.at(i), oldJ);
@@ -90,13 +90,13 @@ int allIntervals(int n) {
 void test() {
   PropagationEngine engine;
   engine.open();
-  VarId a = engine.makeIntVar(1, 1, 1);
-  VarId b = engine.makeIntVar(2, 2, 2);
-  VarId c = engine.makeIntVar(3, 3, 3);
-  VarId d = engine.makeIntVar(4, 4, 4);
-  VarId e = engine.makeIntVar(5, 5, 5);
-  VarId f = engine.makeIntVar(6, 6, 6);
-  VarId g = engine.makeIntVar(7, 7, 7);
+  const VarId a = engine.makeIntVar(1, 1, 1);
+  const VarId b = engine.makeIntVar(2, 2, 2);
+  const VarId c = engine.makeIntVar(3, 3, 3);
+  const VarId d = engine.makeIntVar(4, 4, 4);
+  const VarId e = engine.makeIntVar(5, 5, 5);
+  const VarId f = engine.makeIntVar(6, 6, 6);
+  const VarId g = engine.makeIntVar(7, 7, 7);
 
   auto abc = engine.makeInvariant<Linear>(std::vector<Int>({1, 1}),
                                           std::vector<VarId>({a, b}), c);
