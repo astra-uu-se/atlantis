@@ -30,26 +30,27 @@ void Linear::recompute(Timestamp ts, Engine& engine) {
   Int sum = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
     sum += _coeffs[i] * engine.getValue(ts, _varArray[i]);
-    _localVarArray.at(i).commitValue(engine.getCommittedValue(_varArray[i]));
-    _localVarArray.at(i).setValue(ts, engine.getValue(ts, _varArray[i]));
+    _localVarArray[i].commitValue(engine.getCommittedValue(_varArray[i]));
+    _localVarArray[i].setValue(ts, engine.getValue(ts, _varArray[i]));
   }
   updateValue(ts, engine, _y, sum);
 }
 
 void Linear::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
+  assert(0 <= id && id < _localVarArray.size());
   const Int newValue = engine.getValue(ts, _varArray[id]);
   incValue(ts, engine, _y,
-           (newValue - _localVarArray.at(id).getValue(ts)) * _coeffs[id]);
-  _localVarArray.at(id).setValue(ts, newValue);
+           (newValue - _localVarArray[id].getValue(ts)) * _coeffs[id]);
+  _localVarArray[id].setValue(ts, newValue);
 }
 
 VarId Linear::getNextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
-  if (static_cast<size_t>(_state.getValue(ts)) == _varArray.size()) {
-    return NULL_ID;  // Done
-  } else {
-    return _varArray.at(_state.getValue(ts));
+  const size_t index = static_cast<size_t>(_state.incValue(ts, 1));
+  assert(0 <= _state.getValue(ts));
+  if (index < _varArray.size()) {
+    return _varArray[_state.getValue(ts)];
   }
+  return NULL_ID;  // Done
 }
 
 void Linear::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
@@ -59,7 +60,7 @@ void Linear::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
 
 void Linear::commit(Timestamp ts, Engine& engine) {
   Invariant::commit(ts, engine);
-  for (size_t i = 0; i < _varArray.size(); ++i) {
-    _localVarArray.at(i).commitIf(ts);
+  for (size_t i = 0; i < _localVarArray.size(); ++i) {
+    _localVarArray[i].commitIf(ts);
   }
 }

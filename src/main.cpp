@@ -38,8 +38,7 @@ int allIntervals(int n) {
 
   for (int i = 1; i < n; ++i) {
     v_vars.push_back(engine.makeIntVar(i, 0, n - 1));
-    engine.makeInvariant<AbsDiff>(s_vars.at(i - 1), s_vars.at(i),
-                                  v_vars.back());
+    engine.makeInvariant<AbsDiff>(s_vars[i - 1], s_vars[i], v_vars.back());
   }
 
   VarId violation = engine.makeIntVar(0, 0, n);
@@ -56,11 +55,11 @@ int allIntervals(int n) {
     // Probe all swaps
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
-        Int oldI = engine.getNewValue(s_vars.at(i));
-        Int oldJ = engine.getNewValue(s_vars.at(j));
+        Int oldI = engine.getNewValue(s_vars[i]);
+        Int oldJ = engine.getNewValue(s_vars[j]);
         engine.beginMove();
-        engine.setValue(s_vars.at(i), oldJ);
-        engine.setValue(s_vars.at(j), oldI);
+        engine.setValue(s_vars[i], oldJ);
+        engine.setValue(s_vars[j], oldI);
         engine.endMove();
 
         engine.beginQuery();
@@ -71,12 +70,12 @@ int allIntervals(int n) {
     }
     const int i = distribution(gen);
     const int j = distribution(gen);
-    const Int oldI = engine.getNewValue(s_vars.at(i));
-    const Int oldJ = engine.getNewValue(s_vars.at(j));
+    const Int oldI = engine.getNewValue(s_vars[i]);
+    const Int oldJ = engine.getNewValue(s_vars[j]);
     // Perform random swap
     engine.beginMove();
-    engine.setValue(s_vars.at(i), oldJ);
-    engine.setValue(s_vars.at(j), oldI);
+    engine.setValue(s_vars[i], oldJ);
+    engine.setValue(s_vars[j], oldI);
     engine.endMove();
 
     engine.beginCommit();

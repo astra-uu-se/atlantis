@@ -54,7 +54,8 @@ class PropagationGraph {
     void computeInvariantFromVariables();
     inline size_t getPosition(VarIdBase id) { return variablePosition[id.id]; }
     inline size_t getPosition(InvariantId invariantId) {
-      return invariantPosition.at(invariantId);
+      assert(invariantId < invariantPosition.size());
+      return invariantPosition[invariantId];
     }
   } _topology;
 
@@ -118,9 +119,15 @@ class PropagationGraph {
     return _numInvariants;  // this ignores null invariant
   }
 
-  inline bool isObjectiveVar(VarIdBase id) { return _isObjectiveVar.at(id); }
+  inline bool isObjectiveVar(VarIdBase id) {
+    assert(id < _isObjectiveVar.size());
+    return _isObjectiveVar[id];
+  }
 
-  inline bool isDecisionVar(VarIdBase id) { return _isDecisionVar.at(id); }
+  inline bool isDecisionVar(VarIdBase id) {
+    assert(id < _isDecisionVar.size());
+    return _isDecisionVar.at(id);
+  }
 
   inline InvariantId getDefiningInvariant(VarIdBase id) {
     // Returns NULL_ID is not defined.

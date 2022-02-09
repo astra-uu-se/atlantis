@@ -30,11 +30,12 @@ void MinSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
 }
 
 VarId MinSparse::getNextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
-  if (static_cast<size_t>(_state.getValue(ts)) == _varArray.size()) {
-    return NULL_ID;  // Done
+  const size_t index = static_cast<size_t>(_state.incValue(ts, 1));
+  assert(0 <= _state.getValue(ts));
+  if (index < _varArray.size()) {
+    return _varArray[index];
   } else {
-    return _varArray.at(_state.getValue(ts));
+    return NULL_ID;  // Done
   }
 }
 

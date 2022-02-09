@@ -73,12 +73,12 @@ void PropagationGraph::close() {
   _isDecisionVar.resize(getNumVariables() + 1);
   _isObjectiveVar.resize(getNumVariables() + 1);
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
-    _isObjectiveVar.at(i) = (_listeningInvariants.at(i).empty());
-    _isDecisionVar.at(i) = (_definingInvariant.at(i) == NULL_ID);
-    if (_isObjectiveVar.at(i)) {
+    _isObjectiveVar[i] = (_listeningInvariants.at(i).empty());
+    _isDecisionVar[i] = (_definingInvariant.at(i) == NULL_ID);
+    if (_isObjectiveVar[i]) {
       _outputVariables.push_back(i);
     }
-    if (_isDecisionVar.at(i)) {
+    if (_isDecisionVar[i]) {
       _decisionVariables.push_back(i);
     }
   }

@@ -19,7 +19,7 @@ class MagicSquare : public benchmark::Fixture {
   std::mt19937 gen;
 
   std::uniform_int_distribution<> distribution;
-  int n;
+  size_t n;
 
   VarId totalViolation = NULL_ID;
 
@@ -52,14 +52,16 @@ class MagicSquare : public benchmark::Fixture {
 
     VarId magicSumVar = engine->makeIntVar(magicSum, magicSum, magicSum);
 
-    for (int i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
       square.push_back(std::vector<VarId>{});
-      for (int j = 0; j < n; ++j) {
+      for (size_t j = 0; j < n; ++j) {
         const auto var = engine->makeIntVar(i * n + j + 1, 1, n2);
-        square.at(i).push_back(var);
+        square[i].push_back(var);
         flat.push_back(var);
       }
     }
+    assert(n == square.size());
+    assert(n * n == flat.size());
 
     std::vector<VarId> violations;
 
@@ -67,11 +69,10 @@ class MagicSquare : public benchmark::Fixture {
       // Row
       std::vector<Int> ones{};
       ones.assign(n, 1);
-      for (int i = 0; i < n; ++i) {
+      for (size_t i = 0; i < n; ++i) {
         const VarId rowSum = engine->makeIntVar(0, 0, n2 * n);
         const VarId rowViol = engine->makeIntVar(0, 0, n2 * n);
-
-        engine->makeInvariant<Linear>(ones, square.at(i), rowSum);
+        engine->makeInvariant<Linear>(ones, square[i], rowSum);
         engine->makeConstraint<Equal>(rowViol, rowSum, magicSumVar);
         violations.push_back(rowViol);
       }
@@ -81,12 +82,13 @@ class MagicSquare : public benchmark::Fixture {
       // Column
       std::vector<Int> ones{};
       ones.assign(n, 1);
-      for (int i = 0; i < n; ++i) {
+      for (size_t i = 0; i < n; ++i) {
         const VarId colSum = engine->makeIntVar(0, 0, n2 * n);
         const VarId colViol = engine->makeIntVar(0, 0, n2 * n);
         std::vector<VarId> col{};
-        for (int j = 0; j < n; ++j) {
-          col.push_back(square.at(j).at(i));
+        for (size_t j = 0; j < n; ++j) {
+          assert(square[j].size() == n);
+          col.push_back(square[j][i]);
         }
         engine->makeInvariant<Linear>(ones, col, colSum);
         engine->makeConstraint<Equal>(colViol, colSum, magicSumVar);
@@ -101,8 +103,9 @@ class MagicSquare : public benchmark::Fixture {
       const VarId downDiagSum = engine->makeIntVar(0, 0, n2 * n);
       const VarId downDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
-      for (int j = 0; j < n; ++j) {
-        diag.push_back(square.at(j).at(j));
+      for (size_t j = 0; j < n; ++j) {
+        assert(square[j].size() == n);
+        diag.push_back(square[j][j]);
       }
       engine->makeInvariant<Linear>(ones, diag, downDiagSum);
       engine->makeConstraint<Equal>(downDiagViol, downDiagSum, magicSumVar);
@@ -116,8 +119,9 @@ class MagicSquare : public benchmark::Fixture {
       const VarId upDiagSum = engine->makeIntVar(0, 0, n2 * n);
       const VarId upDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
-      for (int j = 0; j < n; ++j) {
-        diag.push_back(square.at(n - j - 1).at(j));
+      for (size_t j = 0; j < n; ++j) {
+        assert(square[n - j - 1].size() == n);
+        diag.push_back(square[n - j - 1][j]);
       }
       engine->makeInvariant<Linear>(ones, diag, upDiagSum);
       engine->makeConstraint<Equal>(upDiagViol, upDiagSum, magicSumVar);
@@ -142,11 +146,11 @@ BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
-        const Int oldI = engine->getCommittedValue(flat.at(i));
-        const Int oldJ = engine->getCommittedValue(flat.at(j));
+        const Int oldI = engine->getCommittedValue(flat[i]);
+        const Int oldJ = engine->getCommittedValue(flat[j]);
         engine->beginMove();
-        engine->setValue(flat.at(i), oldJ);
-        engine->setValue(flat.at(j), oldI);
+        engine->setValue(flat[i], oldJ);
+        engine->setValue(flat[j], oldI);
         engine->endMove();
 
         engine->beginQuery();
