@@ -21,17 +21,15 @@ class IdMap {
   }
 
   inline T& operator[](I idx) {
-    const auto i = static_cast<Id>(idx).id;
-    assert(i > 0);
-    assert(i <= _vector.size());
-    return _vector[i - 1];
+    assert(static_cast<Id>(idx).id > 0);
+    assert(static_cast<Id>(idx).id <= _vector.size());
+    return _vector[static_cast<Id>(idx).id - 1];
   }
 
   inline const T& at(I idx) const {
-    const auto i = static_cast<Id>(idx).id;
-    assert(i > 0);
-    assert(i <= _vector.size());
-    return _vector[i - 1];
+    assert(static_cast<Id>(idx).id; > 0);
+    assert(static_cast<Id>(idx).id; <= _vector.size());
+    return _vector[static_cast<Id>(idx).id - 1];
   }
 
   inline void register_idx(I idx) {
@@ -73,17 +71,15 @@ class IdMap<I, bool> {
   }
 
   inline bool get(I idx) const {
-    const auto i = static_cast<Id>(idx).id;
-    assert(i > 0);
-    assert(i <= _vector.size());
-    return _vector[i - 1];
+    assert(static_cast<Id>(idx).id > 0);
+    assert(static_cast<Id>(idx).id <= _vector.size());
+    return _vector[static_cast<Id>(idx).id - 1];
   }
 
   inline void set(I idx, bool value) {
-    const auto i = static_cast<Id>(idx).id;
-    assert(i > 0);
-    assert(i <= _vector.size());
-    _vector[i - 1] = value;
+    assert(static_cast<Id>(idx).id > 0);
+    assert(static_cast<Id>(idx).id <= _vector.size());
+    _vector[static_cast<Id>(idx).id - 1] = value;
   }
 
   inline void register_idx(I idx, bool initValue) {
