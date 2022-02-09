@@ -199,7 +199,7 @@ Engine::makeInvariant(Args&&... args) {
   }
   const auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
-  auto newId = _store.createInvariantFromPtr(invariantPtr);
+  const auto newId = _store.createInvariantFromPtr(invariantPtr);
   registerInvariant(newId);
   logDebug("Created new invariant with id: " << newId);
   invariantPtr->init(_currentTimestamp, *this);
@@ -214,7 +214,7 @@ Engine::makeIntView(Args&&... args) {
   }
   const auto viewPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
-  auto newId = _store.createIntViewFromPtr(viewPtr);
+  const auto newId = _store.createIntViewFromPtr(viewPtr);
   // We don'ts actually register views as they are invisible to propagation.
 
   viewPtr->init(newId, *this);

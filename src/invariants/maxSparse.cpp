@@ -25,7 +25,7 @@ void MaxSparse::recompute(Timestamp ts, Engine& engine) {
 }
 
 void MaxSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
-  auto newValue = engine.getValue(ts, _varArray[id]);
+  const Int newValue = engine.getValue(ts, _varArray[id]);
   _localPriority.updatePriority(ts, id, newValue);
   updateValue(ts, engine, _y, _localPriority.getMaxPriority(ts));
 }

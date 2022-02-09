@@ -199,7 +199,7 @@ TEST_F(MagicSquareTest, Probing) {
   for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
     occurrences.at(engine->getNewValue(flat.at(i)) - 1)++;
   }
-  for (int count : occurrences) {
+  for (const int count : occurrences) {
     EXPECT_EQ(count, 1);
   }
 }
@@ -246,7 +246,7 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
   for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
     occurrences.at(engine->getNewValue(flat.at(i)) - 1)++;
   }
-  for (int count : occurrences) {
+  for (const int count : occurrences) {
     EXPECT_EQ(count, 1);
   }
 }

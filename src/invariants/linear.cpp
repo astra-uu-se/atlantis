@@ -37,7 +37,7 @@ void Linear::recompute(Timestamp ts, Engine& engine) {
 }
 
 void Linear::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
-  const auto newValue = engine.getValue(ts, _varArray[id]);
+  const Int newValue = engine.getValue(ts, _varArray[id]);
   incValue(ts, engine, _y,
            (newValue - _localVarArray.at(id).getValue(ts)) * _coeffs[id]);
   _localVarArray.at(id).setValue(ts, newValue);

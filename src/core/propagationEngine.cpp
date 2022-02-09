@@ -44,7 +44,7 @@ void PropagationEngine::close() {
   }
 
 #ifndef NDEBUG
-  for (VarIdBase varId : getDecisionVariables()) {
+  for (const VarIdBase varId : getDecisionVariables()) {
     // Assert that if decision variable varId is modified,
     // then it is in the set of modified decision variables
     assert(_store.getIntVar(varId).hasChanged(_currentTimestamp) ==
@@ -58,7 +58,7 @@ void PropagationEngine::close() {
   recomputeAndCommit();
 
 #ifndef NDEBUG
-  for (size_t varId : _modifiedDecisionVariables) {
+  for (const size_t varId : _modifiedDecisionVariables) {
     // assert that decsion variable varId is no longer modified.
     assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));
   }
@@ -240,7 +240,7 @@ void PropagationEngine::endCommit() {
   try {
 #ifndef NDEBUG
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
-      for (VarIdBase varId : getDecisionVariables()) {
+      for (const VarIdBase varId : getDecisionVariables()) {
         // Assert that if decision variable varId is modified,
         // then it is in the set of modified decision variables
         assert(_store.getIntVar(varId).hasChanged(_currentTimestamp) ==
@@ -254,7 +254,7 @@ void PropagationEngine::endCommit() {
 
 #ifndef NDEBUG
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
-      for (size_t varId : _modifiedDecisionVariables) {
+      for (const size_t varId : _modifiedDecisionVariables) {
         // assert that decsion variable varId is no longer modified.
         assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));
       }
@@ -285,7 +285,7 @@ void PropagationEngine::markPropagationPathAndClearPropagationQueue() {
       continue;
     }
     _varIsOnPropagationPath.set(currentVar, true);
-    for (auto& listeningInv : _listeningInvariantData.at(currentVar)) {
+    for (const auto& listeningInv : _listeningInvariantData.at(currentVar)) {
       for (VarIdBase definedVar :
            _propGraph.getVariablesDefinedBy(listeningInv.invariantId)) {
         if (!_varIsOnPropagationPath.get(definedVar)) {
@@ -349,7 +349,7 @@ void PropagationEngine::propagate() {
       commitIf(_currentTimestamp, stableVarId);
     }
 
-    for (auto& toNotify : _listeningInvariantData[stableVarId]) {
+    for (const auto& toNotify : _listeningInvariantData[stableVarId]) {
       Invariant& invariant = _store.getInvariant(toNotify.invariantId);
 
 #ifdef PROPAGATION_DEBUG
@@ -373,7 +373,7 @@ void PropagationEngine::propagate() {
   logDebug("Printing notification counts");
   for (int i = 0; i < notificationCount.size(); ++i) {
     logDebug("\tInvariant " << i + 1);
-    for (auto [k, v] : notificationCount.at(i)) {
+    for (const auto [k, v] : notificationCount.at(i)) {
       logDebug("\t\tVarId(" << k << "): " << v);
     }
   }

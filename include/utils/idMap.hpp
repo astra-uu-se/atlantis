@@ -21,14 +21,14 @@ class IdMap {
   }
 
   inline T& operator[](I idx) {
-    auto i = static_cast<Id>(idx).id;
+    const auto i = static_cast<Id>(idx).id;
     assert(i > 0);
     assert(i <= _vector.size());
     return _vector[i - 1];
   }
 
   inline const T& at(I idx) const {
-    auto i = static_cast<Id>(idx).id;
+    const auto i = static_cast<Id>(idx).id;
     assert(i > 0);
     assert(i <= _vector.size());
     return _vector[i - 1];
@@ -73,14 +73,14 @@ class IdMap<I, bool> {
   }
 
   inline bool get(I idx) const {
-    auto i = static_cast<Id>(idx).id;
+    const auto i = static_cast<Id>(idx).id;
     assert(i > 0);
     assert(i <= _vector.size());
     return _vector[i - 1];
   }
 
   inline void set(I idx, bool value) {
-    auto i = static_cast<Id>(idx).id;
+    const auto i = static_cast<Id>(idx).id;
     assert(i > 0);
     assert(i <= _vector.size());
     _vector[i - 1] = value;
@@ -97,7 +97,7 @@ class IdMap<I, bool> {
 
   // std::string toString() {
   //   std::string str = "";
-  //   for (auto foo : _vector) {
+  //   for (const auto foo : _vector) {
   //     str += foo + "\n";
   //   }
   //   return str;

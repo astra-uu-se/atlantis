@@ -10,7 +10,7 @@ void Invariant::compute(Timestamp ts, Engine& engine) {
 
   while (_modifiedVars.hasNext()) {
     // don'ts turn this into a for loop...
-    LocalId toNotify = _modifiedVars.pop();
+    const LocalId toNotify = _modifiedVars.pop();
     this->notifyIntChanged(ts, engine, toNotify);
   }
 }
@@ -34,7 +34,7 @@ void Invariant::incValue(Timestamp ts, Engine& engine, VarId id, Int val) {
 
 void Invariant::queueNonPrimaryDefinedVarsForPropagation(Timestamp ts,
                                                          Engine& engine) {
-  for (VarId definedVarId : _definedVars) {
+  for (const VarId definedVarId : _definedVars) {
     if (!engine.hasChanged(ts, definedVarId)) {
       continue;
     }

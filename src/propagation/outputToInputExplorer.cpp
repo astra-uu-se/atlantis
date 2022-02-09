@@ -41,7 +41,8 @@ void OutputToInputExplorer::populateAncestors() {
 
       for (InvariantId invariantId :
            _engine.getListeningInvariants(IdBase(id))) {
-        for (VarIdBase outputVar : _engine.getVariablesDefinedBy(invariantId)) {
+        for (const VarIdBase outputVar :
+             _engine.getVariablesDefinedBy(invariantId)) {
           if (!varVisited[outputVar]) {
             varVisited[outputVar] = true;
             stack.push_back(outputVar);
