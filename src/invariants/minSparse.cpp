@@ -25,8 +25,7 @@ void MinSparse::recompute(Timestamp ts, Engine& engine) {
 }
 
 void MinSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
-  const Int newValue = engine.getValue(ts, _varArray[id]);
-  _localPriority.updatePriority(ts, id, newValue);
+  _localPriority.updatePriority(ts, id, engine.getValue(ts, _varArray[id]));
   updateValue(ts, engine, _y, _localPriority.getMinPriority(ts));
 }
 

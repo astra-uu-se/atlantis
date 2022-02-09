@@ -199,9 +199,8 @@ Engine::makeInvariant(Args&&... args) {
   }
   const auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
-  const auto newId = _store.createInvariantFromPtr(invariantPtr);
-  registerInvariant(newId);
-  logDebug("Created new invariant with id: " << newId);
+  registerInvariant(_store.createInvariantFromPtr(invariantPtr));
+  logDebug("Created new invariant with id: " << invariantPtr->id());
   invariantPtr->init(_currentTimestamp, *this);
   return invariantPtr;
 }
@@ -214,10 +213,9 @@ Engine::makeIntView(Args&&... args) {
   }
   const auto viewPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
-  const auto newId = _store.createIntViewFromPtr(viewPtr);
   // We don'ts actually register views as they are invisible to propagation.
 
-  viewPtr->init(newId, *this);
+  viewPtr->init(_store.createIntViewFromPtr(viewPtr), *this);
   return viewPtr;
 }
 
@@ -229,9 +227,9 @@ Engine::makeConstraint(Args&&... args) {
   }
   const auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
 
-  auto newId = _store.createInvariantFromPtr(constraintPtr);
-  registerInvariant(newId);  // A constraint is a type of invariant.
-  logDebug("Created new Constraint with id: " << newId);
+  registerInvariant(_store.createInvariantFromPtr(
+      constraintPtr));  // A constraint is a type of invariant.
+  logDebug("Created new Constraint with id: " << constraintPtr->id());
   constraintPtr->init(_currentTimestamp, *this);
   return constraintPtr;
 }

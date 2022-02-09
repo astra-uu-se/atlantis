@@ -10,8 +10,7 @@ void Invariant::compute(Timestamp ts, Engine& engine) {
 
   while (_modifiedVars.hasNext()) {
     // don'ts turn this into a for loop...
-    const LocalId toNotify = _modifiedVars.pop();
-    this->notifyIntChanged(ts, engine, toNotify);
+    this->notifyIntChanged(ts, engine, _modifiedVars.pop());
   }
 }
 
