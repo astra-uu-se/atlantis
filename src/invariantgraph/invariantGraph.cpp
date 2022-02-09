@@ -30,7 +30,7 @@ void invariantgraph::InvariantGraph::applyVariable(
 
   if (node->isFunctionallyDefined()) {
     std::shared_ptr<InvariantNode> definedBy =
-        node->definingInvariant().value();
+        node->definingInvariant().value().lock();
     applyInvariant(engine, definedBy);
   }
 
@@ -55,13 +55,11 @@ void invariantgraph::InvariantGraph::applyConstraint(
   if (wasVisited(node)) return;
   appliedSoftConstraints.emplace(node);
 
-  VarId violationVar =
-      node->registerWithEngine(engine, [this, &engine](auto var) {
-        applyVariable(engine, var);
-        return engineVariables.at(var);
-      });
-
-  engineVariables.emplace(node->violationNode(), violationVar);
+  //  VarId violationVar =
+  //      node->registerWithEngine(engine, [this, &engine](auto var) {
+  //        applyVariable(engine, var);
+  //        return engineVariables.at(var);
+  //      });
 }
 
 Int invariantgraph::InvariantGraph::totalViolationsUpperBound(

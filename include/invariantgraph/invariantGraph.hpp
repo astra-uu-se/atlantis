@@ -16,6 +16,8 @@ class InvariantGraph {
   std::map<std::shared_ptr<VariableNode>, VarId> engineVariables;
   std::set<std::shared_ptr<VariableNode>> violationVars;
 
+  friend class InvariantGraphBuilder;
+
  public:
   void apply(Engine& engine);
 

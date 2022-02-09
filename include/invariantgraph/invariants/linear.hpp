@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "../structure.hpp"
 #include "fznparser/constraint.hpp"
 
@@ -8,18 +10,19 @@ class LinearInvariantNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
   std::vector<std::shared_ptr<VariableNode>> _variables;
-  std::shared_ptr<VariableNode> _output;
 
  public:
-  static LinearInvariantNode fromParser(
-      const std::shared_ptr<fznparser::NonFunctionalConstraint>& constraint,
-      std::function<
-          std::shared_ptr<VariableNode>(const fznparser::ConstraintArgument&)>
-          nodeLookup);
+  static std::shared_ptr<LinearInvariantNode> fromModelConstraint(
+      const std::shared_ptr<fznparser::Constraint>& constraint,
+      const std::function<std::shared_ptr<VariableNode>(
+          std::shared_ptr<fznparser::Variable>)>& variableMap);
 
   LinearInvariantNode(std::vector<Int> coeffs,
-                      std::vector<std::shared_ptr<VariableNode>> vars)
-      : _coeffs(std::move(coeffs)), _variables(std::move(vars)) {}
+                      std::vector<std::shared_ptr<VariableNode>> variables,
+                      std::shared_ptr<VariableNode> output)
+      : InvariantNode(std::move(output)),
+        _coeffs(std::move(coeffs)),
+        _variables(std::move(variables)) {}
 
   ~LinearInvariantNode() override = default;
 
