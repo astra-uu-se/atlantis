@@ -55,13 +55,13 @@ class PropagationEngine : public Engine {
    * @throw if the variable is already defined by an invariant.
    */
   void registerDefinedVariable(VarId definedVarId,
-                               InvariantId invariantId) override;
+                               InvariantId invariantId) final override;
 
  public:
   PropagationEngine(/* args */);
 
-  void open() override;
-  void close() override;
+  void open() final override;
+  void close() final override;
 
   void setPropagationMode(PropagationMode);
 
@@ -70,8 +70,8 @@ class PropagationEngine : public Engine {
    * @param ts the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  void notifyMaybeChanged(Timestamp ts, VarId id) override;
-  void queueForPropagation(Timestamp, VarId) override;
+  void notifyMaybeChanged(Timestamp ts, VarId id) final override;
+  void queueForPropagation(Timestamp, VarId) final override;
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
@@ -141,10 +141,10 @@ class PropagationEngine : public Engine {
    * @param localId the id of the variable in the invariant
    */
   void registerInvariantInput(InvariantId invariantId, VarId inputId,
-                              LocalId localId) override;
+                              LocalId localId) final override;
 
-  void registerVar(VarId) override;
-  void registerInvariant(InvariantId) override;
+  void registerVar(VarId) final override;
+  void registerInvariant(InvariantId) final override;
 
   PropagationGraph& getPropGraph();
 };
