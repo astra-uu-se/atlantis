@@ -149,7 +149,7 @@ class MagicSquareTest : public ::testing::Test {
   return str;
 }
 
-int computeTotalViolaton(MagicSquareTest& test) {
+Int computeTotalViolaton(MagicSquareTest& test) {
   int totalViol = 0;
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
     int rowSum = 0;
@@ -176,8 +176,8 @@ int computeTotalViolaton(MagicSquareTest& test) {
 TEST_F(MagicSquareTest, Probing) {
   for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
     for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
-      Int oldI = engine->getCommittedValue(flat.at(i));
-      Int oldJ = engine->getCommittedValue(flat.at(j));
+      const Int oldI = engine->getCommittedValue(flat.at(i));
+      const Int oldJ = engine->getCommittedValue(flat.at(j));
       engine->beginMove();
       engine->setValue(flat.at(i), oldJ);
       engine->setValue(flat.at(j), oldI);
@@ -187,7 +187,7 @@ TEST_F(MagicSquareTest, Probing) {
       engine->query(totalViolation);
       engine->endQuery();
 
-      int totalViol = computeTotalViolaton(*this);
+      const Int totalViol = computeTotalViolaton(*this);
       logDebug(squareToString(*this));
 
       EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
@@ -208,8 +208,8 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
   for (size_t c = 0; c < 10; ++c) {
     for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
-        Int oldI = engine->getCommittedValue(flat.at(i));
-        Int oldJ = engine->getCommittedValue(flat.at(j));
+        const Int oldI = engine->getCommittedValue(flat.at(i));
+        const Int oldJ = engine->getCommittedValue(flat.at(j));
         engine->beginMove();
         engine->setValue(flat.at(i), oldJ);
         engine->setValue(flat.at(j), oldI);
@@ -219,15 +219,15 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
         engine->query(totalViolation);
         engine->endQuery();
 
-        int totalViol = computeTotalViolaton(*this);
+        const Int totalViol = computeTotalViolaton(*this);
 
         EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
       }
     }
-    int i = distribution(gen);
-    int j = distribution(gen);
-    Int oldI = engine->getCommittedValue(flat.at(i));
-    Int oldJ = engine->getCommittedValue(flat.at(j));
+    const int i = distribution(gen);
+    const int j = distribution(gen);
+    const Int oldI = engine->getCommittedValue(flat.at(i));
+    const Int oldJ = engine->getCommittedValue(flat.at(j));
     // Perform random swap
     engine->beginMove();
     engine->setValue(flat.at(i), oldJ);
@@ -237,7 +237,7 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
     engine->beginQuery();
     engine->query(totalViolation);
     engine->endQuery();
-    int totalViol = computeTotalViolaton(*this);
+    const Int totalViol = computeTotalViolaton(*this);
     EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
   }
 

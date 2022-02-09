@@ -16,7 +16,7 @@ void PropagationGraph::Topology::computeNoCycles() {
 
   std::queue<VarId> reverseOrder;
 
-  std::function<void(VarId)> visit = [&](VarId id) {
+  const std::function<void(VarId)> visit = [&](VarId id) {
     // tmp Mark current node
     tmpVisited.at(id) = true;
     // for each invariant id is input to
@@ -69,7 +69,7 @@ void PropagationGraph::Topology::computeWithCycles() {
 
   std::queue<VarId> reverseOrder;
 
-  std::function<void(VarId)> visit = [&](VarId varId) {
+  const std::function<void(VarId)> visit = [&](VarId varId) {
     // Mark current node
     visited.at(varId) = true;
     // for each invariant id is a input to

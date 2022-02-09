@@ -7,8 +7,8 @@
 class Engine;
 class Equal : public Constraint {
  private:
-  VarId _x;
-  VarId _y;
+  const VarId _x;
+  const VarId _y;
 
  public:
   Equal(VarId violationId, VarId x, VarId y);

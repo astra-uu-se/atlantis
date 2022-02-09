@@ -13,9 +13,9 @@
 
 class ElementVar : public Invariant {
  private:
-  VarId _index;
-  std::vector<VarId> _varArray;
-  VarId _y;
+  const VarId _index;
+  const std::vector<VarId> _varArray;
+  const VarId _y;
 
  public:
   ElementVar(VarId index, std::vector<VarId> varArray, VarId y);

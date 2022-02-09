@@ -138,7 +138,7 @@ class PropagationGraph {
   }
 
   [[nodiscard]] inline const std::vector<VarIdBase>& getInputVariables(
-      InvariantId invariantId) {
+      InvariantId invariantId) const {
     return _inputVariables.at(invariantId);
   }
 };

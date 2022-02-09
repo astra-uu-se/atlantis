@@ -8,19 +8,20 @@ class Engine;  // Forward declaration
 class IntView : public View {
  protected:
   friend class Engine;
-  Engine* _engine;  // TODO: a raw pointer might be the best option here as
-                    // views lifetime depend on engine and not vice-versa.
+  const Engine*
+      _engine;  // TODO: a raw pointer might be the best option here as
+                // views lifetime depend on engine and not vice-versa.
 
  public:
   explicit IntView(VarId parentId) : View(parentId), _engine(nullptr) {}
 
-  void init(VarId id, Engine& engine) {
+  void init(VarId id, const Engine& engine) {
     _id = id;
     _engine = &engine;
   }
 
-  virtual Int getValue(Timestamp) = 0;
-  virtual Int getCommittedValue() = 0;
-  virtual Int getLowerBound() = 0;
-  virtual Int getUpperBound() = 0;
+  virtual Int getValue(Timestamp) const = 0;
+  virtual Int getCommittedValue() const = 0;
+  virtual Int getLowerBound() const = 0;
+  virtual Int getUpperBound() const = 0;
 };

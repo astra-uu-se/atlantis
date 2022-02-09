@@ -91,7 +91,7 @@ void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
 void PropagationEngine::registerInvariantInput(InvariantId invariantId,
                                                VarId inputId, LocalId localId) {
   assert(localId < _store.getInvariant(invariantId).notifiableVarsSize());
-  auto sourceId = getSourceId(inputId);
+  const auto sourceId = getSourceId(inputId);
   _propGraph.registerInvariantInput(invariantId, sourceId);
   _listeningInvariantData[sourceId].emplace_back(
       ListeningInvariantData{invariantId, localId});
@@ -272,14 +272,14 @@ void PropagationEngine::markPropagationPathAndClearPropagationQueue() {
   // TODO: replace priority_queue of _propGraph._propagationQueue with custom
   // queue.
   while (!_propGraph._propagationQueue.empty()) {
-    auto id = _propGraph._propagationQueue.top();
+    const auto id = _propGraph._propagationQueue.top();
     _isEnqueued.set(id, false);
     _propagationPathQueue.push(id);
     _propGraph._propagationQueue.pop();
   }
 
   while (!_propagationPathQueue.empty()) {
-    VarId currentVar = _propagationPathQueue.front();
+    const VarId currentVar = _propagationPathQueue.front();
     _propagationPathQueue.pop();
     if (_varIsOnPropagationPath.get(currentVar)) {
       continue;
@@ -316,9 +316,9 @@ void PropagationEngine::propagate() {
   for (VarId stableVarId = getNextStableVariable(_currentTimestamp);
        stableVarId.id != NULL_ID;
        stableVarId = getNextStableVariable(_currentTimestamp)) {
-    IntVar& variable = _store.getIntVar(stableVarId);
+    const IntVar& variable = _store.getIntVar(stableVarId);
 
-    InvariantId definingInvariant =
+    const InvariantId definingInvariant =
         _propGraph.getDefiningInvariant(stableVarId);
 
 #ifdef PROPAGATION_DEBUG
@@ -329,7 +329,7 @@ void PropagationEngine::propagate() {
     if (definingInvariant != NULL_ID) {
       Invariant& defInv = _store.getInvariant(definingInvariant);
       if (stableVarId == defInv.getPrimaryDefinedVar()) {
-        Int oldValue = variable.getValue(_currentTimestamp);
+        const Int oldValue = variable.getValue(_currentTimestamp);
         defInv.compute(_currentTimestamp, *this);
         defInv.queueNonPrimaryDefinedVarsForPropagation(_currentTimestamp,
                                                         *this);

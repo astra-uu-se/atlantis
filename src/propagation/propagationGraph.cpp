@@ -91,7 +91,7 @@ void PropagationGraph::close() {
                                            _topology.variablePosition.end());
   _propagationQueue.init(getNumVariables(), numLayers);
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
-    VarIdBase id = VarIdBase(i);
+    const VarIdBase id = VarIdBase(i);
     _propagationQueue.initVar(id, _topology.getPosition(id));
   }
   // _topology.computeNoCycles();

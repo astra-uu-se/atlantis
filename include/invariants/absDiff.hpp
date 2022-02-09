@@ -12,7 +12,7 @@ class Engine;
 
 class AbsDiff : public Invariant {
  private:
-  VarId _x, _y, _absDiff;
+  const VarId _x, _y, _absDiff;
 
  public:
   AbsDiff(VarId x, VarId y, VarId absDiff);

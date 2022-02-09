@@ -28,30 +28,30 @@ struct InvariantId;  // forward declare
 struct VarIdBase : public Id {
   VarIdBase() : Id() {}
   VarIdBase(size_t i) : Id(i) {}
-  VarIdBase(Id& t_id) : Id(t_id.id) {}
-  VarIdBase(InvariantId&) = delete;
+  VarIdBase(const Id& t_id) : Id(t_id.id) {}
+  VarIdBase(const InvariantId&) = delete;
 };
 struct VarId : public VarIdBase {
   VarIdType idType;
   VarId() : VarIdBase(), idType(VarIdType::var) {}
   VarId(size_t i, VarIdType type) : VarIdBase(i), idType(type) {}
   VarId(size_t i) : VarId(i, VarIdType::var) {}
-  VarId(Id& t_id, VarIdType type) : VarIdBase(t_id.id), idType(type) {}
-  VarId(Id& t_id) : VarId(t_id, VarIdType::var) {}
-  VarId(InvariantId&) = delete;
+  VarId(const Id& t_id, VarIdType type) : VarIdBase(t_id.id), idType(type) {}
+  VarId(const Id& t_id) : VarId(t_id, VarIdType::var) {}
+  VarId(const InvariantId&) = delete;
 };
 struct LocalId : public Id {
   LocalId() : Id() {}
   LocalId(size_t i) : Id(i) {}
-  LocalId(Id& t_id) : Id(t_id.id) {}
-  LocalId(VarId& t_id) : Id(t_id.id) {}
-  LocalId(InvariantId&) = delete;
+  LocalId(const Id& t_id) : Id(t_id.id) {}
+  LocalId(const VarId& t_id) : Id(t_id.id) {}
+  LocalId(const InvariantId&) = delete;
 };
 struct InvariantId : public Id {
   InvariantId() : Id() {}
   InvariantId(size_t i) : Id(i) {}
-  InvariantId(Id& t_id) : Id(t_id.id) {}
-  InvariantId(VarIdBase&) = delete;
-  InvariantId(VarId&) = delete;
-  InvariantId(LocalId&) = delete;
+  InvariantId(const Id& t_id) : Id(t_id.id) {}
+  InvariantId(const VarIdBase&) = delete;
+  InvariantId(const VarId&) = delete;
+  InvariantId(const LocalId&) = delete;
 };

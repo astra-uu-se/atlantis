@@ -14,10 +14,10 @@ class Engine;
 
 class Linear : public Invariant {
  private:
-  std::vector<Int> _coeffs;
-  std::vector<VarId> _varArray;
+  const std::vector<Int> _coeffs;
+  const std::vector<VarId> _varArray;
   std::vector<SavedInt> _localVarArray;
-  VarId _y;
+  const VarId _y;
 
  public:
   Linear(std::vector<VarId> varArray, VarId y)

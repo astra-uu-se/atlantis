@@ -50,8 +50,8 @@ void AllDifferent::recompute(Timestamp ts, Engine& engine) {
 }
 
 void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
-  Int oldValue = _localValues.at(id).getValue(ts);
-  auto newValue = engine.getValue(ts, _variables[id]);
+  const Int oldValue = _localValues.at(id).getValue(ts);
+  const Int newValue = engine.getValue(ts, _variables[id]);
   if (newValue == oldValue) {
     return;
   }
@@ -80,7 +80,7 @@ void AllDifferent::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
 void AllDifferent::commit(Timestamp ts, Engine& engine) {
   Invariant::commit(ts, engine);
 
-  for (auto& localValue : _localValues) {
+  for (SavedInt& localValue : _localValues) {
     localValue.commitIf(ts);
   }
 

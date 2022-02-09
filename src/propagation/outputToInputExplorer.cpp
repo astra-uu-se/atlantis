@@ -153,7 +153,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
   preprocessVarStack<OutputToInputMarking>(currentTimestamp);
   // recursively expand variables to compute their value.
   while (_varStackIdx > 0) {
-    VarId currentVarId = peekVariableStack();
+    const VarId currentVarId = peekVariableStack();
 
     // If the variable is not stable, then expand it.
     if (!isStable(currentTimestamp, currentVarId)) {
@@ -181,11 +181,11 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       notifyCurrentInvariant();
     }
     // push the next input variable of the top invariant
-    bool invariantDone = pushNextInputVariable<OutputToInputMarking>();
-    if (invariantDone) {
+    if (pushNextInputVariable<OutputToInputMarking>()) {  // Invariant is done?
       // The top invariant has finished propagating, so all defined vars can
       // be marked as stable at the current time.
-      for (auto defVar : _engine.getVariablesDefinedBy(peekInvariantStack())) {
+      for (const auto defVar :
+           _engine.getVariablesDefinedBy(peekInvariantStack())) {
         markStable(currentTimestamp, defVar);
       }
       popInvariantStack();
