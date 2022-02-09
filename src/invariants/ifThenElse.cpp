@@ -24,13 +24,13 @@ void IfThenElse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId IfThenElse::getNextInput(Timestamp ts, Engine& engine) {
-  const Int state = _state.incValue(ts, 1);
-  if (state == 0) {
-    return _b;
-  } else if (state == 1) {
-    return _xy[1 - (engine.getValue(ts, _b) == 0)];
-  } else {
-    return NULL_ID;  // Done
+  switch (_state.incValue(ts, 1)) {
+    case 0:
+      return _b;
+    case 1:
+      return _xy[1 - (engine.getValue(ts, _b) == 0)];
+    default:
+      return NULL_ID;  // Done
   }
 }
 

@@ -27,8 +27,8 @@ class IdMap {
   }
 
   inline const T& at(I idx) const {
-    assert(static_cast<Id>(idx).id; > 0);
-    assert(static_cast<Id>(idx).id; <= _vector.size());
+    assert(static_cast<Id>(idx).id > 0);
+    assert(static_cast<Id>(idx).id <= _vector.size());
     return _vector[static_cast<Id>(idx).id - 1];
   }
 

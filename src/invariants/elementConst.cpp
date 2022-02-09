@@ -25,8 +25,7 @@ void ElementConst::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId ElementConst::getNextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
-  if (_state.getValue(ts) == 0) {
+  if (_state.incValue(ts, 1) == 0) {
     return _index;
   } else {
     return NULL_ID;  // Done

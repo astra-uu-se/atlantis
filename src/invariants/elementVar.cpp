@@ -26,14 +26,14 @@ void ElementVar::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId ElementVar::getNextInput(Timestamp ts, Engine& engine) {
-  _state.incValue(ts, 1);
-  if (_state.getValue(ts) == 0) {
-    return _index;
-  } else if (_state.getValue(ts) == 1) {
-    return _varArray.at(
-        static_cast<unsigned long>(engine.getValue(ts, _index)));
-  } else {
-    return NULL_ID;  // Done
+  switch (_state.incValue(ts, 1)) {
+    case 0:
+      return _index;
+    case 1:
+      return _varArray.at(
+          static_cast<unsigned long>(engine.getValue(ts, _index)));
+    default:
+      return NULL_ID;  // Done
   }
 }
 
