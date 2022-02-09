@@ -8,18 +8,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Check if microsoft visual code. I have no idea if this works
-if(MSVC)
-  add_compile_options(/std:c++17 /permissive /W4 /w14640)
-else()
-  add_compile_options(-std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic)
-endif()
+if (MSVC)
+    add_compile_options(/std:c++17 /permissive /W4 /w14640)
+else ()
+    add_compile_options(-std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic)
+endif ()
 
-if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-  # If we are debugging then add debugging flag
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 -O0") 
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g0 -O3 -DNDEBUG ")
-endif()
+if (CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # If we are debugging then add debugging flag
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 -O0")
+else ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g0 -O3 -DNDEBUG ")
+endif ()
 
 message("${CMAKE_BUILD_TYPE}")
 
@@ -53,7 +53,7 @@ include(FetchContent)
 FetchContent_Declare(
         fznparser
         GIT_REPOSITORY git@github.com:astra-uu-se/fznparser.git
-        GIT_TAG 7a3e60b78ceb310570f0e4994b419ed2c8fa4d9a
+        GIT_TAG 0514a6abcbabf4f4acfb3388fc12368cffd08936
 )
 FetchContent_Declare(
         cxxopts
@@ -67,7 +67,7 @@ FetchContent_MakeAvailable(cxxopts fznparser)
 # includes (hpp/h) files are in ./include
 target_include_directories(${PROJECT_LIB}
         PRIVATE
-          ${COMMON_INCLUDES}
+        ${COMMON_INCLUDES}
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
@@ -81,87 +81,87 @@ option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
 
 if (BUILD_TESTS OR BUILD_BENCHMARKS)
-  # Google Test is required for testing and benchmarking
-  FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.10.x
-  )
-  
-  # For Windows: Prevent overriding the parent project's compiler/linker settings
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-endif()
+    # Google Test is required for testing and benchmarking
+    FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.10.x
+    )
+
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif ()
 
 if (BUILD_TESTS)
-  ################################
-  # Testing
-  ################################
+    ################################
+    # Testing
+    ################################
 
-  # Required for rapidcheck
-  set(RC_ENABLE_GTEST ON CACHE BOOL "Rapidcheck GTest Support" FORCE)
-  set(RC_ENABLE_GMOCK ON CACHE BOOL "Rapidcheck GMock Support" FORCE)
-  set(RC_ENABLE_BOOST ON CACHE BOOL "Rapidcheck Boost Support" FORCE)
-  set(RC_ENABLE_RTTI  ON CACHE BOOL "Rapidcheck RTTI Support"  FORCE)
+    # Required for rapidcheck
+    set(RC_ENABLE_GTEST ON CACHE BOOL "Rapidcheck GTest Support" FORCE)
+    set(RC_ENABLE_GMOCK ON CACHE BOOL "Rapidcheck GMock Support" FORCE)
+    set(RC_ENABLE_BOOST ON CACHE BOOL "Rapidcheck Boost Support" FORCE)
+    set(RC_ENABLE_RTTI ON CACHE BOOL "Rapidcheck RTTI Support" FORCE)
 
-  FetchContent_Declare(rapidcheck
-    GIT_REPOSITORY https://github.com/emil-e/rapidcheck.git
-    GIT_TAG 33d15a858e3125f5af61a655f390f1cbc2f272ba
-  )
+    FetchContent_Declare(rapidcheck
+            GIT_REPOSITORY https://github.com/emil-e/rapidcheck.git
+            GIT_TAG 33d15a858e3125f5af61a655f390f1cbc2f272ba
+            )
 
-  FetchContent_MakeAvailable(googletest rapidcheck)
+    FetchContent_MakeAvailable(googletest rapidcheck)
 
-  include(CTest)
+    include(CTest)
 
-  enable_testing()
+    enable_testing()
 
-  ##############
-  # Unit Tests
-  ##############
-  file(GLOB_RECURSE TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp ${PROJECT_SOURCE_DIR}/test/*.h ${PROJECT_SOURCE_DIR}/test/*.hpp)
-  add_executable(runUnitTests ${TEST_SRC_FILES})
+    ##############
+    # Unit Tests
+    ##############
+    file(GLOB_RECURSE TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp ${PROJECT_SOURCE_DIR}/test/*.h ${PROJECT_SOURCE_DIR}/test/*.hpp)
+    add_executable(runUnitTests ${TEST_SRC_FILES})
 
-  # Standard linking to gtest, gmock, and rapidcheck.
-  target_link_libraries(
-    runUnitTests
-    gtest
-    gtest_main
-    gmock
-    gmock_main
-    rapidcheck_gtest
-    rapidcheck_gmock
-    Threads::Threads
-    -lm
-    ${PROJECT_LIB}
-  )
+    # Standard linking to gtest, gmock, and rapidcheck.
+    target_link_libraries(
+            runUnitTests
+            gtest
+            gtest_main
+            gmock
+            gmock_main
+            rapidcheck_gtest
+            rapidcheck_gmock
+            Threads::Threads
+            -lm
+            ${PROJECT_LIB}
+    )
 
-  # This is so you can do 'make test' to see all your tests run, instead of
-  # manually running the executable runUnitTests to see those specific tests.
-  # add_test(NAME "UnitTests" COMMAND "runUnitTests")
+    # This is so you can do 'make test' to see all your tests run, instead of
+    # manually running the executable runUnitTests to see those specific tests.
+    # add_test(NAME "UnitTests" COMMAND "runUnitTests")
 
-  set_target_properties(runUnitTests PROPERTIES FOLDER tests)
+    set_target_properties(runUnitTests PROPERTIES FOLDER tests)
 
-endif()
+endif ()
 if (BUILD_BENCHMARKS)
-  ################################
-  # Benchmarks
-  ################################
-  FetchContent_Declare(googlebenchmark
-    GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG e451e50e9b8af453f076dec10bd6890847f1624e)
+    ################################
+    # Benchmarks
+    ################################
+    FetchContent_Declare(googlebenchmark
+            GIT_REPOSITORY https://github.com/google/benchmark.git
+            GIT_TAG e451e50e9b8af453f076dec10bd6890847f1624e)
 
-  FetchContent_MakeAvailable(googletest googlebenchmark)
+    FetchContent_MakeAvailable(googletest googlebenchmark)
 
-  file(GLOB_RECURSE BENCHMARK_SRC_FILES ${PROJECT_SOURCE_DIR}/benchmark/*.cpp ${PROJECT_SOURCE_DIR}/benchmark/*.h ${PROJECT_SOURCE_DIR}/benchmark/*.hpp)
-  
-  add_executable(runBenchmarks ${BENCHMARK_SRC_FILES})
+    file(GLOB_RECURSE BENCHMARK_SRC_FILES ${PROJECT_SOURCE_DIR}/benchmark/*.cpp ${PROJECT_SOURCE_DIR}/benchmark/*.h ${PROJECT_SOURCE_DIR}/benchmark/*.hpp)
 
-  # Link to benchmark
-  target_link_libraries(
-    runBenchmarks
-    benchmark::benchmark
-    benchmark::benchmark_main
-    Threads::Threads
-    -lm
-    ${PROJECT_LIB}
-  )
-endif()
+    add_executable(runBenchmarks ${BENCHMARK_SRC_FILES})
+
+    # Link to benchmark
+    target_link_libraries(
+            runBenchmarks
+            benchmark::benchmark
+            benchmark::benchmark_main
+            Threads::Threads
+            -lm
+            ${PROJECT_LIB}
+    )
+endif ()
