@@ -41,15 +41,19 @@ class AllDifferent : public Constraint {
 };
 
 inline signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
-  assert(_counts.at(value - _offset).getValue(ts) + 1 >= 0);
-  assert(_counts.at(value - _offset).getValue(ts) + 1 <=
+  assert(0 <= value - _offset &&
+         static_cast<size_t>(value - _offset) < _counts.size());
+  assert(_counts[value - _offset].getValue(ts) + 1 >= 0);
+  assert(_counts[value - _offset].getValue(ts) + 1 <=
          static_cast<Int>(_variables.size()));
-  return _counts.at(value - _offset).incValue(ts, 1) >= 2 ? 1 : 0;
+  return _counts[value - _offset].incValue(ts, 1) >= 2 ? 1 : 0;
 }
 
 inline signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
-  assert(_counts.at(value - _offset).getValue(ts) - 1 >= 0);
-  assert(_counts.at(value - _offset).getValue(ts) - 1 <=
+  assert(0 <= value - _offset &&
+         static_cast<size_t>(value - _offset) < _counts.size());
+  assert(_counts[value - _offset].getValue(ts) - 1 >= 0);
+  assert(_counts[value - _offset].getValue(ts) - 1 <=
          static_cast<Int>(_variables.size()));
-  return _counts.at(value - _offset).incValue(ts, -1) >= 1 ? -1 : 0;
+  return _counts[value - _offset].incValue(ts, -1) >= 1 ? -1 : 0;
 }

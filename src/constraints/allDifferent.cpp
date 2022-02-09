@@ -50,12 +50,13 @@ void AllDifferent::recompute(Timestamp ts, Engine& engine) {
 }
 
 void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
-  const Int oldValue = _localValues.at(id).getValue(ts);
+  assert(id < _localValues.size());
+  const Int oldValue = _localValues[id].getValue(ts);
   const Int newValue = engine.getValue(ts, _variables[id]);
   if (newValue == oldValue) {
     return;
   }
-  _localValues.at(id).setValue(ts, newValue);
+  _localValues[id].setValue(ts, newValue);
   incValue(ts, engine, _violationId,
            static_cast<Int>(decreaseCount(ts, oldValue) +
                             increaseCount(ts, newValue)));
@@ -64,7 +65,7 @@ void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
 VarId AllDifferent::getNextInput(Timestamp ts, Engine&) {
   const size_t index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _variables.size()) {
-    return _variables.at(index);
+    return _variables[index];
   }
   return NULL_ID;
 }

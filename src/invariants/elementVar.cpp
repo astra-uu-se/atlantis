@@ -16,9 +16,12 @@ void ElementVar::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 }
 
 void ElementVar::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _y,
-              engine.getValue(ts, _varArray.at(static_cast<unsigned long>(
-                                      engine.getValue(ts, _index)))));
+  assert(0 <= engine.getValue(ts, _index) &&
+         static_cast<size_t>(engine.getValue(ts, _index)) < _varArray.size());
+  updateValue(
+      ts, engine, _y,
+      engine.getValue(
+          ts, _varArray[static_cast<size_t>(engine.getValue(ts, _index))]));
 }
 
 void ElementVar::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
@@ -30,8 +33,10 @@ VarId ElementVar::getNextInput(Timestamp ts, Engine& engine) {
     case 0:
       return _index;
     case 1:
-      return _varArray.at(
-          static_cast<unsigned long>(engine.getValue(ts, _index)));
+      assert(0 <= engine.getValue(ts, _index) &&
+             static_cast<size_t>(engine.getValue(ts, _index)) <
+                 _varArray.size());
+      return _varArray[static_cast<size_t>(engine.getValue(ts, _index))];
     default:
       return NULL_ID;  // Done
   }
