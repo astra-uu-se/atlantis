@@ -55,8 +55,7 @@ class VariableNode {
  private:
   std::shared_ptr<fznparser::SearchVariable> _variable;
   std::set<std::shared_ptr<SoftConstraintNode>> _softConstraints;
-  std::set<std::shared_ptr<InvariantNode>> _invariants;
-  std::optional<std::weak_ptr<InvariantNode>> _definingInvariant;
+  std::optional<std::shared_ptr<InvariantNode>> _definingInvariant;
   Int _offset = 0;
 
  public:
@@ -67,7 +66,7 @@ class VariableNode {
     return _variable;
   }
 
-  void addSoftConstraint(std::shared_ptr<SoftConstraintNode> node) {
+  void addSoftConstraint(const std::shared_ptr<SoftConstraintNode>& node) {
     _softConstraints.emplace(node);
   }
 
@@ -76,12 +75,12 @@ class VariableNode {
     return _softConstraints;
   }
 
-  void definedByInvariant(std::weak_ptr<InvariantNode> node) {
+  void definedByInvariant(std::shared_ptr<InvariantNode> node) {
     _definingInvariant = node;
   }
 
-  [[nodiscard]] std::optional<std::weak_ptr<InvariantNode>> definingInvariant()
-      const {
+  [[nodiscard]] std::optional<std::shared_ptr<InvariantNode>>
+  definingInvariant() const {
     return _definingInvariant;
   }
 

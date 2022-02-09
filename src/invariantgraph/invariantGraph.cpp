@@ -1,17 +1,17 @@
 #include "invariantgraph/invariantGraph.hpp"
 
-#include <algorithm>
 #include <numeric>
 
 #include "invariants/linear.hpp"
 
 void invariantgraph::InvariantGraph::apply(Engine& engine) {
-  for (const auto& violationVariable : violationVars)
-    applyVariable(engine, violationVariable);
+  engine.open();
+  for (const auto& variable : _variables) applyVariable(engine, variable);
 
   VarId totalViolations =
       engine.makeIntVar(0, 0, totalViolationsUpperBound(engine));
-  engine.makeInvariant<Linear>(getViolationVariables(), totalViolations);
+  engine.makeInvariant<Linear>(violationVars, totalViolations);
+  engine.close();
 }
 
 void invariantgraph::InvariantGraph::applyVariable(
@@ -29,8 +29,7 @@ void invariantgraph::InvariantGraph::applyVariable(
   engineVariables.emplace(node, engineVariable);
 
   if (node->isFunctionallyDefined()) {
-    std::shared_ptr<InvariantNode> definedBy =
-        node->definingInvariant().value().lock();
+    std::shared_ptr<InvariantNode> definedBy = *node->definingInvariant();
     applyInvariant(engine, definedBy);
   }
 
@@ -46,6 +45,8 @@ void invariantgraph::InvariantGraph::applyInvariant(
 
   node->registerWithEngine(engine, [this, &engine](auto var) {
     applyVariable(engine, var);
+    assert(engineVariables.count(var) > 0);
+
     return engineVariables.at(var);
   });
 }
@@ -55,30 +56,20 @@ void invariantgraph::InvariantGraph::applyConstraint(
   if (wasVisited(node)) return;
   appliedSoftConstraints.emplace(node);
 
-  //  VarId violationVar =
-  //      node->registerWithEngine(engine, [this, &engine](auto var) {
-  //        applyVariable(engine, var);
-  //        return engineVariables.at(var);
-  //      });
+  VarId violationVar =
+      node->registerWithEngine(engine, [this, &engine](auto var) {
+        applyVariable(engine, var);
+        assert(engineVariables.count(var) > 0);
+
+        return engineVariables.at(var);
+      });
+
+  violationVars.emplace_back(violationVar);
 }
 
 Int invariantgraph::InvariantGraph::totalViolationsUpperBound(
     Engine& engine) const {
   return std::transform_reduce(
       violationVars.begin(), violationVars.end(), 0, std::plus<>(),
-      [this, &engine](auto node) {
-        return engine.getUpperBound(engineVariables.at(node));
-      });
-}
-
-std::vector<VarId> invariantgraph::InvariantGraph::getViolationVariables()
-    const {
-  std::vector<VarId> variables;
-  variables.reserve(violationVars.size());
-
-  std::transform(violationVars.begin(), violationVars.end(),
-                 std::back_inserter(variables),
-                 [this](auto node) { return engineVariables.at(node); });
-
-  return variables;
+      [&engine](auto var) { return engine.getUpperBound(var); });
 }

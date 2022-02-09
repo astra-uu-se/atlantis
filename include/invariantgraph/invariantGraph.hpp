@@ -11,14 +11,18 @@
 namespace invariantgraph {
 class InvariantGraph {
  private:
+  std::vector<std::shared_ptr<VariableNode>> _variables;
+
   std::set<std::shared_ptr<InvariantNode>> appliedInvariants;
   std::set<std::shared_ptr<SoftConstraintNode>> appliedSoftConstraints;
   std::map<std::shared_ptr<VariableNode>, VarId> engineVariables;
-  std::set<std::shared_ptr<VariableNode>> violationVars;
+  std::vector<VarId> violationVars;
 
   friend class InvariantGraphBuilder;
 
  public:
+  explicit InvariantGraph(std::vector<std::shared_ptr<VariableNode>> variables)
+      : _variables(std::move(variables)) {}
   void apply(Engine& engine);
 
  private:
@@ -29,7 +33,6 @@ class InvariantGraph {
                        const std::shared_ptr<SoftConstraintNode>& node);
 
   [[nodiscard]] Int totalViolationsUpperBound(Engine& engine) const;
-  [[nodiscard]] std::vector<VarId> getViolationVariables() const;
 
   [[nodiscard]] bool wasVisited(
       const std::shared_ptr<VariableNode>& node) const {
