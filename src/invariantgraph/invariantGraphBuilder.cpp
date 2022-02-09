@@ -9,11 +9,15 @@ std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
     const std::unique_ptr<fznparser::Model>& model) {
   _variableNodes.clear();
-  //  _constraintNodes.clear();
 
   createNodes(model);
 
-  auto graph = std::make_unique<invariantgraph::InvariantGraph>();
+  std::vector<std::shared_ptr<invariantgraph::VariableNode>> variables;
+  std::transform(_variableNodes.begin(), _variableNodes.end(), std::back_inserter(variables), [](auto pair) {
+    return pair.second;
+  });
+
+  auto graph = std::make_unique<invariantgraph::InvariantGraph>(variables);
   return graph;
 }
 
