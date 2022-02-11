@@ -43,8 +43,6 @@ class Store {
       std::unique_ptr<IntView>&& ptr) {
     const VarId newId = VarId(_intViews.size() + 1, VarIdType::view);
     ptr->setId(newId);
-    _intViews.register_idx(newId, ptr);
-
     const VarId parentId = ptr->getParentId();
     const VarId source = parentId.idType == VarIdType::var
                              ? parentId
@@ -66,7 +64,6 @@ class Store {
   }
 
   [[nodiscard]] const inline IntView& getConstIntView(VarId id) const {
-      VarId id) const {
     assert(id.idType == VarIdType::view);
     return *(_intViews.at(id.id));
   }

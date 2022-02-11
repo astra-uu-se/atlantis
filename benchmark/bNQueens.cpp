@@ -50,10 +50,8 @@ class Queens : public benchmark::Fixture {
     for (int i = 0; i < n; ++i) {
       const VarId q = engine->makeIntVar(i, 0, n - 1);
       queens.push_back(q);
-      q_offset_minus.push_back(
-          engine->makeIntView<IntOffsetView>(q, -i)->getId());
-      q_offset_plus.push_back(
-          engine->makeIntView<IntOffsetView>(q, i)->getId());
+      q_offset_minus.push_back(engine->makeIntView<IntOffsetView>(q, -i));
+      q_offset_plus.push_back(engine->makeIntView<IntOffsetView>(q, i));
     }
 
     violation1 = engine->makeIntVar(0, 0, n);
@@ -95,10 +93,10 @@ class Queens : public benchmark::Fixture {
 
 BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {
   for (auto _ : st) {
-    const int i = distribution(gen);
-    assert(i <= 0 && i < queens.size());
-    const int j = distribution(gen);
-    assert(j <= 0 && j < queens.size());
+    const size_t i = distribution(gen);
+    assert(i < queens.size());
+    const size_t j = distribution(gen);
+    assert(j < queens.size());
     const Int oldI = engine->getCommittedValue(queens[i]);
     const Int oldJ = engine->getCommittedValue(queens[j]);
     // Perform random swap
