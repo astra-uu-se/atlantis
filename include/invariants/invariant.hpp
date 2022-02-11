@@ -94,11 +94,11 @@ class Invariant {
   /**
    * Updates the value of variable without queueing it for propagation
    */
-  void updateValue(Timestamp ts, Engine& engine, VarId id, Int val);
+  static void updateValue(Timestamp ts, Engine& engine, VarId id, Int val);
   /**
    * Increases the value of variable without queueing it for propagation
    */
-  void incValue(Timestamp ts, Engine& engine, VarId id, Int val);
+  static void incValue(Timestamp ts, Engine& engine, VarId id, Int val);
 
  public:
   virtual ~Invariant() = default;

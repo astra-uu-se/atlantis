@@ -1,7 +1,6 @@
 #include "invariants/absDiff.hpp"
 
 #include "core/engine.hpp"
-extern Id NULL_ID;
 
 AbsDiff::AbsDiff(VarId x, VarId y, VarId absDiff)
     : Invariant(NULL_ID), _x(x), _y(y), _absDiff(absDiff) {

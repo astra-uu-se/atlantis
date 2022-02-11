@@ -51,14 +51,14 @@ void PropagationGraph::registerDefinedVariable(VarIdBase varId,
         " already defined by invariant " +
         std::to_string(_definingInvariant.at(varId).id));
   }
-  Int index = -1;
+  size_t index = _listeningInvariants[varId].size();
   for (size_t i = 0; i < _listeningInvariants[varId].size(); ++i) {
     if (_listeningInvariants[varId][i] == invariantId) {
       index = i;
       break;
     }
   }
-  if (index >= 0) {
+  if (index < _listeningInvariants[varId].size()) {
     _listeningInvariants[varId].erase(_listeningInvariants[varId].begin() +
                                       index);
     logWarning("The (self-cyclic) dependency that the invariant "
@@ -76,10 +76,10 @@ void PropagationGraph::close() {
     _isObjectiveVar[i] = (_listeningInvariants.at(i).empty());
     _isDecisionVar[i] = (_definingInvariant.at(i) == NULL_ID);
     if (_isObjectiveVar[i]) {
-      _outputVariables.push_back(i);
+      _outputVariables.emplace_back(i);
     }
     if (_isDecisionVar[i]) {
-      _decisionVariables.push_back(i);
+      _decisionVariables.emplace_back(i);
     }
   }
 

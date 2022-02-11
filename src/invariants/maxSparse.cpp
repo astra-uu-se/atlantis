@@ -30,7 +30,7 @@ void MaxSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
 }
 
 VarId MaxSparse::getNextInput(Timestamp ts, Engine&) {
-  const size_t index = static_cast<size_t>(_state.incValue(ts, 1));
+  const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.getValue(ts));
   if (index < _varArray.size()) {
     return _varArray[index];
