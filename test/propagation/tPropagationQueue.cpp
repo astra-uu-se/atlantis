@@ -10,7 +10,7 @@
 namespace {
 class PropagationQueueTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
   }

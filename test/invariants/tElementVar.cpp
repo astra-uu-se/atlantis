@@ -67,21 +67,16 @@ class MockElementVar : public ElementVar {
 
 class ElementVarTest : public ::testing::Test {
  protected:
-  std::mt19937 gen;
-
   std::unique_ptr<PropagationEngine> engine;
 
-  virtual void SetUp() {
-    std::random_device rd;
-    gen = std::mt19937(rd());
-    engine = std::make_unique<PropagationEngine>();
-  }
+  void SetUp() override { engine = std::make_unique<PropagationEngine>(); }
 
   void testNotifications(PropagationEngine::PropagationMode propMode) {
     engine->open();
 
     std::vector<VarId> args{};
     int numArgs = 10;
+    args.reserve(numArgs);
     for (int value = 0; value < numArgs; ++value) {
       args.push_back(engine->makeIntVar(value, -100, 100));
     }
@@ -136,6 +131,7 @@ TEST_F(ElementVarTest, CreateElement) {
 
   std::vector<VarId> args{};
   int numArgs = 10;
+  args.reserve(numArgs);
   for (int value = 0; value < numArgs; ++value) {
     args.push_back(engine->makeIntVar(value, -100, 100));
   }

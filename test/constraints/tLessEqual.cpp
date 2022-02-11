@@ -73,7 +73,7 @@ class LessEqualTest : public ::testing::Test {
   LessEqual* lessEqual;
   std::mt19937 gen;
 
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     engine = std::make_unique<PropagationEngine>();

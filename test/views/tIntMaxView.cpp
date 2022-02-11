@@ -15,15 +15,9 @@ namespace {
 
 class IntMaxViewTest : public ::testing::Test {
  protected:
-  std::mt19937 gen;
-
   std::unique_ptr<PropagationEngine> engine;
 
-  virtual void SetUp() {
-    std::random_device rd;
-    gen = std::mt19937(rd());
-    engine = std::make_unique<PropagationEngine>();
-  }
+  void SetUp() override { engine = std::make_unique<PropagationEngine>(); }
 };
 
 RC_GTEST_FIXTURE_PROP(IntMaxViewTest, shouldAlwaysBeMax, (Int a, Int b)) {

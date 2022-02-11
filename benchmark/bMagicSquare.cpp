@@ -3,13 +3,13 @@
 #include <constraints/allDifferent.hpp>
 #include <constraints/equal.hpp>
 #include <core/propagationEngine.hpp>
+#include <exception>
 #include <invariants/absDiff.hpp>
 #include <invariants/linear.hpp>
 #include <iostream>
 #include <random>
 #include <utility>
 #include <vector>
-#include <exception>
 
 class MagicSquare : public benchmark::Fixture {
  public:
@@ -64,8 +64,8 @@ class MagicSquare : public benchmark::Fixture {
         flat.push_back(var);
       }
     }
-    assert(n == square.size());
-    assert(n * n == flat.size());
+    assert(static_cast<size_t>(n) == square.size());
+    assert(static_cast<size_t>(n * n) == flat.size());
 
     std::vector<VarId> violations;
 
@@ -86,12 +86,12 @@ class MagicSquare : public benchmark::Fixture {
       // Column
       std::vector<Int> ones{};
       ones.assign(n, 1);
-      for (size_t i = 0; i < n; ++i) {
+      for (Int i = 0; i < n; ++i) {
         const VarId colSum = engine->makeIntVar(0, 0, n2 * n);
         const VarId colViol = engine->makeIntVar(0, 0, n2 * n);
         std::vector<VarId> col{};
-        for (size_t j = 0; j < n; ++j) {
-          assert(square[j].size() == n);
+        for (Int j = 0; j < n; ++j) {
+          assert(square[j].size() == static_cast<size_t>(n));
           col.push_back(square[j][i]);
         }
         engine->makeInvariant<Linear>(ones, col, colSum);
@@ -108,7 +108,7 @@ class MagicSquare : public benchmark::Fixture {
       const VarId downDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
       for (Int j = 0; j < n; ++j) {
-        assert(square[j].size() == n);
+        assert(square[j].size() == static_cast<size_t>(n));
         diag.push_back(square[j][j]);
       }
       engine->makeInvariant<Linear>(ones, diag, downDiagSum);
@@ -124,7 +124,7 @@ class MagicSquare : public benchmark::Fixture {
       const VarId upDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
       for (Int j = 0; j < n; ++j) {
-        assert(square[n - j - 1].size() == n);
+        assert(square[n - j - 1].size() == static_cast<size_t>(n));
         diag.push_back(square[n - j - 1][j]);
       }
       engine->makeInvariant<Linear>(ones, diag, upDiagSum);

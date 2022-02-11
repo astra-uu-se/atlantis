@@ -79,7 +79,7 @@ class LinearTest : public ::testing::Test {
   Linear* linear;
   std::mt19937 gen;
 
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     engine = std::make_unique<PropagationEngine>();

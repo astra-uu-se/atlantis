@@ -76,7 +76,7 @@ class AllDifferentTest : public ::testing::Test {
   AllDifferent* allDifferent;
   std::mt19937 gen;
 
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     engine = std::make_unique<PropagationEngine>();
@@ -95,8 +95,9 @@ class AllDifferentTest : public ::testing::Test {
     engine->open();
 
     std::vector<VarId> args{};
-    Int numArgs = 10;
-    for (Int value = 0; value < numArgs; ++value) {
+    int numArgs = 10;
+    args.reserve(numArgs);
+    for (int value = 0; value < numArgs; ++value) {
       args.push_back(engine->makeIntVar(0, -100, 100));
     }
 

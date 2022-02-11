@@ -74,7 +74,7 @@ class LessThanTest : public ::testing::Test {
   LessThan* lessThan;
   std::mt19937 gen;
 
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     engine = std::make_unique<PropagationEngine>();
@@ -249,7 +249,7 @@ TEST_F(LessThanTest, IncrementalVsRecompute) {
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTimestamp, violationId);
+    Int tmp = engine->getValue(currentTimestamp, violationId);
     lessThan->recompute(currentTimestamp, *engine);
 
     ASSERT_EQ(tmp, engine->getValue(currentTimestamp, violationId));
