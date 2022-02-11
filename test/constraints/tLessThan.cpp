@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "constraints/lessThan.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
@@ -70,7 +71,7 @@ class LessThanTest : public ::testing::Test {
   VarId violationId = NULL_ID;
   VarId x = NULL_ID;
   VarId y = NULL_ID;
-  std::shared_ptr<LessThan> lessThan;
+  LessThan* lessThan;
   std::mt19937 gen;
 
   virtual void SetUp() {
@@ -82,7 +83,7 @@ class LessThanTest : public ::testing::Test {
     y = engine->makeIntVar(2, -100, 100);
     violationId = engine->makeIntVar(0, 0, 200);
 
-    lessThan = engine->makeConstraint<LessThan>(violationId, x, y);
+    lessThan = &(engine->makeConstraint<LessThan>(violationId, x, y));
     engine->close();
   }
 
@@ -94,14 +95,13 @@ class LessThanTest : public ::testing::Test {
 
     VarId viol = engine->makeIntVar(0, 0, 200);
 
-    auto invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
+    auto& invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
 
-    EXPECT_TRUE(invariant->initialized);
+    EXPECT_TRUE(invariant.initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
+    EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
 
@@ -109,18 +109,18 @@ class LessThanTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
@@ -279,13 +279,13 @@ TEST_F(LessThanTest, CreateLessThan) {
 
   VarId viol = engine->makeIntVar(0, 0, 201);
 
-  auto invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
+  auto& invariant = engine->makeInvariant<MockLessThan>(viol, a, b);
 
-  EXPECT_TRUE(invariant->initialized);
+  EXPECT_TRUE(invariant.initialized);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 

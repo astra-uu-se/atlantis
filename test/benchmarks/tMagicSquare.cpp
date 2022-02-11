@@ -67,7 +67,7 @@ class MagicSquareTest : public ::testing::Test {
         VarId rowSum = engine->makeIntVar(0, 0, n2 * n);
         VarId rowViol = engine->makeIntVar(0, 0, n2 * n);
 
-        engine->makeInvariant<Linear>(ones, square.at(i), rowSum);
+        engine->makeInvariant<Linear>(square.at(i), rowSum);
         engine->makeConstraint<Equal>(rowViol, rowSum, magicSumVar);
         violations.push_back(rowViol);
       }

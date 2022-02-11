@@ -30,22 +30,20 @@ RC_GTEST_FIXTURE_PROP(IntMaxViewTest, shouldAlwaysBeMax, (Int a, Int b)) {
   if (!engine->isOpen()) {
     engine->open();
   }
-  VarId varId = engine->makeIntVar(a, a, a);
-  std::shared_ptr<IntMaxView> view = engine->makeIntView<IntMaxView>(varId, b);
-  RC_ASSERT(view->getCommittedValue() == std::max(a, b));
+  const VarId varId = engine->makeIntVar(a, a, a);
+  const VarId viewId = engine->makeIntView<IntMaxView>(varId, b);
+  RC_ASSERT(engine->getCommittedValue(viewId) == std::max(a, b));
 }
 
 TEST_F(IntMaxViewTest, CreateIntMaxView) {
   engine->open();
 
   const VarId var = engine->makeIntVar(10, 0, 10);
-  std::shared_ptr<IntMaxView> viewOfVar =
-      engine->makeIntView<IntMaxView>(var, 25);
-  std::shared_ptr<IntMaxView> viewOfView =
-      engine->makeIntView<IntMaxView>(viewOfVar->getId(), 50);
+  const VarId viewOfVar = engine->makeIntView<IntMaxView>(var, 25);
+  const VarId viewOfView = engine->makeIntView<IntMaxView>(viewOfVar, 50);
 
-  EXPECT_EQ(viewOfVar->getCommittedValue(), Int(25));
-  EXPECT_EQ(viewOfView->getCommittedValue(), Int(50));
+  EXPECT_EQ(engine->getCommittedValue(viewOfVar), Int(25));
+  EXPECT_EQ(engine->getCommittedValue(viewOfView), Int(50));
 
   engine->close();
 }
@@ -55,46 +53,42 @@ TEST_F(IntMaxViewTest, ComputeBounds) {
   auto a = engine->makeIntVar(20, -100, 100);
   auto b = engine->makeIntVar(20, -100, 100);
 
-  std::shared_ptr<IntMaxView> va = engine->makeIntView<IntMaxView>(a, 10);
-  std::shared_ptr<IntMaxView> vb = engine->makeIntView<IntMaxView>(b, 200);
+  const VarId va = engine->makeIntView<IntMaxView>(a, 10);
+  const VarId vb = engine->makeIntView<IntMaxView>(b, 200);
 
-  EXPECT_EQ(engine->getLowerBound(va->getId()), Int(-100));
-  EXPECT_EQ(engine->getLowerBound(vb->getId()), Int(-100));
-  EXPECT_EQ(engine->getUpperBound(va->getId()), Int(10));
-  EXPECT_EQ(engine->getUpperBound(vb->getId()), Int(100));
+  EXPECT_EQ(engine->getLowerBound(va), Int(-100));
+  EXPECT_EQ(engine->getLowerBound(vb), Int(-100));
+  EXPECT_EQ(engine->getUpperBound(va), Int(10));
+  EXPECT_EQ(engine->getUpperBound(vb), Int(100));
 
   engine->close();
 
-  EXPECT_EQ(engine->getLowerBound(va->getId()), Int(-100));
-  EXPECT_EQ(engine->getLowerBound(vb->getId()), Int(-100));
-  EXPECT_EQ(engine->getUpperBound(va->getId()), Int(10));
-  EXPECT_EQ(engine->getUpperBound(vb->getId()), Int(100));
+  EXPECT_EQ(engine->getLowerBound(va), Int(-100));
+  EXPECT_EQ(engine->getLowerBound(vb), Int(-100));
+  EXPECT_EQ(engine->getUpperBound(va), Int(10));
+  EXPECT_EQ(engine->getUpperBound(vb), Int(100));
 }
 
 TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   engine->open();
-  auto a = engine->makeIntVar(20, -100, 100);
-  auto b = engine->makeIntVar(20, -100, 100);
-  auto sum = engine->makeIntVar(0, -100, 100);
+  const VarId a = engine->makeIntVar(20, -100, 100);
+  const VarId b = engine->makeIntVar(20, -100, 100);
+  const VarId sum = engine->makeIntVar(0, -100, 100);
 
   auto linear = engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
                                               std::vector<VarId>({a, b}), sum);
 
-  std::shared_ptr<IntMaxView> viewOfVar =
-      engine->makeIntView<IntMaxView>(sum, 10);
-  std::shared_ptr<IntMaxView> viewOfView =
-      engine->makeIntView<IntMaxView>(viewOfVar->getId(), 15);
-  VarId viewOfVarId = viewOfVar->getId();
-  VarId viewOfViewId = viewOfView->getId();
+  const VarId viewOfVar = engine->makeIntView<IntMaxView>(sum, 10);
+  const VarId viewOfView = engine->makeIntView<IntMaxView>(viewOfVar, 15);
 
-  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(10));
-  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(15));
+  EXPECT_EQ(engine->getNewValue(viewOfVar), Int(10));
+  EXPECT_EQ(engine->getNewValue(viewOfView), Int(15));
 
   engine->close();
 
   EXPECT_EQ(engine->getNewValue(sum), Int(40));
-  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(40));
-  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(40));
+  EXPECT_EQ(engine->getNewValue(viewOfVar), Int(40));
+  EXPECT_EQ(engine->getNewValue(viewOfView), Int(40));
 
   engine->beginMove();
   engine->setValue(a, 1);
@@ -106,8 +100,8 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   engine->endQuery();
 
   EXPECT_EQ(engine->getNewValue(sum), Int(2));
-  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(10));
-  EXPECT_EQ(engine->getNewValue(viewOfViewId), Int(15));
+  EXPECT_EQ(engine->getNewValue(viewOfVar), Int(10));
+  EXPECT_EQ(engine->getNewValue(viewOfView), Int(15));
 }
 
 TEST_F(IntMaxViewTest, PropagateIntViews) {
@@ -123,57 +117,48 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   auto sum3 = engine->makeIntVar(0, -100, 100);
   // sum1 + sum2 = sum2
 
-  auto linear1 = engine->makeInvariant<Linear>(
-      std::vector<Int>({1, 1}), std::vector<VarId>({a, b}), sum1);
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
+                                std::vector<VarId>({a, b}), sum1);
 
-  auto linear2 = engine->makeInvariant<Linear>(
-      std::vector<Int>({1, 1}), std::vector<VarId>({c, d}), sum2);
+  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
+                                std::vector<VarId>({c, d}), sum2);
 
-  std::shared_ptr<IntMaxView> sum1View =
-      engine->makeIntView<IntMaxView>(sum1, 45);
-  std::shared_ptr<IntMaxView> sum2View =
-      engine->makeIntView<IntMaxView>(sum2, 20);
-
-  VarId sum1ViewId = sum1View->getId();
-  VarId sum2ViewId = sum2View->getId();
+  const VarId sum1View = engine->makeIntView<IntMaxView>(sum1, 45);
+  const VarId sum2View = engine->makeIntView<IntMaxView>(sum2, 20);
 
   auto linear3 = engine->makeInvariant<Linear>(
-      std::vector<Int>({1, 1}), std::vector<VarId>({sum1ViewId, sum2ViewId}),
-      sum3);
+      std::vector<Int>({1, 1}), std::vector<VarId>({sum1View, sum2View}), sum3);
 
-  std::vector<VarId> sum3viewIds;
-  std::vector<std::shared_ptr<IntMaxView>> sum3views;
-  sum3viewIds.reserve(10);
+  std::vector<VarId> sum3views;
   VarId prev = sum3;
   for (size_t i = 0; i < 10; ++i) {
     sum3views.emplace_back(engine->makeIntView<IntMaxView>(prev, 80 + i));
-    sum3viewIds.emplace_back(sum3views[i]->getId());
-    prev = sum3viewIds[i];
+    prev = sum3views[i];
   }
 
   EXPECT_EQ(engine->getCommittedValue(sum1), Int(0));
   EXPECT_EQ(engine->getCommittedValue(sum2), Int(0));
-  EXPECT_EQ(engine->getCommittedValue(sum1ViewId), Int(45));
-  EXPECT_EQ(engine->getCommittedValue(sum2ViewId), Int(20));
+  EXPECT_EQ(engine->getCommittedValue(sum1View), Int(45));
+  EXPECT_EQ(engine->getCommittedValue(sum2View), Int(20));
 
   engine->close();
 
   // a + b = 20 + 20 = sum1 = 40
   EXPECT_EQ(engine->getNewValue(sum1), Int(40));
   // sum1 = 40 -> sum1View = min(20, 40) = 20
-  EXPECT_EQ(engine->getNewValue(sum1ViewId), Int(45));
+  EXPECT_EQ(engine->getNewValue(sum1View), Int(45));
   // c + d = 20 + 20 = sum2 = 40
   EXPECT_EQ(engine->getNewValue(sum2), Int(40));
   // sum2 = 40 -> sum2View = min(20, 40) = 20
-  EXPECT_EQ(engine->getNewValue(sum2ViewId), Int(40));
+  EXPECT_EQ(engine->getNewValue(sum2View), Int(40));
   // sum3 = sum1view + sum2view = 45 + 40 = 85
   EXPECT_EQ(engine->getNewValue(sum3), Int(85));
 
   for (size_t i = 0; i < 10; ++i) {
     if (i == 0) {
-      EXPECT_EQ(engine->getCommittedValue(sum3viewIds[i]), Int(85));
+      EXPECT_EQ(engine->getCommittedValue(sum3views[i]), Int(85));
     } else {
-      EXPECT_EQ(engine->getCommittedValue(sum3viewIds[i]),
+      EXPECT_EQ(engine->getCommittedValue(sum3views[i]),
                 std::max({Int(80 + i), Int(80 + i - 1), Int(85)}));
     }
   }
@@ -202,16 +187,16 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   EXPECT_EQ(engine->getCommittedValue(sum2), Int(10));
 
   // sum1 = 10 -> sum1View = min(20, 10) = 10
-  EXPECT_EQ(engine->getCommittedValue(sum1ViewId), Int(45));
+  EXPECT_EQ(engine->getCommittedValue(sum1View), Int(45));
   // sum2 = 10 -> sum2View = min(20, 10) = 10
-  EXPECT_EQ(engine->getCommittedValue(sum2ViewId), Int(20));
+  EXPECT_EQ(engine->getCommittedValue(sum2View), Int(20));
 
   // sum3 = sum1view + sum2view = 45 + 20 = 65
 
   EXPECT_EQ(engine->getCommittedValue(sum3), Int(65));
 
-  for (size_t i = 0; i < sum3viewIds.size(); ++i) {
-    EXPECT_EQ(engine->getCommittedValue(sum3viewIds[i]),
+  for (size_t i = 0; i < sum3views.size(); ++i) {
+    EXPECT_EQ(engine->getCommittedValue(sum3views[i]),
               std::max({Int(80 + i), Int(80 + i - 1), Int(65)}));
   }
 }

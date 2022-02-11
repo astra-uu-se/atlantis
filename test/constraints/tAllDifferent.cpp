@@ -6,6 +6,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "constraints/allDifferent.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
@@ -72,7 +73,7 @@ class AllDifferentTest : public ::testing::Test {
   VarId a = NULL_ID;
   VarId b = NULL_ID;
   VarId c = NULL_ID;
-  std::shared_ptr<AllDifferent> allDifferent;
+  AllDifferent* allDifferent;
   std::mt19937 gen;
 
   virtual void SetUp() {
@@ -85,8 +86,8 @@ class AllDifferentTest : public ::testing::Test {
     c = engine->makeIntVar(2, -100, 100);
     violationId = engine->makeIntVar(0, 0, 3);
 
-    allDifferent = engine->makeConstraint<AllDifferent>(
-        violationId, std::vector<VarId>({a, b, c}));
+    allDifferent = &(engine->makeConstraint<AllDifferent>(
+        violationId, std::vector<VarId>({a, b, c})));
     engine->close();
   }
 
@@ -101,15 +102,14 @@ class AllDifferentTest : public ::testing::Test {
 
     VarId viol = engine->makeIntVar(0, 0, numArgs);
 
-    auto invariant =
+    auto& invariant =
         engine->makeInvariant<MockAllDifferent>(viol, std::vector<VarId>{args});
 
-    EXPECT_TRUE(invariant->initialized);
+    EXPECT_TRUE(invariant.initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
+    EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
 
@@ -117,19 +117,19 @@ class AllDifferentTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_))
           .Times(numArgs + 1);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
@@ -257,14 +257,14 @@ TEST_F(AllDifferentTest, CreateAllDifferent) {
 
   VarId viol = engine->makeIntVar(0, 0, numArgs);
 
-  auto invariant =
+  auto& invariant =
       engine->makeInvariant<MockAllDifferent>(viol, std::vector<VarId>{args});
 
-  EXPECT_TRUE(invariant->initialized);
+  EXPECT_TRUE(invariant.initialized);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 
