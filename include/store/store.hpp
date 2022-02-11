@@ -68,7 +68,7 @@ class Store {
     return *(_intViews.at(id.id));
   }
 
-  inline VarId getIntViewSourceId(VarId id) const {
+  [[nodiscard]] inline VarId getIntViewSourceId(VarId id) const {
     assert(id.idType == VarIdType::view);
     return _intViewSourceId.at(id);
   }
@@ -77,7 +77,7 @@ class Store {
     return *(_invariants[invariantId.id]);
   }
 
-  inline const Invariant& getConstInvariant(InvariantId invariantId) const {
+  [[nodiscard]] inline const Invariant& getConstInvariant(InvariantId invariantId) const {
     return *(_invariants.at(invariantId.id));
   }
 

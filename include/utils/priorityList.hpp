@@ -42,7 +42,7 @@ class PriorityList {
   }
 
  public:
-  PriorityList(size_t size)
+  explicit PriorityList(size_t size)
       : _list(size),
         _head(NULL_TIMESTAMP, nullptr),
         _tail(NULL_TIMESTAMP, nullptr) {
