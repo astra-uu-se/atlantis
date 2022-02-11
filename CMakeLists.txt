@@ -16,10 +16,8 @@ endif()
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   # If we are debugging then add debugging flag
-  set(DEBUG ON)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 -O0") 
 else()
-  set(DEBUG OFF)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g0 -O3 -DNDEBUG ")
 endif()
 
@@ -73,9 +71,6 @@ if (BUILD_TESTS OR BUILD_BENCHMARKS)
 endif()
 
 if (BUILD_TESTS)
-  if (NOT DEBUG)
-    message(SEND_ERROR "Debug must be on in order to run the unit tests.")
-  endif()
   ################################
   # Testing
   ################################
