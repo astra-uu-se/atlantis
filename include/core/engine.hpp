@@ -70,14 +70,14 @@ class Engine {
   virtual void open() = 0;
   virtual void close() = 0;
 
-  inline bool isOpen() const noexcept { return _isOpen; }
-  inline bool isMoving() const noexcept {
+  [[nodiscard]] inline bool isOpen() const noexcept { return _isOpen; }
+  [[nodiscard]] inline bool isMoving() const noexcept {
     return _engineState == EngineState::MOVE;
   }
 
   //--------------------- Variable ---------------------
 
-  inline VarId getSourceId(VarId id) const {
+  [[nodiscard]] inline VarId getSourceId(VarId id) const {
     return id.idType == VarIdType::var ? id : _store.getIntViewSourceId(id);
     // getSourceId(_store.getIntView(id).getParentId());
   }
@@ -85,20 +85,20 @@ class Engine {
   virtual void queueForPropagation(Timestamp, VarId) = 0;
   virtual void notifyMaybeChanged(Timestamp, VarId) = 0;
 
-  Int getValue(Timestamp, VarId) const;
-  inline Int getNewValue(VarId id) const {
+  [[nodiscard]] Int getValue(Timestamp, VarId) const;
+  [[nodiscard]] inline Int getNewValue(VarId id) const {
     return getValue(_currentTimestamp, id);
   }
 
-  Int getIntViewValue(Timestamp, VarId) const;
+  [[nodiscard]] Int getIntViewValue(Timestamp, VarId) const;
 
-  Int getCommittedValue(VarId) const;
+  [[nodiscard]] Int getCommittedValue(VarId) const;
 
-  Int getIntViewCommittedValue(VarId) const;
+  [[nodiscard]] Int getIntViewCommittedValue(VarId) const;
 
-  Timestamp getTmpTimestamp(VarId) const;
+  [[nodiscard]] Timestamp getTmpTimestamp(VarId) const;
 
-  bool isPostponed(InvariantId) const;
+  [[nodiscard]] bool isPostponed(InvariantId) const;
 
   void recompute(InvariantId);
   void recompute(Timestamp, InvariantId);
