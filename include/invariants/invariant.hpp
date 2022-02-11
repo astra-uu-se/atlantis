@@ -35,9 +35,9 @@ class Invariant {
       return current;
     }
 
-    size_t size() const { return queue.size(); }
+    [[nodiscard]] size_t size() const { return queue.size(); }
 
-    bool hasNext() const { return head < queue.size(); }
+    [[nodiscard]] bool hasNext() const { return head < queue.size(); }
 
     NotificationQueue() : head(0), queue() { queue.push_back(0); }
 
@@ -108,7 +108,7 @@ class Invariant {
    */
   size_t notifiableVarsSize() { return _modifiedVars.size(); }
 
-  inline InvariantId id() const noexcept { return _id; }
+  [[nodiscard]] inline InvariantId id() const noexcept { return _id; }
   void setId(Id id) { _id = id; }
 
   /**
@@ -164,6 +164,6 @@ class Invariant {
   inline void postpone() { _isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 
-  inline VarId getPrimaryDefinedVar() const { return _primaryDefinedVar; }
+  [[nodiscard]] inline VarId getPrimaryDefinedVar() const { return _primaryDefinedVar; }
   void queueNonPrimaryDefinedVarsForPropagation(Timestamp ts, Engine& engine);
 };
