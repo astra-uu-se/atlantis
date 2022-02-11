@@ -9,6 +9,7 @@
 #include <random>
 #include <utility>
 #include <vector>
+#include <exception>
 
 class MagicSquare : public benchmark::Fixture {
  public:
@@ -18,21 +19,24 @@ class MagicSquare : public benchmark::Fixture {
   std::random_device rd;
   std::mt19937 gen;
 
-  std::uniform_int_distribution<> distribution;
-  size_t n;
+  std::uniform_int_distribution<Int> distribution;
+  Int n;
 
   VarId totalViolation = NULL_ID;
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
 
     n = state.range(1);
-    int n2 = n * n;
+    if (n < 0) {
+      throw std::runtime_error("n must be non-negative.");
+    }
+    Int n2 = n * n;
     gen = std::mt19937(rd());
 
-    int magicSum = (n * n * (n * n + 1) / 2) / n;
+    Int magicSum = (n * n * (n * n + 1) / 2) / n;
 
-    distribution = std::uniform_int_distribution<>{0, n2 - 1};
+    distribution = std::uniform_int_distribution<Int>{0, n2 - 1};
 
     engine->open();
 
@@ -52,9 +56,9 @@ class MagicSquare : public benchmark::Fixture {
 
     VarId magicSumVar = engine->makeIntVar(magicSum, magicSum, magicSum);
 
-    for (size_t i = 0; i < n; ++i) {
+    for (Int i = 0; i < n; ++i) {
       square.push_back(std::vector<VarId>{});
-      for (size_t j = 0; j < n; ++j) {
+      for (Int j = 0; j < n; ++j) {
         const auto var = engine->makeIntVar(i * n + j + 1, 1, n2);
         square[i].push_back(var);
         flat.push_back(var);
@@ -69,7 +73,7 @@ class MagicSquare : public benchmark::Fixture {
       // Row
       std::vector<Int> ones{};
       ones.assign(n, 1);
-      for (size_t i = 0; i < n; ++i) {
+      for (Int i = 0; i < n; ++i) {
         const VarId rowSum = engine->makeIntVar(0, 0, n2 * n);
         const VarId rowViol = engine->makeIntVar(0, 0, n2 * n);
         engine->makeInvariant<Linear>(ones, square[i], rowSum);
@@ -103,7 +107,7 @@ class MagicSquare : public benchmark::Fixture {
       const VarId downDiagSum = engine->makeIntVar(0, 0, n2 * n);
       const VarId downDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
-      for (size_t j = 0; j < n; ++j) {
+      for (Int j = 0; j < n; ++j) {
         assert(square[j].size() == n);
         diag.push_back(square[j][j]);
       }
@@ -119,7 +123,7 @@ class MagicSquare : public benchmark::Fixture {
       const VarId upDiagSum = engine->makeIntVar(0, 0, n2 * n);
       const VarId upDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
-      for (size_t j = 0; j < n; ++j) {
+      for (Int j = 0; j < n; ++j) {
         assert(square[n - j - 1].size() == n);
         diag.push_back(square[n - j - 1][j]);
       }
@@ -135,7 +139,7 @@ class MagicSquare : public benchmark::Fixture {
     engine->close();
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     square.clear();
     flat.clear();
   }

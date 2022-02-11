@@ -16,17 +16,18 @@ class AllInterval : public benchmark::Fixture {
   std::random_device rd;
   std::mt19937 gen;
 
-  std::uniform_int_distribution<> distribution;
-  int n;
+  std::uniform_int_distribution<Int> distribution;
+  Int n;
 
   VarId violation = NULL_ID;
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(1);
+    if (n < 0) {
+      throw std::runtime_error("n must be non-negative.");
+    }
 
-    // TODO: why is this printed multiple times per test?
-    logDebug(n);
     engine->open();
 
     switch (state.range(0)) {
@@ -60,10 +61,10 @@ class AllInterval : public benchmark::Fixture {
 
     gen = std::mt19937(rd());
 
-    distribution = std::uniform_int_distribution<>{0, n - 1};
+    distribution = std::uniform_int_distribution<Int>{0, n - 1};
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     inputVars.clear();
     violationVars.clear();
   }

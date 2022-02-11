@@ -18,19 +18,21 @@ class Queens : public benchmark::Fixture {
   std::random_device rd;
   std::mt19937 gen;
 
-  std::uniform_int_distribution<> distribution;
-  int n;
+  std::uniform_int_distribution<Int> distribution;
+  Int n;
 
   VarId violation1 = NULL_ID;
   VarId violation2 = NULL_ID;
   VarId violation3 = NULL_ID;
   VarId total_violation = NULL_ID;
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(1);
+    if (n < 0) {
+      throw std::runtime_error("n must be non-negative.");
+    }
 
-    logDebug(n);
     engine->open();
 
     switch (state.range(0)) {
@@ -47,7 +49,7 @@ class Queens : public benchmark::Fixture {
         break;
     }
 
-    for (int i = 0; i < n; ++i) {
+    for (Int i = 0; i < n; ++i) {
       const VarId q = engine->makeIntVar(i, 0, n - 1);
       queens.push_back(q);
       q_offset_minus.push_back(engine->makeIntView<IntOffsetView>(q, -i));
@@ -73,10 +75,10 @@ class Queens : public benchmark::Fixture {
 
     gen = std::mt19937(rd());
 
-    distribution = std::uniform_int_distribution<>{0, n - 1};
+    distribution = std::uniform_int_distribution<Int>{0, n - 1};
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     queens.clear();
     q_offset_minus.clear();
     q_offset_plus.clear();
