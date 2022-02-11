@@ -6,6 +6,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
 #include "invariants/elementVar.hpp"
@@ -89,15 +90,14 @@ class ElementVarTest : public ::testing::Test {
 
     VarId output = engine->makeIntVar(-10, -100, 100);
 
-    auto invariant = engine->makeInvariant<MockElementVar>(
+    auto& invariant = engine->makeInvariant<MockElementVar>(
         idx, std::vector<VarId>{args}, output);
 
-    EXPECT_TRUE(invariant->initialized);
+    EXPECT_TRUE(invariant.initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
+    EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
 
@@ -105,18 +105,18 @@ class ElementVarTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
@@ -144,14 +144,14 @@ TEST_F(ElementVarTest, CreateElement) {
 
   VarId output = engine->makeIntVar(-10, -100, 100);
 
-  auto invariant = engine->makeInvariant<MockElementVar>(
+  auto& invariant = engine->makeInvariant<MockElementVar>(
       idx, std::vector<VarId>{args}, output);
 
-  EXPECT_TRUE(invariant->initialized);
+  EXPECT_TRUE(invariant.initialized);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 

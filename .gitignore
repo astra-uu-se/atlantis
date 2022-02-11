@@ -34,6 +34,8 @@
 # Build stuff
 build
 build/*
+cmake-build*
+cmake-build*/*
 
 # Misc
 .vscode

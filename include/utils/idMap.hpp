@@ -46,6 +46,13 @@ class IdMap {
     _vector.emplace_back(initValue);
   }
 
+  inline void register_idx_move(I idx, T&& initValue) {
+    if (static_cast<size_t>(idx.id) != _vector.size() + 1) {
+      throw OutOfOrderIndexRegistration();
+    }
+    _vector.emplace_back(std::move(initValue));
+  }
+
   inline void assign_all(T value) { _vector.assign(_vector.size(), value); }
 
   [[nodiscard]] inline size_t size() const { return _vector.size(); }
