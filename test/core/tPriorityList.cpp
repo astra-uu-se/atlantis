@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/types.hpp"
 #include "misc/logging.hpp"
 #include "utils/priorityList.hpp"
@@ -19,7 +20,7 @@ class PriorityListTest : public ::testing::Test {
 
   void testSanity([[maybe_unused]] PriorityList &p,
                   [[maybe_unused]] Timestamp t) {
-#ifndef NDEBUG
+#ifdef CBLS_TEST
     p.sanity(t);
 #endif
   }

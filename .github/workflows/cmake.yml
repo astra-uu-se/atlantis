@@ -39,13 +39,13 @@ jobs:
         shell: bash
         run: mkdir -p build
 
-      - name: Build Tests
+      - name: Build
         working-directory: ${{github.workspace}}/build
         env:
           CMAKE_FLAGS: >
             -DBUILD_TESTS:BOOL=ON
-            -DBUILD_BENCHMARKS:BOOL=OFF
-            -DCMAKE_BUILD_TYPE=Debug
+            -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}}
+            -DCMAKE_BUILD_TYPE=Release
         shell: bash
         run: cmake $CMAKE_FLAGS ..; make
 
@@ -64,23 +64,6 @@ jobs:
           status: ${{ job.status }}
           steps: ${{ toJson(steps) }}
           channel: "#build"
-
-      - name: Clean build Folder
-        if: ${{ steps.buildBenchmarksFlag.outputs.value == 'ON' }}
-        working-directory: ${{github.workspace}}
-        shell: bash
-        run: rm -rf build/*
-
-      - name: Build Benchmarks
-        if: ${{ steps.buildBenchmarksFlag.outputs.value == 'ON' }}
-        working-directory: ${{github.workspace}}/build
-        env:
-          CMAKE_FLAGS: >
-            -DBUILD_TESTS:BOOL=OFF
-            -DBUILD_BENCHMARKS:BOOL=ON
-            -DCMAKE_BUILD_TYPE=Release
-        shell: bash
-        run: cmake $CMAKE_FLAGS ..; make
 
       - name: Run Benchmarks
         if: ${{ steps.buildBenchmarksFlag.outputs.value == 'ON' }}

@@ -6,6 +6,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/types.hpp"
 #include "variables/savedInt.hpp"
 

@@ -20,11 +20,18 @@ class Linear : public Invariant {
   const VarId _y;
 
  public:
-  Linear(std::vector<VarId> varArray, VarId y)
+  Linear(const std::vector<VarId>& varArray, VarId y)
       : Linear(std::vector<Int>(varArray.size(), 1), varArray, y) {}
   Linear(std::vector<Int> coeffs, std::vector<VarId> varArray, VarId y);
 
-#ifndef NDEBUG
+#ifndef CBLS_TEST
+  void init(Timestamp, Engine&) final;
+  void recompute(Timestamp, Engine&) final;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) final;
+  void commit(Timestamp, Engine&) final;
+  VarId getNextInput(Timestamp, Engine&) final;
+  void notifyCurrentInputChanged(Timestamp, Engine&) final;
+#else
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;

@@ -2,9 +2,9 @@
 
 MaxSparse::MaxSparse(std::vector<VarId> varArray, VarId y)
     : Invariant(NULL_ID),
-      _varArray(varArray),
+      _varArray(std::move(varArray)),
       _y(y),
-      _localPriority(varArray.size()) {
+      _localPriority(_varArray.size()) {
   _modifiedVars.reserve(_varArray.size());
 }
 

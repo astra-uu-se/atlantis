@@ -63,7 +63,7 @@ void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
 }
 
 VarId AllDifferent::getNextInput(Timestamp ts, Engine&) {
-  const size_t index = static_cast<size_t>(_state.incValue(ts, 1));
+  const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _variables.size()) {
     return _variables[index];
   }

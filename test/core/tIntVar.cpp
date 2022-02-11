@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/types.hpp"
 #include "variables/intVar.hpp"
 

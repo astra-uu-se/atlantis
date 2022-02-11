@@ -165,7 +165,7 @@ class PriorityList {
     }
   }
 
-#ifndef NDEBUG
+#ifdef CBLS_TEST
   void sanity(Timestamp ts) {
     if (size() == 0) {
       return;
