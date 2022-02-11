@@ -15,7 +15,7 @@ class PropQueue : public benchmark::Fixture {
   std::uniform_int_distribution<> distribution;
   size_t queueSize;
 
-  void SetUp(const ::benchmark::State& st) {
+  void SetUp(const ::benchmark::State& st) override {
     queueSize = size_t(st.range(0));
 
     gen = std::mt19937(rd());
