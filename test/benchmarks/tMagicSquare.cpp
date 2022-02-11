@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/types.hpp"
 
 namespace {

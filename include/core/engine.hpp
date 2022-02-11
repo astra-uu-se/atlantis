@@ -212,7 +212,7 @@ std::enable_if_t<std::is_base_of<IntView, T>::value, VarId> Engine::makeIntView(
   if (!_isOpen) {
     throw EngineClosedException("Cannot make intView when store is closed.");
   }
-  const auto viewPtr = std::make_shared<T>(std::forward<Args>(args)...);
+  // We don't actually register views as they are invisible to propagation.
 
   // We don'ts actually register views as they are invisible to propagation.
 

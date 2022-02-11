@@ -25,7 +25,14 @@ class MinSparse : public Invariant {
  public:
   MinSparse(std::vector<VarId> varArray, VarId y);
 
-#ifndef NDEBUG
+#ifndef CBLS_TEST
+  void init(Timestamp, Engine&) final;
+  void recompute(Timestamp, Engine&) final;
+  void notifyIntChanged(Timestamp, Engine&, LocalId) final;
+  void commit(Timestamp, Engine&) final;
+  VarId getNextInput(Timestamp, Engine&) final;
+  void notifyCurrentInputChanged(Timestamp, Engine&) final;
+#else
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;

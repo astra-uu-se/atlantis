@@ -10,8 +10,8 @@ void ElementVar::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
   registerDefinedVariable(engine, _y);
   engine.registerInvariantInput(_id, _index, LocalId(0));
-  for (size_t index = 0; index < _varArray.size(); ++index) {
-    engine.registerInvariantInput(_id, _varArray[index], LocalId(0));
+  for (const auto index : _varArray) {
+    engine.registerInvariantInput(_id, index, LocalId(0));
   }
 }
 

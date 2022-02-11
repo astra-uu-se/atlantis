@@ -45,7 +45,7 @@ void Linear::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
 }
 
 VarId Linear::getNextInput(Timestamp ts, Engine&) {
-  const size_t index = static_cast<size_t>(_state.incValue(ts, 1));
+  const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.getValue(ts));
   if (index < _varArray.size()) {
     return _varArray[_state.getValue(ts)];
@@ -60,7 +60,7 @@ void Linear::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
 
 void Linear::commit(Timestamp ts, Engine& engine) {
   Invariant::commit(ts, engine);
-  for (size_t i = 0; i < _localVarArray.size(); ++i) {
-    _localVarArray[i].commitIf(ts);
+  for (auto& localVar : _localVarArray) {
+    localVar.commitIf(ts);
   }
 }

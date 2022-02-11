@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "propagation/propagationQueue.hpp"
 
 namespace {
