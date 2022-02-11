@@ -118,7 +118,7 @@ class Engine {
 
   [[nodiscard]] inline Int getIntViewLowerBound(VarId id) const {
     assert(id.idType == VarIdType::view);
-    return _store.getConstIntView(id)->getLowerBound();
+    return _store.getConstIntView(id).getLowerBound();
   }
 
   [[nodiscard]] inline Int getUpperBound(VarId id) const {
@@ -131,7 +131,7 @@ class Engine {
 
   [[nodiscard]] inline Int getIntViewUpperBound(VarId id) const {
     assert(id.idType == VarIdType::view);
-    return _store.getConstIntView(id)->getUpperBound();
+    return _store.getConstIntView(id).getUpperBound();
   }
 
   void commitInvariantIf(Timestamp, InvariantId);
