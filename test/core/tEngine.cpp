@@ -108,9 +108,9 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   // I just had to do some quick test and was too lazy to do this propperly.
   engine->open();
 
-  size_t intVarCount = 10;
+  Int intVarCount = 10;
   std::vector<VarId> X;
-  for (size_t value = 0; value < intVarCount; ++value) {
+  for (Int value = 0; value < intVarCount; ++value) {
     X.push_back(engine->makeIntVar(value, Int(-100), Int(100)));
   }
 
@@ -175,8 +175,8 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
 TEST_F(EngineTest, RecomputeAndCommit) {
   engine->open();
 
-  size_t intVarCount = 10;
-  for (size_t value = 0; value < intVarCount; ++value) {
+  Int intVarCount = 10;
+  for (Int value = 0; value < intVarCount; ++value) {
     engine->makeIntVar(value, -100, 100);
   }
 

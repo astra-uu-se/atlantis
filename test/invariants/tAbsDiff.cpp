@@ -68,7 +68,7 @@ class AbsDiffTest : public ::testing::Test {
 
   std::unique_ptr<PropagationEngine> engine;
 
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     engine = std::make_unique<PropagationEngine>();

@@ -22,28 +22,28 @@ class MagicSquareTest : public ::testing::Test {
   std::random_device rd;
   std::mt19937 gen;
 
-  std::uniform_int_distribution<> distribution;
-  int n;
+  std::uniform_int_distribution<Int> distribution;
+  Int n;
 
   VarId totalViolation = NULL_ID;
 
-  int magicSum = 0;
-  void SetUp() {
+  Int magicSum = 0;
+  void SetUp() override {
     engine = std::make_unique<PropagationEngine>();
     n = 3;
-    int n2 = n * n;
+    Int n2 = n * n;
     gen = std::mt19937(rd());
 
     magicSum = (n * n * (n * n + 1) / 2) / n;
 
-    distribution = std::uniform_int_distribution<>{0, n2 - 1};
+    distribution = std::uniform_int_distribution<Int>{0, n2 - 1};
 
     engine->open();
 
     VarId magicSumVar = engine->makeIntVar(magicSum, magicSum, magicSum);
 
     for (int i = 0; i < n; ++i) {
-      square.push_back(std::vector<VarId>{});
+      square.emplace_back();
       for (int j = 0; j < n; ++j) {
         auto var = engine->makeIntVar(i * n + j + 1, 1, n2);
         square.at(i).push_back(var);
@@ -82,6 +82,7 @@ class MagicSquareTest : public ::testing::Test {
         VarId colSum = engine->makeIntVar(0, 0, n2 * n);
         VarId colViol = engine->makeIntVar(0, 0, n2 * n);
         std::vector<VarId> col{};
+        col.reserve(n);
         for (int j = 0; j < n; ++j) {
           col.push_back(square.at(j).at(i));
         }
@@ -98,6 +99,7 @@ class MagicSquareTest : public ::testing::Test {
       VarId downDiagSum = engine->makeIntVar(0, 0, n2 * n);
       VarId downDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
+      diag.reserve(n);
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(j).at(j));
       }
@@ -113,6 +115,7 @@ class MagicSquareTest : public ::testing::Test {
       VarId upDiagSum = engine->makeIntVar(0, 0, n2 * n);
       VarId upDiagViol = engine->makeIntVar(0, 0, n2 * n);
       std::vector<VarId> diag{};
+      diag.reserve(n);
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(n - j - 1).at(j));
       }
@@ -128,7 +131,7 @@ class MagicSquareTest : public ::testing::Test {
     engine->close();
   }
 
-  void TearDown() {
+  void TearDown() override {
     square.clear();
     flat.clear();
   }
@@ -151,10 +154,10 @@ class MagicSquareTest : public ::testing::Test {
 }
 
 Int computeTotalViolaton(MagicSquareTest& test) {
-  int totalViol = 0;
+  Int totalViol = 0;
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
-    int rowSum = 0;
-    int colSum = 0;
+    Int rowSum = 0;
+    Int colSum = 0;
     for (size_t j = 0; j < static_cast<size_t>(test.n); ++j) {
       rowSum += test.engine->getNewValue(test.square.at(i).at(j));
       colSum += test.engine->getNewValue(test.square.at(j).at(i));
@@ -162,8 +165,8 @@ Int computeTotalViolaton(MagicSquareTest& test) {
     totalViol += std::abs(rowSum - test.magicSum);
     totalViol += std::abs(colSum - test.magicSum);
   }
-  int downDiagSum = 0;
-  int upDiagSum = 0;
+  Int downDiagSum = 0;
+  Int upDiagSum = 0;
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
     downDiagSum += test.engine->getNewValue(test.square.at(i).at(i));
     upDiagSum += test.engine->getNewValue(test.square.at(test.n - i - 1).at(i));
@@ -225,8 +228,8 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
         EXPECT_EQ(totalViol, engine->getNewValue(totalViolation));
       }
     }
-    const int i = distribution(gen);
-    const int j = distribution(gen);
+    const Int i = distribution(gen);
+    const Int j = distribution(gen);
     const Int oldI = engine->getCommittedValue(flat.at(i));
     const Int oldJ = engine->getCommittedValue(flat.at(j));
     // Perform random swap

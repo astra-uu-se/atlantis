@@ -13,7 +13,7 @@
 namespace {
 class SavedIntTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
   }
@@ -215,16 +215,15 @@ TEST_F(SavedIntTest, SavedIntCommitIf) {
   EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
 }
 
-RC_GTEST_FIXTURE_PROP(SavedIntTest,
-              checkConstructorValue,
-              (Timestamp initTime, Int initValue, Timestamp anyTime)) {
+RC_GTEST_FIXTURE_PROP(SavedIntTest, checkConstructorValue,
+                      (Timestamp initTime, Int initValue, Timestamp anyTime)) {
   auto savedInt = SavedInt(initTime, initValue);
   RC_ASSERT(savedInt.getValue(anyTime) == initValue);
 }
 
-RC_GTEST_FIXTURE_PROP(SavedIntTest,
-              checkSetValue,
-              (Timestamp initTime, Int initValue, Timestamp currentTime, Int value)) {
+RC_GTEST_FIXTURE_PROP(SavedIntTest, checkSetValue,
+                      (Timestamp initTime, Int initValue, Timestamp currentTime,
+                       Int value)) {
   auto savedInt = SavedInt(initTime, initValue);
   savedInt.setValue(currentTime, value);
   if (initTime != currentTime) {
@@ -232,9 +231,9 @@ RC_GTEST_FIXTURE_PROP(SavedIntTest,
   }
 }
 
-RC_GTEST_FIXTURE_PROP(SavedIntTest,
-              checkCommittedValue,
-              (Timestamp initTime, Int initValue, Timestamp currentTime, Int value)) {
+RC_GTEST_FIXTURE_PROP(SavedIntTest, checkCommittedValue,
+                      (Timestamp initTime, Int initValue, Timestamp currentTime,
+                       Int value)) {
   auto savedInt = SavedInt(initTime, initValue);
   savedInt.setValue(currentTime, value);
   RC_ASSERT(savedInt.getValue(currentTime) == value);

@@ -8,14 +8,7 @@
 #include "utils/idMap.hpp"
 
 namespace {
-class IdMapTest : public ::testing::Test {
- protected:
-  virtual void SetUp() {
-    std::random_device rd;
-    gen = std::mt19937(rd());
-  }
-  std::mt19937 gen;
-};
+class IdMapTest : public ::testing::Test {};
 
 /**
  *  Testing constructor
@@ -60,8 +53,8 @@ TEST_F(IdMapTest, ID2Vectortest) {
   // values to store
   varToVector.register_idx(id1);
   varToVector.register_idx(id2);
-  varToVector[id2].push_back(VarId(21));
-  varToVector[id2].push_back(VarId(22));
+  varToVector[id2].emplace_back(21);
+  varToVector[id2].emplace_back(22);
   EXPECT_EQ(varToVector[id2].size(), size_t(2));
   EXPECT_EQ(varToVector[id1].size(), size_t(0));
 }
