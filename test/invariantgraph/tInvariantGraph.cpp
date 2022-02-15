@@ -100,3 +100,5 @@ TEST(InvariantGraphBuilder, build_simple_graph_2) {
   // invariants, they define their violation)
   EXPECT_EQ(engine.getNumInvariants(), 3);
 }
+
+TEST(InvariantGraphBuilder, cycles_are_broken) {}
