@@ -4,6 +4,7 @@
 
 #include "invariantgraph/constraints/allDifferent.hpp"
 #include "invariantgraph/invariants/linear.hpp"
+#include "invariantgraph/invariants/max.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
@@ -13,9 +14,9 @@ invariantgraph::InvariantGraphBuilder::build(
   createNodes(model);
 
   std::vector<std::shared_ptr<invariantgraph::VariableNode>> variables;
-  std::transform(_variableNodes.begin(), _variableNodes.end(), std::back_inserter(variables), [](auto pair) {
-    return pair.second;
-  });
+  std::transform(_variableNodes.begin(), _variableNodes.end(),
+                 std::back_inserter(variables),
+                 [](auto pair) { return pair.second; });
 
   auto graph = std::make_unique<invariantgraph::InvariantGraph>(variables);
   return graph;
@@ -143,6 +144,10 @@ invariantgraph::InvariantGraphBuilder::makeInvariant(
   if (name == "int_lin_eq") {
     return std::static_pointer_cast<invariantgraph::InvariantNode>(
         invariantgraph::LinearInvariantNode::fromModelConstraint(
+            constraint, [this](auto var) { return _variableNodes.at(var); }));
+  } else if (name == "int_max" || name == "array_int_maximum") {
+    return std::static_pointer_cast<invariantgraph::InvariantNode>(
+        invariantgraph::MaxInvariantNode::fromModelConstraint(
             constraint, [this](auto var) { return _variableNodes.at(var); }));
   }
 
