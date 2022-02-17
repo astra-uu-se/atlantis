@@ -8,9 +8,8 @@ void invariantgraph::InvariantGraph::apply(Engine& engine) {
   engine.open();
   for (const auto& variable : _variables) applyVariable(engine, variable);
 
-  VarId totalViolations =
-      engine.makeIntVar(0, 0, totalViolationsUpperBound(engine));
-  engine.makeInvariant<Linear>(violationVars, totalViolations);
+  _totalViolations = engine.makeIntVar(0, 0, totalViolationsUpperBound(engine));
+  engine.makeInvariant<Linear>(violationVars, *_totalViolations);
   engine.close();
 }
 

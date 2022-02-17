@@ -18,12 +18,27 @@ class InvariantGraph {
   std::map<std::shared_ptr<VariableNode>, VarId> engineVariables;
   std::vector<VarId> violationVars;
 
+  std::optional<VarId> _totalViolations;
+  std::optional<VarId> _objective;
+
   friend class InvariantGraphBuilder;
 
  public:
   explicit InvariantGraph(std::vector<std::shared_ptr<VariableNode>> variables)
       : _variables(std::move(variables)) {}
   void apply(Engine& engine);
+
+  [[nodiscard]] VarId totalViolations() const {
+    assert(_totalViolations.has_value());
+
+    return *_totalViolations;
+  }
+
+  [[nodiscard]] VarId objective() const {
+    assert(_objective.has_value());
+
+    return *_objective;
+  }
 
  private:
   void applyVariable(Engine& engine, const std::shared_ptr<VariableNode>& node);

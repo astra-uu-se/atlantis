@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <iostream>
 
+#include "cblsModel.hpp"
 #include "fznparser/modelfactory.hpp"
 
 /**
@@ -57,9 +58,9 @@ int main(int argc, char* argv[]) {
     }
 
     auto& modelFilePath = result["modelFile"].as<std::filesystem::path>();
-    auto model = fznparser::ModelFactory::create(modelFilePath);
 
-    std::cout << "Model has " << model->variables().size() << " variables and " << model->constraints().size() << " constraints." << std::endl;
+    CBLSModel model(modelFilePath);
+    model.solve();
   } catch (const cxxopts::OptionException& e) {
     std::cerr << "error: " << e.what() << std::endl;
   } catch (const std::invalid_argument& e) {
