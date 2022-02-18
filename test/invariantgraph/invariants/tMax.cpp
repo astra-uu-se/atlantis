@@ -20,10 +20,15 @@ TEST(MaxInvariantNode, int_max_is_parsed_correctly) {
       "int_max", std::vector<fznparser::ConstraintArgument>{a, b, c},
       constraintAnnotations);
 
+  std::vector<std::unique_ptr<invariantgraph::VariableNode>> _nodes;
   auto node = invariantgraph::MaxInvariantNode::fromModelConstraint(
-      constraint, [](const auto& var) {
-        return std::make_shared<invariantgraph::VariableNode>(
+      constraint, [&](const auto& var) {
+        auto node = std::make_unique<invariantgraph::VariableNode>(
             std::dynamic_pointer_cast<fznparser::SearchVariable>(var));
+
+        auto ptr = node.get();
+        _nodes.push_back(std::move(node));
+        return ptr;
       });
 
   EXPECT_EQ(node->variables()[0]->variable(), a);
@@ -50,10 +55,15 @@ TEST(MaxInvariantNode, array_int_maximum_is_parsed_correctly) {
           c, std::vector<std::shared_ptr<fznparser::Literal>>{a, b}},
       constraintAnnotations);
 
+  std::vector<std::unique_ptr<invariantgraph::VariableNode>> _nodes;
   auto node = invariantgraph::MaxInvariantNode::fromModelConstraint(
-      constraint, [](const auto& var) {
-        return std::make_shared<invariantgraph::VariableNode>(
+      constraint, [&](const auto& var) {
+        auto n = std::make_unique<invariantgraph::VariableNode>(
             std::dynamic_pointer_cast<fznparser::SearchVariable>(var));
+
+        auto ptr = n.get();
+        _nodes.push_back(std::move(n));
+        return ptr;
       });
 
   EXPECT_EQ(node->variables()[0]->variable(), a);
