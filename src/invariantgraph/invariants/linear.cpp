@@ -4,11 +4,11 @@
 
 #include "invariants/linear.hpp"
 
-std::shared_ptr<invariantgraph::LinearInvariantNode>
+std::unique_ptr<invariantgraph::LinearInvariantNode>
 invariantgraph::LinearInvariantNode::fromModelConstraint(
     const std::shared_ptr<fznparser::Constraint>& constraint,
-    const std::function<std::shared_ptr<VariableNode>(
-        std::shared_ptr<fznparser::Variable>)>& variableMap) {
+    const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
+        variableMap) {
   assert(constraint->arguments().size() == 3);
   assert(constraint->annotations().has<fznparser::DefinesVarAnnotation>());
 
@@ -38,7 +38,7 @@ invariantgraph::LinearInvariantNode::fromModelConstraint(
   assert(definedVarPos != vars.end());
   size_t definedVarIndex = definedVarPos - vars.begin();
 
-  std::vector<std::shared_ptr<invariantgraph::VariableNode>> convertedVars;
+  std::vector<invariantgraph::VariableNode*> convertedVars;
   std::vector<Int> convertedCoeffs;
 
   for (size_t i = 0; i < vars.size(); ++i) {
@@ -61,18 +61,16 @@ invariantgraph::LinearInvariantNode::fromModelConstraint(
   }
 
   auto output = variableMap(definedVar);
-  auto linearInv = std::make_shared<invariantgraph::LinearInvariantNode>(
+  auto linearInv = std::make_unique<invariantgraph::LinearInvariantNode>(
       convertedCoeffs, convertedVars, output);
-  output->definedByInvariant(linearInv);
+  output->definedByInvariant(linearInv.get());
   output->setOffset(-sumValue);
 
   return linearInv;
 }
 
 void invariantgraph::LinearInvariantNode::registerWithEngine(
-    Engine& engine,
-    std::function<VarId(const std::shared_ptr<VariableNode>&)> variableMapper)
-    const {
+    Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),
                  std::back_inserter(variables), variableMapper);

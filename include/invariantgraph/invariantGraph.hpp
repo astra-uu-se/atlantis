@@ -11,41 +11,44 @@
 namespace invariantgraph {
 class InvariantGraph {
  private:
-  std::vector<std::shared_ptr<VariableNode>> _variables;
+  std::vector<std::unique_ptr<VariableNode>> _variables;
+  std::vector<std::unique_ptr<InvariantNode>> _invariants;
+  std::vector<std::unique_ptr<SoftConstraintNode>> _softConstraints;
 
-  std::set<std::shared_ptr<InvariantNode>> appliedInvariants;
-  std::set<std::shared_ptr<SoftConstraintNode>> appliedSoftConstraints;
-  std::map<std::shared_ptr<VariableNode>, VarId> engineVariables;
+  std::set<InvariantNode*> appliedInvariants;
+  std::set<SoftConstraintNode*> appliedSoftConstraints;
+  std::map<VariableNode*, VarId> engineVariables;
   std::vector<VarId> violationVars;
 
   friend class InvariantGraphBuilder;
 
  public:
-  explicit InvariantGraph(std::vector<std::shared_ptr<VariableNode>> variables)
-      : _variables(std::move(variables)) {}
+  InvariantGraph(
+      std::vector<std::unique_ptr<VariableNode>> variables,
+      std::vector<std::unique_ptr<InvariantNode>> invariants,
+      std::vector<std::unique_ptr<SoftConstraintNode>> softConstraints)
+      : _variables(std::move(variables)),
+        _invariants(std::move(invariants)),
+        _softConstraints(std::move(softConstraints)) {}
+
   void apply(Engine& engine);
 
  private:
-  void applyVariable(Engine& engine, const std::shared_ptr<VariableNode>& node);
-  void applyInvariant(Engine& engine,
-                      const std::shared_ptr<InvariantNode>& node);
-  void applyConstraint(Engine& engine,
-                       const std::shared_ptr<SoftConstraintNode>& node);
+  void applyVariable(Engine& engine, VariableNode* node);
+  void applyInvariant(Engine& engine, InvariantNode* node);
+  void applyConstraint(Engine& engine, SoftConstraintNode* node);
 
   [[nodiscard]] Int totalViolationsUpperBound(Engine& engine) const;
 
-  [[nodiscard]] bool wasVisited(
-      const std::shared_ptr<VariableNode>& node) const {
+  [[nodiscard]] bool wasVisited(VariableNode* node) const {
     return engineVariables.count(node) > 0;
   }
 
-  [[nodiscard]] bool wasVisited(
-      const std::shared_ptr<InvariantNode>& node) const {
+  [[nodiscard]] bool wasVisited(InvariantNode* node) const {
     return appliedInvariants.count(node) > 0;
   }
 
-  [[nodiscard]] bool wasVisited(
-      const std::shared_ptr<SoftConstraintNode>& node) const {
+  [[nodiscard]] bool wasVisited(SoftConstraintNode* node) const {
     return appliedSoftConstraints.count(node) > 0;
   }
 };

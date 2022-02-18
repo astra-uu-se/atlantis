@@ -9,18 +9,18 @@ namespace invariantgraph {
 class LinearInvariantNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
-  std::vector<std::shared_ptr<VariableNode>> _variables;
+  std::vector<VariableNode*> _variables;
 
  public:
-  static std::shared_ptr<LinearInvariantNode> fromModelConstraint(
+  static std::unique_ptr<LinearInvariantNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<std::shared_ptr<VariableNode>(
-          std::shared_ptr<fznparser::Variable>)>& variableMap);
+      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
+          variableMap);
 
   LinearInvariantNode(std::vector<Int> coeffs,
-                      std::vector<std::shared_ptr<VariableNode>> variables,
-                      std::shared_ptr<VariableNode> output)
-      : InvariantNode(std::move(output)),
+                      std::vector<VariableNode*> variables,
+                      VariableNode* output)
+      : InvariantNode(output),
         _coeffs(std::move(coeffs)),
         _variables(std::move(variables)) {}
 
@@ -28,7 +28,6 @@ class LinearInvariantNode : public InvariantNode {
 
   void registerWithEngine(
       Engine& engine,
-      std::function<VarId(const std::shared_ptr<VariableNode>&)> variableMapper)
-      const override;
+      std::function<VarId(VariableNode*)> variableMapper) const override;
 };
 }  // namespace invariantgraph

@@ -13,19 +13,17 @@ namespace invariantgraph {
 class VariableNode;
 class InvariantNode {
  private:
-  std::shared_ptr<VariableNode> _output;
+  VariableNode* _output;
 
  public:
-  explicit InvariantNode(std::shared_ptr<VariableNode> output)
-      : _output(std::move(output)) {}
+  explicit InvariantNode(VariableNode* output) : _output(output) {}
   virtual ~InvariantNode() = default;
 
   virtual void registerWithEngine(
       Engine& engine,
-      std::function<VarId(const std::shared_ptr<VariableNode>&)> variableMapper)
-      const = 0;
+      std::function<VarId(VariableNode*)> variableMapper) const = 0;
 
-  [[nodiscard]] std::shared_ptr<VariableNode> output() const { return _output; }
+  [[nodiscard]] VariableNode* output() const { return _output; }
 };
 
 class SoftConstraintNode {
@@ -34,19 +32,17 @@ class SoftConstraintNode {
 
   virtual VarId registerWithEngine(
       Engine& engine,
-      std::function<VarId(const std::shared_ptr<VariableNode>&)> variableMapper)
-      const = 0;
+      std::function<VarId(VariableNode*)> variableMapper) const = 0;
 };
 
 class ImplicitConstraintNode {
  private:
-  std::vector<std::shared_ptr<VariableNode>> _definingVariables;
+  std::vector<VariableNode*> _definingVariables;
 
  public:
   virtual ~ImplicitConstraintNode() = default;
 
-  [[nodiscard]] const std::vector<std::shared_ptr<VariableNode>>&
-  definingVariables() const {
+  [[nodiscard]] const std::vector<VariableNode*>& definingVariables() const {
     return _definingVariables;
   }
 };
@@ -54,8 +50,8 @@ class ImplicitConstraintNode {
 class VariableNode {
  private:
   std::shared_ptr<fznparser::SearchVariable> _variable;
-  std::set<std::shared_ptr<SoftConstraintNode>> _softConstraints;
-  std::optional<std::shared_ptr<InvariantNode>> _definingInvariant;
+  std::set<SoftConstraintNode*> _softConstraints;
+  std::optional<InvariantNode*> _definingInvariant;
   Int _offset = 0;
 
  public:
@@ -66,21 +62,17 @@ class VariableNode {
     return _variable;
   }
 
-  void addSoftConstraint(const std::shared_ptr<SoftConstraintNode>& node) {
+  void addSoftConstraint(SoftConstraintNode* node) {
     _softConstraints.emplace(node);
   }
 
-  [[nodiscard]] const std::set<std::shared_ptr<SoftConstraintNode>>&
-  softConstraints() const {
+  [[nodiscard]] const std::set<SoftConstraintNode*>& softConstraints() const {
     return _softConstraints;
   }
 
-  void definedByInvariant(std::shared_ptr<InvariantNode> node) {
-    _definingInvariant = node;
-  }
+  void definedByInvariant(InvariantNode* node) { _definingInvariant = node; }
 
-  [[nodiscard]] std::optional<std::shared_ptr<InvariantNode>>
-  definingInvariant() const {
+  [[nodiscard]] std::optional<InvariantNode*> definingInvariant() const {
     return _definingInvariant;
   }
 

@@ -8,27 +8,24 @@
 namespace invariantgraph {
 class MaxInvariantNode : public InvariantNode {
  private:
-  std::vector<std::shared_ptr<VariableNode>> _variables;
+  std::vector<VariableNode*> _variables;
 
  public:
-  static std::shared_ptr<MaxInvariantNode> fromModelConstraint(
+  static std::unique_ptr<MaxInvariantNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<std::shared_ptr<VariableNode>(
-          std::shared_ptr<fznparser::Variable>)>& variableMap);
+      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
+          variableMap);
 
-  MaxInvariantNode(std::vector<std::shared_ptr<VariableNode>> variables,
-                   std::shared_ptr<VariableNode> output)
-      : InvariantNode(std::move(output)), _variables(std::move(variables)) {}
+  MaxInvariantNode(std::vector<VariableNode*> variables, VariableNode* output)
+      : InvariantNode(output), _variables(std::move(variables)) {}
 
   ~MaxInvariantNode() override = default;
 
   void registerWithEngine(
       Engine& engine,
-      std::function<VarId(const std::shared_ptr<VariableNode>&)> variableMapper)
-      const override;
+      std::function<VarId(VariableNode*)> variableMapper) const override;
 
-  [[nodiscard]] const std::vector<std::shared_ptr<VariableNode>>& variables()
-      const {
+  [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;
   }
 };
