@@ -6,15 +6,15 @@
 
 void invariantgraph::InvariantGraph::apply(Engine& engine) {
   engine.open();
-  for (const auto& variable : _variables) applyVariable(engine, variable);
+  for (const auto& variable : _variables) applyVariable(engine, variable.get());
 
   _totalViolations = engine.makeIntVar(0, 0, totalViolationsUpperBound(engine));
   engine.makeInvariant<Linear>(violationVars, *_totalViolations);
   engine.close();
 }
 
-void invariantgraph::InvariantGraph::applyVariable(
-    Engine& engine, const std::shared_ptr<VariableNode>& node) {
+void invariantgraph::InvariantGraph::applyVariable(Engine& engine,
+                                                   VariableNode* node) {
   if (wasVisited(node)) return;
 
   // TODO: Different types of domains.
@@ -28,7 +28,7 @@ void invariantgraph::InvariantGraph::applyVariable(
   engineVariables.emplace(node, engineVariable);
 
   if (node->isFunctionallyDefined()) {
-    std::shared_ptr<InvariantNode> definedBy = *node->definingInvariant();
+    auto definedBy = *node->definingInvariant();
     applyInvariant(engine, definedBy);
   }
 
@@ -37,8 +37,8 @@ void invariantgraph::InvariantGraph::applyVariable(
   }
 }
 
-void invariantgraph::InvariantGraph::applyInvariant(
-    Engine& engine, const std::shared_ptr<InvariantNode>& node) {
+void invariantgraph::InvariantGraph::applyInvariant(Engine& engine,
+                                                    InvariantNode* node) {
   if (wasVisited(node)) return;
   appliedInvariants.emplace(node);
 
@@ -50,8 +50,8 @@ void invariantgraph::InvariantGraph::applyInvariant(
   });
 }
 
-void invariantgraph::InvariantGraph::applyConstraint(
-    Engine& engine, const std::shared_ptr<SoftConstraintNode>& node) {
+void invariantgraph::InvariantGraph::applyConstraint(Engine& engine,
+                                                     SoftConstraintNode* node) {
   if (wasVisited(node)) return;
   appliedSoftConstraints.emplace(node);
 

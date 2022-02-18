@@ -3,22 +3,20 @@
 #include <algorithm>
 
 #include "invariantgraph/constraints/allDifferent.hpp"
+#include "invariantgraph/constraints/lessThanEq.hpp"
 #include "invariantgraph/invariants/linear.hpp"
 #include "invariantgraph/invariants/max.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
     const std::unique_ptr<fznparser::Model>& model) {
-  _variableNodes.clear();
+  _variableMap.clear();
 
   createNodes(model);
 
-  std::vector<std::shared_ptr<invariantgraph::VariableNode>> variables;
-  std::transform(_variableNodes.begin(), _variableNodes.end(),
-                 std::back_inserter(variables),
-                 [](auto pair) { return pair.second; });
-
-  auto graph = std::make_unique<invariantgraph::InvariantGraph>(variables);
+  auto graph = std::make_unique<invariantgraph::InvariantGraph>(
+      std::move(_variables), std::move(_invariants),
+      std::move(_softConstraints));
   return graph;
 }
 
@@ -29,10 +27,11 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       continue;
     }
 
-    _variableNodes.emplace(
-        variable,
-        std::make_shared<VariableNode>(
-            std::dynamic_pointer_cast<fznparser::SearchVariable>(variable)));
+    auto variableNode = std::make_unique<VariableNode>(
+        std::dynamic_pointer_cast<fznparser::SearchVariable>(variable));
+
+    _variableMap.emplace(variable, variableNode.get());
+    _variables.push_back(std::move(variableNode));
   }
 
   std::unordered_set<VarRef> definedVars;
@@ -50,8 +49,9 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
     }
 
     auto invariant = makeInvariant(constraint);
-
     definedVars.emplace(invariant->output()->variable());
+    _invariants.push_back(std::move(invariant));
+
     processedConstraints.emplace(constraint);
   }
 
@@ -64,10 +64,10 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
     }
 
     auto implicitConstraint = makeImplicitConstraint(constraint);
-    _implicitConstraints.emplace(constraint, implicitConstraint);
-    for (const auto& variableNode : implicitConstraint->definingVariables()) {
+    for (auto variableNode : implicitConstraint->definingVariables()) {
       definedVars.emplace(variableNode->variable());
     }
+    _implicitConstraints.push_back(std::move(implicitConstraint));
     processedConstraints.emplace(constraint);
   }
 
@@ -77,7 +77,7 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       continue;
     }
 
-    makeSoftConstraint(constraint);
+    _softConstraints.push_back(makeSoftConstraint(constraint));
   }
 }
 
@@ -137,36 +137,40 @@ typedef std::unordered_map<VarRef,
                            std::shared_ptr<invariantgraph::VariableNode>>
     VarMap;
 
-std::shared_ptr<invariantgraph::InvariantNode>
+std::unique_ptr<invariantgraph::InvariantNode>
 invariantgraph::InvariantGraphBuilder::makeInvariant(
     const ConstraintRef& constraint) {
   std::string_view name = constraint->name();
   if (name == "int_lin_eq") {
-    return std::static_pointer_cast<invariantgraph::InvariantNode>(
-        invariantgraph::LinearInvariantNode::fromModelConstraint(
-            constraint, [this](auto var) { return _variableNodes.at(var); }));
+    return invariantgraph::LinearInvariantNode::fromModelConstraint(
+        constraint, [this](auto var) { return _variableMap.at(var); });
   } else if (name == "int_max" || name == "array_int_maximum") {
-    return std::static_pointer_cast<invariantgraph::InvariantNode>(
-        invariantgraph::MaxInvariantNode::fromModelConstraint(
-            constraint, [this](auto var) { return _variableNodes.at(var); }));
+    return invariantgraph::MaxInvariantNode::fromModelConstraint(
+        constraint, [this](auto var) { return _variableMap.at(var); });
   }
 
   throw std::runtime_error("Unsupported constraint: " + std::string(name));
 }
 
-invariantgraph::InvariantGraphBuilder::ImplicitConstraintRef
+std::unique_ptr<invariantgraph::ImplicitConstraintNode>
 invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
     const ConstraintRef& constraint) {
-  return std::make_shared<invariantgraph::ImplicitConstraintNode>();
+  return std::make_unique<invariantgraph::ImplicitConstraintNode>();
 }
 
-invariantgraph::InvariantGraphBuilder::SoftConstraintRef
+std::unique_ptr<invariantgraph::SoftConstraintNode>
 invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
     const ConstraintRef& constraint) {
   std::string_view name = constraint->name();
+
   if (name == "alldifferent") {
     return invariantgraph::AllDifferentNode::fromModelConstraint(
-        constraint, [this](auto var) { return _variableNodes.at(var); });
+        constraint, [this](auto var) { return _variableMap.at(var); });
+  }
+
+  if (name == "int_lin_le") {
+    return invariantgraph::LessThanEqNode::fromModelConstraint(
+        constraint, [this](auto var) { return _variableMap.at(var); });
   }
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
