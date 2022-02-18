@@ -8,6 +8,9 @@ bool search::Annealer::accept(Int currentObjectiveValue,
   static std::mt19937 gen(rd());
   static std::uniform_real_distribution<> acceptanceDist(0.0, 1.0);
 
+  auto delta = newObjectiveValue - currentObjectiveValue;
+  if (delta < 0) return true;
+
   auto metropolisCriterion =
       exp(-static_cast<double>(newObjectiveValue - currentObjectiveValue) /
           _temperature);

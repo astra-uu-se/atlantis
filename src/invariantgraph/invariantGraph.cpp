@@ -1,69 +1,61 @@
 #include "invariantgraph/invariantGraph.hpp"
 
+#include <limits>
 #include <numeric>
 
 #include "invariants/linear.hpp"
 
-void invariantgraph::InvariantGraph::apply(Engine& engine) {
+std::map<VarId, std::shared_ptr<fznparser::Variable>>
+invariantgraph::InvariantGraph::apply(Engine& engine) {
   engine.open();
   for (const auto& variable : _variables) applyVariable(engine, variable.get());
+  for (const auto& invariant : _invariants)
+    applyInvariant(engine, invariant.get());
 
-  _totalViolations = engine.makeIntVar(0, 0, totalViolationsUpperBound(engine));
+  violationVars.reserve(_softConstraints.size());
+  for (const auto& softConstraint : _softConstraints)
+    applyConstraint(engine, softConstraint.get());
+
+  Int ub = totalViolationsUpperBound(engine);
+
+  // The upper bound overflowed the Int type.
+  if (ub < 0) ub = std::numeric_limits<Int>::max();
+
+  _totalViolations.emplace(engine.makeIntVar(0, 0, ub));
   engine.makeInvariant<Linear>(violationVars, *_totalViolations);
   engine.close();
+
+  std::map<VarId, std::shared_ptr<fznparser::Variable>> variableMap;
+  for (auto& [variableNode, varId] : engineVariables)
+    variableMap.emplace(varId, variableNode->variable());
+
+  return variableMap;
 }
 
 void invariantgraph::InvariantGraph::applyVariable(Engine& engine,
                                                    VariableNode* node) {
-  if (wasVisited(node)) return;
-
   // TODO: Different types of domains.
   assert(node->variable()->domain()->type() == fznparser::DomainType::INT);
   fznparser::IntDomain* domain =
       dynamic_cast<fznparser::IntDomain*>(node->variable()->domain());
 
-  // TODO: Initial assignment.
   VarId engineVariable = engine.makeIntVar(
       domain->lowerBound(), domain->lowerBound(), domain->upperBound());
   engineVariables.emplace(node, engineVariable);
-
-  if (node->isFunctionallyDefined()) {
-    auto definedBy = *node->definingInvariant();
-    applyInvariant(engine, definedBy);
-  }
-
-  for (const auto& constraint : node->softConstraints()) {
-    applyConstraint(engine, constraint);
-  }
 }
 
 void invariantgraph::InvariantGraph::applyInvariant(Engine& engine,
                                                     InvariantNode* node) {
-  if (wasVisited(node)) return;
-  appliedInvariants.emplace(node);
-
-  node->registerWithEngine(engine, [this, &engine](auto var) {
-    applyVariable(engine, var);
-    assert(engineVariables.count(var) > 0);
-
-    return engineVariables.at(var);
-  });
+  node->registerWithEngine(engine,
+                           [&](auto var) { return engineVariables.at(var); });
 }
 
 void invariantgraph::InvariantGraph::applyConstraint(Engine& engine,
                                                      SoftConstraintNode* node) {
-  if (wasVisited(node)) return;
-  appliedSoftConstraints.emplace(node);
+  VarId violationVar = node->registerWithEngine(
+      engine, [this](auto var) { return engineVariables.at(var); });
 
-  VarId violationVar =
-      node->registerWithEngine(engine, [this, &engine](auto var) {
-        applyVariable(engine, var);
-        assert(engineVariables.count(var) > 0);
-
-        return engineVariables.at(var);
-      });
-
-  violationVars.emplace_back(violationVar);
+  violationVars.push_back(violationVar);
 }
 
 Int invariantgraph::InvariantGraph::totalViolationsUpperBound(

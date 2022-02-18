@@ -1,9 +1,11 @@
 #pragma once
 
+#include <map>
 #include <memory>
 
 #include "annealer.hpp"
 #include "assignment.hpp"
+#include "fznparser/model.hpp"
 #include "neighbourhoods/neighbourhood.hpp"
 #include "search/neighbourhoods/maxViolating.hpp"
 
@@ -20,7 +22,7 @@ class SearchContext {
   bool shouldStop(const Assignment& assignment) {
     ++_attempts;
 
-    return _attempts <= _maxAttempts || assignment.satisfiesConstraints();
+    return _attempts >= _maxAttempts || assignment.satisfiesConstraints();
   }
 };
 
@@ -44,7 +46,9 @@ class SearchProcedure {
         _neighbourhood(neighbourhood),
         _assignment(assignment) {}
 
-  void run(SearchContext& context);
+  void run(
+      SearchContext& context,
+      const std::map<VarId, std::shared_ptr<fznparser::Variable>>& variableMap);
 
  private:
   bool accept(Move m);

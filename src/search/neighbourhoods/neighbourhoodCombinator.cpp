@@ -2,10 +2,10 @@
 
 #include <random>
 
-void search::neighbourhoods::NeighbourhoodCombinator::initialize(
+void search::neighbourhoods::NeighbourhoodCombinator::initialise(
     PropagationEngine& engine) {
   for (const auto& neighbourhood : _neighbourhoods)
-    neighbourhood->initialize(engine);
+    neighbourhood->initialise(engine);
 }
 
 search::Move search::neighbourhoods::NeighbourhoodCombinator::randomMove(

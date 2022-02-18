@@ -3,6 +3,7 @@
 #include "Objective.hpp"
 #include "core/propagationEngine.hpp"
 #include "move.hpp"
+#include "neighbourhoods/maxViolating.hpp"
 
 namespace search {
 
@@ -25,13 +26,18 @@ class Assignment {
   Objective probeMove(Move& m);
   void commitMove(Move& m);
 
+  void initialise(neighbourhoods::MaxViolatingNeighbourhood& neighbourhood);
+
   Objective objective() { return _objective; }
 
   PropagationEngine& engine() { return _engine; }
 
   [[nodiscard]] bool satisfiesConstraints() const {
-    return _totalViolations == 0;
+    return _engine.getCommittedValue(_totalViolations) == 0;
   }
+
+ private:
+  void commit();
 };
 
 }  // namespace search

@@ -16,7 +16,7 @@ class MaxViolatingNeighbourhood : public Neighbourhood {
   explicit MaxViolatingNeighbourhood(const std::vector<VarId>& variables)
       : _variables(variables) {}
 
-  void initialize(PropagationEngine& engine) override;
+  void initialise(PropagationEngine& engine) override;
   Move randomMove(PropagationEngine& engine) override;
 };
 

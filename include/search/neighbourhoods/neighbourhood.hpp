@@ -9,7 +9,7 @@ class Neighbourhood {
  public:
   virtual ~Neighbourhood() = default;
 
-  virtual void initialize(PropagationEngine& engine) = 0;
+  virtual void initialise(PropagationEngine& engine) = 0;
   virtual Move randomMove(PropagationEngine& engine) = 0;
 };
 

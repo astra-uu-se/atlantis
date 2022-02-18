@@ -79,7 +79,11 @@ VarId invariantgraph::LessThanEqNode::registerWithEngine(
                  [&](auto var) { return variableMapper(var); });
   engine.makeInvariant<Linear>(_coeffs, variables, sumVar);
 
-  Int violationUb = std::max<Int>(0, std::numeric_limits<Int>::max() - _bound);
+  // TODO: The violation upper bound could be bigger than what fits into Int,
+  // when _bound is negative. For now, since domains are not posted, we can
+  // ignore it, but we might need to revisit this later.
+  Int violationUb = _bound < 0 ? std::numeric_limits<Int>::max()
+                               : std::numeric_limits<Int>::max() - _bound;
   auto violation = engine.makeIntVar(0, 0, violationUb);
   auto bound = engine.makeIntVar(_bound, _bound, _bound);
   engine.makeConstraint<LessEqual>(violation, sumVar, bound);

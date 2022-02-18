@@ -16,7 +16,7 @@ class NeighbourhoodCombinator : public Neighbourhood {
       std::vector<std::unique_ptr<Neighbourhood>> neighbourhoods)
       : _neighbourhoods(std::move(neighbourhoods)) {}
 
-  void initialize(PropagationEngine& engine) override;
+  void initialise(PropagationEngine& engine) override;
   Move randomMove(PropagationEngine& engine) override;
 };
 

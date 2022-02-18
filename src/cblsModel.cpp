@@ -13,7 +13,7 @@ void CBLSModel::solve() {
   auto invariantGraph = builder.build(model);
 
   PropagationEngine engine;
-  invariantGraph->apply(engine);
+  auto variableMap = invariantGraph->apply(engine);
 
   search::Annealer annealer;
   search::Assignment assignment(engine, invariantGraph->totalViolations()/*,
@@ -22,16 +22,19 @@ void CBLSModel::solve() {
   // TODO: Why does getDecisionVariables return vector<VarIdBase> when all
   //  methods which query the engine take a VarId?
   std::vector<VarId> searchVariables;
-  std::transform(engine.getDecisionVariables().begin(),
-                 engine.getDecisionVariables().end(),
-                 std::back_inserter(searchVariables),
-                 [](auto varIdBase) { return VarId(varIdBase.id); });
+  for (auto varIdBase : engine.getDecisionVariables()) {
+    VarId varId(varIdBase.id);
 
+    if (engine.getLowerBound(varId) != engine.getUpperBound(varId)) {
+      searchVariables.push_back(varId);
+    }
+  }
+  
   search::neighbourhoods::MaxViolatingNeighbourhood neighbourhood(
       searchVariables);
   search::MaxViolatingSearch searchProcedure(annealer, neighbourhood,
                                              assignment);
 
   search::SearchContext context(100'000);
-  searchProcedure.run(context);
+  searchProcedure.run(context, variableMap);
 }
