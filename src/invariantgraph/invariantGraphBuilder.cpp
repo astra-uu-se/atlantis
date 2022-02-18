@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "invariantgraph/constraints/allDifferent.hpp"
+#include "invariantgraph/constraints/lessThanEq.hpp"
 #include "invariantgraph/invariants/linear.hpp"
 #include "invariantgraph/invariants/max.hpp"
 
@@ -161,8 +162,14 @@ std::unique_ptr<invariantgraph::SoftConstraintNode>
 invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
     const ConstraintRef& constraint) {
   std::string_view name = constraint->name();
+
   if (name == "alldifferent") {
     return invariantgraph::AllDifferentNode::fromModelConstraint(
+        constraint, [this](auto var) { return _variableMap.at(var); });
+  }
+
+  if (name == "int_lin_le") {
+    return invariantgraph::LessThanEqNode::fromModelConstraint(
         constraint, [this](auto var) { return _variableMap.at(var); });
   }
 
