@@ -16,8 +16,8 @@ void CBLSModel::solve() {
   invariantGraph->apply(engine);
 
   search::Annealer annealer;
-  search::Assignment assignment(engine, invariantGraph->totalViolations(),
-                                invariantGraph->objective());
+  search::Assignment assignment(engine, invariantGraph->totalViolations()/*,
+                                invariantGraph->objective()*/);
 
   // TODO: Why does getDecisionVariables return vector<VarIdBase> when all
   //  methods which query the engine take a VarId?

@@ -1,5 +1,7 @@
 #include "search/searchprocedure.hpp"
 
+#include <iostream>
+
 template <typename Neighbourhood>
 void search::SearchProcedure<Neighbourhood>::run(SearchContext& context) {
   while (!context.shouldStop(_assignment)) {
@@ -14,6 +16,12 @@ void search::SearchProcedure<Neighbourhood>::run(SearchContext& context) {
         }
       }
     }
+  }
+
+  if (_assignment.satisfiesConstraints()) {
+    std::cout << "Found solution" << std::endl;
+  } else {
+    std::cout << "Couldn't find solution" << std::endl;
   }
 }
 

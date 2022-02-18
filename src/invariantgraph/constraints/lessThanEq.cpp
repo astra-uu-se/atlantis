@@ -6,6 +6,37 @@
 #include "constraints/lessEqual.hpp"
 #include "invariants/linear.hpp"
 
+static std::vector<Int> getCoeffs(fznparser::ConstraintArgument argument) {
+  // In C++20, when std::visit receives an overload that allows return types in
+  // the visitor, the if-statement here can be refactored to the cleaner API.
+
+  std::vector<Int> coeffs;
+
+  if (std::holds_alternative<std::shared_ptr<fznparser::Literal>>(argument)) {
+    auto identifier = std::get<std::shared_ptr<fznparser::Literal>>(argument);
+    auto paramArray =
+        std::dynamic_pointer_cast<fznparser::ParameterArray>(identifier);
+
+    coeffs.reserve(paramArray->size());
+    std::transform(paramArray->contents().begin(), paramArray->contents().end(),
+                   std::back_inserter(coeffs),
+                   [](const auto &coeff) { return coeff; });
+  } else {
+    auto coeffLiterals =
+        std::get<std::vector<std::shared_ptr<fznparser::Literal>>>(argument);
+
+    coeffs.reserve(coeffLiterals.size());
+    std::transform(
+        coeffLiterals.begin(), coeffLiterals.end(), std::back_inserter(coeffs),
+        [](const auto &coeff) {
+          return std::dynamic_pointer_cast<fznparser::ValueLiteral>(coeff)
+              ->value();
+        });
+  }
+
+  return coeffs;
+}
+
 std::unique_ptr<invariantgraph::LessThanEqNode>
 invariantgraph::LessThanEqNode::fromModelConstraint(
     const std::shared_ptr<fznparser::Constraint> &constraint,
@@ -14,22 +45,12 @@ invariantgraph::LessThanEqNode::fromModelConstraint(
   assert(constraint->name() == "int_lin_le");
   assert(constraint->arguments().size() == 3);
 
-  auto coeffLiterals =
-      std::get<std::vector<std::shared_ptr<fznparser::Literal>>>(
-          constraint->arguments()[0]);
+  auto coeffs = getCoeffs(constraint->arguments()[0]);
+
   auto varLiterals = std::get<std::vector<std::shared_ptr<fznparser::Literal>>>(
       constraint->arguments()[1]);
   auto boundLiteral =
       std::get<std::shared_ptr<fznparser::Literal>>(constraint->arguments()[2]);
-
-  std::vector<Int> coeffs;
-  coeffs.reserve(coeffLiterals.size());
-  std::transform(
-      coeffLiterals.begin(), coeffLiterals.end(), std::back_inserter(coeffs),
-      [](const auto &coeff) {
-        return std::dynamic_pointer_cast<fznparser::ValueLiteral>(coeff)
-            ->value();
-      });
 
   std::vector<invariantgraph::VariableNode *> variables;
   variables.reserve(varLiterals.size());

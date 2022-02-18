@@ -10,17 +10,17 @@ class Assignment {
  private:
   PropagationEngine& _engine;
   VarId _totalViolations;
-  VarId _objectiveValue;
+  //  VarId _objectiveValue;
   Objective _objective;
 
  public:
-  Assignment(PropagationEngine& engine, VarId totalViolations,
-             VarId objectiveValue)
+  Assignment(PropagationEngine& engine, VarId totalViolations/*,
+             VarId objectiveValue*/)
       : _engine(engine),
         _totalViolations(totalViolations),
-        _objectiveValue(objectiveValue),
-        _objective(Objective(engine.getCommittedValue(totalViolations),
-                             engine.getCommittedValue(objectiveValue))) {}
+//        _objectiveValue(objectiveValue),
+        _objective(Objective(engine.getCommittedValue(totalViolations)/*,
+                             engine.getCommittedValue(objectiveValue)*/)) {}
 
   Objective probeMove(Move& m);
   void commitMove(Move& m);
