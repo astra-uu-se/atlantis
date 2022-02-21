@@ -10,17 +10,11 @@
 #include "utils/idMap.hpp"
 
 class PropagationEngine : public Engine {
- public:
-  const bool _useMarkingForOutputToInput = true;
-
  protected:
   PropagationMode _propagationMode;
-  OutputToInputMarkingMode _outputToInputMarkingMode;
 
  public:
   const PropagationMode& propagationMode = _propagationMode;
-  const OutputToInputMarkingMode& outputToInputMarkingMode =
-      _outputToInputMarkingMode;
 
  protected:
   size_t _numVariables;
@@ -43,7 +37,6 @@ class PropagationEngine : public Engine {
   template <bool DoCommit>
   void propagate();
 
-  template <OutputToInputMarkingMode MarkingMode>
   void outputToInputPropagate();
 
   void markPropagationPathAndClearPropagationQueue();
@@ -66,6 +59,7 @@ class PropagationEngine : public Engine {
   void close() override;
 
   void setPropagationMode(PropagationMode);
+  OutputToInputMarkingMode outputToInputMarkingMode() const;
   void setOutputToInputMarkingMode(OutputToInputMarkingMode);
 
   //--------------------- Notificaion ---------------------
@@ -170,7 +164,7 @@ inline void PropagationEngine::clearPropagationPath() {
 
 inline bool PropagationEngine::isOnPropagationPath(VarId id) {
   assert(_propagationMode == PropagationMode::INPUT_TO_OUTPUT ||
-         _outputToInputMarkingMode ==
+         outputToInputMarkingMode() ==
              OutputToInputMarkingMode::TOPOLOGICAL_SORT);
   return _varIsOnPropagationPath.get(id);
 }
@@ -231,13 +225,18 @@ inline void PropagationEngine::setPropagationMode(PropagationMode propMode) {
   _propagationMode = propMode;
 }
 
+inline OutputToInputMarkingMode PropagationEngine::outputToInputMarkingMode()
+    const {
+  return _outputToInputExplorer.outputToInputMarkingMode();
+}
+
 inline void PropagationEngine::setOutputToInputMarkingMode(
     OutputToInputMarkingMode markingMode) {
   if (!_isOpen) {
     throw EngineClosedException(
         "Cannot set output-to-input marking mode when model is closed");
   }
-  _outputToInputMarkingMode = markingMode;
+  _outputToInputExplorer.setOutputToInputMarkingMode(markingMode);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
@@ -259,14 +258,13 @@ PropagationEngine::getModifiedDecisionVariables() {
   return _modifiedDecisionVariables;
 }
 
-template <OutputToInputMarkingMode MarkingMode>
 inline void PropagationEngine::outputToInputPropagate() {
   assert(propagationMode == PropagationMode::OUTPUT_TO_INPUT);
-  if constexpr (MarkingMode == OutputToInputMarkingMode::MARK_SWEEP) {
+  if (outputToInputMarkingMode() == OutputToInputMarkingMode::MARK_SWEEP) {
     clearPropagationQueue();
-  } else if constexpr (MarkingMode ==
-                       OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
+  } else if (outputToInputMarkingMode() ==
+             OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
     markPropagationPathAndClearPropagationQueue();
   }
-  _outputToInputExplorer.propagate<MarkingMode>(_currentTimestamp);
+  _outputToInputExplorer.propagate(_currentTimestamp);
 }

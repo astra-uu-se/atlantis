@@ -4,7 +4,6 @@
 
 PropagationEngine::PropagationEngine()
     : _propagationMode(PropagationMode::INPUT_TO_OUTPUT),
-      _outputToInputMarkingMode(OutputToInputMarkingMode::NONE),
       _numVariables(0),
       _propGraph(ESTIMATED_NUM_OBJECTS),
       _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
@@ -40,7 +39,7 @@ void PropagationEngine::close() {
   } catch (std::exception const& e) {
     std::cout << "foo";
   }
-  if (_outputToInputMarkingMode == OutputToInputMarkingMode::MARK_SWEEP) {
+  if (outputToInputMarkingMode() == OutputToInputMarkingMode::MARK_SWEEP) {
     _outputToInputExplorer.populateAncestors();
   }
 
@@ -172,7 +171,8 @@ void PropagationEngine::beginMove() {
   assert(_engineState == EngineState::IDLE);
 
   ++_currentTimestamp;
-  if (_outputToInputMarkingMode == OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
+  if (outputToInputMarkingMode() ==
+      OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
     clearPropagationPath();
   }
 
@@ -208,14 +208,8 @@ void PropagationEngine::endQuery() {
   try {
     if (_propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       propagate<false>();
-    } else if (_outputToInputMarkingMode == OutputToInputMarkingMode::NONE) {
-      outputToInputPropagate<OutputToInputMarkingMode::NONE>();
-    } else if (_outputToInputMarkingMode ==
-               OutputToInputMarkingMode::MARK_SWEEP) {
-      outputToInputPropagate<OutputToInputMarkingMode::MARK_SWEEP>();
-    } else if (_outputToInputMarkingMode ==
-               OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
-      outputToInputPropagate<OutputToInputMarkingMode::TOPOLOGICAL_SORT>();
+    } else {
+      outputToInputPropagate();
     }
     _engineState = EngineState::IDLE;
   } catch (std::exception const& e) {
@@ -241,7 +235,7 @@ void PropagationEngine::endCommit() {
   try {
 #ifndef NDEBUG
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
-        _outputToInputMarkingMode == OutputToInputMarkingMode::MARK_SWEEP) {
+        outputToInputMarkingMode() == OutputToInputMarkingMode::MARK_SWEEP) {
       for (VarIdBase varId : getDecisionVariables()) {
         // Assert that if decision variable varId is modified,
         // then it is in the set of modified decision variables
@@ -256,7 +250,7 @@ void PropagationEngine::endCommit() {
 
 #ifndef NDEBUG
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
-        _outputToInputMarkingMode == OutputToInputMarkingMode::MARK_SWEEP) {
+        outputToInputMarkingMode() == OutputToInputMarkingMode::MARK_SWEEP) {
       for (size_t varId : _modifiedDecisionVariables) {
         // assert that decsion variable varId is no longer modified.
         assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));

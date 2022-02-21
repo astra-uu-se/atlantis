@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include "benchmark.hpp"
+
 class MagicSquare : public benchmark::Fixture {
  public:
   std::unique_ptr<PropagationEngine> engine;
@@ -36,25 +38,9 @@ class MagicSquare : public benchmark::Fixture {
 
     engine->open();
 
-    switch (state.range(0)) {
-      case 0:
-        engine->setPropagationMode(PropagationMode::INPUT_TO_OUTPUT);
-        break;
-      case 1:
-        engine->setPropagationMode(PropagationMode::OUTPUT_TO_INPUT);
-        engine->setOutputToInputMarkingMode(OutputToInputMarkingMode::NONE);
-        break;
-      case 2:
-        engine->setPropagationMode(PropagationMode::OUTPUT_TO_INPUT);
-        engine->setOutputToInputMarkingMode(
-            OutputToInputMarkingMode::MARK_SWEEP);
-        break;
-      case 3:
-        engine->setPropagationMode(PropagationMode::OUTPUT_TO_INPUT);
-        engine->setOutputToInputMarkingMode(
-            OutputToInputMarkingMode::TOPOLOGICAL_SORT);
-        break;
-    }
+    engine->setPropagationMode(intToPropagationMode(state.range(0)));
+    engine->setOutputToInputMarkingMode(
+        intToOutputToInputMarkingMode(state.range(0)));
 
     VarId magicSumVar = engine->makeIntVar(magicSum, magicSum, magicSum);
 
