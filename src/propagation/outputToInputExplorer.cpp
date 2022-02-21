@@ -11,7 +11,8 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
       _varStableAt(expectedSize),
       _invariantStableAt(expectedSize),
       _invariantIsOnStack(expectedSize),
-      _decisionVarAncestor(expectedSize) {
+      _decisionVarAncestor(expectedSize),
+      _outputToInputMarkingMode(OutputToInputMarkingMode::NONE) {
   _variableStack.reserve(expectedSize);
   _invariantStack.reserve(expectedSize);
 }
@@ -52,6 +53,18 @@ void OutputToInputExplorer::populateAncestors() {
   }
 }
 
+void OutputToInputExplorer::propagate(Timestamp ts) {
+  if (_outputToInputMarkingMode == OutputToInputMarkingMode::NONE) {
+    propagate<OutputToInputMarkingMode::NONE>(ts);
+  } else if (_outputToInputMarkingMode ==
+             OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
+    propagate<OutputToInputMarkingMode::TOPOLOGICAL_SORT>(ts);
+  } else if (_outputToInputMarkingMode ==
+             OutputToInputMarkingMode::MARK_SWEEP) {
+    propagate<OutputToInputMarkingMode::MARK_SWEEP>(ts);
+  }
+}
+
 template bool OutputToInputExplorer::isUpToDate<OutputToInputMarkingMode::NONE>(
     VarIdBase id);
 template bool OutputToInputExplorer::isUpToDate<
@@ -72,6 +85,8 @@ bool OutputToInputExplorer::isUpToDate(VarIdBase id) {
                        OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
     return !_engine.isOnPropagationPath(id);
   } else {
+    // We have no marking: no variable is up-to-date, all variables are all
+    // potentially out-of-date and must be recomputed.
     return false;
   }
 }
@@ -178,8 +193,8 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       // Variable will become stable as it is either not defined or we now
       // expand its invariant. Note that expandInvariant may sometimes not
       // push a new invariant nor a new variable on the stack, so we must mark
-      // the variable as stable before we expand it as this otherwise results in
-      // an infinite loop.
+      // the variable as stable before we expand it as this otherwise results
+      // in an infinite loop.
       markStable(currentTimestamp, currentVarId);
       // The variable is upToDate and stable: expand its defining invariant.
       expandInvariant<MarkingMode>(_engine.getDefiningInvariant(currentVarId));

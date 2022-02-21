@@ -9,6 +9,8 @@
 #include <vector>
 #include <views/intOffsetView.hpp>
 
+#include "benchmark.hpp"
+
 class Queens : public benchmark::Fixture {
  public:
   std::unique_ptr<PropagationEngine> engine;
@@ -33,25 +35,9 @@ class Queens : public benchmark::Fixture {
     logDebug(n);
     engine->open();
 
-    switch (state.range(0)) {
-      case 0:
-        engine->setPropagationMode(PropagationMode::INPUT_TO_OUTPUT);
-        break;
-      case 1:
-        engine->setPropagationMode(PropagationMode::OUTPUT_TO_INPUT);
-        engine->setOutputToInputMarkingMode(OutputToInputMarkingMode::NONE);
-        break;
-      case 2:
-        engine->setPropagationMode(PropagationMode::OUTPUT_TO_INPUT);
-        engine->setOutputToInputMarkingMode(
-            OutputToInputMarkingMode::MARK_SWEEP);
-        break;
-      case 3:
-        engine->setPropagationMode(PropagationMode::OUTPUT_TO_INPUT);
-        engine->setOutputToInputMarkingMode(
-            OutputToInputMarkingMode::TOPOLOGICAL_SORT);
-        break;
-    }
+    engine->setPropagationMode(intToPropagationMode(state.range(0)));
+    engine->setOutputToInputMarkingMode(
+        intToOutputToInputMarkingMode(state.range(0)));
 
     for (int i = 0; i < n; ++i) {
       VarId q = engine->makeIntVar(i, 0, n - 1);
