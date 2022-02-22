@@ -5,6 +5,7 @@
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
 #include "fznparser/variable.hpp"
+#include "search/assignment.hpp"
 
 /**
  * Outputs information in the format specified by MiniZinc.
@@ -34,10 +35,9 @@ class MiniZincLogger {
    * appear on parameters). Output must be printed to the standard output
    * stream.
    *
-   * @param engine The propagation engine which holds the solution. The logger
-   * will search for the committed values that are in the variable map.
+   * @param engine The assignment which is a solution.
    */
-  void solution(PropagationEngine& engine);
+  void solution(const search::Assignment& assignment);
 
   enum class FinishReason { Exhausted, Terminated };
 

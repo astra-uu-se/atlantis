@@ -36,6 +36,10 @@ class Assignment {
     return _engine.getCommittedValue(_totalViolations) == 0;
   }
 
+  [[nodiscard]] Int getValue(VarId varId) const {
+    return _engine.getCommittedValue(varId);
+  }
+
  private:
   void commit();
 };

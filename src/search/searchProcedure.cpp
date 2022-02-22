@@ -15,7 +15,7 @@ void search::SearchProcedure<Neighbourhood>::run(SearchContext& context) {
   }
 
   if (_assignment.satisfiesConstraints()) {
-    _logger.solution(_assignment.engine());
+    _logger.solution(_assignment);
   }
 
   _logger.finish(MiniZincLogger::FinishReason::Terminated);

@@ -2,14 +2,14 @@
 
 #include <iostream>
 
-void MiniZincLogger::solution(PropagationEngine& engine) {
+void MiniZincLogger::solution(const search::Assignment& assignment) {
   for (const auto& [variable, varId] : _variableMap) {
     // TODO: Output arrays
     assert(variable->type() == fznparser::LiteralType::SEARCH_VARIABLE);
     auto searchVar =
         std::dynamic_pointer_cast<fznparser::SearchVariable>(variable);
 
-    Int value = engine.getCommittedValue(varId);
+    Int value = assignment.getValue(varId);
     std::cout << searchVar->name() << " = " << value << ";" << std::endl;
   }
 
