@@ -4,7 +4,7 @@
 #include "fznparser/modelfactory.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
 #include "search/neighbourhoods/maxViolating.hpp"
-#include "search/searchprocedure.hpp"
+#include "search/searchProcedure.hpp"
 
 void CBLSModel::solve() {
   auto model = fznparser::ModelFactory::create(_modelPath);
@@ -29,7 +29,7 @@ void CBLSModel::solve() {
       searchVariables.push_back(varId);
     }
   }
-  
+
   search::neighbourhoods::MaxViolatingNeighbourhood neighbourhood(
       searchVariables);
   search::MaxViolatingSearch searchProcedure(annealer, neighbourhood,

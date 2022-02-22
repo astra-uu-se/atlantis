@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Objective.hpp"
 #include "core/propagationEngine.hpp"
 #include "move.hpp"
 #include "neighbourhoods/maxViolating.hpp"
+#include "objective.hpp"
 
 namespace search {
 
