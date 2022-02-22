@@ -6,6 +6,7 @@
 #include "annealer.hpp"
 #include "assignment.hpp"
 #include "fznparser/model.hpp"
+#include "minizincLogger.hpp"
 #include "neighbourhoods/neighbourhood.hpp"
 #include "search/neighbourhoods/maxViolating.hpp"
 
@@ -35,20 +36,20 @@ class SearchProcedure {
   Annealer _annealer;
   Neighbourhood& _neighbourhood;
   Assignment _assignment;
+  MiniZincLogger& _logger;
 
   Int _violationsWeight = 1;
   Int _modelObjectiveWeight = 0;
 
  public:
   SearchProcedure(Annealer annealer, Neighbourhood& neighbourhood,
-                  Assignment assignment)
+                  Assignment assignment, MiniZincLogger& logger)
       : _annealer(annealer),
         _neighbourhood(neighbourhood),
-        _assignment(assignment) {}
+        _assignment(assignment),
+        _logger(logger) {}
 
-  void run(
-      SearchContext& context,
-      const std::map<VarId, std::shared_ptr<fznparser::Variable>>& variableMap);
+  void run(SearchContext& context);
 
  private:
   bool accept(Move m);
