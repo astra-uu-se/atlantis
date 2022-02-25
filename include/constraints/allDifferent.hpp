@@ -23,21 +23,12 @@ class AllDifferent : public Constraint {
  public:
   AllDifferent(VarId violationId, std::vector<VarId> variables);
 
-#ifndef CBLS_TEST
-  void init(Timestamp, Engine&) final;
-  void recompute(Timestamp, Engine&) final;
-  void notifyIntChanged(Timestamp, Engine&, LocalId) final;
-  void commit(Timestamp, Engine&) final;
-  VarId getNextInput(Timestamp, Engine&) final;
-  void notifyCurrentInputChanged(Timestamp, Engine&) final;
-#else
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;
   VarId getNextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
-#endif
 };
 
 inline signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
