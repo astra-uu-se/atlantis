@@ -10,7 +10,7 @@ void invariantgraph::InvariantGraph::apply(Engine& engine) {
 
   VarId totalViolations =
       engine.makeIntVar(0, 0, totalViolationsUpperBound(engine));
-  engine.makeInvariant<Linear>(violationVars, totalViolations);
+  engine.makeInvariant<Linear>(_violationVars, totalViolations);
   engine.close();
 }
 
@@ -26,7 +26,7 @@ void invariantgraph::InvariantGraph::applyVariable(Engine& engine,
   // TODO: Initial assignment.
   VarId engineVariable = engine.makeIntVar(
       domain->lowerBound(), domain->lowerBound(), domain->upperBound());
-  engineVariables.emplace(node, engineVariable);
+  _engineVariables.emplace(node, engineVariable);
 
   if (node->isFunctionallyDefined()) {
     auto definedBy = *node->definingInvariant();
@@ -41,35 +41,35 @@ void invariantgraph::InvariantGraph::applyVariable(Engine& engine,
 void invariantgraph::InvariantGraph::applyInvariant(Engine& engine,
                                                     InvariantNode* node) {
   if (wasVisited(node)) return;
-  appliedInvariants.emplace(node);
+  _appliedInvariants.emplace(node);
 
   node->registerWithEngine(engine, [this, &engine](auto var) {
     applyVariable(engine, var);
-    assert(engineVariables.count(var) > 0);
+    assert(_engineVariables.count(var) > 0);
 
-    return engineVariables.at(var);
+    return _engineVariables.at(var);
   });
 }
 
 void invariantgraph::InvariantGraph::applyConstraint(Engine& engine,
                                                      SoftConstraintNode* node) {
   if (wasVisited(node)) return;
-  appliedSoftConstraints.emplace(node);
+  _appliedSoftConstraints.emplace(node);
 
   VarId violationVar =
       node->registerWithEngine(engine, [this, &engine](auto var) {
         applyVariable(engine, var);
-        assert(engineVariables.count(var) > 0);
+        assert(_engineVariables.count(var) > 0);
 
-        return engineVariables.at(var);
+        return _engineVariables.at(var);
       });
 
-  violationVars.emplace_back(violationVar);
+  _violationVars.emplace_back(violationVar);
 }
 
 Int invariantgraph::InvariantGraph::totalViolationsUpperBound(
     Engine& engine) const {
   return std::transform_reduce(
-      violationVars.begin(), violationVars.end(), 0, std::plus<>(),
+      _violationVars.begin(), _violationVars.end(), 0, std::plus<>(),
       [&engine](auto var) { return engine.getUpperBound(var); });
 }

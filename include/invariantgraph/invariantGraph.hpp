@@ -15,10 +15,10 @@ class InvariantGraph {
   std::vector<std::unique_ptr<InvariantNode>> _invariants;
   std::vector<std::unique_ptr<SoftConstraintNode>> _softConstraints;
 
-  std::set<InvariantNode*> appliedInvariants;
-  std::set<SoftConstraintNode*> appliedSoftConstraints;
-  std::map<VariableNode*, VarId> engineVariables;
-  std::vector<VarId> violationVars;
+  std::set<InvariantNode*> _appliedInvariants;
+  std::set<SoftConstraintNode*> _appliedSoftConstraints;
+  std::map<VariableNode*, VarId> _engineVariables;
+  std::vector<VarId> _violationVars;
 
   friend class InvariantGraphBuilder;
 
@@ -41,15 +41,15 @@ class InvariantGraph {
   [[nodiscard]] Int totalViolationsUpperBound(Engine& engine) const;
 
   [[nodiscard]] bool wasVisited(VariableNode* node) const {
-    return engineVariables.count(node) > 0;
+    return _engineVariables.count(node) > 0;
   }
 
   [[nodiscard]] bool wasVisited(InvariantNode* node) const {
-    return appliedInvariants.count(node) > 0;
+    return _appliedInvariants.count(node) > 0;
   }
 
   [[nodiscard]] bool wasVisited(SoftConstraintNode* node) const {
-    return appliedSoftConstraints.count(node) > 0;
+    return _appliedSoftConstraints.count(node) > 0;
   }
 };
 }  // namespace invariantgraph
