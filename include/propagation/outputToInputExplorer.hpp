@@ -17,19 +17,20 @@ class OutputToInputExplorer {
   size_t _varStackIdx = 0;
   std::vector<InvariantId> _invariantStack;
   size_t _invariantStackIdx = 0;
-  IdMap<VarIdBase, Timestamp> _varStableAt;  // last timestamp when a VarID was
-                                             // stable (i.e., will not change)
-  IdMap<InvariantId, Timestamp> _invariantStableAt;
+  IdMap<VarIdBase, Timestamp>
+      _varComputedAt;  // last timestamp when a VarID was
+                       // computed (i.e., will not change)
+  IdMap<InvariantId, Timestamp> _invariantComputedAt;
   IdMap<InvariantId, bool> _invariantIsOnStack;
 
   IdMap<VarIdBase, std::unordered_set<VarIdBase>> _decisionVarAncestor;
   OutputToInputMarkingMode _outputToInputMarkingMode;
 
   template <OutputToInputMarkingMode MarkingMode>
-  void preprocessVarStack(Timestamp);
+  void preprocessVarStack([[maybe_unused]] Timestamp);
 
   template <OutputToInputMarkingMode MarkingMode>
-  bool isUpToDate([[maybe_unused]] VarIdBase);
+  bool isMarked([[maybe_unused]] VarIdBase);
 
   void pushVariableStack(VarId);
   void popVariableStack();
@@ -37,9 +38,9 @@ class OutputToInputExplorer {
   void pushInvariantStack(InvariantId);
   void popInvariantStack();
   InvariantId peekInvariantStack();
-  void markStable(Timestamp, VarIdBase);
-  bool isStable(Timestamp, VarIdBase);
-  bool isStable(Timestamp, InvariantId);
+  void setComputed(Timestamp, VarIdBase);
+  bool isComputed(Timestamp, VarIdBase);
+  bool isComputed(Timestamp, InvariantId);
 
   // We expand an invariant by pushing it and its first input variable onto
   // each stack.
@@ -103,17 +104,16 @@ inline InvariantId OutputToInputExplorer::peekInvariantStack() {
   return _invariantStack[_invariantStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::markStable(Timestamp ts, VarIdBase id) {
-  _varStableAt[id] = ts;
+inline void OutputToInputExplorer::setComputed(Timestamp ts, VarIdBase id) {
+  _varComputedAt[id] = ts;
+}
+inline bool OutputToInputExplorer::isComputed(Timestamp ts, VarIdBase id) {
+  return _varComputedAt.at(id) == ts;
 }
 
-inline bool OutputToInputExplorer::isStable(Timestamp ts, VarIdBase id) {
-  return _varStableAt.at(id) == ts;
-}
-
-inline bool OutputToInputExplorer::isStable(Timestamp ts,
-                                            InvariantId invariantId) {
-  return _invariantStableAt.at(invariantId) == ts;
+inline bool OutputToInputExplorer::isComputed(Timestamp ts,
+                                              InvariantId invariantId) {
+  return _invariantComputedAt.at(invariantId) == ts;
 }
 
 inline OutputToInputMarkingMode
