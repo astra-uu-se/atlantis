@@ -1,16 +1,16 @@
 #include <gtest/gtest.h>
 
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/lessThanEq.hpp"
+#include "invariantgraph/constraints/leqNode.hpp"
 
-class LessThanEqSoftConstraintNodeTest : public ::testing::Test {
+class LeqNodeTest : public ::testing::Test {
  public:
   std::shared_ptr<fznparser::SearchVariable> a;
   std::shared_ptr<fznparser::SearchVariable> b;
   std::shared_ptr<fznparser::ValueLiteral> c;
 
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
-  std::unique_ptr<invariantgraph::LessThanEqNode> node;
+  std::unique_ptr<invariantgraph::LeqNode> node;
 
   void SetUp() {
     a = std::make_shared<fznparser::SearchVariable>(
@@ -36,7 +36,7 @@ class LessThanEqSoftConstraintNodeTest : public ::testing::Test {
             c},
         fznparser::AnnotationCollection());
 
-    node = invariantgraph::LessThanEqNode::fromModelConstraint(
+    node = invariantgraph::LeqNode::fromModelConstraint(
         constraint, [&](const auto& var) {
           auto n = std::make_unique<invariantgraph::VariableNode>(
               std::dynamic_pointer_cast<fznparser::SearchVariable>(var));
@@ -48,7 +48,7 @@ class LessThanEqSoftConstraintNodeTest : public ::testing::Test {
   }
 };
 
-TEST_F(LessThanEqSoftConstraintNodeTest, construction) {
+TEST_F(LeqNodeTest, construction) {
   EXPECT_EQ(node->variables()[0]->variable(), a);
   EXPECT_EQ(node->variables()[1]->variable(), b);
   EXPECT_EQ(node->coeffs()[0], 1);
@@ -56,7 +56,7 @@ TEST_F(LessThanEqSoftConstraintNodeTest, construction) {
   EXPECT_EQ(node->bound(), 3);
 }
 
-TEST_F(LessThanEqSoftConstraintNodeTest, application) {
+TEST_F(LeqNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   node->registerWithEngine(engine, [&](auto var) {

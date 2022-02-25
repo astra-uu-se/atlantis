@@ -6,20 +6,20 @@
 
 namespace invariantgraph {
 
-class LessThanEqNode : public SoftConstraintNode {
+class LeqNode : public SoftConstraintNode {
  private:
   std::vector<Int> _coeffs;
   std::vector<VariableNode*> _variables;
   Int _bound;
 
  public:
-  LessThanEqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-                 Int bound)
+  LeqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
+          Int bound)
       : _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _bound(bound) {}
 
-  static std::unique_ptr<LessThanEqNode> fromModelConstraint(
+  static std::unique_ptr<LeqNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);

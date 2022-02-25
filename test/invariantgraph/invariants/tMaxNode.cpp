@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/invariants/max.hpp"
+#include "invariantgraph/invariants/maxNode.hpp"
 
-TEST(MaxInvariantNode, int_max_is_parsed_correctly) {
+TEST(MaxNodeTest, int_max_is_parsed_correctly) {
   auto a = std::make_shared<fznparser::SearchVariable>(
       "a", fznparser::AnnotationCollection(),
       std::make_unique<fznparser::IntDomain>(0, 10));
@@ -20,15 +20,13 @@ TEST(MaxInvariantNode, int_max_is_parsed_correctly) {
       "int_max", std::vector<fznparser::ConstraintArgument>{a, b, c},
       constraintAnnotations);
 
+  // required, else the node will be garbage collected.
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _nodes;
-  auto node = invariantgraph::MaxInvariantNode::fromModelConstraint(
+  auto node = invariantgraph::MaxNode::fromModelConstraint(
       constraint, [&](const auto& var) {
-        auto node = std::make_unique<invariantgraph::VariableNode>(
-            std::dynamic_pointer_cast<fznparser::SearchVariable>(var));
-
-        auto ptr = node.get();
-        _nodes.push_back(std::move(node));
-        return ptr;
+        _nodes.emplace_back(std::make_unique<invariantgraph::VariableNode>(
+            std::dynamic_pointer_cast<fznparser::SearchVariable>(var)));
+        return _nodes.back().get();
       });
 
   EXPECT_EQ(node->variables()[0]->variable(), a);
@@ -36,7 +34,7 @@ TEST(MaxInvariantNode, int_max_is_parsed_correctly) {
   EXPECT_EQ(node->output()->variable(), c);
 }
 
-TEST(MaxInvariantNode, array_int_maximum_is_parsed_correctly) {
+TEST(MaxNodeTest, array_int_maximum_is_parsed_correctly) {
   auto a = std::make_shared<fznparser::SearchVariable>(
       "a", fznparser::AnnotationCollection(),
       std::make_unique<fznparser::IntDomain>(0, 10));
@@ -55,17 +53,16 @@ TEST(MaxInvariantNode, array_int_maximum_is_parsed_correctly) {
           c, std::vector<std::shared_ptr<fznparser::Literal>>{a, b}},
       constraintAnnotations);
 
+  // required, else the node will be garbage collected.
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _nodes;
-  auto node = invariantgraph::MaxInvariantNode::fromModelConstraint(
+  auto node = invariantgraph::MaxNode::fromModelConstraint(
       constraint, [&](const auto& var) {
-        auto n = std::make_unique<invariantgraph::VariableNode>(
-            std::dynamic_pointer_cast<fznparser::SearchVariable>(var));
-
-        auto ptr = n.get();
-        _nodes.push_back(std::move(n));
-        return ptr;
+        _nodes.emplace_back(std::make_unique<invariantgraph::VariableNode>(
+            std::dynamic_pointer_cast<fznparser::SearchVariable>(var)));
+        return _nodes.back().get();
       });
 
+  EXPECT_EQ(node->variables().size(), 2);
   EXPECT_EQ(node->variables()[0]->variable(), a);
   EXPECT_EQ(node->variables()[1]->variable(), b);
   EXPECT_EQ(node->output()->variable(), c);

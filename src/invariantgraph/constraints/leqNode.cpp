@@ -1,4 +1,4 @@
-#include "invariantgraph/constraints/lessThanEq.hpp"
+#include "invariantgraph/constraints/leqNode.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -6,8 +6,8 @@
 #include "constraints/lessEqual.hpp"
 #include "invariants/linear.hpp"
 
-std::unique_ptr<invariantgraph::LessThanEqNode>
-invariantgraph::LessThanEqNode::fromModelConstraint(
+std::unique_ptr<invariantgraph::LeqNode>
+invariantgraph::LeqNode::fromModelConstraint(
     const std::shared_ptr<fznparser::Constraint> &constraint,
     const std::function<VariableNode *(std::shared_ptr<fznparser::Variable>)>
         &variableMap) {
@@ -44,10 +44,10 @@ invariantgraph::LessThanEqNode::fromModelConstraint(
   Int bound =
       std::static_pointer_cast<fznparser::ValueLiteral>(boundLiteral)->value();
 
-  return std::make_unique<LessThanEqNode>(coeffs, variables, bound);
+  return std::make_unique<LeqNode>(coeffs, variables, bound);
 }
 
-VarId invariantgraph::LessThanEqNode::registerWithEngine(
+VarId invariantgraph::LeqNode::registerWithEngine(
     Engine &engine, std::function<VarId(VariableNode *)> variableMapper) const {
   auto [sumLb, sumUb] = getDomainBounds();
   auto sumVar = engine.makeIntVar(0, sumLb, sumUb);
@@ -66,7 +66,7 @@ VarId invariantgraph::LessThanEqNode::registerWithEngine(
   return violation;
 }
 
-std::pair<Int, Int> invariantgraph::LessThanEqNode::getDomainBounds() const {
+std::pair<Int, Int> invariantgraph::LeqNode::getDomainBounds() const {
   Int lb = 0;
   Int ub = 0;
 

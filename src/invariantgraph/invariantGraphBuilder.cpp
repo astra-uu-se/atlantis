@@ -2,10 +2,10 @@
 
 #include <algorithm>
 
-#include "invariantgraph/constraints/allDifferent.hpp"
-#include "invariantgraph/constraints/lessThanEq.hpp"
-#include "invariantgraph/invariants/linear.hpp"
-#include "invariantgraph/invariants/max.hpp"
+#include "invariantgraph/constraints/allDifferentNode.hpp"
+#include "invariantgraph/constraints/leqNode.hpp"
+#include "invariantgraph/invariants/linearNode.hpp"
+#include "invariantgraph/invariants/maxNode.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
@@ -82,7 +82,7 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
 }
 
 bool invariantgraph::InvariantGraphBuilder::canBeImplicit(
-    const ConstraintRef& constraint) {
+    const ConstraintRef&) {
   // TODO: Implicit constraints
   return false;
 }
@@ -142,10 +142,10 @@ invariantgraph::InvariantGraphBuilder::makeInvariant(
     const ConstraintRef& constraint) {
   std::string_view name = constraint->name();
   if (name == "int_lin_eq") {
-    return invariantgraph::LinearInvariantNode::fromModelConstraint(
+    return invariantgraph::LinearNode::fromModelConstraint(
         constraint, [this](auto var) { return _variableMap.at(var); });
   } else if (name == "int_max" || name == "array_int_maximum") {
-    return invariantgraph::MaxInvariantNode::fromModelConstraint(
+    return invariantgraph::MaxNode::fromModelConstraint(
         constraint, [this](auto var) { return _variableMap.at(var); });
   }
 
@@ -154,7 +154,7 @@ invariantgraph::InvariantGraphBuilder::makeInvariant(
 
 std::unique_ptr<invariantgraph::ImplicitConstraintNode>
 invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
-    const ConstraintRef& constraint) {
+    const ConstraintRef&) {
   return std::make_unique<invariantgraph::ImplicitConstraintNode>();
 }
 
@@ -169,7 +169,7 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   }
 
   if (name == "int_lin_le") {
-    return invariantgraph::LessThanEqNode::fromModelConstraint(
+    return invariantgraph::LeqNode::fromModelConstraint(
         constraint, [this](auto var) { return _variableMap.at(var); });
   }
 
