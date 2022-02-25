@@ -1,4 +1,4 @@
-#include "invariantgraph/constraints/allDifferent.hpp"
+#include "invariantgraph/constraints/allDifferentNode.hpp"
 
 #include <utility>
 

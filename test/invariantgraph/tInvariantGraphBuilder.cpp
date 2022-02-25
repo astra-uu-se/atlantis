@@ -4,7 +4,7 @@
 #include "fznparser/model.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
 
-TEST(InvariantGraphBuilder, build_simple_graph) {
+TEST(InvariantGraphBuilderTest, build_simple_graph) {
   auto a = std::make_shared<fznparser::SearchVariable>(
       "a", fznparser::AnnotationCollection(),
       std::make_unique<fznparser::IntDomain>(0, 10));
@@ -49,7 +49,7 @@ TEST(InvariantGraphBuilder, build_simple_graph) {
   EXPECT_EQ(engine.getNumInvariants(), 2);  // totalViolations and int_lin_eq
 }
 
-TEST(InvariantGraphBuilder, build_simple_graph_2) {
+TEST(InvariantGraphBuilderTest, build_simple_graph_2) {
   auto a = std::make_shared<fznparser::SearchVariable>(
       "a", fznparser::AnnotationCollection(),
       std::make_unique<fznparser::IntDomain>(0, 10));
@@ -101,4 +101,4 @@ TEST(InvariantGraphBuilder, build_simple_graph_2) {
   EXPECT_EQ(engine.getNumInvariants(), 3);
 }
 
-TEST(InvariantGraphBuilder, cycles_are_broken) {}
+TEST(InvariantGraphBuilderTest, cycles_are_broken) {}

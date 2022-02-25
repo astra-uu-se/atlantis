@@ -1,11 +1,11 @@
-#include "invariantgraph/invariants/max.hpp"
+#include "invariantgraph/invariants/maxNode.hpp"
 
 #include <algorithm>
 
 #include "invariants/maxSparse.hpp"
 
-std::unique_ptr<invariantgraph::MaxInvariantNode>
-invariantgraph::MaxInvariantNode::fromModelConstraint(
+std::unique_ptr<invariantgraph::MaxNode>
+invariantgraph::MaxNode::fromModelConstraint(
     const std::shared_ptr<fznparser::Constraint>& constraint,
     const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
         variableMap) {
@@ -34,7 +34,7 @@ invariantgraph::MaxInvariantNode::fromModelConstraint(
     auto bNode = variableMap(std::dynamic_pointer_cast<fznparser::Variable>(b));
     auto cNode = variableMap(std::dynamic_pointer_cast<fznparser::Variable>(c));
 
-    return std::make_unique<invariantgraph::MaxInvariantNode>(
+    return std::make_unique<invariantgraph::MaxNode>(
         std::vector<VariableNode*>{aNode, bNode}, cNode);
   } else if (constraint->name() == "array_int_maximum") {
     assert(constraint->arguments().size() == 2);
@@ -56,8 +56,7 @@ invariantgraph::MaxInvariantNode::fromModelConstraint(
     auto outputNode =
         variableMap(std::dynamic_pointer_cast<fznparser::Variable>(output));
 
-    return std::make_unique<invariantgraph::MaxInvariantNode>(inputNodes,
-                                                              outputNode);
+    return std::make_unique<invariantgraph::MaxNode>(inputNodes, outputNode);
   }
 
   throw std::runtime_error(
@@ -65,7 +64,7 @@ invariantgraph::MaxInvariantNode::fromModelConstraint(
           .append(constraint->name()));
 }
 
-void invariantgraph::MaxInvariantNode::registerWithEngine(
+void invariantgraph::MaxNode::registerWithEngine(
     Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),

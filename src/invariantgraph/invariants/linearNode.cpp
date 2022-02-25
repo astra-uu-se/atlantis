@@ -1,11 +1,11 @@
-#include "invariantgraph/invariants/linear.hpp"
+#include "invariantgraph/invariants/linearNode.hpp"
 
 #include <algorithm>
 
 #include "invariants/linear.hpp"
 
-std::unique_ptr<invariantgraph::LinearInvariantNode>
-invariantgraph::LinearInvariantNode::fromModelConstraint(
+std::unique_ptr<invariantgraph::LinearNode>
+invariantgraph::LinearNode::fromModelConstraint(
     const std::shared_ptr<fznparser::Constraint>& constraint,
     const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
         variableMap) {
@@ -61,7 +61,7 @@ invariantgraph::LinearInvariantNode::fromModelConstraint(
   }
 
   auto output = variableMap(definedVar);
-  auto linearInv = std::make_unique<invariantgraph::LinearInvariantNode>(
+  auto linearInv = std::make_unique<invariantgraph::LinearNode>(
       convertedCoeffs, convertedVars, output);
   output->definedByInvariant(linearInv.get());
   output->setOffset(-sumValue);
@@ -69,7 +69,7 @@ invariantgraph::LinearInvariantNode::fromModelConstraint(
   return linearInv;
 }
 
-void invariantgraph::LinearInvariantNode::registerWithEngine(
+void invariantgraph::LinearNode::registerWithEngine(
     Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),
