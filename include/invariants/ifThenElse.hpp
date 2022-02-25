@@ -20,7 +20,7 @@
 class IfThenElse : public Invariant {
  private:
   const VarId _b;
-  std::array<VarId, 2> _xy;
+  const std::array<const VarId, 2> _xy;
   const VarId _z;
 
  public:
