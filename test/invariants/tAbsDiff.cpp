@@ -192,14 +192,14 @@ TEST_F(AbsDiffTest, NotificationsOutputToInputNone) {
                     OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(AbsDiffTest, NotificationsOutputToInputMarkSweep) {
+TEST_F(AbsDiffTest, NotificationsOutputToInputOutputToInputStatic) {
   testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::MARK_SWEEP);
+                    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC);
 }
 
-TEST_F(AbsDiffTest, NotificationsOutputToInputTopologicalSort) {
+TEST_F(AbsDiffTest, NotificationsOutputToInputInputToOutputExploration) {
   testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::TOPOLOGICAL_SORT);
+                    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION);
 }
 
 }  // namespace

@@ -18,9 +18,9 @@ inline PropagationMode intToPropagationMode(int state) {
 inline OutputToInputMarkingMode intToOutputToInputMarkingMode(int state) {
   switch (state) {
     case 3:
-      return OutputToInputMarkingMode::TOPOLOGICAL_SORT;
+      return OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION;
     case 2:
-      return OutputToInputMarkingMode::MARK_SWEEP;
+      return OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC;
     case 1:
     case 0:
     default:

@@ -8,8 +8,6 @@ PropagationEngine::PropagationEngine()
       _propGraph(ESTIMATED_NUM_OBJECTS),
       _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
       _isEnqueued(ESTIMATED_NUM_OBJECTS),
-      _varIsOnPropagationPath(ESTIMATED_NUM_OBJECTS),
-      _propagationPathQueue(),
       _modifiedDecisionVariables(),
       _decisionVariablesModifiedAt(NULL_TIMESTAMP) {}
 
@@ -39,8 +37,18 @@ void PropagationEngine::close() {
   } catch (std::exception const& e) {
     std::cout << "foo";
   }
-  if (outputToInputMarkingMode() == OutputToInputMarkingMode::MARK_SWEEP) {
-    _outputToInputExplorer.populateAncestors();
+  if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
+    if (outputToInputMarkingMode() == OutputToInputMarkingMode::NONE) {
+      _outputToInputExplorer.close<OutputToInputMarkingMode::NONE>();
+    } else if (outputToInputMarkingMode() ==
+               OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
+      _outputToInputExplorer
+          .close<OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>();
+    } else if (outputToInputMarkingMode() ==
+               OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION) {
+      _outputToInputExplorer
+          .close<OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>();
+    }
   }
 
 #ifndef NDEBUG
@@ -107,7 +115,6 @@ void PropagationEngine::registerVar(VarId id) {
   _propGraph.registerVar(id);
   _outputToInputExplorer.registerVar(id);
   _isEnqueued.register_idx(id, false);
-  _varIsOnPropagationPath.register_idx(id, false);
 }
 
 void PropagationEngine::registerInvariant(InvariantId invariantId) {
@@ -171,11 +178,6 @@ void PropagationEngine::beginMove() {
   assert(_engineState == EngineState::IDLE);
 
   ++_currentTimestamp;
-  if (outputToInputMarkingMode() ==
-      OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
-    clearPropagationPath();
-  }
-
   _engineState = EngineState::MOVE;
 }
 
@@ -235,7 +237,8 @@ void PropagationEngine::endCommit() {
   try {
 #ifndef NDEBUG
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
-        outputToInputMarkingMode() == OutputToInputMarkingMode::MARK_SWEEP) {
+        outputToInputMarkingMode() ==
+            OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
       for (VarIdBase varId : getDecisionVariables()) {
         // Assert that if decision variable varId is modified,
         // then it is in the set of modified decision variables
@@ -250,7 +253,8 @@ void PropagationEngine::endCommit() {
 
 #ifndef NDEBUG
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
-        outputToInputMarkingMode() == OutputToInputMarkingMode::MARK_SWEEP) {
+        outputToInputMarkingMode() ==
+            OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
       for (size_t varId : _modifiedDecisionVariables) {
         // assert that decsion variable varId is no longer modified.
         assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));
@@ -261,35 +265,6 @@ void PropagationEngine::endCommit() {
   } catch (std::exception const& e) {
     _engineState = EngineState::IDLE;
     throw e;
-  }
-}
-
-void PropagationEngine::markPropagationPathAndClearPropagationQueue() {
-  // We cannot iterate over a priority_queue so we cannot copy it.
-  // TODO: replace priority_queue of _propGraph._propagationQueue with custom
-  // queue.
-  while (!_propGraph._propagationQueue.empty()) {
-    auto id = _propGraph._propagationQueue.top();
-    _isEnqueued.set(id, false);
-    _propagationPathQueue.push(id);
-    _propGraph._propagationQueue.pop();
-  }
-
-  while (!_propagationPathQueue.empty()) {
-    VarId currentVar = _propagationPathQueue.front();
-    _propagationPathQueue.pop();
-    if (_varIsOnPropagationPath.get(currentVar)) {
-      continue;
-    }
-    _varIsOnPropagationPath.set(currentVar, true);
-    for (auto& listeningInv : _listeningInvariantData.at(currentVar)) {
-      for (VarIdBase definedVar :
-           _propGraph.getVariablesDefinedBy(listeningInv.invariantId)) {
-        if (!_varIsOnPropagationPath.get(definedVar)) {
-          _propagationPathQueue.push(definedVar);
-        }
-      }
-    }
   }
 }
 

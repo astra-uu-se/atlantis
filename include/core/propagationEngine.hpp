@@ -24,9 +24,6 @@ class PropagationEngine : public Engine {
 
   IdMap<VarIdBase, bool> _isEnqueued;
 
-  IdMap<VarIdBase, bool> _varIsOnPropagationPath;
-  std::queue<VarIdBase> _propagationPathQueue;
-
   std::unordered_set<VarIdBase> _modifiedDecisionVariables;
   Timestamp _decisionVariablesModifiedAt;
 
@@ -38,9 +35,6 @@ class PropagationEngine : public Engine {
   void propagate();
 
   void outputToInputPropagate();
-
-  void markPropagationPathAndClearPropagationQueue();
-  void clearPropagationPath();
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
@@ -72,17 +66,6 @@ class PropagationEngine : public Engine {
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
-  /**
-   * returns true if variable id is relevant for propagation.
-   * Note that this is not the same thing as the variable being modified.
-   */
-  bool isOnPropagationPath(VarId);
-  /**
-   * returns true if invariant id is relevant for propagation.
-   * Note that this is not the same thing as the invariant being modified.
-   */
-  static bool isOnPropagationPath(Timestamp, InvariantId) { return true; }
-
   [[nodiscard]] VarId getNextStableVariable(Timestamp);
 
   //--------------------- Move semantics ---------------------
@@ -156,17 +139,6 @@ inline size_t PropagationEngine::getNumInvariants() {
 inline InvariantId PropagationEngine::getDefiningInvariant(VarId id) {
   // Returns NULL_ID is not defined.
   return _propGraph.getDefiningInvariant(id);
-}
-
-inline void PropagationEngine::clearPropagationPath() {
-  _varIsOnPropagationPath.assign_all(false);
-}
-
-inline bool PropagationEngine::isOnPropagationPath(VarId id) {
-  assert(_propagationMode == PropagationMode::INPUT_TO_OUTPUT ||
-         outputToInputMarkingMode() ==
-             OutputToInputMarkingMode::TOPOLOGICAL_SORT);
-  return _varIsOnPropagationPath.get(id);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
@@ -260,11 +232,5 @@ PropagationEngine::getModifiedDecisionVariables() {
 
 inline void PropagationEngine::outputToInputPropagate() {
   assert(propagationMode == PropagationMode::OUTPUT_TO_INPUT);
-  if (outputToInputMarkingMode() == OutputToInputMarkingMode::MARK_SWEEP) {
-    clearPropagationQueue();
-  } else if (outputToInputMarkingMode() ==
-             OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
-    markPropagationPathAndClearPropagationQueue();
-  }
   _outputToInputExplorer.propagate(_currentTimestamp);
 }

@@ -9,7 +9,7 @@ void Invariant::compute(Timestamp ts, Engine& engine) {
   assert(_primaryDefinedVar != NULL_ID);
 
   while (_modifiedVars.hasNext()) {
-    // don'ts turn this into a for loop...
+    // don't turn this into a for loop...
     LocalId toNotify = _modifiedVars.pop();
     this->notifyIntChanged(ts, engine, toNotify);
   }
