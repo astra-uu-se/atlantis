@@ -131,12 +131,6 @@ bool invariantgraph::InvariantGraphBuilder::allVariablesFree(
   return true;
 }
 
-typedef std::shared_ptr<fznparser::Variable> VarRef;
-typedef std::shared_ptr<fznparser::Constraint> ConstraintRef;
-typedef std::unordered_map<VarRef,
-                           std::shared_ptr<invariantgraph::VariableNode>>
-    VarMap;
-
 std::unique_ptr<invariantgraph::InvariantNode>
 invariantgraph::InvariantGraphBuilder::makeInvariant(
     const ConstraintRef& constraint) {
