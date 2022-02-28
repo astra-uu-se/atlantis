@@ -50,7 +50,6 @@ jobs:
         run: cmake $CMAKE_FLAGS ..; make
 
       - name: Test
-        id: test
         working-directory: ${{github.workspace}}/build
         shell: bash
         # Execute tests defined by the CMake configuration.
@@ -63,7 +62,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD }}
         with:
           status: ${{ job.status }}
-          steps: ${{ toJson(steps.test.outcome) }}
+          steps: ${{ toJson(steps) }}
           channel: "#build"
 
       - name: Atlantis Slack
@@ -73,7 +72,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD_ATLANTIS }}
         with:
           status: ${{ job.status }}
-          steps: ${{ toJson(steps.test.outcome) }}
+          steps: ${{ toJson(steps) }}
           channel: "#build"
 
       - name: Run Benchmarks
