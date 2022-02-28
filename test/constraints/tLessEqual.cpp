@@ -305,14 +305,14 @@ TEST_F(LessEqualTest, NotificationsOutputToInputNone) {
                     OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(LessEqualTest, NotificationsOutputToInputMarkSweep) {
+TEST_F(LessEqualTest, NotificationsOutputToInputOutputToInputStatic) {
   testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::MARK_SWEEP);
+                    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC);
 }
 
-TEST_F(LessEqualTest, NotificationsOutputToInputTopologicalSort) {
+TEST_F(LessEqualTest, NotificationsOutputToInputInputToOutputExploration) {
   testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::TOPOLOGICAL_SORT);
+                    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION);
 }
 
 }  // namespace

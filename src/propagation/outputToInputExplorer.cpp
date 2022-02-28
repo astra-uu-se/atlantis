@@ -12,14 +12,14 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
       _invariantComputedAt(expectedSize),
       _invariantIsOnStack(expectedSize),
       _decisionVarAncestor(expectedSize),
+      _onPropagationPath(expectedSize),
       _outputToInputMarkingMode(OutputToInputMarkingMode::NONE) {
   _variableStack.reserve(expectedSize);
   _invariantStack.reserve(expectedSize);
 }
 
-void OutputToInputExplorer::populateAncestors() {
+void OutputToInputExplorer::outputToInputStaticMarking() {
   std::vector<bool> varVisited(_engine.getNumVariables() + 1);
-  std::deque<IdBase> stack(_engine.getNumVariables() + 1);
 
   for (IdBase idx = 1; idx <= _engine.getNumVariables(); ++idx) {
     if (_decisionVarAncestor.size() < idx) {
@@ -31,11 +31,13 @@ void OutputToInputExplorer::populateAncestors() {
 
   for (const VarIdBase decisionVar : _engine.getDecisionVariables()) {
     std::fill(varVisited.begin(), varVisited.end(), false);
-    stack.clear();
-    stack.push_back(decisionVar);
+    std::vector<IdBase> stack;
+    stack.reserve(_engine.getNumVariables());
+
+    stack.emplace_back(decisionVar);
     varVisited[decisionVar] = true;
 
-    while (stack.size() > 0) {
+    while (!stack.empty()) {
       const VarIdBase id = stack.back();
       stack.pop_back();
       _decisionVarAncestor[id].emplace(decisionVar);
@@ -53,27 +55,78 @@ void OutputToInputExplorer::populateAncestors() {
   }
 }
 
+void OutputToInputExplorer::inputToOutputExplorationMarking() {
+  std::vector<IdBase> stack;
+  stack.reserve(_engine.getNumVariables());
+
+  _onPropagationPath.assign(_engine.getNumVariables(), false);
+
+  for (const VarIdBase modifiedDecisionVar :
+       _engine.getModifiedDecisionVariables()) {
+    stack.emplace_back(modifiedDecisionVar);
+    assert(!_onPropagationPath.get(modifiedDecisionVar));
+    _onPropagationPath.set(modifiedDecisionVar, true);
+
+    while (!stack.empty()) {
+      const IdBase id = stack.back();
+      stack.pop_back();
+      for (InvariantId invariantId : _engine.getListeningInvariants(id)) {
+        for (const VarIdBase outputVar :
+             _engine.getVariablesDefinedBy(invariantId)) {
+          if (!_onPropagationPath.get(outputVar)) {
+            _onPropagationPath.set(outputVar, true);
+            stack.emplace_back(outputVar);
+          }
+        }
+      }
+    }
+  }
+}
+
+template void OutputToInputExplorer::close<OutputToInputMarkingMode::NONE>();
+template void OutputToInputExplorer::close<
+    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>();
+template void OutputToInputExplorer::close<
+    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>();
+template <OutputToInputMarkingMode MarkingMode>
+void OutputToInputExplorer::close() {
+  if constexpr (MarkingMode !=
+                OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
+    _decisionVarAncestor.clear();
+  }
+  if constexpr (MarkingMode !=
+                OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION) {
+    _onPropagationPath.clear();
+  }
+  if constexpr (MarkingMode ==
+                OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
+    outputToInputStaticMarking();
+  }
+}
+
 void OutputToInputExplorer::propagate(Timestamp ts) {
   if (_outputToInputMarkingMode == OutputToInputMarkingMode::NONE) {
     propagate<OutputToInputMarkingMode::NONE>(ts);
   } else if (_outputToInputMarkingMode ==
-             OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
-    propagate<OutputToInputMarkingMode::TOPOLOGICAL_SORT>(ts);
+             OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION) {
+    inputToOutputExplorationMarking();
+    propagate<OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(ts);
   } else if (_outputToInputMarkingMode ==
-             OutputToInputMarkingMode::MARK_SWEEP) {
-    propagate<OutputToInputMarkingMode::MARK_SWEEP>(ts);
+             OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
+    propagate<OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(ts);
   }
 }
 
 template bool OutputToInputExplorer::isMarked<OutputToInputMarkingMode::NONE>(
     VarIdBase id);
 template bool OutputToInputExplorer::isMarked<
-    OutputToInputMarkingMode::MARK_SWEEP>(VarIdBase id);
+    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(VarIdBase id);
 template bool OutputToInputExplorer::isMarked<
-    OutputToInputMarkingMode::TOPOLOGICAL_SORT>(VarIdBase id);
+    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(VarIdBase id);
 template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::isMarked(VarIdBase id) {
-  if constexpr (MarkingMode == OutputToInputMarkingMode::MARK_SWEEP) {
+  if constexpr (MarkingMode ==
+                OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
     for (const size_t ancestor : _engine.getModifiedDecisionVariables()) {
       if (_decisionVarAncestor.at(id).find(ancestor) !=
           _decisionVarAncestor.at(id).end()) {
@@ -82,8 +135,8 @@ bool OutputToInputExplorer::isMarked(VarIdBase id) {
     }
     return false;
   } else if constexpr (MarkingMode ==
-                       OutputToInputMarkingMode::TOPOLOGICAL_SORT) {
-    return _engine.isOnPropagationPath(id);
+                       OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION) {
+    return _onPropagationPath.get(id);
   } else {
     // We should check this with constant expressions
     assert(false);
@@ -97,9 +150,11 @@ bool OutputToInputExplorer::isMarked(VarIdBase id) {
 template void OutputToInputExplorer::preprocessVarStack<
     OutputToInputMarkingMode::NONE>(Timestamp currentTimestamp);
 template void OutputToInputExplorer::preprocessVarStack<
-    OutputToInputMarkingMode::MARK_SWEEP>(Timestamp currentTimestamp);
+    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(
+    Timestamp currentTimestamp);
 template void OutputToInputExplorer::preprocessVarStack<
-    OutputToInputMarkingMode::TOPOLOGICAL_SORT>(Timestamp currentTimestamp);
+    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(
+    Timestamp currentTimestamp);
 template <OutputToInputMarkingMode MarkingMode>
 void OutputToInputExplorer::preprocessVarStack(Timestamp currentTimestamp) {
   size_t newStackSize = 0;
@@ -122,9 +177,9 @@ void OutputToInputExplorer::preprocessVarStack(Timestamp currentTimestamp) {
 template void OutputToInputExplorer::expandInvariant<
     OutputToInputMarkingMode::NONE>(InvariantId);
 template void OutputToInputExplorer::expandInvariant<
-    OutputToInputMarkingMode::MARK_SWEEP>(InvariantId);
+    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(InvariantId);
 template void OutputToInputExplorer::expandInvariant<
-    OutputToInputMarkingMode::TOPOLOGICAL_SORT>(InvariantId);
+    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(InvariantId);
 // We expand an invariant by pushing it and its first input variable onto each
 // stack.
 template <OutputToInputMarkingMode MarkingMode>
@@ -155,9 +210,9 @@ void OutputToInputExplorer::notifyCurrentInvariant() {
 template bool
 OutputToInputExplorer::pushNextInputVariable<OutputToInputMarkingMode::NONE>();
 template bool OutputToInputExplorer::pushNextInputVariable<
-    OutputToInputMarkingMode::MARK_SWEEP>();
+    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>();
 template bool OutputToInputExplorer::pushNextInputVariable<
-    OutputToInputMarkingMode::TOPOLOGICAL_SORT>();
+    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>();
 
 template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::pushNextInputVariable() {
@@ -188,16 +243,18 @@ void OutputToInputExplorer::registerInvariant(InvariantId invariantId) {
 template void OutputToInputExplorer::propagate<OutputToInputMarkingMode::NONE>(
     Timestamp currentTimestamp);
 template void OutputToInputExplorer::propagate<
-    OutputToInputMarkingMode::MARK_SWEEP>(Timestamp currentTimestamp);
+    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(
+    Timestamp currentTimestamp);
 template void OutputToInputExplorer::propagate<
-    OutputToInputMarkingMode::TOPOLOGICAL_SORT>(Timestamp currentTimestamp);
+    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(
+    Timestamp currentTimestamp);
 
 template <OutputToInputMarkingMode MarkingMode>
 void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
   preprocessVarStack<MarkingMode>(currentTimestamp);
   // recursively expand variables to compute their value.
   while (_varStackIdx > 0) {
-    VarId currentVarId = peekVariableStack();
+    VarIdBase currentVarId = peekVariableStack();
 
     // If the variable is not computed, then expand it.
     if (!isComputed(currentTimestamp, currentVarId)) {

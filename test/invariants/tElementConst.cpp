@@ -170,14 +170,14 @@ TEST_F(ElementConstTest, NotificationsOutputToInputNone) {
                     OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(ElementConstTest, NotificationsOutputToInputMarkSweep) {
+TEST_F(ElementConstTest, NotificationsOutputToInputOutputToInputStatic) {
   testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::MARK_SWEEP);
+                    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC);
 }
 
-TEST_F(ElementConstTest, NotificationsOutputToInputTopologicalSort) {
+TEST_F(ElementConstTest, NotificationsOutputToInputInputToOutputExploration) {
   testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::TOPOLOGICAL_SORT);
+                    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION);
 }
 
 }  // namespace

@@ -24,6 +24,8 @@ class OutputToInputExplorer {
   IdMap<InvariantId, bool> _invariantIsOnStack;
 
   IdMap<VarIdBase, std::unordered_set<VarIdBase>> _decisionVarAncestor;
+  IdMap<VarIdBase, bool> _onPropagationPath;
+
   OutputToInputMarkingMode _outputToInputMarkingMode;
 
   template <OutputToInputMarkingMode MarkingMode>
@@ -40,7 +42,6 @@ class OutputToInputExplorer {
   InvariantId peekInvariantStack();
   void setComputed(Timestamp, VarIdBase);
   bool isComputed(Timestamp, VarIdBase);
-  bool isComputed(Timestamp, InvariantId);
 
   // We expand an invariant by pushing it and its first input variable onto
   // each stack.
@@ -50,6 +51,10 @@ class OutputToInputExplorer {
 
   template <OutputToInputMarkingMode MarkingMode>
   bool pushNextInputVariable();
+
+  void outputToInputStaticMarking();
+  void inputToOutputExplorationMarking();
+
   template <OutputToInputMarkingMode MarkingMode>
   void propagate(Timestamp);
 
@@ -57,7 +62,6 @@ class OutputToInputExplorer {
   OutputToInputExplorer() = delete;
   OutputToInputExplorer(PropagationEngine& engine, size_t expectedSize);
 
-  void populateAncestors();
   void registerVar(VarId);
   void registerInvariant(InvariantId);
   /**
@@ -71,6 +75,9 @@ class OutputToInputExplorer {
 
   OutputToInputMarkingMode outputToInputMarkingMode() const;
   void setOutputToInputMarkingMode(OutputToInputMarkingMode);
+
+  template <OutputToInputMarkingMode MarkingMode>
+  void close();
 };
 
 inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
@@ -109,11 +116,6 @@ inline void OutputToInputExplorer::setComputed(Timestamp ts, VarIdBase id) {
 }
 inline bool OutputToInputExplorer::isComputed(Timestamp ts, VarIdBase id) {
   return _varComputedAt.at(id) == ts;
-}
-
-inline bool OutputToInputExplorer::isComputed(Timestamp ts,
-                                              InvariantId invariantId) {
-  return _invariantComputedAt.at(invariantId) == ts;
 }
 
 inline OutputToInputMarkingMode

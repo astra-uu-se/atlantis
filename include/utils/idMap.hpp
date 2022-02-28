@@ -48,6 +48,8 @@ class IdMap {
     _vector.emplace_back(initValue);
   }
 
+  inline void clear() { _vector.clear(); }
+
   inline void assign_all(T value) { _vector.assign(_vector.size(), value); }
 
   [[nodiscard]] inline size_t size() const { return _vector.size(); }
@@ -93,7 +95,13 @@ class IdMap<I, bool> {
     _vector.emplace_back(initValue);
   }
 
+  inline void clear() { _vector.clear(); }
+
   inline void assign_all(bool value) { _vector.assign(_vector.size(), value); }
+
+  inline void assign(size_t newSize, bool value) {
+    _vector.assign(newSize, value);
+  }
 
   // std::string toString() {
   //   std::string str = "";
