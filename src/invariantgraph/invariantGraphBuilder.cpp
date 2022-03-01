@@ -10,6 +10,7 @@
 #include "invariantgraph/invariants/intDivNode.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
+#include "invariantgraph/invariants/minNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
@@ -153,6 +154,7 @@ invariantgraph::InvariantGraphBuilder::makeInvariant(
   }
 
   INVARIANT_REGISTRATION("array_int_maximum", MaxNode);
+  INVARIANT_REGISTRATION("array_int_minimum", MinNode);
   INVARIANT_REGISTRATION("int_lin_eq", LinearNode);
   INVARIANT_REGISTRATION("array_int_element", ArrayIntElementNode);
   INVARIANT_REGISTRATION("array_var_int_element", ArrayVarIntElementNode);
