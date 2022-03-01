@@ -1,6 +1,7 @@
 #include "invariantgraph/invariants/binaryOpNode.hpp"
 
 #include "invariantgraph/invariants/intDivNode.hpp"
+#include "invariantgraph/invariants/intModNode.hpp"
 #include "invariantgraph/parseHelper.hpp"
 
 template <typename T>
@@ -37,6 +38,11 @@ void invariantgraph::BinaryOpNode::registerWithEngine(
 
 // Instantiation of the binary operator factory methods.
 template std::unique_ptr<invariantgraph::IntDivNode> invariantgraph::BinaryOpNode::fromModelConstraint(
+    const std::shared_ptr<fznparser::Constraint>& constraint,
+    const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
+        variableMap);
+
+template std::unique_ptr<invariantgraph::IntModNode> invariantgraph::BinaryOpNode::fromModelConstraint(
     const std::shared_ptr<fznparser::Constraint>& constraint,
     const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
         variableMap);
