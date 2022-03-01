@@ -1,31 +1,26 @@
 #pragma once
 
-#include "../structure.hpp"
+#include "binaryOpNode.hpp"
+#include "invariants/intDiv.hpp"
 
 namespace invariantgraph {
 
-class IntDivNode : public InvariantNode {
- private:
-  VariableNode* _a;
-  VariableNode* _b;
-
+class IntDivNode : public BinaryOpNode {
  public:
-  static std::unique_ptr<IntDivNode> fromModelConstraint(
-      const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-          variableMap);
+  static inline std::string_view constraint_name() noexcept {
+    return "int_div";
+  }
 
   IntDivNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : InvariantNode(output), _a(a), _b(b) {}
+      : BinaryOpNode(a, b, output) {}
 
   ~IntDivNode() override = default;
 
-  void registerWithEngine(
-      Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
-
-  [[nodiscard]] VariableNode* a() const noexcept { return _a; }
-  [[nodiscard]] VariableNode* b() const noexcept { return _b; }
+ protected:
+  void createInvariant(Engine& engine, VarId a, VarId b,
+                       VarId output) const override {
+    engine.makeInvariant<::IntDiv>(a, b, output);
+  }
 };
 
-}
+}  // namespace invariantgraph

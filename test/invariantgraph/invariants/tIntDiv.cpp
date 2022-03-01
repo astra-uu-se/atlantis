@@ -19,7 +19,8 @@ class IntDivNodeTest : public NodeTestBase {
     FZN_DEFINES_VAR_ANNOTATION(annotations, c);
     auto constraint = makeConstraint("int_div", annotations, a, b, c);
 
-    node = makeNode<invariantgraph::IntDivNode>(constraint);
+    node = invariantgraph::BinaryOpNode::fromModelConstraint<
+        invariantgraph::IntDivNode>(constraint, nodeFactory);
   }
 };
 

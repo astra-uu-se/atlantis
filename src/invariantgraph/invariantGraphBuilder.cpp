@@ -7,6 +7,7 @@
 #include "invariantgraph/constraints/leqNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
+#include "invariantgraph/invariants/binaryOpNode.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
@@ -153,14 +154,22 @@ invariantgraph::InvariantGraphBuilder::makeInvariant(
         constraint, [this](auto var) { return _variableMap.at(var); }); \
   }
 
+#define BINARY_OP_REGISTRATION(nodeType)                                \
+  if (name == invariantgraph::nodeType::constraint_name()) {            \
+    return invariantgraph::BinaryOpNode::fromModelConstraint<           \
+        invariantgraph::nodeType>(                                      \
+        constraint, [this](auto var) { return _variableMap.at(var); }); \
+  }
+
   INVARIANT_REGISTRATION("array_int_maximum", MaxNode);
   INVARIANT_REGISTRATION("array_int_minimum", MinNode);
   INVARIANT_REGISTRATION("int_lin_eq", LinearNode);
   INVARIANT_REGISTRATION("array_int_element", ArrayIntElementNode);
   INVARIANT_REGISTRATION("array_var_int_element", ArrayVarIntElementNode);
-  INVARIANT_REGISTRATION("int_div", IntDivNode);
+  BINARY_OP_REGISTRATION(IntDivNode);
 
   throw std::runtime_error("Unsupported constraint: " + std::string(name));
+#undef BINARY_OP_REGISTRATION
 #undef INVARIANT_REGISTRATION
 }
 
