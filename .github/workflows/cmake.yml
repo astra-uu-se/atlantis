@@ -18,8 +18,8 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+            ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+            ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.9
@@ -32,7 +32,6 @@ jobs:
           sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
           sudo apt-get install gcc-9 g++-9 python3; \
           sudo apt-get update -qq;
-
       - name: Set Benchmarks Flag
         uses: haya14busa/action-cond@v1
         id: buildBenchmarksFlag
@@ -49,7 +48,6 @@ jobs:
       - name: Build
         working-directory: ${{github.workspace}}/build
         env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           CMAKE_FLAGS: >
             -DBUILD_TESTS:BOOL=ON
             -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}}
@@ -63,7 +61,7 @@ jobs:
         # Execute tests defined by the CMake configuration.
         run: ctest
 
-      - name: Slack
+      - name: Optimisation Group Slack
         if: always()
         uses: act10ns/slack@v1
         env:
@@ -73,9 +71,19 @@ jobs:
           steps: ${{ toJson(steps) }}
           channel: "#build"
 
+      - name: Atlantis Slack
+        if: always()
+        uses: act10ns/slack@v1
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD_ATLANTIS }}
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: "#build"
+
       - name: Run Benchmarks
         if: ${{ steps.buildBenchmarksFlag.outputs.value == 'ON' }}
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH_ATLANTIS }}
         shell: bash
         run: chmod +x ./slack-benchmark.sh; ./slack-benchmark.sh;
