@@ -1,50 +1,29 @@
-#include <gtest/gtest.h>
-
+#include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/constraints/leqNode.hpp"
 
-class LeqNodeTest : public ::testing::Test {
+class LeqNodeTest : public NodeTestBase {
  public:
   std::shared_ptr<fznparser::SearchVariable> a;
   std::shared_ptr<fznparser::SearchVariable> b;
   std::shared_ptr<fznparser::ValueLiteral> c;
 
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
   std::unique_ptr<invariantgraph::LeqNode> node;
 
-  void SetUp() {
-    a = std::make_shared<fznparser::SearchVariable>(
-        "a", fznparser::AnnotationCollection(),
-        std::make_unique<fznparser::IntDomain>(0, 10));
-    b = std::make_shared<fznparser::SearchVariable>(
-        "b", fznparser::AnnotationCollection(),
-        std::make_unique<fznparser::IntDomain>(0, 10));
+  void SetUp() override {
+    a = FZN_SEARCH_VARIABLE("a", 0, 10);
+    b = FZN_SEARCH_VARIABLE("b", 0, 10);
+    c = FZN_VALUE(3);
 
-    c = std::make_shared<fznparser::ValueLiteral>(3);
+    auto constraint = FZN_CONSTRAINT(
+        "int_lin_le", FZN_NO_ANNOTATIONS,
+        FZN_VECTOR_CONSTRAINT_ARG(FZN_CONSTRAINT_ARG(FZN_VALUE(1)),
+                                  FZN_CONSTRAINT_ARG(FZN_VALUE(2))),
+        FZN_VECTOR_CONSTRAINT_ARG(FZN_CONSTRAINT_ARG(a), FZN_CONSTRAINT_ARG(b)),
+        FZN_CONSTRAINT_ARG(c));
 
-    auto constraint = std::make_shared<fznparser::Constraint>(
-        "int_lin_le",
-        std::vector<fznparser::ConstraintArgument>{
-            std::vector<std::shared_ptr<fznparser::Literal>>{
-                std::static_pointer_cast<fznparser::Literal>(
-                    std::make_shared<fznparser::ValueLiteral>(1)),
-                std::static_pointer_cast<fznparser::Literal>(
-                    std::make_shared<fznparser::ValueLiteral>(2))},
-            std::vector<std::shared_ptr<fznparser::Literal>>{
-                std::static_pointer_cast<fznparser::Literal>(a),
-                std::static_pointer_cast<fznparser::Literal>(b)},
-            c},
-        fznparser::AnnotationCollection());
-
-    node = invariantgraph::LeqNode::fromModelConstraint(
-        constraint, [&](const auto& var) {
-          auto n = std::make_unique<invariantgraph::VariableNode>(
-              std::dynamic_pointer_cast<fznparser::SearchVariable>(var));
-
-          auto ptr = n.get();
-          _variables.push_back(std::move(n));
-          return ptr;
-        });
+    node =
+        invariantgraph::LeqNode::fromModelConstraint(constraint, nodeFactory);
   }
 };
 
