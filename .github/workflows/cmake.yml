@@ -49,6 +49,7 @@ jobs:
       - name: Build
         working-directory: ${{github.workspace}}/build
         env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           CMAKE_FLAGS: >
             -DBUILD_TESTS:BOOL=ON
             -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}}
