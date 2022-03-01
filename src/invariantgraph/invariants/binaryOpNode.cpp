@@ -1,14 +1,17 @@
+#include "invariantgraph/invariants/binaryOpNode.hpp"
+
 #include "invariantgraph/invariants/intDivNode.hpp"
-
 #include "invariantgraph/parseHelper.hpp"
-#include "invariants/intDiv.hpp"
 
-std::unique_ptr<invariantgraph::IntDivNode>
-invariantgraph::IntDivNode::fromModelConstraint(
+template <typename T>
+std::unique_ptr<T>
+invariantgraph::BinaryOpNode::fromModelConstraint(
     const std::shared_ptr<fznparser::Constraint>& constraint,
     const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
         variableMap) {
-  assert(constraint->name() == "int_div");
+  static_assert(std::is_base_of<BinaryOpNode, T>{});
+
+  assert(constraint->name() == T::constraint_name());
   assert(constraint->annotations().has<fznparser::DefinesVarAnnotation>());
   assert(constraint->arguments().size() == 3);
 
@@ -23,10 +26,17 @@ invariantgraph::IntDivNode::fromModelConstraint(
 
   assert(definedVar == output->variable());
 
-  return std::make_unique<invariantgraph::IntDivNode>(a, b, output);
+  return std::make_unique<T>(a, b, output);
 }
 
-void invariantgraph::IntDivNode::registerWithEngine(
+void invariantgraph::BinaryOpNode::registerWithEngine(
     Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
-  engine.makeInvariant<::IntDiv>(variableMapper(_a), variableMapper(_b), variableMapper(output()));
+  createInvariant(engine, variableMapper(_a), variableMapper(_b),
+                  variableMapper(output()));
 }
+
+// Instantiation of the binary operator factory methods.
+template std::unique_ptr<invariantgraph::IntDivNode> invariantgraph::BinaryOpNode::fromModelConstraint(
+    const std::shared_ptr<fznparser::Constraint>& constraint,
+    const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
+        variableMap);
