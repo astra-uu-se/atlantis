@@ -1,38 +1,53 @@
-#include <gtest/gtest.h>
-
+#include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
 
-TEST(MaxNodeTest, array_int_maximum_is_parsed_correctly) {
-  auto a = std::make_shared<fznparser::SearchVariable>(
-      "a", fznparser::AnnotationCollection(),
-      std::make_unique<fznparser::IntDomain>(0, 10));
-  auto b = std::make_shared<fznparser::SearchVariable>(
-      "b", fznparser::AnnotationCollection(),
-      std::make_unique<fznparser::IntDomain>(0, 10));
-  auto c = std::make_shared<fznparser::SearchVariable>(
-      "c", fznparser::AnnotationCollection(),
-      std::make_unique<fznparser::IntDomain>(0, 10));
+class MaxNodeTest : public NodeTestBase {
+ public:
+  std::shared_ptr<fznparser::SearchVariable> a;
+  std::shared_ptr<fznparser::SearchVariable> b;
+  std::shared_ptr<fznparser::SearchVariable> c;
 
-  fznparser::MutableAnnotationCollection constraintAnnotations;
-  constraintAnnotations.add<fznparser::DefinesVarAnnotation>(c);
-  auto constraint = std::make_shared<fznparser::Constraint>(
-      "array_int_maximum",
-      std::vector<fznparser::ConstraintArgument>{
-          c, std::vector<std::shared_ptr<fznparser::Literal>>{a, b}},
-      constraintAnnotations);
+  std::unique_ptr<invariantgraph::MaxNode> node;
 
-  // required, else the node will be garbage collected.
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> _nodes;
-  auto node = invariantgraph::MaxNode::fromModelConstraint(
-      constraint, [&](const auto& var) {
-        _nodes.emplace_back(std::make_unique<invariantgraph::VariableNode>(
-            std::dynamic_pointer_cast<fznparser::SearchVariable>(var)));
-        return _nodes.back().get();
-      });
+  void SetUp() override {
+    a = FZN_SEARCH_VARIABLE("a", 0, 10);
+    b = FZN_SEARCH_VARIABLE("b", 0, 10);
+    c = FZN_SEARCH_VARIABLE("c", 0, 10);
 
+    FZN_DEFINES_VAR_ANNOTATION(annotations, c);
+    auto constraint = FZN_CONSTRAINT(
+        "array_int_maximum", annotations, FZN_CONSTRAINT_ARG(c),
+        FZN_VECTOR_CONSTRAINT_ARG(FZN_CONSTRAINT_ARG(a),
+                                  FZN_CONSTRAINT_ARG(b)));
+
+    node =
+        invariantgraph::MaxNode::fromModelConstraint(constraint, nodeFactory);
+  }
+};
+
+TEST_F(MaxNodeTest, construction) {
   EXPECT_EQ(node->variables().size(), 2);
   EXPECT_EQ(node->variables()[0]->variable(), a);
   EXPECT_EQ(node->variables()[1]->variable(), b);
   EXPECT_EQ(node->output()->variable(), c);
+}
+
+TEST_F(MaxNodeTest, application) {
+  PropagationEngine engine;
+  engine.open();
+  node->registerWithEngine(engine, [&](auto var) {
+    auto domain = var->variable()->domain();
+    return engine.makeIntVar(0, domain->lowerBound(), domain->upperBound());
+  });
+  engine.close();
+
+  // a and b
+  EXPECT_EQ(engine.getDecisionVariables().size(), 2);
+
+  // a, b and c
+  EXPECT_EQ(engine.getNumVariables(), 3);
+
+  // maxSparse
+  EXPECT_EQ(engine.getNumInvariants(), 1);
 }
