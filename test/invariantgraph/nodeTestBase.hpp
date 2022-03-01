@@ -5,10 +5,9 @@
 #include "invariantgraph/structure.hpp"
 
 class NodeTestBase : public testing::Test {
- private:
+ protected:
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
 
- protected:
   std::function<invariantgraph::VariableNode*(
       std::shared_ptr<fznparser::Variable>)>
       nodeFactory = [&](const auto& var) {
@@ -29,6 +28,7 @@ class NodeTestBase : public testing::Test {
 
 #define FZN_CONSTRAINT_ARG(literal) \
   std::static_pointer_cast<fznparser::Literal>(literal)
+
 #define FZN_VECTOR_CONSTRAINT_ARG(...) \
   std::vector<std::shared_ptr<fznparser::Literal>> { __VA_ARGS__ }
 

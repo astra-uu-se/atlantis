@@ -7,6 +7,10 @@
 void invariantgraph::InvariantGraph::apply(Engine& engine) {
   engine.open();
   for (const auto& variable : _variables) applyVariable(engine, variable.get());
+  for (const auto& invariant : _invariants)
+    applyInvariant(engine, invariant.get());
+  for (const auto& constraint : _softConstraints)
+    applyConstraint(engine, constraint.get());
 
   VarId totalViolations =
       engine.makeIntVar(0, 0, totalViolationsUpperBound(engine));
@@ -18,24 +22,7 @@ void invariantgraph::InvariantGraph::applyVariable(Engine& engine,
                                                    VariableNode* node) {
   if (wasVisited(node)) return;
 
-  // TODO: Different types of domains.
-  assert(node->variable()->domain()->type() == fznparser::DomainType::INT);
-  fznparser::IntDomain* domain =
-      dynamic_cast<fznparser::IntDomain*>(node->variable()->domain());
-
-  // TODO: Initial assignment.
-  VarId engineVariable = engine.makeIntVar(
-      domain->lowerBound(), domain->lowerBound(), domain->upperBound());
-  _engineVariables.emplace(node, engineVariable);
-
-  if (node->isFunctionallyDefined()) {
-    auto definedBy = *node->definingInvariant();
-    applyInvariant(engine, definedBy);
-  }
-
-  for (const auto& constraint : node->softConstraints()) {
-    applyConstraint(engine, constraint);
-  }
+  node->registerWithEngine(engine, _engineVariables);
 }
 
 void invariantgraph::InvariantGraph::applyInvariant(Engine& engine,
@@ -69,7 +56,8 @@ void invariantgraph::InvariantGraph::applyConstraint(Engine& engine,
 
 Int invariantgraph::InvariantGraph::totalViolationsUpperBound(
     Engine& engine) const {
-  return std::transform_reduce(
-      _violationVars.begin(), _violationVars.end(), 0, std::plus<>(),
-      [&engine](auto var) { return engine.getUpperBound(var); });
+  return std::accumulate(_violationVars.begin(), _violationVars.end(), 0,
+                         [&](auto sum, const auto& var) {
+                           return sum + engine.getUpperBound(var);
+                         });
 }

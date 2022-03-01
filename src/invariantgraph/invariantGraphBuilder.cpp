@@ -6,6 +6,7 @@
 #include "invariantgraph/constraints/leqNode.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
+#include "invariantgraph/views/intAbsNode.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
@@ -48,9 +49,14 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       continue;
     }
 
-    auto invariant = makeInvariant(constraint);
-    definedVars.emplace(invariant->output()->variable());
-    _invariants.push_back(std::move(invariant));
+    if (auto view = makeView(constraint)) {
+      definedVars.emplace(view->variable());
+      _variables.push_back(std::move(view));
+    } else {
+      auto invariant = makeInvariant(constraint);
+      definedVars.emplace(invariant->output()->variable());
+      _invariants.push_back(std::move(invariant));
+    }
 
     processedConstraints.emplace(constraint);
   }
@@ -135,15 +141,18 @@ std::unique_ptr<invariantgraph::InvariantNode>
 invariantgraph::InvariantGraphBuilder::makeInvariant(
     const ConstraintRef& constraint) {
   std::string_view name = constraint->name();
-  if (name == "int_lin_eq") {
-    return invariantgraph::LinearNode::fromModelConstraint(
-        constraint, [this](auto var) { return _variableMap.at(var); });
-  } else if (name == "int_max" || name == "array_int_maximum") {
-    return invariantgraph::MaxNode::fromModelConstraint(
-        constraint, [this](auto var) { return _variableMap.at(var); });
+
+#define INVARIANT_REGISTRATION(nameStr, nodeType)                       \
+  if (name == nameStr) {                                                \
+    return invariantgraph::nodeType::fromModelConstraint(               \
+        constraint, [this](auto var) { return _variableMap.at(var); }); \
   }
 
+  INVARIANT_REGISTRATION("array_int_maximum", MaxNode);
+  INVARIANT_REGISTRATION("int_lin_eq", LinearNode);
+
   throw std::runtime_error("Unsupported constraint: " + std::string(name));
+#undef INVARIANT_REGISTRATION
 }
 
 std::unique_ptr<invariantgraph::ImplicitConstraintNode>
@@ -157,16 +166,27 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
     const ConstraintRef& constraint) {
   std::string_view name = constraint->name();
 
-  if (name == "alldifferent") {
-    return invariantgraph::AllDifferentNode::fromModelConstraint(
-        constraint, [this](auto var) { return _variableMap.at(var); });
+#define CONSTRAINT_REGISTRATION(nameStr, nodeType)                      \
+  if (name == nameStr) {                                                \
+    return invariantgraph::nodeType::fromModelConstraint(               \
+        constraint, [this](auto var) { return _variableMap.at(var); }); \
   }
 
-  if (name == "int_lin_le") {
-    return invariantgraph::LeqNode::fromModelConstraint(
-        constraint, [this](auto var) { return _variableMap.at(var); });
-  }
+  CONSTRAINT_REGISTRATION("alldifferent", AllDifferentNode);
+  CONSTRAINT_REGISTRATION("int_lin_le", LeqNode);
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint->name()));
+#undef CONSTRAINT_REGISTRATION
+}
+
+std::unique_ptr<invariantgraph::ViewNode>
+invariantgraph::InvariantGraphBuilder::makeView(
+    const ConstraintRef& constraint) {
+  if (constraint->name() == "int_abs") {
+    return invariantgraph::IntAbsNode::fromModelConstraint(
+        constraint, [this](auto var) { return _variableMap.at(var); });
+  }
+
+  return nullptr;
 }

@@ -38,5 +38,6 @@ class InvariantGraphBuilder {
       const ConstraintRef& constraint);
   std::unique_ptr<SoftConstraintNode> makeSoftConstraint(
       const ConstraintRef& constraint);
+  std::unique_ptr<ViewNode> makeView(const ConstraintRef& constraint);
 };
 }  // namespace invariantgraph
