@@ -13,9 +13,9 @@ class IntAbsNodeTest : public NodeTestBase {
     a = FZN_SEARCH_VARIABLE("a", 5, 10);
     b = FZN_SEARCH_VARIABLE("b", 2, 7);
 
-    auto constraint = FZN_CONSTRAINT("int_abs", FZN_NO_ANNOTATIONS, a, b);
-    node = invariantgraph::IntAbsNode::fromModelConstraint(constraint,
-                                                           nodeFactory);
+    auto constraint = makeConstraint("int_abs", FZN_NO_ANNOTATIONS, a, b);
+
+    node = makeNode<invariantgraph::IntAbsNode>(constraint);
   }
 };
 
