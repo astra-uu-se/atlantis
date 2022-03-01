@@ -1,0 +1,30 @@
+#pragma once
+
+#include <utility>
+
+#include "invariantgraph/structure.hpp"
+
+namespace invariantgraph {
+
+class IntEqNode : public SoftConstraintNode {
+ private:
+  VariableNode* _a;
+  VariableNode* _b;
+
+ public:
+  IntEqNode(VariableNode* a, VariableNode* b) : _a(a), _b(b) {}
+
+  static std::unique_ptr<IntEqNode> fromModelConstraint(
+      const std::shared_ptr<fznparser::Constraint>& constraint,
+      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
+          variableMap);
+
+  VarId registerWithEngine(
+      Engine& engine,
+      std::function<VarId(VariableNode*)> variableMapper) const override;
+
+  [[nodiscard]] VariableNode* a() const noexcept { return _a; }
+  [[nodiscard]] VariableNode* b() const noexcept { return _b; }
+};
+
+}  // namespace invariantgraph

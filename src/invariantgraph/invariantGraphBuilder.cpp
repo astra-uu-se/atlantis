@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "invariantgraph/constraints/allDifferentNode.hpp"
+#include "invariantgraph/constraints/intEqNode.hpp"
 #include "invariantgraph/constraints/leqNode.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
@@ -174,6 +175,7 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
 
   CONSTRAINT_REGISTRATION("alldifferent", AllDifferentNode);
   CONSTRAINT_REGISTRATION("int_lin_le", LeqNode);
+  CONSTRAINT_REGISTRATION("int_eq", IntEqNode);
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint->name()));
