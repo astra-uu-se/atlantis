@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <limits>
 
+#include "invariantgraph/parseHelper.hpp"
 #include "constraints/lessEqual.hpp"
 #include "invariants/linear.hpp"
 
@@ -14,35 +15,10 @@ invariantgraph::LeqNode::fromModelConstraint(
   assert(constraint->name() == "int_lin_le");
   assert(constraint->arguments().size() == 3);
 
-  auto coeffLiterals =
-      std::get<std::vector<std::shared_ptr<fznparser::Literal>>>(
-          constraint->arguments()[0]);
-  auto varLiterals = std::get<std::vector<std::shared_ptr<fznparser::Literal>>>(
-      constraint->arguments()[1]);
-  auto boundLiteral =
-      std::get<std::shared_ptr<fznparser::Literal>>(constraint->arguments()[2]);
-
-  std::vector<Int> coeffs;
-  coeffs.reserve(coeffLiterals.size());
-  std::transform(
-      coeffLiterals.begin(), coeffLiterals.end(), std::back_inserter(coeffs),
-      [](const auto &coeff) {
-        return std::dynamic_pointer_cast<fznparser::ValueLiteral>(coeff)
-            ->value();
-      });
-
-  std::vector<invariantgraph::VariableNode *> variables;
-  variables.reserve(varLiterals.size());
-  std::transform(varLiterals.begin(), varLiterals.end(),
-                 std::back_inserter(variables), [&](const auto &literal) {
-                   auto var =
-                       std::dynamic_pointer_cast<fznparser::Variable>(literal);
-
-                   return variableMap(var);
-                 });
-
-  Int bound =
-      std::static_pointer_cast<fznparser::ValueLiteral>(boundLiteral)->value();
+  VALUE_VECTOR_ARG(coeffs, constraint->arguments()[0]);
+  MAPPED_SEARCH_VARIABLE_VECTOR_ARG(variables, constraint->arguments()[1],
+                             variableMap);
+  VALUE_ARG(bound, constraint->arguments()[2]);
 
   return std::make_unique<LeqNode>(coeffs, variables, bound);
 }
