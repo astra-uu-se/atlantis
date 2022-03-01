@@ -13,7 +13,7 @@ void MinSparse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
   registerDefinedVariable(engine, _y);
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    engine.registerInvariantInput(_id, _varArray[i], LocalId(i));
+    engine.registerInvariantInput(_id, _varArray[i], i);
   }
 }
 
