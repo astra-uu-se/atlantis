@@ -6,7 +6,7 @@
 #include "invariantgraph/constraints/intEqNode.hpp"
 #include "invariantgraph/constraints/leqNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
-#include "invariantgraph/invariants/arrayVarIntElementNode.hpp.hpp"
+#include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
