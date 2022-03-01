@@ -2,6 +2,7 @@
 
 #include "invariantgraph/invariants/intDivNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
+#include "invariantgraph/invariants/intTimesNode.hpp"
 #include "invariantgraph/parseHelper.hpp"
 
 template <typename T>
@@ -43,6 +44,11 @@ template std::unique_ptr<invariantgraph::IntDivNode> invariantgraph::BinaryOpNod
         variableMap);
 
 template std::unique_ptr<invariantgraph::IntModNode> invariantgraph::BinaryOpNode::fromModelConstraint(
+    const std::shared_ptr<fznparser::Constraint>& constraint,
+    const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
+        variableMap);
+
+template std::unique_ptr<invariantgraph::IntTimesNode> invariantgraph::BinaryOpNode::fromModelConstraint(
     const std::shared_ptr<fznparser::Constraint>& constraint,
     const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
         variableMap);

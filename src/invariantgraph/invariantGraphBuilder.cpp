@@ -10,6 +10,7 @@
 #include "invariantgraph/invariants/binaryOpNode.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
+#include "invariantgraph/invariants/intTimesNode.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
 #include "invariantgraph/invariants/minNode.hpp"
@@ -169,6 +170,7 @@ invariantgraph::InvariantGraphBuilder::makeInvariant(
   INVARIANT_REGISTRATION("array_var_int_element", ArrayVarIntElementNode);
   BINARY_OP_REGISTRATION(IntDivNode);
   BINARY_OP_REGISTRATION(IntModNode);
+  BINARY_OP_REGISTRATION(IntTimesNode);
 
   throw std::runtime_error("Unsupported constraint: " + std::string(name));
 #undef BINARY_OP_REGISTRATION
