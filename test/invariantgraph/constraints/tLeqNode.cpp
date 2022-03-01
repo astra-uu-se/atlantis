@@ -15,15 +15,12 @@ class LeqNodeTest : public NodeTestBase {
     b = FZN_SEARCH_VARIABLE("b", 0, 10);
     c = FZN_VALUE(3);
 
-    auto constraint = FZN_CONSTRAINT(
-        "int_lin_le", FZN_NO_ANNOTATIONS,
-        FZN_VECTOR_CONSTRAINT_ARG(FZN_CONSTRAINT_ARG(FZN_VALUE(1)),
-                                  FZN_CONSTRAINT_ARG(FZN_VALUE(2))),
-        FZN_VECTOR_CONSTRAINT_ARG(FZN_CONSTRAINT_ARG(a), FZN_CONSTRAINT_ARG(b)),
-        FZN_CONSTRAINT_ARG(c));
+    auto constraint =
+        makeConstraint("int_lin_le", FZN_NO_ANNOTATIONS,
+                       FZN_VECTOR_CONSTRAINT_ARG(FZN_VALUE(1), FZN_VALUE(2)),
+                       FZN_VECTOR_CONSTRAINT_ARG(a, b), c);
 
-    node =
-        invariantgraph::LeqNode::fromModelConstraint(constraint, nodeFactory);
+    node = makeNode<invariantgraph::LeqNode>(constraint);
   }
 };
 

@@ -16,13 +16,10 @@ class MaxNodeTest : public NodeTestBase {
     c = FZN_SEARCH_VARIABLE("c", 0, 10);
 
     FZN_DEFINES_VAR_ANNOTATION(annotations, c);
-    auto constraint = FZN_CONSTRAINT(
-        "array_int_maximum", annotations, FZN_CONSTRAINT_ARG(c),
-        FZN_VECTOR_CONSTRAINT_ARG(FZN_CONSTRAINT_ARG(a),
-                                  FZN_CONSTRAINT_ARG(b)));
+    auto constraint = makeConstraint("array_int_maximum", annotations, c,
+                                     FZN_VECTOR_CONSTRAINT_ARG(a, b));
 
-    node =
-        invariantgraph::MaxNode::fromModelConstraint(constraint, nodeFactory);
+    node = makeNode<invariantgraph::MaxNode>(constraint);
   }
 };
 
