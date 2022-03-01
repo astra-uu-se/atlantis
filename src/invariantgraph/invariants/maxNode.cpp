@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "invariantgraph/parseHelper.hpp"
 #include "invariants/maxSparse.hpp"
 
 std::unique_ptr<invariantgraph::MaxNode>
@@ -19,24 +20,11 @@ invariantgraph::MaxNode::fromModelConstraint(
 
   assert(constraint->arguments().size() == 2);
 
-  auto inputs = std::get<std::vector<std::shared_ptr<fznparser::Literal>>>(
-      constraint->arguments()[1]);
+  MAPPED_SEARCH_VARIABLE_VECTOR_ARG(inputs, constraint->arguments()[1], variableMap);
+  MAPPED_SEARCH_VARIABLE_ARG(output, constraint->arguments()[0], variableMap);
+  assert(definedVar == output->variable());
 
-  std::vector<VariableNode*> inputNodes;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputNodes),
-                 [&variableMap](const auto& var) {
-                   return variableMap(
-                       std::dynamic_pointer_cast<fznparser::Variable>(var));
-                 });
-
-  auto output = std::get<std::shared_ptr<fznparser::Literal>>(
-      constraint->arguments()[0]);
-  assert(definedVar == output);
-
-  auto outputNode =
-      variableMap(std::dynamic_pointer_cast<fznparser::Variable>(output));
-
-  return std::make_unique<invariantgraph::MaxNode>(inputNodes, outputNode);
+  return std::make_unique<invariantgraph::MaxNode>(inputs, output);
 }
 
 void invariantgraph::MaxNode::registerWithEngine(
