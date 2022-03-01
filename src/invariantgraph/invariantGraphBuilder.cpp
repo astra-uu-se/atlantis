@@ -151,6 +151,7 @@ invariantgraph::InvariantGraphBuilder::makeInvariant(
 
   INVARIANT_REGISTRATION("array_int_maximum", MaxNode);
   INVARIANT_REGISTRATION("int_lin_eq", LinearNode);
+  INVARIANT_REGISTRATION("array_int_element", LinearNode);
 
   throw std::runtime_error("Unsupported constraint: " + std::string(name));
 #undef INVARIANT_REGISTRATION
