@@ -5,6 +5,8 @@
 #include "invariantgraph/constraints/allDifferentNode.hpp"
 #include "invariantgraph/constraints/intEqNode.hpp"
 #include "invariantgraph/constraints/intLinEqNode.hpp"
+#include "invariantgraph/constraints/intLinNeNode.hpp"
+#include "invariantgraph/constraints/intNeqNode.hpp"
 #include "invariantgraph/constraints/leqNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
@@ -200,7 +202,9 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   CONSTRAINT_REGISTRATION("alldifferent", AllDifferentNode);
   CONSTRAINT_REGISTRATION("int_lin_le", LeqNode);
   CONSTRAINT_REGISTRATION("int_lin_eq", IntLinEqNode);
+  CONSTRAINT_REGISTRATION("int_lin_ne", IntLinNeNode);
   CONSTRAINT_REGISTRATION("int_eq", IntEqNode);
+  CONSTRAINT_REGISTRATION("int_ne", IntNeqNode);
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint->name()));
