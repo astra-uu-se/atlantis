@@ -6,15 +6,15 @@
 
 namespace invariantgraph {
 
-class IntNeqNode : public SoftConstraintNode {
+class IntNeNode : public SoftConstraintNode {
  private:
   VariableNode* _a;
   VariableNode* _b;
 
  public:
-  IntNeqNode(VariableNode* a, VariableNode* b) : _a(a), _b(b) {}
+  IntNeNode(VariableNode* a, VariableNode* b) : _a(a), _b(b) {}
 
-  static std::unique_ptr<IntNeqNode> fromModelConstraint(
+  static std::unique_ptr<IntNeNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);

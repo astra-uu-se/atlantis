@@ -1,13 +1,13 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/intNeqNode.hpp"
+#include "invariantgraph/constraints/intNeNode.hpp"
 
-class IntNeqNodeTest : public NodeTestBase {
+class IntNeNodeTest : public NodeTestBase {
  public:
   std::shared_ptr<fznparser::SearchVariable> a;
   std::shared_ptr<fznparser::SearchVariable> b;
 
-  std::unique_ptr<invariantgraph::IntNeqNode> node;
+  std::unique_ptr<invariantgraph::IntNeNode> node;
 
   void SetUp() override {
     a = FZN_SEARCH_VARIABLE("a", 5, 10);
@@ -15,11 +15,11 @@ class IntNeqNodeTest : public NodeTestBase {
 
     auto constraint = makeConstraint("int_ne", FZN_NO_ANNOTATIONS, a, b);
 
-    node = makeNode<invariantgraph::IntNeqNode>(constraint);
+    node = makeNode<invariantgraph::IntNeNode>(constraint);
   }
 };
 
-TEST_F(IntNeqNodeTest, construction) {
+TEST_F(IntNeNodeTest, construction) {
   EXPECT_EQ(node->a()->variable(), a);
   EXPECT_EQ(node->b()->variable(), b);
 
@@ -31,7 +31,7 @@ TEST_F(IntNeqNodeTest, construction) {
             node->b()->softConstraints().end());
 }
 
-TEST_F(IntNeqNodeTest, application) {
+TEST_F(IntNeNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   VarId violation = node->registerWithEngine(engine, [&](auto var) {
