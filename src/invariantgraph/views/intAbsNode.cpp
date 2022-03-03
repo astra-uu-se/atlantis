@@ -1,6 +1,6 @@
 #include "invariantgraph/views/intAbsNode.hpp"
 
-#include "invariantgraph/parseHelper.hpp"
+#include "../parseHelper.hpp"
 
 std::unique_ptr<invariantgraph::IntAbsNode>
 invariantgraph::IntAbsNode::fromModelConstraint(

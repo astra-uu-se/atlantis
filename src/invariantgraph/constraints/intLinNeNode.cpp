@@ -1,6 +1,6 @@
 #include "invariantgraph/constraints/intLinNeNode.hpp"
 
-#include "invariantgraph/parseHelper.hpp"
+#include "../parseHelper.hpp"
 #include "invariants/linear.hpp"
 #include "constraints/notEqual.hpp"
 
