@@ -6,10 +6,10 @@
 #include "fznparser/constraint.hpp"
 
 namespace invariantgraph {
-class LinearNode : public InvariantNode {
+class LinearNode final : public InvariantNode {
  private:
-  std::vector<Int> _coeffs;
-  std::vector<VariableNode*> _variables;
+  const std::vector<Int> _coeffs;
+  const std::vector<VariableNode*> _variables;
 
  public:
   static std::unique_ptr<LinearNode> fromModelConstraint(
@@ -23,10 +23,10 @@ class LinearNode : public InvariantNode {
         _coeffs(std::move(coeffs)),
         _variables(std::move(variables)) {}
 
-  ~LinearNode() override = default;
+  ~LinearNode() final = default;
 
   void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::function<VarId(VariableNode*)> variableMapper) const final;
 };
 }  // namespace invariantgraph
