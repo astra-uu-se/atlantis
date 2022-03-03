@@ -29,7 +29,6 @@ class InvariantNode {
 
 class SoftConstraintNode {
  public:
-  explicit SoftConstraintNode(const std::vector<VariableNode*>& variables);
   virtual ~SoftConstraintNode() = default;
 
   virtual VarId registerWithEngine(
@@ -66,24 +65,6 @@ class VariableNode {
 
   [[nodiscard]] std::shared_ptr<fznparser::SearchVariable> variable() const {
     return _variable;
-  }
-
-  void addSoftConstraint(SoftConstraintNode* node) {
-    _softConstraints.emplace(node);
-  }
-
-  [[nodiscard]] const std::set<SoftConstraintNode*>& softConstraints() const {
-    return _softConstraints;
-  }
-
-  void definedByInvariant(InvariantNode* node) { _definingInvariant = node; }
-
-  [[nodiscard]] std::optional<InvariantNode*> definingInvariant() const {
-    return _definingInvariant;
-  }
-
-  [[nodiscard]] bool isFunctionallyDefined() const {
-    return definingInvariant().has_value();
   }
 
   [[nodiscard]] Int offset() const { return _offset; }

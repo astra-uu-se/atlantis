@@ -46,7 +46,6 @@ invariantgraph::LinearNode::fromModelConstraint(
   auto output = variableMap(definedVar);
   auto linearInv =
       std::make_unique<invariantgraph::LinearNode>(coeffs, vars, output);
-  output->definedByInvariant(linearInv.get());
   output->setOffset(-sum);
 
   return linearInv;

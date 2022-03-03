@@ -31,10 +31,6 @@ TEST_F(AllDifferentNodeTest, construction) {
                  [](const auto& variable) { return variable.get(); });
 
   EXPECT_EQ(node->variables(), expectedVars);
-
-  for (invariantgraph::VariableNode* variable : expectedVars) {
-    EXPECT_EQ(*variable->softConstraints().begin(), node.get());
-  }
 }
 
 TEST_F(AllDifferentNodeTest, application) {

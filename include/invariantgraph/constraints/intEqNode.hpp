@@ -12,7 +12,7 @@ class IntEqNode : public SoftConstraintNode {
   VariableNode* _b;
 
  public:
-  IntEqNode(VariableNode* a, VariableNode* b) : SoftConstraintNode({a, b}), _a(a), _b(b) {}
+  IntEqNode(VariableNode* a, VariableNode* b) : _a(a), _b(b) {}
 
   static std::unique_ptr<IntEqNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,

@@ -22,9 +22,6 @@ class IntNeNodeTest : public NodeTestBase {
 TEST_F(IntNeNodeTest, construction) {
   EXPECT_EQ(node->a()->variable(), a);
   EXPECT_EQ(node->b()->variable(), b);
-
-  EXPECT_EQ(node->a()->softConstraints().count(node.get()), 1);
-  EXPECT_EQ(node->b()->softConstraints().count(node.get()), 1);
 }
 
 TEST_F(IntNeNodeTest, application) {

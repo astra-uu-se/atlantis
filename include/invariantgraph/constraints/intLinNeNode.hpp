@@ -18,8 +18,7 @@ class IntLinNeNode : public SoftConstraintNode {
 
   IntLinNeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
                Int c)
-      : SoftConstraintNode(variables),
-        _coeffs(std::move(coeffs)),
+      : _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _c(c) {}
 

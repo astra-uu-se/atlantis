@@ -30,9 +30,6 @@ TEST_F(LeqNodeTest, construction) {
   EXPECT_EQ(node->coeffs()[0], 1);
   EXPECT_EQ(node->coeffs()[1], 2);
   EXPECT_EQ(node->bound(), 3);
-
-  for (const auto& variable : node->variables())
-    EXPECT_EQ(variable->softConstraints().count(node.get()), 1);
 }
 
 TEST_F(LeqNodeTest, application) {
