@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/types.hpp"
 #include "misc/logging.hpp"
 #include "utils/priorityList.hpp"
@@ -11,38 +12,40 @@
 namespace {
 class PriorityListTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
   }
   std::mt19937 gen;
 
-  void testSanity([[maybe_unused]] PriorityList &p,
-                  [[maybe_unused]] Timestamp t) {
-#ifndef NDEBUG
+  static void testSanity([[maybe_unused]] PriorityList &p,
+                         [[maybe_unused]] Timestamp t) {
+#ifdef CBLS_TEST
     p.sanity(t);
 #endif
   }
-  void updateForward(Timestamp ts, PriorityList &priorityList) {
+  static void updateForward(Timestamp ts, PriorityList &priorityList) {
     updateForward(ts, priorityList, 0);
   }
-  void updateForward(Timestamp ts, PriorityList &priorityList, Int offset) {
+  static void updateForward(Timestamp ts, PriorityList &priorityList,
+                            Int offset) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
       priorityList.updatePriority(ts, idx, idx + 1 + offset);
     }
   }
 
-  void updateBackwards(Timestamp ts, PriorityList &priorityList) {
+  static void updateBackwards(Timestamp ts, PriorityList &priorityList) {
     updateBackwards(ts, priorityList, 0);
   }
-  void updateBackwards(Timestamp ts, PriorityList &priorityList, Int offset) {
+  static void updateBackwards(Timestamp ts, PriorityList &priorityList,
+                              Int offset) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
       priorityList.updatePriority(ts, idx, priorityList.size() - idx + offset);
       testSanity(priorityList, ts);
     }
   }
 
-  void updateUniform(Timestamp ts, PriorityList &priorityList) {
+  static void updateUniform(Timestamp ts, PriorityList &priorityList) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
       priorityList.updatePriority(ts, idx, Int(ts));
       testSanity(priorityList, ts);

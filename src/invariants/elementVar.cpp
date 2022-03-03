@@ -10,15 +10,18 @@ void ElementVar::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
   registerDefinedVariable(engine, _y);
   engine.registerInvariantInput(_id, _index, LocalId(0));
-  for (size_t index = 0; index < _varArray.size(); ++index) {
-    engine.registerInvariantInput(_id, _varArray[index], LocalId(0));
+  for (const auto index : _varArray) {
+    engine.registerInvariantInput(_id, index, LocalId(0));
   }
 }
 
 void ElementVar::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _y,
-              engine.getValue(ts, _varArray.at(static_cast<unsigned long>(
-                                      engine.getValue(ts, _index)))));
+  assert(0 <= engine.getValue(ts, _index) &&
+         static_cast<size_t>(engine.getValue(ts, _index)) < _varArray.size());
+  updateValue(
+      ts, engine, _y,
+      engine.getValue(
+          ts, _varArray[static_cast<size_t>(engine.getValue(ts, _index))]));
 }
 
 void ElementVar::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
@@ -26,14 +29,16 @@ void ElementVar::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId ElementVar::getNextInput(Timestamp ts, Engine& engine) {
-  _state.incValue(ts, 1);
-  if (_state.getValue(ts) == 0) {
-    return _index;
-  } else if (_state.getValue(ts) == 1) {
-    return _varArray.at(
-        static_cast<unsigned long>(engine.getValue(ts, _index)));
-  } else {
-    return NULL_ID;  // Done
+  switch (_state.incValue(ts, 1)) {
+    case 0:
+      return _index;
+    case 1:
+      assert(0 <= engine.getValue(ts, _index) &&
+             static_cast<size_t>(engine.getValue(ts, _index)) <
+                 _varArray.size());
+      return _varArray[static_cast<size_t>(engine.getValue(ts, _index))];
+    default:
+      return NULL_ID;  // Done
   }
 }
 

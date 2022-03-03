@@ -42,7 +42,7 @@ class PriorityList {
   }
 
  public:
-  PriorityList(size_t size)
+  explicit PriorityList(size_t size)
       : _list(size),
         _head(NULL_TIMESTAMP, nullptr),
         _tail(NULL_TIMESTAMP, nullptr) {
@@ -73,7 +73,7 @@ class PriorityList {
       return;  // No change.
     }
 
-    Int oldValue = _list[idx].priority.get(ts);
+    const Int oldValue = _list[idx].priority.get(ts);
 
     DoublyLinkedNode* currentHead = _head.get(ts);
     DoublyLinkedNode* currentTail = _tail.get(ts);
@@ -165,7 +165,7 @@ class PriorityList {
     }
   }
 
-#ifndef NDEBUG
+#ifdef CBLS_TEST
   void sanity(Timestamp ts) {
     if (size() == 0) {
       return;
@@ -174,7 +174,7 @@ class PriorityList {
 
     size_t s = 0;
     bool first = true;
-    Int minPrio = _head.get(ts)->priority.get(ts);
+    const Int minPrio = _head.get(ts)->priority.get(ts);
     for (Saved<DoublyLinkedNode*> cur = _head; cur.get(ts) != nullptr;
          cur = cur.get(ts)->next) {
       ++s;

@@ -17,7 +17,7 @@ class LayeredPropagationQueue {
   size_t _currentLayer;
 
  public:
-  LayeredPropagationQueue() : _dummy(NULL_ID, 123), _priorities(), _queue() {
+  LayeredPropagationQueue() : _dummy(NULL_ID, 123), _priorities(), _queue(), _currentLayer(0) {
     _dummy.next = &_dummy;
   }
   // This implementation does not allow copying as this requires special care

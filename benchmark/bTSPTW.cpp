@@ -24,18 +24,21 @@ class TSPTW : public benchmark::Fixture {
   std::random_device rd;
   std::mt19937 gen;
 
-  std::uniform_int_distribution<> distribution;
-  int n;
+  std::uniform_int_distribution<Int> distribution;
+  Int n;
   const int MAX_TIME = 100000;
 
   std::vector<VarId> violation;
   VarId totalViolation;
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(1);
 
-    logDebug(n);
+    if (n < 1) {
+      throw std::runtime_error("n must strictly positive.");
+    }
+
     engine->open();
 
     switch (state.range(0)) {
@@ -53,7 +56,7 @@ class TSPTW : public benchmark::Fixture {
     }
 
     for (int i = 0; i < n; ++i) {
-      dist.push_back(std::vector<Int>());
+      dist.emplace_back();
       for (int j = 0; j < n; ++j) {
         dist[i].push_back(i * j);
       }
@@ -99,10 +102,10 @@ class TSPTW : public benchmark::Fixture {
 
     gen = std::mt19937(rd());
 
-    distribution = std::uniform_int_distribution<>{0, n - 1};
+    distribution = std::uniform_int_distribution<Int>{0, n - 1};
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     pred.clear();
     timeToPrev.clear();
     arrivalPrev.clear();

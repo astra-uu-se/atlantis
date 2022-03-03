@@ -6,9 +6,9 @@
 #include "fznparser/constraint.hpp"
 
 namespace invariantgraph {
-class MaxNode : public InvariantNode {
+class MaxNode final : public InvariantNode {
  private:
-  std::vector<VariableNode*> _variables;
+  const std::vector<VariableNode*> _variables;
 
  public:
   static std::unique_ptr<MaxNode> fromModelConstraint(
@@ -19,11 +19,11 @@ class MaxNode : public InvariantNode {
   MaxNode(std::vector<VariableNode*> variables, VariableNode* output)
       : InvariantNode(output), _variables(std::move(variables)) {}
 
-  ~MaxNode() override = default;
+  ~MaxNode() final = default;
 
   void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::function<VarId(VariableNode*)> variableMapper) const final;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;

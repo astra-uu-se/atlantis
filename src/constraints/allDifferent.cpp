@@ -50,37 +50,35 @@ void AllDifferent::recompute(Timestamp ts, Engine& engine) {
 }
 
 void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
-  Int oldValue = _localValues.at(id).getValue(ts);
-  auto newValue = engine.getValue(ts, _variables[id]);
+  assert(id < _localValues.size());
+  const Int oldValue = _localValues[id].getValue(ts);
+  const Int newValue = engine.getValue(ts, _variables[id]);
   if (newValue == oldValue) {
     return;
   }
-  signed char dec = decreaseCount(ts, oldValue);
-  signed char inc = increaseCount(ts, newValue);
-  _localValues.at(id).setValue(ts, newValue);
-  incValue(ts, engine, _violationId, static_cast<Int>(dec + inc));
+  _localValues[id].setValue(ts, newValue);
+  incValue(ts, engine, _violationId,
+           static_cast<Int>(decreaseCount(ts, oldValue) +
+                            increaseCount(ts, newValue)));
 }
 
 VarId AllDifferent::getNextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
-
-  auto index = static_cast<size_t>(_state.getValue(ts));
+  const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _variables.size()) {
-    return _variables.at(index);
+    return _variables[index];
   }
   return NULL_ID;
 }
 
 void AllDifferent::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  auto id = static_cast<size_t>(_state.getValue(ts));
-  assert(id < _variables.size());
-  notifyIntChanged(ts, engine, id);
+  assert(static_cast<size_t>(_state.getValue(ts)) < _variables.size());
+  notifyIntChanged(ts, engine, static_cast<size_t>(_state.getValue(ts)));
 }
 
 void AllDifferent::commit(Timestamp ts, Engine& engine) {
   Invariant::commit(ts, engine);
 
-  for (auto& localValue : _localValues) {
+  for (SavedInt& localValue : _localValues) {
     localValue.commitIf(ts);
   }
 

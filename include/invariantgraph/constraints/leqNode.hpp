@@ -6,11 +6,11 @@
 
 namespace invariantgraph {
 
-class LeqNode : public SoftConstraintNode {
+class LeqNode final : public SoftConstraintNode {
  private:
-  std::vector<Int> _coeffs;
-  std::vector<VariableNode*> _variables;
-  Int _bound;
+  const std::vector<Int> _coeffs;
+  const std::vector<VariableNode*> _variables;
+  const Int _bound;
 
  public:
   LeqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
@@ -26,7 +26,7 @@ class LeqNode : public SoftConstraintNode {
 
   VarId registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::function<VarId(VariableNode*)> variableMapper) const final;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;

@@ -8,8 +8,8 @@ class Engine;
 
 class LessThan : public Constraint {
  private:
-  VarId _x;
-  VarId _y;
+  const VarId _x;
+  const VarId _y;
 
  public:
   LessThan(VarId violationId, VarId x, VarId y);
