@@ -212,8 +212,7 @@ inline void PropagationEngine::setOutputToInputMarkingMode(
   _outputToInputExplorer.setOutputToInputMarkingMode(markingMode);
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables()
-    const {
+inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
   return _propGraph._decisionVariables;
 }
 
