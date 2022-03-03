@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <limits>
 
-#include "invariantgraph/parseHelper.hpp"
+#include "../parseHelper.hpp"
 #include "constraints/lessEqual.hpp"
 #include "invariants/linear.hpp"
 

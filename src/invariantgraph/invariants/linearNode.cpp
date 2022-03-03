@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "invariantgraph/parseHelper.hpp"
+#include "../parseHelper.hpp"
 #include "invariants/linear.hpp"
 
 std::unique_ptr<invariantgraph::LinearNode>

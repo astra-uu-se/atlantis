@@ -1,7 +1,7 @@
 #include "invariantgraph/constraints/intNeNode.hpp"
 
 #include "constraints/notEqual.hpp"
-#include "invariantgraph/parseHelper.hpp"
+#include "../parseHelper.hpp"
 
 std::unique_ptr<invariantgraph::IntNeNode>
 invariantgraph::IntNeNode::fromModelConstraint(

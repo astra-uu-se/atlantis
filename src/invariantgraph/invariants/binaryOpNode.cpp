@@ -4,7 +4,7 @@
 #include "invariantgraph/invariants/intModNode.hpp"
 #include "invariantgraph/invariants/intPowNode.hpp"
 #include "invariantgraph/invariants/intTimesNode.hpp"
-#include "invariantgraph/parseHelper.hpp"
+#include "../parseHelper.hpp"
 
 template <typename T>
 std::unique_ptr<T> invariantgraph::BinaryOpNode::fromModelConstraint(

@@ -1,6 +1,6 @@
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
 
-#include "invariantgraph/parseHelper.hpp"
+#include "../parseHelper.hpp"
 #include "invariants/elementConst.hpp"
 
 std::unique_ptr<invariantgraph::ArrayIntElementNode>

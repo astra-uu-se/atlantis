@@ -2,7 +2,7 @@
 
 #include "constraints/equal.hpp"
 #include "invariants/linear.hpp"
-#include "invariantgraph/parseHelper.hpp"
+#include "../parseHelper.hpp"
 
 std::unique_ptr<invariantgraph::IntLinEqNode>
 invariantgraph::IntLinEqNode::fromModelConstraint(

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "core/types.hpp"
+#include "fznparser/model.hpp"
+
 #define SEARCH_VARIABLE_ARG(name, arg)                              \
   auto name = std::dynamic_pointer_cast<fznparser::SearchVariable>( \
       std::get<std::shared_ptr<fznparser::Literal>>(arg))
@@ -9,10 +12,7 @@
       variableMap(std::dynamic_pointer_cast<fznparser::SearchVariable>( \
           std::get<std::shared_ptr<fznparser::Literal>>(arg)))
 
-#define VALUE_ARG(name, arg)                                          \
-  auto name = std::dynamic_pointer_cast<fznparser::ValueLiteral>(     \
-                  std::get<std::shared_ptr<fznparser::Literal>>(arg)) \
-                  ->value()
+#define VALUE_ARG(name, arg) auto name = valueArgument(arg)
 
 #define VECTOR_ARG(name, type, arg, mapper)                                    \
   std::vector<type> name;                                                      \
@@ -24,11 +24,7 @@
                    mapper);                                                    \
   } while (false)
 
-#define VALUE_VECTOR_ARG(name, arg)                                    \
-  VECTOR_ARG(name, Int, arg, [](const auto &literal) {                 \
-    return std::dynamic_pointer_cast<fznparser::ValueLiteral>(literal) \
-        ->value();                                                     \
-  })
+#define VALUE_VECTOR_ARG(name, arg) auto name = valueVectorArgument(arg)
 
 #define MAPPED_SEARCH_VARIABLE_VECTOR_ARG(name, arg, variableMap)           \
   VECTOR_ARG(                                                               \
@@ -36,3 +32,7 @@
         return variableMap(                                                 \
             std::dynamic_pointer_cast<fznparser::SearchVariable>(literal)); \
       })
+
+Int valueArgument(const fznparser::ConstraintArgument &argument);
+std::vector<Int> valueVectorArgument(
+    const fznparser::ConstraintArgument &argument);
