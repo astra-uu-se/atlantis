@@ -18,8 +18,8 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-            ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-            ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.9
@@ -63,7 +63,7 @@ jobs:
         # Execute tests defined by the CMake configuration.
         run: ctest
 
-      - name: Optimisation Group Slack
+      - name: Slack
         if: always()
         uses: act10ns/slack@v1
         env:
@@ -73,19 +73,9 @@ jobs:
           steps: ${{ toJson(steps) }}
           channel: "#build"
 
-      - name: Atlantis Slack
-        if: always()
-        uses: act10ns/slack@v1
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD_ATLANTIS }}
-        with:
-          status: ${{ job.status }}
-          steps: ${{ toJson(steps) }}
-          channel: "#build"
-
       - name: Run Benchmarks
         if: ${{ steps.buildBenchmarksFlag.outputs.value == 'ON' }}
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH_ATLANTIS }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
         shell: bash
         run: chmod +x ./slack-benchmark.sh; ./slack-benchmark.sh;
