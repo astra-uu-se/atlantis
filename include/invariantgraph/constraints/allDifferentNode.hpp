@@ -5,9 +5,9 @@
 #include "invariantgraph/structure.hpp"
 
 namespace invariantgraph {
-class AllDifferentNode : public SoftConstraintNode {
+class AllDifferentNode final : public SoftConstraintNode {
  private:
-  std::vector<VariableNode*> _variables;
+  const std::vector<VariableNode*> _variables;
 
  public:
   explicit AllDifferentNode(std::vector<VariableNode*> variables)
@@ -20,7 +20,7 @@ class AllDifferentNode : public SoftConstraintNode {
 
   VarId registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::function<VarId(VariableNode*)> variableMapper) const final;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() {
     return _variables;

@@ -16,24 +16,29 @@ void PropagationGraph::Topology::computeNoCycles() {
 
   std::queue<VarId> reverseOrder;
 
-  std::function<void(VarId)> visit = [&](VarId id) {
+  const std::function<void(VarId)> visit = [&](VarId id) {
     // tmp Mark current node
-    tmpVisited.at(id) = true;
+    assert(id < tmpVisited.size());
+    tmpVisited[id] = true;
     // for each invariant id is input to
-    for (auto invariant : graph.getListeningInvariants(id)) {
+    for (const auto invariant : graph.getListeningInvariants(id)) {
       // for each variable defined by that invariant
-      for (auto definedVariable : graph.getVariablesDefinedBy(invariant)) {
-        if (visited.at(definedVariable)) {
+      for (const auto definedVariable :
+           graph.getVariablesDefinedBy(invariant)) {
+        assert(definedVariable < visited.size());
+        if (visited[definedVariable]) {
           continue;
         }
-        if (tmpVisited.at(definedVariable)) {
+        assert(definedVariable < tmpVisited.size());
+        if (tmpVisited[definedVariable]) {
           throw PropagationGraphHasCycles(
               "var " + std::to_string(definedVariable) + " is part of cycle.");
         }
         visit(definedVariable);
       }
     }
-    visited.at(id) = true;
+    assert(id < visited.size());
+    visited[id] = true;
     reverseOrder.push(id);
   };
 
@@ -49,7 +54,8 @@ void PropagationGraph::Topology::computeNoCycles() {
 
   variablePosition.resize(graph.getNumVariables() + 1, 0);
   while (!reverseOrder.empty()) {
-    variablePosition.at(reverseOrder.front()) = reverseOrder.size();
+    assert(reverseOrder.front() < variablePosition.size());
+    variablePosition[reverseOrder.front()] = reverseOrder.size();
     reverseOrder.pop();
   }
   computeInvariantFromVariables();
@@ -69,14 +75,17 @@ void PropagationGraph::Topology::computeWithCycles() {
 
   std::queue<VarId> reverseOrder;
 
-  std::function<void(VarId)> visit = [&](VarId varId) {
+  const std::function<void(VarId)> visit = [&](VarId varId) {
     // Mark current node
-    visited.at(varId) = true;
+    assert(varId < visited.size());
+    visited[varId] = true;
     // for each invariant id is a input to
-    for (auto invariant : graph.getListeningInvariants(varId)) {
+    for (const auto invariant : graph.getListeningInvariants(varId)) {
       // for each variable defined by that invariant
-      for (auto definedVariable : graph.getVariablesDefinedBy(invariant)) {
-        if (visited.at(definedVariable)) {
+      for (const auto definedVariable :
+           graph.getVariablesDefinedBy(invariant)) {
+        assert(definedVariable < visited.size());
+        if (visited[definedVariable]) {
           // Ignore nodes that have been visited before
           // This also breaks cycles.
           continue;
@@ -99,7 +108,8 @@ void PropagationGraph::Topology::computeWithCycles() {
 
   variablePosition.resize(graph.getNumVariables() + 1, 0);
   while (!reverseOrder.empty()) {
-    variablePosition.at(reverseOrder.front()) = reverseOrder.size();
+    assert(reverseOrder.front() < variablePosition.size());
+    variablePosition[reverseOrder.front()] = reverseOrder.size();
     reverseOrder.pop();
   }
   computeInvariantFromVariables();
@@ -125,16 +135,20 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
 
   std::queue<VarId> reverseOrder;
 
-  std::function<void(VarId, int)> visit = [&](VarId varId, int depth) {
+  const std::function<void(VarId, int)> visit = [&](VarId varId, int depth) {
     // Mark current node
-    visited.at(varId) = true;
-    position.at(varId) = depth;
+    assert(varId < visited.size());
+    visited[varId] = true;
+    assert(varId < position.size());
+    position[varId] = depth;
     // std::cout << "Visiting " << varId << " at depth " << depth << std::endl;
     // for each invariant id is a input to
-    for (auto invariantId : graph.getListeningInvariants(varId)) {
+    for (const auto invariantId : graph.getListeningInvariants(varId)) {
       // for each variable defined by that invariant
-      for (auto definedVariable : graph.getVariablesDefinedBy(invariantId)) {
-        if (visited.at(definedVariable)) {
+      for (const auto definedVariable :
+           graph.getVariablesDefinedBy(invariantId)) {
+        assert(definedVariable < visited.size());
+        if (visited[definedVariable]) {
           // Ignore nodes that have been visited before
           // This also breaks cycles.
           // std::cout << "Variable " << definedVariable
@@ -142,11 +156,12 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
           //           << std::endl;
           continue;
         }
-        if (position.at(definedVariable) > depth) {
+        assert(definedVariable < position.size());
+        if (position[definedVariable] > depth) {
           // Ignore variable that is already at a lower level.
           // std::cout << "Variable " << definedVariable
           //           << " is already at depth " <<
-          //           position.at(definedVariable)
+          //           position[definedVariable]
           //           << std::endl;
           continue;
         }
@@ -174,8 +189,9 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
   // std::vector<int> count;
   // count.resize(max+1, 0);
   variablePosition.resize(graph.getNumVariables() + 1, 0);
+  assert(position.size() == variablePosition.size());
   for (size_t i = 0; i < graph.getNumVariables() + 1; ++i) {
-    variablePosition.at(i) = position.at(i);
+    variablePosition[i] = position[i];
     // count.at(position.at(i))++;
   }
 
@@ -195,12 +211,14 @@ void PropagationGraph::Topology::computeInvariantFromVariables() {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
-    auto invariantId = InvariantId(i);
+    const InvariantId invariantId(i);
     size_t position = 0;
-    for (auto definedVariable : graph.getVariablesDefinedBy(invariantId)) {
-      position =
-          std::max<size_t>(position, variablePosition.at(definedVariable));
+    for (const auto definedVariable :
+         graph.getVariablesDefinedBy(invariantId)) {
+      assert(definedVariable < variablePosition.size());
+      position = std::max<size_t>(position, variablePosition[definedVariable]);
     }
-    invariantPosition.at(invariantId) = position;
+    assert(invariantId < invariantPosition.size());
+    invariantPosition[invariantId] = position;
   }
 }

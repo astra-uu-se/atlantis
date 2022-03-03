@@ -16,17 +16,18 @@ class AllInterval : public benchmark::Fixture {
   std::random_device rd;
   std::mt19937 gen;
 
-  std::uniform_int_distribution<> distribution;
-  int n;
+  std::uniform_int_distribution<Int> distribution;
+  Int n;
 
   VarId violation = NULL_ID;
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
     n = state.range(1);
+    if (n < 0) {
+      throw std::runtime_error("n must be non-negative.");
+    }
 
-    // TODO: why is this printed multiple times per test?
-    logDebug(n);
     engine->open();
 
     switch (state.range(0)) {
@@ -49,7 +50,7 @@ class AllInterval : public benchmark::Fixture {
 
     for (int i = 1; i < n; ++i) {
       violationVars.push_back(engine->makeIntVar(i, 0, n - 1));
-      engine->makeInvariant<AbsDiff>(inputVars.at(i - 1), inputVars.at(i),
+      engine->makeInvariant<AbsDiff>(inputVars[i - 1], inputVars[i],
                                      violationVars.back());
     }
 
@@ -60,10 +61,10 @@ class AllInterval : public benchmark::Fixture {
 
     gen = std::mt19937(rd());
 
-    distribution = std::uniform_int_distribution<>{0, n - 1};
+    distribution = std::uniform_int_distribution<Int>{0, n - 1};
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     inputVars.clear();
     violationVars.clear();
   }
@@ -72,14 +73,16 @@ class AllInterval : public benchmark::Fixture {
 BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
-    int i = distribution(gen);
-    int j = distribution(gen);
-    Int oldI = engine->getCommittedValue(inputVars.at(i));
-    Int oldJ = engine->getCommittedValue(inputVars.at(j));
+    const size_t i = distribution(gen);
+    assert(i < inputVars.size());
+    const size_t j = distribution(gen);
+    assert(j < inputVars.size());
+    const Int oldI = engine->getCommittedValue(inputVars[i]);
+    const Int oldJ = engine->getCommittedValue(inputVars[j]);
     // Perform random swap
     engine->beginMove();
-    engine->setValue(inputVars.at(i), oldJ);
-    engine->setValue(inputVars.at(j), oldI);
+    engine->setValue(inputVars[i], oldJ);
+    engine->setValue(inputVars[j], oldI);
     engine->endMove();
 
     engine->beginQuery();
@@ -96,11 +99,11 @@ BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
-        Int oldI = engine->getCommittedValue(inputVars.at(i));
-        Int oldJ = engine->getCommittedValue(inputVars.at(j));
+        const Int oldI = engine->getCommittedValue(inputVars[i]);
+        const Int oldJ = engine->getCommittedValue(inputVars[j]);
         engine->beginMove();
-        engine->setValue(inputVars.at(i), oldJ);
-        engine->setValue(inputVars.at(j), oldI);
+        engine->setValue(inputVars[i], oldJ);
+        engine->setValue(inputVars[j], oldI);
         engine->endMove();
 
         engine->beginQuery();
@@ -118,15 +121,16 @@ BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
   int commits = 0;
   for (auto _ : st) {
-    int i = distribution(gen);
-    int j = distribution(gen);
-
-    Int oldI = engine->getCommittedValue(inputVars.at(i));
-    Int oldJ = engine->getCommittedValue(inputVars.at(j));
+    const size_t i = distribution(gen);
+    assert(i < inputVars.size());
+    const size_t j = distribution(gen);
+    assert(j < inputVars.size());
+    const Int oldI = engine->getCommittedValue(inputVars[i]);
+    const Int oldJ = engine->getCommittedValue(inputVars[j]);
     // Perform random swap
     engine->beginMove();
-    engine->setValue(inputVars.at(i), oldJ);
-    engine->setValue(inputVars.at(j), oldI);
+    engine->setValue(inputVars[i], oldJ);
+    engine->setValue(inputVars[j], oldI);
     engine->endMove();
 
     engine->beginCommit();

@@ -19,16 +19,17 @@
 
 class IfThenElse : public Invariant {
  private:
-  VarId _b;
-  std::array<VarId, 2> _xy;
-  VarId _z;
+  const VarId _b;
+  const std::array<const VarId, 2> _xy;
+  const VarId _z;
 
  public:
   IfThenElse(VarId b, VarId x, VarId y, VarId z);
+
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;
+  void commit(Timestamp, Engine&) override;
   VarId getNextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
-  void commit(Timestamp, Engine&) override;
 };

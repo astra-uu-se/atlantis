@@ -21,8 +21,9 @@ invariantgraph::AllDifferentNode::fromModelConstraint(
       });
 
   auto node = std::make_unique<AllDifferentNode>(variableNodes);
-  for (auto variableNode : variableNodes)
+  for (auto variableNode : variableNodes) {
     variableNode->addSoftConstraint(node.get());
+  }
 
   return node;
 }
