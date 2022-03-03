@@ -1,0 +1,1 @@
+predicate alldifferent(array[int] of var int: x);
