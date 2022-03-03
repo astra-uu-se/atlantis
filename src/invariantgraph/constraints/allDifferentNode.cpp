@@ -15,12 +15,7 @@ invariantgraph::AllDifferentNode::fromModelConstraint(
 
   MAPPED_SEARCH_VARIABLE_VECTOR_ARG(variables, constraint->arguments()[0], variableMap);
 
-  auto node = std::make_unique<AllDifferentNode>(variables);
-
-  for (auto variable : variables)
-    variable->addSoftConstraint(node.get());
-
-  return node;
+  return std::make_unique<AllDifferentNode>(variables);
 }
 
 VarId invariantgraph::AllDifferentNode::registerWithEngine(

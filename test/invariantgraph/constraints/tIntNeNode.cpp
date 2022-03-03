@@ -23,12 +23,8 @@ TEST_F(IntNeNodeTest, construction) {
   EXPECT_EQ(node->a()->variable(), a);
   EXPECT_EQ(node->b()->variable(), b);
 
-  EXPECT_NE(std::find(node->a()->softConstraints().begin(),
-                      node->a()->softConstraints().end(), node.get()),
-            node->a()->softConstraints().end());
-  EXPECT_NE(std::find(node->b()->softConstraints().begin(),
-                      node->b()->softConstraints().end(), node.get()),
-            node->b()->softConstraints().end());
+  EXPECT_EQ(node->a()->softConstraints().count(node.get()), 1);
+  EXPECT_EQ(node->b()->softConstraints().count(node.get()), 1);
 }
 
 TEST_F(IntNeNodeTest, application) {

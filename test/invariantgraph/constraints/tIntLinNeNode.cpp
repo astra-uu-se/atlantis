@@ -30,6 +30,9 @@ TEST_F(IntLinNeNodeTest, construction) {
   EXPECT_EQ(node->coeffs()[0], 1);
   EXPECT_EQ(node->coeffs()[1], 2);
   EXPECT_EQ(node->c(), 3);
+
+  for (const auto& variable : node->variables())
+    EXPECT_EQ(variable->softConstraints().count(node.get()), 1);
 }
 
 TEST_F(IntLinNeNodeTest, application) {

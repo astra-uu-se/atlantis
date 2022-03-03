@@ -29,6 +29,7 @@ class InvariantNode {
 
 class SoftConstraintNode {
  public:
+  explicit SoftConstraintNode(const std::vector<VariableNode*>& variables);
   virtual ~SoftConstraintNode() = default;
 
   virtual VarId registerWithEngine(
