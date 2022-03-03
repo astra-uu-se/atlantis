@@ -91,7 +91,8 @@ class AllDifferentTest : public ::testing::Test {
     engine->close();
   }
 
-  void testNotifications(PropagationEngine::PropagationMode propMode) {
+  void testNotifications(PropagationMode propMode,
+                         OutputToInputMarkingMode markingMode) {
     engine->open();
 
     std::vector<VarId> args{};
@@ -113,13 +114,13 @@ class AllDifferentTest : public ::testing::Test {
     EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
+    engine->setOutputToInputMarkingMode(markingMode);
 
     engine->close();
 
-    if (engine->propagationMode ==
-        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
+    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
+      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
@@ -273,15 +274,23 @@ TEST_F(AllDifferentTest, CreateAllDifferent) {
 }
 
 TEST_F(AllDifferentTest, NotificationsInputToOutput) {
-  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+  testNotifications(PropagationMode::INPUT_TO_OUTPUT,
+                    OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(AllDifferentTest, NotificationsOutputToInput) {
-  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
+TEST_F(AllDifferentTest, NotificationsOutputToInputNone) {
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
+                    OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(AllDifferentTest, NotificationsMixed) {
-  testNotifications(PropagationEngine::PropagationMode::MIXED);
+TEST_F(AllDifferentTest, NotificationsOutputToInputOutputToInputStatic) {
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
+                    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC);
+}
+
+TEST_F(AllDifferentTest, NotificationsOutputToInputInputToOutputExploration) {
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
+                    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION);
 }
 
 }  // namespace
