@@ -5,13 +5,14 @@
 #include <stdexcept>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/types.hpp"
 #include "variables/intVar.hpp"
 
 namespace {
 class IntVarTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
   }
@@ -63,7 +64,7 @@ TEST_F(IntVarTest, SavedIntConstructor) {
 TEST_F(IntVarTest, InDomain) {
   Int lowerBound = -10;
   Int upperBound = 10;
-  Timestamp timestamp = Timestamp(1);
+  Timestamp timestamp(1);
   IntVar intVar = IntVar(timestamp, 0, lowerBound, upperBound);
 
   for (Int value = lowerBound; value <= upperBound; ++value) {
@@ -83,7 +84,7 @@ TEST_F(IntVarTest, UpdateDomain) {
   Int initialLowerBound = 0;
   Int initialUpperBound = 0;
 
-  Timestamp timestamp = Timestamp(1);
+  Timestamp timestamp(1);
   IntVar intVar = IntVar(timestamp, 0, initialLowerBound, initialUpperBound);
 
   for (Int value = 1; value <= 1000; ++value) {

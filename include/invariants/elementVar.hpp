@@ -13,16 +13,17 @@
 
 class ElementVar : public Invariant {
  private:
-  VarId _index;
-  std::vector<VarId> _varArray;
-  VarId _y;
+  const VarId _index;
+  const std::vector<VarId> _varArray;
+  const VarId _y;
 
  public:
   ElementVar(VarId index, std::vector<VarId> varArray, VarId y);
+
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;
+  void commit(Timestamp, Engine&) override;
   VarId getNextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
-  void commit(Timestamp, Engine&) override;
 };

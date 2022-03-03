@@ -1,4 +1,5 @@
 #pragma once
+
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 
@@ -7,11 +8,11 @@ class Engine;  // Forward declaration
 class Constraint : public Invariant {
  private:
  protected:
-  VarId _violationId;
+  const VarId _violationId;
   Constraint(Id id, VarId violationId)
       : Invariant(id), _violationId(violationId) {}
 
  public:
-  inline VarId getViolationId();
-  inline Int getViolationCount(Engine&, Timestamp&);
+  [[nodiscard]] inline VarId getViolationId() const;
+  [[nodiscard]] inline Int getViolationCount(Engine&, Timestamp&) const;
 };

@@ -6,6 +6,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
 #include "invariants/elementVar.hpp"
@@ -89,13 +90,13 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   }
 
   // TODO: use some other invariants...
-  auto invariant = engine->makeInvariant<MockInvariantSimple>();
+  auto& invariant = engine->makeInvariant<MockInvariantSimple>();
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-  ASSERT_TRUE(invariant->_initialized);
+  ASSERT_TRUE(invariant._initialized);
 
   engine->close();
   EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
@@ -107,15 +108,15 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   // I just had to do some quick test and was too lazy to do this propperly.
   engine->open();
 
-  size_t intVarCount = 10;
+  Int intVarCount = 10;
   std::vector<VarId> X;
-  for (size_t value = 0; value < intVarCount; ++value) {
+  for (Int value = 0; value < intVarCount; ++value) {
     X.push_back(engine->makeIntVar(value, Int(-100), Int(100)));
   }
 
   VarId min = engine->makeIntVar(100, Int(-100), Int(100));
   // TODO: use some other invariants...
-  auto invariant = engine->makeInvariant<MinSparse>(X, min);
+  engine->makeInvariant<MinSparse>(X, min);
 
   engine->close();
   EXPECT_EQ(engine->getCommittedValue(min), 0);
@@ -174,19 +175,19 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
 TEST_F(EngineTest, RecomputeAndCommit) {
   engine->open();
 
-  size_t intVarCount = 10;
-  for (size_t value = 0; value < intVarCount; ++value) {
+  Int intVarCount = 10;
+  for (Int value = 0; value < intVarCount; ++value) {
     engine->makeIntVar(value, -100, 100);
   }
 
   // TODO: use some other invariants...
-  auto invariant = engine->makeInvariant<MockInvariantSimple>();
+  auto& invariant = engine->makeInvariant<MockInvariantSimple>();
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(1);
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(1);
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(1);
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(1);
 
-  ASSERT_TRUE(invariant->_initialized);
+  ASSERT_TRUE(invariant._initialized);
 
   engine->close();
 
@@ -202,12 +203,12 @@ TEST_F(EngineTest, SimplePropagation) {
   VarId b = engine->makeIntVar(2, -10, 10);
   VarId c = engine->makeIntVar(3, -10, 10);
 
-  auto invariant = engine->makeInvariant<MockInvariantAdvanced>(
+  auto& invariant = engine->makeInvariant<MockInvariantAdvanced>(
       std::vector<VarId>({a, b, c}), output);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(1);
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(1);
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(1);
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(1);
 
   engine->close();
 
@@ -221,27 +222,25 @@ TEST_F(EngineTest, SimplePropagation) {
 
   if (engine->propagationMode ==
       PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, getNextInput(moveTimestamp, testing::_)).Times(0);
+    EXPECT_CALL(invariant, getNextInput(moveTimestamp, testing::_)).Times(0);
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentInputChanged(moveTimestamp, testing::_))
+    EXPECT_CALL(invariant, notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(0);
   } else {
-    EXPECT_CALL(*invariant, getNextInput(moveTimestamp, testing::_))
+    EXPECT_CALL(invariant, getNextInput(moveTimestamp, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
-    EXPECT_CALL(*invariant,
-                notifyCurrentInputChanged(moveTimestamp, testing::_))
+    EXPECT_CALL(invariant, notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(3);
   }
 
   for (size_t id = 0; id < 3; ++id) {
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
     }
@@ -260,28 +259,28 @@ TEST_F(EngineTest, SimpleCommit) {
   VarId b = engine->makeIntVar(2, -10, 10);
   VarId c = engine->makeIntVar(3, -10, 10);
 
-  auto invariant = engine->makeInvariant<MockInvariantAdvanced>(
+  auto& invariant = engine->makeInvariant<MockInvariantAdvanced>(
       std::vector<VarId>({a, b, c}), output);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 
   if (engine->propagationMode ==
       PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
 
-    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+    EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
   } else {
-    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
+    EXPECT_CALL(invariant, getNextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
-    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+    EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(3);
   }
 
@@ -294,7 +293,7 @@ TEST_F(EngineTest, SimpleCommit) {
   for (size_t id = 0; id < 3; ++id) {
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
     }
@@ -306,23 +305,22 @@ TEST_F(EngineTest, SimpleCommit) {
 
   if (engine->propagationMode ==
       PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant,
-                notifyIntChanged(testing::_, testing::_, LocalId(0)))
+    EXPECT_CALL(invariant, notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
 
-    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
 
-    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+    EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
   } else if (engine->propagationMode ==
              PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
+    EXPECT_CALL(invariant, getNextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
-    EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+    EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(1);
   }
 
@@ -400,9 +398,9 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
   VarId i3 = engine->makeIntVar(2, 0, 3);
   VarId output = engine->makeIntVar(2, -300, 300);
 
-  VarId x1Plus1 = engine->makeIntView<IntOffsetView>(x1, 1)->getId();
-  VarId x2Plus2 = engine->makeIntView<IntOffsetView>(x2, 2)->getId();
-  VarId x3Plus3 = engine->makeIntView<IntOffsetView>(x3, 3)->getId();
+  VarId x1Plus1 = engine->makeIntView<IntOffsetView>(x1, 1);
+  VarId x2Plus2 = engine->makeIntView<IntOffsetView>(x2, 2);
+  VarId x3Plus3 = engine->makeIntView<IntOffsetView>(x3, 3);
 
   engine->makeInvariant<ElementVar>(
       i1, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}), x1);
@@ -487,9 +485,9 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   VarId i3 = engine->makeIntVar(2, 0, 3);
   VarId output = engine->makeIntVar(2, 0, 3);
 
-  VarId viewPlus1 = engine->makeIntView<IntOffsetView>(x1, 1)->getId();
-  VarId viewPlus2 = engine->makeIntView<IntOffsetView>(x2, 2)->getId();
-  VarId viewPlus3 = engine->makeIntView<IntOffsetView>(x3, 3)->getId();
+  VarId viewPlus1 = engine->makeIntView<IntOffsetView>(x1, 1);
+  VarId viewPlus2 = engine->makeIntView<IntOffsetView>(x2, 2);
+  VarId viewPlus3 = engine->makeIntView<IntOffsetView>(x3, 3);
 
   engine->makeInvariant<ElementVar>(
       i1, std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}), x1);

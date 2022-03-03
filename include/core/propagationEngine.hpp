@@ -55,13 +55,13 @@ class PropagationEngine : public Engine {
    * @throw if the variable is already defined by an invariant.
    */
   void registerDefinedVariable(VarId definedVarId,
-                               InvariantId invariantId) override;
+                               InvariantId invariantId) final;
 
  public:
   PropagationEngine(/* args */);
 
-  void open() override;
-  void close() override;
+  void open() final;
+  void close() final;
 
   void setPropagationMode(PropagationMode);
 
@@ -70,8 +70,8 @@ class PropagationEngine : public Engine {
    * @param ts the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  void notifyMaybeChanged(Timestamp ts, VarId id) override;
-  void queueForPropagation(Timestamp, VarId) override;
+  void notifyMaybeChanged(Timestamp ts, VarId id) final;
+  void queueForPropagation(Timestamp, VarId) final;
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
@@ -79,7 +79,7 @@ class PropagationEngine : public Engine {
    * returns true if variable id is relevant for propagation.
    * Note that this is not the same thing as the variable being modified.
    */
-  bool isOnPropagationPath(VarId);
+  bool isOnPropagationPath(VarId) const;
   /**
    * returns true if invariant id is relevant for propagation.
    * Note that this is not the same thing as the invariant being modified.
@@ -106,11 +106,12 @@ class PropagationEngine : public Engine {
   size_t getNumVariables();
   size_t getNumInvariants();
 
-  [[nodiscard]] const std::vector<VarIdBase>& getDecisionVariables();
+  [[nodiscard]] const std::vector<VarIdBase>& getDecisionVariables() const;
   [[nodiscard]] const std::unordered_set<VarIdBase>&
-  getModifiedDecisionVariables();
-  [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables();
-  [[nodiscard]] const std::vector<VarIdBase>& getInputVariables(InvariantId);
+  getModifiedDecisionVariables() const;
+  [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables() const;
+  [[nodiscard]] const std::vector<VarIdBase>& getInputVariables(
+      InvariantId) const;
 
   /**
    * returns the next input at the current timestamp.
@@ -140,10 +141,10 @@ class PropagationEngine : public Engine {
    * @param localId the id of the variable in the invariant
    */
   void registerInvariantInput(InvariantId invariantId, VarId inputId,
-                              LocalId localId) override;
+                              LocalId localId) final;
 
-  void registerVar(VarId) override;
-  void registerInvariant(InvariantId) override;
+  void registerVar(VarId) final;
+  void registerInvariant(InvariantId) final;
 
   PropagationGraph& getPropGraph();
 };
@@ -165,7 +166,7 @@ inline void PropagationEngine::clearPropagationPath() {
   _varIsOnPropagationPath.assign_all(false);
 }
 
-inline bool PropagationEngine::isOnPropagationPath(VarId id) {
+inline bool PropagationEngine::isOnPropagationPath(VarId id) const {
   assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT);
   return _varIsOnPropagationPath.get(id);
 }
@@ -227,21 +228,23 @@ inline void PropagationEngine::setPropagationMode(
   _propagationMode = propMode;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables() {
+inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables()
+    const {
   return _propGraph._decisionVariables;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables() {
+inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables()
+    const {
   return _propGraph._outputVariables;
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
-    InvariantId invariantId) {
+    InvariantId invariantId) const {
   return _propGraph.getInputVariables(invariantId);
 }
 
 inline const std::unordered_set<VarIdBase>&
-PropagationEngine::getModifiedDecisionVariables() {
+PropagationEngine::getModifiedDecisionVariables() const {
   assert(_currentTimestamp == _decisionVariablesModifiedAt);
   return _modifiedDecisionVariables;
 }

@@ -35,10 +35,9 @@ void LessEqual::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId LessEqual::getNextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?_x:_y;
-  switch (_state.getValue(ts)) {
+  switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
     case 1:

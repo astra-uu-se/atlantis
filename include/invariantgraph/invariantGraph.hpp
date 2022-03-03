@@ -11,9 +11,9 @@
 namespace invariantgraph {
 class InvariantGraph {
  private:
-  std::vector<std::unique_ptr<VariableNode>> _variables;
-  std::vector<std::unique_ptr<InvariantNode>> _invariants;
-  std::vector<std::unique_ptr<SoftConstraintNode>> _softConstraints;
+  const std::vector<std::unique_ptr<VariableNode>> _variables;
+  const std::vector<std::unique_ptr<InvariantNode>> _invariants;
+  const std::vector<std::unique_ptr<SoftConstraintNode>> _softConstraints;
 
   std::set<InvariantNode*> _appliedInvariants;
   std::set<SoftConstraintNode*> _appliedSoftConstraints;

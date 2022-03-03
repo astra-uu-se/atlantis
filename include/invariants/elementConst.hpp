@@ -17,16 +17,17 @@ class Invariant;
 
 class ElementConst : public Invariant {
  private:
-  VarId _index;
-  std::vector<Int> _array;
-  VarId _y;
+  const VarId _index;
+  const std::vector<Int> _array;
+  const VarId _y;
 
  public:
   ElementConst(VarId index, std::vector<Int> array, VarId y);
+
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;
+  void commit(Timestamp, Engine&) override;
   VarId getNextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
-  void commit(Timestamp, Engine&) override;
 };

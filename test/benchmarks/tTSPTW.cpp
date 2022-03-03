@@ -9,6 +9,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/types.hpp"
 
 namespace {
@@ -23,16 +24,14 @@ class TSPTWTest : public ::testing::Test {
   VarId totalDist;
 
   std::random_device rd;
-  std::mt19937 gen;
 
-  std::uniform_int_distribution<> distribution;
-  int n;
+  Int n;
   const int MAX_TIME = 100000;
 
   std::vector<VarId> violation;
   VarId totalViolation;
 
-  void SetUp() {
+  void SetUp() override {
     engine = std::make_unique<PropagationEngine>();
     n = 30;
 
@@ -83,13 +82,9 @@ class TSPTWTest : public ::testing::Test {
     engine->makeInvariant<Linear>(violation, totalViolation);
 
     engine->close();
-
-    gen = std::mt19937(rd());
-
-    distribution = std::uniform_int_distribution<>{0, n - 1};
   }
 
-  void TearDown() {
+  void TearDown() override {
     pred.clear();
     timeToPrev.clear();
     arrivalPrev.clear();
