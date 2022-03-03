@@ -21,17 +21,15 @@ class IdMap {
   }
 
   inline T& operator[](I idx) {
-    auto i = static_cast<Id>(idx).id;
-    assert(i > 0);
-    assert(i <= _vector.size());
-    return _vector[i - 1];
+    assert(static_cast<Id>(idx).id > 0);
+    assert(static_cast<Id>(idx).id <= _vector.size());
+    return _vector[static_cast<Id>(idx).id - 1];
   }
 
   inline const T& at(I idx) const {
-    auto i = static_cast<Id>(idx).id;
-    assert(i > 0);
-    assert(i <= _vector.size());
-    return _vector[i - 1];
+    assert(static_cast<Id>(idx).id > 0);
+    assert(static_cast<Id>(idx).id <= _vector.size());
+    return _vector[static_cast<Id>(idx).id - 1];
   }
 
   inline void register_idx(I idx) {
@@ -46,6 +44,13 @@ class IdMap {
       throw OutOfOrderIndexRegistration();
     }
     _vector.emplace_back(initValue);
+  }
+
+  inline void register_idx_move(I idx, T&& initValue) {
+    if (static_cast<size_t>(idx.id) != _vector.size() + 1) {
+      throw OutOfOrderIndexRegistration();
+    }
+    _vector.emplace_back(std::move(initValue));
   }
 
   inline void assign_all(T value) { _vector.assign(_vector.size(), value); }
@@ -73,17 +78,15 @@ class IdMap<I, bool> {
   }
 
   inline bool get(I idx) const {
-    auto i = static_cast<Id>(idx).id;
-    assert(i > 0);
-    assert(i <= _vector.size());
-    return _vector[i - 1];
+    assert(static_cast<Id>(idx).id > 0);
+    assert(static_cast<Id>(idx).id <= _vector.size());
+    return _vector[static_cast<Id>(idx).id - 1];
   }
 
   inline void set(I idx, bool value) {
-    auto i = static_cast<Id>(idx).id;
-    assert(i > 0);
-    assert(i <= _vector.size());
-    _vector[i - 1] = value;
+    assert(static_cast<Id>(idx).id > 0);
+    assert(static_cast<Id>(idx).id <= _vector.size());
+    _vector[static_cast<Id>(idx).id - 1] = value;
   }
 
   inline void register_idx(I idx, bool initValue) {
@@ -97,7 +100,7 @@ class IdMap<I, bool> {
 
   // std::string toString() {
   //   std::string str = "";
-  //   for (auto foo : _vector) {
+  //   for (const auto foo : _vector) {
   //     str += foo + "\n";
   //   }
   //   return str;

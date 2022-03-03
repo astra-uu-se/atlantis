@@ -29,14 +29,16 @@ class InvariantGraphBuilder {
  private:
   void createNodes(const std::unique_ptr<fznparser::Model>& model);
 
-  bool canBeImplicit(const ConstraintRef& constraint);
-  bool allVariablesFree(const ConstraintRef& constraint,
-                        const std::unordered_set<VarRef>& definedVars);
+  [[nodiscard]] bool canBeImplicit(const ConstraintRef& constraint) const;
+  [[nodiscard]] bool allVariablesFree(
+      const ConstraintRef& constraint,
+      const std::unordered_set<VarRef>& definedVars) const;
 
-  std::unique_ptr<InvariantNode> makeInvariant(const ConstraintRef& constraint);
-  std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraint(
+  [[nodiscard]] std::unique_ptr<InvariantNode> makeInvariant(
       const ConstraintRef& constraint);
-  std::unique_ptr<SoftConstraintNode> makeSoftConstraint(
+  [[nodiscard]] std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraint(
+      const ConstraintRef& constraint);
+  [[nodiscard]] std::unique_ptr<SoftConstraintNode> makeSoftConstraint(
       const ConstraintRef& constraint);
 };
 }  // namespace invariantgraph

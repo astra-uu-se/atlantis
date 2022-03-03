@@ -29,8 +29,8 @@ class Engine {
 
   EngineState _engineState = EngineState::IDLE;
   struct ListeningInvariantData {
-    InvariantId invariantId;
-    LocalId localId;
+    const InvariantId invariantId;
+    const LocalId localId;
   };
   // Map from VarID -> vector of InvariantID
   IdMap<VarIdBase, std::vector<ListeningInvariantData>> _listeningInvariantData;
@@ -70,14 +70,14 @@ class Engine {
   virtual void open() = 0;
   virtual void close() = 0;
 
-  inline bool isOpen() const noexcept { return _isOpen; }
-  inline bool isMoving() const noexcept {
+  [[nodiscard]] inline bool isOpen() const noexcept { return _isOpen; }
+  [[nodiscard]] inline bool isMoving() const noexcept {
     return _engineState == EngineState::MOVE;
   }
 
   //--------------------- Variable ---------------------
 
-  inline VarId getSourceId(VarId id) {
+  [[nodiscard]] inline VarId getSourceId(VarId id) const {
     return id.idType == VarIdType::var ? id : _store.getIntViewSourceId(id);
     // getSourceId(_store.getIntView(id).getParentId());
   }
@@ -85,18 +85,20 @@ class Engine {
   virtual void queueForPropagation(Timestamp, VarId) = 0;
   virtual void notifyMaybeChanged(Timestamp, VarId) = 0;
 
-  Int getValue(Timestamp, VarId);
-  inline Int getNewValue(VarId id) { return getValue(_currentTimestamp, id); }
+  [[nodiscard]] Int getValue(Timestamp, VarId) const;
+  [[nodiscard]] inline Int getNewValue(VarId id) const {
+    return getValue(_currentTimestamp, id);
+  }
 
-  Int getIntViewValue(Timestamp, VarId);
+  [[nodiscard]] Int getIntViewValue(Timestamp, VarId) const;
 
-  Int getCommittedValue(VarId);
+  [[nodiscard]] Int getCommittedValue(VarId) const;
 
-  Int getIntViewCommittedValue(VarId);
+  [[nodiscard]] Int getIntViewCommittedValue(VarId) const;
 
-  Timestamp getTmpTimestamp(VarId);
+  [[nodiscard]] Timestamp getTmpTimestamp(VarId) const;
 
-  bool isPostponed(InvariantId);
+  [[nodiscard]] bool isPostponed(InvariantId) const;
 
   void recompute(InvariantId);
   void recompute(Timestamp, InvariantId);
@@ -116,7 +118,7 @@ class Engine {
 
   [[nodiscard]] inline Int getIntViewLowerBound(VarId id) const {
     assert(id.idType == VarIdType::view);
-    return _store.getConstIntView(id)->getLowerBound();
+    return _store.getConstIntView(id).getLowerBound();
   }
 
   [[nodiscard]] inline Int getUpperBound(VarId id) const {
@@ -129,7 +131,7 @@ class Engine {
 
   [[nodiscard]] inline Int getIntViewUpperBound(VarId id) const {
     assert(id.idType == VarIdType::view);
-    return _store.getConstIntView(id)->getUpperBound();
+    return _store.getConstIntView(id).getUpperBound();
   }
 
   void commitInvariantIf(Timestamp, InvariantId);
@@ -144,8 +146,8 @@ class Engine {
    * @return the created invariant.
    */
   template <class T, typename... Args>
-  std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
-  makeInvariant(Args&&... args);
+  std::enable_if_t<std::is_base_of<Invariant, T>::value, T&> makeInvariant(
+      Args&&... args);
 
   /**
    * Register an IntView in the engine and return its pointer.
@@ -154,8 +156,8 @@ class Engine {
    * @return the created IntView.
    */
   template <class T, typename... Args>
-  std::enable_if_t<std::is_base_of<IntView, T>::value, std::shared_ptr<T>>
-  makeIntView(Args&&... args);
+  std::enable_if_t<std::is_base_of<IntView, T>::value, VarId> makeIntView(
+      Args&&... args);
 
   /**
    * Register a constraint in the engine and return its pointer.
@@ -164,8 +166,8 @@ class Engine {
    * @return the created constraint.
    */
   template <class T, typename... Args>
-  std::enable_if_t<std::is_base_of<Constraint, T>::value, std::shared_ptr<T>>
-  makeConstraint(Args&&... args);
+  std::enable_if_t<std::is_base_of<Constraint, T>::value, T&> makeConstraint(
+      Args&&... args);
 
   /**
    * Creates an IntVar and registers it to the engine.
@@ -190,48 +192,49 @@ class Engine {
 };
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<Invariant, T>::value, std::shared_ptr<T>>
+std::enable_if_t<std::is_base_of<Invariant, T>::value, T&>
 Engine::makeInvariant(Args&&... args) {
   if (!_isOpen) {
     throw EngineClosedException("Cannot make invariant when store is closed.");
   }
-  auto invariantPtr = std::make_shared<T>(std::forward<Args>(args)...);
-
-  auto newId = _store.createInvariantFromPtr(invariantPtr);
-  registerInvariant(newId);
-  logDebug("Created new invariant with id: " << newId);
-  invariantPtr->init(_currentTimestamp, *this);
-  return invariantPtr;
+  const InvariantId invariantId = _store.createInvariantFromPtr(
+      std::make_unique<T>(std::forward<Args>(args)...));
+  registerInvariant(invariantId);
+  logDebug("Created new invariant with id: " << invariantId);
+  T& invariant = static_cast<T&>(_store.getInvariant(invariantId));
+  invariant.init(_currentTimestamp, *this);
+  return invariant;
 }
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<IntView, T>::value, std::shared_ptr<T>>
-Engine::makeIntView(Args&&... args) {
+std::enable_if_t<std::is_base_of<IntView, T>::value, VarId> Engine::makeIntView(
+    Args&&... args) {
   if (!_isOpen) {
     throw EngineClosedException("Cannot make intView when store is closed.");
   }
-  auto viewPtr = std::make_shared<T>(std::forward<Args>(args)...);
+  // We don't actually register views as they are invisible to propagation.
 
-  auto newId = _store.createIntViewFromPtr(viewPtr);
   // We don'ts actually register views as they are invisible to propagation.
 
-  viewPtr->init(newId, *this);
-  return viewPtr;
+  const VarId viewId = _store.createIntViewFromPtr(
+      std::make_unique<T>(std::forward<Args>(args)...));
+  _store.getIntView(viewId).init(viewId, *this);
+  return viewId;
 }
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<Constraint, T>::value, std::shared_ptr<T>>
+std::enable_if_t<std::is_base_of<Constraint, T>::value, T&>
 Engine::makeConstraint(Args&&... args) {
   if (!_isOpen) {
     throw EngineClosedException("Cannot make invariant when store is closed.");
   }
-  auto constraintPtr = std::make_shared<T>(std::forward<Args>(args)...);
-
-  auto newId = _store.createInvariantFromPtr(constraintPtr);
-  registerInvariant(newId);  // A constraint is a type of invariant.
-  logDebug("Created new Constraint with id: " << newId);
-  constraintPtr->init(_currentTimestamp, *this);
-  return constraintPtr;
+  const InvariantId constraintId = _store.createInvariantFromPtr(
+      std::make_unique<T>(std::forward<Args>(args)...));
+  T& constraint = static_cast<T&>(_store.getInvariant(constraintId));
+  registerInvariant(constraintId);  // A constraint is a type of invariant.
+  logDebug("Created new Constraint with id: " << constraintId);
+  constraint.init(_currentTimestamp, *this);
+  return constraint;
 }
 
 //--------------------- Inlined functions ---------------------
@@ -245,37 +248,38 @@ inline bool Engine::hasChanged(Timestamp ts, VarId id) {
   return _store.getIntVar(id).hasChanged(ts);
 }
 
-inline Int Engine::getValue(Timestamp ts, VarId id) {
+inline Int Engine::getValue(Timestamp ts, VarId id) const {
   if (id.idType == VarIdType::view) {
     return getIntViewValue(ts, id);
   }
-  return _store.getIntVar(id).getValue(ts);
+  return _store.getConstIntVar(id).getValue(ts);
 }
 
-inline Int Engine::getIntViewValue(Timestamp ts, VarId id) {
-  return _store.getIntView(id).getValue(ts);
+inline Int Engine::getIntViewValue(Timestamp ts, VarId id) const {
+  return _store.getConstIntView(id).getValue(ts);
 }
 
-inline Int Engine::getCommittedValue(VarId id) {
+inline Int Engine::getCommittedValue(VarId id) const {
   if (id.idType == VarIdType::view) {
     return getIntViewCommittedValue(id);
   }
-  return _store.getIntVar(id).getCommittedValue();
+  return _store.getConstIntVar(id).getCommittedValue();
 }
 
-inline Int Engine::getIntViewCommittedValue(VarId id) {
-  return _store.getIntView(id).getCommittedValue();
+inline Int Engine::getIntViewCommittedValue(VarId id) const {
+  return _store.getConstIntView(id).getCommittedValue();
 }
 
-inline Timestamp Engine::getTmpTimestamp(VarId id) {
+inline Timestamp Engine::getTmpTimestamp(VarId id) const {
   if (id.idType == VarIdType::view) {
-    return _store.getIntVar(_store.getIntViewSourceId(id)).getTmpTimestamp();
+    return _store.getConstIntVar(_store.getIntViewSourceId(id))
+        .getTmpTimestamp();
   }
-  return _store.getIntVar(id).getTmpTimestamp();
+  return _store.getConstIntVar(id).getTmpTimestamp();
 }
 
-inline bool Engine::isPostponed(InvariantId invariantId) {
-  return _store.getInvariant(invariantId).isPostponed();
+inline bool Engine::isPostponed(InvariantId invariantId) const {
+  return _store.getConstInvariant(invariantId).isPostponed();
 }
 
 inline void Engine::recompute(InvariantId invariantId) {

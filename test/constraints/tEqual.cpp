@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "constraints/equal.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
@@ -67,10 +68,10 @@ class EqualTest : public ::testing::Test {
   VarId violationId = NULL_ID;
   VarId x = NULL_ID;
   VarId y = NULL_ID;
-  std::shared_ptr<Equal> equal;
+  Equal* equal;
   std::mt19937 gen;
 
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     engine = std::make_unique<PropagationEngine>();
@@ -79,7 +80,7 @@ class EqualTest : public ::testing::Test {
     y = engine->makeIntVar(2, -100, 100);
     violationId = engine->makeIntVar(0, 0, 200);
 
-    equal = engine->makeConstraint<Equal>(violationId, x, y);
+    equal = &(engine->makeConstraint<Equal>(violationId, x, y));
     engine->close();
   }
 
@@ -91,14 +92,13 @@ class EqualTest : public ::testing::Test {
 
     VarId viol = engine->makeIntVar(0, 0, 200);
 
-    auto invariant = engine->makeInvariant<MockEqual>(viol, a, b);
+    auto& invariant = engine->makeInvariant<MockEqual>(viol, a, b);
 
-    EXPECT_TRUE(invariant->initialized);
+    EXPECT_TRUE(invariant.initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
+    EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
 
@@ -106,18 +106,18 @@ class EqualTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(0);
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(0);
     }
@@ -255,13 +255,13 @@ TEST_F(EqualTest, CreateEqual) {
 
   VarId viol = engine->makeIntVar(0, 0, 200);
 
-  auto invariant = engine->makeInvariant<MockEqual>(viol, a, b);
+  auto& invariant = engine->makeInvariant<MockEqual>(viol, a, b);
 
-  EXPECT_TRUE(invariant->initialized);
+  EXPECT_TRUE(invariant.initialized);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 

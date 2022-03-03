@@ -17,8 +17,8 @@
 
 class MaxSparse : public Invariant {
  private:
-  std::vector<VarId> _varArray;
-  VarId _y;
+  const std::vector<VarId> _varArray;
+  const VarId _y;
 
   PriorityList _localPriority;
 
@@ -27,8 +27,8 @@ class MaxSparse : public Invariant {
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  VarId getNextInput(Timestamp, Engine&) override;
-  void notifyCurrentInputChanged(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;
+  VarId getNextInput(Timestamp, Engine&) override;
+  void notifyCurrentInputChanged(Timestamp, Engine&) override;
 };

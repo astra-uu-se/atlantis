@@ -6,6 +6,7 @@
 #include <random>
 #include <vector>
 
+#include "../testHelper.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
 #include "invariants/linear.hpp"
@@ -75,10 +76,10 @@ class LinearTest : public ::testing::Test {
   Int aCoef = 1;
   Int bCoef = 10;
   Int cCoef = -20;
-  std::shared_ptr<Linear> linear;
+  Linear* linear;
   std::mt19937 gen;
 
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     engine = std::make_unique<PropagationEngine>();
@@ -90,8 +91,8 @@ class LinearTest : public ::testing::Test {
 
     // d = 1*1+2*10+3*(-20) = 1+20-60 =-39
     linear =
-        engine->makeInvariant<Linear>(std::vector<Int>({aCoef, bCoef, cCoef}),
-                                      std::vector<VarId>({a, b, c}), d);
+        &(engine->makeInvariant<Linear>(std::vector<Int>({aCoef, bCoef, cCoef}),
+                                        std::vector<VarId>({a, b, c}), d));
     engine->close();
   }
 
@@ -108,15 +109,14 @@ class LinearTest : public ::testing::Test {
 
     VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
 
-    auto invariant =
+    auto& invariant =
         engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
 
-    EXPECT_TRUE(invariant->initialized);
+    EXPECT_TRUE(invariant.initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
+    EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
 
@@ -124,19 +124,19 @@ class LinearTest : public ::testing::Test {
 
     if (engine->propagationMode ==
         PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_))
           .Times(numArgs + 1);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
@@ -282,14 +282,14 @@ TEST_F(LinearTest, CreateLinear) {
 
   VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
 
-  auto invariant =
+  auto& invariant =
       engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
 
-  EXPECT_TRUE(invariant->initialized);
+  EXPECT_TRUE(invariant.initialized);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 

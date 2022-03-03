@@ -4,7 +4,7 @@
 
 class View : public Var {
  protected:
-  VarId _parentId;
+  const VarId _parentId;
 
  public:
   explicit View(VarId parentId) : Var(NULL_ID), _parentId(parentId) {

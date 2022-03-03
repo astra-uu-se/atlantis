@@ -1,7 +1,6 @@
 #include "invariants/absDiff.hpp"
 
 #include "core/engine.hpp"
-extern Id NULL_ID;
 
 AbsDiff::AbsDiff(VarId x, VarId y, VarId absDiff)
     : Invariant(NULL_ID), _x(x), _y(y), _absDiff(absDiff) {
@@ -26,8 +25,7 @@ void AbsDiff::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId AbsDiff::getNextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
-  switch (_state.getValue(ts)) {
+  switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
     case 1:

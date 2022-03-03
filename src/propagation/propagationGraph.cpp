@@ -51,14 +51,14 @@ void PropagationGraph::registerDefinedVariable(VarIdBase varId,
         " already defined by invariant " +
         std::to_string(_definingInvariant.at(varId).id));
   }
-  Int index = -1;
+  size_t index = _listeningInvariants[varId].size();
   for (size_t i = 0; i < _listeningInvariants[varId].size(); ++i) {
     if (_listeningInvariants[varId][i] == invariantId) {
       index = i;
       break;
     }
   }
-  if (index >= 0) {
+  if (index < _listeningInvariants[varId].size()) {
     _listeningInvariants[varId].erase(_listeningInvariants[varId].begin() +
                                       index);
     logWarning("The (self-cyclic) dependency that the invariant "
@@ -73,13 +73,13 @@ void PropagationGraph::close() {
   _isDecisionVar.resize(getNumVariables() + 1);
   _isObjectiveVar.resize(getNumVariables() + 1);
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
-    _isObjectiveVar.at(i) = (_listeningInvariants.at(i).empty());
-    _isDecisionVar.at(i) = (_definingInvariant.at(i) == NULL_ID);
-    if (_isObjectiveVar.at(i)) {
-      _outputVariables.push_back(i);
+    _isObjectiveVar[i] = (_listeningInvariants.at(i).empty());
+    _isDecisionVar[i] = (_definingInvariant.at(i) == NULL_ID);
+    if (_isObjectiveVar[i]) {
+      _outputVariables.emplace_back(i);
     }
-    if (_isDecisionVar.at(i)) {
-      _decisionVariables.push_back(i);
+    if (_isDecisionVar[i]) {
+      _decisionVariables.emplace_back(i);
     }
   }
 
@@ -87,11 +87,13 @@ void PropagationGraph::close() {
   // Reset propagation queue data structure.
   // TODO: Be sure that this does not cause a memeory leak...
   // _propagationQueue = PropagationQueue();
-  size_t numLayers = 1 + *std::max_element(_topology.variablePosition.begin(),
-                                           _topology.variablePosition.end());
-  _propagationQueue.init(getNumVariables(), numLayers);
+  _propagationQueue.init(
+      getNumVariables(),
+      // numLayers:
+      1 + *std::max_element(_topology.variablePosition.begin(),
+                            _topology.variablePosition.end()));
   for (size_t i = 1; i < getNumVariables() + 1; ++i) {
-    VarIdBase id = VarIdBase(i);
+    const VarIdBase id = VarIdBase(i);
     _propagationQueue.initVar(id, _topology.getPosition(id));
   }
   // _topology.computeNoCycles();
