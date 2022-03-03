@@ -77,7 +77,7 @@ TEST(InvariantGraphBuilderTest, build_simple_graph_2) {
       constraintAnnotations);
 
   auto allDiff = std::make_shared<fznparser::Constraint>(
-      "alldifferent", std::vector<fznparser::ConstraintArgument>{a, b, c},
+      "alldifferent", std::vector<fznparser::ConstraintArgument>{std::vector<std::shared_ptr<fznparser::Literal>>{a, b, c}},
       fznparser::AnnotationCollection());
 
   auto model = std::make_unique<fznparser::Model>(
