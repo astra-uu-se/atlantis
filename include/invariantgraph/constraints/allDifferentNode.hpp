@@ -11,7 +11,7 @@ class AllDifferentNode final : public SoftConstraintNode {
 
  public:
   explicit AllDifferentNode(std::vector<VariableNode*> variables)
-      : _variables(std::move(variables)) {}
+      : SoftConstraintNode(variables), _variables(std::move(variables)) {}
 
   static std::unique_ptr<AllDifferentNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,

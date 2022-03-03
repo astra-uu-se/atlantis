@@ -11,11 +11,7 @@ invariantgraph::IntEqNode::fromModelConstraint(
   MAPPED_SEARCH_VARIABLE_ARG(a, constraint->arguments()[0], variableMap);
   MAPPED_SEARCH_VARIABLE_ARG(b, constraint->arguments()[1], variableMap);
 
-  auto node = std::make_unique<IntEqNode>(a, b);
-  a->addSoftConstraint(node.get());
-  b->addSoftConstraint(node.get());
-
-  return node;
+  return std::make_unique<IntEqNode>(a, b);
 }
 
 VarId invariantgraph::IntEqNode::registerWithEngine(
