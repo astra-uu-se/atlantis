@@ -61,6 +61,8 @@ class IdMap {
   }
   typedef typename std::vector<T>::iterator iterator;
 
+  inline void clear() { _vector.clear(); }
+
   inline iterator begin() { return _vector.begin(); }
   inline iterator end() { return _vector.end(); }
 };

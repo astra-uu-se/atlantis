@@ -97,8 +97,8 @@ class AbsDiffTest : public ::testing::Test {
     engine->close();
 
     if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, testing::_))
@@ -155,13 +155,12 @@ TEST_F(AbsDiffTest, Modification) {
   EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant,
-                notifyIntChanged(testing::_, testing::_, testing::_))
+    EXPECT_CALL(invariant, notifyIntChanged(testing::_, testing::_, testing::_))
         .Times(AtLeast(1));
     EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(AnyNumber());
   } else if (engine->propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
+    EXPECT_CALL(invariant, getNextInput(testing::_, testing::_))
         .Times(AtLeast(2));
     EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(Exactly(1));
