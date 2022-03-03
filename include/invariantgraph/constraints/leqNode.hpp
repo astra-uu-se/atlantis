@@ -15,8 +15,7 @@ class LeqNode final : public SoftConstraintNode {
  public:
   LeqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
           Int bound)
-      : SoftConstraintNode(variables),
-        _coeffs(std::move(coeffs)),
+      : _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _bound(bound) {}
 

@@ -24,12 +24,11 @@ class InvariantNode {
       Engine& engine,
       std::function<VarId(VariableNode*)> variableMapper) const = 0;
 
-  [[nodiscard]] inline VariableNode* output() const { return _output; }
+  [[nodiscard]] VariableNode* output() const { return _output; }
 };
 
 class SoftConstraintNode {
  public:
-  explicit SoftConstraintNode(const std::vector<VariableNode*>& variables);
   virtual ~SoftConstraintNode() = default;
 
   virtual VarId registerWithEngine(
@@ -44,8 +43,7 @@ class ImplicitConstraintNode {
  public:
   virtual ~ImplicitConstraintNode() = default;
 
-  [[nodiscard]] inline const std::vector<VariableNode*>& definingVariables()
-      const {
+  [[nodiscard]] const std::vector<VariableNode*>& definingVariables() const {
     return _definingVariables;
   }
 };
@@ -65,31 +63,13 @@ class VariableNode {
   virtual void registerWithEngine(Engine& engine,
                                   std::map<VariableNode*, VarId>& map);
 
-  [[nodiscard]] inline std::shared_ptr<fznparser::SearchVariable> variable() const {
+  [[nodiscard]] std::shared_ptr<fznparser::SearchVariable> variable() const {
     return _variable;
   }
 
-  inline void addSoftConstraint(SoftConstraintNode* node) {
-    _softConstraints.emplace(node);
-  }
+  [[nodiscard]] Int offset() const { return _offset; }
 
-  [[nodiscard]] const std::set<SoftConstraintNode*>& softConstraints() const {
-    return _softConstraints;
-  }
-
-  void definedByInvariant(InvariantNode* node) { _definingInvariant = node; }
-
-  [[nodiscard]] inline std::optional<InvariantNode*> definingInvariant() const {
-    return _definingInvariant;
-  }
-
-  [[nodiscard]] inline bool isFunctionallyDefined() const {
-    return definingInvariant().has_value();
-  }
-
-  [[nodiscard]] inline Int offset() const { return _offset; }
-
-  inline void setOffset(Int offset) { _offset = offset; }
+  void setOffset(Int offset) { _offset = offset; }
 };
 
 class ViewNode : public VariableNode {

@@ -18,9 +18,3 @@ void invariantgraph::VariableNode::registerWithEngine(
       domain->lowerBound(), domain->lowerBound(), domain->upperBound());
   map.emplace(this, engineVariable);
 }
-
-invariantgraph::SoftConstraintNode::SoftConstraintNode(
-    const std::vector<VariableNode*>& variables) {
-  for (const auto& variable : variables)
-    variable->addSoftConstraint(this);
-}
