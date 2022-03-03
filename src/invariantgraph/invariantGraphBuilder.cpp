@@ -82,7 +82,7 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
 }
 
 bool invariantgraph::InvariantGraphBuilder::canBeImplicit(
-    const ConstraintRef&) {
+    const ConstraintRef&) const {
   // TODO: Implicit constraints
   return false;
 }
@@ -100,7 +100,7 @@ overloaded(Ts...) -> overloaded<Ts...>;
 
 bool invariantgraph::InvariantGraphBuilder::allVariablesFree(
     const ConstraintRef& constraint,
-    const std::unordered_set<VarRef>& definedVars) {
+    const std::unordered_set<VarRef>& definedVars) const {
   auto isFree =
       [&definedVars](const std::shared_ptr<fznparser::Literal>& literal) {
         if (literal->type() != fznparser::LiteralType::SEARCH_VARIABLE)
