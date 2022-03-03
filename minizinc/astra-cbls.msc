@@ -1,0 +1,8 @@
+{
+  "name" : "Astra CBLS",
+  "version": "0.1",
+  "id": "se.uu.it.astra-cbls",
+  "executable": "astra-cbls",
+  "needsSolns2Out": false,
+  "mznlib": "lib"
+}
