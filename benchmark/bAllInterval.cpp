@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include "benchmark.hpp"
+
 class AllInterval : public benchmark::Fixture {
  public:
   std::unique_ptr<PropagationEngine> engine;
@@ -30,19 +32,9 @@ class AllInterval : public benchmark::Fixture {
 
     engine->open();
 
-    switch (state.range(0)) {
-      case 0:
-        engine->setPropagationMode(
-            PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
-        break;
-      case 1:
-        engine->setPropagationMode(PropagationEngine::PropagationMode::MIXED);
-        break;
-      case 2:
-        engine->setPropagationMode(
-            PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
-        break;
-    }
+    engine->setPropagationMode(intToPropagationMode(state.range(0)));
+    engine->setOutputToInputMarkingMode(
+        intToOutputToInputMarkingMode(state.range(0)));
 
     for (int i = 0; i < n; ++i) {
       inputVars.push_back(engine->makeIntVar(i, 0, n - 1));
@@ -147,7 +139,7 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
 ///*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int n = 10; n <= 30; n += 10) {
-    for (int mode = 0; mode <= 2; ++mode) {
+    for (int mode = 0; mode <= 3; ++mode) {
       benchmark->Args({mode, n});
     }
   }

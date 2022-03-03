@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include "benchmark.hpp"
+
 class MagicSquare : public benchmark::Fixture {
  public:
   std::unique_ptr<PropagationEngine> engine;
@@ -40,19 +42,9 @@ class MagicSquare : public benchmark::Fixture {
 
     engine->open();
 
-    switch (state.range(0)) {
-      case 0:
-        engine->setPropagationMode(
-            PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
-        break;
-      case 1:
-        engine->setPropagationMode(PropagationEngine::PropagationMode::MIXED);
-        break;
-      case 2:
-        engine->setPropagationMode(
-            PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
-        break;
-    }
+    engine->setPropagationMode(intToPropagationMode(state.range(0)));
+    engine->setOutputToInputMarkingMode(
+        intToOutputToInputMarkingMode(state.range(0)));
 
     VarId magicSumVar = engine->makeIntVar(magicSum, magicSum, magicSum);
 
@@ -172,7 +164,7 @@ BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
 ///*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int n = 4; n <= 10; n += 2) {
-    for (int mode = 0; mode <= 2; ++mode) {
+    for (int mode = 0; mode <= 3; ++mode) {
       benchmark->Args({mode, n});
     }
   }

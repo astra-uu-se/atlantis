@@ -55,3 +55,16 @@ struct InvariantId : public Id {
   InvariantId(const VarId&) = delete;
   InvariantId(const LocalId&) = delete;
 };
+
+enum class PropagationMode { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT };
+enum class OutputToInputMarkingMode {
+  // No marking:
+  NONE,
+  // Mark dfs starting from modified search variables:
+  INPUT_TO_OUTPUT_EXPLORATION,
+  // Statically (when closing the model), for each var x, store the set of
+  // search variables x (transitively) depends on.
+  // When propagating a var x, x is marked if the set of modified search
+  // variables and the set of search variables x depends on overlaps:
+  OUTPUT_TO_INPUT_STATIC
+};
