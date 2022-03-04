@@ -1,7 +1,7 @@
 #include "invariantgraph/views/intLinLeReifNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariantgraph/constraints/leqNode.hpp"
+#include "invariantgraph/constraints/intLinLeNode.hpp"
 #include "invariantgraph/views/reifiedConstraint.hpp"
 
 std::unique_ptr<invariantgraph::IntLinLeReifNode>
@@ -18,5 +18,5 @@ invariantgraph::IntLinLeReifNode::fromModelConstraint(
   SEARCH_VARIABLE_ARG(r, constraint->arguments()[3]);
 
   return std::make_unique<invariantgraph::IntLinLeReifNode>(
-      std::make_unique<invariantgraph::LeqNode>(as, bs, c), r);
+      std::make_unique<invariantgraph::IntLinLeNode>(as, bs, c), r);
 }
