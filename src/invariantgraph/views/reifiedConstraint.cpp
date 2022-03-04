@@ -7,7 +7,7 @@ void invariantgraph::ReifiedConstraint::registerWithEngine(
       engine, [&](const auto& node) { return map.at(node); });
 
   auto rId = createView(engine, violationVar)->getId();
-  map.emplace(_r, rId);
+  map.emplace(this, rId);
 }
 
 std::shared_ptr<View> invariantgraph::ReifiedConstraint::createView(
