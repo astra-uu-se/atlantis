@@ -21,6 +21,7 @@
 #include "invariantgraph/views/intAbsNode.hpp"
 #include "invariantgraph/views/intEqReifNode.hpp"
 #include "invariantgraph/views/intLeReifNode.hpp"
+#include "invariantgraph/views/intLinEqReifNode.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
@@ -227,6 +228,7 @@ invariantgraph::InvariantGraphBuilder::makeView(
   VIEW_REGISTRATION("int_abs", IntAbsNode);
   VIEW_REGISTRATION("int_eq_reif", IntEqReifNode);
   VIEW_REGISTRATION("int_le_reif", IntLeReifNode);
+  VIEW_REGISTRATION("int_lin_eq_reif", IntLinEqReifNode);
 
   return nullptr;
 
