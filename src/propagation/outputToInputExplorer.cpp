@@ -11,7 +11,7 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
       _varComputedAt(expectedSize),
       _invariantComputedAt(expectedSize),
       _invariantIsOnStack(expectedSize),
-      _searchVariableAncestors(expectedSize) {
+      _searchVariableAncestors(expectedSize),
       _onPropagationPath(expectedSize),
       _outputToInputMarkingMode(OutputToInputMarkingMode::NONE) {
   _variableStack.reserve(expectedSize);
@@ -19,7 +19,7 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
 }
 
 void OutputToInputExplorer::outputToInputStaticMarking() {
-  std::vector<bool> varVisited(_engine.getNumVariables() + 1);
+  std::vector<bool> varVisited(_engine.numVariables() + 1);
 
   for (IdBase idx = 1; idx <= _engine.numVariables(); ++idx) {
     if (_searchVariableAncestors.size() < idx) {
@@ -32,10 +32,10 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
   for (const VarIdBase searchVariable : _engine.searchVariables()) {
     std::fill(varVisited.begin(), varVisited.end(), false);
     std::vector<IdBase> stack;
-    stack.reserve(_engine.getNumVariables());
+    stack.reserve(_engine.numVariables());
 
-    stack.emplace_back(decisionVar);
-    varVisited[decisionVar] = true;
+    stack.emplace_back(searchVariable);
+    varVisited[searchVariable] = true;
 
     while (!stack.empty()) {
       const VarIdBase id = stack.back();
@@ -57,12 +57,12 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
 
 void OutputToInputExplorer::inputToOutputExplorationMarking() {
   std::vector<IdBase> stack;
-  stack.reserve(_engine.getNumVariables());
+  stack.reserve(_engine.numVariables());
 
-  _onPropagationPath.assign(_engine.getNumVariables(), false);
+  _onPropagationPath.assign(_engine.numVariables(), false);
 
   for (const VarIdBase modifiedDecisionVar :
-       _engine.getModifiedDecisionVariables()) {
+       _engine.modifiedSearchVariables()) {
     stack.emplace_back(modifiedDecisionVar);
     assert(!_onPropagationPath.get(modifiedDecisionVar));
     _onPropagationPath.set(modifiedDecisionVar, true);
@@ -70,9 +70,9 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
     while (!stack.empty()) {
       const IdBase id = stack.back();
       stack.pop_back();
-      for (InvariantId invariantId : _engine.getListeningInvariants(id)) {
+      for (InvariantId invariantId : _engine.listeningInvariants(id)) {
         for (const VarIdBase outputVar :
-             _engine.getVariablesDefinedBy(invariantId)) {
+             _engine.variablesDefinedBy(invariantId)) {
           if (!_onPropagationPath.get(outputVar)) {
             _onPropagationPath.set(outputVar, true);
             stack.emplace_back(outputVar);
@@ -92,7 +92,7 @@ template <OutputToInputMarkingMode MarkingMode>
 void OutputToInputExplorer::close() {
   if constexpr (MarkingMode !=
                 OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-    _decisionVarAncestor.clear();
+    _searchVariableAncestors.clear();
   }
   if constexpr (MarkingMode !=
                 OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION) {
@@ -127,9 +127,9 @@ template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::isMarked(VarIdBase id) {
   if constexpr (MarkingMode ==
                 OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-    for (const size_t ancestor : _engine.getModifiedDecisionVariables()) {
-      if (_decisionVarAncestor.at(id).find(ancestor) !=
-          _decisionVarAncestor.at(id).end()) {
+    for (const size_t ancestor : _engine.modifiedSearchVariables()) {
+      if (_searchVariableAncestors.at(id).find(ancestor) !=
+          _searchVariableAncestors.at(id).end()) {
         return true;
       }
     }
@@ -190,10 +190,10 @@ void OutputToInputExplorer::expandInvariant(InvariantId invariantId) {
   if (_invariantIsOnStack.get(invariantId)) {
     throw DynamicCycleException();
   }
-  VarId nextVar = _engine.getNextInput(invariantId);
+  VarId nextVar = _engine.nextInput(invariantId);
   if constexpr (MarkingMode != OutputToInputMarkingMode::NONE) {
     while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar)) {
-      nextVar = _engine.getNextInput(invariantId);
+      nextVar = _engine.nextInput(invariantId);
     }
   }
   if (nextVar.id == NULL_ID) {
@@ -216,10 +216,10 @@ template bool OutputToInputExplorer::pushNextInputVariable<
 
 template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::pushNextInputVariable() {
-  VarId nextVar = _engine.getNextInput(peekInvariantStack());
+  VarId nextVar = _engine.nextInput(peekInvariantStack());
   if constexpr (MarkingMode != OutputToInputMarkingMode::NONE) {
     while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar)) {
-      nextVar = _engine.getNextInput(peekInvariantStack());
+      nextVar = _engine.nextInput(peekInvariantStack());
     }
   }
   if (nextVar.id == NULL_ID) {
@@ -265,8 +265,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       // results in an infinite loop.
       setComputed(currentTimestamp, currentVarId);
       // The variable is marked and computed: expand its defining invariant.
-      expandInvariant<OutputToInputMarking>(
-          _engine.definingInvariant(currentVarId));
+      expandInvariant<MarkingMode>(_engine.definingInvariant(currentVarId));
       continue;
     }
     // currentVarId is done: pop it from the stack.
@@ -286,7 +285,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       // The top invariant has finished propagating, so all defined vars can
       // be marked as stable at the current time.
       for (const auto defVar :
-           _engine.getVariablesDefinedBy(peekInvariantStack())) {
+           _engine.variablesDefinedBy(peekInvariantStack())) {
         setComputed(currentTimestamp, defVar);
       }
       popInvariantStack();
