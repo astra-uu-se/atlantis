@@ -61,6 +61,8 @@ class IdMap {
   }
   typedef typename std::vector<T>::iterator iterator;
 
+  inline void clear() { _vector.clear(); }
+
   inline iterator begin() { return _vector.begin(); }
   inline iterator end() { return _vector.end(); }
 };
@@ -96,7 +98,13 @@ class IdMap<I, bool> {
     _vector.emplace_back(initValue);
   }
 
+  inline void clear() { _vector.clear(); }
+
   inline void assign_all(bool value) { _vector.assign(_vector.size(), value); }
+
+  inline void assign(size_t newSize, bool value) {
+    _vector.assign(newSize, value);
+  }
 
   // std::string toString() {
   //   std::string str = "";

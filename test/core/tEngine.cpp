@@ -68,6 +68,47 @@ class MockInvariantAdvanced : public Invariant {
   MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
 };
 
+class MockPlus : public Invariant {
+ public:
+  bool _initialized = false;
+  VarId a;
+  VarId b;
+  VarId output;
+
+  MockPlus(VarId t_a, VarId t_b, VarId t_output)
+      : Invariant(NULL_ID), a(t_a), b(t_b), output(t_output) {
+    _modifiedVars.reserve(2);
+    ON_CALL(*this, notifyCurrentInputChanged)
+        .WillByDefault([this](Timestamp ts, Engine& engine) {
+          updateValue(ts, engine, output,
+                      engine.getValue(ts, a) + engine.getValue(ts, b));
+        });
+
+    ON_CALL(*this, notifyIntChanged)
+        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId) {
+          updateValue(ts, engine, output,
+                      engine.getValue(ts, a) + engine.getValue(ts, b));
+        });
+  }
+
+  void init(Timestamp, Engine& engine) override {
+    assert(_id != NULL_ID);
+
+    registerDefinedVariable(engine, output);
+    engine.registerInvariantInput(_id, a, LocalId(0));
+    engine.registerInvariantInput(_id, b, LocalId(1));
+    _initialized = true;
+  }
+
+  MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
+              (override));
+  MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
+              (override));
+  MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
+};
+
 class EngineTest : public ::testing::Test {
  protected:
   std::mt19937 gen;
@@ -78,6 +119,130 @@ class EngineTest : public ::testing::Test {
     std::random_device rd;
     gen = std::mt19937(rd());
     engine = std::make_unique<PropagationEngine>();
+  }
+
+  void propagation(PropagationMode propMode,
+                   OutputToInputMarkingMode markingMode) {
+    engine->open();
+    engine->setPropagationMode(propMode);
+    engine->setOutputToInputMarkingMode(markingMode);
+
+    std::vector<std::vector<VarId>> inputs;
+    std::vector<VarId> outputs;
+    std::vector<MockPlus*> invariants;
+
+    /* +------++------+ +------++------+ +------++------+ +------++------+
+     * |inputs||inputs| |inputs||inputs| |inputs||inputs| |inputs||inputs|
+     * |[0][0]||[0][1]| |[1][0]||[1][1]| |[2][0]||[2][1]| |[3][0]||[3][1]|
+     * +------++------+ +------++------+ +------++------+ +------++------+
+     *     \      /         \      /         \      /         \      /
+     *  +------------+   +------------+   +------------+   +------------+
+     *  |invariant[0]|   |invariant[1]|   |invariant[2]|   |invariant[3]|
+     *  +------------+   +------------+   +------------+   +------------+
+     *         \               /                 \               /
+     *   +------------+ +------------+     +------------+ +------------+
+     *   | outputs[0] | | outputs[1] |     | outputs[2] | | outputs[3] |
+     *   |inputs[4][0]| |inputs[4][1]|     |inputs[5][0]| |inputs[5][1]|
+     *   +------------+ +------------+     +------------+ +------------+
+     *           \            /                   \            /
+     *           +------------+                   +------------+
+     *           |invariant[4]|                   |invariant[5]|
+     *           +------------+                   +------------+
+     *                   \                            /
+     *                  +------------+    +------------+
+     *                  | outputs[4] |    | outputs[5] |
+     *                  |inputs[6][0]|    |inputs[6][1]|
+     *                  +------------+    +------------+
+     *                            \          /
+     *                           +------------+
+     *                           |invariant[6]|
+     *                           +------------+
+     *                                 |
+     *                            +----------+
+     *                            |outputs[6]|
+     *                            +----------+
+     */
+    inputs.resize(7);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      for (size_t j = 0; j < 2; j++) {
+        inputs[i].emplace_back(engine->makeIntVar(0, 0, 10));
+      }
+    }
+    for (size_t i = 4; i < inputs.size(); ++i) {
+      for (VarId output : inputs[i]) {
+        outputs.emplace_back(output);
+      }
+    }
+    outputs.emplace_back(engine->makeIntVar(0, 0, 10));
+
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      invariants.push_back(&engine->makeInvariant<MockPlus>(
+          inputs.at(i).at(0), inputs.at(i).at(1), outputs.at(i)));
+    }
+
+    for (MockPlus* invariant : invariants) {
+      EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(1);
+      EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(1);
+    }
+
+    engine->close();
+
+    engine->beginQuery();
+    Timestamp timestamp = engine->getCurrentTimestamp();
+    VarId modifiedDecisionVariable = inputs[2][1];
+    engine->setValue(modifiedDecisionVariable, 1);
+    std::vector<size_t> markedInvariants = {2, 5, 6};
+    std::vector<size_t> unmarkedInvariants = {0, 1, 3, 4};
+    engine->query(outputs.back());
+
+    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
+      for (size_t i : markedInvariants) {
+        EXPECT_CALL(*invariants[i],
+                    notifyIntChanged(timestamp, testing::_, LocalId(0)))
+            .Times(i == 5 ? 1 : 0);
+        EXPECT_CALL(*invariants[i],
+                    notifyIntChanged(timestamp, testing::_, LocalId(1)))
+            .Times(i == 5 ? 0 : 1);
+      }
+    } else {
+      if (engine->outputToInputMarkingMode() ==
+          OutputToInputMarkingMode::NONE) {
+        for (size_t i = 0; i < invariants.size(); ++i) {
+          VarId a = inputs[i][0];
+          VarId b = inputs[i][1];
+          EXPECT_CALL(*invariants[i], getNextInput(timestamp, testing::_))
+              .WillOnce(Return(a))
+              .WillOnce(Return(b))
+              .WillRepeatedly(Return(NULL_ID));
+        }
+      } else {
+        EXPECT_EQ(engine->getModifiedDecisionVariables().size(), 1);
+        EXPECT_TRUE(engine->getModifiedDecisionVariables().find(
+                        modifiedDecisionVariable) !=
+                    engine->getModifiedDecisionVariables().end());
+        for (size_t i : markedInvariants) {
+          EXPECT_CALL(*invariants[i], getNextInput(timestamp, testing::_))
+              .WillOnce(Return(inputs[i][0]))
+              .WillOnce(Return(inputs[i][1]))
+              .WillRepeatedly(Return(NULL_ID));
+        }
+        for (size_t i : unmarkedInvariants) {
+          EXPECT_CALL(*invariants[i], getNextInput(timestamp, testing::_))
+              .Times(0);
+        }
+      }
+      for (size_t i : markedInvariants) {
+        EXPECT_CALL(*invariants[i],
+                    notifyCurrentInputChanged(timestamp, testing::_))
+            .Times(1);
+      }
+      for (size_t i : unmarkedInvariants) {
+        EXPECT_CALL(*invariants[i],
+                    notifyCurrentInputChanged(timestamp, testing::_))
+            .Times(0);
+      }
+    }
+    engine->endQuery();
   }
 };
 
@@ -220,10 +385,8 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->setValue(c, -3);
   engine->endMove();
 
-  if (engine->propagationMode ==
-      PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(invariant, getNextInput(moveTimestamp, testing::_)).Times(0);
-
     EXPECT_CALL(invariant, notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(0);
   } else {
@@ -238,8 +401,7 @@ TEST_F(EngineTest, SimplePropagation) {
   }
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->propagationMode ==
-        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -267,8 +429,7 @@ TEST_F(EngineTest, SimpleCommit) {
 
   engine->close();
 
-  if (engine->propagationMode ==
-      PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
 
     EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
@@ -291,8 +452,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endMove();
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->propagationMode ==
-        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -303,8 +463,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->query(output);
   engine->endQuery();
 
-  if (engine->propagationMode ==
-      PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(invariant, notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
 
@@ -312,8 +471,7 @@ TEST_F(EngineTest, SimpleCommit) {
 
     EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
-  } else if (engine->propagationMode ==
-             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
+  } else if (engine->propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
     EXPECT_CALL(invariant, getNextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
@@ -562,6 +720,24 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endCommit();
 
   EXPECT_EQ(engine->getNewValue(output), 13);
+}
+
+TEST_F(EngineTest, InputToOutputPropagation) {
+  propagation(PropagationMode::INPUT_TO_OUTPUT, OutputToInputMarkingMode::NONE);
+}
+
+TEST_F(EngineTest, OutputToInputPropagationNone) {
+  propagation(PropagationMode::OUTPUT_TO_INPUT, OutputToInputMarkingMode::NONE);
+}
+
+TEST_F(EngineTest, OutputToInputPropagationOutputToInputStatic) {
+  propagation(PropagationMode::OUTPUT_TO_INPUT,
+              OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC);
+}
+
+TEST_F(EngineTest, NotificationsOutputToInputInputToOutputExploration) {
+  propagation(PropagationMode::OUTPUT_TO_INPUT,
+              OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION);
 }
 
 }  // namespace

@@ -10,10 +10,6 @@
 #include "utils/idMap.hpp"
 
 class PropagationEngine : public Engine {
- public:
-  enum class PropagationMode { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT, MIXED };
-  const bool _useMarkingForOutputToInput = true;
-
  protected:
   PropagationMode _propagationMode;
 
@@ -28,9 +24,6 @@ class PropagationEngine : public Engine {
 
   IdMap<VarIdBase, bool> _isEnqueued;
 
-  IdMap<VarIdBase, bool> _varIsOnPropagationPath;
-  std::queue<VarIdBase> _propagationPathQueue;
-
   std::unordered_set<VarIdBase> _modifiedDecisionVariables;
   Timestamp _decisionVariablesModifiedAt;
 
@@ -41,11 +34,7 @@ class PropagationEngine : public Engine {
   template <bool DoCommit>
   void propagate();
 
-  template <bool OutputToInputMarking>
   void outputToInputPropagate();
-
-  void markPropagationPathAndClearPropagationQueue();
-  void clearPropagationPath();
 
   /**
    * Register that 'from' defines variable 'to'. Throws exception if
@@ -64,6 +53,8 @@ class PropagationEngine : public Engine {
   void close() final;
 
   void setPropagationMode(PropagationMode);
+  OutputToInputMarkingMode outputToInputMarkingMode() const;
+  void setOutputToInputMarkingMode(OutputToInputMarkingMode);
 
   //--------------------- Notificaion ---------------------
   /***
@@ -75,17 +66,6 @@ class PropagationEngine : public Engine {
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
-  /**
-   * returns true if variable id is relevant for propagation.
-   * Note that this is not the same thing as the variable being modified.
-   */
-  bool isOnPropagationPath(VarId) const;
-  /**
-   * returns true if invariant id is relevant for propagation.
-   * Note that this is not the same thing as the invariant being modified.
-   */
-  static bool isOnPropagationPath(Timestamp, InvariantId) { return true; }
-
   [[nodiscard]] VarId getNextStableVariable(Timestamp);
 
   //--------------------- Move semantics ---------------------
@@ -162,15 +142,6 @@ inline InvariantId PropagationEngine::getDefiningInvariant(VarId id) {
   return _propGraph.getDefiningInvariant(id);
 }
 
-inline void PropagationEngine::clearPropagationPath() {
-  _varIsOnPropagationPath.assign_all(false);
-}
-
-inline bool PropagationEngine::isOnPropagationPath(VarId id) const {
-  assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT);
-  return _varIsOnPropagationPath.get(id);
-}
-
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
     InvariantId invariantId) const {
   return _propGraph.getVariablesDefinedBy(invariantId);
@@ -219,13 +190,26 @@ inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
   notifyMaybeChanged(ts, id);
 }
 
-inline void PropagationEngine::setPropagationMode(
-    PropagationEngine::PropagationMode propMode) {
+inline void PropagationEngine::setPropagationMode(PropagationMode propMode) {
   if (!_isOpen) {
     throw EngineClosedException(
         "Cannot set propagation mode when model is closed");
   }
   _propagationMode = propMode;
+}
+
+inline OutputToInputMarkingMode PropagationEngine::outputToInputMarkingMode()
+    const {
+  return _outputToInputExplorer.outputToInputMarkingMode();
+}
+
+inline void PropagationEngine::setOutputToInputMarkingMode(
+    OutputToInputMarkingMode markingMode) {
+  if (!_isOpen) {
+    throw EngineClosedException(
+        "Cannot set output-to-input marking mode when model is closed");
+  }
+  _outputToInputExplorer.setOutputToInputMarkingMode(markingMode);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables()
@@ -249,14 +233,7 @@ PropagationEngine::getModifiedDecisionVariables() const {
   return _modifiedDecisionVariables;
 }
 
-template <bool OutputToInputMarking>
 inline void PropagationEngine::outputToInputPropagate() {
-  if constexpr (OutputToInputMarking) {
-    assert(propagationMode == PropagationMode::OUTPUT_TO_INPUT);
-    clearPropagationQueue();
-  } else {
-    assert(propagationMode == PropagationMode::MIXED);
-    markPropagationPathAndClearPropagationQueue();
-  }
-  _outputToInputExplorer.propagate<OutputToInputMarking>(_currentTimestamp);
+  assert(propagationMode == PropagationMode::OUTPUT_TO_INPUT);
+  _outputToInputExplorer.propagate(_currentTimestamp);
 }
