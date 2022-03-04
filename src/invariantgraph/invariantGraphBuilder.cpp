@@ -23,6 +23,7 @@
 #include "invariantgraph/views/intLeReifNode.hpp"
 #include "invariantgraph/views/intLinEqReifNode.hpp"
 #include "invariantgraph/views/intLinLeReifNode.hpp"
+#include "invariantgraph/views/intLinNeReifNode.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
@@ -231,6 +232,7 @@ invariantgraph::InvariantGraphBuilder::makeView(
   VIEW_REGISTRATION("int_le_reif", IntLeReifNode);
   VIEW_REGISTRATION("int_lin_eq_reif", IntLinEqReifNode);
   VIEW_REGISTRATION("int_lin_le_reif", IntLinLeReifNode);
+  VIEW_REGISTRATION("int_lin_ne_reif", IntLinNeReifNode);
 
   return nullptr;
 
