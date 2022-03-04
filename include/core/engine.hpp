@@ -82,8 +82,7 @@ class Engine {
     // sourceId(_store.intView(id).parentId());
   }
 
-  virtual void queueForPropagation(Timestamp, VarId) = 0;
-  virtual void notifyMaybeChanged(Timestamp, VarId) = 0;
+  virtual void enqueueComputedVar(Timestamp, VarId) = 0;
 
   [[nodiscard]] Int value(Timestamp, VarId) const;
   [[nodiscard]] inline Int currentValue(VarId id) const {

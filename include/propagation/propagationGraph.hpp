@@ -59,8 +59,6 @@ class PropagationGraph {
     }
   } _topology;
 
-  friend class PropagationEngine;
-
   struct PriorityCmp {
     PropagationGraph& graph;
     explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
@@ -146,5 +144,34 @@ class PropagationGraph {
   [[nodiscard]] inline const std::vector<VarIdBase>& inputVariables(
       InvariantId invariantId) const {
     return _inputVariables.at(invariantId);
+  }
+
+  [[nodiscard]] inline const std::vector<VarIdBase>& searchVariables() const {
+    return _searchVariables;
+  }
+
+  [[nodiscard]] inline const std::vector<VarIdBase>& evaluationVariables()
+      const {
+    return _evaluationVariables;
+  }
+
+  inline void clearPropagationQueue() {
+    while (!_propagationQueue.empty()) {
+      _propagationQueue.pop();
+    }
+  }
+
+  [[nodiscard]] inline bool propagationQueueEmpty() {
+    return _propagationQueue.empty();
+  }
+
+  [[nodiscard]] inline VarIdBase dequeuePropagationQueue() {
+    VarIdBase id = _propagationQueue.top();
+    _propagationQueue.pop();
+    return id;
+  }
+
+  inline void enqueuePropagationQueue(VarIdBase id) {
+    _propagationQueue.push(id);
   }
 };
