@@ -19,6 +19,7 @@
 #include "invariantgraph/invariants/maxNode.hpp"
 #include "invariantgraph/invariants/minNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
+#include "invariantgraph/views/intEqReifNode.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
@@ -214,10 +215,18 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
 std::unique_ptr<invariantgraph::ViewNode>
 invariantgraph::InvariantGraphBuilder::makeView(
     const ConstraintRef& constraint) {
-  if (constraint->name() == "int_abs") {
-    return invariantgraph::IntAbsNode::fromModelConstraint(
-        constraint, [this](auto var) { return _variableMap.at(var); });
+  auto name = constraint->name();
+
+#define VIEW_REGISTRATION(nameStr, nodeType)                            \
+  if (name == nameStr) {                                                \
+    return invariantgraph::nodeType::fromModelConstraint(               \
+        constraint, [this](auto var) { return _variableMap.at(var); }); \
   }
 
+  VIEW_REGISTRATION("int_abs", IntAbsNode);
+  VIEW_REGISTRATION("int_eq_reif", IntEqReifNode);
+
   return nullptr;
+
+#undef VIEW_REGISTRATION
 }

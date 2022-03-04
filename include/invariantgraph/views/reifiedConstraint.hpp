@@ -1,17 +1,19 @@
 #pragma once
 
+#include <utility>
+
 #include "invariantgraph/structure.hpp"
 
 namespace invariantgraph {
 
 class ReifiedConstraint : public ViewNode {
  private:
-  SoftConstraintNode* _constraint;
-  VariableNode* _r;
+  std::unique_ptr<SoftConstraintNode> _constraint;
+  std::shared_ptr<fznparser::SearchVariable> _r;
 
  public:
-  ReifiedConstraint(SoftConstraintNode* constraint, VariableNode* r)
-      : ViewNode(nullptr, r->variable()), _constraint(constraint), _r(r) {}
+  ReifiedConstraint(std::unique_ptr<SoftConstraintNode> constraint, std::shared_ptr<fznparser::SearchVariable> r)
+      : ViewNode(nullptr, r), _constraint(std::move(constraint)), _r(std::move(r)) {}
 
   void registerWithEngine(Engine& engine,
                           std::map<VariableNode*, VarId>& map) override;
