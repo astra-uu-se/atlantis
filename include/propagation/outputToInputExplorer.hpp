@@ -17,18 +17,22 @@ class OutputToInputExplorer {
   size_t _varStackIdx = 0;
   std::vector<InvariantId> _invariantStack;
   size_t _invariantStackIdx = 0;
-  IdMap<VarIdBase, Timestamp> _varStableAt;  // last timestamp when a VarID was
-                                             // stable (i.e., will not change)
-  IdMap<InvariantId, Timestamp> _invariantStableAt;
+  IdMap<VarIdBase, Timestamp>
+      _varComputedAt;  // last timestamp when a VarID was
+                       // computed (i.e., will not change)
+  IdMap<InvariantId, Timestamp> _invariantComputedAt;
   IdMap<InvariantId, bool> _invariantIsOnStack;
 
   IdMap<VarIdBase, std::unordered_set<VarIdBase>> _decisionVarAncestor;
+  IdMap<VarIdBase, bool> _onPropagationPath;
 
-  template <bool OutputToInputMarking>
-  void preprocessVarStack(Timestamp);
+  OutputToInputMarkingMode _outputToInputMarkingMode;
 
-  template <bool OutputToInputMarking>
-  bool isUpToDate(VarIdBase);
+  template <OutputToInputMarkingMode MarkingMode>
+  void preprocessVarStack([[maybe_unused]] Timestamp);
+
+  template <OutputToInputMarkingMode MarkingMode>
+  bool isMarked([[maybe_unused]] VarIdBase);
 
   void pushVariableStack(VarId);
   void popVariableStack();
@@ -36,24 +40,28 @@ class OutputToInputExplorer {
   void pushInvariantStack(InvariantId);
   void popInvariantStack();
   InvariantId peekInvariantStack();
-  void markStable(Timestamp, VarIdBase);
-  bool isStable(Timestamp, VarIdBase);
-  bool isStable(Timestamp, InvariantId);
+  void setComputed(Timestamp, VarIdBase);
+  bool isComputed(Timestamp, VarIdBase);
 
   // We expand an invariant by pushing it and its first input variable onto
   // each stack.
-  template <bool OutputToInputMarking>
+  template <OutputToInputMarkingMode MarkingMode>
   void expandInvariant(InvariantId);
   void notifyCurrentInvariant();
 
-  template <bool OutputToInputMarking>
+  template <OutputToInputMarkingMode MarkingMode>
   bool pushNextInputVariable();
+
+  void outputToInputStaticMarking();
+  void inputToOutputExplorationMarking();
+
+  template <OutputToInputMarkingMode MarkingMode>
+  void propagate(Timestamp);
 
  public:
   OutputToInputExplorer() = delete;
   OutputToInputExplorer(PropagationEngine& engine, size_t expectedSize);
 
-  void populateAncestors();
   void registerVar(VarId);
   void registerInvariant(InvariantId);
   /**
@@ -63,8 +71,13 @@ class OutputToInputExplorer {
 
   void clearRegisteredVariables();
 
-  template <bool OutputToInputMarking>
   void propagate(Timestamp);
+
+  OutputToInputMarkingMode outputToInputMarkingMode() const;
+  void setOutputToInputMarkingMode(OutputToInputMarkingMode);
+
+  template <OutputToInputMarkingMode MarkingMode>
+  void close();
 };
 
 inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
@@ -98,15 +111,19 @@ inline InvariantId OutputToInputExplorer::peekInvariantStack() {
   return _invariantStack[_invariantStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::markStable(Timestamp ts, VarIdBase id) {
-  _varStableAt[id] = ts;
+inline void OutputToInputExplorer::setComputed(Timestamp ts, VarIdBase id) {
+  _varComputedAt[id] = ts;
+}
+inline bool OutputToInputExplorer::isComputed(Timestamp ts, VarIdBase id) {
+  return _varComputedAt.at(id) == ts;
 }
 
-inline bool OutputToInputExplorer::isStable(Timestamp ts, VarIdBase id) {
-  return _varStableAt.at(id) == ts;
+inline OutputToInputMarkingMode
+OutputToInputExplorer::outputToInputMarkingMode() const {
+  return _outputToInputMarkingMode;
 }
 
-inline bool OutputToInputExplorer::isStable(Timestamp ts,
-                                            InvariantId invariantId) {
-  return _invariantStableAt.at(invariantId) == ts;
+inline void OutputToInputExplorer::setOutputToInputMarkingMode(
+    OutputToInputMarkingMode markingMode) {
+  _outputToInputMarkingMode = markingMode;
 }
