@@ -239,10 +239,10 @@ void PropagationEngine::endCommit() {
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
         outputToInputMarkingMode() ==
             OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-      for (VarIdBase varId : getDecisionVariables()) {
+      for (VarIdBase varId : searchVariables()) {
         // Assert that if decision variable varId is modified,
         // then it is in the set of modified decision variables
-        assert(_store.getIntVar(varId).hasChanged(_currentTimestamp) ==
+        assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
                (_modifiedSearchVariables.find(varId) !=
                 _modifiedSearchVariables.end()));
       }
@@ -255,7 +255,7 @@ void PropagationEngine::endCommit() {
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
         outputToInputMarkingMode() ==
             OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-      for (size_t varId : _modifiedDecisionVariables) {
+      for (size_t varId : _modifiedSearchVariables) {
         // assert that decsion variable varId is no longer modified.
         assert(!_store.intVar(varId).hasChanged(_currentTimestamp));
       }

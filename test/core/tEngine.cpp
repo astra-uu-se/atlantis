@@ -81,13 +81,13 @@ class MockPlus : public Invariant {
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
           updateValue(ts, engine, output,
-                      engine.getValue(ts, a) + engine.getValue(ts, b));
+                      engine.value(ts, a) + engine.value(ts, b));
         });
 
     ON_CALL(*this, notifyIntChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine, LocalId) {
           updateValue(ts, engine, output,
-                      engine.getValue(ts, a) + engine.getValue(ts, b));
+                      engine.value(ts, a) + engine.value(ts, b));
         });
   }
 
@@ -101,7 +101,7 @@ class MockPlus : public Invariant {
   }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
   MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
@@ -187,15 +187,15 @@ class EngineTest : public ::testing::Test {
 
     engine->close();
 
-    engine->beginQuery();
-    Timestamp timestamp = engine->getCurrentTimestamp();
+    engine->beginProbe();
+    Timestamp timestamp = engine->currentTimestamp();
     VarId modifiedDecisionVariable = inputs[2][1];
     engine->setValue(modifiedDecisionVariable, 1);
     std::vector<size_t> markedInvariants = {2, 5, 6};
     std::vector<size_t> unmarkedInvariants = {0, 1, 3, 4};
     engine->query(outputs.back());
 
-    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       for (size_t i : markedInvariants) {
         EXPECT_CALL(*invariants[i],
                     notifyIntChanged(timestamp, testing::_, LocalId(0)))
@@ -210,24 +210,24 @@ class EngineTest : public ::testing::Test {
         for (size_t i = 0; i < invariants.size(); ++i) {
           VarId a = inputs[i][0];
           VarId b = inputs[i][1];
-          EXPECT_CALL(*invariants[i], getNextInput(timestamp, testing::_))
+          EXPECT_CALL(*invariants[i], nextInput(timestamp, testing::_))
               .WillOnce(Return(a))
               .WillOnce(Return(b))
               .WillRepeatedly(Return(NULL_ID));
         }
       } else {
-        EXPECT_EQ(engine->getModifiedDecisionVariables().size(), 1);
-        EXPECT_TRUE(engine->getModifiedDecisionVariables().find(
-                        modifiedDecisionVariable) !=
-                    engine->getModifiedDecisionVariables().end());
+        EXPECT_EQ(engine->modifiedSearchVariables().size(), 1);
+        EXPECT_TRUE(
+            engine->modifiedSearchVariables().find(modifiedDecisionVariable) !=
+            engine->modifiedSearchVariables().end());
         for (size_t i : markedInvariants) {
-          EXPECT_CALL(*invariants[i], getNextInput(timestamp, testing::_))
+          EXPECT_CALL(*invariants[i], nextInput(timestamp, testing::_))
               .WillOnce(Return(inputs[i][0]))
               .WillOnce(Return(inputs[i][1]))
               .WillRepeatedly(Return(NULL_ID));
         }
         for (size_t i : unmarkedInvariants) {
-          EXPECT_CALL(*invariants[i], getNextInput(timestamp, testing::_))
+          EXPECT_CALL(*invariants[i], nextInput(timestamp, testing::_))
               .Times(0);
         }
       }
@@ -242,7 +242,7 @@ class EngineTest : public ::testing::Test {
             .Times(0);
       }
     }
-    engine->endQuery();
+    engine->endProbe();
   }
 };
 
@@ -385,8 +385,8 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->setValue(c, -3);
   engine->endMove();
 
-  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(invariant, getNextInput(moveTimestamp, testing::_)).Times(0);
+  if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
+    EXPECT_CALL(invariant, nextInput(moveTimestamp, testing::_)).Times(0);
     EXPECT_CALL(invariant, notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(0);
   } else {
@@ -401,7 +401,7 @@ TEST_F(EngineTest, SimplePropagation) {
   }
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -429,8 +429,8 @@ TEST_F(EngineTest, SimpleCommit) {
 
   engine->close();
 
-  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+  if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
+    EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(0);
 
     EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
@@ -452,7 +452,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endMove();
 
   for (size_t id = 0; id < 3; ++id) {
-    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
+    if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(invariant,
                   notifyIntChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
@@ -463,7 +463,7 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->query(output);
   engine->endProbe();
 
-  if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(invariant, notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
 
@@ -471,8 +471,8 @@ TEST_F(EngineTest, SimpleCommit) {
 
     EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
-  } else if (engine->propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(invariant, getNextInput(testing::_, testing::_))
+  } else if (engine->propagationMode() == PropagationMode::OUTPUT_TO_INPUT) {
+    EXPECT_CALL(invariant, nextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))

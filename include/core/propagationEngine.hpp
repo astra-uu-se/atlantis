@@ -67,7 +67,7 @@ class PropagationEngine : public Engine {
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
-  [[nodiscard]] VarId getNextStableVariable(Timestamp);
+  [[nodiscard]] VarId nextStableVariable(Timestamp);
 
   //--------------------- Move semantics ---------------------
   void beginMove();
@@ -142,7 +142,7 @@ inline InvariantId PropagationEngine::definingInvariant(VarId id) {
   return _propGraph.definingInvariant(id);
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
+inline const std::vector<VarIdBase>& PropagationEngine::variablesDefinedBy(
     InvariantId invariantId) const {
   return _propGraph.variablesDefinedBy(invariantId);
 }
@@ -212,7 +212,7 @@ inline void PropagationEngine::setOutputToInputMarkingMode(
   _outputToInputExplorer.setOutputToInputMarkingMode(markingMode);
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getSearchVariables()
+inline const std::vector<VarIdBase>& PropagationEngine::searchVariables()
     const {
   return _propGraph._searchVariables;
 }
@@ -234,6 +234,6 @@ PropagationEngine::modifiedSearchVariables() const {
 }
 
 inline void PropagationEngine::outputToInputPropagate() {
-  assert(propagationMode == PropagationMode::OUTPUT_TO_INPUT);
+  assert(propagationMode() == PropagationMode::OUTPUT_TO_INPUT);
   _outputToInputExplorer.propagate(_currentTimestamp);
 }
