@@ -13,8 +13,8 @@ class IntOffsetView : public IntView {
   IntOffsetView(VarId parentId, Int offset)
       : IntView(parentId), _offset(offset) {}
 
-  [[nodiscard]] Int getValue(Timestamp) const override;
-  [[nodiscard]] Int getCommittedValue() const override;
-  [[nodiscard]] Int getLowerBound() const override;
-  [[nodiscard]] Int getUpperBound() const override;
+  [[nodiscard]] Int value(Timestamp) const override;
+  [[nodiscard]] Int committedValue() const override;
+  [[nodiscard]] Int lowerBound() const override;
+  [[nodiscard]] Int upperBound() const override;
 };

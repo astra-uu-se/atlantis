@@ -43,7 +43,7 @@ class Store {
       std::unique_ptr<IntView>&& ptr) {
     const VarId newId = VarId(_intViews.size() + 1, VarIdType::view);
     ptr->setId(newId);
-    const VarId parentId = ptr->getParentId();
+    const VarId parentId = ptr->parentId();
     const VarId source = parentId.idType == VarIdType::var
                              ? parentId
                              : _intViewSourceId[parentId];
@@ -52,32 +52,33 @@ class Store {
     return newId;
   }
 
-  inline IntVar& getIntVar(VarId id) { return _intVars[id]; }
+  inline IntVar& intVar(VarId id) { return _intVars[id]; }
 
-  [[nodiscard]] inline const IntVar& getConstIntVar(VarId id) const {
+  [[nodiscard]] inline const IntVar& constIntVar(VarId id) const {
     return _intVars.at(id);
   }
 
-  inline IntView& getIntView(VarId id) {
+  inline IntView& intView(VarId id) {
     assert(id.idType == VarIdType::view);
     return *(_intViews[id.id]);
   }
 
-  [[nodiscard]] const inline IntView& getConstIntView(VarId id) const {
+  [[nodiscard]] const inline IntView& constIntView(VarId id) const {
     assert(id.idType == VarIdType::view);
     return *(_intViews.at(id.id));
   }
 
-  [[nodiscard]] inline VarId getIntViewSourceId(VarId id) const {
+  [[nodiscard]] inline VarId intViewSourceId(VarId id) const {
     assert(id.idType == VarIdType::view);
     return _intViewSourceId.at(id);
   }
 
-  inline Invariant& getInvariant(InvariantId invariantId) {
+  inline Invariant& invariant(InvariantId invariantId) {
     return *(_invariants[invariantId.id]);
   }
 
-  [[nodiscard]] inline const Invariant& getConstInvariant(InvariantId invariantId) const {
+  [[nodiscard]] inline const Invariant& constInvariant(
+      InvariantId invariantId) const {
     return *(_invariants.at(invariantId.id));
   }
 
@@ -92,11 +93,9 @@ class Store {
     return _invariants.end();
   }
 
-  [[nodiscard]] inline size_t getNumVariables() const {
-    return _intVars.size();
-  }
+  [[nodiscard]] inline size_t numVariables() const { return _intVars.size(); }
 
-  [[nodiscard]] inline size_t getNumInvariants() const {
+  [[nodiscard]] inline size_t numInvariants() const {
     return _invariants.size();
   }
 };

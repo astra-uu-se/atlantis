@@ -33,9 +33,9 @@ class MockAbsDiff : public AbsDiff {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           AbsDiff::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextInput)
+    ON_CALL(*this, nextInput)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return AbsDiff::getNextInput(ts, engine);
+          return AbsDiff::nextInput(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentInputChanged)
@@ -53,7 +53,7 @@ class MockAbsDiff : public AbsDiff {
 
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
@@ -104,7 +104,7 @@ class AbsDiffTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
@@ -117,9 +117,9 @@ class AbsDiffTest : public ::testing::Test {
     engine->setValue(a, 0);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(output);
-    engine->endQuery();
+    engine->endProbe();
   }
 };
 
@@ -138,7 +138,7 @@ TEST_F(AbsDiffTest, CreateAbsDiff) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(c), 200);
+  EXPECT_EQ(engine->currentValue(c), 200);
 }
 
 TEST_F(AbsDiffTest, Modification) {
@@ -168,17 +168,17 @@ TEST_F(AbsDiffTest, Modification) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(c), 200);
+  EXPECT_EQ(engine->currentValue(c), 200);
 
   engine->beginMove();
   engine->setValue(a, 0);
   engine->endMove();
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(c);
-  engine->endQuery();
+  engine->endProbe();
 
-  EXPECT_EQ(engine->getNewValue(c), 100);
+  EXPECT_EQ(engine->currentValue(c), 100);
 }
 
 TEST_F(AbsDiffTest, NotificationsInputToOutput) {

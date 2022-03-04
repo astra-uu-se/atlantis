@@ -32,8 +32,8 @@ class MockElementVar : public ElementVar {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return ElementVar::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextInput).WillByDefault([this](Timestamp t, Engine& e) {
-      return ElementVar::getNextInput(t, e);
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp t, Engine& e) {
+      return ElementVar::nextInput(t, e);
     });
 
     ON_CALL(*this, notifyCurrentInputChanged)
@@ -54,7 +54,7 @@ class MockElementVar : public ElementVar {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
               (override));
 
@@ -108,7 +108,7 @@ class ElementVarTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
@@ -121,9 +121,9 @@ class ElementVarTest : public ::testing::Test {
     engine->setValue(idx, 5);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(output);
-    engine->endQuery();
+    engine->endProbe();
   }
 };
 
@@ -152,7 +152,7 @@ TEST_F(ElementVarTest, CreateElement) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(output), 3);
+  EXPECT_EQ(engine->currentValue(output), 3);
 }
 
 TEST_F(ElementVarTest, NotificationsInputToOutput) {

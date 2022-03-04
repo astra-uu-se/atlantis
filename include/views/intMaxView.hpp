@@ -12,8 +12,8 @@ class IntMaxView : public IntView {
  public:
   IntMaxView(VarId parentId, Int max) : IntView(parentId), _max(max) {}
 
-  [[nodiscard]] Int getValue(Timestamp) const override;
-  [[nodiscard]] Int getCommittedValue() const override;
-  [[nodiscard]] Int getLowerBound() const override;
-  [[nodiscard]] Int getUpperBound() const override;
+  [[nodiscard]] Int value(Timestamp) const override;
+  [[nodiscard]] Int committedValue() const override;
+  [[nodiscard]] Int lowerBound() const override;
+  [[nodiscard]] Int upperBound() const override;
 };

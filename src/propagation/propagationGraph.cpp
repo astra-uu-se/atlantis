@@ -70,16 +70,16 @@ void PropagationGraph::registerDefinedVariable(VarIdBase varId,
 }
 
 void PropagationGraph::close() {
-  _isDecisionVar.resize(getNumVariables() + 1);
-  _isObjectiveVar.resize(getNumVariables() + 1);
-  for (size_t i = 1; i < getNumVariables() + 1; ++i) {
-    _isObjectiveVar[i] = (_listeningInvariants.at(i).empty());
-    _isDecisionVar[i] = (_definingInvariant.at(i) == NULL_ID);
-    if (_isObjectiveVar[i]) {
-      _outputVariables.emplace_back(i);
+  _isSearchVariable.resize(numVariables() + 1);
+  _isEvaluationVariable.resize(numVariables() + 1);
+  for (size_t i = 1; i < numVariables() + 1; ++i) {
+    _isEvaluationVariable[i] = (_listeningInvariants.at(i).empty());
+    _isSearchVariable[i] = (_definingInvariant.at(i) == NULL_ID);
+    if (_isEvaluationVariable[i]) {
+      _evaluationVariables.emplace_back(i);
     }
-    if (_isDecisionVar[i]) {
-      _decisionVariables.emplace_back(i);
+    if (_isSearchVariable[i]) {
+      _searchVariables.emplace_back(i);
     }
   }
 
@@ -88,13 +88,13 @@ void PropagationGraph::close() {
   // TODO: Be sure that this does not cause a memeory leak...
   // _propagationQueue = PropagationQueue();
   _propagationQueue.init(
-      getNumVariables(),
+      numVariables(),
       // numLayers:
       1 + *std::max_element(_topology.variablePosition.begin(),
                             _topology.variablePosition.end()));
-  for (size_t i = 1; i < getNumVariables() + 1; ++i) {
+  for (size_t i = 1; i < numVariables() + 1; ++i) {
     const VarIdBase id = VarIdBase(i);
-    _propagationQueue.initVar(id, _topology.getPosition(id));
+    _propagationQueue.initVar(id, _topology.position(id));
   }
   // _topology.computeNoCycles();
 }

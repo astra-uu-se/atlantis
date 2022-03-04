@@ -37,7 +37,7 @@ class LeqNode final : public SoftConstraintNode {
   [[nodiscard]] Int bound() const { return _bound; }
 
  private:
-  std::pair<Int, Int> getDomainBounds() const;
+  std::pair<Int, Int> domainBounds() const;
 };
 
 }  // namespace invariantgraph

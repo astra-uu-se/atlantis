@@ -35,11 +35,11 @@ class PropagationGraph {
   // Map from VarId -> vector of InvariantId
   IdMap<VarIdBase, std::vector<InvariantId>> _listeningInvariants;
 
-  std::vector<bool> _isObjectiveVar;
-  std::vector<bool> _isDecisionVar;
+  std::vector<bool> _isEvaluationVariable;
+  std::vector<bool> _isSearchVariable;
 
-  std::vector<VarIdBase> _decisionVariables;
-  std::vector<VarIdBase> _outputVariables;
+  std::vector<VarIdBase> _searchVariables;
+  std::vector<VarIdBase> _evaluationVariables;
 
   struct Topology {
     std::vector<size_t> variablePosition;
@@ -52,8 +52,8 @@ class PropagationGraph {
     void computeWithCycles();
     void computeLayersWithCycles();
     void computeInvariantFromVariables();
-    inline size_t getPosition(VarIdBase id) { return variablePosition[id.id]; }
-    inline size_t getPosition(InvariantId invariantId) {
+    inline size_t position(VarIdBase id) { return variablePosition[id.id]; }
+    inline size_t position(InvariantId invariantId) {
       assert(invariantId < invariantPosition.size());
       return invariantPosition[invariantId];
     }
@@ -65,8 +65,7 @@ class PropagationGraph {
     PropagationGraph& graph;
     explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
     bool operator()(VarIdBase left, VarIdBase right) {
-      return graph._topology.getPosition(left) >
-             graph._topology.getPosition(right);
+      return graph._topology.position(left) > graph._topology.position(right);
     }
   };
 
@@ -111,40 +110,40 @@ class PropagationGraph {
    */
   void registerDefinedVariable(VarIdBase varId, InvariantId invariant);
 
-  [[nodiscard]] inline size_t getNumVariables() const {
+  [[nodiscard]] inline size_t numVariables() const {
     return _numVariables;  // this ignores null var
   }
 
-  [[nodiscard]] inline size_t getNumInvariants() const {
+  [[nodiscard]] inline size_t numInvariants() const {
     return _numInvariants;  // this ignores null invariant
   }
 
-  inline bool isObjectiveVar(VarIdBase id) {
-    assert(id < _isObjectiveVar.size());
-    return _isObjectiveVar[id];
+  inline bool isEvaluationVar(VarIdBase id) {
+    assert(id < _isEvaluationVariable.size());
+    return _isEvaluationVariable[id];
   }
 
-  inline bool isDecisionVar(VarIdBase id) {
-    assert(id < _isDecisionVar.size());
-    return _isDecisionVar.at(id);
+  inline bool isSearchVariable(VarIdBase id) {
+    assert(id < _isSearchVariable.size());
+    return _isSearchVariable.at(id);
   }
 
-  inline InvariantId getDefiningInvariant(VarIdBase id) {
+  inline InvariantId definingInvariant(VarIdBase id) {
     // Returns NULL_ID is not defined.
     return _definingInvariant.at(id);
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& getVariablesDefinedBy(
+  [[nodiscard]] inline const std::vector<VarIdBase>& variablesDefinedBy(
       InvariantId invariantId) const {
     return _variablesDefinedByInvariant.at(invariantId);
   }
 
-  [[nodiscard]] inline const std::vector<InvariantId>& getListeningInvariants(
+  [[nodiscard]] inline const std::vector<InvariantId>& listeningInvariants(
       VarId id) const {
     return _listeningInvariants.at(id);
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& getInputVariables(
+  [[nodiscard]] inline const std::vector<VarIdBase>& inputVariables(
       InvariantId invariantId) const {
     return _inputVariables.at(invariantId);
   }

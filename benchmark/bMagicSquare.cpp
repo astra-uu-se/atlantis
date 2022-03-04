@@ -142,16 +142,16 @@ BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
-        const Int oldI = engine->getCommittedValue(flat[i]);
-        const Int oldJ = engine->getCommittedValue(flat[j]);
+        const Int oldI = engine->committedValue(flat[i]);
+        const Int oldJ = engine->committedValue(flat[j]);
         engine->beginMove();
         engine->setValue(flat[i], oldJ);
         engine->setValue(flat[j], oldI);
         engine->endMove();
 
-        engine->beginQuery();
+        engine->beginProbe();
         engine->query(totalViolation);
-        engine->endQuery();
+        engine->endProbe();
 
         ++probes;
       }

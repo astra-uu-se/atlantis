@@ -15,17 +15,17 @@ void ElementConst::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 }
 
 void ElementConst::recompute(Timestamp ts, Engine& engine) {
-  assert(0 <= engine.getValue(ts, _index) &&
-         static_cast<size_t>(engine.getValue(ts, _index)) < _array.size());
+  assert(0 <= engine.value(ts, _index) &&
+         static_cast<size_t>(engine.value(ts, _index)) < _array.size());
   updateValue(ts, engine, _y,
-              _array[static_cast<size_t>(engine.getValue(ts, _index))]);
+              _array[static_cast<size_t>(engine.value(ts, _index))]);
 }
 
 void ElementConst::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId ElementConst::getNextInput(Timestamp ts, Engine&) {
+VarId ElementConst::nextInput(Timestamp ts, Engine&) {
   if (_state.incValue(ts, 1) == 0) {
     return _index;
   }

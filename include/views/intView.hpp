@@ -20,8 +20,8 @@ class IntView : public View {
     _engine = &engine;
   }
 
-  [[nodiscard]] virtual Int getValue(Timestamp) const = 0;
-  [[nodiscard]] virtual Int getCommittedValue() const = 0;
-  [[nodiscard]] virtual Int getLowerBound() const = 0;
-  [[nodiscard]] virtual Int getUpperBound() const = 0;
+  [[nodiscard]] virtual Int value(Timestamp) const = 0;
+  [[nodiscard]] virtual Int committedValue() const = 0;
+  [[nodiscard]] virtual Int lowerBound() const = 0;
+  [[nodiscard]] virtual Int upperBound() const = 0;
 };

@@ -74,7 +74,7 @@ class OutOfOrderIndexRegistration : public std::exception {
   explicit OutOfOrderIndexRegistration() = default;
 };
 
-class VariableIsNotDecisionVariable : public std::exception {
+class VariableIsNotSearchVariable : public std::exception {
  public:
-  explicit VariableIsNotDecisionVariable() = default;
+  explicit VariableIsNotSearchVariable() = default;
 };

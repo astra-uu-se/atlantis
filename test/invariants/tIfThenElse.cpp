@@ -31,8 +31,8 @@ class MockIfThenElse : public IfThenElse {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return IfThenElse::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextInput).WillByDefault([this](Timestamp t, Engine& e) {
-      return IfThenElse::getNextInput(t, e);
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp t, Engine& e) {
+      return IfThenElse::nextInput(t, e);
     });
 
     ON_CALL(*this, notifyCurrentInputChanged)
@@ -53,7 +53,7 @@ class MockIfThenElse : public IfThenElse {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
               (override));
 
@@ -107,7 +107,7 @@ class IfThenElseTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
@@ -120,9 +120,9 @@ class IfThenElseTest : public ::testing::Test {
     engine->setValue(b, 5);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(z);
-    engine->endQuery();
+    engine->endProbe();
   }
 };
 
@@ -145,7 +145,7 @@ TEST_F(IfThenElseTest, CreateElement) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(z), 0);
+  EXPECT_EQ(engine->currentValue(z), 0);
 }
 
 TEST_F(IfThenElseTest, NotificationsInputToOutput) {

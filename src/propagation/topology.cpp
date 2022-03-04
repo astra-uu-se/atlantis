@@ -11,8 +11,8 @@
 void PropagationGraph::Topology::computeNoCycles() {
   std::vector<bool> tmpVisited;
   std::vector<bool> visited;
-  tmpVisited.resize(graph.getNumVariables() + 1, false);
-  visited.resize(graph.getNumVariables() + 1, false);
+  tmpVisited.resize(graph.numVariables() + 1, false);
+  visited.resize(graph.numVariables() + 1, false);
 
   std::queue<VarId> reverseOrder;
 
@@ -21,10 +21,9 @@ void PropagationGraph::Topology::computeNoCycles() {
     assert(id < tmpVisited.size());
     tmpVisited[id] = true;
     // for each invariant id is input to
-    for (const auto invariant : graph.getListeningInvariants(id)) {
+    for (const auto invariant : graph.listeningInvariants(id)) {
       // for each variable defined by that invariant
-      for (const auto definedVariable :
-           graph.getVariablesDefinedBy(invariant)) {
+      for (const auto definedVariable : graph.variablesDefinedBy(invariant)) {
         assert(definedVariable < visited.size());
         if (visited[definedVariable]) {
           continue;
@@ -43,16 +42,16 @@ void PropagationGraph::Topology::computeNoCycles() {
   };
 
   // Call visit on all top variables
-  for (size_t varId = 0; varId < graph.getNumVariables() + 1; ++varId) {
+  for (size_t varId = 0; varId < graph.numVariables() + 1; ++varId) {
     if (varId == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
-    if (graph.getDefiningInvariant(varId).id == NULL_ID) {
+    if (graph.definingInvariant(varId).id == NULL_ID) {
       visit(VarId(varId));
     }
   }
 
-  variablePosition.resize(graph.getNumVariables() + 1, 0);
+  variablePosition.resize(graph.numVariables() + 1, 0);
   while (!reverseOrder.empty()) {
     assert(reverseOrder.front() < variablePosition.size());
     variablePosition[reverseOrder.front()] = reverseOrder.size();
@@ -71,7 +70,7 @@ void PropagationGraph::Topology::computeNoCycles() {
  */
 void PropagationGraph::Topology::computeWithCycles() {
   std::vector<bool> visited;
-  visited.resize(graph.getNumVariables() + 1, false);
+  visited.resize(graph.numVariables() + 1, false);
 
   std::queue<VarId> reverseOrder;
 
@@ -80,10 +79,9 @@ void PropagationGraph::Topology::computeWithCycles() {
     assert(varId < visited.size());
     visited[varId] = true;
     // for each invariant id is a input to
-    for (const auto invariant : graph.getListeningInvariants(varId)) {
+    for (const auto invariant : graph.listeningInvariants(varId)) {
       // for each variable defined by that invariant
-      for (const auto definedVariable :
-           graph.getVariablesDefinedBy(invariant)) {
+      for (const auto definedVariable : graph.variablesDefinedBy(invariant)) {
         assert(definedVariable < visited.size());
         if (visited[definedVariable]) {
           // Ignore nodes that have been visited before
@@ -97,16 +95,16 @@ void PropagationGraph::Topology::computeWithCycles() {
   };
 
   // Call visit on all top variables
-  for (size_t varId = 0; varId < graph.getNumVariables() + 1; ++varId) {
+  for (size_t varId = 0; varId < graph.numVariables() + 1; ++varId) {
     if (varId == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
-    if (graph.getDefiningInvariant(varId).id == NULL_ID) {
+    if (graph.definingInvariant(varId).id == NULL_ID) {
       visit(VarId(varId));
     }
   }
 
-  variablePosition.resize(graph.getNumVariables() + 1, 0);
+  variablePosition.resize(graph.numVariables() + 1, 0);
   while (!reverseOrder.empty()) {
     assert(reverseOrder.front() < variablePosition.size());
     variablePosition[reverseOrder.front()] = reverseOrder.size();
@@ -128,10 +126,10 @@ void PropagationGraph::Topology::computeWithCycles() {
  */
 void PropagationGraph::Topology::computeLayersWithCycles() {
   std::vector<bool> visited;
-  visited.resize(graph.getNumVariables() + 1, false);
+  visited.resize(graph.numVariables() + 1, false);
 
   std::vector<int> position;
-  position.resize(graph.getNumVariables() + 1, 0);
+  position.resize(graph.numVariables() + 1, 0);
 
   std::queue<VarId> reverseOrder;
 
@@ -143,10 +141,9 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
     position[varId] = depth;
     // std::cout << "Visiting " << varId << " at depth " << depth << std::endl;
     // for each invariant id is a input to
-    for (const auto invariantId : graph.getListeningInvariants(varId)) {
+    for (const auto invariantId : graph.listeningInvariants(varId)) {
       // for each variable defined by that invariant
-      for (const auto definedVariable :
-           graph.getVariablesDefinedBy(invariantId)) {
+      for (const auto definedVariable : graph.variablesDefinedBy(invariantId)) {
         assert(definedVariable < visited.size());
         if (visited[definedVariable]) {
           // Ignore nodes that have been visited before
@@ -171,13 +168,13 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
   };
 
   // Call visit on all top variables
-  for (size_t varId = 0; varId < graph.getNumVariables() + 1; ++varId) {
+  for (size_t varId = 0; varId < graph.numVariables() + 1; ++varId) {
     if (varId == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
 
-    visited.assign(graph.getNumVariables() + 1, false);
-    if (graph.getDefiningInvariant(varId).id == NULL_ID) {
+    visited.assign(graph.numVariables() + 1, false);
+    if (graph.definingInvariant(varId).id == NULL_ID) {
       visit(VarId(varId), 0);
     }
   }
@@ -188,9 +185,9 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
   // }
   // std::vector<int> count;
   // count.resize(max+1, 0);
-  variablePosition.resize(graph.getNumVariables() + 1, 0);
+  variablePosition.resize(graph.numVariables() + 1, 0);
   assert(position.size() == variablePosition.size());
-  for (size_t i = 0; i < graph.getNumVariables() + 1; ++i) {
+  for (size_t i = 0; i < graph.numVariables() + 1; ++i) {
     variablePosition[i] = position[i];
     // count.at(position.at(i))++;
   }
@@ -206,15 +203,14 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
  * Notes that this gives different key-domains to Variables and invariants.
  */
 void PropagationGraph::Topology::computeInvariantFromVariables() {
-  invariantPosition.resize(graph.getNumInvariants() + 1, 0);
-  for (size_t i = 0; i < graph.getNumInvariants() + 1; ++i) {
+  invariantPosition.resize(graph.numInvariants() + 1, 0);
+  for (size_t i = 0; i < graph.numInvariants() + 1; ++i) {
     if (i == NULL_ID) {  // Skip nullVar if any.
       continue;
     }
     const InvariantId invariantId(i);
     size_t position = 0;
-    for (const auto definedVariable :
-         graph.getVariablesDefinedBy(invariantId)) {
+    for (const auto definedVariable : graph.variablesDefinedBy(invariantId)) {
       assert(definedVariable < variablePosition.size());
       position = std::max<size_t>(position, variablePosition[definedVariable]);
     }
