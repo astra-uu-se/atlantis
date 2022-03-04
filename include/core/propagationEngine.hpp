@@ -58,8 +58,7 @@ class PropagationEngine : public Engine {
    * @param ts the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  void notifyMaybeChanged(Timestamp ts, VarId id) final;
-  void queueForPropagation(Timestamp, VarId) final;
+  void enqueueComputedVar(Timestamp, VarId) final;
 
   [[nodiscard]] inline PropagationMode propagationMode() const {
     return _propagationMode;
@@ -67,7 +66,7 @@ class PropagationEngine : public Engine {
 
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
-  [[nodiscard]] VarId nextStableVariable(Timestamp);
+  [[nodiscard]] VarId dequeueComputedVar(Timestamp);
 
   //--------------------- Move semantics ---------------------
   void beginMove();
@@ -186,8 +185,7 @@ inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
       _modifiedSearchVariables.erase(id);
     }
   }
-
-  notifyMaybeChanged(ts, id);
+  enqueueComputedVar(ts, id);
 }
 
 inline void PropagationEngine::setPropagationMode(PropagationMode propMode) {
@@ -214,12 +212,12 @@ inline void PropagationEngine::setOutputToInputMarkingMode(
 
 inline const std::vector<VarIdBase>& PropagationEngine::searchVariables()
     const {
-  return _propGraph._searchVariables;
+  return _propGraph.searchVariables();
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::evaluationVariables()
     const {
-  return _propGraph._evaluationVariables;
+  return _propGraph.evaluationVariables();
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::inputVariables(

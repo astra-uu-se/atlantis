@@ -167,5 +167,7 @@ class Invariant {
   [[nodiscard]] inline VarId primaryDefinedVar() const {
     return _primaryDefinedVar;
   }
-  void queueNonPrimaryDefinedVarsForPropagation(Timestamp ts, Engine& engine);
+  const inline std::vector<VarId>& nonPrimaryDefinedVars() const {
+    return _definedVars;
+  }
 };

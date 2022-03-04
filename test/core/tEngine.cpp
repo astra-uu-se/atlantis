@@ -21,11 +21,11 @@ namespace {
 
 class MockInvariantSimple : public Invariant {
  public:
-  bool _initialized = false;
+  bool initialized = false;
 
   MockInvariantSimple() : Invariant(NULL_ID) {}
 
-  void init(Timestamp, Engine&) override { _initialized = true; }
+  void init(Timestamp, Engine&) override { initialized = true; }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
 
@@ -40,7 +40,7 @@ class MockInvariantSimple : public Invariant {
 
 class MockInvariantAdvanced : public Invariant {
  public:
-  bool _initialized = false;
+  bool initialized = false;
   std::vector<VarId> inputs;
   VarId output;
 
@@ -56,7 +56,7 @@ class MockInvariantAdvanced : public Invariant {
     for (size_t i = 0; i < inputs.size(); ++i) {
       engine.registerInvariantInput(_id, inputs[i], LocalId(i));
     }
-    _initialized = true;
+    initialized = true;
   }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
@@ -70,7 +70,7 @@ class MockInvariantAdvanced : public Invariant {
 
 class MockPlus : public Invariant {
  public:
-  bool _initialized = false;
+  bool initialized = false;
   VarId a;
   VarId b;
   VarId output;
@@ -97,7 +97,7 @@ class MockPlus : public Invariant {
     registerDefinedVariable(engine, output);
     engine.registerInvariantInput(_id, a, LocalId(0));
     engine.registerInvariantInput(_id, b, LocalId(1));
-    _initialized = true;
+    initialized = true;
   }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
@@ -261,7 +261,7 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
 
   EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-  ASSERT_TRUE(invariant._initialized);
+  ASSERT_TRUE(invariant.initialized);
 
   engine->close();
   EXPECT_EQ(engine->store().numVariables(), intVarCount);
@@ -352,7 +352,7 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 
   EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(1);
 
-  ASSERT_TRUE(invariant._initialized);
+  ASSERT_TRUE(invariant.initialized);
 
   engine->close();
 

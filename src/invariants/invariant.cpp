@@ -30,13 +30,3 @@ void Invariant::updateValue(Timestamp ts, Engine& engine, VarId id, Int val) {
 void Invariant::incValue(Timestamp ts, Engine& engine, VarId id, Int val) {
   engine.incValue(ts, id, val);
 }
-
-void Invariant::queueNonPrimaryDefinedVarsForPropagation(Timestamp ts,
-                                                         Engine& engine) {
-  for (const VarId definedVarId : _definedVars) {
-    if (!engine.hasChanged(ts, definedVarId)) {
-      continue;
-    }
-    engine.queueForPropagation(ts, definedVarId);
-  }
-}

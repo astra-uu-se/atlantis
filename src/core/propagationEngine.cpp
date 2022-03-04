@@ -74,25 +74,14 @@ void PropagationEngine::close() {
 }
 
 //---------------------Registration---------------------
-void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
+void PropagationEngine::enqueueComputedVar(Timestamp, VarId id) {
   // logDebug("\t\t\tMaybe changed: " << _store.intVar(id));
   if (_isEnqueued.get(id)) {
     // logDebug("\t\t\talready enqueued");
     return;
   }
   // logDebug("\t\t\tpushed on stack");
-  _propGraph._propagationQueue.push(id);
-  _isEnqueued.set(id, true);
-}
-
-void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
-  // logDebug("\t\t\tMaybe changed: " << _store.intVar(id));
-  if (_isEnqueued.get(id)) {
-    // logDebug("\t\t\talready enqueued");
-    return;
-  }
-  // logDebug("\t\t\tpushed on stack");
-  _propGraph._propagationQueue.push(id);
+  _propGraph.enqueuePropagationQueue(id);
   _isEnqueued.set(id, true);
 }
 
@@ -124,21 +113,20 @@ void PropagationEngine::registerInvariant(InvariantId invariantId) {
 
 //---------------------Propagation---------------------
 
-VarId PropagationEngine::nextStableVariable(Timestamp) {
-  if (_propGraph._propagationQueue.empty()) {
+VarId PropagationEngine::dequeueComputedVar(Timestamp) {
+  assert(propagationMode() == PropagationMode::INPUT_TO_OUTPUT ||
+         _engineState == EngineState::COMMIT);
+  if (_propGraph.propagationQueueEmpty()) {
     return VarId(NULL_ID);
   }
-  VarId nextVar(_propGraph._propagationQueue.top());
-  _propGraph._propagationQueue.pop();
+  VarId nextVar(_propGraph.dequeuePropagationQueue());
   _isEnqueued.set(nextVar, false);
-  // Due to notifyMaybeChanged, all variables in the queue are "active".
+  // Due to enqueueComputedVar, all variables in the queue are "active".
   return nextVar;
 }
 
 void PropagationEngine::clearPropagationQueue() {
-  while (!_propGraph._propagationQueue.empty()) {
-    _propGraph._propagationQueue.pop();
-  }
+  _propGraph.clearPropagationQueue();
   _isEnqueued.assign_all(false);
 }
 
@@ -285,13 +273,14 @@ void PropagationEngine::propagate() {
       _store.numInvariants());
 #endif
 
-  for (VarId stableVarId = nextStableVariable(_currentTimestamp);
-       stableVarId.id != NULL_ID;
-       stableVarId = nextStableVariable(_currentTimestamp)) {
-    const IntVar& variable = _store.intVar(stableVarId);
+  for (VarId queuedVar = dequeueComputedVar(_currentTimestamp);
+       queuedVar.id != NULL_ID;
+       queuedVar = dequeueComputedVar(_currentTimestamp)) {
+    // queuedVar has been computed under _currentTimestamp
+    const IntVar& variable = _store.intVar(queuedVar);
 
     const InvariantId definingInvariant =
-        _propGraph.definingInvariant(stableVarId);
+        _propGraph.definingInvariant(queuedVar);
 
 #ifdef PROPAGATION_DEBUG
     logDebug("\tPropagating " << variable);
@@ -300,11 +289,14 @@ void PropagationEngine::propagate() {
 
     if (definingInvariant != NULL_ID) {
       Invariant& defInv = _store.invariant(definingInvariant);
-      if (stableVarId == defInv.primaryDefinedVar()) {
+      if (queuedVar == defInv.primaryDefinedVar()) {
         const Int oldValue = variable.value(_currentTimestamp);
         defInv.compute(_currentTimestamp, *this);
-        defInv.queueNonPrimaryDefinedVarsForPropagation(_currentTimestamp,
-                                                        *this);
+        for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
+          if (hasChanged(_currentTimestamp, inputId)) {
+            enqueueComputedVar(_currentTimestamp, inputId);
+          }
+        }
         if (oldValue == variable.value(_currentTimestamp)) {
 #ifdef PROPAGATION_DEBUG
           logDebug("\t\tVariable did not change after compute: ignoring.");
@@ -318,10 +310,10 @@ void PropagationEngine::propagate() {
     }
 
     if constexpr (DoCommit) {
-      commitIf(_currentTimestamp, stableVarId);
+      commitIf(_currentTimestamp, queuedVar);
     }
 
-    for (const auto& toNotify : _listeningInvariantData[stableVarId]) {
+    for (const auto& toNotify : _listeningInvariantData[queuedVar]) {
       Invariant& invariant = _store.invariant(toNotify.invariantId);
 
 #ifdef PROPAGATION_DEBUG
@@ -336,7 +328,7 @@ void PropagationEngine::propagate() {
 #endif
 
       invariant.notify(toNotify.localId);
-      queueForPropagation(_currentTimestamp, invariant.primaryDefinedVar());
+      enqueueComputedVar(_currentTimestamp, invariant.primaryDefinedVar());
     }
   }
 

@@ -281,9 +281,10 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       notifyCurrentInvariant();
     }
     // push the next input variable of the top invariant
+    // returns false if there are no more variables to push
     if (pushNextInputVariable<MarkingMode>()) {
       // The top invariant has finished propagating, so all defined vars can
-      // be marked as stable at the current time.
+      // be marked as compte at the current time.
       for (const auto defVar :
            _engine.variablesDefinedBy(peekInvariantStack())) {
         setComputed(currentTimestamp, defVar);
