@@ -41,9 +41,9 @@ class MockLessThan : public LessThan {
           LessThan::notifyCurrentInputChanged(ts, engine);
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          LessThan::notifyIntChanged(ts, engine, id);
+          LessThan::notifyInputChanged(ts, engine, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
@@ -58,7 +58,7 @@ class MockLessThan : public LessThan {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged,
+  MOCK_METHOD(void, notifyInputChanged,
               (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
@@ -114,7 +114,7 @@ class LessThanTest : public ::testing::Test {
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
       EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
@@ -122,7 +122,7 @@ class LessThanTest : public ::testing::Test {
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 
@@ -197,13 +197,13 @@ TEST_F(LessThanTest, NotifyChange) {
   engine->setValue(time1, x, 40);
   EXPECT_EQ(engine->committedValue(x), 2);
   EXPECT_EQ(engine->value(time1, x), 40);
-  lessThan->notifyIntChanged(time1, *engine,
-                             unused);  // Runs recompute internally
+  lessThan->notifyInputChanged(time1, *engine,
+                               unused);  // Runs recompute internally
   EXPECT_EQ(engine->value(time1, violationId), 39);
 
   engine->setValue(time1, y, 0);
-  lessThan->notifyIntChanged(time1, *engine,
-                             unused);  // Runs recompute internally
+  lessThan->notifyInputChanged(time1, *engine,
+                               unused);  // Runs recompute internally
   auto tmpValue = engine->value(time1, violationId);  // 41
 
   // Incremental computation gives the same result as recomputation
@@ -216,7 +216,7 @@ TEST_F(LessThanTest, NotifyChange) {
   engine->setValue(time2, y, 20);
   EXPECT_EQ(engine->committedValue(y), 2);
   EXPECT_EQ(engine->value(time2, y), 20);
-  lessThan->notifyIntChanged(time2, *engine, unused);
+  lessThan->notifyInputChanged(time2, *engine, unused);
   EXPECT_EQ(engine->value(time2, violationId), 0);
 }
 
@@ -242,10 +242,10 @@ TEST_F(LessThanTest, IncrementalVsRecompute) {
 
     // notify changes
     if (engine->committedValue(x) != engine->value(currentTimestamp, x)) {
-      lessThan->notifyIntChanged(currentTimestamp, *engine, unused);
+      lessThan->notifyInputChanged(currentTimestamp, *engine, unused);
     }
     if (engine->committedValue(y) != engine->value(currentTimestamp, y)) {
-      lessThan->notifyIntChanged(currentTimestamp, *engine, unused);
+      lessThan->notifyInputChanged(currentTimestamp, *engine, unused);
     }
 
     // incremental value
@@ -268,7 +268,7 @@ TEST_F(LessThanTest, Commit) {
                    2);  // This change is not notified and should
                         // not have an impact on the commit
 
-  lessThan->notifyIntChanged(currentTimestamp, *engine, unused);
+  lessThan->notifyInputChanged(currentTimestamp, *engine, unused);
 }
 
 TEST_F(LessThanTest, CreateLessThan) {

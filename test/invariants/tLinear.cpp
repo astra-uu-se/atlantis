@@ -42,9 +42,9 @@ class MockLinear : public Linear {
           Linear::notifyCurrentInputChanged(ts, engine);
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          Linear::notifyIntChanged(ts, engine, id);
+          Linear::notifyInputChanged(ts, engine, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
@@ -59,7 +59,7 @@ class MockLinear : public Linear {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged,
+  MOCK_METHOD(void, notifyInputChanged,
               (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
@@ -129,7 +129,7 @@ class LinearTest : public ::testing::Test {
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
       EXPECT_CALL(invariant, nextInput(testing::_, testing::_))
@@ -138,7 +138,7 @@ class LinearTest : public ::testing::Test {
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 
@@ -197,11 +197,11 @@ TEST_F(LinearTest, NotifyChange) {
   engine->setValue(time1, a, 40);
   EXPECT_EQ(engine->committedValue(a), 1);
   EXPECT_EQ(engine->value(time1, a), 40);
-  linear->notifyIntChanged(time1, *engine, 0);
+  linear->notifyInputChanged(time1, *engine, 0);
   EXPECT_EQ(engine->value(time1, d), 0);  // incremental value of d is 0;
 
   engine->setValue(time1, b, 0);
-  linear->notifyIntChanged(time1, *engine, 1);
+  linear->notifyInputChanged(time1, *engine, 1);
   auto tmpValue = engine->value(time1, d);  // incremental value of d is -40;
 
   // Incremental computation gives the same result as recomputation
@@ -214,7 +214,7 @@ TEST_F(LinearTest, NotifyChange) {
   engine->setValue(time2, a, 20);
   EXPECT_EQ(engine->committedValue(a), 1);
   EXPECT_EQ(engine->value(time2, a), 20);
-  linear->notifyIntChanged(time2, *engine, 0);
+  linear->notifyInputChanged(time2, *engine, 0);
   EXPECT_EQ(engine->value(time2, d), -20);  // incremental value of d is 0;
 }
 
@@ -240,13 +240,13 @@ TEST_F(LinearTest, IncrementalVsRecompute) {
 
     // notify changes
     if (engine->committedValue(a) != engine->value(currentTimestamp, a)) {
-      linear->notifyIntChanged(currentTimestamp, *engine, 0);
+      linear->notifyInputChanged(currentTimestamp, *engine, 0);
     }
     if (engine->committedValue(b) != engine->value(currentTimestamp, b)) {
-      linear->notifyIntChanged(currentTimestamp, *engine, 1);
+      linear->notifyInputChanged(currentTimestamp, *engine, 1);
     }
     if (engine->committedValue(c) != engine->value(currentTimestamp, c)) {
-      linear->notifyIntChanged(currentTimestamp, *engine, 2);
+      linear->notifyInputChanged(currentTimestamp, *engine, 2);
     }
 
     // incremental value
@@ -267,7 +267,7 @@ TEST_F(LinearTest, Commit) {
                    2);  // This change is not notified and should
                         // not have an impact on the commit
 
-  linear->notifyIntChanged(currentTimestamp, *engine, 0);
+  linear->notifyInputChanged(currentTimestamp, *engine, 0);
 }
 
 TEST_F(LinearTest, CreateLinear) {

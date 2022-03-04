@@ -36,7 +36,7 @@ void Linear::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _y, sum);
 }
 
-void Linear::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
+void Linear::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
   assert(id < _localVarArray.size());
   const Int newValue = engine.value(ts, _varArray[id]);
   incValue(ts, engine, _y,
@@ -55,7 +55,7 @@ VarId Linear::nextInput(Timestamp ts, Engine&) {
 
 void Linear::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
   assert(_state.value(ts) != -1);
-  notifyIntChanged(ts, engine, _state.value(ts));
+  notifyInputChanged(ts, engine, _state.value(ts));
 }
 
 void Linear::commit(Timestamp ts, Engine& engine) {

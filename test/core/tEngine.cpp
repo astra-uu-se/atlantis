@@ -33,7 +33,7 @@ class MockInvariantSimple : public Invariant {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine&),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, Engine&, LocalId),
               (override));
   MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
 };
@@ -63,7 +63,7 @@ class MockInvariantAdvanced : public Invariant {
   MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine&),
               (override));
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, Engine&, LocalId),
               (override));
   MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
 };
@@ -84,7 +84,7 @@ class MockPlus : public Invariant {
                       engine.value(ts, a) + engine.value(ts, b));
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine, LocalId) {
           updateValue(ts, engine, output,
                       engine.value(ts, a) + engine.value(ts, b));
@@ -104,7 +104,7 @@ class MockPlus : public Invariant {
   MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, Engine&, LocalId),
               (override));
   MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
 };
@@ -198,10 +198,10 @@ class EngineTest : public ::testing::Test {
     if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       for (size_t i : markedInvariants) {
         EXPECT_CALL(*invariants[i],
-                    notifyIntChanged(timestamp, testing::_, LocalId(0)))
+                    notifyInputChanged(timestamp, testing::_, LocalId(0)))
             .Times(i == 5 ? 1 : 0);
         EXPECT_CALL(*invariants[i],
-                    notifyIntChanged(timestamp, testing::_, LocalId(1)))
+                    notifyInputChanged(timestamp, testing::_, LocalId(1)))
             .Times(i == 5 ? 0 : 1);
       }
     } else {
@@ -403,7 +403,7 @@ TEST_F(EngineTest, SimplePropagation) {
   for (size_t id = 0; id < 3; ++id) {
     if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, LocalId(id)))
+                  notifyInputChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
     }
   }
@@ -454,7 +454,7 @@ TEST_F(EngineTest, SimpleCommit) {
   for (size_t id = 0; id < 3; ++id) {
     if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, LocalId(id)))
+                  notifyInputChanged(testing::_, testing::_, LocalId(id)))
           .Times(1);
     }
   }
@@ -464,7 +464,8 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->endProbe();
 
   if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(invariant, notifyIntChanged(testing::_, testing::_, LocalId(0)))
+    EXPECT_CALL(invariant,
+                notifyInputChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
 
     EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(0);

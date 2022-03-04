@@ -38,9 +38,9 @@ class MockEqual : public Equal {
           Equal::notifyCurrentInputChanged(t, engine);
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          Equal::notifyIntChanged(t, engine, id);
+          Equal::notifyInputChanged(t, engine, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
@@ -55,8 +55,8 @@ class MockEqual : public Equal {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyInputChanged,
+              (Timestamp t, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:
@@ -111,7 +111,7 @@ class EqualTest : public ::testing::Test {
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(0);
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
       EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
@@ -119,7 +119,7 @@ class EqualTest : public ::testing::Test {
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(0);
     }
 
@@ -165,12 +165,12 @@ TEST_F(EqualTest, NotifyChange) {
   engine->setValue(time1, x, 40);
   EXPECT_EQ(engine->committedValue(x), 2);
   EXPECT_EQ(engine->value(time1, x), 40);
-  equal->notifyIntChanged(time1, *engine, unused);
+  equal->notifyInputChanged(time1, *engine, unused);
   EXPECT_EQ(engine->value(time1, violationId),
             38);  // incremental value of violationId is 0;
 
   engine->setValue(time1, y, 0);
-  equal->notifyIntChanged(time1, *engine, unused);
+  equal->notifyInputChanged(time1, *engine, unused);
   auto tmpValue = engine->value(
       time1, violationId);  // incremental value of violationId is 40;
 
@@ -184,7 +184,7 @@ TEST_F(EqualTest, NotifyChange) {
   engine->setValue(time2, y, 20);
   EXPECT_EQ(engine->committedValue(y), 2);
   EXPECT_EQ(engine->value(time2, y), 20);
-  equal->notifyIntChanged(time2, *engine, unused);
+  equal->notifyInputChanged(time2, *engine, unused);
   EXPECT_EQ(engine->value(time2, violationId),
             18);  // incremental value of violationId is 0;
 }
@@ -211,10 +211,10 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
 
     // notify changes
     if (engine->committedValue(x) != engine->value(currentTimestamp, x)) {
-      equal->notifyIntChanged(currentTimestamp, *engine, unused);
+      equal->notifyInputChanged(currentTimestamp, *engine, unused);
     }
     if (engine->committedValue(y) != engine->value(currentTimestamp, y)) {
-      equal->notifyIntChanged(currentTimestamp, *engine, unused);
+      equal->notifyInputChanged(currentTimestamp, *engine, unused);
     }
 
     // incremental value
@@ -237,7 +237,7 @@ TEST_F(EqualTest, Commit) {
                    2);  // This change is not notified and should
                         // not have an impact on the commit
 
-  equal->notifyIntChanged(currentTimestamp, *engine, unused);
+  equal->notifyInputChanged(currentTimestamp, *engine, unused);
 
   // Committing an invariant does not commit its output!
   // // Commit at wrong timestamp should have no impact

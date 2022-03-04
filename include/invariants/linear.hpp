@@ -26,7 +26,7 @@ class Linear : public Invariant {
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
+  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;
   VarId nextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;

@@ -24,7 +24,7 @@ void MaxSparse::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _y, _localPriority.maxPriority(ts));
 }
 
-void MaxSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
+void MaxSparse::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
   _localPriority.updatePriority(ts, id, engine.value(ts, _varArray[id]));
   updateValue(ts, engine, _y, _localPriority.maxPriority(ts));
 }
@@ -40,7 +40,7 @@ VarId MaxSparse::nextInput(Timestamp ts, Engine&) {
 }
 
 void MaxSparse::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  notifyIntChanged(ts, engine, _state.value(ts));
+  notifyInputChanged(ts, engine, _state.value(ts));
 }
 
 void MaxSparse::commit(Timestamp ts, Engine& engine) {

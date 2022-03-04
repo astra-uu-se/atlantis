@@ -40,9 +40,9 @@ class MockIfThenElse : public IfThenElse {
           IfThenElse::notifyCurrentInputChanged(t, e);
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
-          IfThenElse::notifyIntChanged(t, e, id);
+          IfThenElse::notifyInputChanged(t, e, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
@@ -57,7 +57,7 @@ class MockIfThenElse : public IfThenElse {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp t, Engine& e, LocalId id),
               (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
@@ -104,7 +104,7 @@ class IfThenElseTest : public ::testing::Test {
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
       EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
@@ -112,7 +112,7 @@ class IfThenElseTest : public ::testing::Test {
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 
