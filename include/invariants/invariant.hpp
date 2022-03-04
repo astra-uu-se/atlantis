@@ -88,8 +88,8 @@ class Invariant {
    * @param engine the engine
    * @param localId the local id of the variable.
    */
-  virtual void notifyIntChanged(Timestamp ts, Engine& engine,
-                                LocalId localId) = 0;
+  virtual void notifyInputChanged(Timestamp ts, Engine& engine,
+                                  LocalId localId) = 0;
 
   /**
    * Updates the value of variable without queueing it for propagation
@@ -106,7 +106,7 @@ class Invariant {
   /**
    * The total number of notifiable variables.
    */
-  size_t notifiableVarsSize() { return _modifiedVars.size(); }
+  size_t notifiableVarsSize() const { return _modifiedVars.size(); }
 
   [[nodiscard]] inline InvariantId id() const noexcept { return _id; }
   void setId(Id id) { _id = id; }

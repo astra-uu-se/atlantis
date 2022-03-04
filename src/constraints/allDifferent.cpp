@@ -50,7 +50,8 @@ void AllDifferent::recompute(Timestamp ts, Engine& engine) {
   incValue(ts, engine, _violationId, violInc);
 }
 
-void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
+void AllDifferent::notifyInputChanged(Timestamp ts, Engine& engine,
+                                      LocalId id) {
   assert(id < _localValues.size());
   const Int oldValue = _localValues[id].value(ts);
   const Int newValue = engine.value(ts, _variables[id]);
@@ -73,7 +74,7 @@ VarId AllDifferent::nextInput(Timestamp ts, Engine&) {
 
 void AllDifferent::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
   assert(static_cast<size_t>(_state.value(ts)) < _variables.size());
-  notifyIntChanged(ts, engine, static_cast<size_t>(_state.value(ts)));
+  notifyInputChanged(ts, engine, static_cast<size_t>(_state.value(ts)));
 }
 
 void AllDifferent::commit(Timestamp ts, Engine& engine) {

@@ -29,7 +29,7 @@ void LessEqual::recompute(Timestamp ts, Engine& engine) {
               std::max((Int)0, engine.value(ts, _x) - engine.value(ts, _y)));
 }
 
-void LessEqual::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void LessEqual::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 

@@ -19,7 +19,7 @@ void IfThenElse::recompute(Timestamp ts, Engine& engine) {
               engine.value(ts, _xy[1 - (engine.value(ts, _b) == 0)]));
 }
 
-void IfThenElse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void IfThenElse::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 

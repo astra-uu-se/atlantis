@@ -21,7 +21,7 @@ void ElementConst::recompute(Timestamp ts, Engine& engine) {
               _array[static_cast<size_t>(engine.value(ts, _index))]);
 }
 
-void ElementConst::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void ElementConst::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 

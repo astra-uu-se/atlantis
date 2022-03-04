@@ -42,9 +42,9 @@ class MockElementConst : public ElementConst {
           ElementConst::notifyCurrentInputChanged(ts, engine);
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          ElementConst::notifyIntChanged(ts, engine, id);
+          ElementConst::notifyInputChanged(ts, engine, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
@@ -59,7 +59,7 @@ class MockElementConst : public ElementConst {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp t, Engine& e, LocalId id),
               (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
@@ -111,7 +111,7 @@ class ElementConstTest : public ::testing::Test {
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
       EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(2);
@@ -119,7 +119,7 @@ class ElementConstTest : public ::testing::Test {
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 

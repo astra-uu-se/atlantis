@@ -42,9 +42,9 @@ class MockAllDifferent : public AllDifferent {
           AllDifferent::notifyCurrentInputChanged(t, engine);
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          AllDifferent::notifyIntChanged(t, engine, id);
+          AllDifferent::notifyInputChanged(t, engine, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
@@ -59,8 +59,8 @@ class MockAllDifferent : public AllDifferent {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyInputChanged,
+              (Timestamp t, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:
@@ -123,7 +123,7 @@ class AllDifferentTest : public ::testing::Test {
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
       EXPECT_CALL(invariant, nextInput(testing::_, testing::_))
@@ -132,7 +132,7 @@ class AllDifferentTest : public ::testing::Test {
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 
@@ -181,11 +181,11 @@ TEST_F(AllDifferentTest, NotifyChange) {
   engine->setValue(time1, a, 2);
   EXPECT_EQ(engine->committedValue(a), 1);
   EXPECT_EQ(engine->value(time1, a), 2);
-  allDifferent->notifyIntChanged(time1, *engine, 0);
+  allDifferent->notifyInputChanged(time1, *engine, 0);
   EXPECT_EQ(engine->value(time1, violationId), 2);
 
   engine->setValue(time1, b, 3);
-  allDifferent->notifyIntChanged(time1, *engine, 1);
+  allDifferent->notifyInputChanged(time1, *engine, 1);
   auto tmpValue = engine->value(time1, violationId);
 
   // Incremental computation gives the same result as recomputation
@@ -198,7 +198,7 @@ TEST_F(AllDifferentTest, NotifyChange) {
   engine->setValue(time2, b, 20);
   EXPECT_EQ(engine->committedValue(b), 2);
   EXPECT_EQ(engine->value(time2, b), 20);
-  allDifferent->notifyIntChanged(time2, *engine, 1);
+  allDifferent->notifyInputChanged(time2, *engine, 1);
   EXPECT_EQ(engine->value(time2, violationId), 0);
 }
 
@@ -223,10 +223,10 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
 
     // notify changes
     if (engine->committedValue(a) != engine->value(currentTimestamp, a)) {
-      allDifferent->notifyIntChanged(currentTimestamp, *engine, 0);
+      allDifferent->notifyInputChanged(currentTimestamp, *engine, 0);
     }
     if (engine->committedValue(b) != engine->value(currentTimestamp, b)) {
-      allDifferent->notifyIntChanged(currentTimestamp, *engine, 1);
+      allDifferent->notifyInputChanged(currentTimestamp, *engine, 1);
     }
 
     // incremental value

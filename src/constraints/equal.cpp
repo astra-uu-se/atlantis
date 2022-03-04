@@ -26,7 +26,7 @@ void Equal::recompute(Timestamp ts, Engine& engine) {
               std::abs(engine.value(ts, _x) - engine.value(ts, _y)));
 }
 
-void Equal::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void Equal::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 

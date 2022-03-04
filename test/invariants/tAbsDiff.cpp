@@ -42,9 +42,9 @@ class MockAbsDiff : public AbsDiff {
         .WillByDefault([this](Timestamp ts, Engine& engine) {
           AbsDiff::notifyCurrentInputChanged(ts, engine);
         });
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          AbsDiff::notifyIntChanged(ts, engine, id);
+          AbsDiff::notifyInputChanged(ts, engine, id);
         });
     ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
       AbsDiff::commit(ts, engine);
@@ -57,7 +57,7 @@ class MockAbsDiff : public AbsDiff {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged,
+  MOCK_METHOD(void, notifyInputChanged,
               (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
@@ -101,7 +101,7 @@ class AbsDiffTest : public ::testing::Test {
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
       EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
@@ -109,7 +109,7 @@ class AbsDiffTest : public ::testing::Test {
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 
@@ -155,7 +155,8 @@ TEST_F(AbsDiffTest, Modification) {
   EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(invariant, notifyIntChanged(testing::_, testing::_, testing::_))
+    EXPECT_CALL(invariant,
+                notifyInputChanged(testing::_, testing::_, testing::_))
         .Times(AtLeast(1));
     EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(AnyNumber());

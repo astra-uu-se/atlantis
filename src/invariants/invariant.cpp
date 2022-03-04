@@ -10,7 +10,7 @@ void Invariant::compute(Timestamp ts, Engine& engine) {
 
   while (_modifiedVars.hasNext()) {
     // don't turn this into a for loop...
-    this->notifyIntChanged(ts, engine, _modifiedVars.pop());
+    this->notifyInputChanged(ts, engine, _modifiedVars.pop());
   }
 }
 

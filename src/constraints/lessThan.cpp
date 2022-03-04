@@ -30,7 +30,7 @@ void LessThan::recompute(Timestamp ts, Engine& engine) {
       std::max((Int)0, engine.value(ts, _x) - engine.value(ts, _y) + 1));
 }
 
-void LessThan::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void LessThan::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 

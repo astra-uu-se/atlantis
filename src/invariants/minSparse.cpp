@@ -25,7 +25,7 @@ void MinSparse::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _y, _localPriority.minPriority(ts));
 }
 
-void MinSparse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
+void MinSparse::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
   _localPriority.updatePriority(ts, id, engine.value(ts, _varArray[id]));
   updateValue(ts, engine, _y, _localPriority.minPriority(ts));
 }
@@ -41,7 +41,7 @@ VarId MinSparse::nextInput(Timestamp ts, Engine&) {
 }
 
 void MinSparse::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  notifyIntChanged(ts, engine, _state.value(ts));
+  notifyInputChanged(ts, engine, _state.value(ts));
 }
 
 void MinSparse::commit(Timestamp ts, Engine& engine) {

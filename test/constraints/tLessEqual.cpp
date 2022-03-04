@@ -40,9 +40,9 @@ class MockLessEqual : public LessEqual {
           LessEqual::notifyCurrentInputChanged(t, engine);
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          LessEqual::notifyIntChanged(t, engine, id);
+          LessEqual::notifyInputChanged(t, engine, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
@@ -57,8 +57,8 @@ class MockLessEqual : public LessEqual {
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& engine, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyInputChanged,
+              (Timestamp t, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
  private:
@@ -113,7 +113,7 @@ class LessEqualTest : public ::testing::Test {
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
       EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
@@ -121,7 +121,7 @@ class LessEqualTest : public ::testing::Test {
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 
@@ -197,12 +197,12 @@ TEST_F(LessEqualTest, NotifyChange) {
   engine->setValue(time1, x, 40);
   EXPECT_EQ(engine->committedValue(x), 2);
   EXPECT_EQ(engine->value(time1, x), 40);
-  lessEqual->notifyIntChanged(time1, *engine, unused);
+  lessEqual->notifyInputChanged(time1, *engine, unused);
   EXPECT_EQ(engine->value(time1, violationId),
             38);  // incremental value of violationId is 0;
 
   engine->setValue(time1, y, 0);
-  lessEqual->notifyIntChanged(time1, *engine, unused);
+  lessEqual->notifyInputChanged(time1, *engine, unused);
   auto tmpValue = engine->value(
       time1, violationId);  // incremental value of violationId is 40;
 
@@ -216,7 +216,7 @@ TEST_F(LessEqualTest, NotifyChange) {
   engine->setValue(time2, y, 20);
   EXPECT_EQ(engine->committedValue(y), 2);
   EXPECT_EQ(engine->value(time2, y), 20);
-  lessEqual->notifyIntChanged(time2, *engine, unused);
+  lessEqual->notifyInputChanged(time2, *engine, unused);
   EXPECT_EQ(engine->value(time2, violationId),
             0);  // incremental value of violationId is 0;
 }
@@ -243,10 +243,10 @@ TEST_F(LessEqualTest, IncrementalVsRecompute) {
 
     // notify changes
     if (engine->committedValue(x) != engine->value(currentTimestamp, x)) {
-      lessEqual->notifyIntChanged(currentTimestamp, *engine, unused);
+      lessEqual->notifyInputChanged(currentTimestamp, *engine, unused);
     }
     if (engine->committedValue(y) != engine->value(currentTimestamp, y)) {
-      lessEqual->notifyIntChanged(currentTimestamp, *engine, unused);
+      lessEqual->notifyInputChanged(currentTimestamp, *engine, unused);
     }
 
     // incremental value
@@ -269,7 +269,7 @@ TEST_F(LessEqualTest, Commit) {
                    2);  // This change is not notified and should
                         // not have an impact on the commit
 
-  lessEqual->notifyIntChanged(currentTimestamp, *engine, unused);
+  lessEqual->notifyInputChanged(currentTimestamp, *engine, unused);
 }
 
 TEST_F(LessEqualTest, CreateLessEqual) {
