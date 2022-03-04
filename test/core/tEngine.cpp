@@ -29,7 +29,7 @@ class MockInvariantSimple : public Invariant {
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
 
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine&),
               (override));
 
@@ -60,7 +60,7 @@ class MockInvariantAdvanced : public Invariant {
   }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine&),
               (override));
   MOCK_METHOD(void, notifyIntChanged, (Timestamp, Engine&, LocalId),
@@ -264,8 +264,8 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   ASSERT_TRUE(invariant._initialized);
 
   engine->close();
-  EXPECT_EQ(engine->getStore().getNumVariables(), intVarCount);
-  EXPECT_EQ(engine->getStore().getNumInvariants(), size_t(1));
+  EXPECT_EQ(engine->store().numVariables(), intVarCount);
+  EXPECT_EQ(engine->store().numInvariants(), size_t(1));
 }
 
 TEST_F(EngineTest, ThisTestShouldNotBeHere) {
@@ -284,38 +284,38 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   engine->makeInvariant<MinSparse>(X, min);
 
   engine->close();
-  EXPECT_EQ(engine->getCommittedValue(min), 0);
+  EXPECT_EQ(engine->committedValue(min), 0);
   engine->beginMove();
   engine->setValue(X[0], 5);
   engine->setValue(X[1], 5);
   engine->endMove();
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(min);
-  engine->endQuery();
+  engine->endProbe();
 
-  EXPECT_EQ(engine->getNewValue(min), 2);
+  EXPECT_EQ(engine->currentValue(min), 2);
 
   engine->beginMove();
   engine->setValue(X[3], -1);
   engine->setValue(X[1], 5);
   engine->endMove();
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(min);
-  engine->endQuery();
+  engine->endProbe();
 
-  EXPECT_EQ(engine->getNewValue(min), -1);
+  EXPECT_EQ(engine->currentValue(min), -1);
 
   engine->beginMove();
   engine->setValue(X[0], 1);
   engine->endMove();
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(min);
-  engine->endQuery();
+  engine->endProbe();
 
-  EXPECT_EQ(engine->getNewValue(min), 1);
+  EXPECT_EQ(engine->currentValue(min), 1);
 
   engine->beginMove();
   engine->setValue(X[0], 1);
@@ -324,7 +324,7 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   engine->beginCommit();
   engine->query(min);
   engine->endCommit();
-  EXPECT_EQ(engine->getNewValue(min), 1);
+  EXPECT_EQ(engine->currentValue(min), 1);
 
   engine->beginMove();
   engine->setValue(X[0], 0);
@@ -334,7 +334,7 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
   engine->query(min);
   engine->endCommit();
 
-  EXPECT_EQ(engine->getNewValue(min), 0);
+  EXPECT_EQ(engine->currentValue(min), 0);
 }
 
 TEST_F(EngineTest, RecomputeAndCommit) {
@@ -356,8 +356,8 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 
   engine->close();
 
-  ASSERT_EQ(engine->getStore().getNumVariables(), intVarCount);
-  ASSERT_EQ(engine->getStore().getNumInvariants(), size_t(1));
+  ASSERT_EQ(engine->store().numVariables(), intVarCount);
+  ASSERT_EQ(engine->store().numInvariants(), size_t(1));
 }
 
 TEST_F(EngineTest, SimplePropagation) {
@@ -378,7 +378,7 @@ TEST_F(EngineTest, SimplePropagation) {
   engine->close();
 
   engine->beginMove();
-  Timestamp moveTimestamp = engine->getCurrentTimestamp();
+  Timestamp moveTimestamp = engine->currentTimestamp();
 
   engine->setValue(a, -1);
   engine->setValue(b, -2);
@@ -390,7 +390,7 @@ TEST_F(EngineTest, SimplePropagation) {
     EXPECT_CALL(invariant, notifyCurrentInputChanged(moveTimestamp, testing::_))
         .Times(0);
   } else {
-    EXPECT_CALL(invariant, getNextInput(moveTimestamp, testing::_))
+    EXPECT_CALL(invariant, nextInput(moveTimestamp, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
@@ -408,9 +408,9 @@ TEST_F(EngineTest, SimplePropagation) {
     }
   }
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(output);
-  engine->endQuery();
+  engine->endProbe();
 }
 
 TEST_F(EngineTest, SimpleCommit) {
@@ -435,7 +435,7 @@ TEST_F(EngineTest, SimpleCommit) {
     EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
   } else {
-    EXPECT_CALL(invariant, getNextInput(testing::_, testing::_))
+    EXPECT_CALL(invariant, nextInput(testing::_, testing::_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
@@ -459,15 +459,15 @@ TEST_F(EngineTest, SimpleCommit) {
     }
   }
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(output);
-  engine->endQuery();
+  engine->endProbe();
 
   if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(invariant, notifyIntChanged(testing::_, testing::_, LocalId(0)))
         .Times(1);
 
-    EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(0);
 
     EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(0);
@@ -490,9 +490,9 @@ TEST_F(EngineTest, SimpleCommit) {
   engine->query(output);
   engine->endCommit();
 
-  EXPECT_EQ(engine->getCommittedValue(a), 0);
-  EXPECT_EQ(engine->getCommittedValue(b), 2);
-  EXPECT_EQ(engine->getCommittedValue(c), 3);
+  EXPECT_EQ(engine->committedValue(a), 0);
+  EXPECT_EQ(engine->committedValue(b), 2);
+  EXPECT_EQ(engine->committedValue(c), 3);
 }
 
 TEST_F(EngineTest, DelayedCommit) {
@@ -519,9 +519,9 @@ TEST_F(EngineTest, DelayedCommit) {
   // 1+1 = c = 2
   // c+1 = e = 3
   // c+1 = g = 3
-  EXPECT_EQ(engine->getCommittedValue(c), 2);
-  EXPECT_EQ(engine->getCommittedValue(e), 3);
-  EXPECT_EQ(engine->getCommittedValue(g), 3);
+  EXPECT_EQ(engine->committedValue(c), 2);
+  EXPECT_EQ(engine->committedValue(e), 3);
+  EXPECT_EQ(engine->committedValue(g), 3);
 
   engine->beginMove();
   engine->setValue(a, 2);
@@ -531,7 +531,7 @@ TEST_F(EngineTest, DelayedCommit) {
   engine->query(e);
   engine->endCommit();
 
-  EXPECT_EQ(engine->getCommittedValue(e), 4);
+  EXPECT_EQ(engine->committedValue(e), 4);
 
   engine->beginMove();
   engine->setValue(d, 0);
@@ -541,7 +541,7 @@ TEST_F(EngineTest, DelayedCommit) {
   engine->query(g);
   engine->endCommit();
 
-  EXPECT_EQ(engine->getCommittedValue(g), 4);
+  EXPECT_EQ(engine->committedValue(g), 4);
 }
 
 TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
@@ -572,7 +572,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getCommittedValue(output), 7);
+  EXPECT_EQ(engine->committedValue(output), 7);
 
   {
     engine->beginMove();
@@ -580,19 +580,19 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
     engine->setValue(i2, 0);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(output);
-    engine->endQuery();
+    engine->endProbe();
 
-    EXPECT_EQ(engine->getNewValue(base), 1);
-    EXPECT_EQ(engine->getNewValue(i1), 3);
-    EXPECT_EQ(engine->getNewValue(i2), 0);
-    EXPECT_EQ(engine->getNewValue(i3), 2);
-    EXPECT_EQ(engine->getNewValue(x1), 6);  // x1 = x3plus3 = x3 + 3
-    EXPECT_EQ(engine->getNewValue(x2), 1);  // x2 = base = 1
-    EXPECT_EQ(engine->getNewValue(x3), 3);  // x3 = x2plus2 = x2 + 2
+    EXPECT_EQ(engine->currentValue(base), 1);
+    EXPECT_EQ(engine->currentValue(i1), 3);
+    EXPECT_EQ(engine->currentValue(i2), 0);
+    EXPECT_EQ(engine->currentValue(i3), 2);
+    EXPECT_EQ(engine->currentValue(x1), 6);  // x1 = x3plus3 = x3 + 3
+    EXPECT_EQ(engine->currentValue(x2), 1);  // x2 = base = 1
+    EXPECT_EQ(engine->currentValue(x3), 3);  // x3 = x2plus2 = x2 + 2
 
-    EXPECT_EQ(engine->getNewValue(output), 10);
+    EXPECT_EQ(engine->currentValue(output), 10);
   }
 
   {
@@ -600,19 +600,19 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
     engine->setValue(base, 3);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(output);
-    engine->endQuery();
+    engine->endProbe();
 
-    EXPECT_EQ(engine->getNewValue(base), 3);
-    EXPECT_EQ(engine->getNewValue(i1), 0);
-    EXPECT_EQ(engine->getNewValue(i2), 1);
-    EXPECT_EQ(engine->getNewValue(i3), 2);
-    EXPECT_EQ(engine->getNewValue(x1), 3);  // x1 = base = 3
-    EXPECT_EQ(engine->getNewValue(x2), 4);  // x2 = x1plus1 = x1 + 1
-    EXPECT_EQ(engine->getNewValue(x3), 6);  // x3 = x2plus2 = x2 + 2
+    EXPECT_EQ(engine->currentValue(base), 3);
+    EXPECT_EQ(engine->currentValue(i1), 0);
+    EXPECT_EQ(engine->currentValue(i2), 1);
+    EXPECT_EQ(engine->currentValue(i3), 2);
+    EXPECT_EQ(engine->currentValue(x1), 3);  // x1 = base = 3
+    EXPECT_EQ(engine->currentValue(x2), 4);  // x2 = x1plus1 = x1 + 1
+    EXPECT_EQ(engine->currentValue(x3), 6);  // x3 = x2plus2 = x2 + 2
 
-    EXPECT_EQ(engine->getNewValue(output), 13);
+    EXPECT_EQ(engine->currentValue(output), 13);
   }
 
   {
@@ -623,11 +623,11 @@ TEST_F(EngineTest, TestSimpleDynamicCycleQuery) {
     engine->setValue(base, 4);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(output);
-    engine->endQuery();
+    engine->endProbe();
 
-    EXPECT_EQ(engine->getNewValue(output), 20);
+    EXPECT_EQ(engine->currentValue(output), 20);
   }
 }
 
@@ -659,7 +659,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getCommittedValue(output), 7);
+  EXPECT_EQ(engine->committedValue(output), 7);
 
   engine->beginMove();
   engine->setValue(i1, 3);
@@ -670,32 +670,32 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->query(output);
   engine->endCommit();
 
-  EXPECT_EQ(engine->getNewValue(base), 1);
-  EXPECT_EQ(engine->getNewValue(i1), 3);
-  EXPECT_EQ(engine->getNewValue(i2), 0);
-  EXPECT_EQ(engine->getNewValue(i3), 2);
-  EXPECT_EQ(engine->getNewValue(x1), 6);  // x1 = x3plus3 = x3 + 3
-  EXPECT_EQ(engine->getNewValue(x2), 1);  // x2 = base = 1
-  EXPECT_EQ(engine->getNewValue(x3), 3);  // x3 = x2plus2 = x2 + 2
+  EXPECT_EQ(engine->currentValue(base), 1);
+  EXPECT_EQ(engine->currentValue(i1), 3);
+  EXPECT_EQ(engine->currentValue(i2), 0);
+  EXPECT_EQ(engine->currentValue(i3), 2);
+  EXPECT_EQ(engine->currentValue(x1), 6);  // x1 = x3plus3 = x3 + 3
+  EXPECT_EQ(engine->currentValue(x2), 1);  // x2 = base = 1
+  EXPECT_EQ(engine->currentValue(x3), 3);  // x3 = x2plus2 = x2 + 2
 
-  EXPECT_EQ(engine->getNewValue(output), 10);
+  EXPECT_EQ(engine->currentValue(output), 10);
 
   engine->beginMove();
   engine->setValue(base, 3);
   engine->endMove();
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(output);
-  engine->endQuery();
+  engine->endProbe();
 
-  EXPECT_EQ(engine->getNewValue(base), 3);
-  EXPECT_EQ(engine->getNewValue(i1), 3);
-  EXPECT_EQ(engine->getNewValue(i2), 0);
-  EXPECT_EQ(engine->getNewValue(i3), 2);
-  EXPECT_EQ(engine->getNewValue(x1), 8);  // x1 = x3plus3 = x3 + 3
-  EXPECT_EQ(engine->getNewValue(x2), 3);  // x2 = base = 1
-  EXPECT_EQ(engine->getNewValue(x3), 5);  // x3 = x2plus2 = x2 + 2
-  EXPECT_EQ(engine->getNewValue(output), 16);
+  EXPECT_EQ(engine->currentValue(base), 3);
+  EXPECT_EQ(engine->currentValue(i1), 3);
+  EXPECT_EQ(engine->currentValue(i2), 0);
+  EXPECT_EQ(engine->currentValue(i3), 2);
+  EXPECT_EQ(engine->currentValue(x1), 8);  // x1 = x3plus3 = x3 + 3
+  EXPECT_EQ(engine->currentValue(x2), 3);  // x2 = base = 1
+  EXPECT_EQ(engine->currentValue(x3), 5);  // x3 = x2plus2 = x2 + 2
+  EXPECT_EQ(engine->currentValue(output), 16);
 
   engine->beginMove();
   engine->setValue(i2, 1);
@@ -703,11 +703,11 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->setValue(base, 2);
   engine->endMove();
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(output);
-  engine->endQuery();
+  engine->endProbe();
 
-  EXPECT_EQ(engine->getNewValue(output), 13);
+  EXPECT_EQ(engine->currentValue(output), 13);
 
   engine->beginMove();
   engine->setValue(i2, 1);
@@ -719,7 +719,7 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->query(output);
   engine->endCommit();
 
-  EXPECT_EQ(engine->getNewValue(output), 13);
+  EXPECT_EQ(engine->currentValue(output), 13);
 }
 
 TEST_F(EngineTest, InputToOutputPropagation) {

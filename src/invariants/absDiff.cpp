@@ -17,14 +17,14 @@ void AbsDiff::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
 void AbsDiff::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _absDiff,
-              std::abs(engine.getValue(ts, _x) - engine.getValue(ts, _y)));
+              std::abs(engine.value(ts, _x) - engine.value(ts, _y)));
 }
 
 void AbsDiff::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId AbsDiff::getNextInput(Timestamp ts, Engine&) {
+VarId AbsDiff::nextInput(Timestamp ts, Engine&) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

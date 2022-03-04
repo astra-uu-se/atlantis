@@ -71,5 +71,5 @@ Int invariantgraph::InvariantGraph::totalViolationsUpperBound(
     Engine& engine) const {
   return std::transform_reduce(
       _violationVars.begin(), _violationVars.end(), 0, std::plus<>(),
-      [&engine](auto var) { return engine.getUpperBound(var); });
+      [&engine](auto var) { return engine.upperBound(var); });
 }

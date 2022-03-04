@@ -13,9 +13,6 @@ class PropagationEngine : public Engine {
  protected:
   PropagationMode _propagationMode;
 
- public:
-  const PropagationMode& propagationMode = _propagationMode;
-
  protected:
   size_t _numVariables;
 
@@ -24,8 +21,8 @@ class PropagationEngine : public Engine {
 
   IdMap<VarIdBase, bool> _isEnqueued;
 
-  std::unordered_set<VarIdBase> _modifiedDecisionVariables;
-  Timestamp _decisionVariablesModifiedAt;
+  std::unordered_set<VarIdBase> _modifiedSearchVariables;
+  Timestamp _searchVariablesModifiedAt;
 
   void recomputeAndCommit();
 
@@ -64,6 +61,10 @@ class PropagationEngine : public Engine {
   void notifyMaybeChanged(Timestamp ts, VarId id) final;
   void queueForPropagation(Timestamp, VarId) final;
 
+  [[nodiscard]] inline PropagationMode propagationMode() const {
+    return _propagationMode;
+  }
+
   // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
   [[nodiscard]] VarId getNextStableVariable(Timestamp);
@@ -76,37 +77,36 @@ class PropagationEngine : public Engine {
     setValue(_currentTimestamp, id, val);
   }
 
-  void beginQuery();
-  void endQuery();
+  void beginProbe();
+  void endProbe();
   void query(VarId);
 
   void beginCommit();
   void endCommit();
 
-  size_t getNumVariables();
-  size_t getNumInvariants();
+  size_t numVariables();
+  size_t numInvariants();
 
-  [[nodiscard]] const std::vector<VarIdBase>& getDecisionVariables() const;
-  [[nodiscard]] const std::unordered_set<VarIdBase>&
-  getModifiedDecisionVariables() const;
-  [[nodiscard]] const std::vector<VarIdBase>& getOutputVariables() const;
-  [[nodiscard]] const std::vector<VarIdBase>& getInputVariables(
-      InvariantId) const;
+  [[nodiscard]] const std::vector<VarIdBase>& searchVariables() const;
+  [[nodiscard]] const std::unordered_set<VarIdBase>& modifiedSearchVariables()
+      const;
+  [[nodiscard]] const std::vector<VarIdBase>& evaluationVariables() const;
+  [[nodiscard]] const std::vector<VarIdBase>& inputVariables(InvariantId) const;
 
   /**
    * returns the next input at the current timestamp.
    */
-  VarId getNextInput(InvariantId);
+  VarId nextInput(InvariantId);
 
-  InvariantId getDefiningInvariant(VarId);
+  InvariantId definingInvariant(VarId);
 
   // This function is used by propagation, which is unaware of views.
   [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
 
-  [[nodiscard]] const std::vector<VarIdBase>& getVariablesDefinedBy(
+  [[nodiscard]] const std::vector<VarIdBase>& variablesDefinedBy(
       InvariantId) const;
 
-  [[nodiscard]] const std::vector<InvariantId>& getListeningInvariants(
+  [[nodiscard]] const std::vector<InvariantId>& listeningInvariants(
       VarId) const;
 
   /**
@@ -126,64 +126,64 @@ class PropagationEngine : public Engine {
   void registerVar(VarId) final;
   void registerInvariant(InvariantId) final;
 
-  PropagationGraph& getPropGraph();
+  PropagationGraph& propGraph();
 };
 
-inline size_t PropagationEngine::getNumVariables() {
-  return _propGraph.getNumVariables();
+inline size_t PropagationEngine::numVariables() {
+  return _propGraph.numVariables();
 }
 
-inline size_t PropagationEngine::getNumInvariants() {
-  return _propGraph.getNumInvariants();
+inline size_t PropagationEngine::numInvariants() {
+  return _propGraph.numInvariants();
 }
 
-inline InvariantId PropagationEngine::getDefiningInvariant(VarId id) {
+inline InvariantId PropagationEngine::definingInvariant(VarId id) {
   // Returns NULL_ID is not defined.
-  return _propGraph.getDefiningInvariant(id);
+  return _propGraph.definingInvariant(id);
 }
 
 inline const std::vector<VarIdBase>& PropagationEngine::getVariablesDefinedBy(
     InvariantId invariantId) const {
-  return _propGraph.getVariablesDefinedBy(invariantId);
+  return _propGraph.variablesDefinedBy(invariantId);
 }
 
-inline const std::vector<InvariantId>&
-PropagationEngine::getListeningInvariants(VarId id) const {
-  return _propGraph.getListeningInvariants(id);
+inline const std::vector<InvariantId>& PropagationEngine::listeningInvariants(
+    VarId id) const {
+  return _propGraph.listeningInvariants(id);
 }
 
-inline VarId PropagationEngine::getNextInput(InvariantId invariantId) {
-  return getSourceId(
-      _store.getInvariant(invariantId).getNextInput(_currentTimestamp, *this));
+inline VarId PropagationEngine::nextInput(InvariantId invariantId) {
+  return sourceId(
+      _store.invariant(invariantId).nextInput(_currentTimestamp, *this));
 }
 inline void PropagationEngine::notifyCurrentInputChanged(
     InvariantId invariantId) {
-  _store.getInvariant(invariantId)
+  _store.invariant(invariantId)
       .notifyCurrentInputChanged(_currentTimestamp, *this);
 }
 
 inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {
   assert(id.idType != VarIdType::view);
-  return _store.getConstIntVar(id).hasChanged(ts);
+  return _store.constIntVar(id).hasChanged(ts);
 }
 
 inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
   assert(id.idType != VarIdType::view);
-  assert(_propGraph.isDecisionVar(id));
+  assert(_propGraph.isSearchVariable(id));
 
-  IntVar& var = _store.getIntVar(id);
+  IntVar& var = _store.intVar(id);
   var.setValue(ts, val);
 
   if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
-    if (ts != _decisionVariablesModifiedAt) {
-      _decisionVariablesModifiedAt = ts;
-      _modifiedDecisionVariables.clear();
+    if (ts != _searchVariablesModifiedAt) {
+      _searchVariablesModifiedAt = ts;
+      _modifiedSearchVariables.clear();
     }
 
     if (var.hasChanged(ts)) {
-      _modifiedDecisionVariables.emplace(id);
+      _modifiedSearchVariables.emplace(id);
     } else {
-      _modifiedDecisionVariables.erase(id);
+      _modifiedSearchVariables.erase(id);
     }
   }
 
@@ -212,25 +212,25 @@ inline void PropagationEngine::setOutputToInputMarkingMode(
   _outputToInputExplorer.setOutputToInputMarkingMode(markingMode);
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getDecisionVariables()
+inline const std::vector<VarIdBase>& PropagationEngine::getSearchVariables()
     const {
-  return _propGraph._decisionVariables;
+  return _propGraph._searchVariables;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getOutputVariables()
+inline const std::vector<VarIdBase>& PropagationEngine::evaluationVariables()
     const {
-  return _propGraph._outputVariables;
+  return _propGraph._evaluationVariables;
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::getInputVariables(
+inline const std::vector<VarIdBase>& PropagationEngine::inputVariables(
     InvariantId invariantId) const {
-  return _propGraph.getInputVariables(invariantId);
+  return _propGraph.inputVariables(invariantId);
 }
 
 inline const std::unordered_set<VarIdBase>&
-PropagationEngine::getModifiedDecisionVariables() const {
-  assert(_currentTimestamp == _decisionVariablesModifiedAt);
-  return _modifiedDecisionVariables;
+PropagationEngine::modifiedSearchVariables() const {
+  assert(_currentTimestamp == _searchVariablesModifiedAt);
+  return _modifiedSearchVariables;
 }
 
 inline void PropagationEngine::outputToInputPropagate() {

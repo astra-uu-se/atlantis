@@ -11,7 +11,7 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
       _varComputedAt(expectedSize),
       _invariantComputedAt(expectedSize),
       _invariantIsOnStack(expectedSize),
-      _decisionVarAncestor(expectedSize),
+      _searchVariableAncestors(expectedSize) {
       _onPropagationPath(expectedSize),
       _outputToInputMarkingMode(OutputToInputMarkingMode::NONE) {
   _variableStack.reserve(expectedSize);
@@ -21,15 +21,15 @@ OutputToInputExplorer::OutputToInputExplorer(PropagationEngine& e,
 void OutputToInputExplorer::outputToInputStaticMarking() {
   std::vector<bool> varVisited(_engine.getNumVariables() + 1);
 
-  for (IdBase idx = 1; idx <= _engine.getNumVariables(); ++idx) {
-    if (_decisionVarAncestor.size() < idx) {
-      _decisionVarAncestor.register_idx(idx);
+  for (IdBase idx = 1; idx <= _engine.numVariables(); ++idx) {
+    if (_searchVariableAncestors.size() < idx) {
+      _searchVariableAncestors.register_idx(idx);
     }
 
-    _decisionVarAncestor[idx].clear();
+    _searchVariableAncestors[idx].clear();
   }
 
-  for (const VarIdBase decisionVar : _engine.getDecisionVariables()) {
+  for (const VarIdBase searchVariable : _engine.searchVariables()) {
     std::fill(varVisited.begin(), varVisited.end(), false);
     std::vector<IdBase> stack;
     stack.reserve(_engine.getNumVariables());
@@ -40,12 +40,11 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
     while (!stack.empty()) {
       const VarIdBase id = stack.back();
       stack.pop_back();
-      _decisionVarAncestor[id].emplace(decisionVar);
+      _searchVariableAncestors[id].emplace(searchVariable);
 
-      for (InvariantId invariantId :
-           _engine.getListeningInvariants(IdBase(id))) {
+      for (InvariantId invariantId : _engine.listeningInvariants(IdBase(id))) {
         for (const VarIdBase outputVar :
-             _engine.getVariablesDefinedBy(invariantId)) {
+             _engine.variablesDefinedBy(invariantId)) {
           if (!varVisited[outputVar]) {
             varVisited[outputVar] = true;
             stack.push_back(outputVar);
@@ -266,7 +265,8 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       // results in an infinite loop.
       setComputed(currentTimestamp, currentVarId);
       // The variable is marked and computed: expand its defining invariant.
-      expandInvariant<MarkingMode>(_engine.getDefiningInvariant(currentVarId));
+      expandInvariant<OutputToInputMarking>(
+          _engine.definingInvariant(currentVarId));
       continue;
     }
     // currentVarId is done: pop it from the stack.

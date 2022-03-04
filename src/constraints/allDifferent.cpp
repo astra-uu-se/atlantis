@@ -1,7 +1,7 @@
 #include "constraints/allDifferent.hpp"
 
 #include "core/engine.hpp"
-#include "variables/savedInt.hpp"
+#include "variables/committableInt.hpp"
 /**
  * @param violationId id for the violationCount
  */
@@ -20,14 +20,15 @@ void AllDifferent::init(Timestamp ts, Engine& engine) {
   Int ub = std::numeric_limits<Int>::min();
 
   for (size_t i = 0; i < _variables.size(); ++i) {
-    lb = std::min(lb, engine.getLowerBound(_variables[i]));
-    ub = std::max(ub, engine.getUpperBound(_variables[i]));
+    lb = std::min(lb, engine.lowerBound(_variables[i]));
+    ub = std::max(ub, engine.upperBound(_variables[i]));
     engine.registerInvariantInput(_id, _variables[i], i);
-    _localValues.emplace_back(ts, engine.getCommittedValue(_variables[i]));
+    _localValues.emplace_back(ts, engine.committedValue(_variables[i]));
   }
   assert(ub >= lb);
 
-  _counts.resize(static_cast<unsigned long>(ub - lb + 1), SavedInt(ts, 0));
+  _counts.resize(static_cast<unsigned long>(ub - lb + 1),
+                 CommittableInt(ts, 0));
 
   registerDefinedVariable(engine, _violationId);
 
@@ -35,7 +36,7 @@ void AllDifferent::init(Timestamp ts, Engine& engine) {
 }
 
 void AllDifferent::recompute(Timestamp ts, Engine& engine) {
-  for (SavedInt& c : _counts) {
+  for (CommittableInt& c : _counts) {
     c.setValue(ts, 0);
   }
 
@@ -43,16 +44,16 @@ void AllDifferent::recompute(Timestamp ts, Engine& engine) {
 
   Int violInc = 0;
   for (size_t i = 0; i < _variables.size(); ++i) {
-    violInc += increaseCount(ts, engine.getValue(ts, _variables[i]));
-    _localValues[i].setValue(ts, engine.getValue(ts, _variables[i]));
+    violInc += increaseCount(ts, engine.value(ts, _variables[i]));
+    _localValues[i].setValue(ts, engine.value(ts, _variables[i]));
   }
   incValue(ts, engine, _violationId, violInc);
 }
 
 void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
   assert(id < _localValues.size());
-  const Int oldValue = _localValues[id].getValue(ts);
-  const Int newValue = engine.getValue(ts, _variables[id]);
+  const Int oldValue = _localValues[id].value(ts);
+  const Int newValue = engine.value(ts, _variables[id]);
   if (newValue == oldValue) {
     return;
   }
@@ -62,7 +63,7 @@ void AllDifferent::notifyIntChanged(Timestamp ts, Engine& engine, LocalId id) {
                             increaseCount(ts, newValue)));
 }
 
-VarId AllDifferent::getNextInput(Timestamp ts, Engine&) {
+VarId AllDifferent::nextInput(Timestamp ts, Engine&) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _variables.size()) {
     return _variables[index];
@@ -71,18 +72,18 @@ VarId AllDifferent::getNextInput(Timestamp ts, Engine&) {
 }
 
 void AllDifferent::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  assert(static_cast<size_t>(_state.getValue(ts)) < _variables.size());
-  notifyIntChanged(ts, engine, static_cast<size_t>(_state.getValue(ts)));
+  assert(static_cast<size_t>(_state.value(ts)) < _variables.size());
+  notifyIntChanged(ts, engine, static_cast<size_t>(_state.value(ts)));
 }
 
 void AllDifferent::commit(Timestamp ts, Engine& engine) {
   Invariant::commit(ts, engine);
 
-  for (SavedInt& localValue : _localValues) {
+  for (CommittableInt& localValue : _localValues) {
     localValue.commitIf(ts);
   }
 
-  for (SavedInt& savedInt : _counts) {
-    savedInt.commitIf(ts);
+  for (CommittableInt& committableInt : _counts) {
+    committableInt.commitIf(ts);
   }
 }

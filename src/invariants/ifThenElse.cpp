@@ -16,19 +16,19 @@ void IfThenElse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
 void IfThenElse::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _z,
-              engine.getValue(ts, _xy[1 - (engine.getValue(ts, _b) == 0)]));
+              engine.value(ts, _xy[1 - (engine.value(ts, _b) == 0)]));
 }
 
 void IfThenElse::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId IfThenElse::getNextInput(Timestamp ts, Engine& engine) {
+VarId IfThenElse::nextInput(Timestamp ts, Engine& engine) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _b;
     case 1:
-      return _xy[1 - (engine.getValue(ts, _b) == 0)];
+      return _xy[1 - (engine.value(ts, _b) == 0)];
     default:
       return NULL_ID;  // Done
   }

@@ -23,7 +23,7 @@ class OutputToInputExplorer {
   IdMap<InvariantId, Timestamp> _invariantComputedAt;
   IdMap<InvariantId, bool> _invariantIsOnStack;
 
-  IdMap<VarIdBase, std::unordered_set<VarIdBase>> _decisionVarAncestor;
+  IdMap<VarIdBase, std::unordered_set<VarIdBase>> _searchVariableAncestors;
   IdMap<VarIdBase, bool> _onPropagationPath;
 
   OutputToInputMarkingMode _outputToInputMarkingMode;

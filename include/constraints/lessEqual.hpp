@@ -18,6 +18,6 @@ class LessEqual : public Constraint {
   void recompute(Timestamp, Engine&) override;
   void notifyIntChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;
-  VarId getNextInput(Timestamp, Engine&) override;
+  VarId nextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
 };

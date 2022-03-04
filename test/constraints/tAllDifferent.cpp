@@ -32,9 +32,9 @@ class MockAllDifferent : public AllDifferent {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return AllDifferent::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextInput)
+    ON_CALL(*this, nextInput)
         .WillByDefault([this](Timestamp t, Engine& engine) {
-          return AllDifferent::getNextInput(t, engine);
+          return AllDifferent::nextInput(t, engine);
         });
 
     ON_CALL(*this, notifyCurrentInputChanged)
@@ -55,7 +55,7 @@ class MockAllDifferent : public AllDifferent {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
@@ -126,7 +126,7 @@ class AllDifferentTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_))
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_))
           .Times(numArgs + 1);
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
@@ -140,9 +140,9 @@ class AllDifferentTest : public ::testing::Test {
     engine->setValue(args.at(0), 1);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(viol);
-    engine->endQuery();
+    engine->endProbe();
   }
 };
 
@@ -151,60 +151,59 @@ class AllDifferentTest : public ::testing::Test {
  */
 
 TEST_F(AllDifferentTest, Init) {
-  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-  EXPECT_EQ(engine->getValue(engine->getTmpTimestamp(violationId), violationId),
-            1);
+  EXPECT_EQ(engine->committedValue(violationId), 1);
+  EXPECT_EQ(engine->value(engine->tmpTimestamp(violationId), violationId), 1);
 }
 
 TEST_F(AllDifferentTest, Recompute) {
-  EXPECT_EQ(engine->getValue(0, violationId), 1);
-  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
+  EXPECT_EQ(engine->value(0, violationId), 1);
+  EXPECT_EQ(engine->committedValue(violationId), 1);
 
   Timestamp newTimestamp = 1;
 
   engine->setValue(newTimestamp, c, 3);
   allDifferent->recompute(newTimestamp, *engine);
-  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-  EXPECT_EQ(engine->getValue(newTimestamp, violationId), 0);
+  EXPECT_EQ(engine->committedValue(violationId), 1);
+  EXPECT_EQ(engine->value(newTimestamp, violationId), 0);
 
   engine->setValue(newTimestamp, a, 2);
   allDifferent->recompute(newTimestamp, *engine);
-  EXPECT_EQ(engine->getCommittedValue(violationId), 1);
-  EXPECT_EQ(engine->getValue(newTimestamp, violationId), 1);
+  EXPECT_EQ(engine->committedValue(violationId), 1);
+  EXPECT_EQ(engine->value(newTimestamp, violationId), 1);
 }
 
 TEST_F(AllDifferentTest, NotifyChange) {
-  EXPECT_EQ(engine->getValue(0, violationId), 1);
+  EXPECT_EQ(engine->value(0, violationId), 1);
 
   Timestamp time1 = 1;
 
-  EXPECT_EQ(engine->getValue(time1, a), 1);
+  EXPECT_EQ(engine->value(time1, a), 1);
   engine->setValue(time1, a, 2);
-  EXPECT_EQ(engine->getCommittedValue(a), 1);
-  EXPECT_EQ(engine->getValue(time1, a), 2);
+  EXPECT_EQ(engine->committedValue(a), 1);
+  EXPECT_EQ(engine->value(time1, a), 2);
   allDifferent->notifyIntChanged(time1, *engine, 0);
-  EXPECT_EQ(engine->getValue(time1, violationId), 2);
+  EXPECT_EQ(engine->value(time1, violationId), 2);
 
   engine->setValue(time1, b, 3);
   allDifferent->notifyIntChanged(time1, *engine, 1);
-  auto tmpValue = engine->getValue(time1, violationId);
+  auto tmpValue = engine->value(time1, violationId);
 
   // Incremental computation gives the same result as recomputation
   allDifferent->recompute(time1, *engine);
-  EXPECT_EQ(engine->getValue(time1, violationId), tmpValue);
+  EXPECT_EQ(engine->value(time1, violationId), tmpValue);
 
   Timestamp time2 = time1 + 1;
 
-  EXPECT_EQ(engine->getValue(time2, b), 2);
+  EXPECT_EQ(engine->value(time2, b), 2);
   engine->setValue(time2, b, 20);
-  EXPECT_EQ(engine->getCommittedValue(b), 2);
-  EXPECT_EQ(engine->getValue(time2, b), 20);
+  EXPECT_EQ(engine->committedValue(b), 2);
+  EXPECT_EQ(engine->value(time2, b), 20);
   allDifferent->notifyIntChanged(time2, *engine, 1);
-  EXPECT_EQ(engine->getValue(time2, violationId), 0);
+  EXPECT_EQ(engine->value(time2, violationId), 0);
 }
 
 TEST_F(AllDifferentTest, IncrementalVsRecompute) {
-  EXPECT_EQ(engine->getValue(0, violationId),
+  EXPECT_EQ(engine->value(0, violationId),
             1);  // initially the value of violationId is 0
   // todo: not clear if we actually want to deal with overflows...
   std::uniform_int_distribution<> distribution(-100, 100);
@@ -213,9 +212,9 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
   for (size_t i = 0; i < 2; ++i) {
     ++currentTimestamp;
     // Check that we do not accidentally commit
-    ASSERT_EQ(engine->getCommittedValue(a), 1);
-    ASSERT_EQ(engine->getCommittedValue(b), 2);
-    ASSERT_EQ(engine->getCommittedValue(violationId),
+    ASSERT_EQ(engine->committedValue(a), 1);
+    ASSERT_EQ(engine->committedValue(b), 2);
+    ASSERT_EQ(engine->committedValue(violationId),
               1);  // violationId is commited by register.
 
     // Set all variables
@@ -223,18 +222,18 @@ TEST_F(AllDifferentTest, IncrementalVsRecompute) {
     engine->setValue(currentTimestamp, b, distribution(gen));
 
     // notify changes
-    if (engine->getCommittedValue(a) != engine->getValue(currentTimestamp, a)) {
+    if (engine->committedValue(a) != engine->value(currentTimestamp, a)) {
       allDifferent->notifyIntChanged(currentTimestamp, *engine, 0);
     }
-    if (engine->getCommittedValue(b) != engine->getValue(currentTimestamp, b)) {
+    if (engine->committedValue(b) != engine->value(currentTimestamp, b)) {
       allDifferent->notifyIntChanged(currentTimestamp, *engine, 1);
     }
 
     // incremental value
-    auto tmp = engine->getValue(currentTimestamp, violationId);
+    auto tmp = engine->value(currentTimestamp, violationId);
     allDifferent->recompute(currentTimestamp, *engine);
 
-    ASSERT_EQ(tmp, engine->getValue(currentTimestamp, violationId));
+    ASSERT_EQ(tmp, engine->value(currentTimestamp, violationId));
   }
 }
 
@@ -270,7 +269,7 @@ TEST_F(AllDifferentTest, CreateAllDifferent) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(viol), numArgs - 1);
+  EXPECT_EQ(engine->currentValue(viol), numArgs - 1);
 }
 
 TEST_F(AllDifferentTest, NotificationsInputToOutput) {

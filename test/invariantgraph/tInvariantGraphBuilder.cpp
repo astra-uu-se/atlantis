@@ -45,8 +45,8 @@ TEST(InvariantGraphBuilderTest, build_simple_graph) {
   PropagationEngine engine;
   graph->apply(engine);
 
-  EXPECT_EQ(engine.getDecisionVariables().size(), 2);  // a and b
-  EXPECT_EQ(engine.getNumInvariants(), 2);  // totalViolations and int_lin_eq
+  EXPECT_EQ(engine.searchVariables().size(), 2);  // a and b
+  EXPECT_EQ(engine.numInvariants(), 2);  // totalViolations and int_lin_eq
 }
 
 TEST(InvariantGraphBuilderTest, build_simple_graph_2) {
@@ -94,11 +94,11 @@ TEST(InvariantGraphBuilderTest, build_simple_graph_2) {
   PropagationEngine engine;
   graph->apply(engine);
 
-  EXPECT_EQ(engine.getDecisionVariables().size(), 2);  // a and b
+  EXPECT_EQ(engine.searchVariables().size(), 2);  // a and b
 
   // totalViolations and int_lin_eq and alldifferent (constraints are also
   // invariants, they define their violation)
-  EXPECT_EQ(engine.getNumInvariants(), 3);
+  EXPECT_EQ(engine.numInvariants(), 3);
 }
 
 TEST(InvariantGraphBuilderTest, cycles_are_broken) {}

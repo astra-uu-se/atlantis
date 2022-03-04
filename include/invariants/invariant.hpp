@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "core/types.hpp"
-#include "variables/savedInt.hpp"
+#include "variables/committableInt.hpp"
 class Engine;  // Forward declaration
 
 class Invariant {
@@ -56,7 +56,7 @@ class Invariant {
   bool _isPostponed;
   InvariantId _id;
   // State used for returning next input. Null state is -1 by default
-  SavedInt _state;
+  CommittableInt _state;
 
   //  std::vector<bool> _modifiedVars;
   NotificationQueue _modifiedVars;
@@ -137,12 +137,12 @@ class Invariant {
    * Used in Output-to-Input propagation to get the next input variable to
    * visit.
    */
-  virtual VarId getNextInput(Timestamp, Engine&) = 0;
+  virtual VarId nextInput(Timestamp, Engine&) = 0;
 
   /**
    * Used in Output-to-Input propagation to notify to the
    * invariant that the current input (the last input given by
-   * getNextInput) has had its value changed.
+   * nextInput) has had its value changed.
    */
   virtual void notifyCurrentInputChanged(Timestamp, Engine&) = 0;
 
@@ -164,6 +164,8 @@ class Invariant {
   inline void postpone() { _isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 
-  [[nodiscard]] inline VarId getPrimaryDefinedVar() const { return _primaryDefinedVar; }
+  [[nodiscard]] inline VarId primaryDefinedVar() const {
+    return _primaryDefinedVar;
+  }
   void queueNonPrimaryDefinedVarsForPropagation(Timestamp ts, Engine& engine);
 };

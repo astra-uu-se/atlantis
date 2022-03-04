@@ -32,9 +32,9 @@ class MockElementConst : public ElementConst {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return ElementConst::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextInput)
+    ON_CALL(*this, nextInput)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return ElementConst::getNextInput(ts, engine);
+          return ElementConst::nextInput(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentInputChanged)
@@ -55,7 +55,7 @@ class MockElementConst : public ElementConst {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
               (override));
 
@@ -114,7 +114,7 @@ class ElementConstTest : public ::testing::Test {
                   notifyIntChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(2);
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(2);
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
@@ -127,9 +127,9 @@ class ElementConstTest : public ::testing::Test {
     engine->setValue(idx, 5);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(output);
-    engine->endQuery();
+    engine->endProbe();
   }
 };
 
@@ -157,7 +157,7 @@ TEST_F(ElementConstTest, CreateElement) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(output), 3);
+  EXPECT_EQ(engine->currentValue(output), 3);
 }
 
 TEST_F(ElementConstTest, NotificationsInputToOutput) {
