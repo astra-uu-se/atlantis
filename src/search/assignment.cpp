@@ -1,6 +1,6 @@
 #include "search/assignment.hpp"
 
-Int search::Assignment::value(VarId var) {
+Int search::Assignment::value(VarId var) const noexcept {
   return _engine.getCommittedValue(var);
 }
 
@@ -25,7 +25,7 @@ search::Cost search::Assignment::probe(
   return {_engine.getNewValue(_violation), _engine.getNewValue(_objective)};
 }
 
-bool search::Assignment::satisfiesConstraints() {
+bool search::Assignment::satisfiesConstraints() const noexcept {
   return _engine.getCommittedValue(_violation) == 0;
 }
 
