@@ -62,6 +62,19 @@ TEST_F(AssignmentTest, assign_sets_values) {
   EXPECT_EQ(assignment.value(b), 2);
 }
 
+TEST_F(AssignmentTest, probe) {
+  auto cost = assignment.probe([&](auto& modifications) {
+    modifications.set(a, 1);
+    modifications.set(b, 2);
+  });
+
+  EXPECT_FALSE(assignment.cost().satisfiesConstraints());
+  EXPECT_EQ(assignment.cost().evaluate(1, 1), 3);
+
+  EXPECT_TRUE(cost.satisfiesConstraints());
+  EXPECT_EQ(cost.evaluate(1, 1), 1);
+}
+
 TEST_F(AssignmentTest, satisfies_constraints) {
   EXPECT_FALSE(assignment.satisfiesConstraints());
 
