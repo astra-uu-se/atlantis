@@ -3,6 +3,7 @@
 #include <functional>
 
 #include "core/propagationEngine.hpp"
+#include "cost.hpp"
 
 namespace search {
 
@@ -22,9 +23,7 @@ class AssignmentModification {
    * @param var The variable to assign.
    * @param value The value to assign to the variable.
    */
-  void set(VarId var, Int value) {
-    _engine.setValue(var, value);
-  }
+  void set(VarId var, Int value) { _engine.setValue(var, value); }
 };
 
 class Assignment {
@@ -34,7 +33,8 @@ class Assignment {
   VarId& _objective;
 
  public:
-  explicit Assignment(PropagationEngine& engine, VarId& violation, VarId& objective)
+  explicit Assignment(PropagationEngine& engine, VarId& violation,
+                      VarId& objective)
       : _engine(engine), _violation(violation), _objective(objective) {}
 
   /**
@@ -67,6 +67,11 @@ class Assignment {
    * otherwise.
    */
   bool satisfiesConstraints();
+
+  /**
+   * @return The cost of the current assignment.
+   */
+  [[nodiscard]] Cost cost() const noexcept;
 };
 
 }  // namespace search
