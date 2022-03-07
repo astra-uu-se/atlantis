@@ -55,6 +55,17 @@ class Assignment {
       const std::function<void(AssignmentModification&)>& modificationFunc);
 
   /**
+   * Probe the cost of a modification to the assignment. Works similarly to
+   * assign(), but does not commit the modification.
+   *
+   * @param modificationFunc The callback which sets the variables to their
+   * new values for the probe.
+   * @return The cost of the assignment if the altered values were committed.
+   */
+  Cost probe(
+      const std::function<void(AssignmentModification&)>& modificationFunc);
+
+  /**
    * Get the value of a variable in the current assignment.
    *
    * @param var The variable for which to query the value.
@@ -72,6 +83,9 @@ class Assignment {
    * @return The cost of the current assignment.
    */
   [[nodiscard]] Cost cost() const noexcept;
+
+ private:
+  void move(const std::function<void(AssignmentModification&)>& modificationFunc);
 };
 
 }  // namespace search
