@@ -17,7 +17,7 @@ class AssignmentTest : public testing::Test {
   PropagationEngine engine;
   search::Assignment assignment { engine, violation, a };
 
-  // Models the following simple CSP:
+  // Models the following simple COP:
   // c <- a + b (a and b have domain 0..10)
   // violation = v(c == 3)
   // obj: minimise(a)
