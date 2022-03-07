@@ -71,13 +71,13 @@ class Assignment {
    * @param var The variable for which to query the value.
    * @return The value of @p var.
    */
-  Int value(VarId var);
+  [[nodiscard]] Int value(VarId var) const noexcept;
 
   /**
    * @return True if the current assignment satisfies all the constraints, false
    * otherwise.
    */
-  bool satisfiesConstraints();
+  [[nodiscard]] bool satisfiesConstraints() const noexcept;
 
   /**
    * @return The cost of the current assignment.
