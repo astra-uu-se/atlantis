@@ -19,3 +19,8 @@ void search::Assignment::assign(
 bool search::Assignment::satisfiesConstraints() {
   return _engine.getCommittedValue(_violation) == 0;
 }
+
+search::Cost search::Assignment::cost() const noexcept {
+  return {_engine.getCommittedValue(_violation), _engine.getCommittedValue(_objective)};
+}
+

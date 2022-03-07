@@ -15,13 +15,13 @@ class AssignmentTest : public testing::Test {
   VarId violation;
 
   PropagationEngine engine;
-  search::Assignment assignment { engine, violation, c };
+  search::Assignment assignment { engine, violation, a };
 
+  // Models the following simple CSP:
+  // c <- a + b (a and b have domain 0..10)
+  // violation = v(c == 3)
+  // obj: minimise(a)
   void SetUp() override {
-    // Models the following:
-    // c <- a + b
-    // violation = v(c == 3)
-
     engine.open();
     a = engine.makeIntVar(0, 0, 10);
     b = engine.makeIntVar(0, 0, 10);
@@ -34,6 +34,23 @@ class AssignmentTest : public testing::Test {
     engine.close();
   }
 };
+
+TEST_F(AssignmentTest, cost) {
+  EXPECT_FALSE(assignment.cost().satisfiesConstraints());
+
+  // c has value 0, which is 3 away from 3.
+  EXPECT_EQ(assignment.cost().evaluate(1, 1), 3);
+
+  assignment.assign([&](auto& modifications) {
+    modifications.set(a, 2);
+    modifications.set(b, 1);
+  });
+
+  EXPECT_TRUE(assignment.cost().satisfiesConstraints());
+
+  // no violation and a (the objective) has value 2.
+  EXPECT_EQ(assignment.cost().evaluate(1, 1), 2);
+}
 
 TEST_F(AssignmentTest, assign_sets_values) {
   assignment.assign([&](auto& modifications) {
