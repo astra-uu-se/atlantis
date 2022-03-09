@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 #include "binaryOpNode.hpp"
 #include "invariants/pow.hpp"
 
@@ -12,7 +14,12 @@ class IntPowNode : public BinaryOpNode {
   }
 
   IntPowNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output) {}
+      : BinaryOpNode(a, b, output) {
+    const auto& [aLb, aUb] = a->domain();
+    const auto& [bLb, bUb] = b->domain();
+
+    output->imposeDomain({std::pow(aLb, bLb), std::pow(aUb, bUb)});
+  }
 
   ~IntPowNode() override = default;
 

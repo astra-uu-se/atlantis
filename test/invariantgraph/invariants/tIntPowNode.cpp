@@ -32,11 +32,12 @@ TEST_F(IntPowNodeTest, construction) {
 TEST_F(IntPowNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(5, domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine);
+  node->registerWithEngine(engine, engineVariableMapper);
   engine.close();
+
+  EXPECT_EQ(engine.getLowerBound(engineVariable(c)), 1);
+  EXPECT_EQ(engine.getUpperBound(engineVariable(c)), 10000000000);
 
   // a and b
   EXPECT_EQ(engine.getDecisionVariables().size(), 2);
