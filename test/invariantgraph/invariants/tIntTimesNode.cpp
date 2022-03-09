@@ -33,11 +33,12 @@ TEST_F(IntTimesNodeTest, construction) {
 TEST_F(IntTimesNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(5, domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine);
+  node->registerWithEngine(engine, engineVariableMapper);
   engine.close();
+
+  EXPECT_EQ(engine.getLowerBound(engineVariable(c)), 0);
+  EXPECT_EQ(engine.getUpperBound(engineVariable(c)), 100);
 
   // a and b
   EXPECT_EQ(engine.getDecisionVariables().size(), 2);
