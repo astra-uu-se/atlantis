@@ -11,8 +11,8 @@ class IntModNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::IntModNode> node;
 
   void SetUp() override {
-    a = FZN_SEARCH_VARIABLE("a", 0, 10);
-    b = FZN_SEARCH_VARIABLE("b", 0, 10);
+    a = FZN_SEARCH_VARIABLE("a", 0, 6);
+    b = FZN_SEARCH_VARIABLE("b", 1, 10);
     c = FZN_SEARCH_VARIABLE("c", 0, 10);
 
     FZN_DEFINES_VAR_ANNOTATION(annotations, c);
@@ -32,11 +32,12 @@ TEST_F(IntModNodeTest, construction) {
 TEST_F(IntModNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(5, domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine);
+  node->registerWithEngine(engine, engineVariableMapper);
   engine.close();
+
+  EXPECT_EQ(engine.getLowerBound(engineVariable(c)), 0);
+  EXPECT_EQ(engine.getUpperBound(engineVariable(c)), 6);
 
   // a and b
   EXPECT_EQ(engine.getDecisionVariables().size(), 2);
