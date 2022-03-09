@@ -18,7 +18,19 @@ class ArrayVarIntElementNode : public InvariantNode {
 
   ArrayVarIntElementNode(std::vector<VariableNode*> as,
                                   VariableNode* b, VariableNode* output)
-      : InvariantNode(output), _as(std::move(as)), _b(b) {}
+      : InvariantNode(output), _as(std::move(as)), _b(b) {
+    Int outputLb = std::numeric_limits<Int>::max();
+    Int outputUb = std::numeric_limits<Int>::min();
+
+    for (const auto& node : _as) {
+      const auto& [nodeLb, nodeUb] = node->domain();
+      outputLb = std::min(nodeLb, outputLb);
+      outputUb = std::max(nodeUb, outputUb);
+    }
+
+    b->imposeDomain({1, _as.size()});
+    output->imposeDomain({outputLb, outputUb});
+  }
 
   void registerWithEngine(
       Engine& engine,
