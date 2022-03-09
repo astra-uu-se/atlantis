@@ -13,8 +13,8 @@ class IntDivNodeTest : public NodeTestBase {
 
   void SetUp() override {
     a = FZN_SEARCH_VARIABLE("a", 0, 10);
-    b = FZN_SEARCH_VARIABLE("b", 0, 10);
-    c = FZN_SEARCH_VARIABLE("c", 0, 10);
+    b = FZN_SEARCH_VARIABLE("b", 1, 10);
+    c = FZN_SEARCH_VARIABLE("c", 3, 5);
 
     FZN_DEFINES_VAR_ANNOTATION(annotations, c);
     auto constraint = makeConstraint("int_div", annotations, a, b, c);
@@ -33,11 +33,12 @@ TEST_F(IntDivNodeTest, construction) {
 TEST_F(IntDivNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(5, domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine);
+  node->registerWithEngine(engine, engineVariableMapper);
   engine.close();
+
+  EXPECT_EQ(engine.getLowerBound(engineVariable(c)), 0);
+  EXPECT_EQ(engine.getUpperBound(engineVariable(c)), 10);
 
   // a and b
   EXPECT_EQ(engine.getDecisionVariables().size(), 2);
