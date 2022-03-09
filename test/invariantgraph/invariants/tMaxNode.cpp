@@ -11,8 +11,8 @@ class MaxNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::MaxNode> node;
 
   void SetUp() override {
-    a = FZN_SEARCH_VARIABLE("a", 0, 10);
-    b = FZN_SEARCH_VARIABLE("b", 0, 10);
+    a = FZN_SEARCH_VARIABLE("a", 5, 10);
+    b = FZN_SEARCH_VARIABLE("b", 0, 20);
     c = FZN_SEARCH_VARIABLE("c", 0, 10);
 
     FZN_DEFINES_VAR_ANNOTATION(annotations, c);
@@ -33,11 +33,12 @@ TEST_F(MaxNodeTest, construction) {
 TEST_F(MaxNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(0, domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine);
+  node->registerWithEngine(engine, engineVariableMapper);
   engine.close();
+
+  EXPECT_EQ(engine.getLowerBound(engineVariable(c)), 5);
+  EXPECT_EQ(engine.getUpperBound(engineVariable(c)), 20);
 
   // a and b
   EXPECT_EQ(engine.getDecisionVariables().size(), 2);
