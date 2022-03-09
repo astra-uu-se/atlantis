@@ -18,7 +18,13 @@ class ArrayIntElementNode : public InvariantNode {
 
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
-      : InvariantNode(output), _as(std::move(as)), _b(b) {}
+      : InvariantNode(output), _as(std::move(as)), _b(b) {
+    b->imposeDomain({1, _as.size()});
+
+    Int smallest = *std::min_element(_as.begin(), _as.end());
+    Int biggest = *std::max_element(_as.begin(), _as.end());
+    output->imposeDomain({smallest, biggest});
+  }
 
   void registerWithEngine(
       Engine& engine,
