@@ -17,7 +17,18 @@ class MinNode : public InvariantNode {
           variableMap);
 
   MinNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : InvariantNode(output), _variables(std::move(variables)) {}
+      : InvariantNode(output), _variables(std::move(variables)) {
+    Int outputLb = std::numeric_limits<Int>::max();
+    Int outputUb = std::numeric_limits<Int>::max();
+
+    for (const auto& node : _variables) {
+      const auto& [nodeLb, nodeUb] = node->domain();
+      outputLb = std::min(nodeLb, outputLb);
+      outputUb = std::min(nodeUb, outputUb);
+    }
+
+    output->imposeDomain({outputLb, outputUb});
+  }
 
   ~MinNode() override = default;
 
