@@ -12,7 +12,15 @@ class IntDivNode : public BinaryOpNode {
   }
 
   IntDivNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output) {}
+      : BinaryOpNode(a, b, output) {
+    const auto& [aLb, aUb] = a->domain();
+    const auto& [bLb, bUb] = b->domain();
+
+    auto outputLb = aLb / bUb;
+    auto outputUb = aUb / bLb;
+
+    output->imposeDomain({outputLb, outputUb});
+  }
 
   ~IntDivNode() override = default;
 
