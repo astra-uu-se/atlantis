@@ -39,11 +39,17 @@ TEST_F(ArrayIntElementNodeTest, construction) {
 TEST_F(ArrayIntElementNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(0, domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine);
+  node->registerWithEngine(engine, engineVariableMapper);
   engine.close();
+
+  // The index ranges over the as array (first index is 1).
+  EXPECT_EQ(engine.getLowerBound(engineVariable(b)), 1);
+  EXPECT_EQ(engine.getUpperBound(engineVariable(b)), as.size());
+
+  // The output domain should contain all elements in as.
+  EXPECT_EQ(engine.getLowerBound(engineVariable(c)), 1);
+  EXPECT_EQ(engine.getUpperBound(engineVariable(c)), 3);
 
   // b
   EXPECT_EQ(engine.getDecisionVariables().size(), 1);

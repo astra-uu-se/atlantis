@@ -8,13 +8,8 @@ void invariantgraph::ViewNode::registerWithEngine(
 
 void invariantgraph::VariableNode::registerWithEngine(
     Engine& engine, std::map<VariableNode*, VarId>& map) {
-  // TODO: Different types of domains.
-  assert(variable()->domain()->type() == fznparser::DomainType::INT);
-  fznparser::IntDomain* domain =
-      dynamic_cast<fznparser::IntDomain*>(variable()->domain());
+  auto& [lb, ub] = _domain;
 
-  // TODO: Initial assignment.
-  VarId engineVariable = engine.makeIntVar(
-      domain->lowerBound(), domain->lowerBound(), domain->upperBound());
+  VarId engineVariable = engine.makeIntVar(lb, lb, ub);
   map.emplace(this, engineVariable);
 }

@@ -55,9 +55,15 @@ class VariableNode {
   std::optional<InvariantNode*> _definingInvariant;
   Int _offset = 0;
 
+  std::pair<Int, Int> _domain;
+
  public:
   explicit VariableNode(std::shared_ptr<fznparser::SearchVariable> variable)
-      : _variable(std::move(variable)) {}
+      : _variable(std::move(variable)) {
+    auto modelDomain = _variable->domain();
+    _domain = std::make_pair(modelDomain->lowerBound(), modelDomain->upperBound());
+  }
+
   virtual ~VariableNode() = default;
 
   virtual void registerWithEngine(Engine& engine,
@@ -65,6 +71,14 @@ class VariableNode {
 
   [[nodiscard]] std::shared_ptr<fznparser::SearchVariable> variable() const {
     return _variable;
+  }
+
+  void imposeDomain(std::pair<Int, Int> domain) {
+    _domain = domain;
+  }
+
+  [[nodiscard]] std::pair<Int, Int> domain() const noexcept {
+    return _domain;
   }
 
   [[nodiscard]] Int offset() const { return _offset; }
