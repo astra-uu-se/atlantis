@@ -17,7 +17,18 @@ class MaxNode final : public InvariantNode {
           variableMap);
 
   MaxNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : InvariantNode(output), _variables(std::move(variables)) {}
+      : InvariantNode(output), _variables(std::move(variables)) {
+    Int outputLb = std::numeric_limits<Int>::min();
+    Int outputUb = std::numeric_limits<Int>::min();
+
+    for (const auto& node : _variables) {
+      const auto& [nodeLb, nodeUb] = node->domain();
+      outputLb = std::max(nodeLb, outputLb);
+      outputUb = std::max(nodeUb, outputUb);
+    }
+
+    output->imposeDomain({outputLb, outputUb});
+  }
 
   ~MaxNode() final = default;
 
