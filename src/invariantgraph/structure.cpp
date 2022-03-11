@@ -1,1 +1,0 @@
-#include "invariantgraph/structure.hpp"

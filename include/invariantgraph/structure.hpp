@@ -144,9 +144,18 @@ class VariableDefiningNode {
   }
 };
 
+/**
+ * Serves as a marker for the invariant graph to start the application to the
+ * propagation engine.
+ */
 class ImplicitConstraintNode : public VariableDefiningNode {
  public:
+  explicit ImplicitConstraintNode(std::vector<VariableNode*> definedVariables)
+      : VariableDefiningNode(std::move(definedVariables)) {}
   ~ImplicitConstraintNode() override = default;
+
+  void registerWithEngine(
+      Engine& engine, std::map<VariableNode*, VarId>& variableMap) override;
 };
 
 class SoftConstraintNode : public VariableDefiningNode {
