@@ -16,8 +16,6 @@ class InvariantGraph {
   std::vector<std::unique_ptr<VariableDefiningNode>> _variableDefiningNodes;
   std::vector<ImplicitConstraintNode*> _implicitConstraints;
 
-  friend class InvariantGraphBuilder;
-
  public:
   InvariantGraph(
       std::vector<std::unique_ptr<VariableNode>> variables,
