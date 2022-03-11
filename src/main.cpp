@@ -20,7 +20,7 @@ std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
 int main(int argc, char* argv[]) {
   try {
     cxxopts::Options options(
-        std::string(argv[0]),
+        argv[0],
         "Constraint-based local search backend for MiniZinc.");
 
     options.positional_help("[flatzinc file]").show_positional_help();
