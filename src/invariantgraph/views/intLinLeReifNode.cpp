@@ -15,7 +15,7 @@ invariantgraph::IntLinLeReifNode::fromModelConstraint(
   VALUE_VECTOR_ARG(as, constraint->arguments()[0]);
   MAPPED_SEARCH_VARIABLE_VECTOR_ARG(bs, constraint->arguments()[1], variableMap);
   VALUE_ARG(c, constraint->arguments()[2]);
-  SEARCH_VARIABLE_ARG(r, constraint->arguments()[3]);
+  MAPPED_SEARCH_VARIABLE_ARG(r, constraint->arguments()[3], variableMap);
 
   return std::make_unique<invariantgraph::IntLinLeReifNode>(
       std::make_unique<invariantgraph::IntLinLeNode>(as, bs, c), r);

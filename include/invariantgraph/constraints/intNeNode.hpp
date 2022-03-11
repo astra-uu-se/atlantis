@@ -12,16 +12,17 @@ class IntNeNode : public SoftConstraintNode {
   VariableNode* _b;
 
  public:
-  IntNeNode(VariableNode* a, VariableNode* b) : _a(a), _b(b) {}
+  IntNeNode(VariableNode* a, VariableNode* b)
+      : SoftConstraintNode([] { return 1; }, {a, b}), _a(a), _b(b) {}
 
   static std::unique_ptr<IntNeNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);
 
-  VarId registerWithEngine(
+  void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::map<VariableNode*, VarId>& variableMap) override;
 
   [[nodiscard]] VariableNode* a() const noexcept { return _a; }
   [[nodiscard]] VariableNode* b() const noexcept { return _b; }

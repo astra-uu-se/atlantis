@@ -5,7 +5,7 @@
 
 namespace invariantgraph {
 
-class ArrayIntElementNode : public InvariantNode {
+class ArrayIntElementNode : public VariableDefiningNode {
  private:
   std::vector<Int> _as;
   VariableNode* _b;
@@ -18,8 +18,8 @@ class ArrayIntElementNode : public InvariantNode {
 
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
-      : InvariantNode(output), _as(std::move(as)), _b(b) {
-    b->imposeDomain({1, _as.size()});
+      : VariableDefiningNode({output}, {b}), _as(std::move(as)), _b(b) {
+    b->imposeDomain({1, static_cast<Int>(_as.size())});
 
     Int smallest = *std::min_element(_as.begin(), _as.end());
     Int biggest = *std::max_element(_as.begin(), _as.end());
@@ -28,7 +28,7 @@ class ArrayIntElementNode : public InvariantNode {
 
   void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::map<VariableNode*, VarId>& variableMap) override;
 
   [[nodiscard]] const std::vector<Int>& as() const noexcept { return _as; }
   [[nodiscard]] VariableNode* b() const noexcept { return _b; }

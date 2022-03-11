@@ -4,27 +4,29 @@
 #include <utility>
 
 #include "../structure.hpp"
-#include "views/intAbsView.hpp"
 
 namespace invariantgraph {
 
-class IntAbsNode : public ViewNode {
+class IntAbsNode : public VariableDefiningNode {
+ private:
+  VariableNode* _input;
+
  public:
   static std::unique_ptr<IntAbsNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);
 
-  explicit IntAbsNode(VariableNode* input,
-                      std::shared_ptr<fznparser::SearchVariable> output)
-      : ViewNode(input, std::move(output)) {}
+  IntAbsNode(VariableNode* input, VariableNode* output)
+      : VariableDefiningNode({output}, {input}), _input(input) {}
+
   ~IntAbsNode() override = default;
 
- protected:
-  std::shared_ptr<View> createView(Engine& engine,
-                                   VarId variable) const override {
-    return engine.makeIntView<::IntAbsView>(variable);
-  }
+  void registerWithEngine(
+      Engine& engine,
+      std::map<VariableNode*, VarId>& variableMap) override;
+
+  [[nodiscard]] VariableNode* input() const noexcept { return _input; }
 };
 
 }  // namespace invariantgraph

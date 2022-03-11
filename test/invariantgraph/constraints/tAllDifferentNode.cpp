@@ -31,15 +31,14 @@ TEST_F(AllDifferentNodeTest, construction) {
                  [](const auto& variable) { return variable.get(); });
 
   EXPECT_EQ(node->variables(), expectedVars);
+  expectMarkedAsInput(node.get(), node->variables());
 }
 
 TEST_F(AllDifferentNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  VarId violation = node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(domain->lowerBound(), domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine, {a, b, c, d});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // a, b, c and d
@@ -51,6 +50,6 @@ TEST_F(AllDifferentNodeTest, application) {
   // alldifferent
   EXPECT_EQ(engine.getNumInvariants(), 1);
 
-  EXPECT_EQ(engine.getLowerBound(violation), 0);
-  EXPECT_EQ(engine.getUpperBound(violation), 4);
+  EXPECT_EQ(engine.getLowerBound(_variableMap.at(node->violation())), 0);
+  EXPECT_EQ(engine.getUpperBound(_variableMap.at(node->violation())), 4);
 }

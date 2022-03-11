@@ -1,16 +1,12 @@
 #include "invariantgraph/views/reifiedConstraint.hpp"
+
 #include "views/boolView.hpp"
 
 void invariantgraph::ReifiedConstraint::registerWithEngine(
     Engine& engine, std::map<VariableNode*, VarId>& map) {
-  VarId violationVar = _constraint->registerWithEngine(
-      engine, [&](const auto& node) { return map.at(node); });
+  _constraint->registerWithEngine(engine, map);
 
-  auto rId = createView(engine, violationVar)->getId();
-  map.emplace(this, rId);
-}
-
-std::shared_ptr<View> invariantgraph::ReifiedConstraint::createView(
-    Engine& engine, VarId variable) const {
-  return engine.makeIntView<BoolView>(variable);
+  auto rId = engine.makeIntView<BoolView>(map.at(_constraint->violation()))->getId();
+  auto variable = definedVariables().at(0);
+  map.emplace(variable, rId);
 }

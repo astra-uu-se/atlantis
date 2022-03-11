@@ -19,7 +19,9 @@ invariantgraph::ArrayIntElementNode::fromModelConstraint(
 }
 
 void invariantgraph::ArrayIntElementNode::registerWithEngine(
-    Engine &engine, std::function<VarId(VariableNode *)> variableMapper) const {
-  engine.makeInvariant<ElementConst>(variableMapper(_b), _as,
-                                     variableMapper(output()));
+    Engine &engine, std::map<VariableNode *, VarId> &variableMap) {
+  VarId output =
+      registerDefinedVariable(engine, variableMap, definedVariables()[0]);
+
+  engine.makeInvariant<ElementConst>(variableMap.at(_b), _as, output);
 }

@@ -4,6 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "invariants/linear.hpp"
+#include "views/intOffsetView.hpp"
 
 std::unique_ptr<invariantgraph::LinearNode>
 invariantgraph::LinearNode::fromModelConstraint(
@@ -41,21 +42,41 @@ invariantgraph::LinearNode::fromModelConstraint(
 
   auto varsIt = vars.begin();
   std::advance(varsIt, definedVarIndex);
+  auto output = *varsIt;
   vars.erase(varsIt);
 
-  auto output = variableMap(definedVar);
   auto linearInv =
-      std::make_unique<invariantgraph::LinearNode>(coeffs, vars, output);
-  output->setOffset(-sum);
+      std::make_unique<invariantgraph::LinearNode>(coeffs, vars, output, -sum);
 
   return linearInv;
 }
 
 void invariantgraph::LinearNode::registerWithEngine(
-    Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
+    Engine& engine,
+    std::map<VariableNode*, VarId>& variableMap) {
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),
-                 std::back_inserter(variables), variableMapper);
+                 std::back_inserter(variables), [&](const auto& node) {
+                   return variableMap.at(node);
+                 });
 
-  engine.makeInvariant<::Linear>(_coeffs, variables, variableMapper(output()));
+  const auto& [lb, ub] = getIntermediateDomain();
+  auto l = engine.makeIntVar(lb, lb, ub);
+  engine.makeInvariant<::Linear>(_coeffs, variables, l);
+
+  auto outputVar = engine.makeIntView<IntOffsetView>(l, _offset);
+  variableMap.emplace(definedVariables()[0], outputVar->getId());
+}
+
+std::pair<Int, Int> invariantgraph::LinearNode::getIntermediateDomain() const {
+  Int lb = 0, ub = 0;
+
+  for (size_t i = 0; i < _coeffs.size(); i++) {
+    const auto& [varLb, varUb] = _variables[i]->domain();
+
+    lb += _coeffs[i] * varLb;
+    ub += _coeffs[i] * varUb;
+  }
+
+  return {lb, ub};
 }

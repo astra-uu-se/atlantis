@@ -22,17 +22,15 @@ class IntEqReifNodeTest : public NodeTestBase {
 };
 
 TEST_F(IntEqReifNodeTest, construction) {
-  EXPECT_EQ(node->variable(), r);
+  EXPECT_EQ(node->definedVariables().size(), 1);
+  EXPECT_EQ(node->definedVariables()[0]->variable(), r);
 }
 
 TEST_F(IntEqReifNodeTest, application) {
-  std::map<invariantgraph::VariableNode*, VarId> variableMap;
-
   PropagationEngine engine;
   engine.open();
-  for (const auto& var : _variables)
-    var->registerWithEngine(engine, variableMap);
-  node->registerWithEngine(engine, variableMap);
+  registerVariables(engine, {a, b});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // a, b
@@ -40,7 +38,4 @@ TEST_F(IntEqReifNodeTest, application) {
 
   // a, b and r
   EXPECT_EQ(engine.getNumVariables(), 3);
-
-  // a, b and r
-  EXPECT_EQ(variableMap.size(), 3);
 }

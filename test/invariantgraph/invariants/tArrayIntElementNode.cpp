@@ -27,7 +27,9 @@ class ArrayIntElementNodeTest : public NodeTestBase {
 
 TEST_F(ArrayIntElementNodeTest, construction) {
   EXPECT_EQ(node->b()->variable(), b);
-  EXPECT_EQ(node->output()->variable(), c);
+  EXPECT_EQ(node->definedVariables().size(), 1);
+  EXPECT_EQ(node->definedVariables()[0]->variable(), c);
+  expectMarkedAsInput(node.get(), {node->b()});
 
   for (size_t idx = 0; idx < as.size(); idx++) {
     EXPECT_EQ(
@@ -39,8 +41,8 @@ TEST_F(ArrayIntElementNodeTest, construction) {
 TEST_F(ArrayIntElementNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine);
-  node->registerWithEngine(engine, engineVariableMapper);
+  registerVariables(engine, {b});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // The index ranges over the as array (first index is 1).

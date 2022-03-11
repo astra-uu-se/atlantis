@@ -30,15 +30,14 @@ TEST_F(LeqNodeTest, construction) {
   EXPECT_EQ(node->coeffs()[0], 1);
   EXPECT_EQ(node->coeffs()[1], 2);
   EXPECT_EQ(node->bound(), 3);
+  expectMarkedAsInput(node.get(), node->variables());
 }
 
 TEST_F(LeqNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(0, domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine, {a, b});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // a, b, the bound (which we have to represent as a variable, but it has a

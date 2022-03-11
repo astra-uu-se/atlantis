@@ -14,8 +14,13 @@ class IntLinLeNode : public SoftConstraintNode {
 
  public:
   IntLinLeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-          Int bound)
-      : _coeffs(std::move(coeffs)),
+               Int bound)
+      : SoftConstraintNode(
+            [&] {
+              return std::max<Int>(0, std::numeric_limits<Int>::max() - bound);
+            },
+            variables),
+        _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _bound(bound) {}
 
@@ -24,9 +29,9 @@ class IntLinLeNode : public SoftConstraintNode {
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);
 
-  VarId registerWithEngine(
+  void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::map<VariableNode*, VarId>& variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;
@@ -37,7 +42,7 @@ class IntLinLeNode : public SoftConstraintNode {
   [[nodiscard]] Int bound() const { return _bound; }
 
  private:
-  std::pair<Int, Int> getDomainBounds() const;
+  [[nodiscard]] std::pair<Int, Int> getDomainBounds() const;
 };
 
 }  // namespace invariantgraph

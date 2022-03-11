@@ -8,7 +8,9 @@
 class NodeTestBase : public testing::Test {
  protected:
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
-  std::map<std::shared_ptr<fznparser::SearchVariable>, invariantgraph::VariableNode*> _nodeMap;
+  std::map<std::shared_ptr<fznparser::SearchVariable>,
+           invariantgraph::VariableNode*>
+      _nodeMap;
   std::map<invariantgraph::VariableNode*, VarId> _variableMap;
 
   std::function<invariantgraph::VariableNode*(
@@ -22,9 +24,6 @@ class NodeTestBase : public testing::Test {
         _variables.push_back(std::move(n));
         return ptr;
       };
-
-  std::function<VarId(invariantgraph::VariableNode*)> engineVariableMapper =
-      [&](const auto& node) { return _variableMap.at(node); };
 
   template <typename... Args>
   inline std::shared_ptr<fznparser::Constraint> makeConstraint(
@@ -40,15 +39,33 @@ class NodeTestBase : public testing::Test {
     return Node::fromModelConstraint(constraint, nodeFactory);
   }
 
-  inline void registerVariables(PropagationEngine& engine) {
-    for (const auto& variable : _variables)
-      variable->registerWithEngine(engine, _variableMap);
+  inline void registerVariables(
+      PropagationEngine& engine,
+      const std::vector<std::shared_ptr<fznparser::SearchVariable>>&
+          freeVariables = {}) {
+    for (const auto& modelVariable : freeVariables) {
+      auto variable = _nodeMap.at(modelVariable);
+      const auto& [lb, ub] = variable->domain();
+      auto varId = engine.makeIntVar(lb, lb, ub);
+      _variableMap.emplace(variable, varId);
+    }
   }
 
-  inline VarId engineVariable(const std::shared_ptr<fznparser::SearchVariable> variable) const {
+  [[nodiscard]] inline VarId engineVariable(
+      const std::shared_ptr<fznparser::SearchVariable>& variable) const {
     return _variableMap.at(_nodeMap.at(variable));
   }
 };
+
+inline void expectMarkedAsInput(
+    invariantgraph::VariableDefiningNode* definingNode,
+    const std::vector<invariantgraph::VariableNode*>& inputs) {
+  for (const auto& variableNode : inputs) {
+    EXPECT_EQ(std::count(variableNode->inputFor().begin(),
+                         variableNode->inputFor().end(), definingNode),
+              1);
+  }
+}
 
 #define FZN_VALUE(value) std::make_shared<fznparser::ValueLiteral>(value)
 #define FZN_SEARCH_VARIABLE(name, lowerBound, upperBound) \

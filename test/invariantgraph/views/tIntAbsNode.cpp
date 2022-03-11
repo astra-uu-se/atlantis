@@ -13,24 +13,27 @@ class IntAbsNodeTest : public NodeTestBase {
     a = FZN_SEARCH_VARIABLE("a", 5, 10);
     b = FZN_SEARCH_VARIABLE("b", 2, 7);
 
-    auto constraint = makeConstraint("int_abs", FZN_NO_ANNOTATIONS, a, b);
+    FZN_DEFINES_VAR_ANNOTATION(annotations, b);
+    auto constraint = makeConstraint("int_abs", annotations, a, b);
 
     node = makeNode<invariantgraph::IntAbsNode>(constraint);
   }
 };
 
 TEST_F(IntAbsNodeTest, construction) {
-  EXPECT_EQ(node->input(), a);
-  EXPECT_EQ(node->variable(), b);
+  EXPECT_EQ(node->input()->variable(), a);
+  EXPECT_EQ(node->input()->inputFor().size(), 1);
+  EXPECT_EQ(node->input()->inputFor()[0], node.get());
+
+  EXPECT_EQ(node->definedVariables().size(), 1);
+  EXPECT_EQ(node->definedVariables()[0]->variable(), b);
 }
 
 TEST_F(IntAbsNodeTest, application) {
-  std::map<invariantgraph::VariableNode*, VarId> variableMap;
-
   PropagationEngine engine;
   engine.open();
-  _variables[0]->registerWithEngine(engine, variableMap);
-  node->registerWithEngine(engine, variableMap);
+  registerVariables(engine, {a});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // a
@@ -40,5 +43,5 @@ TEST_F(IntAbsNodeTest, application) {
   EXPECT_EQ(engine.getNumVariables(), 1);
 
   // a and b
-  EXPECT_EQ(variableMap.size(), 2);
+  EXPECT_EQ(_variableMap.size(), 2);
 }

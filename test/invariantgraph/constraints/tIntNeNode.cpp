@@ -22,15 +22,14 @@ class IntNeNodeTest : public NodeTestBase {
 TEST_F(IntNeNodeTest, construction) {
   EXPECT_EQ(node->a()->variable(), a);
   EXPECT_EQ(node->b()->variable(), b);
+  expectMarkedAsInput(node.get(), {node->a(), node->b()});
 }
 
 TEST_F(IntNeNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  VarId violation = node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(0, domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine, {a, b});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // a and b
@@ -42,6 +41,6 @@ TEST_F(IntNeNodeTest, application) {
   // notEqual
   EXPECT_EQ(engine.getNumInvariants(), 1);
 
-  EXPECT_EQ(engine.getLowerBound(violation), 0);
-  EXPECT_EQ(engine.getUpperBound(violation), 1);
+  EXPECT_EQ(engine.getLowerBound(_variableMap.at(node->violation())), 0);
+  EXPECT_EQ(engine.getUpperBound(_variableMap.at(node->violation())), 1);
 }

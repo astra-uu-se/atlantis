@@ -5,7 +5,7 @@
 
 namespace invariantgraph {
 
-class ArrayVarIntElementNode : public InvariantNode {
+class ArrayVarIntElementNode : public VariableDefiningNode {
  private:
   std::vector<VariableNode*> _as;
   VariableNode* _b;
@@ -16,9 +16,13 @@ class ArrayVarIntElementNode : public InvariantNode {
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);
 
-  ArrayVarIntElementNode(std::vector<VariableNode*> as,
-                                  VariableNode* b, VariableNode* output)
-      : InvariantNode(output), _as(std::move(as)), _b(b) {
+  ArrayVarIntElementNode(std::vector<VariableNode*> as, VariableNode* b,
+                         VariableNode* output)
+      : VariableDefiningNode({output}, {as}), _as(std::move(as)), _b(b) {
+    // No way to add this as an input in addition to the as vector. So we do it
+    // here explicitly.
+    b->markAsInputFor(static_cast<VariableDefiningNode*>(this));
+
     Int outputLb = std::numeric_limits<Int>::max();
     Int outputUb = std::numeric_limits<Int>::min();
 
@@ -28,13 +32,12 @@ class ArrayVarIntElementNode : public InvariantNode {
       outputUb = std::max(nodeUb, outputUb);
     }
 
-    b->imposeDomain({1, _as.size()});
+    b->imposeDomain({1, static_cast<Int>(_as.size())});
     output->imposeDomain({outputLb, outputUb});
   }
 
-  void registerWithEngine(
-      Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+  void registerWithEngine(Engine& engine,
+                          std::map<VariableNode*, VarId>& variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& as() const noexcept {
     return _as;

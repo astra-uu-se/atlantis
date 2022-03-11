@@ -1,7 +1,6 @@
 #include "invariantgraph/constraints/intLinLeNode.hpp"
 
 #include <algorithm>
-#include <limits>
 
 #include "../parseHelper.hpp"
 #include "constraints/lessEqual.hpp"
@@ -23,23 +22,20 @@ invariantgraph::IntLinLeNode::fromModelConstraint(
   return std::make_unique<IntLinLeNode>(coeffs, variables, bound);
 }
 
-VarId invariantgraph::IntLinLeNode::registerWithEngine(
-    Engine &engine, std::function<VarId(VariableNode *)> variableMapper) const {
+void invariantgraph::IntLinLeNode::registerWithEngine(
+    Engine &engine, std::map<VariableNode*, VarId>& variableMap) {
   auto [sumLb, sumUb] = getDomainBounds();
   auto sumVar = engine.makeIntVar(0, sumLb, sumUb);
 
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),
                  std::back_inserter(variables),
-                 [&](auto var) { return variableMapper(var); });
+                 [&](auto var) { return variableMap.at(var); });
   engine.makeInvariant<Linear>(_coeffs, variables, sumVar);
 
-  Int violationUb = std::max<Int>(0, std::numeric_limits<Int>::max() - _bound);
-  auto violation = engine.makeIntVar(0, 0, violationUb);
+  auto violation = registerViolation(engine, variableMap);
   auto bound = engine.makeIntVar(_bound, _bound, _bound);
   engine.makeConstraint<LessEqual>(violation, sumVar, bound);
-
-  return violation;
 }
 
 std::pair<Int, Int> invariantgraph::IntLinLeNode::getDomainBounds() const {

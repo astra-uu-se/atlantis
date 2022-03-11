@@ -27,14 +27,16 @@ TEST_F(MaxNodeTest, construction) {
   EXPECT_EQ(node->variables().size(), 2);
   EXPECT_EQ(node->variables()[0]->variable(), a);
   EXPECT_EQ(node->variables()[1]->variable(), b);
-  EXPECT_EQ(node->output()->variable(), c);
+  EXPECT_EQ(node->definedVariables().size(), 1);
+  EXPECT_EQ(node->definedVariables()[0]->variable(), c);
+  expectMarkedAsInput(node.get(), node->variables());
 }
 
 TEST_F(MaxNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine);
-  node->registerWithEngine(engine, engineVariableMapper);
+  registerVariables(engine, {a, b});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   EXPECT_EQ(engine.getLowerBound(engineVariable(c)), 5);

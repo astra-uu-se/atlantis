@@ -7,7 +7,7 @@ namespace invariantgraph {
 /**
  * Invariant that encodes y <- a ⊕ b, where ⊕ is some binary operation.
  */
-class BinaryOpNode : public InvariantNode {
+class BinaryOpNode : public VariableDefiningNode {
  private:
   VariableNode* _a;
   VariableNode* _b;
@@ -20,13 +20,13 @@ class BinaryOpNode : public InvariantNode {
           variableMap);
 
   BinaryOpNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : InvariantNode(output), _a(a), _b(b) {}
+      : VariableDefiningNode({output}, {a, b}), _a(a), _b(b) {}
 
   ~BinaryOpNode() override = default;
 
   void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::map<VariableNode*, VarId>& variableMap) override;
 
   [[nodiscard]] VariableNode* a() const noexcept { return _a; }
   [[nodiscard]] VariableNode* b() const noexcept { return _b; }

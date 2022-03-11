@@ -27,6 +27,8 @@ class IntLinEqNodeTest : public NodeTestBase {
 TEST_F(IntLinEqNodeTest, construction) {
   EXPECT_EQ(node->variables()[0]->variable(), a);
   EXPECT_EQ(node->variables()[1]->variable(), b);
+  expectMarkedAsInput(node.get(), node->variables());
+
   EXPECT_EQ(node->coeffs()[0], 1);
   EXPECT_EQ(node->coeffs()[1], 2);
   EXPECT_EQ(node->c(), 3);
@@ -35,10 +37,8 @@ TEST_F(IntLinEqNodeTest, construction) {
 TEST_F(IntLinEqNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  node->registerWithEngine(engine, [&](auto var) {
-    auto domain = var->variable()->domain();
-    return engine.makeIntVar(0, domain->lowerBound(), domain->upperBound());
-  });
+  registerVariables(engine, {a, b});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // a, b, the bound (which we have to represent as a variable, but it has a
