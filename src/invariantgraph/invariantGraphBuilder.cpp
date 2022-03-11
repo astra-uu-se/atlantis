@@ -24,11 +24,14 @@
 #include "invariantgraph/views/intLinNeReifNode.hpp"
 #include "invariantgraph/views/intLtReifNode.hpp"
 #include "invariantgraph/views/intNeReifNode.hpp"
+#include "invariantgraph/invariantGraphRoot.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
     const std::unique_ptr<fznparser::Model>& model) {
   _variableMap.clear();
+  _variables.clear();
+  _definingNodes.clear();
 
   createNodes(model);
 
@@ -101,6 +104,15 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
 
     _definingNodes.push_back(makeSoftConstraint(constraint));
   }
+
+  // Finally, define all free variables by the InvariantGraphRoot
+  std::vector<VariableNode*> freeVariables;
+  for (const auto& variableNode : _variables) {
+    if (definedVars.count(variableNode->variable()) == 0) {
+      freeVariables.push_back(variableNode.get());
+    }
+  }
+  _definingNodes.push_back(std::make_unique<invariantgraph::InvariantGraphRoot>(freeVariables));
 }
 
 // bool invariantgraph::InvariantGraphBuilder::canBeImplicit(
