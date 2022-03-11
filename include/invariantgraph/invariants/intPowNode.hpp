@@ -18,7 +18,7 @@ class IntPowNode : public BinaryOpNode {
     const auto& [aLb, aUb] = a->domain();
     const auto& [bLb, bUb] = b->domain();
 
-    output->imposeDomain({std::pow(aLb, bLb), std::pow(aUb, bUb)});
+    output->imposeDomain({static_cast<Int>(std::pow(aLb, bLb)), static_cast<Int>(std::pow(aUb, bUb))});
   }
 
   ~IntPowNode() override = default;
