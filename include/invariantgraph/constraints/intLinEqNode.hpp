@@ -16,15 +16,20 @@ class IntLinEqNode : public SoftConstraintNode {
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);
 
-  IntLinEqNode(std::vector<Int> coeffs,
-                             std::vector<VariableNode*> variables, Int c)
-      : _coeffs(std::move(coeffs)),
+  IntLinEqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
+               Int c)
+      : SoftConstraintNode(
+            [&] {
+              return std::max<Int>(0, std::numeric_limits<Int>::max() - c);
+            },
+            variables),
+        _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _c(c) {}
 
-  VarId registerWithEngine(
+  void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::map<VariableNode*, VarId>& variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;
@@ -35,7 +40,7 @@ class IntLinEqNode : public SoftConstraintNode {
   [[nodiscard]] Int c() const { return _c; }
 
  private:
-  std::pair<Int, Int> getDomainBounds() const;
+  [[nodiscard]] VariableNode::Domain getDomainBounds() const;
 };
 
 }  // namespace invariantgraph

@@ -1,7 +1,7 @@
 #include "invariantgraph/constraints/intNeNode.hpp"
 
-#include "constraints/notEqual.hpp"
 #include "../parseHelper.hpp"
+#include "constraints/notEqual.hpp"
 
 std::unique_ptr<invariantgraph::IntNeNode>
 invariantgraph::IntNeNode::fromModelConstraint(
@@ -17,12 +17,10 @@ invariantgraph::IntNeNode::fromModelConstraint(
   return std::make_unique<IntNeNode>(a, b);
 }
 
-VarId invariantgraph::IntNeNode::registerWithEngine(
-    Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
-  VarId violation = engine.makeIntVar(0, 0, 1);
+void invariantgraph::IntNeNode::registerWithEngine(
+    Engine& engine, std::map<VariableNode*, VarId>& variableMap) {
+  VarId violation = registerViolation(engine, variableMap);
 
-  engine.makeConstraint<::NotEqual>(violation, variableMapper(_a),
-                                 variableMapper(_b));
-
-  return violation;
+  engine.makeConstraint<::NotEqual>(violation, variableMap.at(_a),
+                                    variableMap.at(_b));
 }

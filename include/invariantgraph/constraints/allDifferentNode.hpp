@@ -11,16 +11,17 @@ class AllDifferentNode : public SoftConstraintNode {
 
  public:
   explicit AllDifferentNode(std::vector<VariableNode*> variables)
-      : _variables(std::move(variables)) {}
+      : SoftConstraintNode([&] { return variables.size(); }, variables),
+        _variables(std::move(variables)) {}
 
   static std::unique_ptr<AllDifferentNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);
 
-  VarId registerWithEngine(
+  void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::map<VariableNode*, VarId>& variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() {
     return _variables;

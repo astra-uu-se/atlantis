@@ -31,7 +31,10 @@ class ArrayVarIntElementNodeTest : public NodeTestBase {
 
 TEST_F(ArrayVarIntElementNodeTest, construction) {
   EXPECT_EQ(node->b()->variable(), idx);
-  EXPECT_EQ(node->output()->variable(), y);
+  EXPECT_EQ(node->definedVariables().size(), 1);
+  EXPECT_EQ(node->definedVariables()[0]->variable(), y);
+  expectMarkedAsInput(node.get(), {node->as()});
+  expectMarkedAsInput(node.get(), {node->b()});
 
   EXPECT_EQ(node->as().size(), 3);
   EXPECT_EQ(node->as()[0]->variable(), a);
@@ -42,8 +45,8 @@ TEST_F(ArrayVarIntElementNodeTest, construction) {
 TEST_F(ArrayVarIntElementNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine);
-  node->registerWithEngine(engine, engineVariableMapper);
+  registerVariables(engine, {a, b, c, idx});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // The index ranges over the variable array (first index is 1).

@@ -18,13 +18,14 @@ class IntLinNeNode : public SoftConstraintNode {
 
   IntLinNeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
                Int c)
-      : _coeffs(std::move(coeffs)),
+      : SoftConstraintNode([] { return 1; }, variables),
+        _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _c(c) {}
 
-  VarId registerWithEngine(
+  void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::map<VariableNode *, VarId> &variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;

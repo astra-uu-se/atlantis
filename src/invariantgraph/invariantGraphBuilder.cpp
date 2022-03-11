@@ -1,13 +1,11 @@
 #include "invariantgraph/invariantGraphBuilder.hpp"
 
-#include <algorithm>
-
 #include "invariantgraph/constraints/allDifferentNode.hpp"
 #include "invariantgraph/constraints/intEqNode.hpp"
 #include "invariantgraph/constraints/intLinEqNode.hpp"
+#include "invariantgraph/constraints/intLinLeNode.hpp"
 #include "invariantgraph/constraints/intLinNeNode.hpp"
 #include "invariantgraph/constraints/intNeNode.hpp"
-#include "invariantgraph/constraints/intLinLeNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/binaryOpNode.hpp"
@@ -35,8 +33,7 @@ invariantgraph::InvariantGraphBuilder::build(
   createNodes(model);
 
   auto graph = std::make_unique<invariantgraph::InvariantGraph>(
-      std::move(_variables), std::move(_invariants),
-      std::move(_softConstraints));
+      std::move(_variables), std::move(_definingNodes));
   return graph;
 }
 
@@ -68,33 +65,33 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       continue;
     }
 
-    if (auto view = makeView(constraint)) {
-      definedVars.emplace(view->variable());
-      _variables.push_back(std::move(view));
-    } else {
-      auto invariant = makeInvariant(constraint);
-      definedVars.emplace(invariant->output()->variable());
-      _invariants.push_back(std::move(invariant));
-    }
+    if (auto node = makeVariableDefiningNode(constraint)) {
+      for (const auto& variableNode : node->definedVariables()) {
+        assert(variableNode->variable());
+        definedVars.emplace(variableNode->variable());
+      }
 
-    processedConstraints.emplace(constraint);
+      _definingNodes.push_back(std::move(node));
+      processedConstraints.emplace(constraint);
+    }
   }
 
   // Second, define an implicit constraint (neighborhood) on remaining
   // constraints.
-  for (const auto& constraint : model->constraints()) {
-    if (processedConstraints.count(constraint) || !canBeImplicit(constraint) ||
-        !allVariablesFree(constraint, definedVars)) {
-      continue;
-    }
-
-    auto implicitConstraint = makeImplicitConstraint(constraint);
-    for (auto variableNode : implicitConstraint->definingVariables()) {
-      definedVars.emplace(variableNode->variable());
-    }
-    _implicitConstraints.push_back(std::move(implicitConstraint));
-    processedConstraints.emplace(constraint);
-  }
+  //  for (const auto& constraint : model->constraints()) {
+  //    if (processedConstraints.count(constraint) ||
+  //    !canBeImplicit(constraint) ||
+  //        !allVariablesFree(constraint, definedVars)) {
+  //      continue;
+  //    }
+  //
+  //    auto implicitConstraint = makeImplicitConstraint(constraint);
+  //    for (auto variableNode : implicitConstraint->definingVariables()) {
+  //      definedVars.emplace(variableNode->variable());
+  //    }
+  //    _implicitConstraints.push_back(std::move(implicitConstraint));
+  //    processedConstraints.emplace(constraint);
+  //  }
 
   // Third, define soft constraints.
   for (const auto& constraint : model->constraints()) {
@@ -102,143 +99,126 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       continue;
     }
 
-    _softConstraints.push_back(makeSoftConstraint(constraint));
+    _definingNodes.push_back(makeSoftConstraint(constraint));
   }
 }
 
-bool invariantgraph::InvariantGraphBuilder::canBeImplicit(
-    const ConstraintRef&) {
-  // TODO: Implicit constraints
-  return false;
-}
-
-// ==========================================================================
-// See the example at https://en.cppreference.com/w/cpp/utility/variant/visit
-template <class... Ts>
-struct overloaded : Ts... {
-  using Ts::operator()...;
-};
-// explicit deduction guide (not needed as of C++20)
-template <class... Ts>
-overloaded(Ts...) -> overloaded<Ts...>;
-// ==========================================================================
-
-bool invariantgraph::InvariantGraphBuilder::allVariablesFree(
-    const ConstraintRef& constraint,
-    const std::unordered_set<VarRef>& definedVars) {
-  auto isFree =
-      [&definedVars](const std::shared_ptr<fznparser::Literal>& literal) {
-        if (literal->type() != fznparser::LiteralType::SEARCH_VARIABLE)
-          return false;
-
-        return definedVars.count(
-                   std::dynamic_pointer_cast<fznparser::Variable>(literal)) > 0;
-      };
-
-  for (const auto& arg : constraint->arguments()) {
-    bool free = true;
-    std::visit(
-        overloaded{[&free, &isFree](
-                       const std::shared_ptr<fznparser::Literal>& literal) {
-                     if (!isFree(literal)) free = false;
-                   },
-                   [&free, &isFree](
-                       const std::vector<std::shared_ptr<fznparser::Literal>>&
-                           literals) {
-                     if (!std::all_of(literals.begin(), literals.end(), isFree))
-                       free = false;
-                   }},
-        arg);
-
-    if (!free) return false;
-  }
-
-  return true;
-}
-
-std::unique_ptr<invariantgraph::InvariantNode>
-invariantgraph::InvariantGraphBuilder::makeInvariant(
+// bool invariantgraph::InvariantGraphBuilder::canBeImplicit(
+//     const ConstraintRef&) {
+//   // TODO: Implicit constraints
+//   return false;
+// }
+//
+//// ==========================================================================
+//// See the example at https://en.cppreference.com/w/cpp/utility/variant/visit
+// template <class... Ts>
+// struct overloaded : Ts... {
+//   using Ts::operator()...;
+// };
+//// explicit deduction guide (not needed as of C++20)
+// template <class... Ts>
+// overloaded(Ts...) -> overloaded<Ts...>;
+//// ==========================================================================
+//
+// bool invariantgraph::InvariantGraphBuilder::allVariablesFree(
+//    const ConstraintRef& constraint,
+//    const std::unordered_set<VarRef>& definedVars) {
+//  auto isFree =
+//      [&definedVars](const std::shared_ptr<fznparser::Literal>& literal) {
+//        if (literal->type() != fznparser::LiteralType::SEARCH_VARIABLE)
+//          return false;
+//
+//        return definedVars.count(
+//                   std::dynamic_pointer_cast<fznparser::Variable>(literal)) >
+//                   0;
+//      };
+//
+//  for (const auto& arg : constraint->arguments()) {
+//    bool free = true;
+//    std::visit(
+//        overloaded{[&free, &isFree](
+//                       const std::shared_ptr<fznparser::Literal>& literal) {
+//                     if (!isFree(literal)) free = false;
+//                   },
+//                   [&free, &isFree](
+//                       const std::vector<std::shared_ptr<fznparser::Literal>>&
+//                           literals) {
+//                     if (!std::all_of(literals.begin(), literals.end(),
+//                     isFree))
+//                       free = false;
+//                   }},
+//        arg);
+//
+//    if (!free) return false;
+//  }
+//
+//  return true;
+//}
+//
+std::unique_ptr<invariantgraph::VariableDefiningNode>
+invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
     const ConstraintRef& constraint) {
   std::string_view name = constraint->name();
 
-#define INVARIANT_REGISTRATION(nameStr, nodeType)                       \
-  if (name == nameStr) {                                                \
-    return invariantgraph::nodeType::fromModelConstraint(               \
-        constraint, [this](auto var) { return _variableMap.at(var); }); \
-  }
+#define NODE_REGISTRATION(nameStr, nodeType)            \
+  if (name == nameStr)                                  \
+  return invariantgraph::nodeType::fromModelConstraint( \
+      constraint, [this](auto var) { return _variableMap.at(var); })
 
-#define BINARY_OP_REGISTRATION(nodeType)                                \
-  if (name == invariantgraph::nodeType::constraint_name()) {            \
-    return invariantgraph::BinaryOpNode::fromModelConstraint<           \
-        invariantgraph::nodeType>(                                      \
-        constraint, [this](auto var) { return _variableMap.at(var); }); \
-  }
+#define BINARY_OP_REGISTRATION(nodeType)                    \
+  if (name == invariantgraph::nodeType::constraint_name())  \
+  return invariantgraph::BinaryOpNode::fromModelConstraint< \
+      invariantgraph::nodeType>(                            \
+      constraint, [this](auto var) { return _variableMap.at(var); })
 
-  INVARIANT_REGISTRATION("array_int_maximum", MaxNode);
-  INVARIANT_REGISTRATION("array_int_minimum", MinNode);
-  INVARIANT_REGISTRATION("int_lin_eq", LinearNode);
-  INVARIANT_REGISTRATION("array_int_element", ArrayIntElementNode);
-  INVARIANT_REGISTRATION("array_var_int_element", ArrayVarIntElementNode);
+  NODE_REGISTRATION("int_lin_eq", LinearNode);
+  NODE_REGISTRATION("int_abs", IntAbsNode);
+  NODE_REGISTRATION("array_int_maximum", MaxNode);
+  NODE_REGISTRATION("array_int_minimum", MinNode);
+  NODE_REGISTRATION("array_int_element", ArrayIntElementNode);
+  NODE_REGISTRATION("array_var_int_element", ArrayVarIntElementNode);
   BINARY_OP_REGISTRATION(IntDivNode);
   BINARY_OP_REGISTRATION(IntModNode);
   BINARY_OP_REGISTRATION(IntTimesNode);
   BINARY_OP_REGISTRATION(IntPowNode);
+  NODE_REGISTRATION("int_abs", IntAbsNode);
+  NODE_REGISTRATION("int_eq_reif", IntEqReifNode);
+  NODE_REGISTRATION("int_le_reif", IntLeReifNode);
+  NODE_REGISTRATION("int_lin_eq_reif", IntLinEqReifNode);
+  NODE_REGISTRATION("int_lin_le_reif", IntLinLeReifNode);
+  NODE_REGISTRATION("int_lin_ne_reif", IntLinNeReifNode);
+  NODE_REGISTRATION("int_lt_reif", IntLtReifNode);
+  NODE_REGISTRATION("int_ne_reif", IntNeReifNode);
 
   throw std::runtime_error("Unsupported constraint: " + std::string(name));
 #undef BINARY_OP_REGISTRATION
-#undef INVARIANT_REGISTRATION
+#undef NODE_REGISTRATION
 }
 
-std::unique_ptr<invariantgraph::ImplicitConstraintNode>
-invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
-    const ConstraintRef&) {
-  return std::make_unique<invariantgraph::ImplicitConstraintNode>();
-}
-
+// std::unique_ptr<invariantgraph::ImplicitConstraintNode>
+// invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
+//    const ConstraintRef&) {
+//  return std::make_unique<invariantgraph::ImplicitConstraintNode>();
+//}
+//
 std::unique_ptr<invariantgraph::SoftConstraintNode>
 invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
     const ConstraintRef& constraint) {
   std::string_view name = constraint->name();
 
-#define CONSTRAINT_REGISTRATION(nameStr, nodeType)                      \
-  if (name == nameStr) {                                                \
-    return invariantgraph::nodeType::fromModelConstraint(               \
-        constraint, [this](auto var) { return _variableMap.at(var); }); \
-  }
+#define NODE_REGISTRATION(nameStr, nodeType)            \
+  if (name == nameStr)                                  \
+  return invariantgraph::nodeType::fromModelConstraint( \
+      constraint, [this](auto var) { return _variableMap.at(var); })
 
-  CONSTRAINT_REGISTRATION("alldifferent", AllDifferentNode);
-  CONSTRAINT_REGISTRATION("int_lin_le", IntLinLeNode);
-  CONSTRAINT_REGISTRATION("int_lin_eq", IntLinEqNode);
-  CONSTRAINT_REGISTRATION("int_lin_ne", IntLinNeNode);
-  CONSTRAINT_REGISTRATION("int_eq", IntEqNode);
-  CONSTRAINT_REGISTRATION("int_ne", IntNeNode);
+  NODE_REGISTRATION("alldifferent", AllDifferentNode);
+  NODE_REGISTRATION("int_lin_le", IntLinLeNode);
+  NODE_REGISTRATION("int_lin_eq", IntLinEqNode);
+  NODE_REGISTRATION("int_lin_ne", IntLinNeNode);
+  NODE_REGISTRATION("int_eq", IntEqNode);
+  NODE_REGISTRATION("int_ne", IntNeNode);
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint->name()));
-#undef CONSTRAINT_REGISTRATION
-}
-
-std::unique_ptr<invariantgraph::ViewNode>
-invariantgraph::InvariantGraphBuilder::makeView(
-    const ConstraintRef& constraint) {
-  auto name = constraint->name();
-
-#define VIEW_REGISTRATION(nameStr, nodeType)                            \
-  if (name == nameStr) {                                                \
-    return invariantgraph::nodeType::fromModelConstraint(               \
-        constraint, [this](auto var) { return _variableMap.at(var); }); \
-  }
-
-  VIEW_REGISTRATION("int_abs", IntAbsNode);
-  VIEW_REGISTRATION("int_eq_reif", IntEqReifNode);
-  VIEW_REGISTRATION("int_le_reif", IntLeReifNode);
-  VIEW_REGISTRATION("int_lin_eq_reif", IntLinEqReifNode);
-  VIEW_REGISTRATION("int_lin_le_reif", IntLinLeReifNode);
-  VIEW_REGISTRATION("int_lin_ne_reif", IntLinNeReifNode);
-  VIEW_REGISTRATION("int_lt_reif", IntLtReifNode);
-  VIEW_REGISTRATION("int_ne_reif", IntNeReifNode);
-
-  return nullptr;
-
-#undef VIEW_REGISTRATION
+#undef NODE_REGISTRATION
 }

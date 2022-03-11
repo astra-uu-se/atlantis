@@ -6,7 +6,7 @@
 #include "fznparser/constraint.hpp"
 
 namespace invariantgraph {
-class MinNode : public InvariantNode {
+class MinNode : public VariableDefiningNode {
  private:
   std::vector<VariableNode*> _variables;
 
@@ -17,7 +17,8 @@ class MinNode : public InvariantNode {
           variableMap);
 
   MinNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : InvariantNode(output), _variables(std::move(variables)) {
+      : VariableDefiningNode({output}, variables),
+        _variables(std::move(variables)) {
     Int outputLb = std::numeric_limits<Int>::max();
     Int outputUb = std::numeric_limits<Int>::max();
 
@@ -34,7 +35,7 @@ class MinNode : public InvariantNode {
 
   void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const override;
+      std::map<VariableNode*, VarId>& variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;

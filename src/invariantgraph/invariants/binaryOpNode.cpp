@@ -1,10 +1,10 @@
 #include "invariantgraph/invariants/binaryOpNode.hpp"
 
+#include "../parseHelper.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
 #include "invariantgraph/invariants/intPowNode.hpp"
 #include "invariantgraph/invariants/intTimesNode.hpp"
-#include "../parseHelper.hpp"
 
 template <typename T>
 std::unique_ptr<T> invariantgraph::BinaryOpNode::fromModelConstraint(
@@ -32,9 +32,10 @@ std::unique_ptr<T> invariantgraph::BinaryOpNode::fromModelConstraint(
 }
 
 void invariantgraph::BinaryOpNode::registerWithEngine(
-    Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
-  createInvariant(engine, variableMapper(_a), variableMapper(_b),
-                  variableMapper(output()));
+    Engine& engine, std::map<VariableNode*, VarId>& variableMap) {
+  auto outputId =
+      registerDefinedVariable(engine, variableMap, definedVariables()[0]);
+  createInvariant(engine, variableMap.at(_a), variableMap.at(_b), outputId);
 }
 
 // Instantiation of the binary operator factory methods.

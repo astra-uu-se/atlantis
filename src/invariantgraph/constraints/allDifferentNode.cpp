@@ -1,7 +1,5 @@
 #include "invariantgraph/constraints/allDifferentNode.hpp"
 
-#include <utility>
-
 #include "../parseHelper.hpp"
 #include "constraints/allDifferent.hpp"
 
@@ -18,15 +16,15 @@ invariantgraph::AllDifferentNode::fromModelConstraint(
   return std::make_unique<AllDifferentNode>(variables);
 }
 
-VarId invariantgraph::AllDifferentNode::registerWithEngine(
-    Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
-  VarId violation = engine.makeIntVar(0, 0, _variables.size());
+void invariantgraph::AllDifferentNode::registerWithEngine(
+    Engine& engine, std::map<VariableNode*, VarId>& variableMap) {
+  VarId violation = registerViolation(engine, variableMap);
 
   std::vector<VarId> engineVariables;
   std::transform(_variables.begin(), _variables.end(),
-                 std::back_inserter(engineVariables), variableMapper);
+                 std::back_inserter(engineVariables), [&](const auto& var) {
+                   return variableMap.at(var);
+                 });
 
   engine.makeConstraint<AllDifferent>(violation, engineVariables);
-
-  return violation;
 }

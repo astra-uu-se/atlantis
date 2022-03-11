@@ -27,16 +27,16 @@ class IntLinNeReifNodeTest : public NodeTestBase {
   }
 };
 
-TEST_F(IntLinNeReifNodeTest, construction) { EXPECT_EQ(node->variable(), r); }
+TEST_F(IntLinNeReifNodeTest, construction) {
+  EXPECT_EQ(node->definedVariables().size(), 1);
+  EXPECT_EQ(node->definedVariables()[0]->variable(), r);
+}
 
 TEST_F(IntLinNeReifNodeTest, application) {
-  std::map<invariantgraph::VariableNode*, VarId> variableMap;
-
   PropagationEngine engine;
   engine.open();
-  for (const auto& var : _variables)
-    var->registerWithEngine(engine, variableMap);
-  node->registerWithEngine(engine, variableMap);
+  registerVariables(engine, {a, b});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // a, b
@@ -44,7 +44,4 @@ TEST_F(IntLinNeReifNodeTest, application) {
 
   // a, b and r
   EXPECT_EQ(engine.getNumVariables(), 5);
-
-  // a, b and r
-  EXPECT_EQ(variableMap.size(), 3);
 }

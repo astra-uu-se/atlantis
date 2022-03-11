@@ -20,22 +20,20 @@ invariantgraph::IntLinNeNode::fromModelConstraint(
   return std::make_unique<IntLinNeNode>(coeffs, variables, c);
 }
 
-VarId invariantgraph::IntLinNeNode::registerWithEngine(
-    Engine &engine, std::function<VarId(VariableNode *)> variableMapper) const {
+void invariantgraph::IntLinNeNode::registerWithEngine(
+    Engine &engine, std::map<VariableNode *, VarId> &variableMap) {
   auto [sumLb, sumUb] = getLinearDomainBounds();
   auto sumVar = engine.makeIntVar(0, sumLb, sumUb);
 
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),
                  std::back_inserter(variables),
-                 [&](auto var) { return variableMapper(var); });
+                 [&](auto var) { return variableMap.at(var); });
   engine.makeInvariant<Linear>(_coeffs, variables, sumVar);
 
-  auto violation = engine.makeIntVar(0, 0, 1);
+  auto violation = registerViolation(engine, variableMap);
   auto c = engine.makeIntVar(_c, _c, _c);
   engine.makeConstraint<NotEqual>(violation, sumVar, c);
-
-  return violation;
 }
 
 std::pair<Int, Int>

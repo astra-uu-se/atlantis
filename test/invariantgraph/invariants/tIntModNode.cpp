@@ -26,14 +26,16 @@ class IntModNodeTest : public NodeTestBase {
 TEST_F(IntModNodeTest, construction) {
   EXPECT_EQ(node->a()->variable(), a);
   EXPECT_EQ(node->b()->variable(), b);
-  EXPECT_EQ(node->output()->variable(), c);
+  EXPECT_EQ(node->definedVariables().size(), 1);
+  EXPECT_EQ(node->definedVariables()[0]->variable(), c);
+  expectMarkedAsInput(node.get(), {node->a(), node->b()});
 }
 
 TEST_F(IntModNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine);
-  node->registerWithEngine(engine, engineVariableMapper);
+  registerVariables(engine, {a, b});
+  node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   EXPECT_EQ(engine.getLowerBound(engineVariable(c)), 0);

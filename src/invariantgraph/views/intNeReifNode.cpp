@@ -14,7 +14,7 @@ invariantgraph::IntNeReifNode::fromModelConstraint(
 
   MAPPED_SEARCH_VARIABLE_ARG(a, constraint->arguments()[0], variableMap);
   MAPPED_SEARCH_VARIABLE_ARG(b, constraint->arguments()[1], variableMap);
-  SEARCH_VARIABLE_ARG(r, constraint->arguments()[2]);
+  MAPPED_SEARCH_VARIABLE_ARG(r, constraint->arguments()[2], variableMap);
 
   return std::make_unique<invariantgraph::IntNeReifNode>(
       std::make_unique<invariantgraph::IntEqNode>(a, b), r);

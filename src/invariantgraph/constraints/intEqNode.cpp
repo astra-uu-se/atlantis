@@ -14,19 +14,10 @@ invariantgraph::IntEqNode::fromModelConstraint(
   return std::make_unique<IntEqNode>(a, b);
 }
 
-VarId invariantgraph::IntEqNode::registerWithEngine(
-    Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
-  auto al = _a->variable()->domain()->lowerBound();
-  auto au = _a->variable()->domain()->upperBound();
-  auto bl = _b->variable()->domain()->lowerBound();
-  auto bu = _b->variable()->domain()->upperBound();
+void invariantgraph::IntEqNode::registerWithEngine(
+    Engine& engine, std::map<VariableNode *, VarId> &variableMap) {
+  VarId violation = registerViolation(engine, variableMap);
 
-  auto diff1 = std::abs(al - bu);
-  auto diff2 = std::abs(au - bl);
-  VarId violation = engine.makeIntVar(0, 0, std::max(diff1, diff2));
-
-  engine.makeConstraint<::Equal>(violation, variableMapper(_a),
-                                 variableMapper(_b));
-
-  return violation;
+  engine.makeConstraint<::Equal>(violation, variableMap.at(_a),
+                                 variableMap.at(_b));
 }

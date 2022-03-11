@@ -13,8 +13,8 @@ class IntNeReifNode : public ReifiedConstraint {
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);
 
-  IntNeReifNode(std::unique_ptr<SoftConstraintNode> constraint, std::shared_ptr<fznparser::SearchVariable> r)
-      : ReifiedConstraint(std::move(constraint), std::move(r)) {}
+  IntNeReifNode(std::unique_ptr<SoftConstraintNode> constraint, VariableNode* r)
+      : ReifiedConstraint(std::move(constraint), r) {}
 };
 
 }  // namespace invariantgraph
