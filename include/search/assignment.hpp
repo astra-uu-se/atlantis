@@ -51,8 +51,14 @@ class Assignment {
    * @param modificationFunc The callback which sets the variables and their
    * new values.
    */
-  void assign(
-      const std::function<void(AssignmentModification&)>& modificationFunc);
+  template <typename Callback>
+  void assign(Callback modificationFunc) {
+    move(modificationFunc);
+
+    _engine.beginCommit();
+    _engine.query(_objective);
+    _engine.endCommit();
+  }
 
   /**
    * Probe the cost of a modification to the assignment. Works similarly to
@@ -62,8 +68,17 @@ class Assignment {
    * new values for the probe.
    * @return The cost of the assignment if the altered values were committed.
    */
-  Cost probe(
-      const std::function<void(AssignmentModification&)>& modificationFunc);
+  template <typename Callback>
+  Cost probe(Callback modificationFunc) {
+    move(modificationFunc);
+
+    _engine.beginQuery();
+    _engine.query(_objective);
+    _engine.query(_violation);
+    _engine.endQuery();
+
+    return {_engine.getNewValue(_violation), _engine.getNewValue(_objective)};
+  }
 
   /**
    * Get the value of a variable in the current assignment.
@@ -85,7 +100,13 @@ class Assignment {
   [[nodiscard]] Cost cost() const noexcept;
 
  private:
-  void move(const std::function<void(AssignmentModification&)>& modificationFunc);
+  template <typename Callback>
+  void move(Callback modificationFunc) {
+    _engine.beginMove();
+    AssignmentModification modifications(_engine);
+    modificationFunc(modifications);
+    _engine.endMove();
+  }
 };
 
 }  // namespace search
