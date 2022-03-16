@@ -28,18 +28,18 @@ class MockIntDiv : public IntDiv {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           IntDiv::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextInput)
+    ON_CALL(*this, nextInput)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return IntDiv::getNextInput(ts, engine);
+          return IntDiv::nextInput(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
           IntDiv::notifyCurrentInputChanged(ts, engine);
         });
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          IntDiv::notifyIntChanged(ts, engine, id);
+          IntDiv::notifyInputChanged(ts, engine, id);
         });
     ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
       IntDiv::commit(ts, engine);
@@ -48,11 +48,11 @@ class MockIntDiv : public IntDiv {
 
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged,
+  MOCK_METHOD(void, notifyInputChanged,
               (Timestamp ts, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
@@ -65,7 +65,7 @@ class IntDivTest : public ::testing::Test {
     engine = std::make_unique<PropagationEngine>();
   }
 
-  void testNotifications(PropagationEngine::PropagationMode propMode) {
+  void testNotifications(PropagationMode propMode) {
     engine->open();
 
     VarId a = engine->makeIntVar(-10, -100, 100);
@@ -73,7 +73,7 @@ class IntDivTest : public ::testing::Test {
 
     VarId output = engine->makeIntVar(0, 0, 200);
 
-    auto invariant = engine->makeInvariant<MockIntDiv>(a, b, output);
+    auto invariant = &engine->makeInvariant<MockIntDiv>(a, b, output);
 
     EXPECT_TRUE(invariant->initialized);
 
@@ -86,21 +86,21 @@ class IntDivTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->propagationMode ==
-        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(0);
+    if (engine->propagationMode() ==
+        PropagationMode::INPUT_TO_OUTPUT) {
+      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(0);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(*invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(3);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(*invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 
@@ -108,9 +108,9 @@ class IntDivTest : public ::testing::Test {
     engine->setValue(a, 0);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(output);
-    engine->endQuery();
+    engine->endProbe();
   }
 };
 
@@ -121,7 +121,7 @@ TEST_F(IntDivTest, CreateIntDiv) {
   auto b = engine->makeIntVar(5, -100, 100);
   auto c = engine->makeIntVar(0, 0, 200);
 
-  auto invariant = engine->makeInvariant<MockIntDiv>(a, b, c);
+  auto invariant = &engine->makeInvariant<MockIntDiv>(a, b, c);
 
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
@@ -129,7 +129,7 @@ TEST_F(IntDivTest, CreateIntDiv) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(c), 2);
+  EXPECT_EQ(engine->currentValue(c), 2);
 }
 
 TEST_F(IntDivTest, Modification) {
@@ -139,22 +139,22 @@ TEST_F(IntDivTest, Modification) {
   auto b = engine->makeIntVar(2, -100, 100);
   auto c = engine->makeIntVar(0, 0, 200);
 
-  auto invariant = engine->makeInvariant<MockIntDiv>(a, b, c);
+  auto invariant = &engine->makeInvariant<MockIntDiv>(a, b, c);
 
   EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
   EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
-  if (engine->propagationMode ==
-      PropagationEngine::PropagationMode::INPUT_TO_OUTPUT) {
+  if (engine->propagationMode() ==
+      PropagationMode::INPUT_TO_OUTPUT) {
     EXPECT_CALL(*invariant,
-                notifyIntChanged(testing::_, testing::_, testing::_))
+                notifyInputChanged(testing::_, testing::_, testing::_))
         .Times(AtLeast(1));
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(AnyNumber());
-  } else if (engine->propagationMode ==
-             PropagationEngine::PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, getNextInput(testing::_, testing::_))
+  } else if (engine->propagationMode() ==
+             PropagationMode::OUTPUT_TO_INPUT) {
+    EXPECT_CALL(*invariant, nextInput(testing::_, testing::_))
         .Times(AtLeast(2));
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
         .Times(Exactly(1));
@@ -162,29 +162,25 @@ TEST_F(IntDivTest, Modification) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(c), 5);
+  EXPECT_EQ(engine->currentValue(c), 5);
 
   engine->beginMove();
   engine->setValue(a, 8);
   engine->endMove();
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(c);
-  engine->endQuery();
+  engine->endProbe();
 
-  EXPECT_EQ(engine->getNewValue(c), 4);
+  EXPECT_EQ(engine->currentValue(c), 4);
 }
 
 TEST_F(IntDivTest, NotificationsInputToOutput) {
-  testNotifications(PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+  testNotifications(PropagationMode::INPUT_TO_OUTPUT);
 }
 
 TEST_F(IntDivTest, NotificationsOutputToInput) {
-  testNotifications(PropagationEngine::PropagationMode::OUTPUT_TO_INPUT);
-}
-
-TEST_F(IntDivTest, NotificationsMixed) {
-  testNotifications(PropagationEngine::PropagationMode::MIXED);
+  testNotifications(PropagationMode::OUTPUT_TO_INPUT);
 }
 
 }  // namespace

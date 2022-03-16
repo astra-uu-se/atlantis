@@ -46,19 +46,19 @@ TEST_F(ArrayIntElementNodeTest, application) {
   engine.close();
 
   // The index ranges over the as array (first index is 1).
-  EXPECT_EQ(engine.getLowerBound(engineVariable(b)), 1);
-  EXPECT_EQ(engine.getUpperBound(engineVariable(b)), as.size());
+  EXPECT_EQ(engine.lowerBound(engineVariable(b)), 1);
+  EXPECT_EQ(engine.upperBound(engineVariable(b)), as.size());
 
   // The output domain should contain all elements in as.
-  EXPECT_EQ(engine.getLowerBound(engineVariable(c)), 1);
-  EXPECT_EQ(engine.getUpperBound(engineVariable(c)), 3);
+  EXPECT_EQ(engine.lowerBound(engineVariable(c)), 1);
+  EXPECT_EQ(engine.upperBound(engineVariable(c)), 3);
 
   // b
-  EXPECT_EQ(engine.getDecisionVariables().size(), 1);
+  EXPECT_EQ(engine.searchVariables().size(), 1);
 
   // b and c
-  EXPECT_EQ(engine.getNumVariables(), 2);
+  EXPECT_EQ(engine.numVariables(), 2);
 
   // elementConst
-  EXPECT_EQ(engine.getNumInvariants(), 1);
+  EXPECT_EQ(engine.numInvariants(), 1);
 }

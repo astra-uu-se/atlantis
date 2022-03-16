@@ -72,12 +72,12 @@ class Assignment {
   Cost probe(Callback modificationFunc) {
     move(modificationFunc);
 
-    _engine.beginQuery();
+    _engine.beginProbe();
     _engine.query(_objective);
     _engine.query(_violation);
-    _engine.endQuery();
+    _engine.endProbe();
 
-    return {_engine.getNewValue(_violation), _engine.getNewValue(_objective)};
+    return {_engine.currentValue(_violation), _engine.currentValue(_objective)};
   }
 
   /**

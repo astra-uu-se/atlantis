@@ -13,12 +13,12 @@ void IntDiv::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 void IntDiv::recompute(Timestamp ts, Engine& engine) {
   // TODO: How to handle division by 0?
   updateValue(ts, engine, _y,
-              engine.getValue(ts, _a) / engine.getValue(ts, _b));
+              engine.value(ts, _a) / engine.value(ts, _b));
 }
 
-VarId IntDiv::getNextInput(Timestamp ts, Engine&) {
+VarId IntDiv::nextInput(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
-  switch (_state.getValue(ts)) {
+  switch (_state.value(ts)) {
     case 0:
       return _a;
     case 1:
@@ -32,7 +32,7 @@ void IntDiv::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
   recompute(ts, engine);
 }
 
-void IntDiv::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void IntDiv::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 

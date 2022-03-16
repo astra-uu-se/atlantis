@@ -23,18 +23,18 @@ void NotEqual::init(Timestamp, Engine& engine) {
 
 void NotEqual::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _violationId,
-              engine.getValue(ts, _x) == engine.getValue(ts, _y));
+              engine.value(ts, _x) == engine.value(ts, _y));
 }
 
-void NotEqual::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void NotEqual::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId NotEqual::getNextInput(Timestamp ts, Engine&) {
+VarId NotEqual::nextInput(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
   // todo: maybe this can be faster by first checking null and then doing
   // ==0?_x:_y;
-  switch (_state.getValue(ts)) {
+  switch (_state.value(ts)) {
     case 0:
       return _x;
     case 1:

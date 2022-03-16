@@ -50,20 +50,20 @@ TEST_F(ArrayVarIntElementNodeTest, application) {
   engine.close();
 
   // The index ranges over the variable array (first index is 1).
-  EXPECT_EQ(engine.getLowerBound(engineVariable(idx)), 1);
-  EXPECT_EQ(engine.getUpperBound(engineVariable(idx)), 3);
+  EXPECT_EQ(engine.lowerBound(engineVariable(idx)), 1);
+  EXPECT_EQ(engine.upperBound(engineVariable(idx)), 3);
 
   // The output domain should contain all values in all elements of the variable
   // array.
-  EXPECT_EQ(engine.getLowerBound(engineVariable(y)), 1);
-  EXPECT_EQ(engine.getUpperBound(engineVariable(y)), 11);
+  EXPECT_EQ(engine.lowerBound(engineVariable(y)), 1);
+  EXPECT_EQ(engine.upperBound(engineVariable(y)), 11);
 
   // a, b, c, idx
-  EXPECT_EQ(engine.getDecisionVariables().size(), 4);
+  EXPECT_EQ(engine.searchVariables().size(), 4);
 
   // a, b, c, idx, y
-  EXPECT_EQ(engine.getNumVariables(), 5);
+  EXPECT_EQ(engine.numVariables(), 5);
 
   // elementVar
-  EXPECT_EQ(engine.getNumInvariants(), 1);
+  EXPECT_EQ(engine.numInvariants(), 1);
 }

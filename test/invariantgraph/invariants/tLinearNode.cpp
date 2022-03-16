@@ -45,15 +45,15 @@ TEST_F(LinearNodeTest, application) {
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  EXPECT_EQ(engine.getLowerBound(engineVariable(a)), 0);
-  EXPECT_EQ(engine.getUpperBound(engineVariable(a)), 4);
+  EXPECT_EQ(engine.lowerBound(engineVariable(a)), 0);
+  EXPECT_EQ(engine.upperBound(engineVariable(a)), 4);
 
   // b
-  EXPECT_EQ(engine.getDecisionVariables().size(), 1);
+  EXPECT_EQ(engine.searchVariables().size(), 1);
 
   // b, intermediate (a is a view, and is not counted here)
-  EXPECT_EQ(engine.getNumVariables(), 2);
+  EXPECT_EQ(engine.numVariables(), 2);
 
   // linear
-  EXPECT_EQ(engine.getNumInvariants(), 1);
+  EXPECT_EQ(engine.numInvariants(), 1);
 }

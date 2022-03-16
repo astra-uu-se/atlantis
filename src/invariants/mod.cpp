@@ -16,16 +16,16 @@ void Mod::init([[maybe_unused]] Timestamp ts, Engine& engine) {
 
 void Mod::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _y,
-              std::abs(engine.getValue(ts, _a) % engine.getValue(ts, _b)));
+              std::abs(engine.value(ts, _a) % engine.value(ts, _b)));
 }
 
-void Mod::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void Mod::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId Mod::getNextInput(Timestamp ts, Engine&) {
+VarId Mod::nextInput(Timestamp ts, Engine&) {
   _state.incValue(ts, 1);
-  switch (_state.getValue(ts)) {
+  switch (_state.value(ts)) {
     case 0:
       return _a;
     case 1:

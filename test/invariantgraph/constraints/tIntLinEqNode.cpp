@@ -43,12 +43,12 @@ TEST_F(IntLinEqNodeTest, application) {
 
   // a, b, the bound (which we have to represent as a variable, but it has a
   // unit domain so a search wouldn't use it).
-  EXPECT_EQ(engine.getDecisionVariables().size(), 3);
+  EXPECT_EQ(engine.searchVariables().size(), 3);
 
   // a, b, the linear sum of a and b, the bound (we have to represent it as an
   // IntVar), the violation of the <= constraint.
-  EXPECT_EQ(engine.getNumVariables(), 5);
+  EXPECT_EQ(engine.numVariables(), 5);
 
   // linear and <=
-  EXPECT_EQ(engine.getNumInvariants(), 2);
+  EXPECT_EQ(engine.numInvariants(), 2);
 }

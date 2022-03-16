@@ -65,7 +65,7 @@ void invariantgraph::LinearNode::registerWithEngine(
   engine.makeInvariant<::Linear>(_coeffs, variables, l);
 
   auto outputVar = engine.makeIntView<IntOffsetView>(l, _offset);
-  variableMap.emplace(definedVariables()[0], outputVar->getId());
+  variableMap.emplace(definedVariables()[0], outputVar);
 }
 
 std::pair<Int, Int> invariantgraph::LinearNode::getIntermediateDomain() const {

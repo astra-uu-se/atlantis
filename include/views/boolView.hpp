@@ -9,8 +9,8 @@ class BoolView : public IntView {
  public:
   explicit BoolView(const VarId parentId) : IntView(parentId) {}
 
-  Int getValue(Timestamp) override;
-  Int getCommittedValue() override;
-  Int getLowerBound() override { return 0; }
-  Int getUpperBound() override { return 1; }
+  [[nodiscard]] Int value(Timestamp) const override;
+  [[nodiscard]] Int committedValue() const override;
+  [[nodiscard]] Int lowerBound() const override { return 0; }
+  [[nodiscard]] Int upperBound() const override { return 1; }
 };

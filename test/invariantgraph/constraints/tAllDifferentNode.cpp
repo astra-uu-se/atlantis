@@ -42,14 +42,14 @@ TEST_F(AllDifferentNodeTest, application) {
   engine.close();
 
   // a, b, c and d
-  EXPECT_EQ(engine.getDecisionVariables().size(), 4);
+  EXPECT_EQ(engine.searchVariables().size(), 4);
 
   // a, b, c, d and the violation
-  EXPECT_EQ(engine.getNumVariables(), 5);
+  EXPECT_EQ(engine.numVariables(), 5);
 
   // alldifferent
-  EXPECT_EQ(engine.getNumInvariants(), 1);
+  EXPECT_EQ(engine.numInvariants(), 1);
 
-  EXPECT_EQ(engine.getLowerBound(_variableMap.at(node->violation())), 0);
-  EXPECT_EQ(engine.getUpperBound(_variableMap.at(node->violation())), 4);
+  EXPECT_EQ(engine.lowerBound(_variableMap.at(node->violation())), 0);
+  EXPECT_EQ(engine.upperBound(_variableMap.at(node->violation())), 4);
 }

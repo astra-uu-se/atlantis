@@ -9,7 +9,7 @@ static Int totalViolationsUpperBound(Engine& engine,
                                      const std::vector<VarId>& violations) {
   return std::accumulate(violations.begin(), violations.end(), 0,
                          [&](auto sum, const auto& var) {
-                           return sum + engine.getUpperBound(var);
+                           return sum + engine.upperBound(var);
                          });
 }
 

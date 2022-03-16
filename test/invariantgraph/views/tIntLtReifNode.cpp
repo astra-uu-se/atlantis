@@ -34,8 +34,8 @@ TEST_F(IntLtReifNodeTest, application) {
   engine.close();
 
   // a, b
-  EXPECT_EQ(engine.getDecisionVariables().size(), 2);
+  EXPECT_EQ(engine.searchVariables().size(), 2);
 
   // a, b and r
-  EXPECT_EQ(engine.getNumVariables(), 3);
+  EXPECT_EQ(engine.numVariables(), 3);
 }

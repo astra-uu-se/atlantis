@@ -37,15 +37,15 @@ TEST_F(MinNodeTest, application) {
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  EXPECT_EQ(engine.getLowerBound(engineVariable(c)), -5);
-  EXPECT_EQ(engine.getUpperBound(engineVariable(c)), 5);
+  EXPECT_EQ(engine.lowerBound(engineVariable(c)), -5);
+  EXPECT_EQ(engine.upperBound(engineVariable(c)), 5);
 
   // a and b
-  EXPECT_EQ(engine.getDecisionVariables().size(), 2);
+  EXPECT_EQ(engine.searchVariables().size(), 2);
 
   // a, b and c
-  EXPECT_EQ(engine.getNumVariables(), 3);
+  EXPECT_EQ(engine.numVariables(), 3);
 
   // minSparse
-  EXPECT_EQ(engine.getNumInvariants(), 1);
+  EXPECT_EQ(engine.numInvariants(), 1);
 }

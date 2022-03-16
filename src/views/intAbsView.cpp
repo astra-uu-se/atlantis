@@ -2,18 +2,18 @@
 
 #include "core/engine.hpp"
 
-Int IntAbsView::getValue(Timestamp ts) {
-  return std::abs(_engine->getValue(ts, _parentId));
+Int IntAbsView::value(Timestamp ts) const {
+  return std::abs(_engine->value(ts, _parentId));
 }
 
-Int IntAbsView::getCommittedValue() {
-  return std::abs(_engine->getCommittedValue(_parentId));
+Int IntAbsView::committedValue() const {
+  return std::abs(_engine->committedValue(_parentId));
 }
 
-Int IntAbsView::getLowerBound() {
-  return std::min(std::abs(_engine->getLowerBound(_parentId)), std::abs(_engine->getUpperBound(_parentId)));
+Int IntAbsView::lowerBound() const {
+  return std::min(std::abs(_engine->lowerBound(_parentId)), std::abs(_engine->upperBound(_parentId)));
 }
 
-Int IntAbsView::getUpperBound() {
-  return std::max(std::abs(_engine->getLowerBound(_parentId)), std::abs(_engine->getUpperBound(_parentId)));
+Int IntAbsView::upperBound() const {
+  return std::max(std::abs(_engine->lowerBound(_parentId)), std::abs(_engine->upperBound(_parentId)));
 }

@@ -21,10 +21,10 @@ TEST_F(BoolViewTest, CreateBoolView) {
 
   const VarId var = engine->makeIntVar(10, 0, 10);
   auto viewOfVar = engine->makeIntView<BoolView>(var);
-  auto viewOfView = engine->makeIntView<BoolView>(viewOfVar->getId());
+  auto viewOfView = engine->makeIntView<BoolView>(viewOfVar);
 
-  EXPECT_EQ(viewOfVar->getCommittedValue(), Int(1));
-  EXPECT_EQ(viewOfView->getCommittedValue(), Int(1));
+  EXPECT_EQ(engine->committedValue(viewOfVar), Int(1));
+  EXPECT_EQ(engine->committedValue(viewOfView), Int(1));
 
   engine->close();
 }
@@ -35,37 +35,36 @@ TEST_F(BoolViewTest, ComputeBounds) {
 
   auto va = engine->makeIntView<BoolView>(a);
 
-  EXPECT_EQ(engine->getLowerBound(va->getId()), Int(0));
-  EXPECT_EQ(engine->getUpperBound(va->getId()), Int(1));
+  EXPECT_EQ(engine->lowerBound(va), Int(0));
+  EXPECT_EQ(engine->upperBound(va), Int(1));
 
   engine->close();
 
-  EXPECT_EQ(engine->getLowerBound(va->getId()), Int(0));
-  EXPECT_EQ(engine->getUpperBound(va->getId()), Int(1));
+  EXPECT_EQ(engine->lowerBound(va), Int(0));
+  EXPECT_EQ(engine->upperBound(va), Int(1));
 }
 
 TEST_F(BoolViewTest, RecomputeBoolView) {
   engine->open();
   auto a = engine->makeIntVar(20, -100, 100);
 
-  auto viewOfVar = engine->makeIntView<BoolView>(a);
-  VarId viewOfVarId = viewOfVar->getId();
+  auto viewOfVarId = engine->makeIntView<BoolView>(a);
 
-  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(1));
+  EXPECT_EQ(engine->currentValue(viewOfVarId), Int(1));
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(1));
+  EXPECT_EQ(engine->currentValue(viewOfVarId), Int(1));
 
   engine->beginMove();
   engine->setValue(a, 0);
   engine->endMove();
 
-  engine->beginQuery();
+  engine->beginProbe();
   engine->query(a);
-  engine->endQuery();
+  engine->endProbe();
 
-  EXPECT_EQ(engine->getNewValue(viewOfVarId), Int(0));
+  EXPECT_EQ(engine->currentValue(viewOfVarId), Int(0));
 }
 
 }

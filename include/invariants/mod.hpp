@@ -15,8 +15,8 @@ class Mod : public Invariant {
   Mod(VarId a, VarId b, VarId y);
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  void notifyIntChanged(Timestamp, Engine&, LocalId) override;
-  VarId getNextInput(Timestamp, Engine&) override;
+  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
+  VarId nextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
   void commit(Timestamp, Engine&) override;
 };

@@ -9,8 +9,8 @@ class IntAbsView : public IntView {
  public:
   IntAbsView(const VarId parentId) : IntView(parentId) {}
 
-  Int getValue(Timestamp) override;
-  Int getCommittedValue() override;
-  Int getLowerBound() override;
-  Int getUpperBound() override;
+  [[nodiscard]] Int value(Timestamp) const override;
+  [[nodiscard]] Int committedValue() const override;
+  [[nodiscard]] Int lowerBound() const override;
+  [[nodiscard]] Int upperBound() const override;
 };

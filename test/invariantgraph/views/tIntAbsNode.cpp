@@ -37,10 +37,10 @@ TEST_F(IntAbsNodeTest, application) {
   engine.close();
 
   // a
-  EXPECT_EQ(engine.getDecisionVariables().size(), 1);
+  EXPECT_EQ(engine.searchVariables().size(), 1);
 
   // a
-  EXPECT_EQ(engine.getNumVariables(), 1);
+  EXPECT_EQ(engine.numVariables(), 1);
 
   // a and b
   EXPECT_EQ(_variableMap.size(), 2);

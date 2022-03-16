@@ -33,14 +33,14 @@ TEST_F(IntEqNodeTest, application) {
   engine.close();
 
   // a and b
-  EXPECT_EQ(engine.getDecisionVariables().size(), 2);
+  EXPECT_EQ(engine.searchVariables().size(), 2);
 
   // a, b and the violation
-  EXPECT_EQ(engine.getNumVariables(), 3);
+  EXPECT_EQ(engine.numVariables(), 3);
 
   // equal
-  EXPECT_EQ(engine.getNumInvariants(), 1);
+  EXPECT_EQ(engine.numInvariants(), 1);
 
-  EXPECT_EQ(engine.getLowerBound(_variableMap.at(node->violation())), 0);
-  EXPECT_EQ(engine.getUpperBound(_variableMap.at(node->violation())), 8);
+  EXPECT_EQ(engine.lowerBound(_variableMap.at(node->violation())), 0);
+  EXPECT_EQ(engine.upperBound(_variableMap.at(node->violation())), 8);
 }

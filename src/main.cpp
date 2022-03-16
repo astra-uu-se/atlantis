@@ -71,8 +71,8 @@ int main(int argc, char* argv[]) {
     PropagationEngine engine;
     graph->apply(engine);
 
-    auto numDecisionVars = engine.getDecisionVariables().size();
-    auto numVars = engine.getNumVariables();
+    auto numDecisionVars = engine.searchVariables().size();
+    auto numVars = engine.numVariables();
     std::cout << "Converted to " << numDecisionVars
               << " decision variables and " << (numVars - numDecisionVars)
               << " defined variables." << std::endl;

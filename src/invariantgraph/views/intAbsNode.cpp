@@ -18,5 +18,5 @@ void invariantgraph::IntAbsNode::registerWithEngine(
     Engine& engine, std::map<VariableNode*, VarId>& variableMap) {
 
   auto outputVar = engine.makeIntView<::IntAbsView>(variableMap.at(_input));
-  variableMap.emplace(definedVariables()[0], outputVar->getId());
+  variableMap.emplace(definedVariables()[0], outputVar);
 }
