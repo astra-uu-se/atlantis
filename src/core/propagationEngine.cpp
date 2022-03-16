@@ -28,9 +28,7 @@ void PropagationEngine::close() {
     throw EngineClosedException("Engine already closed.");
   }
 
-  ++_currentTimestamp;  // todo: Is it safe to increment time here? What if a
-                        // user tried to change a variable but without a begin
-                        // move? But we should ignore it anyway then...
+  ++_currentTimestamp;
   _isOpen = false;
   try {
     _propGraph.close();
@@ -75,12 +73,9 @@ void PropagationEngine::close() {
 
 //---------------------Registration---------------------
 void PropagationEngine::enqueueComputedVar(Timestamp, VarId id) {
-  // logDebug("\t\t\tMaybe changed: " << _store.intVar(id));
   if (_isEnqueued.get(id)) {
-    // logDebug("\t\t\talready enqueued");
     return;
   }
-  // logDebug("\t\t\tpushed on stack");
   _propGraph.enqueuePropagationQueue(id);
   _isEnqueued.set(id, true);
 }
@@ -160,7 +155,7 @@ void PropagationEngine::recomputeAndCommit() {
   clearPropagationQueue();
 }
 
-//--------------------- Move semantics ---------------------
+//--------------------- Propagation ---------------------
 void PropagationEngine::beginMove() {
   assert(!_isOpen);
   assert(_engineState == EngineState::IDLE);
@@ -262,17 +257,6 @@ template void PropagationEngine::propagate<false>();
 // Propagates at the current internal timestamp of the engine.
 template <bool DoCommit>
 void PropagationEngine::propagate() {
-// #define PROPAGATION_DEBUG
-// #define PROPAGATION_DEBUG_COUNTING
-#ifdef PROPAGATION_DEBUG
-  setLogLevel(debug);
-  logDebug("Starting propagation");
-#endif
-#ifdef PROPAGATION_DEBUG_COUNTING
-  std::vector<std::unordered_map<size_t, Int>> notificationCount(
-      _store.numInvariants());
-#endif
-
   for (VarId queuedVar = dequeueComputedVar(_currentTimestamp);
        queuedVar.id != NULL_ID;
        queuedVar = dequeueComputedVar(_currentTimestamp)) {
@@ -281,11 +265,6 @@ void PropagationEngine::propagate() {
 
     const InvariantId definingInvariant =
         _propGraph.definingInvariant(queuedVar);
-
-#ifdef PROPAGATION_DEBUG
-    logDebug("\tPropagating " << variable);
-    logDebug("\t\tDepends on invariant: " << definingInvariant);
-#endif
 
     if (definingInvariant != NULL_ID) {
       Invariant& defInv = _store.invariant(definingInvariant);
@@ -298,9 +277,6 @@ void PropagationEngine::propagate() {
           }
         }
         if (oldValue == variable.value(_currentTimestamp)) {
-#ifdef PROPAGATION_DEBUG
-          logDebug("\t\tVariable did not change after compute: ignoring.");
-#endif
           continue;
         }
         if constexpr (DoCommit) {
@@ -315,33 +291,8 @@ void PropagationEngine::propagate() {
 
     for (const auto& toNotify : _listeningInvariantData[queuedVar]) {
       Invariant& invariant = _store.invariant(toNotify.invariantId);
-
-#ifdef PROPAGATION_DEBUG
-      logDebug("\t\tNotifying invariant:" << toNotify.invariantId
-                                          << " with localId: "
-                                          << toNotify.localId);
-#endif
-#ifdef PROPAGATION_DEBUG_COUNTING
-      notificationCount.at(toNotify.invariantId.id - 1)[variable.id().id] =
-          notificationCount.at(toNotify.invariantId.id - 1)[variable.id().id] +
-          1;
-#endif
-
       invariant.notify(toNotify.localId);
       enqueueComputedVar(_currentTimestamp, invariant.primaryDefinedVar());
     }
   }
-
-#ifdef PROPAGATION_DEBUG_COUNTING
-  logDebug("Printing notification counts");
-  for (int i = 0; i < notificationCount.size(); ++i) {
-    logDebug("\tInvariant " << i + 1);
-    for (const auto [k, v] : notificationCount.at(i)) {
-      logDebug("\t\tVarId(" << k << "): " << v);
-    }
-  }
-#endif
-#ifdef PROPAGATION_DEBUG
-  logDebug("Propagation done\n");
-#endif
 }

@@ -3,14 +3,11 @@
 #include <cassert>
 #include <vector>
 
-// #include "constraints/constraint.hpp"
 #include "core/types.hpp"
 #include "exceptions/exceptions.hpp"
 #include "misc/logging.hpp"
 #include "store/store.hpp"
 #include "utils/idMap.hpp"
-// #include "variables/intVar.hpp"
-// #include "views/intView.hpp"
 
 class IntVar;
 class IntView;
@@ -79,7 +76,6 @@ class Engine {
 
   [[nodiscard]] inline VarId sourceId(VarId id) const {
     return id.idType == VarIdType::var ? id : _store.intViewSourceId(id);
-    // sourceId(_store.intView(id).parentId());
   }
 
   virtual void enqueueComputedVar(Timestamp, VarId) = 0;
@@ -212,8 +208,6 @@ std::enable_if_t<std::is_base_of<IntView, T>::value, VarId> Engine::makeIntView(
     throw EngineClosedException("Cannot make intView when store is closed.");
   }
   // We don't actually register views as they are invisible to propagation.
-
-  // We don'ts actually register views as they are invisible to propagation.
 
   const VarId viewId = _store.createIntViewFromPtr(
       std::make_unique<T>(std::forward<Args>(args)...));

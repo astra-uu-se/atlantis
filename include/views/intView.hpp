@@ -8,9 +8,9 @@ class Engine;  // Forward declaration
 class IntView : public View {
  protected:
   friend class Engine;
-  const Engine*
-      _engine;  // TODO: a raw pointer might be the best option here as
-                // views lifetime depend on engine and not vice-versa.
+  // A raw const pointer might be the best option here as views lifetime depend
+  // on engine and not vice-versa:
+  const Engine* _engine;
 
  public:
   explicit IntView(VarId parentId) : View(parentId), _engine(nullptr) {}

@@ -3,10 +3,9 @@
 #include <cassert>
 #include <vector>
 
+#include "constraint.hpp"
 #include "core/types.hpp"
 #include "variables/intVar.hpp"
-// #include "variables/committableInt.hpp"
-#include "constraint.hpp"
 
 class CommittableInt;  // forward declare
 class Engine;

@@ -24,10 +24,9 @@ void LessThan::init(Timestamp, Engine& engine) {
 }
 
 void LessThan::recompute(Timestamp ts, Engine& engine) {
-  // Dereference safe as incValue does not retain ptr.
   updateValue(
       ts, engine, _violationId,
-      std::max((Int)0, engine.value(ts, _x) - engine.value(ts, _y) + 1));
+      std::max(Int(0), engine.value(ts, _x) - engine.value(ts, _y) + 1));
 }
 
 void LessThan::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
@@ -35,8 +34,6 @@ void LessThan::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId LessThan::nextInput(Timestamp ts, Engine&) {
-  // todo: maybe this can be faster by first checking null and then doing
-  // ==0?_x:_y;
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

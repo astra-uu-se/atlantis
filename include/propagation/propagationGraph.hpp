@@ -68,10 +68,6 @@ class PropagationGraph {
   };
 
   PropagationQueue _propagationQueue;
-  // LayeredPropagationQueue _propagationQueue;
-  // std::priority_queue<VarIdBase, std::vector<VarIdBase>,
-  //                     PropagationGraph::PriorityCmp>
-  // _propagationQueue;
 
  public:
   PropagationGraph() : PropagationGraph(1000) {}
@@ -127,7 +123,7 @@ class PropagationGraph {
   }
 
   inline InvariantId definingInvariant(VarIdBase id) {
-    // Returns NULL_ID is not defined.
+    // Returns NULL_ID if id is a search variable (not defined by an invariant)
     return _definingInvariant.at(id);
   }
 
