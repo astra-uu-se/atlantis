@@ -69,7 +69,7 @@ class Assignment {
    * @return The cost of the assignment if the altered values were committed.
    */
   template <typename Callback>
-  Cost probe(Callback modificationFunc) {
+  Cost probe(Callback modificationFunc) const {
     move(modificationFunc);
 
     _engine.beginProbe();
@@ -101,7 +101,7 @@ class Assignment {
 
  private:
   template <typename Callback>
-  void move(Callback modificationFunc) {
+  void move(Callback modificationFunc) const {
     _engine.beginMove();
     AssignmentModification modifications(_engine);
     modificationFunc(modifications);
