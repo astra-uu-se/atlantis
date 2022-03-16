@@ -31,8 +31,6 @@ void Equal::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId Equal::nextInput(Timestamp ts, Engine&) {
-  // todo: maybe this can be faster by first checking null and then doing
-  // ==0?_x:_y;
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

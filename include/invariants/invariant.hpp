@@ -58,7 +58,6 @@ class Invariant {
   // State used for returning next input. Null state is -1 by default
   CommittableInt _state;
 
-  //  std::vector<bool> _modifiedVars;
   NotificationQueue _modifiedVars;
 
   VarId _primaryDefinedVar;

@@ -139,7 +139,6 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
     visited[varId] = true;
     assert(varId < position.size());
     position[varId] = depth;
-    // std::cout << "Visiting " << varId << " at depth " << depth << std::endl;
     // for each invariant id is a input to
     for (const auto invariantId : graph.listeningInvariants(varId)) {
       // for each variable defined by that invariant
@@ -148,18 +147,11 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
         if (visited[definedVariable]) {
           // Ignore nodes that have been visited before
           // This also breaks cycles.
-          // std::cout << "Variable " << definedVariable
-          //           << " has already been visitied in this recursion"
-          //           << std::endl;
           continue;
         }
         assert(definedVariable < position.size());
         if (position[definedVariable] > depth) {
           // Ignore variable that is already at a lower level.
-          // std::cout << "Variable " << definedVariable
-          //           << " is already at depth " <<
-          //           position[definedVariable]
-          //           << std::endl;
           continue;
         }
         visit(definedVariable, depth + 1);
@@ -179,22 +171,12 @@ void PropagationGraph::Topology::computeLayersWithCycles() {
     }
   }
 
-  // int max = 0;
-  // for (int v : position) {
-  //   max = std::max(max, v);
-  // }
-  // std::vector<int> count;
-  // count.resize(max+1, 0);
   variablePosition.resize(graph.numVariables() + 1, 0);
   assert(position.size() == variablePosition.size());
   for (size_t i = 0; i < graph.numVariables() + 1; ++i) {
     variablePosition[i] = position[i];
-    // count.at(position.at(i))++;
   }
 
-  // for (size_t i = 0; i < count.size(); ++i) {
-  //   std::cout << i << ": " << count.at(i) << std::endl;
-  // }
   computeInvariantFromVariables();
 }
 

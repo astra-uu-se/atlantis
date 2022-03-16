@@ -226,7 +226,7 @@ bool OutputToInputExplorer::pushNextInputVariable() {
     return true;  // done with invariant
   }
   pushVariableStack(nextVar);
-  return false;  // not done with invariant
+  return false;  // invariant has more input variables
 }
 
 void OutputToInputExplorer::registerVar(VarId id) {

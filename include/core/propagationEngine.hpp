@@ -64,11 +64,10 @@ class PropagationEngine : public Engine {
     return _propagationMode;
   }
 
-  // todo: Maybe there is a better word than "active", like "relevant".
   // --------------------- Activity ----------------
   [[nodiscard]] VarId dequeueComputedVar(Timestamp);
 
-  //--------------------- Move semantics ---------------------
+  //--------------------- Propagation ---------------------
   void beginMove();
   void endMove();
   void setValue(Timestamp, VarId, Int val);
@@ -137,7 +136,7 @@ inline size_t PropagationEngine::numInvariants() {
 }
 
 inline InvariantId PropagationEngine::definingInvariant(VarId id) {
-  // Returns NULL_ID is not defined.
+  // Returns NULL_ID if there is no defining invariant
   return _propGraph.definingInvariant(id);
 }
 

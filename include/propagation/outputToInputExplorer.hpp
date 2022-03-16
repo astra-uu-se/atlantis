@@ -44,7 +44,7 @@ class OutputToInputExplorer {
   bool isComputed(Timestamp, VarIdBase);
 
   // We expand an invariant by pushing it and its first input variable onto
-  // each stack.
+  // the stack.
   template <OutputToInputMarkingMode MarkingMode>
   void expandInvariant(InvariantId);
   void notifyCurrentInvariant();

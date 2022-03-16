@@ -55,7 +55,6 @@ class CommittableInt {
   }
   [[gnu::always_inline]] inline void commitValue(Int value) noexcept {
     _committedValue = value;
-    // clear what the correct value is at _tmpTimestamp.
   }
 
   [[gnu::always_inline]] inline void commit() noexcept {
