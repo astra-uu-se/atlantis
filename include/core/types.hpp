@@ -18,7 +18,6 @@ struct Id {
   Id() : id(0) {}
   explicit Id(size_t i) : id(i) {}
   operator size_t() const { return id; }
-  // TODO: We should just overload the == operator but I am too scared to do it.
   inline bool equals(const Id& other) const { return id == other.id; }
 };
 

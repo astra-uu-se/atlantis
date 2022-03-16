@@ -72,32 +72,32 @@ TEST_F(PriorityListTest, SimpleUpdatePriority) {
 
   for (ts = 1; ts < 10; ++ts) {
     updateForward(ts, priorityList);
-    EXPECT_EQ(priorityList.getMinPriority(ts), 1);
-    EXPECT_EQ(priorityList.getMaxPriority(ts), 100);
+    EXPECT_EQ(priorityList.minPriority(ts), 1);
+    EXPECT_EQ(priorityList.maxPriority(ts), 100);
   }
   for (ts = 1; ts < 10; ++ts) {
     updateBackwards(ts, priorityList);
-    EXPECT_EQ(priorityList.getMinPriority(ts), 1);
-    EXPECT_EQ(priorityList.getMaxPriority(ts), 100);
+    EXPECT_EQ(priorityList.minPriority(ts), 1);
+    EXPECT_EQ(priorityList.maxPriority(ts), 100);
   }
   for (ts = 1; ts < 10; ++ts) {
     updateUniform(ts, priorityList);
-    EXPECT_EQ(priorityList.getMinPriority(ts), Int(ts));
-    EXPECT_EQ(priorityList.getMaxPriority(ts), Int(ts));
+    EXPECT_EQ(priorityList.minPriority(ts), Int(ts));
+    EXPECT_EQ(priorityList.maxPriority(ts), Int(ts));
   }
 
   for (ts = 1; ts < 10; ++ts) {
     updateForward(ts, priorityList);
-    EXPECT_EQ(priorityList.getMinPriority(ts), 1);
-    EXPECT_EQ(priorityList.getMaxPriority(ts), 100);
+    EXPECT_EQ(priorityList.minPriority(ts), 1);
+    EXPECT_EQ(priorityList.maxPriority(ts), 100);
 
     updateBackwards(ts, priorityList);
-    EXPECT_EQ(priorityList.getMinPriority(ts), 1);
-    EXPECT_EQ(priorityList.getMaxPriority(ts), 100);
+    EXPECT_EQ(priorityList.minPriority(ts), 1);
+    EXPECT_EQ(priorityList.maxPriority(ts), 100);
 
     updateUniform(ts, priorityList);
-    EXPECT_EQ(priorityList.getMinPriority(ts), Int(ts));
-    EXPECT_EQ(priorityList.getMaxPriority(ts), Int(ts));
+    EXPECT_EQ(priorityList.minPriority(ts), Int(ts));
+    EXPECT_EQ(priorityList.maxPriority(ts), Int(ts));
   }
 }
 
@@ -120,8 +120,8 @@ TEST_F(PriorityListTest, RandomUpdatePriority) {
       testSanity(priorityList, ts);
     }
 
-    EXPECT_EQ(priorityList.getMinPriority(ts), minPriority);
-    EXPECT_EQ(priorityList.getMaxPriority(ts), maxPriority);
+    EXPECT_EQ(priorityList.minPriority(ts), minPriority);
+    EXPECT_EQ(priorityList.maxPriority(ts), maxPriority);
   }
 }
 
@@ -132,18 +132,18 @@ TEST_F(PriorityListTest, CommitIf) {
 
   updateForward(ts, priorityList, Int(ts));
   priorityList.commitIf(ts);
-  EXPECT_EQ(priorityList.getMinPriority(ts), 1 + Int(ts));
-  EXPECT_EQ(priorityList.getMaxPriority(ts), 100 + Int(ts));
-  EXPECT_EQ(priorityList.getMinPriority(ts + 1), 1 + Int(ts));
-  EXPECT_EQ(priorityList.getMaxPriority(ts + 1), 100 + Int(ts));
+  EXPECT_EQ(priorityList.minPriority(ts), 1 + Int(ts));
+  EXPECT_EQ(priorityList.maxPriority(ts), 100 + Int(ts));
+  EXPECT_EQ(priorityList.minPriority(ts + 1), 1 + Int(ts));
+  EXPECT_EQ(priorityList.maxPriority(ts + 1), 100 + Int(ts));
 
   for (ts = 2; ts < 10; ++ts) {
     updateForward(ts, priorityList, Int(ts));
-    EXPECT_EQ(priorityList.getMinPriority(ts), 1 + Int(ts));
-    EXPECT_EQ(priorityList.getMaxPriority(ts), 100 + Int(ts));
+    EXPECT_EQ(priorityList.minPriority(ts), 1 + Int(ts));
+    EXPECT_EQ(priorityList.maxPriority(ts), 100 + Int(ts));
     priorityList.commitIf(ts);
-    EXPECT_EQ(priorityList.getMinPriority(ts + 1), 1 + Int(ts));
-    EXPECT_EQ(priorityList.getMaxPriority(ts + 1), 100 + Int(ts));
+    EXPECT_EQ(priorityList.minPriority(ts + 1), 1 + Int(ts));
+    EXPECT_EQ(priorityList.maxPriority(ts + 1), 100 + Int(ts));
   }
 }
 

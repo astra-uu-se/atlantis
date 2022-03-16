@@ -12,6 +12,6 @@ class View : public Var {
   }
   virtual ~View() = default;
   inline void setId(const VarId id) { _id.id = id.id; }
-  [[nodiscard]] inline VarId getId() const { return _id; };
-  [[nodiscard]] inline VarId getParentId() const { return _parentId; }
+  [[nodiscard]] inline VarId id() const { return _id; };
+  [[nodiscard]] inline VarId parentId() const { return _parentId; }
 };

@@ -3,14 +3,14 @@
 #include <iosfwd>
 
 #include "core/types.hpp"
-#include "variables/savedInt.hpp"
+#include "variables/committableInt.hpp"
 #include "variables/var.hpp"
 
 class Engine;  // Forward declaration
 
 class IntVar : public Var {
  private:
-  SavedInt _value;
+  CommittableInt _value;
   Int _lowerBound;
   Int _upperBound;
 
@@ -43,20 +43,19 @@ class IntVar : public Var {
       Timestamp ts) const {
     return _value.hasChanged(ts);
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Timestamp getTmpTimestamp()
-      const {
-    return _value.getTmpTimestamp();
+  [[gnu::always_inline]] [[nodiscard]] inline Timestamp tmpTimestamp() const {
+    return _value.tmpTimestamp();
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Int getValue(Timestamp ts) const {
-    return _value.getValue(ts);
+  [[gnu::always_inline]] [[nodiscard]] inline Int value(Timestamp ts) const {
+    return _value.value(ts);
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Int getCommittedValue() const {
-    return _value.getCommittedValue();
+  [[gnu::always_inline]] [[nodiscard]] inline Int committedValue() const {
+    return _value.committedValue();
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Int getLowerBound() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Int lowerBound() const {
     return _lowerBound;
   }
-  [[gnu::always_inline]] [[nodiscard]] inline Int getUpperBound() const {
+  [[gnu::always_inline]] [[nodiscard]] inline Int upperBound() const {
     return _upperBound;
   }
   [[gnu::always_inline]] [[nodiscard]] inline bool inDomain(Int value) const {

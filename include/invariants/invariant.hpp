@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "core/types.hpp"
-#include "variables/savedInt.hpp"
+#include "variables/committableInt.hpp"
 class Engine;  // Forward declaration
 
 class Invariant {
@@ -56,9 +56,8 @@ class Invariant {
   bool _isPostponed;
   InvariantId _id;
   // State used for returning next input. Null state is -1 by default
-  SavedInt _state;
+  CommittableInt _state;
 
-  //  std::vector<bool> _modifiedVars;
   NotificationQueue _modifiedVars;
 
   VarId _primaryDefinedVar;
@@ -88,8 +87,8 @@ class Invariant {
    * @param engine the engine
    * @param localId the local id of the variable.
    */
-  virtual void notifyIntChanged(Timestamp ts, Engine& engine,
-                                LocalId localId) = 0;
+  virtual void notifyInputChanged(Timestamp ts, Engine& engine,
+                                  LocalId localId) = 0;
 
   /**
    * Updates the value of variable without queueing it for propagation
@@ -106,7 +105,7 @@ class Invariant {
   /**
    * The total number of notifiable variables.
    */
-  size_t notifiableVarsSize() { return _modifiedVars.size(); }
+  size_t notifiableVarsSize() const { return _modifiedVars.size(); }
 
   [[nodiscard]] inline InvariantId id() const noexcept { return _id; }
   void setId(Id id) { _id = id; }
@@ -137,12 +136,12 @@ class Invariant {
    * Used in Output-to-Input propagation to get the next input variable to
    * visit.
    */
-  virtual VarId getNextInput(Timestamp, Engine&) = 0;
+  virtual VarId nextInput(Timestamp, Engine&) = 0;
 
   /**
    * Used in Output-to-Input propagation to notify to the
    * invariant that the current input (the last input given by
-   * getNextInput) has had its value changed.
+   * nextInput) has had its value changed.
    */
   virtual void notifyCurrentInputChanged(Timestamp, Engine&) = 0;
 
@@ -164,6 +163,10 @@ class Invariant {
   inline void postpone() { _isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 
-  [[nodiscard]] inline VarId getPrimaryDefinedVar() const { return _primaryDefinedVar; }
-  void queueNonPrimaryDefinedVarsForPropagation(Timestamp ts, Engine& engine);
+  [[nodiscard]] inline VarId primaryDefinedVar() const {
+    return _primaryDefinedVar;
+  }
+  const inline std::vector<VarId>& nonPrimaryDefinedVars() const {
+    return _definedVars;
+  }
 };

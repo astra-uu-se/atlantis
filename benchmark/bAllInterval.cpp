@@ -69,17 +69,17 @@ BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
     assert(i < inputVars.size());
     const size_t j = distribution(gen);
     assert(j < inputVars.size());
-    const Int oldI = engine->getCommittedValue(inputVars[i]);
-    const Int oldJ = engine->getCommittedValue(inputVars[j]);
+    const Int oldI = engine->committedValue(inputVars[i]);
+    const Int oldJ = engine->committedValue(inputVars[j]);
     // Perform random swap
     engine->beginMove();
     engine->setValue(inputVars[i], oldJ);
     engine->setValue(inputVars[j], oldI);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(violation);
-    engine->endQuery();
+    engine->endProbe();
     ++probes;
   }
   st.counters["probes_per_second"] =
@@ -91,16 +91,16 @@ BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
-        const Int oldI = engine->getCommittedValue(inputVars[i]);
-        const Int oldJ = engine->getCommittedValue(inputVars[j]);
+        const Int oldI = engine->committedValue(inputVars[i]);
+        const Int oldJ = engine->committedValue(inputVars[j]);
         engine->beginMove();
         engine->setValue(inputVars[i], oldJ);
         engine->setValue(inputVars[j], oldI);
         engine->endMove();
 
-        engine->beginQuery();
+        engine->beginProbe();
         engine->query(violation);
-        engine->endQuery();
+        engine->endProbe();
 
         ++probes;
       }
@@ -117,8 +117,8 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
     assert(i < inputVars.size());
     const size_t j = distribution(gen);
     assert(j < inputVars.size());
-    const Int oldI = engine->getCommittedValue(inputVars[i]);
-    const Int oldJ = engine->getCommittedValue(inputVars[j]);
+    const Int oldI = engine->committedValue(inputVars[i]);
+    const Int oldJ = engine->committedValue(inputVars[j]);
     // Perform random swap
     engine->beginMove();
     engine->setValue(inputVars[i], oldJ);

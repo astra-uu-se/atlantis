@@ -8,10 +8,10 @@
 
 #include "../testHelper.hpp"
 #include "core/types.hpp"
-#include "variables/savedInt.hpp"
+#include "variables/committableInt.hpp"
 
 namespace {
-class SavedIntTest : public ::testing::Test {
+class CommittableIntTest : public ::testing::Test {
  protected:
   void SetUp() override {
     std::random_device rd;
@@ -24,7 +24,7 @@ class SavedIntTest : public ::testing::Test {
  *  Testing constructor
  */
 
-TEST_F(SavedIntTest, SavedIntConstructor) {
+TEST_F(CommittableIntTest, CommittableIntConstructor) {
   std::uniform_int_distribution<> distribution(
       std::numeric_limits<int>::min(), std::numeric_limits<int>::max() - 1);
 
@@ -33,27 +33,27 @@ TEST_F(SavedIntTest, SavedIntConstructor) {
   // Random inital value
   Int value = distribution(gen);
 
-  SavedInt savedInt = SavedInt(initTimestamp, value);
+  CommittableInt committableInt = CommittableInt(initTimestamp, value);
 
   // Get the current value at the initial timestamp return the initial value
-  EXPECT_EQ(savedInt.getValue(initTimestamp), value);
+  EXPECT_EQ(committableInt.value(initTimestamp), value);
 
   // get at the current value at the initial timestamp. Returns the initial
   // value
-  EXPECT_EQ(savedInt.getValue(initTimestamp), value);
+  EXPECT_EQ(committableInt.value(initTimestamp), value);
 
   Timestamp otherTimestamp = std::max(0, distribution(gen));
   // Get the current value at another timestamp.
   // Should still return the initial value (as no other value has been
   // committed)
-  EXPECT_EQ(savedInt.getValue(otherTimestamp), value);
+  EXPECT_EQ(committableInt.value(otherTimestamp), value);
 
   // get the current value at another timestamp. Should still return the
   // initial value (as no other value has been committed)
-  EXPECT_EQ(savedInt.getValue(otherTimestamp), value);
+  EXPECT_EQ(committableInt.value(otherTimestamp), value);
 }
 
-TEST_F(SavedIntTest, SavedIntSetGetValue) {
+TEST_F(CommittableIntTest, CommittableIntSetGetValue) {
   // A uniform distribution for the initial value and timestamp
   std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(),
                                                 10000);
@@ -67,26 +67,26 @@ TEST_F(SavedIntTest, SavedIntSetGetValue) {
   Timestamp nextTimestamp = distribution2(gen);
   Int nextValue = distribution2(gen);
 
-  // Create a SavedInt
-  SavedInt savedInt = SavedInt(initTimestamp, initValue);
+  // Create a CommittableInt
+  CommittableInt committableInt = CommittableInt(initTimestamp, initValue);
 
   // Update the value for the other (next) timestamp
-  savedInt.setValue(nextTimestamp, nextValue);
+  committableInt.setValue(nextTimestamp, nextValue);
 
   // The value at the initial timestamp is still the initial value
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
+  EXPECT_EQ(committableInt.value(initTimestamp), initValue);
   // The value at the next timestamp is now the next value
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
+  EXPECT_EQ(committableInt.value(nextTimestamp), nextValue);
 
   Timestamp otherTimestamp = distribution2(gen);
   while (otherTimestamp == nextTimestamp) {
     otherTimestamp = distribution2(gen);
   }
   // The value for any timestamp except nextTimestamp is still the initial value
-  EXPECT_EQ(savedInt.getValue(otherTimestamp), initValue);
+  EXPECT_EQ(committableInt.value(otherTimestamp), initValue);
 }
 
-TEST_F(SavedIntTest, SavedIntIncValue) {
+TEST_F(CommittableIntTest, CommittableIntIncValue) {
   std::uniform_int_distribution<> distribution(
       std::numeric_limits<int>::min() + 10,
       std::numeric_limits<int>::max() - 10);
@@ -94,7 +94,7 @@ TEST_F(SavedIntTest, SavedIntIncValue) {
   Timestamp initTimestamp = std::max(0, distribution(gen));
   Int committedValue = distribution(gen);
 
-  SavedInt savedInt = SavedInt(initTimestamp, committedValue);
+  CommittableInt committableInt = CommittableInt(initTimestamp, committedValue);
 
   Timestamp nextTimestamp;
   Int nextValue;
@@ -108,28 +108,28 @@ TEST_F(SavedIntTest, SavedIntIncValue) {
 
     // Not the same timestamp as init timestamp, increment will be based on:
     //   saved
-    savedInt.incValue(nextTimestamp, increment);
+    committableInt.incValue(nextTimestamp, increment);
 
-    EXPECT_EQ(savedInt.getValue(initTimestamp), committedValue);
-    EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
+    EXPECT_EQ(committableInt.value(initTimestamp), committedValue);
+    EXPECT_EQ(committableInt.value(nextTimestamp), nextValue);
 
     // Not the same timestamp as init timestamp, increment will be based on:
     //   tmp
     // NOTE: tmp was already changed above
-    savedInt.incValue(nextTimestamp, increment);
+    committableInt.incValue(nextTimestamp, increment);
 
     Timestamp otherTimestamp = std::max(0, distribution(gen));
     while (otherTimestamp == nextTimestamp) {
       otherTimestamp = distribution(gen);
     }
     // Any timestamp except nextTimestamp returns the committed value.
-    EXPECT_EQ(savedInt.getValue(otherTimestamp), committedValue);
+    EXPECT_EQ(committableInt.value(otherTimestamp), committedValue);
     // nextTimestamp returns the twice incremented value
-    EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue + increment);
+    EXPECT_EQ(committableInt.value(nextTimestamp), nextValue + increment);
   }
 }
 
-TEST_F(SavedIntTest, SavedIntCommitValue) {
+TEST_F(CommittableIntTest, CommittableIntCommitValue) {
   std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(),
                                                 10000);
   std::uniform_int_distribution<> distribution2(
@@ -141,16 +141,16 @@ TEST_F(SavedIntTest, SavedIntCommitValue) {
   Timestamp nextTimestamp = distribution2(gen);
   Int committedValue = distribution2(gen);
 
-  SavedInt savedInt = SavedInt(initTimestamp, initValue);
+  CommittableInt committableInt = CommittableInt(initTimestamp, initValue);
 
-  savedInt.commitValue(committedValue);
+  committableInt.commitValue(committedValue);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp),
+  EXPECT_EQ(committableInt.value(initTimestamp),
             initValue);  // TODO: shouldn't this be committedValue?
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), committedValue);
+  EXPECT_EQ(committableInt.value(nextTimestamp), committedValue);
 }
 
-TEST_F(SavedIntTest, SavedIntCommit) {
+TEST_F(CommittableIntTest, CommittableIntCommit) {
   std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(),
                                                 10000);
   std::uniform_int_distribution<> distribution2(
@@ -162,23 +162,23 @@ TEST_F(SavedIntTest, SavedIntCommit) {
   Timestamp nextTimestamp = distribution2(gen);
   Int committedValue = distribution2(gen);
 
-  SavedInt savedInt = SavedInt(initTimestamp, initValue);
+  CommittableInt committableInt = CommittableInt(initTimestamp, initValue);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), initValue);
+  EXPECT_EQ(committableInt.value(initTimestamp), initValue);
+  EXPECT_EQ(committableInt.value(nextTimestamp), initValue);
 
-  savedInt.setValue(nextTimestamp, committedValue);
+  committableInt.setValue(nextTimestamp, committedValue);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), committedValue);
+  EXPECT_EQ(committableInt.value(initTimestamp), initValue);
+  EXPECT_EQ(committableInt.value(nextTimestamp), committedValue);
 
-  savedInt.commitIf(nextTimestamp);
+  committableInt.commitIf(nextTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), committedValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), committedValue);
+  EXPECT_EQ(committableInt.value(initTimestamp), committedValue);
+  EXPECT_EQ(committableInt.value(nextTimestamp), committedValue);
 }
 
-TEST_F(SavedIntTest, SavedIntCommitIf) {
+TEST_F(CommittableIntTest, CommittableIntCommitIf) {
   std::uniform_int_distribution<> distribution1(std::numeric_limits<int>::min(),
                                                 10000);
   std::uniform_int_distribution<> distribution2(
@@ -190,53 +190,53 @@ TEST_F(SavedIntTest, SavedIntCommitIf) {
   Timestamp nextTimestamp = distribution2(gen);
   Int nextValue = distribution2(gen);
 
-  SavedInt savedInt = SavedInt(initTimestamp, initValue);
+  CommittableInt committableInt = CommittableInt(initTimestamp, initValue);
 
-  savedInt.commitIf(nextTimestamp);
+  committableInt.commitIf(nextTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), initValue);
+  EXPECT_EQ(committableInt.value(initTimestamp), initValue);
+  EXPECT_EQ(committableInt.value(nextTimestamp), initValue);
 
-  savedInt.commitIf(initTimestamp);
+  committableInt.commitIf(initTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), initValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), initValue);
+  EXPECT_EQ(committableInt.value(initTimestamp), initValue);
+  EXPECT_EQ(committableInt.value(nextTimestamp), initValue);
 
-  savedInt.setValue(nextTimestamp, nextValue);
+  committableInt.setValue(nextTimestamp, nextValue);
 
-  savedInt.commitIf(nextTimestamp);
+  committableInt.commitIf(nextTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), nextValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
+  EXPECT_EQ(committableInt.value(initTimestamp), nextValue);
+  EXPECT_EQ(committableInt.value(nextTimestamp), nextValue);
 
-  savedInt.commitIf(initTimestamp);
+  committableInt.commitIf(initTimestamp);
 
-  EXPECT_EQ(savedInt.getValue(initTimestamp), nextValue);
-  EXPECT_EQ(savedInt.getValue(nextTimestamp), nextValue);
+  EXPECT_EQ(committableInt.value(initTimestamp), nextValue);
+  EXPECT_EQ(committableInt.value(nextTimestamp), nextValue);
 }
 
-RC_GTEST_FIXTURE_PROP(SavedIntTest, checkConstructorValue,
+RC_GTEST_FIXTURE_PROP(CommittableIntTest, checkConstructorValue,
                       (Timestamp initTime, Int initValue, Timestamp anyTime)) {
-  auto savedInt = SavedInt(initTime, initValue);
-  RC_ASSERT(savedInt.getValue(anyTime) == initValue);
+  auto committableInt = CommittableInt(initTime, initValue);
+  RC_ASSERT(committableInt.value(anyTime) == initValue);
 }
 
-RC_GTEST_FIXTURE_PROP(SavedIntTest, checkSetValue,
+RC_GTEST_FIXTURE_PROP(CommittableIntTest, checkSetValue,
                       (Timestamp initTime, Int initValue, Timestamp currentTime,
                        Int value)) {
-  auto savedInt = SavedInt(initTime, initValue);
-  savedInt.setValue(currentTime, value);
+  auto committableInt = CommittableInt(initTime, initValue);
+  committableInt.setValue(currentTime, value);
   if (initTime != currentTime) {
-    RC_ASSERT(savedInt.getValue(initTime) == initValue);
+    RC_ASSERT(committableInt.value(initTime) == initValue);
   }
 }
 
-RC_GTEST_FIXTURE_PROP(SavedIntTest, checkCommittedValue,
+RC_GTEST_FIXTURE_PROP(CommittableIntTest, checkCommittedValue,
                       (Timestamp initTime, Int initValue, Timestamp currentTime,
                        Int value)) {
-  auto savedInt = SavedInt(initTime, initValue);
-  savedInt.setValue(currentTime, value);
-  RC_ASSERT(savedInt.getValue(currentTime) == value);
+  auto committableInt = CommittableInt(initTime, initValue);
+  committableInt.setValue(currentTime, value);
+  RC_ASSERT(committableInt.value(currentTime) == value);
 }
 
 }  // namespace

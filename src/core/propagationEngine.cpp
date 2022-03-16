@@ -8,10 +8,10 @@ PropagationEngine::PropagationEngine()
       _propGraph(ESTIMATED_NUM_OBJECTS),
       _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
       _isEnqueued(ESTIMATED_NUM_OBJECTS),
-      _modifiedDecisionVariables(),
-      _decisionVariablesModifiedAt(NULL_TIMESTAMP) {}
+      _modifiedSearchVariables(),
+      _searchVariablesModifiedAt(NULL_TIMESTAMP) {}
 
-PropagationGraph& PropagationEngine::getPropGraph() { return _propGraph; }
+PropagationGraph& PropagationEngine::propGraph() { return _propGraph; }
 
 void PropagationEngine::open() {
   if (_isOpen) {
@@ -28,9 +28,7 @@ void PropagationEngine::close() {
     throw EngineClosedException("Engine already closed.");
   }
 
-  ++_currentTimestamp;  // todo: Is it safe to increment time here? What if a
-                        // user tried to change a variable but without a begin
-                        // move? But we should ignore it anyway then...
+  ++_currentTimestamp;
   _isOpen = false;
   try {
     _propGraph.close();
@@ -52,12 +50,12 @@ void PropagationEngine::close() {
   }
 
 #ifndef NDEBUG
-  for (const VarIdBase varId : getDecisionVariables()) {
-    // Assert that if decision variable varId is modified,
-    // then it is in the set of modified decision variables
-    assert(_store.getIntVar(varId).hasChanged(_currentTimestamp) ==
-           (_modifiedDecisionVariables.find(varId) !=
-            _modifiedDecisionVariables.end()));
+  for (const VarIdBase varId : searchVariables()) {
+    // Assert that if search variable varId is modified,
+    // then it is in the set of modified search variables
+    assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
+           (_modifiedSearchVariables.find(varId) !=
+            _modifiedSearchVariables.end()));
   }
 #endif
 
@@ -66,48 +64,34 @@ void PropagationEngine::close() {
   recomputeAndCommit();
 
 #ifndef NDEBUG
-  for (const size_t varId : _modifiedDecisionVariables) {
+  for (const size_t varId : _modifiedSearchVariables) {
     // assert that decsion variable varId is no longer modified.
-    assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));
+    assert(!_store.intVar(varId).hasChanged(_currentTimestamp));
   }
 #endif
 }
 
 //---------------------Registration---------------------
-void PropagationEngine::notifyMaybeChanged(Timestamp, VarId id) {
-  // logDebug("\t\t\tMaybe changed: " << _store.getIntVar(id));
+void PropagationEngine::enqueueComputedVar(Timestamp, VarId id) {
   if (_isEnqueued.get(id)) {
-    // logDebug("\t\t\talready enqueued");
     return;
   }
-  // logDebug("\t\t\tpushed on stack");
-  _propGraph._propagationQueue.push(id);
-  _isEnqueued.set(id, true);
-}
-
-void PropagationEngine::queueForPropagation(Timestamp, VarId id) {
-  // logDebug("\t\t\tMaybe changed: " << _store.getIntVar(id));
-  if (_isEnqueued.get(id)) {
-    // logDebug("\t\t\talready enqueued");
-    return;
-  }
-  // logDebug("\t\t\tpushed on stack");
-  _propGraph._propagationQueue.push(id);
+  _propGraph.enqueuePropagationQueue(id);
   _isEnqueued.set(id, true);
 }
 
 void PropagationEngine::registerInvariantInput(InvariantId invariantId,
                                                VarId inputId, LocalId localId) {
-  assert(localId < _store.getInvariant(invariantId).notifiableVarsSize());
-  const auto sourceId = getSourceId(inputId);
-  _propGraph.registerInvariantInput(invariantId, sourceId);
-  _listeningInvariantData[sourceId].emplace_back(
+  assert(localId < _store.invariant(invariantId).notifiableVarsSize());
+  const auto id = sourceId(inputId);
+  _propGraph.registerInvariantInput(invariantId, id);
+  _listeningInvariantData[id].emplace_back(
       ListeningInvariantData{invariantId, localId});
 }
 
 void PropagationEngine::registerDefinedVariable(VarId varId,
                                                 InvariantId invariantId) {
-  _propGraph.registerDefinedVariable(getSourceId(varId), invariantId);
+  _propGraph.registerDefinedVariable(sourceId(varId), invariantId);
 }
 
 void PropagationEngine::registerVar(VarId id) {
@@ -124,21 +108,20 @@ void PropagationEngine::registerInvariant(InvariantId invariantId) {
 
 //---------------------Propagation---------------------
 
-VarId PropagationEngine::getNextStableVariable(Timestamp) {
-  if (_propGraph._propagationQueue.empty()) {
+VarId PropagationEngine::dequeueComputedVar(Timestamp) {
+  assert(propagationMode() == PropagationMode::INPUT_TO_OUTPUT ||
+         _engineState == EngineState::COMMIT);
+  if (_propGraph.propagationQueueEmpty()) {
     return VarId(NULL_ID);
   }
-  VarId nextVar(_propGraph._propagationQueue.top());
-  _propGraph._propagationQueue.pop();
+  VarId nextVar(_propGraph.dequeuePropagationQueue());
   _isEnqueued.set(nextVar, false);
-  // Due to notifyMaybeChanged, all variables in the queue are "active".
+  // Due to enqueueComputedVar, all variables in the queue are "active".
   return nextVar;
 }
 
 void PropagationEngine::clearPropagationQueue() {
-  while (!_propGraph._propagationQueue.empty()) {
-    _propGraph._propagationQueue.pop();
-  }
+  _propGraph.clearPropagationQueue();
   _isEnqueued.assign_all(false);
 }
 
@@ -148,7 +131,7 @@ void PropagationEngine::recomputeAndCommit() {
   bool done = false;
   while (!done) {
     done = true;
-    if (tries++ > _store.getNumVariables()) {
+    if (tries++ > _store.numVariables()) {
       throw FailedToInitialise();
     }
     for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
@@ -172,7 +155,7 @@ void PropagationEngine::recomputeAndCommit() {
   clearPropagationQueue();
 }
 
-//--------------------- Move semantics ---------------------
+//--------------------- Propagation ---------------------
 void PropagationEngine::beginMove() {
   assert(!_isOpen);
   assert(_engineState == EngineState::IDLE);
@@ -186,10 +169,10 @@ void PropagationEngine::endMove() {
   _engineState = EngineState::IDLE;
 }
 
-void PropagationEngine::beginQuery() {
+void PropagationEngine::beginProbe() {
   assert(!_isOpen);
   assert(_engineState == EngineState::IDLE);
-  _engineState = EngineState::QUERY;
+  _engineState = EngineState::PROBE;
 }
 
 void PropagationEngine::query(VarId id) {
@@ -199,12 +182,12 @@ void PropagationEngine::query(VarId id) {
 
   if (_propagationMode != PropagationMode::INPUT_TO_OUTPUT) {
     _outputToInputExplorer.registerForPropagation(_currentTimestamp,
-                                                  getSourceId(id));
+                                                  sourceId(id));
   }
 }
 
-void PropagationEngine::endQuery() {
-  assert(_engineState == EngineState::QUERY);
+void PropagationEngine::endProbe() {
+  assert(_engineState == EngineState::PROBE);
 
   _engineState = EngineState::PROCESSING;
   try {
@@ -239,12 +222,12 @@ void PropagationEngine::endCommit() {
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
         outputToInputMarkingMode() ==
             OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-      for (VarIdBase varId : getDecisionVariables()) {
+      for (VarIdBase varId : searchVariables()) {
         // Assert that if decision variable varId is modified,
         // then it is in the set of modified decision variables
-        assert(_store.getIntVar(varId).hasChanged(_currentTimestamp) ==
-               (_modifiedDecisionVariables.find(varId) !=
-                _modifiedDecisionVariables.end()));
+        assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
+               (_modifiedSearchVariables.find(varId) !=
+                _modifiedSearchVariables.end()));
       }
     }
 #endif
@@ -255,9 +238,9 @@ void PropagationEngine::endCommit() {
     if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
         outputToInputMarkingMode() ==
             OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-      for (size_t varId : _modifiedDecisionVariables) {
+      for (size_t varId : _modifiedSearchVariables) {
         // assert that decsion variable varId is no longer modified.
-        assert(!_store.getIntVar(varId).hasChanged(_currentTimestamp));
+        assert(!_store.intVar(varId).hasChanged(_currentTimestamp));
       }
     }
 #endif
@@ -274,41 +257,26 @@ template void PropagationEngine::propagate<false>();
 // Propagates at the current internal timestamp of the engine.
 template <bool DoCommit>
 void PropagationEngine::propagate() {
-// #define PROPAGATION_DEBUG
-// #define PROPAGATION_DEBUG_COUNTING
-#ifdef PROPAGATION_DEBUG
-  setLogLevel(debug);
-  logDebug("Starting propagation");
-#endif
-#ifdef PROPAGATION_DEBUG_COUNTING
-  std::vector<std::unordered_map<size_t, Int>> notificationCount(
-      _store.getNumInvariants());
-#endif
-
-  for (VarId stableVarId = getNextStableVariable(_currentTimestamp);
-       stableVarId.id != NULL_ID;
-       stableVarId = getNextStableVariable(_currentTimestamp)) {
-    const IntVar& variable = _store.getIntVar(stableVarId);
+  for (VarId queuedVar = dequeueComputedVar(_currentTimestamp);
+       queuedVar.id != NULL_ID;
+       queuedVar = dequeueComputedVar(_currentTimestamp)) {
+    // queuedVar has been computed under _currentTimestamp
+    const IntVar& variable = _store.intVar(queuedVar);
 
     const InvariantId definingInvariant =
-        _propGraph.getDefiningInvariant(stableVarId);
-
-#ifdef PROPAGATION_DEBUG
-    logDebug("\tPropagating " << variable);
-    logDebug("\t\tDepends on invariant: " << definingInvariant);
-#endif
+        _propGraph.definingInvariant(queuedVar);
 
     if (definingInvariant != NULL_ID) {
-      Invariant& defInv = _store.getInvariant(definingInvariant);
-      if (stableVarId == defInv.getPrimaryDefinedVar()) {
-        const Int oldValue = variable.getValue(_currentTimestamp);
+      Invariant& defInv = _store.invariant(definingInvariant);
+      if (queuedVar == defInv.primaryDefinedVar()) {
+        const Int oldValue = variable.value(_currentTimestamp);
         defInv.compute(_currentTimestamp, *this);
-        defInv.queueNonPrimaryDefinedVarsForPropagation(_currentTimestamp,
-                                                        *this);
-        if (oldValue == variable.getValue(_currentTimestamp)) {
-#ifdef PROPAGATION_DEBUG
-          logDebug("\t\tVariable did not change after compute: ignoring.");
-#endif
+        for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
+          if (hasChanged(_currentTimestamp, inputId)) {
+            enqueueComputedVar(_currentTimestamp, inputId);
+          }
+        }
+        if (oldValue == variable.value(_currentTimestamp)) {
           continue;
         }
         if constexpr (DoCommit) {
@@ -318,39 +286,13 @@ void PropagationEngine::propagate() {
     }
 
     if constexpr (DoCommit) {
-      commitIf(_currentTimestamp, stableVarId);
+      commitIf(_currentTimestamp, queuedVar);
     }
 
-    for (const auto& toNotify : _listeningInvariantData[stableVarId]) {
-      Invariant& invariant = _store.getInvariant(toNotify.invariantId);
-
-#ifdef PROPAGATION_DEBUG
-      logDebug("\t\tNotifying invariant:" << toNotify.invariantId
-                                          << " with localId: "
-                                          << toNotify.localId);
-#endif
-#ifdef PROPAGATION_DEBUG_COUNTING
-      notificationCount.at(toNotify.invariantId.id - 1)[variable.getId().id] =
-          notificationCount.at(toNotify.invariantId.id -
-                               1)[variable.getId().id] +
-          1;
-#endif
-
+    for (const auto& toNotify : _listeningInvariantData[queuedVar]) {
+      Invariant& invariant = _store.invariant(toNotify.invariantId);
       invariant.notify(toNotify.localId);
-      queueForPropagation(_currentTimestamp, invariant.getPrimaryDefinedVar());
+      enqueueComputedVar(_currentTimestamp, invariant.primaryDefinedVar());
     }
   }
-
-#ifdef PROPAGATION_DEBUG_COUNTING
-  logDebug("Printing notification counts");
-  for (int i = 0; i < notificationCount.size(); ++i) {
-    logDebug("\tInvariant " << i + 1);
-    for (const auto [k, v] : notificationCount.at(i)) {
-      logDebug("\t\tVarId(" << k << "): " << v);
-    }
-  }
-#endif
-#ifdef PROPAGATION_DEBUG
-  logDebug("Propagation done\n");
-#endif
 }
