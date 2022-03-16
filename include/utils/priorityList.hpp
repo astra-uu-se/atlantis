@@ -3,14 +3,14 @@
 #include <cassert>
 #include <vector>
 
-#include "variables/savedValue.hpp"
+#include "variables/committable.hpp"
 
 class PriorityList {
  private:
   struct DoublyLinkedNode {
-    Saved<DoublyLinkedNode*> prev;
-    Saved<DoublyLinkedNode*> next;
-    Saved<Int> priority;
+    Committable<DoublyLinkedNode*> prev;
+    Committable<DoublyLinkedNode*> next;
+    Committable<Int> priority;
     DoublyLinkedNode()
         : prev(NULL_TIMESTAMP, nullptr),
           next(NULL_TIMESTAMP, nullptr),
@@ -23,8 +23,8 @@ class PriorityList {
   };
 
   std::vector<DoublyLinkedNode> _list;
-  Saved<DoublyLinkedNode*> _head;
-  Saved<DoublyLinkedNode*> _tail;
+  Committable<DoublyLinkedNode*> _head;
+  Committable<DoublyLinkedNode*> _tail;
 
   inline void unlink(Timestamp ts, size_t idx) {
     DoublyLinkedNode* prev = _list[idx].prev.get(ts);
@@ -65,8 +65,8 @@ class PriorityList {
   }
 
   size_t size() { return _list.size(); }
-  Int getMinPriority(Timestamp ts) { return _head.get(ts)->priority.get(ts); }
-  Int getMaxPriority(Timestamp ts) { return _tail.get(ts)->priority.get(ts); }
+  Int minPriority(Timestamp ts) { return _head.get(ts)->priority.get(ts); }
+  Int maxPriority(Timestamp ts) { return _tail.get(ts)->priority.get(ts); }
 
   void updatePriority(Timestamp ts, size_t idx, Int newValue) {
     if (_list[idx].priority.get(ts) == newValue) {
@@ -175,7 +175,7 @@ class PriorityList {
     size_t s = 0;
     bool first = true;
     const Int minPrio = _head.get(ts)->priority.get(ts);
-    for (Saved<DoublyLinkedNode*> cur = _head; cur.get(ts) != nullptr;
+    for (Committable<DoublyLinkedNode*> cur = _head; cur.get(ts) != nullptr;
          cur = cur.get(ts)->next) {
       ++s;
       if (first) {
@@ -192,7 +192,7 @@ class PriorityList {
     s = 0;
     first = true;
     Int maxPrio = _tail.get(ts)->priority.get(ts);
-    for (Saved<DoublyLinkedNode*> cur = _tail; cur.get(ts) != nullptr;
+    for (Committable<DoublyLinkedNode*> cur = _tail; cur.get(ts) != nullptr;
          cur = cur.get(ts)->prev) {
       ++s;
       if (first) {
@@ -206,7 +206,7 @@ class PriorityList {
     }
     assert(size() == s);
 
-    for (Saved<DoublyLinkedNode*> cur = _head; cur.get(ts) != nullptr;
+    for (Committable<DoublyLinkedNode*> cur = _head; cur.get(ts) != nullptr;
          cur = cur.get(ts)->next) {
       if (cur.get(ts)->next.get(ts) == nullptr) {
         continue;

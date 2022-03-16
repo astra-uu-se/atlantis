@@ -79,7 +79,7 @@ class Queens : public benchmark::Fixture {
   std::string instanceToString() {
     std::string str = "Queens: ";
     for (auto q : queens) {
-      str += std::to_string(engine->getCommittedValue(q)) + ", ";
+      str += std::to_string(engine->committedValue(q)) + ", ";
     }
     return str;
   }
@@ -91,17 +91,17 @@ BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {
     assert(i < queens.size());
     const size_t j = distribution(gen);
     assert(j < queens.size());
-    const Int oldI = engine->getCommittedValue(queens[i]);
-    const Int oldJ = engine->getCommittedValue(queens[j]);
+    const Int oldI = engine->committedValue(queens[i]);
+    const Int oldJ = engine->committedValue(queens[j]);
     // Perform random swap
     engine->beginMove();
     engine->setValue(queens[i], oldJ);
     engine->setValue(queens[j], oldI);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(total_violation);
-    engine->endQuery();
+    engine->endProbe();
   }
 }
 
@@ -110,16 +110,16 @@ BENCHMARK_DEFINE_F(Queens, probing_all_swap)(benchmark::State& st) {
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
-        const Int oldI = engine->getCommittedValue(queens[i]);
-        const Int oldJ = engine->getCommittedValue(queens[j]);
+        const Int oldI = engine->committedValue(queens[i]);
+        const Int oldJ = engine->committedValue(queens[j]);
         engine->beginMove();
         engine->setValue(queens[i], oldJ);
         engine->setValue(queens[j], oldI);
         engine->endMove();
 
-        engine->beginQuery();
+        engine->beginProbe();
         engine->query(total_violation);
-        engine->endQuery();
+        engine->endProbe();
 
         ++probes;
       }
@@ -148,20 +148,20 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
           if (tabu[i] > it && tabu[j] > it) {
             continue;
           }
-          const Int oldI = engine->getCommittedValue(queens[i]);
-          const Int oldJ = engine->getCommittedValue(queens[j]);
+          const Int oldI = engine->committedValue(queens[i]);
+          const Int oldJ = engine->committedValue(queens[j]);
           engine->beginMove();
           engine->setValue(queens[i], oldJ);
           engine->setValue(queens[j], oldI);
           engine->endMove();
 
-          engine->beginQuery();
+          engine->beginProbe();
           engine->query(total_violation);
-          engine->endQuery();
+          engine->endProbe();
 
           ++probes;
 
-          Int newValue = engine->getNewValue(total_violation);
+          Int newValue = engine->currentValue(total_violation);
           if (newValue <= bestViol) {
             bestViol = newValue;
             bestI = i;
@@ -170,8 +170,8 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
         }
       }
 
-      const Int oldI = engine->getCommittedValue(queens[bestI]);
-      const Int oldJ = engine->getCommittedValue(queens[bestJ]);
+      const Int oldI = engine->committedValue(queens[bestI]);
+      const Int oldJ = engine->committedValue(queens[bestJ]);
       engine->beginMove();
       engine->setValue(queens[bestI], oldJ);
       engine->setValue(queens[bestJ], oldI);

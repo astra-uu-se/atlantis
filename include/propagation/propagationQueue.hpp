@@ -34,24 +34,22 @@ class PropagationQueue {
   void push(VarIdBase id) {
     ListNode* toInsert = _priorityNodes[id].get();
     if (toInsert->next != nullptr || tail == toInsert) {
-      return;  // id is already is list
+      return;  // id is already in list
     }
     if (head == nullptr) {
       head = toInsert;
       tail = head;
       return;
     }
-    // Insert at start of list
-    if (toInsert->priority <=
-        head->priority) {  // duplicates should not happen but are ok
+    // Insert at start of list (duplicates should not happen but are ok):
+    if (toInsert->priority <= head->priority) {
       toInsert->next = head;
       head = toInsert;
       return;
     }
 
-    // Insert at end of list
-    if (toInsert->priority >=
-        tail->priority) {  // duplicates should not happen but are ok
+    // Insert at end of list (duplicates should not happen but are ok):
+    if (toInsert->priority >= tail->priority) {
       tail->next = toInsert;
       tail = toInsert;
       return;
@@ -65,7 +63,8 @@ class PropagationQueue {
       }
       current = current->next;
     }
-    assert(false);  // Insert failed. Cannot happen.
+    // Insert failed (this should and cannot happen):
+    assert(false);
   }
   VarIdBase pop() {
     if (head == nullptr) {

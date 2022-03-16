@@ -32,9 +32,9 @@ class MockElementConst : public ElementConst {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return ElementConst::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextInput)
+    ON_CALL(*this, nextInput)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return ElementConst::getNextInput(ts, engine);
+          return ElementConst::nextInput(ts, engine);
         });
 
     ON_CALL(*this, notifyCurrentInputChanged)
@@ -42,9 +42,9 @@ class MockElementConst : public ElementConst {
           ElementConst::notifyCurrentInputChanged(ts, engine);
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          ElementConst::notifyIntChanged(ts, engine, id);
+          ElementConst::notifyInputChanged(ts, engine, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
@@ -55,11 +55,11 @@ class MockElementConst : public ElementConst {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp t, Engine& e, LocalId id),
               (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
@@ -106,20 +106,20 @@ class ElementConstTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+    if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(0);
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(2);
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(2);
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 
@@ -127,9 +127,9 @@ class ElementConstTest : public ::testing::Test {
     engine->setValue(idx, 5);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(output);
-    engine->endQuery();
+    engine->endProbe();
   }
 };
 
@@ -157,7 +157,7 @@ TEST_F(ElementConstTest, CreateElement) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(output), 3);
+  EXPECT_EQ(engine->currentValue(output), 3);
 }
 
 TEST_F(ElementConstTest, NotificationsInputToOutput) {

@@ -31,8 +31,8 @@ class MockIfThenElse : public IfThenElse {
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return IfThenElse::recompute(timestamp, engine);
         });
-    ON_CALL(*this, getNextInput).WillByDefault([this](Timestamp t, Engine& e) {
-      return IfThenElse::getNextInput(t, e);
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp t, Engine& e) {
+      return IfThenElse::nextInput(t, e);
     });
 
     ON_CALL(*this, notifyCurrentInputChanged)
@@ -40,9 +40,9 @@ class MockIfThenElse : public IfThenElse {
           IfThenElse::notifyCurrentInputChanged(t, e);
         });
 
-    ON_CALL(*this, notifyIntChanged)
+    ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
-          IfThenElse::notifyIntChanged(t, e, id);
+          IfThenElse::notifyInputChanged(t, e, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
@@ -53,11 +53,11 @@ class MockIfThenElse : public IfThenElse {
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
 
-  MOCK_METHOD(VarId, getNextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
               (override));
 
-  MOCK_METHOD(void, notifyIntChanged, (Timestamp t, Engine& e, LocalId id),
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp t, Engine& e, LocalId id),
               (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 
@@ -99,20 +99,20 @@ class IfThenElseTest : public ::testing::Test {
 
     engine->close();
 
-    if (engine->propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(0);
+    if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(0);
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(invariant, getNextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
       EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
       EXPECT_CALL(invariant,
-                  notifyIntChanged(testing::_, testing::_, testing::_))
+                  notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
 
@@ -120,9 +120,9 @@ class IfThenElseTest : public ::testing::Test {
     engine->setValue(b, 5);
     engine->endMove();
 
-    engine->beginQuery();
+    engine->beginProbe();
     engine->query(z);
-    engine->endQuery();
+    engine->endProbe();
   }
 };
 
@@ -145,7 +145,7 @@ TEST_F(IfThenElseTest, CreateElement) {
 
   engine->close();
 
-  EXPECT_EQ(engine->getNewValue(z), 0);
+  EXPECT_EQ(engine->currentValue(z), 0);
 }
 
 TEST_F(IfThenElseTest, NotificationsInputToOutput) {

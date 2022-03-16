@@ -49,7 +49,7 @@ invariantgraph::LeqNode::fromModelConstraint(
 
 VarId invariantgraph::LeqNode::registerWithEngine(
     Engine &engine, std::function<VarId(VariableNode *)> variableMapper) const {
-  auto [sumLb, sumUb] = getDomainBounds();
+  auto [sumLb, sumUb] = domainBounds();
   auto sumVar = engine.makeIntVar(0, sumLb, sumUb);
 
   std::vector<VarId> variables;
@@ -66,7 +66,7 @@ VarId invariantgraph::LeqNode::registerWithEngine(
   return violation;
 }
 
-std::pair<Int, Int> invariantgraph::LeqNode::getDomainBounds() const {
+std::pair<Int, Int> invariantgraph::LeqNode::domainBounds() const {
   Int lb = 0;
   Int ub = 0;
 

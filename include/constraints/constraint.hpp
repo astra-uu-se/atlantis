@@ -13,6 +13,6 @@ class Constraint : public Invariant {
       : Invariant(id), _violationId(violationId) {}
 
  public:
-  [[nodiscard]] inline VarId getViolationId() const;
-  [[nodiscard]] inline Int getViolationCount(Engine&, Timestamp&) const;
+  [[nodiscard]] inline VarId violationId() const;
+  [[nodiscard]] inline Int violationCount(Engine&, Timestamp&) const;
 };

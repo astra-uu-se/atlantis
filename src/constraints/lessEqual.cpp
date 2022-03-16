@@ -24,19 +24,15 @@ void LessEqual::init(Timestamp, Engine& engine) {
 }
 
 void LessEqual::recompute(Timestamp ts, Engine& engine) {
-  // Dereference safe as incValue does not retain ptr.
-  updateValue(
-      ts, engine, _violationId,
-      std::max((Int)0, engine.getValue(ts, _x) - engine.getValue(ts, _y)));
+  updateValue(ts, engine, _violationId,
+              std::max(Int(0), engine.value(ts, _x) - engine.value(ts, _y)));
 }
 
-void LessEqual::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void LessEqual::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId LessEqual::getNextInput(Timestamp ts, Engine&) {
-  // todo: maybe this can be faster by first checking null and then doing
-  // ==0?_x:_y;
+VarId LessEqual::nextInput(Timestamp ts, Engine&) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
