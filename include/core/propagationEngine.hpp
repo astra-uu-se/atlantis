@@ -22,7 +22,8 @@ class PropagationEngine : public Engine {
   IdMap<VarIdBase, bool> _isEnqueued;
 
   std::unordered_set<VarIdBase> _modifiedSearchVariables;
-  Timestamp _searchVariablesModifiedAt;
+
+  void incCurrentTimestamp();
 
   void recomputeAndCommit();
 
@@ -127,6 +128,18 @@ class PropagationEngine : public Engine {
   PropagationGraph& propGraph();
 };
 
+inline void PropagationEngine::incCurrentTimestamp() {
+  ++_currentTimestamp;
+  _modifiedSearchVariables.clear();
+  if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
+    for (const VarIdBase varId : searchVariables()) {
+      if (_store.intVar(varId).hasChanged(_currentTimestamp)) {
+        _modifiedSearchVariables.emplace(varId);
+      }
+    }
+  }
+}
+
 inline size_t PropagationEngine::numVariables() {
   return _propGraph.numVariables();
 }
@@ -173,8 +186,7 @@ inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
   var.setValue(ts, val);
 
   if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
-    if (ts != _searchVariablesModifiedAt) {
-      _searchVariablesModifiedAt = ts;
+    if (ts != _currentTimestamp) {
       _modifiedSearchVariables.clear();
     }
 
@@ -226,7 +238,6 @@ inline const std::vector<VarIdBase>& PropagationEngine::inputVariables(
 
 inline const std::unordered_set<VarIdBase>&
 PropagationEngine::modifiedSearchVariables() const {
-  assert(_currentTimestamp == _searchVariablesModifiedAt);
   return _modifiedSearchVariables;
 }
 
