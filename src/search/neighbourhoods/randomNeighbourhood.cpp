@@ -9,8 +9,7 @@ void search::neighbourhoods::RandomNeighbourhood::initialise(
 
 search::Move<1u>
 search::neighbourhoods::RandomNeighbourhood::randomMove() {
-  // We can assume _variables is non-empty.
-  auto variable = *_random.element(_variables);
+  auto variable = _random.element(_variables);
   auto value = randomValue(variable);
 
   return { {variable}, {value} };

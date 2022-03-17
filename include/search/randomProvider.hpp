@@ -13,11 +13,8 @@ class RandomProvider {
   explicit RandomProvider(int seed) : _gen(std::mt19937(seed)) {}
 
   template <typename T>
-  std::optional<T> element(const std::vector<T> collection) {
-    if (collection.empty()) {
-      return std::nullopt;
-    }
-
+  T element(const std::vector<T> collection) {
+    assert(!collection.empty());
     std::uniform_int_distribution<size_t> distribution(0,
                                                        collection.size() - 1);
     return collection[distribution(_gen)];
