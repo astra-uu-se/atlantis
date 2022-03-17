@@ -3,7 +3,9 @@
 #include <filesystem>
 #include <iostream>
 
+#include "core/propagationEngine.hpp"
 #include "fznparser/modelfactory.hpp"
+#include "invariantgraph/invariantGraphBuilder.hpp"
 
 /**
  * @brief Read a duration in milliseconds from an input stream. Used to allow
@@ -18,7 +20,7 @@ std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
 int main(int argc, char* argv[]) {
   try {
     cxxopts::Options options(
-        std::string(argv[0]),
+        argv[0],
         "Constraint-based local search backend for MiniZinc.");
 
     options.positional_help("[flatzinc file]").show_positional_help();
@@ -58,8 +60,22 @@ int main(int argc, char* argv[]) {
 
     auto& modelFilePath = result["modelFile"].as<std::filesystem::path>();
     auto model = fznparser::ModelFactory::create(modelFilePath);
+    std::cout << "Model has " << model->variables().size() << " variables and "
+              << model->constraints().size() << " constraints." << std::endl;
 
-    std::cout << "Model has " << model->variables().size() << " variables and " << model->constraints().size() << " constraints." << std::endl;
+    // Not used for output, but this allows running end-to-end tests with the
+    // CLI on the structure identification.
+    invariantgraph::InvariantGraphBuilder invariantGraphBuilder;
+    auto graph = invariantGraphBuilder.build(model);
+
+    PropagationEngine engine;
+    graph->apply(engine);
+
+    auto numDecisionVars = engine.searchVariables().size();
+    auto numVars = engine.numVariables();
+    std::cout << "Converted to " << numDecisionVars
+              << " decision variables and " << (numVars - numDecisionVars)
+              << " defined variables." << std::endl;
   } catch (const cxxopts::OptionException& e) {
     std::cerr << "error: " << e.what() << std::endl;
   } catch (const std::invalid_argument& e) {

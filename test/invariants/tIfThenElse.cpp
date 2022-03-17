@@ -86,13 +86,13 @@ class IfThenElseTest : public ::testing::Test {
     VarId y = engine->makeIntVar(5, 5, 9);
     VarId z = engine->makeIntVar(3, 0, 9);
 
-    auto& invariant = engine->makeInvariant<MockIfThenElse>(b, x, y, z);
+    auto invariant = &engine->makeInvariant<MockIfThenElse>(b, x, y, z);
 
-    EXPECT_TRUE(invariant.initialized);
+    EXPECT_TRUE(invariant->initialized);
 
-    EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-    EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
     engine->setOutputToInputMarkingMode(markingMode);
@@ -100,18 +100,18 @@ class IfThenElseTest : public ::testing::Test {
     engine->close();
 
     if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
-      EXPECT_CALL(invariant,
+      EXPECT_CALL(*invariant,
                   notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(3);
-      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(3);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
-      EXPECT_CALL(invariant,
+      EXPECT_CALL(*invariant,
                   notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(AtMost(1));
     }
@@ -135,13 +135,13 @@ TEST_F(IfThenElseTest, CreateElement) {
   VarId y = engine->makeIntVar(5, 5, 9);
   VarId z = engine->makeIntVar(3, 0, 9);
 
-  auto& invariant = engine->makeInvariant<MockIfThenElse>(b, x, y, z);
+  auto invariant = &engine->makeInvariant<MockIfThenElse>(b, x, y, z);
 
-  EXPECT_TRUE(invariant.initialized);
+  EXPECT_TRUE(invariant->initialized);
 
-  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 

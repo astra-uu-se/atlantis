@@ -2,7 +2,9 @@
 
 #include <algorithm>
 
+#include "../parseHelper.hpp"
 #include "invariants/linear.hpp"
+#include "views/intOffsetView.hpp"
 
 std::unique_ptr<invariantgraph::LinearNode>
 invariantgraph::LinearNode::fromModelConstraint(
@@ -12,68 +14,69 @@ invariantgraph::LinearNode::fromModelConstraint(
   assert(constraint->arguments().size() == 3);
   assert(constraint->annotations().has<fznparser::DefinesVarAnnotation>());
 
-  auto coeffs = std::get<std::vector<std::shared_ptr<fznparser::Literal>>>(
-      constraint->arguments()[0]);
-  auto vars = std::get<std::vector<std::shared_ptr<fznparser::Literal>>>(
-      constraint->arguments()[1]);
-  auto sum =
-      std::get<std::shared_ptr<fznparser::Literal>>(constraint->arguments()[2]);
-
-  assert(vars.size() == coeffs.size());
-
-  Int sumValue =
-      std::dynamic_pointer_cast<fznparser::ValueLiteral>(sum)->value();
+  VALUE_VECTOR_ARG(coeffs, constraint->arguments()[0]);
+  MAPPED_SEARCH_VARIABLE_VECTOR_ARG(vars, constraint->arguments()[1],
+                                    variableMap);
+  VALUE_ARG(sum, constraint->arguments()[2]);
 
   auto definedVar = constraint->annotations()
                         .get<fznparser::DefinesVarAnnotation>()
                         ->defines()
                         .lock();
   auto definedVarPos =
-      std::find_if(vars.begin(), vars.end(), [&definedVar](auto literal) {
-        auto named =
-            std::dynamic_pointer_cast<fznparser::NamedLiteral>(literal);
-        return named->name() == definedVar->name();
+      std::find_if(vars.begin(), vars.end(), [&definedVar](auto varNode) {
+        return varNode->variable()->name() == definedVar->name();
       });
 
   assert(definedVarPos != vars.end());
   size_t definedVarIndex = definedVarPos - vars.begin();
 
-  std::vector<invariantgraph::VariableNode*> convertedVars;
-  std::vector<Int> convertedCoeffs;
-
-  for (size_t i = 0; i < vars.size(); ++i) {
-    assert(coeffs[i]->type() == fznparser::LiteralType::VALUE);
-    auto coeff = std::dynamic_pointer_cast<fznparser::ValueLiteral>(coeffs[i]);
-
-    if (i == definedVarIndex) {
-      if (coeff->value() != 1 && coeff->value() != -1)
-        throw std::runtime_error(
-            "Cannot define variable with coefficient which is not +/-1");
-
-      continue;
-    }
-
-    assert(vars[i]->type() == fznparser::LiteralType::SEARCH_VARIABLE);
-    auto variable = std::dynamic_pointer_cast<fznparser::Variable>(vars[i]);
-    convertedVars.emplace_back(variableMap(variable));
-
-    convertedCoeffs.emplace_back(coeff->value());
+  if (std::abs(coeffs[definedVarIndex]) != 1) {
+    throw std::runtime_error(
+        "Cannot define variable with coefficient which is not +/-1");
   }
 
-  auto output = variableMap(definedVar);
-  auto linearInv = std::make_unique<invariantgraph::LinearNode>(
-      convertedCoeffs, convertedVars, output);
-  output->definedByInvariant(linearInv.get());
-  output->setOffset(-sumValue);
+  auto coeffsIt = coeffs.begin();
+  std::advance(coeffsIt, definedVarIndex);
+  coeffs.erase(coeffsIt);
+
+  auto varsIt = vars.begin();
+  std::advance(varsIt, definedVarIndex);
+  auto output = *varsIt;
+  vars.erase(varsIt);
+
+  auto linearInv =
+      std::make_unique<invariantgraph::LinearNode>(coeffs, vars, output, -sum);
 
   return linearInv;
 }
 
 void invariantgraph::LinearNode::registerWithEngine(
-    Engine& engine, std::function<VarId(VariableNode*)> variableMapper) const {
+    Engine& engine,
+    std::map<VariableNode*, VarId>& variableMap) {
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),
-                 std::back_inserter(variables), variableMapper);
+                 std::back_inserter(variables), [&](const auto& node) {
+                   return variableMap.at(node);
+                 });
 
-  engine.makeInvariant<::Linear>(_coeffs, variables, variableMapper(output()));
+  const auto& [lb, ub] = getIntermediateDomain();
+  auto l = engine.makeIntVar(lb, lb, ub);
+  engine.makeInvariant<::Linear>(_coeffs, variables, l);
+
+  auto outputVar = engine.makeIntView<IntOffsetView>(l, _offset);
+  variableMap.emplace(definedVariables()[0], outputVar);
+}
+
+std::pair<Int, Int> invariantgraph::LinearNode::getIntermediateDomain() const {
+  Int lb = 0, ub = 0;
+
+  for (size_t i = 0; i < _coeffs.size(); i++) {
+    const auto& [varLb, varUb] = _variables[i]->domain();
+
+    lb += _coeffs[i] * varLb;
+    ub += _coeffs[i] * varUb;
+  }
+
+  return {lb, ub};
 }

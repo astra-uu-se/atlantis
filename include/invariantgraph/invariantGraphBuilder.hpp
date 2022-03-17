@@ -16,11 +16,8 @@ class InvariantGraphBuilder {
   typedef std::shared_ptr<fznparser::Constraint> ConstraintRef;
 
   std::unordered_map<VarRef, VariableNode*> _variableMap;
-
   std::vector<std::unique_ptr<VariableNode>> _variables;
-  std::vector<std::unique_ptr<InvariantNode>> _invariants;
-  std::vector<std::unique_ptr<SoftConstraintNode>> _softConstraints;
-  std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraints;
+  std::vector<std::unique_ptr<VariableDefiningNode>> _definingNodes;
 
  public:
   std::unique_ptr<invariantgraph::InvariantGraph> build(
@@ -28,17 +25,16 @@ class InvariantGraphBuilder {
 
  private:
   void createNodes(const std::unique_ptr<fznparser::Model>& model);
-
-  [[nodiscard]] bool canBeImplicit(const ConstraintRef& constraint) const;
-  [[nodiscard]] bool allVariablesFree(
-      const ConstraintRef& constraint,
-      const std::unordered_set<VarRef>& definedVars) const;
-
-  [[nodiscard]] std::unique_ptr<InvariantNode> makeInvariant(
+  //
+  //  bool canBeImplicit(const ConstraintRef& constraint);
+  //  bool allVariablesFree(const ConstraintRef& constraint,
+  //                        const std::unordered_set<VarRef>& definedVars);
+  //
+  std::unique_ptr<VariableDefiningNode> makeVariableDefiningNode(
       const ConstraintRef& constraint);
-  [[nodiscard]] std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraint(
-      const ConstraintRef& constraint);
-  [[nodiscard]] std::unique_ptr<SoftConstraintNode> makeSoftConstraint(
+  //  std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraint(
+  //      const ConstraintRef& constraint);
+  std::unique_ptr<SoftConstraintNode> makeSoftConstraint(
       const ConstraintRef& constraint);
 };
 }  // namespace invariantgraph
