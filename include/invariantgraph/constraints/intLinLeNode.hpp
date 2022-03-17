@@ -6,27 +6,32 @@
 
 namespace invariantgraph {
 
-class LeqNode final : public SoftConstraintNode {
+class IntLinLeNode : public SoftConstraintNode {
  private:
-  const std::vector<Int> _coeffs;
-  const std::vector<VariableNode*> _variables;
-  const Int _bound;
+  std::vector<Int> _coeffs;
+  std::vector<VariableNode*> _variables;
+  Int _bound;
 
  public:
-  LeqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-          Int bound)
-      : _coeffs(std::move(coeffs)),
+  IntLinLeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
+               Int bound)
+      : SoftConstraintNode(
+            [&] {
+              return std::max<Int>(0, std::numeric_limits<Int>::max() - bound);
+            },
+            variables),
+        _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _bound(bound) {}
 
-  static std::unique_ptr<LeqNode> fromModelConstraint(
+  static std::unique_ptr<IntLinLeNode> fromModelConstraint(
       const std::shared_ptr<fznparser::Constraint>& constraint,
       const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
           variableMap);
 
-  VarId registerWithEngine(
+  void registerWithEngine(
       Engine& engine,
-      std::function<VarId(VariableNode*)> variableMapper) const final;
+      std::map<VariableNode*, VarId>& variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;
@@ -37,7 +42,7 @@ class LeqNode final : public SoftConstraintNode {
   [[nodiscard]] Int bound() const { return _bound; }
 
  private:
-  std::pair<Int, Int> domainBounds() const;
+  [[nodiscard]] std::pair<Int, Int> getDomainBounds() const;
 };
 
 }  // namespace invariantgraph

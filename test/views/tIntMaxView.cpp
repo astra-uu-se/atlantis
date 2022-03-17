@@ -69,7 +69,7 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   const VarId b = engine->makeIntVar(20, -100, 100);
   const VarId sum = engine->makeIntVar(0, -100, 100);
 
-  auto linear = engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
+  auto linear = &engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
                                               std::vector<VarId>({a, b}), sum);
 
   const VarId viewOfVar = engine->makeIntView<IntMaxView>(sum, 10);
@@ -120,7 +120,7 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   const VarId sum1View = engine->makeIntView<IntMaxView>(sum1, 45);
   const VarId sum2View = engine->makeIntView<IntMaxView>(sum2, 20);
 
-  auto linear3 = engine->makeInvariant<Linear>(
+  auto linear3 = &engine->makeInvariant<Linear>(
       std::vector<Int>({1, 1}), std::vector<VarId>({sum1View, sum2View}), sum3);
 
   std::vector<VarId> sum3views;
