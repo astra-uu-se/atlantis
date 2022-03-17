@@ -11,7 +11,7 @@ class CommittableInt;  // forward declare
 class Engine;
 
 class AllDifferent : public Constraint {
- private:
+ protected:
   std::vector<VarId> _variables;
   std::vector<CommittableInt> _localValues;
   std::vector<CommittableInt> _counts;
