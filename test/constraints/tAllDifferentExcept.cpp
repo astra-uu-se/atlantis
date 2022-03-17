@@ -365,8 +365,6 @@ RC_GTEST_FIXTURE_PROP(AllDifferentExceptTest, rapidCheck,
       }
     }
   }
-
-  // ask gustav to stay and discuss simulated annealing
 }
 
 TEST_F(AllDifferentExceptTest, NotificationsInputToOutput) {
