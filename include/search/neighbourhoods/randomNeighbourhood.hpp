@@ -2,17 +2,16 @@
 
 #include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
-#include "search/variableStore.hpp"
 
 namespace search::neighbourhoods {
 
 class RandomNeighbourhood : public Neighbourhood {
  public:
   RandomNeighbourhood(std::vector<VarId> variables, RandomProvider& random,
-                      VariableStore& variableStore)
+                      const PropagationEngine& engine)
       : _variables(std::move(variables)),
         _random(random),
-        _variableStore(variableStore) {}
+        _engine(engine) {}
 
   ~RandomNeighbourhood() override = default;
 
@@ -22,7 +21,7 @@ class RandomNeighbourhood : public Neighbourhood {
  private:
   std::vector<VarId> _variables;
   RandomProvider& _random;
-  VariableStore& _variableStore;
+  const PropagationEngine& _engine;
 
   Int randomValue(VarId variable);
 };
