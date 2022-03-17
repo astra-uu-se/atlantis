@@ -33,4 +33,16 @@ class Move {
   bool _probed{false};
 };
 
+class AssignMove : public Move {
+ public:
+  AssignMove(VarId target, Int value) : _target(target), _value(value) {}
+
+ protected:
+  void modify(AssignmentModification& modifications) override;
+
+ private:
+  VarId _target;
+  Int _value;
+};
+
 }  // namespace search

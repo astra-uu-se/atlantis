@@ -16,11 +16,9 @@ class Neighbourhood {
   virtual void initialise(AssignmentModification& modifications) = 0;
 
   /**
-   * @return A probed random move. Ownership should be with the neighbourhood,
-   * as it can reuse the same allocated move. Hence, the lifetime of the
-   * returned value is tied to the lifetime of the neighbourhood.
+   * @return A probed random move.
    */
-  virtual search::Move* randomMove() = 0;
+  virtual std::unique_ptr<search::Move> randomMove() = 0;
 };
 
 }  // namespace search::neighbourhoods

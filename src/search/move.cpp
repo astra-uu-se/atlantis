@@ -17,3 +17,7 @@ void search::Move::commit(search::Assignment& assignment) {
     modify(modifications);
   });
 }
+
+void search::AssignMove::modify(search::AssignmentModification& modifications) {
+  modifications.set(_target, _value);
+}
