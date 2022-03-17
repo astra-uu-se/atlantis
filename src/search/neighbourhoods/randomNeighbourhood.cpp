@@ -16,6 +16,6 @@ search::neighbourhoods::RandomNeighbourhood::randomMove() {
 }
 
 Int search::neighbourhoods::RandomNeighbourhood::randomValue(VarId variable) {
-  return _random.intInRange(_variableStore.lowerBound(variable),
-                            _variableStore.lowerBound(variable));
+  auto domain = _variableStore.domain(variable);
+  return _random.intInRange(domain.lowerBound, domain.upperBound);
 }
