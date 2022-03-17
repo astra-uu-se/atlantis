@@ -5,7 +5,7 @@
 
 namespace search::neighbourhoods {
 
-class RandomNeighbourhood : public Neighbourhood {
+class RandomNeighbourhood : public Neighbourhood<1u> {
  public:
   RandomNeighbourhood(std::vector<VarId> variables, RandomProvider& random,
                       const PropagationEngine& engine)
@@ -16,7 +16,7 @@ class RandomNeighbourhood : public Neighbourhood {
   ~RandomNeighbourhood() override = default;
 
   void initialise(AssignmentModification& modifications) override;
-  std::unique_ptr<search::Move> randomMove() override;
+  search::Move<1u> randomMove() override;
 
  private:
   std::vector<VarId> _variables;

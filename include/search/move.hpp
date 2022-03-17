@@ -5,9 +5,11 @@
 
 namespace search {
 
+template <unsigned int N>
 class Move {
  public:
-  virtual ~Move() = default;
+  Move(std::array<VarId, N> variables, std::array<Int, N> values)
+      : _variables(std::move(variables)), _values(std::move(values)) {}
 
   /**
    * Probe the cost of this move on the given assignment. Will only probe the
@@ -16,33 +18,39 @@ class Move {
    * @param assignment The assignment to probe on.
    * @return The cost of the assignment if this move were committed.
    */
-  const Cost& probe(const Assignment& assignment);
+  const Cost& probe(const Assignment& assignment) {
+    if (_probed) {
+      _cost = assignment.probe([&](auto& modifier) {
+        for (auto i = 0; i < N; i++) {
+          modifier.set(_variables[i], _values[i]);
+        }
+      });
+
+      _probed = true;
+    }
+
+    return _cost;
+  }
 
   /**
    * Commit this move on the given assignment.
    *
    * @param assignment The assignment to change.
    */
-  void commit(Assignment& assignment);
-
- protected:
-  virtual void modify(AssignmentModification& modifications) = 0;
+  void commit(Assignment& assignment) {
+    assignment.assign([&](auto& modifier) {
+      for (auto i = 0; i < N; i++) {
+        modifier.set(_variables[i], _values[i]);
+      }
+    });
+  }
 
  private:
+  std::array<VarId, N> _variables;
+  std::array<Int, N> _values;
+
   Cost _cost{0, 0};
   bool _probed{false};
-};
-
-class AssignMove : public Move {
- public:
-  AssignMove(VarId target, Int value) : _target(target), _value(value) {}
-
- protected:
-  void modify(AssignmentModification& modifications) override;
-
- private:
-  VarId _target;
-  Int _value;
 };
 
 }  // namespace search

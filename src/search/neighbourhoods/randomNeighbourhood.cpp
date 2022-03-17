@@ -7,12 +7,13 @@ void search::neighbourhoods::RandomNeighbourhood::initialise(
   }
 }
 
-std::unique_ptr<search::Move>
+search::Move<1u>
 search::neighbourhoods::RandomNeighbourhood::randomMove() {
   // We can assume _variables is non-empty.
   auto variable = *_random.element(_variables);
+  auto value = randomValue(variable);
 
-  return std::make_unique<search::AssignMove>(variable, randomValue(variable));
+  return { {variable}, {value} };
 }
 
 Int search::neighbourhoods::RandomNeighbourhood::randomValue(VarId variable) {

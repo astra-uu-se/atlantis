@@ -4,6 +4,7 @@
 
 namespace search::neighbourhoods {
 
+template <unsigned int VarsAltered>
 class Neighbourhood {
  public:
   virtual ~Neighbourhood() = default;
@@ -18,7 +19,7 @@ class Neighbourhood {
   /**
    * @return A probed random move.
    */
-  virtual std::unique_ptr<search::Move> randomMove() = 0;
+  virtual Move<VarsAltered> randomMove() = 0;
 };
 
 }  // namespace search::neighbourhoods
