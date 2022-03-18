@@ -1,7 +1,7 @@
 #include "search/neighbourhoods/randomNeighbourhood.hpp"
 
 void search::neighbourhoods::RandomNeighbourhood::initialise(
-    AssignmentModification& modifications) {
+    AssignmentModifier& modifications) {
   for (const auto& variable : _variables) {
     modifications.set(variable, randomValue(variable));
   }

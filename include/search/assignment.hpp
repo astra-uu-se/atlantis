@@ -7,12 +7,12 @@
 
 namespace search {
 
-class AssignmentModification {
+class AssignmentModifier {
  private:
   PropagationEngine& _engine;
 
  public:
-  explicit AssignmentModification(PropagationEngine& engine) : _engine(engine) {
+  explicit AssignmentModifier(PropagationEngine& engine) : _engine(engine) {
     assert(engine.isMoving());
   }
 
@@ -103,7 +103,7 @@ class Assignment {
   template <typename Callback>
   void move(Callback modificationFunc) const {
     _engine.beginMove();
-    AssignmentModification modifications(_engine);
+    AssignmentModifier modifications(_engine);
     modificationFunc(modifications);
     _engine.endMove();
   }

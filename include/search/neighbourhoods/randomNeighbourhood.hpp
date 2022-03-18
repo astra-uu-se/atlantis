@@ -15,7 +15,7 @@ class RandomNeighbourhood : public Neighbourhood {
 
   ~RandomNeighbourhood() override = default;
 
-  void initialise(AssignmentModification& modifications) override;
+  void initialise(AssignmentModifier& modifications) override;
   void randomMove(Assignment& assignment, Annealer* annealer) override;
 
  private:

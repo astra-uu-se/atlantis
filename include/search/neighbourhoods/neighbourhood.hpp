@@ -14,7 +14,7 @@ class Neighbourhood {
    *
    * @param modifications The modifications to the assignment.
    */
-  virtual void initialise(AssignmentModification& modifications) = 0;
+  virtual void initialise(AssignmentModifier& modifications) = 0;
 
   /**
    * Make a random move on @p assignment. After a move is constructed, the
