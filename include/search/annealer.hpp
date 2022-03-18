@@ -5,6 +5,7 @@
 namespace search {
 
 class Annealer {
+ public:
   /**
    * Determine whether @p move should be committed to the assignment.
    *
@@ -13,7 +14,7 @@ class Annealer {
    * @return True if @p move should be committed, false otherwise.
    */
   template <unsigned int N>
-  bool acceptMove(Move<N> move) {
+  bool acceptMove(Move<N>) {
     return false;
   }
 };

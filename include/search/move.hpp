@@ -39,7 +39,7 @@ class Move {
    */
   void commit(Assignment& assignment) {
     assignment.assign([&](auto& modifier) {
-      for (auto i = 0; i < N; i++) {
+      for (auto i = 0u; i < N; i++) {
         modifier.set(_variables[i], _values[i]);
       }
     });
