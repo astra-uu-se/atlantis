@@ -7,12 +7,12 @@ void search::neighbourhoods::RandomNeighbourhood::initialise(
   }
 }
 
-search::Move<1u>
-search::neighbourhoods::RandomNeighbourhood::randomMove() {
+void search::neighbourhoods::RandomNeighbourhood::randomMove(
+    Assignment& assignment, Annealer* annealer) {
   auto variable = _random.element(_variables);
   auto value = randomValue(variable);
 
-  return { {variable}, {value} };
+  maybeCommit(Move<1u>({variable}, {value}), assignment, annealer);
 }
 
 Int search::neighbourhoods::RandomNeighbourhood::randomValue(VarId variable) {
