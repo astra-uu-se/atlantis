@@ -16,6 +16,11 @@ namespace {
 
 class EqualTest : public InvariantTest {
  public:
+  bool isRegistered = false;
+
+  void registerVars(Engine& engine) override {
+    isRegistered = true;
+    Equal::registerVars(engine);
   Int computeViolation(const Timestamp ts,
                        const std::array<const VarId, 2>& inputs) {
     return computeViolation(engine->value(ts, inputs.at(0)),

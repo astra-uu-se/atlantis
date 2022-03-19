@@ -22,7 +22,9 @@ class AllDifferent : public Constraint {
  public:
   AllDifferent(VarId violationId, std::vector<VarId> variables);
 
-  void init(Timestamp, Engine&) override;
+  void registerVars(Engine&) override;
+  void updateBounds(Engine&) override;
+  void close(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;

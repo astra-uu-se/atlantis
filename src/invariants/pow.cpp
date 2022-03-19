@@ -4,12 +4,27 @@
 
 #include "core/engine.hpp"
 
-void Pow::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+void Pow::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(engine, _y);
   engine.registerInvariantInput(_id, _a, 0);
   engine.registerInvariantInput(_id, _b, 0);
+  registerDefinedVariable(engine, _y);
+}
+
+void Pow::updateBounds(Engine& engine) {
+  const Int aLb = engine.lowerBound(_a);
+  const Int aUb = engine.upperBound(_a);
+  const Int bLb = engine.lowerBound(_b);
+  const Int bUb = engine.upperBound(_b);
+
+  const Int lb = aLb >= 0 ? std::pow(aLb, bLb)
+                          : std::pow(aLb, std::max(bLb, bUb - (bUb % 2 == 0)));
+
+  const Int ub = std::max(static_cast<Int>(std::pow(aUb, bUb)),
+                          std::max(bLb, bUb - (bUb % 2 == 0)));
+
+  engine.updateBounds(_y, lb, ub);
 }
 
 void Pow::recompute(Timestamp ts, Engine& engine) {
@@ -18,8 +33,7 @@ void Pow::recompute(Timestamp ts, Engine& engine) {
 }
 
 VarId Pow::nextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
-  switch (_state.value(ts)) {
+  switch (_state.incValue(ts, 1)) {
     case 0:
       return _a;
     case 1:

@@ -1,4 +1,5 @@
 #pragma once
+#include <cmath>
 
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
@@ -14,10 +15,13 @@ class Mod : public Invariant {
 
  public:
   Mod(VarId a, VarId b, VarId y);
-  void init(Timestamp, Engine&) override;
+  void registerVars(Engine&) override;
+  void updateBounds(Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   VarId nextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
   void commit(Timestamp, Engine&) override;
 };
+
+inline Int Mod::mod(Int aVal, Int bVal) { return aVal % std::abs(bVal); }

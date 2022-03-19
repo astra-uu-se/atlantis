@@ -42,7 +42,7 @@ TEST_F(IntModNodeTest, application) {
   engine.close();
 
   EXPECT_EQ(engine.lowerBound(engineVariable(c)), 0);
-  EXPECT_EQ(engine.upperBound(engineVariable(c)), 6);
+  EXPECT_EQ(engine.upperBound(engineVariable(c)), 5);
 
   // a and b
   EXPECT_EQ(engine.searchVariables().size(), 2);

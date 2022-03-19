@@ -5,23 +5,33 @@ ElementVar::ElementVar(VarId index, std::vector<VarId> varArray, VarId y)
   _modifiedVars.reserve(1);
 }
 
-void ElementVar::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+void ElementVar::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
-
-  registerDefinedVariable(engine, _y);
   engine.registerInvariantInput(_id, _index, LocalId(0));
-  for (const auto index : _varArray) {
-    engine.registerInvariantInput(_id, index, LocalId(0));
+  for (const auto inputId : _varArray) {
+    engine.registerInvariantInput(_id, inputId, LocalId(0));
   }
+  registerDefinedVariable(engine, _y);
+}
+
+void ElementVar::updateBounds(Engine& engine) {
+  Int lb = std::numeric_limits<Int>::max();
+  Int ub = std::numeric_limits<Int>::min();
+  for (Int i = std::max(Int(1), engine.lowerBound(_index));
+       i <=
+       std::min(static_cast<Int>(_varArray.size()), engine.upperBound(_index));
+       ++i) {
+    lb = std::min(lb, engine.lowerBound(_varArray[i - 1]));
+    ub = std::max(ub, engine.upperBound(_varArray[i - 1]));
+  }
+  engine.updateBounds(_y, lb, ub);
 }
 
 void ElementVar::recompute(Timestamp ts, Engine& engine) {
-  assert(0 <= engine.value(ts, _index) &&
-         static_cast<size_t>(engine.value(ts, _index)) < _varArray.size());
+  assert(toZeroIndex(engine.value(ts, _index)) < _varArray.size());
   updateValue(
       ts, engine, _y,
-      engine.value(ts,
-                   _varArray[static_cast<size_t>(engine.value(ts, _index))]));
+      engine.value(ts, _varArray[toZeroIndex(engine.value(ts, _index))]));
 }
 
 void ElementVar::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
@@ -32,10 +42,10 @@ VarId ElementVar::nextInput(Timestamp ts, Engine& engine) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _index;
-    case 1:
-      assert(0 <= engine.value(ts, _index) &&
-             static_cast<size_t>(engine.value(ts, _index)) < _varArray.size());
-      return _varArray[static_cast<size_t>(engine.value(ts, _index))];
+    case 1: {
+      assert(toZeroIndex(engine.value(ts, _index)) < _varArray.size());
+      return _varArray[toZeroIndex(engine.value(ts, _index))];
+    }
     default:
       return NULL_ID;  // Done
   }

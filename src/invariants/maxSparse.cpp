@@ -8,13 +8,22 @@ MaxSparse::MaxSparse(std::vector<VarId> varArray, VarId y)
   _modifiedVars.reserve(_varArray.size());
 }
 
-void MaxSparse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+void MaxSparse::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
-
-  registerDefinedVariable(engine, _y);
   for (size_t i = 0; i < _varArray.size(); ++i) {
     engine.registerInvariantInput(_id, _varArray[i], i);
   }
+  registerDefinedVariable(engine, _y);
+}
+
+void MaxSparse::updateBounds(Engine& engine) {
+  Int lb = std::numeric_limits<Int>::min();
+  Int ub = std::numeric_limits<Int>::min();
+  for (const VarId input : _varArray) {
+    lb = std::max(lb, engine.lowerBound(input));
+    ub = std::max(ub, engine.upperBound(input));
+  }
+  engine.updateBounds(_y, lb, ub);
 }
 
 void MaxSparse::recompute(Timestamp ts, Engine& engine) {

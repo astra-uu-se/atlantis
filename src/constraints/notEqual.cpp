@@ -13,12 +13,24 @@ NotEqual::NotEqual(VarId violationId, VarId x, VarId y)
   _modifiedVars.reserve(1);
 }
 
-void NotEqual::init(Timestamp, Engine& engine) {
+void NotEqual::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
-
   engine.registerInvariantInput(_id, _x, LocalId(0));
   engine.registerInvariantInput(_id, _y, LocalId(0));
   registerDefinedVariable(engine, _violationId);
+}
+
+void NotEqual::updateBounds(Engine& engine) {
+  std::array<Int, 4> bounds{engine.lowerBound(_x), engine.upperBound(_x),
+                            engine.lowerBound(_y), engine.upperBound(_y)};
+  Int ub = 0;
+  for (size_t i = 1; i < bounds.size(); ++i) {
+    if (bounds[0] != bounds[i]) {
+      ub = 1;
+      break;
+    }
+  }
+  engine.updateBounds(_violationId, 0, ub);
 }
 
 void NotEqual::recompute(Timestamp ts, Engine& engine) {
@@ -31,10 +43,7 @@ void NotEqual::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId NotEqual::nextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
-  // todo: maybe this can be faster by first checking null and then doing
-  // ==0?_x:_y;
-  switch (_state.value(ts)) {
+  switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
     case 1:

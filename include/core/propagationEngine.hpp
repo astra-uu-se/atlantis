@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <queue>
 
 #include "core/engine.hpp"
@@ -25,6 +26,8 @@ class PropagationEngine : public Engine {
 
   void incCurrentTimestamp();
 
+  void updateDefinedVarsBounds();
+  void closeInvariants();
   void recomputeAndCommit();
 
   void clearPropagationQueue();

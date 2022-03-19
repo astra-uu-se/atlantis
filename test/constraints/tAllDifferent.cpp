@@ -18,13 +18,11 @@ namespace {
 
 class AllDifferentTest : public InvariantTest {
  public:
-  Int computeViolation(const Timestamp ts,
-                       const std::vector<VarId>& variables) {
-    std::vector<Int> values(variables.size(), 0);
-    for (size_t i = 0; i < variables.size(); ++i) {
-      values.at(i) = engine->value(ts, variables.at(i));
-    }
-    return computeViolation(values);
+  bool isRegistered = false;
+
+  void registerVars(Engine& engine) override {
+    isRegistered = true;
+    AllDifferent::registerVars(engine);
   }
 
   Int computeViolation(const std::vector<Int>& values) {

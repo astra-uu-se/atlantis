@@ -13,12 +13,18 @@ Equal::Equal(VarId violationId, VarId x, VarId y)
   _modifiedVars.reserve(1);
 }
 
-void Equal::init(Timestamp, Engine& engine) {
+void Equal::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
-
   engine.registerInvariantInput(_id, _x, LocalId(0));
   engine.registerInvariantInput(_id, _y, LocalId(0));
   registerDefinedVariable(engine, _violationId);
+}
+
+void Equal::updateBounds(Engine& engine) {
+  engine.updateBounds(
+      _violationId, 0,
+      std::max(std::abs(engine.upperBound(_x) - engine.lowerBound(_y)),
+               std::abs(engine.upperBound(_y) - engine.lowerBound(_x))));
 }
 
 void Equal::recompute(Timestamp ts, Engine& engine) {
