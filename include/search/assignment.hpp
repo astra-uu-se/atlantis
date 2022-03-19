@@ -7,12 +7,12 @@
 
 namespace search {
 
-class AssignmentModification {
+class AssignmentModifier {
  private:
   PropagationEngine& _engine;
 
  public:
-  explicit AssignmentModification(PropagationEngine& engine) : _engine(engine) {
+  explicit AssignmentModifier(PropagationEngine& engine) : _engine(engine) {
     assert(engine.isMoving());
   }
 
@@ -69,7 +69,7 @@ class Assignment {
    * @return The cost of the assignment if the altered values were committed.
    */
   template <typename Callback>
-  Cost probe(Callback modificationFunc) {
+  Cost probe(Callback modificationFunc) const {
     move(modificationFunc);
 
     _engine.beginProbe();
@@ -101,9 +101,9 @@ class Assignment {
 
  private:
   template <typename Callback>
-  void move(Callback modificationFunc) {
+  void move(Callback modificationFunc) const {
     _engine.beginMove();
-    AssignmentModification modifications(_engine);
+    AssignmentModifier modifications(_engine);
     modificationFunc(modifications);
     _engine.endMove();
   }
