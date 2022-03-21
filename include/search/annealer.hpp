@@ -5,6 +5,12 @@
 
 namespace search {
 
+/**
+ * Annealing based on chapter 12 of:
+ *
+ * P. Van Hentenryck and L. Michel. Constraint-Based Local Search. The MIT
+ * Press, 2005.
+ */
 class Annealer {
  public:
   Annealer(const Assignment& assignment, RandomProvider& random)
