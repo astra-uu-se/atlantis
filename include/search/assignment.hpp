@@ -29,13 +29,13 @@ class AssignmentModifier {
 class Assignment {
  private:
   PropagationEngine& _engine;
+  std::vector<VarId> _searchVariables{};
   VarId& _violation;
   VarId& _objective;
 
  public:
   explicit Assignment(PropagationEngine& engine, VarId& violation,
-                      VarId& objective)
-      : _engine(engine), _violation(violation), _objective(objective) {}
+                      VarId& objective);
 
   /**
    * Assign values to the variables in the assignment. This is supplied a
@@ -98,6 +98,10 @@ class Assignment {
    * @return The cost of the current assignment.
    */
   [[nodiscard]] Cost cost() const noexcept;
+
+  [[nodiscard]] const std::vector<VarId>& searchVariables() const noexcept {
+    return _searchVariables;
+  }
 
  private:
   template <typename Callback>
