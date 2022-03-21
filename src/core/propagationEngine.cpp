@@ -8,7 +8,8 @@ PropagationEngine::PropagationEngine()
       _propGraph(ESTIMATED_NUM_OBJECTS),
       _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
       _isEnqueued(ESTIMATED_NUM_OBJECTS),
-      _modifiedSearchVariables() {}
+      _modifiedSearchVariables(),
+      _searchVariablesModifiedAt(NULL_TIMESTAMP) {}
 
 PropagationGraph& PropagationEngine::propGraph() { return _propGraph; }
 
@@ -27,8 +28,7 @@ void PropagationEngine::close() {
     throw EngineClosedException("Engine already closed.");
   }
 
-  incCurrentTimestamp();
-
+  ++_currentTimestamp;
   _isOpen = false;
   try {
     _propGraph.close();
@@ -160,7 +160,7 @@ void PropagationEngine::beginMove() {
   assert(!_isOpen);
   assert(_engineState == EngineState::IDLE);
 
-  incCurrentTimestamp();
+  ++_currentTimestamp;
   _engineState = EngineState::MOVE;
 }
 
@@ -194,18 +194,6 @@ void PropagationEngine::endProbe() {
     if (_propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       propagate<false>();
     } else {
-#ifndef NDEBUG
-      if (outputToInputMarkingMode() ==
-          OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-        for (VarIdBase varId : searchVariables()) {
-          // Assert that if decision variable varId is modified,
-          // then it is in the set of modified decision variables
-          assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
-                 (_modifiedSearchVariables.find(varId) !=
-                  _modifiedSearchVariables.end()));
-        }
-      }
-#endif
       outputToInputPropagate();
     }
     _engineState = EngineState::IDLE;
