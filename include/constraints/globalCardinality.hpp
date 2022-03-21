@@ -4,41 +4,40 @@
 #include <cassert>
 #include <vector>
 
+#include "constraint.hpp"
 #include "core/types.hpp"
 #include "variables/intVar.hpp"
-// #include "variables/savedInt.hpp"
-#include "constraint.hpp"
 
-class SavedInt;  // forward declare
+class CommittableInt;  // forward declare
 class Engine;
 
 template <bool IsClosed>
 class GlobalCardinality : public Constraint {
  private:
-  std::vector<VarId> _variables;
-  std::vector<Int> _cover;
+  const std::vector<VarId> _variables;
+  const std::vector<Int> _cover;
   std::vector<Int> _lowerBound;
   std::vector<Int> _upperBound;
-  std::vector<SavedInt> _localValues;
-  SavedInt _excess;
-  SavedInt _shortage;
-  std::vector<SavedInt> _counts;
+  std::vector<CommittableInt> _localValues;
+  CommittableInt _shortage;
+  CommittableInt _excess;
+  std::vector<CommittableInt> _counts;
   Int _offset;
   signed char increaseCount(Timestamp ts, Int value);
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
   GlobalCardinality(VarId violationId, std::vector<VarId> t_variables,
-                    std::vector<Int> cover, std::vector<Int> t_counts);
+                    std::vector<Int> cover, const std::vector<Int>& t_counts);
   GlobalCardinality(VarId violationId, std::vector<VarId> t_variables,
-                    std::vector<Int> cover, std::vector<Int> lowerBound,
-                    std::vector<Int> upperBound);
+                    std::vector<Int> cover, const std::vector<Int>& lowerBound,
+                    const std::vector<Int>& upperBound);
 
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
-  void notifyIntChanged(Timestamp t, Engine& e, LocalId id) override;
+  void notifyInputChanged(Timestamp t, Engine& e, LocalId id) override;
   void commit(Timestamp, Engine&) override;
-  VarId getNextInput(Timestamp, Engine& e) override;
+  VarId nextInput(Timestamp, Engine& e) override;
   void notifyCurrentInputChanged(Timestamp, Engine& e) override;
 };
 
