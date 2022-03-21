@@ -25,6 +25,11 @@ class RandomProvider {
     return distribution(_gen);
   }
 
+  float floatInRange(float lowerBound, float upperBound) {
+    std::uniform_real_distribution<float> distribution(lowerBound, upperBound);
+    return distribution(_gen);
+  }
+
  private:
   std::mt19937 _gen;
 };
