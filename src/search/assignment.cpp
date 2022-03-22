@@ -1,7 +1,7 @@
 #include "search/assignment.hpp"
 
-search::Assignment::Assignment(PropagationEngine& engine, VarId& violation,
-                               VarId& objective)
+search::Assignment::Assignment(PropagationEngine& engine, VarId violation,
+                               VarId objective)
     : _engine(engine), _violation(violation), _objective(objective) {
   _searchVariables.reserve(engine.searchVariables().size());
   for (const VarId varId : engine.searchVariables()) {
