@@ -28,9 +28,11 @@ class InvariantGraphApplyResult {
 
   InvariantGraphApplyResult(
       VariableMap variableMap,
-      std::vector<ImplicitConstraintNode*> implicitConstraints)
+      std::vector<ImplicitConstraintNode*> implicitConstraints,
+      VarId totalViolations)
       : _variableMap(std::move(variableMap)),
-        _implicitConstraints(std::move(implicitConstraints)) {}
+        _implicitConstraints(std::move(implicitConstraints)),
+        _totalViolations(totalViolations) {}
 
   [[nodiscard]] const VariableMap& variableMap() const noexcept {
     return _variableMap;
@@ -41,9 +43,14 @@ class InvariantGraphApplyResult {
     return _implicitConstraints;
   }
 
+  [[nodiscard]] VarId totalViolations() const noexcept {
+    return _totalViolations;
+  }
+
  private:
   VariableMap _variableMap;
   std::vector<ImplicitConstraintNode*> _implicitConstraints;
+  VarId _totalViolations;
 };
 
 class InvariantGraph {

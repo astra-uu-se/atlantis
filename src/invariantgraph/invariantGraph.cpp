@@ -65,5 +65,6 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
 
   engine.close();
 
-  return {createVariableMap(variableIds), _implicitConstraints};
+  return {createVariableMap(variableIds), _implicitConstraints,
+          totalViolations};
 }
