@@ -65,6 +65,8 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
 
   engine.close();
 
-  return {createVariableMap(variableIds), _implicitConstraints,
-          totalViolations};
+  VarId objectiveVarId = variableIds.at(_objectiveVariable);
+
+  return {createVariableMap(variableIds), _implicitConstraints, totalViolations,
+          objectiveVarId};
 }

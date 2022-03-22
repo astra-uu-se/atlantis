@@ -6,6 +6,7 @@
 #include "invariantgraph/constraints/intLinLeNode.hpp"
 #include "invariantgraph/constraints/intLinNeNode.hpp"
 #include "invariantgraph/constraints/intNeNode.hpp"
+#include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/binaryOpNode.hpp"
@@ -24,7 +25,6 @@
 #include "invariantgraph/views/intLinNeReifNode.hpp"
 #include "invariantgraph/views/intLtReifNode.hpp"
 #include "invariantgraph/views/intNeReifNode.hpp"
-#include "invariantgraph/invariantGraphRoot.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
@@ -35,8 +35,13 @@ invariantgraph::InvariantGraphBuilder::build(
 
   createNodes(model);
 
+  invariantgraph::VariableNode* objectiveVariable = nullptr;
+  if (model->objective_value().has_value()) {
+    objectiveVariable = _variableMap.at(*model->objective_value());
+  }
+
   auto graph = std::make_unique<invariantgraph::InvariantGraph>(
-      std::move(_variables), std::move(_definingNodes));
+      std::move(_variables), std::move(_definingNodes), objectiveVariable);
   return graph;
 }
 
@@ -112,7 +117,8 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       freeVariables.push_back(variableNode.get());
     }
   }
-  _definingNodes.push_back(std::make_unique<invariantgraph::InvariantGraphRoot>(freeVariables));
+  _definingNodes.push_back(
+      std::make_unique<invariantgraph::InvariantGraphRoot>(freeVariables));
 }
 
 // bool invariantgraph::InvariantGraphBuilder::canBeImplicit(
