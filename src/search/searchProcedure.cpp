@@ -1,6 +1,7 @@
 #include "search/searchProcedure.hpp"
 
 void search::SearchProcedure::run(SearchController& controller,
+                                  SolutionListener& solutionListener,
                                   search::Annealer* annealer) {
   while (controller.shouldRun(_assignment)) {
     _assignment.assign([&](auto& modifications) {
@@ -9,7 +10,10 @@ void search::SearchProcedure::run(SearchController& controller,
 
     while (controller.shouldRun(_assignment) && annealer->hasNextLocal()) {
       while (controller.shouldRun(_assignment) && annealer->exploreLocal()) {
-        _neighbourhood->randomMove(_assignment, annealer);
+        bool madeMove = _neighbourhood->randomMove(_assignment, annealer);
+        if (madeMove && _assignment.satisfiesConstraints()) {
+          solutionListener.onSolution(_assignment);
+        }
       }
 
       annealer->nextLocal();

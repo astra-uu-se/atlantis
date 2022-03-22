@@ -2,6 +2,7 @@
 
 #include "neighbourhoods/neighbourhood.hpp"
 #include "searchController.hpp"
+#include "solutionListener.hpp"
 
 namespace search {
 
@@ -17,7 +18,8 @@ class SearchProcedure {
                   neighbourhoods::Neighbourhood* neighbourhood)
       : _assignment(assignment), _neighbourhood(neighbourhood) {}
 
-  void run(SearchController& controller, Annealer* annealer);
+  void run(SearchController& controller, SolutionListener& solutionListener,
+           Annealer* annealer);
 
  private:
   Assignment& _assignment;
