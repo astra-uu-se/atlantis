@@ -10,6 +10,42 @@
 
 namespace invariantgraph {
 
+// Required because VarId implicitly converts to size_t, thereby ignoring the
+// idType field. This means VarIds cannot be used as keys in a hashing
+// container if views and intvars are mixed.
+struct VarIdHash {
+  std::size_t operator()(VarId const& varId) const noexcept {
+    std::size_t typeHash = std::hash<int>{}(static_cast<int>(varId.idType));
+    return typeHash ^ (varId.id << 1);
+  }
+};
+
+class InvariantGraphApplyResult {
+ public:
+  using VariableMap =
+      std::unordered_map<VarId, std::shared_ptr<fznparser::SearchVariable>,
+                         VarIdHash>;
+
+  InvariantGraphApplyResult(
+      VariableMap variableMap,
+      std::vector<ImplicitConstraintNode*> implicitConstraints)
+      : _variableMap(std::move(variableMap)),
+        _implicitConstraints(std::move(implicitConstraints)) {}
+
+  [[nodiscard]] const VariableMap& variableMap() const noexcept {
+    return _variableMap;
+  }
+
+  [[nodiscard]] const std::vector<ImplicitConstraintNode*>&
+  implicitConstraints() const noexcept {
+    return _implicitConstraints;
+  }
+
+ private:
+  VariableMap _variableMap;
+  std::vector<ImplicitConstraintNode*> _implicitConstraints;
+};
+
 class InvariantGraph {
  private:
   std::vector<std::unique_ptr<VariableNode>> _variables;
@@ -30,7 +66,7 @@ class InvariantGraph {
     }
   }
 
-  void apply(Engine& engine);
+  InvariantGraphApplyResult apply(Engine& engine);
 };
 
 }  // namespace invariantgraph
