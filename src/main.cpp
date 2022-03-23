@@ -6,6 +6,7 @@
 #include "core/propagationEngine.hpp"
 #include "fznparser/modelfactory.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
+#include "misc/logging.hpp"
 #include "search/assignment.hpp"
 #include "search/neighbourhoods/randomNeighbourhood.hpp"
 #include "search/searchProcedure.hpp"
@@ -22,6 +23,10 @@ std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
 
 int main(int argc, char* argv[]) {
   try {
+    // TODO: How do we want to control this? The log messages don't appear
+    // in release builds, so do we still want a command line flag to set this?
+    setLogLevel(debug);
+
     cxxopts::Options options(
         argv[0], "Constraint-based local search backend for MiniZinc.");
 
