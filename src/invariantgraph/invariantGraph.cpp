@@ -63,9 +63,12 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
       engine.makeIntVar(0, 0, totalViolationsUpperBound(engine, violations));
   engine.makeInvariant<Linear>(violations, totalViolations);
 
-  engine.close();
+  // If the model has no variable to optimise, use a dummy variable.
+  VarId objectiveVarId = _objectiveVariable == nullptr
+                             ? engine.makeIntVar(0, 0, 0)
+                             : variableIds.at(_objectiveVariable);
 
-  VarId objectiveVarId = variableIds.at(_objectiveVariable);
+  engine.close();
 
   return {createVariableMap(variableIds), _implicitConstraints, totalViolations,
           objectiveVarId};

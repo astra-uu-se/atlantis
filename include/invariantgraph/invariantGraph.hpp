@@ -10,16 +10,6 @@
 
 namespace invariantgraph {
 
-// Required because VarId implicitly converts to size_t, thereby ignoring the
-// idType field. This means VarIds cannot be used as keys in a hashing
-// container if views and intvars are mixed.
-struct VarIdHash {
-  std::size_t operator()(VarId const& varId) const noexcept {
-    std::size_t typeHash = std::hash<int>{}(static_cast<int>(varId.idType));
-    return typeHash ^ (varId.id << 1);
-  }
-};
-
 class InvariantGraphApplyResult {
  public:
   using VariableMap =
