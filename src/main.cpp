@@ -90,7 +90,11 @@ int main(int argc, char* argv[]) {
         assignment.searchVariables(), random, engine);
     search::SearchProcedure search(assignment, &neighbourhood);
 
-    search::SolutionListener solutionListener(applicationResult.variableMap());
+    search::SolutionListener::VariableMap flippedMap;
+    for (const auto& [varId, fznVar] : applicationResult.variableMap())
+      flippedMap.emplace(fznVar, varId);
+
+    search::SolutionListener solutionListener(*model, flippedMap);
     search::SearchController searchController(
         result["time-limit"].as<std::chrono::milliseconds>());
 
