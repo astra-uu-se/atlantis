@@ -1,6 +1,6 @@
 #pragma once
 
-#include <map>
+#include <unordered_map>
 
 #include "assignment.hpp"
 #include "core/types.hpp"
@@ -12,7 +12,8 @@ namespace search {
 class SolutionListener {
  public:
   using VariableMap =
-      std::map<VarId, std::shared_ptr<fznparser::SearchVariable>>;
+      std::unordered_map<VarId, std::shared_ptr<fznparser::SearchVariable>,
+                         VarIdHash>;
 
  private:
   VariableMap _variableMap;
