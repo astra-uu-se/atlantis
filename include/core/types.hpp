@@ -87,4 +87,4 @@ struct DomainEntry {
   DomainEntry(Int lb, Int ub) : lowerBound(lb), upperBound(ub) {
     assert(lb <= ub);
   }
-}
+};
