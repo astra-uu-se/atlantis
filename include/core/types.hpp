@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -79,3 +80,11 @@ struct VarIdHash {
     return typeHash ^ (varId.id << 1);
   }
 };
+
+struct DomainEntry {
+  Int lowerBound;
+  Int upperBound;
+  DomainEntry(Int lb, Int ub) : lowerBound(lb), upperBound(ub) {
+    assert(lb <= ub);
+  }
+}
