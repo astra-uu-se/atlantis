@@ -8,7 +8,7 @@ InSparseDomain::InSparseDomain(VarId violationId, VarId x,
       _x(x),
       _offset(domain.front().lowerBound) {
   _modifiedVars.reserve(1);
-  assert(domain.size() > 1);
+  assert(domain.size() > 0);
   for (const auto& domEntry : domain) {
     assert(domEntry.lowerBound <= domEntry.upperBound);
   }
@@ -32,7 +32,7 @@ void InSparseDomain::init(Timestamp, Engine& engine) {
 }
 
 void InSparseDomain::recompute(Timestamp ts, Engine& engine) {
-  const Int value = engine.getValue(ts, _x);
+  const Int value = engine.value(ts, _x);
   if (value < _offset) {
     updateValue(ts, engine, _violationId, _offset - value);
     return;
@@ -45,11 +45,11 @@ void InSparseDomain::recompute(Timestamp ts, Engine& engine) {
   updateValue(ts, engine, _violationId, _valueViolation[value - _offset]);
 }
 
-void InSparseDomain::notifyIntChanged(Timestamp ts, Engine& engine, LocalId) {
+void InSparseDomain::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
   recompute(ts, engine);
 }
 
-VarId InSparseDomain::getNextInput(Timestamp ts, Engine&) {
+VarId InSparseDomain::nextInput(Timestamp ts, Engine&) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
