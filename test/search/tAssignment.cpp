@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "core/propagationEngine.hpp"
 #include "constraints/equal.hpp"
+#include "core/propagationEngine.hpp"
 #include "invariants/linear.hpp"
 #include "search/assignment.hpp"
 
@@ -15,7 +15,6 @@ class AssignmentTest : public testing::Test {
   VarId violation;
 
   PropagationEngine engine;
-  search::Assignment assignment { engine, violation, a };
 
   // Models the following simple COP:
   // c <- a + b (a and b have domain 0..10)
@@ -35,7 +34,16 @@ class AssignmentTest : public testing::Test {
   }
 };
 
+TEST_F(AssignmentTest, search_variables_are_identified) {
+  search::Assignment assignment{engine, violation, a};
+
+  std::vector<VarId> expectedSearchVariables{a, b};
+  EXPECT_EQ(assignment.searchVariables(), expectedSearchVariables);
+}
+
 TEST_F(AssignmentTest, cost) {
+  search::Assignment assignment{engine, violation, a};
+
   EXPECT_FALSE(assignment.cost().satisfiesConstraints());
 
   // c has value 0, which is 3 away from 3.
@@ -53,6 +61,8 @@ TEST_F(AssignmentTest, cost) {
 }
 
 TEST_F(AssignmentTest, assign_sets_values) {
+  search::Assignment assignment{engine, violation, a};
+
   assignment.assign([&](auto& modifications) {
     modifications.set(a, 1);
     modifications.set(b, 2);
@@ -63,6 +73,8 @@ TEST_F(AssignmentTest, assign_sets_values) {
 }
 
 TEST_F(AssignmentTest, probe) {
+  search::Assignment assignment{engine, violation, a};
+
   auto cost = assignment.probe([&](auto& modifications) {
     modifications.set(a, 1);
     modifications.set(b, 2);
@@ -76,6 +88,8 @@ TEST_F(AssignmentTest, probe) {
 }
 
 TEST_F(AssignmentTest, satisfies_constraints) {
+  search::Assignment assignment{engine, violation, a};
+
   EXPECT_FALSE(assignment.satisfiesConstraints());
 
   assignment.assign([&](auto& modifications) {

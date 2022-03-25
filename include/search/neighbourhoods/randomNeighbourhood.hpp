@@ -9,14 +9,12 @@ class RandomNeighbourhood : public Neighbourhood {
  public:
   RandomNeighbourhood(std::vector<VarId> variables, RandomProvider& random,
                       const PropagationEngine& engine)
-      : _variables(std::move(variables)),
-        _random(random),
-        _engine(engine) {}
+      : _variables(std::move(variables)), _random(random), _engine(engine) {}
 
   ~RandomNeighbourhood() override = default;
 
   void initialise(AssignmentModifier& modifications) override;
-  void randomMove(Assignment& assignment, Annealer* annealer) override;
+  bool randomMove(Assignment& assignment, Annealer& annealer) override;
 
  private:
   std::vector<VarId> _variables;

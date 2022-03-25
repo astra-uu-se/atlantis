@@ -9,6 +9,9 @@
 namespace search {
 
 class RandomProvider {
+ private:
+  std::mt19937 _gen;
+
  public:
   explicit RandomProvider(int seed) : _gen(std::mt19937(seed)) {}
 
@@ -21,12 +24,12 @@ class RandomProvider {
   }
 
   Int intInRange(Int lowerBound, Int upperBound) {
-    std::uniform_int_distribution<Int> distribution(lowerBound, upperBound);
-    return distribution(_gen);
+    return std::uniform_int_distribution<Int>(lowerBound, upperBound)(_gen);
   }
 
- private:
-  std::mt19937 _gen;
+  float floatInRange(float lowerBound, float upperBound) {
+    return std::uniform_real_distribution<float>(lowerBound, upperBound)(_gen);
+  }
 };
 
 }  // namespace search
