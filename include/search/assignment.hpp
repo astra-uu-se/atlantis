@@ -56,6 +56,7 @@ class Assignment {
     move(modificationFunc);
 
     _engine.beginCommit();
+    _engine.query(_violation);
     _engine.query(_objective);
     _engine.endCommit();
   }
