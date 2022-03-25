@@ -4,8 +4,7 @@ search::Assignment::Assignment(PropagationEngine& engine, VarId& violation,
                                VarId& objective)
     : _engine(engine), _violation(violation), _objective(objective) {
   _searchVariables.reserve(engine.searchVariables().size());
-  for (const auto& varIdBase : engine.searchVariables()) {
-    VarId varId(varIdBase.id);
+  for (const VarId varId : engine.searchVariables()) {
     if (engine.lowerBound(varId) != engine.upperBound(varId)) {
       _searchVariables.push_back(varId);
     }
