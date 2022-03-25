@@ -12,15 +12,16 @@ namespace search {
 class SolutionListener {
  public:
   using VariableMap =
-      std::unordered_map<VarId, std::shared_ptr<fznparser::SearchVariable>,
-                         VarIdHash>;
+      std::unordered_map<std::shared_ptr<fznparser::SearchVariable>, VarId>;
 
  private:
+  const fznparser::Model& _fznModel;
   VariableMap _variableMap;
 
  public:
-  explicit SolutionListener(VariableMap variableMap)
-      : _variableMap(std::move(variableMap)) {}
+  explicit SolutionListener(const fznparser::Model& fznModel,
+                            VariableMap variableMap)
+      : _fznModel(fznModel), _variableMap(std::move(variableMap)) {}
 
   void onSolution(const Assignment& assignment);
 };

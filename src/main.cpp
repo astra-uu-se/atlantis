@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
     // TODO: Convert different types of neighbourhoods.
     search::neighbourhoods::RandomNeighbourhood neighbourhood(
         assignment.searchVariables(), random, engine);
-    search::SearchProcedure search(assignment, &neighbourhood);
+    search::SearchProcedure search(assignment, neighbourhood);
 
     search::SolutionListener::VariableMap flippedMap;
     for (const auto& [varId, fznVar] : applicationResult.variableMap())
@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
     }
 
     search::Annealer annealer(assignment, random);
-    search.run(searchController, solutionListener, &annealer);
+    search.run(searchController, solutionListener, annealer);
   } catch (const cxxopts::OptionException& e) {
     std::cerr << "error: " << e.what() << std::endl;
   } catch (const std::invalid_argument& e) {
