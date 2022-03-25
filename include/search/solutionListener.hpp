@@ -17,7 +17,7 @@ class SolutionListener {
  private:
   VariableMap _variableMap;
 
- private:
+ public:
   explicit SolutionListener(VariableMap variableMap)
       : _variableMap(std::move(variableMap)) {}
 
