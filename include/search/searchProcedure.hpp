@@ -15,15 +15,15 @@ namespace search {
 class SearchProcedure {
  public:
   SearchProcedure(Assignment& assignment,
-                  neighbourhoods::Neighbourhood* neighbourhood)
+                  neighbourhoods::Neighbourhood& neighbourhood)
       : _assignment(assignment), _neighbourhood(neighbourhood) {}
 
   void run(SearchController& controller, SolutionListener& solutionListener,
-           Annealer* annealer);
+           Annealer& annealer);
 
  private:
   Assignment& _assignment;
-  neighbourhoods::Neighbourhood* _neighbourhood;
+  neighbourhoods::Neighbourhood& _neighbourhood;
 };
 
 }  // namespace search

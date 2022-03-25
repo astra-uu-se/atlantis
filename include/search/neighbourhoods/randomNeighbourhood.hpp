@@ -14,7 +14,7 @@ class RandomNeighbourhood : public Neighbourhood {
   ~RandomNeighbourhood() override = default;
 
   void initialise(AssignmentModifier& modifications) override;
-  bool randomMove(Assignment& assignment, Annealer* annealer) override;
+  bool randomMove(Assignment& assignment, Annealer& annealer) override;
 
  private:
   std::vector<VarId> _variables;

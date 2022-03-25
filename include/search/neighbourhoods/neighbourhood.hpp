@@ -22,12 +22,12 @@ class Neighbourhood {
    *
    * @return True if a move was committed, false otherwise.
    */
-  virtual bool randomMove(Assignment& assignment, Annealer* annealer) = 0;
+  virtual bool randomMove(Assignment& assignment, Annealer& annealer) = 0;
 
  protected:
   template <unsigned int N>
-  bool maybeCommit(Move<N> move, Assignment& assignment, Annealer* annealer) {
-    if (annealer->acceptMove(move)) {
+  bool maybeCommit(Move<N> move, Assignment& assignment, Annealer& annealer) {
+    if (annealer.acceptMove(move)) {
       move.commit(assignment);
       return true;
     }

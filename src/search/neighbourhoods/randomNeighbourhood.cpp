@@ -8,7 +8,7 @@ void search::neighbourhoods::RandomNeighbourhood::initialise(
 }
 
 bool search::neighbourhoods::RandomNeighbourhood::randomMove(
-    Assignment& assignment, Annealer* annealer) {
+    Assignment& assignment, Annealer& annealer) {
   auto variable = _random.element(_variables);
   auto value = randomValue(variable);
 
