@@ -14,9 +14,13 @@ class SearchController {
             std::chrono::duration_cast<std::chrono::milliseconds>(timeout)) {}
 
   bool shouldRun(const Assignment& assignment) {
-    if (assignment.satisfiesConstraints()) return false;
-    if (_started)
+    if (assignment.satisfiesConstraints()) {
+      return false;
+    }
+    
+    if (_started) {
       return std::chrono::steady_clock::now() - _startTime <= _timeout;
+    }
 
     _started = true;
     _startTime = std::chrono::steady_clock::now();

@@ -12,6 +12,21 @@ namespace search {
  * Press, 2005.
  */
 class Annealer {
+ private:
+  const Assignment& _assignment;
+  RandomProvider& _random;
+  int _nb;
+  float _temperature{2.0};
+  int _iterations{0};
+  float _cutoff{0.1};
+  int _sf{3};
+  float _mp{0.02};
+  float _chest{90};
+  float _factor{0.95};
+  int _freezeCounter{0};
+  int _ch{0};
+  float _nc{_cutoff * static_cast<float>(_nb) * _chest};
+  
  public:
   Annealer(const Assignment& assignment, RandomProvider& random)
       : _assignment(assignment),
@@ -22,7 +37,9 @@ class Annealer {
 
   void nextLocal() {
     _temperature = _factor * _temperature;
-    if (1.0 * _ch / _temperature < _mp) ++_freezeCounter;
+    if (1.0 * _ch / _temperature < _mp) {
+      ++_freezeCounter;
+    }
 
     _ch = 0;
     _iterations = 0;
@@ -58,29 +75,17 @@ class Annealer {
     } else if (accept(-delta)) {
       applyAnnealingAction();
       return true;
-    } else {
-      return false;
     }
+
+    return false;
   }
 
  private:
-  const Assignment& _assignment;
-  RandomProvider& _random;
-  int _nb;
-  float _temperature{2.0};
-  int _iterations{0};
-  float _cutoff{0.1};
-  int _sf{3};
-  float _mp{0.02};
-  float _chest{90};
-  float _factor{0.95};
-  int _freezeCounter{0};
-  int _ch{0};
-  float _nc{_cutoff * static_cast<float>(_nb) * _chest};
-
   void applyImprove() {
     ++_ch;
-    if (_assignment.satisfiesConstraints()) _freezeCounter = 0;
+    if (_assignment.satisfiesConstraints()) {
+      _freezeCounter = 0;
+    }
   }
 
   void applyAnnealingAction() { ++_ch; }

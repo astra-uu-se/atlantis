@@ -14,13 +14,14 @@ class SolutionListener {
   using VariableMap =
       std::map<VarId, std::shared_ptr<fznparser::SearchVariable>>;
 
+ private:
+  VariableMap _variableMap;
+
+ private:
   explicit SolutionListener(VariableMap variableMap)
       : _variableMap(std::move(variableMap)) {}
 
   void onSolution(const Assignment& assignment);
-
- private:
-  VariableMap _variableMap;
 };
 
 }  // namespace search
