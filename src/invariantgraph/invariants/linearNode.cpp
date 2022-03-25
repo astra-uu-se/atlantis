@@ -52,19 +52,23 @@ invariantgraph::LinearNode::fromModelConstraint(
 }
 
 void invariantgraph::LinearNode::registerWithEngine(
-    Engine& engine,
-    std::map<VariableNode*, VarId>& variableMap) {
+    Engine& engine, std::map<VariableNode*, VarId>& variableMap) {
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),
-                 std::back_inserter(variables), [&](const auto& node) {
-                   return variableMap.at(node);
-                 });
+                 std::back_inserter(variables),
+                 [&](const auto& node) { return variableMap.at(node); });
 
-  const auto& [lb, ub] = getIntermediateDomain();
-  auto l = engine.makeIntVar(lb, lb, ub);
-  engine.makeInvariant<::Linear>(_coeffs, variables, l);
+  VarId intermediate = variables[0];
 
-  auto outputVar = engine.makeIntView<IntOffsetView>(l, _offset);
+  // If there is only one variable in the input, there is no need to use a
+  // linear invariant.
+  if (variables.size() > 1) {
+    const auto& [lb, ub] = getIntermediateDomain();
+    intermediate = engine.makeIntVar(lb, lb, ub);
+    engine.makeInvariant<::Linear>(_coeffs, variables, intermediate);
+  }
+
+  auto outputVar = engine.makeIntView<IntOffsetView>(intermediate, _offset);
   variableMap.emplace(definedVariables()[0], outputVar);
 }
 
