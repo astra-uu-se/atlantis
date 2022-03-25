@@ -25,6 +25,12 @@ class NodeTestBase : public testing::Test {
         return ptr;
       };
 
+  void TearDown() override {
+    _nodeMap.clear();
+    _variableMap.clear();
+    _variables.clear();
+  }
+
   template <typename... Args>
   inline std::shared_ptr<fznparser::Constraint> makeConstraint(
       const std::string& name, fznparser::AnnotationCollection annotations,
