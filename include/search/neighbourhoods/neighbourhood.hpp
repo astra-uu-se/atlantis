@@ -19,15 +19,20 @@ class Neighbourhood {
   /**
    * Make a random move on @p assignment. After a move is constructed, the
    * decision whether to apply it is taken by @p annealer.
+   *
+   * @return True if a move was committed, false otherwise.
    */
-  virtual void randomMove(Assignment& assignment, Annealer* annealer) = 0;
+  virtual bool randomMove(Assignment& assignment, Annealer& annealer) = 0;
 
  protected:
   template <unsigned int N>
-  void maybeCommit(Move<N> move, Assignment& assignment, Annealer* annealer) {
-    if (annealer->acceptMove(move)) {
+  bool maybeCommit(Move<N> move, Assignment& assignment, Annealer& annealer) {
+    if (annealer.acceptMove(move)) {
       move.commit(assignment);
+      return true;
     }
+
+    return false;
   }
 };
 
