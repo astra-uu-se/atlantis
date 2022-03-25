@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
       (
         "t,time-limit",
         "Wall time limit in milliseconds.",
-        cxxopts::value<std::chrono::milliseconds>()->default_value("1")
+        cxxopts::value<std::chrono::milliseconds>()
       )
       (
         "s,seed",
@@ -88,6 +88,7 @@ int main(int argc, char* argv[]) {
     std::uint_fast32_t seed = givenSeed >= 0
                                   ? static_cast<std::uint_fast32_t>(givenSeed)
                                   : std::time(nullptr);
+    logDebug("Using seed " << seed);
     search::RandomProvider random(seed);
 
     // TODO: Convert different types of neighbourhoods.
@@ -100,8 +101,12 @@ int main(int argc, char* argv[]) {
       flippedMap.emplace(fznVar, varId);
 
     search::SolutionListener solutionListener(*model, flippedMap);
-    search::SearchController searchController(
-        result["time-limit"].as<std::chrono::milliseconds>());
+
+    search::SearchController searchController;
+    if (result.count("time-limit")) {
+      searchController = search::SearchController(
+          result["time-limit"].as<std::chrono::milliseconds>());
+    }
 
     search::Annealer annealer(assignment, random);
     search.run(searchController, solutionListener, &annealer);
