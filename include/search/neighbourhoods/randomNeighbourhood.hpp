@@ -7,21 +7,21 @@ namespace search::neighbourhoods {
 
 class RandomNeighbourhood : public Neighbourhood {
  public:
-  RandomNeighbourhood(std::vector<VarId> variables, RandomProvider& random,
-                      const PropagationEngine& engine)
-      : _variables(std::move(variables)), _random(random), _engine(engine) {}
+  RandomNeighbourhood(std::vector<VarId> variables, const Engine& engine)
+      : _variables(std::move(variables)), _engine(engine) {}
 
   ~RandomNeighbourhood() override = default;
 
-  void initialise(AssignmentModifier& modifications) override;
-  bool randomMove(Assignment& assignment, Annealer& annealer) override;
+  void initialise(RandomProvider& random,
+                  AssignmentModifier& modifications) override;
+  bool randomMove(RandomProvider& random, Assignment& assignment,
+                  Annealer& annealer) override;
 
  private:
   std::vector<VarId> _variables;
-  RandomProvider& _random;
-  const PropagationEngine& _engine;
+  const Engine& _engine;
 
-  Int randomValue(VarId variable);
+  Int randomValue(RandomProvider& random, VarId variable);
 };
 
 }  // namespace search::neighbourhoods

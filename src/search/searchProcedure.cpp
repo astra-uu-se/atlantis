@@ -11,8 +11,9 @@ void search::SearchProcedure::run(SearchController& controller,
                                   SolutionListener& solutionListener,
                                   search::Annealer& annealer) {
   while (controller.shouldRun(_assignment)) {
-    _assignment.assign(
-        [&](auto& modifications) { _neighbourhood.initialise(modifications); });
+    _assignment.assign([&](auto& modifications) {
+      _neighbourhood.initialise(_random, modifications);
+    });
 
     // For some reason, this does not compile, even though we define the
     // operator<< for std::ostream and search::Cost:
@@ -29,7 +30,8 @@ void search::SearchProcedure::run(SearchController& controller,
 
     while (controller.shouldRun(_assignment) && annealer.hasNextLocal()) {
       while (controller.shouldRun(_assignment) && annealer.exploreLocal()) {
-        bool madeMove = _neighbourhood.randomMove(_assignment, annealer);
+        bool madeMove =
+            _neighbourhood.randomMove(_random, _assignment, annealer);
 
         if (madeMove) {
           //          logDebug("Committed assignment. New cost: " <<

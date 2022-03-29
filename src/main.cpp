@@ -92,9 +92,9 @@ int main(int argc, char* argv[]) {
     search::RandomProvider random(seed);
 
     // TODO: Convert different types of neighbourhoods.
-    search::neighbourhoods::RandomNeighbourhood neighbourhood(
-        assignment.searchVariables(), random, engine);
-    search::SearchProcedure search(assignment, neighbourhood);
+    auto neighbourhood =
+        applicationResult.implicitConstraints().front()->takeNeighbourhood();
+    search::SearchProcedure search(random, assignment, *neighbourhood);
 
     search::SolutionListener::VariableMap flippedMap;
     for (const auto& [varId, fznVar] : applicationResult.variableMap())

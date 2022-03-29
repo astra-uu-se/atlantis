@@ -16,7 +16,9 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
 
   ~InvariantGraphRoot() override = default;
 
-
+ protected:
+  search::neighbourhoods::Neighbourhood* createNeighbourhood(
+      Engine& engine, const std::vector<VarId>& varIds) override;
 };
 
 }  // namespace invariantgraph
