@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "core/engine.hpp"
+#include "search/neighbourhoods/neighbourhoodCombinator.hpp"
 #include "structure.hpp"
 
 namespace invariantgraph {
@@ -16,6 +17,13 @@ class InvariantGraphApplyResult {
       std::unordered_map<VarId, std::shared_ptr<fznparser::SearchVariable>,
                          VarIdHash>;
 
+ private:
+  VariableMap _variableMap;
+  std::vector<ImplicitConstraintNode*> _implicitConstraints;
+  VarId _totalViolations;
+  VarId _objectiveVariable;
+
+ public:
   InvariantGraphApplyResult(
       VariableMap variableMap,
       std::vector<ImplicitConstraintNode*> implicitConstraints,
@@ -29,9 +37,17 @@ class InvariantGraphApplyResult {
     return _variableMap;
   }
 
-  [[nodiscard]] const std::vector<ImplicitConstraintNode*>&
-  implicitConstraints() const noexcept {
-    return _implicitConstraints;
+  [[nodiscard]] search::neighbourhoods::NeighbourhoodCombinator neighbourhood()
+      const noexcept {
+    std::vector<std::unique_ptr<search::neighbourhoods::Neighbourhood>>
+        neighbourhoods;
+
+    for (const auto& implicitContraint : _implicitConstraints) {
+      neighbourhoods.push_back(implicitContraint->takeNeighbourhood());
+    }
+
+    return search::neighbourhoods::NeighbourhoodCombinator(
+        std::move(neighbourhoods));
   }
 
   [[nodiscard]] VarId totalViolations() const noexcept {
@@ -41,12 +57,6 @@ class InvariantGraphApplyResult {
   [[nodiscard]] VarId objectiveVariable() const noexcept {
     return _objectiveVariable;
   }
-
- private:
-  VariableMap _variableMap;
-  std::vector<ImplicitConstraintNode*> _implicitConstraints;
-  VarId _totalViolations;
-  VarId _objectiveVariable;
 };
 
 class InvariantGraph {
