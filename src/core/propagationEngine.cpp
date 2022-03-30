@@ -276,11 +276,11 @@ void PropagationEngine::propagate() {
             enqueueComputedVar(_currentTimestamp, inputId);
           }
         }
-        if (oldValue == variable.value(_currentTimestamp)) {
-          continue;
-        }
         if constexpr (DoCommit) {
           defInv.commit(_currentTimestamp, *this);
+        }
+        if (oldValue == variable.value(_currentTimestamp)) {
+          continue;
         }
       }
     }

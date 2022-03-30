@@ -60,7 +60,9 @@ void Linear::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
 
 void Linear::commit(Timestamp ts, Engine& engine) {
   Invariant::commit(ts, engine);
-  for (auto& localVar : _localVarArray) {
-    localVar.commitIf(ts);
+  for (size_t i = 0; i < _localVarArray.size(); ++i) {
+    _localVarArray[i].commitIf(ts);
+    assert(engine.committedValue(_varArray[i]) ==
+           _localVarArray[i].committedValue());
   }
 }
