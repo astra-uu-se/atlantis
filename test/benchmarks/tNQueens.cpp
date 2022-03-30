@@ -5,7 +5,7 @@
 #include "invariants/linear.hpp"
 #include "views/intOffsetView.hpp"
 
-TEST(NQueens, some_test) {
+TEST(NQueens, CommitsInvariant) {
   PropagationEngine engine;
 
   std::vector<VarId> queens;
@@ -47,10 +47,10 @@ TEST(NQueens, some_test) {
   engine.query(total_violation);
   engine.endCommit();
 
-  EXPECT_EQ(engine.committedValue(violation1), 1); // OK!
-  EXPECT_EQ(engine.committedValue(violation2), 1); // OK!
-  EXPECT_EQ(engine.committedValue(violation3), 1); // OK!
-  EXPECT_EQ(engine.committedValue(total_violation), 3); // OK!
+  EXPECT_EQ(engine.committedValue(violation1), 1);       // OK!
+  EXPECT_EQ(engine.committedValue(violation2), 1);       // OK!
+  EXPECT_EQ(engine.committedValue(violation3), 1);       // OK!
+  EXPECT_EQ(engine.committedValue(total_violation), 3);  // OK!
 
   engine.beginMove();
   engine.setValue(queens[0], 3);
@@ -60,8 +60,9 @@ TEST(NQueens, some_test) {
   engine.query(total_violation);
   engine.endCommit();
 
-  EXPECT_EQ(engine.committedValue(violation1), 2); // OK!
-  EXPECT_EQ(engine.committedValue(violation2), 1); // OK!
-  EXPECT_EQ(engine.committedValue(violation3), 1); // OK!
-  EXPECT_EQ(engine.committedValue(total_violation), 4); // Fail - Actual value: 2
+  EXPECT_EQ(engine.committedValue(violation1), 2);  // OK!
+  EXPECT_EQ(engine.committedValue(violation2), 1);  // OK!
+  EXPECT_EQ(engine.committedValue(violation3), 1);  // OK!
+  EXPECT_EQ(engine.committedValue(total_violation),
+            4);  // Fail - Actual value: 2
 }
