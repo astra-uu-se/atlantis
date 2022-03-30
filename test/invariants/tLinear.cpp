@@ -110,12 +110,13 @@ class LinearTest : public ::testing::Test {
 
     VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
 
-    auto invariant = &
-        engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
+    auto invariant =
+        &engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
 
     EXPECT_TRUE(invariant->initialized);
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
+        .Times(AtLeast(1));
 
     EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
@@ -283,8 +284,8 @@ TEST_F(LinearTest, CreateLinear) {
 
   VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
 
-  auto invariant = &
-      engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
+  auto invariant =
+      &engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
 
   EXPECT_TRUE(invariant->initialized);
 
