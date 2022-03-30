@@ -10,7 +10,7 @@ std::ostream& operator<<(std::ostream& os, const search::Cost& cost) {
 void search::SearchProcedure::run(SearchController& controller,
                                   SolutionListener& solutionListener,
                                   search::Annealer& annealer) {
-  while (controller.shouldRun(_assignment)) {
+  do {
     _assignment.assign([&](auto& modifications) {
       _neighbourhood.initialise(_random, modifications);
     });
@@ -52,5 +52,5 @@ void search::SearchProcedure::run(SearchController& controller,
 
       annealer.nextLocal();
     }
-  }
+  } while (controller.shouldRun(_assignment));
 }
