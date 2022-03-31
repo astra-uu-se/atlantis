@@ -19,7 +19,7 @@ class Move {
    * @return The cost of the assignment if this move were committed.
    */
   const Cost& probe(const Assignment& assignment) {
-    if (_probed) {
+    if (!_probed) {
       _cost = assignment.probe([&](auto& modifier) {
         for (auto i = 0u; i < N; i++) {
           modifier.set(_variables[i], _values[i]);

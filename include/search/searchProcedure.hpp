@@ -14,14 +14,17 @@ namespace search {
  */
 class SearchProcedure {
  public:
-  SearchProcedure(Assignment& assignment,
+  SearchProcedure(RandomProvider& random, Assignment& assignment,
                   neighbourhoods::Neighbourhood& neighbourhood)
-      : _assignment(assignment), _neighbourhood(neighbourhood) {}
+      : _random(random),
+        _assignment(assignment),
+        _neighbourhood(neighbourhood) {}
 
   void run(SearchController& controller, SolutionListener& solutionListener,
            Annealer& annealer);
 
  private:
+  RandomProvider& _random;
   Assignment& _assignment;
   neighbourhoods::Neighbourhood& _neighbourhood;
 };
