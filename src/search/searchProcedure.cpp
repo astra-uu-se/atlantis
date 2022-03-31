@@ -1,7 +1,5 @@
 #include "search/searchProcedure.hpp"
 
-#include "misc/logging.hpp"
-
 std::ostream& operator<<(std::ostream& os, const search::Cost& cost) {
   os << "(" << cost.violationDegree() << ", " << cost.objectiveValue() << ")";
   return os;
@@ -20,13 +18,9 @@ void search::SearchProcedure::run(SearchController& controller,
     // logDebug("Initialised assignment with cost " << _assignment.cost());
 
     // Once figured out how to do this, the debug call is expanded manually:
-#ifndef NDDEBUG
-    if (Logging::globalLogLevel >= Logging::LogLevel::debug) {
-      std::cerr << "[debug] " << __FILE__ << " (" << __LINE__ << "): "
-                << "Initialised assignment with cost " << _assignment.cost()
-                << std::endl;
-    }
-#endif
+
+    logDebug("Initialised assignment with cost "
+             << _assignment.cost().toString());
 
     while (controller.shouldRun(_assignment) && annealer.hasNextLocal()) {
       while (controller.shouldRun(_assignment) && annealer.exploreLocal()) {
@@ -36,13 +30,8 @@ void search::SearchProcedure::run(SearchController& controller,
         if (madeMove) {
           //          logDebug("Committed assignment. New cost: " <<
           //          _assignment.cost());
-#ifndef NDDEBUG
-          if (Logging::globalLogLevel >= Logging::LogLevel::debug) {
-            std::cerr << "[debug] " << __FILE__ << " (" << __LINE__ << "): "
-                      << "Committed a move. New cost: " << _assignment.cost()
-                      << std::endl;
-          }
-#endif
+          logDebug(
+              "Committed a move. New cost: " << _assignment.cost().toString());
         }
 
         if (madeMove && _assignment.satisfiesConstraints()) {
