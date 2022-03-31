@@ -19,8 +19,16 @@ static void printSearchVariable(
 static void printVariableArray(
     const FZNVarArray& variableArray, const search::Assignment& assignment,
     const search::SolutionListener::VariableMap& variableMap) {
-  std::cout << variableArray->name() << " = array1d(1.."
-            << variableArray->size() << ", [";
+  auto ann =
+      variableArray->annotations().get<fznparser::OutputArrayAnnotation>();
+
+  std::cout << variableArray->name() << " = array" << ann->dimensions().size()
+            << "d(";
+  for (auto size : ann->dimensions()) {
+    std::cout << "1.." << size << ", ";
+  }
+
+  std::cout << "[";
 
   for (auto i = 0u; i < variableArray->size(); ++i) {
     auto searchVariable = variableArray->contents()[i];
@@ -31,22 +39,20 @@ static void printVariableArray(
     }
   }
 
-  std::cout << "])\n";
+  std::cout << "]);\n";
 }
 
 void search::SolutionListener::onSolution(const Assignment& assignment) {
   for (const auto& fznVariable : _fznModel.variables()) {
     if (fznVariable->annotations().has<fznparser::OutputAnnotation>()) {
-      if (auto searchVariable =
-              std::dynamic_pointer_cast<fznparser::SearchVariable>(
-                  fznVariable)) {
-        printSearchVariable(searchVariable, assignment, _variableMap);
-      } else {
-        auto variableArray =
-            std::dynamic_pointer_cast<fznparser::VariableArray>(fznVariable);
-        assert(variableArray);
-        printVariableArray(variableArray, assignment, _variableMap);
-      }
+      printSearchVariable(
+          std::dynamic_pointer_cast<fznparser::SearchVariable>(fznVariable),
+          assignment, _variableMap);
+    } else if (fznVariable->annotations()
+                   .has<fznparser::OutputArrayAnnotation>()) {
+      printVariableArray(
+          std::dynamic_pointer_cast<fznparser::VariableArray>(fznVariable),
+          assignment, _variableMap);
     }
   }
 
