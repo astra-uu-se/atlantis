@@ -38,9 +38,4 @@ TEST(InvariantGraphTest, apply_result) {
   auto result = graph.apply(engine);
 
   EXPECT_EQ(result.variableMap().size(), 3);
-  EXPECT_EQ(result.implicitConstraints().size(), 1);
-
-  auto retrievedRoot = dynamic_cast<invariantgraph::InvariantGraphRoot*>(
-      result.implicitConstraints()[0]);
-  EXPECT_TRUE(retrievedRoot != nullptr);
 }
