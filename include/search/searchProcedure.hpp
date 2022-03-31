@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include "neighbourhoods/neighbourhood.hpp"
 #include "searchController.hpp"
 #include "solutionListener.hpp"
