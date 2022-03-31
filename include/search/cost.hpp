@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "core/types.hpp"
 
 namespace search {
@@ -38,6 +40,11 @@ class Cost {
   }
 
   [[nodiscard]] Int objectiveValue() const noexcept { return _objective; }
+
+  [[nodiscard]] std::string toString() const {
+    return '<' + std::to_string(_violationDegree) + ", " +
+           std::to_string(_objective) + '>';
+  }
 };
 
 }  // namespace search
