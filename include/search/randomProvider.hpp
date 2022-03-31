@@ -16,7 +16,7 @@ class RandomProvider {
   explicit RandomProvider(std::uint_fast32_t seed) : _gen(std::mt19937(seed)) {}
 
   template <typename T>
-  T element(const std::vector<T> collection) {
+  T& element(std::vector<T>& collection) {
     assert(!collection.empty());
     std::uniform_int_distribution<size_t> distribution(0,
                                                        collection.size() - 1);
