@@ -2,30 +2,44 @@
 
 #include <numeric>
 #include <queue>
+#include <unordered_set>
 
 #include "invariants/linear.hpp"
 
 static Int totalViolationsUpperBound(Engine& engine,
                                      const std::vector<VarId>& violations) {
-  return std::accumulate(violations.begin(), violations.end(), 0,
-                         [&](auto sum, const auto& var) {
-                           return sum + engine.upperBound(var);
-                         });
+  return std::accumulate(
+      violations.begin(), violations.end(), 0,
+      [&](auto sum, const auto& var) { return sum + engine.upperBound(var); });
 }
 
-void invariantgraph::InvariantGraph::apply(Engine& engine) {
+static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
+    const std::map<invariantgraph::VariableNode*, VarId>& variableIds) {
+  invariantgraph::InvariantGraphApplyResult::VariableMap variableMap{};
+  for (const auto& [node, varId] : variableIds) {
+    if (auto modelVariable = node->variable()) {
+      variableMap.emplace(varId, modelVariable);
+    }
+  }
+  return variableMap;
+}
+
+invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
+    Engine& engine) {
   engine.open();
 
   std::map<VariableNode*, VarId> variableIds;
   std::vector<VarId> violations;
 
   std::queue<invariantgraph::VariableDefiningNode*> unAppliedNodes;
+  std::unordered_set<invariantgraph::VariableDefiningNode*> seenNodes;
   for (const auto& implicitConstraint : _implicitConstraints) {
     unAppliedNodes.push(implicitConstraint);
   }
 
   while (!unAppliedNodes.empty()) {
     auto node = unAppliedNodes.front();
+    seenNodes.insert(node);
 
     node->registerWithEngine(engine, variableIds);
 
@@ -34,8 +48,11 @@ void invariantgraph::InvariantGraph::apply(Engine& engine) {
     }
 
     for (const auto& definedVariable : node->definedVariables()) {
-      for (const auto& definingNode : definedVariable->inputFor()) {
-        unAppliedNodes.push(definingNode);
+      for (const auto definingNode : definedVariable->inputFor()) {
+        if (seenNodes.find(definingNode) == seenNodes.end()) {
+          unAppliedNodes.push(definingNode);
+          seenNodes.insert(definingNode);
+        }
       }
     }
 
@@ -46,5 +63,13 @@ void invariantgraph::InvariantGraph::apply(Engine& engine) {
       engine.makeIntVar(0, 0, totalViolationsUpperBound(engine, violations));
   engine.makeInvariant<Linear>(violations, totalViolations);
 
+  // If the model has no variable to optimise, use a dummy variable.
+  VarId objectiveVarId = _objectiveVariable == nullptr
+                             ? engine.makeIntVar(0, 0, 0)
+                             : variableIds.at(_objectiveVariable);
+
   engine.close();
+
+  return {createVariableMap(variableIds), _implicitConstraints, totalViolations,
+          objectiveVarId};
 }

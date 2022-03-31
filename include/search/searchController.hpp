@@ -9,10 +9,12 @@ namespace search {
 class SearchController {
  private:
   std::chrono::steady_clock::time_point _startTime;
-  std::chrono::milliseconds _timeout;
+  std::optional<std::chrono::milliseconds> _timeout;
   bool _started{false};
 
  public:
+  SearchController() : _timeout({}) {}
+
   template <typename Rep, typename Period>
   explicit SearchController(std::chrono::duration<Rep, Period> timeout)
       : _timeout(
@@ -23,8 +25,8 @@ class SearchController {
       return false;
     }
 
-    if (_started) {
-      return std::chrono::steady_clock::now() - _startTime <= _timeout;
+    if (_started && _timeout.has_value()) {
+      return std::chrono::steady_clock::now() - _startTime <= *_timeout;
     }
 
     _started = true;

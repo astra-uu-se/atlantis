@@ -30,9 +30,14 @@ class Cost {
    */
   [[nodiscard]] inline Int evaluate(Int violationWeight,
                                     Int objectiveWeight) const noexcept {
-    return violationWeight * _violationDegree +
-           objectiveWeight * _objective;
+    return violationWeight * _violationDegree + objectiveWeight * _objective;
   }
+
+  [[nodiscard]] Int violationDegree() const noexcept {
+    return _violationDegree;
+  }
+
+  [[nodiscard]] Int objectiveValue() const noexcept { return _objective; }
 };
 
 }  // namespace search

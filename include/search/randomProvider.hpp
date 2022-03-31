@@ -13,7 +13,7 @@ class RandomProvider {
   std::mt19937 _gen;
 
  public:
-  explicit RandomProvider(int seed) : _gen(std::mt19937(seed)) {}
+  explicit RandomProvider(std::uint_fast32_t seed) : _gen(std::mt19937(seed)) {}
 
   template <typename T>
   T element(const std::vector<T> collection) {

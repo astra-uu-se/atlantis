@@ -9,6 +9,7 @@
 
 #include "core/engine.hpp"
 #include "fznparser/model.hpp"
+#include "search/neighbourhoods/neighbourhood.hpp"
 
 namespace invariantgraph {
 
@@ -120,7 +121,8 @@ class VariableDefiningNode {
   /**
    * @return The variable nodes defined by this node.
    */
-  [[nodiscard]] const std::vector<VariableNode*>& definedVariables() const noexcept {
+  [[nodiscard]] const std::vector<VariableNode*>& definedVariables()
+      const noexcept {
     return _definedVariables;
   }
 
@@ -149,13 +151,44 @@ class VariableDefiningNode {
  * propagation engine.
  */
 class ImplicitConstraintNode : public VariableDefiningNode {
+ private:
+  search::neighbourhoods::Neighbourhood* _neighbourhood{nullptr};
+
  public:
   explicit ImplicitConstraintNode(std::vector<VariableNode*> definedVariables)
       : VariableDefiningNode(std::move(definedVariables)) {}
-  ~ImplicitConstraintNode() override = default;
+  ~ImplicitConstraintNode() override { delete _neighbourhood; }
 
-  void registerWithEngine(
-      Engine& engine, std::map<VariableNode*, VarId>& variableMap) override;
+  void registerWithEngine(Engine& engine,
+                          std::map<VariableNode*, VarId>& variableMap) override;
+
+  /**
+   * Take the neighbourhood which is constructed in the registerWithEngine
+   * call out of this instance. Note, this transfers ownership (as indicated
+   * by the usage of unique_ptr).
+   *
+   * Calling this method before calling registerWithEngine will return a
+   * nullptr. The same holds if this method is called multiple times. Only the
+   * first call will return a neighbourhood instance.
+   *
+   * The reason this does not return a reference, is because we want to be able
+   * to delete the entire invariant graph after it has been applied to the
+   * propagation engine. If a reference was returned here, that would leave the
+   * reference dangling.
+   *
+   * @return The neighbourhood corresponding to this implicit constraint.
+   */
+  [[nodiscard]] std::unique_ptr<search::neighbourhoods::Neighbourhood>
+  takeNeighbourhood() noexcept {
+    auto ptr =
+        std::unique_ptr<search::neighbourhoods::Neighbourhood>(_neighbourhood);
+    _neighbourhood = nullptr;
+    return ptr;
+  }
+
+ protected:
+  virtual search::neighbourhoods::Neighbourhood* createNeighbourhood(
+      Engine& engine, const std::vector<VarId>& variables) = 0;
 };
 
 class SoftConstraintNode : public VariableDefiningNode {

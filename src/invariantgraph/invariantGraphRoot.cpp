@@ -1,9 +1,9 @@
 #include "invariantgraph/invariantGraphRoot.hpp"
 
-void invariantgraph::ImplicitConstraintNode::registerWithEngine(
-    Engine& engine, std::map<VariableNode*, VarId>& variableMap) {
-  for (const auto& node : definedVariables()) {
-    const auto& [lb, ub] = node->domain();
-    variableMap.emplace(node, engine.makeIntVar(lb, lb, ub));
-  }
+#include "search/neighbourhoods/randomNeighbourhood.hpp"
+
+search::neighbourhoods::Neighbourhood*
+invariantgraph::InvariantGraphRoot::createNeighbourhood(
+    Engine& engine, const std::vector<VarId>& varIds) {
+  return new search::neighbourhoods::RandomNeighbourhood(varIds, engine);
 }

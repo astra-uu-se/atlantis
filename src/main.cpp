@@ -6,6 +6,10 @@
 #include "core/propagationEngine.hpp"
 #include "fznparser/modelfactory.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
+#include "misc/logging.hpp"
+#include "search/assignment.hpp"
+#include "search/neighbourhoods/randomNeighbourhood.hpp"
+#include "search/searchProcedure.hpp"
 
 /**
  * @brief Read a duration in milliseconds from an input stream. Used to allow
@@ -19,9 +23,12 @@ std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
 
 int main(int argc, char* argv[]) {
   try {
+    // TODO: How do we want to control this? The log messages don't appear
+    // in release builds, so do we still want a command line flag to set this?
+    setLogLevel(debug);
+
     cxxopts::Options options(
-        argv[0],
-        "Constraint-based local search backend for MiniZinc.");
+        argv[0], "Constraint-based local search backend for MiniZinc.");
 
     options.positional_help("[flatzinc file]").show_positional_help();
 
@@ -37,7 +44,12 @@ int main(int argc, char* argv[]) {
       (
         "t,time-limit",
         "Wall time limit in milliseconds.",
-        cxxopts::value<std::chrono::milliseconds>()->default_value("1")
+        cxxopts::value<std::chrono::milliseconds>()
+      )
+      (
+        "s,seed",
+        "The seed to use for the random number generator. If this is negative, the current system time is chosen as the seed.",
+        cxxopts::value<long>()->default_value("-1")
       )
       ("help", "Print help");
 
@@ -60,8 +72,6 @@ int main(int argc, char* argv[]) {
 
     auto& modelFilePath = result["modelFile"].as<std::filesystem::path>();
     auto model = fznparser::ModelFactory::create(modelFilePath);
-    std::cout << "Model has " << model->variables().size() << " variables and "
-              << model->constraints().size() << " constraints." << std::endl;
 
     // Not used for output, but this allows running end-to-end tests with the
     // CLI on the structure identification.
@@ -69,13 +79,37 @@ int main(int argc, char* argv[]) {
     auto graph = invariantGraphBuilder.build(model);
 
     PropagationEngine engine;
-    graph->apply(engine);
+    auto applicationResult = graph->apply(engine);
 
-    auto numDecisionVars = engine.searchVariables().size();
-    auto numVars = engine.numVariables();
-    std::cout << "Converted to " << numDecisionVars
-              << " decision variables and " << (numVars - numDecisionVars)
-              << " defined variables." << std::endl;
+    search::Assignment assignment(engine, applicationResult.totalViolations(),
+                                  applicationResult.objectiveVariable());
+
+    auto givenSeed = result["seed"].as<long>();
+    std::uint_fast32_t seed = givenSeed >= 0
+                                  ? static_cast<std::uint_fast32_t>(givenSeed)
+                                  : std::time(nullptr);
+    logDebug("Using seed " << seed);
+    search::RandomProvider random(seed);
+
+    // TODO: Convert different types of neighbourhoods.
+    auto neighbourhood =
+        applicationResult.implicitConstraints().front()->takeNeighbourhood();
+    search::SearchProcedure search(random, assignment, *neighbourhood);
+
+    search::SolutionListener::VariableMap flippedMap;
+    for (const auto& [varId, fznVar] : applicationResult.variableMap())
+      flippedMap.emplace(fznVar, varId);
+
+    search::SolutionListener solutionListener(*model, flippedMap);
+
+    search::SearchController searchController;
+    if (result.count("time-limit")) {
+      searchController = search::SearchController(
+          result["time-limit"].as<std::chrono::milliseconds>());
+    }
+
+    search::Annealer annealer(assignment, random);
+    search.run(searchController, solutionListener, annealer);
   } catch (const cxxopts::OptionException& e) {
     std::cerr << "error: " << e.what() << std::endl;
   } catch (const std::invalid_argument& e) {
