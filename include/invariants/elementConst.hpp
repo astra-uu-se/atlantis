@@ -21,9 +21,15 @@ class ElementConst : public Invariant {
   const std::vector<Int> _array;
   const VarId _y;
 
-  [[nodiscard]] inline size_t toZeroIndex(Int oneIndex) noexcept {
-    return std::max(
-        Int(0), std::min(static_cast<Int>(_array.size()), oneIndex) - Int(1));
+  [[nodiscard]] inline size_t safeIndex(Int index) noexcept {
+    return std::max(Int(1),
+                    std::min(static_cast<Int>(_array.size()) - Int(1), index));
+  }
+
+  [[nodiscard]] inline std::vector<Int>& prependZero(std::vector<Int>& array) {
+    array.emplace_back(0);
+    std::rotate(array.rbegin(), array.rbegin() + 1, array.rend());
+    return array;
   }
 
  public:

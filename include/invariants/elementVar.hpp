@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <vector>
 
 #include "core/engine.hpp"
@@ -19,10 +20,16 @@ class ElementVar : public Invariant {
   const std::vector<VarId> _varArray;
   const VarId _y;
 
-  [[nodiscard]] inline size_t toZeroIndex(Int oneIndex) noexcept {
+  [[nodiscard]] inline size_t safeIndex(Int index) noexcept {
     return std::max(
-        Int(0),
-        std::min(static_cast<Int>(_varArray.size()), oneIndex) - Int(1));
+        Int(1), std::min(static_cast<Int>(_varArray.size()) - Int(1), index));
+  }
+
+  [[nodiscard]] inline std::vector<VarId>& prependNullId(
+      std::vector<VarId>& varArray) {
+    varArray.emplace_back(NULL_ID);
+    std::rotate(varArray.rbegin(), varArray.rbegin() + 1, varArray.rend());
+    return varArray;
   }
 
  public:

@@ -3,7 +3,7 @@
 #include "core/engine.hpp"
 
 ElementConst::ElementConst(VarId index, std::vector<Int> array, VarId y)
-    : Invariant(NULL_ID), _index(index), _array(std::move(array)), _y(y) {
+    : Invariant(NULL_ID), _index(index), _array(prependZero(array)), _y(y) {
   _modifiedVars.reserve(1);
 }
 
@@ -18,19 +18,19 @@ void ElementConst::updateBounds(Engine& engine) {
   Int ub = std::numeric_limits<Int>::min();
 
   for (Int i = std::max(Int(1), engine.lowerBound(_index));
-       i <=
-       std::min(static_cast<Int>(_array.size()), engine.upperBound(_index));
+       i <= std::min(static_cast<Int>(_array.size()) - Int(1),
+                     engine.upperBound(_index));
        ++i) {
-    lb = std::min(lb, _array[i - 1]);
-    ub = std::max(ub, _array[i - 1]);
+    lb = std::min(lb, _array[i]);
+    ub = std::max(ub, _array[i]);
   }
 
   engine.updateBounds(_y, lb, ub);
 }
 
 void ElementConst::recompute(Timestamp ts, Engine& engine) {
-  assert(toZeroIndex(engine.value(ts, _index)) < _array.size());
-  updateValue(ts, engine, _y, _array[toZeroIndex(engine.value(ts, _index))]);
+  assert(safeIndex(engine.value(ts, _index)) < _array.size());
+  updateValue(ts, engine, _y, _array[safeIndex(engine.value(ts, _index))]);
 }
 
 void ElementConst::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
