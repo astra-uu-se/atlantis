@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "misc/logging.hpp"
 #include "neighbourhoods/neighbourhood.hpp"
 #include "searchController.hpp"
 #include "solutionListener.hpp"
