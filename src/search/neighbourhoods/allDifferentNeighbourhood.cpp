@@ -13,10 +13,10 @@ search::neighbourhoods::AllDifferentNeighbourhood::AllDifferentNeighbourhood(
 
   std::sort(_domain.begin(), _domain.end());
 
-  _domIndexes.resize(_domain.size());
+  _domIndices.resize(_domain.size());
   _offset = _domain.front();
   for (auto i = 0u; i < _domain.size(); ++i) {
-    _domIndexes[_domain[i] - _offset] = i;
+    _domIndices[_domain[i] - _offset] = i;
   }
 }
 
@@ -62,7 +62,7 @@ bool search::neighbourhoods::AllDifferentNeighbourhood::assignValue(
     search::Annealer& annealer) {
   VarId var = random.element(_variables);
   Int oldValue = assignment.value(var);
-  size_t oldValueIdx = _domIndexes[oldValue - _offset];
+  size_t oldValueIdx = _domIndices[oldValue - _offset];
 
   Int newValueIdx = random.intInRange(0, static_cast<Int>(_freeVariables) - 1);
   Int newValue = _domain[newValueIdx];
@@ -71,8 +71,8 @@ bool search::neighbourhoods::AllDifferentNeighbourhood::assignValue(
     _domain[newValueIdx] = oldValue;
     _domain[oldValueIdx] = newValue;
 
-    _domIndexes[newValue - _offset] = oldValueIdx;
-    _domIndexes[oldValue - _offset] = newValueIdx;
+    _domIndices[newValue - _offset] = oldValueIdx;
+    _domIndices[oldValue - _offset] = newValueIdx;
 
     return true;
   }

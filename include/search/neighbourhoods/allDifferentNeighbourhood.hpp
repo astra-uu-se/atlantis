@@ -11,7 +11,7 @@ class AllDifferentNeighbourhood : public Neighbourhood {
   std::vector<Int> _domain;
   const Engine& _engine;
 
-  std::vector<size_t> _domIndexes{};
+  std::vector<size_t> _domIndices{};
   Int _offset{0};
   size_t _freeVariables{0};
 
