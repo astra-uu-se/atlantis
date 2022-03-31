@@ -17,12 +17,10 @@ class IntDiv : public Invariant {
   VarId _a;
   VarId _b;
   VarId _y;
+  Int _zeroReplacement{1};
 
  public:
-  IntDiv(VarId a, VarId b, VarId y) : Invariant(NULL_ID), _a(a), _b(b), _y(y) {
-    _modifiedVars.reserve(1);
-  }
-
+  IntDiv(VarId a, VarId b, VarId y);
   void init(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   VarId nextInput(Timestamp, Engine&) override;

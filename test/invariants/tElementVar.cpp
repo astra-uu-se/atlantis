@@ -17,162 +17,285 @@ using ::testing::Return;
 
 namespace {
 
+class ElementVarTest : public InvariantTest {
+ protected:
+  const size_t numValues = 3;
+  const Int inputLb = std::numeric_limits<Int>::min();
+  const Int inputUb = std::numeric_limits<Int>::max();
+  Int indexLb = 0;
+  Int indexUb = numValues - 1;
+  std::vector<VarId> inputs;
+  std::uniform_int_distribution<Int> inputDist;
+  std::uniform_int_distribution<Int> indexDist;
+
+ public:
+  void SetUp() override {
+    InvariantTest::SetUp();
+    inputs.resize(numValues, NULL_ID);
+    inputDist = std::uniform_int_distribution<Int>(inputLb, inputUb);
+    indexDist = std::uniform_int_distribution<Int>(indexLb, indexUb);
+  }
+
+  void TearDown() override {
+    InvariantTest::TearDown();
+    inputs.clear();
+  }
+
+  Int computeOutput(const Timestamp ts, const VarId index) {
+    return computeOutput(ts, engine->value(ts, index));
+  }
+
+  Int computeOutput(const Timestamp ts, const Int indexVal) {
+    return engine->value(ts, inputs.at(indexVal));
+  }
+};
+
+TEST_F(ElementVarTest, Recompute) {
+  EXPECT_TRUE(inputLb <= inputUb);
+  EXPECT_TRUE(indexLb <= indexUb);
+
+  engine->open();
+  const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+  }
+  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+  ElementVar& invariant = engine->makeInvariant<ElementVar>(
+      index, std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  for (Int val = indexLb; val <= indexUb; ++val) {
+    engine->setValue(engine->currentTimestamp(), index, val);
+    EXPECT_EQ(engine->value(engine->currentTimestamp(), index), val);
+
+    const Int expectedOutput = computeOutput(engine->currentTimestamp(), index);
+    invariant.recompute(engine->currentTimestamp(), *engine);
+    EXPECT_EQ(engine->value(engine->currentTimestamp(), index), val);
+
+    EXPECT_EQ(expectedOutput,
+              engine->value(engine->currentTimestamp(), outputId));
+  }
+}
+
+TEST_F(ElementVarTest, NotifyInputChanged) {
+  EXPECT_TRUE(inputLb <= inputUb);
+  EXPECT_TRUE(indexLb <= indexUb);
+
+  engine->open();
+  const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+  }
+  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+  ElementVar& invariant = engine->makeInvariant<ElementVar>(
+      index, std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  for (Int val = indexLb; val <= indexUb; ++val) {
+    engine->setValue(engine->currentTimestamp(), index, val);
+    const Int expectedOutput = computeOutput(engine->currentTimestamp(), index);
+
+    invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
+                                 LocalId(0));
+    EXPECT_EQ(expectedOutput,
+              engine->value(engine->currentTimestamp(), outputId));
+  }
+}
+
+TEST_F(ElementVarTest, NextInput) {
+  EXPECT_TRUE(inputLb <= inputUb);
+  EXPECT_TRUE(indexLb <= indexUb);
+
+  engine->open();
+  const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+  }
+  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+  ElementVar& invariant = engine->makeInvariant<ElementVar>(
+      index, std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  for (Timestamp ts = engine->currentTimestamp() + 1;
+       ts < engine->currentTimestamp() + 4; ++ts) {
+    EXPECT_EQ(invariant.nextInput(ts, *engine), index);
+    EXPECT_EQ(invariant.nextInput(ts, *engine),
+              inputs.at(engine->value(ts, index)));
+    EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+  }
+}
+
+TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
+  EXPECT_TRUE(inputLb <= inputUb);
+  EXPECT_TRUE(indexLb <= indexUb);
+
+  std::vector<Int> indexValues(numValues, 0);
+  for (size_t i = 0; i < indexValues.size(); ++i) {
+    indexValues.at(i) = i;
+  }
+
+  std::shuffle(indexValues.begin(), indexValues.end(), rng);
+
+  engine->open();
+  const VarId index = engine->makeIntVar(indexValues.back(), indexLb, indexUb);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+  }
+  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+  ElementVar& invariant = engine->makeInvariant<ElementVar>(
+      index, std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  for (size_t i = 0; i < indexValues.size(); ++i) {
+    Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
+    EXPECT_EQ(invariant.nextInput(ts, *engine), index);
+    engine->setValue(ts, index, indexValues.at(i));
+    invariant.notifyCurrentInputChanged(ts, *engine);
+    EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, index));
+
+    const VarId curInput = invariant.nextInput(ts, *engine);
+    EXPECT_EQ(curInput, inputs.at(indexValues.at(i)));
+
+    const Int oldInputVal = engine->value(ts, curInput);
+    do {
+      engine->setValue(ts, curInput, inputDist(gen));
+    } while (engine->value(ts, curInput) == oldInputVal);
+
+    invariant.notifyCurrentInputChanged(ts, *engine);
+    EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, index));
+  }
+}
+
+TEST_F(ElementVarTest, Commit) {
+  EXPECT_TRUE(inputLb <= inputUb);
+  EXPECT_TRUE(indexLb <= indexUb);
+
+  std::vector<Int> indexValues(numValues, 0);
+  for (size_t i = 0; i < indexValues.size(); ++i) {
+    indexValues.at(i) = i;
+  }
+
+  std::shuffle(indexValues.begin(), indexValues.end(), rng);
+
+  engine->open();
+  const VarId index = engine->makeIntVar(indexValues.back(), indexLb, indexUb);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+  }
+  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+  ElementVar& invariant = engine->makeInvariant<ElementVar>(
+      index, std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  Int committedIndexValue = engine->committedValue(index);
+
+  std::vector<Int> committedInputValues(inputs.size(), 0);
+  for (size_t i = 0; i < committedInputValues.size(); ++i) {
+    committedInputValues.at(i) = engine->committedValue(inputs[i]);
+  }
+
+  for (size_t i = 0; i < indexValues.size(); ++i) {
+    Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
+    ASSERT_EQ(engine->committedValue(index), committedIndexValue);
+    for (size_t j = 0; j < inputs.size(); ++j) {
+      ASSERT_EQ(engine->committedValue(inputs.at(j)),
+                committedInputValues.at(j));
+    }
+
+    // Change Index
+    engine->setValue(ts, index, indexValues[i]);
+
+    // notify index change
+    invariant.notifyInputChanged(ts, *engine, LocalId(0));
+
+    // incremental value from index
+    Int notifiedOutput = engine->value(ts, outputId);
+    invariant.recompute(ts, *engine);
+
+    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+
+    // Change input
+    const VarId curInput = inputs.at(indexValues.at(i));
+    const Int oldInputVal = engine->value(ts, curInput);
+    do {
+      engine->setValue(ts, curInput, inputDist(gen));
+    } while (engine->value(ts, curInput) == oldInputVal);
+
+    // notify input change
+    invariant.notifyInputChanged(ts, *engine, LocalId(indexValues.at(i)));
+
+    // incremental value from input
+    notifiedOutput = engine->value(ts, outputId);
+    invariant.recompute(ts, *engine);
+
+    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+
+    engine->commitIf(ts, index);
+    committedIndexValue = engine->value(ts, index);
+    engine->commitIf(ts, curInput);
+    committedInputValues.at(indexValues.at(i)) = engine->value(ts, curInput);
+    engine->commitIf(ts, outputId);
+
+    invariant.commit(ts, *engine);
+    invariant.recompute(ts + 1, *engine);
+    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+  }
+}
+
 class MockElementVar : public ElementVar {
  public:
   bool initialized = false;
-
   void init(Timestamp timestamp, Engine& engine) override {
     initialized = true;
     ElementVar::init(timestamp, engine);
   }
-
-  MockElementVar(VarId i, std::vector<VarId>&& X, VarId b)
-      : ElementVar(i, std::vector<VarId>{X}, b) {
+  MockElementVar(VarId i, std::vector<VarId> X, VarId b) : ElementVar(i, X, b) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return ElementVar::recompute(timestamp, engine);
         });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp t, Engine& e) {
-      return ElementVar::nextInput(t, e);
-    });
-
+    ON_CALL(*this, nextInput)
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          return ElementVar::nextInput(t, engine);
+        });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& e) {
-          ElementVar::notifyCurrentInputChanged(t, e);
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          ElementVar::notifyCurrentInputChanged(t, engine);
         });
-
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& e, LocalId id) {
-          ElementVar::notifyInputChanged(t, e, id);
+        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
+          ElementVar::notifyInputChanged(t, engine, id);
         });
-
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& e) {
-      ElementVar::commit(t, e);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
+      ElementVar::commit(t, engine);
     });
   }
-
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
               (override));
-
   MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& e),
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
               (override));
-
-  MOCK_METHOD(void, notifyInputChanged, (Timestamp t, Engine& e, LocalId id),
-              (override));
+  MOCK_METHOD(void, notifyInputChanged,
+              (Timestamp t, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
-
- private:
 };
-
-class ElementVarTest : public ::testing::Test {
- protected:
-  std::unique_ptr<PropagationEngine> engine;
-
-  void SetUp() override { engine = std::make_unique<PropagationEngine>(); }
-
-  void testNotifications(PropagationMode propMode,
-                         OutputToInputMarkingMode markingMode) {
-    engine->open();
-
-    std::vector<VarId> args{};
-    int numArgs = 10;
+TEST_F(ElementVarTest, EngineIntegration) {
+  for (const auto [propMode, markingMode] : propMarkModes) {
+    if (!engine->isOpen()) {
+      engine->open();
+    }
+    std::vector<VarId> args;
+    const Int numArgs = 10;
     args.reserve(numArgs);
-    for (int value = 0; value < numArgs; ++value) {
+    for (Int value = 0; value < numArgs; ++value) {
       args.push_back(engine->makeIntVar(value, -100, 100));
     }
-
     VarId idx = engine->makeIntVar(0, 0, numArgs - 1);
-
     VarId output = engine->makeIntVar(-10, -100, 100);
-
-    auto invariant = &engine->makeInvariant<MockElementVar>(
-        idx, std::vector<VarId>{args}, output);
-
-    EXPECT_TRUE(invariant->initialized);
-
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
-
-    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
-
-    engine->setPropagationMode(propMode);
-    engine->setOutputToInputMarkingMode(markingMode);
-
-    engine->close();
-
-    if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
-          .Times(AtMost(1));
-      EXPECT_CALL(*invariant,
-                  notifyInputChanged(testing::_, testing::_, testing::_))
-          .Times(1);
-    } else {
-      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(3);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
-          .Times(1);
-
-      EXPECT_CALL(*invariant,
-                  notifyInputChanged(testing::_, testing::_, testing::_))
-          .Times(AtMost(1));
-    }
-
-    engine->beginMove();
-    engine->setValue(idx, 5);
-    engine->endMove();
-
-    engine->beginProbe();
-    engine->query(output);
-    engine->endProbe();
+    testNotifications<MockElementVar>(
+        &engine->makeInvariant<MockElementVar>(idx, args, output), propMode,
+        markingMode, numArgs + 1, idx, 5, output);
   }
-};
-
-TEST_F(ElementVarTest, CreateElement) {
-  engine->open();
-
-  std::vector<VarId> args{};
-  int numArgs = 10;
-  args.reserve(numArgs);
-  for (int value = 0; value < numArgs; ++value) {
-    args.push_back(engine->makeIntVar(value, -100, 100));
-  }
-
-  VarId idx = engine->makeIntVar(3, 0, numArgs - 1);
-
-  VarId output = engine->makeIntVar(-10, -100, 100);
-
-  auto invariant = &engine->makeInvariant<MockElementVar>(
-      idx, std::vector<VarId>{args}, output);
-
-  EXPECT_TRUE(invariant->initialized);
-
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
-
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
-
-  engine->close();
-
-  EXPECT_EQ(engine->currentValue(output), 3);
-}
-
-TEST_F(ElementVarTest, NotificationsInputToOutput) {
-  testNotifications(PropagationMode::INPUT_TO_OUTPUT,
-                    OutputToInputMarkingMode::NONE);
-}
-
-TEST_F(ElementVarTest, NotificationsOutputToInputNone) {
-  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::NONE);
-}
-
-TEST_F(ElementVarTest, NotificationsOutputToInputOutputToInputStatic) {
-  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC);
-}
-
-TEST_F(ElementVarTest, NotificationsOutputToInputInputToOutputExploration) {
-  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION);
 }
 
 }  // namespace
