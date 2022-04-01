@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "core/engine.hpp"
+#include "search/neighbourhoods/neighbourhoodCombinator.hpp"
 #include "structure.hpp"
 
 namespace invariantgraph {
@@ -29,9 +30,17 @@ class InvariantGraphApplyResult {
     return _variableMap;
   }
 
-  [[nodiscard]] const std::vector<ImplicitConstraintNode*>&
-  implicitConstraints() const noexcept {
-    return _implicitConstraints;
+  [[nodiscard]] search::neighbourhoods::NeighbourhoodCombinator neighbourhood()
+      const noexcept {
+    std::vector<std::unique_ptr<search::neighbourhoods::Neighbourhood>>
+        neighbourhoods;
+
+    for (const auto& implicitContraint : _implicitConstraints) {
+      neighbourhoods.push_back(implicitContraint->takeNeighbourhood());
+    }
+
+    return search::neighbourhoods::NeighbourhoodCombinator(
+        std::move(neighbourhoods));
   }
 
   [[nodiscard]] VarId totalViolations() const noexcept {
