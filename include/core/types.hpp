@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -77,5 +78,13 @@ struct VarIdHash {
   std::size_t operator()(VarId const& varId) const noexcept {
     std::size_t typeHash = std::hash<int>{}(static_cast<int>(varId.idType));
     return typeHash ^ (varId.id << 1);
+  }
+};
+
+struct DomainEntry {
+  Int lowerBound;
+  Int upperBound;
+  DomainEntry(Int lb, Int ub) : lowerBound(lb), upperBound(ub) {
+    assert(lb <= ub);
   }
 };
