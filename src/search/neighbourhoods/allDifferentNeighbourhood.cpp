@@ -47,8 +47,13 @@ bool search::neighbourhoods::AllDifferentNeighbourhood::randomMove(
 bool search::neighbourhoods::AllDifferentNeighbourhood::swapValues(
     search::RandomProvider& random, search::Assignment& assignment,
     search::Annealer& annealer) {
-  VarId var1 = random.element(_variables);
-  VarId var2 = random.element(_variables);
+  size_t i = random.intInRange(0, static_cast<Int>(_variables.size()) - 1);
+  size_t j =
+      (i + random.intInRange(1, static_cast<Int>(_variables.size()) - 1)) %
+      _variables.size();
+
+  VarId var1 = _variables[i];
+  VarId var2 = _variables[j];
 
   Int value1 = assignment.value(var1);
   Int value2 = assignment.value(var2);
