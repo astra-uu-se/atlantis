@@ -65,9 +65,9 @@ TEST_F(IfThenElseTest, Recompute) {
         engine->setValue(engine->currentTimestamp(), x, xVal);
         engine->setValue(engine->currentTimestamp(), y, yVal);
 
-        const Int expectedViolation = computeOutput(bVal, xVal, yVal);
+        const Int expectedOutput = computeOutput(bVal, xVal, yVal);
         invariant.recompute(engine->currentTimestamp(), *engine);
-        EXPECT_EQ(expectedViolation,
+        EXPECT_EQ(expectedOutput,
                   engine->value(engine->currentTimestamp(), outputId));
       }
     }
@@ -96,12 +96,12 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
       for (size_t i = 1; i < inputs.size(); ++i) {
         engine->setValue(engine->currentTimestamp(), inputs.at(0), bVal);
         engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
-        const Int expectedViolation =
+        const Int expectedOutput =
             computeOutput(engine->currentTimestamp(), inputs);
 
         invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
                                      LocalId(i));
-        EXPECT_EQ(expectedViolation,
+        EXPECT_EQ(expectedOutput,
                   engine->value(engine->currentTimestamp(), outputId));
       }
     }
@@ -236,10 +236,10 @@ TEST_F(IfThenElseTest, Commit) {
     invariant.notifyInputChanged(ts, *engine, LocalId(i));
 
     // incremental value
-    const Int notifiedViolation = engine->value(ts, outputId);
+    const Int notifiedOutput = engine->value(ts, outputId);
     invariant.recompute(ts, *engine);
 
-    ASSERT_EQ(notifiedViolation, engine->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
     engine->commitIf(ts, inputs.at(i));
     committedValues.at(i) = engine->value(ts, inputs.at(i));
@@ -247,7 +247,7 @@ TEST_F(IfThenElseTest, Commit) {
 
     invariant.commit(ts, *engine);
     invariant.recompute(ts + 1, *engine);
-    ASSERT_EQ(notifiedViolation, engine->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
   }
 }
 

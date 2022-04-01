@@ -6,31 +6,33 @@
  * @param violationId id for the violationCount
  */
 template GlobalCardinality<true>::GlobalCardinality(
-    VarId violationId, std::vector<VarId> t_variables, std::vector<Int> cover,
-    const std::vector<Int>& t_counts);
+    VarId violationId, std::vector<VarId> t_variables,
+    const std::vector<Int>& cover, const std::vector<Int>& t_counts);
 template GlobalCardinality<false>::GlobalCardinality(
-    VarId violationId, std::vector<VarId> t_variables, std::vector<Int> cover,
-    const std::vector<Int>& t_counts);
+    VarId violationId, std::vector<VarId> t_variables,
+    const std::vector<Int>& cover, const std::vector<Int>& t_counts);
 template <bool IsClosed>
 GlobalCardinality<IsClosed>::GlobalCardinality(VarId violationId,
                                                std::vector<VarId> t_variables,
-                                               std::vector<Int> cover,
+                                               const std::vector<Int>& cover,
                                                const std::vector<Int>& t_counts)
     : GlobalCardinality(violationId, t_variables, cover, t_counts, t_counts) {}
 
 template GlobalCardinality<true>::GlobalCardinality(
-    VarId violationId, std::vector<VarId> t_variables, std::vector<Int> cover,
-    const std::vector<Int>& lowerBound, const std::vector<Int>& upperBound);
+    VarId violationId, std::vector<VarId> t_variables,
+    const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
+    const std::vector<Int>& upperBound);
 template GlobalCardinality<false>::GlobalCardinality(
-    VarId violationId, std::vector<VarId> t_variables, std::vector<Int> cover,
-    const std::vector<Int>& lowerBound, const std::vector<Int>& upperBound);
+    VarId violationId, std::vector<VarId> t_variables,
+    const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
+    const std::vector<Int>& upperBound);
 template <bool IsClosed>
 GlobalCardinality<IsClosed>::GlobalCardinality(
-    VarId violationId, std::vector<VarId> t_variables, std::vector<Int> cover,
-    const std::vector<Int>& lowerBound, const std::vector<Int>& upperBound)
+    VarId violationId, std::vector<VarId> t_variables,
+    const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
+    const std::vector<Int>& upperBound)
     : Constraint(NULL_ID, violationId),
       _variables(std::move(t_variables)),
-      _cover(std::move(cover)),
       _lowerBound(),
       _upperBound(),
       _localValues(),
@@ -40,9 +42,9 @@ GlobalCardinality<IsClosed>::GlobalCardinality(
       _offset(0) {
   _modifiedVars.reserve(_variables.size());
   assert(lowerBound.size() == upperBound.size() &&
-         lowerBound.size() == _cover.size());
+         lowerBound.size() == cover.size());
 
-  const auto [lb, ub] = std::minmax_element(_cover.begin(), _cover.end());
+  const auto [lb, ub] = std::minmax_element(cover.begin(), cover.end());
 
   if constexpr (IsClosed) {
     _lowerBound.assign(static_cast<Int>(*ub - *lb + 3), 0);
@@ -54,11 +56,11 @@ GlobalCardinality<IsClosed>::GlobalCardinality(
   }
   _offset = *lb - 1;
 
-  for (size_t i = 0; i < _cover.size(); ++i) {
+  for (size_t i = 0; i < cover.size(); ++i) {
     assert(lowerBound[i] >= 0);
     assert(lowerBound[i] <= upperBound[i]);
-    _lowerBound[_cover[i] - _offset] = lowerBound[i];
-    _upperBound[_cover[i] - _offset] = upperBound[i];
+    _lowerBound[cover[i] - _offset] = lowerBound[i];
+    _upperBound[cover[i] - _offset] = upperBound[i];
   }
 }
 
@@ -89,21 +91,22 @@ void GlobalCardinality<IsClosed>::recompute(Timestamp timestamp,
 
   for (size_t i = 0; i < _variables.size(); ++i) {
     increaseCount(timestamp, engine.value(timestamp, _variables[i]));
-    _localValues[i].setValue(timestamp, engine.value(timestamp, _variables[i]));
+    _localValues.at(i).setValue(timestamp,
+                                engine.value(timestamp, _variables[i]));
   }
 
   Int shortage = 0;
   Int excess = 0;
-  if constexpr (IsClosed) {
-    excess = _counts.front().value(timestamp) + _counts.back().value(timestamp);
-  }
 
-  for (const Int val : _cover) {
+  assert(_counts.size() == _lowerBound.size());
+  for (size_t i = 0; i < _lowerBound.size(); ++i) {
+    if (_lowerBound.at(i) < 0) {
+      continue;
+    }
     shortage +=
-        std::max(Int(0), _lowerBound.at(val - _offset) -
-                             _counts.at(val - _offset).value(timestamp));
-    excess += std::max(Int(0), _counts.at(val - _offset).value(timestamp) -
-                                   _upperBound.at(val - _offset));
+        std::max(Int(0), _lowerBound.at(i) - _counts.at(i).value(timestamp));
+    excess +=
+        std::max(Int(0), _counts.at(i).value(timestamp) - _upperBound.at(i));
   }
 
   _shortage.setValue(timestamp, shortage);

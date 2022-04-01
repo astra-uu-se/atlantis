@@ -196,10 +196,10 @@ TEST_F(IntDivTest, Commit) {
     invariant.notifyInputChanged(ts, *engine, LocalId(i));
 
     // incremental value
-    const Int notifiedViolation = engine->value(ts, outputId);
+    const Int notifiedOutput = engine->value(ts, outputId);
     invariant.recompute(ts, *engine);
 
-    ASSERT_EQ(notifiedViolation, engine->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
     engine->commitIf(ts, inputs.at(i));
     committedValues.at(i) = engine->value(ts, inputs.at(i));
@@ -207,7 +207,7 @@ TEST_F(IntDivTest, Commit) {
 
     invariant.commit(ts, *engine);
     invariant.recompute(ts + 1, *engine);
-    ASSERT_EQ(notifiedViolation, engine->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
   }
 }
 

@@ -21,7 +21,7 @@ class AllDifferentExcept : public AllDifferent {
 
  public:
   AllDifferentExcept(VarId violationId, std::vector<VarId> variables,
-                     std::vector<Int> ignored);
+                     const std::vector<Int>& ignored);
 
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;

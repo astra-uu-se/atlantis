@@ -54,9 +54,9 @@ TEST_F(TimesTest, Recompute) {
       engine->setValue(engine->currentTimestamp(), x, aVal);
       engine->setValue(engine->currentTimestamp(), y, bVal);
 
-      const Int expectedViolation = computeOutput(aVal, bVal);
+      const Int expectedOutput = computeOutput(aVal, bVal);
       invariant.recompute(engine->currentTimestamp(), *engine);
-      EXPECT_EQ(expectedViolation,
+      EXPECT_EQ(expectedOutput,
                 engine->value(engine->currentTimestamp(), outputId));
     }
   }
@@ -78,12 +78,12 @@ TEST_F(TimesTest, NotifyInputChanged) {
   for (Int val = lb; val <= ub; ++val) {
     for (size_t i = 0; i < inputs.size(); ++i) {
       engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
-      const Int expectedViolation =
+      const Int expectedOutput =
           computeOutput(engine->currentTimestamp(), inputs);
 
       invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
                                    LocalId(i));
-      EXPECT_EQ(expectedViolation,
+      EXPECT_EQ(expectedOutput,
                 engine->value(engine->currentTimestamp(), outputId));
     }
   }
@@ -191,10 +191,10 @@ TEST_F(TimesTest, Commit) {
     invariant.notifyInputChanged(ts, *engine, LocalId(i));
 
     // incremental value
-    const Int notifiedViolation = engine->value(ts, outputId);
+    const Int notifiedOutput = engine->value(ts, outputId);
     invariant.recompute(ts, *engine);
 
-    ASSERT_EQ(notifiedViolation, engine->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
     engine->commitIf(ts, inputs.at(i));
     committedValues.at(i) = engine->value(ts, inputs.at(i));
@@ -202,7 +202,7 @@ TEST_F(TimesTest, Commit) {
 
     invariant.commit(ts, *engine);
     invariant.recompute(ts + 1, *engine);
-    ASSERT_EQ(notifiedViolation, engine->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
   }
 }
 
