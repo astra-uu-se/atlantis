@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "core/propagationEngine.hpp"
-#include "fznparser/modelfactory.hpp"
+#include "fznparser/modelFactory.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
 #include "misc/logging.hpp"
 #include "search/assignment.hpp"
