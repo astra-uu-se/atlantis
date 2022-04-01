@@ -1,11 +1,12 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <random>
 #include <vector>
 
 #include "../testHelper.hpp"
-#include "constraints/equal.hpp"
+#include "constraints/inDomain.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
 
@@ -14,37 +15,38 @@ using ::testing::Return;
 
 namespace {
 
-class MockEqual : public Equal {
+class MockInDomain : public InDomain {
  public:
   bool initialized = false;
 
   void init(Timestamp timestamp, Engine& engine) override {
     initialized = true;
-    Equal::init(timestamp, engine);
+    InDomain::init(timestamp, engine);
   }
 
-  MockEqual(VarId violationId, VarId a, VarId b) : Equal(violationId, a, b) {
+  MockInDomain(VarId violationId, VarId x, std::vector<DomainEntry> domain)
+      : InDomain(violationId, x, std::move(domain)) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return Equal::recompute(timestamp, engine);
+          return InDomain::recompute(timestamp, engine);
         });
     ON_CALL(*this, nextInput)
         .WillByDefault([this](Timestamp t, Engine& engine) {
-          return Equal::nextInput(t, engine);
+          return InDomain::nextInput(t, engine);
         });
 
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine) {
-          Equal::notifyCurrentInputChanged(t, engine);
+          InDomain::notifyCurrentInputChanged(t, engine);
         });
 
     ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          Equal::notifyInputChanged(t, engine, id);
+          InDomain::notifyInputChanged(t, engine, id);
         });
 
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      Equal::commit(t, engine);
+      InDomain::commit(t, engine);
     });
   }
 
@@ -62,25 +64,25 @@ class MockEqual : public Equal {
  private:
 };
 
-class EqualTest : public ::testing::Test {
+class InDomainTest : public ::testing::Test {
  protected:
   std::unique_ptr<PropagationEngine> engine;
   VarId violationId = NULL_ID;
   VarId x = NULL_ID;
-  VarId y = NULL_ID;
-  Equal* equal;
+  std::vector<DomainEntry> domain;
+  InDomain* equal;
   std::mt19937 gen;
 
-  void SetUp() override {
+  virtual void SetUp() {
     std::random_device rd;
     gen = std::mt19937(rd());
     engine = std::make_unique<PropagationEngine>();
     engine->open();
     x = engine->makeIntVar(2, -100, 100);
-    y = engine->makeIntVar(2, -100, 100);
+    domain = std::vector<DomainEntry>{{-100, -50}, {0, 50}, {100, 150}};
     violationId = engine->makeIntVar(0, 0, 200);
 
-    equal = &(engine->makeConstraint<Equal>(violationId, x, y));
+    equal = &(engine->makeConstraint<InDomain>(violationId, x, domain));
     engine->close();
   }
 
@@ -88,19 +90,16 @@ class EqualTest : public ::testing::Test {
                          OutputToInputMarkingMode markingMode) {
     engine->open();
 
-    VarId a = engine->makeIntVar(5, -100, 100);
-    VarId b = engine->makeIntVar(0, -100, 100);
+    const VarId a = engine->makeIntVar(5, -100, 100);
+    const VarId viol = engine->makeIntVar(0, 0, 200);
 
-    VarId viol = engine->makeIntVar(0, 0, 200);
+    auto& invariant = engine->makeInvariant<MockInDomain>(viol, a, domain);
 
-    auto invariant = &engine->makeInvariant<MockEqual>(viol, a, b);
+    EXPECT_TRUE(invariant.initialized);
 
-    EXPECT_TRUE(invariant->initialized);
+    EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
-
-    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
     engine->setPropagationMode(propMode);
     engine->setOutputToInputMarkingMode(markingMode);
@@ -108,18 +107,18 @@ class EqualTest : public ::testing::Test {
     engine->close();
 
     if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(0);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(0);
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(3);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(invariant, nextInput(testing::_, testing::_)).Times(2);
+      EXPECT_CALL(invariant, notifyCurrentInputChanged(testing::_, testing::_))
           .Times(1);
 
-      EXPECT_CALL(*invariant,
+      EXPECT_CALL(invariant,
                   notifyInputChanged(testing::_, testing::_, testing::_))
           .Times(0);
     }
@@ -138,23 +137,23 @@ class EqualTest : public ::testing::Test {
  *  Testing constructor
  */
 
-TEST_F(EqualTest, Init) {
+TEST_F(InDomainTest, Init) {
   EXPECT_EQ(engine->committedValue(violationId), 0);
   EXPECT_EQ(engine->value(engine->tmpTimestamp(violationId), violationId), 0);
 }
 
-TEST_F(EqualTest, Recompute) {
+TEST_F(InDomainTest, Recompute) {
   EXPECT_EQ(engine->value(0, violationId), 0);
   EXPECT_EQ(engine->committedValue(violationId), 0);
 
   Timestamp newTimestamp = 1;
-  engine->setValue(newTimestamp, x, 40);
+  engine->setValue(newTimestamp, x, 60);
   equal->recompute(newTimestamp, *engine);
   EXPECT_EQ(engine->committedValue(violationId), 0);
-  EXPECT_EQ(engine->value(newTimestamp, violationId), 38);
+  EXPECT_EQ(engine->value(newTimestamp, violationId), 10);
 }
 
-TEST_F(EqualTest, NotifyChange) {
+TEST_F(InDomainTest, NotifyChange) {
   EXPECT_EQ(engine->value(0, violationId),
             0);  // initially the value of violationId is 0
 
@@ -163,34 +162,77 @@ TEST_F(EqualTest, NotifyChange) {
   Timestamp time1 = 1;
 
   EXPECT_EQ(engine->value(time1, x), 2);
-  engine->setValue(time1, x, 40);
+  engine->setValue(time1, x, 60);
   EXPECT_EQ(engine->committedValue(x), 2);
-  EXPECT_EQ(engine->value(time1, x), 40);
+  EXPECT_EQ(engine->value(time1, x), 60);
   equal->notifyInputChanged(time1, *engine, unused);
-  EXPECT_EQ(engine->value(time1, violationId),
-            38);  // incremental value of violationId is 0;
-
-  engine->setValue(time1, y, 0);
-  equal->notifyInputChanged(time1, *engine, unused);
-  auto tmpValue = engine->value(
-      time1, violationId);  // incremental value of violationId is 40;
-
-  // Incremental computation gives the same result as recomputation
-  equal->recompute(time1, *engine);
-  EXPECT_EQ(engine->value(time1, violationId), tmpValue);
-
-  Timestamp time2 = time1 + 1;
-
-  EXPECT_EQ(engine->value(time2, y), 2);
-  engine->setValue(time2, y, 20);
-  EXPECT_EQ(engine->committedValue(y), 2);
-  EXPECT_EQ(engine->value(time2, y), 20);
-  equal->notifyInputChanged(time2, *engine, unused);
-  EXPECT_EQ(engine->value(time2, violationId),
-            18);  // incremental value of violationId is 0;
+  EXPECT_EQ(engine->value(time1, violationId), 10);
 }
 
-TEST_F(EqualTest, IncrementalVsRecompute) {
+TEST_F(InDomainTest, Violation) {
+  std::vector<DomainEntry> dom = {{-10, -5}, {-2, -2}, {0, 0}, {2, 2}, {5, 10}};
+
+  Int lb = -200;
+  Int ub = 200;
+
+  std::vector<Int> values;
+  for (Int val = lb; val <= ub; ++val) {
+    values.emplace_back(val);
+  }
+
+  auto rng = std::default_random_engine{};
+  std::shuffle(values.begin(), values.end(), rng);
+
+  engine->open();
+
+  VarId a = engine->makeIntVar(values.front(), lb, ub);
+  VarId viol = engine->makeIntVar(0, 0, ub - lb + 1);
+
+  engine->makeInvariant<InDomain>(viol, a, std::vector<DomainEntry>{dom});
+
+  engine->close();
+
+  Int prevCommitted = engine->committedValue(viol);
+
+  for (const Int val : values) {
+    EXPECT_EQ(prevCommitted, engine->committedValue(viol));
+
+    Int expectedViol = std::numeric_limits<Int>::max();
+    for (const DomainEntry domEntry : dom) {
+      if (val < domEntry.lowerBound) {
+        expectedViol = std::min(expectedViol, domEntry.lowerBound - val);
+      } else if (val <= domEntry.upperBound) {
+        expectedViol = std::min(Int(0), expectedViol);
+      } else {
+        EXPECT_TRUE(val > domEntry.upperBound);
+        expectedViol = std::min(expectedViol, val - domEntry.upperBound);
+      }
+    }
+
+    engine->beginMove();
+    engine->setValue(a, val);
+    engine->endMove();
+
+    engine->beginProbe();
+    engine->query(viol);
+    engine->endProbe();
+
+    EXPECT_EQ(expectedViol, engine->currentValue(viol));
+
+    engine->beginMove();
+    engine->setValue(a, val);
+    engine->endMove();
+
+    engine->beginCommit();
+    engine->query(viol);
+    engine->endCommit();
+    EXPECT_EQ(expectedViol, engine->committedValue(viol));
+
+    prevCommitted = expectedViol;
+  }
+}
+
+TEST_F(InDomainTest, IncrementalVsRecompute) {
   EXPECT_EQ(engine->value(0, violationId),
             0);  // initially the value of violationId is 0
   LocalId unused = -1;
@@ -202,19 +244,14 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
     ++currentTimestamp;
     // Check that we do not accidentally commit
     ASSERT_EQ(engine->committedValue(x), 2);
-    ASSERT_EQ(engine->committedValue(y), 2);
     ASSERT_EQ(engine->committedValue(violationId),
               0);  // violationId is committed by register.
 
     // Set all variables
     engine->setValue(currentTimestamp, x, distribution(gen));
-    engine->setValue(currentTimestamp, y, distribution(gen));
 
     // notify changes
     if (engine->committedValue(x) != engine->value(currentTimestamp, x)) {
-      equal->notifyInputChanged(currentTimestamp, *engine, unused);
-    }
-    if (engine->committedValue(y) != engine->value(currentTimestamp, y)) {
       equal->notifyInputChanged(currentTimestamp, *engine, unused);
     }
 
@@ -226,7 +263,7 @@ TEST_F(EqualTest, IncrementalVsRecompute) {
   }
 }
 
-TEST_F(EqualTest, Commit) {
+TEST_F(InDomainTest, Commit) {
   EXPECT_EQ(engine->committedValue(violationId), 0);
 
   LocalId unused = -1;
@@ -234,9 +271,6 @@ TEST_F(EqualTest, Commit) {
   Timestamp currentTimestamp = 1;
 
   engine->setValue(currentTimestamp, x, 40);
-  engine->setValue(currentTimestamp, y,
-                   2);  // This change is not notified and should
-                        // not have an impact on the commit
 
   equal->notifyInputChanged(currentTimestamp, *engine, unused);
 
@@ -248,43 +282,43 @@ TEST_F(EqualTest, Commit) {
   // EXPECT_EQ(engine->committedValue(violationId), 38);
 }
 
-TEST_F(EqualTest, CreateEqual) {
+TEST_F(InDomainTest, CreateInDomain) {
   engine->open();
 
-  VarId a = engine->makeIntVar(5, -100, 100);
-  VarId b = engine->makeIntVar(0, -100, 100);
+  VarId a = engine->makeIntVar(100, -100, 100);
 
   VarId viol = engine->makeIntVar(0, 0, 200);
 
-  auto invariant = &engine->makeInvariant<MockEqual>(viol, a, b);
+  auto& invariant = engine->makeInvariant<MockInDomain>(
+      viol, a, std::vector<DomainEntry>{{0, 0}});
 
-  EXPECT_TRUE(invariant->initialized);
+  EXPECT_TRUE(invariant.initialized);
 
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
 
   engine->close();
 
-  EXPECT_EQ(engine->currentValue(viol), 5);
+  EXPECT_EQ(engine->currentValue(viol), 100);
 }
 
-TEST_F(EqualTest, NotificationsInputToOutput) {
+TEST_F(InDomainTest, NotificationsInputToOutput) {
   testNotifications(PropagationMode::INPUT_TO_OUTPUT,
                     OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(EqualTest, NotificationsOutputToInputNone) {
+TEST_F(InDomainTest, NotificationsOutputToInputNone) {
   testNotifications(PropagationMode::OUTPUT_TO_INPUT,
                     OutputToInputMarkingMode::NONE);
 }
 
-TEST_F(EqualTest, NotificationsOutputToInputOutputToInputStatic) {
+TEST_F(InDomainTest, NotificationsOutputToInputOutputToInputStatic) {
   testNotifications(PropagationMode::OUTPUT_TO_INPUT,
                     OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC);
 }
 
-TEST_F(EqualTest, NotificationsOutputToInputInputToOutputExploration) {
+TEST_F(InDomainTest, NotificationsOutputToInputInputToOutputExploration) {
   testNotifications(PropagationMode::OUTPUT_TO_INPUT,
                     OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION);
 }
