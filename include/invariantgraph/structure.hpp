@@ -27,6 +27,23 @@ class VariableNode {
     Int upperBound;
 
     Domain(Int lb, Int ub) : lowerBound(lb), upperBound(ub) {}
+
+    [[nodiscard]] inline std::vector<Int> values() const {
+      std::vector<Int> values;
+      values.resize(size() + 1);
+      std::iota(values.begin(), values.end(), lowerBound);
+      return values;
+    }
+
+    [[nodiscard]] inline Int size() const noexcept {
+      return upperBound - lowerBound;
+    }
+
+    inline bool operator==(const Domain& rhs) const {
+      return lowerBound == rhs.lowerBound && upperBound == rhs.upperBound;
+    }
+
+    inline bool operator!=(const Domain& rhs) const { return !(*this == rhs); }
   };
 
  private:
