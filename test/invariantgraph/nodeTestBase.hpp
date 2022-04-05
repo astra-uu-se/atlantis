@@ -52,7 +52,7 @@ class NodeTestBase : public testing::Test {
           freeVariables = {}) {
     for (const auto& modelVariable : freeVariables) {
       auto variable = _nodeMap.at(modelVariable);
-      const auto& [lb, ub] = variable->domain();
+      const auto& [lb, ub] = variable->bounds();
       auto varId = engine.makeIntVar(lb, lb, ub);
       _variableMap.emplace(variable, varId);
     }

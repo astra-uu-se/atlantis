@@ -36,8 +36,7 @@ void invariantgraph::IntLinEqNode::registerWithEngine(
   engine.makeConstraint<Equal>(violationVar, sumVar, c);
 }
 
-invariantgraph::VariableNode::Domain
-invariantgraph::IntLinEqNode::getDomainBounds() const {
+std::pair<Int, Int> invariantgraph::IntLinEqNode::getDomainBounds() const {
   Int lb = 0;
   Int ub = 0;
 

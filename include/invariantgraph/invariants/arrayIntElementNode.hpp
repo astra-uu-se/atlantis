@@ -19,11 +19,11 @@ class ArrayIntElementNode : public VariableDefiningNode {
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
       : VariableDefiningNode({output}, {b}), _as(std::move(as)), _b(b) {
-    b->imposeDomain({1, static_cast<Int>(_as.size())});
+    b->imposeDomain(IntervalDomain{1, static_cast<Int>(_as.size())});
 
     Int smallest = *std::min_element(_as.begin(), _as.end());
     Int biggest = *std::max_element(_as.begin(), _as.end());
-    output->imposeDomain({smallest, biggest});
+    output->imposeDomain(IntervalDomain{smallest, biggest});
   }
 
   void registerWithEngine(
