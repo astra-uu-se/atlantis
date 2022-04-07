@@ -12,11 +12,19 @@ void Mod::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   registerDefinedVariable(engine, _y);
   engine.registerInvariantInput(_id, _a, 0);
   engine.registerInvariantInput(_id, _b, 0);
+
+  assert(engine.lowerBound(_b) != 0 || engine.upperBound(_b) != 0);
+  if (engine.lowerBound(_b) <= 0 && 0 <= engine.upperBound(_b)) {
+    _zeroReplacement = engine.upperBound(_b) >= 1 ? 1 : -1;
+  }
 }
 
 void Mod::recompute(Timestamp ts, Engine& engine) {
+  assert(_zeroReplacement != 0);
+  const Int denominator = engine.value(ts, _b);
   updateValue(ts, engine, _y,
-              std::abs(engine.value(ts, _a) % engine.value(ts, _b)));
+              engine.value(ts, _a) %
+                  std::abs(denominator != 0 ? denominator : _zeroReplacement));
 }
 
 void Mod::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
