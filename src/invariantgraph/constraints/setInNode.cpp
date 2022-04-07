@@ -1,7 +1,7 @@
 #include "invariantgraph/constraints/setInNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/inSparseDomain.hpp"
+#include "constraints/inDomain.hpp"
 
 std::unique_ptr<invariantgraph::SetInNode>
 invariantgraph::SetInNode::fromModelConstraint(
@@ -28,6 +28,5 @@ void invariantgraph::SetInNode::registerWithEngine(
                  std::back_inserter(domainEntries),
                  [](const auto& value) { return DomainEntry(value, value); });
 
-  engine.makeConstraint<InSparseDomain>(violation, input,
-                                        std::move(domainEntries));
+  engine.makeConstraint<InDomain>(violation, input, std::move(domainEntries));
 }
