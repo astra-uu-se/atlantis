@@ -109,7 +109,10 @@ int main(int argc, char* argv[]) {
     }();
 
     search::Annealer annealer(assignment, random);
-    search.run(searchController, annealer);
+    auto statistics = search.run(searchController, annealer);
+
+    // Don't log to std::cout, since that would interfere with MiniZinc.
+    statistics.display(std::cerr);
   } catch (const cxxopts::OptionException& e) {
     std::cerr << "error: " << e.what() << std::endl;
   } catch (const std::invalid_argument& e) {
