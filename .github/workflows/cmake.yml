@@ -6,7 +6,7 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BENCHMARK_BRANCHES: refs/heads/master refs/heads/develop
   CC: gcc-11
-  GXX: g++-11
+  CXX: g++-11
 
 jobs:
   build:
