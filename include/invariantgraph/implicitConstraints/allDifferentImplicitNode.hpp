@@ -17,7 +17,7 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
 
  protected:
   search::neighbourhoods::Neighbourhood *createNeighbourhood(
-      Engine &engine, const std::vector<VarId> &variables) override;
+      Engine &engine, std::vector<search::SearchVariable> variables) override;
 };
 
 }  // namespace invariantgraph

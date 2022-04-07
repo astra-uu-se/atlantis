@@ -2,12 +2,13 @@
 
 #include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
+#include "search/searchVariable.hpp"
 
 namespace search::neighbourhoods {
 
 class AllDifferentNeighbourhood : public Neighbourhood {
  private:
-  std::vector<VarId> _variables;
+  std::vector<search::SearchVariable> _variables;
   std::vector<Int> _domain;
   const Engine& _engine;
 
@@ -16,7 +17,7 @@ class AllDifferentNeighbourhood : public Neighbourhood {
   size_t _freeVariables{0};
 
  public:
-  AllDifferentNeighbourhood(std::vector<VarId> variables,
+  AllDifferentNeighbourhood(std::vector<search::SearchVariable> variables,
                             std::vector<Int> domain, const Engine& engine);
 
   ~AllDifferentNeighbourhood() override = default;

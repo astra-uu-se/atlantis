@@ -23,12 +23,12 @@ class MaxNode : public VariableDefiningNode {
     Int outputUb = std::numeric_limits<Int>::min();
 
     for (const auto& node : _variables) {
-      const auto& [nodeLb, nodeUb] = node->domain();
+      const auto& [nodeLb, nodeUb] = node->bounds();
       outputLb = std::max(nodeLb, outputLb);
       outputUb = std::max(nodeUb, outputUb);
     }
 
-    output->imposeDomain({outputLb, outputUb});
+    output->imposeDomain(IntervalDomain{outputLb, outputUb});
   }
 
   ~MaxNode() override = default;

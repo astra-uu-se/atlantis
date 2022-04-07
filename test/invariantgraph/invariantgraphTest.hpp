@@ -4,7 +4,7 @@
 #define FZN_SEARCH_VARIABLE(name, lowerBound, upperBound) \
   std::make_shared<fznparser::SearchVariable>(            \
       name, fznparser::AnnotationCollection(),            \
-      std::make_unique<fznparser::IntDomain>(lowerBound, upperBound))
+      std::make_unique<fznparser::IntervalDomain>(lowerBound, upperBound))
 
 #define FZN_VECTOR_CONSTRAINT_ARG(...) \
   std::vector<std::shared_ptr<fznparser::Literal>> { __VA_ARGS__ }

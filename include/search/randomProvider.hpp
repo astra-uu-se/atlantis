@@ -4,6 +4,7 @@
 #include <random>
 #include <vector>
 
+#include "core/domains.hpp"
 #include "core/types.hpp"
 
 namespace search {
@@ -23,12 +24,32 @@ class RandomProvider {
     return collection[distribution(_gen)];
   }
 
+  template <typename T>
+  const T& element(const std::vector<T>& collection) {
+    assert(!collection.empty());
+    std::uniform_int_distribution<size_t> distribution(0,
+                                                       collection.size() - 1);
+    return collection[distribution(_gen)];
+  }
+
   Int intInRange(Int lowerBound, Int upperBound) {
     return std::uniform_int_distribution<Int>(lowerBound, upperBound)(_gen);
   }
 
   float floatInRange(float lowerBound, float upperBound) {
     return std::uniform_real_distribution<float>(lowerBound, upperBound)(_gen);
+  }
+
+  Int inDomain(SetDomain& domain) { return element(domain.values()); }
+  
+  Int inDomain(IntervalDomain& domain) {
+    return intInRange(domain.lowerBound(), domain.upperBound());
+  }
+
+  Int inDomain(SearchDomain& domain) {
+    Int value;
+    std::visit([&](auto& dom) { value = inDomain(dom); }, domain);
+    return value;
   }
 };
 

@@ -27,13 +27,13 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
     Int outputUb = std::numeric_limits<Int>::min();
 
     for (const auto& node : _as) {
-      const auto& [nodeLb, nodeUb] = node->domain();
+      const auto& [nodeLb, nodeUb] = node->bounds();
       outputLb = std::min(nodeLb, outputLb);
       outputUb = std::max(nodeUb, outputUb);
     }
 
-    b->imposeDomain({1, static_cast<Int>(_as.size())});
-    output->imposeDomain({outputLb, outputUb});
+    b->imposeDomain(IntervalDomain{1, static_cast<Int>(_as.size())});
+    output->imposeDomain(IntervalDomain{outputLb, outputUb});
   }
 
   void registerWithEngine(Engine& engine,

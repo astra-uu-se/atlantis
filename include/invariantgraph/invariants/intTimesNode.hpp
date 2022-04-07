@@ -13,10 +13,10 @@ class IntTimesNode : public BinaryOpNode {
 
   IntTimesNode(VariableNode* a, VariableNode* b, VariableNode* output)
       : BinaryOpNode(a, b, output) {
-    const auto& [aLb, aUb] = a->domain();
-    const auto& [bLb, bUb] = b->domain();
+    const auto& [aLb, aUb] = a->bounds();
+    const auto& [bLb, bUb] = b->bounds();
 
-    output->imposeDomain({aLb * bLb, aUb * bUb});
+    output->imposeDomain(IntervalDomain{aLb * bLb, aUb * bUb});
   }
 
   ~IntTimesNode() override = default;

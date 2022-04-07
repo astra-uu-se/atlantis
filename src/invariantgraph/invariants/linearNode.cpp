@@ -76,7 +76,7 @@ std::pair<Int, Int> invariantgraph::LinearNode::getIntermediateDomain() const {
   Int lb = 0, ub = 0;
 
   for (size_t i = 0; i < _coeffs.size(); i++) {
-    const auto& [varLb, varUb] = _variables[i]->domain();
+    const auto& [varLb, varUb] = _variables[i]->bounds();
 
     lb += _coeffs[i] * varLb;
     ub += _coeffs[i] * varUb;
