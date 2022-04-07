@@ -215,7 +215,7 @@ TEST_F(IntDivTest, ZeroDenominator) {
   const Int aVal = 10;
   const Int outputLb = std::numeric_limits<Int>::min();
   const Int outputUb = std::numeric_limits<Int>::max();
-  for (const auto [bLb, bUb, expected] : std::vector<std::array<Int, 3>>{
+  for (const auto& [bLb, bUb, expected] : std::vector<std::array<Int, 3>>{
            {-100, 0, -10}, {-50, 50, 10}, {0, 100, 10}}) {
     EXPECT_TRUE(bLb <= bUb);
     EXPECT_TRUE(bLb != 0 || bUb != 0);
@@ -278,7 +278,7 @@ class MockIntDiv : public IntDiv {
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 TEST_F(IntDivTest, EngineIntegration) {
-  for (const auto [propMode, markingMode] : propMarkModes) {
+  for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }

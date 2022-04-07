@@ -4,14 +4,14 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PROJECT_NAME cbls)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Check if microsoft visual code. I have no idea if this works
 if (MSVC)
-    add_compile_options(/std:c++17 /permissive /W4 /w14640)
+    add_compile_options(/std:c++20 /permissive /W4 /w14640)
 else ()
-    add_compile_options(-std=c++17 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic)
+    add_compile_options(-std=c++20 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic)
 endif ()
 
 if (CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -83,7 +83,7 @@ if (BUILD_TESTS OR BUILD_BENCHMARKS)
     FetchContent_Declare(
             googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG v1.10.x
+            GIT_TAG release-1.11.0
     )
 
     # For Windows: Prevent overriding the parent project's compiler/linker settings
