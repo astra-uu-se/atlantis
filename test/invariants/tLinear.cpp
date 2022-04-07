@@ -17,144 +17,258 @@ using ::testing::Return;
 
 namespace {
 
-class MockLinear : public Linear {
- public:
-  bool initialized = false;
-
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    Linear::init(timestamp, engine);
-  }
-
-  MockLinear(std::vector<VarId>&& X, VarId b)
-      : Linear(std::vector<VarId>{X}, b) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return Linear::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, nextInput)
-        .WillByDefault([this](Timestamp ts, Engine& engine) {
-          return Linear::nextInput(ts, engine);
-        });
-
-    ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp ts, Engine& engine) {
-          Linear::notifyCurrentInputChanged(ts, engine);
-        });
-
-    ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp ts, Engine& engine, LocalId id) {
-          Linear::notifyInputChanged(ts, engine, id);
-        });
-
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp ts, Engine& engine) {
-      Linear::commit(ts, engine);
-    });
-  }
-
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
-
-  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
-              (override));
-
-  MOCK_METHOD(void, notifyInputChanged,
-              (Timestamp ts, Engine& engine, LocalId id), (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
-
- private:
-};
-
-class LinearTest : public ::testing::Test {
+class LinearTest : public InvariantTest {
  protected:
-  std::unique_ptr<PropagationEngine> engine;
-  VarId a = NULL_ID;
-  VarId b = NULL_ID;
-  VarId c = NULL_ID;
-  VarId d = NULL_ID;
-  Int aCoef = 1;
-  Int bCoef = 10;
-  Int cCoef = -20;
-  Linear* linear;
-  std::mt19937 gen;
+  const size_t numInputs = 1000;
+  Int inputLb = std::numeric_limits<Int>::min();
+  Int inputUb = std::numeric_limits<Int>::max();
+  Int coeffLb = -10000;
+  Int coeffUb = 10000;
+  std::vector<VarId> inputs;
+  std::vector<Int> coeffs;
+  std::uniform_int_distribution<Int> inputValueDist;
+  std::uniform_int_distribution<Int> coeffDist;
 
+ public:
   void SetUp() override {
-    std::random_device rd;
-    gen = std::mt19937(rd());
-    engine = std::make_unique<PropagationEngine>();
-    engine->open();
-    a = engine->makeIntVar(1, -100, 100);
-    b = engine->makeIntVar(2, -100, 100);
-    c = engine->makeIntVar(3, -100, 100);
-    d = engine->makeIntVar(4, -100, 100);
-
-    // d = 1*1+2*10+3*(-20) = 1+20-60 =-39
-    linear =
-        &(engine->makeInvariant<Linear>(std::vector<Int>({aCoef, bCoef, cCoef}),
-                                        std::vector<VarId>({a, b, c}), d));
-    engine->close();
+    InvariantTest::SetUp();
+    inputs.resize(numInputs, NULL_ID);
+    coeffs.resize(numInputs, 0);
+    std::vector<Int> bounds{(inputLb / static_cast<Int>(numInputs)) / coeffLb,
+                            (inputLb / static_cast<Int>(numInputs)) / coeffUb,
+                            (inputUb / static_cast<Int>(numInputs)) / coeffLb,
+                            (inputUb / static_cast<Int>(numInputs)) / coeffUb};
+    const auto [lb, ub] = std::minmax_element(bounds.begin(), bounds.end());
+    inputLb = *lb;
+    inputUb = *ub;
+    inputValueDist = std::uniform_int_distribution<Int>(inputLb, inputUb);
+    coeffDist = std::uniform_int_distribution<Int>(coeffLb, coeffUb);
   }
 
-  void testNotifications(PropagationMode propMode,
-                         OutputToInputMarkingMode markingMode) {
-    engine->open();
+  void TearDown() override {
+    InvariantTest::TearDown();
+    inputs.clear();
+  }
 
-    std::vector<VarId> args{};
-    int numArgs = 10;
+  Int computeOutput(const Timestamp ts, const std::vector<VarId>& variables,
+                    const std::vector<Int>& coefficients) {
+    std::vector<Int> values(variables.size(), 0);
+    for (size_t i = 0; i < variables.size(); ++i) {
+      values.at(i) = engine->value(ts, variables.at(i));
+    }
+    return computeOutput(values, coefficients);
+  }
+
+  Int computeOutput(const std::vector<Int>& values,
+                    const std::vector<Int>& coefficients) {
     Int sum = 0;
-    for (Int value = 1; value <= numArgs; ++value) {
-      args.push_back(engine->makeIntVar(value, 1, numArgs));
-      sum += value;
+    for (size_t i = 0; i < values.size(); ++i) {
+      sum += values.at(i) * coefficients.at(i);
     }
-
-    VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
-
-    auto invariant =
-        &engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
-
-    EXPECT_TRUE(invariant->initialized);
-
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
-
-    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
-
-    engine->setPropagationMode(propMode);
-    engine->setOutputToInputMarkingMode(markingMode);
-
-    engine->close();
-
-    if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
-          .Times(AtMost(1));
-      EXPECT_CALL(*invariant,
-                  notifyInputChanged(testing::_, testing::_, testing::_))
-          .Times(1);
-    } else {
-      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_))
-          .Times(numArgs + 1);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
-          .Times(1);
-
-      EXPECT_CALL(*invariant,
-                  notifyInputChanged(testing::_, testing::_, testing::_))
-          .Times(AtMost(1));
-    }
-
-    engine->beginMove();
-    engine->setValue(args[0], 5);
-    engine->endMove();
-
-    engine->beginProbe();
-    engine->query(output);
-    engine->endProbe();
+    return sum;
   }
 };
+
+TEST_F(LinearTest, Recompute) {
+  const Int iLb = -10;
+  const Int iUb = 10;
+  const Int cLb = -10;
+  const Int cUb = 10;
+
+  ASSERT_TRUE(iLb <= iUb);
+  ASSERT_TRUE(cLb <= cUb);
+
+  std::uniform_int_distribution<Int> iDist(iLb, iUb);
+  std::uniform_int_distribution<Int> cDist(cLb, cUb);
+
+  engine->open();
+
+  const VarId a = engine->makeIntVar(iDist(gen), iLb, iUb);
+  const VarId b = engine->makeIntVar(iDist(gen), iLb, iUb);
+  const VarId c = engine->makeIntVar(iDist(gen), iLb, iUb);
+
+  inputs = std::vector<VarId>{a, b, c};
+  coeffs = std::vector<Int>{cDist(gen), cDist(gen), cDist(gen)};
+
+  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+                                            std::numeric_limits<Int>::max());
+
+  Linear& invariant = engine->makeInvariant<Linear>(
+      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  for (Int aVal = iLb; aVal <= iUb; ++aVal) {
+    for (Int bVal = iLb; bVal <= iUb; ++bVal) {
+      for (Int cVal = iLb; cVal <= iUb; ++cVal) {
+        engine->setValue(engine->currentTimestamp(), a, aVal);
+        engine->setValue(engine->currentTimestamp(), b, bVal);
+        engine->setValue(engine->currentTimestamp(), c, cVal);
+        const Int expectedOutput =
+            computeOutput(engine->currentTimestamp(), inputs, coeffs);
+        invariant.recompute(engine->currentTimestamp(), *engine);
+        EXPECT_EQ(expectedOutput,
+                  engine->value(engine->currentTimestamp(), outputId));
+      }
+    }
+  }
+}
+
+TEST_F(LinearTest, NotifyInputChanged) {
+  engine->open();
+  for (size_t i = 0; i < numInputs; ++i) {
+    inputs.at(i) = engine->makeIntVar(inputValueDist(gen), inputLb, inputUb);
+    coeffs.at(i) = coeffDist(gen);
+  }
+  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+                                            std::numeric_limits<Int>::max());
+  Linear& invariant = engine->makeInvariant<Linear>(
+      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    const Int oldVal = engine->value(engine->currentTimestamp(), inputs.at(i));
+    do {
+      engine->setValue(engine->currentTimestamp(), inputs.at(i),
+                       inputValueDist(gen));
+    } while (oldVal == engine->value(engine->currentTimestamp(), inputs.at(i)));
+
+    const Int expectedOutput =
+        computeOutput(engine->currentTimestamp(), inputs, coeffs);
+
+    invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
+                                 LocalId(i));
+    EXPECT_EQ(expectedOutput,
+              engine->value(engine->currentTimestamp(), outputId));
+  }
+}
+
+TEST_F(LinearTest, NextInput) {
+  engine->open();
+  for (size_t i = 0; i < numInputs; ++i) {
+    inputs.at(i) = engine->makeIntVar(inputValueDist(gen), inputLb, inputUb);
+    coeffs.at(i) = coeffDist(gen);
+  }
+
+  const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
+  const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
+
+  std::shuffle(inputs.begin(), inputs.end(), rng);
+
+  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+                                            std::numeric_limits<Int>::max());
+  Linear& invariant = engine->makeInvariant<Linear>(
+      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+
+  for (Timestamp ts = engine->currentTimestamp() + 1;
+       ts < engine->currentTimestamp() + 4; ++ts) {
+    std::vector<bool> notified(maxVarId + 1, false);
+    for (size_t i = 0; i < numInputs; ++i) {
+      const VarId varId = invariant.nextInput(ts, *engine);
+      EXPECT_NE(varId, NULL_ID);
+      EXPECT_TRUE(minVarId <= varId);
+      EXPECT_TRUE(varId <= maxVarId);
+      EXPECT_FALSE(notified.at(varId));
+      notified[varId] = true;
+    }
+    EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+    for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
+      EXPECT_TRUE(notified.at(varId));
+    }
+  }
+}
+
+TEST_F(LinearTest, NotifyCurrentInputChanged) {
+  engine->open();
+  for (size_t i = 0; i < numInputs; ++i) {
+    inputs.at(i) = engine->makeIntVar(inputValueDist(gen), inputLb, inputUb);
+    coeffs.at(i) = coeffDist(gen);
+  }
+  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+                                            std::numeric_limits<Int>::max());
+  Linear& invariant = engine->makeInvariant<Linear>(
+      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  for (Timestamp ts = engine->currentTimestamp() + 1;
+       ts < engine->currentTimestamp() + 4; ++ts) {
+    for (const VarId varId : inputs) {
+      EXPECT_EQ(invariant.nextInput(ts, *engine), varId);
+      const Int oldVal = engine->value(ts, varId);
+      do {
+        engine->setValue(ts, varId, inputValueDist(gen));
+      } while (engine->value(ts, varId) == oldVal);
+      invariant.notifyCurrentInputChanged(ts, *engine);
+      EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, inputs, coeffs));
+    }
+  }
+}
+
+TEST_F(LinearTest, Commit) {
+  std::vector<size_t> indices(numInputs, 0);
+  std::vector<Int> committedValues(numInputs, 0);
+
+  engine->open();
+  for (size_t i = 0; i < numInputs; ++i) {
+    indices.at(i) = i;
+    const Int inputVal = inputValueDist(gen);
+    committedValues.at(i) = inputVal;
+    coeffs.at(i) = coeffDist(gen);
+    inputs.at(i) = engine->makeIntVar(inputVal, inputLb, inputUb);
+  }
+  std::shuffle(indices.begin(), indices.end(), rng);
+
+  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+                                            std::numeric_limits<Int>::max());
+  Linear& invariant = engine->makeInvariant<Linear>(
+      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
+            computeOutput(engine->currentTimestamp(), inputs, coeffs));
+
+  for (const size_t i : indices) {
+    Timestamp ts = engine->currentTimestamp() + Timestamp(i);
+    for (size_t j = 0; j < numInputs; ++j) {
+      // Check that we do not accidentally commit:
+      ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+    }
+
+    const Int oldVal = committedValues.at(i);
+    do {
+      engine->setValue(ts, inputs.at(i), inputValueDist(gen));
+    } while (oldVal == engine->value(ts, inputs.at(i)));
+
+    // notify changes
+    invariant.notifyInputChanged(ts, *engine, LocalId(i));
+
+    // incremental value
+    const Int notifiedOutput = engine->value(ts, outputId);
+    invariant.recompute(ts, *engine);
+
+    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+
+    engine->commitIf(ts, inputs.at(i));
+    committedValues.at(i) = engine->value(ts, inputs.at(i));
+    engine->commitIf(ts, outputId);
+
+    invariant.commit(ts, *engine);
+    invariant.recompute(ts + 1, *engine);
+    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+  }
+}
 
 RC_GTEST_FIXTURE_PROP(LinearTest, shouldAlwaysBeSum,
-                      (Int aVal, Int bVal, Int cVal)) {
+                      (Int aCoef, Int aVal, Int bCoef, Int bVal, Int cCoef,
+                       Int cVal)) {
+  engine->open();
+  const VarId a = engine->makeIntVar(1, -100, 100);
+  const VarId b = engine->makeIntVar(2, -100, 100);
+  const VarId c = engine->makeIntVar(3, -100, 100);
+  const VarId output = engine->makeIntVar(4, -100, 100);
+  engine->makeInvariant<Linear>(std::vector<Int>{aCoef, bCoef, cCoef},
+                                std::vector<VarId>{a, b, c}, output);
+  engine->close();
+
   engine->beginMove();
   engine->setValue(a, aVal);
   engine->setValue(b, bVal);
@@ -162,160 +276,66 @@ RC_GTEST_FIXTURE_PROP(LinearTest, shouldAlwaysBeSum,
   engine->endMove();
 
   engine->beginCommit();
-  engine->query(d);
+  engine->query(output);
   engine->endCommit();
 
-  RC_ASSERT(engine->committedValue(d) ==
+  RC_ASSERT(engine->committedValue(output) ==
             aCoef * aVal + bCoef * bVal + cCoef * cVal);
 }
 
-/**
- *  Testing constructor
- */
-
-TEST_F(LinearTest, Init) {
-  EXPECT_EQ(engine->committedValue(d), -39);
-  EXPECT_EQ(engine->value(engine->tmpTimestamp(d), d), -39);
-}
-
-TEST_F(LinearTest, Recompute) {
-  EXPECT_EQ(engine->value(0, d), -39);
-  EXPECT_EQ(engine->committedValue(d), -39);
-
-  Timestamp newTimestamp = 1;
-  engine->setValue(newTimestamp, a, 40);
-  linear->recompute(newTimestamp, *engine);
-  EXPECT_EQ(engine->committedValue(d), -39);
-  EXPECT_EQ(engine->value(newTimestamp, d), 0);
-}
-
-TEST_F(LinearTest, NotifyChange) {
-  EXPECT_EQ(engine->value(0, d), -39);  // initially the value of d is -39
-
-  Timestamp time1 = 1;
-
-  EXPECT_EQ(engine->value(time1, a), 1);
-  engine->setValue(time1, a, 40);
-  EXPECT_EQ(engine->committedValue(a), 1);
-  EXPECT_EQ(engine->value(time1, a), 40);
-  linear->notifyInputChanged(time1, *engine, 0);
-  EXPECT_EQ(engine->value(time1, d), 0);  // incremental value of d is 0;
-
-  engine->setValue(time1, b, 0);
-  linear->notifyInputChanged(time1, *engine, 1);
-  auto tmpValue = engine->value(time1, d);  // incremental value of d is -40;
-
-  // Incremental computation gives the same result as recomputation
-  linear->recompute(time1, *engine);
-  EXPECT_EQ(engine->value(time1, d), tmpValue);
-
-  Timestamp time2 = time1 + 1;
-
-  EXPECT_EQ(engine->value(time2, a), 1);
-  engine->setValue(time2, a, 20);
-  EXPECT_EQ(engine->committedValue(a), 1);
-  EXPECT_EQ(engine->value(time2, a), 20);
-  linear->notifyInputChanged(time2, *engine, 0);
-  EXPECT_EQ(engine->value(time2, d), -20);  // incremental value of d is 0;
-}
-
-TEST_F(LinearTest, IncrementalVsRecompute) {
-  EXPECT_EQ(engine->value(0, d), -39);  // initially the value of d is -39
-  // todo: not clear if we actually want to deal with overflows...
-  std::uniform_int_distribution<> distribution(-100000, 100000);
-
-  Timestamp currentTimestamp = 1;
-  for (size_t i = 0; i < 1000; ++i) {
-    ++currentTimestamp;
-    // Check that we do not accidentally commit
-    ASSERT_EQ(engine->committedValue(a), 1);
-    ASSERT_EQ(engine->committedValue(b), 2);
-    ASSERT_EQ(engine->committedValue(c), 3);
-    ASSERT_EQ(engine->committedValue(d),
-              -39);  // d is committed by register.
-
-    // Set all variables
-    engine->setValue(currentTimestamp, a, distribution(gen));
-    engine->setValue(currentTimestamp, b, distribution(gen));
-    engine->setValue(currentTimestamp, c, distribution(gen));
-
-    // notify changes
-    if (engine->committedValue(a) != engine->value(currentTimestamp, a)) {
-      linear->notifyInputChanged(currentTimestamp, *engine, 0);
-    }
-    if (engine->committedValue(b) != engine->value(currentTimestamp, b)) {
-      linear->notifyInputChanged(currentTimestamp, *engine, 1);
-    }
-    if (engine->committedValue(c) != engine->value(currentTimestamp, c)) {
-      linear->notifyInputChanged(currentTimestamp, *engine, 2);
-    }
-
-    // incremental value
-    auto tmp = engine->value(currentTimestamp, d);
-    linear->recompute(currentTimestamp, *engine);
-
-    ASSERT_EQ(tmp, engine->value(currentTimestamp, d));
+class MockLinear : public Linear {
+ public:
+  bool initialized = false;
+  void init(Timestamp timestamp, Engine& engine) override {
+    initialized = true;
+    Linear::init(timestamp, engine);
   }
-}
-
-TEST_F(LinearTest, Commit) {
-  EXPECT_EQ(engine->committedValue(d), -39);
-
-  Timestamp currentTimestamp = 1;
-
-  engine->setValue(currentTimestamp, a, 40);
-  engine->setValue(currentTimestamp, b,
-                   2);  // This change is not notified and should
-                        // not have an impact on the commit
-
-  linear->notifyInputChanged(currentTimestamp, *engine, 0);
-}
-
-TEST_F(LinearTest, CreateLinear) {
-  engine->open();
-
-  std::vector<VarId> args{};
-  int numArgs = 10;
-  Int sum = 0;
-  for (Int value = 1; value <= numArgs; ++value) {
-    args.push_back(engine->makeIntVar(value, 1, numArgs));
-    sum += value;
+  MockLinear(std::vector<VarId> X, VarId b) : Linear(X, b) {
+    ON_CALL(*this, recompute)
+        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
+          return Linear::recompute(timestamp, engine);
+        });
+    ON_CALL(*this, nextInput)
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          return Linear::nextInput(t, engine);
+        });
+    ON_CALL(*this, notifyCurrentInputChanged)
+        .WillByDefault([this](Timestamp t, Engine& engine) {
+          Linear::notifyCurrentInputChanged(t, engine);
+        });
+    ON_CALL(*this, notifyInputChanged)
+        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
+          Linear::notifyInputChanged(t, engine, id);
+        });
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
+      Linear::commit(t, engine);
+    });
   }
-
-  VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
-
-  auto invariant =
-      &engine->makeInvariant<MockLinear>(std::vector<VarId>{args}, output);
-
-  EXPECT_TRUE(invariant->initialized);
-
-  EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
-
-  EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
-
-  engine->close();
-
-  EXPECT_EQ(engine->currentValue(output), sum);
-}
-
-TEST_F(LinearTest, NotificationsInputToOutput) {
-  testNotifications(PropagationMode::INPUT_TO_OUTPUT,
-                    OutputToInputMarkingMode::NONE);
-}
-
-TEST_F(LinearTest, NotificationsOutputToInputNone) {
-  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::NONE);
-}
-
-TEST_F(LinearTest, NotificationsOutputToInputOutputToInputStatic) {
-  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC);
-}
-
-TEST_F(LinearTest, NotificationsOutputToInputInputToOutputExploration) {
-  testNotifications(PropagationMode::OUTPUT_TO_INPUT,
-                    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION);
+  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
+              (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
+              (override));
+  MOCK_METHOD(void, notifyInputChanged,
+              (Timestamp t, Engine& engine, LocalId id), (override));
+  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+};
+TEST_F(LinearTest, EngineIntegration) {
+  for (const auto [propMode, markingMode] : propMarkModes) {
+    if (!engine->isOpen()) {
+      engine->open();
+    }
+    std::vector<VarId> args;
+    const Int numArgs = 10;
+    for (Int value = 1; value <= numArgs; ++value) {
+      args.push_back(engine->makeIntVar(value, 1, numArgs));
+    }
+    const VarId modifiedVarId = args.front();
+    const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
+    testNotifications<MockLinear>(
+        &engine->makeInvariant<MockLinear>(args, output), propMode, markingMode,
+        numArgs + 1, modifiedVarId, 5, output);
+  }
 }
 
 }  // namespace

@@ -7,7 +7,7 @@
  */
 AllDifferentExcept::AllDifferentExcept(VarId violationId,
                                        std::vector<VarId> variables,
-                                       std::vector<Int> ignored)
+                                       const std::vector<Int>& ignored)
     : AllDifferent(violationId, variables) {
   _modifiedVars.reserve(_variables.size());
   const auto [lb, ub] =

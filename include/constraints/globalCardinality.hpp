@@ -15,7 +15,6 @@ template <bool IsClosed>
 class GlobalCardinality : public Constraint {
  private:
   const std::vector<VarId> _variables;
-  const std::vector<Int> _cover;
   std::vector<Int> _lowerBound;
   std::vector<Int> _upperBound;
   std::vector<CommittableInt> _localValues;
@@ -27,10 +26,12 @@ class GlobalCardinality : public Constraint {
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  GlobalCardinality(VarId violationId, std::vector<VarId> t_variables,
-                    std::vector<Int> cover, const std::vector<Int>& t_counts);
-  GlobalCardinality(VarId violationId, std::vector<VarId> t_variables,
-                    std::vector<Int> cover, const std::vector<Int>& lowerBound,
+  GlobalCardinality(VarId violationId, std::vector<VarId> variables,
+                    const std::vector<Int>& cover,
+                    const std::vector<Int>& counts);
+  GlobalCardinality(VarId violationId, std::vector<VarId> variables,
+                    const std::vector<Int>& cover,
+                    const std::vector<Int>& lowerBound,
                     const std::vector<Int>& upperBound);
 
   void init(Timestamp, Engine&) override;

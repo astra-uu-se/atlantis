@@ -10,6 +10,7 @@
 class Mod : public Invariant {
  private:
   VarId _a, _b, _y;
+  Int _zeroReplacement{1};
 
  public:
   Mod(VarId a, VarId b, VarId y);
