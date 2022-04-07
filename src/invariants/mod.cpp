@@ -10,11 +10,7 @@ void Mod::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
   engine.registerInvariantInput(_id, _a, 0);
   engine.registerInvariantInput(_id, _b, 0);
-
-  assert(engine.lowerBound(_b) != 0 || engine.upperBound(_b) != 0);
-  if (engine.lowerBound(_b) <= 0 && 0 <= engine.upperBound(_b)) {
-    _zeroReplacement = engine.upperBound(_b) >= 1 ? 1 : -1;
-  }
+  registerDefinedVariable(engine, _y);
 }
 
 void Mod::updateBounds(Engine& engine) {
@@ -22,9 +18,16 @@ void Mod::updateBounds(Engine& engine) {
   const Int aUb = engine.upperBound(_a);
 
   const Int lb = aLb < 0 ? std::min(aLb + 1, aUb) : 0;
-  const Int ub = std::max(aUb - 1, aLb);
+  const Int ub = aLb < 0 ? 0 : std::max(aUb - 1, aLb);
 
   engine.updateBounds(_y, lb, ub);
+}
+
+void Mod::close(Timestamp, Engine& engine) {
+  assert(engine.lowerBound(_b) != 0 || engine.upperBound(_b) != 0);
+  if (engine.lowerBound(_b) <= 0 && 0 <= engine.upperBound(_b)) {
+    _zeroReplacement = engine.upperBound(_b) >= 1 ? 1 : -1;
+  }
 }
 
 void Mod::recompute(Timestamp ts, Engine& engine) {

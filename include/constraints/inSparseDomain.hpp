@@ -17,7 +17,8 @@ class InSparseDomain : public Constraint {
   InSparseDomain(VarId violationId, VarId x,
                  const std::vector<DomainEntry>& domain);
 
-  void init(Timestamp, Engine&) override;
+  void registerVars(Engine&) override;
+  void updateBounds(Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;

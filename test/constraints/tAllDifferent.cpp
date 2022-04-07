@@ -20,9 +20,12 @@ class AllDifferentTest : public InvariantTest {
  public:
   bool isRegistered = false;
 
-  void registerVars(Engine& engine) override {
-    isRegistered = true;
-    AllDifferent::registerVars(engine);
+  Int computeViolation(Timestamp ts, const std::vector<VarId>& variables) {
+    std::vector<Int> values(variables.size(), 0);
+    for (size_t i = 0; i < variables.size(); ++i) {
+      values.at(i) = engine->value(ts, variables.at(i));
+    }
+    return computeViolation(values);
   }
 
   Int computeViolation(const std::vector<Int>& values) {
@@ -242,10 +245,10 @@ TEST_F(AllDifferentTest, Commit) {
 
 class MockAllDifferent : public AllDifferent {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    AllDifferent::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    AllDifferent::registerVars(engine);
   }
   MockAllDifferent(VarId violationId, std::vector<VarId> t_variables)
       : AllDifferent(violationId, t_variables) {

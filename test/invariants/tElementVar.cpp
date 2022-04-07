@@ -22,8 +22,8 @@ class ElementVarTest : public InvariantTest {
   const size_t numValues = 3;
   const Int inputLb = std::numeric_limits<Int>::min();
   const Int inputUb = std::numeric_limits<Int>::max();
-  Int indexLb = 0;
-  Int indexUb = numValues - 1;
+  Int indexLb = 1;
+  Int indexUb = numValues;
   std::vector<VarId> inputs;
   std::uniform_int_distribution<Int> inputDist;
   std::uniform_int_distribution<Int> indexDist;
@@ -46,7 +46,9 @@ class ElementVarTest : public InvariantTest {
   }
 
   Int computeOutput(const Timestamp ts, const Int indexVal) {
-    return engine->value(ts, inputs.at(indexVal));
+    EXPECT_TRUE(1 <= indexVal);
+    EXPECT_TRUE(static_cast<size_t>(indexVal) <= inputs.size());
+    return engine->value(ts, inputs.at(indexVal - 1));
   }
 };
 
@@ -120,7 +122,7 @@ TEST_F(ElementVarTest, NextInput) {
        ts < engine->currentTimestamp() + 4; ++ts) {
     EXPECT_EQ(invariant.nextInput(ts, *engine), index);
     EXPECT_EQ(invariant.nextInput(ts, *engine),
-              inputs.at(engine->value(ts, index)));
+              inputs.at(engine->value(ts, index) - 1));
     EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
   }
 }
@@ -131,7 +133,7 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
 
   std::vector<Int> indexValues(numValues, 0);
   for (size_t i = 0; i < indexValues.size(); ++i) {
-    indexValues.at(i) = i;
+    indexValues.at(i) = i + 1;
   }
 
   std::shuffle(indexValues.begin(), indexValues.end(), rng);
@@ -154,7 +156,7 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
     EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, index));
 
     const VarId curInput = invariant.nextInput(ts, *engine);
-    EXPECT_EQ(curInput, inputs.at(indexValues.at(i)));
+    EXPECT_EQ(curInput, inputs.at(indexValues.at(i) - 1));
 
     const Int oldInputVal = engine->value(ts, curInput);
     do {
@@ -244,10 +246,10 @@ TEST_F(ElementVarTest, Commit) {
 
 class MockElementVar : public ElementVar {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    ElementVar::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    ElementVar::registerVars(engine);
   }
   MockElementVar(VarId i, std::vector<VarId> X, VarId b) : ElementVar(i, X, b) {
     ON_CALL(*this, recompute)

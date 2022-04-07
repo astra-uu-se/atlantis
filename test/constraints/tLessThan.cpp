@@ -218,10 +218,10 @@ TEST_F(LessThanTest, Commit) {
 
 class MockLessThan : public LessThan {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    LessThan::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    LessThan::registerVars(engine);
   }
   MockLessThan(VarId violationId, VarId a, VarId b)
       : LessThan(violationId, a, b) {

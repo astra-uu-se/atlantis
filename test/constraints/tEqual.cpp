@@ -18,9 +18,6 @@ class EqualTest : public InvariantTest {
  public:
   bool isRegistered = false;
 
-  void registerVars(Engine& engine) override {
-    isRegistered = true;
-    Equal::registerVars(engine);
   Int computeViolation(const Timestamp ts,
                        const std::array<const VarId, 2>& inputs) {
     return computeViolation(engine->value(ts, inputs.at(0)),
@@ -219,10 +216,10 @@ TEST_F(EqualTest, Commit) {
 
 class MockEqual : public Equal {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    Equal::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    Equal::registerVars(engine);
   }
   MockEqual(VarId violationId, VarId a, VarId b) : Equal(violationId, a, b) {
     ON_CALL(*this, recompute)

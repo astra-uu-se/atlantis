@@ -12,11 +12,13 @@ class Mod : public Invariant {
  private:
   VarId _a, _b, _y;
   Int _zeroReplacement{1};
+  Int mod(Int, Int);
 
  public:
   Mod(VarId a, VarId b, VarId y);
   void registerVars(Engine&) override;
   void updateBounds(Engine&) override;
+  void close(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   VarId nextInput(Timestamp, Engine&) override;

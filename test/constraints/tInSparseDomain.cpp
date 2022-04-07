@@ -17,11 +17,11 @@ namespace {
 
 class MockInSparseDomain : public InSparseDomain {
  public:
-  bool initialized = false;
+  bool registered = false;
 
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    InSparseDomain::init(timestamp, engine);
+  void registerVars(Engine& engine) override {
+    registered = true;
+    InSparseDomain::registerVars(engine);
   }
 
   MockInSparseDomain(VarId violationId, VarId x,
@@ -97,7 +97,7 @@ class InSparseDomainTest : public ::testing::Test {
     auto& invariant =
         engine->makeInvariant<MockInSparseDomain>(viol, a, domain);
 
-    EXPECT_TRUE(invariant.initialized);
+    EXPECT_TRUE(invariant.registered);
 
     EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 
@@ -294,7 +294,7 @@ TEST_F(InSparseDomainTest, CreateInDomain) {
   auto& invariant = engine->makeInvariant<MockInSparseDomain>(
       viol, a, std::vector<DomainEntry>{{0, 0}});
 
-  EXPECT_TRUE(invariant.initialized);
+  EXPECT_TRUE(invariant.registered);
 
   EXPECT_CALL(invariant, recompute(testing::_, testing::_)).Times(AtLeast(1));
 

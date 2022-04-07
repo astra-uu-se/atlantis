@@ -224,7 +224,7 @@ class GlobalCardinalityTest : public InvariantTest {
     std::vector<Int> low;
     std::vector<Int> up;
     for (size_t i = 0; i < numInputs; ++i) {
-      inputs.emplace_back(engine->makeIntVar(i, lb, ub));
+      inputs.emplace_back(engine->makeIntVar(valueDist(gen), lb, ub));
       cover.emplace_back(i);
       low.emplace_back(1);
       up.emplace_back(2);
@@ -479,10 +479,10 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityTestClosed, RapidCheck,
 template <bool IsClosed>
 class MockGlobalCardinality : public GlobalCardinality<IsClosed> {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    GlobalCardinality<IsClosed>::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    GlobalCardinality<IsClosed>::registerVars(engine);
   }
   MockGlobalCardinality(VarId violationId, std::vector<VarId>&& t_variables,
                         std::vector<Int>&& cover, std::vector<Int>&& t_counts)

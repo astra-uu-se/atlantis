@@ -217,10 +217,10 @@ TEST_F(LessEqualTest, Commit) {
 
 class MockLessEqual : public LessEqual {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    LessEqual::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    LessEqual::registerVars(engine);
   }
   MockLessEqual(VarId violationId, VarId a, VarId b)
       : LessEqual(violationId, a, b) {

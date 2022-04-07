@@ -98,8 +98,8 @@ TEST_F(PowTest, NextInput) {
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   ;
@@ -211,10 +211,10 @@ TEST_F(PowTest, Commit) {
 
 class MockPow : public Pow {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    Pow::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    Pow::registerVars(engine);
   }
   MockPow(VarId a, VarId b, VarId c) : Pow(a, b, c) {
     ON_CALL(*this, recompute)

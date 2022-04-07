@@ -25,10 +25,21 @@ InSparseDomain::InSparseDomain(VarId violationId, VarId x,
   }
 }
 
-void InSparseDomain::init(Timestamp, Engine& engine) {
+void InSparseDomain::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
   engine.registerInvariantInput(_id, _x, LocalId(0));
   registerDefinedVariable(engine, _violationId);
+}
+
+void InSparseDomain::updateBounds(Engine& engine) {
+  const int domainViol =
+      *std::max(_valueViolation.begin(), _valueViolation.end());
+  const Int maxViol = std::max(
+      static_cast<Int>(domainViol),
+      std::max(_offset - engine.lowerBound(_x),
+               engine.upperBound(_x) -
+                   (_offset + static_cast<Int>(_valueViolation.size()))));
+  engine.updateBounds(_violationId, 0, maxViol);
 }
 
 void InSparseDomain::recompute(Timestamp ts, Engine& engine) {

@@ -101,13 +101,11 @@ TEST_F(AbsDiffTest, NextInput) {
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(lb, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
   AbsDiff& invariant =
       engine->makeInvariant<AbsDiff>(inputs.at(0), inputs.at(1), outputId);
   engine->close();
@@ -214,10 +212,10 @@ TEST_F(AbsDiffTest, Commit) {
 
 class MockAbsDiff : public AbsDiff {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    AbsDiff::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    AbsDiff::registerVars(engine);
   }
   MockAbsDiff(VarId x, VarId y, VarId c) : AbsDiff(x, y, c) {
     ON_CALL(*this, recompute)

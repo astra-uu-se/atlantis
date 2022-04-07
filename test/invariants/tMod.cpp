@@ -91,7 +91,7 @@ TEST_F(ModTest, Recompute) {
   engine->open();
   const VarId a = engine->makeIntVar(aUb, aLb, aUb);
   const VarId b = engine->makeIntVar(bUb, bLb, bUb);
-  const VarId outputId = engine->makeIntVar(0, outputLb, outputUb);
+  const VarId outputId = engine->makeIntVar(outputLb, outputLb, outputUb);
   Mod& invariant = engine->makeInvariant<Mod>(a, b, outputId);
   engine->close();
 
@@ -144,8 +144,8 @@ TEST_F(ModTest, NextInput) {
   EXPECT_TRUE(lb != 0 || ub != 0);
 
   engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   ;
@@ -288,10 +288,10 @@ TEST_F(ModTest, ZeroDenominator) {
 
 class MockMod : public Mod {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    Mod::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    Mod::registerVars(engine);
   }
   MockMod(VarId a, VarId b, VarId c) : Mod(a, b, c) {
     ON_CALL(*this, recompute)

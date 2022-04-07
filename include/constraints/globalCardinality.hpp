@@ -34,7 +34,9 @@ class GlobalCardinality : public Constraint {
                     const std::vector<Int>& lowerBound,
                     const std::vector<Int>& upperBound);
 
-  void init(Timestamp, Engine&) override;
+  void registerVars(Engine&) override;
+  void updateBounds(Engine&) override;
+  void close(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp t, Engine& e, LocalId id) override;
   void commit(Timestamp, Engine&) override;

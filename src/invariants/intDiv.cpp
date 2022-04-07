@@ -7,7 +7,45 @@ IntDiv::IntDiv(VarId a, VarId b, VarId y)
   _modifiedVars.reserve(1);
 }
 
-void IntDiv::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+void IntDiv::registerVars(Engine& engine) {
+  assert(!_id.equals(NULL_ID));
+  engine.registerInvariantInput(_id, _a, 0);
+  engine.registerInvariantInput(_id, _b, 0);
+  registerDefinedVariable(engine, _y);
+}
+
+void IntDiv::updateBounds(Engine& engine) {
+  const Int aLb = engine.lowerBound(_a);
+  const Int aUb = engine.upperBound(_a);
+  const Int bLb = engine.lowerBound(_b);
+  const Int bUb = engine.upperBound(_b);
+
+  Int lb = std::numeric_limits<Int>::max();
+  Int ub = std::numeric_limits<Int>::min();
+
+  if (bLb <= 0 && 0 <= bUb) {
+    if (bLb < 0) {
+      lb = std::min(lb, aUb / -1);
+      ub = std::max(ub, aLb / -1);
+    }
+    if (0 < bUb) {
+      lb = std::min(lb, aLb / 1);
+      ub = std::max(ub, aUb / 1);
+    }
+  }
+  if (bLb != 0) {
+    lb = std::min(lb, aLb / bLb);
+    ub = std::max(ub, aLb / bLb);
+  }
+  if (bUb != 0) {
+    lb = std::min(lb, aLb / bUb);
+    ub = std::max(ub, aLb / bUb);
+  }
+
+  engine.updateBounds(_y, lb, ub);
+}
+
+void IntDiv::close(Timestamp, Engine& engine) {
   assert(!_id.equals(NULL_ID));
   engine.registerInvariantInput(_id, _a, 0);
   engine.registerInvariantInput(_id, _b, 0);
@@ -19,19 +57,6 @@ void IntDiv::init([[maybe_unused]] Timestamp ts, Engine& engine) {
   if (lb <= 0 && 0 <= ub) {
     _zeroReplacement = ub >= 1 ? 1 : -1;
   }
-}
-
-void IntDiv::updateBounds(Engine& engine) {
-  const Int aLb = engine.lowerBound(_a);
-  const Int aUb = engine.upperBound(_a);
-  const Int bLb = engine.lowerBound(_b);
-  const Int bUb = engine.upperBound(_b);
-
-  const std::array<Int, 4> vals{aLb / bLb, aLb / bUb, aUb / bLb, aUb / bUb};
-
-  const auto [lb, ub] = std::minmax_element(vals.begin(), vals.end());
-
-  engine.updateBounds(_y, *lb, *ub);
 }
 
 void IntDiv::recompute(Timestamp ts, Engine& engine) {

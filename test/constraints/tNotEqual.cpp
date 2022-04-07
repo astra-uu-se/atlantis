@@ -96,8 +96,8 @@ TEST_F(NotEqualTest, NextInput) {
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   ;
@@ -209,10 +209,10 @@ TEST_F(NotEqualTest, Commit) {
 
 class MockNotEqual : public NotEqual {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    NotEqual::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    NotEqual::registerVars(engine);
   }
   MockNotEqual(VarId violationId, VarId a, VarId b)
       : NotEqual(violationId, a, b) {

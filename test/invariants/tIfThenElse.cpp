@@ -118,8 +118,8 @@ TEST_F(IfThenElseTest, NextInput) {
 
   engine->open();
   const std::array<VarId, 3> inputs = {engine->makeIntVar(bLb, bLb, bUb),
-                                       engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+                                       engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   ;
@@ -207,7 +207,7 @@ TEST_F(IfThenElseTest, Commit) {
   std::array<Int, 3> committedValues{bDist(gen), valueDist(gen),
                                      valueDist(gen)};
   std::array<VarId, 3> inputs{
-      engine->makeIntVar(committedValues.at(0), bLb, bLb),
+      engine->makeIntVar(committedValues.at(0), bLb, bUb),
       engine->makeIntVar(committedValues.at(1), lb, ub),
       engine->makeIntVar(committedValues.at(2), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
@@ -253,10 +253,10 @@ TEST_F(IfThenElseTest, Commit) {
 
 class MockIfThenElse : public IfThenElse {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    IfThenElse::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    IfThenElse::registerVars(engine);
   }
   MockIfThenElse(VarId b, VarId x, VarId y, VarId z) : IfThenElse(b, x, y, z) {
     ON_CALL(*this, recompute)

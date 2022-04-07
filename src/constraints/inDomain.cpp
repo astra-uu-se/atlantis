@@ -14,10 +14,21 @@ InDomain::InDomain(VarId violationId, VarId x, std::vector<DomainEntry> domain)
   }
 }
 
-void InDomain::init(Timestamp, Engine& engine) {
+void InDomain::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
   engine.registerInvariantInput(_id, _x, LocalId(0));
   registerDefinedVariable(engine, _violationId);
+}
+
+void InDomain::updateBounds(Engine& engine) {
+  Int maxViol =
+      std::max(std::abs(engine.lowerBound(_x) - _domain.back().lowerBound),
+               std::abs(engine.upperBound(_x) - _domain.front().upperBound));
+  for (size_t i = 1; i < _domain.size(); ++i) {
+    maxViol = std::max(maxViol,
+                       _domain[i].lowerBound - (_domain[i - 1].upperBound + 1));
+  }
+  engine.updateBounds(_violationId, 0, maxViol);
 }
 
 void InDomain::recompute(Timestamp ts, Engine& engine) {

@@ -21,8 +21,8 @@ class ElementConstTest : public InvariantTest {
   const size_t numValues = 1000;
   const Int valueLb = std::numeric_limits<Int>::min();
   const Int valueUb = std::numeric_limits<Int>::max();
-  Int indexLb = 0;
-  Int indexUb = numValues - 1;
+  Int indexLb = 1;
+  Int indexUb = numValues;
   std::vector<Int> values;
   std::uniform_int_distribution<Int> valueDist;
   std::uniform_int_distribution<Int> indexDist;
@@ -47,7 +47,11 @@ class ElementConstTest : public InvariantTest {
     return computeOutput(engine->value(ts, index));
   }
 
-  Int computeOutput(const Int indexVal) { return values.at(indexVal); }
+  Int computeOutput(const Int indexVal) {
+    EXPECT_TRUE(1 <= indexVal);
+    EXPECT_TRUE(static_cast<size_t>(indexVal) <= values.size());
+    return values.at(indexVal - 1);
+  }
 };
 
 TEST_F(ElementConstTest, Recompute) {
@@ -189,10 +193,10 @@ TEST_F(ElementConstTest, Commit) {
 
 class MockElementConst : public ElementConst {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    ElementConst::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    ElementConst::registerVars(engine);
   }
   MockElementConst(VarId i, std::vector<Int> X, VarId b)
       : ElementConst(i, X, b) {

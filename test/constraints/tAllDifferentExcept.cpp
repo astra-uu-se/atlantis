@@ -284,10 +284,10 @@ TEST_F(AllDifferentExceptTest, Commit) {
 
 class MockAllDifferentExcept : public AllDifferentExcept {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    AllDifferentExcept::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    AllDifferentExcept::registerVars(engine);
   }
   MockAllDifferentExcept(VarId violationId, std::vector<VarId> variables,
                          const std::vector<Int>& ignored)

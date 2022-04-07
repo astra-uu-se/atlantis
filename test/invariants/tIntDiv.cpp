@@ -99,8 +99,8 @@ TEST_F(IntDivTest, NextInput) {
   EXPECT_TRUE(lb != 0 || ub != 0);
 
   engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   ;
@@ -243,10 +243,10 @@ TEST_F(IntDivTest, ZeroDenominator) {
 
 class MockIntDiv : public IntDiv {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    IntDiv::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    IntDiv::registerVars(engine);
   }
   MockIntDiv(VarId a, VarId b, VarId c) : IntDiv(a, b, c) {
     ON_CALL(*this, recompute)
