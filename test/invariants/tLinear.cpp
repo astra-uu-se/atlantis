@@ -321,7 +321,7 @@ class MockLinear : public Linear {
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 TEST_F(LinearTest, EngineIntegration) {
-  for (const auto [propMode, markingMode] : propMarkModes) {
+  for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }

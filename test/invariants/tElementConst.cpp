@@ -226,7 +226,7 @@ class MockElementConst : public ElementConst {
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 TEST_F(ElementConstTest, EngineIntegration) {
-  for (const auto [propMode, markingMode] : propMarkModes) {
+  for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }

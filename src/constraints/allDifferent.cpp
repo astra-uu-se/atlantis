@@ -1,7 +1,10 @@
 #include "constraints/allDifferent.hpp"
 
+#include <limits>
+
 #include "core/engine.hpp"
 #include "variables/committableInt.hpp"
+
 /**
  * @param violationId id for the violationCount
  */

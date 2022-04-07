@@ -323,7 +323,7 @@ class MockAllDifferentExcept : public AllDifferentExcept {
 };
 
 TEST_F(AllDifferentExceptTest, EngineIntegration) {
-  for (const auto [propMode, markingMode] : propMarkModes) {
+  for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }

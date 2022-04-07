@@ -53,7 +53,7 @@ TEST_F(AllDifferentTest, Recompute) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-10002, -10000}, {-1, 1}, {10000, 10002}};
 
-  for (auto const [lb, ub] : boundVec) {
+  for (const auto& [lb, ub] : boundVec) {
     EXPECT_TRUE(lb <= ub);
     engine->open();
     const VarId a = engine->makeIntVar(lb, lb, ub);
@@ -85,7 +85,7 @@ TEST_F(AllDifferentTest, NotifyInputChanged) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-10002, -10000}, {-1, 1}, {10000, 10002}};
 
-  for (auto const [lb, ub] : boundVec) {
+  for (const auto& [lb, ub] : boundVec) {
     EXPECT_TRUE(lb <= ub);
 
     engine->open();
@@ -282,7 +282,7 @@ class MockAllDifferent : public AllDifferent {
 };
 
 TEST_F(AllDifferentTest, EngineIntegration) {
-  for (const auto [propMode, markingMode] : propMarkModes) {
+  for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }
