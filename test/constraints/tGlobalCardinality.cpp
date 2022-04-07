@@ -40,14 +40,14 @@ class GlobalCardinalityTest : public InvariantTest {
     }
     Int shortage = 0;
     Int excess = 0;
-    for (const auto [val, lu] : coverSet) {
+    for (const auto& [val, lu] : coverSet) {
       const auto [l, u] = lu;
       shortage +=
           std::max(Int(0), l - (actual.count(val) > 0 ? actual[val] : 0));
       excess += std::max(Int(0), (actual.count(val) > 0 ? actual[val] : 0) - u);
     }
     if constexpr (IsClosed) {
-      for (const auto [val, count] : actual) {
+      for (const auto& [val, count] : actual) {
         if (coverSet.count(val) <= 0) {
           excess += count;
         }
@@ -524,7 +524,7 @@ class MockGlobalCardinality : public GlobalCardinality<IsClosed> {
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 TEST_F(GlobalCardinalityTestClosed, EngineIntegration) {
-  for (const auto [propMode, markingMode] : propMarkModes) {
+  for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }
@@ -544,7 +544,7 @@ TEST_F(GlobalCardinalityTestClosed, EngineIntegration) {
   }
 }
 TEST_F(GlobalCardinalityTestOpen, EngineIntegration) {
-  for (const auto [propMode, markingMode] : propMarkModes) {
+  for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }

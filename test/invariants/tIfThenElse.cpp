@@ -289,7 +289,7 @@ class MockIfThenElse : public IfThenElse {
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 TEST_F(IfThenElseTest, EngineIntegration) {
-  for (const auto [propMode, markingMode] : propMarkModes) {
+  for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }

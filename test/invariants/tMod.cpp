@@ -41,7 +41,7 @@ TEST_F(ModTest, Examples) {
   Int outputLb = std::numeric_limits<Int>::max();
   Int outputUb = std::numeric_limits<Int>::min();
 
-  for (const auto [aVal, bVal, outputVal] : data) {
+  for (const auto& [aVal, bVal, outputVal] : data) {
     aLb = std::min(aLb, aVal);
     aUb = std::max(aUb, aVal);
     bLb = std::min(bLb, bVal);
@@ -261,7 +261,7 @@ TEST_F(ModTest, ZeroDenominator) {
   const Int aVal = 10;
   const Int outputLb = std::numeric_limits<Int>::min();
   const Int outputUb = std::numeric_limits<Int>::max();
-  for (const auto [bLb, bUb, expected] : std::vector<std::array<Int, 3>>{
+  for (const auto& [bLb, bUb, expected] : std::vector<std::array<Int, 3>>{
            {-100, 0, 0}, {-50, 50, 0}, {0, 100, 0}}) {
     EXPECT_TRUE(bLb <= bUb);
     EXPECT_TRUE(bLb != 0 || bUb != 0);
@@ -324,7 +324,7 @@ class MockMod : public Mod {
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
 TEST_F(ModTest, EngineIntegration) {
-  for (const auto [propMode, markingMode] : propMarkModes) {
+  for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }
