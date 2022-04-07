@@ -3,36 +3,39 @@
 #include <chrono>
 
 #include "assignment.hpp"
+#include "fznparser/model.hpp"
 
 namespace search {
 
 class SearchController {
+ public:
+  using VariableMap =
+      std::unordered_map<std::shared_ptr<fznparser::SearchVariable>, VarId>;
+
  private:
-  std::chrono::steady_clock::time_point _startTime;
+  const fznparser::Model& _fznModel;
+  VariableMap _variableMap;
   std::optional<std::chrono::milliseconds> _timeout;
+
+  std::chrono::steady_clock::time_point _startTime;
   bool _started{false};
 
  public:
-  SearchController() : _timeout({}) {}
+  SearchController(const fznparser::Model& fznModel, VariableMap variableMap)
+      : _fznModel(fznModel),
+        _variableMap(std::move(variableMap)),
+        _timeout({}) {}
 
   template <typename Rep, typename Period>
-  explicit SearchController(std::chrono::duration<Rep, Period> timeout)
-      : _timeout(
+  SearchController(const fznparser::Model& fznModel, VariableMap variableMap,
+                   std::chrono::duration<Rep, Period> timeout)
+      : _fznModel(fznModel),
+        _variableMap(std::move(variableMap)),
+        _timeout(
             std::chrono::duration_cast<std::chrono::milliseconds>(timeout)) {}
 
-  bool shouldRun(const Assignment& assignment) {
-    if (assignment.satisfiesConstraints()) {
-      return false;
-    }
-
-    if (_started && _timeout.has_value()) {
-      return std::chrono::steady_clock::now() - _startTime <= *_timeout;
-    }
-
-    _started = true;
-    _startTime = std::chrono::steady_clock::now();
-    return true;
-  }
+  bool shouldRun(const Assignment& assignment);
+  void onSolution(const Assignment& assignment);
 };
 
 }  // namespace search
