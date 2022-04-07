@@ -10,6 +10,7 @@
 #include "core/engine.hpp"
 #include "fznparser/model.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
+#include "search/searchVariable.hpp"
 
 namespace invariantgraph {
 
@@ -21,34 +22,9 @@ class VariableDefiningNode;
  * variable.
  */
 class VariableNode {
- public:
-  struct Domain {
-    Int lowerBound;
-    Int upperBound;
-
-    Domain(Int lb, Int ub) : lowerBound(lb), upperBound(ub) {}
-
-    [[nodiscard]] inline std::vector<Int> values() const {
-      std::vector<Int> values;
-      values.resize(size() + 1);
-      std::iota(values.begin(), values.end(), lowerBound);
-      return values;
-    }
-
-    [[nodiscard]] inline Int size() const noexcept {
-      return upperBound - lowerBound;
-    }
-
-    inline bool operator==(const Domain& rhs) const {
-      return lowerBound == rhs.lowerBound && upperBound == rhs.upperBound;
-    }
-
-    inline bool operator!=(const Domain& rhs) const { return !(*this == rhs); }
-  };
-
  private:
   std::shared_ptr<fznparser::SearchVariable> _variable;
-  Domain _domain;
+  SearchDomain _domain;
 
   std::vector<VariableDefiningNode*> _inputFor;
 
@@ -60,15 +36,23 @@ class VariableNode {
    */
   explicit VariableNode(std::shared_ptr<fznparser::SearchVariable> variable)
       : _variable(std::move(variable)),
-        _domain{_variable->domain()->lowerBound(),
-                _variable->domain()->upperBound()} {}
+        _domain{IntervalDomain(_variable->domain()->lowerBound(),
+                               _variable->domain()->upperBound())} {
+    if (auto setDomain =
+            dynamic_cast<fznparser::SetDomain*>(_variable->domain())) {
+      _domain = SetDomain(setDomain->values());
+    } else if (_variable->domain()->type() == fznparser::DomainType::BOOL) {
+      _domain = SetDomain({0, 1});
+    }
+  }
 
   /**
    * Construct a variable node which is not associated with a model variable.
    *
    * @param domain The domain of this variable.
    */
-  explicit VariableNode(Domain domain) : _variable(nullptr), _domain(domain) {}
+  explicit VariableNode(SearchDomain domain)
+      : _variable(nullptr), _domain(std::move(domain)) {}
 
   /**
    * @return The model variable this node is associated with. If the node is not
@@ -78,9 +62,21 @@ class VariableNode {
     return _variable;
   }
 
-  void imposeDomain(Domain domain) { _domain = domain; }
+  void imposeDomain(SearchDomain domain) { _domain = std::move(domain); }
 
-  [[nodiscard]] const Domain& domain() const noexcept { return _domain; }
+  [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
+
+  [[nodiscard]] std::pair<Int, Int> bounds() const noexcept {
+    Int lb, ub;
+    std::visit(
+        [&](auto& domain) {
+          lb = domain.lowerBound();
+          ub = domain.upperBound();
+        },
+        _domain);
+
+    return {lb, ub};
+  }
 
   /**
    * @return The variable defining nodes for which this node is an input.
@@ -154,7 +150,7 @@ class VariableDefiningNode {
   inline VarId registerDefinedVariable(
       Engine& engine, std::map<VariableNode*, VarId>& variableMap,
       VariableNode* variable) {
-    const auto& [lb, ub] = variable->domain();
+    const auto& [lb, ub] = variable->bounds();
     auto varId = engine.makeIntVar(lb, lb, ub);
 
     variableMap.emplace(variable, varId);
@@ -205,7 +201,7 @@ class ImplicitConstraintNode : public VariableDefiningNode {
 
  protected:
   virtual search::neighbourhoods::Neighbourhood* createNeighbourhood(
-      Engine& engine, const std::vector<VarId>& variables) = 0;
+      Engine& engine, std::vector<search::SearchVariable> variables) = 0;
 };
 
 class SoftConstraintNode : public VariableDefiningNode {
@@ -216,7 +212,7 @@ class SoftConstraintNode : public VariableDefiningNode {
   explicit SoftConstraintNode(const std::function<Int()>& violationUb,
                               const std::vector<VariableNode*>& inputs = {})
       : VariableDefiningNode({&_violation}, inputs),
-        _violation(VariableNode::Domain{0, violationUb()}) {}
+        _violation(IntervalDomain{0, violationUb()}) {}
 
   ~SoftConstraintNode() override = default;
 

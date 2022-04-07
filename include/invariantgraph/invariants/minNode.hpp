@@ -23,12 +23,12 @@ class MinNode : public VariableDefiningNode {
     Int outputUb = std::numeric_limits<Int>::max();
 
     for (const auto& node : _variables) {
-      const auto& [nodeLb, nodeUb] = node->domain();
+      const auto& [nodeLb, nodeUb] = node->bounds();
       outputLb = std::min(nodeLb, outputLb);
       outputUb = std::min(nodeUb, outputUb);
     }
 
-    output->imposeDomain({outputLb, outputUb});
+    output->imposeDomain(IntervalDomain{outputLb, outputUb});
   }
 
   ~MinNode() override = default;

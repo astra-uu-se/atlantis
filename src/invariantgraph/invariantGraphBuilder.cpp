@@ -6,6 +6,7 @@
 #include "invariantgraph/constraints/intLinLeNode.hpp"
 #include "invariantgraph/constraints/intLinNeNode.hpp"
 #include "invariantgraph/constraints/intNeNode.hpp"
+#include "invariantgraph/constraints/setInNode.hpp"
 #include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
@@ -26,6 +27,7 @@
 #include "invariantgraph/views/intLinNeReifNode.hpp"
 #include "invariantgraph/views/intLtReifNode.hpp"
 #include "invariantgraph/views/intNeReifNode.hpp"
+#include "invariantgraph/views/setInReifNode.hpp"
 
 std::unique_ptr<invariantgraph::InvariantGraph>
 invariantgraph::InvariantGraphBuilder::build(
@@ -195,6 +197,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION("int_lin_ne_reif", IntLinNeReifNode);
   NODE_REGISTRATION("int_lt_reif", IntLtReifNode);
   NODE_REGISTRATION("int_ne_reif", IntNeReifNode);
+  NODE_REGISTRATION("set_in_reif", SetInReifNode);
 
   throw std::runtime_error("Unsupported constraint: " + std::string(name));
 #undef BINARY_OP_REGISTRATION
@@ -233,6 +236,7 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   NODE_REGISTRATION("int_lin_ne", IntLinNeNode);
   NODE_REGISTRATION("int_eq", IntEqNode);
   NODE_REGISTRATION("int_ne", IntNeNode);
+  NODE_REGISTRATION("set_in", SetInNode);
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint->name()));

@@ -40,7 +40,7 @@ class IntLinEqNode : public SoftConstraintNode {
   [[nodiscard]] Int c() const { return _c; }
 
  private:
-  [[nodiscard]] VariableNode::Domain getDomainBounds() const;
+  [[nodiscard]] std::pair<Int, Int> getDomainBounds() const;
 };
 
 }  // namespace invariantgraph

@@ -3,7 +3,8 @@
 #include <algorithm>
 
 search::neighbourhoods::AllDifferentNeighbourhood::AllDifferentNeighbourhood(
-    std::vector<VarId> variables, std::vector<Int> domain, const Engine& engine)
+    std::vector<search::SearchVariable> variables, std::vector<Int> domain,
+    const Engine& engine)
     : _variables(std::move(variables)),
       _domain(std::move(domain)),
       _engine(engine),
@@ -27,7 +28,7 @@ void search::neighbourhoods::AllDifferentNeighbourhood::initialise(
   for (auto const& variable : _variables) {
     auto idx = random.intInRange(0, static_cast<Int>(_freeVariables) - 1);
     auto value = _domain[idx];
-    modifications.set(variable, value);
+    modifications.set(variable.engineId(), value);
 
     _domain[idx] = _domain[_freeVariables - 1];
     _domain[_freeVariables - 1] = value;
@@ -52,8 +53,8 @@ bool search::neighbourhoods::AllDifferentNeighbourhood::swapValues(
       (i + random.intInRange(1, static_cast<Int>(_variables.size()) - 1)) %
       _variables.size();
 
-  VarId var1 = _variables[i];
-  VarId var2 = _variables[j];
+  auto var1 = _variables[i].engineId();
+  auto var2 = _variables[j].engineId();
 
   Int value1 = assignment.value(var1);
   Int value2 = assignment.value(var2);
@@ -65,7 +66,7 @@ bool search::neighbourhoods::AllDifferentNeighbourhood::swapValues(
 bool search::neighbourhoods::AllDifferentNeighbourhood::assignValue(
     search::RandomProvider& random, search::Assignment& assignment,
     search::Annealer& annealer) {
-  VarId var = random.element(_variables);
+  auto var = random.element(_variables).engineId();
   Int oldValue = assignment.value(var);
   size_t oldValueIdx = _domIndices[oldValue - _offset];
 
