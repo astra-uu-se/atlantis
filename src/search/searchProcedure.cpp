@@ -6,7 +6,6 @@ std::ostream& operator<<(std::ostream& os, const search::Cost& cost) {
 }
 
 void search::SearchProcedure::run(SearchController& controller,
-                                  SolutionListener& solutionListener,
                                   search::Annealer& annealer) {
   do {
     _assignment.assign([&](auto& modifications) {
@@ -35,7 +34,7 @@ void search::SearchProcedure::run(SearchController& controller,
         }
 
         if (madeMove && _assignment.satisfiesConstraints()) {
-          solutionListener.onSolution(_assignment);
+          controller.onSolution(_assignment);
         }
       }
 

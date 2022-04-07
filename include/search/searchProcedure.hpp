@@ -5,7 +5,6 @@
 #include "misc/logging.hpp"
 #include "neighbourhoods/neighbourhood.hpp"
 #include "searchController.hpp"
-#include "solutionListener.hpp"
 
 namespace search {
 
@@ -23,8 +22,7 @@ class SearchProcedure {
         _assignment(assignment),
         _neighbourhood(neighbourhood) {}
 
-  void run(SearchController& controller, SolutionListener& solutionListener,
-           Annealer& annealer);
+  void run(SearchController& controller, Annealer& annealer);
 
  private:
   RandomProvider& _random;
