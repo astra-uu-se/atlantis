@@ -19,6 +19,7 @@
 #include "invariantgraph/invariants/linearNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
 #include "invariantgraph/invariants/minNode.hpp"
+#include "invariantgraph/views/bool2IntNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
 #include "invariantgraph/views/intEqReifNode.hpp"
 #include "invariantgraph/views/intLeReifNode.hpp"
@@ -198,6 +199,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION("int_lt_reif", IntLtReifNode);
   NODE_REGISTRATION("int_ne_reif", IntNeReifNode);
   NODE_REGISTRATION("set_in_reif", SetInReifNode);
+  NODE_REGISTRATION("bool2int", Bool2IntNode);
 
   throw std::runtime_error("Unsupported constraint: " + std::string(name));
 #undef BINARY_OP_REGISTRATION
