@@ -1,6 +1,20 @@
-#include "search/solutionListener.hpp"
+#include "search/searchController.hpp"
 
 #include <iostream>
+
+bool search::SearchController::shouldRun(const search::Assignment& assignment) {
+  if (assignment.satisfiesConstraints()) {
+    return false;
+  }
+
+  if (_started && _timeout.has_value()) {
+    return std::chrono::steady_clock::now() - _startTime <= *_timeout;
+  }
+
+  _started = true;
+  _startTime = std::chrono::steady_clock::now();
+  return true;
+}
 
 typedef std::shared_ptr<fznparser::SearchVariable> FZNVar;
 typedef std::shared_ptr<fznparser::VariableArray> FZNVarArray;
@@ -11,14 +25,14 @@ typedef std::shared_ptr<fznparser::VariableArray> FZNVarArray;
 
 static void printSearchVariable(
     const FZNVar& searchVariable, const search::Assignment& assignment,
-    const search::SolutionListener::VariableMap& variableMap) {
+    const search::SearchController::VariableMap& variableMap) {
   std::cout << searchVariable->name() << " = "
             << assignment.value(variableMap.at(searchVariable)) << ";\n";
 }
 
 static void printVariableArray(
     const FZNVarArray& variableArray, const search::Assignment& assignment,
-    const search::SolutionListener::VariableMap& variableMap) {
+    const search::SearchController::VariableMap& variableMap) {
   auto ann =
       variableArray->annotations().get<fznparser::OutputArrayAnnotation>();
 
@@ -42,7 +56,7 @@ static void printVariableArray(
   std::cout << "]);\n";
 }
 
-void search::SolutionListener::onSolution(const Assignment& assignment) {
+void search::SearchController::onSolution(const Assignment& assignment) {
   for (const auto& fznVariable : _fznModel.variables()) {
     if (fznVariable->annotations().has<fznparser::OutputAnnotation>()) {
       printSearchVariable(

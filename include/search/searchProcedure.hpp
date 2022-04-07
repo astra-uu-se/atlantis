@@ -1,11 +1,8 @@
 #pragma once
 
-#include <iostream>
-
-#include "misc/logging.hpp"
 #include "neighbourhoods/neighbourhood.hpp"
 #include "searchController.hpp"
-#include "solutionListener.hpp"
+#include "searchStatistics.hpp"
 
 namespace search {
 
@@ -23,8 +20,7 @@ class SearchProcedure {
         _assignment(assignment),
         _neighbourhood(neighbourhood) {}
 
-  void run(SearchController& controller, SolutionListener& solutionListener,
-           Annealer& annealer);
+  SearchStatistics run(SearchController& controller, Annealer& annealer);
 
  private:
   RandomProvider& _random;
