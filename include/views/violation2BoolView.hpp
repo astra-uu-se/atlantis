@@ -5,9 +5,9 @@
 
 #include "views/intView.hpp"
 
-class Violation2Bool : public IntView {
+class Violation2BoolView : public IntView {
  public:
-  explicit Violation2Bool(const VarId parentId) : IntView(parentId) {}
+  explicit Violation2BoolView(const VarId parentId) : IntView(parentId) {}
 
   [[nodiscard]] Int value(Timestamp) const override;
   [[nodiscard]] Int committedValue() const override;
