@@ -50,6 +50,7 @@ TEST_F(IntDivTest, UpdateBounds) {
       EXPECT_TRUE(bLb <= bUb);
       engine->updateBounds(b, bLb, bUb);
       engine->open();
+      invariant.updateBounds(*engine);
       engine->close();
       std::vector<Int> outputs;
       const Int lb = engine->lowerBound(outputId);

@@ -95,6 +95,7 @@ TEST_F(ModTest, UpdateBounds) {
       EXPECT_TRUE(bLb <= bUb);
       engine->updateBounds(b, bLb, bUb);
       engine->open();
+      invariant.updateBounds(*engine);
       engine->close();
       for (Int aVal = aLb; aVal <= aUb; ++aVal) {
         engine->setValue(engine->currentTimestamp(), a, aVal);

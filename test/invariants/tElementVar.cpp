@@ -328,7 +328,7 @@ TEST_F(ElementVarTest, EngineIntegration) {
     VarId output = engine->makeIntVar(-10, -100, 100);
     testNotifications<MockElementVar>(
         &engine->makeInvariant<MockElementVar>(idx, args, output), propMode,
-        markingMode, numArgs + 1, idx, 5, output);
+        markingMode, 3, idx, 5, output);
   }
 }
 

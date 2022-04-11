@@ -26,7 +26,6 @@ class PropagationEngine : public Engine {
 
   void incCurrentTimestamp();
 
-  void updateDefinedVarsBounds();
   void closeInvariants();
   void recomputeAndCommit();
 

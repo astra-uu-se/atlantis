@@ -41,9 +41,6 @@ TEST_F(IntPowNodeTest, application) {
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(c)), 1);
-  EXPECT_EQ(engine.upperBound(engineVariable(c)), 10000000000);
-
   // a and b
   EXPECT_EQ(engine.searchVariables().size(), 2);
 

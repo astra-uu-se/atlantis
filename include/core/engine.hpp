@@ -200,9 +200,11 @@ Engine::makeInvariant(Args&&... args) {
   const InvariantId invariantId = _store.createInvariantFromPtr(
       std::make_unique<T>(std::forward<Args>(args)...));
   registerInvariant(invariantId);
+
   logDebug("Created new invariant with id: " << invariantId);
   T& invariant = static_cast<T&>(_store.invariant(invariantId));
   invariant.registerVars(*this);
+  invariant.updateBounds(*this);
   return invariant;
 }
 
@@ -232,6 +234,7 @@ Engine::makeConstraint(Args&&... args) {
   registerInvariant(constraintId);  // A constraint is a type of invariant.
   logDebug("Created new Constraint with id: " << constraintId);
   constraint.registerVars(*this);
+  constraint.updateBounds(*this);
   return constraint;
 }
 

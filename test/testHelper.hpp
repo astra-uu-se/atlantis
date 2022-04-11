@@ -47,12 +47,12 @@ class InvariantTest : public ::testing::Test {
   std::default_random_engine rng;
   std::vector<std::pair<PropagationMode, OutputToInputMarkingMode>>
       propMarkModes{
-          {PropagationMode::INPUT_TO_OUTPUT, OutputToInputMarkingMode::NONE}/*,
+          {PropagationMode::INPUT_TO_OUTPUT, OutputToInputMarkingMode::NONE},
           {PropagationMode::OUTPUT_TO_INPUT, OutputToInputMarkingMode::NONE},
           {PropagationMode::OUTPUT_TO_INPUT,
            OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC},
           {PropagationMode::OUTPUT_TO_INPUT,
-           OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}*/};
+           OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}};
 
   template <class T>
   void testNotifications(T* invariant, PropagationMode propMode,

@@ -59,9 +59,6 @@ void PropagationEngine::close() {
   }
 #endif
 
-  // update bounds for all defined variables.
-  updateDefinedVarsBounds();
-
   // close all invariants
   closeInvariants();
 
@@ -129,67 +126,6 @@ VarId PropagationEngine::dequeueComputedVar(Timestamp) {
 void PropagationEngine::clearPropagationQueue() {
   _propGraph.clearPropagationQueue();
   _isEnqueued.assign_all(false);
-}
-
-void PropagationEngine::updateDefinedVarsBounds() {
-  std::deque<InvariantId> queue;
-  std::vector<bool> inQueue(numInvariants() + 1, false);
-
-  for (const VarId searchVar : searchVariables()) {
-    for (const InvariantId invariantId : listeningInvariants(searchVar)) {
-      if (inQueue[invariantId]) {
-        continue;
-      }
-      bool allSearchVars = true;
-      for (const VarId input : inputVariables(invariantId)) {
-        if (!(_propGraph.isSearchVariable(input))) {
-          allSearchVars = false;
-          break;
-        }
-      }
-      inQueue[invariantId] = true;
-      if (allSearchVars) {
-        queue.emplace_front(invariantId);
-      } else {
-        queue.emplace_back(invariantId);
-      }
-    }
-  }
-
-  std::vector<bool> initialized(numInvariants() + 1, false);
-
-  while (!queue.empty()) {
-    const InvariantId defInv = queue.front();
-    queue.pop_front();
-
-    const auto& definedVars = _propGraph.variablesDefinedBy(defInv);
-    std::vector<std::array<Int, 2>> oldBounds;
-    for (const VarId defVar : definedVars) {
-      oldBounds.emplace_back(
-          std::array<Int, 2>{lowerBound(defVar), upperBound(defVar)});
-    }
-    _store.invariant(defInv).updateBounds(*this);
-    for (size_t i = 0; i < definedVars.size(); ++i) {
-      std::array<Int, 2> newBounds{lowerBound(definedVars[i]),
-                                   upperBound(definedVars[i])};
-      const Int oldBoundSize = oldBounds[i][1] - oldBounds[i][0];
-      const Int newBoundSize = newBounds[1] - newBounds[0];
-      const bool boundsShrunk = newBoundSize < oldBoundSize;
-
-      for (const auto listeningInv : listeningInvariants(definedVars[i])) {
-        if ((!initialized[listeningInv] || boundsShrunk) &&
-            !inQueue[listeningInv]) {
-          if (initialized[listeningInv]) {
-            assert(boundsShrunk);
-          }
-          initialized[listeningInv] = true;
-          inQueue[listeningInv] = true;
-          queue.emplace_back(listeningInv);
-        }
-      }
-    }
-    inQueue[defInv] = false;
-  }
 }
 
 void PropagationEngine::closeInvariants() {

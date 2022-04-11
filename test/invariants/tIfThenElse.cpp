@@ -336,7 +336,7 @@ TEST_F(IfThenElseTest, EngineIntegration) {
     const VarId output = engine->makeIntVar(3, 0, 9);
     testNotifications<MockIfThenElse>(
         &engine->makeInvariant<MockIfThenElse>(b, x, y, output), propMode,
-        markingMode, 4, b, 5, output);
+        markingMode, 3, b, 5, output);
   }
 }
 
