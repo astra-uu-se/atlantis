@@ -4,12 +4,11 @@
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
-#include "invariantgraphTest.hpp"
 
 TEST(InvariantGraphTest, apply_result) {
-  auto a = FZN_SEARCH_VARIABLE("a", 0, 10);
-  auto b = FZN_SEARCH_VARIABLE("b", 0, 10);
-  auto c = FZN_SEARCH_VARIABLE("c", 0, 10);
+  auto a = fznparser::IntVariable{"a", fznparser::IntRange{0, 10}, {}};
+  auto b = fznparser::IntVariable{"b", fznparser::IntRange{0, 10}, {}};
+  auto c = fznparser::IntVariable{"c", fznparser::IntRange{0, 10}, {}};
 
   auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
   auto bNode = std::make_unique<invariantgraph::VariableNode>(b);

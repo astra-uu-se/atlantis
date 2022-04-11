@@ -4,38 +4,42 @@
 
 class MaxNodeTest : public NodeTestBase {
  public:
-  std::shared_ptr<fznparser::SearchVariable> a;
-  std::shared_ptr<fznparser::SearchVariable> b;
-  std::shared_ptr<fznparser::SearchVariable> c;
+  INT_VARIABLE(a, 5, 10);
+  INT_VARIABLE(b, 0, 20);
+  INT_VARIABLE(c, 0, 10);
+
+  fznparser::Constraint constraint{
+      "array_int_maximum",
+      {"c", fznparser::Constraint::ArrayArgument{"a", "b"}},
+      {fznparser::DefinesVariableAnnotation{"c"}}};
+
+  fznparser::FZNModel model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::MaxNode> node;
 
+  MaxNodeTest() : NodeTestBase(model) {}
+
   void SetUp() override {
-    a = FZN_SEARCH_VARIABLE("a", 5, 10);
-    b = FZN_SEARCH_VARIABLE("b", 0, 20);
-    c = FZN_SEARCH_VARIABLE("c", 0, 10);
-
-    FZN_DEFINES_VAR_ANNOTATION(annotations, c);
-    auto constraint = makeConstraint("array_int_maximum", annotations, c,
-                                     FZN_VECTOR_CONSTRAINT_ARG(a, b));
-
     node = makeNode<invariantgraph::MaxNode>(constraint);
   }
 };
 
 TEST_F(MaxNodeTest, construction) {
   EXPECT_EQ(node->variables().size(), 2);
-  EXPECT_EQ(node->variables()[0]->variable(), a);
-  EXPECT_EQ(node->variables()[1]->variable(), b);
+  EXPECT_EQ(*node->variables()[0]->variable(),
+            invariantgraph::VariableNode::FZNVariable(a));
+  EXPECT_EQ(*node->variables()[1]->variable(),
+            invariantgraph::VariableNode::FZNVariable(b));
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(node->definedVariables()[0]->variable(), c);
+  EXPECT_EQ(*node->definedVariables()[0]->variable(),
+            invariantgraph::VariableNode::FZNVariable(c));
   expectMarkedAsInput(node.get(), node->variables());
 }
 
 TEST_F(MaxNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a, b});
+  registerVariables(engine, {a.name, b.name});
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

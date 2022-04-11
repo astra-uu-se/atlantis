@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fznparser/model.hpp>
 #include <utility>
 
 #include "invariantgraph/structure.hpp"
@@ -25,13 +26,11 @@ class IntLinLeNode : public SoftConstraintNode {
         _bound(bound) {}
 
   static std::unique_ptr<IntLinLeNode> fromModelConstraint(
-      const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-          variableMap);
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   void registerWithEngine(
-      Engine& engine,
-      std::map<VariableNode*, VarId>& variableMap) override;
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;

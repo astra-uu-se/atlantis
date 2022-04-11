@@ -1,9 +1,9 @@
 #pragma once
 
+#include <fznparser/model.hpp>
 #include <utility>
 
 #include "../structure.hpp"
-#include "fznparser/constraint.hpp"
 
 namespace invariantgraph {
 class LinearNode : public VariableDefiningNode {
@@ -14,9 +14,8 @@ class LinearNode : public VariableDefiningNode {
 
  public:
   static std::unique_ptr<LinearNode> fromModelConstraint(
-      const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-          variableMap);
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   LinearNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
              VariableNode* output, Int offset = 0)
@@ -28,8 +27,7 @@ class LinearNode : public VariableDefiningNode {
   ~LinearNode() override = default;
 
   void registerWithEngine(
-      Engine& engine,
-      std::map<VariableNode*, VarId>& variableMap) override;
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;

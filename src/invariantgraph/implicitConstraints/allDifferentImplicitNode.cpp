@@ -7,14 +7,12 @@
 
 std::unique_ptr<invariantgraph::AllDifferentImplicitNode>
 invariantgraph::AllDifferentImplicitNode::fromModelConstraint(
-    const std::shared_ptr<fznparser::Constraint>& constraint,
-    const std::function<invariantgraph::VariableNode*(
-        std::shared_ptr<fznparser::Variable>)>& variableMap) {
-  assert(constraint->name() == "alldifferent");
-  assert(constraint->arguments().size() == 1);
+    const fznparser::FZNModel&, const fznparser::Constraint& constraint,
+    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+  assert(constraint.name == "alldifferent");
+  assert(constraint.arguments.size() == 1);
 
-  MAPPED_SEARCH_VARIABLE_VECTOR_ARG(variables, constraint->arguments()[0],
-                                    variableMap);
+  auto variables = mappedVariableVector(constraint.arguments[0], variableMap);
 
   // For now, this only works when all the variables have the same domain.
   const auto& domain = variables.front()->domain();

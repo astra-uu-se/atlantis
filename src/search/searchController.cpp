@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "utils/fznAst.hpp"
+
 bool search::SearchController::shouldRun(const search::Assignment& assignment) {
   if (assignment.satisfiesConstraints()) {
     return false;
@@ -16,29 +18,22 @@ bool search::SearchController::shouldRun(const search::Assignment& assignment) {
   return true;
 }
 
-typedef std::shared_ptr<fznparser::SearchVariable> FZNVar;
-typedef std::shared_ptr<fznparser::VariableArray> FZNVarArray;
-
-// The lines are ended by an explicit '\n' character, so we don't flush the
-// buffer immediately. Instead, the buffer is flushed at the end of the
-// solution output.
-
 static void printSearchVariable(
-    const FZNVar& searchVariable, const search::Assignment& assignment,
+    const fznparser::Identifier& searchVariable,
+    const search::Assignment& assignment,
     const search::SearchController::VariableMap& variableMap) {
-  std::cout << searchVariable->name() << " = "
+  std::cout << searchVariable << " = "
             << assignment.value(variableMap.at(searchVariable)) << ";\n";
 }
 
+template <typename T>
 static void printVariableArray(
-    const FZNVarArray& variableArray, const search::Assignment& assignment,
+    const fznparser::VariableArray<T>& variableArray,
+    const fznparser::OutputArrayAnnotation& ann,
+    const search::Assignment& assignment,
     const search::SearchController::VariableMap& variableMap) {
-  auto ann =
-      variableArray->annotations().get<fznparser::OutputArrayAnnotation>();
-
-  std::cout << variableArray->name() << " = array" << ann->dimensions().size()
-            << "d(";
-  for (auto size : ann->dimensions()) {
+  std::cout << variableArray->name() << " = array" << ann.sizes.size() << "d(";
+  for (auto size : ann.sizes) {
     std::cout << "1.." << size << ", ";
   }
 
@@ -58,15 +53,23 @@ static void printVariableArray(
 
 void search::SearchController::onSolution(const Assignment& assignment) {
   for (const auto& fznVariable : _fznModel.variables()) {
-    if (fznVariable->annotations().has<fznparser::OutputAnnotation>()) {
-      printSearchVariable(
-          std::dynamic_pointer_cast<fznparser::SearchVariable>(fznVariable),
-          assignment, _variableMap);
-    } else if (fznVariable->annotations()
-                   .has<fznparser::OutputArrayAnnotation>()) {
-      printVariableArray(
-          std::dynamic_pointer_cast<fznparser::VariableArray>(fznVariable),
-          assignment, _variableMap);
+    auto tagAnnotation = getAnnotation<fznparser::TagAnnotation>(fznVariable);
+    auto arrayOutputAnnotation =
+        getAnnotation<fznparser::OutputArrayAnnotation>(fznVariable);
+
+    if (tagAnnotation && tagAnnotation->tag == "output_var") {
+      printSearchVariable(identifier(fznVariable), assignment, _variableMap);
+    } else if (arrayOutputAnnotation) {
+      std::visit(
+          [&](const auto& array) {
+            if constexpr (std::is_same_v<decltype(array),
+                                         fznparser::IntVariableArray> ||
+                          std::is_same_v<decltype(array),
+                                         fznparser::BoolVariableArray>)
+              printVariableArray(array, *arrayOutputAnnotation, assignment,
+                                 _variableMap);
+          },
+          fznVariable);
     }
   }
 

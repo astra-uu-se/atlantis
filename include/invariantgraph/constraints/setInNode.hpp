@@ -1,5 +1,5 @@
 #pragma once
-
+#include <fznparser/model.hpp>
 #include <utility>
 
 #include "invariantgraph/structure.hpp"
@@ -18,12 +18,11 @@ class SetInNode : public SoftConstraintNode {
         _values(std::move(values)) {}
 
   static std::unique_ptr<SetInNode> fromModelConstraint(
-      const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-          variableMap);
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
-  void registerWithEngine(Engine& engine,
-                          std::map<VariableNode*, VarId>& variableMap) override;
+  void registerWithEngine(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   [[nodiscard]] const std::vector<Int>& values() { return _values; }
 };
