@@ -21,14 +21,31 @@ void InDomain::registerVars(Engine& engine) {
 }
 
 void InDomain::updateBounds(Engine& engine) {
-  Int maxViol =
-      std::max(std::abs(engine.lowerBound(_x) - _domain.back().lowerBound),
-               std::abs(engine.upperBound(_x) - _domain.front().upperBound));
-  for (size_t i = 1; i < _domain.size(); ++i) {
-    maxViol = std::max(maxViol,
-                       _domain[i].lowerBound - (_domain[i - 1].upperBound + 1));
+  const Int xLb = engine.lowerBound(_x);
+  const Int xUb = engine.upperBound(_x);
+  Int minViol = std::numeric_limits<Int>::max();
+  Int maxViol = std::numeric_limits<Int>::max();
+  for (const auto& [dLb, dUb] : _domain) {
+    if (xUb < dLb) {
+      minViol = std::min(minViol, dLb - xUb);
+      maxViol = std::min(maxViol, dLb - xLb);
+      break;
+    } else if (xLb <= dUb) {
+      minViol = 0;
+      if (xLb < dLb) {
+        maxViol = std::min(maxViol, dLb - xLb);
+      } else if (dUb < xUb) {
+        maxViol = std::min(maxViol, xUb - dUb);
+      } else {
+        maxViol = 0;
+      }
+    } else {
+      // xLb > dUb
+      minViol = std::min(minViol, xLb - dUb);
+      maxViol = std::min(maxViol, xUb - dUb);
+    }
   }
-  engine.updateBounds(_violationId, 0, maxViol);
+  engine.updateBounds(_violationId, minViol, maxViol);
 }
 
 void InDomain::recompute(Timestamp ts, Engine& engine) {

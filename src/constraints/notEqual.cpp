@@ -21,16 +21,22 @@ void NotEqual::registerVars(Engine& engine) {
 }
 
 void NotEqual::updateBounds(Engine& engine) {
-  std::array<Int, 4> bounds{engine.lowerBound(_x), engine.upperBound(_x),
-                            engine.lowerBound(_y), engine.upperBound(_y)};
-  Int ub = 0;
-  for (size_t i = 1; i < bounds.size(); ++i) {
-    if (bounds[0] != bounds[i]) {
-      ub = 1;
-      break;
+  const Int xLb = engine.lowerBound(_x);
+  const Int xUb = engine.upperBound(_x);
+  const Int yLb = engine.lowerBound(_y);
+  const Int yUb = engine.upperBound(_y);
+  if (xUb < yLb || yUb < xLb) {
+    engine.updateBounds(_violationId, 0, 0);
+    return;
+  }
+
+  for (const Int val : std::array<Int, 3>{xUb, yLb, yUb}) {
+    if (xLb != val) {
+      engine.updateBounds(_violationId, 0, 1);
+      return;
     }
   }
-  engine.updateBounds(_violationId, 0, ub);
+  engine.updateBounds(_violationId, 1, 1);
 }
 
 void NotEqual::recompute(Timestamp ts, Engine& engine) {

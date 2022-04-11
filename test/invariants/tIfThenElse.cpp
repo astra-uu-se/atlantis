@@ -39,6 +39,43 @@ class IfThenElseTest : public InvariantTest {
   }
 };
 
+TEST_F(IfThenElseTest, UpdateBounds) {
+  const Int xLb = 0;
+  const Int xUb = 10;
+  const Int yLb = 100;
+  const Int yUb = 1000;
+  EXPECT_TRUE(xLb <= xUb);
+
+  engine->open();
+  const VarId b = engine->makeIntVar(0, 0, 10);
+  const VarId x = engine->makeIntVar(yUb, yLb, yUb);
+  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
+  const VarId outputId =
+      engine->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
+  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(b, x, y, outputId);
+  engine->close();
+
+  std::vector<std::pair<Int, Int>> bBounds{{0, 0}, {0, 100}, {1, 10000}};
+
+  for (const auto& [bLb, bUb] : bBounds) {
+    EXPECT_TRUE(bLb <= bUb);
+    engine->updateBounds(b, bLb, bUb);
+    invariant.updateBounds(*engine);
+    if (bLb == 0 && bUb == 0) {
+      EXPECT_EQ(engine->lowerBound(outputId), engine->lowerBound(x));
+      EXPECT_EQ(engine->upperBound(outputId), engine->upperBound(x));
+    } else if (bLb > 0) {
+      EXPECT_EQ(engine->lowerBound(outputId), engine->lowerBound(y));
+      EXPECT_EQ(engine->upperBound(outputId), engine->upperBound(y));
+    } else {
+      EXPECT_EQ(engine->lowerBound(outputId),
+                std::max(engine->lowerBound(x), engine->lowerBound(y)));
+      EXPECT_EQ(engine->upperBound(outputId),
+                std::min(engine->upperBound(x), engine->upperBound(y)));
+    }
+  }
+}
+
 TEST_F(IfThenElseTest, Recompute) {
   const Int bLb = 0;
   const Int bUb = 5;

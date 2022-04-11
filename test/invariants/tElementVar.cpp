@@ -19,7 +19,7 @@ namespace {
 
 class ElementVarTest : public InvariantTest {
  protected:
-  const size_t numValues = 3;
+  const size_t numValues = 100;
   const Int inputLb = std::numeric_limits<Int>::min();
   const Int inputUb = std::numeric_limits<Int>::max();
   Int indexLb = 1;
@@ -51,6 +51,38 @@ class ElementVarTest : public InvariantTest {
     return engine->value(ts, inputs.at(indexVal - 1));
   }
 };
+
+TEST_F(ElementVarTest, UpdateBounds) {
+  EXPECT_TRUE(inputLb <= inputUb);
+  EXPECT_TRUE(indexLb <= indexUb);
+
+  engine->open();
+  const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+  }
+  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+  ElementVar& invariant = engine->makeInvariant<ElementVar>(
+      index, std::vector<VarId>(inputs), outputId);
+  engine->close();
+
+  const Int ub = 100;
+
+  for (Int minIndex = indexLb; minIndex <= ub; ++minIndex) {
+    for (Int maxIndex = ub; maxIndex >= minIndex; --maxIndex) {
+      engine->updateBounds(index, minIndex, maxIndex);
+      invariant.updateBounds(*engine);
+      Int minVal = std::numeric_limits<Int>::max();
+      Int maxVal = std::numeric_limits<Int>::min();
+      for (Int i = minIndex - 1; i < maxIndex; ++i) {
+        minVal = std::min(minVal, engine->lowerBound(inputs.at(i)));
+        maxVal = std::max(maxVal, engine->upperBound(inputs.at(i)));
+      }
+      EXPECT_EQ(minVal, engine->lowerBound(outputId));
+      EXPECT_EQ(maxVal, engine->upperBound(outputId));
+    }
+  }
+}
 
 TEST_F(ElementVarTest, Recompute) {
   EXPECT_TRUE(inputLb <= inputUb);

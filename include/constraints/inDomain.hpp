@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <limits>
 
 #include "constraint.hpp"
 #include "core/types.hpp"

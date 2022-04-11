@@ -76,6 +76,43 @@ TEST_F(ModTest, Examples) {
   }
 }
 
+TEST_F(ModTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
+  engine->open();
+  const VarId a = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId b = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId outputId = engine->makeIntVar(0, 0, 2);
+  Mod& invariant = engine->makeInvariant<Mod>(a, b, outputId);
+  engine->close();
+
+  for (const auto& [aLb, aUb] : boundVec) {
+    EXPECT_TRUE(aLb <= aUb);
+    engine->updateBounds(a, aLb, aUb);
+    for (const auto& [bLb, bUb] : boundVec) {
+      EXPECT_TRUE(bLb <= bUb);
+      engine->updateBounds(b, bLb, bUb);
+      engine->open();
+      engine->close();
+      for (Int aVal = aLb; aVal <= aUb; ++aVal) {
+        engine->setValue(engine->currentTimestamp(), a, aVal);
+        for (Int bVal = bLb; bVal <= bUb; ++bVal) {
+          engine->setValue(engine->currentTimestamp(), b, bVal);
+          invariant.recompute(engine->currentTimestamp(), *engine);
+          const Int o = engine->value(engine->currentTimestamp(), outputId);
+          if (o < engine->lowerBound(outputId) ||
+              engine->upperBound(outputId) < o) {
+            ASSERT_GE(o, engine->lowerBound(outputId));
+            ASSERT_LE(o, engine->upperBound(outputId));
+          }
+        }
+      }
+    }
+  }
+}
+
 TEST_F(ModTest, Recompute) {
   const Int aLb = -1;
   const Int aUb = 0;

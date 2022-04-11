@@ -69,6 +69,50 @@ class LinearTest : public InvariantTest {
   }
 };
 
+TEST_F(LinearTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-250, -150}, {-100, 0}, {-50, 50}, {0, 100}, {150, 250}};
+  std::vector<Int> coefVec{-1000, -1, 0, 1, 1000};
+  engine->open();
+
+  for (const Int aCoef : coefVec) {
+    for (const Int bCoef : coefVec) {
+      for (const Int cCoef : coefVec) {
+        std::vector<VarId> vars{engine->makeIntVar(0, 0, 10),
+                                engine->makeIntVar(0, 0, 10),
+                                engine->makeIntVar(0, 0, 10)};
+        const VarId outputId = engine->makeIntVar(0, 0, 2);
+        Linear& invariant =
+            engine->makeInvariant<Linear>(std::vector<Int>{aCoef, bCoef, cCoef},
+                                          std::vector<VarId>(vars), outputId);
+        for (const auto& [aLb, aUb] : boundVec) {
+          EXPECT_TRUE(aLb <= aUb);
+          engine->updateBounds(vars.at(0), aLb, aUb);
+          for (const auto& [bLb, bUb] : boundVec) {
+            EXPECT_TRUE(bLb <= bUb);
+            engine->updateBounds(vars.at(1), bLb, bUb);
+            for (const auto& [cLb, cUb] : boundVec) {
+              EXPECT_TRUE(cLb <= cUb);
+              engine->updateBounds(vars.at(2), cLb, cUb);
+              invariant.updateBounds(*engine);
+
+              const Int aMin = std::min(aLb * aCoef, aUb * aCoef);
+              const Int aMax = std::max(aLb * aCoef, aUb * aCoef);
+              const Int bMin = std::min(bLb * bCoef, bUb * bCoef);
+              const Int bMax = std::max(bLb * bCoef, bUb * bCoef);
+              const Int cMin = std::min(cLb * cCoef, cUb * cCoef);
+              const Int cMax = std::max(cLb * cCoef, cUb * cCoef);
+
+              ASSERT_EQ(aMin + bMin + cMin, engine->lowerBound(outputId));
+              ASSERT_EQ(aMax + bMax + cMax, engine->upperBound(outputId));
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 TEST_F(LinearTest, Recompute) {
   const Int iLb = -10;
   const Int iUb = 10;

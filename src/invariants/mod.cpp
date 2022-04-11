@@ -14,13 +14,8 @@ void Mod::registerVars(Engine& engine) {
 }
 
 void Mod::updateBounds(Engine& engine) {
-  const Int aLb = engine.lowerBound(_a);
-  const Int aUb = engine.upperBound(_a);
-
-  const Int lb = aLb < 0 ? std::min(aLb + 1, aUb) : 0;
-  const Int ub = aLb < 0 ? 0 : std::max(aUb - 1, aLb);
-
-  engine.updateBounds(_y, lb, ub);
+  engine.updateBounds(_y, std::min(Int(0), engine.lowerBound(_a)),
+                      std::max(Int(0), engine.upperBound(_a)));
 }
 
 void Mod::close(Timestamp, Engine& engine) {

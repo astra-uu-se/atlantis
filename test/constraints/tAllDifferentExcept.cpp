@@ -50,6 +50,34 @@ class AllDifferentExceptTest : public InvariantTest {
   }
 };
 
+TEST_F(AllDifferentExceptTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-250, -150}, {-100, 0}, {-50, 50}, {0, 100}, {150, 250}};
+  engine->open();
+  std::vector<VarId> inputs{engine->makeIntVar(0, 0, 0),
+                            engine->makeIntVar(0, 0, 0),
+                            engine->makeIntVar(0, 0, 0)};
+  const VarId violationId = engine->makeIntVar(0, 0, 2);
+  AllDifferentExcept& invariant = engine->makeConstraint<AllDifferentExcept>(
+      violationId, std::vector<VarId>(inputs), std::vector<Int>{10, 20});
+
+  for (const auto& [aLb, aUb] : boundVec) {
+    EXPECT_TRUE(aLb <= aUb);
+    engine->updateBounds(inputs.at(0), aLb, aUb);
+    for (const auto& [bLb, bUb] : boundVec) {
+      EXPECT_TRUE(bLb <= bUb);
+      engine->updateBounds(inputs.at(2), bLb, bUb);
+      for (const auto& [cLb, cUb] : boundVec) {
+        EXPECT_TRUE(cLb <= cUb);
+        engine->updateBounds(inputs.at(2), cLb, cUb);
+        invariant.updateBounds(*engine);
+        ASSERT_EQ(0, engine->lowerBound(violationId));
+        ASSERT_EQ(inputs.size() - 1, engine->upperBound(violationId));
+      }
+    }
+  }
+}
+
 TEST_F(AllDifferentExceptTest, Recompute) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-10004, -10000}, {-1, 1}, {10000, 10002}};

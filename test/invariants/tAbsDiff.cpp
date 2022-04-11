@@ -34,33 +34,71 @@ class AbsDiffTest : public InvariantTest {
     return computeOutput(engine->value(ts, x), engine->value(ts, y));
   }
 
-  Int computeOutput(const Int aVal, const Int bVal) {
-    return std::abs(aVal - bVal);
+  Int computeOutput(const Int xVal, const Int yVal) {
+    return std::abs(xVal - yVal);
   }
 };
 
-TEST_F(AbsDiffTest, Recompute) {
-  const Int aLb = -1;
-  const Int aUb = 0;
-  const Int bLb = 0;
-  const Int bUb = 1;
-  EXPECT_TRUE(aLb <= aUb);
-  EXPECT_TRUE(bLb <= bUb);
-
+TEST_F(AbsDiffTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
   engine->open();
-  const VarId x = engine->makeIntVar(aUb, aLb, aUb);
-  const VarId y = engine->makeIntVar(bUb, bLb, bUb);
-  const VarId outputId =
-      engine->makeIntVar(0, 0, std::max(aUb - bLb, bUb - aLb));
+  const VarId x = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId y = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId outputId = engine->makeIntVar(0, 0, 2);
   AbsDiff& invariant = engine->makeInvariant<AbsDiff>(x, y, outputId);
   engine->close();
 
-  for (Int aVal = aLb; aVal <= aUb; ++aVal) {
-    for (Int bVal = bLb; bVal <= bUb; ++bVal) {
-      engine->setValue(engine->currentTimestamp(), x, aVal);
-      engine->setValue(engine->currentTimestamp(), y, bVal);
+  for (const auto& [xLb, xUb] : boundVec) {
+    EXPECT_TRUE(xLb <= xUb);
+    engine->updateBounds(x, xLb, xUb);
+    for (const auto& [yLb, yUb] : boundVec) {
+      EXPECT_TRUE(yLb <= yUb);
+      engine->updateBounds(y, yLb, yUb);
+      invariant.updateBounds(*engine);
+      std::vector<Int> outputs;
+      for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+        engine->setValue(engine->currentTimestamp(), x, xVal);
+        for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+          engine->setValue(engine->currentTimestamp(), y, yVal);
+          invariant.updateBounds(*engine);
+          invariant.recompute(engine->currentTimestamp(), *engine);
+          outputs.emplace_back(
+              engine->value(engine->currentTimestamp(), outputId));
+        }
+      }
+      const auto& [minViol, maxViol] =
+          std::minmax_element(outputs.begin(), outputs.end());
+      ASSERT_EQ(*minViol, engine->lowerBound(outputId));
+      ASSERT_EQ(*maxViol, engine->upperBound(outputId));
+    }
+  }
+}
 
-      const Int expectedOutput = computeOutput(aVal, bVal);
+TEST_F(AbsDiffTest, Recompute) {
+  const Int xLb = -1;
+  const Int xUb = 0;
+  const Int yLb = 0;
+  const Int yUb = 1;
+  EXPECT_TRUE(xLb <= xUb);
+  EXPECT_TRUE(yLb <= yUb);
+
+  engine->open();
+  const VarId x = engine->makeIntVar(xUb, xLb, xUb);
+  const VarId y = engine->makeIntVar(yLb, yLb, yUb);
+  const VarId outputId =
+      engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
+  AbsDiff& invariant = engine->makeInvariant<AbsDiff>(x, y, outputId);
+  engine->close();
+
+  for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+    for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+      engine->setValue(engine->currentTimestamp(), x, xVal);
+      engine->setValue(engine->currentTimestamp(), y, yVal);
+
+      const Int expectedOutput = computeOutput(xVal, yVal);
       invariant.recompute(engine->currentTimestamp(), *engine);
       EXPECT_EQ(expectedOutput,
                 engine->value(engine->currentTimestamp(), outputId));

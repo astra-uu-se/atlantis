@@ -17,6 +17,7 @@ class Pow : public Invariant {
   const VarId _a;
   const VarId _b;
   const VarId _y;
+  Int _zeroReplacement{1};
 
  public:
   Pow(VarId a, VarId b, VarId y) : Invariant(NULL_ID), _a(a), _b(b), _y(y) {

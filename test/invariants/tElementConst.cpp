@@ -54,6 +54,35 @@ class ElementConstTest : public InvariantTest {
   }
 };
 
+TEST_F(ElementConstTest, UpdateBounds) {
+  EXPECT_TRUE(valueLb <= valueUb);
+  EXPECT_TRUE(indexLb <= indexUb);
+
+  engine->open();
+  const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
+  const VarId outputId = engine->makeIntVar(valueLb, valueLb, valueUb);
+  ElementConst& invariant = engine->makeInvariant<ElementConst>(
+      index, std::vector<Int>(values), outputId);
+  engine->close();
+
+  const Int ub = 100;
+
+  for (Int minIndex = indexLb; minIndex <= ub; ++minIndex) {
+    for (Int maxIndex = ub; maxIndex >= minIndex; --maxIndex) {
+      engine->updateBounds(index, minIndex, maxIndex);
+      invariant.updateBounds(*engine);
+      Int minVal = std::numeric_limits<Int>::max();
+      Int maxVal = std::numeric_limits<Int>::min();
+      for (Int i = minIndex - 1; i < maxIndex; ++i) {
+        minVal = std::min(minVal, values.at(i));
+        maxVal = std::max(maxVal, values.at(i));
+      }
+      EXPECT_EQ(minVal, engine->lowerBound(outputId));
+      EXPECT_EQ(maxVal, engine->upperBound(outputId));
+    }
+  }
+}
+
 TEST_F(ElementConstTest, Recompute) {
   EXPECT_TRUE(valueLb <= valueUb);
   EXPECT_TRUE(indexLb <= indexUb);

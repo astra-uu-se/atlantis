@@ -325,4 +325,42 @@ TEST_F(InSparseDomainTest, NotificationsOutputToInputInputToOutputExploration) {
                     OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION);
 }
 
+TEST_F(InSparseDomainTest, UpdateBounds) {
+  std::vector<DomainEntry> domainVec{
+      {-20, -15}, {-10, -5}, {0, 0}, {5, 10}, {15, 20}};
+  engine->open();
+  const VarId a = engine->makeIntVar(domainVec.front().lowerBound,
+                                     domainVec.front().lowerBound,
+                                     domainVec.front().upperBound);
+
+  for (const std::vector<DomainEntry>& dom : subsets(domainVec)) {
+    if (dom.size() == 0) {
+      continue;
+    }
+    for (const auto& [xLb, xUb] : domainVec) {
+      EXPECT_TRUE(xLb <= xUb);
+      if (!engine->isOpen()) {
+        engine->open();
+      }
+      engine->updateBounds(a, xLb, xUb);
+      const VarId violId = engine->makeIntVar(0, 0, 2);
+      InSparseDomain& invariant = engine->makeConstraint<InSparseDomain>(
+          violId, a, std::vector<DomainEntry>(dom));
+      engine->close();
+
+      std::vector<Int> violations;
+      for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+        engine->setValue(engine->currentTimestamp(), a, xVal);
+        invariant.recompute(engine->currentTimestamp(), *engine);
+        violations.emplace_back(
+            engine->value(engine->currentTimestamp(), violId));
+      }
+      const auto& [minViol, maxViol] =
+          std::minmax_element(violations.begin(), violations.end());
+      ASSERT_EQ(*minViol, engine->lowerBound(violId));
+      ASSERT_EQ(*maxViol, engine->upperBound(violId));
+    }
+  }
+}
+
 }  // namespace

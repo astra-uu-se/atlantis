@@ -22,8 +22,9 @@ void LessThan::registerVars(Engine& engine) {
 
 void LessThan::updateBounds(Engine& engine) {
   engine.updateBounds(
-      _violationId, 0,
-      std::max(Int(0), engine.upperBound(_x) - engine.lowerBound(_y) + 1));
+      _violationId,
+      std::max(Int(0), 1 + engine.lowerBound(_x) - engine.upperBound(_y)),
+      std::max(Int(0), 1 + engine.upperBound(_x) - engine.lowerBound(_y)));
 }
 
 void LessThan::recompute(Timestamp ts, Engine& engine) {

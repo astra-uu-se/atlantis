@@ -22,7 +22,8 @@ void LessEqual::registerVars(Engine& engine) {
 
 void LessEqual::updateBounds(Engine& engine) {
   engine.updateBounds(
-      _violationId, 0,
+      _violationId,
+      std::max(Int(0), engine.lowerBound(_x) - engine.upperBound(_y)),
       std::max(Int(0), engine.upperBound(_x) - engine.lowerBound(_y)));
 }
 

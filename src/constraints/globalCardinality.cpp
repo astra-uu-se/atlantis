@@ -79,13 +79,20 @@ template void GlobalCardinality<true>::updateBounds(Engine&);
 template void GlobalCardinality<false>::updateBounds(Engine&);
 template <bool IsClosed>
 void GlobalCardinality<IsClosed>::updateBounds(Engine& engine) {
-  Int maxViol = 0;
+  Int maxShortage = 0;
   for (const Int lb : _lowerBound) {
-    maxViol += lb;
+    maxShortage += lb;
   }
-  engine.updateBounds(
-      _violationId, 0,
-      std::max(maxViol, static_cast<Int>(_variables.size()) - Int(1)));
+  Int maxExcess = 0;
+  for (const Int ub : _upperBound) {
+    maxExcess = std::max(maxExcess, static_cast<Int>(_variables.size()) - ub);
+  }
+  Int maxViol = std::max(maxShortage, maxExcess);
+  if constexpr (IsClosed) {
+    maxViol =
+        std::max(maxViol, maxShortage + static_cast<Int>(_variables.size()));
+  }
+  engine.updateBounds(_violationId, 0, maxViol);
 }
 
 template void GlobalCardinality<true>::close(Timestamp, Engine&);

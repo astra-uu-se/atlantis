@@ -20,26 +20,30 @@ void IntDiv::updateBounds(Engine& engine) {
   const Int bLb = engine.lowerBound(_b);
   const Int bUb = engine.upperBound(_b);
 
-  Int lb = std::numeric_limits<Int>::max();
-  Int ub = std::numeric_limits<Int>::min();
+  assert(bLb != 0 || bUb != 0);
 
-  if (bLb <= 0 && 0 <= bUb) {
-    if (bLb < 0) {
-      lb = std::min(lb, aUb / -1);
-      ub = std::max(ub, aLb / -1);
-    }
-    if (0 < bUb) {
-      lb = std::min(lb, aLb / 1);
-      ub = std::max(ub, aUb / 1);
-    }
+  std::vector<Int> denominators;
+  denominators.reserve(4);
+
+  if (bLb <= 0 && 0 < bUb) {
+    denominators.emplace_back(1);
+  }
+  if (bLb < 0 && 0 <= bUb) {
+    denominators.emplace_back(-1);
   }
   if (bLb != 0) {
-    lb = std::min(lb, aLb / bLb);
-    ub = std::max(ub, aLb / bLb);
+    denominators.emplace_back(bLb);
   }
   if (bUb != 0) {
-    lb = std::min(lb, aLb / bUb);
-    ub = std::max(ub, aLb / bUb);
+    denominators.emplace_back(bUb);
+  }
+
+  assert(denominators.size() > 0);
+  Int lb = std::numeric_limits<Int>::max();
+  Int ub = std::numeric_limits<Int>::min();
+  for (const Int d : denominators) {
+    lb = std::min(lb, std::min(aLb / d, aUb / d));
+    ub = std::max(ub, std::max(aLb / d, aUb / d));
   }
 
   engine.updateBounds(_y, lb, ub);

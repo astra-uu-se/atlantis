@@ -31,6 +31,52 @@ class IntDivTest : public InvariantTest {
   }
 };
 
+TEST_F(IntDivTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
+  engine->open();
+  const VarId a = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId b = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId outputId = engine->makeIntVar(0, 0, 2);
+  IntDiv& invariant = engine->makeInvariant<IntDiv>(a, b, outputId);
+  engine->close();
+
+  for (const auto& [aLb, aUb] : boundVec) {
+    EXPECT_TRUE(aLb <= aUb);
+    engine->updateBounds(a, aLb, aUb);
+    for (const auto& [bLb, bUb] : boundVec) {
+      EXPECT_TRUE(bLb <= bUb);
+      engine->updateBounds(b, bLb, bUb);
+      engine->open();
+      engine->close();
+      std::vector<Int> outputs;
+      const Int lb = engine->lowerBound(outputId);
+      const Int ub = engine->upperBound(outputId);
+      for (Int aVal = aLb; aVal <= aUb; ++aVal) {
+        engine->setValue(engine->currentTimestamp(), a, aVal);
+        for (Int bVal = bLb; bVal <= bUb; ++bVal) {
+          engine->setValue(engine->currentTimestamp(), b, bVal);
+          invariant.recompute(engine->currentTimestamp(), *engine);
+          const Int o = engine->value(engine->currentTimestamp(), outputId);
+          if (o < lb || ub < o) {
+            ASSERT_TRUE(lb <= o);
+            ASSERT_TRUE(o <= ub);
+          }
+          outputs.emplace_back(o);
+        }
+      }
+      const auto& [minVal, maxVal] =
+          std::minmax_element(outputs.begin(), outputs.end());
+      if (*minVal != engine->lowerBound(outputId)) {
+        ASSERT_EQ(*minVal, engine->lowerBound(outputId));
+      }
+      ASSERT_EQ(*maxVal, engine->upperBound(outputId));
+    }
+  }
+}
+
 TEST_F(IntDivTest, Recompute) {
   const Int aLb = -1;
   const Int aUb = 0;
