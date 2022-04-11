@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fznparser/model.hpp>
 #include <utility>
 
 #include "invariantgraph/structure.hpp"
@@ -12,10 +13,8 @@ class IntEqNode : public SoftConstraintNode {
   VariableNode* _b;
 
   inline static auto violationUb = [](auto a, auto b) {
-    auto al = a->variable()->domain()->lowerBound();
-    auto au = a->variable()->domain()->upperBound();
-    auto bl = b->variable()->domain()->lowerBound();
-    auto bu = b->variable()->domain()->upperBound();
+    const auto& [al, au] = a->bounds();
+    const auto& [bl, bu] = b->bounds();
 
     auto diff1 = std::abs(al - bu);
     auto diff2 = std::abs(au - bl);
@@ -30,13 +29,11 @@ class IntEqNode : public SoftConstraintNode {
         _b(b) {}
 
   static std::unique_ptr<IntEqNode> fromModelConstraint(
-      const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-          variableMap);
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   void registerWithEngine(
-      Engine& engine,
-      std::map<VariableNode *, VarId> &variableMap) override;
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   [[nodiscard]] VariableNode* a() const noexcept { return _a; }
   [[nodiscard]] VariableNode* b() const noexcept { return _b; }

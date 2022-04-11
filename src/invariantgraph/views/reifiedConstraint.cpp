@@ -2,8 +2,7 @@
 
 #include "views/violation2BoolView.hpp"
 
-void invariantgraph::ReifiedConstraint::registerWithEngine(
-    Engine& engine, std::map<VariableNode*, VarId>& map) {
+void invariantgraph::ReifiedConstraint::registerWithEngine(Engine& engine, VariableDefiningNode::VariableMap& map) {
   _constraint->registerWithEngine(engine, map);
 
   auto rId =

@@ -5,20 +5,19 @@
 
 std::unique_ptr<invariantgraph::IntNeNode>
 invariantgraph::IntNeNode::fromModelConstraint(
-    const std::shared_ptr<fznparser::Constraint>& constraint,
-    const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-        variableMap) {
-  assert(constraint->name() == "int_ne");
-  assert(constraint->arguments().size() == 2);
+    const fznparser::FZNModel&, const fznparser::Constraint& constraint,
+    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+  assert(constraint.name == "int_ne");
+  assert(constraint.arguments.size() == 2);
 
-  MAPPED_SEARCH_VARIABLE_ARG(a, constraint->arguments()[0], variableMap);
-  MAPPED_SEARCH_VARIABLE_ARG(b, constraint->arguments()[1], variableMap);
+  auto a = mappedVariable(constraint.arguments[0], variableMap);
+  auto b = mappedVariable(constraint.arguments[1], variableMap);
 
   return std::make_unique<IntNeNode>(a, b);
 }
 
 void invariantgraph::IntNeNode::registerWithEngine(
-    Engine& engine, std::map<VariableNode*, VarId>& variableMap) {
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   VarId violation = registerViolation(engine, variableMap);
 
   engine.makeConstraint<::NotEqual>(violation, variableMap.at(_a),

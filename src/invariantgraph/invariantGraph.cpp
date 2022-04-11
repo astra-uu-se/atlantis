@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include "invariants/linear.hpp"
+#include "utils/fznAst.hpp"
 
 static Int totalViolationsUpperBound(Engine& engine,
                                      const std::vector<VarId>& violations) {
@@ -14,11 +15,17 @@ static Int totalViolationsUpperBound(Engine& engine,
 }
 
 static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
-    const std::map<invariantgraph::VariableNode*, VarId>& variableIds) {
+    const std::unordered_map<invariantgraph::VariableNode*, VarId>&
+        variableIds) {
   invariantgraph::InvariantGraphApplyResult::VariableMap variableMap{};
+
   for (const auto& [node, varId] : variableIds) {
-    if (auto modelVariable = node->variable()) {
-      variableMap.emplace(varId, modelVariable);
+    if (node->variable()) {
+      std::visit(
+          [&, varId = varId](const auto& variable) {
+            variableMap.emplace(varId, variable.name);
+          },
+          *node->variable());
     }
   }
   return variableMap;
@@ -28,7 +35,7 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     Engine& engine) {
   engine.open();
 
-  std::map<VariableNode*, VarId> variableIds;
+  std::unordered_map<VariableNode*, VarId> variableIds;
   std::vector<VarId> violations;
 
   std::queue<invariantgraph::VariableDefiningNode*> unAppliedNodes;

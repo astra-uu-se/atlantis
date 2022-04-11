@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fznparser/model.hpp>
+
 #include "../structure.hpp"
 
 namespace invariantgraph {
@@ -15,9 +17,8 @@ class BinaryOpNode : public VariableDefiningNode {
  public:
   template <typename T>
   static std::unique_ptr<T> fromModelConstraint(
-      const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-          variableMap);
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   BinaryOpNode(VariableNode* a, VariableNode* b, VariableNode* output)
       : VariableDefiningNode({output}, {a, b}), _a(a), _b(b) {}
@@ -25,8 +26,7 @@ class BinaryOpNode : public VariableDefiningNode {
   ~BinaryOpNode() override = default;
 
   void registerWithEngine(
-      Engine& engine,
-      std::map<VariableNode*, VarId>& variableMap) override;
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   [[nodiscard]] VariableNode* a() const noexcept { return _a; }
   [[nodiscard]] VariableNode* b() const noexcept { return _b; }

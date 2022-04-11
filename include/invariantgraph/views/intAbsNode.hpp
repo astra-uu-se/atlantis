@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fznparser/model.hpp>
 #include <map>
 #include <utility>
 
@@ -13,9 +14,8 @@ class IntAbsNode : public VariableDefiningNode {
 
  public:
   static std::unique_ptr<IntAbsNode> fromModelConstraint(
-      const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-          variableMap);
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   IntAbsNode(VariableNode* input, VariableNode* output)
       : VariableDefiningNode({output}, {input}), _input(input) {}
@@ -23,8 +23,7 @@ class IntAbsNode : public VariableDefiningNode {
   ~IntAbsNode() override = default;
 
   void registerWithEngine(
-      Engine& engine,
-      std::map<VariableNode*, VarId>& variableMap) override;
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   [[nodiscard]] VariableNode* input() const noexcept { return _input; }
 };

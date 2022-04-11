@@ -6,22 +6,21 @@
 
 std::unique_ptr<invariantgraph::IntLinNeNode>
 invariantgraph::IntLinNeNode::fromModelConstraint(
-    const std::shared_ptr<fznparser::Constraint> &constraint,
-    const std::function<VariableNode *(std::shared_ptr<fznparser::Variable>)>
-        &variableMap) {
-  assert(constraint->name() == "int_lin_ne");
-  assert(constraint->arguments().size() == 3);
+    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+  assert(constraint.name == "int_lin_ne");
+  assert(constraint.arguments.size() == 3);
 
-  VALUE_VECTOR_ARG(coeffs, constraint->arguments()[0]);
-  MAPPED_SEARCH_VARIABLE_VECTOR_ARG(variables, constraint->arguments()[1],
-                             variableMap);
-  VALUE_ARG(c, constraint->arguments()[2]);
+  auto coeffs = integerVector(model, constraint.arguments[0]);
+  auto variables =
+      mappedVariableVector(constraint.arguments[1], variableMap);
+  auto c = integerValue(model, constraint.arguments[2]);
 
   return std::make_unique<IntLinNeNode>(coeffs, variables, c);
 }
 
 void invariantgraph::IntLinNeNode::registerWithEngine(
-    Engine &engine, std::map<VariableNode *, VarId> &variableMap) {
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   auto [sumLb, sumUb] = getLinearDomainBounds();
   auto sumVar = engine.makeIntVar(0, sumLb, sumUb);
 
@@ -36,15 +35,17 @@ void invariantgraph::IntLinNeNode::registerWithEngine(
   engine.makeConstraint<NotEqual>(violation, sumVar, c);
 }
 
-std::pair<Int, Int>
-invariantgraph::IntLinNeNode::getLinearDomainBounds() const {
+std::pair<Int, Int> invariantgraph::IntLinNeNode::getLinearDomainBounds()
+    const {
   Int lb = 0;
   Int ub = 0;
 
   for (size_t idx = 0; idx < _coeffs.size(); idx++) {
-    lb += _coeffs[idx] * _variables[idx]->variable()->domain()->lowerBound();
-    ub += _coeffs[idx] * _variables[idx]->variable()->domain()->upperBound();
+    const auto& [varLb, varUb] = _variables[idx]->bounds();
+
+    lb += _coeffs[idx] * varLb;
+    ub += _coeffs[idx] * varUb;
   }
 
-  return std::make_pair(lb, ub);
+  return {lb, ub};
 }
