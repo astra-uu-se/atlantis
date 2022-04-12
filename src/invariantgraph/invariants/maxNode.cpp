@@ -15,7 +15,6 @@ invariantgraph::MaxNode::fromModelConstraint(
   auto inputs =
       mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto output = mappedVariable(constraint.arguments[0], variableMap);
-  assert(definesVariable(constraint, *output->variable()));
 
   return std::make_unique<invariantgraph::MaxNode>(inputs, output);
 }

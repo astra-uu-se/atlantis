@@ -19,8 +19,6 @@ std::unique_ptr<T> invariantgraph::BinaryOpNode::fromModelConstraint(
   auto b = mappedVariable(constraint.arguments[1], variableMap);
   auto output = mappedVariable(constraint.arguments[2], variableMap);
 
-  assert(definesVariable(constraint, *output->variable()));
-
   return std::make_unique<T>(a, b, output);
 }
 
