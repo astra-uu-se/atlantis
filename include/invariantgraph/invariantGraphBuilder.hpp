@@ -44,13 +44,14 @@ class InvariantGraphBuilder {
     }
 
     std::unique_ptr<VariableNode> node;
-    if constexpr (std::is_same_v<Int, Val>)
+    if constexpr (std::is_same_v<Int, Val>) {
       node = std::make_unique<VariableNode>(SetDomain({val}));
-    else if constexpr (std::is_same_v<bool, Val>)
+    } else if constexpr (std::is_same_v<bool, Val>) {
       node = std::make_unique<VariableNode>(
           SetDomain({1 - static_cast<Int>(val)}));
-    else
+    } else {
       static_assert(!sizeof(Val));
+    }
 
     _valueMap.emplace(val, node.get());
     _variables.push_back(std::move(node));
