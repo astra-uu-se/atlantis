@@ -1,6 +1,7 @@
 #pragma once
 
 #include "neighbourhoods/neighbourhood.hpp"
+#include "objective.hpp"
 #include "searchController.hpp"
 #include "searchStatistics.hpp"
 
@@ -15,10 +16,12 @@ namespace search {
 class SearchProcedure {
  public:
   SearchProcedure(RandomProvider& random, Assignment& assignment,
-                  neighbourhoods::Neighbourhood& neighbourhood)
+                  neighbourhoods::Neighbourhood& neighbourhood,
+                  Objective objective)
       : _random(random),
         _assignment(assignment),
-        _neighbourhood(neighbourhood) {}
+        _neighbourhood(neighbourhood),
+        _objective(std::move(objective)) {}
 
   SearchStatistics run(SearchController& controller, Annealer& annealer);
 
@@ -26,6 +29,7 @@ class SearchProcedure {
   RandomProvider& _random;
   Assignment& _assignment;
   neighbourhoods::Neighbourhood& _neighbourhood;
+  Objective _objective;
 };
 
 }  // namespace search
