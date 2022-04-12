@@ -1,0 +1,4 @@
+int: X_INTRODUCED_21_ = 20;
+array [1..4] of int: X_INTRODUCED_20_ = [2,6,4,8];
+array [1..9] of var int: Magic:: output_array([1..3,1..3]) = [2,7,6,9,5,1,4,3,8];
+solve :: seq_search([int_search(X_INTRODUCED_20_,input_order,indomain_split,complete),int_search(Magic,occurrence,indomain_split,complete)]) minimize X_INTRODUCED_21_;
