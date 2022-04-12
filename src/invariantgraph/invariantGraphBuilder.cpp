@@ -135,7 +135,41 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
     }
   }
 
-  // Third, define soft constraints.
+  // Third, pick up any invariants we can identify without the annotations
+  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
+    auto constraint = model.constraints()[idx];
+    if (processedConstraints.count(idx)) {
+      continue;
+    }
+
+    if (auto node = makeVariableDefiningNode(model, constraint)) {
+      auto canBeInvariant = std::all_of(
+          node->definedVariables().begin(), node->definedVariables().end(),
+          [&](const auto& variableNode) {
+            if (!variableNode->variable()) {
+              return true;
+            }
+
+            return definedVars.count(identifier(*variableNode->variable())) ==
+                   0;
+          });
+
+      if (!canBeInvariant) {
+        continue;
+      }
+
+      for (const auto& variableNode : node->definedVariables()) {
+        assert(variableNode->variable());
+
+        definedVars.emplace(identifier(*variableNode->variable()));
+      }
+
+      _definingNodes.push_back(std::move(node));
+      processedConstraints.emplace(idx);
+    }
+  }
+
+  // Fourth, use soft constraints for the remaining model constraints.
   for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
     auto constraint = model.constraints()[idx];
     if (processedConstraints.count(idx)) {
@@ -198,7 +232,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION("set_in_reif", SetInReifNode);
   NODE_REGISTRATION("bool2int", Bool2IntNode);
 
-  throw std::runtime_error("Unsupported constraint: " + std::string(name));
+  return nullptr;
 #undef BINARY_OP_REGISTRATION
 #undef NODE_REGISTRATION
 }
