@@ -13,6 +13,7 @@
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/invariants/arrayBoolAndNode.hpp"
 #include "invariantgraph/invariants/arrayBoolElementNode.hpp"
+#include "invariantgraph/invariants/arrayBoolOrNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/binaryOpNode.hpp"
@@ -245,6 +246,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION("set_in_reif", SetInReifNode);
   NODE_REGISTRATION("bool2int", Bool2IntNode);
   NODE_REGISTRATION("array_bool_and", ArrayBoolAndNode);
+  NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
   NODE_REGISTRATION("array_bool_element", ArrayBoolElementNode);
 
   return nullptr;
