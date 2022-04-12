@@ -81,7 +81,14 @@ int main(int argc, char* argv[]) {
     PropagationEngine engine;
     auto applicationResult = graph.apply(engine);
 
-    search::Assignment assignment(engine, applicationResult.totalViolations(),
+    search::Objective searchObjective(engine, model);
+    engine.open();
+    auto violation = searchObjective.registerWithEngine(
+        applicationResult.totalViolations(),
+        applicationResult.objectiveVariable());
+    engine.close();
+
+    search::Assignment assignment(engine, violation,
                                   applicationResult.objectiveVariable());
 
     auto givenSeed = result["seed"].as<long>();
@@ -92,7 +99,8 @@ int main(int argc, char* argv[]) {
     search::RandomProvider random(seed);
 
     auto neighbourhood = applicationResult.neighbourhood();
-    search::SearchProcedure search(random, assignment, neighbourhood);
+    search::SearchProcedure search(random, assignment, neighbourhood,
+                                   searchObjective);
 
     search::SearchController::VariableMap flippedMap;
     for (const auto& [varId, fznVar] : applicationResult.variableMap())
