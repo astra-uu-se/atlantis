@@ -2,6 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "constraints/inDomain.hpp"
+#include "utils/variant.hpp"
 
 std::unique_ptr<invariantgraph::SetInNode>
 invariantgraph::SetInNode::fromModelConstraint(
@@ -11,9 +12,23 @@ invariantgraph::SetInNode::fromModelConstraint(
   assert(constraint.arguments.size() == 2);
 
   auto variable = mappedVariable(constraint.arguments[0], variableMap);
-  auto values = integerVector(model, constraint.arguments[1]);
+  auto valueSet = integerSet(model, constraint.arguments[1]);
 
-  return std::make_unique<SetInNode>(variable, values);
+  // Note: if the valueSet is an IntRange, here all the values are collected
+  // into a vector. If it turns out memory usage is an issue, this should be
+  // mitigated.
+
+  return std::visit<std::unique_ptr<SetInNode>>(
+      overloaded{[&](const fznparser::LiteralSet<Int>& set) {
+                   return std::make_unique<SetInNode>(variable, set.values);
+                 },
+                 [&](const fznparser::IntRange& range) {
+                   std::vector<Int> values;
+                   values.resize(range.upperBound - range.lowerBound + 1);
+                   std::iota(values.begin(), values.end(), range.lowerBound);
+                   return std::make_unique<SetInNode>(variable, values);
+                 }},
+      valueSet);
 }
 
 void invariantgraph::SetInNode::registerWithEngine(

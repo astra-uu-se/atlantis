@@ -3,6 +3,7 @@
 #include "../parseHelper.hpp"
 #include "invariantgraph/constraints/setInNode.hpp"
 #include "invariantgraph/views/reifiedConstraint.hpp"
+#include "utils/variant.hpp"
 
 std::unique_ptr<invariantgraph::SetInReifNode>
 invariantgraph::SetInReifNode::fromModelConstraint(
@@ -12,9 +13,21 @@ invariantgraph::SetInReifNode::fromModelConstraint(
   assert(constraint.arguments.size() == 3);
 
   auto a = mappedVariable(constraint.arguments[0], variableMap);
-  auto values = integerVector(model, constraint.arguments[1]);
+  auto valueSet = integerSet(model, constraint.arguments[1]);
   auto r = mappedVariable(constraint.arguments[2], variableMap);
 
-  return std::make_unique<invariantgraph::SetInReifNode>(
-      std::make_unique<invariantgraph::SetInNode>(a, values), r);
+  return std::visit<std::unique_ptr<SetInReifNode>>(
+      overloaded{
+          [&](const fznparser::LiteralSet<Int>& set) {
+            return std::make_unique<invariantgraph::SetInReifNode>(
+                std::make_unique<invariantgraph::SetInNode>(a, set.values), r);
+          },
+          [&](const fznparser::IntRange& range) {
+            std::vector<Int> values;
+            values.resize(range.upperBound - range.lowerBound + 1);
+            std::iota(values.begin(), values.end(), range.lowerBound);
+            return std::make_unique<invariantgraph::SetInReifNode>(
+                std::make_unique<invariantgraph::SetInNode>(a, values), r);
+          }},
+      valueSet);
 }
