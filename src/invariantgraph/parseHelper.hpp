@@ -27,5 +27,8 @@ std::vector<Int> integerVector(const fznparser::FZNModel& model,
 Int integerValue(const fznparser::FZNModel& model,
                  const FZNConstraint::Argument& argument);
 
+fznparser::Set<Int> integerSet(const fznparser::FZNModel& model,
+                               const FZNConstraint::Argument& argument);
+
 bool definesVariable(const fznparser::Constraint& constraint,
                      const FZNSearchVariable& variable);

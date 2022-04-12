@@ -183,3 +183,18 @@ bool definesVariable(const FZNConstraint &constraint,
   return std::visit<bool>(
       [&](const auto &var) { return definedVariableId == var.name; }, variable);
 }
+
+fznparser::Set<Int> integerSet(const FZNModel &model,
+                               const FZNConstraint::Argument &argument) {
+  if (std::holds_alternative<Set<Int>>(argument)) {
+    return std::get<Set<Int>>(argument);
+  }
+
+  assert(std::holds_alternative<fznparser::Identifier>(argument));
+  auto identifier = std::get<fznparser::Identifier>(argument);
+  auto identifiable = *model.identify(identifier);
+  assert(std::holds_alternative<Parameter>(identifiable));
+  auto parameter = std::get<Parameter>(identifiable);
+  assert(std::holds_alternative<SetOfIntParameter>(parameter));
+  return std::get<SetOfIntParameter>(parameter).value;
+}
