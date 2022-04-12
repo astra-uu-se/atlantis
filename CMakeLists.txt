@@ -74,6 +74,19 @@ target_link_libraries(${PROJECT_LIB} PUBLIC fznparser::fznparser)
 # Link the src library with the project
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts)
 
+if (CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+else ()
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT lto_supported OUTPUT error)
+
+    if (lto_supported)
+        message(STATUS "IPO / LTO enabled")
+        set_property(TARGET ${PROJECT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    else ()
+        message(STATUS "IPO / LTO not supported: <${error}>")
+    endif ()
+endif ()
+
 # Options. Turn on with 'cmake -Dmyvarname=ON'.
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.

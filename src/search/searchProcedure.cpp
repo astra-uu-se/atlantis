@@ -53,6 +53,7 @@ search::SearchStatistics search::SearchProcedure::run(
 
         if (madeMove && _assignment.satisfiesConstraints()) {
           controller.onSolution(_assignment);
+          _objective.tighten();
           solutions->increment();
         }
       }
