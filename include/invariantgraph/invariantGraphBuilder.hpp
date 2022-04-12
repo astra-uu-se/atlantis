@@ -28,8 +28,8 @@ class InvariantGraphBuilder {
   void createNodes(const fznparser::FZNModel& model);
 
   std::unique_ptr<VariableDefiningNode> makeVariableDefiningNode(
-      const fznparser::FZNModel& model,
-      const fznparser::Constraint& constraint);
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      bool guessDefinedVariable = false);
   std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraint(
       const fznparser::FZNModel& model,
       const fznparser::Constraint& constraint);

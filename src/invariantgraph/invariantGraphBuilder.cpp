@@ -32,7 +32,6 @@
 #include "invariantgraph/views/intNeReifNode.hpp"
 #include "invariantgraph/views/setInReifNode.hpp"
 #include "utils/fznAst.hpp"
-#include "utils/variant.hpp"
 
 invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build(
     const fznparser::FZNModel& model) {
@@ -72,6 +71,16 @@ static bool allVariablesFree(
     const fznparser::Constraint& constraint,
     const std::unordered_set<fznparser::Identifier>& definedVars);
 
+static void markVariablesAsDefined(
+    const invariantgraph::VariableDefiningNode& node,
+    std::unordered_set<fznparser::Identifier>& definedVars) {
+  for (const auto& variableNode : node.definedVariables()) {
+    if (variableNode->variable()) {
+      definedVars.emplace(identifier(*variableNode->variable()));
+    }
+  }
+}
+
 void invariantgraph::InvariantGraphBuilder::createNodes(
     const fznparser::FZNModel& model) {
   for (const auto& variable : model.variables()) {
@@ -105,10 +114,7 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
     }
 
     if (auto node = makeVariableDefiningNode(model, constraint)) {
-      for (const auto& variableNode : node->definedVariables()) {
-        assert(variableNode->variable());
-        definedVars.emplace(identifier(*variableNode->variable()));
-      }
+      markVariablesAsDefined(*node, definedVars);
 
       _definingNodes.push_back(std::move(node));
       processedConstraints.emplace(idx);
@@ -142,7 +148,7 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       continue;
     }
 
-    if (auto node = makeVariableDefiningNode(model, constraint)) {
+    if (auto node = makeVariableDefiningNode(model, constraint, true)) {
       auto canBeInvariant = std::all_of(
           node->definedVariables().begin(), node->definedVariables().end(),
           [&](const auto& variableNode) {
@@ -158,11 +164,7 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
         continue;
       }
 
-      for (const auto& variableNode : node->definedVariables()) {
-        assert(variableNode->variable());
-
-        definedVars.emplace(identifier(*variableNode->variable()));
-      }
+      markVariablesAsDefined(*node, definedVars);
 
       _definingNodes.push_back(std::move(node));
       processedConstraints.emplace(idx);
@@ -181,9 +183,13 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
 
   // Finally, define all free variables by the InvariantGraphRoot
   std::vector<VariableNode*> freeVariables;
-  for (const auto& variableNode : _variables) {
-    if (definedVars.count(identifier(*variableNode->variable())) == 0) {
-      freeVariables.push_back(variableNode.get());
+  for (const auto& variable : model.variables()) {
+    if (std::holds_alternative<fznparser::IntVariable>(variable) ||
+        std::holds_alternative<fznparser::BoolVariable>(variable)) {
+      auto variableName = identifier(variable);
+      if (definedVars.count(variableName) == 0) {
+        freeVariables.push_back(_variableMap.at(variableName));
+      }
     }
   }
 
@@ -195,7 +201,8 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
 
 std::unique_ptr<invariantgraph::VariableDefiningNode>
 invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint) {
+    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+    bool guessDefinedVariable) {
   std::string_view name = constraint.name;
 
 #define NODE_REGISTRATION(nameStr, nodeType)            \
@@ -211,7 +218,11 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
     return nodeFactory(model, argument);                                       \
   })
 
-  NODE_REGISTRATION("int_lin_eq", LinearNode);
+  if (!guessDefinedVariable) {
+    // For the linear node, we need to know up front what variable is defined.
+    NODE_REGISTRATION("int_lin_eq", LinearNode);
+  }
+
   NODE_REGISTRATION("int_abs", IntAbsNode);
   NODE_REGISTRATION("array_int_maximum", MaxNode);
   NODE_REGISTRATION("array_int_minimum", MinNode);
