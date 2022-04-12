@@ -15,8 +15,7 @@ invariantgraph::MinNode::fromModelConstraint(
   auto inputs =
       mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto output = mappedVariable(constraint.arguments[0], variableMap);
-  assert(definesVariable(constraint, *output->variable()));
-
+  
   return std::make_unique<invariantgraph::MinNode>(inputs, output);
 }
 
