@@ -121,21 +121,22 @@ static T valueFromParameter(const Parameter &param) {
   return std::get<BaseParameter<T>>(param).value;
 }
 
-static std::vector<Int> intLiteralVector(
+template <typename T>
+static std::vector<T> valueLiteralVector(
     const fznparser::FZNModel &model,
     const FZNConstraint::ArrayArgument &array) {
-  std::vector<Int> values;
+  std::vector<T> values;
   values.reserve(array.size());
 
   for (const auto &element : array) {
-    auto value = std::visit<Int>(
+    auto value = std::visit<T>(
         overloaded{
-            [](Int v) { return v; },
+            [](T v) { return v; },
             [&](const Identifier &identifier) {
               auto parameter = std::get<Parameter>(*model.identify(identifier));
-              return valueFromParameter<Int>(parameter);
+              return valueFromParameter<T>(parameter);
             },
-            DEFAULT_EMPTY_VARIANT_BRANCH(Int, "Unexpected variant branch.")},
+            DEFAULT_EMPTY_VARIANT_BRANCH(T, "Unexpected variant branch.")},
         element);
 
     values.push_back(value);
@@ -148,7 +149,7 @@ std::vector<Int> integerVector(const fznparser::FZNModel &model,
                                const FZNConstraint::Argument &argument) {
   return std::visit<std::vector<Int>>(
       overloaded{[&](const FZNConstraint::ArrayArgument &array) {
-                   return intLiteralVector(model, array);
+                   return valueLiteralVector<Int>(model, array);
                  },
                  [&](const Identifier &identifier) {
                    auto param =
@@ -199,4 +200,28 @@ fznparser::Set<Int> integerSet(const FZNModel &model,
   auto parameter = std::get<Parameter>(identifiable);
   assert(std::holds_alternative<SetOfIntParameter>(parameter));
   return std::get<SetOfIntParameter>(parameter).value;
+}
+
+std::vector<Int> boolVectorAsIntVector(
+    const FZNModel &model, const FZNConstraint::Argument &argument) {
+  auto bools = std::visit<std::vector<bool>>(
+      overloaded{
+          [&](const fznparser::Identifier &identifier) {
+            auto identifiable = *model.identify(identifier);
+            return valueFromParameter<std::vector<bool>>(
+                std::get<Parameter>(identifiable));
+          },
+          [&](const FZNConstraint::ArrayArgument &array) {
+            return valueLiteralVector<bool>(model, array);
+          },
+          DEFAULT_EMPTY_VARIANT_BRANCH(
+              std::vector<bool>, "Unexpected variant type for bool array.")},
+      argument);
+
+  std::vector<Int> ints;
+  ints.reserve(bools.size());
+  std::transform(bools.begin(), bools.end(), std::back_inserter(ints),
+                 [](const bool b) { return 1 - static_cast<Int>(b); });
+
+  return ints;
 }

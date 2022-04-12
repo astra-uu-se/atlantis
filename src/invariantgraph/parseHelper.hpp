@@ -24,6 +24,9 @@ invariantgraph::VariableNode* mappedVariable(
 std::vector<Int> integerVector(const fznparser::FZNModel& model,
                                const FZNConstraint::Argument& argument);
 
+std::vector<Int> boolVectorAsIntVector(const fznparser::FZNModel& model,
+                                       const FZNConstraint::Argument& argument);
+
 Int integerValue(const fznparser::FZNModel& model,
                  const FZNConstraint::Argument& argument);
 

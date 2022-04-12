@@ -79,8 +79,9 @@ class NodeTestBase : public testing::Test {
     }
   }
 
+  template <typename T>
   [[nodiscard]] inline VarId engineVariable(
-      const fznparser::IntVariable& variable) const {
+      const fznparser::SearchVariable<T>& variable) const {
     return _variableMap.at(_nodeMap.at(variable.name));
   }
 };
