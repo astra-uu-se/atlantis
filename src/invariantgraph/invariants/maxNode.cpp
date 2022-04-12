@@ -7,12 +7,13 @@
 
 std::unique_ptr<invariantgraph::MaxNode>
 invariantgraph::MaxNode::fromModelConstraint(
-    const fznparser::FZNModel&, const fznparser::Constraint& constraint,
+    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
   assert(constraint.name == "array_int_maximum");
   assert(constraint.arguments.size() == 2);
 
-  auto inputs = mappedVariableVector(constraint.arguments[1], variableMap);
+  auto inputs =
+      mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto output = mappedVariable(constraint.arguments[0], variableMap);
   assert(definesVariable(constraint, *output->variable()));
 

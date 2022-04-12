@@ -13,7 +13,7 @@ invariantgraph::LinearNode::fromModelConstraint(
   assert(constraint.arguments.size() == 3);
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
-  auto vars = mappedVariableVector(constraint.arguments[1], variableMap);
+  auto vars = mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto sum = integerValue(model, constraint.arguments[2]);
 
   auto definedVarId = definedVariable(constraint);

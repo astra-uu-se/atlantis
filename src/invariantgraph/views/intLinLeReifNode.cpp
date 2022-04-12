@@ -12,7 +12,7 @@ invariantgraph::IntLinLeReifNode::fromModelConstraint(
   assert(constraint.arguments.size() == 4);
 
   auto as = integerVector(model, constraint.arguments[0]);
-  auto bs = mappedVariableVector(constraint.arguments[1], variableMap);
+  auto bs = mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto c = integerValue(model, constraint.arguments[2]);
   auto r = mappedVariable(constraint.arguments[3], variableMap);
 

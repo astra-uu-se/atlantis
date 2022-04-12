@@ -25,21 +25,15 @@ static invariantgraph::VariableNode *createNode(
   return variableFactory(value);
 }
 
-std::vector<invariantgraph::VariableNode *> mappedVariableVector(
-    const FZNConstraint::Argument &argument,
+static std::vector<invariantgraph::VariableNode *> variableNodesFromLiteral(
+    const FZNConstraint::ArrayArgument &argument,
     const std::function<invariantgraph::VariableNode *(
         invariantgraph::MappableValue &)> &variableMap) {
-  if (!std::holds_alternative<FZNConstraint::ArrayArgument>(argument)) {
-    throw std::runtime_error("Expected constraint argument to be an array.");
-  }
-
-  auto array = std::get<FZNConstraint::ArrayArgument>(argument);
-
   std::vector<invariantgraph::VariableNode *> nodes;
-  nodes.reserve(array.size());
+  nodes.reserve(argument.size());
 
   std::transform(
-      array.begin(), array.end(), std::back_inserter(nodes),
+      argument.begin(), argument.end(), std::back_inserter(nodes),
       [&](const auto &element) {
         return std::visit<invariantgraph::VariableNode *>(
             overloaded{EMPTY_VARIANT_BRANCH(
@@ -55,6 +49,55 @@ std::vector<invariantgraph::VariableNode *> mappedVariableVector(
       });
 
   return nodes;
+}
+
+template <typename T>
+static std::vector<invariantgraph::VariableNode *>
+variableNodesFromVariableArray(
+    const fznparser::VariableArray<T> &argument,
+    const std::function<invariantgraph::VariableNode *(
+        invariantgraph::MappableValue &)> &variableMap) {
+  std::vector<invariantgraph::VariableNode *> nodes;
+
+  for (const auto &element : argument) {
+    std::visit(
+        [&](const auto &elem) {
+          nodes.push_back(createNode(elem, variableMap));
+        },
+        element);
+  }
+
+  return nodes;
+}
+
+std::vector<invariantgraph::VariableNode *> mappedVariableVector(
+    const fznparser::FZNModel &model, const FZNConstraint::Argument &argument,
+    const std::function<invariantgraph::VariableNode *(
+        invariantgraph::MappableValue &)> &variableMap) {
+  if (std::holds_alternative<FZNConstraint::ArrayArgument>(argument)) {
+    auto array = std::get<FZNConstraint::ArrayArgument>(argument);
+    return variableNodesFromLiteral(array, variableMap);
+  } else if (std::holds_alternative<fznparser::Identifier>(argument)) {
+    auto identifier = std::get<fznparser::Identifier>(argument);
+    auto identifiable = *model.identify(identifier);
+
+    if (std::holds_alternative<fznparser::Variable>(identifiable)) {
+      auto variable = std::get<fznparser::Variable>(identifiable);
+
+      if (std::holds_alternative<fznparser::IntVariableArray>(variable)) {
+        return variableNodesFromVariableArray<Int>(
+            std::get<fznparser::IntVariableArray>(variable), variableMap);
+      } else if (std::holds_alternative<fznparser::BoolVariableArray>(
+                     variable)) {
+        return variableNodesFromVariableArray<bool>(
+            std::get<fznparser::BoolVariableArray>(variable), variableMap);
+      }
+    }
+  }
+
+  throw std::runtime_error(
+      "Expected constraint argument to be an array or an identifier for an "
+      "array.");
 }
 
 invariantgraph::VariableNode *mappedVariable(
