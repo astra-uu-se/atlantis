@@ -4,35 +4,38 @@
 
 class IntAbsNodeTest : public NodeTestBase {
  public:
-  std::shared_ptr<fznparser::SearchVariable> a;
-  std::shared_ptr<fznparser::SearchVariable> b;
+  INT_VARIABLE(a, 5, 10);
+  INT_VARIABLE(b, 2, 7);
+
+  fznparser::Constraint constraint{
+      "int_abs", {"a", "b"}, {fznparser::DefinesVariableAnnotation{"b"}}};
+
+  fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::IntAbsNode> node;
 
+  IntAbsNodeTest() : NodeTestBase(model) {}
+
   void SetUp() override {
-    a = FZN_SEARCH_VARIABLE("a", 5, 10);
-    b = FZN_SEARCH_VARIABLE("b", 2, 7);
-
-    FZN_DEFINES_VAR_ANNOTATION(annotations, b);
-    auto constraint = makeConstraint("int_abs", annotations, a, b);
-
     node = makeNode<invariantgraph::IntAbsNode>(constraint);
   }
 };
 
 TEST_F(IntAbsNodeTest, construction) {
-  EXPECT_EQ(node->input()->variable(), a);
+  EXPECT_EQ(node->input()->variable(),
+            invariantgraph::VariableNode::FZNVariable(a));
   EXPECT_EQ(node->input()->inputFor().size(), 1);
   EXPECT_EQ(node->input()->inputFor()[0], node.get());
 
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(node->definedVariables()[0]->variable(), b);
+  EXPECT_EQ(*node->definedVariables()[0]->variable(),
+            invariantgraph::VariableNode::FZNVariable(b));
 }
 
 TEST_F(IntAbsNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a});
+  registerVariables(engine, {a.name});
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

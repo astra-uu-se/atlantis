@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     auto graph = invariantGraphBuilder.build(model);
 
     PropagationEngine engine;
-    auto applicationResult = graph->apply(engine);
+    auto applicationResult = graph.apply(engine);
 
     search::Assignment assignment(engine, applicationResult.totalViolations(),
                                   applicationResult.objectiveVariable());
@@ -101,10 +101,10 @@ int main(int argc, char* argv[]) {
     search::SearchController searchController = [&] {
       if (result.count("time-limit")) {
         return search::SearchController(
-            *model, flippedMap,
+            model, flippedMap,
             result["time-limit"].as<std::chrono::milliseconds>());
       } else {
-        return search::SearchController(*model, flippedMap);
+        return search::SearchController(model, flippedMap);
       }
     }();
 

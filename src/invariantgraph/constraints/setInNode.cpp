@@ -2,23 +2,37 @@
 
 #include "../parseHelper.hpp"
 #include "constraints/inDomain.hpp"
+#include "utils/variant.hpp"
 
 std::unique_ptr<invariantgraph::SetInNode>
 invariantgraph::SetInNode::fromModelConstraint(
-    const std::shared_ptr<fznparser::Constraint>& constraint,
-    const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-        variableMap) {
-  assert(constraint->name() == "set_in");
-  assert(constraint->arguments().size() == 2);
+    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+  assert(constraint.name == "set_in");
+  assert(constraint.arguments.size() == 2);
 
-  MAPPED_SEARCH_VARIABLE_ARG(variable, constraint->arguments()[0], variableMap);
-  VALUE_VECTOR_ARG(values, constraint->arguments()[1]);
+  auto variable = mappedVariable(constraint.arguments[0], variableMap);
+  auto valueSet = integerSet(model, constraint.arguments[1]);
 
-  return std::make_unique<SetInNode>(variable, values);
+  // Note: if the valueSet is an IntRange, here all the values are collected
+  // into a vector. If it turns out memory usage is an issue, this should be
+  // mitigated.
+
+  return std::visit<std::unique_ptr<SetInNode>>(
+      overloaded{[&](const fznparser::LiteralSet<Int>& set) {
+                   return std::make_unique<SetInNode>(variable, set.values);
+                 },
+                 [&](const fznparser::IntRange& range) {
+                   std::vector<Int> values;
+                   values.resize(range.upperBound - range.lowerBound + 1);
+                   std::iota(values.begin(), values.end(), range.lowerBound);
+                   return std::make_unique<SetInNode>(variable, values);
+                 }},
+      valueSet);
 }
 
 void invariantgraph::SetInNode::registerWithEngine(
-    Engine& engine, std::map<VariableNode*, VarId>& variableMap) {
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   VarId violation = registerViolation(engine, variableMap);
   VarId input = variableMap.at(_input);
 

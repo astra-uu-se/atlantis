@@ -4,38 +4,38 @@
 
 class IntLinEqReifNodeTest : public NodeTestBase {
  public:
-  std::shared_ptr<fznparser::SearchVariable> a;
-  std::shared_ptr<fznparser::SearchVariable> b;
-  std::shared_ptr<fznparser::ValueLiteral> c;
-  std::shared_ptr<fznparser::SearchVariable> r;
+  INT_VARIABLE(a, 5, 10);
+  INT_VARIABLE(b, 2, 7);
+  INT_VARIABLE(r, 0, 1);
+  Int c{3};
+
+  fznparser::Constraint constraint{
+      "int_lin_eq_reif",
+      {fznparser::Constraint::ArrayArgument{1, -1},
+       fznparser::Constraint::ArrayArgument{"a", "b"}, c, "r"},
+      {}};
+
+  fznparser::FZNModel model{{}, {a, b, r}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::IntLinEqReifNode> node;
 
+  IntLinEqReifNodeTest() : NodeTestBase(model) {}
+
   void SetUp() override {
-    a = FZN_SEARCH_VARIABLE("a", 5, 10);
-    b = FZN_SEARCH_VARIABLE("b", 2, 7);
-    c = FZN_VALUE(3);
-    r = FZN_SEARCH_VARIABLE("r", 0, 1);
-
-    auto as = FZN_VECTOR_CONSTRAINT_ARG(FZN_VALUE(1), FZN_VALUE(-1));
-    auto bs = FZN_VECTOR_CONSTRAINT_ARG(a, b);
-
-    auto constraint =
-        makeConstraint("int_lin_eq_reif", FZN_NO_ANNOTATIONS, as, bs, c, r);
-
     node = makeNode<invariantgraph::IntLinEqReifNode>(constraint);
   }
 };
 
 TEST_F(IntLinEqReifNodeTest, construction) {
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(node->definedVariables()[0]->variable(), r);
+  EXPECT_EQ(*node->definedVariables()[0]->variable(),
+            invariantgraph::VariableNode::FZNVariable(r));
 }
 
 TEST_F(IntLinEqReifNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a, b});
+  registerVariables(engine, {a.name, b.name});
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

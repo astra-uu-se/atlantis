@@ -4,29 +4,32 @@
 
 class IntLinEqNodeTest : public NodeTestBase {
  public:
-  std::shared_ptr<fznparser::SearchVariable> a;
-  std::shared_ptr<fznparser::SearchVariable> b;
-  std::shared_ptr<fznparser::ValueLiteral> c;
+  INT_VARIABLE(a, 0, 10);
+  INT_VARIABLE(b, 0, 10);
+  Int sum{3};
+
+  fznparser::Constraint constraint{
+      "int_lin_eq",
+      {fznparser::Constraint::ArrayArgument{1, 2},
+       fznparser::Constraint::ArrayArgument{"a", "b"}, sum},
+      {}};
+
+  fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::IntLinEqNode> node;
 
+  IntLinEqNodeTest() : NodeTestBase(model) {}
+
   void SetUp() override {
-    a = FZN_SEARCH_VARIABLE("a", 0, 10);
-    b = FZN_SEARCH_VARIABLE("b", 0, 10);
-    c = FZN_VALUE(3);
-
-    auto constraint =
-        makeConstraint("int_lin_eq", FZN_NO_ANNOTATIONS,
-                       FZN_VECTOR_CONSTRAINT_ARG(FZN_VALUE(1), FZN_VALUE(2)),
-                       FZN_VECTOR_CONSTRAINT_ARG(a, b), c);
-
     node = makeNode<invariantgraph::IntLinEqNode>(constraint);
   }
 };
 
 TEST_F(IntLinEqNodeTest, construction) {
-  EXPECT_EQ(node->variables()[0]->variable(), a);
-  EXPECT_EQ(node->variables()[1]->variable(), b);
+  EXPECT_EQ(*node->variables()[0]->variable(),
+            invariantgraph::VariableNode::FZNVariable(a));
+  EXPECT_EQ(*node->variables()[1]->variable(),
+            invariantgraph::VariableNode::FZNVariable(b));
   expectMarkedAsInput(node.get(), node->variables());
 
   EXPECT_EQ(node->coeffs()[0], 1);
@@ -37,7 +40,7 @@ TEST_F(IntLinEqNodeTest, construction) {
 TEST_F(IntLinEqNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a, b});
+  registerVariables(engine, {a.name, b.name});
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

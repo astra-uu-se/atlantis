@@ -2,29 +2,59 @@
 
 #include <gtest/gtest.h>
 
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include "core/propagationEngine.hpp"
+#include "fznparser/model.hpp"
 #include "invariantgraph/structure.hpp"
-#include "invariantgraphTest.hpp"
+#include "utils/variant.hpp"
+
+#define INT_VARIABLE(name, lb, ub)              \
+  fznparser::IntVariable name {                 \
+#name, fznparser::IntRange{lb, ub }, {}, {} \
+  }
+
+#define BOOL_VARIABLE(name)                         \
+  fznparser::BoolVariable name {                    \
+#name, fznparser::BasicDomain < bool>{}, {}, {} \
+  }
 
 class NodeTestBase : public testing::Test {
  protected:
+  fznparser::FZNModel& _model;
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
-  std::map<std::shared_ptr<fznparser::SearchVariable>,
-           invariantgraph::VariableNode*>
+  std::unordered_map<fznparser::Identifier, invariantgraph::VariableNode*>
       _nodeMap;
-  std::map<invariantgraph::VariableNode*, VarId> _variableMap;
+  std::unordered_map<invariantgraph::VariableNode*, VarId> _variableMap;
 
-  std::function<invariantgraph::VariableNode*(
-      std::shared_ptr<fznparser::Variable>)>
-      nodeFactory = [&](const auto& var) {
-        auto n = std::make_unique<invariantgraph::VariableNode>(
-            std::dynamic_pointer_cast<fznparser::SearchVariable>(var));
+  explicit NodeTestBase(fznparser::FZNModel& model) : _model(model) {}
 
-        auto ptr = n.get();
-        _nodeMap.emplace(n->variable(), ptr);
-        _variables.push_back(std::move(n));
-        return ptr;
-      };
+  std::function<invariantgraph::VariableNode*(invariantgraph::MappableValue&)>
+      nodeFactory = [&](const auto& mappable) -> invariantgraph::VariableNode* {
+    auto identifier = std::get<fznparser::Identifier>(mappable);
+    auto variable = std::get<fznparser::Variable>(*_model.identify(identifier));
+    auto n = std::visit<std::unique_ptr<invariantgraph::VariableNode>>(
+        overloaded{[](const fznparser::IntVariable& var) {
+                     return std::make_unique<invariantgraph::VariableNode>(
+                         invariantgraph::VariableNode::FZNVariable(var));
+                   },
+                   [](const fznparser::BoolVariable& var) {
+                     return std::make_unique<invariantgraph::VariableNode>(
+                         invariantgraph::VariableNode::FZNVariable(var));
+                   },
+                   [](const auto&) {
+                     assert(false);
+                     return nullptr;
+                   }},
+        variable);
+
+    auto ptr = n.get();
+    _nodeMap.emplace(identifier, ptr);
+    _variables.push_back(std::move(n));
+    return ptr;
+  };
 
   void TearDown() override {
     _nodeMap.clear();
@@ -32,24 +62,15 @@ class NodeTestBase : public testing::Test {
     _variables.clear();
   }
 
-  template <typename... Args>
-  inline std::shared_ptr<fznparser::Constraint> makeConstraint(
-      const std::string& name, fznparser::AnnotationCollection annotations,
-      Args... arguments) {
-    std::vector<fznparser::ConstraintArgument> args{{arguments...}};
-    return std::make_shared<fznparser::Constraint>(name, args, annotations);
-  }
-
   template <typename Node>
   inline std::unique_ptr<Node> makeNode(
-      std::shared_ptr<fznparser::Constraint> constraint) {
-    return Node::fromModelConstraint(constraint, nodeFactory);
+      const fznparser::Constraint& constraint) {
+    return Node::fromModelConstraint(_model, constraint, nodeFactory);
   }
 
   inline void registerVariables(
       PropagationEngine& engine,
-      const std::vector<std::shared_ptr<fznparser::SearchVariable>>&
-          freeVariables = {}) {
+      const std::vector<fznparser::Identifier>& freeVariables = {}) {
     for (const auto& modelVariable : freeVariables) {
       auto variable = _nodeMap.at(modelVariable);
       const auto& [lb, ub] = variable->bounds();
@@ -59,8 +80,8 @@ class NodeTestBase : public testing::Test {
   }
 
   [[nodiscard]] inline VarId engineVariable(
-      const std::shared_ptr<fznparser::SearchVariable>& variable) const {
-    return _variableMap.at(_nodeMap.at(variable));
+      const fznparser::IntVariable& variable) const {
+    return _variableMap.at(_nodeMap.at(variable.name));
   }
 };
 
