@@ -66,8 +66,16 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     unAppliedNodes.pop();
   }
 
-  VarId totalViolations =
-      engine.makeIntVar(0, 0, totalViolationsUpperBound(engine, violations));
+  // TODO: Do this better
+  // This is a quick fix to deal with overflow. However, overflow on signed
+  // integers is undefined behavior. Even though in practice it often means the
+  // value wraps around, we should definitely make this more robust.
+  auto totalViolationsUb = totalViolationsUpperBound(engine, violations);
+  if (totalViolationsUb < 0) {
+    totalViolationsUb = std::numeric_limits<Int>::max();
+  }
+
+  VarId totalViolations = engine.makeIntVar(0, 0, totalViolationsUb);
   engine.makeInvariant<Linear>(violations, totalViolations);
 
   // If the model has no variable to optimise, use a dummy variable.
