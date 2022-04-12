@@ -10,15 +10,13 @@ predicate int_plus(var int: a, var int: b, var int: c) = int_lin_eq([1, 1, -1], 
 %%%%%%%%%%%%%%%%%%%%
 % Bool constraints %
 %%%%%%%%%%%%%%%%%%%%
+predicate bool_and(var bool: a, var bool: b, var bool: r) = array_bool_and([a, b], r);
+predicate bool_or(var bool: a, var bool: b, var bool: r) = array_bool_or([a, b], r);
+
 predicate array_var_bool_element(var int: b, array [int] of var bool: as, var bool: c) =
     let { array[index_set(as)] of var 0..1: asInt;
           var 0..1: cInt } in
     asInt[b] = cInt /\ bool2int(c, cInt) /\ forall(i in index_set(as))(bool2int(as[i], asInt[i]));
-
-predicate bool_and(var bool: a, var bool: b, var bool: r) =
-    let { var 0..1: aInt;
-          var 0..1: bInt } in
-    (r <-> aInt + bInt = 2) /\ bool2int(a, aInt) /\ bool2int(b, bInt);
 
 predicate bool_clause(array [int] of var bool: as, array [int] of var bool: bs) =
     let { array[index_set(as)] of var 0..1: asInt;
@@ -71,11 +69,6 @@ predicate bool_not(var bool: a, var bool: b) =
     let { var 0..1: aInt;
           var 0..1: bInt } in
     bInt = 1 - aInt;
-
-predicate bool_or(var bool: a, var bool: b, var bool: r) =
-    let { var 0..1: aInt;
-          var 0..1: bInt } in
-    r <-> (aInt + bInt > 0);
 
 predicate bool_xor(var bool: a, var bool: b, var bool: r) =
     let { var 0..1: aInt;
