@@ -13,7 +13,7 @@ invariantgraph::IntLinEqNode::fromModelConstraint(
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
   auto variables =
-      mappedVariableVector(constraint.arguments[1], variableMap);
+      mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto bound = integerValue(model, constraint.arguments[2]);
 
   return std::make_unique<IntLinEqNode>(coeffs, variables, bound);

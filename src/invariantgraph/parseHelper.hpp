@@ -12,7 +12,7 @@ using FZNSearchVariable =
     std::variant<fznparser::IntVariable, fznparser::BoolVariable>;
 
 std::vector<invariantgraph::VariableNode*> mappedVariableVector(
-    const FZNConstraint::Argument& argument,
+    const fznparser::FZNModel& model, const FZNConstraint::Argument& argument,
     const std::function<invariantgraph::VariableNode*(
         invariantgraph::MappableValue&)>& variableMap);
 

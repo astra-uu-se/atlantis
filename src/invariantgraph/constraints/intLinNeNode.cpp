@@ -1,8 +1,8 @@
 #include "invariantgraph/constraints/intLinNeNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariants/linear.hpp"
 #include "constraints/notEqual.hpp"
+#include "invariants/linear.hpp"
 
 std::unique_ptr<invariantgraph::IntLinNeNode>
 invariantgraph::IntLinNeNode::fromModelConstraint(
@@ -13,7 +13,7 @@ invariantgraph::IntLinNeNode::fromModelConstraint(
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
   auto variables =
-      mappedVariableVector(constraint.arguments[1], variableMap);
+      mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto c = integerValue(model, constraint.arguments[2]);
 
   return std::make_unique<IntLinNeNode>(coeffs, variables, c);
