@@ -10,10 +10,6 @@ predicate int_plus(var int: a, var int: b, var int: c) = int_lin_eq([1, 1, -1], 
 %%%%%%%%%%%%%%%%%%%%
 % Bool constraints %
 %%%%%%%%%%%%%%%%%%%%
-predicate array_bool_or(array [int] of var bool: as, var bool: r) =
-    let { array[index_set(as)] of var 0..1: asInt } in
-    (r <-> sum(asInt) > 0) /\ forall(i in index_set(as))(bool2int(as[i], asInt[i]));
-
 predicate array_var_bool_element(var int: b, array [int] of var bool: as, var bool: c) =
     let { array[index_set(as)] of var 0..1: asInt;
           var 0..1: cInt } in
