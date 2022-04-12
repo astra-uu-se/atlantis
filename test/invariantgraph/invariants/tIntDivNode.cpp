@@ -4,38 +4,41 @@
 
 class IntDivNodeTest : public NodeTestBase {
  public:
-  std::shared_ptr<fznparser::SearchVariable> a;
-  std::shared_ptr<fznparser::SearchVariable> b;
-  std::shared_ptr<fznparser::SearchVariable> c;
+  INT_VARIABLE(a, 0, 10);
+  INT_VARIABLE(b, 1, 10);
+  INT_VARIABLE(c, 3, 5);
+
+  fznparser::Constraint constraint{
+      "int_div", {"a", "b", "c"}, {fznparser::DefinesVariableAnnotation{"c"}}};
+
+  fznparser::FZNModel model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
 
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
   std::unique_ptr<invariantgraph::IntDivNode> node;
 
+  IntDivNodeTest() : NodeTestBase(model) {}
+
   void SetUp() override {
-    a = FZN_SEARCH_VARIABLE("a", 0, 10);
-    b = FZN_SEARCH_VARIABLE("b", 1, 10);
-    c = FZN_SEARCH_VARIABLE("c", 3, 5);
-
-    FZN_DEFINES_VAR_ANNOTATION(annotations, c);
-    auto constraint = makeConstraint("int_div", annotations, a, b, c);
-
     node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntDivNode>(constraint, nodeFactory);
+        invariantgraph::IntDivNode>(_model, constraint, nodeFactory);
   }
 };
 
 TEST_F(IntDivNodeTest, construction) {
-  EXPECT_EQ(node->a()->variable(), a);
-  EXPECT_EQ(node->b()->variable(), b);
+  EXPECT_EQ(*node->a()->variable(),
+            invariantgraph::VariableNode::FZNVariable(a));
+  EXPECT_EQ(*node->b()->variable(),
+            invariantgraph::VariableNode::FZNVariable(b));
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(node->definedVariables()[0]->variable(), c);
+  EXPECT_EQ(*node->definedVariables()[0]->variable(),
+            invariantgraph::VariableNode::FZNVariable(c));
   expectMarkedAsInput(node.get(), {node->a(), node->b()});
 }
 
 TEST_F(IntDivNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a, b});
+  registerVariables(engine, {a.name, b.name});
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

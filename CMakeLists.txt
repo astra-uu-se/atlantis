@@ -51,7 +51,7 @@ include(FetchContent)
 FetchContent_Declare(
         fznparser
         GIT_REPOSITORY git@github.com:astra-uu-se/fznparser.git
-        GIT_TAG 24f6531916cc2e007e4d0712aea7a1be0415ca16
+        GIT_TAG a4bfe45eec246b54b44616347061d58fb02355a9
 )
 FetchContent_Declare(
         cxxopts

@@ -1,8 +1,6 @@
 #pragma once
 
-#include <map>
-#include <memory>
-#include <set>
+#include <unordered_map>
 #include <vector>
 
 #include "core/engine.hpp"
@@ -14,8 +12,7 @@ namespace invariantgraph {
 class InvariantGraphApplyResult {
  public:
   using VariableMap =
-      std::unordered_map<VarId, std::shared_ptr<fznparser::SearchVariable>,
-                         VarIdHash>;
+      std::unordered_map<VarId, fznparser::Identifier, VarIdHash>;
 
   InvariantGraphApplyResult(
       VariableMap variableMap,
@@ -80,6 +77,9 @@ class InvariantGraph {
       }
     }
   }
+
+  InvariantGraph(const InvariantGraph&) = delete;
+  InvariantGraph(InvariantGraph&&) = default;
 
   InvariantGraphApplyResult apply(Engine& engine);
 };

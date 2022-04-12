@@ -8,22 +8,21 @@
 
 std::unique_ptr<invariantgraph::IntLinLeNode>
 invariantgraph::IntLinLeNode::fromModelConstraint(
-    const std::shared_ptr<fznparser::Constraint> &constraint,
-    const std::function<VariableNode *(std::shared_ptr<fznparser::Variable>)>
-        &variableMap) {
-  assert(constraint->name() == "int_lin_le");
-  assert(constraint->arguments().size() == 3);
+    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+  assert(constraint.name == "int_lin_le");
+  assert(constraint.arguments.size() == 3);
 
-  VALUE_VECTOR_ARG(coeffs, constraint->arguments()[0]);
-  MAPPED_SEARCH_VARIABLE_VECTOR_ARG(variables, constraint->arguments()[1],
-                             variableMap);
-  VALUE_ARG(bound, constraint->arguments()[2]);
+  auto coeffs = integerVector(model, constraint.arguments[0]);
+  auto variables =
+      mappedVariableVector(model, constraint.arguments[1], variableMap);
+  auto bound = integerValue(model, constraint.arguments[2]);
 
   return std::make_unique<IntLinLeNode>(coeffs, variables, bound);
 }
 
 void invariantgraph::IntLinLeNode::registerWithEngine(
-    Engine &engine, std::map<VariableNode*, VarId>& variableMap) {
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   auto [sumLb, sumUb] = getDomainBounds();
   auto sumVar = engine.makeIntVar(0, sumLb, sumUb);
 
@@ -43,9 +42,11 @@ std::pair<Int, Int> invariantgraph::IntLinLeNode::getDomainBounds() const {
   Int ub = 0;
 
   for (size_t idx = 0; idx < _coeffs.size(); idx++) {
-    lb += _coeffs[idx] * _variables[idx]->variable()->domain()->lowerBound();
-    ub += _coeffs[idx] * _variables[idx]->variable()->domain()->upperBound();
+    const auto& [varLb, varUb] = _variables[idx]->bounds();
+
+    lb += _coeffs[idx] * varLb;
+    ub += _coeffs[idx] * varUb;
   }
 
-  return std::make_pair(lb, ub);
+  return {lb, ub};
 }

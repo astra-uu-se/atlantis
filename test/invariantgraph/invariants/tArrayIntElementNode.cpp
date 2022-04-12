@@ -4,50 +4,46 @@
 
 class ArrayIntElementNodeTest : public NodeTestBase {
  public:
-  std::vector<std::shared_ptr<fznparser::Literal>> as = {
-      std::make_shared<fznparser::ValueLiteral>(1),
-      std::make_shared<fznparser::ValueLiteral>(2),
-      std::make_shared<fznparser::ValueLiteral>(3)};
+  INT_VARIABLE(b, 0, 10);
+  INT_VARIABLE(c, 0, 10);
 
-  std::shared_ptr<fznparser::SearchVariable> b;
-  std::shared_ptr<fznparser::SearchVariable> c;
+  fznparser::Constraint constraint{
+      "array_int_element",
+      {"b", fznparser::Constraint::ArrayArgument{1, 2, 3}, "c"},
+      {}};
+  fznparser::FZNModel model{{}, {b, c}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::ArrayIntElementNode> node;
 
+  ArrayIntElementNodeTest() : NodeTestBase(model) {}
+
   void SetUp() override {
-    b = FZN_SEARCH_VARIABLE("b", 0, 10);
-    c = FZN_SEARCH_VARIABLE("c", 0, 10);
-
-    auto constraint =
-        makeConstraint("array_int_element", FZN_NO_ANNOTATIONS, b, as, c);
-
     node = makeNode<invariantgraph::ArrayIntElementNode>(constraint);
   }
 };
 
 TEST_F(ArrayIntElementNodeTest, construction) {
-  EXPECT_EQ(node->b()->variable(), b);
+  EXPECT_EQ(*node->b()->variable(),
+            invariantgraph::VariableNode::FZNVariable(b));
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(node->definedVariables()[0]->variable(), c);
+  EXPECT_EQ(*node->definedVariables()[0]->variable(),
+            invariantgraph::VariableNode::FZNVariable(c));
   expectMarkedAsInput(node.get(), {node->b()});
 
-  for (size_t idx = 0; idx < as.size(); idx++) {
-    EXPECT_EQ(
-        node->as()[idx],
-        std::static_pointer_cast<fznparser::ValueLiteral>(as[idx])->value());
-  }
+  std::vector<Int> expectedAs{1, 2, 3};
+  EXPECT_EQ(node->as(), expectedAs);
 }
 
 TEST_F(ArrayIntElementNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {b});
+  registerVariables(engine, {b.name});
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
   // The index ranges over the as array (first index is 1).
   EXPECT_EQ(engine.lowerBound(engineVariable(b)), 1);
-  EXPECT_EQ(engine.upperBound(engineVariable(b)), as.size());
+  EXPECT_EQ(engine.upperBound(engineVariable(b)), node->as().size());
 
   // The output domain should contain all elements in as.
   EXPECT_EQ(engine.lowerBound(engineVariable(c)), 1);

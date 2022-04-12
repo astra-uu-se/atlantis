@@ -8,24 +8,24 @@
 
 std::unique_ptr<invariantgraph::LinearNode>
 invariantgraph::LinearNode::fromModelConstraint(
-    const std::shared_ptr<fznparser::Constraint>& constraint,
-    const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-        variableMap) {
-  assert(constraint->arguments().size() == 3);
-  assert(constraint->annotations().has<fznparser::DefinesVarAnnotation>());
+    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+  assert(constraint.arguments.size() == 3);
 
-  VALUE_VECTOR_ARG(coeffs, constraint->arguments()[0]);
-  MAPPED_SEARCH_VARIABLE_VECTOR_ARG(vars, constraint->arguments()[1],
-                                    variableMap);
-  VALUE_ARG(sum, constraint->arguments()[2]);
+  auto coeffs = integerVector(model, constraint.arguments[0]);
+  auto vars = mappedVariableVector(model, constraint.arguments[1], variableMap);
+  auto sum = integerValue(model, constraint.arguments[2]);
 
-  auto definedVar = constraint->annotations()
-                        .get<fznparser::DefinesVarAnnotation>()
-                        ->defines()
-                        .lock();
+  auto definedVarId = definedVariable(constraint);
+  assert(definedVarId);
+
   auto definedVarPos =
-      std::find_if(vars.begin(), vars.end(), [&definedVar](auto varNode) {
-        return varNode->variable()->name() == definedVar->name();
+      std::find_if(vars.begin(), vars.end(), [&](auto varNode) {
+        assert(varNode->variable());
+
+        return std::visit<bool>(
+            [&](const auto& var) { return definedVarId == var.name; },
+            *varNode->variable());
       });
 
   assert(definedVarPos != vars.end());
@@ -52,7 +52,7 @@ invariantgraph::LinearNode::fromModelConstraint(
 }
 
 void invariantgraph::LinearNode::registerWithEngine(
-    Engine& engine, std::map<VariableNode*, VarId>& variableMap) {
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),
                  std::back_inserter(variables),

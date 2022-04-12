@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include "invariants/linear.hpp"
+#include "utils/fznAst.hpp"
 
 static Int totalViolationsUpperBound(Engine& engine,
                                      const std::vector<VarId>& violations) {
@@ -14,11 +15,17 @@ static Int totalViolationsUpperBound(Engine& engine,
 }
 
 static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
-    const std::map<invariantgraph::VariableNode*, VarId>& variableIds) {
+    const std::unordered_map<invariantgraph::VariableNode*, VarId>&
+        variableIds) {
   invariantgraph::InvariantGraphApplyResult::VariableMap variableMap{};
+
   for (const auto& [node, varId] : variableIds) {
-    if (auto modelVariable = node->variable()) {
-      variableMap.emplace(varId, modelVariable);
+    if (node->variable()) {
+      std::visit(
+          [&, varId = varId](const auto& variable) {
+            variableMap.emplace(varId, variable.name);
+          },
+          *node->variable());
     }
   }
   return variableMap;
@@ -28,7 +35,7 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     Engine& engine) {
   engine.open();
 
-  std::map<VariableNode*, VarId> variableIds;
+  std::unordered_map<VariableNode*, VarId> variableIds;
   std::vector<VarId> violations;
 
   std::queue<invariantgraph::VariableDefiningNode*> unAppliedNodes;
@@ -59,8 +66,16 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     unAppliedNodes.pop();
   }
 
-  VarId totalViolations =
-      engine.makeIntVar(0, 0, totalViolationsUpperBound(engine, violations));
+  // TODO: Do this better
+  // This is a quick fix to deal with overflow. However, overflow on signed
+  // integers is undefined behavior. Even though in practice it often means the
+  // value wraps around, we should definitely make this more robust.
+  auto totalViolationsUb = totalViolationsUpperBound(engine, violations);
+  if (totalViolationsUb < 0) {
+    totalViolationsUb = std::numeric_limits<Int>::max();
+  }
+
+  VarId totalViolations = engine.makeIntVar(0, 0, totalViolationsUb);
   engine.makeInvariant<Linear>(violations, totalViolations);
 
   // If the model has no variable to optimise, use a dummy variable.

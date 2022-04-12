@@ -4,31 +4,34 @@
 
 class IntNeNodeTest : public NodeTestBase {
  public:
-  std::shared_ptr<fznparser::SearchVariable> a;
-  std::shared_ptr<fznparser::SearchVariable> b;
+  INT_VARIABLE(a, 5, 10);
+  INT_VARIABLE(b, 2, 7);
+
+  fznparser::Constraint constraint{"int_ne", {"a", "b"}, {}};
+
+  fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::IntNeNode> node;
 
+  explicit IntNeNodeTest() : NodeTestBase(model) {}
+
   void SetUp() override {
-    a = FZN_SEARCH_VARIABLE("a", 5, 10);
-    b = FZN_SEARCH_VARIABLE("b", 2, 7);
-
-    auto constraint = makeConstraint("int_ne", FZN_NO_ANNOTATIONS, a, b);
-
     node = makeNode<invariantgraph::IntNeNode>(constraint);
   }
 };
 
 TEST_F(IntNeNodeTest, construction) {
-  EXPECT_EQ(node->a()->variable(), a);
-  EXPECT_EQ(node->b()->variable(), b);
+  EXPECT_EQ(*node->a()->variable(),
+            invariantgraph::VariableNode::FZNVariable(a));
+  EXPECT_EQ(*node->b()->variable(),
+            invariantgraph::VariableNode::FZNVariable(b));
   expectMarkedAsInput(node.get(), {node->a(), node->b()});
 }
 
 TEST_F(IntNeNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a, b});
+  registerVariables(engine, {a.name, b.name});
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

@@ -4,22 +4,23 @@
 
 class AllDifferentNodeTest : public NodeTestBase {
  public:
-  std::shared_ptr<fznparser::SearchVariable> a;
-  std::shared_ptr<fznparser::SearchVariable> b;
-  std::shared_ptr<fznparser::SearchVariable> c;
-  std::shared_ptr<fznparser::SearchVariable> d;
+  INT_VARIABLE(a, 5, 10);
+  INT_VARIABLE(b, 2, 7);
+  INT_VARIABLE(c, 2, 7);
+  INT_VARIABLE(d, 2, 7);
+
+  fznparser::Constraint constraint{
+      "alldifferent",
+      {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
+      {}};
+  fznparser::FZNModel model{
+      {}, {a, b, c, d}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::AllDifferentNode> node;
 
+  AllDifferentNodeTest() : NodeTestBase(model) {}
+
   void SetUp() override {
-    a = FZN_SEARCH_VARIABLE("a", 5, 10);
-    b = FZN_SEARCH_VARIABLE("b", 2, 7);
-    c = FZN_SEARCH_VARIABLE("c", 2, 7);
-    d = FZN_SEARCH_VARIABLE("d", 2, 7);
-
-    auto constraint = makeConstraint("alldifferent", FZN_NO_ANNOTATIONS,
-                                     FZN_VECTOR_CONSTRAINT_ARG(a, b, c, d));
-
     node = makeNode<invariantgraph::AllDifferentNode>(constraint);
   }
 };
@@ -37,7 +38,7 @@ TEST_F(AllDifferentNodeTest, construction) {
 TEST_F(AllDifferentNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a, b, c, d});
+  registerVariables(engine, {a.name, b.name, c.name, d.name});
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

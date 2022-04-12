@@ -9,11 +9,10 @@ namespace search {
 
 class SearchController {
  public:
-  using VariableMap =
-      std::unordered_map<std::shared_ptr<fznparser::SearchVariable>, VarId>;
+  using VariableMap = std::unordered_map<fznparser::Identifier, VarId>;
 
  private:
-  const fznparser::Model& _fznModel;
+  const fznparser::FZNModel& _fznModel;
   VariableMap _variableMap;
   std::optional<std::chrono::milliseconds> _timeout;
 
@@ -21,13 +20,13 @@ class SearchController {
   bool _started{false};
 
  public:
-  SearchController(const fznparser::Model& fznModel, VariableMap variableMap)
+  SearchController(const fznparser::FZNModel& fznModel, VariableMap variableMap)
       : _fznModel(fznModel),
         _variableMap(std::move(variableMap)),
         _timeout({}) {}
 
   template <typename Rep, typename Period>
-  SearchController(const fznparser::Model& fznModel, VariableMap variableMap,
+  SearchController(const fznparser::FZNModel& fznModel, VariableMap variableMap,
                    std::chrono::duration<Rep, Period> timeout)
       : _fznModel(fznModel),
         _variableMap(std::move(variableMap)),

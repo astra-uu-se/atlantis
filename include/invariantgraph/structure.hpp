@@ -1,14 +1,11 @@
 #pragma once
 
-#include <functional>
-#include <map>
-#include <memory>
-#include <set>
-#include <utility>
-#include <variant>
+#include <fznparser/ast.hpp>
+#include <optional>
+#include <unordered_map>
+#include <vector>
 
 #include "core/engine.hpp"
-#include "fznparser/model.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 #include "search/searchVariable.hpp"
 
@@ -17,13 +14,22 @@ namespace invariantgraph {
 class VariableDefiningNode;
 
 /**
+ * The types that can be in an array of search variables.
+ */
+using MappableValue = std::variant<Int, bool, fznparser::Identifier>;
+
+/**
  * A variable in the invariant graph. Every variable is defined by a
  * VariableDefiningNode. The variable is possibly associated with a model
  * variable.
  */
 class VariableNode {
+ public:
+  using FZNVariable =
+      std::variant<fznparser::IntVariable, fznparser::BoolVariable>;
+
  private:
-  std::shared_ptr<fznparser::SearchVariable> _variable;
+  std::optional<FZNVariable> _variable;
   SearchDomain _domain;
 
   std::vector<VariableDefiningNode*> _inputFor;
@@ -34,17 +40,7 @@ class VariableNode {
    *
    * @param variable The model variable this node is associated with.
    */
-  explicit VariableNode(std::shared_ptr<fznparser::SearchVariable> variable)
-      : _variable(std::move(variable)),
-        _domain{IntervalDomain(_variable->domain()->lowerBound(),
-                               _variable->domain()->upperBound())} {
-    if (auto setDomain =
-            dynamic_cast<fznparser::SetDomain*>(_variable->domain())) {
-      _domain = SetDomain(setDomain->values());
-    } else if (_variable->domain()->type() == fznparser::DomainType::BOOL) {
-      _domain = SetDomain({0, 1});
-    }
-  }
+  explicit VariableNode(FZNVariable variable);
 
   /**
    * Construct a variable node which is not associated with a model variable.
@@ -52,13 +48,13 @@ class VariableNode {
    * @param domain The domain of this variable.
    */
   explicit VariableNode(SearchDomain domain)
-      : _variable(nullptr), _domain(std::move(domain)) {}
+      : _variable(std::nullopt), _domain(std::move(domain)) {}
 
   /**
-   * @return The model variable this node is associated with. If the node is not
-   * associated with a model variable, this returns a @p nullptr.
+   * @return The model variable this node is associated with, or std::nullopt
+   * if no model variable is associated with this node.
    */
-  [[nodiscard]] std::shared_ptr<fznparser::SearchVariable> variable() const {
+  [[nodiscard]] std::optional<FZNVariable> variable() const {
     return _variable;
   }
 
@@ -67,15 +63,11 @@ class VariableNode {
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
 
   [[nodiscard]] std::pair<Int, Int> bounds() const noexcept {
-    Int lb, ub;
-    std::visit(
+    return std::visit<std::pair<Int, Int>>(
         [&](auto& domain) {
-          lb = domain.lowerBound();
-          ub = domain.upperBound();
+          return std::make_pair(domain.lowerBound(), domain.upperBound());
         },
         _domain);
-
-    return {lb, ub};
   }
 
   /**
@@ -104,6 +96,8 @@ class VariableDefiningNode {
   std::vector<VariableNode*> _definedVariables;
 
  public:
+  using VariableMap = std::unordered_map<VariableNode*, VarId>;
+
   explicit VariableDefiningNode(std::vector<VariableNode*> definedVariables,
                                 const std::vector<VariableNode*>& inputs = {})
       : _definedVariables(std::move(definedVariables)) {
@@ -128,8 +122,7 @@ class VariableDefiningNode {
    * and views.
    * @param variableMap A map of variable nodes to VarIds.
    */
-  virtual void registerWithEngine(
-      Engine& engine, std::map<VariableNode*, VarId>& variableMap) = 0;
+  virtual void registerWithEngine(Engine& engine, VariableMap& variableMap) = 0;
 
   /**
    * @return The variable nodes defined by this node.
@@ -147,9 +140,9 @@ class VariableDefiningNode {
   [[nodiscard]] virtual VariableNode* violation() { return nullptr; }
 
  protected:
-  inline VarId registerDefinedVariable(
-      Engine& engine, std::map<VariableNode*, VarId>& variableMap,
-      VariableNode* variable) {
+  static inline VarId registerDefinedVariable(Engine& engine,
+                                              VariableMap& variableMap,
+                                              VariableNode* variable) {
     const auto& [lb, ub] = variable->bounds();
     auto varId = engine.makeIntVar(lb, lb, ub);
 
@@ -172,8 +165,8 @@ class ImplicitConstraintNode : public VariableDefiningNode {
       : VariableDefiningNode(std::move(definedVariables)) {}
   ~ImplicitConstraintNode() override { delete _neighbourhood; }
 
-  void registerWithEngine(Engine& engine,
-                          std::map<VariableNode*, VarId>& variableMap) override;
+  void registerWithEngine(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   /**
    * Take the neighbourhood which is constructed in the registerWithEngine
@@ -219,8 +212,8 @@ class SoftConstraintNode : public VariableDefiningNode {
   [[nodiscard]] VariableNode* violation() override { return &_violation; }
 
  protected:
-  inline VarId registerViolation(Engine& engine,
-                                 std::map<VariableNode*, VarId>& variableMap) {
+  inline VarId registerViolation(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
     return registerDefinedVariable(engine, variableMap, violation());
   }
 };

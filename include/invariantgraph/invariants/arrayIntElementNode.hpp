@@ -1,7 +1,8 @@
 #pragma once
 
+#include <fznparser/model.hpp>
+
 #include "../structure.hpp"
-#include "fznparser/constraint.hpp"
 
 namespace invariantgraph {
 
@@ -12,9 +13,8 @@ class ArrayIntElementNode : public VariableDefiningNode {
 
  public:
   static std::unique_ptr<ArrayIntElementNode> fromModelConstraint(
-      const std::shared_ptr<fznparser::Constraint>& constraint,
-      const std::function<VariableNode*(std::shared_ptr<fznparser::Variable>)>&
-          variableMap);
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
@@ -27,8 +27,7 @@ class ArrayIntElementNode : public VariableDefiningNode {
   }
 
   void registerWithEngine(
-      Engine& engine,
-      std::map<VariableNode*, VarId>& variableMap) override;
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   [[nodiscard]] const std::vector<Int>& as() const noexcept { return _as; }
   [[nodiscard]] VariableNode* b() const noexcept { return _b; }

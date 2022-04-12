@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fznparser/model.hpp>
 #include <utility>
 
 #include "invariantgraph/structure.hpp"
@@ -12,11 +13,12 @@ class ReifiedConstraint : public VariableDefiningNode {
   VariableNode* _r;
 
  public:
-  ReifiedConstraint(std::unique_ptr<SoftConstraintNode> constraint, VariableNode* r)
+  ReifiedConstraint(std::unique_ptr<SoftConstraintNode> constraint,
+                    VariableNode* r)
       : VariableDefiningNode({r}), _constraint(std::move(constraint)), _r(r) {}
 
   void registerWithEngine(Engine& engine,
-                          std::map<VariableNode*, VarId>& map) override;
+                          VariableDefiningNode::VariableMap& map) override;
 };
 
 }  // namespace invariantgraph
