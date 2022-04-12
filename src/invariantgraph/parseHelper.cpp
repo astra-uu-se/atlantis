@@ -178,7 +178,9 @@ Int integerValue(const FZNModel &model,
 bool definesVariable(const FZNConstraint &constraint,
                      const FZNSearchVariable &variable) {
   auto definedVariableId = definedVariable(constraint);
-  if (!definedVariableId) return false;
+  if (!definedVariableId) {
+    return false;
+  }
 
   return std::visit<bool>(
       [&](const auto &var) { return definedVariableId == var.name; }, variable);
