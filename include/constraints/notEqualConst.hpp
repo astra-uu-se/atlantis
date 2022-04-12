@@ -8,13 +8,13 @@
 #include "variables/intVar.hpp"
 
 class Engine;
-class NotEqual : public Constraint {
+class NotEqualConst : public Constraint {
  private:
   const VarId _x;
-  const VarId _y;
+  const Int _y;
 
  public:
-  NotEqual(VarId violationId, VarId x, VarId y);
+  NotEqualConst(VarId violationId, VarId x, Int y);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&) override;
@@ -23,4 +23,6 @@ class NotEqual : public Constraint {
   void commit(Timestamp, Engine&) override;
   VarId nextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
+
+  static bool shouldPost(Engine& engine, VarId x, Int y);
 };

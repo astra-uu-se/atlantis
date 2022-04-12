@@ -150,9 +150,7 @@ TEST_F(IntDivTest, NextInput) {
                                        engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
   IntDiv& invariant =
       engine->makeInvariant<IntDiv>(inputs.at(0), inputs.at(1), outputId);
   engine->close();

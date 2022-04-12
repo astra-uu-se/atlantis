@@ -159,9 +159,7 @@ TEST_F(IfThenElseTest, NextInput) {
                                        engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
       inputs.at(0), inputs.at(1), inputs.at(2), outputId);
   engine->close();

@@ -1,54 +1,40 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <limits>
 #include <random>
 #include <vector>
 
 #include "../testHelper.hpp"
-#include "constraints/lessThan.hpp"
+#include "constraints/powDomain.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
 
 using ::testing::AtLeast;
-using ::testing::AtMost;
 using ::testing::Return;
 
 namespace {
 
-class LessThanTest : public InvariantTest {
+class PowDomainTest : public InvariantTest {
  public:
-  Int computeViolation(Timestamp ts, std::array<VarId, 2> inputs) {
-    return computeViolation(engine->value(ts, inputs.at(0)),
-                            engine->value(ts, inputs.at(1)));
+  Int computeViolation(Timestamp ts, const VarId x, const VarId y) {
+    return computeViolation(engine->value(ts, x), engine->value(ts, y));
   }
 
-  Int computeViolation(std::array<Int, 2> inputs) {
-    return computeViolation(inputs.at(0), inputs.at(1));
-  }
-
-  Int computeViolation(Timestamp ts, const VarId a, const VarId b) {
-    return computeViolation(engine->value(ts, a), engine->value(ts, b));
-  }
-
-  Int computeViolation(const Int aVal, const Int bVal) {
-    if (aVal < bVal) {
-      return 0;
-    }
-    return aVal + 1 - bVal;
+  Int computeViolation(const Int xVal, const Int yVal) {
+    return xVal == 0 && yVal < 0 ? 1 : 0;
   }
 };
 
-TEST_F(LessThanTest, UpdateBounds) {
+TEST_F(PowDomainTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
-      {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
+      {-20, -15}, {-10, -10}, {-5, 0}, {-2, 2}, {0, 5}, {10, 10}, {15, 20}};
   engine->open();
   const VarId x = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId y = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId violationId = engine->makeIntVar(0, 0, 2);
-  LessThan& invariant = engine->makeConstraint<LessThan>(violationId, x, y);
+  const VarId violationId = engine->makeIntVar(0, 0, 1);
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(violationId, x, y);
   engine->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
@@ -72,33 +58,34 @@ TEST_F(LessThanTest, UpdateBounds) {
       const auto& [minViol, maxViol] =
           std::minmax_element(violations.begin(), violations.end());
       ASSERT_EQ(*minViol, engine->lowerBound(violationId));
-      ASSERT_EQ(*maxViol, engine->upperBound(violationId));
+      if (*maxViol != engine->upperBound(violationId)) {
+        ASSERT_EQ(*maxViol, engine->upperBound(violationId));
+      }
     }
   }
 }
 
-TEST_F(LessThanTest, Recompute) {
-  const Int aLb = -100;
-  const Int aUb = 25;
-  const Int bLb = -25;
-  const Int bUb = 50;
-  EXPECT_TRUE(aLb <= aUb);
-  EXPECT_TRUE(bLb <= bUb);
+TEST_F(PowDomainTest, Recompute) {
+  const Int xLb = -5;
+  const Int xUb = 5;
+  const Int yLb = -5;
+  const Int yUb = 5;
+  EXPECT_TRUE(xLb <= xUb);
+  EXPECT_TRUE(yLb <= yUb);
 
   engine->open();
-  const VarId a = engine->makeIntVar(aUb, aLb, aUb);
-  const VarId b = engine->makeIntVar(bUb, bLb, bUb);
-  const VarId violationId =
-      engine->makeIntVar(0, 0, std::max(aUb - bLb, bUb - aLb));
-  LessThan& invariant = engine->makeConstraint<LessThan>(violationId, a, b);
+  const VarId x = engine->makeIntVar(xUb, xLb, xUb);
+  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
+  const VarId violationId = engine->makeIntVar(0, 0, 1);
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(violationId, x, y);
   engine->close();
 
-  for (Int aVal = aLb; aVal <= aUb; ++aVal) {
-    for (Int bVal = bLb; bVal <= bUb; ++bVal) {
-      engine->setValue(engine->currentTimestamp(), a, aVal);
-      engine->setValue(engine->currentTimestamp(), b, bVal);
+  for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+    for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+      engine->setValue(engine->currentTimestamp(), x, xVal);
+      engine->setValue(engine->currentTimestamp(), y, yVal);
 
-      const Int expectedViolation = computeViolation(aVal, bVal);
+      const Int expectedViolation = computeViolation(xVal, yVal);
       invariant.recompute(engine->currentTimestamp(), *engine);
       EXPECT_EQ(expectedViolation,
                 engine->value(engine->currentTimestamp(), violationId));
@@ -106,24 +93,24 @@ TEST_F(LessThanTest, Recompute) {
   }
 }
 
-TEST_F(LessThanTest, NotifyInputChanged) {
-  const Int lb = -50;
-  const Int ub = 50;
+TEST_F(PowDomainTest, NotifyInputChanged) {
+  const Int lb = -5;
+  const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
   std::array<VarId, 2> inputs{engine->makeIntVar(ub, lb, ub),
                               engine->makeIntVar(ub, lb, ub)};
-  const VarId violationId = engine->makeIntVar(0, 0, ub - lb);
-  LessThan& invariant =
-      engine->makeConstraint<LessThan>(violationId, inputs.at(0), inputs.at(1));
+  const VarId violationId = engine->makeIntVar(0, 0, 1);
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(
+      violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int val = lb; val <= ub; ++val) {
     for (size_t i = 0; i < inputs.size(); ++i) {
       engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
-      const Int expectedViolation =
-          computeViolation(engine->currentTimestamp(), inputs);
+      const Int expectedViolation = computeViolation(
+          engine->currentTimestamp(), inputs.at(0), inputs.at(1));
 
       invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
                                    LocalId(i));
@@ -133,19 +120,19 @@ TEST_F(LessThanTest, NotifyInputChanged) {
   }
 }
 
-TEST_F(LessThanTest, NextInput) {
-  const Int lb = -10;
-  const Int ub = 10;
+TEST_F(PowDomainTest, NextInput) {
+  const Int lb = -5;
+  const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  LessThan& invariant =
-      engine->makeConstraint<LessThan>(violationId, inputs.at(0), inputs.at(1));
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(
+      violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -166,9 +153,9 @@ TEST_F(LessThanTest, NextInput) {
   }
 }
 
-TEST_F(LessThanTest, NotifyCurrentInputChanged) {
-  const Int lb = -10;
-  const Int ub = 10;
+TEST_F(PowDomainTest, NotifyCurrentInputChanged) {
+  const Int lb = -5;
+  const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
@@ -177,8 +164,8 @@ TEST_F(LessThanTest, NotifyCurrentInputChanged) {
       engine->makeIntVar(valueDist(gen), lb, ub),
       engine->makeIntVar(valueDist(gen), lb, ub)};
   const VarId violationId = engine->makeIntVar(0, 0, ub - lb);
-  LessThan& invariant =
-      engine->makeConstraint<LessThan>(violationId, inputs.at(0), inputs.at(1));
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(
+      violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -190,14 +177,15 @@ TEST_F(LessThanTest, NotifyCurrentInputChanged) {
         engine->setValue(ts, varId, valueDist(gen));
       } while (engine->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts, *engine);
-      EXPECT_EQ(engine->value(ts, violationId), computeViolation(ts, inputs));
+      EXPECT_EQ(engine->value(ts, violationId),
+                computeViolation(ts, inputs.at(0), inputs.at(1)));
     }
   }
 }
 
-TEST_F(LessThanTest, Commit) {
-  const Int lb = -10;
-  const Int ub = 10;
+TEST_F(PowDomainTest, Commit) {
+  const Int lb = -5;
+  const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
@@ -210,12 +198,13 @@ TEST_F(LessThanTest, Commit) {
   std::shuffle(indices.begin(), indices.end(), rng);
 
   const VarId violationId = engine->makeIntVar(0, 0, 2);
-  LessThan& invariant =
-      engine->makeConstraint<LessThan>(violationId, inputs.at(0), inputs.at(1));
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(
+      violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
-  EXPECT_EQ(engine->value(engine->currentTimestamp(), violationId),
-            computeViolation(engine->currentTimestamp(), inputs));
+  EXPECT_EQ(
+      engine->value(engine->currentTimestamp(), violationId),
+      computeViolation(engine->currentTimestamp(), inputs.at(0), inputs.at(1)));
 
   for (const size_t i : indices) {
     Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
@@ -248,33 +237,33 @@ TEST_F(LessThanTest, Commit) {
   }
 }
 
-class MockLessThan : public LessThan {
+class MockPowDomain : public PowDomain {
  public:
   bool registered = false;
   void registerVars(Engine& engine) override {
     registered = true;
-    LessThan::registerVars(engine);
+    PowDomain::registerVars(engine);
   }
-  MockLessThan(VarId violationId, VarId a, VarId b)
-      : LessThan(violationId, a, b) {
+  MockPowDomain(VarId violationId, VarId x, VarId y)
+      : PowDomain(violationId, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return LessThan::recompute(timestamp, engine);
+          return PowDomain::recompute(timestamp, engine);
         });
     ON_CALL(*this, nextInput)
         .WillByDefault([this](Timestamp t, Engine& engine) {
-          return LessThan::nextInput(t, engine);
+          return PowDomain::nextInput(t, engine);
         });
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine) {
-          LessThan::notifyCurrentInputChanged(t, engine);
+          PowDomain::notifyCurrentInputChanged(t, engine);
         });
     ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          LessThan::notifyInputChanged(t, engine, id);
+          PowDomain::notifyInputChanged(t, engine, id);
         });
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      LessThan::commit(t, engine);
+      PowDomain::commit(t, engine);
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
@@ -286,17 +275,17 @@ class MockLessThan : public LessThan {
               (Timestamp t, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
-TEST_F(LessThanTest, EngineIntegration) {
+TEST_F(PowDomainTest, EngineIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }
-    const VarId a = engine->makeIntVar(5, -100, 100);
-    const VarId b = engine->makeIntVar(0, -100, 100);
-    const VarId viol = engine->makeIntVar(0, 0, 200);
-    testNotifications<MockLessThan>(
-        &engine->makeInvariant<MockLessThan>(viol, a, b), propMode, markingMode,
-        3, a, -5, viol);
+    const VarId x = engine->makeIntVar(5, -100, 100);
+    const VarId y = engine->makeIntVar(0, -100, 100);
+    const VarId viol = engine->makeIntVar(0, 0, 1);
+    testNotifications<MockPowDomain>(
+        &engine->makeInvariant<MockPowDomain>(viol, x, y), propMode,
+        markingMode, 3, x, 0, viol);
   }
 }
 

@@ -142,9 +142,8 @@ TEST_F(LessEqualTest, NextInput) {
                                        engine->makeIntVar(1, lb, ub)};
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
+
   LessEqual& invariant = engine->makeConstraint<LessEqual>(
       violationId, inputs.at(0), inputs.at(1));
   engine->close();

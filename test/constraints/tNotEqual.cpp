@@ -140,9 +140,7 @@ TEST_F(NotEqualTest, NextInput) {
                                        engine->makeIntVar(ub, lb, ub)};
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
   NotEqual& invariant =
       engine->makeConstraint<NotEqual>(violationId, inputs.at(0), inputs.at(1));
   engine->close();
