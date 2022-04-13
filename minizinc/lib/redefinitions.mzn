@@ -20,16 +20,6 @@ predicate bool_clause(array [int] of var bool: as, array [int] of var bool: bs) 
     forall(i in index_set(as))(bool2int(as[i], asInt[i])) /\
     forall(i in index_set(bs))(bool2int(not(bs[i]), bsNegInt[i]));
 
-predicate bool_eq(var bool: a, var bool: b) =
-    let { var 0..1: aInt;
-          var 0..1: bInt } in
-    aInt = bInt /\ bool2int(a, aInt) /\ bool2int(b, bInt);
-
-predicate bool_eq_reif(var bool: a, var bool: b, var bool: r) =
-    let { var 0..1: aInt;
-          var 0..1: bInt } in
-    (r <-> aInt = bInt) /\ bool2int(a, aInt) /\ bool2int(b, bInt);
-
 predicate bool_le(var bool: a, var bool: b) =
     let { var 0..1: aInt;
           var 0..1: bInt } in

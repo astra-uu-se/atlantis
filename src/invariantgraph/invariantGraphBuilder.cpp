@@ -3,7 +3,7 @@
 #include <unordered_set>
 
 #include "invariantgraph/constraints/allDifferentNode.hpp"
-#include "invariantgraph/constraints/intEqNode.hpp"
+#include "invariantgraph/constraints/eqNode.hpp"
 #include "invariantgraph/constraints/intLinEqNode.hpp"
 #include "invariantgraph/constraints/intLinLeNode.hpp"
 #include "invariantgraph/constraints/intLinNeNode.hpp"
@@ -26,8 +26,8 @@
 #include "invariantgraph/invariants/maxNode.hpp"
 #include "invariantgraph/invariants/minNode.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
+#include "invariantgraph/views/eqReifNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
-#include "invariantgraph/views/intEqReifNode.hpp"
 #include "invariantgraph/views/intLeReifNode.hpp"
 #include "invariantgraph/views/intLinEqReifNode.hpp"
 #include "invariantgraph/views/intLinLeReifNode.hpp"
@@ -237,7 +237,8 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   BINARY_OP_REGISTRATION(IntTimesNode);
   BINARY_OP_REGISTRATION(IntPowNode);
   NODE_REGISTRATION("int_abs", IntAbsNode);
-  NODE_REGISTRATION("int_eq_reif", IntEqReifNode);
+  NODE_REGISTRATION("int_eq_reif", EqReifNode);
+  NODE_REGISTRATION("bool_eq_reif", EqReifNode);
   NODE_REGISTRATION("int_le_reif", IntLeReifNode);
   NODE_REGISTRATION("int_lin_eq_reif", IntLinEqReifNode);
   NODE_REGISTRATION("int_lin_le_reif", IntLinLeReifNode);
@@ -288,7 +289,8 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   NODE_REGISTRATION("int_lin_le", IntLinLeNode);
   NODE_REGISTRATION("int_lin_eq", IntLinEqNode);
   NODE_REGISTRATION("int_lin_ne", IntLinNeNode);
-  NODE_REGISTRATION("int_eq", IntEqNode);
+  NODE_REGISTRATION("int_eq", EqNode);
+  NODE_REGISTRATION("bool_eq", EqNode);
   NODE_REGISTRATION("int_ne", IntNeNode);
   NODE_REGISTRATION("set_in", SetInNode);
 
