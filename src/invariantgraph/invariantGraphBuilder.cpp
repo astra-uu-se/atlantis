@@ -5,10 +5,10 @@
 #include "invariantgraph/constraints/allDifferentNode.hpp"
 #include "invariantgraph/constraints/boolClauseNode.hpp"
 #include "invariantgraph/constraints/eqNode.hpp"
-#include "invariantgraph/constraints/intLinEqNode.hpp"
 #include "invariantgraph/constraints/intLinLeNode.hpp"
 #include "invariantgraph/constraints/intLinNeNode.hpp"
 #include "invariantgraph/constraints/intNeNode.hpp"
+#include "invariantgraph/constraints/linEqNode.hpp"
 #include "invariantgraph/constraints/setInNode.hpp"
 #include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
@@ -290,7 +290,8 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
 
   NODE_REGISTRATION("alldifferent", AllDifferentNode);
   NODE_REGISTRATION("int_lin_le", IntLinLeNode);
-  NODE_REGISTRATION("int_lin_eq", IntLinEqNode);
+  NODE_REGISTRATION("int_lin_eq", LinEqNode);
+  NODE_REGISTRATION("bool_lin_eq", LinEqNode);
   NODE_REGISTRATION("int_lin_ne", IntLinNeNode);
   NODE_REGISTRATION("int_eq", EqNode);
   NODE_REGISTRATION("bool_eq", EqNode);

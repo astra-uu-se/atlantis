@@ -1,14 +1,15 @@
-#include "invariantgraph/constraints/intLinEqNode.hpp"
+#include "invariantgraph/constraints/linEqNode.hpp"
 
 #include "../parseHelper.hpp"
 #include "constraints/equal.hpp"
 #include "invariants/linear.hpp"
+#include "views/bool2IntView.hpp"
 
-std::unique_ptr<invariantgraph::IntLinEqNode>
-invariantgraph::IntLinEqNode::fromModelConstraint(
+std::unique_ptr<invariantgraph::LinEqNode>
+invariantgraph::LinEqNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(constraint.name == "int_lin_eq");
+  assert(constraint.name == "int_lin_eq" || constraint.name == "bool_lin_eq");
   assert(constraint.arguments.size() == 3);
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
@@ -16,18 +17,25 @@ invariantgraph::IntLinEqNode::fromModelConstraint(
       mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto bound = integerValue(model, constraint.arguments[2]);
 
-  return std::make_unique<IntLinEqNode>(coeffs, variables, bound);
+  return std::make_unique<LinEqNode>(coeffs, variables, bound);
 }
 
-void invariantgraph::IntLinEqNode::registerWithEngine(
+void invariantgraph::LinEqNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   auto [sumLb, sumUb] = getDomainBounds();
   auto sumVar = engine.makeIntVar(0, sumLb, sumUb);
 
   std::vector<VarId> variables;
-  std::transform(_variables.begin(), _variables.end(),
-                 std::back_inserter(variables),
-                 [&](auto var) { return variableMap.at(var); });
+  std::transform(
+      _variables.begin(), _variables.end(), std::back_inserter(variables),
+      [&](auto node) {
+        if (node->variable() &&
+            std::holds_alternative<fznparser::IntVariable>(*node->variable())) {
+          return variableMap.at(node);
+        }
+
+        return engine.makeIntView<Bool2IntView>(variableMap.at(node));
+      });
   engine.makeInvariant<Linear>(_coeffs, variables, sumVar);
 
   auto violationVar = registerViolation(engine, variableMap);
@@ -35,7 +43,7 @@ void invariantgraph::IntLinEqNode::registerWithEngine(
   engine.makeConstraint<Equal>(violationVar, sumVar, c);
 }
 
-std::pair<Int, Int> invariantgraph::IntLinEqNode::getDomainBounds() const {
+std::pair<Int, Int> invariantgraph::LinEqNode::getDomainBounds() const {
   Int lb = 0;
   Int ub = 0;
 
