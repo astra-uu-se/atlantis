@@ -1,4 +1,4 @@
 {
   "solver": "se.uu.it.astra-cbls",
-  "-O4": true
+  "-O3": true
 }
