@@ -37,11 +37,6 @@ int main(int argc, char* argv[]) {
     // clang-format off
     options.add_options()
       (
-        "n,num-solutions",
-        "Instructs the solver to stop after reporting i solutions (only used with satisfaction problems).",
-        cxxopts::value<uint>()->default_value("1")
-      )
-      (
         "t,time-limit",
         "Wall time limit in milliseconds.",
         cxxopts::value<std::chrono::milliseconds>()
