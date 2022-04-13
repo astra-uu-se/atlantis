@@ -37,9 +37,13 @@ int main(int argc, char* argv[]) {
     // clang-format off
     options.add_options()
       (
+        "no-timeout",
+        "Run the solver without a timeout. This means the solver needs to be stopped with a signal, which means no statistics will be printed."
+      )
+      (
         "t,time-limit",
         "Wall time limit in milliseconds.",
-        cxxopts::value<std::chrono::milliseconds>()
+        cxxopts::value<std::chrono::milliseconds>()->default_value("30000") // 30 seconds
       )
       (
         "r,seed",
@@ -102,11 +106,12 @@ int main(int argc, char* argv[]) {
       flippedMap.emplace(fznVar, varId);
 
     search::SearchController searchController = [&] {
-      if (result.count("time-limit")) {
+      if (result.count("no-timeout") == 0) {
         return search::SearchController(
             model, flippedMap,
             result["time-limit"].as<std::chrono::milliseconds>());
       } else {
+        logInfo("Running without timeout.");
         return search::SearchController(model, flippedMap);
       }
     }();
