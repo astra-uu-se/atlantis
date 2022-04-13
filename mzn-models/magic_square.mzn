@@ -24,18 +24,6 @@ constraint sum([Magic[n+1-i,i] | i in N])  = magicSum;
 % and is useful under all solving technologies:
 constraint n * magicSum = sum(1..n*n); % implied constraint
 
-% Break the three rotation symmetries and three of the four
-% reflection symmetries by requiring the top-left corner to
-% be smaller than the other corners:
-constraint symmetry_breaking_constraint(
-    Magic[1,1] < Magic[1,n] /\
-    Magic[1,1] < Magic[n,1] /\
-    Magic[1,1] < Magic[n,n]
-);
-% Break the down-right-diagonal reflection symmetry by requiring the
-% bottom-left corner to be smaller than the top-right corner:
-constraint symmetry_breaking_constraint(Magic[n,1] < Magic[1,n]);
-
 solve
 % Search first on 4 corners, subject to objective function (below)
 % and more constraints (diagonals + symmetry) than the other cells,
