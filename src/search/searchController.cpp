@@ -25,9 +25,17 @@ static void printSolution(
 
 void search::SearchController::onSolution(const Assignment& assignment) {
   assert(assignment.satisfiesConstraints());
-  
+
   _foundSolution = true;
   printSolution(_fznModel, assignment, _variableMap);
+}
+
+void search::SearchController::onFinish() const {
+  if (_foundSolution) {
+    std::cout << "==========" << std::endl;
+  } else {
+    std::cout << "=====UNKNOWN=====" << std::endl;
+  }
 }
 
 static void printSearchVariable(

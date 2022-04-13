@@ -36,6 +36,7 @@ class SearchController {
 
   bool shouldRun(const Assignment& assignment);
   void onSolution(const Assignment& assignment);
+  void onFinish() const;
 };
 
 }  // namespace search
