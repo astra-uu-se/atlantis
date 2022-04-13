@@ -30,12 +30,12 @@
 #include "invariantgraph/views/boolNotNode.hpp"
 #include "invariantgraph/views/eqReifNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
-#include "invariantgraph/views/intLeReifNode.hpp"
 #include "invariantgraph/views/intLinEqReifNode.hpp"
 #include "invariantgraph/views/intLinLeReifNode.hpp"
 #include "invariantgraph/views/intLinNeReifNode.hpp"
-#include "invariantgraph/views/intLtReifNode.hpp"
 #include "invariantgraph/views/intNeReifNode.hpp"
+#include "invariantgraph/views/leReifNode.hpp"
+#include "invariantgraph/views/ltReifNode.hpp"
 #include "invariantgraph/views/setInReifNode.hpp"
 #include "utils/fznAst.hpp"
 
@@ -241,11 +241,13 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION("int_abs", IntAbsNode);
   NODE_REGISTRATION("int_eq_reif", EqReifNode);
   NODE_REGISTRATION("bool_eq_reif", EqReifNode);
-  NODE_REGISTRATION("int_le_reif", IntLeReifNode);
+  NODE_REGISTRATION("int_le_reif", LeReifNode);
+  NODE_REGISTRATION("bool_le_reif", LeReifNode);
   NODE_REGISTRATION("int_lin_eq_reif", IntLinEqReifNode);
   NODE_REGISTRATION("int_lin_le_reif", IntLinLeReifNode);
   NODE_REGISTRATION("int_lin_ne_reif", IntLinNeReifNode);
-  NODE_REGISTRATION("int_lt_reif", IntLtReifNode);
+  NODE_REGISTRATION("int_lt_reif", LtReifNode);
+  NODE_REGISTRATION("bool_lt_reif", LtReifNode);
   NODE_REGISTRATION("int_ne_reif", IntNeReifNode);
   NODE_REGISTRATION("set_in_reif", SetInReifNode);
   NODE_REGISTRATION("bool2int", Bool2IntNode);
