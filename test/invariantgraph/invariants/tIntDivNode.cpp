@@ -42,9 +42,6 @@ TEST_F(IntDivNodeTest, application) {
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(c)), 0);
-  EXPECT_EQ(engine.upperBound(engineVariable(c)), 10);
-
   // a and b
   EXPECT_EQ(engine.searchVariables().size(), 2);
 

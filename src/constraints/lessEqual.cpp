@@ -13,14 +13,18 @@ LessEqual::LessEqual(VarId violationId, VarId x, VarId y)
   _modifiedVars.reserve(1);
 }
 
-void LessEqual::init(Timestamp, Engine& engine) {
-  // precondition: this invariant must be registered with the engine before it
-  // is initialised.
+void LessEqual::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
-
   engine.registerInvariantInput(_id, _x, LocalId(0));
   engine.registerInvariantInput(_id, _y, LocalId(0));
   registerDefinedVariable(engine, _violationId);
+}
+
+void LessEqual::updateBounds(Engine& engine) {
+  engine.updateBounds(
+      _violationId,
+      std::max(Int(0), engine.lowerBound(_x) - engine.upperBound(_y)),
+      std::max(Int(0), engine.upperBound(_x) - engine.lowerBound(_y)));
 }
 
 void LessEqual::recompute(Timestamp ts, Engine& engine) {

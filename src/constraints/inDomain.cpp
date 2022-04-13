@@ -14,10 +14,38 @@ InDomain::InDomain(VarId violationId, VarId x, std::vector<DomainEntry> domain)
   }
 }
 
-void InDomain::init(Timestamp, Engine& engine) {
+void InDomain::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
   engine.registerInvariantInput(_id, _x, LocalId(0));
   registerDefinedVariable(engine, _violationId);
+}
+
+void InDomain::updateBounds(Engine& engine) {
+  const Int xLb = engine.lowerBound(_x);
+  const Int xUb = engine.upperBound(_x);
+  Int minViol = std::numeric_limits<Int>::max();
+  Int maxViol = std::numeric_limits<Int>::max();
+  for (const auto& [dLb, dUb] : _domain) {
+    if (xUb < dLb) {
+      minViol = std::min(minViol, dLb - xUb);
+      maxViol = std::min(maxViol, dLb - xLb);
+      break;
+    } else if (xLb <= dUb) {
+      minViol = 0;
+      if (xLb < dLb) {
+        maxViol = std::min(maxViol, dLb - xLb);
+      } else if (dUb < xUb) {
+        maxViol = std::min(maxViol, xUb - dUb);
+      } else {
+        maxViol = 0;
+      }
+    } else {
+      // xLb > dUb
+      minViol = std::min(minViol, xLb - dUb);
+      maxViol = std::min(maxViol, xUb - dUb);
+    }
+  }
+  engine.updateBounds(_violationId, minViol, maxViol);
 }
 
 void InDomain::recompute(Timestamp ts, Engine& engine) {

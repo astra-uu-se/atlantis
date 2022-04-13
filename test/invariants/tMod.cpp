@@ -76,6 +76,44 @@ TEST_F(ModTest, Examples) {
   }
 }
 
+TEST_F(ModTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
+  engine->open();
+  const VarId a = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId b = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId outputId = engine->makeIntVar(0, 0, 2);
+  Mod& invariant = engine->makeInvariant<Mod>(a, b, outputId);
+  engine->close();
+
+  for (const auto& [aLb, aUb] : boundVec) {
+    EXPECT_TRUE(aLb <= aUb);
+    engine->updateBounds(a, aLb, aUb);
+    for (const auto& [bLb, bUb] : boundVec) {
+      EXPECT_TRUE(bLb <= bUb);
+      engine->updateBounds(b, bLb, bUb);
+      engine->open();
+      invariant.updateBounds(*engine);
+      engine->close();
+      for (Int aVal = aLb; aVal <= aUb; ++aVal) {
+        engine->setValue(engine->currentTimestamp(), a, aVal);
+        for (Int bVal = bLb; bVal <= bUb; ++bVal) {
+          engine->setValue(engine->currentTimestamp(), b, bVal);
+          invariant.recompute(engine->currentTimestamp(), *engine);
+          const Int o = engine->value(engine->currentTimestamp(), outputId);
+          if (o < engine->lowerBound(outputId) ||
+              engine->upperBound(outputId) < o) {
+            ASSERT_GE(o, engine->lowerBound(outputId));
+            ASSERT_LE(o, engine->upperBound(outputId));
+          }
+        }
+      }
+    }
+  }
+}
+
 TEST_F(ModTest, Recompute) {
   const Int aLb = -1;
   const Int aUb = 0;
@@ -91,7 +129,7 @@ TEST_F(ModTest, Recompute) {
   engine->open();
   const VarId a = engine->makeIntVar(aUb, aLb, aUb);
   const VarId b = engine->makeIntVar(bUb, bLb, bUb);
-  const VarId outputId = engine->makeIntVar(0, outputLb, outputUb);
+  const VarId outputId = engine->makeIntVar(outputLb, outputLb, outputUb);
   Mod& invariant = engine->makeInvariant<Mod>(a, b, outputId);
   engine->close();
 
@@ -144,13 +182,11 @@ TEST_F(ModTest, NextInput) {
   EXPECT_TRUE(lb != 0 || ub != 0);
 
   engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
   Mod& invariant =
       engine->makeInvariant<Mod>(inputs.at(0), inputs.at(1), outputId);
   engine->close();
@@ -288,10 +324,10 @@ TEST_F(ModTest, ZeroDenominator) {
 
 class MockMod : public Mod {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    Mod::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    Mod::registerVars(engine);
   }
   MockMod(VarId a, VarId b, VarId c) : Mod(a, b, c) {
     ON_CALL(*this, recompute)

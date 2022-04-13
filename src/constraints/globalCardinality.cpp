@@ -64,20 +64,45 @@ GlobalCardinality<IsClosed>::GlobalCardinality(
   }
 }
 
-template void GlobalCardinality<true>::init(Timestamp, Engine&);
-template void GlobalCardinality<false>::init(Timestamp, Engine&);
+template void GlobalCardinality<true>::registerVars(Engine&);
+template void GlobalCardinality<false>::registerVars(Engine&);
 template <bool IsClosed>
-void GlobalCardinality<IsClosed>::init(Timestamp timestamp, Engine& engine) {
-  _counts.assign(_lowerBound.size(), CommittableInt(timestamp, 0));
-
+void GlobalCardinality<IsClosed>::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
-
   for (size_t i = 0; i < _variables.size(); ++i) {
     engine.registerInvariantInput(_id, _variables[i], LocalId(i));
+  }
+  registerDefinedVariable(engine, _violationId);
+}
+
+template void GlobalCardinality<true>::updateBounds(Engine&);
+template void GlobalCardinality<false>::updateBounds(Engine&);
+template <bool IsClosed>
+void GlobalCardinality<IsClosed>::updateBounds(Engine& engine) {
+  Int maxShortage = 0;
+  for (const Int lb : _lowerBound) {
+    maxShortage += lb;
+  }
+  Int maxExcess = 0;
+  for (const Int ub : _upperBound) {
+    maxExcess = std::max(maxExcess, static_cast<Int>(_variables.size()) - ub);
+  }
+  Int maxViol = std::max(maxShortage, maxExcess);
+  if constexpr (IsClosed) {
+    maxViol =
+        std::max(maxViol, maxShortage + static_cast<Int>(_variables.size()));
+  }
+  engine.updateBounds(_violationId, 0, maxViol);
+}
+
+template void GlobalCardinality<true>::close(Timestamp, Engine&);
+template void GlobalCardinality<false>::close(Timestamp, Engine&);
+template <bool IsClosed>
+void GlobalCardinality<IsClosed>::close(Timestamp timestamp, Engine& engine) {
+  _counts.resize(_lowerBound.size(), CommittableInt(timestamp, 0));
+  for (size_t i = 0; i < _variables.size(); ++i) {
     _localValues.emplace_back(timestamp, engine.committedValue(_variables[i]));
   }
-
-  registerDefinedVariable(engine, _violationId);
 }
 
 template void GlobalCardinality<true>::recompute(Timestamp, Engine&);

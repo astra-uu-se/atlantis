@@ -6,13 +6,19 @@ Mod::Mod(VarId a, VarId b, VarId y) : Invariant(NULL_ID), _a(a), _b(b), _y(y) {
   _modifiedVars.reserve(1);
 }
 
-void Mod::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+void Mod::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
-
-  registerDefinedVariable(engine, _y);
   engine.registerInvariantInput(_id, _a, 0);
   engine.registerInvariantInput(_id, _b, 0);
+  registerDefinedVariable(engine, _y);
+}
 
+void Mod::updateBounds(Engine& engine) {
+  engine.updateBounds(_y, std::min(Int(0), engine.lowerBound(_a)),
+                      std::max(Int(0), engine.upperBound(_a)));
+}
+
+void Mod::close(Timestamp, Engine& engine) {
   assert(engine.lowerBound(_b) != 0 || engine.upperBound(_b) != 0);
   if (engine.lowerBound(_b) <= 0 && 0 <= engine.upperBound(_b)) {
     _zeroReplacement = engine.upperBound(_b) >= 1 ? 1 : -1;
@@ -32,8 +38,7 @@ void Mod::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
 }
 
 VarId Mod::nextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
-  switch (_state.value(ts)) {
+  switch (_state.incValue(ts, 1)) {
     case 0:
       return _a;
     case 1:

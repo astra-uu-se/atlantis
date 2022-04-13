@@ -24,11 +24,9 @@ class IntVarTest : public ::testing::Test {
  */
 
 TEST_F(IntVarTest, CommittableIntConstructor) {
-  std::uniform_int_distribution<> distribution(std::numeric_limits<int>::min(),
-                                               std::numeric_limits<int>::max());
-
-  Int lowerBound = -10;
-  Int upperBound = 10;
+  int lowerBound = std::numeric_limits<int>::min();
+  int upperBound = std::numeric_limits<int>::max();
+  std::uniform_int_distribution<> distribution(lowerBound, upperBound);
 
   // Random timestamp
   VarId varId = distribution(gen);
@@ -48,7 +46,7 @@ TEST_F(IntVarTest, CommittableIntConstructor) {
   // Random inital value
   Int value = distribution(gen);
 
-  IntVar intVarWithValue = IntVar(varId, value, -10, 10);
+  IntVar intVarWithValue = IntVar(varId, value, lowerBound, upperBound);
 
   ASSERT_EQ(intVarWithValue.value(timestamp), value);
   ASSERT_EQ(intVarWithValue.committedValue(), value);
@@ -59,6 +57,8 @@ TEST_F(IntVarTest, CommittableIntConstructor) {
   ASSERT_FALSE(intVarWithValue.hasChanged(timestamp));
 
   EXPECT_THROW(IntVar(varId, value, upperBound, lowerBound), std::out_of_range);
+
+  EXPECT_THROW(IntVar(varId, 10, -5, 5), std::out_of_range);
 }
 
 TEST_F(IntVarTest, InDomain) {
@@ -80,7 +80,7 @@ TEST_F(IntVarTest, InDomain) {
   }
 }
 
-TEST_F(IntVarTest, UpdateDomain) {
+TEST_F(IntVarTest, UpdateBounds) {
   Int initialLowerBound = 0;
   Int initialUpperBound = 0;
 
@@ -90,12 +90,12 @@ TEST_F(IntVarTest, UpdateDomain) {
   for (Int value = 1; value <= 1000; ++value) {
     EXPECT_FALSE(intVar.inDomain(-value));
     EXPECT_FALSE(intVar.inDomain(value));
-    intVar.updateDomain(-value, value);
+    intVar.updateBounds(-value, value);
     EXPECT_TRUE(intVar.inDomain(-value));
     EXPECT_TRUE(intVar.inDomain(value));
   }
 
-  EXPECT_THROW(intVar.updateDomain(10, -10), std::out_of_range);
+  EXPECT_THROW(intVar.updateBounds(10, -10), std::out_of_range);
 }
 
 }  // namespace

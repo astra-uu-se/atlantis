@@ -128,7 +128,11 @@ class Invariant {
    *
    * 4) Compute initial state of invariant!
    */
-  virtual void init(Timestamp, Engine&) = 0;
+  virtual void registerVars(Engine&) = 0;
+
+  virtual void updateBounds(Engine&) = 0;
+
+  virtual void close(Timestamp, Engine&){};
 
   virtual void recompute(Timestamp, Engine&) = 0;
 
@@ -160,6 +164,7 @@ class Invariant {
   void compute(Timestamp, Engine&);
 
   virtual void commit(Timestamp, Engine&) { _isPostponed = false; };
+
   inline void postpone() { _isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
 

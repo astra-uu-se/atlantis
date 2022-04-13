@@ -9,8 +9,10 @@ Int IntMaxView::committedValue() const {
   return std::max<Int>(_max, _engine->committedValue(_parentId));
 }
 
-Int IntMaxView::lowerBound() const { return _engine->lowerBound(_parentId); }
+Int IntMaxView::lowerBound() const {
+  return std::max<Int>(_max, _engine->lowerBound(_parentId));
+}
 
 Int IntMaxView::upperBound() const {
-  return std::min<Int>(_max, _engine->upperBound(_parentId));
+  return std::max<Int>(_max, _engine->upperBound(_parentId));
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <limits>
 
 #include "constraint.hpp"
 #include "core/types.hpp"
@@ -15,7 +16,8 @@ class InDomain : public Constraint {
  public:
   InDomain(VarId violationId, VarId x, std::vector<DomainEntry> domain);
 
-  void init(Timestamp, Engine&) override;
+  void registerVars(Engine&) override;
+  void updateBounds(Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;

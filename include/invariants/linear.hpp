@@ -24,7 +24,9 @@ class Linear : public Invariant {
       : Linear(std::vector<Int>(varArray.size(), 1), varArray, y) {}
   Linear(std::vector<Int> coeffs, std::vector<VarId> varArray, VarId y);
 
-  void init(Timestamp, Engine&) override;
+  void registerVars(Engine&) override;
+  void updateBounds(Engine&) override;
+  void close(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;

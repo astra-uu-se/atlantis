@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <random>
 #include <vector>
 
 #include "../testHelper.hpp"
@@ -17,23 +18,83 @@ namespace {
 
 class PowTest : public InvariantTest {
  public:
-  Int computeOutput(Timestamp ts, std::array<VarId, 2> inputs) {
+  Int computeOutput(Timestamp ts, const std::array<VarId, 2>& inputs) {
+    return computeOutput(ts, inputs, 1);
+  }
+  Int computeOutput(Timestamp ts, const std::array<VarId, 2>& inputs,
+                    Int zeroReplacement) {
     return computeOutput(engine->value(ts, inputs.at(0)),
-                         engine->value(ts, inputs.at(1)));
+                         engine->value(ts, inputs.at(1)), zeroReplacement);
   }
 
-  Int computeOutput(std::array<Int, 2> inputs) {
-    return computeOutput(inputs.at(0), inputs.at(1));
+  Int computeOutput(const std::array<Int, 2>& inputs) {
+    return computeOutput(inputs.at(0), inputs.at(1), 1);
+  }
+
+  Int computeOutput(const std::array<Int, 2>& inputs, Int zeroReplacement) {
+    return computeOutput(inputs.at(0), inputs.at(1), zeroReplacement);
   }
 
   Int computeOutput(Timestamp ts, const VarId x, const VarId y) {
-    return computeOutput(engine->value(ts, x), engine->value(ts, y));
+    return computeOutput(ts, x, y, 1);
+  }
+
+  Int computeOutput(Timestamp ts, const VarId x, const VarId y,
+                    Int zeroReplacement) {
+    return computeOutput(engine->value(ts, x), engine->value(ts, y),
+                         zeroReplacement);
   }
 
   Int computeOutput(const Int aVal, const Int bVal) {
+    return computeOutput(aVal, bVal, 1);
+  }
+
+  Int computeOutput(const Int aVal, const Int bVal, Int zeroReplacement) {
+    if (aVal == 0 && bVal < 0) {
+      return std::pow(zeroReplacement, bVal);
+    }
     return std::pow(aVal, bVal);
   }
 };
+
+TEST_F(PowTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-8, -5}, {-3, 0}, {-2, 2}, {0, 3}, {5, 8}};
+  engine->open();
+  const VarId a = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId b = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+                                            std::numeric_limits<Int>::max());
+  Pow& invariant = engine->makeInvariant<Pow>(a, b, outputId);
+  engine->close();
+
+  for (const auto& [aLb, aUb] : boundVec) {
+    EXPECT_TRUE(aLb <= aUb);
+    engine->updateBounds(a, aLb, aUb);
+    for (const auto& [bLb, bUb] : boundVec) {
+      EXPECT_TRUE(bLb <= bUb);
+      engine->updateBounds(b, bLb, bUb);
+      engine->open();
+      engine->close();
+      for (Int aVal = aLb; aVal <= aUb; ++aVal) {
+        engine->setValue(engine->currentTimestamp(), a, aVal);
+        for (Int bVal = bLb; bVal <= bUb; ++bVal) {
+          engine->setValue(engine->currentTimestamp(), b, bVal);
+          invariant.recompute(engine->currentTimestamp(), *engine);
+          const Int o = engine->value(engine->currentTimestamp(), outputId);
+          if (o < engine->lowerBound(outputId) ||
+              engine->upperBound(outputId) < o) {
+            invariant.updateBounds(*engine);
+            ASSERT_GE(o, engine->lowerBound(outputId));
+            ASSERT_LE(o, engine->upperBound(outputId));
+          }
+        }
+      }
+    }
+  }
+}
 
 TEST_F(PowTest, Recompute) {
   const Int aLb = 0;
@@ -81,7 +142,7 @@ TEST_F(PowTest, NotifyInputChanged) {
     for (size_t i = 0; i < inputs.size(); ++i) {
       engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
       const Int expectedOutput =
-          computeOutput(engine->currentTimestamp(), inputs);
+          computeOutput(engine->currentTimestamp(), inputs, 1);
 
       invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
                                    LocalId(i));
@@ -97,13 +158,11 @@ TEST_F(PowTest, NextInput) {
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
   Pow& invariant =
       engine->makeInvariant<Pow>(inputs.at(0), inputs.at(1), outputId);
   engine->close();
@@ -210,10 +269,10 @@ TEST_F(PowTest, Commit) {
 
 class MockPow : public Pow {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    Pow::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    Pow::registerVars(engine);
   }
   MockPow(VarId a, VarId b, VarId c) : Pow(a, b, c) {
     ON_CALL(*this, recompute)

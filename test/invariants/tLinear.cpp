@@ -69,6 +69,50 @@ class LinearTest : public InvariantTest {
   }
 };
 
+TEST_F(LinearTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-250, -150}, {-100, 0}, {-50, 50}, {0, 100}, {150, 250}};
+  std::vector<Int> coefVec{-1000, -1, 0, 1, 1000};
+  engine->open();
+
+  for (const Int aCoef : coefVec) {
+    for (const Int bCoef : coefVec) {
+      for (const Int cCoef : coefVec) {
+        std::vector<VarId> vars{engine->makeIntVar(0, 0, 10),
+                                engine->makeIntVar(0, 0, 10),
+                                engine->makeIntVar(0, 0, 10)};
+        const VarId outputId = engine->makeIntVar(0, 0, 2);
+        Linear& invariant =
+            engine->makeInvariant<Linear>(std::vector<Int>{aCoef, bCoef, cCoef},
+                                          std::vector<VarId>(vars), outputId);
+        for (const auto& [aLb, aUb] : boundVec) {
+          EXPECT_TRUE(aLb <= aUb);
+          engine->updateBounds(vars.at(0), aLb, aUb);
+          for (const auto& [bLb, bUb] : boundVec) {
+            EXPECT_TRUE(bLb <= bUb);
+            engine->updateBounds(vars.at(1), bLb, bUb);
+            for (const auto& [cLb, cUb] : boundVec) {
+              EXPECT_TRUE(cLb <= cUb);
+              engine->updateBounds(vars.at(2), cLb, cUb);
+              invariant.updateBounds(*engine);
+
+              const Int aMin = std::min(aLb * aCoef, aUb * aCoef);
+              const Int aMax = std::max(aLb * aCoef, aUb * aCoef);
+              const Int bMin = std::min(bLb * bCoef, bUb * bCoef);
+              const Int bMax = std::max(bLb * bCoef, bUb * bCoef);
+              const Int cMin = std::min(cLb * cCoef, cUb * cCoef);
+              const Int cMax = std::max(cLb * cCoef, cUb * cCoef);
+
+              ASSERT_EQ(aMin + bMin + cMin, engine->lowerBound(outputId));
+              ASSERT_EQ(aMax + bMax + cMax, engine->upperBound(outputId));
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 TEST_F(LinearTest, Recompute) {
   const Int iLb = -10;
   const Int iUb = 10;
@@ -257,17 +301,49 @@ TEST_F(LinearTest, Commit) {
   }
 }
 
-RC_GTEST_FIXTURE_PROP(LinearTest, shouldAlwaysBeSum,
+RC_GTEST_FIXTURE_PROP(LinearTest, ShouldAlwaysBeSum,
                       (Int aCoef, Int aVal, Int bCoef, Int bVal, Int cCoef,
                        Int cVal)) {
   engine->open();
-  const VarId a = engine->makeIntVar(1, -100, 100);
-  const VarId b = engine->makeIntVar(2, -100, 100);
-  const VarId c = engine->makeIntVar(3, -100, 100);
-  const VarId output = engine->makeIntVar(4, -100, 100);
+  std::vector<Int> coefficients{aCoef, bCoef, cCoef};
+  std::vector<std::pair<Int, Int>> bounds;
+
+  for (const Int co : coefficients) {
+    if (co == 0) {
+      bounds.emplace_back(std::pair<Int, Int>(0, 0));
+    } else {
+      if (co == -1 || co == 1) {
+        bounds.emplace_back(
+            std::pair<Int, Int>(std::numeric_limits<Int>::min() / 3,
+                                std::numeric_limits<Int>::max() / 3));
+      } else {
+        bounds.emplace_back(
+            std::pair<Int, Int>((std::numeric_limits<Int>::min() / co) / 3,
+                                (std::numeric_limits<Int>::min() / co) / 3));
+      }
+    }
+  }
+
+  const Int aLb = std::min(bounds.at(0).first, bounds.at(0).second);
+  const Int aUb = std::max(bounds.at(0).first, bounds.at(0).second);
+  const Int bLb = std::min(bounds.at(1).first, bounds.at(1).second);
+  const Int bUb = std::max(bounds.at(1).first, bounds.at(1).second);
+  const Int cLb = std::min(bounds.at(2).first, bounds.at(2).second);
+  const Int cUb = std::max(bounds.at(2).first, bounds.at(2).second);
+
+  const VarId a = engine->makeIntVar(aLb, aLb, aUb);
+  const VarId b = engine->makeIntVar(bLb, bLb, bUb);
+  const VarId c = engine->makeIntVar(cLb, cLb, cUb);
+  const VarId output = engine->makeIntVar(
+      aLb * aCoef + bLb * bCoef + cLb * cCoef, std::numeric_limits<Int>::min(),
+      std::numeric_limits<Int>::max());
   engine->makeInvariant<Linear>(std::vector<Int>{aCoef, bCoef, cCoef},
                                 std::vector<VarId>{a, b, c}, output);
   engine->close();
+
+  aVal = std::max(aLb, std::min(aUb, aVal));
+  bVal = std::max(bLb, std::min(bUb, bVal));
+  cVal = std::max(cLb, std::min(cUb, cVal));
 
   engine->beginMove();
   engine->setValue(a, aVal);
@@ -285,10 +361,10 @@ RC_GTEST_FIXTURE_PROP(LinearTest, shouldAlwaysBeSum,
 
 class MockLinear : public Linear {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    Linear::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    Linear::registerVars(engine);
   }
   MockLinear(std::vector<VarId> X, VarId b) : Linear(X, b) {
     ON_CALL(*this, recompute)

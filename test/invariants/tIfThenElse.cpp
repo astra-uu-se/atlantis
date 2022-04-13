@@ -39,6 +39,43 @@ class IfThenElseTest : public InvariantTest {
   }
 };
 
+TEST_F(IfThenElseTest, UpdateBounds) {
+  const Int xLb = 0;
+  const Int xUb = 10;
+  const Int yLb = 100;
+  const Int yUb = 1000;
+  EXPECT_TRUE(xLb <= xUb);
+
+  engine->open();
+  const VarId b = engine->makeIntVar(0, 0, 10);
+  const VarId x = engine->makeIntVar(yUb, yLb, yUb);
+  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
+  const VarId outputId =
+      engine->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
+  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(b, x, y, outputId);
+  engine->close();
+
+  std::vector<std::pair<Int, Int>> bBounds{{0, 0}, {0, 100}, {1, 10000}};
+
+  for (const auto& [bLb, bUb] : bBounds) {
+    EXPECT_TRUE(bLb <= bUb);
+    engine->updateBounds(b, bLb, bUb);
+    invariant.updateBounds(*engine);
+    if (bLb == 0 && bUb == 0) {
+      EXPECT_EQ(engine->lowerBound(outputId), engine->lowerBound(x));
+      EXPECT_EQ(engine->upperBound(outputId), engine->upperBound(x));
+    } else if (bLb > 0) {
+      EXPECT_EQ(engine->lowerBound(outputId), engine->lowerBound(y));
+      EXPECT_EQ(engine->upperBound(outputId), engine->upperBound(y));
+    } else {
+      EXPECT_EQ(engine->lowerBound(outputId),
+                std::max(engine->lowerBound(x), engine->lowerBound(y)));
+      EXPECT_EQ(engine->upperBound(outputId),
+                std::min(engine->upperBound(x), engine->upperBound(y)));
+    }
+  }
+}
+
 TEST_F(IfThenElseTest, Recompute) {
   const Int bLb = 0;
   const Int bUb = 5;
@@ -118,13 +155,11 @@ TEST_F(IfThenElseTest, NextInput) {
 
   engine->open();
   const std::array<VarId, 3> inputs = {engine->makeIntVar(bLb, bLb, bUb),
-                                       engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+                                       engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
       inputs.at(0), inputs.at(1), inputs.at(2), outputId);
   engine->close();
@@ -207,7 +242,7 @@ TEST_F(IfThenElseTest, Commit) {
   std::array<Int, 3> committedValues{bDist(gen), valueDist(gen),
                                      valueDist(gen)};
   std::array<VarId, 3> inputs{
-      engine->makeIntVar(committedValues.at(0), bLb, bLb),
+      engine->makeIntVar(committedValues.at(0), bLb, bUb),
       engine->makeIntVar(committedValues.at(1), lb, ub),
       engine->makeIntVar(committedValues.at(2), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
@@ -253,10 +288,10 @@ TEST_F(IfThenElseTest, Commit) {
 
 class MockIfThenElse : public IfThenElse {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    IfThenElse::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    IfThenElse::registerVars(engine);
   }
   MockIfThenElse(VarId b, VarId x, VarId y, VarId z) : IfThenElse(b, x, y, z) {
     ON_CALL(*this, recompute)
@@ -299,7 +334,7 @@ TEST_F(IfThenElseTest, EngineIntegration) {
     const VarId output = engine->makeIntVar(3, 0, 9);
     testNotifications<MockIfThenElse>(
         &engine->makeInvariant<MockIfThenElse>(b, x, y, output), propMode,
-        markingMode, 4, b, 5, output);
+        markingMode, 3, b, 5, output);
   }
 }
 

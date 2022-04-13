@@ -124,6 +124,11 @@ class Engine {
     return _store.constIntVar(id).upperBound();
   }
 
+  inline void updateBounds(VarId id, Int lb, Int ub) {
+    assert(id.idType == VarIdType::var);
+    _store.intVar(id).updateBounds(lb, ub);
+  }
+
   [[nodiscard]] inline Int intViewUpperBound(VarId id) const {
     assert(id.idType == VarIdType::view);
     return _store.constIntView(id).upperBound();
@@ -195,9 +200,11 @@ Engine::makeInvariant(Args&&... args) {
   const InvariantId invariantId = _store.createInvariantFromPtr(
       std::make_unique<T>(std::forward<Args>(args)...));
   registerInvariant(invariantId);
+
   logDebug("Created new invariant with id: " << invariantId);
   T& invariant = static_cast<T&>(_store.invariant(invariantId));
-  invariant.init(_currentTimestamp, *this);
+  invariant.registerVars(*this);
+  invariant.updateBounds(*this);
   return invariant;
 }
 
@@ -226,7 +233,8 @@ Engine::makeConstraint(Args&&... args) {
   T& constraint = static_cast<T&>(_store.invariant(constraintId));
   registerInvariant(constraintId);  // A constraint is a type of invariant.
   logDebug("Created new Constraint with id: " << constraintId);
-  constraint.init(_currentTimestamp, *this);
+  constraint.registerVars(*this);
+  constraint.updateBounds(*this);
   return constraint;
 }
 

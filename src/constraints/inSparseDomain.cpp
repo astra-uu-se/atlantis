@@ -25,10 +25,47 @@ InSparseDomain::InSparseDomain(VarId violationId, VarId x,
   }
 }
 
-void InSparseDomain::init(Timestamp, Engine& engine) {
+void InSparseDomain::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
   engine.registerInvariantInput(_id, _x, LocalId(0));
   registerDefinedVariable(engine, _violationId);
+}
+
+void InSparseDomain::updateBounds(Engine& engine) {
+  const Int xLb = engine.lowerBound(_x);
+  const Int xUb = engine.upperBound(_x);
+  const Int dLb = _offset;
+  const Int dUb = _offset + _valueViolation.size() - 1;
+
+  if (xUb < dLb) {
+    engine.updateBounds(_violationId, dLb - xUb, dLb - xLb);
+    return;
+  }
+  if (dUb < xLb) {
+    engine.updateBounds(_violationId, xLb - dUb, xUb - dUb);
+    return;
+  }
+  Int minViol = std::numeric_limits<Int>::max();
+  Int maxViol = std::numeric_limits<Int>::min();
+  for (size_t i = 0; i < _valueViolation.size(); ++i) {
+    const Int val = _offset + i;
+    if (val < xLb) {
+      continue;
+    }
+    if (val > xUb) {
+      break;
+    }
+    minViol = std::min<Int>(minViol, _valueViolation[i]);
+    maxViol = std::max<Int>(maxViol, _valueViolation[i]);
+  }
+
+  if (xLb < dLb) {
+    maxViol = std::max(maxViol, dLb - xLb);
+  } else if (dUb < xUb) {
+    maxViol = std::max(maxViol, xUb - dUb);
+  }
+
+  engine.updateBounds(_violationId, minViol, maxViol);
 }
 
 void InSparseDomain::recompute(Timestamp ts, Engine& engine) {

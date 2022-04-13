@@ -1,54 +1,40 @@
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <limits>
 #include <random>
 #include <vector>
 
 #include "../testHelper.hpp"
+#include "constraints/powDomain.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "invariants/absDiff.hpp"
 
-using ::testing::AnyNumber;
 using ::testing::AtLeast;
-using ::testing::AtMost;
-using ::testing::Exactly;
 using ::testing::Return;
 
 namespace {
 
-class AbsDiffTest : public InvariantTest {
+class PowDomainTest : public InvariantTest {
  public:
-  Int computeOutput(Timestamp ts, std::array<VarId, 2> inputs) {
-    return computeOutput(engine->value(ts, inputs.at(0)),
-                         engine->value(ts, inputs.at(1)));
+  Int computeViolation(Timestamp ts, const VarId x, const VarId y) {
+    return computeViolation(engine->value(ts, x), engine->value(ts, y));
   }
 
-  Int computeOutput(std::array<Int, 2> inputs) {
-    return computeOutput(inputs.at(0), inputs.at(1));
-  }
-
-  Int computeOutput(Timestamp ts, const VarId x, const VarId y) {
-    return computeOutput(engine->value(ts, x), engine->value(ts, y));
-  }
-
-  Int computeOutput(const Int xVal, const Int yVal) {
-    return std::abs(xVal - yVal);
+  Int computeViolation(const Int xVal, const Int yVal) {
+    return xVal == 0 && yVal < 0 ? 1 : 0;
   }
 };
 
-TEST_F(AbsDiffTest, UpdateBounds) {
+TEST_F(PowDomainTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
-      {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
+      {-20, -15}, {-10, -10}, {-5, 0}, {-2, 2}, {0, 5}, {10, 10}, {15, 20}};
   engine->open();
   const VarId x = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId y = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
-  AbsDiff& invariant = engine->makeInvariant<AbsDiff>(x, y, outputId);
+  const VarId violationId = engine->makeIntVar(0, 0, 1);
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(violationId, x, y);
   engine->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
@@ -58,39 +44,40 @@ TEST_F(AbsDiffTest, UpdateBounds) {
       EXPECT_TRUE(yLb <= yUb);
       engine->updateBounds(y, yLb, yUb);
       invariant.updateBounds(*engine);
-      std::vector<Int> outputs;
+      std::vector<Int> violations;
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         engine->setValue(engine->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
           engine->setValue(engine->currentTimestamp(), y, yVal);
           invariant.updateBounds(*engine);
           invariant.recompute(engine->currentTimestamp(), *engine);
-          outputs.emplace_back(
-              engine->value(engine->currentTimestamp(), outputId));
+          violations.emplace_back(
+              engine->value(engine->currentTimestamp(), violationId));
         }
       }
       const auto& [minViol, maxViol] =
-          std::minmax_element(outputs.begin(), outputs.end());
-      ASSERT_EQ(*minViol, engine->lowerBound(outputId));
-      ASSERT_EQ(*maxViol, engine->upperBound(outputId));
+          std::minmax_element(violations.begin(), violations.end());
+      ASSERT_EQ(*minViol, engine->lowerBound(violationId));
+      if (*maxViol != engine->upperBound(violationId)) {
+        ASSERT_EQ(*maxViol, engine->upperBound(violationId));
+      }
     }
   }
 }
 
-TEST_F(AbsDiffTest, Recompute) {
-  const Int xLb = -1;
-  const Int xUb = 0;
-  const Int yLb = 0;
-  const Int yUb = 1;
+TEST_F(PowDomainTest, Recompute) {
+  const Int xLb = -5;
+  const Int xUb = 5;
+  const Int yLb = -5;
+  const Int yUb = 5;
   EXPECT_TRUE(xLb <= xUb);
   EXPECT_TRUE(yLb <= yUb);
 
   engine->open();
   const VarId x = engine->makeIntVar(xUb, xLb, xUb);
-  const VarId y = engine->makeIntVar(yLb, yLb, yUb);
-  const VarId outputId =
-      engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  AbsDiff& invariant = engine->makeInvariant<AbsDiff>(x, y, outputId);
+  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
+  const VarId violationId = engine->makeIntVar(0, 0, 1);
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(violationId, x, y);
   engine->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
@@ -98,54 +85,54 @@ TEST_F(AbsDiffTest, Recompute) {
       engine->setValue(engine->currentTimestamp(), x, xVal);
       engine->setValue(engine->currentTimestamp(), y, yVal);
 
-      const Int expectedOutput = computeOutput(xVal, yVal);
+      const Int expectedViolation = computeViolation(xVal, yVal);
       invariant.recompute(engine->currentTimestamp(), *engine);
-      EXPECT_EQ(expectedOutput,
-                engine->value(engine->currentTimestamp(), outputId));
+      EXPECT_EQ(expectedViolation,
+                engine->value(engine->currentTimestamp(), violationId));
     }
   }
 }
 
-TEST_F(AbsDiffTest, NotifyInputChanged) {
-  const Int lb = -50;
-  const Int ub = -49;
+TEST_F(PowDomainTest, NotifyInputChanged) {
+  const Int lb = -5;
+  const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
   std::array<VarId, 2> inputs{engine->makeIntVar(ub, lb, ub),
                               engine->makeIntVar(ub, lb, ub)};
-  VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  AbsDiff& invariant =
-      engine->makeInvariant<AbsDiff>(inputs.at(0), inputs.at(1), outputId);
+  const VarId violationId = engine->makeIntVar(0, 0, 1);
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(
+      violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int val = lb; val <= ub; ++val) {
     for (size_t i = 0; i < inputs.size(); ++i) {
       engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
-      const Int expectedOutput =
-          computeOutput(engine->currentTimestamp(), inputs);
+      const Int expectedViolation = computeViolation(
+          engine->currentTimestamp(), inputs.at(0), inputs.at(1));
 
       invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
                                    LocalId(i));
-      EXPECT_EQ(expectedOutput,
-                engine->value(engine->currentTimestamp(), outputId));
+      EXPECT_EQ(expectedViolation,
+                engine->value(engine->currentTimestamp(), violationId));
     }
   }
 }
 
-TEST_F(AbsDiffTest, NextInput) {
-  const Int lb = 5;
-  const Int ub = 10;
+TEST_F(PowDomainTest, NextInput) {
+  const Int lb = -5;
+  const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
   const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
-                                       engine->makeIntVar(lb, lb, ub)};
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
+                                       engine->makeIntVar(ub, lb, ub)};
+  const VarId violationId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  AbsDiff& invariant =
-      engine->makeInvariant<AbsDiff>(inputs.at(0), inputs.at(1), outputId);
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(
+      violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -166,9 +153,9 @@ TEST_F(AbsDiffTest, NextInput) {
   }
 }
 
-TEST_F(AbsDiffTest, NotifyCurrentInputChanged) {
-  const Int lb = -10002;
-  const Int ub = -10000;
+TEST_F(PowDomainTest, NotifyCurrentInputChanged) {
+  const Int lb = -5;
+  const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
@@ -176,9 +163,9 @@ TEST_F(AbsDiffTest, NotifyCurrentInputChanged) {
   const std::array<VarId, 2> inputs = {
       engine->makeIntVar(valueDist(gen), lb, ub),
       engine->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  AbsDiff& invariant =
-      engine->makeInvariant<AbsDiff>(inputs.at(0), inputs.at(1), outputId);
+  const VarId violationId = engine->makeIntVar(0, 0, ub - lb);
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(
+      violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -190,14 +177,15 @@ TEST_F(AbsDiffTest, NotifyCurrentInputChanged) {
         engine->setValue(ts, varId, valueDist(gen));
       } while (engine->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts, *engine);
-      EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(engine->value(ts, violationId),
+                computeViolation(ts, inputs.at(0), inputs.at(1)));
     }
   }
 }
 
-TEST_F(AbsDiffTest, Commit) {
-  const Int lb = -10;
-  const Int ub = 10;
+TEST_F(PowDomainTest, Commit) {
+  const Int lb = -5;
+  const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
   engine->open();
@@ -209,13 +197,14 @@ TEST_F(AbsDiffTest, Commit) {
       engine->makeIntVar(committedValues.at(1), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarId outputId = engine->makeIntVar(0, 0, 2);
-  AbsDiff& invariant =
-      engine->makeInvariant<AbsDiff>(inputs.at(0), inputs.at(1), outputId);
+  const VarId violationId = engine->makeIntVar(0, 0, 2);
+  PowDomain& invariant = engine->makeConstraint<PowDomain>(
+      violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
-  EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
-            computeOutput(engine->currentTimestamp(), inputs));
+  EXPECT_EQ(
+      engine->value(engine->currentTimestamp(), violationId),
+      computeViolation(engine->currentTimestamp(), inputs.at(0), inputs.at(1)));
 
   for (const size_t i : indices) {
     Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
@@ -233,47 +222,48 @@ TEST_F(AbsDiffTest, Commit) {
     invariant.notifyInputChanged(ts, *engine, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = engine->value(ts, outputId);
+    const Int notifiedViolation = engine->value(ts, violationId);
     invariant.recompute(ts, *engine);
 
-    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+    ASSERT_EQ(notifiedViolation, engine->value(ts, violationId));
 
     engine->commitIf(ts, inputs.at(i));
     committedValues.at(i) = engine->value(ts, inputs.at(i));
-    engine->commitIf(ts, outputId);
+    engine->commitIf(ts, violationId);
 
     invariant.commit(ts, *engine);
     invariant.recompute(ts + 1, *engine);
-    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedViolation, engine->value(ts + 1, violationId));
   }
 }
 
-class MockAbsDiff : public AbsDiff {
+class MockPowDomain : public PowDomain {
  public:
   bool registered = false;
   void registerVars(Engine& engine) override {
     registered = true;
-    AbsDiff::registerVars(engine);
+    PowDomain::registerVars(engine);
   }
-  MockAbsDiff(VarId x, VarId y, VarId c) : AbsDiff(x, y, c) {
+  MockPowDomain(VarId violationId, VarId x, VarId y)
+      : PowDomain(violationId, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return AbsDiff::recompute(timestamp, engine);
+          return PowDomain::recompute(timestamp, engine);
         });
     ON_CALL(*this, nextInput)
         .WillByDefault([this](Timestamp t, Engine& engine) {
-          return AbsDiff::nextInput(t, engine);
+          return PowDomain::nextInput(t, engine);
         });
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine) {
-          AbsDiff::notifyCurrentInputChanged(t, engine);
+          PowDomain::notifyCurrentInputChanged(t, engine);
         });
     ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          AbsDiff::notifyInputChanged(t, engine, id);
+          PowDomain::notifyInputChanged(t, engine, id);
         });
     ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      AbsDiff::commit(t, engine);
+      PowDomain::commit(t, engine);
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
@@ -285,17 +275,17 @@ class MockAbsDiff : public AbsDiff {
               (Timestamp t, Engine& engine, LocalId id), (override));
   MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
 };
-TEST_F(AbsDiffTest, EngineIntegration) {
+TEST_F(PowDomainTest, EngineIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!engine->isOpen()) {
       engine->open();
     }
-    const VarId x = engine->makeIntVar(-10, -100, 100);
-    const VarId y = engine->makeIntVar(10, -100, 100);
-    const VarId output = engine->makeIntVar(0, 0, 200);
-    testNotifications<MockAbsDiff>(
-        &engine->makeInvariant<MockAbsDiff>(x, y, output), propMode,
-        markingMode, 3, x, 0, output);
+    const VarId x = engine->makeIntVar(5, -100, 100);
+    const VarId y = engine->makeIntVar(0, -100, 100);
+    const VarId viol = engine->makeIntVar(0, 0, 1);
+    testNotifications<MockPowDomain>(
+        &engine->makeInvariant<MockPowDomain>(viol, x, y), propMode,
+        markingMode, 3, x, 0, viol);
   }
 }
 
