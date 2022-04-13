@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
         cxxopts::value<std::chrono::milliseconds>()
       )
       (
-        "s,seed",
+        "r,seed",
         "The seed to use for the random number generator. If this is negative, the current system time is chosen as the seed.",
         cxxopts::value<long>()->default_value("-1")
       )
