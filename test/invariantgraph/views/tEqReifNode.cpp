@@ -1,8 +1,8 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/views/intEqReifNode.hpp"
+#include "invariantgraph/views/eqReifNode.hpp"
 
-class IntEqReifNodeTest : public NodeTestBase {
+class EqReifNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 5, 10);
   INT_VARIABLE(b, 2, 7);
@@ -12,22 +12,22 @@ class IntEqReifNodeTest : public NodeTestBase {
 
   fznparser::FZNModel model{{}, {a, b, r}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::IntEqReifNode> node;
+  std::unique_ptr<invariantgraph::EqReifNode> node;
 
-  IntEqReifNodeTest() : NodeTestBase(model) {}
+  EqReifNodeTest() : NodeTestBase(model) {}
 
   void SetUp() override {
-    node = makeNode<invariantgraph::IntEqReifNode>(constraint);
+    node = makeNode<invariantgraph::EqReifNode>(constraint);
   }
 };
 
-TEST_F(IntEqReifNodeTest, construction) {
+TEST_F(EqReifNodeTest, construction) {
   EXPECT_EQ(node->definedVariables().size(), 1);
   EXPECT_EQ(*node->definedVariables()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(r));
 }
 
-TEST_F(IntEqReifNodeTest, application) {
+TEST_F(EqReifNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});

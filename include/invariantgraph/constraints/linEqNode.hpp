@@ -1,36 +1,35 @@
 #pragma once
 
 #include <fznparser/model.hpp>
-#include <utility>
 
 #include "invariantgraph/structure.hpp"
 
 namespace invariantgraph {
 
-class IntLinLeNode : public SoftConstraintNode {
+class LinEqNode : public SoftConstraintNode {
  private:
   std::vector<Int> _coeffs;
   std::vector<VariableNode*> _variables;
-  Int _bound;
+  Int _c;
 
  public:
-  IntLinLeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-               Int bound)
+  static std::unique_ptr<LinEqNode> fromModelConstraint(
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
+
+  LinEqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
+               Int c)
       : SoftConstraintNode(
             [&] {
-              return std::max<Int>(0, std::numeric_limits<Int>::max() - bound);
+              return std::max<Int>(0, std::numeric_limits<Int>::max() - c);
             },
             variables),
         _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
-        _bound(bound) {}
-
-  static std::unique_ptr<IntLinLeNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+        _c(c) {}
 
   void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+      Engine& node, VariableDefiningNode::VariableMap& variableMap) override;
 
   [[nodiscard]] const std::vector<VariableNode*>& variables() const {
     return _variables;
@@ -38,7 +37,7 @@ class IntLinLeNode : public SoftConstraintNode {
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 
-  [[nodiscard]] Int bound() const { return _bound; }
+  [[nodiscard]] Int c() const { return _c; }
 
  private:
   [[nodiscard]] std::pair<Int, Int> getDomainBounds() const;
