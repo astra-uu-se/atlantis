@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/views/intLtReifNode.hpp"
+#include "invariantgraph/views/ltReifNode.hpp"
 
 class IntLtReifNodeTest : public NodeTestBase {
  public:
@@ -11,12 +11,12 @@ class IntLtReifNodeTest : public NodeTestBase {
   fznparser::Constraint constraint{"int_lt_reif", {"a", "b", "r"}, {}};
   fznparser::FZNModel model{{}, {a, b, r}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::IntLtReifNode> node;
+  std::unique_ptr<invariantgraph::LtReifNode> node;
 
   IntLtReifNodeTest() : NodeTestBase(model) {}
 
   void SetUp() override {
-    node = makeNode<invariantgraph::IntLtReifNode>(constraint);
+    node = makeNode<invariantgraph::LtReifNode>(constraint);
   }
 };
 

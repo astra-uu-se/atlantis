@@ -7,13 +7,13 @@
 
 namespace invariantgraph {
 
-class IntLeReifNode : public ReifiedConstraint {
+class LtReifNode : public ReifiedConstraint {
  public:
-  static std::unique_ptr<IntLeReifNode> fromModelConstraint(
+  static std::unique_ptr<LtReifNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
-  IntLeReifNode(std::unique_ptr<SoftConstraintNode> constraint, VariableNode* r)
+  LtReifNode(std::unique_ptr<SoftConstraintNode> constraint, VariableNode* r)
       : ReifiedConstraint(std::move(constraint), r) {}
 };
 
