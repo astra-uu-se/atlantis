@@ -33,7 +33,7 @@ solve
                                 input_order,indomain_split),
        int_search(Magic,occurrence,indomain_split)])
 % Minimise the sum of the 4 corners of the magic square:
-  minimize sum([Magic[i,j] | i,j in {1,n}]);
+  satisfy;
 
 output
   ["Magic sum: ", show(magicSum), "\nMagic square: \n"] ++
