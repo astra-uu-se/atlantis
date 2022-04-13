@@ -14,13 +14,6 @@ predicate bool_and(var bool: a, var bool: b, var bool: r) = array_bool_and([a, b
 predicate bool_or(var bool: a, var bool: b, var bool: r) = array_bool_or([a, b], r);
 predicate bool_le(var bool: a, var bool: b) = bool_lin_le([1, -1], [a, b], 0);
 
-predicate bool_clause(array [int] of var bool: as, array [int] of var bool: bs) =
-    let { array[index_set(as)] of var 0..1: asInt;
-          array[index_set(bs)] of var 0..1: bsNegInt } in
-    sum(asInt) + sum(bsNegInt) > 0 /\
-    forall(i in index_set(as))(bool2int(as[i], asInt[i])) /\
-    forall(i in index_set(bs))(bool2int(not(bs[i]), bsNegInt[i]));
-
 predicate bool_le_reif(var bool: a, var bool: b, var bool: r) =
     let { var 0..1: aInt;
           var 0..1: bInt } in
