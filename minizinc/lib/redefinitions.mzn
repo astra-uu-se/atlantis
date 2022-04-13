@@ -14,16 +14,12 @@ predicate bool_and(var bool: a, var bool: b, var bool: r) = array_bool_and([a, b
 predicate bool_or(var bool: a, var bool: b, var bool: r) = array_bool_or([a, b], r);
 predicate bool_le(var bool: a, var bool: b) = bool_lin_le([1, -1], [a, b], 0);
 predicate bool_lt(var bool: a, var bool: b) = bool_lin_le([1, -1], [a, b], -1);
+predicate bool_xor(var bool: a, var bool: b) = bool_lin_eq([1, 1], [a, b], 1);
 
 predicate bool_xor(var bool: a, var bool: b, var bool: r) =
     let { var 0..1: aInt;
           var 0..1: bInt } in
     r <-> (aInt + bInt = 1);
-
-predicate bool_xor(var bool: a, var bool: b) =
-    let { var 0..1: aInt;
-          var 0..1: bInt } in
-    aInt + bInt = 1;
 
 %%%%%%%%%%%%%%%%%%%
 % Set constraints %

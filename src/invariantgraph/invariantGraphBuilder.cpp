@@ -28,6 +28,7 @@
 #include "invariantgraph/invariants/minNode.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
 #include "invariantgraph/views/boolNotNode.hpp"
+#include "invariantgraph/views/boolXorReifNode.hpp"
 #include "invariantgraph/views/eqReifNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
 #include "invariantgraph/views/intLinEqReifNode.hpp"
@@ -256,6 +257,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
   NODE_REGISTRATION("array_bool_element", ArrayBoolElementNode);
   NODE_REGISTRATION("array_var_bool_element", ArrayVarBoolElementNode);
+  NODE_REGISTRATION("bool_xor", BoolXorReifNode);
 
   return nullptr;
 #undef BINARY_OP_REGISTRATION
