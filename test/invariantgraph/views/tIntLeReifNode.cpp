@@ -34,9 +34,9 @@ TEST_F(IntLeReifNodeTest, application) {
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  // a, b
-  EXPECT_EQ(engine.searchVariables().size(), 2);
+  // a, b, constZero
+  EXPECT_EQ(engine.searchVariables().size(), 3);
 
-  // a, b and r
-  EXPECT_EQ(engine.numVariables(), 3);
+  // a, b, sum, constZero and r
+  EXPECT_EQ(engine.numVariables(), 5);
 }
