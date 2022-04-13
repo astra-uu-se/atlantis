@@ -7,14 +7,14 @@
 
 namespace invariantgraph {
 
-class IntLinLeNode : public SoftConstraintNode {
+class LinLeNode : public SoftConstraintNode {
  private:
   std::vector<Int> _coeffs;
   std::vector<VariableNode*> _variables;
   Int _bound;
 
  public:
-  IntLinLeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
+  LinLeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
                Int bound)
       : SoftConstraintNode(
             [&] {
@@ -25,7 +25,7 @@ class IntLinLeNode : public SoftConstraintNode {
         _variables(std::move(variables)),
         _bound(bound) {}
 
-  static std::unique_ptr<IntLinLeNode> fromModelConstraint(
+  static std::unique_ptr<LinLeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 

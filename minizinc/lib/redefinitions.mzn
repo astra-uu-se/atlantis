@@ -19,11 +19,6 @@ predicate bool_le_reif(var bool: a, var bool: b, var bool: r) =
           var 0..1: bInt } in
     (r <-> aInt <= bInt) /\ bool2int(a, aInt) /\ bool2int(b, bInt);
 
-predicate bool_lin_le(array [int] of int: as, array [int] of var bool: bs, int: c) =
-    let { array[index_set(bs)] of var 0..1: bsInt; } in
-    int_lin_le(as, bsInt, c) /\
-    forall(i in index_set(bs))(bool2int(bs[i], bsInt[i]));
-
 predicate bool_lt(var bool: a, var bool: b) = bool_lin_le([1, -1], [a, b], -1);
 predicate bool_lt_reif(var bool: a, var bool: b, var bool: r) =
     r <-> bool_lin_le([1, -1], [a, b], -1);

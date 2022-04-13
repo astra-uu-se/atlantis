@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/intLinLeNode.hpp"
+#include "invariantgraph/constraints/linLeNode.hpp"
 
 class LeqNodeTest : public NodeTestBase {
  public:
@@ -16,12 +16,12 @@ class LeqNodeTest : public NodeTestBase {
 
   fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::IntLinLeNode> node;
+  std::unique_ptr<invariantgraph::LinLeNode> node;
 
   LeqNodeTest() : NodeTestBase(model) {}
 
   void SetUp() override {
-    node = makeNode<invariantgraph::IntLinLeNode>(constraint);
+    node = makeNode<invariantgraph::LinLeNode>(constraint);
   }
 };
 
