@@ -39,11 +39,6 @@ predicate bool_lt(var bool: a, var bool: b) = bool_lin_le([1, -1], [a, b], -1);
 predicate bool_lt_reif(var bool: a, var bool: b, var bool: r) =
     r <-> bool_lin_le([1, -1], [a, b], -1);
 
-predicate bool_not(var bool: a, var bool: b) =
-    let { var 0..1: aInt;
-          var 0..1: bInt } in
-    bInt = 1 - aInt;
-
 predicate bool_xor(var bool: a, var bool: b, var bool: r) =
     let { var 0..1: aInt;
           var 0..1: bInt } in
