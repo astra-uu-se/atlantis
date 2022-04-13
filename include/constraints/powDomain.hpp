@@ -6,13 +6,13 @@
 
 class Engine;
 
-class LessEqual : public Constraint {
+class PowDomain : public Constraint {
  private:
   const VarId _x;
   const VarId _y;
 
  public:
-  LessEqual(VarId violationId, VarId x, VarId y);
+  PowDomain(VarId violationId, VarId x, VarId y);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&) override;
@@ -21,4 +21,6 @@ class LessEqual : public Constraint {
   void commit(Timestamp, Engine&) override;
   VarId nextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
+
+  static bool shouldPost(Engine&, VarId x, VarId y);
 };

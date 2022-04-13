@@ -13,14 +13,18 @@ LessThan::LessThan(VarId violationId, VarId x, VarId y)
   _modifiedVars.reserve(1);
 }
 
-void LessThan::init(Timestamp, Engine& engine) {
-  // precondition: this invariant must be registered with the engine before it
-  // is initialised.
+void LessThan::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
-
   engine.registerInvariantInput(_id, _x, LocalId(0));
   engine.registerInvariantInput(_id, _y, LocalId(0));
   registerDefinedVariable(engine, _violationId);
+}
+
+void LessThan::updateBounds(Engine& engine) {
+  engine.updateBounds(
+      _violationId,
+      std::max(Int(0), 1 + engine.lowerBound(_x) - engine.upperBound(_y)),
+      std::max(Int(0), 1 + engine.upperBound(_x) - engine.lowerBound(_y)));
 }
 
 void LessThan::recompute(Timestamp ts, Engine& engine) {

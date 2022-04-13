@@ -41,9 +41,6 @@ TEST_F(IntModNodeTest, application) {
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(c)), 0);
-  EXPECT_EQ(engine.upperBound(engineVariable(c)), 6);
-
   // a and b
   EXPECT_EQ(engine.searchVariables().size(), 2);
 

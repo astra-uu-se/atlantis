@@ -50,17 +50,17 @@ TEST_F(IntMaxViewTest, ComputeBounds) {
   const VarId va = engine->makeIntView<IntMaxView>(a, 10);
   const VarId vb = engine->makeIntView<IntMaxView>(b, 200);
 
-  EXPECT_EQ(engine->lowerBound(va), Int(-100));
-  EXPECT_EQ(engine->lowerBound(vb), Int(-100));
-  EXPECT_EQ(engine->upperBound(va), Int(10));
-  EXPECT_EQ(engine->upperBound(vb), Int(100));
+  EXPECT_EQ(engine->lowerBound(va), Int(10));
+  EXPECT_EQ(engine->lowerBound(vb), Int(200));
+  EXPECT_EQ(engine->upperBound(va), Int(100));
+  EXPECT_EQ(engine->upperBound(vb), Int(200));
 
   engine->close();
 
-  EXPECT_EQ(engine->lowerBound(va), Int(-100));
-  EXPECT_EQ(engine->lowerBound(vb), Int(-100));
-  EXPECT_EQ(engine->upperBound(va), Int(10));
-  EXPECT_EQ(engine->upperBound(vb), Int(100));
+  EXPECT_EQ(engine->lowerBound(va), Int(10));
+  EXPECT_EQ(engine->lowerBound(vb), Int(200));
+  EXPECT_EQ(engine->upperBound(va), Int(100));
+  EXPECT_EQ(engine->upperBound(vb), Int(200));
 }
 
 TEST_F(IntMaxViewTest, RecomputeIntMaxView) {

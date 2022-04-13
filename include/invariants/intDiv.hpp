@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "core/types.hpp"
@@ -21,7 +23,9 @@ class IntDiv : public Invariant {
 
  public:
   IntDiv(VarId a, VarId b, VarId y);
-  void init(Timestamp, Engine&) override;
+  void registerVars(Engine&) override;
+  void updateBounds(Engine&) override;
+  void close(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   VarId nextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;

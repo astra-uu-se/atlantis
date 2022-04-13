@@ -39,9 +39,43 @@ class LessThanTest : public InvariantTest {
   }
 };
 
-/**
- *  Testing constructor
- */
+TEST_F(LessThanTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
+  engine->open();
+  const VarId x = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId y = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId violationId = engine->makeIntVar(0, 0, 2);
+  LessThan& invariant = engine->makeConstraint<LessThan>(violationId, x, y);
+  engine->close();
+
+  for (const auto& [xLb, xUb] : boundVec) {
+    EXPECT_TRUE(xLb <= xUb);
+    engine->updateBounds(x, xLb, xUb);
+    for (const auto& [yLb, yUb] : boundVec) {
+      EXPECT_TRUE(yLb <= yUb);
+      engine->updateBounds(y, yLb, yUb);
+      invariant.updateBounds(*engine);
+      std::vector<Int> violations;
+      for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+        engine->setValue(engine->currentTimestamp(), x, xVal);
+        for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+          engine->setValue(engine->currentTimestamp(), y, yVal);
+          invariant.updateBounds(*engine);
+          invariant.recompute(engine->currentTimestamp(), *engine);
+          violations.emplace_back(
+              engine->value(engine->currentTimestamp(), violationId));
+        }
+      }
+      const auto& [minViol, maxViol] =
+          std::minmax_element(violations.begin(), violations.end());
+      ASSERT_EQ(*minViol, engine->lowerBound(violationId));
+      ASSERT_EQ(*maxViol, engine->upperBound(violationId));
+    }
+  }
+}
 
 TEST_F(LessThanTest, Recompute) {
   const Int aLb = -100;
@@ -109,9 +143,7 @@ TEST_F(LessThanTest, NextInput) {
                                        engine->makeIntVar(1, lb, ub)};
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
   LessThan& invariant =
       engine->makeConstraint<LessThan>(violationId, inputs.at(0), inputs.at(1));
   engine->close();
@@ -218,10 +250,10 @@ TEST_F(LessThanTest, Commit) {
 
 class MockLessThan : public LessThan {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    LessThan::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    LessThan::registerVars(engine);
   }
   MockLessThan(VarId violationId, VarId a, VarId b)
       : LessThan(violationId, a, b) {

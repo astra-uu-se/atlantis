@@ -59,6 +59,9 @@ void PropagationEngine::close() {
   }
 #endif
 
+  // close all invariants
+  closeInvariants();
+
   // compute initial values for variables and for (internal datastructure of)
   // invariants
   recomputeAndCommit();
@@ -123,6 +126,13 @@ VarId PropagationEngine::dequeueComputedVar(Timestamp) {
 void PropagationEngine::clearPropagationQueue() {
   _propGraph.clearPropagationQueue();
   _isEnqueued.assign_all(false);
+}
+
+void PropagationEngine::closeInvariants() {
+  for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
+       ++iter) {
+    (*iter)->close(_currentTimestamp, *this);
+  }
 }
 
 void PropagationEngine::recomputeAndCommit() {

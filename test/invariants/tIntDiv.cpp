@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <random>
 #include <vector>
 
 #include "../testHelper.hpp"
@@ -29,6 +30,53 @@ class IntDivTest : public InvariantTest {
     return engine->value(ts, a) / denominator;
   }
 };
+
+TEST_F(IntDivTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
+  engine->open();
+  const VarId a = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId b = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId outputId = engine->makeIntVar(0, 0, 2);
+  IntDiv& invariant = engine->makeInvariant<IntDiv>(a, b, outputId);
+  engine->close();
+
+  for (const auto& [aLb, aUb] : boundVec) {
+    EXPECT_TRUE(aLb <= aUb);
+    engine->updateBounds(a, aLb, aUb);
+    for (const auto& [bLb, bUb] : boundVec) {
+      EXPECT_TRUE(bLb <= bUb);
+      engine->updateBounds(b, bLb, bUb);
+      engine->open();
+      invariant.updateBounds(*engine);
+      engine->close();
+      std::vector<Int> outputs;
+      const Int lb = engine->lowerBound(outputId);
+      const Int ub = engine->upperBound(outputId);
+      for (Int aVal = aLb; aVal <= aUb; ++aVal) {
+        engine->setValue(engine->currentTimestamp(), a, aVal);
+        for (Int bVal = bLb; bVal <= bUb; ++bVal) {
+          engine->setValue(engine->currentTimestamp(), b, bVal);
+          invariant.recompute(engine->currentTimestamp(), *engine);
+          const Int o = engine->value(engine->currentTimestamp(), outputId);
+          if (o < lb || ub < o) {
+            ASSERT_TRUE(lb <= o);
+            ASSERT_TRUE(o <= ub);
+          }
+          outputs.emplace_back(o);
+        }
+      }
+      const auto& [minVal, maxVal] =
+          std::minmax_element(outputs.begin(), outputs.end());
+      if (*minVal != engine->lowerBound(outputId)) {
+        ASSERT_EQ(*minVal, engine->lowerBound(outputId));
+      }
+      ASSERT_EQ(*maxVal, engine->upperBound(outputId));
+    }
+  }
+}
 
 TEST_F(IntDivTest, Recompute) {
   const Int aLb = -1;
@@ -98,13 +146,11 @@ TEST_F(IntDivTest, NextInput) {
   EXPECT_TRUE(lb != 0 || ub != 0);
 
   engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                       engine->makeIntVar(1, lb, ub)};
+  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
+                                       engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  ;
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  ;
   IntDiv& invariant =
       engine->makeInvariant<IntDiv>(inputs.at(0), inputs.at(1), outputId);
   engine->close();
@@ -242,10 +288,10 @@ TEST_F(IntDivTest, ZeroDenominator) {
 
 class MockIntDiv : public IntDiv {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    IntDiv::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    IntDiv::registerVars(engine);
   }
   MockIntDiv(VarId a, VarId b, VarId c) : IntDiv(a, b, c) {
     ON_CALL(*this, recompute)

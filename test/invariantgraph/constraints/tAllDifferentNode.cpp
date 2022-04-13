@@ -52,5 +52,5 @@ TEST_F(AllDifferentNodeTest, application) {
   EXPECT_EQ(engine.numInvariants(), 1);
 
   EXPECT_EQ(engine.lowerBound(_variableMap.at(node->violation())), 0);
-  EXPECT_EQ(engine.upperBound(_variableMap.at(node->violation())), 4);
+  EXPECT_EQ(engine.upperBound(_variableMap.at(node->violation())), 3);
 }

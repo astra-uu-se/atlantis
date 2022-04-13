@@ -14,7 +14,7 @@ class AllDifferentNeighbourhoodTest : public ::testing::Test {
   void SetUp() override {
     engine.open();
     for (auto i = 0u; i < 4; ++i) {
-      VarId var = engine.makeIntVar(0, 1, 4);
+      VarId var = engine.makeIntVar(1, 1, 4);
       variables.emplace_back(var, IntervalDomain{1, 4});
     }
     engine.close();

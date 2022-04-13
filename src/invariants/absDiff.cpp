@@ -7,12 +7,28 @@ AbsDiff::AbsDiff(VarId x, VarId y, VarId absDiff)
   _modifiedVars.reserve(1);
 }
 
-void AbsDiff::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+void AbsDiff::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
 
   registerDefinedVariable(engine, _absDiff);
   engine.registerInvariantInput(_id, _x, 0);
   engine.registerInvariantInput(_id, _y, 0);
+}
+
+void AbsDiff::updateBounds(Engine& engine) {
+  const Int xLb = engine.lowerBound(_x);
+  const Int xUb = engine.upperBound(_x);
+  const Int yLb = engine.lowerBound(_y);
+  const Int yUb = engine.upperBound(_y);
+
+  const Int lb = xLb <= yUb && yLb <= xUb
+                     ? 0
+                     : std::min(std::abs(xLb - yUb), std::abs(yLb - xUb));
+
+  const Int ub = std::max(std::max(std::abs(xLb - yLb), std::abs(xLb - yUb)),
+                          std::max(std::abs(xUb - yLb), std::abs(xUb - yUb)));
+
+  engine.updateBounds(_absDiff, lb, ub);
 }
 
 void AbsDiff::recompute(Timestamp ts, Engine& engine) {

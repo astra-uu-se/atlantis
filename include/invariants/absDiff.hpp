@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 
@@ -17,7 +19,8 @@ class AbsDiff : public Invariant {
  public:
   AbsDiff(VarId x, VarId y, VarId absDiff);
 
-  void init(Timestamp, Engine&) override;
+  void registerVars(Engine&) override;
+  void updateBounds(Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;

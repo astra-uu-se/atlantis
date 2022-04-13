@@ -7,10 +7,50 @@ IntDiv::IntDiv(VarId a, VarId b, VarId y)
   _modifiedVars.reserve(1);
 }
 
-void IntDiv::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+void IntDiv::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
-
+  engine.registerInvariantInput(_id, _a, 0);
+  engine.registerInvariantInput(_id, _b, 0);
   registerDefinedVariable(engine, _y);
+}
+
+void IntDiv::updateBounds(Engine& engine) {
+  const Int aLb = engine.lowerBound(_a);
+  const Int aUb = engine.upperBound(_a);
+  const Int bLb = engine.lowerBound(_b);
+  const Int bUb = engine.upperBound(_b);
+
+  assert(bLb != 0 || bUb != 0);
+
+  std::vector<Int> denominators;
+  denominators.reserve(4);
+
+  if (bLb <= 0 && 0 < bUb) {
+    denominators.emplace_back(1);
+  }
+  if (bLb < 0 && 0 <= bUb) {
+    denominators.emplace_back(-1);
+  }
+  if (bLb != 0) {
+    denominators.emplace_back(bLb);
+  }
+  if (bUb != 0) {
+    denominators.emplace_back(bUb);
+  }
+
+  assert(denominators.size() > 0);
+  Int lb = std::numeric_limits<Int>::max();
+  Int ub = std::numeric_limits<Int>::min();
+  for (const Int d : denominators) {
+    lb = std::min(lb, std::min(aLb / d, aUb / d));
+    ub = std::max(ub, std::max(aLb / d, aUb / d));
+  }
+
+  engine.updateBounds(_y, lb, ub);
+}
+
+void IntDiv::close(Timestamp, Engine& engine) {
+  assert(!_id.equals(NULL_ID));
   engine.registerInvariantInput(_id, _a, 0);
   engine.registerInvariantInput(_id, _b, 0);
 
@@ -32,8 +72,7 @@ void IntDiv::recompute(Timestamp ts, Engine& engine) {
 }
 
 VarId IntDiv::nextInput(Timestamp ts, Engine&) {
-  _state.incValue(ts, 1);
-  switch (_state.value(ts)) {
+  switch (_state.incValue(ts, 1)) {
     case 0:
       return _a;
     case 1:

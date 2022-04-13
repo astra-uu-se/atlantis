@@ -45,8 +45,9 @@ class TSPTWTest : public ::testing::Test {
       }
     }
 
-    for (int i = 0; i < n; ++i) {
-      pred.emplace_back(engine->makeIntVar((i + 1) % n, 0, n - 1));
+    for (int i = 1; i <= n; ++i) {
+      const Int initVal = 1 + (i % n);
+      pred.emplace_back(engine->makeIntVar(initVal, 1, n));
       timeToPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalTime.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
@@ -82,6 +83,11 @@ class TSPTWTest : public ::testing::Test {
     engine->makeInvariant<Linear>(violation, totalViolation);
 
     engine->close();
+    for (const VarId p : pred) {
+      assert(engine->lowerBound(p) == 1);
+      assert(engine->upperBound(p) == n);
+      assert(1 <= engine->committedValue(p) && engine->committedValue(p) <= n);
+    }
   }
 
   void TearDown() override {
@@ -101,14 +107,15 @@ class TSPTWTest : public ::testing::Test {
 TEST_F(TSPTWTest, Probing) {
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      if (i == j || engine->committedValue(pred[i]) == j) {
+      if (i == j || engine->committedValue(pred[i]) == j + 1) {
         continue;
       }
       engine->beginMove();
-      engine->setValue(pred[i], engine->committedValue(
-                                    pred[engine->committedValue(pred[i])]));
+      engine->setValue(
+          pred[i],
+          engine->committedValue(pred.at(engine->committedValue(pred[i]) - 1)));
       engine->setValue(pred[j], engine->committedValue(pred[i]));
-      engine->setValue(pred[engine->committedValue(pred[i])],
+      engine->setValue(pred.at(engine->committedValue(pred[i]) - 1),
                        engine->committedValue(pred[j]));
       engine->endMove();
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <vector>
 
 #include "core/types.hpp"
@@ -13,16 +14,18 @@ class Engine;
  */
 class Pow : public Invariant {
  private:
-  VarId _a;
-  VarId _b;
-  VarId _y;
+  const VarId _a;
+  const VarId _b;
+  const VarId _y;
+  Int _zeroReplacement{1};
 
  public:
   Pow(VarId a, VarId b, VarId y) : Invariant(NULL_ID), _a(a), _b(b), _y(y) {
     _modifiedVars.reserve(1);
   }
 
-  void init(Timestamp, Engine&) override;
+  void registerVars(Engine&) override;
+  void updateBounds(Engine&) override;
   void recompute(Timestamp, Engine&) override;
   VarId nextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;

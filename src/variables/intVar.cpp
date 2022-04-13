@@ -1,5 +1,6 @@
 #include "variables/intVar.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <stdexcept>
 
@@ -24,9 +25,12 @@ IntVar::IntVar(Timestamp ts, VarId id, Int initValue, Int lowerBound,
     throw std::out_of_range(
         "Lower bound must be smaller than or equal to upper bound");
   }
+  if (initValue < lowerBound || upperBound < initValue) {
+    throw std::out_of_range("value must be inside bounds");
+  }
 }
 
-void IntVar::updateDomain(Int lowerBound, Int upperBound) {
+void IntVar::updateBounds(Int lowerBound, Int upperBound) {
   if (lowerBound > upperBound) {
     throw std::out_of_range(
         "Lower bound must be smaller than or equal to upper bound");

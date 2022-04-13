@@ -6,6 +6,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <deque>
 #include <random>
 #include <vector>
 
@@ -16,6 +17,29 @@ using ::testing::AtLeast;
 using ::testing::AtMost;
 using ::testing::Return;
 
+// below function returns the subsets of vector origin.
+template <class T>
+std::vector<std::vector<T>> subsets(std::vector<T>& origin) {
+  std::vector<T> subset;
+  std::vector<std::vector<T>> res;
+  std::deque<std::pair<size_t, size_t>> q;
+  res.emplace_back(std::vector<T>{});
+  q.emplace_back(std::pair<size_t, size_t>{size_t(0), 0 + 1});
+  q.emplace_back(std::pair<size_t, size_t>{res.size(), 0 + 1});
+  res.emplace_back(std::vector<T>{origin.at(0)});
+
+  while (!q.empty()) {
+    const auto& [resIndex, originIndex] = q.front();
+    q.pop_front();
+    for (size_t j = originIndex; j < origin.size(); ++j) {
+      q.emplace_back(std::pair<size_t, size_t>{res.size(), j + 1});
+      res.emplace_back(res.at(resIndex));
+      res.back().emplace_back(origin.at(j));
+    }
+  }
+  return res;
+}
+
 class InvariantTest : public ::testing::Test {
  protected:
   std::unique_ptr<PropagationEngine> engine;
@@ -23,12 +47,12 @@ class InvariantTest : public ::testing::Test {
   std::default_random_engine rng;
   std::vector<std::pair<PropagationMode, OutputToInputMarkingMode>>
       propMarkModes{
-          {PropagationMode::INPUT_TO_OUTPUT, OutputToInputMarkingMode::NONE}/*,
+          {PropagationMode::INPUT_TO_OUTPUT, OutputToInputMarkingMode::NONE},
           {PropagationMode::OUTPUT_TO_INPUT, OutputToInputMarkingMode::NONE},
           {PropagationMode::OUTPUT_TO_INPUT,
            OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC},
           {PropagationMode::OUTPUT_TO_INPUT,
-           OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}*/};
+           OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}};
 
   template <class T>
   void testNotifications(T* invariant, PropagationMode propMode,

@@ -56,6 +56,45 @@ class GlobalCardinalityTest : public InvariantTest {
     return std::max(shortage, excess);
   }
 
+  void updateBounds() {
+    const Int lb = 0;
+    const Int ub = 2;
+    std::vector<std::pair<Int, Int>> lowUpVector{
+        {0, 0}, {0, 4}, {3, 3}, {4, 5}};
+
+    engine->open();
+    std::vector<VarId> inputs{engine->makeIntVar(0, 0, 2),
+                              engine->makeIntVar(0, 0, 2),
+                              engine->makeIntVar(0, 0, 2)};
+
+    for (const auto& [low, up] : lowUpVector) {
+      if (!engine->isOpen()) {
+        engine->open();
+      }
+      const VarId violationId = engine->makeIntVar(0, 0, 2);
+      GlobalCardinality<IsClosed>& invariant =
+          engine->makeConstraint<GlobalCardinality<IsClosed>>(
+              violationId, std::vector<VarId>(inputs), std::vector<Int>{1},
+              std::vector<Int>{low}, std::vector<Int>{up});
+      engine->close();
+      EXPECT_EQ(engine->lowerBound(violationId), 0);
+
+      for (Int aVal = lb; aVal <= ub; ++aVal) {
+        engine->setValue(engine->currentTimestamp(), inputs.at(0), aVal);
+        for (Int bVal = lb; bVal <= ub; ++bVal) {
+          engine->setValue(engine->currentTimestamp(), inputs.at(1), bVal);
+          for (Int cVal = lb; cVal <= ub; ++cVal) {
+            engine->setValue(engine->currentTimestamp(), inputs.at(2), cVal);
+            invariant.compute(engine->currentTimestamp(), *engine);
+            const Int viol =
+                engine->value(engine->currentTimestamp(), violationId);
+            EXPECT_TRUE(viol <= engine->upperBound(violationId));
+          }
+        }
+      }
+    }
+  }
+
   void recompute() {
     std::vector<std::pair<Int, Int>> boundVec{
         {-10004, -10000}, {-2, 2}, {10000, 10002}};
@@ -224,7 +263,7 @@ class GlobalCardinalityTest : public InvariantTest {
     std::vector<Int> low;
     std::vector<Int> up;
     for (size_t i = 0; i < numInputs; ++i) {
-      inputs.emplace_back(engine->makeIntVar(i, lb, ub));
+      inputs.emplace_back(engine->makeIntVar(valueDist(gen), lb, ub));
       cover.emplace_back(i);
       low.emplace_back(1);
       up.emplace_back(2);
@@ -440,6 +479,10 @@ class GlobalCardinalityTest : public InvariantTest {
 class GlobalCardinalityTestClosed : public GlobalCardinalityTest<true> {};
 class GlobalCardinalityTestOpen : public GlobalCardinalityTest<false> {};
 
+TEST_F(GlobalCardinalityTestClosed, UpdateBounds) { updateBounds(); }
+
+TEST_F(GlobalCardinalityTestOpen, UpdateBounds) { updateBounds(); }
+
 TEST_F(GlobalCardinalityTestClosed, Recompute) { recompute(); }
 
 TEST_F(GlobalCardinalityTestOpen, Recompute) { recompute(); }
@@ -479,10 +522,10 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityTestClosed, RapidCheck,
 template <bool IsClosed>
 class MockGlobalCardinality : public GlobalCardinality<IsClosed> {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    GlobalCardinality<IsClosed>::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    GlobalCardinality<IsClosed>::registerVars(engine);
   }
   MockGlobalCardinality(VarId violationId, std::vector<VarId>&& t_variables,
                         std::vector<Int>&& cover, std::vector<Int>&& t_counts)

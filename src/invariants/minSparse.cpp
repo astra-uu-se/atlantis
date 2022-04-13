@@ -9,13 +9,22 @@ MinSparse::MinSparse(std::vector<VarId> varArray, VarId y)
   _modifiedVars.reserve(_varArray.size());
 }
 
-void MinSparse::init([[maybe_unused]] Timestamp ts, Engine& engine) {
+void MinSparse::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
-
-  registerDefinedVariable(engine, _y);
   for (size_t i = 0; i < _varArray.size(); ++i) {
     engine.registerInvariantInput(_id, _varArray[i], i);
   }
+  registerDefinedVariable(engine, _y);
+}
+
+void MinSparse::updateBounds(Engine& engine) {
+  Int lb = std::numeric_limits<Int>::max();
+  Int ub = std::numeric_limits<Int>::max();
+  for (const VarId input : _varArray) {
+    lb = std::min(lb, engine.lowerBound(input));
+    ub = std::min(ub, engine.upperBound(input));
+  }
+  engine.updateBounds(_y, lb, ub);
 }
 
 void MinSparse::recompute(Timestamp ts, Engine& engine) {

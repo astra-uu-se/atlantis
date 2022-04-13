@@ -17,24 +17,30 @@ AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> variables)
   _modifiedVars.reserve(_variables.size());
 }
 
-void AllDifferent::init(Timestamp ts, Engine& engine) {
+void AllDifferent::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
+  for (size_t i = 0; i < _variables.size(); ++i) {
+    engine.registerInvariantInput(_id, _variables[i], i);
+  }
+  registerDefinedVariable(engine, _violationId);
+}
+
+void AllDifferent::updateBounds(Engine& engine) {
+  engine.updateBounds(_violationId, 0, _variables.size() - 1);
+}
+
+void AllDifferent::close(Timestamp ts, Engine& engine) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
   for (size_t i = 0; i < _variables.size(); ++i) {
     lb = std::min(lb, engine.lowerBound(_variables[i]));
     ub = std::max(ub, engine.upperBound(_variables[i]));
-    engine.registerInvariantInput(_id, _variables[i], i);
     _localValues.emplace_back(ts, engine.committedValue(_variables[i]));
   }
   assert(ub >= lb);
-
   _counts.resize(static_cast<unsigned long>(ub - lb + 1),
                  CommittableInt(ts, 0));
-
-  registerDefinedVariable(engine, _violationId);
-
   _offset = lb;
 }
 

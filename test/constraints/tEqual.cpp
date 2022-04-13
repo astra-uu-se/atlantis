@@ -16,6 +16,8 @@ namespace {
 
 class EqualTest : public InvariantTest {
  public:
+  bool isRegistered = false;
+
   Int computeViolation(const Timestamp ts,
                        const std::array<const VarId, 2>& inputs) {
     return computeViolation(engine->value(ts, inputs.at(0)),
@@ -26,42 +28,76 @@ class EqualTest : public InvariantTest {
     return computeViolation(inputs.at(0), inputs.at(1));
   }
 
-  Int computeViolation(const Timestamp ts, const VarId a, const VarId b) {
-    return computeViolation(engine->value(ts, a), engine->value(ts, b));
+  Int computeViolation(const Timestamp ts, const VarId x, const VarId y) {
+    return computeViolation(engine->value(ts, x), engine->value(ts, y));
   }
 
-  Int computeViolation(const Int aVal, const Int bVal) {
-    return std::abs(aVal - bVal);
+  Int computeViolation(const Int xVal, const Int yVal) {
+    return std::abs(xVal - yVal);
   }
 };
 
-/**
- *  Testing constructor
- */
+TEST_F(EqualTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
+  engine->open();
+  const VarId x = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId y = engine->makeIntVar(
+      boundVec.front().first, boundVec.front().first, boundVec.front().second);
+  const VarId violationId = engine->makeIntVar(0, 0, 2);
+  Equal& invariant = engine->makeConstraint<Equal>(violationId, x, y);
+  engine->close();
+
+  for (const auto& [xLb, xUb] : boundVec) {
+    EXPECT_TRUE(xLb <= xUb);
+    engine->updateBounds(x, xLb, xUb);
+    for (const auto& [yLb, yUb] : boundVec) {
+      EXPECT_TRUE(yLb <= yUb);
+      engine->updateBounds(y, yLb, yUb);
+      invariant.updateBounds(*engine);
+      std::vector<Int> violations;
+      for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+        engine->setValue(engine->currentTimestamp(), x, xVal);
+        for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+          engine->setValue(engine->currentTimestamp(), y, yVal);
+          invariant.updateBounds(*engine);
+          invariant.recompute(engine->currentTimestamp(), *engine);
+          violations.emplace_back(
+              engine->value(engine->currentTimestamp(), violationId));
+        }
+      }
+      const auto& [minViol, maxViol] =
+          std::minmax_element(violations.begin(), violations.end());
+      ASSERT_EQ(*minViol, engine->lowerBound(violationId));
+      ASSERT_EQ(*maxViol, engine->upperBound(violationId));
+    }
+  }
+}
 
 TEST_F(EqualTest, Recompute) {
-  const Int aLb = -100;
-  const Int aUb = 25;
-  const Int bLb = -25;
-  const Int bUb = 50;
+  const Int xLb = -100;
+  const Int xUb = 25;
+  const Int yLb = -25;
+  const Int yUb = 50;
 
-  EXPECT_TRUE(aLb <= aUb);
-  EXPECT_TRUE(bLb <= bUb);
+  EXPECT_TRUE(xLb <= xUb);
+  EXPECT_TRUE(yLb <= yUb);
   engine->open();
-  const std::array<const VarId, 2> inputs{engine->makeIntVar(aUb, aLb, aUb),
-                                          engine->makeIntVar(bUb, bLb, bUb)};
+  const std::array<const VarId, 2> inputs{engine->makeIntVar(xUb, xLb, xUb),
+                                          engine->makeIntVar(yUb, yLb, yUb)};
   const VarId violationId =
-      engine->makeIntVar(0, 0, std::max(aUb - bLb, bUb - aLb));
+      engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
   Equal& invariant =
       engine->makeConstraint<Equal>(violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
-  for (Int aVal = aLb; aVal <= aUb; ++aVal) {
-    for (Int bVal = bLb; bVal <= bUb; ++bVal) {
-      engine->setValue(engine->currentTimestamp(), inputs.at(0), aVal);
-      engine->setValue(engine->currentTimestamp(), inputs.at(1), bVal);
+  for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+    for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+      engine->setValue(engine->currentTimestamp(), inputs.at(0), xVal);
+      engine->setValue(engine->currentTimestamp(), inputs.at(1), yVal);
 
-      const Int expectedViolation = computeViolation(aVal, bVal);
+      const Int expectedViolation = computeViolation(xVal, yVal);
       invariant.recompute(engine->currentTimestamp(), *engine);
       EXPECT_EQ(expectedViolation,
                 engine->value(engine->currentTimestamp(), violationId));
@@ -214,12 +250,12 @@ TEST_F(EqualTest, Commit) {
 
 class MockEqual : public Equal {
  public:
-  bool initialized = false;
-  void init(Timestamp timestamp, Engine& engine) override {
-    initialized = true;
-    Equal::init(timestamp, engine);
+  bool registered = false;
+  void registerVars(Engine& engine) override {
+    registered = true;
+    Equal::registerVars(engine);
   }
-  MockEqual(VarId violationId, VarId a, VarId b) : Equal(violationId, a, b) {
+  MockEqual(VarId violationId, VarId x, VarId y) : Equal(violationId, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return Equal::recompute(timestamp, engine);
@@ -254,11 +290,11 @@ TEST_F(EqualTest, EngineIntegration) {
     if (!engine->isOpen()) {
       engine->open();
     }
-    const VarId a = engine->makeIntVar(5, -100, 100);
-    const VarId b = engine->makeIntVar(0, -100, 100);
+    const VarId x = engine->makeIntVar(5, -100, 100);
+    const VarId y = engine->makeIntVar(0, -100, 100);
     const VarId viol = engine->makeIntVar(0, 0, 200);
-    testNotifications<MockEqual>(&engine->makeInvariant<MockEqual>(viol, a, b),
-                                 propMode, markingMode, 3, a, 1, viol);
+    testNotifications<MockEqual>(&engine->makeInvariant<MockEqual>(viol, x, y),
+                                 propMode, markingMode, 3, x, 1, viol);
   }
 }
 }  // namespace
