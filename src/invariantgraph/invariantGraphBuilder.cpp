@@ -3,6 +3,7 @@
 #include <unordered_set>
 
 #include "invariantgraph/constraints/allDifferentNode.hpp"
+#include "invariantgraph/constraints/boolClauseNode.hpp"
 #include "invariantgraph/constraints/eqNode.hpp"
 #include "invariantgraph/constraints/intLinEqNode.hpp"
 #include "invariantgraph/constraints/intLinLeNode.hpp"
@@ -293,6 +294,7 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   NODE_REGISTRATION("bool_eq", EqNode);
   NODE_REGISTRATION("int_ne", IntNeNode);
   NODE_REGISTRATION("set_in", SetInNode);
+  NODE_REGISTRATION("bool_clause", BoolClauseNode);
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint.name));
