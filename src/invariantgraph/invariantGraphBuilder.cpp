@@ -15,6 +15,7 @@
 #include "invariantgraph/invariants/arrayBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayBoolOrNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
+#include "invariantgraph/invariants/arrayVarBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/binaryOpNode.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
@@ -248,6 +249,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION("array_bool_and", ArrayBoolAndNode);
   NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
   NODE_REGISTRATION("array_bool_element", ArrayBoolElementNode);
+  NODE_REGISTRATION("array_var_bool_element", ArrayVarBoolElementNode);
 
   return nullptr;
 #undef BINARY_OP_REGISTRATION
