@@ -27,6 +27,7 @@
 #include "invariantgraph/invariants/maxNode.hpp"
 #include "invariantgraph/invariants/minNode.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
+#include "invariantgraph/views/boolNotNode.hpp"
 #include "invariantgraph/views/eqReifNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
 #include "invariantgraph/views/intLeReifNode.hpp"
@@ -248,6 +249,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION("int_ne_reif", IntNeReifNode);
   NODE_REGISTRATION("set_in_reif", SetInReifNode);
   NODE_REGISTRATION("bool2int", Bool2IntNode);
+  NODE_REGISTRATION("bool_not", BoolNotNode);
   NODE_REGISTRATION("array_bool_and", ArrayBoolAndNode);
   NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
   NODE_REGISTRATION("array_bool_element", ArrayBoolElementNode);
