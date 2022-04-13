@@ -7,7 +7,7 @@
 
 namespace invariantgraph {
 
-class IntEqNode : public SoftConstraintNode {
+class EqNode : public SoftConstraintNode {
  private:
   VariableNode* _a;
   VariableNode* _b;
@@ -23,12 +23,12 @@ class IntEqNode : public SoftConstraintNode {
   };
 
  public:
-  IntEqNode(VariableNode* a, VariableNode* b)
+  EqNode(VariableNode* a, VariableNode* b)
       : SoftConstraintNode([&] { return violationUb(a, b); }, {a, b}),
         _a(a),
         _b(b) {}
 
-  static std::unique_ptr<IntEqNode> fromModelConstraint(
+  static std::unique_ptr<EqNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 

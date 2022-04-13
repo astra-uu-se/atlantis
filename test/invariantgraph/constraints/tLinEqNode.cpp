@@ -1,8 +1,8 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/intLinEqNode.hpp"
+#include "invariantgraph/constraints/linEqNode.hpp"
 
-class IntLinEqNodeTest : public NodeTestBase {
+class LinEqNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 0, 10);
   INT_VARIABLE(b, 0, 10);
@@ -16,16 +16,16 @@ class IntLinEqNodeTest : public NodeTestBase {
 
   fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::IntLinEqNode> node;
+  std::unique_ptr<invariantgraph::LinEqNode> node;
 
-  IntLinEqNodeTest() : NodeTestBase(model) {}
+  LinEqNodeTest() : NodeTestBase(model) {}
 
   void SetUp() override {
-    node = makeNode<invariantgraph::IntLinEqNode>(constraint);
+    node = makeNode<invariantgraph::LinEqNode>(constraint);
   }
 };
 
-TEST_F(IntLinEqNodeTest, construction) {
+TEST_F(LinEqNodeTest, construction) {
   EXPECT_EQ(*node->variables()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
   EXPECT_EQ(*node->variables()[1]->variable(),
@@ -37,7 +37,7 @@ TEST_F(IntLinEqNodeTest, construction) {
   EXPECT_EQ(node->c(), 3);
 }
 
-TEST_F(IntLinEqNodeTest, application) {
+TEST_F(LinEqNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});

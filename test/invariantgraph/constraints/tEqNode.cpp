@@ -1,24 +1,22 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/intEqNode.hpp"
+#include "invariantgraph/constraints/eqNode.hpp"
 
-class IntEqNodeTest : public NodeTestBase {
+class EqNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 5, 10);
   INT_VARIABLE(b, 2, 7);
   fznparser::Constraint constraint{"int_eq", {"a", "b"}, {}};
   fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::IntEqNode> node;
+  std::unique_ptr<invariantgraph::EqNode> node;
 
-  IntEqNodeTest() : NodeTestBase(model) {}
+  EqNodeTest() : NodeTestBase(model) {}
 
-  void SetUp() override {
-    node = makeNode<invariantgraph::IntEqNode>(constraint);
-  }
+  void SetUp() override { node = makeNode<invariantgraph::EqNode>(constraint); }
 };
 
-TEST_F(IntEqNodeTest, construction) {
+TEST_F(EqNodeTest, construction) {
   EXPECT_EQ(*node->a()->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
   EXPECT_EQ(*node->b()->variable(),
@@ -26,7 +24,7 @@ TEST_F(IntEqNodeTest, construction) {
   expectMarkedAsInput(node.get(), {node->a(), node->b()});
 }
 
-TEST_F(IntEqNodeTest, application) {
+TEST_F(EqNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});

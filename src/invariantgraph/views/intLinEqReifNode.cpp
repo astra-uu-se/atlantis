@@ -1,7 +1,7 @@
 #include "invariantgraph/views/intLinEqReifNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariantgraph/constraints/intLinEqNode.hpp"
+#include "invariantgraph/constraints/linEqNode.hpp"
 #include "invariantgraph/views/reifiedConstraint.hpp"
 
 std::unique_ptr<invariantgraph::IntLinEqReifNode>
@@ -17,5 +17,5 @@ invariantgraph::IntLinEqReifNode::fromModelConstraint(
   auto r = mappedVariable(constraint.arguments[3], variableMap);
 
   return std::make_unique<invariantgraph::IntLinEqReifNode>(
-      std::make_unique<invariantgraph::IntLinEqNode>(as, bs, c), r);
+      std::make_unique<invariantgraph::LinEqNode>(as, bs, c), r);
 }
