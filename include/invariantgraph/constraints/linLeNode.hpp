@@ -35,9 +35,6 @@ class LinLeNode : public SoftConstraintNode {
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 
   [[nodiscard]] Int bound() const { return _bound; }
-
- private:
-  [[nodiscard]] std::pair<Int, Int> getDomainBounds() const;
 };
 
 }  // namespace invariantgraph

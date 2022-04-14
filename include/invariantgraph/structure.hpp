@@ -143,11 +143,8 @@ class VariableDefiningNode {
   static inline VarId registerDefinedVariable(Engine& engine,
                                               VariableMap& variableMap,
                                               VariableNode* variable) {
-    const auto& [lb, ub] = variable->bounds();
-    auto varId = engine.makeIntVar(lb, lb, ub);
-
+    auto varId = engine.makeIntVar(0, 0, 0);
     variableMap.emplace(variable, varId);
-
     return varId;
   }
 };

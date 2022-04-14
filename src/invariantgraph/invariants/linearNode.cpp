@@ -63,24 +63,10 @@ void invariantgraph::LinearNode::registerWithEngine(
   // If there is only one variable in the input, there is no need to use a
   // linear invariant.
   if (variables.size() > 1 && _coeffs[0] == 1) {
-    const auto& [lb, ub] = getIntermediateDomain();
-    intermediate = engine.makeIntVar(lb, lb, ub);
+    intermediate = engine.makeIntVar(0, 0, 0);
     engine.makeInvariant<::Linear>(_coeffs, variables, intermediate);
   }
 
   auto outputVar = engine.makeIntView<IntOffsetView>(intermediate, _offset);
   variableMap.emplace(definedVariables()[0], outputVar);
-}
-
-std::pair<Int, Int> invariantgraph::LinearNode::getIntermediateDomain() const {
-  Int lb = 0, ub = 0;
-
-  for (size_t i = 0; i < _coeffs.size(); i++) {
-    const auto& [varLb, varUb] = _variables[i]->bounds();
-
-    lb += _coeffs[i] * varLb;
-    ub += _coeffs[i] * varUb;
-  }
-
-  return {lb, ub};
 }

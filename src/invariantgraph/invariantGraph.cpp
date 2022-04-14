@@ -7,13 +7,6 @@
 #include "invariants/linear.hpp"
 #include "utils/fznAst.hpp"
 
-static Int totalViolationsUpperBound(Engine& engine,
-                                     const std::vector<VarId>& violations) {
-  return std::accumulate(
-      violations.begin(), violations.end(), 0,
-      [&](auto sum, const auto& var) { return sum + engine.upperBound(var); });
-}
-
 static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
     const std::unordered_map<invariantgraph::VariableNode*, VarId>&
         variableIds) {
@@ -66,16 +59,7 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     unAppliedNodes.pop();
   }
 
-  // TODO: Do this better
-  // This is a quick fix to deal with overflow. However, overflow on signed
-  // integers is undefined behavior. Even though in practice it often means the
-  // value wraps around, we should definitely make this more robust.
-  auto totalViolationsUb = totalViolationsUpperBound(engine, violations);
-  if (totalViolationsUb < 0) {
-    totalViolationsUb = std::numeric_limits<Int>::max();
-  }
-
-  VarId totalViolations = engine.makeIntVar(0, 0, totalViolationsUb);
+  VarId totalViolations = engine.makeIntVar(0, 0, 0);
   engine.makeInvariant<Linear>(violations, totalViolations);
 
   // If the model has no variable to optimise, use a dummy variable.
