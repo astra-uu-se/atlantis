@@ -79,6 +79,8 @@ int main(int argc, char* argv[]) {
 
     PropagationEngine engine;
     auto applicationResult = graph.apply(engine);
+    auto neighbourhood = applicationResult.neighbourhood();
+    neighbourhood.printNeighbourhood(std::cerr);
 
     search::Objective searchObjective(engine, model);
     engine.open();
@@ -97,7 +99,6 @@ int main(int argc, char* argv[]) {
     logDebug("Using seed " << seed);
     search::RandomProvider random(seed);
 
-    auto neighbourhood = applicationResult.neighbourhood();
     search::SearchProcedure search(random, assignment, neighbourhood,
                                    searchObjective);
 
