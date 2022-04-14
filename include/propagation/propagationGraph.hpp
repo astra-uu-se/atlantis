@@ -112,7 +112,7 @@ class PropagationGraph {
     return _numInvariants;  // this ignores null invariant
   }
 
-  inline bool isEvaluationVar(VarIdBase id) {
+  inline bool isEvaluationVariable(VarIdBase id) {
     assert(id < _isEvaluationVariable.size());
     return _isEvaluationVariable[id];
   }

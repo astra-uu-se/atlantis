@@ -22,8 +22,7 @@ invariantgraph::LinEqNode::fromModelConstraint(
 
 void invariantgraph::LinEqNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  auto [sumLb, sumUb] = getDomainBounds();
-  auto sumVar = engine.makeIntVar(sumLb, sumLb, sumUb);
+  auto sumVar = engine.makeIntVar(0, 0, 0);
 
   std::vector<VarId> variables;
   std::transform(

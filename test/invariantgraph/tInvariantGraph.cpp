@@ -6,9 +6,9 @@
 #include "invariantgraph/invariants/linearNode.hpp"
 
 TEST(InvariantGraphTest, apply_result) {
-  auto a = fznparser::IntVariable{"a", fznparser::IntRange{0, 10}, {}};
-  auto b = fznparser::IntVariable{"b", fznparser::IntRange{0, 10}, {}};
-  auto c = fznparser::IntVariable{"c", fznparser::IntRange{0, 10}, {}};
+  auto a = fznparser::IntVariable{"a", fznparser::IntRange{0, 10}, {}, 0};
+  auto b = fznparser::IntVariable{"b", fznparser::IntRange{0, 10}, {}, 0};
+  auto c = fznparser::IntVariable{"c", fznparser::IntRange{0, 10}, {}, 0};
 
   auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
   auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
