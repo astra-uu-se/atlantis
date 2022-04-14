@@ -12,6 +12,9 @@ class MockNeighbourhood : public search::neighbourhoods::Neighbourhood {
   MOCK_METHOD(bool, randomMove,
               (search::RandomProvider&, search::Assignment&, search::Annealer&),
               (override));
+
+  MOCK_METHOD(const std::vector<search::SearchVariable>&, coveredVariables, (),
+              (const override));
 };
 
 class NeighbourhoodCombinatorTest : public ::testing::Test {
