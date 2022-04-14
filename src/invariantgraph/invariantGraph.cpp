@@ -4,6 +4,8 @@
 #include <queue>
 #include <unordered_set>
 
+#include "constraints/inDomain.hpp"
+#include "constraints/inSparseDomain.hpp"
 #include "invariants/linear.hpp"
 #include "utils/fznAst.hpp"
 
@@ -66,16 +68,17 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     unAppliedNodes.pop();
   }
 
-  // TODO: Do this better
-  // This is a quick fix to deal with overflow. However, overflow on signed
-  // integers is undefined behavior. Even though in practice it often means the
-  // value wraps around, we should definitely make this more robust.
-  auto totalViolationsUb = totalViolationsUpperBound(engine, violations);
-  if (totalViolationsUb < 0) {
-    totalViolationsUb = std::numeric_limits<Int>::max();
+  for (const auto& node : seenNodes) {
+    for (const auto& varNode : node->definedVariables()) {
+      const VarId domainViolationId = varNode->postDomainConstraint(
+          engine, variableIds, varNode->constrainedDomain(engine, variableIds));
+      if (domainViolationId != NULL_ID) {
+        violations.push_back(domainViolationId);
+      }
+    }
   }
 
-  VarId totalViolations = engine.makeIntVar(0, 0, totalViolationsUb);
+  VarId totalViolations = engine.makeIntVar(0, 0, 0);
   engine.makeInvariant<Linear>(violations, totalViolations);
 
   // If the model has no variable to optimise, use a dummy variable.

@@ -63,8 +63,7 @@ void invariantgraph::LinearNode::registerWithEngine(
   // If there is only one variable in the input, there is no need to use a
   // linear invariant.
   if (variables.size() > 1 && _coeffs[0] == 1) {
-    const auto& [lb, ub] = getIntermediateDomain();
-    intermediate = engine.makeIntVar(lb, lb, ub);
+    intermediate = engine.makeIntVar(0, 0, 0);
     engine.makeInvariant<::Linear>(_coeffs, variables, intermediate);
   }
 

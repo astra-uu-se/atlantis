@@ -1,13 +1,17 @@
 #pragma once
 
+#include <cassert>
 #include <fznparser/ast.hpp>
 #include <optional>
 #include <unordered_map>
 #include <vector>
 
+#include "constraints/inDomain.hpp"
+#include "constraints/inSparseDomain.hpp"
 #include "core/engine.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 #include "search/searchVariable.hpp"
+#include "utils/variant.hpp"
 
 namespace invariantgraph {
 
@@ -27,10 +31,14 @@ class VariableNode {
  public:
   using FZNVariable =
       std::variant<fznparser::IntVariable, fznparser::BoolVariable>;
+  using VariableMap = std::unordered_map<VariableNode*, VarId>;
+  static const size_t SPARSE_MAX_INTERVAL = 1000;
+  float SPARSE_MIN_DENSENESS{0.1};
 
  private:
   std::optional<FZNVariable> _variable;
   SearchDomain _domain;
+  VarId _domainViolationId{NULL_ID};
 
   std::vector<VariableDefiningNode*> _inputFor;
 
@@ -56,6 +64,43 @@ class VariableNode {
    */
   [[nodiscard]] std::optional<FZNVariable> variable() const {
     return _variable;
+  }
+
+  /**
+   * @return if the bound range of the corresponding IntVar in engine is a
+   * sub-set of SearchDomain _domain, then returns an empty vector, otherwise
+   * the relative complement of varLb..varUb in SearchDomain is returned
+   */
+  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(
+      const Engine& engine, const VariableMap& variableMap) {
+    assert(variableMap.contains(this));
+    const VarId varId = variableMap.at(this);
+    return std::visit<std::vector<DomainEntry>>(
+        [&](const auto& dom) {
+          return dom.relativeComplementIfIntersects(engine.lowerBound(varId),
+                                                    engine.upperBound(varId));
+        },
+        _domain);
+  }
+
+  VarId postDomainConstraint(Engine& engine, const VariableMap& variableMap,
+                             std::vector<DomainEntry>&& domain) {
+    if (domain.size() == 0 || _domainViolationId != NULL_ID) {
+      return _domainViolationId;
+    }
+    _domainViolationId = engine.makeIntVar(0, 0, 0);
+    const size_t interval =
+        domain.back().upperBound - domain.front().lowerBound + 1;
+    const float denseness = (float)domain.size() / (float)interval;
+    if (interval <= SPARSE_MAX_INTERVAL && SPARSE_MIN_DENSENESS <= denseness) {
+      engine.makeConstraint<InSparseDomain>(
+          _domainViolationId, variableMap.at(this), std::move(domain));
+    } else {
+      engine.makeConstraint<InDomain>(_domainViolationId, variableMap.at(this),
+                                      std::move(domain));
+    }
+
+    return _domainViolationId;
   }
 
   void imposeDomain(SearchDomain domain) { _domain = std::move(domain); }
