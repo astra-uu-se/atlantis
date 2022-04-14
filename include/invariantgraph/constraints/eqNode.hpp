@@ -24,7 +24,7 @@ class EqNode : public SoftConstraintNode {
 
  public:
   EqNode(VariableNode* a, VariableNode* b)
-      : SoftConstraintNode([&] { return violationUb(a, b); }, {a, b}),
+      : SoftConstraintNode({a, b}),
         _a(a),
         _b(b) {}
 

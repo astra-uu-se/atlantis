@@ -12,8 +12,7 @@ class SetInNode : public SoftConstraintNode {
 
  public:
   explicit SetInNode(VariableNode* input, std::vector<Int> values)
-      // TODO: Specify a better upper bound.
-      : SoftConstraintNode([&] { return 1; }, {input}),
+      : SoftConstraintNode({input}),
         _input(input),
         _values(std::move(values)) {}
 

@@ -199,13 +199,12 @@ class ImplicitConstraintNode : public VariableDefiningNode {
 
 class SoftConstraintNode : public VariableDefiningNode {
  private:
-  VariableNode _violation;
+  // Bounds will be recomputed by the engine.
+  VariableNode _violation{SetDomain({0})};
 
  public:
-  explicit SoftConstraintNode(const std::function<Int()>& violationUb,
-                              const std::vector<VariableNode*>& inputs = {})
-      : VariableDefiningNode({&_violation}, inputs),
-        _violation(IntervalDomain{0, violationUb()}) {}
+  explicit SoftConstraintNode(const std::vector<VariableNode*>& inputs = {})
+      : VariableDefiningNode({&_violation}, inputs) {}
 
   ~SoftConstraintNode() override = default;
 
