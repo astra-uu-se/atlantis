@@ -41,14 +41,6 @@ TEST_F(ArrayIntElementNodeTest, application) {
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  // The index ranges over the as array (first index is 1).
-  EXPECT_EQ(engine.lowerBound(engineVariable(b)), 1);
-  EXPECT_EQ(engine.upperBound(engineVariable(b)), node->as().size());
-
-  // The output domain should contain all elements in as.
-  EXPECT_EQ(engine.lowerBound(engineVariable(c)), 1);
-  EXPECT_EQ(engine.upperBound(engineVariable(c)), 3);
-
   // b
   EXPECT_EQ(engine.searchVariables().size(), 1);
 

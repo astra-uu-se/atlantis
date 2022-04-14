@@ -18,10 +18,7 @@ class Bool2IntNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   Bool2IntNode(VariableNode* input, VariableNode* output)
-      : VariableDefiningNode({output}, {input}), _input(input) {
-    auto expectedBounds = std::make_pair<Int, Int>(0, 1);
-    assert(output->bounds() == expectedBounds);
-  }
+      : VariableDefiningNode({output}, {input}), _input(input) {}
 
   ~Bool2IntNode() override = default;
 

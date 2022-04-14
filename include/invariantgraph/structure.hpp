@@ -58,8 +58,6 @@ class VariableNode {
     return _variable;
   }
 
-  void imposeDomain(SearchDomain domain) { _domain = std::move(domain); }
-
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
 
   [[nodiscard]] std::pair<Int, Int> bounds() const noexcept {

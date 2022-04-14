@@ -16,9 +16,7 @@ class ArrayBoolAndNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   ArrayBoolAndNode(std::vector<VariableNode*> as, VariableNode* output)
-      : VariableDefiningNode({output}, as), _as(std::move(as)) {
-    output->imposeDomain(SetDomain({0, 1}));
-  }
+      : VariableDefiningNode({output}, as), _as(std::move(as)) {}
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
