@@ -4,7 +4,7 @@
 
 #include "utils/fznAst.hpp"
 
-bool search::SearchController::shouldRun(const search::Assignment& assignment) {
+bool search::SearchController::shouldRun(const search::Assignment&) {
   if (_foundSolution &&
       std::holds_alternative<fznparser::Satisfy>(_fznModel.objective())) {
     return false;
