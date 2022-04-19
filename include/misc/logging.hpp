@@ -10,7 +10,7 @@
 namespace Logging {
 
 enum LogLevel { debug = 0, info = 1, warning = 2, error = 3 };
-static LogLevel globalLogLevel = LogLevel::warning;
+extern LogLevel globalLogLevel;
 
 inline void setLogLevel(LogLevel newLogLevel) { globalLogLevel = newLogLevel; }
 
