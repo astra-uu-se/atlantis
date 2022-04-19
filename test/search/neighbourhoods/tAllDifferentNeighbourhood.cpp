@@ -5,7 +5,8 @@
 class AllDifferentNeighbourhoodTest : public ::testing::Test {
  public:
   PropagationEngine engine;
-  search::Assignment assignment{engine, NULL_ID, NULL_ID};
+  search::Assignment assignment{engine, NULL_ID, NULL_ID,
+                                search::Cost::ObjectiveDirection::NONE};
   search::RandomProvider random{123456789};
 
   std::vector<search::SearchVariable> variables;

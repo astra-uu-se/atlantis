@@ -1,8 +1,12 @@
 #include "search/assignment.hpp"
 
 search::Assignment::Assignment(PropagationEngine& engine, VarId violation,
-                               VarId objective)
-    : _engine(engine), _violation(violation), _objective(objective) {
+                               VarId objective,
+                               Cost::ObjectiveDirection objectiveDirection)
+    : _engine(engine),
+      _violation(violation),
+      _objective(objective),
+      _objectiveDirection(objectiveDirection) {
   _searchVariables.reserve(engine.searchVariables().size());
   for (const VarId varId : engine.searchVariables()) {
     if (engine.lowerBound(varId) != engine.upperBound(varId)) {
@@ -21,5 +25,5 @@ bool search::Assignment::satisfiesConstraints() const noexcept {
 
 search::Cost search::Assignment::cost() const noexcept {
   return {_engine.committedValue(_violation),
-          _engine.committedValue(_objective)};
+          _engine.committedValue(_objective), _objectiveDirection};
 }

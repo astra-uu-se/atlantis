@@ -32,10 +32,12 @@ class Assignment {
   std::vector<VarId> _searchVariables{};
   VarId _violation;
   VarId _objective;
+  Cost::ObjectiveDirection _objectiveDirection;
 
  public:
   explicit Assignment(PropagationEngine& engine, VarId violation,
-                      VarId objective);
+                      VarId objective,
+                      Cost::ObjectiveDirection objectiveDirection);
 
   /**
    * Assign values to the variables in the assignment. This is supplied a
@@ -78,7 +80,8 @@ class Assignment {
     _engine.query(_violation);
     _engine.endProbe();
 
-    return {_engine.currentValue(_violation), _engine.currentValue(_objective)};
+    return {_engine.currentValue(_violation), _engine.currentValue(_objective),
+            _objectiveDirection};
   }
 
   /**
