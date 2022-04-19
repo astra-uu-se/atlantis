@@ -21,6 +21,9 @@
  */
 std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
 
+static search::Cost::ObjectiveDirection getObjectiveDirection(
+    const fznparser::Objective& variant);
+
 int main(int argc, char* argv[]) {
   try {
     // TODO: How do we want to control this? The log messages don't appear
@@ -89,7 +92,8 @@ int main(int argc, char* argv[]) {
     engine.close();
 
     search::Assignment assignment(engine, violation,
-                                  applicationResult.objectiveVariable());
+                                  applicationResult.objectiveVariable(),
+                                  getObjectiveDirection(model.objective()));
 
     auto givenSeed = result["seed"].as<long>();
     std::uint_fast32_t seed = givenSeed >= 0
@@ -126,6 +130,21 @@ int main(int argc, char* argv[]) {
   } catch (const std::invalid_argument& e) {
     std::cerr << "error: " << e.what() << std::endl;
   }
+}
+
+static search::Cost::ObjectiveDirection getObjectiveDirection(
+    const fznparser::Objective& objective) {
+  return std::visit<search::Cost::ObjectiveDirection>(
+      overloaded{[](const fznparser::Satisfy&) {
+                   return search::Cost::ObjectiveDirection::NONE;
+                 },
+                 [](const fznparser::Minimise&) {
+                   return search::Cost::ObjectiveDirection::MINIMISE;
+                 },
+                 [](const fznparser::Maximise&) {
+                   return search::Cost::ObjectiveDirection::MAXIMISE;
+                 }},
+      objective);
 }
 
 std::istream& operator>>(std::istream& is,
