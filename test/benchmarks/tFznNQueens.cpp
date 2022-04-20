@@ -2,11 +2,12 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fznparser/modelFactory.hpp>
 #include <iostream>
 
 #include "core/propagationEngine.hpp"
-#include "fznparser/modelFactory.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
+#include "invariantgraph/objectiveTranslator.hpp"
 #include "search/assignment.hpp"
 #include "search/neighbourhoods/randomNeighbourhood.hpp"
 #include "search/searchProcedure.hpp"
@@ -31,7 +32,8 @@ TEST(FznNQueens, Solve) {
   engine.close();
 
   search::Assignment assignment(engine, violation,
-                                applicationResult.objectiveVariable());
+                                applicationResult.objectiveVariable(),
+                                getObjectiveDirection(model.objective()));
 
   std::uint_fast32_t seed = std::time(nullptr);
 

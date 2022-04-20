@@ -31,7 +31,8 @@ TEST(FznCarSequencing, Solve) {
   engine.close();
 
   search::Assignment assignment(engine, violation,
-                                applicationResult.objectiveVariable());
+                                applicationResult.objectiveVariable(),
+                                ObjectiveDirection::NONE);
 
   std::uint_fast32_t seed = std::time(nullptr);
 

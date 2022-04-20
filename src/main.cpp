@@ -21,7 +21,7 @@
  */
 std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
 
-static search::Cost::ObjectiveDirection getObjectiveDirection(
+static ObjectiveDirection getObjectiveDirection(
     const fznparser::Objective& variant);
 
 int main(int argc, char* argv[]) {
@@ -133,18 +133,17 @@ int main(int argc, char* argv[]) {
   }
 }
 
-static search::Cost::ObjectiveDirection getObjectiveDirection(
+static ObjectiveDirection getObjectiveDirection(
     const fznparser::Objective& objective) {
-  return std::visit<search::Cost::ObjectiveDirection>(
-      overloaded{[](const fznparser::Satisfy&) {
-                   return search::Cost::ObjectiveDirection::NONE;
-                 },
-                 [](const fznparser::Minimise&) {
-                   return search::Cost::ObjectiveDirection::MINIMISE;
-                 },
-                 [](const fznparser::Maximise&) {
-                   return search::Cost::ObjectiveDirection::MAXIMISE;
-                 }},
+  return std::visit<ObjectiveDirection>(
+      overloaded{
+          [](const fznparser::Satisfy&) { return ObjectiveDirection::NONE; },
+          [](const fznparser::Minimise&) {
+            return ObjectiveDirection::MINIMISE;
+          },
+          [](const fznparser::Maximise&) {
+            return ObjectiveDirection::MAXIMISE;
+          }},
       objective);
 }
 

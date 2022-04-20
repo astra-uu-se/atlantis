@@ -32,12 +32,11 @@ class Assignment {
   std::vector<VarId> _searchVariables{};
   VarId _violation;
   VarId _objective;
-  Cost::ObjectiveDirection _objectiveDirection;
+  ObjectiveDirection _objectiveDirection;
 
  public:
   explicit Assignment(PropagationEngine& engine, VarId violation,
-                      VarId objective,
-                      Cost::ObjectiveDirection objectiveDirection);
+                      VarId objective, ObjectiveDirection objectiveDirection);
 
   /**
    * Assign values to the variables in the assignment. This is supplied a
