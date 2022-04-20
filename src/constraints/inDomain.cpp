@@ -2,8 +2,9 @@
 
 #include "core/engine.hpp"
 
-InDomain::InDomain(VarId violationId, VarId x, std::vector<DomainEntry> domain)
-    : Constraint(NULL_ID, violationId), _domain(domain), _x(x) {
+InDomain::InDomain(VarId violationId, VarId x,
+                   std::vector<DomainEntry>&& domain)
+    : Constraint(NULL_ID, violationId), _domain(std::move(domain)), _x(x) {
   _modifiedVars.reserve(1);
   assert(_domain.size() >= 1);
   for (const auto& domEntry : _domain) {
