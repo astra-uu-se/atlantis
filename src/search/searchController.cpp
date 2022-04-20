@@ -4,8 +4,9 @@
 
 #include "utils/fznAst.hpp"
 
-bool search::SearchController::shouldRun(const search::Assignment& assignment) {
-  if (assignment.satisfiesConstraints()) {
+bool search::SearchController::shouldRun(const search::Assignment&) {
+  if (_foundSolution &&
+      std::holds_alternative<fznparser::Satisfy>(_fznModel.objective())) {
     return false;
   }
 
@@ -16,6 +17,25 @@ bool search::SearchController::shouldRun(const search::Assignment& assignment) {
   _started = true;
   _startTime = std::chrono::steady_clock::now();
   return true;
+}
+
+static void printSolution(
+    const fznparser::FZNModel& model, const search::Assignment& assignment,
+    const search::SearchController::VariableMap& variableMap);
+
+void search::SearchController::onSolution(const Assignment& assignment) {
+  assert(assignment.satisfiesConstraints());
+
+  _foundSolution = true;
+  printSolution(_fznModel, assignment, _variableMap);
+}
+
+void search::SearchController::onFinish() const {
+  if (_foundSolution) {
+    std::cout << "==========" << std::endl;
+  } else {
+    std::cout << "=====UNKNOWN=====" << std::endl;
+  }
 }
 
 static void printSearchVariable(
@@ -56,24 +76,26 @@ static void printVariableArray(
   std::cout << "]);\n";
 }
 
-void search::SearchController::onSolution(const Assignment& assignment) {
-  for (const auto& fznVariable : _fznModel.variables()) {
+static void printSolution(
+    const fznparser::FZNModel& model, const search::Assignment& assignment,
+    const search::SearchController::VariableMap& variableMap) {
+  for (const auto& fznVariable : model.variables()) {
     auto tagAnnotation = getAnnotation<fznparser::TagAnnotation>(fznVariable);
     auto arrayOutputAnnotation =
         getAnnotation<fznparser::OutputArrayAnnotation>(fznVariable);
 
     if (tagAnnotation && tagAnnotation->tag == "output_var") {
-      printSearchVariable(identifier(fznVariable), assignment, _variableMap);
+      printSearchVariable(identifier(fznVariable), assignment, variableMap);
     } else if (arrayOutputAnnotation) {
       if (std::holds_alternative<fznparser::IntVariableArray>(fznVariable)) {
         printVariableArray<Int>(
             std::get<fznparser::IntVariableArray>(fznVariable),
-            *arrayOutputAnnotation, assignment, _variableMap);
+            *arrayOutputAnnotation, assignment, variableMap);
       } else if (std::holds_alternative<fznparser::BoolVariableArray>(
                      fznVariable)) {
         printVariableArray<bool>(
             std::get<fznparser::BoolVariableArray>(fznVariable),
-            *arrayOutputAnnotation, assignment, _variableMap);
+            *arrayOutputAnnotation, assignment, variableMap);
       }
     }
   }

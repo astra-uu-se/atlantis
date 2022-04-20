@@ -27,6 +27,10 @@ class AllDifferentNeighbourhood : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
+  const std::vector<SearchVariable> & coveredVariables() const override {
+    return _variables;
+  }
+
  private:
   bool swapValues(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer);

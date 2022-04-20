@@ -18,6 +18,7 @@ class SearchController {
 
   std::chrono::steady_clock::time_point _startTime;
   bool _started{false};
+  Int _foundSolution{false};
 
  public:
   SearchController(const fznparser::FZNModel& fznModel, VariableMap variableMap)
@@ -35,6 +36,7 @@ class SearchController {
 
   bool shouldRun(const Assignment& assignment);
   void onSolution(const Assignment& assignment);
+  void onFinish() const;
 };
 
 }  // namespace search

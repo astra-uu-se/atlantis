@@ -22,6 +22,10 @@ class RandomNeighbourhood : public Neighbourhood {
                   AssignmentModifier& modifications) override;
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
+
+  const std::vector<SearchVariable> & coveredVariables() const override {
+    return _variables;
+  }
 };
 
 }  // namespace search::neighbourhoods

@@ -2,6 +2,7 @@
 
 #include "search/annealer.hpp"
 #include "search/move.hpp"
+#include "search/searchVariable.hpp"
 
 namespace search::neighbourhoods {
 
@@ -29,6 +30,12 @@ class Neighbourhood {
    */
   virtual bool randomMove(RandomProvider& random, Assignment& assignment,
                           Annealer& annealer) = 0;
+
+  /**
+   * @return The search variables covered by this neighbourhood.
+   */
+  [[nodiscard]] virtual const std::vector<SearchVariable>& coveredVariables()
+      const = 0;
 
  protected:
   template <unsigned int N>

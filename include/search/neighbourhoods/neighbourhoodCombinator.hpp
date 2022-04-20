@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+
 #include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
 
@@ -8,6 +10,7 @@ namespace search::neighbourhoods {
 class NeighbourhoodCombinator : public Neighbourhood {
  private:
   std::vector<std::unique_ptr<Neighbourhood>> _neighbourhoods;
+  std::vector<SearchVariable> _variables;  // unused for now
 
  public:
   explicit NeighbourhoodCombinator(
@@ -22,6 +25,12 @@ class NeighbourhoodCombinator : public Neighbourhood {
                   AssignmentModifier& modifications) override;
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
+
+  const std::vector<SearchVariable>& coveredVariables() const override {
+    return _variables;
+  }
+
+  void printNeighbourhood(std::ostream&);
 };
 
 }  // namespace search::neighbourhoods
