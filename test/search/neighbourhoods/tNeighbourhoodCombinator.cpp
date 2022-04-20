@@ -59,7 +59,8 @@ TEST_F(NeighbourhoodCombinatorTest,
 
   PropagationEngine engine;
   search::RandomProvider random(123456789);
-  search::Assignment assignment(engine, NULL_ID, NULL_ID);
+  search::Assignment assignment(engine, NULL_ID, NULL_ID,
+                                search::Cost::ObjectiveDirection::NONE);
   search::Annealer annealer(assignment, random);
 
   EXPECT_CALL(*n1,

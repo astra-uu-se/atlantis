@@ -10,10 +10,12 @@ class Cost {
  private:
   Int _violationDegree;
   Int _objective;
+  Int _objectiveWeightSign;
 
  public:
-  Cost(Int violationDegree, Int objective)
-      : _violationDegree(violationDegree), _objective(objective) {}
+  enum class ObjectiveDirection : int { MINIMISE = 1, MAXIMISE = -1, NONE = 0 };
+
+  Cost(Int violationDegree, Int objective, ObjectiveDirection direction);
 
   /**
    * @return True if this cost has no violated constraints.
@@ -30,10 +32,8 @@ class Cost {
    * @param objectiveWeight The weight of the objective value.
    * @return The scalar cost value, given the component weights.
    */
-  [[nodiscard]] inline Int evaluate(Int violationWeight,
-                                    Int objectiveWeight) const noexcept {
-    return violationWeight * _violationDegree + objectiveWeight * _objective;
-  }
+  [[nodiscard]] Int evaluate(UInt violationWeight,
+                             UInt objectiveWeight) const noexcept;
 
   [[nodiscard]] Int violationDegree() const noexcept {
     return _violationDegree;
@@ -41,10 +41,7 @@ class Cost {
 
   [[nodiscard]] Int objectiveValue() const noexcept { return _objective; }
 
-  [[nodiscard]] std::string toString() const {
-    return '<' + std::to_string(_violationDegree) + ", " +
-           std::to_string(_objective) + '>';
-  }
+  [[nodiscard]] std::string toString() const;
 };
 
 }  // namespace search

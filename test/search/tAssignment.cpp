@@ -35,14 +35,16 @@ class AssignmentTest : public testing::Test {
 };
 
 TEST_F(AssignmentTest, search_variables_are_identified) {
-  search::Assignment assignment{engine, violation, a};
+  search::Assignment assignment{engine, violation, a,
+                                search::Cost::ObjectiveDirection::MINIMISE};
 
   std::vector<VarId> expectedSearchVariables{a, b};
   EXPECT_EQ(assignment.searchVariables(), expectedSearchVariables);
 }
 
 TEST_F(AssignmentTest, cost) {
-  search::Assignment assignment{engine, violation, a};
+  search::Assignment assignment{engine, violation, a,
+                                search::Cost::ObjectiveDirection::MINIMISE};
 
   EXPECT_FALSE(assignment.cost().satisfiesConstraints());
 
@@ -61,7 +63,8 @@ TEST_F(AssignmentTest, cost) {
 }
 
 TEST_F(AssignmentTest, assign_sets_values) {
-  search::Assignment assignment{engine, violation, a};
+  search::Assignment assignment{engine, violation, a,
+                                search::Cost::ObjectiveDirection::MINIMISE};
 
   assignment.assign([&](auto& modifications) {
     modifications.set(a, 1);
@@ -73,7 +76,8 @@ TEST_F(AssignmentTest, assign_sets_values) {
 }
 
 TEST_F(AssignmentTest, probe) {
-  search::Assignment assignment{engine, violation, a};
+  search::Assignment assignment{engine, violation, a,
+                                search::Cost::ObjectiveDirection::MINIMISE};
 
   auto cost = assignment.probe([&](auto& modifications) {
     modifications.set(a, 1);
@@ -88,7 +92,8 @@ TEST_F(AssignmentTest, probe) {
 }
 
 TEST_F(AssignmentTest, satisfies_constraints) {
-  search::Assignment assignment{engine, violation, a};
+  search::Assignment assignment{engine, violation, a,
+                                search::Cost::ObjectiveDirection::MINIMISE};
 
   EXPECT_FALSE(assignment.satisfiesConstraints());
 
