@@ -102,7 +102,6 @@ TEST_F(PriorityListTest, SimpleUpdatePriority) {
 }
 
 TEST_F(PriorityListTest, RandomUpdatePriority) {
-  setLogLevel(debug);
   for (size_t n = 0; n < 1000; ++n) {
     size_t size = 100;
     Timestamp ts = 1;
