@@ -91,7 +91,9 @@ class SetDomain : public Domain {
   std::vector<Int> _values;
 
  public:
-  explicit SetDomain(std::vector<Int> values) : _values(std::move(values)) {}
+  explicit SetDomain(std::vector<Int> values) : _values(std::move(values)) {
+    std::sort(_values.begin(), _values.end());
+  }
 
   [[nodiscard]] const std::vector<Int>& values() override { return _values; }
 
@@ -114,6 +116,7 @@ class SetDomain : public Domain {
     assert(size() > 0);
 
     std::vector<DomainEntry> ret;
+    // domEntryLb: the lb of the current DomainEntry (ub + 1 is a dummy value)
     Int domEntryLb = ub + 1;
     for (size_t i = 0; i < _values.size(); ++i) {
       if (_values[i] < lb) {

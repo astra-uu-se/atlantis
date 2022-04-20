@@ -14,7 +14,7 @@ class InDomain : public Constraint {
   const VarId _x;
 
  public:
-  InDomain(VarId violationId, VarId x, std::vector<DomainEntry> domain);
+  InDomain(VarId violationId, VarId x, std::vector<DomainEntry>&& domain);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&) override;

@@ -32,8 +32,7 @@ class VariableNode {
   using FZNVariable =
       std::variant<fznparser::IntVariable, fznparser::BoolVariable>;
   using VariableMap = std::unordered_map<VariableNode*, VarId>;
-  static const size_t SPARSE_MAX_INTERVAL = 1000;
-  float SPARSE_MIN_DENSENESS{0.1};
+  float SPARSE_MIN_DENSENESS{0.6};
 
  private:
   std::optional<FZNVariable> _variable;
@@ -55,8 +54,7 @@ class VariableNode {
    *
    * @param domain The domain of this variable.
    */
-  explicit VariableNode(SearchDomain domain)
-      : _variable(std::nullopt), _domain(std::move(domain)) {}
+  explicit VariableNode(SearchDomain domain);
 
   /**
    * @return The model variable this node is associated with, or std::nullopt
@@ -66,46 +64,20 @@ class VariableNode {
     return _variable;
   }
 
+  void imposeDomain(SearchDomain domain) { _domain = std::move(domain); }
+
+  [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
+
   /**
    * @return if the bound range of the corresponding IntVar in engine is a
    * sub-set of SearchDomain _domain, then returns an empty vector, otherwise
    * the relative complement of varLb..varUb in SearchDomain is returned
    */
-  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(
-      const Engine& engine, const VariableMap& variableMap) {
-    assert(variableMap.contains(this));
-    const VarId varId = variableMap.at(this);
-    return std::visit<std::vector<DomainEntry>>(
-        [&](const auto& dom) {
-          return dom.relativeComplementIfIntersects(engine.lowerBound(varId),
-                                                    engine.upperBound(varId));
-        },
-        _domain);
-  }
+  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(const Engine&,
+                                                           const VariableMap&);
 
-  VarId postDomainConstraint(Engine& engine, const VariableMap& variableMap,
-                             std::vector<DomainEntry>&& domain) {
-    if (domain.size() == 0 || _domainViolationId != NULL_ID) {
-      return _domainViolationId;
-    }
-    _domainViolationId = engine.makeIntVar(0, 0, 0);
-    const size_t interval =
-        domain.back().upperBound - domain.front().lowerBound + 1;
-    const float denseness = (float)domain.size() / (float)interval;
-    if (interval <= SPARSE_MAX_INTERVAL && SPARSE_MIN_DENSENESS <= denseness) {
-      engine.makeConstraint<InSparseDomain>(
-          _domainViolationId, variableMap.at(this), std::move(domain));
-    } else {
-      engine.makeConstraint<InDomain>(_domainViolationId, variableMap.at(this),
-                                      std::move(domain));
-    }
-
-    return _domainViolationId;
-  }
-
-  void imposeDomain(SearchDomain domain) { _domain = std::move(domain); }
-
-  [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
+  VarId postDomainConstraint(Engine&, const VariableMap&,
+                             std::vector<DomainEntry>&&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const noexcept {
     return std::visit<std::pair<Int, Int>>(
