@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CBLS_LOGGING
 #define CBLS_LOGGING
 #ifdef _DEBUG
