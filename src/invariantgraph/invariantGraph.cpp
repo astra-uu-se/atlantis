@@ -1,11 +1,9 @@
 #include "invariantgraph/invariantGraph.hpp"
 
-#include <numeric>
 #include <queue>
+#include <stack>
 #include <unordered_set>
 
-#include "constraints/inDomain.hpp"
-#include "constraints/inSparseDomain.hpp"
 #include "invariants/linear.hpp"
 #include "utils/fznAst.hpp"
 
@@ -26,6 +24,37 @@ static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
   return variableMap;
 }
 
+static void topologicallySortedNodeUtil(
+    invariantgraph::VariableDefiningNode* node,
+    std::unordered_set<invariantgraph::VariableDefiningNode*>& visited,
+    std::stack<invariantgraph::VariableDefiningNode*>& stack) {
+  visited.emplace(node);
+
+  for (const auto& variableNode : node->definedVariables()) {
+    for (const auto& definingNode : variableNode->inputFor()) {
+      if (!visited.contains(definingNode)) {
+        topologicallySortedNodeUtil(definingNode, visited, stack);
+      }
+    }
+  }
+
+  stack.push(node);
+}
+
+static std::stack<invariantgraph::VariableDefiningNode*>
+topologicallySortedNodes(
+    const std::vector<invariantgraph::ImplicitConstraintNode*>&
+        implicitConstraints) {
+  std::unordered_set<invariantgraph::VariableDefiningNode*> visited;
+  std::stack<invariantgraph::VariableDefiningNode*> stack;
+
+  for (const auto& implicitConstraint : implicitConstraints) {
+    topologicallySortedNodeUtil(implicitConstraint, visited, stack);
+  }
+
+  return stack;
+}
+
 invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     Engine& engine) {
   engine.open();
@@ -33,29 +62,15 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
   std::unordered_map<VariableNode*, VarId> variableIds;
   std::vector<VarId> violations;
 
-  std::queue<invariantgraph::VariableDefiningNode*> unAppliedNodes;
-  std::unordered_set<invariantgraph::VariableDefiningNode*> seenNodes;
-  for (const auto& implicitConstraint : _implicitConstraints) {
-    unAppliedNodes.push(implicitConstraint);
-  }
+  auto unAppliedNodes = topologicallySortedNodes(_implicitConstraints);
 
   while (!unAppliedNodes.empty()) {
-    auto node = unAppliedNodes.front();
-    seenNodes.insert(node);
+    auto node = unAppliedNodes.top();
 
     node->registerWithEngine(engine, variableIds);
 
     if (auto violationNode = node->violation()) {
       violations.push_back(variableIds.at(violationNode));
-    }
-
-    for (const auto& definedVariable : node->definedVariables()) {
-      for (const auto definingNode : definedVariable->inputFor()) {
-        if (seenNodes.find(definingNode) == seenNodes.end()) {
-          unAppliedNodes.push(definingNode);
-          seenNodes.insert(definingNode);
-        }
-      }
     }
 
     unAppliedNodes.pop();
