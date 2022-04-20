@@ -14,13 +14,7 @@ class IntPowNode : public BinaryOpNode {
   }
 
   IntPowNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output) {
-    const auto& [aLb, aUb] = a->bounds();
-    const auto& [bLb, bUb] = b->bounds();
-
-    output->imposeDomain(IntervalDomain{static_cast<Int>(std::pow(aLb, bLb)),
-                                        static_cast<Int>(std::pow(aUb, bUb))});
-  }
+      : BinaryOpNode(a, b, output) {}
 
   ~IntPowNode() override = default;
 

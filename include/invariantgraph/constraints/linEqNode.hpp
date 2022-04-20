@@ -18,12 +18,8 @@ class LinEqNode : public SoftConstraintNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   LinEqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-               Int c)
-      : SoftConstraintNode(
-            [&] {
-              return std::max<Int>(0, std::numeric_limits<Int>::max() - c);
-            },
-            variables),
+            Int c)
+      : SoftConstraintNode(variables),
         _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _c(c) {}
@@ -38,9 +34,6 @@ class LinEqNode : public SoftConstraintNode {
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 
   [[nodiscard]] Int c() const { return _c; }
-
- private:
-  [[nodiscard]] std::pair<Int, Int> getDomainBounds() const;
 };
 
 }  // namespace invariantgraph

@@ -54,15 +54,6 @@ TEST_F(ArrayVarBoolElementNodeTest, application) {
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  // The index ranges over the variable array (first index is 1).
-  EXPECT_EQ(engine.lowerBound(engineVariable(idx)), 1);
-  EXPECT_EQ(engine.upperBound(engineVariable(idx)), 3);
-
-  // The output domain should contain all values in all elements of the variable
-  // array.
-  EXPECT_EQ(engine.lowerBound(engineVariable(y)), 0);
-  EXPECT_EQ(engine.upperBound(engineVariable(y)), 1);
-
   // a, b, c, idx
   EXPECT_EQ(engine.searchVariables().size(), 4);
 

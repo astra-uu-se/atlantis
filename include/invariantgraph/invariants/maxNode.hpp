@@ -17,18 +17,7 @@ class MaxNode : public VariableDefiningNode {
 
   MaxNode(std::vector<VariableNode*> variables, VariableNode* output)
       : VariableDefiningNode({output}, variables),
-        _variables(std::move(variables)) {
-    Int outputLb = std::numeric_limits<Int>::min();
-    Int outputUb = std::numeric_limits<Int>::min();
-
-    for (const auto& node : _variables) {
-      const auto& [nodeLb, nodeUb] = node->bounds();
-      outputLb = std::max(nodeLb, outputLb);
-      outputUb = std::max(nodeUb, outputUb);
-    }
-
-    output->imposeDomain(IntervalDomain{outputLb, outputUb});
-  }
+        _variables(std::move(variables)) {}
 
   ~MaxNode() override = default;
 

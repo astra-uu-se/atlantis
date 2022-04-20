@@ -34,8 +34,5 @@ class LinearNode : public VariableDefiningNode {
   }
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
-
- private:
-  [[nodiscard]] std::pair<Int, Int> getIntermediateDomain() const;
 };
 }  // namespace invariantgraph

@@ -19,7 +19,7 @@ class IntLinNeNode : public SoftConstraintNode {
 
   IntLinNeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
                Int c)
-      : SoftConstraintNode([] { return 1; }, variables),
+      : SoftConstraintNode(variables),
         _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _c(c) {}
@@ -34,9 +34,6 @@ class IntLinNeNode : public SoftConstraintNode {
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 
   [[nodiscard]] Int c() const { return _c; }
-
- private:
-  std::pair<Int, Int> getLinearDomainBounds() const;
 };
 
 }  // namespace invariantgraph

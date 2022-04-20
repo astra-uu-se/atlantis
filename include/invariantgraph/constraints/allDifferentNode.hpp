@@ -12,7 +12,7 @@ class AllDifferentNode : public SoftConstraintNode {
 
  public:
   explicit AllDifferentNode(std::vector<VariableNode*> variables)
-      : SoftConstraintNode([&] { return variables.size(); }, variables),
+      : SoftConstraintNode(variables),
         _variables(std::move(variables)) {}
 
   static std::unique_ptr<AllDifferentNode> fromModelConstraint(
