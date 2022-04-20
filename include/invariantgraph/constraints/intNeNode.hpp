@@ -14,7 +14,7 @@ class IntNeNode : public SoftConstraintNode {
 
  public:
   IntNeNode(VariableNode* a, VariableNode* b)
-      : SoftConstraintNode([] { return 1; }, {a, b}), _a(a), _b(b) {}
+      : SoftConstraintNode({a, b}), _a(a), _b(b) {}
 
   static std::unique_ptr<IntNeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

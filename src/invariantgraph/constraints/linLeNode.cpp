@@ -24,8 +24,6 @@ invariantgraph::LinLeNode::fromModelConstraint(
 
 void invariantgraph::LinLeNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  auto sumVar = engine.makeIntVar(0, 0, 0);
-
   std::vector<VarId> variables;
   std::transform(
       _variables.begin(), _variables.end(), std::back_inserter(variables),
@@ -37,23 +35,11 @@ void invariantgraph::LinLeNode::registerWithEngine(
 
         return engine.makeIntView<Bool2IntView>(variableMap.at(node));
       });
+
+  auto sumVar = engine.makeIntVar(0, 0, 0);
   engine.makeInvariant<Linear>(_coeffs, variables, sumVar);
 
   auto violation = registerViolation(engine, variableMap);
   auto bound = engine.makeIntVar(_bound, _bound, _bound);
   engine.makeConstraint<LessEqual>(violation, sumVar, bound);
-}
-
-std::pair<Int, Int> invariantgraph::LinLeNode::getDomainBounds() const {
-  Int lb = 0;
-  Int ub = 0;
-
-  for (size_t idx = 0; idx < _coeffs.size(); idx++) {
-    const auto& [varLb, varUb] = _variables[idx]->bounds();
-
-    lb += _coeffs[idx] * varLb;
-    ub += _coeffs[idx] * varUb;
-  }
-
-  return {lb, ub};
 }

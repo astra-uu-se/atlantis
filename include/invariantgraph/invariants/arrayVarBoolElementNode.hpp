@@ -22,9 +22,6 @@ class ArrayVarBoolElementNode : public VariableDefiningNode {
     // No way to add this as an input in addition to the as vector. So we do it
     // here explicitly.
     b->markAsInputFor(static_cast<VariableDefiningNode*>(this));
-
-    b->imposeDomain(IntervalDomain{1, static_cast<Int>(_as.size())});
-    output->imposeDomain(SetDomain({0, 1}));
   }
 
   void registerWithEngine(

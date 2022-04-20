@@ -64,8 +64,6 @@ class VariableNode {
     return _variable;
   }
 
-  void imposeDomain(SearchDomain domain) { _domain = std::move(domain); }
-
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
 
   /**
@@ -160,11 +158,8 @@ class VariableDefiningNode {
   static inline VarId registerDefinedVariable(Engine& engine,
                                               VariableMap& variableMap,
                                               VariableNode* variable) {
-    const auto& [lb, ub] = variable->bounds();
-    auto varId = engine.makeIntVar(lb, lb, ub);
-
+    auto varId = engine.makeIntVar(0, 0, 0);
     variableMap.emplace(variable, varId);
-
     return varId;
   }
 };
@@ -216,13 +211,12 @@ class ImplicitConstraintNode : public VariableDefiningNode {
 
 class SoftConstraintNode : public VariableDefiningNode {
  private:
-  VariableNode _violation;
+  // Bounds will be recomputed by the engine.
+  VariableNode _violation{SetDomain({0})};
 
  public:
-  explicit SoftConstraintNode(const std::function<Int()>& violationUb,
-                              const std::vector<VariableNode*>& inputs = {})
-      : VariableDefiningNode({&_violation}, inputs),
-        _violation(IntervalDomain{0, violationUb()}) {}
+  explicit SoftConstraintNode(const std::vector<VariableNode*>& inputs = {})
+      : VariableDefiningNode({&_violation}, inputs) {}
 
   ~SoftConstraintNode() override = default;
 

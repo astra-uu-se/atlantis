@@ -9,13 +9,6 @@
 #include "invariants/linear.hpp"
 #include "utils/fznAst.hpp"
 
-static Int totalViolationsUpperBound(Engine& engine,
-                                     const std::vector<VarId>& violations) {
-  return std::accumulate(
-      violations.begin(), violations.end(), 0,
-      [&](auto sum, const auto& var) { return sum + engine.upperBound(var); });
-}
-
 static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
     const std::unordered_map<invariantgraph::VariableNode*, VarId>&
         variableIds) {
@@ -66,16 +59,6 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     }
 
     unAppliedNodes.pop();
-  }
-
-  for (const auto& node : seenNodes) {
-    for (const auto& varNode : node->definedVariables()) {
-      const VarId domainViolationId = varNode->postDomainConstraint(
-          engine, variableIds, varNode->constrainedDomain(engine, variableIds));
-      if (domainViolationId != NULL_ID) {
-        violations.push_back(domainViolationId);
-      }
-    }
   }
 
   VarId totalViolations = engine.makeIntVar(0, 0, 0);

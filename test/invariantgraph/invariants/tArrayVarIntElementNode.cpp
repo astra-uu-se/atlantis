@@ -13,8 +13,7 @@ class ArrayVarIntElementNodeTest : public NodeTestBase {
 
   fznparser::Constraint constraint{
       "array_var_int_element",
-      {"idx", fznparser::Constraint::ArrayArgument{"a", "b", "c"},
-       "y"},
+      {"idx", fznparser::Constraint::ArrayArgument{"a", "b", "c"}, "y"},
       {}};
 
   fznparser::FZNModel model{
@@ -53,15 +52,6 @@ TEST_F(ArrayVarIntElementNodeTest, application) {
   registerVariables(engine, {a.name, b.name, c.name, idx.name});
   node->registerWithEngine(engine, _variableMap);
   engine.close();
-
-  // The index ranges over the variable array (first index is 1).
-  EXPECT_EQ(engine.lowerBound(engineVariable(idx)), 1);
-  EXPECT_EQ(engine.upperBound(engineVariable(idx)), 3);
-
-  // The output domain should contain all values in all elements of the variable
-  // array.
-  EXPECT_EQ(engine.lowerBound(engineVariable(y)), 1);
-  EXPECT_EQ(engine.upperBound(engineVariable(y)), 11);
 
   // a, b, c, idx
   EXPECT_EQ(engine.searchVariables().size(), 4);

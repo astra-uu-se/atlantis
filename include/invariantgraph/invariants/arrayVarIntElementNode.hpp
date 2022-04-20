@@ -22,18 +22,6 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
     // No way to add this as an input in addition to the as vector. So we do it
     // here explicitly.
     b->markAsInputFor(static_cast<VariableDefiningNode*>(this));
-
-    Int outputLb = std::numeric_limits<Int>::max();
-    Int outputUb = std::numeric_limits<Int>::min();
-
-    for (const auto& node : _as) {
-      const auto& [nodeLb, nodeUb] = node->bounds();
-      outputLb = std::min(nodeLb, outputLb);
-      outputUb = std::max(nodeUb, outputUb);
-    }
-
-    b->imposeDomain(IntervalDomain{1, static_cast<Int>(_as.size())});
-    output->imposeDomain(IntervalDomain{outputLb, outputUb});
   }
 
   void registerWithEngine(
