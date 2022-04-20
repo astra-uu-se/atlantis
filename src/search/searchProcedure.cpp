@@ -73,5 +73,7 @@ search::SearchStatistics search::SearchProcedure::run(
   statistics.push_back(std::make_unique<ValueStatistic<std::string>>(
       "Search time", formatDuration(duration)));
 
+  controller.onFinish();
+
   return SearchStatistics{std::move(statistics)};
 }

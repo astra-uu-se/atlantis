@@ -37,17 +37,16 @@ int main(int argc, char* argv[]) {
     // clang-format off
     options.add_options()
       (
-        "n,num-solutions",
-        "Instructs the solver to stop after reporting i solutions (only used with satisfaction problems).",
-        cxxopts::value<uint>()->default_value("1")
+        "no-timeout",
+        "Run the solver without a timeout. This means the solver needs to be stopped with a signal, which means no statistics will be printed."
       )
       (
         "t,time-limit",
         "Wall time limit in milliseconds.",
-        cxxopts::value<std::chrono::milliseconds>()
+        cxxopts::value<std::chrono::milliseconds>()->default_value("30000") // 30 seconds
       )
       (
-        "s,seed",
+        "r,seed",
         "The seed to use for the random number generator. If this is negative, the current system time is chosen as the seed.",
         cxxopts::value<long>()->default_value("-1")
       )
@@ -80,6 +79,8 @@ int main(int argc, char* argv[]) {
 
     PropagationEngine engine;
     auto applicationResult = graph.apply(engine);
+    auto neighbourhood = applicationResult.neighbourhood();
+    neighbourhood.printNeighbourhood(std::cerr);
 
     search::Objective searchObjective(engine, model);
     engine.open();
@@ -98,7 +99,6 @@ int main(int argc, char* argv[]) {
     logDebug("Using seed " << seed);
     search::RandomProvider random(seed);
 
-    auto neighbourhood = applicationResult.neighbourhood();
     search::SearchProcedure search(random, assignment, neighbourhood,
                                    searchObjective);
 
@@ -107,11 +107,12 @@ int main(int argc, char* argv[]) {
       flippedMap.emplace(fznVar, varId);
 
     search::SearchController searchController = [&] {
-      if (result.count("time-limit")) {
+      if (result.count("no-timeout") == 0) {
         return search::SearchController(
             model, flippedMap,
             result["time-limit"].as<std::chrono::milliseconds>());
       } else {
+        logInfo("Running without timeout.");
         return search::SearchController(model, flippedMap);
       }
     }();
