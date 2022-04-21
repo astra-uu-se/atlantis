@@ -14,8 +14,7 @@ class ReifiedConstraint : public VariableDefiningNode {
 
  public:
   ReifiedConstraint(std::unique_ptr<SoftConstraintNode> constraint,
-                    VariableNode* r)
-      : VariableDefiningNode({r}), _constraint(std::move(constraint)), _r(r) {}
+                    VariableNode* r);
 
   void registerWithEngine(Engine& engine,
                           VariableDefiningNode::VariableMap& map) override;

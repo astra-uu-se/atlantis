@@ -21,7 +21,7 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
       : VariableDefiningNode({output}, {as}), _as(std::move(as)), _b(b) {
     // No way to add this as an input in addition to the as vector. So we do it
     // here explicitly.
-    b->markAsInputFor(static_cast<VariableDefiningNode*>(this));
+    markAsInput(b);
   }
 
   void registerWithEngine(

@@ -186,7 +186,10 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
     }
 
     _definingNodes.push_back(makeSoftConstraint(model, constraint));
+    processedConstraints.emplace(idx);
   }
+
+  assert(processedConstraints.size() == model.constraints().size());
 
   // Finally, define all free variables by the InvariantGraphRoot
   std::vector<VariableNode*> freeVariables;

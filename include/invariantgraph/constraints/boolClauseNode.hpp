@@ -16,7 +16,7 @@ class BoolClauseNode : public SoftConstraintNode {
                           std::vector<VariableNode*> bs)
       : SoftConstraintNode({as}), _as(std::move(as)), _bs(std::move(bs)) {
     for (const auto& b : _bs) {
-      b->markAsInputFor(static_cast<VariableDefiningNode*>(this));
+      markAsInput(b);
     }
   }
 

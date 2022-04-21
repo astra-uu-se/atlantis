@@ -25,6 +25,11 @@ TEST_F(IntLeReifNodeTest, construction) {
   EXPECT_EQ(node->definedVariables().size(), 1);
   EXPECT_EQ(*node->definedVariables()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(r));
+
+  EXPECT_EQ(node->inputs().size(), 2);
+  for (const auto& input : node->inputs()) {
+    EXPECT_EQ(input->inputFor().size(), 1);
+  }
 }
 
 TEST_F(IntLeReifNodeTest, application) {

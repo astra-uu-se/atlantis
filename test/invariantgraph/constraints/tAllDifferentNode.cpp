@@ -1,3 +1,4 @@
+#include <gmock/gmock.h>
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/constraints/allDifferentNode.hpp"
@@ -32,7 +33,9 @@ TEST_F(AllDifferentNodeTest, construction) {
                  [](const auto& variable) { return variable.get(); });
 
   EXPECT_EQ(node->variables(), expectedVars);
-  expectMarkedAsInput(node.get(), node->variables());
+  EXPECT_THAT(node->inputs(), testing::ContainerEq(node->variables()));
+
+  expectMarkedAsInput(node.get(), node->inputs());
 }
 
 TEST_F(AllDifferentNodeTest, application) {
