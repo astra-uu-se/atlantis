@@ -2,11 +2,37 @@
 
 #include <limits>
 
-#include "utils/variant.hpp"
-
 using namespace invariantgraph;
 
 static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
+  auto singletonDomain = std::visit<std::optional<SearchDomain>>(
+      overloaded{[]<typename Type>(const fznparser::SearchVariable<Type>& var) {
+        // TODO: The value could be an identifier to a parameter.
+        if (!var.value ||
+            std::holds_alternative<fznparser::Identifier>(*var.value)) {
+          return std::optional<SearchDomain>{};
+        }
+
+        if constexpr (std::is_same_v<Type, Int>) {
+          return std::optional<SearchDomain>{
+              SearchDomain(SetDomain({std::get<Int>(*var.value)}))};
+        } else if constexpr (std::is_same_v<Type, bool>) {
+          if (std::get<bool>(*var.value)) {
+            return std::optional<SearchDomain>{SearchDomain(SetDomain({0}))};
+          } else {
+            return std::optional<SearchDomain>{SearchDomain(SetDomain({1}))};
+          }
+        } else {
+          static_assert(!sizeof(Type),
+                        "Only Int and bool variables are allowed");
+        }
+      }},
+      variable);
+
+  if (singletonDomain) {
+    return *singletonDomain;
+  }
+
   return std::visit<SearchDomain>(
       overloaded{
           [](const fznparser::IntVariable& var) {
