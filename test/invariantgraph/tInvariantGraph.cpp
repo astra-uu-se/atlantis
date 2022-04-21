@@ -31,7 +31,7 @@ TEST(InvariantGraphTest, apply_result) {
   variableDefiningNodes.push_back(std::move(root));
 
   invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), std::move(variableDefiningNodes), cNode.get());
+      std::move(variableNodes), {}, std::move(variableDefiningNodes), cNode.get());
 
   PropagationEngine engine;
   auto result = graph.apply(engine);
