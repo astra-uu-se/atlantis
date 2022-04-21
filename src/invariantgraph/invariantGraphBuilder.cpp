@@ -111,7 +111,26 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
   std::unordered_set<fznparser::Identifier> definedVars;
   std::unordered_set<size_t> processedConstraints;
 
-  // First, define based on annotations.
+  // First, define implicit constraints (neighborhood)
+  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
+    auto constraint = model.constraints()[idx];
+
+    if (processedConstraints.count(idx) ||
+        !allVariablesFree(constraint, definedVars)) {
+      continue;
+    }
+
+    if (auto implicitConstraint = makeImplicitConstraint(model, constraint)) {
+      for (auto variableNode : implicitConstraint->definedVariables()) {
+        definedVars.emplace(identifier(*variableNode->variable()));
+      }
+
+      _definingNodes.push_back(std::move(implicitConstraint));
+      processedConstraints.emplace(idx);
+    }
+  }
+
+  // Second, define variables based on annotations.
   for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
     auto constraint = model.constraints()[idx];
 
@@ -129,26 +148,6 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       markVariablesAsDefined(*node, definedVars);
 
       _definingNodes.push_back(std::move(node));
-      processedConstraints.emplace(idx);
-    }
-  }
-
-  // Second, define an implicit constraint (neighborhood) on remaining
-  // constraints.
-  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
-    auto constraint = model.constraints()[idx];
-
-    if (processedConstraints.count(idx) ||
-        !allVariablesFree(constraint, definedVars)) {
-      continue;
-    }
-
-    if (auto implicitConstraint = makeImplicitConstraint(model, constraint)) {
-      for (auto variableNode : implicitConstraint->definedVariables()) {
-        definedVars.emplace(identifier(*variableNode->variable()));
-      }
-
-      _definingNodes.push_back(std::move(implicitConstraint));
       processedConstraints.emplace(idx);
     }
   }
