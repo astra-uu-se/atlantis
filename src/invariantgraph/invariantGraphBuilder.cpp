@@ -59,7 +59,12 @@ invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build(
       model.objective());
   // clang-format on
 
-  return {std::move(_variables), std::move(_definingNodes), objectiveVariable};
+  std::vector<VariableNode*> valueNodes;
+  for (const auto& [_, node] : _valueMap) {
+    valueNodes.push_back(node);
+  }
+
+  return {std::move(_variables), std::move(valueNodes), std::move(_definingNodes), objectiveVariable};
 }
 
 using FZNSearchVariable =

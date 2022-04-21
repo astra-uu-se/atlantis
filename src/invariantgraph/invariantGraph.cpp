@@ -44,7 +44,8 @@ static void topologicallySortedNodeUtil(
 static std::stack<invariantgraph::VariableDefiningNode*>
 topologicallySortedNodes(
     const std::vector<invariantgraph::ImplicitConstraintNode*>&
-        implicitConstraints) {
+        implicitConstraints,
+    const std::vector<invariantgraph::VariableNode*>& valueNodes) {
   std::unordered_set<invariantgraph::VariableDefiningNode*> visited;
   std::stack<invariantgraph::VariableDefiningNode*> stack;
 
@@ -52,7 +53,26 @@ topologicallySortedNodes(
     topologicallySortedNodeUtil(implicitConstraint, visited, stack);
   }
 
+  for (const auto& node : valueNodes) {
+    for (const auto& definingNode : node->inputFor()) {
+      if (!visited.contains(definingNode)) {
+        topologicallySortedNodeUtil(definingNode, visited, stack);
+      }
+    }
+  }
+
   return stack;
+}
+
+static void applyValueNodes(
+    Engine& engine,
+    std::unordered_map<invariantgraph::VariableNode*, VarId>& variableIds,
+    const std::vector<invariantgraph::VariableNode*>& valueNodes) {
+  for (const auto& node : valueNodes) {
+    const auto& [lb, ub] = node->bounds();
+    auto varId = engine.makeIntVar(lb, lb, ub);
+    variableIds.emplace(node, varId);
+  }
 }
 
 invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
@@ -62,7 +82,10 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
   std::unordered_map<VariableNode*, VarId> variableIds;
   std::vector<VarId> violations;
 
-  auto unAppliedNodes = topologicallySortedNodes(_implicitConstraints);
+  applyValueNodes(engine, variableIds, _valueNodes);
+
+  auto unAppliedNodes = topologicallySortedNodes(_implicitConstraints, _valueNodes);
+  assert(unAppliedNodes.size() == _variableDefiningNodes.size());
 
   while (!unAppliedNodes.empty()) {
     auto node = unAppliedNodes.top();
