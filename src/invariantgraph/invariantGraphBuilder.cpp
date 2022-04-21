@@ -115,8 +115,9 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
   for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
     auto constraint = model.constraints()[idx];
 
-    if (processedConstraints.count(idx) ||
-        !allVariablesFree(constraint, definedVars)) {
+    auto allVariablesAreFree = allVariablesFree(constraint, definedVars);
+    if (processedConstraints.contains(idx) ||
+        !allVariablesAreFree) {
       continue;
     }
 
@@ -370,7 +371,7 @@ static bool allVariablesFree(
     const fznparser::Constraint& constraint,
     const std::unordered_set<fznparser::Identifier>& definedVars) {
   auto isFree = [&](const fznparser::Identifier& identifier) {
-    return definedVars.count(identifier) > 0;
+    return !definedVars.contains(identifier);
   };
 
   return std::all_of(
