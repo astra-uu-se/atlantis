@@ -1,7 +1,7 @@
 #include "invariantgraph/constraints/allDifferentNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "constraints/allDifferent.hpp"
+#include "invariantgraph/parseHelper.hpp"
 
 std::unique_ptr<invariantgraph::AllDifferentNode>
 invariantgraph::AllDifferentNode::fromModelConstraint(

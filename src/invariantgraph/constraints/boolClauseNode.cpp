@@ -1,7 +1,7 @@
 #include "invariantgraph/constraints/boolClauseNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "constraints/lessThan.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariants/linear.hpp"
 #include "views/bool2IntView.hpp"
 

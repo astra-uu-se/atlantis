@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "../parseHelper.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariants/linear.hpp"
 #include "views/intOffsetView.hpp"
 

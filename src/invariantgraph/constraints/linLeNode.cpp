@@ -2,8 +2,8 @@
 
 #include <algorithm>
 
-#include "../parseHelper.hpp"
 #include "constraints/lessEqual.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariants/linear.hpp"
 #include "views/bool2IntView.hpp"
 

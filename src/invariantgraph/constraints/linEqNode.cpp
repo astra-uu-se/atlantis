@@ -1,7 +1,7 @@
 #include "invariantgraph/constraints/linEqNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "constraints/equal.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariants/linear.hpp"
 #include "views/bool2IntView.hpp"
 

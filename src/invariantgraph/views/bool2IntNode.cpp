@@ -1,6 +1,6 @@
 #include "invariantgraph/views/bool2IntNode.hpp"
 
-#include "../parseHelper.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "views/bool2IntView.hpp"
 
 std::unique_ptr<invariantgraph::Bool2IntNode>

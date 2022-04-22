@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "../parseHelper.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariants/minSparse.hpp"
 
 std::unique_ptr<invariantgraph::MinNode>
@@ -15,7 +15,7 @@ invariantgraph::MinNode::fromModelConstraint(
   auto inputs =
       mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto output = mappedVariable(constraint.arguments[0], variableMap);
-  
+
   return std::make_unique<invariantgraph::MinNode>(inputs, output);
 }
 

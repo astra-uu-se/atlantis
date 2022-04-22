@@ -1,26 +1,30 @@
 #pragma once
 
+#include <numeric>
+
+#include "invariantgraph/parseHelper.hpp"
 #include "neighbourhood.hpp"
+#include "search/neighbourhoods/circuitNeighbourhood.hpp"
 #include "search/randomProvider.hpp"
 #include "search/searchVariable.hpp"
 
 namespace search::neighbourhoods {
 
-class AllDifferentNeighbourhood : public Neighbourhood {
+class CircuitNeighbourhood : public Neighbourhood {
  private:
   std::vector<search::SearchVariable> _variables;
-  std::vector<Int> _domain;
   const Engine& _engine;
 
   std::vector<size_t> _domIndices{};
-  Int _offset{0};
+  std::vector<std::vector<Int>> _domains;
   size_t _freeVariables{0};
 
  public:
-  AllDifferentNeighbourhood(std::vector<search::SearchVariable> variables,
-                            std::vector<Int> domain, const Engine& engine);
+  CircuitNeighbourhood(std::vector<search::SearchVariable>&& variables,
+                       std::vector<std::vector<Int>>&& domains,
+                       const Engine& engine);
 
-  ~AllDifferentNeighbourhood() override = default;
+  ~CircuitNeighbourhood() override = default;
 
   void initialise(RandomProvider& random,
                   AssignmentModifier& modifications) override;
@@ -32,10 +36,8 @@ class AllDifferentNeighbourhood : public Neighbourhood {
   }
 
  private:
-  bool swapValues(RandomProvider& random, Assignment& assignment,
-                  Annealer& annealer);
-  bool assignValue(RandomProvider& random, Assignment& assignment,
-                   Annealer& annealer);
+  bool threeOpt(RandomProvider& random, Assignment& assignment,
+                Annealer& annealer);
 };
 
 }  // namespace search::neighbourhoods

@@ -1,10 +1,10 @@
 #include "invariantgraph/invariants/binaryOpNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
 #include "invariantgraph/invariants/intPowNode.hpp"
 #include "invariantgraph/invariants/intTimesNode.hpp"
+#include "invariantgraph/parseHelper.hpp"
 
 template <typename T>
 std::unique_ptr<T> invariantgraph::BinaryOpNode::fromModelConstraint(

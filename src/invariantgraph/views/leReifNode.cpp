@@ -1,7 +1,7 @@
 #include "invariantgraph/views/leReifNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "invariantgraph/constraints/linLeNode.hpp"
+#include "invariantgraph/parseHelper.hpp"
 
 std::unique_ptr<invariantgraph::LeReifNode>
 invariantgraph::LeReifNode::fromModelConstraint(

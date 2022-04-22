@@ -1,4 +1,4 @@
-#include "parseHelper.hpp"
+#include "invariantgraph/parseHelper.hpp"
 
 #include <algorithm>
 #include <optional>

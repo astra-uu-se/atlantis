@@ -1,7 +1,7 @@
 #include "invariantgraph/views/boolXorReifNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "invariantgraph/constraints/linEqNode.hpp"
+#include "invariantgraph/parseHelper.hpp"
 
 std::unique_ptr<invariantgraph::BoolXorReifNode>
 invariantgraph::BoolXorReifNode::fromModelConstraint(

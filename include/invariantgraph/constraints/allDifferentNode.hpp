@@ -3,6 +3,8 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "constraints/allDifferent.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariantgraph/structure.hpp"
 
 namespace invariantgraph {
@@ -12,8 +14,7 @@ class AllDifferentNode : public SoftConstraintNode {
 
  public:
   explicit AllDifferentNode(std::vector<VariableNode*> variables)
-      : SoftConstraintNode(variables),
-        _variables(std::move(variables)) {}
+      : SoftConstraintNode(variables), _variables(std::move(variables)) {}
 
   static std::unique_ptr<AllDifferentNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

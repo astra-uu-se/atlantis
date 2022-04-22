@@ -1,7 +1,7 @@
 #include "invariantgraph/constraints/eqNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "constraints/equal.hpp"
+#include "invariantgraph/parseHelper.hpp"
 
 std::unique_ptr<invariantgraph::EqNode>
 invariantgraph::EqNode::fromModelConstraint(

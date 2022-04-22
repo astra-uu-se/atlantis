@@ -1,6 +1,6 @@
 #include "invariantgraph/invariants/arrayBoolElementNode.hpp"
 
-#include "../parseHelper.hpp"
+#include "invariantgraph/parseHelper.hpp"
 
 std::unique_ptr<invariantgraph::ArrayIntElementNode>
 invariantgraph::ArrayBoolElementNode::fromModelConstraint(

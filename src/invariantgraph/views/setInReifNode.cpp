@@ -1,7 +1,7 @@
 #include "invariantgraph/views/setInReifNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "invariantgraph/constraints/setInNode.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariantgraph/views/reifiedConstraint.hpp"
 #include "utils/variant.hpp"
 

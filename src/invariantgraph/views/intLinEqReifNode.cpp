@@ -1,7 +1,7 @@
 #include "invariantgraph/views/intLinEqReifNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "invariantgraph/constraints/linEqNode.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariantgraph/views/reifiedConstraint.hpp"
 
 std::unique_ptr<invariantgraph::IntLinEqReifNode>

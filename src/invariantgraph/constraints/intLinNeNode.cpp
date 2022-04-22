@@ -1,7 +1,7 @@
 #include "invariantgraph/constraints/intLinNeNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "constraints/notEqual.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariants/linear.hpp"
 
 std::unique_ptr<invariantgraph::IntLinNeNode>

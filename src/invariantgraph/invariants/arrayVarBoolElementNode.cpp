@@ -1,6 +1,6 @@
 #include "invariantgraph/invariants/arrayVarBoolElementNode.hpp"
 
-#include "../parseHelper.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariants/elementVar.hpp"
 
 std::unique_ptr<invariantgraph::ArrayVarBoolElementNode>

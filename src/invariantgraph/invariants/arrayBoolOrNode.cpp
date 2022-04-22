@@ -1,7 +1,7 @@
 #include "invariantgraph/invariants/arrayBoolOrNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "constraints/lessThan.hpp"
+#include "invariantgraph/parseHelper.hpp"
 #include "invariants/elementConst.hpp"
 #include "invariants/linear.hpp"
 #include "views/violation2BoolView.hpp"

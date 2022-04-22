@@ -5,19 +5,19 @@
 
 #include "invariantgraph/parseHelper.hpp"
 #include "invariantgraph/structure.hpp"
-#include "search/neighbourhoods/allDifferentNeighbourhood.hpp"
+#include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
 namespace invariantgraph {
 
-class AllDifferentImplicitNode : public ImplicitConstraintNode {
+class CircuitImplicitNode : public ImplicitConstraintNode {
  public:
-  static std::unique_ptr<AllDifferentImplicitNode> fromModelConstraint(
+  static std::unique_ptr<CircuitImplicitNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
-  explicit AllDifferentImplicitNode(std::vector<VariableNode*> variables);
+  explicit CircuitImplicitNode(std::vector<VariableNode*> variables);
 
-  ~AllDifferentImplicitNode() override = default;
+  ~CircuitImplicitNode() override = default;
 
  protected:
   search::neighbourhoods::Neighbourhood* createNeighbourhood(
