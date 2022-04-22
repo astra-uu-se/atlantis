@@ -49,7 +49,7 @@ class Move {
   std::array<VarId, N> _variables;
   std::array<Int, N> _values;
 
-  Cost _cost{0, 0, Cost::ObjectiveDirection::NONE};
+  Cost _cost{0, 0, ObjectiveDirection::NONE};
   bool _probed{false};
 };
 

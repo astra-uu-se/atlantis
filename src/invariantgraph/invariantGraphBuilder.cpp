@@ -62,6 +62,12 @@ invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build(
   return {std::move(_variables), std::move(_definingNodes), objectiveVariable};
 }
 
+invariantgraph::InvariantGraphApplyResult
+invariantgraph::InvariantGraphBuilder::buildAndApply(
+    const fznparser::FZNModel& model, Engine& engine) {
+  return (InvariantGraphBuilder{}).build(model).apply(engine);
+}
+
 using FZNSearchVariable =
     std::variant<fznparser::IntVariable, fznparser::BoolVariable>;
 

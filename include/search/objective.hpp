@@ -3,49 +3,47 @@
 #include <limits>
 #include <utility>
 
+#include "constraints/lessEqual.hpp"
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "fznparser/model.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariants/linear.hpp"
+#include "search/assignment.hpp"
 
 namespace search {
 
 class Objective {
  private:
   PropagationEngine& _engine;
-  fznparser::Objective _modelObjective;
-
-  std::optional<VarId> _bound{};
-  std::optional<VarId> _objective{};
-  std::optional<VarId> _violation{};
+  const ObjectiveDirection _objectiveDirection;
+  const VarId _violation;
+  const VarId _objective;
+  const VarId _bound;
 
  public:
-  Objective(PropagationEngine& engine, const fznparser::FZNModel& model);
-
-  VarId registerWithEngine(VarId constraintViolation, VarId objectiveVariable);
+  Objective(PropagationEngine& engine, ObjectiveDirection objectiveDirection,
+            VarId objective, VarId violation);
+  Objective(PropagationEngine& engine, ObjectiveDirection objectiveDirection,
+            VarId objective, VarId violation, VarId bound);
 
   void tighten();
 
-  [[nodiscard]] std::optional<VarId> bound() const noexcept { return _bound; }
-
- private:
-  template <typename F>
-  VarId registerOptimisation(VarId constraintViolation, VarId objectiveVariable,
-                             Int initialBound, F constraintFactory) {
-    auto lb = _engine.lowerBound(objectiveVariable);
-    auto ub = _engine.upperBound(objectiveVariable);
-
-    _bound = _engine.makeIntVar(initialBound, lb, ub);
-    auto boundViolation =
-        _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
-    constraintFactory(boundViolation, *_bound);
-
-    _violation = _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
-    _engine.makeInvariant<Linear>(
-        std::vector<VarId>{boundViolation, constraintViolation}, *_violation);
-
-    return *_violation;
+  [[nodiscard]] VarId bound() const noexcept { return _bound; }
+  [[nodiscard]] VarId violation() const noexcept { return _violation; }
+  [[nodiscard]] VarId objective() const noexcept { return _objective; }
+  [[nodiscard]] ObjectiveDirection objectiveDirection() const noexcept {
+    return _objectiveDirection;
   }
+
+  [[nodiscard]] static Objective createAndRegister(
+      PropagationEngine& engine, ObjectiveDirection objectiveDirection,
+      invariantgraph::InvariantGraphApplyResult& applicationResult);
+
+  [[nodiscard]] static Objective createAndRegister(
+      PropagationEngine& engine, ObjectiveDirection objectiveDirection,
+      VarId totalViolations, VarId objectiveVariable);
+
+  [[nodiscard]] search::Assignment createAssignment();
 };
 
 }  // namespace search

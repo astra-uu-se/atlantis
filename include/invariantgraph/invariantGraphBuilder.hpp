@@ -23,6 +23,8 @@ class InvariantGraphBuilder {
 
  public:
   invariantgraph::InvariantGraph build(const fznparser::FZNModel& model);
+  static invariantgraph::InvariantGraphApplyResult buildAndApply(
+      const fznparser::FZNModel& model, Engine& engine);
 
  private:
   void createNodes(const fznparser::FZNModel& model);

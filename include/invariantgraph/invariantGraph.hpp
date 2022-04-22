@@ -48,6 +48,16 @@ class InvariantGraphApplyResult {
     return _objectiveVariable;
   }
 
+  [[nodiscard]] std::unordered_map<fznparser::Identifier, VarId>
+  invertedVariableMap() const {
+    std::unordered_map<fznparser::Identifier, VarId> invertedMap(
+        _variableMap.size());
+    for (const auto& [varId, fznVar] : _variableMap) {
+      invertedMap.emplace(fznVar, varId);
+    }
+    return invertedMap;
+  }
+
  private:
   VariableMap _variableMap;
   std::vector<ImplicitConstraintNode*> _implicitConstraints;

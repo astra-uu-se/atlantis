@@ -1,7 +1,7 @@
 #include "search/cost.hpp"
 
 search::Cost::Cost(Int violationDegree, Int objective,
-                   search::Cost::ObjectiveDirection direction)
+                   ObjectiveDirection direction)
     : _violationDegree(violationDegree),
       _objective(objective),
       _objectiveWeightSign(static_cast<int>(direction)) {}

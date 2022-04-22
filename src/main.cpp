@@ -1,11 +1,13 @@
 #include <chrono>
 #include <cxxopts.hpp>
 #include <filesystem>
+#include <fznparser/modelFactory.hpp>
 #include <iostream>
+#include <unordered_map>
 
 #include "core/propagationEngine.hpp"
-#include "fznparser/modelFactory.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
+#include "invariantgraph/objectiveTranslator.hpp"
 #include "misc/logging.hpp"
 #include "search/assignment.hpp"
 #include "search/neighbourhoods/randomNeighbourhood.hpp"
@@ -21,8 +23,10 @@
  */
 std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
 
-static search::Cost::ObjectiveDirection getObjectiveDirection(
-    const fznparser::Objective& variant);
+static search::SearchStatistics run(const std::filesystem::path& modelFilePath,
+                                    const std::uint_fast32_t& seed,
+                                    const bool noTimeout,
+                                    const std::chrono::milliseconds& timeLimit);
 
 int main(int argc, char* argv[]) {
   try {
@@ -71,59 +75,17 @@ int main(int argc, char* argv[]) {
       std::cout << options.help({""}) << std::endl;
       return 0;
     }
-
     auto& modelFilePath = result["modelFile"].as<std::filesystem::path>();
-    auto model = fznparser::ModelFactory::create(modelFilePath);
-
-    // Not used for output, but this allows running end-to-end tests with the
-    // CLI on the structure identification.
-    invariantgraph::InvariantGraphBuilder invariantGraphBuilder;
-    auto graph = invariantGraphBuilder.build(model);
-
-    PropagationEngine engine;
-    auto applicationResult = graph.apply(engine);
-    auto neighbourhood = applicationResult.neighbourhood();
-    neighbourhood.printNeighbourhood(std::cerr);
-
-    search::Objective searchObjective(engine, model);
-    engine.open();
-    auto violation = searchObjective.registerWithEngine(
-        applicationResult.totalViolations(),
-        applicationResult.objectiveVariable());
-    engine.close();
-
-    search::Assignment assignment(engine, violation,
-                                  applicationResult.objectiveVariable(),
-                                  getObjectiveDirection(model.objective()));
-
     auto givenSeed = result["seed"].as<long>();
     std::uint_fast32_t seed = givenSeed >= 0
                                   ? static_cast<std::uint_fast32_t>(givenSeed)
                                   : std::time(nullptr);
     logDebug("Using seed " << seed);
-    search::RandomProvider random(seed);
+    const bool noTimeout = result.count("no-timeout") > 0;
+    const std::chrono::milliseconds timeLimit =
+        result["time-limit"].as<std::chrono::milliseconds>();
 
-    search::SearchProcedure search(random, assignment, neighbourhood,
-                                   searchObjective);
-
-    search::SearchController::VariableMap flippedMap;
-    for (const auto& [varId, fznVar] : applicationResult.variableMap())
-      flippedMap.emplace(fznVar, varId);
-
-    search::SearchController searchController = [&] {
-      if (result.count("no-timeout") == 0) {
-        return search::SearchController(
-            model, flippedMap,
-            result["time-limit"].as<std::chrono::milliseconds>());
-      } else {
-        logInfo("Running without timeout.");
-        return search::SearchController(model, flippedMap);
-      }
-    }();
-
-    search::Annealer annealer(assignment, random);
-    auto statistics = search.run(searchController, annealer);
-
+    auto statistics = run(modelFilePath, seed, noTimeout, timeLimit);
     // Don't log to std::cout, since that would interfere with MiniZinc.
     statistics.display(std::cerr);
   } catch (const cxxopts::OptionException& e) {
@@ -133,19 +95,44 @@ int main(int argc, char* argv[]) {
   }
 }
 
-static search::Cost::ObjectiveDirection getObjectiveDirection(
-    const fznparser::Objective& objective) {
-  return std::visit<search::Cost::ObjectiveDirection>(
-      overloaded{[](const fznparser::Satisfy&) {
-                   return search::Cost::ObjectiveDirection::NONE;
-                 },
-                 [](const fznparser::Minimise&) {
-                   return search::Cost::ObjectiveDirection::MINIMISE;
-                 },
-                 [](const fznparser::Maximise&) {
-                   return search::Cost::ObjectiveDirection::MAXIMISE;
-                 }},
-      objective);
+static search::SearchStatistics run(
+    const std::filesystem::path& modelFilePath, const std::uint_fast32_t& seed,
+    const bool noTimeout, const std::chrono::milliseconds& timeLimit) {
+  auto model = fznparser::ModelFactory::create(modelFilePath);
+
+  PropagationEngine engine;
+
+  // Not used for output, but this allows running end-to-end tests with the
+  // CLI on the structure identification.
+  auto applicationResult =
+      invariantgraph::InvariantGraphBuilder::buildAndApply(model, engine);
+
+  auto neighbourhood = applicationResult.neighbourhood();
+  neighbourhood.printNeighbourhood(std::cerr);
+
+  search::Objective objective = search::Objective::createAndRegister(
+      engine, getObjectiveDirection(model.objective()), applicationResult);
+
+  search::Assignment assignment = objective.createAssignment();
+
+  search::RandomProvider random(seed);
+
+  search::SearchProcedure search(random, assignment, neighbourhood, objective);
+
+  search::SearchController searchController = [&] {
+    if (noTimeout) {
+      logInfo("Running without timeout.");
+      return search::SearchController(model,
+                                      applicationResult.invertedVariableMap());
+    } else {
+      return search::SearchController(
+          model, applicationResult.invertedVariableMap(), timeLimit);
+    }
+  }();
+
+  search::Annealer annealer(assignment, random);
+
+  return search.run(searchController, annealer);
 }
 
 std::istream& operator>>(std::istream& is,

@@ -1,63 +1,89 @@
 #include "search/objective.hpp"
 
-#include "constraints/lessEqual.hpp"
-#include "utils/variant.hpp"
+search::Objective::Objective(PropagationEngine& engine,
+                             ObjectiveDirection objectiveDirection,
+                             VarId violation, VarId objective, VarId bound)
+    : _engine(engine),
+      _objectiveDirection(objectiveDirection),
+      _violation(violation),
+      _objective(objective),
+      _bound(bound) {}
 
 search::Objective::Objective(PropagationEngine& engine,
-                             const fznparser::FZNModel& model)
-    : _engine(engine), _modelObjective(model.objective()) {}
+                             ObjectiveDirection objectiveDirection,
+                             VarId violation, VarId objective)
+    : _engine(engine),
+      _objectiveDirection(objectiveDirection),
+      _violation(violation),
+      _objective(objective),
+      _bound(NULL_ID) {}
 
-VarId search::Objective::registerWithEngine(VarId constraintViolation,
-                                            VarId objectiveVariable) {
-  assert(_engine.isOpen());
+search::Objective search::Objective::createAndRegister(
+    PropagationEngine& engine, ObjectiveDirection objectiveDirection,
+    invariantgraph::InvariantGraphApplyResult& applicationResult) {
+  return createAndRegister(engine, objectiveDirection,
+                           applicationResult.totalViolations(),
+                           applicationResult.objectiveVariable());
+}
 
-  _objective = objectiveVariable;
+search::Objective search::Objective::createAndRegister(
+    PropagationEngine& engine, ObjectiveDirection objectiveDirection,
+    VarId totalViolations, VarId objectiveVariable) {
+  if (objectiveDirection == ObjectiveDirection::NONE) {
+    return Objective(engine, objectiveDirection, totalViolations,
+                     objectiveVariable);
+  }
 
-  return std::visit<VarId>(
-      overloaded{
-          [&](const fznparser::Satisfy&) { return constraintViolation; },
-          [&](const fznparser::Minimise&) {
-            auto violation = registerOptimisation(
-                constraintViolation, objectiveVariable,
-                _engine.upperBound(objectiveVariable), [&](auto v, auto b) {
-                  _engine.makeConstraint<LessEqual>(v, objectiveVariable, b);
-                });
-            return violation;
-          },
-          [&](const fznparser::Maximise&) {
-            auto violation = registerOptimisation(
-                constraintViolation, objectiveVariable,
-                _engine.lowerBound(objectiveVariable), [&](auto v, auto b) {
-                  _engine.makeConstraint<LessEqual>(v, b, objectiveVariable);
-                });
-            return violation;
-          },
-      },
-      _modelObjective);
+  assert(engine.isOpen());
+
+  const Int lb = engine.lowerBound(objectiveVariable);
+  const Int ub = engine.upperBound(objectiveVariable);
+
+  const VarId boundViolation =
+      engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
+
+  const VarId bound = engine.makeIntVar(
+      objectiveDirection == ObjectiveDirection::MINIMIZE ? ub : lb, lb, ub);
+
+  if (objectiveDirection == ObjectiveDirection::MINIMIZE) {
+    // minimization. objective <= bound
+    engine.makeConstraint<LessEqual>(boundViolation, objectiveVariable, bound);
+  } else {
+    assert(objectiveDirection == ObjectiveDirection::MAXIMIZE);
+    // minimization. objective >= bound
+    engine.makeConstraint<LessEqual>(boundViolation, bound, objectiveVariable);
+  }
+
+  const VarId violation =
+      engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
+
+  engine.makeInvariant<Linear>(
+      std::vector<VarId>{boundViolation, totalViolations}, violation);
+
+  return Objective(engine, objectiveDirection, violation, objectiveVariable,
+                   bound);
 }
 
 void search::Objective::tighten() {
-  if (!_bound) {
+  if (_bound == NULL_ID) {
     return;
   }
 
-  auto newBound = std::visit<Int>(
-      overloaded{[&](const fznparser::Satisfy&) {
-                   return _engine.committedValue(*_bound);
-                 },
-                 [&](const fznparser::Minimise&) {
-                   return _engine.committedValue(*_objective) - 1;
-                 },
-                 [&](const fznparser::Maximise&) {
-                   return _engine.committedValue(*_objective) + 1;
-                 }},
-      _modelObjective);
+  if (_objectiveDirection != ObjectiveDirection::NONE) {
+    _engine.beginMove();
+    _engine.setValue(
+        _bound,
+        _engine.committedValue(_objective) +
+            (_objectiveDirection == ObjectiveDirection::MINIMIZE ? -1 : 1));
 
-  _engine.beginMove();
-  _engine.setValue(*_bound, newBound);
-  _engine.endMove();
+    _engine.endMove();
+  }
 
   _engine.beginCommit();
-  _engine.query(*_violation);
+  _engine.query(_violation);
   _engine.endCommit();
+}
+
+search::Assignment search::Objective::createAssignment() {
+  return Assignment(_engine, _violation, _objective, _objectiveDirection);
 }
