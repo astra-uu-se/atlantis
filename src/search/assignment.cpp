@@ -2,7 +2,7 @@
 
 search::Assignment::Assignment(PropagationEngine& engine, VarId violation,
                                VarId objective,
-                               Cost::ObjectiveDirection objectiveDirection)
+                               ObjectiveDirection objectiveDirection)
     : _engine(engine),
       _violation(violation),
       _objective(objective),

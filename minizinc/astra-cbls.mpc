@@ -1,0 +1,5 @@
+{
+  "solver": "se.uu.it.astra-cbls",
+  "-D": "mzn_ignore_symmetry_breaking_constraints=true",
+  "-O4": true
+}
