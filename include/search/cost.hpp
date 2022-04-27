@@ -13,8 +13,6 @@ class Cost {
   Int _objectiveWeightSign;
 
  public:
-  enum class ObjectiveDirection : int { MINIMISE = 1, MAXIMISE = -1, NONE = 0 };
-
   Cost(Int violationDegree, Int objective, ObjectiveDirection direction);
 
   /**

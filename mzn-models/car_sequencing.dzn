@@ -1,0 +1,17 @@
+%------------
+% Problem 4/72  (Regin & Puget #1)
+% Satisfiable
+%------------
+numCars = 10;
+numOptions = 5;
+numClasses = 6;
+ClassCount = [1, 1, 2, 2, 2, 2];
+CarData = [|1,0,1,1,0|
+            0,0,0,1,0|
+            0,1,0,0,1|
+            0,1,0,1,0|
+            1,0,1,0,0|
+            1,1,0,0,0|];
+
+MaxCarsInBlock = [1,2,1,2,1];
+BlockSize = [2,3,3,5,5];

@@ -88,3 +88,5 @@ struct DomainEntry {
     assert(lb <= ub);
   }
 };
+
+enum class ObjectiveDirection : int { MINIMISE = 1, MAXIMISE = -1, NONE = 0 };

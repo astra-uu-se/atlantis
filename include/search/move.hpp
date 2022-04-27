@@ -1,6 +1,7 @@
 #pragma once
 
 #include "assignment.hpp"
+#include "core/types.hpp"
 #include "cost.hpp"
 
 namespace search {
@@ -49,7 +50,7 @@ class Move {
   std::array<VarId, N> _variables;
   std::array<Int, N> _values;
 
-  Cost _cost{0, 0, Cost::ObjectiveDirection::NONE};
+  Cost _cost{0, 0, ObjectiveDirection::NONE};
   bool _probed{false};
 };
 
