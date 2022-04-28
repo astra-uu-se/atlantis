@@ -1,9 +1,7 @@
 #include "invariantgraph/invariants/arrayBoolOrNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/lessThan.hpp"
-#include "invariants/elementConst.hpp"
-#include "invariants/linear.hpp"
+#include "invariants/exists.hpp"
 #include "views/violation2BoolView.hpp"
 
 std::unique_ptr<invariantgraph::ArrayBoolOrNode>
@@ -21,14 +19,6 @@ invariantgraph::ArrayBoolOrNode::fromModelConstraint(
 
 void invariantgraph::ArrayBoolOrNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (_sumVarId == NULL_ID) {
-    _sumVarId = engine.makeIntVar(0, 0, 0);
-  }
-
-  if (_constZeroVarId == NULL_ID) {
-    _constZeroVarId = engine.makeIntVar(0, 0, 0);
-  }
-
   if (_violationVarId == NULL_ID) {
     _violationVarId = engine.makeIntVar(0, 0, 0);
     assert(!variableMap.contains(definedVariables()[0]));
@@ -43,8 +33,10 @@ void invariantgraph::ArrayBoolOrNode::registerWithEngine(
   std::vector<VarId> inputs;
   std::transform(_as.begin(), _as.end(), std::back_inserter(inputs),
                  [&](const auto& node) { return variableMap.at(node); });
-
-  engine.makeInvariant<Linear>(inputs, _sumVarId);
-
-  engine.makeConstraint<LessThan>(_violationVarId, _constZeroVarId, _sumVarId);
+#ifndef NDEBUG
+  for (const VarId input : inputs) {
+    assert(0 <= engine.lowerBound(input));
+  }
+#endif
+  engine.makeInvariant<Exists>(inputs, _violationVarId);
 }

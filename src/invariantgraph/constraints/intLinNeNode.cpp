@@ -3,6 +3,7 @@
 #include "../parseHelper.hpp"
 #include "constraints/notEqual.hpp"
 #include "invariants/linear.hpp"
+#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::IntLinNeNode>
 invariantgraph::IntLinNeNode::fromModelConstraint(
@@ -23,12 +24,9 @@ void invariantgraph::IntLinNeNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   if (_sumVarId == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-  }
-  if (_cVarId == NULL_ID) {
-    _cVarId = engine.makeIntVar(_c, _c, _c);
-  }
-  if (!variableMap.contains(violation())) {
-    registerViolation(engine, variableMap);
+    assert(!variableMap.contains(violation()));
+    variableMap.emplace(violation(),
+                        engine.makeIntView<NotEqualView>(_sumVarId, _c));
   }
 }
 
@@ -40,10 +38,7 @@ void invariantgraph::IntLinNeNode::registerWithEngine(
                  [&](auto var) { return variableMap.at(var); });
 
   assert(_sumVarId != NULL_ID);
-  assert(_cVarId != NULL_ID);
   assert(variableMap.contains(violation()));
 
   engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
-  engine.makeConstraint<NotEqual>(variableMap.at(violation()), _sumVarId,
-                                  _cVarId);
 }

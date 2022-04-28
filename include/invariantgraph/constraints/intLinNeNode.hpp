@@ -11,7 +11,6 @@ class IntLinNeNode : public SoftConstraintNode {
   std::vector<Int> _coeffs;
   std::vector<VariableNode*> _variables;
   Int _c;
-  VarId _cVarId{NULL_ID};
   VarId _sumVarId{NULL_ID};
 
  public:

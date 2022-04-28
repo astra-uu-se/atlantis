@@ -6,6 +6,7 @@
 #include "constraints/lessEqual.hpp"
 #include "invariants/linear.hpp"
 #include "views/bool2IntView.hpp"
+#include "views/lessEqualView.hpp"
 
 std::unique_ptr<invariantgraph::LinLeNode>
 invariantgraph::LinLeNode::fromModelConstraint(
@@ -26,12 +27,9 @@ void invariantgraph::LinLeNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   if (_sumVarId == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-  }
-  if (_boundVarId == NULL_ID) {
-    _boundVarId = engine.makeIntVar(_bound, _bound, _bound);
-  }
-  if (!variableMap.contains(violation())) {
-    registerViolation(engine, variableMap);
+    assert(!variableMap.contains(violation()));
+    variableMap.emplace(violation(),
+                        engine.makeIntView<LessEqualView>(_sumVarId, _bound));
   }
 }
 
@@ -50,11 +48,7 @@ void invariantgraph::LinLeNode::registerWithEngine(
       });
 
   assert(_sumVarId != NULL_ID);
-  assert(_boundVarId != NULL_ID);
   assert(variableMap.contains(violation()));
 
   engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
-
-  engine.makeConstraint<LessEqual>(variableMap.at(violation()), _sumVarId,
-                                   _boundVarId);
 }

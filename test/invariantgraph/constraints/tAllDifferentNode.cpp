@@ -68,3 +68,59 @@ TEST_F(AllDifferentNodeTest, application) {
   EXPECT_EQ(engine.lowerBound(_variableMap.at(node->violation())), 0);
   EXPECT_EQ(engine.upperBound(_variableMap.at(node->violation())), 3);
 }
+
+static bool isViolating(const std::vector<Int>& values) {
+  for (size_t i = 0; i < values.size(); i++) {
+    for (size_t j = i + 1; j < values.size(); j++) {
+      if (values.at(i) == values.at(j)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+TEST_F(AllDifferentNodeTest, propagation) {
+  PropagationEngine engine;
+  engine.open();
+  registerVariables(engine, {a.name, b.name, c.name, d.name});
+  node->createDefinedVariables(engine, _variableMap);
+  node->registerWithEngine(engine, _variableMap);
+
+  std::vector<VarId> inputs;
+  for (auto* const inputVariable : node->inputs()) {
+    EXPECT_TRUE(_variableMap.contains(inputVariable));
+    inputs.emplace_back(_variableMap.at(inputVariable));
+  }
+
+  EXPECT_TRUE(_variableMap.contains(node->violation()));
+  const VarId violationId = _variableMap.at(node->violation());
+  EXPECT_EQ(inputs.size(), 4);
+
+  std::vector<Int> values(inputs.size());
+  engine.close();
+
+  for (values.at(0) = engine.lowerBound(inputs.at(0));
+       values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
+    for (values.at(1) = engine.lowerBound(inputs.at(1));
+         values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
+      for (values.at(2) = engine.lowerBound(inputs.at(2));
+           values.at(2) <= engine.upperBound(inputs.at(2)); ++values.at(2)) {
+        for (values.at(3) = engine.lowerBound(inputs.at(3));
+             values.at(3) <= engine.upperBound(inputs.at(3)); ++values.at(3)) {
+          engine.beginMove();
+          for (size_t i = 0; i < inputs.size(); ++i) {
+            engine.setValue(inputs.at(i), values.at(i));
+          }
+          engine.endMove();
+
+          engine.beginProbe();
+          engine.query(violationId);
+          engine.endProbe();
+
+          EXPECT_EQ(engine.currentValue(violationId) > 0, isViolating(values));
+        }
+      }
+    }
+  }
+}

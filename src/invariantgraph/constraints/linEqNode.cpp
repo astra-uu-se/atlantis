@@ -4,6 +4,7 @@
 #include "constraints/equal.hpp"
 #include "invariants/linear.hpp"
 #include "views/bool2IntView.hpp"
+#include "views/equalView.hpp"
 
 std::unique_ptr<invariantgraph::LinEqNode>
 invariantgraph::LinEqNode::fromModelConstraint(
@@ -24,12 +25,9 @@ void invariantgraph::LinEqNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   if (_sumVarId == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-  }
-  if (_cVarId == NULL_ID) {
-    _cVarId = engine.makeIntVar(_c, _c, _c);
-  }
-  if (!variableMap.contains(violation())) {
-    registerViolation(engine, variableMap);
+    assert(!variableMap.contains(violation()));
+    variableMap.emplace(violation(),
+                        engine.makeIntView<EqualView>(_sumVarId, _c));
   }
 }
 
@@ -48,9 +46,7 @@ void invariantgraph::LinEqNode::registerWithEngine(
       });
 
   assert(_sumVarId != NULL_ID);
-  assert(_cVarId != NULL_ID);
   assert(variableMap.contains(violation()));
 
   engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
-  engine.makeConstraint<Equal>(variableMap.at(violation()), _sumVarId, _cVarId);
 }

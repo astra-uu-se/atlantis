@@ -47,8 +47,8 @@ TEST_F(IntLinEqReifNodeTest, application) {
   engine.close();
 
   // a, b
-  EXPECT_EQ(engine.searchVariables().size(), 3);
+  EXPECT_EQ(engine.searchVariables().size(), 2);
 
   // a, b and r
-  EXPECT_EQ(engine.numVariables(), 5);
+  EXPECT_EQ(engine.numVariables(), 3);
 }

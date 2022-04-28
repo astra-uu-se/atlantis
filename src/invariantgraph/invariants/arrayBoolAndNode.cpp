@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "invariants/elementConst.hpp"
-#include "invariants/linear.hpp"
+#include "invariants/forAll.hpp"
 #include "views/violation2BoolView.hpp"
 
 std::unique_ptr<invariantgraph::ArrayBoolAndNode>
@@ -34,5 +34,5 @@ void invariantgraph::ArrayBoolAndNode::registerWithEngine(
   std::transform(_as.begin(), _as.end(), std::back_inserter(inputs),
                  [&](const auto& node) { return variableMap.at(node); });
 
-  engine.makeInvariant<Linear>(inputs, _sumVarId);
+  engine.makeInvariant<ForAll>(inputs, _sumVarId);
 }

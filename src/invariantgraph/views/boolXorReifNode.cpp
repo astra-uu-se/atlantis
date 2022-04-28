@@ -1,7 +1,7 @@
 #include "invariantgraph/views/boolXorReifNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariantgraph/constraints/linEqNode.hpp"
+#include "invariantgraph/constraints/intNeNode.hpp"
 
 std::unique_ptr<invariantgraph::BoolXorReifNode>
 invariantgraph::BoolXorReifNode::fromModelConstraint(
@@ -14,8 +14,6 @@ invariantgraph::BoolXorReifNode::fromModelConstraint(
   auto b = mappedVariable(constraint.arguments[1], variableMap);
   auto r = mappedVariable(constraint.arguments[2], variableMap);
 
-  return std::make_unique<BoolXorReifNode>(
-      std::make_unique<LinEqNode>(std::vector<Int>{1, 1},
-                                  std::vector<VariableNode*>{a, b}, 1),
-      r);
+  return std::make_unique<BoolXorReifNode>(std::make_unique<IntNeNode>(a, b),
+                                           r);
 }

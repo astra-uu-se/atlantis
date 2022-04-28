@@ -10,6 +10,7 @@ class BoolClauseNode : public SoftConstraintNode {
  private:
   std::vector<VariableNode*> _as;
   std::vector<VariableNode*> _bs;
+  VarId _sumVarId{NULL_ID};
 
  public:
   explicit BoolClauseNode(std::vector<VariableNode*> as,

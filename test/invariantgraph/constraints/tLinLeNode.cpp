@@ -1,76 +1,78 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/invariants/arrayBoolOrNode.hpp"
+#include "invariantgraph/constraints/linLeNode.hpp"
 
-class ArrayBoolOrNodeTest : public NodeTestBase {
+class LinLeNodeTest : public NodeTestBase {
  public:
-  BOOL_VARIABLE(a);
-  BOOL_VARIABLE(b);
-  BOOL_VARIABLE(r);
+  INT_VARIABLE(a, 0, 10);
+  INT_VARIABLE(b, 0, 10);
+  Int sum{3};
+  std::vector<Int> coeffs{1, 2};
 
   fznparser::Constraint constraint{
-      "array_bool_or",
-      {fznparser::Constraint::ArrayArgument{a.name, b.name}, r.name},
+      "int_lin_le",
+      {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
+       fznparser::Constraint::ArrayArgument{"a", "b"}, sum},
       {}};
-  fznparser::FZNModel model{{}, {a, b, r}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::ArrayBoolOrNode> node;
+  fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
-  ArrayBoolOrNodeTest() : NodeTestBase(model) {}
+  std::unique_ptr<invariantgraph::LinLeNode> node;
+
+  LinLeNodeTest() : NodeTestBase(model) {}
 
   void SetUp() override {
-    node = makeNode<invariantgraph::ArrayBoolOrNode>(constraint);
+    node = makeNode<invariantgraph::LinLeNode>(constraint);
   }
 };
 
-TEST_F(ArrayBoolOrNodeTest, construction) {
-  EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables()[0]->variable(),
-            invariantgraph::VariableNode::FZNVariable(r));
-
-  EXPECT_EQ(node->as().size(), 2);
-  EXPECT_EQ(*node->as()[0]->variable(),
+TEST_F(LinLeNodeTest, construction) {
+  EXPECT_EQ(*node->variables()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->as()[1]->variable(),
+  EXPECT_EQ(*node->variables()[1]->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
-
-  expectMarkedAsInput(node.get(), node->as());
+  EXPECT_EQ(node->coeffs()[0], 1);
+  EXPECT_EQ(node->coeffs()[1], 2);
+  EXPECT_EQ(node->bound(), 3);
+  expectMarkedAsInput(node.get(), node->variables());
 }
 
-TEST_F(ArrayBoolOrNodeTest, application) {
+TEST_F(LinLeNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
   for (auto* const definedVariable : node->definedVariables()) {
     EXPECT_FALSE(_variableMap.contains(definedVariable));
   }
+  EXPECT_FALSE(_variableMap.contains(node->violation()));
   node->createDefinedVariables(engine, _variableMap);
   for (auto* const definedVariable : node->definedVariables()) {
     EXPECT_TRUE(_variableMap.contains(definedVariable));
   }
+  EXPECT_TRUE(_variableMap.contains(node->violation()));
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  // a and b
+  // a, b
   EXPECT_EQ(engine.searchVariables().size(), 2);
 
-  // a, b and r
+  // a, b, the linear sum of a and b
   EXPECT_EQ(engine.numVariables(), 3);
 
-  // minSparse
+  // linear
   EXPECT_EQ(engine.numInvariants(), 1);
 }
 
-static bool isViolating(const std::vector<Int>& values) {
-  for (const Int val : values) {
-    if (val == 0) {
-      return false;
-    }
+static bool isViolating(const std::vector<Int>& coeffs,
+                        const std::vector<Int>& values, const Int expected) {
+  Int sum = 0;
+  for (size_t i = 0; i < values.size(); ++i) {
+    sum += coeffs.at(i) * values.at(i);
   }
-  return true;
+  return sum > expected;
 }
 
-TEST_F(ArrayBoolOrNodeTest, propagation) {
+TEST_F(LinLeNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -83,8 +85,8 @@ TEST_F(ArrayBoolOrNodeTest, propagation) {
     inputs.emplace_back(_variableMap.at(inputVariable));
   }
 
-  EXPECT_TRUE(_variableMap.contains(node->definedVariables()[0]));
-  const VarId outputId = _variableMap.at(node->definedVariables()[0]);
+  EXPECT_TRUE(_variableMap.contains(node->violation()));
+  const VarId violationId = _variableMap.at(node->violation());
   EXPECT_EQ(inputs.size(), 2);
 
   std::vector<Int> values(inputs.size());
@@ -101,12 +103,12 @@ TEST_F(ArrayBoolOrNodeTest, propagation) {
       engine.endMove();
 
       engine.beginProbe();
-      engine.query(outputId);
+      engine.query(violationId);
       engine.endProbe();
 
-      const Int viol = engine.currentValue(outputId);
+      const Int viol = engine.currentValue(violationId);
 
-      EXPECT_EQ(viol > 0, isViolating(values));
+      EXPECT_EQ(viol > 0, isViolating(coeffs, values, sum));
     }
   }
 }
