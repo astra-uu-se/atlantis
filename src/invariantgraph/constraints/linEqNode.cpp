@@ -20,6 +20,19 @@ invariantgraph::LinEqNode::fromModelConstraint(
   return std::make_unique<LinEqNode>(coeffs, variables, bound);
 }
 
+void invariantgraph::LinEqNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  if (_sumVarId == NULL_ID) {
+    _sumVarId = engine.makeIntVar(0, 0, 0);
+  }
+  if (_cVarId == NULL_ID) {
+    _cVarId = engine.makeIntVar(_c, _c, _c);
+  }
+  if (!variableMap.contains(violation())) {
+    registerViolation(engine, variableMap);
+  }
+}
+
 void invariantgraph::LinEqNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<VarId> variables;
@@ -34,10 +47,10 @@ void invariantgraph::LinEqNode::registerWithEngine(
         return engine.makeIntView<Bool2IntView>(variableMap.at(node));
       });
 
-  auto sumVar = engine.makeIntVar(0, 0, 0);
-  engine.makeInvariant<Linear>(_coeffs, variables, sumVar);
+  assert(_sumVarId != NULL_ID);
+  assert(_cVarId != NULL_ID);
+  assert(variableMap.contains(violation()));
 
-  auto violationVar = registerViolation(engine, variableMap);
-  auto c = engine.makeIntVar(_c, _c, _c);
-  engine.makeConstraint<Equal>(violationVar, sumVar, c);
+  engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
+  engine.makeConstraint<Equal>(variableMap.at(violation()), _sumVarId, _cVarId);
 }

@@ -48,7 +48,7 @@ TEST_F(NotEqualConstTest, UpdateBounds) {
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_TRUE(xLb <= xUb);
-    engine->updateBounds(x, xLb, xUb);
+    engine->updateBounds(x, xLb, xUb, false);
     invariant.updateBounds(*engine);
     const Int lb = allEqual(xLb, xUb, y) ? 1 : 0;
     const Int ub = insideBounds(xLb, xUb, y) ? 1 : 0;

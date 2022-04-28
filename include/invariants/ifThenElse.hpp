@@ -21,7 +21,7 @@ class IfThenElse : public Invariant {
   IfThenElse(VarId b, VarId x, VarId y, VarId z);
 
   void registerVars(Engine&) override;
-  void updateBounds(Engine&) override;
+  void updateBounds(Engine&, bool widenOnly = false) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;

@@ -16,10 +16,13 @@ class MaxNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   MaxNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : VariableDefiningNode({output}, variables),
+      : VariableDefiningNode({output}, false, variables),
         _variables(std::move(variables)) {}
 
   ~MaxNode() override = default;
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

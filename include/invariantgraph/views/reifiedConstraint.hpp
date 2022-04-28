@@ -8,13 +8,16 @@
 namespace invariantgraph {
 
 class ReifiedConstraint : public VariableDefiningNode {
- private:
+ protected:
   std::unique_ptr<SoftConstraintNode> _constraint;
   VariableNode* _r;
 
  public:
   ReifiedConstraint(std::unique_ptr<SoftConstraintNode> constraint,
                     VariableNode* r);
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(Engine& engine,
                           VariableDefiningNode::VariableMap& map) override;

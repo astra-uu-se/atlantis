@@ -20,10 +20,14 @@ class BinaryOpNode : public VariableDefiningNode {
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
-  BinaryOpNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : VariableDefiningNode({output}, {a, b}), _a(a), _b(b) {}
+  BinaryOpNode(VariableNode* a, VariableNode* b, VariableNode* output,
+               bool isView)
+      : VariableDefiningNode({output}, isView, {a, b}), _a(a), _b(b) {}
 
   ~BinaryOpNode() override = default;
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

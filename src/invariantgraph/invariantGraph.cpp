@@ -1,5 +1,6 @@
 #include "invariantgraph/invariantGraph.hpp"
 
+#include <deque>
 #include <queue>
 #include <stack>
 #include <unordered_set>
@@ -24,91 +25,69 @@ static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
   return variableMap;
 }
 
-static void topologicallySortedNodeUtil(
-    invariantgraph::VariableDefiningNode* node,
-    std::unordered_set<invariantgraph::VariableDefiningNode*>& visited,
-    std::stack<invariantgraph::VariableDefiningNode*>& stack) {
-  visited.emplace(node);
-
-  for (const auto& variableNode : node->definedVariables()) {
-    for (const auto& definingNode : variableNode->inputFor()) {
-      if (!visited.contains(definingNode)) {
-        topologicallySortedNodeUtil(definingNode, visited, stack);
-      }
-    }
-  }
-
-  stack.push(node);
-}
-
-static std::stack<invariantgraph::VariableDefiningNode*>
-topologicallySortedNodes(
-    const std::vector<invariantgraph::ImplicitConstraintNode*>&
-        implicitConstraints,
-    const std::vector<invariantgraph::VariableNode*>& valueNodes) {
-  std::unordered_set<invariantgraph::VariableDefiningNode*> visited;
-  std::stack<invariantgraph::VariableDefiningNode*> stack;
-
-  for (const auto& implicitConstraint : implicitConstraints) {
-    topologicallySortedNodeUtil(implicitConstraint, visited, stack);
-  }
-
-  for (const auto& node : valueNodes) {
-    for (const auto& definingNode : node->inputFor()) {
-      if (!visited.contains(definingNode)) {
-        topologicallySortedNodeUtil(definingNode, visited, stack);
-      }
-    }
-  }
-
-  return stack;
-}
-
-static void applyValueNodes(
-    Engine& engine,
-    std::unordered_map<invariantgraph::VariableNode*, VarId>& variableIds,
-    const std::vector<invariantgraph::VariableNode*>& valueNodes) {
-  for (const auto& node : valueNodes) {
-    const auto& [lb, ub] = node->bounds();
-    auto varId = engine.makeIntVar(lb, lb, ub);
-    variableIds.emplace(node, varId);
-  }
-}
-
 invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     Engine& engine) {
   engine.open();
 
-  std::unordered_map<VariableNode*, VarId> variableIds;
-  std::vector<VarId> violations;
+  std::unordered_map<VariableNode*, VarId> variableMap;
+  std::unordered_set<invariantgraph::VariableDefiningNode*> visitedNodes;
+  std::queue<invariantgraph::VariableDefiningNode*> unregisteredNodes;
 
-  applyValueNodes(engine, variableIds, _valueNodes);
-
-  auto unAppliedNodes = topologicallySortedNodes(_implicitConstraints, _valueNodes);
-  assert(unAppliedNodes.size() == _variableDefiningNodes.size());
-
-  while (!unAppliedNodes.empty()) {
-    auto node = unAppliedNodes.top();
-
-    node->registerWithEngine(engine, variableIds);
-
-    if (auto violationNode = node->violation()) {
-      violations.push_back(variableIds.at(violationNode));
-    }
-
-    unAppliedNodes.pop();
+  for (auto* const implicitConstraint : _implicitConstraints) {
+    visitedNodes.emplace(implicitConstraint);
+    unregisteredNodes.emplace(implicitConstraint);
   }
 
-  VarId totalViolations = engine.makeIntVar(0, 0, 0);
+  std::vector<VarId> violations;
+  std::unordered_set<VariableNode*> definedVariables;
+
+  while (!unregisteredNodes.empty()) {
+    auto* const node = unregisteredNodes.front();
+    unregisteredNodes.pop();
+    assert(visitedNodes.contains(node));
+    assert(!node->isView() || variableMap.contains(node->inputs().front()));
+    node->createDefinedVariables(engine, variableMap);
+    for (auto* const definedVariable : node->definedVariables()) {
+      definedVariables.emplace(definedVariable);
+      assert(variableMap.contains(definedVariable));
+      for (auto* const variableNode : definedVariable->inputFor()) {
+        if (!visitedNodes.contains(variableNode)) {
+          visitedNodes.emplace(variableNode);
+          unregisteredNodes.emplace(variableNode);
+        }
+      }
+    }
+  }
+
+  for (auto* const node : visitedNodes) {
+#ifndef NDEBUG
+    for (auto* const definedVariable : node->definedVariables()) {
+      variableMap.contains(definedVariable);
+    }
+#endif
+    node->registerWithEngine(engine, variableMap);
+    if (auto* const violationNode = node->violation()) {
+      violations.push_back(variableMap.at(violationNode));
+    }
+  }
+
+  engine.computeBounds();
+
+  for (auto* node : definedVariables) {
+    node->postDomainConstraint(engine, variableMap,
+                               node->constrainedDomain(engine, variableMap));
+  }
+
+  const VarId totalViolations = engine.makeIntVar(0, 0, 0);
   engine.makeInvariant<Linear>(violations, totalViolations);
 
   // If the model has no variable to optimise, use a dummy variable.
   VarId objectiveVarId = _objectiveVariable == nullptr
                              ? engine.makeIntVar(0, 0, 0)
-                             : variableIds.at(_objectiveVariable);
+                             : variableMap.at(_objectiveVariable);
 
   engine.close();
 
-  return {createVariableMap(variableIds), _implicitConstraints, totalViolations,
+  return {createVariableMap(variableMap), _implicitConstraints, totalViolations,
           objectiveVarId};
 }

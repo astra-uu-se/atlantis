@@ -12,13 +12,16 @@ class SetInNode : public SoftConstraintNode {
 
  public:
   explicit SetInNode(VariableNode* input, std::vector<Int> values)
-      : SoftConstraintNode({input}),
+      : SoftConstraintNode(false, {input}),
         _input(input),
         _values(std::move(values)) {}
 
   static std::unique_ptr<SetInNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

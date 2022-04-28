@@ -11,6 +11,8 @@ class IntLinNeNode : public SoftConstraintNode {
   std::vector<Int> _coeffs;
   std::vector<VariableNode*> _variables;
   Int _c;
+  VarId _cVarId{NULL_ID};
+  VarId _sumVarId{NULL_ID};
 
  public:
   static std::unique_ptr<IntLinNeNode> fromModelConstraint(
@@ -19,10 +21,13 @@ class IntLinNeNode : public SoftConstraintNode {
 
   IntLinNeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
                Int c)
-      : SoftConstraintNode(variables),
+      : SoftConstraintNode(false, variables),
         _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _c(c) {}
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

@@ -113,20 +113,37 @@ class VariableDefiningNode {
  private:
   std::vector<VariableNode*> _definedVariables;
   std::vector<VariableNode*> _inputs;
+  const bool _isView;
 
  public:
   using VariableMap = std::unordered_map<VariableNode*, VarId>;
 
   explicit VariableDefiningNode(std::vector<VariableNode*> definedVariables,
+                                bool isView,
                                 std::vector<VariableNode*> inputs = {})
       : _definedVariables(std::move(definedVariables)),
-        _inputs(std::move(inputs)) {
+        _inputs(std::move(inputs)),
+        _isView(isView) {
     for (const auto& input : _inputs) {
       markAsInput(input, false);
     }
   }
 
+  inline bool isView() const noexcept { return _isView; }
+
   virtual ~VariableDefiningNode() = default;
+
+  /**
+   * Creates as all the variables the node
+   * defines in @p engine. The @p variableMap is modified to contain the
+   * variables defined by this node with their corresponding VarId's.
+   *
+   * @param engine The engine with which to register the variables, constraints
+   * and views.
+   * @param variableMap A map of variable nodes to VarIds.
+   */
+  virtual void createDefinedVariables(Engine& engine,
+                                      VariableMap& variableMap) = 0;
 
   /**
    * Registers the current node with the engine, as well as all the variables
@@ -170,9 +187,11 @@ class VariableDefiningNode {
   static inline VarId registerDefinedVariable(Engine& engine,
                                               VariableMap& variableMap,
                                               VariableNode* variable) {
-    auto varId = engine.makeIntVar(0, 0, 0);
-    variableMap.emplace(variable, varId);
-    return varId;
+    if (variableMap.find(variable) == variableMap.end()) {
+      variableMap.emplace(variable, engine.makeIntVar(0, 0, 0));
+    }
+
+    return variableMap.at(variable);
   }
 
   void markAsInput(VariableNode* node, bool registerHere = true) {
@@ -193,9 +212,13 @@ class ImplicitConstraintNode : public VariableDefiningNode {
   search::neighbourhoods::Neighbourhood* _neighbourhood{nullptr};
 
  public:
-  explicit ImplicitConstraintNode(std::vector<VariableNode*> definedVariables)
-      : VariableDefiningNode(std::move(definedVariables)) {}
+  explicit ImplicitConstraintNode(std::vector<VariableNode*> definedVariables,
+                                  bool isView)
+      : VariableDefiningNode(std::move(definedVariables), isView) {}
   ~ImplicitConstraintNode() override { delete _neighbourhood; }
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
@@ -235,8 +258,9 @@ class SoftConstraintNode : public VariableDefiningNode {
   VariableNode _violation{SetDomain({0})};
 
  public:
-  explicit SoftConstraintNode(std::vector<VariableNode*> inputs = {})
-      : VariableDefiningNode({&_violation}, std::move(inputs)) {}
+  explicit SoftConstraintNode(bool isView,
+                              std::vector<VariableNode*> inputs = {})
+      : VariableDefiningNode({&_violation}, isView, std::move(inputs)) {}
 
   ~SoftConstraintNode() override = default;
 

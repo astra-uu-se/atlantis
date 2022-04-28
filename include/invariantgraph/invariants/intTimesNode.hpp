@@ -12,7 +12,7 @@ class IntTimesNode : public BinaryOpNode {
   }
 
   IntTimesNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output) {}
+      : BinaryOpNode(a, b, output, false) {}
 
   ~IntTimesNode() override = default;
 

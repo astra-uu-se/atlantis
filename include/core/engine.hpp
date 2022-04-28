@@ -66,6 +66,7 @@ class Engine {
 
   virtual void open() = 0;
   virtual void close() = 0;
+  virtual void computeBounds() = 0;
 
   [[nodiscard]] inline bool isOpen() const noexcept { return _isOpen; }
   [[nodiscard]] inline bool isMoving() const noexcept {
@@ -124,9 +125,9 @@ class Engine {
     return _store.constIntVar(id).upperBound();
   }
 
-  inline void updateBounds(VarId id, Int lb, Int ub) {
+  inline void updateBounds(VarId id, Int lb, Int ub, bool widenOnly) {
     assert(id.idType == VarIdType::var);
-    _store.intVar(id).updateBounds(lb, ub);
+    _store.intVar(id).updateBounds(lb, ub, widenOnly);
   }
 
   [[nodiscard]] inline Int intViewUpperBound(VarId id) const {
@@ -204,7 +205,7 @@ Engine::makeInvariant(Args&&... args) {
   logDebug("Created new invariant with id: " << invariantId);
   T& invariant = static_cast<T&>(_store.invariant(invariantId));
   invariant.registerVars(*this);
-  invariant.updateBounds(*this);
+  invariant.updateBounds(*this, false);
   return invariant;
 }
 

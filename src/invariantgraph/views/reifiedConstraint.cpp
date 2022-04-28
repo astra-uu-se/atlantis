@@ -5,11 +5,14 @@
 invariantgraph::ReifiedConstraint::ReifiedConstraint(
     std::unique_ptr<SoftConstraintNode> constraint,
     invariantgraph::VariableNode* r)
-    : VariableDefiningNode({r}), _constraint(std::move(constraint)), _r(r) {
+    : VariableDefiningNode({r}, constraint->isView()),
+      _constraint(std::move(constraint)),
+      _r(r) {
   for (const auto& input : _constraint->_inputs) {
     markAsInput(input);
 
-    auto it = std::find(input->_inputFor.begin(), input->_inputFor.end(), _constraint.get());
+    auto it = std::find(input->_inputFor.begin(), input->_inputFor.end(),
+                        _constraint.get());
     assert(it != input->_inputFor.end());
     input->_inputFor.erase(it);
   }
@@ -17,11 +20,18 @@ invariantgraph::ReifiedConstraint::ReifiedConstraint(
   _constraint->_inputs.clear();
 }
 
-void invariantgraph::ReifiedConstraint::registerWithEngine(Engine& engine, VariableDefiningNode::VariableMap& map) {
-  _constraint->registerWithEngine(engine, map);
+void invariantgraph::ReifiedConstraint::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  _constraint->createDefinedVariables(engine, variableMap);
 
-  auto rId =
-      engine.makeIntView<Violation2BoolView>(map.at(_constraint->violation()));
-  auto variable = definedVariables().at(0);
-  map.emplace(variable, rId);
+  if (!variableMap.contains(definedVariables().at(0))) {
+    const auto rId = engine.makeIntView<Violation2BoolView>(
+        variableMap.at(_constraint->violation()));
+    variableMap.emplace(definedVariables().at(0), rId);
+  }
+}
+
+void invariantgraph::ReifiedConstraint::registerWithEngine(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  _constraint->registerWithEngine(engine, variableMap);
 }

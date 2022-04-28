@@ -19,19 +19,32 @@ invariantgraph::ArrayBoolOrNode::fromModelConstraint(
   return std::make_unique<invariantgraph::ArrayBoolOrNode>(as, r);
 }
 
+void invariantgraph::ArrayBoolOrNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  if (_sumVarId == NULL_ID) {
+    _sumVarId = engine.makeIntVar(0, 0, 0);
+  }
+
+  if (_constZeroVarId == NULL_ID) {
+    _constZeroVarId = engine.makeIntVar(0, 0, 0);
+  }
+
+  if (_violationVarId == NULL_ID) {
+    _violationVarId = engine.makeIntVar(0, 0, 0);
+    assert(!variableMap.contains(definedVariables()[0]));
+    variableMap.emplace(
+        definedVariables()[0],
+        engine.makeIntView<Violation2BoolView>(_violationVarId));
+  }
+}
+
 void invariantgraph::ArrayBoolOrNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<VarId> inputs;
   std::transform(_as.begin(), _as.end(), std::back_inserter(inputs),
                  [&](const auto& node) { return variableMap.at(node); });
 
-  auto sum = engine.makeIntVar(0, 0, 0);
-  engine.makeInvariant<Linear>(inputs, sum);
+  engine.makeInvariant<Linear>(inputs, _sumVarId);
 
-  auto violation = engine.makeIntVar(0, 0, 0);
-  auto constZero = engine.makeIntVar(0, 0, 0);
-  engine.makeConstraint<LessThan>(violation, constZero, sum);
-
-  auto output = engine.makeIntView<Violation2BoolView>(violation);
-  variableMap.emplace(definedVariables()[0], output);
+  engine.makeConstraint<LessThan>(_violationVarId, _constZeroVarId, _sumVarId);
 }

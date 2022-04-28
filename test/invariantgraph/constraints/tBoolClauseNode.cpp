@@ -47,15 +47,24 @@ TEST_F(BoolClauseNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name, c.name, d.name});
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_FALSE(_variableMap.contains(definedVariable));
+  }
+  EXPECT_FALSE(_variableMap.contains(node->violation()));
+  node->createDefinedVariables(engine, _variableMap);
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_TRUE(_variableMap.contains(definedVariable));
+  }
+  EXPECT_TRUE(_variableMap.contains(node->violation()));
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  // a, b, c and d, constZero
-  EXPECT_EQ(engine.searchVariables().size(), 5);
+  // a, b, c and d
+  EXPECT_EQ(engine.searchVariables().size(), 4);
 
-  // a, b, c, d, sum, constZero and the violation
-  EXPECT_EQ(engine.numVariables(), 7);
+  // a, b, c, d, sum
+  EXPECT_EQ(engine.numVariables(), 5);
 
-  // lessThan, linear
-  EXPECT_EQ(engine.numInvariants(), 2);
+  // linear
+  EXPECT_EQ(engine.numInvariants(), 1);
 }

@@ -35,7 +35,7 @@ class GlobalCardinality : public Constraint {
                     const std::vector<Int>& upperBound);
 
   void registerVars(Engine&) override;
-  void updateBounds(Engine&) override;
+  void updateBounds(Engine&, bool widenOnly = false) override;
   void close(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp t, Engine& e, LocalId id) override;

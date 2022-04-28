@@ -12,7 +12,7 @@ void Pow::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _y);
 }
 
-void Pow::updateBounds(Engine& engine) {
+void Pow::updateBounds(Engine& engine, bool widenOnly) {
   const Int aLb = engine.lowerBound(_a);
   const Int aUb = engine.upperBound(_a);
 
@@ -67,7 +67,7 @@ void Pow::updateBounds(Engine& engine) {
     ub = std::max<Int>(ub, std::pow(aLb, bUb - (bUb % 2 == 1)));
   }
 
-  engine.updateBounds(_y, lb, ub);
+  engine.updateBounds(_y, lb, ub, widenOnly);
 }
 
 void Pow::recompute(Timestamp ts, Engine& engine) {

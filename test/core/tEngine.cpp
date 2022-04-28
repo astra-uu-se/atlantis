@@ -27,7 +27,7 @@ class MockInvariantSimple : public Invariant {
   MockInvariantSimple() : Invariant(NULL_ID) {}
 
   void registerVars(Engine&) override { isRegistered = true; }
-  void updateBounds(Engine&) override { boundsUpdated = true; }
+  void updateBounds(Engine&, bool) override { boundsUpdated = true; }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
 
@@ -61,7 +61,7 @@ class MockInvariantAdvanced : public Invariant {
     isRegistered = true;
   }
 
-  void updateBounds(Engine&) override { boundsUpdated = true; }
+  void updateBounds(Engine&, bool) override { boundsUpdated = true; }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
   MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
@@ -78,9 +78,15 @@ class MockPlus : public Invariant {
   VarId a;
   VarId b;
   VarId output;
+  std::vector<InvariantId>* position;
 
-  MockPlus(VarId t_a, VarId t_b, VarId t_output)
-      : Invariant(NULL_ID), a(t_a), b(t_b), output(t_output) {
+  MockPlus(VarId t_a, VarId t_b, VarId t_output,
+           std::vector<InvariantId>* t_position = nullptr)
+      : Invariant(NULL_ID),
+        a(t_a),
+        b(t_b),
+        output(t_output),
+        position(t_position) {
     _modifiedVars.reserve(2);
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp ts, Engine& engine) {
@@ -104,9 +110,12 @@ class MockPlus : public Invariant {
     isRegistered = true;
   }
 
-  void updateBounds(Engine& engine) override {
+  void updateBounds(Engine& engine, bool widenOnly = false) override {
     engine.updateBounds(output, engine.lowerBound(a) + engine.lowerBound(b),
-                        engine.upperBound(a) + engine.upperBound(b));
+                        engine.upperBound(a) + engine.upperBound(b), widenOnly);
+    if (position != nullptr) {
+      position->emplace_back(_id);
+    }
   }
 
   MOCK_METHOD(void, recompute, (Timestamp, Engine&), (override));
@@ -732,6 +741,148 @@ TEST_F(EngineTest, TestSimpleDynamicCycleCommit) {
   engine->endCommit();
 
   EXPECT_EQ(engine->currentValue(output), 13);
+}
+TEST_F(EngineTest, ComputeBounds) {
+  engine->open();
+
+  std::vector<std::vector<VarId>> inputs;
+  std::vector<VarId> outputs;
+  std::vector<MockPlus*> invariants;
+  std::vector<InvariantId> position;
+
+  /* +------++------+ +------++------+ +------++------+ +------++------+
+   * |inputs||inputs| |inputs||inputs| |inputs||inputs| |inputs||inputs|
+   * |[0][0]||[0][1]| |[1][0]||[1][1]| |[2][0]||[2][1]| |[3][0]||[3][1]|
+   * +------++------+ +------++------+ +------++------+ +------++------+
+   *     \      /         \      /         \      /         \      /
+   *  +------------+   +------------+   +------------+   +------------+
+   *  |invariant[0]|   |invariant[1]|   |invariant[2]|   |invariant[3]|
+   *  +------------+   +------------+   +------------+   +------------+
+   *         \               /                 \               /
+   *   +------------+ +------------+     +------------+ +------------+
+   *   | outputs[0] | | outputs[1] |     | outputs[2] | | outputs[3] |
+   *   |inputs[4][0]| |inputs[4][1]|     |inputs[5][0]| |inputs[5][1]|
+   *   +------------+ +------------+     +------------+ +------------+
+   *           \            /                   \            /
+   *           +------------+                   +------------+
+   *           |invariant[4]|                   |invariant[5]|
+   *           +------------+                   +------------+
+   *                   \                            /
+   *                  +------------+    +------------+
+   *                  | outputs[4] |    | outputs[5] |
+   *                  |inputs[6][0]|    |inputs[6][1]|
+   *                  +------------+    +------------+
+   *                            \          /
+   *                           +------------+
+   *                           |invariant[6]|
+   *                           +------------+
+   *                                 |
+   *                            +----------+
+   *                            |outputs[6]|
+   *                            +----------+
+   */
+  inputs.resize(7);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    const Int lb = i < 4 ? 5 : 0;
+    const Int ub = i < 4 ? 10 : 0;
+    for (size_t j = 0; j < 2; j++) {
+      inputs[i].emplace_back(engine->makeIntVar(lb, lb, ub));
+    }
+  }
+  for (size_t i = 4; i < inputs.size(); ++i) {
+    for (VarId output : inputs[i]) {
+      outputs.emplace_back(output);
+    }
+  }
+  outputs.emplace_back(engine->makeIntVar(0, 0, 0));
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    invariants.push_back(&engine->makeInvariant<MockPlus>(
+        inputs.at(i).at(0), inputs.at(i).at(1), outputs.at(i), &position));
+  }
+
+  std::vector<std::pair<Int, Int>> expectedBounds = {
+      std::pair<Int, Int>{10, 20}, std::pair<Int, Int>{10, 20},
+      std::pair<Int, Int>{10, 20}, std::pair<Int, Int>{10, 20},
+      std::pair<Int, Int>{20, 40}, std::pair<Int, Int>{20, 40},
+      std::pair<Int, Int>{40, 80}};
+
+  EXPECT_EQ(invariants.size(), position.size());
+
+  for (size_t i = 0; i < invariants.size(); ++i) {
+    EXPECT_EQ(invariants.at(i)->id(), position.at(i));
+  }
+
+  for (size_t v = 0; v < outputs.size(); ++v) {
+    EXPECT_EQ(engine->lowerBound(outputs.at(v)), expectedBounds.at(v).first);
+    EXPECT_EQ(engine->upperBound(outputs.at(v)), expectedBounds.at(v).second);
+  }
+
+  position.clear();
+
+  engine->computeBounds();
+
+  EXPECT_EQ(invariants.size(), position.size());
+
+  for (size_t i = 0; i < invariants.size(); ++i) {
+    EXPECT_EQ(invariants.at(i)->id(), position.at(i));
+  }
+
+  for (size_t v = 0; v < outputs.size(); ++v) {
+    EXPECT_EQ(engine->lowerBound(outputs.at(v)), expectedBounds.at(v).first);
+    EXPECT_EQ(engine->upperBound(outputs.at(v)), expectedBounds.at(v).second);
+  }
+}
+
+TEST_F(EngineTest, ComputeBoundsCycle) {
+  engine->open();
+
+  std::vector<InvariantId> position;
+  std::vector<MockPlus*> invariants;
+
+  const Int lb = 5;
+  const Int ub = 10;
+
+  std::vector<std::vector<VarId>> inputs{
+      std::vector<VarId>{engine->makeIntVar(lb, lb, ub),
+                         engine->makeIntVar(0, 0, 0)},
+      std::vector<VarId>{engine->makeIntVar(lb, lb, ub),
+                         engine->makeIntVar(0, 0, 0)}};
+
+  std::vector<VarId> outputs{inputs.at(1).at(1), inputs.at(0).at(1)};
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    invariants.push_back(&engine->makeInvariant<MockPlus>(
+        inputs.at(i).at(0), inputs.at(i).at(1), outputs.at(i), &position));
+  }
+
+  EXPECT_EQ(invariants.size(), position.size());
+
+  for (size_t i = 0; i < invariants.size(); ++i) {
+    EXPECT_EQ(invariants.at(i)->id(), position.at(i));
+  }
+
+  EXPECT_EQ(engine->lowerBound(outputs.at(0)), 5);
+  EXPECT_EQ(engine->upperBound(outputs.at(0)), 10);
+  EXPECT_EQ(engine->lowerBound(outputs.at(1)), 10);
+  EXPECT_EQ(engine->upperBound(outputs.at(1)), 20);
+
+  position.clear();
+
+  engine->computeBounds();
+
+  EXPECT_EQ(invariants.size(), position.size() - 1);
+
+  for (size_t i = 0; i < invariants.size(); ++i) {
+    EXPECT_EQ(invariants.at(i)->id(), position.at(i));
+  }
+  EXPECT_EQ(invariants.front()->id(), position.back());
+
+  EXPECT_EQ(engine->lowerBound(outputs.at(0)), 5);
+  EXPECT_EQ(engine->upperBound(outputs.at(0)), 50);
+
+  EXPECT_EQ(engine->lowerBound(outputs.at(1)), 10);
+  EXPECT_EQ(engine->upperBound(outputs.at(1)), 40);
 }
 
 TEST_F(EngineTest, InputToOutputPropagation) {

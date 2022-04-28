@@ -72,10 +72,10 @@ TEST_F(PowTest, UpdateBounds) {
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
-    engine->updateBounds(a, aLb, aUb);
+    engine->updateBounds(a, aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_TRUE(bLb <= bUb);
-      engine->updateBounds(b, bLb, bUb);
+      engine->updateBounds(b, bLb, bUb, false);
       engine->open();
       engine->close();
       for (Int aVal = aLb; aVal <= aUb; ++aVal) {

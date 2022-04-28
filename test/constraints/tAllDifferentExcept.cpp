@@ -63,13 +63,13 @@ TEST_F(AllDifferentExceptTest, UpdateBounds) {
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
-    engine->updateBounds(inputs.at(0), aLb, aUb);
+    engine->updateBounds(inputs.at(0), aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_TRUE(bLb <= bUb);
-      engine->updateBounds(inputs.at(2), bLb, bUb);
+      engine->updateBounds(inputs.at(2), bLb, bUb, false);
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_TRUE(cLb <= cUb);
-        engine->updateBounds(inputs.at(2), cLb, cUb);
+        engine->updateBounds(inputs.at(2), cLb, cUb, false);
         invariant.updateBounds(*engine);
         ASSERT_EQ(0, engine->lowerBound(violationId));
         ASSERT_EQ(inputs.size() - 1, engine->upperBound(violationId));

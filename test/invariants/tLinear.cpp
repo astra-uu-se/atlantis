@@ -87,13 +87,13 @@ TEST_F(LinearTest, UpdateBounds) {
                                           std::vector<VarId>(vars), outputId);
         for (const auto& [aLb, aUb] : boundVec) {
           EXPECT_TRUE(aLb <= aUb);
-          engine->updateBounds(vars.at(0), aLb, aUb);
+          engine->updateBounds(vars.at(0), aLb, aUb, false);
           for (const auto& [bLb, bUb] : boundVec) {
             EXPECT_TRUE(bLb <= bUb);
-            engine->updateBounds(vars.at(1), bLb, bUb);
+            engine->updateBounds(vars.at(1), bLb, bUb, false);
             for (const auto& [cLb, cUb] : boundVec) {
               EXPECT_TRUE(cLb <= cUb);
-              engine->updateBounds(vars.at(2), cLb, cUb);
+              engine->updateBounds(vars.at(2), cLb, cUb, false);
               invariant.updateBounds(*engine);
 
               const Int aMin = std::min(aLb * aCoef, aUb * aCoef);

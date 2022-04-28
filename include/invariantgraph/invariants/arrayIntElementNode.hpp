@@ -18,7 +18,10 @@ class ArrayIntElementNode : public VariableDefiningNode {
 
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
-      : VariableDefiningNode({output}, {b}), _as(std::move(as)), _b(b) {}
+      : VariableDefiningNode({output}, false, {b}), _as(std::move(as)), _b(b) {}
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

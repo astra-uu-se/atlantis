@@ -18,11 +18,14 @@ class ArrayVarBoolElementNode : public VariableDefiningNode {
 
   ArrayVarBoolElementNode(std::vector<VariableNode*> as, VariableNode* b,
                           VariableNode* output)
-      : VariableDefiningNode({output}, {as}), _as(std::move(as)), _b(b) {
+      : VariableDefiningNode({output}, false, {as}), _as(std::move(as)), _b(b) {
     // No way to add this as an input in addition to the as vector. So we do it
     // here explicitly.
     markAsInput(b);
   }
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

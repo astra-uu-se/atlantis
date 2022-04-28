@@ -1,7 +1,6 @@
 #include "invariantgraph/constraints/boolClauseNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/lessThan.hpp"
 #include "invariants/linear.hpp"
 #include "views/bool2IntView.hpp"
 
@@ -16,6 +15,11 @@ invariantgraph::BoolClauseNode::fromModelConstraint(
   auto bs = mappedVariableVector(model, constraint.arguments[1], variableMap);
 
   return std::make_unique<BoolClauseNode>(as, bs);
+}
+
+void invariantgraph::BoolClauseNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  registerViolation(engine, variableMap);
 }
 
 void invariantgraph::BoolClauseNode::registerWithEngine(
@@ -34,10 +38,6 @@ void invariantgraph::BoolClauseNode::registerWithEngine(
                    return engine.makeIntView<Bool2IntView>(b);
                  });
 
-  auto sum = engine.makeIntVar(0, 0, 0);
-  engine.makeInvariant<Linear>(engineVariables, sum);
-
-  VarId violation = registerViolation(engine, variableMap);
-  VarId constZero = engine.makeIntVar(0, 0, 0);
-  engine.makeConstraint<LessThan>(violation, constZero, sum);
+  assert(variableMap.find(violation()) != variableMap.end());
+  engine.makeInvariant<Linear>(engineVariables, variableMap.at(violation()));
 }

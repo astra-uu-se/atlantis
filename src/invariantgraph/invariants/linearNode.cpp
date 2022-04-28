@@ -51,22 +51,44 @@ invariantgraph::LinearNode::fromModelConstraint(
   return linearInv;
 }
 
+void invariantgraph::LinearNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  if (_variables.size() == 1 && variableMap.contains(_variables.front())) {
+    if (_coeffs.front() == 1 && _offset == 1) {
+      variableMap.emplace(definedVariables()[0],
+                          variableMap.at(_variables.front()));
+      return;
+    }
+
+    variableMap.emplace(
+        definedVariables()[0],
+        engine.makeIntView<IntOffsetView>(variableMap.at(_variables.front()),
+                                          _coeffs.front() * _offset));
+    return;
+  }
+
+  if (_intermediateVarId == NULL_ID) {
+    _intermediateVarId = engine.makeIntVar(0, 0, 0);
+    assert(!variableMap.contains(definedVariables()[0]));
+    variableMap.emplace(definedVariables()[0],
+                        _offset == 1 ? _intermediateVarId
+                                     : engine.makeIntView<IntOffsetView>(
+                                           _intermediateVarId, _offset));
+  }
+}
+
 void invariantgraph::LinearNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  assert(variableMap.contains(definedVariables()[0]));
+
   std::vector<VarId> variables;
   std::transform(_variables.begin(), _variables.end(),
                  std::back_inserter(variables),
                  [&](const auto& node) { return variableMap.at(node); });
-
-  VarId intermediate = variables[0];
-
-  // If there is only one variable in the input, there is no need to use a
-  // linear invariant.
-  if (variables.size() > 1 || _coeffs[0] != 1) {
-    intermediate = engine.makeIntVar(0, 0, 0);
-    engine.makeInvariant<::Linear>(_coeffs, variables, intermediate);
+  if (_intermediateVarId == NULL_ID) {
+    assert(variables.size() == 1);
+    return;
   }
 
-  auto outputVar = engine.makeIntView<IntOffsetView>(intermediate, _offset);
-  variableMap.emplace(definedVariables()[0], outputVar);
+  engine.makeInvariant<::Linear>(_coeffs, variables, _intermediateVarId);
 }

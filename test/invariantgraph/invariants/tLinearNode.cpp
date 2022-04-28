@@ -9,11 +9,10 @@ class LinearNodeTest : public NodeTestBase {
   INT_VARIABLE(c, 3, 7);
   Int d{3};
 
-  fznparser::Constraint c1{
-      "int_lin_eq",
-      {fznparser::Constraint::ArrayArgument{1, 1},
-       fznparser::Constraint::ArrayArgument{"a", "b"}, d},
-      {fznparser::DefinesVariableAnnotation{"a"}}};
+  fznparser::Constraint c1{"int_lin_eq",
+                           {fznparser::Constraint::ArrayArgument{1, 1},
+                            fznparser::Constraint::ArrayArgument{"a", "b"}, d},
+                           {fznparser::DefinesVariableAnnotation{"a"}}};
 
   fznparser::Constraint c2{
       "int_lin_eq",
@@ -78,6 +77,13 @@ TEST_F(LinearNodeTest, application_should_register_view) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {b.name});
+  for (auto* const definedVariable : shouldRegisterView->definedVariables()) {
+    EXPECT_FALSE(_variableMap.contains(definedVariable));
+  }
+  shouldRegisterView->createDefinedVariables(engine, _variableMap);
+  for (auto* const definedVariable : shouldRegisterView->definedVariables()) {
+    EXPECT_TRUE(_variableMap.contains(definedVariable));
+  }
   shouldRegisterView->registerWithEngine(engine, _variableMap);
   engine.close();
 
@@ -96,6 +102,13 @@ TEST_F(LinearNodeTest, application_should_register_linear) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {b.name, c.name});
+  for (auto* const definedVariable : shouldRegisterLinear->definedVariables()) {
+    EXPECT_FALSE(_variableMap.contains(definedVariable));
+  }
+  shouldRegisterLinear->createDefinedVariables(engine, _variableMap);
+  for (auto* const definedVariable : shouldRegisterLinear->definedVariables()) {
+    EXPECT_TRUE(_variableMap.contains(definedVariable));
+  }
   shouldRegisterLinear->registerWithEngine(engine, _variableMap);
   engine.close();
 

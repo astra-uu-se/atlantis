@@ -28,7 +28,7 @@ invariantgraph::AllDifferentImplicitNode::fromModelConstraint(
 
 invariantgraph::AllDifferentImplicitNode::AllDifferentImplicitNode(
     std::vector<VariableNode*> variables)
-    : ImplicitConstraintNode(std::move(variables)) {
+    : ImplicitConstraintNode(std::move(variables), false) {
   assert(definedVariables().size() > 1);
 
   const auto& domain = definedVariables().front()->domain();

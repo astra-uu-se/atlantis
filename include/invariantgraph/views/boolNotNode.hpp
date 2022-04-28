@@ -18,9 +18,12 @@ class BoolNotNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   BoolNotNode(VariableNode* input, VariableNode* output)
-      : VariableDefiningNode({output}, {input}), _input(input) {}
+      : VariableDefiningNode({output}, true, {input}), _input(input) {}
 
   ~BoolNotNode() override = default;
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

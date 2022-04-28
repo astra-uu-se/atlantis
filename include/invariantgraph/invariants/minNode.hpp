@@ -16,10 +16,13 @@ class MinNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   MinNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : VariableDefiningNode({output}, variables),
+      : VariableDefiningNode({output}, false, variables),
         _variables(std::move(variables)) {}
 
   ~MinNode() override = default;
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

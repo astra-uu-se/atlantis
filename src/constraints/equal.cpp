@@ -20,7 +20,7 @@ void Equal::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _violationId);
 }
 
-void Equal::updateBounds(Engine& engine) {
+void Equal::updateBounds(Engine& engine, bool widenOnly) {
   const Int xLb = engine.lowerBound(_x);
   const Int xUb = engine.upperBound(_x);
   const Int yLb = engine.lowerBound(_y);
@@ -33,7 +33,7 @@ void Equal::updateBounds(Engine& engine) {
   const Int ub = std::max(std::max(std::abs(xLb - yLb), std::abs(xLb - yUb)),
                           std::max(std::abs(xUb - yLb), std::abs(xUb - yUb)));
 
-  engine.updateBounds(_violationId, lb, ub);
+  engine.updateBounds(_violationId, lb, ub, widenOnly);
 }
 
 void Equal::recompute(Timestamp ts, Engine& engine) {

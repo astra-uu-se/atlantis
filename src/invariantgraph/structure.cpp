@@ -63,17 +63,24 @@ VariableNode::VariableNode(VariableNode::FZNVariable variable)
 VariableNode::VariableNode(SearchDomain domain)
     : _variable(std::nullopt), _domain(std::move(domain)) {}
 
+void ImplicitConstraintNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  for (const auto& node : definedVariables()) {
+    if (!variableMap.contains(node)) {
+      const auto& [lb, ub] = node->bounds();
+      variableMap.emplace(node, engine.makeIntVar(lb, lb, ub));
+    }
+  }
+}
+
 void ImplicitConstraintNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<search::SearchVariable> varIds;
   varIds.reserve(definedVariables().size());
 
   for (const auto& node : definedVariables()) {
-    const auto& [lb, ub] = node->bounds();
-    auto varId = engine.makeIntVar(lb, lb, ub);
-
-    variableMap.emplace(node, varId);
-    varIds.emplace_back(varId, node->domain());
+    assert(variableMap.contains(node));
+    varIds.emplace_back(variableMap.at(node), node->domain());
   }
 
   _neighbourhood = createNeighbourhood(engine, varIds);

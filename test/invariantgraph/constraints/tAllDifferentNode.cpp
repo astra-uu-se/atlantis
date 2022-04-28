@@ -1,4 +1,5 @@
 #include <gmock/gmock.h>
+
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/constraints/allDifferentNode.hpp"
@@ -42,6 +43,16 @@ TEST_F(AllDifferentNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name, c.name, d.name});
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_FALSE(_variableMap.contains(definedVariable));
+  }
+  EXPECT_FALSE(_variableMap.contains(node->violation()));
+  node->createDefinedVariables(engine, _variableMap);
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_TRUE(_variableMap.contains(definedVariable));
+  }
+  EXPECT_TRUE(_variableMap.contains(node->violation()));
+  EXPECT_TRUE(_variableMap.contains(node->violation()));
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

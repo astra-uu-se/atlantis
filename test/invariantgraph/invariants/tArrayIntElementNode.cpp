@@ -38,6 +38,13 @@ TEST_F(ArrayIntElementNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {b.name});
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_FALSE(_variableMap.contains(definedVariable));
+  }
+  node->createDefinedVariables(engine, _variableMap);
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_TRUE(_variableMap.contains(definedVariable));
+  }
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

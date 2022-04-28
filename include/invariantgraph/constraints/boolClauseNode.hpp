@@ -14,7 +14,9 @@ class BoolClauseNode : public SoftConstraintNode {
  public:
   explicit BoolClauseNode(std::vector<VariableNode*> as,
                           std::vector<VariableNode*> bs)
-      : SoftConstraintNode({as}), _as(std::move(as)), _bs(std::move(bs)) {
+      : SoftConstraintNode(false, {as}),
+        _as(std::move(as)),
+        _bs(std::move(bs)) {
     for (const auto& b : _bs) {
       markAsInput(b);
     }
@@ -23,6 +25,9 @@ class BoolClauseNode : public SoftConstraintNode {
   static std::unique_ptr<BoolClauseNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

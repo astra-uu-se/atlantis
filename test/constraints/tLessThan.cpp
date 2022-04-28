@@ -53,10 +53,10 @@ TEST_F(LessThanTest, UpdateBounds) {
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_TRUE(xLb <= xUb);
-    engine->updateBounds(x, xLb, xUb);
+    engine->updateBounds(x, xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
-      engine->updateBounds(y, yLb, yUb);
+      engine->updateBounds(y, yLb, yUb, false);
       invariant.updateBounds(*engine);
       std::vector<Int> violations;
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
