@@ -18,7 +18,7 @@ class Bool2IntNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   Bool2IntNode(VariableNode* input, VariableNode* output)
-      : VariableDefiningNode({output}, true, {input}), _input(input) {}
+      : VariableDefiningNode({output}, {input}), _input(input) {}
 
   ~Bool2IntNode() override = default;
 

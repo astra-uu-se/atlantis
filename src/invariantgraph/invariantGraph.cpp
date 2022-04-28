@@ -45,7 +45,9 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     auto* const node = unregisteredNodes.front();
     unregisteredNodes.pop();
     assert(visitedNodes.contains(node));
-    assert(!node->isView() || variableMap.contains(node->inputs().front()));
+    // if node->inputs().size() == 1, then node is a view:
+    assert(node->inputs().size() != 1 ||
+           variableMap.contains(node->inputs().front()));
     node->createDefinedVariables(engine, variableMap);
     for (auto* const definedVariable : node->definedVariables()) {
       definedVariables.emplace(definedVariable);

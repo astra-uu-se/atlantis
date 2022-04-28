@@ -18,7 +18,7 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
 
   ArrayVarIntElementNode(std::vector<VariableNode*> as, VariableNode* b,
                          VariableNode* output)
-      : VariableDefiningNode({output}, false, {as}), _as(std::move(as)), _b(b) {
+      : VariableDefiningNode({output}, {as}), _as(std::move(as)), _b(b) {
     // No way to add this as an input in addition to the as vector. So we do it
     // here explicitly.
     markAsInput(b);

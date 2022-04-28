@@ -18,7 +18,7 @@ class BoolNotNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   BoolNotNode(VariableNode* input, VariableNode* output)
-      : VariableDefiningNode({output}, true, {input}), _input(input) {}
+      : VariableDefiningNode({output}, {input}), _input(input) {}
 
   ~BoolNotNode() override = default;
 

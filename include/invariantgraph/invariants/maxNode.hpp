@@ -16,7 +16,7 @@ class MaxNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   MaxNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : VariableDefiningNode({output}, false, variables),
+      : VariableDefiningNode({output}, variables),
         _variables(std::move(variables)) {}
 
   ~MaxNode() override = default;

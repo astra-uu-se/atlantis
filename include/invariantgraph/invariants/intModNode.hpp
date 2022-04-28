@@ -12,7 +12,7 @@ class IntModNode : public BinaryOpNode {
   }
 
   IntModNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output, false) {}
+      : BinaryOpNode(a, b, output) {}
 
   ~IntModNode() override = default;
 

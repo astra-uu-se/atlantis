@@ -113,23 +113,18 @@ class VariableDefiningNode {
  private:
   std::vector<VariableNode*> _definedVariables;
   std::vector<VariableNode*> _inputs;
-  const bool _isView;
 
  public:
   using VariableMap = std::unordered_map<VariableNode*, VarId>;
 
   explicit VariableDefiningNode(std::vector<VariableNode*> definedVariables,
-                                bool isView,
                                 std::vector<VariableNode*> inputs = {})
       : _definedVariables(std::move(definedVariables)),
-        _inputs(std::move(inputs)),
-        _isView(isView) {
+        _inputs(std::move(inputs)) {
     for (const auto& input : _inputs) {
       markAsInput(input, false);
     }
   }
-
-  inline bool isView() const noexcept { return _isView; }
 
   virtual ~VariableDefiningNode() = default;
 
@@ -212,9 +207,8 @@ class ImplicitConstraintNode : public VariableDefiningNode {
   search::neighbourhoods::Neighbourhood* _neighbourhood{nullptr};
 
  public:
-  explicit ImplicitConstraintNode(std::vector<VariableNode*> definedVariables,
-                                  bool isView)
-      : VariableDefiningNode(std::move(definedVariables), isView) {}
+  explicit ImplicitConstraintNode(std::vector<VariableNode*> definedVariables)
+      : VariableDefiningNode(std::move(definedVariables)) {}
   ~ImplicitConstraintNode() override { delete _neighbourhood; }
 
   void createDefinedVariables(
@@ -258,9 +252,8 @@ class SoftConstraintNode : public VariableDefiningNode {
   VariableNode _violation{SetDomain({0})};
 
  public:
-  explicit SoftConstraintNode(bool isView,
-                              std::vector<VariableNode*> inputs = {})
-      : VariableDefiningNode({&_violation}, isView, std::move(inputs)) {}
+  explicit SoftConstraintNode(std::vector<VariableNode*> inputs = {})
+      : VariableDefiningNode({&_violation}, std::move(inputs)) {}
 
   ~SoftConstraintNode() override = default;
 

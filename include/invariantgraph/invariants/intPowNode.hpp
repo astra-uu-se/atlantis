@@ -14,7 +14,7 @@ class IntPowNode : public BinaryOpNode {
   }
 
   IntPowNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output, false) {}
+      : BinaryOpNode(a, b, output) {}
 
   ~IntPowNode() override = default;
 

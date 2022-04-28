@@ -24,7 +24,7 @@ class EqNode : public SoftConstraintNode {
 
  public:
   EqNode(VariableNode* a, VariableNode* b)
-      : SoftConstraintNode(false, {a, b}), _a(a), _b(b) {}
+      : SoftConstraintNode({a, b}), _a(a), _b(b) {}
 
   static std::unique_ptr<EqNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

@@ -16,7 +16,7 @@ class MinNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   MinNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : VariableDefiningNode({output}, false, variables),
+      : VariableDefiningNode({output}, variables),
         _variables(std::move(variables)) {}
 
   ~MinNode() override = default;

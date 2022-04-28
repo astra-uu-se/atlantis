@@ -19,7 +19,7 @@ class ArrayBoolOrNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   ArrayBoolOrNode(std::vector<VariableNode*> as, VariableNode* output)
-      : VariableDefiningNode({output}, false, as), _as(std::move(as)) {}
+      : VariableDefiningNode({output}, as), _as(std::move(as)) {}
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

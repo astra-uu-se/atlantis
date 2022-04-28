@@ -12,7 +12,7 @@ class SetInNode : public SoftConstraintNode {
 
  public:
   explicit SetInNode(VariableNode* input, std::vector<Int> values)
-      : SoftConstraintNode(false, {input}),
+      : SoftConstraintNode({input}),
         _input(input),
         _values(std::move(values)) {}
 

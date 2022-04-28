@@ -14,9 +14,7 @@ class BoolClauseNode : public SoftConstraintNode {
  public:
   explicit BoolClauseNode(std::vector<VariableNode*> as,
                           std::vector<VariableNode*> bs)
-      : SoftConstraintNode(false, {as}),
-        _as(std::move(as)),
-        _bs(std::move(bs)) {
+      : SoftConstraintNode({as}), _as(std::move(as)), _bs(std::move(bs)) {
     for (const auto& b : _bs) {
       markAsInput(b);
     }

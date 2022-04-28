@@ -12,7 +12,7 @@ namespace invariantgraph {
 class InvariantGraphRoot : public ImplicitConstraintNode {
  public:
   explicit InvariantGraphRoot(std::vector<VariableNode*> variables)
-      : ImplicitConstraintNode(std::move(variables), false) {}
+      : ImplicitConstraintNode(std::move(variables)) {}
 
   ~InvariantGraphRoot() override = default;
 

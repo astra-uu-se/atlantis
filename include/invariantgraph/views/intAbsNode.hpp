@@ -18,7 +18,7 @@ class IntAbsNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   IntAbsNode(VariableNode* input, VariableNode* output)
-      : VariableDefiningNode({output}, true, {input}), _input(input) {}
+      : VariableDefiningNode({output}, {input}), _input(input) {}
 
   ~IntAbsNode() override = default;
 

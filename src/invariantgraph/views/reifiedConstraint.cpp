@@ -5,9 +5,7 @@
 invariantgraph::ReifiedConstraint::ReifiedConstraint(
     std::unique_ptr<SoftConstraintNode> constraint,
     invariantgraph::VariableNode* r)
-    : VariableDefiningNode({r}, constraint->isView()),
-      _constraint(std::move(constraint)),
-      _r(r) {
+    : VariableDefiningNode({r}), _constraint(std::move(constraint)), _r(r) {
   for (const auto& input : _constraint->_inputs) {
     markAsInput(input);
 

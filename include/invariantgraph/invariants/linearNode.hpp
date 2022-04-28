@@ -20,7 +20,7 @@ class LinearNode : public VariableDefiningNode {
 
   LinearNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
              VariableNode* output, Int offset = 0)
-      : VariableDefiningNode({output}, variables.size() == 1, variables),
+      : VariableDefiningNode({output}, variables),
         _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _offset(offset) {}
