@@ -55,3 +55,34 @@ TEST_F(Bool2IntNodeTest, application) {
   // a and b
   EXPECT_EQ(_variableMap.size(), 2);
 }
+
+TEST_F(Bool2IntNodeTest, propagation) {
+  PropagationEngine engine;
+  engine.open();
+  registerVariables(engine, {a.name});
+  node->createDefinedVariables(engine, _variableMap);
+  node->registerWithEngine(engine, _variableMap);
+  engine.close();
+
+  EXPECT_EQ(node->inputs().size(), 1);
+  EXPECT_TRUE(_variableMap.contains(node->inputs().front()));
+  EXPECT_TRUE(_variableMap.contains(node->definedVariables().at(0)));
+
+  const VarId input = _variableMap.at(node->inputs().front());
+  const VarId outputId = _variableMap.at(node->definedVariables().at(0));
+
+  for (Int value = engine.lowerBound(input); value <= engine.upperBound(input);
+       ++value) {
+    engine.beginMove();
+    engine.setValue(input, value);
+    engine.endMove();
+
+    engine.beginProbe();
+    engine.query(outputId);
+    engine.endProbe();
+
+    const Int expected = (value == 0);
+    const Int actual = engine.currentValue(outputId);
+    EXPECT_EQ(expected, actual);
+  }
+}

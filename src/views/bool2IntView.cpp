@@ -1,8 +1,6 @@
 #include "views/bool2IntView.hpp"
 
-#include "core/engine.hpp"
-
-static inline Int convert(Int value) { return 1 - (value == 0); }
+static inline Int convert(Int value) { return static_cast<Int>(value == 0); }
 
 Int Bool2IntView::value(Timestamp ts) const {
   assert(0 >= _engine->lowerBound(_parentId));
