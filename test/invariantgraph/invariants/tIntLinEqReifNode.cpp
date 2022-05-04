@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/views/intLinEqReifNode.hpp"
+#include "invariantgraph/invariants/intLinEqReifNode.hpp"
 
 class IntLinEqReifNodeTest : public NodeTestBase {
  public:

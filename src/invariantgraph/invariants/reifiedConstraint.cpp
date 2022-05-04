@@ -1,4 +1,4 @@
-#include "invariantgraph/views/reifiedConstraint.hpp"
+#include "invariantgraph/invariants/reifiedConstraint.hpp"
 
 #include "views/violation2BoolView.hpp"
 

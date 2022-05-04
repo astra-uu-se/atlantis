@@ -19,25 +19,25 @@
 #include "invariantgraph/invariants/arrayVarBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/binaryOpNode.hpp"
+#include "invariantgraph/invariants/boolXorReifNode.hpp"
+#include "invariantgraph/invariants/eqReifNode.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
+#include "invariantgraph/invariants/intLinEqReifNode.hpp"
+#include "invariantgraph/invariants/intLinLeReifNode.hpp"
+#include "invariantgraph/invariants/intLinNeReifNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
+#include "invariantgraph/invariants/intNeReifNode.hpp"
 #include "invariantgraph/invariants/intPowNode.hpp"
 #include "invariantgraph/invariants/intTimesNode.hpp"
+#include "invariantgraph/invariants/leReifNode.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
+#include "invariantgraph/invariants/ltReifNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
 #include "invariantgraph/invariants/minNode.hpp"
+#include "invariantgraph/invariants/setInReifNode.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
 #include "invariantgraph/views/boolNotNode.hpp"
-#include "invariantgraph/views/boolXorReifNode.hpp"
-#include "invariantgraph/views/eqReifNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
-#include "invariantgraph/views/intLinEqReifNode.hpp"
-#include "invariantgraph/views/intLinLeReifNode.hpp"
-#include "invariantgraph/views/intLinNeReifNode.hpp"
-#include "invariantgraph/views/intNeReifNode.hpp"
-#include "invariantgraph/views/leReifNode.hpp"
-#include "invariantgraph/views/ltReifNode.hpp"
-#include "invariantgraph/views/setInReifNode.hpp"
 #include "utils/fznAst.hpp"
 
 invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build(
@@ -64,7 +64,8 @@ invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build(
     valueNodes.push_back(node);
   }
 
-  return {std::move(_variables), std::move(valueNodes), std::move(_definingNodes), objectiveVariable};
+  return {std::move(_variables), std::move(valueNodes),
+          std::move(_definingNodes), objectiveVariable};
 }
 
 using FZNSearchVariable =
@@ -116,8 +117,7 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
     auto constraint = model.constraints()[idx];
 
     auto allVariablesAreFree = allVariablesFree(constraint, definedVars);
-    if (processedConstraints.contains(idx) ||
-        !allVariablesAreFree) {
+    if (processedConstraints.contains(idx) || !allVariablesAreFree) {
       continue;
     }
 

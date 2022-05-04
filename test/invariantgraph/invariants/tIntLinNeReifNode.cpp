@@ -1,33 +1,39 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/views/eqReifNode.hpp"
+#include "invariantgraph/invariants/intLinNeReifNode.hpp"
 
-class EqReifNodeTest : public NodeTestBase {
+class IntLinNeReifNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 5, 10);
   INT_VARIABLE(b, 2, 7);
   INT_VARIABLE(r, 0, 1);
+  Int c{3};
+  std::vector<Int> coeffs{1, -1};
 
-  fznparser::Constraint constraint{"int_eq_reif", {"a", "b", "r"}, {}};
+  fznparser::Constraint constraint{
+      "int_lin_ne_reif",
+      {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
+       fznparser::Constraint::ArrayArgument{"a", "b"}, c, "r"},
+      {}};
 
   fznparser::FZNModel model{{}, {a, b, r}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::EqReifNode> node;
+  std::unique_ptr<invariantgraph::IntLinNeReifNode> node;
 
-  EqReifNodeTest() : NodeTestBase(model) {}
+  IntLinNeReifNodeTest() : NodeTestBase(model) {}
 
   void SetUp() override {
-    node = makeNode<invariantgraph::EqReifNode>(constraint);
+    node = makeNode<invariantgraph::IntLinNeReifNode>(constraint);
   }
 };
 
-TEST_F(EqReifNodeTest, construction) {
+TEST_F(IntLinNeReifNodeTest, construction) {
   EXPECT_EQ(node->definedVariables().size(), 1);
   EXPECT_EQ(*node->definedVariables()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(r));
 }
 
-TEST_F(EqReifNodeTest, application) {
+TEST_F(IntLinNeReifNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -48,18 +54,16 @@ TEST_F(EqReifNodeTest, application) {
   EXPECT_EQ(engine.numVariables(), 3);
 }
 
-static Int isViolating(const std::vector<Int>& values) {
-  for (size_t i = 0; i < values.size(); i++) {
-    for (size_t j = i + 1; j < values.size(); j++) {
-      if (values.at(i) != values.at(j)) {
-        return 1;
-      }
-    }
+static bool isViolating(const std::vector<Int>& coeffs,
+                        const std::vector<Int>& values, const Int expected) {
+  Int sum = 0;
+  for (size_t i = 0; i < values.size(); ++i) {
+    sum += coeffs.at(i) * values.at(i);
   }
-  return 0;
+  return sum == expected;
 }
 
-TEST_F(EqReifNodeTest, propagation) {
+TEST_F(IntLinNeReifNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -67,7 +71,6 @@ TEST_F(EqReifNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  EXPECT_EQ(node->inputs().size(), 2);
   for (auto* const inputVariable : node->inputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
@@ -75,6 +78,8 @@ TEST_F(EqReifNodeTest, propagation) {
 
   EXPECT_TRUE(_variableMap.contains(node->definedVariables().at(0)));
   const VarId outputId = _variableMap.at(node->definedVariables().at(0));
+  EXPECT_EQ(inputs.size(), 2);
+
   std::vector<Int> values(inputs.size());
   engine.close();
 
@@ -92,7 +97,9 @@ TEST_F(EqReifNodeTest, propagation) {
       engine.query(outputId);
       engine.endProbe();
 
-      EXPECT_EQ(engine.currentValue(outputId), isViolating(values));
+      const Int viol = engine.currentValue(outputId);
+
+      EXPECT_EQ(viol > 0, isViolating(coeffs, values, c));
     }
   }
 }
