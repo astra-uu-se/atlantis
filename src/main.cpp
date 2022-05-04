@@ -45,6 +45,11 @@ int main(int argc, char* argv[]) {
         "The seed to use for the random number generator. If this is negative, the current system time is chosen as the seed.",
         cxxopts::value<long>()->default_value("-1")
       )
+      (
+        "a,annealing-schedule",
+        "A file path to the annealing schedule definition.",
+        cxxopts::value<std::filesystem::path>()
+      )
       ("help", "Print help");
 
     options.add_options("Positional")
@@ -76,12 +81,21 @@ int main(int argc, char* argv[]) {
         return std::optional<std::chrono::milliseconds>{
             result["time-limit"].as<std::chrono::milliseconds>()};
       } else {
-        logInfo("Running without timeout.");
         return std::optional<std::chrono::milliseconds>{};
       }
     }();
 
-    Solver solver(modelFilePath, seed, timeout);
+    std::optional<std::filesystem::path> annealingScheduleDefinition = [&] {
+      if (result.count("annealing-schedule") == 1) {
+        return std::optional<std::filesystem::path>{
+            result["annealing-schedule"].as<std::filesystem::path>()};
+      } else {
+        return std::optional<std::filesystem::path>{};
+      }
+    }();
+
+    search::AnnealingScheduleFactory scheduleFactory(annealingScheduleDefinition);
+    Solver solver(modelFilePath, scheduleFactory, seed, timeout);
     auto statistics = solver.solve();
 
     // Don't log to std::cout, since that would interfere with MiniZinc.

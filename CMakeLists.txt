@@ -66,6 +66,7 @@ FetchContent_MakeAvailable(cxxopts fznparser)
 target_include_directories(${PROJECT_LIB}
         PRIVATE
         ${COMMON_INCLUDES}
+        ${PROJECT_SOURCE_DIR}/ext
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${COMMON_INCLUDES}>)

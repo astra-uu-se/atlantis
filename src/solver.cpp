@@ -4,11 +4,12 @@
 #include "invariantgraph/invariantGraphBuilder.hpp"
 #include "search/objective.hpp"
 #include "search/searchProcedure.hpp"
-#include "search/annealing/annealerFacade.hpp"
 
 Solver::Solver(std::filesystem::path modelFile,
+               search::AnnealingScheduleFactory annealingScheduleFactory,
                std::chrono::milliseconds timeout)
-    : Solver(std::move(modelFile), std::time(nullptr), timeout) {}
+    : Solver(std::move(modelFile), std::move(annealingScheduleFactory),
+             std::time(nullptr), timeout) {}
 
 static ObjectiveDirection getObjectiveDirection(
     const fznparser::Objective& objective) {
@@ -67,7 +68,7 @@ search::SearchStatistics Solver::solve() {
     }
   }();
 
-  auto schedule = search::AnnealerFacade::cooling(0.95, 0.001, 50);
+  auto schedule = _annealingScheduleFactory.create();
   schedule->start(10.0);
   search::Annealer annealer(assignment, random, *schedule);
   return search.run(searchController, annealer);

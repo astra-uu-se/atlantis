@@ -40,7 +40,7 @@ search::SearchStatistics search::SearchProcedure::run(
       _neighbourhood.initialise(_random, modifications);
     });
 
-    while (controller.shouldRun(_assignment) && annealer.isFinished()) {
+    while (controller.shouldRun(_assignment) && !annealer.isFinished()) {
       while (controller.shouldRun(_assignment) &&
              annealer.runMonteCarloSimulation()) {
         bool madeMove =
