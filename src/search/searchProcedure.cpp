@@ -40,8 +40,9 @@ search::SearchStatistics search::SearchProcedure::run(
       _neighbourhood.initialise(_random, modifications);
     });
 
-    while (controller.shouldRun(_assignment) && annealer.hasNextLocal()) {
-      while (controller.shouldRun(_assignment) && annealer.exploreLocal()) {
+    while (controller.shouldRun(_assignment) && annealer.isFinished()) {
+      while (controller.shouldRun(_assignment) &&
+             annealer.runMonteCarloSimulation()) {
         bool madeMove =
             _neighbourhood.randomMove(_random, _assignment, annealer);
 
@@ -58,7 +59,7 @@ search::SearchStatistics search::SearchProcedure::run(
         }
       }
 
-      annealer.nextLocal();
+      annealer.nextRound();
       exploredLocals->increment();
     }
   } while (controller.shouldRun(_assignment));

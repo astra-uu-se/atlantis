@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "search/annealing/annealerFacade.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
 
 class MockNeighbourhood : public search::neighbourhoods::Neighbourhood {
@@ -61,7 +62,10 @@ TEST_F(NeighbourhoodCombinatorTest,
   search::RandomProvider random(123456789);
   search::Assignment assignment(engine, NULL_ID, NULL_ID,
                                 ObjectiveDirection::NONE);
-  search::Annealer annealer(assignment, random);
+
+  auto schedule = search::AnnealerFacade::cooling(0.95, 0.001, 50);
+  schedule->start(10.0);
+  search::Annealer annealer(assignment, random, *schedule);
 
   EXPECT_CALL(*n1,
               randomMove(::testing::Ref(random), ::testing::Ref(assignment),
