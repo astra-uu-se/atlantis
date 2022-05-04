@@ -4,9 +4,6 @@
 #include <vector>
 
 #include "annealingSchedule.hpp"
-#include "geometricCoolingSchedule.hpp"
-#include "geometricHeatingSchedule.hpp"
-#include "scheduleSequence.hpp"
 
 namespace search {
 
@@ -16,29 +13,21 @@ class AnnealerFacade {
   static std::unique_ptr<AnnealingSchedule> sequence(Schedules&&... schedules) {
     std::vector<std::unique_ptr<AnnealingSchedule>> vec;
     vec.reserve(sizeof...(schedules));
-    (vec.push_back(std::forward<std::unique_ptr<AnnealingSchedule>>(schedules)), ...);
+    (vec.push_back(std::forward<std::unique_ptr<AnnealingSchedule>>(schedules)),
+     ...);
     return sequence(std::move(vec));
   }
 
   static std::unique_ptr<AnnealingSchedule> sequence(
-      ScheduleSequence::ScheduleList schedules) {
-    return std::make_unique<ScheduleSequence>(std::move(schedules));
-  }
+      std::vector<std::unique_ptr<AnnealingSchedule>> schedules);
 
   static std::unique_ptr<AnnealingSchedule> heating(
       double heatingRate, double minimumUphillAcceptanceRatio,
-      UInt numberOfMonteCarloSimulations) {
-    return std::make_unique<GeometricHeatingSchedule>(
-        heatingRate, minimumUphillAcceptanceRatio,
-        numberOfMonteCarloSimulations);
-  }
+      UInt numberOfMonteCarloSimulations);
 
   static std::unique_ptr<AnnealingSchedule> cooling(
       double coolingRate, double minimumTemperature,
-      UInt numberOfMonteCarloSimulations) {
-    return std::make_unique<GeometricCoolingSchedule>(
-        coolingRate, minimumTemperature, numberOfMonteCarloSimulations);
-  }
+      UInt numberOfMonteCarloSimulations);
 };
 
 }  // namespace search

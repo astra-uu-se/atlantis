@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include "search/annealing/annealerFacade.hpp"
-#include "search/annealing/scheduleSequence.hpp"
 
 using namespace search;
 
