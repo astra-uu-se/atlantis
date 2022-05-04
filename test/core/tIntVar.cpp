@@ -90,12 +90,12 @@ TEST_F(IntVarTest, UpdateBounds) {
   for (Int value = 1; value <= 1000; ++value) {
     EXPECT_FALSE(intVar.inDomain(-value));
     EXPECT_FALSE(intVar.inDomain(value));
-    intVar.updateBounds(-value, value);
+    intVar.updateBounds(-value, value, false);
     EXPECT_TRUE(intVar.inDomain(-value));
     EXPECT_TRUE(intVar.inDomain(value));
   }
 
-  EXPECT_THROW(intVar.updateBounds(10, -10), std::out_of_range);
+  EXPECT_THROW(intVar.updateBounds(10, -10, false), std::out_of_range);
 }
 
 }  // namespace

@@ -21,6 +21,9 @@ class MinNode : public VariableDefiningNode {
 
   ~MinNode() override = default;
 
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 

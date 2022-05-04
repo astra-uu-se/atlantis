@@ -50,6 +50,13 @@ TEST_F(ArrayVarIntElementNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name, c.name, idx.name});
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_FALSE(_variableMap.contains(definedVariable));
+  }
+  node->createDefinedVariables(engine, _variableMap);
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_TRUE(_variableMap.contains(definedVariable));
+  }
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
@@ -61,4 +68,55 @@ TEST_F(ArrayVarIntElementNodeTest, application) {
 
   // elementVar
   EXPECT_EQ(engine.numInvariants(), 1);
+}
+
+TEST_F(ArrayVarIntElementNodeTest, propagation) {
+  PropagationEngine engine;
+  engine.open();
+  registerVariables(engine, {a.name, b.name, c.name, idx.name});
+  node->createDefinedVariables(engine, _variableMap);
+  node->registerWithEngine(engine, _variableMap);
+
+  EXPECT_EQ(node->inputs().size(), 4);
+  for (auto* const inputVariable : node->inputs()) {
+    EXPECT_TRUE(_variableMap.contains(inputVariable));
+  }
+
+  EXPECT_TRUE(_variableMap.contains(node->definedVariables()[0]));
+  const VarId outputId = _variableMap.at(node->definedVariables()[0]);
+
+  std::vector<VarId> inputs;
+  inputs.emplace_back(_variableMap.at(node->b()));
+  for (auto* const varNode : node->as()) {
+    inputs.emplace_back(_variableMap.at(varNode));
+  }
+
+  const VarId input = inputs.front();
+  engine.close();
+  std::vector<Int> values(4, 0);
+
+  for (values.at(0) = std::max(Int(1), engine.lowerBound(input));
+       values.at(0) <= std::min(Int(3), engine.upperBound(input));
+       ++values.at(0)) {
+    for (values.at(1) = engine.lowerBound(inputs.at(1));
+         values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
+      for (values.at(2) = engine.lowerBound(inputs.at(2));
+           values.at(2) <= engine.upperBound(inputs.at(2)); ++values.at(2)) {
+        for (values.at(3) = engine.lowerBound(inputs.at(3));
+             values.at(3) <= engine.upperBound(inputs.at(3)); ++values.at(3)) {
+          engine.beginMove();
+          for (size_t i = 0; i < inputs.size(); ++i) {
+            engine.setValue(inputs.at(i), values.at(i));
+          }
+          engine.endMove();
+
+          engine.beginProbe();
+          engine.query(outputId);
+          engine.endProbe();
+          const Int actual = engine.currentValue(outputId);
+          EXPECT_EQ(actual, values.at(values.at(0)));
+        }
+      }
+    }
+  }
 }

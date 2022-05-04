@@ -61,7 +61,7 @@ class IntVar : public Var {
   [[gnu::always_inline]] [[nodiscard]] inline bool inDomain(Int value) const {
     return _lowerBound <= value && value <= _upperBound;
   }
-  void updateBounds(Int lowerBound, Int upperBound);
+  void updateBounds(Int lowerBound, Int upperBound, bool widenOnly);
 
   friend std::ostream& operator<<(std::ostream& out, IntVar const& var);
 };

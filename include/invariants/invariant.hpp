@@ -130,7 +130,7 @@ class Invariant {
    */
   virtual void registerVars(Engine&) = 0;
 
-  virtual void updateBounds(Engine&) = 0;
+  virtual void updateBounds(Engine&, bool widenOnly = false) = 0;
 
   virtual void close(Timestamp, Engine&){};
 

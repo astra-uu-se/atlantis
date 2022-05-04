@@ -17,7 +17,7 @@ void ElementVar::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _y);
 }
 
-void ElementVar::updateBounds(Engine& engine) {
+void ElementVar::updateBounds(Engine& engine, bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
   for (Int i = std::max(Int(1), engine.lowerBound(_index));
@@ -27,7 +27,7 @@ void ElementVar::updateBounds(Engine& engine) {
     lb = std::min(lb, engine.lowerBound(_varArray[i]));
     ub = std::max(ub, engine.upperBound(_varArray[i]));
   }
-  engine.updateBounds(_y, lb, ub);
+  engine.updateBounds(_y, lb, ub, widenOnly);
 }
 
 void ElementVar::recompute(Timestamp ts, Engine& engine) {

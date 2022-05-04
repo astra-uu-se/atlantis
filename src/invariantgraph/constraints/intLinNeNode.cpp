@@ -3,6 +3,7 @@
 #include "../parseHelper.hpp"
 #include "constraints/notEqual.hpp"
 #include "invariants/linear.hpp"
+#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::IntLinNeNode>
 invariantgraph::IntLinNeNode::fromModelConstraint(
@@ -19,6 +20,16 @@ invariantgraph::IntLinNeNode::fromModelConstraint(
   return std::make_unique<IntLinNeNode>(coeffs, variables, c);
 }
 
+void invariantgraph::IntLinNeNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  if (_sumVarId == NULL_ID) {
+    _sumVarId = engine.makeIntVar(0, 0, 0);
+    assert(!variableMap.contains(violation()));
+    variableMap.emplace(violation(),
+                        engine.makeIntView<NotEqualView>(_sumVarId, _c));
+  }
+}
+
 void invariantgraph::IntLinNeNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<VarId> variables;
@@ -26,10 +37,8 @@ void invariantgraph::IntLinNeNode::registerWithEngine(
                  std::back_inserter(variables),
                  [&](auto var) { return variableMap.at(var); });
 
-  auto sumVar = engine.makeIntVar(0, 0, 0);
-  engine.makeInvariant<Linear>(_coeffs, variables, sumVar);
+  assert(_sumVarId != NULL_ID);
+  assert(variableMap.contains(violation()));
 
-  auto violation = registerViolation(engine, variableMap);
-  auto c = engine.makeIntVar(_c, _c, _c);
-  engine.makeConstraint<NotEqual>(violation, sumVar, c);
+  engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
 }

@@ -27,7 +27,7 @@ class MinSparse : public Invariant {
   MinSparse(std::vector<VarId> varArray, VarId y);
 
   void registerVars(Engine&) override;
-  void updateBounds(Engine&) override;
+  void updateBounds(Engine&, bool widenOnly = false) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;
   void commit(Timestamp, Engine&) override;

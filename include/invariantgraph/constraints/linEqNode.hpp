@@ -11,6 +11,8 @@ class LinEqNode : public SoftConstraintNode {
   std::vector<Int> _coeffs;
   std::vector<VariableNode*> _variables;
   Int _c;
+  VarId _cVarId{NULL_ID};
+  VarId _sumVarId{NULL_ID};
 
  public:
   static std::unique_ptr<LinEqNode> fromModelConstraint(
@@ -23,6 +25,9 @@ class LinEqNode : public SoftConstraintNode {
         _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
         _c(c) {}
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& node, VariableDefiningNode::VariableMap& variableMap) override;

@@ -20,11 +20,12 @@ void LessEqual::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _violationId);
 }
 
-void LessEqual::updateBounds(Engine& engine) {
+void LessEqual::updateBounds(Engine& engine, bool widenOnly) {
   engine.updateBounds(
       _violationId,
       std::max(Int(0), engine.lowerBound(_x) - engine.upperBound(_y)),
-      std::max(Int(0), engine.upperBound(_x) - engine.lowerBound(_y)));
+      std::max(Int(0), engine.upperBound(_x) - engine.lowerBound(_y)),
+      widenOnly);
 }
 
 void LessEqual::recompute(Timestamp ts, Engine& engine) {

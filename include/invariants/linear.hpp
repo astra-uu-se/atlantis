@@ -25,7 +25,7 @@ class Linear : public Invariant {
   Linear(std::vector<Int> coeffs, std::vector<VarId> varArray, VarId y);
 
   void registerVars(Engine&) override;
-  void updateBounds(Engine&) override;
+  void updateBounds(Engine&, bool widenOnly = false) override;
   void close(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;

@@ -1,14 +1,14 @@
-#include "invariantgraph/views/intLinNeReifNode.hpp"
+#include "invariantgraph/invariants/intLinLeReifNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariantgraph/constraints/intLinNeNode.hpp"
-#include "invariantgraph/views/reifiedConstraint.hpp"
+#include "invariantgraph/constraints/linLeNode.hpp"
+#include "invariantgraph/invariants/reifiedConstraint.hpp"
 
-std::unique_ptr<invariantgraph::IntLinNeReifNode>
-invariantgraph::IntLinNeReifNode::fromModelConstraint(
+std::unique_ptr<invariantgraph::IntLinLeReifNode>
+invariantgraph::IntLinLeReifNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(constraint.name == "int_lin_ne_reif");
+  assert(constraint.name == "int_lin_le_reif");
   assert(constraint.arguments.size() == 4);
 
   auto as = integerVector(model, constraint.arguments[0]);
@@ -16,6 +16,6 @@ invariantgraph::IntLinNeReifNode::fromModelConstraint(
   auto c = integerValue(model, constraint.arguments[2]);
   auto r = mappedVariable(constraint.arguments[3], variableMap);
 
-  return std::make_unique<invariantgraph::IntLinNeReifNode>(
-      std::make_unique<invariantgraph::IntLinNeNode>(as, bs, c), r);
+  return std::make_unique<invariantgraph::IntLinLeReifNode>(
+      std::make_unique<invariantgraph::LinLeNode>(as, bs, c), r);
 }

@@ -20,11 +20,12 @@ void LessThan::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _violationId);
 }
 
-void LessThan::updateBounds(Engine& engine) {
+void LessThan::updateBounds(Engine& engine, bool widenOnly) {
   engine.updateBounds(
       _violationId,
       std::max(Int(0), 1 + engine.lowerBound(_x) - engine.upperBound(_y)),
-      std::max(Int(0), 1 + engine.upperBound(_x) - engine.lowerBound(_y)));
+      std::max(Int(0), 1 + engine.upperBound(_x) - engine.lowerBound(_y)),
+      widenOnly);
 }
 
 void LessThan::recompute(Timestamp ts, Engine& engine) {

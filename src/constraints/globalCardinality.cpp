@@ -75,10 +75,10 @@ void GlobalCardinality<IsClosed>::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _violationId);
 }
 
-template void GlobalCardinality<true>::updateBounds(Engine&);
-template void GlobalCardinality<false>::updateBounds(Engine&);
+template void GlobalCardinality<true>::updateBounds(Engine&, bool widenOnly);
+template void GlobalCardinality<false>::updateBounds(Engine&, bool widenOnly);
 template <bool IsClosed>
-void GlobalCardinality<IsClosed>::updateBounds(Engine& engine) {
+void GlobalCardinality<IsClosed>::updateBounds(Engine& engine, bool widenOnly) {
   Int maxShortage = 0;
   for (const Int lb : _lowerBound) {
     maxShortage += lb;
@@ -92,7 +92,7 @@ void GlobalCardinality<IsClosed>::updateBounds(Engine& engine) {
     maxViol =
         std::max(maxViol, maxShortage + static_cast<Int>(_variables.size()));
   }
-  engine.updateBounds(_violationId, 0, maxViol);
+  engine.updateBounds(_violationId, 0, maxViol, widenOnly);
 }
 
 template void GlobalCardinality<true>::close(Timestamp, Engine&);
@@ -148,7 +148,7 @@ template <bool IsClosed>
 void GlobalCardinality<IsClosed>::notifyInputChanged(Timestamp timestamp,
                                                      Engine& engine,
                                                      LocalId localId) {
-  assert(0 <= localId && localId < _localValues.size());
+  assert(localId < _localValues.size());
   const Int oldValue = _localValues[localId].value(timestamp);
   const Int newValue = engine.value(timestamp, _variables[localId]);
   if (newValue == oldValue) {

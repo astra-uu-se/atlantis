@@ -25,6 +25,9 @@ class BinaryOpNode : public VariableDefiningNode {
 
   ~BinaryOpNode() override = default;
 
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 

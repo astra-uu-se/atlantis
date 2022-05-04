@@ -58,6 +58,7 @@ class InvariantGraphApplyResult {
 class InvariantGraph {
  private:
   std::vector<std::unique_ptr<VariableNode>> _variables;
+  std::vector<VariableNode*> _valueNodes;
   std::vector<std::unique_ptr<VariableDefiningNode>> _variableDefiningNodes;
   std::vector<ImplicitConstraintNode*> _implicitConstraints;
   VariableNode* _objectiveVariable;
@@ -65,9 +66,11 @@ class InvariantGraph {
  public:
   InvariantGraph(
       std::vector<std::unique_ptr<VariableNode>> variables,
+      std::vector<VariableNode*> valueNodes,
       std::vector<std::unique_ptr<VariableDefiningNode>> variableDefiningNodes,
       VariableNode* objectiveVariable)
       : _variables(std::move(variables)),
+        _valueNodes(std::move(valueNodes)),
         _variableDefiningNodes(std::move(variableDefiningNodes)),
         _objectiveVariable(objectiveVariable) {
     for (const auto& definingNode : _variableDefiningNodes) {

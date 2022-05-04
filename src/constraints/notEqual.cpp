@@ -20,23 +20,23 @@ void NotEqual::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _violationId);
 }
 
-void NotEqual::updateBounds(Engine& engine) {
+void NotEqual::updateBounds(Engine& engine, bool widenOnly) {
   const Int xLb = engine.lowerBound(_x);
   const Int xUb = engine.upperBound(_x);
   const Int yLb = engine.lowerBound(_y);
   const Int yUb = engine.upperBound(_y);
   if (xUb < yLb || yUb < xLb) {
-    engine.updateBounds(_violationId, 0, 0);
+    engine.updateBounds(_violationId, 0, 0, widenOnly);
     return;
   }
 
   for (const Int val : std::array<Int, 3>{xUb, yLb, yUb}) {
     if (xLb != val) {
-      engine.updateBounds(_violationId, 0, 1);
+      engine.updateBounds(_violationId, 0, 1, widenOnly);
       return;
     }
   }
-  engine.updateBounds(_violationId, 1, 1);
+  engine.updateBounds(_violationId, 1, 1, widenOnly);
 }
 
 void NotEqual::recompute(Timestamp ts, Engine& engine) {

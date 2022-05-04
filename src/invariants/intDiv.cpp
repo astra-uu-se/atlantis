@@ -14,7 +14,7 @@ void IntDiv::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _y);
 }
 
-void IntDiv::updateBounds(Engine& engine) {
+void IntDiv::updateBounds(Engine& engine, bool widenOnly) {
   const Int aLb = engine.lowerBound(_a);
   const Int aUb = engine.upperBound(_a);
   const Int bLb = engine.lowerBound(_b);
@@ -46,7 +46,7 @@ void IntDiv::updateBounds(Engine& engine) {
     ub = std::max(ub, std::max(aLb / d, aUb / d));
   }
 
-  engine.updateBounds(_y, lb, ub);
+  engine.updateBounds(_y, lb, ub, widenOnly);
 }
 
 void IntDiv::close(Timestamp, Engine& engine) {

@@ -11,6 +11,7 @@ class LinearNode : public VariableDefiningNode {
   std::vector<Int> _coeffs;
   std::vector<VariableNode*> _variables;
   Int _offset;
+  VarId _intermediateVarId{NULL_ID};
 
  public:
   static std::unique_ptr<LinearNode> fromModelConstraint(
@@ -25,6 +26,9 @@ class LinearNode : public VariableDefiningNode {
         _offset(offset) {}
 
   ~LinearNode() override = default;
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

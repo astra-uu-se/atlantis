@@ -15,8 +15,15 @@ invariantgraph::MinNode::fromModelConstraint(
   auto inputs =
       mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto output = mappedVariable(constraint.arguments[0], variableMap);
-  
+
   return std::make_unique<invariantgraph::MinNode>(inputs, output);
+}
+
+void invariantgraph::MinNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  if (!variableMap.contains(definedVariables()[0])) {
+    registerDefinedVariable(engine, variableMap, definedVariables()[0]);
+  }
 }
 
 void invariantgraph::MinNode::registerWithEngine(
@@ -26,7 +33,7 @@ void invariantgraph::MinNode::registerWithEngine(
                  std::back_inserter(variables),
                  [&](const auto& var) { return variableMap.at(var); });
 
-  auto outputId =
-      registerDefinedVariable(engine, variableMap, definedVariables()[0]);
-  engine.makeInvariant<::MinSparse>(variables, outputId);
+  assert(variableMap.contains(definedVariables()[0]));
+  engine.makeInvariant<::MinSparse>(variables,
+                                    variableMap.at(definedVariables()[0]));
 }

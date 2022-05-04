@@ -100,6 +100,9 @@ class VariableNode {
    * @param node The variable defining node for which this is an input.
    */
   void markAsInputFor(VariableDefiningNode* node) { _inputFor.push_back(node); }
+
+  // A hack in order to steal the _inputs from the nested constraint.
+  friend class ReifiedConstraint;
 };
 
 /**
@@ -109,19 +112,33 @@ class VariableNode {
 class VariableDefiningNode {
  private:
   std::vector<VariableNode*> _definedVariables;
+  std::vector<VariableNode*> _inputs;
 
  public:
   using VariableMap = std::unordered_map<VariableNode*, VarId>;
 
   explicit VariableDefiningNode(std::vector<VariableNode*> definedVariables,
-                                const std::vector<VariableNode*>& inputs = {})
-      : _definedVariables(std::move(definedVariables)) {
-    for (const auto& input : inputs) {
-      input->markAsInputFor(static_cast<VariableDefiningNode*>(this));
+                                std::vector<VariableNode*> inputs = {})
+      : _definedVariables(std::move(definedVariables)),
+        _inputs(std::move(inputs)) {
+    for (const auto& input : _inputs) {
+      markAsInput(input, false);
     }
   }
 
   virtual ~VariableDefiningNode() = default;
+
+  /**
+   * Creates as all the variables the node
+   * defines in @p engine. The @p variableMap is modified to contain the
+   * variables defined by this node with their corresponding VarId's.
+   *
+   * @param engine The engine with which to register the variables, constraints
+   * and views.
+   * @param variableMap A map of variable nodes to VarIds.
+   */
+  virtual void createDefinedVariables(Engine& engine,
+                                      VariableMap& variableMap) = 0;
 
   /**
    * Registers the current node with the engine, as well as all the variables
@@ -154,13 +171,30 @@ class VariableDefiningNode {
    */
   [[nodiscard]] virtual VariableNode* violation() { return nullptr; }
 
+  [[nodiscard]] const std::vector<VariableNode*>& inputs() const noexcept {
+    return _inputs;
+  }
+
+  // A hack in order to steal the _inputs from the nested constraint.
+  friend class ReifiedConstraint;
+
  protected:
   static inline VarId registerDefinedVariable(Engine& engine,
                                               VariableMap& variableMap,
                                               VariableNode* variable) {
-    auto varId = engine.makeIntVar(0, 0, 0);
-    variableMap.emplace(variable, varId);
-    return varId;
+    if (variableMap.find(variable) == variableMap.end()) {
+      variableMap.emplace(variable, engine.makeIntVar(0, 0, 0));
+    }
+
+    return variableMap.at(variable);
+  }
+
+  void markAsInput(VariableNode* node, bool registerHere = true) {
+    node->markAsInputFor(this);
+
+    if (registerHere) {
+      _inputs.push_back(node);
+    }
   }
 };
 
@@ -176,6 +210,9 @@ class ImplicitConstraintNode : public VariableDefiningNode {
   explicit ImplicitConstraintNode(std::vector<VariableNode*> definedVariables)
       : VariableDefiningNode(std::move(definedVariables)) {}
   ~ImplicitConstraintNode() override { delete _neighbourhood; }
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
@@ -215,8 +252,8 @@ class SoftConstraintNode : public VariableDefiningNode {
   VariableNode _violation{SetDomain({0})};
 
  public:
-  explicit SoftConstraintNode(const std::vector<VariableNode*>& inputs = {})
-      : VariableDefiningNode({&_violation}, inputs) {}
+  explicit SoftConstraintNode(std::vector<VariableNode*> inputs = {})
+      : VariableDefiningNode({&_violation}, std::move(inputs)) {}
 
   ~SoftConstraintNode() override = default;
 

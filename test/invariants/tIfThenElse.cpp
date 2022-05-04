@@ -59,7 +59,7 @@ TEST_F(IfThenElseTest, UpdateBounds) {
 
   for (const auto& [bLb, bUb] : bBounds) {
     EXPECT_TRUE(bLb <= bUb);
-    engine->updateBounds(b, bLb, bUb);
+    engine->updateBounds(b, bLb, bUb, false);
     invariant.updateBounds(*engine);
     if (bLb == 0 && bUb == 0) {
       EXPECT_EQ(engine->lowerBound(outputId), engine->lowerBound(x));

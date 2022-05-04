@@ -21,7 +21,7 @@ void PowDomain::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _violationId);
 }
 
-void PowDomain::updateBounds(Engine& engine) {
+void PowDomain::updateBounds(Engine& engine, bool widenOnly) {
   const Int xLb = engine.lowerBound(_x);
   const Int xUb = engine.upperBound(_x);
   const Int yLb = engine.lowerBound(_y);
@@ -30,7 +30,7 @@ void PowDomain::updateBounds(Engine& engine) {
   const Int lb = xLb == 0 && xUb == 0 && yUb < 0 ? 1 : 0;
   const Int ub = xLb <= 0 && 0 <= xUb && yLb < 0 ? 1 : 0;
 
-  engine.updateBounds(_violationId, lb, ub);
+  engine.updateBounds(_violationId, lb, ub, widenOnly);
 }
 
 void PowDomain::recompute(Timestamp ts, Engine& engine) {

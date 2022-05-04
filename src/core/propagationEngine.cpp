@@ -318,3 +318,66 @@ void PropagationEngine::propagate() {
     }
   }
 }
+
+void PropagationEngine::computeBounds() {
+  IdMap<InvariantId, Int> inputsToCompute(numInvariants());
+
+  for (size_t invariantId = 1u; invariantId <= numInvariants(); ++invariantId) {
+    inputsToCompute.register_idx(invariantId,
+                                 inputVariables(invariantId).size());
+  }
+
+  // Search variables might now have been computed yet
+  for (size_t varId = 1u; varId <= numVariables(); ++varId) {
+    if (definingInvariant(varId) == NULL_ID) {
+      for (const InvariantId listeningInvariantId :
+           listeningInvariants(varId)) {
+        --inputsToCompute[listeningInvariantId];
+      }
+    }
+  }
+
+  auto cmp = [&](InvariantId a, InvariantId b) {
+    if (inputsToCompute[a] == inputsToCompute[b]) {
+      return a < b;
+    }
+    return inputsToCompute[a] < inputsToCompute[b];
+  };
+
+  std::set<InvariantId, decltype(cmp)> invariantQueue(cmp);
+
+  for (size_t invariantId = 1; invariantId <= numInvariants(); ++invariantId) {
+    invariantQueue.emplace(invariantId);
+  }
+
+  while (!invariantQueue.empty()) {
+    const InvariantId invariantId = *invariantQueue.begin();
+    assert(inputsToCompute[invariantId] >= 0);
+
+    invariantQueue.erase(invariantId);
+
+#ifndef NDEBUG
+    for (const InvariantId invId : invariantQueue) {
+      assert(inputsToCompute[invariantId] < inputsToCompute[invId] ||
+             (inputsToCompute[invariantId] == inputsToCompute[invId] &&
+              invariantId < invId));
+    }
+#endif
+    _store.invariant(invariantId).updateBounds(*this, true);
+
+    for (const VarIdBase outputVarId :
+         _propGraph.variablesDefinedBy(invariantId)) {
+      for (const InvariantId listeningInvariantId :
+           listeningInvariants(outputVarId)) {
+        --inputsToCompute[listeningInvariantId];
+
+        if (invariantQueue.find(listeningInvariantId) != invariantQueue.end()) {
+          invariantQueue.erase(listeningInvariantId);
+        }
+        if (inputsToCompute[listeningInvariantId] >= 0) {
+          invariantQueue.emplace(listeningInvariantId);
+        }
+      }
+    }
+  }
+}

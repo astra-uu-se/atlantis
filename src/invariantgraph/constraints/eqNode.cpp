@@ -13,10 +13,17 @@ invariantgraph::EqNode::fromModelConstraint(
   return std::make_unique<EqNode>(a, b);
 }
 
+void invariantgraph::EqNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  if (!variableMap.contains(violation())) {
+    registerViolation(engine, variableMap);
+  }
+}
+
 void invariantgraph::EqNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  VarId violation = registerViolation(engine, variableMap);
+  assert(variableMap.contains(violation()));
 
-  engine.makeConstraint<::Equal>(violation, variableMap.at(_a),
-                                 variableMap.at(_b));
+  engine.makeConstraint<::Equal>(variableMap.at(violation()),
+                                 variableMap.at(_a), variableMap.at(_b));
 }
