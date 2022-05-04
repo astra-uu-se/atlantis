@@ -21,6 +21,9 @@ class AnnealerFacade {
   static std::unique_ptr<AnnealingSchedule> sequence(
       std::vector<std::unique_ptr<AnnealingSchedule>> schedules);
 
+  static std::unique_ptr<AnnealingSchedule> loop(
+      std::unique_ptr<AnnealingSchedule> schedule, UInt numberOfIterations);
+
   static std::unique_ptr<AnnealingSchedule> heating(
       double heatingRate, double minimumUphillAcceptanceRatio,
       UInt numberOfMonteCarloSimulations);
