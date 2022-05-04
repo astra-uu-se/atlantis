@@ -9,7 +9,7 @@ void Times::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _y);
 }
 
-void Times::updateBounds(Engine& engine) {
+void Times::updateBounds(Engine& engine, bool widenOnly) {
   const Int aLb = engine.lowerBound(_a);
   const Int aUb = engine.upperBound(_a);
   const Int bLb = engine.lowerBound(_b);
@@ -17,7 +17,7 @@ void Times::updateBounds(Engine& engine) {
   const std::array<const Int, 4> vals{aLb * bLb, aLb * bUb, aUb * bLb,
                                       aUb * bUb};
   const auto [lb, ub] = std::minmax_element(vals.begin(), vals.end());
-  engine.updateBounds(_y, *lb, *ub);
+  engine.updateBounds(_y, *lb, *ub, widenOnly);
 }
 
 void Times::recompute(Timestamp ts, Engine& engine) {

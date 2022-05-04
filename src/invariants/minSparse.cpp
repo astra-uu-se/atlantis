@@ -17,14 +17,14 @@ void MinSparse::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _y);
 }
 
-void MinSparse::updateBounds(Engine& engine) {
+void MinSparse::updateBounds(Engine& engine, bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::max();
   for (const VarId input : _varArray) {
     lb = std::min(lb, engine.lowerBound(input));
     ub = std::min(ub, engine.upperBound(input));
   }
-  engine.updateBounds(_y, lb, ub);
+  engine.updateBounds(_y, lb, ub, widenOnly);
 }
 
 void MinSparse::recompute(Timestamp ts, Engine& engine) {

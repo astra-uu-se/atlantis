@@ -1,4 +1,4 @@
-#include "invariantgraph/views/ltReifNode.hpp"
+#include "invariantgraph/invariants/ltReifNode.hpp"
 
 #include "../parseHelper.hpp"
 #include "invariantgraph/constraints/linLeNode.hpp"

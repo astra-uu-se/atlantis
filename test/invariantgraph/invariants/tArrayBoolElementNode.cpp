@@ -6,10 +6,14 @@ class ArrayBoolElementNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(b, 1, 4);
   BOOL_VARIABLE(r);
+  std::vector<bool> elementValues{true, false, false, true};
 
   fznparser::Constraint constraint{
       "array_bool_element",
-      {b.name, fznparser::Constraint::ArrayArgument{true, false, false, true},
+      {b.name,
+       fznparser::Constraint::ArrayArgument{
+           elementValues.at(0), elementValues.at(1), elementValues.at(2),
+           elementValues.at(3)},
        r.name},
       {}};
   fznparser::FZNModel model{{}, {b, r}, {constraint}, fznparser::Satisfy{}};
@@ -40,6 +44,13 @@ TEST_F(ArrayBoolElementNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {b.name});
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_FALSE(_variableMap.contains(definedVariable));
+  }
+  node->createDefinedVariables(engine, _variableMap);
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_TRUE(_variableMap.contains(definedVariable));
+  }
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
@@ -59,4 +70,38 @@ TEST_F(ArrayBoolElementNodeTest, application) {
 
   // elementConst
   EXPECT_EQ(engine.numInvariants(), 1);
+}
+
+TEST_F(ArrayBoolElementNodeTest, propagation) {
+  PropagationEngine engine;
+  engine.open();
+  registerVariables(engine, {b.name});
+  node->createDefinedVariables(engine, _variableMap);
+  node->registerWithEngine(engine, _variableMap);
+
+  std::vector<VarId> inputs;
+  for (auto* const inputVariable : node->inputs()) {
+    EXPECT_TRUE(_variableMap.contains(inputVariable));
+    inputs.emplace_back(_variableMap.at(inputVariable));
+  }
+
+  EXPECT_TRUE(_variableMap.contains(node->definedVariables()[0]));
+  const VarId outputId = _variableMap.at(node->definedVariables()[0]);
+  EXPECT_EQ(inputs.size(), 1);
+
+  const VarId input = inputs.front();
+  engine.close();
+
+  for (Int value = engine.lowerBound(input); value <= engine.upperBound(input);
+       ++value) {
+    engine.beginMove();
+    engine.setValue(input, value);
+    engine.endMove();
+
+    engine.beginProbe();
+    engine.query(outputId);
+    engine.endProbe();
+
+    EXPECT_EQ(engine.currentValue(outputId), !elementValues.at(value - 1));
+  }
 }

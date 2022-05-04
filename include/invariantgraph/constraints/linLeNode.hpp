@@ -12,10 +12,11 @@ class LinLeNode : public SoftConstraintNode {
   std::vector<Int> _coeffs;
   std::vector<VariableNode*> _variables;
   Int _bound;
+  VarId _sumVarId{NULL_ID};
 
  public:
   LinLeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-               Int bound)
+            Int bound)
       : SoftConstraintNode(variables),
         _coeffs(std::move(coeffs)),
         _variables(std::move(variables)),
@@ -24,6 +25,9 @@ class LinLeNode : public SoftConstraintNode {
   static std::unique_ptr<LinLeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

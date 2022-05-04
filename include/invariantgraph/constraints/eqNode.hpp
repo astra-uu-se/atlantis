@@ -24,13 +24,14 @@ class EqNode : public SoftConstraintNode {
 
  public:
   EqNode(VariableNode* a, VariableNode* b)
-      : SoftConstraintNode({a, b}),
-        _a(a),
-        _b(b) {}
+      : SoftConstraintNode({a, b}), _a(a), _b(b) {}
 
   static std::unique_ptr<EqNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
+
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

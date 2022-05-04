@@ -13,10 +13,11 @@ void IfThenElse::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _z);
 }
 
-void IfThenElse::updateBounds(Engine& engine) {
+void IfThenElse::updateBounds(Engine& engine, bool widenOnly) {
   engine.updateBounds(
       _z, std::min(engine.lowerBound(_xy[0]), engine.lowerBound(_xy[1])),
-      std::max(engine.upperBound(_xy[0]), engine.upperBound(_xy[1])));
+      std::max(engine.upperBound(_xy[0]), engine.upperBound(_xy[1])),
+      widenOnly);
 }
 
 void IfThenElse::recompute(Timestamp ts, Engine& engine) {

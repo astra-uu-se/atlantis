@@ -16,10 +16,17 @@ invariantgraph::IntNeNode::fromModelConstraint(
   return std::make_unique<IntNeNode>(a, b);
 }
 
+void invariantgraph::IntNeNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  if (!variableMap.contains(violation())) {
+    registerViolation(engine, variableMap);
+  }
+}
+
 void invariantgraph::IntNeNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  VarId violation = registerViolation(engine, variableMap);
+  assert(variableMap.contains(violation()));
 
-  engine.makeConstraint<::NotEqual>(violation, variableMap.at(_a),
-                                    variableMap.at(_b));
+  engine.makeConstraint<::NotEqual>(variableMap.at(violation()),
+                                    variableMap.at(_a), variableMap.at(_b));
 }

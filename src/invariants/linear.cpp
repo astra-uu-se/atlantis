@@ -25,7 +25,7 @@ void Linear::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _y);
 }
 
-void Linear::updateBounds(Engine& engine) {
+void Linear::updateBounds(Engine& engine, bool widenOnly) {
   // precondition: this invariant must be registered with the engine before it
   // is initialised.
   Int lb = 0;
@@ -36,7 +36,7 @@ void Linear::updateBounds(Engine& engine) {
     ub += _coeffs[i] * (_coeffs[i] < 0 ? engine.lowerBound(_varArray[i])
                                        : engine.upperBound(_varArray[i]));
   }
-  engine.updateBounds(_y, lb, ub);
+  engine.updateBounds(_y, lb, ub, widenOnly);
 }
 
 void Linear::close(Timestamp ts, Engine& engine) {

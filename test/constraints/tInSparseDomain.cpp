@@ -54,7 +54,7 @@ TEST_F(InSparseDomainTest, UpdateBounds) {
       if (!engine->isOpen()) {
         engine->open();
       }
-      engine->updateBounds(x, xLb, xUb);
+      engine->updateBounds(x, xLb, xUb, false);
       const VarId violationId = engine->makeIntVar(0, 0, 2);
       InSparseDomain& invariant = engine->makeConstraint<InSparseDomain>(
           violationId, x, std::vector<DomainEntry>(dom));

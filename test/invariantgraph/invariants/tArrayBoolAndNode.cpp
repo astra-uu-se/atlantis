@@ -41,6 +41,13 @@ TEST_F(ArrayBoolAndNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_FALSE(_variableMap.contains(definedVariable));
+  }
+  node->createDefinedVariables(engine, _variableMap);
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_TRUE(_variableMap.contains(definedVariable));
+  }
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
@@ -52,4 +59,54 @@ TEST_F(ArrayBoolAndNodeTest, application) {
 
   // sum
   EXPECT_EQ(engine.numInvariants(), 1);
+}
+
+static bool isViolating(const std::vector<Int>& values) {
+  for (const Int val : values) {
+    if (val > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+TEST_F(ArrayBoolAndNodeTest, propagation) {
+  PropagationEngine engine;
+  engine.open();
+  registerVariables(engine, {a.name, b.name});
+  node->createDefinedVariables(engine, _variableMap);
+  node->registerWithEngine(engine, _variableMap);
+
+  std::vector<VarId> inputs;
+  for (auto* const inputVariable : node->inputs()) {
+    EXPECT_TRUE(_variableMap.contains(inputVariable));
+    inputs.emplace_back(_variableMap.at(inputVariable));
+  }
+
+  EXPECT_TRUE(_variableMap.contains(node->definedVariables()[0]));
+  const VarId outputId = _variableMap.at(node->definedVariables()[0]);
+  EXPECT_EQ(inputs.size(), 2);
+
+  std::vector<Int> values(inputs.size());
+  engine.close();
+
+  for (values.at(0) = engine.lowerBound(inputs.at(0));
+       values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
+    for (values.at(1) = engine.lowerBound(inputs.at(1));
+         values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
+      engine.beginMove();
+      for (size_t i = 0; i < inputs.size(); ++i) {
+        engine.setValue(inputs.at(i), values.at(i));
+      }
+      engine.endMove();
+
+      engine.beginProbe();
+      engine.query(outputId);
+      engine.endProbe();
+
+      const Int viol = engine.currentValue(outputId);
+
+      EXPECT_EQ(viol > 0, isViolating(values));
+    }
+  }
 }

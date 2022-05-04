@@ -1,8 +1,8 @@
-#include "invariantgraph/views/setInReifNode.hpp"
+#include "invariantgraph/invariants/setInReifNode.hpp"
 
 #include "../parseHelper.hpp"
 #include "invariantgraph/constraints/setInNode.hpp"
-#include "invariantgraph/views/reifiedConstraint.hpp"
+#include "invariantgraph/invariants/reifiedConstraint.hpp"
 #include "utils/variant.hpp"
 
 std::unique_ptr<invariantgraph::SetInReifNode>

@@ -90,8 +90,8 @@ inline void expectMarkedAsInput(
     invariantgraph::VariableDefiningNode* definingNode,
     const std::vector<invariantgraph::VariableNode*>& inputs) {
   for (const auto& variableNode : inputs) {
-    EXPECT_EQ(std::count(variableNode->inputFor().begin(),
-                         variableNode->inputFor().end(), definingNode),
-              1);
+    EXPECT_NE(std::find(variableNode->inputFor().begin(),
+                        variableNode->inputFor().end(), definingNode),
+              variableNode->inputFor().end());
   }
 }

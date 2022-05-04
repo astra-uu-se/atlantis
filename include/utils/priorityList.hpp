@@ -70,6 +70,13 @@ class PriorityList {
 
   void updatePriority(Timestamp ts, size_t idx, Int newValue) {
     if (_list[idx].priority.get(ts) == newValue) {
+      _list[idx].priority.set(ts, newValue);
+      if (_head.get(_head.tmpTimestamp()) == &_list[idx]) {
+        _head.set(ts, &_list[idx]);
+      }
+      if (_tail.get(_head.tmpTimestamp()) == &_list[idx]) {
+        _tail.set(ts, &_list[idx]);
+      }
       return;  // No change.
     }
 

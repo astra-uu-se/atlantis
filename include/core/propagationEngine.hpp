@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <queue>
+#include <set>
 
 #include "core/engine.hpp"
 #include "exceptions/exceptions.hpp"
@@ -51,6 +52,7 @@ class PropagationEngine : public Engine {
 
   void open() final;
   void close() final;
+  void computeBounds() final;
 
   void setPropagationMode(PropagationMode);
   OutputToInputMarkingMode outputToInputMarkingMode() const;

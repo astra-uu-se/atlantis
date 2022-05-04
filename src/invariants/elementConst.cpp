@@ -13,7 +13,7 @@ void ElementConst::registerVars(Engine& engine) {
   engine.registerInvariantInput(_id, _index, 0);
 }
 
-void ElementConst::updateBounds(Engine& engine) {
+void ElementConst::updateBounds(Engine& engine, bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
@@ -25,7 +25,7 @@ void ElementConst::updateBounds(Engine& engine) {
     ub = std::max(ub, _array[i]);
   }
 
-  engine.updateBounds(_y, lb, ub);
+  engine.updateBounds(_y, lb, ub, widenOnly);
 }
 
 void ElementConst::recompute(Timestamp ts, Engine& engine) {

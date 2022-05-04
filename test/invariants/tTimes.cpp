@@ -47,10 +47,10 @@ TEST_F(TimesTest, UpdateBounds) {
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
-    engine->updateBounds(a, aLb, aUb);
+    engine->updateBounds(a, aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_TRUE(bLb <= bUb);
-      engine->updateBounds(b, bLb, bUb);
+      engine->updateBounds(b, bLb, bUb, false);
       engine->open();
       invariant.updateBounds(*engine);
       engine->close();

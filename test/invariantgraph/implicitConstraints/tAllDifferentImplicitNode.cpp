@@ -40,6 +40,13 @@ TEST_F(AllDifferentImplicitNodeTest, construction) {
 TEST_F(AllDifferentImplicitNodeTest, application) {
   PropagationEngine engine;
   engine.open();
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_FALSE(_variableMap.contains(definedVariable));
+  }
+  node->createDefinedVariables(engine, _variableMap);
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_TRUE(_variableMap.contains(definedVariable));
+  }
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 

@@ -16,14 +16,22 @@ invariantgraph::AllDifferentNode::fromModelConstraint(
   return std::make_unique<AllDifferentNode>(variables);
 }
 
+void invariantgraph::AllDifferentNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  if (!variableMap.contains(violation())) {
+    registerViolation(engine, variableMap);
+  }
+}
+
 void invariantgraph::AllDifferentNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  VarId violation = registerViolation(engine, variableMap);
+  assert(variableMap.contains(violation()));
 
   std::vector<VarId> engineVariables;
   std::transform(_variables.begin(), _variables.end(),
                  std::back_inserter(engineVariables),
                  [&](const auto& var) { return variableMap.at(var); });
 
-  engine.makeConstraint<AllDifferent>(violation, engineVariables);
+  engine.makeConstraint<AllDifferent>(variableMap.at(violation()),
+                                      engineVariables);
 }

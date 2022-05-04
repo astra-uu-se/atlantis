@@ -19,25 +19,25 @@
 #include "invariantgraph/invariants/arrayVarBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/binaryOpNode.hpp"
+#include "invariantgraph/invariants/boolXorReifNode.hpp"
+#include "invariantgraph/invariants/eqReifNode.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
+#include "invariantgraph/invariants/intLinEqReifNode.hpp"
+#include "invariantgraph/invariants/intLinLeReifNode.hpp"
+#include "invariantgraph/invariants/intLinNeReifNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
+#include "invariantgraph/invariants/intNeReifNode.hpp"
 #include "invariantgraph/invariants/intPowNode.hpp"
 #include "invariantgraph/invariants/intTimesNode.hpp"
+#include "invariantgraph/invariants/leReifNode.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
+#include "invariantgraph/invariants/ltReifNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
 #include "invariantgraph/invariants/minNode.hpp"
+#include "invariantgraph/invariants/setInReifNode.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
 #include "invariantgraph/views/boolNotNode.hpp"
-#include "invariantgraph/views/boolXorReifNode.hpp"
-#include "invariantgraph/views/eqReifNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
-#include "invariantgraph/views/intLinEqReifNode.hpp"
-#include "invariantgraph/views/intLinLeReifNode.hpp"
-#include "invariantgraph/views/intLinNeReifNode.hpp"
-#include "invariantgraph/views/intNeReifNode.hpp"
-#include "invariantgraph/views/leReifNode.hpp"
-#include "invariantgraph/views/ltReifNode.hpp"
-#include "invariantgraph/views/setInReifNode.hpp"
 #include "utils/fznAst.hpp"
 
 invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build(
@@ -59,7 +59,13 @@ invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build(
       model.objective());
   // clang-format on
 
-  return {std::move(_variables), std::move(_definingNodes), objectiveVariable};
+  std::vector<VariableNode*> valueNodes;
+  for (const auto& [_, node] : _valueMap) {
+    valueNodes.push_back(node);
+  }
+
+  return {std::move(_variables), std::move(valueNodes),
+          std::move(_definingNodes), objectiveVariable};
 }
 
 using FZNSearchVariable =
@@ -106,7 +112,26 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
   std::unordered_set<fznparser::Identifier> definedVars;
   std::unordered_set<size_t> processedConstraints;
 
-  // First, define based on annotations.
+  // First, define implicit constraints (neighborhood)
+  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
+    auto constraint = model.constraints()[idx];
+
+    auto allVariablesAreFree = allVariablesFree(constraint, definedVars);
+    if (processedConstraints.contains(idx) || !allVariablesAreFree) {
+      continue;
+    }
+
+    if (auto implicitConstraint = makeImplicitConstraint(model, constraint)) {
+      for (auto variableNode : implicitConstraint->definedVariables()) {
+        definedVars.emplace(identifier(*variableNode->variable()));
+      }
+
+      _definingNodes.push_back(std::move(implicitConstraint));
+      processedConstraints.emplace(idx);
+    }
+  }
+
+  // Second, define variables based on annotations.
   for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
     auto constraint = model.constraints()[idx];
 
@@ -124,26 +149,6 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       markVariablesAsDefined(*node, definedVars);
 
       _definingNodes.push_back(std::move(node));
-      processedConstraints.emplace(idx);
-    }
-  }
-
-  // Second, define an implicit constraint (neighborhood) on remaining
-  // constraints.
-  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
-    auto constraint = model.constraints()[idx];
-
-    if (processedConstraints.count(idx) ||
-        !allVariablesFree(constraint, definedVars)) {
-      continue;
-    }
-
-    if (auto implicitConstraint = makeImplicitConstraint(model, constraint)) {
-      for (auto variableNode : implicitConstraint->definedVariables()) {
-        definedVars.emplace(identifier(*variableNode->variable()));
-      }
-
-      _definingNodes.push_back(std::move(implicitConstraint));
       processedConstraints.emplace(idx);
     }
   }
@@ -186,7 +191,10 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
     }
 
     _definingNodes.push_back(makeSoftConstraint(model, constraint));
+    processedConstraints.emplace(idx);
   }
+
+  assert(processedConstraints.size() == model.constraints().size());
 
   // Finally, define all free variables by the InvariantGraphRoot
   std::vector<VariableNode*> freeVariables;
@@ -363,7 +371,7 @@ static bool allVariablesFree(
     const fznparser::Constraint& constraint,
     const std::unordered_set<fznparser::Identifier>& definedVars) {
   auto isFree = [&](const fznparser::Identifier& identifier) {
-    return definedVars.count(identifier) > 0;
+    return !definedVars.contains(identifier);
   };
 
   return std::all_of(

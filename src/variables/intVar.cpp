@@ -30,13 +30,13 @@ IntVar::IntVar(Timestamp ts, VarId id, Int initValue, Int lowerBound,
   }
 }
 
-void IntVar::updateBounds(Int lowerBound, Int upperBound) {
-  if (lowerBound > upperBound) {
+void IntVar::updateBounds(Int lowerBound, Int upperBound, bool widenOnly) {
+  _lowerBound = widenOnly ? std::min(_lowerBound, lowerBound) : lowerBound;
+  _upperBound = widenOnly ? std::max(_upperBound, upperBound) : upperBound;
+  if (_lowerBound > _upperBound) {
     throw std::out_of_range(
         "Lower bound must be smaller than or equal to upper bound");
   }
-  _lowerBound = lowerBound;
-  _upperBound = upperBound;
 }
 
 std::ostream& operator<<(std::ostream& out, IntVar const& var) {

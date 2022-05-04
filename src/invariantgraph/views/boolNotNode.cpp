@@ -13,8 +13,11 @@ invariantgraph::BoolNotNode::fromModelConstraint(
   return std::make_unique<invariantgraph::BoolNotNode>(a, b);
 }
 
-void invariantgraph::BoolNotNode::registerWithEngine(
+void invariantgraph::BoolNotNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   auto outputVar = engine.makeIntView<::Bool2IntView>(variableMap.at(_input));
   variableMap.emplace(definedVariables()[0], outputVar);
 }
+
+void invariantgraph::BoolNotNode::registerWithEngine(
+    Engine&, VariableDefiningNode::VariableMap&) {}

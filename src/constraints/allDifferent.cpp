@@ -25,8 +25,8 @@ void AllDifferent::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _violationId);
 }
 
-void AllDifferent::updateBounds(Engine& engine) {
-  engine.updateBounds(_violationId, 0, _variables.size() - 1);
+void AllDifferent::updateBounds(Engine& engine, bool widenOnly) {
+  engine.updateBounds(_violationId, 0, _variables.size() - 1, widenOnly);
 }
 
 void AllDifferent::close(Timestamp ts, Engine& engine) {

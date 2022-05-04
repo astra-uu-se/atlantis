@@ -24,7 +24,7 @@ class IntDiv : public Invariant {
  public:
   IntDiv(VarId a, VarId b, VarId y);
   void registerVars(Engine&) override;
-  void updateBounds(Engine&) override;
+  void updateBounds(Engine&, bool widenOnly = false) override;
   void close(Timestamp, Engine&) override;
   void recompute(Timestamp, Engine&) override;
   VarId nextInput(Timestamp, Engine&) override;

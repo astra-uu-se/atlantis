@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "core/engine.hpp"
 #include "views/intView.hpp"
 
 /**

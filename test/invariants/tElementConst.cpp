@@ -69,7 +69,7 @@ TEST_F(ElementConstTest, UpdateBounds) {
 
   for (Int minIndex = indexLb; minIndex <= ub; ++minIndex) {
     for (Int maxIndex = ub; maxIndex >= minIndex; --maxIndex) {
-      engine->updateBounds(index, minIndex, maxIndex);
+      engine->updateBounds(index, minIndex, maxIndex, false);
       invariant.updateBounds(*engine);
       Int minVal = std::numeric_limits<Int>::max();
       Int maxVal = std::numeric_limits<Int>::min();

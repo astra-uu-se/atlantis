@@ -13,9 +13,9 @@ void Mod::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _y);
 }
 
-void Mod::updateBounds(Engine& engine) {
+void Mod::updateBounds(Engine& engine, bool widenOnly) {
   engine.updateBounds(_y, std::min(Int(0), engine.lowerBound(_a)),
-                      std::max(Int(0), engine.upperBound(_a)));
+                      std::max(Int(0), engine.upperBound(_a)), widenOnly);
 }
 
 void Mod::close(Timestamp, Engine& engine) {

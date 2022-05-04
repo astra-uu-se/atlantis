@@ -21,6 +21,9 @@ class MaxNode : public VariableDefiningNode {
 
   ~MaxNode() override = default;
 
+  void createDefinedVariables(
+      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 

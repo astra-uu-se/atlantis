@@ -25,7 +25,7 @@ class Pow : public Invariant {
   }
 
   void registerVars(Engine&) override;
-  void updateBounds(Engine&) override;
+  void updateBounds(Engine&, bool widenOnly = false) override;
   void recompute(Timestamp, Engine&) override;
   VarId nextInput(Timestamp, Engine&) override;
   void notifyCurrentInputChanged(Timestamp, Engine&) override;

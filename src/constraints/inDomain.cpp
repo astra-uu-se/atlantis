@@ -21,7 +21,7 @@ void InDomain::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _violationId);
 }
 
-void InDomain::updateBounds(Engine& engine) {
+void InDomain::updateBounds(Engine& engine, bool widenOnly) {
   const Int xLb = engine.lowerBound(_x);
   const Int xUb = engine.upperBound(_x);
   Int minViol = std::numeric_limits<Int>::max();
@@ -46,7 +46,7 @@ void InDomain::updateBounds(Engine& engine) {
       maxViol = std::min(maxViol, xUb - dUb);
     }
   }
-  engine.updateBounds(_violationId, minViol, maxViol);
+  engine.updateBounds(_violationId, minViol, maxViol, widenOnly);
 }
 
 void InDomain::recompute(Timestamp ts, Engine& engine) {
