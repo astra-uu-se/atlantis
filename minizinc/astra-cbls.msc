@@ -3,5 +3,9 @@
   "version": "0.1",
   "id": "se.uu.it.astra-cbls",
   "executable": "astra-cbls",
-  "mznlib": "lib"
+  "mznlib": "lib",
+  "stdFlag": ["-a"]
+  "extraFlags": [
+    ["--annealing-schedule", "Path to the annealing schedule definition file to use.", "string"]
+  ]
 }
