@@ -1,20 +1,13 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/eqNode.hpp"
+#include "invariantgraph/constraints/leNode.hpp"
 
 static bool isViolating(const std::vector<Int>& values) {
-  for (size_t i = 0; i < values.size(); i++) {
-    for (size_t j = i + 1; j < values.size(); j++) {
-      if (values.at(i) != values.at(j)) {
-        return true;
-      }
-    }
-  }
-  return false;
+  return values.at(0) > values.at(1);
 }
 
 template <bool IsReified>
-class AbstractEqNodeTest : public NodeTestBase {
+class AbstractLeNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 5, 10);
   INT_VARIABLE(b, 2, 7);
@@ -22,11 +15,11 @@ class AbstractEqNodeTest : public NodeTestBase {
 
   std::unique_ptr<fznparser::Constraint> constraint;
   std::unique_ptr<fznparser::FZNModel> model;
-  std::unique_ptr<invariantgraph::EqNode> node;
+  std::unique_ptr<invariantgraph::LeNode> node;
 
   void SetUp() override {
     if constexpr (!IsReified) {
-      fznparser::Constraint cnstr{"int_eq", {"a", "b"}, {}};
+      fznparser::Constraint cnstr{"int_le", {"a", "b"}, {}};
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
@@ -34,7 +27,7 @@ class AbstractEqNodeTest : public NodeTestBase {
 
       model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     } else {
-      fznparser::Constraint cnstr{"int_eq_reif", {"a", "b", "r"}, {}};
+      fznparser::Constraint cnstr{"int_le_reif", {"a", "b", "r"}, {}};
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
@@ -45,7 +38,7 @@ class AbstractEqNodeTest : public NodeTestBase {
     }
 
     setModel(model.get());
-    node = makeNode<invariantgraph::EqNode>(*constraint);
+    node = makeNode<invariantgraph::LeNode>(*constraint);
   }
 
   void construction() {
@@ -83,7 +76,7 @@ class AbstractEqNodeTest : public NodeTestBase {
     // a, b and the violation
     EXPECT_EQ(engine.numVariables(), 3);
 
-    // equal
+    // less equal
     EXPECT_EQ(engine.numInvariants(), 1);
 
     EXPECT_EQ(engine.lowerBound(_variableMap.at(node->violation())), 0);
@@ -131,18 +124,18 @@ class AbstractEqNodeTest : public NodeTestBase {
   }
 };
 
-class EqNodeTest : public AbstractEqNodeTest<false> {};
+class LeNodeTest : public AbstractLeNodeTest<false> {};
 
-TEST_F(EqNodeTest, Construction) { construction(); }
+TEST_F(LeNodeTest, Construction) { construction(); }
 
-TEST_F(EqNodeTest, Application) { application(); }
+TEST_F(LeNodeTest, Application) { application(); }
 
-TEST_F(EqNodeTest, Propagation) { propagation(); }
+TEST_F(LeNodeTest, Propagation) { propagation(); }
 
-class EqReifNodeTest : public AbstractEqNodeTest<true> {};
+class LeReifNodeTest : public AbstractLeNodeTest<true> {};
 
-TEST_F(EqReifNodeTest, Construction) { construction(); }
+TEST_F(LeReifNodeTest, Construction) { construction(); }
 
-TEST_F(EqReifNodeTest, Application) { application(); }
+TEST_F(LeReifNodeTest, Application) { application(); }
 
-TEST_F(EqReifNodeTest, Propagation) { propagation(); }
+TEST_F(LeReifNodeTest, Propagation) { propagation(); }
