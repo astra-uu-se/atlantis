@@ -69,10 +69,14 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
     EXPECT_EQ(node->staticInputs(), expectedVars);
     EXPECT_THAT(expectedVars, testing::ContainerEq(node->staticInputs()));
     expectMarkedAsInput(node.get(), node->staticInputs());
-    if constexpr (IsReified) {
-      EXPECT_TRUE(node->isReified());
-    } else {
+    if constexpr (!IsReified) {
       EXPECT_FALSE(node->isReified());
+      EXPECT_NE(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
+    } else {
+      EXPECT_TRUE(node->isReified());
+      EXPECT_EQ(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
     }
   }
 
