@@ -31,7 +31,8 @@ void invariantgraph::ArrayBoolOrNode::createDefinedVariables(
 void invariantgraph::ArrayBoolOrNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<VarId> inputs;
-  std::transform(_as.begin(), _as.end(), std::back_inserter(inputs),
+  std::transform(staticInputs().begin(), staticInputs().end(),
+                 std::back_inserter(inputs),
                  [&](const auto& node) { return variableMap.at(node); });
 #ifndef NDEBUG
   for (const VarId input : inputs) {

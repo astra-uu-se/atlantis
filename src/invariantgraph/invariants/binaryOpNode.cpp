@@ -32,7 +32,7 @@ void invariantgraph::BinaryOpNode::createDefinedVariables(
 void invariantgraph::BinaryOpNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   assert(variableMap.contains(definedVariables()[0]));
-  createInvariant(engine, variableMap.at(_a), variableMap.at(_b),
+  createInvariant(engine, variableMap.at(a()), variableMap.at(b()),
                   variableMap.at(definedVariables()[0]));
 }
 

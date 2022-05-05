@@ -34,11 +34,11 @@ TEST_F(LinearNodeTest, construction_should_register_view) {
   EXPECT_EQ(shouldRegisterView->coeffs().size(), 1);
   EXPECT_EQ(shouldRegisterView->coeffs()[0], 1);
 
-  EXPECT_EQ(shouldRegisterView->variables().size(), 1);
-  EXPECT_EQ(shouldRegisterView->variables()[0]->variable(),
+  EXPECT_EQ(shouldRegisterView->staticInputs().size(), 1);
+  EXPECT_EQ(shouldRegisterView->staticInputs()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
-  EXPECT_EQ(shouldRegisterView->variables()[0]->inputFor().size(), 1);
-  EXPECT_EQ(shouldRegisterView->variables()[0]->inputFor()[0],
+  EXPECT_EQ(shouldRegisterView->staticInputs()[0]->inputFor().size(), 1);
+  EXPECT_EQ(shouldRegisterView->staticInputs()[0]->inputFor()[0],
             shouldRegisterView.get());
 
   EXPECT_EQ(shouldRegisterView->definedVariables().size(), 1);
@@ -53,17 +53,17 @@ TEST_F(LinearNodeTest, construction_should_register_linear) {
   EXPECT_EQ(shouldRegisterLinear->coeffs()[0], 1);
   EXPECT_EQ(shouldRegisterLinear->coeffs()[1], 1);
 
-  EXPECT_EQ(shouldRegisterLinear->variables().size(), 2);
-  EXPECT_EQ(shouldRegisterLinear->variables()[0]->variable(),
+  EXPECT_EQ(shouldRegisterLinear->staticInputs().size(), 2);
+  EXPECT_EQ(shouldRegisterLinear->staticInputs()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
-  EXPECT_EQ(shouldRegisterLinear->variables()[0]->inputFor().size(), 1);
-  EXPECT_EQ(shouldRegisterLinear->variables()[0]->inputFor()[0],
+  EXPECT_EQ(shouldRegisterLinear->staticInputs()[0]->inputFor().size(), 1);
+  EXPECT_EQ(shouldRegisterLinear->staticInputs()[0]->inputFor()[0],
             shouldRegisterLinear.get());
 
-  EXPECT_EQ(shouldRegisterLinear->variables()[1]->variable(),
+  EXPECT_EQ(shouldRegisterLinear->staticInputs()[1]->variable(),
             invariantgraph::VariableNode::FZNVariable(c));
-  EXPECT_EQ(shouldRegisterLinear->variables()[1]->inputFor().size(), 1);
-  EXPECT_EQ(shouldRegisterLinear->variables()[1]->inputFor()[0],
+  EXPECT_EQ(shouldRegisterLinear->staticInputs()[1]->inputFor().size(), 1);
+  EXPECT_EQ(shouldRegisterLinear->staticInputs()[1]->inputFor()[0],
             shouldRegisterLinear.get());
 
   EXPECT_EQ(shouldRegisterLinear->definedVariables().size(), 1);

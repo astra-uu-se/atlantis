@@ -7,9 +7,9 @@
 
 namespace invariantgraph {
 
-class EqNode : public SoftConstraintNode {
+class BoolXorNode : public SoftConstraintNode {
  public:
-  EqNode(VariableNode* a, VariableNode* b, VariableNode* r = nullptr)
+  BoolXorNode(VariableNode* a, VariableNode* b, VariableNode* r = nullptr)
       : SoftConstraintNode({a, b}, r) {
     assert(staticInputs().size() == 2);
     assert(staticInputs().front() == a);
@@ -18,7 +18,7 @@ class EqNode : public SoftConstraintNode {
     assert(dynamicInputs().empty());
   }
 
-  static std::unique_ptr<EqNode> fromModelConstraint(
+  static std::unique_ptr<BoolXorNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
