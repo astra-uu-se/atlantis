@@ -1,8 +1,8 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/intLinNeNode.hpp"
+#include "invariantgraph/constraints/linNeNode.hpp"
 
-class IntLinNeNodeTest : public NodeTestBase {
+class LinNeNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 0, 10);
   INT_VARIABLE(b, 0, 10);
@@ -17,27 +17,27 @@ class IntLinNeNodeTest : public NodeTestBase {
 
   fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::IntLinNeNode> node;
+  std::unique_ptr<invariantgraph::LinNeNode> node;
 
-  IntLinNeNodeTest() : NodeTestBase(model) {}
+  LinNeNodeTest() : NodeTestBase(model) {}
 
   void SetUp() override {
-    node = makeNode<invariantgraph::IntLinNeNode>(constraint);
+    node = makeNode<invariantgraph::LinNeNode>(constraint);
   }
 };
 
-TEST_F(IntLinNeNodeTest, construction) {
-  EXPECT_EQ(*node->variables()[0]->variable(),
+TEST_F(LinNeNodeTest, construction) {
+  EXPECT_EQ(*node->staticInputs()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->variables()[1]->variable(),
+  EXPECT_EQ(*node->staticInputs()[1]->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
   EXPECT_EQ(node->coeffs()[0], 1);
   EXPECT_EQ(node->coeffs()[1], 2);
   EXPECT_EQ(node->c(), 3);
-  expectMarkedAsInput(node.get(), node->variables());
+  expectMarkedAsInput(node.get(), node->staticInputs());
 }
 
-TEST_F(IntLinNeNodeTest, application) {
+TEST_F(LinNeNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -72,7 +72,7 @@ static bool isViolating(const std::vector<Int>& coeffs,
   return sum == expected;
 }
 
-TEST_F(IntLinNeNodeTest, propagation) {
+TEST_F(LinNeNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -80,7 +80,8 @@ TEST_F(IntLinNeNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  for (auto* const inputVariable : node->staticInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
   }

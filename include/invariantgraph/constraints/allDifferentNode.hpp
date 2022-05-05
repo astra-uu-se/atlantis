@@ -7,12 +7,19 @@
 
 namespace invariantgraph {
 class AllDifferentNode : public SoftConstraintNode {
- private:
-  std::vector<VariableNode*> _variables;
-
  public:
-  explicit AllDifferentNode(std::vector<VariableNode*> variables)
-      : SoftConstraintNode(variables), _variables(std::move(variables)) {}
+  explicit AllDifferentNode(std::vector<VariableNode*> variables,
+                            VariableNode* r)
+      : SoftConstraintNode(variables, r) {
+    assert(staticInputs().size() == variables.size());
+#ifndef NDEBUG
+    for (size_t i = 0; i < variables.size(); ++i) {
+      assert(variables[i] = staticInputs()[i]);
+    }
+#endif
+    assert(r == nullptr || violation() == r);
+    assert(dynamicInputs().empty());
+  }
 
   static std::unique_ptr<AllDifferentNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
@@ -23,9 +30,5 @@ class AllDifferentNode : public SoftConstraintNode {
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
-
-  [[nodiscard]] const std::vector<VariableNode*>& variables() {
-    return _variables;
-  }
 };
 }  // namespace invariantgraph

@@ -1,8 +1,8 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/intNeNode.hpp"
+#include "invariantgraph/constraints/neNode.hpp"
 
-class IntNeNodeTest : public NodeTestBase {
+class NeNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 5, 10);
   INT_VARIABLE(b, 2, 7);
@@ -11,16 +11,14 @@ class IntNeNodeTest : public NodeTestBase {
 
   fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::IntNeNode> node;
+  std::unique_ptr<invariantgraph::NeNode> node;
 
-  explicit IntNeNodeTest() : NodeTestBase(model) {}
+  explicit NeNodeTest() : NodeTestBase(model) {}
 
-  void SetUp() override {
-    node = makeNode<invariantgraph::IntNeNode>(constraint);
-  }
+  void SetUp() override { node = makeNode<invariantgraph::NeNode>(constraint); }
 };
 
-TEST_F(IntNeNodeTest, construction) {
+TEST_F(NeNodeTest, construction) {
   EXPECT_EQ(*node->a()->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
   EXPECT_EQ(*node->b()->variable(),
@@ -28,7 +26,7 @@ TEST_F(IntNeNodeTest, construction) {
   expectMarkedAsInput(node.get(), {node->a(), node->b()});
 }
 
-TEST_F(IntNeNodeTest, application) {
+TEST_F(NeNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -68,7 +66,7 @@ static bool isViolating(std::vector<Int>& values) {
   return false;
 }
 
-TEST_F(IntNeNodeTest, propagation) {
+TEST_F(NeNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -76,7 +74,8 @@ TEST_F(IntNeNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  for (auto* const inputVariable : node->staticInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
   }

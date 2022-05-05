@@ -7,9 +7,9 @@
 
 namespace invariantgraph {
 
-class EqNode : public SoftConstraintNode {
+class NeNode : public SoftConstraintNode {
  public:
-  EqNode(VariableNode* a, VariableNode* b, VariableNode* r = nullptr)
+  NeNode(VariableNode* a, VariableNode* b, VariableNode* r)
       : SoftConstraintNode({a, b}, r) {
     assert(staticInputs().size() == 2);
     assert(staticInputs().front() == a);
@@ -18,7 +18,7 @@ class EqNode : public SoftConstraintNode {
     assert(dynamicInputs().empty());
   }
 
-  static std::unique_ptr<EqNode> fromModelConstraint(
+  static std::unique_ptr<NeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 

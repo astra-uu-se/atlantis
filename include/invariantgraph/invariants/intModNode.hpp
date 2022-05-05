@@ -12,7 +12,14 @@ class IntModNode : public BinaryOpNode {
   }
 
   IntModNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output) {}
+      : BinaryOpNode(a, b, output) {
+    assert(definedVariables().size() == 1);
+    assert(definedVariables().front() == output);
+    assert(staticInputs().size() == 2);
+    assert(staticInputs().front() == a);
+    assert(staticInputs().back() == b);
+    assert(dynamicInputs().empty());
+  }
 
   ~IntModNode() override = default;
 

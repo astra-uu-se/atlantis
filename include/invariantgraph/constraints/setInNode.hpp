@@ -7,14 +7,17 @@
 namespace invariantgraph {
 class SetInNode : public SoftConstraintNode {
  private:
-  VariableNode* _input;
   std::vector<Int> _values;
 
  public:
-  explicit SetInNode(VariableNode* input, std::vector<Int> values)
-      : SoftConstraintNode({input}),
-        _input(input),
-        _values(std::move(values)) {}
+  explicit SetInNode(VariableNode* input, std::vector<Int> values,
+                     VariableNode* r)
+      : SoftConstraintNode({input}, r), _values(std::move(values)) {
+    assert(staticInputs().size() == 1);
+    assert(staticInputs().front() == input);
+    assert(r == nullptr || violation() == r);
+    assert(dynamicInputs().empty());
+  }
 
   static std::unique_ptr<SetInNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

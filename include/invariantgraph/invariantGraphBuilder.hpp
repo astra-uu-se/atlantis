@@ -39,8 +39,8 @@ class InvariantGraphBuilder {
 
   template <typename Val>
   VariableNode* nodeForValue(Val val) {
-    if (auto it = _valueMap.find(val); it != _valueMap.end()) {
-      return it->second;
+    if (_valueMap.contains(val)) {
+      return _valueMap.at(val);
     }
 
     std::unique_ptr<VariableNode> node;

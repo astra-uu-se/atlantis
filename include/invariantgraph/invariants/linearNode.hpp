@@ -9,7 +9,6 @@ namespace invariantgraph {
 class LinearNode : public VariableDefiningNode {
  private:
   std::vector<Int> _coeffs;
-  std::vector<VariableNode*> _variables;
   Int _offset;
   VarId _intermediateVarId{NULL_ID};
 
@@ -22,8 +21,17 @@ class LinearNode : public VariableDefiningNode {
              VariableNode* output, Int offset = 0)
       : VariableDefiningNode({output}, variables),
         _coeffs(std::move(coeffs)),
-        _variables(std::move(variables)),
-        _offset(offset) {}
+        _offset(offset) {
+    assert(definedVariables().size() == 1);
+    assert(definedVariables().front() == output);
+    assert(staticInputs().size() == variables.size());
+#ifndef NDEBUG
+    for (size_t i = 0; i < variables.size(); ++i) {
+      assert(variables[i] = staticInputs()[i]);
+    }
+#endif
+    assert(dynamicInputs().empty());
+  }
 
   ~LinearNode() override = default;
 
@@ -32,10 +40,6 @@ class LinearNode : public VariableDefiningNode {
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
-
-  [[nodiscard]] const std::vector<VariableNode*>& variables() const {
-    return _variables;
-  }
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 };

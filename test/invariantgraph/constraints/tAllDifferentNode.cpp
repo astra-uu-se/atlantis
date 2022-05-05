@@ -33,10 +33,10 @@ TEST_F(AllDifferentNodeTest, construction) {
                  std::back_inserter(expectedVars),
                  [](const auto& variable) { return variable.get(); });
 
-  EXPECT_EQ(node->variables(), expectedVars);
-  EXPECT_THAT(node->inputs(), testing::ContainerEq(node->variables()));
+  EXPECT_EQ(node->staticInputs(), expectedVars);
+  EXPECT_THAT(node->staticInputs(), testing::ContainerEq(node->staticInputs()));
 
-  expectMarkedAsInput(node.get(), node->inputs());
+  expectMarkedAsInput(node.get(), node->staticInputs());
 }
 
 TEST_F(AllDifferentNodeTest, application) {
@@ -88,7 +88,8 @@ TEST_F(AllDifferentNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 4);
+  for (auto* const inputVariable : node->staticInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
   }

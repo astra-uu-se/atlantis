@@ -128,8 +128,7 @@ bool OutputToInputExplorer::isMarked(VarIdBase id) {
   if constexpr (MarkingMode ==
                 OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
     for (const size_t ancestor : _engine.modifiedSearchVariables()) {
-      if (_searchVariableAncestors.at(id).find(ancestor) !=
-          _searchVariableAncestors.at(id).end()) {
+      if (_searchVariableAncestors.at(id).contains(ancestor)) {
         return true;
       }
     }

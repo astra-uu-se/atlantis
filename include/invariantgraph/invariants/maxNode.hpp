@@ -7,17 +7,23 @@
 
 namespace invariantgraph {
 class MaxNode : public VariableDefiningNode {
- private:
-  std::vector<VariableNode*> _variables;
-
  public:
   static std::unique_ptr<MaxNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   MaxNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : VariableDefiningNode({output}, variables),
-        _variables(std::move(variables)) {}
+      : VariableDefiningNode({output}, variables) {
+    assert(definedVariables().size() == 1);
+    assert(definedVariables().front() == output);
+    assert(staticInputs().size() == variables.size());
+#ifndef NDEBUG
+    for (size_t i = 0; i < variables.size(); ++i) {
+      assert(variables[i] = staticInputs()[i]);
+    }
+#endif
+    assert(dynamicInputs().empty());
+  }
 
   ~MaxNode() override = default;
 
@@ -26,9 +32,5 @@ class MaxNode : public VariableDefiningNode {
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
-
-  [[nodiscard]] const std::vector<VariableNode*>& variables() const {
-    return _variables;
-  }
 };
 }  // namespace invariantgraph

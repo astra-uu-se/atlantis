@@ -84,6 +84,8 @@ class InvariantGraph {
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
 
+  void breakCycles();
+
   InvariantGraphApplyResult apply(Engine& engine);
 };
 

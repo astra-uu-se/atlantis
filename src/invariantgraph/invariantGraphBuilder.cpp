@@ -4,11 +4,14 @@
 
 #include "invariantgraph/constraints/allDifferentNode.hpp"
 #include "invariantgraph/constraints/boolClauseNode.hpp"
+#include "invariantgraph/constraints/boolXorNode.hpp"
 #include "invariantgraph/constraints/eqNode.hpp"
-#include "invariantgraph/constraints/intLinNeNode.hpp"
-#include "invariantgraph/constraints/intNeNode.hpp"
+#include "invariantgraph/constraints/leNode.hpp"
 #include "invariantgraph/constraints/linEqNode.hpp"
 #include "invariantgraph/constraints/linLeNode.hpp"
+#include "invariantgraph/constraints/linNeNode.hpp"
+#include "invariantgraph/constraints/ltNode.hpp"
+#include "invariantgraph/constraints/neNode.hpp"
 #include "invariantgraph/constraints/setInNode.hpp"
 #include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
@@ -19,22 +22,13 @@
 #include "invariantgraph/invariants/arrayVarBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/binaryOpNode.hpp"
-#include "invariantgraph/invariants/boolXorReifNode.hpp"
-#include "invariantgraph/invariants/eqReifNode.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
-#include "invariantgraph/invariants/intLinEqReifNode.hpp"
-#include "invariantgraph/invariants/intLinLeReifNode.hpp"
-#include "invariantgraph/invariants/intLinNeReifNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
-#include "invariantgraph/invariants/intNeReifNode.hpp"
 #include "invariantgraph/invariants/intPowNode.hpp"
 #include "invariantgraph/invariants/intTimesNode.hpp"
-#include "invariantgraph/invariants/leReifNode.hpp"
 #include "invariantgraph/invariants/linearNode.hpp"
-#include "invariantgraph/invariants/ltReifNode.hpp"
 #include "invariantgraph/invariants/maxNode.hpp"
 #include "invariantgraph/invariants/minNode.hpp"
-#include "invariantgraph/invariants/setInReifNode.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
 #include "invariantgraph/views/boolNotNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
@@ -248,24 +242,24 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   BINARY_OP_REGISTRATION(IntTimesNode);
   BINARY_OP_REGISTRATION(IntPowNode);
   NODE_REGISTRATION("int_abs", IntAbsNode);
-  NODE_REGISTRATION("int_eq_reif", EqReifNode);
-  NODE_REGISTRATION("bool_eq_reif", EqReifNode);
-  NODE_REGISTRATION("int_le_reif", LeReifNode);
-  NODE_REGISTRATION("bool_le_reif", LeReifNode);
-  NODE_REGISTRATION("int_lin_eq_reif", IntLinEqReifNode);
-  NODE_REGISTRATION("int_lin_le_reif", IntLinLeReifNode);
-  NODE_REGISTRATION("int_lin_ne_reif", IntLinNeReifNode);
-  NODE_REGISTRATION("int_lt_reif", LtReifNode);
-  NODE_REGISTRATION("bool_lt_reif", LtReifNode);
-  NODE_REGISTRATION("int_ne_reif", IntNeReifNode);
-  NODE_REGISTRATION("set_in_reif", SetInReifNode);
+  NODE_REGISTRATION("int_eq_reif", EqNode);
+  NODE_REGISTRATION("bool_eq_reif", EqNode);
+  NODE_REGISTRATION("int_le_reif", LeNode);
+  NODE_REGISTRATION("bool_le_reif", LeNode);
+  NODE_REGISTRATION("int_lin_eq_reif", LinEqNode);
+  NODE_REGISTRATION("int_lin_le_reif", LinLeNode);
+  NODE_REGISTRATION("int_lin_ne_reif", LinNeNode);
+  NODE_REGISTRATION("int_lt_reif", LtNode);
+  NODE_REGISTRATION("bool_lt_reif", LtNode);
+  NODE_REGISTRATION("int_ne_reif", NeNode);
+  NODE_REGISTRATION("set_in_reif", SetInNode);
   NODE_REGISTRATION("bool2int", Bool2IntNode);
   NODE_REGISTRATION("bool_not", BoolNotNode);
   NODE_REGISTRATION("array_bool_and", ArrayBoolAndNode);
   NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
   NODE_REGISTRATION("array_bool_element", ArrayBoolElementNode);
   NODE_REGISTRATION("array_var_bool_element", ArrayVarBoolElementNode);
-  NODE_REGISTRATION("bool_xor", BoolXorReifNode);
+  NODE_REGISTRATION("bool_xor", BoolXorNode);
 
   return nullptr;
 #undef BINARY_OP_REGISTRATION
@@ -305,10 +299,10 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   NODE_REGISTRATION("bool_lin_le", LinLeNode);
   NODE_REGISTRATION("int_lin_eq", LinEqNode);
   NODE_REGISTRATION("bool_lin_eq", LinEqNode);
-  NODE_REGISTRATION("int_lin_ne", IntLinNeNode);
+  NODE_REGISTRATION("int_lin_ne", LinNeNode);
   NODE_REGISTRATION("int_eq", EqNode);
   NODE_REGISTRATION("bool_eq", EqNode);
-  NODE_REGISTRATION("int_ne", IntNeNode);
+  NODE_REGISTRATION("int_ne", NeNode);
   NODE_REGISTRATION("set_in", SetInNode);
   NODE_REGISTRATION("bool_clause", BoolClauseNode);
 

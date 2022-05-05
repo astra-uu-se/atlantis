@@ -9,7 +9,6 @@ namespace invariantgraph {
 class ArrayIntElementNode : public VariableDefiningNode {
  private:
   std::vector<Int> _as;
-  VariableNode* _b;
 
  public:
   static std::unique_ptr<ArrayIntElementNode> fromModelConstraint(
@@ -18,7 +17,12 @@ class ArrayIntElementNode : public VariableDefiningNode {
 
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
-      : VariableDefiningNode({output}, {b}), _as(std::move(as)), _b(b) {}
+      : VariableDefiningNode({output}, {b}), _as(std::move(as)) {
+    assert(definedVariables().size() == 1);
+    assert(definedVariables().front() == output);
+    assert(staticInputs().size() == 1);
+    assert(staticInputs()[0] == b);
+  }
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
@@ -27,7 +31,9 @@ class ArrayIntElementNode : public VariableDefiningNode {
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   [[nodiscard]] const std::vector<Int>& as() const noexcept { return _as; }
-  [[nodiscard]] VariableNode* b() const noexcept { return _b; }
+  [[nodiscard]] VariableNode* b() const noexcept {
+    return staticInputs().back();
+  }
 };
 
 }  // namespace invariantgraph

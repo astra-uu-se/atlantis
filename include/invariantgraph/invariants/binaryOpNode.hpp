@@ -10,10 +10,6 @@ namespace invariantgraph {
  * Invariant that encodes y <- a ⊕ b, where ⊕ is some binary operation.
  */
 class BinaryOpNode : public VariableDefiningNode {
- private:
-  VariableNode* _a;
-  VariableNode* _b;
-
  public:
   template <typename T>
   static std::unique_ptr<T> fromModelConstraint(
@@ -21,7 +17,14 @@ class BinaryOpNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   BinaryOpNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : VariableDefiningNode({output}, {a, b}), _a(a), _b(b) {}
+      : VariableDefiningNode({output}, {a, b}) {
+    assert(definedVariables().size() == 1);
+    assert(definedVariables().front() == output);
+    assert(staticInputs().size() == 2);
+    assert(staticInputs().front() == a);
+    assert(staticInputs().back() == b);
+    assert(dynamicInputs().empty());
+  }
 
   ~BinaryOpNode() override = default;
 
@@ -31,8 +34,12 @@ class BinaryOpNode : public VariableDefiningNode {
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
-  [[nodiscard]] VariableNode* a() const noexcept { return _a; }
-  [[nodiscard]] VariableNode* b() const noexcept { return _b; }
+  [[nodiscard]] VariableNode* a() const noexcept {
+    return staticInputs().front();
+  }
+  [[nodiscard]] VariableNode* b() const noexcept {
+    return staticInputs().back();
+  }
 
  protected:
   virtual void createInvariant(Engine& engine, VarId a, VarId b,

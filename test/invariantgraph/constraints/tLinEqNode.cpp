@@ -27,11 +27,11 @@ class LinEqNodeTest : public NodeTestBase {
 };
 
 TEST_F(LinEqNodeTest, construction) {
-  EXPECT_EQ(*node->variables()[0]->variable(),
+  EXPECT_EQ(*node->staticInputs()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->variables()[1]->variable(),
+  EXPECT_EQ(*node->staticInputs()[1]->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
-  expectMarkedAsInput(node.get(), node->variables());
+  expectMarkedAsInput(node.get(), node->staticInputs());
 
   EXPECT_EQ(node->coeffs()[0], 1);
   EXPECT_EQ(node->coeffs()[1], 2);
@@ -81,7 +81,8 @@ TEST_F(LinEqNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  for (auto* const inputVariable : node->staticInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
   }

@@ -53,17 +53,18 @@ invariantgraph::LinearNode::fromModelConstraint(
 
 void invariantgraph::LinearNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (_variables.size() == 1 && variableMap.contains(_variables.front())) {
+  if (staticInputs().size() == 1 &&
+      variableMap.contains(staticInputs().front())) {
     if (_coeffs.front() == 1 && _offset == 1) {
       variableMap.emplace(definedVariables()[0],
-                          variableMap.at(_variables.front()));
+                          variableMap.at(staticInputs().front()));
       return;
     }
 
     variableMap.emplace(
         definedVariables()[0],
-        engine.makeIntView<IntOffsetView>(variableMap.at(_variables.front()),
-                                          _coeffs.front() * _offset));
+        engine.makeIntView<IntOffsetView>(
+            variableMap.at(staticInputs().front()), _coeffs.front() * _offset));
     return;
   }
 
@@ -82,7 +83,7 @@ void invariantgraph::LinearNode::registerWithEngine(
   assert(variableMap.contains(definedVariables()[0]));
 
   std::vector<VarId> variables;
-  std::transform(_variables.begin(), _variables.end(),
+  std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
                  [&](const auto& node) { return variableMap.at(node); });
   if (_intermediateVarId == NULL_ID) {
