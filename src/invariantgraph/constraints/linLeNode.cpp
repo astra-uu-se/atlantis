@@ -12,10 +12,12 @@ std::unique_ptr<invariantgraph::LinLeNode>
 invariantgraph::LinLeNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(constraint.name == "int_lin_le" || constraint.name == "bool_lin_le" ||
-         constraint.name == "int_lin_le_reif" ||
-         constraint.name == "bool_lin_le_reif");
-  assert(constraint.arguments.size() == 3);
+  assert(
+      ((constraint.name == "int_lin_le" || constraint.name == "bool_lin_le") &&
+       constraint.arguments.size() == 3) ||
+      (constraint.name == "int_lin_le_reif" ||
+       constraint.name == "bool_lin_le_reif") &&
+          constraint.arguments.size() == 4);
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
   auto variables =

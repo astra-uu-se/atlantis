@@ -25,39 +25,55 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
   BOOL_VARIABLE(r);
 
   std::unique_ptr<fznparser::Constraint> constraint;
-
   std::unique_ptr<fznparser::FZNModel> model;
-
   std::unique_ptr<invariantgraph::AllDifferentNode> node;
 
   void SetUp() override {
-    fznparser::Constraint cnstr{
-        "alldifferent",
-        {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
-        {}};
+    if constexpr (!IsReified) {
+      fznparser::Constraint cnstr{
+          "alldifferent",
+          {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
+          {}};
 
-    constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
-    fznparser::FZNModel mdl{
-        {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
+      fznparser::FZNModel mdl{
+          {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
 
-    model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    } else {
+      fznparser::Constraint cnstr{
+          "alldifferent_reif",
+          {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"},
+           fznparser::Constraint::Argument{"r"}},
+          {}};
+
+      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+
+      fznparser::FZNModel mdl{
+          {}, {a, b, c, d, r}, {*constraint}, fznparser::Satisfy{}};
+
+      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    }
 
     setModel(model.get());
     node = makeNode<invariantgraph::AllDifferentNode>(*constraint);
   }
 
   void construction() {
+    EXPECT_EQ(node->staticInputs().size(), 4);
     std::vector<invariantgraph::VariableNode*> expectedVars;
-    std::transform(_variables.begin(), _variables.end(),
-                   std::back_inserter(expectedVars),
-                   [](const auto& variable) { return variable.get(); });
-
+    for (size_t i = 0; i < 4; ++i) {
+      expectedVars.emplace_back(_variables.at(i).get());
+    }
     EXPECT_EQ(node->staticInputs(), expectedVars);
-    EXPECT_THAT(node->staticInputs(),
-                testing::ContainerEq(node->staticInputs()));
-
+    EXPECT_THAT(expectedVars, testing::ContainerEq(node->staticInputs()));
     expectMarkedAsInput(node.get(), node->staticInputs());
+    if constexpr (IsReified) {
+      EXPECT_TRUE(node->isReified());
+    } else {
+      EXPECT_FALSE(node->isReified());
+    }
   }
 
   void application() {
@@ -139,7 +155,7 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
   }
 };
 
-class AllDifferentNodeTest : public AbstractAllDifferentNodeTest<true> {};
+class AllDifferentNodeTest : public AbstractAllDifferentNodeTest<false> {};
 
 TEST_F(AllDifferentNodeTest, Construction) { construction(); }
 
@@ -147,7 +163,7 @@ TEST_F(AllDifferentNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentNodeTest, Propagation) { propagation(); }
 
-class AllDifferentReifNodeTest : public AbstractAllDifferentNodeTest<false> {};
+class AllDifferentReifNodeTest : public AbstractAllDifferentNodeTest<true> {};
 
 TEST_F(AllDifferentReifNodeTest, Construction) { construction(); }
 
