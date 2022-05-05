@@ -112,21 +112,29 @@ class VariableNode {
 class VariableDefiningNode {
  private:
   std::vector<VariableNode*> _definedVariables;
-  std::vector<VariableNode*> _inputs;
+  std::vector<VariableNode*> _staticInputs;
+  std::vector<VariableNode*> _dynamicInputs;
 
  public:
   using VariableMap = std::unordered_map<VariableNode*, VarId>;
 
   explicit VariableDefiningNode(std::vector<VariableNode*> definedVariables,
-                                std::vector<VariableNode*> inputs = {})
+                                std::vector<VariableNode*> staticInputs = {},
+                                std::vector<VariableNode*> dynamicInputs = {})
       : _definedVariables(std::move(definedVariables)),
-        _inputs(std::move(inputs)) {
-    for (const auto& input : _inputs) {
-      markAsInput(input, false);
+        _staticInputs(std::move(staticInputs)),
+        _dynamicInputs(std::move(dynamicInputs)) {
+    for (const auto& staticInput : _staticInputs) {
+      markAsStaticInput(staticInput, false);
+    }
+    for (const auto& dynamicInput : _dynamicInputs) {
+      markAsDynamicInput(dynamicInput, false);
     }
   }
 
   virtual ~VariableDefiningNode() = default;
+
+  [[nodiscard]] virtual bool isReified() { return false; }
 
   /**
    * Creates as all the variables the node
@@ -171,8 +179,14 @@ class VariableDefiningNode {
    */
   [[nodiscard]] virtual VariableNode* violation() { return nullptr; }
 
-  [[nodiscard]] const std::vector<VariableNode*>& inputs() const noexcept {
-    return _inputs;
+  [[nodiscard]] const std::vector<VariableNode*>& staticInputs()
+      const noexcept {
+    return _staticInputs;
+  }
+
+  [[nodiscard]] const std::vector<VariableNode*>& dynamicInputs()
+      const noexcept {
+    return _dynamicInputs;
   }
 
   // A hack in order to steal the _inputs from the nested constraint.
@@ -182,18 +196,26 @@ class VariableDefiningNode {
   static inline VarId registerDefinedVariable(Engine& engine,
                                               VariableMap& variableMap,
                                               VariableNode* variable) {
-    if (variableMap.find(variable) == variableMap.end()) {
+    if (!variableMap.contains(variable)) {
       variableMap.emplace(variable, engine.makeIntVar(0, 0, 0));
     }
 
     return variableMap.at(variable);
   }
 
-  void markAsInput(VariableNode* node, bool registerHere = true) {
+  void markAsStaticInput(VariableNode* node, bool registerHere = true) {
     node->markAsInputFor(this);
 
     if (registerHere) {
-      _inputs.push_back(node);
+      _staticInputs.push_back(node);
+    }
+  }
+
+  void markAsDynamicInput(VariableNode* node, bool registerHere = true) {
+    node->markAsInputFor(this);
+
+    if (registerHere) {
+      _dynamicInputs.push_back(node);
     }
   }
 };
@@ -250,14 +272,28 @@ class SoftConstraintNode : public VariableDefiningNode {
  private:
   // Bounds will be recomputed by the engine.
   VariableNode _violation{SetDomain({0})};
+  VariableNode* _reifiedViolation;
 
  public:
-  explicit SoftConstraintNode(std::vector<VariableNode*> inputs = {})
-      : VariableDefiningNode({&_violation}, std::move(inputs)) {}
+  explicit SoftConstraintNode(std::vector<VariableNode*> staticInputs = {},
+                              VariableNode* reifiedViolation = nullptr)
+      : VariableDefiningNode(
+            {reifiedViolation == nullptr ? &_violation : reifiedViolation},
+            std::move(staticInputs)),
+        _reifiedViolation(reifiedViolation) {}
 
   ~SoftConstraintNode() override = default;
 
-  [[nodiscard]] VariableNode* violation() override { return &_violation; }
+  [[nodiscard]] VariableNode* violation() override {
+    if (isReified()) {
+      return _reifiedViolation;
+    }
+    return &_violation;
+  }
+
+  [[nodiscard]] bool isReified() override {
+    return _reifiedViolation != nullptr;
+  }
 
  protected:
   inline VarId registerViolation(

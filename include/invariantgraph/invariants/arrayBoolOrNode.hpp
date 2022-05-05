@@ -8,7 +8,6 @@ namespace invariantgraph {
 
 class ArrayBoolOrNode : public VariableDefiningNode {
  private:
-  std::vector<VariableNode*> _as;
   VarId _violationVarId{NULL_ID};
   VarId _constZeroVarId{NULL_ID};
   VarId _sumVarId{NULL_ID};
@@ -19,17 +18,13 @@ class ArrayBoolOrNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   ArrayBoolOrNode(std::vector<VariableNode*> as, VariableNode* output)
-      : VariableDefiningNode({output}, as), _as(std::move(as)) {}
+      : VariableDefiningNode({output}, as) {}
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
-
-  [[nodiscard]] const std::vector<VariableNode*>& as() const noexcept {
-    return _as;
-  }
 };
 
 }  // namespace invariantgraph

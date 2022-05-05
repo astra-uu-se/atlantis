@@ -16,7 +16,7 @@ invariantgraph::Bool2IntNode::fromModelConstraint(
 void invariantgraph::Bool2IntNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   variableMap.emplace(definedVariables()[0], engine.makeIntView<::Bool2IntView>(
-                                                 variableMap.at(_input)));
+                                                 variableMap.at(input())));
 }
 
 void invariantgraph::Bool2IntNode::registerWithEngine(

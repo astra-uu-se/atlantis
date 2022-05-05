@@ -1,32 +1,38 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/eqNode.hpp"
+#include "invariantgraph/constraints/linNeNode.hpp"
 
-static bool isViolating(const std::vector<Int>& values) {
-  for (size_t i = 0; i < values.size(); i++) {
-    for (size_t j = i + 1; j < values.size(); j++) {
-      if (values.at(i) != values.at(j)) {
-        return true;
-      }
-    }
+static bool isViolating(const std::vector<Int>& coeffs,
+                        const std::vector<Int>& values, const Int expected) {
+  Int sum = 0;
+  for (size_t i = 0; i < values.size(); ++i) {
+    sum += coeffs.at(i) * values.at(i);
   }
-  return false;
+  return sum == expected;
 }
 
 template <bool IsReified>
-class AbstractEqNodeTest : public NodeTestBase {
+class AbstractLinNeNodeTest : public NodeTestBase {
  public:
-  INT_VARIABLE(a, 5, 10);
-  INT_VARIABLE(b, 2, 7);
+  INT_VARIABLE(a, 0, 10);
+  INT_VARIABLE(b, 0, 10);
   BOOL_VARIABLE(r);
+
+  Int sum{3};
+  std::vector<Int> coeffs{1, 2};
 
   std::unique_ptr<fznparser::Constraint> constraint;
   std::unique_ptr<fznparser::FZNModel> model;
-  std::unique_ptr<invariantgraph::EqNode> node;
+
+  std::unique_ptr<invariantgraph::LinNeNode> node;
 
   void SetUp() override {
     if constexpr (!IsReified) {
-      fznparser::Constraint cnstr{"int_eq", {"a", "b"}, {}};
+      fznparser::Constraint cnstr{
+          "int_lin_ne",
+          {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
+           fznparser::Constraint::ArrayArgument{"a", "b"}, sum},
+          {}};
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
@@ -34,7 +40,12 @@ class AbstractEqNodeTest : public NodeTestBase {
 
       model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     } else {
-      fznparser::Constraint cnstr{"int_eq_reif", {"a", "b", "r"}, {}};
+      fznparser::Constraint cnstr{
+          "int_lin_ne_reif",
+          {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
+           fznparser::Constraint::ArrayArgument{"a", "b"}, sum,
+           fznparser::Constraint::Argument{"r"}},
+          {}};
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
@@ -45,15 +56,19 @@ class AbstractEqNodeTest : public NodeTestBase {
     }
 
     setModel(model.get());
-    node = makeNode<invariantgraph::EqNode>(*constraint);
+    node = makeNode<invariantgraph::LinNeNode>(*constraint);
   }
 
   void construction() {
-    EXPECT_EQ(*node->a()->variable(),
+    EXPECT_EQ(*node->staticInputs()[0]->variable(),
               invariantgraph::VariableNode::FZNVariable(a));
-    EXPECT_EQ(*node->b()->variable(),
+    EXPECT_EQ(*node->staticInputs()[1]->variable(),
               invariantgraph::VariableNode::FZNVariable(b));
-    expectMarkedAsInput(node.get(), {node->a(), node->b()});
+    EXPECT_EQ(node->coeffs()[0], 1);
+    EXPECT_EQ(node->coeffs()[1], 2);
+    EXPECT_EQ(node->c(), 3);
+    expectMarkedAsInput(node.get(), node->staticInputs());
+
     if constexpr (!IsReified) {
       EXPECT_FALSE(node->isReified());
       EXPECT_NE(node->violation()->variable(),
@@ -81,17 +96,14 @@ class AbstractEqNodeTest : public NodeTestBase {
     node->registerWithEngine(engine, _variableMap);
     engine.close();
 
-    // a and b
+    // a, b
     EXPECT_EQ(engine.searchVariables().size(), 2);
 
-    // a, b and the violation
+    // a, b, the linear sum of a and b
     EXPECT_EQ(engine.numVariables(), 3);
 
-    // equal
+    // linear
     EXPECT_EQ(engine.numInvariants(), 1);
-
-    EXPECT_EQ(engine.lowerBound(_variableMap.at(node->violation())), 0);
-    EXPECT_EQ(engine.upperBound(_variableMap.at(node->violation())), 8);
   }
 
   void propagation() {
@@ -129,24 +141,26 @@ class AbstractEqNodeTest : public NodeTestBase {
         engine.query(violationId);
         engine.endProbe();
 
-        EXPECT_EQ(engine.currentValue(violationId) > 0, isViolating(values));
+        const Int viol = engine.currentValue(violationId);
+
+        EXPECT_EQ(viol > 0, isViolating(coeffs, values, sum));
       }
     }
   }
 };
 
-class EqNodeTest : public AbstractEqNodeTest<false> {};
+class LinNeNodeTest : public AbstractLinNeNodeTest<false> {};
 
-TEST_F(EqNodeTest, Construction) { construction(); }
+TEST_F(LinNeNodeTest, Construction) { construction(); }
 
-TEST_F(EqNodeTest, Application) { application(); }
+TEST_F(LinNeNodeTest, Application) { application(); }
 
-TEST_F(EqNodeTest, Propagation) { propagation(); }
+TEST_F(LinNeNodeTest, Propagation) { propagation(); }
 
-class EqReifNodeTest : public AbstractEqNodeTest<true> {};
+class LinNeReifNodeTest : public AbstractLinNeNodeTest<true> {};
 
-TEST_F(EqReifNodeTest, Construction) { construction(); }
+TEST_F(LinNeReifNodeTest, Construction) { construction(); }
 
-TEST_F(EqReifNodeTest, Application) { application(); }
+TEST_F(LinNeReifNodeTest, Application) { application(); }
 
-TEST_F(EqReifNodeTest, Propagation) { propagation(); }
+TEST_F(LinNeReifNodeTest, Propagation) { propagation(); }

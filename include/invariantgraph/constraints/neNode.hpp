@@ -7,16 +7,12 @@
 
 namespace invariantgraph {
 
-class IntNeNode : public SoftConstraintNode {
- private:
-  VariableNode* _a;
-  VariableNode* _b;
-
+class NeNode : public SoftConstraintNode {
  public:
-  IntNeNode(VariableNode* a, VariableNode* b)
-      : SoftConstraintNode({a, b}), _a(a), _b(b) {}
+  NeNode(VariableNode* a, VariableNode* b, VariableNode* r)
+      : SoftConstraintNode({a, b}, r) {}
 
-  static std::unique_ptr<IntNeNode> fromModelConstraint(
+  static std::unique_ptr<NeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
@@ -26,8 +22,12 @@ class IntNeNode : public SoftConstraintNode {
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
-  [[nodiscard]] VariableNode* a() const noexcept { return _a; }
-  [[nodiscard]] VariableNode* b() const noexcept { return _b; }
+  [[nodiscard]] VariableNode* a() const noexcept {
+    return staticInputs().front();
+  }
+  [[nodiscard]] VariableNode* b() const noexcept {
+    return staticInputs().back();
+  }
 };
 
 }  // namespace invariantgraph

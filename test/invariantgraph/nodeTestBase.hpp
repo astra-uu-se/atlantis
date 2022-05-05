@@ -23,18 +23,19 @@
 
 class NodeTestBase : public testing::Test {
  protected:
-  fznparser::FZNModel& _model;
+  fznparser::FZNModel* _model;
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
   std::unordered_map<fznparser::Identifier, invariantgraph::VariableNode*>
       _nodeMap;
   std::unordered_map<invariantgraph::VariableNode*, VarId> _variableMap;
 
-  explicit NodeTestBase(fznparser::FZNModel& model) : _model(model) {}
+  void setModel(fznparser::FZNModel* model) { _model = model; }
 
   std::function<invariantgraph::VariableNode*(invariantgraph::MappableValue&)>
       nodeFactory = [&](const auto& mappable) -> invariantgraph::VariableNode* {
     auto identifier = std::get<fznparser::Identifier>(mappable);
-    auto variable = std::get<fznparser::Variable>(*_model.identify(identifier));
+    auto variable =
+        std::get<fznparser::Variable>(*_model->identify(identifier));
     auto n = std::visit<std::unique_ptr<invariantgraph::VariableNode>>(
         overloaded{[](const fznparser::IntVariable& var) {
                      return std::make_unique<invariantgraph::VariableNode>(
@@ -65,7 +66,7 @@ class NodeTestBase : public testing::Test {
   template <typename Node>
   inline std::unique_ptr<Node> makeNode(
       const fznparser::Constraint& constraint) {
-    return Node::fromModelConstraint(_model, constraint, nodeFactory);
+    return Node::fromModelConstraint(*_model, constraint, nodeFactory);
   }
 
   inline void registerVariables(

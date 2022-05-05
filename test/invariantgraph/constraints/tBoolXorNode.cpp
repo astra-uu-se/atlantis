@@ -1,32 +1,25 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/eqNode.hpp"
+#include "invariantgraph/constraints/boolXorNode.hpp"
 
 static bool isViolating(const std::vector<Int>& values) {
-  for (size_t i = 0; i < values.size(); i++) {
-    for (size_t j = i + 1; j < values.size(); j++) {
-      if (values.at(i) != values.at(j)) {
-        return true;
-      }
-    }
-  }
-  return false;
+  return values.at(0) == values.at(1);
 }
 
 template <bool IsReified>
-class AbstractEqNodeTest : public NodeTestBase {
+class AbstractBoolXorNodeTest : public NodeTestBase {
  public:
-  INT_VARIABLE(a, 5, 10);
-  INT_VARIABLE(b, 2, 7);
+  BOOL_VARIABLE(a);
+  BOOL_VARIABLE(b);
   BOOL_VARIABLE(r);
 
   std::unique_ptr<fznparser::Constraint> constraint;
   std::unique_ptr<fznparser::FZNModel> model;
-  std::unique_ptr<invariantgraph::EqNode> node;
+  std::unique_ptr<invariantgraph::BoolXorNode> node;
 
   void SetUp() override {
     if constexpr (!IsReified) {
-      fznparser::Constraint cnstr{"int_eq", {"a", "b"}, {}};
+      fznparser::Constraint cnstr{"bool_xor", {"a", "b"}, {}};
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
@@ -34,7 +27,7 @@ class AbstractEqNodeTest : public NodeTestBase {
 
       model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     } else {
-      fznparser::Constraint cnstr{"int_eq_reif", {"a", "b", "r"}, {}};
+      fznparser::Constraint cnstr{"bool_xor_reif", {"a", "b", "r"}, {}};
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
@@ -45,7 +38,7 @@ class AbstractEqNodeTest : public NodeTestBase {
     }
 
     setModel(model.get());
-    node = makeNode<invariantgraph::EqNode>(*constraint);
+    node = makeNode<invariantgraph::BoolXorNode>(*constraint);
   }
 
   void construction() {
@@ -87,11 +80,8 @@ class AbstractEqNodeTest : public NodeTestBase {
     // a, b and the violation
     EXPECT_EQ(engine.numVariables(), 3);
 
-    // equal
+    // BoolXor
     EXPECT_EQ(engine.numInvariants(), 1);
-
-    EXPECT_EQ(engine.lowerBound(_variableMap.at(node->violation())), 0);
-    EXPECT_EQ(engine.upperBound(_variableMap.at(node->violation())), 8);
   }
 
   void propagation() {
@@ -115,10 +105,8 @@ class AbstractEqNodeTest : public NodeTestBase {
     std::vector<Int> values(inputs.size());
     engine.close();
 
-    for (values.at(0) = engine.lowerBound(inputs.at(0));
-         values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
-      for (values.at(1) = engine.lowerBound(inputs.at(1));
-           values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
+    for (values.at(0) = 0; values.at(0) <= 1; ++values.at(0)) {
+      for (values.at(1) = 0; values.at(1) <= 1; ++values.at(1)) {
         engine.beginMove();
         for (size_t i = 0; i < inputs.size(); ++i) {
           engine.setValue(inputs.at(i), values.at(i));
@@ -135,18 +123,18 @@ class AbstractEqNodeTest : public NodeTestBase {
   }
 };
 
-class EqNodeTest : public AbstractEqNodeTest<false> {};
+class BoolXorNodeTest : public AbstractBoolXorNodeTest<false> {};
 
-TEST_F(EqNodeTest, Construction) { construction(); }
+TEST_F(BoolXorNodeTest, Construction) { construction(); }
 
-TEST_F(EqNodeTest, Application) { application(); }
+TEST_F(BoolXorNodeTest, Application) { application(); }
 
-TEST_F(EqNodeTest, Propagation) { propagation(); }
+TEST_F(BoolXorNodeTest, Propagation) { propagation(); }
 
-class EqReifNodeTest : public AbstractEqNodeTest<true> {};
+class BoolXorReifNodeTest : public AbstractBoolXorNodeTest<true> {};
 
-TEST_F(EqReifNodeTest, Construction) { construction(); }
+TEST_F(BoolXorReifNodeTest, Construction) { construction(); }
 
-TEST_F(EqReifNodeTest, Application) { application(); }
+TEST_F(BoolXorReifNodeTest, Application) { application(); }
 
-TEST_F(EqReifNodeTest, Propagation) { propagation(); }
+TEST_F(BoolXorReifNodeTest, Propagation) { propagation(); }

@@ -29,7 +29,7 @@ void invariantgraph::MaxNode::createDefinedVariables(
 void invariantgraph::MaxNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<VarId> variables;
-  std::transform(_variables.begin(), _variables.end(),
+  std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
                  [&](const auto& var) { return variableMap.at(var); });
 

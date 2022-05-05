@@ -19,9 +19,8 @@ class ArrayIntElementNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::ArrayIntElementNode> node;
 
-  ArrayIntElementNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::ArrayIntElementNode>(constraint);
   }
 };
@@ -70,7 +69,8 @@ TEST_F(ArrayIntElementNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 1);
+  for (auto* const inputVariable : node->staticInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
   }

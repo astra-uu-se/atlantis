@@ -235,9 +235,8 @@ class EngineTest : public ::testing::Test {
         }
       } else {
         EXPECT_EQ(engine->modifiedSearchVariables().size(), 1);
-        EXPECT_TRUE(
-            engine->modifiedSearchVariables().find(modifiedDecisionVariable) !=
-            engine->modifiedSearchVariables().end());
+        EXPECT_TRUE(engine->modifiedSearchVariables().contains(
+            modifiedDecisionVariable));
         for (size_t i : markedInvariants) {
           EXPECT_CALL(*invariants[i], nextInput(timestamp, testing::_))
               .WillOnce(Return(inputs[i][0]))

@@ -16,25 +16,24 @@ class ArrayBoolAndNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::ArrayBoolAndNode> node;
 
-  ArrayBoolAndNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::ArrayBoolAndNode>(constraint);
   }
 };
 
 TEST_F(ArrayBoolAndNodeTest, construction) {
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables()[0]->variable(),
+  EXPECT_EQ(*node->definedVariables().at(0)->variable(),
             invariantgraph::VariableNode::FZNVariable(r));
 
-  EXPECT_EQ(node->as().size(), 2);
-  EXPECT_EQ(*node->as()[0]->variable(),
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  EXPECT_EQ(*node->staticInputs().at(0)->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->as()[1]->variable(),
+  EXPECT_EQ(*node->staticInputs().at(1)->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
 
-  expectMarkedAsInput(node.get(), node->as());
+  expectMarkedAsInput(node.get(), node->staticInputs());
 }
 
 TEST_F(ArrayBoolAndNodeTest, application) {
@@ -78,7 +77,8 @@ TEST_F(ArrayBoolAndNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  for (auto* const inputVariable : node->staticInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
   }

@@ -9,16 +9,13 @@
 namespace invariantgraph {
 
 class IntAbsNode : public VariableDefiningNode {
- private:
-  VariableNode* _input;
-
  public:
   static std::unique_ptr<IntAbsNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
-  IntAbsNode(VariableNode* input, VariableNode* output)
-      : VariableDefiningNode({output}, {input}), _input(input) {}
+  IntAbsNode(VariableNode* staticInput, VariableNode* output)
+      : VariableDefiningNode({output}, {staticInput}) {}
 
   ~IntAbsNode() override = default;
 
@@ -28,7 +25,9 @@ class IntAbsNode : public VariableDefiningNode {
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
-  [[nodiscard]] VariableNode* input() const noexcept { return _input; }
+  [[nodiscard]] VariableNode* input() const noexcept {
+    return staticInputs().front();
+  }
 };
 
 }  // namespace invariantgraph

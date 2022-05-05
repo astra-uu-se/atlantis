@@ -15,11 +15,10 @@ class IntPowNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::IntPowNode> node;
 
-  IntPowNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntPowNode>(_model, constraint, nodeFactory);
+        invariantgraph::IntPowNode>(*_model, constraint, nodeFactory);
   }
 };
 
@@ -66,7 +65,8 @@ TEST_F(IntPowNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  for (auto* const inputVariable : node->staticInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
   }
