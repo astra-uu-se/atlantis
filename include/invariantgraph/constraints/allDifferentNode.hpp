@@ -10,16 +10,7 @@ class AllDifferentNode : public SoftConstraintNode {
  public:
   explicit AllDifferentNode(std::vector<VariableNode*> variables,
                             VariableNode* r)
-      : SoftConstraintNode(variables, r) {
-    assert(staticInputs().size() == variables.size());
-#ifndef NDEBUG
-    for (size_t i = 0; i < variables.size(); ++i) {
-      assert(variables[i] = staticInputs()[i]);
-    }
-#endif
-    assert(r == nullptr || violation() == r);
-    assert(dynamicInputs().empty());
-  }
+      : SoftConstraintNode(variables, r) {}
 
   static std::unique_ptr<AllDifferentNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

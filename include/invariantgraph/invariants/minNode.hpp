@@ -13,17 +13,7 @@ class MinNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   MinNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : VariableDefiningNode({output}, variables) {
-    assert(definedVariables().size() == 1);
-    assert(definedVariables().front() == output);
-    assert(staticInputs().size() == variables.size());
-#ifndef NDEBUG
-    for (size_t i = 0; i < variables.size(); ++i) {
-      assert(variables[i] = staticInputs()[i]);
-    }
-#endif
-    assert(dynamicInputs().empty());
-  }
+      : VariableDefiningNode({output}, variables) {}
 
   ~MinNode() override = default;
 

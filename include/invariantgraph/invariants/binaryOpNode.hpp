@@ -17,14 +17,7 @@ class BinaryOpNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   BinaryOpNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : VariableDefiningNode({output}, {a, b}) {
-    assert(definedVariables().size() == 1);
-    assert(definedVariables().front() == output);
-    assert(staticInputs().size() == 2);
-    assert(staticInputs().front() == a);
-    assert(staticInputs().back() == b);
-    assert(dynamicInputs().empty());
-  }
+      : VariableDefiningNode({output}, {a, b}) {}
 
   ~BinaryOpNode() override = default;
 

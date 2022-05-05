@@ -20,16 +20,7 @@ class LinEqNode : public SoftConstraintNode {
 
   LinEqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
             Int c, VariableNode* r)
-      : SoftConstraintNode(variables, r), _coeffs(std::move(coeffs)), _c(c) {
-    assert(staticInputs().size() == variables.size());
-#ifndef NDEBUG
-    for (size_t i = 0; i < variables.size(); ++i) {
-      assert(variables[i] = staticInputs()[i]);
-    }
-#endif
-    assert(r == nullptr || violation() == r);
-    assert(dynamicInputs().empty());
-  }
+      : SoftConstraintNode(variables, r), _coeffs(std::move(coeffs)), _c(c) {}
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

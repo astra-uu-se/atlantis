@@ -30,19 +30,7 @@ class BoolClauseNode : public SoftConstraintNode {
                           std::vector<VariableNode*> bs, VariableNode* r)
       : SoftConstraintNode(merge(as, bs), r),
         _as(std::move(as)),
-        _bs(std::move(bs)) {
-    assert(staticInputs().size() == _as.size() + _bs.size());
-#ifndef NDEBUG
-    for (size_t i = 0; i < _as.size(); ++i) {
-      assert(_as[i] = staticInputs()[i]);
-    }
-    for (size_t i = 0; i < _bs.size(); ++i) {
-      assert(_bs[i] = staticInputs()[_as.size() + i]);
-    }
-#endif
-    assert(r == nullptr || violation() == r);
-    assert(dynamicInputs().empty());
-  }
+        _bs(std::move(bs)) {}
 
   static std::unique_ptr<BoolClauseNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
