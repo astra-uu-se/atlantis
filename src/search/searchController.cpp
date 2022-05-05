@@ -31,9 +31,7 @@ void search::SearchController::onSolution(const Assignment& assignment) {
 }
 
 void search::SearchController::onFinish() const {
-  if (_foundSolution) {
-    std::cout << "==========" << std::endl;
-  } else {
+  if (!_foundSolution) {
     std::cout << "=====UNKNOWN=====" << std::endl;
   }
 }
