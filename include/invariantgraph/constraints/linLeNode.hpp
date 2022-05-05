@@ -18,16 +18,7 @@ class LinLeNode : public SoftConstraintNode {
             Int bound, VariableNode* r = nullptr)
       : SoftConstraintNode(variables, r),
         _coeffs(std::move(coeffs)),
-        _bound(bound) {
-    assert(staticInputs().size() == variables.size());
-#ifndef NDEBUG
-    for (size_t i = 0; i < variables.size(); ++i) {
-      assert(variables[i] = staticInputs()[i]);
-    }
-#endif
-    assert(r == nullptr || violation() == r);
-    assert(dynamicInputs().empty());
-  }
+        _bound(bound) {}
 
   static std::unique_ptr<LinLeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

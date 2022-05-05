@@ -12,12 +12,7 @@ class SetInNode : public SoftConstraintNode {
  public:
   explicit SetInNode(VariableNode* input, std::vector<Int> values,
                      VariableNode* r)
-      : SoftConstraintNode({input}, r), _values(std::move(values)) {
-    assert(staticInputs().size() == 1);
-    assert(staticInputs().front() == input);
-    assert(r == nullptr || violation() == r);
-    assert(dynamicInputs().empty());
-  }
+      : SoftConstraintNode({input}, r), _values(std::move(values)) {}
 
   static std::unique_ptr<SetInNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

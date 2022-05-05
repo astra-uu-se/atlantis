@@ -10,13 +10,7 @@ namespace invariantgraph {
 class BoolXorNode : public SoftConstraintNode {
  public:
   BoolXorNode(VariableNode* a, VariableNode* b, VariableNode* r = nullptr)
-      : SoftConstraintNode({a, b}, r) {
-    assert(staticInputs().size() == 2);
-    assert(staticInputs().front() == a);
-    assert(staticInputs().back() == b);
-    assert(r == nullptr || violation() == r);
-    assert(dynamicInputs().empty());
-  }
+      : SoftConstraintNode({a, b}, r) {}
 
   static std::unique_ptr<BoolXorNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

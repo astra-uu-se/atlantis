@@ -21,17 +21,7 @@ class LinearNode : public VariableDefiningNode {
              VariableNode* output, Int offset = 0)
       : VariableDefiningNode({output}, variables),
         _coeffs(std::move(coeffs)),
-        _offset(offset) {
-    assert(definedVariables().size() == 1);
-    assert(definedVariables().front() == output);
-    assert(staticInputs().size() == variables.size());
-#ifndef NDEBUG
-    for (size_t i = 0; i < variables.size(); ++i) {
-      assert(variables[i] = staticInputs()[i]);
-    }
-#endif
-    assert(dynamicInputs().empty());
-  }
+        _offset(offset) {}
 
   ~LinearNode() override = default;
 

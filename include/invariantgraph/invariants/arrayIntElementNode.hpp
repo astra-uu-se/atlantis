@@ -17,12 +17,7 @@ class ArrayIntElementNode : public VariableDefiningNode {
 
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
-      : VariableDefiningNode({output}, {b}), _as(std::move(as)) {
-    assert(definedVariables().size() == 1);
-    assert(definedVariables().front() == output);
-    assert(staticInputs().size() == 1);
-    assert(staticInputs()[0] == b);
-  }
+      : VariableDefiningNode({output}, {b}), _as(std::move(as)) {}
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

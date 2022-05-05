@@ -10,13 +10,7 @@ namespace invariantgraph {
 class LeNode : public SoftConstraintNode {
  public:
   LeNode(VariableNode* a, VariableNode* b, VariableNode* r)
-      : SoftConstraintNode({a, b}, r) {
-    assert(staticInputs().size() == 2);
-    assert(staticInputs().front() == a);
-    assert(staticInputs().back() == b);
-    assert(r == nullptr || violation() == r);
-    assert(dynamicInputs().empty());
-  }
+      : SoftConstraintNode({a, b}, r) {}
 
   static std::unique_ptr<LeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

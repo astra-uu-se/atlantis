@@ -14,18 +14,7 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
 
   ArrayVarIntElementNode(VariableNode* b, std::vector<VariableNode*> as,
                          VariableNode* output)
-      : VariableDefiningNode({output}, {b}, {as}) {
-    assert(definedVariables().size() == 1);
-    assert(definedVariables().front() == output);
-    assert(staticInputs().size() == 1);
-    assert(staticInputs()[0] == b);
-    assert(dynamicInputs().size() == as.size());
-#ifndef NDEBUG
-    for (size_t i = 0; i < as.size(); ++i) {
-      assert(as[i] = dynamicInputs()[i]);
-    }
-#endif
-  }
+      : VariableDefiningNode({output}, {b}, {as}) {}
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
