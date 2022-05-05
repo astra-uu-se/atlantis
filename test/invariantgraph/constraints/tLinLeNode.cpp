@@ -95,10 +95,14 @@ class AbstractLinLeNodeTest : public NodeTestBase {
     // linear
     EXPECT_EQ(engine.numInvariants(), 1);
 
-    if constexpr (IsReified) {
-      EXPECT_TRUE(node->isReified());
-    } else {
+    if constexpr (!IsReified) {
       EXPECT_FALSE(node->isReified());
+      EXPECT_NE(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
+    } else {
+      EXPECT_TRUE(node->isReified());
+      EXPECT_EQ(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
     }
   }
 

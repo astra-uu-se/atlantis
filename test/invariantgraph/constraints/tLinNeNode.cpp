@@ -69,10 +69,14 @@ class AbstractLinNeNodeTest : public NodeTestBase {
     EXPECT_EQ(node->c(), 3);
     expectMarkedAsInput(node.get(), node->staticInputs());
 
-    if constexpr (IsReified) {
-      EXPECT_TRUE(node->isReified());
-    } else {
+    if constexpr (!IsReified) {
       EXPECT_FALSE(node->isReified());
+      EXPECT_NE(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
+    } else {
+      EXPECT_TRUE(node->isReified());
+      EXPECT_EQ(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
     }
   }
 

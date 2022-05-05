@@ -67,23 +67,36 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
 
   void construction() {
     EXPECT_EQ(node->as().size(), 2);
-    EXPECT_EQ(*node->as()[0]->variable(),
+    EXPECT_EQ(*node->as().at(0)->variable(),
               invariantgraph::VariableNode::FZNVariable(a));
-    EXPECT_EQ(*node->as()[1]->variable(),
+    EXPECT_EQ(*node->as().at(1)->variable(),
               invariantgraph::VariableNode::FZNVariable(b));
 
     EXPECT_EQ(node->bs().size(), 2);
-    EXPECT_EQ(*node->bs()[0]->variable(),
+    EXPECT_EQ(*node->bs().at(0)->variable(),
               invariantgraph::VariableNode::FZNVariable(c));
-    EXPECT_EQ(*node->bs()[1]->variable(),
+    EXPECT_EQ(*node->bs().at(1)->variable(),
               invariantgraph::VariableNode::FZNVariable(d));
+
+    EXPECT_EQ(node->staticInputs().size(),
+              node->as().size() + node->bs().size());
+
+    std::vector<invariantgraph::VariableNode*> expectedVars(node->as());
+    for (auto* const var : node->bs()) {
+      expectedVars.emplace_back(var);
+    }
+    EXPECT_EQ(expectedVars, node->staticInputs());
 
     expectMarkedAsInput(node.get(), node->as());
     expectMarkedAsInput(node.get(), node->bs());
-    if constexpr (IsReified) {
-      EXPECT_TRUE(node->isReified());
-    } else {
+    if constexpr (!IsReified) {
       EXPECT_FALSE(node->isReified());
+      EXPECT_NE(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
+    } else {
+      EXPECT_TRUE(node->isReified());
+      EXPECT_EQ(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
     }
   }
 

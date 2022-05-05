@@ -68,10 +68,14 @@ class AbstractLinEqNodeTest : public NodeTestBase {
     EXPECT_EQ(node->coeffs()[0], 1);
     EXPECT_EQ(node->coeffs()[1], 2);
     EXPECT_EQ(node->c(), 3);
-    if constexpr (IsReified) {
-      EXPECT_TRUE(node->isReified());
-    } else {
+    if constexpr (!IsReified) {
       EXPECT_FALSE(node->isReified());
+      EXPECT_NE(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
+    } else {
+      EXPECT_TRUE(node->isReified());
+      EXPECT_EQ(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
     }
   }
 

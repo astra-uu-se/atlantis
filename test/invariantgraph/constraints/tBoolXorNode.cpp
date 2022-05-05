@@ -47,10 +47,14 @@ class AbstractBoolXorNodeTest : public NodeTestBase {
     EXPECT_EQ(*node->b()->variable(),
               invariantgraph::VariableNode::FZNVariable(b));
     expectMarkedAsInput(node.get(), {node->a(), node->b()});
-    if constexpr (IsReified) {
-      EXPECT_TRUE(node->isReified());
-    } else {
+    if constexpr (!IsReified) {
       EXPECT_FALSE(node->isReified());
+      EXPECT_NE(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
+    } else {
+      EXPECT_TRUE(node->isReified());
+      EXPECT_EQ(node->violation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
     }
   }
 
