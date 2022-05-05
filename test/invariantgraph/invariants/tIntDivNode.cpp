@@ -16,11 +16,10 @@ class IntDivNodeTest : public NodeTestBase {
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
   std::unique_ptr<invariantgraph::IntDivNode> node;
 
-  IntDivNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntDivNode>(_model, constraint, nodeFactory);
+        invariantgraph::IntDivNode>(*_model, constraint, nodeFactory);
   }
 };
 

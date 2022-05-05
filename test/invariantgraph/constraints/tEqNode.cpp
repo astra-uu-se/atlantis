@@ -11,9 +11,10 @@ class EqNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::EqNode> node;
 
-  EqNodeTest() : NodeTestBase(model) {}
-
-  void SetUp() override { node = makeNode<invariantgraph::EqNode>(constraint); }
+  void SetUp() override {
+    setModel(&model);
+    node = makeNode<invariantgraph::EqNode>(constraint);
+  }
 };
 
 TEST_F(EqNodeTest, construction) {

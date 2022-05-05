@@ -17,9 +17,8 @@ class MaxNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::MaxNode> node;
 
-  MaxNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::MaxNode>(constraint);
   }
 };

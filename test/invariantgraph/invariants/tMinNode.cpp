@@ -17,9 +17,8 @@ class MinNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::MinNode> node;
 
-  MinNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::MinNode>(constraint);
   }
 };

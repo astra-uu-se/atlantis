@@ -25,7 +25,7 @@ class LinearNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::LinearNode> shouldRegisterView;
   std::unique_ptr<invariantgraph::LinearNode> shouldRegisterLinear;
 
-  LinearNodeTest() : NodeTestBase(model) {}
+  void SetUp() override { setModel(&model); }
 };
 
 TEST_F(LinearNodeTest, construction_should_register_view) {

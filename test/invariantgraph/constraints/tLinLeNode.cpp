@@ -19,9 +19,8 @@ class LinLeNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::LinLeNode> node;
 
-  LinLeNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::LinLeNode>(constraint);
   }
 };

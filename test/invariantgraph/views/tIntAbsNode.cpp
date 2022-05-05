@@ -14,9 +14,8 @@ class IntAbsNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::IntAbsNode> node;
 
-  IntAbsNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::IntAbsNode>(constraint);
   }
 };

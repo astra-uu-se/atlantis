@@ -16,9 +16,8 @@ class ArrayBoolAndNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::ArrayBoolAndNode> node;
 
-  ArrayBoolAndNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::ArrayBoolAndNode>(constraint);
   }
 };

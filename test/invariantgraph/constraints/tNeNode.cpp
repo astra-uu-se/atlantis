@@ -13,9 +13,10 @@ class NeNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::NeNode> node;
 
-  explicit NeNodeTest() : NodeTestBase(model) {}
-
-  void SetUp() override { node = makeNode<invariantgraph::NeNode>(constraint); }
+  void SetUp() override {
+    setModel(&model);
+    node = makeNode<invariantgraph::NeNode>(constraint);
+  }
 };
 
 TEST_F(NeNodeTest, construction) {

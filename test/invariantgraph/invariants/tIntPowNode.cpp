@@ -15,11 +15,10 @@ class IntPowNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::IntPowNode> node;
 
-  IntPowNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntPowNode>(_model, constraint, nodeFactory);
+        invariantgraph::IntPowNode>(*_model, constraint, nodeFactory);
   }
 };
 

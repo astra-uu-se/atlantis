@@ -20,9 +20,8 @@ class AllDifferentImplicitNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::AllDifferentImplicitNode> node;
 
-  AllDifferentImplicitNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::AllDifferentImplicitNode>(constraint);
   }
 };

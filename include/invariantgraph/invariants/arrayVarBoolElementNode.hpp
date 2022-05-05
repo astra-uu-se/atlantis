@@ -14,17 +14,17 @@ class ArrayVarBoolElementNode : public VariableDefiningNode {
 
   ArrayVarBoolElementNode(VariableNode* b, std::vector<VariableNode*> as,
                           VariableNode* output)
-      : VariableDefiningNode({output}, {as}, {b}) {
+      : VariableDefiningNode({output}, {b}, {as}) {
     assert(definedVariables().size() == 1);
     assert(definedVariables().front() == output);
-    assert(staticInputs().size() == as.size());
+    assert(staticInputs().size() == 1);
+    assert(staticInputs()[0] == b);
+    assert(dynamicInputs().size() == as.size());
 #ifndef NDEBUG
     for (size_t i = 0; i < as.size(); ++i) {
-      assert(as[i] = staticInputs()[i]);
+      assert(as[i] = dynamicInputs()[i]);
     }
 #endif
-    assert(dynamicInputs().size() == 1);
-    assert(dynamicInputs()[0] == b);
   }
 
   void createDefinedVariables(
