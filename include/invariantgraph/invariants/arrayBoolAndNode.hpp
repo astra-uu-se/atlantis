@@ -16,17 +16,7 @@ class ArrayBoolAndNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   ArrayBoolAndNode(std::vector<VariableNode*> as, VariableNode* output)
-      : VariableDefiningNode({output}, as) {
-    assert(definedVariables().size() == 1);
-    assert(definedVariables().front() == output);
-    assert(staticInputs().size() == as.size());
-#ifndef NDEBUG
-    for (size_t i = 0; i < as.size(); ++i) {
-      assert(as[i] = staticInputs()[i]);
-    }
-#endif
-    assert(dynamicInputs().empty());
-  }
+      : VariableDefiningNode({output}, as) {}
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
