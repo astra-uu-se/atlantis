@@ -12,7 +12,7 @@ class ScheduleLoopTest : public testing::Test {
   UInt numberOfMonteCarloSimulations = 10;
   double minimumTemperature = 2.6;
 
-  UInt numIterations = 2;
+  UInt maximumConsecutiveFutileIterations = 2;
 
   std::unique_ptr<AnnealingSchedule> schedule;
 
@@ -20,7 +20,7 @@ class ScheduleLoopTest : public testing::Test {
     schedule = AnnealerFacade::loop(
         AnnealerFacade::cooling(coolingRate, minimumTemperature,
                                 numberOfMonteCarloSimulations),
-        numIterations);
+        maximumConsecutiveFutileIterations);
     schedule->start(initialTemp);
   }
 };
@@ -43,9 +43,23 @@ TEST_F(ScheduleLoopTest,
   EXPECT_EQ(schedule->temperature(), initialTemp);
 }
 
-TEST_F(ScheduleLoopTest, frozen_if_number_of_iterations_is_reached) {
+TEST_F(ScheduleLoopTest, frozen_if_consecutive_rounds_do_not_improve) {
   schedule->nextRound({});
   schedule->nextRound({});
 
+  EXPECT_TRUE(schedule->frozen());
+}
+
+TEST_F(ScheduleLoopTest, not_frozen_if_futile_rounds_are_broken_up_by_improving_rounds) {
+  schedule->nextRound({});
+
+  RoundStatistics improvingRoundStats{};
+  improvingRoundStats.bestCostOfPreviousRound = 10;
+  improvingRoundStats.bestCostOfThisRound = 5;
+  schedule->nextRound(improvingRoundStats);
+  EXPECT_FALSE(schedule->frozen());
+  schedule->nextRound({});
+  EXPECT_FALSE(schedule->frozen());
+  schedule->nextRound({});
   EXPECT_TRUE(schedule->frozen());
 }

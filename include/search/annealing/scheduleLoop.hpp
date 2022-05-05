@@ -6,18 +6,22 @@
 
 namespace search {
 
+/**
+ * Executes an inner schedule until a maximum number of consecutive rounds were
+ * don't improve the assignment compared to the previous round.
+ */
 class ScheduleLoop : public AnnealingSchedule {
  private:
   std::unique_ptr<AnnealingSchedule> _schedule;
-  UInt _numberOfIterations;
+  UInt _maximumConsecutiveFutileRounds;
 
-  UInt _executedIterations{0};
+  UInt _consecutiveFutileIterations{0};
 
  public:
   explicit ScheduleLoop(std::unique_ptr<AnnealingSchedule> schedule,
-                        UInt numberOfIterations)
+                        UInt maximumConsecutiveFutileRounds)
       : _schedule(std::move(schedule)),
-        _numberOfIterations(numberOfIterations) {}
+        _maximumConsecutiveFutileRounds(maximumConsecutiveFutileRounds) {}
 
   ~ScheduleLoop() override = default;
 
