@@ -2,7 +2,7 @@
 
 void search::ScheduleLoop::start(double initialTemperature) {
   _schedule->start(initialTemperature);
-  _executedIterations = 0;
+  _consecutiveFutileIterations = 0;
 }
 
 void search::ScheduleLoop::nextRound(
@@ -13,7 +13,12 @@ void search::ScheduleLoop::nextRound(
   _schedule->nextRound(statistics);
 
   if (_schedule->frozen()) {
-    _executedIterations++;
+    if (statistics.roundImprovedOnPrevious()) {
+      _consecutiveFutileIterations = 0;
+    } else {
+      _consecutiveFutileIterations++;
+    }
+
     _schedule->start(temp);
   }
 }
@@ -25,5 +30,5 @@ UInt search::ScheduleLoop::numberOfMonteCarloSimulations() {
 }
 
 bool search::ScheduleLoop::frozen() {
-  return _executedIterations >= _numberOfIterations;
+  return _consecutiveFutileIterations >= _maximumConsecutiveFutileRounds;
 }

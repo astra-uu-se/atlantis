@@ -22,10 +22,8 @@ class Annealer {
   RoundStatistics _statistics{};
 
  public:
-  Annealer(const Assignment& assignment, RandomProvider& random, AnnealingSchedule& schedule)
-      : _assignment(assignment),
-        _random(random),
-        _schedule(schedule) {}
+  Annealer(const Assignment& assignment, RandomProvider& random,
+           AnnealingSchedule& schedule);
 
   virtual ~Annealer() = default;
 
@@ -54,27 +52,17 @@ class Annealer {
    */
   template <unsigned int N>
   bool acceptMove(Move<N> move) {
-    // TODO: Weights for the objective and violation.
-    Int assignmentCost = _assignment.cost().evaluate(1, 1);
-    Int moveCost = move.probe(_assignment).evaluate(1, 1);
-    Int delta = moveCost - assignmentCost;
-
-    if (delta <= 0) {
-      return true;
-    } else {
-      _statistics.uphillAttemptedMoves++;
-
-      if (accept(delta)) {
-        _statistics.uphillAcceptedMoves++;
-        return true;
-      }
-    }
-
-    return false;
+    Int moveCost = evaluate(move.probe(_assignment));
+    return accept(moveCost);
   }
 
  protected:
-  [[nodiscard]] virtual bool accept(Int delta) const;
+  bool accept(Int moveCost);
+
+  inline static Int evaluate(Cost cost) {
+    // TODO: Weights for the objective and violation.
+    return cost.evaluate(1, 1);
+  }
 };
 
 }  // namespace search

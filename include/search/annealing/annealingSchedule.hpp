@@ -7,8 +7,15 @@ struct RoundStatistics {
   UInt uphillAttemptedMoves;
   UInt uphillAcceptedMoves;
 
+  Int bestCostOfPreviousRound;
+  Int bestCostOfThisRound;
+
   [[nodiscard]] inline double uphillAcceptanceRatio() const noexcept {
     return static_cast<double>(uphillAcceptedMoves) / static_cast<double>(uphillAttemptedMoves);
+  }
+
+  [[nodiscard]] inline bool roundImprovedOnPrevious() const noexcept {
+    return bestCostOfThisRound < bestCostOfPreviousRound;
   }
 };
 

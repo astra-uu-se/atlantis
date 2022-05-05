@@ -88,16 +88,16 @@ static std::unique_ptr<AnnealingSchedule> parseScheduleSequence(
 }
 
 static std::unique_ptr<AnnealingSchedule> parseScheduleLoop(const json& value) {
-  if (!value.is_object() || !value.contains("numberOfIterations") ||
+  if (!value.is_object() || !value.contains("maximumConsecutiveFutileRounds") ||
       !value.contains("inner") ||
-      !value["numberOfIterations"].is_number_unsigned() ||
+      !value["maximumConsecutiveFutileRounds"].is_number_unsigned() ||
       !value["inner"].is_object() || value["inner"].size() != 1) {
     throw AnnealingScheduleCreationError(
         "Invalid JSON for a schedule loop. Expected an object with the fields "
-        "'numberOfIterations' (uint) and 'inner' (schedule).");
+        "'maximumConsecutiveFutileRounds' (uint) and 'inner' (schedule).");
   }
 
-  auto iterationCount = value["numberOfIterations"].get<UInt>();
+  auto iterationCount = value["maximumConsecutiveFutileRounds"].get<UInt>();
   auto it = value["inner"].begin();
   auto schedule = parseSchedule(it.key(), it.value());
   return AnnealerFacade::loop(std::move(schedule), iterationCount);
