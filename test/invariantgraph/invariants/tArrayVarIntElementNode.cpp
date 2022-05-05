@@ -21,9 +21,8 @@ class ArrayVarIntElementNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::ArrayVarIntElementNode> node;
 
-  ArrayVarIntElementNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::ArrayVarIntElementNode>(constraint);
   }
 };

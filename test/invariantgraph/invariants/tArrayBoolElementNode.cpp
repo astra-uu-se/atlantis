@@ -20,11 +20,10 @@ class ArrayBoolElementNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::ArrayIntElementNode> node;
 
-  ArrayBoolElementNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = invariantgraph::ArrayBoolElementNode::fromModelConstraint(
-        model, constraint, nodeFactory);
+        *_model, constraint, nodeFactory);
   }
 };
 

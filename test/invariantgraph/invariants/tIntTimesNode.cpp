@@ -16,11 +16,10 @@ class IntTimesNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::IntTimesNode> node;
 
-  IntTimesNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntTimesNode>(_model, constraint, nodeFactory);
+        invariantgraph::IntTimesNode>(*_model, constraint, nodeFactory);
   }
 };
 

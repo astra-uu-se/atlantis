@@ -19,9 +19,8 @@ class BoolClauseNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::BoolClauseNode> node;
 
-  BoolClauseNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::BoolClauseNode>(constraint);
   }
 };

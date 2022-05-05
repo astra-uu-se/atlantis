@@ -14,9 +14,8 @@ class Bool2IntNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::Bool2IntNode> node;
 
-  Bool2IntNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::Bool2IntNode>(constraint);
   }
 };
