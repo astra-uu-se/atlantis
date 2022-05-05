@@ -1,3 +1,5 @@
+include "nosets.mzn";
+
 predicate int_max(var int: a, var int: b, var int: c) = array_int_maximum(c, [a, b]);
 predicate int_min(var int: a, var int: b, var int: c) = array_int_minimum(c, [a, b]);
 
@@ -20,72 +22,6 @@ predicate bool_xor(var bool: a, var bool: b, var bool: r) =
     let { var 0..1: aInt;
           var 0..1: bInt } in
     r <-> (aInt + bInt = 1);
-
-%%%%%%%%%%%%%%%%%%%
-% Set constraints %
-%%%%%%%%%%%%%%%%%%%
-predicate array_set_element(var int: b, array [int] of set of int: as, var set of int: c)
-    = abort("Set variables are unsupported");
-
-predicate array_var_set_element(var int: b, array [int] of var set of int: as, var set of int: c)
-    = abort("Set variables are unsupported");
-
-predicate set_card(var set of int: S, var int: x)
-    = abort("Set variables are unsupported");
-
-predicate set_diff(var set of int: x, var set of int: y, var set of int: r)
-    = abort("Set variables are unsupported");
-
-predicate set_eq(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_eq_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_in(var int: x, var set of int: S)
-    = abort("Set variables are unsupported");
-
-predicate set_in_reif(var int: x, var set of int: S, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_intersect(var set of int: x, var set of int: y, var set of int: r)
-    = abort("Set variables are unsupported");
-
-predicate set_le(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_le_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_lt(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_lt_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_ne(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_ne_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_subset(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_subset_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_superset(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_superset_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_symdiff(var set of int: x, var set of int: y, var set of int: r)
-    = abort("Set variables are unsupported");
-
-predicate set_union(var set of int: x, var set of int: y, var set of int: r)
-    = abort("Set variables are unsupported");
 
 %%%%%%%%%%%%%%%%%%%%%
 % Float constraints %
