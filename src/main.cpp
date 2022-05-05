@@ -32,6 +32,10 @@ int main(int argc, char* argv[]) {
     // clang-format off
     options.add_options()
       (
+        "a,intermediate-solutions",
+        "Ignored, but present because used in the MiniZinc challenge."
+      )
+      (
         "no-timeout",
         "Run the solver without a timeout. This means the solver needs to be stopped with a signal, which means no statistics will be printed."
       )
@@ -46,7 +50,7 @@ int main(int argc, char* argv[]) {
         cxxopts::value<long>()->default_value("-1")
       )
       (
-        "a,annealing-schedule",
+        "annealing-schedule",
         "A file path to the annealing schedule definition.",
         cxxopts::value<std::filesystem::path>()
       )
