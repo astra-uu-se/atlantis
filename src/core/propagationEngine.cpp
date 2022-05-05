@@ -356,11 +356,18 @@ void PropagationEngine::computeBounds() {
 
     invariantQueue.erase(invariantId);
 
+    assert(!invariantQueue.contains(invariantId));
+
 #ifndef NDEBUG
+    for (const InvariantId invId : invariantQueue) {
+      // If the following assertion fails, then inputsToCompute[i] was updated
+      // before removing invariant i:
+      assert(invId != invariantId);
+    }
     for (const InvariantId invId : invariantQueue) {
       assert(inputsToCompute[invariantId] < inputsToCompute[invId] ||
              (inputsToCompute[invariantId] == inputsToCompute[invId] &&
-              invariantId < invId));
+              size_t(invariantId) <= size_t(invId)));
     }
 #endif
     _store.invariant(invariantId).updateBounds(*this, true);
@@ -369,11 +376,14 @@ void PropagationEngine::computeBounds() {
          _propGraph.variablesDefinedBy(invariantId)) {
       for (const InvariantId listeningInvariantId :
            listeningInvariants(outputVarId)) {
-        --inputsToCompute[listeningInvariantId];
-
-        if (invariantQueue.find(listeningInvariantId) != invariantQueue.end()) {
+        // Remove from the data structure must happen before updating
+        // inputsToCompute
+        if (invariantQueue.contains(listeningInvariantId)) {
           invariantQueue.erase(listeningInvariantId);
         }
+        assert(listeningInvariantId != invariantId);
+        --inputsToCompute[listeningInvariantId];
+
         if (inputsToCompute[listeningInvariantId] >= 0) {
           invariantQueue.emplace(listeningInvariantId);
         }

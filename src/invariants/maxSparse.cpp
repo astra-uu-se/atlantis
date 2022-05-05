@@ -5,6 +5,7 @@ MaxSparse::MaxSparse(std::vector<VarId> varArray, VarId y)
       _varArray(std::move(varArray)),
       _y(y),
       _localPriority(_varArray.size()) {
+  assert(!_varArray.empty());
   _modifiedVars.reserve(_varArray.size());
 }
 

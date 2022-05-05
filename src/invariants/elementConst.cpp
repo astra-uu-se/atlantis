@@ -14,13 +14,18 @@ void ElementConst::registerVars(Engine& engine) {
 }
 
 void ElementConst::updateBounds(Engine& engine, bool widenOnly) {
+  const Int indexLb = std::max(Int(1), engine.lowerBound(_index));
+  const Int indexUb = std::min(static_cast<Int>(_array.size()) - Int(1),
+                               engine.upperBound(_index));
+
+  if (indexLb > indexUb) {
+    return;
+  }
+
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  for (Int i = std::max(Int(1), engine.lowerBound(_index));
-       i <= std::min(static_cast<Int>(_array.size()) - Int(1),
-                     engine.upperBound(_index));
-       ++i) {
+  for (Int i = indexLb; i <= indexUb; ++i) {
     lb = std::min(lb, _array[i]);
     ub = std::max(ub, _array[i]);
   }
