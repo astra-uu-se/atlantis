@@ -17,8 +17,8 @@ class BoolNotNode : public VariableDefiningNode {
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
-  BoolNotNode(VariableNode* input, VariableNode* output)
-      : VariableDefiningNode({output}, {input}), _input(input) {}
+  BoolNotNode(VariableNode* staticInput, VariableNode* output)
+      : VariableDefiningNode({output}, {staticInput}) {}
 
   ~BoolNotNode() override = default;
 
@@ -28,7 +28,9 @@ class BoolNotNode : public VariableDefiningNode {
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
-  [[nodiscard]] VariableNode* input() const noexcept { return _input; }
+  [[nodiscard]] VariableNode* input() const noexcept {
+    return staticInputs().front();
+  }
 };
 
 }  // namespace invariantgraph

@@ -25,6 +25,8 @@ static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
   return variableMap;
 }
 
+void invariantgraph::InvariantGraph::breakCycles() {}
+
 invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     Engine& engine) {
   engine.open();
@@ -45,9 +47,15 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     auto* const node = unregisteredNodes.front();
     unregisteredNodes.pop();
     assert(visitedNodes.contains(node));
-    // if node->inputs().size() == 1, then node is a view:
-    assert(node->inputs().size() != 1 ||
-           variableMap.contains(node->inputs().front()));
+    // If the node only defines a single variable, then it is a view:
+    assert((node->dynamicInputs().size() == 0 &&
+            node->staticInputs().size() != 1) ||
+           variableMap.contains(node->staticInputs().front()));
+#ifndef NDEBUG
+    for (auto* const definedVariable : node->definedVariables()) {
+      assert(!variableMap.contains(definedVariable));
+    }
+#endif
     node->createDefinedVariables(engine, variableMap);
     for (auto* const definedVariable : node->definedVariables()) {
       definedVariables.emplace(definedVariable);
@@ -68,8 +76,10 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     }
 #endif
     node->registerWithEngine(engine, variableMap);
-    if (auto* const violationNode = node->violation()) {
-      violations.push_back(variableMap.at(violationNode));
+    if (!node->isReified()) {
+      if (auto* const violationNode = node->violation()) {
+        violations.push_back(variableMap.at(violationNode));
+      }
     }
   }
 

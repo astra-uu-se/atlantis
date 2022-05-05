@@ -17,23 +17,22 @@ class MaxNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::MaxNode> node;
 
-  MaxNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::MaxNode>(constraint);
   }
 };
 
 TEST_F(MaxNodeTest, construction) {
-  EXPECT_EQ(node->variables().size(), 2);
-  EXPECT_EQ(*node->variables()[0]->variable(),
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  EXPECT_EQ(*node->staticInputs()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->variables()[1]->variable(),
+  EXPECT_EQ(*node->staticInputs()[1]->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
   EXPECT_EQ(node->definedVariables().size(), 1);
   EXPECT_EQ(*node->definedVariables()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(c));
-  expectMarkedAsInput(node.get(), node->variables());
+  expectMarkedAsInput(node.get(), node->staticInputs());
 }
 
 TEST_F(MaxNodeTest, application) {
@@ -71,7 +70,8 @@ TEST_F(MaxNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  for (auto* const inputVariable : node->staticInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
   }

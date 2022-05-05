@@ -14,9 +14,8 @@ class Bool2IntNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::Bool2IntNode> node;
 
-  Bool2IntNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::Bool2IntNode>(constraint);
   }
 };
@@ -64,11 +63,11 @@ TEST_F(Bool2IntNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
   engine.close();
 
-  EXPECT_EQ(node->inputs().size(), 1);
-  EXPECT_TRUE(_variableMap.contains(node->inputs().front()));
+  EXPECT_EQ(node->staticInputs().size(), 1);
+  EXPECT_TRUE(_variableMap.contains(node->staticInputs().front()));
   EXPECT_TRUE(_variableMap.contains(node->definedVariables().at(0)));
 
-  const VarId input = _variableMap.at(node->inputs().front());
+  const VarId input = _variableMap.at(node->staticInputs().front());
   const VarId outputId = _variableMap.at(node->definedVariables().at(0));
 
   for (Int value = engine.lowerBound(input); value <= engine.upperBound(input);

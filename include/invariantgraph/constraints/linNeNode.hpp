@@ -6,34 +6,26 @@
 
 namespace invariantgraph {
 
-class IntLinNeNode : public SoftConstraintNode {
+class LinNeNode : public SoftConstraintNode {
  private:
   std::vector<Int> _coeffs;
-  std::vector<VariableNode*> _variables;
   Int _c;
   VarId _sumVarId{NULL_ID};
 
  public:
-  static std::unique_ptr<IntLinNeNode> fromModelConstraint(
+  static std::unique_ptr<LinNeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
-  IntLinNeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-               Int c)
-      : SoftConstraintNode(variables),
-        _coeffs(std::move(coeffs)),
-        _variables(std::move(variables)),
-        _c(c) {}
+  LinNeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
+            Int c, VariableNode* r = nullptr)
+      : SoftConstraintNode(variables, r), _coeffs(std::move(coeffs)), _c(c) {}
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
-
-  [[nodiscard]] const std::vector<VariableNode*>& variables() const {
-    return _variables;
-  }
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 

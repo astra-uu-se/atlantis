@@ -21,9 +21,8 @@ class ArrayVarIntElementNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::ArrayVarIntElementNode> node;
 
-  ArrayVarIntElementNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = makeNode<invariantgraph::ArrayVarIntElementNode>(constraint);
   }
 };
@@ -34,15 +33,15 @@ TEST_F(ArrayVarIntElementNodeTest, construction) {
   EXPECT_EQ(node->definedVariables().size(), 1);
   EXPECT_EQ(*node->definedVariables()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(y));
-  expectMarkedAsInput(node.get(), {node->as()});
+  expectMarkedAsInput(node.get(), {node->dynamicInputs()});
   expectMarkedAsInput(node.get(), {node->b()});
 
-  EXPECT_EQ(node->as().size(), 3);
-  EXPECT_EQ(node->as()[0]->variable(),
+  EXPECT_EQ(node->dynamicInputs().size(), 3);
+  EXPECT_EQ(node->dynamicInputs().at(0)->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(node->as()[1]->variable(),
+  EXPECT_EQ(node->dynamicInputs().at(1)->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
-  EXPECT_EQ(node->as()[2]->variable(),
+  EXPECT_EQ(node->dynamicInputs().at(2)->variable(),
             invariantgraph::VariableNode::FZNVariable(c));
 }
 
@@ -77,8 +76,11 @@ TEST_F(ArrayVarIntElementNodeTest, propagation) {
   node->createDefinedVariables(engine, _variableMap);
   node->registerWithEngine(engine, _variableMap);
 
-  EXPECT_EQ(node->inputs().size(), 4);
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 1);
+  EXPECT_TRUE(_variableMap.contains(node->staticInputs().front()));
+
+  EXPECT_EQ(node->dynamicInputs().size(), 3);
+  for (auto* const inputVariable : node->dynamicInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
   }
 
@@ -86,8 +88,8 @@ TEST_F(ArrayVarIntElementNodeTest, propagation) {
   const VarId outputId = _variableMap.at(node->definedVariables()[0]);
 
   std::vector<VarId> inputs;
-  inputs.emplace_back(_variableMap.at(node->b()));
-  for (auto* const varNode : node->as()) {
+  inputs.emplace_back(_variableMap.at(node->staticInputs().front()));
+  for (auto* const varNode : node->dynamicInputs()) {
     inputs.emplace_back(_variableMap.at(varNode));
   }
 

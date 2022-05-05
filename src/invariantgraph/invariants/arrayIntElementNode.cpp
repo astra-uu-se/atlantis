@@ -28,6 +28,6 @@ void invariantgraph::ArrayIntElementNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   assert(variableMap.contains(definedVariables()[0]));
 
-  engine.makeInvariant<ElementConst>(variableMap.at(_b), _as,
+  engine.makeInvariant<ElementConst>(variableMap.at(b()), _as,
                                      variableMap.at(definedVariables()[0]));
 }

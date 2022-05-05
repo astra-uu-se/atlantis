@@ -15,7 +15,7 @@ invariantgraph::IntAbsNode::fromModelConstraint(
 
 void invariantgraph::IntAbsNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  auto outputVar = engine.makeIntView<::IntAbsView>(variableMap.at(_input));
+  auto outputVar = engine.makeIntView<::IntAbsView>(variableMap.at(input()));
   variableMap.emplace(definedVariables()[0], outputVar);
 }
 

@@ -1,25 +1,20 @@
 #pragma once
 
 #include <fznparser/model.hpp>
+#include <utility>
 
-#include "../structure.hpp"
+#include "invariantgraph/structure.hpp"
 
 namespace invariantgraph {
 
-/**
- * Invariant that encodes y <- a ⊕ b, where ⊕ is some binary operation.
- */
-class BinaryOpNode : public VariableDefiningNode {
+class LeNode : public SoftConstraintNode {
  public:
-  template <typename T>
-  static std::unique_ptr<T> fromModelConstraint(
+  LeNode(VariableNode* a, VariableNode* b, VariableNode* r)
+      : SoftConstraintNode({a, b}, r) {}
+
+  static std::unique_ptr<LeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
-
-  BinaryOpNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : VariableDefiningNode({output}, {a, b}) {}
-
-  ~BinaryOpNode() override = default;
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
@@ -33,10 +28,6 @@ class BinaryOpNode : public VariableDefiningNode {
   [[nodiscard]] VariableNode* b() const noexcept {
     return staticInputs().back();
   }
-
- protected:
-  virtual void createInvariant(Engine& engine, VarId a, VarId b,
-                               VarId output) const = 0;
 };
 
 }  // namespace invariantgraph

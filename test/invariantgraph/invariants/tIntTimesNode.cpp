@@ -16,11 +16,10 @@ class IntTimesNodeTest : public NodeTestBase {
 
   std::unique_ptr<invariantgraph::IntTimesNode> node;
 
-  IntTimesNodeTest() : NodeTestBase(model) {}
-
   void SetUp() override {
+    setModel(&model);
     node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntTimesNode>(_model, constraint, nodeFactory);
+        invariantgraph::IntTimesNode>(*_model, constraint, nodeFactory);
   }
 };
 
@@ -70,7 +69,8 @@ TEST_F(IntTimesNodeTest, propagation) {
   node->registerWithEngine(engine, _variableMap);
 
   std::vector<VarId> inputs;
-  for (auto* const inputVariable : node->inputs()) {
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  for (auto* const inputVariable : node->staticInputs()) {
     EXPECT_TRUE(_variableMap.contains(inputVariable));
     inputs.emplace_back(_variableMap.at(inputVariable));
   }

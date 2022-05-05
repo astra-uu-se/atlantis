@@ -54,8 +54,7 @@ void PropagationEngine::close() {
     // Assert that if search variable varId is modified,
     // then it is in the set of modified search variables
     assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
-           (_modifiedSearchVariables.find(varId) !=
-            _modifiedSearchVariables.end()));
+           _modifiedSearchVariables.contains(varId));
   }
 #endif
 
@@ -211,8 +210,7 @@ void PropagationEngine::endProbe() {
           // Assert that if decision variable varId is modified,
           // then it is in the set of modified decision variables
           assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
-                 (_modifiedSearchVariables.find(varId) !=
-                  _modifiedSearchVariables.end()));
+                 _modifiedSearchVariables.contains(varId));
         }
       }
 #endif
@@ -248,8 +246,7 @@ void PropagationEngine::endCommit() {
         // Assert that if decision variable varId is modified,
         // then it is in the set of modified decision variables
         assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
-               (_modifiedSearchVariables.find(varId) !=
-                _modifiedSearchVariables.end()));
+               _modifiedSearchVariables.contains(varId));
       }
     }
 #endif
@@ -355,6 +352,7 @@ void PropagationEngine::computeBounds() {
     assert(inputsToCompute[invariantId] >= 0);
 
     invariantQueue.erase(invariantId);
+    assert(!invariantQueue.contains(invariantId));
 
     assert(!invariantQueue.contains(invariantId));
 

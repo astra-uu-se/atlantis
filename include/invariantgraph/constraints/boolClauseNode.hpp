@@ -5,6 +5,19 @@
 
 #include "invariantgraph/structure.hpp"
 
+static std::vector<invariantgraph::VariableNode*> merge(
+    const std::vector<invariantgraph::VariableNode*>& as,
+    const std::vector<invariantgraph::VariableNode*>& bs) {
+  std::vector<invariantgraph::VariableNode*> output(as.size() + bs.size());
+  for (size_t i = 0; i < as.size(); ++i) {
+    output[i] = as[i];
+  }
+  for (size_t i = 0; i < bs.size(); ++i) {
+    output[as.size() + i] = bs[i];
+  }
+  return output;
+}
+
 namespace invariantgraph {
 class BoolClauseNode : public SoftConstraintNode {
  private:
@@ -14,12 +27,10 @@ class BoolClauseNode : public SoftConstraintNode {
 
  public:
   explicit BoolClauseNode(std::vector<VariableNode*> as,
-                          std::vector<VariableNode*> bs)
-      : SoftConstraintNode({as}), _as(std::move(as)), _bs(std::move(bs)) {
-    for (const auto& b : _bs) {
-      markAsInput(b);
-    }
-  }
+                          std::vector<VariableNode*> bs, VariableNode* r)
+      : SoftConstraintNode(merge(as, bs), r),
+        _as(std::move(as)),
+        _bs(std::move(bs)) {}
 
   static std::unique_ptr<BoolClauseNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

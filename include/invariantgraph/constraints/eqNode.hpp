@@ -8,23 +8,9 @@
 namespace invariantgraph {
 
 class EqNode : public SoftConstraintNode {
- private:
-  VariableNode* _a;
-  VariableNode* _b;
-
-  inline static auto violationUb = [](auto a, auto b) {
-    const auto& [al, au] = a->bounds();
-    const auto& [bl, bu] = b->bounds();
-
-    auto diff1 = std::abs(al - bu);
-    auto diff2 = std::abs(au - bl);
-
-    return std::max(diff1, diff2);
-  };
-
  public:
-  EqNode(VariableNode* a, VariableNode* b)
-      : SoftConstraintNode({a, b}), _a(a), _b(b) {}
+  EqNode(VariableNode* a, VariableNode* b, VariableNode* r = nullptr)
+      : SoftConstraintNode({a, b}, r) {}
 
   static std::unique_ptr<EqNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
@@ -36,8 +22,12 @@ class EqNode : public SoftConstraintNode {
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
-  [[nodiscard]] VariableNode* a() const noexcept { return _a; }
-  [[nodiscard]] VariableNode* b() const noexcept { return _b; }
+  [[nodiscard]] VariableNode* a() const noexcept {
+    return staticInputs().front();
+  }
+  [[nodiscard]] VariableNode* b() const noexcept {
+    return staticInputs().back();
+  }
 };
 
 }  // namespace invariantgraph
