@@ -27,10 +27,9 @@ static std::string formatDuration(std::chrono::nanoseconds duration) {
 
 search::SearchStatistics search::SearchProcedure::run(
     SearchController& controller, search::Annealer& annealer) {
-  auto exploredLocals = std::make_unique<CounterStatistic>("Locals");
+  auto rounds = std::make_unique<CounterStatistic>("Rounds");
   auto initialisations = std::make_unique<CounterStatistic>("Initialisations");
   auto moves = std::make_unique<CounterStatistic>("Moves");
-  auto solutions = std::make_unique<CounterStatistic>("Solutions");
 
   auto startTime = std::chrono::steady_clock::now();
 
@@ -55,22 +54,20 @@ search::SearchStatistics search::SearchProcedure::run(
         if (madeMove && _assignment.satisfiesConstraints()) {
           controller.onSolution(_assignment);
           _objective.tighten();
-          solutions->increment();
         }
       }
 
       annealer.nextRound();
-      exploredLocals->increment();
+      rounds->increment();
     }
   } while (controller.shouldRun(_assignment));
 
   auto duration = std::chrono::steady_clock::now() - startTime;
 
   std::vector<std::unique_ptr<Statistic>> statistics;
-  statistics.push_back(std::move(exploredLocals));
+  statistics.push_back(std::move(rounds));
   statistics.push_back(std::move(initialisations));
   statistics.push_back(std::move(moves));
-  statistics.push_back(std::move(solutions));
   statistics.push_back(std::make_unique<ValueStatistic<std::string>>(
       "Search time", formatDuration(duration)));
 
