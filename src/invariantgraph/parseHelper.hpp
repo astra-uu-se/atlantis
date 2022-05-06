@@ -30,6 +30,9 @@ std::vector<Int> boolVectorAsIntVector(const fznparser::FZNModel& model,
 Int integerValue(const fznparser::FZNModel& model,
                  const FZNConstraint::Argument& argument);
 
+bool booleanValue(const fznparser::FZNModel& model,
+                  const FZNConstraint::Argument& argument);
+
 fznparser::Set<Int> integerSet(const fznparser::FZNModel& model,
                                const FZNConstraint::Argument& argument);
 

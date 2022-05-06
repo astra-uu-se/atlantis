@@ -13,18 +13,28 @@ invariantgraph::ArrayBoolAndNode::fromModelConstraint(
   assert(constraint.arguments.size() == 2);
 
   auto as = mappedVariableVector(model, constraint.arguments[0], variableMap);
-  auto r = mappedVariable(constraint.arguments[1], variableMap);
-
-  return std::make_unique<invariantgraph::ArrayBoolAndNode>(as, r);
+  if (std::holds_alternative<bool>(constraint.arguments[1])) {
+    auto value = std::get<bool>(constraint.arguments[1]);
+    return std::make_unique<invariantgraph::ArrayBoolAndNode>(as, value);
+  } else {
+    auto r = mappedVariable(constraint.arguments[1], variableMap);
+    return std::make_unique<invariantgraph::ArrayBoolAndNode>(as, r);
+  }
 }
 
 void invariantgraph::ArrayBoolAndNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   if (_sumVarId == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(!variableMap.contains(definedVariables()[0]));
-    variableMap.emplace(definedVariables()[0],
-                        engine.makeIntView<Violation2BoolView>(_sumVarId));
+
+    if (!_rIsConstant) {
+      assert(!variableMap.contains(definedVariables()[0]));
+      variableMap.emplace(
+          definedVariables()[0],
+          engine.makeIntView<Violation2BoolView>(_sumVarId));
+    } else {
+      variableMap.emplace(definedVariables()[0], _sumVarId);
+    }
   }
 }
 
@@ -36,4 +46,8 @@ void invariantgraph::ArrayBoolAndNode::registerWithEngine(
                  [&](const auto& node) { return variableMap.at(node); });
 
   engine.makeInvariant<ForAll>(inputs, _sumVarId);
+}
+
+invariantgraph::VariableNode* invariantgraph::ArrayBoolAndNode::violation() {
+  return _rIsConstant ? &_violation : nullptr;
 }
