@@ -1,16 +1,13 @@
 #pragma once
 
-#include <fznparser/model.hpp>
+#include "fznparser/model.hpp"
 
-#include "../structure.hpp"
+#include "invariantgraph/structure.hpp"
 
 namespace invariantgraph {
 
-class ArrayBoolAndNode : public VariableDefiningNode {
+class ArrayBoolAndNode : public SoftConstraintNode {
  private:
-  VarId _sumVarId{NULL_ID};
-
-  VariableNode _violation{SetDomain({0})};
   bool _rIsConstant;
   bool _rValue;
 
@@ -20,12 +17,12 @@ class ArrayBoolAndNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   ArrayBoolAndNode(std::vector<VariableNode*> as, VariableNode* output)
-      : VariableDefiningNode({output}, std::move(as)),
+      : SoftConstraintNode(std::move(as), output),
         _rIsConstant(false),
         _rValue{false} {}
 
   ArrayBoolAndNode(std::vector<VariableNode*> as, bool output)
-      : VariableDefiningNode({&_violation}, std::move(as)),
+      : SoftConstraintNode(std::move(as)),
         _rIsConstant(true),
         _rValue{output} {}
 
@@ -34,8 +31,6 @@ class ArrayBoolAndNode : public VariableDefiningNode {
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
-
-  VariableNode* violation() override;
 };
 
 }  // namespace invariantgraph
