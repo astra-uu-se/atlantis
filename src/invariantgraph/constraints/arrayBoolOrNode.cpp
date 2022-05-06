@@ -1,4 +1,4 @@
-#include "invariantgraph/invariants/arrayBoolOrNode.hpp"
+#include "invariantgraph/constraints/arrayBoolOrNode.hpp"
 
 #include "../parseHelper.hpp"
 #include "invariants/exists.hpp"
@@ -12,19 +12,20 @@ invariantgraph::ArrayBoolOrNode::fromModelConstraint(
   assert(constraint.arguments.size() == 2);
 
   auto as = mappedVariableVector(model, constraint.arguments[0], variableMap);
-  auto r = mappedVariable(constraint.arguments[1], variableMap);
 
-  return std::make_unique<invariantgraph::ArrayBoolOrNode>(as, r);
+  if (std::holds_alternative<bool>(constraint.arguments[1])) {
+    auto value = std::get<bool>(constraint.arguments[1]);
+    return std::make_unique<invariantgraph::ArrayBoolOrNode>(as, value);
+  } else {
+    auto r = mappedVariable(constraint.arguments[1], variableMap);
+    return std::make_unique<invariantgraph::ArrayBoolOrNode>(as, r);
+  }
 }
 
 void invariantgraph::ArrayBoolOrNode::createDefinedVariables(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (_violationVarId == NULL_ID) {
-    _violationVarId = engine.makeIntVar(0, 0, 0);
-    assert(!variableMap.contains(definedVariables()[0]));
-    variableMap.emplace(
-        definedVariables()[0],
-        engine.makeIntView<Violation2BoolView>(_violationVarId));
+  if (!variableMap.contains(violation())) {
+    registerViolation(engine, variableMap);
   }
 }
 
@@ -39,5 +40,10 @@ void invariantgraph::ArrayBoolOrNode::registerWithEngine(
     assert(0 <= engine.lowerBound(input));
   }
 #endif
-  engine.makeInvariant<Exists>(inputs, _violationVarId);
+
+  // TODO: The case where _rValue is false when r is constant.
+  // For that a new invariant is needed, since a simple view performing negation
+  // cannot know how far off the inputs are from all being non-zero.
+  assert(!_rIsConstant || _rValue);
+  engine.makeInvariant<Exists>(inputs, variableMap.at(violation()));
 }

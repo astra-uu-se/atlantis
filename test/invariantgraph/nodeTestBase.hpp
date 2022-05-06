@@ -21,6 +21,12 @@
 #name, fznparser::BasicDomain < bool>{}, {}, {} \
   }
 
+template <typename T>
+fznparser::Identifier identifier(const T& variable) {
+  return std::visit<fznparser::Identifier>(
+      [](const auto& var) { return var.name; }, variable);
+}
+
 class NodeTestBase : public testing::Test {
  protected:
   fznparser::FZNModel* _model;
@@ -33,26 +39,40 @@ class NodeTestBase : public testing::Test {
 
   std::function<invariantgraph::VariableNode*(invariantgraph::MappableValue&)>
       nodeFactory = [&](const auto& mappable) -> invariantgraph::VariableNode* {
-    auto identifier = std::get<fznparser::Identifier>(mappable);
-    auto variable =
-        std::get<fznparser::Variable>(*_model->identify(identifier));
     auto n = std::visit<std::unique_ptr<invariantgraph::VariableNode>>(
-        overloaded{[](const fznparser::IntVariable& var) {
-                     return std::make_unique<invariantgraph::VariableNode>(
-                         invariantgraph::VariableNode::FZNVariable(var));
-                   },
-                   [](const fznparser::BoolVariable& var) {
-                     return std::make_unique<invariantgraph::VariableNode>(
-                         invariantgraph::VariableNode::FZNVariable(var));
-                   },
-                   [](const auto&) {
-                     assert(false);
-                     return nullptr;
-                   }},
-        variable);
-
+        overloaded{
+            [&](const fznparser::Identifier& identifier) {
+              auto variable =
+                  std::get<fznparser::Variable>(*_model->identify(identifier));
+              return std::visit<std::unique_ptr<invariantgraph::VariableNode>>(
+                  overloaded{
+                      [](const fznparser::IntVariable& var) {
+                        return std::make_unique<invariantgraph::VariableNode>(
+                            invariantgraph::VariableNode::FZNVariable(var));
+                      },
+                      [](const fznparser::BoolVariable& var) {
+                        return std::make_unique<invariantgraph::VariableNode>(
+                            invariantgraph::VariableNode::FZNVariable(var));
+                      },
+                      [](const auto&) {
+                        assert(false);
+                        return nullptr;
+                      }},
+                  variable);
+            },
+            [](Int value) {
+              return std::make_unique<invariantgraph::VariableNode>(
+                  SetDomain({value}));
+            },
+            [](bool value) {
+              return std::make_unique<invariantgraph::VariableNode>(
+                  SetDomain({1 - static_cast<int>(value)}));
+            }},
+        mappable);
     auto ptr = n.get();
-    _nodeMap.emplace(identifier, ptr);
+    if (n->variable()) {
+      _nodeMap.emplace(identifier(*n->variable()), ptr);
+    }
     _variables.push_back(std::move(n));
     return ptr;
   };
@@ -84,6 +104,11 @@ class NodeTestBase : public testing::Test {
   [[nodiscard]] inline VarId engineVariable(
       const fznparser::SearchVariable<T>& variable) const {
     return _variableMap.at(_nodeMap.at(variable.name));
+  }
+
+  [[nodiscard]] inline VarId engineVariable(
+      invariantgraph::VariableNode* node) const {
+    return _variableMap.at(node);
   }
 };
 
