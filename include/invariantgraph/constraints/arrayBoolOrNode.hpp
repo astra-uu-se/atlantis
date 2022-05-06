@@ -1,16 +1,18 @@
 #pragma once
 
-#include <fznparser/model.hpp>
+#include "fznparser/model.hpp"
+#include <utility>
 
-#include "../structure.hpp"
+#include "invariantgraph/structure.hpp"
 
 namespace invariantgraph {
 
-class ArrayBoolOrNode : public VariableDefiningNode {
+class ArrayBoolOrNode : public SoftConstraintNode {
  private:
-  VarId _violationVarId{NULL_ID};
-  VarId _constZeroVarId{NULL_ID};
   VarId _sumVarId{NULL_ID};
+
+  bool _rIsConstant;
+  bool _rValue;
 
  public:
   static std::unique_ptr<ArrayBoolOrNode> fromModelConstraint(
@@ -18,7 +20,14 @@ class ArrayBoolOrNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   ArrayBoolOrNode(std::vector<VariableNode*> as, VariableNode* output)
-      : VariableDefiningNode({output}, as) {}
+      : SoftConstraintNode(std::move(as), output),
+        _rIsConstant(false),
+        _rValue{false} {}
+
+  ArrayBoolOrNode(std::vector<VariableNode*> as, bool output)
+      : SoftConstraintNode(std::move(as)),
+        _rIsConstant(true),
+        _rValue{output} {}
 
   void createDefinedVariables(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

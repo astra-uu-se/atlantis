@@ -225,3 +225,16 @@ std::vector<Int> boolVectorAsIntVector(
 
   return ints;
 }
+
+bool booleanValue(const FZNModel &model, const FZNConstraint::Argument &argument) {
+  return std::visit<bool>(
+      overloaded{[](bool value) { return value; },
+                 [&](const Identifier &identifier) {
+                   auto parameter =
+                       std::get<Parameter>(*model.identify(identifier));
+                   return valueFromParameter<bool>(parameter);
+                 },
+                 DEFAULT_EMPTY_VARIANT_BRANCH(
+                     Int, "Invalid variant for boolean value.")},
+      argument);
+}
