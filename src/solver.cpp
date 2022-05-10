@@ -1,5 +1,7 @@
 #include "solver.hpp"
 
+#include <iostream>
+
 #include "fznparser/modelFactory.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
 #include "search/objective.hpp"
