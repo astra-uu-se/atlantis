@@ -100,9 +100,6 @@ class VariableNode {
    * @param node The variable defining node for which this is an input.
    */
   void markAsInputFor(VariableDefiningNode* node) { _inputFor.push_back(node); }
-
-  // A hack in order to steal the _inputs from the nested constraint.
-  friend class ReifiedConstraint;
 };
 
 /**
@@ -188,9 +185,6 @@ class VariableDefiningNode {
       const noexcept {
     return _dynamicInputs;
   }
-
-  // A hack in order to steal the _inputs from the nested constraint.
-  friend class ReifiedConstraint;
 
  protected:
   static inline VarId registerDefinedVariable(Engine& engine,
