@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "core/engine.hpp"
+#include "invariantgraph/constraints/eqNode.hpp"
+#include "invariantgraph/invariantGraphRoot.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
 #include "structure.hpp"
 
@@ -101,6 +103,18 @@ class InvariantGraph {
   InvariantGraphApplyResult apply(Engine& engine);
 
  private:
+  std::vector<VariableNode*> findCycle(
+      const std::unordered_map<VariableNode*, VariableNode*>& childOf,
+      VariableNode* const node, VariableNode* const parent);
+
+  std::pair<invariantgraph::VariableNode*,
+            invariantgraph::VariableDefiningNode*>
+  findPivotInCycle(const std::vector<VariableNode*>& cycle);
+
+  std::vector<VariableNode*> breakCycles(
+      VariableNode* node, std::unordered_set<VariableNode*>& visitedGlobal);
+  VariableNode* breakCycle(const std::vector<VariableNode*>& cycle);
+
   void createVariables(Engine&);
   void createInvariants(Engine&);
   VarId createViolations(Engine&);
