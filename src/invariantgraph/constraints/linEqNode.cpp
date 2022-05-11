@@ -29,32 +29,29 @@ invariantgraph::LinEqNode::fromModelConstraint(
   return std::make_unique<LinEqNode>(coeffs, variables, bound, r);
 }
 
-void invariantgraph::LinEqNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::LinEqNode::createDefinedVariables(Engine& engine) {
   if (_sumVarId == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(!variableMap.contains(violation()));
-    variableMap.emplace(violation(),
-                        engine.makeIntView<EqualView>(_sumVarId, _c));
+    assert(violationVarId() == NULL_ID);
+    setViolationVarId(engine.makeIntView<EqualView>(_sumVarId, _c));
   }
 }
 
-void invariantgraph::LinEqNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::LinEqNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
   std::transform(
       staticInputs().begin(), staticInputs().end(),
       std::back_inserter(variables), [&](auto node) {
         if (node->variable() &&
             std::holds_alternative<fznparser::IntVariable>(*node->variable())) {
-          return variableMap.at(node);
+          return node->varId();
         }
 
-        return engine.makeIntView<Bool2IntView>(variableMap.at(node));
+        return engine.makeIntView<Bool2IntView>(node->varId());
       });
 
   assert(_sumVarId != NULL_ID);
-  assert(variableMap.contains(violation()));
+  assert(violationVarId() != NULL_ID);
 
   engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
 }

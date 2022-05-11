@@ -13,11 +13,11 @@ invariantgraph::Bool2IntNode::fromModelConstraint(
   return std::make_unique<invariantgraph::Bool2IntNode>(a, b);
 }
 
-void invariantgraph::Bool2IntNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  variableMap.emplace(definedVariables()[0], engine.makeIntView<::Bool2IntView>(
-                                                 variableMap.at(input())));
+void invariantgraph::Bool2IntNode::createDefinedVariables(Engine& engine) {
+  if (definedVariables().front()->varId() == NULL_ID) {
+    definedVariables().front()->setVarId(
+        engine.makeIntView<::Bool2IntView>(input()->varId()));
+  }
 }
 
-void invariantgraph::Bool2IntNode::registerWithEngine(
-    Engine&, VariableDefiningNode::VariableMap&) {}
+void invariantgraph::Bool2IntNode::registerWithEngine(Engine&) {}

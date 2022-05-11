@@ -20,11 +20,9 @@ class ArrayBoolOrNode : public VariableDefiningNode {
   ArrayBoolOrNode(std::vector<VariableNode*> as, VariableNode* output)
       : VariableDefiningNode({output}, as) {}
 
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void createDefinedVariables(Engine& engine) override;
 
-  void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void registerWithEngine(Engine& engine) override;
 };
 
 }  // namespace invariantgraph

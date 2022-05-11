@@ -17,21 +17,20 @@ invariantgraph::ArrayVarIntElementNode::fromModelConstraint(
 }
 
 void invariantgraph::ArrayVarIntElementNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(definedVariables()[0])) {
-    registerDefinedVariable(engine, variableMap, definedVariables()[0]);
-  }
+    Engine& engine) {
+  // TODO: offset can be different than 1
+  registerDefinedVariable(engine, definedVariables().front(), 1);
 }
 
 void invariantgraph::ArrayVarIntElementNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+    Engine& engine) {
   std::vector<VarId> as;
   std::transform(dynamicInputs().begin(), dynamicInputs().end(),
                  std::back_inserter(as),
-                 [&](auto var) { return variableMap.at(var); });
+                 [&](auto node) { return node->varId(); });
 
-  assert(variableMap.contains(definedVariables()[0]));
+  assert(definedVariables().front()->varId() != NULL_ID);
 
-  engine.makeInvariant<ElementVar>(variableMap.at(b()), as,
-                                   variableMap.at(definedVariables()[0]));
+  engine.makeInvariant<ElementVar>(b()->varId(), as,
+                                   definedVariables().front()->varId());
 }

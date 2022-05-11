@@ -19,11 +19,9 @@ class Bool2IntNode : public VariableDefiningNode {
 
   ~Bool2IntNode() override = default;
 
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void createDefinedVariables(Engine& engine) override;
 
-  void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void registerWithEngine(Engine& engine) override;
 
   [[nodiscard]] VariableNode* input() const noexcept {
     return staticInputs().front();

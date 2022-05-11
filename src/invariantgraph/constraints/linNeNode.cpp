@@ -26,25 +26,22 @@ invariantgraph::LinNeNode::fromModelConstraint(
   return std::make_unique<LinNeNode>(coeffs, variables, c, r);
 }
 
-void invariantgraph::LinNeNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::LinNeNode::createDefinedVariables(Engine& engine) {
   if (_sumVarId == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(!variableMap.contains(violation()));
-    variableMap.emplace(violation(),
-                        engine.makeIntView<NotEqualView>(_sumVarId, _c));
+    assert(violationVarId() == NULL_ID);
+    setViolationVarId(engine.makeIntView<NotEqualView>(_sumVarId, _c));
   }
 }
 
-void invariantgraph::LinNeNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::LinNeNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
-                 [&](auto var) { return variableMap.at(var); });
+                 [&](auto node) { return node->varId(); });
 
   assert(_sumVarId != NULL_ID);
-  assert(variableMap.contains(violation()));
+  assert(violationVarId() != NULL_ID);
 
   engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
 }

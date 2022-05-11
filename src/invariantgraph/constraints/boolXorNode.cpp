@@ -20,17 +20,13 @@ invariantgraph::BoolXorNode::fromModelConstraint(
   return std::make_unique<BoolXorNode>(a, b, r);
 }
 
-void invariantgraph::BoolXorNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(violation())) {
-    registerViolation(engine, variableMap);
-  }
+void invariantgraph::BoolXorNode::createDefinedVariables(Engine& engine) {
+  registerViolation(engine);
 }
 
-void invariantgraph::BoolXorNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  assert(variableMap.contains(violation()));
+void invariantgraph::BoolXorNode::registerWithEngine(Engine& engine) {
+  assert(violationVarId() != NULL_ID);
 
-  engine.makeConstraint<::NotEqual>(variableMap.at(violation()),
-                                    variableMap.at(a()), variableMap.at(b()));
+  engine.makeConstraint<::NotEqual>(violationVarId(), a()->varId(),
+                                    b()->varId());
 }

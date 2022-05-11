@@ -9,9 +9,6 @@
 namespace invariantgraph {
 
 class BoolNotNode : public VariableDefiningNode {
- private:
-  VariableNode* _input;
-
  public:
   static std::unique_ptr<BoolNotNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
@@ -22,11 +19,9 @@ class BoolNotNode : public VariableDefiningNode {
 
   ~BoolNotNode() override = default;
 
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void createDefinedVariables(Engine& engine) override;
 
-  void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void registerWithEngine(Engine& engine) override;
 
   [[nodiscard]] VariableNode* input() const noexcept {
     return staticInputs().front();

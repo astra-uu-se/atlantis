@@ -15,9 +15,9 @@ invariantgraph::LinLeNode::fromModelConstraint(
   assert(
       ((constraint.name == "int_lin_le" || constraint.name == "bool_lin_le") &&
        constraint.arguments.size() == 3) ||
-      (constraint.name == "int_lin_le_reif" ||
-       constraint.name == "bool_lin_le_reif") &&
-          constraint.arguments.size() == 4);
+      ((constraint.name == "int_lin_le_reif" ||
+        constraint.name == "bool_lin_le_reif") &&
+       constraint.arguments.size() == 4));
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
   auto variables =
@@ -31,32 +31,29 @@ invariantgraph::LinLeNode::fromModelConstraint(
   return std::make_unique<LinLeNode>(coeffs, variables, bound, r);
 }
 
-void invariantgraph::LinLeNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::LinLeNode::createDefinedVariables(Engine& engine) {
   if (_sumVarId == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(!variableMap.contains(violation()));
-    variableMap.emplace(violation(),
-                        engine.makeIntView<LessEqualView>(_sumVarId, _bound));
+    assert(violationVarId() == NULL_ID);
+    setViolationVarId(engine.makeIntView<LessEqualView>(_sumVarId, _bound));
   }
 }
 
-void invariantgraph::LinLeNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::LinLeNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
   std::transform(
       staticInputs().begin(), staticInputs().end(),
       std::back_inserter(variables), [&](auto node) {
         if (node->variable() &&
             std::holds_alternative<fznparser::IntVariable>(*node->variable())) {
-          return variableMap.at(node);
+          return node->varId();
         }
 
-        return engine.makeIntView<Bool2IntView>(variableMap.at(node));
+        return engine.makeIntView<Bool2IntView>(node->varId());
       });
 
   assert(_sumVarId != NULL_ID);
-  assert(variableMap.contains(violation()));
+  assert(violationVarId() != NULL_ID);
 
   engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
 }
