@@ -20,10 +20,10 @@ std::unique_ptr<AnnealingSchedule> AnnealerFacade::heating(
 }
 
 std::unique_ptr<AnnealingSchedule> AnnealerFacade::cooling(
-    double coolingRate, double minimumTemperature,
+    double coolingRate, double moveAcceptanceRatio,
     UInt numberOfMonteCarloSimulations) {
   return std::make_unique<GeometricCoolingSchedule>(
-      coolingRate, minimumTemperature, numberOfMonteCarloSimulations);
+      coolingRate, moveAcceptanceRatio, numberOfMonteCarloSimulations);
 }
 
 std::unique_ptr<AnnealingSchedule> AnnealerFacade::loop(

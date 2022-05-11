@@ -7,14 +7,15 @@ namespace search {
 class GeometricCoolingSchedule : public AnnealingSchedule {
  private:
   double _coolingRate;
-  double _minimumTemperature;
+  double _minimumMoveAcceptanceRatio;
   UInt _numberOfMonteCarloSimulations;
 
   double _temperature{0.0};
+  double _lastRoundMoveAcceptanceRatio{-1.0};
 
  public:
   GeometricCoolingSchedule(double coolingRate,
-                           double minimumTemperature,
+                           double moveAcceptanceRatio,
                            UInt numberOfMonteCarloSimulations);
 
   ~GeometricCoolingSchedule() override = default;
