@@ -87,11 +87,9 @@ class VariableNode {
    * sub-set of SearchDomain _domain, then returns an empty vector, otherwise
    * the relative complement of varLb..varUb in SearchDomain is returned
    */
-  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(const Engine&,
-                                                           const VariableMap&);
+  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(const Engine&);
 
-  VarId postDomainConstraint(Engine&, const VariableMap&,
-                             std::vector<DomainEntry>&&);
+  VarId postDomainConstraint(Engine&, std::vector<DomainEntry>&&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const noexcept {
     return std::visit<std::pair<Int, Int>>(
@@ -162,7 +160,6 @@ class VariableDefiningNode {
    * @param variableMap A map of variable nodes to VarIds.
    */
   virtual void createDefinedVariables(Engine& engine) = 0;
-                                      VariableMap& variableMap) = 0;
 
   /**
    * Registers the current node with the engine, as well as all the variables
@@ -219,12 +216,8 @@ class VariableDefiningNode {
     return variable->varId();
   }
 
-    return variableMap.at(variable);
-  }
-
   void markAsStaticInput(VariableNode* node, bool registerHere = true) {
     node->markAsInputFor(this);
-
     if (registerHere) {
       _staticInputs.push_back(node);
     }
@@ -232,7 +225,6 @@ class VariableDefiningNode {
 
   void markAsDynamicInput(VariableNode* node, bool registerHere = true) {
     node->markAsInputFor(this);
-
     if (registerHere) {
       _dynamicInputs.push_back(node);
     }
@@ -250,13 +242,12 @@ class ImplicitConstraintNode : public VariableDefiningNode {
  public:
   explicit ImplicitConstraintNode(std::vector<VariableNode*> definedVariables)
       : VariableDefiningNode(std::move(definedVariables)) {}
+
   ~ImplicitConstraintNode() override { delete _neighbourhood; }
 
   void createDefinedVariables(Engine& engine) override;
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(Engine& engine) override;
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   /**
    * Take the neighbourhood which is constructed in the registerWithEngine
@@ -264,13 +255,13 @@ class ImplicitConstraintNode : public VariableDefiningNode {
    * by the usage of unique_ptr).
    *
    * Calling this method before calling registerWithEngine will return a
-   * nullptr. The same holds if this method is called multiple times. Only the
-   * first call will return a neighbourhood instance.
+   * nullptr. The same holds if this method is called multiple times. Only
+   * the first call will return a neighbourhood instance.
    *
-   * The reason this does not return a reference, is because we want to be able
-   * to delete the entire invariant graph after it has been applied to the
-   * propagation engine. If a reference was returned here, that would leave the
-   * reference dangling.
+   * The reason this does not return a reference, is because we want to be
+   * able to delete the entire invariant graph after it has been applied to
+   * the propagation engine. If a reference was returned here, that would
+   * leave the reference dangling.
    *
    * @return The neighbourhood corresponding to this implicit constraint.
    */
@@ -306,7 +297,6 @@ class SoftConstraintNode : public VariableDefiningNode {
       assert(definedVariables().size() == 0);
     } else {
       assert(_reifiedViolation != nullptr);
-      assert(_reifiedViolation->definedBy() == this);
       assert(definedVariables().size() == 1);
       assert(definedVariables().front() == _reifiedViolation);
     }
