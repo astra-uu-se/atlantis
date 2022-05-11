@@ -47,7 +47,6 @@ class Objective {
       _engine.makeInvariant<Linear>(
           std::vector<VarId>{boundViolation, constraintViolation}, *_violation);
     }
-
     return *_violation;
   }
 };

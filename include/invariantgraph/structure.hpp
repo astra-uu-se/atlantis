@@ -41,6 +41,9 @@ class VariableNode {
   VarId _domainViolationId{NULL_ID};
 
   std::vector<VariableDefiningNode*> _inputFor;
+  std::vector<VariableDefiningNode*> _staticInputFor;
+  std::vector<VariableDefiningNode*> _dynamicInputFor;
+  VariableDefiningNode* _definedBy{nullptr};
 
  public:
   /**
@@ -92,11 +95,7 @@ class VariableNode {
   VarId postDomainConstraint(Engine&, std::vector<DomainEntry>&&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const noexcept {
-    return std::visit<std::pair<Int, Int>>(
-        [&](auto& domain) {
-          return std::make_pair(domain.lowerBound(), domain.upperBound());
-        },
-        _domain);
+    return _domain.bounds();
   }
 
   /**
@@ -108,12 +107,84 @@ class VariableNode {
   }
 
   /**
+   * @return The variable defining nodes for which this node is an input.
+   */
+  [[nodiscard]] const std::vector<VariableDefiningNode*>& staticInputFor()
+      const noexcept {
+    return _staticInputFor;
+  }
+
+  /**
+   * @return The variable defining nodes for which this node is an input.
+   */
+  [[nodiscard]] const std::vector<VariableDefiningNode*>& dynamicInputFor()
+      const noexcept {
+    return _dynamicInputFor;
+  }
+
+  /**
+   * @return The variable defining nodes for which this node is an input.
+   */
+  [[nodiscard]] VariableDefiningNode* definedBy() const noexcept {
+    return _definedBy;
+  }
+
+  /**
    * Indicate this variable node serves as an input to the given variable
    * defining node.
    *
    * @param node The variable defining node for which this is an input.
    */
-  void markAsInputFor(VariableDefiningNode* node) { _inputFor.push_back(node); }
+  void markAsInputFor(VariableDefiningNode* listeningInvariant,
+                      bool isStaticInput) {
+    _inputFor.push_back(listeningInvariant);
+    if (isStaticInput) {
+      _staticInputFor.push_back(listeningInvariant);
+    } else {
+      _dynamicInputFor.push_back(listeningInvariant);
+    }
+  }
+
+  /**
+   * Indicate this variable node no longer serves as an input to the given
+   * variable defining node.
+   *
+   * @param node The variable defining node for which this is no longer an
+   * input.
+   */
+  void unmarkAsInputFor(VariableDefiningNode* listeningInvariant,
+                        bool isStaticInput) {
+    if (isStaticInput) {
+      auto it = _staticInputFor.begin();
+      while (it != _staticInputFor.end()) {
+        if (*it == listeningInvariant) {
+          it = _staticInputFor.erase(it);
+        } else {
+          it++;
+        }
+      }
+    } else {
+      auto it = _dynamicInputFor.begin();
+      while (it != _dynamicInputFor.end()) {
+        if (*it == listeningInvariant) {
+          it = _dynamicInputFor.erase(it);
+        } else {
+          it++;
+        }
+      }
+    }
+  }
+
+  /**
+   * Indicate this variable node is defined by the given variable
+   * defining node.
+   *
+   * @param node The variable defining node this is defined by.
+   */
+  void markDefinedBy(VariableDefiningNode* definingInvariant) {
+    assert(definingInvariant != nullptr);
+    _definedBy = definingInvariant;
+  }
 
   // A hack in order to steal the _inputs from the nested constraint.
   friend class ReifiedConstraint;
@@ -138,10 +209,14 @@ class VariableDefiningNode {
       : _definedVariables(std::move(definedVariables)),
         _staticInputs(std::move(staticInputs)),
         _dynamicInputs(std::move(dynamicInputs)) {
-    for (const auto& staticInput : _staticInputs) {
+    for (auto* const definedVar : _definedVariables) {
+      markDefinedBy(definedVar, false);
+      assert(definedVar->definedBy() == this);
+    }
+    for (auto* const staticInput : _staticInputs) {
       markAsStaticInput(staticInput, false);
     }
-    for (const auto& dynamicInput : _dynamicInputs) {
+    for (auto* const dynamicInput : _dynamicInputs) {
       markAsDynamicInput(dynamicInput, false);
     }
   }
@@ -152,28 +227,21 @@ class VariableDefiningNode {
 
   /**
    * Creates as all the variables the node defines in @p engine.
-   * defines in @p engine. The @p variableMap is modified to contain the
-   * variables defined by this node with their corresponding VarId's.
    *
    * @param engine The engine with which to register the variables, constraints
    * and views.
-   * @param variableMap A map of variable nodes to VarIds.
    */
   virtual void createDefinedVariables(Engine& engine) = 0;
 
   /**
    * Registers the current node with the engine, as well as all the variables
    * it defines.
-   * by this node with their corresponding VarId's.
    *
    * Note: This method assumes it is called after all the inputs to this node
    * are already registered with the engine.
-   * to look up all the VarId's for its inputs in @p variableMap. Therefore,
-   * nodes should be registered with the engine in a breadth-first manner.
    *
    * @param engine The engine with which to register the variables, constraints
    * and views.
-   * @param variableMap A map of variable nodes to VarIds.
    */
   virtual void registerWithEngine(Engine& engine) = 0;
 
@@ -202,6 +270,28 @@ class VariableDefiningNode {
     return _dynamicInputs;
   }
 
+  void replaceStaticInput(VariableNode* oldInput, VariableNode* newInput) {
+    // Replace all occurrences:
+    for (size_t i = 0; i < _staticInputs.size(); ++i) {
+      if (_staticInputs[i] == oldInput) {
+        _staticInputs[i] = newInput;
+      }
+    }
+    oldInput->unmarkAsInputFor(this, true);
+    newInput->markAsInputFor(this, true);
+  }
+
+  void replaceDynamicInput(VariableNode* oldInput, VariableNode* newInput) {
+    // Replace all occurrences:
+    for (size_t i = 0; i < _dynamicInputs.size(); ++i) {
+      if (_dynamicInputs[i] == oldInput) {
+        _dynamicInputs[i] = newInput;
+      }
+    }
+    oldInput->unmarkAsInputFor(this, false);
+    newInput->markAsInputFor(this, false);
+  }
+
   // A hack in order to steal the _inputs from the nested constraint.
   friend class ReifiedConstraint;
 
@@ -216,15 +306,30 @@ class VariableDefiningNode {
     return variable->varId();
   }
 
+  void markDefinedBy(VariableNode* node, bool registerHere = true) {
+    node->markDefinedBy(this);
+
+    if (registerHere) {
+      _definedVariables.push_back(node);
+    }
+  }
+
+  void addDefinedVariable(VariableNode* node) {
+    _definedVariables.emplace_back(node);
+    markDefinedBy(node, false);
+  }
+
   void markAsStaticInput(VariableNode* node, bool registerHere = true) {
-    node->markAsInputFor(this);
+    node->markAsInputFor(this, true);
+
     if (registerHere) {
       _staticInputs.push_back(node);
     }
   }
 
   void markAsDynamicInput(VariableNode* node, bool registerHere = true) {
-    node->markAsInputFor(this);
+    node->markAsInputFor(this, false);
+
     if (registerHere) {
       _dynamicInputs.push_back(node);
     }
@@ -297,6 +402,7 @@ class SoftConstraintNode : public VariableDefiningNode {
       assert(definedVariables().size() == 0);
     } else {
       assert(_reifiedViolation != nullptr);
+      assert(_reifiedViolation->definedBy() == this);
       assert(definedVariables().size() == 1);
       assert(definedVariables().front() == _reifiedViolation);
     }

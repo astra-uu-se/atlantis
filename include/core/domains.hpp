@@ -32,6 +32,11 @@ class Domain {
   [[nodiscard]] virtual Int upperBound() const noexcept = 0;
 
   /**
+   * @return The values of the lowest and largest elements in the domain.
+   */
+  [[nodiscard]] virtual std::pair<Int, Int> bounds() const noexcept = 0;
+
+  /**
    * @return The number of values of the domain.
    */
   [[nodiscard]] virtual size_t size() const noexcept = 0;
@@ -67,6 +72,9 @@ class IntervalDomain : public Domain {
 
   [[nodiscard]] Int lowerBound() const noexcept override { return _lb; }
   [[nodiscard]] Int upperBound() const noexcept override { return _ub; }
+  [[nodiscard]] std::pair<Int, Int> bounds() const noexcept override {
+    return std::pair<Int, Int>{_lb, _ub};
+  }
   [[nodiscard]] size_t size() const noexcept override { return _ub - _lb + 1; }
 
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
@@ -97,12 +105,20 @@ class SetDomain : public Domain {
 
   [[nodiscard]] const std::vector<Int>& values() override { return _values; }
 
+  [[nodiscard]] inline const std::vector<Int>& constValues() const {
+    return _values;
+  }
+
   [[nodiscard]] Int lowerBound() const noexcept override {
     return _values.front();
   }
 
   [[nodiscard]] Int upperBound() const noexcept override {
     return _values.back();
+  }
+
+  [[nodiscard]] std::pair<Int, Int> bounds() const noexcept override {
+    return std::pair<Int, Int>{_values.front(), _values.back()};
   }
 
   [[nodiscard]] size_t size() const noexcept override { return _values.size(); }
@@ -158,4 +174,78 @@ class SetDomain : public Domain {
   bool operator!=(const SetDomain& other) const { return !(*this == other); }
 };
 
-using SearchDomain = std::variant<IntervalDomain, SetDomain>;
+class SearchDomain : public Domain {
+ private:
+  std::variant<IntervalDomain, SetDomain> _domain;
+
+ public:
+  explicit SearchDomain(std::vector<Int> values) : _domain(SetDomain{values}) {}
+  explicit SearchDomain(Int lb, Int ub) : _domain(IntervalDomain{lb, ub}) {}
+
+  [[nodiscard]] inline const std::variant<IntervalDomain, SetDomain>&
+  innerDomain() const noexcept {
+    return _domain;
+  }
+
+  [[nodiscard]] const std::vector<Int>& values() override {
+    if (std::holds_alternative<SetDomain>(_domain)) {
+      return std::get<SetDomain>(_domain).values();
+    }
+    return std::get<IntervalDomain>(_domain).values();
+  }
+
+  [[nodiscard]] Int lowerBound() const noexcept override {
+    return std::visit<Int>([&](const auto& dom) { return dom.lowerBound(); },
+                           _domain);
+  }
+
+  [[nodiscard]] Int upperBound() const noexcept override {
+    return std::visit<Int>([&](const auto& dom) { return dom.upperBound(); },
+                           _domain);
+  }
+
+  [[nodiscard]] std::pair<Int, Int> bounds() const noexcept override {
+    return std::visit<std::pair<Int, Int>>(
+        [&](const auto& dom) { return dom.bounds(); }, _domain);
+  }
+
+  [[nodiscard]] size_t size() const noexcept override {
+    return std::visit<Int>([&](const auto& dom) { return dom.size(); },
+                           _domain);
+  }
+
+  std::vector<DomainEntry> relativeComplementIfIntersects(
+      const Int lb, const Int ub) const override {
+    return std::visit<std::vector<DomainEntry>>(
+        [&](const auto& dom) {
+          return dom.relativeComplementIfIntersects(lb, ub);
+        },
+        _domain);
+  }
+
+  bool operator==(const SearchDomain& other) const {
+    if (std::holds_alternative<IntervalDomain>(_domain) &&
+        std::holds_alternative<IntervalDomain>(other._domain)) {
+      return std::get<IntervalDomain>(_domain) ==
+             std::get<IntervalDomain>(other._domain);
+    }
+    if (std::holds_alternative<SetDomain>(_domain) &&
+        std::holds_alternative<SetDomain>(other._domain)) {
+      return std::get<SetDomain>(_domain) == std::get<SetDomain>(other._domain);
+    }
+    return false;
+  }
+
+  bool operator!=(const SearchDomain& other) const {
+    if (std::holds_alternative<IntervalDomain>(_domain) &&
+        std::holds_alternative<IntervalDomain>(other._domain)) {
+      return std::get<IntervalDomain>(_domain) !=
+             std::get<IntervalDomain>(other._domain);
+    }
+    if (std::holds_alternative<SetDomain>(_domain) &&
+        std::holds_alternative<SetDomain>(other._domain)) {
+      return std::get<SetDomain>(_domain) != std::get<SetDomain>(other._domain);
+    }
+    return true;
+  }
+};
