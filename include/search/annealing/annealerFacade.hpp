@@ -29,7 +29,7 @@ class AnnealerFacade {
       UInt numberOfMonteCarloSimulations);
 
   static std::unique_ptr<AnnealingSchedule> cooling(
-      double coolingRate, double minimumTemperature,
+      double coolingRate, double moveAcceptanceRatio,
       UInt numberOfMonteCarloSimulations);
 };
 

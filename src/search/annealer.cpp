@@ -31,11 +31,14 @@ bool search::Annealer::accept(Int moveCost) {
   Int assignmentCost = evaluate(_assignment.cost());
   Int delta = moveCost - assignmentCost;
 
+  _statistics.attemptedMoves++;
+
   if (delta <= 0) {
     if (moveCost < _statistics.bestCostOfThisRound) {
       _statistics.bestCostOfThisRound = moveCost;
     }
 
+    _statistics.acceptedMoves++;
     return true;
   } else {
     _statistics.uphillAttemptedMoves++;
@@ -43,6 +46,7 @@ bool search::Annealer::accept(Int moveCost) {
     if (std::exp(static_cast<double>(-delta) / _schedule.temperature()) >=
         _random.floatInRange(0.0f, 1.0f)) {
       _statistics.uphillAcceptedMoves++;
+      _statistics.acceptedMoves++;
       return true;
     }
   }
