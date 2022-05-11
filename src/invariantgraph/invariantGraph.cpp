@@ -35,6 +35,13 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
   std::unordered_set<invariantgraph::VariableDefiningNode*> visitedNodes;
   std::queue<invariantgraph::VariableDefiningNode*> unregisteredNodes;
 
+  for (auto& node : _valueNodes) {
+    assert(node->isConstant());
+
+    auto val = node->bounds().first;
+    variableMap.emplace(node, engine.makeIntVar(val, val, val));
+  }
+
   for (auto* const implicitConstraint : _implicitConstraints) {
     visitedNodes.emplace(implicitConstraint);
     unregisteredNodes.emplace(implicitConstraint);

@@ -101,3 +101,23 @@ TEST_F(IntTimesNodeTest, propagation) {
     }
   }
 }
+
+TEST_F(IntTimesNodeTest, as_soft_constraint) {
+  node->makeSoft();
+
+  PropagationEngine engine;
+  engine.open();
+  registerVariables(engine, {a.name, b.name, c.name});
+  node->createDefinedVariables(engine, _variableMap);
+  node->registerWithEngine(engine, _variableMap);
+  engine.close();
+
+  // a, b, c, (a * b), violation for c = a * b
+  EXPECT_EQ(engine.numVariables(), 5);
+
+  // a, b, c
+  EXPECT_EQ(engine.searchVariables().size(), 3);
+
+  // times, equality
+  EXPECT_EQ(engine.numInvariants(), 2);
+}

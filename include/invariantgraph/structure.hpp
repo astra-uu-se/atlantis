@@ -4,6 +4,7 @@
 #include <fznparser/ast.hpp>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "constraints/inDomain.hpp"
@@ -57,6 +58,13 @@ class VariableNode {
   explicit VariableNode(SearchDomain domain);
 
   /**
+   * Construct a variable node for a constant.
+   *
+   * @param value The value of the constant.
+   */
+  explicit VariableNode(Int value) : VariableNode(SetDomain({value})) {}
+
+  /**
    * @return The model variable this node is associated with, or std::nullopt
    * if no model variable is associated with this node.
    */
@@ -100,6 +108,14 @@ class VariableNode {
    * @param node The variable defining node for which this is an input.
    */
   void markAsInputFor(VariableDefiningNode* node) { _inputFor.push_back(node); }
+
+  /**
+   * @return True if the variable is a constant.
+   */
+  [[nodiscard]] bool isConstant() const noexcept {
+    return std::visit<bool>(
+        [](const auto& domain) { return domain.size() == 1; }, _domain);
+  }
 };
 
 /**
@@ -107,7 +123,7 @@ class VariableNode {
  * be an invariant, a soft constraint (which defines a violation), or a view.
  */
 class VariableDefiningNode {
- private:
+ protected:
   std::vector<VariableNode*> _definedVariables;
   std::vector<VariableNode*> _staticInputs;
   std::vector<VariableNode*> _dynamicInputs;
@@ -212,6 +228,50 @@ class VariableDefiningNode {
       _dynamicInputs.push_back(node);
     }
   }
+};
+
+class InvariantNode : public VariableDefiningNode {
+ private:
+  bool _makeSoftConstraint{false};
+  size_t _numExpectedViolations{0};
+  std::vector<VarId> _violations{};
+  VariableNode _violation{0};
+
+ public:
+  explicit InvariantNode(std::vector<VariableNode*> definedVariables,
+                         std::vector<VariableNode*> staticInputs = {},
+                         std::vector<VariableNode*> dynamicInputs = {})
+      : VariableDefiningNode(std::move(definedVariables),
+                             std::move(staticInputs),
+                             std::move(dynamicInputs)) {}
+
+  void createDefinedVariables(Engine& engine,
+                              VariableMap& variableMap) override;
+
+  /**
+   * Registers the appropriate invariants with the engine.
+   *
+   * NOTE: Classes overriding this method should still call this method, and it
+   * should be done after they are done with registering all the invariants
+   * they need to register.
+   *
+   * @param engine The engine with which to register variables and invariants.
+   * @param variableMap The mapping of variable nodes to engine variables.
+   */
+  void registerWithEngine(Engine& engine, VariableMap& variableMap) override;
+
+  /**
+   * Convert this invariant to a soft constraint. This makes it so no variables
+   * are defined, other than the total violation of the equality constraints
+   * introduced for the variables that would be defined.
+   */
+  void makeSoft() noexcept;
+
+  VariableNode* violation() override;
+
+ protected:
+  VarId getOutputVarId(Engine& engine, VariableMap& variableMap,
+                       VariableNode* outputNode);
 };
 
 /**

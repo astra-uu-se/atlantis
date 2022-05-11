@@ -1,12 +1,16 @@
 #pragma once
 
 #include <fznparser/model.hpp>
+#include <utility>
 
 #include "../structure.hpp"
 
 namespace invariantgraph {
 
-class ArrayVarIntElementNode : public VariableDefiningNode {
+class ArrayVarIntElementNode : public InvariantNode {
+ private:
+  VariableNode* _output;
+
  public:
   static std::unique_ptr<ArrayVarIntElementNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
@@ -14,10 +18,7 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
 
   ArrayVarIntElementNode(VariableNode* b, std::vector<VariableNode*> as,
                          VariableNode* output)
-      : VariableDefiningNode({output}, {b}, {as}) {}
-
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+      : InvariantNode({output}, {b}, {std::move(as)}), _output(output) {}
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

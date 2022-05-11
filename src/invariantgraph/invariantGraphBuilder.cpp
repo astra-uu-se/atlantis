@@ -147,36 +147,6 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
     }
   }
 
-  // Third, pick up any invariants we can identify without the annotations
-  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
-    auto constraint = model.constraints()[idx];
-    if (processedConstraints.count(idx)) {
-      continue;
-    }
-
-    if (auto node = makeVariableDefiningNode(model, constraint, true)) {
-      auto canBeInvariant = std::all_of(
-          node->definedVariables().begin(), node->definedVariables().end(),
-          [&](const auto& variableNode) {
-            if (!variableNode->variable()) {
-              return true;
-            }
-
-            return definedVars.count(identifier(*variableNode->variable())) ==
-                   0;
-          });
-
-      if (!canBeInvariant) {
-        continue;
-      }
-
-      markVariablesAsDefined(*node, definedVars);
-
-      _definingNodes.push_back(std::move(node));
-      processedConstraints.emplace(idx);
-    }
-  }
-
   // Fourth, use soft constraints for the remaining model constraints.
   for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
     auto constraint = model.constraints()[idx];
@@ -255,11 +225,8 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION("set_in_reif", SetInNode);
   NODE_REGISTRATION("bool2int", Bool2IntNode);
   NODE_REGISTRATION("bool_not", BoolNotNode);
-  NODE_REGISTRATION("array_bool_and", ArrayBoolAndNode);
-  NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
   NODE_REGISTRATION("array_bool_element", ArrayBoolElementNode);
   NODE_REGISTRATION("array_var_bool_element", ArrayVarBoolElementNode);
-  NODE_REGISTRATION("bool_xor", BoolXorNode);
 
   return nullptr;
 #undef BINARY_OP_REGISTRATION
@@ -283,7 +250,7 @@ invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
 #undef NODE_REGISTRATION
 }
 
-std::unique_ptr<invariantgraph::SoftConstraintNode>
+std::unique_ptr<invariantgraph::VariableDefiningNode>
 invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint) {
   std::string_view name = constraint.name;
@@ -305,10 +272,19 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   NODE_REGISTRATION("int_ne", NeNode);
   NODE_REGISTRATION("set_in", SetInNode);
   NODE_REGISTRATION("bool_clause", BoolClauseNode);
+  NODE_REGISTRATION("array_bool_and", ArrayBoolAndNode);
+  NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
+  NODE_REGISTRATION("bool_xor", BoolXorNode);
+#undef NODE_REGISTRATION
+
+  auto ptr = makeVariableDefiningNode(model, constraint, true);
+  if (auto invariant = dynamic_cast<invariantgraph::InvariantNode*>(ptr.get())) {
+    invariant->makeSoft();
+    return ptr;
+  }
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint.name));
-#undef NODE_REGISTRATION
 }
 
 invariantgraph::VariableNode*

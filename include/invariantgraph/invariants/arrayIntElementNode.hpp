@@ -6,9 +6,10 @@
 
 namespace invariantgraph {
 
-class ArrayIntElementNode : public VariableDefiningNode {
+class ArrayIntElementNode : public InvariantNode {
  private:
   std::vector<Int> _as;
+  VariableNode* _output;
 
  public:
   static std::unique_ptr<ArrayIntElementNode> fromModelConstraint(
@@ -17,10 +18,7 @@ class ArrayIntElementNode : public VariableDefiningNode {
 
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
-      : VariableDefiningNode({output}, {b}), _as(std::move(as)) {}
-
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+      : InvariantNode({output}, {b}), _as(std::move(as)), _output{output} {}
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

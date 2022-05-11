@@ -22,18 +22,13 @@ std::unique_ptr<T> invariantgraph::BinaryOpNode::fromModelConstraint(
   return std::make_unique<T>(a, b, output);
 }
 
-void invariantgraph::BinaryOpNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(definedVariables()[0])) {
-    registerDefinedVariable(engine, variableMap, definedVariables()[0]);
-  }
-}
-
 void invariantgraph::BinaryOpNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   assert(variableMap.contains(definedVariables()[0]));
+
   createInvariant(engine, variableMap.at(a()), variableMap.at(b()),
-                  variableMap.at(definedVariables()[0]));
+                  getOutputVarId(engine, variableMap, _y));
+  InvariantNode::registerWithEngine(engine, variableMap);
 }
 
 // Instantiation of the binary operator factory methods.

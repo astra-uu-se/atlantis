@@ -42,16 +42,9 @@ void invariantgraph::LinEqNode::createDefinedVariables(
 void invariantgraph::LinEqNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<VarId> variables;
-  std::transform(
-      staticInputs().begin(), staticInputs().end(),
-      std::back_inserter(variables), [&](auto node) {
-        if (node->variable() &&
-            std::holds_alternative<fznparser::IntVariable>(*node->variable())) {
-          return variableMap.at(node);
-        }
-
-        return engine.makeIntView<Bool2IntView>(variableMap.at(node));
-      });
+  std::transform(staticInputs().begin(), staticInputs().end(),
+                 std::back_inserter(variables),
+                 [&](auto node) { return variableMap.at(node); });
 
   assert(_sumVarId != NULL_ID);
   assert(variableMap.contains(violation()));

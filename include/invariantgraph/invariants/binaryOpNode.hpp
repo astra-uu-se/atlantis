@@ -9,7 +9,10 @@ namespace invariantgraph {
 /**
  * Invariant that encodes y <- a ⊕ b, where ⊕ is some binary operation.
  */
-class BinaryOpNode : public VariableDefiningNode {
+class BinaryOpNode : public InvariantNode {
+ private:
+  VariableNode* _y;
+
  public:
   template <typename T>
   static std::unique_ptr<T> fromModelConstraint(
@@ -17,12 +20,9 @@ class BinaryOpNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   BinaryOpNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : VariableDefiningNode({output}, {a, b}) {}
+      : InvariantNode({output}, {a, b}), _y{output} {}
 
   ~BinaryOpNode() override = default;
-
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   void registerWithEngine(
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;

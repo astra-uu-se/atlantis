@@ -16,13 +16,6 @@ invariantgraph::ArrayVarIntElementNode::fromModelConstraint(
   return std::make_unique<invariantgraph::ArrayVarIntElementNode>(b, as, c);
 }
 
-void invariantgraph::ArrayVarIntElementNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(definedVariables()[0])) {
-    registerDefinedVariable(engine, variableMap, definedVariables()[0]);
-  }
-}
-
 void invariantgraph::ArrayVarIntElementNode::registerWithEngine(
     Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<VarId> as;
@@ -30,8 +23,8 @@ void invariantgraph::ArrayVarIntElementNode::registerWithEngine(
                  std::back_inserter(as),
                  [&](auto var) { return variableMap.at(var); });
 
-  assert(variableMap.contains(definedVariables()[0]));
-
   engine.makeInvariant<ElementVar>(variableMap.at(b()), as,
-                                   variableMap.at(definedVariables()[0]));
+                                   getOutputVarId(engine, variableMap, _output));
+
+  InvariantNode::registerWithEngine(engine, variableMap);
 }

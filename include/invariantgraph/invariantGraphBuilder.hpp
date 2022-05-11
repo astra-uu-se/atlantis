@@ -33,7 +33,7 @@ class InvariantGraphBuilder {
   std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraint(
       const fznparser::FZNModel& model,
       const fznparser::Constraint& constraint);
-  std::unique_ptr<SoftConstraintNode> makeSoftConstraint(
+  std::unique_ptr<VariableDefiningNode> makeSoftConstraint(
       const fznparser::FZNModel& model,
       const fznparser::Constraint& constraint);
 

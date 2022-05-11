@@ -2,6 +2,9 @@
 
 #include <limits>
 
+#include "constraints/equal.hpp"
+#include "invariants/linear.hpp"
+
 using namespace invariantgraph;
 
 static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
@@ -120,4 +123,59 @@ std::vector<DomainEntry> VariableNode::constrainedDomain(
                                                   engine.upperBound(varId));
       },
       _domain);
+}
+
+void InvariantNode::createDefinedVariables(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  for (auto& node : definedVariables()) {
+    registerDefinedVariable(engine, variableMap, node);
+  }
+}
+
+void InvariantNode::makeSoft() noexcept {
+  _makeSoftConstraint = true;
+  _numExpectedViolations = _definedVariables.size();
+
+  for (auto& node : _definedVariables) {
+    markAsStaticInput(node);
+  }
+
+  _definedVariables.clear();
+  _definedVariables.push_back(&_violation);
+}
+
+VarId InvariantNode::getOutputVarId(Engine& engine, VariableMap& variableMap,
+                                    VariableNode* outputNode) {
+  if (_makeSoftConstraint) {
+    auto [lb, ub] = outputNode->bounds();
+    auto intermediate = engine.makeIntVar(lb, lb, ub);
+    auto violation = _numExpectedViolations == 1 ? variableMap.at(&_violation)
+                                                 : engine.makeIntVar(0, 0, 0);
+
+    engine.makeConstraint<Equal>(violation, intermediate,
+                                 variableMap.at(outputNode));
+
+    if (_numExpectedViolations > 1) {
+      _violations.push_back(violation);
+    }
+
+    return intermediate;
+  } else {
+    return variableMap.at(outputNode);
+  }
+}
+
+void InvariantNode::registerWithEngine(
+    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+  if (_violations.empty()) {
+    return;
+  }
+
+  if (_numExpectedViolations > 1) {
+    engine.makeInvariant<Linear>(_violations, variableMap.at(&_violation));
+  }
+}
+
+VariableNode* InvariantNode::violation() {
+  return _makeSoftConstraint ? &_violation : nullptr;
 }
