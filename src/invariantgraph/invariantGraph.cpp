@@ -274,6 +274,7 @@ void invariantgraph::InvariantGraph::createVariables(Engine& engine) {
 #endif
     node->createDefinedVariables(engine);
     for (auto* const definedVariable : node->definedVariables()) {
+      assert(definedVariable->definedBy() == node);
       definedVariables.emplace(definedVariable);
       assert(definedVariable->varId() != NULL_ID);
       for (auto* const variableNode : definedVariable->inputFor()) {
@@ -296,6 +297,41 @@ void invariantgraph::InvariantGraph::createInvariants(Engine& engine) {
 #endif
     node->registerWithEngine(engine);
   }
+}
+
+VarId invariantgraph::InvariantGraph::createViolations(Engine& engine) {
+  std::vector<VarId> violations;
+  for (const auto& definingNode : _variableDefiningNodes) {
+    if (!definingNode->isReified() &&
+        definingNode->violationVarId() != NULL_ID) {
+      violations.emplace_back(definingNode->violationVarId());
+    }
+  }
+
+  std::unordered_set<VariableNode*> searchVariables;
+  for (auto* const implicitConstraint : _implicitConstraints) {
+    for (auto* const searchNode : implicitConstraint->definedVariables()) {
+      searchVariables.emplace(searchNode);
+    }
+  }
+  for (auto& node : _variables) {
+    if (!searchVariables.contains(node.get())) {
+      const VarId violationId =
+          node->postDomainConstraint(engine, node->constrainedDomain(engine));
+      if (violationId != NULL_ID) {
+        violations.emplace_back(violationId);
+      }
+    }
+  }
+  if (violations.empty()) {
+    return NULL_ID;
+  }
+  if (violations.size() == 1) {
+    return violations.front();
+  }
+  const VarId totalViolation = engine.makeIntVar(0, 0, 0);
+  engine.makeInvariant<Linear>(violations, totalViolation);
+  return totalViolation;
 }
 
 invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
