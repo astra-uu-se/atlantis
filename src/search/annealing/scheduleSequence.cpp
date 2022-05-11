@@ -10,7 +10,6 @@ void search::ScheduleSequence::start(double initialTemperature) {
 void search::ScheduleSequence::nextRound(
     const search::RoundStatistics& statistics) {
   assert(!frozen());
-  assert(!currentSchedule().frozen());
 
   auto temp = temperature();
   currentSchedule().nextRound(statistics);
