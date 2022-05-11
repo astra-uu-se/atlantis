@@ -10,7 +10,6 @@
 
 static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
     const std::vector<invariantgraph::VariableNode*>& variableNodes) {
-        variableIds) {
   invariantgraph::InvariantGraphApplyResult::VariableMap variableMap{};
 
   for (const auto& node : variableNodes) {
@@ -23,72 +22,6 @@ static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
     }
   }
   return variableMap;
-}
-
-void invariantgraph::InvariantGraph::breakCycles() {}
-
-invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
-    Engine& engine) {
-  engine.open();
-
-  std::unordered_map<VariableNode*, VarId> variableMap;
-void invariantgraph::InvariantGraph::createVariables(Engine& engine) {
-  std::unordered_set<invariantgraph::VariableDefiningNode*> visitedNodes;
-  std::unordered_set<invariantgraph::VariableNode*> searchVariables;
-
-  std::queue<invariantgraph::VariableDefiningNode*> unregisteredNodes;
-
-  for (auto* const implicitConstraint : _implicitConstraints) {
-    visitedNodes.emplace(implicitConstraint);
-    unregisteredNodes.emplace(implicitConstraint);
-    for (auto* const searchNode : implicitConstraint->definedVariables()) {
-      searchVariables.emplace(searchNode);
-    }
-  }
-
-  std::vector<VarId> violations;
-  std::unordered_set<VariableNode*> definedVariables;
-
-  while (!unregisteredNodes.empty()) {
-    auto* const node = unregisteredNodes.front();
-    unregisteredNodes.pop();
-    assert(visitedNodes.contains(node));
-    // If the node only defines a single variable, then it is a view:
-    assert(!node->dynamicInputs().empty() || node->staticInputs().size() != 1 ||
-           node->staticInputs().front()->varId() != NULL_ID);
-           variableMap.contains(node->staticInputs().front()));
-#ifndef NDEBUG
-    for (auto* const definedVariable : node->definedVariables()) {
-      assert(definedVariable->varId() == NULL_ID);
-    }
-#endif
-    node->createDefinedVariables(engine);
-    for (auto* const definedVariable : node->definedVariables()) {
-      assert(definedVariable->definedBy() == node);
-      definedVariables.emplace(definedVariable);
-      assert(definedVariable->varId() != NULL_ID);
-      for (auto* const variableNode : definedVariable->inputFor()) {
-        if (!visitedNodes.contains(variableNode)) {
-          visitedNodes.emplace(variableNode);
-          unregisteredNodes.emplace(variableNode);
-        }
-      }
-    }
-  }
-  assert(visitedNodes.size() == _variableDefiningNodes.size());
-}
-
-void invariantgraph::InvariantGraph::createInvariants(Engine& engine) {
-  for (const auto& node : _variableDefiningNodes) {
-#ifndef NDEBUG
-    for (auto* const definedVariable : node->definedVariables()) {
-      assert(definedVariable->varId() != NULL_ID);
-    }
-#endif
-    node->registerWithEngine(engine);
-  }
-      if (auto* const violationNode = node->violation()) {
-        violations.push_back(variableMap.at(violationNode));
 }
 
 VarId invariantgraph::InvariantGraph::createViolations(Engine& engine) {
@@ -124,6 +57,61 @@ VarId invariantgraph::InvariantGraph::createViolations(Engine& engine) {
   const VarId totalViolation = engine.makeIntVar(0, 0, 0);
   engine.makeInvariant<Linear>(violations, totalViolation);
   return totalViolation;
+}
+
+void invariantgraph::InvariantGraph::createVariables(Engine& engine) {
+  std::unordered_set<invariantgraph::VariableDefiningNode*> visitedNodes;
+  std::unordered_set<invariantgraph::VariableNode*> searchVariables;
+
+  std::queue<invariantgraph::VariableDefiningNode*> unregisteredNodes;
+
+  for (auto* const implicitConstraint : _implicitConstraints) {
+    visitedNodes.emplace(implicitConstraint);
+    unregisteredNodes.emplace(implicitConstraint);
+    for (auto* const searchNode : implicitConstraint->definedVariables()) {
+      searchVariables.emplace(searchNode);
+    }
+  }
+
+  std::vector<VarId> violations;
+  std::unordered_set<VariableNode*> definedVariables;
+
+  while (!unregisteredNodes.empty()) {
+    auto* const node = unregisteredNodes.front();
+    unregisteredNodes.pop();
+    assert(visitedNodes.contains(node));
+    // If the node only defines a single variable, then it is a view:
+    assert(!node->dynamicInputs().empty() || node->staticInputs().size() != 1 ||
+           node->staticInputs().front()->varId() != NULL_ID);
+#ifndef NDEBUG
+    for (auto* const definedVariable : node->definedVariables()) {
+      assert(definedVariable->varId() == NULL_ID);
+    }
+#endif
+    node->createDefinedVariables(engine);
+    for (auto* const definedVariable : node->definedVariables()) {
+      definedVariables.emplace(definedVariable);
+      assert(definedVariable->varId() != NULL_ID);
+      for (auto* const variableNode : definedVariable->inputFor()) {
+        if (!visitedNodes.contains(variableNode)) {
+          visitedNodes.emplace(variableNode);
+          unregisteredNodes.emplace(variableNode);
+        }
+      }
+    }
+  }
+  assert(visitedNodes.size() == _variableDefiningNodes.size());
+}
+
+void invariantgraph::InvariantGraph::createInvariants(Engine& engine) {
+  for (const auto& node : _variableDefiningNodes) {
+#ifndef NDEBUG
+    for (auto* const definedVariable : node->definedVariables()) {
+      assert(definedVariable->varId() != NULL_ID);
+    }
+#endif
+    node->registerWithEngine(engine);
+  }
 }
 
 invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(

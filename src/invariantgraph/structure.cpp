@@ -64,7 +64,6 @@ VariableNode::VariableNode(SearchDomain domain)
     : _variable(std::nullopt), _domain(std::move(domain)) {}
 
 void ImplicitConstraintNode::createDefinedVariables(Engine& engine) {
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   for (const auto& node : definedVariables()) {
     if (node->varId() == NULL_ID) {
       const auto& [lb, ub] = node->bounds();
@@ -74,7 +73,6 @@ void ImplicitConstraintNode::createDefinedVariables(Engine& engine) {
 }
 
 void ImplicitConstraintNode::registerWithEngine(Engine& engine) {
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
   std::vector<search::SearchVariable> varIds;
   varIds.reserve(definedVariables().size());
 
@@ -88,7 +86,6 @@ void ImplicitConstraintNode::registerWithEngine(Engine& engine) {
 }
 
 VarId VariableNode::postDomainConstraint(Engine& engine,
-                                         const VariableMap& variableMap,
                                          std::vector<DomainEntry>&& domain) {
   if (domain.size() == 0 || _domainViolationId != NULL_ID) {
     return _domainViolationId;
@@ -113,11 +110,10 @@ VarId VariableNode::postDomainConstraint(Engine& engine,
 std::vector<DomainEntry> VariableNode::constrainedDomain(const Engine& engine) {
   assert(this->varId() != NULL_ID);
   const VarId varId = this->varId();
-  return _domain.relativeComplementIfIntersects(engine.lowerBound(varId),
   return std::visit<std::vector<DomainEntry>>(
       [&](const auto& dom) {
         return dom.relativeComplementIfIntersects(engine.lowerBound(varId),
-                                                engine.upperBound(varId));
+                                                  engine.upperBound(varId));
       },
       _domain);
 }
