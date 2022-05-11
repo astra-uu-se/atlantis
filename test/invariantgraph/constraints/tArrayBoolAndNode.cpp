@@ -24,7 +24,7 @@ class ArrayBoolAndNodeTest : public NodeTestBase {
 
 TEST_F(ArrayBoolAndNodeTest, construction) {
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables().at(0)->variable(),
+  EXPECT_EQ(*node->definedVariables().front()->variable(),
             invariantgraph::VariableNode::FZNVariable(r));
 
   EXPECT_EQ(node->staticInputs().size(), 2);
@@ -41,13 +41,13 @@ TEST_F(ArrayBoolAndNodeTest, application) {
   engine.open();
   registerVariables(engine, {a.name, b.name});
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_FALSE(_variableMap.contains(definedVariable));
+    EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  node->createDefinedVariables(engine, _variableMap);
+  node->createDefinedVariables(engine);
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_TRUE(_variableMap.contains(definedVariable));
+    EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  node->registerWithEngine(engine, _variableMap);
+  node->registerWithEngine(engine);
   engine.close();
 
   // a and b
@@ -73,18 +73,18 @@ TEST_F(ArrayBoolAndNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
-  node->createDefinedVariables(engine, _variableMap);
-  node->registerWithEngine(engine, _variableMap);
+  node->createDefinedVariables(engine);
+  node->registerWithEngine(engine);
 
   std::vector<VarId> inputs;
   EXPECT_EQ(node->staticInputs().size(), 2);
   for (auto* const inputVariable : node->staticInputs()) {
-    EXPECT_TRUE(_variableMap.contains(inputVariable));
-    inputs.emplace_back(_variableMap.at(inputVariable));
+    EXPECT_NE(inputVariable->varId(), NULL_ID);
+    inputs.emplace_back(inputVariable->varId());
   }
 
-  EXPECT_TRUE(_variableMap.contains(node->definedVariables()[0]));
-  const VarId outputId = _variableMap.at(node->definedVariables()[0]);
+  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
+  const VarId outputId = node->definedVariables().front()->varId();
   EXPECT_EQ(inputs.size(), 2);
 
   std::vector<Int> values(inputs.size());

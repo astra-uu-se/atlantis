@@ -25,6 +25,7 @@ TEST(InvariantGraphTest, apply_result) {
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> variableNodes;
   variableNodes.push_back(std::move(aNode));
   variableNodes.push_back(std::move(bNode));
+  variableNodes.push_back(std::move(cNode));
 
   std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
       variableDefiningNodes;
@@ -39,6 +40,13 @@ TEST(InvariantGraphTest, apply_result) {
   auto result = graph.apply(engine);
 
   EXPECT_EQ(result.variableMap().size(), 3);
+  std::unordered_set<std::string> varNames;
+  for (const auto& [varId, var] : result.variableMap()) {
+    varNames.emplace(var);
+  }
+  EXPECT_TRUE(varNames.contains(a.name));
+  EXPECT_TRUE(varNames.contains(b.name));
+  EXPECT_TRUE(varNames.contains(c.name));
 }
 
 TEST(InvariantGraphTest, ApplyGraph) {
@@ -88,6 +96,9 @@ TEST(InvariantGraphTest, ApplyGraph) {
   variableNodes.push_back(std::move(a2Node));
   variableNodes.push_back(std::move(b1Node));
   variableNodes.push_back(std::move(b2Node));
+  variableNodes.push_back(std::move(c1Node));
+  variableNodes.push_back(std::move(c2Node));
+  variableNodes.push_back(std::move(sumNode));
 
   std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
       variableDefiningNodes;
@@ -105,6 +116,7 @@ TEST(InvariantGraphTest, ApplyGraph) {
   auto result = graph.apply(engine);
 
   EXPECT_EQ(result.variableMap().size(), 7);
+  // 7 variables + dummy objective
   EXPECT_EQ(engine.numVariables(), 8);
-  EXPECT_EQ(engine.numInvariants(), 4);
+  EXPECT_EQ(engine.numInvariants(), 3);
 }

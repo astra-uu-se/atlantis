@@ -13,11 +13,11 @@ invariantgraph::IntAbsNode::fromModelConstraint(
   return std::make_unique<invariantgraph::IntAbsNode>(a, b);
 }
 
-void invariantgraph::IntAbsNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  auto outputVar = engine.makeIntView<::IntAbsView>(variableMap.at(input()));
-  variableMap.emplace(definedVariables()[0], outputVar);
+void invariantgraph::IntAbsNode::createDefinedVariables(Engine& engine) {
+  if (definedVariables().front()->varId() == NULL_ID) {
+    definedVariables().front()->setVarId(
+        engine.makeIntView<::IntAbsView>(input()->varId()));
+  }
 }
 
-void invariantgraph::IntAbsNode::registerWithEngine(
-    Engine&, VariableDefiningNode::VariableMap&) {}
+void invariantgraph::IntAbsNode::registerWithEngine(Engine&) {}

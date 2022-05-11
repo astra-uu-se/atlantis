@@ -24,32 +24,28 @@ invariantgraph::BoolClauseNode::fromModelConstraint(
       mappedVariableVector(model, constraint.arguments[1], variableMap), r);
 }
 
-void invariantgraph::BoolClauseNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::BoolClauseNode::createDefinedVariables(Engine& engine) {
   if (_sumVarId == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(!variableMap.contains(violation()));
-    variableMap.emplace(violation(),
-                        engine.makeIntView<EqualView>(
-                            _sumVarId, static_cast<Int>(_as.size()) +
-                                           static_cast<Int>(_bs.size())));
+    assert(violationVarId() == NULL_ID);
+    setViolationVarId(engine.makeIntView<EqualView>(
+        _sumVarId,
+        static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
   }
 }
 
-void invariantgraph::BoolClauseNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::BoolClauseNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> engineVariables;
   engineVariables.reserve(_as.size() + _bs.size());
   std::transform(_as.begin(), _as.end(), std::back_inserter(engineVariables),
-                 [&](const auto& var) { return variableMap.at(var); });
+                 [&](const auto& var) { return var->varId(); });
 
   std::transform(_bs.begin(), _bs.end(), std::back_inserter(engineVariables),
                  [&](const auto& var) {
-                   auto b = variableMap.at(var);
-                   return engine.makeIntView<NotEqualView>(b, 0);
+                   return engine.makeIntView<NotEqualView>(var->varId(), 0);
                  });
 
   assert(_sumVarId != NULL_ID);
-  assert(variableMap.contains(violation()));
+  assert(violationVarId() != NULL_ID);
   engine.makeInvariant<Linear>(engineVariables, _sumVarId);
 }

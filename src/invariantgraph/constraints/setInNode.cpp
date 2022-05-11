@@ -35,16 +35,12 @@ invariantgraph::SetInNode::fromModelConstraint(
       valueSet);
 }
 
-void invariantgraph::SetInNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(violation())) {
-    registerViolation(engine, variableMap);
-  }
+void invariantgraph::SetInNode::createDefinedVariables(Engine& engine) {
+  registerViolation(engine);
 }
 
-void invariantgraph::SetInNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  VarId input = variableMap.at(staticInputs().front());
+void invariantgraph::SetInNode::registerWithEngine(Engine& engine) {
+  VarId input = staticInputs().front()->varId();
 
   std::vector<DomainEntry> domainEntries;
   domainEntries.reserve(_values.size());
@@ -52,8 +48,8 @@ void invariantgraph::SetInNode::registerWithEngine(
                  std::back_inserter(domainEntries),
                  [](const auto& value) { return DomainEntry(value, value); });
 
-  assert(variableMap.contains(violation()));
+  assert(violationVarId() != NULL_ID);
 
-  engine.makeConstraint<InDomain>(variableMap.at(violation()), input,
+  engine.makeConstraint<InDomain>(violationVarId(), input,
                                   std::move(domainEntries));
 }

@@ -16,11 +16,9 @@ class ArrayVarBoolElementNode : public VariableDefiningNode {
                           VariableNode* output)
       : VariableDefiningNode({output}, {b}, {as}) {}
 
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void createDefinedVariables(Engine& engine) override;
 
-  void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void registerWithEngine(Engine& engine) override;
 
   [[nodiscard]] VariableNode* b() const noexcept {
     return staticInputs().front();
