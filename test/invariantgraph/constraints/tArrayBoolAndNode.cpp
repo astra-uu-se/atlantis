@@ -32,7 +32,10 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase {
            fznparser::Constraint::Argument{true}},
           {}};
 
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+TEST_F(ArrayBoolAndNodeTest, construction) {
+  EXPECT_EQ(node->definedVariables().size(), 1);
+  EXPECT_EQ(*node->definedVariables().front()->variable(),
+            invariantgraph::VariableNode::FZNVariable(r));
 
       fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
 
@@ -44,37 +47,19 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase {
            fznparser::Constraint::Argument{"r"}},
           {}};
 
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::FZNModel mdl{
-          {}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-    }
-    setModel(model.get());
-    node = makeNode<invariantgraph::ArrayBoolAndNode>(*constraint);
+TEST_F(ArrayBoolAndNodeTest, application) {
+  PropagationEngine engine;
+  engine.open();
+  registerVariables(engine, {a.name, b.name});
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-
-  void construction() {
-    EXPECT_EQ(node->staticInputs().size(), 2);
-    EXPECT_EQ(node->dynamicInputs().size(), 0);
-    std::vector<invariantgraph::VariableNode*> expectedVars;
-    for (size_t i = 0; i < 2; ++i) {
-      expectedVars.emplace_back(_variables.at(i).get());
-    }
-    EXPECT_EQ(node->staticInputs(), expectedVars);
-    EXPECT_THAT(expectedVars, testing::ContainerEq(node->staticInputs()));
-    expectMarkedAsInput(node.get(), node->staticInputs());
-    if constexpr (!IsReified) {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
-    } else {
-      EXPECT_TRUE(node->isReified());
-      EXPECT_NE(node->reifiedViolation(), nullptr);
-      EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VariableNode::FZNVariable(r));
-    }
+  node->createDefinedVariables(engine);
+  for (auto* const definedVariable : node->definedVariables()) {
+    EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
+  node->registerWithEngine(engine);
+  engine.close();
 
   void application() {
     PropagationEngine engine;
@@ -100,23 +85,23 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase {
     EXPECT_EQ(engine.numInvariants(), 1);
   }
 
-  void propagation() {
-    PropagationEngine engine;
-    engine.open();
-    registerVariables(engine, {a.name, b.name});
-    node->createDefinedVariables(engine);
-    node->registerWithEngine(engine);
+TEST_F(ArrayBoolAndNodeTest, propagation) {
+  PropagationEngine engine;
+  engine.open();
+  registerVariables(engine, {a.name, b.name});
+  node->createDefinedVariables(engine);
+  node->registerWithEngine(engine);
 
-    std::vector<VarId> inputs;
-    EXPECT_EQ(node->staticInputs().size(), 2);
-    for (auto* const inputVariable : node->staticInputs()) {
-      EXPECT_NE(inputVariable->varId(), NULL_ID);
-      inputs.emplace_back(inputVariable->varId());
-    }
+  std::vector<VarId> inputs;
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  for (auto* const inputVariable : node->staticInputs()) {
+    EXPECT_NE(inputVariable->varId(), NULL_ID);
+    inputs.emplace_back(inputVariable->varId());
+  }
 
-    EXPECT_NE(node->violationVarId(), NULL_ID);
-    const VarId outputId = node->violationVarId();
-    EXPECT_EQ(inputs.size(), 2);
+  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
+  const VarId outputId = node->definedVariables().front()->varId();
+  EXPECT_EQ(inputs.size(), 2);
 
     std::vector<Int> values(inputs.size());
     engine.close();
