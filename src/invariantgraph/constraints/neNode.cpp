@@ -21,17 +21,13 @@ invariantgraph::NeNode::fromModelConstraint(
   return std::make_unique<NeNode>(a, b, r);
 }
 
-void invariantgraph::NeNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(violation())) {
-    registerViolation(engine, variableMap);
-  }
+void invariantgraph::NeNode::createDefinedVariables(Engine& engine) {
+  registerViolation(engine);
 }
 
-void invariantgraph::NeNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  assert(variableMap.contains(violation()));
+void invariantgraph::NeNode::registerWithEngine(Engine& engine) {
+  assert(violationVarId() != NULL_ID);
 
-  engine.makeConstraint<::NotEqual>(variableMap.at(violation()),
-                                    variableMap.at(a()), variableMap.at(b()));
+  engine.makeConstraint<::NotEqual>(violationVarId(), a()->varId(),
+                                    b()->varId());
 }

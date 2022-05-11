@@ -27,7 +27,7 @@ TEST_F(Bool2IntNodeTest, construction) {
   EXPECT_EQ(node->input()->inputFor()[0], node.get());
 
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables()[0]->variable(),
+  EXPECT_EQ(*node->definedVariables().front()->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
 }
 
@@ -36,13 +36,13 @@ TEST_F(Bool2IntNodeTest, application) {
   engine.open();
   registerVariables(engine, {a.name});
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_FALSE(_variableMap.contains(definedVariable));
+    EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  node->createDefinedVariables(engine, _variableMap);
+  node->createDefinedVariables(engine);
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_TRUE(_variableMap.contains(definedVariable));
+    EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  node->registerWithEngine(engine, _variableMap);
+  node->registerWithEngine(engine);
   engine.close();
 
   // a
@@ -50,25 +50,22 @@ TEST_F(Bool2IntNodeTest, application) {
 
   // a
   EXPECT_EQ(engine.numVariables(), 1);
-
-  // a and b
-  EXPECT_EQ(_variableMap.size(), 2);
 }
 
 TEST_F(Bool2IntNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name});
-  node->createDefinedVariables(engine, _variableMap);
-  node->registerWithEngine(engine, _variableMap);
+  node->createDefinedVariables(engine);
+  node->registerWithEngine(engine);
   engine.close();
 
   EXPECT_EQ(node->staticInputs().size(), 1);
-  EXPECT_TRUE(_variableMap.contains(node->staticInputs().front()));
-  EXPECT_TRUE(_variableMap.contains(node->definedVariables().at(0)));
+  EXPECT_NE(node->staticInputs().front()->varId(), NULL_ID);
+  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
 
-  const VarId input = _variableMap.at(node->staticInputs().front());
-  const VarId outputId = _variableMap.at(node->definedVariables().at(0));
+  const VarId input = node->staticInputs().front()->varId();
+  const VarId outputId = node->definedVariables().front()->varId();
 
   for (Int value = engine.lowerBound(input); value <= engine.upperBound(input);
        ++value) {

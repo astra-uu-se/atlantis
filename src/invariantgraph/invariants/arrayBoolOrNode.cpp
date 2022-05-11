@@ -17,23 +17,20 @@ invariantgraph::ArrayBoolOrNode::fromModelConstraint(
   return std::make_unique<invariantgraph::ArrayBoolOrNode>(as, r);
 }
 
-void invariantgraph::ArrayBoolOrNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::ArrayBoolOrNode::createDefinedVariables(Engine& engine) {
   if (_violationVarId == NULL_ID) {
     _violationVarId = engine.makeIntVar(0, 0, 0);
-    assert(!variableMap.contains(definedVariables()[0]));
-    variableMap.emplace(
-        definedVariables()[0],
+    assert(definedVariables().front()->varId() == NULL_ID);
+    definedVariables().front()->setVarId(
         engine.makeIntView<Violation2BoolView>(_violationVarId));
   }
 }
 
-void invariantgraph::ArrayBoolOrNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::ArrayBoolOrNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> inputs;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(inputs),
-                 [&](const auto& node) { return variableMap.at(node); });
+                 [&](const auto& node) { return node->varId(); });
 #ifndef NDEBUG
   for (const VarId input : inputs) {
     assert(0 <= engine.lowerBound(input));

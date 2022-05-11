@@ -79,6 +79,18 @@ class InvariantGraph {
         _implicitConstraints.push_back(implicitConstraint);
       }
     }
+#ifndef NDEBUG
+    if (_objectiveVariable != nullptr) {
+      bool containsObj = false;
+      for (auto& var : _variables) {
+        if (var.get() == _objectiveVariable) {
+          containsObj = true;
+          break;
+        }
+      }
+      assert(containsObj);
+    }
+#endif
   }
 
   InvariantGraph(const InvariantGraph&) = delete;
@@ -87,6 +99,11 @@ class InvariantGraph {
   void breakCycles();
 
   InvariantGraphApplyResult apply(Engine& engine);
+
+ private:
+  void createVariables(Engine&);
+  void createInvariants(Engine&);
+  VarId createViolations(Engine&);
 };
 
 }  // namespace invariantgraph

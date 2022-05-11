@@ -25,11 +25,9 @@ class LinearNode : public VariableDefiningNode {
 
   ~LinearNode() override = default;
 
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void createDefinedVariables(Engine& engine) override;
 
-  void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void registerWithEngine(Engine& engine) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 };

@@ -91,11 +91,11 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
     expectMarkedAsInput(node.get(), node->bs());
     if constexpr (!IsReified) {
       EXPECT_FALSE(node->isReified());
-      EXPECT_NE(node->violation()->variable(),
-                invariantgraph::VariableNode::FZNVariable(r));
+      EXPECT_EQ(node->reifiedViolation(), nullptr);
     } else {
       EXPECT_TRUE(node->isReified());
-      EXPECT_EQ(node->violation()->variable(),
+      EXPECT_NE(node->reifiedViolation(), nullptr);
+      EXPECT_EQ(node->reifiedViolation()->variable(),
                 invariantgraph::VariableNode::FZNVariable(r));
     }
   }
@@ -105,15 +105,15 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
     engine.open();
     registerVariables(engine, {a.name, b.name, c.name, d.name});
     for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_FALSE(_variableMap.contains(definedVariable));
+      EXPECT_EQ(definedVariable->varId(), NULL_ID);
     }
-    EXPECT_FALSE(_variableMap.contains(node->violation()));
-    node->createDefinedVariables(engine, _variableMap);
+    EXPECT_EQ(node->violationVarId(), NULL_ID);
+    node->createDefinedVariables(engine);
     for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_TRUE(_variableMap.contains(definedVariable));
+      EXPECT_NE(definedVariable->varId(), NULL_ID);
     }
-    EXPECT_TRUE(_variableMap.contains(node->violation()));
-    node->registerWithEngine(engine, _variableMap);
+    EXPECT_NE(node->violationVarId(), NULL_ID);
+    node->registerWithEngine(engine);
     engine.close();
 
     // a, b, c and d
@@ -130,22 +130,22 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
     PropagationEngine engine;
     engine.open();
     registerVariables(engine, {a.name, b.name, c.name, d.name});
-    node->createDefinedVariables(engine, _variableMap);
-    node->registerWithEngine(engine, _variableMap);
+    node->createDefinedVariables(engine);
+    node->registerWithEngine(engine);
 
     std::vector<VarId> asInputs;
     for (auto* const inputVariable : node->as()) {
-      EXPECT_TRUE(_variableMap.contains(inputVariable));
-      asInputs.emplace_back(_variableMap.at(inputVariable));
+      EXPECT_NE(inputVariable->varId(), NULL_ID);
+      asInputs.emplace_back(inputVariable->varId());
     }
     std::vector<VarId> bsInputs;
     for (auto* const inputVariable : node->bs()) {
-      EXPECT_TRUE(_variableMap.contains(inputVariable));
-      bsInputs.emplace_back(_variableMap.at(inputVariable));
+      EXPECT_NE(inputVariable->varId(), NULL_ID);
+      bsInputs.emplace_back(inputVariable->varId());
     }
 
-    EXPECT_TRUE(_variableMap.contains(node->violation()));
-    const VarId violationId = _variableMap.at(node->violation());
+    EXPECT_NE(node->violationVarId(), NULL_ID);
+    const VarId violationId = node->violationVarId();
     EXPECT_EQ(asInputs.size(), 2);
     EXPECT_EQ(bsInputs.size(), 2);
 

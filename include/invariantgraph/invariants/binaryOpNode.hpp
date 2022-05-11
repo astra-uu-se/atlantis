@@ -21,11 +21,9 @@ class BinaryOpNode : public VariableDefiningNode {
 
   ~BinaryOpNode() override = default;
 
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void createDefinedVariables(Engine& engine) override;
 
-  void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void registerWithEngine(Engine& engine) override;
 
   [[nodiscard]] VariableNode* a() const noexcept {
     return staticInputs().front();

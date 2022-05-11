@@ -9,15 +9,15 @@
 #include "utils/fznAst.hpp"
 
 static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
-    const std::unordered_map<invariantgraph::VariableNode*, VarId>&
+    const std::vector<invariantgraph::VariableNode*>& variableNodes) {
         variableIds) {
   invariantgraph::InvariantGraphApplyResult::VariableMap variableMap{};
 
-  for (const auto& [node, varId] : variableIds) {
+  for (const auto& node : variableNodes) {
     if (node->variable()) {
       std::visit(
-          [&, varId = varId](const auto& variable) {
-            variableMap.emplace(varId, variable.name);
+          [&](const auto& variable) {
+            variableMap.emplace(node->varId(), variable.name);
           },
           *node->variable());
     }
@@ -32,12 +32,18 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
   engine.open();
 
   std::unordered_map<VariableNode*, VarId> variableMap;
+void invariantgraph::InvariantGraph::createVariables(Engine& engine) {
   std::unordered_set<invariantgraph::VariableDefiningNode*> visitedNodes;
+  std::unordered_set<invariantgraph::VariableNode*> searchVariables;
+
   std::queue<invariantgraph::VariableDefiningNode*> unregisteredNodes;
 
   for (auto* const implicitConstraint : _implicitConstraints) {
     visitedNodes.emplace(implicitConstraint);
     unregisteredNodes.emplace(implicitConstraint);
+    for (auto* const searchNode : implicitConstraint->definedVariables()) {
+      searchVariables.emplace(searchNode);
+    }
   }
 
   std::vector<VarId> violations;
@@ -48,18 +54,19 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     unregisteredNodes.pop();
     assert(visitedNodes.contains(node));
     // If the node only defines a single variable, then it is a view:
-    assert((node->dynamicInputs().size() == 0 &&
-            node->staticInputs().size() != 1) ||
+    assert(!node->dynamicInputs().empty() || node->staticInputs().size() != 1 ||
+           node->staticInputs().front()->varId() != NULL_ID);
            variableMap.contains(node->staticInputs().front()));
 #ifndef NDEBUG
     for (auto* const definedVariable : node->definedVariables()) {
-      assert(!variableMap.contains(definedVariable));
+      assert(definedVariable->varId() == NULL_ID);
     }
 #endif
-    node->createDefinedVariables(engine, variableMap);
+    node->createDefinedVariables(engine);
     for (auto* const definedVariable : node->definedVariables()) {
+      assert(definedVariable->definedBy() == node);
       definedVariables.emplace(definedVariable);
-      assert(variableMap.contains(definedVariable));
+      assert(definedVariable->varId() != NULL_ID);
       for (auto* const variableNode : definedVariable->inputFor()) {
         if (!visitedNodes.contains(variableNode)) {
           visitedNodes.emplace(variableNode);
@@ -68,38 +75,79 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
       }
     }
   }
+  assert(visitedNodes.size() == _variableDefiningNodes.size());
+}
 
-  for (auto* const node : visitedNodes) {
+void invariantgraph::InvariantGraph::createInvariants(Engine& engine) {
+  for (const auto& node : _variableDefiningNodes) {
 #ifndef NDEBUG
     for (auto* const definedVariable : node->definedVariables()) {
-      variableMap.contains(definedVariable);
+      assert(definedVariable->varId() != NULL_ID);
     }
 #endif
-    node->registerWithEngine(engine, variableMap);
-    if (!node->isReified()) {
+    node->registerWithEngine(engine);
+  }
       if (auto* const violationNode = node->violation()) {
         violations.push_back(variableMap.at(violationNode));
+}
+
+VarId invariantgraph::InvariantGraph::createViolations(Engine& engine) {
+  std::vector<VarId> violations;
+  for (const auto& definingNode : _variableDefiningNodes) {
+    if (!definingNode->isReified() &&
+        definingNode->violationVarId() != NULL_ID) {
+      violations.emplace_back(definingNode->violationVarId());
+    }
+  }
+
+  std::unordered_set<VariableNode*> searchVariables;
+  for (auto* const implicitConstraint : _implicitConstraints) {
+    for (auto* const searchNode : implicitConstraint->definedVariables()) {
+      searchVariables.emplace(searchNode);
+    }
+  }
+  for (auto& node : _variables) {
+    if (!searchVariables.contains(node.get())) {
+      const VarId violationId =
+          node->postDomainConstraint(engine, node->constrainedDomain(engine));
+      if (violationId != NULL_ID) {
+        violations.emplace_back(violationId);
       }
     }
   }
-
-  engine.computeBounds();
-
-  for (auto* node : definedVariables) {
-    node->postDomainConstraint(engine, variableMap,
-                               node->constrainedDomain(engine, variableMap));
+  if (violations.empty()) {
+    return NULL_ID;
   }
+  if (violations.size() == 1) {
+    return violations.front();
+  }
+  const VarId totalViolation = engine.makeIntVar(0, 0, 0);
+  engine.makeInvariant<Linear>(violations, totalViolation);
+  return totalViolation;
+}
 
-  const VarId totalViolations = engine.makeIntVar(0, 0, 0);
-  engine.makeInvariant<Linear>(violations, totalViolations);
-
+invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
+    Engine& engine) {
+  engine.open();
+  createVariables(engine);
+  engine.computeBounds();
+  createInvariants(engine);
+  const VarId totalViolation = createViolations(engine);
   // If the model has no variable to optimise, use a dummy variable.
-  VarId objectiveVarId = _objectiveVariable == nullptr
-                             ? engine.makeIntVar(0, 0, 0)
-                             : variableMap.at(_objectiveVariable);
-
+  VarId objectiveVarId = _objectiveVariable != nullptr
+                             ? _objectiveVariable->varId()
+                             : engine.makeIntVar(0, 0, 0);
   engine.close();
 
-  return {createVariableMap(variableMap), _implicitConstraints, totalViolations,
+  std::vector<VariableNode*> variables(
+      _variables.size() + (_objectiveVariable != nullptr ? 1 : 0), nullptr);
+  for (size_t i = 0; i < _variables.size(); ++i) {
+    variables[i] = _variables[i].get();
+  }
+  if (_objectiveVariable != nullptr) {
+    variables.back() = _objectiveVariable;
+  }
+
+  return {createVariableMap(variables), _implicitConstraints, totalViolation,
           objectiveVarId};
 }

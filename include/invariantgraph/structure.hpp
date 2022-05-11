@@ -37,6 +37,7 @@ class VariableNode {
  private:
   std::optional<FZNVariable> _variable;
   SearchDomain _domain;
+  VarId _varId{NULL_ID};
   VarId _domainViolationId{NULL_ID};
 
   std::vector<VariableDefiningNode*> _inputFor;
@@ -62,6 +63,21 @@ class VariableNode {
    */
   [[nodiscard]] std::optional<FZNVariable> variable() const {
     return _variable;
+  }
+
+  /**
+   * @return The model VarId this node is associated with, or NULL_ID
+   * if no VarId is associated with this node.
+   */
+  [[nodiscard]] VarId varId() const { return _varId; }
+
+  /**
+   * @return The model VarId this node is associated with, or NULL_ID
+   * if no VarId is associated with this node.
+   */
+  void setVarId(VarId varId) {
+    assert(_varId == NULL_ID);
+    _varId = varId;
   }
 
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
@@ -134,10 +150,10 @@ class VariableDefiningNode {
 
   virtual ~VariableDefiningNode() = default;
 
-  [[nodiscard]] virtual bool isReified() { return false; }
+  [[nodiscard]] virtual bool isReified() const { return false; }
 
   /**
-   * Creates as all the variables the node
+   * Creates as all the variables the node defines in @p engine.
    * defines in @p engine. The @p variableMap is modified to contain the
    * variables defined by this node with their corresponding VarId's.
    *
@@ -145,16 +161,16 @@ class VariableDefiningNode {
    * and views.
    * @param variableMap A map of variable nodes to VarIds.
    */
-  virtual void createDefinedVariables(Engine& engine,
+  virtual void createDefinedVariables(Engine& engine) = 0;
                                       VariableMap& variableMap) = 0;
 
   /**
    * Registers the current node with the engine, as well as all the variables
-   * it defines. The @p variableMap is modified to contain the variables defined
+   * it defines.
    * by this node with their corresponding VarId's.
    *
    * Note: This method assumes it is called after all the inputs to this node
-   * are already registered with the engine. This means the node should be able
+   * are already registered with the engine.
    * to look up all the VarId's for its inputs in @p variableMap. Therefore,
    * nodes should be registered with the engine in a breadth-first manner.
    *
@@ -162,7 +178,7 @@ class VariableDefiningNode {
    * and views.
    * @param variableMap A map of variable nodes to VarIds.
    */
-  virtual void registerWithEngine(Engine& engine, VariableMap& variableMap) = 0;
+  virtual void registerWithEngine(Engine& engine) = 0;
 
   /**
    * @return The variable nodes defined by this node.
@@ -177,7 +193,7 @@ class VariableDefiningNode {
    * applicable if the current node is a soft constraint. If this node does not
    * define a violation variable, this method returns @p nullptr.
    */
-  [[nodiscard]] virtual VariableNode* violation() { return nullptr; }
+  [[nodiscard]] virtual VarId violationVarId() const { return NULL_ID; }
 
   [[nodiscard]] const std::vector<VariableNode*>& staticInputs()
       const noexcept {
@@ -194,11 +210,14 @@ class VariableDefiningNode {
 
  protected:
   static inline VarId registerDefinedVariable(Engine& engine,
-                                              VariableMap& variableMap,
-                                              VariableNode* variable) {
-    if (!variableMap.contains(variable)) {
-      variableMap.emplace(variable, engine.makeIntVar(0, 0, 0));
+                                              VariableNode* variable,
+                                              Int initialValue = 0) {
+    if (variable->varId() == NULL_ID) {
+      variable->setVarId(
+          engine.makeIntVar(initialValue, initialValue, initialValue));
     }
+    return variable->varId();
+  }
 
     return variableMap.at(variable);
   }
@@ -233,10 +252,10 @@ class ImplicitConstraintNode : public VariableDefiningNode {
       : VariableDefiningNode(std::move(definedVariables)) {}
   ~ImplicitConstraintNode() override { delete _neighbourhood; }
 
-  void createDefinedVariables(
+  void createDefinedVariables(Engine& engine) override;
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
-  void registerWithEngine(
+  void registerWithEngine(Engine& engine) override;
       Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
 
   /**
@@ -271,34 +290,60 @@ class ImplicitConstraintNode : public VariableDefiningNode {
 class SoftConstraintNode : public VariableDefiningNode {
  private:
   // Bounds will be recomputed by the engine.
-  VariableNode _violation{SetDomain({0})};
+  VarId _violationVarId{NULL_ID};
   VariableNode* _reifiedViolation;
 
  public:
   explicit SoftConstraintNode(std::vector<VariableNode*> staticInputs = {},
                               VariableNode* reifiedViolation = nullptr)
-      : VariableDefiningNode(
-            {reifiedViolation == nullptr ? &_violation : reifiedViolation},
-            std::move(staticInputs)),
-        _reifiedViolation(reifiedViolation) {}
+      : VariableDefiningNode(reifiedViolation == nullptr
+                                 ? std::vector<VariableNode*>{}
+                                 : std::vector<VariableNode*>{reifiedViolation},
+                             std::move(staticInputs)),
+        _reifiedViolation(reifiedViolation) {
+    if (!isReified()) {
+      assert(_reifiedViolation == nullptr);
+      assert(definedVariables().size() == 0);
+    } else {
+      assert(_reifiedViolation != nullptr);
+      assert(_reifiedViolation->definedBy() == this);
+      assert(definedVariables().size() == 1);
+      assert(definedVariables().front() == _reifiedViolation);
+    }
+  }
 
   ~SoftConstraintNode() override = default;
 
-  [[nodiscard]] VariableNode* violation() override {
-    if (isReified()) {
-      return _reifiedViolation;
-    }
-    return &_violation;
-  }
-
-  [[nodiscard]] bool isReified() override {
+  [[nodiscard]] bool isReified() const override {
     return _reifiedViolation != nullptr;
   }
 
+  [[nodiscard]] VarId violationVarId() const override {
+    if (isReified()) {
+      return _reifiedViolation->varId();
+    }
+    return _violationVarId;
+  }
+
+  inline VariableNode* reifiedViolation() { return _reifiedViolation; }
+
  protected:
-  inline VarId registerViolation(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-    return registerDefinedVariable(engine, variableMap, violation());
+  VarId setViolationVarId(VarId varId) {
+    assert(violationVarId() == NULL_ID);
+    if (isReified()) {
+      _reifiedViolation->setVarId(varId);
+    } else {
+      _violationVarId = varId;
+    }
+    return violationVarId();
+  }
+
+  inline VarId registerViolation(Engine& engine, Int initialValue = 0) {
+    if (violationVarId() == NULL_ID) {
+      return setViolationVarId(
+          engine.makeIntVar(initialValue, initialValue, initialValue));
+    }
+    return violationVarId();
   }
 };
 

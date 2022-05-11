@@ -33,20 +33,19 @@ TEST_F(AllDifferentImplicitNodeTest, construction) {
                  [](const auto& variable) { return variable.get(); });
 
   EXPECT_EQ(node->definedVariables(), expectedVars);
-  EXPECT_FALSE(node->violation());
 }
 
 TEST_F(AllDifferentImplicitNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_FALSE(_variableMap.contains(definedVariable));
+    EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  node->createDefinedVariables(engine, _variableMap);
+  node->createDefinedVariables(engine);
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_TRUE(_variableMap.contains(definedVariable));
+    EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  node->registerWithEngine(engine, _variableMap);
+  node->registerWithEngine(engine);
   engine.close();
 
   // a, b, c and d

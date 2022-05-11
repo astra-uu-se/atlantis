@@ -31,7 +31,7 @@ TEST_F(ArrayBoolElementNodeTest, construction) {
   EXPECT_EQ(*node->b()->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables()[0]->variable(),
+  EXPECT_EQ(*node->definedVariables().front()->variable(),
             invariantgraph::VariableNode::FZNVariable(r));
   expectMarkedAsInput(node.get(), {node->b()});
 
@@ -44,13 +44,13 @@ TEST_F(ArrayBoolElementNodeTest, application) {
   engine.open();
   registerVariables(engine, {b.name});
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_FALSE(_variableMap.contains(definedVariable));
+    EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  node->createDefinedVariables(engine, _variableMap);
+  node->createDefinedVariables(engine);
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_TRUE(_variableMap.contains(definedVariable));
+    EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  node->registerWithEngine(engine, _variableMap);
+  node->registerWithEngine(engine);
   engine.close();
 
   // The index ranges over the as array (first index is 1).
@@ -75,18 +75,18 @@ TEST_F(ArrayBoolElementNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {b.name});
-  node->createDefinedVariables(engine, _variableMap);
-  node->registerWithEngine(engine, _variableMap);
+  node->createDefinedVariables(engine);
+  node->registerWithEngine(engine);
 
   std::vector<VarId> inputs;
   EXPECT_EQ(node->staticInputs().size(), 1);
   for (auto* const inputVariable : node->staticInputs()) {
-    EXPECT_TRUE(_variableMap.contains(inputVariable));
-    inputs.emplace_back(_variableMap.at(inputVariable));
+    EXPECT_NE(inputVariable->varId(), NULL_ID);
+    inputs.emplace_back(inputVariable->varId());
   }
 
-  EXPECT_TRUE(_variableMap.contains(node->definedVariables()[0]));
-  const VarId outputId = _variableMap.at(node->definedVariables()[0]);
+  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
+  const VarId outputId = node->definedVariables().front()->varId();
   EXPECT_EQ(inputs.size(), 1);
 
   const VarId input = inputs.front();

@@ -18,16 +18,14 @@ invariantgraph::ArrayIntElementNode::fromModelConstraint(
 }
 
 void invariantgraph::ArrayIntElementNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(definedVariables()[0])) {
-    registerDefinedVariable(engine, variableMap, definedVariables()[0]);
-  }
+    Engine& engine) {
+  // TODO: offset can be different than 1
+  registerDefinedVariable(engine, definedVariables().front(), 1);
 }
 
-void invariantgraph::ArrayIntElementNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  assert(variableMap.contains(definedVariables()[0]));
+void invariantgraph::ArrayIntElementNode::registerWithEngine(Engine& engine) {
+  assert(definedVariables().front()->varId() != NULL_ID);
 
-  engine.makeInvariant<ElementConst>(variableMap.at(b()), _as,
-                                     variableMap.at(definedVariables()[0]));
+  engine.makeInvariant<ElementConst>(b()->varId(), _as,
+                                     definedVariables().front()->varId());
 }

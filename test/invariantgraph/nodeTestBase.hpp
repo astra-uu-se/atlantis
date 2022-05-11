@@ -27,7 +27,6 @@ class NodeTestBase : public testing::Test {
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
   std::unordered_map<fznparser::Identifier, invariantgraph::VariableNode*>
       _nodeMap;
-  std::unordered_map<invariantgraph::VariableNode*, VarId> _variableMap;
 
   void setModel(fznparser::FZNModel* model) { _model = model; }
 
@@ -59,7 +58,6 @@ class NodeTestBase : public testing::Test {
 
   void TearDown() override {
     _nodeMap.clear();
-    _variableMap.clear();
     _variables.clear();
   }
 
@@ -75,15 +73,14 @@ class NodeTestBase : public testing::Test {
     for (const auto& modelVariable : freeVariables) {
       auto variable = _nodeMap.at(modelVariable);
       const auto& [lb, ub] = variable->bounds();
-      auto varId = engine.makeIntVar(lb, lb, ub);
-      _variableMap.emplace(variable, varId);
+      variable->setVarId(engine.makeIntVar(lb, lb, ub));
     }
   }
 
   template <typename T>
   [[nodiscard]] inline VarId engineVariable(
       const fznparser::SearchVariable<T>& variable) const {
-    return _variableMap.at(_nodeMap.at(variable.name));
+    return _nodeMap.at(variable.name)->varId();
   }
 };
 

@@ -18,22 +18,20 @@ invariantgraph::ArrayBoolAndNode::fromModelConstraint(
   return std::make_unique<invariantgraph::ArrayBoolAndNode>(as, r);
 }
 
-void invariantgraph::ArrayBoolAndNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::ArrayBoolAndNode::createDefinedVariables(Engine& engine) {
   if (_sumVarId == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(!variableMap.contains(definedVariables()[0]));
-    variableMap.emplace(definedVariables()[0],
-                        engine.makeIntView<Violation2BoolView>(_sumVarId));
+    assert(definedVariables().front()->varId() == NULL_ID);
+    definedVariables().front()->setVarId(
+        engine.makeIntView<Violation2BoolView>(_sumVarId));
   }
 }
 
-void invariantgraph::ArrayBoolAndNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::ArrayBoolAndNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> inputs;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(inputs),
-                 [&](const auto& node) { return variableMap.at(node); });
+                 [&](const auto& node) { return node->varId(); });
 
   engine.makeInvariant<ForAll>(inputs, _sumVarId);
 }
