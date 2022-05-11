@@ -408,7 +408,6 @@ class SoftConstraintNode : public VariableDefiningNode {
       assert(definedVariables().size() == 0);
     } else {
       assert(_reifiedViolation != nullptr);
-      assert(_reifiedViolation->definedBy() == this);
       assert(definedVariables().size() == 1);
       assert(definedVariables().front() == _reifiedViolation);
     }
