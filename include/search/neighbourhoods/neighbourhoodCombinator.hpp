@@ -1,7 +1,6 @@
 #pragma once
 
-#include <ostream>
-
+#include "logging/logger.hpp"
 #include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
 
@@ -30,7 +29,7 @@ class NeighbourhoodCombinator : public Neighbourhood {
     return _variables;
   }
 
-  void printNeighbourhood(std::ostream&);
+  void printNeighbourhood(logging::Logger& logger);
 };
 
 }  // namespace search::neighbourhoods

@@ -27,18 +27,23 @@ static ObjectiveDirection getObjectiveDirection(
       objective);
 }
 
-search::SearchStatistics Solver::solve() {
-  auto model = fznparser::ModelFactory::create(_modelFile);
+search::SearchStatistics Solver::solve(logging::Logger& logger) {
+  auto model = logger.timed<fznparser::FZNModel>("parsing FlatZinc", [&] {
+    auto m = fznparser::ModelFactory::create(_modelFile);
+    logger.debug("Found {:d} variables", m.variables().size());
+    logger.debug("Found {:d} constraints", m.constraints().size());
+    return m;
+  });
 
-  // Not used for output, but this allows running end-to-end tests with the
-  // CLI on the structure identification.
   invariantgraph::InvariantGraphBuilder invariantGraphBuilder;
-  auto graph = invariantGraphBuilder.build(model);
+  auto graph = logger.timed<invariantgraph::InvariantGraph>(
+      "building invariant graph",
+      [&] { return invariantGraphBuilder.build(model); });
 
   PropagationEngine engine;
   auto applicationResult = graph.apply(engine);
   auto neighbourhood = applicationResult.neighbourhood();
-  neighbourhood.printNeighbourhood(std::cerr);
+  neighbourhood.printNeighbourhood(logger);
 
   search::Objective searchObjective(engine, model);
   engine.open();
@@ -51,7 +56,7 @@ search::SearchStatistics Solver::solve() {
                                 applicationResult.objectiveVariable(),
                                 getObjectiveDirection(model.objective()));
 
-  logDebug("Using seed " << _seed);
+  logger.debug("Using seed {}.", _seed);
   search::RandomProvider random(_seed);
 
   search::SearchProcedure search(random, assignment, neighbourhood,
@@ -65,7 +70,7 @@ search::SearchStatistics Solver::solve() {
     if (_timeout) {
       return search::SearchController(model, flippedMap, *_timeout);
     } else {
-      logInfo("Running without timeout.");
+      logger.info("Running without timeout.");
       return search::SearchController(model, flippedMap);
     }
   }();
@@ -73,5 +78,7 @@ search::SearchStatistics Solver::solve() {
   auto schedule = _annealingScheduleFactory.create();
   schedule->start(10.0);
   search::Annealer annealer(assignment, random, *schedule);
-  return search.run(searchController, annealer);
+
+  return logger.timed<search::SearchStatistics>(
+      "search", [&] { return search.run(searchController, annealer, logger); });
 }

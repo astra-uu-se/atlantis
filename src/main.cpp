@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <iostream>
 
-#include "misc/logging.hpp"
+#include "logging/logger.hpp"
 #include "solver.hpp"
 
 /**
@@ -15,13 +15,10 @@
  * @return std::istream& The modified input stream.
  */
 std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
+logging::Level getLogLevel(cxxopts::ParseResult& result);
 
 int main(int argc, char* argv[]) {
   try {
-    // TODO: How do we want to control this? The log messages don't appear
-    // in release builds, so do we still want a command line flag to set this?
-    setLogLevel(debug);
-
     cxxopts::Options options(
         argv[0], "Constraint-based local search backend for MiniZinc.");
 
@@ -54,6 +51,11 @@ int main(int argc, char* argv[]) {
         "A file path to the annealing schedule definition.",
         cxxopts::value<std::filesystem::path>()
       )
+      (
+        "log-level",
+        "Configures the log level. 1 = INFO, 2 = DEBUG, 3 = TRACE. If not specified, the WARN level is used.",
+        cxxopts::value<uint8_t>()
+      )
       ("help", "Print help");
 
     options.add_options("Positional")
@@ -72,6 +74,8 @@ int main(int argc, char* argv[]) {
       std::cout << options.help({""}) << std::endl;
       return 0;
     }
+
+    logging::Logger logger(stderr, getLogLevel(result));
 
     auto& modelFilePath = result["modelFile"].as<std::filesystem::path>();
 
@@ -100,14 +104,31 @@ int main(int argc, char* argv[]) {
 
     search::AnnealingScheduleFactory scheduleFactory(annealingScheduleDefinition);
     Solver solver(modelFilePath, scheduleFactory, seed, timeout);
-    auto statistics = solver.solve();
+    auto statistics = solver.solve(logger);
 
     // Don't log to std::cout, since that would interfere with MiniZinc.
     statistics.display(std::cerr);
   } catch (const cxxopts::OptionException& e) {
-    std::cerr << "error: " << e.what() << std::endl;
+    std::cerr << "Error: " << e.what() << std::endl;
   } catch (const std::invalid_argument& e) {
-    std::cerr << "error: " << e.what() << std::endl;
+    std::cerr << "Error: " << e.what() << std::endl;
+  }
+}
+
+logging::Level getLogLevel(cxxopts::ParseResult& result) {
+  if (result.count("log-level") != 1) {
+    return logging::Level::WARN;
+  }
+
+  switch (result["log-level"].as<uint8_t>()) {
+    case 1:
+      return logging::Level::INFO;
+    case 2:
+      return logging::Level::DEBUG;
+    case 3:
+      return logging::Level::TRACE;
+    default:
+      throw cxxopts::OptionException("The log level should be 1, 2 or 3.");
   }
 }
 

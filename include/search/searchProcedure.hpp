@@ -4,6 +4,7 @@
 #include "objective.hpp"
 #include "searchController.hpp"
 #include "searchStatistics.hpp"
+#include "logging/logger.hpp"
 
 namespace search {
 
@@ -23,7 +24,7 @@ class SearchProcedure {
         _neighbourhood(neighbourhood),
         _objective(std::move(objective)) {}
 
-  SearchStatistics run(SearchController& controller, Annealer& annealer);
+  SearchStatistics run(SearchController& controller, Annealer& annealer, logging::Logger& logger);
 
  private:
   RandomProvider& _random;
