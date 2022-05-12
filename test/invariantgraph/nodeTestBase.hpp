@@ -61,11 +61,11 @@ class NodeTestBase : public testing::Test {
             },
             [](Int value) {
               return std::make_unique<invariantgraph::VariableNode>(
-                  SetDomain({value}));
+                  SearchDomain({value}));
             },
             [](bool value) {
               return std::make_unique<invariantgraph::VariableNode>(
-                  SetDomain({1 - static_cast<int>(value)}));
+                  SearchDomain({1 - static_cast<int>(value)}));
             }},
         mappable);
     auto ptr = n.get();
@@ -101,11 +101,6 @@ class NodeTestBase : public testing::Test {
   [[nodiscard]] inline VarId engineVariable(
       const fznparser::SearchVariable<T>& variable) const {
     return _nodeMap.at(variable.name)->varId();
-  }
-
-  [[nodiscard]] inline VarId engineVariable(
-      invariantgraph::VariableNode* node) const {
-    return _variableMap.at(node);
   }
 };
 
