@@ -33,10 +33,6 @@ int main(int argc, char* argv[]) {
         "Ignored, but present because used in the MiniZinc challenge."
       )
       (
-        "no-timeout",
-        "Run the solver without a timeout. This means the solver needs to be stopped with a signal, which means no statistics will be printed."
-      )
-      (
         "t,time-limit",
         "Wall time limit in milliseconds.",
         cxxopts::value<std::chrono::milliseconds>()->default_value("30000") // 30 seconds
@@ -85,7 +81,7 @@ int main(int argc, char* argv[]) {
                                   : std::time(nullptr);
 
     std::optional<std::chrono::milliseconds> timeout = [&] {
-      if (result.count("no-timeout") == 0) {
+      if (result.count("time-limit") == 1) {
         return std::optional<std::chrono::milliseconds>{
             result["time-limit"].as<std::chrono::milliseconds>()};
       } else {
