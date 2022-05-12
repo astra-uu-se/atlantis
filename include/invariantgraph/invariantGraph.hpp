@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "core/engine.hpp"
+#include "invariantgraph/constraints/allEqualNode.hpp"
 #include "invariantgraph/constraints/eqNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
@@ -98,6 +99,7 @@ class InvariantGraph {
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
 
+  void splitMultiDefinedVariables();
   void breakCycles();
 
   InvariantGraphApplyResult apply(Engine& engine);

@@ -43,7 +43,7 @@ class VariableNode {
   std::vector<VariableDefiningNode*> _inputFor;
   std::vector<VariableDefiningNode*> _staticInputFor;
   std::vector<VariableDefiningNode*> _dynamicInputFor;
-  VariableDefiningNode* _definedBy{nullptr};
+  std::unordered_set<VariableDefiningNode*> _definingNodes;
 
  public:
   /**
@@ -125,8 +125,19 @@ class VariableNode {
   /**
    * @return The variable defining nodes for which this node is an input.
    */
+  [[nodiscard]] const std::unordered_set<VariableDefiningNode*>& definingNodes()
+      const noexcept {
+    return _definingNodes;
+  }
+
+  /**
+   * @return The variable defining nodes for which this node is an input.
+   */
   [[nodiscard]] VariableDefiningNode* definedBy() const noexcept {
-    return _definedBy;
+    if (_definingNodes.size() == 1) {
+      return *_definingNodes.begin();
+    }
+    return nullptr;
   }
 
   /**
@@ -143,6 +154,16 @@ class VariableNode {
     } else {
       _dynamicInputFor.push_back(listeningInvariant);
     }
+  }
+
+  /**
+   * Indicate this variable node is no longer defined by the variable defining
+   * node.
+   *
+   * @param node The variable defining node for which this is no longer defined.
+   */
+  void unmarkAsDefinedBy(VariableDefiningNode* definingInvariant) {
+    _definingNodes.erase(definingInvariant);
   }
 
   /**
@@ -183,7 +204,7 @@ class VariableNode {
    */
   void markDefinedBy(VariableDefiningNode* definingInvariant) {
     assert(definingInvariant != nullptr);
-    _definedBy = definingInvariant;
+    _definingNodes.emplace(definingInvariant);
   }
 
   // A hack in order to steal the _inputs from the nested constraint.
@@ -211,7 +232,7 @@ class VariableDefiningNode {
         _dynamicInputs(std::move(dynamicInputs)) {
     for (auto* const definedVar : _definedVariables) {
       markDefinedBy(definedVar, false);
-      assert(definedVar->definedBy() == this);
+      assert(definedVar->definingNodes().contains(this));
     }
     for (auto* const staticInput : _staticInputs) {
       markAsStaticInput(staticInput, false);
@@ -268,6 +289,18 @@ class VariableDefiningNode {
   [[nodiscard]] const std::vector<VariableNode*>& dynamicInputs()
       const noexcept {
     return _dynamicInputs;
+  }
+
+  void replaceDefinedVariable(VariableNode* oldDefinedVar,
+                              VariableNode* newDefinedVar) {
+    // Replace all occurrences:
+    for (size_t i = 0; i < _definedVariables.size(); ++i) {
+      if (_definedVariables[i] == oldDefinedVar) {
+        _definedVariables[i] = newDefinedVar;
+      }
+    }
+    oldDefinedVar->unmarkAsDefinedBy(this);
+    newDefinedVar->markDefinedBy(this);
   }
 
   void replaceStaticInput(VariableNode* oldInput, VariableNode* newInput) {
@@ -402,7 +435,7 @@ class SoftConstraintNode : public VariableDefiningNode {
       assert(definedVariables().size() == 0);
     } else {
       assert(_reifiedViolation != nullptr);
-      assert(_reifiedViolation->definedBy() == this);
+      assert(_reifiedViolation->definingNodes().contains(this));
       assert(definedVariables().size() == 1);
       assert(definedVariables().front() == _reifiedViolation);
     }
