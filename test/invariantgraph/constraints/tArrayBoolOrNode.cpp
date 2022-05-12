@@ -32,10 +32,7 @@ class AbstractArrayBoolOrNodeTest : public NodeTestBase {
            fznparser::Constraint::Argument{true}},
           {}};
 
-TEST_F(ArrayBoolOrNodeTest, construction) {
-  EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables().front()->variable(),
-            invariantgraph::VariableNode::FZNVariable(r));
+      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
       fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
 
@@ -47,19 +44,7 @@ TEST_F(ArrayBoolOrNodeTest, construction) {
            fznparser::Constraint::Argument{"r"}},
           {}};
 
-TEST_F(ArrayBoolOrNodeTest, application) {
-  PropagationEngine engine;
-  engine.open();
-  registerVariables(engine, {a.name, b.name});
-  for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_EQ(definedVariable->varId(), NULL_ID);
-  }
-  node->createDefinedVariables(engine);
-  for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_NE(definedVariable->varId(), NULL_ID);
-  }
-  node->registerWithEngine(engine);
-  engine.close();
+      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
       fznparser::FZNModel mdl{
           {}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
@@ -92,23 +77,36 @@ TEST_F(ArrayBoolOrNodeTest, application) {
     }
   }
 
-TEST_F(ArrayBoolOrNodeTest, propagation) {
-  PropagationEngine engine;
-  engine.open();
-  registerVariables(engine, {a.name, b.name});
-  node->createDefinedVariables(engine);
-  node->registerWithEngine(engine);
+  void application() {
+    PropagationEngine engine;
+    engine.open();
+    registerVariables(engine, {a.name, b.name});
+    for (auto* const definedVariable : node->definedVariables()) {
+      EXPECT_EQ(definedVariable->varId(), NULL_ID);
+    }
+    node->createDefinedVariables(engine);
+    for (auto* const definedVariable : node->definedVariables()) {
+      EXPECT_NE(definedVariable->varId(), NULL_ID);
+    }
+    node->registerWithEngine(engine);
+    engine.close();
 
-  std::vector<VarId> inputs;
-  EXPECT_EQ(node->staticInputs().size(), 2);
-  for (auto* const inputVariable : node->staticInputs()) {
-    EXPECT_NE(inputVariable->varId(), NULL_ID);
-    inputs.emplace_back(inputVariable->varId());
+    // a and b
+    EXPECT_EQ(engine.searchVariables().size(), 2);
+
+    // a, b and r
+    EXPECT_EQ(engine.numVariables(), 3);
+
+    // minSparse
+    EXPECT_EQ(engine.numInvariants(), 1);
   }
 
-  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
-  const VarId outputId = node->definedVariables().front()->varId();
-  EXPECT_EQ(inputs.size(), 2);
+  void propagation() {
+    PropagationEngine engine;
+    engine.open();
+    registerVariables(engine, {a.name, b.name});
+    node->createDefinedVariables(engine);
+    node->registerWithEngine(engine);
 
     std::vector<VarId> inputs;
     EXPECT_EQ(node->staticInputs().size(), 2);
