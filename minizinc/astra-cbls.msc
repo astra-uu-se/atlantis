@@ -6,6 +6,7 @@
   "mznlib": "lib",
   "stdFlag": ["-a"]
   "extraFlags": [
-    ["--annealing-schedule", "Path to the annealing schedule definition file to use.", "string"]
+    ["--annealing-schedule", "Path to the annealing schedule definition file to use.", "string"],
+    ["--log-level", "Configures the log level. 1 = INFO, 2 = DEBUG, 3 = TRACE. If not specified, the WARN level is used.", "opt:1:2:3"]
   ]
 }
