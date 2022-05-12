@@ -24,6 +24,41 @@ static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
   return variableMap;
 }
 
+void invariantgraph::InvariantGraph::splitMultiDefinedVariables() {
+  for (size_t i = 0; i < _variables.size(); ++i) {
+    if (_variables[i]->definingNodes().size() <= 1) {
+      continue;
+    }
+
+    std::vector<VariableDefiningNode*> replacedDefiningNodes;
+    std::vector<VariableNode*> splitNodes;
+    replacedDefiningNodes.reserve(_variables[i]->definingNodes().size() - 1);
+    splitNodes.reserve(_variables[i]->definingNodes().size());
+    splitNodes.emplace_back(_variables[i].get());
+
+    for (auto iter = ++_variables[i]->definingNodes().begin();
+         iter != _variables[i]->definingNodes().end(); ++iter) {
+      replacedDefiningNodes.emplace_back(*iter);
+    }
+
+    for (auto* const definingNode : replacedDefiningNodes) {
+      VariableNode* newNode = splitNodes.emplace_back(
+          _variables
+              .emplace_back(
+                  std::make_unique<VariableNode>(_variables[i]->domain()))
+              .get());
+      definingNode->replaceDefinedVariable(_variables[i].get(), newNode);
+    }
+    if (splitNodes.size() == 2) {
+      _variableDefiningNodes.emplace_back(
+          std::make_unique<EqNode>(splitNodes.front(), splitNodes.back()));
+    } else {
+      _variableDefiningNodes.emplace_back(
+          std::make_unique<AllEqualNode>(splitNodes));
+    }
+  }
+}
+
 std::pair<invariantgraph::VariableNode*, invariantgraph::VariableDefiningNode*>
 invariantgraph::InvariantGraph::findPivotInCycle(
     const std::vector<VariableNode*>& cycle) {
@@ -336,8 +371,9 @@ VarId invariantgraph::InvariantGraph::createViolations(Engine& engine) {
 
 invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
     Engine& engine) {
-  engine.open();
+  splitMultiDefinedVariables();
   breakCycles();
+  engine.open();
   createVariables(engine);
   engine.computeBounds();
   createInvariants(engine);
