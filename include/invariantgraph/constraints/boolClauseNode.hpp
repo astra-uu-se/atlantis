@@ -3,7 +3,7 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "invariantgraph/structure.hpp"
+#include "invariantgraph/softConstraintNode.hpp"
 
 static std::vector<invariantgraph::VariableNode*> merge(
     const std::vector<invariantgraph::VariableNode*>& as,

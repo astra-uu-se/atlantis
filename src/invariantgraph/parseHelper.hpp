@@ -4,7 +4,10 @@
 #include <optional>
 #include <vector>
 
-#include "invariantgraph/structure.hpp"
+#include "invariantgraph/implicitConstraintNode.hpp"
+#include "invariantgraph/softConstraintNode.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/variableNode.hpp"
 #include "utils/fznAst.hpp"
 
 using FZNConstraint = fznparser::Constraint;

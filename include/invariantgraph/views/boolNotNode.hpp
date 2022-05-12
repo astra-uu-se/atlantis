@@ -4,7 +4,7 @@
 #include <map>
 #include <utility>
 
-#include "../structure.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
 
 namespace invariantgraph {
 

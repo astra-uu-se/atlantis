@@ -6,9 +6,12 @@
 #include "core/engine.hpp"
 #include "invariantgraph/constraints/allEqualNode.hpp"
 #include "invariantgraph/constraints/eqNode.hpp"
+#include "invariantgraph/implicitConstraintNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
+#include "invariantgraph/softConstraintNode.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/variableNode.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
-#include "structure.hpp"
 
 namespace invariantgraph {
 

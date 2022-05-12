@@ -8,7 +8,7 @@
 
 #include "core/propagationEngine.hpp"
 #include "fznparser/model.hpp"
-#include "invariantgraph/structure.hpp"
+#include "invariantgraph/variableNode.hpp"
 #include "utils/variant.hpp"
 
 #define INT_VARIABLE(name, lb, ub)              \

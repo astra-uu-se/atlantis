@@ -1,6 +1,4 @@
-#include "invariantgraph/structure.hpp"
-
-#include <limits>
+#include "invariantgraph/variableNode.hpp"
 
 using namespace invariantgraph;
 
@@ -57,36 +55,14 @@ static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
       variable);
 }
 
-VariableNode::VariableNode(VariableNode::FZNVariable variable)
+invariantgraph::VariableNode::VariableNode(VariableNode::FZNVariable variable)
     : _variable(std::move(variable)), _domain{convertDomain(*_variable)} {}
 
-VariableNode::VariableNode(SearchDomain domain)
+invariantgraph::VariableNode::VariableNode(SearchDomain domain)
     : _variable(std::nullopt), _domain(std::move(domain)) {}
 
-void ImplicitConstraintNode::createDefinedVariables(Engine& engine) {
-  for (const auto& node : definedVariables()) {
-    if (node->varId() == NULL_ID) {
-      const auto& [lb, ub] = node->bounds();
-      node->setVarId(engine.makeIntVar(lb, lb, ub));
-    }
-  }
-}
-
-void ImplicitConstraintNode::registerWithEngine(Engine& engine) {
-  std::vector<search::SearchVariable> varIds;
-  varIds.reserve(definedVariables().size());
-
-  for (const auto& node : definedVariables()) {
-    assert(node->varId() != NULL_ID);
-    varIds.emplace_back(node->varId(), node->domain());
-  }
-
-  _neighbourhood = createNeighbourhood(engine, varIds);
-  assert(_neighbourhood);
-}
-
-VarId VariableNode::postDomainConstraint(Engine& engine,
-                                         std::vector<DomainEntry>&& domain) {
+VarId invariantgraph::VariableNode::postDomainConstraint(
+    Engine& engine, std::vector<DomainEntry>&& domain) {
   if (domain.size() == 0 || _domainViolationId != NULL_ID) {
     return _domainViolationId;
   }
@@ -107,7 +83,8 @@ VarId VariableNode::postDomainConstraint(Engine& engine,
   return _domainViolationId;
 }
 
-std::vector<DomainEntry> VariableNode::constrainedDomain(const Engine& engine) {
+std::vector<DomainEntry> invariantgraph::VariableNode::constrainedDomain(
+    const Engine& engine) {
   assert(this->varId() != NULL_ID);
   const VarId varId = this->varId();
   return _domain.relativeComplementIfIntersects(engine.lowerBound(varId),

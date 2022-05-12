@@ -3,7 +3,7 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "../structure.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
 
 namespace invariantgraph {
 class MaxNode : public VariableDefiningNode {

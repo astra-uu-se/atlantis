@@ -3,7 +3,7 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "invariantgraph/structure.hpp"
+#include "invariantgraph/softConstraintNode.hpp"
 
 namespace invariantgraph {
 class AllDifferentNode : public SoftConstraintNode {
