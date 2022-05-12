@@ -3,6 +3,9 @@
 #include <unordered_set>
 
 #include "invariantgraph/constraints/allDifferentNode.hpp"
+#include "invariantgraph/constraints/allEqualNode.hpp"
+#include "invariantgraph/constraints/arrayBoolAndNode.hpp"
+#include "invariantgraph/constraints/arrayBoolOrNode.hpp"
 #include "invariantgraph/constraints/boolClauseNode.hpp"
 #include "invariantgraph/constraints/boolXorNode.hpp"
 #include "invariantgraph/constraints/eqNode.hpp"
@@ -15,9 +18,7 @@
 #include "invariantgraph/constraints/setInNode.hpp"
 #include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
-#include "invariantgraph/constraints/arrayBoolAndNode.hpp"
 #include "invariantgraph/invariants/arrayBoolElementNode.hpp"
-#include "invariantgraph/constraints/arrayBoolOrNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
@@ -295,6 +296,7 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
       [&](const auto& argument) { return nodeFactory(model, argument); })
 
   NODE_REGISTRATION("alldifferent", AllDifferentNode);
+  NODE_REGISTRATION("allequal", AllEqualNode);
   NODE_REGISTRATION("int_lin_le", LinLeNode);
   NODE_REGISTRATION("bool_lin_le", LinLeNode);
   NODE_REGISTRATION("int_lin_eq", LinEqNode);
