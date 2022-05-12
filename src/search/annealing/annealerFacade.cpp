@@ -13,17 +13,15 @@ std::unique_ptr<AnnealingSchedule> AnnealerFacade::sequence(
 }
 
 std::unique_ptr<AnnealingSchedule> AnnealerFacade::heating(
-    double heatingRate, double minimumUphillAcceptanceRatio,
-    UInt numberOfMonteCarloSimulations) {
+    double heatingRate, double minimumUphillAcceptanceRatio) {
   return std::make_unique<GeometricHeatingSchedule>(
-      heatingRate, minimumUphillAcceptanceRatio, numberOfMonteCarloSimulations);
+      heatingRate, minimumUphillAcceptanceRatio);
 }
 
 std::unique_ptr<AnnealingSchedule> AnnealerFacade::cooling(
-    double coolingRate, double moveAcceptanceRatio,
-    UInt numberOfMonteCarloSimulations) {
-  return std::make_unique<GeometricCoolingSchedule>(
-      coolingRate, moveAcceptanceRatio, numberOfMonteCarloSimulations);
+    double coolingRate, double moveAcceptanceRatio) {
+  return std::make_unique<GeometricCoolingSchedule>(coolingRate,
+                                                    moveAcceptanceRatio);
 }
 
 std::unique_ptr<AnnealingSchedule> AnnealerFacade::loop(

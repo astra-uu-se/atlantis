@@ -25,10 +25,6 @@ void search::ScheduleLoop::nextRound(
 
 double search::ScheduleLoop::temperature() { return _schedule->temperature(); }
 
-UInt search::ScheduleLoop::numberOfMonteCarloSimulations() {
-  return _schedule->numberOfMonteCarloSimulations();
-}
-
 bool search::ScheduleLoop::frozen() {
   return _consecutiveFutileIterations >= _maximumConsecutiveFutileRounds;
 }

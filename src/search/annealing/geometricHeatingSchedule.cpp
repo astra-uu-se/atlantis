@@ -1,11 +1,9 @@
 #include "search/annealing/geometricHeatingSchedule.hpp"
 
 search::GeometricHeatingSchedule::GeometricHeatingSchedule(
-    double heatingRate, double minimumUphillAcceptanceRatio,
-    UInt numberOfMonteCarloSimulations)
+    double heatingRate, double minimumUphillAcceptanceRatio)
     : _heatingRate(heatingRate),
-      _minimumUphillAcceptanceRatio(minimumUphillAcceptanceRatio),
-      _numberOfMonteCarloSimulations(numberOfMonteCarloSimulations) {
+      _minimumUphillAcceptanceRatio(minimumUphillAcceptanceRatio) {
   assert(heatingRate >= 1.0);
   assert(minimumUphillAcceptanceRatio > 0);
 }
@@ -24,10 +22,6 @@ void search::GeometricHeatingSchedule::nextRound(
 }
 
 double search::GeometricHeatingSchedule::temperature() { return _temperature; }
-
-UInt search::GeometricHeatingSchedule::numberOfMonteCarloSimulations() {
-  return _numberOfMonteCarloSimulations;
-}
 
 bool search::GeometricHeatingSchedule::frozen() {
   return _lastUphillAcceptanceRatio >= _minimumUphillAcceptanceRatio;

@@ -25,12 +25,10 @@ class AnnealerFacade {
       std::unique_ptr<AnnealingSchedule> schedule, UInt numberOfIterations);
 
   static std::unique_ptr<AnnealingSchedule> heating(
-      double heatingRate, double minimumUphillAcceptanceRatio,
-      UInt numberOfMonteCarloSimulations);
+      double heatingRate, double minimumUphillAcceptanceRatio);
 
-  static std::unique_ptr<AnnealingSchedule> cooling(
-      double coolingRate, double moveAcceptanceRatio,
-      UInt numberOfMonteCarloSimulations);
+  static std::unique_ptr<AnnealingSchedule> cooling(double coolingRate,
+                                                    double moveAcceptanceRatio);
 };
 
 }  // namespace search

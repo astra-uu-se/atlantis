@@ -75,9 +75,9 @@ TEST_F(NeighbourhoodCombinatorTest,
   search::Assignment assignment(engine, NULL_ID, NULL_ID,
                                 ObjectiveDirection::NONE);
 
-  auto schedule = search::AnnealerFacade::cooling(0.95, 0.001, 50);
-  schedule->start(10.0);
+  auto schedule = search::AnnealerFacade::cooling(0.95, 0.001);
   search::Annealer annealer(assignment, random, *schedule);
+  annealer.start();
 
   EXPECT_CALL(*n1,
               randomMove(::testing::Ref(random), ::testing::Ref(assignment),

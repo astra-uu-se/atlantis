@@ -1,11 +1,9 @@
 #include "search/annealing/geometricCoolingSchedule.hpp"
 
 search::GeometricCoolingSchedule::GeometricCoolingSchedule(
-    double coolingRate, double moveAcceptanceRatio,
-    UInt numberOfMonteCarloSimulations)
+    double coolingRate, double moveAcceptanceRatio)
     : _coolingRate(coolingRate),
-      _minimumMoveAcceptanceRatio(moveAcceptanceRatio),
-      _numberOfMonteCarloSimulations(numberOfMonteCarloSimulations) {
+      _minimumMoveAcceptanceRatio(moveAcceptanceRatio) {
   assert(coolingRate < 1.0);
   assert(moveAcceptanceRatio > 0);
 }
@@ -23,10 +21,6 @@ void search::GeometricCoolingSchedule::nextRound(
 }
 
 double search::GeometricCoolingSchedule::temperature() { return _temperature; }
-
-UInt search::GeometricCoolingSchedule::numberOfMonteCarloSimulations() {
-  return _numberOfMonteCarloSimulations;
-}
 
 bool search::GeometricCoolingSchedule::frozen() {
   return _lastRoundMoveAcceptanceRatio >= 0 &&

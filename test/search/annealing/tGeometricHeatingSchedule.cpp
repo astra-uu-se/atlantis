@@ -10,19 +10,17 @@ class GeometricHeatingScheduleTest : public testing::Test {
   double heatingRate = 1.2;
   double initialTemp = 0.1;
   double minimumUphillMoveAcceptanceRatio = 0.5;
-  UInt numberOfMonteCarloSimulations = 10;
 
   std::unique_ptr<AnnealingSchedule> schedule;
 
   void SetUp() override {
-    schedule = AnnealerFacade::heating(heatingRate, minimumUphillMoveAcceptanceRatio, numberOfMonteCarloSimulations);
+    schedule = AnnealerFacade::heating(heatingRate, minimumUphillMoveAcceptanceRatio);
     schedule->start(initialTemp);
   }
 };
 
 TEST_F(GeometricHeatingScheduleTest, schedule_is_initialised) {
   EXPECT_EQ(schedule->temperature(), initialTemp);
-  EXPECT_EQ(schedule->numberOfMonteCarloSimulations(), numberOfMonteCarloSimulations);
 }
 
 TEST_F(GeometricHeatingScheduleTest, start_resets_temperature) {

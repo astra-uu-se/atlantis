@@ -35,40 +35,34 @@ static std::unique_ptr<AnnealingSchedule> parseHeatingSchedule(
     const json& value) {
   if (!value.is_object() || !value.contains("heatingRate") ||
       !value.contains("minimumUphillAcceptanceRatio") ||
-      !value.contains("numberOfMonteCarloSimulations") ||
       !value["heatingRate"].is_number_float() ||
-      !value["minimumUphillAcceptanceRatio"].is_number_float() ||
-      !value["numberOfMonteCarloSimulations"].is_number_unsigned()) {
+      !value["minimumUphillAcceptanceRatio"].is_number_float()) {
     throw AnnealingScheduleCreationError(
         "Invalid JSON for a heating schedule. Expected an object with the "
-        "fields 'heatingRate' (double), 'minimumUphillAcceptanceRatio' "
-        "(double) and 'numberOfMonteCarloSimulations' (uint).");
+        "fields 'heatingRate' (double) and 'minimumUphillAcceptanceRatio' "
+        "(double).");
   }
 
   return AnnealerFacade::heating(
       value["heatingRate"].get<double>(),
-      value["minimumUphillAcceptanceRatio"].get<double>(),
-      value["numberOfMonteCarloSimulations"].get<UInt>());
+      value["minimumUphillAcceptanceRatio"].get<double>());
 }
 
 static std::unique_ptr<AnnealingSchedule> parseCoolingSchedule(
     const json& value) {
   if (!value.is_object() || !value.contains("coolingRate") ||
       !value.contains("moveAcceptanceRatio") ||
-      !value.contains("numberOfMonteCarloSimulations") ||
       !value["coolingRate"].is_number_float() ||
-      !value["moveAcceptanceRatio"].is_number_float() ||
-      !value["numberOfMonteCarloSimulations"].is_number_unsigned()) {
+      !value["moveAcceptanceRatio"].is_number_float()) {
     throw AnnealingScheduleCreationError(
         "Invalid JSON for a cooling schedule. Expected an object with the "
-        "fields 'coolingRate' (double), 'moveAcceptanceRatio' "
-        "(double) and 'numberOfMonteCarloSimulations' (uint).");
+        "fields 'coolingRate' (double) and 'moveAcceptanceRatio' "
+        "(double).");
   }
 
   return AnnealerFacade::cooling(
       value["coolingRate"].get<double>(),
-      value["moveAcceptanceRatio"].get<double>(),
-      value["numberOfMonteCarloSimulations"].get<UInt>());
+      value["moveAcceptanceRatio"].get<double>());
 }
 
 static std::unique_ptr<AnnealingSchedule> parseScheduleSequence(
@@ -121,7 +115,7 @@ static std::unique_ptr<AnnealingSchedule> parseSchedule(
 
 std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
   if (!_scheduleDefinition) {
-    return AnnealerFacade::cooling(0.95, 0.001, 50);
+    return AnnealerFacade::cooling(0.95, 0.001);
   }
 
   auto contents = readFileToString(*_scheduleDefinition);

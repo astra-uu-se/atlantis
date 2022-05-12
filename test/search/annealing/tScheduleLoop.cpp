@@ -13,7 +13,6 @@ class DummyAnnealingSchedule : public AnnealingSchedule {
   MOCK_METHOD(void, nextRound, (const RoundStatistics& initialTemperature),
               (override));
   MOCK_METHOD(double, temperature, (), (override));
-  MOCK_METHOD(UInt, numberOfMonteCarloSimulations, (), (override));
   MOCK_METHOD(bool, frozen, (), (override));
 };
 
@@ -37,14 +36,10 @@ class ScheduleLoopTest : public testing::Test {
 TEST_F(ScheduleLoopTest, nested_schedule_is_active) {
   auto temperature = 1.0;
 
-  EXPECT_CALL(*inner, numberOfMonteCarloSimulations())
-      .WillOnce(testing::Return(10));
   EXPECT_CALL(*inner, temperature())
       .WillOnce(testing::Return(temperature));
 
   EXPECT_EQ(schedule->temperature(), temperature);
-  EXPECT_EQ(schedule->numberOfMonteCarloSimulations(), 10);
-
   EXPECT_FALSE(schedule->frozen());
 }
 

@@ -151,6 +151,7 @@ if (BUILD_TESTS)
             Threads::Threads
             -lm
             ${PROJECT_LIB}
+            fmt::fmt
     )
 
     # This is so you can do 'make test' to see all your tests run, instead of

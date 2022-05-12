@@ -64,11 +64,6 @@ class AnnealingSchedule {
   virtual double temperature() = 0;
 
   /**
-   * @return The number of Monte-Carlo simulations to perform per round.
-   */
-  virtual UInt numberOfMonteCarloSimulations() = 0;
-
-  /**
    * @return True if the schedule has completed, false otherwise.
    */
   virtual bool frozen() = 0;

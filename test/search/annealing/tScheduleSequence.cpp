@@ -13,7 +13,6 @@ class DummyAnnealingSchedule : public AnnealingSchedule {
   MOCK_METHOD(void, nextRound, (const RoundStatistics& initialTemperature),
               (override));
   MOCK_METHOD(double, temperature, (), (override));
-  MOCK_METHOD(UInt, numberOfMonteCarloSimulations, (), (override));
   MOCK_METHOD(bool, frozen, (), (override));
 };
 
@@ -43,14 +42,10 @@ class ScheduleSequenceTest : public testing::Test {
 };
 
 TEST_F(ScheduleSequenceTest, first_schedule_is_active) {
-  EXPECT_CALL(*inner1, numberOfMonteCarloSimulations())
-      .WillOnce(testing::Return(10));
   EXPECT_CALL(*inner1, temperature())
       .WillOnce(testing::Return(1.0));
 
   EXPECT_EQ(schedule->temperature(), 1.0);
-  EXPECT_EQ(schedule->numberOfMonteCarloSimulations(), 10);
-
   EXPECT_FALSE(schedule->frozen());
 }
 
@@ -58,8 +53,6 @@ TEST_F(ScheduleSequenceTest, second_schedule_is_active_after_first_freezes) {
   EXPECT_CALL(*inner1, frozen())
       .WillOnce(testing::Return(true));
 
-  EXPECT_CALL(*inner2, numberOfMonteCarloSimulations())
-      .WillRepeatedly(testing::Return(20));
   EXPECT_CALL(*inner2, frozen())
       .WillRepeatedly(testing::Return(false));
   EXPECT_CALL(*inner2, temperature())
@@ -67,12 +60,9 @@ TEST_F(ScheduleSequenceTest, second_schedule_is_active_after_first_freezes) {
 
   schedule->nextRound({});
   EXPECT_FALSE(schedule->frozen());
-  EXPECT_EQ(schedule->numberOfMonteCarloSimulations(), 20);
-
   schedule->nextRound({});
   EXPECT_FALSE(schedule->frozen());
 
-  EXPECT_EQ(schedule->numberOfMonteCarloSimulations(), 20);
   EXPECT_EQ(schedule->temperature(), 2.0);
 }
 

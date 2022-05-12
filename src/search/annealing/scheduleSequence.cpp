@@ -27,10 +27,6 @@ double search::ScheduleSequence::temperature() {
   return currentSchedule().temperature();
 }
 
-UInt search::ScheduleSequence::numberOfMonteCarloSimulations() {
-  return currentSchedule().numberOfMonteCarloSimulations();
-}
-
 bool search::ScheduleSequence::frozen() {
   return _currentSchedule >= _schedules.size();
 }
