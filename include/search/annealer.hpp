@@ -56,6 +56,10 @@ class Annealer {
     return accept(moveCost);
   }
 
+  [[nodiscard]] const RoundStatistics& currentRoundStatistics() {
+    return _statistics;
+  }
+
  protected:
   bool accept(Int moveCost);
 

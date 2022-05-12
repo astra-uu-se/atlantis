@@ -5,6 +5,7 @@
 #include <optional>
 #include <utility>
 
+#include "logging/logger.hpp"
 #include "search/annealing/annealingScheduleFactory.hpp"
 #include "search/searchStatistics.hpp"
 
@@ -28,5 +29,5 @@ class Solver {
         _timeout(timeout),
         _seed(seed) {}
 
-  search::SearchStatistics solve();
+  search::SearchStatistics solve(logging::Logger& logger);
 };
