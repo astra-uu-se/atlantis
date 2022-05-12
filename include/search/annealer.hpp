@@ -18,14 +18,22 @@ class Annealer {
   RandomProvider& _random;
   AnnealingSchedule& _schedule;
 
-  UInt _localIterations{0};
+  UInt _requiredMovesPerRound{0};
+  UInt _attemptedMovesPerRound{0};
   RoundStatistics _statistics{};
+
+  const double INITIAL_TEMPERATURE = 1.0;
 
  public:
   Annealer(const Assignment& assignment, RandomProvider& random,
            AnnealingSchedule& schedule);
 
   virtual ~Annealer() = default;
+
+  /**
+   * Start the annealing process.
+   */
+  void start();
 
   /**
    * @return True if the annealer has finished.
@@ -52,6 +60,8 @@ class Annealer {
    */
   template <unsigned int N>
   bool acceptMove(Move<N> move) {
+    _attemptedMovesPerRound++;
+
     Int moveCost = evaluate(move.probe(_assignment));
     return accept(moveCost);
   }

@@ -19,7 +19,7 @@ void search::GeometricCoolingSchedule::start(double initialTemperature) {
 void search::GeometricCoolingSchedule::nextRound(
     const search::RoundStatistics& statistics) {
   _temperature *= _coolingRate;
-  _lastRoundMoveAcceptanceRatio = statistics.moveAcceptanceRatio();
+  _lastRoundMoveAcceptanceRatio = statistics.improvingMoveRatio();
 }
 
 double search::GeometricCoolingSchedule::temperature() { return _temperature; }

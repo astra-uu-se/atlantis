@@ -14,6 +14,7 @@ static void logRoundStatistics(logging::Logger& logger,
   logger.trace("Lowest cost this round: {:d}", statistics.bestCostOfThisRound);
   logger.trace("Lowest cost previous round: {:d}",
                statistics.bestCostOfPreviousRound);
+  logger.trace("Temperature: {:.3f}", statistics.temperature);
 }
 
 search::SearchStatistics search::SearchProcedure::run(
@@ -28,11 +29,13 @@ search::SearchStatistics search::SearchProcedure::run(
   do {
     initialisations->increment();
 
-    logger.timed<void>(logging::Level::DEBUG, "initialise assignment", [&] {
+    logger.timed<void>(logging::Level::TRACE, "initialise assignment", [&] {
       _assignment.assign([&](auto& modifications) {
         _neighbourhood.initialise(_random, modifications);
       });
     });
+
+    annealer.start();
 
     while (controller.shouldRun(_assignment) && !annealer.isFinished()) {
       logger.timed<void>(logging::Level::TRACE, "round", [&] {
@@ -59,8 +62,6 @@ search::SearchStatistics search::SearchProcedure::run(
       });
     }
   } while (controller.shouldRun(_assignment));
-
-  auto duration = std::chrono::steady_clock::now() - startTime;
 
   std::vector<std::unique_ptr<Statistic>> statistics;
   statistics.push_back(std::move(rounds));

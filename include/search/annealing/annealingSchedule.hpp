@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/types.hpp"
+
 namespace search {
 
 struct RoundStatistics {
@@ -9,16 +10,26 @@ struct RoundStatistics {
 
   UInt attemptedMoves;
   UInt acceptedMoves;
+  UInt improvingMoves;
 
   Int bestCostOfPreviousRound;
   Int bestCostOfThisRound;
 
+  double temperature;
+
   [[nodiscard]] inline double uphillAcceptanceRatio() const noexcept {
-    return static_cast<double>(uphillAcceptedMoves) / static_cast<double>(uphillAttemptedMoves);
+    return static_cast<double>(uphillAcceptedMoves) /
+           static_cast<double>(uphillAttemptedMoves);
   }
 
   [[nodiscard]] inline double moveAcceptanceRatio() const noexcept {
-    return static_cast<double>(acceptedMoves) / static_cast<double>(attemptedMoves);
+    return static_cast<double>(acceptedMoves) /
+           static_cast<double>(attemptedMoves);
+  }
+
+  [[nodiscard]] inline double improvingMoveRatio() const noexcept {
+    return static_cast<double>(improvingMoves) /
+           static_cast<double>(attemptedMoves);
   }
 
   [[nodiscard]] inline bool roundImprovedOnPrevious() const noexcept {
@@ -63,4 +74,4 @@ class AnnealingSchedule {
   virtual bool frozen() = 0;
 };
 
-}
+}  // namespace search

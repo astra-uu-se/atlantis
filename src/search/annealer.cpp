@@ -8,6 +8,11 @@ search::Annealer::Annealer(const search::Assignment& assignment,
     : _assignment(assignment), _random(random), _schedule(schedule) {
   _statistics.bestCostOfPreviousRound = std::numeric_limits<Int>::max();
   _statistics.bestCostOfThisRound = std::numeric_limits<Int>::max();
+
+  auto numSearchVariables = assignment.searchVariables().size();
+  _requiredMovesPerRound =
+      static_cast<UInt>(static_cast<double>(128 * numSearchVariables) /
+                        std::log2(numSearchVariables));
 }
 
 bool search::Annealer::isFinished() const { return _schedule.frozen(); }
@@ -18,13 +23,14 @@ void search::Annealer::nextRound() {
   auto previousBest = _statistics.bestCostOfThisRound;
   _statistics = {};
   _statistics.bestCostOfPreviousRound = previousBest;
+  _statistics.bestCostOfThisRound = std::numeric_limits<Int>::max();
+  _statistics.temperature = _schedule.temperature();
 
-  _localIterations = 0;
+  _attemptedMovesPerRound = 0;
 }
 
 bool search::Annealer::runMonteCarloSimulation() {
-  ++_localIterations;
-  return _localIterations < _schedule.numberOfMonteCarloSimulations();
+  return _attemptedMovesPerRound < _requiredMovesPerRound;
 }
 
 bool search::Annealer::accept(Int moveCost) {
@@ -34,6 +40,10 @@ bool search::Annealer::accept(Int moveCost) {
   _statistics.attemptedMoves++;
 
   if (delta <= 0) {
+    if (delta < 0) {
+      _statistics.improvingMoves++;
+    }
+
     if (moveCost < _statistics.bestCostOfThisRound) {
       _statistics.bestCostOfThisRound = moveCost;
     }
@@ -52,4 +62,8 @@ bool search::Annealer::accept(Int moveCost) {
   }
 
   return false;
+}
+
+void search::Annealer::start() {
+  _schedule.start(INITIAL_TEMPERATURE);
 }

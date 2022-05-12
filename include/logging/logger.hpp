@@ -66,20 +66,14 @@ class Logger {
   template <typename ReturnType, typename Action>
   ReturnType beginScope(Level level, LogScopeWrapper& logScopeWrapper,
                         Action action) {
-    auto oldLevel = _maxLevel;
-    _maxLevel = level;
-
     logScopeWrapper.begin(*this, level);
 
     if constexpr (std::is_void_v<ReturnType>) {
       action();
       logScopeWrapper.end(*this, level);
-      _maxLevel = oldLevel;
     } else {
       ReturnType value = action();
       logScopeWrapper.end(*this, level);
-      _maxLevel = oldLevel;
-
       return value;
     }
   }

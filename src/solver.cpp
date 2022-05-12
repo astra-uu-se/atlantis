@@ -76,7 +76,6 @@ search::SearchStatistics Solver::solve(logging::Logger& logger) {
   }();
 
   auto schedule = _annealingScheduleFactory.create();
-  schedule->start(10.0);
   search::Annealer annealer(assignment, random, *schedule);
 
   return logger.timed<search::SearchStatistics>(
