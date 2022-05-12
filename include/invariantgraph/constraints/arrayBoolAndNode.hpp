@@ -1,15 +1,15 @@
 #pragma once
 
 #include "fznparser/model.hpp"
-
 #include "invariantgraph/structure.hpp"
 
 namespace invariantgraph {
 
 class ArrayBoolAndNode : public SoftConstraintNode {
  private:
-  bool _rIsConstant;
-  bool _rValue;
+  VarId _sumVarId{NULL_ID};
+  const bool _rIsConstant;
+  const bool _rValue;
 
  public:
   static std::unique_ptr<ArrayBoolAndNode> fromModelConstraint(
@@ -26,11 +26,9 @@ class ArrayBoolAndNode : public SoftConstraintNode {
         _rIsConstant(true),
         _rValue{output} {}
 
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void createDefinedVariables(Engine& engine) override;
 
-  void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void registerWithEngine(Engine& engine) override;
 };
 
 }  // namespace invariantgraph
