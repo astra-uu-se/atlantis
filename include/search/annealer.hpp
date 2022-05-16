@@ -71,7 +71,7 @@ class Annealer {
   }
 
  protected:
-  bool accept(Int moveCost);
+  virtual bool accept(Int moveCost);
 
   inline static Int evaluate(Cost cost) {
     // TODO: Weights for the objective and violation.
