@@ -40,10 +40,13 @@ class Objective {
         _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
     constraintFactory(boundViolation, *_bound);
 
-    _violation = _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
-    _engine.makeInvariant<Linear>(
-        std::vector<VarId>{boundViolation, constraintViolation}, *_violation);
-
+    if (constraintViolation == NULL_ID) {
+      _violation = boundViolation;
+    } else {
+      _violation = _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
+      _engine.makeInvariant<Linear>(
+          std::vector<VarId>{boundViolation, constraintViolation}, *_violation);
+    }
     return *_violation;
   }
 };

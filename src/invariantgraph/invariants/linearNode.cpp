@@ -14,6 +14,7 @@ invariantgraph::LinearNode::fromModelConstraint(
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
   auto vars = mappedVariableVector(model, constraint.arguments[1], variableMap);
+  // The negative sum is the offset of the defined variable:
   auto sum = integerValue(model, constraint.arguments[2]);
 
   auto definedVarId = definedVariable(constraint);
@@ -31,6 +32,7 @@ invariantgraph::LinearNode::fromModelConstraint(
   assert(definedVarPos != vars.end());
   size_t definedVarIndex = definedVarPos - vars.begin();
 
+  // TODO: add a violation that is definedVar % coeffs[definedVarIndex]
   if (std::abs(coeffs[definedVarIndex]) != 1) {
     throw std::runtime_error(
         "Cannot define variable with coefficient which is not +/-1");
@@ -51,41 +53,36 @@ invariantgraph::LinearNode::fromModelConstraint(
   return linearInv;
 }
 
-void invariantgraph::LinearNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::LinearNode::createDefinedVariables(Engine& engine) {
   if (staticInputs().size() == 1 &&
-      variableMap.contains(staticInputs().front())) {
-    if (_coeffs.front() == 1 && _offset == 1) {
-      variableMap.emplace(definedVariables()[0],
-                          variableMap.at(staticInputs().front()));
+      staticInputs().front()->varId() != NULL_ID) {
+    if (_coeffs.front() == 1 && _offset == 0) {
+      definedVariables().front()->setVarId(staticInputs().front()->varId());
       return;
     }
 
-    variableMap.emplace(
-        definedVariables()[0],
-        engine.makeIntView<IntOffsetView>(
-            variableMap.at(staticInputs().front()), _coeffs.front() * _offset));
+    definedVariables().front()->setVarId(engine.makeIntView<IntOffsetView>(
+        staticInputs().front()->varId(), _coeffs.front() * _offset));
     return;
   }
 
   if (_intermediateVarId == NULL_ID) {
     _intermediateVarId = engine.makeIntVar(0, 0, 0);
-    assert(!variableMap.contains(definedVariables()[0]));
-    variableMap.emplace(definedVariables()[0],
-                        _offset == 1 ? _intermediateVarId
-                                     : engine.makeIntView<IntOffsetView>(
-                                           _intermediateVarId, _offset));
+    assert(definedVariables().front()->varId() == NULL_ID);
+    definedVariables().front()->setVarId(
+        _offset == 0
+            ? _intermediateVarId
+            : engine.makeIntView<IntOffsetView>(_intermediateVarId, _offset));
   }
 }
 
-void invariantgraph::LinearNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  assert(variableMap.contains(definedVariables()[0]));
+void invariantgraph::LinearNode::registerWithEngine(Engine& engine) {
+  assert(definedVariables().front()->varId() != NULL_ID);
 
   std::vector<VarId> variables;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
-                 [&](const auto& node) { return variableMap.at(node); });
+                 [&](const auto& node) { return node->varId(); });
   if (_intermediateVarId == NULL_ID) {
     assert(variables.size() == 1);
     return;

@@ -78,13 +78,13 @@ TEST_F(LinearNodeTest, application_should_register_view) {
   engine.open();
   registerVariables(engine, {b.name});
   for (auto* const definedVariable : shouldRegisterView->definedVariables()) {
-    EXPECT_FALSE(_variableMap.contains(definedVariable));
+    EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  shouldRegisterView->createDefinedVariables(engine, _variableMap);
+  shouldRegisterView->createDefinedVariables(engine);
   for (auto* const definedVariable : shouldRegisterView->definedVariables()) {
-    EXPECT_TRUE(_variableMap.contains(definedVariable));
+    EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  shouldRegisterView->registerWithEngine(engine, _variableMap);
+  shouldRegisterView->registerWithEngine(engine);
   engine.close();
 
   EXPECT_EQ(engine.lowerBound(engineVariable(a)), 0);
@@ -103,13 +103,13 @@ TEST_F(LinearNodeTest, application_should_register_linear) {
   engine.open();
   registerVariables(engine, {b.name, c.name});
   for (auto* const definedVariable : shouldRegisterLinear->definedVariables()) {
-    EXPECT_FALSE(_variableMap.contains(definedVariable));
+    EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  shouldRegisterLinear->createDefinedVariables(engine, _variableMap);
+  shouldRegisterLinear->createDefinedVariables(engine);
   for (auto* const definedVariable : shouldRegisterLinear->definedVariables()) {
-    EXPECT_TRUE(_variableMap.contains(definedVariable));
+    EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  shouldRegisterLinear->registerWithEngine(engine, _variableMap);
+  shouldRegisterLinear->registerWithEngine(engine);
   engine.close();
 
   EXPECT_EQ(engine.lowerBound(engineVariable(a)), 3);

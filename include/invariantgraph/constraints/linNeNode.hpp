@@ -21,11 +21,9 @@ class LinNeNode : public SoftConstraintNode {
             Int c, VariableNode* r = nullptr)
       : SoftConstraintNode(variables, r), _coeffs(std::move(coeffs)), _c(c) {}
 
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void createDefinedVariables(Engine& engine) override;
 
-  void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void registerWithEngine(Engine& engine) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 

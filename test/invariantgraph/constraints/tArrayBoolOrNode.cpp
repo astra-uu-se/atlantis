@@ -1,64 +1,8 @@
+#include <gmock/gmock.h>
+
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/constraints/arrayBoolOrNode.hpp"
-
-class ArrayBoolOrNodeTest : public NodeTestBase {
- public:
-  BOOL_VARIABLE(a);
-  BOOL_VARIABLE(b);
-  BOOL_VARIABLE(r);
-
-  fznparser::Constraint constraint{
-      "array_bool_or",
-      {fznparser::Constraint::ArrayArgument{a.name, b.name}, r.name},
-      {}};
-  fznparser::FZNModel model{{}, {a, b, r}, {constraint}, fznparser::Satisfy{}};
-
-  std::unique_ptr<invariantgraph::ArrayBoolOrNode> node;
-
-  void SetUp() override {
-    setModel(&model);
-    node = makeNode<invariantgraph::ArrayBoolOrNode>(constraint);
-  }
-};
-
-TEST_F(ArrayBoolOrNodeTest, construction) {
-  EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables()[0]->variable(),
-            invariantgraph::VariableNode::FZNVariable(r));
-
-  EXPECT_EQ(node->staticInputs().size(), 2);
-  EXPECT_EQ(*node->staticInputs()[0]->variable(),
-            invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->staticInputs()[1]->variable(),
-            invariantgraph::VariableNode::FZNVariable(b));
-
-  expectMarkedAsInput(node.get(), node->staticInputs());
-}
-
-TEST_F(ArrayBoolOrNodeTest, application) {
-  PropagationEngine engine;
-  engine.open();
-  registerVariables(engine, {a.name, b.name});
-  for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_FALSE(_variableMap.contains(definedVariable));
-  }
-  node->createDefinedVariables(engine, _variableMap);
-  for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_TRUE(_variableMap.contains(definedVariable));
-  }
-  node->registerWithEngine(engine, _variableMap);
-  engine.close();
-
-  // a and b
-  EXPECT_EQ(engine.searchVariables().size(), 2);
-
-  // a, b and r
-  EXPECT_EQ(engine.numVariables(), 3);
-
-  // minSparse
-  EXPECT_EQ(engine.numInvariants(), 1);
-}
 
 static bool isViolating(const std::vector<Int>& values) {
   for (const Int val : values) {
@@ -69,51 +13,155 @@ static bool isViolating(const std::vector<Int>& values) {
   return true;
 }
 
-TEST_F(ArrayBoolOrNodeTest, propagation) {
-  PropagationEngine engine;
-  engine.open();
-  registerVariables(engine, {a.name, b.name});
-  node->createDefinedVariables(engine, _variableMap);
-  node->registerWithEngine(engine, _variableMap);
+template <bool IsReified>
+class AbstractArrayBoolOrNodeTest : public NodeTestBase {
+ public:
+  BOOL_VARIABLE(a);
+  BOOL_VARIABLE(b);
+  BOOL_VARIABLE(r);
 
-  std::vector<VarId> inputs;
-  EXPECT_EQ(node->staticInputs().size(), 2);
-  for (auto* const inputVariable : node->staticInputs()) {
-    EXPECT_TRUE(_variableMap.contains(inputVariable));
-    inputs.emplace_back(_variableMap.at(inputVariable));
+  std::unique_ptr<fznparser::Constraint> constraint;
+  std::unique_ptr<fznparser::FZNModel> model;
+  std::unique_ptr<invariantgraph::ArrayBoolOrNode> node;
+
+  void SetUp() override {
+    if constexpr (!IsReified) {
+      fznparser::Constraint cnstr{
+          "array_bool_or",
+          {fznparser::Constraint::ArrayArgument{"a", "b"},
+           fznparser::Constraint::Argument{true}},
+          {}};
+
+      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+
+      fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
+
+      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    } else {
+      fznparser::Constraint cnstr{
+          "array_bool_or",
+          {fznparser::Constraint::ArrayArgument{"a", "b"},
+           fznparser::Constraint::Argument{"r"}},
+          {}};
+
+      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+
+      fznparser::FZNModel mdl{
+          {}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
+
+      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    }
+
+    setModel(model.get());
+    node = makeNode<invariantgraph::ArrayBoolOrNode>(*constraint);
   }
 
-  EXPECT_TRUE(_variableMap.contains(node->definedVariables()[0]));
-  const VarId outputId = _variableMap.at(node->definedVariables()[0]);
-  EXPECT_EQ(inputs.size(), 2);
-
-  std::vector<Int> values(inputs.size());
-  engine.close();
-
-  for (values.at(0) = engine.lowerBound(inputs.at(0));
-       values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
-    for (values.at(1) = engine.lowerBound(inputs.at(1));
-         values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
-      engine.beginMove();
-      for (size_t i = 0; i < inputs.size(); ++i) {
-        engine.setValue(inputs.at(i), values.at(i));
-      }
-      engine.endMove();
-
-      engine.beginProbe();
-      engine.query(outputId);
-      engine.endProbe();
-
-      const Int viol = engine.currentValue(outputId);
-
-      EXPECT_EQ(viol > 0, isViolating(values));
+  void construction() {
+    EXPECT_EQ(node->staticInputs().size(), 2);
+    EXPECT_EQ(node->dynamicInputs().size(), 0);
+    std::vector<invariantgraph::VariableNode*> expectedVars;
+    for (size_t i = 0; i < 2; ++i) {
+      expectedVars.emplace_back(_variables.at(i).get());
+    }
+    EXPECT_EQ(node->staticInputs(), expectedVars);
+    EXPECT_THAT(expectedVars, testing::ContainerEq(node->staticInputs()));
+    expectMarkedAsInput(node.get(), node->staticInputs());
+    if constexpr (!IsReified) {
+      EXPECT_FALSE(node->isReified());
+      EXPECT_EQ(node->reifiedViolation(), nullptr);
+    } else {
+      EXPECT_TRUE(node->isReified());
+      EXPECT_NE(node->reifiedViolation(), nullptr);
+      EXPECT_EQ(node->reifiedViolation()->variable(),
+                invariantgraph::VariableNode::FZNVariable(r));
     }
   }
-}
 
-TEST_F(ArrayBoolOrNodeTest, r_is_a_constant) {
+  void application() {
+    PropagationEngine engine;
+    engine.open();
+    registerVariables(engine, {a.name, b.name});
+    for (auto* const definedVariable : node->definedVariables()) {
+      EXPECT_EQ(definedVariable->varId(), NULL_ID);
+    }
+    node->createDefinedVariables(engine);
+    for (auto* const definedVariable : node->definedVariables()) {
+      EXPECT_NE(definedVariable->varId(), NULL_ID);
+    }
+    node->registerWithEngine(engine);
+    engine.close();
+
+    // a and b
+    EXPECT_EQ(engine.searchVariables().size(), 2);
+
+    // a, b and r
+    EXPECT_EQ(engine.numVariables(), 3);
+
+    // minSparse
+    EXPECT_EQ(engine.numInvariants(), 1);
+  }
+
+  void propagation() {
+    PropagationEngine engine;
+    engine.open();
+    registerVariables(engine, {a.name, b.name});
+    node->createDefinedVariables(engine);
+    node->registerWithEngine(engine);
+
+    std::vector<VarId> inputs;
+    EXPECT_EQ(node->staticInputs().size(), 2);
+    for (auto* const inputVariable : node->staticInputs()) {
+      EXPECT_NE(inputVariable->varId(), NULL_ID);
+      inputs.emplace_back(inputVariable->varId());
+    }
+
+    EXPECT_NE(node->violationVarId(), NULL_ID);
+    const VarId outputId = node->violationVarId();
+    EXPECT_EQ(inputs.size(), 2);
+
+    std::vector<Int> values(inputs.size());
+    engine.close();
+
+    for (values.at(0) = engine.lowerBound(inputs.at(0));
+         values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
+      for (values.at(1) = engine.lowerBound(inputs.at(1));
+           values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
+        engine.beginMove();
+        for (size_t i = 0; i < inputs.size(); ++i) {
+          engine.setValue(inputs.at(i), values.at(i));
+        }
+        engine.endMove();
+
+        engine.beginProbe();
+        engine.query(outputId);
+        engine.endProbe();
+
+        const Int viol = engine.currentValue(outputId);
+
+        EXPECT_EQ(viol > 0, isViolating(values));
+      }
+    }
+  }
+};
+
+class ArrayBoolOrNodeTest : public AbstractArrayBoolOrNodeTest<false> {};
+
+TEST_F(ArrayBoolOrNodeTest, Construction) { construction(); }
+
+TEST_F(ArrayBoolOrNodeTest, Application) { application(); }
+
+TEST_F(ArrayBoolOrNodeTest, Propagation) { propagation(); }
+
+class ArrayBoolOrReifNodeTest : public AbstractArrayBoolOrNodeTest<true> {};
+
+TEST_F(ArrayBoolOrReifNodeTest, Construction) { construction(); }
+
+TEST_F(ArrayBoolOrReifNodeTest, Application) { application(); }
+
+TEST_F(ArrayBoolOrReifNodeTest, Propagation) { propagation(); }
+
+TEST_F(ArrayBoolOrReifNodeTest, r_is_a_constant) {
   _nodeMap.clear();
-  _variableMap.clear();
   _variables.clear();
 
   fznparser::Constraint constraint2{
@@ -122,13 +170,14 @@ TEST_F(ArrayBoolOrNodeTest, r_is_a_constant) {
       {}};
 
   node = makeNode<invariantgraph::ArrayBoolOrNode>(constraint2);
-  EXPECT_TRUE(node->violation());
+  EXPECT_TRUE(!node->isReified());
+  EXPECT_FALSE(!node->definedVariables().empty());
 
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
-  node->createDefinedVariables(engine, _variableMap);
-  node->registerWithEngine(engine, _variableMap);
+  node->createDefinedVariables(engine);
+  node->registerWithEngine(engine);
   engine.close();
 
   engine.beginMove();
@@ -137,9 +186,9 @@ TEST_F(ArrayBoolOrNodeTest, r_is_a_constant) {
   engine.endMove();
 
   engine.beginCommit();
-  engine.query(engineVariable(node->violation()));
+  engine.query(node->violationVarId());
   engine.endCommit();
-  EXPECT_EQ(engine.committedValue(engineVariable(node->violation())), 0);
+  EXPECT_EQ(engine.committedValue(node->violationVarId()), 0);
 
   engine.beginMove();
   engine.setValue(engineVariable(a), 1);
@@ -147,9 +196,9 @@ TEST_F(ArrayBoolOrNodeTest, r_is_a_constant) {
   engine.endMove();
 
   engine.beginCommit();
-  engine.query(engineVariable(node->violation()));
+  engine.query(node->violationVarId());
   engine.endCommit();
-  EXPECT_EQ(engine.committedValue(engineVariable(node->violation())), 0);
+  EXPECT_EQ(engine.committedValue(node->violationVarId()), 0);
 
   engine.beginMove();
   engine.setValue(engineVariable(a), 1);
@@ -157,7 +206,7 @@ TEST_F(ArrayBoolOrNodeTest, r_is_a_constant) {
   engine.endMove();
 
   engine.beginCommit();
-  engine.query(engineVariable(node->violation()));
+  engine.query(node->violationVarId());
   engine.endCommit();
-  EXPECT_GT(engine.committedValue(engineVariable(node->violation())), 0);
+  EXPECT_GT(engine.committedValue(node->violationVarId()), 0);
 }
