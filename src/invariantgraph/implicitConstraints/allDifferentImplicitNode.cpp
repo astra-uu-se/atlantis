@@ -40,9 +40,8 @@ invariantgraph::AllDifferentImplicitNode::AllDifferentImplicitNode(
 search::neighbourhoods::Neighbourhood*
 invariantgraph::AllDifferentImplicitNode::createNeighbourhood(
     Engine& engine, std::vector<search::SearchVariable> variables) {
-  std::vector<Int> domainValues;
-  std::visit([&](auto& domain) { domainValues = std::move(domain.values()); },
-             definedVariables().front()->domain());
+  std::vector<Int> domainValues(
+      std::move(definedVariables().front()->domain().values()));
 
   return new search::neighbourhoods::AllDifferentNeighbourhood(
       variables, std::move(domainValues), engine);

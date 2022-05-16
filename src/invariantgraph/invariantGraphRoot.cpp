@@ -10,3 +10,10 @@ invariantgraph::InvariantGraphRoot::createNeighbourhood(
   return new search::neighbourhoods::RandomNeighbourhood(std::move(variables),
                                                          engine);
 }
+
+void invariantgraph::InvariantGraphRoot::addSearchVariable(VariableNode* node) {
+  assert(node->definedBy() == nullptr);
+  addDefinedVariable(node);
+  assert(definedVariables().back() == node);
+  assert(node->definedBy() == this);
+}

@@ -2,14 +2,14 @@
 
 #include "../parseHelper.hpp"
 #include "invariants/exists.hpp"
-#include "views/violation2BoolView.hpp"
+#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::ArrayBoolOrNode>
 invariantgraph::ArrayBoolOrNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(constraint.name == "array_bool_or");
-  assert(constraint.arguments.size() == 2);
+  assert(constraint.name == "array_bool_or" &&
+         constraint.arguments.size() == 2);
 
   auto as = mappedVariableVector(model, constraint.arguments[0], variableMap);
 
@@ -22,28 +22,22 @@ invariantgraph::ArrayBoolOrNode::fromModelConstraint(
   }
 }
 
-void invariantgraph::ArrayBoolOrNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(violation())) {
-    registerViolation(engine, variableMap);
+void invariantgraph::ArrayBoolOrNode::createDefinedVariables(Engine& engine) {
+  if (_rIsConstant && !_rValue) {
+    _sumVarId = engine.makeIntVar(0, 0, 0);
+    setViolationVarId(engine.makeIntView<NotEqualView>(_sumVarId, 0));
+  } else {
+    registerViolation(engine);
   }
 }
 
-void invariantgraph::ArrayBoolOrNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::ArrayBoolOrNode::registerWithEngine(Engine& engine) {
+  assert(violationVarId() != NULL_ID);
   std::vector<VarId> inputs;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(inputs),
-                 [&](const auto& node) { return variableMap.at(node); });
-#ifndef NDEBUG
-  for (const VarId input : inputs) {
-    assert(0 <= engine.lowerBound(input));
-  }
-#endif
+                 [&](const auto& node) { return node->varId(); });
 
-  // TODO: The case where _rValue is false when r is constant.
-  // For that a new invariant is needed, since a simple view performing negation
-  // cannot know how far off the inputs are from all being non-zero.
-  assert(!_rIsConstant || _rValue);
-  engine.makeInvariant<Exists>(inputs, variableMap.at(violation()));
+  engine.makeInvariant<Exists>(
+      inputs, _rIsConstant && !_rValue ? _sumVarId : violationVarId());
 }

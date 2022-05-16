@@ -21,17 +21,13 @@ invariantgraph::LeNode::fromModelConstraint(
   return std::make_unique<LeNode>(a, b, r);
 }
 
-void invariantgraph::LeNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(violation())) {
-    registerViolation(engine, variableMap);
-  }
+void invariantgraph::LeNode::createDefinedVariables(Engine& engine) {
+  registerViolation(engine);
 }
 
-void invariantgraph::LeNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  assert(variableMap.contains(violation()));
+void invariantgraph::LeNode::registerWithEngine(Engine& engine) {
+  assert(violationVarId() != NULL_ID);
 
-  engine.makeConstraint<::LessEqual>(variableMap.at(violation()),
-                                     variableMap.at(a()), variableMap.at(b()));
+  engine.makeConstraint<::LessEqual>(violationVarId(), a()->varId(),
+                                     b()->varId());
 }

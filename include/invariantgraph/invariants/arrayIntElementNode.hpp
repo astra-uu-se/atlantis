@@ -19,11 +19,9 @@ class ArrayIntElementNode : public VariableDefiningNode {
                       VariableNode* output)
       : VariableDefiningNode({output}, {b}), _as(std::move(as)) {}
 
-  void createDefinedVariables(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void createDefinedVariables(Engine& engine) override;
 
-  void registerWithEngine(
-      Engine& engine, VariableDefiningNode::VariableMap& variableMap) override;
+  void registerWithEngine(Engine& engine) override;
 
   [[nodiscard]] const std::vector<Int>& as() const noexcept { return _as; }
   [[nodiscard]] VariableNode* b() const noexcept {

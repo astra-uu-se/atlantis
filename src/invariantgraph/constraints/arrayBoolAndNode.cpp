@@ -3,14 +3,14 @@
 #include "../parseHelper.hpp"
 #include "invariants/elementConst.hpp"
 #include "invariants/forAll.hpp"
-#include "views/violation2BoolView.hpp"
+#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::ArrayBoolAndNode>
 invariantgraph::ArrayBoolAndNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(constraint.name == "array_bool_and");
-  assert(constraint.arguments.size() == 2);
+  assert(constraint.name == "array_bool_and" &&
+         constraint.arguments.size() == 2);
 
   auto as = mappedVariableVector(model, constraint.arguments[0], variableMap);
   if (std::holds_alternative<bool>(constraint.arguments[1])) {
@@ -22,21 +22,22 @@ invariantgraph::ArrayBoolAndNode::fromModelConstraint(
   }
 }
 
-void invariantgraph::ArrayBoolAndNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(violation())) {
-    registerViolation(engine, variableMap);
+void invariantgraph::ArrayBoolAndNode::createDefinedVariables(Engine& engine) {
+  if (_rIsConstant && !_rValue) {
+    _sumVarId = engine.makeIntVar(0, 0, 0);
+    setViolationVarId(engine.makeIntView<NotEqualView>(_sumVarId, 0));
+  } else {
+    registerViolation(engine);
   }
 }
 
-void invariantgraph::ArrayBoolAndNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::ArrayBoolAndNode::registerWithEngine(Engine& engine) {
+  assert(violationVarId() != NULL_ID);
   std::vector<VarId> inputs;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(inputs),
-                 [&](const auto& node) { return variableMap.at(node); });
+                 [&](const auto& node) { return node->varId(); });
 
-  // TODO: The case where _rValue is false.
-  assert(!_rIsConstant || _rValue);
-  engine.makeInvariant<ForAll>(inputs, variableMap.at(violation()));
+  engine.makeInvariant<ForAll>(
+      inputs, _rIsConstant && !_rValue ? _sumVarId : violationVarId());
 }

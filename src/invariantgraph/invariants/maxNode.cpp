@@ -19,21 +19,17 @@ invariantgraph::MaxNode::fromModelConstraint(
   return std::make_unique<invariantgraph::MaxNode>(inputs, output);
 }
 
-void invariantgraph::MaxNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
-  if (!variableMap.contains(definedVariables()[0])) {
-    registerDefinedVariable(engine, variableMap, definedVariables()[0]);
-  }
+void invariantgraph::MaxNode::createDefinedVariables(Engine& engine) {
+  registerDefinedVariable(engine, definedVariables().front());
 }
 
-void invariantgraph::MaxNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void invariantgraph::MaxNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
-                 [&](const auto& var) { return variableMap.at(var); });
+                 [&](const auto& node) { return node->varId(); });
 
-  assert(variableMap.contains(definedVariables()[0]));
+  assert(definedVariables().front()->varId() != NULL_ID);
   engine.makeInvariant<::MaxSparse>(variables,
-                                    variableMap.at(definedVariables()[0]));
+                                    definedVariables().front()->varId());
 }

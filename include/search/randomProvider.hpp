@@ -40,16 +40,18 @@ class RandomProvider {
     return std::uniform_real_distribution<float>(lowerBound, upperBound)(_gen);
   }
 
-  Int inDomain(SetDomain& domain) { return element(domain.values()); }
-  
-  Int inDomain(IntervalDomain& domain) {
+  Int inDomain(const SetDomain& domain) {
+    return element(domain.constValues());
+  }
+
+  Int inDomain(const IntervalDomain& domain) {
     return intInRange(domain.lowerBound(), domain.upperBound());
   }
 
   Int inDomain(SearchDomain& domain) {
-    Int value;
-    std::visit([&](auto& dom) { value = inDomain(dom); }, domain);
-    return value;
+    return std::visit<Int>([&](const auto& dom) { return inDomain(dom); },
+                           domain.innerDomain());
+    ;
   }
 };
 

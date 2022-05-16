@@ -15,12 +15,12 @@ static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
 
         if constexpr (std::is_same_v<Type, Int>) {
           return std::optional<SearchDomain>{
-              SearchDomain(SetDomain({std::get<Int>(*var.value)}))};
+              SearchDomain({std::get<Int>(*var.value)})};
         } else if constexpr (std::is_same_v<Type, bool>) {
           if (std::get<bool>(*var.value)) {
-            return std::optional<SearchDomain>{SearchDomain(SetDomain({0}))};
+            return std::optional<SearchDomain>{SearchDomain({0})};
           } else {
-            return std::optional<SearchDomain>{SearchDomain(SetDomain({1}))};
+            return std::optional<SearchDomain>{SearchDomain({1})};
           }
         } else {
           static_assert(!sizeof(Type),
@@ -39,19 +39,19 @@ static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
             return std::visit<SearchDomain>(
                 overloaded{
                     [](const fznparser::BasicDomain<Int>&) {
-                      return IntervalDomain(std::numeric_limits<Int>::min(),
-                                            std::numeric_limits<Int>::max());
+                      return SearchDomain(std::numeric_limits<Int>::min(),
+                                          std::numeric_limits<Int>::max());
                     },
                     [](const fznparser::IntRange& range) {
-                      return IntervalDomain(range.lowerBound, range.upperBound);
+                      return SearchDomain(range.lowerBound, range.upperBound);
                     },
                     [](const fznparser::LiteralSet<Int>& set) {
-                      return SetDomain(set.values);
+                      return SearchDomain(set.values);
                     }},
                 var.domain);
           },
           [](const fznparser::BoolVariable&) {
-            return SetDomain({0, 1});
+            return SearchDomain(std::vector<Int>{0, 1});
           },
       },
       variable);
@@ -63,24 +63,22 @@ VariableNode::VariableNode(VariableNode::FZNVariable variable)
 VariableNode::VariableNode(SearchDomain domain)
     : _variable(std::nullopt), _domain(std::move(domain)) {}
 
-void ImplicitConstraintNode::createDefinedVariables(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void ImplicitConstraintNode::createDefinedVariables(Engine& engine) {
   for (const auto& node : definedVariables()) {
-    if (!variableMap.contains(node)) {
+    if (node->varId() == NULL_ID) {
       const auto& [lb, ub] = node->bounds();
-      variableMap.emplace(node, engine.makeIntVar(lb, lb, ub));
+      node->setVarId(engine.makeIntVar(lb, lb, ub));
     }
   }
 }
 
-void ImplicitConstraintNode::registerWithEngine(
-    Engine& engine, VariableDefiningNode::VariableMap& variableMap) {
+void ImplicitConstraintNode::registerWithEngine(Engine& engine) {
   std::vector<search::SearchVariable> varIds;
   varIds.reserve(definedVariables().size());
 
   for (const auto& node : definedVariables()) {
-    assert(variableMap.contains(node));
-    varIds.emplace_back(variableMap.at(node), node->domain());
+    assert(node->varId() != NULL_ID);
+    varIds.emplace_back(node->varId(), node->domain());
   }
 
   _neighbourhood = createNeighbourhood(engine, varIds);
@@ -88,7 +86,6 @@ void ImplicitConstraintNode::registerWithEngine(
 }
 
 VarId VariableNode::postDomainConstraint(Engine& engine,
-                                         const VariableMap& variableMap,
                                          std::vector<DomainEntry>&& domain) {
   if (domain.size() == 0 || _domainViolationId != NULL_ID) {
     return _domainViolationId;
@@ -101,23 +98,18 @@ VarId VariableNode::postDomainConstraint(Engine& engine,
   // domain.size() - 1 = number of "holes" in the domain:
   const float denseness = 1.0 - ((float)(domain.size() - 1) / (float)interval);
   if (SPARSE_MIN_DENSENESS <= denseness) {
-    engine.makeConstraint<InSparseDomain>(
-        _domainViolationId, variableMap.at(this), std::move(domain));
+    engine.makeConstraint<InSparseDomain>(_domainViolationId, this->varId(),
+                                          std::move(domain));
   } else {
-    engine.makeConstraint<InDomain>(_domainViolationId, variableMap.at(this),
+    engine.makeConstraint<InDomain>(_domainViolationId, this->varId(),
                                     std::move(domain));
   }
   return _domainViolationId;
 }
 
-std::vector<DomainEntry> VariableNode::constrainedDomain(
-    const Engine& engine, const VariableMap& variableMap) {
-  assert(variableMap.contains(this));
-  const VarId varId = variableMap.at(this);
-  return std::visit<std::vector<DomainEntry>>(
-      [&](const auto& dom) {
-        return dom.relativeComplementIfIntersects(engine.lowerBound(varId),
-                                                  engine.upperBound(varId));
-      },
-      _domain);
+std::vector<DomainEntry> VariableNode::constrainedDomain(const Engine& engine) {
+  assert(this->varId() != NULL_ID);
+  const VarId varId = this->varId();
+  return _domain.relativeComplementIfIntersects(engine.lowerBound(varId),
+                                                engine.upperBound(varId));
 }

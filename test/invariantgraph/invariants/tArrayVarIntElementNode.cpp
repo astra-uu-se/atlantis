@@ -31,7 +31,7 @@ TEST_F(ArrayVarIntElementNodeTest, construction) {
   EXPECT_EQ(*node->b()->variable(),
             invariantgraph::VariableNode::FZNVariable(idx));
   EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables()[0]->variable(),
+  EXPECT_EQ(*node->definedVariables().front()->variable(),
             invariantgraph::VariableNode::FZNVariable(y));
   expectMarkedAsInput(node.get(), {node->dynamicInputs()});
   expectMarkedAsInput(node.get(), {node->b()});
@@ -50,13 +50,13 @@ TEST_F(ArrayVarIntElementNodeTest, application) {
   engine.open();
   registerVariables(engine, {a.name, b.name, c.name, idx.name});
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_FALSE(_variableMap.contains(definedVariable));
+    EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  node->createDefinedVariables(engine, _variableMap);
+  node->createDefinedVariables(engine);
   for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_TRUE(_variableMap.contains(definedVariable));
+    EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  node->registerWithEngine(engine, _variableMap);
+  node->registerWithEngine(engine);
   engine.close();
 
   // a, b, c, idx
@@ -73,24 +73,24 @@ TEST_F(ArrayVarIntElementNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name, c.name, idx.name});
-  node->createDefinedVariables(engine, _variableMap);
-  node->registerWithEngine(engine, _variableMap);
+  node->createDefinedVariables(engine);
+  node->registerWithEngine(engine);
 
   EXPECT_EQ(node->staticInputs().size(), 1);
-  EXPECT_TRUE(_variableMap.contains(node->staticInputs().front()));
+  EXPECT_NE(node->staticInputs().front()->varId(), NULL_ID);
 
   EXPECT_EQ(node->dynamicInputs().size(), 3);
   for (auto* const inputVariable : node->dynamicInputs()) {
-    EXPECT_TRUE(_variableMap.contains(inputVariable));
+    EXPECT_NE(inputVariable->varId(), NULL_ID);
   }
 
-  EXPECT_TRUE(_variableMap.contains(node->definedVariables()[0]));
-  const VarId outputId = _variableMap.at(node->definedVariables()[0]);
+  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
+  const VarId outputId = node->definedVariables().front()->varId();
 
   std::vector<VarId> inputs;
-  inputs.emplace_back(_variableMap.at(node->staticInputs().front()));
+  inputs.emplace_back(node->staticInputs().front()->varId());
   for (auto* const varNode : node->dynamicInputs()) {
-    inputs.emplace_back(_variableMap.at(varNode));
+    inputs.emplace_back(varNode->varId());
   }
 
   const VarId input = inputs.front();
