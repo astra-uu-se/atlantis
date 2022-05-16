@@ -41,16 +41,9 @@ void invariantgraph::LinLeNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::LinLeNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
-  std::transform(
-      staticInputs().begin(), staticInputs().end(),
-      std::back_inserter(variables), [&](auto node) {
-        if (node->variable() &&
-            std::holds_alternative<fznparser::IntVariable>(*node->variable())) {
-          return node->varId();
-        }
-
-        return engine.makeIntView<Bool2IntView>(node->varId());
-      });
+  std::transform(staticInputs().begin(), staticInputs().end(),
+                 std::back_inserter(variables),
+                 [&](auto node) { return node->varId(); });
 
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
