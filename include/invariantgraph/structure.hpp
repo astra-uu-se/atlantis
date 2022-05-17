@@ -186,8 +186,14 @@ class VariableNode {
     _definedBy = definingInvariant;
   }
 
-  // A hack in order to steal the _inputs from the nested constraint.
-  friend class ReifiedConstraint;
+  /**
+   * @return The constant value if this node represents a node, or std::nullopt
+   * otherwise.
+   */
+  [[nodiscard]] std::optional<Int> constantValue() const noexcept {
+    auto [lb, ub] = _domain.bounds();
+    return lb == ub ? std::optional<Int>{lb} : std::optional<Int>{};
+  }
 };
 
 /**
