@@ -56,10 +56,14 @@ static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
 }
 
 invariantgraph::VariableNode::VariableNode(VariableNode::FZNVariable variable)
-    : _variable(std::move(variable)), _domain{convertDomain(*_variable)} {}
+    : _variable(std::move(variable)),
+      _domain{convertDomain(*_variable)},
+      _isIntVar(std::holds_alternative<fznparser::IntVariable>(variable)) {}
 
-invariantgraph::VariableNode::VariableNode(SearchDomain domain)
-    : _variable(std::nullopt), _domain(std::move(domain)) {}
+invariantgraph::VariableNode::VariableNode(SearchDomain domain, bool isIntVar)
+    : _variable(std::nullopt),
+      _domain(std::move(domain)),
+      _isIntVar(isIntVar) {}
 
 VarId invariantgraph::VariableNode::postDomainConstraint(
     Engine& engine, std::vector<DomainEntry>&& domain) {

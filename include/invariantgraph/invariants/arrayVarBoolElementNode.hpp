@@ -14,7 +14,15 @@ class ArrayVarBoolElementNode : public VariableDefiningNode {
 
   ArrayVarBoolElementNode(VariableNode* b, std::vector<VariableNode*> as,
                           VariableNode* output)
-      : VariableDefiningNode({output}, {b}, {as}) {}
+      : VariableDefiningNode({output}, {b}, {as}) {
+#ifndef NDEBUG
+    assert(staticInputs().front()->isIntVar());
+    for (auto* const dynamicInput : dynamicInputs()) {
+      assert(!dynamicInput->isIntVar());
+    }
+    assert(definedVariables().front()->isIntVar());
+#endif
+  }
 
   void createDefinedVariables(Engine& engine) override;
 

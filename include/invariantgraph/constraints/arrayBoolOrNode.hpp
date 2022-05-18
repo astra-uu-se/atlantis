@@ -9,9 +9,7 @@ namespace invariantgraph {
 
 class ArrayBoolOrNode : public SoftConstraintNode {
  private:
-  VarId _sumVarId{NULL_ID};
-  const bool _rIsConstant;
-  const bool _rValue;
+  VarId _intermediate{NULL_ID};
 
  public:
   static std::unique_ptr<ArrayBoolOrNode> fromModelConstraint(
@@ -19,14 +17,10 @@ class ArrayBoolOrNode : public SoftConstraintNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   ArrayBoolOrNode(std::vector<VariableNode*> as, VariableNode* output)
-      : SoftConstraintNode(std::move(as), output),
-        _rIsConstant(false),
-        _rValue{false} {}
+      : SoftConstraintNode(std::move(as), output) {}
 
-  ArrayBoolOrNode(std::vector<VariableNode*> as, bool output)
-      : SoftConstraintNode(std::move(as)),
-        _rIsConstant(true),
-        _rValue{output} {}
+  ArrayBoolOrNode(std::vector<VariableNode*> as, bool shouldHold)
+      : SoftConstraintNode(std::move(as), shouldHold) {}
 
   void createDefinedVariables(Engine& engine) override;
 

@@ -5,16 +5,21 @@
 
 #include "invariantgraph/softConstraintNode.hpp"
 #include "views/equalView.hpp"
+#include "views/notEqualView.hpp"
 
 namespace invariantgraph {
 class AllEqualNode : public SoftConstraintNode {
  private:
+  VarId _intermediate{NULL_ID};
   VarId _allDifferentViolationVarId{NULL_ID};
 
  public:
-  explicit AllEqualNode(std::vector<VariableNode*> variables,
-                        VariableNode* r = nullptr)
+  explicit AllEqualNode(std::vector<VariableNode*> variables, VariableNode* r)
       : SoftConstraintNode(variables, r) {}
+
+  explicit AllEqualNode(std::vector<VariableNode*> variables,
+                        bool shouldHold = true)
+      : SoftConstraintNode(variables, shouldHold) {}
 
   static std::unique_ptr<AllEqualNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

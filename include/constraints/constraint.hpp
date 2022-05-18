@@ -9,7 +9,7 @@ class Constraint : public Invariant {
  private:
  protected:
   const VarId _violationId;
-  Constraint(Id id, VarId violationId)
+  explicit Constraint(Id id, VarId violationId)
       : Invariant(id), _violationId(violationId) {}
 
  public:

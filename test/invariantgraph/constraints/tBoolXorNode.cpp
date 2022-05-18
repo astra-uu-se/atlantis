@@ -3,10 +3,10 @@
 #include "invariantgraph/constraints/boolXorNode.hpp"
 
 static bool isViolating(const std::vector<Int>& values) {
-  return values.at(0) == values.at(1);
+  return (values.at(0) == 0) == (values.at(1) == 0);
 }
 
-template <bool IsReified>
+template <ConstraintType Type>
 class AbstractBoolXorNodeTest : public NodeTestBase {
  public:
   BOOL_VARIABLE(a);
@@ -18,21 +18,31 @@ class AbstractBoolXorNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::BoolXorNode> node;
 
   void SetUp() override {
-    if constexpr (!IsReified) {
-      fznparser::Constraint cnstr{"bool_xor", {"a", "b"}, {}};
-
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-    } else {
-      fznparser::Constraint cnstr{"bool_xor_reif", {"a", "b", "r"}, {}};
+    if constexpr (Type == ConstraintType::REIFIED) {
+      fznparser::Constraint cnstr{"bool_xor", {"a", "b", "r"}, {}};
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
       fznparser::FZNModel mdl{
           {}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
+
+      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    } else {
+      if constexpr (Type == ConstraintType::NORMAL) {
+        fznparser::Constraint cnstr{"bool_xor", {"a", "b"}, {}};
+
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
+        fznparser::Constraint cnstr{"bool_xor_reif", {"a", "b", false}, {}};
+
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else {
+        fznparser::Constraint cnstr{"bool_xor_reif", {"a", "b", true}, {}};
+
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      }
+
+      fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
 
       model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     }
@@ -47,7 +57,7 @@ class AbstractBoolXorNodeTest : public NodeTestBase {
     EXPECT_EQ(*node->b()->variable(),
               invariantgraph::VariableNode::FZNVariable(b));
     expectMarkedAsInput(node.get(), {node->a(), node->b()});
-    if constexpr (!IsReified) {
+    if constexpr (Type != ConstraintType::REIFIED) {
       EXPECT_FALSE(node->isReified());
       EXPECT_EQ(node->reifiedViolation(), nullptr);
     } else {
@@ -96,11 +106,11 @@ class AbstractBoolXorNodeTest : public NodeTestBase {
     for (auto* const inputVariable : node->staticInputs()) {
       EXPECT_NE(inputVariable->varId(), NULL_ID);
       inputs.emplace_back(inputVariable->varId());
+      engine.updateBounds(inputVariable->varId(), 0, 10, true);
     }
 
     EXPECT_NE(node->violationVarId(), NULL_ID);
     const VarId violationId = node->violationVarId();
-    EXPECT_EQ(inputs.size(), 2);
 
     std::vector<Int> values(inputs.size());
     engine.close();
@@ -117,13 +127,18 @@ class AbstractBoolXorNodeTest : public NodeTestBase {
         engine.query(violationId);
         engine.endProbe();
 
-        EXPECT_EQ(engine.currentValue(violationId) > 0, isViolating(values));
+        if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
+          EXPECT_EQ(engine.currentValue(violationId) > 0, isViolating(values));
+        } else {
+          EXPECT_NE(engine.currentValue(violationId) > 0, isViolating(values));
+        }
       }
     }
   }
 };
 
-class BoolXorNodeTest : public AbstractBoolXorNodeTest<false> {};
+class BoolXorNodeTest : public AbstractBoolXorNodeTest<ConstraintType::NORMAL> {
+};
 
 TEST_F(BoolXorNodeTest, Construction) { construction(); }
 
@@ -131,10 +146,29 @@ TEST_F(BoolXorNodeTest, Application) { application(); }
 
 TEST_F(BoolXorNodeTest, Propagation) { propagation(); }
 
-class BoolXorReifNodeTest : public AbstractBoolXorNodeTest<true> {};
+class BoolXorReifNodeTest
+    : public AbstractBoolXorNodeTest<ConstraintType::REIFIED> {};
 
 TEST_F(BoolXorReifNodeTest, Construction) { construction(); }
 
 TEST_F(BoolXorReifNodeTest, Application) { application(); }
 
 TEST_F(BoolXorReifNodeTest, Propagation) { propagation(); }
+
+class BoolXorFalseNodeTest
+    : public AbstractBoolXorNodeTest<ConstraintType::CONSTANT_FALSE> {};
+
+TEST_F(BoolXorFalseNodeTest, Construction) { construction(); }
+
+TEST_F(BoolXorFalseNodeTest, Application) { application(); }
+
+TEST_F(BoolXorFalseNodeTest, Propagation) { propagation(); }
+
+class BoolXorTrueNodeTest
+    : public AbstractBoolXorNodeTest<ConstraintType::CONSTANT_TRUE> {};
+
+TEST_F(BoolXorTrueNodeTest, Construction) { construction(); }
+
+TEST_F(BoolXorTrueNodeTest, Application) { application(); }
+
+TEST_F(BoolXorTrueNodeTest, Propagation) { propagation(); }

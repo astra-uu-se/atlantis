@@ -15,7 +15,7 @@ static bool isViolating(const std::vector<Int>& values) {
   return false;
 }
 
-template <bool IsReified>
+template <ConstraintType Type>
 class AbstractAllEqualNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 5, 10);
@@ -29,19 +29,7 @@ class AbstractAllEqualNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::AllEqualNode> node;
 
   void SetUp() override {
-    if constexpr (!IsReified) {
-      fznparser::Constraint cnstr{
-          "all_equal",
-          {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
-          {}};
-
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::FZNModel mdl{
-          {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-    } else {
+    if constexpr (Type == ConstraintType::REIFIED) {
       fznparser::Constraint cnstr{
           "all_equal_reif",
           {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"},
@@ -52,6 +40,31 @@ class AbstractAllEqualNodeTest : public NodeTestBase {
 
       fznparser::FZNModel mdl{
           {}, {a, b, c, d, r}, {*constraint}, fznparser::Satisfy{}};
+
+      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    } else {
+      if constexpr (Type == ConstraintType::NORMAL) {
+        fznparser::Constraint cnstr{
+            "all_equal",
+            {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
+            {}};
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
+        fznparser::Constraint cnstr{
+            "all_equal_reif",
+            {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}, false},
+            {}};
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else {
+        fznparser::Constraint cnstr{
+            "all_equal_reif",
+            {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}, true},
+            {}};
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      }
+
+      fznparser::FZNModel mdl{
+          {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
 
       model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     }
@@ -69,7 +82,7 @@ class AbstractAllEqualNodeTest : public NodeTestBase {
     EXPECT_EQ(node->staticInputs(), expectedVars);
     EXPECT_THAT(expectedVars, testing::ContainerEq(node->staticInputs()));
     expectMarkedAsInput(node.get(), node->staticInputs());
-    if constexpr (!IsReified) {
+    if constexpr (Type != ConstraintType::REIFIED) {
       EXPECT_FALSE(node->isReified());
       EXPECT_EQ(node->reifiedViolation(), nullptr);
     } else {
@@ -149,8 +162,13 @@ class AbstractAllEqualNodeTest : public NodeTestBase {
             engine.query(violationId);
             engine.endProbe();
 
-            EXPECT_EQ(engine.currentValue(violationId) > 0,
-                      isViolating(values));
+            if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
+              EXPECT_EQ(engine.currentValue(violationId) > 0,
+                        isViolating(values));
+            } else {
+              EXPECT_NE(engine.currentValue(violationId) > 0,
+                        isViolating(values));
+            }
           }
         }
       }
@@ -158,7 +176,8 @@ class AbstractAllEqualNodeTest : public NodeTestBase {
   }
 };
 
-class AllEqualNodeTest : public AbstractAllEqualNodeTest<false> {};
+class AllEqualNodeTest
+    : public AbstractAllEqualNodeTest<ConstraintType::NORMAL> {};
 
 TEST_F(AllEqualNodeTest, Construction) { construction(); }
 
@@ -166,10 +185,29 @@ TEST_F(AllEqualNodeTest, Application) { application(); }
 
 TEST_F(AllEqualNodeTest, Propagation) { propagation(); }
 
-class AllEqualReifNodeTest : public AbstractAllEqualNodeTest<true> {};
+class AllEqualReifNodeTest
+    : public AbstractAllEqualNodeTest<ConstraintType::REIFIED> {};
 
 TEST_F(AllEqualReifNodeTest, Construction) { construction(); }
 
 TEST_F(AllEqualReifNodeTest, Application) { application(); }
 
 TEST_F(AllEqualReifNodeTest, Propagation) { propagation(); }
+
+class AllEqualFalseNodeTest
+    : public AbstractAllEqualNodeTest<ConstraintType::CONSTANT_FALSE> {};
+
+TEST_F(AllEqualFalseNodeTest, Construction) { construction(); }
+
+TEST_F(AllEqualFalseNodeTest, Application) { application(); }
+
+TEST_F(AllEqualFalseNodeTest, Propagation) { propagation(); }
+
+class AllEqualTrueNodeTest
+    : public AbstractAllEqualNodeTest<ConstraintType::CONSTANT_TRUE> {};
+
+TEST_F(AllEqualTrueNodeTest, Construction) { construction(); }
+
+TEST_F(AllEqualTrueNodeTest, Application) { application(); }
+
+TEST_F(AllEqualTrueNodeTest, Propagation) { propagation(); }

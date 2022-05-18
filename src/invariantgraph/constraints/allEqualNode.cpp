@@ -14,18 +14,30 @@ invariantgraph::AllEqualNode::fromModelConstraint(
   auto variables =
       mappedVariableVector(model, constraint.arguments[0], variableMap);
 
-  VariableNode* r = constraint.arguments.size() >= 2
-                        ? mappedVariable(constraint.arguments[1], variableMap)
-                        : nullptr;
-
-  return std::make_unique<AllEqualNode>(variables, r);
+  if (constraint.arguments.size() >= 2) {
+    if (std::holds_alternative<bool>(constraint.arguments[1])) {
+      auto shouldHold = std::get<bool>(constraint.arguments[1]);
+      return std::make_unique<invariantgraph::AllEqualNode>(variables,
+                                                            shouldHold);
+    } else {
+      auto r = mappedVariable(constraint.arguments[1], variableMap);
+      return std::make_unique<invariantgraph::AllEqualNode>(variables, r);
+    }
+  }
+  return std::make_unique<AllEqualNode>(variables, true);
 }
 
 void invariantgraph::AllEqualNode::createDefinedVariables(Engine& engine) {
-  if (_allDifferentViolationVarId == NULL_ID) {
+  if (violationVarId() == NULL_ID) {
     _allDifferentViolationVarId = engine.makeIntVar(0, 0, 0);
-    setViolationVarId(engine.makeIntView<EqualView>(_allDifferentViolationVarId,
-                                                    staticInputs().size() - 1));
+    if (shouldHold()) {
+      setViolationVarId(engine.makeIntView<EqualView>(
+          _allDifferentViolationVarId, staticInputs().size() - 1));
+    } else {
+      assert(!isReified());
+      setViolationVarId(engine.makeIntView<NotEqualView>(
+          _allDifferentViolationVarId, staticInputs().size() - 1));
+    }
   }
 }
 

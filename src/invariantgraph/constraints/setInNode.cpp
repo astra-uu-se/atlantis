@@ -14,29 +14,44 @@ invariantgraph::SetInNode::fromModelConstraint(
 
   auto variable = mappedVariable(constraint.arguments[0], variableMap);
   auto valueSet = integerSet(model, constraint.arguments[1]);
-  VariableNode* r = constraint.arguments.size() >= 3
-                        ? mappedVariable(constraint.arguments[2], variableMap)
-                        : nullptr;
 
   // Note: if the valueSet is an IntRange, here all the values are collected
   // into a vector. If it turns out memory usage is an issue, this should be
   // mitigated.
 
-  return std::visit<std::unique_ptr<SetInNode>>(
-      overloaded{[&](const fznparser::LiteralSet<Int>& set) {
-                   return std::make_unique<SetInNode>(variable, set.values, r);
-                 },
-                 [&](const fznparser::IntRange& range) {
-                   std::vector<Int> values;
-                   values.resize(range.upperBound - range.lowerBound + 1);
-                   std::iota(values.begin(), values.end(), range.lowerBound);
-                   return std::make_unique<SetInNode>(variable, values, r);
-                 }},
+  std::vector<Int> values = std::visit<std::vector<Int>>(
+      overloaded{
+          [&](const fznparser::LiteralSet<Int>& set) { return set.values; },
+          [&](const fznparser::IntRange& range) {
+            std::vector<Int> vals;
+            vals.resize(range.upperBound - range.lowerBound + 1);
+            std::iota(vals.begin(), vals.end(), range.lowerBound);
+            return vals;
+          }},
       valueSet);
+
+  if (constraint.arguments.size() >= 3) {
+    if (std::holds_alternative<bool>(constraint.arguments[2])) {
+      auto shouldHold = std::get<bool>(constraint.arguments[2]);
+      return std::make_unique<SetInNode>(variable, values, shouldHold);
+    } else {
+      auto r = mappedVariable(constraint.arguments[2], variableMap);
+      return std::make_unique<SetInNode>(variable, values, r);
+    }
+  }
+  return std::make_unique<SetInNode>(variable, values, true);
 }
 
 void invariantgraph::SetInNode::createDefinedVariables(Engine& engine) {
-  registerViolation(engine);
+  if (violationVarId() == NULL_ID) {
+    if (!shouldHold()) {
+      assert(!isReified());
+      _intermediate = engine.makeIntVar(0, 0, 0);
+      setViolationVarId(engine.makeIntView<NotEqualView>(_intermediate, 0));
+    } else {
+      registerViolation(engine);
+    }
+  }
 }
 
 void invariantgraph::SetInNode::registerWithEngine(Engine& engine) {
@@ -50,6 +65,7 @@ void invariantgraph::SetInNode::registerWithEngine(Engine& engine) {
 
   assert(violationVarId() != NULL_ID);
 
-  engine.makeConstraint<InDomain>(violationVarId(), input,
-                                  std::move(domainEntries));
+  engine.makeConstraint<InDomain>(
+      !shouldHold() ? _intermediate : violationVarId(), input,
+      std::move(domainEntries));
 }

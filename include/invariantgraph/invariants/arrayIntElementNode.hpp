@@ -17,7 +17,13 @@ class ArrayIntElementNode : public VariableDefiningNode {
 
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
-      : VariableDefiningNode({output}, {b}), _as(std::move(as)) {}
+      : VariableDefiningNode({output}, {b}), _as(std::move(as)) {
+#ifndef NDEBUG
+    for (auto* const staticInput : staticInputs()) {
+      assert(staticInput->isIntVar());
+    }
+#endif
+  }
 
   void createDefinedVariables(Engine& engine) override;
 

@@ -24,11 +24,17 @@ class BoolClauseNode : public SoftConstraintNode {
   std::vector<VariableNode*> _as;
   std::vector<VariableNode*> _bs;
   VarId _sumVarId{NULL_ID};
+  VarId _intermediate{NULL_ID};
 
  public:
   explicit BoolClauseNode(std::vector<VariableNode*> as,
                           std::vector<VariableNode*> bs, VariableNode* r)
       : SoftConstraintNode(merge(as, bs), r),
+        _as(std::move(as)),
+        _bs(std::move(bs)) {}
+  explicit BoolClauseNode(std::vector<VariableNode*> as,
+                          std::vector<VariableNode*> bs, bool shouldHold)
+      : SoftConstraintNode(merge(as, bs), shouldHold),
         _as(std::move(as)),
         _bs(std::move(bs)) {}
 

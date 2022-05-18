@@ -12,7 +12,13 @@ class IntTimesNode : public BinaryOpNode {
   }
 
   IntTimesNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output) {}
+      : BinaryOpNode(a, b, output) {
+#ifndef NDEBUG
+    for (auto* const staticInput : staticInputs()) {
+      assert(staticInput->isIntVar());
+    }
+#endif
+  }
 
   ~IntTimesNode() override = default;
 

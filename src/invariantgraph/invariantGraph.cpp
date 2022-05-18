@@ -1,13 +1,5 @@
 #include "invariantgraph/invariantGraph.hpp"
 
-#include <deque>
-#include <queue>
-#include <stack>
-#include <unordered_set>
-
-#include "invariants/linear.hpp"
-#include "utils/fznAst.hpp"
-
 static invariantgraph::InvariantGraphApplyResult::VariableMap createVariableMap(
     const std::vector<invariantgraph::VariableNode*>& variableNodes) {
   invariantgraph::InvariantGraphApplyResult::VariableMap variableMap{};
@@ -44,17 +36,19 @@ void invariantgraph::InvariantGraph::splitMultiDefinedVariables() {
     for (auto* const definingNode : replacedDefiningNodes) {
       VariableNode* newNode = splitNodes.emplace_back(
           _variables
-              .emplace_back(
-                  std::make_unique<VariableNode>(_variables[i]->domain()))
+              .emplace_back(std::make_unique<VariableNode>(
+                  _variables[i]->domain(), _variables[i]->isIntVar()))
               .get());
       definingNode->replaceDefinedVariable(_variables[i].get(), newNode);
     }
-    if (splitNodes.size() == 2) {
-      _variableDefiningNodes.emplace_back(
-          std::make_unique<EqNode>(splitNodes.front(), splitNodes.back()));
-    } else {
-      _variableDefiningNodes.emplace_back(
-          std::make_unique<AllEqualNode>(splitNodes));
+    if (_variables[i]->isIntVar()) {
+      if (splitNodes.size() == 2) {
+        _variableDefiningNodes.emplace_back(
+            std::make_unique<IntEqNode>(splitNodes.front(), splitNodes.back()));
+      } else {
+        _variableDefiningNodes.emplace_back(
+            std::make_unique<AllEqualNode>(splitNodes));
+      }
     }
   }
 }
@@ -112,13 +106,14 @@ invariantgraph::VariableNode* invariantgraph::InvariantGraph::breakCycle(
     const std::vector<VariableNode*>& cycle) {
   auto [pivot, listeningInvariant] = findPivotInCycle(cycle);
 
-  VariableNode* newInputNode =
-      _variables.emplace_back(std::make_unique<VariableNode>(pivot->domain()))
-          .get();
+  VariableNode* newInputNode = _variables
+                                   .emplace_back(std::make_unique<VariableNode>(
+                                       pivot->domain(), pivot->isIntVar()))
+                                   .get();
 
   listeningInvariant->replaceStaticInput(pivot, newInputNode);
   _variableDefiningNodes.emplace_back(
-      std::make_unique<EqNode>(pivot, newInputNode));
+      std::make_unique<IntEqNode>(pivot, newInputNode));
   bool addedToSearchNodes = false;
   for (auto* const implicitConstraint : _implicitConstraints) {
     assert(listeningInvariant != implicitConstraint);

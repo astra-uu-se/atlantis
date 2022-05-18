@@ -25,14 +25,18 @@ class SoftConstraintNode : public VariableDefiningNode {
   VarId _violationVarId{NULL_ID};
   VariableNode* _reifiedViolation;
 
- public:
-  explicit SoftConstraintNode(std::vector<VariableNode*> staticInputs = {},
-                              VariableNode* reifiedViolation = nullptr)
+  // If the constraint is not reified, then this boolean indicates if the
+  // constraint should hold or not:
+  const bool _shouldHold;
+
+  explicit SoftConstraintNode(std::vector<VariableNode*> staticInputs,
+                              VariableNode* reifiedViolation, bool shouldHold)
       : VariableDefiningNode(reifiedViolation == nullptr
                                  ? std::vector<VariableNode*>{}
                                  : std::vector<VariableNode*>{reifiedViolation},
                              std::move(staticInputs)),
-        _reifiedViolation(reifiedViolation) {
+        _reifiedViolation(reifiedViolation),
+        _shouldHold(shouldHold) {
     if (!isReified()) {
       assert(_reifiedViolation == nullptr);
       assert(definedVariables().size() == 0);
@@ -43,6 +47,24 @@ class SoftConstraintNode : public VariableDefiningNode {
       assert(definedVariables().front() == _reifiedViolation);
     }
   }
+
+ protected:
+  inline bool shouldHold() const noexcept { return _shouldHold; }
+
+ public:
+  explicit SoftConstraintNode(std::vector<VariableNode*> staticInputs,
+                              VariableNode* reifiedViolation)
+      : SoftConstraintNode(staticInputs, reifiedViolation, true) {}
+
+  /**
+   * @brief Construct a new Soft Constraint Node object
+   *
+   * @param staticInputs
+   * @param shouldHold true if the constraint should hold, else false
+   */
+  explicit SoftConstraintNode(std::vector<VariableNode*> staticInputs,
+                              bool shouldHold)
+      : SoftConstraintNode(staticInputs, nullptr, shouldHold) {}
 
   ~SoftConstraintNode() override = default;
 

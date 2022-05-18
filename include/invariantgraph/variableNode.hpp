@@ -38,6 +38,7 @@ class VariableNode {
  private:
   std::optional<FZNVariable> _variable;
   SearchDomain _domain;
+  const bool _isIntVar;
   VarId _varId{NULL_ID};
   VarId _domainViolationId{NULL_ID};
 
@@ -59,7 +60,7 @@ class VariableNode {
    *
    * @param domain The domain of this variable.
    */
-  explicit VariableNode(SearchDomain domain);
+  explicit VariableNode(SearchDomain domain, bool isIntVar);
 
   /**
    * @return The model variable this node is associated with, or std::nullopt
@@ -85,6 +86,8 @@ class VariableNode {
   }
 
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
+
+  [[nodiscard]] inline bool isIntVar() const noexcept { return _isIntVar; }
 
   /**
    * @return if the bound range of the corresponding IntVar in engine is a

@@ -6,15 +6,22 @@
 #include "invariantgraph/constraints/allEqualNode.hpp"
 #include "invariantgraph/constraints/arrayBoolAndNode.hpp"
 #include "invariantgraph/constraints/arrayBoolOrNode.hpp"
+#include "invariantgraph/constraints/boolAndNode.hpp"
 #include "invariantgraph/constraints/boolClauseNode.hpp"
+#include "invariantgraph/constraints/boolEqNode.hpp"
+#include "invariantgraph/constraints/boolLeNode.hpp"
+#include "invariantgraph/constraints/boolLinEqNode.hpp"
+#include "invariantgraph/constraints/boolLinLeNode.hpp"
+#include "invariantgraph/constraints/boolLtNode.hpp"
+#include "invariantgraph/constraints/boolOrNode.hpp"
 #include "invariantgraph/constraints/boolXorNode.hpp"
-#include "invariantgraph/constraints/eqNode.hpp"
-#include "invariantgraph/constraints/leNode.hpp"
-#include "invariantgraph/constraints/linEqNode.hpp"
-#include "invariantgraph/constraints/linLeNode.hpp"
-#include "invariantgraph/constraints/linNeNode.hpp"
-#include "invariantgraph/constraints/ltNode.hpp"
-#include "invariantgraph/constraints/neNode.hpp"
+#include "invariantgraph/constraints/intEqNode.hpp"
+#include "invariantgraph/constraints/intLeNode.hpp"
+#include "invariantgraph/constraints/intLinEqNode.hpp"
+#include "invariantgraph/constraints/intLinLeNode.hpp"
+#include "invariantgraph/constraints/intLinNeNode.hpp"
+#include "invariantgraph/constraints/intLtNode.hpp"
+#include "invariantgraph/constraints/intNeNode.hpp"
 #include "invariantgraph/constraints/setInNode.hpp"
 #include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
@@ -23,13 +30,14 @@
 #include "invariantgraph/invariants/arrayVarBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/binaryOpNode.hpp"
+#include "invariantgraph/invariants/boolLinearNode.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
+#include "invariantgraph/invariants/intLinearNode.hpp"
+#include "invariantgraph/invariants/intMaxNode.hpp"
+#include "invariantgraph/invariants/intMinNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
 #include "invariantgraph/invariants/intPowNode.hpp"
 #include "invariantgraph/invariants/intTimesNode.hpp"
-#include "invariantgraph/invariants/linearNode.hpp"
-#include "invariantgraph/invariants/maxNode.hpp"
-#include "invariantgraph/invariants/minNode.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
 #include "invariantgraph/views/boolNotNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
@@ -230,37 +238,36 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
 
   if (!guessDefinedVariable) {
     // For the linear node, we need to know up front what variable is defined.
-    NODE_REGISTRATION("int_lin_eq", LinearNode);
+    NODE_REGISTRATION("int_lin_eq", IntLinearNode);
+    NODE_REGISTRATION("bool_lin_eq", BoolLinearNode);
   }
 
-  NODE_REGISTRATION("int_abs", IntAbsNode);
-  NODE_REGISTRATION("array_int_maximum", MaxNode);
-  NODE_REGISTRATION("array_int_minimum", MinNode);
-  NODE_REGISTRATION("array_int_element", ArrayIntElementNode);
-  NODE_REGISTRATION("array_var_int_element", ArrayVarIntElementNode);
   BINARY_OP_REGISTRATION(IntDivNode);
   BINARY_OP_REGISTRATION(IntModNode);
-  BINARY_OP_REGISTRATION(IntTimesNode);
   BINARY_OP_REGISTRATION(IntPowNode);
-  NODE_REGISTRATION("int_abs", IntAbsNode);
-  NODE_REGISTRATION("int_eq_reif", EqNode);
-  NODE_REGISTRATION("bool_eq_reif", EqNode);
-  NODE_REGISTRATION("int_le_reif", LeNode);
-  NODE_REGISTRATION("bool_le_reif", LeNode);
-  NODE_REGISTRATION("int_lin_eq_reif", LinEqNode);
-  NODE_REGISTRATION("int_lin_le_reif", LinLeNode);
-  NODE_REGISTRATION("int_lin_ne_reif", LinNeNode);
-  NODE_REGISTRATION("int_lt_reif", LtNode);
-  NODE_REGISTRATION("bool_lt_reif", LtNode);
-  NODE_REGISTRATION("int_ne_reif", NeNode);
-  NODE_REGISTRATION("set_in_reif", SetInNode);
-  NODE_REGISTRATION("bool2int", Bool2IntNode);
-  NODE_REGISTRATION("bool_not", BoolNotNode);
+  BINARY_OP_REGISTRATION(IntTimesNode);
   NODE_REGISTRATION("array_bool_and", ArrayBoolAndNode);
-  NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
   NODE_REGISTRATION("array_bool_element", ArrayBoolElementNode);
+  NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
+  NODE_REGISTRATION("array_int_element", ArrayIntElementNode);
+  NODE_REGISTRATION("array_int_maximum", MaxNode);
+  NODE_REGISTRATION("array_int_minimum", MinNode);
   NODE_REGISTRATION("array_var_bool_element", ArrayVarBoolElementNode);
+  NODE_REGISTRATION("array_var_int_element", ArrayVarIntElementNode);
+  NODE_REGISTRATION("bool2int", Bool2IntNode);
+  NODE_REGISTRATION("bool_eq_reif", BoolEqNode);
+  NODE_REGISTRATION("bool_le_reif", BoolLeNode);
+  NODE_REGISTRATION("bool_lt_reif", BoolLtNode);
   NODE_REGISTRATION("bool_xor", BoolXorNode);
+  NODE_REGISTRATION("int_abs", IntAbsNode);
+  NODE_REGISTRATION("int_eq_reif", IntEqNode);
+  NODE_REGISTRATION("int_le_reif", IntLeNode);
+  NODE_REGISTRATION("int_lin_eq_reif", IntLinEqNode);
+  NODE_REGISTRATION("int_lin_le_reif", IntLinLeNode);
+  NODE_REGISTRATION("int_lin_ne_reif", IntLinNeNode);
+  NODE_REGISTRATION("int_lt_reif", IntLtNode);
+  NODE_REGISTRATION("int_ne_reif", IntNeNode);
+  NODE_REGISTRATION("set_in_reif", SetInNode);
 
   return nullptr;
 #undef BINARY_OP_REGISTRATION
@@ -297,16 +304,20 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
 
   NODE_REGISTRATION("alldifferent", AllDifferentNode);
   NODE_REGISTRATION("allequal", AllEqualNode);
-  NODE_REGISTRATION("int_lin_le", LinLeNode);
-  NODE_REGISTRATION("bool_lin_le", LinLeNode);
-  NODE_REGISTRATION("int_lin_eq", LinEqNode);
-  NODE_REGISTRATION("bool_lin_eq", LinEqNode);
-  NODE_REGISTRATION("int_lin_ne", LinNeNode);
-  NODE_REGISTRATION("int_eq", EqNode);
-  NODE_REGISTRATION("bool_eq", EqNode);
-  NODE_REGISTRATION("int_ne", NeNode);
-  NODE_REGISTRATION("set_in", SetInNode);
+  NODE_REGISTRATION("bool_and", BoolAndNode);
   NODE_REGISTRATION("bool_clause", BoolClauseNode);
+  NODE_REGISTRATION("bool_eq", BoolEqNode);
+  NODE_REGISTRATION("bool_le", BoolLeNode);
+  NODE_REGISTRATION("bool_lin_eq", BoolLinEqNode);
+  NODE_REGISTRATION("bool_lin_le", BoolLinLeNode);
+  NODE_REGISTRATION("bool_lt", BoolLeNode);
+  NODE_REGISTRATION("bool_or", BoolOrNode);
+  NODE_REGISTRATION("int_eq", IntEqNode);
+  NODE_REGISTRATION("int_lin_eq", IntLinEqNode);
+  NODE_REGISTRATION("int_lin_le", IntLinLeNode);
+  NODE_REGISTRATION("int_lin_ne", IntLinNeNode);
+  NODE_REGISTRATION("int_ne", IntNeNode);
+  NODE_REGISTRATION("set_in", SetInNode);
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint.name));
