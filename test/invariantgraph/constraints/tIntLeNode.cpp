@@ -94,7 +94,7 @@ class AbstractIntLeNodeTest : public NodeTestBase {
     EXPECT_EQ(engine.numInvariants(), 1);
 
     EXPECT_EQ(engine.lowerBound(node->violationVarId()), 0);
-    EXPECT_EQ(engine.upperBound(node->violationVarId()), 8);
+    EXPECT_GT(engine.upperBound(node->violationVarId()), 0);
   }
 
   void propagation() {

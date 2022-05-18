@@ -3,14 +3,13 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "constraints/lessEqual.hpp"
+#include "constraints/lessThan.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 
 namespace invariantgraph {
 
 class IntLtNode : public SoftConstraintNode {
- private:
-  VarId _intermediate{NULL_ID};
-
  public:
   IntLtNode(VariableNode* a, VariableNode* b, VariableNode* r)
       : SoftConstraintNode({a, b}, r) {}

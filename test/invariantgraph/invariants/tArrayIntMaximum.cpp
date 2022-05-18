@@ -1,39 +1,41 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/invariants/intMinNode.hpp"
+#include "invariantgraph/invariants/arrayIntMaximumNode.hpp"
 
-class IntMinNodeTest : public NodeTestBase {
+class ArrayIntMaximumTest : public NodeTestBase {
  public:
-  INT_VARIABLE(a, 0, 10);
-  INT_VARIABLE(b, 0, 10);
+  INT_VARIABLE(a, 5, 10);
+  INT_VARIABLE(b, 0, 20);
   INT_VARIABLE(c, 0, 10);
 
   fznparser::Constraint constraint{
-      "int_min", {"a", "b", "c"}, {fznparser::DefinesVariableAnnotation{"c"}}};
+      "array_int_maximum",
+      {"c", fznparser::Constraint::ArrayArgument{"a", "b"}},
+      {fznparser::DefinesVariableAnnotation{"c"}}};
 
   fznparser::FZNModel model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::IntMinNode> node;
+  std::unique_ptr<invariantgraph::ArrayIntMaximumNode> node;
 
   void SetUp() override {
     setModel(&model);
-    node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntMinNode>(*_model, constraint, nodeFactory);
+    node = makeNode<invariantgraph::ArrayIntMaximumNode>(constraint);
   }
 };
 
-TEST_F(IntMinNodeTest, construction) {
-  EXPECT_EQ(*node->a()->variable(),
+TEST_F(ArrayIntMaximumTest, construction) {
+  EXPECT_EQ(node->staticInputs().size(), 2);
+  EXPECT_EQ(*node->staticInputs()[0]->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->b()->variable(),
+  EXPECT_EQ(*node->staticInputs()[1]->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
   EXPECT_EQ(node->definedVariables().size(), 1);
   EXPECT_EQ(*node->definedVariables().front()->variable(),
             invariantgraph::VariableNode::FZNVariable(c));
-  expectMarkedAsInput(node.get(), {node->a(), node->b()});
+  expectMarkedAsInput(node.get(), node->staticInputs());
 }
 
-TEST_F(IntMinNodeTest, application) {
+TEST_F(ArrayIntMaximumTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -47,17 +49,20 @@ TEST_F(IntMinNodeTest, application) {
   node->registerWithEngine(engine);
   engine.close();
 
+  EXPECT_EQ(engine.lowerBound(engineVariable(c)), 5);
+  EXPECT_EQ(engine.upperBound(engineVariable(c)), 20);
+
   // a and b
   EXPECT_EQ(engine.searchVariables().size(), 2);
 
   // a, b and c
   EXPECT_EQ(engine.numVariables(), 3);
 
-  // intPow
+  // maxSparse
   EXPECT_EQ(engine.numInvariants(), 1);
 }
 
-TEST_F(IntMinNodeTest, propagation) {
+TEST_F(ArrayIntMaximumTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -92,8 +97,9 @@ TEST_F(IntMinNodeTest, propagation) {
       engine.query(outputId);
       engine.endProbe();
 
-      EXPECT_EQ(engine.currentValue(outputId),
-                std::min(values.at(0), values.at(1)));
+      const Int expected = *std::max_element(values.begin(), values.end());
+      const Int actual = engine.currentValue(outputId);
+      EXPECT_EQ(expected, actual);
     }
   }
 }

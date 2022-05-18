@@ -54,6 +54,7 @@ class BoolLessThanTest : public InvariantTest {
       return 1;
     }
     EXPECT_FALSE(true);
+    return -1;
   }
 };
 

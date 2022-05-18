@@ -1,12 +1,6 @@
 #include "invariantgraph/constraints/boolLinLeNode.hpp"
 
-#include <algorithm>
-
 #include "../parseHelper.hpp"
-#include "constraints/lessEqual.hpp"
-#include "invariants/linear.hpp"
-#include "views/bool2IntView.hpp"
-#include "views/lessEqualView.hpp"
 
 std::unique_ptr<invariantgraph::BoolLinLeNode>
 invariantgraph::BoolLinLeNode::fromModelConstraint(
@@ -36,10 +30,14 @@ invariantgraph::BoolLinLeNode::fromModelConstraint(
 }
 
 void invariantgraph::BoolLinLeNode::createDefinedVariables(Engine& engine) {
-  if (_sumVarId == NULL_ID) {
+  if (violationVarId() == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(violationVarId() == NULL_ID);
-    setViolationVarId(engine.makeIntView<LessEqualView>(_sumVarId, _bound));
+    if (shouldHold()) {
+      setViolationVarId(engine.makeIntView<LessEqualView>(_sumVarId, _bound));
+    } else {
+      assert(!isReified());
+      setViolationVarId(engine.makeIntView<GreaterThanView>(_sumVarId, _bound));
+    }
   }
 }
 
@@ -52,5 +50,5 @@ void invariantgraph::BoolLinLeNode::registerWithEngine(Engine& engine) {
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
 
-  engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
+  engine.makeInvariant<BoolLinear>(_coeffs, variables, _sumVarId);
 }

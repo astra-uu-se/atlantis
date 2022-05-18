@@ -2,7 +2,11 @@
 
 #include <fznparser/model.hpp>
 
+#include "constraints/equal.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/boolLinear.hpp"
+#include "views/equalView.hpp"
+#include "views/notEqualView.hpp"
 
 namespace invariantgraph {
 
@@ -12,7 +16,6 @@ class BoolLinEqNode : public SoftConstraintNode {
   Int _c;
   VarId _cVarId{NULL_ID};
   VarId _sumVarId{NULL_ID};
-  VarId _intermediate{NULL_ID};
 
  public:
   static std::unique_ptr<BoolLinEqNode> fromModelConstraint(

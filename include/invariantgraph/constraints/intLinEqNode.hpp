@@ -2,7 +2,11 @@
 
 #include <fznparser/model.hpp>
 
+#include "constraints/equal.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/linear.hpp"
+#include "views/equalView.hpp"
+#include "views/notEqualView.hpp"
 
 namespace invariantgraph {
 
@@ -10,9 +14,7 @@ class IntLinEqNode : public SoftConstraintNode {
  private:
   std::vector<Int> _coeffs;
   Int _c;
-  VarId _cVarId{NULL_ID};
   VarId _sumVarId{NULL_ID};
-  VarId _intermediate{NULL_ID};
 
  public:
   static std::unique_ptr<IntLinEqNode> fromModelConstraint(

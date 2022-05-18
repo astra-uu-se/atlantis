@@ -3,17 +3,17 @@
 #include <cmath>
 
 #include "binaryOpNode.hpp"
-#include "invariants/binaryMax.hpp"
+#include "invariants/plus.hpp"
 
 namespace invariantgraph {
 
-class IntMaxNode : public BinaryOpNode {
+class IntPlusNode : public BinaryOpNode {
  public:
   static inline std::string_view constraint_name() noexcept {
-    return "int_max";
+    return "int_plus";
   }
 
-  IntMaxNode(VariableNode* a, VariableNode* b, VariableNode* output)
+  IntPlusNode(VariableNode* a, VariableNode* b, VariableNode* output)
       : BinaryOpNode(a, b, output) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
@@ -22,12 +22,12 @@ class IntMaxNode : public BinaryOpNode {
 #endif
   }
 
-  ~IntMaxNode() override = default;
+  ~IntPlusNode() override = default;
 
  protected:
   void createInvariant(Engine& engine, VarId a, VarId b,
                        VarId output) const override {
-    engine.makeInvariant<BinaryMax>(a, b, output);
+    engine.makeInvariant<Plus>(a, b, output);
   }
 };
 

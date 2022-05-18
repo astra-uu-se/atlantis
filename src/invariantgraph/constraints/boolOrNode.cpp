@@ -1,8 +1,6 @@
 #include "invariantgraph/constraints/boolOrNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariants/boolOr.hpp"
-#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::BoolOrNode>
 invariantgraph::BoolOrNode::fromModelConstraint(

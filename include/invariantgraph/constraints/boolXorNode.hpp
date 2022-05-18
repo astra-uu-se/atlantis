@@ -3,14 +3,13 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "constraints/boolEqual.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/boolXor.hpp"
 
 namespace invariantgraph {
 
 class BoolXorNode : public SoftConstraintNode {
- private:
-  VarId _intermediate{NULL_ID};
-
  public:
   BoolXorNode(VariableNode* a, VariableNode* b, VariableNode* r)
       : SoftConstraintNode({a, b}, r) {}

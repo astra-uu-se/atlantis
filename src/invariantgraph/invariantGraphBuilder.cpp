@@ -27,6 +27,8 @@
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/invariants/arrayBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
+#include "invariantgraph/invariants/arrayIntMaximumNode.hpp"
+#include "invariantgraph/invariants/arrayIntMinimumNode.hpp"
 #include "invariantgraph/invariants/arrayVarBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariants/binaryOpNode.hpp"
@@ -36,6 +38,7 @@
 #include "invariantgraph/invariants/intMaxNode.hpp"
 #include "invariantgraph/invariants/intMinNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
+#include "invariantgraph/invariants/intPlusNode.hpp"
 #include "invariantgraph/invariants/intPowNode.hpp"
 #include "invariantgraph/invariants/intTimesNode.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
@@ -243,15 +246,18 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   }
 
   BINARY_OP_REGISTRATION(IntDivNode);
+  BINARY_OP_REGISTRATION(IntMaxNode);
+  BINARY_OP_REGISTRATION(IntMinNode);
   BINARY_OP_REGISTRATION(IntModNode);
+  BINARY_OP_REGISTRATION(IntPlusNode);
   BINARY_OP_REGISTRATION(IntPowNode);
   BINARY_OP_REGISTRATION(IntTimesNode);
   NODE_REGISTRATION("array_bool_and", ArrayBoolAndNode);
   NODE_REGISTRATION("array_bool_element", ArrayBoolElementNode);
   NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
   NODE_REGISTRATION("array_int_element", ArrayIntElementNode);
-  NODE_REGISTRATION("array_int_maximum", MaxNode);
-  NODE_REGISTRATION("array_int_minimum", MinNode);
+  NODE_REGISTRATION("array_int_maximum", ArrayIntMaximumNode);
+  NODE_REGISTRATION("array_int_minimum", ArrayIntMinimumNode);
   NODE_REGISTRATION("array_var_bool_element", ArrayVarBoolElementNode);
   NODE_REGISTRATION("array_var_int_element", ArrayVarIntElementNode);
   NODE_REGISTRATION("bool2int", Bool2IntNode);
@@ -313,6 +319,8 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   NODE_REGISTRATION("bool_lt", BoolLeNode);
   NODE_REGISTRATION("bool_or", BoolOrNode);
   NODE_REGISTRATION("int_eq", IntEqNode);
+  NODE_REGISTRATION("int_le", IntLeNode);
+  NODE_REGISTRATION("int_lt", IntLtNode);
   NODE_REGISTRATION("int_lin_eq", IntLinEqNode);
   NODE_REGISTRATION("int_lin_le", IntLinLeNode);
   NODE_REGISTRATION("int_lin_ne", IntLinNeNode);

@@ -33,11 +33,11 @@ class AbstractBoolXorNodeTest : public NodeTestBase {
 
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-        fznparser::Constraint cnstr{"bool_xor_reif", {"a", "b", false}, {}};
+        fznparser::Constraint cnstr{"bool_xor", {"a", "b", false}, {}};
 
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       } else {
-        fznparser::Constraint cnstr{"bool_xor_reif", {"a", "b", true}, {}};
+        fznparser::Constraint cnstr{"bool_xor", {"a", "b", true}, {}};
 
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       }

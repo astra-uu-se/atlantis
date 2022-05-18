@@ -4,35 +4,33 @@
 
 class IntMaxNodeTest : public NodeTestBase {
  public:
-  INT_VARIABLE(a, 5, 10);
-  INT_VARIABLE(b, 0, 20);
+  INT_VARIABLE(a, 0, 10);
+  INT_VARIABLE(b, 0, 10);
   INT_VARIABLE(c, 0, 10);
 
   fznparser::Constraint constraint{
-      "array_int_maximum",
-      {"c", fznparser::Constraint::ArrayArgument{"a", "b"}},
-      {fznparser::DefinesVariableAnnotation{"c"}}};
+      "int_max", {"a", "b", "c"}, {fznparser::DefinesVariableAnnotation{"c"}}};
 
   fznparser::FZNModel model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::MaxNode> node;
+  std::unique_ptr<invariantgraph::IntMaxNode> node;
 
   void SetUp() override {
     setModel(&model);
-    node = makeNode<invariantgraph::MaxNode>(constraint);
+    node = invariantgraph::BinaryOpNode::fromModelConstraint<
+        invariantgraph::IntMaxNode>(*_model, constraint, nodeFactory);
   }
 };
 
 TEST_F(IntMaxNodeTest, construction) {
-  EXPECT_EQ(node->staticInputs().size(), 2);
-  EXPECT_EQ(*node->staticInputs()[0]->variable(),
+  EXPECT_EQ(*node->a()->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->staticInputs()[1]->variable(),
+  EXPECT_EQ(*node->b()->variable(),
             invariantgraph::VariableNode::FZNVariable(b));
   EXPECT_EQ(node->definedVariables().size(), 1);
   EXPECT_EQ(*node->definedVariables().front()->variable(),
             invariantgraph::VariableNode::FZNVariable(c));
-  expectMarkedAsInput(node.get(), node->staticInputs());
+  expectMarkedAsInput(node.get(), {node->a(), node->b()});
 }
 
 TEST_F(IntMaxNodeTest, application) {
@@ -49,16 +47,13 @@ TEST_F(IntMaxNodeTest, application) {
   node->registerWithEngine(engine);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(c)), 5);
-  EXPECT_EQ(engine.upperBound(engineVariable(c)), 20);
-
   // a and b
   EXPECT_EQ(engine.searchVariables().size(), 2);
 
   // a, b and c
   EXPECT_EQ(engine.numVariables(), 3);
 
-  // maxSparse
+  // intPow
   EXPECT_EQ(engine.numInvariants(), 1);
 }
 
@@ -97,9 +92,8 @@ TEST_F(IntMaxNodeTest, propagation) {
       engine.query(outputId);
       engine.endProbe();
 
-      const Int expected = *std::max_element(values.begin(), values.end());
-      const Int actual = engine.currentValue(outputId);
-      EXPECT_EQ(expected, actual);
+      EXPECT_EQ(engine.currentValue(outputId),
+                std::max(values.at(0), values.at(1)));
     }
   }
 }

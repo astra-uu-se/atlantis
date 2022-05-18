@@ -1,9 +1,6 @@
 #include "invariantgraph/constraints/arrayBoolXorNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariants/boolLinear.hpp"
-#include "views/equalView.hpp"
-#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::ArrayBoolXorNode>
 invariantgraph::ArrayBoolXorNode::fromModelConstraint(

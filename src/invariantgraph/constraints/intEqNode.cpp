@@ -1,8 +1,6 @@
 #include "invariantgraph/constraints/intEqNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/equal.hpp"
-#include "constraints/notEqual.hpp"
 
 std::unique_ptr<invariantgraph::IntEqNode>
 invariantgraph::IntEqNode::fromModelConstraint(

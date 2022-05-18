@@ -10,9 +10,6 @@
 namespace invariantgraph {
 
 class BoolLtNode : public SoftConstraintNode {
- private:
-  VarId _intermediate{NULL_ID};
-
  public:
   BoolLtNode(VariableNode* a, VariableNode* b, VariableNode* r)
       : SoftConstraintNode({a, b}, r) {}

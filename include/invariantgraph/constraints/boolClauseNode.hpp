@@ -4,6 +4,9 @@
 #include <utility>
 
 #include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/boolLinear.hpp"
+#include "views/equalView.hpp"
+#include "views/notEqualView.hpp"
 
 static std::vector<invariantgraph::VariableNode*> merge(
     const std::vector<invariantgraph::VariableNode*>& as,
@@ -24,7 +27,6 @@ class BoolClauseNode : public SoftConstraintNode {
   std::vector<VariableNode*> _as;
   std::vector<VariableNode*> _bs;
   VarId _sumVarId{NULL_ID};
-  VarId _intermediate{NULL_ID};
 
  public:
   explicit BoolClauseNode(std::vector<VariableNode*> as,

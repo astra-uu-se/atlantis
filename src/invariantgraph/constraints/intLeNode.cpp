@@ -1,8 +1,6 @@
 #include "invariantgraph/constraints/intLeNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/lessEqual.hpp"
-#include "constraints/lessThan.hpp"
 
 std::unique_ptr<invariantgraph::IntLeNode>
 invariantgraph::IntLeNode::fromModelConstraint(

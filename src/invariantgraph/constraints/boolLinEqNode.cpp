@@ -1,10 +1,6 @@
 #include "invariantgraph/constraints/boolLinEqNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/equal.hpp"
-#include "invariants/linear.hpp"
-#include "views/bool2IntView.hpp"
-#include "views/equalView.hpp"
 
 std::unique_ptr<invariantgraph::BoolLinEqNode>
 invariantgraph::BoolLinEqNode::fromModelConstraint(
@@ -34,10 +30,13 @@ invariantgraph::BoolLinEqNode::fromModelConstraint(
 }
 
 void invariantgraph::BoolLinEqNode::createDefinedVariables(Engine& engine) {
-  if (_sumVarId == NULL_ID) {
+  if (violationVarId() == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(violationVarId() == NULL_ID);
-    setViolationVarId(engine.makeIntView<EqualView>(_sumVarId, _c));
+    if (shouldHold()) {
+      setViolationVarId(engine.makeIntView<EqualView>(_sumVarId, _c));
+    } else {
+      setViolationVarId(engine.makeIntView<NotEqualView>(_sumVarId, _c));
+    }
   }
 }
 
@@ -50,5 +49,5 @@ void invariantgraph::BoolLinEqNode::registerWithEngine(Engine& engine) {
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
 
-  engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
+  engine.makeInvariant<BoolLinear>(_coeffs, variables, _sumVarId);
 }

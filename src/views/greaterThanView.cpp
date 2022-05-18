@@ -1,7 +1,7 @@
 #include "views/greaterThanView.hpp"
 
 static inline Int compute(Int var, Int val) {
-  return std::max(Int(0), val + 1 - var);
+  return std::max<Int>(0, val + 1 - var);
 }
 
 Int GreaterThanView::value(Timestamp ts) const {
@@ -13,9 +13,9 @@ Int GreaterThanView::committedValue() const {
 }
 
 Int GreaterThanView::lowerBound() const {
-  return compute(_engine->lowerBound(_parentId), _val);
+  return compute(_engine->upperBound(_parentId), _val);
 }
 
 Int GreaterThanView::upperBound() const {
-  return compute(_engine->upperBound(_parentId), _val);
+  return compute(_engine->lowerBound(_parentId), _val);
 }

@@ -10,7 +10,6 @@
 namespace invariantgraph {
 class AllEqualNode : public SoftConstraintNode {
  private:
-  VarId _intermediate{NULL_ID};
   VarId _allDifferentViolationVarId{NULL_ID};
 
  public:

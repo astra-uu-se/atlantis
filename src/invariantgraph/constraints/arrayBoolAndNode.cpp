@@ -1,9 +1,6 @@
 #include "invariantgraph/constraints/arrayBoolAndNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariants/elementConst.hpp"
-#include "invariants/forAll.hpp"
-#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::ArrayBoolAndNode>
 invariantgraph::ArrayBoolAndNode::fromModelConstraint(

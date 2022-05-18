@@ -1,28 +1,28 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/invariants/intMinNode.hpp"
+#include "invariantgraph/invariants/intPlusNode.hpp"
 
-class IntMinNodeTest : public NodeTestBase {
+class IntPlusNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 0, 10);
   INT_VARIABLE(b, 0, 10);
   INT_VARIABLE(c, 0, 10);
 
   fznparser::Constraint constraint{
-      "int_min", {"a", "b", "c"}, {fznparser::DefinesVariableAnnotation{"c"}}};
+      "int_plus", {"a", "b", "c"}, {fznparser::DefinesVariableAnnotation{"c"}}};
 
   fznparser::FZNModel model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
 
-  std::unique_ptr<invariantgraph::IntMinNode> node;
+  std::unique_ptr<invariantgraph::IntPlusNode> node;
 
   void SetUp() override {
     setModel(&model);
     node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntMinNode>(*_model, constraint, nodeFactory);
+        invariantgraph::IntPlusNode>(*_model, constraint, nodeFactory);
   }
 };
 
-TEST_F(IntMinNodeTest, construction) {
+TEST_F(IntPlusNodeTest, construction) {
   EXPECT_EQ(*node->a()->variable(),
             invariantgraph::VariableNode::FZNVariable(a));
   EXPECT_EQ(*node->b()->variable(),
@@ -33,7 +33,7 @@ TEST_F(IntMinNodeTest, construction) {
   expectMarkedAsInput(node.get(), {node->a(), node->b()});
 }
 
-TEST_F(IntMinNodeTest, application) {
+TEST_F(IntPlusNodeTest, application) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -57,7 +57,7 @@ TEST_F(IntMinNodeTest, application) {
   EXPECT_EQ(engine.numInvariants(), 1);
 }
 
-TEST_F(IntMinNodeTest, propagation) {
+TEST_F(IntPlusNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
   registerVariables(engine, {a.name, b.name});
@@ -92,8 +92,7 @@ TEST_F(IntMinNodeTest, propagation) {
       engine.query(outputId);
       engine.endProbe();
 
-      EXPECT_EQ(engine.currentValue(outputId),
-                std::min(values.at(0), values.at(1)));
+      EXPECT_EQ(engine.currentValue(outputId), values.at(0) + values.at(1));
     }
   }
 }

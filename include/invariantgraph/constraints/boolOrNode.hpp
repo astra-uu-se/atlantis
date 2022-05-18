@@ -4,6 +4,8 @@
 #include <utility>
 
 #include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/boolOr.hpp"
+#include "views/notEqualView.hpp"
 
 namespace invariantgraph {
 

@@ -1,9 +1,14 @@
 #pragma once
 
+#include <algorithm>
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "constraints/lessEqual.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/linear.hpp"
+#include "views/greaterThanView.hpp"
+#include "views/lessEqualView.hpp"
 
 namespace invariantgraph {
 
@@ -12,7 +17,6 @@ class IntLinLeNode : public SoftConstraintNode {
   std::vector<Int> _coeffs;
   Int _bound;
   VarId _sumVarId{NULL_ID};
-  VarId _intermediate{NULL_ID};
 
  public:
   IntLinLeNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,

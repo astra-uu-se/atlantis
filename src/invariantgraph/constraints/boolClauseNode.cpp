@@ -1,10 +1,6 @@
 #include "invariantgraph/constraints/boolClauseNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariants/boolLinear.hpp"
-#include "views/bool2IntView.hpp"
-#include "views/equalView.hpp"
-#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::BoolClauseNode>
 invariantgraph::BoolClauseNode::fromModelConstraint(
@@ -34,12 +30,18 @@ invariantgraph::BoolClauseNode::fromModelConstraint(
 }
 
 void invariantgraph::BoolClauseNode::createDefinedVariables(Engine& engine) {
-  if (_sumVarId == NULL_ID) {
+  if (violationVarId() == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(violationVarId() == NULL_ID);
-    setViolationVarId(engine.makeIntView<EqualView>(
-        _sumVarId,
-        static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
+    if (shouldHold()) {
+      setViolationVarId(engine.makeIntView<EqualView>(
+          _sumVarId,
+          static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
+    } else {
+      assert(!isReified());
+      setViolationVarId(engine.makeIntView<NotEqualView>(
+          _sumVarId,
+          static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
+    }
   }
 }
 

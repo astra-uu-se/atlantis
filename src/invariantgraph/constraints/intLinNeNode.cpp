@@ -1,10 +1,6 @@
 #include "invariantgraph/constraints/intLinNeNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/notEqual.hpp"
-#include "invariants/linear.hpp"
-#include "views/equalView.hpp"
-#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::IntLinNeNode>
 invariantgraph::IntLinNeNode::fromModelConstraint(

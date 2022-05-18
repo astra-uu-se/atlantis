@@ -1,26 +1,3 @@
-predicate int_max(var int: a, var int: b, var int: c) = array_int_maximum(c, [a, b]);
-predicate int_min(var int: a, var int: b, var int: c) = array_int_minimum(c, [a, b]);
-
-predicate int_le(var int: a, var int: b) = int_lin_le([1, -1], [a, b], 0);
-predicate int_lt(var int: a, var int: b) = int_lin_le([1, -1], [a, b], -1);
-
-predicate int_ne(var int: a, var int: b) = int_lin_ne([1, -1], [a, b], 0);
-predicate int_plus(var int: a, var int: b, var int: c) = int_lin_eq([1, 1, -1], [a, b, c], 0);
-
-%%%%%%%%%%%%%%%%%%%%
-% Bool constraints %
-%%%%%%%%%%%%%%%%%%%%
-predicate bool_and(var bool: a, var bool: b, var bool: r) = array_bool_and([a, b], r);
-predicate bool_or(var bool: a, var bool: b, var bool: r) = array_bool_or([a, b], r);
-predicate bool_le(var bool: a, var bool: b) = bool_lin_le([1, -1], [a, b], 0);
-predicate bool_lt(var bool: a, var bool: b) = bool_lin_le([1, -1], [a, b], -1);
-predicate bool_xor(var bool: a, var bool: b) = bool_lin_eq([1, 1], [a, b], 1);
-
-predicate bool_xor(var bool: a, var bool: b, var bool: r) =
-    let { var 0..1: aInt;
-          var 0..1: bInt } in
-    r <-> (aInt + bInt = 1);
-
 %%%%%%%%%%%%%%%%%%%
 % Set constraints %
 %%%%%%%%%%%%%%%%%%%

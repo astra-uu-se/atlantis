@@ -53,7 +53,7 @@ class AbstractBoolLinEqNodeTest : public NodeTestBase {
         fznparser::Constraint cnstr{
             "bool_lin_eq_reif",
             {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-             fznparser::Constraint::ArrayArgument{"a", "b"}, sum, true},
+             fznparser::Constraint::ArrayArgument{"a", "b"}, sum, false},
             {}};
 
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
@@ -61,7 +61,7 @@ class AbstractBoolLinEqNodeTest : public NodeTestBase {
         fznparser::Constraint cnstr{
             "bool_lin_eq_reif",
             {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-             fznparser::Constraint::ArrayArgument{"a", "b"}, sum, false},
+             fznparser::Constraint::ArrayArgument{"a", "b"}, sum, true},
             {}};
 
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
@@ -162,9 +162,9 @@ class AbstractBoolLinEqNodeTest : public NodeTestBase {
         const Int viol = engine.currentValue(violationId);
 
         if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
-          EXPECT_EQ(viol > 0, isViolating(coeffs, values, sum));
+          EXPECT_EQ(viol != 0, isViolating(coeffs, values, sum));
         } else {
-          EXPECT_NE(viol > 0, isViolating(coeffs, values, sum));
+          EXPECT_NE(viol != 0, isViolating(coeffs, values, sum));
         }
       }
     }

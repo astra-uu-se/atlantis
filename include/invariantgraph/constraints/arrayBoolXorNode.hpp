@@ -4,6 +4,9 @@
 
 #include "fznparser/model.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/boolLinear.hpp"
+#include "views/equalView.hpp"
+#include "views/notEqualView.hpp"
 
 namespace invariantgraph {
 

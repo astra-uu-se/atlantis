@@ -1,8 +1,6 @@
 #include "invariantgraph/constraints/setInNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/inDomain.hpp"
-#include "utils/variant.hpp"
 
 std::unique_ptr<invariantgraph::SetInNode>
 invariantgraph::SetInNode::fromModelConstraint(

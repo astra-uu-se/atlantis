@@ -2,6 +2,9 @@
 
 #include "fznparser/model.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/elementConst.hpp"
+#include "invariants/forAll.hpp"
+#include "views/notEqualView.hpp"
 
 namespace invariantgraph {
 

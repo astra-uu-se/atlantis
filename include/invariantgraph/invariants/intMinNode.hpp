@@ -1,19 +1,20 @@
 #pragma once
 
-#include <fznparser/model.hpp>
-#include <utility>
+#include <cmath>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "binaryOpNode.hpp"
+#include "invariants/binaryMin.hpp"
 
 namespace invariantgraph {
-class MinNode : public VariableDefiningNode {
- public:
-  static std::unique_ptr<MinNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
-  MinNode(std::vector<VariableNode*> variables, VariableNode* output)
-      : VariableDefiningNode({output}, variables) {
+class IntMinNode : public BinaryOpNode {
+ public:
+  static inline std::string_view constraint_name() noexcept {
+    return "int_min";
+  }
+
+  IntMinNode(VariableNode* a, VariableNode* b, VariableNode* output)
+      : BinaryOpNode(a, b, output) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
       assert(staticInput->isIntVar());
@@ -21,10 +22,13 @@ class MinNode : public VariableDefiningNode {
 #endif
   }
 
-  ~MinNode() override = default;
+  ~IntMinNode() override = default;
 
-  void createDefinedVariables(Engine& engine) override;
-
-  void registerWithEngine(Engine& engine) override;
+ protected:
+  void createInvariant(Engine& engine, VarId a, VarId b,
+                       VarId output) const override {
+    engine.makeInvariant<BinaryMin>(a, b, output);
+  }
 };
+
 }  // namespace invariantgraph
