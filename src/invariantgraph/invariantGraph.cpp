@@ -241,6 +241,14 @@ void invariantgraph::InvariantGraph::createVariables(Engine& engine) {
 
   std::queue<invariantgraph::VariableDefiningNode*> unregisteredNodes;
 
+  for (auto* const valueNode : _valueNodes) {
+    auto constant = valueNode->constantValue();
+    assert(constant);
+
+    auto varId = engine.makeIntVar(*constant, *constant, *constant);
+    valueNode->setVarId(varId);
+  }
+
   for (auto* const implicitConstraint : _implicitConstraints) {
     visitedNodes.emplace(implicitConstraint);
     unregisteredNodes.emplace(implicitConstraint);
