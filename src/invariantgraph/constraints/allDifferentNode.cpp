@@ -18,7 +18,7 @@ invariantgraph::AllDifferentNode::fromModelConstraint(
 
   std::vector<Int> prunedValues;
 
-  for (size_t i = 0; i <= variables.size(); ++i) {
+  for (size_t i = 0; i < variables.size(); ++i) {
     for (const Int value : prunedValues) {
       variables[i]->domain().removeValue(value);
     }
@@ -53,6 +53,9 @@ invariantgraph::AllDifferentNode::fromModelConstraint(
 }
 
 void invariantgraph::AllDifferentNode::createDefinedVariables(Engine& engine) {
+  if (staticInputs().empty()) {
+    return;
+  }
   if (violationVarId() == NULL_ID) {
     if (shouldHold()) {
       registerViolation(engine);
@@ -65,6 +68,9 @@ void invariantgraph::AllDifferentNode::createDefinedVariables(Engine& engine) {
 }
 
 void invariantgraph::AllDifferentNode::registerWithEngine(Engine& engine) {
+  if (staticInputs().empty()) {
+    return;
+  }
   assert(violationVarId() != NULL_ID);
 
   std::vector<VarId> engineVariables;

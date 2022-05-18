@@ -211,3 +211,21 @@ TEST_F(AllDifferentTrueNodeTest, Construction) { construction(); }
 TEST_F(AllDifferentTrueNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentTrueNodeTest, Propagation) { propagation(); }
+
+TEST_F(AllDifferentNodeTest, pruneParameters) {
+  fznparser::Constraint cnstr{"alldifferent",
+                              {fznparser::Constraint::ArrayArgument{
+                                  7, "a", 10, "b", 6, "c", 9, "d", 5}},
+                              {}};
+
+  fznparser::FZNModel mdl{{}, {}, {cnstr}, fznparser::Satisfy{}};
+
+  auto locNode = invariantgraph::AllDifferentNode::fromModelConstraint(
+      mdl, cnstr, nodeFactory);
+  EXPECT_EQ(locNode->staticInputs().size(), 3);
+  for (auto* const var : locNode->staticInputs()) {
+    EXPECT_EQ(var->domain().lowerBound(), 2);
+    EXPECT_EQ(var->domain().upperBound(), 4);
+    EXPECT_EQ(var->domain().size(), 3);
+  }
+}
