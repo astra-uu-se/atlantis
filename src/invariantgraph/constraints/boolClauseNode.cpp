@@ -1,10 +1,6 @@
 #include "invariantgraph/constraints/boolClauseNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariants/linear.hpp"
-#include "views/bool2IntView.hpp"
-#include "views/equalView.hpp"
-#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::BoolClauseNode>
 invariantgraph::BoolClauseNode::fromModelConstraint(
@@ -15,22 +11,37 @@ invariantgraph::BoolClauseNode::fromModelConstraint(
       (constraint.name == "bool_clause_reif" &&
        constraint.arguments.size() == 3));
 
-  VariableNode* r = constraint.arguments.size() >= 3
-                        ? mappedVariable(constraint.arguments[2], variableMap)
-                        : nullptr;
+  std::vector<invariantgraph::VariableNode*> as =
+      mappedVariableVector(model, constraint.arguments[0], variableMap);
+  std::vector<invariantgraph::VariableNode*> bs =
+      mappedVariableVector(model, constraint.arguments[1], variableMap);
 
-  return std::make_unique<BoolClauseNode>(
-      mappedVariableVector(model, constraint.arguments[0], variableMap),
-      mappedVariableVector(model, constraint.arguments[1], variableMap), r);
+  if (constraint.arguments.size() >= 3) {
+    if (std::holds_alternative<bool>(constraint.arguments[2])) {
+      auto shouldHold = std::get<bool>(constraint.arguments[2]);
+      return std::make_unique<invariantgraph::BoolClauseNode>(as, bs,
+                                                              shouldHold);
+    } else {
+      auto r = mappedVariable(constraint.arguments[2], variableMap);
+      return std::make_unique<invariantgraph::BoolClauseNode>(as, bs, r);
+    }
+  }
+  return std::make_unique<BoolClauseNode>(as, bs, true);
 }
 
 void invariantgraph::BoolClauseNode::createDefinedVariables(Engine& engine) {
-  if (_sumVarId == NULL_ID) {
+  if (violationVarId() == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
-    assert(violationVarId() == NULL_ID);
-    setViolationVarId(engine.makeIntView<EqualView>(
-        _sumVarId,
-        static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
+    if (shouldHold()) {
+      setViolationVarId(engine.makeIntView<EqualView>(
+          _sumVarId,
+          static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
+    } else {
+      assert(!isReified());
+      setViolationVarId(engine.makeIntView<NotEqualView>(
+          _sumVarId,
+          static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
+    }
   }
 }
 
@@ -47,5 +58,5 @@ void invariantgraph::BoolClauseNode::registerWithEngine(Engine& engine) {
 
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
-  engine.makeInvariant<Linear>(engineVariables, _sumVarId);
+  engine.makeInvariant<BoolLinear>(engineVariables, _sumVarId);
 }

@@ -15,7 +15,7 @@ static bool isViolating(const std::vector<Int>& values) {
   return false;
 }
 
-template <bool IsReified>
+template <ConstraintType Type>
 class AbstractAllDifferentNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(a, 5, 10);
@@ -29,19 +29,7 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::AllDifferentNode> node;
 
   void SetUp() override {
-    if constexpr (!IsReified) {
-      fznparser::Constraint cnstr{
-          "alldifferent",
-          {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
-          {}};
-
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::FZNModel mdl{
-          {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-    } else {
+    if constexpr (Type == ConstraintType::REIFIED) {
       fznparser::Constraint cnstr{
           "alldifferent_reif",
           {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"},
@@ -54,9 +42,35 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
           {}, {a, b, c, d, r}, {*constraint}, fznparser::Satisfy{}};
 
       model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    } else {
+      if constexpr (Type == ConstraintType::NORMAL) {
+        fznparser::Constraint cnstr{
+            "alldifferent",
+            {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
+            {}};
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
+        fznparser::Constraint cnstr{
+            "alldifferent_reif",
+            {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}, false},
+            {}};
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else {
+        fznparser::Constraint cnstr{
+            "alldifferent_reif",
+            {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}, true},
+            {}};
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      }
+
+      fznparser::FZNModel mdl{
+          {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
+
+      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     }
 
     setModel(model.get());
+
     node = makeNode<invariantgraph::AllDifferentNode>(*constraint);
   }
 
@@ -69,14 +83,14 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
     EXPECT_EQ(node->staticInputs(), expectedVars);
     EXPECT_THAT(expectedVars, testing::ContainerEq(node->staticInputs()));
     expectMarkedAsInput(node.get(), node->staticInputs());
-    if constexpr (!IsReified) {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
-    } else {
+    if constexpr (Type == ConstraintType::REIFIED) {
       EXPECT_TRUE(node->isReified());
       EXPECT_NE(node->reifiedViolation(), nullptr);
       EXPECT_EQ(node->reifiedViolation()->variable(),
                 invariantgraph::VariableNode::FZNVariable(r));
+    } else {
+      EXPECT_FALSE(node->isReified());
+      EXPECT_EQ(node->reifiedViolation(), nullptr);
     }
   }
 
@@ -106,7 +120,7 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
     EXPECT_EQ(engine.numInvariants(), 1);
 
     EXPECT_EQ(engine.lowerBound(node->violationVarId()), 0);
-    EXPECT_EQ(engine.upperBound(node->violationVarId()), 3);
+    EXPECT_GT(engine.upperBound(node->violationVarId()), 0);
   }
 
   void propagation() {
@@ -148,9 +162,13 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
             engine.beginProbe();
             engine.query(violationId);
             engine.endProbe();
-
-            EXPECT_EQ(engine.currentValue(violationId) > 0,
-                      isViolating(values));
+            if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
+              EXPECT_EQ(engine.currentValue(violationId) > 0,
+                        isViolating(values));
+            } else {
+              EXPECT_NE(engine.currentValue(violationId) > 0,
+                        isViolating(values));
+            }
           }
         }
       }
@@ -158,7 +176,8 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
   }
 };
 
-class AllDifferentNodeTest : public AbstractAllDifferentNodeTest<false> {};
+class AllDifferentNodeTest
+    : public AbstractAllDifferentNodeTest<ConstraintType::NORMAL> {};
 
 TEST_F(AllDifferentNodeTest, Construction) { construction(); }
 
@@ -166,10 +185,29 @@ TEST_F(AllDifferentNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentNodeTest, Propagation) { propagation(); }
 
-class AllDifferentReifNodeTest : public AbstractAllDifferentNodeTest<true> {};
+class AllDifferentReifNodeTest
+    : public AbstractAllDifferentNodeTest<ConstraintType::REIFIED> {};
 
 TEST_F(AllDifferentReifNodeTest, Construction) { construction(); }
 
 TEST_F(AllDifferentReifNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentReifNodeTest, Propagation) { propagation(); }
+
+class AllDifferentFalseNodeTest
+    : public AbstractAllDifferentNodeTest<ConstraintType::CONSTANT_FALSE> {};
+
+TEST_F(AllDifferentFalseNodeTest, Construction) { construction(); }
+
+TEST_F(AllDifferentFalseNodeTest, Application) { application(); }
+
+TEST_F(AllDifferentFalseNodeTest, Propagation) { propagation(); }
+
+class AllDifferentTrueNodeTest
+    : public AbstractAllDifferentNodeTest<ConstraintType::CONSTANT_TRUE> {};
+
+TEST_F(AllDifferentTrueNodeTest, Construction) { construction(); }
+
+TEST_F(AllDifferentTrueNodeTest, Application) { application(); }
+
+TEST_F(AllDifferentTrueNodeTest, Propagation) { propagation(); }

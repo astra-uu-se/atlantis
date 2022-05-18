@@ -12,7 +12,13 @@ class IntModNode : public BinaryOpNode {
   }
 
   IntModNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output) {}
+      : BinaryOpNode(a, b, output) {
+#ifndef NDEBUG
+    for (auto* const staticInput : staticInputs()) {
+      assert(staticInput->isIntVar());
+    }
+#endif
+  }
 
   ~IntModNode() override = default;
 

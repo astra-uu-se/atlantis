@@ -1,7 +1,6 @@
 #include "invariantgraph/views/boolNotNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "views/bool2IntView.hpp"
 
 std::unique_ptr<invariantgraph::BoolNotNode>
 invariantgraph::BoolNotNode::fromModelConstraint(
@@ -16,7 +15,7 @@ invariantgraph::BoolNotNode::fromModelConstraint(
 void invariantgraph::BoolNotNode::createDefinedVariables(Engine& engine) {
   if (definedVariables().front()->varId() == NULL_ID) {
     definedVariables().front()->setVarId(
-        engine.makeIntView<::Bool2IntView>(input()->varId()));
+        engine.makeIntView<Bool2IntView>(input()->varId()));
   }
 }
 

@@ -4,7 +4,8 @@
 #include <map>
 #include <utility>
 
-#include "../structure.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
+#include "views/bool2IntView.hpp"
 
 namespace invariantgraph {
 

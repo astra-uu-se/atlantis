@@ -2,7 +2,10 @@
 
 #include "../parseHelper.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
+#include "invariantgraph/invariants/intMaxNode.hpp"
+#include "invariantgraph/invariants/intMinNode.hpp"
 #include "invariantgraph/invariants/intModNode.hpp"
+#include "invariantgraph/invariants/intPlusNode.hpp"
 #include "invariantgraph/invariants/intPowNode.hpp"
 #include "invariantgraph/invariants/intTimesNode.hpp"
 
@@ -38,17 +41,32 @@ invariantgraph::BinaryOpNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap);
 
+template std::unique_ptr<invariantgraph::IntMaxNode>
+invariantgraph::BinaryOpNode::fromModelConstraint(
+    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+    const std::function<VariableNode*(MappableValue&)>& variableMap);
+
+template std::unique_ptr<invariantgraph::IntMinNode>
+invariantgraph::BinaryOpNode::fromModelConstraint(
+    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+    const std::function<VariableNode*(MappableValue&)>& variableMap);
+
 template std::unique_ptr<invariantgraph::IntModNode>
 invariantgraph::BinaryOpNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap);
 
-template std::unique_ptr<invariantgraph::IntTimesNode>
+template std::unique_ptr<invariantgraph::IntPlusNode>
 invariantgraph::BinaryOpNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap);
 
 template std::unique_ptr<invariantgraph::IntPowNode>
+invariantgraph::BinaryOpNode::fromModelConstraint(
+    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+    const std::function<VariableNode*(MappableValue&)>& variableMap);
+
+template std::unique_ptr<invariantgraph::IntTimesNode>
 invariantgraph::BinaryOpNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap);

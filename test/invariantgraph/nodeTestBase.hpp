@@ -8,7 +8,7 @@
 
 #include "core/propagationEngine.hpp"
 #include "fznparser/model.hpp"
-#include "invariantgraph/structure.hpp"
+#include "invariantgraph/variableNode.hpp"
 #include "utils/variant.hpp"
 
 #define INT_VARIABLE(name, lb, ub)              \
@@ -61,11 +61,11 @@ class NodeTestBase : public testing::Test {
             },
             [](Int value) {
               return std::make_unique<invariantgraph::VariableNode>(
-                  SearchDomain({value}));
+                  SearchDomain({value}), true);
             },
             [](bool value) {
               return std::make_unique<invariantgraph::VariableNode>(
-                  SearchDomain({1 - static_cast<int>(value)}));
+                  SearchDomain({1 - static_cast<int>(value)}), false);
             }},
         mappable);
     auto ptr = n.get();
@@ -113,3 +113,10 @@ inline void expectMarkedAsInput(
               variableNode->inputFor().end());
   }
 }
+
+enum class ConstraintType : unsigned char {
+  NORMAL = 0,
+  REIFIED = 1,
+  CONSTANT_FALSE = 2,
+  CONSTANT_TRUE = 3
+};

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "structure.hpp"
+#include "invariantgraph/implicitConstraintNode.hpp"
 
 namespace invariantgraph {
 

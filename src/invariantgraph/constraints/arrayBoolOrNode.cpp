@@ -1,8 +1,6 @@
 #include "invariantgraph/constraints/arrayBoolOrNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariants/exists.hpp"
-#include "views/notEqualView.hpp"
 
 std::unique_ptr<invariantgraph::ArrayBoolOrNode>
 invariantgraph::ArrayBoolOrNode::fromModelConstraint(
@@ -14,20 +12,24 @@ invariantgraph::ArrayBoolOrNode::fromModelConstraint(
   auto as = mappedVariableVector(model, constraint.arguments[0], variableMap);
 
   if (std::holds_alternative<bool>(constraint.arguments[1])) {
-    auto value = std::get<bool>(constraint.arguments[1]);
-    return std::make_unique<invariantgraph::ArrayBoolOrNode>(as, value);
+    auto shouldHold = std::get<bool>(constraint.arguments[1]);
+    return std::make_unique<invariantgraph::ArrayBoolOrNode>(as, shouldHold);
   } else {
     auto r = mappedVariable(constraint.arguments[1], variableMap);
     return std::make_unique<invariantgraph::ArrayBoolOrNode>(as, r);
   }
+  return std::make_unique<invariantgraph::ArrayBoolOrNode>(as, true);
 }
 
 void invariantgraph::ArrayBoolOrNode::createDefinedVariables(Engine& engine) {
-  if (_rIsConstant && !_rValue) {
-    _sumVarId = engine.makeIntVar(0, 0, 0);
-    setViolationVarId(engine.makeIntView<NotEqualView>(_sumVarId, 0));
-  } else {
-    registerViolation(engine);
+  if (violationVarId() == NULL_ID) {
+    if (shouldHold()) {
+      registerViolation(engine);
+    } else {
+      assert(!isReified());
+      _intermediate = engine.makeIntVar(0, 0, 0);
+      setViolationVarId(engine.makeIntView<NotEqualView>(_intermediate, 0));
+    }
   }
 }
 
@@ -39,5 +41,5 @@ void invariantgraph::ArrayBoolOrNode::registerWithEngine(Engine& engine) {
                  [&](const auto& node) { return node->varId(); });
 
   engine.makeInvariant<Exists>(
-      inputs, _rIsConstant && !_rValue ? _sumVarId : violationVarId());
+      inputs, !shouldHold() ? _intermediate : violationVarId());
 }

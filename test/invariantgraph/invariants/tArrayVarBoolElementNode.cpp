@@ -92,6 +92,7 @@ TEST_F(ArrayVarBoolElementNodeTest, propagation) {
   inputs.emplace_back(node->staticInputs().front()->varId());
   for (auto* const varNode : node->dynamicInputs()) {
     inputs.emplace_back(varNode->varId());
+    engine.updateBounds(varNode->varId(), 0, 10, true);
   }
   engine.close();
   std::vector<Int> values(4, 0);

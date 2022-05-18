@@ -2,23 +2,22 @@
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/constraints/boolClauseNode.hpp"
 
-static Int computeViolation(const std::vector<Int>& asValues,
-                            const std::vector<Int>& bsValues) {
-  Int violation = 0;
+static bool isViolating(const std::vector<Int>& asValues,
+                        const std::vector<Int>& bsValues) {
   for (const Int aVal : asValues) {
-    if (aVal != 1) {
-      ++violation;
+    if (aVal != 0) {
+      return true;
     }
   }
   for (const Int bVal : bsValues) {
-    if (bVal != 0) {
-      ++violation;
+    if (bVal == 0) {
+      return true;
     }
   }
-  return violation;
+  return false;
 }
 
-template <bool IsReified>
+template <ConstraintType Type>
 class AbstractBoolClauseNodeTest : public NodeTestBase {
  public:
   BOOL_VARIABLE(a);
@@ -32,20 +31,7 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::BoolClauseNode> node;
 
   void SetUp() override {
-    if constexpr (!IsReified) {
-      fznparser::Constraint cnstr{
-          "bool_clause",
-          {fznparser::Constraint::ArrayArgument{a.name, b.name},
-           fznparser::Constraint::ArrayArgument{c.name, d.name}},
-          {}};
-
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::FZNModel mdl{
-          {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-    } else {
+    if constexpr (Type == ConstraintType::REIFIED) {
       fznparser::Constraint cnstr{
           "bool_clause_reif",
           {fznparser::Constraint::ArrayArgument{a.name, b.name},
@@ -57,6 +43,37 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
 
       fznparser::FZNModel mdl{
           {}, {a, b, c, d, r}, {*constraint}, fznparser::Satisfy{}};
+
+      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    } else {
+      if constexpr (Type == ConstraintType::NORMAL) {
+        fznparser::Constraint cnstr{
+            "bool_clause",
+            {fznparser::Constraint::ArrayArgument{a.name, b.name},
+             fznparser::Constraint::ArrayArgument{c.name, d.name}},
+            {}};
+
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
+        fznparser::Constraint cnstr{
+            "bool_clause_reif",
+            {fznparser::Constraint::ArrayArgument{a.name, b.name},
+             fznparser::Constraint::ArrayArgument{c.name, d.name}, false},
+            {}};
+
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else {
+        fznparser::Constraint cnstr{
+            "bool_clause_reif",
+            {fznparser::Constraint::ArrayArgument{a.name, b.name},
+             fznparser::Constraint::ArrayArgument{c.name, d.name}, true},
+            {}};
+
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      }
+
+      fznparser::FZNModel mdl{
+          {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
 
       model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     }
@@ -89,7 +106,7 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
 
     expectMarkedAsInput(node.get(), node->as());
     expectMarkedAsInput(node.get(), node->bs());
-    if constexpr (!IsReified) {
+    if constexpr (Type != ConstraintType::REIFIED) {
       EXPECT_FALSE(node->isReified());
       EXPECT_EQ(node->reifiedViolation(), nullptr);
     } else {
@@ -133,21 +150,23 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
     node->createDefinedVariables(engine);
     node->registerWithEngine(engine);
 
+    EXPECT_EQ(node->as().size(), 2);
     std::vector<VarId> asInputs;
     for (auto* const inputVariable : node->as()) {
       EXPECT_NE(inputVariable->varId(), NULL_ID);
       asInputs.emplace_back(inputVariable->varId());
+      engine.updateBounds(inputVariable->varId(), 0, 5, true);
     }
+    EXPECT_EQ(node->bs().size(), 2);
     std::vector<VarId> bsInputs;
     for (auto* const inputVariable : node->bs()) {
       EXPECT_NE(inputVariable->varId(), NULL_ID);
       bsInputs.emplace_back(inputVariable->varId());
+      engine.updateBounds(inputVariable->varId(), 0, 5, true);
     }
 
     EXPECT_NE(node->violationVarId(), NULL_ID);
     const VarId violationId = node->violationVarId();
-    EXPECT_EQ(asInputs.size(), 2);
-    EXPECT_EQ(bsInputs.size(), 2);
 
     std::vector<Int> asValues(asInputs.size());
     std::vector<Int> bsValues(bsInputs.size());
@@ -177,9 +196,13 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
             engine.beginProbe();
             engine.query(violationId);
             engine.endProbe();
-
-            EXPECT_EQ(engine.currentValue(violationId),
-                      computeViolation(asValues, bsValues));
+            if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
+              EXPECT_EQ(engine.currentValue(violationId) > 0,
+                        isViolating(asValues, bsValues));
+            } else {
+              EXPECT_NE(engine.currentValue(violationId) > 0,
+                        isViolating(asValues, bsValues));
+            }
           }
         }
       }
@@ -187,7 +210,8 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
   }
 };
 
-class BoolClauseNodeTest : public AbstractBoolClauseNodeTest<false> {};
+class BoolClauseNodeTest
+    : public AbstractBoolClauseNodeTest<ConstraintType::NORMAL> {};
 
 TEST_F(BoolClauseNodeTest, Construction) { construction(); }
 
@@ -195,10 +219,29 @@ TEST_F(BoolClauseNodeTest, Application) { application(); }
 
 TEST_F(BoolClauseNodeTest, Propagation) { propagation(); }
 
-class BoolClauseReifNodeTest : public AbstractBoolClauseNodeTest<true> {};
+class BoolClauseReifNodeTest
+    : public AbstractBoolClauseNodeTest<ConstraintType::REIFIED> {};
 
 TEST_F(BoolClauseReifNodeTest, Construction) { construction(); }
 
 TEST_F(BoolClauseReifNodeTest, Application) { application(); }
 
 TEST_F(BoolClauseReifNodeTest, Propagation) { propagation(); }
+
+class BoolClauseFalseNodeTest
+    : public AbstractBoolClauseNodeTest<ConstraintType::CONSTANT_FALSE> {};
+
+TEST_F(BoolClauseFalseNodeTest, Construction) { construction(); }
+
+TEST_F(BoolClauseFalseNodeTest, Application) { application(); }
+
+TEST_F(BoolClauseFalseNodeTest, Propagation) { propagation(); }
+
+class BoolClauseTrueNodeTest
+    : public AbstractBoolClauseNodeTest<ConstraintType::CONSTANT_TRUE> {};
+
+TEST_F(BoolClauseTrueNodeTest, Construction) { construction(); }
+
+TEST_F(BoolClauseTrueNodeTest, Application) { application(); }
+
+TEST_F(BoolClauseTrueNodeTest, Propagation) { propagation(); }

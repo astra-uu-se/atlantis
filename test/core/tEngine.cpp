@@ -72,7 +72,7 @@ class MockInvariantAdvanced : public Invariant {
   MOCK_METHOD(void, commit, (Timestamp, Engine&), (override));
 };
 
-class MockPlus : public Invariant {
+class MockSimplePlus : public Invariant {
  public:
   bool isRegistered = false;
   VarId a;
@@ -80,8 +80,8 @@ class MockPlus : public Invariant {
   VarId output;
   std::vector<InvariantId>* position;
 
-  MockPlus(VarId t_a, VarId t_b, VarId t_output,
-           std::vector<InvariantId>* t_position = nullptr)
+  MockSimplePlus(VarId t_a, VarId t_b, VarId t_output,
+                 std::vector<InvariantId>* t_position = nullptr)
       : Invariant(NULL_ID),
         a(t_a),
         b(t_b),
@@ -147,7 +147,7 @@ class EngineTest : public ::testing::Test {
 
     std::vector<std::vector<VarId>> inputs;
     std::vector<VarId> outputs;
-    std::vector<MockPlus*> invariants;
+    std::vector<MockSimplePlus*> invariants;
 
     /* +------++------+ +------++------+ +------++------+ +------++------+
      * |inputs||inputs| |inputs||inputs| |inputs||inputs| |inputs||inputs|
@@ -194,11 +194,11 @@ class EngineTest : public ::testing::Test {
     outputs.emplace_back(engine->makeIntVar(0, 0, 10));
 
     for (size_t i = 0; i < inputs.size(); ++i) {
-      invariants.push_back(&engine->makeInvariant<MockPlus>(
+      invariants.push_back(&engine->makeInvariant<MockSimplePlus>(
           inputs.at(i).at(0), inputs.at(i).at(1), outputs.at(i)));
     }
 
-    for (MockPlus* invariant : invariants) {
+    for (MockSimplePlus* invariant : invariants) {
       EXPECT_CALL(*invariant, recompute(testing::_, testing::_)).Times(1);
       EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(1);
     }
@@ -746,7 +746,7 @@ TEST_F(EngineTest, ComputeBounds) {
 
   std::vector<std::vector<VarId>> inputs;
   std::vector<VarId> outputs;
-  std::vector<MockPlus*> invariants;
+  std::vector<MockSimplePlus*> invariants;
   std::vector<InvariantId> position;
 
   /* +------++------+ +------++------+ +------++------+ +------++------+
@@ -796,7 +796,7 @@ TEST_F(EngineTest, ComputeBounds) {
   outputs.emplace_back(engine->makeIntVar(0, 0, 0));
 
   for (size_t i = 0; i < inputs.size(); ++i) {
-    invariants.push_back(&engine->makeInvariant<MockPlus>(
+    invariants.push_back(&engine->makeInvariant<MockSimplePlus>(
         inputs.at(i).at(0), inputs.at(i).at(1), outputs.at(i), &position));
   }
 
@@ -837,7 +837,7 @@ TEST_F(EngineTest, ComputeBoundsCycle) {
   engine->open();
 
   std::vector<InvariantId> position;
-  std::vector<MockPlus*> invariants;
+  std::vector<MockSimplePlus*> invariants;
 
   const Int lb = 5;
   const Int ub = 10;
@@ -851,7 +851,7 @@ TEST_F(EngineTest, ComputeBoundsCycle) {
   std::vector<VarId> outputs{inputs.at(1).at(1), inputs.at(0).at(1)};
 
   for (size_t i = 0; i < inputs.size(); ++i) {
-    invariants.push_back(&engine->makeInvariant<MockPlus>(
+    invariants.push_back(&engine->makeInvariant<MockSimplePlus>(
         inputs.at(i).at(0), inputs.at(i).at(1), outputs.at(i), &position));
   }
 

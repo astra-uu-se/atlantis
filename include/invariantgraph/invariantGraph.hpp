@@ -1,13 +1,24 @@
 #pragma once
 
+#include <deque>
+#include <queue>
+#include <stack>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "core/engine.hpp"
-#include "invariantgraph/constraints/eqNode.hpp"
+#include "invariantgraph/constraints/allEqualNode.hpp"
+#include "invariantgraph/constraints/boolEqNode.hpp"
+#include "invariantgraph/constraints/intEqNode.hpp"
+#include "invariantgraph/implicitConstraintNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
+#include "invariantgraph/softConstraintNode.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/variableNode.hpp"
+#include "invariants/linear.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
-#include "structure.hpp"
+#include "utils/fznAst.hpp"
 
 namespace invariantgraph {
 
@@ -98,6 +109,7 @@ class InvariantGraph {
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
 
+  void splitMultiDefinedVariables();
   void breakCycles();
 
   InvariantGraphApplyResult apply(Engine& engine);
