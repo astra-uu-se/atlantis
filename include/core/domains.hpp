@@ -14,14 +14,6 @@ class Domain {
   virtual ~Domain() = default;
 
   /**
-   * Note: Might allocate a lot of memory, depending on the size of the domain.
-   * Use sparingly.
-   *
-   * @return The values in the domain.
-   */
-  [[nodiscard]] virtual const std::vector<Int>& values() = 0;
-
-  /**
    * @return The value of the smallest element in the domain.
    */
   [[nodiscard]] virtual Int lowerBound() const noexcept = 0;
@@ -40,6 +32,11 @@ class Domain {
    * @return The number of values of the domain.
    */
   [[nodiscard]] virtual size_t size() const noexcept = 0;
+
+  /**
+   * @return The value of the largest element in the domain.
+   */
+  [[nodiscard]] bool isConstant() { return size() == 1; };
 
   /**
    * @return if the domain is not a superset of lb..ub,
@@ -61,15 +58,6 @@ class IntervalDomain : public Domain {
  public:
   IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {}
 
-  [[nodiscard]] const std::vector<Int>& values() override {
-    if (!_valuesCollected) {
-      _valuesCollected = true;
-      _values.resize(_ub - _lb + 1);
-      std::iota(_values.begin(), _values.end(), _lb);
-    }
-    return _values;
-  }
-
   [[nodiscard]] Int lowerBound() const noexcept override { return _lb; }
   [[nodiscard]] Int upperBound() const noexcept override { return _ub; }
   [[nodiscard]] std::pair<Int, Int> bounds() const noexcept override {
@@ -83,6 +71,16 @@ class IntervalDomain : public Domain {
       return std::vector<DomainEntry>();
     }
     return std::vector<DomainEntry>{{std::max(_lb, lb), std::min(_ub, ub)}};
+  }
+
+  void setLowerBound(Int lb) {
+    assert(lb <= _ub);
+    _lb = lb;
+  }
+
+  void setUpperBound(Int ub) {
+    assert(_lb <= ub);
+    _ub = ub;
   }
 
   bool operator==(const IntervalDomain& other) const {
@@ -103,11 +101,7 @@ class SetDomain : public Domain {
     std::sort(_values.begin(), _values.end());
   }
 
-  [[nodiscard]] const std::vector<Int>& values() override { return _values; }
-
-  [[nodiscard]] inline const std::vector<Int>& constValues() const {
-    return _values;
-  }
+  [[nodiscard]] const std::vector<Int>& values() const { return _values; }
 
   [[nodiscard]] Int lowerBound() const noexcept override {
     return _values.front();
@@ -167,6 +161,16 @@ class SetDomain : public Domain {
     return ret;
   }
 
+  void removeValue(Int value) {
+    if (value < lowerBound() || upperBound() < value) {
+      return;
+    }
+    auto it = std::find(_values.begin(), _values.end(), value);
+    if (it != _values.end()) {
+      _values.erase(it);
+    }
+  }
+
   bool operator==(const SetDomain& other) const {
     return _values == other._values;
   }
@@ -187,11 +191,14 @@ class SearchDomain : public Domain {
     return _domain;
   }
 
-  [[nodiscard]] const std::vector<Int>& values() override {
-    if (std::holds_alternative<SetDomain>(_domain)) {
-      return std::get<SetDomain>(_domain).values();
+  [[nodiscard]] const std::vector<Int>& values() {
+    if (std::holds_alternative<IntervalDomain>(_domain)) {
+      std::vector<Int> values(upperBound() - lowerBound() + 1);
+      std::iota(values.begin(), values.end(), lowerBound());
+      _domain = SetDomain(values);
     }
-    return std::get<IntervalDomain>(_domain).values();
+    assert(std::holds_alternative<SetDomain>(_domain));
+    return std::get<SetDomain>(_domain).values();
   }
 
   [[nodiscard]] Int lowerBound() const noexcept override {
@@ -221,6 +228,37 @@ class SearchDomain : public Domain {
           return dom.relativeComplementIfIntersects(lb, ub);
         },
         _domain);
+  }
+
+  void removeValue(Int value) {
+    // do nothing if the value is not in the domain:
+    if (value < lowerBound() || upperBound() < value) {
+      return;
+    }
+    if (std::holds_alternative<SetDomain>(_domain)) {
+      // Remove the value from the set domain:
+      std::get<SetDomain>(_domain).removeValue(value);
+      return;
+    }
+    assert(std::holds_alternative<IntervalDomain>(_domain));
+    if (value == lowerBound()) {
+      // change lb
+      std::get<IntervalDomain>(_domain).setLowerBound(value + 1);
+      return;
+    } else if (value == upperBound()) {
+      // change ub
+      std::get<IntervalDomain>(_domain).setUpperBound(value - 1);
+      return;
+    }
+    std::vector<Int> newDomain(upperBound() - lowerBound());
+    Int i = 0;
+    for (Int val = lowerBound(); val <= upperBound(); ++val) {
+      if (val != value) {
+        newDomain.at(i) = val;
+        ++i;
+      }
+    }
+    _domain = SetDomain(newDomain);
   }
 
   bool operator==(const SearchDomain& other) const {
