@@ -45,10 +45,10 @@ class InvariantGraphBuilder {
 
     std::unique_ptr<VariableNode> node;
     if constexpr (std::is_same_v<Int, Val>) {
-      node = std::make_unique<VariableNode>(SearchDomain({val}));
+      node = std::make_unique<VariableNode>(SearchDomain({val}), true);
     } else if constexpr (std::is_same_v<bool, Val>) {
       node = std::make_unique<VariableNode>(
-          SearchDomain({1 - static_cast<Int>(val)}));
+          SearchDomain({1 - static_cast<Int>(val)}), false);
     } else {
       static_assert(!sizeof(Val));
     }

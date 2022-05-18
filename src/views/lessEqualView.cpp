@@ -1,7 +1,7 @@
 #include "views/lessEqualView.hpp"
 
 static inline Int compute(Int var, Int val) {
-  return std::max(Int(0), var - val);
+  return std::max<Int>(0, var - val);
 }
 
 Int LessEqualView::value(Timestamp ts) const {

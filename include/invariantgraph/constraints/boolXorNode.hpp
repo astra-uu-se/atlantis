@@ -3,14 +3,18 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "invariantgraph/structure.hpp"
+#include "constraints/boolEqual.hpp"
+#include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/boolXor.hpp"
 
 namespace invariantgraph {
 
 class BoolXorNode : public SoftConstraintNode {
  public:
-  BoolXorNode(VariableNode* a, VariableNode* b, VariableNode* r = nullptr)
+  BoolXorNode(VariableNode* a, VariableNode* b, VariableNode* r)
       : SoftConstraintNode({a, b}, r) {}
+  BoolXorNode(VariableNode* a, VariableNode* b, bool shouldHold)
+      : SoftConstraintNode({a, b}, shouldHold) {}
 
   static std::unique_ptr<BoolXorNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

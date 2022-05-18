@@ -13,7 +13,7 @@ static bool isViolating(const std::vector<Int>& values) {
   return false;
 }
 
-template <bool IsReified>
+template <ConstraintType Type>
 class AbstractArrayBoolAndNodeTest : public NodeTestBase {
  public:
   BOOL_VARIABLE(a);
@@ -25,19 +25,7 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::ArrayBoolAndNode> node;
 
   void SetUp() override {
-    if constexpr (!IsReified) {
-      fznparser::Constraint cnstr{
-          "array_bool_and",
-          {fznparser::Constraint::ArrayArgument{"a", "b"},
-           fznparser::Constraint::Argument{true}},
-          {}};
-
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-    } else {
+    if constexpr (Type == ConstraintType::REIFIED) {
       fznparser::Constraint cnstr{
           "array_bool_and",
           {fznparser::Constraint::ArrayArgument{"a", "b"},
@@ -48,6 +36,33 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase {
 
       fznparser::FZNModel mdl{
           {}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
+
+      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    } else {
+      if constexpr (Type == ConstraintType::NORMAL) {
+        fznparser::Constraint cnstr{
+            "array_bool_and",
+            {fznparser::Constraint::ArrayArgument{"a", "b"}, true},
+            {}};
+
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
+        fznparser::Constraint cnstr{
+            "array_bool_and",
+            {fznparser::Constraint::ArrayArgument{"a", "b"}, false},
+            {}};
+
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      } else {
+        fznparser::Constraint cnstr{
+            "array_bool_and",
+            {fznparser::Constraint::ArrayArgument{"a", "b"}, true},
+            {}};
+
+        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+      }
+
+      fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
 
       model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     }
@@ -65,7 +80,7 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase {
     EXPECT_EQ(node->staticInputs(), expectedVars);
     EXPECT_THAT(expectedVars, testing::ContainerEq(node->staticInputs()));
     expectMarkedAsInput(node.get(), node->staticInputs());
-    if constexpr (!IsReified) {
+    if constexpr (Type != ConstraintType::REIFIED) {
       EXPECT_FALSE(node->isReified());
       EXPECT_EQ(node->reifiedViolation(), nullptr);
     } else {
@@ -112,11 +127,11 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase {
     for (auto* const inputVariable : node->staticInputs()) {
       EXPECT_NE(inputVariable->varId(), NULL_ID);
       inputs.emplace_back(inputVariable->varId());
+      engine.updateBounds(inputVariable->varId(), 0, 10, true);
     }
 
     EXPECT_NE(node->violationVarId(), NULL_ID);
-    const VarId outputId = node->violationVarId();
-    EXPECT_EQ(inputs.size(), 2);
+    const VarId violationId = node->violationVarId();
 
     std::vector<Int> values(inputs.size());
     engine.close();
@@ -132,18 +147,21 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase {
         engine.endMove();
 
         engine.beginProbe();
-        engine.query(outputId);
+        engine.query(violationId);
         engine.endProbe();
 
-        const Int viol = engine.currentValue(outputId);
-
-        EXPECT_EQ(viol > 0, isViolating(values));
+        if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
+          EXPECT_EQ(engine.currentValue(violationId) > 0, isViolating(values));
+        } else {
+          EXPECT_NE(engine.currentValue(violationId) > 0, isViolating(values));
+        }
       }
     }
   }
 };
 
-class ArrayBoolAndNodeTest : public AbstractArrayBoolAndNodeTest<false> {};
+class ArrayBoolAndNodeTest
+    : public AbstractArrayBoolAndNodeTest<ConstraintType::NORMAL> {};
 
 TEST_F(ArrayBoolAndNodeTest, Construction) { construction(); }
 
@@ -151,7 +169,8 @@ TEST_F(ArrayBoolAndNodeTest, Application) { application(); }
 
 TEST_F(ArrayBoolAndNodeTest, Propagation) { propagation(); }
 
-class ArrayBoolAndReifNodeTest : public AbstractArrayBoolAndNodeTest<true> {};
+class ArrayBoolAndReifNodeTest
+    : public AbstractArrayBoolAndNodeTest<ConstraintType::REIFIED> {};
 
 TEST_F(ArrayBoolAndReifNodeTest, Construction) { construction(); }
 
@@ -159,53 +178,20 @@ TEST_F(ArrayBoolAndReifNodeTest, Application) { application(); }
 
 TEST_F(ArrayBoolAndReifNodeTest, Propagation) { propagation(); }
 
-TEST_F(ArrayBoolAndReifNodeTest, r_is_a_constant) {
-  _nodeMap.clear();
-  _variables.clear();
+class ArrayBoolAndFalseNodeTest
+    : public AbstractArrayBoolAndNodeTest<ConstraintType::CONSTANT_FALSE> {};
 
-  fznparser::Constraint constraint2{
-      "array_bool_and",
-      {fznparser::Constraint::ArrayArgument{a.name, b.name}, true},
-      {}};
+TEST_F(ArrayBoolAndFalseNodeTest, Construction) { construction(); }
 
-  node = makeNode<invariantgraph::ArrayBoolAndNode>(constraint2);
-  EXPECT_TRUE(!node->isReified());
-  EXPECT_FALSE(!node->definedVariables().empty());
+TEST_F(ArrayBoolAndFalseNodeTest, Application) { application(); }
 
-  PropagationEngine engine;
-  engine.open();
-  registerVariables(engine, {a.name, b.name});
-  node->createDefinedVariables(engine);
-  node->registerWithEngine(engine);
-  engine.close();
+TEST_F(ArrayBoolAndFalseNodeTest, Propagation) { propagation(); }
 
-  engine.beginMove();
-  engine.setValue(engineVariable(a), 0);
-  engine.setValue(engineVariable(b), 0);
-  engine.endMove();
+class ArrayBoolAndTrueNodeTest
+    : public AbstractArrayBoolAndNodeTest<ConstraintType::CONSTANT_TRUE> {};
 
-  engine.beginCommit();
-  engine.query(node->violationVarId());
-  engine.endCommit();
-  EXPECT_EQ(engine.committedValue(node->violationVarId()), 0);
+TEST_F(ArrayBoolAndTrueNodeTest, Construction) { construction(); }
 
-  engine.beginMove();
-  engine.setValue(engineVariable(a), 1);
-  engine.setValue(engineVariable(b), 0);
-  engine.endMove();
+TEST_F(ArrayBoolAndTrueNodeTest, Application) { application(); }
 
-  engine.beginCommit();
-  engine.query(node->violationVarId());
-  engine.endCommit();
-  EXPECT_GT(engine.committedValue(node->violationVarId()), 0);
-
-  engine.beginMove();
-  engine.setValue(engineVariable(a), 1);
-  engine.setValue(engineVariable(b), 1);
-  engine.endMove();
-
-  engine.beginCommit();
-  engine.query(node->violationVarId());
-  engine.endCommit();
-  EXPECT_GT(engine.committedValue(node->violationVarId()), 0);
-}
+TEST_F(ArrayBoolAndTrueNodeTest, Propagation) { propagation(); }

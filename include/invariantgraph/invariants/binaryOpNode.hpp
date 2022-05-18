@@ -2,7 +2,7 @@
 
 #include <fznparser/model.hpp>
 
-#include "../structure.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
 
 namespace invariantgraph {
 

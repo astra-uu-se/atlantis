@@ -3,7 +3,10 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "invariantgraph/structure.hpp"
+#include "invariantgraph/softConstraintNode.hpp"
+#include "invariants/boolLinear.hpp"
+#include "views/equalView.hpp"
+#include "views/notEqualView.hpp"
 
 static std::vector<invariantgraph::VariableNode*> merge(
     const std::vector<invariantgraph::VariableNode*>& as,
@@ -29,6 +32,11 @@ class BoolClauseNode : public SoftConstraintNode {
   explicit BoolClauseNode(std::vector<VariableNode*> as,
                           std::vector<VariableNode*> bs, VariableNode* r)
       : SoftConstraintNode(merge(as, bs), r),
+        _as(std::move(as)),
+        _bs(std::move(bs)) {}
+  explicit BoolClauseNode(std::vector<VariableNode*> as,
+                          std::vector<VariableNode*> bs, bool shouldHold)
+      : SoftConstraintNode(merge(as, bs), shouldHold),
         _as(std::move(as)),
         _bs(std::move(bs)) {}
 

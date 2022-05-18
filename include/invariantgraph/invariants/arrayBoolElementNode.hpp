@@ -2,8 +2,8 @@
 
 #include <fznparser/model.hpp>
 
-#include "../structure.hpp"
 #include "arrayIntElementNode.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
 
 namespace invariantgraph {
 

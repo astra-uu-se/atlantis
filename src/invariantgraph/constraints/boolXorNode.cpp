@@ -1,23 +1,30 @@
 #include "invariantgraph/constraints/boolXorNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/notEqual.hpp"
 
 std::unique_ptr<invariantgraph::BoolXorNode>
 invariantgraph::BoolXorNode::fromModelConstraint(
     const fznparser::FZNModel&, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
   assert(
-      (constraint.name == "bool_xor" && constraint.arguments.size() == 2) ||
-      (constraint.name == "bool_xor_reif" && constraint.arguments.size() == 3));
+      ((constraint.name == "bool_xor" || constraint.name == "bool_not") &&
+       constraint.arguments.size() == 2) ||
+      ((constraint.name == "bool_xor" || constraint.name == "bool_not_reif") &&
+       constraint.arguments.size() == 3));
 
   auto a = mappedVariable(constraint.arguments[0], variableMap);
   auto b = mappedVariable(constraint.arguments[1], variableMap);
-  VariableNode* r = constraint.arguments.size() >= 3
-                        ? mappedVariable(constraint.arguments[2], variableMap)
-                        : nullptr;
 
-  return std::make_unique<BoolXorNode>(a, b, r);
+  if (constraint.arguments.size() >= 3) {
+    if (std::holds_alternative<bool>(constraint.arguments[2])) {
+      auto shouldHold = std::get<bool>(constraint.arguments[2]);
+      return std::make_unique<invariantgraph::BoolXorNode>(a, b, shouldHold);
+    } else {
+      auto r = mappedVariable(constraint.arguments[2], variableMap);
+      return std::make_unique<invariantgraph::BoolXorNode>(a, b, r);
+    }
+  }
+  return std::make_unique<BoolXorNode>(a, b, true);
 }
 
 void invariantgraph::BoolXorNode::createDefinedVariables(Engine& engine) {
@@ -27,6 +34,11 @@ void invariantgraph::BoolXorNode::createDefinedVariables(Engine& engine) {
 void invariantgraph::BoolXorNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
 
-  engine.makeConstraint<::NotEqual>(violationVarId(), a()->varId(),
+  if (shouldHold()) {
+    engine.makeInvariant<BoolXor>(a()->varId(), b()->varId(), violationVarId());
+  } else {
+    assert(!isReified());
+    engine.makeInvariant<BoolEqual>(violationVarId(), a()->varId(),
                                     b()->varId());
+  }
 }
