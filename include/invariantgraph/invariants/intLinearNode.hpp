@@ -8,7 +8,8 @@ namespace invariantgraph {
 class IntLinearNode : public VariableDefiningNode {
  private:
   std::vector<Int> _coeffs;
-  Int _offset;
+  Int _definingCoefficient;
+  Int _sum;
   VarId _intermediateVarId{NULL_ID};
 
  public:
@@ -17,10 +18,11 @@ class IntLinearNode : public VariableDefiningNode {
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   IntLinearNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-                VariableNode* output, Int offset = 0)
-      : VariableDefiningNode({output}, variables),
+                VariableNode* output, Int definingCoefficient, Int sum)
+      : VariableDefiningNode({output}, std::move(variables)),
         _coeffs(std::move(coeffs)),
-        _offset(offset) {
+        _definingCoefficient(definingCoefficient),
+        _sum(sum) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
       assert(staticInput->isIntVar());

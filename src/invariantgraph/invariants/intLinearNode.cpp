@@ -5,6 +5,7 @@
 #include "../parseHelper.hpp"
 #include "invariants/linear.hpp"
 #include "views/intOffsetView.hpp"
+#include "views/scalarView.hpp"
 
 std::unique_ptr<invariantgraph::IntLinearNode>
 invariantgraph::IntLinearNode::fromModelConstraint(
@@ -31,9 +32,10 @@ invariantgraph::IntLinearNode::fromModelConstraint(
 
   assert(definedVarPos != vars.end());
   size_t definedVarIndex = definedVarPos - vars.begin();
+  auto definedVarCoeff = coeffs[definedVarIndex];
 
   // TODO: add a violation that is definedVar % coeffs[definedVarIndex]
-  if (std::abs(coeffs[definedVarIndex]) != 1) {
+  if (std::abs(definedVarCoeff) != 1) {
     throw std::runtime_error(
         "Cannot define variable with coefficient which is not +/-1");
   }
@@ -48,7 +50,7 @@ invariantgraph::IntLinearNode::fromModelConstraint(
   vars.erase(varsIt);
 
   auto linearInv = std::make_unique<invariantgraph::IntLinearNode>(
-      coeffs, vars, output, -sum);
+      coeffs, vars, output, definedVarCoeff, sum);
 
   return linearInv;
 }
@@ -56,23 +58,42 @@ invariantgraph::IntLinearNode::fromModelConstraint(
 void invariantgraph::IntLinearNode::createDefinedVariables(Engine& engine) {
   if (staticInputs().size() == 1 &&
       staticInputs().front()->varId() != NULL_ID) {
-    if (_coeffs.front() == 1 && _offset == 0) {
+    if (_coeffs.front() == 1 && _sum == 0) {
       definedVariables().front()->setVarId(staticInputs().front()->varId());
       return;
     }
 
-    definedVariables().front()->setVarId(engine.makeIntView<IntOffsetView>(
-        staticInputs().front()->varId(), _coeffs.front() * _offset));
+    if (_definingCoefficient == -1) {
+      auto scalar = engine.makeIntView<ScalarView>(
+          staticInputs().front()->varId(), _coeffs.front());
+      definedVariables().front()->setVarId(
+          engine.makeIntView<IntOffsetView>(scalar, -_sum));
+    } else {
+      assert(_definingCoefficient == 1);
+      auto scalar = engine.makeIntView<ScalarView>(
+          staticInputs().front()->varId(), -_coeffs.front());
+      definedVariables().front()->setVarId(
+          engine.makeIntView<IntOffsetView>(scalar, _sum));
+    }
+
     return;
   }
 
   if (_intermediateVarId == NULL_ID) {
     _intermediateVarId = engine.makeIntVar(0, 0, 0);
     assert(definedVariables().front()->varId() == NULL_ID);
-    definedVariables().front()->setVarId(
-        _offset == 0
-            ? _intermediateVarId
-            : engine.makeIntView<IntOffsetView>(_intermediateVarId, _offset));
+
+    auto offsetIntermediate = _intermediateVarId;
+    if (_sum != 0) {
+      offsetIntermediate = engine.makeIntView<IntOffsetView>(_intermediateVarId, -_sum);
+    }
+
+    auto invertedIntermediate = offsetIntermediate;
+    if (_definingCoefficient == 1) {
+      invertedIntermediate = engine.makeIntView<ScalarView>(offsetIntermediate, -1);
+    }
+
+    definedVariables().front()->setVarId(invertedIntermediate);
   }
 }
 
