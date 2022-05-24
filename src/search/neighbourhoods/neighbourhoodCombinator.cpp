@@ -9,7 +9,7 @@ search::neighbourhoods::NeighbourhoodCombinator::NeighbourhoodCombinator(
     : _neighbourhoods(std::move(neighbourhoods)) {
   assert(!_neighbourhoods.empty());
 
-  std::vector<size_t> weights(_neighbourhoods.size());
+  std::vector<size_t> weights;
   for (const auto& neighbourhood : _neighbourhoods) {
     weights.push_back(neighbourhood->coveredVariables().size());
 
@@ -32,7 +32,7 @@ void search::neighbourhoods::NeighbourhoodCombinator::initialise(
 bool search::neighbourhoods::NeighbourhoodCombinator::randomMove(
     search::RandomProvider& random, search::Assignment& assignment,
     search::Annealer& annealer) {
-  auto& neighbourhood = selectNeighbourhood();
+  auto& neighbourhood = selectNeighbourhood(random);
   return neighbourhood.randomMove(random, assignment, annealer);
 }
 
