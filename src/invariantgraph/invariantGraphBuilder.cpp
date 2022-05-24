@@ -291,7 +291,7 @@ invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
       model, constraint,                                \
       [&](const auto& argument) { return nodeFactory(model, argument); })
 
-  NODE_REGISTRATION("alldifferent", AllDifferentImplicitNode);
+  NODE_REGISTRATION("fzn_all_different_int", AllDifferentImplicitNode);
 
   return nullptr;
 #undef NODE_REGISTRATION
@@ -308,7 +308,7 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
       model, constraint,                                \
       [&](const auto& argument) { return nodeFactory(model, argument); })
 
-  NODE_REGISTRATION("alldifferent", AllDifferentNode);
+  NODE_REGISTRATION("fzn_all_different_int", AllDifferentNode);
   NODE_REGISTRATION("allequal", AllEqualNode);
   NODE_REGISTRATION("bool_and", BoolAndNode);
   NODE_REGISTRATION("bool_clause", BoolClauseNode);
