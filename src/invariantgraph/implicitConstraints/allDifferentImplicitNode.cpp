@@ -15,6 +15,13 @@ invariantgraph::AllDifferentImplicitNode::fromModelConstraint(
   auto variables =
       mappedVariableVector(model, constraint.arguments[0], variableMap);
 
+  if (variables.size() < 2) {
+    // Apparently it can happen that variables is an array of length 1. In that
+    // case, there is no benefit by the variable being defined by this implicit
+    // node, since any value from its domain would satisfy this constraint.
+    return nullptr;
+  }
+
   // For now, this only works when all the variables have the same domain.
   const auto& domain = variables.front()->domain();
   for (const auto& variable : variables) {
