@@ -24,6 +24,7 @@
 #include "invariantgraph/constraints/intNeNode.hpp"
 #include "invariantgraph/constraints/setInNode.hpp"
 #include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
+#include "invariantgraph/implicitConstraints/circuitImplicitNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/invariants/arrayBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
@@ -292,6 +293,7 @@ invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
       [&](const auto& argument) { return nodeFactory(model, argument); })
 
   NODE_REGISTRATION("alldifferent", AllDifferentImplicitNode);
+  NODE_REGISTRATION("fzn_circuit", CircuitImplicitNode);
 
   return nullptr;
 #undef NODE_REGISTRATION
