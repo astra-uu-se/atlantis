@@ -27,7 +27,7 @@ void search::neighbourhoods::AllDifferentUniformNeighbourhood::initialise(
   _freeVariables = _domain.size();
 
   for (auto const& variable : _variables) {
-    auto idx = random.intInRange<size_t>(0, _freeVariables - 1);
+    auto idx = random.intInRange(0, static_cast<Int>(_freeVariables) - 1);
     auto value = _domain[idx];
     modifications.set(variable.engineId(), value);
 
@@ -49,9 +49,10 @@ bool search::neighbourhoods::AllDifferentUniformNeighbourhood::randomMove(
 bool search::neighbourhoods::AllDifferentUniformNeighbourhood::swapValues(
     search::RandomProvider& random, search::Assignment& assignment,
     search::Annealer& annealer) {
-  auto i = random.intInRange<size_t>(0, _variables.size() - 1);
-  auto j = (i + random.intInRange<size_t>(1, _variables.size() - 1)) %
-           _variables.size();
+  size_t i = random.intInRange(0, static_cast<Int>(_variables.size()) - 1);
+  size_t j =
+      (i + random.intInRange(1, static_cast<Int>(_variables.size()) - 1)) %
+      _variables.size();
 
   auto var1 = _variables[i].engineId();
   auto var2 = _variables[j].engineId();
@@ -70,7 +71,7 @@ bool search::neighbourhoods::AllDifferentUniformNeighbourhood::assignValue(
   Int oldValue = assignment.value(var);
   size_t oldValueIdx = _domIndices[oldValue - _offset];
 
-  auto newValueIdx = random.intInRange<size_t>(0, _freeVariables - 1);
+  Int newValueIdx = random.intInRange(0, static_cast<Int>(_freeVariables) - 1);
   Int newValue = _domain[newValueIdx];
 
   if (maybeCommit(Move<1>({var}, {newValue}), assignment, annealer)) {
