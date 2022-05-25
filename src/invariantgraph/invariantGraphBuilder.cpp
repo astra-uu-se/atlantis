@@ -293,7 +293,7 @@ invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
   }
 
   NODE_REGISTRATION(AllDifferentImplicitNode);
-  NODE_REGISTRATION("fzn_circuit", CircuitImplicitNode);
+  NODE_REGISTRATION(CircuitImplicitNode);
 
   return nullptr;
 #undef NODE_REGISTRATION
