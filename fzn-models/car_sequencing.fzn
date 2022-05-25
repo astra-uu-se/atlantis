@@ -1,4 +1,4 @@
-predicate alldifferent(array [int] of var int: x);
+predicate fzn_all_different_int(array [int] of var int: x);
 array [1..10] of int: X_INTRODUCED_10_ = [1,0,0,0,0,0,1,1,1,1];
 array [1..2] of int: X_INTRODUCED_14_ = [1,1];
 array [1..10] of int: X_INTRODUCED_31_ = [0,0,1,1,1,1,0,0,1,1];
@@ -68,7 +68,7 @@ var 0..1: X_INTRODUCED_99_ ::var_is_introduced :: is_defined_var;
 var 0..1: X_INTRODUCED_101_ ::var_is_introduced :: is_defined_var;
 var 0..1: X_INTRODUCED_103_ ::var_is_introduced :: is_defined_var;
 array [1..10] of var int: Sequence:: output_array([1..10]) = [X_INTRODUCED_0_,X_INTRODUCED_1_,X_INTRODUCED_2_,X_INTRODUCED_3_,X_INTRODUCED_4_,X_INTRODUCED_5_,X_INTRODUCED_6_,X_INTRODUCED_7_,X_INTRODUCED_8_,X_INTRODUCED_9_];
-constraint alldifferent(Sequence);
+constraint fzn_all_different_int(Sequence);
 constraint array_int_element(X_INTRODUCED_0_,X_INTRODUCED_10_,X_INTRODUCED_11_):: defines_var(X_INTRODUCED_11_);
 constraint array_int_element(X_INTRODUCED_1_,X_INTRODUCED_10_,X_INTRODUCED_12_):: defines_var(X_INTRODUCED_12_);
 constraint int_lin_le(X_INTRODUCED_14_,[X_INTRODUCED_11_,X_INTRODUCED_12_],1);
