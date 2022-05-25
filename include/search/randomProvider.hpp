@@ -63,6 +63,11 @@ class RandomProvider {
   void seed(std::int_fast32_t seed) {
     _gen.seed(seed);
   }
+  
+  template <typename Value, typename Distribution>
+  Value fromDistribution(Distribution d) {
+    return d(_gen);
+  }
 };
 
 }  // namespace search

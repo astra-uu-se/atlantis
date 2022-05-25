@@ -31,7 +31,7 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
   void SetUp() override {
     if constexpr (Type == ConstraintType::REIFIED) {
       fznparser::Constraint cnstr{
-          "alldifferent_reif",
+          "fzn_all_different_int_reif",
           {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"},
            fznparser::Constraint::Argument{"r"}},
           {}};
@@ -45,19 +45,19 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
         fznparser::Constraint cnstr{
-            "alldifferent",
+            "fzn_all_different_int",
             {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
             {}};
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
         fznparser::Constraint cnstr{
-            "alldifferent_reif",
+            "fzn_all_different_int_reif",
             {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}, false},
             {}};
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       } else {
         fznparser::Constraint cnstr{
-            "alldifferent_reif",
+            "fzn_all_different_int_reif",
             {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}, true},
             {}};
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));

@@ -23,6 +23,8 @@ class NeighbourhoodCombinatorTest : public ::testing::Test {
   MockNeighbourhood* n1{nullptr};
   MockNeighbourhood* n2{nullptr};
 
+  std::vector<search::SearchVariable> variables{search::SearchVariable(NULL_ID, SearchDomain(0, 10))};
+
   void SetUp() override {
     auto unique_n1 = std::make_unique<MockNeighbourhood>();
     auto unique_n2 = std::make_unique<MockNeighbourhood>();
@@ -36,6 +38,11 @@ class NeighbourhoodCombinatorTest : public ::testing::Test {
 };
 
 TEST_F(NeighbourhoodCombinatorTest, initialise_calls_all_neighbourhoods) {
+  EXPECT_CALL(*n1, coveredVariables())
+    .WillRepeatedly(::testing::ReturnRef(variables));
+  EXPECT_CALL(*n2, coveredVariables())
+      .WillRepeatedly(::testing::ReturnRef(variables));
+
   search::neighbourhoods::NeighbourhoodCombinator combinator(std::move(ns));
 
   PropagationEngine engine;
@@ -55,6 +62,11 @@ TEST_F(NeighbourhoodCombinatorTest, initialise_calls_all_neighbourhoods) {
 
 TEST_F(NeighbourhoodCombinatorTest,
        randomMove_calls_one_neighbourhood_and_forwards_result) {
+  EXPECT_CALL(*n1, coveredVariables())
+      .WillRepeatedly(::testing::ReturnRef(variables));
+  EXPECT_CALL(*n2, coveredVariables())
+      .WillRepeatedly(::testing::ReturnRef(variables));
+
   search::neighbourhoods::NeighbourhoodCombinator combinator(std::move(ns));
 
   PropagationEngine engine;
