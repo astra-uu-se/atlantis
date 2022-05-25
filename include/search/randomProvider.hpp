@@ -32,6 +32,12 @@ class RandomProvider {
     return collection[distribution(_gen)];
   }
 
+  template <typename Iter>
+  Iter iterator(Iter begin, Iter end) {
+    auto offset = intInRange(0, std::distance(begin, end) - 1);
+    return std::next(begin, offset);
+  }
+
   Int intInRange(Int lowerBound, Int upperBound) {
     return std::uniform_int_distribution<Int>(lowerBound, upperBound)(_gen);
   }
@@ -52,6 +58,10 @@ class RandomProvider {
     ;
   }
 
+  void seed(std::int_fast32_t seed) {
+    _gen.seed(seed);
+  }
+  
   template <typename Value, typename Distribution>
   Value fromDistribution(Distribution d) {
     return d(_gen);
