@@ -87,8 +87,8 @@ TEST_F(LinearNodeTest, application_should_register_view) {
   shouldRegisterView->registerWithEngine(engine);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(a)), 0);
-  EXPECT_EQ(engine.upperBound(engineVariable(a)), 4);
+  EXPECT_EQ(engine.lowerBound(engineVariable(a)), -4);
+  EXPECT_EQ(engine.upperBound(engineVariable(a)), 0);
 
   // b
   EXPECT_EQ(engine.searchVariables().size(), 1);
@@ -112,8 +112,8 @@ TEST_F(LinearNodeTest, application_should_register_linear) {
   shouldRegisterLinear->registerWithEngine(engine);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(a)), 3);
-  EXPECT_EQ(engine.upperBound(engineVariable(a)), 11);
+  EXPECT_EQ(engine.lowerBound(engineVariable(a)), -11);
+  EXPECT_EQ(engine.upperBound(engineVariable(a)), -3);
 
   // b and c
   EXPECT_EQ(engine.searchVariables().size(), 2);
