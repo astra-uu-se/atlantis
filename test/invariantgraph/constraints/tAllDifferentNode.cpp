@@ -213,7 +213,7 @@ TEST_F(AllDifferentTrueNodeTest, Application) { application(); }
 TEST_F(AllDifferentTrueNodeTest, Propagation) { propagation(); }
 
 TEST_F(AllDifferentNodeTest, pruneParameters) {
-  fznparser::Constraint cnstr{"alldifferent",
+  fznparser::Constraint cnstr{"fzn_all_different_int",
                               {fznparser::Constraint::ArrayArgument{
                                   7, "a", 10, "b", 6, "c", 9, "d", 5}},
                               {}};
