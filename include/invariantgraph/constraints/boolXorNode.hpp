@@ -16,6 +16,12 @@ class BoolXorNode : public SoftConstraintNode {
   BoolXorNode(VariableNode* a, VariableNode* b, bool shouldHold)
       : SoftConstraintNode({a, b}, shouldHold) {}
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"bool_not", 2}, {"bool_xor", 3}, {"bool_xor", 2}};
+  }
+
   static std::unique_ptr<BoolXorNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);

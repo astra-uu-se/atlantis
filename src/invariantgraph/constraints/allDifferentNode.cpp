@@ -8,10 +8,7 @@ std::unique_ptr<invariantgraph::AllDifferentNode>
 invariantgraph::AllDifferentNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(
-      (constraint.name == "fzn_all_different_int" && constraint.arguments.size() == 1) ||
-      (constraint.name == "fzn_all_different_int_reif" &&
-       constraint.arguments.size() == 2));
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto variables =
       mappedVariableVector(model, constraint.arguments[0], variableMap);

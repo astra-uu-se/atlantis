@@ -6,9 +6,7 @@ std::unique_ptr<invariantgraph::IntNeNode>
 invariantgraph::IntNeNode::fromModelConstraint(
     const fznparser::FZNModel&, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(
-      (constraint.name == "int_ne" && constraint.arguments.size() == 2) ||
-      (constraint.name == "int_ne_reif" && constraint.arguments.size() == 3));
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto a = mappedVariable(constraint.arguments[0], variableMap);
   auto b = mappedVariable(constraint.arguments[1], variableMap);
