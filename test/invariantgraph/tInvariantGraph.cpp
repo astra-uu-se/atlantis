@@ -18,7 +18,7 @@ TEST(InvariantGraphTest, apply_result) {
   auto plusNode = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
       std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()},
-      cNode.get());
+      cNode.get(), -1, 0);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
       std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()});
@@ -76,17 +76,17 @@ TEST(InvariantGraphTest, ApplyGraph) {
   auto aPlusNode = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
       std::vector<invariantgraph::VariableNode*>{a1Node.get(), a2Node.get()},
-      c1Node.get());
+      c1Node.get(), -1, 0);
 
   auto bPlusNode = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
       std::vector<invariantgraph::VariableNode*>{b1Node.get(), b2Node.get()},
-      c2Node.get());
+      c2Node.get(), -1, 0);
 
   auto cPlusNode = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
       std::vector<invariantgraph::VariableNode*>{c1Node.get(), c2Node.get()},
-      sumNode.get());
+      sumNode.get(), -1, 0);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
       std::vector<invariantgraph::VariableNode*>{a1Node.get(), a2Node.get(),
@@ -154,12 +154,12 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
   auto plusNode1 = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
       std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()},
-      xNode.get());
+      xNode.get(), -1, 0);
 
   auto plusNode2 = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
       std::vector<invariantgraph::VariableNode*>{cNode.get(), dNode.get()},
-      xNode.get());
+      xNode.get(), -1, 0);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
       std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get(),
@@ -244,7 +244,7 @@ TEST(InvariantGraphTest, SplitGraph) {
     }
     variableDefiningNodes.emplace_back(
         std::make_unique<invariantgraph::IntLinearNode>(coeffs, arguments,
-                                                        xNode.get()));
+                                                        xNode.get(), -1, 0));
   }
 
   std::vector<invariantgraph::VariableNode*> searchVariables;
@@ -312,12 +312,12 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
   auto plusNode1 = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
       std::vector<invariantgraph::VariableNode*>{aNode.get(), yNode.get()},
-      xNode.get());
+      xNode.get(), -1, 0);
 
   auto plusNode2 = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
       std::vector<invariantgraph::VariableNode*>{xNode.get(), bNode.get()},
-      yNode.get());
+      yNode.get(), -1, 0);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
       std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()});
