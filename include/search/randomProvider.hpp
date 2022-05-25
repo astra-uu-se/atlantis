@@ -40,9 +40,7 @@ class RandomProvider {
     return std::uniform_real_distribution<float>(lowerBound, upperBound)(_gen);
   }
 
-  Int inDomain(const SetDomain& domain) {
-    return element(domain.constValues());
-  }
+  Int inDomain(const SetDomain& domain) { return element(domain.values()); }
 
   Int inDomain(const IntervalDomain& domain) {
     return intInRange(domain.lowerBound(), domain.upperBound());
