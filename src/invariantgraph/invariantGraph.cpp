@@ -370,8 +370,8 @@ invariantgraph::InvariantGraphApplyResult invariantgraph::InvariantGraph::apply(
   breakCycles();
   engine.open();
   createVariables(engine);
-  engine.computeBounds();
   createInvariants(engine);
+  engine.computeBounds();
   const VarId totalViolation = createViolations(engine);
   // If the model has no variable to optimise, use a dummy variable.
   VarId objectiveVarId = _objectiveVariable != nullptr
