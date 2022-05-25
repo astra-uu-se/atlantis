@@ -9,7 +9,8 @@
 class Engine;
 
 /**
- * output <- number of occurrences of _y in _variables
+ * Invariant for:
+ * output <- number of occurences of _y in _variables
  *
  */
 

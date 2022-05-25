@@ -1,13 +1,14 @@
-#include "constraints/countConst.hpp"
+#include "invariants/countConst.hpp"
 
 #include <utility>
 
 #include "core/engine.hpp"
 
-CountConst::CountConst(VarId violationId, Int y, std::vector<VarId> variables)
-    : Constraint(NULL_ID, violationId),
+CountConst::CountConst(Int y, std::vector<VarId> variables, VarId output)
+    : Invariant(NULL_ID),
       _y(y),
-      _variables(std::move(variables)) {
+      _variables(std::move(variables)),
+      _output(output) {
   _hasCountValue.reserve(_variables.size());
   _modifiedVars.reserve(_variables.size());
 }
@@ -20,11 +21,11 @@ void CountConst::registerVars(Engine& engine) {
   for (size_t i = 0; i < _variables.size(); ++i) {
     engine.registerInvariantInput(_id, _variables[i], i);
   }
-  registerDefinedVariable(engine, _violationId);
+  registerDefinedVariable(engine, _output);
 }
 
 void CountConst::updateBounds(Engine& engine, bool widenOnly) {
-  engine.updateBounds(_violationId, 0, _variables.size(), widenOnly);
+  engine.updateBounds(_output, 0, _variables.size(), widenOnly);
 }
 
 void CountConst::close(Timestamp ts, Engine& engine) {
@@ -44,7 +45,7 @@ void CountConst::recompute(Timestamp ts, Engine& engine) {
     _hasCountValue[i].setValue(
         ts, static_cast<Int>(engine.value(ts, _variables[i])) == _y);
   }
-  updateValue(ts, engine, _violationId, count);
+  updateValue(ts, engine, _output, count);
 }
 
 void CountConst::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
@@ -55,7 +56,7 @@ void CountConst::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
     return;
   }
   _hasCountValue[id].setValue(ts, newValue);
-  incValue(ts, engine, _violationId, newValue - oldValue);
+  incValue(ts, engine, _output, newValue - oldValue);
 }
 
 VarId CountConst::nextInput(Timestamp ts, Engine&) {
