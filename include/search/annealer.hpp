@@ -26,12 +26,13 @@ class Annealer {
   int _freezeCounter{0};
   int _ch{0};
   float _nc{_cutoff * static_cast<float>(_nb) * _chest};
-  
+
  public:
   Annealer(const Assignment& assignment, RandomProvider& random)
       : _assignment(assignment),
         _random(random),
         _nb{static_cast<int>(assignment.searchVariables().size())} {}
+  virtual ~Annealer() = default;
 
   [[nodiscard]] bool hasNextLocal() const { return _freezeCounter < 5; }
 
@@ -90,7 +91,8 @@ class Annealer {
 
   void applyAnnealingAction() { ++_ch; }
 
-  [[nodiscard]] bool accept(Int val) const {
+ protected:
+  [[nodiscard]] virtual bool accept(Int val) const {
     return std::exp(static_cast<float>(val) / _temperature) >=
            _random.floatInRange(0.0f, 1.0f);
   }
