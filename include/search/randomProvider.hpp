@@ -53,6 +53,11 @@ class RandomProvider {
                            domain.innerDomain());
     ;
   }
+
+  template <typename Value, typename Distribution>
+  Value fromDistribution(Distribution d) {
+    return d(_gen);
+  }
 };
 
 }  // namespace search
