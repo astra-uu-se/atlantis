@@ -4,6 +4,24 @@
 
 #include "utils/type.hpp"
 
+search::neighbourhoods::NeighbourhoodCombinator::NeighbourhoodCombinator(
+    std::vector<std::unique_ptr<Neighbourhood>> neighbourhoods)
+    : _neighbourhoods(std::move(neighbourhoods)) {
+  assert(!_neighbourhoods.empty());
+
+  std::vector<size_t> weights;
+  for (const auto& neighbourhood : _neighbourhoods) {
+    weights.push_back(neighbourhood->coveredVariables().size());
+
+    _variables.insert(_variables.end(),
+                      neighbourhood->coveredVariables().begin(),
+                      neighbourhood->coveredVariables().end());
+  }
+
+  _neighbourhoodDistribution =
+      std::discrete_distribution<size_t>{weights.begin(), weights.end()};
+}
+
 void search::neighbourhoods::NeighbourhoodCombinator::initialise(
     search::RandomProvider& random, search::AssignmentModifier& modifications) {
   for (const auto& neighbourhood : _neighbourhoods) {
@@ -14,8 +32,8 @@ void search::neighbourhoods::NeighbourhoodCombinator::initialise(
 bool search::neighbourhoods::NeighbourhoodCombinator::randomMove(
     search::RandomProvider& random, search::Assignment& assignment,
     search::Annealer& annealer) {
-  auto& neighbourhood = random.element(_neighbourhoods);
-  return neighbourhood->randomMove(random, assignment, annealer);
+  auto& neighbourhood = selectNeighbourhood(random);
+  return neighbourhood.randomMove(random, assignment, annealer);
 }
 
 void search::neighbourhoods::NeighbourhoodCombinator::printNeighbourhood(
@@ -25,4 +43,11 @@ void search::neighbourhoods::NeighbourhoodCombinator::printNeighbourhood(
         << " covers " << neighbourhood->coveredVariables().size()
         << " variables." << std::endl;
   }
+}
+
+search::neighbourhoods::Neighbourhood&
+search::neighbourhoods::NeighbourhoodCombinator::selectNeighbourhood(
+    RandomProvider& random) {
+  auto idx = random.fromDistribution<size_t>(_neighbourhoodDistribution);
+  return *_neighbourhoods[idx];
 }

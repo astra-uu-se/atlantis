@@ -11,7 +11,7 @@ class AllDifferentImplicitNodeTest : public NodeTestBase {
   INT_VARIABLE(d, 2, 7);
 
   fznparser::Constraint constraint{
-      "alldifferent",
+      "fzn_all_different_int",
       {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
       {}};
 

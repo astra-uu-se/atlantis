@@ -9,8 +9,8 @@ invariantgraph::AllDifferentNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
   assert(
-      (constraint.name == "alldifferent" && constraint.arguments.size() == 1) ||
-      (constraint.name == "alldifferent_reif" &&
+      (constraint.name == "fzn_all_different_int" && constraint.arguments.size() == 1) ||
+      (constraint.name == "fzn_all_different_int_reif" &&
        constraint.arguments.size() == 2));
 
   auto variables =
