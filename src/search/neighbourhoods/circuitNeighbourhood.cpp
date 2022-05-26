@@ -61,12 +61,14 @@ void search::neighbourhoods::CircuitNeighbourhood::initialise(
 
 static size_t determineNewNext(search::RandomProvider& random, size_t node,
                                size_t oldNext, size_t numVariables) {
+  assert(numVariables >= 3);
   // Based on https://stackoverflow.com/a/39631885.
   std::array<size_t, 2> excluded{std::min(node, oldNext),
                                  std::max(node, oldNext)};
-
+  // the range is between 0..numVariables-1
+  // excluded.size() = 2
   auto newNext = static_cast<size_t>(
-      random.intInRange(0, static_cast<Int>(numVariables - excluded.size())));
+      random.intInRange(0, static_cast<Int>(numVariables - 3)));
   for (const auto num : excluded) {
     if (newNext < num) {
       return newNext;
@@ -86,7 +88,8 @@ bool search::neighbourhoods::CircuitNeighbourhood::randomMove(
       getNodeIdx(assignment.value(_variables[nodeIdx].engineId()));
 
   auto newNextIdx =
-      determineNewNext(random, nodeIdx, oldNextIdx, _variables.size());
+      determineNewNext(random, nodeIdx, oldNextIdx, _variables.size() - 1);
+  assert(newNextIdx < _variables.size());
   auto kIdx = getNodeIdx(assignment.value(_variables[oldNextIdx].engineId()));
   auto lastIdx =
       getNodeIdx(assignment.value(_variables[newNextIdx].engineId()));
