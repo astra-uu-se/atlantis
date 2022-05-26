@@ -2,7 +2,7 @@
 
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/countGeqNode.hpp"
+#include "invariantgraph/constraints/countGtNode.hpp"
 
 static bool isSatisfied(const std::vector<Int>& values, const Int y,
                         const Int c) {
@@ -10,11 +10,11 @@ static bool isSatisfied(const std::vector<Int>& values, const Int y,
   for (const Int val : values) {
     count += static_cast<Int>(val == y);
   }
-  return c >= count;
+  return c > count;
 }
 
 template <bool YIsParameter, bool CIsParameter, ConstraintType Type>
-class AbstractCountGeqNodeTest : public NodeTestBase {
+class AbstractCountGtNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(x1, 5, 10);
   INT_VARIABLE(x2, 2, 7);
@@ -27,14 +27,14 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
 
   std::unique_ptr<fznparser::Constraint> constraint;
   std::unique_ptr<fznparser::FZNModel> model;
-  std::unique_ptr<invariantgraph::CountGeqNode> node;
+  std::unique_ptr<invariantgraph::CountGtNode> node;
 
   void SetUp() override {
     if constexpr (Type == ConstraintType::REIFIED) {
       if constexpr (YIsParameter) {
         if constexpr (CIsParameter) {
           fznparser::Constraint cnstr{
-              "fzn_count_geq_reif",
+              "fzn_count_gt_reif",
               {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                yParamVal, cParamVal, fznparser::Constraint::Argument{"r"}},
               {}};
@@ -48,7 +48,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
           model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
         } else {
           fznparser::Constraint cnstr{
-              "fzn_count_geq_reif",
+              "fzn_count_gt_reif",
               {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                yParamVal, fznparser::Constraint::Argument{"c"},
                fznparser::Constraint::Argument{"r"}},
@@ -65,7 +65,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
       } else {
         if constexpr (CIsParameter) {
           fznparser::Constraint cnstr{
-              "fzn_count_geq_reif",
+              "fzn_count_gt_reif",
               {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                fznparser::Constraint::Argument{"y"}, cParamVal,
                fznparser::Constraint::Argument{"r"}},
@@ -80,7 +80,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
           model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
         } else {
           fznparser::Constraint cnstr{
-              "fzn_count_geq_reif",
+              "fzn_count_gt_reif",
               {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                fznparser::Constraint::Argument{"y"},
                fznparser::Constraint::Argument{"c"},
@@ -102,7 +102,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
         if constexpr (YIsParameter) {
           if constexpr (CIsParameter) {
             fznparser::Constraint cnstr{
-                "fzn_count_geq",
+                "fzn_count_gt",
                 {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                  yParamVal, cParamVal},
                 {}};
@@ -114,7 +114,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
             model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
           } else {
             fznparser::Constraint cnstr{
-                "fzn_count_geq",
+                "fzn_count_gt",
                 {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                  yParamVal, fznparser::Constraint::Argument{"c"}},
                 {}};
@@ -128,7 +128,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
         } else {
           if constexpr (CIsParameter) {
             fznparser::Constraint cnstr{
-                "fzn_count_geq",
+                "fzn_count_gt",
                 {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                  fznparser::Constraint::Argument{"y"}, cParamVal},
                 {}};
@@ -140,7 +140,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
             model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
           } else {
             fznparser::Constraint cnstr{
-                "fzn_count_geq",
+                "fzn_count_gt",
                 {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                  fznparser::Constraint::Argument{"y"},
                  fznparser::Constraint::Argument{"c"}},
@@ -159,7 +159,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
           if constexpr (CIsParameter) {
             if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
               fznparser::Constraint cnstr{
-                  "fzn_count_geq_reif",
+                  "fzn_count_gt_reif",
                   {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                    yParamVal, cParamVal, false},
                   {}};
@@ -167,7 +167,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
                   std::make_unique<fznparser::Constraint>(std::move(cnstr));
             } else {
               fznparser::Constraint cnstr{
-                  "fzn_count_geq_reif",
+                  "fzn_count_gt_reif",
                   {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                    yParamVal, cParamVal, true},
                   {}};
@@ -181,7 +181,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
             // C is var
             if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
               fznparser::Constraint cnstr{
-                  "fzn_count_geq_reif",
+                  "fzn_count_gt_reif",
                   {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                    yParamVal, fznparser::Constraint::Argument{"c"}, false},
                   {}};
@@ -189,7 +189,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
                   std::make_unique<fznparser::Constraint>(std::move(cnstr));
             } else {
               fznparser::Constraint cnstr{
-                  "fzn_count_geq_reif",
+                  "fzn_count_gt_reif",
                   {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                    yParamVal, fznparser::Constraint::Argument{"c"}, true},
                   {}};
@@ -205,7 +205,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
           if constexpr (CIsParameter) {
             if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
               fznparser::Constraint cnstr{
-                  "fzn_count_geq_reif",
+                  "fzn_count_gt_reif",
                   {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                    fznparser::Constraint::Argument{"y"}, cParamVal, false},
                   {}};
@@ -213,7 +213,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
                   std::make_unique<fznparser::Constraint>(std::move(cnstr));
             } else {
               fznparser::Constraint cnstr{
-                  "fzn_count_geq_reif",
+                  "fzn_count_gt_reif",
                   {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                    fznparser::Constraint::Argument{"y"}, cParamVal, true},
                   {}};
@@ -227,7 +227,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
             // c is var
             if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
               fznparser::Constraint cnstr{
-                  "fzn_count_geq_reif",
+                  "fzn_count_gt_reif",
                   {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                    fznparser::Constraint::Argument{"y"},
                    fznparser::Constraint::Argument{"c"}, false},
@@ -236,7 +236,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
                   std::make_unique<fznparser::Constraint>(std::move(cnstr));
             } else {
               fznparser::Constraint cnstr{
-                  "fzn_count_geq_reif",
+                  "fzn_count_gt_reif",
                   {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                    fznparser::Constraint::Argument{"y"},
                    fznparser::Constraint::Argument{"c"}, true},
@@ -254,7 +254,7 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
 
     setModel(model.get());
 
-    node = makeNode<invariantgraph::CountGeqNode>(*constraint);
+    node = makeNode<invariantgraph::CountGtNode>(*constraint);
   }
 
   void construction() {
@@ -460,154 +460,154 @@ class AbstractCountGeqNodeTest : public NodeTestBase {
   }
 };
 
-class CountGeqNodeTest
-    : public AbstractCountGeqNodeTest<false, false, ConstraintType::NORMAL> {};
+class CountGtNodeTest
+    : public AbstractCountGtNodeTest<false, false, ConstraintType::NORMAL> {};
 
-TEST_F(CountGeqNodeTest, Construction) { construction(); }
+TEST_F(CountGtNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqNodeTest, Application) { application(); }
+TEST_F(CountGtNodeTest, Application) { application(); }
 
-TEST_F(CountGeqNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtNodeTest, Propagation) { propagation(); }
 
-class CountGeqReifNodeTest
-    : public AbstractCountGeqNodeTest<false, false, ConstraintType::REIFIED> {};
+class CountGtReifNodeTest
+    : public AbstractCountGtNodeTest<false, false, ConstraintType::REIFIED> {};
 
-TEST_F(CountGeqReifNodeTest, Construction) { construction(); }
+TEST_F(CountGtReifNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqReifNodeTest, Application) { application(); }
+TEST_F(CountGtReifNodeTest, Application) { application(); }
 
-TEST_F(CountGeqReifNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtReifNodeTest, Propagation) { propagation(); }
 
-class CountGeqFalseNodeTest
-    : public AbstractCountGeqNodeTest<false, false,
-                                      ConstraintType::CONSTANT_FALSE> {};
+class CountGtFalseNodeTest
+    : public AbstractCountGtNodeTest<false, false,
+                                     ConstraintType::CONSTANT_FALSE> {};
 
-TEST_F(CountGeqFalseNodeTest, Construction) { construction(); }
+TEST_F(CountGtFalseNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqFalseNodeTest, Application) { application(); }
+TEST_F(CountGtFalseNodeTest, Application) { application(); }
 
-TEST_F(CountGeqFalseNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtFalseNodeTest, Propagation) { propagation(); }
 
-class CountGeqTrueNodeTest
-    : public AbstractCountGeqNodeTest<false, false,
-                                      ConstraintType::CONSTANT_TRUE> {};
+class CountGtTrueNodeTest
+    : public AbstractCountGtNodeTest<false, false,
+                                     ConstraintType::CONSTANT_TRUE> {};
 
-TEST_F(CountGeqTrueNodeTest, Construction) { construction(); }
+TEST_F(CountGtTrueNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqTrueNodeTest, Application) { application(); }
+TEST_F(CountGtTrueNodeTest, Application) { application(); }
 
-TEST_F(CountGeqTrueNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtTrueNodeTest, Propagation) { propagation(); }
 
-class CountGeqYParNodeTest
-    : public AbstractCountGeqNodeTest<true, false, ConstraintType::NORMAL> {};
+class CountGtYParNodeTest
+    : public AbstractCountGtNodeTest<true, false, ConstraintType::NORMAL> {};
 
-TEST_F(CountGeqYParNodeTest, Construction) { construction(); }
+TEST_F(CountGtYParNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqYParNodeTest, Application) { application(); }
+TEST_F(CountGtYParNodeTest, Application) { application(); }
 
-TEST_F(CountGeqYParNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtYParNodeTest, Propagation) { propagation(); }
 
-class CountGeqYParReifNodeTest
-    : public AbstractCountGeqNodeTest<true, false, ConstraintType::REIFIED> {};
+class CountGtYParReifNodeTest
+    : public AbstractCountGtNodeTest<true, false, ConstraintType::REIFIED> {};
 
-TEST_F(CountGeqYParReifNodeTest, Construction) { construction(); }
+TEST_F(CountGtYParReifNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqYParReifNodeTest, Application) { application(); }
+TEST_F(CountGtYParReifNodeTest, Application) { application(); }
 
-TEST_F(CountGeqYParReifNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtYParReifNodeTest, Propagation) { propagation(); }
 
-class CountGeqYParFalseNodeTest
-    : public AbstractCountGeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_FALSE> {};
+class CountGtYParFalseNodeTest
+    : public AbstractCountGtNodeTest<true, false,
+                                     ConstraintType::CONSTANT_FALSE> {};
 
-TEST_F(CountGeqYParFalseNodeTest, Construction) { construction(); }
+TEST_F(CountGtYParFalseNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqYParFalseNodeTest, Application) { application(); }
+TEST_F(CountGtYParFalseNodeTest, Application) { application(); }
 
-TEST_F(CountGeqYParFalseNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtYParFalseNodeTest, Propagation) { propagation(); }
 
-class CountGeqYParTrueNodeTest
-    : public AbstractCountGeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_TRUE> {};
+class CountGtYParTrueNodeTest
+    : public AbstractCountGtNodeTest<true, false,
+                                     ConstraintType::CONSTANT_TRUE> {};
 
-TEST_F(CountGeqYParTrueNodeTest, Construction) { construction(); }
+TEST_F(CountGtYParTrueNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqYParTrueNodeTest, Application) { application(); }
+TEST_F(CountGtYParTrueNodeTest, Application) { application(); }
 
-TEST_F(CountGeqYParTrueNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtYParTrueNodeTest, Propagation) { propagation(); }
 
-class CountGeqCParNodeTest
-    : public AbstractCountGeqNodeTest<true, false, ConstraintType::NORMAL> {};
+class CountGtCParNodeTest
+    : public AbstractCountGtNodeTest<true, false, ConstraintType::NORMAL> {};
 
-TEST_F(CountGeqCParNodeTest, Construction) { construction(); }
+TEST_F(CountGtCParNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqCParNodeTest, Application) { application(); }
+TEST_F(CountGtCParNodeTest, Application) { application(); }
 
-TEST_F(CountGeqCParNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtCParNodeTest, Propagation) { propagation(); }
 
-class CountGeqCParReifNodeTest
-    : public AbstractCountGeqNodeTest<true, false, ConstraintType::REIFIED> {};
+class CountGtCParReifNodeTest
+    : public AbstractCountGtNodeTest<true, false, ConstraintType::REIFIED> {};
 
-TEST_F(CountGeqCParReifNodeTest, Construction) { construction(); }
+TEST_F(CountGtCParReifNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqCParReifNodeTest, Application) { application(); }
+TEST_F(CountGtCParReifNodeTest, Application) { application(); }
 
-TEST_F(CountGeqCParReifNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtCParReifNodeTest, Propagation) { propagation(); }
 
-class CountGeqCParFalseNodeTest
-    : public AbstractCountGeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_FALSE> {};
+class CountGtCParFalseNodeTest
+    : public AbstractCountGtNodeTest<true, false,
+                                     ConstraintType::CONSTANT_FALSE> {};
 
-TEST_F(CountGeqCParFalseNodeTest, Construction) { construction(); }
+TEST_F(CountGtCParFalseNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqCParFalseNodeTest, Application) { application(); }
+TEST_F(CountGtCParFalseNodeTest, Application) { application(); }
 
-TEST_F(CountGeqCParFalseNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtCParFalseNodeTest, Propagation) { propagation(); }
 
-class CountGeqCParTrueNodeTest
-    : public AbstractCountGeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_TRUE> {};
+class CountGtCParTrueNodeTest
+    : public AbstractCountGtNodeTest<true, false,
+                                     ConstraintType::CONSTANT_TRUE> {};
 
-TEST_F(CountGeqCParTrueNodeTest, Construction) { construction(); }
+TEST_F(CountGtCParTrueNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqCParTrueNodeTest, Application) { application(); }
+TEST_F(CountGtCParTrueNodeTest, Application) { application(); }
 
-TEST_F(CountGeqCParTrueNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtCParTrueNodeTest, Propagation) { propagation(); }
 
-class CountGeqYParCParNodeTest
-    : public AbstractCountGeqNodeTest<true, false, ConstraintType::NORMAL> {};
+class CountGtYParCParNodeTest
+    : public AbstractCountGtNodeTest<true, false, ConstraintType::NORMAL> {};
 
-TEST_F(CountGeqYParCParNodeTest, Construction) { construction(); }
+TEST_F(CountGtYParCParNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqYParCParNodeTest, Application) { application(); }
+TEST_F(CountGtYParCParNodeTest, Application) { application(); }
 
-TEST_F(CountGeqYParCParNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtYParCParNodeTest, Propagation) { propagation(); }
 
-class CountGeqYParCParReifNodeTest
-    : public AbstractCountGeqNodeTest<true, false, ConstraintType::REIFIED> {};
+class CountGtYParCParReifNodeTest
+    : public AbstractCountGtNodeTest<true, false, ConstraintType::REIFIED> {};
 
-TEST_F(CountGeqYParCParReifNodeTest, Construction) { construction(); }
+TEST_F(CountGtYParCParReifNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqYParCParReifNodeTest, Application) { application(); }
+TEST_F(CountGtYParCParReifNodeTest, Application) { application(); }
 
-TEST_F(CountGeqYParCParReifNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtYParCParReifNodeTest, Propagation) { propagation(); }
 
-class CountGeqYParCParFalseNodeTest
-    : public AbstractCountGeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_FALSE> {};
+class CountGtYParCParFalseNodeTest
+    : public AbstractCountGtNodeTest<true, false,
+                                     ConstraintType::CONSTANT_FALSE> {};
 
-TEST_F(CountGeqYParCParFalseNodeTest, Construction) { construction(); }
+TEST_F(CountGtYParCParFalseNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqYParCParFalseNodeTest, Application) { application(); }
+TEST_F(CountGtYParCParFalseNodeTest, Application) { application(); }
 
-TEST_F(CountGeqYParCParFalseNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtYParCParFalseNodeTest, Propagation) { propagation(); }
 
-class CountGeqYParCParTrueNodeTest
-    : public AbstractCountGeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_TRUE> {};
+class CountGtYParCParTrueNodeTest
+    : public AbstractCountGtNodeTest<true, false,
+                                     ConstraintType::CONSTANT_TRUE> {};
 
-TEST_F(CountGeqYParCParTrueNodeTest, Construction) { construction(); }
+TEST_F(CountGtYParCParTrueNodeTest, Construction) { construction(); }
 
-TEST_F(CountGeqYParCParTrueNodeTest, Application) { application(); }
+TEST_F(CountGtYParCParTrueNodeTest, Application) { application(); }
 
-TEST_F(CountGeqYParCParTrueNodeTest, Propagation) { propagation(); }
+TEST_F(CountGtYParCParTrueNodeTest, Propagation) { propagation(); }

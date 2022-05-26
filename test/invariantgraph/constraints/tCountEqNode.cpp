@@ -4,7 +4,7 @@
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/constraints/countEqNode.hpp"
 
-static Int computeOutput(const Int y, const std::vector<Int>& values) {
+static Int computeOutput(const std::vector<Int>& values, const Int y) {
   Int count = 0;
   for (const Int val : values) {
     count += static_cast<Int>(val == y);
@@ -12,9 +12,9 @@ static Int computeOutput(const Int y, const std::vector<Int>& values) {
   return count;
 }
 
-static bool isViolating(const Int y, const std::vector<Int>& values,
+static bool isViolating(const std::vector<Int>& values, const Int y,
                         const Int c) {
-  return computeOutput(y, values) != c;
+  return computeOutput(values, y) != c;
 }
 
 template <bool YIsParameter, ConstraintType Type>
@@ -37,7 +37,7 @@ class AbstractCountEqNodeTest : public NodeTestBase {
     if constexpr (Type == ConstraintType::REIFIED) {
       if constexpr (YIsParameter) {
         fznparser::Constraint cnstr{
-            "count_eq_reif",
+            "fzn_count_eq_reif",
             {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"}, yParamVal,
              cParamVal, fznparser::Constraint::Argument{"r"}},
             {}};
@@ -49,8 +49,9 @@ class AbstractCountEqNodeTest : public NodeTestBase {
 
         model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
       } else {
+        // y is var
         fznparser::Constraint cnstr{
-            "count_eq_reif",
+            "fzn_count_eq_reif",
             {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
              fznparser::Constraint::Argument{"y"}, cParamVal,
              fznparser::Constraint::Argument{"r"}},
@@ -68,7 +69,7 @@ class AbstractCountEqNodeTest : public NodeTestBase {
       if constexpr (Type == ConstraintType::NORMAL) {
         if constexpr (YIsParameter) {
           fznparser::Constraint cnstr{
-              "count_eq",
+              "fzn_count_eq",
               {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                yParamVal, fznparser::Constraint::Argument{"c"}},
               {}};
@@ -80,7 +81,7 @@ class AbstractCountEqNodeTest : public NodeTestBase {
           model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
         } else {
           fznparser::Constraint cnstr{
-              "count_eq",
+              "fzn_count_eq",
               {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                fznparser::Constraint::Argument{"y"},
                fznparser::Constraint::Argument{"c"}},
@@ -97,7 +98,7 @@ class AbstractCountEqNodeTest : public NodeTestBase {
         if constexpr (YIsParameter) {
           if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
             fznparser::Constraint cnstr{
-                "count_eq_reif",
+                "fzn_count_eq_reif",
                 {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                  yParamVal, cParamVal, false},
                 {}};
@@ -105,7 +106,7 @@ class AbstractCountEqNodeTest : public NodeTestBase {
                 std::make_unique<fznparser::Constraint>(std::move(cnstr));
           } else {
             fznparser::Constraint cnstr{
-                "count_eq_reif",
+                "fzn_count_eq_reif",
                 {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                  yParamVal, cParamVal, true},
                 {}};
@@ -118,7 +119,7 @@ class AbstractCountEqNodeTest : public NodeTestBase {
         } else {
           if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
             fznparser::Constraint cnstr{
-                "count_eq_reif",
+                "fzn_count_eq_reif",
                 {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                  fznparser::Constraint::Argument{"y"}, cParamVal, false},
                 {}};
@@ -126,7 +127,7 @@ class AbstractCountEqNodeTest : public NodeTestBase {
                 std::make_unique<fznparser::Constraint>(std::move(cnstr));
           } else {
             fznparser::Constraint cnstr{
-                "count_eq_reif",
+                "fzn_count_eq_reif",
                 {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
                  fznparser::Constraint::Argument{"y"}, cParamVal, true},
                 {}};
@@ -308,15 +309,15 @@ class AbstractCountEqNodeTest : public NodeTestBase {
 
             if (outputId != NULL_ID) {
               EXPECT_EQ(engine.currentValue(outputId),
-                        computeOutput(yVal, values));
+                        computeOutput(values, yVal));
             }
             if (violationId != NULL_ID) {
               if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
                 EXPECT_EQ(engine.currentValue(violationId) > 0,
-                          isViolating(yVal, values, cParamVal));
+                          isViolating(values, yVal, cParamVal));
               } else {
                 EXPECT_NE(engine.currentValue(violationId) > 0,
-                          isViolating(yVal, values, cParamVal));
+                          isViolating(values, yVal, cParamVal));
               }
             }
           }
@@ -362,38 +363,38 @@ TEST_F(CountEqTrueNodeTest, Application) { application(); }
 
 TEST_F(CountEqTrueNodeTest, Propagation) { propagation(); }
 
-class CountEqConstYNodeTest
+class CountEqYParNodeTest
     : public AbstractCountEqNodeTest<true, ConstraintType::NORMAL> {};
 
-TEST_F(CountEqConstYNodeTest, Construction) { construction(); }
+TEST_F(CountEqYParNodeTest, Construction) { construction(); }
 
-TEST_F(CountEqConstYNodeTest, Application) { application(); }
+TEST_F(CountEqYParNodeTest, Application) { application(); }
 
-TEST_F(CountEqConstYNodeTest, Propagation) { propagation(); }
+TEST_F(CountEqYParNodeTest, Propagation) { propagation(); }
 
-class CountEqConstYReifNodeTest
+class CountEqYParReifNodeTest
     : public AbstractCountEqNodeTest<true, ConstraintType::REIFIED> {};
 
-TEST_F(CountEqConstYReifNodeTest, Construction) { construction(); }
+TEST_F(CountEqYParReifNodeTest, Construction) { construction(); }
 
-TEST_F(CountEqConstYReifNodeTest, Application) { application(); }
+TEST_F(CountEqYParReifNodeTest, Application) { application(); }
 
-TEST_F(CountEqConstYReifNodeTest, Propagation) { propagation(); }
+TEST_F(CountEqYParReifNodeTest, Propagation) { propagation(); }
 
-class CountEqConstYFalseNodeTest
+class CountEqYParFalseNodeTest
     : public AbstractCountEqNodeTest<true, ConstraintType::CONSTANT_FALSE> {};
 
-TEST_F(CountEqConstYFalseNodeTest, Construction) { construction(); }
+TEST_F(CountEqYParFalseNodeTest, Construction) { construction(); }
 
-TEST_F(CountEqConstYFalseNodeTest, Application) { application(); }
+TEST_F(CountEqYParFalseNodeTest, Application) { application(); }
 
-TEST_F(CountEqConstYFalseNodeTest, Propagation) { propagation(); }
+TEST_F(CountEqYParFalseNodeTest, Propagation) { propagation(); }
 
-class CountEqConstYTrueNodeTest
+class CountEqYParTrueNodeTest
     : public AbstractCountEqNodeTest<true, ConstraintType::CONSTANT_TRUE> {};
 
-TEST_F(CountEqConstYTrueNodeTest, Construction) { construction(); }
+TEST_F(CountEqYParTrueNodeTest, Construction) { construction(); }
 
-TEST_F(CountEqConstYTrueNodeTest, Application) { application(); }
+TEST_F(CountEqYParTrueNodeTest, Application) { application(); }
 
-TEST_F(CountEqConstYTrueNodeTest, Propagation) { propagation(); }
+TEST_F(CountEqYParTrueNodeTest, Propagation) { propagation(); }

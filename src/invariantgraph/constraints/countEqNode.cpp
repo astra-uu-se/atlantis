@@ -11,8 +11,9 @@ invariantgraph::CountEqNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
   assert(
-      (constraint.name == "count_eq" && constraint.arguments.size() == 3) ||
-      (constraint.name == "count_eq_reif" && constraint.arguments.size() == 4));
+      (constraint.name == "fzn_count_eq" && constraint.arguments.size() == 3) ||
+      (constraint.name == "fzn_count_eq_reif" &&
+       constraint.arguments.size() == 4));
 
   auto x = mappedVariableVector(model, constraint.arguments[0], variableMap);
 

@@ -1,14 +1,14 @@
-#include "invariantgraph/constraints/countGeqNode.hpp"
+#include "invariantgraph/constraints/countLeqNode.hpp"
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::CountGeqNode>
-invariantgraph::CountGeqNode::fromModelConstraint(
+std::unique_ptr<invariantgraph::CountLeqNode>
+invariantgraph::CountLeqNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert((constraint.name == "fzn_count_geq" &&
+  assert((constraint.name == "fzn_count_leq" &&
           constraint.arguments.size() == 3) ||
-         (constraint.name == "fzn_count_geq_reif" &&
+         (constraint.name == "fzn_count_leq_reif" &&
           constraint.arguments.size() == 4));
 
   auto x = mappedVariableVector(model, constraint.arguments[0], variableMap);
@@ -41,47 +41,47 @@ invariantgraph::CountGeqNode::fromModelConstraint(
   if (yIsParameter) {
     if (cIsParameter) {
       if (r != nullptr) {
-        return std::make_unique<CountGeqNode>(x, yParameter, cParameter, r);
+        return std::make_unique<CountLeqNode>(x, yParameter, cParameter, r);
       }
-      return std::make_unique<CountGeqNode>(x, yParameter, cParameter,
+      return std::make_unique<CountLeqNode>(x, yParameter, cParameter,
                                             shouldHold);
     }
     if (r != nullptr) {
-      return std::make_unique<CountGeqNode>(x, yParameter, cVarNode, r);
+      return std::make_unique<CountLeqNode>(x, yParameter, cVarNode, r);
     }
-    return std::make_unique<CountGeqNode>(x, yParameter, cVarNode, shouldHold);
+    return std::make_unique<CountLeqNode>(x, yParameter, cVarNode, shouldHold);
   }
   if (cIsParameter) {
     if (r != nullptr) {
-      return std::make_unique<CountGeqNode>(x, yVarNode, cParameter, r);
+      return std::make_unique<CountLeqNode>(x, yVarNode, cParameter, r);
     }
-    return std::make_unique<CountGeqNode>(x, yVarNode, cParameter, shouldHold);
+    return std::make_unique<CountLeqNode>(x, yVarNode, cParameter, shouldHold);
   }
   if (r != nullptr) {
-    return std::make_unique<CountGeqNode>(x, yVarNode, cVarNode, r);
+    return std::make_unique<CountLeqNode>(x, yVarNode, cVarNode, r);
   }
-  return std::make_unique<CountGeqNode>(x, yVarNode, cVarNode, shouldHold);
+  return std::make_unique<CountLeqNode>(x, yVarNode, cVarNode, shouldHold);
 }
 
-void invariantgraph::CountGeqNode::createDefinedVariables(Engine& engine) {
+void invariantgraph::CountLeqNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     _intermediate = engine.makeIntVar(0, 0, 0);
     if (!_cIsParameter) {
       registerViolation(engine);
     } else {
       if (shouldHold()) {
-        setViolationVarId(engine.makeIntView<GreaterThanView>(_intermediate,
-                                                              _cParameter - 1));
+        setViolationVarId(
+            engine.makeIntView<LessEqualView>(_intermediate, _cParameter));
       } else {
         assert(!isReified());
         setViolationVarId(
-            engine.makeIntView<LessEqualView>(_intermediate, _cParameter + 1));
+            engine.makeIntView<GreaterThanView>(_intermediate, _cParameter));
       }
     }
   }
 }
 
-void invariantgraph::CountGeqNode::registerWithEngine(Engine& engine) {
+void invariantgraph::CountLeqNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> engineInputs;
   assert(staticInputs().size() >= static_cast<size_t>(!_yIsParameter) +
                                       static_cast<size_t>(!_cIsParameter));
@@ -111,12 +111,12 @@ void invariantgraph::CountGeqNode::registerWithEngine(Engine& engine) {
     assert(cVarNode() != nullptr);
     assert(cVarNode()->varId() != NULL_ID);
     if (shouldHold()) {
-      // c >= count(x, y) -> count(x, y) <= c
-      engine.makeInvariant<LessEqual>(violationVarId(), _intermediate,
-                                      cVarNode()->varId());
+      engine.makeInvariant<LessEqual>(violationVarId(), cVarNode()->varId(),
+                                      _intermediate);
     } else {
-      engine.makeInvariant<LessThan>(violationVarId(), cVarNode()->varId(),
-                                     _intermediate);
+      // c > count(x, y) -> count(x, y) < c
+      engine.makeInvariant<LessThan>(violationVarId(), _intermediate,
+                                     cVarNode()->varId());
     }
   }
 }

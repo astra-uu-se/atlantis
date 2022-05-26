@@ -70,6 +70,12 @@ class CountEqNode : public SoftConstraintNode {
                        Int cParameter, bool shouldHold)
       : CountEqNode(x, nullptr, yParameter, nullptr, cParameter, shouldHold) {}
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"fzn_count_eq", 3}, {"fzn_count_eq_reif", 4}};
+  }
+
   static std::unique_ptr<CountEqNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);

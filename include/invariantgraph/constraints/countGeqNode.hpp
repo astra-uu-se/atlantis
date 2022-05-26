@@ -46,9 +46,7 @@ class CountGeqNode : public SoftConstraintNode {
   explicit CountGeqNode(std::vector<VariableNode*> x, VariableNode* y,
                         Int yParameter, VariableNode* c, Int cParameter,
                         bool shouldHold)
-      : SoftConstraintNode(c == nullptr ? std::vector<VariableNode*>{}
-                                        : std::vector<VariableNode*>{c},
-                           append(x, y, c), shouldHold),
+      : SoftConstraintNode(append(x, y, c), shouldHold),
         _yIsParameter(y == nullptr),
         _yParameter(yParameter),
         _cIsParameter(c == nullptr),
@@ -87,6 +85,12 @@ class CountGeqNode : public SoftConstraintNode {
                         Int cParameter, bool shouldHold)
       : CountGeqNode(x, nullptr, yParameter, nullptr, cParameter, shouldHold) {}
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"fzn_count_geq", 3}, {"fzn_count_geq_reif", 4}};
+  }
+
   static std::unique_ptr<CountGeqNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
@@ -95,21 +99,15 @@ class CountGeqNode : public SoftConstraintNode {
 
   void registerWithEngine(Engine& engine) override;
 
-  VariableNode* yVarNode() {
-    if (_yIsParameter) {
-      return nullptr;
-    }
-    if (_cIsParameter) {
-      return staticInputs().at(staticInputs().size() - 2);
-    }
-    return staticInputs().back();
+  [[nodiscard]] VariableNode* yVarNode() const {
+    return _yIsParameter
+               ? nullptr
+               : staticInputs().at(staticInputs().size() -
+                                   (1 + static_cast<size_t>(!_cIsParameter)));
   }
 
-  VariableNode* cVarNode() {
-    if (_cIsParameter) {
-      return nullptr;
-    }
-    return staticInputs().back();
+  [[nodiscard]] VariableNode* cVarNode() const {
+    return _cIsParameter ? nullptr : staticInputs().back();
   }
 };
 }  // namespace invariantgraph
