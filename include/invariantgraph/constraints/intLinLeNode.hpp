@@ -30,6 +30,12 @@ class IntLinLeNode : public SoftConstraintNode {
         _coeffs(std::move(coeffs)),
         _bound(bound) {}
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"int_lin_le", 3}, {"int_lin_le_reif", 4}};
+  }
+
   static std::unique_ptr<IntLinLeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);

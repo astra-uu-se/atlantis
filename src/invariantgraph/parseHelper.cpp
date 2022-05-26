@@ -226,7 +226,8 @@ std::vector<Int> boolVectorAsIntVector(
   return ints;
 }
 
-bool booleanValue(const FZNModel &model, const FZNConstraint::Argument &argument) {
+bool booleanValue(const FZNModel &model,
+                  const FZNConstraint::Argument &argument) {
   return std::visit<bool>(
       overloaded{[](bool value) { return value; },
                  [&](const Identifier &identifier) {
@@ -237,4 +238,15 @@ bool booleanValue(const FZNModel &model, const FZNConstraint::Argument &argument
                  DEFAULT_EMPTY_VARIANT_BRANCH(
                      Int, "Invalid variant for boolean value.")},
       argument);
+}
+
+bool hasCorrectSignature(
+    const std::vector<std::pair<std::string_view, size_t>> &nameNumArgPairs,
+    const fznparser::Constraint &constraint) {
+  for (const auto &[name, numArgs] : nameNumArgPairs) {
+    if (name == constraint.name && numArgs == constraint.arguments.size()) {
+      return true;
+    }
+  }
+  return false;
 }

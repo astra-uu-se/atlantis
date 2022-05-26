@@ -6,8 +6,7 @@ std::unique_ptr<invariantgraph::ArrayIntElementNode>
 invariantgraph::ArrayBoolElementNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(constraint.name == "array_bool_element");
-  assert(constraint.arguments.size() == 3);
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto b = mappedVariable(constraint.arguments[0], variableMap);
   auto as = boolVectorAsIntVector(model, constraint.arguments[1]);

@@ -8,10 +8,6 @@
 namespace invariantgraph {
 class ArrayIntMinimumNode : public VariableDefiningNode {
  public:
-  static std::unique_ptr<ArrayIntMinimumNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
-
   ArrayIntMinimumNode(std::vector<VariableNode*> variables,
                       VariableNode* output)
       : VariableDefiningNode({output}, variables) {
@@ -23,6 +19,16 @@ class ArrayIntMinimumNode : public VariableDefiningNode {
   }
 
   ~ArrayIntMinimumNode() override = default;
+
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"array_int_minimum", 2}};
+  }
+
+  static std::unique_ptr<ArrayIntMinimumNode> fromModelConstraint(
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   void createDefinedVariables(Engine& engine) override;
 

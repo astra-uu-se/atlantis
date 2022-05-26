@@ -16,6 +16,12 @@ class IntLtNode : public SoftConstraintNode {
   IntLtNode(VariableNode* a, VariableNode* b, bool shouldHold)
       : SoftConstraintNode({a, b}, shouldHold) {}
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{{"int_lt", 2},
+                                                            {"int_lt_reif", 3}};
+  }
+
   static std::unique_ptr<IntLtNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);

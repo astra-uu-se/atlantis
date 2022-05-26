@@ -6,11 +6,7 @@ std::unique_ptr<invariantgraph::BoolXorNode>
 invariantgraph::BoolXorNode::fromModelConstraint(
     const fznparser::FZNModel&, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(
-      ((constraint.name == "bool_xor" || constraint.name == "bool_not") &&
-       constraint.arguments.size() == 2) ||
-      ((constraint.name == "bool_xor" || constraint.name == "bool_not_reif") &&
-       constraint.arguments.size() == 3));
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto a = mappedVariable(constraint.arguments[0], variableMap);
   auto b = mappedVariable(constraint.arguments[1], variableMap);

@@ -40,6 +40,12 @@ class BoolClauseNode : public SoftConstraintNode {
         _as(std::move(as)),
         _bs(std::move(bs)) {}
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"bool_clause", 2}, {"bool_clause_reif", 3}};
+  }
+
   static std::unique_ptr<BoolClauseNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);

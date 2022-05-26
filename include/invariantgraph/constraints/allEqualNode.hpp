@@ -20,6 +20,12 @@ class AllEqualNode : public SoftConstraintNode {
                         bool shouldHold = true)
       : SoftConstraintNode(variables, shouldHold) {}
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"fzn_all_equal_int", 1}, {"fzn_all_equal_int_reif", 2}};
+  }
+
   static std::unique_ptr<AllEqualNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);

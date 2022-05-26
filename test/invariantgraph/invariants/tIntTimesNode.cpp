@@ -18,8 +18,8 @@ class IntTimesNodeTest : public NodeTestBase {
 
   void SetUp() override {
     setModel(&model);
-    node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntTimesNode>(*_model, constraint, nodeFactory);
+    node = invariantgraph::IntTimesNode::fromModelConstraint(
+        *_model, constraint, nodeFactory);
   }
 };
 

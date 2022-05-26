@@ -6,10 +6,7 @@ std::unique_ptr<invariantgraph::BoolClauseNode>
 invariantgraph::BoolClauseNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(
-      (constraint.name == "bool_clause" && constraint.arguments.size() == 2) ||
-      (constraint.name == "bool_clause_reif" &&
-       constraint.arguments.size() == 3));
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   std::vector<invariantgraph::VariableNode*> as =
       mappedVariableVector(model, constraint.arguments[0], variableMap);

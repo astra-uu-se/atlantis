@@ -8,10 +8,6 @@ namespace invariantgraph {
 
 class ArrayVarIntElementNode : public VariableDefiningNode {
  public:
-  static std::unique_ptr<ArrayVarIntElementNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
-
   ArrayVarIntElementNode(VariableNode* b, std::vector<VariableNode*> as,
                          VariableNode* output)
       : VariableDefiningNode({output}, {b}, {as}) {
@@ -22,6 +18,16 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
     }
 #endif
   }
+
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"array_var_int_element", 3}};
+  }
+
+  static std::unique_ptr<ArrayVarIntElementNode> fromModelConstraint(
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   void createDefinedVariables(Engine& engine) override;
 

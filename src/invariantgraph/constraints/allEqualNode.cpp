@@ -7,9 +7,7 @@ std::unique_ptr<invariantgraph::AllEqualNode>
 invariantgraph::AllEqualNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert((constraint.name == "all_equal" && constraint.arguments.size() == 1) ||
-         (constraint.name == "all_equal_reif" &&
-          constraint.arguments.size() == 2));
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto variables =
       mappedVariableVector(model, constraint.arguments[0], variableMap);

@@ -11,8 +11,7 @@ static bool isViolating(const std::vector<Int>& coeffs,
   return sum != expected;
 }
 
-template <ConstraintType Type>
-class AbstractBoolLinEqNodeTest : public NodeTestBase {
+class BoolLinEqNodeTest : public NodeTestBase {
  public:
   BOOL_VARIABLE(a);
   BOOL_VARIABLE(b);
@@ -26,51 +25,16 @@ class AbstractBoolLinEqNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::BoolLinEqNode> node;
 
   void SetUp() override {
-    if constexpr (Type == ConstraintType::REIFIED) {
-      fznparser::Constraint cnstr{
-          "bool_lin_eq_reif",
-          {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-           fznparser::Constraint::ArrayArgument{"a", "b"}, sum,
-           fznparser::Constraint::Argument{"r"}},
-          {}};
+    fznparser::Constraint cnstr{
+        "bool_lin_eq",
+        {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
+         fznparser::Constraint::ArrayArgument{"a", "b"}, sum},
+        {}};
 
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+    constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+    fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
 
-      fznparser::FZNModel mdl{
-          {}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-    } else {
-      if constexpr (Type == ConstraintType::NORMAL) {
-        fznparser::Constraint cnstr{
-            "bool_lin_eq",
-            {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-             fznparser::Constraint::ArrayArgument{"a", "b"}, sum},
-            {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-      } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-        fznparser::Constraint cnstr{
-            "bool_lin_eq_reif",
-            {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-             fznparser::Constraint::ArrayArgument{"a", "b"}, sum, false},
-            {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-      } else {
-        fznparser::Constraint cnstr{
-            "bool_lin_eq_reif",
-            {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-             fznparser::Constraint::ArrayArgument{"a", "b"}, sum, true},
-            {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-      }
-
-      fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-    }
+    model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
 
     setModel(model.get());
     node = makeNode<invariantgraph::BoolLinEqNode>(*constraint);
@@ -86,15 +50,10 @@ class AbstractBoolLinEqNodeTest : public NodeTestBase {
     EXPECT_EQ(node->coeffs()[0], 1);
     EXPECT_EQ(node->coeffs()[1], 2);
     EXPECT_EQ(node->c(), 3);
-    if constexpr (Type != ConstraintType::REIFIED) {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
-    } else {
-      EXPECT_TRUE(node->isReified());
-      EXPECT_NE(node->reifiedViolation(), nullptr);
-      EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VariableNode::FZNVariable(r));
-    }
+    EXPECT_TRUE(node->isReified());
+    EXPECT_NE(node->reifiedViolation(), nullptr);
+    EXPECT_EQ(node->reifiedViolation()->variable(),
+              invariantgraph::VariableNode::FZNVariable(r));
   }
 
   void application() {
@@ -161,48 +120,14 @@ class AbstractBoolLinEqNodeTest : public NodeTestBase {
 
         const Int viol = engine.currentValue(violationId);
 
-        if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
-          EXPECT_EQ(viol != 0, isViolating(coeffs, values, sum));
-        } else {
-          EXPECT_NE(viol != 0, isViolating(coeffs, values, sum));
-        }
+        EXPECT_EQ(viol != 0, isViolating(coeffs, values, sum));
       }
     }
   }
 };
-
-class BoolLinEqNodeTest
-    : public AbstractBoolLinEqNodeTest<ConstraintType::NORMAL> {};
 
 TEST_F(BoolLinEqNodeTest, Construction) {}
 
 TEST_F(BoolLinEqNodeTest, Application) {}
 
 TEST_F(BoolLinEqNodeTest, Propagation) {}
-
-class BoolLinEqReifNodeTest
-    : public AbstractBoolLinEqNodeTest<ConstraintType::REIFIED> {};
-
-TEST_F(BoolLinEqReifNodeTest, Construction) {}
-
-TEST_F(BoolLinEqReifNodeTest, Application) {}
-
-TEST_F(BoolLinEqReifNodeTest, Propagation) {}
-
-class BoolLinEqFalseNodeTest
-    : public AbstractBoolLinEqNodeTest<ConstraintType::CONSTANT_FALSE> {};
-
-TEST_F(BoolLinEqFalseNodeTest, Construction) { construction(); }
-
-TEST_F(BoolLinEqFalseNodeTest, Application) { application(); }
-
-TEST_F(BoolLinEqFalseNodeTest, Propagation) { propagation(); }
-
-class BoolLinEqTrueNodeTest
-    : public AbstractBoolLinEqNodeTest<ConstraintType::CONSTANT_TRUE> {};
-
-TEST_F(BoolLinEqTrueNodeTest, Construction) { construction(); }
-
-TEST_F(BoolLinEqTrueNodeTest, Application) { application(); }
-
-TEST_F(BoolLinEqTrueNodeTest, Propagation) { propagation(); }

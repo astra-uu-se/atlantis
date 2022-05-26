@@ -20,6 +20,12 @@ class IntNeNode : public SoftConstraintNode {
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{{"int_ne", 2},
+                                                            {"int_ne_reif", 3}};
+  }
+
   void createDefinedVariables(Engine& engine) override;
 
   void registerWithEngine(Engine& engine) override;

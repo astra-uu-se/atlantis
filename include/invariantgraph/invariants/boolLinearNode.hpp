@@ -13,10 +13,6 @@ class BoolLinearNode : public VariableDefiningNode {
   VarId _intermediateVarId{NULL_ID};
 
  public:
-  static std::unique_ptr<BoolLinearNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
-
   BoolLinearNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
                  VariableNode* output, Int definingCoefficient, Int sum)
       : VariableDefiningNode({output}, std::move(variables)),
@@ -31,6 +27,15 @@ class BoolLinearNode : public VariableDefiningNode {
   }
 
   ~BoolLinearNode() override = default;
+
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{{"bool_lin_eq", 3}};
+  }
+
+  static std::unique_ptr<BoolLinearNode> fromModelConstraint(
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   void createDefinedVariables(Engine& engine) override;
 
