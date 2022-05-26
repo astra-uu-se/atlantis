@@ -11,10 +11,6 @@ class ArrayIntElementNode : public VariableDefiningNode {
   std::vector<Int> _as;
 
  public:
-  static std::unique_ptr<ArrayIntElementNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
-
   ArrayIntElementNode(std::vector<Int> as, VariableNode* b,
                       VariableNode* output)
       : VariableDefiningNode({output}, {b}), _as(std::move(as)) {
@@ -24,6 +20,16 @@ class ArrayIntElementNode : public VariableDefiningNode {
     }
 #endif
   }
+
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"array_int_element", 3}};
+  }
+
+  static std::unique_ptr<ArrayIntElementNode> fromModelConstraint(
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   void createDefinedVariables(Engine& engine) override;
 

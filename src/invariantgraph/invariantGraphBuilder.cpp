@@ -32,7 +32,6 @@
 #include "invariantgraph/invariants/arrayIntMinimumNode.hpp"
 #include "invariantgraph/invariants/arrayVarBoolElementNode.hpp"
 #include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
-#include "invariantgraph/invariants/binaryOpNode.hpp"
 #include "invariantgraph/invariants/boolLinearNode.hpp"
 #include "invariantgraph/invariants/intDivNode.hpp"
 #include "invariantgraph/invariants/intLinearNode.hpp"
@@ -227,54 +226,51 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
     bool guessDefinedVariable) {
   std::string_view name = constraint.name;
 
-#define NODE_REGISTRATION(nameStr, nodeType)            \
-  if (name == nameStr)                                  \
-  return invariantgraph::nodeType::fromModelConstraint( \
-      model, constraint,                                \
-      [&](const auto& argument) { return nodeFactory(model, argument); })
-
-#define BINARY_OP_REGISTRATION(nodeType)                                       \
-  if (name == invariantgraph::nodeType::constraint_name())                     \
-  return invariantgraph::BinaryOpNode::fromModelConstraint<                    \
-      invariantgraph::nodeType>(model, constraint, [&](const auto& argument) { \
-    return nodeFactory(model, argument);                                       \
-  })
+#define NODE_REGISTRATION(nodeType)                                            \
+  for (const auto& [nameStr, numArgs] :                                        \
+       invariantgraph::nodeType::acceptedNameNumArgPairs()) {                  \
+    if (name == nameStr && constraint.arguments.size() == numArgs) {           \
+      return invariantgraph::nodeType::fromModelConstraint(                    \
+          model, constraint,                                                   \
+          [&](const auto& argument) { return nodeFactory(model, argument); }); \
+    }                                                                          \
+  }
 
   if (!guessDefinedVariable) {
     // For the linear node, we need to know up front what variable is defined.
-    NODE_REGISTRATION("int_lin_eq", IntLinearNode);
-    NODE_REGISTRATION("bool_lin_eq", BoolLinearNode);
+    NODE_REGISTRATION(IntLinearNode);
+    NODE_REGISTRATION(BoolLinearNode);
   }
 
-  BINARY_OP_REGISTRATION(IntDivNode);
-  BINARY_OP_REGISTRATION(IntMaxNode);
-  BINARY_OP_REGISTRATION(IntMinNode);
-  BINARY_OP_REGISTRATION(IntModNode);
-  BINARY_OP_REGISTRATION(IntPlusNode);
-  BINARY_OP_REGISTRATION(IntPowNode);
-  BINARY_OP_REGISTRATION(IntTimesNode);
-  NODE_REGISTRATION("array_bool_and", ArrayBoolAndNode);
-  NODE_REGISTRATION("array_bool_element", ArrayBoolElementNode);
-  NODE_REGISTRATION("array_bool_or", ArrayBoolOrNode);
-  NODE_REGISTRATION("array_int_element", ArrayIntElementNode);
-  NODE_REGISTRATION("array_int_maximum", ArrayIntMaximumNode);
-  NODE_REGISTRATION("array_int_minimum", ArrayIntMinimumNode);
-  NODE_REGISTRATION("array_var_bool_element", ArrayVarBoolElementNode);
-  NODE_REGISTRATION("array_var_int_element", ArrayVarIntElementNode);
-  NODE_REGISTRATION("bool2int", Bool2IntNode);
-  NODE_REGISTRATION("bool_eq_reif", BoolEqNode);
-  NODE_REGISTRATION("bool_le_reif", BoolLeNode);
-  NODE_REGISTRATION("bool_lt_reif", BoolLtNode);
-  NODE_REGISTRATION("bool_xor", BoolXorNode);
-  NODE_REGISTRATION("int_abs", IntAbsNode);
-  NODE_REGISTRATION("int_eq_reif", IntEqNode);
-  NODE_REGISTRATION("int_le_reif", IntLeNode);
-  NODE_REGISTRATION("int_lin_eq_reif", IntLinEqNode);
-  NODE_REGISTRATION("int_lin_le_reif", IntLinLeNode);
-  NODE_REGISTRATION("int_lin_ne_reif", IntLinNeNode);
-  NODE_REGISTRATION("int_lt_reif", IntLtNode);
-  NODE_REGISTRATION("int_ne_reif", IntNeNode);
-  NODE_REGISTRATION("set_in_reif", SetInNode);
+  NODE_REGISTRATION(IntDivNode);
+  NODE_REGISTRATION(IntMaxNode);
+  NODE_REGISTRATION(IntMinNode);
+  NODE_REGISTRATION(IntModNode);
+  NODE_REGISTRATION(IntPlusNode);
+  NODE_REGISTRATION(IntPowNode);
+  NODE_REGISTRATION(IntTimesNode);
+  NODE_REGISTRATION(ArrayBoolAndNode);
+  NODE_REGISTRATION(ArrayBoolElementNode);
+  NODE_REGISTRATION(ArrayBoolOrNode);
+  NODE_REGISTRATION(ArrayIntElementNode);
+  NODE_REGISTRATION(ArrayIntMaximumNode);
+  NODE_REGISTRATION(ArrayIntMinimumNode);
+  NODE_REGISTRATION(ArrayVarBoolElementNode);
+  NODE_REGISTRATION(ArrayVarIntElementNode);
+  NODE_REGISTRATION(Bool2IntNode);
+  NODE_REGISTRATION(BoolEqNode);
+  NODE_REGISTRATION(BoolLeNode);
+  NODE_REGISTRATION(BoolLtNode);
+  NODE_REGISTRATION(BoolXorNode);
+  NODE_REGISTRATION(IntAbsNode);
+  NODE_REGISTRATION(IntEqNode);
+  NODE_REGISTRATION(IntLeNode);
+  NODE_REGISTRATION(IntLinEqNode);
+  NODE_REGISTRATION(IntLinLeNode);
+  NODE_REGISTRATION(IntLinNeNode);
+  NODE_REGISTRATION(IntLtNode);
+  NODE_REGISTRATION(IntNeNode);
+  NODE_REGISTRATION(SetInNode);
 
   return nullptr;
 #undef BINARY_OP_REGISTRATION
@@ -286,14 +282,18 @@ invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint) {
   std::string_view name = constraint.name;
 
-#define NODE_REGISTRATION(nameStr, nodeType)            \
-  if (name == nameStr)                                  \
-  return invariantgraph::nodeType::fromModelConstraint( \
-      model, constraint,                                \
-      [&](const auto& argument) { return nodeFactory(model, argument); })
+#define NODE_REGISTRATION(nodeType)                                            \
+  for (const auto& [nameStr, numArgs] :                                        \
+       invariantgraph::nodeType::acceptedNameNumArgPairs()) {                  \
+    if (name == nameStr && constraint.arguments.size() == numArgs) {           \
+      return invariantgraph::nodeType::fromModelConstraint(                    \
+          model, constraint,                                                   \
+          [&](const auto& argument) { return nodeFactory(model, argument); }); \
+    }                                                                          \
+  }
 
-  NODE_REGISTRATION("fzn_all_different_int", AllDifferentImplicitNode);
-  NODE_REGISTRATION("fzn_circuit", CircuitImplicitNode);
+  NODE_REGISTRATION(AllDifferentImplicitNode);
+  NODE_REGISTRATION(CircuitImplicitNode);
 
   return nullptr;
 #undef NODE_REGISTRATION
@@ -304,30 +304,34 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint) {
   std::string_view name = constraint.name;
 
-#define NODE_REGISTRATION(nameStr, nodeType)            \
-  if (name == nameStr)                                  \
-  return invariantgraph::nodeType::fromModelConstraint( \
-      model, constraint,                                \
-      [&](const auto& argument) { return nodeFactory(model, argument); })
+#define NODE_REGISTRATION(nodeType)                                            \
+  for (const auto& [nameStr, numArgs] :                                        \
+       invariantgraph::nodeType::acceptedNameNumArgPairs()) {                  \
+    if (name == nameStr && constraint.arguments.size() == numArgs) {           \
+      return invariantgraph::nodeType::fromModelConstraint(                    \
+          model, constraint,                                                   \
+          [&](const auto& argument) { return nodeFactory(model, argument); }); \
+    }                                                                          \
+  }
 
-  NODE_REGISTRATION("fzn_all_different_int", AllDifferentNode);
-  NODE_REGISTRATION("allequal", AllEqualNode);
-  NODE_REGISTRATION("bool_and", BoolAndNode);
-  NODE_REGISTRATION("bool_clause", BoolClauseNode);
-  NODE_REGISTRATION("bool_eq", BoolEqNode);
-  NODE_REGISTRATION("bool_le", BoolLeNode);
-  NODE_REGISTRATION("bool_lin_eq", BoolLinEqNode);
-  NODE_REGISTRATION("bool_lin_le", BoolLinLeNode);
-  NODE_REGISTRATION("bool_lt", BoolLeNode);
-  NODE_REGISTRATION("bool_or", BoolOrNode);
-  NODE_REGISTRATION("int_eq", IntEqNode);
-  NODE_REGISTRATION("int_le", IntLeNode);
-  NODE_REGISTRATION("int_lt", IntLtNode);
-  NODE_REGISTRATION("int_lin_eq", IntLinEqNode);
-  NODE_REGISTRATION("int_lin_le", IntLinLeNode);
-  NODE_REGISTRATION("int_lin_ne", IntLinNeNode);
-  NODE_REGISTRATION("int_ne", IntNeNode);
-  NODE_REGISTRATION("set_in", SetInNode);
+  NODE_REGISTRATION(AllDifferentNode);
+  NODE_REGISTRATION(AllEqualNode);
+  NODE_REGISTRATION(BoolAndNode);
+  NODE_REGISTRATION(BoolClauseNode);
+  NODE_REGISTRATION(BoolEqNode);
+  NODE_REGISTRATION(BoolLeNode);
+  NODE_REGISTRATION(BoolLinEqNode);
+  NODE_REGISTRATION(BoolLinLeNode);
+  NODE_REGISTRATION(BoolLeNode);
+  NODE_REGISTRATION(BoolOrNode);
+  NODE_REGISTRATION(IntEqNode);
+  NODE_REGISTRATION(IntLeNode);
+  NODE_REGISTRATION(IntLtNode);
+  NODE_REGISTRATION(IntLinEqNode);
+  NODE_REGISTRATION(IntLinLeNode);
+  NODE_REGISTRATION(IntLinNeNode);
+  NODE_REGISTRATION(IntNeNode);
+  NODE_REGISTRATION(SetInNode);
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint.name));

@@ -18,8 +18,8 @@ class IntDivNodeTest : public NodeTestBase {
 
   void SetUp() override {
     setModel(&model);
-    node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntDivNode>(*_model, constraint, nodeFactory);
+    node = invariantgraph::IntDivNode::fromModelConstraint(*_model, constraint,
+                                                           nodeFactory);
   }
 };
 

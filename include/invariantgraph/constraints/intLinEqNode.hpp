@@ -21,6 +21,12 @@ class IntLinEqNode : public SoftConstraintNode {
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"int_lin_eq", 3}, {"int_lin_eq_reif", 4}};
+  }
+
   IntLinEqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
                Int c, VariableNode* r)
       : SoftConstraintNode(variables, r), _coeffs(std::move(coeffs)), _c(c) {}

@@ -13,15 +13,21 @@ class ArrayBoolAndNode : public SoftConstraintNode {
   VarId _intermediate{NULL_ID};
 
  public:
-  static std::unique_ptr<ArrayBoolAndNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
-
   ArrayBoolAndNode(std::vector<VariableNode*> as, VariableNode* output)
       : SoftConstraintNode(std::move(as), output) {}
 
   ArrayBoolAndNode(std::vector<VariableNode*> as, bool shouldHold)
       : SoftConstraintNode(std::move(as), shouldHold) {}
+
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"array_bool_and", 2}};
+  }
+
+  static std::unique_ptr<ArrayBoolAndNode> fromModelConstraint(
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
 
   void createDefinedVariables(Engine& engine) override;
 

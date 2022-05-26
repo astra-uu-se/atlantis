@@ -6,9 +6,7 @@ std::unique_ptr<invariantgraph::SetInNode>
 invariantgraph::SetInNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(
-      (constraint.name == "set_in" && constraint.arguments.size() == 2) ||
-      (constraint.name == "set_in_reif" && constraint.arguments.size() == 3));
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto variable = mappedVariable(constraint.arguments[0], variableMap);
   auto valueSet = integerSet(model, constraint.arguments[1]);

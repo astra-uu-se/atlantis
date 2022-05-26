@@ -17,8 +17,8 @@ class IntMinNodeTest : public NodeTestBase {
 
   void SetUp() override {
     setModel(&model);
-    node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntMinNode>(*_model, constraint, nodeFactory);
+    node = invariantgraph::IntMinNode::fromModelConstraint(*_model, constraint,
+                                                           nodeFactory);
   }
 };
 

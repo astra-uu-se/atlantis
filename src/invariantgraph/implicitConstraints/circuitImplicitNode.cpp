@@ -9,9 +9,7 @@ std::unique_ptr<invariantgraph::CircuitImplicitNode>
 invariantgraph::CircuitImplicitNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(constraint.name == "circuit_no_offset");
-  assert(constraint.arguments.size() == 1);
-
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
   auto variables =
       mappedVariableVector(model, constraint.arguments[0], variableMap);
 

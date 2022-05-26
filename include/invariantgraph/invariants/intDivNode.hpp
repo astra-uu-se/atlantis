@@ -1,18 +1,14 @@
 #pragma once
 
-#include "binaryOpNode.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
 #include "invariants/intDiv.hpp"
 
 namespace invariantgraph {
 
-class IntDivNode : public BinaryOpNode {
+class IntDivNode : public VariableDefiningNode {
  public:
-  static inline std::string_view constraint_name() noexcept {
-    return "int_div";
-  }
-
   IntDivNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output) {
+      : VariableDefiningNode({output}, {a, b}) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
       assert(staticInput->isIntVar());
@@ -22,10 +18,24 @@ class IntDivNode : public BinaryOpNode {
 
   ~IntDivNode() override = default;
 
- protected:
-  void createInvariant(Engine& engine, VarId a, VarId b,
-                       VarId output) const override {
-    engine.makeInvariant<::IntDiv>(a, b, output);
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{{"int_div", 3}};
+  }
+
+  static std::unique_ptr<IntDivNode> fromModelConstraint(
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
+
+  void createDefinedVariables(Engine& engine) override;
+
+  void registerWithEngine(Engine& engine) override;
+
+  [[nodiscard]] VariableNode* a() const noexcept {
+    return staticInputs().front();
+  }
+  [[nodiscard]] VariableNode* b() const noexcept {
+    return staticInputs().back();
   }
 };
 

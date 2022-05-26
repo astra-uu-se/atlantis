@@ -17,8 +17,8 @@ class IntPlusNodeTest : public NodeTestBase {
 
   void SetUp() override {
     setModel(&model);
-    node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntPlusNode>(*_model, constraint, nodeFactory);
+    node = invariantgraph::IntPlusNode::fromModelConstraint(*_model, constraint,
+                                                            nodeFactory);
   }
 };
 

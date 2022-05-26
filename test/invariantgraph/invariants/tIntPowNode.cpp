@@ -17,8 +17,8 @@ class IntPowNodeTest : public NodeTestBase {
 
   void SetUp() override {
     setModel(&model);
-    node = invariantgraph::BinaryOpNode::fromModelConstraint<
-        invariantgraph::IntPowNode>(*_model, constraint, nodeFactory);
+    node = invariantgraph::IntPowNode::fromModelConstraint(*_model, constraint,
+                                                           nodeFactory);
   }
 };
 

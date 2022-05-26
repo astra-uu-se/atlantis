@@ -30,6 +30,11 @@ class BoolLinLeNode : public SoftConstraintNode {
         _coeffs(std::move(coeffs)),
         _bound(bound) {}
 
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{{"bool_lin_le", 3}};
+  }
+
   static std::unique_ptr<BoolLinLeNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);

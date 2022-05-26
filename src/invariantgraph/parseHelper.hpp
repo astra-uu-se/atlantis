@@ -41,3 +41,7 @@ fznparser::Set<Int> integerSet(const fznparser::FZNModel& model,
 
 bool definesVariable(const fznparser::Constraint& constraint,
                      const FZNSearchVariable& variable);
+
+bool hasCorrectSignature(
+    const std::vector<std::pair<std::string_view, size_t>>& nameNumArgPairs,
+    const fznparser::Constraint& constraint);

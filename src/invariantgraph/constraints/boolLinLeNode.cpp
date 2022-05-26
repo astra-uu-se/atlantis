@@ -6,10 +6,7 @@ std::unique_ptr<invariantgraph::BoolLinLeNode>
 invariantgraph::BoolLinLeNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(
-      (constraint.name == "bool_lin_le" && constraint.arguments.size() == 3) ||
-      (constraint.name == "bool_lin_le_reif" &&
-       constraint.arguments.size() == 4));
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
   auto variables =

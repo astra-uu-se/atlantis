@@ -2,19 +2,15 @@
 
 #include <cmath>
 
-#include "binaryOpNode.hpp"
+#include "invariantgraph/variableDefiningNode.hpp"
 #include "invariants/pow.hpp"
 
 namespace invariantgraph {
 
-class IntPowNode : public BinaryOpNode {
+class IntPowNode : public VariableDefiningNode {
  public:
-  static inline std::string_view constraint_name() noexcept {
-    return "int_pow";
-  }
-
   IntPowNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : BinaryOpNode(a, b, output) {
+      : VariableDefiningNode({output}, {a, b}) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
       assert(staticInput->isIntVar());
@@ -24,10 +20,25 @@ class IntPowNode : public BinaryOpNode {
 
   ~IntPowNode() override = default;
 
- protected:
-  void createInvariant(Engine& engine, VarId a, VarId b,
-                       VarId output) const override {
-    engine.makeInvariant<::Pow>(a, b, output);
+  static std::vector<std::pair<std::string_view, size_t>>
+  acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string_view, size_t>>{
+        {"int_pow", 3}, {"int_pow_fixed", 3}};
+  }
+
+  static std::unique_ptr<IntPowNode> fromModelConstraint(
+      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const std::function<VariableNode*(MappableValue&)>& variableMap);
+
+  void createDefinedVariables(Engine& engine) override;
+
+  void registerWithEngine(Engine& engine) override;
+
+  [[nodiscard]] VariableNode* a() const noexcept {
+    return staticInputs().front();
+  }
+  [[nodiscard]] VariableNode* b() const noexcept {
+    return staticInputs().back();
   }
 };
 
