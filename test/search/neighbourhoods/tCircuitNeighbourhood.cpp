@@ -73,7 +73,7 @@ TEST_F(CircuitNeighbourhoodTest, fixed_variables_are_considered) {
 }
 
 TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
-  static int CONFIDENCE = 10;
+  static int CONFIDENCE = 1000;
 
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(next);
   assignment->assign(
