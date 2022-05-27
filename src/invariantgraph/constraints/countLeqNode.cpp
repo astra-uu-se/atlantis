@@ -6,10 +6,7 @@ std::unique_ptr<invariantgraph::CountLeqNode>
 invariantgraph::CountLeqNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert((constraint.name == "fzn_count_leq" &&
-          constraint.arguments.size() == 3) ||
-         (constraint.name == "fzn_count_leq_reif" &&
-          constraint.arguments.size() == 4));
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto x = mappedVariableVector(model, constraint.arguments[0], variableMap);
 

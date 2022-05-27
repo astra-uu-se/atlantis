@@ -2,38 +2,32 @@
 
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/globalCardinalityNode.hpp"
+#include "invariantgraph/constraints/globalCardinalityClosedNode.hpp"
 
-static std::vector<Int> computeOutputs(const std::vector<Int>& values,
-                                       const std::vector<Int>& cover) {
+static std::pair<bool, std::vector<Int>> compute(
+    const std::vector<Int>& values, const std::vector<Int>& cover,
+    const std::vector<Int>& counts = {}) {
+  bool sat = true;
   std::vector<Int> outputs(cover.size(), 0);
-  for (size_t i = 0; i < values.size(); ++i) {
-    for (size_t j = 0; j < cover.size(); ++j) {
-      if (values.at(i) == cover.at(j)) {
-        outputs.at(j)++;
+  for (const Int val : values) {
+    bool inCover = false;
+    for (size_t i = 0; i < cover.size(); ++i) {
+      if (val == cover.at(i)) {
+        outputs.at(i)++;
+        inCover = true;
+        break;
       }
     }
-  }
-  return outputs;
-}
-
-static bool isSatisfied(const std::vector<Int>& values,
-                        const std::vector<Int>& cover,
-                        const std::vector<Int>& counts) {
-  auto outputs = computeOutputs(values, cover);
-  if (outputs.size() != counts.size()) {
-    return false;
+    sat = sat && inCover;
   }
   for (size_t i = 0; i < counts.size(); ++i) {
-    if (outputs.at(i) != counts.at(i)) {
-      return false;
-    }
+    sat = sat && outputs.at(i) == counts.at(i);
   }
-  return true;
+  return std::pair<bool, std::vector<Int>>{sat, outputs};
 }
 
 template <ConstraintType Type>
-class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
+class AbstractGlobalCardinalityClosedNodeTest : public NodeTestBase {
  public:
   INT_VARIABLE(x1, 5, 10);
   INT_VARIABLE(x2, 2, 7);
@@ -44,12 +38,12 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
 
   std::unique_ptr<fznparser::Constraint> constraint;
   std::unique_ptr<fznparser::FZNModel> model;
-  std::unique_ptr<invariantgraph::GlobalCardinalityNode> node;
+  std::unique_ptr<invariantgraph::GlobalCardinalityClosedNode> node;
 
   void SetUp() override {
     if constexpr (Type == ConstraintType::REIFIED) {
       fznparser::Constraint cnstr{
-          "fzn_global_cardinality_reif",
+          "fzn_global_cardinality_closed_reif",
           {fznparser::Constraint::ArrayArgument{"x1", "x2"},
            fznparser::Constraint::ArrayArgument{cover.at(0), cover.at(1)},
            fznparser::Constraint::ArrayArgument{"o1", "o2"},
@@ -65,7 +59,7 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
         fznparser::Constraint cnstr{
-            "fzn_global_cardinality",
+            "fzn_global_cardinality_closed",
             {fznparser::Constraint::ArrayArgument{"x1", "x2"},
              fznparser::Constraint::ArrayArgument{cover.at(0), cover.at(1)},
              fznparser::Constraint::ArrayArgument{"o1", "o2"}},
@@ -73,7 +67,7 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
         fznparser::Constraint cnstr{
-            "fzn_global_cardinality_reif",
+            "fzn_global_cardinality_closed_reif",
             {fznparser::Constraint::ArrayArgument{"x1", "x2"},
              fznparser::Constraint::ArrayArgument{cover.at(0), cover.at(1)},
              fznparser::Constraint::ArrayArgument{"o1", "o2"}, false},
@@ -81,7 +75,7 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       } else {
         fznparser::Constraint cnstr{
-            "fzn_global_cardinality_reif",
+            "fzn_global_cardinality_closed_reif",
             {fznparser::Constraint::ArrayArgument{"x1", "x2"},
              fznparser::Constraint::ArrayArgument{cover.at(0), cover.at(1)},
              fznparser::Constraint::ArrayArgument{"o1", "o2"}, true},
@@ -97,7 +91,7 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
 
     setModel(model.get());
 
-    node = makeNode<invariantgraph::GlobalCardinalityNode>(*constraint);
+    node = makeNode<invariantgraph::GlobalCardinalityClosedNode>(*constraint);
   }
 
   void construction() {
@@ -160,12 +154,7 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
     for (auto* const definedVariable : node->definedVariables()) {
       EXPECT_NE(definedVariable->varId(), NULL_ID);
     }
-    if constexpr (Type == ConstraintType::NORMAL ||
-                  Type == ConstraintType::CONSTANT_TRUE) {
-      EXPECT_EQ(node->violationVarId(), NULL_ID);
-    } else {
-      EXPECT_NE(node->violationVarId(), NULL_ID);
-    }
+    EXPECT_NE(node->violationVarId(), NULL_ID);
 
     node->registerWithEngine(engine);
     engine.close();
@@ -175,7 +164,8 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
       // x1, x2
       EXPECT_EQ(engine.searchVariables().size(), 2);
       // x1, x2, o1, o2
-      EXPECT_EQ(engine.numVariables(), 4);
+      // violation
+      EXPECT_EQ(engine.numVariables(), 5);
       // gcc
       EXPECT_EQ(engine.numInvariants(), 1);
     } else {
@@ -183,9 +173,9 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
       EXPECT_EQ(engine.searchVariables().size(), 4);
       // x1, x2, o1, o2
       // intermediate o1, intermediate o2
-      // 2 intermediate violations
+      // 3 intermediate violations
       // 1 total violation
-      EXPECT_EQ(engine.numVariables(), 9);
+      EXPECT_EQ(engine.numVariables(), 10);
       // gcc + 2 (non)-equal + 1 total violation
       EXPECT_EQ(engine.numInvariants(), 4);
 
@@ -215,12 +205,7 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
     }
     EXPECT_EQ(counts.size(), 2);
 
-    if constexpr (Type == ConstraintType::NORMAL ||
-                  Type == ConstraintType::CONSTANT_TRUE) {
-      EXPECT_EQ(node->violationVarId(), NULL_ID);
-    } else {
-      EXPECT_NE(node->violationVarId(), NULL_ID);
-    }
+    EXPECT_NE(node->violationVarId(), NULL_ID);
     const VarId violationId = node->violationVarId();
 
     std::vector<Int> inputVals(inputs.size());
@@ -267,21 +252,25 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
             engine.beginProbe();
             engine.query(violationId);
             engine.endProbe();
-            if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
-              if constexpr (Type == ConstraintType::REIFIED) {
-                EXPECT_EQ(engine.currentValue(violationId) == 0,
-                          isSatisfied(inputVals, cover, countVals));
-              } else {
-                const std::vector<Int> actual =
-                    computeOutputs(inputVals, cover);
-                EXPECT_EQ(countVals.size(), counts.size());
-                for (size_t i = 0; i < countVals.size(); ++i) {
-                  EXPECT_EQ(engine.currentValue(counts.at(i)), actual.at(i));
-                }
+
+            if constexpr (Type == ConstraintType::NORMAL ||
+                          Type == ConstraintType::CONSTANT_TRUE) {
+              const auto& [sat, expectedCounts] = compute(inputVals, cover);
+              EXPECT_EQ(engine.currentValue(violationId) == 0, sat);
+              EXPECT_EQ(counts.size(), expectedCounts.size());
+              for (size_t i = 0; i < countVals.size(); ++i) {
+                EXPECT_EQ(engine.currentValue(counts.at(i)),
+                          expectedCounts.at(i));
               }
             } else {
-              EXPECT_NE(engine.currentValue(violationId) == 0,
-                        isSatisfied(inputVals, cover, countVals));
+              const auto& [sat, expectedCounts] =
+                  compute(inputVals, cover, countVals);
+              if (Type == ConstraintType::REIFIED) {
+                EXPECT_EQ(engine.currentValue(violationId) == 0, sat);
+              } else {
+                bool actual = engine.currentValue(violationId) == 0;
+                EXPECT_NE(actual, sat);
+              }
             }
           }
         }
@@ -290,40 +279,41 @@ class AbstractGlobalCardinalityNodeTest : public NodeTestBase {
   }
 };
 
-class GlobalCardinalityNodeTest
-    : public AbstractGlobalCardinalityNodeTest<ConstraintType::NORMAL> {};
+class GlobalCardinalityClosedNodeTest
+    : public AbstractGlobalCardinalityClosedNodeTest<ConstraintType::NORMAL> {};
 
-TEST_F(GlobalCardinalityNodeTest, Construction) { construction(); }
+TEST_F(GlobalCardinalityClosedNodeTest, Construction) { construction(); }
 
-TEST_F(GlobalCardinalityNodeTest, Application) { application(); }
+TEST_F(GlobalCardinalityClosedNodeTest, Application) { application(); }
 
-TEST_F(GlobalCardinalityNodeTest, Propagation) { propagation(); }
+TEST_F(GlobalCardinalityClosedNodeTest, Propagation) { propagation(); }
 
-class GlobalCardinalityReifNodeTest
-    : public AbstractGlobalCardinalityNodeTest<ConstraintType::REIFIED> {};
-
-TEST_F(GlobalCardinalityReifNodeTest, Construction) { construction(); }
-
-TEST_F(GlobalCardinalityReifNodeTest, Application) { application(); }
-
-TEST_F(GlobalCardinalityReifNodeTest, Propagation) { propagation(); }
-
-class GlobalCardinalityFalseNodeTest
-    : public AbstractGlobalCardinalityNodeTest<ConstraintType::CONSTANT_FALSE> {
+class GlobalCardinalityClosedReifNodeTest
+    : public AbstractGlobalCardinalityClosedNodeTest<ConstraintType::REIFIED> {
 };
 
-TEST_F(GlobalCardinalityFalseNodeTest, Construction) { construction(); }
+TEST_F(GlobalCardinalityClosedReifNodeTest, Construction) { construction(); }
 
-TEST_F(GlobalCardinalityFalseNodeTest, Application) { application(); }
+TEST_F(GlobalCardinalityClosedReifNodeTest, Application) { application(); }
 
-TEST_F(GlobalCardinalityFalseNodeTest, Propagation) { propagation(); }
+TEST_F(GlobalCardinalityClosedReifNodeTest, Propagation) { propagation(); }
 
-class GlobalCardinalityTrueNodeTest
-    : public AbstractGlobalCardinalityNodeTest<ConstraintType::CONSTANT_TRUE> {
-};
+class GlobalCardinalityClosedFalseNodeTest
+    : public AbstractGlobalCardinalityClosedNodeTest<
+          ConstraintType::CONSTANT_FALSE> {};
 
-TEST_F(GlobalCardinalityTrueNodeTest, Construction) { construction(); }
+TEST_F(GlobalCardinalityClosedFalseNodeTest, Construction) { construction(); }
 
-TEST_F(GlobalCardinalityTrueNodeTest, Application) { application(); }
+TEST_F(GlobalCardinalityClosedFalseNodeTest, Application) { application(); }
 
-TEST_F(GlobalCardinalityTrueNodeTest, Propagation) { propagation(); }
+TEST_F(GlobalCardinalityClosedFalseNodeTest, Propagation) { propagation(); }
+
+class GlobalCardinalityClosedTrueNodeTest
+    : public AbstractGlobalCardinalityClosedNodeTest<
+          ConstraintType::CONSTANT_TRUE> {};
+
+TEST_F(GlobalCardinalityClosedTrueNodeTest, Construction) { construction(); }
+
+TEST_F(GlobalCardinalityClosedTrueNodeTest, Application) { application(); }
+
+TEST_F(GlobalCardinalityClosedTrueNodeTest, Propagation) { propagation(); }

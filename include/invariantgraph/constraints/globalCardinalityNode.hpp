@@ -24,7 +24,9 @@ static std::vector<invariantgraph::VariableNode*> merge(
 namespace invariantgraph {
 class GlobalCardinalityNode : public SoftConstraintNode {
  private:
+  const std::vector<VariableNode*> _inputs;
   const std::vector<Int> _cover;
+  const std::vector<VariableNode*> _counts;
   std::vector<VarId> _intermediate{};
   std::vector<VarId> _violations{};
 
@@ -33,22 +35,10 @@ class GlobalCardinalityNode : public SoftConstraintNode {
                                  std::vector<Int> cover,
                                  std::vector<VariableNode*> counts,
                                  VariableNode* r)
-      : SoftConstraintNode({}, merge(x, counts), r), _cover(cover) {
-#ifndef NDEBUG
-    size_t i = 0;
-    for (auto iter = inputsBegin(); iter != inputsEnd(); ++iter) {
-      assert((*iter) == x.at(i));
-      i++;
-    }
-    assert(i == x.size());
-    i = 0;
-    for (auto iter = countsBegin(); iter != countsEnd(); ++iter) {
-      assert((*iter) == counts.at(i));
-      i++;
-    }
-    assert(i == counts.size());
-#endif
-  }
+      : SoftConstraintNode({}, merge(x, counts), r),
+        _inputs(x),
+        _cover(cover),
+        _counts(counts) {}
 
   explicit GlobalCardinalityNode(std::vector<VariableNode*> x,
                                  std::vector<Int> cover,
@@ -56,22 +46,9 @@ class GlobalCardinalityNode : public SoftConstraintNode {
                                  bool shouldHold)
       : SoftConstraintNode(shouldHold ? counts : std::vector<VariableNode*>{},
                            shouldHold ? x : merge(x, counts), shouldHold),
-        _cover(cover) {
-#ifndef NDEBUG
-    size_t i = 0;
-    for (auto iter = inputsBegin(); iter != inputsEnd(); ++iter) {
-      assert((*iter) == x.at(i));
-      i++;
-    }
-    assert(i == x.size());
-    i = 0;
-    for (auto iter = countsBegin(); iter != countsEnd(); ++iter) {
-      assert((*iter) == counts.at(i));
-      i++;
-    }
-    assert(i == counts.size());
-#endif
-  }
+        _inputs(x),
+        _cover(cover),
+        _counts(counts) {}
 
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {
@@ -87,36 +64,12 @@ class GlobalCardinalityNode : public SoftConstraintNode {
 
   void registerWithEngine(Engine& engine) override;
 
-  size_t numInputs() const {
-    if (!isReified() && shouldHold()) {
-      return staticInputs().size();
-    }
-    return staticInputs().size() - _cover.size();
+  [[nodiscard]] inline const std::vector<VariableNode*>& inputs() const {
+    return _inputs;
   }
 
-  std::vector<VariableNode*>::const_iterator inputsBegin() {
-    return staticInputs().begin();
-  }
-
-  std::vector<VariableNode*>::const_iterator inputsEnd() {
-    if (!isReified() && shouldHold()) {
-      return staticInputs().end();
-    }
-    return staticInputs().end() - _cover.size();
-  }
-
-  std::vector<VariableNode*>::const_iterator countsBegin() {
-    if (!isReified() && shouldHold()) {
-      return definedVariables().begin();
-    }
-    return staticInputs().end() - _cover.size();
-  }
-
-  std::vector<VariableNode*>::const_iterator countsEnd() {
-    if (!isReified() && shouldHold()) {
-      return definedVariables().end();
-    }
-    return staticInputs().end();
+  [[nodiscard]] inline const std::vector<VariableNode*>& counts() const {
+    return _counts;
   }
 };
 }  // namespace invariantgraph

@@ -6,10 +6,7 @@ std::unique_ptr<invariantgraph::GlobalCardinalityNode>
 invariantgraph::GlobalCardinalityNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert((constraint.name == "fzn_global_cardinality" &&
-          constraint.arguments.size() == 3) ||
-         (constraint.name == "fzn_global_cardinality_reif" &&
-          constraint.arguments.size() == 4));
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto x = mappedVariableVector(model, constraint.arguments[0], variableMap);
 
@@ -41,59 +38,60 @@ invariantgraph::GlobalCardinalityNode::fromModelConstraint(
 void invariantgraph::GlobalCardinalityNode::createDefinedVariables(
     Engine& engine) {
   if (!isReified() && shouldHold()) {
-    for (auto* const definedNode : definedVariables()) {
-      if (definedNode->varId() == NULL_ID) {
-        definedNode->setVarId(engine.makeIntVar(0, 0, numInputs()));
+    for (auto* const countOutput : definedVariables()) {
+      if (countOutput->varId() == NULL_ID) {
+        countOutput->setVarId(engine.makeIntVar(0, 0, _inputs.size()));
       }
     }
-  } else if (_intermediate.size() == 0) {
-    for (auto iter = countsBegin(); iter != countsEnd(); ++iter) {
-      _intermediate.emplace_back(engine.makeIntVar(0, 0, numInputs()));
-      if (_cover.size() > 1) {
-        _violations.emplace_back(engine.makeIntVar(0, 0, numInputs()));
-      }
-    }
+  } else if (violationVarId() == NULL_ID) {
     registerViolation(engine);
+
+    for (size_t i = 0; i < _counts.size(); ++i) {
+      _intermediate.emplace_back(engine.makeIntVar(0, 0, _inputs.size()));
+    }
+    if (_counts.size() == 1) {
+      _violations.emplace_back(violationVarId());
+    } else {
+      for (size_t i = 0; i < _counts.size(); ++i) {
+        _violations.emplace_back(engine.makeIntVar(0, 0, _inputs.size()));
+      }
+    }
   }
 }
 
 void invariantgraph::GlobalCardinalityNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> inputs;
-  std::transform(inputsBegin(), inputsEnd(), std::back_inserter(inputs),
+  std::transform(_inputs.begin(), _inputs.end(), std::back_inserter(inputs),
                  [&](auto node) { return node->varId(); });
 
   if (!isReified() && shouldHold()) {
-    std::vector<VarId> outputs;
-    std::transform(definedVariables().begin(), definedVariables().end(),
-                   std::back_inserter(outputs),
+    std::vector<VarId> countOutputs;
+    std::transform(_counts.begin(), _counts.end(),
+                   std::back_inserter(countOutputs),
                    [&](auto node) { return node->varId(); });
-    engine.makeInvariant<GlobalCardinalityOpen>(inputs, _cover, outputs);
+
+    engine.makeInvariant<GlobalCardinalityOpen>(inputs, _cover, countOutputs);
   } else {
     assert(violationVarId() != NULL_ID);
+    assert(_intermediate.size() == _counts.size());
+    assert(_violations.size() == _counts.size());
     engine.makeInvariant<GlobalCardinalityOpen>(inputs, _cover, _intermediate);
-    size_t i = 0;
-    if (_cover.size() == 1) {
+    for (size_t i = 0; i < _counts.size(); ++i) {
       if (shouldHold()) {
-        engine.makeConstraint<Equal>(violationVarId(), _intermediate.front(),
-                                     (*countsBegin())->varId());
+        engine.makeConstraint<Equal>(_violations.at(i), _intermediate.at(i),
+                                     _counts.at(i)->varId());
       } else {
-        engine.makeConstraint<NotEqual>(violationVarId(), _intermediate.front(),
-                                        (*countsBegin())->varId());
+        engine.makeConstraint<NotEqual>(_violations.at(i), _intermediate.at(i),
+                                        _counts.at(i)->varId());
       }
-    } else {
-      for (auto iter = countsBegin(); iter != countsEnd(); ++iter) {
-        if (shouldHold()) {
-          engine.makeConstraint<Equal>(_violations.at(i), _intermediate.at(i),
-                                       (*iter)->varId());
-        } else {
-          engine.makeConstraint<NotEqual>(
-              _violations.at(i), _intermediate.at(i), (*iter)->varId());
-        }
-        ++i;
-      }
+    }
+    if (_counts.size() > 1) {
       if (shouldHold()) {
+        // To hold, each count must be equal to its corresponding intermediate:
         engine.makeInvariant<Linear>(_violations, violationVarId());
       } else {
+        // To hold, only one count must not be equal to its corresponding
+        // intermediate:
         engine.makeInvariant<Exists>(_violations, violationVarId());
       }
     }
