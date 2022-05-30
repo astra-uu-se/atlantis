@@ -3,7 +3,7 @@
 #include <numeric>
 
 #include "../parseHelper.hpp"
-#include "search/neighbourhoods/allDifferentNeighbourhood.hpp"
+#include "search/neighbourhoods/allDifferentEqualDomainNeighbourhood.hpp"
 
 std::unique_ptr<invariantgraph::AllDifferentImplicitNode>
 invariantgraph::AllDifferentImplicitNode::fromModelConstraint(
@@ -49,6 +49,6 @@ invariantgraph::AllDifferentImplicitNode::createNeighbourhood(
   std::vector<Int> domainValues(
       std::move(definedVariables().front()->domain().values()));
 
-  return new search::neighbourhoods::AllDifferentNeighbourhood(
+  return new search::neighbourhoods::AllDifferentEqualDomainNeighbourhood(
       variables, std::move(domainValues), engine);
 }
