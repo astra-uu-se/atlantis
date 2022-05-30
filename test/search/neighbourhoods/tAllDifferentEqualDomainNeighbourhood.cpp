@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "search/neighbourhoods/allDifferentNeighbourhood.hpp"
+#include "search/neighbourhoods/allDifferentEqualDomainNeighbourhood.hpp"
 
 class AllDifferentNeighbourhoodTest : public ::testing::Test {
  public:
@@ -23,7 +23,7 @@ class AllDifferentNeighbourhoodTest : public ::testing::Test {
 };
 
 TEST_F(AllDifferentNeighbourhoodTest, all_values_are_initialised) {
-  search::neighbourhoods::AllDifferentNeighbourhood neighbourhood(
+  search::neighbourhoods::AllDifferentEqualDomainNeighbourhood neighbourhood(
       variables, domain, engine);
 
   assignment.assign(
