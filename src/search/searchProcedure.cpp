@@ -24,8 +24,6 @@ search::SearchStatistics search::SearchProcedure::run(
   auto initialisations = std::make_unique<CounterStatistic>("Initialisations");
   auto moves = std::make_unique<CounterStatistic>("Moves");
 
-  auto startTime = std::chrono::steady_clock::now();
-
   do {
     initialisations->increment();
 
