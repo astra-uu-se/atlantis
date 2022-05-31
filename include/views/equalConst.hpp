@@ -6,12 +6,12 @@
 #include "core/engine.hpp"
 #include "views/intView.hpp"
 
-class EqualView : public IntView {
+class EqualConst : public IntView {
  private:
   const Int _val;
 
  public:
-  explicit EqualView(VarId parentId, Int val) : IntView(parentId), _val(val) {}
+  explicit EqualConst(VarId parentId, Int val) : IntView(parentId), _val(val) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

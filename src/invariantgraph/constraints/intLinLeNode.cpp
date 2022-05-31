@@ -30,11 +30,11 @@ void invariantgraph::IntLinLeNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(engine.makeIntView<LessEqualView>(_sumVarId, _bound));
+      setViolationVarId(engine.makeIntView<LessEqualConst>(_sumVarId, _bound));
     } else {
       assert(!isReified());
       setViolationVarId(
-          engine.makeIntView<GreaterEqualView>(_sumVarId, _bound + 1));
+          engine.makeIntView<GreaterEqualConst>(_sumVarId, _bound + 1));
     }
   }
 }

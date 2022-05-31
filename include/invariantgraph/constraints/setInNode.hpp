@@ -5,7 +5,7 @@
 #include "invariantgraph/softConstraintNode.hpp"
 #include "utils/variant.hpp"
 #include "views/inDomain.hpp"
-#include "views/notEqualView.hpp"
+#include "views/notEqualConst.hpp"
 
 namespace invariantgraph {
 class SetInNode : public SoftConstraintNode {

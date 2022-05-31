@@ -4,8 +4,8 @@
 #include <utility>
 
 #include "invariantgraph/softConstraintNode.hpp"
-#include "views/equalView.hpp"
-#include "views/notEqualView.hpp"
+#include "views/equalConst.hpp"
+#include "views/notEqualConst.hpp"
 
 namespace invariantgraph {
 class AllEqualNode : public SoftConstraintNode {

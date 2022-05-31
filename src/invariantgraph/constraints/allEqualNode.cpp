@@ -29,11 +29,11 @@ void invariantgraph::AllEqualNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     _allDifferentViolationVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(engine.makeIntView<EqualView>(
+      setViolationVarId(engine.makeIntView<EqualConst>(
           _allDifferentViolationVarId, staticInputs().size() - 1));
     } else {
       assert(!isReified());
-      setViolationVarId(engine.makeIntView<NotEqualView>(
+      setViolationVarId(engine.makeIntView<NotEqualConst>(
           _allDifferentViolationVarId, staticInputs().size() - 1));
     }
   }

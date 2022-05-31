@@ -4,7 +4,7 @@
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/forAll.hpp"
 #include "views/elementConst.hpp"
-#include "views/notEqualView.hpp"
+#include "views/notEqualConst.hpp"
 
 namespace invariantgraph {
 

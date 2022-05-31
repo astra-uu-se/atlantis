@@ -1,21 +1,21 @@
-#include "views/lessEqualView.hpp"
+#include "views/lessEqualConst.hpp"
 
 static inline Int compute(Int var, Int val) {
   return std::max<Int>(0, var - val);
 }
 
-Int LessEqualView::value(Timestamp ts) {
+Int LessEqualConst::value(Timestamp ts) {
   return compute(_engine->value(ts, _parentId), _val);
 }
 
-Int LessEqualView::committedValue() {
+Int LessEqualConst::committedValue() {
   return compute(_engine->committedValue(_parentId), _val);
 }
 
-Int LessEqualView::lowerBound() const {
+Int LessEqualConst::lowerBound() const {
   return compute(_engine->lowerBound(_parentId), _val);
 }
 
-Int LessEqualView::upperBound() const {
+Int LessEqualConst::upperBound() const {
   return compute(_engine->upperBound(_parentId), _val);
 }

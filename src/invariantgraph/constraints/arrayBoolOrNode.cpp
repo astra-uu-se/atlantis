@@ -27,7 +27,7 @@ void invariantgraph::ArrayBoolOrNode::createDefinedVariables(Engine& engine) {
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(engine.makeIntView<NotEqualView>(_intermediate, 0));
+      setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 0));
     }
   }
 }

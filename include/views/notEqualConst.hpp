@@ -6,12 +6,12 @@
 #include "core/engine.hpp"
 #include "views/intView.hpp"
 
-class LessEqualView : public IntView {
+class NotEqualConst : public IntView {
  private:
   const Int _val;
 
  public:
-  explicit LessEqualView(VarId parentId, Int val)
+  explicit NotEqualConst(VarId parentId, Int val)
       : IntView(parentId), _val(val) {}
 
   [[nodiscard]] Int value(Timestamp) override;

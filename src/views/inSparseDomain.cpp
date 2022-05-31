@@ -57,15 +57,12 @@ Int InSparseDomain::lowerBound() const {
   } else if (dUb < parentLb) {
     return parentLb - dUb;
   }
-  const Int indexBegin = std::max<Int>(0, parentLb - _offset);
-  const Int indexEnd = std::min<Int>(
-      static_cast<Int>(_valueViolation.size()) - 1, parentUb - _offset);
+  const Int begin = std::max<Int>(0, parentLb - _offset);
+  const Int end = std::min<Int>(static_cast<Int>(_valueViolation.size()),
+                                parentUb - _offset + 1);
 
-  Int minViol = std::numeric_limits<Int>::max();
-  for (Int i = indexBegin; i <= indexEnd; ++i) {
-    minViol = std::min<Int>(minViol, _valueViolation[i]);
-  }
-  return minViol;
+  return *std::min_element(_valueViolation.begin() + begin,
+                           _valueViolation.begin() + end);
 }
 
 Int InSparseDomain::upperBound() const {
@@ -79,13 +76,10 @@ Int InSparseDomain::upperBound() const {
   } else if (dUb < parentLb) {
     return parentUb - dUb;
   }
-  const Int indexBegin = std::max<Int>(0, parentLb - _offset);
-  const Int indexEnd = std::min<Int>(
-      static_cast<Int>(_valueViolation.size()) - 1, parentUb - _offset);
+  const Int begin = std::max<Int>(0, parentLb - _offset);
+  const Int end = std::min<Int>(static_cast<Int>(_valueViolation.size()),
+                                parentUb - _offset + 1);
 
-  Int maxViol = std::numeric_limits<Int>::min();
-  for (Int i = indexBegin; i <= indexEnd; ++i) {
-    maxViol = std::max<Int>(maxViol, _valueViolation[i]);
-  }
-  return maxViol;
+  return *std::max_element(_valueViolation.begin() + begin,
+                           _valueViolation.begin() + end);
 }

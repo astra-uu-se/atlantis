@@ -107,11 +107,8 @@ TEST_F(ElementConstTest, CommittedValue) {
   EXPECT_TRUE(valueLb <= valueUb);
   EXPECT_TRUE(indexLb <= indexUb);
 
-  std::vector<Int> indexValues(numValues, 0);
-  for (size_t i = 0; i < indexValues.size(); ++i) {
-    indexValues.at(i) = i + 1;
-  }
-
+  std::vector<Int> indexValues(numValues);
+  std::iota(indexValues.begin(), indexValues.end(), 1);
   std::shuffle(indexValues.begin(), indexValues.end(), rng);
 
   engine->open();

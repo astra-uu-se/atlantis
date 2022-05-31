@@ -122,10 +122,8 @@ TEST_F(InSparseDomainTest, CommittedValue) {
     const Int lb = domainVec.front().lowerBound - margin;
     const Int ub = domainVec.back().upperBound + margin;
 
-    std::vector<Int> values(ub - lb + 1, 0);
-    for (size_t i = 0; i < values.size(); ++i) {
-      values.at(i) = lb + i;
-    }
+    std::vector<Int> values(ub - lb + 1);
+    std::iota(values.begin(), values.end(), lb);
     EXPECT_EQ(values.front(), lb);
     EXPECT_EQ(values.back(), ub);
 

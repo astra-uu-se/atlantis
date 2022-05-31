@@ -5,7 +5,7 @@
 
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/boolAnd.hpp"
-#include "views/notEqualView.hpp"
+#include "views/notEqualConst.hpp"
 
 namespace invariantgraph {
 

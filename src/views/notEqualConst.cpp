@@ -1,11 +1,11 @@
 #include "views/notEqualConst.hpp"
 
 Int NotEqualConst::value(Timestamp ts) {
-  return _engine->value(ts, _parentId) == _val;
+  return static_cast<Int>(_engine->value(ts, _parentId) == _val);
 }
 
 Int NotEqualConst::committedValue() {
-  return _engine->committedValue(_parentId) == _val;
+  return static_cast<Int>(_engine->committedValue(_parentId) == _val);
 }
 
 Int NotEqualConst::lowerBound() const {
