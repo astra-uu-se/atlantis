@@ -45,3 +45,9 @@ void utils::FlowNetwork::resetFlows() {
     }
   }
 }
+
+void utils::FlowNetwork::shuffleAdjacencyList(std::mt19937& generator) {
+  for (auto i = 0u; i < size(); i++) {
+    std::shuffle(_adjacencyList[i].begin(), _adjacencyList[i].end(), generator);
+  }
+}

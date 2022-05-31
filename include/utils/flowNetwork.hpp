@@ -1,5 +1,6 @@
 #pragma once
 
+#include <random>
 #include <vector>
 
 namespace utils {
@@ -30,6 +31,12 @@ class FlowNetwork {
    * Resets the remaining capacity to full capacity, setting the flow to 0.
    */
   void resetFlows();
+
+  /**
+   * Shuffles the order of the adjacency list. This impacts any search done on
+   * the network.
+   */
+  void shuffleAdjacencyList(std::mt19937& generator);
 
   [[nodiscard]] size_t source() const noexcept { return _source; }
   [[nodiscard]] bool isSource(size_t node) const noexcept {
