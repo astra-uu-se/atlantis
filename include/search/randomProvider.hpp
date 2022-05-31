@@ -70,6 +70,8 @@ class RandomProvider {
   bool boolean() {
     return floatInRange(0.0, 1.0) >= 0.5;
   }
+
+  std::mt19937& generator() { return _gen; }
 };
 
 }  // namespace search

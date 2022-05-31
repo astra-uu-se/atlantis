@@ -37,7 +37,7 @@ class AllDifferentNeighbourhood : public Neighbourhood {
                   Annealer& annealer);
   bool assignValue(RandomProvider& random, Assignment& assignment,
                    Annealer& annealer);
-  size_t createMatching(AssignmentModifier& modifications);
+  size_t createMatching(RandomProvider& random, AssignmentModifier& modifications);
 };
 
 }  // namespace search::neighbourhoods

@@ -77,60 +77,17 @@ search::neighbourhoods::AllDifferentNeighbourhood::AllDifferentNeighbourhood(
   _flowNetwork = makeFlowNetwork(_variables, _values);
 }
 
-static Int bfs(utils::FlowNetwork& graph, std::vector<int>& parent) {
-  std::fill(parent.begin(), parent.end(), -1);
-  parent[graph.source()] = -2;
-  std::queue<std::pair<size_t, size_t>> q;
-  q.push({graph.source(), std::numeric_limits<size_t>::max()});
-
-  while (!q.empty()) {
-    size_t cur = q.front().first;
-    size_t flow = q.front().second;
-    q.pop();
-
-    for (auto next : graph.edges(cur)) {
-      if (parent[next] == -1 && graph.remainingCapacity(cur, next) > 0) {
-        parent[next] = cur;
-        int new_flow = std::min(flow, graph.capacity(cur, next));
-        if (next == graph.sink())
-          return new_flow;
-        q.push({next, new_flow});
-      }
-    }
-  }
-
-  return 0;
-}
-
-static Int edmundsKarp(utils::FlowNetwork& graph) {
-  Int flow = 0;
-  std::vector<int> parent(graph.size());
-  Int new_flow;
-
-  while ((new_flow = bfs(graph, parent)) != 0) {
-    flow += new_flow;
-    auto cur = graph.sink();
-    while (cur != graph.source()) {
-      int prev = parent[cur];
-      graph.remainingCapacity(prev, cur) -= new_flow;
-      graph.remainingCapacity(cur, prev) += new_flow;
-      cur = prev;
-    }
-  }
-
-  return flow;
-}
-
 void search::neighbourhoods::AllDifferentNeighbourhood::initialise(
-    RandomProvider&, AssignmentModifier& modifications) {
+    RandomProvider& random, AssignmentModifier& modifications) {
   _freeValues.clear();
   for (Int i = _minVal; i <= _maxVal; ++i) {
     _freeValues.emplace(i);
   }
 
-  auto matchingSize = createMatching(modifications);
+  auto matchingSize = createMatching(random, modifications);
   if (matchingSize != _variables.size()) {
-    throw std::runtime_error("Failed to create assignment satisfying all different.");
+    throw std::runtime_error(
+        "Failed to create assignment satisfying all different.");
   }
 }
 
@@ -185,8 +142,53 @@ bool search::neighbourhoods::AllDifferentNeighbourhood::assignValue(
   return false;
 }
 
-size_t search::neighbourhoods::AllDifferentNeighbourhood::createMatching(AssignmentModifier& modifications) {
+static Int bfs(utils::FlowNetwork& graph, std::vector<int>& parent) {
+  std::fill(parent.begin(), parent.end(), -1);
+  parent[graph.source()] = -2;
+  std::queue<std::pair<size_t, size_t>> q;
+  q.push({graph.source(), std::numeric_limits<size_t>::max()});
+
+  while (!q.empty()) {
+    size_t cur = q.front().first;
+    size_t flow = q.front().second;
+    q.pop();
+
+    for (auto next : graph.edges(cur)) {
+      if (parent[next] == -1 && graph.remainingCapacity(cur, next) > 0) {
+        parent[next] = cur;
+        int new_flow = std::min(flow, graph.capacity(cur, next));
+        if (next == graph.sink()) return new_flow;
+        q.push({next, new_flow});
+      }
+    }
+  }
+
+  return 0;
+}
+
+static Int edmundsKarp(utils::FlowNetwork& graph) {
+  Int flow = 0;
+  std::vector<int> parent(graph.size());
+  Int new_flow;
+
+  while ((new_flow = bfs(graph, parent)) != 0) {
+    flow += new_flow;
+    auto cur = graph.sink();
+    while (cur != graph.source()) {
+      int prev = parent[cur];
+      graph.remainingCapacity(prev, cur) -= new_flow;
+      graph.remainingCapacity(cur, prev) += new_flow;
+      cur = prev;
+    }
+  }
+
+  return flow;
+}
+
+size_t search::neighbourhoods::AllDifferentNeighbourhood::createMatching(
+    RandomProvider& random, AssignmentModifier& modifications) {
   _flowNetwork.resetFlows();
+  _flowNetwork.shuffleAdjacencyList(random.generator());
   auto size = edmundsKarp(_flowNetwork);
 
   for (auto i = 0u; i < _variables.size(); i++) {
