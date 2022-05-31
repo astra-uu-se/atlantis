@@ -10,8 +10,8 @@
  * @param y second violation variable
  * @param output the result
  */
-BoolAnd::BoolAnd(VarId x, VarId y, VarId output)
-    : Invariant(NULL_ID), _x(x), _y(y), _output(output) {
+BoolAnd::BoolAnd(VarId output, VarId x, VarId y)
+    : Invariant(), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 

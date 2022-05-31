@@ -7,16 +7,18 @@
 #include "invariants/invariant.hpp"
 #include "variables/intVar.hpp"
 
+/**
+ * Invariant for output <- xor(x, y) [bool(x) != bool(y)]
+ *
+ */
+
 class Engine;
 class BoolXor : public Invariant {
  private:
-  const VarId _x;
-  const VarId _y;
-  const VarId _output;
+  const VarId _output, _x, _y;
 
  public:
-  explicit BoolXor(VarId x, VarId y, VarId output);
-
+  explicit BoolXor(VarId output, VarId x, VarId y);
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;
   void recompute(Timestamp, Engine&) override;

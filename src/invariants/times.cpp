@@ -2,34 +2,39 @@
 
 #include "core/engine.hpp"
 
+Times::Times(VarId output, VarId x, VarId y)
+    : Invariant(), _output(output), _x(x), _y(y) {
+  _modifiedVars.reserve(1);
+}
+
 void Times::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
-  engine.registerInvariantInput(_id, _a, 0);
-  engine.registerInvariantInput(_id, _b, 0);
-  registerDefinedVariable(engine, _y);
+  engine.registerInvariantInput(_id, _x, 0);
+  engine.registerInvariantInput(_id, _y, 0);
+  registerDefinedVariable(engine, _output);
 }
 
 void Times::updateBounds(Engine& engine, bool widenOnly) {
-  const Int aLb = engine.lowerBound(_a);
-  const Int aUb = engine.upperBound(_a);
-  const Int bLb = engine.lowerBound(_b);
-  const Int bUb = engine.upperBound(_b);
-  const std::array<const Int, 4> vals{aLb * bLb, aLb * bUb, aUb * bLb,
-                                      aUb * bUb};
+  const Int xLb = engine.lowerBound(_x);
+  const Int xUb = engine.upperBound(_x);
+  const Int yLb = engine.lowerBound(_y);
+  const Int yUb = engine.upperBound(_y);
+  const std::array<const Int, 4> vals{xLb * yLb, xLb * yUb, xUb * yLb,
+                                      xUb * yUb};
   const auto [lb, ub] = std::minmax_element(vals.begin(), vals.end());
-  engine.updateBounds(_y, *lb, *ub, widenOnly);
+  engine.updateBounds(_output, *lb, *ub, widenOnly);
 }
 
 void Times::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _y, engine.value(ts, _a) * engine.value(ts, _b));
+  updateValue(ts, engine, _output, engine.value(ts, _x) * engine.value(ts, _y));
 }
 
 VarId Times::nextInput(Timestamp ts, Engine&) {
   switch (_state.incValue(ts, 1)) {
     case 0:
-      return _a;
+      return _x;
     case 1:
-      return _b;
+      return _y;
     default:
       return NULL_ID;
   }

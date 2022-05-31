@@ -9,7 +9,7 @@
  * @param violationId id for the violationCount
  */
 AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> variables)
-    : Constraint(NULL_ID, violationId),
+    : Constraint(violationId),
       _variables(std::move(variables)),
       _localValues(),
       _counts(),

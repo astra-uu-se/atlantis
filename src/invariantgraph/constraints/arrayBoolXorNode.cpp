@@ -39,5 +39,5 @@ void invariantgraph::ArrayBoolXorNode::registerWithEngine(Engine& engine) {
                  std::back_inserter(inputs),
                  [&](const auto& node) { return node->varId(); });
 
-  engine.makeInvariant<BoolLinear>(inputs, _intermediate);
+  engine.makeInvariant<BoolLinear>(_intermediate, inputs);
 }

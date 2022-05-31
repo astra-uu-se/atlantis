@@ -1,10 +1,10 @@
 #include "invariants/elementVar.hpp"
 
-ElementVar::ElementVar(VarId index, std::vector<VarId> varArray, VarId y)
-    : Invariant(NULL_ID),
+ElementVar::ElementVar(VarId output, VarId index, std::vector<VarId> varArray)
+    : Invariant(),
+      _output(output),
       _index(index),
-      _varArray(prependNullId(varArray)),
-      _y(y) {
+      _varArray(prependNullId(varArray)) {
   _modifiedVars.reserve(1);
 }
 
@@ -14,7 +14,7 @@ void ElementVar::registerVars(Engine& engine) {
   for (size_t i = 1; i < _varArray.size(); ++i) {
     engine.registerInvariantInput(_id, _varArray[i], LocalId(0));
   }
-  registerDefinedVariable(engine, _y);
+  registerDefinedVariable(engine, _output);
 }
 
 void ElementVar::updateBounds(Engine& engine, bool widenOnly) {
@@ -31,12 +31,12 @@ void ElementVar::updateBounds(Engine& engine, bool widenOnly) {
     lb = std::min(lb, engine.lowerBound(_varArray[i]));
     ub = std::max(ub, engine.upperBound(_varArray[i]));
   }
-  engine.updateBounds(_y, lb, ub, widenOnly);
+  engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void ElementVar::recompute(Timestamp ts, Engine& engine) {
   assert(safeIndex(engine.value(ts, _index)) < _varArray.size());
-  updateValue(ts, engine, _y,
+  updateValue(ts, engine, _output,
               engine.value(ts, _varArray[safeIndex(engine.value(ts, _index))]));
 }
 

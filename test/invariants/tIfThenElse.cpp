@@ -52,7 +52,7 @@ TEST_F(IfThenElseTest, UpdateBounds) {
   const VarId y = engine->makeIntVar(yUb, yLb, yUb);
   const VarId outputId =
       engine->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
-  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(b, x, y, outputId);
+  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(outputId, b, x, y);
   engine->close();
 
   std::vector<std::pair<Int, Int>> bBounds{{0, 0}, {0, 100}, {1, 10000}};
@@ -93,7 +93,7 @@ TEST_F(IfThenElseTest, Recompute) {
   const VarId y = engine->makeIntVar(yUb, yLb, yUb);
   const VarId outputId =
       engine->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
-  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(b, x, y, outputId);
+  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(outputId, b, x, y);
   engine->close();
   for (Int bVal = bLb; bVal <= bUb; ++bVal) {
     for (Int xVal = xLb; xVal <= xUb; ++xVal) {
@@ -125,7 +125,7 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
                               engine->makeIntVar(ub, lb, ub)};
   VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      inputs.at(0), inputs.at(1), inputs.at(2), outputId);
+      outputId, inputs.at(0), inputs.at(1), inputs.at(2));
   engine->close();
 
   for (Int bVal = bLb; bVal <= bUb; ++bVal) {
@@ -161,7 +161,7 @@ TEST_F(IfThenElseTest, NextInput) {
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      inputs.at(0), inputs.at(1), inputs.at(2), outputId);
+      outputId, inputs.at(0), inputs.at(1), inputs.at(2));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -204,7 +204,7 @@ TEST_F(IfThenElseTest, NotifyCurrentInputChanged) {
       engine->makeIntVar(valueDist(gen), lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      inputs.at(0), inputs.at(1), inputs.at(2), outputId);
+      outputId, inputs.at(0), inputs.at(1), inputs.at(2));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -249,7 +249,7 @@ TEST_F(IfThenElseTest, Commit) {
 
   VarId outputId = engine->makeIntVar(0, 0, 2);
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      inputs.at(0), inputs.at(1), inputs.at(2), outputId);
+      outputId, inputs.at(0), inputs.at(1), inputs.at(2));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
@@ -293,7 +293,8 @@ class MockIfThenElse : public IfThenElse {
     registered = true;
     IfThenElse::registerVars(engine);
   }
-  MockIfThenElse(VarId b, VarId x, VarId y, VarId z) : IfThenElse(b, x, y, z) {
+  explicit MockIfThenElse(VarId output, VarId b, VarId x, VarId y)
+      : IfThenElse(output, b, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return IfThenElse::recompute(timestamp, engine);
@@ -333,7 +334,7 @@ TEST_F(IfThenElseTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(5, 5, 9);
     const VarId output = engine->makeIntVar(3, 0, 9);
     testNotifications<MockIfThenElse>(
-        &engine->makeInvariant<MockIfThenElse>(b, x, y, output), propMode,
+        &engine->makeInvariant<MockIfThenElse>(output, b, x, y), propMode,
         markingMode, 3, b, 5, output);
   }
 }

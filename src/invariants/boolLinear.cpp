@@ -4,13 +4,16 @@
 
 #include "core/engine.hpp"
 
-BoolLinear::BoolLinear(std::vector<Int> coeffs, std::vector<VarId> violArray,
-                       VarId y)
-    : Invariant(NULL_ID),
+BoolLinear::BoolLinear(VarId output, const std::vector<VarId>& violArray)
+    : BoolLinear(output, std::vector<Int>(violArray.size(), 1), violArray) {}
+
+BoolLinear::BoolLinear(VarId output, std::vector<Int> coeffs,
+                       std::vector<VarId> violArray)
+    : Invariant(),
+      _output(output),
       _coeffs(std::move(coeffs)),
       _violArray(std::move(violArray)),
-      _isSatisfied(),
-      _y(y) {
+      _isSatisfied() {
   _isSatisfied.reserve(_violArray.size());
   _modifiedVars.reserve(_violArray.size());
 }
@@ -23,7 +26,7 @@ void BoolLinear::registerVars(Engine& engine) {
   for (size_t i = 0; i < _violArray.size(); ++i) {
     engine.registerInvariantInput(_id, _violArray[i], i);
   }
-  registerDefinedVariable(engine, _y);
+  registerDefinedVariable(engine, _output);
 }
 
 void BoolLinear::updateBounds(Engine& engine, bool widenOnly) {
@@ -45,7 +48,7 @@ void BoolLinear::updateBounds(Engine& engine, bool widenOnly) {
     lb += _coeffs[i] * (_coeffs[i] < 0 ? boolUb : boolLb);
     ub += _coeffs[i] * (_coeffs[i] < 0 ? boolLb : boolUb);
   }
-  engine.updateBounds(_y, lb, ub, widenOnly);
+  engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void BoolLinear::close(Timestamp ts, Engine& engine) {
@@ -62,7 +65,7 @@ void BoolLinear::recompute(Timestamp ts, Engine& engine) {
     _isSatisfied[i].commitValue(engine.committedValue(_violArray[i]) == 0);
     _isSatisfied[i].setValue(ts, engine.value(ts, _violArray[i]) == 0);
   }
-  updateValue(ts, engine, _y, sum);
+  updateValue(ts, engine, _output, sum);
 }
 
 void BoolLinear::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
@@ -71,7 +74,7 @@ void BoolLinear::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
   if (newValue == _isSatisfied[id].value(ts)) {
     return;
   }
-  incValue(ts, engine, _y,
+  incValue(ts, engine, _output,
            (newValue - _isSatisfied[id].value(ts)) * _coeffs[id]);
   _isSatisfied[id].setValue(ts, newValue);
 }

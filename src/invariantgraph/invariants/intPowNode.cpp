@@ -21,6 +21,6 @@ void invariantgraph::IntPowNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::IntPowNode::registerWithEngine(Engine& engine) {
   assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<Pow>(a()->varId(), b()->varId(),
-                            definedVariables().front()->varId());
+  engine.makeInvariant<Pow>(definedVariables().front()->varId(), a()->varId(),
+                            b()->varId());
 }

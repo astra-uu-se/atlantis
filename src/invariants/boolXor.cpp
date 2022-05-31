@@ -10,8 +10,8 @@
  * @param y second violation variable
  * @param output result
  */
-BoolXor::BoolXor(VarId x, VarId y, VarId output)
-    : Invariant(NULL_ID), _x(x), _y(y), _output(output) {
+BoolXor::BoolXor(VarId output, VarId x, VarId y)
+    : Invariant(), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 

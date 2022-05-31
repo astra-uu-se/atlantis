@@ -40,28 +40,23 @@ invariantgraph::SetInNode::fromModelConstraint(
 
 void invariantgraph::SetInNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
+    const VarId input = staticInputs().front()->varId();
+    std::vector<DomainEntry> domainEntries;
+    domainEntries.reserve(_values.size());
+    std::transform(_values.begin(), _values.end(),
+                   std::back_inserter(domainEntries),
+                   [](const auto& value) { return DomainEntry(value, value); });
+
     if (!shouldHold()) {
       assert(!isReified());
-      _intermediate = engine.makeIntVar(0, 0, 0);
+      _intermediate =
+          engine.makeIntView<InDomain>(input, std::move(domainEntries));
       setViolationVarId(engine.makeIntView<NotEqualView>(_intermediate, 0));
     } else {
-      registerViolation(engine);
+      setViolationVarId(
+          engine.makeIntView<InDomain>(input, std::move(domainEntries)));
     }
   }
 }
 
-void invariantgraph::SetInNode::registerWithEngine(Engine& engine) {
-  VarId input = staticInputs().front()->varId();
-
-  std::vector<DomainEntry> domainEntries;
-  domainEntries.reserve(_values.size());
-  std::transform(_values.begin(), _values.end(),
-                 std::back_inserter(domainEntries),
-                 [](const auto& value) { return DomainEntry(value, value); });
-
-  assert(violationVarId() != NULL_ID);
-
-  engine.makeConstraint<InDomain>(
-      !shouldHold() ? _intermediate : violationVarId(), input,
-      std::move(domainEntries));
-}
+void invariantgraph::SetInNode::registerWithEngine(Engine&) {}

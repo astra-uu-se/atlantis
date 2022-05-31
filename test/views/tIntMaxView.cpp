@@ -69,8 +69,8 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   const VarId b = engine->makeIntVar(20, -100, 100);
   const VarId sum = engine->makeIntVar(0, -100, 100);
 
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({a, b}), sum);
+  engine->makeInvariant<Linear>(sum, std::vector<Int>({1, 1}),
+                                std::vector<VarId>({a, b}));
 
   const VarId viewOfVar = engine->makeIntView<IntMaxView>(sum, 10);
   const VarId viewOfView = engine->makeIntView<IntMaxView>(viewOfVar, 15);
@@ -111,17 +111,17 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   auto sum3 = engine->makeIntVar(0, -100, 100);
   // sum1 + sum2 = sum2
 
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({a, b}), sum1);
+  engine->makeInvariant<Linear>(sum1, std::vector<Int>({1, 1}),
+                                std::vector<VarId>({a, b}));
 
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({c, d}), sum2);
+  engine->makeInvariant<Linear>(sum2, std::vector<Int>({1, 1}),
+                                std::vector<VarId>({c, d}));
 
   const VarId sum1View = engine->makeIntView<IntMaxView>(sum1, 45);
   const VarId sum2View = engine->makeIntView<IntMaxView>(sum2, 20);
 
-  engine->makeInvariant<Linear>(std::vector<Int>({1, 1}),
-                                std::vector<VarId>({sum1View, sum2View}), sum3);
+  engine->makeInvariant<Linear>(sum3, std::vector<Int>({1, 1}),
+                                std::vector<VarId>({sum1View, sum2View}));
 
   std::vector<VarId> sum3views;
   VarId prev = sum3;

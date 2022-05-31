@@ -39,6 +39,6 @@ void invariantgraph::ArrayBoolOrNode::registerWithEngine(Engine& engine) {
                  std::back_inserter(inputs),
                  [&](const auto& node) { return node->varId(); });
 
-  engine.makeInvariant<Exists>(
-      inputs, !shouldHold() ? _intermediate : violationVarId());
+  engine.makeInvariant<Exists>(!shouldHold() ? _intermediate : violationVarId(),
+                               inputs);
 }

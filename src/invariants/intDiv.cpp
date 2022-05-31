@@ -2,60 +2,60 @@
 
 #include "core/engine.hpp"
 
-IntDiv::IntDiv(VarId a, VarId b, VarId y)
-    : Invariant(NULL_ID), _a(a), _b(b), _y(y) {
+IntDiv::IntDiv(VarId output, VarId x, VarId y)
+    : Invariant(), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void IntDiv::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
-  engine.registerInvariantInput(_id, _a, 0);
-  engine.registerInvariantInput(_id, _b, 0);
-  registerDefinedVariable(engine, _y);
+  engine.registerInvariantInput(_id, _x, 0);
+  engine.registerInvariantInput(_id, _y, 0);
+  registerDefinedVariable(engine, _output);
 }
 
 void IntDiv::updateBounds(Engine& engine, bool widenOnly) {
-  const Int aLb = engine.lowerBound(_a);
-  const Int aUb = engine.upperBound(_a);
-  const Int bLb = engine.lowerBound(_b);
-  const Int bUb = engine.upperBound(_b);
+  const Int xLb = engine.lowerBound(_x);
+  const Int xUb = engine.upperBound(_x);
+  const Int yLb = engine.lowerBound(_y);
+  const Int yUb = engine.upperBound(_y);
 
-  assert(bLb != 0 || bUb != 0);
+  assert(yLb != 0 || yUb != 0);
 
   std::vector<Int> denominators;
   denominators.reserve(4);
 
-  if (bLb <= 0 && 0 < bUb) {
+  if (yLb <= 0 && 0 < yUb) {
     denominators.emplace_back(1);
   }
-  if (bLb < 0 && 0 <= bUb) {
+  if (yLb < 0 && 0 <= yUb) {
     denominators.emplace_back(-1);
   }
-  if (bLb != 0) {
-    denominators.emplace_back(bLb);
+  if (yLb != 0) {
+    denominators.emplace_back(yLb);
   }
-  if (bUb != 0) {
-    denominators.emplace_back(bUb);
+  if (yUb != 0) {
+    denominators.emplace_back(yUb);
   }
 
   assert(denominators.size() > 0);
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
   for (const Int d : denominators) {
-    lb = std::min(lb, std::min(aLb / d, aUb / d));
-    ub = std::max(ub, std::max(aLb / d, aUb / d));
+    lb = std::min(lb, std::min(xLb / d, xUb / d));
+    ub = std::max(ub, std::max(xLb / d, xUb / d));
   }
 
-  engine.updateBounds(_y, lb, ub, widenOnly);
+  engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void IntDiv::close(Timestamp, Engine& engine) {
   assert(!_id.equals(NULL_ID));
-  engine.registerInvariantInput(_id, _a, 0);
-  engine.registerInvariantInput(_id, _b, 0);
+  engine.registerInvariantInput(_id, _x, 0);
+  engine.registerInvariantInput(_id, _y, 0);
 
-  const Int lb = engine.lowerBound(_b);
-  const Int ub = engine.upperBound(_b);
+  const Int lb = engine.lowerBound(_y);
+  const Int ub = engine.upperBound(_y);
 
   assert(lb != 0 || ub != 0);
   if (lb <= 0 && 0 <= ub) {
@@ -65,18 +65,18 @@ void IntDiv::close(Timestamp, Engine& engine) {
 
 void IntDiv::recompute(Timestamp ts, Engine& engine) {
   assert(_zeroReplacement != 0);
-  const Int denominator = engine.value(ts, _b);
-  updateValue(ts, engine, _y,
-              engine.value(ts, _a) /
+  const Int denominator = engine.value(ts, _y);
+  updateValue(ts, engine, _output,
+              engine.value(ts, _x) /
                   (denominator != 0 ? denominator : _zeroReplacement));
 }
 
 VarId IntDiv::nextInput(Timestamp ts, Engine&) {
   switch (_state.incValue(ts, 1)) {
     case 0:
-      return _a;
+      return _x;
     case 1:
-      return _b;
+      return _y;
     default:
       return NULL_ID;
   }

@@ -5,15 +5,15 @@
 #include "invariants/invariant.hpp"
 
 /**
- * Invariant for y <- max(a, b)
+ * Invariant for output <- max(x, y)
  *
  */
 class BinaryMax : public Invariant {
  private:
-  const VarId _a, _b, _y;
+  const VarId _output, _x, _y;
 
  public:
-  explicit BinaryMax(VarId a, VarId b, VarId y);
+  explicit BinaryMax(VarId output, VarId x, VarId y);
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;
   void recompute(Timestamp, Engine&) override;

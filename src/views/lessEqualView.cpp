@@ -4,11 +4,11 @@ static inline Int compute(Int var, Int val) {
   return std::max<Int>(0, var - val);
 }
 
-Int LessEqualView::value(Timestamp ts) const {
+Int LessEqualView::value(Timestamp ts) {
   return compute(_engine->value(ts, _parentId), _val);
 }
 
-Int LessEqualView::committedValue() const {
+Int LessEqualView::committedValue() {
   return compute(_engine->committedValue(_parentId), _val);
 }
 

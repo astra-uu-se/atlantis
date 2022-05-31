@@ -38,5 +38,5 @@ void invariantgraph::BoolOrNode::createDefinedVariables(Engine& engine) {
 void invariantgraph::BoolOrNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
 
-  engine.makeInvariant<BoolOr>(a()->varId(), b()->varId(), violationVarId());
+  engine.makeInvariant<BoolOr>(violationVarId(), a()->varId(), b()->varId());
 }

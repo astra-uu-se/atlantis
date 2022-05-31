@@ -62,8 +62,8 @@ TEST_F(ElementVarTest, UpdateBounds) {
     inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
   }
   const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant = engine->makeInvariant<ElementVar>(
-      index, std::vector<VarId>(inputs), outputId);
+  ElementVar& invariant =
+      engine->makeInvariant<ElementVar>(outputId, index, inputs);
   engine->close();
 
   const Int ub = 100;
@@ -94,8 +94,8 @@ TEST_F(ElementVarTest, Recompute) {
     inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
   }
   const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant = engine->makeInvariant<ElementVar>(
-      index, std::vector<VarId>(inputs), outputId);
+  ElementVar& invariant =
+      engine->makeInvariant<ElementVar>(outputId, index, inputs);
   engine->close();
 
   for (Int val = indexLb; val <= indexUb; ++val) {
@@ -121,8 +121,8 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
     inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
   }
   const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant = engine->makeInvariant<ElementVar>(
-      index, std::vector<VarId>(inputs), outputId);
+  ElementVar& invariant =
+      engine->makeInvariant<ElementVar>(outputId, index, inputs);
   engine->close();
 
   for (Int val = indexLb; val <= indexUb; ++val) {
@@ -146,8 +146,8 @@ TEST_F(ElementVarTest, NextInput) {
     inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
   }
   const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant = engine->makeInvariant<ElementVar>(
-      index, std::vector<VarId>(inputs), outputId);
+  ElementVar& invariant =
+      engine->makeInvariant<ElementVar>(outputId, index, inputs);
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -176,8 +176,8 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
     inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
   }
   const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant = engine->makeInvariant<ElementVar>(
-      index, std::vector<VarId>(inputs), outputId);
+  ElementVar& invariant =
+      engine->makeInvariant<ElementVar>(outputId, index, inputs);
   engine->close();
 
   for (size_t i = 0; i < indexValues.size(); ++i) {
@@ -217,8 +217,8 @@ TEST_F(ElementVarTest, Commit) {
     inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
   }
   const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant = engine->makeInvariant<ElementVar>(
-      index, std::vector<VarId>(inputs), outputId);
+  ElementVar& invariant =
+      engine->makeInvariant<ElementVar>(outputId, index, inputs);
   engine->close();
 
   Int committedIndexValue = engine->committedValue(index);
@@ -283,7 +283,9 @@ class MockElementVar : public ElementVar {
     registered = true;
     ElementVar::registerVars(engine);
   }
-  MockElementVar(VarId i, std::vector<VarId> X, VarId b) : ElementVar(i, X, b) {
+  explicit MockElementVar(VarId output, VarId index,
+                          std::vector<VarId> varArray)
+      : ElementVar(output, index, varArray) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return ElementVar::recompute(timestamp, engine);
@@ -327,7 +329,7 @@ TEST_F(ElementVarTest, EngineIntegration) {
     VarId idx = engine->makeIntVar(0, 0, numArgs - 1);
     VarId output = engine->makeIntVar(-10, -100, 100);
     testNotifications<MockElementVar>(
-        &engine->makeInvariant<MockElementVar>(idx, args, output), propMode,
+        &engine->makeInvariant<MockElementVar>(output, idx, args), propMode,
         markingMode, 3, idx, 5, output);
   }
 }

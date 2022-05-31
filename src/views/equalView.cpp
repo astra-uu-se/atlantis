@@ -1,10 +1,10 @@
 #include "views/equalView.hpp"
 
-Int EqualView::value(Timestamp ts) const {
+Int EqualView::value(Timestamp ts) {
   return std::abs(_engine->value(ts, _parentId) - _val);
 }
 
-Int EqualView::committedValue() const {
+Int EqualView::committedValue() {
   return std::abs(_engine->committedValue(_parentId) - _val);
 }
 

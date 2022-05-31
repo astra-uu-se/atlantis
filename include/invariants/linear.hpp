@@ -8,21 +8,21 @@
 class Engine;
 
 /**
- * Invariant for y <- sum(coeffs_i*varArray_i)
+ * Invariant for output <- sum(coeffs_i * varArray_i)
  *
  */
 
 class Linear : public Invariant {
  private:
+  const VarId _output;
   const std::vector<Int> _coeffs;
   const std::vector<VarId> _varArray;
   std::vector<CommittableInt> _localVarArray;
-  const VarId _y;
 
  public:
-  Linear(const std::vector<VarId>& varArray, VarId y)
-      : Linear(std::vector<Int>(varArray.size(), 1), varArray, y) {}
-  Linear(std::vector<Int> coeffs, std::vector<VarId> varArray, VarId y);
+  explicit Linear(VarId output, const std::vector<VarId>& varArray);
+  explicit Linear(VarId output, std::vector<Int> coeffs,
+                  std::vector<VarId> varArray);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;

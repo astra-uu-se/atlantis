@@ -28,7 +28,7 @@ class AssignmentTest : public testing::Test {
     d = engine.makeIntVar(3, 3, 3);
     violation = engine.makeIntVar(0, 0, 10);
 
-    engine.makeInvariant<Linear>(std::vector<VarId>{a, b}, c);
+    engine.makeInvariant<Linear>(c, std::vector<VarId>{a, b});
     engine.makeConstraint<Equal>(violation, c, d);
     engine.close();
   }

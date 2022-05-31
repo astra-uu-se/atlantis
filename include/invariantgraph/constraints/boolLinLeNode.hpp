@@ -7,7 +7,7 @@
 #include "constraints/lessEqual.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/boolLinear.hpp"
-#include "views/greaterThanView.hpp"
+#include "views/greaterEqualView.hpp"
 #include "views/lessEqualView.hpp"
 
 namespace invariantgraph {

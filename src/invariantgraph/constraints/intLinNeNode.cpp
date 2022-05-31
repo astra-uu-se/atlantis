@@ -46,5 +46,5 @@ void invariantgraph::IntLinNeNode::registerWithEngine(Engine& engine) {
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
 
-  engine.makeInvariant<Linear>(_coeffs, variables, _sumVarId);
+  engine.makeInvariant<Linear>(_sumVarId, _coeffs, variables);
 }

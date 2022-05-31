@@ -46,5 +46,5 @@ void invariantgraph::BoolLinEqNode::registerWithEngine(Engine& engine) {
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
 
-  engine.makeInvariant<BoolLinear>(_coeffs, variables, _sumVarId);
+  engine.makeInvariant<BoolLinear>(_sumVarId, _coeffs, variables);
 }

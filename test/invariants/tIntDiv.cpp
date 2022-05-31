@@ -22,12 +22,12 @@ class IntDivTest : public InvariantTest {
     return computeOutput(ts, inputs.at(0), inputs.at(1));
   }
 
-  Int computeOutput(Timestamp ts, const VarId a, const VarId b) {
-    Int denominator = engine->value(ts, b);
+  Int computeOutput(Timestamp ts, const VarId x, const VarId y) {
+    Int denominator = engine->value(ts, y);
     if (denominator == 0) {
-      denominator = engine->upperBound(b) > 0 ? 1 : -1;
+      denominator = engine->upperBound(y) > 0 ? 1 : -1;
     }
-    return engine->value(ts, a) / denominator;
+    return engine->value(ts, x) / denominator;
   }
 };
 
@@ -35,30 +35,30 @@ TEST_F(IntDivTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
   engine->open();
-  const VarId a = engine->makeIntVar(
+  const VarId x = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId b = engine->makeIntVar(
+  const VarId y = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId outputId = engine->makeIntVar(0, 0, 2);
-  IntDiv& invariant = engine->makeInvariant<IntDiv>(a, b, outputId);
+  IntDiv& invariant = engine->makeInvariant<IntDiv>(outputId, x, y);
   engine->close();
 
-  for (const auto& [aLb, aUb] : boundVec) {
-    EXPECT_TRUE(aLb <= aUb);
-    engine->updateBounds(a, aLb, aUb, false);
-    for (const auto& [bLb, bUb] : boundVec) {
-      EXPECT_TRUE(bLb <= bUb);
-      engine->updateBounds(b, bLb, bUb, false);
+  for (const auto& [xLb, xUb] : boundVec) {
+    EXPECT_TRUE(xLb <= xUb);
+    engine->updateBounds(x, xLb, xUb, false);
+    for (const auto& [yLb, yUb] : boundVec) {
+      EXPECT_TRUE(yLb <= yUb);
+      engine->updateBounds(y, yLb, yUb, false);
       engine->open();
       invariant.updateBounds(*engine);
       engine->close();
       std::vector<Int> outputs;
       const Int lb = engine->lowerBound(outputId);
       const Int ub = engine->upperBound(outputId);
-      for (Int aVal = aLb; aVal <= aUb; ++aVal) {
-        engine->setValue(engine->currentTimestamp(), a, aVal);
-        for (Int bVal = bLb; bVal <= bUb; ++bVal) {
-          engine->setValue(engine->currentTimestamp(), b, bVal);
+      for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+        engine->setValue(engine->currentTimestamp(), x, xVal);
+        for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+          engine->setValue(engine->currentTimestamp(), y, yVal);
           invariant.recompute(engine->currentTimestamp(), *engine);
           const Int o = engine->value(engine->currentTimestamp(), outputId);
           if (o < lb || ub < o) {
@@ -79,31 +79,31 @@ TEST_F(IntDivTest, UpdateBounds) {
 }
 
 TEST_F(IntDivTest, Recompute) {
-  const Int aLb = -1;
-  const Int aUb = 0;
-  const Int bLb = 0;
-  const Int bUb = 1;
+  const Int xLb = -1;
+  const Int xUb = 0;
+  const Int yLb = 0;
+  const Int yUb = 1;
   const Int outputLb = -1;
   const Int outputUb = 0;
 
-  EXPECT_TRUE(aLb <= aUb);
-  EXPECT_TRUE(bLb <= bUb);
-  EXPECT_TRUE(bLb != 0 || bUb != 0);
+  EXPECT_TRUE(xLb <= xUb);
+  EXPECT_TRUE(yLb <= yUb);
+  EXPECT_TRUE(yLb != 0 || yUb != 0);
 
   engine->open();
-  const VarId a = engine->makeIntVar(aUb, aLb, aUb);
-  const VarId b = engine->makeIntVar(bUb, bLb, bUb);
+  const VarId x = engine->makeIntVar(xUb, xLb, xUb);
+  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
   const VarId outputId = engine->makeIntVar(0, outputLb, outputUb);
-  IntDiv& invariant = engine->makeInvariant<IntDiv>(a, b, outputId);
+  IntDiv& invariant = engine->makeInvariant<IntDiv>(outputId, x, y);
   engine->close();
 
-  for (Int aVal = aLb; aVal <= aUb; ++aVal) {
-    for (Int bVal = bLb; bVal <= bUb; ++bVal) {
-      engine->setValue(engine->currentTimestamp(), a, aVal);
-      engine->setValue(engine->currentTimestamp(), b, bVal);
+  for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+    for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+      engine->setValue(engine->currentTimestamp(), x, xVal);
+      engine->setValue(engine->currentTimestamp(), y, yVal);
 
       const Int expectedOutput =
-          computeOutput(engine->currentTimestamp(), a, b);
+          computeOutput(engine->currentTimestamp(), x, y);
       invariant.recompute(engine->currentTimestamp(), *engine);
       EXPECT_EQ(expectedOutput,
                 engine->value(engine->currentTimestamp(), outputId));
@@ -122,7 +122,7 @@ TEST_F(IntDivTest, NotifyInputChanged) {
                               engine->makeIntVar(ub, lb, ub)};
   VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   IntDiv& invariant =
-      engine->makeInvariant<IntDiv>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<IntDiv>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int val = lb; val <= ub; ++val) {
@@ -152,7 +152,7 @@ TEST_F(IntDivTest, NextInput) {
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
   IntDiv& invariant =
-      engine->makeInvariant<IntDiv>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<IntDiv>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -186,7 +186,7 @@ TEST_F(IntDivTest, NotifyCurrentInputChanged) {
       engine->makeIntVar(valueDist(gen), lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   IntDiv& invariant =
-      engine->makeInvariant<IntDiv>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<IntDiv>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -220,7 +220,7 @@ TEST_F(IntDivTest, Commit) {
 
   VarId outputId = engine->makeIntVar(0, 0, 2);
   IntDiv& invariant =
-      engine->makeInvariant<IntDiv>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<IntDiv>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
@@ -258,23 +258,23 @@ TEST_F(IntDivTest, Commit) {
 }
 
 TEST_F(IntDivTest, ZeroDenominator) {
-  const Int aVal = 10;
+  const Int xVal = 10;
   const Int outputLb = std::numeric_limits<Int>::min();
   const Int outputUb = std::numeric_limits<Int>::max();
-  for (const auto& [bLb, bUb, expected] : std::vector<std::array<Int, 3>>{
+  for (const auto& [yLb, yUb, expected] : std::vector<std::array<Int, 3>>{
            {-100, 0, -10}, {-50, 50, 10}, {0, 100, 10}}) {
-    EXPECT_TRUE(bLb <= bUb);
-    EXPECT_TRUE(bLb != 0 || bUb != 0);
+    EXPECT_TRUE(yLb <= yUb);
+    EXPECT_TRUE(yLb != 0 || yUb != 0);
 
     for (size_t method = 0; method < 2; ++method) {
       engine->open();
-      const VarId a = engine->makeIntVar(aVal, aVal, aVal);
-      const VarId b = engine->makeIntVar(0, bLb, bUb);
+      const VarId x = engine->makeIntVar(xVal, xVal, xVal);
+      const VarId y = engine->makeIntVar(0, yLb, yUb);
       const VarId outputId = engine->makeIntVar(0, outputLb, outputUb);
-      IntDiv& invariant = engine->makeInvariant<IntDiv>(a, b, outputId);
+      IntDiv& invariant = engine->makeInvariant<IntDiv>(outputId, x, y);
       engine->close();
 
-      EXPECT_EQ(expected, computeOutput(engine->currentTimestamp(), a, b));
+      EXPECT_EQ(expected, computeOutput(engine->currentTimestamp(), x, y));
       if (method == 0) {
         invariant.recompute(engine->currentTimestamp(), *engine);
       } else {
@@ -293,7 +293,7 @@ class MockIntDiv : public IntDiv {
     registered = true;
     IntDiv::registerVars(engine);
   }
-  MockIntDiv(VarId a, VarId b, VarId c) : IntDiv(a, b, c) {
+  explicit MockIntDiv(VarId x, VarId y, VarId c) : IntDiv(x, y, c) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return IntDiv::recompute(timestamp, engine);
@@ -328,12 +328,12 @@ TEST_F(IntDivTest, EngineIntegration) {
     if (!engine->isOpen()) {
       engine->open();
     }
-    const VarId a = engine->makeIntVar(-10, -100, 100);
-    const VarId b = engine->makeIntVar(10, -100, 100);
+    const VarId x = engine->makeIntVar(-10, -100, 100);
+    const VarId y = engine->makeIntVar(10, -100, 100);
     const VarId output = engine->makeIntVar(0, 0, 200);
     testNotifications<MockIntDiv>(
-        &engine->makeInvariant<MockIntDiv>(a, b, output), propMode, markingMode,
-        3, a, 0, output);
+        &engine->makeInvariant<MockIntDiv>(output, x, y), propMode, markingMode,
+        3, x, 0, output);
   }
 }
 

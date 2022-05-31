@@ -5,17 +5,16 @@
 #include "invariants/invariant.hpp"
 
 /**
- * Invariant for y <- a % b (integer division)
+ * Invariant for output <- x % y (integer division)
  *
  */
 class Mod : public Invariant {
  private:
-  VarId _a, _b, _y;
+  VarId _output, _x, _y;
   Int _zeroReplacement{1};
-  Int mod(Int, Int);
 
  public:
-  Mod(VarId a, VarId b, VarId y);
+  explicit Mod(VarId output, VarId x, VarId y);
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;
   void close(Timestamp, Engine&) override;
@@ -25,5 +24,3 @@ class Mod : public Invariant {
   void notifyCurrentInputChanged(Timestamp, Engine&) override;
   void commit(Timestamp, Engine&) override;
 };
-
-inline Int Mod::mod(Int aVal, Int bVal) { return aVal % std::abs(bVal); }

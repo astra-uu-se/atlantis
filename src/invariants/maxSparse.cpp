@@ -1,9 +1,9 @@
 #include "invariants/maxSparse.hpp"
 
-MaxSparse::MaxSparse(std::vector<VarId> varArray, VarId y)
-    : Invariant(NULL_ID),
+MaxSparse::MaxSparse(VarId output, std::vector<VarId> varArray)
+    : Invariant(),
+      _output(output),
       _varArray(std::move(varArray)),
-      _y(y),
       _localPriority(_varArray.size()) {
   assert(!_varArray.empty());
   _modifiedVars.reserve(_varArray.size());
@@ -14,7 +14,7 @@ void MaxSparse::registerVars(Engine& engine) {
   for (size_t i = 0; i < _varArray.size(); ++i) {
     engine.registerInvariantInput(_id, _varArray[i], i);
   }
-  registerDefinedVariable(engine, _y);
+  registerDefinedVariable(engine, _output);
 }
 
 void MaxSparse::updateBounds(Engine& engine, bool widenOnly) {
@@ -24,19 +24,19 @@ void MaxSparse::updateBounds(Engine& engine, bool widenOnly) {
     lb = std::max(lb, engine.lowerBound(input));
     ub = std::max(ub, engine.upperBound(input));
   }
-  engine.updateBounds(_y, lb, ub, widenOnly);
+  engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void MaxSparse::recompute(Timestamp ts, Engine& engine) {
   for (size_t i = 0; i < _varArray.size(); ++i) {
     _localPriority.updatePriority(ts, i, engine.value(ts, _varArray[i]));
   }
-  updateValue(ts, engine, _y, _localPriority.maxPriority(ts));
+  updateValue(ts, engine, _output, _localPriority.maxPriority(ts));
 }
 
 void MaxSparse::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
   _localPriority.updatePriority(ts, id, engine.value(ts, _varArray[id]));
-  updateValue(ts, engine, _y, _localPriority.maxPriority(ts));
+  updateValue(ts, engine, _output, _localPriority.maxPriority(ts));
 }
 
 VarId MaxSparse::nextInput(Timestamp ts, Engine&) {

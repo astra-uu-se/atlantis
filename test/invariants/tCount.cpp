@@ -49,8 +49,7 @@ TEST_F(CountTest, UpdateBounds) {
                           engine->makeIntVar(0, 0, 10),
                           engine->makeIntVar(0, 0, 10)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
-  Count& invariant =
-      engine->makeInvariant<Count>(y, std::vector<VarId>(vars), outputId);
+  Count& invariant = engine->makeInvariant<Count>(outputId, y, vars);
 
   for (const auto& [yLb, yUb] : boundVec) {
     EXPECT_TRUE(yLb <= yUb);
@@ -94,8 +93,7 @@ TEST_F(CountTest, Recompute) {
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
 
-  Count& invariant =
-      engine->makeInvariant<Count>(y, std::vector<VarId>(inputs), outputId);
+  Count& invariant = engine->makeInvariant<Count>(outputId, y, inputs);
   engine->close();
 
   for (Int yVal = lb; yVal <= ub; ++yVal) {
@@ -131,8 +129,7 @@ TEST_F(CountTest, NotifyInputChanged) {
   }
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant =
-      engine->makeInvariant<Count>(y, std::vector<VarId>(inputs), outputId);
+  Count& invariant = engine->makeInvariant<Count>(outputId, y, inputs);
   engine->close();
 
   std::vector<VarId> allInputs(inputs);
@@ -171,8 +168,7 @@ TEST_F(CountTest, NextInput) {
   }
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant =
-      engine->makeInvariant<Count>(y, std::vector<VarId>(inputs), outputId);
+  Count& invariant = engine->makeInvariant<Count>(outputId, y, inputs);
   engine->close();
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
@@ -215,8 +211,7 @@ TEST_F(CountTest, NotifyCurrentInputChanged) {
 
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant =
-      engine->makeInvariant<Count>(y, std::vector<VarId>(inputs), outputId);
+  Count& invariant = engine->makeInvariant<Count>(outputId, y, inputs);
   engine->close();
 
   std::vector<VarId> allInputs(inputs);
@@ -257,8 +252,7 @@ TEST_F(CountTest, Commit) {
 
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant =
-      engine->makeInvariant<Count>(y, std::vector<VarId>(inputs), outputId);
+  Count& invariant = engine->makeInvariant<Count>(outputId, y, inputs);
 
   std::shuffle(indices.begin(), indices.end(), rng);
 
@@ -307,7 +301,8 @@ class MockCount : public Count {
     registered = true;
     Count::registerVars(engine);
   }
-  MockCount(VarId y, std::vector<VarId> X, VarId b) : Count(y, X, b) {
+  explicit MockCount(VarId output, VarId y, std::vector<VarId> varArray)
+      : Count(output, y, varArray) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return Count::recompute(timestamp, engine);
@@ -351,7 +346,7 @@ TEST_F(CountTest, EngineIntegration) {
     const VarId modifiedVarId = args.front();
     const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCount>(
-        &engine->makeInvariant<MockCount>(y, args, output), propMode,
+        &engine->makeInvariant<MockCount>(output, y, args), propMode,
         markingMode, numArgs + 2, modifiedVarId, 5, output);
   }
 }

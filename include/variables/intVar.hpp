@@ -33,10 +33,11 @@ class IntVar : public Var {
   friend class PropagationEngine;
 
  public:
-  IntVar(Int lowerBound, Int upperBound);
-  IntVar(VarId id, Int lowerBound, Int upperBound);
-  IntVar(VarId id, Int initValue, Int lowerBound, Int upperBound);
-  IntVar(Timestamp ts, VarId id, Int initValue, Int lowerBound, Int upperBound);
+  explicit IntVar(Int lowerBound, Int upperBound);
+  explicit IntVar(VarId id, Int lowerBound, Int upperBound);
+  explicit IntVar(VarId id, Int initValue, Int lowerBound, Int upperBound);
+  explicit IntVar(Timestamp ts, VarId id, Int initValue, Int lowerBound,
+                  Int upperBound);
   ~IntVar() = default;
 
   [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(

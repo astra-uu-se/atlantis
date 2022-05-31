@@ -55,5 +55,5 @@ void invariantgraph::BoolClauseNode::registerWithEngine(Engine& engine) {
 
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
-  engine.makeInvariant<BoolLinear>(engineVariables, _sumVarId);
+  engine.makeInvariant<BoolLinear>(_sumVarId, engineVariables);
 }

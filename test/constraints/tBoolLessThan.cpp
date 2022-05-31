@@ -272,7 +272,7 @@ class MockBoolLessThan : public BoolLessThan {
     registered = true;
     BoolLessThan::registerVars(engine);
   }
-  MockBoolLessThan(VarId violationId, VarId x, VarId y)
+  explicit MockBoolLessThan(VarId violationId, VarId x, VarId y)
       : BoolLessThan(violationId, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
@@ -312,7 +312,7 @@ TEST_F(BoolLessThanTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(0, 0, 100);
     const VarId viol = engine->makeIntVar(0, 0, 200);
     testNotifications<MockBoolLessThan>(
-        &engine->makeInvariant<MockBoolLessThan>(viol, x, y), propMode,
+        &engine->makeConstraint<MockBoolLessThan>(viol, x, y), propMode,
         markingMode, 3, x, 1, viol);
   }
 }

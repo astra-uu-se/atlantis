@@ -21,6 +21,6 @@ void invariantgraph::IntPlusNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::IntPlusNode::registerWithEngine(Engine& engine) {
   assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<Plus>(a()->varId(), b()->varId(),
-                             definedVariables().front()->varId());
+  engine.makeInvariant<Plus>(definedVariables().front()->varId(), a()->varId(),
+                             b()->varId());
 }

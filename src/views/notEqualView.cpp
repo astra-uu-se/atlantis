@@ -1,10 +1,10 @@
 #include "views/notEqualView.hpp"
 
-Int NotEqualView::value(Timestamp ts) const {
+Int NotEqualView::value(Timestamp ts) {
   return _engine->value(ts, _parentId) == _val;
 }
 
-Int NotEqualView::committedValue() const {
+Int NotEqualView::committedValue() {
   return _engine->committedValue(_parentId) == _val;
 }
 

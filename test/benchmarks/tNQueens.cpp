@@ -33,7 +33,7 @@ TEST(NQueens, CommitsInvariant) {
   auto total_violation = engine.makeIntVar(0, 0, 3 * n);
 
   engine.makeInvariant<Linear>(
-      std::vector<VarId>{violation1, violation2, violation3}, total_violation);
+      total_violation, std::vector<VarId>{violation1, violation2, violation3});
 
   engine.close();
 

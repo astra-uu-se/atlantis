@@ -14,8 +14,8 @@ class NotEqualView : public IntView {
   explicit NotEqualView(VarId parentId, Int val)
       : IntView(parentId), _val(val) {}
 
-  [[nodiscard]] Int value(Timestamp) const override;
-  [[nodiscard]] Int committedValue() const override;
+  [[nodiscard]] Int value(Timestamp) override;
+  [[nodiscard]] Int committedValue() override;
   [[nodiscard]] Int lowerBound() const override;
   [[nodiscard]] Int upperBound() const override;
 };
