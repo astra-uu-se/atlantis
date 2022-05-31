@@ -1,18 +1,20 @@
 #include "invariants/elementVar.hpp"
 
-ElementVar::ElementVar(VarId output, VarId index, std::vector<VarId> varArray)
+ElementVar::ElementVar(VarId output, VarId index, std::vector<VarId> varArray,
+                       Int offset)
     : Invariant(),
       _output(output),
       _index(index),
-      _varArray(prependNullId(varArray)) {
+      _varArray(varArray),
+      _offset(offset) {
   _modifiedVars.reserve(1);
 }
 
 void ElementVar::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
   engine.registerInvariantInput(_id, _index, LocalId(0));
-  for (size_t i = 1; i < _varArray.size(); ++i) {
-    engine.registerInvariantInput(_id, _varArray[i], LocalId(0));
+  for (const VarId input : _varArray) {
+    engine.registerInvariantInput(_id, input, LocalId(0));
   }
   registerDefinedVariable(engine, _output);
 }
@@ -20,9 +22,9 @@ void ElementVar::registerVars(Engine& engine) {
 void ElementVar::updateBounds(Engine& engine, bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
-  Int iLb = std::max(Int(1), engine.lowerBound(_index));
-  Int iUb = std::min(static_cast<Int>(_varArray.size()) - Int(1),
-                     engine.upperBound(_index));
+  Int iLb = std::max<Int>(1, engine.lowerBound(_index));
+  Int iUb = std::min<Int>(static_cast<Int>(_varArray.size()) - 1,
+                          engine.upperBound(_index));
   if (iLb > iUb) {
     iLb = 1;
     iUb = static_cast<Int>(_varArray.size()) - 1;

@@ -18,33 +18,28 @@ Int ElementConst::committedValue() {
 Int ElementConst::lowerBound() const {
   const Int indexBegin =
       std::max<Int>(0, _engine->lowerBound(_parentId) - _offset);
-  const Int indexEnd = std::min<Int>(_array.size() - 1,
-                                     _engine->upperBound(_parentId) - _offset);
+  const Int indexEnd = std::min<Int>(
+      _array.size(), _engine->upperBound(_parentId) - _offset + 1);
   if (indexBegin >= static_cast<Int>(_array.size())) {
     return _array.back();
   } else if (indexEnd < 0) {
     return _array.front();
   }
-  Int lb = std::numeric_limits<Int>::max();
-  for (Int i = indexBegin; i <= indexEnd; ++i) {
-    lb = std::min<Int>(lb, _array[i]);
-  }
-  return lb;
+  return *std::min_element(_array.begin() + indexBegin,
+                           _array.begin() + indexEnd);
 }
 
 Int ElementConst::upperBound() const {
   const Int indexBegin =
       std::max<Int>(0, _engine->lowerBound(_parentId) - _offset);
-  const Int indexEnd = std::min<Int>(_array.size() - 1,
-                                     _engine->upperBound(_parentId) - _offset);
+  const Int indexEnd = std::min<Int>(
+      _array.size(), _engine->upperBound(_parentId) - _offset + 1);
+
   if (indexBegin >= static_cast<Int>(_array.size())) {
     return _array.back();
   } else if (indexEnd < 0) {
     return _array.front();
   }
-  Int ub = std::numeric_limits<Int>::min();
-  for (Int i = indexBegin; i <= indexEnd; ++i) {
-    ub = std::max<Int>(ub, _array[i]);
-  }
-  return ub;
+  return *std::max_element(_array.begin() + indexBegin,
+                           _array.begin() + indexEnd);
 }
