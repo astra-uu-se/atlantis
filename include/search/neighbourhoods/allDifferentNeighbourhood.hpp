@@ -3,22 +3,23 @@
 #include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
 #include "search/searchVariable.hpp"
+#include "utils/flowNetwork.hpp"
 
 namespace search::neighbourhoods {
 
 class AllDifferentNeighbourhood : public Neighbourhood {
  private:
   std::vector<search::SearchVariable> _variables;
-  std::vector<Int> _domain;
-  const Engine& _engine;
+  utils::FlowNetwork _flowNetwork{2, 0, 1};
 
-  std::vector<size_t> _domIndices{};
-  Int _offset{0};
-  size_t _freeVariables{0};
+  std::vector<Int> _values;
+
+  Int _minVal;
+  Int _maxVal;
+  std::unordered_set<Int> _freeValues;
 
  public:
-  AllDifferentNeighbourhood(std::vector<search::SearchVariable> variables,
-                            std::vector<Int> domain, const Engine& engine);
+  explicit AllDifferentNeighbourhood(std::vector<search::SearchVariable> variables);
 
   ~AllDifferentNeighbourhood() override = default;
 
@@ -36,6 +37,7 @@ class AllDifferentNeighbourhood : public Neighbourhood {
                   Annealer& annealer);
   bool assignValue(RandomProvider& random, Assignment& assignment,
                    Annealer& annealer);
+  size_t createMatching(AssignmentModifier& modifications);
 };
 
 }  // namespace search::neighbourhoods

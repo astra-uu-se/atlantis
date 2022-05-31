@@ -129,7 +129,9 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
 
     if (auto implicitConstraint = makeImplicitConstraint(model, constraint)) {
       for (auto variableNode : implicitConstraint->definedVariables()) {
-        definedVars.emplace(identifier(*variableNode->variable()));
+        if (variableNode->variable()) {
+          definedVars.emplace(identifier(*variableNode->variable()));
+        }
       }
 
       _definingNodes.push_back(std::move(implicitConstraint));

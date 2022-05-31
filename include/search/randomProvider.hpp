@@ -66,6 +66,10 @@ class RandomProvider {
   Value fromDistribution(Distribution d) {
     return d(_gen);
   }
+
+  bool boolean() {
+    return floatInRange(0.0, 1.0) >= 0.5;
+  }
 };
 
 }  // namespace search
