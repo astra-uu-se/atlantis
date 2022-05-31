@@ -23,8 +23,7 @@ class AllDifferentNeighbourhoodTest : public ::testing::Test {
 };
 
 TEST_F(AllDifferentNeighbourhoodTest, all_values_are_initialised) {
-  search::neighbourhoods::AllDifferentNeighbourhood neighbourhood(
-      variables, domain, engine);
+  search::neighbourhoods::AllDifferentNeighbourhood neighbourhood(variables);
 
   assignment.assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
