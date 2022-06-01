@@ -7,14 +7,14 @@ namespace search {
 class GeometricCoolingSchedule : public AnnealingSchedule {
  private:
   double _coolingRate;
-  double _minimumMoveAcceptanceRatio;
+  UInt _successiveFutileRoundsThreshold;
 
   double _temperature{0.0};
-  double _lastRoundMoveAcceptanceRatio{-1.0};
+  UInt _successiveFutileRounds{0};
 
  public:
   GeometricCoolingSchedule(double coolingRate,
-                           double moveAcceptanceRatio);
+                           UInt successiveFutileRoundsThreshold);
 
   ~GeometricCoolingSchedule() override = default;
 

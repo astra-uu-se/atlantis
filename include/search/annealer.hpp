@@ -24,6 +24,9 @@ class Annealer {
 
   const double INITIAL_TEMPERATURE = 1.0;
 
+  UInt _violationWeight{1};
+  UInt _objectiveWeight{1};
+
  public:
   Annealer(const Assignment& assignment, RandomProvider& random,
            AnnealingSchedule& schedule);
@@ -73,9 +76,8 @@ class Annealer {
  protected:
   virtual bool accept(Int moveCost);
 
-  inline static Int evaluate(Cost cost) {
-    // TODO: Weights for the objective and violation.
-    return cost.evaluate(1, 1);
+  inline Int evaluate(Cost cost) {
+    return cost.evaluate(_violationWeight, _objectiveWeight);
   }
 };
 

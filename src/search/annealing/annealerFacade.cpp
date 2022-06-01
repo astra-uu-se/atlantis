@@ -19,9 +19,9 @@ std::unique_ptr<AnnealingSchedule> AnnealerFacade::heating(
 }
 
 std::unique_ptr<AnnealingSchedule> AnnealerFacade::cooling(
-    double coolingRate, double moveAcceptanceRatio) {
-  return std::make_unique<GeometricCoolingSchedule>(coolingRate,
-                                                    moveAcceptanceRatio);
+    double coolingRate, UInt successiveFutileRoundsThreshold) {
+  return std::make_unique<GeometricCoolingSchedule>(
+      coolingRate, successiveFutileRoundsThreshold);
 }
 
 std::unique_ptr<AnnealingSchedule> AnnealerFacade::loop(

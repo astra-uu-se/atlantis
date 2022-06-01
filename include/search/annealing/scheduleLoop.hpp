@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include "annealingSchedule.hpp"
 
@@ -16,6 +17,7 @@ class ScheduleLoop : public AnnealingSchedule {
   UInt _maximumConsecutiveFutileRounds;
 
   UInt _consecutiveFutileIterations{0};
+  std::optional<RoundStatistics> _lastRoundStatistics;
 
  public:
   explicit ScheduleLoop(std::unique_ptr<AnnealingSchedule> schedule,

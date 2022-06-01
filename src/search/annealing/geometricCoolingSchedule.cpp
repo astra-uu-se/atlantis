@@ -1,28 +1,32 @@
 #include "search/annealing/geometricCoolingSchedule.hpp"
 
 search::GeometricCoolingSchedule::GeometricCoolingSchedule(
-    double coolingRate, double moveAcceptanceRatio)
+    double coolingRate, UInt successiveFutileRoundsThreshold)
     : _coolingRate(coolingRate),
-      _minimumMoveAcceptanceRatio(moveAcceptanceRatio) {
+      _successiveFutileRoundsThreshold(successiveFutileRoundsThreshold) {
   assert(coolingRate < 1.0);
-  assert(moveAcceptanceRatio > 0);
+  assert(successiveFutileRoundsThreshold > 0);
 }
 
 void search::GeometricCoolingSchedule::start(double initialTemperature) {
   assert(initialTemperature != 0.0);
-  _lastRoundMoveAcceptanceRatio = -1.0;
   _temperature = initialTemperature;
+  _successiveFutileRounds = 0;
 }
 
 void search::GeometricCoolingSchedule::nextRound(
     const search::RoundStatistics& statistics) {
   _temperature *= _coolingRate;
-  _lastRoundMoveAcceptanceRatio = statistics.improvingMoveRatio();
+
+  if (statistics.roundImprovedOnPrevious()) {
+    _successiveFutileRounds = 0;
+  } else {
+    _successiveFutileRounds++;
+  }
 }
 
 double search::GeometricCoolingSchedule::temperature() { return _temperature; }
 
 bool search::GeometricCoolingSchedule::frozen() {
-  return _lastRoundMoveAcceptanceRatio >= 0 &&
-         _lastRoundMoveAcceptanceRatio <= _minimumMoveAcceptanceRatio;
+  return _successiveFutileRounds >= _successiveFutileRoundsThreshold;
 }

@@ -66,4 +66,6 @@ bool search::Annealer::accept(Int moveCost) {
 
 void search::Annealer::start() {
   _schedule.start(INITIAL_TEMPERATURE);
+  _violationWeight = 1;
+  _objectiveWeight = 0;
 }

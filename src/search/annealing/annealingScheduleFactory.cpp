@@ -51,18 +51,18 @@ static std::unique_ptr<AnnealingSchedule> parseHeatingSchedule(
 static std::unique_ptr<AnnealingSchedule> parseCoolingSchedule(
     const json& value) {
   if (!value.is_object() || !value.contains("coolingRate") ||
-      !value.contains("moveAcceptanceRatio") ||
+      !value.contains("successiveFutileRoundsThreshold") ||
       !value["coolingRate"].is_number_float() ||
-      !value["moveAcceptanceRatio"].is_number_float()) {
+      !value["successiveFutileRoundsThreshold"].is_number_unsigned()) {
     throw AnnealingScheduleCreationError(
         "Invalid JSON for a cooling schedule. Expected an object with the "
-        "fields 'coolingRate' (double) and 'moveAcceptanceRatio' "
-        "(double).");
+        "fields 'coolingRate' (double) and 'successiveFutileRoundsThreshold' "
+        "(uint).");
   }
 
   return AnnealerFacade::cooling(
       value["coolingRate"].get<double>(),
-      value["moveAcceptanceRatio"].get<double>());
+      value["successiveFutileRoundsThreshold"].get<UInt>());
 }
 
 static std::unique_ptr<AnnealingSchedule> parseScheduleSequence(

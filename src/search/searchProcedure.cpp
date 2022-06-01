@@ -11,6 +11,7 @@ static void logRoundStatistics(logging::Logger& logger,
   logger.trace("Accepted over attempted uphill moves: {:d} / {:d} = {:.3f}",
                statistics.uphillAcceptedMoves, statistics.uphillAttemptedMoves,
                statistics.uphillAcceptanceRatio());
+  logger.trace("Improving move ratio: {:.3f}", statistics.improvingMoveRatio());
   logger.trace("Lowest cost this round: {:d}", statistics.bestCostOfThisRound);
   logger.trace("Lowest cost previous round: {:d}",
                statistics.bestCostOfPreviousRound);
