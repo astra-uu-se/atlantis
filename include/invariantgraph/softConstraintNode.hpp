@@ -15,6 +15,15 @@ namespace invariantgraph {
  */
 using MappableValue = std::variant<Int, bool, fznparser::Identifier>;
 
+static std::vector<invariantgraph::VariableNode*> combine(
+    VariableNode* reifiedViolation, std::vector<VariableNode*> definedVars) {
+  if (reifiedViolation == nullptr) {
+    return definedVars;
+  }
+  definedVars.insert(definedVars.begin(), reifiedViolation);
+  return definedVars;
+}
+
 /**
  * Serves as a marker for the invariant graph to start the application to the
  * propagation engine.
@@ -29,21 +38,18 @@ class SoftConstraintNode : public VariableDefiningNode {
   // constraint should hold or not:
   const bool _shouldHold;
 
-  explicit SoftConstraintNode(std::vector<VariableNode*> staticInputs,
+  explicit SoftConstraintNode(std::vector<VariableNode*> definedVars,
+                              std::vector<VariableNode*> staticInputs,
                               VariableNode* reifiedViolation, bool shouldHold)
-      : VariableDefiningNode(reifiedViolation == nullptr
-                                 ? std::vector<VariableNode*>{}
-                                 : std::vector<VariableNode*>{reifiedViolation},
+      : VariableDefiningNode(combine(reifiedViolation, definedVars),
                              std::move(staticInputs)),
         _reifiedViolation(reifiedViolation),
         _shouldHold(shouldHold) {
     if (!isReified()) {
       assert(_reifiedViolation == nullptr);
-      assert(definedVariables().size() == 0);
     } else {
       assert(_reifiedViolation != nullptr);
       assert(_reifiedViolation->definingNodes().contains(this));
-      assert(definedVariables().size() == 1);
       assert(definedVariables().front() == _reifiedViolation);
     }
   }
@@ -52,9 +58,15 @@ class SoftConstraintNode : public VariableDefiningNode {
   inline bool shouldHold() const noexcept { return _shouldHold; }
 
  public:
+  explicit SoftConstraintNode(std::vector<VariableNode*> definedVariables,
+                              std::vector<VariableNode*> staticInputs,
+                              VariableNode* reifiedViolation)
+      : SoftConstraintNode(definedVariables, staticInputs, reifiedViolation,
+                           true) {}
+
   explicit SoftConstraintNode(std::vector<VariableNode*> staticInputs,
                               VariableNode* reifiedViolation)
-      : SoftConstraintNode(staticInputs, reifiedViolation, true) {}
+      : SoftConstraintNode({}, staticInputs, reifiedViolation, true) {}
 
   /**
    * @brief Construct a new Soft Constraint Node object
@@ -62,9 +74,15 @@ class SoftConstraintNode : public VariableDefiningNode {
    * @param staticInputs
    * @param shouldHold true if the constraint should hold, else false
    */
+  explicit SoftConstraintNode(std::vector<VariableNode*> definedVariables,
+                              std::vector<VariableNode*> staticInputs,
+                              bool shouldHold)
+      : SoftConstraintNode(definedVariables, staticInputs, nullptr,
+                           shouldHold) {}
+
   explicit SoftConstraintNode(std::vector<VariableNode*> staticInputs,
                               bool shouldHold)
-      : SoftConstraintNode(staticInputs, nullptr, shouldHold) {}
+      : SoftConstraintNode({}, staticInputs, nullptr, shouldHold) {}
 
   ~SoftConstraintNode() override = default;
 

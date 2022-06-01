@@ -12,7 +12,7 @@ class CommittableInt;  // forward declare
 class Engine;
 
 template <bool IsClosed>
-class GlobalCardinality : public Constraint {
+class GlobalCardinalityConst : public Constraint {
  private:
   const std::vector<VarId> _variables;
   std::vector<Int> _lowerBound;
@@ -26,13 +26,13 @@ class GlobalCardinality : public Constraint {
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  GlobalCardinality(VarId violationId, std::vector<VarId> variables,
-                    const std::vector<Int>& cover,
-                    const std::vector<Int>& counts);
-  GlobalCardinality(VarId violationId, std::vector<VarId> variables,
-                    const std::vector<Int>& cover,
-                    const std::vector<Int>& lowerBound,
-                    const std::vector<Int>& upperBound);
+  GlobalCardinalityConst(VarId violationId, std::vector<VarId> variables,
+                         const std::vector<Int>& cover,
+                         const std::vector<Int>& counts);
+  GlobalCardinalityConst(VarId violationId, std::vector<VarId> variables,
+                         const std::vector<Int>& cover,
+                         const std::vector<Int>& lowerBound,
+                         const std::vector<Int>& upperBound);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;
@@ -45,8 +45,8 @@ class GlobalCardinality : public Constraint {
 };
 
 template <bool IsClosed>
-inline signed char GlobalCardinality<IsClosed>::increaseCount(Timestamp ts,
-                                                              Int value) {
+inline signed char GlobalCardinalityConst<IsClosed>::increaseCount(Timestamp ts,
+                                                                   Int value) {
   size_t pos = static_cast<size_t>(
       std::max<Int>(0, std::min(Int(_lowerBound.size()) - 1, value - _offset)));
   if constexpr (!IsClosed) {
@@ -63,8 +63,8 @@ inline signed char GlobalCardinality<IsClosed>::increaseCount(Timestamp ts,
 }
 
 template <bool IsClosed>
-inline signed char GlobalCardinality<IsClosed>::decreaseCount(Timestamp ts,
-                                                              Int value) {
+inline signed char GlobalCardinalityConst<IsClosed>::decreaseCount(Timestamp ts,
+                                                                   Int value) {
   size_t pos = static_cast<size_t>(
       std::max<Int>(0, std::min(Int(_lowerBound.size()) - 1, value - _offset)));
   if constexpr (!IsClosed) {

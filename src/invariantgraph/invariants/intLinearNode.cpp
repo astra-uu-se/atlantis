@@ -11,7 +11,7 @@ std::unique_ptr<invariantgraph::IntLinearNode>
 invariantgraph::IntLinearNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(constraint.arguments.size() == 3);
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
   auto vars = mappedVariableVector(model, constraint.arguments[1], variableMap);
@@ -85,12 +85,14 @@ void invariantgraph::IntLinearNode::createDefinedVariables(Engine& engine) {
 
     auto offsetIntermediate = _intermediateVarId;
     if (_sum != 0) {
-      offsetIntermediate = engine.makeIntView<IntOffsetView>(_intermediateVarId, -_sum);
+      offsetIntermediate =
+          engine.makeIntView<IntOffsetView>(_intermediateVarId, -_sum);
     }
 
     auto invertedIntermediate = offsetIntermediate;
     if (_definingCoefficient == 1) {
-      invertedIntermediate = engine.makeIntView<ScalarView>(offsetIntermediate, -1);
+      invertedIntermediate =
+          engine.makeIntView<ScalarView>(offsetIntermediate, -1);
     }
 
     definedVariables().front()->setVarId(invertedIntermediate);

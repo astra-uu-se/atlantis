@@ -1,33 +1,33 @@
-#include "constraints/globalCardinality.hpp"
+#include "constraints/globalCardinalityConst.hpp"
 
 #include "core/engine.hpp"
 #include "variables/committableInt.hpp"
 /**
  * @param violationId id for the violationCount
  */
-template GlobalCardinality<true>::GlobalCardinality(
+template GlobalCardinalityConst<true>::GlobalCardinalityConst(
     VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& t_counts);
-template GlobalCardinality<false>::GlobalCardinality(
+template GlobalCardinalityConst<false>::GlobalCardinalityConst(
     VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& t_counts);
 template <bool IsClosed>
-GlobalCardinality<IsClosed>::GlobalCardinality(VarId violationId,
-                                               std::vector<VarId> t_variables,
-                                               const std::vector<Int>& cover,
-                                               const std::vector<Int>& t_counts)
-    : GlobalCardinality(violationId, t_variables, cover, t_counts, t_counts) {}
+GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
+    VarId violationId, std::vector<VarId> t_variables,
+    const std::vector<Int>& cover, const std::vector<Int>& t_counts)
+    : GlobalCardinalityConst(violationId, t_variables, cover, t_counts,
+                             t_counts) {}
 
-template GlobalCardinality<true>::GlobalCardinality(
+template GlobalCardinalityConst<true>::GlobalCardinalityConst(
     VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound);
-template GlobalCardinality<false>::GlobalCardinality(
+template GlobalCardinalityConst<false>::GlobalCardinalityConst(
     VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound);
 template <bool IsClosed>
-GlobalCardinality<IsClosed>::GlobalCardinality(
+GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
     VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound)
@@ -64,10 +64,10 @@ GlobalCardinality<IsClosed>::GlobalCardinality(
   }
 }
 
-template void GlobalCardinality<true>::registerVars(Engine&);
-template void GlobalCardinality<false>::registerVars(Engine&);
+template void GlobalCardinalityConst<true>::registerVars(Engine&);
+template void GlobalCardinalityConst<false>::registerVars(Engine&);
 template <bool IsClosed>
-void GlobalCardinality<IsClosed>::registerVars(Engine& engine) {
+void GlobalCardinalityConst<IsClosed>::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _variables.size(); ++i) {
     engine.registerInvariantInput(_id, _variables[i], LocalId(i));
@@ -75,10 +75,13 @@ void GlobalCardinality<IsClosed>::registerVars(Engine& engine) {
   registerDefinedVariable(engine, _violationId);
 }
 
-template void GlobalCardinality<true>::updateBounds(Engine&, bool widenOnly);
-template void GlobalCardinality<false>::updateBounds(Engine&, bool widenOnly);
+template void GlobalCardinalityConst<true>::updateBounds(Engine&,
+                                                         bool widenOnly);
+template void GlobalCardinalityConst<false>::updateBounds(Engine&,
+                                                          bool widenOnly);
 template <bool IsClosed>
-void GlobalCardinality<IsClosed>::updateBounds(Engine& engine, bool widenOnly) {
+void GlobalCardinalityConst<IsClosed>::updateBounds(Engine& engine,
+                                                    bool widenOnly) {
   Int maxShortage = 0;
   for (const Int lb : _lowerBound) {
     maxShortage += lb;
@@ -95,21 +98,23 @@ void GlobalCardinality<IsClosed>::updateBounds(Engine& engine, bool widenOnly) {
   engine.updateBounds(_violationId, 0, maxViol, widenOnly);
 }
 
-template void GlobalCardinality<true>::close(Timestamp, Engine&);
-template void GlobalCardinality<false>::close(Timestamp, Engine&);
+template void GlobalCardinalityConst<true>::close(Timestamp, Engine&);
+template void GlobalCardinalityConst<false>::close(Timestamp, Engine&);
 template <bool IsClosed>
-void GlobalCardinality<IsClosed>::close(Timestamp timestamp, Engine& engine) {
+void GlobalCardinalityConst<IsClosed>::close(Timestamp timestamp,
+                                             Engine& engine) {
   _counts.resize(_lowerBound.size(), CommittableInt(timestamp, 0));
+  _localValues.clear();
   for (size_t i = 0; i < _variables.size(); ++i) {
     _localValues.emplace_back(timestamp, engine.committedValue(_variables[i]));
   }
 }
 
-template void GlobalCardinality<true>::recompute(Timestamp, Engine&);
-template void GlobalCardinality<false>::recompute(Timestamp, Engine&);
+template void GlobalCardinalityConst<true>::recompute(Timestamp, Engine&);
+template void GlobalCardinalityConst<false>::recompute(Timestamp, Engine&);
 template <bool IsClosed>
-void GlobalCardinality<IsClosed>::recompute(Timestamp timestamp,
-                                            Engine& engine) {
+void GlobalCardinalityConst<IsClosed>::recompute(Timestamp timestamp,
+                                                 Engine& engine) {
   for (CommittableInt& c : _counts) {
     c.setValue(timestamp, 0);
   }
@@ -140,14 +145,16 @@ void GlobalCardinality<IsClosed>::recompute(Timestamp timestamp,
   updateValue(timestamp, engine, _violationId, std::max(excess, shortage));
 }
 
-template void GlobalCardinality<true>::notifyInputChanged(Timestamp, Engine&,
-                                                          LocalId);
-template void GlobalCardinality<false>::notifyInputChanged(Timestamp, Engine&,
-                                                           LocalId);
+template void GlobalCardinalityConst<true>::notifyInputChanged(Timestamp,
+                                                               Engine&,
+                                                               LocalId);
+template void GlobalCardinalityConst<false>::notifyInputChanged(Timestamp,
+                                                                Engine&,
+                                                                LocalId);
 template <bool IsClosed>
-void GlobalCardinality<IsClosed>::notifyInputChanged(Timestamp timestamp,
-                                                     Engine& engine,
-                                                     LocalId localId) {
+void GlobalCardinalityConst<IsClosed>::notifyInputChanged(Timestamp timestamp,
+                                                          Engine& engine,
+                                                          LocalId localId) {
   assert(localId < _localValues.size());
   const Int oldValue = _localValues[localId].value(timestamp);
   const Int newValue = engine.value(timestamp, _variables[localId]);
@@ -164,10 +171,11 @@ void GlobalCardinality<IsClosed>::notifyInputChanged(Timestamp timestamp,
                                                        (inc > 0 ? inc : 0))));
 }
 
-template VarId GlobalCardinality<true>::nextInput(Timestamp, Engine&);
-template VarId GlobalCardinality<false>::nextInput(Timestamp, Engine&);
+template VarId GlobalCardinalityConst<true>::nextInput(Timestamp, Engine&);
+template VarId GlobalCardinalityConst<false>::nextInput(Timestamp, Engine&);
 template <bool IsClosed>
-VarId GlobalCardinality<IsClosed>::nextInput(Timestamp timestamp, Engine&) {
+VarId GlobalCardinalityConst<IsClosed>::nextInput(Timestamp timestamp,
+                                                  Engine&) {
   const auto index = static_cast<size_t>(_state.incValue(timestamp, 1));
   assert(0 <= _state.value(timestamp));
   if (index < _variables.size()) {
@@ -176,21 +184,22 @@ VarId GlobalCardinality<IsClosed>::nextInput(Timestamp timestamp, Engine&) {
   return NULL_ID;
 }
 
-template void GlobalCardinality<true>::notifyCurrentInputChanged(Timestamp,
-                                                                 Engine&);
-template void GlobalCardinality<false>::notifyCurrentInputChanged(Timestamp,
-                                                                  Engine&);
+template void GlobalCardinalityConst<true>::notifyCurrentInputChanged(Timestamp,
+                                                                      Engine&);
+template void GlobalCardinalityConst<false>::notifyCurrentInputChanged(
+    Timestamp, Engine&);
 template <bool IsClosed>
-void GlobalCardinality<IsClosed>::notifyCurrentInputChanged(Timestamp timestamp,
-                                                            Engine& engine) {
+void GlobalCardinalityConst<IsClosed>::notifyCurrentInputChanged(
+    Timestamp timestamp, Engine& engine) {
   assert(static_cast<size_t>(_state.value(timestamp)) < _variables.size());
   notifyInputChanged(timestamp, engine, _state.value(timestamp));
 }
 
-template void GlobalCardinality<true>::commit(Timestamp, Engine&);
-template void GlobalCardinality<false>::commit(Timestamp, Engine&);
+template void GlobalCardinalityConst<true>::commit(Timestamp, Engine&);
+template void GlobalCardinalityConst<false>::commit(Timestamp, Engine&);
 template <bool IsClosed>
-void GlobalCardinality<IsClosed>::commit(Timestamp timestamp, Engine& engine) {
+void GlobalCardinalityConst<IsClosed>::commit(Timestamp timestamp,
+                                              Engine& engine) {
   Invariant::commit(timestamp, engine);
 
   _shortage.commitIf(timestamp);
