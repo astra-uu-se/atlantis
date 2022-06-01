@@ -30,6 +30,6 @@ void invariantgraph::ArrayIntMinimumNode::registerWithEngine(Engine& engine) {
                  [&](const auto& node) { return node->varId(); });
 
   assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<::MinSparse>(variables,
-                                    definedVariables().front()->varId());
+  engine.makeInvariant<MinSparse>(definedVariables().front()->varId(),
+                                  variables);
 }

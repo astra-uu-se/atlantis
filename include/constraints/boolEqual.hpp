@@ -8,8 +8,7 @@ class Engine;
 
 class BoolEqual : public Constraint {
  private:
-  const VarId _x;
-  const VarId _y;
+  const VarId _x, _y;
 
  public:
   explicit BoolEqual(VarId violationId, VarId x, VarId y);

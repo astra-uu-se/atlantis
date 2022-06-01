@@ -20,7 +20,7 @@ class AllDifferent : public Constraint {
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  AllDifferent(VarId violationId, std::vector<VarId> variables);
+  explicit AllDifferent(VarId violationId, std::vector<VarId> variables);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;

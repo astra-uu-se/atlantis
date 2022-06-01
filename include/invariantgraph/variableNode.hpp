@@ -7,12 +7,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "constraints/inDomain.hpp"
-#include "constraints/inSparseDomain.hpp"
 #include "core/engine.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 #include "search/searchVariable.hpp"
 #include "utils/variant.hpp"
+#include "views/inDomain.hpp"
+#include "views/inSparseDomain.hpp"
 
 namespace invariantgraph {
 

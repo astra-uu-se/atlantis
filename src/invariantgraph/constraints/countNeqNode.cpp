@@ -68,11 +68,11 @@ void invariantgraph::CountNeqNode::createDefinedVariables(Engine& engine) {
     } else {
       if (shouldHold()) {
         setViolationVarId(
-            engine.makeIntView<NotEqualView>(_intermediate, _cParameter - 1));
+            engine.makeIntView<NotEqualConst>(_intermediate, _cParameter - 1));
       } else {
         assert(!isReified());
         setViolationVarId(
-            engine.makeIntView<EqualView>(_intermediate, _cParameter + 1));
+            engine.makeIntView<EqualConst>(_intermediate, _cParameter + 1));
       }
     }
   }
@@ -98,11 +98,11 @@ void invariantgraph::CountNeqNode::registerWithEngine(Engine& engine) {
   if (!_yIsParameter) {
     assert(yVarNode() != nullptr);
     assert(yVarNode()->varId() != NULL_ID);
-    engine.makeInvariant<Count>(yVarNode()->varId(), engineInputs,
-                                _intermediate);
+    engine.makeInvariant<Count>(_intermediate, yVarNode()->varId(),
+                                engineInputs);
   } else {
     assert(yVarNode() == nullptr);
-    engine.makeInvariant<CountConst>(_yParameter, engineInputs, _intermediate);
+    engine.makeInvariant<CountConst>(_intermediate, _yParameter, engineInputs);
   }
   if (!_cIsParameter) {
     assert(cVarNode() != nullptr);

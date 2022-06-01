@@ -111,5 +111,5 @@ void invariantgraph::IntLinearNode::registerWithEngine(Engine& engine) {
     return;
   }
 
-  engine.makeInvariant<::Linear>(_coeffs, variables, _intermediateVarId);
+  engine.makeInvariant<Linear>(_intermediateVarId, _coeffs, variables);
 }

@@ -317,8 +317,9 @@ class MockAllDifferentExcept : public AllDifferentExcept {
     registered = true;
     AllDifferentExcept::registerVars(engine);
   }
-  MockAllDifferentExcept(VarId violationId, std::vector<VarId> variables,
-                         const std::vector<Int>& ignored)
+  explicit MockAllDifferentExcept(VarId violationId,
+                                  std::vector<VarId> variables,
+                                  const std::vector<Int>& ignored)
       : AllDifferentExcept(violationId, variables, ignored) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
@@ -369,7 +370,7 @@ TEST_F(AllDifferentExceptTest, EngineIntegration) {
     std::shuffle(ignored.begin(), ignored.end(), rng);
     const VarId viol = engine->makeIntVar(0, 0, numArgs);
     testNotifications<MockAllDifferentExcept>(
-        &engine->makeInvariant<MockAllDifferentExcept>(viol, args, ignored),
+        &engine->makeConstraint<MockAllDifferentExcept>(viol, args, ignored),
         propMode, markingMode, numArgs + 1, args.front(), 1, viol);
   }
 }

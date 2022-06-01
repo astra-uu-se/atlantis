@@ -2,33 +2,33 @@
 
 #include "core/engine.hpp"
 
-Plus::Plus(VarId a, VarId b, VarId y)
-    : Invariant(NULL_ID), _a(a), _b(b), _y(y) {
+Plus::Plus(VarId output, VarId x, VarId y)
+    : Invariant(), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void Plus::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
-  engine.registerInvariantInput(_id, _a, 0);
-  engine.registerInvariantInput(_id, _b, 0);
-  registerDefinedVariable(engine, _y);
+  engine.registerInvariantInput(_id, _x, 0);
+  engine.registerInvariantInput(_id, _y, 0);
+  registerDefinedVariable(engine, _output);
 }
 
 void Plus::updateBounds(Engine& engine, bool widenOnly) {
-  engine.updateBounds(_y, engine.lowerBound(_a) + engine.lowerBound(_b),
-                      engine.upperBound(_a) + engine.upperBound(_b), widenOnly);
+  engine.updateBounds(_output, engine.lowerBound(_x) + engine.lowerBound(_y),
+                      engine.upperBound(_x) + engine.upperBound(_y), widenOnly);
 }
 
 void Plus::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _y, engine.value(ts, _a) + engine.value(ts, _b));
+  updateValue(ts, engine, _output, engine.value(ts, _x) + engine.value(ts, _y));
 }
 
 VarId Plus::nextInput(Timestamp ts, Engine&) {
   switch (_state.incValue(ts, 1)) {
     case 0:
-      return _a;
+      return _x;
     case 1:
-      return _b;
+      return _y;
     default:
       return NULL_ID;
   }

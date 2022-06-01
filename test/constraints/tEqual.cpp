@@ -255,7 +255,8 @@ class MockEqual : public Equal {
     registered = true;
     Equal::registerVars(engine);
   }
-  MockEqual(VarId violationId, VarId x, VarId y) : Equal(violationId, x, y) {
+  explicit MockEqual(VarId violationId, VarId x, VarId y)
+      : Equal(violationId, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return Equal::recompute(timestamp, engine);
@@ -293,7 +294,7 @@ TEST_F(EqualTest, EngineIntegration) {
     const VarId x = engine->makeIntVar(5, -100, 100);
     const VarId y = engine->makeIntVar(0, -100, 100);
     const VarId viol = engine->makeIntVar(0, 0, 200);
-    testNotifications<MockEqual>(&engine->makeInvariant<MockEqual>(viol, x, y),
+    testNotifications<MockEqual>(&engine->makeConstraint<MockEqual>(viol, x, y),
                                  propMode, markingMode, 3, x, 1, viol);
   }
 }

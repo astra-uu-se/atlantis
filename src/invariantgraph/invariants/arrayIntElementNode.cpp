@@ -1,7 +1,7 @@
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariants/elementConst.hpp"
+#include "views/elementConst.hpp"
 
 std::unique_ptr<invariantgraph::ArrayIntElementNode>
 invariantgraph::ArrayIntElementNode::fromModelConstraint(
@@ -19,12 +19,11 @@ invariantgraph::ArrayIntElementNode::fromModelConstraint(
 void invariantgraph::ArrayIntElementNode::createDefinedVariables(
     Engine& engine) {
   // TODO: offset can be different than 1
-  registerDefinedVariable(engine, definedVariables().front(), 1);
+  if (definedVariables().front()->varId() == NULL_ID) {
+    assert(b()->varId() != NULL_ID);
+    definedVariables().front()->setVarId(
+        engine.makeIntView<ElementConst>(b()->varId(), _as));
+  }
 }
 
-void invariantgraph::ArrayIntElementNode::registerWithEngine(Engine& engine) {
-  assert(definedVariables().front()->varId() != NULL_ID);
-
-  engine.makeInvariant<ElementConst>(b()->varId(), _as,
-                                     definedVariables().front()->varId());
-}
+void invariantgraph::ArrayIntElementNode::registerWithEngine(Engine&) {}

@@ -70,19 +70,17 @@ VarId invariantgraph::VariableNode::postDomainConstraint(
   if (domain.size() == 0 || _domainViolationId != NULL_ID) {
     return _domainViolationId;
   }
-  _domainViolationId = engine.makeIntVar(0, 0, 0);
-
   const size_t interval =
       domain.back().upperBound - domain.front().lowerBound + 1;
 
   // domain.size() - 1 = number of "holes" in the domain:
   const float denseness = 1.0 - ((float)(domain.size() - 1) / (float)interval);
   if (SPARSE_MIN_DENSENESS <= denseness) {
-    engine.makeConstraint<InSparseDomain>(_domainViolationId, this->varId(),
-                                          std::move(domain));
+    _domainViolationId =
+        engine.makeIntView<InSparseDomain>(this->varId(), std::move(domain));
   } else {
-    engine.makeConstraint<InDomain>(_domainViolationId, this->varId(),
-                                    std::move(domain));
+    _domainViolationId =
+        engine.makeIntView<InDomain>(this->varId(), std::move(domain));
   }
   return _domainViolationId;
 }

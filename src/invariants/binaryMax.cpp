@@ -2,35 +2,35 @@
 
 #include "core/engine.hpp"
 
-BinaryMax::BinaryMax(VarId a, VarId b, VarId y)
-    : Invariant(NULL_ID), _a(a), _b(b), _y(y) {
+BinaryMax::BinaryMax(VarId output, VarId x, VarId y)
+    : Invariant(), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void BinaryMax::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
-  engine.registerInvariantInput(_id, _a, 0);
-  engine.registerInvariantInput(_id, _b, 0);
-  registerDefinedVariable(engine, _y);
+  engine.registerInvariantInput(_id, _x, 0);
+  engine.registerInvariantInput(_id, _y, 0);
+  registerDefinedVariable(engine, _output);
 }
 
 void BinaryMax::updateBounds(Engine& engine, bool widenOnly) {
   engine.updateBounds(
-      _y, std::max(engine.lowerBound(_a), engine.lowerBound(_b)),
-      std::max(engine.upperBound(_a), engine.upperBound(_b)), widenOnly);
+      _output, std::max(engine.lowerBound(_x), engine.lowerBound(_y)),
+      std::max(engine.upperBound(_x), engine.upperBound(_y)), widenOnly);
 }
 
 void BinaryMax::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _y,
-              std::max(engine.value(ts, _a), engine.value(ts, _b)));
+  updateValue(ts, engine, _output,
+              std::max(engine.value(ts, _x), engine.value(ts, _y)));
 }
 
 VarId BinaryMax::nextInput(Timestamp ts, Engine&) {
   switch (_state.incValue(ts, 1)) {
     case 0:
-      return _a;
+      return _x;
     case 1:
-      return _b;
+      return _y;
     default:
       return NULL_ID;
   }

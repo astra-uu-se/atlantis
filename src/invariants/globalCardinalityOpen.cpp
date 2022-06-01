@@ -5,13 +5,13 @@
 /**
  * @param violationId id for the violationCount
  */
-GlobalCardinalityOpen::GlobalCardinalityOpen(std::vector<VarId> inputs,
-                                             std::vector<Int> cover,
-                                             std::vector<VarId> outputs)
-    : Invariant(NULL_ID),
+GlobalCardinalityOpen::GlobalCardinalityOpen(std::vector<VarId> outputs,
+                                             std::vector<VarId> inputs,
+                                             std::vector<Int> cover)
+    : Invariant(),
+      _outputs(std::move(outputs)),
       _inputs(std::move(inputs)),
       _cover(std::move(cover)),
-      _outputs(std::move(outputs)),
       _coverVarIndex(),
       _localValues(),
       _counts(),

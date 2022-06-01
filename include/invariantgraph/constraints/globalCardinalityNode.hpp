@@ -9,8 +9,8 @@
 #include "invariants/exists.hpp"
 #include "invariants/globalCardinalityOpen.hpp"
 #include "invariants/linear.hpp"
-#include "views/equalView.hpp"
-#include "views/notEqualView.hpp"
+#include "views/equalConst.hpp"
+#include "views/notEqualConst.hpp"
 
 static std::vector<invariantgraph::VariableNode*> merge(
     const std::vector<invariantgraph::VariableNode*>& fst,

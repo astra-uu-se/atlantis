@@ -31,7 +31,7 @@ GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
     VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound)
-    : Constraint(NULL_ID, violationId),
+    : Constraint(violationId),
       _variables(std::move(t_variables)),
       _lowerBound(),
       _upperBound(),

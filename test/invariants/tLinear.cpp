@@ -82,9 +82,9 @@ TEST_F(LinearTest, UpdateBounds) {
                                 engine->makeIntVar(0, 0, 10),
                                 engine->makeIntVar(0, 0, 10)};
         const VarId outputId = engine->makeIntVar(0, 0, 2);
-        Linear& invariant =
-            engine->makeInvariant<Linear>(std::vector<Int>{aCoef, bCoef, cCoef},
-                                          std::vector<VarId>(vars), outputId);
+        Linear& invariant = engine->makeInvariant<Linear>(
+            outputId, std::vector<Int>{aCoef, bCoef, cCoef},
+            std::vector<VarId>(vars));
         for (const auto& [aLb, aUb] : boundVec) {
           EXPECT_TRUE(aLb <= aUb);
           engine->updateBounds(vars.at(0), aLb, aUb, false);
@@ -137,8 +137,7 @@ TEST_F(LinearTest, Recompute) {
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
 
-  Linear& invariant = engine->makeInvariant<Linear>(
-      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+  Linear& invariant = engine->makeInvariant<Linear>(outputId, coeffs, inputs);
   engine->close();
 
   for (Int aVal = iLb; aVal <= iUb; ++aVal) {
@@ -165,8 +164,7 @@ TEST_F(LinearTest, NotifyInputChanged) {
   }
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Linear& invariant = engine->makeInvariant<Linear>(
-      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+  Linear& invariant = engine->makeInvariant<Linear>(outputId, coeffs, inputs);
   engine->close();
 
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -200,8 +198,7 @@ TEST_F(LinearTest, NextInput) {
 
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Linear& invariant = engine->makeInvariant<Linear>(
-      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+  Linear& invariant = engine->makeInvariant<Linear>(outputId, coeffs, inputs);
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
@@ -229,8 +226,7 @@ TEST_F(LinearTest, NotifyCurrentInputChanged) {
   }
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Linear& invariant = engine->makeInvariant<Linear>(
-      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+  Linear& invariant = engine->makeInvariant<Linear>(outputId, coeffs, inputs);
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -263,8 +259,7 @@ TEST_F(LinearTest, Commit) {
 
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Linear& invariant = engine->makeInvariant<Linear>(
-      std::vector<Int>(coeffs), std::vector<VarId>(inputs), outputId);
+  Linear& invariant = engine->makeInvariant<Linear>(outputId, coeffs, inputs);
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
@@ -337,8 +332,8 @@ RC_GTEST_FIXTURE_PROP(LinearTest, ShouldAlwaysBeSum,
   const VarId output = engine->makeIntVar(
       aLb * aCoef + bLb * bCoef + cLb * cCoef, std::numeric_limits<Int>::min(),
       std::numeric_limits<Int>::max());
-  engine->makeInvariant<Linear>(std::vector<Int>{aCoef, bCoef, cCoef},
-                                std::vector<VarId>{a, b, c}, output);
+  engine->makeInvariant<Linear>(output, std::vector<Int>{aCoef, bCoef, cCoef},
+                                std::vector<VarId>{a, b, c});
   engine->close();
 
   aVal = std::max(aLb, std::min(aUb, aVal));
@@ -366,7 +361,8 @@ class MockLinear : public Linear {
     registered = true;
     Linear::registerVars(engine);
   }
-  MockLinear(std::vector<VarId> X, VarId b) : Linear(X, b) {
+  explicit MockLinear(VarId output, std::vector<VarId> varArray)
+      : Linear(output, varArray) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return Linear::recompute(timestamp, engine);
@@ -409,7 +405,7 @@ TEST_F(LinearTest, EngineIntegration) {
     const VarId modifiedVarId = args.front();
     const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockLinear>(
-        &engine->makeInvariant<MockLinear>(args, output), propMode, markingMode,
+        &engine->makeInvariant<MockLinear>(output, args), propMode, markingMode,
         numArgs + 1, modifiedVarId, 5, output);
   }
 }

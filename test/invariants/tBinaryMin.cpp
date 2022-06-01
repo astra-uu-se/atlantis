@@ -30,8 +30,8 @@ class BinaryMinTest : public InvariantTest {
     return computeOutput(engine->value(ts, x), engine->value(ts, y));
   }
 
-  Int computeOutput(const Int aVal, const Int bVal) {
-    return std::min(aVal, bVal);
+  Int computeOutput(const Int xVal, const Int yVal) {
+    return std::min(xVal, yVal);
   }
 };
 
@@ -39,51 +39,51 @@ TEST_F(BinaryMinTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
   engine->open();
-  const VarId a = engine->makeIntVar(
+  const VarId x = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId b = engine->makeIntVar(
+  const VarId y = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId outputId = engine->makeIntVar(0, 0, 2);
-  BinaryMin& invariant = engine->makeInvariant<BinaryMin>(a, b, outputId);
+  BinaryMin& invariant = engine->makeInvariant<BinaryMin>(outputId, x, y);
   engine->close();
 
-  for (const auto& [aLb, aUb] : boundVec) {
-    EXPECT_TRUE(aLb <= aUb);
-    engine->updateBounds(a, aLb, aUb, false);
-    for (const auto& [bLb, bUb] : boundVec) {
-      EXPECT_TRUE(bLb <= bUb);
-      engine->updateBounds(b, bLb, bUb, false);
+  for (const auto& [xLb, xUb] : boundVec) {
+    EXPECT_TRUE(xLb <= xUb);
+    engine->updateBounds(x, xLb, xUb, false);
+    for (const auto& [yLb, yUb] : boundVec) {
+      EXPECT_TRUE(yLb <= yUb);
+      engine->updateBounds(y, yLb, yUb, false);
       engine->open();
       invariant.updateBounds(*engine);
       engine->close();
-      EXPECT_EQ(engine->lowerBound(outputId), std::min(aLb, bLb));
-      EXPECT_EQ(engine->upperBound(outputId), std::min(aUb, bUb));
+      EXPECT_EQ(engine->lowerBound(outputId), std::min(xLb, yLb));
+      EXPECT_EQ(engine->upperBound(outputId), std::min(xUb, yUb));
     }
   }
 }
 
 TEST_F(BinaryMinTest, Recompute) {
-  const Int aLb = 0;
-  const Int aUb = 10;
-  const Int bLb = 0;
-  const Int bUb = 5;
-  EXPECT_TRUE(aLb <= aUb);
-  EXPECT_TRUE(bLb <= bUb);
+  const Int xLb = 0;
+  const Int xUb = 10;
+  const Int yLb = 0;
+  const Int yUb = 5;
+  EXPECT_TRUE(xLb <= xUb);
+  EXPECT_TRUE(yLb <= yUb);
 
   engine->open();
-  const VarId x = engine->makeIntVar(aUb, aLb, aUb);
-  const VarId y = engine->makeIntVar(bUb, bLb, bUb);
+  const VarId x = engine->makeIntVar(xUb, xLb, xUb);
+  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
   const VarId outputId =
-      engine->makeIntVar(0, 0, std::max(aUb - bLb, bUb - aLb));
-  BinaryMin& invariant = engine->makeInvariant<BinaryMin>(x, y, outputId);
+      engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
+  BinaryMin& invariant = engine->makeInvariant<BinaryMin>(outputId, x, y);
   engine->close();
 
-  for (Int aVal = aLb; aVal <= aUb; ++aVal) {
-    for (Int bVal = bLb; bVal <= bUb; ++bVal) {
-      engine->setValue(engine->currentTimestamp(), x, aVal);
-      engine->setValue(engine->currentTimestamp(), y, bVal);
+  for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+    for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+      engine->setValue(engine->currentTimestamp(), x, xVal);
+      engine->setValue(engine->currentTimestamp(), y, yVal);
 
-      const Int expectedOutput = computeOutput(aVal, bVal);
+      const Int expectedOutput = computeOutput(xVal, yVal);
       invariant.recompute(engine->currentTimestamp(), *engine);
       EXPECT_EQ(expectedOutput,
                 engine->value(engine->currentTimestamp(), outputId));
@@ -101,7 +101,7 @@ TEST_F(BinaryMinTest, NotifyInputChanged) {
                               engine->makeIntVar(ub, lb, ub)};
   VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   BinaryMin& invariant =
-      engine->makeInvariant<BinaryMin>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<BinaryMin>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int val = lb; val <= ub; ++val) {
@@ -130,7 +130,7 @@ TEST_F(BinaryMinTest, NextInput) {
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
   BinaryMin& invariant =
-      engine->makeInvariant<BinaryMin>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<BinaryMin>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -163,7 +163,7 @@ TEST_F(BinaryMinTest, NotifyCurrentInputChanged) {
       engine->makeIntVar(valueDist(gen), lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   BinaryMin& invariant =
-      engine->makeInvariant<BinaryMin>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<BinaryMin>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -196,7 +196,7 @@ TEST_F(BinaryMinTest, Commit) {
 
   VarId outputId = engine->makeIntVar(0, 0, 2);
   BinaryMin& invariant =
-      engine->makeInvariant<BinaryMin>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<BinaryMin>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
@@ -240,7 +240,8 @@ class MockBinaryMin : public BinaryMin {
     registered = true;
     BinaryMin::registerVars(engine);
   }
-  MockBinaryMin(VarId a, VarId b, VarId c) : BinaryMin(a, b, c) {
+  explicit MockBinaryMin(VarId output, VarId x, VarId y)
+      : BinaryMin(output, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return BinaryMin::recompute(timestamp, engine);
@@ -275,12 +276,12 @@ TEST_F(BinaryMinTest, EngineIntegration) {
     if (!engine->isOpen()) {
       engine->open();
     }
-    const VarId a = engine->makeIntVar(-10, -100, 100);
-    const VarId b = engine->makeIntVar(10, -100, 100);
+    const VarId x = engine->makeIntVar(-10, -100, 100);
+    const VarId y = engine->makeIntVar(10, -100, 100);
     const VarId output = engine->makeIntVar(0, 0, 200);
     testNotifications<MockBinaryMin>(
-        &engine->makeInvariant<MockBinaryMin>(a, b, output), propMode,
-        markingMode, 3, a, 0, output);
+        &engine->makeInvariant<MockBinaryMin>(output, x, y), propMode,
+        markingMode, 3, x, 0, output);
   }
 }
 

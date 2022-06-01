@@ -45,26 +45,26 @@ TEST_F(CountConstTest, UpdateBounds) {
   engine->open();
 
   const Int y = 10;
-  std::vector<VarId> vars{engine->makeIntVar(0, 0, 10),
-                          engine->makeIntVar(0, 0, 10),
-                          engine->makeIntVar(0, 0, 10)};
+  std::vector<VarId> inputs{engine->makeIntVar(0, 0, 10),
+                            engine->makeIntVar(0, 0, 10),
+                            engine->makeIntVar(0, 0, 10)};
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   CountConst& invariant =
-      engine->makeInvariant<CountConst>(y, std::vector<VarId>(vars), outputId);
+      engine->makeInvariant<CountConst>(outputId, y, inputs);
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
-    engine->updateBounds(vars.at(0), aLb, aUb, false);
+    engine->updateBounds(inputs.at(0), aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_TRUE(bLb <= bUb);
-      engine->updateBounds(vars.at(1), bLb, bUb, false);
+      engine->updateBounds(inputs.at(1), bLb, bUb, false);
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_TRUE(cLb <= cUb);
-        engine->updateBounds(vars.at(2), cLb, cUb, false);
+        engine->updateBounds(inputs.at(2), cLb, cUb, false);
         invariant.updateBounds(*engine);
 
         ASSERT_GE(0, engine->lowerBound(outputId));
-        ASSERT_LE(vars.size(), engine->upperBound(outputId));
+        ASSERT_LE(inputs.size(), engine->upperBound(outputId));
       }
     }
   }
@@ -90,8 +90,8 @@ TEST_F(CountConstTest, Recompute) {
     const VarId outputId = engine->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
 
-    CountConst& invariant = engine->makeInvariant<CountConst>(
-        y, std::vector<VarId>(inputs), outputId);
+    CountConst& invariant =
+        engine->makeInvariant<CountConst>(outputId, y, inputs);
     engine->close();
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
@@ -125,8 +125,8 @@ TEST_F(CountConstTest, NotifyInputChanged) {
     }
     const VarId outputId = engine->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-    CountConst& invariant = engine->makeInvariant<CountConst>(
-        y, std::vector<VarId>(inputs), outputId);
+    CountConst& invariant =
+        engine->makeInvariant<CountConst>(outputId, y, inputs);
     engine->close();
 
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -163,8 +163,8 @@ TEST_F(CountConstTest, NextInput) {
   }
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  CountConst& invariant = engine->makeInvariant<CountConst>(
-      y, std::vector<VarId>(inputs), outputId);
+  CountConst& invariant =
+      engine->makeInvariant<CountConst>(outputId, y, inputs);
   engine->close();
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
@@ -208,8 +208,8 @@ TEST_F(CountConstTest, NotifyCurrentInputChanged) {
     }
     const VarId outputId = engine->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-    CountConst& invariant = engine->makeInvariant<CountConst>(
-        y, std::vector<VarId>(inputs), outputId);
+    CountConst& invariant =
+        engine->makeInvariant<CountConst>(outputId, y, inputs);
     engine->close();
 
     for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -249,8 +249,8 @@ TEST_F(CountConstTest, Commit) {
     }
     const VarId outputId = engine->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-    CountConst& invariant = engine->makeInvariant<CountConst>(
-        y, std::vector<VarId>(inputs), outputId);
+    CountConst& invariant =
+        engine->makeInvariant<CountConst>(outputId, y, inputs);
 
     engine->close();
 
@@ -302,8 +302,9 @@ class MockCountConst : public CountConst {
     registered = true;
     CountConst::registerVars(engine);
   }
-  MockCountConst(Int y, std::vector<VarId> X, VarId output)
-      : CountConst(y, X, output) {
+  explicit MockCountConst(VarId output, Int y,
+                          const std::vector<VarId>& varArray)
+      : CountConst(output, y, varArray) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return CountConst::recompute(timestamp, engine);
@@ -340,14 +341,14 @@ TEST_F(CountConstTest, EngineIntegration) {
     }
     const Int numArgs = 10;
     const Int y = 5;
-    std::vector<VarId> args;
+    std::vector<VarId> varArray;
     for (Int value = 1; value <= numArgs; ++value) {
-      args.push_back(engine->makeIntVar(value, 1, numArgs));
+      varArray.push_back(engine->makeIntVar(value, 1, numArgs));
     }
-    const VarId modifiedVarId = args.front();
+    const VarId modifiedVarId = varArray.front();
     const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCountConst>(
-        &engine->makeInvariant<MockCountConst>(y, args, output), propMode,
+        &engine->makeInvariant<MockCountConst>(output, y, varArray), propMode,
         markingMode, numArgs + 1, modifiedVarId, 5, output);
   }
 }

@@ -2,15 +2,15 @@
 
 #include "core/engine.hpp"
 
-AbsDiff::AbsDiff(VarId x, VarId y, VarId absDiff)
-    : Invariant(NULL_ID), _x(x), _y(y), _absDiff(absDiff) {
+AbsDiff::AbsDiff(VarId output, VarId x, VarId y)
+    : Invariant(), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void AbsDiff::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(engine, _absDiff);
+  registerDefinedVariable(engine, _output);
   engine.registerInvariantInput(_id, _x, 0);
   engine.registerInvariantInput(_id, _y, 0);
 }
@@ -28,11 +28,11 @@ void AbsDiff::updateBounds(Engine& engine, bool widenOnly) {
   const Int ub = std::max(std::max(std::abs(xLb - yLb), std::abs(xLb - yUb)),
                           std::max(std::abs(xUb - yLb), std::abs(xUb - yUb)));
 
-  engine.updateBounds(_absDiff, lb, ub, widenOnly);
+  engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void AbsDiff::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _absDiff,
+  updateValue(ts, engine, _output,
               std::abs(engine.value(ts, _x) - engine.value(ts, _y)));
 }
 

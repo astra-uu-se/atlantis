@@ -4,11 +4,11 @@
 
 #include "core/engine.hpp"
 
-Count::Count(VarId y, std::vector<VarId> varArray, VarId output)
-    : Invariant(NULL_ID),
+Count::Count(VarId output, VarId y, std::vector<VarId> varArray)
+    : Invariant(),
+      _output(output),
       _y(y),
       _variables(std::move(varArray)),
-      _output(output),
       _localValues(),
       _counts(),
       _offset(0) {

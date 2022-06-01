@@ -8,11 +8,10 @@ class Engine;
 
 class LessEqual : public Constraint {
  private:
-  const VarId _x;
-  const VarId _y;
+  const VarId _x, _y;
 
  public:
-  LessEqual(VarId violationId, VarId x, VarId y);
+  explicit LessEqual(VarId violationId, VarId x, VarId y);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;

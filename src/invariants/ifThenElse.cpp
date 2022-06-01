@@ -1,7 +1,7 @@
 #include "invariants/ifThenElse.hpp"
 
-IfThenElse::IfThenElse(VarId b, VarId x, VarId y, VarId z)
-    : Invariant(NULL_ID), _b(b), _xy({x, y}), _z(z) {
+IfThenElse::IfThenElse(VarId output, VarId b, VarId x, VarId y)
+    : Invariant(), _output(output), _b(b), _xy({x, y}) {
   _modifiedVars.reserve(1);
 }
 
@@ -10,18 +10,18 @@ void IfThenElse::registerVars(Engine& engine) {
   engine.registerInvariantInput(_id, _b, 0);
   engine.registerInvariantInput(_id, _xy[0], 0);
   engine.registerInvariantInput(_id, _xy[1], 0);
-  registerDefinedVariable(engine, _z);
+  registerDefinedVariable(engine, _output);
 }
 
 void IfThenElse::updateBounds(Engine& engine, bool widenOnly) {
   engine.updateBounds(
-      _z, std::min(engine.lowerBound(_xy[0]), engine.lowerBound(_xy[1])),
+      _output, std::min(engine.lowerBound(_xy[0]), engine.lowerBound(_xy[1])),
       std::max(engine.upperBound(_xy[0]), engine.upperBound(_xy[1])),
       widenOnly);
 }
 
 void IfThenElse::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _z,
+  updateValue(ts, engine, _output,
               engine.value(ts, _xy[1 - (engine.value(ts, _b) == 0)]));
 }
 

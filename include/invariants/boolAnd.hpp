@@ -6,15 +6,16 @@
 
 class Engine;
 
+/**
+ * Invariant for output <- x /\ y
+ *
+ */
 class BoolAnd : public Invariant {
  private:
-  const VarId _x;
-  const VarId _y;
-  const VarId _output;
+  const VarId _output, _x, _y;
 
  public:
-  explicit BoolAnd(VarId x, VarId y, VarId output);
-
+  explicit BoolAnd(VarId output, VarId x, VarId y);
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;
   void recompute(Timestamp, Engine&) override;

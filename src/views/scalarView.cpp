@@ -4,11 +4,11 @@
 
 extern Id NULL_ID;
 
-Int ScalarView::value(Timestamp ts) const {
+Int ScalarView::value(Timestamp ts) {
   return _scalar * _engine->value(ts, _parentId);
 }
 
-Int ScalarView::committedValue() const {
+Int ScalarView::committedValue() {
   return _scalar * _engine->committedValue(_parentId);
 }
 

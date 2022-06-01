@@ -4,11 +4,11 @@
 
 extern Id NULL_ID;
 
-Int IntOffsetView::value(Timestamp ts) const {
+Int IntOffsetView::value(Timestamp ts) {
   return _offset + _engine->value(ts, _parentId);
 }
 
-Int IntOffsetView::committedValue() const {
+Int IntOffsetView::committedValue() {
   return _offset + _engine->committedValue(_parentId);
 }
 

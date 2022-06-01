@@ -81,16 +81,12 @@ class Engine {
 
   virtual void enqueueComputedVar(Timestamp, VarId) = 0;
 
-  [[nodiscard]] Int value(Timestamp, VarId) const;
-  [[nodiscard]] inline Int currentValue(VarId id) const {
+  [[nodiscard]] Int value(Timestamp, VarId);
+  [[nodiscard]] inline Int currentValue(VarId id) {
     return value(_currentTimestamp, id);
   }
 
-  [[nodiscard]] Int intViewValue(Timestamp, VarId) const;
-
-  [[nodiscard]] Int committedValue(VarId) const;
-
-  [[nodiscard]] Int intViewCommittedValue(VarId) const;
+  [[nodiscard]] Int committedValue(VarId);
 
   [[nodiscard]] Timestamp tmpTimestamp(VarId) const;
 
@@ -248,26 +244,18 @@ inline bool Engine::hasChanged(Timestamp ts, VarId id) {
   return _store.intVar(id).hasChanged(ts);
 }
 
-inline Int Engine::value(Timestamp ts, VarId id) const {
+inline Int Engine::value(Timestamp ts, VarId id) {
   if (id.idType == VarIdType::view) {
-    return intViewValue(ts, id);
+    return _store.intView(id).value(ts);
   }
   return _store.constIntVar(id).value(ts);
 }
 
-inline Int Engine::intViewValue(Timestamp ts, VarId id) const {
-  return _store.constIntView(id).value(ts);
-}
-
-inline Int Engine::committedValue(VarId id) const {
+inline Int Engine::committedValue(VarId id) {
   if (id.idType == VarIdType::view) {
-    return intViewCommittedValue(id);
+    return _store.intView(id).committedValue();
   }
   return _store.constIntVar(id).committedValue();
-}
-
-inline Int Engine::intViewCommittedValue(VarId id) const {
-  return _store.constIntView(id).committedValue();
 }
 
 inline Timestamp Engine::tmpTimestamp(VarId id) const {

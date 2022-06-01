@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "constraints/allDifferent.hpp"
-#include "views/notEqualView.hpp"
+#include "views/notEqualConst.hpp"
 
 std::unique_ptr<invariantgraph::AllDifferentNode>
 invariantgraph::AllDifferentNode::fromModelConstraint(
@@ -59,7 +59,7 @@ void invariantgraph::AllDifferentNode::createDefinedVariables(Engine& engine) {
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(engine.makeIntView<NotEqualView>(_intermediate, 0));
+      setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 0));
     }
   }
 }

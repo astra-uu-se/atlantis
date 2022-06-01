@@ -8,36 +8,34 @@
 
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "views/greaterThanView.hpp"
+#include "views/greaterEqualConst.hpp"
 
 namespace {
 
-static Int computeViolation(Int a, Int b) {
-  return std::max<Int>(0, b + 1 - a);
-}
+static Int computeViolation(Int a, Int b) { return std::max<Int>(0, b - a); }
 
-class GreaterThanViewTest : public ::testing::Test {
+class GreaterEqualViewConst : public ::testing::Test {
  protected:
   std::unique_ptr<PropagationEngine> engine;
 
   void SetUp() override { engine = std::make_unique<PropagationEngine>(); }
 };
 
-RC_GTEST_FIXTURE_PROP(GreaterThanViewTest, simple, (int a, int b)) {
+RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, simple, (int a, int b)) {
   if (!engine->isOpen()) {
     engine->open();
   }
   const VarId varId = engine->makeIntVar(a, a, a);
-  const VarId violationId = engine->makeIntView<GreaterThanView>(varId, b);
+  const VarId violationId = engine->makeIntView<GreaterEqualConst>(varId, b);
   RC_ASSERT(engine->committedValue(violationId) == computeViolation(a, b));
 }
 
-RC_GTEST_FIXTURE_PROP(GreaterThanViewTest, singleton, (int a, int b)) {
+RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, singleton, (int a, int b)) {
   if (!engine->isOpen()) {
     engine->open();
   }
   const VarId varId = engine->makeIntVar(a, a, a);
-  const VarId violationId = engine->makeIntView<GreaterThanView>(varId, b);
+  const VarId violationId = engine->makeIntView<GreaterEqualConst>(varId, b);
   RC_ASSERT(engine->committedValue(violationId) == computeViolation(a, b));
   RC_ASSERT(engine->lowerBound(violationId) ==
             engine->committedValue(violationId));
@@ -45,14 +43,14 @@ RC_GTEST_FIXTURE_PROP(GreaterThanViewTest, singleton, (int a, int b)) {
             engine->committedValue(violationId));
 }
 
-RC_GTEST_FIXTURE_PROP(GreaterThanViewTest, interval, (int a, int b)) {
+RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, interval, (int a, int b)) {
   const Int size = 5;
   Int lb = Int(a) - size;
   Int ub = Int(a) + size;
 
   engine->open();
   const VarId varId = engine->makeIntVar(ub, lb, ub);
-  const VarId violationId = engine->makeIntView<GreaterThanView>(varId, b);
+  const VarId violationId = engine->makeIntView<GreaterEqualConst>(varId, b);
   engine->close();
 
   const Int violLb = engine->lowerBound(violationId);
@@ -69,7 +67,7 @@ RC_GTEST_FIXTURE_PROP(GreaterThanViewTest, interval, (int a, int b)) {
     const Int actual = engine->currentValue(violationId);
     const Int expected = computeViolation(val, b);
 
-    EXPECT_EQ(val > Int(b), expected == 0);
+    EXPECT_EQ(val >= Int(b), expected == 0);
 
     RC_ASSERT(engine->lowerBound(violationId) == violLb);
     RC_ASSERT(engine->upperBound(violationId) == violUb);

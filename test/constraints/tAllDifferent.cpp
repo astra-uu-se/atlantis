@@ -278,7 +278,7 @@ class MockAllDifferent : public AllDifferent {
     registered = true;
     AllDifferent::registerVars(engine);
   }
-  MockAllDifferent(VarId violationId, std::vector<VarId> t_variables)
+  explicit MockAllDifferent(VarId violationId, std::vector<VarId> t_variables)
       : AllDifferent(violationId, t_variables) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
@@ -322,7 +322,7 @@ TEST_F(AllDifferentTest, EngineIntegration) {
     }
     const VarId viol = engine->makeIntVar(0, 0, numArgs);
     testNotifications<MockAllDifferent>(
-        &engine->makeInvariant<MockAllDifferent>(viol, args), propMode,
+        &engine->makeConstraint<MockAllDifferent>(viol, args), propMode,
         markingMode, numArgs + 1, args.front(), 1, viol);
   }
 }

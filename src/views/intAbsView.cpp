@@ -2,11 +2,11 @@
 
 #include "core/engine.hpp"
 
-Int IntAbsView::value(Timestamp ts) const {
+Int IntAbsView::value(Timestamp ts) {
   return std::abs(_engine->value(ts, _parentId));
 }
 
-Int IntAbsView::committedValue() const {
+Int IntAbsView::committedValue() {
   return std::abs(_engine->committedValue(_parentId));
 }
 

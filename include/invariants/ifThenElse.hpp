@@ -7,18 +7,17 @@
 #include "invariants/invariant.hpp"
 
 /**
- * Invariant for z <- if b = 0 then x else y
+ * Invariant for output <- if b = 0 then x else y
  *
  */
 
 class IfThenElse : public Invariant {
  private:
-  const VarId _b;
+  const VarId _output, _b;
   const std::array<const VarId, 2> _xy;
-  const VarId _z;
 
  public:
-  IfThenElse(VarId b, VarId x, VarId y, VarId z);
+  explicit IfThenElse(VarId output, VarId b, VarId x, VarId y);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;

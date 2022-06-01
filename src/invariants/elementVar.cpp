@@ -1,28 +1,30 @@
 #include "invariants/elementVar.hpp"
 
-ElementVar::ElementVar(VarId index, std::vector<VarId> varArray, VarId y)
-    : Invariant(NULL_ID),
+ElementVar::ElementVar(VarId output, VarId index, std::vector<VarId> varArray,
+                       Int offset)
+    : Invariant(),
+      _output(output),
       _index(index),
-      _varArray(prependNullId(varArray)),
-      _y(y) {
+      _varArray(varArray),
+      _offset(offset) {
   _modifiedVars.reserve(1);
 }
 
 void ElementVar::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
   engine.registerInvariantInput(_id, _index, LocalId(0));
-  for (size_t i = 1; i < _varArray.size(); ++i) {
-    engine.registerInvariantInput(_id, _varArray[i], LocalId(0));
+  for (const VarId input : _varArray) {
+    engine.registerInvariantInput(_id, input, LocalId(0));
   }
-  registerDefinedVariable(engine, _y);
+  registerDefinedVariable(engine, _output);
 }
 
 void ElementVar::updateBounds(Engine& engine, bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
-  Int iLb = std::max(Int(1), engine.lowerBound(_index));
-  Int iUb = std::min(static_cast<Int>(_varArray.size()) - Int(1),
-                     engine.upperBound(_index));
+  Int iLb = std::max<Int>(1, engine.lowerBound(_index));
+  Int iUb = std::min<Int>(static_cast<Int>(_varArray.size()) - 1,
+                          engine.upperBound(_index));
   if (iLb > iUb) {
     iLb = 1;
     iUb = static_cast<Int>(_varArray.size()) - 1;
@@ -31,12 +33,12 @@ void ElementVar::updateBounds(Engine& engine, bool widenOnly) {
     lb = std::min(lb, engine.lowerBound(_varArray[i]));
     ub = std::max(ub, engine.upperBound(_varArray[i]));
   }
-  engine.updateBounds(_y, lb, ub, widenOnly);
+  engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void ElementVar::recompute(Timestamp ts, Engine& engine) {
   assert(safeIndex(engine.value(ts, _index)) < _varArray.size());
-  updateValue(ts, engine, _y,
+  updateValue(ts, engine, _output,
               engine.value(ts, _varArray[safeIndex(engine.value(ts, _index))]));
 }
 

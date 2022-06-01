@@ -8,16 +8,16 @@
 class Engine;
 
 /**
- * Invariant for absDiff <== |x-y|
+ * Invariant for output <== |x - y|
  *
  */
 
 class AbsDiff : public Invariant {
  private:
-  const VarId _x, _y, _absDiff;
+  const VarId _output, _x, _y;
 
  public:
-  AbsDiff(VarId x, VarId y, VarId absDiff);
+  explicit AbsDiff(VarId output, VarId x, VarId y);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;

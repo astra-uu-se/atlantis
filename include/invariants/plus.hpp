@@ -5,15 +5,15 @@
 #include "invariants/invariant.hpp"
 
 /**
- * Invariant for y <- a + b
+ * Invariant for output <- x + y
  *
  */
 class Plus : public Invariant {
  private:
-  const VarId _a, _b, _y;
+  const VarId _output, _x, _y;
 
  public:
-  explicit Plus(VarId a, VarId b, VarId y);
+  explicit Plus(VarId output, VarId x, VarId y);
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;
   void recompute(Timestamp, Engine&) override;
