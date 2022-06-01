@@ -20,8 +20,8 @@ class AllDifferentExcept : public AllDifferent {
   bool isIgnored(Int) const;
 
  public:
-  AllDifferentExcept(VarId violationId, std::vector<VarId> variables,
-                     const std::vector<Int>& ignored);
+  explicit AllDifferentExcept(VarId violationId, std::vector<VarId> variables,
+                              const std::vector<Int>& ignored);
 
   void recompute(Timestamp, Engine&) override;
   void notifyInputChanged(Timestamp, Engine&, LocalId) override;

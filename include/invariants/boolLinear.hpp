@@ -8,23 +8,22 @@
 class Engine;
 
 /**
- * Invariant for y <- sum(coeffs_i * violArray_i)
+ * Invariant for output <- sum(coeffs_i * violArray_i)
  *
  */
 
 class BoolLinear : public Invariant {
  private:
+  const VarId _output;
   const std::vector<Int> _coeffs;
   const std::vector<VarId> _violArray;
   // (_isSatisfied[i] == 1) <=> (_violArray[i] == 0)
   std::vector<CommittableInt> _isSatisfied;
-  const VarId _y;
 
  public:
-  explicit BoolLinear(const std::vector<VarId>& violArray, VarId y)
-      : BoolLinear(std::vector<Int>(violArray.size(), 1), violArray, y) {}
-  explicit BoolLinear(std::vector<Int> coeffs, std::vector<VarId> violArray,
-                      VarId y);
+  explicit BoolLinear(VarId output, const std::vector<VarId>& violArray);
+  explicit BoolLinear(VarId output, std::vector<Int> coeffs,
+                      std::vector<VarId> violArray);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;

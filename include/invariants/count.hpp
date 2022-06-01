@@ -9,16 +9,15 @@
 class Engine;
 
 /**
- * Invariant for:
- * output <- number of occurences of _y in _variables
+ * output <- number of occurrences of y in variables
  *
  */
 
 class Count : public Invariant {
  private:
+  const VarId _output;
   const VarId _y;
   const std::vector<VarId> _variables;
-  const VarId _output;
   std::vector<CommittableInt> _localValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
@@ -27,8 +26,7 @@ class Count : public Invariant {
   signed char count(Timestamp ts, Int value);
 
  public:
-  explicit Count(VarId y, std::vector<VarId> varArray, VarId output);
-
+  explicit Count(VarId output, VarId y, std::vector<VarId> varArray);
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;
   void close(Timestamp, Engine&) override;

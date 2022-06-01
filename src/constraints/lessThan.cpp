@@ -9,7 +9,7 @@
  * @param y variable of rhs
  */
 LessThan::LessThan(VarId violationId, VarId x, VarId y)
-    : Constraint(NULL_ID, violationId), _x(x), _y(y) {
+    : Constraint(violationId), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 

@@ -4,11 +4,8 @@
 
 #include "core/engine.hpp"
 
-CountConst::CountConst(Int y, std::vector<VarId> variables, VarId output)
-    : Invariant(NULL_ID),
-      _y(y),
-      _variables(std::move(variables)),
-      _output(output) {
+CountConst::CountConst(VarId output, Int y, std::vector<VarId> variables)
+    : Invariant(), _output(output), _y(y), _variables(std::move(variables)) {
   _hasCountValue.reserve(_variables.size());
   _modifiedVars.reserve(_variables.size());
 }

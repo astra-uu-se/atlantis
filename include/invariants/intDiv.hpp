@@ -10,19 +10,18 @@
 class Engine;
 
 /**
- * Invariant for y <- a div c (integer division)
+ * Invariant for output <- x div y (integer division)
+ * If y = 0, then divides by 1 or -1 (depending on the domain of y)
  *
  */
 
 class IntDiv : public Invariant {
  private:
-  VarId _a;
-  VarId _b;
-  VarId _y;
+  VarId _output, _x, _y;
   Int _zeroReplacement{1};
 
  public:
-  IntDiv(VarId a, VarId b, VarId y);
+  explicit IntDiv(VarId output, VarId x, VarId y);
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;
   void close(Timestamp, Engine&) override;

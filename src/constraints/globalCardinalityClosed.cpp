@@ -6,13 +6,13 @@
  * @param violationId id for the violationCount
  */
 GlobalCardinalityClosed::GlobalCardinalityClosed(VarId violationId,
+                                                 std::vector<VarId> outputs,
                                                  std::vector<VarId> inputs,
-                                                 std::vector<Int> cover,
-                                                 std::vector<VarId> outputs)
-    : Constraint(NULL_ID, violationId),
+                                                 std::vector<Int> cover)
+    : Constraint(violationId),
+      _outputs(std::move(outputs)),
       _inputs(std::move(inputs)),
       _cover(std::move(cover)),
-      _outputs(std::move(outputs)),
       _coverVarIndex(),
       _localValues(),
       _counts(),

@@ -8,10 +8,10 @@
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/count.hpp"
 #include "invariants/countConst.hpp"
-#include "views/equalView.hpp"
-#include "views/greaterThanView.hpp"
-#include "views/lessEqualView.hpp"
-#include "views/notEqualView.hpp"
+#include "views/equalConst.hpp"
+#include "views/greaterEqualConst.hpp"
+#include "views/lessEqualConst.hpp"
+#include "views/notEqualConst.hpp"
 
 static std::vector<invariantgraph::VariableNode*> append(
     std::vector<invariantgraph::VariableNode*>& vars,

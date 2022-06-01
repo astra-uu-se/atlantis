@@ -8,8 +8,7 @@ class Engine;
 
 class BoolLessThan : public Constraint {
  private:
-  const VarId _x;
-  const VarId _y;
+  const VarId _x, _y;
 
  public:
   explicit BoolLessThan(VarId violationId, VarId x, VarId y);

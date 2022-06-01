@@ -345,17 +345,15 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
 
   EXPECT_EQ(result.variableMap().size(), 4);
   // a, b, x, y
-  // domain constraints for x and y
   // the pivot
   // The Equality (x == pivot) violation
   // total violation
   // Dummy Objective
-  EXPECT_EQ(engine.numVariables(), 4 + 2 + 1 + 1 + 1 + 1);
+  EXPECT_EQ(engine.numVariables(), 4 + 1 + 1 + 1 + 1);
   // 2 Linear
   // 1 from breaking the cycle (x == pivot)
-  // 2 domain constraints
   // 1 Total Violation
-  EXPECT_EQ(engine.numInvariants(), 2 + 2 + 1 + 1);
+  EXPECT_EQ(engine.numInvariants(), 2 + 1 + 1);
 }
 
 TEST(InvariantGraphTest, BreakElementIndexCycle) {
@@ -427,17 +425,15 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
 
   EXPECT_EQ(result.variableMap().size(), 6);
   // a, b, c, d, x, y
-  // domain constraints for x and y
   // the pivot
   // The Equality violation
   // total violation
   // dummy objective
-  EXPECT_EQ(engine.numVariables(), 6 + 2 + 1 + 1 + 1 + 1);
+  EXPECT_EQ(engine.numVariables(), 6 + 1 + 1 + 1 + 1);
   // 2 Element
-  // 2 domain constraints
   // 1 Total Violation
   // 1 from breaking the cycle
-  EXPECT_EQ(engine.numInvariants(), 2 + 2 + 1 + 1);
+  EXPECT_EQ(engine.numInvariants(), 2 + 1 + 1);
 }
 
 TEST(InvariantGraphTest, AllowDynamicCycle) {

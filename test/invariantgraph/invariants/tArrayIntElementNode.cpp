@@ -54,11 +54,11 @@ TEST_F(ArrayIntElementNodeTest, application) {
   // b
   EXPECT_EQ(engine.searchVariables().size(), 1);
 
-  // b and c
-  EXPECT_EQ(engine.numVariables(), 2);
+  // b (c is a view)
+  EXPECT_EQ(engine.numVariables(), 1);
 
-  // elementConst
-  EXPECT_EQ(engine.numInvariants(), 1);
+  // elementConst is a view
+  EXPECT_EQ(engine.numInvariants(), 0);
 }
 
 TEST_F(ArrayIntElementNodeTest, propagation) {

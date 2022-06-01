@@ -30,6 +30,6 @@ void invariantgraph::ArrayIntMaximumNode::registerWithEngine(Engine& engine) {
                  [&](const auto& node) { return node->varId(); });
 
   assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<::MaxSparse>(variables,
-                                    definedVariables().front()->varId());
+  engine.makeInvariant<MaxSparse>(definedVariables().front()->varId(),
+                                  variables);
 }

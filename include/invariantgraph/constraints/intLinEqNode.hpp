@@ -5,8 +5,8 @@
 #include "constraints/equal.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/linear.hpp"
-#include "views/equalView.hpp"
-#include "views/notEqualView.hpp"
+#include "views/equalConst.hpp"
+#include "views/notEqualConst.hpp"
 
 namespace invariantgraph {
 

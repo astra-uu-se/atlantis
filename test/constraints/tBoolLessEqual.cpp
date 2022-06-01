@@ -254,7 +254,7 @@ class MockBoolLessEqual : public BoolLessEqual {
     registered = true;
     BoolLessEqual::registerVars(engine);
   }
-  MockBoolLessEqual(VarId violationId, VarId x, VarId y)
+  explicit MockBoolLessEqual(VarId violationId, VarId x, VarId y)
       : BoolLessEqual(violationId, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
@@ -294,7 +294,7 @@ TEST_F(BoolLessEqualTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(0, 0, 100);
     const VarId viol = engine->makeIntVar(0, 0, 200);
     testNotifications<MockBoolLessEqual>(
-        &engine->makeInvariant<MockBoolLessEqual>(viol, x, y), propMode,
+        &engine->makeConstraint<MockBoolLessEqual>(viol, x, y), propMode,
         markingMode, 3, x, 1, viol);
   }
 }

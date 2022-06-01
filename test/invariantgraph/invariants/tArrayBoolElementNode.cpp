@@ -64,11 +64,11 @@ TEST_F(ArrayBoolElementNodeTest, application) {
   // b
   EXPECT_EQ(engine.searchVariables().size(), 1);
 
-  // b and r
-  EXPECT_EQ(engine.numVariables(), 2);
+  // b (r is a view)
+  EXPECT_EQ(engine.numVariables(), 1);
 
-  // elementConst
-  EXPECT_EQ(engine.numInvariants(), 1);
+  // elementConst is a view
+  EXPECT_EQ(engine.numInvariants(), 0);
 }
 
 TEST_F(ArrayBoolElementNodeTest, propagation) {

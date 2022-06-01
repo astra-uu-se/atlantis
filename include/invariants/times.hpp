@@ -9,21 +9,16 @@
 class Engine;
 
 /**
- * Invariant for y <- a * b
+ * Invariant for output <- x * y
  *
  */
 
 class Times : public Invariant {
  private:
-  const VarId _a;
-  const VarId _b;
-  const VarId _y;
+  const VarId _output, _x, _y;
 
  public:
-  Times(VarId a, VarId b, VarId y) : Invariant(NULL_ID), _a(a), _b(b), _y(y) {
-    _modifiedVars.reserve(1);
-  }
-
+  explicit Times(VarId output, VarId x, VarId y);
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;
   void recompute(Timestamp, Engine&) override;

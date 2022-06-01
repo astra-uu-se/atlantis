@@ -36,6 +36,6 @@ void invariantgraph::BoolEqNode::registerWithEngine(Engine& engine) {
     engine.makeConstraint<BoolEqual>(violationVarId(), a()->varId(),
                                      b()->varId());
   } else {
-    engine.makeInvariant<BoolXor>(a()->varId(), b()->varId(), violationVarId());
+    engine.makeInvariant<BoolXor>(violationVarId(), a()->varId(), b()->varId());
   }
 }

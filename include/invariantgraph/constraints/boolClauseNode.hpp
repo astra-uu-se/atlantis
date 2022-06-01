@@ -5,8 +5,8 @@
 
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/boolLinear.hpp"
-#include "views/equalView.hpp"
-#include "views/notEqualView.hpp"
+#include "views/equalConst.hpp"
+#include "views/notEqualConst.hpp"
 
 static std::vector<invariantgraph::VariableNode*> merge(
     const std::vector<invariantgraph::VariableNode*>& as,

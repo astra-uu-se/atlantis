@@ -111,5 +111,5 @@ void invariantgraph::BoolLinearNode::registerWithEngine(Engine& engine) {
     return;
   }
 
-  engine.makeInvariant<::BoolLinear>(_coeffs, variables, _intermediateVarId);
+  engine.makeInvariant<BoolLinear>(_intermediateVarId, _coeffs, variables);
 }

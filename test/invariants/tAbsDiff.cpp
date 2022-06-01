@@ -48,7 +48,7 @@ TEST_F(AbsDiffTest, UpdateBounds) {
   const VarId y = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId outputId = engine->makeIntVar(0, 0, 2);
-  AbsDiff& invariant = engine->makeInvariant<AbsDiff>(x, y, outputId);
+  AbsDiff& invariant = engine->makeInvariant<AbsDiff>(outputId, x, y);
   engine->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
@@ -90,7 +90,7 @@ TEST_F(AbsDiffTest, Recompute) {
   const VarId y = engine->makeIntVar(yLb, yLb, yUb);
   const VarId outputId =
       engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  AbsDiff& invariant = engine->makeInvariant<AbsDiff>(x, y, outputId);
+  AbsDiff& invariant = engine->makeInvariant<AbsDiff>(outputId, x, y);
   engine->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
@@ -116,7 +116,7 @@ TEST_F(AbsDiffTest, NotifyInputChanged) {
                               engine->makeIntVar(ub, lb, ub)};
   VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   AbsDiff& invariant =
-      engine->makeInvariant<AbsDiff>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<AbsDiff>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int val = lb; val <= ub; ++val) {
@@ -145,7 +145,7 @@ TEST_F(AbsDiffTest, NextInput) {
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
   AbsDiff& invariant =
-      engine->makeInvariant<AbsDiff>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<AbsDiff>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -178,7 +178,7 @@ TEST_F(AbsDiffTest, NotifyCurrentInputChanged) {
       engine->makeIntVar(valueDist(gen), lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   AbsDiff& invariant =
-      engine->makeInvariant<AbsDiff>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<AbsDiff>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -211,7 +211,7 @@ TEST_F(AbsDiffTest, Commit) {
 
   VarId outputId = engine->makeIntVar(0, 0, 2);
   AbsDiff& invariant =
-      engine->makeInvariant<AbsDiff>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<AbsDiff>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
@@ -255,7 +255,7 @@ class MockAbsDiff : public AbsDiff {
     registered = true;
     AbsDiff::registerVars(engine);
   }
-  MockAbsDiff(VarId x, VarId y, VarId c) : AbsDiff(x, y, c) {
+  explicit MockAbsDiff(VarId output, VarId x, VarId y) : AbsDiff(output, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return AbsDiff::recompute(timestamp, engine);
@@ -294,7 +294,7 @@ TEST_F(AbsDiffTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(10, -100, 100);
     const VarId output = engine->makeIntVar(0, 0, 200);
     testNotifications<MockAbsDiff>(
-        &engine->makeInvariant<MockAbsDiff>(x, y, output), propMode,
+        &engine->makeInvariant<MockAbsDiff>(output, x, y), propMode,
         markingMode, 3, x, 0, output);
   }
 }

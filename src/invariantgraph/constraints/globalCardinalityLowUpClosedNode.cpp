@@ -44,7 +44,7 @@ void invariantgraph::GlobalCardinalityLowUpClosedNode::createDefinedVariables(
   if (violationVarId() == NULL_ID) {
     if (!shouldHold()) {
       _intermediate = engine.makeIntVar(0, 0, staticInputs().size());
-      setViolationVarId(engine.makeIntView<NotEqualView>(_intermediate, 0));
+      setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 0));
     } else {
       registerViolation(engine);
     }

@@ -1,14 +1,14 @@
-#include "views/notEqualView.hpp"
+#include "views/notEqualConst.hpp"
 
-Int NotEqualView::value(Timestamp ts) const {
+Int NotEqualConst::value(Timestamp ts) {
   return _engine->value(ts, _parentId) == _val;
 }
 
-Int NotEqualView::committedValue() const {
+Int NotEqualConst::committedValue() {
   return _engine->committedValue(_parentId) == _val;
 }
 
-Int NotEqualView::lowerBound() const {
+Int NotEqualConst::lowerBound() const {
   if (_val == _engine->lowerBound(_parentId) &&
       _val == _engine->upperBound(_parentId)) {
     return 1;
@@ -16,7 +16,7 @@ Int NotEqualView::lowerBound() const {
   return 0;
 }
 
-Int NotEqualView::upperBound() const {
+Int NotEqualConst::upperBound() const {
   if (_val < _engine->lowerBound(_parentId) ||
       _val > _engine->upperBound(_parentId)) {
     return 0;

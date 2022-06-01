@@ -244,7 +244,7 @@ class MockPowDomain : public PowDomain {
     registered = true;
     PowDomain::registerVars(engine);
   }
-  MockPowDomain(VarId violationId, VarId x, VarId y)
+  explicit MockPowDomain(VarId violationId, VarId x, VarId y)
       : PowDomain(violationId, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
@@ -284,7 +284,7 @@ TEST_F(PowDomainTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(0, -100, 100);
     const VarId viol = engine->makeIntVar(0, 0, 1);
     testNotifications<MockPowDomain>(
-        &engine->makeInvariant<MockPowDomain>(viol, x, y), propMode,
+        &engine->makeConstraint<MockPowDomain>(viol, x, y), propMode,
         markingMode, 3, x, 0, viol);
   }
 }

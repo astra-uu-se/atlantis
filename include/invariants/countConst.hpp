@@ -15,13 +15,13 @@ class Engine;
 
 class CountConst : public Invariant {
  private:
+  const VarId _output;
   const Int _y;
   const std::vector<VarId> _variables;
-  const VarId _output;
   std::vector<CommittableInt> _hasCountValue;
 
  public:
-  explicit CountConst(Int y, std::vector<VarId> variables, VarId output);
+  explicit CountConst(VarId output, Int y, std::vector<VarId> variables);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;

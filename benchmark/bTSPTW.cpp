@@ -2,13 +2,13 @@
 
 #include <constraints/lessEqual.hpp>
 #include <core/propagationEngine.hpp>
-#include <invariants/elementConst.hpp>
 #include <invariants/elementVar.hpp>
 #include <invariants/linear.hpp>
 #include <iostream>
 #include <random>
 #include <utility>
 #include <vector>
+#include <views/elementConst.hpp>
 #include <views/intOffsetView.hpp>
 
 #include "benchmark.hpp"
@@ -66,22 +66,22 @@ class TSPTW : public benchmark::Fixture {
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // timeToPrev[i] = dist[i][pred[i]]
-      engine->makeInvariant<ElementConst>(pred[i], dist[i], timeToPrev[i]);
+      timeToPrev[i] = engine->makeIntView<ElementConst>(pred[i], dist[i]);
       // arrivalPrev[i] = arrivalTime[pred[i]]
     }
 
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // arrivalPrev[i] = arrivalTime[pred[i]]
-      engine->makeInvariant<ElementVar>(pred[i], arrivalTime, arrivalPrev[i]);
+      engine->makeInvariant<ElementVar>(arrivalPrev[i], pred[i], arrivalTime);
       // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
       engine->makeInvariant<Linear>(
-          std::vector<VarId>({arrivalPrev[i], timeToPrev[i]}), arrivalTime[i]);
+          arrivalTime[i], std::vector<VarId>({arrivalPrev[i], timeToPrev[i]}));
     }
 
     // totalDist = sum(timeToPrev)
     totalDist = engine->makeIntVar(0, 0, MAX_TIME);
-    engine->makeInvariant<Linear>(timeToPrev, totalDist);
+    engine->makeInvariant<Linear>(totalDist, timeToPrev);
 
     VarId leqConst = engine->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
@@ -89,7 +89,7 @@ class TSPTW : public benchmark::Fixture {
     }
 
     totalViolation = engine->makeIntVar(0, 0, MAX_TIME * n);
-    engine->makeInvariant<Linear>(violation, totalViolation);
+    engine->makeInvariant<Linear>(totalViolation, violation);
 
     engine->close();
     for (const VarId p : pred) {

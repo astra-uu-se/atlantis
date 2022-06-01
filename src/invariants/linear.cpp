@@ -4,12 +4,16 @@
 
 #include "core/engine.hpp"
 
-Linear::Linear(std::vector<Int> A, std::vector<VarId> X, VarId y)
-    : Invariant(NULL_ID),
-      _coeffs(std::move(A)),
-      _varArray(std::move(X)),
-      _localVarArray(),
-      _y(y) {
+Linear::Linear(VarId output, const std::vector<VarId>& varArray)
+    : Linear(output, std::vector<Int>(varArray.size(), 1), varArray) {}
+
+Linear::Linear(VarId output, std::vector<Int> coeffs,
+               std::vector<VarId> varArray)
+    : Invariant(),
+      _output(output),
+      _coeffs(std::move(coeffs)),
+      _varArray(std::move(varArray)),
+      _localVarArray() {
   _localVarArray.reserve(_varArray.size());
   _modifiedVars.reserve(_varArray.size());
 }
@@ -22,7 +26,7 @@ void Linear::registerVars(Engine& engine) {
   for (size_t i = 0; i < _varArray.size(); ++i) {
     engine.registerInvariantInput(_id, _varArray[i], i);
   }
-  registerDefinedVariable(engine, _y);
+  registerDefinedVariable(engine, _output);
 }
 
 void Linear::updateBounds(Engine& engine, bool widenOnly) {
@@ -36,7 +40,7 @@ void Linear::updateBounds(Engine& engine, bool widenOnly) {
     ub += _coeffs[i] * (_coeffs[i] < 0 ? engine.lowerBound(_varArray[i])
                                        : engine.upperBound(_varArray[i]));
   }
-  engine.updateBounds(_y, lb, ub, widenOnly);
+  engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void Linear::close(Timestamp ts, Engine& engine) {
@@ -53,13 +57,13 @@ void Linear::recompute(Timestamp ts, Engine& engine) {
     _localVarArray[i].commitValue(engine.committedValue(_varArray[i]));
     _localVarArray[i].setValue(ts, engine.value(ts, _varArray[i]));
   }
-  updateValue(ts, engine, _y, sum);
+  updateValue(ts, engine, _output, sum);
 }
 
 void Linear::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
   assert(id < _localVarArray.size());
   const Int newValue = engine.value(ts, _varArray[id]);
-  incValue(ts, engine, _y,
+  incValue(ts, engine, _output,
            (newValue - _localVarArray[id].value(ts)) * _coeffs[id]);
   _localVarArray[id].setValue(ts, newValue);
 }

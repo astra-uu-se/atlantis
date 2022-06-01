@@ -42,8 +42,8 @@ class AllInterval : public benchmark::Fixture {
 
     for (int i = 1; i < n; ++i) {
       violationVars.push_back(engine->makeIntVar(i, 0, n - 1));
-      engine->makeInvariant<AbsDiff>(inputVars[i - 1], inputVars[i],
-                                     violationVars.back());
+      engine->makeInvariant<AbsDiff>(violationVars.back(), inputVars[i - 1],
+                                     inputVars[i]);
     }
 
     violation = engine->makeIntVar(0, 0, n);

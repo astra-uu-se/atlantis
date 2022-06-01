@@ -24,10 +24,10 @@ void invariantgraph::ArrayBoolXorNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     _intermediate = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(engine.makeIntView<EqualView>(_intermediate, 1));
+      setViolationVarId(engine.makeIntView<EqualConst>(_intermediate, 1));
     } else {
       assert(!isReified());
-      setViolationVarId(engine.makeIntView<NotEqualView>(_intermediate, 1));
+      setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 1));
     }
   }
 }
@@ -39,5 +39,5 @@ void invariantgraph::ArrayBoolXorNode::registerWithEngine(Engine& engine) {
                  std::back_inserter(inputs),
                  [&](const auto& node) { return node->varId(); });
 
-  engine.makeInvariant<BoolLinear>(inputs, _intermediate);
+  engine.makeInvariant<BoolLinear>(_intermediate, inputs);
 }

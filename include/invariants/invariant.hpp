@@ -54,7 +54,7 @@ class Invariant {
   };
 
   bool _isPostponed;
-  InvariantId _id;
+  InvariantId _id{NULL_ID};
   // State used for returning next input. Null state is -1 by default
   CommittableInt _state;
 
@@ -63,10 +63,9 @@ class Invariant {
   VarId _primaryDefinedVar;
   std::vector<VarId> _definedVars;
 
-  explicit Invariant(Id id) : Invariant(id, -1) {}
-  Invariant(Id id, Int nullState)
+  explicit Invariant() : Invariant(-1) {}
+  explicit Invariant(Int nullState)
       : _isPostponed(false),
-        _id(id),
         _state(NULL_TIMESTAMP, nullState),
         _modifiedVars(),
         _primaryDefinedVar() {}

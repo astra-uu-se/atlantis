@@ -9,22 +9,19 @@
 #include "utils/priorityList.hpp"
 
 /**
- * Invariant for y <- min(varArray)
- * This version of min should be used when the domain of the variables
- * in varArray is large compared to the number of variables in varArray, and/or
- * when few elements in varArray are expected to take the same value.
+ * Invariant for output <- min(varArray)
  *
  */
 
 class MinSparse : public Invariant {
  private:
+  const VarId _output;
   const std::vector<VarId> _varArray;
-  const VarId _y;
 
   PriorityList _localPriority;
 
  public:
-  MinSparse(std::vector<VarId> varArray, VarId y);
+  explicit MinSparse(VarId output, std::vector<VarId> varArray);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;

@@ -46,7 +46,7 @@ TEST_F(BoolOrTest, UpdateBounds) {
   const VarId y = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId outputId = engine->makeIntVar(0, 0, 2);
-  BoolOr& invariant = engine->makeInvariant<BoolOr>(x, y, outputId);
+  BoolOr& invariant = engine->makeInvariant<BoolOr>(outputId, x, y);
   engine->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
@@ -84,7 +84,7 @@ TEST_F(BoolOrTest, Recompute) {
   const VarId outputId =
       engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
   BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
@@ -110,7 +110,7 @@ TEST_F(BoolOrTest, NotifyInputChanged) {
                                           engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int val = lb; val <= ub; ++val) {
@@ -139,7 +139,7 @@ TEST_F(BoolOrTest, NextInput) {
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
   BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -172,7 +172,7 @@ TEST_F(BoolOrTest, NotifyCurrentInputChanged) {
       engine->makeIntVar(valueDist(gen), lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -206,7 +206,7 @@ TEST_F(BoolOrTest, Commit) {
 
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(inputs.at(0), inputs.at(1), outputId);
+      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
@@ -250,7 +250,8 @@ class MockBoolOr : public BoolOr {
     registered = true;
     BoolOr::registerVars(engine);
   }
-  MockBoolOr(VarId x, VarId y, VarId outputId) : BoolOr(x, y, outputId) {
+  explicit MockBoolOr(VarId outputId, VarId x, VarId y)
+      : BoolOr(outputId, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return BoolOr::recompute(timestamp, engine);
@@ -289,7 +290,7 @@ TEST_F(BoolOrTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(0, 0, 100);
     const VarId output = engine->makeIntVar(0, 0, 200);
     testNotifications<MockBoolOr>(
-        &engine->makeInvariant<MockBoolOr>(x, y, output), propMode, markingMode,
+        &engine->makeInvariant<MockBoolOr>(output, x, y), propMode, markingMode,
         3, x, 1, output);
   }
 }

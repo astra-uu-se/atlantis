@@ -68,7 +68,7 @@ class MagicSquare : public benchmark::Fixture {
       for (Int i = 0; i < n; ++i) {
         const VarId rowSum = engine->makeIntVar(0, 0, n2 * n);
         const VarId rowViol = engine->makeIntVar(0, 0, n2 * n);
-        engine->makeInvariant<Linear>(ones, square[i], rowSum);
+        engine->makeInvariant<Linear>(rowSum, ones, square[i]);
         engine->makeConstraint<Equal>(rowViol, rowSum, magicSumVar);
         violations.push_back(rowViol);
       }
@@ -86,7 +86,7 @@ class MagicSquare : public benchmark::Fixture {
           assert(square[j].size() == static_cast<size_t>(n));
           col.push_back(square[j][i]);
         }
-        engine->makeInvariant<Linear>(ones, col, colSum);
+        engine->makeInvariant<Linear>(colSum, ones, col);
         engine->makeConstraint<Equal>(colViol, colSum, magicSumVar);
         violations.push_back(colViol);
       }
@@ -103,7 +103,7 @@ class MagicSquare : public benchmark::Fixture {
         assert(square[j].size() == static_cast<size_t>(n));
         diag.push_back(square[j][j]);
       }
-      engine->makeInvariant<Linear>(ones, diag, downDiagSum);
+      engine->makeInvariant<Linear>(downDiagSum, ones, diag);
       engine->makeConstraint<Equal>(downDiagViol, downDiagSum, magicSumVar);
       violations.push_back(downDiagViol);
     }
@@ -119,7 +119,7 @@ class MagicSquare : public benchmark::Fixture {
         assert(square[n - j - 1].size() == static_cast<size_t>(n));
         diag.push_back(square[n - j - 1][j]);
       }
-      engine->makeInvariant<Linear>(ones, diag, upDiagSum);
+      engine->makeInvariant<Linear>(upDiagSum, ones, diag);
       engine->makeConstraint<Equal>(upDiagViol, upDiagSum, magicSumVar);
       violations.push_back(upDiagViol);
     }
@@ -127,7 +127,7 @@ class MagicSquare : public benchmark::Fixture {
     std::vector<Int> ones{};
     ones.assign(violations.size(), 1);
     totalViolation = engine->makeIntVar(0, 0, n2 * n2 * 2 + 2 * n2);
-    engine->makeInvariant<Linear>(ones, violations, totalViolation);
+    engine->makeInvariant<Linear>(totalViolation, ones, violations);
     engine->close();
   }
 

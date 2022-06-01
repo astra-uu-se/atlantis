@@ -25,12 +25,12 @@ class NotEqualTest : public InvariantTest {
     return computeViolation(inputs.at(0), inputs.at(1));
   }
 
-  Int computeViolation(Timestamp ts, const VarId a, const VarId b) {
-    return computeViolation(engine->value(ts, a), engine->value(ts, b));
+  Int computeViolation(Timestamp ts, const VarId x, const VarId y) {
+    return computeViolation(engine->value(ts, x), engine->value(ts, y));
   }
 
-  Int computeViolation(const Int aVal, const Int bVal) {
-    return aVal == bVal ? 1 : 0;
+  Int computeViolation(const Int xVal, const Int yVal) {
+    return xVal == yVal ? 1 : 0;
   }
 };
 
@@ -75,27 +75,27 @@ TEST_F(NotEqualTest, UpdateBounds) {
 }
 
 TEST_F(NotEqualTest, Recompute) {
-  const Int aLb = -1;
-  const Int aUb = 0;
-  const Int bLb = 0;
-  const Int bUb = 1;
-  EXPECT_TRUE(aLb <= aUb);
-  EXPECT_TRUE(bLb <= bUb);
+  const Int xLb = -1;
+  const Int xUb = 0;
+  const Int yLb = 0;
+  const Int yUb = 1;
+  EXPECT_TRUE(xLb <= xUb);
+  EXPECT_TRUE(yLb <= yUb);
 
   engine->open();
-  const VarId a = engine->makeIntVar(aUb, aLb, aUb);
-  const VarId b = engine->makeIntVar(bUb, bLb, bUb);
+  const VarId x = engine->makeIntVar(xUb, xLb, xUb);
+  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
   const VarId violationId =
-      engine->makeIntVar(0, 0, std::max(aUb - bLb, bUb - aLb));
-  NotEqual& invariant = engine->makeConstraint<NotEqual>(violationId, a, b);
+      engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
+  NotEqual& invariant = engine->makeConstraint<NotEqual>(violationId, x, y);
   engine->close();
 
-  for (Int aVal = aLb; aVal <= aUb; ++aVal) {
-    for (Int bVal = bLb; bVal <= bUb; ++bVal) {
-      engine->setValue(engine->currentTimestamp(), a, aVal);
-      engine->setValue(engine->currentTimestamp(), b, bVal);
+  for (Int xVal = xLb; xVal <= xUb; ++xVal) {
+    for (Int yVal = yLb; yVal <= yUb; ++yVal) {
+      engine->setValue(engine->currentTimestamp(), x, xVal);
+      engine->setValue(engine->currentTimestamp(), y, yVal);
 
-      const Int expectedViolation = computeViolation(aVal, bVal);
+      const Int expectedViolation = computeViolation(xVal, yVal);
       invariant.recompute(engine->currentTimestamp(), *engine);
       EXPECT_EQ(expectedViolation,
                 engine->value(engine->currentTimestamp(), violationId));
@@ -252,8 +252,8 @@ class MockNotEqual : public NotEqual {
     registered = true;
     NotEqual::registerVars(engine);
   }
-  MockNotEqual(VarId violationId, VarId a, VarId b)
-      : NotEqual(violationId, a, b) {
+  explicit MockNotEqual(VarId violationId, VarId x, VarId y)
+      : NotEqual(violationId, x, y) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return NotEqual::recompute(timestamp, engine);
@@ -288,12 +288,12 @@ TEST_F(NotEqualTest, EngineIntegration) {
     if (!engine->isOpen()) {
       engine->open();
     }
-    const VarId a = engine->makeIntVar(5, -100, 100);
-    const VarId b = engine->makeIntVar(0, -100, 100);
+    const VarId x = engine->makeIntVar(5, -100, 100);
+    const VarId y = engine->makeIntVar(0, -100, 100);
     const VarId viol = engine->makeIntVar(0, 0, 1);
     testNotifications<MockNotEqual>(
-        &engine->makeInvariant<MockNotEqual>(viol, a, b), propMode, markingMode,
-        3, a, 0, viol);
+        &engine->makeConstraint<MockNotEqual>(viol, x, y), propMode,
+        markingMode, 3, x, 0, viol);
   }
 }
 

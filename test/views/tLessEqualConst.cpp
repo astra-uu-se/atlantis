@@ -8,58 +8,49 @@
 
 #include "core/propagationEngine.hpp"
 #include "core/types.hpp"
-#include "views/notEqualView.hpp"
+#include "views/lessEqualConst.hpp"
 
 namespace {
 
-class notEqualViewTest : public ::testing::Test {
+static Int computeViolation(Int a, Int b) { return std::max<Int>(0, a - b); }
+
+class LessEqualViewConst : public ::testing::Test {
  protected:
   std::unique_ptr<PropagationEngine> engine;
 
   void SetUp() override { engine = std::make_unique<PropagationEngine>(); }
 };
 
-RC_GTEST_FIXTURE_PROP(notEqualViewTest, simple, (Int a, Int b)) {
+RC_GTEST_FIXTURE_PROP(LessEqualViewConst, simple, (int a, int b)) {
   if (!engine->isOpen()) {
     engine->open();
   }
   const VarId varId = engine->makeIntVar(a, a, a);
-  const VarId violationId = engine->makeIntView<NotEqualView>(varId, b);
-  RC_ASSERT(engine->committedValue(violationId) == static_cast<Int>(a == b));
+  const VarId violationId = engine->makeIntView<LessEqualConst>(varId, b);
+  RC_ASSERT(engine->committedValue(violationId) == computeViolation(a, b));
 }
 
-RC_GTEST_FIXTURE_PROP(notEqualViewTest, singleton, (Int a, Int b)) {
+RC_GTEST_FIXTURE_PROP(LessEqualViewConst, singleton, (int a, int b)) {
   if (!engine->isOpen()) {
     engine->open();
   }
   const VarId varId = engine->makeIntVar(a, a, a);
-  const VarId violationId = engine->makeIntView<NotEqualView>(varId, b);
-  RC_ASSERT(engine->committedValue(violationId) == static_cast<Int>(a == b));
+  const VarId violationId = engine->makeIntView<LessEqualConst>(varId, b);
+  RC_ASSERT(engine->committedValue(violationId) == computeViolation(a, b));
   RC_ASSERT(engine->lowerBound(violationId) ==
             engine->committedValue(violationId));
   RC_ASSERT(engine->upperBound(violationId) ==
             engine->committedValue(violationId));
 }
 
-RC_GTEST_FIXTURE_PROP(notEqualViewTest, interval, (Int a)) {
+RC_GTEST_FIXTURE_PROP(LessEqualViewConst, interval, (int a, int b)) {
   const Int size = 5;
-  Int lb, ub;
-  if ((a > 0) && (size > std::numeric_limits<Int>::max() - a)) {
-    lb = std::numeric_limits<Int>::max() - 2 * size;
-    ub = std::numeric_limits<Int>::max();
-  } else if ((a < 0) && (size < std::numeric_limits<Int>::max() - a)) {
-    lb = std::numeric_limits<Int>::min();
-    ub = std::numeric_limits<Int>::min() + 2 * size;
-  } else {
-    lb = a - size;
-    ub = a + size;
-  }
-
-  const Int b = lb + size;
+  Int lb = Int(a) - size;
+  Int ub = Int(a) + size;
 
   engine->open();
   const VarId varId = engine->makeIntVar(ub, lb, ub);
-  const VarId violationId = engine->makeIntView<NotEqualView>(varId, b);
+  const VarId violationId = engine->makeIntView<LessEqualConst>(varId, b);
   engine->close();
 
   const Int violLb = engine->lowerBound(violationId);
@@ -74,7 +65,9 @@ RC_GTEST_FIXTURE_PROP(notEqualViewTest, interval, (Int a)) {
     engine->endProbe();
 
     const Int actual = engine->currentValue(violationId);
-    const Int expected = static_cast<Int>(val == b);
+    const Int expected = computeViolation(val, b);
+
+    EXPECT_EQ(val <= Int(b), expected == 0);
 
     RC_ASSERT(engine->lowerBound(violationId) == violLb);
     RC_ASSERT(engine->upperBound(violationId) == violUb);

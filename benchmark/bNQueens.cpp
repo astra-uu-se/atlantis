@@ -59,9 +59,8 @@ class Queens : public benchmark::Fixture {
     total_violation = engine->makeIntVar(0, 0, 3 * n);
 
     engine->makeInvariant<Linear>(
-        std::vector<Int>{1, 1, 1},
-        std::vector<VarId>{violation1, violation2, violation3},
-        total_violation);
+        total_violation, std::vector<Int>{1, 1, 1},
+        std::vector<VarId>{violation1, violation2, violation3});
 
     engine->close();
 

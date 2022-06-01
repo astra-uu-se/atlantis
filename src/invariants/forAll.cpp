@@ -1,9 +1,9 @@
 #include "invariants/forAll.hpp"
 
-ForAll::ForAll(std::vector<VarId> varArray, VarId y)
-    : Invariant(NULL_ID),
+ForAll::ForAll(VarId output, std::vector<VarId> varArray)
+    : Invariant(),
+      _output(output),
       _varArray(std::move(varArray)),
-      _y(y),
       _localPriority(_varArray.size()) {
   _modifiedVars.reserve(_varArray.size());
 }
@@ -13,7 +13,7 @@ void ForAll::registerVars(Engine& engine) {
   for (size_t i = 0; i < _varArray.size(); ++i) {
     engine.registerInvariantInput(_id, _varArray[i], i);
   }
-  registerDefinedVariable(engine, _y);
+  registerDefinedVariable(engine, _output);
 }
 
 void ForAll::updateBounds(Engine& engine, bool widenOnly) {
@@ -23,7 +23,7 @@ void ForAll::updateBounds(Engine& engine, bool widenOnly) {
     lb = std::max(lb, engine.lowerBound(input));
     ub = std::max(ub, engine.upperBound(input));
   }
-  engine.updateBounds(_y, std::max(Int(0), lb), ub, widenOnly);
+  engine.updateBounds(_output, std::max(Int(0), lb), ub, widenOnly);
 }
 
 void ForAll::recompute(Timestamp ts, Engine& engine) {
@@ -31,14 +31,14 @@ void ForAll::recompute(Timestamp ts, Engine& engine) {
     _localPriority.updatePriority(ts, i, engine.value(ts, _varArray[i]));
   }
   assert(_localPriority.minPriority(ts) >= 0);
-  updateValue(ts, engine, _y, _localPriority.maxPriority(ts));
+  updateValue(ts, engine, _output, _localPriority.maxPriority(ts));
 }
 
 void ForAll::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
   _localPriority.updatePriority(
       ts, id, std::max(Int(0), engine.value(ts, _varArray[id])));
   assert(_localPriority.minPriority(ts) >= 0);
-  updateValue(ts, engine, _y, _localPriority.maxPriority(ts));
+  updateValue(ts, engine, _output, _localPriority.maxPriority(ts));
 }
 
 VarId ForAll::nextInput(Timestamp ts, Engine&) {

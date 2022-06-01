@@ -527,13 +527,12 @@ class MockGlobalCardinalityConst : public GlobalCardinalityConst<IsClosed> {
     registered = true;
     GlobalCardinalityConst<IsClosed>::registerVars(engine);
   }
-  MockGlobalCardinalityConst(VarId violationId,
-                             std::vector<VarId>&& t_variables,
-                             std::vector<Int>&& cover,
-                             std::vector<Int>&& t_counts)
-      : GlobalCardinalityConst<IsClosed>(
-            violationId, std::vector<VarId>{t_variables},
-            std::vector<Int>{cover}, std::vector<Int>{t_counts}) {
+  explicit MockGlobalCardinalityConst(VarId violationId,
+                                      const std::vector<VarId>& variables,
+                                      const std::vector<Int>& cover,
+                                      const std::vector<Int>& counts)
+      : GlobalCardinalityConst<IsClosed>(violationId, variables, cover,
+                                         counts) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return GlobalCardinalityConst<IsClosed>::recompute(timestamp, engine);

@@ -2,10 +2,10 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "constraints/inDomain.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "utils/variant.hpp"
-#include "views/notEqualView.hpp"
+#include "views/inDomain.hpp"
+#include "views/notEqualConst.hpp"
 
 namespace invariantgraph {
 class SetInNode : public SoftConstraintNode {

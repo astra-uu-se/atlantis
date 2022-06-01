@@ -16,7 +16,7 @@ invariantgraph::Bool2IntNode::fromModelConstraint(
 void invariantgraph::Bool2IntNode::createDefinedVariables(Engine& engine) {
   if (definedVariables().front()->varId() == NULL_ID) {
     definedVariables().front()->setVarId(
-        engine.makeIntView<::Bool2IntView>(input()->varId()));
+        engine.makeIntView<Bool2IntView>(input()->varId()));
   }
 }
 
