@@ -6,7 +6,7 @@
 
 namespace search::neighbourhoods {
 
-class AllDifferentNeighbourhood : public Neighbourhood {
+class AllDifferentUniformNeighbourhood : public Neighbourhood {
  private:
   std::vector<search::SearchVariable> _variables;
   std::vector<Int> _domain;
@@ -17,17 +17,18 @@ class AllDifferentNeighbourhood : public Neighbourhood {
   size_t _freeVariables{0};
 
  public:
-  AllDifferentNeighbourhood(std::vector<search::SearchVariable> variables,
-                            std::vector<Int> domain, const Engine& engine);
+  AllDifferentUniformNeighbourhood(
+      std::vector<search::SearchVariable> variables, std::vector<Int> domain,
+      const Engine& engine);
 
-  ~AllDifferentNeighbourhood() override = default;
+  ~AllDifferentUniformNeighbourhood() override = default;
 
   void initialise(RandomProvider& random,
                   AssignmentModifier& modifications) override;
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  const std::vector<SearchVariable> & coveredVariables() const override {
+  const std::vector<SearchVariable>& coveredVariables() const override {
     return _variables;
   }
 

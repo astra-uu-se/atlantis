@@ -45,3 +45,6 @@ bool definesVariable(const fznparser::Constraint& constraint,
 bool hasCorrectSignature(
     const std::vector<std::pair<std::string_view, size_t>>& nameNumArgPairs,
     const fznparser::Constraint& constraint);
+
+std::vector<invariantgraph::VariableNode*> pruneAllDifferent(
+    std::vector<invariantgraph::VariableNode*> staticInputs);

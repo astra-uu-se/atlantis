@@ -1,7 +1,7 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
-#include "search/neighbourhoods/allDifferentNeighbourhood.hpp"
+#include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
 class AllDifferentImplicitNodeTest : public NodeTestBase {
  public:
@@ -59,6 +59,7 @@ TEST_F(AllDifferentImplicitNodeTest, application) {
   auto neighbourhood = node->takeNeighbourhood();
   EXPECT_FALSE(node->takeNeighbourhood());
 
-  EXPECT_TRUE(dynamic_cast<search::neighbourhoods::AllDifferentNeighbourhood*>(
-      neighbourhood.get()));
+  EXPECT_TRUE(
+      dynamic_cast<search::neighbourhoods::AllDifferentUniformNeighbourhood*>(
+          neighbourhood.get()));
 }

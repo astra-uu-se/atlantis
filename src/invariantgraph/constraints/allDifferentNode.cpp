@@ -10,43 +10,20 @@ invariantgraph::AllDifferentNode::fromModelConstraint(
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto variables =
-      mappedVariableVector(model, constraint.arguments[0], variableMap);
-
-  std::vector<Int> prunedValues;
-
-  for (size_t i = 0; i < variables.size(); ++i) {
-    for (const Int value : prunedValues) {
-      variables[i]->domain().removeValue(value);
-    }
-    if (variables[i]->domain().isConstant()) {
-      const Int value =
-          prunedValues.emplace_back(variables[i]->domain().lowerBound());
-      for (size_t j = 0; j < i; j++) {
-        variables[j]->domain().removeValue(value);
-      }
-    }
-  }
-
-  std::vector<VariableNode*> prunedVariables;
-  for (auto* const variable : variables) {
-    if (!variable->domain().isConstant()) {
-      prunedVariables.emplace_back(variable);
-    }
-  }
+  auto variables = pruneAllDifferent(
+      mappedVariableVector(model, constraint.arguments[0], variableMap));
 
   if (constraint.arguments.size() >= 2) {
     if (std::holds_alternative<bool>(constraint.arguments[1])) {
       auto shouldHold = std::get<bool>(constraint.arguments[1]);
-      return std::make_unique<invariantgraph::AllDifferentNode>(prunedVariables,
+      return std::make_unique<invariantgraph::AllDifferentNode>(variables,
                                                                 shouldHold);
     } else {
       auto r = mappedVariable(constraint.arguments[1], variableMap);
-      return std::make_unique<invariantgraph::AllDifferentNode>(prunedVariables,
-                                                                r);
+      return std::make_unique<invariantgraph::AllDifferentNode>(variables, r);
     }
   }
-  return std::make_unique<AllDifferentNode>(prunedVariables, true);
+  return std::make_unique<AllDifferentNode>(variables, true);
 }
 
 void invariantgraph::AllDifferentNode::createDefinedVariables(Engine& engine) {
