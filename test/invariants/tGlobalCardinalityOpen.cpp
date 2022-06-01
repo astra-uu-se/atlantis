@@ -54,8 +54,8 @@ TEST_F(GlobalCardinalityOpenTest, UpdateBounds) {
                              engine->makeIntVar(0, 0, 2)};
 
   GlobalCardinalityOpen& invariant =
-      engine->makeInvariant<GlobalCardinalityOpen>(
-          inputs, std::vector<Int>{0, 2}, std::vector<VarId>{outputs});
+      engine->makeInvariant<GlobalCardinalityOpen>(outputs, inputs,
+                                                   std::vector<Int>{0, 2});
   engine->close();
   for (const VarId output : outputs) {
     EXPECT_EQ(engine->lowerBound(output), 0);
@@ -105,12 +105,11 @@ TEST_F(GlobalCardinalityOpenTest, Recompute) {
       outputs.emplace_back(engine->makeIntVar(0, 0, 0));
     }
 
-    GlobalCardinalityOpen& invariant =
-        engine->makeInvariant<GlobalCardinalityOpen>(
-            std::vector<VarId>{a, b, c}, cover, outputs);
-    engine->close();
-
     const std::vector<VarId> inputs{a, b, c};
+
+    GlobalCardinalityOpen& invariant =
+        engine->makeInvariant<GlobalCardinalityOpen>(outputs, inputs, cover);
+    engine->close();
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
       for (Int bVal = lb; bVal <= ub; ++bVal) {
@@ -156,7 +155,7 @@ TEST_F(GlobalCardinalityOpenTest, NotifyInputChanged) {
     }
 
     GlobalCardinalityOpen& invariant =
-        engine->makeInvariant<GlobalCardinalityOpen>(inputs, cover, outputs);
+        engine->makeInvariant<GlobalCardinalityOpen>(outputs, inputs, cover);
     engine->close();
 
     for (Int val = lb; val <= ub; ++val) {
@@ -203,7 +202,7 @@ TEST_F(GlobalCardinalityOpenTest, NextInput) {
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
   GlobalCardinalityOpen& invariant =
-      engine->makeInvariant<GlobalCardinalityOpen>(inputs, cover, outputs);
+      engine->makeInvariant<GlobalCardinalityOpen>(outputs, inputs, cover);
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -245,7 +244,7 @@ TEST_F(GlobalCardinalityOpenTest, NotifyCurrentInputChanged) {
   }
 
   GlobalCardinalityOpen& invariant =
-      engine->makeInvariant<GlobalCardinalityOpen>(inputs, cover, outputs);
+      engine->makeInvariant<GlobalCardinalityOpen>(outputs, inputs, cover);
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -298,7 +297,7 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
   std::shuffle(indices.begin(), indices.end(), rng);
 
   GlobalCardinalityOpen& invariant =
-      engine->makeInvariant<GlobalCardinalityOpen>(inputs, cover, outputs);
+      engine->makeInvariant<GlobalCardinalityOpen>(outputs, inputs, cover);
   engine->close();
 
   std::vector<Int> notifiedOutputValues(numOutputs, -1);
@@ -377,7 +376,7 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityOpenTest, RapidCheck,
 
   RC_ASSERT(outputs.size() == numOutputs);
 
-  engine->makeInvariant<GlobalCardinalityOpen>(inputs, cover, outputs);
+  engine->makeInvariant<GlobalCardinalityOpen>(outputs, inputs, cover);
 
   engine->close();
 
@@ -417,12 +416,12 @@ class MockGlobalCardinalityClosed : public GlobalCardinalityOpen {
     registered = true;
     GlobalCardinalityOpen::registerVars(engine);
   }
-  MockGlobalCardinalityClosed(std::vector<VarId>&& inputs,
-                              std::vector<Int>&& cover,
-                              std::vector<VarId>&& outputs)
-      : GlobalCardinalityOpen(std::vector<VarId>{inputs},
-                              std::vector<Int>{cover},
-                              std::vector<VarId>{outputs}) {
+  explicit MockGlobalCardinalityClosed(const std::vector<VarId>& outputs,
+                                       const std::vector<VarId>& inputs,
+                                       const std::vector<Int>& cover)
+      : GlobalCardinalityOpen(std::vector<VarId>{outputs},
+                              std::vector<VarId>{inputs},
+                              std::vector<Int>{cover}) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return GlobalCardinalityOpen::recompute(timestamp, engine);
@@ -473,9 +472,8 @@ TEST_F(GlobalCardinalityOpenTest, EngineIntegration) {
     }
 
     testNotifications<MockGlobalCardinalityClosed>(
-        &engine->makeInvariant<MockGlobalCardinalityClosed>(
-            std::vector<VarId>{inputs}, std::vector<Int>{cover},
-            std::vector<VarId>{outputs}),
+        &engine->makeInvariant<MockGlobalCardinalityClosed>(outputs, inputs,
+                                                            cover),
         propMode, markingMode, numInputs + 1, inputs.front(), 1,
         outputs.front());
   }

@@ -3,8 +3,8 @@
 #include "../parseHelper.hpp"
 #include "invariants/count.hpp"
 #include "invariants/countConst.hpp"
-#include "views/equalView.hpp"
-#include "views/notEqualView.hpp"
+#include "views/equalConst.hpp"
+#include "views/notEqualConst.hpp"
 
 std::unique_ptr<invariantgraph::CountEqNode>
 invariantgraph::CountEqNode::fromModelConstraint(
@@ -82,11 +82,11 @@ void invariantgraph::CountEqNode::createDefinedVariables(Engine& engine) {
     _intermediate = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
       setViolationVarId(
-          engine.makeIntView<EqualView>(_intermediate, _cParameter));
+          engine.makeIntView<EqualConst>(_intermediate, _cParameter));
     } else {
       assert(!isReified());
       setViolationVarId(
-          engine.makeIntView<NotEqualView>(_intermediate, _cParameter));
+          engine.makeIntView<NotEqualConst>(_intermediate, _cParameter));
     }
   }
 }
@@ -110,8 +110,8 @@ void invariantgraph::CountEqNode::registerWithEngine(Engine& engine) {
     assert(_cIsParameter == (_intermediate != NULL_ID));
     assert(_cIsParameter == (violationVarId() != NULL_ID));
     engine.makeInvariant<Count>(
-        yVarNode()->varId(), engineInputs,
-        _cIsParameter ? _intermediate : cVarNode()->varId());
+        _cIsParameter ? _intermediate : cVarNode()->varId(),
+        yVarNode()->varId(), engineInputs);
     return;
   }
   assert(_yIsParameter);
@@ -121,13 +121,13 @@ void invariantgraph::CountEqNode::registerWithEngine(Engine& engine) {
     assert(!isReified());
     assert(cVarNode() != nullptr);
     assert(cVarNode()->varId() != NULL_ID);
-    engine.makeInvariant<CountConst>(_yParameter, engineInputs,
-                                     cVarNode()->varId());
+    engine.makeInvariant<CountConst>(cVarNode()->varId(), _yParameter,
+                                     engineInputs);
     return;
   }
   assert(_cIsParameter);
   assert(violationVarId() != NULL_ID);
   assert(_intermediate != NULL_ID);
   assert(cVarNode() == nullptr);
-  engine.makeInvariant<CountConst>(_yParameter, engineInputs, _intermediate);
+  engine.makeInvariant<CountConst>(_intermediate, _yParameter, engineInputs);
 }

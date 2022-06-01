@@ -13,9 +13,9 @@ class Engine;
 
 class GlobalCardinalityClosed : public Constraint {
  private:
+  const std::vector<VarId> _outputs;
   const std::vector<VarId> _inputs;
   const std::vector<Int> _cover;
-  const std::vector<VarId> _outputs;
   std::vector<Int> _coverVarIndex;
   std::vector<CommittableInt> _localValues;
   std::vector<CommittableInt> _counts;
@@ -25,8 +25,8 @@ class GlobalCardinalityClosed : public Constraint {
   void updateOutput(Timestamp ts, Engine& engine, Int value);
 
  public:
-  GlobalCardinalityClosed(VarId violationId, std::vector<VarId> inputs,
-                          std::vector<Int> cover, std::vector<VarId> outputs);
+  GlobalCardinalityClosed(VarId violationId, std::vector<VarId> outputs,
+                          std::vector<VarId> inputs, std::vector<Int> cover);
 
   void registerVars(Engine&) override;
   void updateBounds(Engine&, bool widenOnly = false) override;

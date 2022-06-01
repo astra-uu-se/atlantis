@@ -9,7 +9,7 @@
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/exists.hpp"
 #include "invariants/linear.hpp"
-#include "views/notEqualView.hpp"
+#include "views/notEqualConst.hpp"
 
 namespace invariantgraph {
 class GlobalCardinalityLowUpNode : public SoftConstraintNode {

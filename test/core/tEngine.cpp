@@ -24,7 +24,7 @@ class MockInvariantSimple : public Invariant {
   bool isRegistered = false;
   bool boundsUpdated = false;
 
-  MockInvariantSimple() : Invariant() {}
+  explicit MockInvariantSimple() : Invariant() {}
 
   void registerVars(Engine&) override { isRegistered = true; }
   void updateBounds(Engine&, bool) override { boundsUpdated = true; }
