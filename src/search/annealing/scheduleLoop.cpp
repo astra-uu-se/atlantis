@@ -13,7 +13,7 @@ void search::ScheduleLoop::nextRound(
   _schedule->nextRound(statistics);
 
   if (_schedule->frozen()) {
-    if (_lastRoundStatistics && _lastRoundStatistics->bestCostOfThisRound == statistics.bestCostOfThisRound) {
+    if (_lastRoundStatistics && _lastRoundStatistics->bestCostOfThisRound <= statistics.bestCostOfThisRound) {
       _consecutiveFutileIterations++;
     } else {
       _consecutiveFutileIterations = 1;
