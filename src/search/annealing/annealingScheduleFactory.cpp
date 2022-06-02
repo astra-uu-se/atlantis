@@ -115,7 +115,7 @@ static std::unique_ptr<AnnealingSchedule> parseSchedule(
 
 std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
   if (!_scheduleDefinition) {
-    return AnnealerFacade::cooling(0.95, 0.001);
+    return AnnealerFacade::cooling(0.95, 4);
   }
 
   auto contents = readFileToString(*_scheduleDefinition);

@@ -16,7 +16,7 @@ void search::ScheduleLoop::nextRound(
     if (_lastRoundStatistics && _lastRoundStatistics->bestCostOfThisRound == statistics.bestCostOfThisRound) {
       _consecutiveFutileIterations++;
     } else {
-      _consecutiveFutileIterations = 0;
+      _consecutiveFutileIterations = 1;
     }
 
     _lastRoundStatistics.emplace(statistics);

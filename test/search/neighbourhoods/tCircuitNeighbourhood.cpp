@@ -81,7 +81,7 @@ TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
   assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
 
-  auto schedule = search::AnnealerFacade::cooling(0.99, 0.001);
+  auto schedule = search::AnnealerFacade::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
 
   for (auto i = 0; i < CONFIDENCE; i++) {

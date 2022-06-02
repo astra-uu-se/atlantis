@@ -29,9 +29,3 @@ std::unique_ptr<AnnealingSchedule> AnnealerFacade::loop(
   return std::make_unique<ScheduleLoop>(std::move(schedule),
                                         numberOfIterations);
 }
-
-std::unique_ptr<AnnealingSchedule> AnnealerFacade::loop(
-    std::unique_ptr<AnnealingSchedule> schedule, UInt numberOfIterations) {
-  return std::make_unique<ScheduleLoop>(std::move(schedule),
-                                        numberOfIterations);
-}

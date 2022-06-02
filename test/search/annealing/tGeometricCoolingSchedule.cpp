@@ -9,12 +9,12 @@ class GeometricCoolingScheduleTest : public testing::Test {
  protected:
   double cooling = 0.5;
   double initialTemp = 5.0;
-  double acceptedMoveRatio = 0.001;
+  UInt successiveFutileRoundsThreshold = 2;
 
   std::unique_ptr<AnnealingSchedule> schedule;
 
   void SetUp() override {
-    schedule = AnnealerFacade::cooling(cooling, acceptedMoveRatio);
+    schedule = AnnealerFacade::cooling(cooling, successiveFutileRoundsThreshold);
     schedule->start(initialTemp);
   }
 };
@@ -42,16 +42,15 @@ TEST_F(GeometricCoolingScheduleTest, temperature_decreases_geometrically) {
   EXPECT_EQ(schedule->temperature(), initialTemp * cooling * cooling);
 }
 
-TEST_F(GeometricCoolingScheduleTest, frozen_when_temperature_crosses_minimum_threshold) {
+TEST_F(GeometricCoolingScheduleTest, frozen_if_rounds_no_longer_improve) {
   EXPECT_FALSE(schedule->frozen());
 
   RoundStatistics stats{};
-  stats.attemptedMoves = 5000;
-  stats.improvingMoves = 100;
+  stats.bestCostOfThisRound = 5;
+  stats.bestCostOfPreviousRound = 5;
   schedule->nextRound(stats);
   EXPECT_FALSE(schedule->frozen());
 
-  stats.improvingMoves = 1;
   schedule->nextRound(stats);
   EXPECT_TRUE(schedule->frozen());
 }
@@ -60,8 +59,9 @@ TEST_F(GeometricCoolingScheduleTest, restarting_frozen_schedule_is_unfrozen) {
   EXPECT_FALSE(schedule->frozen());
 
   RoundStatistics stats{};
-  stats.attemptedMoves = 5000;
-  stats.improvingMoves = 1;
+  stats.bestCostOfThisRound = 5;
+  stats.bestCostOfPreviousRound = 5;
+  schedule->nextRound(stats);
   schedule->nextRound(stats);
   EXPECT_TRUE(schedule->frozen());
 
