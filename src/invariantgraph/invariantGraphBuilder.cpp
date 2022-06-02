@@ -262,6 +262,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION(BoolEqNode);
   NODE_REGISTRATION(BoolLeNode);
   NODE_REGISTRATION(BoolLtNode);
+  NODE_REGISTRATION(BoolNotNode);
   NODE_REGISTRATION(BoolXorNode);
   NODE_REGISTRATION(IntAbsNode);
   NODE_REGISTRATION(IntEqNode);
