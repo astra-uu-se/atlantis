@@ -14,7 +14,7 @@ void ElementVar::registerVars(Engine& engine) {
   assert(_id != NULL_ID);
   engine.registerInvariantInput(_id, _index, LocalId(0));
   for (const VarId input : _varArray) {
-    engine.registerInvariantInput(_id, input, LocalId(0));
+    engine.registerInvariantInput(_id, input, LocalId(0), true);
   }
   registerDefinedVariable(engine, _output);
 }
@@ -39,7 +39,9 @@ void ElementVar::updateBounds(Engine& engine, bool widenOnly) {
 void ElementVar::recompute(Timestamp ts, Engine& engine) {
   assert(safeIndex(engine.value(ts, _index)) < _varArray.size());
   updateValue(ts, engine, _output,
-              engine.value(ts, _varArray[safeIndex(engine.value(ts, _index))]));
+              engine.value(
+                  ts, _dynamicInputVar.set(
+                          ts, _varArray[safeIndex(engine.value(ts, _index))])));
 }
 
 void ElementVar::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
@@ -65,4 +67,5 @@ void ElementVar::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
 
 void ElementVar::commit(Timestamp ts, Engine& engine) {
   Invariant::commit(ts, engine);
+  _dynamicInputVar.commitIf(ts);
 }

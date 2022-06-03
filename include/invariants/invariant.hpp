@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "core/types.hpp"
+#include "variables/committable.hpp"
 #include "variables/committableInt.hpp"
 class Engine;  // Forward declaration
 
@@ -53,22 +54,19 @@ class Invariant {
     }
   };
 
-  bool _isPostponed;
-  InvariantId _id{NULL_ID};
+  NotificationQueue _modifiedVars{};
+  std::vector<VarId> _definedVars{};
   // State used for returning next input. Null state is -1 by default
   CommittableInt _state;
+  Committable<VarId> _dynamicInputVar;
+  VarId _primaryDefinedVar{NULL_ID};
+  size_t _level{0};
+  InvariantId _id{NULL_ID};
+  bool _isPostponed{false};
 
-  NotificationQueue _modifiedVars;
-
-  VarId _primaryDefinedVar;
-  std::vector<VarId> _definedVars;
-
-  explicit Invariant() : Invariant(-1) {}
-  explicit Invariant(Int nullState)
-      : _isPostponed(false),
-        _state(NULL_TIMESTAMP, nullState),
-        _modifiedVars(),
-        _primaryDefinedVar() {}
+  explicit Invariant(Int nullState = -1)
+      : _state(NULL_TIMESTAMP, nullState),
+        _dynamicInputVar(NULL_TIMESTAMP, NULL_ID) {}
 
   /**
    * Register to the engine that variable is defined by the invariant.
@@ -104,7 +102,19 @@ class Invariant {
   /**
    * The total number of notifiable variables.
    */
-  size_t notifiableVarsSize() const { return _modifiedVars.size(); }
+  [[nodiscard]] size_t notifiableVarsSize() const {
+    return _modifiedVars.size();
+  }
+
+  /**
+   * @brief The level of the invariant in the invariant graph
+   */
+  [[nodiscard]] size_t level() const noexcept { return _level; }
+  void setLevel(size_t newLevel) noexcept { _level = newLevel; }
+
+  [[nodiscard]] VarId dynamicInputVar(Timestamp ts) const noexcept {
+    return _dynamicInputVar.get(ts);
+  }
 
   [[nodiscard]] inline InvariantId id() const noexcept { return _id; }
   void setId(Id id) { _id = id; }

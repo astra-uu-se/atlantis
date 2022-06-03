@@ -16,7 +16,7 @@ class PropagationEngine : public Engine {
   PropagationMode _propagationMode;
 
  protected:
-  size_t _numVariables;
+  size_t _numVariables{0};
 
   PropagationGraph _propGraph;
   OutputToInputExplorer _outputToInputExplorer;
@@ -32,7 +32,7 @@ class PropagationEngine : public Engine {
 
   void clearPropagationQueue();
 
-  template <bool DoCommit>
+  template <bool DoCommit, bool HasDynamicCycles>
   void propagate();
 
   void outputToInputPropagate();
@@ -94,7 +94,8 @@ class PropagationEngine : public Engine {
   [[nodiscard]] const std::unordered_set<VarIdBase>& modifiedSearchVariables()
       const;
   [[nodiscard]] const std::vector<VarIdBase>& evaluationVariables() const;
-  [[nodiscard]] const std::vector<VarIdBase>& inputVariables(InvariantId) const;
+  [[nodiscard]] const std::vector<std::pair<VarIdBase, bool>>& inputVariables(
+      InvariantId) const;
 
   /**
    * returns the next input at the current timestamp.
@@ -124,7 +125,7 @@ class PropagationEngine : public Engine {
    * @param localId the id of the variable in the invariant
    */
   void registerInvariantInput(InvariantId invariantId, VarId inputId,
-                              LocalId localId) final;
+                              LocalId localId, bool isDynamic = false) final;
 
   void registerVar(VarId) final;
   void registerInvariant(InvariantId) final;
@@ -237,8 +238,8 @@ inline const std::vector<VarIdBase>& PropagationEngine::evaluationVariables()
   return _propGraph.evaluationVariables();
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::inputVariables(
-    InvariantId invariantId) const {
+inline const std::vector<std::pair<VarIdBase, bool>>&
+PropagationEngine::inputVariables(InvariantId invariantId) const {
   return _propGraph.inputVariables(invariantId);
 }
 

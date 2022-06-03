@@ -8,8 +8,8 @@ IfThenElse::IfThenElse(VarId output, VarId b, VarId x, VarId y)
 void IfThenElse::registerVars(Engine& engine) {
   assert(!_id.equals(NULL_ID));
   engine.registerInvariantInput(_id, _b, 0);
-  engine.registerInvariantInput(_id, _xy[0], 0);
-  engine.registerInvariantInput(_id, _xy[1], 0);
+  engine.registerInvariantInput(_id, _xy[0], 0, true);
+  engine.registerInvariantInput(_id, _xy[1], 0, true);
   registerDefinedVariable(engine, _output);
 }
 
@@ -21,8 +21,11 @@ void IfThenElse::updateBounds(Engine& engine, bool widenOnly) {
 }
 
 void IfThenElse::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _output,
-              engine.value(ts, _xy[1 - (engine.value(ts, _b) == 0)]));
+  updateValue(
+      ts, engine, _output,
+      engine.value(
+          ts, _dynamicInputVar.set(
+                  ts, _xy[static_cast<size_t>(engine.value(ts, _b) != 0)])));
 }
 
 void IfThenElse::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
@@ -46,4 +49,5 @@ void IfThenElse::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
 
 void IfThenElse::commit(Timestamp ts, Engine& engine) {
   Invariant::commit(ts, engine);
+  _dynamicInputVar.commitIf(ts);
 }
