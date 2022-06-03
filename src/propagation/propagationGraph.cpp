@@ -103,42 +103,42 @@ void PropagationGraph::close(Timestamp ts) {
 }
 
 bool PropagationGraph::containsStaticCycle(std::vector<bool>& visited,
-                                           std::vector<bool>& inPenumbra,
+                                           std::vector<bool>& inFrontier,
                                            VarIdBase varId) {
   // Mark current output variable
   assert(varId < visited.size());
-  assert(varId < inPenumbra.size());
-  if (inPenumbra[varId]) {
+  assert(varId < inFrontier.size());
+  if (inFrontier[varId]) {
     return true;
   }
   visited[varId] = true;
-  inPenumbra[varId] = true;
+  inFrontier[varId] = true;
   // get the defining invariant:
   const InvariantId defInv = definingInvariant(varId);
   if (defInv != NULL_ID) {
     for (const auto& [inputId, isDynamicInput] : inputVariables(defInv)) {
       if (!isDynamicInput &&
-          containsStaticCycle(visited, inPenumbra, inputId)) {
+          containsStaticCycle(visited, inFrontier, inputId)) {
         return true;
       }
     }
   }
-  inPenumbra[varId] = false;
+  inFrontier[varId] = false;
   return false;
 }
 
 bool PropagationGraph::containsStaticCycle() {
   std::vector<bool> visited(numVariables() + 1, false);
-  std::vector<bool> inPenumbra(numVariables() + 1, false);
+  std::vector<bool> inFrontier(numVariables() + 1, false);
   // Check for static cycles starting from the output variables:
   for (size_t varId = 1u; varId <= numVariables(); ++varId) {
 #ifndef NDEBUG
     for (size_t i = 1u; i <= numVariables(); ++i) {
-      assert(!inPenumbra[i]);
+      assert(!inFrontier[i]);
     }
 #endif
     if (listeningInvariants(varId).size() == 0) {
-      if (containsStaticCycle(visited, inPenumbra, VarIdBase(varId))) {
+      if (containsStaticCycle(visited, inFrontier, VarIdBase(varId))) {
         return true;
       }
     }
@@ -222,7 +222,7 @@ void PropagationGraph::partitionIntoLayers() {
 }
 
 bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
-                                            std::vector<bool>& inPenumbra,
+                                            std::vector<bool>& inFrontier,
                                             VarIdBase varId) {
   assert(_variableLayerIndex.has_idx(varId));
   // Mark current invariant as visited:
@@ -232,13 +232,13 @@ bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
   assert(index < _variablesInLayer.at(layer).size());
   assert(varId == _variablesInLayer.at(layer).at(index));
   assert(index < visited.size());
-  assert(index < inPenumbra.size());
+  assert(index < inFrontier.size());
 
   // mark as visited:
   visited[index] = true;
 
-  if (inPenumbra[index]) {
-    // the variable is already in the penumbra: there is a cycle.
+  if (inFrontier[index]) {
+    // the variable is already in the frontier: there is a cycle.
     return true;
   }
   const InvariantId defInv = definingInvariant(varId);
@@ -246,34 +246,34 @@ bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
     // we are at a search variable.
     return false;
   }
-  // mark as in penumbra:
-  inPenumbra[index] = true;
+  // mark as in frontier:
+  inFrontier[index] = true;
   // get the defining invariant:
   for (const auto& [inputId, _] : inputVariables(defInv)) {
     assert(_variableLayerIndex[inputId].layer <= layer);
     if (_variableLayerIndex[inputId].layer == layer) {
-      if (containsDynamicCycle(visited, inPenumbra, inputId)) {
+      if (containsDynamicCycle(visited, inFrontier, inputId)) {
         return true;
       }
     }
   }
-  inPenumbra[index] = false;
+  inFrontier[index] = false;
   return false;
 }
 
 bool PropagationGraph::containsDynamicCycle(size_t layer) {
   assert(layer < numLayers());
   std::vector<bool> visited(_variablesInLayer[layer].size(), false);
-  std::vector<bool> inPenumbra(_variablesInLayer[layer].size(), false);
+  std::vector<bool> inFrontier(_variablesInLayer[layer].size(), false);
   // Check for static cycles starting from the output variables:
   for (size_t i = 0; i < _variablesInLayer[layer].size(); ++i) {
 #ifndef NDEBUG
-    for (size_t varId = 0; varId <= _variablesInLayer[layer].size(); ++varId) {
-      assert(!inPenumbra[varId]);
+    for (size_t varId = 0; varId < _variablesInLayer[layer].size(); ++varId) {
+      assert(!inFrontier[varId]);
     }
 #endif
     if (!visited[i]) {
-      if (containsDynamicCycle(visited, inPenumbra,
+      if (containsDynamicCycle(visited, inFrontier,
                                _variablesInLayer[layer][i])) {
         return true;
       }

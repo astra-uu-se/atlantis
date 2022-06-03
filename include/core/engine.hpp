@@ -79,7 +79,7 @@ class Engine {
     return id.idType == VarIdType::var ? id : _store.intViewSourceId(id);
   }
 
-  virtual void enqueueComputedVar(Timestamp, VarId) = 0;
+  virtual void enqueueComputedVar(VarId) = 0;
 
   [[nodiscard]] Int value(Timestamp, VarId);
   [[nodiscard]] inline Int currentValue(VarId id) {

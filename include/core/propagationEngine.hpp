@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deque>
+#include <iostream>
 #include <queue>
 #include <set>
 
@@ -22,6 +23,8 @@ class PropagationEngine : public Engine {
   OutputToInputExplorer _outputToInputExplorer;
 
   IdMap<VarIdBase, bool> _isEnqueued;
+  std::vector<std::vector<VarIdBase>> _layerQueue{};
+  std::vector<size_t> _layerQueueIndex{};
 
   std::unordered_set<VarIdBase> _modifiedSearchVariables;
 
@@ -60,10 +63,10 @@ class PropagationEngine : public Engine {
 
   //--------------------- Notificaion ---------------------
   /***
-   * @param ts the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  void enqueueComputedVar(Timestamp, VarId) final;
+  void enqueueComputedVar(VarId) final;
+  void enqueueComputedVar(VarId, size_t layer);
 
   [[nodiscard]] inline PropagationMode propagationMode() const {
     return _propagationMode;
@@ -203,7 +206,7 @@ inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
       _modifiedSearchVariables.erase(id);
     }
   }
-  enqueueComputedVar(ts, id);
+  enqueueComputedVar(id);
 }
 
 inline void PropagationEngine::setPropagationMode(PropagationMode propMode) {

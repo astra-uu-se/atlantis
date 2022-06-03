@@ -1,7 +1,5 @@
 #include "core/propagationEngine.hpp"
 
-#include <iostream>
-
 PropagationEngine::PropagationEngine()
     : _propagationMode(PropagationMode::INPUT_TO_OUTPUT),
       _propGraph(_store, ESTIMATED_NUM_OBJECTS),
@@ -34,6 +32,18 @@ void PropagationEngine::close() {
   } catch (std::exception const& e) {
     std::cout << "foo";
   }
+
+  if (_propGraph.numLayers() > 1) {
+    _layerQueueIndex.assign(_propGraph.numLayers(), 0);
+    _layerQueue.resize(_propGraph.numLayers(), std::vector<VarIdBase>{});
+    for (size_t layer = 1; layer < _propGraph.numLayers(); ++layer) {
+      _layerQueue[layer].resize(_propGraph.numVariablesInLayer(layer));
+    }
+  } else {
+    _layerQueueIndex.clear();
+    _layerQueue.clear();
+  }
+
   if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
     if (outputToInputMarkingMode() == OutputToInputMarkingMode::NONE) {
       _outputToInputExplorer.close<OutputToInputMarkingMode::NONE>();
@@ -73,11 +83,25 @@ void PropagationEngine::close() {
 }
 
 //---------------------Registration---------------------
-void PropagationEngine::enqueueComputedVar(Timestamp, VarId id) {
+void PropagationEngine::enqueueComputedVar(VarId id) {
   if (_isEnqueued.get(id)) {
     return;
   }
   _propGraph.enqueuePropagationQueue(id);
+  _isEnqueued.set(id, true);
+}
+
+void PropagationEngine::enqueueComputedVar(VarId id, size_t curLayer) {
+  if (_isEnqueued.get(id)) {
+    return;
+  }
+  const size_t varLayer = _propGraph.layer(id);
+  if (varLayer == curLayer) {
+    _propGraph.enqueuePropagationQueue(id);
+  } else {
+    _layerQueue[varLayer][_layerQueueIndex[varLayer]] = id;
+    ++_layerQueueIndex[varLayer];
+  }
   _isEnqueued.set(id, true);
 }
 
@@ -284,35 +308,8 @@ template void PropagationEngine::propagate<true, true>();
 // Propagates at the current internal timestamp of the engine.
 template <bool DoCommit, bool SingleLayer>
 void PropagationEngine::propagate() {
-  const size_t numLayers([&] {
-    if constexpr (SingleLayer) {
-      return 1;
-    } else {
-      return _propGraph.numLayers();
-    }
-  }());
-
-  auto _layerQueues([&] {
-    if constexpr (SingleLayer) {
-      return std::vector<std::vector<VarIdBase>>{};
-    } else {
-      return std::vector<std::vector<VarIdBase>>(_propGraph.numLayers(),
-                                                 std::vector<VarIdBase>{});
-    }
-  }());
-
-  for (size_t curLayer = 0; curLayer < numLayers; ++curLayer) {
-    if constexpr (!SingleLayer) {
-      if (curLayer != 0 && _layerQueues[curLayer].empty()) {
-        continue;
-      }
-      if (_propGraph.hasDynamicCycle(curLayer)) {
-        _propGraph.topologicallyOrder(currentTimestamp(), curLayer);
-      }
-      for (const VarIdBase queuedVar : _layerQueues[curLayer]) {
-        enqueueComputedVar(_currentTimestamp, queuedVar);
-      }
-    }
+  size_t curLayer = 0;
+  while (true) {
     for (VarId queuedVar = dequeueComputedVar(_currentTimestamp);
          queuedVar.id != NULL_ID;
          queuedVar = dequeueComputedVar(_currentTimestamp)) {
@@ -331,7 +328,9 @@ void PropagationEngine::propagate() {
           defInv.compute(_currentTimestamp, *this);
           for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
             if (hasChanged(_currentTimestamp, inputId)) {
-              enqueueComputedVar(_currentTimestamp, inputId);
+              assert(!_isEnqueued.get(inputId));
+              _propGraph.enqueuePropagationQueue(inputId);
+              _isEnqueued.set(inputId, true);
             }
           }
           if constexpr (DoCommit) {
@@ -354,19 +353,43 @@ void PropagationEngine::propagate() {
         assert(invariant.primaryDefinedVar().idType == VarIdType::var);
         if constexpr (SingleLayer) {
           assert(_propGraph.layer(invariant.primaryDefinedVar()) == 0);
-          enqueueComputedVar(_currentTimestamp, invariant.primaryDefinedVar());
+          enqueueComputedVar(invariant.primaryDefinedVar());
         } else {
-          const VarIdBase primVar = invariant.primaryDefinedVar();
-          if (!_isEnqueued.get(primVar)) {
-            if (_propGraph.layer(primVar) == curLayer) {
-              enqueueComputedVar(_currentTimestamp, primVar);
-            } else {
-              assert(_propGraph.layer(primVar) > curLayer);
-              _layerQueues[_propGraph.layer(primVar)].push_back(primVar);
-            }
-          }
+          enqueueComputedVar(invariant.primaryDefinedVar(), curLayer);
         }
       }
+    }
+    // Done with propagating current layer.
+    if constexpr (SingleLayer) {
+      return;
+    } else {
+      // Find next layer that has queued variables:
+      while (++curLayer < _propGraph.numLayers() &&
+             _layerQueueIndex[curLayer] == 0) {
+        ;
+      }
+
+      if (curLayer >= _propGraph.numLayers()) {
+        // All layers have been propogated
+#ifndef NDEBUG
+        for (size_t l = 0; l < _propGraph.numLayers(); ++l) {
+          assert(_layerQueueIndex[l] == 0);
+        }
+#endif
+        return;
+      }
+      // There are variables to enqueue for the new layer:
+      assert(_layerQueueIndex[curLayer] > 0);
+      // Topologically order the new layer if necessary:
+      if (_propGraph.hasDynamicCycle(curLayer)) {
+        _propGraph.topologicallyOrder(_currentTimestamp, curLayer);
+      }
+      // Add all queued variables to the propagation queue:
+      while (_layerQueueIndex[curLayer] > 0) {
+        _propGraph.enqueuePropagationQueue(
+            _layerQueue[curLayer][--_layerQueueIndex[curLayer]]);
+      }
+      assert(_layerQueueIndex[curLayer] == 0);
     }
   }
 }

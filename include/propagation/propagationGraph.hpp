@@ -66,12 +66,12 @@ class PropagationGraph {
   size_t _numVariables{0};
 
   bool containsStaticCycle(std::vector<bool>& visited,
-                           std::vector<bool>& inPenumbra, VarIdBase varId);
+                           std::vector<bool>& inFrontier, VarIdBase varId);
   bool containsStaticCycle();
   void partitionIntoLayers(std::vector<bool>& visited, VarIdBase varId);
   void partitionIntoLayers();
   bool containsDynamicCycle(std::vector<bool>& visited,
-                            std::vector<bool>& inPenumbra, VarIdBase varId);
+                            std::vector<bool>& inFrontier, VarIdBase varId);
   bool containsDynamicCycle(size_t level);
   void mergeLayersWithoutDynamicCycles();
   void computeLayerOffsets();
@@ -218,6 +218,11 @@ class PropagationGraph {
 
   [[nodiscard]] inline size_t numLayers() const noexcept {
     return _variablesInLayer.size();
+  }
+
+  [[nodiscard]] inline size_t numVariablesInLayer(size_t layer) const noexcept {
+    assert(layer < numLayers());
+    return _variablesInLayer[layer].size();
   }
 
   [[nodiscard]] inline size_t layer(VarIdBase id) {
