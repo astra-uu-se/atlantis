@@ -1,8 +1,15 @@
 #include "invariantgraph/constraints/allDifferentNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "constraints/allDifferent.hpp"
-#include "views/notEqualConst.hpp"
+
+invariantgraph::AllDifferentNode::AllDifferentNode(
+    std::vector<VariableNode*> variables, VariableNode* r)
+    : SoftConstraintNode(variables, r) {}
+
+invariantgraph::AllDifferentNode::AllDifferentNode(
+    std::vector<VariableNode*> variables, bool shouldHold)
+    : SoftConstraintNode(shouldHold ? pruneAllDifferent(variables) : variables,
+                         shouldHold) {}
 
 std::unique_ptr<invariantgraph::AllDifferentNode>
 invariantgraph::AllDifferentNode::fromModelConstraint(

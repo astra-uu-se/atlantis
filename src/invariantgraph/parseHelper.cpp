@@ -252,7 +252,7 @@ bool hasCorrectSignature(
 }
 
 std::vector<invariantgraph::VariableNode *> pruneAllDifferent(
-    std::vector<invariantgraph::VariableNode *> staticInputs) {
+    const std::vector<invariantgraph::VariableNode *> &staticInputs) {
   std::vector<Int> prunedValues;
 
   for (size_t i = 0; i < staticInputs.size(); ++i) {

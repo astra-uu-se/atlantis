@@ -47,4 +47,4 @@ bool hasCorrectSignature(
     const fznparser::Constraint& constraint);
 
 std::vector<invariantgraph::VariableNode*> pruneAllDifferent(
-    std::vector<invariantgraph::VariableNode*> staticInputs);
+    const std::vector<invariantgraph::VariableNode*>& staticInputs);
