@@ -112,6 +112,14 @@ class VariableDefiningNode {
     input->unmarkAsInputFor(this, true);
   }
 
+  void removeDefinedVariable(VariableNode* input) {
+    // remove all occurrences:
+    _definedVariables.erase(
+        std::remove(_definedVariables.begin(), _definedVariables.end(), input),
+        _definedVariables.end());
+    input->unmarkAsDefinedBy(this);
+  }
+
   void replaceStaticInput(VariableNode* oldInput, VariableNode* newInput) {
     // Replace all occurrences:
     for (size_t i = 0; i < _staticInputs.size(); ++i) {
