@@ -3,13 +3,8 @@
 #include <filesystem>
 #include <iostream>
 
-#include "core/propagationEngine.hpp"
-#include "fznparser/modelFactory.hpp"
-#include "invariantgraph/invariantGraphBuilder.hpp"
-#include "misc/logging.hpp"
-#include "search/assignment.hpp"
-#include "search/neighbourhoods/randomNeighbourhood.hpp"
-#include "search/searchProcedure.hpp"
+#include "logging/logger.hpp"
+#include "solver.hpp"
 
 /**
  * @brief Read a duration in milliseconds from an input stream. Used to allow
@@ -20,16 +15,10 @@
  * @return std::istream& The modified input stream.
  */
 std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
-
-static ObjectiveDirection getObjectiveDirection(
-    const fznparser::Objective& variant);
+logging::Level getLogLevel(cxxopts::ParseResult& result);
 
 int main(int argc, char* argv[]) {
   try {
-    // TODO: How do we want to control this? The log messages don't appear
-    // in release builds, so do we still want a command line flag to set this?
-    setLogLevel(debug);
-
     cxxopts::Options options(
         argv[0], "Constraint-based local search backend for MiniZinc.");
 
@@ -40,8 +29,8 @@ int main(int argc, char* argv[]) {
     // clang-format off
     options.add_options()
       (
-        "no-timeout",
-        "Run the solver without a timeout. This means the solver needs to be stopped with a signal, which means no statistics will be printed."
+        "a,intermediate-solutions",
+        "Ignored, but present because used in the MiniZinc challenge."
       )
       (
         "t,time-limit",
@@ -52,6 +41,16 @@ int main(int argc, char* argv[]) {
         "r,seed",
         "The seed to use for the random number generator. If this is negative, the current system time is chosen as the seed.",
         cxxopts::value<long>()->default_value("-1")
+      )
+      (
+        "annealing-schedule",
+        "A file path to the annealing schedule definition.",
+        cxxopts::value<std::filesystem::path>()
+      )
+      (
+        "log-level",
+        "Configures the log level. 0 = ERROR, 1 = WARNING, 2 = INFO, 3 = DEBUG, 4 = TRACE. If not specified, the WARN level is used.",
+        cxxopts::value<uint8_t>()
       )
       ("help", "Print help");
 
@@ -72,79 +71,66 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
+    logging::Logger logger(stderr, getLogLevel(result));
+
     auto& modelFilePath = result["modelFile"].as<std::filesystem::path>();
-    auto model = fznparser::ModelFactory::create(modelFilePath);
-
-    // Not used for output, but this allows running end-to-end tests with the
-    // CLI on the structure identification.
-    invariantgraph::InvariantGraphBuilder invariantGraphBuilder;
-    auto graph = invariantGraphBuilder.build(model);
-
-    PropagationEngine engine;
-    auto applicationResult = graph.apply(engine);
-    auto neighbourhood = applicationResult.neighbourhood();
-    neighbourhood.printNeighbourhood(std::cerr);
-
-    search::Objective searchObjective(engine, model);
-    engine.open();
-    auto violation = searchObjective.registerWithEngine(
-        applicationResult.totalViolations(),
-        applicationResult.objectiveVariable());
-    engine.close();
-
-    search::Assignment assignment(engine, violation,
-                                  applicationResult.objectiveVariable(),
-                                  getObjectiveDirection(model.objective()));
 
     auto givenSeed = result["seed"].as<long>();
     std::uint_fast32_t seed = givenSeed >= 0
                                   ? static_cast<std::uint_fast32_t>(givenSeed)
                                   : std::time(nullptr);
-    logDebug("Using seed " << seed);
-    search::RandomProvider random(seed);
 
-    search::SearchProcedure search(random, assignment, neighbourhood,
-                                   searchObjective);
-
-    search::SearchController::VariableMap flippedMap;
-    for (const auto& [varId, fznVar] : applicationResult.variableMap())
-      flippedMap.emplace(fznVar, varId);
-
-    search::SearchController searchController = [&] {
-      if (result.count("no-timeout") == 0) {
-        return search::SearchController(
-            model, flippedMap,
-            result["time-limit"].as<std::chrono::milliseconds>());
+    std::optional<std::chrono::milliseconds> timeout = [&] {
+      if (result.count("time-limit") == 1) {
+        return std::optional<std::chrono::milliseconds>{
+            result["time-limit"].as<std::chrono::milliseconds>()};
       } else {
-        logInfo("Running without timeout.");
-        return search::SearchController(model, flippedMap);
+        return std::optional<std::chrono::milliseconds>{};
       }
     }();
 
-    search::Annealer annealer(assignment, random);
-    auto statistics = search.run(searchController, annealer);
+    std::optional<std::filesystem::path> annealingScheduleDefinition = [&] {
+      if (result.count("annealing-schedule") == 1) {
+        return std::optional<std::filesystem::path>{
+            result["annealing-schedule"].as<std::filesystem::path>()};
+      } else {
+        return std::optional<std::filesystem::path>{};
+      }
+    }();
+
+    search::AnnealingScheduleFactory scheduleFactory(
+        annealingScheduleDefinition);
+    Solver solver(modelFilePath, scheduleFactory, seed, timeout);
+    auto statistics = solver.solve(logger);
 
     // Don't log to std::cout, since that would interfere with MiniZinc.
     statistics.display(std::cerr);
   } catch (const cxxopts::OptionException& e) {
-    std::cerr << "error: " << e.what() << std::endl;
+    std::cerr << "Error: " << e.what() << std::endl;
   } catch (const std::invalid_argument& e) {
-    std::cerr << "error: " << e.what() << std::endl;
+    std::cerr << "Error: " << e.what() << std::endl;
   }
 }
 
-static ObjectiveDirection getObjectiveDirection(
-    const fznparser::Objective& objective) {
-  return std::visit<ObjectiveDirection>(
-      overloaded{
-          [](const fznparser::Satisfy&) { return ObjectiveDirection::NONE; },
-          [](const fznparser::Minimise&) {
-            return ObjectiveDirection::MINIMISE;
-          },
-          [](const fznparser::Maximise&) {
-            return ObjectiveDirection::MAXIMISE;
-          }},
-      objective);
+logging::Level getLogLevel(cxxopts::ParseResult& result) {
+  if (result.count("log-level") != 1) {
+    return logging::Level::WARN;
+  }
+
+  switch (result["log-level"].as<uint8_t>()) {
+    case 0:
+      return logging::Level::ERR;
+    case 1:
+      return logging::Level::WARN;
+    case 2:
+      return logging::Level::INFO;
+    case 3:
+      return logging::Level::DEBUG;
+    case 4:
+      return logging::Level::TRACE;
+    default:
+      throw cxxopts::OptionException("The log level should be 0, 1, 2 or 3.");
+  }
 }
 
 std::istream& operator>>(std::istream& is,

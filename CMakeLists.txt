@@ -59,20 +59,28 @@ FetchContent_Declare(
         GIT_TAG v3.0.0
 )
 
-FetchContent_MakeAvailable(cxxopts fznparser)
+FetchContent_Declare(
+        fmt
+        GIT_REPOSITORY https://github.com/fmtlib/fmt
+        GIT_TAG 8.1.1
+)
 
+FetchContent_MakeAvailable(cxxopts fznparser fmt)
 
 # includes (hpp/h) files are in ./include
 target_include_directories(${PROJECT_LIB}
         PRIVATE
         ${COMMON_INCLUDES}
+        ${PROJECT_SOURCE_DIR}/ext
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
-target_link_libraries(${PROJECT_LIB} PUBLIC fznparser::fznparser)
+
+
+target_link_libraries(${PROJECT_LIB} PUBLIC fznparser::fznparser PRIVATE fmt::fmt)
 
 # Link the src library with the project
-target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts fmt::fmt)
 
 if (CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 else ()
@@ -143,6 +151,7 @@ if (BUILD_TESTS)
             Threads::Threads
             -lm
             ${PROJECT_LIB}
+            fmt::fmt
     )
 
     # This is so you can do 'make test' to see all your tests run, instead of

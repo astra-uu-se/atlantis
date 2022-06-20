@@ -4,6 +4,7 @@
 #include <random>
 
 #include "neighbourhood.hpp"
+#include "logging/logger.hpp"
 #include "search/randomProvider.hpp"
 
 namespace search::neighbourhoods {
@@ -29,7 +30,7 @@ class NeighbourhoodCombinator : public Neighbourhood {
     return _variables;
   }
 
-  void printNeighbourhood(std::ostream&);
+  void printNeighbourhood(logging::Logger&);
 
  private:
   Neighbourhood& selectNeighbourhood(RandomProvider& random);
