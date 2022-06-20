@@ -42,7 +42,8 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
       stack.pop_back();
       _searchVariableAncestors[id].emplace(searchVariable);
 
-      for (InvariantId invariantId : _engine.listeningInvariants(IdBase(id))) {
+      for (const InvariantId invariantId :
+           _engine.listeningInvariants(IdBase(id))) {
         for (const VarIdBase outputVar :
              _engine.variablesDefinedBy(invariantId)) {
           if (!varVisited[outputVar]) {
@@ -70,7 +71,7 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
     while (!stack.empty()) {
       const IdBase id = stack.back();
       stack.pop_back();
-      for (InvariantId invariantId : _engine.listeningInvariants(id)) {
+      for (const InvariantId invariantId : _engine.listeningInvariants(id)) {
         for (const VarIdBase outputVar :
              _engine.variablesDefinedBy(invariantId)) {
           if (!_onPropagationPath.get(outputVar)) {

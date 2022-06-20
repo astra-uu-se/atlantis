@@ -62,6 +62,14 @@ class FailedToInitialise : public std::runtime_error {
   }
 };
 
+class TopologicalOrderError : public std::runtime_error {
+ public:
+  explicit TopologicalOrderError()
+      : std::runtime_error(
+            "Could not topologically order the invariant graph due to one or "
+            "more dynamic cycles.") {}
+};
+
 // We do not extend std::runtime_error to keep runtime overhead at a minimum.
 class DynamicCycleException : public std::exception {
  public:

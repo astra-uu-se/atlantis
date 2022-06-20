@@ -30,6 +30,11 @@ class PropagationQueue {
     _priorityNodes[id] = std::make_unique<ListNode>(id, priority);
   }
 
+  void updatePriority(VarIdBase id, size_t newPriority) {
+    assert(_priorityNodes.has_idx(id));
+    _priorityNodes[id]->priority = newPriority;
+  }
+
   bool empty() { return head == nullptr; }
   void push(VarIdBase id) {
     ListNode* toInsert = _priorityNodes[id].get();
