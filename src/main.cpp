@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
       )
       (
         "log-level",
-        "Configures the log level. 1 = INFO, 2 = DEBUG, 3 = TRACE. If not specified, the WARN level is used.",
+        "Configures the log level. 0 = ERROR, 1 = WARNING, 2 = INFO, 3 = DEBUG, 4 = TRACE. If not specified, the WARN level is used.",
         cxxopts::value<uint8_t>()
       )
       ("help", "Print help");
@@ -98,7 +98,8 @@ int main(int argc, char* argv[]) {
       }
     }();
 
-    search::AnnealingScheduleFactory scheduleFactory(annealingScheduleDefinition);
+    search::AnnealingScheduleFactory scheduleFactory(
+        annealingScheduleDefinition);
     Solver solver(modelFilePath, scheduleFactory, seed, timeout);
     auto statistics = solver.solve(logger);
 
@@ -117,14 +118,18 @@ logging::Level getLogLevel(cxxopts::ParseResult& result) {
   }
 
   switch (result["log-level"].as<uint8_t>()) {
+    case 0:
+      return logging::Level::ERR;
     case 1:
-      return logging::Level::INFO;
+      return logging::Level::WARN;
     case 2:
-      return logging::Level::DEBUG;
+      return logging::Level::INFO;
     case 3:
+      return logging::Level::DEBUG;
+    case 4:
       return logging::Level::TRACE;
     default:
-      throw cxxopts::OptionException("The log level should be 1, 2 or 3.");
+      throw cxxopts::OptionException("The log level should be 0, 1, 2 or 3.");
   }
 }
 

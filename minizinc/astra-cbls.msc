@@ -7,6 +7,6 @@
   "stdFlag": ["-a"]
   "extraFlags": [
     ["--annealing-schedule", "Path to the annealing schedule definition file to use.", "string"],
-    ["--log-level", "Configures the log level. 1 = INFO, 2 = DEBUG, 3 = TRACE. If not specified, the WARN level is used.", "opt:1:2:3"]
+    ["--log-level", "Configures the log level. 0 = ERROR, 1 = WARNING, 2 = INFO, 3 = DEBUG, 4 = TRACE. If not specified, the WARNING level is used.", "opt:0:1:2:3:4"]
   ]
 }
