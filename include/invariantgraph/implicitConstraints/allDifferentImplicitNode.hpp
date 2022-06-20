@@ -1,8 +1,11 @@
 #pragma once
 
 #include <fznparser/model.hpp>
+#include <numeric>
 
 #include "invariantgraph/implicitConstraintNode.hpp"
+#include "search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
+#include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
 namespace invariantgraph {
 

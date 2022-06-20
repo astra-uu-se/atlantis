@@ -250,3 +250,29 @@ bool hasCorrectSignature(
   }
   return false;
 }
+
+std::vector<invariantgraph::VariableNode *> pruneAllDifferent(
+    const std::vector<invariantgraph::VariableNode *> &staticInputs) {
+  std::vector<Int> prunedValues;
+
+  for (size_t i = 0; i < staticInputs.size(); ++i) {
+    for (const Int value : prunedValues) {
+      staticInputs[i]->domain().removeValue(value);
+    }
+    if (staticInputs[i]->domain().isConstant()) {
+      const Int value =
+          prunedValues.emplace_back(staticInputs[i]->domain().lowerBound());
+      for (size_t j = 0; j < i; j++) {
+        staticInputs[j]->domain().removeValue(value);
+      }
+    }
+  }
+
+  std::vector<invariantgraph::VariableNode *> prunedVariables;
+  for (auto *const variable : staticInputs) {
+    if (!variable->domain().isConstant()) {
+      prunedVariables.emplace_back(variable);
+    }
+  }
+  return prunedVariables;
+}

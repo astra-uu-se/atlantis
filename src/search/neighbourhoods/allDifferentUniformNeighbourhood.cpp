@@ -1,10 +1,11 @@
-#include "search/neighbourhoods/allDifferentNeighbourhood.hpp"
+#include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
 #include <algorithm>
 
-search::neighbourhoods::AllDifferentNeighbourhood::AllDifferentNeighbourhood(
-    std::vector<search::SearchVariable> variables, std::vector<Int> domain,
-    const Engine& engine)
+search::neighbourhoods::AllDifferentUniformNeighbourhood::
+    AllDifferentUniformNeighbourhood(
+        std::vector<search::SearchVariable> variables, std::vector<Int> domain,
+        const Engine& engine)
     : _variables(std::move(variables)),
       _domain(std::move(domain)),
       _engine(engine),
@@ -21,7 +22,7 @@ search::neighbourhoods::AllDifferentNeighbourhood::AllDifferentNeighbourhood(
   }
 }
 
-void search::neighbourhoods::AllDifferentNeighbourhood::initialise(
+void search::neighbourhoods::AllDifferentUniformNeighbourhood::initialise(
     RandomProvider& random, AssignmentModifier& modifications) {
   _freeVariables = _domain.size();
 
@@ -36,7 +37,7 @@ void search::neighbourhoods::AllDifferentNeighbourhood::initialise(
   }
 }
 
-bool search::neighbourhoods::AllDifferentNeighbourhood::randomMove(
+bool search::neighbourhoods::AllDifferentUniformNeighbourhood::randomMove(
     RandomProvider& random, Assignment& assignment, Annealer& annealer) {
   if (_freeVariables == 0) {
     return swapValues(random, assignment, annealer);
@@ -45,7 +46,7 @@ bool search::neighbourhoods::AllDifferentNeighbourhood::randomMove(
   return assignValue(random, assignment, annealer);
 }
 
-bool search::neighbourhoods::AllDifferentNeighbourhood::swapValues(
+bool search::neighbourhoods::AllDifferentUniformNeighbourhood::swapValues(
     search::RandomProvider& random, search::Assignment& assignment,
     search::Annealer& annealer) {
   size_t i = random.intInRange(0, static_cast<Int>(_variables.size()) - 1);
@@ -63,7 +64,7 @@ bool search::neighbourhoods::AllDifferentNeighbourhood::swapValues(
                      annealer);
 }
 
-bool search::neighbourhoods::AllDifferentNeighbourhood::assignValue(
+bool search::neighbourhoods::AllDifferentUniformNeighbourhood::assignValue(
     search::RandomProvider& random, search::Assignment& assignment,
     search::Annealer& annealer) {
   auto var = random.element(_variables).engineId();
