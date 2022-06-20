@@ -3,7 +3,9 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "constraints/allDifferent.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
+#include "views/notEqualConst.hpp"
 
 namespace invariantgraph {
 class AllDifferentNode : public SoftConstraintNode {
@@ -12,12 +14,10 @@ class AllDifferentNode : public SoftConstraintNode {
 
  public:
   explicit AllDifferentNode(std::vector<VariableNode*> variables,
-                            VariableNode* r)
-      : SoftConstraintNode(variables, r) {}
+                            VariableNode* r);
 
   explicit AllDifferentNode(std::vector<VariableNode*> variables,
-                            bool shouldHold)
-      : SoftConstraintNode(variables, shouldHold) {}
+                            bool shouldHold);
 
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {

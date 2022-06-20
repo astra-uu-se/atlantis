@@ -12,6 +12,7 @@ namespace search {
 class RandomProvider {
  private:
   std::mt19937 _gen;
+  std::default_random_engine _randomEngine;
 
  public:
   explicit RandomProvider(std::uint_fast32_t seed) : _gen(std::mt19937(seed)) {}
@@ -58,10 +59,13 @@ class RandomProvider {
     ;
   }
 
-  void seed(std::int_fast32_t seed) {
-    _gen.seed(seed);
+  template <typename T>
+  void shuffle(std::vector<T>& v) {
+    std::shuffle(v.begin(), v.end(), _randomEngine);
   }
-  
+
+  void seed(std::int_fast32_t seed) { _gen.seed(seed); }
+
   template <typename Value, typename Distribution>
   Value fromDistribution(Distribution d) {
     return d(_gen);

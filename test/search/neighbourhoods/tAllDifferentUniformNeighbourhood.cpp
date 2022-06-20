@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "search/neighbourhoods/allDifferentNeighbourhood.hpp"
+#include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
-class AllDifferentNeighbourhoodTest : public ::testing::Test {
+class AllDifferentUniformNeighbourhoodTest : public ::testing::Test {
  public:
   PropagationEngine engine;
   search::Assignment assignment{engine, NULL_ID, NULL_ID,
@@ -22,8 +22,8 @@ class AllDifferentNeighbourhoodTest : public ::testing::Test {
   }
 };
 
-TEST_F(AllDifferentNeighbourhoodTest, all_values_are_initialised) {
-  search::neighbourhoods::AllDifferentNeighbourhood neighbourhood(
+TEST_F(AllDifferentUniformNeighbourhoodTest, all_values_are_initialised) {
+  search::neighbourhoods::AllDifferentUniformNeighbourhood neighbourhood(
       variables, domain, engine);
 
   assignment.assign(
