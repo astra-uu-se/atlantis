@@ -24,7 +24,17 @@ invariantgraph::AllDifferentImplicitNode::fromModelConstraint(
 invariantgraph::AllDifferentImplicitNode::AllDifferentImplicitNode(
     std::vector<VariableNode*> variables)
     : ImplicitConstraintNode(std::move(variables)) {
+#ifndef NDEBUG
   assert(definedVariables().size() > 1);
+}
+
+bool invariantgraph::AllDifferentImplicitNode::prune() {
+  std::vector<VariableNode*> singletonStaticInputs =
+      pruneAllDifferent(staticInputs());
+  for (auto* const singleton : singletonStaticInputs) {
+    removeStaticInput(singleton);
+  }
+  return !singletonStaticInputs.empty();
 }
 
 search::neighbourhoods::Neighbourhood*

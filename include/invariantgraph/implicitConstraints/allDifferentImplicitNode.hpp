@@ -25,6 +25,8 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
+  bool prune() override;
+
  protected:
   search::neighbourhoods::Neighbourhood* createNeighbourhood(
       Engine& engine, std::vector<search::SearchVariable> variables) override;

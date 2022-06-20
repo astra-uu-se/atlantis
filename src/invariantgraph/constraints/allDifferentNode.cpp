@@ -48,6 +48,18 @@ void invariantgraph::AllDifferentNode::createDefinedVariables(Engine& engine) {
   }
 }
 
+bool invariantgraph::AllDifferentNode::prune() {
+  if (isReified() || !shouldHold()) {
+    return false;
+  }
+  std::vector<VariableNode*> singletonStaticInputs =
+      pruneAllDifferent(staticInputs());
+  for (auto* const singleton : singletonStaticInputs) {
+    removeStaticInput(singleton);
+  }
+  return !singletonStaticInputs.empty();
+}
+
 void invariantgraph::AllDifferentNode::registerWithEngine(Engine& engine) {
   if (staticInputs().empty()) {
     return;

@@ -7,10 +7,13 @@
 namespace invariantgraph {
 
 class ArrayVarBoolElementNode : public VariableDefiningNode {
+ private:
+  const Int _offset;
+
  public:
   ArrayVarBoolElementNode(VariableNode* b, std::vector<VariableNode*> as,
-                          VariableNode* output)
-      : VariableDefiningNode({output}, {b}, {as}) {
+                          VariableNode* output, Int offset)
+      : VariableDefiningNode({output}, {b}, as), _offset(offset) {
 #ifndef NDEBUG
     assert(staticInputs().front()->isIntVar());
     for (auto* const dynamicInput : dynamicInputs()) {
@@ -23,7 +26,8 @@ class ArrayVarBoolElementNode : public VariableDefiningNode {
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string_view, size_t>>{
-        {"array_var_bool_element", 3}};
+        {"array_var_bool_element", 3},
+        {"array_var_bool_element_nonshifted", 3}};
   }
 
   static std::unique_ptr<ArrayVarBoolElementNode> fromModelConstraint(

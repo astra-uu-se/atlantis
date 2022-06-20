@@ -222,6 +222,7 @@ TEST_F(AllDifferentNodeTest, pruneParameters) {
 
   auto locNode = invariantgraph::AllDifferentNode::fromModelConstraint(
       mdl, cnstr, nodeFactory);
+  EXPECT_TRUE(locNode->prune());
   EXPECT_EQ(locNode->staticInputs().size(), 3);
   for (auto* const var : locNode->staticInputs()) {
     EXPECT_EQ(var->domain().lowerBound(), 2);

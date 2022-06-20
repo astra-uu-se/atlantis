@@ -29,6 +29,8 @@ class AllDifferentNode : public SoftConstraintNode {
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
+  bool prune();
+
   void createDefinedVariables(Engine& engine) override;
 
   void registerWithEngine(Engine& engine) override;
