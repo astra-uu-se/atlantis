@@ -8,8 +8,7 @@ invariantgraph::AllDifferentNode::AllDifferentNode(
 
 invariantgraph::AllDifferentNode::AllDifferentNode(
     std::vector<VariableNode*> variables, bool shouldHold)
-    : SoftConstraintNode(shouldHold ? pruneAllDifferent(variables) : variables,
-                         shouldHold) {}
+    : SoftConstraintNode(variables, shouldHold) {}
 
 std::unique_ptr<invariantgraph::AllDifferentNode>
 invariantgraph::AllDifferentNode::fromModelConstraint(
@@ -17,8 +16,8 @@ invariantgraph::AllDifferentNode::fromModelConstraint(
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto variables = pruneAllDifferent(
-      mappedVariableVector(model, constraint.arguments[0], variableMap));
+  auto variables =
+      mappedVariableVector(model, constraint.arguments[0], variableMap);
 
   if (constraint.arguments.size() >= 2) {
     if (std::holds_alternative<bool>(constraint.arguments[1])) {
@@ -46,6 +45,18 @@ void invariantgraph::AllDifferentNode::createDefinedVariables(Engine& engine) {
       setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 0));
     }
   }
+}
+
+bool invariantgraph::AllDifferentNode::prune() {
+  if (isReified() || !shouldHold()) {
+    return false;
+  }
+  std::vector<VariableNode*> singletonStaticInputs =
+      pruneAllDifferent(staticInputs());
+  for (auto* const singleton : singletonStaticInputs) {
+    removeStaticInput(singleton);
+  }
+  return !singletonStaticInputs.empty();
 }
 
 void invariantgraph::AllDifferentNode::registerWithEngine(Engine& engine) {

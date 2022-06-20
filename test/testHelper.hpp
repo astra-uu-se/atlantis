@@ -40,6 +40,23 @@ std::vector<std::vector<T>> subsets(std::vector<T>& origin) {
   return res;
 }
 
+template <class T, class U>
+std::vector<std::pair<T, U>> cartesianProduct(const std::vector<T>& t,
+                                              const std::vector<U>& u) {
+  std::vector<std::pair<T, U>> prod(t.size() * u.size());
+  for (size_t i = 0; i < t.size(); ++i) {
+    for (size_t j = 0; j < u.size(); ++j) {
+      prod.at(i * u.size() + j) = std::pair<T, U>{t.at(i), u.at(j)};
+    }
+  }
+  return prod;
+}
+
+template <class T>
+std::vector<std::pair<T, T>> cartesianProduct(const std::vector<T>& t) {
+  return cartesianProduct(t, t);
+}
+
 class InvariantTest : public ::testing::Test {
  protected:
   std::unique_ptr<PropagationEngine> engine;

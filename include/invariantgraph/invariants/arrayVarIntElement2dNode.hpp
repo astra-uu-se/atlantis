@@ -3,18 +3,24 @@
 #include <fznparser/model.hpp>
 
 #include "invariantgraph/variableDefiningNode.hpp"
-#include "invariants/elementVar.hpp"
+#include "invariants/element2dVar.hpp"
 
 namespace invariantgraph {
 
-class ArrayVarIntElementNode : public VariableDefiningNode {
+class ArrayVarIntElement2dNode : public VariableDefiningNode {
  private:
-  const Int _offset;
+  const size_t _numRows;
+  const Int _offset1;
+  const Int _offset2;
 
  public:
-  ArrayVarIntElementNode(VariableNode* b, std::vector<VariableNode*> as,
-                         VariableNode* output, Int offset)
-      : VariableDefiningNode({output}, {b}, as), _offset(offset) {
+  ArrayVarIntElement2dNode(VariableNode* idx1, VariableNode* idx2,
+                           std::vector<VariableNode*> as, VariableNode* output,
+                           size_t numRows, Int offset1, Int offset2)
+      : VariableDefiningNode({output}, {idx1, idx2}, as),
+        _numRows(numRows),
+        _offset1(offset1),
+        _offset2(offset2) {
 #ifndef NDEBUG
     assert(staticInputs().front()->isIntVar());
     for (auto* const dynamicInput : dynamicInputs()) {
@@ -26,10 +32,10 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string_view, size_t>>{
-        {"array_var_int_element", 3}, {"array_var_int_element_nonshifted", 3}};
+        {"array_var_int_element2d_nonshifted_flat", 7}};
   }
 
-  static std::unique_ptr<ArrayVarIntElementNode> fromModelConstraint(
+  static std::unique_ptr<ArrayVarIntElement2dNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);
 
@@ -37,8 +43,12 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
 
   void registerWithEngine(Engine& engine) override;
 
-  [[nodiscard]] VariableNode* b() const noexcept {
+  [[nodiscard]] VariableNode* idx1() const noexcept {
     return staticInputs().front();
+  }
+
+  [[nodiscard]] VariableNode* idx2() const noexcept {
+    return staticInputs().back();
   }
 };
 

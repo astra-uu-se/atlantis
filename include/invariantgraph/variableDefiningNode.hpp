@@ -45,6 +45,8 @@ class VariableDefiningNode {
 
   [[nodiscard]] virtual bool isReified() const { return false; }
 
+  virtual bool prune() { return false; }
+
   /**
    * Creates as all the variables the node defines in @p engine.
    *
@@ -100,6 +102,22 @@ class VariableDefiningNode {
     }
     oldDefinedVar->unmarkAsDefinedBy(this);
     newDefinedVar->markDefinedBy(this);
+  }
+
+  void removeStaticInput(VariableNode* input) {
+    // remove all occurrences:
+    _staticInputs.erase(
+        std::remove(_staticInputs.begin(), _staticInputs.end(), input),
+        _staticInputs.end());
+    input->unmarkAsInputFor(this, true);
+  }
+
+  void removeDefinedVariable(VariableNode* input) {
+    // remove all occurrences:
+    _definedVariables.erase(
+        std::remove(_definedVariables.begin(), _definedVariables.end(), input),
+        _definedVariables.end());
+    input->unmarkAsDefinedBy(this);
   }
 
   void replaceStaticInput(VariableNode* oldInput, VariableNode* newInput) {

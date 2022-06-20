@@ -389,12 +389,12 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   auto elementNode1 = std::make_unique<invariantgraph::ArrayVarIntElementNode>(
       yNode.get(),
       std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()},
-      xNode.get());
+      xNode.get(), 1);
 
   auto elementNode2 = std::make_unique<invariantgraph::ArrayVarIntElementNode>(
       xNode.get(),
       std::vector<invariantgraph::VariableNode*>{cNode.get(), dNode.get()},
-      yNode.get());
+      yNode.get(), 1);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
       std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get(),
@@ -470,12 +470,12 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
   auto elementNode1 = std::make_unique<invariantgraph::ArrayVarIntElementNode>(
       aNode.get(),
       std::vector<invariantgraph::VariableNode*>{bNode.get(), yNode.get()},
-      xNode.get());
+      xNode.get(), 1);
 
   auto elementNode2 = std::make_unique<invariantgraph::ArrayVarIntElementNode>(
       cNode.get(),
       std::vector<invariantgraph::VariableNode*>{xNode.get(), dNode.get()},
-      yNode.get());
+      yNode.get(), 1);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
       std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get(),

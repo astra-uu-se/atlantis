@@ -252,27 +252,39 @@ bool hasCorrectSignature(
 }
 
 std::vector<invariantgraph::VariableNode *> pruneAllDifferent(
-    const std::vector<invariantgraph::VariableNode *> &staticInputs) {
-  std::vector<Int> prunedValues;
+    std::vector<invariantgraph::VariableNode *> staticInputs) {
+  // pruned[i] = <index, value> where index is the index of the static variable
+  // with singleton domain {value}.
+  std::vector<std::pair<size_t, Int>> pruned;
+  pruned.reserve(staticInputs.size());
 
   for (size_t i = 0; i < staticInputs.size(); ++i) {
-    for (const Int value : prunedValues) {
+    for (const auto &[index, value] : pruned) {
+      // remove all pruned values from the current variable:
+      assert(index < i);
       staticInputs[i]->domain().removeValue(value);
     }
-    if (staticInputs[i]->domain().isConstant()) {
-      const Int value =
-          prunedValues.emplace_back(staticInputs[i]->domain().lowerBound());
-      for (size_t j = 0; j < i; j++) {
+    if (!staticInputs[i]->domain().isConstant()) {
+      continue;
+    }
+    // the variable has a singleton domain
+    // Remove all occurrences of the value from previous static variables. Any
+    // variable that gets a singleton domain is added to the pruned list.
+    pruned.emplace_back(i, staticInputs[i]->domain().lowerBound());
+    for (size_t p = pruned.size() - 1; p < pruned.size(); ++p) {
+      const auto &[index, value] = pruned.at(p);
+      for (size_t j = 0; j < index; j++) {
+        const bool wasConstant = staticInputs[j]->domain().isConstant();
         staticInputs[j]->domain().removeValue(value);
+        if (!wasConstant && staticInputs[j]->domain().isConstant()) {
+          pruned.emplace_back(j, staticInputs[j]->domain().lowerBound());
+        }
       }
     }
   }
-
-  std::vector<invariantgraph::VariableNode *> prunedVariables;
-  for (auto *const variable : staticInputs) {
-    if (!variable->domain().isConstant()) {
-      prunedVariables.emplace_back(variable);
-    }
+  std::vector<invariantgraph::VariableNode *> prunedVars(pruned.size());
+  for (size_t i = 0; i < pruned.size(); ++i) {
+    prunedVars[i] = staticInputs[pruned[i].first];
   }
-  return prunedVariables;
+  return prunedVars;
 }

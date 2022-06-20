@@ -317,7 +317,11 @@ void invariantgraph::InvariantGraph::createVariables(Engine& engine) {
     }
   }
 
-  assert(visitedNodes.size() == _variableDefiningNodes.size());
+#ifndef NDEBUG
+  for (auto& node : _variableDefiningNodes) {
+    assert(visitedNodes.contains(node.get()));
+  }
+#endif
 }
 
 void invariantgraph::InvariantGraph::createInvariants(Engine& engine) {
