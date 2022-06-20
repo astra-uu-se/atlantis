@@ -7,7 +7,7 @@
 
 namespace search {
 
-class AnnealerFacade {
+class AnnealerContainer {
  public:
   template <typename... Schedules>
   static std::unique_ptr<AnnealingSchedule> sequence(Schedules&&... schedules) {

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "core/propagationEngine.hpp"
-#include "search/annealing/annealerFacade.hpp"
+#include "search/annealing/annealerContainer.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
 class CircuitNeighbourhoodTest : public ::testing::Test {
@@ -81,7 +81,7 @@ TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
   assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
 
-  auto schedule = search::AnnealerFacade::cooling(0.99, 4);
+  auto schedule = search::AnnealerContainer::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
 
   for (auto i = 0; i < CONFIDENCE; i++) {

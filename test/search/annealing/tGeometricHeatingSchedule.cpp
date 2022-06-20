@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "search/annealing/annealerFacade.hpp"
+#include "search/annealing/annealerContainer.hpp"
 #include "search/annealing/geometricHeatingSchedule.hpp"
 
 using namespace search;
@@ -14,7 +14,8 @@ class GeometricHeatingScheduleTest : public testing::Test {
   std::unique_ptr<AnnealingSchedule> schedule;
 
   void SetUp() override {
-    schedule = AnnealerFacade::heating(heatingRate, minimumUphillMoveAcceptanceRatio);
+    schedule = AnnealerContainer::heating(heatingRate,
+                                          minimumUphillMoveAcceptanceRatio);
     schedule->start(initialTemp);
   }
 };
@@ -39,7 +40,8 @@ TEST_F(GeometricHeatingScheduleTest, temperature_increases_geometrically) {
   EXPECT_EQ(schedule->temperature(), initialTemp * heatingRate * heatingRate);
 }
 
-TEST_F(GeometricHeatingScheduleTest, frozen_when_accepted_uphill_moves_surpasses_threshold) {
+TEST_F(GeometricHeatingScheduleTest,
+       frozen_when_accepted_uphill_moves_surpasses_threshold) {
   EXPECT_FALSE(schedule->frozen());
 
   RoundStatistics stats{};

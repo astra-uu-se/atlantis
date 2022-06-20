@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "search/annealing/annealerFacade.hpp"
+#include "search/annealing/annealerContainer.hpp"
 #include "search/annealing/geometricCoolingSchedule.hpp"
 
 using namespace search;
@@ -14,7 +14,8 @@ class GeometricCoolingScheduleTest : public testing::Test {
   std::unique_ptr<AnnealingSchedule> schedule;
 
   void SetUp() override {
-    schedule = AnnealerFacade::cooling(cooling, successiveFutileRoundsThreshold);
+    schedule =
+        AnnealerContainer::cooling(cooling, successiveFutileRoundsThreshold);
     schedule->start(initialTemp);
   }
 };

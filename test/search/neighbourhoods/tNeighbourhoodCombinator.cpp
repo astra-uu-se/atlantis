@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "search/annealing/annealerFacade.hpp"
+#include "search/annealing/annealerContainer.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
 
 class MockNeighbourhood : public search::neighbourhoods::Neighbourhood {
@@ -24,7 +24,8 @@ class NeighbourhoodCombinatorTest : public ::testing::Test {
   MockNeighbourhood* n1{nullptr};
   MockNeighbourhood* n2{nullptr};
 
-  std::vector<search::SearchVariable> variables{search::SearchVariable(NULL_ID, SearchDomain(0, 10))};
+  std::vector<search::SearchVariable> variables{
+      search::SearchVariable(NULL_ID, SearchDomain(0, 10))};
 
   void SetUp() override {
     auto unique_n1 = std::make_unique<MockNeighbourhood>();
@@ -40,7 +41,7 @@ class NeighbourhoodCombinatorTest : public ::testing::Test {
 
 TEST_F(NeighbourhoodCombinatorTest, initialise_calls_all_neighbourhoods) {
   EXPECT_CALL(*n1, coveredVariables())
-    .WillRepeatedly(::testing::ReturnRef(variables));
+      .WillRepeatedly(::testing::ReturnRef(variables));
   EXPECT_CALL(*n2, coveredVariables())
       .WillRepeatedly(::testing::ReturnRef(variables));
 
@@ -75,7 +76,7 @@ TEST_F(NeighbourhoodCombinatorTest,
   search::Assignment assignment(engine, NULL_ID, NULL_ID,
                                 ObjectiveDirection::NONE);
 
-  auto schedule = search::AnnealerFacade::cooling(0.95, 4);
+  auto schedule = search::AnnealerContainer::cooling(0.95, 4);
   search::Annealer annealer(assignment, random, *schedule);
   annealer.start();
 

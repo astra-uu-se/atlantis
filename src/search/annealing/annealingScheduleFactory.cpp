@@ -6,7 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-#include "search/annealing/annealerFacade.hpp"
+#include "search/annealing/annealerContainer.hpp"
 
 using namespace nlohmann;
 using namespace search;
@@ -28,8 +28,8 @@ static std::string readFileToString(const std::filesystem::path& path) {
   return stringStream.str();
 }
 
-static std::unique_ptr<AnnealingSchedule> parseSchedule(
-    const std::string& name, const json& value);
+static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
+                                                        const json& value);
 
 static std::unique_ptr<AnnealingSchedule> parseHeatingSchedule(
     const json& value) {
@@ -43,7 +43,7 @@ static std::unique_ptr<AnnealingSchedule> parseHeatingSchedule(
         "(double).");
   }
 
-  return AnnealerFacade::heating(
+  return AnnealerContainer::heating(
       value["heatingRate"].get<double>(),
       value["minimumUphillAcceptanceRatio"].get<double>());
 }
@@ -60,7 +60,7 @@ static std::unique_ptr<AnnealingSchedule> parseCoolingSchedule(
         "(uint).");
   }
 
-  return AnnealerFacade::cooling(
+  return AnnealerContainer::cooling(
       value["coolingRate"].get<double>(),
       value["successiveFutileRoundsThreshold"].get<UInt>());
 }
@@ -78,7 +78,7 @@ static std::unique_ptr<AnnealingSchedule> parseScheduleSequence(
     schedules.push_back(parseSchedule(memberIt.key(), memberIt.value()));
   }
 
-  return AnnealerFacade::sequence(std::move(schedules));
+  return AnnealerContainer::sequence(std::move(schedules));
 }
 
 static std::unique_ptr<AnnealingSchedule> parseScheduleLoop(const json& value) {
@@ -94,11 +94,11 @@ static std::unique_ptr<AnnealingSchedule> parseScheduleLoop(const json& value) {
   auto iterationCount = value["maximumConsecutiveFutileRounds"].get<UInt>();
   auto it = value["inner"].begin();
   auto schedule = parseSchedule(it.key(), it.value());
-  return AnnealerFacade::loop(std::move(schedule), iterationCount);
+  return AnnealerContainer::loop(std::move(schedule), iterationCount);
 }
 
-static std::unique_ptr<AnnealingSchedule> parseSchedule(
-    const std::string& name, const json& value) {
+static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
+                                                        const json& value) {
   if (name == "heating") {
     return parseHeatingSchedule(value);
   } else if (name == "cooling") {
@@ -115,7 +115,7 @@ static std::unique_ptr<AnnealingSchedule> parseSchedule(
 
 std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
   if (!_scheduleDefinition) {
-    return AnnealerFacade::cooling(0.95, 4);
+    return AnnealerContainer::cooling(0.95, 4);
   }
 
   auto contents = readFileToString(*_scheduleDefinition);

@@ -2,17 +2,19 @@
 
 #include <unordered_set>
 
+#include "search/annealing/annealerContainer.hpp"
 #include "search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
 
 class AlwaysAcceptingAnnealer : public search::Annealer {
  public:
   AlwaysAcceptingAnnealer(const search::Assignment& assignment,
-                          search::RandomProvider& random)
-      : Annealer(assignment, random) {}
+                          search::RandomProvider& random,
+                          search::AnnealingSchedule& schedule)
+      : Annealer(assignment, random, schedule) {}
   virtual ~AlwaysAcceptingAnnealer() = default;
 
  protected:
-  [[nodiscard]] bool accept(Int) const override { return true; }
+  [[nodiscard]] bool accept(Int) override { return true; }
 };
 
 class AllDifferentNonUniformNeighbourhoodTest : public ::testing::Test {
@@ -123,7 +125,8 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, Swap) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
       variables, domainLb, domainUb, *engine);
 
-  AlwaysAcceptingAnnealer annealer(*assignment, random);
+  auto schedule = search::AnnealerContainer::cooling(0.99, 4);
+  AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
 
   std::vector<std::unordered_set<Int>> setDomains(domains.size());
   for (size_t i = 0u; i < variables.size(); ++i) {
@@ -165,7 +168,8 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, AssignValue) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
       variables, domainLb, domainUb, *engine);
 
-  AlwaysAcceptingAnnealer annealer(*assignment, random);
+  auto schedule = search::AnnealerContainer::cooling(0.99, 4);
+  AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
 
   std::vector<std::unordered_set<Int>> setDomains(domains.size());
   for (size_t i = 0u; i < variables.size(); ++i) {
@@ -208,7 +212,8 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, RandomMove) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
       variables, domainLb, domainUb, *engine);
 
-  AlwaysAcceptingAnnealer annealer(*assignment, random);
+  auto schedule = search::AnnealerContainer::cooling(0.99, 4);
+  AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
 
   std::vector<std::unordered_set<Int>> setDomains(domains.size());
   for (size_t i = 0u; i < variables.size(); ++i) {

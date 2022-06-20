@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "search/annealing/annealerFacade.hpp"
+#include "search/annealing/annealerContainer.hpp"
 
 using namespace search;
 
@@ -27,8 +27,8 @@ class ScheduleLoopTest : public testing::Test {
     auto innerSchedule = std::make_unique<DummyAnnealingSchedule>();
     inner = innerSchedule.get();
 
-    schedule = AnnealerFacade::loop(std::move(innerSchedule),
-                                    maximumConsecutiveFutileIterations);
+    schedule = AnnealerContainer::loop(std::move(innerSchedule),
+                                       maximumConsecutiveFutileIterations);
     schedule->start(5.0);
   }
 };
@@ -36,8 +36,7 @@ class ScheduleLoopTest : public testing::Test {
 TEST_F(ScheduleLoopTest, nested_schedule_is_active) {
   auto temperature = 1.0;
 
-  EXPECT_CALL(*inner, temperature())
-      .WillOnce(testing::Return(temperature));
+  EXPECT_CALL(*inner, temperature()).WillOnce(testing::Return(temperature));
 
   EXPECT_EQ(schedule->temperature(), temperature);
   EXPECT_FALSE(schedule->frozen());
@@ -46,10 +45,9 @@ TEST_F(ScheduleLoopTest, nested_schedule_is_active) {
 TEST_F(ScheduleLoopTest,
        first_freeze_restarts_the_schedule_with_the_old_temperature) {
   auto restartTemp = 10.0;
-  EXPECT_CALL(*inner, frozen())
-      .WillOnce(testing::Return(true));
+  EXPECT_CALL(*inner, frozen()).WillOnce(testing::Return(true));
   EXPECT_CALL(*inner, temperature())
-    .WillRepeatedly(testing::Return(restartTemp));
+      .WillRepeatedly(testing::Return(restartTemp));
 
   schedule->nextRound({});
   EXPECT_FALSE(schedule->frozen());
