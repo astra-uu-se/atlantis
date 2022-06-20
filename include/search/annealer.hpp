@@ -2,6 +2,7 @@
 
 #include "move.hpp"
 #include "randomProvider.hpp"
+#include "search/annealing/annealingSchedule.hpp"
 
 namespace search {
 
@@ -15,44 +16,43 @@ class Annealer {
  private:
   const Assignment& _assignment;
   RandomProvider& _random;
-  int _nb;
-  float _temperature{2.0};
-  int _iterations{0};
-  float _cutoff{0.1};
-  int _sf{3};
-  float _mp{0.02};
-  float _chest{90};
-  float _factor{0.95};
-  int _freezeCounter{0};
-  int _ch{0};
-  float _nc{_cutoff * static_cast<float>(_nb) * _chest};
+  AnnealingSchedule& _schedule;
+
+  UInt _requiredMovesPerRound{0};
+  UInt _attemptedMovesPerRound{0};
+  RoundStatistics _statistics{};
+
+  const double INITIAL_TEMPERATURE = 1.0;
+
+  UInt _violationWeight{1};
+  UInt _objectiveWeight{1};
 
  public:
-  Annealer(const Assignment& assignment, RandomProvider& random)
-      : _assignment(assignment),
-        _random(random),
-        _nb{static_cast<int>(assignment.searchVariables().size())} {}
+  Annealer(const Assignment& assignment, RandomProvider& random,
+           AnnealingSchedule& schedule);
+
   virtual ~Annealer() = default;
 
-  [[nodiscard]] bool hasNextLocal() const { return _freezeCounter < 5; }
+  /**
+   * Start the annealing process.
+   */
+  void start();
 
-  void nextLocal() {
-    _temperature = _factor * _temperature;
-    if (1.0 * _ch / _temperature < _mp) {
-      ++_freezeCounter;
-    }
+  /**
+   * @return True if the annealer has finished.
+   */
+  [[nodiscard]] bool isFinished() const;
 
-    _ch = 0;
-    _iterations = 0;
-  }
+  /**
+   * Advance to the next round.
+   */
+  void nextRound();
 
-  bool exploreLocal() {
-    ++_iterations;
-
-    return static_cast<float>(_iterations) <=
-               static_cast<float>(_sf) * _chest * static_cast<float>(_nb) &&
-           static_cast<float>(_ch) < _nc;
-  }
+  /**
+   * @return True whilst more Monte-Carlo simulations need to be run for this
+   * round.
+   */
+  bool runMonteCarloSimulation();
 
   /**
    * Determine whether @p move should be committed to the assignment.
@@ -63,38 +63,21 @@ class Annealer {
    */
   template <unsigned int N>
   bool acceptMove(Move<N> move) {
-    // TODO: Weights for the objective and violation.
-    Int assignmentCost = _assignment.cost().evaluate(1, 1);
-    Int moveCost = move.probe(_assignment).evaluate(1, 1);
-    Int delta = moveCost - assignmentCost;
+    _attemptedMovesPerRound++;
 
-    if (delta < 0) {
-      applyImprove();
-      return true;
-    } else if (delta == 0) {
-      return true;
-    } else if (accept(-delta)) {
-      applyAnnealingAction();
-      return true;
-    }
-
-    return false;
+    Int moveCost = evaluate(move.probe(_assignment));
+    return accept(moveCost);
   }
 
- private:
-  void applyImprove() {
-    ++_ch;
-    if (_assignment.satisfiesConstraints()) {
-      _freezeCounter = 0;
-    }
+  [[nodiscard]] const RoundStatistics& currentRoundStatistics() {
+    return _statistics;
   }
-
-  void applyAnnealingAction() { ++_ch; }
 
  protected:
-  [[nodiscard]] virtual bool accept(Int val) const {
-    return std::exp(static_cast<float>(val) / _temperature) >=
-           _random.floatInRange(0.0f, 1.0f);
+  virtual bool accept(Int moveCost);
+
+  inline Int evaluate(Cost cost) {
+    return cost.evaluate(_violationWeight, _objectiveWeight);
   }
 };
 

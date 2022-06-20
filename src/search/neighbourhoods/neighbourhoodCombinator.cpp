@@ -37,11 +37,11 @@ bool search::neighbourhoods::NeighbourhoodCombinator::randomMove(
 }
 
 void search::neighbourhoods::NeighbourhoodCombinator::printNeighbourhood(
-    std::ostream& out) {
+    logging::Logger& logger) {
   for (const auto& neighbourhood : _neighbourhoods) {
-    out << "Neighbourhood " << demangle(typeid(*neighbourhood).name())
-        << " covers " << neighbourhood->coveredVariables().size()
-        << " variables." << std::endl;
+    logger.debug("Neighbourhood {} covers {} variables.",
+                 demangle(typeid(*neighbourhood).name()),
+                 neighbourhood->coveredVariables().size());
   }
 }
 

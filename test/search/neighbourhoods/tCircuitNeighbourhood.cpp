@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "core/propagationEngine.hpp"
+#include "search/annealing/annealerContainer.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
 class CircuitNeighbourhoodTest : public ::testing::Test {
@@ -44,12 +45,13 @@ class CircuitNeighbourhoodTest : public ::testing::Test {
 class AlwaysAcceptingAnnealer : public search::Annealer {
  public:
   AlwaysAcceptingAnnealer(const search::Assignment& assignment,
-                          search::RandomProvider& random)
-      : Annealer(assignment, random) {}
+                          search::RandomProvider& random,
+                          search::AnnealingSchedule& schedule)
+      : Annealer(assignment, random, schedule) {}
   virtual ~AlwaysAcceptingAnnealer() = default;
 
  protected:
-  [[nodiscard]] bool accept(Int) const override { return true; }
+  [[nodiscard]] bool accept(Int) override { return true; }
 };
 
 TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {
@@ -79,7 +81,8 @@ TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
   assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
 
-  AlwaysAcceptingAnnealer annealer(*assignment, random);
+  auto schedule = search::AnnealerContainer::cooling(0.99, 4);
+  AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
 
   for (auto i = 0; i < CONFIDENCE; i++) {
     random.seed(std::time(nullptr));
