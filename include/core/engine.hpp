@@ -79,7 +79,7 @@ class Engine {
     return id.idType == VarIdType::var ? id : _store.intViewSourceId(id);
   }
 
-  virtual void enqueueComputedVar(Timestamp, VarId) = 0;
+  virtual void enqueueComputedVar(VarId) = 0;
 
   [[nodiscard]] Int value(Timestamp, VarId);
   [[nodiscard]] inline Int currentValue(VarId id) {
@@ -179,7 +179,8 @@ class Engine {
    * @param localId the id of the input in the invariant
    */
   virtual void registerInvariantInput(InvariantId invariantId, VarId varId,
-                                      LocalId localId) = 0;
+                                      LocalId localId,
+                                      bool isDynamic = false) = 0;
 
   virtual void registerVar(VarId) = 0;
   virtual void registerInvariant(InvariantId) = 0;

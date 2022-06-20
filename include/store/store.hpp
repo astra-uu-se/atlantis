@@ -98,4 +98,9 @@ class Store {
   [[nodiscard]] inline size_t numInvariants() const {
     return _invariants.size();
   }
+
+  [[nodiscard]] inline VarId dynamicInputVar(Timestamp ts,
+                                             InvariantId invariantId) const {
+    return _invariants.at(invariantId)->dynamicInputVar(ts);
+  }
 };

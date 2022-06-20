@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deque>
+#include <iostream>
 #include <queue>
 #include <set>
 
@@ -16,12 +17,14 @@ class PropagationEngine : public Engine {
   PropagationMode _propagationMode;
 
  protected:
-  size_t _numVariables;
+  size_t _numVariables{0};
 
   PropagationGraph _propGraph;
   OutputToInputExplorer _outputToInputExplorer;
 
   IdMap<VarIdBase, bool> _isEnqueued;
+  std::vector<std::vector<VarIdBase>> _layerQueue{};
+  std::vector<size_t> _layerQueueIndex{};
 
   std::unordered_set<VarIdBase> _modifiedSearchVariables;
 
@@ -32,7 +35,7 @@ class PropagationEngine : public Engine {
 
   void clearPropagationQueue();
 
-  template <bool DoCommit>
+  template <bool DoCommit, bool HasDynamicCycles>
   void propagate();
 
   void outputToInputPropagate();
@@ -60,10 +63,10 @@ class PropagationEngine : public Engine {
 
   //--------------------- Notificaion ---------------------
   /***
-   * @param ts the timestamp when the changed happened
    * @param id the id of the changed variable
    */
-  void enqueueComputedVar(Timestamp, VarId) final;
+  void enqueueComputedVar(VarId) final;
+  void enqueueComputedVar(VarId, size_t layer);
 
   [[nodiscard]] inline PropagationMode propagationMode() const {
     return _propagationMode;
@@ -94,7 +97,8 @@ class PropagationEngine : public Engine {
   [[nodiscard]] const std::unordered_set<VarIdBase>& modifiedSearchVariables()
       const;
   [[nodiscard]] const std::vector<VarIdBase>& evaluationVariables() const;
-  [[nodiscard]] const std::vector<VarIdBase>& inputVariables(InvariantId) const;
+  [[nodiscard]] const std::vector<std::pair<VarIdBase, bool>>& inputVariables(
+      InvariantId) const;
 
   /**
    * returns the next input at the current timestamp.
@@ -124,7 +128,7 @@ class PropagationEngine : public Engine {
    * @param localId the id of the variable in the invariant
    */
   void registerInvariantInput(InvariantId invariantId, VarId inputId,
-                              LocalId localId) final;
+                              LocalId localId, bool isDynamic = false) final;
 
   void registerVar(VarId) final;
   void registerInvariant(InvariantId) final;
@@ -202,7 +206,7 @@ inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
       _modifiedSearchVariables.erase(id);
     }
   }
-  enqueueComputedVar(ts, id);
+  enqueueComputedVar(id);
 }
 
 inline void PropagationEngine::setPropagationMode(PropagationMode propMode) {
@@ -237,8 +241,8 @@ inline const std::vector<VarIdBase>& PropagationEngine::evaluationVariables()
   return _propGraph.evaluationVariables();
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::inputVariables(
-    InvariantId invariantId) const {
+inline const std::vector<std::pair<VarIdBase, bool>>&
+PropagationEngine::inputVariables(InvariantId invariantId) const {
   return _propGraph.inputVariables(invariantId);
 }
 
