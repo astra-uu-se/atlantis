@@ -22,16 +22,18 @@ void ElementVar::registerVars(Engine& engine) {
 void ElementVar::updateBounds(Engine& engine, bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
-  Int iLb = std::max<Int>(1, engine.lowerBound(_index));
-  Int iUb = std::min<Int>(static_cast<Int>(_varArray.size()) - 1,
+  Int iLb = std::max<Int>(_offset, engine.lowerBound(_index));
+  Int iUb = std::min<Int>(static_cast<Int>(_varArray.size()) - 1 + _offset,
                           engine.upperBound(_index));
   if (iLb > iUb) {
-    iLb = 1;
-    iUb = static_cast<Int>(_varArray.size()) - 1;
+    iLb = _offset;
+    iUb = static_cast<Int>(_varArray.size()) - 1 + _offset;
   }
   for (Int i = iLb; i <= iUb; ++i) {
-    lb = std::min(lb, engine.lowerBound(_varArray[i]));
-    ub = std::max(ub, engine.upperBound(_varArray[i]));
+    assert(_offset <= i);
+    assert(i - _offset < _varArray.size());
+    lb = std::min(lb, engine.lowerBound(_varArray[safeIndex(i)]));
+    ub = std::max(ub, engine.upperBound(_varArray[safeIndex(i)]));
   }
   engine.updateBounds(_output, lb, ub, widenOnly);
 }

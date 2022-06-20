@@ -8,8 +8,8 @@ invariantgraph::AllDifferentImplicitNode::fromModelConstraint(
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto variables = pruneAllDifferent(
-      mappedVariableVector(model, constraint.arguments[0], variableMap));
+  auto variables =
+      mappedVariableVector(model, constraint.arguments[0], variableMap);
 
   if (variables.size() < 2) {
     // Apparently it can happen that variables is an array of length 1. In that
@@ -27,6 +27,15 @@ invariantgraph::AllDifferentImplicitNode::AllDifferentImplicitNode(
   assert(definedVariables().size() > 1);
 }
 
+bool invariantgraph::AllDifferentImplicitNode::prune() {
+  std::vector<VariableNode*> singletonDefinedVariables =
+      pruneAllDifferent(definedVariables());
+  for (auto* const singleton : singletonDefinedVariables) {
+    removeDefinedVariable(singleton);
+  }
+  return !singletonDefinedVariables.empty();
+}
+
 search::neighbourhoods::Neighbourhood*
 invariantgraph::AllDifferentImplicitNode::createNeighbourhood(
     Engine& engine, std::vector<search::SearchVariable> variables) {
@@ -39,11 +48,9 @@ invariantgraph::AllDifferentImplicitNode::createNeighbourhood(
     }
   }
   if (hasSameDomain) {
-    std::vector<Int> domainValues(
-        std::move(definedVariables().front()->domain().values()));
-
     return new search::neighbourhoods::AllDifferentUniformNeighbourhood(
-        variables, std::move(domainValues), engine);
+        variables, std::move(definedVariables().front()->domain().values()),
+        engine);
   } else {
     Int domainLb = std::numeric_limits<Int>::max();
     Int domainUb = std::numeric_limits<Int>::min();

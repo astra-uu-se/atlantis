@@ -22,18 +22,15 @@ class ElementVarTest : public InvariantTest {
   const size_t numValues = 100;
   const Int inputLb = std::numeric_limits<Int>::min();
   const Int inputUb = std::numeric_limits<Int>::max();
-  Int indexLb = 1;
-  Int indexUb = numValues;
+  std::vector<Int> offsets{-10, 0, 10};
   std::vector<VarId> inputs;
   std::uniform_int_distribution<Int> inputDist;
-  std::uniform_int_distribution<Int> indexDist;
 
  public:
   void SetUp() override {
     InvariantTest::SetUp();
     inputs.resize(numValues, NULL_ID);
     inputDist = std::uniform_int_distribution<Int>(inputLb, inputUb);
-    indexDist = std::uniform_int_distribution<Int>(indexLb, indexUb);
   }
 
   void TearDown() override {
@@ -41,238 +38,281 @@ class ElementVarTest : public InvariantTest {
     inputs.clear();
   }
 
-  Int computeOutput(const Timestamp ts, const VarId index) {
-    return computeOutput(ts, engine->value(ts, index));
+  size_t zeroBasedIndex(const Int indexVal, const Int offset) {
+    EXPECT_LE(offset, indexVal);
+    EXPECT_LT(indexVal - offset, static_cast<Int>(numValues));
+    return indexVal - offset;
   }
 
-  Int computeOutput(const Timestamp ts, const Int indexVal) {
-    EXPECT_TRUE(1 <= indexVal);
-    EXPECT_TRUE(static_cast<size_t>(indexVal) <= inputs.size());
-    return engine->value(ts, inputs.at(indexVal - 1));
+  VarId getInput(const Int indexVal, const Int offset) {
+    return inputs.at(zeroBasedIndex(indexVal, offset));
+  }
+
+  Int computeOutput(const Timestamp ts, const VarId index, const Int offset) {
+    return computeOutput(ts, engine->value(ts, index), offset);
+  }
+
+  Int computeOutput(const Timestamp ts, const Int indexVal, const Int offset) {
+    return engine->value(ts, getInput(indexVal, offset));
   }
 };
 
 TEST_F(ElementVarTest, UpdateBounds) {
   EXPECT_TRUE(inputLb <= inputUb);
-  EXPECT_TRUE(indexLb <= indexUb);
+  for (const Int offset : offsets) {
+    const Int indexLb = offset;
+    const Int indexUb = numValues - 1 + offset;
+    EXPECT_TRUE(indexLb <= indexUb);
 
-  engine->open();
-  const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
-  }
-  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant =
-      engine->makeInvariant<ElementVar>(outputId, index, inputs);
-  engine->close();
+    std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
-  const Int ub = 100;
+    engine->open();
+    const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+    }
+    const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+    ElementVar& invariant =
+        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    engine->close();
 
-  for (Int minIndex = indexLb; minIndex <= ub; ++minIndex) {
-    for (Int maxIndex = ub; maxIndex >= minIndex; --maxIndex) {
-      engine->updateBounds(index, minIndex, maxIndex, false);
-      invariant.updateBounds(*engine);
-      Int minVal = std::numeric_limits<Int>::max();
-      Int maxVal = std::numeric_limits<Int>::min();
-      for (Int i = minIndex - 1; i < maxIndex; ++i) {
-        minVal = std::min(minVal, engine->lowerBound(inputs.at(i)));
-        maxVal = std::max(maxVal, engine->upperBound(inputs.at(i)));
+    for (Int minIndex = indexLb; minIndex <= indexUb; ++minIndex) {
+      for (Int maxIndex = indexUb; maxIndex >= minIndex; --maxIndex) {
+        engine->updateBounds(index, minIndex, maxIndex, false);
+        invariant.updateBounds(*engine);
+        Int minVal = std::numeric_limits<Int>::max();
+        Int maxVal = std::numeric_limits<Int>::min();
+        for (Int indexVal = minIndex; indexVal <= maxIndex; ++indexVal) {
+          minVal =
+              std::min(minVal, engine->lowerBound(getInput(indexVal, offset)));
+          maxVal =
+              std::max(maxVal, engine->upperBound(getInput(indexVal, offset)));
+        }
+        EXPECT_EQ(minVal, engine->lowerBound(outputId));
+        EXPECT_EQ(maxVal, engine->upperBound(outputId));
       }
-      EXPECT_EQ(minVal, engine->lowerBound(outputId));
-      EXPECT_EQ(maxVal, engine->upperBound(outputId));
     }
   }
 }
 
 TEST_F(ElementVarTest, Recompute) {
   EXPECT_TRUE(inputLb <= inputUb);
-  EXPECT_TRUE(indexLb <= indexUb);
+  for (const Int offset : offsets) {
+    const Int indexLb = offset;
+    const Int indexUb = numValues - 1 + offset;
+    EXPECT_TRUE(indexLb <= indexUb);
 
-  engine->open();
-  const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
-  }
-  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant =
-      engine->makeInvariant<ElementVar>(outputId, index, inputs);
-  engine->close();
+    std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
-  for (Int val = indexLb; val <= indexUb; ++val) {
-    engine->setValue(engine->currentTimestamp(), index, val);
-    EXPECT_EQ(engine->value(engine->currentTimestamp(), index), val);
+    engine->open();
+    const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+    }
+    const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+    ElementVar& invariant =
+        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    engine->close();
 
-    const Int expectedOutput = computeOutput(engine->currentTimestamp(), index);
-    invariant.recompute(engine->currentTimestamp(), *engine);
-    EXPECT_EQ(engine->value(engine->currentTimestamp(), index), val);
+    for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
+      engine->setValue(engine->currentTimestamp(), index, indexVal);
+      EXPECT_EQ(engine->value(engine->currentTimestamp(), index), indexVal);
 
-    EXPECT_EQ(expectedOutput,
-              engine->value(engine->currentTimestamp(), outputId));
+      const Int expectedOutput =
+          computeOutput(engine->currentTimestamp(), index, offset);
+      invariant.recompute(engine->currentTimestamp(), *engine);
+      EXPECT_EQ(engine->value(engine->currentTimestamp(), index), indexVal);
+
+      EXPECT_EQ(expectedOutput,
+                engine->value(engine->currentTimestamp(), outputId));
+    }
   }
 }
 
 TEST_F(ElementVarTest, NotifyInputChanged) {
   EXPECT_TRUE(inputLb <= inputUb);
-  EXPECT_TRUE(indexLb <= indexUb);
+  for (const Int offset : offsets) {
+    const Int indexLb = offset;
+    const Int indexUb = numValues - 1 + offset;
+    EXPECT_TRUE(indexLb <= indexUb);
 
-  engine->open();
-  const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
-  }
-  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant =
-      engine->makeInvariant<ElementVar>(outputId, index, inputs);
-  engine->close();
+    std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
-  for (Int val = indexLb; val <= indexUb; ++val) {
-    engine->setValue(engine->currentTimestamp(), index, val);
-    const Int expectedOutput = computeOutput(engine->currentTimestamp(), index);
+    engine->open();
+    const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+    }
+    const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+    ElementVar& invariant =
+        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    engine->close();
 
-    invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
-                                 LocalId(0));
-    EXPECT_EQ(expectedOutput,
-              engine->value(engine->currentTimestamp(), outputId));
+    for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
+      engine->setValue(engine->currentTimestamp(), index, indexVal);
+      const Int expectedOutput =
+          computeOutput(engine->currentTimestamp(), index, offset);
+
+      invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
+                                   LocalId(0));
+      EXPECT_EQ(expectedOutput,
+                engine->value(engine->currentTimestamp(), outputId));
+    }
   }
 }
 
 TEST_F(ElementVarTest, NextInput) {
   EXPECT_TRUE(inputLb <= inputUb);
-  EXPECT_TRUE(indexLb <= indexUb);
+  for (const Int offset : offsets) {
+    const Int indexLb = offset;
+    const Int indexUb = numValues - 1 + offset;
+    EXPECT_TRUE(indexLb <= indexUb);
 
-  engine->open();
-  const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
-  }
-  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant =
-      engine->makeInvariant<ElementVar>(outputId, index, inputs);
-  engine->close();
+    std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
-    EXPECT_EQ(invariant.nextInput(ts, *engine), index);
-    EXPECT_EQ(invariant.nextInput(ts, *engine),
-              inputs.at(engine->value(ts, index) - 1));
-    EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+    engine->open();
+    const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+    }
+    const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+    ElementVar& invariant =
+        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    engine->close();
+
+    for (Timestamp ts = engine->currentTimestamp() + 1;
+         ts < engine->currentTimestamp() + 4; ++ts) {
+      EXPECT_EQ(invariant.nextInput(ts, *engine), index);
+      EXPECT_EQ(invariant.nextInput(ts, *engine),
+                getInput(engine->value(ts, index), offset));
+      EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+    }
   }
 }
 
 TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
   EXPECT_TRUE(inputLb <= inputUb);
-  EXPECT_TRUE(indexLb <= indexUb);
+  Timestamp t0 = engine->currentTimestamp() +
+                 (numValues * static_cast<Int>(offsets.size())) + 1;
+  for (const Int offset : offsets) {
+    const Int indexLb = offset;
+    const Int indexUb = numValues - 1 + offset;
+    EXPECT_TRUE(indexLb <= indexUb);
 
-  std::vector<Int> indexValues(numValues, 0);
-  for (size_t i = 0; i < indexValues.size(); ++i) {
-    indexValues.at(i) = i + 1;
-  }
+    std::vector<Int> indexValues(numValues, 0);
+    std::iota(indexValues.begin(), indexValues.end(), offset);
+    std::shuffle(indexValues.begin(), indexValues.end(), rng);
 
-  std::shuffle(indexValues.begin(), indexValues.end(), rng);
+    engine->open();
+    const VarId index =
+        engine->makeIntVar(indexValues.back(), indexLb, indexUb);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+    }
+    const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+    ElementVar& invariant =
+        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    engine->close();
 
-  engine->open();
-  const VarId index = engine->makeIntVar(indexValues.back(), indexLb, indexUb);
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
-  }
-  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant =
-      engine->makeInvariant<ElementVar>(outputId, index, inputs);
-  engine->close();
+    for (size_t i = 0; i < indexValues.size(); ++i) {
+      const Int indexVal = indexValues.at(i);
+      Timestamp ts = t0 + Timestamp(i);
+      EXPECT_EQ(invariant.nextInput(ts, *engine), index);
+      engine->setValue(ts, index, indexVal);
+      invariant.notifyCurrentInputChanged(ts, *engine);
+      EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, index, offset));
 
-  for (size_t i = 0; i < indexValues.size(); ++i) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
-    EXPECT_EQ(invariant.nextInput(ts, *engine), index);
-    engine->setValue(ts, index, indexValues.at(i));
-    invariant.notifyCurrentInputChanged(ts, *engine);
-    EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, index));
+      const VarId curInput = invariant.nextInput(ts, *engine);
+      EXPECT_EQ(curInput, getInput(indexVal, offset));
 
-    const VarId curInput = invariant.nextInput(ts, *engine);
-    EXPECT_EQ(curInput, inputs.at(indexValues.at(i) - 1));
+      const Int oldInputVal = engine->value(ts, curInput);
+      do {
+        engine->setValue(ts, curInput, inputDist(gen));
+      } while (engine->value(ts, curInput) == oldInputVal);
 
-    const Int oldInputVal = engine->value(ts, curInput);
-    do {
-      engine->setValue(ts, curInput, inputDist(gen));
-    } while (engine->value(ts, curInput) == oldInputVal);
-
-    invariant.notifyCurrentInputChanged(ts, *engine);
-    EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, index));
+      invariant.notifyCurrentInputChanged(ts, *engine);
+      EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, index, offset));
+    }
   }
 }
 
 TEST_F(ElementVarTest, Commit) {
   EXPECT_TRUE(inputLb <= inputUb);
-  EXPECT_TRUE(indexLb <= indexUb);
+  for (const Int offset : offsets) {
+    const Int indexLb = offset;
+    const Int indexUb = numValues - 1 + offset;
+    EXPECT_TRUE(indexLb <= indexUb);
 
-  std::vector<Int> indexValues(numValues, 0);
-  for (size_t i = 0; i < indexValues.size(); ++i) {
-    indexValues.at(i) = i;
-  }
+    std::vector<Int> indexValues(numValues);
+    std::iota(indexValues.begin(), indexValues.end(), offset);
+    std::shuffle(indexValues.begin(), indexValues.end(), rng);
 
-  std::shuffle(indexValues.begin(), indexValues.end(), rng);
+    engine->open();
+    const VarId index =
+        engine->makeIntVar(indexValues.back(), indexLb, indexUb);
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
+    }
+    const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
+    ElementVar& invariant =
+        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    engine->close();
 
-  engine->open();
-  const VarId index = engine->makeIntVar(indexValues.back(), indexLb, indexUb);
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
-  }
-  const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-  ElementVar& invariant =
-      engine->makeInvariant<ElementVar>(outputId, index, inputs);
-  engine->close();
+    Int committedIndexValue = engine->committedValue(index);
 
-  Int committedIndexValue = engine->committedValue(index);
-
-  std::vector<Int> committedInputValues(inputs.size(), 0);
-  for (size_t i = 0; i < committedInputValues.size(); ++i) {
-    committedInputValues.at(i) = engine->committedValue(inputs[i]);
-  }
-
-  for (size_t i = 0; i < indexValues.size(); ++i) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
-    ASSERT_EQ(engine->committedValue(index), committedIndexValue);
-    for (size_t j = 0; j < inputs.size(); ++j) {
-      ASSERT_EQ(engine->committedValue(inputs.at(j)),
-                committedInputValues.at(j));
+    std::vector<Int> committedInputValues(inputs.size());
+    for (size_t i = 0; i < committedInputValues.size(); ++i) {
+      committedInputValues.at(i) = engine->committedValue(inputs.at(i));
     }
 
-    // Change Index
-    engine->setValue(ts, index, indexValues[i]);
+    for (size_t i = 0; i < indexValues.size(); ++i) {
+      const Int indexVal = indexValues.at(i);
+      Timestamp ts = engine->currentTimestamp() + Timestamp(i);
+      ASSERT_EQ(engine->committedValue(index), committedIndexValue);
+      for (size_t j = 0; j < inputs.size(); ++j) {
+        ASSERT_EQ(engine->committedValue(inputs.at(j)),
+                  committedInputValues.at(j));
+      }
 
-    // notify index change
-    invariant.notifyInputChanged(ts, *engine, LocalId(0));
+      // Change Index
+      engine->setValue(ts, index, indexVal);
 
-    // incremental value from index
-    Int notifiedOutput = engine->value(ts, outputId);
-    invariant.recompute(ts, *engine);
+      // notify index change
+      invariant.notifyInputChanged(ts, *engine, LocalId(0));
 
-    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+      // incremental value from index
+      Int notifiedOutput = engine->value(ts, outputId);
+      invariant.recompute(ts, *engine);
 
-    // Change input
-    const VarId curInput = inputs.at(indexValues.at(i));
-    const Int oldInputVal = engine->value(ts, curInput);
-    do {
-      engine->setValue(ts, curInput, inputDist(gen));
-    } while (engine->value(ts, curInput) == oldInputVal);
+      ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
-    // notify input change
-    invariant.notifyInputChanged(ts, *engine, LocalId(indexValues.at(i)));
+      // Change input
+      const VarId curInput = getInput(indexVal, offset);
+      const Int oldInputVal = engine->value(ts, curInput);
+      do {
+        engine->setValue(ts, curInput, inputDist(gen));
+      } while (engine->value(ts, curInput) == oldInputVal);
 
-    // incremental value from input
-    notifiedOutput = engine->value(ts, outputId);
-    invariant.recompute(ts, *engine);
+      // notify input change
+      invariant.notifyInputChanged(ts, *engine, LocalId(indexVal));
 
-    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+      // incremental value from input
+      notifiedOutput = engine->value(ts, outputId);
+      invariant.recompute(ts, *engine);
 
-    engine->commitIf(ts, index);
-    committedIndexValue = engine->value(ts, index);
-    engine->commitIf(ts, curInput);
-    committedInputValues.at(indexValues.at(i)) = engine->value(ts, curInput);
-    engine->commitIf(ts, outputId);
+      ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
-    invariant.commit(ts, *engine);
-    invariant.recompute(ts + 1, *engine);
-    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+      engine->commitIf(ts, index);
+      committedIndexValue = engine->value(ts, index);
+      engine->commitIf(ts, curInput);
+      committedInputValues.at(zeroBasedIndex(indexVal, offset)) =
+          engine->value(ts, curInput);
+      engine->commitIf(ts, outputId);
+
+      invariant.commit(ts, *engine);
+      invariant.recompute(ts + 1, *engine);
+      ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+    }
   }
 }
 
@@ -284,8 +324,8 @@ class MockElementVar : public ElementVar {
     ElementVar::registerVars(engine);
   }
   explicit MockElementVar(VarId output, VarId index,
-                          std::vector<VarId> varArray)
-      : ElementVar(output, index, varArray) {
+                          std::vector<VarId> varArray, Int offset)
+      : ElementVar(output, index, varArray, offset) {
     ON_CALL(*this, recompute)
         .WillByDefault([this](Timestamp timestamp, Engine& engine) {
           return ElementVar::recompute(timestamp, engine);
@@ -329,7 +369,7 @@ TEST_F(ElementVarTest, EngineIntegration) {
     VarId idx = engine->makeIntVar(0, 0, numArgs - 1);
     VarId output = engine->makeIntVar(-10, -100, 100);
     testNotifications<MockElementVar>(
-        &engine->makeInvariant<MockElementVar>(output, idx, args), propMode,
+        &engine->makeInvariant<MockElementVar>(output, idx, args, 1), propMode,
         markingMode, 3, idx, 5, output);
   }
 }
