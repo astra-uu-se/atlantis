@@ -1,5 +1,5 @@
-# cbls
-CBLS solver
+# Atlantis
+Atlantis CBLS solver
 
 ## Building
 The project is built using cmake, but a `Makefile` is used to simplify the execution of cmake.
