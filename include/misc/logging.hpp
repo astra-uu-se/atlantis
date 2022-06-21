@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CBLS_LOGGING
-#define CBLS_LOGGING
 #ifdef _DEBUG
 #ifndef NDEBUG
 #define NDEBUG
@@ -103,5 +101,4 @@ void log(LogLevel logLevel, const char *file, int line,
 #define logError(x) \
   do {              \
   } while (0)
-#endif
 #endif

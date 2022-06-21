@@ -1,8 +1,8 @@
 {
-  "name" : "Astra CBLS",
+  "name" : "Atlantis",
   "version": "0.1",
-  "id": "se.uu.it.astra-cbls",
-  "executable": "astra-cbls",
+  "id": "se.uu.it.atlantis",
+  "executable": "atlantis",
   "mznlib": "lib",
   "extraFlags": [
     ["--annealing-schedule", "Path to the annealing schedule definition file to use.", "string"],

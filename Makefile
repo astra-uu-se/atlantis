@@ -35,7 +35,7 @@ build-benchmarks:
 
 .PHONY: run
 run: build
-	exec ${BUILD_DIR}/cbls
+	exec ${BUILD_DIR}/atlantis
 
 .PHONY: run-tests
 run-tests: build-tests
@@ -50,23 +50,23 @@ all: clean build build-tests build-benchmarks
 
 .PHONY: fzn
 fzn: #build
-	cp build/cbls minizinc/astra-cbls
-	minizinc ${MZN_SOLVER_PATH}/astra-cbls.mpc -c \
+	cp build/atlantis minizinc/atlantis
+	minizinc ${MZN_SOLVER_PATH}/atlantis.mpc -c \
 					 ${MZN_MODEL_DIR}/car_sequencing.mzn \
 					 ${MZN_MODEL_DIR}/car_sequencing.dzn \
 					 --fzn ${FZN_MODEL_DIR}/car_sequencing.fzn
 	rm -f ${MZN_MODEL_DIR}/car_sequencing.ozn
-	minizinc ${MZN_SOLVER_PATH}/astra-cbls.mpc -c \
+	minizinc ${MZN_SOLVER_PATH}/atlantis.mpc -c \
 					 ${MZN_MODEL_DIR}/magic_square.mzn \
 					 -D n=3 \
 					 --fzn ${FZN_MODEL_DIR}/magic_square.fzn
 	rm -f ${MZN_MODEL_DIR}/magic_square.ozn
-	minizinc ${MZN_SOLVER_PATH}/astra-cbls.mpc -c \
+	minizinc ${MZN_SOLVER_PATH}/atlantis.mpc -c \
 					 ${MZN_MODEL_DIR}/tsp_alldiff.mzn \
 					 ${MZN_MODEL_DIR}/tsp_17.dzn \
 					 --fzn ${FZN_MODEL_DIR}/tsp_alldiff.fzn
 	rm -f ${MZN_MODEL_DIR}/tsp_alldiff.ozn
-	minizinc ${MZN_SOLVER_PATH}/astra-cbls.mpc -c \
+	minizinc ${MZN_SOLVER_PATH}/atlantis.mpc -c \
 					 ${MZN_MODEL_DIR}/n_queens.mzn \
 					 -D n=32 \
 					 --fzn ${FZN_MODEL_DIR}/n_queens.fzn

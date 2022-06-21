@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Build the project
-cmake --build build --target cbls
+cmake --build build --target atlantis
 
 # Copy the executable to the minizinc directory.
-cp build/cbls minizinc/astra-cbls
+cp build/atlantis minizinc/atlantis
 printf "\nCopied executable to solver folder.\n"
 
 # Modify path
