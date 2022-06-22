@@ -9,17 +9,17 @@ invariantgraph::ArrayVarBoolElementNode::fromModelConstraint(
     const std::function<VariableNode*(MappableValue&)>& variableMap) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto b = mappedVariable(constraint.arguments[0], variableMap);
-
-  // Compute offset if nonshifted variant:
-  Int offset = constraint.name != "array_var_bool_element_nonshifted"
-                   ? 1
-                   : b->domain().lowerBound();
-
+  auto idx = mappedVariable(constraint.arguments[0], variableMap);
   auto as = mappedVariableVector(model, constraint.arguments[1], variableMap);
   auto c = mappedVariable(constraint.arguments[2], variableMap);
 
-  return std::make_unique<invariantgraph::ArrayVarBoolElementNode>(b, as, c,
+  // Compute offset if nonshifted variant:
+  Int offset = constraint.name != "array_var_bool_element_offset"
+                   ? 1
+                   : integerValue(model, constraint.arguments.at(4));
+  assert(offset <= idx1->domain().lowerBound());
+
+  return std::make_unique<invariantgraph::ArrayVarBoolElementNode>(idx, as, c,
                                                                    offset);
 }
 

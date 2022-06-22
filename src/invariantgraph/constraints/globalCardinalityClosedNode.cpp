@@ -2,6 +2,32 @@
 
 #include "../parseHelper.hpp"
 
+static std::vector<invariantgraph::VariableNode*> merge(
+    const std::vector<invariantgraph::VariableNode*>& fst,
+    const std::vector<invariantgraph::VariableNode*>& snd) {
+  std::vector<invariantgraph::VariableNode*> v(fst);
+  v.reserve(fst.size() + snd.size());
+  v.insert(v.end(), snd.begin(), snd.end());
+  return v;
+}
+
+invariantgraph::GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
+    std::vector<VariableNode*> x, std::vector<Int> cover,
+    std::vector<VariableNode*> counts, VariableNode* r)
+    : SoftConstraintNode({}, merge(x, counts), r),
+      _inputs(x),
+      _cover(cover),
+      _counts(counts) {}
+
+invariantgraph::GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
+    std::vector<VariableNode*> x, std::vector<Int> cover,
+    std::vector<VariableNode*> counts, bool shouldHold)
+    : SoftConstraintNode(shouldHold ? counts : std::vector<VariableNode*>{},
+                         shouldHold ? x : merge(x, counts), shouldHold),
+      _inputs(x),
+      _cover(cover),
+      _counts(counts) {}
+
 std::unique_ptr<invariantgraph::GlobalCardinalityClosedNode>
 invariantgraph::GlobalCardinalityClosedNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

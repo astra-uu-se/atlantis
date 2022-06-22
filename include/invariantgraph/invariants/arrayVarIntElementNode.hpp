@@ -26,7 +26,7 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string_view, size_t>>{
-        {"array_var_int_element", 3}, {"array_var_int_element_nonshifted", 3}};
+        {"array_var_int_element", 3}, {"array_var_int_element_offset", 4}};
   }
 
   static std::unique_ptr<ArrayVarIntElementNode> fromModelConstraint(

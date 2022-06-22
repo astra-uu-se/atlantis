@@ -13,10 +13,11 @@ invariantgraph::ArrayVarIntElementNode::fromModelConstraint(
   auto c = mappedVariable(constraint.arguments[2], variableMap);
 
   // Compute offset if nonshifted variant:
-  Int offset = constraint.name != "array_var_int_element_nonshifted"
+  Int offset = constraint.name != "array_var_int_element_offset"
                    ? 1
-                   : idx->domain().lowerBound();
+                   : integerValue(model, constraint.arguments.at(3));
 
+  assert(offset <= idx1->domain().lowerBound());
   return std::make_unique<invariantgraph::ArrayVarIntElementNode>(idx, as, c,
                                                                   offset);
 }

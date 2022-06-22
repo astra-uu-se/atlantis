@@ -15,6 +15,10 @@
 #include "invariantgraph/constraints/boolLtNode.hpp"
 #include "invariantgraph/constraints/boolOrNode.hpp"
 #include "invariantgraph/constraints/boolXorNode.hpp"
+#include "invariantgraph/constraints/globalCardinalityClosedNode.hpp"
+#include "invariantgraph/constraints/globalCardinalityLowUpClosedNode.hpp"
+#include "invariantgraph/constraints/globalCardinalityLowUpNode.hpp"
+#include "invariantgraph/constraints/globalCardinalityNode.hpp"
 #include "invariantgraph/constraints/intEqNode.hpp"
 #include "invariantgraph/constraints/intLeNode.hpp"
 #include "invariantgraph/constraints/intLinEqNode.hpp"
@@ -271,6 +275,8 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION(BoolLtNode);
   NODE_REGISTRATION(BoolNotNode);
   NODE_REGISTRATION(BoolXorNode);
+  NODE_REGISTRATION(GlobalCardinalityClosedNode);
+  NODE_REGISTRATION(GlobalCardinalityNode);
   NODE_REGISTRATION(IntAbsNode);
   NODE_REGISTRATION(IntDivNode);
   NODE_REGISTRATION(IntEqNode);
@@ -336,16 +342,18 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   NODE_REGISTRATION(BoolClauseNode);
   NODE_REGISTRATION(BoolEqNode);
   NODE_REGISTRATION(BoolLeNode);
+  NODE_REGISTRATION(BoolLeNode);
   NODE_REGISTRATION(BoolLinEqNode);
   NODE_REGISTRATION(BoolLinLeNode);
-  NODE_REGISTRATION(BoolLeNode);
   NODE_REGISTRATION(BoolOrNode);
+  NODE_REGISTRATION(GlobalCardinalityLowUpClosedNode);
+  NODE_REGISTRATION(GlobalCardinalityLowUpNode);
   NODE_REGISTRATION(IntEqNode);
   NODE_REGISTRATION(IntLeNode);
-  NODE_REGISTRATION(IntLtNode);
   NODE_REGISTRATION(IntLinEqNode);
   NODE_REGISTRATION(IntLinLeNode);
   NODE_REGISTRATION(IntLinNeNode);
+  NODE_REGISTRATION(IntLtNode);
   NODE_REGISTRATION(IntNeNode);
   NODE_REGISTRATION(SetInNode);
 

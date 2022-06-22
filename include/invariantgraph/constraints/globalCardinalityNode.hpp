@@ -12,15 +12,6 @@
 #include "views/equalConst.hpp"
 #include "views/notEqualConst.hpp"
 
-static std::vector<invariantgraph::VariableNode*> merge(
-    const std::vector<invariantgraph::VariableNode*>& fst,
-    const std::vector<invariantgraph::VariableNode*>& snd) {
-  std::vector<invariantgraph::VariableNode*> v(fst);
-  v.reserve(fst.size() + snd.size());
-  v.insert(v.end(), snd.begin(), snd.end());
-  return v;
-}
-
 namespace invariantgraph {
 class GlobalCardinalityNode : public SoftConstraintNode {
  private:
@@ -34,21 +25,12 @@ class GlobalCardinalityNode : public SoftConstraintNode {
   explicit GlobalCardinalityNode(std::vector<VariableNode*> x,
                                  std::vector<Int> cover,
                                  std::vector<VariableNode*> counts,
-                                 VariableNode* r)
-      : SoftConstraintNode({}, merge(x, counts), r),
-        _inputs(x),
-        _cover(cover),
-        _counts(counts) {}
+                                 VariableNode* r);
 
   explicit GlobalCardinalityNode(std::vector<VariableNode*> x,
                                  std::vector<Int> cover,
                                  std::vector<VariableNode*> counts,
-                                 bool shouldHold)
-      : SoftConstraintNode(shouldHold ? counts : std::vector<VariableNode*>{},
-                           shouldHold ? x : merge(x, counts), shouldHold),
-        _inputs(x),
-        _cover(cover),
-        _counts(counts) {}
+                                 bool shouldHold);
 
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {

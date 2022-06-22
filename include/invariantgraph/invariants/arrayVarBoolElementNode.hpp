@@ -26,8 +26,7 @@ class ArrayVarBoolElementNode : public VariableDefiningNode {
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string_view, size_t>>{
-        {"array_var_bool_element", 3},
-        {"array_var_bool_element_nonshifted", 3}};
+        {"array_var_bool_element", 3}, {"array_var_bool_element_offset", 4}};
   }
 
   static std::unique_ptr<ArrayVarBoolElementNode> fromModelConstraint(

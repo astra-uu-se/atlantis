@@ -5,6 +5,14 @@ predicate symmetry_breaking_constraint(var bool: b) = true;
 % reduce the number of objects to be maintained by the solver.
 predicate redundant_constraint(var bool: b) = true;
 
+predicate array_bool_element_offset(var int: idx,
+                                    array [int] of var bool: x,
+                                    var bool: c, int: offset);
+
+predicate array_var_bool_element_offset(var int: idx,
+                                        array [int] of var bool: x,
+                                        var bool: c, int: offset);
+
 predicate array_var_bool_element_nonshifted(var int: idx,
                                             array [int] of var bool: x,
                                             var bool: c) =
@@ -14,13 +22,13 @@ predicate array_var_bool_element_nonshifted(var int: idx,
   } in if all_params then array_bool_element_offset(idx, x, c, offset)
     else array_var_bool_element_offset(idx, x, c, offset) endif;
 
-predicate array_bool_element_offset(var int: idx,
-                                    array [int] of var bool: x,
-                                    var bool: c, int: offset);
+predicate array_int_element_offset(var int: idx,
+                                   array [int] of var int: x,
+                                   var int: c, int: offset);
 
-predicate array_var_bool_element_offset(var int: idx,
-                                        array [int] of var bool: x,
-                                        var bool: c, int: offset);
+predicate array_var_int_element_offset(var int: idx,
+                                       array [int] of var int: x,
+                                       var int: c, int: offset);
 
 predicate array_var_int_element_nonshifted(var int: idx,
                                            array [int] of var int: x,
@@ -30,11 +38,3 @@ predicate array_var_int_element_nonshifted(var int: idx,
     bool: all_params = is_fixed(x);
   } in if all_params then array_int_element_offset(idx, x, c, offset)
     else array_var_int_element_offset(idx, x, c, offset) endif;
-
-predicate array_int_element_offset(var int: idx,
-                                   array [int] of var int: x,
-                                   var int: c, int: offset);
-
-predicate array_var_int_element_offset(var int: idx,
-                                       array [int] of var int: x,
-                                       var int: c, int: offset);

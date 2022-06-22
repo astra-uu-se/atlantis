@@ -1,5 +1,5 @@
 {
   "solver": "se.uu.it.atlantis",
   "-D": "mzn_ignore_symmetry_breaking_constraints=true",
-  "-O4": true
+  "-O3": true
 }
