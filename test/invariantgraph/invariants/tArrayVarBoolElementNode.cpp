@@ -8,7 +8,7 @@ class ArrayVarBoolElementNodeTest : public NodeTestBase {
   BOOL_VARIABLE(b);
   BOOL_VARIABLE(c);
 
-  INT_VARIABLE(idx, 0, 10);
+  INT_VARIABLE(idx, 1, 10);
   INT_VARIABLE(y, 0, 10);
 
   fznparser::Constraint constraint{

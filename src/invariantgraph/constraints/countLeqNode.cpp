@@ -2,6 +2,78 @@
 
 #include "../parseHelper.hpp"
 
+static std::vector<invariantgraph::VariableNode*> append(
+    std::vector<invariantgraph::VariableNode*>& vars,
+    invariantgraph::VariableNode* y, invariantgraph::VariableNode* c) {
+  if (y != nullptr) {
+    vars.emplace_back(y);
+  }
+  if (c != nullptr) {
+    vars.emplace_back(c);
+  }
+  return vars;
+}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           VariableNode* y, Int yParameter,
+                                           VariableNode* c, Int cParameter,
+                                           VariableNode* r)
+    : SoftConstraintNode(append(x, y, c), r),
+      _yIsParameter(y == nullptr),
+      _yParameter(yParameter),
+      _cIsParameter(c == nullptr),
+      _cParameter(cParameter) {}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           VariableNode* y, Int yParameter,
+                                           VariableNode* c, Int cParameter,
+                                           bool shouldHold)
+    : SoftConstraintNode(append(x, y, c), shouldHold),
+      _yIsParameter(y == nullptr),
+      _yParameter(yParameter),
+      _cIsParameter(c == nullptr),
+      _cParameter(cParameter) {}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           VariableNode* y, VariableNode* c,
+                                           VariableNode* r)
+    : CountLeqNode(x, y, 0, c, 0, r) {}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           Int yParameter, VariableNode* c,
+                                           VariableNode* r)
+    : CountLeqNode(x, nullptr, yParameter, c, 0, r) {}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           VariableNode* y, Int cParameter,
+                                           VariableNode* r)
+    : CountLeqNode(x, y, 0, nullptr, cParameter, r) {}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           Int yParameter, Int cParameter,
+                                           VariableNode* r)
+    : CountLeqNode(x, nullptr, yParameter, nullptr, cParameter, r) {}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           VariableNode* y, VariableNode* c,
+                                           bool shouldHold)
+    : CountLeqNode(x, y, 0, c, 0, shouldHold) {}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           Int yParameter, VariableNode* c,
+                                           bool shouldHold)
+    : CountLeqNode(x, nullptr, yParameter, c, 0, shouldHold) {}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           VariableNode* y, Int cParameter,
+                                           bool shouldHold)
+    : CountLeqNode(x, y, 0, nullptr, cParameter, shouldHold) {}
+
+invariantgraph::CountLeqNode::CountLeqNode(std::vector<VariableNode*> x,
+                                           Int yParameter, Int cParameter,
+                                           bool shouldHold)
+    : CountLeqNode(x, nullptr, yParameter, nullptr, cParameter, shouldHold) {}
+
 std::unique_ptr<invariantgraph::CountLeqNode>
 invariantgraph::CountLeqNode::fromModelConstraint(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,

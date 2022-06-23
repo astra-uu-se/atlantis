@@ -50,6 +50,8 @@ class GlobalCardinalityLowUpClosedNode : public SoftConstraintNode {
         {"fzn_global_cardinality_low_up_closed_reif", 5}};
   }
 
+  bool prune() override;
+
   static std::unique_ptr<GlobalCardinalityLowUpClosedNode> fromModelConstraint(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       const std::function<VariableNode*(MappableValue&)>& variableMap);

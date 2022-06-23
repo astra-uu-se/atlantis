@@ -47,6 +47,8 @@ class GlobalCardinalityClosedNode : public SoftConstraintNode {
 
   void registerWithEngine(Engine& engine) override;
 
+  bool prune() override;
+
   [[nodiscard]] inline const std::vector<VariableNode*>& inputs() const {
     return _inputs;
   }

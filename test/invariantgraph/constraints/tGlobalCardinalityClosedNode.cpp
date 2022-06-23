@@ -288,6 +288,21 @@ TEST_F(GlobalCardinalityClosedNodeTest, Application) { application(); }
 
 TEST_F(GlobalCardinalityClosedNodeTest, Propagation) { propagation(); }
 
+TEST_F(GlobalCardinalityClosedNodeTest, prune) {
+  node->prune();
+  EXPECT_TRUE(node->staticInputs().at(0)->domain().contains(6));
+  EXPECT_TRUE(node->staticInputs().at(0)->domain().isConstant());
+
+  EXPECT_TRUE(node->staticInputs().at(1)->domain().contains(2));
+  EXPECT_TRUE(node->staticInputs().at(1)->domain().isConstant());
+
+  EXPECT_EQ(node->definedVariables().at(0)->domain().lowerBound(), 1);
+  EXPECT_EQ(node->definedVariables().at(0)->domain().upperBound(), 1);
+
+  EXPECT_EQ(node->definedVariables().at(1)->domain().lowerBound(), 1);
+  EXPECT_EQ(node->definedVariables().at(1)->domain().upperBound(), 1);
+}
+
 class GlobalCardinalityClosedReifNodeTest
     : public AbstractGlobalCardinalityClosedNodeTest<ConstraintType::REIFIED> {
 };

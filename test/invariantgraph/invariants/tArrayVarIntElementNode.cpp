@@ -8,7 +8,7 @@ class ArrayVarIntElementNodeTest : public NodeTestBase {
   INT_VARIABLE(b, 2, 11);
   INT_VARIABLE(c, 1, 9);
 
-  INT_VARIABLE(idx, 0, 10);
+  INT_VARIABLE(idx, 1, 10);
   INT_VARIABLE(y, 0, 10);
 
   fznparser::Constraint constraint{

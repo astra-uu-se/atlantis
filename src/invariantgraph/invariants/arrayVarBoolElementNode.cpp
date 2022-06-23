@@ -17,7 +17,7 @@ invariantgraph::ArrayVarBoolElementNode::fromModelConstraint(
   Int offset = constraint.name != "array_var_bool_element_offset"
                    ? 1
                    : integerValue(model, constraint.arguments.at(4));
-  assert(offset <= idx1->domain().lowerBound());
+  assert(offset <= idx->domain().lowerBound());
 
   return std::make_unique<invariantgraph::ArrayVarBoolElementNode>(idx, as, c,
                                                                    offset);

@@ -31,7 +31,7 @@ void ElementVar::updateBounds(Engine& engine, bool widenOnly) {
   }
   for (Int i = iLb; i <= iUb; ++i) {
     assert(_offset <= i);
-    assert(i - _offset < _varArray.size());
+    assert(i - _offset < static_cast<Int>(_varArray.size()));
     lb = std::min(lb, engine.lowerBound(_varArray[safeIndex(i)]));
     ub = std::max(ub, engine.upperBound(_varArray[safeIndex(i)]));
   }

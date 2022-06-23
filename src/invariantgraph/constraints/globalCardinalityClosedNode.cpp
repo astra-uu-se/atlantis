@@ -42,7 +42,11 @@ invariantgraph::GlobalCardinalityClosedNode::fromModelConstraint(
   auto counts =
       mappedVariableVector(model, constraint.arguments[2], variableMap);
 
-  assert(cover.size() == counts.size());
+  if (cover.size() != counts.size()) {
+    throw BadArgumentError(
+        "GlobalCardinalityClosedNode: cover and counts must have the same "
+        "size.");
+  }
 
   bool shouldHold = true;
   VariableNode* r = nullptr;
@@ -62,6 +66,87 @@ invariantgraph::GlobalCardinalityClosedNode::fromModelConstraint(
   assert(r == nullptr);
   return std::make_unique<GlobalCardinalityClosedNode>(inputs, cover, counts,
                                                        shouldHold);
+}
+
+bool invariantgraph::GlobalCardinalityClosedNode::prune() {
+  if (isReified() || !shouldHold()) {
+    return false;
+  }
+  std::vector<Int> sortedCover(_cover);
+  std::sort(sortedCover.begin(), sortedCover.end());
+
+  std::vector<std::unordered_set<VariableNode*>> inCover(_cover.size());
+  std::vector<bool> isCoverFixed(_cover.size(), false);
+  bool didChange = false;
+  for (auto* var : staticInputs()) {
+    const size_t prevDomSize = var->domain().size();
+    var->domain().removeBelow(sortedCover.front());
+    var->domain().removeAbove(sortedCover.back());
+    didChange = didChange || var->domain().size() != prevDomSize;
+  }
+  size_t i = 0;
+  for (Int val = sortedCover.front(); val <= sortedCover.back(); ++val) {
+    while (sortedCover[i] < val) {
+      ++i;
+    }
+    assert(i < sortedCover.size());
+    if (val != sortedCover[i]) {
+      for (auto* var : staticInputs()) {
+        var->domain().removeValue(val);
+      }
+    }
+  }
+  for (size_t j = 0; j < _cover.size(); ++j) {
+    for (auto* var : staticInputs()) {
+      if (var->domain().contains(_cover[j])) {
+        inCover[j].emplace(var);
+      }
+    }
+    isCoverFixed[j] = std::all_of(
+        inCover[j].begin(), inCover[j].end(),
+        ([&](auto* const var) { return var->domain().isConstant(); }));
+  }
+  for (size_t j = 0; j < _cover.size(); ++j) {
+    if (isCoverFixed[j]) {
+      continue;
+    }
+    Int minCover = 0;
+    for (auto* var : inCover[j]) {
+      assert(var->domain().contains(_cover[j]));
+      minCover += static_cast<Int>(var->domain().isConstant());
+    }
+    definedVariables().at(j)->domain().removeBelow(minCover);
+    definedVariables().at(j)->domain().removeAbove(inCover[j].size());
+    if (definedVariables().at(j)->domain().upperBound() == 0) {
+      for (auto* var : inCover[j]) {
+        didChange = true;
+        var->domain().removeValue(_cover[j]);
+      }
+    } else if (definedVariables().at(j)->domain().isConstant() &&
+               static_cast<Int>(inCover[j].size()) ==
+                   definedVariables().at(j)->domain().upperBound() &&
+               minCover < definedVariables().at(j)->domain().upperBound()) {
+      // The cover variable is fixed, and exactly maxCover input variables can
+      // take the value _cover[j]:
+      didChange = true;
+      for (auto* var : inCover[j]) {
+        var->domain().fix(_cover[j]);
+      }
+      for (size_t k = 0; k < _cover.size(); ++k) {
+        if (j != k && !isCoverFixed[k]) {
+          for (auto* const var : inCover[j]) {
+            inCover[k].erase(var);
+          }
+        }
+      }
+      if (j > 0) {
+        // the pruning might cause additional propagation for indices
+        // 0..j-1, start the loop again:
+        j = 0;
+      }
+    }
+  }
+  return didChange;
 }
 
 void invariantgraph::GlobalCardinalityClosedNode::createDefinedVariables(

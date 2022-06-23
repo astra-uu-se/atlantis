@@ -3,6 +3,7 @@
 #include <limits>
 #include <random>
 #include <stdexcept>
+#include <unordered_set>
 #include <vector>
 
 #include "core/domains.hpp"
@@ -139,4 +140,70 @@ TEST_F(DomainTest, relativeComplementIfIntersects) {
     }
   }
 }
+
+TEST_F(DomainTest, contains) {
+  const std::vector<Int> values{-10, -8, -6, -4, 4, 6, 8, 10};
+  std::unordered_set<Int> setValues;
+  for (const Int v : values) {
+    setValues.emplace(v);
+  }
+  const Int lb = -10;
+  const Int ub = 10;
+
+  IntervalDomain intervalDomain = IntervalDomain(lb, ub);
+  for (Int val = lb - 5; val <= ub + 5; ++val) {
+    EXPECT_EQ(lb <= val && val <= ub, intervalDomain.contains(val));
+  }
+  SetDomain setDomain = SetDomain(values);
+  for (Int val = lb - 5; val <= ub + 5; ++val) {
+    EXPECT_EQ(setValues.contains(val), setDomain.contains(val));
+  }
+}
+
+TEST_F(DomainTest, removeBelow) {
+  const std::vector<Int> values{-100, -75, -50, -25, 0, 25, 50, 75, 100};
+  std::unordered_set<Int> setValues;
+  for (const Int v : values) {
+    setValues.emplace(v);
+  }
+  const Int lb = -100;
+  const Int ub = 100;
+
+  for (Int val = lb - 5; val < ub; ++val) {
+    IntervalDomain intervalDomain = IntervalDomain(lb, ub);
+    intervalDomain.removeBelow(val);
+    for (Int v = lb; v <= ub; ++v) {
+      EXPECT_EQ(v >= val, intervalDomain.contains(v));
+    }
+    SetDomain setDomain = SetDomain(values);
+    setDomain.removeBelow(val);
+    for (Int v = lb; v <= ub; ++v) {
+      EXPECT_EQ(setValues.contains(v) && v >= val, setDomain.contains(v));
+    }
+  }
+}
+
+TEST_F(DomainTest, removeAbove) {
+  const std::vector<Int> values{-100, -75, -50, -25, 0, 25, 50, 75, 100};
+  std::unordered_set<Int> setValues;
+  for (const Int v : values) {
+    setValues.emplace(v);
+  }
+  const Int lb = -100;
+  const Int ub = 100;
+
+  for (Int val = lb; val < ub + 5; ++val) {
+    IntervalDomain intervalDomain = IntervalDomain(lb, ub);
+    intervalDomain.removeAbove(val);
+    for (Int v = lb; v >= ub; ++v) {
+      EXPECT_EQ(v >= val, intervalDomain.contains(v));
+    }
+    SetDomain setDomain = SetDomain(values);
+    setDomain.removeAbove(val);
+    for (Int v = lb; v >= ub; ++v) {
+      EXPECT_EQ(setValues.contains(v) && v >= val, setDomain.contains(v));
+    }
+  }
+}
+
 }  // namespace

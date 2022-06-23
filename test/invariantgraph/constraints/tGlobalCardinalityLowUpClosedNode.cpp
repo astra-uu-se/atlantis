@@ -33,8 +33,8 @@ class AbstractGlobalCardinalityLowUpClosedNodeTest : public NodeTestBase {
   INT_VARIABLE(x1, 5, 10);
   INT_VARIABLE(x2, 2, 7);
   const std::vector<Int> cover{2, 6};
-  const std::vector<Int> low{0, 1};
-  const std::vector<Int> up{1, 2};
+  const std::vector<Int> low{1, 0};
+  const std::vector<Int> up{2, 1};
   BOOL_VARIABLE(r);
 
   std::unique_ptr<fznparser::Constraint> constraint;
@@ -214,6 +214,14 @@ TEST_F(GlobalCardinalityLowUpClosedNodeTest, Construction) { construction(); }
 TEST_F(GlobalCardinalityLowUpClosedNodeTest, Application) { application(); }
 
 TEST_F(GlobalCardinalityLowUpClosedNodeTest, Propagation) { propagation(); }
+
+TEST_F(GlobalCardinalityLowUpClosedNodeTest, prune) {
+  node->prune();
+  EXPECT_EQ(node->staticInputs().at(0)->domain().lowerBound(), 6);
+  EXPECT_TRUE(node->staticInputs().at(0)->domain().isConstant());
+  EXPECT_EQ(node->staticInputs().at(1)->domain().lowerBound(), 2);
+  EXPECT_TRUE(node->staticInputs().at(1)->domain().isConstant());
+}
 
 class GlobalCardinalityLowUpClosedReifNodeTest
     : public AbstractGlobalCardinalityLowUpClosedNodeTest<

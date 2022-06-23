@@ -6,6 +6,7 @@
 #include "invariantgraph/constraints/allEqualNode.hpp"
 #include "invariantgraph/constraints/arrayBoolAndNode.hpp"
 #include "invariantgraph/constraints/arrayBoolOrNode.hpp"
+#include "invariantgraph/constraints/arrayBoolXorNode.hpp"
 #include "invariantgraph/constraints/boolAndNode.hpp"
 #include "invariantgraph/constraints/boolClauseNode.hpp"
 #include "invariantgraph/constraints/boolEqNode.hpp"
@@ -15,6 +16,12 @@
 #include "invariantgraph/constraints/boolLtNode.hpp"
 #include "invariantgraph/constraints/boolOrNode.hpp"
 #include "invariantgraph/constraints/boolXorNode.hpp"
+#include "invariantgraph/constraints/countEqNode.hpp"
+#include "invariantgraph/constraints/countGeqNode.hpp"
+#include "invariantgraph/constraints/countGtNode.hpp"
+#include "invariantgraph/constraints/countLeqNode.hpp"
+#include "invariantgraph/constraints/countLtNode.hpp"
+#include "invariantgraph/constraints/countNeqNode.hpp"
 #include "invariantgraph/constraints/globalCardinalityClosedNode.hpp"
 #include "invariantgraph/constraints/globalCardinalityLowUpClosedNode.hpp"
 #include "invariantgraph/constraints/globalCardinalityLowUpNode.hpp"
@@ -261,6 +268,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION(ArrayBoolElement2dNode);
   NODE_REGISTRATION(ArrayBoolElementNode);
   NODE_REGISTRATION(ArrayBoolOrNode);
+  NODE_REGISTRATION(ArrayBoolXorNode);
   NODE_REGISTRATION(ArrayIntElement2dNode);
   NODE_REGISTRATION(ArrayIntElementNode);
   NODE_REGISTRATION(ArrayIntMaximumNode);
@@ -275,6 +283,7 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   NODE_REGISTRATION(BoolLtNode);
   NODE_REGISTRATION(BoolNotNode);
   NODE_REGISTRATION(BoolXorNode);
+  NODE_REGISTRATION(CountEqNode);
   NODE_REGISTRATION(GlobalCardinalityClosedNode);
   NODE_REGISTRATION(GlobalCardinalityNode);
   NODE_REGISTRATION(IntAbsNode);
@@ -342,10 +351,14 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
   NODE_REGISTRATION(BoolClauseNode);
   NODE_REGISTRATION(BoolEqNode);
   NODE_REGISTRATION(BoolLeNode);
-  NODE_REGISTRATION(BoolLeNode);
   NODE_REGISTRATION(BoolLinEqNode);
   NODE_REGISTRATION(BoolLinLeNode);
   NODE_REGISTRATION(BoolOrNode);
+  NODE_REGISTRATION(CountGeqNode);
+  NODE_REGISTRATION(CountGtNode);
+  NODE_REGISTRATION(CountLeqNode);
+  NODE_REGISTRATION(CountLtNode);
+  NODE_REGISTRATION(CountNeqNode);
   NODE_REGISTRATION(GlobalCardinalityLowUpClosedNode);
   NODE_REGISTRATION(GlobalCardinalityLowUpNode);
   NODE_REGISTRATION(IntEqNode);

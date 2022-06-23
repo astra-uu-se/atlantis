@@ -17,7 +17,7 @@ invariantgraph::ArrayVarIntElementNode::fromModelConstraint(
                    ? 1
                    : integerValue(model, constraint.arguments.at(3));
 
-  assert(offset <= idx1->domain().lowerBound());
+  assert(offset <= idx->domain().lowerBound());
   return std::make_unique<invariantgraph::ArrayVarIntElementNode>(idx, as, c,
                                                                   offset);
 }

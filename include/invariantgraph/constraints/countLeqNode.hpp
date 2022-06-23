@@ -13,18 +13,6 @@
 #include "views/lessEqualConst.hpp"
 #include "views/notEqualConst.hpp"
 
-static std::vector<invariantgraph::VariableNode*> append(
-    std::vector<invariantgraph::VariableNode*>& vars,
-    invariantgraph::VariableNode* y, invariantgraph::VariableNode* c) {
-  if (y != nullptr) {
-    vars.emplace_back(y);
-  }
-  if (c != nullptr) {
-    vars.emplace_back(c);
-  }
-  return vars;
-}
-
 namespace invariantgraph {
 class CountLeqNode : public SoftConstraintNode {
  private:
@@ -36,54 +24,36 @@ class CountLeqNode : public SoftConstraintNode {
 
   explicit CountLeqNode(std::vector<VariableNode*> x, VariableNode* y,
                         Int yParameter, VariableNode* c, Int cParameter,
-                        VariableNode* r)
-      : SoftConstraintNode(append(x, y, c), r),
-        _yIsParameter(y == nullptr),
-        _yParameter(yParameter),
-        _cIsParameter(c == nullptr),
-        _cParameter(cParameter) {}
+                        VariableNode* r);
 
   explicit CountLeqNode(std::vector<VariableNode*> x, VariableNode* y,
                         Int yParameter, VariableNode* c, Int cParameter,
-                        bool shouldHold)
-      : SoftConstraintNode(append(x, y, c), shouldHold),
-        _yIsParameter(y == nullptr),
-        _yParameter(yParameter),
-        _cIsParameter(c == nullptr),
-        _cParameter(cParameter) {}
+                        bool shouldHold);
 
  public:
   explicit CountLeqNode(std::vector<VariableNode*> x, VariableNode* y,
-                        VariableNode* c, VariableNode* r)
-      : CountLeqNode(x, y, 0, c, 0, r) {}
+                        VariableNode* c, VariableNode* r);
 
   explicit CountLeqNode(std::vector<VariableNode*> x, Int yParameter,
-                        VariableNode* c, VariableNode* r)
-      : CountLeqNode(x, nullptr, yParameter, c, 0, r) {}
+                        VariableNode* c, VariableNode* r);
 
   explicit CountLeqNode(std::vector<VariableNode*> x, VariableNode* y,
-                        Int cParameter, VariableNode* r)
-      : CountLeqNode(x, y, 0, nullptr, cParameter, r) {}
+                        Int cParameter, VariableNode* r);
 
   explicit CountLeqNode(std::vector<VariableNode*> x, Int yParameter,
-                        Int cParameter, VariableNode* r)
-      : CountLeqNode(x, nullptr, yParameter, nullptr, cParameter, r) {}
+                        Int cParameter, VariableNode* r);
 
   explicit CountLeqNode(std::vector<VariableNode*> x, VariableNode* y,
-                        VariableNode* c, bool shouldHold)
-      : CountLeqNode(x, y, 0, c, 0, shouldHold) {}
+                        VariableNode* c, bool shouldHold);
 
   explicit CountLeqNode(std::vector<VariableNode*> x, Int yParameter,
-                        VariableNode* c, bool shouldHold)
-      : CountLeqNode(x, nullptr, yParameter, c, 0, shouldHold) {}
+                        VariableNode* c, bool shouldHold);
 
   explicit CountLeqNode(std::vector<VariableNode*> x, VariableNode* y,
-                        Int cParameter, bool shouldHold)
-      : CountLeqNode(x, y, 0, nullptr, cParameter, shouldHold) {}
+                        Int cParameter, bool shouldHold);
 
   explicit CountLeqNode(std::vector<VariableNode*> x, Int yParameter,
-                        Int cParameter, bool shouldHold)
-      : CountLeqNode(x, nullptr, yParameter, nullptr, cParameter, shouldHold) {}
+                        Int cParameter, bool shouldHold);
 
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {

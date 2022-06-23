@@ -10,6 +10,15 @@ class VariableAlreadyDefinedException : public std::runtime_error {
       : std::runtime_error(msg) {}
 };
 
+class EmptyDomainException : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit EmptyDomainException()
+      : std::runtime_error("The domain of a variable became empty.") {}
+};
+
 class EngineOpenException : public std::runtime_error {
  public:
   /**
@@ -68,6 +77,11 @@ class TopologicalOrderError : public std::runtime_error {
       : std::runtime_error(
             "Could not topologically order the invariant graph due to one or "
             "more dynamic cycles.") {}
+};
+
+class BadArgumentError : public std::runtime_error {
+ public:
+  explicit BadArgumentError(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 // We do not extend std::runtime_error to keep runtime overhead at a minimum.
