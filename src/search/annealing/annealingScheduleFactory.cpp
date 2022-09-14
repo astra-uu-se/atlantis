@@ -2,11 +2,7 @@
 
 #define JSON_NO_IO
 #define JSON_HAS_CPP_17
-#include <fstream>
 #include <nlohmann/json.hpp>
-#include <string>
-
-#include "search/annealing/annealerContainer.hpp"
 
 using namespace nlohmann;
 using namespace search;
@@ -115,7 +111,7 @@ static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
 
 std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
   if (!_scheduleDefinition) {
-    return AnnealerContainer::cooling(0.95, 4);
+    return defaultAnnealingSchedule();
   }
 
   auto contents = readFileToString(*_scheduleDefinition);

@@ -1,10 +1,13 @@
 #pragma once
 
 #include <filesystem>
+#include <fstream>
 #include <optional>
+#include <string>
 #include <utility>
 
 #include "annealingSchedule.hpp"
+#include "search/annealing/annealerContainer.hpp"
 
 namespace search {
 
@@ -13,15 +16,26 @@ class AnnealingScheduleCreationError : public std::exception {
   const std::string _msg;
 
  public:
-  explicit AnnealingScheduleCreationError(std::string msg) : _msg(std::move(msg)) {}
+  explicit AnnealingScheduleCreationError(std::string msg)
+      : _msg(std::move(msg)) {}
   explicit AnnealingScheduleCreationError(const char* msg) : _msg(msg) {}
 
-  [[nodiscard]] const char* what() const noexcept override { return _msg.c_str(); }
+  [[nodiscard]] const char* what() const noexcept override {
+    return _msg.c_str();
+  }
 };
 
 class AnnealingScheduleFactory {
  private:
   std::optional<std::filesystem::path> _scheduleDefinition;
+
+  inline std::unique_ptr<AnnealingSchedule> defaultAnnealingSchedule() const {
+    std::vector<std::unique_ptr<AnnealingSchedule>> inner;
+    inner.push_back(AnnealerContainer::heating(1.2, 0.75));
+    inner.push_back(AnnealerContainer::cooling(0.99, 4));
+    return AnnealerContainer::loop(
+        AnnealerContainer::sequence(std::move(inner)), 5);
+  }
 
  public:
   explicit AnnealingScheduleFactory(
