@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "../benchmark.hpp"
 #include "constraints/allDifferent.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariants/absDiff.hpp"
@@ -51,7 +52,7 @@ class LinearTree : public benchmark::Fixture {
           decisionVars.push_back(var);
         }
       }
-      engine->makeInvariant<Linear>(linearInputs, cur.id);
+      engine->makeInvariant<Linear>(cur.id, linearInputs);
       linearInputs.clear();
     }
 #ifndef NDEBUG
@@ -89,18 +90,15 @@ class LinearTree : public benchmark::Fixture {
   void commitRnd(benchmark::State& st, size_t numMoves);
 
   void SetUp(const ::benchmark::State& state) {
-    setLogLevel(debug);
-
     engine = std::make_unique<PropagationEngine>();
 
-    linearArgumentCount = state.range(1);
-    treeHeight = state.range(2);
+    linearArgumentCount = state.range(0);
+    treeHeight = state.range(1);
     lb = -1000;
     ub = 1000;
 
     engine->open();
-    engine->setPropagationMode(
-        static_cast<PropagationEngine::PropagationMode>(state.range(0)));
+    setEngineModes(*engine, state.range(2));
 
     createTree();
 
@@ -210,10 +208,10 @@ void LinearTree::commitRnd(benchmark::State& st, size_t numMoves) {
       benchmark::Counter(commits, benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(LinearTree, probe_single_move)
+BENCHMARK_DEFINE_F(LinearTree, probe_single)
 (benchmark::State& st) { probe(std::ref(st), 1); }
 
-BENCHMARK_DEFINE_F(LinearTree, probe_single_move_query_rnd)
+BENCHMARK_DEFINE_F(LinearTree, probe_single_query_rnd)
 (benchmark::State& st) { probeRnd(std::ref(st), 1); }
 
 BENCHMARK_DEFINE_F(LinearTree, probe_swap)(benchmark::State& st) {
@@ -227,10 +225,10 @@ BENCHMARK_DEFINE_F(LinearTree, probe_all_move)(benchmark::State& st) {
   probe(std::ref(st), decisionVars.size());
 }
 
-BENCHMARK_DEFINE_F(LinearTree, commit_single_move)
+BENCHMARK_DEFINE_F(LinearTree, commit_single)
 (benchmark::State& st) { commit(std::ref(st), 1); }
 
-BENCHMARK_DEFINE_F(LinearTree, commit_single_move_query_rnd)
+BENCHMARK_DEFINE_F(LinearTree, commit_single_query_rnd)
 (benchmark::State& st) { commitRnd(std::ref(st), 1); }
 
 BENCHMARK_DEFINE_F(LinearTree, commit_swap)(benchmark::State& st) {
@@ -244,19 +242,22 @@ BENCHMARK_DEFINE_F(LinearTree, commit_all_move)(benchmark::State& st) {
   commit(std::ref(st), decisionVars.size());
 }
 
-BENCHMARK_DEFINE_F(LinearTree, commit_all_move_query_rnd)
+BENCHMARK_DEFINE_F(LinearTree, commit_all_query_rnd)
 (benchmark::State& st) { commitRnd(std::ref(st), decisionVars.size()); }
 
-BENCHMARK_DEFINE_F(LinearTree, probe_all_move_query_rnd)
+BENCHMARK_DEFINE_F(LinearTree, probe_all_query_rnd)
 (benchmark::State& st) { probeRnd(std::ref(st), decisionVars.size()); }
 
-/*
+//*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int treeHeight = 18; treeHeight <= 18; treeHeight += 2) {
-    for (Int mode = 0; mode <= 2; ++mode) {
-      benchmark->Args({mode, 2, treeHeight});
+  for (int treeHeight = 2; treeHeight <= 12; treeHeight += 2) {
+    for (Int mode = 0; mode <= 3; ++mode) {
+      benchmark->Args({2, treeHeight, mode});
     }
+#ifndef NDEBUG
+    break;
+#endif
   }
 }
 
@@ -264,24 +265,39 @@ static void arguments(benchmark::internal::Benchmark* benchmark) {
 // Probing
 // -----------------------------------------
 
-BENCHMARK_REGISTER_F(LinearTree, probe_single_move)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, probe_single_move_query_rnd)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, probe_swap)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, probe_swap_query_rnd)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, probe_all_move)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, probe_all_move_query_rnd)->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearTree, probe_single)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearTree, probe_single_query_rnd)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+
+//*/
+/*
+BENCHMARK_REGISTER_F(LinearTree, probe_swap)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearTree, probe_swap_query_rnd)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearTree, probe_all_move)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearTree, probe_all_query_rnd)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
 
 /*
 // -----------------------------------------
 // Commit
 // -----------------------------------------
 
-BENCHMARK_REGISTER_F(LinearTree, commit_single_move)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, commit_single_move_query_rnd)
+BENCHMARK_REGISTER_F(LinearTree, commit_single)->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearTree, commit_single_query_rnd)
     ->Apply(arguments);
 BENCHMARK_REGISTER_F(LinearTree, commit_swap)->Apply(arguments);
 BENCHMARK_REGISTER_F(LinearTree, commit_swap_query_rnd)->Apply(arguments);
 BENCHMARK_REGISTER_F(LinearTree, commit_all_move)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, commit_all_move_query_rnd)->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearTree, commit_all_query_rnd)->Apply(arguments);
 
 //*/

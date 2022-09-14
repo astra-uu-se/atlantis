@@ -27,3 +27,8 @@ inline OutputToInputMarkingMode intToOutputToInputMarkingMode(int state) {
       return OutputToInputMarkingMode::NONE;
   }
 }
+
+inline void setEngineModes(PropagationEngine& engine, const int state) {
+  engine.setPropagationMode(intToPropagationMode(state));
+  engine.setOutputToInputMarkingMode(intToOutputToInputMarkingMode(state));
+}

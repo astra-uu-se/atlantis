@@ -5,6 +5,9 @@ MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR=${MKFILE_PATH}build
 MZN_MODEL_DIR=${MKFILE_PATH}mzn-models
 FZN_MODEL_DIR=${MKFILE_PATH}fzn-models
+BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
+BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
+NUM_BENCHMARK_REPETITIONS=5
 
 export MZN_SOLVER_PATH=${MKFILE_PATH}minizinc
 
@@ -23,14 +26,14 @@ build:
 build-tests:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; \
-	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS:BOOL=ON ..; \
+	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=OFF ..; \
 	$(MAKE)
 
 .PHONY: build-benchmarks
 build-benchmarks:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; \
-	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS:BOOL=ON ..; \
+	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON ..; \
 	$(MAKE)
 
 .PHONY: run
@@ -44,6 +47,13 @@ run-tests: build-tests
 .PHONY: run-benchmarks
 run-benchmarks: build-benchmarks
 	exec ${BUILD_DIR}/runBenchmarks
+
+.PHONY: benchmark
+benchmark: build-benchmarks
+	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))
+	$(eval $@_JSON_FILE := ${BENCHMARK_JSON_DIR}/${$@_TIMESTAMP}.json)
+	exec ${BUILD_DIR}/runBenchmarks --benchmark_format=json --benchmark_out=${$@_JSON_FILE} --benchmark_repetitions=${NUM_BENCHMARK_REPETITIONS}
+	python3 ${MKFILE_PATH}plot-formatter.py -v --input=${$@_JSON_FILE} --file-suffix=${$@_TIMESTAMP} --output-dir=${BENCHMARK_PLOT_DIR}
 
 .PHONY: all
 all: clean build build-tests build-benchmarks

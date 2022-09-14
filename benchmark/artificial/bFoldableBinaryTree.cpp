@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "../benchmark.hpp"
 #include "constraints/allDifferent.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariants/absDiff.hpp"
@@ -30,7 +31,7 @@ class FoldableBinaryTree : public benchmark::Fixture {
       vars.push_back(left);
       vars.push_back(right);
 
-      engine->makeInvariant<Linear>(std::vector<VarId>{left, right}, prev);
+      engine->makeInvariant<Linear>(prev, std::vector<VarId>{left, right});
       if (level == treeHeight - 1) {
         decisionVars.push_back(left);
       }
@@ -45,7 +46,7 @@ class FoldableBinaryTree : public benchmark::Fixture {
   std::unique_ptr<PropagationEngine> engine;
   std::vector<VarId> vars;
   std::vector<VarId> decisionVars;
-  VarId outputVar;
+  VarId queryVar;
   std::random_device rd;
 
   std::mt19937 genValue;
@@ -71,10 +72,9 @@ class FoldableBinaryTree : public benchmark::Fixture {
     ub = 1000;
 
     engine->open();
-    engine->setPropagationMode(
-        PropagationEngine::PropagationMode::INPUT_TO_OUTPUT);
+    setEngineModes(*engine, state.range(1));
 
-    outputVar = createTree();
+    queryVar = createTree();
 
     engine->close();
 
@@ -102,9 +102,9 @@ void FoldableBinaryTree::probe(benchmark::State& st, size_t moveCount) {
     }
     engine->endMove();
 
-    // Query output var
+    // Query queryVar var
     engine->beginProbe();
-    engine->query(output);
+    engine->query(queryVar);
     engine->endProbe();
     ++probes;
   }
@@ -156,9 +156,9 @@ void FoldableBinaryTree::commit(benchmark::State& st, size_t moveCount) {
 
     st.ResumeTiming();
 
-    // Commit last output var
+    // Commit last queryVar var
     engine->beginCommit();
-    engine->query(outputVar);
+    engine->query(queryVar);
     engine->endCommit();
     ++commits;
   }
@@ -193,23 +193,23 @@ void FoldableBinaryTree::commitRnd(benchmark::State& st, size_t moveCount) {
       commits, benchmark::Counter::kIsRate | benchmark::Counter::kInvert);
 }
 
-BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_move_single)
+BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_single)
 (benchmark::State& st) { probe(std::ref(st), 1); }
 
-BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_move_single_query_rnd)
+BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_single_query_rnd)
 (benchmark::State& st) { probeRnd(std::ref(st), 1); }
 
-BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_move_two)
+BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_double)
 (benchmark::State& st) { probe(std::ref(st), 2); }
 
-BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_move_two_query_rnd)
+BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_double_query_rnd)
 (benchmark::State& st) { probeRnd(std::ref(st), 2); }
 
-BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_move_all)
-(benchmark::State& st) { probe(std::ref(st), st.range(0) + 1); }
+BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_all)
+(benchmark::State& st) { probe(std::ref(st), st.range(1) + 1); }
 
-BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_move_all_query_rnd)
-(benchmark::State& st) { probeRnd(std::ref(st), st.range(0) + 1); }
+BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_all_query_rnd)
+(benchmark::State& st) { probeRnd(std::ref(st), st.range(1) + 1); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_single)
 (benchmark::State& st) { commit(std::ref(st), 1); }
@@ -229,22 +229,43 @@ BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_all)
 BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_all_query_rnd)
 (benchmark::State& st) { commitRnd(std::ref(st), decisionVars.size()); }
 
-/*
+//*
 
 // -----------------------------------------
 // Probing
 // ------------------------------------------
 
-BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_move_single)
-    ->DenseRange(4, 20, 2);
-BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_move_single_query_rnd)
-    ->DenseRange(4, 20, 2);
-BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_move_two)->DenseRange(4, 20, 2);
-BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_move_two_query_rnd)
-    ->DenseRange(4, 20, 2);
-BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_move_all)->DenseRange(4, 20, 2);
-BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_move_all_query_rnd)
-    ->DenseRange(4, 20, 2);
+static void arguments(benchmark::internal::Benchmark* benchmark) {
+  for (int treeHeight = 2; treeHeight <= 10; treeHeight += 2) {
+    for (Int mode = 0; mode <= 3; ++mode) {
+      benchmark->Args({treeHeight, mode});
+    }
+#ifndef NDEBUG
+    return;
+#endif
+  }
+}
+
+BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_single)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_single_query_rnd)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+
+/*
+BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_double)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_double_query_rnd)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_all)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_all_query_rnd)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
 
 /*
 // -----------------------------------------
@@ -252,17 +273,15 @@ BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_move_all_query_rnd)
 // ------------------------------------------
 
 // BENCHMARK_REGISTER_F(FoldableBinaryTree, commit_move_single)
-//    ->ArgsProduct({benchmark::CreateRange(4, 20, 2),
+//    ->ArgsProduct({benchmark::CreateRange(4, 4, 2),
 //                   benchmark::CreateRange(0, 0, 0)});
 BENCHMARK_REGISTER_F(FoldableBinaryTree, commit_move_single_query_rnd)
-    ->DenseRange(4, 20, 2);
-BENCHMARK_REGISTER_F(FoldableBinaryTree, commit_move_two)
-    ->DenseRange(4, 20, 2);
+    ->DenseRange(4, 4, 2);
+BENCHMARK_REGISTER_F(FoldableBinaryTree, commit_move_two)->DenseRange(4, 4, 2);
 BENCHMARK_REGISTER_F(FoldableBinaryTree, commit_move_two_query_rnd)
-    ->DenseRange(4, 20, 2);
-BENCHMARK_REGISTER_F(FoldableBinaryTree, commit_move_all)
-    ->DenseRange(4, 20, 2);
+    ->DenseRange(4, 4, 2);
+BENCHMARK_REGISTER_F(FoldableBinaryTree, commit_move_all)->DenseRange(4, 4, 2);
 BENCHMARK_REGISTER_F(FoldableBinaryTree, commit_move_all_query_rnd)
-    ->DenseRange(4, 20, 2);
+    ->DenseRange(4, 4, 2);
 
 //*/

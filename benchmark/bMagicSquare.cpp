@@ -1,17 +1,17 @@
 #include <benchmark/benchmark.h>
 
-#include <constraints/allDifferent.hpp>
-#include <constraints/equal.hpp>
-#include <core/propagationEngine.hpp>
 #include <exception>
-#include <invariants/absDiff.hpp>
-#include <invariants/linear.hpp>
 #include <iostream>
 #include <random>
 #include <utility>
 #include <vector>
 
 #include "benchmark.hpp"
+#include "constraints/allDifferent.hpp"
+#include "constraints/equal.hpp"
+#include "core/propagationEngine.hpp"
+#include "invariants/absDiff.hpp"
+#include "invariants/linear.hpp"
 
 class MagicSquare : public benchmark::Fixture {
  public:
@@ -29,7 +29,7 @@ class MagicSquare : public benchmark::Fixture {
   void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
 
-    n = state.range(1);
+    n = state.range(0);
     if (n < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
@@ -42,9 +42,7 @@ class MagicSquare : public benchmark::Fixture {
 
     engine->open();
 
-    engine->setPropagationMode(intToPropagationMode(state.range(0)));
-    engine->setOutputToInputMarkingMode(
-        intToOutputToInputMarkingMode(state.range(0)));
+    setEngineModes(*engine, state.range(1));
 
     VarId magicSumVar = engine->makeIntVar(magicSum, magicSum, magicSum);
 
@@ -137,7 +135,27 @@ class MagicSquare : public benchmark::Fixture {
   }
 };
 
-BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(MagicSquare, probe_single_swap)(benchmark::State& st) {
+  for (auto _ : st) {
+    const size_t i = distribution(gen);
+    assert(i < flat.size());
+    const size_t j = distribution(gen);
+    assert(j < flat.size());
+
+    const Int oldI = engine->committedValue(flat[i]);
+    const Int oldJ = engine->committedValue(flat[j]);
+    engine->beginMove();
+    engine->setValue(flat[i], oldJ);
+    engine->setValue(flat[j], oldI);
+    engine->endMove();
+
+    engine->beginProbe();
+    engine->query(totalViolation);
+    engine->endProbe();
+  }
+}
+
+BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(benchmark::State& st) {
   int probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
@@ -161,16 +179,26 @@ BENCHMARK_DEFINE_F(MagicSquare, probing_all_swap)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-///*
+//*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int n = 4; n <= 10; n += 2) {
+  for (int n = 4; n <= 16; n += 2) {
     for (int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({mode, n});
+      benchmark->Args({n, mode});
     }
+#ifndef NDEBUG
+    return;
+#endif
   }
 }
 
-BENCHMARK_REGISTER_F(MagicSquare, probing_all_swap)
+BENCHMARK_REGISTER_F(MagicSquare, probe_single_swap)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+
+//*/
+
+/*
+BENCHMARK_REGISTER_F(MagicSquare, probe_all_swap)
     ->Unit(benchmark::kMillisecond)
     ->Apply(arguments);
 //*/

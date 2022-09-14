@@ -1,15 +1,15 @@
 #include <benchmark/benchmark.h>
 
-#include <constraints/allDifferent.hpp>
-#include <core/propagationEngine.hpp>
-#include <invariants/linear.hpp>
 #include <iostream>
 #include <random>
 #include <utility>
 #include <vector>
-#include <views/intOffsetView.hpp>
 
 #include "benchmark.hpp"
+#include "constraints/allDifferent.hpp"
+#include "core/propagationEngine.hpp"
+#include "invariants/linear.hpp"
+#include "views/intOffsetView.hpp"
 
 class Queens : public benchmark::Fixture {
  public:
@@ -26,20 +26,18 @@ class Queens : public benchmark::Fixture {
   VarId violation1 = NULL_ID;
   VarId violation2 = NULL_ID;
   VarId violation3 = NULL_ID;
-  VarId total_violation = NULL_ID;
+  VarId totalViolation = NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(1);
+    n = state.range(0);
     if (n < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
 
     engine->open();
 
-    engine->setPropagationMode(intToPropagationMode(state.range(0)));
-    engine->setOutputToInputMarkingMode(
-        intToOutputToInputMarkingMode(state.range(0)));
+    setEngineModes(*engine, state.range(1));
 
     for (Int i = 0; i < n; ++i) {
       const VarId q = engine->makeIntVar(i, 0, n - 1);
@@ -56,10 +54,10 @@ class Queens : public benchmark::Fixture {
     engine->makeConstraint<AllDifferent>(violation2, q_offset_minus);
     engine->makeConstraint<AllDifferent>(violation3, q_offset_plus);
 
-    total_violation = engine->makeIntVar(0, 0, 3 * n);
+    totalViolation = engine->makeIntVar(0, 0, 3 * n);
 
     engine->makeInvariant<Linear>(
-        total_violation, std::vector<Int>{1, 1, 1},
+        totalViolation, std::vector<Int>{1, 1, 1},
         std::vector<VarId>{violation1, violation2, violation3});
 
     engine->close();
@@ -84,7 +82,7 @@ class Queens : public benchmark::Fixture {
   }
 };
 
-BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(Queens, probe_single_swap)(benchmark::State& st) {
   for (auto _ : st) {
     const size_t i = distribution(gen);
     assert(i < queens.size());
@@ -99,12 +97,12 @@ BENCHMARK_DEFINE_F(Queens, probing_single_swap)(benchmark::State& st) {
     engine->endMove();
 
     engine->beginProbe();
-    engine->query(total_violation);
+    engine->query(totalViolation);
     engine->endProbe();
   }
 }
 
-BENCHMARK_DEFINE_F(Queens, probing_all_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(Queens, probe_all_swap)(benchmark::State& st) {
   int probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
@@ -117,7 +115,7 @@ BENCHMARK_DEFINE_F(Queens, probing_all_swap)(benchmark::State& st) {
         engine->endMove();
 
         engine->beginProbe();
-        engine->query(total_violation);
+        engine->query(totalViolation);
         engine->endProbe();
 
         ++probes;
@@ -155,12 +153,12 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
           engine->endMove();
 
           engine->beginProbe();
-          engine->query(total_violation);
+          engine->query(totalViolation);
           engine->endProbe();
 
           ++probes;
 
-          Int newValue = engine->currentValue(total_violation);
+          Int newValue = engine->currentValue(totalViolation);
           if (newValue <= bestViol) {
             bestViol = newValue;
             bestI = i;
@@ -177,7 +175,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
       engine->endMove();
 
       engine->beginCommit();
-      engine->query(total_violation);
+      engine->query(totalViolation);
       engine->endCommit();
 
       tabu[bestI] = it + tenure;
@@ -198,19 +196,28 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
   logDebug(instanceToString());
 }
 
-/*
+//*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int n = 50; n <= 50; n += 50) {
-    for (int mode = 0; mode <= 2; ++mode) {
-      benchmark->Args({mode, n});
+  for (int n = 16; n <= 1024; n *= 2) {
+    for (int mode = 0; mode <= 3; ++mode) {
+      benchmark->Args({n, mode});
     }
+#ifndef NDEBUG
+    return;
+#endif
   }
 }
 
-BENCHMARK_REGISTER_F(Queens, probing_single_swap)->Ranges({{0, 2}, {5, 5000}});
-BENCHMARK_REGISTER_F(Queens, probing_all_swap)
+BENCHMARK_REGISTER_F(Queens, probe_single_swap)
     ->Unit(benchmark::kMillisecond)
-    ->Ranges({{0, 2}, {5, 1000}});
+    ->Apply(arguments);
 
+//*
+/*
+BENCHMARK_REGISTER_F(Queens, probe_all_swap)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+
+/*
 BENCHMARK_REGISTER_F(Queens, solve)->Apply(arguments);
 //*/

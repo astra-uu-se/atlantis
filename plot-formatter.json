@@ -1,35 +1,150 @@
 {
+  "ElementLinearTree": {
+    "model_name": "Element Linear Tree",
+    "yscale": "log",
+    "method_name": {
+      "probe_single_move_decision_var": "non-index variable",
+      "probe_single_search_var": "non-index variable",
+      "probe_single_non_index_var": "non-index variable",
+      "probing_single_move_index_var": "index variable",
+      "probe_single_index_var": "index variable"
+    },
+    "argument_order": [
+      "Tree Count",
+      "Tree Height",
+      "PROPAGATION_MODE"
+    ]
+  },
+  "ElementVarTree": {
+    "model_name": "Element Tree",
+    "yscale": "log",
+    "method_name": {
+      "probe_single": "single",
+      "probe_double": "double",
+      "probe_all": "all search variables"
+    },
+    "argument_order": [
+      "Tree Height",
+      "Element dynamic input count",
+      "PROPAGATION_MODE"
+    ]
+  },
+  "FoldableBinaryTree": {
+    "model_name": "Foldable Binary Tree",
+    "yscale": "log",
+    "method_name": {
+      "probe_move_single": "single - query output",
+      "probe_single": "single - query output",
+      "probe_move_single_query_rnd": "single - query random",
+      "probe_single_query_rnd": "single - query random",
+      "probe_move_two": "double - query output",
+      "probe_double": "double - query output",
+      "probe_move_two_query_rnd": "double - query random",
+      "probe_double_query_rnd": "all - query random",
+      "probe_move_all": "all - query output",
+      "probe_all": "all - query output",
+      "probe_move_all_query_rnd": "all - query random",
+      "probe_all_query_rnd": "all - query random"
+    },
+    "argument_order": [
+      "Tree Height",
+      "PROPAGATION_MODE"
+    ]
+  },
+  "LinearAllDifferent": {
+    "model_name": "Linear All Different",
+    "yscale": "log",
+    "method_name": {
+      "probing_single_swap": "single swap",
+      "probing_all_swap": "all swaps"
+    },
+    "argument_order": [
+      "Overlapping input variables",
+      "Number of input variables",
+      "PROPAGATION_MODE"
+    ]
+  },
+  "LinearTree": {
+    "model_name": "Linear Tree",
+    "yscale": "log",
+    "method_name": {
+      "probe_single_move": "single",
+      "probe_single": "single",
+      "probe_single_move_query_rnd": "single - query random",
+      "probe_single_query_rnd": "single - query random",
+      "probe_swap": "swap",
+      "probe_swap_query_rnd": "swap - query random",
+      "probe_all_move": "all",
+      "probe_all_move_query_rnd": "all - query random"
+    },
+    "argument_order": [
+      "Linear input count",
+      "Tree Height",
+      "PROPAGATION_MODE"
+    ]
+  },
   "AllInterval": {
     "yscale": "log",
     "model_name": "All-Interval Series"
   },
+  "CarSequencing": {
+    "model_name": "Car Sequencing",
+    "method_name": {
+      "probing_single": "single swap",
+      "probe_single_swap": "single swap",
+      "probing_all_swap": "all swaps",
+      "probe_all_swap": "all swaps"
+    },
+    "argument_order": [
+      "Number of cars",
+      "PROPAGATION_MODE"
+    ],
+    "yscale": "log"
+  },
   "Queens": {
     "model_name": "N-Queens",
     "yscale": "log",
+    "method_name": {
+      "probing_single_swap": "single swap",
+      "probe_single_swap": "single swap",
+      "probing_all_swap": "all swaps",
+      "probe_all_swap": "all swaps"
+    },
     "argument_order": [
-      "PROPAGATION_MODE",
-      "Number of queens"
+      "Number of queens",
+      "PROPAGATION_MODE"
     ]
   },
   "MagicSquare": {
     "model_name": "Magic Square",
+    "method_name": {
+      "probing_single_swap": "single swap",
+      "probe_single_swap": "single swap",
+      "probing_all_swap": "all swaps",
+      "probe_all_swap": "all swaps"
+    },
     "yscale": "log"
+  },
+  "VesselLoading": {
+    "model_name": "Vessel Loading",
+    "yscale": "log",
+    "method_name": {
+      "rotate_rand_container": "Rotate random"
+    },
+    "argument_order": [
+      "Container count",
+      "PROPAGATION_MODE"
+    ]
   },
   "TSPTW": {
     "yscale": "log",
+    "method_name": {
+      "probe_single_relocate": "single Three-opt",
+      "probe_all_relocate": "all Three-opts"
+    },
     "argument_order": [
-      "PROPAGATION_MODE",
-      "Number of locations"
-    ]
-  },
-  "bElementLinearTree": {
-    "model_name": "Element Binary Tree",
-    "yscale": "log",
-    "argument_order": [
-      "PROPAGATION_MODE",
-      "IGNORE",
-      "Tree Count",
-      "Tree Height"
+      "Number of locations",
+      "PROPAGATION_MODE"
     ]
   }
 }

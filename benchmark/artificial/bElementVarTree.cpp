@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "../benchmark.hpp"
 #include "constraints/allDifferent.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariants/absDiff.hpp"
@@ -54,7 +55,7 @@ class ElementVarTree : public benchmark::Fixture {
         }
       }
 
-      engine->makeInvariant<ElementVar>(indexVar, elementInputs, cur.id);
+      engine->makeInvariant<ElementVar>(cur.id, indexVar, elementInputs);
       elementInputs.clear();
     }
   }
@@ -90,15 +91,14 @@ class ElementVarTree : public benchmark::Fixture {
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
 
-    treeHeight = state.range(1);
-    elementSize = state.range(2);  // number of element inputs
+    treeHeight = state.range(0);
+    elementSize = state.range(1);  // number of element inputs
 
     genValue = std::mt19937(rd());
     valueDist = std::uniform_int_distribution<Int>(0, elementSize - 1);
 
     engine->open();
-    engine->setPropagationMode(
-        static_cast<PropagationEngine::PropagationMode>(state.range(0)));
+    setEngineModes(*engine, state.range(2));
 
     createTree();
 
@@ -185,15 +185,19 @@ BENCHMARK_DEFINE_F(ElementVarTree, commit_all)(benchmark::State& st) {
   commit(std::ref(st), indexDecisionVars.size());
 }
 
-/*
+//*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int treeHeight = 6; treeHeight <= 12; treeHeight += 2) {
-    for (int elementSize = 2; elementSize * treeHeight <= 36;
-         elementSize += 2) {
-      for (Int mode = 0; mode <= 2; ++mode) {
-        benchmark->Args({mode, treeHeight, elementSize});
+  for (int treeHeight = 2; treeHeight <= 10; treeHeight += 2) {
+    for (int elementSize = 2;
+         elementSize <= 10 && std::pow(treeHeight, elementSize) <= 2048;
+         ++elementSize) {
+      for (Int mode = 0; mode <= 3; ++mode) {
+        benchmark->Args({treeHeight, elementSize, mode});
       }
+#ifndef NDEBUG
+      return;
+#endif
     }
   }
 }
@@ -202,17 +206,38 @@ static void arguments(benchmark::internal::Benchmark* benchmark) {
 // Probing
 // -----------------------------------------
 
-BENCHMARK_REGISTER_F(ElementVarTree, probe_single)->Apply(arguments);
-BENCHMARK_REGISTER_F(ElementVarTree, probe_double)->Apply(arguments);
-BENCHMARK_REGISTER_F(ElementVarTree, probe_all)->Apply(arguments);
+BENCHMARK_REGISTER_F(ElementVarTree, probe_single)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+/*
+BENCHMARK_REGISTER_F(ElementVarTree, probe_double)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+BENCHMARK_REGISTER_F(ElementVarTree, probe_all)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+
+//*/
 
 /*
 // -----------------------------------------
 // Commit
 // -----------------------------------------
 
-BENCHMARK_REGISTER_F(ElementVarTree, commit_single)->Apply(arguments);
-BENCHMARK_REGISTER_F(ElementVarTree, commit_double)->Apply(arguments);
-BENCHMARK_REGISTER_F(ElementVarTree, commit_all)->Apply(arguments);
+static void commitArguments(benchmark::internal::Benchmark* benchmark) {
+  for (int treeHeight = 6; treeHeight <= 6; treeHeight += 2) {
+    for (int elementSize = 2; elementSize * treeHeight <= 12;
+         elementSize += 2) {
+      benchmark->Args({treeHeight, elementSize. 0});
+    }
+  }
+}
+
+BENCHMARK_REGISTER_F(ElementVarTree,
+commit_single)->Unit(benchmark::kMillisecond)->Apply(commitArguments);
+BENCHMARK_REGISTER_F(ElementVarTree,
+commit_double)->Unit(benchmark::kMillisecond)->Apply(commitArguments);
+BENCHMARK_REGISTER_F(ElementVarTree,
+commit_all)->Unit(benchmark::kMillisecond)->Apply(commitArguments);
 
 //*/

@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "../benchmark.hpp"
 #include "constraints/allDifferent.hpp"
 #include "core/propagationEngine.hpp"
 #include "invariants/absDiff.hpp"
@@ -25,23 +26,22 @@ class LinearAllDifferent : public benchmark::Fixture {
 
   void SetUp(const ::benchmark::State& state) {
     engine = std::make_unique<PropagationEngine>();
-    bool overlappingLinears = state.range(1) != 0;
+    bool overlappingLinears = state.range(0) != 0;
     std::vector<VarId> linearOutputVars;
     size_t increment;
 
     if (overlappingLinears) {
-      varCount = state.range(2);
+      varCount = state.range(1);
       linearOutputVars.reserve(varCount - 1);
       increment = 1;
     } else {
-      varCount = state.range(2) - (state.range(2) % 2);
+      varCount = state.range(1) - (state.range(1) % 2);
       linearOutputVars.reserve(varCount / 2);
       increment = 2;
     }
 
     engine->open();
-    engine->setPropagationMode(
-        static_cast<PropagationEngine::PropagationMode>(state.range(0)));
+    setEngineModes(*engine, state.range(2));
 
     decisionVars.reserve(varCount);
 
@@ -52,8 +52,8 @@ class LinearAllDifferent : public benchmark::Fixture {
     for (size_t i = 0; i < varCount - 1; i += increment) {
       linearOutputVars.push_back(engine->makeIntVar(i, 0, 2 * (varCount - 1)));
       engine->makeInvariant<Linear>(
-          std::vector<VarId>{decisionVars.at(i), decisionVars.at(i + 1)},
-          linearOutputVars.back());
+          linearOutputVars.back(),
+          std::vector<VarId>{decisionVars.at(i), decisionVars.at(i + 1)});
     }
 
     violation = engine->makeIntVar(0, 0, varCount);
@@ -69,7 +69,7 @@ class LinearAllDifferent : public benchmark::Fixture {
   void TearDown(const ::benchmark::State&) { decisionVars.clear(); }
 };
 
-BENCHMARK_DEFINE_F(LinearAllDifferent, probing_single_swap)
+BENCHMARK_DEFINE_F(LinearAllDifferent, probe_single_swap)
 (benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
@@ -95,7 +95,7 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probing_single_swap)
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(LinearAllDifferent, probing_all_swap)
+BENCHMARK_DEFINE_F(LinearAllDifferent, probe_all_swap)
 (benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
@@ -103,14 +103,14 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probing_all_swap)
       for (size_t j = i + 1; j < varCount; ++j) {
         engine->beginMove();
         engine->setValue(decisionVars.at(i),
-                         engine->getCommittedValue(decisionVars.at(j)));
+                         engine->committedValue(decisionVars.at(j)));
         engine->setValue(decisionVars.at(j),
-                         engine->getCommittedValue(decisionVars.at(i)));
+                         engine->committedValue(decisionVars.at(i)));
         engine->endMove();
 
-        engine->beginQuery();
+        engine->beginProbe();
         engine->query(violation);
-        engine->endQuery();
+        engine->endProbe();
 
         ++probes;
       }
@@ -146,21 +146,27 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
       benchmark::Counter(commits, benchmark::Counter::kIsRate);
 }
 
-///*
+//*
 
-static void arguments(benchmark::internal::Benchmark* b) {
+static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int overlapping = 0; overlapping <= 1; ++overlapping) {
-    for (int varCount = 8; varCount <= 32; varCount *= 2) {
-      for (Int mode = 0; mode <= 2; ++mode) {
-        b->Args({mode, overlapping, varCount});
+    for (int varCount = 2; varCount <= 16; varCount *= 2) {
+      for (Int mode = 0; mode <= 3; ++mode) {
+        benchmark->Args({overlapping, varCount, mode});
       }
+#ifndef NDEBUG
+      return;
+#endif
     }
   }
 }
 
-BENCHMARK_REGISTER_F(LinearAllDifferent, probing_single_swap)->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearAllDifferent, probe_single_swap)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
 
-BENCHMARK_REGISTER_F(LinearAllDifferent, probing_all_swap)
+/*
+BENCHMARK_REGISTER_F(LinearAllDifferent, probe_all_swap)
     ->Unit(benchmark::kMillisecond)
     ->Apply(arguments);
 /*
