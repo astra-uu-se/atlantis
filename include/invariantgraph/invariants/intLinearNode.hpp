@@ -19,11 +19,9 @@ class IntLinearNode : public VariableDefiningNode {
         _coeffs(std::move(coeffs)),
         _definingCoefficient(definingCoefficient),
         _sum(sum) {
-#ifndef NDEBUG
-    for (auto* const staticInput : staticInputs()) {
-      assert(staticInput->isIntVar());
-    }
-#endif
+    assert(std::all_of(
+        staticInputs().begin(), staticInputs().end(),
+        [&](auto* const staticInput) { return staticInput->isIntVar(); }));
   }
 
   ~IntLinearNode() override = default;

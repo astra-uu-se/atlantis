@@ -11,11 +11,9 @@ class ArrayIntMinimumNode : public VariableDefiningNode {
   ArrayIntMinimumNode(std::vector<VariableNode*> variables,
                       VariableNode* output)
       : VariableDefiningNode({output}, variables) {
-#ifndef NDEBUG
-    for (auto* const staticInput : staticInputs()) {
-      assert(staticInput->isIntVar());
-    }
-#endif
+    assert(std::all_of(
+        staticInputs().begin(), staticInputs().end(),
+        [&](auto* const staticInput) { return staticInput->isIntVar(); }));
   }
 
   ~ArrayIntMinimumNode() override = default;

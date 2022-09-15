@@ -29,10 +29,11 @@ invariantgraph::CircuitImplicitNode::CircuitImplicitNode(
     : ImplicitConstraintNode(std::move(variables)) {
   assert(definedVariables().size() > 1);
 
-  const auto& domain = definedVariables().front()->domain();
-  for (const auto& variable : definedVariables()) {
-    assert(variable->domain() == domain);
-  }
+  assert(std::all_of(definedVariables().begin(), definedVariables().end(),
+                     [&](VariableNode* const variable) {
+                       return variable->domain() ==
+                              definedVariables().front()->domain();
+                     }));
 }
 
 search::neighbourhoods::Neighbourhood*

@@ -2,18 +2,25 @@
 
 #include "core/engine.hpp"
 
+inline bool all_in_range(size_t start, size_t stop,
+                         std::function<bool(size_t)> predicate) {
+  std::vector<size_t> vec(stop - start);
+  for (size_t i = 0; i < stop - start; ++i) {
+    vec.at(i) = start + i;
+  }
+  return std::all_of(vec.begin(), vec.end(), predicate);
+}
+
 InSparseDomain::InSparseDomain(VarId parentId,
                                const std::vector<DomainEntry>& domain)
     : IntView(parentId), _offset(domain.front().lowerBound) {
-#ifndef NDEBUG
   assert(domain.size() > 0);
-  for (const auto& domEntry : domain) {
-    assert(domEntry.lowerBound <= domEntry.upperBound);
-  }
-  for (size_t i = 1; i < domain.size(); ++i) {
-    assert(domain[i - 1].upperBound < domain[i].lowerBound);
-  }
-#endif
+  assert(std::all_of(domain.begin(), domain.end(), [&](const auto& domEntry) {
+    return domEntry.lowerBound <= domEntry.upperBound;
+  }));
+  assert(all_in_range(1u, domain.size(), [&](const size_t i) {
+    return domain.at(i - 1).upperBound < domain.at(i).lowerBound;
+  }));
   _valueViolation.resize(domain.back().upperBound - _offset + 1, 0);
   for (size_t i = 1; i < domain.size(); ++i) {
     for (Int val = domain[i - 1].upperBound + 1; val < domain[i].lowerBound;
