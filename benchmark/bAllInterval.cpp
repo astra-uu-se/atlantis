@@ -1,14 +1,14 @@
 #include <benchmark/benchmark.h>
 
-#include <constraints/allDifferent.hpp>
-#include <core/propagationEngine.hpp>
-#include <invariants/absDiff.hpp>
 #include <iostream>
 #include <random>
 #include <utility>
 #include <vector>
 
 #include "benchmark.hpp"
+#include "constraints/allDifferent.hpp"
+#include "core/propagationEngine.hpp"
+#include "invariants/absDiff.hpp"
 
 class AllInterval : public benchmark::Fixture {
  public:
@@ -21,20 +21,18 @@ class AllInterval : public benchmark::Fixture {
   std::uniform_int_distribution<Int> distribution;
   Int n;
 
-  VarId violation = NULL_ID;
+  VarId totalViolation = NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(1);
+    n = state.range(0);
     if (n < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
 
     engine->open();
 
-    engine->setPropagationMode(intToPropagationMode(state.range(0)));
-    engine->setOutputToInputMarkingMode(
-        intToOutputToInputMarkingMode(state.range(0)));
+    setEngineModes(*engine, state.range(1));
 
     for (int i = 0; i < n; ++i) {
       inputVars.push_back(engine->makeIntVar(i, 0, n - 1));
@@ -46,8 +44,8 @@ class AllInterval : public benchmark::Fixture {
                                      inputVars[i]);
     }
 
-    violation = engine->makeIntVar(0, 0, n);
-    engine->makeConstraint<AllDifferent>(violation, violationVars);
+    totalViolation = engine->makeIntVar(0, 0, n);
+    engine->makeConstraint<AllDifferent>(totalViolation, violationVars);
 
     engine->close();
 
@@ -62,7 +60,7 @@ class AllInterval : public benchmark::Fixture {
   }
 };
 
-BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
     const size_t i = distribution(gen);
@@ -78,7 +76,7 @@ BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
     engine->endMove();
 
     engine->beginProbe();
-    engine->query(violation);
+    engine->query(totalViolation);
     engine->endProbe();
     ++probes;
   }
@@ -86,7 +84,7 @@ BENCHMARK_DEFINE_F(AllInterval, probing_single_swap)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
@@ -99,7 +97,7 @@ BENCHMARK_DEFINE_F(AllInterval, probing_all_swap)(benchmark::State& st) {
         engine->endMove();
 
         engine->beginProbe();
-        engine->query(violation);
+        engine->query(totalViolation);
         engine->endProbe();
 
         ++probes;
@@ -126,7 +124,7 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
     engine->endMove();
 
     engine->beginCommit();
-    engine->query(violation);
+    engine->query(totalViolation);
     engine->endCommit();
 
     ++commits;
@@ -136,24 +134,39 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
       commits, benchmark::Counter::kIsRate | benchmark::Counter::kInvert);
 }
 
-///*
+//*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int n = 10; n <= 30; n += 10) {
+  for (int n = 10; n <= 100; n += 10) {
     for (int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({mode, n});
+      benchmark->Args({n, mode});
     }
+#ifndef NDEBUG
+    return;
+#endif
   }
 }
 
-static void commitArguments(benchmark::internal::Benchmark* benchmark) {
-  for (int n = 10; n <= 30; n += 10) {
-    benchmark->Args({0, n});
-  }
-}
-
-BENCHMARK_REGISTER_F(AllInterval, probing_single_swap)->Apply(arguments);
-BENCHMARK_REGISTER_F(AllInterval, probing_all_swap)
+BENCHMARK_REGISTER_F(AllInterval, probe_single_swap)
     ->Unit(benchmark::kMillisecond)
     ->Apply(arguments);
-BENCHMARK_REGISTER_F(AllInterval, commit_single_swap)->Apply(commitArguments);
+//*/
+/*
+BENCHMARK_REGISTER_F(AllInterval, probe_all_swap)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(arguments);
+
+//*/
+/*
+
+static void commitArguments(benchmark::internal::Benchmark* benchmark) {
+  for (int n = 10; n <= 10; n += 10) {
+    benchmark->Args({n, 0});
+  }
+#ifndef NDEBUG
+    break;
+#endif
+}
+BENCHMARK_REGISTER_F(AllInterval, commit_single_swap)
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(commitArguments);
 //*/

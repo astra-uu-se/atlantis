@@ -1,9 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <constraints/equal.hpp>
-#include <core/propagationEngine.hpp>
-#include <invariants/linear.hpp>
 #include <iostream>
 #include <limits>
 #include <random>
@@ -11,7 +8,10 @@
 #include <vector>
 
 #include "../testHelper.hpp"
+#include "constraints/equal.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/types.hpp"
+#include "invariants/linear.hpp"
 
 namespace {
 class MagicSquareTest : public ::testing::Test {

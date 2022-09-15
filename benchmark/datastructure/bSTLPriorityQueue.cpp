@@ -183,8 +183,11 @@ BENCHMARK_DEFINE_F(PrioQueue, pop_random)(benchmark::State& st) {
 
 /*
 static void arguments(benchmark::internal::Benchmark* b) {
-  for (int i = 5000; i <= 5000; i *= 10) {
+  for (int i = 5000; i <= 20000; i *= 10) {
     b->Arg(i);
+#ifndef NDEBUG
+    return;
+#endif
   }
 }
 

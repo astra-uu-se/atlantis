@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm>
-#include <fznparser/model.hpp>
 #include <utility>
 
 #include "constraints/lessEqual.hpp"
