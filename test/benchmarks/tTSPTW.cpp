@@ -1,16 +1,16 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <constraints/lessEqual.hpp>
-#include <core/propagationEngine.hpp>
-#include <invariants/elementVar.hpp>
-#include <invariants/linear.hpp>
 #include <random>
 #include <vector>
-#include <views/elementConst.hpp>
 
 #include "../testHelper.hpp"
+#include "constraints/lessEqual.hpp"
+#include "core/propagationEngine.hpp"
 #include "core/types.hpp"
+#include "invariants/elementVar.hpp"
+#include "invariants/linear.hpp"
+#include "views/elementConst.hpp"
 
 namespace {
 class TSPTWTest : public ::testing::Test {

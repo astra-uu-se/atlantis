@@ -1,17 +1,17 @@
 #include <benchmark/benchmark.h>
 
-#include <constraints/lessEqual.hpp>
-#include <core/propagationEngine.hpp>
-#include <invariants/elementVar.hpp>
-#include <invariants/linear.hpp>
 #include <iostream>
 #include <random>
 #include <utility>
 #include <vector>
-#include <views/elementConst.hpp>
-#include <views/intOffsetView.hpp>
 
 #include "benchmark.hpp"
+#include "constraints/lessEqual.hpp"
+#include "core/propagationEngine.hpp"
+#include "invariants/elementVar.hpp"
+#include "invariants/linear.hpp"
+#include "views/elementConst.hpp"
+#include "views/intOffsetView.hpp"
 
 class TSPTW : public benchmark::Fixture {
  public:
@@ -35,7 +35,7 @@ class TSPTW : public benchmark::Fixture {
 
   void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(1);
+    n = state.range(0);
 
     if (n < 1) {
       throw std::runtime_error("n must strictly positive.");
@@ -43,9 +43,7 @@ class TSPTW : public benchmark::Fixture {
 
     engine->open();
 
-    engine->setPropagationMode(intToPropagationMode(state.range(0)));
-    engine->setOutputToInputMarkingMode(
-        intToOutputToInputMarkingMode(state.range(0)));
+    setEngineModes(*engine, state.range(1));
 
     for (int i = 0; i < n; ++i) {
       dist.emplace_back();
@@ -92,11 +90,15 @@ class TSPTW : public benchmark::Fixture {
     engine->makeInvariant<Linear>(totalViolation, violation);
 
     engine->close();
-    for (const VarId p : pred) {
-      assert(engine->lowerBound(p) == 1);
-      assert(engine->upperBound(p) == n);
-      assert(1 <= engine->committedValue(p) && engine->committedValue(p) <= n);
-    }
+    assert(std::all_of(pred.begin(), pred.end(), [&](const VarId p) {
+      return engine->lowerBound(p) == 1;
+    }));
+    assert(std::all_of(pred.begin(), pred.end(), [&](const VarId p) {
+      return engine->upperBound(p) == n;
+    }));
+    assert(std::all_of(pred.begin(), pred.end(), [&](const VarId p) {
+      return 1 <= engine->committedValue(p) && engine->committedValue(p) <= n;
+    }));
 
     gen = std::mt19937(rd());
 
@@ -112,6 +114,52 @@ class TSPTW : public benchmark::Fixture {
     violation.clear();
   }
 };
+
+inline size_t randInRange(const size_t minVal, const size_t maxVal) {
+  return minVal + (std::rand() % (maxVal - minVal + 1));
+}
+
+BENCHMARK_DEFINE_F(TSPTW, probe_single_swap)(benchmark::State& st) {
+  std::vector<Int> indexVec1(n);
+  std::iota(indexVec1.begin(), indexVec1.end(), 0);
+  std::vector<Int> indexVec2(n);
+  std::iota(indexVec2.begin(), indexVec2.end(), 0);
+
+  for (auto _ : st) {
+    Int i = static_cast<Int>(n);
+    Int j = static_cast<Int>(n);
+    for (size_t index1 = 0; i == n && index1 < static_cast<size_t>(n);
+         ++index1) {
+      std::swap(indexVec1[index1], indexVec1[randInRange(index1, n - 1)]);
+      const Int tmpI = indexVec1[index1];
+      for (size_t index2 = 0; index2 < static_cast<size_t>(n); ++index2) {
+        std::swap(indexVec2[index2],
+                  indexVec2[randInRange(index2, static_cast<size_t>(n - 1))]);
+        const Int tmpJ = indexVec2[index2];
+        if (tmpI != tmpJ && engine->committedValue(pred[tmpI]) != tmpJ + 1) {
+          i = tmpI;
+          j = tmpJ;
+          break;
+        }
+      }
+    }
+    assert(i < static_cast<Int>(n));
+    assert(j < static_cast<Int>(n));
+    engine->beginMove();
+    engine->setValue(
+        pred[i],
+        engine->committedValue(pred.at(engine->committedValue(pred[i]) - 1)));
+    engine->setValue(pred[j], engine->committedValue(pred[i]));
+    engine->setValue(pred.at(engine->committedValue(pred[i]) - 1),
+                     engine->committedValue(pred[j]));
+    engine->endMove();
+
+    engine->beginProbe();
+    engine->query(totalDist);
+    engine->query(totalViolation);
+    engine->endProbe();
+  }
+}
 
 BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
   Int probes = 0;
@@ -143,13 +191,21 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
 
 ///*
 static void arguments(benchmark::internal::Benchmark* b) {
-  for (int i = 10; i <= 100; i += 30) {
+  for (int i = 10; i <= 150; i += 10) {
     for (int mode = 0; mode <= 3; ++mode) {
-      b->Args({mode, i});
+      b->Args({i, mode});
     }
+#ifndef NDEBUG
+    return;
+#endif
   }
 }
 
+BENCHMARK_REGISTER_F(TSPTW, probe_single_swap)
+    ->Apply(arguments)
+    ->Unit(benchmark::kMillisecond);
+
+/*
 BENCHMARK_REGISTER_F(TSPTW, probe_all_relocate)
     ->Apply(arguments)
     ->Unit(benchmark::kMillisecond);
