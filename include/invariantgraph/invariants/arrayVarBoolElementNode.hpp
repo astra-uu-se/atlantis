@@ -2,18 +2,18 @@
 
 #include <fznparser/model.hpp>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 
 namespace invariantgraph {
 
-class ArrayVarBoolElementNode : public VariableDefiningNode {
+class ArrayVarBoolElementNode : public InvariantNode {
  private:
   const Int _offset;
 
  public:
   ArrayVarBoolElementNode(VariableNode* b, std::vector<VariableNode*> as,
                           VariableNode* output, Int offset)
-      : VariableDefiningNode({output}, {b}, as), _offset(offset) {
+      : InvariantNode({output}, {b}, as), _offset(offset) {
 #ifndef NDEBUG
     assert(staticInputs().front()->isIntVar());
     for (auto* const dynamicInput : dynamicInputs()) {

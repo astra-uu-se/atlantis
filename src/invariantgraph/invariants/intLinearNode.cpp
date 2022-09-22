@@ -57,23 +57,24 @@ invariantgraph::IntLinearNode::fromModelConstraint(
 
 void invariantgraph::IntLinearNode::createDefinedVariables(Engine& engine) {
   if (staticInputs().size() == 1 &&
-      staticInputs().front()->varId() != NULL_ID) {
+      staticInputs().front()->inputVarId() != NULL_ID) {
     if (_coeffs.front() == 1 && _sum == 0) {
-      definedVariables().front()->setVarId(staticInputs().front()->varId());
+      definedVariables().front()->setVarId(staticInputs().front()->inputVarId(),
+                                           this);
       return;
     }
 
     if (_definingCoefficient == -1) {
       auto scalar = engine.makeIntView<ScalarView>(
-          staticInputs().front()->varId(), _coeffs.front());
+          staticInputs().front()->inputVarId(), _coeffs.front());
       definedVariables().front()->setVarId(
-          engine.makeIntView<IntOffsetView>(scalar, -_sum));
+          engine.makeIntView<IntOffsetView>(scalar, -_sum), this);
     } else {
       assert(_definingCoefficient == 1);
       auto scalar = engine.makeIntView<ScalarView>(
-          staticInputs().front()->varId(), -_coeffs.front());
+          staticInputs().front()->inputVarId(), -_coeffs.front());
       definedVariables().front()->setVarId(
-          engine.makeIntView<IntOffsetView>(scalar, _sum));
+          engine.makeIntView<IntOffsetView>(scalar, _sum), this);
     }
 
     return;
@@ -81,7 +82,7 @@ void invariantgraph::IntLinearNode::createDefinedVariables(Engine& engine) {
 
   if (_intermediateVarId == NULL_ID) {
     _intermediateVarId = engine.makeIntVar(0, 0, 0);
-    assert(definedVariables().front()->varId() == NULL_ID);
+    assert(definedVariables().front()->varId(this) == NULL_ID);
 
     auto offsetIntermediate = _intermediateVarId;
     if (_sum != 0) {
@@ -95,17 +96,17 @@ void invariantgraph::IntLinearNode::createDefinedVariables(Engine& engine) {
           engine.makeIntView<ScalarView>(offsetIntermediate, -1);
     }
 
-    definedVariables().front()->setVarId(invertedIntermediate);
+    definedVariables().front()->setVarId(invertedIntermediate, this);
   }
 }
 
 void invariantgraph::IntLinearNode::registerWithEngine(Engine& engine) {
-  assert(definedVariables().front()->varId() != NULL_ID);
+  assert(definedVariables().front()->varId(this) != NULL_ID);
 
   std::vector<VarId> variables;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
-                 [&](const auto& node) { return node->varId(); });
+                 [&](const auto& node) { return node->inputVarId(); });
   if (_intermediateVarId == NULL_ID) {
     assert(variables.size() == 1);
     return;

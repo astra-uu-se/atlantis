@@ -41,8 +41,8 @@ void invariantgraph::GlobalCardinalityNode::createDefinedVariables(
     Engine& engine) {
   if (!isReified() && shouldHold()) {
     for (auto* const countOutput : definedVariables()) {
-      if (countOutput->varId() == NULL_ID) {
-        countOutput->setVarId(engine.makeIntVar(0, 0, _inputs.size()));
+      if (countOutput->varId(this) == NULL_ID) {
+        countOutput->setVarId(engine.makeIntVar(0, 0, _inputs.size()), this);
       }
     }
   } else if (violationVarId() == NULL_ID) {
@@ -64,13 +64,13 @@ void invariantgraph::GlobalCardinalityNode::createDefinedVariables(
 void invariantgraph::GlobalCardinalityNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> inputs;
   std::transform(_inputs.begin(), _inputs.end(), std::back_inserter(inputs),
-                 [&](auto node) { return node->varId(); });
+                 [&](auto node) { return node->inputVarId(); });
 
   if (!isReified() && shouldHold()) {
     std::vector<VarId> countOutputs;
     std::transform(_counts.begin(), _counts.end(),
                    std::back_inserter(countOutputs),
-                   [&](auto node) { return node->varId(); });
+                   [&](auto node) { return node->inputVarId(); });
 
     engine.makeInvariant<GlobalCardinalityOpen>(countOutputs, inputs, _cover);
   } else {
@@ -81,10 +81,10 @@ void invariantgraph::GlobalCardinalityNode::registerWithEngine(Engine& engine) {
     for (size_t i = 0; i < _counts.size(); ++i) {
       if (shouldHold()) {
         engine.makeConstraint<Equal>(_violations.at(i), _intermediate.at(i),
-                                     _counts.at(i)->varId());
+                                     _counts.at(i)->inputVarId());
       } else {
         engine.makeConstraint<NotEqual>(_violations.at(i), _intermediate.at(i),
-                                        _counts.at(i)->varId());
+                                        _counts.at(i)->inputVarId());
       }
     }
     if (_counts.size() > 1) {

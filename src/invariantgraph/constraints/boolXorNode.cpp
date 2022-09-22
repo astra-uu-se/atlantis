@@ -29,12 +29,15 @@ void invariantgraph::BoolXorNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::BoolXorNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
+  assert(a()->inputVarId() != NULL_ID);
+  assert(b()->inputVarId() != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeInvariant<BoolXor>(violationVarId(), a()->varId(), b()->varId());
+    engine.makeInvariant<BoolXor>(violationVarId(), a()->inputVarId(),
+                                  b()->inputVarId());
   } else {
     assert(!isReified());
-    engine.makeConstraint<BoolEqual>(violationVarId(), a()->varId(),
-                                     b()->varId());
+    engine.makeConstraint<BoolEqual>(violationVarId(), a()->inputVarId(),
+                                     b()->inputVarId());
   }
 }

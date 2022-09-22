@@ -2,15 +2,15 @@
 
 #include <cmath>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 #include "invariants/binaryMin.hpp"
 
 namespace invariantgraph {
 
-class IntMinNode : public VariableDefiningNode {
+class IntMinNode : public InvariantNode {
  public:
   IntMinNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : VariableDefiningNode({output}, {a, b}) {
+      : InvariantNode({output}, {a, b}) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
       assert(staticInput->isIntVar());

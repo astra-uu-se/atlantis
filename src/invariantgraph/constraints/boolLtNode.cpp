@@ -29,15 +29,15 @@ void invariantgraph::BoolLtNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::BoolLtNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
-  assert(a()->varId() != NULL_ID);
-  assert(b()->varId() != NULL_ID);
+  assert(a()->inputVarId() != NULL_ID);
+  assert(b()->inputVarId() != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<BoolLessThan>(violationVarId(), a()->varId(),
-                                        b()->varId());
+    engine.makeConstraint<BoolLessThan>(violationVarId(), a()->inputVarId(),
+                                        b()->inputVarId());
   } else {
     assert(!isReified());
-    engine.makeConstraint<BoolLessEqual>(violationVarId(), b()->varId(),
-                                         a()->varId());
+    engine.makeConstraint<BoolLessEqual>(violationVarId(), b()->inputVarId(),
+                                         a()->inputVarId());
   }
 }

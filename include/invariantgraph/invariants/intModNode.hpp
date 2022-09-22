@@ -1,14 +1,14 @@
 #pragma once
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 #include "invariants/mod.hpp"
 
 namespace invariantgraph {
 
-class IntModNode : public VariableDefiningNode {
+class IntModNode : public InvariantNode {
  public:
   IntModNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : VariableDefiningNode({output}, {a, b}) {
+      : InvariantNode({output}, {a, b}) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
       assert(staticInput->isIntVar());

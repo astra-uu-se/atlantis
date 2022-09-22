@@ -40,7 +40,7 @@ invariantgraph::SetInNode::fromModelConstraint(
 
 void invariantgraph::SetInNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
-    const VarId input = staticInputs().front()->varId();
+    const VarId input = staticInputs().front()->inputVarId();
     std::vector<DomainEntry> domainEntries;
     domainEntries.reserve(_values.size());
     std::transform(_values.begin(), _values.end(),

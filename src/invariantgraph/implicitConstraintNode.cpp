@@ -3,8 +3,9 @@
 void invariantgraph::ImplicitConstraintNode::createDefinedVariables(
     Engine& engine) {
   for (const auto& node : definedVariables()) {
-    if (node->varId() == NULL_ID) {
+    if (node->varId(this) == NULL_ID) {
       const auto& [lb, ub] = node->bounds();
+      assert(node->isSearchVariable());
       node->setVarId(engine.makeIntVar(lb, lb, ub));
     }
   }
@@ -16,8 +17,9 @@ void invariantgraph::ImplicitConstraintNode::registerWithEngine(
   varIds.reserve(definedVariables().size());
 
   for (const auto& node : definedVariables()) {
-    assert(node->varId() != NULL_ID);
-    varIds.emplace_back(node->varId(), node->domain());
+    assert(node->isSearchVariable());
+    assert(node->inputVarId() != NULL_ID);
+    varIds.emplace_back(node->inputVarId(), node->domain());
   }
 
   _neighbourhood = createNeighbourhood(engine, varIds);

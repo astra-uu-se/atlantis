@@ -42,7 +42,7 @@ void invariantgraph::IntLinEqNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
-                 [&](auto node) { return node->varId(); });
+                 [&](auto node) { return node->inputVarId(); });
 
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);

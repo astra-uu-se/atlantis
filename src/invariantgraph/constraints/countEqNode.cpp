@@ -73,10 +73,10 @@ invariantgraph::CountEqNode::fromModelConstraint(
 
 void invariantgraph::CountEqNode::createDefinedVariables(Engine& engine) {
   if (!_cIsParameter) {
-    if (cVarNode()->varId() == NULL_ID) {
+    if (cVarNode()->inputVarId() == NULL_ID) {
       assert(!isReified());
       assert(shouldHold());
-      cVarNode()->setVarId(engine.makeIntVar(0, 0, 0));
+      cVarNode()->setVarId(engine.makeIntVar(0, 0, 0), this);
     }
   } else if (violationVarId() == NULL_ID) {
     _intermediate = engine.makeIntVar(0, 0, 0);
@@ -99,19 +99,19 @@ void invariantgraph::CountEqNode::registerWithEngine(Engine& engine) {
   engineInputs.resize(inputSize);
 
   for (size_t i = 0; i < inputSize; ++i) {
-    engineInputs.at(i) = staticInputs().at(i)->varId();
+    engineInputs.at(i) = staticInputs().at(i)->inputVarId();
   }
 
   if (!_yIsParameter) {
     assert(yVarNode() != nullptr);
-    assert(yVarNode()->varId() != NULL_ID);
+    assert(yVarNode()->inputVarId() != NULL_ID);
     assert(_cIsParameter || (cVarNode() != nullptr));
-    assert(_cIsParameter || (cVarNode()->varId() != NULL_ID));
+    assert(_cIsParameter || (cVarNode()->varId(this) != NULL_ID));
     assert(_cIsParameter == (_intermediate != NULL_ID));
     assert(_cIsParameter == (violationVarId() != NULL_ID));
     engine.makeInvariant<Count>(
-        _cIsParameter ? _intermediate : cVarNode()->varId(),
-        yVarNode()->varId(), engineInputs);
+        _cIsParameter ? _intermediate : cVarNode()->inputVarId(),
+        yVarNode()->inputVarId(), engineInputs);
     return;
   }
   assert(_yIsParameter);
@@ -120,8 +120,8 @@ void invariantgraph::CountEqNode::registerWithEngine(Engine& engine) {
     assert(shouldHold());
     assert(!isReified());
     assert(cVarNode() != nullptr);
-    assert(cVarNode()->varId() != NULL_ID);
-    engine.makeInvariant<CountConst>(cVarNode()->varId(), _yParameter,
+    assert(cVarNode()->varId(this) != NULL_ID);
+    engine.makeInvariant<CountConst>(cVarNode()->varId(this), _yParameter,
                                      engineInputs);
     return;
   }

@@ -20,7 +20,7 @@ void invariantgraph::IntPlusNode::createDefinedVariables(Engine& engine) {
 }
 
 void invariantgraph::IntPlusNode::registerWithEngine(Engine& engine) {
-  assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<Plus>(definedVariables().front()->varId(), a()->varId(),
-                             b()->varId());
+  assert(definedVariables().front()->varId(this) != NULL_ID);
+  engine.makeInvariant<Plus>(definedVariables().front()->varId(this),
+                             a()->inputVarId(), b()->inputVarId());
 }

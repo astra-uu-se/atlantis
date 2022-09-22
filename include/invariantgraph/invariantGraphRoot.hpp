@@ -5,7 +5,7 @@
 namespace invariantgraph {
 
 /**
- * Given all variable nodes need to be defined by a a VariableDefiningNode, this
+ * Given all variable nodes need to be defined by a a InvariantNode, this
  * class "defines" the search variables so their nodes can be created and
  * registered with the engine.
  */

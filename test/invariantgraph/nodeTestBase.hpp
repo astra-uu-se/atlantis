@@ -93,7 +93,7 @@ class NodeTestBase : public testing::Test {
     for (const auto& modelVariable : freeVariables) {
       auto variable = _nodeMap.at(modelVariable);
       const auto& [lb, ub] = variable->bounds();
-      variable->setVarId(engine.makeIntVar(lb, lb, ub));
+      variable->setVarId(engine.makeIntVar(lb, lb, ub), this);
     }
   }
 
@@ -105,7 +105,7 @@ class NodeTestBase : public testing::Test {
 };
 
 inline void expectMarkedAsInput(
-    invariantgraph::VariableDefiningNode* definingNode,
+    invariantgraph::InvariantNode* definingNode,
     const std::vector<invariantgraph::VariableNode*>& inputs) {
   for (const auto& variableNode : inputs) {
     EXPECT_NE(std::find(variableNode->inputFor().begin(),

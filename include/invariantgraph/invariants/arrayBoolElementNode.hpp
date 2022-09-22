@@ -2,12 +2,12 @@
 
 #include <fznparser/model.hpp>
 
+#include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/invariants/arrayIntElementNode.hpp"
-#include "invariantgraph/variableDefiningNode.hpp"
 
 namespace invariantgraph {
 
-class ArrayBoolElementNode : public VariableDefiningNode {
+class ArrayBoolElementNode : public InvariantNode {
  public:
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {

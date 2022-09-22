@@ -13,8 +13,8 @@
 #include "invariantgraph/constraints/intEqNode.hpp"
 #include "invariantgraph/implicitConstraintNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
+#include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
-#include "invariantgraph/variableDefiningNode.hpp"
 #include "invariantgraph/variableNode.hpp"
 #include "invariants/linear.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
@@ -72,21 +72,20 @@ class InvariantGraph {
  private:
   std::vector<std::unique_ptr<VariableNode>> _variables;
   std::vector<VariableNode*> _valueNodes;
-  std::vector<std::unique_ptr<VariableDefiningNode>> _variableDefiningNodes;
+  std::vector<std::unique_ptr<InvariantNode>> _invariantNodes;
   std::vector<ImplicitConstraintNode*> _implicitConstraints;
   VariableNode* _objectiveVariable;
 
  public:
-  InvariantGraph(
-      std::vector<std::unique_ptr<VariableNode>> variables,
-      std::vector<VariableNode*> valueNodes,
-      std::vector<std::unique_ptr<VariableDefiningNode>> variableDefiningNodes,
-      VariableNode* objectiveVariable)
+  InvariantGraph(std::vector<std::unique_ptr<VariableNode>> variables,
+                 std::vector<VariableNode*> valueNodes,
+                 std::vector<std::unique_ptr<InvariantNode>> invariantNodes,
+                 VariableNode* objectiveVariable)
       : _variables(std::move(variables)),
         _valueNodes(std::move(valueNodes)),
-        _variableDefiningNodes(std::move(variableDefiningNodes)),
+        _invariantNodes(std::move(invariantNodes)),
         _objectiveVariable(objectiveVariable) {
-    for (const auto& definingNode : _variableDefiningNodes) {
+    for (const auto& definingNode : _invariantNodes) {
       if (auto implicitConstraint =
               dynamic_cast<ImplicitConstraintNode*>(definingNode.get())) {
         _implicitConstraints.push_back(implicitConstraint);
@@ -115,17 +114,16 @@ class InvariantGraph {
   InvariantGraphApplyResult apply(Engine& engine);
 
  private:
-  std::vector<VariableNode*> findCycle(
-      const std::unordered_map<VariableNode*, VariableNode*>& childOf,
-      VariableNode* const node, VariableNode* const parent);
-
-  std::pair<invariantgraph::VariableNode*,
-            invariantgraph::VariableDefiningNode*>
-  findPivotInCycle(const std::vector<VariableNode*>& cycle);
+  std::pair<invariantgraph::VariableNode*, invariantgraph::InvariantNode*>
+  findPivotInCycle(
+      const std::vector<std::pair<VariableNode*, InvariantNode*>>& cycle);
 
   std::vector<VariableNode*> breakCycles(
-      VariableNode* node, std::unordered_set<VariableNode*>& visitedGlobal);
-  VariableNode* breakCycle(const std::vector<VariableNode*>& cycle);
+      VariableNode* variable,
+      std::unordered_map<VariableNode*, std::unordered_set<InvariantNode*>>&
+          visitedGlobal);
+  VariableNode* breakCycle(
+      const std::vector<std::pair<VariableNode*, InvariantNode*>>& cycle);
 
   void createVariables(Engine&);
   void createInvariants(Engine&);

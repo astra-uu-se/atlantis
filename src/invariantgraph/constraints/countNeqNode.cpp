@@ -89,7 +89,7 @@ void invariantgraph::CountNeqNode::registerWithEngine(Engine& engine) {
   engineInputs.resize(vectorSize);
 
   for (size_t i = 0; i < vectorSize; ++i) {
-    engineInputs.at(i) = staticInputs().at(i)->varId();
+    engineInputs.at(i) = staticInputs().at(i)->inputVarId();
   }
 
   assert(violationVarId() != NULL_ID);
@@ -97,8 +97,8 @@ void invariantgraph::CountNeqNode::registerWithEngine(Engine& engine) {
 
   if (!_yIsParameter) {
     assert(yVarNode() != nullptr);
-    assert(yVarNode()->varId() != NULL_ID);
-    engine.makeInvariant<Count>(_intermediate, yVarNode()->varId(),
+    assert(yVarNode()->inputVarId() != NULL_ID);
+    engine.makeInvariant<Count>(_intermediate, yVarNode()->inputVarId(),
                                 engineInputs);
   } else {
     assert(yVarNode() == nullptr);
@@ -106,14 +106,14 @@ void invariantgraph::CountNeqNode::registerWithEngine(Engine& engine) {
   }
   if (!_cIsParameter) {
     assert(cVarNode() != nullptr);
-    assert(cVarNode()->varId() != NULL_ID);
+    assert(cVarNode()->inputVarId() != NULL_ID);
     if (shouldHold()) {
-      engine.makeInvariant<NotEqual>(violationVarId(), cVarNode()->varId(),
+      engine.makeInvariant<NotEqual>(violationVarId(), cVarNode()->inputVarId(),
                                      _intermediate);
     } else {
       // c >= count(x, y) -> count(x, y) <= c
       engine.makeInvariant<Equal>(violationVarId(), _intermediate,
-                                  cVarNode()->varId());
+                                  cVarNode()->inputVarId());
     }
   }
 }

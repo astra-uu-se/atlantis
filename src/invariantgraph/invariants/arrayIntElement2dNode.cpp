@@ -39,8 +39,8 @@ void invariantgraph::ArrayIntElement2dNode::createDefinedVariables(
 }
 
 void invariantgraph::ArrayIntElement2dNode::registerWithEngine(Engine& engine) {
-  assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<Element2dConst>(definedVariables().front()->varId(),
-                                       idx1()->varId(), idx2()->varId(),
-                                       _parMatrix, _offset1, _offset2);
+  assert(definedVariables().front()->varId(this) != NULL_ID);
+  engine.makeInvariant<Element2dConst>(
+      definedVariables().front()->varId(this), idx1()->inputVarId(),
+      idx2()->inputVarId(), _parMatrix, _offset1, _offset2);
 }

@@ -4,14 +4,14 @@
 #include <map>
 #include <utility>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 
 namespace invariantgraph {
 
-class Bool2IntNode : public VariableDefiningNode {
+class Bool2IntNode : public InvariantNode {
  public:
   Bool2IntNode(VariableNode* staticInput, VariableNode* output)
-      : VariableDefiningNode({output}, {staticInput}) {}
+      : InvariantNode({output}, {staticInput}) {}
 
   ~Bool2IntNode() override = default;
 

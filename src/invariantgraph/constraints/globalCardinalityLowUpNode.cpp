@@ -55,7 +55,7 @@ void invariantgraph::GlobalCardinalityLowUpNode::registerWithEngine(
   std::vector<VarId> inputs;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(inputs),
-                 [&](auto node) { return node->varId(); });
+                 [&](auto node) { return node->inputVarId(); });
 
   if (shouldHold()) {
     engine.makeInvariant<GlobalCardinalityConst<false>>(

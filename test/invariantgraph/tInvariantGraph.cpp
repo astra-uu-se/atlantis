@@ -28,14 +28,12 @@ TEST(InvariantGraphTest, apply_result) {
   variableNodes.push_back(std::move(bNode));
   variableNodes.push_back(std::move(cNode));
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
-  variableDefiningNodes.push_back(std::move(plusNode));
-  variableDefiningNodes.push_back(std::move(root));
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> invariantNodes;
+  invariantNodes.push_back(std::move(plusNode));
+  invariantNodes.push_back(std::move(root));
 
   invariantgraph::InvariantGraph graph(std::move(variableNodes), {},
-                                       std::move(variableDefiningNodes),
-                                       cNode.get());
+                                       std::move(invariantNodes), cNode.get());
 
   PropagationEngine engine;
   auto result = graph.apply(engine);
@@ -101,17 +99,15 @@ TEST(InvariantGraphTest, ApplyGraph) {
   variableNodes.push_back(std::move(c2Node));
   variableNodes.push_back(std::move(sumNode));
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> invariantNodes;
 
-  variableDefiningNodes.push_back(std::move(aPlusNode));
-  variableDefiningNodes.push_back(std::move(bPlusNode));
-  variableDefiningNodes.push_back(std::move(cPlusNode));
-  variableDefiningNodes.push_back(std::move(root));
+  invariantNodes.push_back(std::move(aPlusNode));
+  invariantNodes.push_back(std::move(bPlusNode));
+  invariantNodes.push_back(std::move(cPlusNode));
+  invariantNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(std::move(variableNodes), {},
-                                       std::move(variableDefiningNodes),
-                                       sumNode.get());
+  invariantgraph::InvariantGraph graph(
+      std::move(variableNodes), {}, std::move(invariantNodes), sumNode.get());
 
   PropagationEngine engine;
   auto result = graph.apply(engine);
@@ -172,15 +168,12 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
   variableNodes.push_back(std::move(dNode));
   variableNodes.push_back(std::move(xNode));
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
-
-  variableDefiningNodes.push_back(std::move(plusNode1));
-  variableDefiningNodes.push_back(std::move(plusNode2));
-  variableDefiningNodes.push_back(std::move(root));
-
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> invariantNodes;
+  invariantNode invariantNodes.push_back(std::move(plusNode1));
+  invariantNodes.push_back(std::move(plusNode2));
+  invariantNodes.push_back(std::move(root));
+  invariantNode invariantgraph::InvariantGraph graph(
+  invariantNodeleNodes), {}, std::move(invariantNodes), nullptr);
 
   PropagationEngine engine;
   auto result = graph.apply(engine);
@@ -223,8 +216,7 @@ TEST(InvariantGraphTest, SplitGraph) {
   std::vector<std::vector<std::unique_ptr<invariantgraph::VariableNode>>>
       inputNodes;
   std::vector<Int> coeffs(numInputs, 1);
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> invariantNodes;
 
   for (size_t i = 0; i < numInvariants; ++i) {
     inputNodes.emplace_back(
@@ -242,9 +234,8 @@ TEST(InvariantGraphTest, SplitGraph) {
                   std::make_unique<invariantgraph::VariableNode>(input))
               .get());
     }
-    variableDefiningNodes.emplace_back(
-        std::make_unique<invariantgraph::IntLinearNode>(coeffs, arguments,
-                                                        xNode.get(), -1, 0));
+    invariantNodes.emplace_back(std::make_unique<invariantgraph::IntLinearNode>(
+        coeffs, arguments, xNode.get(), -1, 0));
   }
 
   std::vector<invariantgraph::VariableNode*> searchVariables;
@@ -265,10 +256,10 @@ TEST(InvariantGraphTest, SplitGraph) {
   }
   variableNodes.push_back(std::move(xNode));
 
-  variableDefiningNodes.push_back(std::move(root));
+  invariantNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
+  invariantgraph::InvariantGraph graph(std::move(variableNodes), {},
+                                       std::move(invariantNodes), nullptr);
 
   PropagationEngine engine;
   auto result = graph.apply(engine);
@@ -328,15 +319,14 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
   variableNodes.push_back(std::move(xNode));
   variableNodes.push_back(std::move(yNode));
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> invariantNodes;
 
-  variableDefiningNodes.push_back(std::move(plusNode1));
-  variableDefiningNodes.push_back(std::move(plusNode2));
-  variableDefiningNodes.push_back(std::move(root));
+  invariantNodes.push_back(std::move(plusNode1));
+  invariantNodes.push_back(std::move(plusNode2));
+  invariantNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
+  invariantgraph::InvariantGraph graph(std::move(variableNodes), {},
+                                       std::move(invariantNodes), nullptr);
 
   graph.breakCycles();
 
@@ -408,15 +398,14 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   variableNodes.push_back(std::move(xNode));
   variableNodes.push_back(std::move(yNode));
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> invariantNodes;
 
-  variableDefiningNodes.push_back(std::move(elementNode1));
-  variableDefiningNodes.push_back(std::move(elementNode2));
-  variableDefiningNodes.push_back(std::move(root));
+  invariantNodes.push_back(std::move(elementNode1));
+  invariantNodes.push_back(std::move(elementNode2));
+  invariantNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
+  invariantgraph::InvariantGraph graph(std::move(variableNodes), {},
+                                       std::move(invariantNodes), nullptr);
 
   graph.breakCycles();
 
@@ -489,15 +478,14 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
   variableNodes.push_back(std::move(xNode));
   variableNodes.push_back(std::move(yNode));
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> invariantNodes;
 
-  variableDefiningNodes.push_back(std::move(elementNode1));
-  variableDefiningNodes.push_back(std::move(elementNode2));
-  variableDefiningNodes.push_back(std::move(root));
+  invariantNodes.push_back(std::move(elementNode1));
+  invariantNodes.push_back(std::move(elementNode2));
+  invariantNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
+  invariantgraph::InvariantGraph graph(std::move(variableNodes), {},
+                                       std::move(invariantNodes), nullptr);
 
   graph.breakCycles();
 

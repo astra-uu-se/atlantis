@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "core/engine.hpp"
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/variableNode.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 
@@ -15,13 +15,13 @@ namespace invariantgraph {
  * Serves as a marker for the invariant graph to start the application to the
  * propagation engine.
  */
-class ImplicitConstraintNode : public VariableDefiningNode {
+class ImplicitConstraintNode : public InvariantNode {
  private:
   search::neighbourhoods::Neighbourhood* _neighbourhood{nullptr};
 
  public:
   explicit ImplicitConstraintNode(std::vector<VariableNode*> definedVariables)
-      : VariableDefiningNode(std::move(definedVariables)) {}
+      : InvariantNode(std::move(definedVariables)) {}
 
   ~ImplicitConstraintNode() override { delete _neighbourhood; }
 

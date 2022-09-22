@@ -44,8 +44,8 @@ void invariantgraph::GlobalCardinalityClosedNode::createDefinedVariables(
     registerViolation(engine);
     if (!isReified() && shouldHold()) {
       for (auto* const countOutput : definedVariables()) {
-        if (countOutput->varId() == NULL_ID) {
-          countOutput->setVarId(engine.makeIntVar(0, 0, _inputs.size()));
+        if (countOutput->varId(this) == NULL_ID) {
+          countOutput->setVarId(engine.makeIntVar(0, 0, _inputs.size()), this);
         }
       }
     } else {
@@ -73,7 +73,7 @@ void invariantgraph::GlobalCardinalityClosedNode::registerWithEngine(
 
   std::vector<VarId> inputs;
   std::transform(_inputs.begin(), _inputs.end(), std::back_inserter(inputs),
-                 [&](auto node) { return node->varId(); });
+                 [&](auto node) { return node->inputVarId(); });
 
   if (!isReified() && shouldHold()) {
     assert(_intermediate.size() == 0);
@@ -81,7 +81,7 @@ void invariantgraph::GlobalCardinalityClosedNode::registerWithEngine(
     std::vector<VarId> countOutputs;
     std::transform(_counts.begin(), _counts.end(),
                    std::back_inserter(countOutputs),
-                   [&](auto node) { return node->varId(); });
+                   [&](auto node) { return node->inputVarId(); });
 
     engine.makeInvariant<GlobalCardinalityClosed>(violationVarId(),
                                                   countOutputs, inputs, _cover);
@@ -99,10 +99,10 @@ void invariantgraph::GlobalCardinalityClosedNode::registerWithEngine(
     for (size_t i = 0; i < _counts.size(); ++i) {
       if (shouldHold()) {
         engine.makeConstraint<Equal>(_violations.at(i), _intermediate.at(i),
-                                     _counts.at(i)->varId());
+                                     _counts.at(i)->inputVarId());
       } else {
         engine.makeConstraint<NotEqual>(_violations.at(i), _intermediate.at(i),
-                                        _counts.at(i)->varId());
+                                        _counts.at(i)->inputVarId());
       }
     }
     if (shouldHold()) {

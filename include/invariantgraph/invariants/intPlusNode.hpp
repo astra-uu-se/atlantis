@@ -2,15 +2,15 @@
 
 #include <cmath>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 #include "invariants/plus.hpp"
 
 namespace invariantgraph {
 
-class IntPlusNode : public VariableDefiningNode {
+class IntPlusNode : public InvariantNode {
  public:
   IntPlusNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : VariableDefiningNode({output}, {a, b}) {
+      : InvariantNode({output}, {a, b}) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
       assert(staticInput->isIntVar());

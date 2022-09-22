@@ -12,8 +12,8 @@ invariantgraph::InvariantGraphRoot::createNeighbourhood(
 }
 
 void invariantgraph::InvariantGraphRoot::addSearchVariable(VariableNode* node) {
-  assert(node->definedBy() == nullptr);
-  addDefinedVariable(node);
+  assert(node->isSearchVariable());
+  addDefinedVariable(node, false);
   assert(definedVariables().back() == node);
-  assert(node->definedBy() == this);
+  assert(node->isSearchVariable());
 }

@@ -2,15 +2,15 @@
 
 #include <cmath>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 #include "invariants/binaryMax.hpp"
 
 namespace invariantgraph {
 
-class IntMaxNode : public VariableDefiningNode {
+class IntMaxNode : public InvariantNode {
  public:
   IntMaxNode(VariableNode* a, VariableNode* b, VariableNode* output)
-      : VariableDefiningNode({output}, {a, b}) {
+      : InvariantNode({output}, {a, b}) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
       assert(staticInput->isIntVar());

@@ -20,7 +20,7 @@ void invariantgraph::IntModNode::createDefinedVariables(Engine& engine) {
 }
 
 void invariantgraph::IntModNode::registerWithEngine(Engine& engine) {
-  assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<Mod>(definedVariables().front()->varId(), a()->varId(),
-                            b()->varId());
+  assert(definedVariables().front()->varId(this) != NULL_ID);
+  engine.makeInvariant<Mod>(definedVariables().front()->varId(this),
+                            a()->inputVarId(), b()->inputVarId());
 }

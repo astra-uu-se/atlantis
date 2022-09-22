@@ -3,14 +3,14 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 
 namespace invariantgraph {
-class ArrayIntMaximumNode : public VariableDefiningNode {
+class ArrayIntMaximumNode : public InvariantNode {
  public:
   ArrayIntMaximumNode(std::vector<VariableNode*> variables,
                       VariableNode* output)
-      : VariableDefiningNode({output}, variables) {
+      : InvariantNode({output}, variables) {
 #ifndef NDEBUG
     for (auto* const staticInput : staticInputs()) {
       assert(staticInput->isIntVar());

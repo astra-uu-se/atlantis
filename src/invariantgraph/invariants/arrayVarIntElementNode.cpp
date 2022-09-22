@@ -31,10 +31,10 @@ void invariantgraph::ArrayVarIntElementNode::registerWithEngine(
   std::vector<VarId> as;
   std::transform(dynamicInputs().begin(), dynamicInputs().end(),
                  std::back_inserter(as),
-                 [&](auto node) { return node->varId(); });
+                 [&](auto node) { return node->inputVarId(); });
 
-  assert(definedVariables().front()->varId() != NULL_ID);
+  assert(definedVariables().front()->varId(this) != NULL_ID);
 
-  engine.makeInvariant<ElementVar>(definedVariables().front()->varId(),
-                                   b()->varId(), as, _offset);
+  engine.makeInvariant<ElementVar>(definedVariables().front()->varId(this),
+                                   b()->inputVarId(), as, _offset);
 }

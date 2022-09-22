@@ -19,7 +19,7 @@ class InvariantGraphBuilder {
   std::unordered_map<std::variant<Int, bool>, VariableNode*> _valueMap;
 
   std::vector<std::unique_ptr<VariableNode>> _variables;
-  std::vector<std::unique_ptr<VariableDefiningNode>> _definingNodes;
+  std::vector<std::unique_ptr<InvariantNode>> _definingNodes;
 
  public:
   invariantgraph::InvariantGraph build(const fznparser::FZNModel& model);
@@ -27,7 +27,7 @@ class InvariantGraphBuilder {
  private:
   void createNodes(const fznparser::FZNModel& model);
 
-  std::unique_ptr<VariableDefiningNode> makeVariableDefiningNode(
+  std::unique_ptr<InvariantNode> makeInvariantNode(
       const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
       bool guessDefinedVariable = false);
   std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraint(

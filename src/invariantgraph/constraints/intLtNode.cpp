@@ -31,11 +31,11 @@ void invariantgraph::IntLtNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<LessThan>(violationVarId(), a()->varId(),
-                                    b()->varId());
+    engine.makeConstraint<LessThan>(violationVarId(), a()->inputVarId(),
+                                    b()->inputVarId());
   } else {
     assert(!isReified());
-    engine.makeConstraint<LessEqual>(violationVarId(), b()->varId(),
-                                     a()->varId());
+    engine.makeConstraint<LessEqual>(violationVarId(), b()->inputVarId(),
+                                     a()->inputVarId());
   }
 }

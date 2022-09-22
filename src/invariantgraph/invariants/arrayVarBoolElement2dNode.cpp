@@ -36,12 +36,12 @@ void invariantgraph::ArrayVarBoolElement2dNode::registerWithEngine(
                                             std::vector<VarId>(numCols));
   for (size_t i = 0; i < _numRows; ++i) {
     for (size_t j = 0; j < numCols; ++j) {
-      varMatrix.at(i).at(j) = dynamicInputs().at(i * numCols + j)->varId();
+      varMatrix.at(i).at(j) = dynamicInputs().at(i * numCols + j)->inputVarId();
     }
   }
 
-  assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<Element2dVar>(definedVariables().front()->varId(),
-                                     idx1()->varId(), idx2()->varId(),
+  assert(definedVariables().front()->varId(this) != NULL_ID);
+  engine.makeInvariant<Element2dVar>(definedVariables().front()->varId(this),
+                                     idx1()->inputVarId(), idx2()->inputVarId(),
                                      varMatrix, _offset1, _offset2);
 }

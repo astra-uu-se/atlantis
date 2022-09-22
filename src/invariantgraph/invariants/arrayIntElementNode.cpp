@@ -21,10 +21,11 @@ invariantgraph::ArrayIntElementNode::fromModelConstraint(
 
 void invariantgraph::ArrayIntElementNode::createDefinedVariables(
     Engine& engine) {
-  if (definedVariables().front()->varId() == NULL_ID) {
-    assert(b()->varId() != NULL_ID);
+  if (definedVariables().front()->varId(this) == NULL_ID) {
+    assert(b()->inputVarId() != NULL_ID);
     definedVariables().front()->setVarId(
-        engine.makeIntView<ElementConst>(b()->varId(), _as, _offset));
+        engine.makeIntView<ElementConst>(b()->inputVarId(), _as, _offset),
+        this);
   }
 }
 

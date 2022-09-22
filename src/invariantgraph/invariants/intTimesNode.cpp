@@ -20,7 +20,7 @@ void invariantgraph::IntTimesNode::createDefinedVariables(Engine& engine) {
 }
 
 void invariantgraph::IntTimesNode::registerWithEngine(Engine& engine) {
-  assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<Times>(definedVariables().front()->varId(), a()->varId(),
-                              b()->varId());
+  assert(definedVariables().front()->varId(this) != NULL_ID);
+  engine.makeInvariant<Times>(definedVariables().front()->varId(this),
+                              a()->inputVarId(), b()->inputVarId());
 }

@@ -2,10 +2,10 @@
 
 #include <utility>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 
 namespace invariantgraph {
-class BoolLinearNode : public VariableDefiningNode {
+class BoolLinearNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _definingCoefficient;
@@ -15,7 +15,7 @@ class BoolLinearNode : public VariableDefiningNode {
  public:
   BoolLinearNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
                  VariableNode* output, Int definingCoefficient, Int sum)
-      : VariableDefiningNode({output}, std::move(variables)),
+      : InvariantNode({output}, std::move(variables)),
         _coeffs(std::move(coeffs)),
         _definingCoefficient(definingCoefficient),
         _sum(sum) {

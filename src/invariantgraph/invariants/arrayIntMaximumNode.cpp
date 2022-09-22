@@ -27,9 +27,9 @@ void invariantgraph::ArrayIntMaximumNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
-                 [&](const auto& node) { return node->varId(); });
+                 [&](const auto& node) { return node->inputVarId(); });
 
-  assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<MaxSparse>(definedVariables().front()->varId(),
+  assert(definedVariables().front()->varId(this) != NULL_ID);
+  engine.makeInvariant<MaxSparse>(definedVariables().front()->varId(this),
                                   variables);
 }

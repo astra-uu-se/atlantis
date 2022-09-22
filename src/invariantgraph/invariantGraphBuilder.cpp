@@ -95,7 +95,7 @@ static bool allVariablesFree(
     const std::unordered_set<fznparser::Identifier>& definedVars);
 
 static void markVariablesAsDefined(
-    const invariantgraph::VariableDefiningNode& node,
+    const invariantgraph::InvariantNode& node,
     std::unordered_set<fznparser::Identifier>& definedVars) {
   for (const auto& variableNode : node.definedVariables()) {
     if (variableNode->variable()) {
@@ -136,8 +136,8 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       continue;
     }
 
-    if (std::unique_ptr<invariantgraph::VariableDefiningNode> node =
-            makeVariableDefiningNode(model, constraint)) {
+    if (std::unique_ptr<invariantgraph::InvariantNode> node =
+            makeInvariantNode(model, constraint)) {
       node->prune();
       markVariablesAsDefined(*node, definedVars);
 
@@ -174,8 +174,8 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       continue;
     }
 
-    if (std::unique_ptr<invariantgraph::VariableDefiningNode> node =
-            makeVariableDefiningNode(model, constraint, true)) {
+    if (std::unique_ptr<invariantgraph::InvariantNode> node =
+            makeInvariantNode(model, constraint, true)) {
       auto canBeInvariant = std::all_of(
           node->definedVariables().begin(), node->definedVariables().end(),
           [&](const auto& variableNode) {
@@ -231,8 +231,8 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
   }
 }
 
-std::unique_ptr<invariantgraph::VariableDefiningNode>
-invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
+std::unique_ptr<invariantgraph::InvariantNode>
+invariantgraph::InvariantGraphBuilder::makeInvariantNode(
     const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
     bool guessDefinedVariable) {
   std::string_view name = constraint.name;

@@ -2,12 +2,12 @@
 
 #include <fznparser/model.hpp>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 #include "invariants/element2dConst.hpp"
 
 namespace invariantgraph {
 
-class ArrayIntElement2dNode : public VariableDefiningNode {
+class ArrayIntElement2dNode : public InvariantNode {
  private:
   const std::vector<std::vector<Int>> _parMatrix;
   const Int _offset1;
@@ -17,7 +17,7 @@ class ArrayIntElement2dNode : public VariableDefiningNode {
   ArrayIntElement2dNode(VariableNode* idx1, VariableNode* idx2,
                         std::vector<std::vector<Int>> parMatrix,
                         VariableNode* output, Int offset1, Int offset2)
-      : VariableDefiningNode({output}, {idx1, idx2}),
+      : InvariantNode({output}, {idx1, idx2}),
         _parMatrix(std::move(parMatrix)),
         _offset1(offset1),
         _offset2(offset2) {}

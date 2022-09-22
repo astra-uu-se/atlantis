@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "core/engine.hpp"
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/variableNode.hpp"
 
 namespace invariantgraph {
@@ -28,7 +28,7 @@ static std::vector<invariantgraph::VariableNode*> combine(
  * Serves as a marker for the invariant graph to start the application to the
  * propagation engine.
  */
-class SoftConstraintNode : public VariableDefiningNode {
+class SoftConstraintNode : public InvariantNode {
  private:
   // Bounds will be recomputed by the engine.
   VarId _violationVarId{NULL_ID};
@@ -41,15 +41,15 @@ class SoftConstraintNode : public VariableDefiningNode {
   explicit SoftConstraintNode(std::vector<VariableNode*> definedVars,
                               std::vector<VariableNode*> staticInputs,
                               VariableNode* reifiedViolation, bool shouldHold)
-      : VariableDefiningNode(combine(reifiedViolation, definedVars),
-                             std::move(staticInputs)),
+      : InvariantNode(combine(reifiedViolation, definedVars),
+                      std::move(staticInputs)),
         _reifiedViolation(reifiedViolation),
         _shouldHold(shouldHold) {
     if (!isReified()) {
       assert(_reifiedViolation == nullptr);
     } else {
       assert(_reifiedViolation != nullptr);
-      assert(_reifiedViolation->definingNodes().contains(this));
+      assert(_reifiedViolation->isDefinedBy(this));
       assert(definedVariables().front() == _reifiedViolation);
     }
   }
@@ -90,9 +90,9 @@ class SoftConstraintNode : public VariableDefiningNode {
     return _reifiedViolation != nullptr;
   }
 
-  [[nodiscard]] VarId violationVarId() const override {
+  [[nodiscard]] VarId violationVarId() override {
     if (isReified()) {
-      return _reifiedViolation->varId();
+      return _reifiedViolation->varId(this);
     }
     return _violationVarId;
   }
@@ -103,7 +103,7 @@ class SoftConstraintNode : public VariableDefiningNode {
   VarId setViolationVarId(VarId varId) {
     assert(violationVarId() == NULL_ID);
     if (isReified()) {
-      _reifiedViolation->setVarId(varId);
+      _reifiedViolation->setVarId(varId, this);
     } else {
       _violationVarId = varId;
     }

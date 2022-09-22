@@ -14,7 +14,7 @@ namespace invariantgraph {
  * A node in the invariant graph which defines a number of variables. This could
  * be an invariant, a soft constraint (which defines a violation), or a view.
  */
-class VariableDefiningNode {
+class InvariantNode {
  private:
   std::vector<VariableNode*> _definedVariables;
   std::vector<VariableNode*> _staticInputs;
@@ -23,15 +23,15 @@ class VariableDefiningNode {
  public:
   using VariableMap = std::unordered_map<VariableNode*, VarId>;
 
-  explicit VariableDefiningNode(std::vector<VariableNode*> definedVariables,
-                                std::vector<VariableNode*> staticInputs = {},
-                                std::vector<VariableNode*> dynamicInputs = {})
+  explicit InvariantNode(std::vector<VariableNode*> definedVariables,
+                         std::vector<VariableNode*> staticInputs = {},
+                         std::vector<VariableNode*> dynamicInputs = {})
       : _definedVariables(std::move(definedVariables)),
         _staticInputs(std::move(staticInputs)),
         _dynamicInputs(std::move(dynamicInputs)) {
     for (auto* const definedVar : _definedVariables) {
       markDefinedBy(definedVar, false);
-      assert(definedVar->definingNodes().contains(this));
+      assert(definedVar->isDefinedBy(this));
     }
     for (auto* const staticInput : _staticInputs) {
       markAsStaticInput(staticInput, false);
@@ -41,7 +41,7 @@ class VariableDefiningNode {
     }
   }
 
-  virtual ~VariableDefiningNode() = default;
+  virtual ~InvariantNode() = default;
 
   [[nodiscard]] virtual bool isReified() const { return false; }
 
@@ -80,7 +80,7 @@ class VariableDefiningNode {
    * applicable if the current node is a soft constraint. If this node does not
    * define a violation variable, this method returns @p nullptr.
    */
-  [[nodiscard]] virtual VarId violationVarId() const { return NULL_ID; }
+  [[nodiscard]] virtual VarId violationVarId() { return NULL_ID; }
 
   [[nodiscard]] const std::vector<VariableNode*>& staticInputs()
       const noexcept {
@@ -101,7 +101,7 @@ class VariableDefiningNode {
       }
     }
     oldDefinedVar->unmarkAsDefinedBy(this);
-    newDefinedVar->markDefinedBy(this);
+    newDefinedVar->setVarId(NULL_ID, this);
   }
 
   void removeStaticInput(VariableNode* input) {
@@ -146,34 +146,34 @@ class VariableDefiningNode {
   friend class ReifiedConstraint;
 
  protected:
-  static inline VarId registerDefinedVariable(Engine& engine,
-                                              VariableNode* variable,
-                                              Int initialValue = 0) {
-    if (variable->varId() == NULL_ID) {
+  inline VarId registerDefinedVariable(Engine& engine, VariableNode* variable,
+                                       Int initialValue = 0) {
+    if (variable->varId(this) == NULL_ID) {
       variable->setVarId(
-          engine.makeIntVar(initialValue, initialValue, initialValue));
+          engine.makeIntVar(initialValue, initialValue, initialValue), this);
     }
-    return variable->varId();
+    return variable->varId(this);
   }
 
   void markDefinedBy(VariableNode* node, bool registerHere = true) {
-    node->markDefinedBy(this);
-
+    node->setVarId(NULL_ID, this);
     if (registerHere) {
-      _definedVariables.push_back(node);
+      _definedVariables.emplace_back(node);
     }
   }
 
-  void addDefinedVariable(VariableNode* node) {
+  void addDefinedVariable(VariableNode* node, bool markDefined = true) {
     _definedVariables.emplace_back(node);
-    markDefinedBy(node, false);
+    if (markDefined) {
+      markDefinedBy(node, false);
+    }
   }
 
   void markAsStaticInput(VariableNode* node, bool registerHere = true) {
     node->markAsInputFor(this, true);
 
     if (registerHere) {
-      _staticInputs.push_back(node);
+      _staticInputs.emplace_back(node);
     }
   }
 
@@ -181,7 +181,7 @@ class VariableDefiningNode {
     node->markAsInputFor(this, false);
 
     if (registerHere) {
-      _dynamicInputs.push_back(node);
+      _dynamicInputs.emplace_back(node);
     }
   }
 };

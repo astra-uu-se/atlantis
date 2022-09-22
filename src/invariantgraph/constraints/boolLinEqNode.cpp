@@ -38,13 +38,15 @@ void invariantgraph::BoolLinEqNode::createDefinedVariables(Engine& engine) {
 }
 
 void invariantgraph::BoolLinEqNode::registerWithEngine(Engine& engine) {
-  std::vector<VarId> variables;
+  std::vector<VarId> inputs;
   std::transform(staticInputs().begin(), staticInputs().end(),
-                 std::back_inserter(variables),
-                 [&](auto node) { return node->varId(); });
+                 std::back_inserter(inputs),
+                 [&](auto node) { return node->inputVarId(); });
+  assert(std::all_of(inputs.begin(), inputs.end(),
+                     [&](const VarId varId) { return varId != NULL_ID; }));
 
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
 
-  engine.makeInvariant<BoolLinear>(_sumVarId, _coeffs, variables);
+  engine.makeInvariant<BoolLinear>(_sumVarId, _coeffs, inputs);
 }

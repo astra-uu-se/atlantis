@@ -20,7 +20,7 @@ void invariantgraph::IntMaxNode::createDefinedVariables(Engine& engine) {
 }
 
 void invariantgraph::IntMaxNode::registerWithEngine(Engine& engine) {
-  assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<BinaryMax>(definedVariables().front()->varId(),
-                                  a()->varId(), b()->varId());
+  assert(definedVariables().front()->varId(this) != NULL_ID);
+  engine.makeInvariant<BinaryMax>(definedVariables().front()->varId(this),
+                                  a()->inputVarId(), b()->inputVarId());
 }

@@ -16,7 +16,7 @@ invariantgraph::IntAbsNode::fromModelConstraint(
 void invariantgraph::IntAbsNode::createDefinedVariables(Engine& engine) {
   if (definedVariables().front()->varId() == NULL_ID) {
     definedVariables().front()->setVarId(
-        engine.makeIntView<IntAbsView>(input()->varId()));
+        engine.makeIntView<IntAbsView>(input()->varId(), this));
   }
 }
 

@@ -29,14 +29,15 @@ void invariantgraph::IntEqNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::IntEqNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
-  assert(a()->varId() != NULL_ID);
-  assert(b()->varId() != NULL_ID);
+  assert(a()->inputVarId() != NULL_ID);
+  assert(b()->inputVarId() != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<Equal>(violationVarId(), a()->varId(), b()->varId());
+    engine.makeConstraint<Equal>(violationVarId(), a()->inputVarId(),
+                                 b()->inputVarId());
   } else {
     assert(!isReified());
-    engine.makeConstraint<NotEqual>(violationVarId(), a()->varId(),
-                                    b()->varId());
+    engine.makeConstraint<NotEqual>(violationVarId(), a()->inputVarId(),
+                                    b()->inputVarId());
   }
 }

@@ -37,8 +37,9 @@ void invariantgraph::BoolAndNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::BoolAndNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
-  assert(a()->varId() != NULL_ID);
-  assert(b()->varId() != NULL_ID);
+  assert(a()->inputVarId() != NULL_ID);
+  assert(b()->inputVarId() != NULL_ID);
 
-  engine.makeInvariant<BoolAnd>(violationVarId(), a()->varId(), b()->varId());
+  engine.makeInvariant<BoolAnd>(violationVarId(), a()->inputVarId(),
+                                b()->inputVarId());
 }

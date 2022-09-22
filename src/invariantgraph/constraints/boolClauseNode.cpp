@@ -43,17 +43,20 @@ void invariantgraph::BoolClauseNode::createDefinedVariables(Engine& engine) {
 }
 
 void invariantgraph::BoolClauseNode::registerWithEngine(Engine& engine) {
-  std::vector<VarId> engineVariables;
-  engineVariables.reserve(_as.size() + _bs.size());
-  std::transform(_as.begin(), _as.end(), std::back_inserter(engineVariables),
-                 [&](const auto& var) { return var->varId(); });
+  std::vector<VarId> inputs;
+  inputs.reserve(_as.size() + _bs.size());
+  std::transform(_as.begin(), _as.end(), std::back_inserter(inputs),
+                 [&](const auto& var) { return var->inputVarId(); });
 
-  std::transform(_bs.begin(), _bs.end(), std::back_inserter(engineVariables),
-                 [&](const auto& var) {
-                   return engine.makeIntView<NotEqualConst>(var->varId(), 0);
-                 });
+  std::transform(
+      _bs.begin(), _bs.end(), std::back_inserter(inputs), [&](const auto& var) {
+        return engine.makeIntView<NotEqualConst>(var->inputVarId(), 0);
+      });
+
+  assert(std::all_of(inputs.begin(), inputs.end(),
+                     [&](const VarId varId) { return varId != NULL_ID; }));
 
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
-  engine.makeInvariant<BoolLinear>(_sumVarId, engineVariables);
+  engine.makeInvariant<BoolLinear>(_sumVarId, inputs);
 }

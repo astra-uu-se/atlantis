@@ -4,15 +4,15 @@
 #include <map>
 #include <utility>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 #include "views/bool2IntView.hpp"
 
 namespace invariantgraph {
 
-class BoolNotNode : public VariableDefiningNode {
+class BoolNotNode : public InvariantNode {
  public:
   BoolNotNode(VariableNode* staticInput, VariableNode* output)
-      : VariableDefiningNode({output}, {staticInput}) {}
+      : InvariantNode({output}, {staticInput}) {}
 
   ~BoolNotNode() override = default;
 

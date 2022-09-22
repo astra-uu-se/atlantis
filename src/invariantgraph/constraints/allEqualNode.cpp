@@ -43,11 +43,12 @@ void invariantgraph::AllEqualNode::registerWithEngine(Engine& engine) {
   assert(_allDifferentViolationVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
 
-  std::vector<VarId> engineVariables;
+  std::vector<VarId> inputs;
   std::transform(staticInputs().begin(), staticInputs().end(),
-                 std::back_inserter(engineVariables),
-                 [&](const auto& var) { return var->varId(); });
+                 std::back_inserter(inputs),
+                 [&](const auto& var) { return var->inputVarId(); });
+  assert(std::all_of(inputs.begin(), inputs.end(),
+                     [&](const VarId varId) { return varId != NULL_ID; }));
 
-  engine.makeConstraint<AllDifferent>(_allDifferentViolationVarId,
-                                      engineVariables);
+  engine.makeConstraint<AllDifferent>(_allDifferentViolationVarId, inputs);
 }

@@ -21,11 +21,11 @@ namespace invariantgraph {
  */
 using MappableValue = std::variant<Int, bool, fznparser::Identifier>;
 
-class VariableDefiningNode;
+class InvariantNode;
 
 /**
  * A variable in the invariant graph. Every variable is defined by a
- * VariableDefiningNode. The variable is possibly associated with a model
+ * InvariantNode. The variable is possibly associated with a model
  * variable.
  */
 class VariableNode {
@@ -36,16 +36,15 @@ class VariableNode {
   float SPARSE_MIN_DENSENESS{0.6};
 
  private:
+  std::unordered_set<InvariantNode*> _inputFor;
+  std::unordered_set<InvariantNode*> _staticInputFor;
+  std::unordered_set<InvariantNode*> _dynamicInputFor;
+  std::unordered_map<InvariantNode*, VarId> _definingInvariants;
   std::optional<FZNVariable> _variable;
   SearchDomain _domain;
   const bool _isIntVar;
-  VarId _varId{NULL_ID};
   VarId _domainViolationId{NULL_ID};
-
-  std::vector<VariableDefiningNode*> _inputFor;
-  std::vector<VariableDefiningNode*> _staticInputFor;
-  std::vector<VariableDefiningNode*> _dynamicInputFor;
-  std::unordered_set<VariableDefiningNode*> _definingNodes;
+  VarId _varId{NULL_ID};
 
  public:
   /**
@@ -70,24 +69,22 @@ class VariableNode {
     return _variable;
   }
 
-  /**
-   * @return The model VarId this node is associated with, or NULL_ID
-   * if no VarId is associated with this node.
-   */
-  [[nodiscard]] VarId varId() const { return _varId; }
-
-  /**
-   * @return The model VarId this node is associated with, or NULL_ID
-   * if no VarId is associated with this node.
-   */
-  void setVarId(VarId varId) {
-    assert(_varId == NULL_ID);
-    _varId = varId;
-  }
-
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
 
   [[nodiscard]] inline bool isIntVar() const noexcept { return _isIntVar; }
+
+  [[nodiscard]] inline bool isSearchVariable() const noexcept {
+    return _definingInvariants.empty();
+  }
+
+  [[nodiscard]] inline bool isEvaluationVariable() const noexcept {
+    return _inputFor.empty();
+  }
+
+  [[nodiscard]] inline bool isDefinedBy(
+      InvariantNode* const invariantNode) const noexcept {
+    return _definingInvariants.contains(invariantNode);
+  }
 
   /**
    * @return if the bound range of the corresponding IntVar in engine is a
@@ -105,7 +102,7 @@ class VariableNode {
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] const std::vector<VariableDefiningNode*>& inputFor()
+  [[nodiscard]] const std::unordered_set<InvariantNode*>& inputFor()
       const noexcept {
     return _inputFor;
   }
@@ -113,7 +110,7 @@ class VariableNode {
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] const std::vector<VariableDefiningNode*>& staticInputFor()
+  [[nodiscard]] const std::unordered_set<InvariantNode*>& staticInputFor()
       const noexcept {
     return _staticInputFor;
   }
@@ -121,7 +118,7 @@ class VariableNode {
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] const std::vector<VariableDefiningNode*>& dynamicInputFor()
+  [[nodiscard]] const std::unordered_set<InvariantNode*>& dynamicInputFor()
       const noexcept {
     return _dynamicInputFor;
   }
@@ -129,20 +126,39 @@ class VariableNode {
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] const std::unordered_set<VariableDefiningNode*>& definingNodes()
-      const noexcept {
-    return _definingNodes;
+  [[nodiscard]] std::vector<InvariantNode*> definingNodes() const noexcept {
+    std::vector<InvariantNode*> keys;
+    keys.reserve(_definingInvariants.size());
+    std::transform(_definingInvariants.begin(), _definingInvariants.end(),
+                   keys.begin(), [&](const auto pair) { return pair.first; });
+    return keys;
   }
 
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] VariableDefiningNode* definedBy() const noexcept {
-    if (_definingNodes.size() == 1) {
-      return *_definingNodes.begin();
-    }
-    return nullptr;
+  [[nodiscard]] std::vector<VarId> varIds() const noexcept {
+    std::vector<VarId> keys;
+    keys.reserve(_definingInvariants.size());
+    std::transform(_definingInvariants.begin(), _definingInvariants.end(),
+                   keys.begin(), [&](const auto pair) { return pair.second; });
+    return keys;
   }
+
+  /**
+   * @return The variable defining nodes for which this node is an input.
+   */
+  [[nodiscard]] VarId varId(InvariantNode* const definingInvariant) noexcept {
+    assert(_definingInvariants.contains(definingInvariant));
+    return _definingInvariants.contains(definingInvariant)
+               ? _definingInvariants[definingInvariant]
+               : NULL_ID;
+  }
+
+  /**
+   * @return The variable defining nodes for which this node is an input.
+   */
+  [[nodiscard]] VarId inputVarId() const noexcept { return _varId; }
 
   /**
    * Indicate this variable node serves as an input to the given variable
@@ -150,13 +166,12 @@ class VariableNode {
    *
    * @param node The variable defining node for which this is an input.
    */
-  void markAsInputFor(VariableDefiningNode* listeningInvariant,
-                      bool isStaticInput) {
-    _inputFor.push_back(listeningInvariant);
+  void markAsInputFor(InvariantNode* listeningInvariant, bool isStaticInput) {
+    _inputFor.emplace(listeningInvariant);
     if (isStaticInput) {
-      _staticInputFor.push_back(listeningInvariant);
+      _staticInputFor.emplace(listeningInvariant);
     } else {
-      _dynamicInputFor.push_back(listeningInvariant);
+      _dynamicInputFor.emplace(listeningInvariant);
     }
   }
 
@@ -166,8 +181,9 @@ class VariableNode {
    *
    * @param node The variable defining node for which this is no longer defined.
    */
-  void unmarkAsDefinedBy(VariableDefiningNode* definingInvariant) {
-    _definingNodes.erase(definingInvariant);
+  void unmarkAsDefinedBy(InvariantNode* definingInvariant) {
+    assert(varId(definingInvariant) == NULL_ID);
+    _definingInvariants.erase(definingInvariant);
   }
 
   /**
@@ -177,26 +193,35 @@ class VariableNode {
    * @param node The variable defining node for which this is no longer an
    * input.
    */
-  void unmarkAsInputFor(VariableDefiningNode* listeningInvariant,
-                        bool isStaticInput) {
+  void unmarkAsInputFor(InvariantNode* listeningInvariant, bool isStaticInput) {
+    _inputFor.erase(listeningInvariant);
     if (isStaticInput) {
-      auto it = _staticInputFor.begin();
-      while (it != _staticInputFor.end()) {
-        if (*it == listeningInvariant) {
-          it = _staticInputFor.erase(it);
-        } else {
-          it++;
-        }
-      }
+      _staticInputFor.erase(listeningInvariant);
     } else {
-      auto it = _dynamicInputFor.begin();
-      while (it != _dynamicInputFor.end()) {
-        if (*it == listeningInvariant) {
-          it = _dynamicInputFor.erase(it);
-        } else {
-          it++;
-        }
-      }
+      _staticInputFor.erase(listeningInvariant);
+    }
+  }
+
+  inline void setVarId(VarId varId) { _varId = varId; }
+
+  /**
+   * Indicate this variable node is defined by the given variable
+   * defining node.
+   *
+   * @param node The variable defining node this is defined by.
+   */
+  inline void setVarId(VarId varId, InvariantNode* definingInvariant) {
+    assert(definingInvariant != nullptr);
+    assert(varId != NULL_ID);
+    assert(!_definingInvariants.contains(definingInvariant));
+    if (_varId == NULL_ID) {
+      setVarId(varId);
+    }
+    if (_definingInvariants.contains(definingInvariant)) {
+      _definingInvariants[definingInvariant] = varId;
+    } else {
+      _definingInvariants.emplace(
+          std::pair<InvariantNode*, VarId>(definingInvariant, varId));
     }
   }
 
@@ -206,9 +231,17 @@ class VariableNode {
    *
    * @param node The variable defining node this is defined by.
    */
-  void markDefinedBy(VariableDefiningNode* definingInvariant) {
+  inline void markInputFor(InvariantNode* definingInvariant) {
     assert(definingInvariant != nullptr);
-    _definingNodes.emplace(definingInvariant);
+    if (!_definingInvariants.contains(definingInvariant)) {
+      _definingInvariants.emplace(
+          std::pair<InvariantNode*, VarId>(definingInvariant, NULL_ID));
+    }
+  }
+
+  [[nodiscard]] inline bool isConstantValue() const noexcept {
+    const auto [lb, ub] = _domain.bounds();
+    return lb == ub;
   }
 
   /**
