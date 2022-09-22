@@ -143,11 +143,11 @@ inline void PropagationEngine::incCurrentTimestamp() {
   } else {
     _modifiedSearchVariables.clear();
   }
-#ifndef NDEBUG
-  for (const VarIdBase varId : searchVariables()) {
-    assert(!_store.intVar(varId).hasChanged(_currentTimestamp));
-  }
-#endif
+  assert(std::all_of(searchVariables().begin(), searchVariables().end(),
+                     [&](const VarIdBase varId) {
+                       return !_store.intVar(varId).hasChanged(
+                           _currentTimestamp);
+                     }));
 }
 
 inline size_t PropagationEngine::numVariables() {

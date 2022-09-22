@@ -22,14 +22,16 @@ class ArrayVarBoolElement2dNode : public VariableDefiningNode {
         _numRows(numRows),
         _offset1(offset1),
         _offset2(offset2) {
-#ifndef NDEBUG
-    assert(staticInputs().front()->isIntVar());
-    assert(staticInputs().back()->isIntVar());
-    for (auto* const dynamicInput : dynamicInputs()) {
-      assert(!dynamicInput->isIntVar());
-    }
-    assert(definedVariables().front()->isIntVar());
-#endif
+    assert(std::all_of(
+        staticInputs().begin(), staticInputs().end(),
+        [&](auto* const staticInput) { return staticInput->isIntVar(); }));
+    assert(std::all_of(
+        dynamicInputs().begin(), dynamicInputs().end(),
+        [&](auto* const dynamicInput) { return !dynamicInput->isIntVar(); }));
+    assert(std::all_of(definedVariables().begin(), definedVariables().end(),
+                       [&](auto* const definedVariable) {
+                         return definedVariable->isIntVar();
+                       }));
   }
 
   static std::vector<std::pair<std::string_view, size_t>>

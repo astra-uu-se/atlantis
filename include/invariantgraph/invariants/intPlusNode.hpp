@@ -11,11 +11,9 @@ class IntPlusNode : public VariableDefiningNode {
  public:
   IntPlusNode(VariableNode* a, VariableNode* b, VariableNode* output)
       : VariableDefiningNode({output}, {a, b}) {
-#ifndef NDEBUG
-    for (auto* const staticInput : staticInputs()) {
-      assert(staticInput->isIntVar());
-    }
-#endif
+    assert(std::all_of(
+        staticInputs().begin(), staticInputs().end(),
+        [&](auto* const staticInput) { return staticInput->isIntVar(); }));
   }
 
   ~IntPlusNode() override = default;

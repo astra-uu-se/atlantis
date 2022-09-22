@@ -126,17 +126,8 @@ bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::randomMove(
                 _domains[variable1Index][random.intInRange(
                     j, _domains[variable1Index].size() - 1)]);
       const size_t value2Index = toValueIndex(_domains[variable1Index][j]);
-#ifndef NDEBUG
       assert(inDomain(variable1Index, value2Index));
 
-      if (isValueIndexOccupied(value2Index)) {
-        const size_t variable2Index =
-            _valueIndexToVariableIndex.at(value2Index);
-        assert(value2Index == toValueIndex(assignment.value(
-                                  _variables.at(variable2Index).engineId())));
-        assert(variable2Index == _valueIndexToVariableIndex.at(value2Index));
-      }
-#endif
       if (_valueIndexToVariableIndex[value2Index] == variable1Index) {
         continue;
       }
@@ -224,7 +215,6 @@ bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::swapValues(
                   assignment, annealer)) {
     _valueIndexToVariableIndex[toValueIndex(value1)] = variable2Index;
     _valueIndexToVariableIndex[value2Index] = variable1Index;
-#ifndef NDEBUG
     assert(variable1Index == _valueIndexToVariableIndex.at(value2Index));
     assert(variable2Index == _valueIndexToVariableIndex.at(value1Index));
     assert(
@@ -242,7 +232,6 @@ bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::swapValues(
 
     assert(_valueIndexToVariableIndex.at(value1Index) == variable2Index);
     assert(_valueIndexToVariableIndex.at(value2Index) == variable1Index);
-#endif
     return true;
   }
   return false;

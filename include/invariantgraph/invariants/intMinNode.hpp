@@ -11,11 +11,9 @@ class IntMinNode : public VariableDefiningNode {
  public:
   IntMinNode(VariableNode* a, VariableNode* b, VariableNode* output)
       : VariableDefiningNode({output}, {a, b}) {
-#ifndef NDEBUG
-    for (auto* const staticInput : staticInputs()) {
-      assert(staticInput->isIntVar());
-    }
-#endif
+    assert(std::all_of(
+        staticInputs().begin(), staticInputs().end(),
+        [&](auto* const staticInput) { return staticInput->isIntVar(); }));
   }
 
   ~IntMinNode() override = default;

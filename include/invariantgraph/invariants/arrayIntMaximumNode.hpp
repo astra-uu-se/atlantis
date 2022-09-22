@@ -11,11 +11,9 @@ class ArrayIntMaximumNode : public VariableDefiningNode {
   ArrayIntMaximumNode(std::vector<VariableNode*> variables,
                       VariableNode* output)
       : VariableDefiningNode({output}, variables) {
-#ifndef NDEBUG
-    for (auto* const staticInput : staticInputs()) {
-      assert(staticInput->isIntVar());
-    }
-#endif
+    assert(std::all_of(
+        staticInputs().begin(), staticInputs().end(),
+        [&](auto* const staticInput) { return staticInput->isIntVar(); }));
   }
 
   static std::vector<std::pair<std::string_view, size_t>>

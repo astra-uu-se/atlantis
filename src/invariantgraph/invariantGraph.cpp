@@ -65,15 +65,10 @@ invariantgraph::InvariantGraph::findPivotInCycle(
       maxDomainSize = cycle[i]->domain().size();
       pivot = cycle[i];
       listeningInvariant = cycle[(i + 1) % cycle.size()]->definedBy();
-#ifndef NDEBUG
-      bool isInputTo = false;
-      for (auto* const input : listeningInvariant->staticInputs()) {
-        if (input == pivot) {
-          isInputTo = true;
-        }
-      }
-      assert(isInputTo);
-#endif
+      assert(std::any_of(
+          listeningInvariant->staticInputs().begin(),
+          listeningInvariant->staticInputs().end(),
+          [&](VariableNode* const input) { return input == pivot; }));
     }
   }
   assert(pivot != nullptr);
@@ -114,17 +109,19 @@ invariantgraph::VariableNode* invariantgraph::InvariantGraph::breakCycle(
   listeningInvariant->replaceStaticInput(pivot, newInputNode);
   _variableDefiningNodes.emplace_back(
       std::make_unique<IntEqNode>(pivot, newInputNode));
-  bool addedToSearchNodes = false;
+  assert(std::any_of(_implicitConstraints.begin(), _implicitConstraints.end(),
+                     [&](ImplicitConstraintNode* const implicitConstraint) {
+                       return dynamic_cast<InvariantGraphRoot*>(
+                                  implicitConstraint) != nullptr;
+                     }));
   for (auto* const implicitConstraint : _implicitConstraints) {
     assert(listeningInvariant != implicitConstraint);
     if (InvariantGraphRoot* root =
             dynamic_cast<InvariantGraphRoot*>(implicitConstraint);
         root != nullptr) {
-      addedToSearchNodes = true;
       root->addSearchVariable(newInputNode);
     }
   }
-  assert(addedToSearchNodes);
   return newInputNode;
 }
 
@@ -210,11 +207,9 @@ invariantgraph::InvariantGraph::breakCycles(
       for (; path.contains(cur); cur = path.at(cur)) {
         cycle.push_back(cur);
       }
-#ifndef NDEBUG
-      for (auto* n : cycle) {
-        assert(n != cur);
-      }
-#endif
+      assert(std::all_of(
+          cycle.begin(), cycle.end(),
+          [&](invariantgraph::VariableNode* n) { return n != cur; }));
       cycle.push_back(cur);
       newSearchNodes.emplace_back(breakCycle(cycle));
       assert(newSearchNodes.back() != nullptr);
@@ -289,11 +284,12 @@ void invariantgraph::InvariantGraph::createVariables(Engine& engine) {
     // If the node only defines a single variable, then it is a view:
     assert(!node->dynamicInputs().empty() || node->staticInputs().size() != 1 ||
            node->staticInputs().front()->varId() != NULL_ID);
-#ifndef NDEBUG
-    for (auto* const definedVariable : node->definedVariables()) {
-      assert(definedVariable->varId() == NULL_ID);
-    }
-#endif
+    assert(std::all_of(node->definedVariables().begin(),
+                       node->definedVariables().end(),
+                       [&](VariableNode* const definedVariable) {
+                         return definedVariable->varId() == NULL_ID;
+                       }));
+
     node->createDefinedVariables(engine);
     for (auto* const definedVariable : node->definedVariables()) {
       assert(definedVariable->definedBy() == node);
@@ -317,20 +313,18 @@ void invariantgraph::InvariantGraph::createVariables(Engine& engine) {
     }
   }
 
-#ifndef NDEBUG
-  for (auto& node : _variableDefiningNodes) {
-    assert(visitedNodes.contains(node.get()));
-  }
-#endif
+  assert(std::all_of(
+      _variableDefiningNodes.begin(), _variableDefiningNodes.end(),
+      [&](const auto& node) { return visitedNodes.contains(node.get()); }));
 }
 
 void invariantgraph::InvariantGraph::createInvariants(Engine& engine) {
   for (const auto& node : _variableDefiningNodes) {
-#ifndef NDEBUG
-    for (auto* const definedVariable : node->definedVariables()) {
-      assert(definedVariable->varId() != NULL_ID);
-    }
-#endif
+    assert(std::all_of(node->definedVariables().begin(),
+                       node->definedVariables().end(),
+                       [&](auto* const definedVariable) {
+                         return definedVariable->varId() != NULL_ID;
+                       }));
     node->registerWithEngine(engine);
   }
 }
