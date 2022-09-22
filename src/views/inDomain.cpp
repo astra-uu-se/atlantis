@@ -2,19 +2,26 @@
 
 #include "core/engine.hpp"
 
+inline bool all_in_range(size_t start, size_t stop,
+                         std::function<bool(size_t)> predicate) {
+  std::vector<size_t> vec(stop - start);
+  for (size_t i = 0; i < stop - start; ++i) {
+    vec.at(i) = start + i;
+  }
+  return std::all_of(vec.begin(), vec.end(), predicate);
+}
+
 InDomain::InDomain(VarId parentId, std::vector<DomainEntry>&& domain)
     : IntView(parentId),
       _domain(std::move(domain)),
       _cache(NULL_TIMESTAMP, std::pair<Int, Int>(0, compute(0))) {
-#ifndef NDEBUG
   assert(_domain.size() >= 1);
-  for (const auto& domEntry : _domain) {
-    assert(domEntry.lowerBound <= domEntry.upperBound);
-  }
-  for (size_t i = 1; i < _domain.size(); ++i) {
-    assert(_domain[i - 1].upperBound < _domain[i].lowerBound);
-  }
-#endif
+  assert(std::all_of(_domain.begin(), _domain.end(), [&](const auto& domEntry) {
+    return domEntry.lowerBound <= domEntry.upperBound;
+  }));
+  assert(all_in_range(1u, _domain.size(), [&](const size_t i) {
+    return _domain.at(i - 1).upperBound < _domain.at(i).lowerBound;
+  }));
 }
 
 Int InDomain::compute(const Int val) const {

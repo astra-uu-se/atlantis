@@ -1,11 +1,9 @@
 #include "invariants/element2dConst.hpp"
 
 static inline Int numCols(const std::vector<std::vector<Int>>& matrix) {
-#ifndef NDEBUG
-  for (const auto& col : matrix) {
-    assert(col.size() == matrix.front().size());
-  }
-#endif
+  assert(std::all_of(matrix.begin(), matrix.end(), [&](const auto& col) {
+    return col.size() == matrix.front().size();
+  }));
   return matrix.empty() ? 0 : matrix.front().size();
 }
 

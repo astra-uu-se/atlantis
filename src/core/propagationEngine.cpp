@@ -58,14 +58,20 @@ void PropagationEngine::close() {
     }
   }
 
-#ifndef NDEBUG
-  for (const VarIdBase varId : searchVariables()) {
-    // Assert that if search variable varId is modified,
-    // then it is in the set of modified search variables
-    assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
-           _modifiedSearchVariables.contains(varId));
-  }
-#endif
+  // Assert that if search variable varId is modified,
+  // then it is in the set of modified search variables
+  assert(std::all_of(searchVariables().begin(), searchVariables().end(),
+                     [&](const VarIdBase varId) {
+                       return _store.intVar(varId).hasChanged(
+                                  _currentTimestamp) ==
+                              _modifiedSearchVariables.contains(varId);
+                     }));
+  assert(std::all_of(searchVariables().begin(), searchVariables().end(),
+                     [&](const VarIdBase varId) {
+                       return _store.intVar(varId).hasChanged(
+                                  _currentTimestamp) ==
+                              _modifiedSearchVariables.contains(varId);
+                     }));
 
   // close all invariants
   closeInvariants();
@@ -74,12 +80,12 @@ void PropagationEngine::close() {
   // invariants
   recomputeAndCommit();
 
-#ifndef NDEBUG
-  for (const size_t varId : _modifiedSearchVariables) {
-    // assert that decsion variable varId is no longer modified.
-    assert(!_store.intVar(varId).hasChanged(_currentTimestamp));
-  }
-#endif
+  // assert that decsion variable varId is no longer modified.
+  assert(std::all_of(_modifiedSearchVariables.begin(),
+                     _modifiedSearchVariables.end(), [&](const size_t varId) {
+                       return !_store.intVar(varId).hasChanged(
+                           _currentTimestamp);
+                     }));
 }
 
 //---------------------Registration---------------------
@@ -231,17 +237,16 @@ void PropagationEngine::endProbe() {
         propagate<false, false>();
       }
     } else {
-#ifndef NDEBUG
-      if (outputToInputMarkingMode() ==
-          OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-        for (VarIdBase varId : searchVariables()) {
-          // Assert that if decision variable varId is modified,
-          // then it is in the set of modified decision variables
-          assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
-                 _modifiedSearchVariables.contains(varId));
-        }
-      }
-#endif
+      // Assert that if decision variable varId is modified,
+      // then it is in the set of modified decision variables
+      assert(outputToInputMarkingMode() !=
+                 OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC ||
+             std::all_of(searchVariables().begin(), searchVariables().end(),
+                         [&](const VarIdBase varId) {
+                           return _store.intVar(varId).hasChanged(
+                                      _currentTimestamp) ==
+                                  _modifiedSearchVariables.contains(varId);
+                         }));
       outputToInputPropagate();
     }
     _engineState = EngineState::IDLE;
@@ -266,34 +271,30 @@ void PropagationEngine::endCommit() {
   _engineState = EngineState::PROCESSING;
 
   try {
-#ifndef NDEBUG
-    if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
-        outputToInputMarkingMode() ==
-            OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-      for (VarIdBase varId : searchVariables()) {
-        // Assert that if decision variable varId is modified,
-        // then it is in the set of modified decision variables
-        assert(_store.intVar(varId).hasChanged(_currentTimestamp) ==
-               _modifiedSearchVariables.contains(varId));
-      }
-    }
-#endif
+    // Assert that if decision variable varId is modified,
+    // then it is in the set of modified decision variables
+    assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT ||
+           outputToInputMarkingMode() !=
+               OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC ||
+           std::all_of(searchVariables().begin(), searchVariables().end(),
+                       [&](const VarIdBase varId) {
+                         return _store.intVar(varId).hasChanged(
+                                    _currentTimestamp) ==
+                                _modifiedSearchVariables.contains(varId);
+                       }));
     if (_propGraph.numLayers() == 1) {
       propagate<true, true>();
     } else {
       propagate<true, false>();
     }
 
-#ifndef NDEBUG
-    if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT &&
-        outputToInputMarkingMode() ==
-            OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-      for (size_t varId : _modifiedSearchVariables) {
-        // assert that decsion variable varId is no longer modified.
-        assert(!_store.intVar(varId).hasChanged(_currentTimestamp));
-      }
-    }
-#endif
+    // assert that decsion variable varId is no longer modified.
+    assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT ||
+           std::all_of(_modifiedSearchVariables.begin(),
+                       _modifiedSearchVariables.end(), [&](const size_t varId) {
+                         return !_store.intVar(varId).hasChanged(
+                             _currentTimestamp);
+                       }));
     _engineState = EngineState::IDLE;
   } catch (std::exception const& e) {
     _engineState = EngineState::IDLE;
@@ -371,11 +372,9 @@ void PropagationEngine::propagate() {
 
       if (curLayer >= _propGraph.numLayers()) {
         // All layers have been propogated
-#ifndef NDEBUG
-        for (size_t l = 0; l < _propGraph.numLayers(); ++l) {
-          assert(_layerQueueIndex[l] == 0);
-        }
-#endif
+        assert(_layerQueueIndex.size() == _propGraph.numLayers());
+        assert(std::all_of(_layerQueueIndex.begin(), _layerQueueIndex.end(),
+                           [&](const Timestamp lqi) { return lqi == 0; }));
         return;
       }
       // There are variables to enqueue for the new layer:
@@ -433,18 +432,18 @@ void PropagationEngine::computeBounds() {
     assert(!invariantQueue.contains(invariantId));
 
     assert(!invariantQueue.contains(invariantId));
-#ifndef NDEBUG
-    for (const InvariantId invId : invariantQueue) {
-      // If the following assertion fails, then inputsToCompute[i] was
-      // updated before removing invariant i:
-      assert(invId != invariantId);
-    }
-    for (const InvariantId invId : invariantQueue) {
-      assert(inputsToCompute[invariantId] < inputsToCompute[invId] ||
-             (inputsToCompute[invariantId] == inputsToCompute[invId] &&
-              size_t(invariantId) <= size_t(invId)));
-    }
-#endif
+    // If the following assertion fails, then inputsToCompute[i] was
+    // updated before removing invariant i:
+    assert(std::all_of(
+        invariantQueue.begin(), invariantQueue.end(),
+        [&](const InvariantId invId) { return invId != invariantId; }));
+    assert(std::all_of(
+        invariantQueue.begin(), invariantQueue.end(),
+        [&](const InvariantId invId) {
+          return inputsToCompute[invariantId] < inputsToCompute[invId] ||
+                 (inputsToCompute[invariantId] == inputsToCompute[invId] &&
+                  size_t(invariantId) <= size_t(invId));
+        }));
     _store.invariant(invariantId).updateBounds(*this, true);
 
     for (const VarIdBase outputVarId :

@@ -2,6 +2,15 @@
 
 #include "misc/logging.hpp"
 
+inline bool all_in_range(size_t start, size_t stop,
+                         std::function<bool(size_t)> predicate) {
+  std::vector<size_t> vec(stop - start);
+  for (size_t i = 0; i < stop - start; ++i) {
+    vec.at(i) = start + i;
+  }
+  return std::all_of(vec.begin(), vec.end(), predicate);
+}
+
 PropagationGraph::PropagationGraph(const Store& store, size_t expectedSize)
     : _store(store),
       _definingInvariant(expectedSize),
@@ -132,22 +141,16 @@ bool PropagationGraph::containsStaticCycle() {
   std::vector<bool> inFrontier(numVariables() + 1, false);
   // Check for static cycles starting from the output variables:
   for (size_t varId = 1u; varId <= numVariables(); ++varId) {
-#ifndef NDEBUG
-    for (size_t i = 1u; i <= numVariables(); ++i) {
-      assert(!inFrontier[i]);
-    }
-#endif
+    assert(all_in_range(1u, numVariables() + 1,
+                        [&](const size_t i) { return !inFrontier.at(i); }));
     if (listeningInvariants(varId).size() == 0) {
       if (containsStaticCycle(visited, inFrontier, VarIdBase(varId))) {
         return true;
       }
     }
   }
-#ifndef NDEBUG
-  for (size_t varId = 1u; varId <= numVariables(); ++varId) {
-    assert(visited[varId]);
-  }
-#endif
+  assert(all_in_range(1u, numVariables() + 1,
+                      [&](const size_t varId) { return visited.at(varId); }));
   return false;
 }
 
@@ -209,16 +212,14 @@ void PropagationGraph::partitionIntoLayers() {
       partitionIntoLayers(visited, VarIdBase(varId));
     }
   }
-#ifndef NDEBUG
-  for (size_t varId = 1; varId <= numVariables(); ++varId) {
-    assert(_variableLayerIndex.has_idx(varId));
+  assert(all_in_range(1u, numVariables() + 1, [&](const size_t varId) {
     const size_t layer = _variableLayerIndex.at(varId).layer;
     const size_t index = _variableLayerIndex.at(varId).index;
-    assert(layer < _variablesInLayer.size());
-    assert(index < _variablesInLayer.at(layer).size());
-    assert(varId == _variablesInLayer.at(layer).at(index).id);
-  }
-#endif
+    return _variableLayerIndex.has_idx(varId) &&
+           layer < _variablesInLayer.size() &&
+           index < _variablesInLayer.at(layer).size() &&
+           varId == _variablesInLayer.at(layer).at(index).id;
+  }));
 }
 
 bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
@@ -267,11 +268,9 @@ bool PropagationGraph::containsDynamicCycle(size_t layer) {
   std::vector<bool> inFrontier(_variablesInLayer[layer].size(), false);
   // Check for static cycles starting from the output variables:
   for (size_t i = 0; i < _variablesInLayer[layer].size(); ++i) {
-#ifndef NDEBUG
-    for (size_t varId = 0; varId < _variablesInLayer[layer].size(); ++varId) {
-      assert(!inFrontier[varId]);
-    }
-#endif
+    assert(all_in_range(
+        0, _variablesInLayer.at(layer).size(),
+        [&](const size_t varId) { return !inFrontier.at(varId); }));
     if (!visited[i]) {
       if (containsDynamicCycle(visited, inFrontier,
                                _variablesInLayer[layer][i])) {
@@ -279,11 +278,8 @@ bool PropagationGraph::containsDynamicCycle(size_t layer) {
       }
     }
   }
-#ifndef NDEBUG
-  for (size_t i = 0; i < _variablesInLayer[layer].size(); ++i) {
-    assert(visited[i]);
-  }
-#endif
+  assert(all_in_range(0, _variablesInLayer.at(layer).size(),
+                      [&](const size_t varId) { return visited.at(varId); }));
   return false;
 }
 
@@ -433,10 +429,10 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
       curPosition = topologicallyOrder(ts, inFrontier, varId, curPosition);
     }
   }
+  assert(all_in_range(0u, inFrontier.size(), [&](const size_t index) {
+    return !inFrontier.at(index);
+  }));
 #ifndef NDEBUG
-  for (size_t index = 0; index < inFrontier.size(); ++index) {
-    assert(!inFrontier[index]);
-  }
   std::vector<bool> posIndexUsed(_variablesInLayer[layer].size(), false);
   const size_t offset = _layerPositionOffset.at(layer);
   for (const VarIdBase varId : _variablesInLayer[layer]) {
@@ -446,10 +442,10 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
     assert(!posIndexUsed.at(posIndex));
     posIndexUsed[posIndex] = true;
   }
-  for (size_t index = 0; index < posIndexUsed.size(); ++index) {
-    assert(posIndexUsed[index]);
-  }
 #endif
+  assert(all_in_range(0u, posIndexUsed.size(), [&](const size_t index) {
+    return posIndexUsed.at(index);
+  }));
   if (updatePriorityQueue) {
     for (const VarIdBase varId : _variablesInLayer[layer]) {
       _propagationQueue.updatePriority(varId, _variablePosition.at(varId));

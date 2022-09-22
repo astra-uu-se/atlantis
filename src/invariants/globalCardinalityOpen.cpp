@@ -2,6 +2,16 @@
 
 #include "core/engine.hpp"
 #include "variables/committableInt.hpp"
+
+inline bool all_in_range(Int start, Int stop,
+                         std::function<bool(Int)> predicate) {
+  std::vector<Int> vec(stop - start);
+  for (Int i = 0; i < stop - start; ++i) {
+    vec.at(i) = start + i;
+  }
+  return std::all_of(vec.begin(), vec.end(), predicate);
+}
+
 /**
  * @param violationId id for the violationCount
  */
@@ -18,14 +28,11 @@ GlobalCardinalityOpen::GlobalCardinalityOpen(std::vector<VarId> outputs,
       _offset(0) {
   _modifiedVars.reserve(_inputs.size());
   assert(_cover.size() == _outputs.size());
-#ifndef NDEBUG
-  for (size_t i = 0; i < _cover.size(); ++i) {
-    for (size_t j = i + 1; j < _cover.size(); ++j) {
-      assert(_cover.at(i) != _cover.at(j));
-      assert(_outputs.at(i) != _outputs.at(j));
-    }
-  }
-#endif
+  assert(all_in_range(0, _cover.size(), [&](const Int i) {
+    return all_in_range(i + 1, _cover.size(), [&](const Int j) {
+      return _cover.at(i) != _cover.at(j) && _outputs.at(i) != _outputs.at(j);
+    });
+  }));
 }
 
 void GlobalCardinalityOpen::registerVars(Engine& engine) {

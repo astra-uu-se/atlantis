@@ -1,11 +1,9 @@
 #include "invariants/element2dVar.hpp"
 
 static inline Int numCols(const std::vector<std::vector<VarId>>& varMatrix) {
-#ifndef NDEBUG
-  for (const auto& col : varMatrix) {
-    assert(col.size() == varMatrix.front().size());
-  }
-#endif
+  assert(std::all_of(varMatrix.begin(), varMatrix.end(), [&](const auto& col) {
+    return col.size() == varMatrix.front().size();
+  }));
   return varMatrix.empty() ? 0 : varMatrix.front().size();
 }
 

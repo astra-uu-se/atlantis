@@ -92,18 +92,11 @@ class InvariantGraph {
         _implicitConstraints.push_back(implicitConstraint);
       }
     }
-#ifndef NDEBUG
-    if (_objectiveVariable != nullptr) {
-      bool containsObj = false;
-      for (auto& var : _variables) {
-        if (var.get() == _objectiveVariable) {
-          containsObj = true;
-          break;
-        }
-      }
-      assert(containsObj);
-    }
-#endif
+    assert(
+        _objectiveVariable == nullptr ||
+        std::any_of(_variables.begin(), _variables.end(), [&](const auto& var) {
+          return var.get() == _objectiveVariable;
+        }));
   }
 
   InvariantGraph(const InvariantGraph&) = delete;

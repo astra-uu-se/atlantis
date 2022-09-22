@@ -15,12 +15,12 @@ class ArrayVarIntElementNode : public VariableDefiningNode {
   ArrayVarIntElementNode(VariableNode* b, std::vector<VariableNode*> as,
                          VariableNode* output, Int offset)
       : VariableDefiningNode({output}, {b}, as), _offset(offset) {
-#ifndef NDEBUG
-    assert(staticInputs().front()->isIntVar());
-    for (auto* const dynamicInput : dynamicInputs()) {
-      assert(dynamicInput->isIntVar());
-    }
-#endif
+    assert(std::all_of(
+        staticInputs().begin(), staticInputs().end(),
+        [&](auto* const staticInput) { return staticInput->isIntVar(); }));
+    assert(std::all_of(
+        dynamicInputs().begin(), dynamicInputs().end(),
+        [&](auto* const dynamicInput) { return dynamicInput->isIntVar(); }));
   }
 
   static std::vector<std::pair<std::string_view, size_t>>
