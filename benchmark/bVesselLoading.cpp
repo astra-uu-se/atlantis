@@ -209,7 +209,6 @@ class VesselLoading : public benchmark::Fixture {
 };
 
 BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)(benchmark::State& st) {
-  st.PauseTiming();
   auto indexDistr =
       std::uniform_int_distribution<size_t>{0u, containerCount - 1};
   auto rotationDistr = std::uniform_int_distribution<Int>{0, 1};
@@ -227,7 +226,7 @@ BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)(benchmark::State& st) {
         std::uniform_int_distribution<Int>{
             0, std::max<Int>(0, vesselLength - conWidth.at(i))}});
   }
-  st.ResumeTiming();
+  size_t probes = 0;
   for (auto _ : st) {
     const size_t i = indexDistr(gen);
     assert(i < containerCount);
@@ -241,7 +240,10 @@ BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)(benchmark::State& st) {
     engine->beginProbe();
     engine->query(totalViolation);
     engine->endProbe();
+    ++probes;
   }
+  st.counters["probes_per_second"] =
+      benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(VesselLoading, solve)(benchmark::State& st) {
@@ -326,7 +328,7 @@ BENCHMARK_DEFINE_F(VesselLoading, solve)(benchmark::State& st) {
   st.counters["solved"] = benchmark::Counter(done);
 }
 
-/*
+///*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int containerCount = 5; containerCount <= 50; containerCount += 5) {
     for (int mode = 0; mode <= 3; ++mode) {

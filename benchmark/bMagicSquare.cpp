@@ -138,6 +138,7 @@ class MagicSquare : public benchmark::Fixture {
 };
 
 BENCHMARK_DEFINE_F(MagicSquare, probe_single_swap)(benchmark::State& st) {
+  size_t probes = 0;
   for (auto _ : st) {
     const size_t i = distribution(gen);
     assert(i < flat.size());
@@ -154,7 +155,10 @@ BENCHMARK_DEFINE_F(MagicSquare, probe_single_swap)(benchmark::State& st) {
     engine->beginProbe();
     engine->query(totalViolation);
     engine->endProbe();
+    ++probes;
   }
+  st.counters["probes_per_second"] =
+      benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(benchmark::State& st) {
