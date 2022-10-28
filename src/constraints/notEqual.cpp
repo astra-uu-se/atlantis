@@ -8,47 +8,44 @@
  * @param x variable of lhs
  * @param y variable of rhs
  */
-NotEqual::NotEqual(VarId violationId, VarId x, VarId y)
-    : Constraint(violationId), _x(x), _y(y) {
+NotEqual::NotEqual(Engine& engine, VarId violationId, VarId x, VarId y)
+    : Constraint(engine, violationId), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
-void NotEqual::registerVars(Engine& engine) {
+void NotEqual::registerVars() {
   assert(_id != NULL_ID);
-  engine.registerInvariantInput(_id, _x, LocalId(0));
-  engine.registerInvariantInput(_id, _y, LocalId(0));
-  registerDefinedVariable(engine, _violationId);
+  _engine.registerInvariantInput(_id, _x, LocalId(0));
+  _engine.registerInvariantInput(_id, _y, LocalId(0));
+  registerDefinedVariable(_violationId);
 }
 
-void NotEqual::updateBounds(Engine& engine, bool widenOnly) {
-  const Int xLb = engine.lowerBound(_x);
-  const Int xUb = engine.upperBound(_x);
-  const Int yLb = engine.lowerBound(_y);
-  const Int yUb = engine.upperBound(_y);
+void NotEqual::updateBounds(bool widenOnly) {
+  const Int xLb = _engine.lowerBound(_x);
+  const Int xUb = _engine.upperBound(_x);
+  const Int yLb = _engine.lowerBound(_y);
+  const Int yUb = _engine.upperBound(_y);
   if (xUb < yLb || yUb < xLb) {
-    engine.updateBounds(_violationId, 0, 0, widenOnly);
+    _engine.updateBounds(_violationId, 0, 0, widenOnly);
     return;
   }
 
   for (const Int val : std::array<Int, 3>{xUb, yLb, yUb}) {
     if (xLb != val) {
-      engine.updateBounds(_violationId, 0, 1, widenOnly);
+      _engine.updateBounds(_violationId, 0, 1, widenOnly);
       return;
     }
   }
-  engine.updateBounds(_violationId, 1, 1, widenOnly);
+  _engine.updateBounds(_violationId, 1, 1, widenOnly);
 }
 
-void NotEqual::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _violationId,
-              engine.value(ts, _x) == engine.value(ts, _y));
+void NotEqual::recompute(Timestamp ts) {
+  updateValue(ts, _violationId, _engine.value(ts, _x) == _engine.value(ts, _y));
 }
 
-void NotEqual::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
-  recompute(ts, engine);
-}
+void NotEqual::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId NotEqual::nextInput(Timestamp ts, Engine&) {
+VarId NotEqual::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -59,10 +56,6 @@ VarId NotEqual::nextInput(Timestamp ts, Engine&) {
   }
 }
 
-void NotEqual::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  recompute(ts, engine);
-}
+void NotEqual::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
-void NotEqual::commit(Timestamp ts, Engine& engine) {
-  Invariant::commit(ts, engine);
-}
+void NotEqual::commit(Timestamp ts) { Invariant::commit(ts); }

@@ -1,10 +1,12 @@
 #pragma once
 
 #include <cassert>
+#include <limits>
 #include <vector>
 
 #include "constraint.hpp"
 #include "core/types.hpp"
+#include "variables/committableInt.hpp"
 #include "variables/intVar.hpp"
 
 class CommittableInt;  // forward declare
@@ -20,16 +22,17 @@ class AllDifferent : public Constraint {
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  explicit AllDifferent(VarId violationId, std::vector<VarId> variables);
+  explicit AllDifferent(Engine&, VarId violationId,
+                        std::vector<VarId> variables);
 
-  void registerVars(Engine&) override;
-  void updateBounds(Engine&, bool widenOnly = false) override;
-  void close(Timestamp, Engine&) override;
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
-  void commit(Timestamp, Engine&) override;
-  VarId nextInput(Timestamp, Engine&) override;
-  void notifyCurrentInputChanged(Timestamp, Engine&) override;
+  void registerVars() override;
+  void updateBounds(bool widenOnly = false) override;
+  void close(Timestamp) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
+  void commit(Timestamp) override;
+  VarId nextInput(Timestamp) override;
+  void notifyCurrentInputChanged(Timestamp) override;
 };
 
 inline signed char AllDifferent::increaseCount(Timestamp ts, Int value) {

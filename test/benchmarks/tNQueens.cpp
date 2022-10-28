@@ -18,22 +18,23 @@ TEST(NQueens, CommitsInvariant) {
   for (Int i = 0; i < n; ++i) {
     const VarId q = engine.makeIntVar(1, 1, n);
     queens.push_back(q);
-    q_offset_minus.push_back(engine.makeIntView<IntOffsetView>(q, -i));
-    q_offset_plus.push_back(engine.makeIntView<IntOffsetView>(q, i));
+    q_offset_minus.push_back(engine.makeIntView<IntOffsetView>(engine, q, -i));
+    q_offset_plus.push_back(engine.makeIntView<IntOffsetView>(engine, q, i));
   }
 
   auto violation1 = engine.makeIntVar(0, 0, n);
   auto violation2 = engine.makeIntVar(0, 0, n);
   auto violation3 = engine.makeIntVar(0, 0, n);
 
-  engine.makeConstraint<AllDifferent>(violation1, queens);
-  engine.makeConstraint<AllDifferent>(violation2, q_offset_minus);
-  engine.makeConstraint<AllDifferent>(violation3, q_offset_plus);
+  engine.makeConstraint<AllDifferent>(engine, violation1, queens);
+  engine.makeConstraint<AllDifferent>(engine, violation2, q_offset_minus);
+  engine.makeConstraint<AllDifferent>(engine, violation3, q_offset_plus);
 
   auto total_violation = engine.makeIntVar(0, 0, 3 * n);
 
   engine.makeInvariant<Linear>(
-      total_violation, std::vector<VarId>{violation1, violation2, violation3});
+      engine, total_violation,
+      std::vector<VarId>{violation1, violation2, violation3});
 
   engine.close();
 

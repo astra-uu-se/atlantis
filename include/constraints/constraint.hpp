@@ -9,10 +9,10 @@ class Constraint : public Invariant {
  private:
  protected:
   const VarId _violationId;
-  explicit Constraint(VarId violationId, Int nullState = -1)
-      : Invariant(nullState), _violationId(violationId) {}
+  explicit Constraint(Engine& engine, VarId violationId, Int nullState = -1)
+      : Invariant(engine, nullState), _violationId(violationId) {}
 
  public:
   [[nodiscard]] inline VarId violationId() const;
-  [[nodiscard]] inline Int violationCount(Engine&, Timestamp&) const;
+  [[nodiscard]] inline Int violationCount(Timestamp&) const;
 };

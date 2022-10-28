@@ -46,7 +46,7 @@ TEST_F(BoolXorTest, UpdateBounds) {
   const VarId y = engine->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId outputId = engine->makeIntVar(0, 0, 2);
-  BoolOr& invariant = engine->makeInvariant<BoolOr>(outputId, x, y);
+  BoolOr& invariant = engine->makeInvariant<BoolOr>(*engine, outputId, x, y);
   engine->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
@@ -55,13 +55,13 @@ TEST_F(BoolXorTest, UpdateBounds) {
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
       engine->updateBounds(y, yLb, yUb, false);
-      invariant.updateBounds(*engine);
+      invariant.updateBounds();
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         engine->setValue(engine->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
           engine->setValue(engine->currentTimestamp(), y, yVal);
-          invariant.updateBounds(*engine);
-          invariant.recompute(engine->currentTimestamp(), *engine);
+          invariant.updateBounds();
+          invariant.recompute(engine->currentTimestamp());
         }
       }
       ASSERT_GE(std::min(xLb, yLb), engine->lowerBound(outputId));
@@ -83,8 +83,8 @@ TEST_F(BoolXorTest, Recompute) {
                                           engine->makeIntVar(yUb, yLb, yUb)};
   const VarId outputId =
       engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
+  BoolOr& invariant = engine->makeInvariant<BoolOr>(*engine, outputId,
+                                                    inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
@@ -93,7 +93,7 @@ TEST_F(BoolXorTest, Recompute) {
       engine->setValue(engine->currentTimestamp(), inputs.at(1), yVal);
 
       const Int expectedViolation = computeViolation(xVal, yVal);
-      invariant.recompute(engine->currentTimestamp(), *engine);
+      invariant.recompute(engine->currentTimestamp());
       EXPECT_EQ(expectedViolation,
                 engine->value(engine->currentTimestamp(), outputId));
     }
@@ -109,8 +109,8 @@ TEST_F(BoolXorTest, NotifyInputChanged) {
   const std::array<const VarId, 2> inputs{engine->makeIntVar(ub, lb, ub),
                                           engine->makeIntVar(ub, lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
+  BoolOr& invariant = engine->makeInvariant<BoolOr>(*engine, outputId,
+                                                    inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int val = lb; val <= ub; ++val) {
@@ -119,8 +119,7 @@ TEST_F(BoolXorTest, NotifyInputChanged) {
       const Int expectedViolation =
           computeViolation(engine->currentTimestamp(), inputs);
 
-      invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
-                                   LocalId(i));
+      invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
       EXPECT_EQ(expectedViolation,
                 engine->value(engine->currentTimestamp(), outputId));
     }
@@ -138,22 +137,22 @@ TEST_F(BoolXorTest, NextInput) {
   const VarId outputId = engine->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
+  BoolOr& invariant = engine->makeInvariant<BoolOr>(*engine, outputId,
+                                                    inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < inputs.size(); ++i) {
-      const VarId varId = invariant.nextInput(ts, *engine);
+      const VarId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
       EXPECT_TRUE(minVarId <= varId);
       EXPECT_TRUE(varId <= maxVarId);
       EXPECT_FALSE(notified.at(varId));
       notified[varId] = true;
     }
-    EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
       EXPECT_TRUE(notified.at(varId));
     }
@@ -171,19 +170,19 @@ TEST_F(BoolXorTest, NotifyCurrentInputChanged) {
       engine->makeIntVar(valueDist(gen), lb, ub),
       engine->makeIntVar(valueDist(gen), lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
+  BoolOr& invariant = engine->makeInvariant<BoolOr>(*engine, outputId,
+                                                    inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
-      EXPECT_EQ(invariant.nextInput(ts, *engine), varId);
+      EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = engine->value(ts, varId);
       do {
         engine->setValue(ts, varId, valueDist(gen));
       } while (engine->value(ts, varId) == oldVal);
-      invariant.notifyCurrentInputChanged(ts, *engine);
+      invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(engine->value(ts, outputId), computeViolation(ts, inputs));
     }
   }
@@ -205,8 +204,8 @@ TEST_F(BoolXorTest, Commit) {
       engine->makeIntVar(committedValues.at(1), lb, ub)};
 
   const VarId outputId = engine->makeIntVar(0, 0, 2);
-  BoolOr& invariant =
-      engine->makeInvariant<BoolOr>(outputId, inputs.at(0), inputs.at(1));
+  BoolOr& invariant = engine->makeInvariant<BoolOr>(*engine, outputId,
+                                                    inputs.at(0), inputs.at(1));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
@@ -225,11 +224,11 @@ TEST_F(BoolXorTest, Commit) {
     } while (oldVal == engine->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, *engine, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
     const Int notifiedViolation = engine->value(ts, outputId);
-    invariant.recompute(ts, *engine);
+    invariant.recompute(ts);
 
     ASSERT_EQ(notifiedViolation, engine->value(ts, outputId));
 
@@ -237,8 +236,8 @@ TEST_F(BoolXorTest, Commit) {
     committedValues.at(i) = engine->value(ts, inputs.at(i));
     engine->commitIf(ts, outputId);
 
-    invariant.commit(ts, *engine);
-    invariant.recompute(ts + 1, *engine);
+    invariant.commit(ts);
+    invariant.recompute(ts + 1);
     ASSERT_EQ(notifiedViolation, engine->value(ts + 1, outputId));
   }
 }
@@ -246,40 +245,35 @@ TEST_F(BoolXorTest, Commit) {
 class MockBoolXor : public BoolOr {
  public:
   bool registered = false;
-  void registerVars(Engine& engine) override {
+  void registerVars() override {
     registered = true;
-    BoolOr::registerVars(engine);
+    BoolOr::registerVars();
   }
-  explicit MockBoolXor(VarId outputId, VarId x, VarId y)
-      : BoolOr(outputId, x, y) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return BoolOr::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, nextInput)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return BoolOr::nextInput(t, engine);
-        });
+  explicit MockBoolXor(Engine& engine, VarId outputId, VarId x, VarId y)
+      : BoolOr(engine, outputId, x, y) {
+    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+      return BoolOr::recompute(timestamp);
+    });
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+      return BoolOr::nextInput(timestamp);
+    });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          BoolOr::notifyCurrentInputChanged(t, engine);
+        .WillByDefault([this](Timestamp timestamp) {
+          BoolOr::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          BoolOr::notifyInputChanged(t, engine, id);
+        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+          BoolOr::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      BoolOr::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+      BoolOr::commit(timestamp);
     });
   }
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(void, notifyInputChanged,
-              (Timestamp t, Engine& engine, LocalId id), (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
+  MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(BoolXorTest, EngineIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
@@ -290,7 +284,7 @@ TEST_F(BoolXorTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(0, 0, 100);
     const VarId output = engine->makeIntVar(0, 0, 200);
     testNotifications<MockBoolXor>(
-        &engine->makeInvariant<MockBoolXor>(output, x, y), propMode,
+        &engine->makeInvariant<MockBoolXor>(*engine, output, x, y), propMode,
         markingMode, 3, x, 1, output);
   }
 }

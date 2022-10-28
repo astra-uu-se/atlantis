@@ -17,18 +17,20 @@ VarId search::Objective::registerWithEngine(VarId constraintViolation,
       overloaded{
           [&](const fznparser::Satisfy&) { return constraintViolation; },
           [&](const fznparser::Minimise&) {
-            auto violation = registerOptimisation(
+            VarId violation = registerOptimisation(
                 constraintViolation, objectiveVariable,
-                _engine.upperBound(objectiveVariable), [&](auto v, auto b) {
-                  _engine.makeConstraint<LessEqual>(v, objectiveVariable, b);
+                _engine.upperBound(objectiveVariable), [&](VarId v, VarId b) {
+                  _engine.makeConstraint<LessEqual>(_engine, v,
+                                                    objectiveVariable, b);
                 });
             return violation;
           },
           [&](const fznparser::Maximise&) {
-            auto violation = registerOptimisation(
+            VarId violation = registerOptimisation(
                 constraintViolation, objectiveVariable,
-                _engine.lowerBound(objectiveVariable), [&](auto v, auto b) {
-                  _engine.makeConstraint<LessEqual>(v, b, objectiveVariable);
+                _engine.lowerBound(objectiveVariable), [&](VarId v, VarId b) {
+                  _engine.makeConstraint<LessEqual>(_engine, v, b,
+                                                    objectiveVariable);
                 });
             return violation;
           },

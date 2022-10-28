@@ -57,30 +57,34 @@ class TSPTWTest : public ::testing::Test {
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // timeToPrev[i] = dist[i][pred[i]]
-      timeToPrev[i] = engine->makeIntView<ElementConst>(pred[i], dist[i]);
+      timeToPrev[i] =
+          engine->makeIntView<ElementConst>(*engine, pred[i], dist[i]);
       // arrivalPrev[i] = arrivalTime[pred[i]]
     }
 
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // arrivalPrev[i] = arrivalTime[pred[i]]
-      engine->makeInvariant<ElementVar>(arrivalPrev[i], pred[i], arrivalTime);
+      engine->makeInvariant<ElementVar>(*engine, arrivalPrev[i], pred[i],
+                                        arrivalTime);
       // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
       engine->makeInvariant<Linear>(
-          arrivalTime[i], std::vector<VarId>({arrivalPrev[i], timeToPrev[i]}));
+          *engine, arrivalTime[i],
+          std::vector<VarId>({arrivalPrev[i], timeToPrev[i]}));
     }
 
     // totalDist = sum(timeToPrev)
     totalDist = engine->makeIntVar(0, 0, MAX_TIME);
-    engine->makeInvariant<Linear>(totalDist, timeToPrev);
+    engine->makeInvariant<Linear>(*engine, totalDist, timeToPrev);
 
     VarId leqConst = engine->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
-      engine->makeConstraint<LessEqual>(violation[i], arrivalTime[i], leqConst);
+      engine->makeConstraint<LessEqual>(*engine, violation[i], arrivalTime[i],
+                                        leqConst);
     }
 
     totalViolation = engine->makeIntVar(0, 0, MAX_TIME * n);
-    engine->makeInvariant<Linear>(totalViolation, violation);
+    engine->makeInvariant<Linear>(*engine, totalViolation, violation);
 
     engine->close();
     for (const VarId p : pred) {

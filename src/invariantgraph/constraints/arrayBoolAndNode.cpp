@@ -27,7 +27,8 @@ void invariantgraph::ArrayBoolAndNode::createDefinedVariables(Engine& engine) {
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 0));
+      setViolationVarId(
+          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
     }
   }
 }
@@ -39,6 +40,6 @@ void invariantgraph::ArrayBoolAndNode::registerWithEngine(Engine& engine) {
                  std::back_inserter(inputs),
                  [&](const auto& node) { return node->varId(); });
 
-  engine.makeInvariant<ForAll>(!shouldHold() ? _intermediate : violationVarId(),
-                               inputs);
+  engine.makeInvariant<ForAll>(
+      engine, !shouldHold() ? _intermediate : violationVarId(), inputs);
 }

@@ -50,11 +50,12 @@ void invariantgraph::SetInNode::createDefinedVariables(Engine& engine) {
     if (!shouldHold()) {
       assert(!isReified());
       _intermediate =
-          engine.makeIntView<InDomain>(input, std::move(domainEntries));
-      setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 0));
-    } else {
+          engine.makeIntView<InDomain>(engine, input, std::move(domainEntries));
       setViolationVarId(
-          engine.makeIntView<InDomain>(input, std::move(domainEntries)));
+          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
+    } else {
+      setViolationVarId(engine.makeIntView<InDomain>(engine, input,
+                                                     std::move(domainEntries)));
     }
   }
 }

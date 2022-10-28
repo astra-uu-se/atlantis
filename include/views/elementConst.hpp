@@ -29,7 +29,8 @@ class ElementConst : public IntView {
   }
 
  public:
-  explicit ElementConst(VarId parentId, std::vector<Int> array, Int offset = 1);
+  explicit ElementConst(Engine& engine, VarId parentId, std::vector<Int> array,
+                        Int offset = 1);
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;
   [[nodiscard]] Int lowerBound() const override;

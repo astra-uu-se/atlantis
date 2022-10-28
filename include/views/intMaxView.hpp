@@ -10,7 +10,8 @@ class IntMaxView : public IntView {
   Int _max;
 
  public:
-  explicit IntMaxView(VarId parentId, Int max) : IntView(parentId), _max(max) {}
+  explicit IntMaxView(Engine& engine, VarId parentId, Int max)
+      : IntView(engine, parentId), _max(max) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

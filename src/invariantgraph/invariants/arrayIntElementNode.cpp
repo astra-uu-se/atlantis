@@ -24,7 +24,7 @@ void invariantgraph::ArrayIntElementNode::createDefinedVariables(
   if (definedVariables().front()->varId() == NULL_ID) {
     assert(b()->varId() != NULL_ID);
     definedVariables().front()->setVarId(
-        engine.makeIntView<ElementConst>(b()->varId(), _as, _offset));
+        engine.makeIntView<ElementConst>(engine, b()->varId(), _as, _offset));
   }
 }
 

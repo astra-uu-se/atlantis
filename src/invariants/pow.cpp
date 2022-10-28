@@ -1,28 +1,26 @@
 #include "invariants/pow.hpp"
 
-#include <cmath>
-
 #include "core/engine.hpp"
 
-Pow::Pow(VarId output, VarId x, VarId y)
-    : Invariant(), _output(output), _x(x), _y(y) {
+Pow::Pow(Engine& engine, VarId output, VarId x, VarId y)
+    : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
-void Pow::registerVars(Engine& engine) {
+void Pow::registerVars() {
   assert(!_id.equals(NULL_ID));
 
-  engine.registerInvariantInput(_id, _x, 0);
-  engine.registerInvariantInput(_id, _y, 0);
-  registerDefinedVariable(engine, _output);
+  _engine.registerInvariantInput(_id, _x, 0);
+  _engine.registerInvariantInput(_id, _y, 0);
+  registerDefinedVariable(_output);
 }
 
-void Pow::updateBounds(Engine& engine, bool widenOnly) {
-  const Int xLb = engine.lowerBound(_x);
-  const Int xUb = engine.upperBound(_x);
+void Pow::updateBounds(bool widenOnly) {
+  const Int xLb = _engine.lowerBound(_x);
+  const Int xUb = _engine.upperBound(_x);
 
-  const Int yLb = engine.lowerBound(_y);
-  const Int yUb = engine.upperBound(_y);
+  const Int yLb = _engine.lowerBound(_y);
+  const Int yUb = _engine.upperBound(_y);
 
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
@@ -72,20 +70,20 @@ void Pow::updateBounds(Engine& engine, bool widenOnly) {
     ub = std::max<Int>(ub, std::pow(xLb, yUb - (yUb % 2 == 1)));
   }
 
-  engine.updateBounds(_output, lb, ub, widenOnly);
+  _engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void Pow::recompute(Timestamp ts, Engine& engine) {
-  const Int xVal = engine.value(ts, _x);
-  const Int yVal = engine.value(ts, _y);
+void Pow::recompute(Timestamp ts) {
+  const Int xVal = _engine.value(ts, _x);
+  const Int yVal = _engine.value(ts, _y);
   if (xVal == 0 && yVal < 0) {
-    updateValue(ts, engine, _output, std::pow(_zeroReplacement, yVal));
+    updateValue(ts, _output, std::pow(_zeroReplacement, yVal));
     return;
   }
-  updateValue(ts, engine, _output, std::pow(xVal, yVal));
+  updateValue(ts, _output, std::pow(xVal, yVal));
 }
 
-VarId Pow::nextInput(Timestamp ts, Engine&) {
+VarId Pow::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -96,14 +94,8 @@ VarId Pow::nextInput(Timestamp ts, Engine&) {
   }
 }
 
-void Pow::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  recompute(ts, engine);
-}
+void Pow::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
-void Pow::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
-  recompute(ts, engine);
-}
+void Pow::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-void Pow::commit(Timestamp ts, Engine& engine) {
-  Invariant::commit(ts, engine);
-}
+void Pow::commit(Timestamp ts) { Invariant::commit(ts); }

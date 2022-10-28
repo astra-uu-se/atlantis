@@ -21,6 +21,6 @@ void invariantgraph::IntDivNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::IntDivNode::registerWithEngine(Engine& engine) {
   assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<IntDiv>(definedVariables().front()->varId(),
+  engine.makeInvariant<IntDiv>(engine, definedVariables().front()->varId(),
                                a()->varId(), b()->varId());
 }

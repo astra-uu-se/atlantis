@@ -65,8 +65,8 @@ TEST_F(InSparseDomainTest, Bounds) {
         engine->open();
       }
       engine->updateBounds(x, xLb, xUb, false);
-      const VarId violationId =
-          engine->makeIntView<InSparseDomain>(x, std::vector<DomainEntry>(dom));
+      const VarId violationId = engine->makeIntView<InSparseDomain>(
+          *engine, x, std::vector<DomainEntry>(dom));
       engine->close();
 
       std::vector<Int> violations;
@@ -97,8 +97,8 @@ TEST_F(InSparseDomainTest, Value) {
     const Int lb = domainVec.front().lowerBound - margin;
     const Int ub = domainVec.back().upperBound + margin;
     const VarId x = engine->makeIntVar(lb, lb, ub);
-    const VarId violationId =
-        engine->makeIntView<InSparseDomain>(x, std::vector<DomainEntry>(dom));
+    const VarId violationId = engine->makeIntView<InSparseDomain>(
+        *engine, x, std::vector<DomainEntry>(dom));
     engine->close();
     for (Int val = lb; val <= ub; ++val) {
       engine->setValue(engine->currentTimestamp(), x, val);
@@ -130,8 +130,8 @@ TEST_F(InSparseDomainTest, CommittedValue) {
     std::shuffle(values.begin(), values.end(), rng);
 
     const VarId x = engine->makeIntVar(lb, lb, ub);
-    const VarId violationId =
-        engine->makeIntView<InSparseDomain>(x, std::vector<DomainEntry>(dom));
+    const VarId violationId = engine->makeIntView<InSparseDomain>(
+        *engine, x, std::vector<DomainEntry>(dom));
     engine->close();
 
     Int committedValue = engine->committedValue(x);

@@ -31,12 +31,12 @@ void invariantgraph::BoolClauseNode::createDefinedVariables(Engine& engine) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
       setViolationVarId(engine.makeIntView<EqualConst>(
-          _sumVarId,
+          engine, _sumVarId,
           static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
     } else {
       assert(!isReified());
       setViolationVarId(engine.makeIntView<NotEqualConst>(
-          _sumVarId,
+          engine, _sumVarId,
           static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
     }
   }
@@ -50,10 +50,11 @@ void invariantgraph::BoolClauseNode::registerWithEngine(Engine& engine) {
 
   std::transform(_bs.begin(), _bs.end(), std::back_inserter(engineVariables),
                  [&](const auto& var) {
-                   return engine.makeIntView<NotEqualConst>(var->varId(), 0);
+                   return engine.makeIntView<NotEqualConst>(engine,
+                                                            var->varId(), 0);
                  });
 
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
-  engine.makeInvariant<BoolLinear>(_sumVarId, engineVariables);
+  engine.makeInvariant<BoolLinear>(engine, _sumVarId, engineVariables);
 }

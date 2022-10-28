@@ -11,7 +11,8 @@ class EqualConst : public IntView {
   const Int _val;
 
  public:
-  explicit EqualConst(VarId parentId, Int val) : IntView(parentId), _val(val) {}
+  explicit EqualConst(Engine& engine, VarId parentId, Int val)
+      : IntView(engine, parentId), _val(val) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

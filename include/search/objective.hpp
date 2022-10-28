@@ -45,7 +45,8 @@ class Objective {
     } else {
       _violation = _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
       _engine.makeInvariant<Linear>(
-          *_violation, std::vector<VarId>{boundViolation, constraintViolation});
+          _engine, *_violation,
+          std::vector<VarId>{boundViolation, constraintViolation});
     }
     return *_violation;
   }

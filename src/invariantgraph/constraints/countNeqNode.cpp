@@ -67,12 +67,12 @@ void invariantgraph::CountNeqNode::createDefinedVariables(Engine& engine) {
       registerViolation(engine);
     } else {
       if (shouldHold()) {
-        setViolationVarId(
-            engine.makeIntView<NotEqualConst>(_intermediate, _cParameter - 1));
+        setViolationVarId(engine.makeIntView<NotEqualConst>(
+            engine, _intermediate, _cParameter - 1));
       } else {
         assert(!isReified());
-        setViolationVarId(
-            engine.makeIntView<EqualConst>(_intermediate, _cParameter + 1));
+        setViolationVarId(engine.makeIntView<EqualConst>(engine, _intermediate,
+                                                         _cParameter + 1));
       }
     }
   }
@@ -98,21 +98,22 @@ void invariantgraph::CountNeqNode::registerWithEngine(Engine& engine) {
   if (!_yIsParameter) {
     assert(yVarNode() != nullptr);
     assert(yVarNode()->varId() != NULL_ID);
-    engine.makeInvariant<Count>(_intermediate, yVarNode()->varId(),
+    engine.makeInvariant<Count>(engine, _intermediate, yVarNode()->varId(),
                                 engineInputs);
   } else {
     assert(yVarNode() == nullptr);
-    engine.makeInvariant<CountConst>(_intermediate, _yParameter, engineInputs);
+    engine.makeInvariant<CountConst>(engine, _intermediate, _yParameter,
+                                     engineInputs);
   }
   if (!_cIsParameter) {
     assert(cVarNode() != nullptr);
     assert(cVarNode()->varId() != NULL_ID);
     if (shouldHold()) {
-      engine.makeInvariant<NotEqual>(violationVarId(), cVarNode()->varId(),
-                                     _intermediate);
+      engine.makeInvariant<NotEqual>(engine, violationVarId(),
+                                     cVarNode()->varId(), _intermediate);
     } else {
       // c >= count(x, y) -> count(x, y) <= c
-      engine.makeInvariant<Equal>(violationVarId(), _intermediate,
+      engine.makeInvariant<Equal>(engine, violationVarId(), _intermediate,
                                   cVarNode()->varId());
     }
   }

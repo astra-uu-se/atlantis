@@ -10,6 +10,7 @@ class Engine;  // Forward declaration
 
 class Invariant {
  protected:
+  Engine& _engine;
   /**
    * A simple queue structure of a fixed length to hold what input
    * variables that have been updated.
@@ -64,16 +65,16 @@ class Invariant {
   InvariantId _id{NULL_ID};
   bool _isPostponed{false};
 
-  explicit Invariant(Int nullState = -1)
-      : _state(NULL_TIMESTAMP, nullState),
+  explicit Invariant(Engine& engine, Int nullState = -1)
+      : _engine(engine),
+        _state(NULL_TIMESTAMP, nullState),
         _dynamicInputVar(NULL_TIMESTAMP, NULL_ID) {}
 
   /**
    * Register to the engine that variable is defined by the invariant.
-   * @param engine the engine
    * @param id the id of the variable that is defined by the invariant.
    */
-  void registerDefinedVariable(Engine& engine, VarId id);
+  void registerDefinedVariable(VarId id);
 
   /**
    * Used in Input-to-Output propagation to notify that a
@@ -81,20 +82,18 @@ class Invariant {
    * method is called for each variable that was marked as modified
    * in notify.
    * @param ts the current timestamp
-   * @param engine the engine
    * @param localId the local id of the variable.
    */
-  virtual void notifyInputChanged(Timestamp ts, Engine& engine,
-                                  LocalId localId) = 0;
+  virtual void notifyInputChanged(Timestamp ts, LocalId localId) = 0;
 
   /**
    * Updates the value of variable without queueing it for propagation
    */
-  static void updateValue(Timestamp ts, Engine& engine, VarId id, Int val);
+  void updateValue(Timestamp ts, VarId id, Int val);
   /**
    * Increases the value of variable without queueing it for propagation
    */
-  static void incValue(Timestamp ts, Engine& engine, VarId id, Int val);
+  void incValue(Timestamp ts, VarId id, Int val);
 
  public:
   virtual ~Invariant() = default;
@@ -137,26 +136,26 @@ class Invariant {
    *
    * 4) Compute initial state of invariant!
    */
-  virtual void registerVars(Engine&) = 0;
+  virtual void registerVars() = 0;
 
-  virtual void updateBounds(Engine&, bool widenOnly = false) = 0;
+  virtual void updateBounds(bool widenOnly = false) = 0;
 
-  virtual void close(Timestamp, Engine&){};
+  virtual void close(Timestamp){};
 
-  virtual void recompute(Timestamp, Engine&) = 0;
+  virtual void recompute(Timestamp) = 0;
 
   /**
    * Used in Output-to-Input propagation to get the next input variable to
    * visit.
    */
-  virtual VarId nextInput(Timestamp, Engine&) = 0;
+  virtual VarId nextInput(Timestamp) = 0;
 
   /**
    * Used in Output-to-Input propagation to notify to the
    * invariant that the current input (the last input given by
    * nextInput) has had its value changed.
    */
-  virtual void notifyCurrentInputChanged(Timestamp, Engine&) = 0;
+  virtual void notifyCurrentInputChanged(Timestamp) = 0;
 
   /**
    * Used in the Input-to-Output propagation to notify that an
@@ -170,9 +169,9 @@ class Invariant {
    * the primary and non-primary defined variables are to be
    * computed.
    */
-  void compute(Timestamp, Engine&);
+  void compute(Timestamp);
 
-  virtual void commit(Timestamp, Engine&) { _isPostponed = false; };
+  virtual void commit(Timestamp) { _isPostponed = false; };
 
   inline void postpone() { _isPostponed = true; }
   [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }

@@ -55,7 +55,8 @@ class ElementVarTree : public benchmark::Fixture {
         }
       }
 
-      engine->makeInvariant<ElementVar>(cur.id, indexVar, elementInputs);
+      engine->makeInvariant<ElementVar>(*engine, cur.id, indexVar,
+                                        elementInputs);
       elementInputs.clear();
     }
   }
@@ -185,7 +186,7 @@ BENCHMARK_DEFINE_F(ElementVarTree, commit_all)(benchmark::State& st) {
   commit(std::ref(st), indexDecisionVars.size());
 }
 
-//*
+/*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int treeHeight = 2; treeHeight <= 10; treeHeight += 2) {

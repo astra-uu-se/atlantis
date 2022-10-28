@@ -33,11 +33,11 @@ void invariantgraph::BoolLeNode::registerWithEngine(Engine& engine) {
   assert(b()->varId() != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<BoolLessEqual>(violationVarId(), a()->varId(),
+    engine.makeConstraint<BoolLessEqual>(engine, violationVarId(), a()->varId(),
                                          b()->varId());
   } else {
     assert(!isReified());
-    engine.makeConstraint<BoolLessThan>(violationVarId(), b()->varId(),
+    engine.makeConstraint<BoolLessThan>(engine, violationVarId(), b()->varId(),
                                         a()->varId());
   }
 }

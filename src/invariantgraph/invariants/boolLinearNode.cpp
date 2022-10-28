@@ -65,15 +65,15 @@ void invariantgraph::BoolLinearNode::createDefinedVariables(Engine& engine) {
 
     if (_definingCoefficient == -1) {
       auto scalar = engine.makeIntView<ScalarView>(
-          staticInputs().front()->varId(), _coeffs.front());
+          engine, staticInputs().front()->varId(), _coeffs.front());
       definedVariables().front()->setVarId(
-          engine.makeIntView<IntOffsetView>(scalar, -_sum));
+          engine.makeIntView<IntOffsetView>(engine, scalar, -_sum));
     } else {
       assert(_definingCoefficient == 1);
       auto scalar = engine.makeIntView<ScalarView>(
-          staticInputs().front()->varId(), -_coeffs.front());
+          engine, staticInputs().front()->varId(), -_coeffs.front());
       definedVariables().front()->setVarId(
-          engine.makeIntView<IntOffsetView>(scalar, _sum));
+          engine.makeIntView<IntOffsetView>(engine, scalar, _sum));
     }
 
     return;
@@ -86,13 +86,13 @@ void invariantgraph::BoolLinearNode::createDefinedVariables(Engine& engine) {
     auto offsetIntermediate = _intermediateVarId;
     if (_sum != 0) {
       offsetIntermediate =
-          engine.makeIntView<IntOffsetView>(_intermediateVarId, -_sum);
+          engine.makeIntView<IntOffsetView>(engine, _intermediateVarId, -_sum);
     }
 
     auto invertedIntermediate = offsetIntermediate;
     if (_definingCoefficient == 1) {
       invertedIntermediate =
-          engine.makeIntView<ScalarView>(offsetIntermediate, -1);
+          engine.makeIntView<ScalarView>(engine, offsetIntermediate, -1);
     }
 
     definedVariables().front()->setVarId(invertedIntermediate);
@@ -111,5 +111,6 @@ void invariantgraph::BoolLinearNode::registerWithEngine(Engine& engine) {
     return;
   }
 
-  engine.makeInvariant<BoolLinear>(_intermediateVarId, _coeffs, variables);
+  engine.makeInvariant<BoolLinear>(engine, _intermediateVarId, _coeffs,
+                                   variables);
 }

@@ -6,6 +6,7 @@
 
 #include "constraint.hpp"
 #include "core/types.hpp"
+#include "variables/committableInt.hpp"
 #include "variables/intVar.hpp"
 
 class CommittableInt;  // forward declare
@@ -22,20 +23,21 @@ class GlobalCardinalityClosed : public Constraint {
   Int _offset;
   Int increaseCount(Timestamp ts, Int value);
   Int decreaseCount(Timestamp ts, Int value);
-  void updateOutput(Timestamp ts, Engine& engine, Int value);
+  void updateOutput(Timestamp ts, Int value);
 
  public:
-  GlobalCardinalityClosed(VarId violationId, std::vector<VarId> outputs,
-                          std::vector<VarId> inputs, std::vector<Int> cover);
+  GlobalCardinalityClosed(Engine&, VarId violationId,
+                          std::vector<VarId> outputs, std::vector<VarId> inputs,
+                          std::vector<Int> cover);
 
-  void registerVars(Engine&) override;
-  void updateBounds(Engine&, bool widenOnly = false) override;
-  void close(Timestamp, Engine&) override;
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp t, Engine& e, LocalId id) override;
-  void commit(Timestamp, Engine&) override;
-  VarId nextInput(Timestamp, Engine& e) override;
-  void notifyCurrentInputChanged(Timestamp, Engine& e) override;
+  void registerVars() override;
+  void updateBounds(bool widenOnly = false) override;
+  void close(Timestamp) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
+  void commit(Timestamp) override;
+  VarId nextInput(Timestamp) override;
+  void notifyCurrentInputChanged(Timestamp) override;
 };
 
 inline Int GlobalCardinalityClosed::increaseCount(Timestamp ts, Int value) {
@@ -58,12 +60,11 @@ inline Int GlobalCardinalityClosed::decreaseCount(Timestamp ts, Int value) {
   return 1;
 }
 
-inline void GlobalCardinalityClosed::updateOutput(Timestamp ts, Engine& engine,
-                                                  Int value) {
+inline void GlobalCardinalityClosed::updateOutput(Timestamp ts, Int value) {
   if (0 <= value - _offset &&
       value - _offset < static_cast<Int>(_coverVarIndex.size()) &&
       _coverVarIndex[value - _offset] >= 0) {
-    updateValue(ts, engine, _outputs[_coverVarIndex[value - _offset]],
+    updateValue(ts, _outputs[_coverVarIndex[value - _offset]],
                 _counts[_coverVarIndex[value - _offset]].value(ts));
   }
 }

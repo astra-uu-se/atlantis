@@ -360,7 +360,7 @@ VarId invariantgraph::InvariantGraph::createViolations(Engine& engine) {
     return violations.front();
   }
   const VarId totalViolation = engine.makeIntVar(0, 0, 0);
-  engine.makeInvariant<Linear>(totalViolation, violations);
+  engine.makeInvariant<Linear>(engine, totalViolation, violations);
   return totalViolation;
 }
 

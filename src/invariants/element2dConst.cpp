@@ -1,5 +1,7 @@
 #include "invariants/element2dConst.hpp"
 
+#include "core/engine.hpp"
+
 static inline Int numCols(const std::vector<std::vector<Int>>& matrix) {
   assert(std::all_of(matrix.begin(), matrix.end(), [&](const auto& col) {
     return col.size() == matrix.front().size();
@@ -7,10 +9,11 @@ static inline Int numCols(const std::vector<std::vector<Int>>& matrix) {
   return matrix.empty() ? 0 : matrix.front().size();
 }
 
-Element2dConst::Element2dConst(VarId output, VarId index1, VarId index2,
+Element2dConst::Element2dConst(Engine& engine, VarId output, VarId index1,
+                               VarId index2,
                                std::vector<std::vector<Int>> matrix,
                                Int offset1, Int offset2)
-    : Invariant(),
+    : Invariant(engine),
       _matrix(matrix),
       _indices{index1, index2},
       _dimensions{static_cast<Int>(_matrix.size()), numCols(_matrix)},
@@ -19,24 +22,24 @@ Element2dConst::Element2dConst(VarId output, VarId index1, VarId index2,
   _modifiedVars.reserve(1);
 }
 
-void Element2dConst::registerVars(Engine& engine) {
+void Element2dConst::registerVars() {
   assert(_id != NULL_ID);
-  engine.registerInvariantInput(_id, _indices[0], LocalId(0));
-  engine.registerInvariantInput(_id, _indices[1], LocalId(0));
-  registerDefinedVariable(engine, _output);
+  _engine.registerInvariantInput(_id, _indices[0], LocalId(0));
+  _engine.registerInvariantInput(_id, _indices[1], LocalId(0));
+  registerDefinedVariable(_output);
 }
 
-void Element2dConst::updateBounds(Engine& engine, bool widenOnly) {
+void Element2dConst::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
   std::array<Int, 2> iLb;
   std::array<Int, 2> iUb;
   for (size_t i = 0; i < 2; ++i) {
-    iLb[i] = std::max<Int>(_offsets[i], engine.lowerBound(_indices[i]));
+    iLb[i] = std::max<Int>(_offsets[i], _engine.lowerBound(_indices[i]));
     iUb[i] = std::min<Int>(_dimensions[i] - 1 + _offsets[i],
-                           engine.upperBound(_indices[i]));
-    if (iLb > iUb) {
+                           _engine.upperBound(_indices[i]));
+    if (iLb[i] > iUb[i]) {
       iLb[i] = _offsets[i];
       iUb[i] = _dimensions[i] - 1 + _offsets[i];
     }
@@ -52,24 +55,24 @@ void Element2dConst::updateBounds(Engine& engine, bool widenOnly) {
       ub = std::max(ub, _matrix[safeIndex1(i1)][safeIndex2(i2)]);
     }
   }
-  engine.updateBounds(_output, lb, ub, widenOnly);
+  _engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void Element2dConst::recompute(Timestamp ts, Engine& engine) {
-  assert(safeIndex1(engine.value(ts, _indices[0])) <
+void Element2dConst::recompute(Timestamp ts) {
+  assert(safeIndex1(_engine.value(ts, _indices[0])) <
          static_cast<size_t>(_dimensions[0]));
-  assert(safeIndex2(engine.value(ts, _indices[1])) <
+  assert(safeIndex2(_engine.value(ts, _indices[1])) <
          static_cast<size_t>(_dimensions[1]));
-  updateValue(ts, engine, _output,
-              _matrix[safeIndex1(engine.value(ts, _indices[0]))]
-                     [safeIndex2(engine.value(ts, _indices[1]))]);
+  updateValue(ts, _output,
+              _matrix[safeIndex1(_engine.value(ts, _indices[0]))]
+                     [safeIndex2(_engine.value(ts, _indices[1]))]);
 }
 
-void Element2dConst::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
-  recompute(ts, engine);
+void Element2dConst::notifyInputChanged(Timestamp ts, LocalId) {
+  recompute(ts);
 }
 
-VarId Element2dConst::nextInput(Timestamp ts, Engine&) {
+VarId Element2dConst::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _indices[0];
@@ -80,10 +83,6 @@ VarId Element2dConst::nextInput(Timestamp ts, Engine&) {
   }
 }
 
-void Element2dConst::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  recompute(ts, engine);
-}
+void Element2dConst::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
-void Element2dConst::commit(Timestamp ts, Engine& engine) {
-  Invariant::commit(ts, engine);
-}
+void Element2dConst::commit(Timestamp ts) { Invariant::commit(ts); }

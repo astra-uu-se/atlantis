@@ -71,12 +71,12 @@ void invariantgraph::CountGeqNode::createDefinedVariables(Engine& engine) {
       registerViolation(engine);
     } else {
       if (shouldHold()) {
-        setViolationVarId(
-            engine.makeIntView<GreaterEqualConst>(_intermediate, _cParameter));
+        setViolationVarId(engine.makeIntView<GreaterEqualConst>(
+            engine, _intermediate, _cParameter));
       } else {
         assert(!isReified());
-        setViolationVarId(
-            engine.makeIntView<LessEqualConst>(_intermediate, _cParameter + 1));
+        setViolationVarId(engine.makeIntView<LessEqualConst>(
+            engine, _intermediate, _cParameter + 1));
       }
     }
   }
@@ -102,22 +102,23 @@ void invariantgraph::CountGeqNode::registerWithEngine(Engine& engine) {
   if (!_yIsParameter) {
     assert(yVarNode() != nullptr);
     assert(yVarNode()->varId() != NULL_ID);
-    engine.makeInvariant<Count>(_intermediate, yVarNode()->varId(),
+    engine.makeInvariant<Count>(engine, _intermediate, yVarNode()->varId(),
                                 engineInputs);
   } else {
     assert(yVarNode() == nullptr);
-    engine.makeInvariant<CountConst>(_intermediate, _yParameter, engineInputs);
+    engine.makeInvariant<CountConst>(engine, _intermediate, _yParameter,
+                                     engineInputs);
   }
   if (!_cIsParameter) {
     assert(cVarNode() != nullptr);
     assert(cVarNode()->varId() != NULL_ID);
     if (shouldHold()) {
       // c >= count(inputs, y) -> count(inputs, y) <= c
-      engine.makeInvariant<LessEqual>(violationVarId(), _intermediate,
+      engine.makeInvariant<LessEqual>(engine, violationVarId(), _intermediate,
                                       cVarNode()->varId());
     } else {
-      engine.makeInvariant<LessThan>(violationVarId(), cVarNode()->varId(),
-                                     _intermediate);
+      engine.makeInvariant<LessThan>(engine, violationVarId(),
+                                     cVarNode()->varId(), _intermediate);
     }
   }
 }

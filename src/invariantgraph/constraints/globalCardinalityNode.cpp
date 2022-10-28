@@ -72,29 +72,33 @@ void invariantgraph::GlobalCardinalityNode::registerWithEngine(Engine& engine) {
                    std::back_inserter(countOutputs),
                    [&](auto node) { return node->varId(); });
 
-    engine.makeInvariant<GlobalCardinalityOpen>(countOutputs, inputs, _cover);
+    engine.makeInvariant<GlobalCardinalityOpen>(engine, countOutputs, inputs,
+                                                _cover);
   } else {
     assert(violationVarId() != NULL_ID);
     assert(_intermediate.size() == _counts.size());
     assert(_violations.size() == _counts.size());
-    engine.makeInvariant<GlobalCardinalityOpen>(_intermediate, inputs, _cover);
+    engine.makeInvariant<GlobalCardinalityOpen>(engine, _intermediate, inputs,
+                                                _cover);
     for (size_t i = 0; i < _counts.size(); ++i) {
       if (shouldHold()) {
-        engine.makeConstraint<Equal>(_violations.at(i), _intermediate.at(i),
+        engine.makeConstraint<Equal>(engine, _violations.at(i),
+                                     _intermediate.at(i),
                                      _counts.at(i)->varId());
       } else {
-        engine.makeConstraint<NotEqual>(_violations.at(i), _intermediate.at(i),
+        engine.makeConstraint<NotEqual>(engine, _violations.at(i),
+                                        _intermediate.at(i),
                                         _counts.at(i)->varId());
       }
     }
     if (_counts.size() > 1) {
       if (shouldHold()) {
         // To hold, each count must be equal to its corresponding intermediate:
-        engine.makeInvariant<Linear>(violationVarId(), _violations);
+        engine.makeInvariant<Linear>(engine, violationVarId(), _violations);
       } else {
         // To hold, only one count must not be equal to its corresponding
         // intermediate:
-        engine.makeInvariant<Exists>(violationVarId(), _violations);
+        engine.makeInvariant<Exists>(engine, violationVarId(), _violations);
       }
     }
   }

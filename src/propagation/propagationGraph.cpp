@@ -386,7 +386,8 @@ size_t PropagationGraph::topologicallyOrder(Timestamp ts,
   } else {
     for (const auto& [inputId, isDynamicInput] : inputVariables(defInv)) {
       // The layer has no cycles or defInv is a static invariant:
-      assert(!_layerHasDynamicCycle.at(layer) || !isDynamicInput);
+      assert(layer == 0 || !_layerHasDynamicCycle.at(layer - 1) ||
+             !isDynamicInput);
       // sanity check:
       assert(inputId != NULL_ID);
       // we should have no dependencies to subsequent layers:

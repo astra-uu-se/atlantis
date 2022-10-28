@@ -50,7 +50,7 @@ TEST_F(BoolLessEqualTest, UpdateBounds) {
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   BoolLessEqual& invariant =
-      engine->makeConstraint<BoolLessEqual>(violationId, x, y);
+      engine->makeConstraint<BoolLessEqual>(*engine, violationId, x, y);
   engine->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
@@ -59,13 +59,13 @@ TEST_F(BoolLessEqualTest, UpdateBounds) {
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
       engine->updateBounds(y, yLb, yUb, false);
-      invariant.updateBounds(*engine);
+      invariant.updateBounds();
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         engine->setValue(engine->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
           engine->setValue(engine->currentTimestamp(), y, yVal);
-          invariant.updateBounds(*engine);
-          invariant.recompute(engine->currentTimestamp(), *engine);
+          invariant.updateBounds();
+          invariant.recompute(engine->currentTimestamp());
         }
       }
       ASSERT_GE(0, engine->lowerBound(violationId));
@@ -88,7 +88,7 @@ TEST_F(BoolLessEqualTest, Recompute) {
   const VarId violationId =
       engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
   BoolLessEqual& invariant = engine->makeConstraint<BoolLessEqual>(
-      violationId, inputs.at(0), inputs.at(1));
+      *engine, violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
@@ -97,7 +97,7 @@ TEST_F(BoolLessEqualTest, Recompute) {
       engine->setValue(engine->currentTimestamp(), inputs.at(1), yVal);
 
       const Int expectedViolation = computeViolation(xVal, yVal);
-      invariant.recompute(engine->currentTimestamp(), *engine);
+      invariant.recompute(engine->currentTimestamp());
       EXPECT_EQ(expectedViolation,
                 engine->value(engine->currentTimestamp(), violationId));
     }
@@ -114,7 +114,7 @@ TEST_F(BoolLessEqualTest, NotifyInputChanged) {
                                           engine->makeIntVar(ub, lb, ub)};
   const VarId violationId = engine->makeIntVar(0, 0, ub - lb);
   BoolLessEqual& invariant = engine->makeConstraint<BoolLessEqual>(
-      violationId, inputs.at(0), inputs.at(1));
+      *engine, violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Int val = lb; val <= ub; ++val) {
@@ -123,8 +123,7 @@ TEST_F(BoolLessEqualTest, NotifyInputChanged) {
       const Int expectedViolation =
           computeViolation(engine->currentTimestamp(), inputs);
 
-      invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
-                                   LocalId(i));
+      invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
       EXPECT_EQ(expectedViolation,
                 engine->value(engine->currentTimestamp(), violationId));
     }
@@ -143,21 +142,21 @@ TEST_F(BoolLessEqualTest, NextInput) {
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
   BoolLessEqual& invariant = engine->makeConstraint<BoolLessEqual>(
-      violationId, inputs.at(0), inputs.at(1));
+      *engine, violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < inputs.size(); ++i) {
-      const VarId varId = invariant.nextInput(ts, *engine);
+      const VarId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
       EXPECT_TRUE(minVarId <= varId);
       EXPECT_TRUE(varId <= maxVarId);
       EXPECT_FALSE(notified.at(varId));
       notified[varId] = true;
     }
-    EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
       EXPECT_TRUE(notified.at(varId));
     }
@@ -176,18 +175,18 @@ TEST_F(BoolLessEqualTest, NotifyCurrentInputChanged) {
       engine->makeIntVar(valueDist(gen), lb, ub)};
   const VarId violationId = engine->makeIntVar(0, 0, ub - lb);
   BoolLessEqual& invariant = engine->makeConstraint<BoolLessEqual>(
-      violationId, inputs.at(0), inputs.at(1));
+      *engine, violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
-      EXPECT_EQ(invariant.nextInput(ts, *engine), varId);
+      EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = engine->value(ts, varId);
       do {
         engine->setValue(ts, varId, valueDist(gen));
       } while (engine->value(ts, varId) == oldVal);
-      invariant.notifyCurrentInputChanged(ts, *engine);
+      invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(engine->value(ts, violationId), computeViolation(ts, inputs));
     }
   }
@@ -210,7 +209,7 @@ TEST_F(BoolLessEqualTest, Commit) {
 
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   BoolLessEqual& invariant = engine->makeConstraint<BoolLessEqual>(
-      violationId, inputs.at(0), inputs.at(1));
+      *engine, violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), violationId),
@@ -229,11 +228,11 @@ TEST_F(BoolLessEqualTest, Commit) {
     } while (oldVal == engine->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, *engine, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
     const Int notifiedViolation = engine->value(ts, violationId);
-    invariant.recompute(ts, *engine);
+    invariant.recompute(ts);
 
     ASSERT_EQ(notifiedViolation, engine->value(ts, violationId));
 
@@ -241,8 +240,8 @@ TEST_F(BoolLessEqualTest, Commit) {
     committedValues.at(i) = engine->value(ts, inputs.at(i));
     engine->commitIf(ts, violationId);
 
-    invariant.commit(ts, *engine);
-    invariant.recompute(ts + 1, *engine);
+    invariant.commit(ts);
+    invariant.recompute(ts + 1);
     ASSERT_EQ(notifiedViolation, engine->value(ts + 1, violationId));
   }
 }
@@ -250,40 +249,36 @@ TEST_F(BoolLessEqualTest, Commit) {
 class MockBoolLessEqual : public BoolLessEqual {
  public:
   bool registered = false;
-  void registerVars(Engine& engine) override {
+  void registerVars() override {
     registered = true;
-    BoolLessEqual::registerVars(engine);
+    BoolLessEqual::registerVars();
   }
-  explicit MockBoolLessEqual(VarId violationId, VarId x, VarId y)
-      : BoolLessEqual(violationId, x, y) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return BoolLessEqual::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, nextInput)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return BoolLessEqual::nextInput(t, engine);
-        });
+  explicit MockBoolLessEqual(Engine& engine, VarId violationId, VarId x,
+                             VarId y)
+      : BoolLessEqual(engine, violationId, x, y) {
+    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+      return BoolLessEqual::recompute(timestamp);
+    });
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+      return BoolLessEqual::nextInput(timestamp);
+    });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          BoolLessEqual::notifyCurrentInputChanged(t, engine);
+        .WillByDefault([this](Timestamp timestamp) {
+          BoolLessEqual::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          BoolLessEqual::notifyInputChanged(t, engine, id);
+        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+          BoolLessEqual::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      BoolLessEqual::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+      BoolLessEqual::commit(timestamp);
     });
   }
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(void, notifyInputChanged,
-              (Timestamp t, Engine& engine, LocalId id), (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
+  MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(BoolLessEqualTest, EngineIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
@@ -294,8 +289,8 @@ TEST_F(BoolLessEqualTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(0, 0, 100);
     const VarId viol = engine->makeIntVar(0, 0, 200);
     testNotifications<MockBoolLessEqual>(
-        &engine->makeConstraint<MockBoolLessEqual>(viol, x, y), propMode,
-        markingMode, 3, x, 1, viol);
+        &engine->makeConstraint<MockBoolLessEqual>(*engine, viol, x, y),
+        propMode, markingMode, 3, x, 1, viol);
   }
 }
 }  // namespace

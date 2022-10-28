@@ -40,12 +40,13 @@ class AllInterval : public benchmark::Fixture {
 
     for (int i = 1; i < n; ++i) {
       violationVars.push_back(engine->makeIntVar(i, 0, n - 1));
-      engine->makeInvariant<AbsDiff>(violationVars.back(), inputVars[i - 1],
-                                     inputVars[i]);
+      engine->makeInvariant<AbsDiff>(*engine, violationVars.back(),
+                                     inputVars[i - 1], inputVars[i]);
     }
 
     totalViolation = engine->makeIntVar(0, 0, n);
-    engine->makeConstraint<AllDifferent>(totalViolation, violationVars);
+    engine->makeConstraint<AllDifferent>(*engine, totalViolation,
+                                         violationVars);
 
     engine->close();
 
@@ -134,7 +135,7 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
       commits, benchmark::Counter::kIsRate | benchmark::Counter::kInvert);
 }
 
-//*
+/*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int n = 10; n <= 100; n += 10) {
     for (int mode = 0; mode <= 3; ++mode) {

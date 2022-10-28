@@ -201,8 +201,8 @@ Engine::makeInvariant(Args&&... args) {
 
   logDebug("Created new invariant with id: " << invariantId);
   T& invariant = static_cast<T&>(_store.invariant(invariantId));
-  invariant.registerVars(*this);
-  invariant.updateBounds(*this, false);
+  invariant.registerVars();
+  invariant.updateBounds(false);
   return invariant;
 }
 
@@ -216,7 +216,7 @@ std::enable_if_t<std::is_base_of<IntView, T>::value, VarId> Engine::makeIntView(
 
   const VarId viewId = _store.createIntViewFromPtr(
       std::make_unique<T>(std::forward<Args>(args)...));
-  _store.intView(viewId).init(viewId, *this);
+  _store.intView(viewId).init(viewId);
   return viewId;
 }
 
@@ -231,8 +231,8 @@ Engine::makeConstraint(Args&&... args) {
   T& constraint = static_cast<T&>(_store.invariant(constraintId));
   registerInvariant(constraintId);  // A constraint is a type of invariant.
   logDebug("Created new Constraint with id: " << constraintId);
-  constraint.registerVars(*this);
-  constraint.updateBounds(*this);
+  constraint.registerVars();
+  constraint.updateBounds();
   return constraint;
 }
 
@@ -271,11 +271,11 @@ inline bool Engine::isPostponed(InvariantId invariantId) const {
 }
 
 inline void Engine::recompute(InvariantId invariantId) {
-  return _store.invariant(invariantId).recompute(_currentTimestamp, *this);
+  return _store.invariant(invariantId).recompute(_currentTimestamp);
 }
 
 inline void Engine::recompute(Timestamp ts, InvariantId invariantId) {
-  return _store.invariant(invariantId).recompute(ts, *this);
+  return _store.invariant(invariantId).recompute(ts);
 }
 
 inline void Engine::updateValue(Timestamp ts, VarId id, Int val) {
@@ -297,9 +297,9 @@ inline void Engine::commitValue(VarId id, Int val) {
 }
 
 inline void Engine::commitInvariantIf(Timestamp ts, InvariantId invariantId) {
-  _store.invariant(invariantId).commit(ts, *this);
+  _store.invariant(invariantId).commit(ts);
 }
 
 inline void Engine::commitInvariant(InvariantId invariantId) {
-  _store.invariant(invariantId).commit(_currentTimestamp, *this);
+  _store.invariant(invariantId).commit(_currentTimestamp);
 }

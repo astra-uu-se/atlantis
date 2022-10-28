@@ -7,7 +7,8 @@
 
 class IntAbsView : public IntView {
  public:
-  IntAbsView(const VarId parentId) : IntView(parentId) {}
+  IntAbsView(Engine& engine, const VarId parentId)
+      : IntView(engine, parentId) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

@@ -42,22 +42,24 @@ class Queens : public benchmark::Fixture {
     for (Int i = 0; i < n; ++i) {
       const VarId q = engine->makeIntVar(i, 0, n - 1);
       queens.push_back(q);
-      q_offset_minus.push_back(engine->makeIntView<IntOffsetView>(q, -i));
-      q_offset_plus.push_back(engine->makeIntView<IntOffsetView>(q, i));
+      q_offset_minus.push_back(
+          engine->makeIntView<IntOffsetView>(*engine, q, -i));
+      q_offset_plus.push_back(
+          engine->makeIntView<IntOffsetView>(*engine, q, i));
     }
 
     violation1 = engine->makeIntVar(0, 0, n);
     violation2 = engine->makeIntVar(0, 0, n);
     violation3 = engine->makeIntVar(0, 0, n);
 
-    engine->makeConstraint<AllDifferent>(violation1, queens);
-    engine->makeConstraint<AllDifferent>(violation2, q_offset_minus);
-    engine->makeConstraint<AllDifferent>(violation3, q_offset_plus);
+    engine->makeConstraint<AllDifferent>(*engine, violation1, queens);
+    engine->makeConstraint<AllDifferent>(*engine, violation2, q_offset_minus);
+    engine->makeConstraint<AllDifferent>(*engine, violation3, q_offset_plus);
 
     totalViolation = engine->makeIntVar(0, 0, 3 * n);
 
     engine->makeInvariant<Linear>(
-        totalViolation, std::vector<Int>{1, 1, 1},
+        *engine, totalViolation, std::vector<Int>{1, 1, 1},
         std::vector<VarId>{violation1, violation2, violation3});
 
     engine->close();
@@ -196,7 +198,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
   logDebug(instanceToString());
 }
 
-//*
+/*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int n = 16; n <= 1024; n *= 2) {
     for (int mode = 0; mode <= 3; ++mode) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "constraints/constraint.hpp"
@@ -26,15 +27,15 @@ class Count : public Invariant {
   signed char count(Timestamp ts, Int value);
 
  public:
-  explicit Count(VarId output, VarId y, std::vector<VarId> varArray);
-  void registerVars(Engine&) override;
-  void updateBounds(Engine&, bool widenOnly = false) override;
-  void close(Timestamp, Engine&) override;
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
-  void commit(Timestamp, Engine&) override;
-  VarId nextInput(Timestamp, Engine&) override;
-  void notifyCurrentInputChanged(Timestamp, Engine&) override;
+  explicit Count(Engine&, VarId output, VarId y, std::vector<VarId> varArray);
+  void registerVars() override;
+  void updateBounds(bool widenOnly = false) override;
+  void close(Timestamp) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
+  void commit(Timestamp) override;
+  VarId nextInput(Timestamp) override;
+  void notifyCurrentInputChanged(Timestamp) override;
 };
 
 inline void Count::increaseCount(Timestamp ts, Int value) {
