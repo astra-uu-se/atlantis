@@ -131,13 +131,14 @@ class TSPTWAllDiff : public benchmark::Fixture {
     violation.clear();
   }
 
-  void reversed(size_t begin, size_t end) {
-    assert(begin < end);
-    assert(end < static_cast<size_t>(n));
-    for (size_t i = 0; i <= end - begin; ++i) {
-      engine->setValue(tour[begin + i], engine->committedValue(tour[end - i]));
-      logDebug("  tour[" << (begin + i) << "] = tour[" << (end - i) << ']');
+  Int computeDistance() {
+    Int tot = 0;
+    // Ignore wrapping from last to first location
+    for (Int i = 1; i < n; ++i) {
+      tot += dist.at(engine->currentValue(tour.at(i - 1)))
+                 .at(engine->currentValue(tour.at(i)));
     }
+    return tot;
   }
 };
 
@@ -200,6 +201,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(benchmark::State& st) {
     engine->query(totalDist);
     engine->query(totalViolation);
     engine->endProbe();
+    assert(engine->currentValue(totalDist) == computeDistance());
     ++probes;
   }
   st.counters["probes_per_second"] =

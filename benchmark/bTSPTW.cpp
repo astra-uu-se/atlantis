@@ -129,6 +129,14 @@ class TSPTW : public benchmark::Fixture {
     dist.clear();
     violation.clear();
   }
+
+  Int computeDistance() {
+    Int tot = 0;
+    for (Int i = 0; i < n; ++i) {
+      tot += dist.at(i).at(engine->currentValue(pred[i] - 1));
+    }
+    return tot;
+  }
 };
 
 inline size_t randInRange(const size_t minVal, const size_t maxVal) {
@@ -201,6 +209,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
         engine->query(totalDist);
         engine->query(totalViolation);
         engine->endProbe();
+        assert(engine->currentValue(totalDist) == computeDistance());
         ++probes;
       }
     }
