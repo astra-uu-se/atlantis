@@ -28,8 +28,8 @@ class AssignmentTest : public testing::Test {
     d = engine.makeIntVar(3, 3, 3);
     violation = engine.makeIntVar(0, 0, 10);
 
-    engine.makeInvariant<Linear>(c, std::vector<VarId>{a, b});
-    engine.makeConstraint<Equal>(violation, c, d);
+    engine.makeInvariant<Linear>(engine, c, std::vector<VarId>{a, b});
+    engine.makeConstraint<Equal>(engine, violation, c, d);
     engine.close();
   }
 };

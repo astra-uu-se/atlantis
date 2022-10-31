@@ -10,34 +10,32 @@
  * @param y second violation variable
  * @param output the result
  */
-BoolAnd::BoolAnd(VarId output, VarId x, VarId y)
-    : Invariant(), _output(output), _x(x), _y(y) {
+BoolAnd::BoolAnd(Engine& engine, VarId output, VarId x, VarId y)
+    : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
-void BoolAnd::registerVars(Engine& engine) {
+void BoolAnd::registerVars() {
   assert(_id != NULL_ID);
-  engine.registerInvariantInput(_id, _x, LocalId(0));
-  engine.registerInvariantInput(_id, _y, LocalId(0));
-  registerDefinedVariable(engine, _output);
+  _engine.registerInvariantInput(_id, _x, LocalId(0));
+  _engine.registerInvariantInput(_id, _y, LocalId(0));
+  registerDefinedVariable(_output);
 }
 
-void BoolAnd::updateBounds(Engine& engine, bool widenOnly) {
-  engine.updateBounds(
-      _output, std::max(engine.lowerBound(_x), engine.lowerBound(_y)),
-      std::max(engine.upperBound(_x), engine.upperBound(_y)), widenOnly);
+void BoolAnd::updateBounds(bool widenOnly) {
+  _engine.updateBounds(
+      _output, std::max(_engine.lowerBound(_x), _engine.lowerBound(_y)),
+      std::max(_engine.upperBound(_x), _engine.upperBound(_y)), widenOnly);
 }
 
-void BoolAnd::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _output,
-              std::max(engine.value(ts, _x), engine.value(ts, _y)));
+void BoolAnd::recompute(Timestamp ts) {
+  updateValue(ts, _output,
+              std::max(_engine.value(ts, _x), _engine.value(ts, _y)));
 }
 
-void BoolAnd::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
-  recompute(ts, engine);
-}
+void BoolAnd::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId BoolAnd::nextInput(Timestamp ts, Engine&) {
+VarId BoolAnd::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -48,10 +46,6 @@ VarId BoolAnd::nextInput(Timestamp ts, Engine&) {
   }
 }
 
-void BoolAnd::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  recompute(ts, engine);
-}
+void BoolAnd::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
-void BoolAnd::commit(Timestamp ts, Engine& engine) {
-  Invariant::commit(ts, engine);
-}
+void BoolAnd::commit(Timestamp ts) { Invariant::commit(ts); }

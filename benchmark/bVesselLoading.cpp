@@ -93,23 +93,23 @@ class VesselLoading : public benchmark::Fixture {
       // orientation[i] = 0 <=> container i is positioned horizontally
       // orientation[i] = 1 <=> container i is positioned vertically
       VarId rightHorizontally =
-          engine->makeIntView<IntOffsetView>(left[i], conWidth[i]);
+          engine->makeIntView<IntOffsetView>(*engine, left[i], conWidth[i]);
       VarId rightVertically =
-          engine->makeIntView<IntOffsetView>(left[i], conLength[i]);
+          engine->makeIntView<IntOffsetView>(*engine, left[i], conLength[i]);
       VarId topHorizontally =
-          engine->makeIntView<IntOffsetView>(bottom[i], conLength[i]);
+          engine->makeIntView<IntOffsetView>(*engine, bottom[i], conLength[i]);
       VarId topVertically =
-          engine->makeIntView<IntOffsetView>(bottom[i], conWidth[i]);
+          engine->makeIntView<IntOffsetView>(*engine, bottom[i], conWidth[i]);
 
       // right[i] = left[i] + (if orientation[i] == 0 then conWidth[i] else
       // conLength[i] endif)
-      engine->makeInvariant<IfThenElse>(right[i], orientation[i],
+      engine->makeInvariant<IfThenElse>(*engine, right[i], orientation[i],
                                         rightHorizontally, rightVertically);
 
       // top[i] = bottom[i] + (if orientation[i] != 0 then conWidth[i] else
       // conLength[i] endif)
-      engine->makeInvariant<IfThenElse>(top[i], orientation[i], topHorizontally,
-                                        topVertically);
+      engine->makeInvariant<IfThenElse>(*engine, top[i], orientation[i],
+                                        topHorizontally, topVertically);
     }
 
     // No overlap between any container pair
@@ -128,17 +128,18 @@ class VesselLoading : public benchmark::Fixture {
 
         Int sep = seperations[conClass[i]][c];
 
-        VarId rightSep =
-            sep == 0 ? right[i]
-                     : engine->makeIntView<IntOffsetView>(right[i], sep);
-        VarId leftSep = sep == 0
-                            ? left[i]
-                            : engine->makeIntView<IntOffsetView>(left[i], -sep);
+        VarId rightSep = sep == 0 ? right[i]
+                                  : engine->makeIntView<IntOffsetView>(
+                                        *engine, right[i], sep);
+        VarId leftSep = sep == 0 ? left[i]
+                                 : engine->makeIntView<IntOffsetView>(
+                                       *engine, left[i], -sep);
         VarId topSep =
-            sep == 0 ? top[i] : engine->makeIntView<IntOffsetView>(top[i], sep);
-        VarId bottomSep =
-            sep == 0 ? bottom[i]
-                     : engine->makeIntView<IntOffsetView>(bottom[i], -sep);
+            sep == 0 ? top[i]
+                     : engine->makeIntView<IntOffsetView>(*engine, top[i], sep);
+        VarId bottomSep = sep == 0 ? bottom[i]
+                                   : engine->makeIntView<IntOffsetView>(
+                                         *engine, bottom[i], -sep);
 
         for (size_t j = i + 1; j < containerCount; ++j) {
           if (conClass[j] != c) {
@@ -152,19 +153,23 @@ class VesselLoading : public benchmark::Fixture {
           VarId isAbove = engine->makeIntVar(0, 0, vesselLength + vesselWidth);
 
           // isRightOf = right[i] + sep <= left[j]:
-          engine->makeConstraint<LessEqual>(isRightOf, rightSep, left[j]);
+          engine->makeConstraint<LessEqual>(*engine, isRightOf, rightSep,
+                                            left[j]);
           // isLeftOf = right[j] <= left[i] - sep:
-          engine->makeConstraint<LessEqual>(isLeftOf, right[j], leftSep);
+          engine->makeConstraint<LessEqual>(*engine, isLeftOf, right[j],
+                                            leftSep);
           // isAbove = top[i] + sep <= bottom[j]:
-          engine->makeConstraint<LessEqual>(isAbove, topSep, bottom[j]);
+          engine->makeConstraint<LessEqual>(*engine, isAbove, topSep,
+                                            bottom[j]);
           // isBelow = top[j] <= bottom[i] - sep:
-          engine->makeConstraint<LessEqual>(isBelow, top[j], bottomSep);
+          engine->makeConstraint<LessEqual>(*engine, isBelow, top[j],
+                                            bottomSep);
 
           violations.push_back(
               engine->makeIntVar(0, 0, vesselLength + vesselWidth));
 
           engine->makeInvariant<Exists>(
-              violations.back(),
+              *engine, violations.back(),
               std::vector<VarId>{isRightOf, isLeftOf, isAbove, isBelow});
         }
       }
@@ -177,7 +182,7 @@ class VesselLoading : public benchmark::Fixture {
         engine->makeIntVar(0, 0,
                            (containerCount * (containerCount - 1) / 2) *
                                (vesselLength + vesselWidth));
-    engine->makeInvariant<Linear>(totalViolation, violations);
+    engine->makeInvariant<Linear>(*engine, totalViolation, violations);
     engine->close();
   }
 

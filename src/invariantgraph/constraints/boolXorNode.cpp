@@ -31,10 +31,11 @@ void invariantgraph::BoolXorNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeInvariant<BoolXor>(violationVarId(), a()->varId(), b()->varId());
+    engine.makeInvariant<BoolXor>(engine, violationVarId(), a()->varId(),
+                                  b()->varId());
   } else {
     assert(!isReified());
-    engine.makeConstraint<BoolEqual>(violationVarId(), a()->varId(),
+    engine.makeConstraint<BoolEqual>(engine, violationVarId(), a()->varId(),
                                      b()->varId());
   }
 }

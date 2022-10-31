@@ -104,7 +104,8 @@ TEST_F(Element2dVarTest, UpdateBounds) {
 
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
     Element2dVar& invariant = engine->makeInvariant<Element2dVar>(
-        outputId, rowIndex, colIndex, inputMatrix, rowOffset, colOffset);
+        *engine, outputId, rowIndex, colIndex, inputMatrix, rowOffset,
+        colOffset);
     engine->close();
 
     for (Int minRowIndex = rowIndexLb; minRowIndex <= rowIndexUb;
@@ -117,7 +118,7 @@ TEST_F(Element2dVarTest, UpdateBounds) {
           for (Int maxColIndex = colIndexUb; maxColIndex >= minColIndex;
                --maxColIndex) {
             engine->updateBounds(colIndex, minColIndex, maxColIndex, false);
-            invariant.updateBounds(*engine);
+            invariant.updateBounds();
             Int minVal = std::numeric_limits<Int>::max();
             Int maxVal = std::numeric_limits<Int>::min();
             for (Int rowIndexVal = minRowIndex; rowIndexVal <= maxRowIndex;
@@ -172,7 +173,8 @@ TEST_F(Element2dVarTest, Recompute) {
 
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
     Element2dVar& invariant = engine->makeInvariant<Element2dVar>(
-        outputId, rowIndex, colIndex, inputMatrix, rowOffset, colOffset);
+        *engine, outputId, rowIndex, colIndex, inputMatrix, rowOffset,
+        colOffset);
     engine->close();
 
     for (Int rowIndexVal = rowIndexLb; rowIndexVal <= rowIndexUb;
@@ -189,7 +191,7 @@ TEST_F(Element2dVarTest, Recompute) {
         const Int expectedOutput =
             computeOutput(engine->currentTimestamp(), rowIndex, colIndex,
                           rowOffset, colOffset);
-        invariant.recompute(engine->currentTimestamp(), *engine);
+        invariant.recompute(engine->currentTimestamp());
         EXPECT_EQ(engine->value(engine->currentTimestamp(), rowIndex),
                   rowIndexVal);
 
@@ -231,7 +233,8 @@ TEST_F(Element2dVarTest, NotifyInputChanged) {
 
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
     Element2dVar& invariant = engine->makeInvariant<Element2dVar>(
-        outputId, rowIndex, colIndex, inputMatrix, rowOffset, colOffset);
+        *engine, outputId, rowIndex, colIndex, inputMatrix, rowOffset,
+        colOffset);
     engine->close();
 
     for (Int rowIndexVal = rowIndexLb; rowIndexVal <= rowIndexUb;
@@ -245,8 +248,7 @@ TEST_F(Element2dVarTest, NotifyInputChanged) {
             computeOutput(engine->currentTimestamp(), rowIndex, colIndex,
                           rowOffset, colOffset);
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
-                                     LocalId(0));
+        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(0));
         EXPECT_EQ(expectedOutput,
                   engine->value(engine->currentTimestamp(), outputId));
       }
@@ -285,17 +287,18 @@ TEST_F(Element2dVarTest, NextInput) {
 
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
     Element2dVar& invariant = engine->makeInvariant<Element2dVar>(
-        outputId, rowIndex, colIndex, inputMatrix, rowOffset, colOffset);
+        *engine, outputId, rowIndex, colIndex, inputMatrix, rowOffset,
+        colOffset);
     engine->close();
 
     for (Timestamp ts = engine->currentTimestamp() + 1;
          ts < engine->currentTimestamp() + 4; ++ts) {
-      EXPECT_EQ(invariant.nextInput(ts, *engine), rowIndex);
-      EXPECT_EQ(invariant.nextInput(ts, *engine), colIndex);
-      EXPECT_EQ(invariant.nextInput(ts, *engine),
+      EXPECT_EQ(invariant.nextInput(ts), rowIndex);
+      EXPECT_EQ(invariant.nextInput(ts), colIndex);
+      EXPECT_EQ(invariant.nextInput(ts),
                 getInput(engine->value(ts, rowIndex),
                          engine->value(ts, colIndex), rowOffset, colOffset));
-      EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+      EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     }
   }
 }
@@ -341,7 +344,8 @@ TEST_F(Element2dVarTest, NotifyCurrentInputChanged) {
 
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
     Element2dVar& invariant = engine->makeInvariant<Element2dVar>(
-        outputId, rowIndex, colIndex, inputMatrix, rowOffset, colOffset);
+        *engine, outputId, rowIndex, colIndex, inputMatrix, rowOffset,
+        colOffset);
     engine->close();
 
     for (size_t i = 0; i < rowIndexValues.size(); ++i) {
@@ -350,18 +354,18 @@ TEST_F(Element2dVarTest, NotifyCurrentInputChanged) {
         const Int colIndexVal = colIndexValues.at(j);
         const Timestamp ts = t0 + Timestamp(i * colIndexValues.size() + j);
 
-        EXPECT_EQ(invariant.nextInput(ts, *engine), rowIndex);
+        EXPECT_EQ(invariant.nextInput(ts), rowIndex);
         engine->setValue(ts, rowIndex, rowIndexVal);
-        invariant.notifyCurrentInputChanged(ts, *engine);
+        invariant.notifyCurrentInputChanged(ts);
 
-        EXPECT_EQ(invariant.nextInput(ts, *engine), colIndex);
+        EXPECT_EQ(invariant.nextInput(ts), colIndex);
         engine->setValue(ts, colIndex, colIndexVal);
-        invariant.notifyCurrentInputChanged(ts, *engine);
+        invariant.notifyCurrentInputChanged(ts);
 
         EXPECT_EQ(engine->value(ts, outputId),
                   computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset));
 
-        const VarId curInput = invariant.nextInput(ts, *engine);
+        const VarId curInput = invariant.nextInput(ts);
         EXPECT_EQ(curInput,
                   getInput(rowIndexVal, colIndexVal, rowOffset, colOffset));
 
@@ -370,7 +374,7 @@ TEST_F(Element2dVarTest, NotifyCurrentInputChanged) {
           engine->setValue(ts, curInput, inputDist(gen));
         } while (engine->value(ts, curInput) == oldInputVal);
 
-        invariant.notifyCurrentInputChanged(ts, *engine);
+        invariant.notifyCurrentInputChanged(ts);
         EXPECT_EQ(engine->value(ts, outputId),
                   computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset));
       }
@@ -417,7 +421,8 @@ TEST_F(Element2dVarTest, Commit) {
 
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
     Element2dVar& invariant = engine->makeInvariant<Element2dVar>(
-        outputId, rowIndex, colIndex, inputMatrix, rowOffset, colOffset);
+        *engine, outputId, rowIndex, colIndex, inputMatrix, rowOffset,
+        colOffset);
     engine->close();
 
     Int committedRowIndexValue = engine->committedValue(rowIndex);
@@ -452,11 +457,11 @@ TEST_F(Element2dVarTest, Commit) {
         engine->setValue(ts, rowIndex, rowIndexVal);
 
         // notify row index change
-        invariant.notifyInputChanged(ts, *engine, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId(0));
 
         // incremental value from row index
         Int notifiedOutput = engine->value(ts, outputId);
-        invariant.recompute(ts, *engine);
+        invariant.recompute(ts);
 
         ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
@@ -464,11 +469,11 @@ TEST_F(Element2dVarTest, Commit) {
         engine->setValue(ts, colIndex, colIndexVal);
 
         // notify col index change
-        invariant.notifyInputChanged(ts, *engine, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId(0));
 
         // incremental value from col index
         notifiedOutput = engine->value(ts, outputId);
-        invariant.recompute(ts, *engine);
+        invariant.recompute(ts);
 
         ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
@@ -481,11 +486,11 @@ TEST_F(Element2dVarTest, Commit) {
         } while (engine->value(ts, curInput) == oldInputVal);
 
         // notify input change
-        invariant.notifyInputChanged(ts, *engine, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId(0));
 
         // incremental value from input
         notifiedOutput = engine->value(ts, outputId);
-        invariant.recompute(ts, *engine);
+        invariant.recompute(ts);
 
         ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
@@ -499,8 +504,8 @@ TEST_F(Element2dVarTest, Commit) {
             engine->value(ts, curInput);
         engine->commitIf(ts, outputId);
 
-        invariant.commit(ts, *engine);
-        invariant.recompute(ts + 1, *engine);
+        invariant.commit(ts);
+        invariant.recompute(ts + 1);
         ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
       }
     }
@@ -510,42 +515,39 @@ TEST_F(Element2dVarTest, Commit) {
 class MockElement2dVar : public Element2dVar {
  public:
   bool registered = false;
-  void registerVars(Engine& engine) override {
+  void registerVars() override {
     registered = true;
-    Element2dVar::registerVars(engine);
+    Element2dVar::registerVars();
   }
-  explicit MockElement2dVar(VarId output, VarId index1, VarId index2,
+  explicit MockElement2dVar(Engine& engine, VarId output, VarId index1,
+                            VarId index2,
                             const std::vector<std::vector<VarId>>& varMatrix,
                             Int offset1, Int offset2)
-      : Element2dVar(output, index1, index2, varMatrix, offset1, offset2) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return Element2dVar::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, nextInput)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return Element2dVar::nextInput(t, engine);
-        });
+      : Element2dVar(engine, output, index1, index2, varMatrix, offset1,
+                     offset2) {
+    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+      return Element2dVar::recompute(timestamp);
+    });
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+      return Element2dVar::nextInput(timestamp);
+    });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          Element2dVar::notifyCurrentInputChanged(t, engine);
+        .WillByDefault([this](Timestamp timestamp) {
+          Element2dVar::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          Element2dVar::notifyInputChanged(t, engine, id);
+        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+          Element2dVar::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      Element2dVar::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+      Element2dVar::commit(timestamp);
     });
   }
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(void, notifyInputChanged,
-              (Timestamp t, Engine& engine, LocalId id), (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
+  MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(Element2dVarTest, EngineIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
@@ -563,8 +565,8 @@ TEST_F(Element2dVarTest, EngineIntegration) {
     VarId index2 = engine->makeIntVar(1, 1, numCols);
     VarId output = engine->makeIntVar(-10, -100, 100);
     testNotifications<MockElement2dVar>(
-        &engine->makeInvariant<MockElement2dVar>(output, index1, index2,
-                                                 varMatrix, 1, 1),
+        &engine->makeInvariant<MockElement2dVar>(*engine, output, index1,
+                                                 index2, varMatrix, 1, 1),
         propMode, markingMode, 4, index1, 5, output);
   }
 }

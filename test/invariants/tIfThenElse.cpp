@@ -52,7 +52,8 @@ TEST_F(IfThenElseTest, UpdateBounds) {
   const VarId y = engine->makeIntVar(yUb, yLb, yUb);
   const VarId outputId =
       engine->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
-  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(outputId, b, x, y);
+  IfThenElse& invariant =
+      engine->makeInvariant<IfThenElse>(*engine, outputId, b, x, y);
   engine->close();
 
   std::vector<std::pair<Int, Int>> bBounds{{0, 0}, {0, 100}, {1, 10000}};
@@ -60,7 +61,7 @@ TEST_F(IfThenElseTest, UpdateBounds) {
   for (const auto& [bLb, bUb] : bBounds) {
     EXPECT_TRUE(bLb <= bUb);
     engine->updateBounds(b, bLb, bUb, false);
-    invariant.updateBounds(*engine);
+    invariant.updateBounds();
     if (bLb == 0 && bUb == 0) {
       EXPECT_EQ(engine->lowerBound(outputId), engine->lowerBound(x));
       EXPECT_EQ(engine->upperBound(outputId), engine->upperBound(x));
@@ -93,7 +94,8 @@ TEST_F(IfThenElseTest, Recompute) {
   const VarId y = engine->makeIntVar(yUb, yLb, yUb);
   const VarId outputId =
       engine->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
-  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(outputId, b, x, y);
+  IfThenElse& invariant =
+      engine->makeInvariant<IfThenElse>(*engine, outputId, b, x, y);
   engine->close();
   for (Int bVal = bLb; bVal <= bUb; ++bVal) {
     for (Int xVal = xLb; xVal <= xUb; ++xVal) {
@@ -103,7 +105,7 @@ TEST_F(IfThenElseTest, Recompute) {
         engine->setValue(engine->currentTimestamp(), y, yVal);
 
         const Int expectedOutput = computeOutput(bVal, xVal, yVal);
-        invariant.recompute(engine->currentTimestamp(), *engine);
+        invariant.recompute(engine->currentTimestamp());
         EXPECT_EQ(expectedOutput,
                   engine->value(engine->currentTimestamp(), outputId));
       }
@@ -125,7 +127,7 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
                               engine->makeIntVar(ub, lb, ub)};
   VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+      *engine, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
   engine->close();
 
   for (Int bVal = bLb; bVal <= bUb; ++bVal) {
@@ -136,8 +138,7 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
         const Int expectedOutput =
             computeOutput(engine->currentTimestamp(), inputs);
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
-                                     LocalId(i));
+        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
         EXPECT_EQ(expectedOutput,
                   engine->value(engine->currentTimestamp(), outputId));
       }
@@ -161,7 +162,7 @@ TEST_F(IfThenElseTest, NextInput) {
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+      *engine, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
@@ -170,14 +171,14 @@ TEST_F(IfThenElseTest, NextInput) {
     // First input is b,
     // Second input is x if b = 0, otherwise y:
     for (size_t i = 0; i < 2; ++i) {
-      const VarId varId = invariant.nextInput(ts, *engine);
+      const VarId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
       EXPECT_TRUE(minVarId <= varId);
       EXPECT_TRUE(varId <= maxVarId);
       EXPECT_FALSE(notified.at(varId));
       notified[varId] = true;
     }
-    EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     const Int bVal = engine->value(ts, inputs.at(0));
 
     EXPECT_TRUE(notified.at(inputs.at(0)));
@@ -204,14 +205,14 @@ TEST_F(IfThenElseTest, NotifyCurrentInputChanged) {
       engine->makeIntVar(valueDist(gen), lb, ub)};
   const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+      *engine, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     for (size_t i = 0; i < 2; ++i) {
       const Int bOld = engine->value(ts, inputs.at(0));
-      const VarId curInput = invariant.nextInput(ts, *engine);
+      const VarId curInput = invariant.nextInput(ts);
       EXPECT_EQ(curInput, inputs.at(i == 0 ? 0 : bOld == 0 ? 1 : 2));
 
       const Int oldVal = engine->value(ts, curInput);
@@ -219,7 +220,7 @@ TEST_F(IfThenElseTest, NotifyCurrentInputChanged) {
         engine->setValue(ts, curInput, i == 0 ? bDist(gen) : valueDist(gen));
       } while (engine->value(ts, curInput) == oldVal);
 
-      invariant.notifyCurrentInputChanged(ts, *engine);
+      invariant.notifyCurrentInputChanged(ts);
 
       EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, inputs));
     }
@@ -249,7 +250,7 @@ TEST_F(IfThenElseTest, Commit) {
 
   VarId outputId = engine->makeIntVar(0, 0, 2);
   IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+      *engine, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
@@ -268,11 +269,11 @@ TEST_F(IfThenElseTest, Commit) {
     } while (oldVal == engine->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, *engine, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
     const Int notifiedOutput = engine->value(ts, outputId);
-    invariant.recompute(ts, *engine);
+    invariant.recompute(ts);
 
     ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
@@ -280,8 +281,8 @@ TEST_F(IfThenElseTest, Commit) {
     committedValues.at(i) = engine->value(ts, inputs.at(i));
     engine->commitIf(ts, outputId);
 
-    invariant.commit(ts, *engine);
-    invariant.recompute(ts + 1, *engine);
+    invariant.commit(ts);
+    invariant.recompute(ts + 1);
     ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
   }
 }
@@ -289,40 +290,36 @@ TEST_F(IfThenElseTest, Commit) {
 class MockIfThenElse : public IfThenElse {
  public:
   bool registered = false;
-  void registerVars(Engine& engine) override {
+  void registerVars() override {
     registered = true;
-    IfThenElse::registerVars(engine);
+    IfThenElse::registerVars();
   }
-  explicit MockIfThenElse(VarId output, VarId b, VarId x, VarId y)
-      : IfThenElse(output, b, x, y) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return IfThenElse::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, nextInput)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return IfThenElse::nextInput(t, engine);
-        });
+  explicit MockIfThenElse(Engine& engine, VarId output, VarId b, VarId x,
+                          VarId y)
+      : IfThenElse(engine, output, b, x, y) {
+    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+      return IfThenElse::recompute(timestamp);
+    });
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+      return IfThenElse::nextInput(timestamp);
+    });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          IfThenElse::notifyCurrentInputChanged(t, engine);
+        .WillByDefault([this](Timestamp timestamp) {
+          IfThenElse::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          IfThenElse::notifyInputChanged(t, engine, id);
+        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+          IfThenElse::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      IfThenElse::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+      IfThenElse::commit(timestamp);
     });
   }
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(void, notifyInputChanged,
-              (Timestamp t, Engine& engine, LocalId id), (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
+  MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(IfThenElseTest, EngineIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
@@ -334,8 +331,8 @@ TEST_F(IfThenElseTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(5, 5, 9);
     const VarId output = engine->makeIntVar(3, 0, 9);
     testNotifications<MockIfThenElse>(
-        &engine->makeInvariant<MockIfThenElse>(output, b, x, y), propMode,
-        markingMode, 3, b, 5, output);
+        &engine->makeInvariant<MockIfThenElse>(*engine, output, b, x, y),
+        propMode, markingMode, 3, b, 5, output);
   }
 }
 

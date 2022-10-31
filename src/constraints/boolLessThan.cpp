@@ -8,33 +8,31 @@
  * @param x variable of lhs
  * @param y variable of rhs
  */
-BoolLessThan::BoolLessThan(VarId violationId, VarId x, VarId y)
-    : Constraint(violationId), _x(x), _y(y) {
+BoolLessThan::BoolLessThan(Engine& engine, VarId violationId, VarId x, VarId y)
+    : Constraint(engine, violationId), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
-void BoolLessThan::registerVars(Engine& engine) {
+void BoolLessThan::registerVars() {
   assert(_id != NULL_ID);
-  engine.registerInvariantInput(_id, _x, LocalId(0));
-  engine.registerInvariantInput(_id, _y, LocalId(0));
-  registerDefinedVariable(engine, _violationId);
+  _engine.registerInvariantInput(_id, _x, LocalId(0));
+  _engine.registerInvariantInput(_id, _y, LocalId(0));
+  registerDefinedVariable(_violationId);
 }
 
-void BoolLessThan::updateBounds(Engine& engine, bool widenOnly) {
-  engine.updateBounds(_violationId, 0, 1, widenOnly);
+void BoolLessThan::updateBounds(bool widenOnly) {
+  _engine.updateBounds(_violationId, 0, 1, widenOnly);
 }
 
-void BoolLessThan::recompute(Timestamp ts, Engine& engine) {
+void BoolLessThan::recompute(Timestamp ts) {
   updateValue(
-      ts, engine, _violationId,
-      static_cast<Int>(engine.value(ts, _x) == 0) + engine.value(ts, _y));
+      ts, _violationId,
+      static_cast<Int>(_engine.value(ts, _x) == 0) + _engine.value(ts, _y));
 }
 
-void BoolLessThan::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
-  recompute(ts, engine);
-}
+void BoolLessThan::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId BoolLessThan::nextInput(Timestamp ts, Engine&) {
+VarId BoolLessThan::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -45,10 +43,6 @@ VarId BoolLessThan::nextInput(Timestamp ts, Engine&) {
   }
 }
 
-void BoolLessThan::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  recompute(ts, engine);
-}
+void BoolLessThan::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
-void BoolLessThan::commit(Timestamp ts, Engine& engine) {
-  Invariant::commit(ts, engine);
-}
+void BoolLessThan::commit(Timestamp ts) { Invariant::commit(ts); }

@@ -52,7 +52,7 @@ class LinearTree : public benchmark::Fixture {
           decisionVars.push_back(var);
         }
       }
-      engine->makeInvariant<Linear>(cur.id, linearInputs);
+      engine->makeInvariant<Linear>(*engine, cur.id, linearInputs);
       linearInputs.clear();
     }
 #ifndef NDEBUG
@@ -248,7 +248,7 @@ BENCHMARK_DEFINE_F(LinearTree, commit_all_query_rnd)
 BENCHMARK_DEFINE_F(LinearTree, probe_all_query_rnd)
 (benchmark::State& st) { probeRnd(std::ref(st), decisionVars.size()); }
 
-//*
+/*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int treeHeight = 2; treeHeight <= 12; treeHeight += 2) {

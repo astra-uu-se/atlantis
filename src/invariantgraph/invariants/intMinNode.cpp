@@ -21,6 +21,6 @@ void invariantgraph::IntMinNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::IntMinNode::registerWithEngine(Engine& engine) {
   assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<BinaryMin>(definedVariables().front()->varId(),
+  engine.makeInvariant<BinaryMin>(engine, definedVariables().front()->varId(),
                                   a()->varId(), b()->varId());
 }

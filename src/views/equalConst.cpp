@@ -3,16 +3,16 @@
 inline static Int compute(Int var, Int val) { return std::abs(var - val); }
 
 Int EqualConst::value(Timestamp ts) {
-  return compute(_engine->value(ts, _parentId), _val);
+  return compute(_engine.value(ts, _parentId), _val);
 }
 
 Int EqualConst::committedValue() {
-  return compute(_engine->committedValue(_parentId), _val);
+  return compute(_engine.committedValue(_parentId), _val);
 }
 
 Int EqualConst::lowerBound() const {
-  const Int lb = _engine->lowerBound(_parentId);
-  const Int ub = _engine->upperBound(_parentId);
+  const Int lb = _engine.lowerBound(_parentId);
+  const Int ub = _engine.upperBound(_parentId);
   if (lb <= _val && _val <= ub) {
     return Int(0);
   }
@@ -20,6 +20,6 @@ Int EqualConst::lowerBound() const {
 }
 
 Int EqualConst::upperBound() const {
-  return std::max(compute(_engine->lowerBound(_parentId), _val),
-                  compute(_engine->upperBound(_parentId), _val));
+  return std::max(compute(_engine.lowerBound(_parentId), _val),
+                  compute(_engine.upperBound(_parentId), _val));
 }

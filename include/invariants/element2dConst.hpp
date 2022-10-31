@@ -37,14 +37,14 @@ class Element2dConst : public Invariant {
   }
 
  public:
-  explicit Element2dConst(VarId output, VarId index1, VarId index2,
+  explicit Element2dConst(Engine&, VarId output, VarId index1, VarId index2,
                           std::vector<std::vector<Int>> matrix, Int offset1 = 1,
                           Int offset2 = 1);
-  void registerVars(Engine&) override;
-  void updateBounds(Engine&, bool widenOnly = false) override;
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
-  void commit(Timestamp, Engine&) override;
-  VarId nextInput(Timestamp, Engine&) override;
-  void notifyCurrentInputChanged(Timestamp, Engine&) override;
+  void registerVars() override;
+  void updateBounds(bool widenOnly = false) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
+  void commit(Timestamp) override;
+  VarId nextInput(Timestamp) override;
+  void notifyCurrentInputChanged(Timestamp) override;
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 
 #include "core/types.hpp"
@@ -20,16 +21,16 @@ class Linear : public Invariant {
   std::vector<CommittableInt> _localVarArray;
 
  public:
-  explicit Linear(VarId output, const std::vector<VarId>& varArray);
-  explicit Linear(VarId output, std::vector<Int> coeffs,
+  explicit Linear(Engine&, VarId output, const std::vector<VarId>& varArray);
+  explicit Linear(Engine&, VarId output, std::vector<Int> coeffs,
                   std::vector<VarId> varArray);
 
-  void registerVars(Engine&) override;
-  void updateBounds(Engine&, bool widenOnly = false) override;
-  void close(Timestamp, Engine&) override;
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
-  void commit(Timestamp, Engine&) override;
-  VarId nextInput(Timestamp, Engine&) override;
-  void notifyCurrentInputChanged(Timestamp, Engine&) override;
+  void registerVars() override;
+  void updateBounds(bool widenOnly = false) override;
+  void close(Timestamp) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
+  void commit(Timestamp) override;
+  VarId nextInput(Timestamp) override;
+  void notifyCurrentInputChanged(Timestamp) override;
 };

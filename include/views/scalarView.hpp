@@ -7,8 +7,8 @@ class ScalarView : public IntView {
   const Int _scalar;
 
  public:
-  explicit ScalarView(VarId parentId, Int scalar)
-      : IntView(parentId), _scalar(scalar) {}
+  explicit ScalarView(Engine& engine, VarId parentId, Int scalar)
+      : IntView(engine, parentId), _scalar(scalar) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

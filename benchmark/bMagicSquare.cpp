@@ -66,8 +66,8 @@ class MagicSquare : public benchmark::Fixture {
       for (Int i = 0; i < n; ++i) {
         const VarId rowSum = engine->makeIntVar(0, 0, n2 * n);
         const VarId rowViol = engine->makeIntVar(0, 0, n2 * n);
-        engine->makeInvariant<Linear>(rowSum, ones, square[i]);
-        engine->makeConstraint<Equal>(rowViol, rowSum, magicSumVar);
+        engine->makeInvariant<Linear>(*engine, rowSum, ones, square[i]);
+        engine->makeConstraint<Equal>(*engine, rowViol, rowSum, magicSumVar);
         violations.push_back(rowViol);
       }
     }
@@ -84,8 +84,8 @@ class MagicSquare : public benchmark::Fixture {
           assert(square[j].size() == static_cast<size_t>(n));
           col.push_back(square[j][i]);
         }
-        engine->makeInvariant<Linear>(colSum, ones, col);
-        engine->makeConstraint<Equal>(colViol, colSum, magicSumVar);
+        engine->makeInvariant<Linear>(*engine, colSum, ones, col);
+        engine->makeConstraint<Equal>(*engine, colViol, colSum, magicSumVar);
         violations.push_back(colViol);
       }
     }
@@ -101,8 +101,9 @@ class MagicSquare : public benchmark::Fixture {
         assert(square[j].size() == static_cast<size_t>(n));
         diag.push_back(square[j][j]);
       }
-      engine->makeInvariant<Linear>(downDiagSum, ones, diag);
-      engine->makeConstraint<Equal>(downDiagViol, downDiagSum, magicSumVar);
+      engine->makeInvariant<Linear>(*engine, downDiagSum, ones, diag);
+      engine->makeConstraint<Equal>(*engine, downDiagViol, downDiagSum,
+                                    magicSumVar);
       violations.push_back(downDiagViol);
     }
 
@@ -117,15 +118,16 @@ class MagicSquare : public benchmark::Fixture {
         assert(square[n - j - 1].size() == static_cast<size_t>(n));
         diag.push_back(square[n - j - 1][j]);
       }
-      engine->makeInvariant<Linear>(upDiagSum, ones, diag);
-      engine->makeConstraint<Equal>(upDiagViol, upDiagSum, magicSumVar);
+      engine->makeInvariant<Linear>(*engine, upDiagSum, ones, diag);
+      engine->makeConstraint<Equal>(*engine, upDiagViol, upDiagSum,
+                                    magicSumVar);
       violations.push_back(upDiagViol);
     }
 
     std::vector<Int> ones{};
     ones.assign(violations.size(), 1);
     totalViolation = engine->makeIntVar(0, 0, n2 * n2 * 2 + 2 * n2);
-    engine->makeInvariant<Linear>(totalViolation, ones, violations);
+    engine->makeInvariant<Linear>(*engine, totalViolation, ones, violations);
     engine->close();
   }
 
@@ -179,7 +181,7 @@ BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-//*
+/*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int n = 4; n <= 16; n += 2) {
     for (int mode = 0; mode <= 3; ++mode) {

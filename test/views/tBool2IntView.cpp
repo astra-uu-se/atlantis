@@ -16,7 +16,7 @@ TEST(Bool2IntViewTest, simple) {
   PropagationEngine engine;
   engine.open();
   const VarId varId = engine.makeIntVar(0, 0, 1);
-  const VarId viewId = engine.makeIntView<Bool2IntView>(varId);
+  const VarId viewId = engine.makeIntView<Bool2IntView>(engine, varId);
   const std::array<Int, 5> values{0, 0, 1, 1, 0};
   engine.close();
 

@@ -30,9 +30,10 @@ void invariantgraph::BoolLinEqNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(engine.makeIntView<EqualConst>(_sumVarId, _c));
+      setViolationVarId(engine.makeIntView<EqualConst>(engine, _sumVarId, _c));
     } else {
-      setViolationVarId(engine.makeIntView<NotEqualConst>(_sumVarId, _c));
+      setViolationVarId(
+          engine.makeIntView<NotEqualConst>(engine, _sumVarId, _c));
     }
   }
 }
@@ -46,5 +47,5 @@ void invariantgraph::BoolLinEqNode::registerWithEngine(Engine& engine) {
   assert(_sumVarId != NULL_ID);
   assert(violationVarId() != NULL_ID);
 
-  engine.makeInvariant<BoolLinear>(_sumVarId, _coeffs, variables);
+  engine.makeInvariant<BoolLinear>(engine, _sumVarId, _coeffs, variables);
 }

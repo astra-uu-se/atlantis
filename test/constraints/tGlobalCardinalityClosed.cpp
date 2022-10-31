@@ -60,7 +60,7 @@ TEST_F(GlobalCardinalityClosedTest, UpdateBounds) {
 
   GlobalCardinalityClosed& invariant =
       engine->makeConstraint<GlobalCardinalityClosed>(
-          violationId, outputs, inputs, std::vector<Int>{0, 2});
+          *engine, violationId, outputs, inputs, std::vector<Int>{0, 2});
   engine->close();
   EXPECT_EQ(engine->lowerBound(violationId), 0);
   for (const VarId output : outputs) {
@@ -73,7 +73,7 @@ TEST_F(GlobalCardinalityClosedTest, UpdateBounds) {
       engine->setValue(engine->currentTimestamp(), inputs.at(1), bVal);
       for (Int cVal = lb; cVal <= ub; ++cVal) {
         engine->setValue(engine->currentTimestamp(), inputs.at(2), cVal);
-        invariant.compute(engine->currentTimestamp(), *engine);
+        invariant.compute(engine->currentTimestamp());
         EXPECT_GE(engine->value(engine->currentTimestamp(), violationId), 0);
         EXPECT_LE(engine->value(engine->currentTimestamp(), violationId),
                   inputs.size());
@@ -118,7 +118,7 @@ TEST_F(GlobalCardinalityClosedTest, Recompute) {
 
     GlobalCardinalityClosed& invariant =
         engine->makeConstraint<GlobalCardinalityClosed>(
-            violationId, outputs, std::vector<VarId>{a, b, c}, cover);
+            *engine, violationId, outputs, std::vector<VarId>{a, b, c}, cover);
     engine->close();
 
     const std::vector<VarId> inputs{a, b, c};
@@ -133,7 +133,7 @@ TEST_F(GlobalCardinalityClosedTest, Recompute) {
               computeViolationAndOutputs(engine->currentTimestamp(), inputs,
                                          cover);
           EXPECT_EQ(expectedCounts.size(), cover.size());
-          invariant.recompute(engine->currentTimestamp(), *engine);
+          invariant.recompute(engine->currentTimestamp());
           const Int actualViolation =
               engine->value(engine->currentTimestamp(), violationId);
           EXPECT_EQ(expectedViolation, actualViolation);
@@ -173,8 +173,8 @@ TEST_F(GlobalCardinalityClosedTest, NotifyInputChanged) {
     }
 
     GlobalCardinalityClosed& invariant =
-        engine->makeConstraint<GlobalCardinalityClosed>(violationId, outputs,
-                                                        inputs, cover);
+        engine->makeConstraint<GlobalCardinalityClosed>(*engine, violationId,
+                                                        outputs, inputs, cover);
     engine->close();
 
     for (Int val = lb; val <= ub; ++val) {
@@ -184,8 +184,7 @@ TEST_F(GlobalCardinalityClosedTest, NotifyInputChanged) {
             computeViolationAndOutputs(engine->currentTimestamp(), inputs,
                                        cover);
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
-                                     LocalId(j));
+        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(j));
         EXPECT_EQ(expectedViolation,
                   engine->value(engine->currentTimestamp(), violationId));
         for (size_t k = 0; k < outputs.size(); ++k) {
@@ -226,22 +225,22 @@ TEST_F(GlobalCardinalityClosedTest, NextInput) {
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
   GlobalCardinalityClosed& invariant =
-      engine->makeConstraint<GlobalCardinalityClosed>(violationId, outputs,
-                                                      inputs, cover);
+      engine->makeConstraint<GlobalCardinalityClosed>(*engine, violationId,
+                                                      outputs, inputs, cover);
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
-      const VarId varId = invariant.nextInput(ts, *engine);
+      const VarId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
       EXPECT_TRUE(minVarId <= varId);
       EXPECT_TRUE(varId <= maxVarId);
       EXPECT_FALSE(notified.at(varId));
       notified[varId] = true;
     }
-    EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
       EXPECT_TRUE(notified.at(varId));
     }
@@ -271,14 +270,14 @@ TEST_F(GlobalCardinalityClosedTest, NotifyCurrentInputChanged) {
   }
 
   GlobalCardinalityClosed& invariant =
-      engine->makeConstraint<GlobalCardinalityClosed>(violationId, outputs,
-                                                      inputs, cover);
+      engine->makeConstraint<GlobalCardinalityClosed>(*engine, violationId,
+                                                      outputs, inputs, cover);
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
-      EXPECT_EQ(invariant.nextInput(ts, *engine), varId);
+      EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = engine->value(ts, varId);
       do {
         engine->setValue(ts, varId, valueDist(gen));
@@ -286,7 +285,7 @@ TEST_F(GlobalCardinalityClosedTest, NotifyCurrentInputChanged) {
       const auto [expectedViolation, expectedCounts] =
           computeViolationAndOutputs(ts, inputs, cover);
 
-      invariant.notifyCurrentInputChanged(ts, *engine);
+      invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(engine->value(ts, violationId), expectedViolation);
       for (size_t i = 0; i < outputs.size(); ++i) {
         EXPECT_EQ(expectedCounts.at(i), engine->value(ts, outputs.at(i)));
@@ -329,8 +328,8 @@ TEST_F(GlobalCardinalityClosedTest, Commit) {
   std::shuffle(indices.begin(), indices.end(), rng);
 
   GlobalCardinalityClosed& invariant =
-      engine->makeConstraint<GlobalCardinalityClosed>(violationId, outputs,
-                                                      inputs, cover);
+      engine->makeConstraint<GlobalCardinalityClosed>(*engine, violationId,
+                                                      outputs, inputs, cover);
   engine->close();
 
   std::vector<Int> notifiedOutputValues(numOutputs, -1);
@@ -348,14 +347,14 @@ TEST_F(GlobalCardinalityClosedTest, Commit) {
     } while (oldVal == engine->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, *engine, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
     const Int notifiedViolation = engine->value(ts, violationId);
     for (size_t j = 0; j < outputs.size(); ++j) {
       notifiedOutputValues.at(j) = engine->value(ts, outputs.at(j));
     }
-    invariant.recompute(ts, *engine);
+    invariant.recompute(ts);
 
     ASSERT_EQ(notifiedViolation, engine->value(ts, violationId));
 
@@ -370,8 +369,8 @@ TEST_F(GlobalCardinalityClosedTest, Commit) {
       engine->commitIf(ts, o);
     }
 
-    invariant.commit(ts, *engine);
-    invariant.recompute(ts + 1, *engine);
+    invariant.commit(ts);
+    invariant.recompute(ts + 1);
     ASSERT_EQ(notifiedViolation, engine->value(ts + 1, violationId));
     for (size_t j = 0; j < outputs.size(); ++j) {
       ASSERT_EQ(notifiedOutputValues.at(j),
@@ -416,7 +415,8 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityClosedTest, RapidCheck,
 
   RC_ASSERT(outputs.size() == numOutputs);
 
-  engine->makeConstraint<GlobalCardinalityClosed>(viol, outputs, inputs, cover);
+  engine->makeConstraint<GlobalCardinalityClosed>(*engine, viol, outputs,
+                                                  inputs, cover);
 
   engine->close();
 
@@ -454,47 +454,38 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityClosedTest, RapidCheck,
 class MockGlobalCardinalityClosed : public GlobalCardinalityClosed {
  public:
   bool registered = false;
-  void registerVars(Engine& engine) override {
+  void registerVars() override {
     registered = true;
-    GlobalCardinalityClosed::registerVars(engine);
+    GlobalCardinalityClosed::registerVars();
   }
-  explicit MockGlobalCardinalityClosed(VarId violationId,
+  explicit MockGlobalCardinalityClosed(Engine& engine, VarId violationId,
                                        const std::vector<VarId>& outputs,
                                        const std::vector<VarId>& inputs,
                                        const std::vector<Int>& cover)
-      : GlobalCardinalityClosed(violationId, outputs, inputs, cover) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return GlobalCardinalityClosed::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, nextInput)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return GlobalCardinalityClosed::nextInput(timestamp, engine);
-        });
+      : GlobalCardinalityClosed(engine, violationId, outputs, inputs, cover) {
+    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+      return GlobalCardinalityClosed::recompute(timestamp);
+    });
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+      return GlobalCardinalityClosed::nextInput(timestamp);
+    });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          GlobalCardinalityClosed::notifyCurrentInputChanged(timestamp, engine);
+        .WillByDefault([this](Timestamp timestamp) {
+          GlobalCardinalityClosed::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault(
-            [this](Timestamp timestamp, Engine& engine, LocalId localId) {
-              GlobalCardinalityClosed::notifyInputChanged(timestamp, engine,
-                                                          localId);
-            });
-    ON_CALL(*this, commit)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          GlobalCardinalityClosed::commit(timestamp, engine);
+        .WillByDefault([this](Timestamp timestamp, LocalId localId) {
+          GlobalCardinalityClosed::notifyInputChanged(timestamp, localId);
         });
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+      GlobalCardinalityClosed::commit(timestamp);
+    });
   }
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(void, notifyInputChanged,
-              (Timestamp timestamp, Engine& engine, LocalId localId),
-              (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
+  MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(GlobalCardinalityClosedTest, EngineIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
@@ -515,8 +506,8 @@ TEST_F(GlobalCardinalityClosedTest, EngineIntegration) {
     }
 
     testNotifications<MockGlobalCardinalityClosed>(
-        &engine->makeInvariant<MockGlobalCardinalityClosed>(viol, outputs,
-                                                            inputs, cover),
+        &engine->makeInvariant<MockGlobalCardinalityClosed>(
+            *engine, viol, outputs, inputs, cover),
         propMode, markingMode, numInputs + 1, inputs.front(), 1, viol);
   }
 }

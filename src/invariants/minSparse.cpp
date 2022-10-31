@@ -1,8 +1,9 @@
 #include "invariants/minSparse.hpp"
 
-#include <utility>
-MinSparse::MinSparse(VarId output, std::vector<VarId> varArray)
-    : Invariant(),
+#include "core/engine.hpp"
+
+MinSparse::MinSparse(Engine& engine, VarId output, std::vector<VarId> varArray)
+    : Invariant(engine),
       _output(output),
       _varArray(std::move(varArray)),
       _localPriority(_varArray.size()) {
@@ -10,37 +11,37 @@ MinSparse::MinSparse(VarId output, std::vector<VarId> varArray)
   _modifiedVars.reserve(_varArray.size());
 }
 
-void MinSparse::registerVars(Engine& engine) {
+void MinSparse::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    engine.registerInvariantInput(_id, _varArray[i], i);
+    _engine.registerInvariantInput(_id, _varArray[i], i);
   }
-  registerDefinedVariable(engine, _output);
+  registerDefinedVariable(_output);
 }
 
-void MinSparse::updateBounds(Engine& engine, bool widenOnly) {
+void MinSparse::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::max();
   for (const VarId input : _varArray) {
-    lb = std::min(lb, engine.lowerBound(input));
-    ub = std::min(ub, engine.upperBound(input));
+    lb = std::min(lb, _engine.lowerBound(input));
+    ub = std::min(ub, _engine.upperBound(input));
   }
-  engine.updateBounds(_output, lb, ub, widenOnly);
+  _engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void MinSparse::recompute(Timestamp ts, Engine& engine) {
+void MinSparse::recompute(Timestamp ts) {
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    _localPriority.updatePriority(ts, i, engine.value(ts, _varArray[i]));
+    _localPriority.updatePriority(ts, i, _engine.value(ts, _varArray[i]));
   }
-  updateValue(ts, engine, _output, _localPriority.minPriority(ts));
+  updateValue(ts, _output, _localPriority.minPriority(ts));
 }
 
-void MinSparse::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
-  _localPriority.updatePriority(ts, id, engine.value(ts, _varArray[id]));
-  updateValue(ts, engine, _output, _localPriority.minPriority(ts));
+void MinSparse::notifyInputChanged(Timestamp ts, LocalId id) {
+  _localPriority.updatePriority(ts, id, _engine.value(ts, _varArray[id]));
+  updateValue(ts, _output, _localPriority.minPriority(ts));
 }
 
-VarId MinSparse::nextInput(Timestamp ts, Engine&) {
+VarId MinSparse::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _varArray.size()) {
@@ -50,11 +51,11 @@ VarId MinSparse::nextInput(Timestamp ts, Engine&) {
   }
 }
 
-void MinSparse::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  notifyInputChanged(ts, engine, _state.value(ts));
+void MinSparse::notifyCurrentInputChanged(Timestamp ts) {
+  notifyInputChanged(ts, _state.value(ts));
 }
 
-void MinSparse::commit(Timestamp ts, Engine& engine) {
-  Invariant::commit(ts, engine);
+void MinSparse::commit(Timestamp ts) {
+  Invariant::commit(ts);
   _localPriority.commitIf(ts);
 }

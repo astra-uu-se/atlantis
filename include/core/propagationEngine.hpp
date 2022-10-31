@@ -174,13 +174,11 @@ inline const std::vector<InvariantId>& PropagationEngine::listeningInvariants(
 }
 
 inline VarId PropagationEngine::nextInput(InvariantId invariantId) {
-  return sourceId(
-      _store.invariant(invariantId).nextInput(_currentTimestamp, *this));
+  return sourceId(_store.invariant(invariantId).nextInput(_currentTimestamp));
 }
 inline void PropagationEngine::notifyCurrentInputChanged(
     InvariantId invariantId) {
-  _store.invariant(invariantId)
-      .notifyCurrentInputChanged(_currentTimestamp, *this);
+  _store.invariant(invariantId).notifyCurrentInputChanged(_currentTimestamp);
 }
 
 inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {

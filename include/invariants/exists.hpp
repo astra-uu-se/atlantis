@@ -22,12 +22,12 @@ class Exists : public Invariant {
   PriorityList _localPriority;
 
  public:
-  explicit Exists(VarId output, std::vector<VarId> varArray);
-  void registerVars(Engine&) override;
-  void updateBounds(Engine&, bool widenOnly = false) override;
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
-  void commit(Timestamp, Engine&) override;
-  VarId nextInput(Timestamp, Engine&) override;
-  void notifyCurrentInputChanged(Timestamp, Engine&) override;
+  explicit Exists(Engine&, VarId output, std::vector<VarId> varArray);
+  void registerVars() override;
+  void updateBounds(bool widenOnly = false) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
+  void commit(Timestamp) override;
+  VarId nextInput(Timestamp) override;
+  void notifyCurrentInputChanged(Timestamp) override;
 };

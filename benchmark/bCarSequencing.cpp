@@ -107,7 +107,7 @@ class CarSequencing : public benchmark::Fixture {
 
     std::vector<VarId> violations;
     engine->makeConstraint<AllDifferent>(
-        violations.emplace_back(engine->makeIntVar(0, 0, numCars - 1)),
+        *engine, violations.emplace_back(engine->makeIntVar(0, 0, numCars - 1)),
         sequence);
 
     for (size_t o = 0; o < numOptions; ++o) {
@@ -116,12 +116,12 @@ class CarSequencing : public benchmark::Fixture {
         std::vector<VarId> optionRun;
         for (Int car = start; car < start + blockSize.at(o) - 1; ++car) {
           optionRun.emplace_back(engine->makeIntView<ElementConst>(
-              sequence.at(car), carOption.at(o)));
+              *engine, sequence.at(car), carOption.at(o)));
         }
         VarId sum = engine->makeIntVar(0, 0, blockSize.at(o));
-        engine->makeInvariant<Linear>(sum, optionRun);
-        violations.emplace_back(
-            engine->makeIntView<LessEqualConst>(sum, maxCarsInBlock.at(o)));
+        engine->makeInvariant<Linear>(*engine, sum, optionRun);
+        violations.emplace_back(engine->makeIntView<LessEqualConst>(
+            *engine, sum, maxCarsInBlock.at(o)));
       }
     }
 
@@ -131,7 +131,7 @@ class CarSequencing : public benchmark::Fixture {
       maxViol += engine->upperBound(viol);
     }
     totalViolation = engine->makeIntVar(0, 0, maxViol);
-    engine->makeInvariant<Linear>(totalViolation, violations);
+    engine->makeInvariant<Linear>(*engine, totalViolation, violations);
 
     engine->close();
   }
@@ -183,7 +183,7 @@ BENCHMARK_DEFINE_F(CarSequencing, probe_all_swap)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-//*
+/*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int numCars = 20; numCars <= 150; numCars += 20) {

@@ -1,7 +1,6 @@
 #include "invariants/globalCardinalityOpen.hpp"
 
 #include "core/engine.hpp"
-#include "variables/committableInt.hpp"
 
 inline bool all_in_range(Int start, Int stop,
                          std::function<bool(Int)> predicate) {
@@ -15,10 +14,11 @@ inline bool all_in_range(Int start, Int stop,
 /**
  * @param violationId id for the violationCount
  */
-GlobalCardinalityOpen::GlobalCardinalityOpen(std::vector<VarId> outputs,
+GlobalCardinalityOpen::GlobalCardinalityOpen(Engine& engine,
+                                             std::vector<VarId> outputs,
                                              std::vector<VarId> inputs,
                                              std::vector<Int> cover)
-    : Invariant(),
+    : Invariant(engine),
       _outputs(std::move(outputs)),
       _inputs(std::move(inputs)),
       _cover(std::move(cover)),
@@ -35,23 +35,23 @@ GlobalCardinalityOpen::GlobalCardinalityOpen(std::vector<VarId> outputs,
   }));
 }
 
-void GlobalCardinalityOpen::registerVars(Engine& engine) {
+void GlobalCardinalityOpen::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _inputs.size(); ++i) {
-    engine.registerInvariantInput(_id, _inputs[i], LocalId(i));
+    _engine.registerInvariantInput(_id, _inputs[i], LocalId(i));
   }
   for (const VarId output : _outputs) {
-    registerDefinedVariable(engine, output);
+    registerDefinedVariable(output);
   }
 }
 
-void GlobalCardinalityOpen::updateBounds(Engine& engine, bool widenOnly) {
+void GlobalCardinalityOpen::updateBounds(bool widenOnly) {
   for (const VarId output : _outputs) {
-    engine.updateBounds(output, 0, _inputs.size(), widenOnly);
+    _engine.updateBounds(output, 0, _inputs.size(), widenOnly);
   }
 }
 
-void GlobalCardinalityOpen::close(Timestamp timestamp, Engine& engine) {
+void GlobalCardinalityOpen::close(Timestamp timestamp) {
   const auto [lb, ub] = std::minmax_element(_cover.begin(), _cover.end());
   _offset = *lb;
   _coverVarIndex.resize(*ub - *lb + 1, -1);
@@ -63,42 +63,41 @@ void GlobalCardinalityOpen::close(Timestamp timestamp, Engine& engine) {
   _counts.resize(_outputs.size(), CommittableInt(timestamp, 0));
   _localValues.clear();
   for (const VarId input : _inputs) {
-    _localValues.emplace_back(timestamp, engine.committedValue(input));
+    _localValues.emplace_back(timestamp, _engine.committedValue(input));
   }
 }
 
-void GlobalCardinalityOpen::recompute(Timestamp timestamp, Engine& engine) {
+void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
   for (CommittableInt& c : _counts) {
     c.setValue(timestamp, 0);
   }
 
   for (size_t i = 0; i < _inputs.size(); ++i) {
-    increaseCount(timestamp, engine.value(timestamp, _inputs[i]));
-    _localValues[i].setValue(timestamp, engine.value(timestamp, _inputs[i]));
+    increaseCount(timestamp, _engine.value(timestamp, _inputs[i]));
+    _localValues[i].setValue(timestamp, _engine.value(timestamp, _inputs[i]));
   }
 
   for (size_t i = 0; i < _outputs.size(); ++i) {
     assert(0 <= _cover[i] - _offset &&
            _cover[i] - _offset < static_cast<Int>(_coverVarIndex.size()));
-    updateValue(timestamp, engine, _outputs[i], _counts[i].value(timestamp));
+    updateValue(timestamp, _outputs[i], _counts[i].value(timestamp));
   }
 }
 
 void GlobalCardinalityOpen::notifyInputChanged(Timestamp timestamp,
-                                               Engine& engine,
                                                LocalId localId) {
   assert(localId < _localValues.size());
   const Int oldValue = _localValues[localId].value(timestamp);
-  const Int newValue = engine.value(timestamp, _inputs[localId]);
+  const Int newValue = _engine.value(timestamp, _inputs[localId]);
   if (newValue == oldValue) {
     return;
   }
   _localValues[localId].setValue(timestamp, newValue);
-  decreaseCountAndUpdateOutput(timestamp, engine, oldValue);
-  increaseCountAndUpdateOutput(timestamp, engine, newValue);
+  decreaseCountAndUpdateOutput(timestamp, oldValue);
+  increaseCountAndUpdateOutput(timestamp, newValue);
 }
 
-VarId GlobalCardinalityOpen::nextInput(Timestamp timestamp, Engine&) {
+VarId GlobalCardinalityOpen::nextInput(Timestamp timestamp) {
   const auto index = static_cast<size_t>(_state.incValue(timestamp, 1));
   assert(0 <= _state.value(timestamp));
   if (index < _inputs.size()) {
@@ -107,14 +106,13 @@ VarId GlobalCardinalityOpen::nextInput(Timestamp timestamp, Engine&) {
   return NULL_ID;
 }
 
-void GlobalCardinalityOpen::notifyCurrentInputChanged(Timestamp timestamp,
-                                                      Engine& engine) {
+void GlobalCardinalityOpen::notifyCurrentInputChanged(Timestamp timestamp) {
   assert(static_cast<size_t>(_state.value(timestamp)) < _inputs.size());
-  notifyInputChanged(timestamp, engine, _state.value(timestamp));
+  notifyInputChanged(timestamp, _state.value(timestamp));
 }
 
-void GlobalCardinalityOpen::commit(Timestamp timestamp, Engine& engine) {
-  Invariant::commit(timestamp, engine);
+void GlobalCardinalityOpen::commit(Timestamp timestamp) {
+  Invariant::commit(timestamp);
 
   for (auto& localValue : _localValues) {
     localValue.commitIf(timestamp);

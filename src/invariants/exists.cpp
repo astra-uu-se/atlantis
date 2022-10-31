@@ -1,48 +1,50 @@
 #include "invariants/exists.hpp"
 
-Exists::Exists(VarId output, std::vector<VarId> varArray)
-    : Invariant(),
+#include "core/engine.hpp"
+
+Exists::Exists(Engine& engine, VarId output, std::vector<VarId> varArray)
+    : Invariant(engine),
       _output(output),
       _varArray(std::move(varArray)),
       _localPriority(_varArray.size()) {
   _modifiedVars.reserve(_varArray.size());
 }
 
-void Exists::registerVars(Engine& engine) {
+void Exists::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    engine.registerInvariantInput(_id, _varArray[i], i);
+    _engine.registerInvariantInput(_id, _varArray[i], i);
   }
-  registerDefinedVariable(engine, _output);
+  registerDefinedVariable(_output);
 }
 
-void Exists::updateBounds(Engine& engine, bool widenOnly) {
+void Exists::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::max();
   for (const VarId input : _varArray) {
-    lb = std::min(lb, engine.lowerBound(input));
-    ub = std::min(ub, engine.upperBound(input));
+    lb = std::min(lb, _engine.lowerBound(input));
+    ub = std::min(ub, _engine.upperBound(input));
   }
-  engine.updateBounds(_output, std::max(Int(0), lb), ub, widenOnly);
+  _engine.updateBounds(_output, std::max(Int(0), lb), ub, widenOnly);
 }
 
-void Exists::recompute(Timestamp ts, Engine& engine) {
+void Exists::recompute(Timestamp ts) {
   for (size_t i = 0; i < _varArray.size(); ++i) {
     _localPriority.updatePriority(
-        ts, i, std::max(Int(0), engine.value(ts, _varArray[i])));
+        ts, i, std::max(Int(0), _engine.value(ts, _varArray[i])));
   }
   assert(_localPriority.minPriority(ts) >= 0);
-  updateValue(ts, engine, _output, _localPriority.minPriority(ts));
+  updateValue(ts, _output, _localPriority.minPriority(ts));
 }
 
-void Exists::notifyInputChanged(Timestamp ts, Engine& engine, LocalId id) {
+void Exists::notifyInputChanged(Timestamp ts, LocalId id) {
   _localPriority.updatePriority(
-      ts, id, std::max(Int(0), engine.value(ts, _varArray[id])));
+      ts, id, std::max(Int(0), _engine.value(ts, _varArray[id])));
   assert(_localPriority.minPriority(ts) >= 0);
-  updateValue(ts, engine, _output, _localPriority.minPriority(ts));
+  updateValue(ts, _output, _localPriority.minPriority(ts));
 }
 
-VarId Exists::nextInput(Timestamp ts, Engine&) {
+VarId Exists::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _varArray.size()) {
@@ -52,11 +54,11 @@ VarId Exists::nextInput(Timestamp ts, Engine&) {
   }
 }
 
-void Exists::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  notifyInputChanged(ts, engine, _state.value(ts));
+void Exists::notifyCurrentInputChanged(Timestamp ts) {
+  notifyInputChanged(ts, _state.value(ts));
 }
 
-void Exists::commit(Timestamp ts, Engine& engine) {
-  Invariant::commit(ts, engine);
+void Exists::commit(Timestamp ts) {
+  Invariant::commit(ts);
   _localPriority.commitIf(ts);
 }

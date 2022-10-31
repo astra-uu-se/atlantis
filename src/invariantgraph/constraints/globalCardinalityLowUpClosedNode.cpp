@@ -44,7 +44,8 @@ void invariantgraph::GlobalCardinalityLowUpClosedNode::createDefinedVariables(
   if (violationVarId() == NULL_ID) {
     if (!shouldHold()) {
       _intermediate = engine.makeIntVar(0, 0, staticInputs().size());
-      setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 0));
+      setViolationVarId(
+          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
     } else {
       registerViolation(engine);
     }
@@ -59,10 +60,10 @@ void invariantgraph::GlobalCardinalityLowUpClosedNode::registerWithEngine(
                  [&](auto node) { return node->varId(); });
 
   if (shouldHold()) {
-    engine.makeInvariant<GlobalCardinalityConst<true>>(violationVarId(), inputs,
-                                                       _cover, _low, _up);
+    engine.makeInvariant<GlobalCardinalityConst<true>>(
+        engine, violationVarId(), inputs, _cover, _low, _up);
   } else {
-    engine.makeInvariant<GlobalCardinalityConst<true>>(_intermediate, inputs,
-                                                       _cover, _low, _up);
+    engine.makeInvariant<GlobalCardinalityConst<true>>(
+        engine, _intermediate, inputs, _cover, _low, _up);
   }
 }

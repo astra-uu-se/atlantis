@@ -76,11 +76,11 @@ VarId invariantgraph::VariableNode::postDomainConstraint(
   // domain.size() - 1 = number of "holes" in the domain:
   const float denseness = 1.0 - ((float)(domain.size() - 1) / (float)interval);
   if (SPARSE_MIN_DENSENESS <= denseness) {
-    _domainViolationId =
-        engine.makeIntView<InSparseDomain>(this->varId(), std::move(domain));
+    _domainViolationId = engine.makeIntView<InSparseDomain>(
+        engine, this->varId(), std::move(domain));
   } else {
     _domainViolationId =
-        engine.makeIntView<InDomain>(this->varId(), std::move(domain));
+        engine.makeIntView<InDomain>(engine, this->varId(), std::move(domain));
   }
   return _domainViolationId;
 }

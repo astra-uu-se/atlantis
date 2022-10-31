@@ -2,30 +2,30 @@
 
 #include "core/engine.hpp"
 
-BinaryMin::BinaryMin(VarId output, VarId x, VarId y)
-    : Invariant(), _output(output), _x(x), _y(y) {
+BinaryMin::BinaryMin(Engine& engine, VarId output, VarId x, VarId y)
+    : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
-void BinaryMin::registerVars(Engine& engine) {
+void BinaryMin::registerVars() {
   assert(!_id.equals(NULL_ID));
-  engine.registerInvariantInput(_id, _x, 0);
-  engine.registerInvariantInput(_id, _y, 0);
-  registerDefinedVariable(engine, _output);
+  _engine.registerInvariantInput(_id, _x, 0);
+  _engine.registerInvariantInput(_id, _y, 0);
+  registerDefinedVariable(_output);
 }
 
-void BinaryMin::updateBounds(Engine& engine, bool widenOnly) {
-  engine.updateBounds(
-      _output, std::min(engine.lowerBound(_x), engine.lowerBound(_y)),
-      std::min(engine.upperBound(_x), engine.upperBound(_y)), widenOnly);
+void BinaryMin::updateBounds(bool widenOnly) {
+  _engine.updateBounds(
+      _output, std::min(_engine.lowerBound(_x), _engine.lowerBound(_y)),
+      std::min(_engine.upperBound(_x), _engine.upperBound(_y)), widenOnly);
 }
 
-void BinaryMin::recompute(Timestamp ts, Engine& engine) {
-  updateValue(ts, engine, _output,
-              std::min(engine.value(ts, _x), engine.value(ts, _y)));
+void BinaryMin::recompute(Timestamp ts) {
+  updateValue(ts, _output,
+              std::min(_engine.value(ts, _x), _engine.value(ts, _y)));
 }
 
-VarId BinaryMin::nextInput(Timestamp ts, Engine&) {
+VarId BinaryMin::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -36,14 +36,8 @@ VarId BinaryMin::nextInput(Timestamp ts, Engine&) {
   }
 }
 
-void BinaryMin::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
-  recompute(ts, engine);
-}
+void BinaryMin::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
-void BinaryMin::notifyInputChanged(Timestamp ts, Engine& engine, LocalId) {
-  recompute(ts, engine);
-}
+void BinaryMin::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-void BinaryMin::commit(Timestamp ts, Engine& engine) {
-  Invariant::commit(ts, engine);
-}
+void BinaryMin::commit(Timestamp ts) { Invariant::commit(ts); }

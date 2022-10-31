@@ -57,7 +57,7 @@ class MagicSquareTest : public ::testing::Test {
     // {
     //   VarId allDiffViol = engine->makeIntVar(0, 0, n2);
     //   violations.push_back(allDiffViol);
-    //   engine->makeConstraint<AllDifferent>(allDiffViol, flat);
+    //   engine->makeConstraint<AllDifferent>(*engine, allDiffViol, flat);
     // }
 
     {
@@ -68,8 +68,8 @@ class MagicSquareTest : public ::testing::Test {
         VarId rowSum = engine->makeIntVar(0, 0, n2 * n);
         VarId rowViol = engine->makeIntVar(0, 0, n2 * n);
 
-        engine->makeInvariant<Linear>(rowSum, square.at(i));
-        engine->makeConstraint<Equal>(rowViol, rowSum, magicSumVar);
+        engine->makeInvariant<Linear>(*engine, rowSum, square.at(i));
+        engine->makeConstraint<Equal>(*engine, rowViol, rowSum, magicSumVar);
         violations.push_back(rowViol);
       }
     }
@@ -86,8 +86,8 @@ class MagicSquareTest : public ::testing::Test {
         for (int j = 0; j < n; ++j) {
           col.push_back(square.at(j).at(i));
         }
-        engine->makeInvariant<Linear>(colSum, ones, col);
-        engine->makeConstraint<Equal>(colViol, colSum, magicSumVar);
+        engine->makeInvariant<Linear>(*engine, colSum, ones, col);
+        engine->makeConstraint<Equal>(*engine, colViol, colSum, magicSumVar);
         violations.push_back(colViol);
       }
     }
@@ -103,8 +103,9 @@ class MagicSquareTest : public ::testing::Test {
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(j).at(j));
       }
-      engine->makeInvariant<Linear>(downDiagSum, ones, diag);
-      engine->makeConstraint<Equal>(downDiagViol, downDiagSum, magicSumVar);
+      engine->makeInvariant<Linear>(*engine, downDiagSum, ones, diag);
+      engine->makeConstraint<Equal>(*engine, downDiagViol, downDiagSum,
+                                    magicSumVar);
       violations.push_back(downDiagViol);
     }
 
@@ -119,15 +120,16 @@ class MagicSquareTest : public ::testing::Test {
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(n - j - 1).at(j));
       }
-      engine->makeInvariant<Linear>(upDiagSum, ones, diag);
-      engine->makeConstraint<Equal>(upDiagViol, upDiagSum, magicSumVar);
+      engine->makeInvariant<Linear>(*engine, upDiagSum, ones, diag);
+      engine->makeConstraint<Equal>(*engine, upDiagViol, upDiagSum,
+                                    magicSumVar);
       violations.push_back(upDiagViol);
     }
 
     std::vector<Int> ones{};
     ones.assign(violations.size(), 1);
     totalViolation = engine->makeIntVar(0, 0, n2 * n2 * 2 + 2 * n2);
-    engine->makeInvariant<Linear>(totalViolation, ones, violations);
+    engine->makeInvariant<Linear>(*engine, totalViolation, ones, violations);
     engine->close();
   }
 
