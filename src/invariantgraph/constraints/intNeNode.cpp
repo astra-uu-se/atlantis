@@ -31,10 +31,11 @@ void invariantgraph::IntNeNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<NotEqual>(violationVarId(), a()->varId(),
+    engine.makeConstraint<NotEqual>(engine, violationVarId(), a()->varId(),
                                     b()->varId());
   } else {
     assert(!isReified());
-    engine.makeConstraint<Equal>(violationVarId(), a()->varId(), b()->varId());
+    engine.makeConstraint<Equal>(engine, violationVarId(), a()->varId(),
+                                 b()->varId());
   }
 }

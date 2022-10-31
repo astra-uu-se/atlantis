@@ -5,9 +5,9 @@
 static Int convert(Int value) { return std::min<Int>(value, 1); }
 
 Int Violation2BoolView::value(Timestamp ts) {
-  return convert(_engine->value(ts, _parentId));
+  return convert(_engine.value(ts, _parentId));
 }
 
 Int Violation2BoolView::committedValue() {
-  return convert(_engine->committedValue(_parentId));
+  return convert(_engine.committedValue(_parentId));
 }

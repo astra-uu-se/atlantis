@@ -6,6 +6,7 @@
 
 #include "constraint.hpp"
 #include "core/types.hpp"
+#include "variables/committableInt.hpp"
 #include "variables/intVar.hpp"
 
 class CommittableInt;  // forward declare
@@ -26,22 +27,24 @@ class GlobalCardinalityConst : public Constraint {
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  GlobalCardinalityConst(VarId violationId, std::vector<VarId> variables,
+  GlobalCardinalityConst(Engine&, VarId violationId,
+                         std::vector<VarId> variables,
                          const std::vector<Int>& cover,
                          const std::vector<Int>& counts);
-  GlobalCardinalityConst(VarId violationId, std::vector<VarId> variables,
+  GlobalCardinalityConst(Engine&, VarId violationId,
+                         std::vector<VarId> variables,
                          const std::vector<Int>& cover,
                          const std::vector<Int>& lowerBound,
                          const std::vector<Int>& upperBound);
 
-  void registerVars(Engine&) override;
-  void updateBounds(Engine&, bool widenOnly = false) override;
-  void close(Timestamp, Engine&) override;
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp t, Engine& e, LocalId id) override;
-  void commit(Timestamp, Engine&) override;
-  VarId nextInput(Timestamp, Engine& e) override;
-  void notifyCurrentInputChanged(Timestamp, Engine& e) override;
+  void registerVars() override;
+  void updateBounds(bool widenOnly = false) override;
+  void close(Timestamp) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
+  void commit(Timestamp) override;
+  VarId nextInput(Timestamp) override;
+  void notifyCurrentInputChanged(Timestamp) override;
 };
 
 template <bool IsClosed>

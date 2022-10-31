@@ -14,7 +14,7 @@ class ScalarViewTest : public ::testing::Test {
 RC_GTEST_FIXTURE_PROP(ScalarViewTest, simple, (Int a, Int b)) {
   engine->open();
   auto varId = engine->makeIntVar(a, a, a);
-  auto viewId = engine->makeIntView<ScalarView>(varId, b);
+  auto viewId = engine->makeIntView<ScalarView>(*engine, varId, b);
   engine->close();
 
   RC_ASSERT(engine->committedValue(viewId) == a * b);

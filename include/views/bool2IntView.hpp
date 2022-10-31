@@ -22,7 +22,8 @@
  */
 class Bool2IntView : public IntView {
  public:
-  explicit Bool2IntView(const VarId parentId) : IntView(parentId) {}
+  explicit Bool2IntView(Engine& engine, const VarId parentId)
+      : IntView(engine, parentId) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

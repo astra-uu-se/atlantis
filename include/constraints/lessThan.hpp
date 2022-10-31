@@ -11,13 +11,13 @@ class LessThan : public Constraint {
   const VarId _x, _y;
 
  public:
-  explicit LessThan(VarId violationId, VarId x, VarId y);
+  explicit LessThan(Engine&, VarId violationId, VarId x, VarId y);
 
-  void registerVars(Engine&) override;
-  void updateBounds(Engine&, bool widenOnly = false) override;
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
-  void commit(Timestamp, Engine&) override;
-  VarId nextInput(Timestamp, Engine&) override;
-  void notifyCurrentInputChanged(Timestamp, Engine&) override;
+  void registerVars() override;
+  void updateBounds(bool widenOnly = false) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
+  void commit(Timestamp) override;
+  VarId nextInput(Timestamp) override;
+  void notifyCurrentInputChanged(Timestamp) override;
 };

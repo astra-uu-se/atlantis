@@ -1,15 +1,13 @@
 #include "constraints/allDifferent.hpp"
 
-#include <limits>
-
 #include "core/engine.hpp"
-#include "variables/committableInt.hpp"
 
 /**
  * @param violationId id for the violationCount
  */
-AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> variables)
-    : Constraint(violationId),
+AllDifferent::AllDifferent(Engine& engine, VarId violationId,
+                           std::vector<VarId> variables)
+    : Constraint(engine, violationId),
       _variables(std::move(variables)),
       _localValues(),
       _counts(),
@@ -17,26 +15,26 @@ AllDifferent::AllDifferent(VarId violationId, std::vector<VarId> variables)
   _modifiedVars.reserve(_variables.size());
 }
 
-void AllDifferent::registerVars(Engine& engine) {
+void AllDifferent::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _variables.size(); ++i) {
-    engine.registerInvariantInput(_id, _variables[i], i);
+    _engine.registerInvariantInput(_id, _variables[i], i);
   }
-  registerDefinedVariable(engine, _violationId);
+  registerDefinedVariable(_violationId);
 }
 
-void AllDifferent::updateBounds(Engine& engine, bool widenOnly) {
-  engine.updateBounds(_violationId, 0, _variables.size() - 1, widenOnly);
+void AllDifferent::updateBounds(bool widenOnly) {
+  _engine.updateBounds(_violationId, 0, _variables.size() - 1, widenOnly);
 }
 
-void AllDifferent::close(Timestamp ts, Engine& engine) {
+void AllDifferent::close(Timestamp ts) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
   for (size_t i = 0; i < _variables.size(); ++i) {
-    lb = std::min(lb, engine.lowerBound(_variables[i]));
-    ub = std::max(ub, engine.upperBound(_variables[i]));
-    _localValues.emplace_back(ts, engine.committedValue(_variables[i]));
+    lb = std::min(lb, _engine.lowerBound(_variables[i]));
+    ub = std::max(ub, _engine.upperBound(_variables[i]));
+    _localValues.emplace_back(ts, _engine.committedValue(_variables[i]));
   }
   assert(ub >= lb);
   _counts.resize(static_cast<unsigned long>(ub - lb + 1),
@@ -44,36 +42,35 @@ void AllDifferent::close(Timestamp ts, Engine& engine) {
   _offset = lb;
 }
 
-void AllDifferent::recompute(Timestamp ts, Engine& engine) {
+void AllDifferent::recompute(Timestamp ts) {
   for (CommittableInt& c : _counts) {
     c.setValue(ts, 0);
   }
 
-  updateValue(ts, engine, _violationId, 0);
+  updateValue(ts, _violationId, 0);
 
   Int violInc = 0;
   for (size_t i = 0; i < _variables.size(); ++i) {
-    violInc += increaseCount(ts, engine.value(ts, _variables[i]));
-    _localValues[i].setValue(ts, engine.value(ts, _variables[i]));
+    violInc += increaseCount(ts, _engine.value(ts, _variables[i]));
+    _localValues[i].setValue(ts, _engine.value(ts, _variables[i]));
   }
-  incValue(ts, engine, _violationId, violInc);
+  incValue(ts, _violationId, violInc);
 }
 
-void AllDifferent::notifyInputChanged(Timestamp ts, Engine& engine,
-                                      LocalId id) {
+void AllDifferent::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _localValues.size());
   const Int oldValue = _localValues[id].value(ts);
-  const Int newValue = engine.value(ts, _variables[id]);
+  const Int newValue = _engine.value(ts, _variables[id]);
   if (newValue == oldValue) {
     return;
   }
   _localValues[id].setValue(ts, newValue);
-  incValue(ts, engine, _violationId,
+  incValue(ts, _violationId,
            static_cast<Int>(decreaseCount(ts, oldValue) +
                             increaseCount(ts, newValue)));
 }
 
-VarId AllDifferent::nextInput(Timestamp ts, Engine&) {
+VarId AllDifferent::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _variables.size()) {
     return _variables[index];
@@ -81,13 +78,13 @@ VarId AllDifferent::nextInput(Timestamp ts, Engine&) {
   return NULL_ID;
 }
 
-void AllDifferent::notifyCurrentInputChanged(Timestamp ts, Engine& engine) {
+void AllDifferent::notifyCurrentInputChanged(Timestamp ts) {
   assert(static_cast<size_t>(_state.value(ts)) < _variables.size());
-  notifyInputChanged(ts, engine, static_cast<size_t>(_state.value(ts)));
+  notifyInputChanged(ts, static_cast<size_t>(_state.value(ts)));
 }
 
-void AllDifferent::commit(Timestamp ts, Engine& engine) {
-  Invariant::commit(ts, engine);
+void AllDifferent::commit(Timestamp ts) {
+  Invariant::commit(ts);
 
   for (CommittableInt& localValue : _localValues) {
     localValue.commitIf(ts);

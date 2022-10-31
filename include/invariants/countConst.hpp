@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 
 #include "core/types.hpp"
@@ -21,14 +22,15 @@ class CountConst : public Invariant {
   std::vector<CommittableInt> _hasCountValue;
 
  public:
-  explicit CountConst(VarId output, Int y, std::vector<VarId> variables);
+  explicit CountConst(Engine&, VarId output, Int y,
+                      std::vector<VarId> variables);
 
-  void registerVars(Engine&) override;
-  void updateBounds(Engine&, bool widenOnly = false) override;
-  void close(Timestamp, Engine&) override;
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
-  void commit(Timestamp, Engine&) override;
-  VarId nextInput(Timestamp, Engine&) override;
-  void notifyCurrentInputChanged(Timestamp, Engine&) override;
+  void registerVars() override;
+  void updateBounds(bool widenOnly = false) override;
+  void close(Timestamp) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
+  void commit(Timestamp) override;
+  VarId nextInput(Timestamp) override;
+  void notifyCurrentInputChanged(Timestamp) override;
 };

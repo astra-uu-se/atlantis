@@ -11,9 +11,9 @@ inline bool all_in_range(size_t start, size_t stop,
   return std::all_of(vec.begin(), vec.end(), predicate);
 }
 
-InSparseDomain::InSparseDomain(VarId parentId,
+InSparseDomain::InSparseDomain(Engine& engine, VarId parentId,
                                const std::vector<DomainEntry>& domain)
-    : IntView(parentId), _offset(domain.front().lowerBound) {
+    : IntView(engine, parentId), _offset(domain.front().lowerBound) {
   assert(domain.size() > 0);
   assert(std::all_of(domain.begin(), domain.end(), [&](const auto& domEntry) {
     return domEntry.lowerBound <= domEntry.upperBound;
@@ -32,7 +32,7 @@ InSparseDomain::InSparseDomain(VarId parentId,
 }
 
 Int InSparseDomain::value(Timestamp ts) {
-  const Int val = _engine->value(ts, _parentId);
+  const Int val = _engine.value(ts, _parentId);
   if (val < _offset) {
     return _offset - val;
   }
@@ -43,7 +43,7 @@ Int InSparseDomain::value(Timestamp ts) {
 }
 
 Int InSparseDomain::committedValue() {
-  const Int val = _engine->committedValue(_parentId);
+  const Int val = _engine.committedValue(_parentId);
   if (val < _offset) {
     return _offset - val;
   }
@@ -54,8 +54,8 @@ Int InSparseDomain::committedValue() {
 }
 
 Int InSparseDomain::lowerBound() const {
-  const Int parentLb = _engine->lowerBound(_parentId);
-  const Int parentUb = _engine->upperBound(_parentId);
+  const Int parentLb = _engine.lowerBound(_parentId);
+  const Int parentUb = _engine.upperBound(_parentId);
   const Int dLb = _offset;
   const Int dUb = _offset + _valueViolation.size() - 1;
 
@@ -73,8 +73,8 @@ Int InSparseDomain::lowerBound() const {
 }
 
 Int InSparseDomain::upperBound() const {
-  const Int parentLb = _engine->lowerBound(_parentId);
-  const Int parentUb = _engine->upperBound(_parentId);
+  const Int parentLb = _engine.lowerBound(_parentId);
+  const Int parentUb = _engine.upperBound(_parentId);
   const Int dLb = _offset;
   const Int dUb = _offset + _valueViolation.size() - 1;
 

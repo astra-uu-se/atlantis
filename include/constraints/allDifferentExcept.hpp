@@ -7,6 +7,7 @@
 #include "constraint.hpp"
 #include "constraints/allDifferent.hpp"
 #include "core/types.hpp"
+#include "variables/committableInt.hpp"
 #include "variables/intVar.hpp"
 
 class CommittableInt;  // forward declare
@@ -20,11 +21,12 @@ class AllDifferentExcept : public AllDifferent {
   bool isIgnored(Int) const;
 
  public:
-  explicit AllDifferentExcept(VarId violationId, std::vector<VarId> variables,
+  explicit AllDifferentExcept(Engine&, VarId violationId,
+                              std::vector<VarId> variables,
                               const std::vector<Int>& ignored);
 
-  void recompute(Timestamp, Engine&) override;
-  void notifyInputChanged(Timestamp, Engine&, LocalId) override;
+  void recompute(Timestamp) override;
+  void notifyInputChanged(Timestamp, LocalId) override;
 };
 
 inline bool AllDifferentExcept::isIgnored(const Int val) const {

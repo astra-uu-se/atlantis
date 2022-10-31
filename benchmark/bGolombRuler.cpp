@@ -70,7 +70,8 @@ class GolombRuler : public benchmark::Fixture {
         std::vector<VarId> vars{marks.at(j), marks.at(i)};
 
         engine->makeInvariant<Linear>(
-            differences.emplace_back(engine->makeIntVar(0, 0, ub)), coef, vars);
+            *engine, differences.emplace_back(engine->makeIntVar(0, 0, ub)),
+            coef, vars);
       }
     }
 
@@ -79,10 +80,10 @@ class GolombRuler : public benchmark::Fixture {
         engine->makeIntVar(0, 0, pairCount + 2 * ub + pairCount * ub);
     engine->makeConstraint<AllDifferent>(
         // violations.emplace_back(engine->makeIntVar(0, 0, pairCount - 1)),
-        totalViolation, differences);
+        *engine, totalViolation, differences);
 
     // Sum violations
-    // engine->makeInvariant<Linear>(totalViolation, violations);
+    // engine->makeInvariant<Linear>(*engine, totalViolation, violations);
 
     engine->close();
 
@@ -156,7 +157,7 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-//*
+/*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int markCount = 6; markCount <= 20; markCount += 2) {

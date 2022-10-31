@@ -82,7 +82,7 @@ TEST_F(BoolLinearTest, UpdateBounds) {
                                 engine->makeIntVar(0, 0, 10)};
         const VarId outputId = engine->makeIntVar(0, 0, 2);
         BoolLinear& invariant = engine->makeInvariant<BoolLinear>(
-            outputId, std::vector<Int>{aCoef, bCoef, cCoef},
+            *engine, outputId, std::vector<Int>{aCoef, bCoef, cCoef},
             std::vector<VarId>(vars));
         for (const auto& [aLb, aUb] : boundVec) {
           EXPECT_TRUE(aLb <= aUb);
@@ -93,7 +93,7 @@ TEST_F(BoolLinearTest, UpdateBounds) {
             for (const auto& [cLb, cUb] : boundVec) {
               EXPECT_TRUE(cLb <= cUb);
               engine->updateBounds(vars.at(2), cLb, cUb, false);
-              invariant.updateBounds(*engine);
+              invariant.updateBounds();
 
               const Int aMin = std::min(static_cast<Int>(aLb == 0) * aCoef,
                                         static_cast<Int>(aUb == 0) * aCoef);
@@ -143,7 +143,7 @@ TEST_F(BoolLinearTest, Recompute) {
                                             std::numeric_limits<Int>::max());
 
   BoolLinear& invariant = engine->makeInvariant<BoolLinear>(
-      outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *engine, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
   engine->close();
 
   for (Int aVal = iLb; aVal <= iUb; ++aVal) {
@@ -154,7 +154,7 @@ TEST_F(BoolLinearTest, Recompute) {
         engine->setValue(engine->currentTimestamp(), c, cVal);
         const Int expectedOutput =
             computeOutput(engine->currentTimestamp(), inputs, coeffs);
-        invariant.recompute(engine->currentTimestamp(), *engine);
+        invariant.recompute(engine->currentTimestamp());
         EXPECT_EQ(expectedOutput,
                   engine->value(engine->currentTimestamp(), outputId));
       }
@@ -171,7 +171,7 @@ TEST_F(BoolLinearTest, NotifyInputChanged) {
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
   BoolLinear& invariant = engine->makeInvariant<BoolLinear>(
-      outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *engine, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
   engine->close();
 
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -184,8 +184,7 @@ TEST_F(BoolLinearTest, NotifyInputChanged) {
     const Int expectedOutput =
         computeOutput(engine->currentTimestamp(), inputs, coeffs);
 
-    invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
-                                 LocalId(i));
+    invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
     EXPECT_EQ(expectedOutput,
               engine->value(engine->currentTimestamp(), outputId));
   }
@@ -206,20 +205,20 @@ TEST_F(BoolLinearTest, NextInput) {
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
   BoolLinear& invariant = engine->makeInvariant<BoolLinear>(
-      outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *engine, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
-      const VarId varId = invariant.nextInput(ts, *engine);
+      const VarId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
       EXPECT_TRUE(minVarId <= varId);
       EXPECT_TRUE(varId <= maxVarId);
       EXPECT_FALSE(notified.at(varId));
       notified[varId] = true;
     }
-    EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
       EXPECT_TRUE(notified.at(varId));
     }
@@ -235,18 +234,18 @@ TEST_F(BoolLinearTest, NotifyCurrentInputChanged) {
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
   BoolLinear& invariant = engine->makeInvariant<BoolLinear>(
-      outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *engine, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
-      EXPECT_EQ(invariant.nextInput(ts, *engine), varId);
+      EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = engine->value(ts, varId);
       do {
         engine->setValue(ts, varId, inputValueDist(gen));
       } while (engine->value(ts, varId) == oldVal);
-      invariant.notifyCurrentInputChanged(ts, *engine);
+      invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, inputs, coeffs));
     }
   }
@@ -269,7 +268,7 @@ TEST_F(BoolLinearTest, Commit) {
   const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
   BoolLinear& invariant = engine->makeInvariant<BoolLinear>(
-      outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *engine, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
@@ -288,11 +287,11 @@ TEST_F(BoolLinearTest, Commit) {
     } while (oldVal == engine->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, *engine, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
     const Int notifiedOutput = engine->value(ts, outputId);
-    invariant.recompute(ts, *engine);
+    invariant.recompute(ts);
 
     ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
@@ -300,8 +299,8 @@ TEST_F(BoolLinearTest, Commit) {
     committedValues.at(i) = engine->value(ts, inputs.at(i));
     engine->commitIf(ts, outputId);
 
-    invariant.commit(ts, *engine);
-    invariant.recompute(ts + 1, *engine);
+    invariant.commit(ts);
+    invariant.recompute(ts + 1);
     ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
   }
 }
@@ -327,7 +326,7 @@ RC_GTEST_FIXTURE_PROP(BoolLinearTest, ShouldAlwaysBeSum,
   const VarId output =
       engine->makeIntVar(aCoef + bCoef + cCoef, std::numeric_limits<Int>::min(),
                          std::numeric_limits<Int>::max());
-  engine->makeInvariant<BoolLinear>(output,
+  engine->makeInvariant<BoolLinear>(*engine, output,
                                     std::vector<Int>{aCoef, bCoef, cCoef},
                                     std::vector<VarId>{a, b, c});
   engine->close();
@@ -358,40 +357,36 @@ RC_GTEST_FIXTURE_PROP(BoolLinearTest, ShouldAlwaysBeSum,
 class MockBoolLinear : public BoolLinear {
  public:
   bool registered = false;
-  void registerVars(Engine& engine) override {
+  void registerVars() override {
     registered = true;
-    BoolLinear::registerVars(engine);
+    BoolLinear::registerVars();
   }
-  explicit MockBoolLinear(VarId output, std::vector<VarId> varArray)
-      : BoolLinear(output, varArray) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return BoolLinear::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, nextInput)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return BoolLinear::nextInput(t, engine);
-        });
+  explicit MockBoolLinear(Engine& engine, VarId output,
+                          std::vector<VarId> varArray)
+      : BoolLinear(engine, output, varArray) {
+    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+      return BoolLinear::recompute(timestamp);
+    });
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+      return BoolLinear::nextInput(timestamp);
+    });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          BoolLinear::notifyCurrentInputChanged(t, engine);
+        .WillByDefault([this](Timestamp timestamp) {
+          BoolLinear::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          BoolLinear::notifyInputChanged(t, engine, id);
+        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+          BoolLinear::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      BoolLinear::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+      BoolLinear::commit(timestamp);
     });
   }
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(void, notifyInputChanged,
-              (Timestamp t, Engine& engine, LocalId id), (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
+  MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(BoolLinearTest, EngineIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
@@ -406,7 +401,7 @@ TEST_F(BoolLinearTest, EngineIntegration) {
     const VarId modifiedVarId = args.front();
     const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockBoolLinear>(
-        &engine->makeInvariant<MockBoolLinear>(output, args), propMode,
+        &engine->makeInvariant<MockBoolLinear>(*engine, output, args), propMode,
         markingMode, numArgs + 1, modifiedVarId, 5, output);
   }
 }

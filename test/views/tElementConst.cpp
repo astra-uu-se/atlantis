@@ -64,7 +64,8 @@ TEST_F(ElementConstTest, Bounds) {
 
   engine->open();
   const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarId outputId = engine->makeIntView<ElementConst>(index, values);
+  const VarId outputId =
+      engine->makeIntView<ElementConst>(*engine, index, values);
   engine->close();
 
   const Int ub = 100;
@@ -90,7 +91,8 @@ TEST_F(ElementConstTest, Value) {
 
   engine->open();
   const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarId outputId = engine->makeIntView<ElementConst>(index, values);
+  const VarId outputId =
+      engine->makeIntView<ElementConst>(*engine, index, values);
   engine->close();
 
   for (Int val = indexLb; val <= indexUb; ++val) {
@@ -113,7 +115,8 @@ TEST_F(ElementConstTest, CommittedValue) {
 
   engine->open();
   const VarId index = engine->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarId outputId = engine->makeIntView<ElementConst>(index, values);
+  const VarId outputId =
+      engine->makeIntView<ElementConst>(*engine, index, values);
   engine->close();
 
   Int committedValue = engine->committedValue(index);

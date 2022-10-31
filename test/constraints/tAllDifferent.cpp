@@ -59,7 +59,7 @@ TEST_F(AllDifferentTest, UpdateBounds) {
                             engine->makeIntVar(0, 0, 0)};
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   AllDifferent& invariant = engine->makeConstraint<AllDifferent>(
-      violationId, std::vector<VarId>(inputs));
+      *engine, violationId, std::vector<VarId>(inputs));
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
@@ -70,7 +70,7 @@ TEST_F(AllDifferentTest, UpdateBounds) {
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_TRUE(cLb <= cUb);
         engine->updateBounds(inputs.at(2), cLb, cUb, false);
-        invariant.updateBounds(*engine);
+        invariant.updateBounds();
         ASSERT_EQ(0, engine->lowerBound(violationId));
         ASSERT_EQ(inputs.size() - 1, engine->upperBound(violationId));
       }
@@ -90,7 +90,7 @@ TEST_F(AllDifferentTest, Recompute) {
     const VarId c = engine->makeIntVar(lb, lb, ub);
     const VarId violationId = engine->makeIntVar(0, 0, 2);
     AllDifferent& invariant = engine->makeConstraint<AllDifferent>(
-        violationId, std::vector<VarId>{a, b, c});
+        *engine, violationId, std::vector<VarId>{a, b, c});
     engine->close();
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
@@ -101,7 +101,7 @@ TEST_F(AllDifferentTest, Recompute) {
           engine->setValue(engine->currentTimestamp(), c, cVal);
           const Int expectedViolation =
               computeViolation(std::vector{aVal, bVal, cVal});
-          invariant.recompute(engine->currentTimestamp(), *engine);
+          invariant.recompute(engine->currentTimestamp());
           EXPECT_EQ(expectedViolation,
                     engine->value(engine->currentTimestamp(), violationId));
         }
@@ -123,7 +123,7 @@ TEST_F(AllDifferentTest, NotifyInputChanged) {
                               engine->makeIntVar(lb, lb, ub)};
     const VarId violationId = engine->makeIntVar(0, 0, 2);
     AllDifferent& invariant = engine->makeConstraint<AllDifferent>(
-        violationId, std::vector<VarId>(inputs));
+        *engine, violationId, std::vector<VarId>(inputs));
     engine->close();
 
     for (Int val = lb; val <= ub; ++val) {
@@ -132,8 +132,7 @@ TEST_F(AllDifferentTest, NotifyInputChanged) {
         const Int expectedViolation =
             computeViolation(engine->currentTimestamp(), inputs);
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
-                                     LocalId(i));
+        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
         EXPECT_EQ(expectedViolation,
                   engine->value(engine->currentTimestamp(), violationId));
       }
@@ -161,21 +160,21 @@ TEST_F(AllDifferentTest, NextInput) {
 
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   AllDifferent& invariant = engine->makeConstraint<AllDifferent>(
-      violationId, std::vector<VarId>(inputs));
+      *engine, violationId, std::vector<VarId>(inputs));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
-      const VarId varId = invariant.nextInput(ts, *engine);
+      const VarId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
       EXPECT_TRUE(minVarId <= varId);
       EXPECT_TRUE(varId <= maxVarId);
       EXPECT_FALSE(notified.at(varId));
       notified[varId] = true;
     }
-    EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
       EXPECT_TRUE(notified.at(varId));
     }
@@ -196,18 +195,18 @@ TEST_F(AllDifferentTest, NotifyCurrentInputChanged) {
   }
   const VarId violationId = engine->makeIntVar(0, 0, numInputs - 1);
   AllDifferent& invariant = engine->makeConstraint<AllDifferent>(
-      violationId, std::vector<VarId>(inputs));
+      *engine, violationId, std::vector<VarId>(inputs));
   engine->close();
 
   for (Timestamp ts = engine->currentTimestamp() + 1;
        ts < engine->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
-      EXPECT_EQ(invariant.nextInput(ts, *engine), varId);
+      EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = engine->value(ts, varId);
       do {
         engine->setValue(ts, varId, valueDist(gen));
       } while (engine->value(ts, varId) == oldVal);
-      invariant.notifyCurrentInputChanged(ts, *engine);
+      invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(engine->value(ts, violationId), computeViolation(ts, inputs));
     }
   }
@@ -234,7 +233,7 @@ TEST_F(AllDifferentTest, Commit) {
 
   const VarId violationId = engine->makeIntVar(0, 0, 2);
   AllDifferent& invariant = engine->makeConstraint<AllDifferent>(
-      violationId, std::vector<VarId>(inputs));
+      *engine, violationId, std::vector<VarId>(inputs));
   engine->close();
 
   EXPECT_EQ(engine->value(engine->currentTimestamp(), violationId),
@@ -253,11 +252,11 @@ TEST_F(AllDifferentTest, Commit) {
     } while (oldVal == engine->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, *engine, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
     const Int notifiedViolation = engine->value(ts, violationId);
-    invariant.recompute(ts, *engine);
+    invariant.recompute(ts);
 
     ASSERT_EQ(notifiedViolation, engine->value(ts, violationId));
 
@@ -265,8 +264,8 @@ TEST_F(AllDifferentTest, Commit) {
     committedValues.at(i) = engine->value(ts, inputs.at(i));
     engine->commitIf(ts, violationId);
 
-    invariant.commit(ts, *engine);
-    invariant.recompute(ts + 1, *engine);
+    invariant.commit(ts);
+    invariant.recompute(ts + 1);
     ASSERT_EQ(notifiedViolation, engine->value(ts + 1, violationId));
   }
 }
@@ -274,40 +273,36 @@ TEST_F(AllDifferentTest, Commit) {
 class MockAllDifferent : public AllDifferent {
  public:
   bool registered = false;
-  void registerVars(Engine& engine) override {
+  void registerVars() override {
     registered = true;
-    AllDifferent::registerVars(engine);
+    AllDifferent::registerVars();
   }
-  explicit MockAllDifferent(VarId violationId, std::vector<VarId> t_variables)
-      : AllDifferent(violationId, t_variables) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return AllDifferent::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, nextInput)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return AllDifferent::nextInput(t, engine);
-        });
+  explicit MockAllDifferent(Engine& engine, VarId violationId,
+                            std::vector<VarId> t_variables)
+      : AllDifferent(engine, violationId, t_variables) {
+    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+      return AllDifferent::recompute(timestamp);
+    });
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+      return AllDifferent::nextInput(timestamp);
+    });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          AllDifferent::notifyCurrentInputChanged(t, engine);
+        .WillByDefault([this](Timestamp timestamp) {
+          AllDifferent::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          AllDifferent::notifyInputChanged(t, engine, id);
+        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+          AllDifferent::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      AllDifferent::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+      AllDifferent::commit(timestamp);
     });
   }
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(void, notifyInputChanged,
-              (Timestamp t, Engine& engine, LocalId id), (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
+  MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 
 TEST_F(AllDifferentTest, EngineIntegration) {
@@ -322,8 +317,8 @@ TEST_F(AllDifferentTest, EngineIntegration) {
     }
     const VarId viol = engine->makeIntVar(0, 0, numArgs);
     testNotifications<MockAllDifferent>(
-        &engine->makeConstraint<MockAllDifferent>(viol, args), propMode,
-        markingMode, numArgs + 1, args.front(), 1, viol);
+        &engine->makeConstraint<MockAllDifferent>(*engine, viol, args),
+        propMode, markingMode, numArgs + 1, args.front(), 1, viol);
   }
 }
 

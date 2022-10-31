@@ -20,8 +20,8 @@ TEST_F(BoolViewTest, CreateBoolView) {
   engine->open();
 
   const VarId var = engine->makeIntVar(10, 0, 10);
-  auto viewOfVar = engine->makeIntView<Violation2BoolView>(var);
-  auto viewOfView = engine->makeIntView<Violation2BoolView>(viewOfVar);
+  auto viewOfVar = engine->makeIntView<Violation2BoolView>(*engine, var);
+  auto viewOfView = engine->makeIntView<Violation2BoolView>(*engine, viewOfVar);
 
   EXPECT_EQ(engine->committedValue(viewOfVar), Int(1));
   EXPECT_EQ(engine->committedValue(viewOfView), Int(1));
@@ -33,7 +33,7 @@ TEST_F(BoolViewTest, ComputeBounds) {
   engine->open();
   auto a = engine->makeIntVar(20, -100, 100);
 
-  auto va = engine->makeIntView<Violation2BoolView>(a);
+  auto va = engine->makeIntView<Violation2BoolView>(*engine, a);
 
   EXPECT_EQ(engine->lowerBound(va), Int(0));
   EXPECT_EQ(engine->upperBound(va), Int(1));
@@ -48,7 +48,7 @@ TEST_F(BoolViewTest, RecomputeBoolView) {
   engine->open();
   auto a = engine->makeIntVar(20, -100, 100);
 
-  auto viewOfVarId = engine->makeIntView<Violation2BoolView>(a);
+  auto viewOfVarId = engine->makeIntView<Violation2BoolView>(*engine, a);
 
   EXPECT_EQ(engine->currentValue(viewOfVarId), Int(1));
 

@@ -7,7 +7,8 @@
 
 class Violation2BoolView : public IntView {
  public:
-  explicit Violation2BoolView(const VarId parentId) : IntView(parentId) {}
+  explicit Violation2BoolView(Engine& engine, const VarId parentId)
+      : IntView(engine, parentId) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

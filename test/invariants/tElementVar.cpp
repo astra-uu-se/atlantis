@@ -72,14 +72,14 @@ TEST_F(ElementVarTest, UpdateBounds) {
       inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant =
-        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    ElementVar& invariant = engine->makeInvariant<ElementVar>(
+        *engine, outputId, index, inputs, offset);
     engine->close();
 
     for (Int minIndex = indexLb; minIndex <= indexUb; ++minIndex) {
       for (Int maxIndex = indexUb; maxIndex >= minIndex; --maxIndex) {
         engine->updateBounds(index, minIndex, maxIndex, false);
-        invariant.updateBounds(*engine);
+        invariant.updateBounds();
         Int minVal = std::numeric_limits<Int>::max();
         Int maxVal = std::numeric_limits<Int>::min();
         for (Int indexVal = minIndex; indexVal <= maxIndex; ++indexVal) {
@@ -110,8 +110,8 @@ TEST_F(ElementVarTest, Recompute) {
       inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant =
-        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    ElementVar& invariant = engine->makeInvariant<ElementVar>(
+        *engine, outputId, index, inputs, offset);
     engine->close();
 
     for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
@@ -120,7 +120,7 @@ TEST_F(ElementVarTest, Recompute) {
 
       const Int expectedOutput =
           computeOutput(engine->currentTimestamp(), index, offset);
-      invariant.recompute(engine->currentTimestamp(), *engine);
+      invariant.recompute(engine->currentTimestamp());
       EXPECT_EQ(engine->value(engine->currentTimestamp(), index), indexVal);
 
       EXPECT_EQ(expectedOutput,
@@ -144,8 +144,8 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
       inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant =
-        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    ElementVar& invariant = engine->makeInvariant<ElementVar>(
+        *engine, outputId, index, inputs, offset);
     engine->close();
 
     for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
@@ -153,8 +153,7 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
       const Int expectedOutput =
           computeOutput(engine->currentTimestamp(), index, offset);
 
-      invariant.notifyInputChanged(engine->currentTimestamp(), *engine,
-                                   LocalId(0));
+      invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(0));
       EXPECT_EQ(expectedOutput,
                 engine->value(engine->currentTimestamp(), outputId));
     }
@@ -176,16 +175,16 @@ TEST_F(ElementVarTest, NextInput) {
       inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant =
-        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    ElementVar& invariant = engine->makeInvariant<ElementVar>(
+        *engine, outputId, index, inputs, offset);
     engine->close();
 
     for (Timestamp ts = engine->currentTimestamp() + 1;
          ts < engine->currentTimestamp() + 4; ++ts) {
-      EXPECT_EQ(invariant.nextInput(ts, *engine), index);
-      EXPECT_EQ(invariant.nextInput(ts, *engine),
+      EXPECT_EQ(invariant.nextInput(ts), index);
+      EXPECT_EQ(invariant.nextInput(ts),
                 getInput(engine->value(ts, index), offset));
-      EXPECT_EQ(invariant.nextInput(ts, *engine), NULL_ID);
+      EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     }
   }
 }
@@ -210,19 +209,19 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
       inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant =
-        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    ElementVar& invariant = engine->makeInvariant<ElementVar>(
+        *engine, outputId, index, inputs, offset);
     engine->close();
 
     for (size_t i = 0; i < indexValues.size(); ++i) {
       const Int indexVal = indexValues.at(i);
       Timestamp ts = t0 + Timestamp(i);
-      EXPECT_EQ(invariant.nextInput(ts, *engine), index);
+      EXPECT_EQ(invariant.nextInput(ts), index);
       engine->setValue(ts, index, indexVal);
-      invariant.notifyCurrentInputChanged(ts, *engine);
+      invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, index, offset));
 
-      const VarId curInput = invariant.nextInput(ts, *engine);
+      const VarId curInput = invariant.nextInput(ts);
       EXPECT_EQ(curInput, getInput(indexVal, offset));
 
       const Int oldInputVal = engine->value(ts, curInput);
@@ -230,7 +229,7 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
         engine->setValue(ts, curInput, inputDist(gen));
       } while (engine->value(ts, curInput) == oldInputVal);
 
-      invariant.notifyCurrentInputChanged(ts, *engine);
+      invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, index, offset));
     }
   }
@@ -254,8 +253,8 @@ TEST_F(ElementVarTest, Commit) {
       inputs.at(i) = engine->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = engine->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant =
-        engine->makeInvariant<ElementVar>(outputId, index, inputs, offset);
+    ElementVar& invariant = engine->makeInvariant<ElementVar>(
+        *engine, outputId, index, inputs, offset);
     engine->close();
 
     Int committedIndexValue = engine->committedValue(index);
@@ -278,11 +277,11 @@ TEST_F(ElementVarTest, Commit) {
       engine->setValue(ts, index, indexVal);
 
       // notify index change
-      invariant.notifyInputChanged(ts, *engine, LocalId(0));
+      invariant.notifyInputChanged(ts, LocalId(0));
 
       // incremental value from index
       Int notifiedOutput = engine->value(ts, outputId);
-      invariant.recompute(ts, *engine);
+      invariant.recompute(ts);
 
       ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
@@ -294,11 +293,11 @@ TEST_F(ElementVarTest, Commit) {
       } while (engine->value(ts, curInput) == oldInputVal);
 
       // notify input change
-      invariant.notifyInputChanged(ts, *engine, LocalId(indexVal));
+      invariant.notifyInputChanged(ts, LocalId(indexVal));
 
       // incremental value from input
       notifiedOutput = engine->value(ts, outputId);
-      invariant.recompute(ts, *engine);
+      invariant.recompute(ts);
 
       ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
 
@@ -309,8 +308,8 @@ TEST_F(ElementVarTest, Commit) {
           engine->value(ts, curInput);
       engine->commitIf(ts, outputId);
 
-      invariant.commit(ts, *engine);
-      invariant.recompute(ts + 1, *engine);
+      invariant.commit(ts);
+      invariant.recompute(ts + 1);
       ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
     }
   }
@@ -319,41 +318,36 @@ TEST_F(ElementVarTest, Commit) {
 class MockElementVar : public ElementVar {
  public:
   bool registered = false;
-  void registerVars(Engine& engine) override {
+  void registerVars() override {
     registered = true;
-    ElementVar::registerVars(engine);
+    ElementVar::registerVars();
   }
-  explicit MockElementVar(VarId output, VarId index,
+  explicit MockElementVar(Engine& engine, VarId output, VarId index,
                           std::vector<VarId> varArray, Int offset)
-      : ElementVar(output, index, varArray, offset) {
-    ON_CALL(*this, recompute)
-        .WillByDefault([this](Timestamp timestamp, Engine& engine) {
-          return ElementVar::recompute(timestamp, engine);
-        });
-    ON_CALL(*this, nextInput)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          return ElementVar::nextInput(t, engine);
-        });
+      : ElementVar(engine, output, index, varArray, offset) {
+    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+      return ElementVar::recompute(timestamp);
+    });
+    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+      return ElementVar::nextInput(timestamp);
+    });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine) {
-          ElementVar::notifyCurrentInputChanged(t, engine);
+        .WillByDefault([this](Timestamp timestamp) {
+          ElementVar::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp t, Engine& engine, LocalId id) {
-          ElementVar::notifyInputChanged(t, engine, id);
+        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+          ElementVar::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp t, Engine& engine) {
-      ElementVar::commit(t, engine);
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+      ElementVar::commit(timestamp);
     });
   }
-  MOCK_METHOD(void, recompute, (Timestamp timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp, Engine&), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp, Engine& engine),
-              (override));
-  MOCK_METHOD(void, notifyInputChanged,
-              (Timestamp t, Engine& engine, LocalId id), (override));
-  MOCK_METHOD(void, commit, (Timestamp timestamp, Engine& engine), (override));
+  MOCK_METHOD(void, recompute, (Timestamp), (override));
+  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
+  MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
+  MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(ElementVarTest, EngineIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
@@ -369,8 +363,8 @@ TEST_F(ElementVarTest, EngineIntegration) {
     VarId idx = engine->makeIntVar(0, 0, numArgs - 1);
     VarId output = engine->makeIntVar(-10, -100, 100);
     testNotifications<MockElementVar>(
-        &engine->makeInvariant<MockElementVar>(output, idx, args, 1), propMode,
-        markingMode, 3, idx, 5, output);
+        &engine->makeInvariant<MockElementVar>(*engine, output, idx, args, 1),
+        propMode, markingMode, 3, idx, 5, output);
   }
 }
 

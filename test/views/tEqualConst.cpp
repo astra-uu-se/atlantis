@@ -24,7 +24,7 @@ RC_GTEST_FIXTURE_PROP(EqualViewConst, simple, (int a, int b)) {
     engine->open();
   }
   const VarId varId = engine->makeIntVar(a, a, a);
-  const VarId violationId = engine->makeIntView<EqualConst>(varId, b);
+  const VarId violationId = engine->makeIntView<EqualConst>(*engine, varId, b);
   RC_ASSERT(engine->committedValue(violationId) == std::abs(Int(a) - Int(b)));
 }
 
@@ -33,7 +33,7 @@ RC_GTEST_FIXTURE_PROP(EqualViewConst, singleton, (int a, int b)) {
     engine->open();
   }
   const VarId varId = engine->makeIntVar(a, a, a);
-  const VarId violationId = engine->makeIntView<EqualConst>(varId, b);
+  const VarId violationId = engine->makeIntView<EqualConst>(*engine, varId, b);
   RC_ASSERT(engine->committedValue(violationId) == std::abs(Int(a) - Int(b)));
   RC_ASSERT(engine->lowerBound(violationId) ==
             engine->committedValue(violationId));
@@ -48,7 +48,7 @@ RC_GTEST_FIXTURE_PROP(EqualViewConst, interval, (int a, int b)) {
 
   engine->open();
   const VarId varId = engine->makeIntVar(ub, lb, ub);
-  const VarId violationId = engine->makeIntView<EqualConst>(varId, b);
+  const VarId violationId = engine->makeIntView<EqualConst>(*engine, varId, b);
   engine->close();
 
   const Int violLb = engine->lowerBound(violationId);

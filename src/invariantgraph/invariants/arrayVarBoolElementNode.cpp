@@ -37,6 +37,6 @@ void invariantgraph::ArrayVarBoolElementNode::registerWithEngine(
                  [&](auto node) { return node->varId(); });
 
   assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<ElementVar>(definedVariables().front()->varId(),
+  engine.makeInvariant<ElementVar>(engine, definedVariables().front()->varId(),
                                    b()->varId(), as);
 }

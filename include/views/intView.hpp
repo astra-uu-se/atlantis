@@ -10,15 +10,11 @@ class IntView : public View {
   friend class Engine;
   // A raw pointer might be the best option here as views lifetime depend
   // on engine and not vice-versa:
-  Engine* _engine;
 
  public:
-  explicit IntView(VarId parentId) : View(parentId), _engine(nullptr) {}
+  explicit IntView(Engine& engine, VarId parentId) : View(engine, parentId) {}
 
-  void init(VarId id, Engine& engine) {
-    _id = id;
-    _engine = &engine;
-  }
+  void init(VarId id) { _id = id; }
 
   [[nodiscard]] virtual Int value(Timestamp) = 0;
   [[nodiscard]] virtual Int committedValue() = 0;

@@ -30,11 +30,11 @@ void invariantgraph::AllEqualNode::createDefinedVariables(Engine& engine) {
     _allDifferentViolationVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
       setViolationVarId(engine.makeIntView<EqualConst>(
-          _allDifferentViolationVarId, staticInputs().size() - 1));
+          engine, _allDifferentViolationVarId, staticInputs().size() - 1));
     } else {
       assert(!isReified());
       setViolationVarId(engine.makeIntView<NotEqualConst>(
-          _allDifferentViolationVarId, staticInputs().size() - 1));
+          engine, _allDifferentViolationVarId, staticInputs().size() - 1));
     }
   }
 }
@@ -48,6 +48,6 @@ void invariantgraph::AllEqualNode::registerWithEngine(Engine& engine) {
                  std::back_inserter(engineVariables),
                  [&](const auto& var) { return var->varId(); });
 
-  engine.makeConstraint<AllDifferent>(_allDifferentViolationVarId,
+  engine.makeConstraint<AllDifferent>(engine, _allDifferentViolationVarId,
                                       engineVariables);
 }

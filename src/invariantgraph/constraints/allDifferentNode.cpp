@@ -42,7 +42,8 @@ void invariantgraph::AllDifferentNode::createDefinedVariables(Engine& engine) {
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 0));
+      setViolationVarId(
+          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
     }
   }
 }
@@ -71,5 +72,6 @@ void invariantgraph::AllDifferentNode::registerWithEngine(Engine& engine) {
                  [&](const auto& var) { return var->varId(); });
 
   engine.makeConstraint<AllDifferent>(
-      !shouldHold() ? _intermediate : violationVarId(), engineVariables);
+      engine, !shouldHold() ? _intermediate : violationVarId(),
+      engineVariables);
 }

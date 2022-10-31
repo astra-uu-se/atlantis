@@ -18,7 +18,8 @@ class InDomain : public IntView {
   Int compute(const Int val) const;
 
  public:
-  explicit InDomain(VarId parentId, std::vector<DomainEntry>&& domain);
+  explicit InDomain(Engine& engine, VarId parentId,
+                    std::vector<DomainEntry>&& domain);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

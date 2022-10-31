@@ -11,8 +11,9 @@ inline bool all_in_range(size_t start, size_t stop,
   return std::all_of(vec.begin(), vec.end(), predicate);
 }
 
-InDomain::InDomain(VarId parentId, std::vector<DomainEntry>&& domain)
-    : IntView(parentId),
+InDomain::InDomain(Engine& engine, VarId parentId,
+                   std::vector<DomainEntry>&& domain)
+    : IntView(engine, parentId),
       _domain(std::move(domain)),
       _cache(NULL_TIMESTAMP, std::pair<Int, Int>(0, compute(0))) {
   assert(_domain.size() >= 1);
@@ -47,7 +48,7 @@ Int InDomain::compute(const Int val) const {
 }
 
 Int InDomain::value(Timestamp ts) {
-  const Int val = _engine->value(ts, _parentId);
+  const Int val = _engine.value(ts, _parentId);
   if (_cache.get(ts).first != val) {
     _cache.set(ts, std::pair<Int, Int>{val, compute(val)});
   }
@@ -55,7 +56,7 @@ Int InDomain::value(Timestamp ts) {
 }
 
 Int InDomain::committedValue() {
-  const Int val = _engine->committedValue(_parentId);
+  const Int val = _engine.committedValue(_parentId);
   if (_cache.get(_cache.tmpTimestamp()).first != val) {
     _cache.commitValue(std::pair<Int, Int>{val, compute(val)});
   }
@@ -63,8 +64,8 @@ Int InDomain::committedValue() {
 }
 
 Int InDomain::lowerBound() const {
-  const Int parentLb = _engine->lowerBound(_parentId);
-  const Int parentUb = _engine->upperBound(_parentId);
+  const Int parentLb = _engine.lowerBound(_parentId);
+  const Int parentUb = _engine.upperBound(_parentId);
   Int minViol = std::numeric_limits<Int>::max();
   for (const auto& [dLb, dUb] : _domain) {
     if (parentUb < dLb) {
@@ -80,8 +81,8 @@ Int InDomain::lowerBound() const {
 }
 
 Int InDomain::upperBound() const {
-  const Int parentLb = _engine->lowerBound(_parentId);
-  const Int parentUb = _engine->upperBound(_parentId);
+  const Int parentLb = _engine.lowerBound(_parentId);
+  const Int parentUb = _engine.upperBound(_parentId);
   Int maxViol = std::numeric_limits<Int>::max();
   for (const auto& [dLb, dUb] : _domain) {
     if (parentUb < dLb) {

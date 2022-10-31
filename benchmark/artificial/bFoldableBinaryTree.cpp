@@ -31,7 +31,8 @@ class FoldableBinaryTree : public benchmark::Fixture {
       vars.push_back(left);
       vars.push_back(right);
 
-      engine->makeInvariant<Linear>(prev, std::vector<VarId>{left, right});
+      engine->makeInvariant<Linear>(*engine, prev,
+                                    std::vector<VarId>{left, right});
       if (level == treeHeight - 1) {
         decisionVars.push_back(left);
       }
@@ -229,7 +230,7 @@ BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_all)
 BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_all_query_rnd)
 (benchmark::State& st) { commitRnd(std::ref(st), decisionVars.size()); }
 
-//*
+/*
 
 // -----------------------------------------
 // Probing

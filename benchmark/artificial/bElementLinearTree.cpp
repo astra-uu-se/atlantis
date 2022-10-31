@@ -52,7 +52,7 @@ class ElementLinearTree : public benchmark::Fixture {
           decisionVars.push_back(var);
         }
       }
-      engine->makeInvariant<Linear>(cur.id, linearInputs);
+      engine->makeInvariant<Linear>(*engine, cur.id, linearInputs);
       linearInputs.clear();
     }
 #ifndef NDEBUG
@@ -107,8 +107,8 @@ class ElementLinearTree : public benchmark::Fixture {
                         << ", each non-leaf node having " << linearArgumentCount
                         << " children");
 
-    engine->makeInvariant<ElementVar>(elementOutputVar, elementIndexVar,
-                                      elementInputVars);
+    engine->makeInvariant<ElementVar>(*engine, elementOutputVar,
+                                      elementIndexVar, elementInputVars);
     engine->close();
     genDecisionVarIndex = std::mt19937(rd());
     genDecisionVarValue = std::mt19937(rd());
@@ -167,7 +167,7 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-//*
+/*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int treeCount = 2; treeCount <= 10; treeCount += 2) {

@@ -160,7 +160,7 @@ void PropagationEngine::clearPropagationQueue() {
 void PropagationEngine::closeInvariants() {
   for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
        ++iter) {
-    (*iter)->close(_currentTimestamp, *this);
+    (*iter)->close(_currentTimestamp);
   }
 }
 
@@ -176,7 +176,7 @@ void PropagationEngine::recomputeAndCommit() {
     for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
          ++iter) {
       assert((*iter) != nullptr);
-      (*iter)->recompute(_currentTimestamp, *this);
+      (*iter)->recompute(_currentTimestamp);
     }
     for (auto iter = _store.intVarBegin(); iter != _store.intVarEnd(); ++iter) {
       if (iter->hasChanged(_currentTimestamp)) {
@@ -189,7 +189,7 @@ void PropagationEngine::recomputeAndCommit() {
   // Commiting an invariant will commit any internal datastructure.
   for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
        ++iter) {
-    (*iter)->commit(_currentTimestamp, *this);
+    (*iter)->commit(_currentTimestamp);
   }
   clearPropagationQueue();
 }
@@ -326,7 +326,7 @@ void PropagationEngine::propagate() {
         Invariant& defInv = _store.invariant(definingInvariant);
         if (queuedVar == defInv.primaryDefinedVar()) {
           const Int oldValue = variable.value(_currentTimestamp);
-          defInv.compute(_currentTimestamp, *this);
+          defInv.compute(_currentTimestamp);
           for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
             if (hasChanged(_currentTimestamp, inputId)) {
               assert(!_isEnqueued.get(inputId));
@@ -335,7 +335,7 @@ void PropagationEngine::propagate() {
             }
           }
           if constexpr (DoCommit) {
-            defInv.commit(_currentTimestamp, *this);
+            defInv.commit(_currentTimestamp);
           }
           if (oldValue == variable.value(_currentTimestamp)) {
             continue;
@@ -352,6 +352,8 @@ void PropagationEngine::propagate() {
         invariant.notify(toNotify.localId);
         assert(invariant.primaryDefinedVar() != NULL_ID);
         assert(invariant.primaryDefinedVar().idType == VarIdType::var);
+        //        assert(_propGraph.position(queuedVar) <
+        //             _propGraph.position(invariant.primaryDefinedVar()));
         if constexpr (SingleLayer) {
           assert(_propGraph.layer(invariant.primaryDefinedVar()) == 0);
           enqueueComputedVar(invariant.primaryDefinedVar());
@@ -444,7 +446,7 @@ void PropagationEngine::computeBounds() {
                  (inputsToCompute[invariantId] == inputsToCompute[invId] &&
                   size_t(invariantId) <= size_t(invId));
         }));
-    _store.invariant(invariantId).updateBounds(*this, true);
+    _store.invariant(invariantId).updateBounds(true);
 
     for (const VarIdBase outputVarId :
          _propGraph.variablesDefinedBy(invariantId)) {

@@ -11,8 +11,8 @@ class LessEqualConst : public IntView {
   const Int _val;
 
  public:
-  explicit LessEqualConst(VarId parentId, Int val)
-      : IntView(parentId), _val(val) {}
+  explicit LessEqualConst(Engine& engine, VarId parentId, Int val)
+      : IntView(engine, parentId), _val(val) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

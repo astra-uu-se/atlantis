@@ -52,12 +52,12 @@ class LinearAllDifferent : public benchmark::Fixture {
     for (size_t i = 0; i < varCount - 1; i += increment) {
       linearOutputVars.push_back(engine->makeIntVar(i, 0, 2 * (varCount - 1)));
       engine->makeInvariant<Linear>(
-          linearOutputVars.back(),
+          *engine.get(), linearOutputVars.back(),
           std::vector<VarId>{decisionVars.at(i), decisionVars.at(i + 1)});
     }
 
     violation = engine->makeIntVar(0, 0, varCount);
-    engine->makeConstraint<AllDifferent>(violation, linearOutputVars);
+    engine->makeConstraint<AllDifferent>(*engine, violation, linearOutputVars);
 
     engine->close();
 
@@ -146,7 +146,7 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
       benchmark::Counter(commits, benchmark::Counter::kIsRate);
 }
 
-//*
+/*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int overlapping = 0; overlapping <= 1; ++overlapping) {

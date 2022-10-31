@@ -24,7 +24,8 @@ RC_GTEST_FIXTURE_PROP(notEqualViewConst, simple, (Int a, Int b)) {
     engine->open();
   }
   const VarId varId = engine->makeIntVar(a, a, a);
-  const VarId violationId = engine->makeIntView<NotEqualConst>(varId, b);
+  const VarId violationId =
+      engine->makeIntView<NotEqualConst>(*engine, varId, b);
   RC_ASSERT(engine->committedValue(violationId) == static_cast<Int>(a == b));
 }
 
@@ -33,7 +34,8 @@ RC_GTEST_FIXTURE_PROP(notEqualViewConst, singleton, (Int a, Int b)) {
     engine->open();
   }
   const VarId varId = engine->makeIntVar(a, a, a);
-  const VarId violationId = engine->makeIntView<NotEqualConst>(varId, b);
+  const VarId violationId =
+      engine->makeIntView<NotEqualConst>(*engine, varId, b);
   RC_ASSERT(engine->committedValue(violationId) == static_cast<Int>(a == b));
   RC_ASSERT(engine->lowerBound(violationId) ==
             engine->committedValue(violationId));
@@ -59,7 +61,8 @@ RC_GTEST_FIXTURE_PROP(notEqualViewConst, interval, (Int a)) {
 
   engine->open();
   const VarId varId = engine->makeIntVar(ub, lb, ub);
-  const VarId violationId = engine->makeIntView<NotEqualConst>(varId, b);
+  const VarId violationId =
+      engine->makeIntView<NotEqualConst>(*engine, varId, b);
   engine->close();
 
   const Int violLb = engine->lowerBound(violationId);

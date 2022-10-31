@@ -25,7 +25,7 @@ RC_GTEST_FIXTURE_PROP(IntMaxViewTest, shouldAlwaysBeMax, (Int a, Int b)) {
     engine->open();
   }
   const VarId varId = engine->makeIntVar(a, a, a);
-  const VarId viewId = engine->makeIntView<IntMaxView>(varId, b);
+  const VarId viewId = engine->makeIntView<IntMaxView>(*engine, varId, b);
   RC_ASSERT(engine->committedValue(viewId) == std::max(a, b));
 }
 
@@ -33,8 +33,9 @@ TEST_F(IntMaxViewTest, CreateIntMaxView) {
   engine->open();
 
   const VarId var = engine->makeIntVar(10, 0, 10);
-  const VarId viewOfVar = engine->makeIntView<IntMaxView>(var, 25);
-  const VarId viewOfView = engine->makeIntView<IntMaxView>(viewOfVar, 50);
+  const VarId viewOfVar = engine->makeIntView<IntMaxView>(*engine, var, 25);
+  const VarId viewOfView =
+      engine->makeIntView<IntMaxView>(*engine, viewOfVar, 50);
 
   EXPECT_EQ(engine->committedValue(viewOfVar), Int(25));
   EXPECT_EQ(engine->committedValue(viewOfView), Int(50));
@@ -47,8 +48,8 @@ TEST_F(IntMaxViewTest, ComputeBounds) {
   auto a = engine->makeIntVar(20, -100, 100);
   auto b = engine->makeIntVar(20, -100, 100);
 
-  const VarId va = engine->makeIntView<IntMaxView>(a, 10);
-  const VarId vb = engine->makeIntView<IntMaxView>(b, 200);
+  const VarId va = engine->makeIntView<IntMaxView>(*engine, a, 10);
+  const VarId vb = engine->makeIntView<IntMaxView>(*engine, b, 200);
 
   EXPECT_EQ(engine->lowerBound(va), Int(10));
   EXPECT_EQ(engine->lowerBound(vb), Int(200));
@@ -69,11 +70,12 @@ TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   const VarId b = engine->makeIntVar(20, -100, 100);
   const VarId sum = engine->makeIntVar(0, -100, 100);
 
-  engine->makeInvariant<Linear>(sum, std::vector<Int>({1, 1}),
+  engine->makeInvariant<Linear>(*engine, sum, std::vector<Int>({1, 1}),
                                 std::vector<VarId>({a, b}));
 
-  const VarId viewOfVar = engine->makeIntView<IntMaxView>(sum, 10);
-  const VarId viewOfView = engine->makeIntView<IntMaxView>(viewOfVar, 15);
+  const VarId viewOfVar = engine->makeIntView<IntMaxView>(*engine, sum, 10);
+  const VarId viewOfView =
+      engine->makeIntView<IntMaxView>(*engine, viewOfVar, 15);
 
   EXPECT_EQ(engine->currentValue(viewOfVar), Int(10));
   EXPECT_EQ(engine->currentValue(viewOfView), Int(15));
@@ -111,22 +113,23 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   auto sum3 = engine->makeIntVar(0, -100, 100);
   // sum1 + sum2 = sum2
 
-  engine->makeInvariant<Linear>(sum1, std::vector<Int>({1, 1}),
+  engine->makeInvariant<Linear>(*engine, sum1, std::vector<Int>({1, 1}),
                                 std::vector<VarId>({a, b}));
 
-  engine->makeInvariant<Linear>(sum2, std::vector<Int>({1, 1}),
+  engine->makeInvariant<Linear>(*engine, sum2, std::vector<Int>({1, 1}),
                                 std::vector<VarId>({c, d}));
 
-  const VarId sum1View = engine->makeIntView<IntMaxView>(sum1, 45);
-  const VarId sum2View = engine->makeIntView<IntMaxView>(sum2, 20);
+  const VarId sum1View = engine->makeIntView<IntMaxView>(*engine, sum1, 45);
+  const VarId sum2View = engine->makeIntView<IntMaxView>(*engine, sum2, 20);
 
-  engine->makeInvariant<Linear>(sum3, std::vector<Int>({1, 1}),
+  engine->makeInvariant<Linear>(*engine, sum3, std::vector<Int>({1, 1}),
                                 std::vector<VarId>({sum1View, sum2View}));
 
   std::vector<VarId> sum3views;
   VarId prev = sum3;
   for (size_t i = 0; i < 10; ++i) {
-    sum3views.emplace_back(engine->makeIntView<IntMaxView>(prev, 80 + i));
+    sum3views.emplace_back(
+        engine->makeIntView<IntMaxView>(*engine, prev, 80 + i));
     prev = sum3views[i];
   }
 

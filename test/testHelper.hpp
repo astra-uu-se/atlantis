@@ -74,9 +74,8 @@ class InvariantTest : public ::testing::Test {
                          const size_t numNextInputCalls,
                          const VarId modifiedVarId, const Int modifiedVal,
                          const VarId queryVarId) {
-    EXPECT_CALL(*invariant, recompute(testing::_, testing::_))
-        .Times(AtLeast(1));
-    EXPECT_CALL(*invariant, commit(testing::_, testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(*invariant, recompute(testing::_)).Times(AtLeast(1));
+    EXPECT_CALL(*invariant, commit(testing::_)).Times(AtLeast(1));
 
     if (!engine->isOpen()) {
       engine->open();
@@ -86,20 +85,16 @@ class InvariantTest : public ::testing::Test {
     engine->close();
 
     if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
+      EXPECT_CALL(*invariant, nextInput(testing::_)).Times(0);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_))
           .Times(AtMost(1));
-      EXPECT_CALL(*invariant,
-                  notifyInputChanged(testing::_, testing::_, testing::_))
+      EXPECT_CALL(*invariant, notifyInputChanged(testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, nextInput(testing::_, testing::_))
-          .Times(numNextInputCalls);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_, testing::_))
-          .Times(1);
+      EXPECT_CALL(*invariant, nextInput(testing::_)).Times(numNextInputCalls);
+      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_)).Times(1);
 
-      EXPECT_CALL(*invariant,
-                  notifyInputChanged(testing::_, testing::_, testing::_))
+      EXPECT_CALL(*invariant, notifyInputChanged(testing::_, testing::_))
           .Times(AtMost(1));
     }
 

@@ -21,6 +21,6 @@ void invariantgraph::IntModNode::createDefinedVariables(Engine& engine) {
 
 void invariantgraph::IntModNode::registerWithEngine(Engine& engine) {
   assert(definedVariables().front()->varId() != NULL_ID);
-  engine.makeInvariant<Mod>(definedVariables().front()->varId(), a()->varId(),
-                            b()->varId());
+  engine.makeInvariant<Mod>(engine, definedVariables().front()->varId(),
+                            a()->varId(), b()->varId());
 }

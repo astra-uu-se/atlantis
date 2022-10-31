@@ -30,7 +30,8 @@ void invariantgraph::BoolAndNode::createDefinedVariables(Engine& engine) {
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(engine.makeIntView<NotEqualConst>(_intermediate, 0));
+      setViolationVarId(
+          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
     }
   }
 }
@@ -40,5 +41,6 @@ void invariantgraph::BoolAndNode::registerWithEngine(Engine& engine) {
   assert(a()->varId() != NULL_ID);
   assert(b()->varId() != NULL_ID);
 
-  engine.makeInvariant<BoolAnd>(violationVarId(), a()->varId(), b()->varId());
+  engine.makeInvariant<BoolAnd>(engine, violationVarId(), a()->varId(),
+                                b()->varId());
 }
