@@ -96,8 +96,9 @@ class TSPTW : public benchmark::Fixture {
 
     VarId leqConst = engine->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
-      engine->makeConstraint<LessEqual>(*engine, violation[i], arrivalTime[i],
-                                        leqConst);
+      engine->makeConstraint<LessEqual>(
+          *engine, violation.emplace_back(engine->makeIntVar(0, 0, MAX_TIME)),
+          arrivalTime[i], leqConst);
     }
 
     totalViolation = engine->makeIntVar(0, 0, MAX_TIME * n);
@@ -218,7 +219,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-///*
+//*
 static void arguments(benchmark::internal::Benchmark* b) {
   for (int i = 10; i <= 150; i += 10) {
     for (int mode = 0; mode <= 3; ++mode) {

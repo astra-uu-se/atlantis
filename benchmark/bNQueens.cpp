@@ -202,7 +202,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
   logDebug(instanceToString());
 }
 
-/*
+//*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int n = 16; n <= 1024; n *= 2) {
     for (int mode = 0; mode <= 3; ++mode) {
@@ -218,7 +218,6 @@ BENCHMARK_REGISTER_F(Queens, probe_single_swap)
     ->Unit(benchmark::kMillisecond)
     ->Apply(arguments);
 
-//*
 /*
 BENCHMARK_REGISTER_F(Queens, probe_all_swap)
     ->Unit(benchmark::kMillisecond)

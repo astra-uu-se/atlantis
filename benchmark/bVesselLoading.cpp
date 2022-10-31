@@ -237,6 +237,7 @@ BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)(benchmark::State& st) {
     engine->setValue(orientation[i], newRotation);
     engine->setValue(left[i], newLeft);
     engine->setValue(bottom[i], newBottom);
+    engine->endMove();
     engine->beginProbe();
     engine->query(totalViolation);
     engine->endProbe();
@@ -328,7 +329,7 @@ BENCHMARK_DEFINE_F(VesselLoading, solve)(benchmark::State& st) {
   st.counters["solved"] = benchmark::Counter(done);
 }
 
-///*
+//*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int containerCount = 5; containerCount <= 50; containerCount += 5) {
     for (int mode = 0; mode <= 3; ++mode) {

@@ -85,10 +85,10 @@ class TSPTWAllDiff : public benchmark::Fixture {
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // timeTo[i] = dist[tour[i - 1]][tour[i]]
-      engine->makeInvariant<Element2dConst>(timeTo[i], tour[i - 1], tour[i],
-                                            dist, 0, 0);
+      engine->makeInvariant<Element2dConst>(*engine, timeTo[i], tour[i - 1],
+                                            tour[i], dist, 0, 0);
       // arrivalTime[i] = arrivalTime[i - 1] + timeTo[i];
-      engine->makeInvariant<Plus>(arrivalTime[i], arrivalTime[i - 1],
+      engine->makeInvariant<Plus>(*engine, arrivalTime[i], arrivalTime[i - 1],
                                   timeTo[i]);
     }
 
@@ -96,15 +96,15 @@ class TSPTWAllDiff : public benchmark::Fixture {
     timeTo.erase(timeTo.begin());
     // totalDist = sum(timeTo)
     totalDist = engine->makeIntVar(0, 0, MAX_TIME);
-    engine->makeInvariant<Linear>(totalDist, timeTo);
+    engine->makeInvariant<Linear>(*engine, totalDist, timeTo);
 
     for (int i = 1; i < n; ++i) {
       violation.emplace_back(
-          engine->makeIntView<LessEqualConst>(arrivalTime[i], 100));
+          engine->makeIntView<LessEqualConst>(*engine, arrivalTime[i], 100));
     }
 
     totalViolation = engine->makeIntVar(0, 0, MAX_TIME * n);
-    engine->makeInvariant<Linear>(totalViolation, violation);
+    engine->makeInvariant<Linear>(*engine, totalViolation, violation);
 
     engine->close();
     assert(std::all_of(tour.begin(), tour.end(), [&](const VarId p) {
@@ -184,15 +184,15 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(benchmark::State& st) {
       engine->setValue(tour[cur++], engine->committedValue(tour[i]));
     }
 
-    assert(all_in_range(0, n, [&](const size_t a) {
-      const Int curA = engine->currentValue(tour.at(a));
-      return all_in_range(a + 1, n, [&](const size_t b) {
-        const Int curB = engine->currentValue(tour.at(b));
-        if (curA == curB) {
-          logDebug("a: " << a << "; b: " << b);
+    assert(all_in_range(0, n, [&](const size_t i) {
+      const Int curI = engine->currentValue(tour.at(i));
+      return all_in_range(i + 1, n, [&](const size_t j) {
+        const Int curJ = engine->currentValue(tour.at(j));
+        if (curI == curJ) {
+          logDebug("i: " << i << "; j: " << j);
           return false;
         }
-        return curA != curB;
+        return curI != curJ;
       });
     }));
     engine->endMove();
@@ -230,7 +230,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-///*
+//*
 static void arguments(benchmark::internal::Benchmark* b) {
   for (int i = 10; i <= 150; i += 10) {
     for (int mode = 0; mode <= 3; ++mode) {

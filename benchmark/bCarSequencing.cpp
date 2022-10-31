@@ -187,7 +187,7 @@ BENCHMARK_DEFINE_F(CarSequencing, probe_all_swap)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-/*
+//*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int numCars = 20; numCars <= 150; numCars += 20) {

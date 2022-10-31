@@ -185,7 +185,7 @@ BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-/*
+//*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int n = 4; n <= 16; n += 2) {
     for (int mode = 0; mode <= 3; ++mode) {

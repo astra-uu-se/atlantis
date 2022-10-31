@@ -157,7 +157,7 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-/*
+//*
 
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int markCount = 6; markCount <= 20; markCount += 2) {
