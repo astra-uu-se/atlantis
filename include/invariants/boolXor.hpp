@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 #include "variables/intVar.hpp"
@@ -12,7 +13,6 @@
  *
  */
 
-class Engine;
 class BoolXor : public Invariant {
  private:
   const VarId _output, _x, _y;
@@ -23,7 +23,6 @@ class BoolXor : public Invariant {
   void updateBounds(bool widenOnly = false) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  void commit(Timestamp) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };

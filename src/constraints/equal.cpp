@@ -1,7 +1,5 @@
 #include "constraints/equal.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * Constraint x = y
  * @param violationId id for the violationCount
@@ -55,5 +53,3 @@ VarId Equal::nextInput(Timestamp ts) {
 }
 
 void Equal::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void Equal::commit(Timestamp ts) { Invariant::commit(ts); }

@@ -78,7 +78,21 @@ void PropagationEngine::close() {
 
   // compute initial values for variables and for (internal datastructure of)
   // invariants
-  recomputeAndCommit();
+  clearPropagationQueue();
+  for (const VarId searchVarId : _propGraph.searchVariables()) {
+    enqueueComputedVar(searchVarId);
+  }
+
+  const PropagationMode propMode = _propagationMode;
+  _propagationMode = PropagationMode::INPUT_TO_OUTPUT;
+  if (_propGraph.numLayers() == 1) {
+    propagate<CommitMode::RECOMPUTE_AND_COMMIT, true>();
+  } else {
+    propagate<CommitMode::RECOMPUTE_AND_COMMIT, false>();
+  }
+  _propagationMode = propMode;
+
+  assert(_propGraph.propagationQueueEmpty());
 
   // assert that decsion variable varId is no longer modified.
   assert(std::all_of(_modifiedSearchVariables.begin(),
@@ -114,11 +128,8 @@ void PropagationEngine::enqueueComputedVar(VarId id, size_t curLayer) {
 void PropagationEngine::registerInvariantInput(InvariantId invariantId,
                                                VarId inputId, LocalId localId,
                                                bool isDynamicInput) {
-  assert(localId < _store.invariant(invariantId).notifiableVarsSize());
-  const auto id = sourceId(inputId);
-  _propGraph.registerInvariantInput(invariantId, id, isDynamicInput);
-  _listeningInvariantData[id].emplace_back(
-      ListeningInvariantData{invariantId, localId});
+  _propGraph.registerInvariantInput(invariantId, sourceId(inputId), localId,
+                                    isDynamicInput);
 }
 
 void PropagationEngine::registerDefinedVariable(VarId varId,
@@ -232,9 +243,9 @@ void PropagationEngine::endProbe() {
   try {
     if (_propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       if (_propGraph.numLayers() == 1) {
-        propagate<false, true>();
+        propagate<CommitMode::NO_COMMIT, true>();
       } else {
-        propagate<false, false>();
+        propagate<CommitMode::NO_COMMIT, false>();
       }
     } else {
       // Assert that if decision variable varId is modified,
@@ -283,9 +294,9 @@ void PropagationEngine::endCommit() {
                                 _modifiedSearchVariables.contains(varId);
                        }));
     if (_propGraph.numLayers() == 1) {
-      propagate<true, true>();
+      propagate<CommitMode::COMMIT, true>();
     } else {
-      propagate<true, false>();
+      propagate<CommitMode::COMMIT, false>();
     }
 
     // assert that decsion variable varId is no longer modified.
@@ -302,12 +313,16 @@ void PropagationEngine::endCommit() {
   }
 }
 
-template void PropagationEngine::propagate<false, false>();
-template void PropagationEngine::propagate<false, true>();
-template void PropagationEngine::propagate<true, false>();
-template void PropagationEngine::propagate<true, true>();
+template void PropagationEngine::propagate<CommitMode::NO_COMMIT, false>();
+template void PropagationEngine::propagate<CommitMode::NO_COMMIT, true>();
+template void PropagationEngine::propagate<CommitMode::COMMIT, false>();
+template void PropagationEngine::propagate<CommitMode::COMMIT, true>();
+template void
+PropagationEngine::propagate<CommitMode::RECOMPUTE_AND_COMMIT, false>();
+template void
+PropagationEngine::propagate<CommitMode::RECOMPUTE_AND_COMMIT, true>();
 // Propagates at the current internal timestamp of the engine.
-template <bool DoCommit, bool SingleLayer>
+template <CommitMode Mode, bool SingleLayer>
 void PropagationEngine::propagate() {
   size_t curLayer = 0;
   while (true) {
@@ -325,40 +340,77 @@ void PropagationEngine::propagate() {
       if (definingInvariant != NULL_ID) {
         Invariant& defInv = _store.invariant(definingInvariant);
         if (queuedVar == defInv.primaryDefinedVar()) {
-          const Int oldValue = variable.value(_currentTimestamp);
-          defInv.compute(_currentTimestamp);
-          for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
-            if (hasChanged(_currentTimestamp, inputId)) {
+          if constexpr (Mode == CommitMode::RECOMPUTE_AND_COMMIT) {
+            defInv.recompute(_currentTimestamp);
+            for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
               assert(!_isEnqueued.get(inputId));
               _propGraph.enqueuePropagationQueue(inputId);
               _isEnqueued.set(inputId, true);
             }
-          }
-          if constexpr (DoCommit) {
             defInv.commit(_currentTimestamp);
-          }
-          if (oldValue == variable.value(_currentTimestamp)) {
-            continue;
+          } else {
+            const Int oldValue = variable.value(_currentTimestamp);
+            defInv.compute(_currentTimestamp);
+            for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
+              if (hasChanged(_currentTimestamp, inputId)) {
+                assert(!_isEnqueued.get(inputId));
+                _propGraph.enqueuePropagationQueue(inputId);
+                _isEnqueued.set(inputId, true);
+              }
+            }
+            if constexpr (Mode == CommitMode::COMMIT) {
+              defInv.commit(_currentTimestamp);
+            }
+            if (oldValue == variable.value(_currentTimestamp)) {
+              continue;
+            }
           }
         }
       }
 
-      if constexpr (DoCommit) {
+      if constexpr (Mode != CommitMode::NO_COMMIT) {
         commitIf(_currentTimestamp, queuedVar);
       }
 
-      for (const auto& toNotify : _listeningInvariantData[queuedVar]) {
+      for (const auto& toNotify : listeningInvariantData(queuedVar)) {
         Invariant& invariant = _store.invariant(toNotify.invariantId);
-        invariant.notify(toNotify.localId);
-        assert(invariant.primaryDefinedVar() != NULL_ID);
-        assert(invariant.primaryDefinedVar().idType == VarIdType::var);
-        //        assert(_propGraph.position(queuedVar) <
-        //             _propGraph.position(invariant.primaryDefinedVar()));
-        if constexpr (SingleLayer) {
-          assert(_propGraph.layer(invariant.primaryDefinedVar()) == 0);
-          enqueueComputedVar(invariant.primaryDefinedVar());
+        assert(toNotify.invariantId != definingInvariant);
+        assert(_propGraph.position(queuedVar) !=
+               _propGraph.position(invariant.primaryDefinedVar()));
+        if constexpr (Mode == CommitMode::RECOMPUTE_AND_COMMIT) {
+          if (_propGraph.position(queuedVar) <
+              _propGraph.position(invariant.primaryDefinedVar())) {
+            if constexpr (SingleLayer) {
+              assert(_propGraph.layer(invariant.primaryDefinedVar()) == 0);
+              enqueueComputedVar(invariant.primaryDefinedVar());
+            } else {
+              enqueueComputedVar(invariant.primaryDefinedVar(), curLayer);
+            }
+          }
         } else {
-          enqueueComputedVar(invariant.primaryDefinedVar(), curLayer);
+          if constexpr (SingleLayer) {
+            assert(_propGraph.position(queuedVar) <
+                   _propGraph.position(invariant.primaryDefinedVar()));
+          } else {
+            if (_propGraph.position(queuedVar) >
+                _propGraph.position(invariant.primaryDefinedVar())) {
+              assert(_propGraph.isDynamicInvariant(toNotify.invariantId) &&
+                     _store.dynamicInputVar(_currentTimestamp,
+                                            toNotify.invariantId) != queuedVar);
+              continue;
+            }
+          }
+          invariant.notify(toNotify.localId);
+          assert(invariant.primaryDefinedVar() != NULL_ID);
+          assert(invariant.primaryDefinedVar().idType == VarIdType::var);
+          assert(_propGraph.position(queuedVar) <
+                 _propGraph.position(invariant.primaryDefinedVar()));
+          if constexpr (SingleLayer) {
+            assert(_propGraph.layer(invariant.primaryDefinedVar()) == 0);
+            enqueueComputedVar(invariant.primaryDefinedVar());
+          } else {
+            enqueueComputedVar(invariant.primaryDefinedVar(), curLayer);
+          }
         }
       }
     }
@@ -406,9 +458,9 @@ void PropagationEngine::computeBounds() {
   // Search variables might now have been computed yet
   for (size_t varId = 1u; varId <= numVariables(); ++varId) {
     if (definingInvariant(varId) == NULL_ID) {
-      for (const InvariantId listeningInvariantId :
-           listeningInvariants(varId)) {
-        --inputsToCompute[listeningInvariantId];
+      for (const PropagationGraph::ListeningInvariantData&
+               listeningInvariantData : listeningInvariantData(varId)) {
+        --inputsToCompute[listeningInvariantData.invariantId];
       }
     }
   }
@@ -450,18 +502,18 @@ void PropagationEngine::computeBounds() {
 
     for (const VarIdBase outputVarId :
          _propGraph.variablesDefinedBy(invariantId)) {
-      for (const InvariantId listeningInvariantId :
-           listeningInvariants(outputVarId)) {
+      for (const PropagationGraph::ListeningInvariantData&
+               listeningInvariantData : listeningInvariantData(outputVarId)) {
         // Remove from the data structure must happen before updating
         // inputsToCompute
-        if (invariantQueue.contains(listeningInvariantId)) {
-          invariantQueue.erase(listeningInvariantId);
+        if (invariantQueue.contains(listeningInvariantData.invariantId)) {
+          invariantQueue.erase(listeningInvariantData.invariantId);
         }
-        assert(listeningInvariantId != invariantId);
-        --inputsToCompute[listeningInvariantId];
+        assert(listeningInvariantData.invariantId != invariantId);
+        --inputsToCompute[listeningInvariantData.invariantId];
 
-        if (inputsToCompute[listeningInvariantId] >= 0) {
-          invariantQueue.emplace(listeningInvariantId);
+        if (inputsToCompute[listeningInvariantData.invariantId] >= 0) {
+          invariantQueue.emplace(listeningInvariantData.invariantId);
         }
       }
     }

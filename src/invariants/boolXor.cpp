@@ -1,7 +1,5 @@
 #include "invariants/boolXor.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * invariant output = ((x == 0) != (y == 0))
  * output does not violate if exactly one of x or y violates.
@@ -46,5 +44,3 @@ VarId BoolXor::nextInput(Timestamp ts) {
 }
 
 void BoolXor::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void BoolXor::commit(Timestamp ts) { Invariant::commit(ts); }

@@ -1,6 +1,5 @@
 #include "constraints/globalCardinalityConst.hpp"
 
-#include "core/engine.hpp"
 /**
  * @param violationId id for the violationCount
  */
@@ -34,7 +33,7 @@ GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
       _variables(std::move(t_variables)),
       _lowerBound(),
       _upperBound(),
-      _localValues(),
+      _committedValues(_variables.size(), 0),
       _shortage(NULL_TIMESTAMP, 0),
       _excess(NULL_TIMESTAMP, 0),
       _counts(),
@@ -99,10 +98,6 @@ template void GlobalCardinalityConst<false>::close(Timestamp);
 template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::close(Timestamp timestamp) {
   _counts.resize(_lowerBound.size(), CommittableInt(timestamp, 0));
-  _localValues.clear();
-  for (size_t i = 0; i < _variables.size(); ++i) {
-    _localValues.emplace_back(timestamp, _engine.committedValue(_variables[i]));
-  }
 }
 
 template void GlobalCardinalityConst<true>::recompute(Timestamp);
@@ -115,8 +110,6 @@ void GlobalCardinalityConst<IsClosed>::recompute(Timestamp timestamp) {
 
   for (size_t i = 0; i < _variables.size(); ++i) {
     increaseCount(timestamp, _engine.value(timestamp, _variables[i]));
-    _localValues.at(i).setValue(timestamp,
-                                _engine.value(timestamp, _variables[i]));
   }
 
   Int shortage = 0;
@@ -146,15 +139,13 @@ template void GlobalCardinalityConst<false>::notifyInputChanged(Timestamp,
 template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::notifyInputChanged(Timestamp timestamp,
                                                           LocalId localId) {
-  assert(localId < _localValues.size());
-  const Int oldValue = _localValues[localId].value(timestamp);
+  assert(localId < _committedValues.size());
   const Int newValue = _engine.value(timestamp, _variables[localId]);
-  if (newValue == oldValue) {
+  if (newValue == _committedValues[localId]) {
     return;
   }
-  const signed char dec = decreaseCount(timestamp, oldValue);
+  const signed char dec = decreaseCount(timestamp, _committedValues[localId]);
   const signed char inc = increaseCount(timestamp, newValue);
-  _localValues[localId].setValue(timestamp, newValue);
   updateValue(timestamp, _violationId,
               std::max(_shortage.incValue(timestamp, (dec > 0 ? dec : 0) +
                                                          (inc < 0 ? inc : 0)),
@@ -194,8 +185,8 @@ void GlobalCardinalityConst<IsClosed>::commit(Timestamp timestamp) {
   _shortage.commitIf(timestamp);
   _excess.commitIf(timestamp);
 
-  for (auto& localValue : _localValues) {
-    localValue.commitIf(timestamp);
+  for (size_t i = 0; i < _committedValues.size(); ++i) {
+    _committedValues[i] = _engine.committedValue(_variables[i]);
   }
 
   for (CommittableInt& CommittableInt : _counts) {

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "constraints/constraint.hpp"
+#include "core/engine.hpp"
 #include "core/types.hpp"
 
 class Engine;
@@ -19,7 +20,7 @@ class Count : public Invariant {
   const VarId _output;
   const VarId _y;
   const std::vector<VarId> _variables;
-  std::vector<CommittableInt> _localValues;
+  std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
   void increaseCount(Timestamp ts, Int value);

@@ -1,6 +1,7 @@
 #pragma once
 #include <cmath>
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 
@@ -22,5 +23,4 @@ class Mod : public Invariant {
   void notifyInputChanged(Timestamp, LocalId) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
-  void commit(Timestamp) override;
 };

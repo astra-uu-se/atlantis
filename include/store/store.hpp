@@ -13,7 +13,6 @@ class Store {
   IdMap<VarIdBase, IntVar> _intVars;
 
   IdMap<InvariantId, std::unique_ptr<Invariant>> _invariants;
-
   IdMap<VarIdBase, std::unique_ptr<IntView>> _intViews;
   IdMap<VarIdBase, VarId> _intViewSourceId;
 
@@ -68,6 +67,10 @@ class Store {
     return *(_intViews.at(id.id));
   }
 
+  [[nodiscard]] inline VarId sourceId(VarId id) const noexcept {
+    return id.idType == VarIdType::var ? id : intViewSourceId(id);
+  }
+
   [[nodiscard]] inline VarId intViewSourceId(VarId id) const {
     assert(id.idType == VarIdType::view);
     return _intViewSourceId.at(id);
@@ -99,8 +102,8 @@ class Store {
     return _invariants.size();
   }
 
-  [[nodiscard]] inline VarId dynamicInputVar(Timestamp ts,
-                                             InvariantId invariantId) const {
-    return _invariants.at(invariantId)->dynamicInputVar(ts);
+  [[nodiscard]] inline VarId dynamicInputVar(
+      Timestamp ts, InvariantId invariantId) const noexcept {
+    return sourceId(_invariants.at(invariantId)->dynamicInputVar(ts));
   }
 };

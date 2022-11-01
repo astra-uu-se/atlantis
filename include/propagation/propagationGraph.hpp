@@ -14,6 +14,23 @@
 #include "utils/idMap.hpp"
 
 class PropagationGraph {
+ public:
+  struct ListeningInvariantData {
+   public:
+    InvariantId invariantId;
+    LocalId localId;
+    ListeningInvariantData(const ListeningInvariantData& other)
+        : invariantId(other.invariantId), localId(other.localId) {}
+    ListeningInvariantData(const InvariantId t_invariantId,
+                           const LocalId t_localId)
+        : invariantId(t_invariantId), localId(t_localId) {}
+    ListeningInvariantData& operator=(ListeningInvariantData&& other) {
+      invariantId = other.invariantId;
+      localId = other.localId;
+      return *this;
+    }
+  };
+
  private:
   std::vector<bool> _isEvaluationVariable{};
   std::vector<bool> _isSearchVariable{};
@@ -49,8 +66,8 @@ class PropagationGraph {
   // has one or more dynamic input variables.
   IdMap<InvariantId, bool> _isDynamicInvariant;
 
-  // Map from VarId -> vector of InvariantId
-  IdMap<VarIdBase, std::vector<InvariantId>> _listeningInvariants;
+  // Map from VarID -> vector of InvariantID
+  IdMap<VarIdBase, std::vector<ListeningInvariantData>> _listeningInvariantData;
 
   std::vector<std::vector<VarIdBase>> _variablesInLayer;
   struct LayerIndex {
@@ -90,8 +107,8 @@ class PropagationGraph {
 
   PropagationQueue _propagationQueue;
 
-  [[nodiscard]] inline VarId dynamicInputVariable(Timestamp ts,
-                                                  InvariantId invariantId) {
+  [[nodiscard]] inline VarId dynamicInputVar(
+      Timestamp ts, InvariantId invariantId) const noexcept {
     return _store.dynamicInputVar(ts, invariantId);
   }
 
@@ -121,7 +138,7 @@ class PropagationGraph {
    * @param isDynamic true if the variable is a dynamic input to the invariant.
    */
   void registerInvariantInput(InvariantId invariantId, VarIdBase inputId,
-                              bool isDynamic);
+                              LocalId localId, bool isDynamic);
 
   /**
    * Register that source functionally defines varId
@@ -173,9 +190,9 @@ class PropagationGraph {
     return _variablesDefinedByInvariant.at(invariantId);
   }
 
-  [[nodiscard]] inline const std::vector<InvariantId>& listeningInvariants(
-      VarId id) const {
-    return _listeningInvariants.at(id);
+  [[nodiscard]] inline const std::vector<ListeningInvariantData>&
+  listeningInvariantData(VarId id) const {
+    return _listeningInvariantData.at(id);
   }
 
   [[nodiscard]] inline const std::vector<std::pair<VarIdBase, bool>>&

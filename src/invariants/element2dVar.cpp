@@ -1,7 +1,5 @@
 #include "invariants/element2dVar.hpp"
 
-#include "core/engine.hpp"
-
 static inline Int numCols(const std::vector<std::vector<VarId>>& varMatrix) {
   assert(std::all_of(varMatrix.begin(), varMatrix.end(), [&](const auto& col) {
     return col.size() == varMatrix.front().size();
@@ -65,6 +63,11 @@ void Element2dVar::updateBounds(bool widenOnly) {
   _engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
+VarId Element2dVar::dynamicInputVar(Timestamp ts) const noexcept {
+  return _varMatrix[safeIndex1(_engine.value(ts, _indices[0]))]
+                   [safeIndex2(_engine.value(ts, _indices[1]))];
+}
+
 void Element2dVar::recompute(Timestamp ts) {
   assert(safeIndex1(_engine.value(ts, _indices[0])) <
          static_cast<size_t>(_dimensions[0]));
@@ -98,5 +101,3 @@ VarId Element2dVar::nextInput(Timestamp ts) {
 }
 
 void Element2dVar::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void Element2dVar::commit(Timestamp ts) { Invariant::commit(ts); }

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <vector>
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "invariant.hpp"
 #include "variables/committableInt.hpp"
@@ -18,7 +19,7 @@ class GlobalCardinalityOpen : public Invariant {
   const std::vector<VarId> _inputs;
   const std::vector<Int> _cover;
   std::vector<Int> _coverVarIndex;
-  std::vector<CommittableInt> _localValues;
+  std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
   void increaseCount(Timestamp ts, Int value);

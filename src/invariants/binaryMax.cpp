@@ -1,7 +1,5 @@
 #include "invariants/binaryMax.hpp"
 
-#include "core/engine.hpp"
-
 BinaryMax::BinaryMax(Engine& engine, VarId output, VarId x, VarId y)
     : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
@@ -39,5 +37,3 @@ VarId BinaryMax::nextInput(Timestamp ts) {
 void BinaryMax::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
 void BinaryMax::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
-
-void BinaryMax::commit(Timestamp ts) { Invariant::commit(ts); }

@@ -1,7 +1,5 @@
 #include "constraints/powDomain.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * Constraint x != 0 && y >= 0
  * Required for Pow invariants since pow(0, v) where v < 0 is undefined.
@@ -52,8 +50,6 @@ VarId PowDomain::nextInput(Timestamp ts) {
 }
 
 void PowDomain::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void PowDomain::commit(Timestamp ts) { Invariant::commit(ts); }
 
 [[nodiscard]] bool PowDomain::shouldPost(Engine& engine, VarId x, VarId y) {
   return engine.lowerBound(x) <= 0 && 0 <= engine.upperBound(x) &&

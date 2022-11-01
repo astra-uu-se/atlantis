@@ -1,7 +1,5 @@
 #include "constraints/allDifferent.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * @param violationId id for the violationCount
  */
@@ -9,7 +7,7 @@ AllDifferent::AllDifferent(Engine& engine, VarId violationId,
                            std::vector<VarId> variables)
     : Constraint(engine, violationId),
       _variables(std::move(variables)),
-      _localValues(),
+      _committedValues(_variables.size(), 0),
       _counts(),
       _offset(0) {
   _modifiedVars.reserve(_variables.size());
@@ -34,7 +32,6 @@ void AllDifferent::close(Timestamp ts) {
   for (size_t i = 0; i < _variables.size(); ++i) {
     lb = std::min(lb, _engine.lowerBound(_variables[i]));
     ub = std::max(ub, _engine.upperBound(_variables[i]));
-    _localValues.emplace_back(ts, _engine.committedValue(_variables[i]));
   }
   assert(ub >= lb);
   _counts.resize(static_cast<unsigned long>(ub - lb + 1),
@@ -47,26 +44,21 @@ void AllDifferent::recompute(Timestamp ts) {
     c.setValue(ts, 0);
   }
 
-  updateValue(ts, _violationId, 0);
-
   Int violInc = 0;
   for (size_t i = 0; i < _variables.size(); ++i) {
     violInc += increaseCount(ts, _engine.value(ts, _variables[i]));
-    _localValues[i].setValue(ts, _engine.value(ts, _variables[i]));
   }
-  incValue(ts, _violationId, violInc);
+  updateValue(ts, _violationId, violInc);
 }
 
 void AllDifferent::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(id < _localValues.size());
-  const Int oldValue = _localValues[id].value(ts);
+  assert(id < _committedValues.size());
   const Int newValue = _engine.value(ts, _variables[id]);
-  if (newValue == oldValue) {
+  if (newValue == _committedValues[id]) {
     return;
   }
-  _localValues[id].setValue(ts, newValue);
   incValue(ts, _violationId,
-           static_cast<Int>(decreaseCount(ts, oldValue) +
+           static_cast<Int>(decreaseCount(ts, _committedValues[id]) +
                             increaseCount(ts, newValue)));
 }
 
@@ -86,8 +78,8 @@ void AllDifferent::notifyCurrentInputChanged(Timestamp ts) {
 void AllDifferent::commit(Timestamp ts) {
   Invariant::commit(ts);
 
-  for (CommittableInt& localValue : _localValues) {
-    localValue.commitIf(ts);
+  for (size_t i = 0; i < _committedValues.size(); ++i) {
+    _committedValues[i] = _engine.committedValue(_variables[i]);
   }
 
   for (CommittableInt& committableInt : _counts) {

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <limits>
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "variables/committable.hpp"
 #include "variables/intVar.hpp"

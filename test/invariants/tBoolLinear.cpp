@@ -174,19 +174,18 @@ TEST_F(BoolLinearTest, NotifyInputChanged) {
       *engine, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
   engine->close();
 
+  Timestamp ts = engine->currentTimestamp() + 1;
+
   for (size_t i = 0; i < inputs.size(); ++i) {
-    const Int oldVal = engine->value(engine->currentTimestamp(), inputs.at(i));
+    const Int oldVal = engine->value(ts, inputs.at(i));
     do {
-      engine->setValue(engine->currentTimestamp(), inputs.at(i),
-                       inputValueDist(gen));
-    } while (oldVal == engine->value(engine->currentTimestamp(), inputs.at(i)));
+      engine->setValue(ts, inputs.at(i), inputValueDist(gen));
+    } while (oldVal == engine->value(ts, inputs.at(i)));
 
-    const Int expectedOutput =
-        computeOutput(engine->currentTimestamp(), inputs, coeffs);
+    const Int expectedOutput = computeOutput(ts, inputs, coeffs);
 
-    invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
-    EXPECT_EQ(expectedOutput,
-              engine->value(engine->currentTimestamp(), outputId));
+    invariant.notifyInputChanged(ts, LocalId(i));
+    EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
   }
 }
 
@@ -394,15 +393,17 @@ TEST_F(BoolLinearTest, EngineIntegration) {
       engine->open();
     }
     std::vector<VarId> args;
-    const Int numArgs = 10;
-    for (Int value = 1; value <= numArgs; ++value) {
-      args.push_back(engine->makeIntVar(value, 1, numArgs));
+    const size_t numArgs = 10;
+    for (size_t value = 1; value <= numArgs; ++value) {
+      args.push_back(engine->makeIntVar(static_cast<Int>(value), 1,
+                                        static_cast<Int>(numArgs)));
     }
     const VarId modifiedVarId = args.front();
-    const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
+    const VarId output =
+        engine->makeIntVar(-10, -100, static_cast<Int>(numArgs * numArgs));
     testNotifications<MockBoolLinear>(
-        &engine->makeInvariant<MockBoolLinear>(*engine, output, args), propMode,
-        markingMode, numArgs + 1, modifiedVarId, 5, output);
+        &engine->makeInvariant<MockBoolLinear>(*engine, output, args),
+        {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }
 

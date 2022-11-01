@@ -15,6 +15,11 @@ class CommittableInt {
   CommittableInt(Timestamp ts, const Int& value)
       : _tmpTimestamp(ts), _committedValue(value), _tmpValue(value) {}
 
+  CommittableInt(Timestamp ts, const Int& committedValue, const Int& tmpValue)
+      : _tmpTimestamp(ts),
+        _committedValue(committedValue),
+        _tmpValue(tmpValue) {}
+
   [[gnu::always_inline]] [[nodiscard]] inline bool hasChanged(
       Timestamp ts) const {
     return _tmpTimestamp == ts && _committedValue != _tmpValue;

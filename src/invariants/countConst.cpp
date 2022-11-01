@@ -1,14 +1,12 @@
 #include "invariants/countConst.hpp"
 
-#include "core/engine.hpp"
-
 CountConst::CountConst(Engine& engine, VarId output, Int y,
                        std::vector<VarId> variables)
     : Invariant(engine),
       _output(output),
       _y(y),
-      _variables(std::move(variables)) {
-  _hasCountValue.reserve(_variables.size());
+      _variables(std::move(variables)),
+      _hasCountValue(_variables.size(), 0) {
   _modifiedVars.reserve(_variables.size());
 }
 
@@ -27,36 +25,22 @@ void CountConst::updateBounds(bool widenOnly) {
   _engine.updateBounds(_output, 0, _variables.size(), widenOnly);
 }
 
-void CountConst::close(Timestamp ts) {
-  _hasCountValue.clear();
-  for (const VarId input : _variables) {
-    _hasCountValue.emplace_back(
-        ts, static_cast<Int>(_engine.committedValue(input) == _y));
-  }
-}
-
 void CountConst::recompute(Timestamp ts) {
   Int count = 0;
   for (size_t i = 0; i < _variables.size(); ++i) {
-    _hasCountValue[i].commitValue(
-        static_cast<Int>(_engine.committedValue(_variables[i])) == _y);
     count += static_cast<Int>(_engine.value(ts, _variables[i]) == _y);
-    _hasCountValue[i].setValue(
-        ts, static_cast<Int>(_engine.value(ts, _variables[i])) == _y);
   }
   updateValue(ts, _output, count);
 }
 
 void CountConst::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _hasCountValue.size());
-  const Int oldValue = _hasCountValue[id].value(ts);
   const Int newValue =
       static_cast<Int>(_engine.value(ts, _variables[id]) == _y);
-  if (oldValue == newValue) {
+  if (_hasCountValue[id] == newValue) {
     return;
   }
-  _hasCountValue[id].setValue(ts, newValue);
-  incValue(ts, _output, newValue - oldValue);
+  incValue(ts, _output, newValue - _hasCountValue[id]);
 }
 
 VarId CountConst::nextInput(Timestamp ts) {
@@ -76,8 +60,7 @@ void CountConst::notifyCurrentInputChanged(Timestamp ts) {
 void CountConst::commit(Timestamp ts) {
   Invariant::commit(ts);
   for (size_t i = 0; i < _hasCountValue.size(); ++i) {
-    _hasCountValue[i].commitIf(ts);
-    assert(_hasCountValue[i].committedValue() ==
-           static_cast<Int>(_engine.committedValue(_variables[i]) == _y));
+    _hasCountValue[i] =
+        static_cast<Int>(_engine.committedValue(_variables[i]) == _y);
   }
 }

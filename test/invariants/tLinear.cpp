@@ -169,19 +169,18 @@ TEST_F(LinearTest, NotifyInputChanged) {
       engine->makeInvariant<Linear>(*engine, outputId, coeffs, inputs);
   engine->close();
 
+  const Timestamp ts = engine->currentTimestamp() + 1;
+
   for (size_t i = 0; i < inputs.size(); ++i) {
-    const Int oldVal = engine->value(engine->currentTimestamp(), inputs.at(i));
+    const Int oldVal = engine->value(ts, inputs.at(i));
     do {
-      engine->setValue(engine->currentTimestamp(), inputs.at(i),
-                       inputValueDist(gen));
-    } while (oldVal == engine->value(engine->currentTimestamp(), inputs.at(i)));
+      engine->setValue(ts, inputs.at(i), inputValueDist(gen));
+    } while (oldVal == engine->value(ts, inputs.at(i)));
 
-    const Int expectedOutput =
-        computeOutput(engine->currentTimestamp(), inputs, coeffs);
+    const Int expectedOutput = computeOutput(ts, inputs, coeffs);
 
-    invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
-    EXPECT_EQ(expectedOutput,
-              engine->value(engine->currentTimestamp(), outputId));
+    invariant.notifyInputChanged(ts, LocalId(i));
+    EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
   }
 }
 
@@ -269,17 +268,22 @@ TEST_F(LinearTest, Commit) {
   EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
             computeOutput(engine->currentTimestamp(), inputs, coeffs));
 
+  Timestamp ts = engine->currentTimestamp();
   for (const size_t i : indices) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(i);
+    ts += 2;
     for (size_t j = 0; j < numInputs; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(engine->value(ts, inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
+    Int newVal;
     do {
-      engine->setValue(ts, inputs.at(i), inputValueDist(gen));
-    } while (oldVal == engine->value(ts, inputs.at(i)));
+      newVal = inputValueDist(gen);
+    } while (newVal == oldVal);
+
+    engine->setValue(ts, inputs.at(i), newVal);
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
@@ -398,15 +402,17 @@ TEST_F(LinearTest, EngineIntegration) {
       engine->open();
     }
     std::vector<VarId> args;
-    const Int numArgs = 10;
-    for (Int value = 1; value <= numArgs; ++value) {
-      args.push_back(engine->makeIntVar(value, 1, numArgs));
+    const size_t numArgs = 10;
+    for (size_t value = 1; value <= numArgs; ++value) {
+      args.push_back(engine->makeIntVar(static_cast<Int>(value), 1,
+                                        static_cast<Int>(numArgs)));
     }
     const VarId modifiedVarId = args.front();
-    const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
+    const VarId output =
+        engine->makeIntVar(-10, -100, static_cast<Int>(numArgs * numArgs));
     testNotifications<MockLinear>(
-        &engine->makeInvariant<MockLinear>(*engine, output, args), propMode,
-        markingMode, numArgs + 1, modifiedVarId, 5, output);
+        &engine->makeInvariant<MockLinear>(*engine, output, args),
+        {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }
 

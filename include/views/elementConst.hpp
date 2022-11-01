@@ -4,12 +4,10 @@
 #include <limits>
 #include <vector>
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "variables/committableInt.hpp"
 #include "views/intView.hpp"
-
-class Engine;
-class Invariant;
 
 /**
  * Invariant for y <- array[index] where array is a vector of constants.

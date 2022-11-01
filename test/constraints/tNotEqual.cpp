@@ -118,15 +118,16 @@ TEST_F(NotEqualTest, NotifyInputChanged) {
       *engine, violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
-  for (Int val = lb; val <= ub; ++val) {
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
-      const Int expectedViolation =
-          computeViolation(engine->currentTimestamp(), inputs);
+  Timestamp ts = engine->currentTimestamp();
 
-      invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
-      EXPECT_EQ(expectedViolation,
-                engine->value(engine->currentTimestamp(), violationId));
+  for (Int val = lb; val <= ub; ++val) {
+    ++ts;
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      engine->setValue(ts, inputs.at(i), val);
+      const Int expectedViolation = computeViolation(ts, inputs);
+
+      invariant.notifyInputChanged(ts, LocalId(i));
+      EXPECT_EQ(expectedViolation, engine->value(ts, violationId));
     }
   }
 }
@@ -288,8 +289,8 @@ TEST_F(NotEqualTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(0, -100, 100);
     const VarId viol = engine->makeIntVar(0, 0, 1);
     testNotifications<MockNotEqual>(
-        &engine->makeConstraint<MockNotEqual>(*engine, viol, x, y), propMode,
-        markingMode, 3, x, 0, viol);
+        &engine->makeConstraint<MockNotEqual>(*engine, viol, x, y),
+        {propMode, markingMode, 3, x, 0, viol});
   }
 }
 

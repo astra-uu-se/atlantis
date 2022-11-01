@@ -117,7 +117,10 @@ TEST_F(CountConstTest, NotifyInputChanged) {
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
+  const Timestamp ts = engine->currentTimestamp() + (ub - lb) + 2;
+
   for (Int y = lb; y <= ub; ++y) {
+    EXPECT_NE(ts, engine->currentTimestamp());
     engine->open();
     std::vector<VarId> inputs(numInputs, NULL_ID);
     for (size_t i = 0; i < numInputs; ++i) {
@@ -128,21 +131,18 @@ TEST_F(CountConstTest, NotifyInputChanged) {
     CountConst& invariant =
         engine->makeInvariant<CountConst>(*engine, outputId, y, inputs);
     engine->close();
+    EXPECT_NE(ts, engine->currentTimestamp());
 
     for (size_t i = 0; i < inputs.size(); ++i) {
-      const Int oldVal =
-          engine->value(engine->currentTimestamp(), inputs.at(i));
+      const Int oldVal = engine->value(ts, inputs.at(i));
       do {
-        engine->setValue(engine->currentTimestamp(), inputs.at(i), dist(gen));
-      } while (oldVal ==
-               engine->value(engine->currentTimestamp(), inputs.at(i)));
+        engine->setValue(ts, inputs.at(i), dist(gen));
+      } while (oldVal == engine->value(ts, inputs.at(i)));
 
-      const Int expectedOutput =
-          computeOutput(engine->currentTimestamp(), y, inputs);
+      const Int expectedOutput = computeOutput(ts, y, inputs);
 
-      invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
-      EXPECT_EQ(expectedOutput,
-                engine->value(engine->currentTimestamp(), outputId));
+      invariant.notifyInputChanged(ts, LocalId(i));
+      EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
     }
   }
 }
@@ -333,17 +333,18 @@ TEST_F(CountConstTest, EngineIntegration) {
     if (!engine->isOpen()) {
       engine->open();
     }
-    const Int numArgs = 10;
+    const size_t numArgs = 10;
     const Int y = 5;
     std::vector<VarId> varArray;
-    for (Int value = 1; value <= numArgs; ++value) {
-      varArray.push_back(engine->makeIntVar(value, 1, numArgs));
+    for (size_t value = 1; value <= numArgs; ++value) {
+      varArray.push_back(engine->makeIntVar(static_cast<Int>(value), 1,
+                                            static_cast<Int>(numArgs)));
     }
     const VarId modifiedVarId = varArray.front();
     const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCountConst>(
         &engine->makeInvariant<MockCountConst>(*engine, output, y, varArray),
-        propMode, markingMode, numArgs + 1, modifiedVarId, 5, output);
+        {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }
 

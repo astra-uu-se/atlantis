@@ -35,7 +35,7 @@ class PropagationEngine : public Engine {
 
   void clearPropagationQueue();
 
-  template <bool DoCommit, bool HasDynamicCycles>
+  template <CommitMode Mode, bool SingleLayer>
   void propagate();
 
   void outputToInputPropagate();
@@ -113,8 +113,8 @@ class PropagationEngine : public Engine {
   [[nodiscard]] const std::vector<VarIdBase>& variablesDefinedBy(
       InvariantId) const;
 
-  [[nodiscard]] const std::vector<InvariantId>& listeningInvariants(
-      VarId) const;
+  [[nodiscard]] const std::vector<PropagationGraph::ListeningInvariantData>&
+      listeningInvariantData(VarId) const;
 
   /**
    * Notify an invariant that its current input has changed
@@ -168,9 +168,9 @@ inline const std::vector<VarIdBase>& PropagationEngine::variablesDefinedBy(
   return _propGraph.variablesDefinedBy(invariantId);
 }
 
-inline const std::vector<InvariantId>& PropagationEngine::listeningInvariants(
-    VarId id) const {
-  return _propGraph.listeningInvariants(id);
+inline const std::vector<PropagationGraph::ListeningInvariantData>&
+PropagationEngine::listeningInvariantData(VarId id) const {
+  return _propGraph.listeningInvariantData(id);
 }
 
 inline VarId PropagationEngine::nextInput(InvariantId invariantId) {

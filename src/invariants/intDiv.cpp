@@ -1,7 +1,5 @@
 #include "invariants/intDiv.hpp"
 
-#include "core/engine.hpp"
-
 IntDiv::IntDiv(Engine& engine, VarId output, VarId x, VarId y)
     : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
@@ -85,5 +83,3 @@ VarId IntDiv::nextInput(Timestamp ts) {
 void IntDiv::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
 void IntDiv::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
-
-void IntDiv::commit(Timestamp ts) { Invariant::commit(ts); }

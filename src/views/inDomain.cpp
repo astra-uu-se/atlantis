@@ -1,7 +1,5 @@
 #include "views/inDomain.hpp"
 
-#include "core/engine.hpp"
-
 inline bool all_in_range(size_t start, size_t stop,
                          std::function<bool(size_t)> predicate) {
   std::vector<size_t> vec(stop - start);

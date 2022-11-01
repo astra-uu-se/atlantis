@@ -3,6 +3,7 @@
 #include <utility>
 #include <vector>
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 
@@ -18,7 +19,7 @@ class Linear : public Invariant {
   const VarId _output;
   const std::vector<Int> _coeffs;
   const std::vector<VarId> _varArray;
-  std::vector<CommittableInt> _localVarArray;
+  std::vector<Int> _committedValues;
 
  public:
   explicit Linear(Engine&, VarId output, const std::vector<VarId>& varArray);
@@ -27,7 +28,6 @@ class Linear : public Invariant {
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
-  void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;

@@ -1,7 +1,5 @@
 #include "invariants/boolOr.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * Invariant output = x \/ y. output does not violate if x or y does not
  * violate.
@@ -47,5 +45,3 @@ VarId BoolOr::nextInput(Timestamp ts) {
 }
 
 void BoolOr::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void BoolOr::commit(Timestamp ts) { Invariant::commit(ts); }
