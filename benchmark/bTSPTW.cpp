@@ -10,8 +10,10 @@
 #include "core/propagationEngine.hpp"
 #include "invariants/elementVar.hpp"
 #include "invariants/linear.hpp"
+#include "invariants/plus.hpp"
 #include "views/elementConst.hpp"
 #include "views/intOffsetView.hpp"
+#include "views/lessEqualConst.hpp"
 
 class TSPTW : public benchmark::Fixture {
  public:
@@ -35,30 +37,36 @@ class TSPTW : public benchmark::Fixture {
 
   void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(0);
+    // First location is the dummy location:
+    n = state.range(0) + 1;
 
-    if (n < 1) {
-      throw std::runtime_error("n must strictly positive.");
+    if (n < 3) {
+      throw std::runtime_error("There must be at least 3 locations.");
     }
 
     engine->open();
 
     setEngineModes(*engine, state.range(1));
 
+    // The first row and column hold dummy values:
     for (int i = 0; i < n; ++i) {
       dist.emplace_back();
       for (int j = 0; j < n; ++j) {
-        dist[i].push_back(i * j);
+        dist.back().push_back(i * j);
       }
     }
 
-    for (int i = 1; i <= n; ++i) {
+    pred.emplace_back(engine->makeIntVar(2, 2, n));
+    arrivalTime.emplace_back(engine->makeIntVar(0, 0, 0));
+    arrivalPrev.emplace_back(NULL_ID);
+    timeToPrev.emplace_back(NULL_ID);
+
+    for (int i = 2; i <= n; ++i) {
       const Int initVal = 1 + (i % n);
-      pred.emplace_back(engine->makeIntVar(initVal, 1, n));
+      pred.emplace_back(engine->makeIntVar(initVal, 1, i == n ? (n - 1) : n));
       timeToPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalTime.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
       arrivalPrev.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
-      violation.emplace_back(engine->makeIntVar(0, 0, MAX_TIME));
     }
 
     // Ignore index 0
@@ -82,22 +90,27 @@ class TSPTW : public benchmark::Fixture {
 
     // totalDist = sum(timeToPrev)
     totalDist = engine->makeIntVar(0, 0, MAX_TIME);
+    // Remove the first dummy value:
+    timeToPrev.erase(timeToPrev.begin());
     engine->makeInvariant<Linear>(*engine, totalDist, timeToPrev);
 
     VarId leqConst = engine->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
-      engine->makeConstraint<LessEqual>(*engine, violation[i], arrivalTime[i],
-                                        leqConst);
+      engine->makeConstraint<LessEqual>(
+          *engine, violation.emplace_back(engine->makeIntVar(0, 0, MAX_TIME)),
+          arrivalTime[i], leqConst);
     }
 
     totalViolation = engine->makeIntVar(0, 0, MAX_TIME * n);
     engine->makeInvariant<Linear>(*engine, totalViolation, violation);
 
     engine->close();
-    assert(std::all_of(pred.begin(), pred.end(), [&](const VarId p) {
+    assert(engine->lowerBound(pred.front()) == 2);
+    assert(engine->upperBound(pred.back()) == n - 1);
+    assert(std::all_of(pred.begin() + 1, pred.end(), [&](const VarId p) {
       return engine->lowerBound(p) == 1;
     }));
-    assert(std::all_of(pred.begin(), pred.end(), [&](const VarId p) {
+    assert(std::all_of(pred.begin(), pred.end() - 1, [&](const VarId p) {
       return engine->upperBound(p) == n;
     }));
     assert(std::all_of(pred.begin(), pred.end(), [&](const VarId p) {
@@ -117,18 +130,27 @@ class TSPTW : public benchmark::Fixture {
     dist.clear();
     violation.clear();
   }
+
+  Int computeDistance() {
+    Int tot = 0;
+    for (Int i = 0; i < n; ++i) {
+      tot += dist.at(i).at(engine->currentValue(pred[i] - 1));
+    }
+    return tot;
+  }
 };
 
 inline size_t randInRange(const size_t minVal, const size_t maxVal) {
   return minVal + (std::rand() % (maxVal - minVal + 1));
 }
 
-BENCHMARK_DEFINE_F(TSPTW, probe_single_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(TSPTW, probe_three_opt)(benchmark::State& st) {
   std::vector<Int> indexVec1(n);
   std::iota(indexVec1.begin(), indexVec1.end(), 0);
   std::vector<Int> indexVec2(n);
   std::iota(indexVec2.begin(), indexVec2.end(), 0);
 
+  size_t probes = 0;
   for (auto _ : st) {
     Int i = static_cast<Int>(n);
     Int j = static_cast<Int>(n);
@@ -150,11 +172,10 @@ BENCHMARK_DEFINE_F(TSPTW, probe_single_swap)(benchmark::State& st) {
     assert(i < static_cast<Int>(n));
     assert(j < static_cast<Int>(n));
     engine->beginMove();
-    engine->setValue(
-        pred[i],
-        engine->committedValue(pred.at(engine->committedValue(pred[i]) - 1)));
+    engine->setValue(pred[i], engine->committedValue(
+                                  pred[engine->committedValue(pred[i]) - 1]));
     engine->setValue(pred[j], engine->committedValue(pred[i]));
-    engine->setValue(pred.at(engine->committedValue(pred[i]) - 1),
+    engine->setValue(pred[engine->committedValue(pred[i]) - 1],
                      engine->committedValue(pred[j]));
     engine->endMove();
 
@@ -162,7 +183,10 @@ BENCHMARK_DEFINE_F(TSPTW, probe_single_swap)(benchmark::State& st) {
     engine->query(totalDist);
     engine->query(totalViolation);
     engine->endProbe();
+    ++probes;
   }
+  st.counters["probes_per_second"] =
+      benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
@@ -174,10 +198,11 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
           continue;
         }
         engine->beginMove();
-        engine->setValue(pred[i], engine->committedValue(pred.at(
-                                      engine->committedValue(pred[i]) - 1)));
+        engine->setValue(
+            pred[i],
+            engine->committedValue(pred[engine->committedValue(pred[i]) - 1]));
         engine->setValue(pred[j], engine->committedValue(pred[i]));
-        engine->setValue(pred.at(engine->committedValue(pred[i]) - 1),
+        engine->setValue(pred[engine->committedValue(pred[i]) - 1],
                          engine->committedValue(pred[j]));
         engine->endMove();
 
@@ -185,6 +210,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
         engine->query(totalDist);
         engine->query(totalViolation);
         engine->endProbe();
+        assert(engine->currentValue(totalDist) == computeDistance());
         ++probes;
       }
     }
@@ -193,7 +219,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-///*
+//*
 static void arguments(benchmark::internal::Benchmark* b) {
   for (int i = 10; i <= 150; i += 10) {
     for (int mode = 0; mode <= 3; ++mode) {
@@ -205,7 +231,7 @@ static void arguments(benchmark::internal::Benchmark* b) {
   }
 }
 
-BENCHMARK_REGISTER_F(TSPTW, probe_single_swap)
+BENCHMARK_REGISTER_F(TSPTW, probe_three_opt)
     ->Apply(arguments)
     ->Unit(benchmark::kMillisecond);
 

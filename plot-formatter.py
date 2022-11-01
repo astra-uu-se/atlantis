@@ -1,13 +1,49 @@
+from fileinput import filename
 import logging
-from sys import argv
-from os import name, path, access, R_OK
+from os import path, access, R_OK
+from re import X
 import matplotlib
 matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
 import json
 import argparse
 from typing import *
+from math import ceil
 
+
+class Plot:
+    def __init__(self, x_vals, y_vals, label, marker, linestyle):
+        self.x_vals = x_vals
+        self.y_vals = y_vals
+        self.label = label
+        self.marker = marker
+        self.linestyle = linestyle
+
+
+class Figure:
+    def __init__(self, title, xlabel, ylabel, yscale, xticks, identifier, plots) -> None:
+        self.title = title
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+        self.yscale = yscale
+        self.xticks = xticks
+        self.identifier = identifier
+        self.plots:List[Plot] = plots
+    
+    @property
+    def pretty_xticks(self):
+        if len(self.xticks) == 0:
+            return []
+        first = int(self.xticks[0])
+        last = int(self.xticks[-1])
+        
+        res = [first]
+        min_dist = (last - first) / 20
+        for xt in self.xticks[1:]:
+            if int(xt) - res[-1] >= min_dist:
+                res.append(xt)
+        
+        return res
 
 def int_to_propagation_mode(value:int) -> str:
     if value == 0:
@@ -15,10 +51,20 @@ def int_to_propagation_mode(value:int) -> str:
     elif value == 1:
         return 'o2i'
     elif value == 2:
-        return 'o2i with static marking'
+        return 'o2i - static'
     elif value == 3:
-        return 'o2i with i2o marking'
+        return 'o2i - ad-hoc'
     return ''
+
+def iteration_to_line_style(iteration:int) -> str:
+    if iteration == 0:
+        return '-'
+    elif iteration == 1:
+        return '--'
+    elif iteration == 2:
+        return ':'
+    elif iteration == 3:
+        return '-.'
 
 
 def int_to_marker(value:int) -> str:
@@ -287,6 +333,10 @@ class Model:
         return self.settings.get('model_name', self.name)
     
     @property
+    def label(self) -> str:
+        return self.settings.get('label', self.pretty_name)
+    
+    @property
     def yscale(self) -> str:
         return self.settings.get('yscale', 'linear')
     
@@ -396,13 +446,45 @@ class PlotFormatter:
         for json_file_path in self.inputs:
             with open(json_file_path, 'r') as json_file:
                 json_data.append(json.load(json_file))
-        
+        logging.info(f'Retrieved and loaded {len(json_data)} json file(s)')
         return json_data
 
     def parse_problem_collection(self, json_data:Dict) -> ProblemCollection:
         problem_collection = ProblemCollection()
         for tuple in zip(self.inputs, json_data):
             problem_collection.add_model_collection(tuple[0], self.parse_json(tuple[1]))
+        
+        model_collection_count = 0
+        model_count = 0
+        method_count = 0
+        propagation_mode_collection_count = 0
+        instance_collection_count = 0
+        instance_count = 0
+        run_count = 0
+        for model_collection in problem_collection.model_collections.values():
+            model_collection_count += 1
+            for model in model_collection.models.values():
+                model_count += 1
+                for method in model.methods.values():
+                    method_count += 1
+                    for propagation_mode_collection in method.propagation_mode_collections.values():
+                        propagation_mode_collection_count += 1
+                        for instance_collection in propagation_mode_collection.instance_collections.values():
+                            instance_collection_count += 1
+                            for instance in instance_collection.instances.values():
+                                instance_count += 1
+                                for run in instance.runs:
+                                    run_count += 1
+        logging.info('Parsed: ' + str.join('; ',
+                                           [f'{c} {l}(s)' for c, l in [
+                                             (model_collection_count, 'model collection'),
+                                             (model_count, 'model'),
+                                             (method_count, 'method'),
+                                             (propagation_mode_collection_count,'propagation mode collection'),
+                                             (instance_collection_count, 'instance collection'),
+                                             (instance_count, 'instance'),
+                                             (run_count, 'run')]
+                                            ]))
         
         return problem_collection
 
@@ -448,14 +530,13 @@ class PlotFormatter:
         problem_instance_index = max(0, len(arguments) - (2 if prop_mode_index == len(arguments) - 1 else 1))
         problem_instance = arguments[problem_instance_index]
         
-        logging.info(f"prop_mode_index: {prop_mode_index}; problem_instance_index: {problem_instance_index}")
-
         identifier = '/'.join(name_parts[1:2] + [str(a) for i, a in enumerate(arguments) if i not in {prop_mode_index, problem_instance_index}])
-
 
         probes_per_second = benchmark['probes_per_second']
 
         model = Model(model_name, settings)
+
+        print(f"{model_name}\t{problem_instance}\t{int_to_propagation_mode(propagation_mode)}\t{probes_per_second}")
 
         model.create_method(method_name)\
              .create_propagation_mode_collection(identifier)\
@@ -484,103 +565,176 @@ class PlotFormatter:
         return merged_model_collection
 
     def plot_model_collection(self):
-        self.plot_model_collection_no_compare()
-    
-    def plot_model_collection_compare(self):
-        problem_collection = list(self.problem_collection.model_collections.items())
-
-        for problem_name, model_collection in problem_collection.items():
-            for model in model_collection.models.values():
-                settings = self.settings.get(model.name, dict()).get('agument_order', [])
-                if "PROPAGATION_MODE" not in settings:
-                    settings.append("PROPAGATION_MODE")
-
-                for method in model.methods.values():
-                    for instance_collection in method.propagation_mode_collections.values():
-                        arguments = instance_collection.arguments
-                        label_entries = [model.name, method.name]
-                        for i in range(max(len(arguments), len(settings))):
-                            if len(arguments) <= i:
-                                continue
-                            elif len(settings) <= i:
-                                label_entries.append(arguments[i])
-                            elif settings[i] == "IGNORE":
-                                continue
-                            elif settings[i] == "PROPAGATION_MODE":
-                                continue
-                            else:
-                                label_entries.append(f'{settings[i]}: {arguments[i]}')
-
-                        other_problem_models = [pc for pc in problem_collection[i:] if pc.contains(model.name, method.name, instance_collection.identifier)]
-
-                        if len(settings) <= 1:
-                            plt.xlabel(f'n')
-                        else:
-                            plt.xlabel(settings[-1])
-                        plt.ylabel(f'probes/s')
-                        
-                        plt.title(f'{problem_name} - {model.name} - {int_to_propagation_mode(propagation_mode)}')
-                        ticks = set()
-
-                        for file_name, benchmarks in files.items():
-                            x_vals = [int(e[0]) for e in benchmarks]
-                            y_vals = [e[1] for e in benchmarks]
-                            for x_val in x_vals:
-                                ticks.add(x_val)
-                            plt.plot(
-                                x_vals,
-                                y_vals,
-                                label=f'{file_name}'
-                            )
-                        
-                        ticks = list(ticks)
-                        ticks.sort()
-                        plt.xticks(list(sorted(ticks)))
-                        plt.legend()
-
-                        if self.save_plot(f'{problem_name}-{model.name}-{method.name}'):
-                            plt.clf()
-                        else:
-                            plt.show()
-    
-    def plot_model_collection_no_compare(self):
-        for model_collections in self.problem_collection.model_collections.values():
-            for model in model_collections.models.values():
-                logging.info(model.name)
-                for method in model.methods.values():
-                    logging.info(method.name)
-                    for propagation_mode_collection in method.propagation_mode_collections.values():
-                        logging.info(propagation_mode_collection.identifier)
-                        argument_labels = propagation_mode_collection.argument_labels
-                        logging.info(argument_labels)
-                        title_entries = [a if t is None else f'{t}: {a}' for t, a in argument_labels]
-                        title = ' - '.join(map(str, [model.pretty_name, method.pretty_name] + title_entries[0:-1]))
-                        xlabel = argument_labels[-1][0] if len(title_entries) > 0 and argument_labels[-1][0] is not None else 'n'
-                        plt.ylabel(f'probes/s')
-                        plt.yscale(model.yscale)
-                        plt.title(title)
-                        plt.xlabel(xlabel)
-                        
-                        xticks = set()
-
-                        for propagation_mode, instance_collection in propagation_mode_collection.instance_collections.items():
-                            x_vals, y_vals = instance_collection.results()
-                            xticks.update(x_vals)
-                            plt.plot(
-                                x_vals,
-                                y_vals,
-                                label=int_to_propagation_mode(propagation_mode),
-                                marker=int_to_marker(propagation_mode)
-                            )
+        plt.rcParams["figure.figsize"] = (10, 8)
+        #plt.tight_layout(pad=0, h_pad=0, w_pad=0)
+        subplots:List[Figure] = []
+        for model_collection in sorted(self.problem_collection.model_collections.values()):
+            plotted_models = set()
+            for model in sorted(model_collection.models.values(), key=lambda a: a.name):
+                if model in plotted_models:
+                    continue
+                models_to_compare = {model}
+                for model_to_compare in self.settings.get(model.name, dict()).get('compare', dict()):
+                    if model_to_compare in model_collection.models:
+                        models_to_compare.add(model_collection.models[model_to_compare])
+                if len(models_to_compare) == 1:
+                    subplots.append(self.create_plot(model))
+                else:
+                    figure = self.plot_compare_models(models_to_compare)
+                    plt.rcParams["figure.figsize"] = (10, 4)
+                    plt.title(figure.title)
+                    plt.xlabel(figure.xlabel)
+                    plt.ylabel(figure.ylabel)
+                    plt.yscale(figure.yscale)
+                    for p in figure.plots:
+                        plt.plot(
+                            p.x_vals,
+                            p.y_vals,
+                            label=p.label,
+                            marker=p.marker,
+                            linestyle=p.linestyle
+                        )
+                    plt.legend(ncol=2)
+                    plt.show()
                     
-                        plt.xticks(list(sorted(xticks)))
-                        plt.legend()
-                        
-                        if self.save_plot('-'.join([model.name] + propagation_mode_collection.identifier.split('/'))):
-                            plt.clf()
-                        else:
-                            plt.show()
-            exit(0)
+                    
+                plotted_models = plotted_models.union(models_to_compare)
+        plt.rcParams["figure.figsize"] = (10, 8)
+        cols = 2
+        rows = int(ceil(len(subplots) / 2))
+        
+        fig, axes = plt.subplots(rows, cols)
+        
+        axes = axes.flatten()
+        
+        lines_labels = set()
+        
+        for i, fig in enumerate(subplots):
+
+            axes[i].set_title(fig.title)
+            axes[i].set_xlabel(fig.xlabel)
+            axes[i].set_ylabel(fig.ylabel)
+            axes[i].set_yscale(fig.yscale)
+            for p in fig.plots:
+                axes[i].plot(
+                    p.x_vals,
+                    p.y_vals,
+                    label=p.label,
+                    marker=p.marker,
+                    linestyle=p.linestyle
+                )
+
+            axes[i].set_xticks(fig.pretty_xticks)
+        plt.subplots_adjust(
+          left=0.06,
+          right=0.98,
+          bottom=0.06,
+          top=0.94,
+          wspace=0.15,
+          hspace=0.38
+        )
+        
+        seen_labels = set()
+        lines = []
+        labels = []
+        
+        for ax in axes:
+            li, la = ax.get_legend_handles_labels()
+            for i, l in enumerate(la):
+                if l not in seen_labels:
+                    seen_labels.add(l)
+                    lines.append(li[i])
+                    labels.append(l)
+              
+        plt.legend(lines, labels, ncol=2)
+        
+        plt.show()
+        
+    
+    def plot_compare_models(self, models_to_compare:Set[Model]):
+        initial_model = next(iter(models_to_compare))
+        logging.info(f"comparing models")
+        logging.info(initial_model.methods)
+        for method_name, method in initial_model.methods.items():
+            logging.info(method.name)
+            for identifier, propagation_mode_collection in method.propagation_mode_collections.items():
+                logging.info(propagation_mode_collection.identifier)
+                argument_labels = propagation_mode_collection.argument_labels
+                logging.info(str.join(' - ', [initial_model.name, method.name, str(propagation_mode_collection.identifier)]))
+                logging.info(argument_labels)
+                title_entries = [a if t is None else f'{t}: {a}' for t, a in argument_labels]
+                title = ' - '.join(map(str, [initial_model.pretty_name, method.pretty_name] + title_entries[0:-1]))
+                xlabel = argument_labels[-1][0] if len(title_entries) > 0 and argument_labels[-1][0] is not None else 'n'
+                ylabel = 'probes/s'
+                xticks = set()
+
+                pretty_method_name = method.pretty_name
+
+                plots = []
+                
+                for i, model in enumerate(models_to_compare):
+                    method = next((m for m in model.methods.values() if method_name == m.name or pretty_method_name == m.pretty_name), None)
+                    
+                    if method is None:
+                        continue
+                    
+                    logging.info(f"identifier: {identifier}")
+                    logging.info(f"identifiers: {list(method.propagation_mode_collections.keys())}")
+                    
+                    for propagation_mode, instance_collection in method.propagation_mode_collections[identifier].instance_collections.items():
+                        x_vals, y_vals = instance_collection.results()
+                        xticks.update(x_vals)
+                        plots.append(Plot(
+                            x_vals,
+                            y_vals,
+                            label=f'{model.label} - {int_to_propagation_mode(propagation_mode)}',
+                            marker=int_to_marker(propagation_mode),
+                            linestyle=iteration_to_line_style(i)
+                        ))
+                
+                return Figure(title,
+                              xlabel,
+                              ylabel,
+                              initial_model.yscale,
+                              list(sorted(xticks)),
+                              '-'.join([model.name] + propagation_mode_collection.identifier.split('/')),
+                              plots)
+    
+    def create_plot(self, model:Model) -> Figure:
+        logging.info(model.name)
+        for method in model.methods.values():
+            logging.info(method.name)
+            for propagation_mode_collection in method.propagation_mode_collections.values():
+                logging.info(propagation_mode_collection.identifier)
+                argument_labels = propagation_mode_collection.argument_labels
+                logging.info(str.join(' - ', [model.name, method.name, str(propagation_mode_collection.identifier)]))
+                logging.info(argument_labels)
+                title_entries = [a if t is None else f'{t}: {a}' for t, a in argument_labels]
+                title = model.pretty_name #' - '.join(map(str, [model.pretty_name, method.pretty_name] + title_entries[0:-1]))
+                xlabel = argument_labels[-1][0] if len(title_entries) > 0 and argument_labels[-1][0] is not None else 'n'
+                
+                ylabel = 'probes/s'
+                
+                xticks = set()
+
+                plots = []
+                for propagation_mode, instance_collection in propagation_mode_collection.instance_collections.items():
+                    x_vals, y_vals = instance_collection.results()
+                    xticks.update(x_vals)
+                    plots.append(Plot(
+                        x_vals,
+                        y_vals,
+                        int_to_propagation_mode(propagation_mode),
+                        int_to_marker(propagation_mode),
+                        iteration_to_line_style(0)
+                    ))
+                return Figure(title,
+                              xlabel,
+                              ylabel,
+                              model.yscale,
+                              list(sorted(xticks)),
+                              '-'.join([model.name] + propagation_mode_collection.identifier.split('/')),
+                              plots)
 
     def save_plot(self, file_name):
         if not self.save_plots:
@@ -589,7 +743,7 @@ class PlotFormatter:
             self.output_dir,
             f'{self.file_prefix}{file_name}{self.file_suffix}.png'
         )
-        plt.savefig(plot_filename)
+        plt.savefig(plot_filename, bbox_inches=0, transparant=True, pad_inches=0)
         return True
 
 
@@ -610,12 +764,12 @@ if __name__ == "__main__":
     parser.add_argument('--file-prefix', type=str, dest='file_prefix', default='')
     parser.add_argument('--file-suffix', type=str, dest='file_suffix', default='')
     parser.add_argument('--input', dest='inputs', nargs='+', default=['tmp.json'])
-    parser.add_argument('--settings', dest='settings', default='plot-formatter.json')
+    parser.add_argument('--settings', dest='settings', default=path.join(path.dirname(path.realpath(__file__)), 'plot-formatter.json'))
     parser.add_argument('-v', '--verbose', dest='verbose', default=True, action="store_true")
     args = parser.parse_args()
 
     if args.verbose:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.WARNING)
 
     plot_formatter = PlotFormatter(
       args.inputs,

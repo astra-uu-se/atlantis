@@ -60,7 +60,7 @@
     },
     "argument_order": [
       "Overlapping input variables",
-      "Number of input variables",
+      "Input variable count",
       "PROPAGATION_MODE"
     ]
   },
@@ -85,51 +85,70 @@
   },
   "AllInterval": {
     "yscale": "log",
-    "model_name": "All-Interval Series"
+    "model_name": "All-Interval Series",
+    "method_name": {
+      "probe_single_swap": "single swap"
+    }
   },
   "CarSequencing": {
     "model_name": "Car Sequencing",
     "method_name": {
-      "probing_single": "single swap",
-      "probe_single_swap": "single swap",
+      "probing_single": "swap two cars",
+      "probe_single_swap": "swap two cars",
       "probing_all_swap": "all swaps",
       "probe_all_swap": "all swaps"
     },
     "argument_order": [
-      "Number of cars",
+      "Car count",
       "PROPAGATION_MODE"
     ],
     "yscale": "log"
+  },
+  "GolombRuler": {
+    "model_name": "Golomb Rulers",
+    "yscale": "log",
+    "method_name": {
+      "probe_single": "change single mark"
+    },
+    "argument_order": [
+      "Mark count",
+      "PROPAGATION_MODE"
+    ]
   },
   "Queens": {
     "model_name": "N-Queens",
     "yscale": "log",
     "method_name": {
-      "probing_single_swap": "single swap",
-      "probe_single_swap": "single swap",
+      "probing_single_swap": "swap two queens",
+      "probe_single_swap": "swap two queens",
       "probing_all_swap": "all swaps",
       "probe_all_swap": "all swaps"
     },
     "argument_order": [
-      "Number of queens",
+      "Queen count",
       "PROPAGATION_MODE"
     ]
   },
   "MagicSquare": {
-    "model_name": "Magic Square",
+    "model_name": "Magic Squares and Sequences",
     "method_name": {
-      "probing_single_swap": "single swap",
-      "probe_single_swap": "single swap",
+      "probing_single_swap": "swap two numbers",
+      "probe_single_swap": "swap two numbers",
       "probing_all_swap": "all swaps",
       "probe_all_swap": "all swaps"
     },
-    "yscale": "log"
+    "yscale": "log",
+    "argument_order": [
+      "Number count",
+      "PROPAGATION_MODE"
+    ]
   },
   "VesselLoading": {
     "model_name": "Vessel Loading",
     "yscale": "log",
     "method_name": {
-      "rotate_rand_container": "Rotate random"
+      "rotate_rand_container": "Rotate random",
+      "probe_single_relocate": "relocate single container"
     },
     "argument_order": [
       "Container count",
@@ -137,14 +156,35 @@
     ]
   },
   "TSPTW": {
+    "model_name": "TSPTW",
+    "label": "Tour",
     "yscale": "log",
     "method_name": {
-      "probe_single_relocate": "single Three-opt",
-      "probe_all_relocate": "all Three-opts"
+      "probe_three_opt": "single Three-opt",
+      "probe_all_swap": "all Three-opts"
     },
     "argument_order": [
-      "Number of locations",
+      "Location count",
       "PROPAGATION_MODE"
+    ],
+    "compare": [
+      "TSPTWAllDiff"
+    ]
+  },
+  "TSPTWAllDiff": {
+    "model_name": "TSPTW",
+    "label": "Sequence",
+    "yscale": "log",
+    "method_name": {
+      "probe_three_opt": "single Three-opt",
+      "probe_all_swap": "all Three-opts"
+    },
+    "argument_order": [
+      "Location count",
+      "PROPAGATION_MODE"
+    ],
+    "compare": [
+      "TSPTW"
     ]
   }
 }

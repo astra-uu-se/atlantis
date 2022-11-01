@@ -69,7 +69,7 @@ void log(LogLevel logLevel, const char *file, int line,
 
   std::cerr << level << file << " (" << line << "): ";
   printList(std::cerr, data.list);
-  std::cerr << "\n";
+  std::cerr << '\n';
 }
 }  // namespace Logging
 #define setLogLevel(x) (Logging::setLogLevel(Logging::LogLevel::x))

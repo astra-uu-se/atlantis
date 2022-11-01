@@ -135,7 +135,7 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
       commits, benchmark::Counter::kIsRate | benchmark::Counter::kInvert);
 }
 
-/*
+//*
 static void arguments(benchmark::internal::Benchmark* benchmark) {
   for (int n = 10; n <= 100; n += 10) {
     for (int mode = 0; mode <= 3; ++mode) {
