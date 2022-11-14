@@ -196,12 +196,27 @@
   },
   "ExtremeDynamic": {
     "model_name": "Extreme Dynamic",
+    "label": "All Element",
     "yscale": "log",
-    "group": 1
+    "method_name": {
+      "probe_static_var": "static var",
+      "probe_single_dynamic_var": "single dynamic var"
+    },
+    "argument_order": [
+      "number of dynamic search variables",
+      "PROPAGATION_MODE"
+    ]
   },
   "ExtremeStatic": {
     "model_name": "Extreme Static",
+    "label": "Single Linear",
     "yscale": "log",
-    "group": 1
+    "method_name": {
+      "probe_single_var": "single (static) var"
+    },
+    "argument_order": [
+      "number of (static) search variables",
+      "PROPAGATION_MODE"
+    ]
   }
 }

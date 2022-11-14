@@ -221,10 +221,19 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(benchmark::State& st) {
 
 //*
 static void arguments(benchmark::internal::Benchmark* b) {
-  for (int i = 10; i <= 150; i += 10) {
+  int i = 16;
+  while (i <= 1024) {
     for (int mode = 0; mode <= 3; ++mode) {
       b->Args({i, mode});
     }
+    if (i < 128) {
+      i += 16;
+      continue;
+    } else if (i < 256) {
+      i += 64;
+      continue;
+    }
+    i *= 2;
 #ifndef NDEBUG
     return;
 #endif

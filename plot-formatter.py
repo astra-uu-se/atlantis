@@ -755,55 +755,85 @@ class PlotFormatter:
 
         return merged_model_collection
 
-    def plot_comparing_models(self, models_to_compare: Set[Model]) -> None:
-        figure = self.plot_compare_models(models_to_compare)
-        plt.rcParams["figure.figsize"] = (10, 4)
-        plt.title(figure.title)
-        plt.xlabel(figure.xlabel, fontsize=10)
-        plt.ylabel(figure.ylabel)
-        plt.yscale(figure.yscale)
-        for plot in figure:
-            plt.plot(
-                plot.x_vals,
-                plot.y_vals,
-                label=plot.label,
-                marker=plot.marker,
-                linestyle=plot.linestyle
-            )
-        plt.legend(ncol=2)
-        plt.show()
-
-    def plot_subplots(self, subplots: List[Figure]) -> None:
+    def plot_model_collection(self):
+        plt.rcParams["figure.figsize"] = (10, 8)
+        #plt.tight_layout(pad=0, h_pad=0, w_pad=0)
+        subplots:List[Figure] = []
+        for model_collection in sorted(self.problem_collection.model_collections.values()):
+            plotted_models = set()
+            for model in sorted(model_collection.models.values(), key=lambda a: a.name):
+                if model in plotted_models:
+                    continue
+                models_to_compare = {model}
+                for model_to_compare in self.settings.get(model.name, dict()).get('compare', dict()):
+                    if model_to_compare in model_collection.models:
+                        models_to_compare.add(model_collection.models[model_to_compare])
+                if len(models_to_compare) == 1:
+                    subplots.append(self.create_plot(model))
+                else:
+                    figure = self.plot_compare_models(models_to_compare)
+                    plt.rcParams["figure.figsize"] = (8, 4)
+                    plt.title(figure.title)
+                    plt.xlabel(figure.xlabel)
+                    plt.ylabel(figure.ylabel)
+                    plt.yscale(figure.yscale)
+                    for p in figure.plots:
+                        plt.plot(
+                            p.x_vals,
+                            p.y_vals,
+                            label=p.label,
+                            marker=p.marker,
+                            linestyle=p.linestyle
+                        )
+                    plt.legend(ncol=2)
+                    plt.tight_layout()
+                    if not self.save_plot(figure.identifier):
+                        plt.show()
+                    
+                    
+                plotted_models = plotted_models.union(models_to_compare)
+        plt.rcParams["figure.figsize"] = (8, 7)
         cols = 2
         rows = int(ceil(len(subplots) / 2))
+        
+        fig, axes = plt.subplots(rows, cols)
+        
+        axes:List[plt.Axes] = axes.flatten()
+        
+        for i, fig in enumerate(subplots):
 
-        fig, axes = plt.subplots(rows, cols, figsize=(10, 8))
+            axes[i].set_title(fig.title)
+            if i >= len(axes) - 2:
+                axes[i].set_xlabel('instance size')
+            else:
+                axes[i].set_xlabel('')
 
-        for i, figure in enumerate(subplots):
-            axes.flat[i].set_title(figure.title)
-            axes.flat[i].set_xlabel(figure.xlabel)
-            axes.flat[i].set_ylabel(figure.ylabel)
-            axes.flat[i].set_yscale(figure.yscale)
-            for plot in figure:
-                axes.flat[i].plot(
-                    plot.x_vals,
-                    plot.y_vals,
-                    label=plot.label,
-                    marker=plot.marker,
-                    linestyle=plot.linestyle
+            if i % 2 == 0:
+                axes[i].set_ylabel(fig.ylabel)
+            else:
+                axes[i].set_ylabel('')
+            axes[i].set_yscale(fig.yscale)
+            for p in fig.plots:
+                axes[i].plot(
+                    p.x_vals,
+                    p.y_vals,
+                    label=p.label,
+                    marker=p.marker,
+                    linestyle=p.linestyle
                 )
                 # axes.flat[i].xaxis.set_tick_params(labelsize=9)
                 # axes.flat[i].yaxis.set_tick_params(labelsize=9)
 
             axes.flat[i].set_xticks(figure.pretty_xticks)
         plt.subplots_adjust(
-          left=0.06,
-          right=0.999,
-          bottom=0.06,
-          top=0.92,
-          wspace=0.15,
-          hspace=0.43)
-
+          left=0.075,
+          right=1,
+          bottom=0.07,
+          top=0.96,
+          wspace=0.13,
+          hspace=0.33
+        )
+        
         seen_labels = set()
         lines = []
         labels = []
@@ -815,75 +845,13 @@ class PlotFormatter:
                     seen_labels.add(l)
                     lines.append(li[i])
                     labels.append(l)
-
-        fig.legend(labels=labels, ncol=len(labels), loc='upper center')
-
-        plt.show()
-
-    def plot_model_collection(self) -> None:
-        plt.rcParams["figure.figsize"] = (10, 8)
-        # plt.tight_layout(pad=0, h_pad=0, w_pad=0)
-        subplots: List[Tuple[Tuple[int, str], Figure]] = []
-        for model_collection in self.problem_collection:
-            plotted_models = set()
-            for model in model_collection:
-                if model in plotted_models:
-                    continue
-                models_to_compare = model_collection.models_to_compare(model)
-                if len(models_to_compare) == 1:
-                    subplots.append(
-                      ((model.group, model.name), self.create_plot(model)))
-                else:
-                    self.plot_comparing_models(models_to_compare)
-                plotted_models = plotted_models.union(models_to_compare)
-        subplots = [f for (_, f) in sorted(subplots)]
-        self.plot_subplots(subplots)
-
-    def plot_compare_with_other_models(self, initial_model: Model,
-                                       models_to_compare: Set[Model],
-                                       method: Method,
-                                       pmc: PropagationModeCollection
-                                       ) -> None:
-        logging.info(pmc.identifier)
-        logging.info(' - '.join([initial_model.name,
-                                 method.name,
-                                 str(pmc.identifier)]))
-        logging.info(pmc.argument_labels)
-
-        title = get_title(initial_model, method, pmc)
-        xlabel = pmc.xlabel
-        ylabel = 'probes/s'
-
-        plots: List[Plot] = []
-
-        for i, model in enumerate(models_to_compare):
-            c_method = model.find_method(method)
-
-            if c_method is None:
-                continue
-
-            logging.info(f"identifier: {pmc.identifier}")
-            logging.info(
-              "identifiers: " +
-              list(c_method.propagation_mode_collections.keys()))
-
-            plots.extend(
-              c_method.find_insance_collection(pmc).create_plots(
-                iteration_to_line_style(i),
-                [model.label]))
-
-        identifier = '-'.join([model.name] + pmc.identifier.split('/'))
-
-        return Figure(title,
-                      xlabel,
-                      ylabel,
-                      initial_model.yscale,
-                      identifier,
-                      plots)
-
-    def plot_compare_models(self, models_to_compare: Set[Model]) -> None:
-        if len(models_to_compare) == 0:
-            return
+              
+        plt.legend(lines, labels, ncol=2)
+        if not self.save_plot('results'):
+            plt.show()
+        
+    
+    def plot_compare_models(self, models_to_compare:Set[Model]):
         initial_model = next(iter(models_to_compare))
         logging.info(f"comparing models")
         logging.info(initial_model.methods)
@@ -930,10 +898,7 @@ class PlotFormatter:
             self.output_dir,
             f'{self.file_prefix}{file_name}{self.file_suffix}.png'
         )
-        plt.savefig(plot_filename,
-                    bbox_inches=0,
-                    transparant=True,
-                    pad_inches=0)
+        plt.savefig(plot_filename, bbox_inches='tight', pad_inches=0.02)
         return True
 
 
