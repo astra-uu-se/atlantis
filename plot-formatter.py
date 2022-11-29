@@ -11,7 +11,41 @@ from math import ceil
 matplotlib.use('tkagg')
 
 
-def int_to_propagation_mode(value: int) -> str:
+class Plot:
+    def __init__(self, x_vals, y_vals, label, marker, linestyle):
+        self.x_vals = x_vals
+        self.y_vals = y_vals
+        self.label = label
+        self.marker = marker
+        self.linestyle = linestyle
+
+
+class Figure:
+    def __init__(self, title, xlabel, ylabel, yscale, xticks, identifier, plots) -> None:
+        self.title = title
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+        self.yscale = yscale
+        self.xticks = xticks
+        self.identifier = identifier
+        self.plots:List[Plot] = plots
+    
+    @property
+    def pretty_xticks(self):
+        if len(self.xticks) == 0:
+            return []
+        first = int(self.xticks[0])
+        last = int(self.xticks[-1])
+        
+        res = [first]
+        min_dist = (last - first) / 10
+        for xt in self.xticks[1:]:
+            if int(xt) - res[-1] >= min_dist:
+                res.append(xt)
+        
+        return res
+
+def int_to_propagation_mode(value:int) -> str:
     if value == 0:
         return 'i2o'
     elif value == 1:
@@ -699,6 +733,9 @@ class PlotFormatter:
         arguments: List[str] = [int(a) for a in name_parts[2:]]
 
         settings = self.settings.get(model_name, dict())
+        
+        if settings.get('ignore', False):
+            return None
 
         prop_mode_index = next(
           (i for i, val in enumerate(settings.get('agument_order', []))
@@ -739,7 +776,9 @@ class PlotFormatter:
     def parse_json(self, json_instance: Dict[str, Any]) -> ModelCollection:
         model_collection = ModelCollection()
         for benchmark in self.filter_json_benchmarks(json_instance):
-            model_collection.add_model(self.parse_json_benchmark(benchmark))
+            model = self.parse_json_benchmark(benchmark)
+            if model is not None:
+                model_collection.add_model(model)
 
         return model_collection
 
@@ -827,7 +866,7 @@ class PlotFormatter:
             axes.flat[i].set_xticks(figure.pretty_xticks)
         plt.subplots_adjust(
           left=0.075,
-          right=1,
+          right=0.999,
           bottom=0.07,
           top=0.96,
           wspace=0.13,

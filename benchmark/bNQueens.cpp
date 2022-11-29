@@ -36,22 +36,25 @@ class Queens : public benchmark::Fixture {
     }
 
     engine->open();
-
     setEngineModes(*engine, state.range(1));
+    // the total number of variables is linear in n
+    queens = std::vector<VarId>(n);
+    q_offset_minus = std::vector<VarId>(n);
+    q_offset_plus = std::vector<VarId>(n);
 
     for (Int i = 0; i < n; ++i) {
-      const VarId q = engine->makeIntVar(i, 0, n - 1);
-      queens.push_back(q);
-      q_offset_minus.push_back(
-          engine->makeIntView<IntOffsetView>(*engine, q, -i));
-      q_offset_plus.push_back(
-          engine->makeIntView<IntOffsetView>(*engine, q, i));
+      queens.at(i) = engine->makeIntVar(i, 0, n - 1);
+      q_offset_minus.at(i) =
+          engine->makeIntView<IntOffsetView>(*engine, queens.at(i), -i);
+      q_offset_plus.at(i) =
+          engine->makeIntView<IntOffsetView>(*engine, queens.at(i), i);
     }
 
     violation1 = engine->makeIntVar(0, 0, n);
     violation2 = engine->makeIntVar(0, 0, n);
     violation3 = engine->makeIntVar(0, 0, n);
 
+    // 3 invariants, each having taking n static input variables
     engine->makeConstraint<AllDifferent>(*engine, violation1, queens);
     engine->makeConstraint<AllDifferent>(*engine, violation2, q_offset_minus);
     engine->makeConstraint<AllDifferent>(*engine, violation3, q_offset_plus);
@@ -59,7 +62,7 @@ class Queens : public benchmark::Fixture {
     totalViolation = engine->makeIntVar(0, 0, 3 * n);
 
     engine->makeInvariant<Linear>(
-        *engine, totalViolation, std::vector<Int>{1, 1, 1},
+        *engine, totalViolation,
         std::vector<VarId>{violation1, violation2, violation3});
 
     engine->close();
@@ -82,6 +85,17 @@ class Queens : public benchmark::Fixture {
     }
     return str;
   }
+
+  inline bool sanity() const {
+    return all_in_range(0, n - 1, [&](const size_t i) {
+      return all_in_range(i + 1, n, [&](const size_t j) {
+        return engine->committedValue(queens.at(i)) !=
+                   engine->committedValue(queens.at(j)) &&
+               engine->currentValue(queens.at(i)) !=
+                   engine->currentValue(queens.at(j));
+      });
+    });
+  }
 };
 
 BENCHMARK_DEFINE_F(Queens, probe_single_swap)(benchmark::State& st) {
@@ -103,6 +117,7 @@ BENCHMARK_DEFINE_F(Queens, probe_single_swap)(benchmark::State& st) {
     engine->query(totalViolation);
     engine->endProbe();
     ++probes;
+    assert(sanity());
   }
   st.counters["probes_per_second"] =
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
@@ -125,6 +140,7 @@ BENCHMARK_DEFINE_F(Queens, probe_all_swap)(benchmark::State& st) {
         engine->endProbe();
 
         ++probes;
+        assert(sanity());
       }
     }
   }
@@ -163,6 +179,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
           engine->endProbe();
 
           ++probes;
+          assert(sanity());
 
           Int newValue = engine->currentValue(totalViolation);
           if (newValue <= bestViol) {
@@ -203,26 +220,15 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
 }
 
 //*
-static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int n = 16; n <= 1024; n *= 2) {
-    for (int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({n, mode});
-    }
-#ifndef NDEBUG
-    return;
-#endif
-  }
-}
-
 BENCHMARK_REGISTER_F(Queens, probe_single_swap)
     ->Unit(benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultArguments);
 
 /*
 BENCHMARK_REGISTER_F(Queens, probe_all_swap)
     ->Unit(benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultArguments);
 
 /*
-BENCHMARK_REGISTER_F(Queens, solve)->Apply(arguments);
+BENCHMARK_REGISTER_F(Queens, solve)->Apply(defaultArguments);
 //*/

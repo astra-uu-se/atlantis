@@ -21,8 +21,7 @@ class ExtremeStatic : public benchmark::Fixture {
   VarId objective;
 
   std::random_device rd;
-  std::mt19937 genStaticVarValue;
-  std::mt19937 genStaticVarIndex;
+  std::mt19937 gen;
   std::uniform_int_distribution<Int> staticVarValueDist;
   std::uniform_int_distribution<Int> staticVarIndexDist;
   size_t numInputs;
@@ -49,8 +48,7 @@ class ExtremeStatic : public benchmark::Fixture {
     engine->makeInvariant<Linear>(*engine, objective, staticInputVars);
 
     engine->close();
-    genStaticVarValue = std::mt19937(rd());
-    genStaticVarIndex = std::mt19937(rd());
+    gen = std::mt19937(rd());
     staticVarIndexDist =
         std::uniform_int_distribution<Int>{0, static_cast<Int>(numInputs) - 1};
     staticVarValueDist = std::uniform_int_distribution<Int>{lb, ub};
@@ -68,8 +66,8 @@ BENCHMARK_DEFINE_F(ExtremeStatic, probe_single_var)
   size_t probes = 0;
   for (auto _ : st) {
     engine->beginMove();
-    engine->setValue(staticInputVars.at(staticVarIndexDist(genStaticVarIndex)),
-                     staticVarValueDist(genStaticVarValue));
+    engine->setValue(staticInputVars.at(staticVarIndexDist(gen)),
+                     staticVarValueDist(gen));
     engine->endMove();
 
     engine->beginProbe();
@@ -82,21 +80,10 @@ BENCHMARK_DEFINE_F(ExtremeStatic, probe_single_var)
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-///*
-
-static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int numInputs = 32; numInputs <= 1024; numInputs *= 2) {
-    for (Int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({numInputs, mode});
-    }
-#ifndef NDEBUG
-    return;
-#endif
-  }
-}
+//*
 
 BENCHMARK_REGISTER_F(ExtremeStatic, probe_single_var)
     ->Unit(benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultArguments);
 
 //*/

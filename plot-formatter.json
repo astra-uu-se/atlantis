@@ -181,7 +181,7 @@
     "model_name": "TSPTW",
     "label": "Sequence",
     "yscale": "log",
-    "group": 0,
+    "ignore": true,
     "method_name": {
       "probe_three_opt": "single Three-opt",
       "probe_all_swap": "all Three-opts"

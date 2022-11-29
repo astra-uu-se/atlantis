@@ -23,8 +23,7 @@ class ExtremeDynamic : public benchmark::Fixture {
   VarId objective;
 
   std::random_device rd;
-  std::mt19937 genStaticVarValue;
-  std::mt19937 genDynamicVarValue;
+  std::mt19937 gen;
   std::uniform_int_distribution<Int> staticVarValueDist;
   std::uniform_int_distribution<Int> dynamicVarValueDist;
   size_t numInvariants;
@@ -59,8 +58,7 @@ class ExtremeDynamic : public benchmark::Fixture {
                                       outputVars, 0);
 
     engine->close();
-    genStaticVarValue = std::mt19937(rd());
-    genDynamicVarValue = std::mt19937(rd());
+    gen = std::mt19937(rd());
     staticVarValueDist = std::uniform_int_distribution<Int>{
         0, static_cast<Int>(numInvariants) - 1};
     dynamicVarValueDist = std::uniform_int_distribution<Int>{lb, ub};
@@ -82,7 +80,7 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_static_var)
   for (auto _ : st) {
     // Perform move
     engine->beginMove();
-    engine->setValue(staticInputVar, staticVarValueDist(genStaticVarValue));
+    engine->setValue(staticInputVar, staticVarValueDist(gen));
     engine->endMove();
 
     engine->beginProbe();
@@ -100,8 +98,8 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_single_dynamic_var)
   size_t probes = 0;
   for (auto _ : st) {
     engine->beginMove();
-    engine->setValue(dynamicInputVars.at(staticVarValueDist(genStaticVarValue)),
-                     dynamicVarValueDist(genDynamicVarValue));
+    engine->setValue(dynamicInputVars.at(staticVarValueDist(gen)),
+                     dynamicVarValueDist(gen));
     engine->endMove();
 
     engine->beginProbe();
@@ -114,25 +112,14 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_single_dynamic_var)
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
 }
 
-///*
-
-static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int numInvariants = 32; numInvariants <= 1024; numInvariants *= 2) {
-    for (Int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({numInvariants, mode});
-    }
-#ifndef NDEBUG
-    return;
-#endif
-  }
-}
+//*
 
 BENCHMARK_REGISTER_F(ExtremeDynamic, probe_static_var)
     ->Unit(benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultArguments);
 
 BENCHMARK_REGISTER_F(ExtremeDynamic, probe_single_dynamic_var)
     ->Unit(benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultArguments);
 
 //*/
