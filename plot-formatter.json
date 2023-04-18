@@ -98,6 +98,7 @@
       "probing_all_swap": "all swaps",
       "probe_all_swap": "all swaps"
     },
+    "group": 0,
     "argument_order": [
       "Car count",
       "PROPAGATION_MODE"
@@ -107,6 +108,7 @@
   "GolombRuler": {
     "model_name": "Golomb Rulers",
     "yscale": "log",
+    "group": 0,
     "method_name": {
       "probe_single": "change single mark"
     },
@@ -118,6 +120,7 @@
   "Queens": {
     "model_name": "N-Queens",
     "yscale": "log",
+    "group": 0,
     "method_name": {
       "probing_single_swap": "swap two queens",
       "probe_single_swap": "swap two queens",
@@ -131,13 +134,14 @@
   },
   "MagicSquare": {
     "model_name": "Magic Squares and Sequences",
+    "yscale": "log",
+    "group": 0,
     "method_name": {
       "probing_single_swap": "swap two numbers",
       "probe_single_swap": "swap two numbers",
       "probing_all_swap": "all swaps",
       "probe_all_swap": "all swaps"
     },
-    "yscale": "log",
     "argument_order": [
       "Number count",
       "PROPAGATION_MODE"
@@ -146,6 +150,7 @@
   "VesselLoading": {
     "model_name": "Vessel Loading",
     "yscale": "log",
+    "group": 0,
     "method_name": {
       "rotate_rand_container": "Rotate random",
       "probe_single_relocate": "relocate single container"
@@ -159,6 +164,7 @@
     "model_name": "TSPTW",
     "label": "Tour",
     "yscale": "log",
+    "group": 0,
     "method_name": {
       "probe_three_opt": "single Three-opt",
       "probe_all_swap": "all Three-opts"
@@ -175,6 +181,7 @@
     "model_name": "TSPTW",
     "label": "Sequence",
     "yscale": "log",
+    "group": 0,
     "method_name": {
       "probe_three_opt": "single Three-opt",
       "probe_all_swap": "all Three-opts"
@@ -186,5 +193,15 @@
     "compare": [
       "TSPTW"
     ]
+  },
+  "ExtremeDynamic": {
+    "model_name": "Extreme Dynamic",
+    "yscale": "log",
+    "group": 1
+  },
+  "ExtremeStatic": {
+    "model_name": "Extreme Static",
+    "yscale": "log",
+    "group": 1
   }
 }
