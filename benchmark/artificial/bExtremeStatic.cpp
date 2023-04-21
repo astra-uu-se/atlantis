@@ -10,9 +10,7 @@
 
 #include "../benchmark.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariants/elementVar.hpp"
 #include "invariants/linear.hpp"
-#include "misc/logging.hpp"
 
 class ExtremeStatic : public benchmark::Fixture {
  public:

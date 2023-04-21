@@ -19,10 +19,10 @@ class TSPTW : public benchmark::Fixture {
  public:
   std::unique_ptr<PropagationEngine> engine;
   std::vector<VarId> pred;
-  std::vector<VarId> timeToPrev;
-  std::vector<VarId> arrivalPrev;
+  std::vector<VarId> timeToPred;
+  std::vector<VarId> arrivalTimePred;
   std::vector<VarId> arrivalTime;
-  std::vector<std::vector<Int>> dist;
+  std::vector<std::vector<Int>> durations;
   VarId totalDist;
 
   std::random_device rd;
@@ -50,16 +50,16 @@ class TSPTW : public benchmark::Fixture {
 
     // The first row and column hold dummy values:
     for (int i = 0; i < n; ++i) {
-      dist.emplace_back();
+      durations.emplace_back();
       for (int j = 0; j < n; ++j) {
-        dist.back().push_back(i * j);
+        durations.back().push_back(i * j);
       }
     }
 
     pred = std::vector<VarId>(n);
     arrivalTime = std::vector<VarId>(n);
-    timeToPrev = std::vector<VarId>(n, NULL_ID);
-    arrivalPrev = std::vector<VarId>(n, NULL_ID);
+    timeToPred = std::vector<VarId>(n, NULL_ID);
+    arrivalTimePred = std::vector<VarId>(n, NULL_ID);
 
     for (Int i = 0; i < n; ++i) {
       const Int initVal = (i - 1 + n) % n;
@@ -74,10 +74,10 @@ class TSPTW : public benchmark::Fixture {
 
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
-      // timeToPrev[i] = dist[i][pred[i]]
-      timeToPrev[i] =
-          engine->makeIntView<ElementConst>(*engine, pred[i], dist[i], 0);
-      arrivalPrev.at(i) = engine->makeIntVar(0, 0, MAX_TIME);
+      // timeToPred[i] = durations[i][pred[i]]
+      timeToPred[i] =
+          engine->makeIntView<ElementConst>(*engine, pred[i], durations[i], 0);
+      arrivalTimePred.at(i) = engine->makeIntVar(0, 0, MAX_TIME);
       arrivalTime.at(i) = engine->makeIntVar(0, 0, MAX_TIME);
     }
 
@@ -85,31 +85,29 @@ class TSPTW : public benchmark::Fixture {
     // Creating n - 1 dynamic invariants, each with 1 static variable and n
     // dynamic variables, resulting in n * n dynamic edges
     // Creating n - 1 static invariants, each with 2 static edges
-    arrivalPrev.at(0) = engine->makeIntVar(0, 0, 0);
-    arrivalTime.at(0) = arrivalPrev.at(0);
+    arrivalTimePred.at(0) = engine->makeIntVar(0, 0, 0);
+    arrivalTime.at(0) = arrivalTimePred.at(0);
     for (int i = 1; i < n; ++i) {
-      // arrivalPrev[i] = arrivalTime[pred[i]]
-      engine->makeInvariant<ElementVar>(*engine, arrivalPrev[i], pred[i],
+      // arrivalTimePred[i] = arrivalTime[pred[i]]
+      engine->makeInvariant<ElementVar>(*engine, arrivalTimePred[i], pred[i],
                                         arrivalTime, 0);
-      // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
-      engine->makeInvariant<Plus>(*engine, arrivalTime[i], arrivalPrev[i],
-                                  timeToPrev[i]);
+      // arrivalTime[i] = arrivalTimePred[i] + timeToPred[i]
+      engine->makeInvariant<Plus>(*engine, arrivalTime[i], arrivalTimePred[i],
+                                  timeToPred[i]);
     }
 
-    // totalDist = sum(timeToPrev)
+    // totalDist = sum(timeToPred)
     totalDist = engine->makeIntVar(0, 0, MAX_TIME);
     // Remove the first dummy value:
-    assert(timeToPrev.front() == NULL_ID);
-    timeToPrev.erase(timeToPrev.begin());
-    assert(timeToPrev.front() != NULL_ID);
-    engine->makeInvariant<Linear>(*engine, totalDist, timeToPrev);
+    assert(timeToPred.front() == NULL_ID);
+    timeToPred.erase(timeToPred.begin());
+    assert(timeToPred.front() != NULL_ID);
+    engine->makeInvariant<Linear>(*engine, totalDist, timeToPred);
 
-    VarId leqConst = engine->makeIntVar(100, 100, 100);
-    violation = std::vector<VarId>(n);
-    for (int i = 0; i < n; ++i) {
-      violation.at(i) = engine->makeIntVar(0, 0, MAX_TIME);
-      engine->makeConstraint<LessEqual>(*engine, violation.at(i),
-                                        arrivalTime[i], leqConst);
+    violation = std::vector<VarId>{};
+    for (int i = 1; i < n; ++i) {
+      violation.emplace_back(
+          engine->makeIntView<LessEqualConst>(*engine, arrivalTime[i], 100));
     }
 
     totalViolation = engine->makeIntVar(0, 0, MAX_TIME * n);
@@ -135,10 +133,10 @@ class TSPTW : public benchmark::Fixture {
 
   void TearDown(const ::benchmark::State&) override {
     pred.clear();
-    timeToPrev.clear();
-    arrivalPrev.clear();
+    timeToPred.clear();
+    arrivalTimePred.clear();
     arrivalTime.clear();
-    dist.clear();
+    durations.clear();
     violation.clear();
   }
 
@@ -161,7 +159,7 @@ class TSPTW : public benchmark::Fixture {
   Int computeDistance() {
     Int tot = 0;
     for (Int i = 0; i < n; ++i) {
-      tot += dist.at(i).at(engine->currentValue(pred.at(i)));
+      tot += durations.at(i).at(engine->currentValue(pred.at(i)));
     }
     return tot;
   }

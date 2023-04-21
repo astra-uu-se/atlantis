@@ -45,7 +45,7 @@ class VesselLoading : public benchmark::Fixture {
   VarId totalViolation;
 
   std::uniform_int_distribution<size_t> indexDistr;
-  std::uniform_int_distribution<Int> rotationDistr;
+  std::uniform_int_distribution<Int> orientationDistr;
   std::vector<std::array<std::uniform_int_distribution<Int>, 2>> leftDistr;
   std::vector<std::array<std::uniform_int_distribution<Int>, 2>> bottomDistr;
 
@@ -174,16 +174,16 @@ class VesselLoading : public benchmark::Fixture {
           VarId isBelow = engine->makeIntVar(0, 0, vesselLength + vesselWidth);
           VarId isAbove = engine->makeIntVar(0, 0, vesselLength + vesselWidth);
 
-          // isRightOf = right[i] + sep <= left[j]:
+          // isRightOf = (right[i] + sep <= left[j]):
           engine->makeConstraint<LessEqual>(*engine, isRightOf, rightSep,
                                             left[j]);
-          // isLeftOf = right[j] <= left[i] - sep:
+          // isLeftOf = (right[j] <= left[i] - sep):
           engine->makeConstraint<LessEqual>(*engine, isLeftOf, right[j],
                                             leftSep);
-          // isAbove = top[i] + sep <= bottom[j]:
+          // isAbove = (top[i] + sep <= bottom[j]):
           engine->makeConstraint<LessEqual>(*engine, isAbove, topSep,
                                             bottom[j]);
-          // isBelow = top[j] <= bottom[i] - sep:
+          // isBelow = (top[j] <= bottom[i] - sep):
           engine->makeConstraint<LessEqual>(*engine, isBelow, top[j],
                                             bottomSep);
 
@@ -209,7 +209,7 @@ class VesselLoading : public benchmark::Fixture {
     engine->close();
 
     indexDistr = std::uniform_int_distribution<size_t>{0u, containerCount - 1};
-    rotationDistr = std::uniform_int_distribution<Int>{0, 1};
+    orientationDistr = std::uniform_int_distribution<Int>{0, 1};
     leftDistr.resize(containerCount);
     bottomDistr.resize(containerCount);
     for (size_t i = 0; i < containerCount; ++i) {
@@ -240,12 +240,12 @@ BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)(benchmark::State& st) {
   for (auto _ : st) {
     const size_t i = indexDistr(gen);
     assert(i < containerCount);
-    const Int newRotation = rotationDistr(gen);
-    assert(0 <= newRotation && newRotation <= 1);
-    const Int newLeft = leftDistr[i][newRotation](gen);
-    const Int newBottom = bottomDistr[i][newRotation](gen);
+    const Int newOrientation = orientationDistr(gen);
+    assert(0 <= newOrientation && newOrientation <= 1);
+    const Int newLeft = leftDistr[i][newOrientation](gen);
+    const Int newBottom = bottomDistr[i][newOrientation](gen);
     engine->beginMove();
-    engine->setValue(orientation[i], newRotation);
+    engine->setValue(orientation[i], newOrientation);
     engine->setValue(left[i], newLeft);
     engine->setValue(bottom[i], newBottom);
     engine->endMove();

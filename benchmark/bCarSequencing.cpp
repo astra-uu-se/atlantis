@@ -11,8 +11,8 @@
 #include "constraints/equal.hpp"
 #include "constraints/lessThan.hpp"
 #include "core/propagationEngine.hpp"
+#include "invariants/countConst.hpp"
 #include "invariants/linear.hpp"
-#include "views/elementConst.hpp"
 #include "views/lessEqualConst.hpp"
 
 class CarSequencing : public benchmark::Fixture {
@@ -20,13 +20,13 @@ class CarSequencing : public benchmark::Fixture {
   std::unique_ptr<PropagationEngine> engine;
 
   size_t numCars;
-  const size_t numOptions = 5;
+  const size_t numFeatures = 5;
 
   std::vector<size_t> classCount;
   std::vector<size_t> maxCarsInBlock;
   std::vector<size_t> blockSize;
   std::vector<std::vector<bool>> carData;
-  std::vector<std::vector<Int>> carOption;
+  std::vector<std::vector<Int>> carFeature;
 
   std::vector<VarId> sequence;
   VarId totalViolation;
@@ -51,19 +51,20 @@ class CarSequencing : public benchmark::Fixture {
   }
 
   void initCarData() {
-    std::uniform_int_distribution<size_t> optionDistribution(1, numOptions - 1);
+    std::uniform_int_distribution<size_t> featureDistribution(1,
+                                                              numFeatures - 1);
     auto rng = std::default_random_engine{};
     carData = std::vector<std::vector<bool>>(
-        numClasses(), std::vector<bool>(numOptions, false));
+        numClasses(), std::vector<bool>(numFeatures, false));
     for (size_t c = 0; c < numClasses(); ++c) {
-      const size_t classOptionCount = optionDistribution(gen);
-      for (size_t o = 0; o < classOptionCount; ++o) {
+      const size_t classFeatureCount = featureDistribution(gen);
+      for (size_t o = 0; o < classFeatureCount; ++o) {
         carData.at(c).at(o) = true;
       }
       std::shuffle(carData.at(c).begin(), carData.at(c).end(), rng);
     }
 
-    for (size_t o = 0; o < numOptions; ++o) {
+    for (size_t o = 0; o < numFeatures; ++o) {
       bool found = false;
       for (size_t c = 0; c < numClasses(); ++c) {
         if (carData.at(c).at(o) == 1) {
@@ -78,22 +79,20 @@ class CarSequencing : public benchmark::Fixture {
   }
 
   void initCarBlocks() {
-    maxCarsInBlock = std::vector<size_t>(numOptions);
-    blockSize = std::vector<size_t>(numOptions);
-    for (size_t o = 0; o < numOptions; ++o) {
-      maxCarsInBlock.at(o) = 1 + carDistribution(gen);
-      blockSize.at(o) = 1 + carDistribution(gen);
-    }
+    blockSize = std::vector<size_t>(numFeatures);
+    std::iota(blockSize.begin(), blockSize.end(), 2);
+    maxCarsInBlock = std::vector<size_t>(numFeatures);
+    std::iota(maxCarsInBlock.begin(), maxCarsInBlock.end(), 1);
   }
 
-  void initCarOptions() {
-    carOption = std::vector<std::vector<Int>>(numOptions);
-    for (size_t o = 0; o < numOptions; ++o) {
-      carOption.at(o) = std::vector<Int>(numCars);
+  void initCarFeatures() {
+    carFeature = std::vector<std::vector<Int>>(numFeatures);
+    for (size_t o = 0; o < numFeatures; ++o) {
+      carFeature.at(o) = std::vector<Int>(numCars);
       size_t i = 0;
       for (size_t c = 0; c < classCount.size(); ++c) {
         for (size_t j = 0; j < classCount.at(c); ++j) {
-          carOption.at(o).at(i) = carData.at(c).at(o) ? 1 : 0;
+          carFeature.at(o).at(i) = carData.at(c).at(o) ? 1 : 0;
           ++i;
         }
       }
@@ -113,10 +112,10 @@ class CarSequencing : public benchmark::Fixture {
     initClassCount();
     initCarData();
     initCarBlocks();
-    initCarOptions();
+    initCarFeatures();
 
     assert(std::all_of(
-        carOption.begin(), carOption.end(), [&](const std::vector<Int>& v) {
+        carFeature.begin(), carFeature.end(), [&](const std::vector<Int>& v) {
           return std::all_of(v.begin(), v.end(),
                              [&](const Int o) { return 0 <= o && o <= 1; });
         }));
@@ -125,45 +124,39 @@ class CarSequencing : public benchmark::Fixture {
     sequence = std::vector<VarId>(numCars);
     std::vector<VarId> violations{};
     // introducing variables linear in numCars
-    violations.reserve(numOptions * numCars);
-    std::vector<VarId> optionElemSum{};
+    violations.reserve(numFeatures * numCars);
+    std::vector<VarId> featureElemSum{};
     // introducing variables linear in numCars
-    optionElemSum.reserve(numOptions * numCars);
-    // introducing variables linear in numCars (numOptions is a constant)
-    std::vector<std::vector<VarId>> optionElem(numOptions);
-    for (size_t o = 0; o < numOptions; ++o) {
-      optionElem.at(o) = std::vector<VarId>(numCars, NULL_ID);
+    featureElemSum.reserve(numFeatures * numCars);
+    // introducing variables linear in numCars (numFeatures is a constant)
+    std::vector<std::vector<VarId>> featureElem(numFeatures);
+    for (size_t o = 0; o < numFeatures; ++o) {
+      featureElem.at(o) = std::vector<VarId>(numCars, NULL_ID);
     }
 
     for (size_t i = 0; i < numCars; ++i) {
       sequence.at(i) = engine->makeIntVar(i, 0, numCars - 1);
     }
 
-    for (size_t o = 0; o < numOptions; ++o) {
-      for (size_t start = 0; start < numCars - blockSize.at(o) + 1; ++start) {
-        std::vector<VarId> optionElemRun{};
-        optionElemRun.reserve(blockSize.at(o) - 1);
-        for (size_t car = start; car < start + blockSize.at(o) && car < numCars;
-             ++car) {
-          if (optionElem.at(o).at(car) == NULL_ID) {
-            optionElem.at(o).at(car) = engine->makeIntView<ElementConst>(
-                *engine, sequence.at(car), carOption.at(o));
-          }
-          optionElemRun.emplace_back(optionElem.at(o).at(car));
-        }
-        assert(optionElemRun.size() == blockSize.at(o));
-        optionElemSum.emplace_back(engine->makeIntVar(0, 0, blockSize.at(o)));
+    for (size_t o = 0; o < numFeatures; ++o) {
+      const size_t end = numCars - blockSize.at(o) + 1;
+      for (size_t start = 0; start < end; ++start) {
+        std::vector<VarId> featureElemRun(
+            sequence.begin() + start,
+            sequence.begin() + start + blockSize.at(o));
+        assert(featureElemRun.size() == blockSize.at(o));
+        featureElemSum.emplace_back(engine->makeIntVar(0, 0, blockSize.at(o)));
         // Introducing up to n invariants each with up to n static edges
-        engine->makeInvariant<Linear>(*engine, optionElemSum.back(),
-                                      optionElemRun);
+        engine->makeInvariant<CountConst>(*engine, featureElemSum.back(), o,
+                                          featureElemRun);
         // Introducing up to n invariants each with 2 static edges
         violations.emplace_back(engine->makeIntView<LessEqualConst>(
-            *engine, optionElemSum.back(), maxCarsInBlock.at(o)));
+            *engine, featureElemSum.back(), maxCarsInBlock.at(o)));
       }
     }
 
-    assert(violations.size() <= numOptions * numCars);
-    assert(optionElemSum.size() <= numOptions * numCars);
+    assert(violations.size() <= numFeatures * numCars);
+    assert(featureElemSum.size() <= numFeatures * numCars);
 
     Int maxViol = 0;
     for (const VarId viol : violations) {
@@ -186,11 +179,11 @@ class CarSequencing : public benchmark::Fixture {
     for (auto& vec : carData) {
       vec.clear();
     }
-    for (auto& vec : carOption) {
+    for (auto& vec : carFeature) {
       vec.clear();
     }
     carData.clear();
-    carOption.clear();
+    carFeature.clear();
   }
 };
 

@@ -8,7 +8,7 @@ FZN_MODEL_DIR=${MKFILE_PATH}fzn-models
 BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 NUM_BENCHMARK_REPETITIONS=5
-BENCHMARK_FILTER="^(CarSequencing|ExtremeDynamic|ExtremeStatic|MagicSquare|NQueens|VesselLoading|TSPTW)\/"
+BENCHMARK_FILTER="^(GolomgRuler|ExtremeDynamic|ExtremeStatic|MagicSquare|NQueens|TSPTW|VesselLoading)"
 
 export MZN_SOLVER_PATH=${MKFILE_PATH}minizinc
 
