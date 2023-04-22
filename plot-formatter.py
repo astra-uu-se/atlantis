@@ -8,6 +8,7 @@ import json
 import argparse
 from typing import *
 from math import ceil
+from pprint import pprint
 matplotlib.use('tkagg')
 
 
@@ -75,16 +76,19 @@ class Figure:
     ylabel: str
     yscale: str
     identifier: str
+    show_y_values: bool
     plots: List[Plot]
     xticks: List[str]
 
     def __init__(self, title: str, xlabel: str, ylabel: str, yscale: str,
-                 identifier: str, plots: List[Plot]) -> None:
+                 identifier: str, show_y_values: bool,
+                 plots: List[Plot]) -> None:
         self.title: str = title
         self.xlabel: str = xlabel
         self.ylabel: str = ylabel
         self.yscale: str = yscale
         self.identifier: str = identifier
+        self.show_y_values: bool = show_y_values
         self.plots: List[Plot] = plots
         self.xticks: List[int] = get_xticks(plots)
 
@@ -450,6 +454,10 @@ class Model:
         return self.settings.get('group', 0)
 
     @property
+    def show_y_values(self) -> bool:
+        return self.settings.get('show_y_values', False)
+
+    @property
     def argument_labels(self) -> List[str]:
         for method in self.methods.values():
             if len(method.argument_labels) > 0:
@@ -699,7 +707,7 @@ class PlotFormatter:
         arguments: List[str] = [int(a) for a in name_parts[2:]]
 
         settings = self.settings.get(model_name, dict())
-        
+
         if settings.get('ignore', False):
             return None
 
@@ -779,28 +787,35 @@ class PlotFormatter:
         plt.show()
 
     def plot_subplots(self, subplots: List[Figure]) -> None:
-        cols = 2
+        cols = 1 if len(subplots) < 2 else 2
         rows = int(ceil(len(subplots) / 2))
 
         fig, axes = plt.subplots(rows, cols, figsize=(10, 8))
 
+        flat = [axes] if len(subplots) == 1 else axes.flat
+
         for i, figure in enumerate(subplots):
-            axes.flat[i].set_title(figure.title)
-            axes.flat[i].set_xlabel(figure.xlabel)
-            axes.flat[i].set_ylabel(figure.ylabel)
-            axes.flat[i].set_yscale(figure.yscale)
+            flat[i].set_title(figure.title)
+            flat[i].set_xlabel(figure.xlabel)
+            flat[i].set_ylabel(figure.ylabel)
+            flat[i].set_yscale(figure.yscale)
             for plot in figure:
-                axes.flat[i].plot(
+                flat[i].plot(
                     plot.x_vals,
                     plot.y_vals,
                     label=plot.label,
                     marker=plot.marker,
                     linestyle=plot.linestyle
                 )
-                # axes.flat[i].xaxis.set_tick_params(labelsize=9)
-                # axes.flat[i].yaxis.set_tick_params(labelsize=9)
+                if not figure.show_y_values:
+                    continue
+                for x, y in zip(plot.x_vals, plot.y_vals):
+                    flat[i].text(x, y, str(int(y)), ha='center')
+                # flat[i].xaxis.set_tick_params(labelsize=9)
+                # flat[i].yaxis.set_tick_params(labelsize=9)
 
-            axes.flat[i].set_xticks(figure.pretty_xticks)
+            flat[i].set_xticks(figure.pretty_xticks)
+
         plt.subplots_adjust(
           left=0.06,
           right=0.999,
@@ -810,18 +825,20 @@ class PlotFormatter:
           hspace=0.43)
 
         seen_labels = set()
-        lines = []
-        labels = []
+        handles_labels = []
 
-        for ax in axes.flat:
-            li, la = ax.get_legend_handles_labels()
-            for i, l in enumerate(la):
-                if l not in seen_labels:
-                    seen_labels.add(l)
-                    lines.append(li[i])
-                    labels.append(l)
+        for ax in flat:
+            ha, la = ax.get_legend_handles_labels()
+            for handle, label in zip(ha, la):
+                if label not in seen_labels:
+                    handles_labels.append((handle, label))
+                    seen_labels.add(label)
 
-        fig.legend(labels=labels, ncol=len(labels), loc='upper center')
+        labels = [l for _, l in sorted(handles_labels, key=lambda hl: hl[1])]
+        handles = [h for h, _ in sorted(handles_labels, key=lambda hl: hl[1])]
+
+        fig.legend(labels=labels, handles=handles, ncol=len(labels),
+                   loc='upper center')
 
         plt.show()
 
@@ -884,6 +901,7 @@ class PlotFormatter:
                       ylabel,
                       initial_model.yscale,
                       identifier,
+                      model.show_y_values,
                       plots)
 
     def plot_compare_models(self, models_to_compare: Set[Model]) -> None:
@@ -919,6 +937,7 @@ class PlotFormatter:
                       ylabel,
                       model.yscale,
                       identifier,
+                      model.show_y_values,
                       plots)
 
     def create_plot(self, model: Model) -> Figure:

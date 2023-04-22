@@ -113,7 +113,7 @@
       "probe_single": "change single mark"
     },
     "argument_order": [
-      "Mark count",
+      "n",
       "PROPAGATION_MODE"
     ]
   },
@@ -133,7 +133,7 @@
     ]
   },
   "MagicSquare": {
-    "model_name": "Magic Squares and Sequences",
+    "model_name": "Magic Square",
     "yscale": "log",
     "group": 0,
     "method_name": {
@@ -143,7 +143,7 @@
       "probe_all_swap": "all swaps"
     },
     "argument_order": [
-      "Number count",
+      "n",
       "PROPAGATION_MODE"
     ]
   },
@@ -151,17 +151,18 @@
     "model_name": "Vessel Loading",
     "yscale": "log",
     "group": 0,
+    "show_y_values": false,
     "method_name": {
       "rotate_rand_container": "Rotate random",
       "probe_single_relocate": "relocate single container"
     },
     "argument_order": [
-      "Container count",
+      "n",
       "PROPAGATION_MODE"
     ]
   },
   "TSPTW": {
-    "model_name": "TSPTW",
+    "model_name": "Travelling Salesperson with Time Windows",
     "label": "Tour",
     "yscale": "log",
     "group": 0,
@@ -170,7 +171,7 @@
       "probe_all_swap": "all Three-opts"
     },
     "argument_order": [
-      "Location count",
+      "n",
       "PROPAGATION_MODE"
     ],
     "compare": [
@@ -179,6 +180,7 @@
   },
   "TSPTWAllDiff": {
     "model_name": "TSPTW",
+    "ignore": true,
     "label": "Sequence",
     "yscale": "log",
     "group": 0,
