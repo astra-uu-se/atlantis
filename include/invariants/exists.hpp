@@ -18,8 +18,7 @@ class Exists : public Invariant {
  private:
   const VarId _output;
   const std::vector<VarId> _varArray;
-
-  PriorityList _localPriority;
+  CommittableInt _min;
 
  public:
   explicit Exists(Engine&, VarId output, std::vector<VarId> varArray);
