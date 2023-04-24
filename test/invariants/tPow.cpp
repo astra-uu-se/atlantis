@@ -138,15 +138,16 @@ TEST_F(PowTest, NotifyInputChanged) {
       engine->makeInvariant<Pow>(*engine, outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
-  for (Int val = lb; val <= ub; ++val) {
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
-      const Int expectedOutput =
-          computeOutput(engine->currentTimestamp(), inputs, 1);
+  Timestamp ts = engine->currentTimestamp();
 
-      invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
-      EXPECT_EQ(expectedOutput,
-                engine->value(engine->currentTimestamp(), outputId));
+  for (Int val = lb; val <= ub; ++val) {
+    ++ts;
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      engine->setValue(ts, inputs.at(i), val);
+      const Int expectedOutput = computeOutput(ts, inputs, 1);
+
+      invariant.notifyInputChanged(ts, LocalId(i));
+      EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
     }
   }
 }
@@ -308,8 +309,8 @@ TEST_F(PowTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(10, -100, 100);
     const VarId output = engine->makeIntVar(0, 0, 200);
     testNotifications<MockPow>(
-        &engine->makeInvariant<MockPow>(*engine, output, x, y), propMode,
-        markingMode, 3, x, 0, output);
+        &engine->makeInvariant<MockPow>(*engine, output, x, y),
+        {propMode, markingMode, 3, x, 0, output});
   }
 }
 

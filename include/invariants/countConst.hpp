@@ -3,10 +3,9 @@
 #include <utility>
 #include <vector>
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
-
-class Engine;
 
 /**
  * Invariant for:
@@ -19,7 +18,7 @@ class CountConst : public Invariant {
   const VarId _output;
   const Int _y;
   const std::vector<VarId> _variables;
-  std::vector<CommittableInt> _hasCountValue;
+  std::vector<Int> _hasCountValue;
 
  public:
   explicit CountConst(Engine&, VarId output, Int y,
@@ -27,7 +26,6 @@ class CountConst : public Invariant {
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
-  void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;

@@ -1,7 +1,5 @@
 #include "constraints/boolLessThan.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * Constraint x = y
  * @param violationId id for the violationCount
@@ -44,5 +42,3 @@ VarId BoolLessThan::nextInput(Timestamp ts) {
 }
 
 void BoolLessThan::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void BoolLessThan::commit(Timestamp ts) { Invariant::commit(ts); }

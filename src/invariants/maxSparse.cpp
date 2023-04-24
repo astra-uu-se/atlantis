@@ -1,7 +1,5 @@
 #include "invariants/maxSparse.hpp"
 
-#include "core/engine.hpp"
-
 MaxSparse::MaxSparse(Engine& engine, VarId output, std::vector<VarId> varArray)
     : Invariant(engine),
       _output(output),

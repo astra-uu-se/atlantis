@@ -5,12 +5,10 @@
 #include <vector>
 
 #include "constraint.hpp"
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "variables/committableInt.hpp"
 #include "variables/intVar.hpp"
-
-class CommittableInt;  // forward declare
-class Engine;
 
 template <bool IsClosed>
 class GlobalCardinalityConst : public Constraint {
@@ -18,7 +16,7 @@ class GlobalCardinalityConst : public Constraint {
   const std::vector<VarId> _variables;
   std::vector<Int> _lowerBound;
   std::vector<Int> _upperBound;
-  std::vector<CommittableInt> _localValues;
+  std::vector<Int> _committedValues;
   CommittableInt _shortage;
   CommittableInt _excess;
   std::vector<CommittableInt> _counts;

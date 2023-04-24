@@ -1,7 +1,5 @@
 #include "invariants/elementVar.hpp"
 
-#include "core/engine.hpp"
-
 ElementVar::ElementVar(Engine& engine, VarId output, VarId index,
                        std::vector<VarId> varArray, Int offset)
     : Invariant(engine),
@@ -44,9 +42,11 @@ void ElementVar::recompute(Timestamp ts) {
   assert(safeIndex(_engine.value(ts, _index)) < _varArray.size());
   updateValue(
       ts, _output,
-      _engine.value(ts,
-                    _dynamicInputVar.set(
-                        ts, _varArray[safeIndex(_engine.value(ts, _index))])));
+      _engine.value(ts, _varArray[safeIndex(_engine.value(ts, _index))]));
+}
+
+VarId ElementVar::dynamicInputVar(Timestamp ts) const noexcept {
+  return _varArray[safeIndex(_engine.value(ts, _index))];
 }
 
 void ElementVar::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
@@ -65,5 +65,3 @@ VarId ElementVar::nextInput(Timestamp ts) {
 }
 
 void ElementVar::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void ElementVar::commit(Timestamp ts) { Invariant::commit(ts); }

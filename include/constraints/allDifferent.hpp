@@ -5,17 +5,15 @@
 #include <vector>
 
 #include "constraint.hpp"
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "variables/committableInt.hpp"
 #include "variables/intVar.hpp"
 
-class CommittableInt;  // forward declare
-class Engine;
-
 class AllDifferent : public Constraint {
  protected:
   std::vector<VarId> _variables;
-  std::vector<CommittableInt> _localValues;
+  std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
   signed char increaseCount(Timestamp ts, Int value);

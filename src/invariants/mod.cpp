@@ -1,7 +1,5 @@
 #include "invariants/mod.hpp"
 
-#include "core/engine.hpp"
-
 static inline Int mod(Int xVal, Int yVal) { return xVal % std::abs(yVal); }
 
 Mod::Mod(Engine& engine, VarId output, VarId x, VarId y)
@@ -50,5 +48,3 @@ VarId Mod::nextInput(Timestamp ts) {
 }
 
 void Mod::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void Mod::commit(Timestamp ts) { Invariant::commit(ts); }

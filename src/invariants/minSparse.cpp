@@ -1,7 +1,5 @@
 #include "invariants/minSparse.hpp"
 
-#include "core/engine.hpp"
-
 MinSparse::MinSparse(Engine& engine, VarId output, std::vector<VarId> varArray)
     : Invariant(engine),
       _output(output),

@@ -1,7 +1,5 @@
 #include "invariants/times.hpp"
 
-#include "core/engine.hpp"
-
 Times::Times(Engine& engine, VarId output, VarId x, VarId y)
     : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
@@ -43,5 +41,3 @@ VarId Times::nextInput(Timestamp ts) {
 void Times::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
 void Times::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
-
-void Times::commit(Timestamp ts) { Invariant::commit(ts); }

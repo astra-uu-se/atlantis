@@ -5,7 +5,6 @@
 Engine::Engine()
     : _currentTimestamp(NULL_TIMESTAMP + 1),
       _isOpen(false),
-      _listeningInvariantData(ESTIMATED_NUM_OBJECTS),
       _store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
 
 //---------------------Registration---------------------
@@ -17,6 +16,5 @@ VarId Engine::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
   VarId newId =
       _store.createIntVar(_currentTimestamp, initValue, lowerBound, upperBound);
   registerVar(newId);
-  _listeningInvariantData.register_idx(newId);
   return newId;
 }

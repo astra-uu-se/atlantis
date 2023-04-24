@@ -6,12 +6,10 @@
 
 #include "constraint.hpp"
 #include "constraints/allDifferent.hpp"
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "variables/committableInt.hpp"
 #include "variables/intVar.hpp"
-
-class CommittableInt;  // forward declare
-class Engine;
 
 class AllDifferentExcept : public AllDifferent {
  private:

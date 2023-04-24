@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/engine.hpp"
 #include "views/intView.hpp"
 
 class ScalarView : public IntView {

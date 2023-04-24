@@ -17,7 +17,7 @@ PropagationGraph::PropagationGraph(const Store& store, size_t expectedSize)
       _variablesDefinedByInvariant(expectedSize),
       _inputVariables(expectedSize),
       _isDynamicInvariant(expectedSize),
-      _listeningInvariants(expectedSize),
+      _listeningInvariantData(expectedSize),
       _variableLayerIndex(expectedSize),
       _variablePosition(expectedSize) {}
 
@@ -31,14 +31,14 @@ void PropagationGraph::registerInvariant(InvariantId invariantId) {
 
 void PropagationGraph::registerVar(VarIdBase id) {
   _definingInvariant.register_idx(id);
-  _listeningInvariants.register_idx(id);
+  _listeningInvariantData.register_idx(id);
   _variableLayerIndex.register_idx(id);
   _variablePosition.register_idx(id);
   ++_numVariables;
 }
 
 void PropagationGraph::registerInvariantInput(InvariantId invariantId,
-                                              VarIdBase varId,
+                                              VarIdBase varId, LocalId localId,
                                               bool isDynamicInput) {
   assert(!invariantId.equals(NULL_ID) && !varId.equals(NULL_ID));
   if (_definingInvariant[varId] == invariantId) {
@@ -50,7 +50,8 @@ void PropagationGraph::registerInvariantInput(InvariantId invariantId,
   }
   _isDynamicInvariant.set(
       invariantId, _isDynamicInvariant.get(invariantId) || isDynamicInput);
-  _listeningInvariants[varId].push_back(invariantId);
+  _listeningInvariantData[varId].push_back(
+      ListeningInvariantData(invariantId, localId));
   _inputVariables[invariantId].push_back(
       std::pair<VarIdBase, bool>{varId, isDynamicInput});
 }
@@ -64,19 +65,24 @@ void PropagationGraph::registerDefinedVariable(VarIdBase varId,
         " already defined by invariant " +
         std::to_string(_definingInvariant.at(varId).id));
   }
-  size_t index = _listeningInvariants[varId].size();
-  for (size_t i = 0; i < _listeningInvariants[varId].size(); ++i) {
-    if (_listeningInvariants[varId][i] == invariantId) {
+  size_t index = _listeningInvariantData[varId].size();
+  for (size_t i = 0; i < _listeningInvariantData[varId].size(); ++i) {
+    if (_listeningInvariantData[varId][i].invariantId == invariantId) {
       index = i;
       break;
     }
   }
-  if (index < _listeningInvariants[varId].size()) {
-    _listeningInvariants[varId].erase(_listeningInvariants[varId].begin() +
-                                      index);
+  if (index < _listeningInvariantData[varId].size()) {
+    _listeningInvariantData[varId].erase(
+        _listeningInvariantData[varId].begin() + index);
     logWarning("The (self-cyclic) dependency that the invariant "
                << "(" << invariantId << ") depends on the input "
                << "variable (" << invariantId << ") was removed.");
+    assert(std::all_of(_listeningInvariantData[varId].begin(),
+                       _listeningInvariantData[varId].end(),
+                       [&](const ListeningInvariantData& data) {
+                         return data.invariantId != invariantId;
+                       }));
   }
   _definingInvariant[varId] = invariantId;
   _variablesDefinedByInvariant[invariantId].push_back(varId);
@@ -88,7 +94,7 @@ void PropagationGraph::close(Timestamp ts) {
   _evaluationVariables.clear();
   _searchVariables.clear();
   for (size_t i = 1; i < numVariables() + 1; ++i) {
-    _isEvaluationVariable[i] = (_listeningInvariants.at(i).empty());
+    _isEvaluationVariable[i] = (_listeningInvariantData.at(i).empty());
     _isSearchVariable[i] = (_definingInvariant.at(i) == NULL_ID);
     if (_isEvaluationVariable[i]) {
       _evaluationVariables.emplace_back(i);
@@ -143,7 +149,7 @@ bool PropagationGraph::containsStaticCycle() {
   for (size_t varId = 1u; varId <= numVariables(); ++varId) {
     assert(all_in_range(1u, numVariables() + 1,
                         [&](const size_t i) { return !inFrontier.at(i); }));
-    if (listeningInvariants(varId).size() == 0) {
+    if (listeningInvariantData(varId).size() == 0) {
       if (containsStaticCycle(visited, inFrontier, VarIdBase(varId))) {
         return true;
       }
@@ -373,21 +379,27 @@ size_t PropagationGraph::topologicallyOrder(Timestamp ts,
 
   if (_layerHasDynamicCycle[layer] && isDynamicInvariant(defInv)) {
     // Layer with dynamic cycle and defInv is a dynamic invariant:
-    const VarId dynamicInputId = dynamicInputVariable(ts, defInv);
+    assert(std::all_of(
+        inputVariables(defInv).begin(), inputVariables(defInv).end(),
+        [&](const std::pair<VarId, bool>& p) {
+          return p.first != NULL_ID &&
+                 ((p.second && _variableLayerIndex[p.first].layer <= layer) ||
+                  (!p.second && _variableLayerIndex[p.first].layer < layer));
+        }));
+    const VarId dynamicInputId = dynamicInputVar(ts, defInv);
+    assert(dynamicInputId != NULL_ID);
     // we should have no dependencies to subsequent layers:
-    assert(dynamicInputId == NULL_ID ||
-           _variableLayerIndex[dynamicInputId].layer <= layer);
-    if (dynamicInputId != NULL_ID &&
-        _variableLayerIndex[dynamicInputId].layer == layer) {
+    assert(_variableLayerIndex[dynamicInputId].layer <= layer);
+    if (_variableLayerIndex[dynamicInputId].layer == layer) {
       // visit dynamic input, retrieving the updated position:
       curPosition =
           topologicallyOrder(ts, inFrontier, dynamicInputId, curPosition);
     }
+    assert(_variablePosition[dynamicInputId] < curPosition);
   } else {
     for (const auto& [inputId, isDynamicInput] : inputVariables(defInv)) {
       // The layer has no cycles or defInv is a static invariant:
-      assert(layer == 0 || !_layerHasDynamicCycle.at(layer - 1) ||
-             !isDynamicInput);
+      assert(!_layerHasDynamicCycle.at(layer) || !isDynamicInput);
       // sanity check:
       assert(inputId != NULL_ID);
       // we should have no dependencies to subsequent layers:
@@ -397,6 +409,11 @@ size_t PropagationGraph::topologicallyOrder(Timestamp ts,
         curPosition = topologicallyOrder(ts, inFrontier, inputId, curPosition);
       }
     }
+    assert(std::all_of(inputVariables(defInv).begin(),
+                       inputVariables(defInv).end(),
+                       [&](const std::pair<VarId, bool> p) {
+                         return _variablePosition[p.first] < curPosition;
+                       }));
   }
 
   inFrontier[index] = false;

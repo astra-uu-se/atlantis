@@ -21,9 +21,9 @@ class IfThenElse : public Invariant {
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
+  VarId dynamicInputVar(Timestamp) const noexcept override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  void commit(Timestamp) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };

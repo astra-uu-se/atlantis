@@ -1,6 +1,5 @@
 #include "views/intMaxView.hpp"
 
-#include "core/engine.hpp"
 Int IntMaxView::value(Timestamp ts) {
   return std::max<Int>(_max, _engine.value(ts, _parentId));
 }

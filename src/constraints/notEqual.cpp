@@ -1,7 +1,5 @@
 #include "constraints/notEqual.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * Constraint x != y
  * @param violationId id for the violationCount
@@ -57,5 +55,3 @@ VarId NotEqual::nextInput(Timestamp ts) {
 }
 
 void NotEqual::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void NotEqual::commit(Timestamp ts) { Invariant::commit(ts); }

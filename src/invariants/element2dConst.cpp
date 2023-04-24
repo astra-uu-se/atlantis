@@ -1,7 +1,5 @@
 #include "invariants/element2dConst.hpp"
 
-#include "core/engine.hpp"
-
 static inline Int numCols(const std::vector<std::vector<Int>>& matrix) {
   assert(std::all_of(matrix.begin(), matrix.end(), [&](const auto& col) {
     return col.size() == matrix.front().size();
@@ -84,5 +82,3 @@ VarId Element2dConst::nextInput(Timestamp ts) {
 }
 
 void Element2dConst::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void Element2dConst::commit(Timestamp ts) { Invariant::commit(ts); }

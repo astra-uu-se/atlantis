@@ -237,20 +237,21 @@ TEST_F(Element2dVarTest, NotifyInputChanged) {
         colOffset);
     engine->close();
 
+    Timestamp ts = engine->currentTimestamp();
+
     for (Int rowIndexVal = rowIndexLb; rowIndexVal <= rowIndexUb;
          ++rowIndexVal) {
-      engine->setValue(engine->currentTimestamp(), rowIndex, rowIndexVal);
       for (Int colIndexVal = colIndexLb; colIndexVal <= colIndexUb;
            ++colIndexVal) {
-        engine->setValue(engine->currentTimestamp(), colIndex, colIndexVal);
+        ++ts;
+        engine->setValue(ts, rowIndex, rowIndexVal);
+        engine->setValue(ts, colIndex, colIndexVal);
 
         const Int expectedOutput =
-            computeOutput(engine->currentTimestamp(), rowIndex, colIndex,
-                          rowOffset, colOffset);
+            computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset);
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(0));
-        EXPECT_EQ(expectedOutput,
-                  engine->value(engine->currentTimestamp(), outputId));
+        invariant.notifyInputChanged(ts, LocalId(0));
+        EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
       }
     }
   }
@@ -567,7 +568,7 @@ TEST_F(Element2dVarTest, EngineIntegration) {
     testNotifications<MockElement2dVar>(
         &engine->makeInvariant<MockElement2dVar>(*engine, output, index1,
                                                  index2, varMatrix, 1, 1),
-        propMode, markingMode, 4, index1, 5, output);
+        {propMode, markingMode, 4, index1, 5, output});
   }
 }
 

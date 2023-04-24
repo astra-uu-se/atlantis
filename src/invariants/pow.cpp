@@ -1,7 +1,5 @@
 #include "invariants/pow.hpp"
 
-#include "core/engine.hpp"
-
 Pow::Pow(Engine& engine, VarId output, VarId x, VarId y)
     : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
@@ -97,5 +95,3 @@ VarId Pow::nextInput(Timestamp ts) {
 void Pow::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
 void Pow::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
-
-void Pow::commit(Timestamp ts) { Invariant::commit(ts); }

@@ -23,10 +23,18 @@ class MockInvariantSimple : public Invariant {
  public:
   bool isRegistered = false;
   bool boundsUpdated = false;
+  const VarId outputVar;
+  const VarId inputVar;
 
-  explicit MockInvariantSimple(Engine& engine) : Invariant(engine) {}
+  explicit MockInvariantSimple(Engine& engine, VarId t_outputVar,
+                               VarId t_inputVar)
+      : Invariant(engine), outputVar(t_outputVar), inputVar(t_inputVar) {}
 
-  void registerVars() override { isRegistered = true; }
+  void registerVars() override {
+    _engine.registerInvariantInput(_id, inputVar, LocalId(0));
+    registerDefinedVariable(outputVar);
+    isRegistered = true;
+  }
   void updateBounds(bool) override { boundsUpdated = true; }
 
   MOCK_METHOD(void, recompute, (Timestamp), (override));
@@ -253,13 +261,12 @@ class EngineTest : public ::testing::Test {
 TEST_F(EngineTest, CreateVariablesAndInvariant) {
   engine->open();
 
-  size_t intVarCount = 10;
-  for (size_t value = 0; value < intVarCount; ++value) {
-    engine->makeIntVar(value, Int(-100), Int(100));
-  }
+  const VarId inputVar = engine->makeIntVar(0, Int(-100), Int(100));
+  const VarId outputVar = engine->makeIntVar(0, Int(-100), Int(100));
 
   // TODO: use some other invariants...
-  auto invariant = &engine->makeInvariant<MockInvariantSimple>(*engine);
+  auto invariant =
+      &engine->makeInvariant<MockInvariantSimple>(*engine, outputVar, inputVar);
 
   EXPECT_CALL(*invariant, recompute(testing::_)).Times(AtLeast(1));
 
@@ -268,7 +275,7 @@ TEST_F(EngineTest, CreateVariablesAndInvariant) {
   ASSERT_TRUE(invariant->isRegistered);
 
   engine->close();
-  EXPECT_EQ(engine->store().numVariables(), intVarCount);
+  EXPECT_EQ(engine->store().numVariables(), 2);
   EXPECT_EQ(engine->store().numInvariants(), size_t(1));
 }
 
@@ -344,13 +351,12 @@ TEST_F(EngineTest, ThisTestShouldNotBeHere) {
 TEST_F(EngineTest, RecomputeAndCommit) {
   engine->open();
 
-  Int intVarCount = 10;
-  for (Int value = 0; value < intVarCount; ++value) {
-    engine->makeIntVar(value, -100, 100);
-  }
+  const VarId inputVar = engine->makeIntVar(0, -100, 100);
+  const VarId outputVar = engine->makeIntVar(0, -100, 100);
 
   // TODO: use some other invariants...
-  auto invariant = &engine->makeInvariant<MockInvariantSimple>(*engine);
+  auto invariant =
+      &engine->makeInvariant<MockInvariantSimple>(*engine, outputVar, inputVar);
 
   EXPECT_CALL(*invariant, recompute(testing::_)).Times(1);
 
@@ -360,7 +366,7 @@ TEST_F(EngineTest, RecomputeAndCommit) {
 
   engine->close();
 
-  ASSERT_EQ(engine->store().numVariables(), intVarCount);
+  ASSERT_EQ(engine->store().numVariables(), 2);
   ASSERT_EQ(engine->store().numInvariants(), size_t(1));
 }
 

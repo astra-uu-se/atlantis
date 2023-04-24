@@ -1,7 +1,5 @@
 #include "invariants/absDiff.hpp"
 
-#include "core/engine.hpp"
-
 AbsDiff::AbsDiff(Engine& engine, VarId output, VarId x, VarId y)
     : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
@@ -50,5 +48,3 @@ VarId AbsDiff::nextInput(Timestamp ts) {
 }
 
 void AbsDiff::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void AbsDiff::commit(Timestamp ts) { Invariant::commit(ts); }

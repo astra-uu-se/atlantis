@@ -42,10 +42,10 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
       stack.pop_back();
       _searchVariableAncestors[id].emplace(searchVariable);
 
-      for (const InvariantId invariantId :
-           _engine.listeningInvariants(IdBase(id))) {
+      for (const PropagationGraph::ListeningInvariantData& invariantData :
+           _engine.listeningInvariantData(IdBase(id))) {
         for (const VarIdBase outputVar :
-             _engine.variablesDefinedBy(invariantId)) {
+             _engine.variablesDefinedBy(invariantData.invariantId)) {
           if (!varVisited[outputVar]) {
             varVisited[outputVar] = true;
             stack.push_back(outputVar);
@@ -71,9 +71,10 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
     while (!stack.empty()) {
       const IdBase id = stack.back();
       stack.pop_back();
-      for (const InvariantId invariantId : _engine.listeningInvariants(id)) {
+      for (const PropagationGraph::ListeningInvariantData& invariantData :
+           _engine.listeningInvariantData(id)) {
         for (const VarIdBase outputVar :
-             _engine.variablesDefinedBy(invariantId)) {
+             _engine.variablesDefinedBy(invariantData.invariantId)) {
           if (!_onPropagationPath.get(outputVar)) {
             _onPropagationPath.set(outputVar, true);
             stack.emplace_back(outputVar);

@@ -160,16 +160,17 @@ TEST_F(GlobalCardinalityOpenTest, NotifyInputChanged) {
                                                      cover);
     engine->close();
 
-    for (Int val = lb; val <= ub; ++val) {
-      for (size_t j = 0; j < inputs.size(); ++j) {
-        engine->setValue(engine->currentTimestamp(), inputs[j], val);
-        const auto expectedCounts =
-            computeOutputs(engine->currentTimestamp(), inputs, cover);
+    Timestamp ts = engine->currentTimestamp();
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(j));
+    for (Int val = lb; val <= ub; ++val) {
+      ++ts;
+      for (size_t j = 0; j < inputs.size(); ++j) {
+        engine->setValue(ts, inputs[j], val);
+        const auto expectedCounts = computeOutputs(ts, inputs, cover);
+
+        invariant.notifyInputChanged(ts, LocalId(j));
         for (size_t k = 0; k < outputs.size(); ++k) {
-          EXPECT_EQ(expectedCounts.at(k),
-                    engine->value(engine->currentTimestamp(), outputs.at(k)));
+          EXPECT_EQ(expectedCounts.at(k), engine->value(ts, outputs.at(k)));
         }
       }
     }
@@ -471,8 +472,8 @@ TEST_F(GlobalCardinalityOpenTest, EngineIntegration) {
     testNotifications<MockGlobalCardinalityClosed>(
         &engine->makeInvariant<MockGlobalCardinalityClosed>(*engine, outputs,
                                                             inputs, cover),
-        propMode, markingMode, numInputs + 1, inputs.front(), 1,
-        outputs.front());
+        {propMode, markingMode, numInputs + 1, inputs.front(), 1,
+         outputs.front()});
   }
 }
 

@@ -58,6 +58,7 @@ struct InvariantId : public Id {
   InvariantId(const LocalId&) = delete;
 };
 
+enum class CommitMode { NO_COMMIT, COMMIT, RECOMPUTE_AND_COMMIT };
 enum class PropagationMode { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT };
 enum class OutputToInputMarkingMode {
   // No marking:

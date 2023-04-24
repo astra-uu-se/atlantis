@@ -54,6 +54,15 @@ std::vector<std::pair<T, T>> cartesianProduct(const std::vector<T>& t) {
   return cartesianProduct(t, t);
 }
 
+struct NotificationData {
+  PropagationMode propMode;
+  OutputToInputMarkingMode markingMode;
+  size_t numNextInputCalls;
+  VarId modifiedVarId;
+  Int modifiedVal;
+  VarId queryVarId;
+};
+
 class InvariantTest : public ::testing::Test {
  protected:
   std::unique_ptr<PropagationEngine> engine;
@@ -69,19 +78,15 @@ class InvariantTest : public ::testing::Test {
            OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}};
 
   template <class T>
-  void testNotifications(T* invariant, PropagationMode propMode,
-                         OutputToInputMarkingMode markingMode,
-                         const size_t numNextInputCalls,
-                         const VarId modifiedVarId, const Int modifiedVal,
-                         const VarId queryVarId) {
+  void testNotifications(T* invariant, NotificationData data) {
     EXPECT_CALL(*invariant, recompute(testing::_)).Times(AtLeast(1));
     EXPECT_CALL(*invariant, commit(testing::_)).Times(AtLeast(1));
 
     if (!engine->isOpen()) {
       engine->open();
     }
-    engine->setPropagationMode(propMode);
-    engine->setOutputToInputMarkingMode(markingMode);
+    engine->setPropagationMode(data.propMode);
+    engine->setOutputToInputMarkingMode(data.markingMode);
     engine->close();
 
     if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
@@ -91,7 +96,8 @@ class InvariantTest : public ::testing::Test {
       EXPECT_CALL(*invariant, notifyInputChanged(testing::_, testing::_))
           .Times(1);
     } else {
-      EXPECT_CALL(*invariant, nextInput(testing::_)).Times(numNextInputCalls);
+      EXPECT_CALL(*invariant, nextInput(testing::_))
+          .Times(data.numNextInputCalls);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_)).Times(1);
 
       EXPECT_CALL(*invariant, notifyInputChanged(testing::_, testing::_))
@@ -99,11 +105,11 @@ class InvariantTest : public ::testing::Test {
     }
 
     engine->beginMove();
-    engine->setValue(modifiedVarId, modifiedVal);
+    engine->setValue(data.modifiedVarId, data.modifiedVal);
     engine->endMove();
 
     engine->beginProbe();
-    engine->query(queryVarId);
+    engine->query(data.queryVarId);
     engine->endProbe();
     engine->open();
   }

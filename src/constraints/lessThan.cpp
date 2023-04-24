@@ -1,7 +1,5 @@
 #include "constraints/lessThan.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * Constraint x < y
  * @param violationId id for the violationCount
@@ -48,5 +46,3 @@ VarId LessThan::nextInput(Timestamp ts) {
 }
 
 void LessThan::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void LessThan::commit(Timestamp ts) { Invariant::commit(ts); }

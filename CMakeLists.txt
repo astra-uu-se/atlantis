@@ -164,6 +164,7 @@ if(BUILD_BENCHMARKS)
   # ###############################
   # Benchmarks
   # ###############################
+  set(BENCHMARK_ENABLE_TESTING off) # to suppress benchmark internal tests
   FetchContent_Declare(googlebenchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
     GIT_TAG e451e50e9b8af453f076dec10bd6890847f1624e)

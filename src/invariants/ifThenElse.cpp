@@ -1,7 +1,5 @@
 #include "invariants/ifThenElse.hpp"
 
-#include "core/engine.hpp"
-
 IfThenElse::IfThenElse(Engine& engine, VarId output, VarId b, VarId x, VarId y)
     : Invariant(engine), _output(output), _b(b), _xy({x, y}) {
   _modifiedVars.reserve(1);
@@ -15,6 +13,11 @@ void IfThenElse::registerVars() {
   registerDefinedVariable(_output);
 }
 
+VarId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
+  return _engine.value(ts,
+                       _xy[static_cast<size_t>(_engine.value(ts, _b) != 0)]);
+}
+
 void IfThenElse::updateBounds(bool widenOnly) {
   _engine.updateBounds(
       _output, std::min(_engine.lowerBound(_xy[0]), _engine.lowerBound(_xy[1])),
@@ -25,9 +28,7 @@ void IfThenElse::updateBounds(bool widenOnly) {
 void IfThenElse::recompute(Timestamp ts) {
   updateValue(
       ts, _output,
-      _engine.value(
-          ts, _dynamicInputVar.set(
-                  ts, _xy[static_cast<size_t>(_engine.value(ts, _b) != 0)])));
+      _engine.value(ts, _xy[static_cast<size_t>(_engine.value(ts, _b) != 0)]));
 }
 
 void IfThenElse::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
@@ -44,5 +45,3 @@ VarId IfThenElse::nextInput(Timestamp ts) {
 }
 
 void IfThenElse::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void IfThenElse::commit(Timestamp ts) { Invariant::commit(ts); }

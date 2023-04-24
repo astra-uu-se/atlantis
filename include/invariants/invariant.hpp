@@ -6,6 +6,7 @@
 #include "core/types.hpp"
 #include "variables/committable.hpp"
 #include "variables/committableInt.hpp"
+
 class Engine;  // Forward declaration
 
 class Invariant {
@@ -59,16 +60,13 @@ class Invariant {
   std::vector<VarId> _definedVars{};
   // State used for returning next input. Null state is -1 by default
   CommittableInt _state;
-  Committable<VarId> _dynamicInputVar;
   VarId _primaryDefinedVar{NULL_ID};
   size_t _level{0};
   InvariantId _id{NULL_ID};
   bool _isPostponed{false};
 
   explicit Invariant(Engine& engine, Int nullState = -1)
-      : _engine(engine),
-        _state(NULL_TIMESTAMP, nullState),
-        _dynamicInputVar(NULL_TIMESTAMP, NULL_ID) {}
+      : _engine(engine), _state(NULL_TIMESTAMP, nullState) {}
 
   /**
    * Register to the engine that variable is defined by the invariant.
@@ -111,8 +109,8 @@ class Invariant {
   [[nodiscard]] size_t level() const noexcept { return _level; }
   void setLevel(size_t newLevel) noexcept { _level = newLevel; }
 
-  [[nodiscard]] VarId dynamicInputVar(Timestamp ts) const noexcept {
-    return _dynamicInputVar.get(ts);
+  [[nodiscard]] virtual VarId dynamicInputVar(Timestamp) const noexcept {
+    return NULL_ID;
   }
 
   [[nodiscard]] inline InvariantId id() const noexcept { return _id; }

@@ -1,7 +1,5 @@
 #include "views/intAbsView.hpp"
 
-#include "core/engine.hpp"
-
 Int IntAbsView::value(Timestamp ts) {
   return std::abs(_engine.value(ts, _parentId));
 }
