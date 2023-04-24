@@ -25,12 +25,6 @@ class Engine {
   bool _isOpen = true;
 
   EngineState _engineState = EngineState::IDLE;
-  struct ListeningInvariantData {
-    const InvariantId invariantId;
-    const LocalId localId;
-  };
-  // Map from VarID -> vector of InvariantID
-  IdMap<VarIdBase, std::vector<ListeningInvariantData>> _listeningInvariantData;
 
   Store _store;
 
@@ -76,7 +70,7 @@ class Engine {
   //--------------------- Variable ---------------------
 
   [[nodiscard]] inline VarId sourceId(VarId id) const {
-    return id.idType == VarIdType::var ? id : _store.intViewSourceId(id);
+    return _store.sourceId(id);
   }
 
   virtual void enqueueComputedVar(VarId) = 0;

@@ -1,7 +1,5 @@
 #include "invariants/globalCardinalityOpen.hpp"
 
-#include "core/engine.hpp"
-
 inline bool all_in_range(Int start, Int stop,
                          std::function<bool(Int)> predicate) {
   std::vector<Int> vec(stop - start);
@@ -23,7 +21,7 @@ GlobalCardinalityOpen::GlobalCardinalityOpen(Engine& engine,
       _inputs(std::move(inputs)),
       _cover(std::move(cover)),
       _coverVarIndex(),
-      _localValues(),
+      _committedValues(_inputs.size(), 0),
       _counts(),
       _offset(0) {
   _modifiedVars.reserve(_inputs.size());
@@ -61,10 +59,6 @@ void GlobalCardinalityOpen::close(Timestamp timestamp) {
     _coverVarIndex[_cover[i] - _offset] = i;
   }
   _counts.resize(_outputs.size(), CommittableInt(timestamp, 0));
-  _localValues.clear();
-  for (const VarId input : _inputs) {
-    _localValues.emplace_back(timestamp, _engine.committedValue(input));
-  }
 }
 
 void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
@@ -74,7 +68,6 @@ void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
 
   for (size_t i = 0; i < _inputs.size(); ++i) {
     increaseCount(timestamp, _engine.value(timestamp, _inputs[i]));
-    _localValues[i].setValue(timestamp, _engine.value(timestamp, _inputs[i]));
   }
 
   for (size_t i = 0; i < _outputs.size(); ++i) {
@@ -86,14 +79,12 @@ void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
 
 void GlobalCardinalityOpen::notifyInputChanged(Timestamp timestamp,
                                                LocalId localId) {
-  assert(localId < _localValues.size());
-  const Int oldValue = _localValues[localId].value(timestamp);
+  assert(localId < _committedValues.size());
   const Int newValue = _engine.value(timestamp, _inputs[localId]);
-  if (newValue == oldValue) {
+  if (newValue == _committedValues[localId]) {
     return;
   }
-  _localValues[localId].setValue(timestamp, newValue);
-  decreaseCountAndUpdateOutput(timestamp, oldValue);
+  decreaseCountAndUpdateOutput(timestamp, _committedValues[localId]);
   increaseCountAndUpdateOutput(timestamp, newValue);
 }
 
@@ -114,8 +105,8 @@ void GlobalCardinalityOpen::notifyCurrentInputChanged(Timestamp timestamp) {
 void GlobalCardinalityOpen::commit(Timestamp timestamp) {
   Invariant::commit(timestamp);
 
-  for (auto& localValue : _localValues) {
-    localValue.commitIf(timestamp);
+  for (size_t i = 0; i < _committedValues.size(); ++i) {
+    _committedValues[i] = _engine.committedValue(_inputs[i]);
   }
 
   for (CommittableInt& CommittableInt : _counts) {

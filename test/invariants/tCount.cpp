@@ -132,23 +132,21 @@ TEST_F(CountTest, NotifyInputChanged) {
   Count& invariant = engine->makeInvariant<Count>(*engine, outputId, y, inputs);
   engine->close();
 
+  const Timestamp ts = engine->currentTimestamp() + 1;
+
   std::vector<VarId> allInputs(inputs);
   allInputs.emplace_back(y);
 
   for (size_t i = 0; i < allInputs.size(); ++i) {
-    const Int oldVal =
-        engine->value(engine->currentTimestamp(), allInputs.at(i));
+    const Int oldVal = engine->value(ts, allInputs.at(i));
     do {
-      engine->setValue(engine->currentTimestamp(), allInputs.at(i), dist(gen));
-    } while (oldVal ==
-             engine->value(engine->currentTimestamp(), allInputs.at(i)));
+      engine->setValue(ts, allInputs.at(i), dist(gen));
+    } while (oldVal == engine->value(ts, allInputs.at(i)));
 
-    const Int expectedOutput =
-        computeOutput(engine->currentTimestamp(), y, inputs);
+    const Int expectedOutput = computeOutput(ts, y, inputs);
 
-    invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
-    EXPECT_EQ(expectedOutput,
-              engine->value(engine->currentTimestamp(), outputId));
+    invariant.notifyInputChanged(ts, LocalId(i));
+    EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
   }
 }
 
@@ -332,17 +330,18 @@ TEST_F(CountTest, EngineIntegration) {
     if (!engine->isOpen()) {
       engine->open();
     }
-    const Int numArgs = 10;
+    const size_t numArgs = 10;
     const VarId y = engine->makeIntVar(0, 0, numArgs);
     std::vector<VarId> args;
-    for (Int value = 1; value <= numArgs; ++value) {
-      args.push_back(engine->makeIntVar(value, 1, numArgs));
+    for (size_t value = 1; value <= numArgs; ++value) {
+      args.push_back(engine->makeIntVar(static_cast<Int>(value), 1,
+                                        static_cast<Int>(numArgs)));
     }
     const VarId modifiedVarId = args.front();
     const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCount>(
-        &engine->makeInvariant<MockCount>(*engine, output, y, args), propMode,
-        markingMode, numArgs + 2, modifiedVarId, 5, output);
+        &engine->makeInvariant<MockCount>(*engine, output, y, args),
+        {propMode, markingMode, numArgs + 2, modifiedVarId, 5, output});
   }
 }
 

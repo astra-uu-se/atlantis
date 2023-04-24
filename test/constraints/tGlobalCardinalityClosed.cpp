@@ -177,19 +177,19 @@ TEST_F(GlobalCardinalityClosedTest, NotifyInputChanged) {
                                                         outputs, inputs, cover);
     engine->close();
 
-    for (Int val = lb; val <= ub; ++val) {
-      for (size_t j = 0; j < inputs.size(); ++j) {
-        engine->setValue(engine->currentTimestamp(), inputs[j], val);
-        const auto [expectedViolation, expectedCounts] =
-            computeViolationAndOutputs(engine->currentTimestamp(), inputs,
-                                       cover);
+    Timestamp ts = engine->currentTimestamp();
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(j));
-        EXPECT_EQ(expectedViolation,
-                  engine->value(engine->currentTimestamp(), violationId));
+    for (Int val = lb; val <= ub; ++val) {
+      ++ts;
+      for (size_t j = 0; j < inputs.size(); ++j) {
+        engine->setValue(ts, inputs[j], val);
+        const auto [expectedViolation, expectedCounts] =
+            computeViolationAndOutputs(ts, inputs, cover);
+
+        invariant.notifyInputChanged(ts, LocalId(j));
+        EXPECT_EQ(expectedViolation, engine->value(ts, violationId));
         for (size_t k = 0; k < outputs.size(); ++k) {
-          EXPECT_EQ(expectedCounts.at(k),
-                    engine->value(engine->currentTimestamp(), outputs.at(k)));
+          EXPECT_EQ(expectedCounts.at(k), engine->value(ts, outputs.at(k)));
         }
       }
     }
@@ -508,7 +508,7 @@ TEST_F(GlobalCardinalityClosedTest, EngineIntegration) {
     testNotifications<MockGlobalCardinalityClosed>(
         &engine->makeInvariant<MockGlobalCardinalityClosed>(
             *engine, viol, outputs, inputs, cover),
-        propMode, markingMode, numInputs + 1, inputs.front(), 1, viol);
+        {propMode, markingMode, numInputs + 1, inputs.front(), 1, viol});
   }
 }
 

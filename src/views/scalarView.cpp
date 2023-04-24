@@ -1,9 +1,5 @@
 #include "views/scalarView.hpp"
 
-#include "core/engine.hpp"
-
-extern Id NULL_ID;
-
 Int ScalarView::value(Timestamp ts) {
   return _scalar * _engine.value(ts, _parentId);
 }

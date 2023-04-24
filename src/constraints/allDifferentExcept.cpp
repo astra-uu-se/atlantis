@@ -1,6 +1,5 @@
 #include "constraints/allDifferentExcept.hpp"
 
-#include "core/engine.hpp"
 /**
  * @param violationId id for the violationCount
  */
@@ -30,22 +29,20 @@ void AllDifferentExcept::recompute(Timestamp ts) {
     if (!isIgnored(val)) {
       violInc += increaseCount(ts, val);
     }
-    _localValues[i].setValue(ts, val);
   }
   updateValue(ts, _violationId, violInc);
 }
 
 void AllDifferentExcept::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(id < _localValues.size());
-  const Int oldValue = _localValues[id].value(ts);
+  assert(id < _committedValues.size());
   const Int newValue = _engine.value(ts, _variables[id]);
-  if (newValue == oldValue) {
+  if (newValue == _committedValues[id]) {
     return;
   }
-  _localValues[id].setValue(ts, newValue);
-
   incValue(ts, _violationId,
            static_cast<Int>(
-               (isIgnored(oldValue) ? 0 : decreaseCount(ts, oldValue)) +
+               (isIgnored(_committedValues[id])
+                    ? 0
+                    : decreaseCount(ts, _committedValues[id])) +
                (isIgnored(newValue) ? 0 : increaseCount(ts, newValue))));
 }

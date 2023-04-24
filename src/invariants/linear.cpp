@@ -1,7 +1,5 @@
 #include "invariants/linear.hpp"
 
-#include "core/engine.hpp"
-
 Linear::Linear(Engine& engine, VarId output, const std::vector<VarId>& varArray)
     : Linear(engine, output, std::vector<Int>(varArray.size(), 1), varArray) {}
 
@@ -11,8 +9,7 @@ Linear::Linear(Engine& engine, VarId output, std::vector<Int> coeffs,
       _output(output),
       _coeffs(std::move(coeffs)),
       _varArray(std::move(varArray)),
-      _localVarArray() {
-  _localVarArray.reserve(_varArray.size());
+      _committedValues(_varArray.size(), 0) {
   _modifiedVars.reserve(_varArray.size());
 }
 
@@ -41,29 +38,18 @@ void Linear::updateBounds(bool widenOnly) {
   _engine.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void Linear::close(Timestamp ts) {
-  _localVarArray.clear();
-  for (const VarId input : _varArray) {
-    _localVarArray.emplace_back(ts, _engine.committedValue(input));
-  }
-}
-
 void Linear::recompute(Timestamp ts) {
   Int sum = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
     sum += _coeffs[i] * _engine.value(ts, _varArray[i]);
-    _localVarArray[i].commitValue(_engine.committedValue(_varArray[i]));
-    _localVarArray[i].setValue(ts, _engine.value(ts, _varArray[i]));
   }
   updateValue(ts, _output, sum);
 }
 
 void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(id < _localVarArray.size());
+  assert(id < _committedValues.size());
   const Int newValue = _engine.value(ts, _varArray[id]);
-  incValue(ts, _output,
-           (newValue - _localVarArray[id].value(ts)) * _coeffs[id]);
-  _localVarArray[id].setValue(ts, newValue);
+  incValue(ts, _output, (newValue - _committedValues[id]) * _coeffs[id]);
 }
 
 VarId Linear::nextInput(Timestamp ts) {
@@ -82,9 +68,7 @@ void Linear::notifyCurrentInputChanged(Timestamp ts) {
 
 void Linear::commit(Timestamp ts) {
   Invariant::commit(ts);
-  for (size_t i = 0; i < _localVarArray.size(); ++i) {
-    _localVarArray[i].commitIf(ts);
-    assert(_engine.committedValue(_varArray[i]) ==
-           _localVarArray[i].committedValue());
+  for (size_t i = 0; i < _committedValues.size(); ++i) {
+    _committedValues[i] = _engine.committedValue(_varArray[i]);
   }
 }

@@ -1,7 +1,5 @@
 #include "invariants/plus.hpp"
 
-#include "core/engine.hpp"
-
 Plus::Plus(Engine& engine, VarId output, VarId x, VarId y)
     : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
@@ -38,5 +36,3 @@ VarId Plus::nextInput(Timestamp ts) {
 void Plus::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
 void Plus::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
-
-void Plus::commit(Timestamp ts) { Invariant::commit(ts); }

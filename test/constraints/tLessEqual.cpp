@@ -120,7 +120,10 @@ TEST_F(LessEqualTest, NotifyInputChanged) {
       *engine, violationId, inputs.at(0), inputs.at(1));
   engine->close();
 
+  Timestamp ts = engine->currentTimestamp();
+
   for (Int val = lb; val <= ub; ++val) {
+    ++ts;
     for (size_t i = 0; i < inputs.size(); ++i) {
       engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
       const Int expectedViolation =
@@ -291,8 +294,8 @@ TEST_F(LessEqualTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(0, -100, 100);
     const VarId viol = engine->makeIntVar(0, 0, 200);
     testNotifications<MockLessEqual>(
-        &engine->makeConstraint<MockLessEqual>(*engine, viol, x, y), propMode,
-        markingMode, 3, x, -5, viol);
+        &engine->makeConstraint<MockLessEqual>(*engine, viol, x, y),
+        {propMode, markingMode, 3, x, -5, viol});
   }
 }
 

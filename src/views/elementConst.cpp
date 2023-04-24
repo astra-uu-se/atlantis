@@ -1,7 +1,5 @@
 #include "views/elementConst.hpp"
 
-#include "core/engine.hpp"
-
 ElementConst::ElementConst(Engine& engine, VarId parentId,
                            std::vector<Int> array, Int offset)
     : IntView(engine, parentId), _array(array), _offset(offset) {}

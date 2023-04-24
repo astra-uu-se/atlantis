@@ -1,7 +1,5 @@
 #include "invariants/binaryMin.hpp"
 
-#include "core/engine.hpp"
-
 BinaryMin::BinaryMin(Engine& engine, VarId output, VarId x, VarId y)
     : Invariant(engine), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
@@ -39,5 +37,3 @@ VarId BinaryMin::nextInput(Timestamp ts) {
 void BinaryMin::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
 void BinaryMin::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
-
-void BinaryMin::commit(Timestamp ts) { Invariant::commit(ts); }

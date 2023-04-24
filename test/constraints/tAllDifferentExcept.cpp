@@ -148,15 +148,16 @@ TEST_F(AllDifferentExceptTest, NotifyInputChanged) {
         std::vector<Int>(ignored));
     engine->close();
 
-    for (Int val = lb; val <= ub; ++val) {
-      for (size_t j = 0; j < inputs.size(); ++j) {
-        engine->setValue(engine->currentTimestamp(), inputs[j], val);
-        const Int expectedViolation =
-            computeViolation(engine->currentTimestamp(), inputs, ignoredSet);
+    Timestamp ts = engine->currentTimestamp();
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(j));
-        EXPECT_EQ(expectedViolation,
-                  engine->value(engine->currentTimestamp(), violationId));
+    for (Int val = lb; val <= ub; ++val) {
+      ++ts;
+      for (size_t j = 0; j < inputs.size(); ++j) {
+        engine->setValue(ts, inputs[j], val);
+        const Int expectedViolation = computeViolation(ts, inputs, ignoredSet);
+
+        invariant.notifyInputChanged(ts, LocalId(j));
+        EXPECT_EQ(expectedViolation, engine->value(ts, violationId));
       }
     }
   }
@@ -354,10 +355,10 @@ TEST_F(AllDifferentExceptTest, EngineIntegration) {
       engine->open();
     }
     std::vector<VarId> args;
-    const Int numArgs = 10;
+    const size_t numArgs = 10;
     const Int lb = -100;
     const Int ub = 100;
-    for (Int value = 0; value < numArgs; ++value) {
+    for (size_t value = 0; value < numArgs; ++value) {
       args.emplace_back(engine->makeIntVar(0, lb, ub));
     }
     std::vector<Int> ignored(ub - lb, 0);
@@ -365,11 +366,11 @@ TEST_F(AllDifferentExceptTest, EngineIntegration) {
       ignored[i] = i - lb;
     }
     std::shuffle(ignored.begin(), ignored.end(), rng);
-    const VarId viol = engine->makeIntVar(0, 0, numArgs);
+    const VarId viol = engine->makeIntVar(0, 0, static_cast<Int>(numArgs));
     testNotifications<MockAllDifferentExcept>(
         &engine->makeConstraint<MockAllDifferentExcept>(*engine, viol, args,
                                                         ignored),
-        propMode, markingMode, numArgs + 1, args.front(), 1, viol);
+        {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
   }
 }
 

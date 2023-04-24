@@ -130,17 +130,18 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
       *engine, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
   engine->close();
 
+  Timestamp ts = engine->currentTimestamp();
+
   for (Int bVal = bLb; bVal <= bUb; ++bVal) {
     for (Int val = lb; val <= ub; ++val) {
       for (size_t i = 1; i < inputs.size(); ++i) {
-        engine->setValue(engine->currentTimestamp(), inputs.at(0), bVal);
-        engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
-        const Int expectedOutput =
-            computeOutput(engine->currentTimestamp(), inputs);
+        ++ts;
+        engine->setValue(ts, inputs.at(0), bVal);
+        engine->setValue(ts, inputs.at(i), val);
+        const Int expectedOutput = computeOutput(ts, inputs);
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
-        EXPECT_EQ(expectedOutput,
-                  engine->value(engine->currentTimestamp(), outputId));
+        invariant.notifyInputChanged(ts, LocalId(i));
+        EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
       }
     }
   }
@@ -332,7 +333,7 @@ TEST_F(IfThenElseTest, EngineIntegration) {
     const VarId output = engine->makeIntVar(3, 0, 9);
     testNotifications<MockIfThenElse>(
         &engine->makeInvariant<MockIfThenElse>(*engine, output, b, x, y),
-        propMode, markingMode, 3, b, 5, output);
+        {propMode, markingMode, 3, b, 5, output});
   }
 }
 

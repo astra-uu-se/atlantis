@@ -1,7 +1,5 @@
 #include "invariants/forAll.hpp"
 
-#include "core/engine.hpp"
-
 ForAll::ForAll(Engine& engine, VarId output, std::vector<VarId> varArray)
     : Invariant(engine),
       _output(output),

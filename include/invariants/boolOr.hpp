@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 #include "variables/intVar.hpp"
@@ -21,7 +22,6 @@ class BoolOr : public Invariant {
   void updateBounds(bool widenOnly = false) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  void commit(Timestamp) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };

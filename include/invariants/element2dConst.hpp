@@ -44,7 +44,6 @@ class Element2dConst : public Invariant {
   void updateBounds(bool widenOnly = false) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  void commit(Timestamp) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };

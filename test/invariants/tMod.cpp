@@ -161,7 +161,10 @@ TEST_F(ModTest, NotifyInputChanged) {
       engine->makeInvariant<Mod>(*engine, outputId, inputs.at(0), inputs.at(1));
   engine->close();
 
+  Timestamp ts = engine->currentTimestamp();
+
   for (Int val = lb; val <= ub; ++val) {
+    ++ts;
     for (size_t i = 0; i < inputs.size(); ++i) {
       engine->setValue(engine->currentTimestamp(), inputs.at(i), val);
       const Int expectedOutput =
@@ -362,8 +365,8 @@ TEST_F(ModTest, EngineIntegration) {
     const VarId y = engine->makeIntVar(10, -100, 100);
     const VarId output = engine->makeIntVar(0, 0, 200);
     testNotifications<MockMod>(
-        &engine->makeInvariant<MockMod>(*engine, output, x, y), propMode,
-        markingMode, 3, x, 0, output);
+        &engine->makeInvariant<MockMod>(*engine, output, x, y),
+        {propMode, markingMode, 3, x, 0, output});
   }
 }
 

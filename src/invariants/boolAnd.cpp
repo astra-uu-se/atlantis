@@ -1,7 +1,5 @@
 #include "invariants/boolAnd.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * Invariant output = x /\ y
  * output does not violate if x and y does not violate
@@ -47,5 +45,3 @@ VarId BoolAnd::nextInput(Timestamp ts) {
 }
 
 void BoolAnd::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void BoolAnd::commit(Timestamp ts) { Invariant::commit(ts); }

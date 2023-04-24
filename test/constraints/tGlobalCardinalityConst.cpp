@@ -183,15 +183,16 @@ class GlobalCardinalityConstTest : public InvariantTest {
               *engine, violationId, std::vector<VarId>(inputs), cover, low, up);
       engine->close();
 
-      for (Int val = lb; val <= ub; ++val) {
-        for (size_t j = 0; j < inputs.size(); ++j) {
-          engine->setValue(engine->currentTimestamp(), inputs[j], val);
-          const Int expectedViolation =
-              computeViolation(engine->currentTimestamp(), inputs, coverSet);
+      Timestamp ts = engine->currentTimestamp();
 
-          invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(j));
-          EXPECT_EQ(expectedViolation,
-                    engine->value(engine->currentTimestamp(), violationId));
+      for (Int val = lb; val <= ub; ++val) {
+        ++ts;
+        for (size_t j = 0; j < inputs.size(); ++j) {
+          engine->setValue(ts, inputs[j], val);
+          const Int expectedViolation = computeViolation(ts, inputs, coverSet);
+
+          invariant.notifyInputChanged(ts, LocalId(j));
+          EXPECT_EQ(expectedViolation, engine->value(ts, violationId));
         }
       }
     }
@@ -576,7 +577,7 @@ TEST_F(GlobalCardinalityTestClosed, EngineIntegration) {
         &engine->makeInvariant<MockGlobalCardinalityConst<false>>(
             *engine, viol, std::vector<VarId>{args}, std::vector<Int>{1, 2, 3},
             std::vector<Int>{1, 2, 3}),
-        propMode, markingMode, numArgs + 1, args.front(), 1, viol);
+        {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
   }
 }
 TEST_F(GlobalCardinalityTestOpen, EngineIntegration) {
@@ -596,7 +597,7 @@ TEST_F(GlobalCardinalityTestOpen, EngineIntegration) {
         &engine->makeInvariant<MockGlobalCardinalityConst<true>>(
             *engine, viol, std::vector<VarId>{args}, std::vector<Int>{1, 2, 3},
             std::vector<Int>{1, 2, 3}),
-        propMode, markingMode, numArgs + 1, args.front(), 1, viol);
+        {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
   }
 }
 

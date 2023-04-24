@@ -126,15 +126,16 @@ TEST_F(AllDifferentTest, NotifyInputChanged) {
         *engine, violationId, std::vector<VarId>(inputs));
     engine->close();
 
-    for (Int val = lb; val <= ub; ++val) {
-      for (size_t i = 0; i < inputs.size(); ++i) {
-        engine->setValue(engine->currentTimestamp(), inputs[i], val);
-        const Int expectedViolation =
-            computeViolation(engine->currentTimestamp(), inputs);
+    Timestamp ts = engine->currentTimestamp();
 
-        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
-        EXPECT_EQ(expectedViolation,
-                  engine->value(engine->currentTimestamp(), violationId));
+    for (Int val = lb; val <= ub; ++val) {
+      ++ts;
+      for (size_t i = 0; i < inputs.size(); ++i) {
+        engine->setValue(ts, inputs[i], val);
+        const Int expectedViolation = computeViolation(ts, inputs);
+
+        invariant.notifyInputChanged(ts, LocalId(i));
+        EXPECT_EQ(expectedViolation, engine->value(ts, violationId));
       }
     }
   }
@@ -311,14 +312,14 @@ TEST_F(AllDifferentTest, EngineIntegration) {
       engine->open();
     }
     std::vector<VarId> args;
-    const Int numArgs = 10;
-    for (Int value = 0; value < numArgs; ++value) {
+    const size_t numArgs = 10;
+    for (size_t value = 0; value < numArgs; ++value) {
       args.emplace_back(engine->makeIntVar(0, -100, 100));
     }
-    const VarId viol = engine->makeIntVar(0, 0, numArgs);
+    const VarId viol = engine->makeIntVar(0, 0, static_cast<Int>(numArgs));
     testNotifications<MockAllDifferent>(
         &engine->makeConstraint<MockAllDifferent>(*engine, viol, args),
-        propMode, markingMode, numArgs + 1, args.front(), 1, viol);
+        {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
   }
 }
 

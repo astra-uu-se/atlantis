@@ -148,14 +148,15 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
         *engine, outputId, index, inputs, offset);
     engine->close();
 
-    for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
-      engine->setValue(engine->currentTimestamp(), index, indexVal);
-      const Int expectedOutput =
-          computeOutput(engine->currentTimestamp(), index, offset);
+    Timestamp ts = engine->currentTimestamp();
 
-      invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(0));
-      EXPECT_EQ(expectedOutput,
-                engine->value(engine->currentTimestamp(), outputId));
+    for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
+      ++ts;
+      engine->setValue(ts, index, indexVal);
+      const Int expectedOutput = computeOutput(ts, index, offset);
+
+      invariant.notifyInputChanged(ts, LocalId(0));
+      EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
     }
   }
 }
@@ -355,16 +356,16 @@ TEST_F(ElementVarTest, EngineIntegration) {
       engine->open();
     }
     std::vector<VarId> args;
-    const Int numArgs = 10;
+    const size_t numArgs = 10;
     args.reserve(numArgs);
-    for (Int value = 0; value < numArgs; ++value) {
-      args.push_back(engine->makeIntVar(value, -100, 100));
+    for (size_t value = 0; value < numArgs; ++value) {
+      args.push_back(engine->makeIntVar(static_cast<Int>(value), -100, 100));
     }
-    VarId idx = engine->makeIntVar(0, 0, numArgs - 1);
+    VarId idx = engine->makeIntVar(0, 0, static_cast<Int>(numArgs) - 1);
     VarId output = engine->makeIntVar(-10, -100, 100);
     testNotifications<MockElementVar>(
         &engine->makeInvariant<MockElementVar>(*engine, output, idx, args, 1),
-        propMode, markingMode, 3, idx, 5, output);
+        {propMode, markingMode, 3, idx, 5, output});
   }
 }
 

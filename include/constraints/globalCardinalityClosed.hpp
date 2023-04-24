@@ -5,12 +5,10 @@
 #include <vector>
 
 #include "constraint.hpp"
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "variables/committableInt.hpp"
 #include "variables/intVar.hpp"
-
-class CommittableInt;  // forward declare
-class Engine;
 
 class GlobalCardinalityClosed : public Constraint {
  private:
@@ -18,7 +16,7 @@ class GlobalCardinalityClosed : public Constraint {
   const std::vector<VarId> _inputs;
   const std::vector<Int> _cover;
   std::vector<Int> _coverVarIndex;
-  std::vector<CommittableInt> _localValues;
+  std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
   Int increaseCount(Timestamp ts, Int value);

@@ -1,7 +1,5 @@
 #include "constraints/globalCardinalityClosed.hpp"
 
-#include "core/engine.hpp"
-
 inline bool all_in_range(Int start, Int stop,
                          std::function<bool(Int)> predicate) {
   std::vector<Int> vec(stop - start);
@@ -24,7 +22,7 @@ GlobalCardinalityClosed::GlobalCardinalityClosed(Engine& engine,
       _inputs(std::move(inputs)),
       _cover(std::move(cover)),
       _coverVarIndex(),
-      _localValues(),
+      _committedValues(_inputs.size(), 0),
       _counts(),
       _offset(0) {
   _modifiedVars.reserve(_inputs.size());
@@ -64,10 +62,6 @@ void GlobalCardinalityClosed::close(Timestamp timestamp) {
     _coverVarIndex[_cover[i] - _offset] = i;
   }
   _counts.resize(_outputs.size(), CommittableInt(timestamp, 0));
-  _localValues.clear();
-  for (const VarId input : _inputs) {
-    _localValues.emplace_back(timestamp, _engine.committedValue(input));
-  }
 }
 
 void GlobalCardinalityClosed::recompute(Timestamp timestamp) {
@@ -78,7 +72,6 @@ void GlobalCardinalityClosed::recompute(Timestamp timestamp) {
   Int excess = 0;
   for (size_t i = 0; i < _inputs.size(); ++i) {
     excess += increaseCount(timestamp, _engine.value(timestamp, _inputs[i]));
-    _localValues[i].setValue(timestamp, _engine.value(timestamp, _inputs[i]));
   }
 
   updateValue(timestamp, _violationId, excess);
@@ -91,17 +84,15 @@ void GlobalCardinalityClosed::recompute(Timestamp timestamp) {
 
 void GlobalCardinalityClosed::notifyInputChanged(Timestamp timestamp,
                                                  LocalId localId) {
-  assert(localId < _localValues.size());
-  const Int oldValue = _localValues[localId].value(timestamp);
+  assert(localId < _committedValues.size());
   const Int newValue = _engine.value(timestamp, _inputs[localId]);
-  if (newValue == oldValue) {
+  if (newValue == _committedValues[localId]) {
     return;
   }
-  const Int dec = decreaseCount(timestamp, oldValue);
+  const Int dec = decreaseCount(timestamp, _committedValues[localId]);
   const Int inc = increaseCount(timestamp, newValue);
-  _localValues[localId].setValue(timestamp, newValue);
   incValue(timestamp, _violationId, inc - dec);
-  updateOutput(timestamp, oldValue);
+  updateOutput(timestamp, _committedValues[localId]);
   updateOutput(timestamp, newValue);
 }
 
@@ -122,8 +113,8 @@ void GlobalCardinalityClosed::notifyCurrentInputChanged(Timestamp timestamp) {
 void GlobalCardinalityClosed::commit(Timestamp timestamp) {
   Invariant::commit(timestamp);
 
-  for (auto& localValue : _localValues) {
-    localValue.commitIf(timestamp);
+  for (size_t i = 0; i < _committedValues.size(); ++i) {
+    _committedValues[i] = _engine.committedValue(_inputs[i]);
   }
 
   for (CommittableInt& CommittableInt : _counts) {

@@ -1,7 +1,5 @@
 #include "constraints/lessEqual.hpp"
 
-#include "core/engine.hpp"
-
 /**
  * Constraint x <= y
  * @param violationId id for the violationCount
@@ -29,9 +27,8 @@ void LessEqual::updateBounds(bool widenOnly) {
 }
 
 void LessEqual::recompute(Timestamp ts) {
-  updateValue(
-      ts, _violationId,
-      std::max(Int(0), _engine.value(ts, _x) - _engine.value(ts, _y)));
+  updateValue(ts, _violationId,
+              std::max(Int(0), _engine.value(ts, _x) - _engine.value(ts, _y)));
 }
 
 void LessEqual::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
@@ -48,5 +45,3 @@ VarId LessEqual::nextInput(Timestamp ts) {
 }
 
 void LessEqual::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
-
-void LessEqual::commit(Timestamp ts) { Invariant::commit(ts); }

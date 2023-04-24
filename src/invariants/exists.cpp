@@ -1,7 +1,5 @@
 #include "invariants/exists.hpp"
 
-#include "core/engine.hpp"
-
 Exists::Exists(Engine& engine, VarId output, std::vector<VarId> varArray)
     : Invariant(engine),
       _output(output),

@@ -3,6 +3,7 @@
 #include <utility>
 #include <vector>
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 
@@ -19,7 +20,7 @@ class BoolLinear : public Invariant {
   const std::vector<Int> _coeffs;
   const std::vector<VarId> _violArray;
   // (_isSatisfied[i] == 1) <=> (_violArray[i] == 0)
-  std::vector<CommittableInt> _isSatisfied;
+  std::vector<Int> _isSatisfied;
 
  public:
   explicit BoolLinear(Engine&, VarId output,
@@ -29,7 +30,6 @@ class BoolLinear : public Invariant {
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
-  void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;

@@ -4,6 +4,7 @@
 #include <limits>
 #include <vector>
 
+#include "core/engine.hpp"
 #include "core/types.hpp"
 #include "invariants/invariant.hpp"
 
@@ -29,5 +30,4 @@ class IntDiv : public Invariant {
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  void commit(Timestamp) override;
 };
