@@ -8,7 +8,7 @@ FZN_MODEL_DIR=${MKFILE_PATH}fzn-models
 BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 NUM_BENCHMARK_REPETITIONS=5
-BENCHMARK_FILTER="(AllInterval|CarSequencing|GolombRuler|MagicSquare|Queens|TSPTW|TSPTWAllDiff|VesselLoading)"
+BENCHMARK_FILTER="^(GolombRuler|ExtremeDynamic|ExtremeStatic|MagicSquare|NQueens|TSPTW|VesselLoading)"
 
 export MZN_SOLVER_PATH=${MKFILE_PATH}minizinc
 
@@ -43,7 +43,8 @@ run: build
 
 .PHONY: run-tests
 run-tests: build-tests
-	exec ${BUILD_DIR}/runUnitTests
+	cd ${BUILD_DIR}; \
+	exec ./runUnitTests
 
 .PHONY: run-benchmarks
 run-benchmarks: build-benchmarks

@@ -21,34 +21,33 @@ class VesselLoading : public benchmark::Fixture {
   std::random_device rd;
   std::mt19937 gen;
 
-  const Int vesselWidth = 50;   // Vessel vesselWidth
-  const Int vesselLength = 50;  // Vessel vesselLength
-  const Int classCount = 4;     // Num classes
+  const size_t vesselWidth = 50;   // Vessel vesselWidth
+  const size_t vesselLength = 50;  // Vessel vesselLength
+  const size_t classCount = 4;     // Num classes
 
   size_t containerCount;  // Num containers
 
-  std::uniform_int_distribution<> distClass;  // dist for container classes
-  std::uniform_int_distribution<> distDim;    // dist for container dimensions
-  std::uniform_int_distribution<> distSep;    // dist for class min sep distance
+  std::uniform_int_distribution<size_t>
+      distClass;  // dist for container classes
+  std::uniform_int_distribution<size_t>
+      distDim;  // dist for container dimensions
+  std::uniform_int_distribution<size_t>
+      distSep;  // dist for class min sep distance
 
-  std::vector<Int> conLength;  // conLength[i] = container i vesselLength
-  std::vector<Int> conWidth;   // conWidth[i]  = container i vesselWidth
-  std::vector<Int> conClass;   // conClass[i]  = container i class
-  std::vector<std::vector<int>>
-      seperations;  // seperations[i][j] = min distance
-                    // between container class i and j
-
+  // conLength[i] = container i vesselLength:
+  std::vector<size_t> conLength;
+  // conWidth[i]  = container i vesselWidth:
+  std::vector<size_t> conWidth;
   std::vector<VarId> orientation;
   std::vector<VarId> left;
-  std::vector<VarId> right;
-  std::vector<VarId> top;
   std::vector<VarId> bottom;
 
-  std::vector<VarId> violations;
   VarId totalViolation;
 
-  std::vector<std::vector<Int>> bestPositions;
-  std::vector<size_t> tabu;
+  std::uniform_int_distribution<size_t> indexDistr;
+  std::uniform_int_distribution<Int> orientationDistr;
+  std::vector<std::array<std::uniform_int_distribution<Int>, 2>> leftDistr;
+  std::vector<std::array<std::uniform_int_distribution<Int>, 2>> bottomDistr;
 
   void SetUp(const ::benchmark::State& state) {
     containerCount = state.range(0);
@@ -58,37 +57,55 @@ class VesselLoading : public benchmark::Fixture {
     setEngineModes(*engine, state.range(1));
 
     gen = std::mt19937(rd());
-    distClass = std::uniform_int_distribution<>{0, (int)classCount - 1};
-    distDim = std::uniform_int_distribution<>{2, 10};
-    distSep = std::uniform_int_distribution<>{0, 4};
+    distClass = std::uniform_int_distribution<size_t>{
+        0, static_cast<size_t>(classCount - 1)};
+    distDim = std::uniform_int_distribution<size_t>{2, 10};
+    distSep = std::uniform_int_distribution<size_t>{0, 4};
+
+    // conLength[i] = container i vesselLength:
+    conLength.resize(containerCount);
+    // conWidth[i]  = container i vesselWidth:
+    conWidth.resize(containerCount);
+    // conClass[i]  = container i class:
+    std::vector<size_t> conClass(containerCount);
+
+    orientation.resize(containerCount);
+    left.resize(containerCount);
+    std::vector<VarId> right(containerCount);
+    bottom.resize(containerCount);
+    std::vector<VarId> top(containerCount);
 
     // Create containerCount containers
-    for (size_t c = 0; c < containerCount; ++c) {
-      conLength.push_back(distDim(gen));
-      conWidth.push_back(distDim(gen));
-      conClass.push_back(distClass(gen));
+    for (size_t i = 0; i < containerCount; ++i) {
+      conLength[distDim(gen)];
+      conWidth[distDim(gen)];
+      conClass[distClass(gen)];
 
       // Create variables
-      Int m = std::min(conWidth[c], conLength[c]);
-      orientation.push_back(engine->makeIntVar(0, 0, 1));
-      left.push_back(engine->makeIntVar(0, 0, vesselWidth - m));
-      right.push_back(engine->makeIntVar(m, m, vesselWidth));
-      bottom.push_back(engine->makeIntVar(0, 0, vesselLength - m));
-      top.push_back(engine->makeIntVar(m, m, vesselLength));
+      Int m = std::min(conWidth[i], conLength[i]);
+      orientation[i] = engine->makeIntVar(0, 0, 1);
+      left[i] = engine->makeIntVar(0, 0, vesselWidth - m);
+      right[i] = engine->makeIntVar(m, m, vesselWidth);
+      bottom[i] = engine->makeIntVar(0, 0, vesselLength - m);
+      top[i] = engine->makeIntVar(m, m, vesselLength);
     }
 
     // Create random min separation distance between classes.
-    seperations =
-        std::vector<std::vector<int>>(classCount, std::vector<int>(classCount));
-    for (Int i = 0; i < classCount; ++i) {
-      seperations[i][i] = 0;
-      for (Int j = i + 1; j < classCount; ++j) {
-        seperations[i][j] = distSep(gen);
-        seperations[j][i] = seperations[i][j];
+
+    // seperations[c1][c2] = min distance between container class c1 and c2
+    std::vector<std::vector<int>> seperations(classCount,
+                                              std::vector<int>(classCount));
+    for (size_t c1 = 0; c1 < classCount; ++c1) {
+      seperations[c1][c1] = 0;
+      for (size_t c2 = c1 + 1; c2 < classCount; ++c2) {
+        seperations[c1][c2] = distSep(gen);
+        seperations[c2][c1] = seperations[c1][c2];
       }
     }
 
-    // Create invariants
+    // Creating 2 * n dynamic invariants, each with 1 static input variable and
+    // 2 dynamic input variables, resulting in n static input variables and 2*n
+    // dynamic input variables
     for (size_t i = 0; i < containerCount; ++i) {
       // orientation[i] = 0 <=> container i is positioned horizontally
       // orientation[i] = 1 <=> container i is positioned vertically
@@ -112,9 +129,14 @@ class VesselLoading : public benchmark::Fixture {
                                         topHorizontally, topVertically);
     }
 
-    // No overlap between any container pair
+    // Creating a number of static invariants that is quadratic in n, each with
+    // a constant number of static input variables, resulting in a number of
+    // static input variables that is quadratic in n.
+    std::vector<VarId> violations{};
+    violations.reserve(containerCount * (containerCount - 1) / 2);
+
     for (size_t i = 0; i < containerCount; ++i) {
-      for (Int c = 0; c < classCount; ++c) {
+      for (size_t c = 0; c < classCount; ++c) {
         bool exists = false;
         for (size_t j = i + 1; j < containerCount; ++j) {
           if (conClass[j] == c) {
@@ -152,28 +174,29 @@ class VesselLoading : public benchmark::Fixture {
           VarId isBelow = engine->makeIntVar(0, 0, vesselLength + vesselWidth);
           VarId isAbove = engine->makeIntVar(0, 0, vesselLength + vesselWidth);
 
-          // isRightOf = right[i] + sep <= left[j]:
+          // isRightOf = (right[i] + sep <= left[j]):
           engine->makeConstraint<LessEqual>(*engine, isRightOf, rightSep,
                                             left[j]);
-          // isLeftOf = right[j] <= left[i] - sep:
+          // isLeftOf = (right[j] <= left[i] - sep):
           engine->makeConstraint<LessEqual>(*engine, isLeftOf, right[j],
                                             leftSep);
-          // isAbove = top[i] + sep <= bottom[j]:
+          // isAbove = (top[i] + sep <= bottom[j]):
           engine->makeConstraint<LessEqual>(*engine, isAbove, topSep,
                                             bottom[j]);
-          // isBelow = top[j] <= bottom[i] - sep:
+          // isBelow = (top[j] <= bottom[i] - sep):
           engine->makeConstraint<LessEqual>(*engine, isBelow, top[j],
                                             bottomSep);
 
-          violations.push_back(
-              engine->makeIntVar(0, 0, vesselLength + vesselWidth));
-
           engine->makeInvariant<Exists>(
-              *engine, violations.back(),
+              *engine,
+              violations.emplace_back(
+                  engine->makeIntVar(0, 0, vesselLength + vesselWidth)),
               std::vector<VarId>{isRightOf, isLeftOf, isAbove, isBelow});
         }
       }
     }
+
+    assert(violations.size() == containerCount * (containerCount - 1) / 2);
 
     // Add violations
     // Each container pair can bring vesselLength+vesselWidth violations.
@@ -184,57 +207,45 @@ class VesselLoading : public benchmark::Fixture {
                                (vesselLength + vesselWidth));
     engine->makeInvariant<Linear>(*engine, totalViolation, violations);
     engine->close();
+
+    indexDistr = std::uniform_int_distribution<size_t>{0u, containerCount - 1};
+    orientationDistr = std::uniform_int_distribution<Int>{0, 1};
+    leftDistr.resize(containerCount);
+    bottomDistr.resize(containerCount);
+    for (size_t i = 0; i < containerCount; ++i) {
+      leftDistr.at(i) = std::array<std::uniform_int_distribution<Int>, 2>{
+          std::uniform_int_distribution<Int>{
+              0, std::max<Int>(0, vesselWidth - conWidth.at(i))},
+          std::uniform_int_distribution<Int>{
+              0, std::max<Int>(0, vesselWidth - conLength.at(i))}};
+      bottomDistr.at(i) = std::array<std::uniform_int_distribution<Int>, 2>{
+          std::uniform_int_distribution<Int>{
+              0, std::max<Int>(0, vesselLength - conLength.at(i))},
+          std::uniform_int_distribution<Int>{
+              0, std::max<Int>(0, vesselLength - conWidth.at(i))}};
+    }
   }
 
   void TearDown(const ::benchmark::State&) {
     conLength.clear();
     conWidth.clear();
-    conClass.clear();
-    for (std::vector<int>& s : seperations) {
-      s.clear();
-    }
-    seperations.clear();
     orientation.clear();
     left.clear();
-    right.clear();
-    top.clear();
     bottom.clear();
-
-    violations.clear();
-    for (std::vector<Int>& p : bestPositions) {
-      p.clear();
-    }
-    tabu.clear();
   }
 };
 
 BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)(benchmark::State& st) {
-  auto indexDistr =
-      std::uniform_int_distribution<size_t>{0u, containerCount - 1};
-  auto rotationDistr = std::uniform_int_distribution<Int>{0, 1};
-  std::vector<std::array<std::uniform_int_distribution<Int>, 2>> leftDistr;
-  std::vector<std::array<std::uniform_int_distribution<Int>, 2>> rightDistr;
-  for (size_t i = 0; i < containerCount; ++i) {
-    leftDistr.emplace_back(std::array<std::uniform_int_distribution<Int>, 2>{
-        std::uniform_int_distribution<Int>{
-            0, std::max<Int>(0, vesselWidth - conWidth.at(i))},
-        std::uniform_int_distribution<Int>{
-            0, std::max<Int>(0, vesselWidth - conLength.at(i))}});
-    rightDistr.emplace_back(std::array<std::uniform_int_distribution<Int>, 2>{
-        std::uniform_int_distribution<Int>{
-            0, std::max<Int>(0, vesselLength - conLength.at(i))},
-        std::uniform_int_distribution<Int>{
-            0, std::max<Int>(0, vesselLength - conWidth.at(i))}});
-  }
   size_t probes = 0;
   for (auto _ : st) {
     const size_t i = indexDistr(gen);
     assert(i < containerCount);
-    const Int newRotation = rotationDistr(gen);
-    const Int newLeft = leftDistr[i][newRotation](gen);
-    const Int newBottom = rightDistr[i][newRotation](gen);
+    const Int newOrientation = orientationDistr(gen);
+    assert(0 <= newOrientation && newOrientation <= 1);
+    const Int newLeft = leftDistr[i][newOrientation](gen);
+    const Int newBottom = bottomDistr[i][newOrientation](gen);
     engine->beginMove();
-    engine->setValue(orientation[i], newRotation);
+    engine->setValue(orientation[i], newOrientation);
     engine->setValue(left[i], newLeft);
     engine->setValue(bottom[i], newBottom);
     engine->endMove();
@@ -250,7 +261,7 @@ BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)(benchmark::State& st) {
 BENCHMARK_DEFINE_F(VesselLoading, solve)(benchmark::State& st) {
   size_t it = 0;
   Int probes = 0;
-  tabu.assign(containerCount, 0);
+  std::vector<size_t> tabu(containerCount, 0);
   Int tenure = 10;
   bool done = false;
 
@@ -330,20 +341,9 @@ BENCHMARK_DEFINE_F(VesselLoading, solve)(benchmark::State& st) {
 }
 
 //*
-static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int containerCount = 5; containerCount <= 50; containerCount += 5) {
-    for (int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({containerCount, mode});
-    }
-#ifndef NDEBUG
-    return;
-#endif
-  }
-}
-
 BENCHMARK_REGISTER_F(VesselLoading, probe_single_relocate)
-    ->Apply(arguments)
-    ->Unit(benchmark::kMillisecond);
+    ->Unit(benchmark::kMillisecond)
+    ->Apply(defaultArguments);
 
 //*/
 

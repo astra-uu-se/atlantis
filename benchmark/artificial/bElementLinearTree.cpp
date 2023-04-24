@@ -72,9 +72,7 @@ class ElementLinearTree : public benchmark::Fixture {
   VarId elementOutputVar = NULL_ID;
 
   std::random_device rd;
-  std::mt19937 genDecisionVarIndex;
-  std::mt19937 genDecisionVarValue;
-  std::mt19937 genElementVarValue;
+  std::mt19937 gen;
   std::uniform_int_distribution<size_t> decisionVarIndexDist;
   std::uniform_int_distribution<Int> decisionVarValueDist;
   std::uniform_int_distribution<Int> elementVarValueDist;
@@ -110,9 +108,7 @@ class ElementLinearTree : public benchmark::Fixture {
     engine->makeInvariant<ElementVar>(*engine, elementOutputVar,
                                       elementIndexVar, elementInputVars);
     engine->close();
-    genDecisionVarIndex = std::mt19937(rd());
-    genDecisionVarValue = std::mt19937(rd());
-    genElementVarValue = std::mt19937(rd());
+    gen = std::mt19937(rd());
     decisionVarIndexDist =
         std::uniform_int_distribution<size_t>{0, decisionVars.size() - 1};
     decisionVarValueDist = std::uniform_int_distribution<Int>{lb, ub};
@@ -135,8 +131,8 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_non_index_var)
   for (auto _ : st) {
     // Perform move
     engine->beginMove();
-    engine->setValue(decisionVars.at(decisionVarIndexDist(genDecisionVarIndex)),
-                     decisionVarValueDist(genDecisionVarValue));
+    engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+                     decisionVarValueDist(gen));
     engine->endMove();
 
     engine->beginProbe();
@@ -154,7 +150,7 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
   size_t probes = 0;
   for (auto _ : st) {
     engine->beginMove();
-    engine->setValue(elementIndexVar, elementVarValueDist(genElementVarValue));
+    engine->setValue(elementIndexVar, elementVarValueDist(gen));
     engine->endMove();
 
     engine->beginProbe();

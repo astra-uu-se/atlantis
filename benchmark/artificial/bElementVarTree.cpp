@@ -32,8 +32,7 @@ class ElementVarTree : public benchmark::Fixture {
       treeNodes.pop();
 
       VarId indexVar = engine->makeIntVar(
-          cur.level < treeHeight - 1 ? 0 : valueDist(genValue), 0,
-          elementSize - 1);
+          cur.level < treeHeight - 1 ? 0 : valueDist(gen), 0, elementSize - 1);
 
       if (cur.level < treeHeight - 1) {
         treeNodes.push({cur.level + 1, indexVar});
@@ -71,10 +70,7 @@ class ElementVarTree : public benchmark::Fixture {
 
   std::random_device rd;
 
-  std::mt19937 genVarIndex;
-  std::mt19937 genDecisionVarIndex;
-  std::mt19937 genIndexDecisionVarIndex;
-  std::mt19937 genValue;
+  std::mt19937 gen;
 
   std::uniform_int_distribution<size_t> decisionVarIndexDist;
   std::uniform_int_distribution<size_t> varIndexDist;
@@ -95,7 +91,7 @@ class ElementVarTree : public benchmark::Fixture {
     treeHeight = state.range(0);
     elementSize = state.range(1);  // number of element inputs
 
-    genValue = std::mt19937(rd());
+    gen = std::mt19937(rd());
     valueDist = std::uniform_int_distribution<Int>(0, elementSize - 1);
 
     engine->open();
@@ -105,8 +101,6 @@ class ElementVarTree : public benchmark::Fixture {
 
     engine->close();
 
-    genDecisionVarIndex = std::mt19937(rd());
-    genVarIndex = std::mt19937(rd());
     decisionVarIndexDist =
         std::uniform_int_distribution<size_t>(0, decisionVars.size() - 1);
     indexDecisionVarIndexDist =
@@ -126,9 +120,8 @@ void ElementVarTree::probe(benchmark::State& st, size_t numMoves) {
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       engine->beginMove();
-      engine->setValue(
-          decisionVars.at(decisionVarIndexDist(genDecisionVarIndex)),
-          valueDist(genValue));
+      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+                       valueDist(gen));
       engine->endMove();
     }
 
@@ -147,9 +140,8 @@ void ElementVarTree::commit(benchmark::State& st, size_t numMoves) {
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       engine->beginMove();
-      engine->setValue(indexDecisionVars.at(
-                           indexDecisionVarIndexDist(genIndexDecisionVarIndex)),
-                       valueDist(genValue));
+      engine->setValue(indexDecisionVars.at(indexDecisionVarIndexDist(gen)),
+                       valueDist(gen));
       engine->endMove();
     }
 
