@@ -112,6 +112,8 @@ if(BUILD_TESTS OR BUILD_BENCHMARKS)
 endif()
 
 if(BUILD_TESTS)
+  add_compile_definitions(FZN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fzn-models")
+
   # ###############################
   # Testing
   # ###############################

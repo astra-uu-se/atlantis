@@ -1,5 +1,5 @@
+#include <string>
+
 #include "modelTest.hpp"
 
-TEST(FznNQueens, Solve) {
-  testModelFile("../fzn-models/n_queens.fzn");
-}
+TEST(FznNQueens, Solve) { testModelFile("n_queens.fzn"); }
