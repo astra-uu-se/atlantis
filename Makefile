@@ -43,7 +43,8 @@ run: build
 
 .PHONY: run-tests
 run-tests: build-tests
-	exec ${BUILD_DIR}/runUnitTests
+	cd ${BUILD_DIR}; \
+	exec ./runUnitTests
 
 .PHONY: run-benchmarks
 run-benchmarks: build-benchmarks
