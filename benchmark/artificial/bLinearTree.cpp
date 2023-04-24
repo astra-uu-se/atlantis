@@ -71,9 +71,7 @@ class LinearTree : public benchmark::Fixture {
 
   std::random_device rd;
 
-  std::mt19937 genVarIndex;
-  std::mt19937 genDecisionVarIndex;
-  std::mt19937 genDecisionVarValue;
+  std::mt19937 gen;
 
   std::uniform_int_distribution<size_t> decisionVarIndexDist;
   std::uniform_int_distribution<size_t> varIndexDist;
@@ -107,9 +105,7 @@ class LinearTree : public benchmark::Fixture {
                                          << linearArgumentCount << " children");
     engine->close();
 
-    genDecisionVarIndex = std::mt19937(rd());
-    genDecisionVarValue = std::mt19937(rd());
-    genVarIndex = std::mt19937(rd());
+    gen = std::mt19937(rd());
     decisionVarIndexDist =
         std::uniform_int_distribution<size_t>(0, decisionVars.size() - 1);
     varIndexDist = std::uniform_int_distribution<size_t>(0, vars.size() - 1);
@@ -127,9 +123,8 @@ void LinearTree::probe(benchmark::State& st, size_t numMoves) {
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       engine->beginMove();
-      engine->setValue(
-          decisionVars.at(decisionVarIndexDist(genDecisionVarIndex)),
-          decisionVarValueDist(genDecisionVarValue));
+      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+                       decisionVarValueDist(gen));
       engine->endMove();
     }
 
@@ -148,15 +143,14 @@ void LinearTree::probeRnd(benchmark::State& st, size_t numMoves) {
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       engine->beginMove();
-      engine->setValue(
-          decisionVars.at(decisionVarIndexDist(genDecisionVarIndex)),
-          decisionVarValueDist(genDecisionVarValue));
+      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+                       decisionVarValueDist(gen));
       engine->endMove();
     }
 
     // Random query variable
     engine->beginProbe();
-    engine->query(vars.at(varIndexDist(genVarIndex)));
+    engine->query(vars.at(varIndexDist(gen)));
     engine->endProbe();
     ++probes;
   }
@@ -170,9 +164,8 @@ void LinearTree::commit(benchmark::State& st, size_t numMoves) {
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       engine->beginMove();
-      engine->setValue(
-          decisionVars.at(decisionVarIndexDist(genDecisionVarIndex)),
-          decisionVarValueDist(genDecisionVarValue));
+      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+                       decisionVarValueDist(gen));
       engine->endMove();
     }
 
@@ -192,14 +185,13 @@ void LinearTree::commitRnd(benchmark::State& st, size_t numMoves) {
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       engine->beginMove();
-      engine->setValue(
-          decisionVars.at(decisionVarIndexDist(genDecisionVarIndex)),
-          decisionVarValueDist(genDecisionVarValue));
+      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+                       decisionVarValueDist(gen));
       engine->endMove();
     }
 
     engine->beginCommit();
-    engine->query(vars.at(varIndexDist(genVarIndex)));
+    engine->query(vars.at(varIndexDist(gen)));
     engine->endCommit();
     ++commits;
   }

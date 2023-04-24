@@ -14,37 +14,43 @@ class AllInterval : public benchmark::Fixture {
  public:
   std::unique_ptr<PropagationEngine> engine;
   std::vector<VarId> inputVars;
-  std::vector<VarId> violationVars;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
-  Int n;
+  size_t n;
 
   VarId totalViolation = NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
     engine = std::make_unique<PropagationEngine>();
-    n = state.range(0);
-    if (n < 0) {
+    if (state.range(0) < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
-
+    n = state.range(0);
+    inputVars.resize(n, NULL_ID);
+    std::vector<VarId> violationVars(n - 1, NULL_ID);
+    // number of constraints: n
+    // total number of static input variables: 3 * n
     engine->open();
 
     setEngineModes(*engine, state.range(1));
 
-    for (int i = 0; i < n; ++i) {
-      inputVars.push_back(engine->makeIntVar(i, 0, n - 1));
+    for (size_t i = 0; i < n; ++i) {
+      assert(i < inputVars.size());
+      inputVars[i] = engine->makeIntVar(static_cast<Int>(i), 0, n - 1);
     }
-
-    for (int i = 1; i < n; ++i) {
-      violationVars.push_back(engine->makeIntVar(i, 0, n - 1));
-      engine->makeInvariant<AbsDiff>(*engine, violationVars.back(),
-                                     inputVars[i - 1], inputVars[i]);
+    // Creating n - 1 invariants, each having two inputs and one output
+    for (size_t i = 0; i < n - 1; ++i) {
+      assert(i < violationVars.size());
+      violationVars[i] = engine->makeIntVar(static_cast<Int>(i), 0, n - 1);
+      assert(i + 1 < inputVars.size());
+      engine->makeInvariant<AbsDiff>(*engine, violationVars[i], inputVars[i],
+                                     inputVars[i + 1]);
     }
 
     totalViolation = engine->makeIntVar(0, 0, n);
+    // Creating one invariant, taking n input variables and one output
     engine->makeConstraint<AllDifferent>(*engine, totalViolation,
                                          violationVars);
 
@@ -52,13 +58,11 @@ class AllInterval : public benchmark::Fixture {
 
     gen = std::mt19937(rd());
 
-    distribution = std::uniform_int_distribution<Int>{0, n - 1};
+    distribution =
+        std::uniform_int_distribution<Int>{0, static_cast<Int>(n) - 1};
   }
 
-  void TearDown(const ::benchmark::State&) override {
-    inputVars.clear();
-    violationVars.clear();
-  }
+  void TearDown(const ::benchmark::State&) override { inputVars.clear(); }
 };
 
 BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(benchmark::State& st) {
@@ -80,6 +84,14 @@ BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(benchmark::State& st) {
     engine->query(totalViolation);
     engine->endProbe();
     ++probes;
+    assert(all_in_range(0, n - 1, [&](const size_t a) {
+      return all_in_range(a + 1, n, [&](const size_t b) {
+        return engine->committedValue(inputVars.at(a)) !=
+                   engine->committedValue(inputVars.at(b)) &&
+               engine->currentValue(inputVars.at(a)) !=
+                   engine->currentValue(inputVars.at(b));
+      });
+    }));
   }
   st.counters["probes_per_second"] =
       benchmark::Counter(probes, benchmark::Counter::kIsRate);
@@ -136,25 +148,14 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
 }
 
 //*
-static void arguments(benchmark::internal::Benchmark* benchmark) {
-  for (int n = 10; n <= 100; n += 10) {
-    for (int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({n, mode});
-    }
-#ifndef NDEBUG
-    return;
-#endif
-  }
-}
-
 BENCHMARK_REGISTER_F(AllInterval, probe_single_swap)
     ->Unit(benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultArguments);
 //*/
 /*
 BENCHMARK_REGISTER_F(AllInterval, probe_all_swap)
     ->Unit(benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultArguments);
 
 //*/
 /*
