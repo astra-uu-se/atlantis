@@ -1,5 +1,8 @@
 #include "propagation/propagationGraph.hpp"
 
+#include <chrono>
+#include <iostream>
+
 #include "misc/logging.hpp"
 
 inline bool all_in_range(size_t start, size_t stop,
@@ -229,63 +232,69 @@ void PropagationGraph::partitionIntoLayers() {
 }
 
 bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
-                                            std::vector<bool>& inFrontier,
-                                            VarIdBase varId) {
-  assert(_variableLayerIndex.has_idx(varId));
-  // Mark current invariant as visited:
-  const size_t layer = _variableLayerIndex[varId].layer;
+                                            VarIdBase originVarId) {
+  assert(_variableLayerIndex.has_idx(originVarId));
+  const size_t layer = _variableLayerIndex[originVarId].layer;
   assert(layer < numLayers());
-  const size_t index = _variableLayerIndex[varId].index;
-  assert(index < _variablesInLayer.at(layer).size());
-  assert(varId == _variablesInLayer.at(layer).at(index));
-  assert(index < visited.size());
-  assert(index < inFrontier.size());
 
-  // mark as visited:
-  visited[index] = true;
+  std::vector<bool> onStack(visited.size(), false);
+  std::vector<VarIdBase> stack;
+  stack.reserve(visited.size());
+  stack.emplace_back(originVarId);
+  size_t stackPtr = 0;
 
-  if (inFrontier[index]) {
-    // the variable is already in the frontier: there is a cycle.
-    return true;
-  }
-  const InvariantId defInv = definingInvariant(varId);
-  if (defInv == NULL_ID) {
-    // we are at a search variable.
-    return false;
-  }
-  // mark as in frontier:
-  inFrontier[index] = true;
-  // get the defining invariant:
-  for (const auto& [inputId, _] : inputVariables(defInv)) {
-    assert(_variableLayerIndex[inputId].layer <= layer);
-    if (_variableLayerIndex[inputId].layer == layer) {
-      if (containsDynamicCycle(visited, inFrontier, inputId)) {
-        return true;
+  while (stackPtr < stack.size()) {
+    const VarIdBase varId = stack[stackPtr];
+    ++stackPtr;
+    assert(varId != NULL_ID);
+    const size_t index = _variableLayerIndex[varId].index;
+    assert(index < _variablesInLayer.at(layer).size());
+    assert(varId == _variablesInLayer.at(layer).at(index));
+    assert(index < visited.size());
+    assert(index < onStack.size());
+
+    if (visited[index]) {
+      // this node has been visited during a previous origin var
+      continue;
+    }
+    if (onStack[index]) {
+      // this node has been pushed onto the stack, there is a cycle
+      return true;
+    }
+    onStack[index] = true;
+    const InvariantId defInv = definingInvariant(varId);
+    if (defInv == NULL_ID) {
+      // we are at a search variable.
+      return false;
+    }
+    // mark as in frontier:
+    onStack[index] = true;
+    // get the defining invariant:
+    for (const auto& [inputId, _] : inputVariables(defInv)) {
+      assert(_variableLayerIndex[inputId].layer <= layer);
+      if (_variableLayerIndex[inputId].layer == layer) {
+        stack.emplace_back(inputId);
       }
     }
   }
-  inFrontier[index] = false;
+  for (const VarIdBase varId : stack) {
+    // add all nodes that have been visited during this call to visited
+    visited[_variableLayerIndex[varId].index] = true;
+  }
   return false;
 }
 
 bool PropagationGraph::containsDynamicCycle(size_t layer) {
   assert(layer < numLayers());
   std::vector<bool> visited(_variablesInLayer[layer].size(), false);
-  std::vector<bool> inFrontier(_variablesInLayer[layer].size(), false);
-  // Check for static cycles starting from the output variables:
-  for (size_t i = 0; i < _variablesInLayer[layer].size(); ++i) {
-    assert(all_in_range(
-        0, _variablesInLayer.at(layer).size(),
-        [&](const size_t varId) { return !inFrontier.at(varId); }));
-    if (!visited[i]) {
-      if (containsDynamicCycle(visited, inFrontier,
-                               _variablesInLayer[layer][i])) {
-        return true;
-      }
+  // Check for dynamic cycles starting from the output variables:
+  for (const VarIdBase varId : _variablesInLayer[layer]) {
+    if (!visited[varId] && definingInvariant(varId) != NULL_ID &&
+        isDynamicInvariant(definingInvariant(varId)) &&
+        containsDynamicCycle(visited, varId)) {
+      return true;
     }
   }
-  assert(all_in_range(0, _variablesInLayer.at(layer).size(),
-                      [&](const size_t varId) { return visited.at(varId); }));
   return false;
 }
 
@@ -303,19 +312,31 @@ void PropagationGraph::mergeLayersWithoutDynamicCycles() {
     }
     // The previous layer contained no cycles: merge the layers.
     // merge layers layer - 1 and layer:
-    for (const VarIdBase varId : _variablesInLayer[layer]) {
+    const size_t oldSize = _variablesInLayer[layer - 1].size();
+    // concat layer to layer - 1:
+    _variablesInLayer[layer - 1].insert(_variablesInLayer[layer - 1].end(),
+                                        _variablesInLayer[layer].begin(),
+                                        _variablesInLayer[layer].end());
+    // Update the vars:
+    for (size_t i = oldSize; i < _variablesInLayer[layer - 1].size(); ++i) {
+      const VarIdBase varId = _variablesInLayer[layer - 1][i];
       // sanity:
       assert(_variableLayerIndex.at(varId).layer == layer);
       assert(_variablesInLayer[layer][_variableLayerIndex.at(varId).index] ==
              varId);
       // change layer
       _variableLayerIndex[varId].layer = layer - 1;
-      _variableLayerIndex[varId].index = _variablesInLayer[layer - 1].size();
-      _variablesInLayer[layer - 1].emplace_back(varId);
+      _variableLayerIndex[varId].index = i;
       // sanity
       assert(varId == _variablesInLayer[_variableLayerIndex[varId].layer]
                                        [_variableLayerIndex[varId].index]);
     }
+    assert(std::all_of(_variablesInLayer[layer - 1].begin(),
+                       _variablesInLayer[layer - 1].end(),
+                       [&](const VarIdBase varId) {
+                         return _variableLayerIndex[varId].layer == layer - 1;
+                       }));
+
     assert(!containsDynamicCycle(layer - 1));
     // shift the rest of the layers:
     for (size_t l = layer + 1; l < numLayers(); ++l) {

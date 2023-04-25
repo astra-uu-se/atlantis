@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <functional>
 #include <iostream>
+#include <numeric>
 #include <queue>
 #include <vector>
 
@@ -87,8 +88,7 @@ class PropagationGraph {
   bool containsStaticCycle();
   void partitionIntoLayers(std::vector<bool>& visited, VarIdBase varId);
   void partitionIntoLayers();
-  bool containsDynamicCycle(std::vector<bool>& visited,
-                            std::vector<bool>& inFrontier, VarIdBase varId);
+  bool containsDynamicCycle(std::vector<bool>& visited, VarIdBase varId);
   bool containsDynamicCycle(size_t level);
   void mergeLayersWithoutDynamicCycles();
   void computeLayerOffsets();
