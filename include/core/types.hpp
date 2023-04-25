@@ -12,7 +12,7 @@ using Int = int64_t;
 using Timestamp = UInt;
 using IdBase = size_t;  // IDs are mainly used for vector lookups, so they must
                         // be of size_t.
-enum VarIdType { var, view };
+enum class VarIdType : bool { var, view };
 
 [[maybe_unused]] static Timestamp NULL_TIMESTAMP = Timestamp(0);
 
@@ -58,9 +58,9 @@ struct InvariantId : public Id {
   InvariantId(const LocalId&) = delete;
 };
 
-enum class CommitMode { NO_COMMIT, COMMIT, RECOMPUTE_AND_COMMIT };
-enum class PropagationMode { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT };
-enum class OutputToInputMarkingMode {
+enum class CommitMode : bool { NO_COMMIT, COMMIT };
+enum class PropagationMode : bool { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT };
+enum class OutputToInputMarkingMode : char {
   // No marking:
   NONE,
   // Mark dfs starting from modified search variables:
@@ -90,4 +90,4 @@ struct DomainEntry {
   }
 };
 
-enum class ObjectiveDirection : int { MINIMISE = 1, MAXIMISE = -1, NONE = 0 };
+enum class ObjectiveDirection : char { MINIMISE = 1, MAXIMISE = -1, NONE = 0 };
