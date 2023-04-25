@@ -35,6 +35,8 @@ class PropagationEngine : public Engine {
 
   void clearPropagationQueue();
 
+  void propagateOnClose();
+
   template <CommitMode Mode, bool SingleLayer>
   void propagate();
 
