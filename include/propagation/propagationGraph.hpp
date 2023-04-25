@@ -243,6 +243,11 @@ class PropagationGraph {
     return _variablesInLayer[layer].size();
   }
 
+  [[nodiscard]] inline const std::vector<VarIdBase>& variablesInLayer(
+      size_t layer) const noexcept {
+    return _variablesInLayer[layer];
+  }
+
   [[nodiscard]] inline size_t layer(VarIdBase id) {
     return _variableLayerIndex.at(id).layer;
   }

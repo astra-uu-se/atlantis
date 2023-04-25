@@ -35,10 +35,11 @@ class PropagationQueue {
     _priorityNodes[id]->priority = newPriority;
   }
 
-  bool empty() { return head == nullptr; }
+  bool empty() const { return head == nullptr; }
+
   void push(VarIdBase id) {
     ListNode* toInsert = _priorityNodes[id].get();
-    if (toInsert->next != nullptr || tail == toInsert) {
+    if (toInsert->next != nullptr || head == toInsert || tail == toInsert) {
       return;  // id is already in list
     }
     if (head == nullptr) {
@@ -66,6 +67,7 @@ class PropagationQueue {
         current->next = toInsert;
         return;
       }
+      assert(current->priority <= current->next->priority);
       current = current->next;
     }
     // Insert failed (this should and cannot happen):
