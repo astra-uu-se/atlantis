@@ -325,8 +325,8 @@ TEST_F(ExistsTest, EngineIntegration) {
     const VarId modifiedVarId = args.front();
     const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockExists>(
-        &engine->makeInvariant<MockExists>(*engine, output, args), propMode,
-        markingMode, numArgs + 1, modifiedVarId, 5, output);
+        &engine->makeInvariant<MockExists>(*engine, output, args),
+        {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }
 
