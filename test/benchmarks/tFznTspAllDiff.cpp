@@ -1,5 +1,5 @@
+#include <string>
+
 #include "modelTest.hpp"
 
-TEST(FznTspAllDiff, Solve) {
-  testModelFile("../fzn-models/tsp_alldiff.fzn");
-}
+TEST(FznTspAllDiff, Solve) { testModelFile("tsp_alldiff.fzn"); }

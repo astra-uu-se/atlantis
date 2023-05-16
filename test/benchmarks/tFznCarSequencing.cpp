@@ -1,5 +1,5 @@
+#include <string>
+
 #include "modelTest.hpp"
 
-TEST(FznCarSequencing, Solve) {
-  testModelFile("../fzn-models/car_sequencing.fzn");
-}
+TEST(FznCarSequencing, Solve) { testModelFile("car_sequencing.fzn"); }
