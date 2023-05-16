@@ -368,9 +368,9 @@ void PropagationEngine::propagate() {
 
       for (const auto& toNotify : listeningInvariantData(queuedVar)) {
         Invariant& invariant = _store.invariant(toNotify.invariantId);
+        assert(invariant.primaryDefinedVar() != NULL_ID);
         assert(toNotify.invariantId != definingInvariant);
-        assert(_propGraph.position(queuedVar) !=
-               _propGraph.position(invariant.primaryDefinedVar()));
+        assert(invariant.primaryDefinedVar().idType == VarIdType::var);
         if constexpr (SingleLayer) {
           assert(_propGraph.position(queuedVar) <
                  _propGraph.position(invariant.primaryDefinedVar()));
@@ -384,10 +384,6 @@ void PropagationEngine::propagate() {
           }
         }
         invariant.notify(toNotify.localId);
-        assert(invariant.primaryDefinedVar() != NULL_ID);
-        assert(invariant.primaryDefinedVar().idType == VarIdType::var);
-        assert(_propGraph.position(queuedVar) <
-               _propGraph.position(invariant.primaryDefinedVar()));
         if constexpr (SingleLayer) {
           assert(_propGraph.layer(invariant.primaryDefinedVar()) == 0);
           enqueueComputedVar(invariant.primaryDefinedVar());
