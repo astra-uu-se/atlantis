@@ -1,7 +1,7 @@
 from fileinput import filename
 import logging
 from os import path, access, R_OK
-from re import X
+import re
 import matplotlib
 import matplotlib.pyplot as plt
 import json
@@ -12,15 +12,17 @@ from pprint import pprint
 matplotlib.use('tkagg')
 
 
-def int_to_propagation_mode(value: int) -> str:
+def int_to_propagation_mode(value: int, short: bool = True) -> str:
+    assert 0 <= value and value <= 3
     if value == 0:
-        return 'i2o'
-    elif value == 1:
-        return 'o2i'
+        return 'i2o' if short else 'input-to-output'
+    prop_mode = ('o2i' if short else 'output-to-input') + ' –⁠ '  # en dash
+    if value == 1:
+        return prop_mode + 'without marking'
     elif value == 2:
-        return 'o2i - static'
+        return prop_mode + 'prepared'
     elif value == 3:
-        return 'o2i - ad-hoc'
+        return prop_mode + 'dfs'
     return ''
 
 
@@ -46,6 +48,9 @@ def int_to_marker(value: int) -> str:
         return '+'
     return ''
 
+
+def flatten(l: List[List[Any]]) -> List[Any]:
+    return [item for sublist in l for item in sublist]
 
 class Plot:
     x_vals: List[int]
@@ -128,7 +133,7 @@ class Instance:
             return self.runs[0]
         return sum(self.runs) / len(self.runs)
 
-    def add_instance(self, instance) -> None:
+    def add_instance(self, instance: 'Instance') -> 'Instance':
         assert self.problem_instance == instance.problem_instance
         self.runs = self.runs + instance.runs
         return self
@@ -190,6 +195,16 @@ class InstanceCollection:
     def propagation_modes(self) -> List[Instance]:
         return list(sorted(self.instances.keys()))
 
+    @property
+    def smallest_instance(self) -> Instance:
+        return min(self.instances.values(), key=lambda i: i.problem_instance,
+                   default=None)
+
+    @property
+    def largest_instance(self) -> Instance:
+        return max(self.instances.values(), key=lambda i: i.problem_instance,
+                   default=None)
+
     def add_instance(self, instance: Instance) -> 'InstanceCollection':
         if instance.problem_instance not in self.instances:
             self.instances[instance.problem_instance] = instance
@@ -207,8 +222,8 @@ class InstanceCollection:
 
         return instance
 
-    def add_instance_collection(self,
-                                instance: Instance) -> 'InstanceCollection':
+    def add_instance_collection(
+      self, instance: 'InstanceCollection') -> 'InstanceCollection':
         assert self.propagation_mode == instance.propagation_mode
 
         for instance in instance.instances.values():
@@ -237,13 +252,19 @@ class InstanceCollection:
         return any((self.instances[i].overlaps(
           instance_collection.instances[i]) for i in intersection))
 
+    def extremums(self) -> 'InstanceCollection':
+        return InstanceCollection(self.propagation_mode, self.arguments.copy(),
+                                  self.settings.copy()).add_instance(
+                                    self.largest_instance).add_instance(
+                                      self.smallest_instance)
+
 
 class PropagationModeCollection:
     identifier: str
     instance_collections: Dict[int, InstanceCollection]
     settings: Dict[str, Any]
 
-    def __init__(self, identifier, settings: Dict[str, Any]):
+    def __init__(self, identifier: str, settings: Dict[str, Any]):
         self.identifier: str = identifier
         self.instance_collections: Dict[int, InstanceCollection] = dict()
         self.settings: Dict[str, Any] = settings
@@ -292,15 +313,17 @@ class PropagationModeCollection:
         self.add_instance_collection(ic)
         return ic
 
-    def add_propagation_mode_collection(self, propagation_mode_collection
-                                        ) -> 'PropagationModeCollection':
+    def add_propagation_mode_collection(
+      self, propagation_mode_collection: 'PropagationModeCollection'
+      ) -> 'PropagationModeCollection':
         assert self.identifier == propagation_mode_collection.identifier
 
         for ic in propagation_mode_collection.instance_collections.values():
             self.add_instance_collection(ic)
         return self
 
-    def add(self, obj) -> 'PropagationModeCollection':
+    def add(self, obj: Union[InstanceCollection, 'PropagationModeCollection']
+            ) -> 'PropagationModeCollection':
         if isinstance(obj, InstanceCollection):
             return self.add_instance_collection(obj)
         if isinstance(obj, PropagationModeCollection):
@@ -326,7 +349,8 @@ class PropagationModeCollection:
         for ic in self:
             x_vals, y_vals = ic.results()
             label = ' - '.join(
-              label_parts + [int_to_propagation_mode(ic.propagation_mode)])
+              label_parts + [int_to_propagation_mode(ic.propagation_mode,
+                                                     True)])
 
             plots.append(Plot(
                 x_vals,
@@ -336,6 +360,9 @@ class PropagationModeCollection:
                 linestyle=linestyle
             ))
         return plots
+
+    def extremums(self) -> List[InstanceCollection]:
+        return [ic.extremums() for ic in self.instance_collections.values()]
 
 
 class Method:
@@ -391,17 +418,17 @@ class Method:
             self.add_propagation_mode_collection(pmc)
         return self
 
-    def add(self, obj) -> 'Method':
+    def add(self, obj: Union[PropagationModeCollection, 'Method']) -> 'Method':
         if isinstance(obj, PropagationModeCollection):
             return self.add_propagation_mode_collection(obj)
         if isinstance(obj, Method):
             return self.add_method(obj)
         return self
 
-    def contains(self, identifier) -> bool:
-        return identifier in self.identifiers
+    def contains(self, identifier: str) -> bool:
+        return identifier in self.propagation_mode_collections
 
-    def orverlaps(self, method) -> bool:
+    def orverlaps(self, method: 'Method') -> bool:
         if self.name != method.name:
             return False
 
@@ -417,6 +444,10 @@ class Method:
                                   ) -> Iterable[InstanceCollection]:
         return iter(
           self.propagation_mode_collections.get(pmc.identifier), list())
+
+    def extremums(self) -> List[InstanceCollection]:
+        return flatten([pmc.extremums() for
+                        pmc in self.propagation_mode_collections.values()])
 
 
 class Model:
@@ -436,6 +467,18 @@ class Model:
     @property
     def pretty_name(self) -> str:
         return self.settings.get('model_name', self.name)
+
+    @property
+    def latex_name(self):
+        if 'model_name' not in self.settings:
+            return self.settings.get('abbreviation', self.name)
+        if 'abbreviation' not in self.settings:
+            return self.settings.get('model_name', self.name)
+        
+        model_name = self.settings['model_name']
+        if len(model_name) > 20:
+            return self.settings['abbreviation']
+        return model_name
 
     @property
     def label(self) -> str:
@@ -480,13 +523,13 @@ class Model:
             self.methods[method_name].add_method(method)
         return method
 
-    def add_model(self, model) -> 'Model':
+    def add_model(self, model: 'Model') -> 'Model':
         assert self.name == model.name
         for method in model.methods.values():
             self.add_method(method)
         return self
 
-    def add(self, obj) -> 'Model':
+    def add(self, obj: Union[Method, 'Model']) -> 'Model':
         if isinstance(obj, Method):
             return self.add_method(obj)
         if isinstance(obj, Model):
@@ -507,6 +550,10 @@ class Model:
           (met for met in self if
            method.name == met.name or method.pretty_name == met.pretty_name),
           None)
+
+    def extremums(self) -> List[InstanceCollection]:
+        return flatten([m.extremums() for
+                        m in self.methods.values()])
 
 
 class ModelCollection:
@@ -529,19 +576,20 @@ class ModelCollection:
             self.models[model.name].add_model(model)
         return self
 
-    def add_model_collection(self, model_collection) -> 'ModelCollection':
+    def add_model_collection(
+      self, model_collection: 'ModelCollection') -> 'ModelCollection':
         for model in model_collection:
             self.add_model(model)
         return self
 
-    def add(self, obj) -> 'ModelCollection':
+    def add(self, obj: Union[Model, 'ModelCollection']) -> 'ModelCollection':
         if isinstance(obj, Model):
             return self.add_model(obj)
         if isinstance(obj, ModelCollection):
             return self.add_model_collection(obj)
         return self
 
-    def orverlaps(self, model_collection) -> bool:
+    def orverlaps(self, model_collection: 'ModelCollection') -> bool:
         intersection = set(
           self.models.keys).intersection(model_collection.models.keys())
         return any(
@@ -568,8 +616,9 @@ class ProblemCollection:
         for mc in self.model_collections.values():
             yield mc
 
-    def add_model_collection(self, file_name, model_collection
-                             ) -> 'ProblemCollection':
+    def add_model_collection(
+      self, file_name: str, model_collection: ModelCollection
+      ) -> 'ProblemCollection':
         if file_name not in self.model_collections:
             self.model_collections[file_name] = model_collection
         else:
@@ -594,11 +643,13 @@ class PlotFormatter:
     settings: Dict[str, Any]
     file_prefix: str
     file_suffix: str
+    models_re: str
     problem_collection: ProblemCollection
 
     def __init__(self, inputs: List[str],
                  save_plots: bool, output_dir: str, settings: str,
-                 file_prefix: str = '', file_suffix: str = ''):
+                 file_prefix: str = '', file_suffix: str = '.*', 
+                 models_re: str = ''):
         self.inputs: List[str] = inputs
         self.output_dir: Union[str, None] = output_dir
         self.save_plots: bool = save_plots
@@ -607,6 +658,7 @@ class PlotFormatter:
           f'{file_prefix}-' if len(file_prefix) > 0 else '')
         self.file_suffix: str = (
           f'-{file_suffix}' if len(file_suffix) > 0 else '')
+        self.models_re: str = models_re
         json_data = self.retrieve_json()
         self.problem_collection = self.parse_problem_collection(json_data)
 
@@ -702,6 +754,9 @@ class PlotFormatter:
     def parse_json_benchmark(self, benchmark: Dict[str, Any]) -> Model:
         name_parts: str = benchmark['run_name'].split('/')
         model_name: str = name_parts[0]
+        if not re.search(self.models_re, model_name):
+            return None
+
         method_name: str = name_parts[1]
 
         arguments: List[str] = [int(a) for a in name_parts[2:]]
@@ -734,10 +789,10 @@ class PlotFormatter:
 
         model = Model(model_name, settings)
 
-        print('\t'.join([model_name,
-                         str(problem_instance),
-                         int_to_propagation_mode(propagation_mode),
-                         str(probes_per_second)]))
+        logging.info('\t'.join([model_name,
+                                str(problem_instance),
+                                int_to_propagation_mode(propagation_mode),
+                                str(probes_per_second)]))
 
         model.create_method(method_name)\
              .create_propagation_mode_collection(identifier)\
@@ -773,7 +828,7 @@ class PlotFormatter:
         plt.rcParams["figure.figsize"] = (10, 4)
         plt.title(figure.title)
         plt.xlabel(figure.xlabel, fontsize=10)
-        plt.ylabel(figure.ylabel)
+        plt.ylabel(figure.ylabel, fontsize=10)
         plt.yscale(figure.yscale)
         for plot in figure:
             plt.plot(
@@ -790,14 +845,14 @@ class PlotFormatter:
         cols = 1 if len(subplots) < 2 else 2
         rows = int(ceil(len(subplots) / 2))
 
-        fig, axes = plt.subplots(rows, cols, figsize=(10, 8))
+        fig, axes = plt.subplots(rows, cols, figsize=(8, 3.8))
 
         flat = [axes] if len(subplots) == 1 else axes.flat
 
         for i, figure in enumerate(subplots):
             flat[i].set_title(figure.title)
-            flat[i].set_xlabel(figure.xlabel)
-            flat[i].set_ylabel(figure.ylabel)
+            flat[i].set_xlabel(figure.xlabel, fontsize=10.5)
+            flat[i].set_ylabel(figure.ylabel, fontsize=10.5)
             flat[i].set_yscale(figure.yscale)
             for plot in figure:
                 flat[i].plot(
@@ -837,8 +892,12 @@ class PlotFormatter:
         labels = [l for _, l in sorted(handles_labels, key=lambda hl: hl[1])]
         handles = [h for h, _ in sorted(handles_labels, key=lambda hl: hl[1])]
 
-        fig.legend(labels=labels, handles=handles, ncol=len(labels),
-                   loc='upper center')
+        if len(subplots) > 1:
+            fig.legend(labels=labels, handles=handles, ncol=len(labels),
+                       loc='upper center', fontsize=11.4)
+        else:
+            flat[0].legend(labels=labels, handles=handles, ncol=len(labels),
+                           loc='best', fontsize=11.4)
 
         plt.show()
 
@@ -960,6 +1019,81 @@ class PlotFormatter:
                     pad_inches=0)
         return True
 
+    def to_latex(self):
+        models: Dict[Model, List[InstanceCollection]] = dict()
+        for model_collection in self.problem_collection:
+            for model in model_collection:
+                models[model] = list(model.methods.values())[0].extremums()
+
+        latex: Dict[Model, List[Tuple[float, float]]] = dict()
+        propagation_modes: List[int] = list()
+        smallest = None
+        largest = None
+        for model, instance_collections in models.items():
+            assert (len(instance_collections)) > 0
+
+            instance_collections = sorted(
+              instance_collections, key=lambda ic: ic.propagation_mode)
+            
+            s = next((ic.smallest_instance.problem_instance
+                      for ic in instance_collections))
+            assert smallest is None or smallest == s
+            smallest = s
+
+            l = next((ic.largest_instance.problem_instance
+                      for ic in instance_collections))
+            assert largest is None or largest == l
+            largest = l
+            
+            best_s = max((ic.smallest_instance.probes_per_second
+                          for ic in instance_collections))
+
+            best_l = max((ic.largest_instance.probes_per_second
+                          for ic in instance_collections))
+            p_modes = [ic.propagation_mode for ic in instance_collections]
+            assert len(propagation_modes) == 0 or propagation_modes == p_modes
+            propagation_modes = p_modes
+            
+            latex[model] = (
+              [ic.smallest_instance.probes_per_second / best_s
+               for ic in instance_collections] +
+              [ic.largest_instance.probes_per_second / best_l
+               for ic in instance_collections])
+
+        assert propagation_modes == [0, 1, 2, 3]
+        print('\\textbf{Instance size} & '
+              f'\\multicolumn{{3}}{{c}}{{smallest ($n$={smallest})}} & '
+              f'\\multicolumn{{3}}{{c}}{{largest ($n$={largest})}} \\\\')
+        
+        print('\\cmidrule(lr){1-1} \\cmidrule(lr){2-4} \\cmidrule(lr){5-7}')
+        
+        print('\\textbf{Propagation} & \\multicolumn{1}{c}{input-to-output} & '
+              '\\multicolumn{2}{c}{output-to-input} & '
+              '\\multicolumn{1}{c}{input-to-output} & '
+              '\\multicolumn{2}{c}{output-to-input} \\\\')
+
+        print('\\cmidrule(lr){1-1} \\cmidrule(lr){2-2} \\cmidrule(lr){3-4} '
+              '\\cmidrule(lr){5-5} \\cmidrule(lr){6-7}')
+
+        print('\\textbf{Marking} & \\multicolumn{1}{c}{no} &'
+              '\\multicolumn{1}{c}{no} & \\multicolumn{1}{c}{yes} &'
+              '\\multicolumn{1}{c}{no} & \\multicolumn{1}{c}{no} &'
+              '\\multicolumn{1}{c}{yes} \\\\')
+
+        print('\\midrule')
+        
+        latex = sorted(latex.items(), key=lambda kvp: kvp[0].latex_name)
+        for model, data in latex:
+            def to_str(val: float) -> str:
+                str_val = f'{val:4.3f}'
+                if val >= 1.0:
+                    return f'$\\mathbf{{{str_val}}}$'
+                return f'${str_val}$'
+            
+            print(model.latex_name + ' & ' +
+                  ' & '.join(map(to_str, data)) +
+                  ' \\\\')
+
 
 if __name__ == "__main__":
     class readable_dir(argparse.Action):
@@ -992,10 +1126,13 @@ if __name__ == "__main__":
                           'plot-formatter.json'))
     parser.add_argument('-v', '--verbose', dest='verbose', default=True,
                         action="store_true")
+    parser.add_argument('--latex', dest='latex', default=False,
+                        action="store_true")
+    parser.add_argument('--models', dest='models_re', default='.*')
     args = parser.parse_args()
 
     if args.verbose:
-        logging.basicConfig(level=logging.WARNING)
+        logging.basicConfig(level=logging.INFO)
 
     plot_formatter = PlotFormatter(
       args.inputs,
@@ -1003,6 +1140,10 @@ if __name__ == "__main__":
       args.output_dir,
       args.settings,
       args.file_prefix,
-      args.file_suffix
+      args.file_suffix,
+      args.models_re
     )
-    plot_formatter.plot_model_collection()
+    if args.latex:
+        plot_formatter.to_latex()
+    else:
+        plot_formatter.plot_model_collection()

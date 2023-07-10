@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 if(MSVC)
   add_compile_options(/std:c++20 /permissive /W4 /w14640)
 else()
-  add_compile_options(-std=c++20 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic)
+  add_compile_options(-std=c++20 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -static)
 endif()
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
