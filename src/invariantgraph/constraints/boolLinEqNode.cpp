@@ -4,26 +4,78 @@
 
 std::unique_ptr<invariantgraph::BoolLinEqNode>
 invariantgraph::BoolLinEqNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto coeffs = integerVector(model, constraint.arguments[0]);
-  auto variables =
-      mappedVariableVector(model, constraint.arguments[1], variableMap);
-  auto bound = integerValue(model, constraint.arguments[2]);
-
-  if (constraint.arguments.size() >= 4) {
-    if (std::holds_alternative<bool>(constraint.arguments[3])) {
-      auto shouldHold = std::get<bool>(constraint.arguments[3]);
-      return std::make_unique<BoolLinEqNode>(coeffs, variables, bound,
-                                             shouldHold);
-    } else {
-      auto r = mappedVariable(constraint.arguments[3], variableMap);
-      return std::make_unique<BoolLinEqNode>(coeffs, variables, bound, r);
-    }
+  if (constraint.arguments().size() != 3 ||
+      constraint.arguments().size() != 4) {
+    throw std::runtime_error("BoolLinEq constraint takes two arguments");
   }
-  return std::make_unique<BoolLinEqNode>(coeffs, variables, bound, true);
+
+  if (!std::holds_alternative<fznparser::IntVarArray>(
+          constraint.arguments().at(0))) {
+    throw std::runtime_error(
+        "BoolLinEq constraint first argument must be an integer array");
+  }
+  if (!std::holds_alternative<fznparser::BoolArg>(
+          constraint.arguments().at(1))) {
+    throw std::runtime_error(
+        "BoolLinEq constraint second argument must be a bool var array");
+  }
+  if (!std::holds_alternative<fznparser::IntArg>(
+          constraint.arguments().at(2))) {
+    throw std::runtime_error(
+        "BoolLinEq constraint third argument must be an integer");
+  }
+
+  const fznparser::IntVarArray& coeffsArg =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(0));
+
+  if (!coeffsArg.isParArray()) {
+    throw std::runtime_error(
+        "BoolLinEq constraint first argument must be an integer array");
+  }
+
+  std::vector<int64_t> coeffs = coeffsArg.toParVector();
+
+  std::vector<VariableNode*> boolVarArray = invariantGraph.addVariableArray(
+      get<fznparser::IntVarArray>(constraint.arguments().front()));
+
+  const fznparser::IntArg& boundArg =
+      std::get<fznparser::IntArg>(constraint.arguments().at(2));
+
+  if (!boundArg.isParameter()) {
+    throw std::runtime_error(
+        "BoolLinEq constraint third argument must be an integer");
+  }
+
+  int64_t bound = boundArg.toParameter();
+
+  if (coeffs.size() != boolVarArray.size()) {
+    throw std::runtime_error(
+        "BoolLinEq constraint first and second array arguments must have the "
+        "same length");
+  }
+
+  if (constraint.arguments().size() == 3) {
+    return std::make_unique<BoolLinEqNode>(
+        std::move(coeffs), std::move(boolVarArray), bound, true);
+  }
+
+  const fznparser::BoolArg& reified =
+      get<fznparser::BoolArg>(constraint.arguments().back());
+
+  if (std::holds_alternative<bool>(reified)) {
+    return std::make_unique<BoolLinEqNode>(std::move(coeffs),
+                                           std::move(boolVarArray), bound,
+                                           std::get<bool>(reified));
+  }
+  return std::make_unique<BoolLinEqNode>(
+      std::move(coeffs), std::move(boolVarArray), bound,
+      invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get()));
 }
 
 void invariantgraph::BoolLinEqNode::createDefinedVariables(Engine& engine) {

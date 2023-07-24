@@ -2,11 +2,12 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::IntTimesNode>
-invariantgraph::IntTimesNode::fromModelConstraint(
-    const fznparser::FZNModel&, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
+namespace invariantgraph {
+
+std::unique_ptr<IntTimesNode> IntTimesNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    std::unordered_map<std::string_view, VariableNode>& variableMap) {
+  //  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto a = mappedVariable(constraint.arguments[0], variableMap);
   auto b = mappedVariable(constraint.arguments[1], variableMap);
@@ -15,12 +16,14 @@ invariantgraph::IntTimesNode::fromModelConstraint(
   return std::make_unique<IntTimesNode>(a, b, output);
 }
 
-void invariantgraph::IntTimesNode::createDefinedVariables(Engine& engine) {
+void IntTimesNode::createDefinedVariables(Engine& engine) {
   registerDefinedVariable(engine, definedVariables().front());
 }
 
-void invariantgraph::IntTimesNode::registerWithEngine(Engine& engine) {
+void IntTimesNode::registerWithEngine(Engine& engine) {
   assert(definedVariables().front()->varId() != NULL_ID);
   engine.makeInvariant<Times>(engine, definedVariables().front()->varId(),
                               a()->varId(), b()->varId());
 }
+
+}  // namespace invariantgraph

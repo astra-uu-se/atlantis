@@ -2,43 +2,44 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::SetInNode>
-invariantgraph::SetInNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<SetInNode> SetInNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto variable = mappedVariable(constraint.arguments[0], variableMap);
-  auto valueSet = integerSet(model, constraint.arguments[1]);
+  auto variable = invariantGraph.addVariable(
+      std::get<fznparser::IntArg>(constraint.arguments().at(0)));
+
+  fznparser::IntSet valueSet =
+      std::get<fznparser::IntSetArg>(constraint.arguments().at(1))
+          .toParameter();
 
   // Note: if the valueSet is an IntRange, here all the values are collected
   // into a vector. If it turns out memory usage is an issue, this should be
   // mitigated.
 
-  std::vector<Int> values = std::visit<std::vector<Int>>(
-      overloaded{
-          [&](const fznparser::LiteralSet<Int>& set) { return set.values; },
-          [&](const fznparser::IntRange& range) {
-            std::vector<Int> vals;
-            vals.resize(range.upperBound - range.lowerBound + 1);
-            std::iota(vals.begin(), vals.end(), range.lowerBound);
-            return vals;
-          }},
-      valueSet);
+  std::vector<Int> values = valueSet.populateElements();
 
-  if (constraint.arguments.size() >= 3) {
-    if (std::holds_alternative<bool>(constraint.arguments[2])) {
-      auto shouldHold = std::get<bool>(constraint.arguments[2]);
-      return std::make_unique<SetInNode>(variable, values, shouldHold);
-    } else {
-      auto r = mappedVariable(constraint.arguments[2], variableMap);
-      return std::make_unique<SetInNode>(variable, values, r);
-    }
+  if (constraint.arguments().size() == 2) {
+    return std::make_unique<SetInNode>(variable, values, true);
   }
-  return std::make_unique<SetInNode>(variable, values, true);
+  const fznparser::BoolArg reified =
+      std::get<fznparser::BoolArg>(constraint.arguments().at(2));
+
+  if (std::holds_alternative<bool>(reified)) {
+    return std::make_unique<SetInNode>(variable, values,
+                                       std::get<bool>(reified));
+  }
+  return std::make_unique<SetInNode>(
+      variable, values,
+      invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get()));
 }
 
-void invariantgraph::SetInNode::createDefinedVariables(Engine& engine) {
+void SetInNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     const VarId input = staticInputs().front()->varId();
     std::vector<DomainEntry> domainEntries;
@@ -60,4 +61,6 @@ void invariantgraph::SetInNode::createDefinedVariables(Engine& engine) {
   }
 }
 
-void invariantgraph::SetInNode::registerWithEngine(Engine&) {}
+void SetInNode::registerWithEngine(Engine&) {}
+
+}  // namespace invariantgraph

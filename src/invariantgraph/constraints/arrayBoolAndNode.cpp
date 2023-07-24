@@ -2,25 +2,51 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::ArrayBoolAndNode>
-invariantgraph::ArrayBoolAndNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<ArrayBoolAndNode> ArrayBoolAndNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  auto as = mappedVariableVector(model, constraint.arguments[0], variableMap);
-
-  if (std::holds_alternative<bool>(constraint.arguments[1])) {
-    auto shouldHold = std::get<bool>(constraint.arguments[1]);
-    return std::make_unique<invariantgraph::ArrayBoolAndNode>(as, shouldHold);
-  } else {
-    auto r = mappedVariable(constraint.arguments[1], variableMap);
-    return std::make_unique<invariantgraph::ArrayBoolAndNode>(as, r);
+  if (constraint.arguments().size() != 2) {
+    throw std::runtime_error("ArrayBoolAnd constraint takes two arguments");
   }
-  return std::make_unique<invariantgraph::ArrayBoolAndNode>(as, true);
+  if (!std::holds_alternative<fznparser::IntVarArray>(
+          constraint.arguments().front())) {
+    throw std::runtime_error(
+        "ArrayBoolAnd constraint first argument must be an bool var array");
+  }
+  if (!std::holds_alternative<fznparser::BoolArg>(
+          constraint.arguments().back())) {
+    throw std::runtime_error(
+        "ArrayBoolAnd constraint optional second argument must be a bool "
+        "var");
+  }
+  const auto& boolVarArray =
+      get<fznparser::IntVarArray>(constraint.arguments().front());
+
+  if (boolVarArray.size() == 0 || boolVarArray.isParArray()) {
+    return nullptr;
+  }
+
+  std::vector<VariableNode*> variableNodes =
+      invariantGraph.addVariableArray(boolVarArray);
+
+  const fznparser::BoolArg& reified =
+      get<fznparser::BoolArg>(constraint.arguments().back());
+
+  if (std::holds_alternative<bool>(reified)) {
+    return std::make_unique<ArrayBoolAndNode>(std::move(variableNodes),
+                                              std::get<bool>(reified));
+  }
+  return std::make_unique<ArrayBoolAndNode>(
+      std::move(variableNodes),
+      invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get()));
 }
 
-void invariantgraph::ArrayBoolAndNode::createDefinedVariables(Engine& engine) {
+void ArrayBoolAndNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     if (shouldHold()) {
       registerViolation(engine);
@@ -33,7 +59,7 @@ void invariantgraph::ArrayBoolAndNode::createDefinedVariables(Engine& engine) {
   }
 }
 
-void invariantgraph::ArrayBoolAndNode::registerWithEngine(Engine& engine) {
+void ArrayBoolAndNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
   std::vector<VarId> inputs;
   std::transform(staticInputs().begin(), staticInputs().end(),
@@ -43,3 +69,5 @@ void invariantgraph::ArrayBoolAndNode::registerWithEngine(Engine& engine) {
   engine.makeInvariant<ForAll>(
       engine, !shouldHold() ? _intermediate : violationVarId(), inputs);
 }
+
+}  // namespace invariantgraph

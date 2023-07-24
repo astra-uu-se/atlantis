@@ -1,29 +1,28 @@
 #include "invariantgraph/invariants/arrayIntMinimumNode.hpp"
 
-#include <algorithm>
-
 #include "../parseHelper.hpp"
-#include "invariants/minSparse.hpp"
 
-std::unique_ptr<invariantgraph::ArrayIntMinimumNode>
-invariantgraph::ArrayIntMinimumNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<ArrayIntMinimumNode> ArrayIntMinimumNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto inputs =
-      mappedVariableVector(model, constraint.arguments[1], variableMap);
-  auto output = mappedVariable(constraint.arguments[0], variableMap);
+  InvariantNode* output = invariantGraph.addVariable(
+      std::get<IntArg>(constraint.arguments().at(0)));
 
-  return std::make_unique<invariantgraph::ArrayIntMinimumNode>(inputs, output);
+  std::vector<InvariantNode*> inputs = invariantGraph.addVariableArray(
+      std::get<IntVarArray>(constraint.arguments().at(1)));
+
+  return std::make_unique<ArrayIntMinimumNode>(inputs, output);
 }
 
-void invariantgraph::ArrayIntMinimumNode::createDefinedVariables(
-    Engine& engine) {
+void ArrayIntMinimumNode::createDefinedVariables(Engine& engine) {
   registerDefinedVariable(engine, definedVariables().front());
 }
 
-void invariantgraph::ArrayIntMinimumNode::registerWithEngine(Engine& engine) {
+void ArrayIntMinimumNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
@@ -33,3 +32,5 @@ void invariantgraph::ArrayIntMinimumNode::registerWithEngine(Engine& engine) {
   engine.makeInvariant<MinSparse>(engine, definedVariables().front()->varId(),
                                   variables);
 }
+
+}  // namespace invariantgraph

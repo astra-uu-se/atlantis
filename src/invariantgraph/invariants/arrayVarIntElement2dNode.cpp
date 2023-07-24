@@ -2,11 +2,13 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::ArrayVarIntElement2dNode>
-invariantgraph::ArrayVarIntElement2dNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
+namespace invariantgraph {
+
+std::unique_ptr<ArrayVarIntElement2dNode>
+ArrayVarIntElement2dNode::fromModelConstraint(
+    const fznparser::Model& model, const fznparser::Constraint& constraint,
+    std::unordered_map<std::string_view, VariableNode>& variableMap) {
+  //  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto idx1 = mappedVariable(constraint.arguments[0], variableMap);
   auto idx2 = mappedVariable(constraint.arguments[1], variableMap);
@@ -20,17 +22,15 @@ invariantgraph::ArrayVarIntElement2dNode::fromModelConstraint(
   const Int offset2 = integerValue(model, constraint.arguments[6]);
   assert(offset2 <= idx2->domain().lowerBound());
 
-  return std::make_unique<invariantgraph::ArrayVarIntElement2dNode>(
+  return std::make_unique<ArrayVarIntElement2dNode>(
       idx1, idx2, x, c, static_cast<size_t>(numRows), offset1, offset2);
 }
 
-void invariantgraph::ArrayVarIntElement2dNode::createDefinedVariables(
-    Engine& engine) {
+void ArrayVarIntElement2dNode::createDefinedVariables(Engine& engine) {
   registerDefinedVariable(engine, definedVariables().front());
 }
 
-void invariantgraph::ArrayVarIntElement2dNode::registerWithEngine(
-    Engine& engine) {
+void ArrayVarIntElement2dNode::registerWithEngine(Engine& engine) {
   const size_t numCols = dynamicInputs().size() / _numRows;
   std::vector<std::vector<VarId>> varMatrix(_numRows,
                                             std::vector<VarId>(numCols));
@@ -45,3 +45,5 @@ void invariantgraph::ArrayVarIntElement2dNode::registerWithEngine(
       engine, definedVariables().front()->varId(), idx1()->varId(),
       idx2()->varId(), varMatrix, _offset1, _offset2);
 }
+
+}  // namespace invariantgraph

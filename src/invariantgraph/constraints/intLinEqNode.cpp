@@ -2,31 +2,43 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::IntLinEqNode>
-invariantgraph::IntLinEqNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<IntLinEqNode> IntLinEqNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto coeffs = integerVector(model, constraint.arguments[0]);
-  auto variables =
-      mappedVariableVector(model, constraint.arguments[1], variableMap);
-  auto bound = integerValue(model, constraint.arguments[2]);
+  std::vector<Int> coeffs =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(0))
+          .toParVector();
 
-  if (constraint.arguments.size() >= 4) {
-    if (std::holds_alternative<bool>(constraint.arguments[3])) {
-      auto shouldHold = std::get<bool>(constraint.arguments[3]);
+  std::vector<VariableNode*> variables = invariantGraph.addVariableArray(
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(1)));
+
+  Int bound =
+      std::get<Int>(std::get<fznparser::IntArg>(constraint.arguments().at(2)));
+
+  if (constraint.arguments().size() == 4) {
+    const fznparser::BoolArg& reified =
+        std::get<fznparser::BoolArg>(constraint.arguments().at(3));
+
+    if (std::holds_alternative<bool>(reified)) {
       return std::make_unique<IntLinEqNode>(coeffs, variables, bound,
-                                            shouldHold);
+                                            std::get<bool>(reified));
     } else {
-      auto r = mappedVariable(constraint.arguments[3], variableMap);
-      return std::make_unique<IntLinEqNode>(coeffs, variables, bound, r);
+      return std::make_unique<IntLinEqNode>(
+          coeffs, variables, bound,
+          invariantGraph.addVariable(
+              std::get<std::reference_wrapper<const fznparser::BoolVar>>(
+                  reified)
+                  .get()));
     }
   }
   return std::make_unique<IntLinEqNode>(coeffs, variables, bound, true);
 }
 
-void invariantgraph::IntLinEqNode::createDefinedVariables(Engine& engine) {
+void IntLinEqNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
@@ -39,7 +51,7 @@ void invariantgraph::IntLinEqNode::createDefinedVariables(Engine& engine) {
   }
 }
 
-void invariantgraph::IntLinEqNode::registerWithEngine(Engine& engine) {
+void IntLinEqNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
@@ -50,3 +62,5 @@ void invariantgraph::IntLinEqNode::registerWithEngine(Engine& engine) {
 
   engine.makeInvariant<Linear>(engine, _sumVarId, _coeffs, variables);
 }
+
+}  // namespace invariantgraph

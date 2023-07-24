@@ -4,7 +4,7 @@
 #include "utils/variant.hpp"
 
 search::Objective::Objective(PropagationEngine& engine,
-                             const fznparser::FZNModel& model)
+                             const fznparser::Model& model)
     : _engine(engine), _modelObjective(model.objective()) {}
 
 VarId search::Objective::registerWithEngine(VarId constraintViolation,

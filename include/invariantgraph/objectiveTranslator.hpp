@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fznparser/ast.hpp>
 #include <variant>
 
 #include "search/cost.hpp"

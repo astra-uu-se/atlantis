@@ -4,20 +4,46 @@
 
 std::unique_ptr<invariantgraph::ArrayBoolXorNode>
 invariantgraph::ArrayBoolXorNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto as = mappedVariableVector(model, constraint.arguments[0], variableMap);
-
-  if (std::holds_alternative<bool>(constraint.arguments[1])) {
-    auto shouldHold = std::get<bool>(constraint.arguments[1]);
-    return std::make_unique<invariantgraph::ArrayBoolXorNode>(as, shouldHold);
-  } else {
-    auto r = mappedVariable(constraint.arguments[1], variableMap);
-    return std::make_unique<invariantgraph::ArrayBoolXorNode>(as, r);
+  if (constraint.arguments().size() != 2) {
+    throw std::runtime_error("ArrayBoolXOr constraint takes two arguments");
   }
-  return std::make_unique<invariantgraph::ArrayBoolXorNode>(as, true);
+  if (!std::holds_alternative<fznparser::IntVarArray>(
+          constraint.arguments().front())) {
+    throw std::runtime_error(
+        "ArrayBoolXOr constraint first argument must be a bool var array");
+  }
+  if (!std::holds_alternative<fznparser::BoolArg>(
+          constraint.arguments().back())) {
+    throw std::runtime_error(
+        "ArrayBoolXOr constraint optional second argument must be a bool "
+        "var");
+  }
+  const auto& boolVarArray =
+      get<fznparser::IntVarArray>(constraint.arguments().front());
+
+  if (boolVarArray.size() == 0 || boolVarArray.isParArray()) {
+    return nullptr;
+  }
+
+  std::vector<VariableNode*> variableNodes =
+      invariantGraph.addVariableArray(boolVarArray);
+
+  const fznparser::BoolArg& reified =
+      get<fznparser::BoolArg>(constraint.arguments().back());
+
+  if (std::holds_alternative<bool>(reified)) {
+    return std::make_unique<ArrayBoolXorNode>(std::move(variableNodes),
+                                              std::get<bool>(reified));
+  }
+  return std::make_unique<ArrayBoolXorNode>(
+      std::move(variableNodes),
+      invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get()));
 }
 
 void invariantgraph::ArrayBoolXorNode::createDefinedVariables(Engine& engine) {

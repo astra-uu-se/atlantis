@@ -3,11 +3,15 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "constraints/allDifferent.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "views/equalConst.hpp"
 #include "views/notEqualConst.hpp"
 
 namespace invariantgraph {
+class InvariantGraph;  // Forward declaration
+
 class AllEqualNode : public SoftConstraintNode {
  private:
   VarId _allDifferentViolationVarId{NULL_ID};
@@ -27,8 +31,8 @@ class AllEqualNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<AllEqualNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

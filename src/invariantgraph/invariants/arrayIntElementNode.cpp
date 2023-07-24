@@ -2,25 +2,34 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::ArrayIntElementNode>
-invariantgraph::ArrayIntElementNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<ArrayIntElementNode> ArrayIntElementNode::fromModelConstraint(
+    const fznparser::Model& model, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto as = integerVector(model, constraint.arguments[1]);
-  auto idx = mappedVariable(constraint.arguments[0], variableMap);
-  auto c = mappedVariable(constraint.arguments[2], variableMap);
-  const Int offset = constraint.name != "array_int_element_offset"
-                         ? 1
-                         : idx->domain().lowerBound();
+  const fznparser::IntVar& idx =
+      std::get<std::reference_wrapper<const fznparser::IntVar>>(
+          std::get<fznparser::IntArg>(constraint.arguments().at(0)));
 
-  return std::make_unique<invariantgraph::ArrayIntElementNode>(as, idx, c,
-                                                               offset);
+  std::vector<Int> as =
+      std::get<fznParser::IntVarArray>(constraint.arguments().at(1))
+          .toParVector();
+
+  const fznparser::IntVar& c =
+      std::get<std::reference_wrapper<const fznparser::IntVar>>(
+          std::get<fznparser::BoolArg>(constraint.arguments().at(2)));
+
+  const Int offset =
+      constraint.name != "array_int_element_offset" ? 1 : idx.lowerBound();
+
+  return std::make_unique<ArrayIntElementNode>(
+      as, invariantGraph.addVariable(idx), invariantGraph.addVariable(c),
+      offset);
 }
 
-void invariantgraph::ArrayIntElementNode::createDefinedVariables(
-    Engine& engine) {
+void ArrayIntElementNode::createDefinedVariables(Engine& engine) {
   if (definedVariables().front()->varId() == NULL_ID) {
     assert(b()->varId() != NULL_ID);
     definedVariables().front()->setVarId(
@@ -28,4 +37,6 @@ void invariantgraph::ArrayIntElementNode::createDefinedVariables(
   }
 }
 
-void invariantgraph::ArrayIntElementNode::registerWithEngine(Engine&) {}
+void ArrayIntElementNode::registerWithEngine(Engine&) {}
+
+}  // namespace invariantgraph

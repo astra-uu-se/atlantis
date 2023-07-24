@@ -11,7 +11,7 @@ class IntDivNodeTest : public NodeTestBase {
   fznparser::Constraint constraint{
       "int_div", {"a", "b", "c"}, {fznparser::DefinesVariableAnnotation{"c"}}};
 
-  fznparser::FZNModel model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
+  fznparser::Model model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
 
   std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
   std::unique_ptr<invariantgraph::IntDivNode> node;

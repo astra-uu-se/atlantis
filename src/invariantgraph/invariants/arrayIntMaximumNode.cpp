@@ -1,29 +1,28 @@
 #include "invariantgraph/invariants/arrayIntMaximumNode.hpp"
 
-#include <algorithm>
-
 #include "../parseHelper.hpp"
-#include "invariants/maxSparse.hpp"
 
-std::unique_ptr<invariantgraph::ArrayIntMaximumNode>
-invariantgraph::ArrayIntMaximumNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<ArrayIntMaximumNode> ArrayIntMaximumNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto inputs =
-      mappedVariableVector(model, constraint.arguments[1], variableMap);
-  auto output = mappedVariable(constraint.arguments[0], variableMap);
+  InvariantNode* output = invariantGraph.addVariable(
+      std::get<IntArg>(constraint.arguments().at(0)));
 
-  return std::make_unique<invariantgraph::ArrayIntMaximumNode>(inputs, output);
+  std::vector<InvariantNode*> inputs = invariantGraph.addVariableArray(
+      std::get<IntVarArray>(constraint.arguments().at(1)));
+
+  return std::make_unique<ArrayIntMaximumNode>(inputs, output);
 }
 
-void invariantgraph::ArrayIntMaximumNode::createDefinedVariables(
-    Engine& engine) {
+void ArrayIntMaximumNode::createDefinedVariables(Engine& engine) {
   registerDefinedVariable(engine, definedVariables().front());
 }
 
-void invariantgraph::ArrayIntMaximumNode::registerWithEngine(Engine& engine) {
+void ArrayIntMaximumNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> variables;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(variables),
@@ -33,3 +32,5 @@ void invariantgraph::ArrayIntMaximumNode::registerWithEngine(Engine& engine) {
   engine.makeInvariant<MaxSparse>(engine, definedVariables().front()->varId(),
                                   variables);
 }
+
+}  // namespace invariantgraph

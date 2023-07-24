@@ -10,7 +10,7 @@ class Bool2IntNodeTest : public NodeTestBase {
   fznparser::Constraint constraint{
       "bool2int", {"a", "b"}, {fznparser::DefinesVariableAnnotation{"b"}}};
 
-  fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
+  fznparser::Model model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::Bool2IntNode> node;
 

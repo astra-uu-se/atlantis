@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fznparser/ast.hpp>
 #include <optional>
 
 template <typename T, typename Object>
@@ -27,11 +26,11 @@ std::optional<T> getAnnotation(const fznparser::Constraint& constraint) {
   return getAnnotationInternal<T>(constraint);
 }
 
-std::optional<fznparser::Identifier> definedVariable(
+std::optional<std::string_view> definedVariable(
     const fznparser::Constraint& constraint);
 
 template <typename T>
-fznparser::Identifier identifier(const T& variable) {
-  return std::visit<fznparser::Identifier>(
-      [](const auto& var) { return var.name; }, variable);
+std::string_view identifier(const T& variable) {
+  return std::visit<std::string_view>(
+      [](const auto& var) { return var.identifier(); }, variable);
 }

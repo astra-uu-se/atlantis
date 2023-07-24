@@ -3,33 +3,60 @@
 #include "../parseHelper.hpp"
 
 invariantgraph::AllDifferentNode::AllDifferentNode(
-    std::vector<VariableNode*> variables, VariableNode* r)
-    : SoftConstraintNode(variables, r) {}
+    std::vector<VariableNode*>&& variables, VariableNode* r)
+    : SoftConstraintNode(std::move(variables), r) {}
 
 invariantgraph::AllDifferentNode::AllDifferentNode(
-    std::vector<VariableNode*> variables, bool shouldHold)
-    : SoftConstraintNode(variables, shouldHold) {}
+    std::vector<VariableNode*>&& variables, bool shouldHold)
+    : SoftConstraintNode(std::move(variables), shouldHold) {}
 
 std::unique_ptr<invariantgraph::AllDifferentNode>
 invariantgraph::AllDifferentNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto variables =
-      mappedVariableVector(model, constraint.arguments[0], variableMap);
-
-  if (constraint.arguments.size() >= 2) {
-    if (std::holds_alternative<bool>(constraint.arguments[1])) {
-      auto shouldHold = std::get<bool>(constraint.arguments[1]);
-      return std::make_unique<invariantgraph::AllDifferentNode>(variables,
-                                                                shouldHold);
-    } else {
-      auto r = mappedVariable(constraint.arguments[1], variableMap);
-      return std::make_unique<invariantgraph::AllDifferentNode>(variables, r);
+  if (constraint.arguments().empty() || constraint.arguments().size() > 2) {
+    throw std::runtime_error(
+        "AllDifferent constraint takes one or two arguments");
+  }
+  if (!std::holds_alternative<fznparser::IntVarArray>(
+          constraint.arguments().front())) {
+    throw std::runtime_error(
+        "AllDifferent constraint first argument must be an int var array");
+  }
+  if (constraint.arguments().size() == 2) {
+    if (!std::holds_alternative<fznparser::BoolArg>(
+            constraint.arguments().back())) {
+      throw std::runtime_error(
+          "AllDifferent constraint optional second argument must be a bool "
+          "var");
     }
   }
-  return std::make_unique<AllDifferentNode>(variables, true);
+  const auto& intVarArray =
+      get<fznparser::IntVarArray>(constraint.arguments().front());
+  if (intVarArray.size() == 0 || intVarArray.isParArray()) {
+    return nullptr;
+  }
+
+  std::vector<VariableNode*> variableNodes =
+      pruneAllDifferent(invariantGraph.addVariableArray(intVarArray));
+
+  if (constraint.arguments().size() == 1) {
+    return std::make_unique<AllDifferentNode>(std::move(variableNodes), true);
+  }
+
+  const fznparser::BoolArg& reified =
+      get<fznparser::BoolArg>(constraint.arguments().back());
+  if (std::holds_alternative<bool>(reified)) {
+    return std::make_unique<invariantgraph::AllDifferentNode>(
+        std::move(variableNodes), std::get<bool>(reified));
+  }
+  return std::make_unique<invariantgraph::AllDifferentNode>(
+      std::move(variableNodes),
+      invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get()));
 }
 
 void invariantgraph::AllDifferentNode::createDefinedVariables(Engine& engine) {

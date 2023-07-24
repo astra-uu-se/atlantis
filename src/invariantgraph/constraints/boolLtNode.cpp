@@ -2,32 +2,50 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::BoolLtNode>
-invariantgraph::BoolLtNode::fromModelConstraint(
-    const fznparser::FZNModel&, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<BoolLtNode> BoolLtNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto a = mappedVariable(constraint.arguments[0], variableMap);
-  auto b = mappedVariable(constraint.arguments[1], variableMap);
-
-  if (constraint.arguments.size() >= 3) {
-    if (std::holds_alternative<bool>(constraint.arguments[2])) {
-      auto shouldHold = std::get<bool>(constraint.arguments[2]);
-      return std::make_unique<invariantgraph::BoolLtNode>(a, b, shouldHold);
-    } else {
-      auto r = mappedVariable(constraint.arguments[2], variableMap);
-      return std::make_unique<invariantgraph::BoolLtNode>(a, b, r);
+  if (constraint.arguments().size() != 2 ||
+      constraint.arguments().size() != 3) {
+    throw std::runtime_error("BoolLt constraint takes two var bool arguments");
+  }
+  for (const auto& arg : constraint.arguments()) {
+    if (!std::holds_alternative<fznparser::BoolArg>(arg)) {
+      throw std::runtime_error(
+          "BoolLt constraint takes two var bool arguments");
     }
   }
-  return std::make_unique<BoolLtNode>(a, b, true);
+
+  VariableNode* a = invariantGraph.addVariable(
+      std::get<fznparser::BoolArg>(constraint.arguments().at(0)));
+
+  VariableNode* b = invariantGraph.addVariable(
+      std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
+
+  if (constraint.arguments().size() == 2) {
+    return std::make_unique<BoolLtNode>(a, b, true);
+  }
+
+  const auto& reified = get<fznparser::BoolArg>(constraint.arguments().at(2));
+  if (std::holds_alternative<bool>(reified)) {
+    return std::make_unique<BoolLtNode>(a, b, std::get<bool>(reified));
+  }
+  return std::make_unique<BoolLtNode>(
+      a, b,
+      invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get()));
 }
 
-void invariantgraph::BoolLtNode::createDefinedVariables(Engine& engine) {
+void BoolLtNode::createDefinedVariables(Engine& engine) {
   registerViolation(engine);
 }
 
-void invariantgraph::BoolLtNode::registerWithEngine(Engine& engine) {
+void BoolLtNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
   assert(a()->varId() != NULL_ID);
   assert(b()->varId() != NULL_ID);
@@ -41,3 +59,5 @@ void invariantgraph::BoolLtNode::registerWithEngine(Engine& engine) {
                                          a()->varId());
   }
 }
+
+}  // namespace invariantgraph

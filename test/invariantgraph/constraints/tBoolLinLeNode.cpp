@@ -21,7 +21,7 @@ class BoolLinLeNodeTest : public NodeTestBase {
   std::vector<Int> coeffs{1, 2};
 
   std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::FZNModel> model;
+  std::unique_ptr<fznparser::Model> model;
   std::unique_ptr<invariantgraph::BoolLinLeNode> node;
 
   void SetUp() override {
@@ -32,9 +32,9 @@ class BoolLinLeNodeTest : public NodeTestBase {
         {}};
 
     constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-    fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
+    fznparser::Model mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
 
-    model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+    model = std::make_unique<fznparser::Model>(std::move(mdl));
 
     setModel(model.get());
     node = makeNode<invariantgraph::BoolLinLeNode>(*constraint);

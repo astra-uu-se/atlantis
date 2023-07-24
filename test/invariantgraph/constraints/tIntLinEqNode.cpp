@@ -22,7 +22,7 @@ class AbstractIntLinEqNodeTest : public NodeTestBase {
   std::vector<Int> coeffs{1, 2};
 
   std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::FZNModel> model;
+  std::unique_ptr<fznparser::Model> model;
   std::unique_ptr<invariantgraph::IntLinEqNode> node;
 
   void SetUp() override {
@@ -36,10 +36,9 @@ class AbstractIntLinEqNodeTest : public NodeTestBase {
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
-      fznparser::FZNModel mdl{
-          {}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
+      fznparser::Model mdl{{}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
 
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+      model = std::make_unique<fznparser::Model>(std::move(mdl));
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
         fznparser::Constraint cnstr{
@@ -67,9 +66,9 @@ class AbstractIntLinEqNodeTest : public NodeTestBase {
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       }
 
-      fznparser::FZNModel mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
+      fznparser::Model mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
 
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+      model = std::make_unique<fznparser::Model>(std::move(mdl));
     }
 
     setModel(model.get());

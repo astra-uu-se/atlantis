@@ -2,30 +2,38 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::GlobalCardinalityClosedNode>
-invariantgraph::GlobalCardinalityClosedNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<GlobalCardinalityClosedNode>
+GlobalCardinalityClosedNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto inputs =
-      mappedVariableVector(model, constraint.arguments[0], variableMap);
+  std::vector<VariableNode*> inputs = invariantGraph.addVariableArray(
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(0)));
 
-  auto cover = integerVector(model, constraint.arguments[1]);
+  std::vector<Int> cover =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(1))
+          .toParVector();
 
-  auto counts =
-      mappedVariableVector(model, constraint.arguments[2], variableMap);
+  std::vector<VariableNode*> counts = invariantGraph.addVariableArray(
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(2)));
 
   assert(cover.size() == counts.size());
 
   bool shouldHold = true;
   VariableNode* r = nullptr;
 
-  if (constraint.arguments.size() >= 4) {
-    if (std::holds_alternative<bool>(constraint.arguments[3])) {
-      shouldHold = std::get<bool>(constraint.arguments[3]);
+  if (constraint.arguments().size() == 4) {
+    const fznparser::BoolArg reified =
+        std::get<fznparser::BoolArg>(constraint.arguments().at(3));
+    if (std::holds_alternative<bool>(reified)) {
+      shouldHold = std::get<bool>(reified);
     } else {
-      r = mappedVariable(constraint.arguments[3], variableMap);
+      r = invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get());
     }
   }
 
@@ -38,8 +46,7 @@ invariantgraph::GlobalCardinalityClosedNode::fromModelConstraint(
                                                        shouldHold);
 }
 
-void invariantgraph::GlobalCardinalityClosedNode::createDefinedVariables(
-    Engine& engine) {
+void GlobalCardinalityClosedNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     registerViolation(engine);
     if (!isReified() && shouldHold()) {
@@ -67,8 +74,7 @@ void invariantgraph::GlobalCardinalityClosedNode::createDefinedVariables(
   }
 }
 
-void invariantgraph::GlobalCardinalityClosedNode::registerWithEngine(
-    Engine& engine) {
+void GlobalCardinalityClosedNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
 
   std::vector<VarId> inputs;
@@ -117,3 +123,5 @@ void invariantgraph::GlobalCardinalityClosedNode::registerWithEngine(
     }
   }
 }
+
+}  // namespace invariantgraph

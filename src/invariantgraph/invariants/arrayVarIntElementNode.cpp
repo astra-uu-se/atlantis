@@ -2,11 +2,13 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::ArrayVarIntElementNode>
-invariantgraph::ArrayVarIntElementNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
+namespace invariantgraph {
+
+std::unique_ptr<ArrayVarIntElementNode>
+ArrayVarIntElementNode::fromModelConstraint(
+    const fznparser::Model& model, const fznparser::Constraint& constraint,
+    std::unordered_map<std::string_view, VariableNode>& variableMap) {
+  //  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto idx = mappedVariable(constraint.arguments[0], variableMap);
   auto as = mappedVariableVector(model, constraint.arguments[1], variableMap);
@@ -17,17 +19,14 @@ invariantgraph::ArrayVarIntElementNode::fromModelConstraint(
                    ? 1
                    : idx->domain().lowerBound();
 
-  return std::make_unique<invariantgraph::ArrayVarIntElementNode>(idx, as, c,
-                                                                  offset);
+  return std::make_unique<ArrayVarIntElementNode>(idx, as, c, offset);
 }
 
-void invariantgraph::ArrayVarIntElementNode::createDefinedVariables(
-    Engine& engine) {
+void ArrayVarIntElementNode::createDefinedVariables(Engine& engine) {
   registerDefinedVariable(engine, definedVariables().front(), _offset);
 }
 
-void invariantgraph::ArrayVarIntElementNode::registerWithEngine(
-    Engine& engine) {
+void ArrayVarIntElementNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> as;
   std::transform(dynamicInputs().begin(), dynamicInputs().end(),
                  std::back_inserter(as),
@@ -38,3 +37,5 @@ void invariantgraph::ArrayVarIntElementNode::registerWithEngine(
   engine.makeInvariant<ElementVar>(engine, definedVariables().front()->varId(),
                                    b()->varId(), as, _offset);
 }
+
+}  // namespace invariantgraph

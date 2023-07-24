@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "constraints/lessEqual.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/linear.hpp"
 #include "views/greaterEqualConst.hpp"
@@ -37,8 +38,8 @@ class IntLinLeNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<IntLinLeNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

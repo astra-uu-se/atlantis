@@ -2,32 +2,34 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::AllDifferentImplicitNode>
-invariantgraph::AllDifferentImplicitNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<AllDifferentImplicitNode>
+AllDifferentImplicitNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto variables =
-      mappedVariableVector(model, constraint.arguments[0], variableMap);
+  auto arg = std::get<fznparser::IntVarArray>(constraint.arguments().at(0));
 
-  if (variables.size() < 2) {
+  if (arg.size() < 2) {
     // Apparently it can happen that variables is an array of length 1. In that
     // case, there is no benefit by the variable being defined by this implicit
     // node, since any value from its domain would satisfy this constraint.
     return nullptr;
   }
 
-  return std::make_unique<AllDifferentImplicitNode>(variables);
+  return std::make_unique<AllDifferentImplicitNode>(
+      invariantGraph.addVariableArray(arg));
 }
 
-invariantgraph::AllDifferentImplicitNode::AllDifferentImplicitNode(
+AllDifferentImplicitNode::AllDifferentImplicitNode(
     std::vector<VariableNode*> variables)
     : ImplicitConstraintNode(std::move(variables)) {
   assert(definedVariables().size() > 1);
 }
 
-bool invariantgraph::AllDifferentImplicitNode::prune() {
+bool AllDifferentImplicitNode::prune() {
   std::vector<VariableNode*> singletonDefinedVariables =
       pruneAllDifferent(definedVariables());
   for (auto* const singleton : singletonDefinedVariables) {
@@ -37,7 +39,7 @@ bool invariantgraph::AllDifferentImplicitNode::prune() {
 }
 
 search::neighbourhoods::Neighbourhood*
-invariantgraph::AllDifferentImplicitNode::createNeighbourhood(
+AllDifferentImplicitNode::createNeighbourhood(
     Engine& engine, std::vector<search::SearchVariable> variables) {
   bool hasSameDomain = true;
   const auto& domain = variables.front().domain();
@@ -62,3 +64,5 @@ invariantgraph::AllDifferentImplicitNode::createNeighbourhood(
         variables, domainLb, domainUb, engine);
   }
 }
+
+}  // namespace invariantgraph

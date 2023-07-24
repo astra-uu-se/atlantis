@@ -10,7 +10,7 @@ class IntAbsNodeTest : public NodeTestBase {
   fznparser::Constraint constraint{
       "int_abs", {"a", "b"}, {fznparser::DefinesVariableAnnotation{"b"}}};
 
-  fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
+  fznparser::Model model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::IntAbsNode> node;
 

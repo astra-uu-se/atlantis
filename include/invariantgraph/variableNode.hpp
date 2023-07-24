@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cassert>
-#include <fznparser/ast.hpp>
+#include <fznparser/variables.hpp>
 #include <limits>
 #include <optional>
 #include <unordered_map>
@@ -19,7 +19,7 @@ namespace invariantgraph {
 /**
  * The types that can be in an array of search variables.
  */
-using MappableValue = std::variant<Int, bool, fznparser::Identifier>;
+using MappableValue = std::variant<Int, bool, std::string_view>;
 
 class VariableDefiningNode;
 
@@ -30,8 +30,7 @@ class VariableDefiningNode;
  */
 class VariableNode {
  public:
-  using FZNVariable =
-      std::variant<fznparser::IntVariable, fznparser::BoolVariable>;
+  using FZNVariable = std::variant<fznparser::IntVar, fznparser::BoolVar>;
   using VariableMap = std::unordered_map<VariableNode*, VarId>;
   float SPARSE_MIN_DENSENESS{0.6};
 

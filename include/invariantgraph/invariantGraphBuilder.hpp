@@ -11,31 +11,24 @@
 namespace invariantgraph {
 class InvariantGraphBuilder {
  private:
-  std::unordered_map<fznparser::Identifier, VariableNode*> _variableMap;
-
-  // Used for values that are used in place of search variables. To reduce
-  // memory, if the same value occurs in multiple times, they will use the
-  // same variable node.
-  std::unordered_map<std::variant<Int, bool>, VariableNode*> _valueMap;
-
-  std::vector<std::unique_ptr<VariableNode>> _variables;
-  std::vector<std::unique_ptr<VariableDefiningNode>> _definingNodes;
+  fznparser::Model _model;
 
  public:
-  invariantgraph::InvariantGraph build(const fznparser::FZNModel& model);
+  InvariantGraphBuilder(fznparser::Model&&);
+
+  InvariantGraph build();
 
  private:
-  void createNodes(const fznparser::FZNModel& model);
+  void initVariableNodes();
+  void createNodes();
 
   std::unique_ptr<VariableDefiningNode> makeVariableDefiningNode(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
       bool guessDefinedVariable = false);
   std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraint(
-      const fznparser::FZNModel& model,
-      const fznparser::Constraint& constraint);
+      const fznparser::Model& model, const fznparser::Constraint& constraint);
   std::unique_ptr<SoftConstraintNode> makeSoftConstraint(
-      const fznparser::FZNModel& model,
-      const fznparser::Constraint& constraint);
+      const fznparser::Model& model, const fznparser::Constraint& constraint);
 
   template <typename Val>
   VariableNode* nodeForValue(Val val) {
@@ -58,12 +51,15 @@ class InvariantGraphBuilder {
     return _valueMap.at(val);
   }
 
-  VariableNode* nodeForParameter(const fznparser::Parameter& parameter);
+  bool isFree(const std::BoolVar& var, const std::vector<VariableNode*>& vars);
+  bool isFree(const std::IntVar& var, const std::vector<VariableNode*>& vars);
 
-  VariableNode* nodeForIdentifier(const fznparser::FZNModel& model,
-                                  const fznparser::Identifier& identifier);
+  bool argumentIsFreeVariable(
+      const fznparser::Arg& constraintArg,
+      const std::unordered_set<std::string_view>& definedVars);
 
-  VariableNode* nodeFactory(const fznparser::FZNModel& model,
-                            const MappableValue& argument);
+  bool allArgumentsAreFreeVariables(
+      const fznparser::Constraint& constraint,
+      const std::unordered_set<std::string_view>& definedVars);
 };
 }  // namespace invariantgraph

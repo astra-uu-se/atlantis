@@ -1,8 +1,13 @@
 #pragma once
 
+#include <algorithm>
 #include <utility>
 
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/variableDefiningNode.hpp"
+#include "invariants/boolLinear.hpp"
+#include "views/intOffsetView.hpp"
+#include "views/scalarView.hpp"
 
 namespace invariantgraph {
 class BoolLinearNode : public VariableDefiningNode {
@@ -32,8 +37,8 @@ class BoolLinearNode : public VariableDefiningNode {
   }
 
   static std::unique_ptr<BoolLinearNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

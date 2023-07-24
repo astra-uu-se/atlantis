@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cassert>
-#include <fznparser/ast.hpp>
 #include <fznparser/model.hpp>
 #include <unordered_map>
 #include <vector>

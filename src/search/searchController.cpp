@@ -6,7 +6,7 @@
 
 bool search::SearchController::shouldRun(const search::Assignment&) {
   if (_foundSolution &&
-      std::holds_alternative<fznparser::Satisfy>(_fznModel.objective())) {
+      std::holds_alternative<fznparser::Satisfy>(_Model.objective())) {
     return false;
   }
 
@@ -20,14 +20,14 @@ bool search::SearchController::shouldRun(const search::Assignment&) {
 }
 
 static void printSolution(
-    const fznparser::FZNModel& model, const search::Assignment& assignment,
+    const fznparser::Model& model, const search::Assignment& assignment,
     const search::SearchController::VariableMap& variableMap);
 
 void search::SearchController::onSolution(const Assignment& assignment) {
   assert(assignment.satisfiesConstraints());
 
   _foundSolution = true;
-  printSolution(_fznModel, assignment, _variableMap);
+  printSolution(_Model, assignment, _variableMap);
 }
 
 void search::SearchController::onFinish() const {
@@ -37,7 +37,7 @@ void search::SearchController::onFinish() const {
 }
 
 static void printSearchVariable(
-    const fznparser::Identifier& searchVariable,
+    const std::string_view& searchVariable,
     const search::Assignment& assignment,
     const search::SearchController::VariableMap& variableMap) {
   std::cout << searchVariable << " = "
@@ -63,7 +63,7 @@ static void printVariableArray(
       std::cout << std::get<T>(elem);
     } else {
       std::cout << assignment.value(
-          variableMap.at(std::get<fznparser::Identifier>(elem)));
+          variableMap.at(std::get<std::string_view>(elem)));
     }
 
     if (i < variableArray.size() - 1) {
@@ -75,7 +75,7 @@ static void printVariableArray(
 }
 
 static void printSolution(
-    const fznparser::FZNModel& model, const search::Assignment& assignment,
+    const fznparser::Model& model, const search::Assignment& assignment,
     const search::SearchController::VariableMap& variableMap) {
   for (const auto& fznVariable : model.variables()) {
     auto tagAnnotation = getAnnotation<fznparser::TagAnnotation>(fznVariable);

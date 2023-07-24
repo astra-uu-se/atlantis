@@ -2,31 +2,58 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::BoolClauseNode>
-invariantgraph::BoolClauseNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<BoolClauseNode> BoolClauseNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  std::vector<invariantgraph::VariableNode*> as =
-      mappedVariableVector(model, constraint.arguments[0], variableMap);
-  std::vector<invariantgraph::VariableNode*> bs =
-      mappedVariableVector(model, constraint.arguments[1], variableMap);
-
-  if (constraint.arguments.size() >= 3) {
-    if (std::holds_alternative<bool>(constraint.arguments[2])) {
-      auto shouldHold = std::get<bool>(constraint.arguments[2]);
-      return std::make_unique<invariantgraph::BoolClauseNode>(as, bs,
-                                                              shouldHold);
-    } else {
-      auto r = mappedVariable(constraint.arguments[2], variableMap);
-      return std::make_unique<invariantgraph::BoolClauseNode>(as, bs, r);
-    }
+  if (constraint.arguments().size() != 2 ||
+      constraint.arguments().size() != 3) {
+    throw std::runtime_error("boolClause constraint takes two arguments");
   }
-  return std::make_unique<BoolClauseNode>(as, bs, true);
+  if (!std::holds_alternative<fznparser::BoolVarArray>(
+          constraint.arguments().at(0))) {
+    throw std::runtime_error(
+        "boolClause constraint first argument must be a bool var array");
+  }
+  if (!std::holds_alternative<fznparser::BoolVarArray>(
+          constraint.arguments().at(1))) {
+    throw std::runtime_error(
+        "boolClause constraint second argument must be a bool var array");
+  }
+  if (!std::holds_alternative<fznparser::BoolArg>(
+          constraint.arguments().back())) {
+    throw std::runtime_error(
+        "boolClause constraint optional third argument must be a bool "
+        "var");
+  }
+  std::vector<VariableNode*> as = invariantGraph.addVariableArray(
+      get<fznparser::BoolVarArray>(constraint.arguments().at(0)));
+
+  std::vector<VariableNode*> bs = invariantGraph.addVariableArray(
+      get<fznparser::BoolVarArray>(constraint.arguments().at(1)));
+
+  if (constraint.arguments().size() == 2) {
+    return std::make_unique<BoolClauseNode>(std::move(as), std::move(bs), true);
+  }
+
+  const fznparser::BoolArg& reified =
+      get<fznparser::BoolArg>(constraint.arguments().back());
+
+  if (std::holds_alternative<bool>(reified)) {
+    return std::make_unique<BoolClauseNode>(std::move(as), std::move(bs),
+                                            std::get<bool>(reified));
+  }
+  return std::make_unique<BoolClauseNode>(
+      std::move(as), std::move(bs),
+      invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get()));
 }
 
-void invariantgraph::BoolClauseNode::createDefinedVariables(Engine& engine) {
+void BoolClauseNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
@@ -42,7 +69,7 @@ void invariantgraph::BoolClauseNode::createDefinedVariables(Engine& engine) {
   }
 }
 
-void invariantgraph::BoolClauseNode::registerWithEngine(Engine& engine) {
+void BoolClauseNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> engineVariables;
   engineVariables.reserve(_as.size() + _bs.size());
   std::transform(_as.begin(), _as.end(), std::back_inserter(engineVariables),
@@ -58,3 +85,5 @@ void invariantgraph::BoolClauseNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
   engine.makeInvariant<BoolLinear>(engine, _sumVarId, engineVariables);
 }
+
+}  // namespace invariantgraph

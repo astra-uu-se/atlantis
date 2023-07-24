@@ -3,6 +3,7 @@
 #include <fznparser/model.hpp>
 
 #include "constraints/equal.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/boolLinear.hpp"
 #include "views/equalConst.hpp"
@@ -18,11 +19,11 @@ class BoolLinEqNode : public SoftConstraintNode {
   VarId _sumVarId{NULL_ID};
 
  public:
-  BoolLinEqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-                Int c, VariableNode* r)
+  BoolLinEqNode(std::vector<Int>&& coeffs,
+                std::vector<VariableNode*>&& variables, Int c, VariableNode* r)
       : SoftConstraintNode(variables, r), _coeffs(std::move(coeffs)), _c(c) {}
-  BoolLinEqNode(std::vector<Int> coeffs, std::vector<VariableNode*> variables,
-                Int c, bool shouldHold)
+  BoolLinEqNode(std::vector<Int>&& coeffs,
+                std::vector<VariableNode*>&& variables, Int c, bool shouldHold)
       : SoftConstraintNode(variables, shouldHold),
         _coeffs(std::move(coeffs)),
         _c(c) {}
@@ -33,8 +34,8 @@ class BoolLinEqNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<BoolLinEqNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

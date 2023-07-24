@@ -8,9 +8,6 @@
 #include <vector>
 
 #include "core/engine.hpp"
-#include "invariantgraph/constraints/allEqualNode.hpp"
-#include "invariantgraph/constraints/boolEqNode.hpp"
-#include "invariantgraph/constraints/intEqNode.hpp"
 #include "invariantgraph/implicitConstraintNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
@@ -24,20 +21,29 @@ namespace invariantgraph {
 
 class InvariantGraphApplyResult {
  public:
-  using VariableMap =
-      std::unordered_map<VarId, fznparser::Identifier, VarIdHash>;
+  using VariableIdentifiers =
+      std::unordered_map<VarId, std::string_view, VarIdHash>;
 
+ private:
+  VariableIdentifiers _variableIdentifiers;
+
+  std::vector<ImplicitConstraintNode*> _implicitConstraints;
+  VarId _totalViolations;
+  VarId _objectiveVariable;
+
+ public:
   InvariantGraphApplyResult(
-      VariableMap variableMap,
+      VariableIdentifiers variableIdentifiers,
       std::vector<ImplicitConstraintNode*> implicitConstraints,
       VarId totalViolations, VarId objectiveVariable)
-      : _variableMap(std::move(variableMap)),
+      : _variableIdentifiers(std::move(variableIdentifiers)),
         _implicitConstraints(std::move(implicitConstraints)),
         _totalViolations(totalViolations),
         _objectiveVariable(objectiveVariable) {}
 
-  [[nodiscard]] const VariableMap& variableMap() const noexcept {
-    return _variableMap;
+  [[nodiscard]] const VariableIdentifiers& variableIdentifiers()
+      const noexcept {
+    return _variableIdentifiers;
   }
 
   [[nodiscard]] search::neighbourhoods::NeighbourhoodCombinator neighbourhood()
@@ -60,47 +66,48 @@ class InvariantGraphApplyResult {
   [[nodiscard]] VarId objectiveVariable() const noexcept {
     return _objectiveVariable;
   }
-
- private:
-  VariableMap _variableMap;
-  std::vector<ImplicitConstraintNode*> _implicitConstraints;
-  VarId _totalViolations;
-  VarId _objectiveVariable;
 };
 
 class InvariantGraph {
  private:
-  std::vector<std::unique_ptr<VariableNode>> _variables;
-  std::vector<VariableNode*> _valueNodes;
+  std::vector<VariableNode> _variableNodes;
+
+  std::unordered_map<std::string_view, VariableNode*> _namedVariableNodes;
+  std::unordered_map<int64_t, VariableNode*> _intVariableNodes;
+  std::array<VariableNode*, 2> _boolVariableNodes;
+
   std::vector<std::unique_ptr<VariableDefiningNode>> _variableDefiningNodes;
   std::vector<ImplicitConstraintNode*> _implicitConstraints;
   VariableNode* _objectiveVariable;
 
  public:
-  InvariantGraph(
-      std::vector<std::unique_ptr<VariableNode>> variables,
-      std::vector<VariableNode*> valueNodes,
-      std::vector<std::unique_ptr<VariableDefiningNode>> variableDefiningNodes,
-      VariableNode* objectiveVariable)
-      : _variables(std::move(variables)),
-        _valueNodes(std::move(valueNodes)),
-        _variableDefiningNodes(std::move(variableDefiningNodes)),
-        _objectiveVariable(objectiveVariable) {
-    for (const auto& definingNode : _variableDefiningNodes) {
-      if (auto implicitConstraint =
-              dynamic_cast<ImplicitConstraintNode*>(definingNode.get())) {
-        _implicitConstraints.push_back(implicitConstraint);
-      }
-    }
-    assert(
-        _objectiveVariable == nullptr ||
-        std::any_of(_variables.begin(), _variables.end(), [&](const auto& var) {
-          return var.get() == _objectiveVariable;
-        }));
-  }
+  InvariantGraph()
+      : _variableNodes{VariableNode(SearchDomain({1}), false),
+                       VariableNode(SearchDomain({0}), false)},
+        _namedVariableNodes(),
+        _intVariableNodes(),
+        _boolVariableNodes{&_variableNodes.at(0), &_variableNodes.at(1)},
+        _variableDefiningNodes(),
+        _implicitConstraints(),
+        _objectiveVariable(nullptr) {}
 
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
+
+  // TODO: This should be changed to be references and wrapped_reference
+  // vectors!
+  VariableNode* addVariable(bool);
+  VariableNode* addVariable(const fznparser::BoolVar&);
+  VariableNode* addVariable(std::reference_wrapper<const fznparser::BoolVar>);
+  VariableNode* addVariable(const fznparser::BoolArg&);
+
+  VariableNode* addVariable(Int);
+  VariableNode* addVariable(const fznparser::IntVar&);
+  VariableNode* addVariable(const fznparser::IntArg&);
+  VariableNode* addVariable(std::reference_wrapper<const fznparser::IntVar>);
+
+  std::vector<VariableNode*> addVariableArray(const fznparser::BoolVarArray&);
+  std::vector<VariableNode*> addVariableArray(const fznparser::IntVarArray&);
 
   void splitMultiDefinedVariables();
   void breakCycles();

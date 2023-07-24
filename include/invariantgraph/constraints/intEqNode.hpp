@@ -5,6 +5,7 @@
 
 #include "constraints/equal.hpp"
 #include "constraints/notEqual.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 
 namespace invariantgraph {
@@ -23,8 +24,8 @@ class IntEqNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<IntEqNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 
