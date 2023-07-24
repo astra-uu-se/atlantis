@@ -3,6 +3,7 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/boolAnd.hpp"
 #include "views/notEqualConst.hpp"
@@ -25,8 +26,8 @@ class BoolAndNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<BoolAndNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

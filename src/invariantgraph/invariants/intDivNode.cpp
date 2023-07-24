@@ -2,11 +2,13 @@
 
 #include "../parseHelper.hpp"
 
+namespace invariantgraph {
+
 std::unique_ptr<invariantgraph::IntDivNode>
 invariantgraph::IntDivNode::fromModelConstraint(
-    const fznparser::FZNModel&, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    std::unordered_map<std::string_view, VariableNode>& variableMap) {
+  //  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto a = mappedVariable(constraint.arguments[0], variableMap);
   auto b = mappedVariable(constraint.arguments[1], variableMap);
@@ -24,3 +26,5 @@ void invariantgraph::IntDivNode::registerWithEngine(Engine& engine) {
   engine.makeInvariant<IntDiv>(engine, definedVariables().front()->varId(),
                                a()->varId(), b()->varId());
 }
+
+}  // namespace invariantgraph

@@ -35,7 +35,7 @@ class AbstractGlobalCardinalityLowUpNodeTest : public NodeTestBase {
   BOOL_VARIABLE(r);
 
   std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::FZNModel> model;
+  std::unique_ptr<fznparser::Model> model;
   std::unique_ptr<invariantgraph::GlobalCardinalityLowUpNode> node;
 
   void SetUp() override {
@@ -51,10 +51,10 @@ class AbstractGlobalCardinalityLowUpNodeTest : public NodeTestBase {
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
-      fznparser::FZNModel mdl{
+      fznparser::Model mdl{
           {}, {x1, x2, r}, {*constraint}, fznparser::Satisfy{}};
 
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+      model = std::make_unique<fznparser::Model>(std::move(mdl));
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
         fznparser::Constraint cnstr{
@@ -84,10 +84,9 @@ class AbstractGlobalCardinalityLowUpNodeTest : public NodeTestBase {
             {}};
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       }
-      fznparser::FZNModel mdl{
-          {}, {x1, x2}, {*constraint}, fznparser::Satisfy{}};
+      fznparser::Model mdl{{}, {x1, x2}, {*constraint}, fznparser::Satisfy{}};
 
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+      model = std::make_unique<fznparser::Model>(std::move(mdl));
     }
     setModel(model.get());
 

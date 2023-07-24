@@ -11,7 +11,7 @@ class IntMinNodeTest : public NodeTestBase {
   fznparser::Constraint constraint{
       "int_min", {"a", "b", "c"}, {fznparser::DefinesVariableAnnotation{"c"}}};
 
-  fznparser::FZNModel model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
+  fznparser::Model model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::IntMinNode> node;
 

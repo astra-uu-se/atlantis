@@ -15,8 +15,7 @@ class AllDifferentImplicitNodeTest : public NodeTestBase {
       {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
       {}};
 
-  fznparser::FZNModel model{
-      {}, {a, b, c, d}, {constraint}, fznparser::Satisfy{}};
+  fznparser::Model model{{}, {a, b, c, d}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::AllDifferentImplicitNode> node;
 

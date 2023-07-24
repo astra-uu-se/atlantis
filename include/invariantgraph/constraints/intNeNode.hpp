@@ -5,6 +5,7 @@
 
 #include "constraints/equal.hpp"
 #include "constraints/notEqual.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 
 namespace invariantgraph {
@@ -17,8 +18,8 @@ class IntNeNode : public SoftConstraintNode {
       : SoftConstraintNode({a, b}, shouldHold) {}
 
   static std::unique_ptr<IntNeNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {

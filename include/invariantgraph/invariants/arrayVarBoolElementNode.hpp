@@ -2,7 +2,9 @@
 
 #include <fznparser/model.hpp>
 
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/variableDefiningNode.hpp"
+#include "invariants/elementVar.hpp"
 
 namespace invariantgraph {
 
@@ -30,8 +32,8 @@ class ArrayVarBoolElementNode : public VariableDefiningNode {
   }
 
   static std::unique_ptr<ArrayVarBoolElementNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

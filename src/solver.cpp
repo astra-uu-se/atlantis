@@ -28,7 +28,7 @@ static ObjectiveDirection getObjectiveDirection(
 }
 
 search::SearchStatistics Solver::solve(logging::Logger& logger) {
-  auto model = logger.timed<fznparser::FZNModel>("parsing FlatZinc", [&] {
+  auto model = logger.timed<fznparser::Model>("parsing FlatZinc", [&] {
     auto m = fznparser::ModelFactory::create(_modelFile);
     logger.debug("Found {:d} variables", m.variables().size());
     logger.debug("Found {:d} constraints", m.constraints().size());

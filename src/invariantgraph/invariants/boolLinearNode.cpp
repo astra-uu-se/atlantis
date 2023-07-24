@@ -1,17 +1,13 @@
 #include "invariantgraph/invariants/boolLinearNode.hpp"
 
-#include <algorithm>
-
 #include "../parseHelper.hpp"
-#include "invariants/boolLinear.hpp"
-#include "views/intOffsetView.hpp"
-#include "views/scalarView.hpp"
 
-std::unique_ptr<invariantgraph::BoolLinearNode>
-invariantgraph::BoolLinearNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
+namespace invariantgraph {
+
+std::unique_ptr<BoolLinearNode> BoolLinearNode::fromModelConstraint(
+    const fznparser::Model& model, const fznparser::Constraint& constraint,
+    std::unordered_map<std::string_view, VariableNode>& variableMap) {
+  //  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto coeffs = integerVector(model, constraint.arguments[0]);
   auto vars = mappedVariableVector(model, constraint.arguments[1], variableMap);
@@ -49,13 +45,13 @@ invariantgraph::BoolLinearNode::fromModelConstraint(
   auto output = *varsIt;
   vars.erase(varsIt);
 
-  auto linearInv = std::make_unique<invariantgraph::BoolLinearNode>(
-      coeffs, vars, output, definedVarCoeff, sum);
+  auto linearInv = std::make_unique<BoolLinearNode>(coeffs, vars, output,
+                                                    definedVarCoeff, sum);
 
   return linearInv;
 }
 
-void invariantgraph::BoolLinearNode::createDefinedVariables(Engine& engine) {
+void BoolLinearNode::createDefinedVariables(Engine& engine) {
   if (staticInputs().size() == 1 &&
       staticInputs().front()->varId() != NULL_ID) {
     if (_coeffs.front() == 1 && _sum == 0) {
@@ -99,7 +95,7 @@ void invariantgraph::BoolLinearNode::createDefinedVariables(Engine& engine) {
   }
 }
 
-void invariantgraph::BoolLinearNode::registerWithEngine(Engine& engine) {
+void BoolLinearNode::registerWithEngine(Engine& engine) {
   assert(definedVariables().front()->varId() != NULL_ID);
 
   std::vector<VarId> variables;
@@ -114,3 +110,5 @@ void invariantgraph::BoolLinearNode::registerWithEngine(Engine& engine) {
   engine.makeInvariant<BoolLinear>(engine, _intermediateVarId, _coeffs,
                                    variables);
 }
+
+}  // namespace invariantgraph

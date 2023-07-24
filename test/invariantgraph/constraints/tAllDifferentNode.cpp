@@ -25,7 +25,7 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
   BOOL_VARIABLE(r);
 
   std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::FZNModel> model;
+  std::unique_ptr<fznparser::Model> model;
   std::unique_ptr<invariantgraph::AllDifferentNode> node;
 
   void SetUp() override {
@@ -38,10 +38,10 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
 
       constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
-      fznparser::FZNModel mdl{
+      fznparser::Model mdl{
           {}, {a, b, c, d, r}, {*constraint}, fznparser::Satisfy{}};
 
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+      model = std::make_unique<fznparser::Model>(std::move(mdl));
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
         fznparser::Constraint cnstr{
@@ -63,10 +63,10 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
         constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
       }
 
-      fznparser::FZNModel mdl{
+      fznparser::Model mdl{
           {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
 
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+      model = std::make_unique<fznparser::Model>(std::move(mdl));
     }
 
     setModel(model.get());
@@ -218,7 +218,7 @@ TEST_F(AllDifferentNodeTest, pruneParameters) {
                                   7, "a", 10, "b", 6, "c", 9, "d", 5}},
                               {}};
 
-  fznparser::FZNModel mdl{{}, {}, {cnstr}, fznparser::Satisfy{}};
+  fznparser::Model mdl{{}, {}, {cnstr}, fznparser::Satisfy{}};
 
   auto locNode = invariantgraph::AllDifferentNode::fromModelConstraint(
       mdl, cnstr, nodeFactory);

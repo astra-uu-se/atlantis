@@ -7,9 +7,9 @@
 #include "invariantgraph/invariants/intLinearNode.hpp"
 
 TEST(InvariantGraphTest, apply_result) {
-  fznparser::IntVariable a{"a", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable c{"c", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar a{"a", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar c{"c", fznparser::IntRange{0, 10}, {}, {}};
 
   auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
   auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
@@ -51,16 +51,16 @@ TEST(InvariantGraphTest, apply_result) {
 }
 
 TEST(InvariantGraphTest, ApplyGraph) {
-  fznparser::IntVariable a1{"a1", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable a2{"a2", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar a1{"a1", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar a2{"a2", fznparser::IntRange{0, 10}, {}, {}};
 
-  fznparser::IntVariable b1{"b1", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable b2{"b2", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar b1{"b1", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar b2{"b2", fznparser::IntRange{0, 10}, {}, {}};
 
-  fznparser::IntVariable c1{"c1", fznparser::IntRange{0, 20}, {}, {}};
-  fznparser::IntVariable c2{"c2", fznparser::IntRange{0, 20}, {}, {}};
+  fznparser::IntVar c1{"c1", fznparser::IntRange{0, 20}, {}, {}};
+  fznparser::IntVar c2{"c2", fznparser::IntRange{0, 20}, {}, {}};
 
-  fznparser::IntVariable sum{"sum", fznparser::IntRange{0, 40}, {}, {}};
+  fznparser::IntVar sum{"sum", fznparser::IntRange{0, 40}, {}, {}};
 
   auto a1Node = std::make_unique<invariantgraph::VariableNode>(a1);
   auto a2Node = std::make_unique<invariantgraph::VariableNode>(a2);
@@ -139,11 +139,11 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
    *
    */
 
-  fznparser::IntVariable a{"a", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable c{"c", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable d{"d", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable x{"x", fznparser::IntRange{0, 20}, {}, {}};
+  fznparser::IntVar a{"a", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar c{"c", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar d{"d", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar x{"x", fznparser::IntRange{0, 20}, {}, {}};
 
   auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
   auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
@@ -217,7 +217,7 @@ TEST(InvariantGraphTest, SplitGraph) {
   const size_t numInputs = 5;
   const Int lb = 0;
   const Int ub = 10;
-  fznparser::IntVariable x{
+  fznparser::IntVar x{
       "x", fznparser::IntRange{lb * numInputs, ub * numInputs}, {}, {}};
   auto xNode = std::make_unique<invariantgraph::VariableNode>(x);
   std::vector<std::vector<std::unique_ptr<invariantgraph::VariableNode>>>
@@ -231,10 +231,10 @@ TEST(InvariantGraphTest, SplitGraph) {
         std::vector<std::unique_ptr<invariantgraph::VariableNode>>());
     std::vector<invariantgraph::VariableNode*> arguments;
     for (size_t j = 0; j < numInputs; ++j) {
-      fznparser::IntVariable input{std::to_string(i) + "_" + std::to_string(j),
-                                   fznparser::IntRange{0, 10},
-                                   {},
-                                   {}};
+      fznparser::IntVar input{std::to_string(i) + "_" + std::to_string(j),
+                              fznparser::IntRange{0, 10},
+                              {},
+                              {}};
 
       arguments.emplace_back(
           inputNodes.back()
@@ -299,10 +299,10 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
    *
    */
 
-  fznparser::IntVariable a{"a", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable x{"x", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable y{"y", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar a{"a", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar x{"x", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar y{"y", fznparser::IntRange{0, 10}, {}, {}};
 
   auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
   auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
@@ -372,12 +372,12 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
    *  +-------------------+
    */
 
-  fznparser::IntVariable a{"a", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable c{"c", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable d{"d", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable x{"x", fznparser::IntRange{1, 2}, {}, {}};
-  fznparser::IntVariable y{"y", fznparser::IntRange{1, 2}, {}, {}};
+  fznparser::IntVar a{"a", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar c{"c", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar d{"d", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar x{"x", fznparser::IntRange{1, 2}, {}, {}};
+  fznparser::IntVar y{"y", fznparser::IntRange{1, 2}, {}, {}};
 
   auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
   auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
@@ -453,12 +453,12 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
    *
    */
 
-  fznparser::IntVariable a{"a", fznparser::IntRange{1, 2}, {}, {}};
-  fznparser::IntVariable b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable c{"c", fznparser::IntRange{1, 2}, {}, {}};
-  fznparser::IntVariable d{"d", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable x{"x", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVariable y{"y", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar a{"a", fznparser::IntRange{1, 2}, {}, {}};
+  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar c{"c", fznparser::IntRange{1, 2}, {}, {}};
+  fznparser::IntVar d{"d", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar x{"x", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::IntVar y{"y", fznparser::IntRange{0, 10}, {}, {}};
 
   auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
   auto bNode = std::make_unique<invariantgraph::VariableNode>(b);

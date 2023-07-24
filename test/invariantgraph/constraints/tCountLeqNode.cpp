@@ -26,7 +26,7 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
   const Int cParamVal{2};
 
   std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::FZNModel> model;
+  std::unique_ptr<fznparser::Model> model;
   std::unique_ptr<invariantgraph::CountLeqNode> node;
 
   void SetUp() override {
@@ -42,10 +42,10 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
           constraint =
               std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
-          fznparser::FZNModel mdl{
+          fznparser::Model mdl{
               {}, {x1, x2, x3, r}, {*constraint}, fznparser::Satisfy{}};
 
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+          model = std::make_unique<fznparser::Model>(std::move(mdl));
         } else {
           fznparser::Constraint cnstr{
               "fzn_count_leq_reif",
@@ -57,10 +57,10 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
           constraint =
               std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
-          fznparser::FZNModel mdl{
+          fznparser::Model mdl{
               {}, {x1, x2, x3, c, r}, {*constraint}, fznparser::Satisfy{}};
 
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+          model = std::make_unique<fznparser::Model>(std::move(mdl));
         }
       } else {
         if constexpr (CIsParameter) {
@@ -74,10 +74,10 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
           constraint =
               std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
-          fznparser::FZNModel mdl{
+          fznparser::Model mdl{
               {}, {x1, x2, x3, y, r}, {*constraint}, fznparser::Satisfy{}};
 
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+          model = std::make_unique<fznparser::Model>(std::move(mdl));
         } else {
           fznparser::Constraint cnstr{
               "fzn_count_leq_reif",
@@ -90,10 +90,10 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
           constraint =
               std::make_unique<fznparser::Constraint>(std::move(cnstr));
 
-          fznparser::FZNModel mdl{
+          fznparser::Model mdl{
               {}, {x1, x2, x3, y, c, r}, {*constraint}, fznparser::Satisfy{}};
 
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+          model = std::make_unique<fznparser::Model>(std::move(mdl));
         }
       }
     } else {
@@ -108,10 +108,10 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
                 {}};
             constraint =
                 std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            fznparser::FZNModel mdl{
+            fznparser::Model mdl{
                 {}, {x1, x2, x3}, {*constraint}, fznparser::Satisfy{}};
 
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            model = std::make_unique<fznparser::Model>(std::move(mdl));
           } else {
             fznparser::Constraint cnstr{
                 "fzn_count_leq",
@@ -120,10 +120,10 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
                 {}};
             constraint =
                 std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            fznparser::FZNModel mdl{
+            fznparser::Model mdl{
                 {}, {x1, x2, x3, c}, {*constraint}, fznparser::Satisfy{}};
 
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            model = std::make_unique<fznparser::Model>(std::move(mdl));
           }
         } else {
           if constexpr (CIsParameter) {
@@ -134,10 +134,10 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
                 {}};
             constraint =
                 std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            fznparser::FZNModel mdl{
+            fznparser::Model mdl{
                 {}, {x1, x2, x3, y}, {*constraint}, fznparser::Satisfy{}};
 
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            model = std::make_unique<fznparser::Model>(std::move(mdl));
           } else {
             fznparser::Constraint cnstr{
                 "fzn_count_leq",
@@ -147,10 +147,10 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
                 {}};
             constraint =
                 std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            fznparser::FZNModel mdl{
+            fznparser::Model mdl{
                 {}, {x1, x2, x3, y, c}, {*constraint}, fznparser::Satisfy{}};
 
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            model = std::make_unique<fznparser::Model>(std::move(mdl));
           }
         }
       } else {
@@ -174,9 +174,9 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
               constraint =
                   std::make_unique<fznparser::Constraint>(std::move(cnstr));
             }
-            fznparser::FZNModel mdl{
+            fznparser::Model mdl{
                 {}, {x1, x2, x3}, {*constraint}, fznparser::Satisfy{}};
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            model = std::make_unique<fznparser::Model>(std::move(mdl));
           } else {
             // C is var
             if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
@@ -196,9 +196,9 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
               constraint =
                   std::make_unique<fznparser::Constraint>(std::move(cnstr));
             }
-            fznparser::FZNModel mdl{
+            fznparser::Model mdl{
                 {}, {x1, x2, x3, c}, {*constraint}, fznparser::Satisfy{}};
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            model = std::make_unique<fznparser::Model>(std::move(mdl));
           }
         } else {
           // y is var
@@ -220,9 +220,9 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
               constraint =
                   std::make_unique<fznparser::Constraint>(std::move(cnstr));
             }
-            fznparser::FZNModel mdl{
+            fznparser::Model mdl{
                 {}, {x1, x2, x3, y}, {*constraint}, fznparser::Satisfy{}};
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            model = std::make_unique<fznparser::Model>(std::move(mdl));
           } else {
             // c is var
             if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
@@ -244,9 +244,9 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
               constraint =
                   std::make_unique<fznparser::Constraint>(std::move(cnstr));
             }
-            fznparser::FZNModel mdl{
+            fznparser::Model mdl{
                 {}, {x1, x2, x3, y, c}, {*constraint}, fznparser::Satisfy{}};
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            model = std::make_unique<fznparser::Model>(std::move(mdl));
           }
         }
       }

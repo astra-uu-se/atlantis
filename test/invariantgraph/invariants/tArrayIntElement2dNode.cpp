@@ -20,7 +20,7 @@ class ArrayIntElement2dNodeTest : public NodeTestBase {
        "y", static_cast<Int>(parMatrix.size()), 1, 1},
       {}};
 
-  fznparser::FZNModel model{
+  fznparser::Model model{
       {}, {idx1, idx2, y}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::ArrayIntElement2dNode> node;

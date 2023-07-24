@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cassert>
-#include <fznparser/ast.hpp>
 #include <vector>
 
 #include "core/engine.hpp"
@@ -13,7 +12,7 @@ namespace invariantgraph {
 /**
  * The types that can be in an array of search variables.
  */
-using MappableValue = std::variant<Int, bool, fznparser::Identifier>;
+using MappableValue = std::variant<Int, bool, std::string_view>;
 
 static std::vector<invariantgraph::VariableNode*> combine(
     VariableNode* reifiedViolation, std::vector<VariableNode*> definedVars) {

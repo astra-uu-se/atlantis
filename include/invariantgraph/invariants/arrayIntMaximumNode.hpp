@@ -1,9 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/variableDefiningNode.hpp"
+#include "invariants/maxSparse.hpp"
 
 namespace invariantgraph {
 class ArrayIntMaximumNode : public VariableDefiningNode {
@@ -23,8 +26,8 @@ class ArrayIntMaximumNode : public VariableDefiningNode {
   }
 
   static std::unique_ptr<ArrayIntMaximumNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   ~ArrayIntMaximumNode() override = default;
 

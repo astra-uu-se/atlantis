@@ -7,7 +7,7 @@ static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
       overloaded{[]<typename Type>(const fznparser::SearchVariable<Type>& var) {
         // TODO: The value could be an identifier to a parameter.
         if (!var.value ||
-            std::holds_alternative<fznparser::Identifier>(*var.value)) {
+            std::holds_alternative<std::string_view>(*var.value)) {
           return std::optional<SearchDomain>{};
         }
 
@@ -33,7 +33,7 @@ static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
 
   return std::visit<SearchDomain>(
       overloaded{
-          [](const fznparser::IntVariable& var) {
+          [](const fznparser::IntVar& var) {
             return std::visit<SearchDomain>(
                 overloaded{
                     [](const fznparser::BasicDomain<Int>&) {
@@ -48,7 +48,7 @@ static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
                     }},
                 var.domain);
           },
-          [](const fznparser::BoolVariable&) {
+          [](const fznparser::BoolVar&) {
             return SearchDomain(std::vector<Int>{0, 1});
           },
       },
@@ -58,7 +58,7 @@ static SearchDomain convertDomain(const VariableNode::FZNVariable& variable) {
 invariantgraph::VariableNode::VariableNode(VariableNode::FZNVariable variable)
     : _variable(std::move(variable)),
       _domain{convertDomain(*_variable)},
-      _isIntVar(std::holds_alternative<fznparser::IntVariable>(variable)) {}
+      _isIntVar(std::holds_alternative<fznparser::IntVar>(variable)) {}
 
 invariantgraph::VariableNode::VariableNode(SearchDomain domain, bool isIntVar)
     : _variable(std::nullopt),

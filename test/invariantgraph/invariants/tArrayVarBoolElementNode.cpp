@@ -17,7 +17,7 @@ class ArrayVarBoolElementNodeTest : public NodeTestBase {
        y.name},
       {}};
 
-  fznparser::FZNModel model{
+  fznparser::Model model{
       {}, {a, b, c, idx, y}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::ArrayVarBoolElementNode> node;

@@ -20,10 +20,10 @@ class ArrayVarIntElement2dNodeTest : public NodeTestBase {
        1, 1},
       {}};
 
-  fznparser::FZNModel model{{},
-                            {x00, x01, x10, x11, idx1, idx2, y},
-                            {constraint},
-                            fznparser::Satisfy{}};
+  fznparser::Model model{{},
+                         {x00, x01, x10, x11, idx1, idx2, y},
+                         {constraint},
+                         fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::ArrayVarIntElement2dNode> node;
 

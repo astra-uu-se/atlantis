@@ -1,8 +1,10 @@
 #pragma once
 
 #include <fznparser/model.hpp>
+#include <numeric>
 
 #include "invariantgraph/implicitConstraintNode.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 
 namespace invariantgraph {
 
@@ -19,8 +21,8 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
   }
 
   static std::unique_ptr<CircuitImplicitNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
  protected:
   search::neighbourhoods::Neighbourhood* createNeighbourhood(

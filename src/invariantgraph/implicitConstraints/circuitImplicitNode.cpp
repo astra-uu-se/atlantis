@@ -1,31 +1,48 @@
 #include "invariantgraph/implicitConstraints/circuitImplicitNode.hpp"
 
-#include <numeric>
-
 #include "../parseHelper.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
-std::unique_ptr<invariantgraph::CircuitImplicitNode>
-invariantgraph::CircuitImplicitNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-  auto variables =
-      mappedVariableVector(model, constraint.arguments[0], variableMap);
+namespace invariantgraph {
 
-  // For now, this only works when all the variables have the same domain.
-  const auto& domain = variables.front()->domain();
-  for (const auto& variable : variables) {
-    if (variable->domain() != domain) {
+std::unique_ptr<CircuitImplicitNode> CircuitImplicitNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
+  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
+
+  const fznparser::IntVarArray& arg =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(0));
+
+  if (arg.size() < 2) {
+    return nullptr;
+  }
+
+  for (size_t i = 0; i < arg.size(); ++i) {
+    if (std::holds_alternative<Int>(arg.at(i))) {
       return nullptr;
     }
   }
 
-  return std::make_unique<CircuitImplicitNode>(variables);
+  // For now, this only works when all the variables have the same domain.
+  const fznparser::IntSet& domain =
+      std::get<std::reference_wrapper<const fznparser::IntVar>>(arg.at(0))
+          .get()
+          .domain();
+
+  for (size_t i = 1; i < arg.size(); ++i) {
+    if (domain !=
+        std::get<std::reference_wrapper<const fznparser::IntVar>>(arg.at(i))
+            .get()
+            .domain()) {
+      return nullptr;
+    }
+  }
+
+  return std::make_unique<CircuitImplicitNode>(
+      invariantGraph.addVariableArray(arg));
 }
 
-invariantgraph::CircuitImplicitNode::CircuitImplicitNode(
-    std::vector<VariableNode*> variables)
+CircuitImplicitNode::CircuitImplicitNode(std::vector<VariableNode*> variables)
     : ImplicitConstraintNode(std::move(variables)) {
   assert(definedVariables().size() > 1);
 
@@ -36,8 +53,9 @@ invariantgraph::CircuitImplicitNode::CircuitImplicitNode(
                      }));
 }
 
-search::neighbourhoods::Neighbourhood*
-invariantgraph::CircuitImplicitNode::createNeighbourhood(
+search::neighbourhoods::Neighbourhood* CircuitImplicitNode::createNeighbourhood(
     Engine&, std::vector<search::SearchVariable> variables) {
   return new search::neighbourhoods::CircuitNeighbourhood(variables);
 }
+
+}  // namespace invariantgraph

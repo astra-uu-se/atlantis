@@ -2,18 +2,31 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::ArrayIntElementNode>
-invariantgraph::ArrayBoolElementNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<ArrayIntElementNode> ArrayBoolElementNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto idx = mappedVariable(constraint.arguments[0], variableMap);
-  auto as = boolVectorAsIntVector(model, constraint.arguments[1]);
-  auto c = mappedVariable(constraint.arguments[2], variableMap);
-  const Int offset = constraint.name != "array_bool_element_offset"
-                         ? 1
-                         : idx->domain().lowerBound();
+  const fznparser::IntVar& idx =
+      std::get<std::reference_wrapper<const fznparser::IntVar>>(
+          std::get<fznparser::IntArg>(constraint.arguments().at(0)));
 
-  return std::make_unique<ArrayIntElementNode>(as, idx, c, offset);
+  std::vector<Int> as = toIntVector(
+      std::get<fznParser::BoolVarArray>(constraint.arguments().at(1))
+          .toParVector());
+
+  const fznparser::BoolVar& c =
+      std::get<std::reference_wrapper<const fznparser::BoolVar>>(
+          std::get<fznparser::BoolArg>(constraint.arguments().at(2)));
+
+  const Int offset =
+      constraint.name != "array_bool_element_offset" ? 1 : idx.lowerBound();
+
+  return std::make_unique<ArrayIntElementNode>(
+      as, invariantGraph.addVariable(idx), invariantGraph.addVariable(c),
+      offset);
 }
+
+}  // namespace invariantgraph

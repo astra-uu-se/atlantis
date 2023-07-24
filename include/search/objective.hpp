@@ -20,7 +20,7 @@ class Objective {
   std::optional<VarId> _violation{};
 
  public:
-  Objective(PropagationEngine& engine, const fznparser::FZNModel& model);
+  Objective(PropagationEngine& engine, const fznparser::Model& model);
 
   VarId registerWithEngine(VarId constraintViolation, VarId objectiveVariable);
 

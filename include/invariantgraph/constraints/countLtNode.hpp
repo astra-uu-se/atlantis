@@ -5,6 +5,7 @@
 
 #include "constraints/lessEqual.hpp"
 #include "constraints/lessThan.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/count.hpp"
 #include "invariants/countConst.hpp"
@@ -92,8 +93,8 @@ class CountLtNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<CountLtNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

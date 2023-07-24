@@ -2,30 +2,38 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::GlobalCardinalityNode>
-invariantgraph::GlobalCardinalityNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<GlobalCardinalityNode>
+GlobalCardinalityNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto inputs =
-      mappedVariableVector(model, constraint.arguments[0], variableMap);
+  std::vector<VariableNode*> inputs = invariantGraph.addVariableArray(
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(0)));
 
-  auto cover = integerVector(model, constraint.arguments[1]);
+  std::vector<Int> cover =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(1))
+          .toParVector();
 
-  auto counts =
-      mappedVariableVector(model, constraint.arguments[2], variableMap);
+  std::vector<VariableNode*> counts = invariantGraph.addVariableArray(
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(2)));
 
   assert(cover.size() == counts.size());
 
   bool shouldHold = true;
   VariableNode* r = nullptr;
 
-  if (constraint.arguments.size() >= 4) {
-    if (std::holds_alternative<bool>(constraint.arguments[3])) {
-      shouldHold = std::get<bool>(constraint.arguments[3]);
+  if (constraint.arguments().size() == 4) {
+    const fznparser::BoolArg reified =
+        std::get<fznparser::BoolArg>(constraint.arguments().at(3));
+    if (std::holds_alternative<bool>(reified)) {
+      shouldHold = std::get<bool>(reified);
     } else {
-      r = mappedVariable(constraint.arguments[3], variableMap);
+      r = invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get());
     }
   }
 
@@ -37,8 +45,7 @@ invariantgraph::GlobalCardinalityNode::fromModelConstraint(
                                                  shouldHold);
 }
 
-void invariantgraph::GlobalCardinalityNode::createDefinedVariables(
-    Engine& engine) {
+void GlobalCardinalityNode::createDefinedVariables(Engine& engine) {
   if (!isReified() && shouldHold()) {
     for (auto* const countOutput : definedVariables()) {
       if (countOutput->varId() == NULL_ID) {
@@ -61,7 +68,7 @@ void invariantgraph::GlobalCardinalityNode::createDefinedVariables(
   }
 }
 
-void invariantgraph::GlobalCardinalityNode::registerWithEngine(Engine& engine) {
+void GlobalCardinalityNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> inputs;
   std::transform(_inputs.begin(), _inputs.end(), std::back_inserter(inputs),
                  [&](auto node) { return node->varId(); });
@@ -103,3 +110,5 @@ void invariantgraph::GlobalCardinalityNode::registerWithEngine(Engine& engine) {
     }
   }
 }
+
+}  // namespace invariantgraph

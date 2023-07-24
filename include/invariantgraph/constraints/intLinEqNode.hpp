@@ -3,6 +3,7 @@
 #include <fznparser/model.hpp>
 
 #include "constraints/equal.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/linear.hpp"
 #include "views/equalConst.hpp"
@@ -18,8 +19,8 @@ class IntLinEqNode : public SoftConstraintNode {
 
  public:
   static std::unique_ptr<IntLinEqNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   static std::vector<std::pair<std::string_view, size_t>>
   acceptedNameNumArgPairs() {

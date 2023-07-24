@@ -2,19 +2,28 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::GlobalCardinalityLowUpClosedNode>
-invariantgraph::GlobalCardinalityLowUpClosedNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<GlobalCardinalityLowUpClosedNode>
+GlobalCardinalityLowUpClosedNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto x = mappedVariableVector(model, constraint.arguments[0], variableMap);
+  std::vector<VariableNode*> inputs = invariantGraph.addVariableArray(
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(0)));
 
-  auto cover = integerVector(model, constraint.arguments[1]);
+  std::vector<Int> cover =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(1))
+          .toParVector();
 
-  auto low = integerVector(model, constraint.arguments[2]);
+  std::vector<Int> low =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(2))
+          .toParVector();
 
-  auto up = integerVector(model, constraint.arguments[3]);
+  std::vector<Int> up =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(3))
+          .toParVector();
 
   assert(cover.size() == low.size());
   assert(cover.size() == up.size());
@@ -22,25 +31,28 @@ invariantgraph::GlobalCardinalityLowUpClosedNode::fromModelConstraint(
   bool shouldHold = true;
   VariableNode* r = nullptr;
 
-  if (constraint.arguments.size() >= 5) {
-    if (std::holds_alternative<bool>(constraint.arguments[4])) {
-      shouldHold = std::get<bool>(constraint.arguments[4]);
+  if (constraint.arguments().size() == 5) {
+    const fznparser::BoolArg reified =
+        std::get<fznparser::BoolArg>(constraint.arguments().at(4));
+    if (std::holds_alternative<bool>(reified)) {
+      shouldHold = std::get<bool>(reified);
     } else {
-      r = mappedVariable(constraint.arguments[4], variableMap);
+      r = invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get());
     }
   }
 
   if (r != nullptr) {
-    return std::make_unique<GlobalCardinalityLowUpClosedNode>(x, cover, low, up,
-                                                              r);
+    return std::make_unique<GlobalCardinalityLowUpClosedNode>(inputs, cover,
+                                                              low, up, r);
   }
   assert(r == nullptr);
-  return std::make_unique<GlobalCardinalityLowUpClosedNode>(x, cover, low, up,
-                                                            shouldHold);
+  return std::make_unique<GlobalCardinalityLowUpClosedNode>(inputs, cover, low,
+                                                            up, shouldHold);
 }
 
-void invariantgraph::GlobalCardinalityLowUpClosedNode::createDefinedVariables(
-    Engine& engine) {
+void GlobalCardinalityLowUpClosedNode::createDefinedVariables(Engine& engine) {
   if (violationVarId() == NULL_ID) {
     if (!shouldHold()) {
       _intermediate = engine.makeIntVar(0, 0, staticInputs().size());
@@ -52,8 +64,7 @@ void invariantgraph::GlobalCardinalityLowUpClosedNode::createDefinedVariables(
   }
 }
 
-void invariantgraph::GlobalCardinalityLowUpClosedNode::registerWithEngine(
-    Engine& engine) {
+void GlobalCardinalityLowUpClosedNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> inputs;
   std::transform(staticInputs().begin(), staticInputs().end(),
                  std::back_inserter(inputs),
@@ -67,3 +78,5 @@ void invariantgraph::GlobalCardinalityLowUpClosedNode::registerWithEngine(
         engine, _intermediate, inputs, _cover, _low, _up);
   }
 }
+
+}  // namespace invariantgraph

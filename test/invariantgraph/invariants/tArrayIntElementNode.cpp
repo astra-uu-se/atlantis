@@ -15,7 +15,7 @@ class ArrayIntElementNodeTest : public NodeTestBase {
            elementValues.at(0), elementValues.at(1), elementValues.at(2)},
        "c"},
       {}};
-  fznparser::FZNModel model{{}, {b, c}, {constraint}, fznparser::Satisfy{}};
+  fznparser::Model model{{}, {b, c}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::ArrayIntElementNode> node;
 

@@ -6,6 +6,7 @@
 #include "constraints/equal.hpp"
 #include "constraints/globalCardinalityConst.hpp"
 #include "constraints/notEqual.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/exists.hpp"
 #include "invariants/linear.hpp"
@@ -49,8 +50,8 @@ class GlobalCardinalityLowUpNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<GlobalCardinalityLowUpNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

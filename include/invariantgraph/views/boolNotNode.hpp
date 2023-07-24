@@ -4,6 +4,7 @@
 #include <map>
 #include <utility>
 
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/variableDefiningNode.hpp"
 #include "views/bool2IntView.hpp"
 
@@ -22,8 +23,8 @@ class BoolNotNode : public VariableDefiningNode {
   }
 
   static std::unique_ptr<BoolNotNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

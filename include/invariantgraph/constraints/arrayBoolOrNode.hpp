@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "fznparser/model.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/exists.hpp"
 #include "views/notEqualConst.hpp"
@@ -14,10 +15,10 @@ class ArrayBoolOrNode : public SoftConstraintNode {
   VarId _intermediate{NULL_ID};
 
  public:
-  ArrayBoolOrNode(std::vector<VariableNode*> as, VariableNode* output)
+  ArrayBoolOrNode(std::vector<VariableNode*>&& as, VariableNode* output)
       : SoftConstraintNode(std::move(as), output) {}
 
-  ArrayBoolOrNode(std::vector<VariableNode*> as, bool shouldHold)
+  ArrayBoolOrNode(std::vector<VariableNode*>&& as, bool shouldHold)
       : SoftConstraintNode(std::move(as), shouldHold) {}
 
   static std::vector<std::pair<std::string_view, size_t>>
@@ -27,8 +28,8 @@ class ArrayBoolOrNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<ArrayBoolOrNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

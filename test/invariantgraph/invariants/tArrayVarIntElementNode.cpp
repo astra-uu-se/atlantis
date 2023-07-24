@@ -16,7 +16,7 @@ class ArrayVarIntElementNodeTest : public NodeTestBase {
       {"idx", fznparser::Constraint::ArrayArgument{"a", "b", "c"}, "y"},
       {}};
 
-  fznparser::FZNModel model{
+  fznparser::Model model{
       {}, {a, b, c, idx, y}, {constraint}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::ArrayVarIntElementNode> node;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cassert>
-#include <fznparser/ast.hpp>
 #include <vector>
 
 #include "core/engine.hpp"

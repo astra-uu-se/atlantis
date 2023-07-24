@@ -20,7 +20,7 @@ class LinearNodeTest : public NodeTestBase {
        fznparser::Constraint::ArrayArgument{"a", "b", "c"}, d},
       {fznparser::DefinesVariableAnnotation{"a"}}};
 
-  fznparser::FZNModel model{{}, {a, b, c}, {c1, c2}, fznparser::Satisfy{}};
+  fznparser::Model model{{}, {a, b, c}, {c1, c2}, fznparser::Satisfy{}};
 
   std::unique_ptr<invariantgraph::IntLinearNode> shouldRegisterView;
   std::unique_ptr<invariantgraph::IntLinearNode> shouldRegisterLinear;

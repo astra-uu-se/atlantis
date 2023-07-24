@@ -2,6 +2,7 @@
 
 #include <fznparser/model.hpp>
 
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/variableDefiningNode.hpp"
 #include "invariants/element2dConst.hpp"
 
@@ -29,8 +30,8 @@ class ArrayIntElement2dNode : public VariableDefiningNode {
   }
 
   static std::unique_ptr<ArrayIntElement2dNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

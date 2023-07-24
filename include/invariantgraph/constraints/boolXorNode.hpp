@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "constraints/boolEqual.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "invariants/boolXor.hpp"
 
@@ -23,8 +24,8 @@ class BoolXorNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<BoolXorNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   void createDefinedVariables(Engine& engine) override;
 

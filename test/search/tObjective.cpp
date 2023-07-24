@@ -25,7 +25,7 @@ class ObjectiveTest : public testing::Test {
 };
 
 TEST_F(ObjectiveTest, satisfaction_objective) {
-  fznparser::FZNModel model({}, {}, {}, fznparser::Satisfy{});
+  fznparser::Model model({}, {}, {}, fznparser::Satisfy{});
   search::Objective searchObjective(*engine, model);
 
   auto violation = install(searchObjective);
@@ -41,8 +41,8 @@ TEST_F(ObjectiveTest, satisfaction_objective) {
 
 TEST_F(ObjectiveTest, minimisation_objective) {
   fznparser::IntRange domain{1, 10};
-  fznparser::IntVariable a{"a", domain, {}, {}};
-  fznparser::FZNModel model({}, {a}, {}, fznparser::Minimise{a.name});
+  fznparser::IntVar a{"a", domain, {}, {}};
+  fznparser::Model model({}, {a}, {}, fznparser::Minimise{a.name});
   search::Objective searchObjective(*engine, model);
 
   auto violation = install(searchObjective, domain, 5);
@@ -74,8 +74,8 @@ TEST_F(ObjectiveTest, minimisation_objective) {
 
 TEST_F(ObjectiveTest, maximisation_objective) {
   fznparser::IntRange domain{1, 10};
-  fznparser::IntVariable a{"a", domain, {}, {}};
-  fznparser::FZNModel model({}, {a}, {}, fznparser::Maximise{a.name});
+  fznparser::IntVar a{"a", domain, {}, {}};
+  fznparser::Model model({}, {a}, {}, fznparser::Maximise{a.name});
   search::Objective searchObjective(*engine, model);
 
   auto violation = install(searchObjective, domain, 5);

@@ -4,23 +4,40 @@
 
 std::unique_ptr<invariantgraph::BoolAndNode>
 invariantgraph::BoolAndNode::fromModelConstraint(
-    const fznparser::FZNModel&, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto a = mappedVariable(constraint.arguments[0], variableMap);
-  auto b = mappedVariable(constraint.arguments[1], variableMap);
-
-  if (constraint.arguments.size() >= 3) {
-    if (std::holds_alternative<bool>(constraint.arguments[2])) {
-      auto shouldHold = std::get<bool>(constraint.arguments[2]);
-      return std::make_unique<invariantgraph::BoolAndNode>(a, b, shouldHold);
-    } else {
-      auto r = mappedVariable(constraint.arguments[2], variableMap);
-      return std::make_unique<invariantgraph::BoolAndNode>(a, b, r);
+  if (constraint.arguments().size() != 2 ||
+      constraint.arguments().size() != 3) {
+    throw std::runtime_error("BoolAnd constraint takes two var bool arguments");
+  }
+  for (const auto& arg : constraint.arguments()) {
+    if (!std::holds_alternative<fznparser::BoolArg>(arg)) {
+      throw std::runtime_error(
+          "BoolAnd constraint takes two var bool arguments");
     }
   }
-  return std::make_unique<BoolAndNode>(a, b, true);
+  const auto& a = invariantGraph.addVariable(
+      std::get<fznparser::BoolArg>(constraint.arguments().at(0)));
+
+  const auto& b = invariantGraph.addVariable(
+      std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
+
+  if (constraint.arguments().size() == 2) {
+    return std::make_unique<BoolAndNode>(a, b, true);
+  }
+
+  const auto& reified = get<fznparser::BoolArg>(constraint.arguments().at(2));
+  if (std::holds_alternative<bool>(reified)) {
+    return std::make_unique<invariantgraph::BoolAndNode>(
+        a, b, std::get<bool>(reified));
+  }
+  return std::make_unique<invariantgraph::BoolAndNode>(
+      a, b,
+      invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get()));
 }
 
 void invariantgraph::BoolAndNode::createDefinedVariables(Engine& engine) {

@@ -2,32 +2,44 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::IntEqNode>
-invariantgraph::IntEqNode::fromModelConstraint(
-    const fznparser::FZNModel&, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<IntEqNode> IntEqNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto a = mappedVariable(constraint.arguments[0], variableMap);
-  auto b = mappedVariable(constraint.arguments[1], variableMap);
-
-  if (constraint.arguments.size() >= 3) {
-    if (std::holds_alternative<bool>(constraint.arguments[2])) {
-      auto shouldHold = std::get<bool>(constraint.arguments[2]);
-      return std::make_unique<invariantgraph::IntEqNode>(a, b, shouldHold);
-    } else {
-      auto r = mappedVariable(constraint.arguments[2], variableMap);
-      return std::make_unique<invariantgraph::IntEqNode>(a, b, r);
-    }
+  if (constraint.arguments().size() != 2 ||
+      constraint.arguments().size() != 3) {
+    throw std::runtime_error("IntEq constraint takes two var bool arguments");
   }
-  return std::make_unique<IntEqNode>(a, b, true);
+
+  VariableNode* a = invariantGraph.addVariable(
+      std::get<fznparser::IntArg>(constraint.arguments().at(0)));
+
+  VariableNode* b = invariantGraph.addVariable(
+      std::get<fznparser::IntArg>(constraint.arguments().at(1)));
+
+  if (constraint.arguments().size() == 2) {
+    return std::make_unique<IntEqNode>(a, b, true);
+  }
+
+  const auto& reified = get<fznparser::BoolArg>(constraint.arguments().at(2));
+  if (std::holds_alternative<bool>(reified)) {
+    return std::make_unique<IntEqNode>(a, b, std::get<bool>(reified));
+  }
+  return std::make_unique<IntEqNode>(
+      a, b,
+      invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get()));
 }
 
-void invariantgraph::IntEqNode::createDefinedVariables(Engine& engine) {
+void IntEqNode::createDefinedVariables(Engine& engine) {
   registerViolation(engine);
 }
 
-void invariantgraph::IntEqNode::registerWithEngine(Engine& engine) {
+void IntEqNode::registerWithEngine(Engine& engine) {
   assert(violationVarId() != NULL_ID);
   assert(a()->varId() != NULL_ID);
   assert(b()->varId() != NULL_ID);
@@ -41,3 +53,5 @@ void invariantgraph::IntEqNode::registerWithEngine(Engine& engine) {
                                     b()->varId());
   }
 }
+
+}  // namespace invariantgraph

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PROJECT_NAME atlantis)
@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 if(MSVC)
   add_compile_options(/std:c++20 /permissive /W4 /w14640)
 else()
-  add_compile_options(-std=c++20 -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -static)
+  add_compile_options(-std=c++20 -Wall -Wextra -Wnon-virtual-dtor -pedantic -static)
 endif()
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -52,7 +52,7 @@ include(FetchContent)
 FetchContent_Declare(
   fznparser
   GIT_REPOSITORY git@github.com:astra-uu-se/fznparser.git
-  GIT_TAG a4bfe45eec246b54b44616347061d58fb02355a9
+  GIT_TAG fe4b2b6134fcf4c1a36bc546ac7024397c31fa78
 )
 FetchContent_Declare(
   cxxopts

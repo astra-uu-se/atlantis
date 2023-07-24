@@ -1,55 +1,70 @@
 #include "invariantgraph/constraints/countEqNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "invariants/count.hpp"
-#include "invariants/countConst.hpp"
-#include "views/equalConst.hpp"
-#include "views/notEqualConst.hpp"
 
-std::unique_ptr<invariantgraph::CountEqNode>
-invariantgraph::CountEqNode::fromModelConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
+namespace invariantgraph {
+
+std::unique_ptr<CountEqNode> CountEqNode::fromModelConstraint(
+    const fznparser::Model&, const fznparser::Constraint& constraint,
+    InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto x = mappedVariableVector(model, constraint.arguments[0], variableMap);
+  const fznparser::IntVarArray& xArg =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(0));
 
-  bool yIsParameter = std::holds_alternative<Int>(constraint.arguments[1]);
+  const fznparser::IntArg& yArg =
+      std::get<fznparser::IntArg>(constraint.arguments().at(1));
+
   VariableNode* yVarNode =
-      yIsParameter ? nullptr
-                   : mappedVariable(constraint.arguments[1], variableMap);
-  const Int yParameter =
-      yIsParameter ? std::get<Int>(constraint.arguments[1]) : -1;
+      yArg.isParameter()
+          ? nullptr
+          : invariantGraph.addVariable(
+                std::get<std::reference_wrapper<const fznparser::IntVar>>(yArg)
+                    .get());
 
-  bool cIsParameter = std::holds_alternative<Int>(constraint.arguments[2]);
+  const Int yParameter = yArg.isParameter() ? std::get<Int>(yArg) : -1;
+
+  const fznparser::IntArg& cArg =
+      std::get<fznparser::IntArg>(constraint.arguments().at(2));
+
   VariableNode* cVarNode =
-      cIsParameter ? nullptr
-                   : mappedVariable(constraint.arguments[2], variableMap);
-  const Int cParameter =
-      cIsParameter ? std::get<Int>(constraint.arguments[2]) : -1;
+      cArg.isParameter()
+          ? nullptr
+          : invariantGraph.addVariable(
+                std::get<std::reference_wrapper<const fznparser::IntVar>>(cArg)
+                    .get());
+
+  const Int cParameter = cArg.isParameter() ? std::get<Int>(cArg) : -1;
 
   bool shouldHold = true;
   VariableNode* r = nullptr;
 
-  if (constraint.arguments.size() >= 4) {
-    if (std::holds_alternative<bool>(constraint.arguments[3])) {
-      shouldHold = std::get<bool>(constraint.arguments[3]);
+  if (constraint.arguments().size() == 4) {
+    const fznparser::BoolArg& reified =
+        std::get<fznparser::BoolArg>(constraint.arguments().at(3));
+
+    if (std::holds_alternative<bool>(reified)) {
+      shouldHold = std::get<bool>(reified);
     } else {
-      r = mappedVariable(constraint.arguments[3], variableMap);
+      r = invariantGraph.addVariable(
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(reified)
+              .get());
     }
   }
 
-  if (r != nullptr && !cIsParameter) {
+  if (r != nullptr && !cArg.isParameter()) {
     throw std::runtime_error(
         "count_eq_reif(x, y, c, r): c must be a parameter, var given");
   }
-  if (!shouldHold && !cIsParameter) {
+  if (!shouldHold && !cArg.isParameter()) {
     throw std::runtime_error(
         "count_eq_reif(x, y, c, false): c must be a parameter, var given");
   }
 
-  if (yIsParameter) {
-    if (cIsParameter) {
+  std::vector<VariableNode*> x = invariantGraph.addVariableArray(xArg);
+
+  if (yArg.isParameter()) {
+    if (cArg.isParameter()) {
       if (r != nullptr) {
         return std::make_unique<CountEqNode>(x, yParameter, cParameter, r);
       }
@@ -60,7 +75,7 @@ invariantgraph::CountEqNode::fromModelConstraint(
     assert(shouldHold);
     return std::make_unique<CountEqNode>(x, yParameter, cVarNode, true);
   }
-  if (cIsParameter) {
+  if (cArg.isParameter()) {
     if (r != nullptr) {
       return std::make_unique<CountEqNode>(x, yVarNode, cParameter, r);
     }
@@ -71,7 +86,7 @@ invariantgraph::CountEqNode::fromModelConstraint(
   return std::make_unique<CountEqNode>(x, yVarNode, cVarNode, true);
 }
 
-void invariantgraph::CountEqNode::createDefinedVariables(Engine& engine) {
+void CountEqNode::createDefinedVariables(Engine& engine) {
   if (!_cIsParameter) {
     if (cVarNode()->varId() == NULL_ID) {
       assert(!isReified());
@@ -91,7 +106,7 @@ void invariantgraph::CountEqNode::createDefinedVariables(Engine& engine) {
   }
 }
 
-void invariantgraph::CountEqNode::registerWithEngine(Engine& engine) {
+void CountEqNode::registerWithEngine(Engine& engine) {
   std::vector<VarId> engineInputs;
   const size_t inputSize =
       staticInputs().size() - static_cast<size_t>(!_yIsParameter);
@@ -132,3 +147,5 @@ void invariantgraph::CountEqNode::registerWithEngine(Engine& engine) {
   engine.makeInvariant<CountConst>(engine, _intermediate, _yParameter,
                                    engineInputs);
 }
+
+}  // namespace invariantgraph

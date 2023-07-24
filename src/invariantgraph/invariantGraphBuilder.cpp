@@ -50,53 +50,37 @@
 #include "invariantgraph/views/intAbsNode.hpp"
 #include "utils/fznAst.hpp"
 
-invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build(
-    const fznparser::FZNModel& model) {
-  _variableMap.clear();
-  _variables.clear();
-  _definingNodes.clear();
+invaraintgraph::InvariantGraphBuilder::InvariantGraphBuilder(
+    fznparser::Model&& _model)
+    : _model(std::move(_model)), _invariantGraph() {}
 
-  createNodes(model);
+invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build() {
+  initVariableNodes(_model);
 
-  // clang-format off
-  auto objectiveVariable = std::visit<invariantgraph::VariableNode*>(
-      overloaded{
-        [](const fznparser::Satisfy&) { return nullptr; },
-        [&](const auto& objective) {
-          return _variableMap.at(objective.variable);
-        }
-      },
-      model.objective());
-  // clang-format on
+  createNodes()
 
-  std::vector<VariableNode*> valueNodes;
-  for (const auto& [_, node] : _valueMap) {
-    valueNodes.push_back(node);
-  }
-
-  return {std::move(_variables), std::move(valueNodes),
-          std::move(_definingNodes), objectiveVariable};
+      std::optional<Variable>
+          objectiveVariable = _model.solveType().objective();
 }
 
-using FZNSearchVariable =
-    std::variant<fznparser::IntVariable, fznparser::BoolVariable>;
+using FZNSearchVariable = std::variant<fznparser::IntVar, fznparser::BoolVar>;
 
 static std::optional<FZNSearchVariable> searchVariable(
     const fznparser::Variable& variable) {
   return std::visit<std::optional<FZNSearchVariable>>(
-      overloaded{[](const fznparser::IntVariable& var) { return var; },
-                 [](const fznparser::BoolVariable& var) { return var; },
+      overloaded{[](const fznparser::IntVar& var) { return var; },
+                 [](const fznparser::BoolVar& var) { return var; },
                  [](const auto&) { return std::nullopt; }},
       variable);
 }
 
 static bool allVariablesFree(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::unordered_set<fznparser::Identifier>& definedVars);
+    const fznparser::Model& _model, const fznparser::Constraint& constraint,
+    const std::unordered_set<std::string_view>& definedVars);
 
 static void markVariablesAsDefined(
     const invariantgraph::VariableDefiningNode& node,
-    std::unordered_set<fznparser::Identifier>& definedVars) {
+    std::unordered_set<std::string_view>& definedVars) {
   for (const auto& variableNode : node.definedVariables()) {
     if (variableNode->variable()) {
       definedVars.emplace(identifier(*variableNode->variable()));
@@ -104,31 +88,29 @@ static void markVariablesAsDefined(
   }
 }
 
-void invariantgraph::InvariantGraphBuilder::createNodes(
-    const fznparser::FZNModel& model) {
-  for (const auto& variable : model.variables()) {
-    auto var = searchVariable(variable);
-    if (!var) {
-      continue;
+void invariantgraph::InvariantGraphBuilder::initVariableNodes(
+    const fznparser::Model& _model) {
+  for (const auto& variable : _model.variables()) {
+    if (std::holds_alternative<fznparser::BolVar>(variable)) {
+      _invariantGraph.addNode(std::get<fznparser::BolVar>(variable));
+    } else if (std::holds_alternative<fznparser::IntVar>(variable)) {
+      _invariantGraph.addNode(std::get<fznparser::IntVar>(variable));
     }
-
-    auto variableNode = std::visit<std::unique_ptr<VariableNode>>(
-        [](const auto& v) { return std::make_unique<VariableNode>(v); }, *var);
-
-    _variableMap.emplace(identifier(variable), variableNode.get());
-    _variables.push_back(std::move(variableNode));
   }
+}
 
-  std::unordered_set<fznparser::Identifier> definedVars;
-  std::unordered_set<size_t> processedConstraints;
+void invariantgraph::InvariantGraphBuilder::createNodes() {
+  std::unordered_set<std::string_view> definedVars;
+  std::vector<bool> constraintIsProcessed(_model.constraints().size(), false);
 
   // First, define variables based on annotations.
-  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
-    auto constraint = model.constraints()[idx];
+  for (size_t idx = 0; idx < _model.constraints().size(); ++idx) {
+    auto& constraint = _model.constraints().at(idx);
 
-    auto annotation =
-        getAnnotation<fznparser::DefinesVariableAnnotation>(constraint);
-    if (!annotation) {
+    std::optional<std::reference_wrapper<const fznparser::Variable>>
+        definedVar = constraint.definedVariable(_model);
+
+    if (!definedVariable.has_value()) {
       continue;
     }
 
@@ -136,104 +118,109 @@ void invariantgraph::InvariantGraphBuilder::createNodes(
       continue;
     }
 
-    if (std::unique_ptr<invariantgraph::VariableDefiningNode> node =
-            makeVariableDefiningNode(model, constraint)) {
-      node->prune();
-      markVariablesAsDefined(*node, definedVars);
+    std::unique_ptr<VariableDefiningNode> variableDefiningNode =
+        makeVariableDefiningNode(constraint);
 
-      _definingNodes.push_back(std::move(node));
-      processedConstraints.emplace(idx);
+    if (variableDefiningNode == nullptr) {
+      continue;
     }
+
+    variableDefiningNode->prune();
+    markVariablesAsDefined(variableDefiningNode.value(), definedVars);
+
+    constraintIsProcessed.at(idx) = true;
   }
 
   // Second, define implicit constraints (neighborhood)
-  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
-    auto constraint = model.constraints()[idx];
+  for (size_t idx = 0; idx < _model.constraints().size(); ++idx) {
+    auto constraint = _model.constraints().at(idx);
 
-    auto allVariablesAreFree = allVariablesFree(model, constraint, definedVars);
-    if (processedConstraints.contains(idx) || !allVariablesAreFree) {
+    if (constraintIsProcessed.at(idx) || !allVariablesFree(definedVars)) {
       continue;
     }
 
     if (std::unique_ptr<ImplicitConstraintNode> implicitConstraint =
-            makeImplicitConstraint(model, constraint)) {
+            makeImplicitConstraint(constraint)) {
       implicitConstraint->prune();
+
       for (auto variableNode : implicitConstraint->definedVariables()) {
         definedVars.emplace(identifier(*variableNode->variable()));
       }
 
-      _definingNodes.push_back(std::move(implicitConstraint));
-      processedConstraints.emplace(idx);
+      _intVariableNodes.push_back(std::move(implicitConstraint));
+      constraintIsProcessed.at(idx) = true;
     }
   }
 
   // Third, pick up any invariants we can identify without the annotations
-  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
-    auto constraint = model.constraints()[idx];
-    if (processedConstraints.count(idx)) {
+  for (size_t idx = 0; idx < _model.constraints().size(); ++idx) {
+    auto constraint = _model.constraints().at(idx);
+    if (constraintIsProcessed.at(idx)) {
       continue;
     }
 
-    if (std::unique_ptr<invariantgraph::VariableDefiningNode> node =
-            makeVariableDefiningNode(model, constraint, true)) {
+    if (std::unique_ptr<invariantgraph::VariableDefiningNode>
+            variableDefiningNode =
+                makeVariableDefiningNode(_model, constraint, true)) {
       auto canBeInvariant = std::all_of(
-          node->definedVariables().begin(), node->definedVariables().end(),
+          variableDefiningNode->definedVariables().begin(),
+          variableDefiningNode->definedVariables().end(),
           [&](const auto& variableNode) {
-            if (!variableNode->variable()) {
-              return true;
-            }
-
-            return definedVars.count(identifier(*variableNode->variable())) ==
-                   0;
+            return !variableNode->variable() ||
+                   definedVars.contains(identifier(*variableNode->variable()));
           });
 
       if (!canBeInvariant) {
         continue;
       }
 
-      node->prune();
+      variableDefiningNode->prune();
 
-      markVariablesAsDefined(*node, definedVars);
+      markVariablesAsDefined(*variableDefiningNode, definedVars);
 
-      _definingNodes.push_back(std::move(node));
-      processedConstraints.emplace(idx);
+      _intVariableNodes.push_back(std::move(node));
+      constraintIsProcessed.at(idx) = true;
     }
   }
 
-  // Fourth, use soft constraints for the remaining model constraints.
-  for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
-    auto constraint = model.constraints()[idx];
-    if (processedConstraints.count(idx)) {
+  // Fourth, use soft constraints for the remaining _model constraints.
+  for (size_t idx = 0; idx < _model.constraints().size(); ++idx) {
+    auto constraint = _model.constraints().at(idx);
+    if (constraintIsProcessed(idx)) {
       continue;
     }
 
-    _definingNodes.push_back(makeSoftConstraint(model, constraint));
-    processedConstraints.emplace(idx);
+    _intVariableNodes.push_back(makeSoftConstraint(constraint));
+    constraintIsProcessed.at(idx) = true;
   }
 
-  assert(processedConstraints.size() == model.constraints().size());
+  assert(std::all_of(constraintIsProcessed.begin(), constraintIsProcessed.end(),
+                     [](bool b) { return b; }));
 
   // Finally, define all free variables by the InvariantGraphRoot
-  std::vector<VariableNode*> freeVariables;
-  for (const auto& variable : model.variables()) {
-    if (std::holds_alternative<fznparser::IntVariable>(variable) ||
-        std::holds_alternative<fznparser::BoolVariable>(variable)) {
-      auto variableName = identifier(variable);
-      if (definedVars.count(variableName) == 0) {
-        freeVariables.push_back(_variableMap.at(variableName));
-      }
+  std::vector<std::reference_wrapper<VariableNode>> freeVariables;
+
+  for (const auto& variable : _model.variables()) {
+    if (definedVars.contains(variable.identifier())) {
+      continue;
     }
+    if (!_namedVariableNodes.contains(variable.identifier())) {
+      throw std::runtime_error("Variable with identifier \"" +
+                               std::string(variable.identifier()) +
+                               "\" is not defined");
+    }
+    freeVariables.push_back(_namedVariableNodes.at(variable.identifier()));
   }
 
   if (!freeVariables.empty()) {
-    _definingNodes.push_back(
+    _intVariableNodes.push_back(
         std::make_unique<invariantgraph::InvariantGraphRoot>(freeVariables));
   }
 }
 
 std::unique_ptr<invariantgraph::VariableDefiningNode>
 invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
+    const fznparser::Model& _model, const fznparser::Constraint& constraint,
     bool guessDefinedVariable) {
   std::string_view name = constraint.name;
 
@@ -241,9 +228,8 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
   for (const auto& [nameStr, numArgs] :                                        \
        invariantgraph::nodeType::acceptedNameNumArgPairs()) {                  \
     if (name == nameStr && constraint.arguments.size() == numArgs) {           \
-      return invariantgraph::nodeType::fromModelConstraint(                    \
-          model, constraint,                                                   \
-          [&](const auto& argument) { return nodeFactory(model, argument); }); \
+      return invariantgraph::nodeType::fromModelConstraint(_model, constraint, \
+                                                           _invariantGraph);   \
     }                                                                          \
   }
 
@@ -295,16 +281,15 @@ invariantgraph::InvariantGraphBuilder::makeVariableDefiningNode(
 
 std::unique_ptr<invariantgraph::ImplicitConstraintNode>
 invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint) {
+    const fznparser::Model& _model, const fznparser::Constraint& constraint) {
   std::string_view name = constraint.name;
 
 #define NODE_REGISTRATION(nodeType)                                            \
   for (const auto& [nameStr, numArgs] :                                        \
        invariantgraph::nodeType::acceptedNameNumArgPairs()) {                  \
     if (name == nameStr && constraint.arguments.size() == numArgs) {           \
-      return invariantgraph::nodeType::fromModelConstraint(                    \
-          model, constraint,                                                   \
-          [&](const auto& argument) { return nodeFactory(model, argument); }); \
+      return invariantgraph::nodeType::fromModelConstraint(_model, constraint, \
+                                                           _invariantGraph);   \
     }                                                                          \
   }
 
@@ -317,16 +302,15 @@ invariantgraph::InvariantGraphBuilder::makeImplicitConstraint(
 
 std::unique_ptr<invariantgraph::SoftConstraintNode>
 invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint) {
+    const fznparser::Model& _model, const fznparser::Constraint& constraint) {
   std::string_view name = constraint.name;
 
 #define NODE_REGISTRATION(nodeType)                                            \
   for (const auto& [nameStr, numArgs] :                                        \
        invariantgraph::nodeType::acceptedNameNumArgPairs()) {                  \
     if (name == nameStr && constraint.arguments.size() == numArgs) {           \
-      return invariantgraph::nodeType::fromModelConstraint(                    \
-          model, constraint,                                                   \
-          [&](const auto& argument) { return nodeFactory(model, argument); }); \
+      return invariantgraph::nodeType::fromModelConstraint(_model, constraint, \
+                                                           _invariantGraph);   \
     }                                                                          \
   }
 
@@ -354,113 +338,55 @@ invariantgraph::InvariantGraphBuilder::makeSoftConstraint(
 #undef NODE_REGISTRATION
 }
 
-invariantgraph::VariableNode*
-invariantgraph::InvariantGraphBuilder::nodeFactory(
-    const fznparser::FZNModel& model, const MappableValue& argument) {
-  return std::visit<VariableNode*>(
-      overloaded{[&](Int value) { return nodeForValue(value); },
-                 [&](bool value) { return nodeForValue(value); },
-                 [&](const fznparser::Identifier& identifier) {
-                   return nodeForIdentifier(model, identifier);
-                 }},
-      argument);
+bool invariantGraph::InvariantGraphBuilder::isFreeVariable(
+    const fznparser::BoolVar& var,
+    const std::unordered_set<std::string_view>& definedVars) {
+  return var.isFixed() || !definedVars.contains(constraintArg.identifier());
 }
 
-invariantgraph::VariableNode*
-invariantgraph::InvariantGraphBuilder::nodeForIdentifier(
-    const fznparser::FZNModel& model, const fznparser::Identifier& identifier) {
-  auto item = model.identify(identifier);
-  assert(item);
-
-  // clang-format off
-  return std::visit<VariableNode*>(overloaded{
-      [&](const fznparser::Parameter& parameter) {
-        return nodeForParameter(parameter);
-      },
-      [&](const fznparser::Variable&) {
-        return _variableMap.at(identifier);
-      }
-  }, *item);
-  // clang-format on
+bool invariantGraph::InvariantGraphBuilder::isFreeVariable(
+    const fznparser::IntVar& var,
+    const std::unordered_set<std::string_view>& definedVars) {
+  return var.isFixed() || !definedVars.contains(constraintArg.identifier());
 }
 
-invariantgraph::VariableNode*
-invariantgraph::InvariantGraphBuilder::nodeForParameter(
-    const fznparser::Parameter& parameter) {
-  return std::visit<VariableNode*>(
-      overloaded{
-          [&](const fznparser::IntParameter& intParam) {
-            return nodeForValue(intParam.value);
-          },
-          [&](const fznparser::BoolParameter& boolParam) {
-            return nodeForValue(boolParam.value);
-          },
-
-          // Shouldn't happen. See comment near the top of the header file.
-          [](const auto&) {
-            assert(false);
-            return nullptr;
-          }},
-      parameter);
-}
-
-static bool isFree(
-    const fznparser::FZNModel& model, const fznparser::Identifier& identifier,
-    const std::unordered_set<fznparser::Identifier>& definedVars) {
-  auto identifiable = *model.identify(identifier);
-  if (std::holds_alternative<fznparser::Parameter>(identifiable)) {
+bool invariantGraph::InvariantGraphBuilder::argumentIsFreeVariable(
+    const fznparser::Arg& constraintArg,
+    const std::unordered_set<std::string_view>& definedVars) {
+  if (constraintArg.isParameter()) {
     return true;
   }
-
-  auto variable = std::get<fznparser::Variable>(identifiable);
-
-  return std::visit<bool>(
-      overloaded{
-          [&](const fznparser::IntVariable& v) {
-            return !definedVars.contains(v.name);
-          },
-          [&](const fznparser::BoolVariable& v) {
-            return !definedVars.contains(v.name);
-          },
-          [&](const auto& v) {
-            // v is a VariableArray
-            return std::all_of(v.begin(), v.end(), [&](const auto& expr) {
-              return std::visit<bool>(
-                  overloaded{[&](const fznparser::Identifier& ident) {
-                               return isFree(model, ident, definedVars);
-                             },
-                             [&](const auto&) { return true; }},
-                  expr);
-            });
-            return definedVars.contains(v.name);
-          },
-      },
-      variable);
+  if (std::holds_alternative<fznparser::BoolArg>(constraintArg)) {
+    return std::holds_alternative<bool>(constraintArg) ||
+           isFreeVariable(
+               std::get<std::reference_wrapper<const fznparser::BoolVar>>(
+                   constraintArg)
+                   .get(),
+               definedVars);
+  } else if (std::holds_alternative<fznparser::IntArg>(constraintArg)) {
+    return std::holds_alternative<int64_t>(constraintArg) ||
+           isFreeVariable(
+               std::get<std::reference_wrapper<const fznparser::IntVar>>(
+                   constraintArg)
+                   .get(),
+               definedVars);
+  } else if (std::holds_alternative<BoolVarArray>(constraintArg)) {
+    return std::all_of(
+        constraintArg.begin(), constraintArg.end(),
+        [&](const auto& var) { return isFreeVariable(var, definedVars); });
+  } else if (std::holds_alternative<IntVarArray>(constraintArg)) {
+    return std::all_of(
+        constraintArg.begin(), variable.end(),
+        [&](const auto& var) { return isFreeVariable(var, definedVars); });
+  }
+  return false;
 }
 
-static bool allVariablesFree(
-    const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-    const std::unordered_set<fznparser::Identifier>& definedVars) {
-  auto identifierFree = [&](const fznparser::Identifier& identifier) {
-    return isFree(model, identifier, definedVars);
-  };
-
-  return std::all_of(
-      constraint.arguments.begin(), constraint.arguments.end(),
-      [&](const auto& arg) {
-        return std::visit<bool>(
-            overloaded{identifierFree,
-                       [&](const fznparser::Constraint::ArrayArgument& array) {
-                         return std::all_of(
-                             array.begin(), array.end(),
-                             [&](const auto& element) {
-                               return std::visit<bool>(
-                                   overloaded{identifierFree,
-                                              [](const auto&) { return true; }},
-                                   element);
-                             });
-                       },
-                       [](const auto&) { return false; }},
-            arg);
-      });
+bool invariantGraph::InvariantGraphBuilder::allArgumentsAreFreeVariables(
+    const fznparser::Constraint& constraint,
+    const std::unordered_set<std::string_view>& definedVars) {
+  return std::all_of(constraint.arguments.begin(), constraint.arguments.end(),
+                     [&](const Arg& arg) {
+                       return std::visit<bool>(isFree(arg, definedVars), arg);
+                     });
 }

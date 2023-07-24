@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "constraints/allDifferent.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/softConstraintNode.hpp"
 #include "views/notEqualConst.hpp"
 
@@ -13,10 +14,10 @@ class AllDifferentNode : public SoftConstraintNode {
   VarId _intermediate{NULL_ID};
 
  public:
-  explicit AllDifferentNode(std::vector<VariableNode*> variables,
+  explicit AllDifferentNode(std::vector<VariableNode*>&& variables,
                             VariableNode* r);
 
-  explicit AllDifferentNode(std::vector<VariableNode*> variables,
+  explicit AllDifferentNode(std::vector<VariableNode*>&& variables,
                             bool shouldHold);
 
   static std::vector<std::pair<std::string_view, size_t>>
@@ -26,8 +27,8 @@ class AllDifferentNode : public SoftConstraintNode {
   }
 
   static std::unique_ptr<AllDifferentNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Model& model, const fznparser::Constraint& constraint,
+      InvariantGraph& invariantGraph);
 
   bool prune();
 

@@ -1,6 +1,6 @@
 #include "utils/fznAst.hpp"
 
-std::optional<fznparser::Identifier> definedVariable(
+std::optional<std::string_view> definedVariable(
     const fznparser::Constraint& constraint) {
   auto annotation =
       getAnnotation<fznparser::DefinesVariableAnnotation>(constraint);
