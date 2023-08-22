@@ -5,14 +5,14 @@
 #include <utility>
 
 #include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
 
 namespace invariantgraph {
 
-class Bool2IntNode : public VariableDefiningNode {
+class Bool2IntNode : public InvariantNode {
  public:
-  Bool2IntNode(VariableNode* staticInput, VariableNode* output)
-      : VariableDefiningNode({output}, {staticInput}) {}
+  Bool2IntNode(VarNodeId staticInput, VarNodeId output)
+      : InvariantNode({output}, {staticInput}) {}
 
   ~Bool2IntNode() override = default;
 
@@ -22,15 +22,14 @@ class Bool2IntNode : public VariableDefiningNode {
   }
 
   static std::unique_ptr<Bool2IntNode> fromModelConstraint(
-      const fznparser::Model& model, const fznparser::Constraint& constraint,
-      InvariantGraph& invariantGraph);
+      const fznparser::Constraint&, InvariantGraph&);
 
-  void createDefinedVariables(Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
 
-  void registerWithEngine(Engine& engine) override;
+  void registerNode(InvariantGraph&, Engine& engine) override;
 
-  [[nodiscard]] VariableNode* input() const noexcept {
-    return staticInputs().front();
+  [[nodiscard]] VarNodeId input() const noexcept {
+    return staticInputVarNodeIds().front();
   }
 };
 

@@ -1,66 +1,71 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/invariants/arrayBoolElement2dNode.hpp"
-#include "invariantgraph/invariants/arrayIntElement2dNode.hpp"
+#include "invariantgraph/invariantNodes/arrayBoolElement2dNode.hpp"
+#include "invariantgraph/invariantNodes/arrayIntElement2dNode.hpp"
 
 class ArrayBoolElement2dNodeTest : public NodeTestBase {
  public:
   std::vector<std::vector<bool>> parMatrix{std::vector<bool>{true, false},
                                            std::vector<bool>{false, true}};
 
-  INT_VARIABLE(idx1, 1, 2);
-  INT_VARIABLE(idx2, 1, 2);
-  BOOL_VARIABLE(y);
-
-  fznparser::Constraint constraint{
-      "array_bool_element2d_nonshifted_flat",
-      {"idx1", "idx2",
-       fznparser::Constraint::ArrayArgument{
-           parMatrix.at(0).at(0), parMatrix.at(0).at(1), parMatrix.at(1).at(0),
-           parMatrix.at(1).at(1)},
-       "y", static_cast<Int>(parMatrix.size()), 1, 1},
-      {}};
-
-  fznparser::Model model{
-      {}, {idx1, idx2, y}, {constraint}, fznparser::Satisfy{}};
+  std::unique_ptr<fznparser::IntVar> idx1;
+  std::unique_ptr<fznparser::IntVar> idx2;
+  std::unique_ptr<fznparser::BoolVar> y;
 
   std::unique_ptr<invariantgraph::ArrayIntElement2dNode> node;
 
   void SetUp() override {
-    setModel(&model);
-    node = invariantgraph::ArrayBoolElement2dNode::fromModelConstraint(
-        *_model, constraint, nodeFactory);
+    NodeTestBase::SetUp();
+    idx1 = intVar(1, 2, "idx1");
+    idx2 = intVar(1, 2, "idx2");
+    y = boolVar("y");
+
+    fznparser::BoolVarArray argMatrix("");
+    for (const auto& row : parMatrix) {
+      for (const auto& elem : row) {
+        argMatrix.append(elem);
+      }
+    }
+
+    node = makeNode<invariantgraph::ArrayIntElement2dNode>(
+        _model->addConstraint(fznparser::Constraint(
+            "array_bool_element2d_nonshifted_flat",
+            std::vector<fznparser::Arg>{
+                fznparser::IntArg{*idx1}, fznparser::IntArg{*idx2}, argMatrix,
+                fznparser::BoolArg{*y},
+                fznparser::IntArg{static_cast<Int>(parMatrix.size())},
+                fznparser::IntArg{1}, fznparser::IntArg{1}})));
   }
 };
 
 TEST_F(ArrayBoolElement2dNodeTest, construction) {
   EXPECT_EQ(*node->idx1()->variable(),
-            invariantgraph::VariableNode::FZNVariable(idx1));
+            invariantgraph::VarNode::FZNVariable(*idx1));
   EXPECT_EQ(*node->idx2()->variable(),
-            invariantgraph::VariableNode::FZNVariable(idx2));
+            invariantgraph::VarNode::FZNVariable(*idx2));
 
-  EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables().front()->variable(),
-            invariantgraph::VariableNode::FZNVariable(y));
-  expectMarkedAsInput(node.get(), {node->dynamicInputs()});
+  EXPECT_EQ(node->outputVarNodeIds().size(), 1);
+  EXPECT_EQ(*node->outputVarNodeIds().front()->variable(),
+            invariantgraph::VarNode::FZNVariable(*y));
+  expectMarkedAsInput(node.get(), {node->dynamicInputVarNodeIds()});
   expectMarkedAsInput(node.get(), {node->idx1()});
   expectMarkedAsInput(node.get(), {node->idx2()});
 
-  EXPECT_EQ(node->dynamicInputs().size(), 0);
+  EXPECT_EQ(node->dynamicInputVarNodeIds().size(), 0);
 }
 
 TEST_F(ArrayBoolElement2dNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {idx1.name, idx2.name});
-  for (auto* const definedVariable : node->definedVariables()) {
+  addVariablesToEngine(engine);
+  for (auto* const definedVariable : node->outputVarNodeIds()) {
     EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  node->createDefinedVariables(engine);
-  for (auto* const definedVariable : node->definedVariables()) {
+  node->registerOutputVariables(engine);
+  for (auto* const definedVariable : node->outputVarNodeIds()) {
     EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  node->registerWithEngine(engine);
+  node->registerNode(*_invariantGraph, engine);
   engine.close();
 
   // idx1, idx2
@@ -76,17 +81,17 @@ TEST_F(ArrayBoolElement2dNodeTest, application) {
 TEST_F(ArrayBoolElement2dNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {idx1.name, idx2.name});
-  node->createDefinedVariables(engine);
-  node->registerWithEngine(engine);
+  addVariablesToEngine(engine);
+  node->registerOutputVariables(engine);
+  node->registerNode(*_invariantGraph, engine);
 
-  EXPECT_EQ(node->staticInputs().size(), 2);
-  EXPECT_NE(node->staticInputs().front()->varId(), NULL_ID);
+  EXPECT_EQ(node->staticInputVarNodeIds().size(), 2);
+  EXPECT_NE(node->staticInputVarNodeIds().front()->varId(), NULL_ID);
 
-  EXPECT_EQ(node->dynamicInputs().size(), 0);
+  EXPECT_EQ(node->dynamicInputVarNodeIds().size(), 0);
 
-  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
-  const VarId outputId = node->definedVariables().front()->varId();
+  EXPECT_NE(node->outputVarNodeIds().front()->varId(), NULL_ID);
+  const VarId outputId = node->outputVarNodeIds().front()->varId();
 
   std::vector<VarId> inputs;
   inputs.emplace_back(node->idx1()->varId());

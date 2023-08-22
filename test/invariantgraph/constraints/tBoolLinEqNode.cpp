@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/boolLinEqNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolLinEqNode.hpp"
 
 static bool isViolating(const std::vector<Int>& coeffs,
                         const std::vector<Int>& values, const Int expected) {
@@ -13,9 +13,9 @@ static bool isViolating(const std::vector<Int>& coeffs,
 
 class BoolLinEqNodeTest : public NodeTestBase {
  public:
-  BOOL_VARIABLE(a);
-  BOOL_VARIABLE(b);
-  BOOL_VARIABLE(r);
+  std::unique_ptr<fznparser::BoolVar> a;
+  std::unique_ptr<fznparser::BoolVar> b;
+  std::unique_ptr<fznparser::BoolVar> r;
 
   Int sum{3};
   std::vector<Int> coeffs{1, 2};
@@ -25,27 +25,33 @@ class BoolLinEqNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::BoolLinEqNode> node;
 
   void SetUp() override {
-    fznparser::Constraint cnstr{
-        "bool_lin_eq",
-        {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-         fznparser::Constraint::ArrayArgument{"a", "b"}, sum},
-        {}};
+    NodeTestBase::SetUp();
+    a = boolVar("a");
+    b = boolVar("b");
+    r = boolVar("r");
 
-    constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-    fznparser::Model mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
+    fznparser::IntVarArray coeffsArg("");
+    for (int64_t c : coeffs) {
+      coeffsArg.append(c);
+    }
+    fznparser::BoolVarArray varsArg("");
+    varsArg.append(*a);
+    varsArg.append(*b);
 
-    model = std::make_unique<fznparser::Model>(std::move(mdl));
+    _model->addConstraint(std::move(fznparser::Constraint(
+        "bool_lin_eq", std::vector<fznparser::Arg>{coeffsArg, varsArg,
+                                                   fznparser::IntArg{sum}})));
 
-    setModel(model.get());
-    node = makeNode<invariantgraph::BoolLinEqNode>(*constraint);
+    node =
+        makeNode<invariantgraph::BoolLinEqNode>(_model->constraints().front());
   }
 
   void construction() {
-    EXPECT_EQ(*node->staticInputs()[0]->variable(),
-              invariantgraph::VariableNode::FZNVariable(a));
-    EXPECT_EQ(*node->staticInputs()[1]->variable(),
-              invariantgraph::VariableNode::FZNVariable(b));
-    expectMarkedAsInput(node.get(), node->staticInputs());
+    EXPECT_EQ(*node->staticInputVarNodeIds()[0]->variable(),
+              invariantgraph::VarNode::FZNVariable(*a));
+    EXPECT_EQ(*node->staticInputVarNodeIds()[1]->variable(),
+              invariantgraph::VarNode::FZNVariable(*b));
+    expectMarkedAsInput(node.get(), node->staticInputVarNodeIds());
 
     EXPECT_EQ(node->coeffs()[0], 1);
     EXPECT_EQ(node->coeffs()[1], 2);
@@ -53,23 +59,23 @@ class BoolLinEqNodeTest : public NodeTestBase {
     EXPECT_TRUE(node->isReified());
     EXPECT_NE(node->reifiedViolation(), nullptr);
     EXPECT_EQ(node->reifiedViolation()->variable(),
-              invariantgraph::VariableNode::FZNVariable(r));
+              invariantgraph::VarNode::FZNVariable(*r));
   }
 
   void application() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {a.name, b.name});
-    for (auto* const definedVariable : node->definedVariables()) {
+    addVariablesToEngine(engine);
+    for (auto* const definedVariable : node->outputVarNodeIds()) {
       EXPECT_EQ(definedVariable->varId(), NULL_ID);
     }
     EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->createDefinedVariables(engine);
-    for (auto* const definedVariable : node->definedVariables()) {
+    node->registerOutputVariables(engine);
+    for (auto* const definedVariable : node->outputVarNodeIds()) {
       EXPECT_NE(definedVariable->varId(), NULL_ID);
     }
     EXPECT_NE(node->violationVarId(), NULL_ID);
-    node->registerWithEngine(engine);
+    node->registerNode(*_invariantGraph, engine);
     engine.close();
 
     // a and b
@@ -85,13 +91,13 @@ class BoolLinEqNodeTest : public NodeTestBase {
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {a.name, b.name});
-    node->createDefinedVariables(engine);
-    node->registerWithEngine(engine);
+    addVariablesToEngine(engine);
+    node->registerOutputVariables(engine);
+    node->registerNode(*_invariantGraph, engine);
 
     std::vector<VarId> inputs;
-    EXPECT_EQ(node->staticInputs().size(), 2);
-    for (auto* const inputVariable : node->staticInputs()) {
+    EXPECT_EQ(node->staticInputVarNodeIds().size(), 2);
+    for (auto* const inputVariable : node->staticInputVarNodeIds()) {
       EXPECT_NE(inputVariable->varId(), NULL_ID);
       inputs.emplace_back(inputVariable->varId());
       engine.updateBounds(inputVariable->varId(), 0, 3, true);

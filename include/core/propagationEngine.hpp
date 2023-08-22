@@ -49,7 +49,7 @@ class PropagationEngine : public Engine {
    * @param invariantId the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariable(VarId definedVarId,
+  void registerDefinedVariables(VarId definedVarId,
                                InvariantId invariantId) final;
 
  public:

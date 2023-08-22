@@ -5,46 +5,51 @@
 
 class CircuitImplicitNodeTest : public NodeTestBase {
  public:
-  INT_VARIABLE(a, 1, 4);
-  INT_VARIABLE(b, 1, 4);
-  INT_VARIABLE(c, 1, 4);
-  INT_VARIABLE(d, 1, 4);
-
-  fznparser::Constraint constraint{
-      "circuit_no_offset",
-      {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
-      {}};
-
-  fznparser::Model model{{}, {a, b, c, d}, {constraint}, fznparser::Satisfy{}};
+  std::unique_ptr<fznparser::IntVar> a;
+  std::unique_ptr<fznparser::IntVar> b;
+  std::unique_ptr<fznparser::IntVar> c;
+  std::unique_ptr<fznparser::IntVar> d;
 
   std::unique_ptr<invariantgraph::CircuitImplicitNode> node;
 
   void SetUp() override {
-    setModel(&model);
-    node = makeNode<invariantgraph::CircuitImplicitNode>(constraint);
+    NodeTestBase::SetUp();
+    a = intVar(1, 4, "a");
+    b = intVar(1, 4, "b");
+    c = intVar(1, 4, "c");
+    d = intVar(1, 4, "d");
+
+    fznparser::IntVarArray inputs("");
+    inputs.append(*a);
+    inputs.append(*b);
+    inputs.append(*c);
+    inputs.append(*d);
+
+    node = makeNode<invariantgraph::CircuitImplicitNode>(
+        _model->addConstraint(fznparser::Constraint(
+            "fzn_circuit", std::vector<fznparser::Arg>{inputs})));
   }
 };
 
 TEST_F(CircuitImplicitNodeTest, construction) {
-  std::vector<invariantgraph::VariableNode*> expectedVars;
-  std::transform(_variables.begin(), _variables.end(),
-                 std::back_inserter(expectedVars),
-                 [](const auto& variable) { return variable.get(); });
+  std::vector<invariantgraph::VarNodeId> expectedVars{
+      _nodeMap->at("a"), _nodeMap->at("b"), _nodeMap->at("c"),
+      _nodeMap->at("d")};
 
-  EXPECT_EQ(node->definedVariables(), expectedVars);
+  EXPECT_EQ(node->outputVarNodeIds(), expectedVars);
 }
 
 TEST_F(CircuitImplicitNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  for (auto* const definedVariable : node->definedVariables()) {
+  for (auto* const definedVariable : node->outputVarNodeIds()) {
     EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  node->createDefinedVariables(engine);
-  for (auto* const definedVariable : node->definedVariables()) {
+  node->registerOutputVariables(engine);
+  for (auto* const definedVariable : node->outputVarNodeIds()) {
     EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  node->registerWithEngine(engine);
+  node->registerNode(*_invariantGraph, engine);
   engine.close();
 
   // a, b, c and d

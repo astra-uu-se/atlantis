@@ -10,7 +10,7 @@ namespace invariantgraph {
 
 class CircuitImplicitNode : public ImplicitConstraintNode {
  public:
-  explicit CircuitImplicitNode(std::vector<VariableNode*> variables);
+  explicit CircuitImplicitNode(std::vector<VarNodeId>&& variables);
 
   ~CircuitImplicitNode() override = default;
 
@@ -21,8 +21,7 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
   }
 
   static std::unique_ptr<CircuitImplicitNode> fromModelConstraint(
-      const fznparser::Model& model, const fznparser::Constraint& constraint,
-      InvariantGraph& invariantGraph);
+      const fznparser::Constraint&, InvariantGraph&);
 
  protected:
   search::neighbourhoods::Neighbourhood* createNeighbourhood(

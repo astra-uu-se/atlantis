@@ -21,7 +21,7 @@ class SearchVariable {
   [[nodiscard]] VarId engineId() const noexcept { return _varId; }
 
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
-  [[nodiscard]] bool isConstant() const noexcept { return _domain.size() == 1; }
+  [[nodiscard]] bool isFixed() const noexcept { return _domain.isFixed(); }
 };
 
 }  // namespace search

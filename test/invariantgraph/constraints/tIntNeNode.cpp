@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/intNeNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intNeNode.hpp"
 
 static bool isViolating(std::vector<Int>& values) {
   for (size_t i = 0; i < values.size(); ++i) {
@@ -16,9 +16,9 @@ static bool isViolating(std::vector<Int>& values) {
 template <ConstraintType Type>
 class AbstractIntNeNodeTest : public NodeTestBase {
  public:
-  INT_VARIABLE(a, 5, 10);
-  INT_VARIABLE(b, 2, 7);
-  BOOL_VARIABLE(r);
+  std::unique_ptr<fznparser::IntVar> a;
+  std::unique_ptr<fznparser::IntVar> b;
+  std::unique_ptr<fznparser::BoolVar> r;
 
   std::unique_ptr<fznparser::Constraint> constraint;
   std::unique_ptr<fznparser::Model> model;
@@ -26,43 +26,41 @@ class AbstractIntNeNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::IntNeNode> node;
 
   void SetUp() override {
+    NodeTestBase::SetUp();
+    a = intVar(5, 10, "a");
+    b = intVar(2, 7, "b");
+    r = boolVar("r");
+
     if constexpr (Type == ConstraintType::REIFIED) {
-      fznparser::Constraint cnstr{"int_ne_reif", {"a", "b", "r"}, {}};
+      _model->addConstraint(std::move(fznparser::Constraint(
+          "int_ne_reif", std::vector<fznparser::Arg>{fznparser::IntArg{*a},
+                                                     fznparser::IntArg{*b},
+                                                     fznparser::BoolArg{*r}})));
 
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::Model mdl{{}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::Model>(std::move(mdl));
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
-        fznparser::Constraint cnstr{"int_ne", {"a", "b"}, {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+        _model->addConstraint(std::move(fznparser::Constraint(
+            "int_ne", std::vector<fznparser::Arg>{fznparser::IntArg{*a},
+                                                  fznparser::IntArg{*b}})));
       } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-        fznparser::Constraint cnstr{"int_ne_reif", {"a", "b", false}, {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+        _model->addConstraint(std::move(fznparser::Constraint(
+            "int_ne_reif", std::vector<fznparser::Arg>{
+                               fznparser::IntArg{*a}, fznparser::IntArg{*b},
+                               fznparser::BoolArg{false}})));
       } else {
-        fznparser::Constraint cnstr{"int_ne_reif", {"a", "b", true}, {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+        _model->addConstraint(std::move(fznparser::Constraint(
+            "int_ne_reif", std::vector<fznparser::Arg>{
+                               fznparser::IntArg{*a}, fznparser::IntArg{*b},
+                               fznparser::BoolArg{true}})));
       }
-
-      fznparser::Model mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::Model>(std::move(mdl));
     }
 
-    setModel(model.get());
-    node = makeNode<invariantgraph::IntNeNode>(*constraint);
+    node = makeNode<invariantgraph::IntNeNode>(_model->constraints().front());
   }
 
   void construction() {
-    EXPECT_EQ(*node->a()->variable(),
-              invariantgraph::VariableNode::FZNVariable(a));
-    EXPECT_EQ(*node->b()->variable(),
-              invariantgraph::VariableNode::FZNVariable(b));
+    EXPECT_EQ(*node->a()->variable(), invariantgraph::VarNode::FZNVariable(*a));
+    EXPECT_EQ(*node->b()->variable(), invariantgraph::VarNode::FZNVariable(*b));
     expectMarkedAsInput(node.get(), {node->a(), node->b()});
 
     if constexpr (Type != ConstraintType::REIFIED) {
@@ -72,24 +70,24 @@ class AbstractIntNeNodeTest : public NodeTestBase {
       EXPECT_TRUE(node->isReified());
       EXPECT_NE(node->reifiedViolation(), nullptr);
       EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VariableNode::FZNVariable(r));
+                invariantgraph::VarNode::FZNVariable(*r));
     }
   }
 
   void application() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {a.name, b.name});
-    for (auto* const definedVariable : node->definedVariables()) {
+    addVariablesToEngine(engine);
+    for (auto* const definedVariable : node->outputVarNodeIds()) {
       EXPECT_EQ(definedVariable->varId(), NULL_ID);
     }
     EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->createDefinedVariables(engine);
-    for (auto* const definedVariable : node->definedVariables()) {
+    node->registerOutputVariables(engine);
+    for (auto* const definedVariable : node->outputVarNodeIds()) {
       EXPECT_NE(definedVariable->varId(), NULL_ID);
     }
     EXPECT_NE(node->violationVarId(), NULL_ID);
-    node->registerWithEngine(engine);
+    node->registerNode(*_invariantGraph, engine);
     engine.close();
 
     // a and b
@@ -108,13 +106,13 @@ class AbstractIntNeNodeTest : public NodeTestBase {
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {a.name, b.name});
-    node->createDefinedVariables(engine);
-    node->registerWithEngine(engine);
+    addVariablesToEngine(engine);
+    node->registerOutputVariables(engine);
+    node->registerNode(*_invariantGraph, engine);
 
     std::vector<VarId> inputs;
-    EXPECT_EQ(node->staticInputs().size(), 2);
-    for (auto* const inputVariable : node->staticInputs()) {
+    EXPECT_EQ(node->staticInputVarNodeIds().size(), 2);
+    for (auto* const inputVariable : node->staticInputVarNodeIds()) {
       EXPECT_NE(inputVariable->varId(), NULL_ID);
       inputs.emplace_back(inputVariable->varId());
     }

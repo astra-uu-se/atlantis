@@ -16,7 +16,7 @@ void search::neighbourhoods::CircuitNeighbourhood::initialise(
   };
 
   for (auto& variable : _variables) {
-    if (variable.isConstant()) {
+    if (variable.isFixed()) {
       auto nextNode = getValue(variable);
       auto nextNodeIdx = getNodeIdx(nextNode);
 
@@ -36,7 +36,7 @@ void search::neighbourhoods::CircuitNeighbourhood::initialise(
 
   size_t currentNodeIdx = firstNodeIdx;
   while (!availableIndices.empty()) {
-    if (_variables[currentNodeIdx].isConstant()) {
+    if (_variables[currentNodeIdx].isFixed()) {
       currentNodeIdx = getNodeIdx(getValue(_variables[currentNodeIdx]));
       continue;
     }
@@ -96,7 +96,7 @@ bool search::neighbourhoods::CircuitNeighbourhood::randomMove(
       getNodeIdx(assignment.value(_variables[newNextIdx].engineId()));
 
   for (auto varIdx : {nodeIdx, oldNextIdx, newNextIdx}) {
-    if (_variables[varIdx].isConstant()) {
+    if (_variables[varIdx].isFixed()) {
       return false;
     }
   }

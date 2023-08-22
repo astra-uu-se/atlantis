@@ -1,56 +1,59 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/invariants/arrayIntMaximumNode.hpp"
+#include "invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
 
 class ArrayIntMaximumTest : public NodeTestBase {
  public:
-  INT_VARIABLE(a, 5, 10);
-  INT_VARIABLE(b, 0, 20);
-  INT_VARIABLE(c, 0, 10);
-
-  fznparser::Constraint constraint{
-      "array_int_maximum",
-      {"c", fznparser::Constraint::ArrayArgument{"a", "b"}},
-      {fznparser::DefinesVariableAnnotation{"c"}}};
-
-  fznparser::Model model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
+  std::unique_ptr<fznparser::IntVar> a;
+  std::unique_ptr<fznparser::IntVar> b;
+  std::unique_ptr<fznparser::IntVar> c;
 
   std::unique_ptr<invariantgraph::ArrayIntMaximumNode> node;
 
   void SetUp() override {
-    setModel(&model);
-    node = makeNode<invariantgraph::ArrayIntMaximumNode>(constraint);
+    NodeTestBase::SetUp();
+    a = intVar(5, 10, "a");
+    b = intVar(0, 20, "b");
+    c = intVar(0, 10, "c");
+
+    node = makeNode<invariantgraph::ArrayIntMaximumNode>(_model->addConstraint(
+        fznparser::Constraint("array_int_maximum",
+                              std::vector<fznparser::Arg>{
+                                  fznparser::IntArg{*a}, fznparser::IntArg{*b},
+                                  fznparser::IntArg{*c}},
+                              std::vector<fznparser::Annotation>{
+                                  definesVarAnnotation(c->identifier())})));
   }
 };
 
 TEST_F(ArrayIntMaximumTest, construction) {
-  EXPECT_EQ(node->staticInputs().size(), 2);
-  EXPECT_EQ(*node->staticInputs()[0]->variable(),
-            invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->staticInputs()[1]->variable(),
-            invariantgraph::VariableNode::FZNVariable(b));
-  EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables().front()->variable(),
-            invariantgraph::VariableNode::FZNVariable(c));
-  expectMarkedAsInput(node.get(), node->staticInputs());
+  EXPECT_EQ(node->staticInputVarNodeIds().size(), 2);
+  EXPECT_EQ(*node->staticInputVarNodeIds()[0]->variable(),
+            invariantgraph::VarNode::FZNVariable(*a));
+  EXPECT_EQ(*node->staticInputVarNodeIds()[1]->variable(),
+            invariantgraph::VarNode::FZNVariable(*b));
+  EXPECT_EQ(node->outputVarNodeIds().size(), 1);
+  EXPECT_EQ(*node->outputVarNodeIds().front()->variable(),
+            invariantgraph::VarNode::FZNVariable(*c));
+  expectMarkedAsInput(node.get(), node->staticInputVarNodeIds());
 }
 
 TEST_F(ArrayIntMaximumTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a.name, b.name});
-  for (auto* const definedVariable : node->definedVariables()) {
+  addVariablesToEngine(engine);
+  for (auto* const definedVariable : node->outputVarNodeIds()) {
     EXPECT_EQ(definedVariable->varId(), NULL_ID);
   }
-  node->createDefinedVariables(engine);
-  for (auto* const definedVariable : node->definedVariables()) {
+  node->registerOutputVariables(engine);
+  for (auto* const definedVariable : node->outputVarNodeIds()) {
     EXPECT_NE(definedVariable->varId(), NULL_ID);
   }
-  node->registerWithEngine(engine);
+  node->registerNode(*_invariantGraph, engine);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(c)), 5);
-  EXPECT_EQ(engine.upperBound(engineVariable(c)), 20);
+  EXPECT_EQ(engine.lowerBound(engineVariable(*c)), 5);
+  EXPECT_EQ(engine.upperBound(engineVariable(*c)), 20);
 
   // a and b
   EXPECT_EQ(engine.searchVariables().size(), 2);
@@ -65,19 +68,19 @@ TEST_F(ArrayIntMaximumTest, application) {
 TEST_F(ArrayIntMaximumTest, propagation) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a.name, b.name});
-  node->createDefinedVariables(engine);
-  node->registerWithEngine(engine);
+  addVariablesToEngine(engine);
+  node->registerOutputVariables(engine);
+  node->registerNode(*_invariantGraph, engine);
 
   std::vector<VarId> inputs;
-  EXPECT_EQ(node->staticInputs().size(), 2);
-  for (auto* const inputVariable : node->staticInputs()) {
+  EXPECT_EQ(node->staticInputVarNodeIds().size(), 2);
+  for (auto* const inputVariable : node->staticInputVarNodeIds()) {
     EXPECT_NE(inputVariable->varId(), NULL_ID);
     inputs.emplace_back(inputVariable->varId());
   }
 
-  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
-  const VarId outputId = node->definedVariables().front()->varId();
+  EXPECT_NE(node->outputVarNodeIds().front()->varId(), NULL_ID);
+  const VarId outputId = node->outputVarNodeIds().front()->varId();
   EXPECT_EQ(inputs.size(), 2);
 
   std::vector<Int> values(inputs.size());

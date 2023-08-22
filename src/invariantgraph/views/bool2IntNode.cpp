@@ -4,19 +4,24 @@
 
 std::unique_ptr<invariantgraph::Bool2IntNode>
 invariantgraph::Bool2IntNode::fromModelConstraint(
-    const fznparser::Model&, const fznparser::Constraint& constraint,
-    std::unordered_map<std::string_view, VariableNode>& variableMap) {
-  auto a = mappedVariable(constraint.arguments[0], variableMap);
-  auto b = mappedVariable(constraint.arguments[1], variableMap);
+    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+  const fznparser::BoolArg a =
+      std::get<fznparser::BoolArg>(constraint.arguments().at(0));
 
-  return std::make_unique<invariantgraph::Bool2IntNode>(a, b);
+  const fznparser::IntArg b =
+      std::get<fznparser::IntArg>(constraint.arguments().at(1));
+
+  return std::make_unique<invariantgraph::Bool2IntNode>(
+      invariantGraph.createVarNode(a), invariantGraph.createVarNode(b));
 }
 
-void invariantgraph::Bool2IntNode::createDefinedVariables(Engine& engine) {
-  if (definedVariables().front()->varId() == NULL_ID) {
-    definedVariables().front()->setVarId(
+void invariantgraph::Bool2IntNode::registerOutputVariables(
+    InvariantGraph& invariantGraph, Engine& engine) {
+  if (outputVarNodeIds().front()->varId() == NULL_ID) {
+    outputVarNodeIds().front()->setVarId(
         engine.makeIntView<Bool2IntView>(engine, input()->varId()));
   }
 }
 
-void invariantgraph::Bool2IntNode::registerWithEngine(Engine&) {}
+void invariantgraph::Bool2IntNode::registerNode(
+    const InvariantGraph& invariantGraph, Engine&) {}

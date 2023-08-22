@@ -1,25 +1,41 @@
 #include "invariantgraph/implicitConstraintNode.hpp"
 
-void invariantgraph::ImplicitConstraintNode::createDefinedVariables(
-    Engine& engine) {
-  for (const auto& node : definedVariables()) {
-    if (node->varId() == NULL_ID) {
-      const auto& [lb, ub] = node->bounds();
-      node->setVarId(engine.makeIntVar(lb, lb, ub));
+#include "invariantgraph/invariantGraph.hpp"
+
+namespace invariantgraph {
+
+void ImplicitConstraintNode::registerOutputVariables(
+    InvariantGraph& invariantGraph, Engine& engine) {
+  for (const auto& varNodeId : outputVarNodeIds()) {
+    auto& varNode = invariantGraph.varNode(varNodeId);
+    if (varNode.varId() == NULL_ID) {
+      const auto& [lb, ub] = varNode.bounds();
+      varNode.setVarId(engine.makeIntVar(lb, lb, ub));
     }
   }
 }
 
-void invariantgraph::ImplicitConstraintNode::registerWithEngine(
-    Engine& engine) {
-  std::vector<search::SearchVariable> varIds;
-  varIds.reserve(definedVariables().size());
+std::unique_ptr<search::neighbourhoods::Neighbourhood>
+ImplicitConstraintNode::takeNeighbourhood() noexcept {
+  auto ptr =
+      std::unique_ptr<search::neighbourhoods::Neighbourhood>(_neighbourhood);
+  _neighbourhood = nullptr;
+  return ptr;
+}
 
-  for (const auto& node : definedVariables()) {
-    assert(node->varId() != NULL_ID);
-    varIds.emplace_back(node->varId(), node->domain());
+void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
+                                          Engine& engine) {
+  std::vector<search::SearchVariable> varIds;
+  varIds.reserve(outputVarNodeIds().size());
+
+  for (const auto& id : outputVarNodeIds()) {
+    auto& node = invariantGraph.varNode(id);
+    assert(node.varId() != NULL_ID);
+    varIds.emplace_back(node.varId(), node.domain());
   }
 
   _neighbourhood = createNeighbourhood(engine, varIds);
   assert(_neighbourhood);
 }
+
+}  // namespace invariantgraph

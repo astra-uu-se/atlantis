@@ -4,38 +4,30 @@
 #include "utils/variant.hpp"
 
 search::Objective::Objective(PropagationEngine& engine,
-                             const fznparser::Model& model)
-    : _engine(engine), _modelObjective(model.objective()) {}
+                             fznparser::ProblemType problemType)
+    : _engine(engine), _problemType(problemType) {}
 
-VarId search::Objective::registerWithEngine(VarId constraintViolation,
-                                            VarId objectiveVariable) {
+VarId search::Objective::registerNode(VarId totalViolationId,
+                                      VarId objectiveVarId) {
   assert(_engine.isOpen());
 
-  _objective = objectiveVariable;
+  _objective = objectiveVarId;
 
-  return std::visit<VarId>(
-      overloaded{
-          [&](const fznparser::Satisfy&) { return constraintViolation; },
-          [&](const fznparser::Minimise&) {
-            VarId violation = registerOptimisation(
-                constraintViolation, objectiveVariable,
-                _engine.upperBound(objectiveVariable), [&](VarId v, VarId b) {
-                  _engine.makeConstraint<LessEqual>(_engine, v,
-                                                    objectiveVariable, b);
-                });
-            return violation;
-          },
-          [&](const fznparser::Maximise&) {
-            VarId violation = registerOptimisation(
-                constraintViolation, objectiveVariable,
-                _engine.lowerBound(objectiveVariable), [&](VarId v, VarId b) {
-                  _engine.makeConstraint<LessEqual>(_engine, v, b,
-                                                    objectiveVariable);
-                });
-            return violation;
-          },
-      },
-      _modelObjective);
+  if (_problemType == fznparser::ProblemType::MINIMIZE) {
+    return registerOptimisation(
+        totalViolationId, objectiveVarId, _engine.upperBound(objectiveVarId),
+        [&](VarId v, VarId b) {
+          _engine.makeConstraint<LessEqual>(_engine, v, objectiveVarId, b);
+        });
+  } else if (_problemType == fznparser::ProblemType::MAXIMIZE) {
+    return registerOptimisation(
+        totalViolationId, objectiveVarId, _engine.lowerBound(objectiveVarId),
+        [&](VarId v, VarId b) {
+          _engine.makeConstraint<LessEqual>(_engine, v, b, objectiveVarId);
+        });
+  }
+  assert(_problemType == fznparser::ProblemType::SATISFY);
+  return totalViolationId;
 }
 
 void search::Objective::tighten() {
@@ -43,17 +35,11 @@ void search::Objective::tighten() {
     return;
   }
 
-  auto newBound = std::visit<Int>(
-      overloaded{[&](const fznparser::Satisfy&) {
-                   return _engine.committedValue(*_bound);
-                 },
-                 [&](const fznparser::Minimise&) {
-                   return _engine.committedValue(*_objective) - 1;
-                 },
-                 [&](const fznparser::Maximise&) {
-                   return _engine.committedValue(*_objective) + 1;
-                 }},
-      _modelObjective);
+  const Int newBound =
+      _problemType == fznparser::ProblemType::SATISFY
+          ? _engine.committedValue(*_bound)
+          : (_engine.committedValue(*_objective) +
+             (_problemType == fznparser::ProblemType::MINIMIZE ? -1 : 1));
 
   _engine.beginMove();
   _engine.setValue(*_bound, newBound);

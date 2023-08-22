@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/intLinLeNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intLinLeNode.hpp"
 
 static bool isViolating(const std::vector<Int>& coeffs,
                         const std::vector<Int>& values, const Int expected) {
@@ -14,9 +14,9 @@ static bool isViolating(const std::vector<Int>& coeffs,
 template <ConstraintType Type>
 class AbstractIntLinLeNodeTest : public NodeTestBase {
  public:
-  INT_VARIABLE(a, 0, 10);
-  INT_VARIABLE(b, 0, 10);
-  BOOL_VARIABLE(r);
+  std::unique_ptr<fznparser::IntVar> a;
+  std::unique_ptr<fznparser::IntVar> b;
+  std::unique_ptr<fznparser::BoolVar> r;
 
   Int sum{3};
   std::vector<Int> coeffs{1, 2};
@@ -27,80 +27,72 @@ class AbstractIntLinLeNodeTest : public NodeTestBase {
   std::unique_ptr<invariantgraph::IntLinLeNode> node;
 
   void SetUp() override {
-    if constexpr (Type == ConstraintType::REIFIED) {
-      fznparser::Constraint cnstr{
-          "int_lin_le_reif",
-          {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-           fznparser::Constraint::ArrayArgument{"a", "b"}, sum,
-           fznparser::Constraint::Argument{"r"}},
-          {}};
+    NodeTestBase::SetUp();
+    a = intVar(0, 10, "a");
+    b = intVar(0, 10, "b");
+    r = boolVar("r");
 
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::Model mdl{{}, {a, b, r}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::Model>(std::move(mdl));
-    } else {
-      if constexpr (Type == ConstraintType::NORMAL) {
-        fznparser::Constraint cnstr{
-            "int_lin_le",
-            {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-             fznparser::Constraint::ArrayArgument{"a", "b"}, sum},
-            {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-      } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-        fznparser::Constraint cnstr{
-            "int_lin_le_reif",
-            {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-             fznparser::Constraint::ArrayArgument{"a", "b"}, sum, false},
-            {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-      } else {
-        fznparser::Constraint cnstr{
-            "int_lin_le_reif",
-            {fznparser::Constraint::ArrayArgument{coeffs.at(0), coeffs.at(1)},
-             fznparser::Constraint::ArrayArgument{"a", "b"}, sum, true},
-            {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-      }
-
-      fznparser::Model mdl{{}, {a, b}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::Model>(std::move(mdl));
+    fznparser::IntVarArray coeffArg("");
+    for (const Int coeff : coeffs) {
+      coeffArg.append(coeff);
     }
 
-    setModel(model.get());
-    node = makeNode<invariantgraph::IntLinLeNode>(*constraint);
+    fznparser::IntVarArray inputArg("");
+    inputArg.append(*a);
+    inputArg.append(*b);
+
+    if constexpr (Type == ConstraintType::REIFIED) {
+      _model->addConstraint(std::move(fznparser::Constraint(
+          "int_lin_le_reif", {coeffArg, inputArg, fznparser::IntArg{sum},
+                              fznparser::BoolArg{*r}})));
+
+    } else {
+      if constexpr (Type == ConstraintType::NORMAL) {
+        _model->addConstraint(std::move(fznparser::Constraint(
+            "int_lin_le", std::vector<fznparser::Arg>{
+                              coeffArg, inputArg, fznparser::IntArg{sum}})));
+      } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
+        _model->addConstraint(std::move(fznparser::Constraint(
+            "int_lin_le_reif", std::vector<fznparser::Arg>{
+                                   coeffArg, inputArg, fznparser::IntArg{sum},
+                                   fznparser::BoolArg{false}})));
+      } else {
+        _model->addConstraint(std::move(fznparser::Constraint(
+            "int_lin_le_reif", std::vector<fznparser::Arg>{
+                                   coeffArg, inputArg, fznparser::IntArg{sum},
+                                   fznparser::BoolArg{true}})));
+      }
+    }
+
+    node =
+        makeNode<invariantgraph::IntLinLeNode>(_model->constraints().front());
   }
 
   void construction() {
-    EXPECT_EQ(*node->staticInputs()[0]->variable(),
-              invariantgraph::VariableNode::FZNVariable(a));
-    EXPECT_EQ(*node->staticInputs()[1]->variable(),
-              invariantgraph::VariableNode::FZNVariable(b));
+    EXPECT_EQ(*node->staticInputVarNodeIds()[0]->variable(),
+              invariantgraph::VarNode::FZNVariable(*a));
+    EXPECT_EQ(*node->staticInputVarNodeIds()[1]->variable(),
+              invariantgraph::VarNode::FZNVariable(*b));
     EXPECT_EQ(node->coeffs()[0], 1);
     EXPECT_EQ(node->coeffs()[1], 2);
     EXPECT_EQ(node->bound(), 3);
-    expectMarkedAsInput(node.get(), node->staticInputs());
+    expectMarkedAsInput(node.get(), node->staticInputVarNodeIds());
   }
 
   void application() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {a.name, b.name});
-    for (auto* const definedVariable : node->definedVariables()) {
+    addVariablesToEngine(engine);
+    for (auto* const definedVariable : node->outputVarNodeIds()) {
       EXPECT_EQ(definedVariable->varId(), NULL_ID);
     }
     EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->createDefinedVariables(engine);
-    for (auto* const definedVariable : node->definedVariables()) {
+    node->registerOutputVariables(engine);
+    for (auto* const definedVariable : node->outputVarNodeIds()) {
       EXPECT_NE(definedVariable->varId(), NULL_ID);
     }
     EXPECT_NE(node->violationVarId(), NULL_ID);
-    node->registerWithEngine(engine);
+    node->registerNode(*_invariantGraph, engine);
     engine.close();
 
     // a, b
@@ -119,20 +111,20 @@ class AbstractIntLinLeNodeTest : public NodeTestBase {
       EXPECT_TRUE(node->isReified());
       EXPECT_NE(node->reifiedViolation(), nullptr);
       EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VariableNode::FZNVariable(r));
+                invariantgraph::VarNode::FZNVariable(*r));
     }
   }
 
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {a.name, b.name});
-    node->createDefinedVariables(engine);
-    node->registerWithEngine(engine);
+    addVariablesToEngine(engine);
+    node->registerOutputVariables(engine);
+    node->registerNode(*_invariantGraph, engine);
 
     std::vector<VarId> inputs;
-    EXPECT_EQ(node->staticInputs().size(), 2);
-    for (auto* const inputVariable : node->staticInputs()) {
+    EXPECT_EQ(node->staticInputVarNodeIds().size(), 2);
+    for (auto* const inputVariable : node->staticInputVarNodeIds()) {
       EXPECT_NE(inputVariable->varId(), NULL_ID);
       inputs.emplace_back(inputVariable->varId());
     }

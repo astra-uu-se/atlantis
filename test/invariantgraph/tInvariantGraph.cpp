@@ -3,96 +3,101 @@
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
-#include "invariantgraph/invariants/arrayVarIntElementNode.hpp"
-#include "invariantgraph/invariants/intLinearNode.hpp"
+#include "invariantgraph/invariantNodes/arrayVarIntElementNode.hpp"
+#include "invariantgraph/invariantNodes/intLinearNode.hpp"
 
 TEST(InvariantGraphTest, apply_result) {
-  fznparser::IntVar a{"a", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar c{"c", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::Model model;
+  invariantgraph::InvariantGraph invariantGraph;
 
-  auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
-  auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
-  auto cNode = std::make_unique<invariantgraph::VariableNode>(c);
+  const fznparser::IntVar& a = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "a")));
+  const fznparser::IntVar& b = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "b")));
+  const fznparser::IntVar& c = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "c")));
+
+  auto aNode = invariantGraph.createVarNode(a);
+  auto bNode = invariantGraph.createVarNode(b);
+  auto cNode = invariantGraph.createVarNode(c);
 
   auto plusNode = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
-      std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()},
-      cNode.get(), -1, 0);
+      std::vector<invariantgraph::VarNodeId>{aNode, bNode}, cNode, -1, 0);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
-      std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()});
+      std::vector<invariantgraph::VarNodeId>{aNode, bNode});
 
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> variableNodes;
-  variableNodes.push_back(std::move(aNode));
-  variableNodes.push_back(std::move(bNode));
-  variableNodes.push_back(std::move(cNode));
+  std::vector<invariantgraph::VarNodeId> variableNodes;
+  variableNodes.push_back(aNode);
+  variableNodes.push_back(bNode);
+  variableNodes.push_back(cNode);
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> variableDefiningNodes;
   variableDefiningNodes.push_back(std::move(plusNode));
   variableDefiningNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(std::move(variableNodes), {},
-                                       std::move(variableDefiningNodes),
-                                       cNode.get());
-
   PropagationEngine engine;
-  auto result = graph.apply(engine);
+  auto result = invariantGraph.apply(engine);
 
-  EXPECT_EQ(result.variableMap().size(), 3);
-  std::unordered_set<std::string> varNames;
-  for (const auto& [varId, var] : result.variableMap()) {
+  EXPECT_EQ(result.variableIdentifiers().size(), 3);
+  std::unordered_set<std::string_view> varNames;
+  for (const auto& [varId, var] : result.variableIdentifiers()) {
     varNames.emplace(var);
   }
-  EXPECT_TRUE(varNames.contains(a.name));
-  EXPECT_TRUE(varNames.contains(b.name));
-  EXPECT_TRUE(varNames.contains(c.name));
+  EXPECT_TRUE(varNames.contains(a.identifier()));
+  EXPECT_TRUE(varNames.contains(b.identifier()));
+  EXPECT_TRUE(varNames.contains(c.identifier()));
 }
 
 TEST(InvariantGraphTest, ApplyGraph) {
-  fznparser::IntVar a1{"a1", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar a2{"a2", fznparser::IntRange{0, 10}, {}, {}};
+  fznparser::Model model;
+  invariantgraph::InvariantGraph invariantGraph;
+  const fznparser::IntVar& a1 = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "a1")));
+  const fznparser::IntVar& a2 = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "a2")));
 
-  fznparser::IntVar b1{"b1", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar b2{"b2", fznparser::IntRange{0, 10}, {}, {}};
+  const fznparser::IntVar& b1 = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "b1")));
+  const fznparser::IntVar& b2 = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "b2")));
 
-  fznparser::IntVar c1{"c1", fznparser::IntRange{0, 20}, {}, {}};
-  fznparser::IntVar c2{"c2", fznparser::IntRange{0, 20}, {}, {}};
+  const fznparser::IntVar& c1 = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 20, "c1")));
+  const fznparser::IntVar& c2 = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 20, "c2")));
 
-  fznparser::IntVar sum{"sum", fznparser::IntRange{0, 40}, {}, {}};
+  const fznparser::IntVar& sum = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 40, "sum")));
 
-  auto a1Node = std::make_unique<invariantgraph::VariableNode>(a1);
-  auto a2Node = std::make_unique<invariantgraph::VariableNode>(a2);
+  auto a1Node = invariantGraph.createVarNode(a1);
+  auto a2Node = invariantGraph.createVarNode(a2);
 
-  auto b1Node = std::make_unique<invariantgraph::VariableNode>(b1);
-  auto b2Node = std::make_unique<invariantgraph::VariableNode>(b2);
+  auto b1Node = invariantGraph.createVarNode(b1);
+  auto b2Node = invariantGraph.createVarNode(b2);
 
-  auto c1Node = std::make_unique<invariantgraph::VariableNode>(c1);
-  auto c2Node = std::make_unique<invariantgraph::VariableNode>(c2);
+  auto c1Node = invariantGraph.createVarNode(c1);
+  auto c2Node = invariantGraph.createVarNode(c2);
 
-  auto sumNode = std::make_unique<invariantgraph::VariableNode>(sum);
+  auto sumNode = invariantGraph.createVarNode(sum);
 
   auto aPlusNode = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
-      std::vector<invariantgraph::VariableNode*>{a1Node.get(), a2Node.get()},
-      c1Node.get(), -1, 0);
+      std::vector<invariantgraph::VarNodeId>{a1Node, a2Node}, c1Node, -1, 0);
 
   auto bPlusNode = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
-      std::vector<invariantgraph::VariableNode*>{b1Node.get(), b2Node.get()},
-      c2Node.get(), -1, 0);
+      std::vector<invariantgraph::VarNodeId>{b1Node, b2Node}, c2Node, -1, 0);
 
   auto cPlusNode = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
-      std::vector<invariantgraph::VariableNode*>{c1Node.get(), c2Node.get()},
-      sumNode.get(), -1, 0);
+      std::vector<invariantgraph::VarNodeId>{c1Node, c2Node}, sumNode, -1, 0);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
-      std::vector<invariantgraph::VariableNode*>{a1Node.get(), a2Node.get(),
-                                                 b1Node.get(), b2Node.get()});
+      std::vector<invariantgraph::VarNodeId>{a1Node, a2Node, b1Node, b2Node});
 
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> variableNodes;
+  std::vector<invariantgraph::VarNodeId> variableNodes;
   variableNodes.push_back(std::move(a1Node));
   variableNodes.push_back(std::move(a2Node));
   variableNodes.push_back(std::move(b1Node));
@@ -101,28 +106,25 @@ TEST(InvariantGraphTest, ApplyGraph) {
   variableNodes.push_back(std::move(c2Node));
   variableNodes.push_back(std::move(sumNode));
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> variableDefiningNodes;
 
   variableDefiningNodes.push_back(std::move(aPlusNode));
   variableDefiningNodes.push_back(std::move(bPlusNode));
   variableDefiningNodes.push_back(std::move(cPlusNode));
   variableDefiningNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(std::move(variableNodes), {},
-                                       std::move(variableDefiningNodes),
-                                       sumNode.get());
-
   PropagationEngine engine;
-  auto result = graph.apply(engine);
+  auto result = invariantGraph.apply(engine);
 
-  EXPECT_EQ(result.variableMap().size(), 7);
+  EXPECT_EQ(result.variableIdentifiers().size(), 7);
   // 7 variables + dummy objective
   EXPECT_EQ(engine.numVariables(), 8);
   EXPECT_EQ(engine.numInvariants(), 3);
 }
 
 TEST(InvariantGraphTest, SplitSimpleGraph) {
+  fznparser::Model model;
+  invariantgraph::InvariantGraph invariantGraph;
   /* Graph:
    *
    *  a   b     c   d
@@ -139,53 +141,51 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
    *
    */
 
-  fznparser::IntVar a{"a", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar c{"c", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar d{"d", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar x{"x", fznparser::IntRange{0, 20}, {}, {}};
+  const fznparser::IntVar& a = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "a")));
+  const fznparser::IntVar& b = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "b")));
+  const fznparser::IntVar& c = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "c")));
+  const fznparser::IntVar& d = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "d")));
+  const fznparser::IntVar& x = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 20, "x")));
 
-  auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
-  auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
-  auto cNode = std::make_unique<invariantgraph::VariableNode>(c);
-  auto dNode = std::make_unique<invariantgraph::VariableNode>(d);
-  auto xNode = std::make_unique<invariantgraph::VariableNode>(x);
+  auto aNode = invariantGraph.createVarNode(a);
+  auto bNode = invariantGraph.createVarNode(b);
+  auto cNode = invariantGraph.createVarNode(c);
+  auto dNode = invariantGraph.createVarNode(d);
+  auto xNode = invariantGraph.createVarNode(x);
 
   auto plusNode1 = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
-      std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()},
-      xNode.get(), -1, 0);
+      std::vector<invariantgraph::VarNodeId>{aNode, bNode}, xNode, -1, 0);
 
   auto plusNode2 = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
-      std::vector<invariantgraph::VariableNode*>{cNode.get(), dNode.get()},
-      xNode.get(), -1, 0);
+      std::vector<invariantgraph::VarNodeId>{cNode, dNode}, xNode, -1, 0);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
-      std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get(),
-                                                 cNode.get(), dNode.get()});
+      std::vector<invariantgraph::VarNodeId>{aNode, bNode, cNode, dNode});
 
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> variableNodes;
+  std::vector<invariantgraph::VarNodeId> variableNodes;
   variableNodes.push_back(std::move(aNode));
   variableNodes.push_back(std::move(bNode));
   variableNodes.push_back(std::move(cNode));
   variableNodes.push_back(std::move(dNode));
   variableNodes.push_back(std::move(xNode));
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> variableDefiningNodes;
 
   variableDefiningNodes.push_back(std::move(plusNode1));
   variableDefiningNodes.push_back(std::move(plusNode2));
   variableDefiningNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
-
   PropagationEngine engine;
-  auto result = graph.apply(engine);
+  auto result = invariantGraph.apply(engine);
 
-  EXPECT_EQ(result.variableMap().size(), 5);
+  EXPECT_EQ(result.variableIdentifiers().size(), 5);
   // a, b, c, d, x
   // x_copy
   // violation for equal constraint (x == x_copy)
@@ -197,6 +197,8 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
 }
 
 TEST(InvariantGraphTest, SplitGraph) {
+  fznparser::Model model;
+  invariantgraph::InvariantGraph invariantGraph;
   /* Graph:
    *
    * 0_0 0_1   0_0 0_1      n_0 n_1
@@ -217,47 +219,42 @@ TEST(InvariantGraphTest, SplitGraph) {
   const size_t numInputs = 5;
   const Int lb = 0;
   const Int ub = 10;
-  fznparser::IntVar x{
-      "x", fznparser::IntRange{lb * numInputs, ub * numInputs}, {}, {}};
-  auto xNode = std::make_unique<invariantgraph::VariableNode>(x);
-  std::vector<std::vector<std::unique_ptr<invariantgraph::VariableNode>>>
-      inputNodes;
+  const fznparser::IntVar& x = std::get<fznparser::IntVar>(model.createVarNode(
+      fznparser::IntVar(lb * numInputs, ub * numInputs, "x")));
+  auto xNode = invariantGraph.createVarNode(x);
+  std::vector<std::vector<invariantgraph::VarNodeId>> inputNodes;
   std::vector<Int> coeffs(numInputs, 1);
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> variableDefiningNodes;
 
   for (size_t i = 0; i < numInvariants; ++i) {
-    inputNodes.emplace_back(
-        std::vector<std::unique_ptr<invariantgraph::VariableNode>>());
-    std::vector<invariantgraph::VariableNode*> arguments;
+    inputNodes.emplace_back(std::vector<invariantgraph::VarNodeId>{});
+
+    std::vector<invariantgraph::VarNodeId> arguments;
     for (size_t j = 0; j < numInputs; ++j) {
-      fznparser::IntVar input{std::to_string(i) + "_" + std::to_string(j),
-                              fznparser::IntRange{0, 10},
-                              {},
-                              {}};
+      const fznparser::IntVar& input =
+          std::get<fznparser::IntVar>(model.createVarNode(fznparser::IntVar(
+              0, 10, std ::to_string(i) + "_" + std::to_string(j))));
 
       arguments.emplace_back(
-          inputNodes.back()
-              .emplace_back(
-                  std::make_unique<invariantgraph::VariableNode>(input))
-              .get());
+          inputNodes.back().emplace_back(invariantGraph.createVarNode(input)));
     }
     variableDefiningNodes.emplace_back(
-        std::make_unique<invariantgraph::IntLinearNode>(coeffs, arguments,
-                                                        xNode.get(), -1, 0));
+        std::make_unique<invariantgraph::IntLinearNode>(
+            std::vector<Int>(coeffs),
+            std::vector<invariantgraph::VarNodeId>(arguments), xNode, -1, 0));
   }
 
-  std::vector<invariantgraph::VariableNode*> searchVariables;
+  std::vector<invariantgraph::VarNodeId> searchVariables;
   for (const auto& inv : inputNodes) {
     for (const auto& input : inv) {
-      searchVariables.emplace_back(input.get());
+      searchVariables.emplace_back(input);
     }
   }
 
   auto root =
       std::make_unique<invariantgraph::InvariantGraphRoot>(searchVariables);
 
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> variableNodes;
+  std::vector<invariantgraph::VarNodeId> variableNodes;
   for (auto& inv : inputNodes) {
     for (auto& input : inv) {
       variableNodes.push_back(std::move(input));
@@ -267,13 +264,10 @@ TEST(InvariantGraphTest, SplitGraph) {
 
   variableDefiningNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
-
   PropagationEngine engine;
-  auto result = graph.apply(engine);
+  auto result = invariantGraph.apply(engine);
 
-  EXPECT_EQ(result.variableMap().size(), numInvariants * numInputs + 1);
+  EXPECT_EQ(result.variableIdentifiers().size(), numInvariants * numInputs + 1);
   // Each invariant has numInputs inputs
   // Each invariant has 1 output
   // There is one violation for the AllDiff
@@ -283,6 +277,8 @@ TEST(InvariantGraphTest, SplitGraph) {
 }
 
 TEST(InvariantGraphTest, BreakSimpleCycle) {
+  fznparser::Model model;
+  invariantgraph::InvariantGraph invariantGraph;
   /* Graph:
    *
    *      +---------------+
@@ -299,51 +295,49 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
    *
    */
 
-  fznparser::IntVar a{"a", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar x{"x", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar y{"y", fznparser::IntRange{0, 10}, {}, {}};
+  const fznparser::IntVar& a = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "a")));
+  const fznparser::IntVar& b = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "b")));
+  const fznparser::IntVar& x = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "x")));
+  const fznparser::IntVar& y = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "y")));
 
-  auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
-  auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
-  auto xNode = std::make_unique<invariantgraph::VariableNode>(x);
-  auto yNode = std::make_unique<invariantgraph::VariableNode>(y);
+  auto aNode = invariantGraph.createVarNode(a);
+  auto bNode = invariantGraph.createVarNode(b);
+  auto xNode = invariantGraph.createVarNode(x);
+  auto yNode = invariantGraph.createVarNode(y);
 
   auto plusNode1 = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
-      std::vector<invariantgraph::VariableNode*>{aNode.get(), yNode.get()},
-      xNode.get(), -1, 0);
+      std::vector<invariantgraph::VarNodeId>{aNode, yNode}, xNode, -1, 0);
 
   auto plusNode2 = std::make_unique<invariantgraph::IntLinearNode>(
       std::vector<Int>{1, 1},
-      std::vector<invariantgraph::VariableNode*>{xNode.get(), bNode.get()},
-      yNode.get(), -1, 0);
+      std::vector<invariantgraph::VarNodeId>{xNode, bNode}, yNode, -1, 0);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
-      std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()});
+      std::vector<invariantgraph::VarNodeId>{aNode, bNode});
 
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> variableNodes;
-  variableNodes.push_back(std::move(aNode));
-  variableNodes.push_back(std::move(bNode));
-  variableNodes.push_back(std::move(xNode));
-  variableNodes.push_back(std::move(yNode));
+  std::vector<invariantgraph::VarNodeId> variableNodes;
+  variableNodes.push_back(aNode);
+  variableNodes.push_back(bNode);
+  variableNodes.push_back(xNode);
+  variableNodes.push_back(yNode);
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> variableDefiningNodes;
 
   variableDefiningNodes.push_back(std::move(plusNode1));
   variableDefiningNodes.push_back(std::move(plusNode2));
   variableDefiningNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
-
-  graph.breakCycles();
+  invariantGraph.breakCycles();
 
   PropagationEngine engine;
-  auto result = graph.apply(engine);
+  auto result = invariantGraph.apply(engine);
 
-  EXPECT_EQ(result.variableMap().size(), 4);
+  EXPECT_EQ(result.variableIdentifiers().size(), 4);
   // a, b, x, y
   // the pivot
   // The Equality (x == pivot) violation
@@ -357,6 +351,8 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
 }
 
 TEST(InvariantGraphTest, BreakElementIndexCycle) {
+  fznparser::Model model;
+  invariantgraph::InvariantGraph invariantGraph;
   /* Graph:
    *
    *       a   b        c   d
@@ -372,58 +368,55 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
    *  +-------------------+
    */
 
-  fznparser::IntVar a{"a", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar c{"c", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar d{"d", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar x{"x", fznparser::IntRange{1, 2}, {}, {}};
-  fznparser::IntVar y{"y", fznparser::IntRange{1, 2}, {}, {}};
+  const fznparser::IntVar& a = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "a")));
+  const fznparser::IntVar& b = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "b")));
+  const fznparser::IntVar& c = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "c")));
+  const fznparser::IntVar& d = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "d")));
+  const fznparser::IntVar& x = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(1, 2, "x")));
+  const fznparser::IntVar& y = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(1, 2, "y")));
 
-  auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
-  auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
-  auto cNode = std::make_unique<invariantgraph::VariableNode>(c);
-  auto dNode = std::make_unique<invariantgraph::VariableNode>(d);
-  auto xNode = std::make_unique<invariantgraph::VariableNode>(x);
-  auto yNode = std::make_unique<invariantgraph::VariableNode>(y);
+  auto aNode = invariantGraph.createVarNode(a);
+  auto bNode = invariantGraph.createVarNode(b);
+  auto cNode = invariantGraph.createVarNode(c);
+  auto dNode = invariantGraph.createVarNode(d);
+  auto xNode = invariantGraph.createVarNode(x);
+  auto yNode = invariantGraph.createVarNode(y);
 
   auto elementNode1 = std::make_unique<invariantgraph::ArrayVarIntElementNode>(
-      yNode.get(),
-      std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get()},
-      xNode.get(), 1);
+      yNode, std::vector<invariantgraph::VarNodeId>{aNode, bNode}, xNode, 1);
 
   auto elementNode2 = std::make_unique<invariantgraph::ArrayVarIntElementNode>(
-      xNode.get(),
-      std::vector<invariantgraph::VariableNode*>{cNode.get(), dNode.get()},
-      yNode.get(), 1);
+      xNode, std::vector<invariantgraph::VarNodeId>{cNode, dNode}, yNode, 1);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
-      std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get(),
-                                                 cNode.get(), dNode.get()});
+      std::vector<invariantgraph::VarNodeId>{aNode, bNode, cNode, dNode});
 
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> variableNodes;
-  variableNodes.push_back(std::move(aNode));
-  variableNodes.push_back(std::move(bNode));
-  variableNodes.push_back(std::move(cNode));
-  variableNodes.push_back(std::move(dNode));
-  variableNodes.push_back(std::move(xNode));
-  variableNodes.push_back(std::move(yNode));
+  std::vector<invariantgraph::VarNodeId> variableNodes;
+  variableNodes.push_back(aNode);
+  variableNodes.push_back(bNode);
+  variableNodes.push_back(cNode);
+  variableNodes.push_back(dNode);
+  variableNodes.push_back(xNode);
+  variableNodes.push_back(yNode);
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> variableDefiningNodes;
 
   variableDefiningNodes.push_back(std::move(elementNode1));
   variableDefiningNodes.push_back(std::move(elementNode2));
   variableDefiningNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
-
-  graph.breakCycles();
+  invariantGraph.breakCycles();
 
   PropagationEngine engine;
-  auto result = graph.apply(engine);
+  auto result = invariantGraph.apply(engine);
 
-  EXPECT_EQ(result.variableMap().size(), 6);
+  EXPECT_EQ(result.variableIdentifiers().size(), 6);
   // a, b, c, d, x, y
   // the pivot
   // The Equality violation
@@ -437,6 +430,8 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
 }
 
 TEST(InvariantGraphTest, AllowDynamicCycle) {
+  fznparser::Model model;
+  invariantgraph::InvariantGraph invariantGraph;
   /* Graph:
    *
    *          +-------------------+
@@ -453,58 +448,55 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
    *
    */
 
-  fznparser::IntVar a{"a", fznparser::IntRange{1, 2}, {}, {}};
-  fznparser::IntVar b{"b", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar c{"c", fznparser::IntRange{1, 2}, {}, {}};
-  fznparser::IntVar d{"d", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar x{"x", fznparser::IntRange{0, 10}, {}, {}};
-  fznparser::IntVar y{"y", fznparser::IntRange{0, 10}, {}, {}};
+  const fznparser::IntVar& a = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(1, 2, "a")));
+  const fznparser::IntVar& b = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "b")));
+  const fznparser::IntVar& c = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(1, 2, "c")));
+  const fznparser::IntVar& d = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "d")));
+  const fznparser::IntVar& x = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "x")));
+  const fznparser::IntVar& y = std::get<fznparser::IntVar>(
+      model.createVarNode(fznparser::IntVar(0, 10, "y")));
 
-  auto aNode = std::make_unique<invariantgraph::VariableNode>(a);
-  auto bNode = std::make_unique<invariantgraph::VariableNode>(b);
-  auto cNode = std::make_unique<invariantgraph::VariableNode>(c);
-  auto dNode = std::make_unique<invariantgraph::VariableNode>(d);
-  auto xNode = std::make_unique<invariantgraph::VariableNode>(x);
-  auto yNode = std::make_unique<invariantgraph::VariableNode>(y);
+  auto aNode = invariantGraph.createVarNode(a);
+  auto bNode = invariantGraph.createVarNode(b);
+  auto cNode = invariantGraph.createVarNode(c);
+  auto dNode = invariantGraph.createVarNode(d);
+  auto xNode = invariantGraph.createVarNode(x);
+  auto yNode = invariantGraph.createVarNode(y);
 
   auto elementNode1 = std::make_unique<invariantgraph::ArrayVarIntElementNode>(
-      aNode.get(),
-      std::vector<invariantgraph::VariableNode*>{bNode.get(), yNode.get()},
-      xNode.get(), 1);
+      aNode, std::vector<invariantgraph::VarNodeId>{bNode, yNode}, xNode, 1);
 
   auto elementNode2 = std::make_unique<invariantgraph::ArrayVarIntElementNode>(
-      cNode.get(),
-      std::vector<invariantgraph::VariableNode*>{xNode.get(), dNode.get()},
-      yNode.get(), 1);
+      cNode, std::vector<invariantgraph::VarNodeId>{xNode, dNode}, yNode, 1);
 
   auto root = std::make_unique<invariantgraph::InvariantGraphRoot>(
-      std::vector<invariantgraph::VariableNode*>{aNode.get(), bNode.get(),
-                                                 cNode.get(), dNode.get()});
+      std::vector<invariantgraph::VarNodeId>{aNode, bNode, cNode, dNode});
 
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> variableNodes;
-  variableNodes.push_back(std::move(aNode));
-  variableNodes.push_back(std::move(bNode));
-  variableNodes.push_back(std::move(cNode));
-  variableNodes.push_back(std::move(dNode));
-  variableNodes.push_back(std::move(xNode));
-  variableNodes.push_back(std::move(yNode));
+  std::vector<invariantgraph::VarNodeId> variableNodes;
+  variableNodes.push_back(aNode);
+  variableNodes.push_back(bNode);
+  variableNodes.push_back(cNode);
+  variableNodes.push_back(dNode);
+  variableNodes.push_back(xNode);
+  variableNodes.push_back(yNode);
 
-  std::vector<std::unique_ptr<invariantgraph::VariableDefiningNode>>
-      variableDefiningNodes;
+  std::vector<std::unique_ptr<invariantgraph::InvariantNode>> variableDefiningNodes;
 
   variableDefiningNodes.push_back(std::move(elementNode1));
   variableDefiningNodes.push_back(std::move(elementNode2));
   variableDefiningNodes.push_back(std::move(root));
 
-  invariantgraph::InvariantGraph graph(
-      std::move(variableNodes), {}, std::move(variableDefiningNodes), nullptr);
-
-  graph.breakCycles();
+  invariantGraph.breakCycles();
 
   PropagationEngine engine;
-  auto result = graph.apply(engine);
+  auto result = invariantGraph.apply(engine);
 
-  EXPECT_EQ(result.variableMap().size(), 6);
+  EXPECT_EQ(result.variableIdentifiers().size(), 6);
   // a, b, c, d, x, y
   // dummy objective
   // (no violations)

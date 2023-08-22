@@ -34,9 +34,9 @@ class Domain {
   [[nodiscard]] virtual size_t size() const noexcept = 0;
 
   /**
-   * @return The value of the largest element in the domain.
+   * @return true if the domain constains exactly one value, else false.
    */
-  [[nodiscard]] bool isConstant() { return size() == 1; };
+  [[nodiscard]] bool isFixed() const noexcept { return size() == 1; };
 
   /**
    * @return if the domain is not a superset of lb..ub,

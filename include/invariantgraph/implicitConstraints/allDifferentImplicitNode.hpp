@@ -12,7 +12,7 @@ namespace invariantgraph {
 
 class AllDifferentImplicitNode : public ImplicitConstraintNode {
  public:
-  explicit AllDifferentImplicitNode(std::vector<VariableNode*> variables);
+  explicit AllDifferentImplicitNode(std::vector<VarNodeId>&& variables);
 
   ~AllDifferentImplicitNode() override = default;
 
@@ -23,10 +23,9 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
   }
 
   static std::unique_ptr<AllDifferentImplicitNode> fromModelConstraint(
-      const fznparser::Model& model, const fznparser::Constraint& constraint,
-      InvariantGraph& invariantGraph);
+      const fznparser::Constraint&, InvariantGraph&);
 
-  bool prune() override;
+  bool prune(InvariantGraph&) override;
 
  protected:
   search::neighbourhoods::Neighbourhood* createNeighbourhood(

@@ -11,10 +11,10 @@ ObjectiveDirection getObjectiveDirection(
       overloaded{
           [](const fznparser::Satisfy&) { return ObjectiveDirection::NONE; },
           [](const fznparser::Minimise&) {
-            return ObjectiveDirection::MINIMISE;
+            return ObjectiveDirection::MINIMIZE;
           },
           [](const fznparser::Maximise&) {
-            return ObjectiveDirection::MAXIMISE;
+            return ObjectiveDirection::MAXIMIZE;
           }},
       objective);
 }

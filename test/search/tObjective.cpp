@@ -6,31 +6,30 @@
 class ObjectiveTest : public testing::Test {
  public:
   std::unique_ptr<PropagationEngine> engine;
-  VarId objectiveVariable;
-  VarId constraintViolation;
+  VarId objectiveVarId;
+  VarId totalViolationId;
 
   void SetUp() override { engine = std::make_unique<PropagationEngine>(); }
 
   VarId install(search::Objective& objective,
-                fznparser::IntRange objectiveRange = {0, 0}, Int initial = 0) {
+                fznparser::IntSet objectiveRange = fznparser::IntSet(0, 0),
+                Int initial = 0) {
     engine->open();
-    objectiveVariable = engine->makeIntVar(initial, objectiveRange.lowerBound,
-                                           objectiveRange.upperBound);
-    constraintViolation = engine->makeIntVar(0, 0, 0);
-    auto violation =
-        objective.registerWithEngine(constraintViolation, objectiveVariable);
+    objectiveVarId = engine->makeIntVar(initial, objectiveRange.lowerBound(),
+                                        objectiveRange.upperBound());
+    totalViolationId = engine->makeIntVar(0, 0, 0);
+    auto violation = objective.registerNode(totalViolationId, objectiveVarId);
     engine->close();
     return violation;
   }
 };
 
 TEST_F(ObjectiveTest, satisfaction_objective) {
-  fznparser::Model model({}, {}, {}, fznparser::Satisfy{});
-  search::Objective searchObjective(*engine, model);
+  search::Objective searchObjective(*engine, fznparser::ProblemType::SATISFY);
 
   auto violation = install(searchObjective);
 
-  EXPECT_EQ(violation, constraintViolation);
+  EXPECT_EQ(violation, totalViolationId);
   EXPECT_EQ(engine->numVariables(), 2);
   EXPECT_EQ(engine->numInvariants(), 0);
   EXPECT_EQ(engine->committedValue(violation), 0);
@@ -40,10 +39,10 @@ TEST_F(ObjectiveTest, satisfaction_objective) {
 }
 
 TEST_F(ObjectiveTest, minimisation_objective) {
-  fznparser::IntRange domain{1, 10};
-  fznparser::IntVar a{"a", domain, {}, {}};
-  fznparser::Model model({}, {a}, {}, fznparser::Minimise{a.name});
-  search::Objective searchObjective(*engine, model);
+  fznparser::Model model;
+  fznparser::IntSet domain(1, 10);
+  fznparser::IntVar a(domain.lowerBound(), domain.upperBound(), "a");
+  search::Objective searchObjective(*engine, fznparser::ProblemType::MINIMIZE);
 
   auto violation = install(searchObjective, domain, 5);
 
@@ -60,7 +59,7 @@ TEST_F(ObjectiveTest, minimisation_objective) {
   EXPECT_EQ(engine->committedValue(*searchObjective.bound()), 4);
 
   engine->beginMove();
-  engine->setValue(objectiveVariable, 3);
+  engine->setValue(objectiveVarId, 3);
   engine->endMove();
   engine->beginCommit();
   engine->query(violation);
@@ -73,10 +72,11 @@ TEST_F(ObjectiveTest, minimisation_objective) {
 }
 
 TEST_F(ObjectiveTest, maximisation_objective) {
-  fznparser::IntRange domain{1, 10};
-  fznparser::IntVar a{"a", domain, {}, {}};
-  fznparser::Model model({}, {a}, {}, fznparser::Maximise{a.name});
-  search::Objective searchObjective(*engine, model);
+  fznparser::Model model;
+  fznparser::IntSet domain(1, 10);
+  fznparser::IntVar a(domain.lowerBound(), domain.upperBound(), "a");
+
+  search::Objective searchObjective(*engine, fznparser::ProblemType::MAXIMIZE);
 
   auto violation = install(searchObjective, domain, 5);
 
@@ -93,7 +93,7 @@ TEST_F(ObjectiveTest, maximisation_objective) {
   EXPECT_EQ(engine->committedValue(*searchObjective.bound()), 6);
 
   engine->beginMove();
-  engine->setValue(objectiveVariable, 7);
+  engine->setValue(objectiveVarId, 7);
   engine->endMove();
   engine->beginCommit();
   engine->query(violation);

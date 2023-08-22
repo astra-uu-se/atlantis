@@ -6,8 +6,7 @@ namespace invariantgraph {
 
 std::unique_ptr<AllDifferentImplicitNode>
 AllDifferentImplicitNode::fromModelConstraint(
-    const fznparser::Model&, const fznparser::Constraint& constraint,
-    InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   auto arg = std::get<fznparser::IntVarArray>(constraint.arguments().at(0));
@@ -20,20 +19,20 @@ AllDifferentImplicitNode::fromModelConstraint(
   }
 
   return std::make_unique<AllDifferentImplicitNode>(
-      invariantGraph.addVariableArray(arg));
+      invariantGraph.createVarNodes(arg));
 }
 
 AllDifferentImplicitNode::AllDifferentImplicitNode(
-    std::vector<VariableNode*> variables)
+    std::vector<VarNodeId>&& variables)
     : ImplicitConstraintNode(std::move(variables)) {
-  assert(definedVariables().size() > 1);
+  assert(outputVarNodeIds().size() > 1);
 }
 
-bool AllDifferentImplicitNode::prune() {
-  std::vector<VariableNode*> singletonDefinedVariables =
-      pruneAllDifferent(definedVariables());
-  for (auto* const singleton : singletonDefinedVariables) {
-    removeDefinedVariable(singleton);
+bool AllDifferentImplicitNode::prune(InvariantGraph& invariantGraph) {
+  std::vector<VarNodeId> singletonDefinedVariables =
+      pruneAllDifferent(invariantGraph, outputVarNodeIds());
+  for (auto singleton : singletonDefinedVariables) {
+    removeOutputVarNode(invariantGraph.varNode(singleton));
   }
   return !singletonDefinedVariables.empty();
 }
@@ -42,7 +41,9 @@ search::neighbourhoods::Neighbourhood*
 AllDifferentImplicitNode::createNeighbourhood(
     Engine& engine, std::vector<search::SearchVariable> variables) {
   bool hasSameDomain = true;
-  const auto& domain = variables.front().domain();
+  assert(!variables.empty());
+
+  auto& domain = variables.front().domain();
   for (auto& variable : variables) {
     if (variable.domain() != domain) {
       hasSameDomain = false;
@@ -51,8 +52,7 @@ AllDifferentImplicitNode::createNeighbourhood(
   }
   if (hasSameDomain) {
     return new search::neighbourhoods::AllDifferentUniformNeighbourhood(
-        variables, std::move(definedVariables().front()->domain().values()),
-        engine);
+        variables, domain.values(), engine);
   } else {
     Int domainLb = std::numeric_limits<Int>::max();
     Int domainUb = std::numeric_limits<Int>::min();

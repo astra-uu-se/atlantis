@@ -48,7 +48,7 @@ class Engine {
    * @param invariantId the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  virtual void registerDefinedVariable(VarId definedVarId,
+  virtual void registerDefinedVariabless(VarId definedVarId,
                                        InvariantId invariantId) = 0;
 
   friend class Invariant;

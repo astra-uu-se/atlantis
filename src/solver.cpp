@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "fznparser/modelFactory.hpp"
+#include "fznparser/parser.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
 #include "search/objective.hpp"
 #include "search/searchProcedure.hpp"
@@ -14,47 +14,47 @@ Solver::Solver(std::filesystem::path modelFile,
              std::time(nullptr), timeout) {}
 
 static ObjectiveDirection getObjectiveDirection(
-    const fznparser::Objective& objective) {
-  return std::visit<ObjectiveDirection>(
-      overloaded{
-          [](const fznparser::Satisfy&) { return ObjectiveDirection::NONE; },
-          [](const fznparser::Minimise&) {
-            return ObjectiveDirection::MINIMISE;
-          },
-          [](const fznparser::Maximise&) {
-            return ObjectiveDirection::MAXIMISE;
-          }},
-      objective);
+    fznparser::ProblemType problemType) {
+  switch (problemType) {
+    case fznparser::ProblemType::MINIMIZE:
+      return ObjectiveDirection::MINIMIZE;
+    case fznparser::ProblemType::MAXIMIZE:
+      return ObjectiveDirection::MAXIMIZE;
+    case fznparser::ProblemType::SATISFY:
+    default:
+      return ObjectiveDirection::NONE;
+  }
 }
 
 search::SearchStatistics Solver::solve(logging::Logger& logger) {
   auto model = logger.timed<fznparser::Model>("parsing FlatZinc", [&] {
-    auto m = fznparser::ModelFactory::create(_modelFile);
+    auto m = fznparser::parseFznFile(_modelFile);
     logger.debug("Found {:d} variables", m.variables().size());
     logger.debug("Found {:d} constraints", m.constraints().size());
     return m;
   });
 
-  invariantgraph::InvariantGraphBuilder invariantGraphBuilder;
+  fznparser::ProblemType problemType = model.solveType().problemType();
+
+  invariantgraph::InvariantGraphBuilder invariantGraphBuilder(model);
   auto graph = logger.timed<invariantgraph::InvariantGraph>(
       "building invariant graph",
-      [&] { return invariantGraphBuilder.build(model); });
+      [&] { return invariantGraphBuilder.build(); });
 
   PropagationEngine engine;
   auto applicationResult = graph.apply(engine);
   auto neighbourhood = applicationResult.neighbourhood();
   neighbourhood.printNeighbourhood(logger);
 
-  search::Objective searchObjective(engine, model);
+  search::Objective searchObjective(engine, problemType);
   engine.open();
-  auto violation =
-      searchObjective.registerWithEngine(applicationResult.totalViolations(),
-                                         applicationResult.objectiveVariable());
+  auto violation = searchObjective.registerNode(
+      applicationResult.totalViolationId(), applicationResult.objectiveVarId());
   engine.close();
 
   search::Assignment assignment(engine, violation,
-                                applicationResult.objectiveVariable(),
-                                getObjectiveDirection(model.objective()));
+                                applicationResult.objectiveVarId(),
+                                getObjectiveDirection(problemType));
 
   logger.debug("Using seed {}.", _seed);
   search::RandomProvider random(_seed);
@@ -63,7 +63,7 @@ search::SearchStatistics Solver::solve(logging::Logger& logger) {
                                  searchObjective);
 
   search::SearchController::VariableMap flippedMap;
-  for (const auto& [varId, fznVar] : applicationResult.variableMap())
+  for (const auto& [varId, fznVar] : applicationResult.variableIdentifiers())
     flippedMap.emplace(fznVar, varId);
 
   search::SearchController searchController = [&] {

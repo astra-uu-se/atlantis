@@ -12,7 +12,7 @@ class SearchController {
   using VariableMap = std::unordered_map<std::string_view, VarId>;
 
  private:
-  const fznparser::Model& _Model;
+  const fznparser::Model& _model;
   VariableMap _variableMap;
   std::optional<std::chrono::milliseconds> _timeout;
 
@@ -21,13 +21,13 @@ class SearchController {
   Int _foundSolution{false};
 
  public:
-  SearchController(const fznparser::Model& Model, VariableMap variableMap)
-      : _Model(Model), _variableMap(std::move(variableMap)), _timeout({}) {}
+  SearchController(const fznparser::Model& model, VariableMap variableMap)
+      : _model(model), _variableMap(std::move(variableMap)), _timeout({}) {}
 
   template <typename Rep, typename Period>
-  SearchController(const fznparser::Model& Model, VariableMap variableMap,
+  SearchController(const fznparser::Model& model, VariableMap variableMap,
                    std::chrono::duration<Rep, Period> timeout)
-      : _Model(Model),
+      : _model(model),
         _variableMap(std::move(variableMap)),
         _timeout(
             std::chrono::duration_cast<std::chrono::milliseconds>(timeout)) {}

@@ -114,6 +114,7 @@ class Invariant {
   }
 
   [[nodiscard]] inline InvariantId id() const noexcept { return _id; }
+
   void setId(Id id) { _id = id; }
 
   /**

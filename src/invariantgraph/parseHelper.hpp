@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "invariantgraph/implicitConstraintNode.hpp"
-#include "invariantgraph/softConstraintNode.hpp"
-#include "invariantgraph/variableDefiningNode.hpp"
-#include "invariantgraph/variableNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
+#include "invariantgraph/varNode.hpp"
+#include "invariantgraph/violationInvariantNode.hpp"
 #include "utils/fznAst.hpp"
 #include "utils/variant.hpp"
 
@@ -19,18 +19,20 @@ bool hasCorrectSignature(
     const std::vector<std::pair<std::string_view, size_t>>& nameNumArgPairs,
     const fznparser::Constraint& constraint);
 
-std::vector<VariableNode*> pruneAllDifferent(
-    std::vector<VariableNode*> staticInputs);
+std::vector<VarNodeId> pruneAllDifferent(
+    InvariantGraph&, std::vector<VarNodeId> staticInputVarNodeIds);
+
+std::vector<Int> toIntVector(const std::vector<bool>& argument);
 
 /*
-std::vector<:VariableNode*> mappedVariableVector(
+std::vector<:VarNodeId> mappedVariableVector(
     const fznparser::Model& model, const FZNConstraint::Argument& argument,
-    const std::function<:VariableNode*(
+    const std::function<:VarNodeId(
         :MappableValue&)>& variableMap);
 
-:VariableNode* mappedVariable(
+:VarNodeId mappedVariable(
     const FZNConstraint::Argument& argument,
-    const std::function<:VariableNode*(
+    const std::function<:VarNodeId(
         :MappableValue&)>& variableMap);
 
 std::vector<Int> integerVector(const fznparser::Model& model,
