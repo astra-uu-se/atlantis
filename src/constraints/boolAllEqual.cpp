@@ -31,8 +31,12 @@ void BoolAllEqual::recompute(Timestamp ts) {
 
   for (size_t i = 0; i < _variables.size(); ++i) {
     _numTrue.incValue(ts,
-                      static_cast<Int>(_engine.value(ts, _variables[i]) == 1));
+                      static_cast<Int>(_engine.value(ts, _variables[i]) == 0));
   }
+
+  assert(0 <= _numTrue.value(ts) &&
+         _numTrue.value(ts) <= static_cast<Int>(_variables.size()));
+
   updateValue(ts, _violationId,
               std::min(_numTrue.value(ts), static_cast<Int>(_variables.size()) -
                                                _numTrue.value(ts)));
@@ -44,8 +48,12 @@ void BoolAllEqual::notifyInputChanged(Timestamp ts, LocalId id) {
   if ((newValue == 0) == (_committedValues[id] == 0)) {
     return;
   }
+
   _numTrue.incValue(ts, static_cast<Int>(newValue == 0) -
                             static_cast<Int>(_committedValues[id] == 0));
+
+  assert(0 <= _numTrue.value(ts) &&
+         _numTrue.value(ts) <= static_cast<Int>(_variables.size()));
 
   updateValue(ts, _violationId,
               std::min(_numTrue.value(ts), static_cast<Int>(_variables.size()) -

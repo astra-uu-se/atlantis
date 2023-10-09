@@ -12,13 +12,12 @@ namespace invariantgraph {
 
 class AllDifferentImplicitNode : public ImplicitConstraintNode {
  public:
-  explicit AllDifferentImplicitNode(std::vector<VarNodeId>&& variables);
+  explicit AllDifferentImplicitNode(std::vector<VarNodeId>&&);
 
   ~AllDifferentImplicitNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"fzn_all_different_int", 1}};
   }
 
@@ -28,8 +27,8 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
   bool prune(InvariantGraph&) override;
 
  protected:
-  search::neighbourhoods::Neighbourhood* createNeighbourhood(
-      Engine& engine, std::vector<search::SearchVariable> variables) override;
+  std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
+      Engine& engine, std::vector<search::SearchVariable>&& variables) override;
 };
 
 }  // namespace invariantgraph

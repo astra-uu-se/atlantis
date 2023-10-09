@@ -4,6 +4,10 @@
 
 namespace invariantgraph {
 
+ArrayIntMaximumNode::ArrayIntMaximumNode(std::vector<VarNodeId>&& variables,
+                                         VarNodeId output)
+    : InvariantNode({output}, std::move(variables)) {}
+
 std::unique_ptr<ArrayIntMaximumNode> ArrayIntMaximumNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
@@ -15,26 +19,27 @@ std::unique_ptr<ArrayIntMaximumNode> ArrayIntMaximumNode::fromModelConstraint(
       std::get<fznparser::IntVarArray>(constraint.arguments().at(1));
 
   return std::make_unique<ArrayIntMaximumNode>(
-      invariantGraph.nextInvariantNodeId(),
       invariantGraph.createVarNodes(inputs),
       invariantGraph.createVarNode(output));
 }
 
 void ArrayIntMaximumNode::registerOutputVariables(
     InvariantGraph& invariantGraph, Engine& engine) {
-  registerDefinedVariable(engine, outputVarNodeIds().front());
+  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void ArrayIntMaximumNode::registerNode(InvariantGraph& invariantGraph,
                                        Engine& engine) {
   std::vector<VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(variables),
-                 [&](const auto& node) { return node->varId(); });
+                 std::back_inserter(variables), [&](const auto& node) {
+                   return invariantGraph.varId(node);
+                 });
 
-  assert(outputVarNodeIds().front()->varId() != NULL_ID);
-  engine.makeInvariant<MaxSparse>(engine, outputVarNodeIds().front()->varId(),
-                                  variables);
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
+  engine.makeInvariant<MaxSparse>(
+      engine, invariantGraph.varId(outputVarNodeIds().front()),
+      variables);
 }
 
 }  // namespace invariantgraph

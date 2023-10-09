@@ -4,26 +4,18 @@
 
 namespace invariantgraph {
 
-BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b,
-                       VarNodeId r = VarNodeId(NULL_NODE_ID))
+BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
 
-BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold = true)
+BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
                              shouldHold) {}
-
-BoolEqNode::BoolEqNode(InvariantGraph invariantGraph, VarNodeId a, VarNodeId b,
-                       bool shouldHold = true)
-    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
-                             shouldHold) {
-  init(invariantGraph, invariantGraph.nextInvariantNodeId());
-}
 
 std::unique_ptr<BoolEqNode> BoolEqNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("BoolEq constraint takes two var bool arguments");
   }
@@ -56,20 +48,22 @@ std::unique_ptr<BoolEqNode> BoolEqNode::fromModelConstraint(
 
 void BoolEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                          Engine& engine) {
-  registerViolation(engine);
+  registerViolation(invariantGraph, engine);
 }
 
 void BoolEqNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId() != NULL_ID);
-  assert(a()->varId() != NULL_ID);
-  assert(b()->varId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(invariantGraph.varId(a()) != NULL_ID);
+  assert(invariantGraph.varId(b()) != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<BoolEqual>(engine, violationVarId(), a()->varId(),
-                                     b()->varId());
+    engine.makeConstraint<BoolEqual>(engine, violationVarId(invariantGraph),
+                                     invariantGraph.varId(a()),
+                                     invariantGraph.varId(b()));
   } else {
-    engine.makeInvariant<BoolXor>(engine, violationVarId(), a()->varId(),
-                                  b()->varId());
+    engine.makeInvariant<BoolXor>(engine, violationVarId(invariantGraph),
+                                  invariantGraph.varId(a()),
+                                  invariantGraph.varId(b()));
   }
 }
 

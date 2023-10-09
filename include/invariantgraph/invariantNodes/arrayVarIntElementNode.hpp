@@ -14,12 +14,10 @@ class ArrayVarIntElementNode : public InvariantNode {
 
  public:
   ArrayVarIntElementNode(VarNodeId b, std::vector<VarNodeId>&& as,
-                         VarNodeId output, Int offset)
-      : InvariantNode({output}, {b}, std::move(as)), _offset(offset) {}
+                         VarNodeId output, Int offset);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"array_var_int_element", 3}, {"array_var_int_element_nonshifted", 3}};
   }
 

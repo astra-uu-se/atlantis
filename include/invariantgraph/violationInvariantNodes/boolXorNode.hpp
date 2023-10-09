@@ -12,15 +12,12 @@ namespace invariantgraph {
 
 class BoolXorNode : public ViolationInvariantNode {
  public:
-  BoolXorNode(VarNodeId a, VarNodeId b, VarNodeId r)
-      : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
-  BoolXorNode(VarNodeId a, VarNodeId b, bool shouldHold)
-      : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
-                               shouldHold) {}
+  BoolXorNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  BoolXorNode(VarNodeId a, VarNodeId b, bool shouldHold);
+
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"bool_not", 2}, {"bool_xor", 3}, {"bool_xor", 2}};
   }
 

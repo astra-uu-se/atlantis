@@ -4,6 +4,9 @@
 
 namespace invariantgraph {
 
+IntMaxNode::IntMaxNode(VarNodeId a, VarNodeId b, VarNodeId output)
+    : InvariantNode({output}, {a, b}) {}
+
 std::unique_ptr<IntMaxNode> IntMaxNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
@@ -22,13 +25,14 @@ std::unique_ptr<IntMaxNode> IntMaxNode::fromModelConstraint(
 
 void IntMaxNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                          Engine& engine) {
-  registerDefinedVariable(engine, outputVarNodeIds().front());
+  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void IntMaxNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(outputVarNodeIds().front()->varId() != NULL_ID);
-  engine.makeInvariant<BinaryMax>(engine, outputVarNodeIds().front()->varId(),
-                                  a()->varId(), b()->varId());
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
+  engine.makeInvariant<BinaryMax>(
+      engine, invariantGraph.varId(outputVarNodeIds().front()),
+      invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 
 }  // namespace invariantgraph

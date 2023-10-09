@@ -4,11 +4,16 @@
 
 namespace invariantgraph {
 
+IntNeNode::IntNeNode(VarNodeId a, VarNodeId b, VarNodeId r)
+    : ViolationInvariantNode({a, b}, r) {}
+IntNeNode::IntNeNode(VarNodeId a, VarNodeId b, bool shouldHold)
+    : ViolationInvariantNode({a, b}, shouldHold) {}
+
 std::unique_ptr<IntNeNode> IntNeNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("IntNe constraint takes two var bool arguments");
   }
@@ -33,19 +38,21 @@ std::unique_ptr<IntNeNode> IntNeNode::fromModelConstraint(
 
 void IntNeNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                         Engine& engine) {
-  registerViolation(engine);
+  registerViolation(invariantGraph, engine);
 }
 
 void IntNeNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<NotEqual>(engine, violationVarId(), a()->varId(),
-                                    b()->varId());
+    engine.makeConstraint<NotEqual>(engine, violationVarId(invariantGraph),
+                                    invariantGraph.varId(a()),
+                                    invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<Equal>(engine, violationVarId(), a()->varId(),
-                                 b()->varId());
+    engine.makeConstraint<Equal>(engine, violationVarId(invariantGraph),
+                                 invariantGraph.varId(a()),
+                                 invariantGraph.varId(b()));
   }
 }
 

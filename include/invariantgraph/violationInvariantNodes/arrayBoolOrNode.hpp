@@ -15,16 +15,12 @@ class ArrayBoolOrNode : public ViolationInvariantNode {
   VarId _intermediate{NULL_ID};
 
  public:
-  ArrayBoolOrNode(std::vector<VarNodeId>&& as, VarNodeId output)
-      : ViolationInvariantNode(std::move(as), output) {}
+  ArrayBoolOrNode(std::vector<VarNodeId>&& as, VarNodeId output);
 
-  ArrayBoolOrNode(std::vector<VarNodeId>&& as, bool shouldHold)
-      : ViolationInvariantNode(std::move(as), shouldHold) {}
+  ArrayBoolOrNode(std::vector<VarNodeId>&& as, bool shouldHold);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
-        {"array_bool_or", 2}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"array_bool_or", 2}};
   }
 
   static std::unique_ptr<ArrayBoolOrNode> fromModelConstraint(

@@ -2,8 +2,16 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::ArrayBoolXorNode>
-invariantgraph::ArrayBoolXorNode::fromModelConstraint(
+namespace invariantgraph {
+
+ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& as,
+                                   VarNodeId output)
+    : ViolationInvariantNode(std::move(as), output) {}
+
+ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& as, bool shouldHold)
+    : ViolationInvariantNode(std::move(as), shouldHold) {}
+
+std::unique_ptr<ArrayBoolXorNode> ArrayBoolXorNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
@@ -34,35 +42,37 @@ invariantgraph::ArrayBoolXorNode::fromModelConstraint(
   const fznparser::BoolArg& reified =
       get<fznparser::BoolArg>(constraint.arguments().back());
   if (reified.isFixed()) {
-    return std::make_unique<invariantgraph::ArrayBoolXorNode>(
-        std::move(variableNodes), reified.toParameter());
+    return std::make_unique<ArrayBoolXorNode>(std::move(variableNodes),
+                                              reified.toParameter());
   }
-  return std::make_unique<invariantgraph::ArrayBoolXorNode>(
+  return std::make_unique<ArrayBoolXorNode>(
       std::move(variableNodes), invariantGraph.createVarNode(reified.var()));
 }
 
-void invariantgraph::ArrayBoolXorNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  if (violationVarId() == NULL_ID) {
+void ArrayBoolXorNode::registerOutputVariables(InvariantGraph& invariantGraph,
+                                               Engine& engine) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     _intermediate = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(
-          engine.makeIntView<EqualConst>(engine, _intermediate, 1));
+      setViolationVarId(invariantGraph, engine.makeIntView<EqualConst>(
+                                            engine, _intermediate, 1));
     } else {
       assert(!isReified());
-      setViolationVarId(
-          engine.makeIntView<NotEqualConst>(engine, _intermediate, 1));
+      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+                                            engine, _intermediate, 1));
     }
   }
 }
 
-void invariantgraph::ArrayBoolXorNode::registerNode(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId() != NULL_ID);
+void ArrayBoolXorNode::registerNode(InvariantGraph& invariantGraph,
+                                    Engine& engine) {
+  assert(violationVarId(invariantGraph) != NULL_ID);
   std::vector<VarId> inputs;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputs),
-                 [&](const auto& node) { return node->varId(); });
+                 [&](const auto& node) { return invariantGraph.varId(node); });
 
   engine.makeInvariant<BoolLinear>(engine, _intermediate, inputs);
 }
+
+}  // namespace invariantgraph

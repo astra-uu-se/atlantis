@@ -11,7 +11,7 @@ class CircuitNeighbourhood : public Neighbourhood {
   std::vector<search::SearchVariable> _variables;
 
  public:
-  CircuitNeighbourhood(std::vector<search::SearchVariable> variables);
+  CircuitNeighbourhood(std::vector<search::SearchVariable>&& variables);
 
   ~CircuitNeighbourhood() override = default;
 

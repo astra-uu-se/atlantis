@@ -4,6 +4,28 @@
 
 namespace invariantgraph {
 
+GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& x,
+                                             std::vector<Int>&& cover,
+                                             std::vector<VarNodeId>&& counts,
+                                             VarNodeId r)
+    : ViolationInvariantNode({}, std::move(concat(x, counts)), r),
+      _inputs(std::move(x)),
+      _cover(std::move(cover)),
+      _counts(std::move(counts)) {}
+
+GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& x,
+                                             std::vector<Int>&& cover,
+                                             std::vector<VarNodeId>&& counts,
+                                             bool shouldHold)
+    : ViolationInvariantNode(
+          shouldHold ? std::vector<VarNodeId>(counts)
+                     : std::vector<VarNodeId>{},
+          shouldHold ? std::vector<VarNodeId>(x) : std::move(concat(x, counts)),
+          shouldHold),
+      _inputs(std::move(x)),
+      _cover(std::move(cover)),
+      _counts(std::move(counts)) {}
+
 std::unique_ptr<GlobalCardinalityNode>
 GlobalCardinalityNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
@@ -22,7 +44,7 @@ GlobalCardinalityNode::fromModelConstraint(
   assert(cover.size() == counts.size());
 
   bool shouldHold = true;
-  VarNodeId r = nullptr;
+  VarNodeId r = NULL_NODE_ID;
 
   if (constraint.arguments().size() == 4) {
     const fznparser::BoolArg reified =
@@ -34,11 +56,11 @@ GlobalCardinalityNode::fromModelConstraint(
     }
   }
 
-  if (r != nullptr) {
+  if (r != NULL_NODE_ID) {
     return std::make_unique<GlobalCardinalityNode>(
         std::move(inputs), std::move(cover), std::move(counts), r);
   }
-  assert(r == nullptr);
+  assert(r == NULL_NODE_ID);
   return std::make_unique<GlobalCardinalityNode>(
       std::move(inputs), std::move(cover), std::move(counts), shouldHold);
 }
@@ -46,19 +68,20 @@ GlobalCardinalityNode::fromModelConstraint(
 void GlobalCardinalityNode::registerOutputVariables(
     InvariantGraph& invariantGraph, Engine& engine) {
   if (!isReified() && shouldHold()) {
-    for (auto* const countOutput : outputVarNodeIds()) {
-      if (countOutput->varId() == NULL_ID) {
-        countOutput->setVarId(engine.makeIntVar(0, 0, _inputs.size()));
+    for (const auto& countOutput : outputVarNodeIds()) {
+      if (invariantGraph.varId(countOutput) == NULL_ID) {
+        invariantGraph.varNode(countOutput)
+            .setVarId(engine.makeIntVar(0, 0, _inputs.size()));
       }
     }
-  } else if (violationVarId() == NULL_ID) {
-    registerViolation(engine);
+  } else if (violationVarId(invariantGraph) == NULL_ID) {
+    registerViolation(invariantGraph, engine);
 
     for (size_t i = 0; i < _counts.size(); ++i) {
       _intermediate.emplace_back(engine.makeIntVar(0, 0, _inputs.size()));
     }
     if (_counts.size() == 1) {
-      _violations.emplace_back(violationVarId());
+      _violations.emplace_back(violationVarId(invariantGraph));
     } else {
       for (size_t i = 0; i < _counts.size(); ++i) {
         _violations.emplace_back(engine.makeIntVar(0, 0, _inputs.size()));
@@ -71,18 +94,18 @@ void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,
                                          Engine& engine) {
   std::vector<VarId> inputs;
   std::transform(_inputs.begin(), _inputs.end(), std::back_inserter(inputs),
-                 [&](auto node) { return node->varId(); });
+                 [&](const auto& id) { return invariantGraph.varId(id); });
 
   if (!isReified() && shouldHold()) {
     std::vector<VarId> countOutputs;
     std::transform(_counts.begin(), _counts.end(),
                    std::back_inserter(countOutputs),
-                   [&](auto node) { return node->varId(); });
+                   [&](const auto& id) { return invariantGraph.varId(id); });
 
     engine.makeInvariant<GlobalCardinalityOpen>(engine, countOutputs, inputs,
                                                 _cover);
   } else {
-    assert(violationVarId() != NULL_ID);
+    assert(violationVarId(invariantGraph) != NULL_ID);
     assert(_intermediate.size() == _counts.size());
     assert(_violations.size() == _counts.size());
     engine.makeInvariant<GlobalCardinalityOpen>(engine, _intermediate, inputs,
@@ -91,21 +114,23 @@ void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,
       if (shouldHold()) {
         engine.makeConstraint<Equal>(engine, _violations.at(i),
                                      _intermediate.at(i),
-                                     _counts.at(i)->varId());
+                                     invariantGraph.varId(_counts.at(i)));
       } else {
         engine.makeConstraint<NotEqual>(engine, _violations.at(i),
                                         _intermediate.at(i),
-                                        _counts.at(i)->varId());
+                                        invariantGraph.varId(_counts.at(i)));
       }
     }
     if (_counts.size() > 1) {
       if (shouldHold()) {
         // To hold, each count must be equal to its corresponding intermediate:
-        engine.makeInvariant<Linear>(engine, violationVarId(), _violations);
+        engine.makeInvariant<Linear>(engine, violationVarId(invariantGraph),
+                                     _violations);
       } else {
         // To hold, only one count must not be equal to its corresponding
         // intermediate:
-        engine.makeInvariant<Exists>(engine, violationVarId(), _violations);
+        engine.makeInvariant<Exists>(engine, violationVarId(invariantGraph),
+                                     _violations);
       }
     }
   }

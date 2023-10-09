@@ -66,30 +66,22 @@ invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build() {
 
 using FZNSearchVariable = std::variant<fznparser::IntVar, fznparser::BoolVar>;
 
-static std::optional<FZNSearchVariable> searchVariable(
-    const fznparser::Variable& variable) {
-  if (std::holds_alternative<fznparser::BoolVar>(variable)) {
-    return std::get<fznparser::BoolVar>(variable);
-  } else if (std::holds_alternative<fznparser::IntVar>(variable)) {
-    return std::get<fznparser::IntVar>(variable);
-  }
-  return std::nullopt;
-}
-
 bool argumentIsFree(const fznparser::Arg& arg,
-                    const std::unordered_set<std::string_view>& definedVars);
+                    const std::unordered_set<std::string>& definedVars);
 
 bool argumentsAreFree(const fznparser::Constraint& constraint,
-                      const std::unordered_set<std::string_view>& definedVars);
+                      const std::unordered_set<std::string>& definedVars);
 
 void invariantgraph::InvariantGraphBuilder::markOutputTo(
     const invariantgraph::InvariantNode& invNode,
-    std::unordered_set<std::string_view>& definedVars) {
+    std::unordered_set<std::string>& definedVars) {
   for (invariantgraph::VarNodeId varNodeId : invNode.outputVarNodeIds()) {
-    assert(_invariantGraph.varNode(varNodeId).definedBy() !=
-           invariantgraph::NULL_NODE_ID);
-    if (!_invariantGraph.varNode(varNodeId).identifier().empty()) {
-      definedVars.emplace(_invariantGraph.varNode(varNodeId).identifier());
+    assert(_invariantGraph.varNode(varNodeId).definingNodes().contains(
+        invNode.id()));
+    const std::string& identifier =
+        _invariantGraph.varNode(varNodeId).identifier();
+    if (!identifier.empty() && !definedVars.contains(identifier)) {
+      definedVars.emplace(identifier);
     }
   }
 }
@@ -105,7 +97,7 @@ void invariantgraph::InvariantGraphBuilder::initVariableNodes() {
 }
 
 void invariantgraph::InvariantGraphBuilder::createNodes() {
-  std::unordered_set<std::string_view> definedVars;
+  std::unordered_set<std::string> definedVars;
   std::vector<bool> constraintIsProcessed(_model.constraints().size(), false);
 
   // First, define variables based on annotations.
@@ -186,6 +178,10 @@ void invariantgraph::InvariantGraphBuilder::createNodes() {
       continue;
     }
 
+    /*
+    // If some variable is defined by multiple invariants, then _invariantGraph
+    // will split the variables
+
     bool canBeInvariant = std::all_of(
         invNode->outputVarNodeIds().begin(), invNode->outputVarNodeIds().end(),
         [&](const auto& varNodeId) {
@@ -197,14 +193,16 @@ void invariantgraph::InvariantGraphBuilder::createNodes() {
     if (!canBeInvariant) {
       continue;
     }
+    */
 
-    invNode->prune(_invariantGraph);
+    const InvariantNodeId invNodeId =
+        _invariantGraph.addInvariantNode(std::move(invNode));
 
-    markOutputTo(*invNode, definedVars);
+    _invariantGraph.invariantNode(invNodeId).prune(_invariantGraph);
+
+    markOutputTo(_invariantGraph.invariantNode(invNodeId), definedVars);
 
     constraintIsProcessed.at(idx) = true;
-
-    _invariantGraph.addInvariantNode(std::move(invNode));
   }
 
   // Fourth, use soft constraints for the remaining _model constraints.
@@ -235,22 +233,32 @@ void invariantgraph::InvariantGraphBuilder::createNodes() {
 
   // Finally, define all free variables by the InvariantGraphRoot
   for (const auto& [identifier, variable] : _model.variables()) {
-    if (definedVars.contains(identifier)) {
-      continue;
+    assert(!identifier.empty());
+    if (std::holds_alternative<fznparser::IntVar>(variable)) {
+      const fznparser::IntVar& intVar = std::get<fznparser::IntVar>(variable);
+      if (intVar.isFixed()) {
+        continue;
+      }
+      assert(_invariantGraph.varNode(identifier).varNodeId() !=
+             invariantgraph::NULL_NODE_ID);
+      assert(_invariantGraph.varNode(identifier).isIntVar());
+    } else if (std::holds_alternative<fznparser::BoolVar>(variable)) {
+      const fznparser::BoolVar& boolVar =
+          std::get<fznparser::BoolVar>(variable);
+      if (boolVar.isFixed()) {
+        continue;
+      }
+      assert(_invariantGraph.varNode(identifier).varNodeId() !=
+             invariantgraph::NULL_NODE_ID);
+      assert(!_invariantGraph.varNode(identifier).isIntVar());
     }
-    auto& varNode = _invariantGraph.varNode(identifier);
-    if (varNode.varNodeId() == invariantgraph::NULL_NODE_ID) {
-      throw std::runtime_error("Variable with identifier \"" +
-                               std::string(identifier) + "\" is not defined");
-    }
-    _invariantGraph.root().addSearchVarNode(varNode);
   }
 }
 
 std::unique_ptr<invariantgraph::InvariantNode>
 invariantgraph::InvariantGraphBuilder::makeInvariantNode(
     const fznparser::Constraint& constraint, bool guessDefinedVariable) {
-  std::string_view name = constraint.identifier();
+  std::string name = constraint.identifier();
 
 #define NODE_REGISTRATION(nodeType)                                          \
   for (const auto& [nameStr, numArgs] :                                      \
@@ -310,7 +318,7 @@ invariantgraph::InvariantGraphBuilder::makeInvariantNode(
 std::unique_ptr<invariantgraph::ImplicitConstraintNode>
 invariantgraph::InvariantGraphBuilder::makeImplicitConstraintNode(
     const fznparser::Constraint& constraint) {
-  std::string_view name = constraint.identifier();
+  std::string name = constraint.identifier();
 
 #define NODE_REGISTRATION(nodeType)                                          \
   for (const auto& [nameStr, numArgs] :                                      \
@@ -331,7 +339,7 @@ invariantgraph::InvariantGraphBuilder::makeImplicitConstraintNode(
 std::unique_ptr<invariantgraph::ViolationInvariantNode>
 invariantgraph::InvariantGraphBuilder::makeViolationInvariantNode(
     const fznparser::Constraint& constraint) {
-  std::string_view name = constraint.identifier();
+  std::string name = constraint.identifier();
 
 #define NODE_REGISTRATION(nodeType)                                          \
   for (const auto& [nameStr, numArgs] :                                      \
@@ -367,41 +375,41 @@ invariantgraph::InvariantGraphBuilder::makeViolationInvariantNode(
 }
 
 bool varIsFree(const fznparser::BoolVar& var,
-               const std::unordered_set<std::string_view>& definedVars) {
+               const std::unordered_set<std::string>& definedVars) {
   return var.isFixed() || !definedVars.contains(var.identifier());
 }
 bool varIsFree(const fznparser::IntVar& var,
-               const std::unordered_set<std::string_view>& definedVars) {
+               const std::unordered_set<std::string>& definedVars) {
   return var.isFixed() || !definedVars.contains(var.identifier());
 }
 bool varIsFree(const fznparser::FloatVar& var,
-               const std::unordered_set<std::string_view>&) {
+               const std::unordered_set<std::string>&) {
   return var.isFixed();
 }
 bool varIsFree(const fznparser::SetVar&,
-               const std::unordered_set<std::string_view>&) {
+               const std::unordered_set<std::string>&) {
   return false;
 }
 bool argIsFree(const fznparser::BoolArg& arg,
-               const std::unordered_set<std::string_view>& definedVars) {
+               const std::unordered_set<std::string>& definedVars) {
   return arg.isParameter() || varIsFree(arg.var(), definedVars);
 }
 bool argIsFree(const fznparser::IntArg& arg,
-               const std::unordered_set<std::string_view>& definedVars) {
+               const std::unordered_set<std::string>& definedVars) {
   return arg.isParameter() || varIsFree(arg.var(), definedVars);
 }
 bool argIsFree(const fznparser::FloatArg& arg,
-               const std::unordered_set<std::string_view>& definedVars) {
+               const std::unordered_set<std::string>& definedVars) {
   return arg.isParameter() || varIsFree(arg.var(), definedVars);
 }
 bool argIsFree(const fznparser::IntSetArg& arg,
-               const std::unordered_set<std::string_view>& definedVars) {
+               const std::unordered_set<std::string>& definedVars) {
   return arg.isParameter() || varIsFree(arg.var(), definedVars);
 }
 
 template <typename ArrayType, typename VarType, typename ParType>
 bool arrayIsFree(const ArrayType& var,
-                 const std::unordered_set<std::string_view>& definedVars) {
+                 const std::unordered_set<std::string>& definedVars) {
   for (size_t i = 0; i < var.size(); ++i) {
     if (!std::holds_alternative<ParType>(var.at(i)) &&
         !argIsFree(
@@ -414,7 +422,7 @@ bool arrayIsFree(const ArrayType& var,
 }
 
 bool argumentIsFree(const fznparser::Arg& arg,
-                    const std::unordered_set<std::string_view>& definedVars) {
+                    const std::unordered_set<std::string>& definedVars) {
   if (std::holds_alternative<fznparser::BoolArg>(arg)) {
     return argIsFree(std::get<fznparser::BoolArg>(arg), definedVars);
   } else if (std::holds_alternative<fznparser::IntArg>(arg)) {
@@ -441,7 +449,7 @@ bool argumentIsFree(const fznparser::Arg& arg,
 }
 
 bool argumentsAreFree(const fznparser::Constraint& constraint,
-                      const std::unordered_set<std::string_view>& definedVars) {
+                      const std::unordered_set<std::string>& definedVars) {
   return std::all_of(constraint.arguments().begin(),
                      constraint.arguments().end(),
                      [&](const fznparser::Arg& arg) {

@@ -4,6 +4,9 @@
 
 namespace invariantgraph {
 
+IntMinNode::IntMinNode(VarNodeId a, VarNodeId b, VarNodeId output)
+    : InvariantNode({output}, {a, b}) {}
+
 std::unique_ptr<IntMinNode> IntMinNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
@@ -22,13 +25,14 @@ std::unique_ptr<IntMinNode> IntMinNode::fromModelConstraint(
 
 void IntMinNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                          Engine& engine) {
-  registerDefinedVariable(engine, outputVarNodeIds().front());
+  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void IntMinNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(outputVarNodeIds().front()->varId() != NULL_ID);
-  engine.makeInvariant<BinaryMin>(engine, outputVarNodeIds().front()->varId(),
-                                  a()->varId(), b()->varId());
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
+  engine.makeInvariant<BinaryMin>(
+      engine, invariantGraph.varId(outputVarNodeIds().front()),
+      invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 
 }  // namespace invariantgraph

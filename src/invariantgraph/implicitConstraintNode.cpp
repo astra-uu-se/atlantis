@@ -4,6 +4,10 @@
 
 namespace invariantgraph {
 
+ImplicitConstraintNode::ImplicitConstraintNode(
+    std::vector<VarNodeId>&& outputVarNodeIds)
+    : InvariantNode(std::move(outputVarNodeIds)) {}
+
 void ImplicitConstraintNode::registerOutputVariables(
     InvariantGraph& invariantGraph, Engine& engine) {
   for (const auto& varNodeId : outputVarNodeIds()) {
@@ -15,16 +19,16 @@ void ImplicitConstraintNode::registerOutputVariables(
   }
 }
 
-std::unique_ptr<search::neighbourhoods::Neighbourhood>
-ImplicitConstraintNode::takeNeighbourhood() noexcept {
-  auto ptr =
-      std::unique_ptr<search::neighbourhoods::Neighbourhood>(_neighbourhood);
-  _neighbourhood = nullptr;
-  return ptr;
+std::shared_ptr<search::neighbourhoods::Neighbourhood>
+ImplicitConstraintNode::neighbourhood() noexcept {
+  return _neighbourhood;
 }
 
 void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
                                           Engine& engine) {
+  if (_neighbourhood != nullptr) {
+    return;
+  }
   std::vector<search::SearchVariable> varIds;
   varIds.reserve(outputVarNodeIds().size());
 
@@ -34,7 +38,7 @@ void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
     varIds.emplace_back(node.varId(), node.domain());
   }
 
-  _neighbourhood = createNeighbourhood(engine, varIds);
+  _neighbourhood = createNeighbourhood(engine, std::move(varIds));
   assert(_neighbourhood);
 }
 

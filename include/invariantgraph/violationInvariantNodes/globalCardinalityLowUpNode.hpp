@@ -22,29 +22,18 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
   VarId _intermediate{NULL_ID};
 
  public:
-  explicit GlobalCardinalityLowUpNode(InvariantNodeId id,
-                                      std::vector<VarNodeId>&& x,
+  explicit GlobalCardinalityLowUpNode(std::vector<VarNodeId>&& x,
                                       std::vector<Int>&& cover,
                                       std::vector<Int>&& low,
-                                      std::vector<Int>&& up, VarNodeId r)
-      : ViolationInvariantNode({}, std::move(x), r),
-        _cover(std::move(cover)),
-        _low(std::move(low)),
-        _up(std::move(up)) {}
+                                      std::vector<Int>&& up, VarNodeId r);
 
-  explicit GlobalCardinalityLowUpNode(InvariantNodeId id,
-                                      std::vector<VarNodeId>&& x,
+  explicit GlobalCardinalityLowUpNode(std::vector<VarNodeId>&& x,
                                       std::vector<Int>&& cover,
                                       std::vector<Int>&& low,
-                                      std::vector<Int>&& up, bool shouldHold)
-      : ViolationInvariantNode({}, std::move(x), shouldHold),
-        _cover(std::move(cover)),
-        _low(std::move(low)),
-        _up(std::move(up)) {}
+                                      std::vector<Int>&& up, bool shouldHold);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"fzn_global_cardinality_low_up", 4},
         {"fzn_global_cardinality_low_up_reif", 5}};
   }

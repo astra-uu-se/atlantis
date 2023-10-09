@@ -49,8 +49,8 @@ class PropagationEngine : public Engine {
    * @param invariantId the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVariables(VarId definedVarId,
-                               InvariantId invariantId) final;
+  virtual void registerDefinedVariable(VarId definedVarId,
+                                       InvariantId invariantId) final;
 
  public:
   PropagationEngine(/* args */);
@@ -92,8 +92,8 @@ class PropagationEngine : public Engine {
   void beginCommit();
   void endCommit();
 
-  size_t numVariables();
-  size_t numInvariants();
+  size_t numVariables() const;
+  size_t numInvariants() const;
 
   [[nodiscard]] const std::vector<VarIdBase>& searchVariables() const;
   [[nodiscard]] const std::unordered_set<VarIdBase>& modifiedSearchVariables()
@@ -107,7 +107,7 @@ class PropagationEngine : public Engine {
    */
   VarId nextInput(InvariantId);
 
-  InvariantId definingInvariant(VarId);
+  InvariantId definingInvariant(VarId) const;
 
   // This function is used by propagation, which is unaware of views.
   [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
@@ -152,15 +152,15 @@ inline void PropagationEngine::incCurrentTimestamp() {
                      }));
 }
 
-inline size_t PropagationEngine::numVariables() {
+inline size_t PropagationEngine::numVariables() const {
   return _propGraph.numVariables();
 }
 
-inline size_t PropagationEngine::numInvariants() {
+inline size_t PropagationEngine::numInvariants() const {
   return _propGraph.numInvariants();
 }
 
-inline InvariantId PropagationEngine::definingInvariant(VarId id) {
+inline InvariantId PropagationEngine::definingInvariant(VarId id) const {
   // Returns NULL_ID if there is no defining invariant
   return _propGraph.definingInvariant(id);
 }

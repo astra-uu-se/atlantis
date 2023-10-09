@@ -22,8 +22,7 @@ namespace invariantgraph {
 
 class InvariantGraphApplyResult {
  public:
-  using VariableIdentifiers =
-      std::unordered_map<VarId, std::string_view, VarIdHash>;
+  using VariableIdentifiers = std::unordered_map<VarId, std::string, VarIdHash>;
 
  private:
   VariableIdentifiers _variableIdentifiers;
@@ -50,11 +49,15 @@ class InvariantGraphApplyResult {
 
   [[nodiscard]] search::neighbourhoods::NeighbourhoodCombinator neighbourhood()
       const noexcept {
-    std::vector<std::unique_ptr<search::neighbourhoods::Neighbourhood>>
+    std::vector<std::shared_ptr<search::neighbourhoods::Neighbourhood>>
         neighbourhoods;
 
     for (auto const& implicitContraint : _implicitConstraintNodes) {
-      neighbourhoods.push_back(implicitContraint->takeNeighbourhood());
+      std::shared_ptr<search::neighbourhoods::Neighbourhood> neighbourhood =
+          implicitContraint->neighbourhood();
+      if (neighbourhood != nullptr) {
+        neighbourhoods.push_back(std::move(neighbourhood));
+      }
     }
 
     return search::neighbourhoods::NeighbourhoodCombinator(
@@ -73,13 +76,18 @@ class InvariantGraphApplyResult {
 class InvariantGraph {
  private:
   std::vector<VarNode> _varNodes;
-  std::unordered_map<std::string_view, VarNodeId> _namedVariableNodeIndices;
+  std::unordered_map<std::string, VarNodeId> _namedVariableNodeIndices;
   std::unordered_map<Int, VarNodeId> _intVariableNodeIndices;
   std::array<VarNodeId, 2> _boolVariableNodeIndices;
 
   std::vector<std::unique_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
   VarNodeId _objectiveVarNodeId;
+
+  std::unordered_map<std::string, VarNodeId> _outputVars;
+  std::unordered_map<std::string, std::vector<VarNodeId>> _outputArrays;
+
+  void populateRootNode();
 
  public:
   InvariantGraph();
@@ -100,12 +108,16 @@ class InvariantGraph {
   VarNodeId createVarNode(std::reference_wrapper<const fznparser::IntVar>);
 
   VarNodeId createVarNode(const SearchDomain&, bool isIntVar);
+  VarNodeId createVarNode(const VarNode&);
 
   std::vector<VarNodeId> createVarNodes(const fznparser::BoolVarArray&);
   std::vector<VarNodeId> createVarNodes(const fznparser::IntVarArray&);
 
-  VarNode& varNode(const std::string_view& identifier);
+  VarNode& varNode(const std::string& identifier);
   VarNode& varNode(VarNodeId id);
+
+  VarId varId(const std::string& identifier) const;
+  VarId varId(VarNodeId id) const;
 
   InvariantNode& invariantNode(InvariantNodeId);
   InvariantGraphRoot& root();
@@ -148,6 +160,7 @@ class InvariantGraph {
   VarNodeId breakCycle(const std::vector<VarNodeId>& cycle);
 
   void createVariables(Engine&);
+  void createImplicitConstraints(Engine&);
   void createInvariants(Engine&);
   VarId createViolations(Engine&);
 };

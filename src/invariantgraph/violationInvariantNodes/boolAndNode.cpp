@@ -2,12 +2,19 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::BoolAndNode>
-invariantgraph::BoolAndNode::fromModelConstraint(
+namespace invariantgraph {
+
+BoolAndNode::BoolAndNode(VarNodeId a, VarNodeId b, VarNodeId r)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
+BoolAndNode::BoolAndNode(VarNodeId a, VarNodeId b, bool shouldHold)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
+                             shouldHold) {}
+
+std::unique_ptr<BoolAndNode> BoolAndNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("BoolAnd constraint takes two var bool arguments");
   }
@@ -30,33 +37,34 @@ invariantgraph::BoolAndNode::fromModelConstraint(
   const fznparser::BoolArg& reified =
       get<fznparser::BoolArg>(constraint.arguments().back());
   if (reified.isFixed()) {
-    return std::make_unique<invariantgraph::BoolAndNode>(a, b,
-                                                         reified.toParameter());
+    return std::make_unique<BoolAndNode>(a, b, reified.toParameter());
   }
-  return std::make_unique<invariantgraph::BoolAndNode>(
+  return std::make_unique<BoolAndNode>(
       a, b, invariantGraph.createVarNode(reified.var()));
 }
 
-void invariantgraph::BoolAndNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  if (violationVarId() == NULL_ID) {
+void BoolAndNode::registerOutputVariables(InvariantGraph& invariantGraph,
+                                          Engine& engine) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     if (shouldHold()) {
-      registerViolation(engine);
+      registerViolation(invariantGraph, engine);
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(
-          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
+      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+                                            engine, _intermediate, 0));
     }
   }
 }
 
-void invariantgraph::BoolAndNode::registerNode(InvariantGraph& invariantGraph,
-                                               Engine& engine) {
-  assert(violationVarId() != NULL_ID);
-  assert(a()->varId() != NULL_ID);
-  assert(b()->varId() != NULL_ID);
+void BoolAndNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
+  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(invariantGraph.varId(a()) != NULL_ID);
+  assert(invariantGraph.varId(b()) != NULL_ID);
 
-  engine.makeInvariant<BoolAnd>(engine, violationVarId(), a()->varId(),
-                                b()->varId());
+  engine.makeInvariant<BoolAnd>(engine, violationVarId(invariantGraph),
+                                invariantGraph.varId(a()),
+                                invariantGraph.varId(b()));
 }
+
+}  // namespace invariantgraph

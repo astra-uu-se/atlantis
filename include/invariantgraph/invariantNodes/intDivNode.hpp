@@ -8,14 +8,12 @@ namespace invariantgraph {
 
 class IntDivNode : public InvariantNode {
  public:
-  IntDivNode(VarNodeId a, VarNodeId b, VarNodeId output)
-      : InvariantNode({output}, {a, b}) {}
+  IntDivNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
   ~IntDivNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"int_div", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_div", 3}};
   }
 
   static std::unique_ptr<IntDivNode> fromModelConstraint(
@@ -25,12 +23,8 @@ class IntDivNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, Engine& engine) override;
 
-  [[nodiscard]] VarNodeId a() const noexcept {
-    return staticInputVarNodeIds().front();
-  }
-  [[nodiscard]] VarNodeId b() const noexcept {
-    return staticInputVarNodeIds().back();
-  }
+  [[nodiscard]] VarNodeId a() const noexcept;
+  [[nodiscard]] VarNodeId b() const noexcept;
 };
 
 }  // namespace invariantgraph

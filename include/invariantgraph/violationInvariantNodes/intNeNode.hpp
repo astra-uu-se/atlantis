@@ -12,18 +12,16 @@ namespace invariantgraph {
 
 class IntNeNode : public ViolationInvariantNode {
  public:
-  IntNeNode(VarNodeId a, VarNodeId b, VarNodeId r)
-      : ViolationInvariantNode({a, b}, r) {}
-  IntNeNode(VarNodeId a, VarNodeId b, bool shouldHold)
-      : ViolationInvariantNode({a, b}, shouldHold) {}
+  IntNeNode(VarNodeId a, VarNodeId b, VarNodeId r);
+
+  IntNeNode(VarNodeId a, VarNodeId b, bool shouldHold);
 
   static std::unique_ptr<IntNeNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"int_ne", 2},
-                                                            {"int_ne_reif", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_ne", 2},
+                                                       {"int_ne_reif", 3}};
   }
 
   void registerOutputVariables(InvariantGraph&, Engine& engine) override;

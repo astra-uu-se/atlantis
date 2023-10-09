@@ -4,11 +4,17 @@
 
 namespace invariantgraph {
 
+BoolXorNode::BoolXorNode(VarNodeId a, VarNodeId b, VarNodeId r)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
+BoolXorNode::BoolXorNode(VarNodeId a, VarNodeId b, bool shouldHold)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
+                             shouldHold) {}
+
 std::unique_ptr<BoolXorNode> BoolXorNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("BoolXor constraint takes two var bool arguments");
   }
@@ -39,19 +45,21 @@ std::unique_ptr<BoolXorNode> BoolXorNode::fromModelConstraint(
 
 void BoolXorNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                           Engine& engine) {
-  registerViolation(engine);
+  registerViolation(invariantGraph, engine);
 }
 
 void BoolXorNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeInvariant<BoolXor>(engine, violationVarId(), a()->varId(),
-                                  b()->varId());
+    engine.makeInvariant<BoolXor>(engine, violationVarId(invariantGraph),
+                                  invariantGraph.varId(a()),
+                                  invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<BoolEqual>(engine, violationVarId(), a()->varId(),
-                                     b()->varId());
+    engine.makeConstraint<BoolEqual>(engine, violationVarId(invariantGraph),
+                                     invariantGraph.varId(a()),
+                                     invariantGraph.varId(b()));
   }
 }
 

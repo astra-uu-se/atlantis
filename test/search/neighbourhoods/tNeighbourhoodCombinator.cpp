@@ -20,7 +20,7 @@ class MockNeighbourhood : public search::neighbourhoods::Neighbourhood {
 
 class NeighbourhoodCombinatorTest : public ::testing::Test {
  public:
-  std::vector<std::unique_ptr<search::neighbourhoods::Neighbourhood>> ns;
+  std::vector<std::shared_ptr<search::neighbourhoods::Neighbourhood>> ns;
   MockNeighbourhood* n1{nullptr};
   MockNeighbourhood* n2{nullptr};
 

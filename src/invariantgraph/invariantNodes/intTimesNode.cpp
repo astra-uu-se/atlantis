@@ -4,6 +4,9 @@
 
 namespace invariantgraph {
 
+IntTimesNode::IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output)
+    : InvariantNode({output}, {a, b}) {}
+
 std::unique_ptr<IntTimesNode> IntTimesNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
@@ -22,14 +25,15 @@ std::unique_ptr<IntTimesNode> IntTimesNode::fromModelConstraint(
 
 void IntTimesNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                            Engine& engine) {
-  registerDefinedVariable(engine, outputVarNodeIds().front());
+  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void IntTimesNode::registerNode(InvariantGraph& invariantGraph,
                                 Engine& engine) {
-  assert(outputVarNodeIds().front()->varId() != NULL_ID);
-  engine.makeInvariant<Times>(engine, outputVarNodeIds().front()->varId(),
-                              a()->varId(), b()->varId());
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
+  engine.makeInvariant<Times>(
+      engine, invariantGraph.varId(outputVarNodeIds().front()),
+      invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 
 }  // namespace invariantgraph

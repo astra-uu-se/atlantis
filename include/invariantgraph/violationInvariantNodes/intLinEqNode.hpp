@@ -21,23 +21,16 @@ class IntLinEqNode : public ViolationInvariantNode {
   static std::unique_ptr<IntLinEqNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
-        {"int_lin_eq", 3}, {"int_lin_eq_reif", 4}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_lin_eq", 3},
+                                                       {"int_lin_eq_reif", 4}};
   }
 
   IntLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
-               Int c, VarNodeId r)
-      : ViolationInvariantNode(std::move(variables), r),
-        _coeffs(std::move(coeffs)),
-        _c(c) {}
+               Int c, VarNodeId r);
 
   IntLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
-               Int c, bool shouldHold)
-      : ViolationInvariantNode(std::move(variables), shouldHold),
-        _coeffs(std::move(coeffs)),
-        _c(c) {}
+               Int c, bool shouldHold);
 
   void registerOutputVariables(InvariantGraph&, Engine& engine) override;
 

@@ -11,9 +11,8 @@ namespace invariantgraph {
 
 class ArrayBoolElement2dNode : public InvariantNode {
  public:
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"array_bool_element2d_nonshifted_flat", 7}};
   }
 

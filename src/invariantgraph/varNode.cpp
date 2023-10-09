@@ -1,15 +1,20 @@
 #include "invariantgraph/varNode.hpp"
 
+#include "invariantgraph/invariantGraph.hpp"
+#include "invariantgraph/invariantNode.hpp"
+
 namespace invariantgraph {
 
 static SearchDomain convertDomain(const VarNode::FZNVariable& variable) {
   if (std::holds_alternative<fznparser::BoolVar>(variable)) {
     const fznparser::BoolVar& boolVar = std::get<fznparser::BoolVar>(variable);
     std::vector<Int> boolDomain;
-    if (boolVar.upperBound() == false) {
+    if (boolVar.upperBound() == true) {
+      // 0 indicates there is no violation
       boolDomain.emplace_back(0);
     }
     if (boolVar.lowerBound() == false) {
+      // non-zero indicates there is a violation
       boolDomain.emplace_back(1);
     }
     return SearchDomain(std::move(boolDomain));
@@ -22,28 +27,33 @@ static SearchDomain convertDomain(const VarNode::FZNVariable& variable) {
   return SearchDomain(intDomain.elements());
 }
 
-VarNode::VarNode(VarNodeId id, const VarNode::FZNVariable& variable)
-    : _id(id),
+VarNode::VarNode(VarNodeId varNodeId, const VarNode::FZNVariable& variable)
+    : _varNodeId(varNodeId),
       _variable(variable),
       _domain{std::move(convertDomain(*_variable))},
       _isIntVar(std::holds_alternative<fznparser::IntVar>(variable)) {}
 
-VarNode::VarNode(VarNodeId id, SearchDomain&& domain, bool isIntVar)
-    : _id(id),
+VarNode::VarNode(VarNodeId varNodeId, SearchDomain&& domain, bool isIntVar)
+    : _varNodeId(varNodeId),
       _variable(std::nullopt),
       _domain(std::move(domain)),
       _isIntVar(isIntVar) {}
 
-VarNode::VarNode(VarNodeId id, const SearchDomain& domain, bool isIntVar)
-    : _id(id), _variable(std::nullopt), _domain(domain), _isIntVar(isIntVar) {}
+VarNode::VarNode(VarNodeId varNodeId, const SearchDomain& domain, bool isIntVar)
+    : _varNodeId(varNodeId),
+      _variable(std::nullopt),
+      _domain(domain),
+      _isIntVar(isIntVar) {}
 
-VarNodeId VarNode::varNodeId() const noexcept { return _id; }
+VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
-std::optional<FZNVariable> VarNode::variable() const { return _variable; }
+std::optional<VarNode::FZNVariable> VarNode::variable() const {
+  return _variable;
+}
 
-std::string_view VarNode::identifier() const {
-  if (!_variable.holds_value()) {
-    return std::string_view::empty();
+std::string VarNode::identifier() const {
+  if (!_variable.has_value()) {
+    return "";
   }
   if (std::holds_alternative<fznparser::BoolVar>(*_variable)) {
     return std::get<fznparser::BoolVar>(*_variable).identifier();
@@ -53,16 +63,18 @@ std::string_view VarNode::identifier() const {
 
 VarId VarNode::varId() const { return _varId; }
 
-void setVarId(VarId varId) {
+void VarNode::setVarId(VarId varId) {
   assert(_varId == NULL_ID);
   _varId = varId;
 }
+
+const SearchDomain& VarNode::constDomain() const noexcept { return _domain; }
 
 SearchDomain& VarNode::domain() noexcept { return _domain; }
 
 bool VarNode::isFixed() const noexcept { return _domain.isFixed(); }
 
-inline bool VarNode::isIntVar() const noexcept { return _isIntVar; }
+bool VarNode::isIntVar() const noexcept { return _isIntVar; }
 
 VarId VarNode::postDomainConstraint(Engine& engine,
                                     std::vector<DomainEntry>&& domain) {
@@ -84,6 +96,28 @@ VarId VarNode::postDomainConstraint(Engine& engine,
   return _domainViolationId;
 }
 
+Int VarNode::val() const {
+  if (_domain.isFixed()) {
+    return _domain.lowerBound();
+  } else {
+    throw std::runtime_error("val() called on non-fixed variable");
+  }
+}
+
+void VarNode::removeValue(Int val) {
+  if (!isIntVar()) {
+    throw std::runtime_error("removeValue(Int) called on BoolVar");
+  }
+  _domain.removeValue(val);
+}
+
+void VarNode::removeValue(bool val) {
+  if (isIntVar()) {
+    throw std::runtime_error("removeValue(bool) called on IntVar");
+  }
+  _domain.fix(val ? 0 : 1);
+}
+
 std::vector<DomainEntry> VarNode::constrainedDomain(const Engine& engine) {
   assert(this->varId() != NULL_ID);
   const VarId varId = this->varId();
@@ -91,63 +125,64 @@ std::vector<DomainEntry> VarNode::constrainedDomain(const Engine& engine) {
                                                 engine.upperBound(varId));
 }
 
-std::pair<Int, Int> VarNode::bounds() const noexcept {
-  return _domain.bounds();
+std::pair<Int, Int> VarNode::bounds() const { return _domain.bounds(); }
+
+const std::vector<InvariantNodeId>& VarNode::inputTo() const noexcept {
+  return _inputTo;
 }
 
-const std::vector<InvariantNodeId>& VarNode::inputFor() const noexcept {
-  return _inputFor;
+const std::vector<InvariantNodeId>& VarNode::staticInputTo() const noexcept {
+  return _staticInputTo;
 }
 
-const std::vector<InvariantNodeId>& VarNode::staticInputFor() const noexcept {
-  return _staticInputFor;
-}
-
-const std::vector<InvariantNodeId>& VarNode::dynamicInputFor() const noexcept {
-  return _dynamicInputFor;
+const std::vector<InvariantNodeId>& VarNode::dynamicInputTo() const noexcept {
+  return _dynamicInputTo;
 }
 
 const std::unordered_set<InvariantNodeId, InvariantNodeIdHash>&
 VarNode::definingNodes() const noexcept {
-  return _definingNodes;
+  return _outputOf;
 }
 
-InvariantNodeId VarNode::definedBy() const noexcept {
-  if (_definingNodes.size() == 1) {
-    return _definingNodes.begin();
+InvariantNodeId VarNode::outputOf() const noexcept {
+  if (_outputOf.size() == 0) {
+    return InvariantNodeId(NULL_NODE_ID);
+  } else if (_outputOf.size() != 1) {
+    throw std::runtime_error("VarNode is not an output variable");
   }
+  return *_outputOf.begin();
 }
 
 void VarNode::markAsInputFor(InvariantNodeId listeningInvNodeId,
                              bool isStaticInput) {
-  _inputFor.push_back(listeningInvNodeId);
+  _inputTo.push_back(listeningInvNodeId);
   if (isStaticInput) {
-    _staticInputFor.push_back(listeningInvNodeId);
+    _staticInputTo.push_back(listeningInvNodeId);
   } else {
-    _dynamicInputFor.push_back(listeningInvNodeId);
+    _dynamicInputTo.push_back(listeningInvNodeId);
   }
 }
 
-void VarNode::unmarkAsDefinedBy(InvariantNodeId definingInvNodeId) {
-  _definingNodes.erase(definingInvNodeId);
+void VarNode::unmarkOutputTo(InvariantNodeId definingInvNodeId) {
+  _outputOf.erase(definingInvNodeId);
 }
 
 void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvNodeId,
                                bool isStaticInput) {
   if (isStaticInput) {
-    auto it = _staticInputFor.begin();
-    while (it != _staticInputFor.end()) {
+    auto it = _staticInputTo.begin();
+    while (it != _staticInputTo.end()) {
       if (*it == listeningInvNodeId) {
-        it = _staticInputFor.erase(it);
+        it = _staticInputTo.erase(it);
       } else {
         it++;
       }
     }
   } else {
-    auto it = _dynamicInputFor.begin();
-    while (it != _dynamicInputFor.end()) {
+    auto it = _dynamicInputTo.begin();
+    while (it != _dynamicInputTo.end()) {
       if (*it == listeningInvNodeId) {
-        it = _dynamicInputFor.erase(it);
+        it = _dynamicInputTo.erase(it);
       } else {
         it++;
       }
@@ -157,7 +192,7 @@ void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvNodeId,
 
 void VarNode::markOutputTo(InvariantNodeId definingInvNodeId) {
   assert(definingInvNodeId != NULL_NODE_ID);
-  _definingNodes.emplace(definingInvariant);
+  _outputOf.emplace(definingInvNodeId);
 }
 
 std::optional<Int> VarNode::constantValue() const noexcept {

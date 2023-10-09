@@ -11,12 +11,10 @@
 namespace invariantgraph {
 class ArrayIntMaximumNode : public InvariantNode {
  public:
-  ArrayIntMaximumNode(std::vector<VarNodeId>&& variables, VarNodeId output)
-      : InvariantNode({output}, std::move(variables)) {}
+  ArrayIntMaximumNode(std::vector<VarNodeId>&& variables, VarNodeId output);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"array_int_maximum", 2}};
   }
 

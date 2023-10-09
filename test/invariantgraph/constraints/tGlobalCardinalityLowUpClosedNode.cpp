@@ -28,28 +28,25 @@ static bool isSatisfied(const std::vector<Int>& values,
 }
 
 template <ConstraintType Type>
-class AbstractGlobalCardinalityLowUpClosedNodeTest : public NodeTestBase {
+class AbstractGlobalCardinalityLowUpClosedNodeTest
+    : public NodeTestBase<invariantgraph::GlobalCardinalityLowUpClosedNode> {
  public:
-  std::unique_ptr<fznparser::IntVar> x1;
-  std::unique_ptr<fznparser::IntVar> x2;
+  invariantgraph::VarNodeId x1;
+  invariantgraph::VarNodeId x2;
   const std::vector<Int> cover{2, 6};
   const std::vector<Int> low{0, 1};
   const std::vector<Int> up{1, 2};
-  std::unique_ptr<fznparser::BoolVar> r;
-
-  std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::Model> model;
-  std::unique_ptr<invariantgraph::GlobalCardinalityLowUpClosedNode> node;
+  invariantgraph::VarNodeId r;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = intVar(5, 10, "x1");
-    x2 = intVar(2, 7, "x2");
-    r = boolVar("r");
+    x1 = createIntVar(5, 10, "x1");
+    x2 = createIntVar(2, 7, "x2");
+    r = createBoolVar("r");
 
     fznparser::IntVarArray inputArg("");
-    inputArg.append(*x1);
-    inputArg.append(*x2);
+    inputArg.append(intVar(x1));
+    inputArg.append(intVar(x2));
 
     fznparser::IntVarArray coverArg("");
     for (const Int val : cover) {
@@ -70,7 +67,7 @@ class AbstractGlobalCardinalityLowUpClosedNodeTest : public NodeTestBase {
       _model->addConstraint(std::move(fznparser::Constraint(
           "fzn_global_cardinality_low_up_closed_reif",
           std::vector<fznparser::Arg>{inputArg, coverArg, lowArg, upArg,
-                                      fznparser::BoolArg{*r}})));
+                                      fznparser::BoolArg{boolVar(r)}})));
 
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
@@ -90,54 +87,55 @@ class AbstractGlobalCardinalityLowUpClosedNodeTest : public NodeTestBase {
       }
     }
 
-    node =
-        makeNode<invariantgraph::GlobalCardinalityLowUpClosedNode>(*constraint);
+    makeInvNode(_model->constraints().front());
   }
 
   void construction() {
+    expectInputTo(invNode());
+    expectOutputOf(invNode());
+
     const size_t numInputs = 2;
-    EXPECT_EQ(node->staticInputVarNodeIds().size(), numInputs);
-    std::vector<invariantgraph::VarNodeId> expectedInputs{_nodeMap->at("x1"),
-                                                          _nodeMap->at("x2")};
-    EXPECT_EQ(node->staticInputVarNodeIds(), expectedInputs);
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
+    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2};
+    EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
     EXPECT_THAT(expectedInputs,
-                testing::ContainerEq(node->staticInputVarNodeIds()));
-    expectMarkedAsInput(node.get(), node->staticInputVarNodeIds());
+                testing::ContainerEq(invNode().staticInputVarNodeIds()));
 
     if (Type == ConstraintType::REIFIED) {
-      EXPECT_EQ(node->outputVarNodeIds().size(), 1);
-      EXPECT_EQ(node->outputVarNodeIds().front(), _nodeMap->at("r"));
+      EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
+      EXPECT_EQ(invNode().outputVarNodeIds().front(), r);
     } else {
-      EXPECT_EQ(node->outputVarNodeIds().size(), 0);
+      EXPECT_EQ(invNode().outputVarNodeIds().size(), 0);
     }
 
     if constexpr (Type == ConstraintType::REIFIED) {
-      EXPECT_TRUE(node->isReified());
-      EXPECT_NE(node->reifiedViolation(), nullptr);
-      EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VarNode::FZNVariable(*r));
+      EXPECT_TRUE(invNode().isReified());
+      EXPECT_NE(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     } else {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
+      EXPECT_FALSE(invNode().isReified());
+      EXPECT_EQ(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
     }
   }
 
   void application() {
     PropagationEngine engine;
     engine.open();
-    addVariablesToEngine(engine);
+    addInputVarsToEngine(engine);
 
-    for (auto* const definedVariable : node->outputVarNodeIds()) {
-      EXPECT_EQ(definedVariable->varId(), NULL_ID);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
     }
-    EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->registerOutputVariables(engine);
-    for (auto* const definedVariable : node->outputVarNodeIds()) {
-      EXPECT_NE(definedVariable->varId(), NULL_ID);
+    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_NE(varId(outputVarNodeId), NULL_ID);
     }
-    EXPECT_NE(node->violationVarId(), NULL_ID);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
 
-    node->registerNode(*_invariantGraph, engine);
+    invNode().registerNode(*_invariantGraph, engine);
     engine.close();
 
     // x1, x2
@@ -147,26 +145,26 @@ class AbstractGlobalCardinalityLowUpClosedNodeTest : public NodeTestBase {
     EXPECT_EQ(engine.numVariables(), 3);
     // gcc
     EXPECT_EQ(engine.numInvariants(), 1);
-    EXPECT_EQ(engine.lowerBound(node->violationVarId()), 0);
-    EXPECT_GT(engine.upperBound(node->violationVarId()), 0);
+    EXPECT_EQ(engine.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
+    EXPECT_GT(engine.upperBound(invNode().violationVarId(*_invariantGraph)), 0);
   }
 
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    addVariablesToEngine(engine);
-    node->registerOutputVariables(engine);
-    node->registerNode(*_invariantGraph, engine);
+    addInputVarsToEngine(engine);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerNode(*_invariantGraph, engine);
 
     std::vector<VarId> inputs;
-    for (auto* const input : node->staticInputVarNodeIds()) {
-      EXPECT_NE(input->varId(), NULL_ID);
-      inputs.emplace_back(input->varId());
+    for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      inputs.emplace_back(varId(inputVarNodeId));
     }
     EXPECT_EQ(inputs.size(), 2);
 
-    EXPECT_NE(node->violationVarId(), NULL_ID);
-    const VarId violationId = node->violationVarId();
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    const VarId violationId = invNode().violationVarId(*_invariantGraph);
 
     std::vector<Int> inputVals(inputs.size());
 

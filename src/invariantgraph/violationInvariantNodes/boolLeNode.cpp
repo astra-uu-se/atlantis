@@ -2,12 +2,20 @@
 
 #include "../parseHelper.hpp"
 
-std::unique_ptr<invariantgraph::BoolLeNode>
-invariantgraph::BoolLeNode::fromModelConstraint(
+namespace invariantgraph {
+
+BoolLeNode::BoolLeNode(VarNodeId a, VarNodeId b, VarNodeId r)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
+
+BoolLeNode::BoolLeNode(VarNodeId a, VarNodeId b, bool shouldHold)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
+                             shouldHold) {}
+
+std::unique_ptr<BoolLeNode> BoolLeNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("BoolLe constraint takes two var bool arguments");
   }
@@ -30,30 +38,32 @@ invariantgraph::BoolLeNode::fromModelConstraint(
   const fznparser::BoolArg& reified =
       get<fznparser::BoolArg>(constraint.arguments().back());
   if (reified.isFixed()) {
-    return std::make_unique<invariantgraph::BoolLeNode>(a, b,
-                                                        reified.toParameter());
+    return std::make_unique<BoolLeNode>(a, b, reified.toParameter());
   }
-  return std::make_unique<invariantgraph::BoolLeNode>(
+  return std::make_unique<BoolLeNode>(
       a, b, invariantGraph.createVarNode(reified.var()));
 }
 
-void invariantgraph::BoolLeNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  registerViolation(engine);
+void BoolLeNode::registerOutputVariables(InvariantGraph& invariantGraph,
+                                         Engine& engine) {
+  registerViolation(invariantGraph, engine);
 }
 
-void invariantgraph::BoolLeNode::registerNode(InvariantGraph& invariantGraph,
-                                              Engine& engine) {
-  assert(violationVarId() != NULL_ID);
-  assert(a()->varId() != NULL_ID);
-  assert(b()->varId() != NULL_ID);
+void BoolLeNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
+  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(invariantGraph.varId(a()) != NULL_ID);
+  assert(invariantGraph.varId(b()) != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<BoolLessEqual>(engine, violationVarId(), a()->varId(),
-                                         b()->varId());
+    engine.makeConstraint<BoolLessEqual>(engine, violationVarId(invariantGraph),
+                                         invariantGraph.varId(a()),
+                                         invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<BoolLessThan>(engine, violationVarId(), b()->varId(),
-                                        a()->varId());
+    engine.makeConstraint<BoolLessThan>(engine, violationVarId(invariantGraph),
+                                        invariantGraph.varId(b()),
+                                        invariantGraph.varId(a()));
   }
 }
+
+}  // namespace invariantgraph

@@ -18,13 +18,11 @@ class InvariantGraph;  // Forward declaration
  */
 class ImplicitConstraintNode : public InvariantNode {
  private:
-  search::neighbourhoods::Neighbourhood* _neighbourhood{nullptr};
+  std::shared_ptr<search::neighbourhoods::Neighbourhood> _neighbourhood{
+      nullptr};
 
  public:
-  explicit ImplicitConstraintNode(std::vector<VarNodeId>&& outputVarNodeIds)
-      : InvariantNode(std::move(outputVarNodeIds)) {}
-
-  ~ImplicitConstraintNode() override { delete _neighbourhood; }
+  explicit ImplicitConstraintNode(std::vector<VarNodeId>&& outputVarNodeIds);
 
   void registerOutputVariables(InvariantGraph&, Engine& engine) override;
 
@@ -46,11 +44,12 @@ class ImplicitConstraintNode : public InvariantNode {
    *
    * @return The neighbourhood corresponding to this implicit constraint.
    */
-  [[nodiscard]] std::unique_ptr<search::neighbourhoods::Neighbourhood>
-  takeNeighbourhood() noexcept;
+  [[nodiscard]] std::shared_ptr<search::neighbourhoods::Neighbourhood>
+  neighbourhood() noexcept;
 
  protected:
-  virtual search::neighbourhoods::Neighbourhood* createNeighbourhood(
-      Engine& engine, std::vector<search::SearchVariable> variables) = 0;
+  virtual std::shared_ptr<search::neighbourhoods::Neighbourhood>
+  createNeighbourhood(Engine& engine,
+                      std::vector<search::SearchVariable>&& variables) = 0;
 };
 }  // namespace invariantgraph

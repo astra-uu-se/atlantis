@@ -29,13 +29,16 @@ class BoolAllEqualTest : public InvariantTest {
   }
 
   Int computeViolation(const std::vector<Int>& values) {
-    size_t numTrue;
-    for (size_t i = 0; i < values.size(); ++i) {
-      if (values.at(i) == 0) {
+    size_t numFalse = 0;
+    size_t numTrue = 0;
+    for (const Int val : values) {
+      if (val == 0) {
         ++numTrue;
+      } else {
+        ++numFalse;
       }
     }
-    return std::min(numTrue, static_cast<Int>(values.size()) - numTrue);
+    return std::min(values.size() - numTrue, values.size() - numFalse);
   }
 };
 

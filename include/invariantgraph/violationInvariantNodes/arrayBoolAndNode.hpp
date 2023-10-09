@@ -14,16 +14,12 @@ class ArrayBoolAndNode : public ViolationInvariantNode {
   VarId _intermediate{NULL_ID};
 
  public:
-  ArrayBoolAndNode(std::vector<VarNodeId>&& as, VarNodeId output)
-      : ViolationInvariantNode(std::move(as), output) {}
+  ArrayBoolAndNode(std::vector<VarNodeId>&& as, VarNodeId output);
 
-  ArrayBoolAndNode(std::vector<VarNodeId>&& as, bool shouldHold)
-      : ViolationInvariantNode(std::move(as), shouldHold) {}
+  ArrayBoolAndNode(std::vector<VarNodeId>&& as, bool shouldHold);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
-        {"array_bool_and", 2}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"array_bool_and", 2}};
   }
 
   static std::unique_ptr<ArrayBoolAndNode> fromModelConstraint(

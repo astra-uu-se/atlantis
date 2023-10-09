@@ -12,14 +12,12 @@ namespace invariantgraph {
 
 class BoolNotNode : public InvariantNode {
  public:
-  BoolNotNode(VarNodeId staticInput, VarNodeId output)
-      : InvariantNode({output}, {staticInput}) {}
+  BoolNotNode(VarNodeId staticInput, VarNodeId output);
 
   ~BoolNotNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{};
   }
 
   static std::unique_ptr<BoolNotNode> fromModelConstraint(

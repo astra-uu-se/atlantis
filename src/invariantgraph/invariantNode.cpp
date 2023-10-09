@@ -7,12 +7,12 @@ namespace invariantgraph {
  * A node in the invariant graph which defines a number of variables. This could
  * be an invariant, a soft constraint (which defines a violation), or a view.
  */
-InvariantNode::InvariantNode(std::vector<VarNodeId>&& outputVarNodeIds,
-                             std::vector<VarNodeId>&& staticInputVarNodeIds,
-                             std::vector<VarNodeId>&& dynamicInputVarNodeIds)
-    : _outputVarNodeIds(std::move(outputVarNodeIds)),
-      _staticInputVarNodeIds(std::move(staticInputVarNodeIds)),
-      _dynamicInputVarNodeIds(std::move(dynamicInputVarNodeIds)) {}
+InvariantNode::InvariantNode(std::vector<VarNodeId>&& outputIds,
+                             std::vector<VarNodeId>&& staticInputIds,
+                             std::vector<VarNodeId>&& dynamicInputIds)
+    : _outputVarNodeIds(std::move(outputIds)),
+      _staticInputVarNodeIds(std::move(staticInputIds)),
+      _dynamicInputVarNodeIds(std::move(dynamicInputIds)) {}
 
 bool InvariantNode::isReified() const { return false; }
 
@@ -23,8 +23,7 @@ void InvariantNode::init(InvariantGraph& invariantGraph,
   assert(_id == NULL_NODE_ID);
   _id = id;
   for (VarNodeId varNodeId : _outputVarNodeIds) {
-    markOutputTo(invariantGraph, invariantGraph.varNode(varNodeId), false);
-    assert(invariantGraph.varNode(varNodeId).definingNodes().contains(this));
+    markOutputTo(invariantGraph.varNode(varNodeId), false);
   }
   for (VarNodeId varNodeId : _staticInputVarNodeIds) {
     markStaticInputTo(invariantGraph.varNode(varNodeId), false);
@@ -46,7 +45,9 @@ const std::vector<VarNodeId>& InvariantNode::outputVarNodeIds() const noexcept {
  * applicable if the current node is a soft constraint. If this node does not
  * define a violation variable, this method returns @p nullptr.
  */
-virtual VarId InvariantNode::violationVarId() const { return NULL_ID; }
+VarId InvariantNode::violationVarId(const InvariantGraph&) const {
+  return NULL_ID;
+}
 
 const std::vector<VarNodeId>& InvariantNode::staticInputVarNodeIds()
     const noexcept {
@@ -63,10 +64,10 @@ void InvariantNode::replaceDefinedVariable(VarNode& oldOutputVarNode,
   // Replace all occurrences:
   for (size_t i = 0; i < _outputVarNodeIds.size(); ++i) {
     if (_outputVarNodeIds[i] == oldOutputVarNode.varNodeId()) {
-      _outputVarNodeIds[i] = newOutputVarNode;
+      _outputVarNodeIds[i] = newOutputVarNode.varNodeId();
     }
   }
-  oldOutputVarNode.unmarkAsDefinedBy(_id);
+  oldOutputVarNode.unmarkOutputTo(_id);
   newOutputVarNode.markOutputTo(_id);
 }
 
@@ -85,7 +86,7 @@ void InvariantNode::removeOutputVarNode(VarNode& outputVarNode) {
       std::remove(_outputVarNodeIds.begin(), _outputVarNodeIds.end(),
                   outputVarNode.varNodeId()),
       _outputVarNodeIds.end());
-  outputVarNode.unmarkAsDefinedBy(_id);
+  outputVarNode.unmarkOutputTo(_id);
 }
 
 void InvariantNode::replaceStaticInputVarNode(VarNode& oldInputVarNode,
@@ -112,8 +113,8 @@ void InvariantNode::replaceDynamicInputVarNode(VarNode& oldInputVarNode,
   newInputVarNode.markAsInputFor(_id, false);
 }
 
-static inline VarId InvariantNode::registerDefinedVariable(
-    Engine& engine, VarNode& varNode, Int initialValue) {
+VarId InvariantNode::makeEngineVar(Engine& engine, VarNode& varNode,
+                                   Int initialValue) {
   if (varNode.varId() == NULL_ID) {
     varNode.setVarId(
         engine.makeIntVar(initialValue, initialValue, initialValue));

@@ -9,19 +9,6 @@
 #include "views/equalConst.hpp"
 #include "views/notEqualConst.hpp"
 
-static std::vector<invariantgraph::VarNodeId> merge(
-    const std::vector<invariantgraph::VarNodeId>& as,
-    const std::vector<invariantgraph::VarNodeId>& bs) {
-  std::vector<invariantgraph::VarNodeId> output(as.size() + bs.size());
-  for (size_t i = 0; i < as.size(); ++i) {
-    output[i] = as[i];
-  }
-  for (size_t i = 0; i < bs.size(); ++i) {
-    output[as.size() + i] = bs[i];
-  }
-  return output;
-}
-
 namespace invariantgraph {
 class BoolClauseNode : public ViolationInvariantNode {
  private:
@@ -31,20 +18,14 @@ class BoolClauseNode : public ViolationInvariantNode {
 
  public:
   explicit BoolClauseNode(std::vector<VarNodeId>&& as,
-                          std::vector<VarNodeId>&& bs, VarNodeId r)
-      : ViolationInvariantNode(std::move(merge(as, bs)), r),
-        _as(std::move(as)),
-        _bs(std::move(bs)) {}
-  explicit BoolClauseNode(std::vector<VarNodeId>&& as,
-                          std::vector<VarNodeId>&& bs, bool shouldHold)
-      : ViolationInvariantNode(std::move(merge(as, bs)), shouldHold),
-        _as(std::move(as)),
-        _bs(std::move(bs)) {}
+                          std::vector<VarNodeId>&& bs, VarNodeId r);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
-        {"bool_clause", 2}, {"bool_clause_reif", 3}};
+  explicit BoolClauseNode(std::vector<VarNodeId>&& as,
+                          std::vector<VarNodeId>&& bs, bool shouldHold);
+
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"bool_clause", 2},
+                                                       {"bool_clause_reif", 3}};
   }
 
   static std::unique_ptr<BoolClauseNode> fromModelConstraint(

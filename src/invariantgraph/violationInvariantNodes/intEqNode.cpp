@@ -10,17 +10,11 @@ IntEqNode::IntEqNode(VarNodeId a, VarNodeId b, VarNodeId r)
 IntEqNode::IntEqNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ViolationInvariantNode({a, b}, shouldHold) {}
 
-IntEqNode::IntEqNode(InvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
-                     bool shouldHold)
-    : ViolationInvariantNode({a, b}, shouldHold) {
-  init(invariantGraph, invariantGraph.nextInvariantNodeId());
-}
-
 std::unique_ptr<IntEqNode> IntEqNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("IntEq constraint takes two var bool arguments");
   }
@@ -45,21 +39,23 @@ std::unique_ptr<IntEqNode> IntEqNode::fromModelConstraint(
 
 void IntEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                         Engine& engine) {
-  registerViolation(engine);
+  registerViolation(invariantGraph, engine);
 }
 
 void IntEqNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId() != NULL_ID);
-  assert(a()->varId() != NULL_ID);
-  assert(b()->varId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(invariantGraph.varId(a()) != NULL_ID);
+  assert(invariantGraph.varId(b()) != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<Equal>(engine, violationVarId(), a()->varId(),
-                                 b()->varId());
+    engine.makeConstraint<Equal>(engine, violationVarId(invariantGraph),
+                                 invariantGraph.varId(a()),
+                                 invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<NotEqual>(engine, violationVarId(), a()->varId(),
-                                    b()->varId());
+    engine.makeConstraint<NotEqual>(engine, violationVarId(invariantGraph),
+                                    invariantGraph.varId(a()),
+                                    invariantGraph.varId(b()));
   }
 }
 

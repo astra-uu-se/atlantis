@@ -9,7 +9,7 @@ namespace search {
 
 class SearchController {
  public:
-  using VariableMap = std::unordered_map<std::string_view, VarId>;
+  using VariableMap = std::unordered_map<std::string, VarId>;
 
  private:
   const fznparser::Model& _model;

@@ -40,7 +40,7 @@ std::unique_ptr<AllDifferentNode> AllDifferentNode::fromModelConstraint(
     return nullptr;
   }
 
-  std::vector<VarNodeId> variableNodes = pruneAllDifferent(
+  std::vector<VarNodeId> variableNodes = pruneAllDifferentFree(
       invariantGraph, invariantGraph.createVarNodes(intVarArray));
 
   if (constraint.arguments().size() == 1) {
@@ -62,14 +62,14 @@ void AllDifferentNode::registerOutputVariables(InvariantGraph& invariantGraph,
   if (staticInputVarNodeIds().empty()) {
     return;
   }
-  if (violationVarId() == NULL_ID) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     if (shouldHold()) {
-      registerViolation(engine);
+      registerViolation(invariantGraph, engine);
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(
-          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
+      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+                                            engine, _intermediate, 0));
     }
   }
 }
@@ -78,12 +78,15 @@ bool AllDifferentNode::prune(InvariantGraph& invariantGraph) {
   if (isReified() || !shouldHold()) {
     return false;
   }
-  std::vector<VarNodeId> singletonStaticInputs =
-      pruneAllDifferent(invariantGraph, staticInputVarNodeIds());
-  for (auto* const singleton : singletonStaticInputs) {
-    removeStaticInputVarNode(singleton);
+
+  std::vector<VarNodeId> fixedInputs =
+      pruneAllDifferentFixed(invariantGraph, staticInputVarNodeIds());
+
+  for (const auto& fixedVarNodeId : fixedInputs) {
+    removeStaticInputVarNode(invariantGraph.varNode(fixedVarNodeId));
   }
-  return !singletonStaticInputs.empty();
+
+  return !fixedInputs.empty();
 }
 
 void AllDifferentNode::registerNode(InvariantGraph& invariantGraph,
@@ -91,15 +94,15 @@ void AllDifferentNode::registerNode(InvariantGraph& invariantGraph,
   if (staticInputVarNodeIds().empty()) {
     return;
   }
-  assert(violationVarId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
 
   std::vector<VarId> engineVariables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(engineVariables),
-                 [&](const auto& var) { return var->varId(); });
+                 [&](const auto& id) { return invariantGraph.varId(id); });
 
   engine.makeConstraint<AllDifferent>(
-      engine, !shouldHold() ? _intermediate : violationVarId(),
+      engine, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
       engineVariables);
 }
 

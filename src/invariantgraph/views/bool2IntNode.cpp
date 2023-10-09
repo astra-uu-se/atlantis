@@ -2,8 +2,12 @@
 
 #include "views/bool2IntView.hpp"
 
-std::unique_ptr<invariantgraph::Bool2IntNode>
-invariantgraph::Bool2IntNode::fromModelConstraint(
+namespace invariantgraph {
+
+Bool2IntNode::Bool2IntNode(VarNodeId staticInput, VarNodeId output)
+    : InvariantNode({output}, {staticInput}) {}
+
+std::unique_ptr<Bool2IntNode> Bool2IntNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   const fznparser::BoolArg a =
       std::get<fznparser::BoolArg>(constraint.arguments().at(0));
@@ -11,17 +15,19 @@ invariantgraph::Bool2IntNode::fromModelConstraint(
   const fznparser::IntArg b =
       std::get<fznparser::IntArg>(constraint.arguments().at(1));
 
-  return std::make_unique<invariantgraph::Bool2IntNode>(
-      invariantGraph.createVarNode(a), invariantGraph.createVarNode(b));
+  return std::make_unique<Bool2IntNode>(invariantGraph.createVarNode(a),
+                                        invariantGraph.createVarNode(b));
 }
 
-void invariantgraph::Bool2IntNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  if (outputVarNodeIds().front()->varId() == NULL_ID) {
-    outputVarNodeIds().front()->setVarId(
-        engine.makeIntView<Bool2IntView>(engine, input()->varId()));
+void Bool2IntNode::registerOutputVariables(InvariantGraph& invariantGraph,
+                                           Engine& engine) {
+  if (invariantGraph.varId(outputVarNodeIds().front()) == NULL_ID) {
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(engine.makeIntView<Bool2IntView>(
+            engine, invariantGraph.varId(input())));
   }
 }
 
-void invariantgraph::Bool2IntNode::registerNode(
-    const InvariantGraph& invariantGraph, Engine&) {}
+void Bool2IntNode::registerNode(InvariantGraph&, Engine&) {}
+
+}  // namespace invariantgraph

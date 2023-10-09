@@ -28,9 +28,9 @@ class InvariantNode {
  public:
   using VariableMap = std::unordered_map<VarNodeId, VarId, VarNodeIdHash>;
 
-  explicit InvariantNode(std::vector<VarNodeId>&& outputVarNodeIds,
-                         std::vector<VarNodeId>&& staticInputVarNodeIds = {},
-                         std::vector<VarNodeId>&& dynamicInputVarNodeIds = {});
+  explicit InvariantNode(std::vector<VarNodeId>&& outputIds,
+                         std::vector<VarNodeId>&& staticInputIds = {},
+                         std::vector<VarNodeId>&& dynamicInputIds = {});
 
   virtual ~InvariantNode() = default;
 
@@ -72,7 +72,7 @@ class InvariantNode {
    * applicable if the current node is a violation invariant. If this node does
    * not define a violation variable, this method returns NULL_ID.
    */
-  [[nodiscard]] virtual VarId violationVarId() const;
+  [[nodiscard]] virtual VarId violationVarId(const InvariantGraph&) const;
 
   [[nodiscard]] const std::vector<VarNodeId>& staticInputVarNodeIds()
       const noexcept;
@@ -97,10 +97,7 @@ class InvariantNode {
   friend class ReifiedConstraint;
 
  protected:
-  static inline VarId registerDefinedVariables(Engine&,
-                                              VarNode&,
-                                              Int initialValue = 0);
-
+  static VarId makeEngineVar(Engine&, VarNode&, Int initialValue = 0);
 
   void markOutputTo(VarNode& node, bool registerHere = true);
 

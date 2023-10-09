@@ -49,9 +49,8 @@ ArrayBoolElement2dNode::fromModelConstraint(
   }
 
   return std::make_unique<ArrayIntElement2dNode>(
-      (invariantGraph.createVarNode(idx1),
-      invariantGraph.createVarNode(idx2), std::move(parMatrix),
-      invariantGraph.createVarNode(c), offset1, offset2);
+      invariantGraph.createVarNode(idx1), invariantGraph.createVarNode(idx2),
+      std::move(parMatrix), invariantGraph.createVarNode(c), offset1, offset2);
 }
 
 }  // namespace invariantgraph

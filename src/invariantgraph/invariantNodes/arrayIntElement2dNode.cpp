@@ -4,8 +4,16 @@
 
 namespace invariantgraph {
 
-std::unique_ptr<invariantgraph::ArrayIntElement2dNode>
-invariantgraph::ArrayIntElement2dNode::fromModelConstraint(
+ArrayIntElement2dNode::ArrayIntElement2dNode(
+    VarNodeId idx1, VarNodeId idx2, std::vector<std::vector<Int>>&& parMatrix,
+    VarNodeId output, Int offset1, Int offset2)
+    : InvariantNode({output}, {idx1, idx2}),
+      _parMatrix(std::move(parMatrix)),
+      _offset1(offset1),
+      _offset2(offset2) {}
+
+std::unique_ptr<ArrayIntElement2dNode>
+ArrayIntElement2dNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
@@ -47,23 +55,24 @@ invariantgraph::ArrayIntElement2dNode::fromModelConstraint(
     }
   }
 
-  return std::make_unique<invariantgraph::ArrayIntElement2dNode>(
+  return std::make_unique<ArrayIntElement2dNode>(
       invariantGraph.createVarNode(idx1), invariantGraph.createVarNode(idx2),
       std::move(parMatrix), invariantGraph.createVarNode(cArg), offset1,
       offset2);
 }
 
-void invariantgraph::ArrayIntElement2dNode::registerOutputVariables(
+void ArrayIntElement2dNode::registerOutputVariables(
     InvariantGraph& invariantGraph, Engine& engine) {
-  registerDefinedVariable(engine, outputVarNodeIds().front());
+  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void invariantgraph::ArrayIntElement2dNode::registerNode(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  assert(outputVarNodeIds().front()->varId() != NULL_ID);
+void ArrayIntElement2dNode::registerNode(InvariantGraph& invariantGraph,
+                                         Engine& engine) {
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
   engine.makeInvariant<Element2dConst>(
-      engine, outputVarNodeIds().front()->varId(), idx1()->varId(),
-      idx2()->varId(), _parMatrix, _offset1, _offset2);
+      engine, invariantGraph.varId(outputVarNodeIds().front()),
+      invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), _parMatrix,
+      _offset1, _offset2);
 }
 
 }  // namespace invariantgraph

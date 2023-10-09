@@ -3,53 +3,51 @@
 #include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
 #include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
-class AllDifferentImplicitNodeTest : public NodeTestBase {
+class AllDifferentImplicitNodeTest
+    : public NodeTestBase<invariantgraph::AllDifferentImplicitNode> {
  public:
-  std::unique_ptr<fznparser::IntVar> a;
-  std::unique_ptr<fznparser::IntVar> b;
-  std::unique_ptr<fznparser::IntVar> c;
-  std::unique_ptr<fznparser::IntVar> d;
-
-  std::unique_ptr<invariantgraph::AllDifferentImplicitNode> node;
+  invariantgraph::VarNodeId a;
+  invariantgraph::VarNodeId b;
+  invariantgraph::VarNodeId c;
+  invariantgraph::VarNodeId d;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = intVar(2, 7, "a");
-    b = intVar(2, 7, "b");
-    c = intVar(2, 7, "c");
-    d = intVar(2, 7, "d");
+    a = createIntVar(2, 7, "a");
+    b = createIntVar(2, 7, "b");
+    c = createIntVar(2, 7, "c");
+    d = createIntVar(2, 7, "d");
 
     fznparser::IntVarArray inputs("");
-    inputs.append(*a);
-    inputs.append(*b);
-    inputs.append(*c);
-    inputs.append(*d);
+    inputs.append(intVar(a));
+    inputs.append(intVar(b));
+    inputs.append(intVar(c));
+    inputs.append(intVar(d));
 
-    node = makeNode<invariantgraph::AllDifferentImplicitNode>(
-        _model->addConstraint(fznparser::Constraint(
-            "fzn_all_different_int", std::vector<fznparser::Arg>{inputs})));
+    _model->addConstraint(fznparser::Constraint(
+        "fzn_all_different_int", std::vector<fznparser::Arg>{inputs}));
+
+    makeImplicitNode(_model->constraints().front());
   }
 };
 
 TEST_F(AllDifferentImplicitNodeTest, construction) {
-  std::vector<invariantgraph::VarNodeId> expectedVars{
-      _nodeMap->at("a"), _nodeMap->at("b"), _nodeMap->at("c"),
-      _nodeMap->at("d")};
+  std::vector<invariantgraph::VarNodeId> expectedVars{a, b, c, d};
 
-  EXPECT_EQ(node->outputVarNodeIds(), expectedVars);
+  EXPECT_EQ(invNode().outputVarNodeIds(), expectedVars);
 }
 
 TEST_F(AllDifferentImplicitNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  for (auto* const definedVariable : node->outputVarNodeIds()) {
-    EXPECT_EQ(definedVariable->varId(), NULL_ID);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
   }
-  node->registerOutputVariables(engine);
-  for (auto* const definedVariable : node->outputVarNodeIds()) {
-    EXPECT_NE(definedVariable->varId(), NULL_ID);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
   }
-  node->registerNode(*_invariantGraph, engine);
+  invNode().registerNode(*_invariantGraph, engine);
   engine.close();
 
   // a, b, c and d
@@ -60,8 +58,7 @@ TEST_F(AllDifferentImplicitNodeTest, application) {
 
   EXPECT_EQ(engine.numInvariants(), 0);
 
-  auto neighbourhood = node->takeNeighbourhood();
-  EXPECT_FALSE(node->takeNeighbourhood());
+  auto neighbourhood = invNode().neighbourhood();
 
   EXPECT_TRUE(
       dynamic_cast<search::neighbourhoods::AllDifferentUniformNeighbourhood*>(

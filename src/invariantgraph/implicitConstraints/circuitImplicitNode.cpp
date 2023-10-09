@@ -46,9 +46,11 @@ std::unique_ptr<CircuitImplicitNode> CircuitImplicitNode::fromModelConstraint(
       invariantGraph.createVarNodes(arg));
 }
 
-search::neighbourhoods::Neighbourhood* CircuitImplicitNode::createNeighbourhood(
-    Engine&, std::vector<search::SearchVariable> variables) {
-  return new search::neighbourhoods::CircuitNeighbourhood(variables);
+std::shared_ptr<search::neighbourhoods::Neighbourhood>
+CircuitImplicitNode::createNeighbourhood(
+    Engine&, std::vector<search::SearchVariable>&& variables) {
+  return std::make_shared<search::neighbourhoods::CircuitNeighbourhood>(
+      std::move(variables));
 }
 
 }  // namespace invariantgraph

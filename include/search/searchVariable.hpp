@@ -15,8 +15,8 @@ class SearchVariable {
   VarId _varId;
 
  public:
-  explicit SearchVariable(VarId varId, SearchDomain domain)
-      : _domain(std::move(domain)), _varId(varId) {}
+  explicit SearchVariable(VarId varId, const SearchDomain& domain)
+      : _domain(domain), _varId(varId) {}
 
   [[nodiscard]] VarId engineId() const noexcept { return _varId; }
 

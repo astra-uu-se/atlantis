@@ -24,7 +24,7 @@ class InvariantGraphBuilder {
   void createNodes();
 
   void markOutputTo(const invariantgraph::InvariantNode& invNodeId,
-                     std::unordered_set<std::string_view>& definedVars);
+                    std::unordered_set<std::string>& definedVars);
 
   std::unique_ptr<InvariantNode> makeInvariantNode(
       const fznparser::Constraint& constraint,

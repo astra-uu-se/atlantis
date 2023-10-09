@@ -36,7 +36,7 @@ void search::SearchController::onFinish() const {
 }
 
 static void printSearchVariable(
-    const std::string_view& searchVariable,
+    const std::string& searchVariable,
     const search::Assignment& assignment,
     const search::SearchController::VariableMap& variableMap) {
   std::cout << searchVariable << " = "

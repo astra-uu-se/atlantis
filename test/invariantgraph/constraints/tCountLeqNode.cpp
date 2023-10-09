@@ -4,44 +4,42 @@
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/violationInvariantNodes/countLeqNode.hpp"
 
+// Constrains c to be less than or equal to the number of occurrences of y in x.
 static bool isSatisfied(const std::vector<Int>& values, const Int y,
                         const Int c) {
-  Int count = 0;
+  Int occurrences = 0;
   for (const Int val : values) {
-    count += static_cast<Int>(val == y);
+    occurrences += (val == y ? 1 : 0);
   }
-  return c <= count;
+  return c <= occurrences;
 }
 
-template <bool YIsParameter, bool CIsParameter, ConstraintType Type>
-class AbstractCountLeqNodeTest : public NodeTestBase {
+template <bool YIsParameter, ConstraintType Type>
+class AbstractCountLeqNodeTest
+    : public NodeTestBase<invariantgraph::CountLeqNode> {
  public:
-  std::unique_ptr<fznparser::IntVar> x1;
-  std::unique_ptr<fznparser::IntVar> x2;
-  std::unique_ptr<fznparser::IntVar> x3;
-  std::unique_ptr<fznparser::IntVar> y;
-  std::unique_ptr<fznparser::IntVar> c;
-  std::unique_ptr<fznparser::BoolVar> r;
+  invariantgraph::VarNodeId x1;
+  invariantgraph::VarNodeId x2;
+  invariantgraph::VarNodeId x3;
+  invariantgraph::VarNodeId y;
+  invariantgraph::VarNodeId c;
+  invariantgraph::VarNodeId r;
   const Int yParamVal{5};
   const Int cParamVal{2};
 
-  std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::Model> model;
-  std::unique_ptr<invariantgraph::CountLeqNode> node;
-
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = intVar(5, 10, "x1");
-    x2 = intVar(2, 7, "x2");
-    x3 = intVar(2, 7, "x3");
-    y = intVar(2, 7, "y");
-    c = intVar(2, 7, "c");
-    r = boolVar("r");
+    x1 = createIntVar(2, 5, "x1");
+    x2 = createIntVar(3, 5, "x2");
+    x3 = createIntVar(4, 5, "x3");
+    y = createIntVar(2, 5, "y");
+    c = createIntVar(0, 2, "c");
+    r = createBoolVar("r");
 
     fznparser::IntVarArray inputs("");
-    inputs.append(*x1);
-    inputs.append(*x2);
-    inputs.append(*x3);
+    inputs.append(intVar(x1));
+    inputs.append(intVar(x2));
+    inputs.append(intVar(x3));
 
     if constexpr (Type == ConstraintType::REIFIED) {
       if constexpr (YIsParameter) {
@@ -49,30 +47,30 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
             "fzn_count_leq_reif",
             std::vector<fznparser::Arg>{inputs, fznparser::IntArg{yParamVal},
                                         fznparser::IntArg{cParamVal},
-                                        fznparser::BoolArg{*r}})));
+                                        fznparser::BoolArg{boolVar(r)}})));
 
       } else {
         // y is var
         _model->addConstraint(std::move(fznparser::Constraint(
             "fzn_count_leq_reif",
-            std::vector<fznparser::Arg>{inputs, fznparser::IntArg{*y},
+            std::vector<fznparser::Arg>{inputs, fznparser::IntArg{intVar(y)},
                                         fznparser::IntArg{cParamVal},
-                                        fznparser::BoolArg{*r}})));
+                                        fznparser::BoolArg{boolVar(r)}})));
       }
     } else {
       // No variable reification:
       if constexpr (Type == ConstraintType::NORMAL) {
         if constexpr (YIsParameter) {
           _model->addConstraint(std::move(fznparser::Constraint(
-              "fzn_count_eq",
+              "fzn_count_leq",
               std::vector<fznparser::Arg>{inputs, fznparser::IntArg{yParamVal},
-                                          fznparser::IntArg{*c}})));
+                                          fznparser::IntArg{intVar(c)}})));
 
         } else {
           _model->addConstraint(std::move(fznparser::Constraint(
-              "fzn_count_eq",
-              std::vector<fznparser::Arg>{inputs, fznparser::IntArg{*y},
-                                          fznparser::IntArg{*c}})));
+              "fzn_count_leq",
+              std::vector<fznparser::Arg>{inputs, fznparser::IntArg{intVar(y)},
+                                          fznparser::IntArg{intVar(c)}})));
         }
       } else {
         // constant reification:
@@ -94,132 +92,122 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
           if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
             _model->addConstraint(std::move(fznparser::Constraint(
                 "fzn_count_leq_reif",
-                std::vector<fznparser::Arg>{inputs, fznparser::IntArg{*y},
-                                            fznparser::IntArg{cParamVal},
-                                            fznparser::BoolArg{false}})));
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{intVar(y)},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{false}})));
           } else {
             _model->addConstraint(std::move(fznparser::Constraint(
                 "fzn_count_leq_reif",
-                std::vector<fznparser::Arg>{inputs, fznparser::IntArg{*y},
-                                            fznparser::IntArg{cParamVal},
-                                            fznparser::BoolArg{true}})));
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{intVar(y)},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{true}})));
           }
         }
       }
     }
 
-    node =
-        makeNode<invariantgraph::CountLeqNode>(_model->constraints().front());
+    makeInvNode(_model->constraints().front());
   }
 
   void construction() {
-    size_t inputSize = 5;
-    if constexpr (YIsParameter) {
-      --inputSize;
-      EXPECT_EQ(node->yVarNode(), nullptr);
-    } else {
-      EXPECT_NE(node->yVarNode(), nullptr);
-    }
-    if constexpr (CIsParameter) {
-      --inputSize;
-      EXPECT_EQ(node->cVarNode(), nullptr);
-    } else {
-      EXPECT_NE(node->cVarNode(), nullptr);
-    }
-    EXPECT_EQ(node->staticInputVarNodeIds().size(), inputSize);
-    std::vector<invariantgraph::VarNodeId> expectedInputs{
-        _nodeMap->at("x1"), _nodeMap->at("x2"), _nodeMap->at("c"),
-        _nodeMap->at("y")};
-    EXPECT_EQ(node->staticInputVarNodeIds(), expectedInputs);
-    EXPECT_THAT(expectedInputs,
-                testing::ContainerEq(node->staticInputVarNodeIds()));
-    expectMarkedAsInput(node.get(), node->staticInputVarNodeIds());
+    expectInputTo(invNode());
+    expectOutputOf(invNode());
 
-    std::vector<invariantgraph::VarNodeId> expectedOutputs{_nodeMap->at("c")};
-    EXPECT_EQ(node->outputVarNodeIds(), expectedOutputs);
+    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2, x3};
+    if constexpr (YIsParameter) {
+      EXPECT_EQ(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
+    } else {
+      EXPECT_NE(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
+      expectedInputs.emplace_back(y);
+    }
+    if constexpr (Type != ConstraintType::NORMAL) {
+      EXPECT_EQ(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+    } else {
+      EXPECT_NE(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+      expectedInputs.emplace_back(c);
+    }
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), expectedInputs.size());
+    EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
+    EXPECT_THAT(expectedInputs,
+                testing::ContainerEq(invNode().staticInputVarNodeIds()));
+
+    std::vector<invariantgraph::VarNodeId> expectedOutputs;
+    if constexpr (Type == ConstraintType::REIFIED) {
+      expectedOutputs.emplace_back(r);
+    }
+    EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
     EXPECT_THAT(expectedOutputs,
-                testing::ContainerEq(node->outputVarNodeIds()));
+                testing::ContainerEq(invNode().outputVarNodeIds()));
 
     if constexpr (Type == ConstraintType::REIFIED) {
-      EXPECT_TRUE(node->isReified());
-      EXPECT_NE(node->reifiedViolation(), nullptr);
-      EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VarNode::FZNVariable(*r));
+      EXPECT_TRUE(invNode().isReified());
+      EXPECT_NE(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     } else {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
+      EXPECT_FALSE(invNode().isReified());
+      EXPECT_EQ(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
     }
   }
 
   void application() {
-    PropagationEngine engine;
-    engine.open();
-    addVariablesToEngine(engine);
-    for (auto* const definedVariable : node->outputVarNodeIds()) {
-      EXPECT_EQ(definedVariable->varId(), NULL_ID);
-    }
-    EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->registerOutputVariables(engine);
-    for (auto* const definedVariable : node->outputVarNodeIds()) {
-      EXPECT_NE(definedVariable->varId(), NULL_ID);
-    }
-    EXPECT_NE(node->violationVarId(), NULL_ID);
-    node->registerNode(*_invariantGraph, engine);
-    engine.close();
+    expectInputTo(invNode());
+    expectOutputOf(invNode());
 
-    // x1, x2, x3, y, c
-    size_t numSearchVars = 5;
-    // x1, x2, x3, y, c, the violation, dummy objective
-    size_t numVariables = 7;
-
+    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2, x3};
     if constexpr (YIsParameter) {
-      --numSearchVars;
-      --numVariables;
+      EXPECT_EQ(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
+    } else {
+      EXPECT_NE(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
+      expectedInputs.emplace_back(y);
     }
-    if constexpr (CIsParameter) {
-      --numSearchVars;
-      --numVariables;
+    if constexpr (Type != ConstraintType::NORMAL) {
+      EXPECT_EQ(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+    } else {
+      EXPECT_NE(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+      expectedInputs.emplace_back(c);
     }
-    EXPECT_EQ(engine.searchVariables().size(), numSearchVars);
-    // x1, x2, x3, and the violation
-    EXPECT_EQ(engine.numVariables(), numVariables);
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), expectedInputs.size());
+    EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
+    EXPECT_THAT(expectedInputs,
+                testing::ContainerEq(invNode().staticInputVarNodeIds()));
 
-    // countEq
-    size_t numInvariants = 2;
-    if constexpr (CIsParameter) {
-      --numInvariants;
+    std::vector<invariantgraph::VarNodeId> expectedOutputs;
+    if constexpr (Type == ConstraintType::REIFIED) {
+      expectedOutputs.emplace_back(r);
     }
 
-    EXPECT_EQ(engine.numInvariants(), numInvariants);
+    EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
+    EXPECT_THAT(expectedOutputs,
+                testing::ContainerEq(invNode().outputVarNodeIds()));
 
-    EXPECT_EQ(engine.lowerBound(node->violationVarId()), 0);
-    EXPECT_GT(engine.upperBound(node->violationVarId()), 0);
+    if constexpr (Type == ConstraintType::REIFIED) {
+      EXPECT_TRUE(invNode().isReified());
+      EXPECT_NE(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
+    } else {
+      EXPECT_FALSE(invNode().isReified());
+      EXPECT_EQ(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+    }
   }
 
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    addVariablesToEngine(engine);
-    node->registerOutputVariables(engine);
-    node->registerNode(*_invariantGraph, engine);
+    addInputVarsToEngine(engine);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerNode(*_invariantGraph, engine);
 
     std::vector<VarId> inputs;
-    size_t numStaticInputs = 5;
-    if constexpr (YIsParameter) {
-      --numStaticInputs;
+    for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      inputs.emplace_back(varId(inputVarNodeId));
     }
-    if constexpr (CIsParameter) {
-      --numStaticInputs;
-    }
-    EXPECT_EQ(node->staticInputVarNodeIds().size(), numStaticInputs);
 
-    for (auto* const inputVariable : node->staticInputVarNodeIds()) {
-      EXPECT_NE(inputVariable->varId(), NULL_ID);
-      inputs.emplace_back(inputVariable->varId());
-    }
-    EXPECT_EQ(inputs.size(), numStaticInputs);
-
-    const VarId violationId = node->violationVarId();
+    const VarId violationId = invNode().violationVarId(*_invariantGraph);
 
     std::vector<Int> values;
     Int yLb = yParamVal;
@@ -228,8 +216,9 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
     Int cUb = cParamVal;
 
     values.resize(3);
-    const VarId yVar =
-        node->yVarNode() == nullptr ? NULL_ID : node->yVarNode()->varId();
+    const VarId yVar = invNode().yVarNode() == invariantgraph::NULL_NODE_ID
+                           ? NULL_ID
+                           : varId(invNode().yVarNode());
 
     if constexpr (!YIsParameter) {
       EXPECT_NE(yVar, NULL_ID);
@@ -237,9 +226,10 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
       yUb = engine.upperBound(yVar);
     }
 
-    const VarId cVar =
-        node->cVarNode() == nullptr ? NULL_ID : node->cVarNode()->varId();
-    if constexpr (!CIsParameter) {
+    const VarId cVar = invNode().cVarNode() == invariantgraph::NULL_NODE_ID
+                           ? NULL_ID
+                           : varId(invNode().cVarNode());
+    if constexpr (Type == ConstraintType::NORMAL) {
       EXPECT_NE(cVar, NULL_ID);
       cLb = engine.lowerBound(cVar);
       cUb = engine.upperBound(cVar);
@@ -261,7 +251,7 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
               if constexpr (!YIsParameter) {
                 engine.setValue(yVar, yVal);
               }
-              if constexpr (!CIsParameter) {
+              if constexpr (Type == ConstraintType::NORMAL) {
                 engine.setValue(cVar, cVal);
               }
               engine.endMove();
@@ -272,7 +262,7 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
               if constexpr (!YIsParameter) {
                 EXPECT_EQ(engine.currentValue(yVar), yVal);
               }
-              if constexpr (!CIsParameter) {
+              if constexpr (Type == ConstraintType::NORMAL) {
                 EXPECT_EQ(engine.currentValue(cVar), cVal);
               }
 
@@ -293,7 +283,7 @@ class AbstractCountLeqNodeTest : public NodeTestBase {
 };
 
 class CountLeqNodeTest
-    : public AbstractCountLeqNodeTest<false, false, ConstraintType::NORMAL> {};
+    : public AbstractCountLeqNodeTest<false, ConstraintType::NORMAL> {};
 
 TEST_F(CountLeqNodeTest, Construction) { construction(); }
 
@@ -302,7 +292,7 @@ TEST_F(CountLeqNodeTest, Application) { application(); }
 TEST_F(CountLeqNodeTest, Propagation) { propagation(); }
 
 class CountLeqReifNodeTest
-    : public AbstractCountLeqNodeTest<false, false, ConstraintType::REIFIED> {};
+    : public AbstractCountLeqNodeTest<false, ConstraintType::REIFIED> {};
 
 TEST_F(CountLeqReifNodeTest, Construction) { construction(); }
 
@@ -311,8 +301,7 @@ TEST_F(CountLeqReifNodeTest, Application) { application(); }
 TEST_F(CountLeqReifNodeTest, Propagation) { propagation(); }
 
 class CountLeqFalseNodeTest
-    : public AbstractCountLeqNodeTest<false, false,
-                                      ConstraintType::CONSTANT_FALSE> {};
+    : public AbstractCountLeqNodeTest<false, ConstraintType::CONSTANT_FALSE> {};
 
 TEST_F(CountLeqFalseNodeTest, Construction) { construction(); }
 
@@ -321,8 +310,7 @@ TEST_F(CountLeqFalseNodeTest, Application) { application(); }
 TEST_F(CountLeqFalseNodeTest, Propagation) { propagation(); }
 
 class CountLeqTrueNodeTest
-    : public AbstractCountLeqNodeTest<false, false,
-                                      ConstraintType::CONSTANT_TRUE> {};
+    : public AbstractCountLeqNodeTest<false, ConstraintType::CONSTANT_TRUE> {};
 
 TEST_F(CountLeqTrueNodeTest, Construction) { construction(); }
 
@@ -331,7 +319,7 @@ TEST_F(CountLeqTrueNodeTest, Application) { application(); }
 TEST_F(CountLeqTrueNodeTest, Propagation) { propagation(); }
 
 class CountLeqYParNodeTest
-    : public AbstractCountLeqNodeTest<true, false, ConstraintType::NORMAL> {};
+    : public AbstractCountLeqNodeTest<true, ConstraintType::NORMAL> {};
 
 TEST_F(CountLeqYParNodeTest, Construction) { construction(); }
 
@@ -340,7 +328,7 @@ TEST_F(CountLeqYParNodeTest, Application) { application(); }
 TEST_F(CountLeqYParNodeTest, Propagation) { propagation(); }
 
 class CountLeqYParReifNodeTest
-    : public AbstractCountLeqNodeTest<true, false, ConstraintType::REIFIED> {};
+    : public AbstractCountLeqNodeTest<true, ConstraintType::REIFIED> {};
 
 TEST_F(CountLeqYParReifNodeTest, Construction) { construction(); }
 
@@ -349,8 +337,7 @@ TEST_F(CountLeqYParReifNodeTest, Application) { application(); }
 TEST_F(CountLeqYParReifNodeTest, Propagation) { propagation(); }
 
 class CountLeqYParFalseNodeTest
-    : public AbstractCountLeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_FALSE> {};
+    : public AbstractCountLeqNodeTest<true, ConstraintType::CONSTANT_FALSE> {};
 
 TEST_F(CountLeqYParFalseNodeTest, Construction) { construction(); }
 
@@ -359,87 +346,10 @@ TEST_F(CountLeqYParFalseNodeTest, Application) { application(); }
 TEST_F(CountLeqYParFalseNodeTest, Propagation) { propagation(); }
 
 class CountLeqYParTrueNodeTest
-    : public AbstractCountLeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_TRUE> {};
+    : public AbstractCountLeqNodeTest<true, ConstraintType::CONSTANT_TRUE> {};
 
 TEST_F(CountLeqYParTrueNodeTest, Construction) { construction(); }
 
 TEST_F(CountLeqYParTrueNodeTest, Application) { application(); }
 
 TEST_F(CountLeqYParTrueNodeTest, Propagation) { propagation(); }
-
-class CountLeqCParNodeTest
-    : public AbstractCountLeqNodeTest<true, false, ConstraintType::NORMAL> {};
-
-TEST_F(CountLeqCParNodeTest, Construction) { construction(); }
-
-TEST_F(CountLeqCParNodeTest, Application) { application(); }
-
-TEST_F(CountLeqCParNodeTest, Propagation) { propagation(); }
-
-class CountLeqCParReifNodeTest
-    : public AbstractCountLeqNodeTest<true, false, ConstraintType::REIFIED> {};
-
-TEST_F(CountLeqCParReifNodeTest, Construction) { construction(); }
-
-TEST_F(CountLeqCParReifNodeTest, Application) { application(); }
-
-TEST_F(CountLeqCParReifNodeTest, Propagation) { propagation(); }
-
-class CountLeqCParFalseNodeTest
-    : public AbstractCountLeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_FALSE> {};
-
-TEST_F(CountLeqCParFalseNodeTest, Construction) { construction(); }
-
-TEST_F(CountLeqCParFalseNodeTest, Application) { application(); }
-
-TEST_F(CountLeqCParFalseNodeTest, Propagation) { propagation(); }
-
-class CountLeqCParTrueNodeTest
-    : public AbstractCountLeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_TRUE> {};
-
-TEST_F(CountLeqCParTrueNodeTest, Construction) { construction(); }
-
-TEST_F(CountLeqCParTrueNodeTest, Application) { application(); }
-
-TEST_F(CountLeqCParTrueNodeTest, Propagation) { propagation(); }
-
-class CountLeqYParCParNodeTest
-    : public AbstractCountLeqNodeTest<true, false, ConstraintType::NORMAL> {};
-
-TEST_F(CountLeqYParCParNodeTest, Construction) { construction(); }
-
-TEST_F(CountLeqYParCParNodeTest, Application) { application(); }
-
-TEST_F(CountLeqYParCParNodeTest, Propagation) { propagation(); }
-
-class CountLeqYParCParReifNodeTest
-    : public AbstractCountLeqNodeTest<true, false, ConstraintType::REIFIED> {};
-
-TEST_F(CountLeqYParCParReifNodeTest, Construction) { construction(); }
-
-TEST_F(CountLeqYParCParReifNodeTest, Application) { application(); }
-
-TEST_F(CountLeqYParCParReifNodeTest, Propagation) { propagation(); }
-
-class CountLeqYParCParFalseNodeTest
-    : public AbstractCountLeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_FALSE> {};
-
-TEST_F(CountLeqYParCParFalseNodeTest, Construction) { construction(); }
-
-TEST_F(CountLeqYParCParFalseNodeTest, Application) { application(); }
-
-TEST_F(CountLeqYParCParFalseNodeTest, Propagation) { propagation(); }
-
-class CountLeqYParCParTrueNodeTest
-    : public AbstractCountLeqNodeTest<true, false,
-                                      ConstraintType::CONSTANT_TRUE> {};
-
-TEST_F(CountLeqYParCParTrueNodeTest, Construction) { construction(); }
-
-TEST_F(CountLeqYParCParTrueNodeTest, Application) { application(); }
-
-TEST_F(CountLeqYParCParTrueNodeTest, Propagation) { propagation(); }

@@ -11,18 +11,16 @@ namespace invariantgraph {
  */
 class InvariantGraphRoot : public ImplicitConstraintNode {
  public:
-  InvariantGraphRoot() : ImplicitConstraintNode({}) {}
-
-  explicit InvariantGraphRoot(std::vector<VarNodeId>&& variables)
+  InvariantGraphRoot(std::vector<VarNodeId>&& variables = {})
       : ImplicitConstraintNode(std::move(variables)) {}
 
   ~InvariantGraphRoot() override = default;
 
-  void addSearchVarNode(VarNode);
+  void addSearchVarNode(VarNode&);
 
  protected:
-  search::neighbourhoods::Neighbourhood* createNeighbourhood(
-      Engine& engine, std::vector<search::SearchVariable> variables) override;
+  std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
+      Engine& engine, std::vector<search::SearchVariable>&& variables) override;
 };
 
 }  // namespace invariantgraph

@@ -16,16 +16,12 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
   VarId _intermediate{NULL_ID};
 
  public:
-  ArrayBoolXorNode(std::vector<VarNodeId>&& as, VarNodeId output)
-      : ViolationInvariantNode(std::move(as), output) {}
+  ArrayBoolXorNode(std::vector<VarNodeId>&& as, VarNodeId output);
 
-  ArrayBoolXorNode(std::vector<VarNodeId>&& as, bool shouldHold)
-      : ViolationInvariantNode(std::move(as), shouldHold) {}
+  ArrayBoolXorNode(std::vector<VarNodeId>&& as, bool shouldHold);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
-        {"array_bool_xor", 1}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"array_bool_xor", 1}};
   }
 
   static std::unique_ptr<ArrayBoolXorNode> fromModelConstraint(

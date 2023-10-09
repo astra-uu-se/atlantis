@@ -4,6 +4,13 @@
 
 namespace invariantgraph {
 
+SetInNode::SetInNode(VarNodeId input, std::vector<Int>&& values, VarNodeId r)
+    : ViolationInvariantNode({input}, r), _values(std::move(values)) {}
+
+SetInNode::SetInNode(VarNodeId input, std::vector<Int>&& values,
+                     bool shouldHold)
+    : ViolationInvariantNode({input}, shouldHold), _values(std::move(values)) {}
+
 std::unique_ptr<SetInNode> SetInNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
@@ -39,8 +46,8 @@ std::unique_ptr<SetInNode> SetInNode::fromModelConstraint(
 
 void SetInNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                         Engine& engine) {
-  if (violationVarId() == NULL_ID) {
-    const VarId input = staticInputVarNodeIds().front()->varId();
+  if (violationVarId(invariantGraph) == NULL_ID) {
+    const VarId input = invariantGraph.varId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
     domainEntries.reserve(_values.size());
     std::transform(_values.begin(), _values.end(),
@@ -51,15 +58,16 @@ void SetInNode::registerOutputVariables(InvariantGraph& invariantGraph,
       assert(!isReified());
       _intermediate =
           engine.makeIntView<InDomain>(engine, input, std::move(domainEntries));
-      setViolationVarId(
-          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
+      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+                                            engine, _intermediate, 0));
     } else {
-      setViolationVarId(engine.makeIntView<InDomain>(engine, input,
+      setViolationVarId(invariantGraph,
+                        engine.makeIntView<InDomain>(engine, input,
                                                      std::move(domainEntries)));
     }
   }
 }
 
-void SetInNode::registerNode(InvariantGraph& invariantGraph, Engine&) {}
+void SetInNode::registerNode(InvariantGraph&, Engine&) {}
 
 }  // namespace invariantgraph

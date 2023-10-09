@@ -4,13 +4,27 @@
 
 namespace invariantgraph {
 
+BoolLinLeNode::BoolLinLeNode(std::vector<Int> coeffs,
+                             std::vector<VarNodeId>&& variables, Int bound,
+                             VarNodeId r)
+    : ViolationInvariantNode(std::move(variables), r),
+      _coeffs(std::move(coeffs)),
+      _bound(bound) {}
+
+BoolLinLeNode::BoolLinLeNode(std::vector<Int> coeffs,
+                             std::vector<VarNodeId>&& variables, Int bound,
+                             bool shouldHold)
+    : ViolationInvariantNode(std::move(variables), shouldHold),
+      _coeffs(std::move(coeffs)),
+      _bound(bound) {}
+
 std::unique_ptr<BoolLinLeNode> BoolLinLeNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 3 ||
+  if (constraint.arguments().size() != 3 &&
       constraint.arguments().size() != 4) {
     throw std::runtime_error("BoolLinLe constraint takes two arguments");
   }
@@ -20,7 +34,7 @@ std::unique_ptr<BoolLinLeNode> BoolLinLeNode::fromModelConstraint(
     throw std::runtime_error(
         "BoolLinLe constraint first argument must be an integer array");
   }
-  if (!std::holds_alternative<fznparser::BoolArg>(
+  if (!std::holds_alternative<fznparser::BoolVarArray>(
           constraint.arguments().at(1))) {
     throw std::runtime_error(
         "BoolLinLe constraint second argument must be a bool var array");
@@ -42,7 +56,7 @@ std::unique_ptr<BoolLinLeNode> BoolLinLeNode::fromModelConstraint(
   std::vector<int64_t> coeffs = coeffsArg.toParVector();
 
   std::vector<VarNodeId> boolVarArray = invariantGraph.createVarNodes(
-      get<fznparser::IntVarArray>(constraint.arguments().front()));
+      get<fznparser::BoolVarArray>(constraint.arguments().at(1)));
 
   const fznparser::IntArg& boundArg =
       std::get<fznparser::IntArg>(constraint.arguments().at(2));
@@ -80,15 +94,15 @@ std::unique_ptr<BoolLinLeNode> BoolLinLeNode::fromModelConstraint(
 
 void BoolLinLeNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                             Engine& engine) {
-  if (violationVarId() == NULL_ID) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(
-          engine.makeIntView<LessEqualConst>(engine, _sumVarId, _bound));
+      setViolationVarId(invariantGraph, engine.makeIntView<LessEqualConst>(
+                                            engine, _sumVarId, _bound));
     } else {
       assert(!isReified());
-      setViolationVarId(
-          engine.makeIntView<GreaterEqualConst>(engine, _sumVarId, _bound + 1));
+      setViolationVarId(invariantGraph, engine.makeIntView<GreaterEqualConst>(
+                                            engine, _sumVarId, _bound + 1));
     }
   }
 }
@@ -98,10 +112,10 @@ void BoolLinLeNode::registerNode(InvariantGraph& invariantGraph,
   std::vector<VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
-                 [&](auto node) { return node->varId(); });
+                 [&](const auto& id) { return invariantGraph.varId(id); });
 
   assert(_sumVarId != NULL_ID);
-  assert(violationVarId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
 
   engine.makeInvariant<BoolLinear>(engine, _sumVarId, _coeffs, variables);
 }

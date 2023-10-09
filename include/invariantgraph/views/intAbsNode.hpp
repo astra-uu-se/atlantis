@@ -11,14 +11,12 @@ namespace invariantgraph {
 
 class IntAbsNode : public InvariantNode {
  public:
-  IntAbsNode(VarNodeId staticInput, VarNodeId output)
-      : InvariantNode({output}, {staticInput}) {}
+  IntAbsNode(VarNodeId staticInput, VarNodeId output);
 
   ~IntAbsNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"int_abs", 2}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_abs", 2}};
   }
 
   static std::unique_ptr<IntAbsNode> fromModelConstraint(

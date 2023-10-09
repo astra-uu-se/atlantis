@@ -4,6 +4,11 @@
 
 namespace invariantgraph {
 
+ArrayVarIntElementNode::ArrayVarIntElementNode(VarNodeId b,
+                                               std::vector<VarNodeId>&& as,
+                                               VarNodeId output, Int offset)
+    : InvariantNode({output}, {b}, std::move(as)), _offset(offset) {}
+
 std::unique_ptr<ArrayVarIntElementNode>
 ArrayVarIntElementNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
@@ -30,7 +35,8 @@ ArrayVarIntElementNode::fromModelConstraint(
 
 void ArrayVarIntElementNode::registerOutputVariables(
     InvariantGraph& invariantGraph, Engine& engine) {
-  registerDefinedVariable(engine, outputVarNodeIds().front(), _offset);
+  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()),
+                _offset);
 }
 
 void ArrayVarIntElementNode::registerNode(InvariantGraph& invariantGraph,
@@ -38,12 +44,13 @@ void ArrayVarIntElementNode::registerNode(InvariantGraph& invariantGraph,
   std::vector<VarId> as;
   std::transform(dynamicInputVarNodeIds().begin(),
                  dynamicInputVarNodeIds().end(), std::back_inserter(as),
-                 [&](auto node) { return node->varId(); });
+                 [&](auto node) { return invariantGraph.varId(node); });
 
-  assert(outputVarNodeIds().front()->varId() != NULL_ID);
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
 
-  engine.makeInvariant<ElementVar>(engine, outputVarNodeIds().front()->varId(),
-                                   b()->varId(), as, _offset);
+  engine.makeInvariant<ElementVar>(
+      engine, invariantGraph.varId(outputVarNodeIds().front()),
+      invariantGraph.varId(b()), as, _offset);
 }
 
 }  // namespace invariantgraph

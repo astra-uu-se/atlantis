@@ -11,14 +11,12 @@
 namespace invariantgraph {
 class ArrayIntMinimumNode : public InvariantNode {
  public:
-  ArrayIntMinimumNode(std::vector<VarNodeId>&& variables, VarNodeId output)
-      : InvariantNode({output}, std::move(variables)) {}
+  ArrayIntMinimumNode(std::vector<VarNodeId>&& variables, VarNodeId output);
 
   ~ArrayIntMinimumNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"array_int_minimum", 2}};
   }
 

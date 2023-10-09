@@ -5,12 +5,12 @@
 namespace invariantgraph {
 
 static std::vector<invariantgraph::VarNodeId> combine(
-    VarNodeId reifiedViolation, std::vector<VarNodeId>&& definedVars) {
-  if (reifiedViolation == nullptr) {
-    return std::move(definedVars);
+    VarNodeId reifiedId, std::vector<VarNodeId>&& outputIds) {
+  if (reifiedId == NULL_NODE_ID) {
+    return std::move(outputIds);
   }
-  definedVars.insert(definedVars.begin(), reifiedViolation);
-  return std::move(definedVars);
+  outputIds.insert(outputIds.begin(), reifiedId);
+  return std::move(outputIds);
 }
 
 /**
@@ -18,84 +18,79 @@ static std::vector<invariantgraph::VarNodeId> combine(
  * propagation engine.
  */
 
-explicit ViolationInvariantNode::ViolationInvariantNode(
-    InvariantNodeId id, std::vector<VarNodeId>&& definedVars,
-    std::vector<VarNodeId>&& staticInputVarNodeIds, VarNodeId reifiedViolation,
-    bool shouldHold)
-    : InvariantNode(
-          id, std::move(combine(reifiedViolation, std::move(definedVars))),
-          std::move(staticInputVarNodeIds)),
-      _reifiedViolation(reifiedViolation),
+ViolationInvariantNode::ViolationInvariantNode(
+    std::vector<VarNodeId>&& outputIds, std::vector<VarNodeId>&& staticInputIds,
+    VarNodeId reifiedId, bool shouldHold)
+    : InvariantNode(std::move(combine(reifiedId, std::move(outputIds))),
+                    std::move(staticInputIds)),
+      _reifiedViolationNodeId(reifiedId),
       _shouldHold(shouldHold) {
   if (!isReified()) {
-    assert(_reifiedViolation == nullptr);
+    assert(_reifiedViolationNodeId == NULL_NODE_ID);
   } else {
-    assert(_reifiedViolation != nullptr);
-    assert(_reifiedViolation->definingNodes().contains(this));
-    assert(outputVarNodeIds().front() == _reifiedViolation);
+    assert(_reifiedViolationNodeId != NULL_NODE_ID);
+    assert(outputVarNodeIds().front() == _reifiedViolationNodeId);
   }
 }
 
-inline bool ViolationInvariantNode::shouldHold() const noexcept {
-  return _shouldHold;
+bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
+
+ViolationInvariantNode::ViolationInvariantNode(
+    std::vector<VarNodeId>&& outputIds, std::vector<VarNodeId>&& staticInputIds,
+    VarNodeId reifiedId)
+    : ViolationInvariantNode(std::move(outputIds), std::move(staticInputIds),
+                             reifiedId, true) {}
+
+ViolationInvariantNode::ViolationInvariantNode(
+    std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedId)
+    : ViolationInvariantNode({}, std::move(staticInputIds), reifiedId, true) {}
+
+ViolationInvariantNode::ViolationInvariantNode(
+    std::vector<VarNodeId>&& outputIds, std::vector<VarNodeId>&& staticInputIds,
+    bool shouldHold)
+    : ViolationInvariantNode(std::move(outputIds), std::move(staticInputIds),
+                             NULL_NODE_ID, shouldHold) {}
+
+ViolationInvariantNode::ViolationInvariantNode(
+    std::vector<VarNodeId>&& staticInputIds, bool shouldHold)
+    : ViolationInvariantNode({}, std::move(staticInputIds), NULL_NODE_ID,
+                             shouldHold) {}
+bool ViolationInvariantNode::isReified() const {
+  return _reifiedViolationNodeId != NULL_NODE_ID;
 }
 
-explicit ViolationInvariantNode::ViolationInvariantNode(
-    std::vector<VarNodeId>&& outputVarNodeIds,
-    std::vector<VarNodeId>&& staticInputVarNodeIds, VarNodeId reifiedViolation)
-    : ViolationInvariantNode(std::move(outputVarNodeIds),
-                             std::move(staticInputVarNodeIds), reifiedViolation,
-                             true) {}
-
-explicit ViolationInvariantNode::ViolationInvariantNode(
-    std::vector<VarNodeId>&& staticInputVarNodeIds, VarNodeId reifiedViolation)
-    : ViolationInvariantNode({}, std::move(staticInputVarNodeIds),
-                             reifiedViolation, true) {}
-
-explicit ViolationInvariantNode::ViolationInvariantNode(
-    std::vector<VarNodeId>&& outputVarNodeIds,
-    std::vector<VarNodeId>&& staticInputVarNodeIds, bool shouldHold)
-    : ViolationInvariantNode(std::move(outputVarNodeIds),
-                             std::move(staticInputVarNodeIds), nullptr,
-                             shouldHold) {}
-
-explicit ViolationInvariantNode::ViolationInvariantNode(
-    std::vector<VarNodeId>&& staticInputVarNodeIds, bool shouldHold)
-    : ViolationInvariantNode({}, std::move(staticInputVarNodeIds), nullptr,
-                             shouldHold) {}
-bool ViolationInvariantNode::isReified() const override {
-  return _reifiedViolation != nullptr;
-}
-
-VarId ViolationInvariantNode::violationVarId() const override {
+VarId ViolationInvariantNode::violationVarId(
+    const InvariantGraph& invariantGraph) const {
   if (isReified()) {
-    return _reifiedViolation->varId();
+    return invariantGraph.varId(_reifiedViolationNodeId);
   }
   return _violationVarId;
 }
 
-inline VarNodeId ViolationInvariantNode::reifiedViolation() {
-  return _reifiedViolation;
+VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
+  return _reifiedViolationNodeId;
 }
 
-VarId ViolationInvariantNode::setViolationVarId(VarId varId) {
-  assert(violationVarId() == NULL_ID);
+VarId ViolationInvariantNode::setViolationVarId(InvariantGraph& invariantGraph,
+                                                VarId varId) {
+  assert(violationVarId(invariantGraph) == NULL_ID);
   if (isReified()) {
-    _reifiedViolation->setVarId(varId);
+    invariantGraph.varNode(_reifiedViolationNodeId).setVarId(varId);
   } else {
     _violationVarId = varId;
   }
-  return violationVarId();
+  return violationVarId(invariantGraph);
 }
 
-inline VarId ViolationInvariantNode::registerViolation(Engine& engine,
-                                                       Int initialValue) {
-  if (violationVarId() == NULL_ID) {
+VarId ViolationInvariantNode::registerViolation(InvariantGraph& invariantGraph,
+                                                Engine& engine,
+                                                Int initialValue) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     return setViolationVarId(
+        invariantGraph,
         engine.makeIntVar(initialValue, initialValue, initialValue));
   }
-  return violationVarId();
+  return violationVarId(invariantGraph);
 }
-};
 
 }  // namespace invariantgraph

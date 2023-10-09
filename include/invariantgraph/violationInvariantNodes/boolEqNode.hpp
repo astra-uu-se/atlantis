@@ -12,17 +12,13 @@ namespace invariantgraph {
 
 class BoolEqNode : public ViolationInvariantNode {
  public:
-  BoolEqNode(VarNodeId a, VarNodeId b, VarNodeId r = VarNodeId(NULL_NODE_ID));
+  explicit BoolEqNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
-  BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+  explicit BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
-  BoolEqNode(InvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
-             bool shouldHold = true);
-
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
-        {"bool_eq", 2}, {"bool_eq_reif", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"bool_eq", 2},
+                                                       {"bool_eq_reif", 3}};
   }
 
   static std::unique_ptr<BoolEqNode> fromModelConstraint(

@@ -2,15 +2,12 @@
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/invariantNodes/intLinearNode.hpp"
 
-class LinearNodeTest : public NodeTestBase {
+class LinearNodeTest : public NodeTestBase<invariantgraph::IntLinearNode> {
  public:
-  std::unique_ptr<fznparser::IntVar> a;
-  std::unique_ptr<fznparser::IntVar> b;
-  std::unique_ptr<fznparser::IntVar> c;
+  invariantgraph::VarNodeId a;
+  invariantgraph::VarNodeId b;
+  invariantgraph::VarNodeId c;
   Int d{3};
-
-  std::unique_ptr<invariantgraph::IntLinearNode> shouldRegisterView;
-  std::unique_ptr<invariantgraph::IntLinearNode> shouldRegisterLinear;
 
   void makeView() {
     fznparser::IntVarArray coeffs("");
@@ -18,15 +15,16 @@ class LinearNodeTest : public NodeTestBase {
     coeffs.append(1);
 
     fznparser::IntVarArray inputs("");
-    inputs.append(*a);
-    inputs.append(*b);
+    inputs.append(intVar(a));
+    inputs.append(intVar(b));
 
-    makeNode<invariantgraph::IntLinearNode>(
-        _model->addConstraint(fznparser::Constraint(
-            "int_lin_eq",
-            std::vector<fznparser::Arg>{coeffs, inputs, fznparser::IntArg{d}},
-            std::vector<fznparser::Annotation>{
-                definesVarAnnotation(a->identifier())})));
+    _model->addConstraint(fznparser::Constraint(
+        "int_lin_eq",
+        std::vector<fznparser::Arg>{coeffs, inputs, fznparser::IntArg{d}},
+        std::vector<fznparser::Annotation>{
+            definesVarAnnotation(identifier(a))}));
+
+    makeInvNode(_model->constraints().front());
   }
 
   void makeLinear() {
@@ -36,70 +34,56 @@ class LinearNodeTest : public NodeTestBase {
     coeffs.append(1);
 
     fznparser::IntVarArray inputs("");
-    inputs.append(*a);
-    inputs.append(*b);
-    inputs.append(*c);
+    inputs.append(intVar(a));
+    inputs.append(intVar(b));
+    inputs.append(intVar(c));
 
-    shouldRegisterLinear = makeNode<invariantgraph::IntLinearNode>(
-        _model->addConstraint(fznparser::Constraint(
-            "int_lin_eq",
-            std::vector<fznparser::Arg>{coeffs, inputs, fznparser::IntArg{d}},
-            std::vector<fznparser::Annotation>{
-                definesVarAnnotation(a->identifier())})));
+    _model->addConstraint(fznparser::Constraint(
+        "int_lin_eq",
+        std::vector<fznparser::Arg>{coeffs, inputs, fznparser::IntArg{d}},
+        std::vector<fznparser::Annotation>{
+            definesVarAnnotation(identifier(a))}));
+
+    makeInvNode(_model->constraints().front());
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = intVar(0, 10, "a");
-    b = intVar(3, 7, "b");
-    c = intVar(3, 7, "c");
+    a = createIntVar(0, 10, "a");
+    b = createIntVar(3, 7, "b");
+    c = createIntVar(3, 7, "c");
   }
 };
 
 TEST_F(LinearNodeTest, construction_should_register_view) {
   makeView();
+  expectInputTo(invNode());
+  expectOutputOf(invNode());
 
-  EXPECT_EQ(shouldRegisterView->coeffs().size(), 1);
-  EXPECT_EQ(shouldRegisterView->coeffs()[0], 1);
+  EXPECT_EQ(invNode().coeffs().size(), 1);
+  EXPECT_EQ(invNode().coeffs().at(0), 1);
 
-  EXPECT_EQ(shouldRegisterView->staticInputVarNodeIds().size(), 1);
-  EXPECT_EQ(shouldRegisterView->staticInputVarNodeIds()[0]->variable(),
-            invariantgraph::VarNode::FZNVariable(*b));
-  EXPECT_EQ(shouldRegisterView->staticInputVarNodeIds()[0]->inputFor().size(),
-            1);
-  EXPECT_EQ(shouldRegisterView->staticInputVarNodeIds()[0]->inputFor()[0],
-            shouldRegisterView.get());
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().at(0), b);
 
-  EXPECT_EQ(shouldRegisterView->outputVarNodeIds().size(), 1);
-  EXPECT_EQ(shouldRegisterView->outputVarNodeIds()[0]->variable(),
-            invariantgraph::VarNode::FZNVariable(*a));
+  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
+  EXPECT_EQ(invNode().outputVarNodeIds().at(0), a);
 }
 
 TEST_F(LinearNodeTest, construction_should_register_linear) {
   makeLinear();
+  expectInputTo(invNode());
+  expectOutputOf(invNode());
 
-  EXPECT_EQ(shouldRegisterLinear->coeffs().size(), 2);
-  EXPECT_EQ(shouldRegisterLinear->coeffs()[0], 1);
-  EXPECT_EQ(shouldRegisterLinear->coeffs()[1], 1);
+  EXPECT_EQ(invNode().coeffs().size(), 2);
+  EXPECT_EQ(invNode().coeffs().at(0), 1);
+  EXPECT_EQ(invNode().coeffs().at(1), 1);
 
-  EXPECT_EQ(shouldRegisterLinear->staticInputVarNodeIds().size(), 2);
-  EXPECT_EQ(shouldRegisterLinear->staticInputVarNodeIds()[0]->variable(),
-            invariantgraph::VarNode::FZNVariable(*b));
-  EXPECT_EQ(shouldRegisterLinear->staticInputVarNodeIds()[0]->inputFor().size(),
-            1);
-  EXPECT_EQ(shouldRegisterLinear->staticInputVarNodeIds()[0]->inputFor()[0],
-            shouldRegisterLinear.get());
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().at(0), b);
 
-  EXPECT_EQ(shouldRegisterLinear->staticInputVarNodeIds()[1]->variable(),
-            invariantgraph::VarNode::FZNVariable(*c));
-  EXPECT_EQ(shouldRegisterLinear->staticInputVarNodeIds()[1]->inputFor().size(),
-            1);
-  EXPECT_EQ(shouldRegisterLinear->staticInputVarNodeIds()[1]->inputFor()[0],
-            shouldRegisterLinear.get());
-
-  EXPECT_EQ(shouldRegisterLinear->outputVarNodeIds().size(), 1);
-  EXPECT_EQ(shouldRegisterLinear->outputVarNodeIds()[0]->variable(),
-            invariantgraph::VarNode::FZNVariable(*a));
+  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
+  EXPECT_EQ(invNode().outputVarNodeIds().at(0), a);
 }
 
 TEST_F(LinearNodeTest, application_should_register_view) {
@@ -107,19 +91,19 @@ TEST_F(LinearNodeTest, application_should_register_view) {
 
   PropagationEngine engine;
   engine.open();
-  addVariablesToEngine(engine);
-  for (auto* const definedVariable : shouldRegisterView->outputVarNodeIds()) {
-    EXPECT_EQ(definedVariable->varId(), NULL_ID);
+  addInputVarsToEngine(engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
   }
-  shouldRegisterView->registerOutputVariables(engine);
-  for (auto* const definedVariable : shouldRegisterView->outputVarNodeIds()) {
-    EXPECT_NE(definedVariable->varId(), NULL_ID);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
   }
-  shouldRegisterView->registerNode(engine);
+  invNode().registerNode(*_invariantGraph, engine);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(*a)), -4);
-  EXPECT_EQ(engine.upperBound(engineVariable(*a)), 0);
+  EXPECT_EQ(engine.lowerBound(varId(a)), -4);
+  EXPECT_EQ(engine.upperBound(varId(a)), 0);
 
   // b
   EXPECT_EQ(engine.searchVariables().size(), 1);
@@ -132,19 +116,19 @@ TEST_F(LinearNodeTest, application_should_register_linear) {
   makeLinear();
   PropagationEngine engine;
   engine.open();
-  addVariablesToEngine(engine);
-  for (auto* const definedVariable : shouldRegisterLinear->outputVarNodeIds()) {
-    EXPECT_EQ(definedVariable->varId(), NULL_ID);
+  addInputVarsToEngine(engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
   }
-  shouldRegisterLinear->registerOutputVariables(engine);
-  for (auto* const definedVariable : shouldRegisterLinear->outputVarNodeIds()) {
-    EXPECT_NE(definedVariable->varId(), NULL_ID);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
   }
-  shouldRegisterLinear->registerNode(engine);
+  invNode().registerNode(*_invariantGraph, engine);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(*a)), -11);
-  EXPECT_EQ(engine.upperBound(engineVariable(*a)), -3);
+  EXPECT_EQ(engine.lowerBound(varId(a)), -11);
+  EXPECT_EQ(engine.upperBound(varId(a)), -3);
 
   // b and c
   EXPECT_EQ(engine.searchVariables().size(), 2);

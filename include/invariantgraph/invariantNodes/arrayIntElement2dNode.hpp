@@ -17,15 +17,10 @@ class ArrayIntElement2dNode : public InvariantNode {
  public:
   ArrayIntElement2dNode(VarNodeId idx1, VarNodeId idx2,
                         std::vector<std::vector<Int>>&& parMatrix,
-                        VarNodeId output, Int offset1, Int offset2)
-      : InvariantNode({output}, {idx1, idx2}),
-        _parMatrix(std::move(parMatrix)),
-        _offset1(offset1),
-        _offset2(offset2) {}
+                        VarNodeId output, Int offset1, Int offset2);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"array_int_element2d_nonshifted_flat", 7}};
   }
 

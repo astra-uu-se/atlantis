@@ -12,16 +12,13 @@ namespace invariantgraph {
 
 class BoolLtNode : public ViolationInvariantNode {
  public:
-  BoolLtNode(VarNodeId a, VarNodeId b, VarNodeId r)
-      : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
-  BoolLtNode(VarNodeId a, VarNodeId b, bool shouldHold)
-      : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
-                               shouldHold) {}
+  BoolLtNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
-        {"bool_lt", 2}, {"bool_lt_reif", 3}};
+  BoolLtNode(VarNodeId a, VarNodeId b, bool shouldHold);
+
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"bool_lt", 2},
+                                                       {"bool_lt_reif", 3}};
   }
 
   static std::unique_ptr<BoolLtNode> fromModelConstraint(

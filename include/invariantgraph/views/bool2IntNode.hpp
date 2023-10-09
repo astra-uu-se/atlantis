@@ -11,14 +11,12 @@ namespace invariantgraph {
 
 class Bool2IntNode : public InvariantNode {
  public:
-  Bool2IntNode(VarNodeId staticInput, VarNodeId output)
-      : InvariantNode({output}, {staticInput}) {}
+  Bool2IntNode(VarNodeId staticInput, VarNodeId output);
 
   ~Bool2IntNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"bool2int", 2}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"bool2int", 2}};
   }
 
   static std::unique_ptr<Bool2IntNode> fromModelConstraint(

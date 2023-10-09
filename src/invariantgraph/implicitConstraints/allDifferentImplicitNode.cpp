@@ -29,17 +29,22 @@ AllDifferentImplicitNode::AllDifferentImplicitNode(
 }
 
 bool AllDifferentImplicitNode::prune(InvariantGraph& invariantGraph) {
-  std::vector<VarNodeId> singletonDefinedVariables =
-      pruneAllDifferent(invariantGraph, outputVarNodeIds());
-  for (auto singleton : singletonDefinedVariables) {
+  std::vector<VarNodeId> fixedInputNodes =
+      pruneAllDifferentFixed(invariantGraph, outputVarNodeIds());
+
+  for (const auto& singleton : fixedInputNodes) {
     removeOutputVarNode(invariantGraph.varNode(singleton));
   }
-  return !singletonDefinedVariables.empty();
+
+  return !fixedInputNodes.empty();
 }
 
-search::neighbourhoods::Neighbourhood*
+std::shared_ptr<search::neighbourhoods::Neighbourhood>
 AllDifferentImplicitNode::createNeighbourhood(
-    Engine& engine, std::vector<search::SearchVariable> variables) {
+    Engine& engine, std::vector<search::SearchVariable>&& variables) {
+  if (variables.size() <= 1) {
+    return nullptr;
+  }
   bool hasSameDomain = true;
   assert(!variables.empty());
 
@@ -51,8 +56,9 @@ AllDifferentImplicitNode::createNeighbourhood(
     }
   }
   if (hasSameDomain) {
-    return new search::neighbourhoods::AllDifferentUniformNeighbourhood(
-        variables, domain.values(), engine);
+    return std::make_shared<
+        search::neighbourhoods::AllDifferentUniformNeighbourhood>(
+        std::move(variables), domain.values(), engine);
   } else {
     Int domainLb = std::numeric_limits<Int>::max();
     Int domainUb = std::numeric_limits<Int>::min();
@@ -60,8 +66,9 @@ AllDifferentImplicitNode::createNeighbourhood(
       domainLb = std::min<Int>(domainLb, variable.domain().lowerBound());
       domainUb = std::max<Int>(domainUb, variable.domain().upperBound());
     }
-    return new search::neighbourhoods::AllDifferentNonUniformNeighbourhood(
-        variables, domainLb, domainUb, engine);
+    return std::make_shared<
+        search::neighbourhoods::AllDifferentNonUniformNeighbourhood>(
+        std::move(variables), domainLb, domainUb, engine);
   }
 }
 

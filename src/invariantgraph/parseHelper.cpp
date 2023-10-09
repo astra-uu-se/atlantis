@@ -1,9 +1,11 @@
 #include "parseHelper.hpp"
 
+#include "invariantgraph/invariantGraph.hpp"
+
 namespace invariantgraph {
 
 bool hasCorrectSignature(
-    const std::vector<std::pair<std::string_view, size_t>> &nameNumArgPairs,
+    const std::vector<std::pair<std::string, size_t>> &nameNumArgPairs,
     const fznparser::Constraint &constraint) {
   for (const auto &[name, numArgs] : nameNumArgPairs) {
     if (name == constraint.identifier() &&
@@ -14,50 +16,105 @@ bool hasCorrectSignature(
   return false;
 }
 
-std::vector<VarNodeId> pruneAllDifferent(
-    InvariantGraph invariantGraph, std::vector<VarNode> staticInputVarNodeIds) {
-  // pruned[i] = <index, value> where index is the index of the static variable
-  // with singleton domain {value}.
-  std::vector<std::pair<size_t, Int>> pruned;
-  pruned.reserve(staticInputVarNodeIds.size());
+std::vector<invariantgraph::VarNodeId> &&append(
+    std::vector<invariantgraph::VarNodeId> &&vars,
+    invariantgraph::VarNodeId fst, invariantgraph::VarNodeId snd) {
+  if (fst != NULL_NODE_ID) {
+    vars.emplace_back(fst);
+  }
+  if (snd != NULL_NODE_ID) {
+    vars.emplace_back(snd);
+  }
+  return std::move(vars);
+}
 
-  for (size_t i = 0; i < staticInputVarNodeIds.size(); ++i) {
-    for (const auto &[index, value] : pruned) {
-      // remove all pruned values from the current variable:
+std::vector<invariantgraph::VarNodeId> &&append(
+    std::vector<invariantgraph::VarNodeId> &&vars,
+    invariantgraph::VarNodeId var) {
+  if (var != NULL_NODE_ID) {
+    vars.emplace_back(var);
+  }
+  return std::move(vars);
+}
+
+std::vector<invariantgraph::VarNodeId> concat(
+    const std::vector<invariantgraph::VarNodeId> &fst,
+    const std::vector<invariantgraph::VarNodeId> &snd) {
+  std::vector<invariantgraph::VarNodeId> res;
+  res.reserve(fst.size() + snd.size());
+  res.insert(res.end(), fst.begin(), fst.end());
+  res.insert(res.end(), snd.begin(), snd.end());
+  return res;
+}
+
+static std::vector<std::pair<size_t, Int>> allDifferent(
+    InvariantGraph &invariantGraph, std::vector<VarNodeId> inputs) {
+  // pruned[i] = <index, value> where index is the index of the static
+  // variable with singleton domain {value}.
+  std::vector<std::pair<size_t, Int>> fixed;
+  fixed.reserve(inputs.size());
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    for (const auto &[index, value] : fixed) {
+      // remove all fixed values from the current variable:
       assert(index < i);
-      staticInputVarNodeIds[i]->domain().removeValue(value);
+      invariantGraph.varNode(inputs[i]).domain().removeValue(value);
     }
-    if (!staticInputVarNodeIds[i]->domain().isFixed()) {
+    if (!invariantGraph.varNode(inputs[i]).domain().isFixed()) {
       continue;
     }
     // the variable has a singleton domain
     // Remove all occurrences of the value from previous static variables. Any
-    // variable that gets a singleton domain is added to the pruned list.
-    pruned.emplace_back(i, staticInputVarNodeIds[i]->domain().lowerBound());
-    for (size_t p = pruned.size() - 1; p < pruned.size(); ++p) {
-      const auto &[index, value] = pruned.at(p);
+    // variable that gets a singleton domain is added to the fixed list.
+    fixed.emplace_back(i, invariantGraph.varNode(inputs[i]).val());
+    for (size_t p = fixed.size() - 1; p < fixed.size(); ++p) {
+      const auto &[index, value] = fixed.at(p);
       for (size_t j = 0; j < index; j++) {
-        const bool wasConstant = staticInputVarNodeIds[j]->domain().isFixed();
-        staticInputVarNodeIds[j]->domain().removeValue(value);
-        if (!wasConstant && staticInputVarNodeIds[j]->domain().isFixed()) {
-          pruned.emplace_back(j,
-                              staticInputVarNodeIds[j]->domain().lowerBound());
+        const bool wasConstant =
+            invariantGraph.varNode(inputs[j]).domain().isFixed();
+        invariantGraph.varNode(inputs[j]).domain().removeValue(value);
+        if (!wasConstant &&
+            invariantGraph.varNode(inputs[j]).domain().isFixed()) {
+          fixed.emplace_back(j, invariantGraph.varNode(inputs[j]).val());
         }
       }
     }
   }
-  std::vector<bool> prunedVars(staticInputVarNodeIds.size(), false);
-  for (const auto &[index, _] : pruned) {
-    prunedVars[index] = true;
+  return fixed;
+}
+
+std::vector<VarNodeId> pruneAllDifferentFree(InvariantGraph &invariantGraph,
+                                             std::vector<VarNodeId> inputs) {
+  const auto fixed = allDifferent(invariantGraph, inputs);
+  std::vector<bool> isFree(inputs.size(), true);
+  for (const auto &[index, _] : fixed) {
+    isFree[index] = false;
   }
-  std::vector<VarNode *> args;
-  args.reserve(staticInputVarNodeIds.size() - pruned.size());
-  for (size_t i = 0; i < staticInputVarNodeIds.size(); ++i) {
-    if (!prunedVars[i]) {
-      args.push_back(staticInputVarNodeIds[i]);
+  std::vector<VarNodeId> freeVars;
+  freeVars.reserve(inputs.size() - fixed.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (isFree[i]) {
+      freeVars.push_back(inputs[i]);
     }
   }
-  return args;
+  return freeVars;
+}
+
+std::vector<VarNodeId> pruneAllDifferentFixed(InvariantGraph &invariantGraph,
+                                              std::vector<VarNodeId> inputs) {
+  const auto fixed = allDifferent(invariantGraph, inputs);
+  std::vector<bool> isFree(inputs.size(), true);
+  for (const auto &[index, _] : fixed) {
+    isFree[index] = false;
+  }
+  std::vector<VarNodeId> freeVars;
+  freeVars.reserve(inputs.size() - fixed.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (!isFree[i]) {
+      freeVars.push_back(inputs[i]);
+    }
+  }
+  return freeVars;
 }
 
 std::vector<Int> toIntVector(const std::vector<bool> &argument) {
@@ -133,7 +190,7 @@ variableNodesFromVariableArray(const fznparser::VariableArray<T> &argument,
 std::vector<std::reference_wrapper<invariantgraph::VarNode>>
 mappedVariableVector(
     const fznparser::Model &model, const fznparser::Arg &argument,
-    std::unordered_map<std::string_view, VarNode> &variableMap) {
+    std::unordered_map<std::string, VarNode> &variableMap) {
   if (std::holds_alternative<fznparser::BoolVarArray>(argument)) {
     const auto &array = std::get<fznparser::BoolVarArray>(argument);
     return variableNodesFromVariableArray<bool>(array, variableMap);
@@ -154,7 +211,7 @@ invariantgraph::VarNode *mappedVariable(
   return std::visit<invariantgraph::VarNode *>(
       overloaded{[&](bool b) { return createVariableNode(b, variableMap); },
                  [&](Int i) { return createVariableNode(i, variableMap); },
-                 [&](const std::string_view &ident) {
+                 [&](const std::string &ident) {
                    return createVariableNode(ident, variableMap);
                  },
                  DEFAULT_EMPTY_VARIANT_BRANCH(
@@ -170,17 +227,17 @@ static T valueFromParameter(const Parameter &param) {
 
 template <typename T>
 static std::vector<T> valueLiteralVector(
-    const fznparser::Model &model, const FZNConstraint::ArrayArgument &array) {
-  std::vector<T> values;
-  values.reserve(array.size());
+    const fznparser::Model &model, const FZNConstraint::ArrayArgument &array)
+{ std::vector<T> values; values.reserve(array.size());
 
   for (const auto &element : array) {
     auto value = std::visit<T>(
         overloaded{
             [](T v) { return v; },
             [&](const Identifier &identifier) {
-              auto parameter = std::get<Parameter>(*model.identify(identifier));
-              return valueFromParameter<T>(parameter);
+              auto parameter =
+std::get<Parameter>(*model.identify(identifier)); return
+valueFromParameter<T>(parameter);
             },
             DEFAULT_EMPTY_VARIANT_BRANCH(T, "Unexpected variant branch.")},
         element);
@@ -208,9 +265,8 @@ std::vector<Int> integerVector(const fznparser::Model &model,
       argument);
 }
 
-Int integerValue(const Model &model, const FZNConstraint::Argument &argument) {
-  return std::visit<Int>(
-      overloaded{[](Int value) { return value; },
+Int integerValue(const Model &model, const FZNConstraint::Argument &argument)
+{ return std::visit<Int>( overloaded{[](Int value) { return value; },
                  [&](const Identifier &identifier) {
                    auto parameter =
                        std::get<Parameter>(*model.identify(identifier));
@@ -229,7 +285,8 @@ bool definesVariable(const FZNConstraint &constraint,
   }
 
   return std::visit<bool>(
-      [&](const auto &var) { return definedVariableId == var.name; }, variable);
+      [&](const auto &var) { return definedVariableId == var.name; },
+variable);
 }
 
 fznparser::Set<Int> integerSet(const Model &model,
@@ -238,8 +295,8 @@ fznparser::Set<Int> integerSet(const Model &model,
     return std::get<Set<Int>>(argument);
   }
 
-  assert(std::holds_alternative<std::string_view>(argument));
-  auto identifier = std::get<std::string_view>(argument);
+  assert(std::holds_alternative<std::string>(argument));
+  auto identifier = std::get<std::string>(argument);
   auto identifiable = *model.identify(identifier);
   assert(std::holds_alternative<Parameter>(identifiable));
   auto parameter = std::get<Parameter>(identifiable);
@@ -251,7 +308,7 @@ std::vector<Int> boolVectorAsIntVector(
     const Model &model, const FZNConstraint::Argument &argument) {
   auto bools = std::visit<std::vector<bool>>(
       overloaded{
-          [&](const std::string_view &identifier) {
+          [&](const std::string &identifier) {
             auto identifiable = *model.identify(identifier);
             return valueFromParameter<std::vector<bool>>(
                 std::get<Parameter>(identifiable));
@@ -271,9 +328,8 @@ std::vector<Int> boolVectorAsIntVector(
   return ints;
 }
 
-bool booleanValue(const Model &model, const FZNConstraint::Argument &argument) {
-  return std::visit<bool>(
-      overloaded{[](bool value) { return value; },
+bool booleanValue(const Model &model, const FZNConstraint::Argument &argument)
+{ return std::visit<bool>( overloaded{[](bool value) { return value; },
                  [&](const Identifier &identifier) {
                    auto parameter =
                        std::get<Parameter>(*model.identify(identifier));

@@ -4,6 +4,23 @@
 
 namespace invariantgraph {
 
+GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
+
+    std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
+    std::vector<Int>&& low, std::vector<Int>&& up, VarNodeId r)
+    : ViolationInvariantNode({}, std::move(x), r),
+      _cover(std::move(cover)),
+      _low(std::move(low)),
+      _up(std::move(up)) {}
+
+GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
+    std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
+    std::vector<Int>&& low, std::vector<Int>&& up, bool shouldHold)
+    : ViolationInvariantNode({}, std::move(x), shouldHold),
+      _cover(std::move(cover)),
+      _low(std::move(low)),
+      _up(std::move(up)) {}
+
 std::unique_ptr<GlobalCardinalityLowUpClosedNode>
 GlobalCardinalityLowUpClosedNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
@@ -28,7 +45,7 @@ GlobalCardinalityLowUpClosedNode::fromModelConstraint(
   assert(cover.size() == up.size());
 
   bool shouldHold = true;
-  VarNodeId r = nullptr;
+  VarNodeId r = NULL_NODE_ID;
 
   if (constraint.arguments().size() == 5) {
     const fznparser::BoolArg reified =
@@ -40,11 +57,11 @@ GlobalCardinalityLowUpClosedNode::fromModelConstraint(
     }
   }
 
-  if (r != nullptr) {
+  if (r != NULL_NODE_ID) {
     return std::make_unique<GlobalCardinalityLowUpClosedNode>(
         std::move(inputs), std::move(cover), std::move(low), std::move(up), r);
   }
-  assert(r == nullptr);
+  assert(r == NULL_NODE_ID);
   return std::make_unique<GlobalCardinalityLowUpClosedNode>(
       std::move(inputs), std::move(cover), std::move(low), std::move(up),
       shouldHold);
@@ -52,13 +69,13 @@ GlobalCardinalityLowUpClosedNode::fromModelConstraint(
 
 void GlobalCardinalityLowUpClosedNode::registerOutputVariables(
     InvariantGraph& invariantGraph, Engine& engine) {
-  if (violationVarId() == NULL_ID) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     if (!shouldHold()) {
       _intermediate = engine.makeIntVar(0, 0, staticInputVarNodeIds().size());
-      setViolationVarId(
-          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
+      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+                                            engine, _intermediate, 0));
     } else {
-      registerViolation(engine);
+      registerViolation(invariantGraph, engine);
     }
   }
 }
@@ -68,11 +85,11 @@ void GlobalCardinalityLowUpClosedNode::registerNode(
   std::vector<VarId> inputs;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputs),
-                 [&](auto node) { return node->varId(); });
+                 [&](const auto& id) { return invariantGraph.varId(id); });
 
   if (shouldHold()) {
     engine.makeInvariant<GlobalCardinalityConst<true>>(
-        engine, violationVarId(), inputs, _cover, _low, _up);
+        engine, violationVarId(invariantGraph), inputs, _cover, _low, _up);
   } else {
     engine.makeInvariant<GlobalCardinalityConst<true>>(
         engine, _intermediate, inputs, _cover, _low, _up);

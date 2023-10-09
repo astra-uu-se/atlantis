@@ -4,6 +4,9 @@
 
 namespace invariantgraph {
 
+IntDivNode::IntDivNode(VarNodeId a, VarNodeId b, VarNodeId output)
+    : InvariantNode({output}, {a, b}) {}
+
 std::unique_ptr<invariantgraph::IntDivNode>
 invariantgraph::IntDivNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
@@ -23,14 +26,22 @@ invariantgraph::IntDivNode::fromModelConstraint(
 
 void invariantgraph::IntDivNode::registerOutputVariables(
     InvariantGraph& invariantGraph, Engine& engine) {
-  registerDefinedVariable(engine, outputVarNodeIds().front());
+  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void invariantgraph::IntDivNode::registerNode(InvariantGraph& invariantGraph,
                                               Engine& engine) {
-  assert(outputVarNodeIds().front()->varId() != NULL_ID);
-  engine.makeInvariant<IntDiv>(engine, outputVarNodeIds().front()->varId(),
-                               a()->varId(), b()->varId());
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
+  engine.makeInvariant<IntDiv>(
+      engine, invariantGraph.varId(outputVarNodeIds().front()),
+      invariantGraph.varId(a()), invariantGraph.varId(b()));
+}
+
+VarNodeId IntDivNode::a() const noexcept {
+  return staticInputVarNodeIds().front();
+}
+VarNodeId IntDivNode::b() const noexcept {
+  return staticInputVarNodeIds().back();
 }
 
 }  // namespace invariantgraph

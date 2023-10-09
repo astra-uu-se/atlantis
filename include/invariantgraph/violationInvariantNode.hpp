@@ -5,16 +5,13 @@
 
 #include "core/engine.hpp"
 #include "invariantgraph/invariantNode.hpp"
-#include "invariantgraph/varNode.hpp"
 
 namespace invariantgraph {
-
-class InvariantGraph;  // Forward declaration
 
 /**
  * The types that can be in an array of search variables.
  */
-using MappableValue = std::variant<Int, bool, std::string_view>;
+using MappableValue = std::variant<Int, bool, std::string>;
 
 /**
  * Serves as a marker for the invariant graph to start the application to the
@@ -24,29 +21,27 @@ class ViolationInvariantNode : public InvariantNode {
  private:
   // Bounds will be recomputed by the engine.
   VarId _violationVarId{NULL_ID};
-  VarNodeId _reifiedViolation;
+  VarNodeId _reifiedViolationNodeId;
 
   // If the constraint is not reified, then this boolean indicates if the
   // constraint should hold or not:
   const bool _shouldHold;
 
-  explicit ViolationInvariantNode(
-      std::vector<VarNodeId>&& definedVars,
-      std::vector<VarNodeId>&& staticInputVarNodeIds,
-      VarNodeId reifiedViolation, bool shouldHold);
+  explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
+                                  std::vector<VarNodeId>&& staticInputIds,
+                                  VarNodeId reifiedViolationId,
+                                  bool shouldHold);
 
  protected:
-  inline bool shouldHold() const noexcept;
+  [[nodiscard]] bool shouldHold() const noexcept;
 
  public:
-  explicit ViolationInvariantNode(
-      std::vector<VarNodeId>&& outputVarNodeIds,
-      std::vector<VarNodeId>&& staticInputVarNodeIds,
-      VarNodeId reifiedViolation);
+  explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
+                                  std::vector<VarNodeId>&& staticInputIds,
+                                  VarNodeId reifiedViolationId);
 
-  explicit ViolationInvariantNode(
-      std::vector<VarNodeId>&& staticInputVarNodeIds,
-      VarNodeId reifiedViolation);
+  explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
+                                  VarNodeId reifiedViolationId);
 
   /**
    * @brief Construct a new Soft Constraint Node object
@@ -54,25 +49,25 @@ class ViolationInvariantNode : public InvariantNode {
    * @param staticInputVarNodeIds
    * @param shouldHold true if the constraint should hold, else false
    */
-  explicit ViolationInvariantNode(
-      std::vector<VarNodeId>&& outputVarNodeIds,
-      std::vector<VarNodeId>&& staticInputVarNodeIds, bool shouldHold);
+  explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
+                                  std::vector<VarNodeId>&& staticInputIds,
+                                  bool shouldHold);
 
-  explicit ViolationInvariantNode(
-      std::vector<VarNodeId>&& staticInputVarNodeIds, bool shouldHold);
+  explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
+                                  bool shouldHold);
 
   ~ViolationInvariantNode() override = default;
 
   [[nodiscard]] bool isReified() const override;
 
-  [[nodiscard]] VarId violationVarId() const override;
+  [[nodiscard]] VarId violationVarId(const InvariantGraph&) const override;
 
-  inline VarNodeId reifiedViolation();
+  VarNodeId reifiedViolationNodeId();
 
  protected:
-  VarId setViolationVarId(VarId varId);
+  VarId setViolationVarId(InvariantGraph&, VarId);
 
-  inline VarId registerViolation(Engine& engine, Int initialValue = 0);
+  VarId registerViolation(InvariantGraph&, Engine&, Int initialValue = 0);
 };
 
 }  // namespace invariantgraph

@@ -15,15 +15,12 @@ class BoolOrNode : public ViolationInvariantNode {
   VarId _intermediate{NULL_ID};
 
  public:
-  BoolOrNode(VarNodeId a, VarNodeId b, VarNodeId r)
-      : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
-  BoolOrNode(VarNodeId a, VarNodeId b, bool shouldHold)
-      : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
-                               shouldHold) {}
+  BoolOrNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"bool_or", 3}};
+  BoolOrNode(VarNodeId a, VarNodeId b, bool shouldHold);
+
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"bool_or", 3}};
   }
 
   static std::unique_ptr<BoolOrNode> fromModelConstraint(

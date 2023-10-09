@@ -8,14 +8,12 @@ namespace invariantgraph {
 
 class IntTimesNode : public InvariantNode {
  public:
-  IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output)
-      : InvariantNode({output}, {a, b}) {}
+  IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
   ~IntTimesNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"int_times", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_times", 3}};
   }
 
   static std::unique_ptr<IntTimesNode> fromModelConstraint(

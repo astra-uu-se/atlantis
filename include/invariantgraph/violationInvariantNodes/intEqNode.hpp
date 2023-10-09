@@ -16,13 +16,9 @@ class IntEqNode : public ViolationInvariantNode {
 
   explicit IntEqNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
-  explicit IntEqNode(InvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
-                     bool shouldHold = true);
-
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"int_eq", 2},
-                                                            {"int_eq_reif", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_eq", 2},
+                                                       {"int_eq_reif", 3}};
   }
 
   static std::unique_ptr<IntEqNode> fromModelConstraint(

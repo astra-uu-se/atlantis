@@ -2,67 +2,64 @@
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/invariantNodes/arrayVarBoolElementNode.hpp"
 
-class ArrayVarBoolElementNodeTest : public NodeTestBase {
+class ArrayVarBoolElementNodeTest
+    : public NodeTestBase<invariantgraph::ArrayVarBoolElementNode> {
  public:
-  std::unique_ptr<fznparser::BoolVar> a;
-  std::unique_ptr<fznparser::BoolVar> b;
-  std::unique_ptr<fznparser::BoolVar> c;
+  invariantgraph::VarNodeId a;
+  invariantgraph::VarNodeId b;
+  invariantgraph::VarNodeId c;
 
-  std::unique_ptr<fznparser::IntVar> idx;
-  std::unique_ptr<fznparser::IntVar> y;
-
-  std::unique_ptr<invariantgraph::ArrayVarBoolElementNode> node;
+  invariantgraph::VarNodeId idx;
+  invariantgraph::VarNodeId y;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = boolVar("a");
-    b = boolVar("b");
-    c = boolVar("c");
-    idx = intVar(0, 10, "idx");
-    y = intVar(0, 10, "y");
+    a = createBoolVar("a");
+    b = createBoolVar("b");
+    c = createBoolVar("c");
+    idx = createIntVar(0, 10, "idx");
+    y = createBoolVar("y");
 
     fznparser::BoolVarArray inputs("");
-    inputs.append(*a);
-    inputs.append(*b);
-    inputs.append(*c);
+    inputs.append(boolVar(a));
+    inputs.append(boolVar(b));
+    inputs.append(boolVar(c));
 
-    node = makeNode<invariantgraph::ArrayVarBoolElementNode>(
-        _model->addConstraint(fznparser::Constraint(
-            "array_var_bool_element",
-            std::vector<fznparser::Arg>{fznparser::IntArg{*idx}, inputs,
-                                        fznparser::IntArg{*y}})));
+    _model->addConstraint(fznparser::Constraint(
+        "array_var_bool_element",
+        std::vector<fznparser::Arg>{fznparser::IntArg{intVar(idx)}, inputs,
+                                    fznparser::BoolArg{boolVar(y)}}));
+
+    makeInvNode(_model->constraints().front());
   }
 };
 
 TEST_F(ArrayVarBoolElementNodeTest, construction) {
-  EXPECT_EQ(*node->b()->variable(), invariantgraph::VarNode::FZNVariable(*idx));
-  EXPECT_EQ(node->outputVarNodeIds().size(), 1);
-  EXPECT_EQ(*node->outputVarNodeIds().front()->variable(),
-            invariantgraph::VarNode::FZNVariable(*y));
-  expectMarkedAsInput(node.get(), {node->dynamicInputVarNodeIds()});
-  expectMarkedAsInput(node.get(), {node->b()});
+  expectInputTo(invNode());
+  expectOutputOf(invNode());
 
-  EXPECT_EQ(node->dynamicInputVarNodeIds().size(), 3);
-  EXPECT_EQ(node->dynamicInputVarNodeIds().at(0)->variable(),
-            invariantgraph::VarNode::FZNVariable(*a));
-  EXPECT_EQ(node->dynamicInputVarNodeIds().at(1)->variable(),
-            invariantgraph::VarNode::FZNVariable(*b));
-  EXPECT_EQ(node->dynamicInputVarNodeIds().at(2)->variable(),
-            invariantgraph::VarNode::FZNVariable(*c));
+  EXPECT_EQ(invNode().b(), idx);
+  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), y);
+
+  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 3);
+  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(0), a);
+  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(1), b);
+  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(2), c);
 }
 
 TEST_F(ArrayVarBoolElementNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  addVariablesToEngine(engine);
-  for (auto* const definedVariable : node->outputVarNodeIds()) {
-    EXPECT_EQ(definedVariable->varId(), NULL_ID);
+  addInputVarsToEngine(engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
   }
-  node->registerOutputVariables(engine);
-  for (auto* const definedVariable : node->outputVarNodeIds()) {
-    EXPECT_NE(definedVariable->varId(), NULL_ID);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
   }
-  node->registerNode(*_invariantGraph, engine);
+  invNode().registerNode(*_invariantGraph, engine);
   engine.close();
 
   // a, b, c, idx
@@ -78,26 +75,26 @@ TEST_F(ArrayVarBoolElementNodeTest, application) {
 TEST_F(ArrayVarBoolElementNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
-  addVariablesToEngine(engine);
-  node->registerOutputVariables(engine);
-  node->registerNode(*_invariantGraph, engine);
+  addInputVarsToEngine(engine);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerNode(*_invariantGraph, engine);
 
-  EXPECT_EQ(node->staticInputVarNodeIds().size(), 1);
-  EXPECT_NE(node->staticInputVarNodeIds().front()->varId(), NULL_ID);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), NULL_ID);
 
-  EXPECT_EQ(node->dynamicInputVarNodeIds().size(), 3);
-  for (auto* const inputVariable : node->dynamicInputVarNodeIds()) {
-    EXPECT_NE(inputVariable->varId(), NULL_ID);
+  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 3);
+  for (const auto& inputVarNodeId : invNode().dynamicInputVarNodeIds()) {
+    EXPECT_NE(varId(inputVarNodeId), NULL_ID);
   }
 
-  EXPECT_NE(node->outputVarNodeIds().front()->varId(), NULL_ID);
-  const VarId outputId = node->outputVarNodeIds().front()->varId();
+  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), NULL_ID);
+  const VarId outputId = varId(invNode().outputVarNodeIds().front());
 
   std::vector<VarId> inputs;
-  inputs.emplace_back(node->staticInputVarNodeIds().front()->varId());
-  for (auto* const varNode : node->dynamicInputVarNodeIds()) {
-    inputs.emplace_back(varNode->varId());
-    engine.updateBounds(varNode->varId(), 0, 10, true);
+  inputs.emplace_back(varId(invNode().staticInputVarNodeIds().front()));
+  for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
+    inputs.emplace_back(varId(varNodeId));
+    engine.updateBounds(varId(varNodeId), 0, 10, true);
   }
   engine.close();
   std::vector<Int> values(4, 0);

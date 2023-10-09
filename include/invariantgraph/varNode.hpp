@@ -7,7 +7,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "core/domains.hpp"
 #include "core/engine.hpp"
+#include "invariantgraph/types.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 #include "search/searchVariable.hpp"
 #include "utils/variant.hpp"
@@ -19,9 +21,10 @@ namespace invariantgraph {
 /**
  * The types that can be in an array of search variables.
  */
-using MappableValue = std::variant<Int, bool, std::string_view>;
+using MappableValue = std::variant<Int, bool, std::string>;
 
-class InvariantNode;
+class InvariantGraph;  // Forward declaration
+class InvariantNode;   // Forward declaration
 
 /**
  * A variable in the invariant graph. Every variable is defined by a
@@ -42,10 +45,10 @@ class VarNode {
   VarId _varId{NULL_ID};
   VarId _domainViolationId{NULL_ID};
 
-  std::vector<InvariantNodeId> _inputFor;
-  std::vector<InvariantNodeId> _staticInputFor;
-  std::vector<InvariantNodeId> _dynamicInputFor;
-  std::unordered_set<InvariantNodeId, InvariantNodeIdHash> _definingNodes;
+  std::vector<InvariantNodeId> _inputTo;
+  std::vector<InvariantNodeId> _staticInputTo;
+  std::vector<InvariantNodeId> _dynamicInputTo;
+  std::unordered_set<InvariantNodeId, InvariantNodeIdHash> _outputOf;
 
  public:
   /**
@@ -77,7 +80,7 @@ class VarNode {
    */
   [[nodiscard]] std::optional<FZNVariable> variable() const;
 
-  [[nodiscard]] std::string_view identifier() const;
+  [[nodiscard]] std::string identifier() const;
 
   /**
    * @return The model VarId this node is associated with, or NULL_ID
@@ -89,16 +92,21 @@ class VarNode {
    * @return The model VarId this node is associated with, or NULL_ID
    * if no VarId is associated with this node.
    */
-  void setVarId(VarId varId) {
-    assert(_varId == NULL_ID);
-    _varId = varId;
-  }
+  void setVarId(VarId varId);
 
-  [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
+  [[nodiscard]] const SearchDomain& constDomain() const noexcept;
 
-  [[nodiscard]] bool isFixed() const noexcept { return _domain.isFixed(); }
+  [[nodiscard]] SearchDomain& domain() noexcept;
 
-  [[nodiscard]] inline bool isIntVar() const noexcept { return _isIntVar; }
+  [[nodiscard]] bool isFixed() const noexcept;
+
+  [[nodiscard]] Int val() const;
+
+  void removeValue(Int);
+
+  void removeValue(bool);
+
+  [[nodiscard]] bool isIntVar() const noexcept;
 
   /**
    * @return if the bound range of the corresponding IntVar in engine is a
@@ -109,45 +117,35 @@ class VarNode {
 
   VarId postDomainConstraint(Engine&, std::vector<DomainEntry>&&);
 
-  [[nodiscard]] std::pair<Int, Int> bounds() const noexcept {
-    return _domain.bounds();
-  }
+  [[nodiscard]] std::pair<Int, Int> bounds() const;
 
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] const std::vector<InvariantNodeId>& inputFor() const noexcept {
-    return _inputFor;
-  }
+  [[nodiscard]] const std::vector<InvariantNodeId>& inputTo() const noexcept;
 
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] const std::vector<InvariantNodeId>& staticInputFor()
-      const noexcept {
-    return _staticInputFor;
-  }
+  [[nodiscard]] const std::vector<InvariantNodeId>& staticInputTo()
+      const noexcept;
 
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] const std::vector<InvariantNodeId>& dynamicInputFor()
-      const noexcept {
-    return _dynamicInputFor;
-  }
+  [[nodiscard]] const std::vector<InvariantNodeId>& dynamicInputTo()
+      const noexcept;
 
   /**
    * @return The variable defining nodes for which this node is an input.
    */
   [[nodiscard]] const std::unordered_set<InvariantNodeId, InvariantNodeIdHash>&
-  definingNodes() const noexcept {
-    return _definingNodes;
-  }
+  definingNodes() const noexcept;
 
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] InvariantNodeId definedBy() const noexcept;
+  [[nodiscard]] InvariantNodeId outputOf() const noexcept;
 
   /**
    * Indicate this variable node serves as an input to the given variable
@@ -163,7 +161,7 @@ class VarNode {
    *
    * @param node The variable defining node for which this is no longer defined.
    */
-  void unmarkAsDefinedBy(InvariantNodeId definingInvariant);
+  void unmarkOutputTo(InvariantNodeId definingInvariant);
 
   /**
    * Indicate this variable node no longer serves as an input to the given

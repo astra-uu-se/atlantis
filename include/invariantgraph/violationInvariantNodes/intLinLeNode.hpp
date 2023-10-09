@@ -21,21 +21,14 @@ class IntLinLeNode : public ViolationInvariantNode {
 
  public:
   IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
-               Int bound, VarNodeId r)
-      : ViolationInvariantNode(std::move(variables), r),
-        _coeffs(std::move(coeffs)),
-        _bound(bound) {}
+               Int bound, VarNodeId r);
 
   IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
-               Int bound, bool shouldHold)
-      : ViolationInvariantNode(std::move(variables), shouldHold),
-        _coeffs(std::move(coeffs)),
-        _bound(bound) {}
+               Int bound, bool shouldHold);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
-        {"int_lin_le", 3}, {"int_lin_le_reif", 4}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_lin_le", 3},
+                                                       {"int_lin_le_reif", 4}};
   }
 
   static std::unique_ptr<IntLinLeNode> fromModelConstraint(

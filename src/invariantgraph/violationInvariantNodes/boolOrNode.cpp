@@ -4,11 +4,17 @@
 
 namespace invariantgraph {
 
+BoolOrNode::BoolOrNode(VarNodeId a, VarNodeId b, VarNodeId r)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
+BoolOrNode::BoolOrNode(VarNodeId a, VarNodeId b, bool shouldHold)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
+                             shouldHold) {}
+
 std::unique_ptr<BoolOrNode> BoolOrNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("BoolOr constraint takes two var bool arguments");
   }
@@ -39,23 +45,24 @@ std::unique_ptr<BoolOrNode> BoolOrNode::fromModelConstraint(
 
 void BoolOrNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                          Engine& engine) {
-  if (violationVarId() == NULL_ID) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     if (shouldHold()) {
-      registerViolation(engine);
+      registerViolation(invariantGraph, engine);
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(
-          engine.makeIntView<NotEqualConst>(engine, _intermediate, 0));
+      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+                                            engine, _intermediate, 0));
     }
   }
 }
 
 void BoolOrNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
 
-  engine.makeInvariant<BoolOr>(engine, violationVarId(), a()->varId(),
-                               b()->varId());
+  engine.makeInvariant<BoolOr>(engine, violationVarId(invariantGraph),
+                               invariantGraph.varId(a()),
+                               invariantGraph.varId(b()));
 }
 
 }  // namespace invariantgraph

@@ -10,14 +10,12 @@ namespace invariantgraph {
 
 class IntMaxNode : public InvariantNode {
  public:
-  IntMaxNode(VarNodeId a, VarNodeId b, VarNodeId output)
-      : InvariantNode({output}, {a, b}) {}
+  IntMaxNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
   ~IntMaxNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"int_max", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_max", 3}};
   }
 
   static std::unique_ptr<IntMaxNode> fromModelConstraint(

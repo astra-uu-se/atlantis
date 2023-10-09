@@ -4,6 +4,20 @@
 
 namespace invariantgraph {
 
+IntLinEqNode::IntLinEqNode(std::vector<Int>&& coeffs,
+                           std::vector<VarNodeId>&& variables, Int c,
+                           VarNodeId r)
+    : ViolationInvariantNode(std::move(variables), r),
+      _coeffs(std::move(coeffs)),
+      _c(c) {}
+
+IntLinEqNode::IntLinEqNode(std::vector<Int>&& coeffs,
+                           std::vector<VarNodeId>&& variables, Int c,
+                           bool shouldHold)
+    : ViolationInvariantNode(std::move(variables), shouldHold),
+      _coeffs(std::move(coeffs)),
+      _c(c) {}
+
 std::unique_ptr<IntLinEqNode> IntLinEqNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
@@ -38,14 +52,15 @@ std::unique_ptr<IntLinEqNode> IntLinEqNode::fromModelConstraint(
 
 void IntLinEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                            Engine& engine) {
-  if (violationVarId() == NULL_ID) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(engine.makeIntView<EqualConst>(engine, _sumVarId, _c));
+      setViolationVarId(invariantGraph,
+                        engine.makeIntView<EqualConst>(engine, _sumVarId, _c));
     } else {
       assert(!isReified());
-      setViolationVarId(
-          engine.makeIntView<NotEqualConst>(engine, _sumVarId, _c));
+      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+                                            engine, _sumVarId, _c));
     }
   }
 }
@@ -55,10 +70,10 @@ void IntLinEqNode::registerNode(InvariantGraph& invariantGraph,
   std::vector<VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
-                 [&](auto node) { return node->varId(); });
+                 [&](const auto& id) { return invariantGraph.varId(id); });
 
   assert(_sumVarId != NULL_ID);
-  assert(violationVarId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
 
   engine.makeInvariant<Linear>(engine, _sumVarId, _coeffs, variables);
 }

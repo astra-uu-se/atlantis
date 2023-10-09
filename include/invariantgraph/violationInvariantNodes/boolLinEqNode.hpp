@@ -20,20 +20,13 @@ class BoolLinEqNode : public ViolationInvariantNode {
 
  public:
   BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
-                Int c, VarNodeId r)
-      : ViolationInvariantNode(std::move(variables), r),
-        _coeffs(std::move(coeffs)),
-        _c(c) {}
+                Int c, VarNodeId r);
 
   BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
-                Int c, bool shouldHold)
-      : ViolationInvariantNode(std::move(variables), shouldHold),
-        _coeffs(std::move(coeffs)),
-        _c(c) {}
+                Int c, bool shouldHold);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"bool_lin_eq", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"bool_lin_eq", 3}};
   }
 
   static std::unique_ptr<BoolLinEqNode> fromModelConstraint(

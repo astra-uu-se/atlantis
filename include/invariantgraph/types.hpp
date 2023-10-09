@@ -48,9 +48,12 @@ struct InvariantNodeId : public NodeId {
   bool operator==(const InvariantNodeId& other) const {
     return type == other.type && id == other.id;
   }
+  inline bool operator==(const NodeId& other) const { return id == other.id; }
+
   bool operator!=(const InvariantNodeId& other) const {
     return !(operator==(other));
   }
+  bool operator!=(const NodeId& other) const { return !(operator==(other)); }
 };
 
 struct VarNodeIdHash {

@@ -4,40 +4,47 @@
 
 #include "utils/type.hpp"
 
-search::neighbourhoods::NeighbourhoodCombinator::NeighbourhoodCombinator(
-    std::vector<std::unique_ptr<Neighbourhood>> neighbourhoods)
+namespace search::neighbourhoods {
+
+NeighbourhoodCombinator::NeighbourhoodCombinator(
+    std::vector<std::shared_ptr<Neighbourhood>>&& neighbourhoods)
     : _neighbourhoods(std::move(neighbourhoods)) {
   assert(!_neighbourhoods.empty());
+  size_t num_vars = 0;
+  for (const auto& neighbourhood : _neighbourhoods) {
+    num_vars += neighbourhood->coveredVariables().size();
+  }
+  _variables.reserve(num_vars);
 
   std::vector<size_t> weights;
+  weights.reserve(_neighbourhoods.size());
   for (const auto& neighbourhood : _neighbourhoods) {
     weights.push_back(neighbourhood->coveredVariables().size());
 
-    _variables.insert(_variables.end(),
-                      neighbourhood->coveredVariables().begin(),
-                      neighbourhood->coveredVariables().end());
+    for (const auto& searchVar : neighbourhood->coveredVariables()) {
+      _variables.emplace_back(searchVar);
+    }
   }
 
   _neighbourhoodDistribution =
       std::discrete_distribution<size_t>{weights.begin(), weights.end()};
 }
 
-void search::neighbourhoods::NeighbourhoodCombinator::initialise(
-    search::RandomProvider& random, search::AssignmentModifier& modifications) {
+void NeighbourhoodCombinator::initialise(RandomProvider& random,
+                                         AssignmentModifier& modifications) {
   for (const auto& neighbourhood : _neighbourhoods) {
     neighbourhood->initialise(random, modifications);
   }
 }
 
-bool search::neighbourhoods::NeighbourhoodCombinator::randomMove(
-    search::RandomProvider& random, search::Assignment& assignment,
-    search::Annealer& annealer) {
+bool NeighbourhoodCombinator::randomMove(RandomProvider& random,
+                                         Assignment& assignment,
+                                         Annealer& annealer) {
   auto& neighbourhood = selectNeighbourhood(random);
   return neighbourhood.randomMove(random, assignment, annealer);
 }
 
-void search::neighbourhoods::NeighbourhoodCombinator::printNeighbourhood(
-    logging::Logger& logger) {
+void NeighbourhoodCombinator::printNeighbourhood(logging::Logger& logger) {
   for (const auto& neighbourhood : _neighbourhoods) {
     logger.debug("Neighbourhood {} covers {} variables.",
                  demangle(typeid(*neighbourhood).name()),
@@ -45,9 +52,10 @@ void search::neighbourhoods::NeighbourhoodCombinator::printNeighbourhood(
   }
 }
 
-search::neighbourhoods::Neighbourhood&
-search::neighbourhoods::NeighbourhoodCombinator::selectNeighbourhood(
+Neighbourhood& NeighbourhoodCombinator::selectNeighbourhood(
     RandomProvider& random) {
   auto idx = random.fromDistribution<size_t>(_neighbourhoodDistribution);
   return *_neighbourhoods[idx];
 }
+
+}  // namespace search::neighbourhoods

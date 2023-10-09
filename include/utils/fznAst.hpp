@@ -2,7 +2,7 @@
 
 #include <fznparser/variables.hpp>
 #include <optional>
-#include <string_view>
+#include <string>
 
-const std::string_view& identifier(
+const std::string& identifier(
     const std::variant<fznparser::BoolVar, fznparser::IntVar>& variable);

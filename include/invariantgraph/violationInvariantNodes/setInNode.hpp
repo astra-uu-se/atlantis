@@ -15,18 +15,14 @@ class SetInNode : public ViolationInvariantNode {
   VarId _intermediate{NULL_ID};
 
  public:
-  explicit SetInNode(VarNodeId input, std::vector<Int>&& values, VarNodeId r)
-      : ViolationInvariantNode({input}, r), _values(std::move(values)) {}
+  explicit SetInNode(VarNodeId input, std::vector<Int>&& values, VarNodeId r);
 
   explicit SetInNode(VarNodeId input, std::vector<Int>&& values,
-                     bool shouldHold)
-      : ViolationInvariantNode({input}, shouldHold),
-        _values(std::move(values)) {}
+                     bool shouldHold);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"set_in", 2},
-                                                            {"set_in_reif", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"set_in", 2},
+                                                       {"set_in_reif", 3}};
   }
 
   static std::unique_ptr<SetInNode> fromModelConstraint(

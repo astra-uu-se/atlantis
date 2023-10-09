@@ -2,6 +2,11 @@
 
 #include "views/intAbsView.hpp"
 
+namespace invariantgraph {
+
+IntAbsNode::IntAbsNode(VarNodeId staticInput, VarNodeId output)
+    : InvariantNode({output}, {staticInput}) {}
+
 std::unique_ptr<invariantgraph::IntAbsNode>
 invariantgraph::IntAbsNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
@@ -16,11 +21,13 @@ invariantgraph::IntAbsNode::fromModelConstraint(
 
 void invariantgraph::IntAbsNode::registerOutputVariables(
     InvariantGraph& invariantGraph, Engine& engine) {
-  if (outputVarNodeIds().front()->varId() == NULL_ID) {
-    outputVarNodeIds().front()->setVarId(
-        engine.makeIntView<IntAbsView>(engine, input()->varId()));
+  if (invariantGraph.varId(outputVarNodeIds().front()) == NULL_ID) {
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(engine.makeIntView<IntAbsView>(
+            engine, invariantGraph.varId(input())));
   }
 }
 
-void invariantgraph::IntAbsNode::registerNode(
-    const InvariantGraph& invariantGraph, Engine&) {}
+void invariantgraph::IntAbsNode::registerNode(InvariantGraph&, Engine&) {}
+
+}  // namespace invariantgraph

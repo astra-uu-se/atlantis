@@ -10,13 +10,12 @@ namespace invariantgraph {
 
 class CircuitImplicitNode : public ImplicitConstraintNode {
  public:
-  explicit CircuitImplicitNode(std::vector<VarNodeId>&& variables);
+  explicit CircuitImplicitNode(std::vector<VarNodeId>&&);
 
   ~CircuitImplicitNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"circuit_no_offset", 1}};
   }
 
@@ -24,8 +23,8 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
       const fznparser::Constraint&, InvariantGraph&);
 
  protected:
-  search::neighbourhoods::Neighbourhood* createNeighbourhood(
-      Engine& engine, std::vector<search::SearchVariable> variables) override;
+  std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
+      Engine& engine, std::vector<search::SearchVariable>&& variables) override;
 };
 
 }  // namespace invariantgraph

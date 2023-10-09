@@ -2,55 +2,56 @@
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/invariantNodes/arrayIntElementNode.hpp"
 
-class ArrayIntElementNodeTest : public NodeTestBase {
+class ArrayIntElementNodeTest
+    : public NodeTestBase<invariantgraph::ArrayIntElementNode> {
  public:
-  std::unique_ptr<fznparser::IntVar> b;
-  std::unique_ptr<fznparser::IntVar> c;
+  invariantgraph::VarNodeId b;
+  invariantgraph::VarNodeId c;
   std::vector<Int> elementValues{1, 2, 3};
-
-  std::unique_ptr<invariantgraph::ArrayIntElementNode> node;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    b = intVar(0, 10, "b");
-    c = intVar(0, 10, "c");
+    b = createIntVar(0, 10, "b");
+    c = createIntVar(0, 10, "c");
 
     fznparser::IntVarArray elements("");
     for (const auto& elem : elementValues) {
       elements.append(elem);
     }
 
-    node = makeNode<invariantgraph::ArrayIntElementNode>(
-        _model->addConstraint(fznparser::Constraint(
-            "array_int_element",
-            std::vector<fznparser::Arg>{fznparser::IntArg{*b}, elements,
-                                        fznparser::IntArg{*c}})));
+    _model->addConstraint(fznparser::Constraint(
+        "array_int_element",
+        std::vector<fznparser::Arg>{fznparser::IntArg{intVar(b)}, elements,
+                                    fznparser::IntArg{intVar(c)}}));
+
+    makeInvNode(_model->constraints().front());
   }
 };
 
 TEST_F(ArrayIntElementNodeTest, construction) {
-  EXPECT_EQ(*node->b()->variable(), invariantgraph::VarNode::FZNVariable(*b));
-  EXPECT_EQ(node->outputVarNodeIds().size(), 1);
-  EXPECT_EQ(*node->outputVarNodeIds().front()->variable(),
-            invariantgraph::VarNode::FZNVariable(*c));
-  expectMarkedAsInput(node.get(), {node->b()});
+  expectInputTo(invNode());
+  expectOutputOf(invNode());
+
+  EXPECT_EQ(invNode().b(), b);
+  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), c);
 
   std::vector<Int> expectedAs{1, 2, 3};
-  EXPECT_EQ(node->as(), expectedAs);
+  EXPECT_EQ(invNode().as(), expectedAs);
 }
 
 TEST_F(ArrayIntElementNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  addVariablesToEngine(engine);
-  for (auto* const definedVariable : node->outputVarNodeIds()) {
-    EXPECT_EQ(definedVariable->varId(), NULL_ID);
+  addInputVarsToEngine(engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
   }
-  node->registerOutputVariables(engine);
-  for (auto* const definedVariable : node->outputVarNodeIds()) {
-    EXPECT_NE(definedVariable->varId(), NULL_ID);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
   }
-  node->registerNode(*_invariantGraph, engine);
+  invNode().registerNode(*_invariantGraph, engine);
   engine.close();
 
   // b
@@ -66,19 +67,19 @@ TEST_F(ArrayIntElementNodeTest, application) {
 TEST_F(ArrayIntElementNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
-  addVariablesToEngine(engine);
-  node->registerOutputVariables(engine);
-  node->registerNode(*_invariantGraph, engine);
+  addInputVarsToEngine(engine);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerNode(*_invariantGraph, engine);
 
   std::vector<VarId> inputs;
-  EXPECT_EQ(node->staticInputVarNodeIds().size(), 1);
-  for (auto* const inputVariable : node->staticInputVarNodeIds()) {
-    EXPECT_NE(inputVariable->varId(), NULL_ID);
-    inputs.emplace_back(inputVariable->varId());
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
+  for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+    EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+    inputs.emplace_back(varId(inputVarNodeId));
   }
 
-  EXPECT_NE(node->outputVarNodeIds().front()->varId(), NULL_ID);
-  const VarId outputId = node->outputVarNodeIds().front()->varId();
+  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), NULL_ID);
+  const VarId outputId = varId(invNode().outputVarNodeIds().front());
   EXPECT_EQ(inputs.size(), 1);
 
   const VarId input = inputs.front();

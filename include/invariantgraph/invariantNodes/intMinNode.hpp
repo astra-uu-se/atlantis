@@ -10,14 +10,12 @@ namespace invariantgraph {
 
 class IntMinNode : public InvariantNode {
  public:
-  IntMinNode(VarNodeId a, VarNodeId b, VarNodeId output)
-      : InvariantNode({output}, {a, b}) {}
+  IntMinNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
   ~IntMinNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"int_min", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_min", 3}};
   }
 
   static std::unique_ptr<IntMinNode> fromModelConstraint(

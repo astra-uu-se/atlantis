@@ -4,11 +4,17 @@
 
 namespace invariantgraph {
 
+BoolLtNode::BoolLtNode(VarNodeId a, VarNodeId b, VarNodeId r)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
+BoolLtNode::BoolLtNode(VarNodeId a, VarNodeId b, bool shouldHold)
+    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
+                             shouldHold) {}
+
 std::unique_ptr<BoolLtNode> BoolLtNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("BoolLt constraint takes two var bool arguments");
   }
@@ -39,21 +45,23 @@ std::unique_ptr<BoolLtNode> BoolLtNode::fromModelConstraint(
 
 void BoolLtNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                          Engine& engine) {
-  registerViolation(engine);
+  registerViolation(invariantGraph, engine);
 }
 
 void BoolLtNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId() != NULL_ID);
-  assert(a()->varId() != NULL_ID);
-  assert(b()->varId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(invariantGraph.varId(a()) != NULL_ID);
+  assert(invariantGraph.varId(b()) != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<BoolLessThan>(engine, violationVarId(), a()->varId(),
-                                        b()->varId());
+    engine.makeConstraint<BoolLessThan>(engine, violationVarId(invariantGraph),
+                                        invariantGraph.varId(a()),
+                                        invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<BoolLessEqual>(engine, violationVarId(), b()->varId(),
-                                         a()->varId());
+    engine.makeConstraint<BoolLessEqual>(engine, violationVarId(invariantGraph),
+                                         invariantGraph.varId(b()),
+                                         invariantGraph.varId(a()));
   }
 }
 

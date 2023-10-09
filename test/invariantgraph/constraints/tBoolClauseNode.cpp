@@ -18,37 +18,34 @@ static bool isViolating(const std::vector<Int>& asValues,
 }
 
 template <ConstraintType Type>
-class AbstractBoolClauseNodeTest : public NodeTestBase {
+class AbstractBoolClauseNodeTest
+    : public NodeTestBase<invariantgraph::BoolClauseNode> {
  public:
-  std::unique_ptr<fznparser::BoolVar> a;
-  std::unique_ptr<fznparser::BoolVar> b;
-  std::unique_ptr<fznparser::BoolVar> c;
-  std::unique_ptr<fznparser::BoolVar> d;
-  std::unique_ptr<fznparser::BoolVar> r;
-
-  std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::Model> model;
-  std::unique_ptr<invariantgraph::BoolClauseNode> node;
+  invariantgraph::VarNodeId a;
+  invariantgraph::VarNodeId b;
+  invariantgraph::VarNodeId c;
+  invariantgraph::VarNodeId d;
+  invariantgraph::VarNodeId r;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = boolVar("a");
-    b = boolVar("b");
-    c = boolVar("c");
-    d = boolVar("d");
-    r = boolVar("r");
+    a = createBoolVar("a");
+    b = createBoolVar("b");
+    c = createBoolVar("c");
+    d = createBoolVar("d");
+    r = createBoolVar("r");
 
     fznparser::BoolVarArray as("");
-    as.append(*a);
-    as.append(*b);
+    as.append(boolVar(a));
+    as.append(boolVar(b));
     fznparser::BoolVarArray bs("");
-    bs.append(*c);
-    bs.append(*d);
+    bs.append(boolVar(c));
+    bs.append(boolVar(d));
 
     if constexpr (Type == ConstraintType::REIFIED) {
       _model->addConstraint(std::move(fznparser::Constraint(
-          "bool_clause_reif",
-          std::vector<fznparser::Arg>{as, bs, fznparser::BoolArg{*r}})));
+          "bool_clause_reif", std::vector<fznparser::Arg>{
+                                  as, bs, fznparser::BoolArg{boolVar(r)}})));
 
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
@@ -65,59 +62,56 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
       }
     }
 
-    node =
-        makeNode<invariantgraph::BoolClauseNode>(_model->constraints().front());
+    makeInvNode(_model->constraints().front());
   }
 
   void construction() {
-    EXPECT_EQ(node->as().size(), 2);
-    EXPECT_EQ(*node->as().at(0)->variable(),
-              invariantgraph::VarNode::FZNVariable(*a));
-    EXPECT_EQ(*node->as().at(1)->variable(),
-              invariantgraph::VarNode::FZNVariable(*b));
+    expectInputTo(invNode());
+    expectOutputOf(invNode());
 
-    EXPECT_EQ(node->bs().size(), 2);
-    EXPECT_EQ(*node->bs().at(0)->variable(),
-              invariantgraph::VarNode::FZNVariable(*c));
-    EXPECT_EQ(*node->bs().at(1)->variable(),
-              invariantgraph::VarNode::FZNVariable(*d));
+    EXPECT_EQ(invNode().as().size(), 2);
+    EXPECT_EQ(invNode().as().at(0), a);
+    EXPECT_EQ(invNode().as().at(1), b);
 
-    EXPECT_EQ(node->staticInputVarNodeIds().size(),
-              node->as().size() + node->bs().size());
+    EXPECT_EQ(invNode().bs().size(), 2);
+    EXPECT_EQ(invNode().bs().at(0), c);
+    EXPECT_EQ(invNode().bs().at(1), d);
 
-    std::vector<invariantgraph::VarNodeId> expectedVars(node->as());
-    for (auto* const var : node->bs()) {
-      expectedVars.emplace_back(var);
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(),
+              invNode().as().size() + invNode().bs().size());
+
+    std::vector<invariantgraph::VarNodeId> expectedVars(invNode().as());
+    for (const auto& varNodeId : invNode().bs()) {
+      expectedVars.emplace_back(varNodeId);
     }
-    EXPECT_EQ(expectedVars, node->staticInputVarNodeIds());
+    EXPECT_EQ(expectedVars, invNode().staticInputVarNodeIds());
 
-    expectMarkedAsInput(node.get(), node->as());
-    expectMarkedAsInput(node.get(), node->bs());
     if constexpr (Type != ConstraintType::REIFIED) {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
+      EXPECT_FALSE(invNode().isReified());
+      EXPECT_EQ(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
     } else {
-      EXPECT_TRUE(node->isReified());
-      EXPECT_NE(node->reifiedViolation(), nullptr);
-      EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VarNode::FZNVariable(*r));
+      EXPECT_TRUE(invNode().isReified());
+      EXPECT_NE(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     }
   }
 
   void application() {
     PropagationEngine engine;
     engine.open();
-    addVariablesToEngine(engine);
-    for (auto* const definedVariable : node->outputVarNodeIds()) {
-      EXPECT_EQ(definedVariable->varId(), NULL_ID);
+    addInputVarsToEngine(engine);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
     }
-    EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->registerOutputVariables(engine);
-    for (auto* const definedVariable : node->outputVarNodeIds()) {
-      EXPECT_NE(definedVariable->varId(), NULL_ID);
+    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_NE(varId(outputVarNodeId), NULL_ID);
     }
-    EXPECT_NE(node->violationVarId(), NULL_ID);
-    node->registerNode(*_invariantGraph, engine);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    invNode().registerNode(*_invariantGraph, engine);
     engine.close();
 
     // a, b, c and d
@@ -133,27 +127,27 @@ class AbstractBoolClauseNodeTest : public NodeTestBase {
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    addVariablesToEngine(engine);
-    node->registerOutputVariables(engine);
-    node->registerNode(*_invariantGraph, engine);
+    addInputVarsToEngine(engine);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerNode(*_invariantGraph, engine);
 
-    EXPECT_EQ(node->as().size(), 2);
+    EXPECT_EQ(invNode().as().size(), 2);
     std::vector<VarId> asInputs;
-    for (auto* const inputVariable : node->as()) {
-      EXPECT_NE(inputVariable->varId(), NULL_ID);
-      asInputs.emplace_back(inputVariable->varId());
-      engine.updateBounds(inputVariable->varId(), 0, 5, true);
+    for (const invariantgraph::VarNodeId& inputVarNodeId : invNode().as()) {
+      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      asInputs.emplace_back(varId(inputVarNodeId));
+      engine.updateBounds(varId(inputVarNodeId), 0, 5, true);
     }
-    EXPECT_EQ(node->bs().size(), 2);
+    EXPECT_EQ(invNode().bs().size(), 2);
     std::vector<VarId> bsInputs;
-    for (auto* const inputVariable : node->bs()) {
-      EXPECT_NE(inputVariable->varId(), NULL_ID);
-      bsInputs.emplace_back(inputVariable->varId());
-      engine.updateBounds(inputVariable->varId(), 0, 5, true);
+    for (const invariantgraph::VarNodeId& inputVarNodeId : invNode().bs()) {
+      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      bsInputs.emplace_back(varId(inputVarNodeId));
+      engine.updateBounds(varId(inputVarNodeId), 0, 5, true);
     }
 
-    EXPECT_NE(node->violationVarId(), NULL_ID);
-    const VarId violationId = node->violationVarId();
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    const VarId violationId = invNode().violationVarId(*_invariantGraph);
 
     std::vector<Int> asValues(asInputs.size());
     std::vector<Int> bsValues(bsInputs.size());

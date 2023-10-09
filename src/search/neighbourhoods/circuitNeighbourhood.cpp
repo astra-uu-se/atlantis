@@ -2,12 +2,14 @@
 
 #include <algorithm>
 
-search::neighbourhoods::CircuitNeighbourhood::CircuitNeighbourhood(
-    std::vector<search::SearchVariable> variables)
+namespace search::neighbourhoods {
+
+CircuitNeighbourhood::CircuitNeighbourhood(
+    std::vector<SearchVariable>&& variables)
     : _variables(std::move(variables)) {}
 
-void search::neighbourhoods::CircuitNeighbourhood::initialise(
-    RandomProvider& random, AssignmentModifier& modifications) {
+void CircuitNeighbourhood::initialise(RandomProvider& random,
+                                      AssignmentModifier& modifications) {
   std::vector<Int> availableIndices(_variables.size());
   std::iota(availableIndices.begin(), availableIndices.end(), 0);
 
@@ -59,7 +61,7 @@ void search::neighbourhoods::CircuitNeighbourhood::initialise(
                     getNode(firstNodeIdx));
 }
 
-static size_t determineNewNext(search::RandomProvider& random, size_t node,
+static size_t determineNewNext(RandomProvider& random, size_t node,
                                size_t oldNext, size_t numVariables) {
   assert(numVariables >= 3);
   // Based on https://stackoverflow.com/a/39631885.
@@ -81,8 +83,9 @@ static size_t determineNewNext(search::RandomProvider& random, size_t node,
   return newNext;
 }
 
-bool search::neighbourhoods::CircuitNeighbourhood::randomMove(
-    RandomProvider& random, Assignment& assignment, Annealer& annealer) {
+bool CircuitNeighbourhood::randomMove(RandomProvider& random,
+                                      Assignment& assignment,
+                                      Annealer& annealer) {
   auto nodeIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_variables.size() - 1)));
   auto oldNextIdx =
@@ -108,14 +111,14 @@ bool search::neighbourhoods::CircuitNeighbourhood::randomMove(
   return annealer.acceptMove(move);
 }
 
-Int search::neighbourhoods::CircuitNeighbourhood::getNode(
-    size_t nodeIdx) const noexcept {
+Int CircuitNeighbourhood::getNode(size_t nodeIdx) const noexcept {
   // Account for index sets starting at 1 instead of 0.
   return static_cast<Int>(nodeIdx) + 1;
 }
 
-size_t search::neighbourhoods::CircuitNeighbourhood::getNodeIdx(
-    Int node) const noexcept {
+size_t CircuitNeighbourhood::getNodeIdx(Int node) const noexcept {
   // Account for index sets starting at 1 instead of 0.
   return static_cast<size_t>(node) - 1;
 }
+
+}  // namespace search::neighbourhoods

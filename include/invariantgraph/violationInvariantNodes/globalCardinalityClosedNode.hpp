@@ -12,15 +12,6 @@
 #include "invariants/linear.hpp"
 #include "views/notEqualConst.hpp"
 
-static std::vector<invariantgraph::VarNodeId> merge(
-    const std::vector<invariantgraph::VarNodeId>& fst,
-    const std::vector<invariantgraph::VarNodeId>& snd) {
-  std::vector<invariantgraph::VarNodeId> v(fst);
-  v.reserve(fst.size() + snd.size());
-  v.insert(v.end(), snd.begin(), snd.end());
-  return v;
-}
-
 namespace invariantgraph {
 class GlobalCardinalityClosedNode : public ViolationInvariantNode {
  private:
@@ -32,34 +23,18 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
   VarId _shouldFailViol{NULL_ID};
 
  public:
-  explicit GlobalCardinalityClosedNode(InvariantNodeId id,
-                                       std::vector<VarNodeId>&& x,
+  explicit GlobalCardinalityClosedNode(std::vector<VarNodeId>&& x,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,
-                                       VarNodeId r)
-      : ViolationInvariantNode({}, merge(x, counts), r),
-        _inputs(std::move(x)),
-        _cover(std::move(cover)),
-        _counts(std::move(counts)) {}
+                                       VarNodeId r);
 
-  explicit GlobalCardinalityClosedNode(InvariantNodeId id,
-                                       std::vector<VarNodeId>&& x,
+  explicit GlobalCardinalityClosedNode(std::vector<VarNodeId>&& x,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,
-                                       bool shouldHold)
-      : ViolationInvariantNode(id,
-                               shouldHold ? std::vector<VarNodeId>(counts)
-                                          : std::vector<VarNodeId>{},
-                               shouldHold ? std::move(std::vector<VarNodeId>(x))
-                                          : merge(x, counts),
-                               shouldHold),
-        _inputs(std::move(x)),
-        _cover(std::move(cover)),
-        _counts(std::move(counts)) {}
+                                       bool shouldHold);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"fzn_global_cardinality_closed", 3},
         {"fzn_global_cardinality_closed_reif", 4}};
   }

@@ -4,6 +4,15 @@
 
 namespace invariantgraph {
 
+BoolLinearNode::BoolLinearNode(std::vector<Int>&& coeffs,
+                               std::vector<VarNodeId>&& variables,
+                               VarNodeId output, Int definingCoefficient,
+                               Int sum)
+    : InvariantNode({output}, std::move(variables)),
+      _coeffs(std::move(coeffs)),
+      _definingCoefficient(definingCoefficient),
+      _sum(sum) {}
+
 std::unique_ptr<BoolLinearNode> BoolLinearNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
@@ -65,24 +74,26 @@ std::unique_ptr<BoolLinearNode> BoolLinearNode::fromModelConstraint(
 void BoolLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                              Engine& engine) {
   if (staticInputVarNodeIds().size() == 1 &&
-      staticInputVarNodeIds().front()->varId() != NULL_ID) {
+      invariantGraph.varId(staticInputVarNodeIds().front()) != NULL_ID) {
     if (_coeffs.front() == 1 && _sum == 0) {
-      outputVarNodeIds().front()->setVarId(
-          staticInputVarNodeIds().front()->varId());
+      invariantGraph.varNode(outputVarNodeIds().front())
+          .setVarId(invariantGraph.varId(staticInputVarNodeIds().front()));
       return;
     }
 
     if (_definingCoefficient == -1) {
       auto scalar = engine.makeIntView<ScalarView>(
-          engine, staticInputVarNodeIds().front()->varId(), _coeffs.front());
-      outputVarNodeIds().front()->setVarId(
-          engine.makeIntView<IntOffsetView>(engine, scalar, -_sum));
+          engine, invariantGraph.varId(staticInputVarNodeIds().front()),
+          _coeffs.front());
+      invariantGraph.varNode(outputVarNodeIds().front())
+          .setVarId(engine.makeIntView<IntOffsetView>(engine, scalar, -_sum));
     } else {
       assert(_definingCoefficient == 1);
       auto scalar = engine.makeIntView<ScalarView>(
-          engine, staticInputVarNodeIds().front()->varId(), -_coeffs.front());
-      outputVarNodeIds().front()->setVarId(
-          engine.makeIntView<IntOffsetView>(engine, scalar, _sum));
+          engine, invariantGraph.varId(staticInputVarNodeIds().front()),
+          -_coeffs.front());
+      invariantGraph.varNode(outputVarNodeIds().front())
+          .setVarId(engine.makeIntView<IntOffsetView>(engine, scalar, _sum));
     }
 
     return;
@@ -90,7 +101,7 @@ void BoolLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
 
   if (_intermediateVarId == NULL_ID) {
     _intermediateVarId = engine.makeIntVar(0, 0, 0);
-    assert(outputVarNodeIds().front()->varId() == NULL_ID);
+    assert(invariantGraph.varId(outputVarNodeIds().front()) == NULL_ID);
 
     auto offsetIntermediate = _intermediateVarId;
     if (_sum != 0) {
@@ -104,18 +115,19 @@ void BoolLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
           engine.makeIntView<ScalarView>(engine, offsetIntermediate, -1);
     }
 
-    outputVarNodeIds().front()->setVarId(invertedIntermediate);
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(invertedIntermediate);
   }
 }
 
 void BoolLinearNode::registerNode(InvariantGraph& invariantGraph,
                                   Engine& engine) {
-  assert(outputVarNodeIds().front()->varId() != NULL_ID);
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
 
   std::vector<VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
-                 [&](const auto& node) { return node->varId(); });
+                 [&](const auto& node) { return invariantGraph.varId(node); });
   if (_intermediateVarId == NULL_ID) {
     assert(variables.size() == 1);
     return;

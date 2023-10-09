@@ -4,11 +4,22 @@
 
 namespace invariantgraph {
 
+BoolClauseNode::BoolClauseNode(std::vector<VarNodeId>&& as,
+                               std::vector<VarNodeId>&& bs, VarNodeId r)
+    : ViolationInvariantNode(std::move(concat(as, bs)), r),
+      _as(std::move(as)),
+      _bs(std::move(bs)) {}
+BoolClauseNode::BoolClauseNode(std::vector<VarNodeId>&& as,
+                               std::vector<VarNodeId>&& bs, bool shouldHold)
+    : ViolationInvariantNode(std::move(concat(as, bs)), shouldHold),
+      _as(std::move(as)),
+      _bs(std::move(bs)) {}
+
 std::unique_ptr<BoolClauseNode> BoolClauseNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("boolClause constraint takes two arguments");
   }
@@ -22,7 +33,8 @@ std::unique_ptr<BoolClauseNode> BoolClauseNode::fromModelConstraint(
     throw std::runtime_error(
         "boolClause constraint second argument must be a bool var array");
   }
-  if (!std::holds_alternative<fznparser::BoolArg>(
+  if (constraint.arguments().size() == 3 &&
+      !std::holds_alternative<fznparser::BoolArg>(
           constraint.arguments().back())) {
     throw std::runtime_error(
         "boolClause constraint optional third argument must be a bool "
@@ -51,17 +63,19 @@ std::unique_ptr<BoolClauseNode> BoolClauseNode::fromModelConstraint(
 
 void BoolClauseNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                              Engine& engine) {
-  if (violationVarId() == NULL_ID) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(engine.makeIntView<EqualConst>(
-          engine, _sumVarId,
-          static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
+      setViolationVarId(invariantGraph, engine.makeIntView<EqualConst>(
+                                            engine, _sumVarId,
+                                            static_cast<Int>(_as.size()) +
+                                                static_cast<Int>(_bs.size())));
     } else {
       assert(!isReified());
-      setViolationVarId(engine.makeIntView<NotEqualConst>(
-          engine, _sumVarId,
-          static_cast<Int>(_as.size()) + static_cast<Int>(_bs.size())));
+      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+                                            engine, _sumVarId,
+                                            static_cast<Int>(_as.size()) +
+                                                static_cast<Int>(_bs.size())));
     }
   }
 }
@@ -71,16 +85,16 @@ void BoolClauseNode::registerNode(InvariantGraph& invariantGraph,
   std::vector<VarId> engineVariables;
   engineVariables.reserve(_as.size() + _bs.size());
   std::transform(_as.begin(), _as.end(), std::back_inserter(engineVariables),
-                 [&](const auto& var) { return var->varId(); });
+                 [&](const auto& id) { return invariantGraph.varId(id); });
 
   std::transform(_bs.begin(), _bs.end(), std::back_inserter(engineVariables),
-                 [&](const auto& var) {
-                   return engine.makeIntView<NotEqualConst>(engine,
-                                                            var->varId(), 0);
+                 [&](const auto& id) {
+                   return engine.makeIntView<NotEqualConst>(
+                       engine, invariantGraph.varId(id), 0);
                  });
 
   assert(_sumVarId != NULL_ID);
-  assert(violationVarId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
   engine.makeInvariant<BoolLinear>(engine, _sumVarId, engineVariables);
 }
 

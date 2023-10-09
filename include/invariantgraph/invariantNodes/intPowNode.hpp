@@ -10,15 +10,13 @@ namespace invariantgraph {
 
 class IntPowNode : public InvariantNode {
  public:
-  IntPowNode(VarNodeId a, VarNodeId b, VarNodeId output)
-      : InvariantNode({output}, {a, b}) {}
+  IntPowNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
   ~IntPowNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
-        {"int_pow", 3}, {"int_pow_fixed", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"int_pow", 3},
+                                                       {"int_pow_fixed", 3}};
   }
 
   static std::unique_ptr<IntPowNode> fromModelConstraint(

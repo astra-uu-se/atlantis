@@ -19,17 +19,12 @@ class BoolLinearNode : public InvariantNode {
 
  public:
   BoolLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
-                 VarNodeId output, Int definingCoefficient, Int sum)
-      : InvariantNode({output}, std::move(variables)),
-        _coeffs(std::move(coeffs)),
-        _definingCoefficient(definingCoefficient),
-        _sum(sum) {}
+                 VarNodeId output, Int definingCoefficient, Int sum);
 
   ~BoolLinearNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"bool_lin_eq", 3}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"bool_lin_eq", 3}};
   }
 
   static std::unique_ptr<BoolLinearNode> fromModelConstraint(

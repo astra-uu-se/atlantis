@@ -4,20 +4,11 @@
 
 namespace invariantgraph {
 
-explicit AllEqualNode::AllEqualNode(std::vector<VarNodeId>&& variables,
-                                    VarNodeId r)
+AllEqualNode::AllEqualNode(std::vector<VarNodeId>&& variables, VarNodeId r)
     : ViolationInvariantNode(std::move(variables), r) {}
 
-explicit AllEqualNode::AllEqualNode(std::vector<VarNodeId>&& variables,
-                                    bool shouldHold = true)
+AllEqualNode::AllEqualNode(std::vector<VarNodeId>&& variables, bool shouldHold)
     : ViolationInvariantNode(std::move(variables), shouldHold) {}
-
-explicit AllEqualNode::AllEqualNode(InvariantGraph& invariantgraph,
-                                    std::vector<VarNodeId>&& variables,
-                                    bool shouldHold = true)
-    : ViolationInvariantNode(std::move(variables), shouldHold) {
-  init(invariantgraph, invariantgraph.nextImplicitNodeId());
-}
 
 std::unique_ptr<AllEqualNode> AllEqualNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
@@ -61,17 +52,19 @@ std::unique_ptr<AllEqualNode> AllEqualNode::fromModelConstraint(
 
 void AllEqualNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                            Engine& engine) {
-  if (violationVarId() == NULL_ID) {
+  if (violationVarId(invariantGraph) == NULL_ID) {
     _allDifferentViolationVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
       setViolationVarId(
+          invariantGraph,
           engine.makeIntView<EqualConst>(engine, _allDifferentViolationVarId,
                                          staticInputVarNodeIds().size() - 1));
     } else {
       assert(!isReified());
-      setViolationVarId(engine.makeIntView<NotEqualConst>(
-          engine, _allDifferentViolationVarId,
-          staticInputVarNodeIds().size() - 1));
+      setViolationVarId(invariantGraph,
+                        engine.makeIntView<NotEqualConst>(
+                            engine, _allDifferentViolationVarId,
+                            staticInputVarNodeIds().size() - 1));
     }
   }
 }
@@ -79,12 +72,12 @@ void AllEqualNode::registerOutputVariables(InvariantGraph& invariantGraph,
 void AllEqualNode::registerNode(InvariantGraph& invariantGraph,
                                 Engine& engine) {
   assert(_allDifferentViolationVarId != NULL_ID);
-  assert(violationVarId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
 
   std::vector<VarId> engineVariables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(engineVariables),
-                 [&](const auto& var) { return var->varId(); });
+                 [&](const auto& id) { return invariantGraph.varId(id); });
 
   engine.makeConstraint<AllDifferent>(engine, _allDifferentViolationVarId,
                                       engineVariables);

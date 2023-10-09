@@ -22,13 +22,8 @@ class AllEqualNode : public ViolationInvariantNode {
   explicit AllEqualNode(std::vector<VarNodeId>&& variables,
                         bool shouldHold = true);
 
-  explicit AllEqualNode(InvariantGraph& invariantgraph,
-                        std::vector<VarNodeId>&& variables,
-                        bool shouldHold = true);
-
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"fzn_all_equal_int", 1}, {"fzn_all_equal_int_reif", 2}};
   }
 

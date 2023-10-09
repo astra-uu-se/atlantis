@@ -4,11 +4,17 @@
 
 namespace invariantgraph {
 
+IntLeNode::IntLeNode(VarNodeId a, VarNodeId b, VarNodeId r)
+    : ViolationInvariantNode({a, b}, r) {}
+
+IntLeNode::IntLeNode(VarNodeId a, VarNodeId b, bool shouldHold)
+    : ViolationInvariantNode({a, b}, shouldHold) {}
+
 std::unique_ptr<IntLeNode> IntLeNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  if (constraint.arguments().size() != 2 ||
+  if (constraint.arguments().size() != 2 &&
       constraint.arguments().size() != 3) {
     throw std::runtime_error("IntLe constraint takes two var bool arguments");
   }
@@ -33,19 +39,21 @@ std::unique_ptr<IntLeNode> IntLeNode::fromModelConstraint(
 
 void IntLeNode::registerOutputVariables(InvariantGraph& invariantGraph,
                                         Engine& engine) {
-  registerViolation(engine);
+  registerViolation(invariantGraph, engine);
 }
 
 void IntLeNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId() != NULL_ID);
+  assert(violationVarId(invariantGraph) != NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<LessEqual>(engine, violationVarId(), a()->varId(),
-                                     b()->varId());
+    engine.makeConstraint<LessEqual>(engine, violationVarId(invariantGraph),
+                                     invariantGraph.varId(a()),
+                                     invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<LessThan>(engine, violationVarId(), b()->varId(),
-                                    a()->varId());
+    engine.makeConstraint<LessThan>(engine, violationVarId(invariantGraph),
+                                    invariantGraph.varId(b()),
+                                    invariantGraph.varId(a()));
   }
 }
 

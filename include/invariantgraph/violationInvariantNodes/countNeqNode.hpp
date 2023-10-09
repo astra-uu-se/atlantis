@@ -12,18 +12,6 @@
 #include "views/equalConst.hpp"
 #include "views/notEqualConst.hpp"
 
-static std::vector<invariantgraph::VarNodeId> append(
-    std::vector<invariantgraph::VarNodeId>&& vars, invariantgraph::VarNodeId y,
-    invariantgraph::VarNodeId c) {
-  if (y != nullptr) {
-    vars.emplace_back(y);
-  }
-  if (c != nullptr) {
-    vars.emplace_back(c);
-  }
-  return std::move(vars);
-}
-
 namespace invariantgraph {
 class CountNeqNode : public ViolationInvariantNode {
  private:
@@ -34,59 +22,38 @@ class CountNeqNode : public ViolationInvariantNode {
   VarId _intermediate{NULL_ID};
 
   explicit CountNeqNode(std::vector<VarNodeId>&& x, VarNodeId y, Int yParameter,
-                        VarNodeId c, Int cParameter, VarNodeId r)
-      : ViolationInvariantNode(append(std::move(x), y, c), r),
-        _yIsParameter(y == nullptr),
-        _yParameter(yParameter),
-        _cIsParameter(c == nullptr),
-        _cParameter(cParameter) {}
+                        VarNodeId c, Int cParameter, VarNodeId r);
 
   explicit CountNeqNode(std::vector<VarNodeId>&& x, VarNodeId y, Int yParameter,
-                        VarNodeId c, Int cParameter, bool shouldHold)
-      : ViolationInvariantNode(append(std::move(x), y, c), shouldHold),
-        _yIsParameter(y == nullptr),
-        _yParameter(yParameter),
-        _cIsParameter(c == nullptr),
-        _cParameter(cParameter) {}
+                        VarNodeId c, Int cParameter, bool shouldHold);
 
  public:
   explicit CountNeqNode(std::vector<VarNodeId>&& x, VarNodeId y, VarNodeId c,
-                        VarNodeId r)
-      : CountNeqNode(std::move(x), y, 0, c, 0, r) {}
+                        VarNodeId r);
 
   explicit CountNeqNode(std::vector<VarNodeId>&& x, Int yParameter, VarNodeId c,
-                        VarNodeId r)
-      : CountNeqNode(std::move(x), nullptr, yParameter, c, 0, r) {}
+                        VarNodeId r);
 
   explicit CountNeqNode(std::vector<VarNodeId>&& x, VarNodeId y, Int cParameter,
-                        VarNodeId r)
-      : CountNeqNode(std::move(x), y, 0, nullptr, cParameter, r) {}
+                        VarNodeId r);
 
   explicit CountNeqNode(std::vector<VarNodeId>&& x, Int yParameter,
-                        Int cParameter, VarNodeId r)
-      : CountNeqNode(std::move(x), nullptr, yParameter, nullptr, cParameter,
-                     r) {}
+                        Int cParameter, VarNodeId r);
 
   explicit CountNeqNode(std::vector<VarNodeId>&& x, VarNodeId y, VarNodeId c,
-                        bool shouldHold)
-      : CountNeqNode(std::move(x), y, 0, c, 0, shouldHold) {}
+                        bool shouldHold);
 
   explicit CountNeqNode(std::vector<VarNodeId>&& x, Int yParameter, VarNodeId c,
-                        bool shouldHold)
-      : CountNeqNode(std::move(x), nullptr, yParameter, c, 0, shouldHold) {}
+                        bool shouldHold);
 
   explicit CountNeqNode(std::vector<VarNodeId>&& x, VarNodeId y, Int cParameter,
-                        bool shouldHold)
-      : CountNeqNode(std::move(x), y, 0, nullptr, cParameter, shouldHold) {}
+                        bool shouldHold);
 
   explicit CountNeqNode(std::vector<VarNodeId>&& x, Int yParameter,
-                        Int cParameter, bool shouldHold)
-      : CountNeqNode(std::move(x), nullptr, yParameter, nullptr, cParameter,
-                     shouldHold) {}
+                        Int cParameter, bool shouldHold);
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{
         {"fzn_count_neq", 3}, {"fzn_count_neq_reif", 4}};
   }
 
@@ -97,15 +64,8 @@ class CountNeqNode : public ViolationInvariantNode {
 
   void registerNode(InvariantGraph&, Engine& engine) override;
 
-  [[nodiscard]] VarNodeId yVarNode() const {
-    return _yIsParameter ? nullptr
-                         : staticInputVarNodeIds().at(
-                               staticInputVarNodeIds().size() -
-                               (1 + static_cast<size_t>(!_cIsParameter)));
-  }
+  [[nodiscard]] VarNodeId yVarNode() const;
 
-  [[nodiscard]] VarNodeId cVarNode() const {
-    return _cIsParameter ? nullptr : staticInputVarNodeIds().back();
-  }
+  [[nodiscard]] VarNodeId cVarNode() const;
 };
 }  // namespace invariantgraph
