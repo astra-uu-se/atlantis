@@ -2,10 +2,11 @@
 
 #include <algorithm>
 
-search::neighbourhoods::AllDifferentUniformNeighbourhood::
-    AllDifferentUniformNeighbourhood(
-        std::vector<search::SearchVariable> variables, std::vector<Int> domain,
-        const Engine& engine)
+namespace search::neighbourhoods {
+
+AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
+    std::vector<SearchVariable>&& variables, std::vector<Int> domain,
+    const Engine& engine)
     : _variables(std::move(variables)),
       _domain(std::move(domain)),
       _engine(engine),
@@ -22,7 +23,7 @@ search::neighbourhoods::AllDifferentUniformNeighbourhood::
   }
 }
 
-void search::neighbourhoods::AllDifferentUniformNeighbourhood::initialise(
+void AllDifferentUniformNeighbourhood::initialise(
     RandomProvider& random, AssignmentModifier& modifications) {
   _freeVariables = _domain.size();
 
@@ -37,8 +38,9 @@ void search::neighbourhoods::AllDifferentUniformNeighbourhood::initialise(
   }
 }
 
-bool search::neighbourhoods::AllDifferentUniformNeighbourhood::randomMove(
-    RandomProvider& random, Assignment& assignment, Annealer& annealer) {
+bool AllDifferentUniformNeighbourhood::randomMove(RandomProvider& random,
+                                                  Assignment& assignment,
+                                                  Annealer& annealer) {
   if (_freeVariables == 0) {
     return swapValues(random, assignment, annealer);
   }
@@ -46,9 +48,9 @@ bool search::neighbourhoods::AllDifferentUniformNeighbourhood::randomMove(
   return assignValue(random, assignment, annealer);
 }
 
-bool search::neighbourhoods::AllDifferentUniformNeighbourhood::swapValues(
-    search::RandomProvider& random, search::Assignment& assignment,
-    search::Annealer& annealer) {
+bool AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
+                                                  Assignment& assignment,
+                                                  Annealer& annealer) {
   size_t i = random.intInRange(0, static_cast<Int>(_variables.size()) - 1);
   size_t j =
       (i + random.intInRange(1, static_cast<Int>(_variables.size()) - 1)) %
@@ -64,9 +66,9 @@ bool search::neighbourhoods::AllDifferentUniformNeighbourhood::swapValues(
                      annealer);
 }
 
-bool search::neighbourhoods::AllDifferentUniformNeighbourhood::assignValue(
-    search::RandomProvider& random, search::Assignment& assignment,
-    search::Annealer& annealer) {
+bool AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
+                                                   Assignment& assignment,
+                                                   Annealer& annealer) {
   auto var = random.element(_variables).engineId();
   Int oldValue = assignment.value(var);
   size_t oldValueIdx = _domIndices[oldValue - _offset];
@@ -86,3 +88,5 @@ bool search::neighbourhoods::AllDifferentUniformNeighbourhood::assignValue(
 
   return false;
 }
+
+}  // namespace search::neighbourhoods

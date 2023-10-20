@@ -2,47 +2,49 @@
 #include "core/propagationEngine.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
 
-class Bool2IntNodeTest : public NodeTestBase {
+class Bool2IntNodeTest : public NodeTestBase<invariantgraph::Bool2IntNode> {
  public:
-  BOOL_VARIABLE(a);
-  INT_VARIABLE(b, 0, 1);
-
-  fznparser::Constraint constraint{
-      "bool2int", {"a", "b"}, {fznparser::DefinesVariableAnnotation{"b"}}};
-
-  fznparser::FZNModel model{{}, {a, b}, {constraint}, fznparser::Satisfy{}};
-
-  std::unique_ptr<invariantgraph::Bool2IntNode> node;
+  invariantgraph::VarNodeId a;
+  invariantgraph::VarNodeId b;
 
   void SetUp() override {
-    setModel(&model);
-    node = makeNode<invariantgraph::Bool2IntNode>(constraint);
+    NodeTestBase::SetUp();
+    a = createBoolVar("a");
+    b = createIntVar(0, 1, "b");
+
+    _model->addConstraint(fznparser::Constraint(
+        "bool2int",
+        std::vector<fznparser::Arg>{fznparser::BoolArg{boolVar(a)},
+                                    fznparser::IntArg{intVar(b)}},
+        std::vector<fznparser::Annotation>{
+            definesVarAnnotation(identifier(b))}));
+
+    makeInvNode(_model->constraints().front());
   }
 };
 
 TEST_F(Bool2IntNodeTest, construction) {
-  EXPECT_EQ(node->input()->variable(),
-            invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(node->input()->inputFor().size(), 1);
-  EXPECT_EQ(node->input()->inputFor()[0], node.get());
+  expectInputTo(invNode());
+  expectOutputOf(invNode());
 
-  EXPECT_EQ(node->definedVariables().size(), 1);
-  EXPECT_EQ(*node->definedVariables().front()->variable(),
-            invariantgraph::VariableNode::FZNVariable(b));
+  EXPECT_EQ(invNode().input(), a);
+
+  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), b);
 }
 
 TEST_F(Bool2IntNodeTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a.name});
-  for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_EQ(definedVariable->varId(), NULL_ID);
+  addInputVarsToEngine(engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
   }
-  node->createDefinedVariables(engine);
-  for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_NE(definedVariable->varId(), NULL_ID);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
   }
-  node->registerWithEngine(engine);
+  invNode().registerNode(*_invariantGraph, engine);
   engine.close();
 
   // a
@@ -55,17 +57,17 @@ TEST_F(Bool2IntNodeTest, application) {
 TEST_F(Bool2IntNodeTest, propagation) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a.name});
-  node->createDefinedVariables(engine);
-  node->registerWithEngine(engine);
+  addInputVarsToEngine(engine);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerNode(*_invariantGraph, engine);
   engine.close();
 
-  EXPECT_EQ(node->staticInputs().size(), 1);
-  EXPECT_NE(node->staticInputs().front()->varId(), NULL_ID);
-  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), NULL_ID);
+  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), NULL_ID);
 
-  const VarId input = node->staticInputs().front()->varId();
-  const VarId outputId = node->definedVariables().front()->varId();
+  const VarId input = varId(invNode().staticInputVarNodeIds().front());
+  const VarId outputId = varId(invNode().outputVarNodeIds().front());
 
   for (Int value = engine.lowerBound(input); value <= engine.upperBound(input);
        ++value) {

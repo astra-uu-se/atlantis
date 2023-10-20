@@ -1,11 +1,132 @@
 #include "parseHelper.hpp"
 
-#include <algorithm>
-#include <optional>
-#include <variant>
+#include "invariantgraph/invariantGraph.hpp"
 
-#include "utils/variant.hpp"
+namespace invariantgraph {
 
+bool hasCorrectSignature(
+    const std::vector<std::pair<std::string, size_t>> &nameNumArgPairs,
+    const fznparser::Constraint &constraint) {
+  for (const auto &[name, numArgs] : nameNumArgPairs) {
+    if (name == constraint.identifier() &&
+        numArgs == constraint.arguments().size()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<invariantgraph::VarNodeId> &&append(
+    std::vector<invariantgraph::VarNodeId> &&vars,
+    invariantgraph::VarNodeId fst, invariantgraph::VarNodeId snd) {
+  if (fst != NULL_NODE_ID) {
+    vars.emplace_back(fst);
+  }
+  if (snd != NULL_NODE_ID) {
+    vars.emplace_back(snd);
+  }
+  return std::move(vars);
+}
+
+std::vector<invariantgraph::VarNodeId> &&append(
+    std::vector<invariantgraph::VarNodeId> &&vars,
+    invariantgraph::VarNodeId var) {
+  if (var != NULL_NODE_ID) {
+    vars.emplace_back(var);
+  }
+  return std::move(vars);
+}
+
+std::vector<invariantgraph::VarNodeId> concat(
+    const std::vector<invariantgraph::VarNodeId> &fst,
+    const std::vector<invariantgraph::VarNodeId> &snd) {
+  std::vector<invariantgraph::VarNodeId> res;
+  res.reserve(fst.size() + snd.size());
+  res.insert(res.end(), fst.begin(), fst.end());
+  res.insert(res.end(), snd.begin(), snd.end());
+  return res;
+}
+
+static std::vector<std::pair<size_t, Int>> allDifferent(
+    InvariantGraph &invariantGraph, std::vector<VarNodeId> inputs) {
+  // pruned[i] = <index, value> where index is the index of the static
+  // variable with singleton domain {value}.
+  std::vector<std::pair<size_t, Int>> fixed;
+  fixed.reserve(inputs.size());
+
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    for (const auto &[index, value] : fixed) {
+      // remove all fixed values from the current variable:
+      assert(index < i);
+      invariantGraph.varNode(inputs[i]).domain().removeValue(value);
+    }
+    if (!invariantGraph.varNode(inputs[i]).domain().isFixed()) {
+      continue;
+    }
+    // the variable has a singleton domain
+    // Remove all occurrences of the value from previous static variables. Any
+    // variable that gets a singleton domain is added to the fixed list.
+    fixed.emplace_back(i, invariantGraph.varNode(inputs[i]).val());
+    for (size_t p = fixed.size() - 1; p < fixed.size(); ++p) {
+      const auto &[index, value] = fixed.at(p);
+      for (size_t j = 0; j < index; j++) {
+        const bool wasConstant =
+            invariantGraph.varNode(inputs[j]).domain().isFixed();
+        invariantGraph.varNode(inputs[j]).domain().removeValue(value);
+        if (!wasConstant &&
+            invariantGraph.varNode(inputs[j]).domain().isFixed()) {
+          fixed.emplace_back(j, invariantGraph.varNode(inputs[j]).val());
+        }
+      }
+    }
+  }
+  return fixed;
+}
+
+std::vector<VarNodeId> pruneAllDifferentFree(InvariantGraph &invariantGraph,
+                                             std::vector<VarNodeId> inputs) {
+  const auto fixed = allDifferent(invariantGraph, inputs);
+  std::vector<bool> isFree(inputs.size(), true);
+  for (const auto &[index, _] : fixed) {
+    isFree[index] = false;
+  }
+  std::vector<VarNodeId> freeVars;
+  freeVars.reserve(inputs.size() - fixed.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (isFree[i]) {
+      freeVars.push_back(inputs[i]);
+    }
+  }
+  return freeVars;
+}
+
+std::vector<VarNodeId> pruneAllDifferentFixed(InvariantGraph &invariantGraph,
+                                              std::vector<VarNodeId> inputs) {
+  const auto fixed = allDifferent(invariantGraph, inputs);
+  std::vector<bool> isFree(inputs.size(), true);
+  for (const auto &[index, _] : fixed) {
+    isFree[index] = false;
+  }
+  std::vector<VarNodeId> freeVars;
+  freeVars.reserve(inputs.size() - fixed.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (!isFree[i]) {
+      freeVars.push_back(inputs[i]);
+    }
+  }
+  return freeVars;
+}
+
+std::vector<Int> toIntVector(const std::vector<bool> &argument) {
+  std::vector<Int> ints;
+  ints.reserve(argument.size());
+  std::transform(argument.begin(), argument.end(), std::back_inserter(ints),
+                 [](const bool b) { return 1 - static_cast<Int>(b); });
+
+  return ints;
+}
+
+/*
 #define EMPTY_VARIANT_BRANCH(ParamType, ReturnType, message) \
   [](const ParamType &) {                                    \
     throw std::runtime_error(message);                       \
@@ -18,32 +139,32 @@
 using namespace fznparser;
 
 template <typename T>
-static invariantgraph::VariableNode *createNode(
-    T element, const std::function<invariantgraph::VariableNode *(
+static invariantgraph::VarNode *createVariableNode(
+    T element, const std::function<invariantgraph::VarNode *(
                    invariantgraph::MappableValue &)> &variableFactory) {
   invariantgraph::MappableValue value(element);
   return variableFactory(value);
 }
 
-static std::vector<invariantgraph::VariableNode *> variableNodesFromLiteral(
+static std::vector<invariantgraph::VarNode *> variableNodesFromLiteral(
     const FZNConstraint::ArrayArgument &argument,
-    const std::function<invariantgraph::VariableNode *(
+    const std::function<invariantgraph::VarNode *(
         invariantgraph::MappableValue &)> &variableMap) {
-  std::vector<invariantgraph::VariableNode *> nodes;
+  std::vector<invariantgraph::VarNode *> nodes;
   nodes.reserve(argument.size());
 
   std::transform(
       argument.begin(), argument.end(), std::back_inserter(nodes),
       [&](const auto &element) {
-        return std::visit<invariantgraph::VariableNode *>(
+        return std::visit<invariantgraph::VarNode *>(
             overloaded{EMPTY_VARIANT_BRANCH(
-                           Set<Int>, invariantgraph::VariableNode *,
+                           Set<Int>, invariantgraph::VarNode *,
                            "Cannot parse Set<Int> as a variable node."),
                        [&](const Identifier &identifier) {
-                         return createNode(identifier, variableMap);
+                         return createVariableNode(identifier, variableMap);
                        },
                        [&](const auto &value) {
-                         return createNode(value, variableMap);
+                         return createVariableNode(value, variableMap);
                        }},
             element);
       });
@@ -52,17 +173,13 @@ static std::vector<invariantgraph::VariableNode *> variableNodesFromLiteral(
 }
 
 template <typename T>
-static std::vector<invariantgraph::VariableNode *>
-variableNodesFromVariableArray(
-    const fznparser::VariableArray<T> &argument,
-    const std::function<invariantgraph::VariableNode *(
-        invariantgraph::MappableValue &)> &variableMap) {
-  std::vector<invariantgraph::VariableNode *> nodes;
-
+static std::vector<invariantgraph::VarNode *>
+variableNodesFromVariableArray(const fznparser::VariableArray<T> &argument,
+                               InvariantGraph &invariantGraph) {
   for (const auto &element : argument) {
     std::visit(
         [&](const auto &elem) {
-          nodes.push_back(createNode(elem, variableMap));
+          nodes.push_back(createVariableNode(elem, variableMap));
         },
         element);
   }
@@ -70,29 +187,16 @@ variableNodesFromVariableArray(
   return nodes;
 }
 
-std::vector<invariantgraph::VariableNode *> mappedVariableVector(
-    const fznparser::FZNModel &model, const FZNConstraint::Argument &argument,
-    const std::function<invariantgraph::VariableNode *(
-        invariantgraph::MappableValue &)> &variableMap) {
-  if (std::holds_alternative<FZNConstraint::ArrayArgument>(argument)) {
-    auto array = std::get<FZNConstraint::ArrayArgument>(argument);
-    return variableNodesFromLiteral(array, variableMap);
-  } else if (std::holds_alternative<fznparser::Identifier>(argument)) {
-    auto identifier = std::get<fznparser::Identifier>(argument);
-    auto identifiable = *model.identify(identifier);
-
-    if (std::holds_alternative<fznparser::Variable>(identifiable)) {
-      auto variable = std::get<fznparser::Variable>(identifiable);
-
-      if (std::holds_alternative<fznparser::IntVariableArray>(variable)) {
-        return variableNodesFromVariableArray<Int>(
-            std::get<fznparser::IntVariableArray>(variable), variableMap);
-      } else if (std::holds_alternative<fznparser::BoolVariableArray>(
-                     variable)) {
-        return variableNodesFromVariableArray<bool>(
-            std::get<fznparser::BoolVariableArray>(variable), variableMap);
-      }
-    }
+std::vector<std::reference_wrapper<invariantgraph::VarNode>>
+mappedVariableVector(
+    const fznparser::Model &model, const fznparser::Arg &argument,
+    std::unordered_map<std::string, VarNode> &variableMap) {
+  if (std::holds_alternative<fznparser::BoolVarArray>(argument)) {
+    const auto &array = std::get<fznparser::BoolVarArray>(argument);
+    return variableNodesFromVariableArray<bool>(array, variableMap);
+  } else if (std::holds_alternative<fznparser::IntVarArray>(argument)) {
+    const auto &array = std::get<fznparser::IntVarArray>(argument);
+    return variableNodesFromVariableArray<Int>(array, variableMap);
   }
 
   throw std::runtime_error(
@@ -100,18 +204,18 @@ std::vector<invariantgraph::VariableNode *> mappedVariableVector(
       "array.");
 }
 
-invariantgraph::VariableNode *mappedVariable(
+invariantgraph::VarNode *mappedVariable(
     const fznparser::Constraint::Argument &argument,
-    const std::function<invariantgraph::VariableNode *(
+    const std::function<invariantgraph::VarNode *(
         invariantgraph::MappableValue &)> &variableMap) {
-  return std::visit<invariantgraph::VariableNode *>(
-      overloaded{[&](bool b) { return createNode(b, variableMap); },
-                 [&](Int i) { return createNode(i, variableMap); },
-                 [&](const fznparser::Identifier &ident) {
-                   return createNode(ident, variableMap);
+  return std::visit<invariantgraph::VarNode *>(
+      overloaded{[&](bool b) { return createVariableNode(b, variableMap); },
+                 [&](Int i) { return createVariableNode(i, variableMap); },
+                 [&](const std::string &ident) {
+                   return createVariableNode(ident, variableMap);
                  },
                  DEFAULT_EMPTY_VARIANT_BRANCH(
-                     invariantgraph::VariableNode *,
+                     invariantgraph::VarNode *,
                      "Unexpected variant for variable node ptr.")},
       argument);
 }
@@ -123,18 +227,17 @@ static T valueFromParameter(const Parameter &param) {
 
 template <typename T>
 static std::vector<T> valueLiteralVector(
-    const fznparser::FZNModel &model,
-    const FZNConstraint::ArrayArgument &array) {
-  std::vector<T> values;
-  values.reserve(array.size());
+    const fznparser::Model &model, const FZNConstraint::ArrayArgument &array)
+{ std::vector<T> values; values.reserve(array.size());
 
   for (const auto &element : array) {
     auto value = std::visit<T>(
         overloaded{
             [](T v) { return v; },
             [&](const Identifier &identifier) {
-              auto parameter = std::get<Parameter>(*model.identify(identifier));
-              return valueFromParameter<T>(parameter);
+              auto parameter =
+std::get<Parameter>(*model.identify(identifier)); return
+valueFromParameter<T>(parameter);
             },
             DEFAULT_EMPTY_VARIANT_BRANCH(T, "Unexpected variant branch.")},
         element);
@@ -145,7 +248,7 @@ static std::vector<T> valueLiteralVector(
   return values;
 }
 
-std::vector<Int> integerVector(const fznparser::FZNModel &model,
+std::vector<Int> integerVector(const fznparser::Model &model,
                                const FZNConstraint::Argument &argument) {
   return std::visit<std::vector<Int>>(
       overloaded{[&](const FZNConstraint::ArrayArgument &array) {
@@ -162,10 +265,8 @@ std::vector<Int> integerVector(const fznparser::FZNModel &model,
       argument);
 }
 
-Int integerValue(const FZNModel &model,
-                 const FZNConstraint::Argument &argument) {
-  return std::visit<Int>(
-      overloaded{[](Int value) { return value; },
+Int integerValue(const Model &model, const FZNConstraint::Argument &argument)
+{ return std::visit<Int>( overloaded{[](Int value) { return value; },
                  [&](const Identifier &identifier) {
                    auto parameter =
                        std::get<Parameter>(*model.identify(identifier));
@@ -184,17 +285,18 @@ bool definesVariable(const FZNConstraint &constraint,
   }
 
   return std::visit<bool>(
-      [&](const auto &var) { return definedVariableId == var.name; }, variable);
+      [&](const auto &var) { return definedVariableId == var.name; },
+variable);
 }
 
-fznparser::Set<Int> integerSet(const FZNModel &model,
+fznparser::Set<Int> integerSet(const Model &model,
                                const FZNConstraint::Argument &argument) {
   if (std::holds_alternative<Set<Int>>(argument)) {
     return std::get<Set<Int>>(argument);
   }
 
-  assert(std::holds_alternative<fznparser::Identifier>(argument));
-  auto identifier = std::get<fznparser::Identifier>(argument);
+  assert(std::holds_alternative<std::string>(argument));
+  auto identifier = std::get<std::string>(argument);
   auto identifiable = *model.identify(identifier);
   assert(std::holds_alternative<Parameter>(identifiable));
   auto parameter = std::get<Parameter>(identifiable);
@@ -203,10 +305,10 @@ fznparser::Set<Int> integerSet(const FZNModel &model,
 }
 
 std::vector<Int> boolVectorAsIntVector(
-    const FZNModel &model, const FZNConstraint::Argument &argument) {
+    const Model &model, const FZNConstraint::Argument &argument) {
   auto bools = std::visit<std::vector<bool>>(
       overloaded{
-          [&](const fznparser::Identifier &identifier) {
+          [&](const std::string &identifier) {
             auto identifiable = *model.identify(identifier);
             return valueFromParameter<std::vector<bool>>(
                 std::get<Parameter>(identifiable));
@@ -226,10 +328,8 @@ std::vector<Int> boolVectorAsIntVector(
   return ints;
 }
 
-bool booleanValue(const FZNModel &model,
-                  const FZNConstraint::Argument &argument) {
-  return std::visit<bool>(
-      overloaded{[](bool value) { return value; },
+bool booleanValue(const Model &model, const FZNConstraint::Argument &argument)
+{ return std::visit<bool>( overloaded{[](bool value) { return value; },
                  [&](const Identifier &identifier) {
                    auto parameter =
                        std::get<Parameter>(*model.identify(identifier));
@@ -239,52 +339,6 @@ bool booleanValue(const FZNModel &model,
                      Int, "Invalid variant for boolean value.")},
       argument);
 }
+*/
 
-bool hasCorrectSignature(
-    const std::vector<std::pair<std::string_view, size_t>> &nameNumArgPairs,
-    const fznparser::Constraint &constraint) {
-  for (const auto &[name, numArgs] : nameNumArgPairs) {
-    if (name == constraint.name && numArgs == constraint.arguments.size()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-std::vector<invariantgraph::VariableNode *> pruneAllDifferent(
-    std::vector<invariantgraph::VariableNode *> staticInputs) {
-  // pruned[i] = <index, value> where index is the index of the static variable
-  // with singleton domain {value}.
-  std::vector<std::pair<size_t, Int>> pruned;
-  pruned.reserve(staticInputs.size());
-
-  for (size_t i = 0; i < staticInputs.size(); ++i) {
-    for (const auto &[index, value] : pruned) {
-      // remove all pruned values from the current variable:
-      assert(index < i);
-      staticInputs[i]->domain().removeValue(value);
-    }
-    if (!staticInputs[i]->domain().isConstant()) {
-      continue;
-    }
-    // the variable has a singleton domain
-    // Remove all occurrences of the value from previous static variables. Any
-    // variable that gets a singleton domain is added to the pruned list.
-    pruned.emplace_back(i, staticInputs[i]->domain().lowerBound());
-    for (size_t p = pruned.size() - 1; p < pruned.size(); ++p) {
-      const auto &[index, value] = pruned.at(p);
-      for (size_t j = 0; j < index; j++) {
-        const bool wasConstant = staticInputs[j]->domain().isConstant();
-        staticInputs[j]->domain().removeValue(value);
-        if (!wasConstant && staticInputs[j]->domain().isConstant()) {
-          pruned.emplace_back(j, staticInputs[j]->domain().lowerBound());
-        }
-      }
-    }
-  }
-  std::vector<invariantgraph::VariableNode *> prunedVars(pruned.size());
-  for (size_t i = 0; i < pruned.size(); ++i) {
-    prunedVars[i] = staticInputs[pruned[i].first];
-  }
-  return prunedVars;
-}
+}  // namespace invariantgraph

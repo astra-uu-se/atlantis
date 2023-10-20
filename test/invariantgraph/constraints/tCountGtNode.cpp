@@ -2,392 +2,212 @@
 
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/countGtNode.hpp"
+#include "invariantgraph/violationInvariantNodes/countGtNode.hpp"
 
+// Constrains c to be strictly greater than the number of occurrences of y in x.
 static bool isSatisfied(const std::vector<Int>& values, const Int y,
                         const Int c) {
-  Int count = 0;
+  Int occurrences = 0;
   for (const Int val : values) {
-    count += static_cast<Int>(val == y);
+    occurrences += (val == y ? 1 : 0);
   }
-  return c > count;
+  return c > occurrences;
 }
 
-template <bool YIsParameter, bool CIsParameter, ConstraintType Type>
-class AbstractCountGtNodeTest : public NodeTestBase {
+template <bool YIsParameter, ConstraintType Type>
+class AbstractCountGtNodeTest
+    : public NodeTestBase<invariantgraph::CountGtNode> {
  public:
-  INT_VARIABLE(x1, 5, 10);
-  INT_VARIABLE(x2, 2, 7);
-  INT_VARIABLE(x3, 2, 7);
+  invariantgraph::VarNodeId x1;
+  invariantgraph::VarNodeId x2;
+  invariantgraph::VarNodeId x3;
+  invariantgraph::VarNodeId y;
+  invariantgraph::VarNodeId c;
+  invariantgraph::VarNodeId r;
   const Int yParamVal{5};
-  INT_VARIABLE(y, 2, 7);
-  BOOL_VARIABLE(r);
-  INT_VARIABLE(c, 2, 7);
   const Int cParamVal{2};
 
-  std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::FZNModel> model;
-  std::unique_ptr<invariantgraph::CountGtNode> node;
-
   void SetUp() override {
+    NodeTestBase::SetUp();
+    x1 = createIntVar(2, 5, "x1");
+    x2 = createIntVar(3, 5, "x2");
+    x3 = createIntVar(4, 5, "x3");
+    y = createIntVar(2, 5, "y");
+    c = createIntVar(0, 2, "c");
+    r = createBoolVar("r");
+
+    fznparser::IntVarArray inputs("");
+    inputs.append(intVar(x1));
+    inputs.append(intVar(x2));
+    inputs.append(intVar(x3));
+
     if constexpr (Type == ConstraintType::REIFIED) {
       if constexpr (YIsParameter) {
-        if constexpr (CIsParameter) {
-          fznparser::Constraint cnstr{
-              "fzn_count_gt_reif",
-              {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-               yParamVal, cParamVal, fznparser::Constraint::Argument{"r"}},
-              {}};
+        _model->addConstraint(std::move(fznparser::Constraint(
+            "fzn_count_gt_reif",
+            std::vector<fznparser::Arg>{inputs, fznparser::IntArg{yParamVal},
+                                        fznparser::IntArg{cParamVal},
+                                        fznparser::BoolArg{boolVar(r)}})));
 
-          constraint =
-              std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-          fznparser::FZNModel mdl{
-              {}, {x1, x2, x3, r}, {*constraint}, fznparser::Satisfy{}};
-
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-        } else {
-          fznparser::Constraint cnstr{
-              "fzn_count_gt_reif",
-              {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-               yParamVal, fznparser::Constraint::Argument{"c"},
-               fznparser::Constraint::Argument{"r"}},
-              {}};
-
-          constraint =
-              std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-          fznparser::FZNModel mdl{
-              {}, {x1, x2, x3, c, r}, {*constraint}, fznparser::Satisfy{}};
-
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-        }
       } else {
-        if constexpr (CIsParameter) {
-          fznparser::Constraint cnstr{
-              "fzn_count_gt_reif",
-              {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-               fznparser::Constraint::Argument{"y"}, cParamVal,
-               fznparser::Constraint::Argument{"r"}},
-              {}};
-
-          constraint =
-              std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-          fznparser::FZNModel mdl{
-              {}, {x1, x2, x3, y, r}, {*constraint}, fznparser::Satisfy{}};
-
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-        } else {
-          fznparser::Constraint cnstr{
-              "fzn_count_gt_reif",
-              {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-               fznparser::Constraint::Argument{"y"},
-               fznparser::Constraint::Argument{"c"},
-               fznparser::Constraint::Argument{"r"}},
-              {}};
-
-          constraint =
-              std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-          fznparser::FZNModel mdl{
-              {}, {x1, x2, x3, y, c, r}, {*constraint}, fznparser::Satisfy{}};
-
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-        }
+        // y is var
+        _model->addConstraint(std::move(fznparser::Constraint(
+            "fzn_count_gt_reif",
+            std::vector<fznparser::Arg>{inputs, fznparser::IntArg{intVar(y)},
+                                        fznparser::IntArg{cParamVal},
+                                        fznparser::BoolArg{boolVar(r)}})));
       }
     } else {
       // No variable reification:
       if constexpr (Type == ConstraintType::NORMAL) {
         if constexpr (YIsParameter) {
-          if constexpr (CIsParameter) {
-            fznparser::Constraint cnstr{
-                "fzn_count_gt",
-                {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                 yParamVal, cParamVal},
-                {}};
-            constraint =
-                std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            fznparser::FZNModel mdl{
-                {}, {x1, x2, x3}, {*constraint}, fznparser::Satisfy{}};
+          _model->addConstraint(std::move(fznparser::Constraint(
+              "fzn_count_gt",
+              std::vector<fznparser::Arg>{inputs, fznparser::IntArg{yParamVal},
+                                          fznparser::IntArg{intVar(c)}})));
 
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-          } else {
-            fznparser::Constraint cnstr{
-                "fzn_count_gt",
-                {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                 yParamVal, fznparser::Constraint::Argument{"c"}},
-                {}};
-            constraint =
-                std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            fznparser::FZNModel mdl{
-                {}, {x1, x2, x3, c}, {*constraint}, fznparser::Satisfy{}};
-
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-          }
         } else {
-          if constexpr (CIsParameter) {
-            fznparser::Constraint cnstr{
-                "fzn_count_gt",
-                {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                 fznparser::Constraint::Argument{"y"}, cParamVal},
-                {}};
-            constraint =
-                std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            fznparser::FZNModel mdl{
-                {}, {x1, x2, x3, y}, {*constraint}, fznparser::Satisfy{}};
-
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-          } else {
-            fznparser::Constraint cnstr{
-                "fzn_count_gt",
-                {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                 fznparser::Constraint::Argument{"y"},
-                 fznparser::Constraint::Argument{"c"}},
-                {}};
-            constraint =
-                std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            fznparser::FZNModel mdl{
-                {}, {x1, x2, x3, y, c}, {*constraint}, fznparser::Satisfy{}};
-
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
-          }
+          _model->addConstraint(std::move(fznparser::Constraint(
+              "fzn_count_gt",
+              std::vector<fznparser::Arg>{inputs, fznparser::IntArg{intVar(y)},
+                                          fznparser::IntArg{intVar(c)}})));
         }
       } else {
         // constant reification:
         if constexpr (YIsParameter) {
-          if constexpr (CIsParameter) {
-            if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-              fznparser::Constraint cnstr{
-                  "fzn_count_gt_reif",
-                  {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                   yParamVal, cParamVal, false},
-                  {}};
-              constraint =
-                  std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            } else {
-              fznparser::Constraint cnstr{
-                  "fzn_count_gt_reif",
-                  {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                   yParamVal, cParamVal, true},
-                  {}};
-              constraint =
-                  std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            }
-            fznparser::FZNModel mdl{
-                {}, {x1, x2, x3}, {*constraint}, fznparser::Satisfy{}};
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+          if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
+            _model->addConstraint(std::move(fznparser::Constraint(
+                "fzn_count_gt_reif",
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{yParamVal},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{false}})));
           } else {
-            // C is var
-            if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-              fznparser::Constraint cnstr{
-                  "fzn_count_gt_reif",
-                  {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                   yParamVal, fznparser::Constraint::Argument{"c"}, false},
-                  {}};
-              constraint =
-                  std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            } else {
-              fznparser::Constraint cnstr{
-                  "fzn_count_gt_reif",
-                  {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                   yParamVal, fznparser::Constraint::Argument{"c"}, true},
-                  {}};
-              constraint =
-                  std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            }
-            fznparser::FZNModel mdl{
-                {}, {x1, x2, x3, c}, {*constraint}, fznparser::Satisfy{}};
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            _model->addConstraint(std::move(fznparser::Constraint(
+                "fzn_count_gt_reif",
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{yParamVal},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{true}})));
           }
         } else {
-          // y is var
-          if constexpr (CIsParameter) {
-            if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-              fznparser::Constraint cnstr{
-                  "fzn_count_gt_reif",
-                  {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                   fznparser::Constraint::Argument{"y"}, cParamVal, false},
-                  {}};
-              constraint =
-                  std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            } else {
-              fznparser::Constraint cnstr{
-                  "fzn_count_gt_reif",
-                  {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                   fznparser::Constraint::Argument{"y"}, cParamVal, true},
-                  {}};
-              constraint =
-                  std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            }
-            fznparser::FZNModel mdl{
-                {}, {x1, x2, x3, y}, {*constraint}, fznparser::Satisfy{}};
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+          if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
+            _model->addConstraint(std::move(fznparser::Constraint(
+                "fzn_count_gt_reif",
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{intVar(y)},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{false}})));
           } else {
-            // c is var
-            if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-              fznparser::Constraint cnstr{
-                  "fzn_count_gt_reif",
-                  {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                   fznparser::Constraint::Argument{"y"},
-                   fznparser::Constraint::Argument{"c"}, false},
-                  {}};
-              constraint =
-                  std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            } else {
-              fznparser::Constraint cnstr{
-                  "fzn_count_gt_reif",
-                  {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                   fznparser::Constraint::Argument{"y"},
-                   fznparser::Constraint::Argument{"c"}, true},
-                  {}};
-              constraint =
-                  std::make_unique<fznparser::Constraint>(std::move(cnstr));
-            }
-            fznparser::FZNModel mdl{
-                {}, {x1, x2, x3, y, c}, {*constraint}, fznparser::Satisfy{}};
-            model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            _model->addConstraint(std::move(fznparser::Constraint(
+                "fzn_count_gt_reif",
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{intVar(y)},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{true}})));
           }
         }
       }
     }
 
-    setModel(model.get());
-
-    node = makeNode<invariantgraph::CountGtNode>(*constraint);
+    makeInvNode(_model->constraints().front());
   }
 
   void construction() {
-    size_t inputSize = 5;
-    if constexpr (YIsParameter) {
-      --inputSize;
-      EXPECT_EQ(node->yVarNode(), nullptr);
-    } else {
-      EXPECT_NE(node->yVarNode(), nullptr);
-    }
-    if constexpr (CIsParameter) {
-      --inputSize;
-      EXPECT_EQ(node->cVarNode(), nullptr);
-    } else {
-      EXPECT_NE(node->cVarNode(), nullptr);
-    }
-    EXPECT_EQ(node->staticInputs().size(), inputSize);
-    std::vector<invariantgraph::VariableNode*> expectedInputs;
-    for (size_t i = 0; i < inputSize; ++i) {
-      expectedInputs.emplace_back(_variables.at(i).get());
-    }
-    EXPECT_EQ(node->staticInputs(), expectedInputs);
-    EXPECT_THAT(expectedInputs, testing::ContainerEq(node->staticInputs()));
-    expectMarkedAsInput(node.get(), node->staticInputs());
+    expectInputTo(invNode());
+    expectOutputOf(invNode());
 
-    std::vector<invariantgraph::VariableNode*> expectedOutputs;
-    for (size_t i = inputSize; i < _variables.size(); ++i) {
-      expectedOutputs.emplace_back(_variables.at(i).get());
+    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2, x3};
+    if constexpr (YIsParameter) {
+      EXPECT_EQ(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
+    } else {
+      expectedInputs.emplace_back(y);
+      EXPECT_NE(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
     }
-    EXPECT_EQ(node->definedVariables(), expectedOutputs);
+    if constexpr (Type != ConstraintType::NORMAL) {
+      EXPECT_EQ(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+    } else {
+      expectedInputs.emplace_back(c);
+      EXPECT_NE(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+    }
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), expectedInputs.size());
+    EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
+    EXPECT_THAT(expectedInputs,
+                testing::ContainerEq(invNode().staticInputVarNodeIds()));
+
+    std::vector<invariantgraph::VarNodeId> expectedOutputs;
+    if constexpr (Type == ConstraintType::REIFIED) {
+      expectedOutputs.emplace_back(r);
+    }
+    EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
     EXPECT_THAT(expectedOutputs,
-                testing::ContainerEq(node->definedVariables()));
+                testing::ContainerEq(invNode().outputVarNodeIds()));
 
     if constexpr (Type == ConstraintType::REIFIED) {
-      EXPECT_TRUE(node->isReified());
-      EXPECT_NE(node->reifiedViolation(), nullptr);
-      EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VariableNode::FZNVariable(r));
+      EXPECT_TRUE(invNode().isReified());
+      EXPECT_NE(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     } else {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
+      EXPECT_FALSE(invNode().isReified());
+      EXPECT_EQ(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
     }
   }
 
   void application() {
-    PropagationEngine engine;
-    engine.open();
+    expectInputTo(invNode());
+    expectOutputOf(invNode());
+
+    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2, x3};
     if constexpr (YIsParameter) {
-      if constexpr (CIsParameter) {
-        registerVariables(engine, {x1.name, x2.name, x3.name});
-      } else {
-        registerVariables(engine, {x1.name, x2.name, x3.name, c.name});
-      }
-    } else if constexpr (CIsParameter) {
-      registerVariables(engine, {x1.name, x2.name, x3.name, y.name});
+      EXPECT_EQ(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
     } else {
-      registerVariables(engine, {x1.name, x2.name, x3.name, y.name, c.name});
+      EXPECT_NE(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
+      expectedInputs.emplace_back(y);
     }
-    for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_EQ(definedVariable->varId(), NULL_ID);
+    if constexpr (Type != ConstraintType::NORMAL) {
+      EXPECT_EQ(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+    } else {
+      EXPECT_NE(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+      expectedInputs.emplace_back(c);
     }
-    EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->createDefinedVariables(engine);
-    for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_NE(definedVariable->varId(), NULL_ID);
-    }
-    EXPECT_NE(node->violationVarId(), NULL_ID);
-    node->registerWithEngine(engine);
-    engine.close();
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), expectedInputs.size());
+    EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
+    EXPECT_THAT(expectedInputs,
+                testing::ContainerEq(invNode().staticInputVarNodeIds()));
 
-    // x1, x2, x3, y, c
-    size_t numSearchVars = 5;
-    // x1, x2, x3, y, c, the violation, dummy objective
-    size_t numVariables = 7;
-
-    if constexpr (YIsParameter) {
-      --numSearchVars;
-      --numVariables;
-    }
-    if constexpr (CIsParameter) {
-      --numSearchVars;
-      --numVariables;
-    }
-    EXPECT_EQ(engine.searchVariables().size(), numSearchVars);
-    // x1, x2, x3, and the violation
-    EXPECT_EQ(engine.numVariables(), numVariables);
-
-    // countEq
-    size_t numInvariants = 2;
-    if constexpr (CIsParameter) {
-      --numInvariants;
+    std::vector<invariantgraph::VarNodeId> expectedOutputs;
+    if constexpr (Type == ConstraintType::REIFIED) {
+      expectedOutputs.emplace_back(r);
     }
 
-    EXPECT_EQ(engine.numInvariants(), numInvariants);
+    EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
+    EXPECT_THAT(expectedOutputs,
+                testing::ContainerEq(invNode().outputVarNodeIds()));
 
-    EXPECT_EQ(engine.lowerBound(node->violationVarId()), 0);
-    EXPECT_GT(engine.upperBound(node->violationVarId()), 0);
+    if constexpr (Type == ConstraintType::REIFIED) {
+      EXPECT_TRUE(invNode().isReified());
+      EXPECT_NE(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
+    } else {
+      EXPECT_FALSE(invNode().isReified());
+      EXPECT_EQ(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+    }
   }
 
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    if constexpr (YIsParameter) {
-      if constexpr (CIsParameter) {
-        registerVariables(engine, {x1.name, x2.name, x3.name});
-      } else {
-        registerVariables(engine, {x1.name, x2.name, x3.name, c.name});
-      }
-    } else if constexpr (CIsParameter) {
-      registerVariables(engine, {x1.name, x2.name, x3.name, y.name});
-    } else {
-      registerVariables(engine, {x1.name, x2.name, x3.name, y.name, c.name});
-    }
-    node->createDefinedVariables(engine);
-    node->registerWithEngine(engine);
+    addInputVarsToEngine(engine);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerNode(*_invariantGraph, engine);
 
     std::vector<VarId> inputs;
-    size_t numStaticInputs = 5;
-    if constexpr (YIsParameter) {
-      --numStaticInputs;
+    for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      inputs.emplace_back(varId(inputVarNodeId));
     }
-    if constexpr (CIsParameter) {
-      --numStaticInputs;
-    }
-    EXPECT_EQ(node->staticInputs().size(), numStaticInputs);
 
-    for (auto* const inputVariable : node->staticInputs()) {
-      EXPECT_NE(inputVariable->varId(), NULL_ID);
-      inputs.emplace_back(inputVariable->varId());
-    }
-    EXPECT_EQ(inputs.size(), numStaticInputs);
-
-    const VarId violationId = node->violationVarId();
+    const VarId violationId = invNode().violationVarId(*_invariantGraph);
 
     std::vector<Int> values;
     Int yLb = yParamVal;
@@ -396,8 +216,9 @@ class AbstractCountGtNodeTest : public NodeTestBase {
     Int cUb = cParamVal;
 
     values.resize(3);
-    const VarId yVar =
-        node->yVarNode() == nullptr ? NULL_ID : node->yVarNode()->varId();
+    const VarId yVar = invNode().yVarNode() == invariantgraph::NULL_NODE_ID
+                           ? NULL_ID
+                           : varId(invNode().yVarNode());
 
     if constexpr (!YIsParameter) {
       EXPECT_NE(yVar, NULL_ID);
@@ -405,9 +226,10 @@ class AbstractCountGtNodeTest : public NodeTestBase {
       yUb = engine.upperBound(yVar);
     }
 
-    const VarId cVar =
-        node->cVarNode() == nullptr ? NULL_ID : node->cVarNode()->varId();
-    if constexpr (!CIsParameter) {
+    const VarId cVar = invNode().cVarNode() == invariantgraph::NULL_NODE_ID
+                           ? NULL_ID
+                           : varId(invNode().cVarNode());
+    if constexpr (Type == ConstraintType::NORMAL) {
       EXPECT_NE(cVar, NULL_ID);
       cLb = engine.lowerBound(cVar);
       cUb = engine.upperBound(cVar);
@@ -429,7 +251,7 @@ class AbstractCountGtNodeTest : public NodeTestBase {
               if constexpr (!YIsParameter) {
                 engine.setValue(yVar, yVal);
               }
-              if constexpr (!CIsParameter) {
+              if constexpr (Type == ConstraintType::NORMAL) {
                 engine.setValue(cVar, cVal);
               }
               engine.endMove();
@@ -440,7 +262,7 @@ class AbstractCountGtNodeTest : public NodeTestBase {
               if constexpr (!YIsParameter) {
                 EXPECT_EQ(engine.currentValue(yVar), yVal);
               }
-              if constexpr (!CIsParameter) {
+              if constexpr (Type == ConstraintType::NORMAL) {
                 EXPECT_EQ(engine.currentValue(cVar), cVal);
               }
 
@@ -461,7 +283,7 @@ class AbstractCountGtNodeTest : public NodeTestBase {
 };
 
 class CountGtNodeTest
-    : public AbstractCountGtNodeTest<false, false, ConstraintType::NORMAL> {};
+    : public AbstractCountGtNodeTest<false, ConstraintType::NORMAL> {};
 
 TEST_F(CountGtNodeTest, Construction) { construction(); }
 
@@ -470,7 +292,7 @@ TEST_F(CountGtNodeTest, Application) { application(); }
 TEST_F(CountGtNodeTest, Propagation) { propagation(); }
 
 class CountGtReifNodeTest
-    : public AbstractCountGtNodeTest<false, false, ConstraintType::REIFIED> {};
+    : public AbstractCountGtNodeTest<false, ConstraintType::REIFIED> {};
 
 TEST_F(CountGtReifNodeTest, Construction) { construction(); }
 
@@ -479,8 +301,7 @@ TEST_F(CountGtReifNodeTest, Application) { application(); }
 TEST_F(CountGtReifNodeTest, Propagation) { propagation(); }
 
 class CountGtFalseNodeTest
-    : public AbstractCountGtNodeTest<false, false,
-                                     ConstraintType::CONSTANT_FALSE> {};
+    : public AbstractCountGtNodeTest<false, ConstraintType::CONSTANT_FALSE> {};
 
 TEST_F(CountGtFalseNodeTest, Construction) { construction(); }
 
@@ -489,8 +310,7 @@ TEST_F(CountGtFalseNodeTest, Application) { application(); }
 TEST_F(CountGtFalseNodeTest, Propagation) { propagation(); }
 
 class CountGtTrueNodeTest
-    : public AbstractCountGtNodeTest<false, false,
-                                     ConstraintType::CONSTANT_TRUE> {};
+    : public AbstractCountGtNodeTest<false, ConstraintType::CONSTANT_TRUE> {};
 
 TEST_F(CountGtTrueNodeTest, Construction) { construction(); }
 
@@ -499,7 +319,7 @@ TEST_F(CountGtTrueNodeTest, Application) { application(); }
 TEST_F(CountGtTrueNodeTest, Propagation) { propagation(); }
 
 class CountGtYParNodeTest
-    : public AbstractCountGtNodeTest<true, false, ConstraintType::NORMAL> {};
+    : public AbstractCountGtNodeTest<true, ConstraintType::NORMAL> {};
 
 TEST_F(CountGtYParNodeTest, Construction) { construction(); }
 
@@ -508,7 +328,7 @@ TEST_F(CountGtYParNodeTest, Application) { application(); }
 TEST_F(CountGtYParNodeTest, Propagation) { propagation(); }
 
 class CountGtYParReifNodeTest
-    : public AbstractCountGtNodeTest<true, false, ConstraintType::REIFIED> {};
+    : public AbstractCountGtNodeTest<true, ConstraintType::REIFIED> {};
 
 TEST_F(CountGtYParReifNodeTest, Construction) { construction(); }
 
@@ -517,8 +337,7 @@ TEST_F(CountGtYParReifNodeTest, Application) { application(); }
 TEST_F(CountGtYParReifNodeTest, Propagation) { propagation(); }
 
 class CountGtYParFalseNodeTest
-    : public AbstractCountGtNodeTest<true, false,
-                                     ConstraintType::CONSTANT_FALSE> {};
+    : public AbstractCountGtNodeTest<true, ConstraintType::CONSTANT_FALSE> {};
 
 TEST_F(CountGtYParFalseNodeTest, Construction) { construction(); }
 
@@ -527,87 +346,10 @@ TEST_F(CountGtYParFalseNodeTest, Application) { application(); }
 TEST_F(CountGtYParFalseNodeTest, Propagation) { propagation(); }
 
 class CountGtYParTrueNodeTest
-    : public AbstractCountGtNodeTest<true, false,
-                                     ConstraintType::CONSTANT_TRUE> {};
+    : public AbstractCountGtNodeTest<true, ConstraintType::CONSTANT_TRUE> {};
 
 TEST_F(CountGtYParTrueNodeTest, Construction) { construction(); }
 
 TEST_F(CountGtYParTrueNodeTest, Application) { application(); }
 
 TEST_F(CountGtYParTrueNodeTest, Propagation) { propagation(); }
-
-class CountGtCParNodeTest
-    : public AbstractCountGtNodeTest<true, false, ConstraintType::NORMAL> {};
-
-TEST_F(CountGtCParNodeTest, Construction) { construction(); }
-
-TEST_F(CountGtCParNodeTest, Application) { application(); }
-
-TEST_F(CountGtCParNodeTest, Propagation) { propagation(); }
-
-class CountGtCParReifNodeTest
-    : public AbstractCountGtNodeTest<true, false, ConstraintType::REIFIED> {};
-
-TEST_F(CountGtCParReifNodeTest, Construction) { construction(); }
-
-TEST_F(CountGtCParReifNodeTest, Application) { application(); }
-
-TEST_F(CountGtCParReifNodeTest, Propagation) { propagation(); }
-
-class CountGtCParFalseNodeTest
-    : public AbstractCountGtNodeTest<true, false,
-                                     ConstraintType::CONSTANT_FALSE> {};
-
-TEST_F(CountGtCParFalseNodeTest, Construction) { construction(); }
-
-TEST_F(CountGtCParFalseNodeTest, Application) { application(); }
-
-TEST_F(CountGtCParFalseNodeTest, Propagation) { propagation(); }
-
-class CountGtCParTrueNodeTest
-    : public AbstractCountGtNodeTest<true, false,
-                                     ConstraintType::CONSTANT_TRUE> {};
-
-TEST_F(CountGtCParTrueNodeTest, Construction) { construction(); }
-
-TEST_F(CountGtCParTrueNodeTest, Application) { application(); }
-
-TEST_F(CountGtCParTrueNodeTest, Propagation) { propagation(); }
-
-class CountGtYParCParNodeTest
-    : public AbstractCountGtNodeTest<true, false, ConstraintType::NORMAL> {};
-
-TEST_F(CountGtYParCParNodeTest, Construction) { construction(); }
-
-TEST_F(CountGtYParCParNodeTest, Application) { application(); }
-
-TEST_F(CountGtYParCParNodeTest, Propagation) { propagation(); }
-
-class CountGtYParCParReifNodeTest
-    : public AbstractCountGtNodeTest<true, false, ConstraintType::REIFIED> {};
-
-TEST_F(CountGtYParCParReifNodeTest, Construction) { construction(); }
-
-TEST_F(CountGtYParCParReifNodeTest, Application) { application(); }
-
-TEST_F(CountGtYParCParReifNodeTest, Propagation) { propagation(); }
-
-class CountGtYParCParFalseNodeTest
-    : public AbstractCountGtNodeTest<true, false,
-                                     ConstraintType::CONSTANT_FALSE> {};
-
-TEST_F(CountGtYParCParFalseNodeTest, Construction) { construction(); }
-
-TEST_F(CountGtYParCParFalseNodeTest, Application) { application(); }
-
-TEST_F(CountGtYParCParFalseNodeTest, Propagation) { propagation(); }
-
-class CountGtYParCParTrueNodeTest
-    : public AbstractCountGtNodeTest<true, false,
-                                     ConstraintType::CONSTANT_TRUE> {};
-
-TEST_F(CountGtYParCParTrueNodeTest, Construction) { construction(); }
-
-TEST_F(CountGtYParCParTrueNodeTest, Application) { application(); }
-
-TEST_F(CountGtYParCParTrueNodeTest, Propagation) { propagation(); }

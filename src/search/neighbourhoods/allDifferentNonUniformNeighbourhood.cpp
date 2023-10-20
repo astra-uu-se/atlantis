@@ -2,10 +2,11 @@
 
 #include <algorithm>
 
-search::neighbourhoods::AllDifferentNonUniformNeighbourhood::
-    AllDifferentNonUniformNeighbourhood(
-        std::vector<search::SearchVariable> variables, Int domainLb,
-        Int domainUb, const Engine& engine)
+namespace search::neighbourhoods {
+
+AllDifferentNonUniformNeighbourhood::AllDifferentNonUniformNeighbourhood(
+    std::vector<SearchVariable>&& variables, Int domainLb, Int domainUb,
+    const Engine& engine)
     : _variables(std::move(variables)),
       _variableIndices(_variables.size()),
       _domainOffset(domainLb),
@@ -44,7 +45,7 @@ static bool bipartiteMatching(
   return false;
 }
 
-void search::neighbourhoods::AllDifferentNonUniformNeighbourhood::initialise(
+void AllDifferentNonUniformNeighbourhood::initialise(
     RandomProvider& random, AssignmentModifier& modifications) {
   std::vector<std::vector<size_t>> forwardArcs(_variables.size());
   std::fill(_valueIndexToVariableIndex.begin(),
@@ -103,8 +104,9 @@ void search::neighbourhoods::AllDifferentNonUniformNeighbourhood::initialise(
   }
 }
 
-bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::randomMove(
-    RandomProvider& random, Assignment& assignment, Annealer& annealer) {
+bool AllDifferentNonUniformNeighbourhood::randomMove(RandomProvider& random,
+                                                     Assignment& assignment,
+                                                     Annealer& annealer) {
   assert(sanity(assignment));
   bool didMove = false;
 
@@ -146,8 +148,8 @@ bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::randomMove(
   return didMove;
 }
 
-bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::canSwap(
-    const search::Assignment& assignment, size_t variable1Index,
+bool AllDifferentNonUniformNeighbourhood::canSwap(
+    const Assignment& assignment, size_t variable1Index,
     size_t value2Index) const noexcept {
   // variable 1:
   assert(variable1Index < _variables.size());
@@ -174,9 +176,10 @@ bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::canSwap(
       toValueIndex(assignment.value(_variables[variable1Index].engineId())));
 }
 
-bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::swapValues(
-    search::Assignment& assignment, search::Annealer& annealer,
-    size_t variable1Index, size_t value2Index) {
+bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
+                                                     Annealer& annealer,
+                                                     size_t variable1Index,
+                                                     size_t value2Index) {
   // variable 1:
   assert(variable1Index < _variables.size());
   const VarId variable1 = _variables[variable1Index].engineId();
@@ -237,9 +240,10 @@ bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::swapValues(
   return false;
 }
 
-bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::assignValue(
-    search::Assignment& assignment, search::Annealer& annealer,
-    size_t variableIndex, size_t newValueIndex) {
+bool AllDifferentNonUniformNeighbourhood::assignValue(Assignment& assignment,
+                                                      Annealer& annealer,
+                                                      size_t variableIndex,
+                                                      size_t newValueIndex) {
   assert(newValueIndex < _valueIndexToVariableIndex.size());
   assert(_valueIndexToVariableIndex[newValueIndex] == _variables.size());
   assert(variableIndex < _variables.size());
@@ -259,3 +263,5 @@ bool search::neighbourhoods::AllDifferentNonUniformNeighbourhood::assignValue(
 
   return false;
 }
+
+}  // namespace search::neighbourhoods

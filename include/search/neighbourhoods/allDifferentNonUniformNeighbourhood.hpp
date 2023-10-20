@@ -28,8 +28,8 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
 
  public:
   AllDifferentNonUniformNeighbourhood(
-      std::vector<search::SearchVariable> variables, Int domainLb, Int domainUb,
-      const Engine& engine);
+      std::vector<search::SearchVariable>&& variables, Int domainLb,
+      Int domainUb, const Engine& engine);
 
   ~AllDifferentNonUniformNeighbourhood() override = default;
 

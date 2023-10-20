@@ -1,23 +1,33 @@
 #include "invariantgraph/views/bool2IntNode.hpp"
 
-#include "../parseHelper.hpp"
 #include "views/bool2IntView.hpp"
 
-std::unique_ptr<invariantgraph::Bool2IntNode>
-invariantgraph::Bool2IntNode::fromModelConstraint(
-    const fznparser::FZNModel&, const fznparser::Constraint& constraint,
-    const std::function<VariableNode*(MappableValue&)>& variableMap) {
-  auto a = mappedVariable(constraint.arguments[0], variableMap);
-  auto b = mappedVariable(constraint.arguments[1], variableMap);
+namespace invariantgraph {
 
-  return std::make_unique<invariantgraph::Bool2IntNode>(a, b);
+Bool2IntNode::Bool2IntNode(VarNodeId staticInput, VarNodeId output)
+    : InvariantNode({output}, {staticInput}) {}
+
+std::unique_ptr<Bool2IntNode> Bool2IntNode::fromModelConstraint(
+    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+  const fznparser::BoolArg a =
+      std::get<fznparser::BoolArg>(constraint.arguments().at(0));
+
+  const fznparser::IntArg b =
+      std::get<fznparser::IntArg>(constraint.arguments().at(1));
+
+  return std::make_unique<Bool2IntNode>(invariantGraph.createVarNode(a),
+                                        invariantGraph.createVarNode(b));
 }
 
-void invariantgraph::Bool2IntNode::createDefinedVariables(Engine& engine) {
-  if (definedVariables().front()->varId() == NULL_ID) {
-    definedVariables().front()->setVarId(
-        engine.makeIntView<Bool2IntView>(engine, input()->varId()));
+void Bool2IntNode::registerOutputVariables(InvariantGraph& invariantGraph,
+                                           Engine& engine) {
+  if (invariantGraph.varId(outputVarNodeIds().front()) == NULL_ID) {
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(engine.makeIntView<Bool2IntView>(
+            engine, invariantGraph.varId(input())));
   }
 }
 
-void invariantgraph::Bool2IntNode::registerWithEngine(Engine&) {}
+void Bool2IntNode::registerNode(InvariantGraph&, Engine&) {}
+
+}  // namespace invariantgraph

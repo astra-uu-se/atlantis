@@ -56,7 +56,7 @@ class RandomProvider {
   Int inDomain(SearchDomain& domain) {
     return std::visit<Int>([&](const auto& dom) { return inDomain(dom); },
                            domain.innerDomain());
-    ;
+  
   }
 
   template <typename T>

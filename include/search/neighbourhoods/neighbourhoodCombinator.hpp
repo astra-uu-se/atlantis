@@ -3,21 +3,21 @@
 #include <ostream>
 #include <random>
 
-#include "neighbourhood.hpp"
 #include "logging/logger.hpp"
+#include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
 
 namespace search::neighbourhoods {
 
 class NeighbourhoodCombinator : public Neighbourhood {
  private:
-  std::vector<std::unique_ptr<Neighbourhood>> _neighbourhoods;
+  std::vector<std::shared_ptr<Neighbourhood>> _neighbourhoods;
   std::vector<SearchVariable> _variables;
   std::discrete_distribution<size_t> _neighbourhoodDistribution;
 
  public:
   explicit NeighbourhoodCombinator(
-      std::vector<std::unique_ptr<Neighbourhood>> neighbourhoods);
+      std::vector<std::shared_ptr<Neighbourhood>>&& neighbourhoods);
 
   ~NeighbourhoodCombinator() override = default;
 

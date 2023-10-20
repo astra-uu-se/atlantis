@@ -2,205 +2,173 @@
 
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/countEqNode.hpp"
+#include "invariantgraph/violationInvariantNodes/countEqNode.hpp"
 
 static Int computeOutput(const std::vector<Int>& values, const Int y) {
-  Int count = 0;
+  Int occurrences = 0;
   for (const Int val : values) {
-    count += static_cast<Int>(val == y);
+    occurrences += (val == y ? 1 : 0);
   }
-  return count;
+  return occurrences;
 }
 
-static bool isViolating(const std::vector<Int>& values, const Int y,
+static bool isSatisfied(const std::vector<Int>& values, const Int y,
                         const Int c) {
-  return computeOutput(values, y) != c;
+  return computeOutput(values, y) == c;
 }
 
 template <bool YIsParameter, ConstraintType Type>
-class AbstractCountEqNodeTest : public NodeTestBase {
+class AbstractCountEqNodeTest
+    : public NodeTestBase<invariantgraph::CountEqNode> {
  public:
-  INT_VARIABLE(x1, 5, 10);
-  INT_VARIABLE(x2, 2, 7);
-  INT_VARIABLE(x3, 2, 7);
-  const Int yParamVal{5};
-  INT_VARIABLE(y, 2, 7);
-  BOOL_VARIABLE(r);
-  INT_VARIABLE(c, 2, 7);
+  invariantgraph::VarNodeId x1;
+  invariantgraph::VarNodeId x2;
+  invariantgraph::VarNodeId x3;
+  invariantgraph::VarNodeId y;
+  invariantgraph::VarNodeId c;
+  invariantgraph::VarNodeId r;
   const Int cParamVal{2};
-
-  std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::FZNModel> model;
-  std::unique_ptr<invariantgraph::CountEqNode> node;
+  const Int yParamVal{5};
 
   void SetUp() override {
+    NodeTestBase::SetUp();
+    x1 = createIntVar(2, 5, "x1");
+    x2 = createIntVar(3, 5, "x2");
+    x3 = createIntVar(4, 5, "x3");
+    y = createIntVar(2, 5, "y");
+    c = createIntVar(0, 2, "c");
+    r = createBoolVar("r");
+
+    fznparser::IntVarArray inputs("");
+    inputs.append(intVar(x1));
+    inputs.append(intVar(x2));
+    inputs.append(intVar(x3));
+
     if constexpr (Type == ConstraintType::REIFIED) {
       if constexpr (YIsParameter) {
-        fznparser::Constraint cnstr{
+        _model->addConstraint(std::move(fznparser::Constraint(
             "fzn_count_eq_reif",
-            {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"}, yParamVal,
-             cParamVal, fznparser::Constraint::Argument{"r"}},
-            {}};
+            std::vector<fznparser::Arg>{inputs, fznparser::IntArg{yParamVal},
+                                        fznparser::IntArg{cParamVal},
+                                        fznparser::BoolArg{boolVar(r)}})));
 
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-        fznparser::FZNModel mdl{
-            {}, {x1, x2, x3, r}, {*constraint}, fznparser::Satisfy{}};
-
-        model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
       } else {
         // y is var
-        fznparser::Constraint cnstr{
+        _model->addConstraint(std::move(fznparser::Constraint(
             "fzn_count_eq_reif",
-            {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-             fznparser::Constraint::Argument{"y"}, cParamVal,
-             fznparser::Constraint::Argument{"r"}},
-            {}};
-
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-        fznparser::FZNModel mdl{
-            {}, {x1, x2, x3, y, r}, {*constraint}, fznparser::Satisfy{}};
-
-        model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+            std::vector<fznparser::Arg>{inputs, fznparser::IntArg{intVar(y)},
+                                        fznparser::IntArg{cParamVal},
+                                        fznparser::BoolArg{boolVar(r)}})));
       }
     } else {
       // No variable reification:
       if constexpr (Type == ConstraintType::NORMAL) {
         if constexpr (YIsParameter) {
-          fznparser::Constraint cnstr{
+          _model->addConstraint(std::move(fznparser::Constraint(
               "fzn_count_eq",
-              {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-               yParamVal, fznparser::Constraint::Argument{"c"}},
-              {}};
-          constraint =
-              std::make_unique<fznparser::Constraint>(std::move(cnstr));
-          fznparser::FZNModel mdl{
-              {}, {x1, x2, x3, c}, {*constraint}, fznparser::Satisfy{}};
+              std::vector<fznparser::Arg>{inputs, fznparser::IntArg{yParamVal},
+                                          fznparser::IntArg{intVar(c)}})));
 
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
         } else {
-          fznparser::Constraint cnstr{
+          _model->addConstraint(std::move(fznparser::Constraint(
               "fzn_count_eq",
-              {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-               fznparser::Constraint::Argument{"y"},
-               fznparser::Constraint::Argument{"c"}},
-              {}};
-          constraint =
-              std::make_unique<fznparser::Constraint>(std::move(cnstr));
-          fznparser::FZNModel mdl{
-              {}, {x1, x2, x3, y, c}, {*constraint}, fznparser::Satisfy{}};
-
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+              std::vector<fznparser::Arg>{inputs, fznparser::IntArg{intVar(y)},
+                                          fznparser::IntArg{intVar(c)}})));
         }
       } else {
         // constant reification:
         if constexpr (YIsParameter) {
           if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-            fznparser::Constraint cnstr{
+            _model->addConstraint(std::move(fznparser::Constraint(
                 "fzn_count_eq_reif",
-                {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                 yParamVal, cParamVal, false},
-                {}};
-            constraint =
-                std::make_unique<fznparser::Constraint>(std::move(cnstr));
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{yParamVal},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{false}})));
           } else {
-            fznparser::Constraint cnstr{
+            _model->addConstraint(std::move(fznparser::Constraint(
                 "fzn_count_eq_reif",
-                {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                 yParamVal, cParamVal, true},
-                {}};
-            constraint =
-                std::make_unique<fznparser::Constraint>(std::move(cnstr));
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{yParamVal},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{true}})));
           }
-          fznparser::FZNModel mdl{
-              {}, {x1, x2, x3}, {*constraint}, fznparser::Satisfy{}};
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
         } else {
           if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-            fznparser::Constraint cnstr{
+            _model->addConstraint(std::move(fznparser::Constraint(
                 "fzn_count_eq_reif",
-                {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                 fznparser::Constraint::Argument{"y"}, cParamVal, false},
-                {}};
-            constraint =
-                std::make_unique<fznparser::Constraint>(std::move(cnstr));
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{intVar(y)},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{false}})));
           } else {
-            fznparser::Constraint cnstr{
+            _model->addConstraint(std::move(fznparser::Constraint(
                 "fzn_count_eq_reif",
-                {fznparser::Constraint::ArrayArgument{"x1", "x2", "x3"},
-                 fznparser::Constraint::Argument{"y"}, cParamVal, true},
-                {}};
-            constraint =
-                std::make_unique<fznparser::Constraint>(std::move(cnstr));
+                std::vector<fznparser::Arg>{
+                    inputs, fznparser::IntArg{intVar(y)},
+                    fznparser::IntArg{cParamVal}, fznparser::BoolArg{true}})));
           }
-          fznparser::FZNModel mdl{
-              {}, {x1, x2, x3, y}, {*constraint}, fznparser::Satisfy{}};
-          model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
         }
       }
     }
 
-    setModel(model.get());
-
-    node = makeNode<invariantgraph::CountEqNode>(*constraint);
+    makeInvNode(_model->constraints().front());
   }
 
   void construction() {
-    size_t inputSize = 4;
-    if constexpr (YIsParameter) {
-      inputSize = 3;
-    }
-    EXPECT_EQ(node->staticInputs().size(), inputSize);
-    std::vector<invariantgraph::VariableNode*> expectedInputs;
-    for (size_t i = 0; i < inputSize; ++i) {
-      expectedInputs.emplace_back(_variables.at(i).get());
-    }
-    EXPECT_EQ(node->staticInputs(), expectedInputs);
-    EXPECT_THAT(expectedInputs, testing::ContainerEq(node->staticInputs()));
-    expectMarkedAsInput(node.get(), node->staticInputs());
+    expectInputTo(invNode());
+    expectOutputOf(invNode());
 
-    std::vector<invariantgraph::VariableNode*> expectedOutputs;
-    for (size_t i = inputSize; i < _variables.size(); ++i) {
-      expectedOutputs.emplace_back(_variables.at(i).get());
+    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2, x3};
+    size_t inputSize = 3;
+    if constexpr (!YIsParameter) {
+      inputSize = 4;
+      expectedInputs.emplace_back(y);
     }
-    EXPECT_EQ(node->definedVariables(), expectedOutputs);
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputSize);
+
+    EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
+    EXPECT_THAT(expectedInputs,
+                testing::ContainerEq(invNode().staticInputVarNodeIds()));
+
+    std::vector<invariantgraph::VarNodeId> expectedOutputs;
+    if constexpr (Type == ConstraintType::REIFIED) {
+      expectedOutputs.emplace_back(r);
+    } else if constexpr (Type == ConstraintType::NORMAL) {
+      expectedOutputs.emplace_back(c);
+    }
+
+    EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
     EXPECT_THAT(expectedOutputs,
-                testing::ContainerEq(node->definedVariables()));
+                testing::ContainerEq(invNode().outputVarNodeIds()));
 
     if constexpr (Type == ConstraintType::REIFIED) {
-      EXPECT_TRUE(node->isReified());
-      EXPECT_NE(node->reifiedViolation(), nullptr);
-      EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VariableNode::FZNVariable(r));
+      EXPECT_TRUE(invNode().isReified());
+      EXPECT_NE(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     } else {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
+      EXPECT_FALSE(invNode().isReified());
+      EXPECT_EQ(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
     }
   }
 
   void application() {
     PropagationEngine engine;
     engine.open();
-    if constexpr (YIsParameter) {
-      registerVariables(engine, {x1.name, x2.name, x3.name});
-    } else {
-      registerVariables(engine, {x1.name, x2.name, x3.name, y.name});
+    addInputVarsToEngine(engine);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
     }
-    for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_EQ(definedVariable->varId(), NULL_ID);
-    }
-    EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->createDefinedVariables(engine);
-    for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_NE(definedVariable->varId(), NULL_ID);
+    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_NE(varId(outputVarNodeId), NULL_ID);
     }
     if constexpr (Type == ConstraintType::NORMAL) {
-      EXPECT_EQ(node->violationVarId(), NULL_ID);
+      EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
     } else {
-      EXPECT_NE(node->violationVarId(), NULL_ID);
+      EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
     }
-    node->registerWithEngine(engine);
+    invNode().registerNode(*_invariantGraph, engine);
     engine.close();
 
     if constexpr (YIsParameter) {
@@ -219,36 +187,34 @@ class AbstractCountEqNodeTest : public NodeTestBase {
     EXPECT_EQ(engine.numInvariants(), 1);
 
     if constexpr (Type != ConstraintType::NORMAL) {
-      EXPECT_EQ(engine.lowerBound(node->violationVarId()), 0);
-      EXPECT_GT(engine.upperBound(node->violationVarId()), 0);
+      EXPECT_EQ(engine.lowerBound(invNode().violationVarId(*_invariantGraph)),
+                0);
+      EXPECT_GT(engine.upperBound(invNode().violationVarId(*_invariantGraph)),
+                0);
     }
 
-    for (auto* definedVariable : node->definedVariables()) {
-      EXPECT_EQ(engine.lowerBound(definedVariable->varId()), 0);
-      EXPECT_GT(engine.upperBound(definedVariable->varId()), 0);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_EQ(engine.lowerBound(varId(outputVarNodeId)), 0);
+      EXPECT_GT(engine.upperBound(varId(outputVarNodeId)), 0);
     }
   }
 
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    if constexpr (YIsParameter) {
-      registerVariables(engine, {x1.name, x2.name, x3.name});
-    } else {
-      registerVariables(engine, {x1.name, x2.name, x3.name, y.name});
-    }
-    node->createDefinedVariables(engine);
-    node->registerWithEngine(engine);
+    addInputVarsToEngine(engine);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerNode(*_invariantGraph, engine);
 
     std::vector<VarId> inputs;
     if constexpr (YIsParameter) {
-      EXPECT_EQ(node->staticInputs().size(), 3);
+      EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 3);
     } else {
-      EXPECT_EQ(node->staticInputs().size(), 4);
+      EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 4);
     }
-    for (auto* const inputVariable : node->staticInputs()) {
-      EXPECT_NE(inputVariable->varId(), NULL_ID);
-      inputs.emplace_back(inputVariable->varId());
+    for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      inputs.emplace_back(varId(inputVarNodeId));
     }
     if constexpr (YIsParameter) {
       EXPECT_EQ(inputs.size(), 3);
@@ -257,17 +223,18 @@ class AbstractCountEqNodeTest : public NodeTestBase {
     }
 
     if constexpr (Type == ConstraintType::NORMAL) {
-      EXPECT_NE(node->cVarNode(), nullptr);
-      EXPECT_NE(node->cVarNode()->varId(), NULL_ID);
-      EXPECT_EQ(node->violationVarId(), NULL_ID);
+      EXPECT_NE(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+      EXPECT_NE(varId(invNode().cVarNode()), NULL_ID);
+      EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
     } else {
-      EXPECT_EQ(node->cVarNode(), nullptr);
-      EXPECT_NE(node->violationVarId(), NULL_ID);
+      EXPECT_EQ(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+      EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
     }
 
-    const VarId outputId =
-        node->cVarNode() == nullptr ? NULL_ID : node->cVarNode()->varId();
-    const VarId violationId = node->violationVarId();
+    const VarId outputId = invNode().cVarNode() == invariantgraph::NULL_NODE_ID
+                               ? NULL_ID
+                               : varId(invNode().cVarNode());
+    const VarId violationId = invNode().violationVarId(*_invariantGraph);
 
     std::vector<Int> values;
     Int yLb = yParamVal;
@@ -313,11 +280,11 @@ class AbstractCountEqNodeTest : public NodeTestBase {
             }
             if (violationId != NULL_ID) {
               if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
-                EXPECT_EQ(engine.currentValue(violationId) > 0,
-                          isViolating(values, yVal, cParamVal));
+                EXPECT_EQ(engine.currentValue(violationId) == 0,
+                          isSatisfied(values, yVal, cParamVal));
               } else {
-                EXPECT_NE(engine.currentValue(violationId) > 0,
-                          isViolating(values, yVal, cParamVal));
+                EXPECT_NE(engine.currentValue(violationId) == 0,
+                          isSatisfied(values, yVal, cParamVal));
               }
             }
           }

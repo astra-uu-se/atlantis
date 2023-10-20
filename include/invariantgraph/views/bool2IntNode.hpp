@@ -4,32 +4,30 @@
 #include <map>
 #include <utility>
 
-#include "invariantgraph/variableDefiningNode.hpp"
+#include "invariantgraph/invariantGraph.hpp"
+#include "invariantgraph/invariantNode.hpp"
 
 namespace invariantgraph {
 
-class Bool2IntNode : public VariableDefiningNode {
+class Bool2IntNode : public InvariantNode {
  public:
-  Bool2IntNode(VariableNode* staticInput, VariableNode* output)
-      : VariableDefiningNode({output}, {staticInput}) {}
+  Bool2IntNode(VarNodeId staticInput, VarNodeId output);
 
   ~Bool2IntNode() override = default;
 
-  static std::vector<std::pair<std::string_view, size_t>>
-  acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string_view, size_t>>{{"bool2int", 2}};
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
+    return std::vector<std::pair<std::string, size_t>>{{"bool2int", 2}};
   }
 
   static std::unique_ptr<Bool2IntNode> fromModelConstraint(
-      const fznparser::FZNModel& model, const fznparser::Constraint& constraint,
-      const std::function<VariableNode*(MappableValue&)>& variableMap);
+      const fznparser::Constraint&, InvariantGraph&);
 
-  void createDefinedVariables(Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
 
-  void registerWithEngine(Engine& engine) override;
+  void registerNode(InvariantGraph&, Engine& engine) override;
 
-  [[nodiscard]] VariableNode* input() const noexcept {
-    return staticInputs().front();
+  [[nodiscard]] VarNodeId input() const noexcept {
+    return staticInputVarNodeIds().front();
   }
 };
 

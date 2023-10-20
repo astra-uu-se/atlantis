@@ -24,7 +24,7 @@ class AllDifferentUniformNeighbourhoodTest : public ::testing::Test {
 
 TEST_F(AllDifferentUniformNeighbourhoodTest, all_values_are_initialised) {
   search::neighbourhoods::AllDifferentUniformNeighbourhood neighbourhood(
-      variables, domain, engine);
+      std::vector<search::SearchVariable>(variables), domain, engine);
 
   assignment.assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });

@@ -1,8 +1,10 @@
 #include <gmock/gmock.h>
 
+#include <iostream>
+
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/allDifferentNode.hpp"
+#include "invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 
 static bool isViolating(const std::vector<Int>& values) {
   for (size_t i = 0; i < values.size(); i++) {
@@ -16,98 +18,92 @@ static bool isViolating(const std::vector<Int>& values) {
 }
 
 template <ConstraintType Type>
-class AbstractAllDifferentNodeTest : public NodeTestBase {
+class AbstractAllDifferentNodeTest
+    : public NodeTestBase<invariantgraph::AllDifferentNode> {
  public:
-  INT_VARIABLE(a, 5, 10);
-  INT_VARIABLE(b, 2, 7);
-  INT_VARIABLE(c, 2, 7);
-  INT_VARIABLE(d, 2, 7);
-  BOOL_VARIABLE(r);
+  invariantgraph::VarNodeId a;
+  invariantgraph::VarNodeId b;
+  invariantgraph::VarNodeId c;
+  invariantgraph::VarNodeId d;
+  invariantgraph::VarNodeId r;
 
-  std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::FZNModel> model;
-  std::unique_ptr<invariantgraph::AllDifferentNode> node;
+  invariantgraph::InvariantNodeId invNodeId;
 
   void SetUp() override {
+    NodeTestBase::SetUp();
+    a = createIntVar(5, 10, "a");
+    b = createIntVar(2, 7, "b");
+    c = createIntVar(2, 7, "c");
+    d = createIntVar(2, 7, "d");
+    r = createBoolVar("r");
+
+    fznparser::IntVarArray inputs("");
+    inputs.append(intVar(a));
+    inputs.append(intVar(b));
+    inputs.append(intVar(c));
+    inputs.append(intVar(d));
+
     if constexpr (Type == ConstraintType::REIFIED) {
-      fznparser::Constraint cnstr{
-          "fzn_all_different_int_reif",
-          {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"},
-           fznparser::Constraint::Argument{"r"}},
-          {}};
-
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::FZNModel mdl{
-          {}, {a, b, c, d, r}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
+      _model->addConstraint(std::move(
+          fznparser::Constraint("fzn_all_different_int_reif",
+                                std::vector<fznparser::Arg>{
+                                    inputs, fznparser::BoolArg{boolVar(r)}})));
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
-        fznparser::Constraint cnstr{
-            "fzn_all_different_int",
-            {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}},
-            {}};
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+        _model->addConstraint(std::move(fznparser::Constraint{
+            "fzn_all_different_int", std::vector<fznparser::Arg>{inputs}}));
       } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-        fznparser::Constraint cnstr{
+        _model->addConstraint(std::move(fznparser::Constraint(
             "fzn_all_different_int_reif",
-            {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}, false},
-            {}};
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+            std::vector<fznparser::Arg>{inputs, fznparser::BoolArg{false}})));
       } else {
-        fznparser::Constraint cnstr{
+        _model->addConstraint(std::move(fznparser::Constraint(
             "fzn_all_different_int_reif",
-            {fznparser::Constraint::ArrayArgument{"a", "b", "c", "d"}, true},
-            {}};
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+            std::vector<fznparser::Arg>{inputs, fznparser::BoolArg{true}})));
       }
-
-      fznparser::FZNModel mdl{
-          {}, {a, b, c, d}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     }
 
-    setModel(model.get());
-
-    node = makeNode<invariantgraph::AllDifferentNode>(*constraint);
+    makeInvNode(_model->constraints().front());
   }
 
   void construction() {
-    EXPECT_EQ(node->staticInputs().size(), 4);
-    std::vector<invariantgraph::VariableNode*> expectedVars;
-    for (size_t i = 0; i < 4; ++i) {
-      expectedVars.emplace_back(_variables.at(i).get());
-    }
-    EXPECT_EQ(node->staticInputs(), expectedVars);
-    EXPECT_THAT(expectedVars, testing::ContainerEq(node->staticInputs()));
-    expectMarkedAsInput(node.get(), node->staticInputs());
+    expectInputTo(invNode());
+    expectOutputOf(invNode());
+
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 4);
+    std::vector<invariantgraph::VarNodeId> expectedVars{a, b, c, d};
+
+    EXPECT_THAT(expectedVars,
+                testing::ContainerEq(invNode().staticInputVarNodeIds()));
+
+    EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedVars);
+
     if constexpr (Type == ConstraintType::REIFIED) {
-      EXPECT_TRUE(node->isReified());
-      EXPECT_NE(node->reifiedViolation(), nullptr);
-      EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VariableNode::FZNVariable(r));
+      EXPECT_TRUE(invNode().isReified());
+      EXPECT_NE(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     } else {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
+      EXPECT_FALSE(invNode().isReified());
+      EXPECT_EQ(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
     }
   }
 
   void application() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {a.name, b.name, c.name, d.name});
-    for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_EQ(definedVariable->varId(), NULL_ID);
+    addInputVarsToEngine(engine);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
     }
-    EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->createDefinedVariables(engine);
-    for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_NE(definedVariable->varId(), NULL_ID);
+    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_NE(varId(outputVarNodeId), NULL_ID);
     }
-    EXPECT_NE(node->violationVarId(), NULL_ID);
-    node->registerWithEngine(engine);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    invNode().registerNode(*_invariantGraph, engine);
     engine.close();
 
     // a, b, c and d
@@ -119,26 +115,26 @@ class AbstractAllDifferentNodeTest : public NodeTestBase {
     // alldifferent
     EXPECT_EQ(engine.numInvariants(), 1);
 
-    EXPECT_EQ(engine.lowerBound(node->violationVarId()), 0);
-    EXPECT_GT(engine.upperBound(node->violationVarId()), 0);
+    EXPECT_EQ(engine.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
+    EXPECT_GT(engine.upperBound(invNode().violationVarId(*_invariantGraph)), 0);
   }
 
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {a.name, b.name, c.name, d.name});
-    node->createDefinedVariables(engine);
-    node->registerWithEngine(engine);
+    addInputVarsToEngine(engine);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerNode(*_invariantGraph, engine);
 
     std::vector<VarId> inputs;
-    EXPECT_EQ(node->staticInputs().size(), 4);
-    for (auto* const inputVariable : node->staticInputs()) {
-      EXPECT_NE(inputVariable->varId(), NULL_ID);
-      inputs.emplace_back(inputVariable->varId());
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 4);
+    for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      inputs.emplace_back(varId(inputVarNodeId));
     }
 
-    EXPECT_NE(node->violationVarId(), NULL_ID);
-    const VarId violationId = node->violationVarId();
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    const VarId violationId = invNode().violationVarId(*_invariantGraph);
     EXPECT_EQ(inputs.size(), 4);
 
     std::vector<Int> values(inputs.size());
@@ -213,20 +209,36 @@ TEST_F(AllDifferentTrueNodeTest, Application) { application(); }
 TEST_F(AllDifferentTrueNodeTest, Propagation) { propagation(); }
 
 TEST_F(AllDifferentNodeTest, pruneParameters) {
-  fznparser::Constraint cnstr{"fzn_all_different_int",
-                              {fznparser::Constraint::ArrayArgument{
-                                  7, "a", 10, "b", 6, "c", 9, "d", 5}},
-                              {}};
+  fznparser::IntVarArray inputs("");
+  inputs.append(7);
+  inputs.append(intVar(a));
+  inputs.append(10);
+  inputs.append(intVar(b));
+  inputs.append(6);
+  inputs.append(intVar(c));
+  inputs.append(9);
+  inputs.append(intVar(d));
+  inputs.append(5);
 
-  fznparser::FZNModel mdl{{}, {}, {cnstr}, fznparser::Satisfy{}};
+  _model->addConstraint(std::move(fznparser::Constraint(
+      "fzn_all_different_int", std::vector<fznparser::Arg>{inputs})));
 
-  auto locNode = invariantgraph::AllDifferentNode::fromModelConstraint(
-      mdl, cnstr, nodeFactory);
-  EXPECT_TRUE(locNode->prune());
-  EXPECT_EQ(locNode->staticInputs().size(), 3);
-  for (auto* const var : locNode->staticInputs()) {
-    EXPECT_EQ(var->domain().lowerBound(), 2);
-    EXPECT_EQ(var->domain().upperBound(), 4);
-    EXPECT_EQ(var->domain().size(), 3);
+  makeInvNode(_model->constraints().back());
+
+  varNode(b).domain().fix(2);
+
+  EXPECT_TRUE(invNode().prune(*_invariantGraph));
+
+  std::vector<invariantgraph::VarNodeId> expectedVars{c, d};
+
+  EXPECT_THAT(expectedVars,
+              testing::ContainerEq(invNode().staticInputVarNodeIds()));
+
+  EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedVars);
+
+  for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
+    EXPECT_EQ(varNode(varNodeId).domain().lowerBound(), 3);
+    EXPECT_EQ(varNode(varNodeId).domain().upperBound(), 4);
+    EXPECT_EQ(varNode(varNodeId).domain().size(), 2);
   }
 }

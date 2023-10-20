@@ -90,4 +90,4 @@ struct DomainEntry {
   }
 };
 
-enum class ObjectiveDirection : char { MINIMISE = 1, MAXIMISE = -1, NONE = 0 };
+enum class ObjectiveDirection : char { MINIMIZE = 1, MAXIMIZE = -1, NONE = 0 };

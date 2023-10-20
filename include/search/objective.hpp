@@ -13,16 +13,16 @@ namespace search {
 class Objective {
  private:
   PropagationEngine& _engine;
-  fznparser::Objective _modelObjective;
+  fznparser::ProblemType _problemType;
 
   std::optional<VarId> _bound{};
   std::optional<VarId> _objective{};
   std::optional<VarId> _violation{};
 
  public:
-  Objective(PropagationEngine& engine, const fznparser::FZNModel& model);
+  Objective(PropagationEngine& engine, fznparser::ProblemType problemType);
 
-  VarId registerWithEngine(VarId constraintViolation, VarId objectiveVariable);
+  VarId registerNode(VarId totalViolationId, VarId objectiveVarId);
 
   void tighten();
 
@@ -30,10 +30,10 @@ class Objective {
 
  private:
   template <typename F>
-  VarId registerOptimisation(VarId constraintViolation, VarId objectiveVariable,
+  VarId registerOptimisation(VarId constraintViolation, VarId objectiveVarId,
                              Int initialBound, F constraintFactory) {
-    auto lb = _engine.lowerBound(objectiveVariable);
-    auto ub = _engine.upperBound(objectiveVariable);
+    auto lb = _engine.lowerBound(objectiveVarId);
+    auto ub = _engine.upperBound(objectiveVarId);
 
     _bound = _engine.makeIntVar(initialBound, lb, ub);
     auto boundViolation =

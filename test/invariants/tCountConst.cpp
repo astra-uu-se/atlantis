@@ -29,13 +29,11 @@ class CountConstTest : public InvariantTest {
   }
 
   Int computeOutput(const Int y, const std::vector<Int>& values) {
-    Int count = 0;
-    for (size_t i = 0; i < values.size(); ++i) {
-      if (values.at(i) == y) {
-        ++count;
-      }
+    Int occurrences = 0;
+    for (const Int val : values) {
+      occurrences += (val == y ? 1 : 0);
     }
-    return count;
+    return occurrences;
   }
 };
 

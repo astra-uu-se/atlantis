@@ -18,7 +18,7 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
 
  public:
   AllDifferentUniformNeighbourhood(
-      std::vector<search::SearchVariable> variables, std::vector<Int> domain,
+      std::vector<search::SearchVariable>&& variables, std::vector<Int> domain,
       const Engine& engine);
 
   ~AllDifferentUniformNeighbourhood() override = default;
