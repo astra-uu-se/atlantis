@@ -1,82 +1,94 @@
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/invariants/arrayIntMinimumNode.hpp"
+#include "invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
 
-class ArrayVarIntMinimumTest : public NodeTestBase {
+class ArrayIntMinimumTest
+    : public NodeTestBase<invariantgraph::ArrayIntMinimumNode> {
  public:
-  INT_VARIABLE(a, -5, 10);
-  INT_VARIABLE(b, 0, 5);
-  INT_VARIABLE(c, 0, 10);
-
-  fznparser::Constraint constraint{
-      "array_int_minimum",
-      {"c", fznparser::Constraint::ArrayArgument{"a", "b"}},
-      {fznparser::DefinesVariableAnnotation{"c"}}};
-
-  fznparser::FZNModel model{{}, {a, b, c}, {constraint}, fznparser::Satisfy{}};
-
-  std::unique_ptr<invariantgraph::ArrayIntMinimumNode> node;
+  invariantgraph::VarNodeId x1;
+  invariantgraph::VarNodeId x2;
+  invariantgraph::VarNodeId x3;
+  invariantgraph::VarNodeId o;
 
   void SetUp() override {
-    setModel(&model);
-    node = makeNode<invariantgraph::ArrayIntMinimumNode>(constraint);
+    NodeTestBase::SetUp();
+    x1 = createIntVar(5, 10, "x1");
+    x2 = createIntVar(0, 20, "x2");
+    x3 = createIntVar(0, 20, "x3");
+    o = createIntVar(-10, 100, "o");
+
+    fznparser::IntVarArray inputs("");
+    inputs.append(intVar(x1));
+    inputs.append(intVar(x2));
+    inputs.append(intVar(x3));
+
+    _model->addConstraint(fznparser::Constraint(
+        "array_int_minimum",
+        std::vector<fznparser::Arg>{fznparser::IntArg{intVar(o)}, inputs},
+        std::vector<fznparser::Annotation>{
+            definesVarAnnotation(identifier(o))}));
+
+    makeInvNode(_model->constraints().front());
   }
 };
 
-TEST_F(ArrayVarIntMinimumTest, construction) {
-  EXPECT_EQ(*node->staticInputs()[0]->variable(),
-            invariantgraph::VariableNode::FZNVariable(a));
-  EXPECT_EQ(*node->staticInputs()[1]->variable(),
-            invariantgraph::VariableNode::FZNVariable(b));
-  EXPECT_EQ(*node->definedVariables().front()->variable(),
-            invariantgraph::VariableNode::FZNVariable(c));
-  expectMarkedAsInput(node.get(), node->staticInputs());
+TEST_F(ArrayIntMinimumTest, construction) {
+  expectInputTo(invNode());
+  expectOutputOf(invNode());
+
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 3);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().at(0), x1);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().at(1), x2);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().at(2), x3);
+
+  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), o);
 }
 
-TEST_F(ArrayVarIntMinimumTest, application) {
+TEST_F(ArrayIntMinimumTest, application) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a.name, b.name});
-  for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_EQ(definedVariable->varId(), NULL_ID);
+  addInputVarsToEngine(engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
   }
-  node->createDefinedVariables(engine);
-  for (auto* const definedVariable : node->definedVariables()) {
-    EXPECT_NE(definedVariable->varId(), NULL_ID);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
   }
-  node->registerWithEngine(engine);
+  invNode().registerNode(*_invariantGraph, engine);
   engine.close();
 
-  EXPECT_EQ(engine.lowerBound(engineVariable(c)), -5);
-  EXPECT_EQ(engine.upperBound(engineVariable(c)), 5);
+  EXPECT_EQ(engine.lowerBound(varId(o)), 0);
+  EXPECT_EQ(engine.upperBound(varId(o)), 10);
 
-  // a and b
-  EXPECT_EQ(engine.searchVariables().size(), 2);
+  // x1, x2, and x3
+  EXPECT_EQ(engine.searchVariables().size(), 3);
 
-  // a, b and c
-  EXPECT_EQ(engine.numVariables(), 3);
+  // x1, x2 and o
+  EXPECT_EQ(engine.numVariables(), 4);
 
-  // minSparse
+  // maxSparse
   EXPECT_EQ(engine.numInvariants(), 1);
 }
 
-TEST_F(ArrayVarIntMinimumTest, propagation) {
+TEST_F(ArrayIntMinimumTest, propagation) {
   PropagationEngine engine;
   engine.open();
-  registerVariables(engine, {a.name, b.name});
-  node->createDefinedVariables(engine);
-  node->registerWithEngine(engine);
+  addInputVarsToEngine(engine);
+  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerNode(*_invariantGraph, engine);
 
   std::vector<VarId> inputs;
-  EXPECT_EQ(node->staticInputs().size(), 2);
-  for (auto* const inputVariable : node->staticInputs()) {
-    EXPECT_NE(inputVariable->varId(), NULL_ID);
-    inputs.emplace_back(inputVariable->varId());
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 3);
+  for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+    EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+    inputs.emplace_back(varId(inputVarNodeId));
   }
 
-  EXPECT_NE(node->definedVariables().front()->varId(), NULL_ID);
-  const VarId outputId = node->definedVariables().front()->varId();
-  EXPECT_EQ(inputs.size(), 2);
+  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), NULL_ID);
+  const VarId outputId = varId(invNode().outputVarNodeIds().front());
+  EXPECT_EQ(inputs.size(), 3);
 
   std::vector<Int> values(inputs.size());
   engine.close();
@@ -84,20 +96,23 @@ TEST_F(ArrayVarIntMinimumTest, propagation) {
   for (values.at(0) = engine.lowerBound(inputs.at(0));
        values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
     for (values.at(1) = engine.lowerBound(inputs.at(1));
-         values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
-      engine.beginMove();
-      for (size_t i = 0; i < inputs.size(); ++i) {
-        engine.setValue(inputs.at(i), values.at(i));
+         values.at(2) <= engine.upperBound(inputs.at(2)); ++values.at(2)) {
+      for (values.at(2) = engine.lowerBound(inputs.at(2));
+           values.at(2) <= engine.upperBound(inputs.at(2)); ++values.at(2)) {
+        engine.beginMove();
+        for (size_t i = 0; i < inputs.size(); ++i) {
+          engine.setValue(inputs.at(i), values.at(i));
+        }
+        engine.endMove();
+
+        engine.beginProbe();
+        engine.query(outputId);
+        engine.endProbe();
+
+        const Int expected = *std::min_element(values.begin(), values.end());
+        const Int actual = engine.currentValue(outputId);
+        EXPECT_EQ(expected, actual);
       }
-      engine.endMove();
-
-      engine.beginProbe();
-      engine.query(outputId);
-      engine.endProbe();
-
-      const Int expected = *std::min_element(values.begin(), values.end());
-      const Int actual = engine.currentValue(outputId);
-      EXPECT_EQ(expected, actual);
     }
   }
 }

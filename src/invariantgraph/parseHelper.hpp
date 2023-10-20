@@ -1,50 +1,72 @@
 #pragma once
 
+#include <algorithm>
 #include <fznparser/model.hpp>
 #include <optional>
+#include <variant>
 #include <vector>
 
 #include "invariantgraph/implicitConstraintNode.hpp"
-#include "invariantgraph/softConstraintNode.hpp"
-#include "invariantgraph/variableDefiningNode.hpp"
-#include "invariantgraph/variableNode.hpp"
+#include "invariantgraph/invariantNode.hpp"
+#include "invariantgraph/varNode.hpp"
+#include "invariantgraph/violationInvariantNode.hpp"
 #include "utils/fznAst.hpp"
+#include "utils/variant.hpp"
 
-using FZNConstraint = fznparser::Constraint;
-using FZNSearchVariable =
-    std::variant<fznparser::IntVariable, fznparser::BoolVariable>;
+namespace invariantgraph {
 
-std::vector<invariantgraph::VariableNode*> mappedVariableVector(
-    const fznparser::FZNModel& model, const FZNConstraint::Argument& argument,
-    const std::function<invariantgraph::VariableNode*(
-        invariantgraph::MappableValue&)>& variableMap);
+std::vector<invariantgraph::VarNodeId>&& append(
+    std::vector<invariantgraph::VarNodeId>&&, invariantgraph::VarNodeId,
+    invariantgraph::VarNodeId);
 
-invariantgraph::VariableNode* mappedVariable(
+std::vector<invariantgraph::VarNodeId>&& append(
+    std::vector<invariantgraph::VarNodeId>&&, invariantgraph::VarNodeId);
+
+std::vector<invariantgraph::VarNodeId> concat(
+    const std::vector<invariantgraph::VarNodeId>&,
+    const std::vector<invariantgraph::VarNodeId>&);
+
+bool hasCorrectSignature(
+    const std::vector<std::pair<std::string, size_t>>& nameNumArgPairs,
+    const fznparser::Constraint& constraint);
+
+std::vector<VarNodeId> pruneAllDifferentFree(
+    InvariantGraph&, std::vector<VarNodeId> staticInputVarNodeIds);
+
+std::vector<VarNodeId> pruneAllDifferentFixed(
+    InvariantGraph&, std::vector<VarNodeId> staticInputVarNodeIds);
+
+std::vector<Int> toIntVector(const std::vector<bool>& argument);
+
+/*
+std::vector<:VarNodeId> mappedVariableVector(
+    const fznparser::Model& model, const FZNConstraint::Argument& argument,
+    const std::function<:VarNodeId(
+        :MappableValue&)>& variableMap);
+
+:VarNodeId mappedVariable(
     const FZNConstraint::Argument& argument,
-    const std::function<invariantgraph::VariableNode*(
-        invariantgraph::MappableValue&)>& variableMap);
+    const std::function<:VarNodeId(
+        :MappableValue&)>& variableMap);
 
-std::vector<Int> integerVector(const fznparser::FZNModel& model,
+std::vector<Int> integerVector(const fznparser::Model& model,
                                const FZNConstraint::Argument& argument);
 
-std::vector<Int> boolVectorAsIntVector(const fznparser::FZNModel& model,
+std::vector<Int> boolVectorAsIntVector(const fznparser::Model& model,
                                        const FZNConstraint::Argument& argument);
 
-Int integerValue(const fznparser::FZNModel& model,
+Int integerValue(const fznparser::Model& model,
                  const FZNConstraint::Argument& argument);
 
-bool booleanValue(const fznparser::FZNModel& model,
+bool booleanValue(const fznparser::Model& model,
                   const FZNConstraint::Argument& argument);
 
-fznparser::Set<Int> integerSet(const fznparser::FZNModel& model,
+fznparser::Set<Int> integerSet(const fznparser::Model& model,
                                const FZNConstraint::Argument& argument);
 
 bool definesVariable(const fznparser::Constraint& constraint,
                      const FZNSearchVariable& variable);
 
-bool hasCorrectSignature(
-    const std::vector<std::pair<std::string_view, size_t>>& nameNumArgPairs,
-    const fznparser::Constraint& constraint);
+*/
 
-std::vector<invariantgraph::VariableNode*> pruneAllDifferent(
-    std::vector<invariantgraph::VariableNode*> staticInputs);
+}  // namespace invariantgraph

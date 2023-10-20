@@ -399,8 +399,7 @@ void PropagationEngine::propagate() {
       // Find next layer that has queued variables:
       while (++curLayer < _propGraph.numLayers() &&
              _layerQueueIndex[curLayer] == 0) {
-        ;
-      }
+            }
 
       if (curLayer >= _propGraph.numLayers()) {
         // All layers have been propogated

@@ -566,12 +566,12 @@ TEST_F(GlobalCardinalityTestClosed, EngineIntegration) {
       engine->open();
     }
     std::vector<VarId> args;
-    Int numArgs = 10;
-    for (Int value = 0; value < numArgs; ++value) {
+    size_t numArgs = 10;
+    for (size_t value = 0; value < numArgs; ++value) {
       args.push_back(engine->makeIntVar(0, -100, 100));
     }
 
-    VarId viol = engine->makeIntVar(0, 0, numArgs);
+    VarId viol = engine->makeIntVar(0, 0, static_cast<Int>(numArgs));
 
     testNotifications<MockGlobalCardinalityConst<false>>(
         &engine->makeInvariant<MockGlobalCardinalityConst<false>>(
@@ -586,12 +586,12 @@ TEST_F(GlobalCardinalityTestOpen, EngineIntegration) {
       engine->open();
     }
     std::vector<VarId> args;
-    Int numArgs = 10;
-    for (Int value = 0; value < numArgs; ++value) {
+    size_t numArgs = 10;
+    for (size_t value = 0; value < numArgs; ++value) {
       args.push_back(engine->makeIntVar(0, -100, 100));
     }
 
-    VarId viol = engine->makeIntVar(0, 0, numArgs);
+    VarId viol = engine->makeIntVar(0, 0, static_cast<Int>(numArgs));
 
     testNotifications<MockGlobalCardinalityConst<true>>(
         &engine->makeInvariant<MockGlobalCardinalityConst<true>>(

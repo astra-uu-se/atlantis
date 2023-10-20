@@ -32,6 +32,7 @@ class BoolLinearTest : public InvariantTest {
  public:
   void SetUp() override {
     InvariantTest::SetUp();
+
     inputs.resize(numInputs, NULL_ID);
     coeffs.resize(numInputs, 0);
     std::vector<Int> bounds{0,

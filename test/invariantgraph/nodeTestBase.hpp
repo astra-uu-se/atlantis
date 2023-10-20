@@ -8,111 +8,189 @@
 
 #include "core/propagationEngine.hpp"
 #include "fznparser/model.hpp"
-#include "invariantgraph/variableNode.hpp"
+#include "invariantgraph/invariantGraph.hpp"
+#include "invariantgraph/types.hpp"
 #include "utils/variant.hpp"
 
-#define INT_VARIABLE(name, lb, ub)              \
-  fznparser::IntVariable name {                 \
-#name, fznparser::IntRange{lb, ub }, {}, {} \
-  }
-
-#define BOOL_VARIABLE(name)                         \
-  fznparser::BoolVariable name {                    \
-#name, fznparser::BasicDomain < bool>{}, {}, {} \
-  }
-
-template <typename T>
-fznparser::Identifier identifier(const T& variable) {
-  return std::visit<fznparser::Identifier>(
-      [](const auto& var) { return var.name; }, variable);
-}
-
+template <typename InvNode>
 class NodeTestBase : public testing::Test {
  protected:
-  fznparser::FZNModel* _model;
-  std::vector<std::unique_ptr<invariantgraph::VariableNode>> _variables;
-  std::unordered_map<fznparser::Identifier, invariantgraph::VariableNode*>
-      _nodeMap;
+  std::unique_ptr<fznparser::Model> _model;
+  std::unique_ptr<invariantgraph::InvariantGraph> _invariantGraph;
 
-  void setModel(fznparser::FZNModel* model) { _model = model; }
+  invariantgraph::InvariantNodeId _invNodeId =
+      invariantgraph::InvariantNodeId(invariantgraph::NULL_NODE_ID);
 
-  std::function<invariantgraph::VariableNode*(invariantgraph::MappableValue&)>
-      nodeFactory = [&](const auto& mappable) -> invariantgraph::VariableNode* {
-    auto n = std::visit<std::unique_ptr<invariantgraph::VariableNode>>(
-        overloaded{
-            [&](const fznparser::Identifier& identifier) {
-              auto variable =
-                  std::get<fznparser::Variable>(*_model->identify(identifier));
-              return std::visit<std::unique_ptr<invariantgraph::VariableNode>>(
-                  overloaded{
-                      [](const fznparser::IntVariable& var) {
-                        return std::make_unique<invariantgraph::VariableNode>(
-                            invariantgraph::VariableNode::FZNVariable(var));
-                      },
-                      [](const fznparser::BoolVariable& var) {
-                        return std::make_unique<invariantgraph::VariableNode>(
-                            invariantgraph::VariableNode::FZNVariable(var));
-                      },
-                      [](const auto&) {
-                        assert(false);
-                        return nullptr;
-                      }},
-                  variable);
-            },
-            [](Int value) {
-              return std::make_unique<invariantgraph::VariableNode>(
-                  SearchDomain({value}), true);
-            },
-            [](bool value) {
-              return std::make_unique<invariantgraph::VariableNode>(
-                  SearchDomain({1 - static_cast<int>(value)}), false);
-            }},
-        mappable);
-    auto ptr = n.get();
-    if (n->variable()) {
-      _nodeMap.emplace(identifier(*n->variable()), ptr);
-    }
-    _variables.push_back(std::move(n));
-    return ptr;
-  };
-
-  void TearDown() override {
-    _nodeMap.clear();
-    _variables.clear();
+  void SetUp() override {
+    _model = std::make_unique<fznparser::Model>();
+    _invariantGraph = std::make_unique<invariantgraph::InvariantGraph>();
   }
 
-  template <typename Node>
-  inline std::unique_ptr<Node> makeNode(
-      const fznparser::Constraint& constraint) {
-    return Node::fromModelConstraint(*_model, constraint, nodeFactory);
-  }
-
-  inline void registerVariables(
-      PropagationEngine& engine,
-      const std::vector<fznparser::Identifier>& freeVariables = {}) {
-    for (const auto& modelVariable : freeVariables) {
-      auto variable = _nodeMap.at(modelVariable);
-      const auto& [lb, ub] = variable->bounds();
-      variable->setVarId(engine.makeIntVar(lb, lb, ub));
+  InvNode& invNode() {
+    EXPECT_NE(_invNodeId, invariantgraph::NULL_NODE_ID);
+    if (_invNodeId.type == invariantgraph::InvariantNodeId::Type::INVARIANT) {
+      return dynamic_cast<InvNode&>(_invariantGraph->invariantNode(_invNodeId));
+    } else {
+      return dynamic_cast<InvNode&>(
+          _invariantGraph->implicitConstraintNode(_invNodeId));
     }
   }
 
-  template <typename T>
-  [[nodiscard]] inline VarId engineVariable(
-      const fznparser::SearchVariable<T>& variable) const {
-    return _nodeMap.at(variable.name)->varId();
+  void makeInvNode(const fznparser::Constraint& constraint) {
+    _invNodeId = _invariantGraph->addInvariantNode(
+        std::move(InvNode::fromModelConstraint(constraint, *_invariantGraph)));
+  }
+
+  void makeImplicitNode(const fznparser::Constraint& constraint) {
+    _invNodeId = _invariantGraph->addImplicitConstraintNode(
+        std::move(InvNode::fromModelConstraint(constraint, *_invariantGraph)));
+  }
+
+  template <typename OtherInvNode>
+  void makeOtherInvNode(const fznparser::Constraint& constraint) {
+    _invNodeId = _invariantGraph->addInvariantNode(std::move(
+        OtherInvNode::fromModelConstraint(constraint, *_invariantGraph)));
+  }
+
+  invariantgraph::VarNodeId createIntVar(int64_t lowerBound, int64_t upperBound,
+                                         std::string identifier) {
+    EXPECT_FALSE(_model->hasVariable(identifier));
+    const fznparser::IntVar& var =
+        std::get<fznparser::IntVar>(_model->addVariable(
+            std::move(fznparser::IntVar(lowerBound, upperBound, identifier))));
+    return _invariantGraph->createVarNode(var);
+  }
+
+  invariantgraph::VarNodeId createBoolVar(std::string identifier) {
+    EXPECT_FALSE(_model->hasVariable(identifier));
+    const fznparser::BoolVar& var = std::get<fznparser::BoolVar>(
+        _model->addVariable(std::move(fznparser::BoolVar(identifier))));
+    return _invariantGraph->createVarNode(var);
+  }
+
+  invariantgraph::VarNode& varNode(const std::string& identifier) {
+    return _invariantGraph->varNode(identifier);
+  }
+
+  invariantgraph::VarNode& varNode(invariantgraph::VarNodeId varNodeId) {
+    return _invariantGraph->varNode(varNodeId);
+  }
+
+  const fznparser::IntVar& intVar(const std::string& identifier) {
+    return std::get<fznparser::IntVar>(_model->variable(identifier));
+  }
+
+  const fznparser::IntVar& intVar(invariantgraph::VarNodeId varNodeId) {
+    return std::get<fznparser::IntVar>(
+        _model->variable(varNode(varNodeId).identifier()));
+  }
+
+  const fznparser::BoolVar& boolVar(const std::string& identifier) {
+    return std::get<fznparser::BoolVar>(_model->variable(identifier));
+  }
+
+  const fznparser::BoolVar& boolVar(invariantgraph::VarNodeId varNodeId) {
+    return std::get<fznparser::BoolVar>(
+        _model->variable(varNode(varNodeId).identifier()));
+  }
+
+  VarId varId(const std::string& identifier) {
+    return varNode(identifier).varId();
+  }
+
+  VarId varId(invariantgraph::VarNodeId varNodeId) {
+    return varNode(varNodeId).varId();
+  }
+
+  std::string identifier(invariantgraph::VarNodeId varNodeId) {
+    return varNode(varNodeId).identifier();
+  }
+
+  fznparser::Annotation definesVarAnnotation(std::string identifier) {
+    return fznparser::Annotation(
+        "defines_var",
+        std::vector<std::vector<fznparser::AnnotationExpression>>{
+            std::vector<fznparser::AnnotationExpression>{
+                fznparser::Annotation(identifier)}});
+  }
+
+  void addInputVarsToEngine(PropagationEngine& engine) {
+    EXPECT_EQ(engine.numVariables(), 0);
+    for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
+      EXPECT_EQ(varId(varNodeId), NULL_ID);
+      const auto& [lb, ub] = varNode(varNodeId).bounds();
+      varNode(varNodeId).setVarId(engine.makeIntVar(lb, lb, ub));
+      EXPECT_NE(varId(varNodeId), NULL_ID);
+    }
+    for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
+      EXPECT_EQ(varId(varNodeId), NULL_ID);
+      const auto& [lb, ub] = varNode(varNodeId).bounds();
+      varNode(varNodeId).setVarId(engine.makeIntVar(lb, lb, ub));
+      EXPECT_NE(varId(varNodeId), NULL_ID);
+    }
+    EXPECT_EQ(engine.numVariables(),
+              invNode().staticInputVarNodeIds().size() +
+                  invNode().dynamicInputVarNodeIds().size());
+    expectInputsRegistered(invNode(), engine);
+  }
+
+  [[nodiscard]] inline VarId engineVarId(
+      const invariantgraph::VarNodeId& varNodeId) const {
+    return _invariantGraph->varNode(varNodeId).varId();
+  }
+
+  void expectInputTo(const invariantgraph::InvariantNode& invNode) {
+    for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
+      bool found = false;
+      for (const auto& invNodeId :
+           _invariantGraph->varNode(varNodeId).inputTo()) {
+        if (invNodeId == invNode.id()) {
+          found = true;
+          break;
+        }
+      }
+      EXPECT_TRUE(found);
+    }
+    for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
+      bool found = false;
+      for (const auto& invNodeId :
+           _invariantGraph->varNode(varNodeId).inputTo()) {
+        if (invNodeId == invNode.id()) {
+          found = true;
+          break;
+        }
+      }
+      EXPECT_TRUE(found);
+    }
+  }
+
+  void expectOutputOf(const invariantgraph::InvariantNode& invNode) {
+    for (const auto& varNodeId : invNode.outputVarNodeIds()) {
+      EXPECT_EQ(_invariantGraph->varNode(varNodeId).outputOf(), invNode.id());
+    }
+  }
+
+  void expectInputsRegistered(const invariantgraph::InvariantNode& invNode,
+                              const PropagationEngine& engine) {
+    EXPECT_EQ(engine.numVariables(),
+              invNode.staticInputVarNodeIds().size() +
+                  invNode.dynamicInputVarNodeIds().size());
+    std::vector<bool> registered(engine.numVariables(), false);
+    for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
+      EXPECT_NE(engineVarId(varNodeId), NULL_ID);
+      EXPECT_FALSE(registered.at(engineVarId(varNodeId) - 1));
+      registered.at(engineVarId(varNodeId) - 1) = true;
+    }
+    for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
+      EXPECT_NE(engineVarId(varNodeId), NULL_ID);
+      EXPECT_FALSE(registered.at(engineVarId(varNodeId) - 1));
+      registered.at(engineVarId(varNodeId) - 1) = true;
+    }
+    for (size_t i = 0; i < registered.size(); ++i) {
+      EXPECT_TRUE(registered.at(i));
+    }
   }
 };
-
-inline void expectMarkedAsInput(
-    invariantgraph::VariableDefiningNode* definingNode,
-    const std::vector<invariantgraph::VariableNode*>& inputs) {
-  for (const auto& variableNode : inputs) {
-    EXPECT_NE(std::find(variableNode->inputFor().begin(),
-                        variableNode->inputFor().end(), definingNode),
-              variableNode->inputFor().end());
-  }
-}
 
 enum class ConstraintType : unsigned char {
   NORMAL = 0,

@@ -55,7 +55,8 @@ class AlwaysAcceptingAnnealer : public search::Annealer {
 };
 
 TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {
-  search::neighbourhoods::CircuitNeighbourhood neighbourhood(next);
+  search::neighbourhoods::CircuitNeighbourhood neighbourhood(
+      std::move(std::vector<search::SearchVariable>(next)));
 
   assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
@@ -66,7 +67,8 @@ TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {
 TEST_F(CircuitNeighbourhoodTest, fixed_variables_are_considered) {
   next[1] = search::SearchVariable(next[1].engineId(), SearchDomain({3}));
 
-  search::neighbourhoods::CircuitNeighbourhood neighbourhood(next);
+  search::neighbourhoods::CircuitNeighbourhood neighbourhood(
+      std::move(std::vector<search::SearchVariable>(next)));
 
   assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
@@ -77,7 +79,8 @@ TEST_F(CircuitNeighbourhoodTest, fixed_variables_are_considered) {
 TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
   static int CONFIDENCE = 1000;
 
-  search::neighbourhoods::CircuitNeighbourhood neighbourhood(next);
+  search::neighbourhoods::CircuitNeighbourhood neighbourhood(
+      std::move(std::vector<search::SearchVariable>(next)));
   assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
 

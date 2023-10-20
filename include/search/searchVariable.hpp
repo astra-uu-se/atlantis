@@ -15,13 +15,13 @@ class SearchVariable {
   VarId _varId;
 
  public:
-  explicit SearchVariable(VarId varId, SearchDomain domain)
-      : _domain(std::move(domain)), _varId(varId) {}
+  explicit SearchVariable(VarId varId, const SearchDomain& domain)
+      : _domain(domain), _varId(varId) {}
 
   [[nodiscard]] VarId engineId() const noexcept { return _varId; }
 
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
-  [[nodiscard]] bool isConstant() const noexcept { return _domain.size() == 1; }
+  [[nodiscard]] bool isFixed() const noexcept { return _domain.isFixed(); }
 };
 
 }  // namespace search

@@ -1,12 +1,8 @@
 #include "utils/fznAst.hpp"
 
-std::optional<fznparser::Identifier> definedVariable(
-    const fznparser::Constraint& constraint) {
-  auto annotation =
-      getAnnotation<fznparser::DefinesVariableAnnotation>(constraint);
-  if (!annotation) {
-    return std::nullopt;
-  }
-
-  return annotation->definedVariable;
+const std::string& identifier(
+    const std::variant<fznparser::BoolVar, fznparser::IntVar>& variable) {
+  return std::holds_alternative<fznparser::BoolVar>(variable)
+             ? std::get<fznparser::BoolVar>(variable).identifier()
+             : std::get<fznparser::IntVar>(variable).identifier();
 }

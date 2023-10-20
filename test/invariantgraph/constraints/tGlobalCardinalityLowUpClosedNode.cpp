@@ -2,7 +2,7 @@
 
 #include "../nodeTestBase.hpp"
 #include "core/propagationEngine.hpp"
-#include "invariantgraph/constraints/globalCardinalityLowUpClosedNode.hpp"
+#include "invariantgraph/violationInvariantNodes/globalCardinalityLowUpClosedNode.hpp"
 
 static bool isSatisfied(const std::vector<Int>& values,
                         const std::vector<Int>& cover,
@@ -28,121 +28,114 @@ static bool isSatisfied(const std::vector<Int>& values,
 }
 
 template <ConstraintType Type>
-class AbstractGlobalCardinalityLowUpClosedNodeTest : public NodeTestBase {
+class AbstractGlobalCardinalityLowUpClosedNodeTest
+    : public NodeTestBase<invariantgraph::GlobalCardinalityLowUpClosedNode> {
  public:
-  INT_VARIABLE(x1, 5, 10);
-  INT_VARIABLE(x2, 2, 7);
+  invariantgraph::VarNodeId x1;
+  invariantgraph::VarNodeId x2;
   const std::vector<Int> cover{2, 6};
   const std::vector<Int> low{0, 1};
   const std::vector<Int> up{1, 2};
-  BOOL_VARIABLE(r);
-
-  std::unique_ptr<fznparser::Constraint> constraint;
-  std::unique_ptr<fznparser::FZNModel> model;
-  std::unique_ptr<invariantgraph::GlobalCardinalityLowUpClosedNode> node;
+  invariantgraph::VarNodeId r;
 
   void SetUp() override {
+    NodeTestBase::SetUp();
+    x1 = createIntVar(5, 10, "x1");
+    x2 = createIntVar(2, 7, "x2");
+    r = createBoolVar("r");
+
+    fznparser::IntVarArray inputArg("");
+    inputArg.append(intVar(x1));
+    inputArg.append(intVar(x2));
+
+    fznparser::IntVarArray coverArg("");
+    for (const Int val : cover) {
+      coverArg.append(val);
+    }
+
+    fznparser::IntVarArray lowArg("");
+    for (const Int val : low) {
+      lowArg.append(val);
+    }
+
+    fznparser::IntVarArray upArg("");
+    for (const Int val : up) {
+      upArg.append(val);
+    }
+
     if constexpr (Type == ConstraintType::REIFIED) {
-      fznparser::Constraint cnstr{
+      _model->addConstraint(std::move(fznparser::Constraint(
           "fzn_global_cardinality_low_up_closed_reif",
-          {fznparser::Constraint::ArrayArgument{"x1", "x2"},
-           fznparser::Constraint::ArrayArgument{cover.at(0), cover.at(1)},
-           fznparser::Constraint::ArrayArgument{low.at(0), low.at(1)},
-           fznparser::Constraint::ArrayArgument{up.at(0), up.at(1)},
-           fznparser::Constraint::Argument{"r"}},
-          {}};
+          std::vector<fznparser::Arg>{inputArg, coverArg, lowArg, upArg,
+                                      fznparser::BoolArg{boolVar(r)}})));
 
-      constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
-
-      fznparser::FZNModel mdl{
-          {}, {x1, x2, r}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     } else {
       if constexpr (Type == ConstraintType::NORMAL) {
-        fznparser::Constraint cnstr{
+        _model->addConstraint(std::move(fznparser::Constraint(
             "fzn_global_cardinality_low_up_closed",
-            {fznparser::Constraint::ArrayArgument{"x1", "x2"},
-             fznparser::Constraint::ArrayArgument{cover.at(0), cover.at(1)},
-             fznparser::Constraint::ArrayArgument{low.at(0), low.at(1)},
-             fznparser::Constraint::ArrayArgument{up.at(0), up.at(1)}},
-            {}};
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+            std::vector<fznparser::Arg>{inputArg, coverArg, lowArg, upArg})));
       } else if constexpr (Type == ConstraintType::CONSTANT_FALSE) {
-        fznparser::Constraint cnstr{
+        _model->addConstraint(std::move(fznparser::Constraint(
             "fzn_global_cardinality_low_up_closed_reif",
-            {fznparser::Constraint::ArrayArgument{"x1", "x2"},
-             fznparser::Constraint::ArrayArgument{cover.at(0), cover.at(1)},
-             fznparser::Constraint::ArrayArgument{low.at(0), low.at(1)},
-             fznparser::Constraint::ArrayArgument{up.at(0), up.at(1)}, false},
-            {}};
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+            std::vector<fznparser::Arg>{inputArg, coverArg, lowArg, upArg,
+                                        fznparser::BoolArg{false}})));
       } else {
-        fznparser::Constraint cnstr{
+        _model->addConstraint(std::move(fznparser::Constraint(
             "fzn_global_cardinality_low_up_closed_reif",
-            {fznparser::Constraint::ArrayArgument{"x1", "x2"},
-             fznparser::Constraint::ArrayArgument{cover.at(0), cover.at(1)},
-             fznparser::Constraint::ArrayArgument{low.at(0), low.at(1)},
-             fznparser::Constraint::ArrayArgument{up.at(0), up.at(1)}, true},
-            {}};
-        constraint = std::make_unique<fznparser::Constraint>(std::move(cnstr));
+            std::vector<fznparser::Arg>{inputArg, coverArg, lowArg, upArg,
+                                        fznparser::BoolArg{true}})));
       }
-      fznparser::FZNModel mdl{
-          {}, {x1, x2}, {*constraint}, fznparser::Satisfy{}};
-
-      model = std::make_unique<fznparser::FZNModel>(std::move(mdl));
     }
-    setModel(model.get());
 
-    node =
-        makeNode<invariantgraph::GlobalCardinalityLowUpClosedNode>(*constraint);
+    makeInvNode(_model->constraints().front());
   }
 
   void construction() {
+    expectInputTo(invNode());
+    expectOutputOf(invNode());
+
     const size_t numInputs = 2;
-    EXPECT_EQ(node->staticInputs().size(), numInputs);
-    std::vector<invariantgraph::VariableNode*> expectedInputs;
-    for (size_t i = 0; i < numInputs; ++i) {
-      expectedInputs.emplace_back(_variables.at(i).get());
-    }
-    EXPECT_EQ(node->staticInputs(), expectedInputs);
-    EXPECT_THAT(expectedInputs, testing::ContainerEq(node->staticInputs()));
-    expectMarkedAsInput(node.get(), node->staticInputs());
+    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
+    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2};
+    EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
+    EXPECT_THAT(expectedInputs,
+                testing::ContainerEq(invNode().staticInputVarNodeIds()));
 
     if (Type == ConstraintType::REIFIED) {
-      EXPECT_EQ(node->definedVariables().size(), 1);
-      EXPECT_EQ(node->definedVariables().front(), _variables.back().get());
+      EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
+      EXPECT_EQ(invNode().outputVarNodeIds().front(), r);
     } else {
-      EXPECT_EQ(node->definedVariables().size(), 0);
+      EXPECT_EQ(invNode().outputVarNodeIds().size(), 0);
     }
 
     if constexpr (Type == ConstraintType::REIFIED) {
-      EXPECT_TRUE(node->isReified());
-      EXPECT_NE(node->reifiedViolation(), nullptr);
-      EXPECT_EQ(node->reifiedViolation()->variable(),
-                invariantgraph::VariableNode::FZNVariable(r));
+      EXPECT_TRUE(invNode().isReified());
+      EXPECT_NE(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     } else {
-      EXPECT_FALSE(node->isReified());
-      EXPECT_EQ(node->reifiedViolation(), nullptr);
+      EXPECT_FALSE(invNode().isReified());
+      EXPECT_EQ(invNode().reifiedViolationNodeId(),
+                invariantgraph::NULL_NODE_ID);
     }
   }
 
   void application() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {x1.name, x2.name});
+    addInputVarsToEngine(engine);
 
-    for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_EQ(definedVariable->varId(), NULL_ID);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
     }
-    EXPECT_EQ(node->violationVarId(), NULL_ID);
-    node->createDefinedVariables(engine);
-    for (auto* const definedVariable : node->definedVariables()) {
-      EXPECT_NE(definedVariable->varId(), NULL_ID);
+    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+      EXPECT_NE(varId(outputVarNodeId), NULL_ID);
     }
-    EXPECT_NE(node->violationVarId(), NULL_ID);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
 
-    node->registerWithEngine(engine);
+    invNode().registerNode(*_invariantGraph, engine);
     engine.close();
 
     // x1, x2
@@ -152,26 +145,26 @@ class AbstractGlobalCardinalityLowUpClosedNodeTest : public NodeTestBase {
     EXPECT_EQ(engine.numVariables(), 3);
     // gcc
     EXPECT_EQ(engine.numInvariants(), 1);
-    EXPECT_EQ(engine.lowerBound(node->violationVarId()), 0);
-    EXPECT_GT(engine.upperBound(node->violationVarId()), 0);
+    EXPECT_EQ(engine.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
+    EXPECT_GT(engine.upperBound(invNode().violationVarId(*_invariantGraph)), 0);
   }
 
   void propagation() {
     PropagationEngine engine;
     engine.open();
-    registerVariables(engine, {x1.name, x2.name});
-    node->createDefinedVariables(engine);
-    node->registerWithEngine(engine);
+    addInputVarsToEngine(engine);
+    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerNode(*_invariantGraph, engine);
 
     std::vector<VarId> inputs;
-    for (auto* const input : node->staticInputs()) {
-      EXPECT_NE(input->varId(), NULL_ID);
-      inputs.emplace_back(input->varId());
+    for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      inputs.emplace_back(varId(inputVarNodeId));
     }
     EXPECT_EQ(inputs.size(), 2);
 
-    EXPECT_NE(node->violationVarId(), NULL_ID);
-    const VarId violationId = node->violationVarId();
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    const VarId violationId = invNode().violationVarId(*_invariantGraph);
 
     std::vector<Int> inputVals(inputs.size());
 

@@ -180,7 +180,7 @@ class PropagationGraph {
     return _isDynamicInvariant.get(id);
   }
 
-  inline InvariantId definingInvariant(VarIdBase id) {
+  inline InvariantId definingInvariant(VarIdBase id) const {
     // Returns NULL_ID if id is a search variable (not defined by an invariant)
     return _definingInvariant.at(id);
   }
