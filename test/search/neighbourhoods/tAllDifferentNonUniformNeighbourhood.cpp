@@ -23,7 +23,7 @@ class AlwaysAcceptingAnnealer : public search::Annealer {
 
 class AllDifferentNonUniformNeighbourhoodTest : public ::testing::Test {
  public:
-  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::unique_ptr<propagation::Solver> solver;
   std::unique_ptr<search::Assignment> assignment;
   search::RandomProvider random{123456789};
 
@@ -40,28 +40,28 @@ class AllDifferentNonUniformNeighbourhoodTest : public ::testing::Test {
       *std::max_element(domains.front().begin(), domains.front().end())};
 
   void SetUp() override {
-    engine = std::make_unique<propagation::PropagationEngine>();
-    engine->open();
+    solver = std::make_unique<propagation::Solver>();
+    solver->open();
     assignment = std::make_unique<search::Assignment>(
-        *engine, engine->makeIntVar(0, 0, 0), engine->makeIntVar(0, 0, 0),
+        *solver, solver->makeIntVar(0, 0, 0), solver->makeIntVar(0, 0, 0),
         propagation::ObjectiveDirection::NONE);
     for (auto i = 0u; i < domains.size(); ++i) {
       const auto& [lb, ub] =
           std::minmax_element(domains.at(i).begin(), domains.at(i).end());
 
-      propagation::VarId var = engine->makeIntVar(*lb, *lb, *ub);
+      propagation::VarId var = solver->makeIntVar(*lb, *lb, *ub);
       domainLb = std::min(domainLb, *lb);
       domainUb = std::max(domainUb, *ub);
       variables.emplace_back(var, SearchDomain(domains.at(i)));
     }
-    engine->close();
+    solver->close();
   }
 };
 
 TEST_F(AllDifferentNonUniformNeighbourhoodTest, Initialize) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
       std::vector<search::SearchVariable>(variables), domainLb, domainUb,
-      *engine);
+      *solver);
 
   std::vector<std::unordered_set<Int>> setDomains(domains.size());
   for (size_t i = 0u; i < variables.size(); ++i) {
@@ -77,7 +77,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, Initialize) {
         [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
     usedValues.clear();
     for (auto i = 0u; i < variables.size(); ++i) {
-      const Int value = engine->committedValue(variables.at(i).engineId());
+      const Int value = solver->committedValue(variables.at(i).solverId());
       EXPECT_FALSE(usedValues.contains(value));
       usedValues.emplace(value);
       EXPECT_TRUE(setDomains.at(i).contains(value));
@@ -89,7 +89,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, Initialize) {
 TEST_F(AllDifferentNonUniformNeighbourhoodTest, CanSwap) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
       std::move(std::vector<search::SearchVariable>(variables)), domainLb,
-      domainUb, *engine);
+      domainUb, *solver);
 
   std::vector<std::unordered_set<Int>> setDomains(domains.size());
   for (size_t i = 0u; i < variables.size(); ++i) {
@@ -105,14 +105,14 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, CanSwap) {
     for (size_t variable1Index = 0; variable1Index < variables.size();
          ++variable1Index) {
       const Int value1 =
-          engine->committedValue(variables.at(variable1Index).engineId());
+          solver->committedValue(variables.at(variable1Index).solverId());
       for (size_t variable2Index = 0; variable2Index < variables.size();
            ++variable2Index) {
         if (variable1Index == variable2Index) {
           continue;
         }
         const Int value2 =
-            engine->committedValue(variables.at(variable2Index).engineId());
+            solver->committedValue(variables.at(variable2Index).solverId());
         EXPECT_GE(value2, domainLb);
         if (!setDomains.at(variable1Index).contains(value2)) {
           continue;
@@ -130,7 +130,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, CanSwap) {
 TEST_F(AllDifferentNonUniformNeighbourhoodTest, Swap) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
       std::move(std::vector<search::SearchVariable>(variables)), domainLb,
-      domainUb, *engine);
+      domainUb, *solver);
 
   auto schedule = search::AnnealerContainer::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
@@ -149,14 +149,14 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, Swap) {
     for (size_t variable1Index = 0; variable1Index < variables.size();
          ++variable1Index) {
       const Int value1 =
-          engine->committedValue(variables.at(variable1Index).engineId());
+          solver->committedValue(variables.at(variable1Index).solverId());
       for (size_t variable2Index = 0; variable2Index < variables.size();
            ++variable2Index) {
         if (variable1Index == variable2Index) {
           continue;
         }
         const Int value2 =
-            engine->committedValue(variables.at(variable2Index).engineId());
+            solver->committedValue(variables.at(variable2Index).solverId());
         EXPECT_GE(value2, domainLb);
         if (!setDomains.at(variable1Index).contains(value2)) {
           continue;
@@ -174,7 +174,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, Swap) {
 TEST_F(AllDifferentNonUniformNeighbourhoodTest, AssignValue) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
       std::move(std::vector<search::SearchVariable>(variables)), domainLb,
-      domainUb, *engine);
+      domainUb, *solver);
 
   auto schedule = search::AnnealerContainer::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
@@ -194,11 +194,11 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, AssignValue) {
          ++variableIndex) {
       for (const Int newValue : domains.at(variableIndex)) {
         const Int oldValue =
-            engine->committedValue(variables.at(variableIndex).engineId());
+            solver->committedValue(variables.at(variableIndex).solverId());
         EXPECT_GE(newValue, domainLb);
         bool freeValue = true;
         for (const auto& variable : variables) {
-          if (newValue == engine->committedValue(variable.engineId())) {
+          if (newValue == solver->committedValue(variable.solverId())) {
             freeValue = false;
             break;
           }
@@ -207,8 +207,8 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, AssignValue) {
           continue;
         }
         const size_t newValueIndex = static_cast<size_t>(newValue - domainLb);
-        EXPECT_EQ(oldValue, engine->committedValue(
-                                variables.at(variableIndex).engineId()));
+        EXPECT_EQ(oldValue, solver->committedValue(
+                                variables.at(variableIndex).solverId()));
         neighbourhood.assignValue(*assignment, annealer, variableIndex,
                                   newValueIndex);
       }
@@ -219,7 +219,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, AssignValue) {
 TEST_F(AllDifferentNonUniformNeighbourhoodTest, RandomMove) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
       std::move(std::vector<search::SearchVariable>(variables)), domainLb,
-      domainUb, *engine);
+      domainUb, *solver);
 
   auto schedule = search::AnnealerContainer::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);

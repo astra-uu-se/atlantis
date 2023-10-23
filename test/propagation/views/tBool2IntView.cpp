@@ -6,7 +6,7 @@
 #include <random>
 #include <vector>
 
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/bool2IntView.hpp"
 #include "types.hpp"
 
@@ -15,31 +15,31 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 TEST(Bool2IntViewTest, simple) {
-  PropagationEngine engine;
-  engine.open();
-  const VarId varId = engine.makeIntVar(0, 0, 1);
-  const VarId viewId = engine.makeIntView<Bool2IntView>(engine, varId);
+  Solver solver;
+  solver.open();
+  const VarId varId = solver.makeIntVar(0, 0, 1);
+  const VarId viewId = solver.makeIntView<Bool2IntView>(solver, varId);
   const std::array<Int, 5> values{0, 0, 1, 1, 0};
-  engine.close();
+  solver.close();
 
   for (const Int committedValue : values) {
-    engine.beginMove();
-    engine.setValue(varId, committedValue);
-    engine.endMove();
-    engine.beginCommit();
-    engine.query(viewId);
-    engine.endCommit();
-    EXPECT_EQ(engine.committedValue(viewId),
+    solver.beginMove();
+    solver.setValue(varId, committedValue);
+    solver.endMove();
+    solver.beginCommit();
+    solver.query(viewId);
+    solver.endCommit();
+    EXPECT_EQ(solver.committedValue(viewId),
               static_cast<Int>(committedValue == 0));
 
     for (const Int value : values) {
-      engine.beginMove();
-      engine.setValue(varId, value);
-      engine.endMove();
-      engine.beginProbe();
-      engine.query(viewId);
-      engine.endProbe();
-      EXPECT_EQ(engine.currentValue(viewId), static_cast<Int>(value == 0));
+      solver.beginMove();
+      solver.setValue(varId, value);
+      solver.endMove();
+      solver.beginProbe();
+      solver.query(viewId);
+      solver.endProbe();
+      EXPECT_EQ(solver.currentValue(viewId), static_cast<Int>(value == 0));
     }
   }
 }

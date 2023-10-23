@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
@@ -23,7 +23,7 @@ class CountConst : public Invariant {
   std::vector<Int> _hasCountValue;
 
  public:
-  explicit CountConst(Engine&, VarId output, Int y,
+  explicit CountConst(SolverBase&, VarId output, Int y,
                       std::vector<VarId> variables);
 
   void registerVars() override;

@@ -32,9 +32,9 @@ class IntLinEqNode : public ViolationInvariantNode {
   IntLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
                Int c, bool shouldHold);
 
-  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine&) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 

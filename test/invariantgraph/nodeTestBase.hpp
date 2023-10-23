@@ -9,7 +9,7 @@
 #include "fznparser/model.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/types.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "utils/variant.hpp"
 
 namespace atlantis::testing {
@@ -117,27 +117,27 @@ class NodeTestBase : public ::testing::Test {
                 fznparser::Annotation(identifier)}});
   }
 
-  void addInputVarsToEngine(propagation::PropagationEngine& engine) {
-    EXPECT_EQ(engine.numVariables(), 0);
+  void addInputVarsToSolver(propagation::Solver& solver) {
+    EXPECT_EQ(solver.numVariables(), 0);
     for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
       EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
       const auto& [lb, ub] = varNode(varNodeId).bounds();
-      varNode(varNodeId).setVarId(engine.makeIntVar(lb, lb, ub));
+      varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
     for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
       EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
       const auto& [lb, ub] = varNode(varNodeId).bounds();
-      varNode(varNodeId).setVarId(engine.makeIntVar(lb, lb, ub));
+      varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
-    EXPECT_EQ(engine.numVariables(),
+    EXPECT_EQ(solver.numVariables(),
               invNode().staticInputVarNodeIds().size() +
                   invNode().dynamicInputVarNodeIds().size());
-    expectInputsRegistered(invNode(), engine);
+    expectInputsRegistered(invNode(), solver);
   }
 
-  [[nodiscard]] inline propagation::VarId engineVarId(
+  [[nodiscard]] inline propagation::VarId solverVarId(
       const VarNodeId& varNodeId) const {
     return _invariantGraph->varNode(varNodeId).varId();
   }
@@ -174,20 +174,20 @@ class NodeTestBase : public ::testing::Test {
   }
 
   void expectInputsRegistered(const InvariantNode& invNode,
-                              const propagation::PropagationEngine& engine) {
-    EXPECT_EQ(engine.numVariables(),
+                              const propagation::Solver& solver) {
+    EXPECT_EQ(solver.numVariables(),
               invNode.staticInputVarNodeIds().size() +
                   invNode.dynamicInputVarNodeIds().size());
-    std::vector<bool> registered(engine.numVariables(), false);
+    std::vector<bool> registered(solver.numVariables(), false);
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
-      EXPECT_NE(engineVarId(varNodeId), propagation::NULL_ID);
-      EXPECT_FALSE(registered.at(engineVarId(varNodeId) - 1));
-      registered.at(engineVarId(varNodeId) - 1) = true;
+      EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
+      EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      registered.at(solverVarId(varNodeId) - 1) = true;
     }
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
-      EXPECT_NE(engineVarId(varNodeId), propagation::NULL_ID);
-      EXPECT_FALSE(registered.at(engineVarId(varNodeId) - 1));
-      registered.at(engineVarId(varNodeId) - 1) = true;
+      EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
+      EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      registered.at(solverVarId(varNodeId) - 1) = true;
     }
     for (size_t i = 0; i < registered.size(); ++i) {
       EXPECT_TRUE(registered.at(i));

@@ -33,9 +33,9 @@ class BoolLinEqNode : public ViolationInvariantNode {
       const fznparser::Constraint&, InvariantGraph&);
 
   void registerOutputVariables(InvariantGraph&,
-                               propagation::Engine& engine) override;
+                               propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine&) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 

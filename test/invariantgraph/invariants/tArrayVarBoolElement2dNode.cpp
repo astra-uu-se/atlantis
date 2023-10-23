@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/invariantNodes/arrayVarBoolElement2dNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -63,35 +63,35 @@ TEST_F(ArrayVarBoolElement2dNodeTest, construction) {
 }
 
 TEST_F(ArrayVarBoolElement2dNodeTest, application) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
   // x00, x01, x10, x11, idx1, idx2
-  EXPECT_EQ(engine.searchVariables().size(), 6);
+  EXPECT_EQ(solver.searchVariables().size(), 6);
 
   // x00, x01, x10, x11, idx1, idx2, and y
-  EXPECT_EQ(engine.numVariables(), 7);
+  EXPECT_EQ(solver.numVariables(), 7);
 
   // element2dVar
-  EXPECT_EQ(engine.numInvariants(), 1);
+  EXPECT_EQ(solver.numInvariants(), 1);
 }
 
 TEST_F(ArrayVarBoolElement2dNodeTest, propagation) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
-  invNode().registerOutputVariables(*_invariantGraph, engine);
-  invNode().registerNode(*_invariantGraph, engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerNode(*_invariantGraph, solver);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
   EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
@@ -109,36 +109,36 @@ TEST_F(ArrayVarBoolElement2dNodeTest, propagation) {
   inputs.emplace_back(varId(invNode().idx2()));
   for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
     inputs.emplace_back(varId(varNodeId));
-    engine.updateBounds(varId(varNodeId), 0, 3, true);
+    solver.updateBounds(varId(varNodeId), 0, 3, true);
   }
-  engine.close();
+  solver.close();
   std::vector<Int> values(inputs.size(), 0);
 
-  for (values.at(0) = engine.lowerBound(inputs.at(0));
-       values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
-    for (values.at(1) = engine.lowerBound(inputs.at(1));
-         values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
-      for (values.at(2) = engine.lowerBound(inputs.at(2));
-           values.at(2) <= engine.upperBound(inputs.at(2)); ++values.at(2)) {
-        for (values.at(3) = engine.lowerBound(inputs.at(3));
-             values.at(3) <= engine.upperBound(inputs.at(3)); ++values.at(3)) {
-          for (values.at(4) = engine.lowerBound(inputs.at(4));
-               values.at(4) <= engine.upperBound(inputs.at(4));
+  for (values.at(0) = solver.lowerBound(inputs.at(0));
+       values.at(0) <= solver.upperBound(inputs.at(0)); ++values.at(0)) {
+    for (values.at(1) = solver.lowerBound(inputs.at(1));
+         values.at(1) <= solver.upperBound(inputs.at(1)); ++values.at(1)) {
+      for (values.at(2) = solver.lowerBound(inputs.at(2));
+           values.at(2) <= solver.upperBound(inputs.at(2)); ++values.at(2)) {
+        for (values.at(3) = solver.lowerBound(inputs.at(3));
+             values.at(3) <= solver.upperBound(inputs.at(3)); ++values.at(3)) {
+          for (values.at(4) = solver.lowerBound(inputs.at(4));
+               values.at(4) <= solver.upperBound(inputs.at(4));
                ++values.at(4)) {
-            for (values.at(5) = engine.lowerBound(inputs.at(5));
-                 values.at(5) <= engine.upperBound(inputs.at(5));
+            for (values.at(5) = solver.lowerBound(inputs.at(5));
+                 values.at(5) <= solver.upperBound(inputs.at(5));
                  ++values.at(5)) {
-              engine.beginMove();
+              solver.beginMove();
               for (size_t i = 0; i < inputs.size(); ++i) {
-                engine.setValue(inputs.at(i), values.at(i));
+                solver.setValue(inputs.at(i), values.at(i));
               }
-              engine.endMove();
+              solver.endMove();
 
-              engine.beginProbe();
-              engine.query(outputId);
-              engine.endProbe();
+              solver.beginProbe();
+              solver.query(outputId);
+              solver.endProbe();
 
-              const Int actual = engine.currentValue(outputId);
+              const Int actual = solver.currentValue(outputId);
               const Int row = values.at(0) - 1;  // offset of 1
               const Int col = values.at(1) - 1;  // offset of 1
 

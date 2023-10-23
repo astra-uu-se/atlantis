@@ -6,7 +6,7 @@
 
 #include "constraint.hpp"
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
 
@@ -26,7 +26,7 @@ class GlobalCardinalityClosed : public Constraint {
   void updateOutput(Timestamp ts, Int value);
 
  public:
-  GlobalCardinalityClosed(Engine&, VarId violationId,
+  GlobalCardinalityClosed(SolverBase&, VarId violationId,
                           std::vector<VarId> outputs, std::vector<VarId> inputs,
                           std::vector<Int> cover);
 

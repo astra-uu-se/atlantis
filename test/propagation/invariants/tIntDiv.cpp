@@ -6,7 +6,7 @@
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/intDiv.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -20,44 +20,44 @@ class IntDivTest : public InvariantTest {
   }
 
   Int computeOutput(Timestamp ts, const VarId x, const VarId y) {
-    Int denominator = engine->value(ts, y);
+    Int denominator = solver->value(ts, y);
     if (denominator == 0) {
-      denominator = engine->upperBound(y) > 0 ? 1 : -1;
+      denominator = solver->upperBound(y) > 0 ? 1 : -1;
     }
-    return engine->value(ts, x) / denominator;
+    return solver->value(ts, x) / denominator;
   }
 };
 
 TEST_F(IntDivTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
-  engine->open();
-  const VarId x = engine->makeIntVar(
+  solver->open();
+  const VarId x = solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId y = engine->makeIntVar(
+  const VarId y = solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
-  IntDiv& invariant = engine->makeInvariant<IntDiv>(*engine, outputId, x, y);
-  engine->close();
+  const VarId outputId = solver->makeIntVar(0, 0, 2);
+  IntDiv& invariant = solver->makeInvariant<IntDiv>(*solver, outputId, x, y);
+  solver->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_TRUE(xLb <= xUb);
-    engine->updateBounds(x, xLb, xUb, false);
+    solver->updateBounds(x, xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
-      engine->updateBounds(y, yLb, yUb, false);
-      engine->open();
+      solver->updateBounds(y, yLb, yUb, false);
+      solver->open();
       invariant.updateBounds();
-      engine->close();
+      solver->close();
       std::vector<Int> outputs;
-      const Int lb = engine->lowerBound(outputId);
-      const Int ub = engine->upperBound(outputId);
+      const Int lb = solver->lowerBound(outputId);
+      const Int ub = solver->upperBound(outputId);
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-        engine->setValue(engine->currentTimestamp(), x, xVal);
+        solver->setValue(solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-          engine->setValue(engine->currentTimestamp(), y, yVal);
-          invariant.recompute(engine->currentTimestamp());
-          const Int o = engine->value(engine->currentTimestamp(), outputId);
+          solver->setValue(solver->currentTimestamp(), y, yVal);
+          invariant.recompute(solver->currentTimestamp());
+          const Int o = solver->value(solver->currentTimestamp(), outputId);
           if (o < lb || ub < o) {
             ASSERT_TRUE(lb <= o);
             ASSERT_TRUE(o <= ub);
@@ -67,10 +67,10 @@ TEST_F(IntDivTest, UpdateBounds) {
       }
       const auto& [minVal, maxVal] =
           std::minmax_element(outputs.begin(), outputs.end());
-      if (*minVal != engine->lowerBound(outputId)) {
-        ASSERT_EQ(*minVal, engine->lowerBound(outputId));
+      if (*minVal != solver->lowerBound(outputId)) {
+        ASSERT_EQ(*minVal, solver->lowerBound(outputId));
       }
-      ASSERT_EQ(*maxVal, engine->upperBound(outputId));
+      ASSERT_EQ(*maxVal, solver->upperBound(outputId));
     }
   }
 }
@@ -87,23 +87,23 @@ TEST_F(IntDivTest, Recompute) {
   EXPECT_TRUE(yLb <= yUb);
   EXPECT_TRUE(yLb != 0 || yUb != 0);
 
-  engine->open();
-  const VarId x = engine->makeIntVar(xUb, xLb, xUb);
-  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
-  const VarId outputId = engine->makeIntVar(0, outputLb, outputUb);
-  IntDiv& invariant = engine->makeInvariant<IntDiv>(*engine, outputId, x, y);
-  engine->close();
+  solver->open();
+  const VarId x = solver->makeIntVar(xUb, xLb, xUb);
+  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
+  const VarId outputId = solver->makeIntVar(0, outputLb, outputUb);
+  IntDiv& invariant = solver->makeInvariant<IntDiv>(*solver, outputId, x, y);
+  solver->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
     for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      engine->setValue(engine->currentTimestamp(), x, xVal);
-      engine->setValue(engine->currentTimestamp(), y, yVal);
+      solver->setValue(solver->currentTimestamp(), x, xVal);
+      solver->setValue(solver->currentTimestamp(), y, yVal);
 
       const Int expectedOutput =
-          computeOutput(engine->currentTimestamp(), x, y);
-      invariant.recompute(engine->currentTimestamp());
+          computeOutput(solver->currentTimestamp(), x, y);
+      invariant.recompute(solver->currentTimestamp());
       EXPECT_EQ(expectedOutput,
-                engine->value(engine->currentTimestamp(), outputId));
+                solver->value(solver->currentTimestamp(), outputId));
     }
   }
 }
@@ -114,24 +114,24 @@ TEST_F(IntDivTest, NotifyInputChanged) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(lb != 0 || ub != 0);
 
-  engine->open();
-  std::array<VarId, 2> inputs{engine->makeIntVar(ub, lb, ub),
-                              engine->makeIntVar(ub, lb, ub)};
-  VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  IntDiv& invariant = engine->makeInvariant<IntDiv>(*engine, outputId,
+  solver->open();
+  std::array<VarId, 2> inputs{solver->makeIntVar(ub, lb, ub),
+                              solver->makeIntVar(ub, lb, ub)};
+  VarId outputId = solver->makeIntVar(0, 0, ub - lb);
+  IntDiv& invariant = solver->makeInvariant<IntDiv>(*solver, outputId,
                                                     inputs.at(0), inputs.at(1));
-  engine->close();
+  solver->close();
 
-  Timestamp ts = engine->currentTimestamp();
+  Timestamp ts = solver->currentTimestamp();
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
     for (size_t i = 0; i < inputs.size(); ++i) {
-      engine->setValue(ts, inputs.at(i), val);
+      solver->setValue(ts, inputs.at(i), val);
       const Int expectedOutput = computeOutput(ts, inputs);
 
       invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
+      EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
     }
   }
 }
@@ -142,18 +142,18 @@ TEST_F(IntDivTest, NextInput) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(lb != 0 || ub != 0);
 
-  engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
-                                       engine->makeIntVar(ub, lb, ub)};
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
+  solver->open();
+  const std::array<VarId, 2> inputs = {solver->makeIntVar(lb, lb, ub),
+                                       solver->makeIntVar(ub, lb, ub)};
+  const VarId outputId = solver->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  IntDiv& invariant = engine->makeInvariant<IntDiv>(*engine, outputId,
+  IntDiv& invariant = solver->makeInvariant<IntDiv>(*solver, outputId,
                                                     inputs.at(0), inputs.at(1));
-  engine->close();
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < inputs.size(); ++i) {
       const VarId varId = invariant.nextInput(ts);
@@ -176,26 +176,26 @@ TEST_F(IntDivTest, NotifyCurrentInputChanged) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(lb != 0 || ub != 0);
 
-  engine->open();
+  solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   const std::array<VarId, 2> inputs = {
-      engine->makeIntVar(valueDist(gen), lb, ub),
-      engine->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  IntDiv& invariant = engine->makeInvariant<IntDiv>(*engine, outputId,
+      solver->makeIntVar(valueDist(gen), lb, ub),
+      solver->makeIntVar(valueDist(gen), lb, ub)};
+  const VarId outputId = solver->makeIntVar(0, 0, ub - lb);
+  IntDiv& invariant = solver->makeInvariant<IntDiv>(*solver, outputId,
                                                     inputs.at(0), inputs.at(1));
-  engine->close();
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = engine->value(ts, varId);
+      const Int oldVal = solver->value(ts, varId);
       do {
-        engine->setValue(ts, varId, valueDist(gen));
-      } while (engine->value(ts, varId) == oldVal);
+        solver->setValue(ts, varId, valueDist(gen));
+      } while (solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, inputs));
     }
   }
 }
@@ -206,51 +206,51 @@ TEST_F(IntDivTest, Commit) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(lb != 0 || ub != 0);
 
-  engine->open();
+  solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   std::array<size_t, 2> indices{0, 1};
   std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
   std::array<VarId, 2> inputs{
-      engine->makeIntVar(committedValues.at(0), lb, ub),
-      engine->makeIntVar(committedValues.at(1), lb, ub)};
+      solver->makeIntVar(committedValues.at(0), lb, ub),
+      solver->makeIntVar(committedValues.at(1), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarId outputId = engine->makeIntVar(0, 0, 2);
-  IntDiv& invariant = engine->makeInvariant<IntDiv>(*engine, outputId,
+  VarId outputId = solver->makeIntVar(0, 0, 2);
+  IntDiv& invariant = solver->makeInvariant<IntDiv>(*solver, outputId,
                                                     inputs.at(0), inputs.at(1));
-  engine->close();
+  solver->close();
 
-  EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
-            computeOutput(engine->currentTimestamp(), inputs));
+  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
+            computeOutput(solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
+    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputs.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      engine->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == engine->value(ts, inputs.at(i)));
+      solver->setValue(ts, inputs.at(i), valueDist(gen));
+    } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = engine->value(ts, outputId);
+    const Int notifiedOutput = solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
 
-    engine->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = engine->value(ts, inputs.at(i));
-    engine->commitIf(ts, outputId);
+    solver->commitIf(ts, inputs.at(i));
+    committedValues.at(i) = solver->value(ts, inputs.at(i));
+    solver->commitIf(ts, outputId);
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
   }
 }
 
@@ -264,21 +264,21 @@ TEST_F(IntDivTest, ZeroDenominator) {
     EXPECT_TRUE(yLb != 0 || yUb != 0);
 
     for (size_t method = 0; method < 2; ++method) {
-      engine->open();
-      const VarId x = engine->makeIntVar(xVal, xVal, xVal);
-      const VarId y = engine->makeIntVar(0, yLb, yUb);
-      const VarId outputId = engine->makeIntVar(0, outputLb, outputUb);
+      solver->open();
+      const VarId x = solver->makeIntVar(xVal, xVal, xVal);
+      const VarId y = solver->makeIntVar(0, yLb, yUb);
+      const VarId outputId = solver->makeIntVar(0, outputLb, outputUb);
       IntDiv& invariant =
-          engine->makeInvariant<IntDiv>(*engine, outputId, x, y);
-      engine->close();
+          solver->makeInvariant<IntDiv>(*solver, outputId, x, y);
+      solver->close();
 
-      EXPECT_EQ(expected, computeOutput(engine->currentTimestamp(), x, y));
+      EXPECT_EQ(expected, computeOutput(solver->currentTimestamp(), x, y));
       if (method == 0) {
-        invariant.recompute(engine->currentTimestamp());
+        invariant.recompute(solver->currentTimestamp());
       } else {
-        invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(1));
+        invariant.notifyInputChanged(solver->currentTimestamp(), LocalId(1));
       }
-      EXPECT_EQ(expected, engine->value(engine->currentTimestamp(), outputId));
+      EXPECT_EQ(expected, solver->value(solver->currentTimestamp(), outputId));
     }
   }
 }
@@ -290,8 +290,8 @@ class MockIntDiv : public IntDiv {
     registered = true;
     IntDiv::registerVars();
   }
-  explicit MockIntDiv(Engine& engine, VarId x, VarId y, VarId c)
-      : IntDiv(engine, x, y, c) {
+  explicit MockIntDiv(SolverBase& solver, VarId x, VarId y, VarId c)
+      : IntDiv(solver, x, y, c) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return IntDiv::recompute(timestamp);
     });
@@ -316,16 +316,16 @@ class MockIntDiv : public IntDiv {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(IntDivTest, EngineIntegration) {
+TEST_F(IntDivTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
-    const VarId x = engine->makeIntVar(-10, -100, 100);
-    const VarId y = engine->makeIntVar(10, -100, 100);
-    const VarId output = engine->makeIntVar(0, 0, 200);
+    const VarId x = solver->makeIntVar(-10, -100, 100);
+    const VarId y = solver->makeIntVar(10, -100, 100);
+    const VarId output = solver->makeIntVar(0, 0, 200);
     testNotifications<MockIntDiv>(
-        &engine->makeInvariant<MockIntDiv>(*engine, output, x, y),
+        &solver->makeInvariant<MockIntDiv>(*solver, output, x, y),
         {propMode, markingMode, 3, x, 0, output});
   }
 }

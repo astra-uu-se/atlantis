@@ -6,14 +6,14 @@
 
 #include "types.hpp"
 #include "invariant.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
 
 class CommittableInt;  // forward declare
-class Engine;
+class SolverBase;
 
 class GlobalCardinalityOpen : public Invariant {
  private:
@@ -29,7 +29,7 @@ class GlobalCardinalityOpen : public Invariant {
   void increaseCountAndUpdateOutput(Timestamp ts, Int value);
 
  public:
-  GlobalCardinalityOpen(Engine&, std::vector<VarId> outputs,
+  GlobalCardinalityOpen(SolverBase&, std::vector<VarId> outputs,
                         std::vector<VarId> inputs, std::vector<Int> cover);
 
   void registerVars() override;

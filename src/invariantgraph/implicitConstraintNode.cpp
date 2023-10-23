@@ -9,12 +9,12 @@ ImplicitConstraintNode::ImplicitConstraintNode(
     : InvariantNode(std::move(outputVarNodeIds)) {}
 
 void ImplicitConstraintNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   for (const auto& varNodeId : outputVarNodeIds()) {
     auto& varNode = invariantGraph.varNode(varNodeId);
     if (varNode.varId() == propagation::NULL_ID) {
       const auto& [lb, ub] = varNode.bounds();
-      varNode.setVarId(engine.makeIntVar(lb, lb, ub));
+      varNode.setVarId(solver.makeIntVar(lb, lb, ub));
     }
   }
 }
@@ -25,7 +25,7 @@ ImplicitConstraintNode::neighbourhood() noexcept {
 }
 
 void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
-                                          propagation::Engine& engine) {
+                                          propagation::SolverBase& solver) {
   if (_neighbourhood != nullptr) {
     return;
   }
@@ -38,7 +38,7 @@ void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
     varIds.emplace_back(node.varId(), node.domain());
   }
 
-  _neighbourhood = createNeighbourhood(engine, std::move(varIds));
+  _neighbourhood = createNeighbourhood(solver, std::move(varIds));
   assert(_neighbourhood);
 }
 

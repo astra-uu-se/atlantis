@@ -24,14 +24,14 @@ std::unique_ptr<IntMaxNode> IntMaxNode::fromModelConstraint(
 }
 
 void IntMaxNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+                                         propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void IntMaxNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+void IntMaxNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  engine.makeInvariant<propagation::BinaryMax>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::BinaryMax>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 

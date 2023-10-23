@@ -14,12 +14,12 @@ inline bool all_in_range(Int start, Int stop,
 /**
  * @param violationId id for the violationCount
  */
-GlobalCardinalityClosed::GlobalCardinalityClosed(Engine& engine,
+GlobalCardinalityClosed::GlobalCardinalityClosed(SolverBase& solver,
                                                  VarId violationId,
                                                  std::vector<VarId> outputs,
                                                  std::vector<VarId> inputs,
                                                  std::vector<Int> cover)
-    : Constraint(engine, violationId),
+    : Constraint(solver, violationId),
       _outputs(std::move(outputs)),
       _inputs(std::move(inputs)),
       _cover(std::move(cover)),
@@ -39,7 +39,7 @@ GlobalCardinalityClosed::GlobalCardinalityClosed(Engine& engine,
 void GlobalCardinalityClosed::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _inputs.size(); ++i) {
-    _engine.registerInvariantInput(_id, _inputs[i], LocalId(i));
+    _solver.registerInvariantInput(_id, _inputs[i], LocalId(i));
   }
   registerDefinedVariable(_violationId);
   for (const VarId output : _outputs) {
@@ -48,9 +48,9 @@ void GlobalCardinalityClosed::registerVars() {
 }
 
 void GlobalCardinalityClosed::updateBounds(bool widenOnly) {
-  _engine.updateBounds(_violationId, 0, _inputs.size(), widenOnly);
+  _solver.updateBounds(_violationId, 0, _inputs.size(), widenOnly);
   for (const VarId output : _outputs) {
-    _engine.updateBounds(output, 0, _inputs.size(), widenOnly);
+    _solver.updateBounds(output, 0, _inputs.size(), widenOnly);
   }
 }
 
@@ -73,7 +73,7 @@ void GlobalCardinalityClosed::recompute(Timestamp timestamp) {
 
   Int excess = 0;
   for (size_t i = 0; i < _inputs.size(); ++i) {
-    excess += increaseCount(timestamp, _engine.value(timestamp, _inputs[i]));
+    excess += increaseCount(timestamp, _solver.value(timestamp, _inputs[i]));
   }
 
   updateValue(timestamp, _violationId, excess);
@@ -87,7 +87,7 @@ void GlobalCardinalityClosed::recompute(Timestamp timestamp) {
 void GlobalCardinalityClosed::notifyInputChanged(Timestamp timestamp,
                                                  LocalId localId) {
   assert(localId < _committedValues.size());
-  const Int newValue = _engine.value(timestamp, _inputs[localId]);
+  const Int newValue = _solver.value(timestamp, _inputs[localId]);
   if (newValue == _committedValues[localId]) {
     return;
   }
@@ -116,7 +116,7 @@ void GlobalCardinalityClosed::commit(Timestamp timestamp) {
   Invariant::commit(timestamp);
 
   for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _engine.committedValue(_inputs[i]);
+    _committedValues[i] = _solver.committedValue(_inputs[i]);
   }
 
   for (CommittableInt& CommittableInt : _counts) {

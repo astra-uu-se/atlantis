@@ -128,50 +128,53 @@ std::unique_ptr<CountEqNode> CountEqNode::fromModelConstraint(
 }
 
 void CountEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                          propagation::Engine& engine) {
+                                          propagation::SolverBase& solver) {
   if (!_cIsParameter) {
     if (invariantGraph.varId(cVarNode()) == propagation::NULL_ID) {
       assert(!isReified());
       assert(shouldHold());
-      invariantGraph.varNode(cVarNode()).setVarId(engine.makeIntVar(0, 0, 0));
+      invariantGraph.varNode(cVarNode()).setVarId(solver.makeIntVar(0, 0, 0));
     }
   } else if (violationVarId(invariantGraph) == propagation::NULL_ID) {
-    _intermediate = engine.makeIntVar(0, 0, 0);
+    _intermediate = solver.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(
-          invariantGraph,
-          engine.makeIntView<propagation::EqualConst>(engine, _intermediate, _cParameter));
+      setViolationVarId(invariantGraph,
+                        solver.makeIntView<propagation::EqualConst>(
+                            solver, _intermediate, _cParameter));
     } else {
       assert(!isReified());
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<propagation::NotEqualConst>(engine, _intermediate,
-                                                          _cParameter));
+                        solver.makeIntView<propagation::NotEqualConst>(
+                            solver, _intermediate, _cParameter));
     }
   }
 }
 
-void CountEqNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
-  std::vector<propagation::VarId> engineInputs;
+void CountEqNode::registerNode(InvariantGraph& invariantGraph,
+                               propagation::SolverBase& solver) {
+  std::vector<propagation::VarId> solverInputs;
   const size_t inputSize =
       staticInputVarNodeIds().size() - static_cast<size_t>(!_yIsParameter);
 
-  engineInputs.resize(inputSize);
+  solverInputs.resize(inputSize);
 
   for (size_t i = 0; i < inputSize; ++i) {
-    engineInputs.at(i) = invariantGraph.varId(staticInputVarNodeIds().at(i));
+    solverInputs.at(i) = invariantGraph.varId(staticInputVarNodeIds().at(i));
   }
 
   if (!_yIsParameter) {
     assert(yVarNode() != NULL_NODE_ID);
     assert(invariantGraph.varId(yVarNode()) != propagation::NULL_ID);
     assert(_cIsParameter || (cVarNode() != NULL_NODE_ID));
-    assert(_cIsParameter || (invariantGraph.varId(cVarNode()) != propagation::NULL_ID));
+    assert(_cIsParameter ||
+           (invariantGraph.varId(cVarNode()) != propagation::NULL_ID));
     assert(_cIsParameter == (_intermediate != propagation::NULL_ID));
-    assert(_cIsParameter == (violationVarId(invariantGraph) != propagation::NULL_ID));
-    engine.makeInvariant<propagation::Count>(
-        engine,
+    assert(_cIsParameter ==
+           (violationVarId(invariantGraph) != propagation::NULL_ID));
+    solver.makeInvariant<propagation::Count>(
+        solver,
         _cIsParameter ? _intermediate : invariantGraph.varId(cVarNode()),
-        invariantGraph.varId(yVarNode()), engineInputs);
+        invariantGraph.varId(yVarNode()), solverInputs);
     return;
   }
   assert(_yIsParameter);
@@ -181,16 +184,16 @@ void CountEqNode::registerNode(InvariantGraph& invariantGraph, propagation::Engi
     assert(!isReified());
     assert(cVarNode() != NULL_NODE_ID);
     assert(invariantGraph.varId(cVarNode()) != propagation::NULL_ID);
-    engine.makeInvariant<propagation::CountConst>(engine, invariantGraph.varId(cVarNode()),
-                                     _yParameter, engineInputs);
+    solver.makeInvariant<propagation::CountConst>(
+        solver, invariantGraph.varId(cVarNode()), _yParameter, solverInputs);
     return;
   }
   assert(_cIsParameter);
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
   assert(_intermediate != propagation::NULL_ID);
   assert(cVarNode() == NULL_NODE_ID);
-  engine.makeInvariant<propagation::CountConst>(engine, _intermediate, _yParameter,
-                                   engineInputs);
+  solver.makeInvariant<propagation::CountConst>(solver, _intermediate,
+                                                _yParameter, solverInputs);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

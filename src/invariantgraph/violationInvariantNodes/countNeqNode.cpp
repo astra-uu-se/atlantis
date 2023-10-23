@@ -129,29 +129,29 @@ std::unique_ptr<CountNeqNode> CountNeqNode::fromModelConstraint(
 }
 
 void CountNeqNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                           propagation::Engine& engine) {
+                                           propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
-    _intermediate = engine.makeIntVar(0, 0, 0);
+    _intermediate = solver.makeIntVar(0, 0, 0);
     if (!_cIsParameter) {
-      registerViolation(invariantGraph, engine);
+      registerViolation(invariantGraph, solver);
     } else {
       if (shouldHold()) {
         setViolationVarId(invariantGraph,
-                          engine.makeIntView<propagation::NotEqualConst>(
-                              engine, _intermediate, _cParameter));
+                          solver.makeIntView<propagation::NotEqualConst>(
+                              solver, _intermediate, _cParameter));
       } else {
         assert(!isReified());
         setViolationVarId(
             invariantGraph,
-            engine.makeIntView<propagation::EqualConst>(engine, _intermediate, _cParameter));
+            solver.makeIntView<propagation::EqualConst>(solver, _intermediate, _cParameter));
       }
     }
   }
 }
 
 void CountNeqNode::registerNode(InvariantGraph& invariantGraph,
-                                propagation::Engine& engine) {
-  std::vector<propagation::VarId> engineInputs;
+                                propagation::SolverBase& solver) {
+  std::vector<propagation::VarId> solverInputs;
   assert(staticInputVarNodeIds().size() >=
          static_cast<size_t>(!_yIsParameter) +
              static_cast<size_t>(!_cIsParameter));
@@ -159,10 +159,10 @@ void CountNeqNode::registerNode(InvariantGraph& invariantGraph,
                             static_cast<size_t>(!_yIsParameter) -
                             static_cast<size_t>(!_cIsParameter);
 
-  engineInputs.resize(vectorSize);
+  solverInputs.resize(vectorSize);
 
   for (size_t i = 0; i < vectorSize; ++i) {
-    engineInputs.at(i) = invariantGraph.varId(staticInputVarNodeIds().at(i));
+    solverInputs.at(i) = invariantGraph.varId(staticInputVarNodeIds().at(i));
   }
 
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
@@ -171,23 +171,23 @@ void CountNeqNode::registerNode(InvariantGraph& invariantGraph,
   if (!_yIsParameter) {
     assert(yVarNode() != NULL_NODE_ID);
     assert(invariantGraph.varId(yVarNode()) != propagation::NULL_ID);
-    engine.makeInvariant<propagation::Count>(engine, _intermediate,
-                                invariantGraph.varId(yVarNode()), engineInputs);
+    solver.makeInvariant<propagation::Count>(solver, _intermediate,
+                                invariantGraph.varId(yVarNode()), solverInputs);
   } else {
     assert(yVarNode() == NULL_NODE_ID);
-    engine.makeInvariant<propagation::CountConst>(engine, _intermediate, _yParameter,
-                                     engineInputs);
+    solver.makeInvariant<propagation::CountConst>(solver, _intermediate, _yParameter,
+                                     solverInputs);
   }
   if (!_cIsParameter) {
     assert(cVarNode() != NULL_NODE_ID);
     assert(invariantGraph.varId(cVarNode()) != propagation::NULL_ID);
     if (shouldHold()) {
-      engine.makeInvariant<propagation::NotEqual>(engine, violationVarId(invariantGraph),
+      solver.makeInvariant<propagation::NotEqual>(solver, violationVarId(invariantGraph),
                                      invariantGraph.varId(cVarNode()),
                                      _intermediate);
     } else {
       // c >= count(x, y) -> count(x, y) <= c
-      engine.makeInvariant<propagation::Equal>(engine, violationVarId(invariantGraph),
+      solver.makeInvariant<propagation::Equal>(solver, violationVarId(invariantGraph),
                                   _intermediate,
                                   invariantGraph.varId(cVarNode()));
     }

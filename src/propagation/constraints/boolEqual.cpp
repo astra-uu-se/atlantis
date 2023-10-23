@@ -8,26 +8,26 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-BoolEqual::BoolEqual(Engine& engine, VarId violationId, VarId x, VarId y)
-    : Constraint(engine, violationId), _x(x), _y(y) {
+BoolEqual::BoolEqual(SolverBase& solver, VarId violationId, VarId x, VarId y)
+    : Constraint(solver, violationId), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void BoolEqual::registerVars() {
   assert(_id != NULL_ID);
-  _engine.registerInvariantInput(_id, _x, LocalId(0));
-  _engine.registerInvariantInput(_id, _y, LocalId(0));
+  _solver.registerInvariantInput(_id, _x, LocalId(0));
+  _solver.registerInvariantInput(_id, _y, LocalId(0));
   registerDefinedVariable(_violationId);
 }
 
 void BoolEqual::updateBounds(bool widenOnly) {
-  _engine.updateBounds(_violationId, 0, 1, widenOnly);
+  _solver.updateBounds(_violationId, 0, 1, widenOnly);
 }
 
 void BoolEqual::recompute(Timestamp ts) {
   updateValue(ts, _violationId,
-              static_cast<Int>((_engine.value(ts, _x) != 0) !=
-                               (_engine.value(ts, _y) != 0)));
+              static_cast<Int>((_solver.value(ts, _x) != 0) !=
+                               (_solver.value(ts, _y) != 0)));
 }
 
 void BoolEqual::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

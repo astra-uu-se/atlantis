@@ -24,12 +24,12 @@ std::unique_ptr<ArrayIntMinimumNode> ArrayIntMinimumNode::fromModelConstraint(
 }
 
 void ArrayIntMinimumNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void ArrayIntMinimumNode::registerNode(InvariantGraph& invariantGraph,
-                                       propagation::Engine& engine) {
+                                       propagation::SolverBase& solver) {
   std::vector<propagation::VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
@@ -37,8 +37,8 @@ void ArrayIntMinimumNode::registerNode(InvariantGraph& invariantGraph,
 
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
-  engine.makeInvariant<propagation::MinSparse>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()), variables);
+  solver.makeInvariant<propagation::MinSparse>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()), variables);
 }
 
 }  // namespace atlantis::invariantgraph

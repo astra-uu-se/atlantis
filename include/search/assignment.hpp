@@ -2,19 +2,19 @@
 
 #include <functional>
 
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "search/cost.hpp"
 
 namespace atlantis::search {
 
 class AssignmentModifier {
  private:
-  propagation::PropagationEngine& _engine;
+  propagation::Solver& _solver;
 
  public:
-  explicit AssignmentModifier(propagation::PropagationEngine& engine)
-      : _engine(engine) {
-    assert(engine.isMoving());
+  explicit AssignmentModifier(propagation::Solver& solver)
+      : _solver(solver) {
+    assert(solver.isMoving());
   }
 
   /**
@@ -24,19 +24,19 @@ class AssignmentModifier {
    * @param var The variable to assign.
    * @param value The value to assign to the variable.
    */
-  void set(propagation::VarId var, Int value) { _engine.setValue(var, value); }
+  void set(propagation::VarId var, Int value) { _solver.setValue(var, value); }
 };
 
 class Assignment {
  private:
-  propagation::PropagationEngine& _engine;
+  propagation::Solver& _solver;
   std::vector<propagation::VarId> _searchVariables{};
   propagation::VarId _violation;
   propagation::VarId _objective;
   propagation::ObjectiveDirection _objectiveDirection;
 
  public:
-  explicit Assignment(propagation::PropagationEngine& engine,
+  explicit Assignment(propagation::Solver& solver,
                       propagation::VarId violation,
                       propagation::VarId objective,
                       propagation::ObjectiveDirection objectiveDirection);
@@ -59,10 +59,10 @@ class Assignment {
   void assign(Callback modificationFunc) {
     move(modificationFunc);
 
-    _engine.beginCommit();
-    _engine.query(_violation);
-    _engine.query(_objective);
-    _engine.endCommit();
+    _solver.beginCommit();
+    _solver.query(_violation);
+    _solver.query(_objective);
+    _solver.endCommit();
   }
 
   /**
@@ -77,12 +77,12 @@ class Assignment {
   Cost probe(Callback modificationFunc) const {
     move(modificationFunc);
 
-    _engine.beginProbe();
-    _engine.query(_objective);
-    _engine.query(_violation);
-    _engine.endProbe();
+    _solver.beginProbe();
+    _solver.query(_objective);
+    _solver.query(_violation);
+    _solver.endProbe();
 
-    return {_engine.currentValue(_violation), _engine.currentValue(_objective),
+    return {_solver.currentValue(_violation), _solver.currentValue(_objective),
             _objectiveDirection};
   }
 
@@ -113,10 +113,10 @@ class Assignment {
  private:
   template <typename Callback>
   void move(Callback modificationFunc) const {
-    _engine.beginMove();
-    AssignmentModifier modifications(_engine);
+    _solver.beginMove();
+    AssignmentModifier modifications(_solver);
     modificationFunc(modifications);
-    _engine.endMove();
+    _solver.endMove();
   }
 };
 

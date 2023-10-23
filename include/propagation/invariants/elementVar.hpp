@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
@@ -29,7 +29,7 @@ class ElementVar : public Invariant {
   }
 
  public:
-  explicit ElementVar(Engine&, VarId output, VarId index,
+  explicit ElementVar(SolverBase&, VarId output, VarId index,
                       std::vector<VarId> varArray, Int offset = 1);
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;

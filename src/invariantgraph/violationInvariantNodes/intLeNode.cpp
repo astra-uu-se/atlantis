@@ -38,20 +38,20 @@ std::unique_ptr<IntLeNode> IntLeNode::fromModelConstraint(
 }
 
 void IntLeNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                        propagation::Engine& engine) {
-  registerViolation(invariantGraph, engine);
+                                        propagation::SolverBase& solver) {
+  registerViolation(invariantGraph, solver);
 }
 
-void IntLeNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+void IntLeNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<propagation::LessEqual>(engine, violationVarId(invariantGraph),
+    solver.makeConstraint<propagation::LessEqual>(solver, violationVarId(invariantGraph),
                                      invariantGraph.varId(a()),
                                      invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<propagation::LessThan>(engine, violationVarId(invariantGraph),
+    solver.makeConstraint<propagation::LessThan>(solver, violationVarId(invariantGraph),
                                     invariantGraph.varId(b()),
                                     invariantGraph.varId(a()));
   }

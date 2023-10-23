@@ -2,8 +2,8 @@
 
 namespace atlantis::propagation {
 
-Count::Count(Engine& engine, VarId output, VarId y, std::vector<VarId> varArray)
-    : Invariant(engine),
+Count::Count(SolverBase& solver, VarId output, VarId y, std::vector<VarId> varArray)
+    : Invariant(solver),
       _output(output),
       _y(y),
       _variables(std::move(varArray)),
@@ -16,14 +16,14 @@ Count::Count(Engine& engine, VarId output, VarId y, std::vector<VarId> varArray)
 void Count::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _variables.size(); ++i) {
-    _engine.registerInvariantInput(_id, _variables[i], i);
+    _solver.registerInvariantInput(_id, _variables[i], i);
   }
-  _engine.registerInvariantInput(_id, _y, _variables.size());
+  _solver.registerInvariantInput(_id, _y, _variables.size());
   registerDefinedVariable(_output);
 }
 
 void Count::updateBounds(bool widenOnly) {
-  _engine.updateBounds(_output, 0, _variables.size(), widenOnly);
+  _solver.updateBounds(_output, 0, _variables.size(), widenOnly);
 }
 
 void Count::close(Timestamp ts) {
@@ -31,12 +31,12 @@ void Count::close(Timestamp ts) {
   Int ub = std::numeric_limits<Int>::min();
 
   for (size_t i = 0; i < _variables.size(); ++i) {
-    lb = std::min(lb, _engine.lowerBound(_variables[i]));
-    ub = std::max(ub, _engine.upperBound(_variables[i]));
+    lb = std::min(lb, _solver.lowerBound(_variables[i]));
+    ub = std::max(ub, _solver.upperBound(_variables[i]));
   }
   assert(ub >= lb);
-  lb = std::max(lb, _engine.lowerBound(_y));
-  ub = std::max(ub, _engine.lowerBound(_y));
+  lb = std::max(lb, _solver.lowerBound(_y));
+  ub = std::max(ub, _solver.lowerBound(_y));
 
   _counts.resize(static_cast<unsigned long>(ub - lb + 1),
                  CommittableInt(ts, 0));
@@ -51,24 +51,24 @@ void Count::recompute(Timestamp ts) {
   updateValue(ts, _output, 0);
 
   for (size_t i = 0; i < _variables.size(); ++i) {
-    increaseCount(ts, _engine.value(ts, _variables[i]));
+    increaseCount(ts, _solver.value(ts, _variables[i]));
   }
-  updateValue(ts, _output, count(ts, _engine.value(ts, _y)));
+  updateValue(ts, _output, count(ts, _solver.value(ts, _y)));
 }
 
 void Count::notifyInputChanged(Timestamp ts, LocalId id) {
   if (id == _committedValues.size()) {
-    updateValue(ts, _output, count(ts, _engine.value(ts, _y)));
+    updateValue(ts, _output, count(ts, _solver.value(ts, _y)));
     return;
   }
   assert(id < _committedValues.size());
-  const Int newValue = _engine.value(ts, _variables[id]);
+  const Int newValue = _solver.value(ts, _variables[id]);
   if (newValue == _committedValues[id]) {
     return;
   }
   decreaseCount(ts, _committedValues[id]);
   increaseCount(ts, newValue);
-  updateValue(ts, _output, count(ts, _engine.value(ts, _y)));
+  updateValue(ts, _output, count(ts, _solver.value(ts, _y)));
 }
 
 VarId Count::nextInput(Timestamp ts) {
@@ -90,7 +90,7 @@ void Count::commit(Timestamp ts) {
   Invariant::commit(ts);
 
   for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _engine.committedValue(_variables[i]);
+    _committedValues[i] = _solver.committedValue(_variables[i]);
   }
 
   for (CommittableInt& committableInt : _counts) {

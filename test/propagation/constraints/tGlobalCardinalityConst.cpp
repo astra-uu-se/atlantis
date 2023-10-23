@@ -9,7 +9,7 @@
 #include "../invariantTestHelper.hpp"
 #include "types.hpp"
 #include "propagation/constraints/globalCardinalityConst.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -23,7 +23,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
       const std::unordered_map<Int, std::pair<Int, Int>>& coverSet) {
     std::vector<Int> values(variables.size(), 0);
     for (size_t i = 0; i < variables.size(); ++i) {
-      values.at(i) = engine->value(ts, variables.at(i));
+      values.at(i) = solver->value(ts, variables.at(i));
     }
     return computeViolation(values, coverSet);
   }
@@ -64,33 +64,33 @@ class GlobalCardinalityConstTest : public InvariantTest {
     std::vector<std::pair<Int, Int>> lowUpVector{
         {0, 0}, {0, 4}, {3, 3}, {4, 5}};
 
-    engine->open();
-    std::vector<VarId> inputs{engine->makeIntVar(0, 0, 2),
-                              engine->makeIntVar(0, 0, 2),
-                              engine->makeIntVar(0, 0, 2)};
+    solver->open();
+    std::vector<VarId> inputs{solver->makeIntVar(0, 0, 2),
+                              solver->makeIntVar(0, 0, 2),
+                              solver->makeIntVar(0, 0, 2)};
 
     for (const auto& [low, up] : lowUpVector) {
-      if (!engine->isOpen()) {
-        engine->open();
+      if (!solver->isOpen()) {
+        solver->open();
       }
-      const VarId violationId = engine->makeIntVar(0, 0, 2);
+      const VarId violationId = solver->makeIntVar(0, 0, 2);
       GlobalCardinalityConst<IsClosed>& invariant =
-          engine->makeConstraint<GlobalCardinalityConst<IsClosed>>(
-              *engine, violationId, std::vector<VarId>(inputs),
+          solver->makeConstraint<GlobalCardinalityConst<IsClosed>>(
+              *solver, violationId, std::vector<VarId>(inputs),
               std::vector<Int>{1}, std::vector<Int>{low}, std::vector<Int>{up});
-      engine->close();
-      EXPECT_EQ(engine->lowerBound(violationId), 0);
+      solver->close();
+      EXPECT_EQ(solver->lowerBound(violationId), 0);
 
       for (Int aVal = lb; aVal <= ub; ++aVal) {
-        engine->setValue(engine->currentTimestamp(), inputs.at(0), aVal);
+        solver->setValue(solver->currentTimestamp(), inputs.at(0), aVal);
         for (Int bVal = lb; bVal <= ub; ++bVal) {
-          engine->setValue(engine->currentTimestamp(), inputs.at(1), bVal);
+          solver->setValue(solver->currentTimestamp(), inputs.at(1), bVal);
           for (Int cVal = lb; cVal <= ub; ++cVal) {
-            engine->setValue(engine->currentTimestamp(), inputs.at(2), cVal);
-            invariant.compute(engine->currentTimestamp());
+            solver->setValue(solver->currentTimestamp(), inputs.at(2), cVal);
+            invariant.compute(solver->currentTimestamp());
             const Int viol =
-                engine->value(engine->currentTimestamp(), violationId);
-            EXPECT_TRUE(viol <= engine->upperBound(violationId));
+                solver->value(solver->currentTimestamp(), violationId);
+            EXPECT_TRUE(viol <= solver->upperBound(violationId));
           }
         }
       }
@@ -120,30 +120,30 @@ class GlobalCardinalityConstTest : public InvariantTest {
         coverSet.emplace(cover.at(j), std::pair<Int, Int>(low.at(j), up.at(j)));
       }
 
-      engine->open();
-      const VarId a = engine->makeIntVar(lb, lb, ub);
-      const VarId b = engine->makeIntVar(lb, lb, ub);
-      const VarId c = engine->makeIntVar(lb, lb, ub);
-      const VarId violationId = engine->makeIntVar(0, 0, 2);
+      solver->open();
+      const VarId a = solver->makeIntVar(lb, lb, ub);
+      const VarId b = solver->makeIntVar(lb, lb, ub);
+      const VarId c = solver->makeIntVar(lb, lb, ub);
+      const VarId violationId = solver->makeIntVar(0, 0, 2);
       GlobalCardinalityConst<IsClosed>& invariant =
-          engine->makeConstraint<GlobalCardinalityConst<IsClosed>>(
-              *engine, violationId, std::vector<VarId>{a, b, c}, cover, low,
+          solver->makeConstraint<GlobalCardinalityConst<IsClosed>>(
+              *solver, violationId, std::vector<VarId>{a, b, c}, cover, low,
               up);
-      engine->close();
+      solver->close();
 
       const std::vector<VarId> inputs{a, b, c};
 
       for (Int aVal = lb; aVal <= ub; ++aVal) {
         for (Int bVal = lb; bVal <= ub; ++bVal) {
           for (Int cVal = lb; cVal <= ub; ++cVal) {
-            engine->setValue(engine->currentTimestamp(), a, aVal);
-            engine->setValue(engine->currentTimestamp(), b, bVal);
-            engine->setValue(engine->currentTimestamp(), c, cVal);
+            solver->setValue(solver->currentTimestamp(), a, aVal);
+            solver->setValue(solver->currentTimestamp(), b, bVal);
+            solver->setValue(solver->currentTimestamp(), c, cVal);
             const Int expectedViolation =
-                computeViolation(engine->currentTimestamp(), inputs, coverSet);
-            invariant.recompute(engine->currentTimestamp());
+                computeViolation(solver->currentTimestamp(), inputs, coverSet);
+            invariant.recompute(solver->currentTimestamp());
             const Int actualViolation =
-                engine->value(engine->currentTimestamp(), violationId);
+                solver->value(solver->currentTimestamp(), violationId);
             if (expectedViolation != actualViolation) {
               EXPECT_EQ(expectedViolation, actualViolation);
             }
@@ -175,26 +175,26 @@ class GlobalCardinalityConstTest : public InvariantTest {
         coverSet.emplace(cover.at(j), std::pair<Int, Int>(low.at(j), up.at(j)));
       }
 
-      engine->open();
-      std::vector<VarId> inputs{engine->makeIntVar(lb, lb, ub),
-                                engine->makeIntVar(lb, lb, ub),
-                                engine->makeIntVar(lb, lb, ub)};
-      const VarId violationId = engine->makeIntVar(0, 0, 2);
+      solver->open();
+      std::vector<VarId> inputs{solver->makeIntVar(lb, lb, ub),
+                                solver->makeIntVar(lb, lb, ub),
+                                solver->makeIntVar(lb, lb, ub)};
+      const VarId violationId = solver->makeIntVar(0, 0, 2);
       GlobalCardinalityConst<IsClosed>& invariant =
-          engine->makeConstraint<GlobalCardinalityConst<IsClosed>>(
-              *engine, violationId, std::vector<VarId>(inputs), cover, low, up);
-      engine->close();
+          solver->makeConstraint<GlobalCardinalityConst<IsClosed>>(
+              *solver, violationId, std::vector<VarId>(inputs), cover, low, up);
+      solver->close();
 
-      Timestamp ts = engine->currentTimestamp();
+      Timestamp ts = solver->currentTimestamp();
 
       for (Int val = lb; val <= ub; ++val) {
         ++ts;
         for (size_t j = 0; j < inputs.size(); ++j) {
-          engine->setValue(ts, inputs[j], val);
+          solver->setValue(ts, inputs[j], val);
           const Int expectedViolation = computeViolation(ts, inputs, coverSet);
 
           invariant.notifyInputChanged(ts, LocalId(j));
-          EXPECT_EQ(expectedViolation, engine->value(ts, violationId));
+          EXPECT_EQ(expectedViolation, solver->value(ts, violationId));
         }
       }
     }
@@ -205,7 +205,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
     const Int ub = numInputs - 1;
     EXPECT_TRUE(lb <= ub);
 
-    engine->open();
+    solver->open();
     std::vector<size_t> indices;
     std::vector<Int> committedValues;
     std::vector<VarId> inputs;
@@ -213,7 +213,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
     std::vector<Int> low;
     std::vector<Int> up;
     for (size_t i = 0; i < numInputs; ++i) {
-      inputs.emplace_back(engine->makeIntVar(i, lb, ub));
+      inputs.emplace_back(solver->makeIntVar(i, lb, ub));
       cover.emplace_back(i);
       low.emplace_back(1);
       up.emplace_back(2);
@@ -229,14 +229,14 @@ class GlobalCardinalityConstTest : public InvariantTest {
 
     std::shuffle(inputs.begin(), inputs.end(), rng);
 
-    const VarId violationId = engine->makeIntVar(0, 0, 2);
+    const VarId violationId = solver->makeIntVar(0, 0, 2);
     GlobalCardinalityConst<IsClosed>& invariant =
-        engine->makeConstraint<GlobalCardinalityConst<IsClosed>>(
-            *engine, violationId, std::vector<VarId>(inputs), cover, low, up);
-    engine->close();
+        solver->makeConstraint<GlobalCardinalityConst<IsClosed>>(
+            *solver, violationId, std::vector<VarId>(inputs), cover, low, up);
+    solver->close();
 
-    for (Timestamp ts = engine->currentTimestamp() + 1;
-         ts < engine->currentTimestamp() + 4; ++ts) {
+    for (Timestamp ts = solver->currentTimestamp() + 1;
+         ts < solver->currentTimestamp() + 4; ++ts) {
       std::vector<bool> notified(maxVarId + 1, false);
       for (size_t i = 0; i < numInputs; ++i) {
         const VarId varId = invariant.nextInput(ts);
@@ -258,7 +258,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
     const Int ub = 10;
     EXPECT_TRUE(lb <= ub);
 
-    engine->open();
+    solver->open();
     const size_t numInputs = 100;
     std::uniform_int_distribution<Int> valueDist(lb, ub);
     std::vector<VarId> inputs;
@@ -266,7 +266,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
     std::vector<Int> low;
     std::vector<Int> up;
     for (size_t i = 0; i < numInputs; ++i) {
-      inputs.emplace_back(engine->makeIntVar(valueDist(gen), lb, ub));
+      inputs.emplace_back(solver->makeIntVar(valueDist(gen), lb, ub));
       cover.emplace_back(i);
       low.emplace_back(1);
       up.emplace_back(2);
@@ -277,22 +277,22 @@ class GlobalCardinalityConstTest : public InvariantTest {
       coverSet.emplace(cover.at(j), std::pair<Int, Int>(low.at(j), up.at(j)));
     }
 
-    const VarId violationId = engine->makeIntVar(0, 0, numInputs - 1);
+    const VarId violationId = solver->makeIntVar(0, 0, numInputs - 1);
     GlobalCardinalityConst<IsClosed>& invariant =
-        engine->makeConstraint<GlobalCardinalityConst<IsClosed>>(
-            *engine, violationId, std::vector<VarId>(inputs), cover, low, up);
-    engine->close();
+        solver->makeConstraint<GlobalCardinalityConst<IsClosed>>(
+            *solver, violationId, std::vector<VarId>(inputs), cover, low, up);
+    solver->close();
 
-    for (Timestamp ts = engine->currentTimestamp() + 1;
-         ts < engine->currentTimestamp() + 4; ++ts) {
+    for (Timestamp ts = solver->currentTimestamp() + 1;
+         ts < solver->currentTimestamp() + 4; ++ts) {
       for (const VarId varId : inputs) {
         EXPECT_EQ(invariant.nextInput(ts), varId);
-        const Int oldVal = engine->value(ts, varId);
+        const Int oldVal = solver->value(ts, varId);
         do {
-          engine->setValue(ts, varId, valueDist(gen));
-        } while (engine->value(ts, varId) == oldVal);
+          solver->setValue(ts, varId, valueDist(gen));
+        } while (solver->value(ts, varId) == oldVal);
         invariant.notifyCurrentInputChanged(ts);
-        EXPECT_EQ(engine->value(ts, violationId),
+        EXPECT_EQ(solver->value(ts, violationId),
                   computeViolation(ts, inputs, coverSet));
       }
     }
@@ -303,7 +303,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
     const Int ub = 10;
     EXPECT_TRUE(lb <= ub);
 
-    engine->open();
+    solver->open();
     const size_t numInputs = 1000;
     std::uniform_int_distribution<Int> valueDist(lb, ub);
     std::uniform_int_distribution<size_t> varDist(size_t(0), numInputs);
@@ -316,7 +316,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
     for (size_t i = 0; i < numInputs; ++i) {
       indices.emplace_back(i);
       committedValues.emplace_back(valueDist(gen));
-      inputs.emplace_back(engine->makeIntVar(committedValues.back(), lb, ub));
+      inputs.emplace_back(solver->makeIntVar(committedValues.back(), lb, ub));
       const Int b1 = varDist(gen);
       const Int b2 = varDist(gen);
       cover.emplace_back(i);
@@ -329,43 +329,43 @@ class GlobalCardinalityConstTest : public InvariantTest {
     }
     std::shuffle(indices.begin(), indices.end(), rng);
 
-    const VarId violationId = engine->makeIntVar(0, 0, 2);
+    const VarId violationId = solver->makeIntVar(0, 0, 2);
     GlobalCardinalityConst<IsClosed>& invariant =
-        engine->makeConstraint<GlobalCardinalityConst<IsClosed>>(
-            *engine, violationId, std::vector<VarId>(inputs), cover, low, up);
-    engine->close();
+        solver->makeConstraint<GlobalCardinalityConst<IsClosed>>(
+            *solver, violationId, std::vector<VarId>(inputs), cover, low, up);
+    solver->close();
 
-    EXPECT_EQ(engine->value(engine->currentTimestamp(), violationId),
-              computeViolation(engine->currentTimestamp(), inputs, coverSet));
+    EXPECT_EQ(solver->value(solver->currentTimestamp(), violationId),
+              computeViolation(solver->currentTimestamp(), inputs, coverSet));
 
     for (const size_t i : indices) {
-      Timestamp ts = engine->currentTimestamp() + Timestamp(i);
+      Timestamp ts = solver->currentTimestamp() + Timestamp(i);
       for (size_t j = 0; j < numInputs; ++j) {
         // Check that we do not accidentally commit:
-        ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+        ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
       }
 
       const Int oldVal = committedValues.at(i);
       do {
-        engine->setValue(ts, inputs.at(i), valueDist(gen));
-      } while (oldVal == engine->value(ts, inputs.at(i)));
+        solver->setValue(ts, inputs.at(i), valueDist(gen));
+      } while (oldVal == solver->value(ts, inputs.at(i)));
 
       // notify changes
       invariant.notifyInputChanged(ts, LocalId(i));
 
       // incremental value
-      const Int notifiedViolation = engine->value(ts, violationId);
+      const Int notifiedViolation = solver->value(ts, violationId);
       invariant.recompute(ts);
 
-      ASSERT_EQ(notifiedViolation, engine->value(ts, violationId));
+      ASSERT_EQ(notifiedViolation, solver->value(ts, violationId));
 
-      engine->commitIf(ts, inputs.at(i));
-      committedValues.at(i) = engine->value(ts, inputs.at(i));
-      engine->commitIf(ts, violationId);
+      solver->commitIf(ts, inputs.at(i));
+      committedValues.at(i) = solver->value(ts, inputs.at(i));
+      solver->commitIf(ts, violationId);
 
       invariant.commit(ts);
       invariant.recompute(ts + 1);
-      ASSERT_EQ(notifiedViolation, engine->value(ts + 1, violationId));
+      ASSERT_EQ(notifiedViolation, solver->value(ts + 1, violationId));
     }
   }
 
@@ -382,11 +382,11 @@ class GlobalCardinalityConstTest : public InvariantTest {
     std::vector<Int> coverCounts(valUb - valLb + 1, 0);
     std::vector<VarId> variables;
 
-    engine->open();
+    solver->open();
     for (size_t i = 0; i < numVariables; i++) {
       const Int val = valDistribution(valGen);
       coverCounts[val - valLb] += 1;
-      variables.emplace_back(engine->makeIntVar(valLb, valLb, valUb));
+      variables.emplace_back(solver->makeIntVar(valLb, valLb, valUb));
     }
 
     std::vector<Int> cover;
@@ -400,14 +400,14 @@ class GlobalCardinalityConstTest : public InvariantTest {
       }
     }
 
-    VarId viol = engine->makeIntVar(0, 0, static_cast<Int>(numVariables));
+    VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numVariables));
 
-    engine->makeInvariant<GlobalCardinalityConst<IsClosed>>(
-        *engine, viol, variables, cover, lowerBound, upperBound);
+    solver->makeInvariant<GlobalCardinalityConst<IsClosed>>(
+        *solver, viol, variables, cover, lowerBound, upperBound);
 
-    engine->close();
+    solver->close();
 
-    // There are currently a bug in PropagationEngine that is resolved in
+    // There are currently a bug in Solver that is resolved in
     // another branch.
     for (auto [propMode, markMode] :
          std::vector<std::pair<PropagationMode, OutputToInputMarkingMode>>{
@@ -421,20 +421,20 @@ class GlobalCardinalityConstTest : public InvariantTest {
              // OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC}
          }) {
       for (size_t iter = 0; iter < 3; ++iter) {
-        engine->open();
-        engine->setPropagationMode(propMode);
-        engine->setOutputToInputMarkingMode(markMode);
-        engine->close();
+        solver->open();
+        solver->setPropagationMode(propMode);
+        solver->setOutputToInputMarkingMode(markMode);
+        solver->close();
 
-        engine->beginMove();
+        solver->beginMove();
         for (const VarId x : variables) {
-          engine->setValue(x, valDistribution(valGen));
+          solver->setValue(x, valDistribution(valGen));
         }
-        engine->endMove();
+        solver->endMove();
 
-        engine->beginProbe();
-        engine->query(viol);
-        engine->endProbe();
+        solver->beginProbe();
+        solver->query(viol);
+        solver->endProbe();
 
         std::unordered_map<Int, std::pair<Int, Int>> bounds;
         std::unordered_map<Int, Int> actualCounts;
@@ -446,7 +446,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
         }
 
         for (const VarId varId : variables) {
-          Int val = engine->currentValue(varId);
+          Int val = solver->currentValue(varId);
           if (actualCounts.count(val) <= 0) {
             ++outsideCount;
           } else {
@@ -469,7 +469,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
           excess += std::max(Int(0), actual - u);
         }
 
-        Int actualViolation = engine->currentValue(viol);
+        Int actualViolation = solver->currentValue(viol);
         Int expectedViolation = std::max(shortage, excess);
         if (actualViolation != expectedViolation) {
           RC_ASSERT(actualViolation == expectedViolation);
@@ -530,11 +530,11 @@ class MockGlobalCardinalityConst : public GlobalCardinalityConst<IsClosed> {
     registered = true;
     GlobalCardinalityConst<IsClosed>::registerVars();
   }
-  explicit MockGlobalCardinalityConst(Engine& engine, VarId violationId,
+  explicit MockGlobalCardinalityConst(SolverBase& solver, VarId violationId,
                                       const std::vector<VarId>& variables,
                                       const std::vector<Int>& cover,
                                       const std::vector<Int>& counts)
-      : GlobalCardinalityConst<IsClosed>(engine, violationId, variables, cover,
+      : GlobalCardinalityConst<IsClosed>(solver, violationId, variables, cover,
                                          counts) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return GlobalCardinalityConst<IsClosed>::recompute(timestamp);
@@ -562,42 +562,42 @@ class MockGlobalCardinalityConst : public GlobalCardinalityConst<IsClosed> {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(GlobalCardinalityTestClosed, EngineIntegration) {
+TEST_F(GlobalCardinalityTestClosed, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
     std::vector<VarId> args;
     size_t numArgs = 10;
     for (size_t value = 0; value < numArgs; ++value) {
-      args.push_back(engine->makeIntVar(0, -100, 100));
+      args.push_back(solver->makeIntVar(0, -100, 100));
     }
 
-    VarId viol = engine->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
 
     testNotifications<MockGlobalCardinalityConst<false>>(
-        &engine->makeInvariant<MockGlobalCardinalityConst<false>>(
-            *engine, viol, std::vector<VarId>{args}, std::vector<Int>{1, 2, 3},
+        &solver->makeInvariant<MockGlobalCardinalityConst<false>>(
+            *solver, viol, std::vector<VarId>{args}, std::vector<Int>{1, 2, 3},
             std::vector<Int>{1, 2, 3}),
         {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
   }
 }
-TEST_F(GlobalCardinalityTestOpen, EngineIntegration) {
+TEST_F(GlobalCardinalityTestOpen, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
     std::vector<VarId> args;
     size_t numArgs = 10;
     for (size_t value = 0; value < numArgs; ++value) {
-      args.push_back(engine->makeIntVar(0, -100, 100));
+      args.push_back(solver->makeIntVar(0, -100, 100));
     }
 
-    VarId viol = engine->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
 
     testNotifications<MockGlobalCardinalityConst<true>>(
-        &engine->makeInvariant<MockGlobalCardinalityConst<true>>(
-            *engine, viol, std::vector<VarId>{args}, std::vector<Int>{1, 2, 3},
+        &solver->makeInvariant<MockGlobalCardinalityConst<true>>(
+            *solver, viol, std::vector<VarId>{args}, std::vector<Int>{1, 2, 3},
             std::vector<Int>{1, 2, 3}),
         {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
   }

@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
@@ -13,8 +13,8 @@ class EqualConst : public IntView {
   const Int _val;
 
  public:
-  explicit EqualConst(Engine& engine, VarId parentId, Int val)
-      : IntView(engine, parentId), _val(val) {}
+  explicit EqualConst(SolverBase& solver, VarId parentId, Int val)
+      : IntView(solver, parentId), _val(val) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

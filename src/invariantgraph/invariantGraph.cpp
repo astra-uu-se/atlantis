@@ -485,7 +485,7 @@ void InvariantGraph::breakCycles() {
   }
 }
 
-void InvariantGraph::createVariables(propagation::Engine& engine) {
+void InvariantGraph::createVariables(propagation::SolverBase& solver) {
   std::unordered_set<InvariantNodeId, InvariantNodeIdHash> visitedInvNodes;
   std::unordered_set<VarNodeId, VarNodeIdHash> searchVariables;
 
@@ -517,7 +517,7 @@ void InvariantGraph::createVariables(propagation::Engine& engine) {
                          return varId(outputVarNodeId) == propagation::NULL_ID;
                        }));
 
-    invariantNode(invNodeId).registerOutputVariables(*this, engine);
+    invariantNode(invNodeId).registerOutputVariables(*this, solver);
     for (const auto outputVarNodeId :
          invariantNode(invNodeId).outputVarNodeIds()) {
       assert(outputVarNodeId != NULL_NODE_ID);
@@ -542,7 +542,7 @@ void InvariantGraph::createVariables(propagation::Engine& engine) {
         !varNode(varNodeId).inputTo().empty()) {
       auto constant = varNode(varNodeId).constantValue();
       assert(constant.has_value());
-      propagation::VarId varId = engine.makeIntVar(
+      propagation::VarId varId = solver.makeIntVar(
           constant.value(), constant.value(), constant.value());
       varNode(varNodeId).setVarId(varId);
     }
@@ -554,7 +554,7 @@ void InvariantGraph::createVariables(propagation::Engine& engine) {
       assert(varNode(varNodeId).constantValue().has_value() &&
              varNode(varNodeId).constantValue().value() == constant);
       propagation::VarId varId =
-          engine.makeIntVar(constant, constant, constant);
+          solver.makeIntVar(constant, constant, constant);
       varNode(varNodeId).setVarId(varId);
     }
   }
@@ -565,30 +565,30 @@ void InvariantGraph::createVariables(propagation::Engine& engine) {
                      }));
 }
 
-void InvariantGraph::createImplicitConstraints(propagation::Engine& engine) {
+void InvariantGraph::createImplicitConstraints(propagation::SolverBase& solver) {
   for (auto& implicitConstraintNode : _implicitConstraintNodes) {
     assert(std::all_of(implicitConstraintNode->outputVarNodeIds().begin(),
                        implicitConstraintNode->outputVarNodeIds().end(),
                        [&](VarNodeId varNodeId) {
                          return varId(varNodeId) != propagation::NULL_ID;
                        }));
-    implicitConstraintNode->registerNode(*this, engine);
+    implicitConstraintNode->registerNode(*this, solver);
   }
 }
 
-void InvariantGraph::createInvariants(propagation::Engine& engine) {
+void InvariantGraph::createInvariants(propagation::SolverBase& solver) {
   for (auto& invariantNode : _invariantNodes) {
     assert(std::all_of(invariantNode->outputVarNodeIds().begin(),
                        invariantNode->outputVarNodeIds().end(),
                        [&](VarNodeId varNodeId) {
                          return varId(varNodeId) != propagation::NULL_ID;
                        }));
-    invariantNode->registerNode(*this, engine);
+    invariantNode->registerNode(*this, solver);
   }
 }
 
 propagation::VarId InvariantGraph::createViolations(
-    propagation::Engine& engine) {
+    propagation::SolverBase& solver) {
   std::vector<propagation::VarId> violations;
   for (const auto& definingNode : _invariantNodes) {
     if (!definingNode->isReified() &&
@@ -606,7 +606,7 @@ propagation::VarId InvariantGraph::createViolations(
   for (VarNode& var : _varNodes) {
     if (!searchVariables.contains(var.varNodeId()) && !var.inputTo().empty()) {
       const propagation::VarId violationId =
-          var.postDomainConstraint(engine, var.constrainedDomain(engine));
+          var.postDomainConstraint(solver, var.constrainedDomain(solver));
       if (violationId != propagation::NULL_ID) {
         violations.emplace_back(violationId);
       }
@@ -618,26 +618,26 @@ propagation::VarId InvariantGraph::createViolations(
   if (violations.size() == 1) {
     return violations.front();
   }
-  const propagation::VarId totalViolation = engine.makeIntVar(0, 0, 0);
-  engine.makeInvariant<propagation::Linear>(engine, totalViolation, violations);
+  const propagation::VarId totalViolation = solver.makeIntVar(0, 0, 0);
+  solver.makeInvariant<propagation::Linear>(solver, totalViolation, violations);
   return totalViolation;
 }
 
-InvariantGraphApplyResult InvariantGraph::apply(propagation::Engine& engine) {
+InvariantGraphApplyResult InvariantGraph::apply(propagation::SolverBase& solver) {
   populateRootNode();
   splitMultiDefinedVariables();
   breakCycles();
-  engine.open();
-  createVariables(engine);
-  createImplicitConstraints(engine);
-  createInvariants(engine);
-  engine.computeBounds();
-  const propagation::VarId totalViolation = createViolations(engine);
+  solver.open();
+  createVariables(solver);
+  createImplicitConstraints(solver);
+  createInvariants(solver);
+  solver.computeBounds();
+  const propagation::VarId totalViolation = createViolations(solver);
   // If the model has no variable to optimise, use a dummy variable.
   propagation::VarId objectiveVarId = _objectiveVarNodeId != NULL_NODE_ID
                                           ? varId(_objectiveVarNodeId)
-                                          : engine.makeIntVar(0, 0, 0);
-  engine.close();
+                                          : solver.makeIntVar(0, 0, 0);
+  solver.close();
 
   InvariantGraphApplyResult::VariableIdentifiers variableIdentifiers;
   variableIdentifiers.reserve(_varNodes.size() +

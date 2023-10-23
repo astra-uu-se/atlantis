@@ -2,7 +2,7 @@
 #include <cmath>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
@@ -16,7 +16,7 @@ class Plus : public Invariant {
   const VarId _output, _x, _y;
 
  public:
-  explicit Plus(Engine&, VarId output, VarId x, VarId y);
+  explicit Plus(SolverBase&, VarId output, VarId x, VarId y);
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
   void recompute(Timestamp) override;

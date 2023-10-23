@@ -58,18 +58,18 @@ std::unique_ptr<BoolAllEqualNode> BoolAllEqualNode::fromModelConstraint(
 }
 
 void BoolAllEqualNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                               propagation::Engine& engine) {
+                                               propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().empty()) {
     return;
   }
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (shouldHold()) {
-      registerViolation(invariantGraph, engine);
+      registerViolation(invariantGraph, solver);
     } else {
       assert(!isReified());
-      _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
-                                            engine, _intermediate, 0));
+      _intermediate = solver.makeIntVar(0, 0, 0);
+      setViolationVarId(invariantGraph, solver.makeIntView<propagation::NotEqualConst>(
+                                            solver, _intermediate, 0));
     }
   }
 }
@@ -89,20 +89,20 @@ bool BoolAllEqualNode::prune(InvariantGraph& invariantGraph) {
 }
 
 void BoolAllEqualNode::registerNode(InvariantGraph& invariantGraph,
-                                    propagation::Engine& engine) {
+                                    propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().empty()) {
     return;
   }
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  std::vector<propagation::VarId> engineVariables;
+  std::vector<propagation::VarId> solverVariables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(engineVariables),
+                 std::back_inserter(solverVariables),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  engine.makeConstraint<propagation::BoolAllEqual>(
-      engine, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
-      engineVariables);
+  solver.makeConstraint<propagation::BoolAllEqual>(
+      solver, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
+      solverVariables);
 }
 
 }  // namespace invariantgraph

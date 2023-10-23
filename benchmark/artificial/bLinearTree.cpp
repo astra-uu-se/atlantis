@@ -12,7 +12,7 @@
 #include "propagation/constraints/allDifferent.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/linear.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::benchmark {
 
@@ -25,7 +25,7 @@ class LinearTree : public ::benchmark::Fixture {
 
   void createTree() {
     std::stack<TreeNode> treeNodes;
-    output = engine->makeIntVar(0, lb, ub);
+    output = solver->makeIntVar(0, lb, ub);
     treeNodes.push({1, output});
     vars.push_back(output);
 
@@ -36,7 +36,7 @@ class LinearTree : public ::benchmark::Fixture {
     while (!treeNodes.empty()) {
       std::vector<propagation::VarId> linearInputs(linearArgumentCount);
       for (size_t i = 0; i < linearArgumentCount; ++i) {
-        linearInputs[i] = engine->makeIntVar(0, lb, ub);
+        linearInputs[i] = solver->makeIntVar(0, lb, ub);
         vars.push_back(linearInputs[i]);
       }
       TreeNode cur = treeNodes.top();
@@ -54,7 +54,7 @@ class LinearTree : public ::benchmark::Fixture {
           decisionVars.push_back(var);
         }
       }
-      engine->makeInvariant<propagation::Linear>(*engine, cur.id, linearInputs);
+      solver->makeInvariant<propagation::Linear>(*solver, cur.id, linearInputs);
       linearInputs.clear();
     }
 #ifndef NDEBUG
@@ -65,7 +65,7 @@ class LinearTree : public ::benchmark::Fixture {
   }
 
  public:
-  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::unique_ptr<propagation::Solver> solver;
   propagation::VarId output;
 
   std::vector<propagation::VarId> vars;
@@ -90,22 +90,22 @@ class LinearTree : public ::benchmark::Fixture {
   void commitRnd(::benchmark::State& st, size_t numMoves);
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<propagation::PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
 
     linearArgumentCount = state.range(0);
     treeHeight = state.range(1);
     lb = -1000;
     ub = 1000;
 
-    engine->open();
-    setEngineModes(*engine, state.range(2));
+    solver->open();
+    setSolverMode(*solver, state.range(2));
 
     createTree();
 
     logDebug("Created a tree of height " << treeHeight
                                          << ", each non-leaf node having "
                                          << linearArgumentCount << " children");
-    engine->close();
+    solver->close();
 
     gen = std::mt19937(rd());
     decisionVarIndexDist =
@@ -124,15 +124,15 @@ void LinearTree::probe(::benchmark::State& st, size_t numMoves) {
   size_t probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
-      engine->beginMove();
-      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+      solver->beginMove();
+      solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
                        decisionVarValueDist(gen));
-      engine->endMove();
+      solver->endMove();
     }
 
-    engine->beginProbe();
-    engine->query(output);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(output);
+    solver->endProbe();
     ++probes;
   }
 
@@ -144,16 +144,16 @@ void LinearTree::probeRnd(::benchmark::State& st, size_t numMoves) {
   size_t probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
-      engine->beginMove();
-      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+      solver->beginMove();
+      solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
                        decisionVarValueDist(gen));
-      engine->endMove();
+      solver->endMove();
     }
 
     // Random query variable
-    engine->beginProbe();
-    engine->query(vars.at(varIndexDist(gen)));
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(vars.at(varIndexDist(gen)));
+    solver->endProbe();
     ++probes;
   }
 
@@ -165,16 +165,16 @@ void LinearTree::commit(::benchmark::State& st, size_t numMoves) {
   Int commits = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
-      engine->beginMove();
-      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+      solver->beginMove();
+      solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
                        decisionVarValueDist(gen));
-      engine->endMove();
+      solver->endMove();
     }
 
     // Commit last output var
-    engine->beginCommit();
-    engine->query(output);
-    engine->endCommit();
+    solver->beginCommit();
+    solver->query(output);
+    solver->endCommit();
     ++commits;
   }
 
@@ -186,15 +186,15 @@ void LinearTree::commitRnd(::benchmark::State& st, size_t numMoves) {
   Int commits = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
-      engine->beginMove();
-      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+      solver->beginMove();
+      solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
                        decisionVarValueDist(gen));
-      engine->endMove();
+      solver->endMove();
     }
 
-    engine->beginCommit();
-    engine->query(vars.at(varIndexDist(gen)));
-    engine->endCommit();
+    solver->beginCommit();
+    solver->query(vars.at(varIndexDist(gen)));
+    solver->endCommit();
     ++commits;
   }
 

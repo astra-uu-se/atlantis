@@ -24,12 +24,12 @@ std::unique_ptr<ArrayIntMaximumNode> ArrayIntMaximumNode::fromModelConstraint(
 }
 
 void ArrayIntMaximumNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void ArrayIntMaximumNode::registerNode(InvariantGraph& invariantGraph,
-                                       propagation::Engine& engine) {
+                                       propagation::SolverBase& solver) {
   std::vector<propagation::VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables), [&](const auto& node) {
@@ -37,8 +37,8 @@ void ArrayIntMaximumNode::registerNode(InvariantGraph& invariantGraph,
                  });
 
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  engine.makeInvariant<propagation::MaxSparse>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::MaxSparse>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       variables);
 }
 

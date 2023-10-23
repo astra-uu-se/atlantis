@@ -4,13 +4,13 @@
 #include <limits>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/intVar.hpp"
 #include "propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
 
-class Engine;
+class SolverBase;
 
 class InSparseDomain : public IntView {
  private:
@@ -18,7 +18,7 @@ class InSparseDomain : public IntView {
   std::vector<int> _valueViolation;
 
  public:
-  explicit InSparseDomain(Engine& engine, VarId parentId,
+  explicit InSparseDomain(SolverBase& solver, VarId parentId,
                           const std::vector<DomainEntry>& domain);
 
   [[nodiscard]] Int value(Timestamp) override;

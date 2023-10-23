@@ -2,25 +2,25 @@
 
 namespace atlantis::propagation {
 
-ElementConst::ElementConst(Engine& engine, VarId parentId,
+ElementConst::ElementConst(SolverBase& solver, VarId parentId,
                            std::vector<Int> array, Int offset)
-    : IntView(engine, parentId), _array(array), _offset(offset) {}
+    : IntView(solver, parentId), _array(array), _offset(offset) {}
 
 Int ElementConst::value(Timestamp ts) {
-  assert(safeIndex(_engine.value(ts, _parentId)) < _array.size());
-  return _array[safeIndex(_engine.value(ts, _parentId))];
+  assert(safeIndex(_solver.value(ts, _parentId)) < _array.size());
+  return _array[safeIndex(_solver.value(ts, _parentId))];
 }
 
 Int ElementConst::committedValue() {
-  assert(safeIndex(_engine.committedValue(_parentId)) < _array.size());
-  return _array[safeIndex(_engine.committedValue(_parentId))];
+  assert(safeIndex(_solver.committedValue(_parentId)) < _array.size());
+  return _array[safeIndex(_solver.committedValue(_parentId))];
 }
 
 Int ElementConst::lowerBound() const {
   const Int indexBegin =
-      std::max<Int>(0, _engine.lowerBound(_parentId) - _offset);
+      std::max<Int>(0, _solver.lowerBound(_parentId) - _offset);
   const Int indexEnd =
-      std::min<Int>(_array.size(), _engine.upperBound(_parentId) - _offset + 1);
+      std::min<Int>(_array.size(), _solver.upperBound(_parentId) - _offset + 1);
   if (indexBegin >= static_cast<Int>(_array.size())) {
     return _array.back();
   } else if (indexEnd < 0) {
@@ -32,9 +32,9 @@ Int ElementConst::lowerBound() const {
 
 Int ElementConst::upperBound() const {
   const Int indexBegin =
-      std::max<Int>(0, _engine.lowerBound(_parentId) - _offset);
+      std::max<Int>(0, _solver.lowerBound(_parentId) - _offset);
   const Int indexEnd =
-      std::min<Int>(_array.size(), _engine.upperBound(_parentId) - _offset + 1);
+      std::min<Int>(_array.size(), _solver.upperBound(_parentId) - _offset + 1);
 
   if (indexBegin >= static_cast<Int>(_array.size())) {
     return _array.back();

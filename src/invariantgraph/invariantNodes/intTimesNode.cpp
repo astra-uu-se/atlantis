@@ -24,15 +24,15 @@ std::unique_ptr<IntTimesNode> IntTimesNode::fromModelConstraint(
 }
 
 void IntTimesNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                           propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+                                           propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void IntTimesNode::registerNode(InvariantGraph& invariantGraph,
-                                propagation::Engine& engine) {
+                                propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  engine.makeInvariant<propagation::Times>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::Times>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 

@@ -2,7 +2,7 @@
 
 #include "constraint.hpp"
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
@@ -12,7 +12,7 @@ class PowDomain : public Constraint {
   const VarId _x, _y;
 
  public:
-  explicit PowDomain(Engine&, VarId violationId, VarId x, VarId y);
+  explicit PowDomain(SolverBase&, VarId violationId, VarId x, VarId y);
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
@@ -21,7 +21,7 @@ class PowDomain : public Constraint {
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 
-  static bool shouldPost(Engine&, VarId x, VarId y);
+  static bool shouldPost(SolverBase&, VarId x, VarId y);
 };
 
 }  // namespace atlantis::propagation

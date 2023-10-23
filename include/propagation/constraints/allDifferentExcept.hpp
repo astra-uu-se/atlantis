@@ -7,7 +7,7 @@
 #include "constraint.hpp"
 #include "types.hpp"
 #include "propagation/constraints/allDifferent.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
 
@@ -21,7 +21,7 @@ class AllDifferentExcept : public AllDifferent {
   bool isIgnored(Int) const;
 
  public:
-  explicit AllDifferentExcept(Engine&, VarId violationId,
+  explicit AllDifferentExcept(SolverBase&, VarId violationId,
                               std::vector<VarId> variables,
                               const std::vector<Int>& ignored);
 

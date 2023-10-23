@@ -4,12 +4,12 @@
 #include <vector>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
 
-class Engine;
+class SolverBase;
 
 /**
  * Invariant for output <- sum(coeffs_i * varArray_i)
@@ -24,8 +24,8 @@ class Linear : public Invariant {
   std::vector<Int> _committedValues;
 
  public:
-  explicit Linear(Engine&, VarId output, const std::vector<VarId>& varArray);
-  explicit Linear(Engine&, VarId output, std::vector<Int> coeffs,
+  explicit Linear(SolverBase&, VarId output, const std::vector<VarId>& varArray);
+  explicit Linear(SolverBase&, VarId output, std::vector<Int> coeffs,
                   std::vector<VarId> varArray);
 
   void registerVars() override;

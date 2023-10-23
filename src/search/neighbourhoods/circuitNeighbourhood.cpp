@@ -26,7 +26,7 @@ void CircuitNeighbourhood::initialise(RandomProvider& random,
                           nextNodeIdx);
       assert(it != availableIndices.end());
 
-      modifications.set(variable.engineId(), nextNode);
+      modifications.set(variable.solverId(), nextNode);
       availableIndices.erase(it);
     }
   }
@@ -50,14 +50,14 @@ void CircuitNeighbourhood::initialise(RandomProvider& random,
     size_t nextNodeIdx = *nextIt;
     assert(nextNodeIdx < _variables.size());
 
-    modifications.set(_variables[currentNodeIdx].engineId(),
+    modifications.set(_variables[currentNodeIdx].solverId(),
                       getNode(nextNodeIdx));
 
     availableIndices.erase(nextIt);
     currentNodeIdx = nextNodeIdx;
   }
 
-  modifications.set(_variables[currentNodeIdx].engineId(),
+  modifications.set(_variables[currentNodeIdx].solverId(),
                     getNode(firstNodeIdx));
 }
 
@@ -89,14 +89,14 @@ bool CircuitNeighbourhood::randomMove(RandomProvider& random,
   auto nodeIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_variables.size() - 1)));
   auto oldNextIdx =
-      getNodeIdx(assignment.value(_variables[nodeIdx].engineId()));
+      getNodeIdx(assignment.value(_variables[nodeIdx].solverId()));
 
   auto newNextIdx =
       determineNewNext(random, nodeIdx, oldNextIdx, _variables.size());
   assert(newNextIdx < _variables.size());
-  auto kIdx = getNodeIdx(assignment.value(_variables[oldNextIdx].engineId()));
+  auto kIdx = getNodeIdx(assignment.value(_variables[oldNextIdx].solverId()));
   auto lastIdx =
-      getNodeIdx(assignment.value(_variables[newNextIdx].engineId()));
+      getNodeIdx(assignment.value(_variables[newNextIdx].solverId()));
 
   for (auto varIdx : {nodeIdx, oldNextIdx, newNextIdx}) {
     if (_variables[varIdx].isFixed()) {
@@ -105,8 +105,8 @@ bool CircuitNeighbourhood::randomMove(RandomProvider& random,
   }
 
   Move<3> move(
-      {_variables[nodeIdx].engineId(), _variables[oldNextIdx].engineId(),
-       _variables[newNextIdx].engineId()},
+      {_variables[nodeIdx].solverId(), _variables[oldNextIdx].solverId(),
+       _variables[newNextIdx].solverId()},
       {getNode(kIdx), getNode(lastIdx), getNode(oldNextIdx)});
   return annealer.acceptMove(move);
 }

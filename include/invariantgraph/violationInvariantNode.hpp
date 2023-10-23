@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "invariantgraph/invariantNode.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -15,11 +15,11 @@ using MappableValue = std::variant<Int, bool, std::string>;
 
 /**
  * Serves as a marker for the invariant graph to start the application to the
- * propagation engine.
+ * propagation solver.
  */
 class ViolationInvariantNode : public InvariantNode {
  private:
-  // Bounds will be recomputed by the engine.
+  // Bounds will be recomputed by the solver.
   propagation::VarId _violationVarId{propagation::NULL_ID};
   VarNodeId _reifiedViolationNodeId;
 
@@ -70,7 +70,7 @@ class ViolationInvariantNode : public InvariantNode {
                                           propagation::VarId);
 
   propagation::VarId registerViolation(InvariantGraph&,
-                                          propagation::Engine&,
+                                          propagation::SolverBase&,
                                           Int initialValue = 0);
 };
 

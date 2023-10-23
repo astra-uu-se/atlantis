@@ -25,15 +25,15 @@ invariantgraph::IntDivNode::fromModelConstraint(
 }
 
 void invariantgraph::IntDivNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void invariantgraph::IntDivNode::registerNode(InvariantGraph& invariantGraph,
-                                              propagation::Engine& engine) {
+                                              propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  engine.makeInvariant<propagation::IntDiv>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::IntDiv>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 

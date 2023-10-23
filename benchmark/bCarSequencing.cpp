@@ -12,14 +12,14 @@
 #include "propagation/constraints/lessThan.hpp"
 #include "propagation/invariants/countConst.hpp"
 #include "propagation/invariants/linear.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/lessEqualConst.hpp"
 
 namespace atlantis::benchmark {
 
 class CarSequencing : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::unique_ptr<propagation::Solver> solver;
 
   size_t numCars;
   const size_t numFeatures = 5;
@@ -102,11 +102,11 @@ class CarSequencing : public ::benchmark::Fixture {
   }
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<propagation::PropagationEngine>();
-    engine->open();
+    solver = std::make_unique<propagation::Solver>();
+    solver->open();
 
     numCars = state.range(0);
-    setEngineModes(*engine, state.range(1));
+    setSolverMode(*solver, state.range(1));
 
     gen = std::mt19937(rd());
     carDistribution = std::uniform_int_distribution<size_t>{0, numCars - 1};
@@ -138,7 +138,7 @@ class CarSequencing : public ::benchmark::Fixture {
     }
 
     for (size_t i = 0; i < numCars; ++i) {
-      sequence.at(i) = engine->makeIntVar(i, 0, numCars - 1);
+      sequence.at(i) = solver->makeIntVar(i, 0, numCars - 1);
     }
 
     for (size_t o = 0; o < numFeatures; ++o) {
@@ -148,14 +148,14 @@ class CarSequencing : public ::benchmark::Fixture {
             sequence.begin() + start,
             sequence.begin() + start + blockSize.at(o));
         assert(featureElemRun.size() == blockSize.at(o));
-        featureElemSum.emplace_back(engine->makeIntVar(0, 0, blockSize.at(o)));
+        featureElemSum.emplace_back(solver->makeIntVar(0, 0, blockSize.at(o)));
         // Introducing up to n invariants each with up to n static edges
-        engine->makeInvariant<propagation::CountConst>(
-            *engine, featureElemSum.back(), o, featureElemRun);
+        solver->makeInvariant<propagation::CountConst>(
+            *solver, featureElemSum.back(), o, featureElemRun);
         // Introducing up to n invariants each with 2 static edges
         violations.emplace_back(
-            engine->makeIntView<propagation::LessEqualConst>(
-                *engine, featureElemSum.back(), maxCarsInBlock.at(o)));
+            solver->makeIntView<propagation::LessEqualConst>(
+                *solver, featureElemSum.back(), maxCarsInBlock.at(o)));
       }
     }
 
@@ -164,14 +164,14 @@ class CarSequencing : public ::benchmark::Fixture {
 
     Int maxViol = 0;
     for (const propagation::VarId viol : violations) {
-      maxViol += engine->upperBound(viol);
+      maxViol += solver->upperBound(viol);
     }
-    totalViolation = engine->makeIntVar(0, 0, maxViol);
+    totalViolation = solver->makeIntVar(0, 0, maxViol);
     // introducing one invariant with up to n edges
-    engine->makeInvariant<propagation::Linear>(*engine, totalViolation,
+    solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
                                                violations);
 
-    engine->close();
+    solver->close();
   }
 
   void sanity() const {}
@@ -199,24 +199,24 @@ BENCHMARK_DEFINE_F(CarSequencing, probe_single_swap)(::benchmark::State& st) {
     assert(i < sequence.size());
     const size_t j = carDistribution(gen);
     assert(j < sequence.size());
-    const Int oldI = engine->committedValue(sequence[i]);
-    const Int oldJ = engine->committedValue(sequence[j]);
+    const Int oldI = solver->committedValue(sequence[i]);
+    const Int oldJ = solver->committedValue(sequence[j]);
     // Perform random swap
-    engine->beginMove();
-    engine->setValue(sequence[i], oldJ);
-    engine->setValue(sequence[j], oldI);
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(sequence[i], oldJ);
+    solver->setValue(sequence[j], oldI);
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(totalViolation);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(totalViolation);
+    solver->endProbe();
     ++probes;
     assert(all_in_range(0, numCars - 1, [&](const size_t a) {
       return all_in_range(a + 1, numCars, [&](const size_t b) {
-        return engine->committedValue(sequence.at(a)) !=
-                   engine->committedValue(sequence.at(b)) &&
-               engine->currentValue(sequence.at(a)) !=
-                   engine->currentValue(sequence.at(b));
+        return solver->committedValue(sequence.at(a)) !=
+                   solver->committedValue(sequence.at(b)) &&
+               solver->currentValue(sequence.at(a)) !=
+                   solver->currentValue(sequence.at(b));
       });
     }));
   }
@@ -229,16 +229,16 @@ BENCHMARK_DEFINE_F(CarSequencing, probe_all_swap)(::benchmark::State& st) {
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(numCars); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(numCars); ++j) {
-        const Int oldI = engine->committedValue(sequence[i]);
-        const Int oldJ = engine->committedValue(sequence[j]);
-        engine->beginMove();
-        engine->setValue(sequence[i], oldJ);
-        engine->setValue(sequence[j], oldI);
-        engine->endMove();
+        const Int oldI = solver->committedValue(sequence[i]);
+        const Int oldJ = solver->committedValue(sequence[j]);
+        solver->beginMove();
+        solver->setValue(sequence[i], oldJ);
+        solver->setValue(sequence[j], oldI);
+        solver->endMove();
 
-        engine->beginProbe();
-        engine->query(totalViolation);
-        engine->endProbe();
+        solver->beginProbe();
+        solver->query(totalViolation);
+        solver->endProbe();
 
         ++probes;
       }

@@ -24,14 +24,14 @@ std::unique_ptr<IntPowNode> IntPowNode::fromModelConstraint(
 }
 
 void IntPowNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+                                         propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void IntPowNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+void IntPowNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  engine.makeInvariant<propagation::Pow>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::Pow>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 

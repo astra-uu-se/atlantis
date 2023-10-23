@@ -5,7 +5,7 @@
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/binaryMax.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -15,8 +15,8 @@ using namespace atlantis::propagation;
 class BinaryMaxTest : public InvariantTest {
  public:
   Int computeOutput(Timestamp ts, std::array<VarId, 2> inputs) {
-    return computeOutput(engine->value(ts, inputs.at(0)),
-                         engine->value(ts, inputs.at(1)));
+    return computeOutput(solver->value(ts, inputs.at(0)),
+                         solver->value(ts, inputs.at(1)));
   }
 
   Int computeOutput(std::array<Int, 2> inputs) {
@@ -24,7 +24,7 @@ class BinaryMaxTest : public InvariantTest {
   }
 
   Int computeOutput(Timestamp ts, const VarId x, const VarId y) {
-    return computeOutput(engine->value(ts, x), engine->value(ts, y));
+    return computeOutput(solver->value(ts, x), solver->value(ts, y));
   }
 
   Int computeOutput(const Int xVal, const Int yVal) {
@@ -35,27 +35,27 @@ class BinaryMaxTest : public InvariantTest {
 TEST_F(BinaryMaxTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
-  engine->open();
-  const VarId x = engine->makeIntVar(
+  solver->open();
+  const VarId x = solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId y = engine->makeIntVar(
+  const VarId y = solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
+  const VarId outputId = solver->makeIntVar(0, 0, 2);
   BinaryMax& invariant =
-      engine->makeInvariant<BinaryMax>(*engine, outputId, x, y);
-  engine->close();
+      solver->makeInvariant<BinaryMax>(*solver, outputId, x, y);
+  solver->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_TRUE(xLb <= xUb);
-    engine->updateBounds(x, xLb, xUb, false);
+    solver->updateBounds(x, xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
-      engine->updateBounds(y, yLb, yUb, false);
-      engine->open();
+      solver->updateBounds(y, yLb, yUb, false);
+      solver->open();
       invariant.updateBounds();
-      engine->close();
-      EXPECT_EQ(engine->lowerBound(outputId), std::max(xLb, yLb));
-      EXPECT_EQ(engine->upperBound(outputId), std::max(xUb, yUb));
+      solver->close();
+      EXPECT_EQ(solver->lowerBound(outputId), std::max(xLb, yLb));
+      EXPECT_EQ(solver->upperBound(outputId), std::max(xUb, yUb));
     }
   }
 }
@@ -68,24 +68,24 @@ TEST_F(BinaryMaxTest, Recompute) {
   EXPECT_TRUE(xLb <= xUb);
   EXPECT_TRUE(yLb <= yUb);
 
-  engine->open();
-  const VarId x = engine->makeIntVar(xUb, xLb, xUb);
-  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
+  solver->open();
+  const VarId x = solver->makeIntVar(xUb, xLb, xUb);
+  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
   const VarId outputId =
-      engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
+      solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
   BinaryMax& invariant =
-      engine->makeInvariant<BinaryMax>(*engine, outputId, x, y);
-  engine->close();
+      solver->makeInvariant<BinaryMax>(*solver, outputId, x, y);
+  solver->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
     for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      engine->setValue(engine->currentTimestamp(), x, xVal);
-      engine->setValue(engine->currentTimestamp(), y, yVal);
+      solver->setValue(solver->currentTimestamp(), x, xVal);
+      solver->setValue(solver->currentTimestamp(), y, yVal);
 
       const Int expectedOutput = computeOutput(xVal, yVal);
-      invariant.recompute(engine->currentTimestamp());
+      invariant.recompute(solver->currentTimestamp());
       EXPECT_EQ(expectedOutput,
-                engine->value(engine->currentTimestamp(), outputId));
+                solver->value(solver->currentTimestamp(), outputId));
     }
   }
 }
@@ -95,24 +95,24 @@ TEST_F(BinaryMaxTest, NotifyInputChanged) {
   const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
-  engine->open();
-  std::array<VarId, 2> inputs{engine->makeIntVar(ub, lb, ub),
-                              engine->makeIntVar(ub, lb, ub)};
-  VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  BinaryMax& invariant = engine->makeInvariant<BinaryMax>(
-      *engine, outputId, inputs.at(0), inputs.at(1));
-  engine->close();
+  solver->open();
+  std::array<VarId, 2> inputs{solver->makeIntVar(ub, lb, ub),
+                              solver->makeIntVar(ub, lb, ub)};
+  VarId outputId = solver->makeIntVar(0, 0, ub - lb);
+  BinaryMax& invariant = solver->makeInvariant<BinaryMax>(
+      *solver, outputId, inputs.at(0), inputs.at(1));
+  solver->close();
 
-  Timestamp ts = engine->currentTimestamp();
+  Timestamp ts = solver->currentTimestamp();
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
     for (size_t i = 0; i < inputs.size(); ++i) {
-      engine->setValue(ts, inputs.at(i), val);
+      solver->setValue(ts, inputs.at(i), val);
       const Int expectedOutput = computeOutput(ts, inputs);
 
       invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
+      EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
     }
   }
 }
@@ -122,18 +122,18 @@ TEST_F(BinaryMaxTest, NextInput) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  engine->open();
-  const std::array<VarId, 2> inputs = {engine->makeIntVar(lb, lb, ub),
-                                       engine->makeIntVar(ub, lb, ub)};
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
+  solver->open();
+  const std::array<VarId, 2> inputs = {solver->makeIntVar(lb, lb, ub),
+                                       solver->makeIntVar(ub, lb, ub)};
+  const VarId outputId = solver->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  BinaryMax& invariant = engine->makeInvariant<BinaryMax>(
-      *engine, outputId, inputs.at(0), inputs.at(1));
-  engine->close();
+  BinaryMax& invariant = solver->makeInvariant<BinaryMax>(
+      *solver, outputId, inputs.at(0), inputs.at(1));
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < inputs.size(); ++i) {
       const VarId varId = invariant.nextInput(ts);
@@ -155,26 +155,26 @@ TEST_F(BinaryMaxTest, NotifyCurrentInputChanged) {
   const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
-  engine->open();
+  solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   const std::array<VarId, 2> inputs = {
-      engine->makeIntVar(valueDist(gen), lb, ub),
-      engine->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  BinaryMax& invariant = engine->makeInvariant<BinaryMax>(
-      *engine, outputId, inputs.at(0), inputs.at(1));
-  engine->close();
+      solver->makeIntVar(valueDist(gen), lb, ub),
+      solver->makeIntVar(valueDist(gen), lb, ub)};
+  const VarId outputId = solver->makeIntVar(0, 0, ub - lb);
+  BinaryMax& invariant = solver->makeInvariant<BinaryMax>(
+      *solver, outputId, inputs.at(0), inputs.at(1));
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = engine->value(ts, varId);
+      const Int oldVal = solver->value(ts, varId);
       do {
-        engine->setValue(ts, varId, valueDist(gen));
-      } while (engine->value(ts, varId) == oldVal);
+        solver->setValue(ts, varId, valueDist(gen));
+      } while (solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, inputs));
     }
   }
 }
@@ -184,51 +184,51 @@ TEST_F(BinaryMaxTest, Commit) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  engine->open();
+  solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   std::array<size_t, 2> indices{0, 1};
   std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
   std::array<VarId, 2> inputs{
-      engine->makeIntVar(committedValues.at(0), lb, ub),
-      engine->makeIntVar(committedValues.at(1), lb, ub)};
+      solver->makeIntVar(committedValues.at(0), lb, ub),
+      solver->makeIntVar(committedValues.at(1), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarId outputId = engine->makeIntVar(0, 0, 2);
-  BinaryMax& invariant = engine->makeInvariant<BinaryMax>(
-      *engine, outputId, inputs.at(0), inputs.at(1));
-  engine->close();
+  VarId outputId = solver->makeIntVar(0, 0, 2);
+  BinaryMax& invariant = solver->makeInvariant<BinaryMax>(
+      *solver, outputId, inputs.at(0), inputs.at(1));
+  solver->close();
 
-  EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
-            computeOutput(engine->currentTimestamp(), inputs));
+  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
+            computeOutput(solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
+    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputs.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      engine->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == engine->value(ts, inputs.at(i)));
+      solver->setValue(ts, inputs.at(i), valueDist(gen));
+    } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = engine->value(ts, outputId);
+    const Int notifiedOutput = solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
 
-    engine->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = engine->value(ts, inputs.at(i));
-    engine->commitIf(ts, outputId);
+    solver->commitIf(ts, inputs.at(i));
+    committedValues.at(i) = solver->value(ts, inputs.at(i));
+    solver->commitIf(ts, outputId);
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
   }
 }
 
@@ -239,8 +239,8 @@ class MockBinaryMax : public BinaryMax {
     registered = true;
     BinaryMax::registerVars();
   }
-  explicit MockBinaryMax(Engine& engine, VarId output, VarId x, VarId y)
-      : BinaryMax(engine, output, x, y) {
+  explicit MockBinaryMax(SolverBase& solver, VarId output, VarId x, VarId y)
+      : BinaryMax(solver, output, x, y) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BinaryMax::recompute(timestamp);
     });
@@ -265,16 +265,16 @@ class MockBinaryMax : public BinaryMax {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(BinaryMaxTest, EngineIntegration) {
+TEST_F(BinaryMaxTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
-    const VarId x = engine->makeIntVar(-10, -100, 100);
-    const VarId y = engine->makeIntVar(10, -100, 100);
-    const VarId output = engine->makeIntVar(0, 0, 200);
+    const VarId x = solver->makeIntVar(-10, -100, 100);
+    const VarId y = solver->makeIntVar(10, -100, 100);
+    const VarId output = solver->makeIntVar(0, 0, 200);
     testNotifications<MockBinaryMax>(
-        &engine->makeInvariant<MockBinaryMax>(*engine, output, x, y),
+        &solver->makeInvariant<MockBinaryMax>(*solver, output, x, y),
         {propMode, markingMode, 3, x, 0, output});
   }
 }

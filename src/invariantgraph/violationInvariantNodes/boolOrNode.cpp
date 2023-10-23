@@ -44,23 +44,23 @@ std::unique_ptr<BoolOrNode> BoolOrNode::fromModelConstraint(
 }
 
 void BoolOrNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         propagation::Engine& engine) {
+                                         propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (shouldHold()) {
-      registerViolation(invariantGraph, engine);
+      registerViolation(invariantGraph, solver);
     } else {
       assert(!isReified());
-      _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
-                                            engine, _intermediate, 0));
+      _intermediate = solver.makeIntVar(0, 0, 0);
+      setViolationVarId(invariantGraph, solver.makeIntView<propagation::NotEqualConst>(
+                                            solver, _intermediate, 0));
     }
   }
 }
 
-void BoolOrNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+void BoolOrNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  engine.makeInvariant<propagation::BoolOr>(engine, violationVarId(invariantGraph),
+  solver.makeInvariant<propagation::BoolOr>(solver, violationVarId(invariantGraph),
                                invariantGraph.varId(a()),
                                invariantGraph.varId(b()));
 }

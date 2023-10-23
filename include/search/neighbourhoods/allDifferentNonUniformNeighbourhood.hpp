@@ -24,12 +24,12 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
   std::vector<std::vector<Int>> _domains;
   // inDomain[i][j] = the domain of _variables[i] contains value j + _offset
   std::vector<std::vector<bool>> _inDomain;
-  const propagation::Engine& _engine;
+  const propagation::SolverBase& _solver;
 
  public:
   AllDifferentNonUniformNeighbourhood(
       std::vector<search::SearchVariable>&& variables, Int domainLb,
-      Int domainUb, const propagation::Engine& engine);
+      Int domainUb, const propagation::SolverBase& solver);
 
   ~AllDifferentNonUniformNeighbourhood() override = default;
 
@@ -78,7 +78,7 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
     for (size_t variableIndex = 0; variableIndex < _variables.size();
          ++variableIndex) {
       const Int value =
-          assignment.value(_variables.at(variableIndex).engineId());
+          assignment.value(_variables.at(variableIndex).solverId());
       const size_t valueIndex = toValueIndex(value);
       assert(valueIndex < _valueIndexToVariableIndex.size());
       assert(_valueIndexToVariableIndex.at(valueIndex) == variableIndex);

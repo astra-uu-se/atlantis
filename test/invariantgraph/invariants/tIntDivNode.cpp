@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/invariantNodes/intDivNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -41,35 +41,35 @@ TEST_F(IntDivNodeTest, construction) {
 }
 
 TEST_F(IntDivNodeTest, application) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
   // a and b
-  EXPECT_EQ(engine.searchVariables().size(), 2);
+  EXPECT_EQ(solver.searchVariables().size(), 2);
 
   // a, b and c
-  EXPECT_EQ(engine.numVariables(), 3);
+  EXPECT_EQ(solver.numVariables(), 3);
 
   // intDiv
-  EXPECT_EQ(engine.numInvariants(), 1);
+  EXPECT_EQ(solver.numInvariants(), 1);
 }
 
 TEST_F(IntDivNodeTest, propagation) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
-  invNode().registerOutputVariables(*_invariantGraph, engine);
-  invNode().registerNode(*_invariantGraph, engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerNode(*_invariantGraph, solver);
 
   std::vector<propagation::VarId> inputs;
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
@@ -83,24 +83,24 @@ TEST_F(IntDivNodeTest, propagation) {
   EXPECT_EQ(inputs.size(), 2);
 
   std::vector<Int> values(inputs.size());
-  engine.close();
+  solver.close();
 
-  for (values.at(0) = engine.lowerBound(inputs.at(0));
-       values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
-    for (values.at(1) = engine.lowerBound(inputs.at(1));
-         values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
-      engine.beginMove();
+  for (values.at(0) = solver.lowerBound(inputs.at(0));
+       values.at(0) <= solver.upperBound(inputs.at(0)); ++values.at(0)) {
+    for (values.at(1) = solver.lowerBound(inputs.at(1));
+         values.at(1) <= solver.upperBound(inputs.at(1)); ++values.at(1)) {
+      solver.beginMove();
       for (size_t i = 0; i < inputs.size(); ++i) {
-        engine.setValue(inputs.at(i), values.at(i));
+        solver.setValue(inputs.at(i), values.at(i));
       }
-      engine.endMove();
+      solver.endMove();
 
-      engine.beginProbe();
-      engine.query(outputId);
-      engine.endProbe();
+      solver.beginProbe();
+      solver.query(outputId);
+      solver.endProbe();
 
       if (values.at(1) != 0) {
-        const Int fraction = engine.currentValue(outputId);
+        const Int fraction = solver.currentValue(outputId);
         EXPECT_EQ(fraction, values.at(0) / values.at(1));
       }
     }

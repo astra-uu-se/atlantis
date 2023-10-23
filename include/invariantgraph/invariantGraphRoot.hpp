@@ -7,7 +7,7 @@ namespace atlantis::invariantgraph {
 /**
  * Given all variable nodes need to be defined by a a InvariantNode, this
  * class "defines" the search variables so their nodes can be created and
- * registered with the engine.
+ * registered with the solver.
  */
 class InvariantGraphRoot : public ImplicitConstraintNode {
  public:
@@ -20,7 +20,7 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      propagation::Engine& engine, std::vector<search::SearchVariable>&& variables) override;
+      propagation::SolverBase& solver, std::vector<search::SearchVariable>&& variables) override;
 };
 
 }  // namespace invariantgraph

@@ -32,9 +32,9 @@ class BoolClauseNode : public ViolationInvariantNode {
       const fznparser::Constraint& constraint, InvariantGraph&);
 
   void registerOutputVariables(InvariantGraph&,
-                               propagation::Engine& engine) override;
+                               propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] const std::vector<VarNodeId>& as() { return _as; }
 

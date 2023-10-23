@@ -10,7 +10,7 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
  private:
   std::vector<search::SearchVariable> _variables;
   std::vector<Int> _domain;
-  const propagation::Engine& _engine;
+  const propagation::SolverBase& _solver;
 
   std::vector<size_t> _domIndices{};
   Int _offset{0};
@@ -19,7 +19,7 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
  public:
   AllDifferentUniformNeighbourhood(
       std::vector<search::SearchVariable>&& variables, std::vector<Int> domain,
-      const propagation::Engine& engine);
+      const propagation::SolverBase& solver);
 
   ~AllDifferentUniformNeighbourhood() override = default;
 

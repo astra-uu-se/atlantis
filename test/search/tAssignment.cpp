@@ -2,7 +2,7 @@
 
 #include "propagation/constraints/equal.hpp"
 #include "propagation/invariants/linear.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "search/assignment.hpp"
 
 namespace atlantis::testing {
@@ -18,29 +18,29 @@ class AssignmentTest : public ::testing::Test {
 
   propagation::VarId violation;
 
-  propagation::PropagationEngine engine;
+  propagation::Solver solver;
 
   // Models the following simple COP:
   // c <- a + b (a and b have domain 0..10)
   // violation = v(c == 3)
   // obj: minimise(a)
   void SetUp() override {
-    engine.open();
-    a = engine.makeIntVar(0, 0, 10);
-    b = engine.makeIntVar(0, 0, 10);
-    c = engine.makeIntVar(0, 0, 10);
-    d = engine.makeIntVar(3, 3, 3);
-    violation = engine.makeIntVar(0, 0, 10);
+    solver.open();
+    a = solver.makeIntVar(0, 0, 10);
+    b = solver.makeIntVar(0, 0, 10);
+    c = solver.makeIntVar(0, 0, 10);
+    d = solver.makeIntVar(3, 3, 3);
+    violation = solver.makeIntVar(0, 0, 10);
 
-    engine.makeInvariant<propagation::Linear>(
-        engine, c, std::vector<propagation::VarId>{a, b});
-    engine.makeConstraint<propagation::Equal>(engine, violation, c, d);
-    engine.close();
+    solver.makeInvariant<propagation::Linear>(
+        solver, c, std::vector<propagation::VarId>{a, b});
+    solver.makeConstraint<propagation::Equal>(solver, violation, c, d);
+    solver.close();
   }
 };
 
 TEST_F(AssignmentTest, search_variables_are_identified) {
-  search::Assignment assignment{engine, violation, a,
+  search::Assignment assignment{solver, violation, a,
                                 propagation::ObjectiveDirection::MINIMIZE};
 
   std::vector<propagation::VarId> expectedSearchVariables{a, b};
@@ -48,7 +48,7 @@ TEST_F(AssignmentTest, search_variables_are_identified) {
 }
 
 TEST_F(AssignmentTest, cost) {
-  search::Assignment assignment{engine, violation, a,
+  search::Assignment assignment{solver, violation, a,
                                 propagation::ObjectiveDirection::MINIMIZE};
 
   EXPECT_FALSE(assignment.cost().satisfiesConstraints());
@@ -68,7 +68,7 @@ TEST_F(AssignmentTest, cost) {
 }
 
 TEST_F(AssignmentTest, assign_sets_values) {
-  search::Assignment assignment{engine, violation, a,
+  search::Assignment assignment{solver, violation, a,
                                 propagation::ObjectiveDirection::MINIMIZE};
 
   assignment.assign([&](auto& modifications) {
@@ -81,7 +81,7 @@ TEST_F(AssignmentTest, assign_sets_values) {
 }
 
 TEST_F(AssignmentTest, probe) {
-  search::Assignment assignment{engine, violation, a,
+  search::Assignment assignment{solver, violation, a,
                                 propagation::ObjectiveDirection::MINIMIZE};
 
   auto cost = assignment.probe([&](auto& modifications) {
@@ -97,7 +97,7 @@ TEST_F(AssignmentTest, probe) {
 }
 
 TEST_F(AssignmentTest, satisfies_constraints) {
-  search::Assignment assignment{engine, violation, a,
+  search::Assignment assignment{solver, violation, a,
                                 propagation::ObjectiveDirection::MINIMIZE};
 
   EXPECT_FALSE(assignment.satisfiesConstraints());

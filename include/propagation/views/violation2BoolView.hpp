@@ -3,15 +3,15 @@
 #include <memory>
 #include <vector>
 
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
 
 class Violation2BoolView : public IntView {
  public:
-  explicit Violation2BoolView(Engine& engine, const VarId parentId)
-      : IntView(engine, parentId) {}
+  explicit Violation2BoolView(SolverBase& solver, const VarId parentId)
+      : IntView(solver, parentId) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

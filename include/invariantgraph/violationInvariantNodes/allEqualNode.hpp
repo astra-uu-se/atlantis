@@ -31,8 +31,8 @@ class AllEqualNode : public ViolationInvariantNode {
       const fznparser::Constraint&, InvariantGraph&);
 
   void registerOutputVariables(InvariantGraph&,
-                               propagation::Engine& engine) override;
+                               propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
 }  // namespace atlantis::invariantgraph

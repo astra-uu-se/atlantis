@@ -8,7 +8,7 @@
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/ifThenElse.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -18,9 +18,9 @@ using namespace atlantis::propagation;
 class IfThenElseTest : public InvariantTest {
  public:
   Int computeOutput(Timestamp ts, std::array<VarId, 3> inputs) {
-    return computeOutput(engine->value(ts, inputs.at(0)),
-                         engine->value(ts, inputs.at(1)),
-                         engine->value(ts, inputs.at(2)));
+    return computeOutput(solver->value(ts, inputs.at(0)),
+                         solver->value(ts, inputs.at(1)),
+                         solver->value(ts, inputs.at(2)));
   }
 
   Int computeOutput(std::array<Int, 3> inputs) {
@@ -28,8 +28,8 @@ class IfThenElseTest : public InvariantTest {
   }
 
   Int computeOutput(Timestamp ts, const VarId b, const VarId x, const VarId y) {
-    return computeOutput(engine->value(ts, b), engine->value(ts, x),
-                         engine->value(ts, y));
+    return computeOutput(solver->value(ts, b), solver->value(ts, x),
+                         solver->value(ts, y));
   }
 
   Int computeOutput(const Int bVal, const Int xVal, const Int yVal) {
@@ -44,33 +44,33 @@ TEST_F(IfThenElseTest, UpdateBounds) {
   const Int yUb = 1000;
   EXPECT_TRUE(xLb <= xUb);
 
-  engine->open();
-  const VarId b = engine->makeIntVar(0, 0, 10);
-  const VarId x = engine->makeIntVar(yUb, yLb, yUb);
-  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
+  solver->open();
+  const VarId b = solver->makeIntVar(0, 0, 10);
+  const VarId x = solver->makeIntVar(yUb, yLb, yUb);
+  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
   const VarId outputId =
-      engine->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
+      solver->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
   IfThenElse& invariant =
-      engine->makeInvariant<IfThenElse>(*engine, outputId, b, x, y);
-  engine->close();
+      solver->makeInvariant<IfThenElse>(*solver, outputId, b, x, y);
+  solver->close();
 
   std::vector<std::pair<Int, Int>> bBounds{{0, 0}, {0, 100}, {1, 10000}};
 
   for (const auto& [bLb, bUb] : bBounds) {
     EXPECT_TRUE(bLb <= bUb);
-    engine->updateBounds(b, bLb, bUb, false);
+    solver->updateBounds(b, bLb, bUb, false);
     invariant.updateBounds();
     if (bLb == 0 && bUb == 0) {
-      EXPECT_EQ(engine->lowerBound(outputId), engine->lowerBound(x));
-      EXPECT_EQ(engine->upperBound(outputId), engine->upperBound(x));
+      EXPECT_EQ(solver->lowerBound(outputId), solver->lowerBound(x));
+      EXPECT_EQ(solver->upperBound(outputId), solver->upperBound(x));
     } else if (bLb > 0) {
-      EXPECT_EQ(engine->lowerBound(outputId), engine->lowerBound(y));
-      EXPECT_EQ(engine->upperBound(outputId), engine->upperBound(y));
+      EXPECT_EQ(solver->lowerBound(outputId), solver->lowerBound(y));
+      EXPECT_EQ(solver->upperBound(outputId), solver->upperBound(y));
     } else {
-      EXPECT_EQ(engine->lowerBound(outputId),
-                std::max(engine->lowerBound(x), engine->lowerBound(y)));
-      EXPECT_EQ(engine->upperBound(outputId),
-                std::min(engine->upperBound(x), engine->upperBound(y)));
+      EXPECT_EQ(solver->lowerBound(outputId),
+                std::max(solver->lowerBound(x), solver->lowerBound(y)));
+      EXPECT_EQ(solver->upperBound(outputId),
+                std::min(solver->upperBound(x), solver->upperBound(y)));
     }
   }
 }
@@ -86,26 +86,26 @@ TEST_F(IfThenElseTest, Recompute) {
   EXPECT_TRUE(xLb <= xUb);
   EXPECT_TRUE(yLb <= yUb);
 
-  engine->open();
-  const VarId b = engine->makeIntVar(bLb, bLb, bUb);
-  const VarId x = engine->makeIntVar(yUb, yLb, yUb);
-  const VarId y = engine->makeIntVar(yUb, yLb, yUb);
+  solver->open();
+  const VarId b = solver->makeIntVar(bLb, bLb, bUb);
+  const VarId x = solver->makeIntVar(yUb, yLb, yUb);
+  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
   const VarId outputId =
-      engine->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
+      solver->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
   IfThenElse& invariant =
-      engine->makeInvariant<IfThenElse>(*engine, outputId, b, x, y);
-  engine->close();
+      solver->makeInvariant<IfThenElse>(*solver, outputId, b, x, y);
+  solver->close();
   for (Int bVal = bLb; bVal <= bUb; ++bVal) {
     for (Int xVal = xLb; xVal <= xUb; ++xVal) {
       for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-        engine->setValue(engine->currentTimestamp(), b, bVal);
-        engine->setValue(engine->currentTimestamp(), x, xVal);
-        engine->setValue(engine->currentTimestamp(), y, yVal);
+        solver->setValue(solver->currentTimestamp(), b, bVal);
+        solver->setValue(solver->currentTimestamp(), x, xVal);
+        solver->setValue(solver->currentTimestamp(), y, yVal);
 
         const Int expectedOutput = computeOutput(bVal, xVal, yVal);
-        invariant.recompute(engine->currentTimestamp());
+        invariant.recompute(solver->currentTimestamp());
         EXPECT_EQ(expectedOutput,
-                  engine->value(engine->currentTimestamp(), outputId));
+                  solver->value(solver->currentTimestamp(), outputId));
       }
     }
   }
@@ -119,27 +119,27 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(bLb <= bUb);
 
-  engine->open();
-  std::array<VarId, 3> inputs{engine->makeIntVar(bLb, bLb, bUb),
-                              engine->makeIntVar(ub, lb, ub),
-                              engine->makeIntVar(ub, lb, ub)};
-  VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      *engine, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  engine->close();
+  solver->open();
+  std::array<VarId, 3> inputs{solver->makeIntVar(bLb, bLb, bUb),
+                              solver->makeIntVar(ub, lb, ub),
+                              solver->makeIntVar(ub, lb, ub)};
+  VarId outputId = solver->makeIntVar(0, 0, ub - lb);
+  IfThenElse& invariant = solver->makeInvariant<IfThenElse>(
+      *solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+  solver->close();
 
-  Timestamp ts = engine->currentTimestamp();
+  Timestamp ts = solver->currentTimestamp();
 
   for (Int bVal = bLb; bVal <= bUb; ++bVal) {
     for (Int val = lb; val <= ub; ++val) {
       for (size_t i = 1; i < inputs.size(); ++i) {
         ++ts;
-        engine->setValue(ts, inputs.at(0), bVal);
-        engine->setValue(ts, inputs.at(i), val);
+        solver->setValue(ts, inputs.at(0), bVal);
+        solver->setValue(ts, inputs.at(i), val);
         const Int expectedOutput = computeOutput(ts, inputs);
 
         invariant.notifyInputChanged(ts, LocalId(i));
-        EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
+        EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
       }
     }
   }
@@ -153,19 +153,19 @@ TEST_F(IfThenElseTest, NextInput) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(bLb <= bUb);
 
-  engine->open();
-  const std::array<VarId, 3> inputs = {engine->makeIntVar(bLb, bLb, bUb),
-                                       engine->makeIntVar(lb, lb, ub),
-                                       engine->makeIntVar(ub, lb, ub)};
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
+  solver->open();
+  const std::array<VarId, 3> inputs = {solver->makeIntVar(bLb, bLb, bUb),
+                                       solver->makeIntVar(lb, lb, ub),
+                                       solver->makeIntVar(ub, lb, ub)};
+  const VarId outputId = solver->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      *engine, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  engine->close();
+  IfThenElse& invariant = solver->makeInvariant<IfThenElse>(
+      *solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     // First input is b,
     // Second input is x if b = 0, otherwise y:
@@ -178,7 +178,7 @@ TEST_F(IfThenElseTest, NextInput) {
       notified[varId] = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    const Int bVal = engine->value(ts, inputs.at(0));
+    const Int bVal = solver->value(ts, inputs.at(0));
 
     EXPECT_TRUE(notified.at(inputs.at(0)));
     EXPECT_TRUE(notified.at(inputs.at(bVal == 0 ? 1 : 2)));
@@ -194,34 +194,34 @@ TEST_F(IfThenElseTest, NotifyCurrentInputChanged) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(bLb <= bUb);
 
-  engine->open();
+  solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   std::uniform_int_distribution<Int> bDist(bLb, bUb);
 
   const std::array<VarId, 3> inputs = {
-      engine->makeIntVar(bLb, bLb, bLb),
-      engine->makeIntVar(valueDist(gen), lb, ub),
-      engine->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId outputId = engine->makeIntVar(0, 0, ub - lb);
-  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      *engine, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  engine->close();
+      solver->makeIntVar(bLb, bLb, bLb),
+      solver->makeIntVar(valueDist(gen), lb, ub),
+      solver->makeIntVar(valueDist(gen), lb, ub)};
+  const VarId outputId = solver->makeIntVar(0, 0, ub - lb);
+  IfThenElse& invariant = solver->makeInvariant<IfThenElse>(
+      *solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     for (size_t i = 0; i < 2; ++i) {
-      const Int bOld = engine->value(ts, inputs.at(0));
+      const Int bOld = solver->value(ts, inputs.at(0));
       const VarId curInput = invariant.nextInput(ts);
       EXPECT_EQ(curInput, inputs.at(i == 0 ? 0 : bOld == 0 ? 1 : 2));
 
-      const Int oldVal = engine->value(ts, curInput);
+      const Int oldVal = solver->value(ts, curInput);
       do {
-        engine->setValue(ts, curInput, i == 0 ? bDist(gen) : valueDist(gen));
-      } while (engine->value(ts, curInput) == oldVal);
+        solver->setValue(ts, curInput, i == 0 ? bDist(gen) : valueDist(gen));
+      } while (solver->value(ts, curInput) == oldVal);
 
       invariant.notifyCurrentInputChanged(ts);
 
-      EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, inputs));
     }
   }
 }
@@ -234,7 +234,7 @@ TEST_F(IfThenElseTest, Commit) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(bLb <= bUb);
 
-  engine->open();
+  solver->open();
   std::uniform_int_distribution<Int> bDist(bLb, bUb);
   std::uniform_int_distribution<Int> valueDist(lb, ub);
 
@@ -242,47 +242,47 @@ TEST_F(IfThenElseTest, Commit) {
   std::array<Int, 3> committedValues{bDist(gen), valueDist(gen),
                                      valueDist(gen)};
   std::array<VarId, 3> inputs{
-      engine->makeIntVar(committedValues.at(0), bLb, bUb),
-      engine->makeIntVar(committedValues.at(1), lb, ub),
-      engine->makeIntVar(committedValues.at(2), lb, ub)};
+      solver->makeIntVar(committedValues.at(0), bLb, bUb),
+      solver->makeIntVar(committedValues.at(1), lb, ub),
+      solver->makeIntVar(committedValues.at(2), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarId outputId = engine->makeIntVar(0, 0, 2);
-  IfThenElse& invariant = engine->makeInvariant<IfThenElse>(
-      *engine, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  engine->close();
+  VarId outputId = solver->makeIntVar(0, 0, 2);
+  IfThenElse& invariant = solver->makeInvariant<IfThenElse>(
+      *solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+  solver->close();
 
-  EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
-            computeOutput(engine->currentTimestamp(), inputs));
+  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
+            computeOutput(solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
+    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputs.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      engine->setValue(ts, inputs.at(i), i == 0 ? bDist(gen) : valueDist(gen));
-    } while (oldVal == engine->value(ts, inputs.at(i)));
+      solver->setValue(ts, inputs.at(i), i == 0 ? bDist(gen) : valueDist(gen));
+    } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = engine->value(ts, outputId);
+    const Int notifiedOutput = solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
 
-    engine->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = engine->value(ts, inputs.at(i));
-    engine->commitIf(ts, outputId);
+    solver->commitIf(ts, inputs.at(i));
+    committedValues.at(i) = solver->value(ts, inputs.at(i));
+    solver->commitIf(ts, outputId);
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
   }
 }
 
@@ -293,9 +293,9 @@ class MockIfThenElse : public IfThenElse {
     registered = true;
     IfThenElse::registerVars();
   }
-  explicit MockIfThenElse(Engine& engine, VarId output, VarId b, VarId x,
+  explicit MockIfThenElse(SolverBase& solver, VarId output, VarId b, VarId x,
                           VarId y)
-      : IfThenElse(engine, output, b, x, y) {
+      : IfThenElse(solver, output, b, x, y) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return IfThenElse::recompute(timestamp);
     });
@@ -320,17 +320,17 @@ class MockIfThenElse : public IfThenElse {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(IfThenElseTest, EngineIntegration) {
+TEST_F(IfThenElseTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
-    const VarId b = engine->makeIntVar(0, -100, 100);
-    const VarId x = engine->makeIntVar(0, 0, 4);
-    const VarId y = engine->makeIntVar(5, 5, 9);
-    const VarId output = engine->makeIntVar(3, 0, 9);
+    const VarId b = solver->makeIntVar(0, -100, 100);
+    const VarId x = solver->makeIntVar(0, 0, 4);
+    const VarId y = solver->makeIntVar(5, 5, 9);
+    const VarId output = solver->makeIntVar(3, 0, 9);
     testNotifications<MockIfThenElse>(
-        &engine->makeInvariant<MockIfThenElse>(*engine, output, b, x, y),
+        &solver->makeInvariant<MockIfThenElse>(*solver, output, b, x, y),
         {propMode, markingMode, 3, b, 5, output});
   }
 }

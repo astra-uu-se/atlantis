@@ -2,7 +2,7 @@
 
 #include "constraint.hpp"
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
@@ -12,7 +12,7 @@ class LessThan : public Constraint {
   const VarId _x, _y;
 
  public:
-  explicit LessThan(Engine&, VarId violationId, VarId x, VarId y);
+  explicit LessThan(SolverBase&, VarId violationId, VarId x, VarId y);
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;

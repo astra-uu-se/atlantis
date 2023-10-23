@@ -8,7 +8,7 @@
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/exists.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -38,7 +38,7 @@ class ExistsTest : public InvariantTest {
   Int computeOutput(const Timestamp ts, const std::vector<VarId>& variables) {
     Int min_val = std::numeric_limits<Int>::max();
     for (size_t i = 0; i < variables.size(); ++i) {
-      min_val = std::min(min_val, engine->value(ts, variables.at(i)));
+      min_val = std::min(min_val, solver->value(ts, variables.at(i)));
     }
     return min_val;
   }
@@ -50,29 +50,29 @@ class ExistsTest : public InvariantTest {
 
 TEST_F(ExistsTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{{0, 100}, {150, 250}};
-  engine->open();
+  solver->open();
 
-  std::vector<VarId> vars{engine->makeIntVar(0, 0, 10),
-                          engine->makeIntVar(0, 0, 10),
-                          engine->makeIntVar(0, 0, 10)};
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
-  Exists& invariant = engine->makeInvariant<Exists>(*engine, outputId,
+  std::vector<VarId> vars{solver->makeIntVar(0, 0, 10),
+                          solver->makeIntVar(0, 0, 10),
+                          solver->makeIntVar(0, 0, 10)};
+  const VarId outputId = solver->makeIntVar(0, 0, 2);
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId,
                                                     std::vector<VarId>(vars));
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
-    engine->updateBounds(vars.at(0), aLb, aUb, false);
+    solver->updateBounds(vars.at(0), aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_TRUE(bLb <= bUb);
-      engine->updateBounds(vars.at(1), bLb, bUb, false);
+      solver->updateBounds(vars.at(1), bLb, bUb, false);
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_TRUE(cLb <= cUb);
-        engine->updateBounds(vars.at(2), cLb, cUb, false);
+        solver->updateBounds(vars.at(2), cLb, cUb, false);
         invariant.updateBounds();
 
         ASSERT_EQ(std::min(aLb, std::min(bLb, cLb)),
-                  engine->lowerBound(outputId));
+                  solver->lowerBound(outputId));
         ASSERT_EQ(std::min(aUb, std::min(bUb, cUb)),
-                  engine->upperBound(outputId));
+                  solver->upperBound(outputId));
       }
     }
   }
@@ -86,66 +86,66 @@ TEST_F(ExistsTest, Recompute) {
 
   std::uniform_int_distribution<Int> iDist(iLb, iUb);
 
-  engine->open();
+  solver->open();
 
-  const VarId a = engine->makeIntVar(iDist(gen), iLb, iUb);
-  const VarId b = engine->makeIntVar(iDist(gen), iLb, iUb);
-  const VarId c = engine->makeIntVar(iDist(gen), iLb, iUb);
+  const VarId a = solver->makeIntVar(iDist(gen), iLb, iUb);
+  const VarId b = solver->makeIntVar(iDist(gen), iLb, iUb);
+  const VarId c = solver->makeIntVar(iDist(gen), iLb, iUb);
 
   inputs = std::vector<VarId>{a, b, c};
 
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
 
-  Exists& invariant = engine->makeInvariant<Exists>(*engine, outputId, inputs);
-  engine->close();
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, inputs);
+  solver->close();
 
   for (Int aVal = iLb; aVal <= iUb; ++aVal) {
     for (Int bVal = iLb; bVal <= iUb; ++bVal) {
       for (Int cVal = iLb; cVal <= iUb; ++cVal) {
-        engine->setValue(engine->currentTimestamp(), a, aVal);
-        engine->setValue(engine->currentTimestamp(), b, bVal);
-        engine->setValue(engine->currentTimestamp(), c, cVal);
+        solver->setValue(solver->currentTimestamp(), a, aVal);
+        solver->setValue(solver->currentTimestamp(), b, bVal);
+        solver->setValue(solver->currentTimestamp(), c, cVal);
         const Int expectedOutput =
-            computeOutput(engine->currentTimestamp(), inputs);
-        invariant.recompute(engine->currentTimestamp());
+            computeOutput(solver->currentTimestamp(), inputs);
+        invariant.recompute(solver->currentTimestamp());
         EXPECT_EQ(expectedOutput,
-                  engine->value(engine->currentTimestamp(), outputId));
+                  solver->value(solver->currentTimestamp(), outputId));
       }
     }
   }
 }
 
 TEST_F(ExistsTest, NotifyInputChanged) {
-  engine->open();
+  solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = engine->makeIntVar(inputValueDist(gen), inputLb, inputUb);
+    inputs.at(i) = solver->makeIntVar(inputValueDist(gen), inputLb, inputUb);
   }
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Exists& invariant = engine->makeInvariant<Exists>(*engine, outputId, inputs);
-  engine->close();
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, inputs);
+  solver->close();
 
   for (size_t i = 0; i < inputs.size(); ++i) {
-    const Int oldVal = engine->value(engine->currentTimestamp(), inputs.at(i));
+    const Int oldVal = solver->value(solver->currentTimestamp(), inputs.at(i));
     do {
-      engine->setValue(engine->currentTimestamp(), inputs.at(i),
+      solver->setValue(solver->currentTimestamp(), inputs.at(i),
                        inputValueDist(gen));
-    } while (oldVal == engine->value(engine->currentTimestamp(), inputs.at(i)));
+    } while (oldVal == solver->value(solver->currentTimestamp(), inputs.at(i)));
 
     const Int expectedOutput =
-        computeOutput(engine->currentTimestamp(), inputs);
+        computeOutput(solver->currentTimestamp(), inputs);
 
-    invariant.notifyInputChanged(engine->currentTimestamp(), LocalId(i));
+    invariant.notifyInputChanged(solver->currentTimestamp(), LocalId(i));
     EXPECT_EQ(expectedOutput,
-              engine->value(engine->currentTimestamp(), outputId));
+              solver->value(solver->currentTimestamp(), outputId));
   }
 }
 
 TEST_F(ExistsTest, NextInput) {
-  engine->open();
+  solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = engine->makeIntVar(inputValueDist(gen), inputLb, inputUb);
+    inputs.at(i) = solver->makeIntVar(inputValueDist(gen), inputLb, inputUb);
   }
 
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
@@ -153,12 +153,12 @@ TEST_F(ExistsTest, NextInput) {
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Exists& invariant = engine->makeInvariant<Exists>(*engine, outputId, inputs);
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, inputs);
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
       const VarId varId = invariant.nextInput(ts);
@@ -176,25 +176,25 @@ TEST_F(ExistsTest, NextInput) {
 }
 
 TEST_F(ExistsTest, NotifyCurrentInputChanged) {
-  engine->open();
+  solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = engine->makeIntVar(inputValueDist(gen), inputLb, inputUb);
+    inputs.at(i) = solver->makeIntVar(inputValueDist(gen), inputLb, inputUb);
   }
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Exists& invariant = engine->makeInvariant<Exists>(*engine, outputId, inputs);
-  engine->close();
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, inputs);
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = engine->value(ts, varId);
+      const Int oldVal = solver->value(ts, varId);
       do {
-        engine->setValue(ts, varId, inputValueDist(gen));
-      } while (engine->value(ts, varId) == oldVal);
+        solver->setValue(ts, varId, inputValueDist(gen));
+      } while (solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, inputs));
     }
   }
 }
@@ -203,77 +203,77 @@ TEST_F(ExistsTest, Commit) {
   std::vector<size_t> indices(numInputs, 0);
   std::vector<Int> committedValues(numInputs, 0);
 
-  engine->open();
+  solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
     indices.at(i) = i;
     const Int inputVal = inputValueDist(gen);
     committedValues.at(i) = inputVal;
-    inputs.at(i) = engine->makeIntVar(inputVal, inputLb, inputUb);
+    inputs.at(i) = solver->makeIntVar(inputVal, inputLb, inputUb);
   }
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Exists& invariant = engine->makeInvariant<Exists>(*engine, outputId, inputs);
-  engine->close();
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, inputs);
+  solver->close();
 
-  EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
-            computeOutput(engine->currentTimestamp(), inputs));
+  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
+            computeOutput(solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(i);
+    Timestamp ts = solver->currentTimestamp() + Timestamp(i);
     for (size_t j = 0; j < numInputs; ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      engine->setValue(ts, inputs.at(i), inputValueDist(gen));
-    } while (oldVal == engine->value(ts, inputs.at(i)));
+      solver->setValue(ts, inputs.at(i), inputValueDist(gen));
+    } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = engine->value(ts, outputId);
+    const Int notifiedOutput = solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
 
-    engine->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = engine->value(ts, inputs.at(i));
-    engine->commitIf(ts, outputId);
+    solver->commitIf(ts, inputs.at(i));
+    committedValues.at(i) = solver->value(ts, inputs.at(i));
+    solver->commitIf(ts, outputId);
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
   }
 }
 
 RC_GTEST_FIXTURE_PROP(ExistsTest, ShouldAlwaysBeMin,
                       (uint aVal, uint bVal, uint cVal)) {
-  engine->open();
+  solver->open();
 
-  const VarId a = engine->makeIntVar(0, 0, std::numeric_limits<Int>::max());
-  const VarId b = engine->makeIntVar(0, 0, std::numeric_limits<Int>::max());
-  const VarId c = engine->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+  const VarId a = solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+  const VarId b = solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+  const VarId c = solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
   const VarId output =
-      engine->makeIntVar(0, 0, std::numeric_limits<Int>::max());
-  engine->makeInvariant<Exists>(*engine, output, std::vector<VarId>{a, b, c});
-  engine->close();
+      solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+  solver->makeInvariant<Exists>(*solver, output, std::vector<VarId>{a, b, c});
+  solver->close();
 
-  engine->beginMove();
-  engine->setValue(a, static_cast<Int>(aVal));
-  engine->setValue(b, static_cast<Int>(bVal));
-  engine->setValue(c, static_cast<Int>(cVal));
-  engine->endMove();
+  solver->beginMove();
+  solver->setValue(a, static_cast<Int>(aVal));
+  solver->setValue(b, static_cast<Int>(bVal));
+  solver->setValue(c, static_cast<Int>(cVal));
+  solver->endMove();
 
-  engine->beginCommit();
-  engine->query(output);
-  engine->endCommit();
+  solver->beginCommit();
+  solver->query(output);
+  solver->endCommit();
 
-  RC_ASSERT(engine->committedValue(output) ==
+  RC_ASSERT(solver->committedValue(output) ==
             std::min<Int>(aVal, std::min<Int>(bVal, cVal)));
 }
 
@@ -284,8 +284,8 @@ class MockExists : public Exists {
     registered = true;
     Exists::registerVars();
   }
-  explicit MockExists(Engine& engine, VarId output, std::vector<VarId> varArray)
-      : Exists(engine, output, varArray) {
+  explicit MockExists(SolverBase& solver, VarId output, std::vector<VarId> varArray)
+      : Exists(solver, output, varArray) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Exists::recompute(timestamp);
     });
@@ -310,20 +310,20 @@ class MockExists : public Exists {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(ExistsTest, EngineIntegration) {
+TEST_F(ExistsTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
     std::vector<VarId> args;
     const Int numArgs = 10;
     for (Int value = 1; value <= numArgs; ++value) {
-      args.push_back(engine->makeIntVar(value, 1, numArgs));
+      args.push_back(solver->makeIntVar(value, 1, numArgs));
     }
     const VarId modifiedVarId = args.front();
-    const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
+    const VarId output = solver->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockExists>(
-        &engine->makeInvariant<MockExists>(*engine, output, args),
+        &solver->makeInvariant<MockExists>(*solver, output, args),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }

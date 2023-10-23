@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "invariantgraph/types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/inDomain.hpp"
 #include "propagation/views/inSparseDomain.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
@@ -112,14 +112,14 @@ class VarNode {
   [[nodiscard]] bool isIntVar() const noexcept;
 
   /**
-   * @return if the bound range of the corresponding IntVar in engine is a
+   * @return if the bound range of the corresponding IntVar in solver is a
    * sub-set of SearchDomain _domain, then returns an empty vector, otherwise
    * the relative complement of varLb..varUb in SearchDomain is returned
    */
   [[nodiscard]] std::vector<DomainEntry> constrainedDomain(
-      const propagation::Engine&);
+      const propagation::SolverBase&);
 
-  propagation::VarId postDomainConstraint(propagation::Engine&,
+  propagation::VarId postDomainConstraint(propagation::SolverBase&,
                                           std::vector<DomainEntry>&&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;

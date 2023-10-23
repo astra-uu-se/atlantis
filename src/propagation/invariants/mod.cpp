@@ -4,35 +4,35 @@ namespace atlantis::propagation {
 
 static inline Int mod(Int xVal, Int yVal) { return xVal % std::abs(yVal); }
 
-Mod::Mod(Engine& engine, VarId output, VarId x, VarId y)
-    : Invariant(engine), _output(output), _x(x), _y(y) {
+Mod::Mod(SolverBase& solver, VarId output, VarId x, VarId y)
+    : Invariant(solver), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void Mod::registerVars() {
   assert(!_id.equals(NULL_ID));
-  _engine.registerInvariantInput(_id, _x, 0);
-  _engine.registerInvariantInput(_id, _y, 0);
+  _solver.registerInvariantInput(_id, _x, 0);
+  _solver.registerInvariantInput(_id, _y, 0);
   registerDefinedVariable(_output);
 }
 
 void Mod::updateBounds(bool widenOnly) {
-  _engine.updateBounds(_output, std::min(Int(0), _engine.lowerBound(_x)),
-                       std::max(Int(0), _engine.upperBound(_x)), widenOnly);
+  _solver.updateBounds(_output, std::min(Int(0), _solver.lowerBound(_x)),
+                       std::max(Int(0), _solver.upperBound(_x)), widenOnly);
 }
 
 void Mod::close(Timestamp) {
-  assert(_engine.lowerBound(_y) != 0 || _engine.upperBound(_y) != 0);
-  if (_engine.lowerBound(_y) <= 0 && 0 <= _engine.upperBound(_y)) {
-    _zeroReplacement = _engine.upperBound(_y) >= 1 ? 1 : -1;
+  assert(_solver.lowerBound(_y) != 0 || _solver.upperBound(_y) != 0);
+  if (_solver.lowerBound(_y) <= 0 && 0 <= _solver.upperBound(_y)) {
+    _zeroReplacement = _solver.upperBound(_y) >= 1 ? 1 : -1;
   }
 }
 
 void Mod::recompute(Timestamp ts) {
   assert(_zeroReplacement != 0);
-  const Int denominator = _engine.value(ts, _y);
+  const Int denominator = _solver.value(ts, _y);
   updateValue(ts, _output,
-              _engine.value(ts, _x) %
+              _solver.value(ts, _x) %
                   std::abs(denominator != 0 ? denominator : _zeroReplacement));
 }
 

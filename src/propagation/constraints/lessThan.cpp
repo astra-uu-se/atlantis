@@ -8,30 +8,30 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-LessThan::LessThan(Engine& engine, VarId violationId, VarId x, VarId y)
-    : Constraint(engine, violationId), _x(x), _y(y) {
+LessThan::LessThan(SolverBase& solver, VarId violationId, VarId x, VarId y)
+    : Constraint(solver, violationId), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void LessThan::registerVars() {
   assert(_id != NULL_ID);
-  _engine.registerInvariantInput(_id, _x, LocalId(0));
-  _engine.registerInvariantInput(_id, _y, LocalId(0));
+  _solver.registerInvariantInput(_id, _x, LocalId(0));
+  _solver.registerInvariantInput(_id, _y, LocalId(0));
   registerDefinedVariable(_violationId);
 }
 
 void LessThan::updateBounds(bool widenOnly) {
-  _engine.updateBounds(
+  _solver.updateBounds(
       _violationId,
-      std::max(Int(0), 1 + _engine.lowerBound(_x) - _engine.upperBound(_y)),
-      std::max(Int(0), 1 + _engine.upperBound(_x) - _engine.lowerBound(_y)),
+      std::max(Int(0), 1 + _solver.lowerBound(_x) - _solver.upperBound(_y)),
+      std::max(Int(0), 1 + _solver.upperBound(_x) - _solver.lowerBound(_y)),
       widenOnly);
 }
 
 void LessThan::recompute(Timestamp ts) {
   updateValue(
       ts, _violationId,
-      std::max(Int(0), _engine.value(ts, _x) - _engine.value(ts, _y) + 1));
+      std::max(Int(0), _solver.value(ts, _x) - _solver.value(ts, _y) + 1));
 }
 
 void LessThan::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

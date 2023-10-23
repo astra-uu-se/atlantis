@@ -5,7 +5,7 @@
 
 #include "constraint.hpp"
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
@@ -15,7 +15,7 @@ class NotEqual : public Constraint {
   const VarId _x, _y;
 
  public:
-  explicit NotEqual(Engine&, VarId violationId, VarId x, VarId y);
+  explicit NotEqual(SolverBase&, VarId violationId, VarId x, VarId y);
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;

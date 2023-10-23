@@ -41,8 +41,8 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
   static std::unique_ptr<GlobalCardinalityLowUpNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
 }  // namespace invariantgraph

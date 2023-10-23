@@ -23,8 +23,8 @@ class ArrayIntMinimumNode : public InvariantNode {
   static std::unique_ptr<ArrayIntMinimumNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
 }  // namespace invariantgraph

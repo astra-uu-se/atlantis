@@ -4,14 +4,14 @@
 #include <limits>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/committable.hpp"
 #include "propagation/variables/intVar.hpp"
 #include "propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
 
-class Engine;
+class SolverBase;
 
 class InDomain : public IntView {
  private:
@@ -22,7 +22,7 @@ class InDomain : public IntView {
   Int compute(const Int val) const;
 
  public:
-  explicit InDomain(Engine& engine, VarId parentId,
+  explicit InDomain(SolverBase& solver, VarId parentId,
                     std::vector<DomainEntry>&& domain);
 
   [[nodiscard]] Int value(Timestamp) override;

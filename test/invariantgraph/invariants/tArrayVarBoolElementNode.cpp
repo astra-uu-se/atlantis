@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/invariantNodes/arrayVarBoolElementNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -53,35 +53,35 @@ TEST_F(ArrayVarBoolElementNodeTest, construction) {
 }
 
 TEST_F(ArrayVarBoolElementNodeTest, application) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
   // a, b, c, idx
-  EXPECT_EQ(engine.searchVariables().size(), 4);
+  EXPECT_EQ(solver.searchVariables().size(), 4);
 
   // a, b, c, idx, y
-  EXPECT_EQ(engine.numVariables(), 5);
+  EXPECT_EQ(solver.numVariables(), 5);
 
   // elementVar
-  EXPECT_EQ(engine.numInvariants(), 1);
+  EXPECT_EQ(solver.numInvariants(), 1);
 }
 
 TEST_F(ArrayVarBoolElementNodeTest, propagation) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
-  invNode().registerOutputVariables(*_invariantGraph, engine);
-  invNode().registerNode(*_invariantGraph, engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerNode(*_invariantGraph, solver);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
   EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
@@ -98,27 +98,27 @@ TEST_F(ArrayVarBoolElementNodeTest, propagation) {
   inputs.emplace_back(varId(invNode().staticInputVarNodeIds().front()));
   for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
     inputs.emplace_back(varId(varNodeId));
-    engine.updateBounds(varId(varNodeId), 0, 10, true);
+    solver.updateBounds(varId(varNodeId), 0, 10, true);
   }
-  engine.close();
+  solver.close();
   std::vector<Int> values(4, 0);
 
-  for (values.at(0) = std::max(Int(1), engine.lowerBound(inputs.at(0)));
-       values.at(0) <= std::min(Int(3), engine.upperBound(inputs.at(0)));
+  for (values.at(0) = std::max(Int(1), solver.lowerBound(inputs.at(0)));
+       values.at(0) <= std::min(Int(3), solver.upperBound(inputs.at(0)));
        ++values.at(0)) {
     for (values.at(1) = 0; values.at(1) <= 1; ++values.at(1)) {
       for (values.at(2) = 0; values.at(2) <= 1; ++values.at(2)) {
         for (values.at(3) = 0; values.at(3) <= 1; ++values.at(3)) {
-          engine.beginMove();
+          solver.beginMove();
           for (size_t i = 0; i < inputs.size(); ++i) {
-            engine.setValue(inputs.at(i), values.at(i));
+            solver.setValue(inputs.at(i), values.at(i));
           }
-          engine.endMove();
+          solver.endMove();
 
-          engine.beginProbe();
-          engine.query(outputId);
-          engine.endProbe();
-          EXPECT_EQ(engine.currentValue(outputId), values.at(values.at(0)) > 0);
+          solver.beginProbe();
+          solver.query(outputId);
+          solver.endProbe();
+          EXPECT_EQ(solver.currentValue(outputId), values.at(values.at(0)) > 0);
         }
       }
     }

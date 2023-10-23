@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
@@ -13,8 +13,8 @@ class IntMaxView : public IntView {
   Int _max;
 
  public:
-  explicit IntMaxView(Engine& engine, VarId parentId, Int max)
-      : IntView(engine, parentId), _max(max) {}
+  explicit IntMaxView(SolverBase& solver, VarId parentId, Int max)
+      : IntView(solver, parentId), _max(max) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

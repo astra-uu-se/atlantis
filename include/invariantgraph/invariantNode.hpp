@@ -8,7 +8,7 @@
 
 #include "invariantgraph/types.hpp"
 #include "invariantgraph/varNode.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::invariantgraph {
 /**
@@ -44,25 +44,25 @@ class InvariantNode {
   virtual bool prune(InvariantGraph&);
 
   /**
-   * Creates as all the variables the node defines in @p engine.
+   * Creates as all the variables the node defines in @p solver.
    *
-   * @param engine The engine with which to register the variables, constraints
+   * @param solver The solver with which to register the variables, constraints
    * and views.
    */
   virtual void registerOutputVariables(InvariantGraph&,
-                                       propagation::Engine&) = 0;
+                                       propagation::SolverBase&) = 0;
 
   /**
-   * Registers the current node with the engine, as well as all the variables
+   * Registers the current node with the solver, as well as all the variables
    * it defines.
    *
    * Note: This method assumes it is called after all the inputs to this node
-   * are already registered with the engine.
+   * are already registered with the solver.
    *
-   * @param engine The engine with which to register the variables, constraints
+   * @param solver The solver with which to register the variables, constraints
    * and views.
    */
-  virtual void registerNode(InvariantGraph&, propagation::Engine&) = 0;
+  virtual void registerNode(InvariantGraph&, propagation::SolverBase&) = 0;
 
   /**
    * @return The variable nodes defined by this node.
@@ -100,8 +100,8 @@ class InvariantNode {
   friend class ReifiedConstraint;
 
  protected:
-  static propagation::VarId makeEngineVar(
-      propagation::Engine&, VarNode&, Int initialValue = 0);
+  static propagation::VarId makeSolverVar(propagation::SolverBase&, VarNode&,
+                                          Int initialValue = 0);
 
   void markOutputTo(VarNode& node, bool registerHere = true);
 

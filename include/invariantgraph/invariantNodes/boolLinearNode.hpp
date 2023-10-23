@@ -30,9 +30,9 @@ class BoolLinearNode : public InvariantNode {
   static std::unique_ptr<BoolLinearNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 };

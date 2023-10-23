@@ -25,9 +25,9 @@ class ArrayIntElementNode : public InvariantNode {
   static std::unique_ptr<ArrayIntElementNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] const std::vector<Int>& as() const noexcept { return _as; }
   [[nodiscard]] VarNodeId b() const noexcept {

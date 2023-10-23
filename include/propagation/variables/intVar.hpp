@@ -8,7 +8,7 @@
 
 namespace atlantis::propagation {
 
-class Engine;  // Forward declaration
+class SolverBase;  // Forward declaration
 
 class IntVar : public Var {
  private:
@@ -31,8 +31,8 @@ class IntVar : public Var {
     _value.commitIf(timestamp);
   }
 
-  friend class Engine;
-  friend class PropagationEngine;
+  friend class SolverBase;
+  friend class Solver;
 
  public:
   explicit IntVar(Int lowerBound, Int upperBound);

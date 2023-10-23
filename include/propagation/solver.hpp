@@ -6,15 +6,15 @@
 #include <set>
 
 #include "exceptions/exceptions.hpp"
-#include "propagation/engine.hpp"
 #include "propagation/propagation/outputToInputExplorer.hpp"
 #include "propagation/propagation/propagationGraph.hpp"
-#include "utils/hashes.hpp"
+#include "propagation/solverBase.hpp"
 #include "propagation/utils/idMap.hpp"
+#include "utils/hashes.hpp"
 
 namespace atlantis::propagation {
 
-class PropagationEngine : public Engine {
+class Solver : public SolverBase {
  protected:
   PropagationMode _propagationMode;
 
@@ -55,7 +55,7 @@ class PropagationEngine : public Engine {
                                        InvariantId invariantId) final;
 
  public:
-  PropagationEngine(/* args */);
+  Solver(/* args */);
 
   void open() final;
   void close() final;
@@ -140,7 +140,7 @@ class PropagationEngine : public Engine {
   PropagationGraph& propGraph();
 };
 
-inline void PropagationEngine::incCurrentTimestamp() {
+inline void Solver::incCurrentTimestamp() {
   ++_currentTimestamp;
   if (_propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     clearPropagationQueue();
@@ -154,43 +154,40 @@ inline void PropagationEngine::incCurrentTimestamp() {
                      }));
 }
 
-inline size_t PropagationEngine::numVariables() const {
-  return _propGraph.numVariables();
-}
+inline size_t Solver::numVariables() const { return _propGraph.numVariables(); }
 
-inline size_t PropagationEngine::numInvariants() const {
+inline size_t Solver::numInvariants() const {
   return _propGraph.numInvariants();
 }
 
-inline InvariantId PropagationEngine::definingInvariant(VarId id) const {
+inline InvariantId Solver::definingInvariant(VarId id) const {
   // Returns NULL_ID if there is no defining invariant
   return _propGraph.definingInvariant(id);
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::variablesDefinedBy(
+inline const std::vector<VarIdBase>& Solver::variablesDefinedBy(
     InvariantId invariantId) const {
   return _propGraph.variablesDefinedBy(invariantId);
 }
 
 inline const std::vector<PropagationGraph::ListeningInvariantData>&
-PropagationEngine::listeningInvariantData(VarId id) const {
+Solver::listeningInvariantData(VarId id) const {
   return _propGraph.listeningInvariantData(id);
 }
 
-inline VarId PropagationEngine::nextInput(InvariantId invariantId) {
+inline VarId Solver::nextInput(InvariantId invariantId) {
   return sourceId(_store.invariant(invariantId).nextInput(_currentTimestamp));
 }
-inline void PropagationEngine::notifyCurrentInputChanged(
-    InvariantId invariantId) {
+inline void Solver::notifyCurrentInputChanged(InvariantId invariantId) {
   _store.invariant(invariantId).notifyCurrentInputChanged(_currentTimestamp);
 }
 
-inline bool PropagationEngine::hasChanged(Timestamp ts, VarId id) const {
+inline bool Solver::hasChanged(Timestamp ts, VarId id) const {
   assert(id.idType != VarIdType::view);
   return _store.constIntVar(id).hasChanged(ts);
 }
 
-inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
+inline void Solver::setValue(Timestamp ts, VarId id, Int val) {
   assert(id.idType != VarIdType::view);
   assert(_propGraph.isSearchVariable(id));
 
@@ -211,49 +208,46 @@ inline void PropagationEngine::setValue(Timestamp ts, VarId id, Int val) {
   enqueueComputedVar(id);
 }
 
-inline void PropagationEngine::setPropagationMode(PropagationMode propMode) {
+inline void Solver::setPropagationMode(PropagationMode propMode) {
   if (!_isOpen) {
-    throw EngineClosedException(
+    throw SolverClosedException(
         "Cannot set propagation mode when model is closed");
   }
   _propagationMode = propMode;
 }
 
-inline OutputToInputMarkingMode PropagationEngine::outputToInputMarkingMode()
-    const {
+inline OutputToInputMarkingMode Solver::outputToInputMarkingMode() const {
   return _outputToInputExplorer.outputToInputMarkingMode();
 }
 
-inline void PropagationEngine::setOutputToInputMarkingMode(
+inline void Solver::setOutputToInputMarkingMode(
     OutputToInputMarkingMode markingMode) {
   if (!_isOpen) {
-    throw EngineClosedException(
+    throw SolverClosedException(
         "Cannot set output-to-input marking mode when model is closed");
   }
   _outputToInputExplorer.setOutputToInputMarkingMode(markingMode);
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::searchVariables()
-    const {
+inline const std::vector<VarIdBase>& Solver::searchVariables() const {
   return _propGraph.searchVariables();
 }
 
-inline const std::vector<VarIdBase>& PropagationEngine::evaluationVariables()
-    const {
+inline const std::vector<VarIdBase>& Solver::evaluationVariables() const {
   return _propGraph.evaluationVariables();
 }
 
-inline const std::vector<std::pair<VarIdBase, bool>>&
-PropagationEngine::inputVariables(InvariantId invariantId) const {
+inline const std::vector<std::pair<VarIdBase, bool>>& Solver::inputVariables(
+    InvariantId invariantId) const {
   return _propGraph.inputVariables(invariantId);
 }
 
-inline const std::unordered_set<VarIdBase>&
-PropagationEngine::modifiedSearchVariables() const {
+inline const std::unordered_set<VarIdBase>& Solver::modifiedSearchVariables()
+    const {
   return _modifiedSearchVariables;
 }
 
-inline void PropagationEngine::outputToInputPropagate() {
+inline void Solver::outputToInputPropagate() {
   assert(propagationMode() == PropagationMode::OUTPUT_TO_INPUT);
   _outputToInputExplorer.propagate(_currentTimestamp);
 }

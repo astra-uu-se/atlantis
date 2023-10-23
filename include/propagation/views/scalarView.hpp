@@ -1,6 +1,6 @@
 #pragma once
 
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
@@ -10,8 +10,8 @@ class ScalarView : public IntView {
   const Int _scalar;
 
  public:
-  explicit ScalarView(Engine& engine, VarId parentId, Int scalar)
-      : IntView(engine, parentId), _scalar(scalar) {}
+  explicit ScalarView(SolverBase& solver, VarId parentId, Int scalar)
+      : IntView(solver, parentId), _scalar(scalar) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

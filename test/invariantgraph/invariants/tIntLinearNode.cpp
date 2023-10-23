@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/invariantNodes/intLinearNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -93,54 +93,54 @@ TEST_F(LinearNodeTest, construction_should_register_linear) {
 TEST_F(LinearNodeTest, application_should_register_view) {
   makeView();
 
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
-  EXPECT_EQ(engine.lowerBound(varId(a)), -4);
-  EXPECT_EQ(engine.upperBound(varId(a)), 0);
-
-  // b
-  EXPECT_EQ(engine.searchVariables().size(), 1);
+  EXPECT_EQ(solver.lowerBound(varId(a)), -4);
+  EXPECT_EQ(solver.upperBound(varId(a)), 0);
 
   // b
-  EXPECT_EQ(engine.numVariables(), 1);
+  EXPECT_EQ(solver.searchVariables().size(), 1);
+
+  // b
+  EXPECT_EQ(solver.numVariables(), 1);
 }
 
 TEST_F(LinearNodeTest, application_should_register_linear) {
   makeLinear();
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
-  EXPECT_EQ(engine.lowerBound(varId(a)), -11);
-  EXPECT_EQ(engine.upperBound(varId(a)), -3);
+  EXPECT_EQ(solver.lowerBound(varId(a)), -11);
+  EXPECT_EQ(solver.upperBound(varId(a)), -3);
 
   // b and c
-  EXPECT_EQ(engine.searchVariables().size(), 2);
+  EXPECT_EQ(solver.searchVariables().size(), 2);
 
   // b, c, intermediate (a is a view, and is not counted here)
-  EXPECT_EQ(engine.numVariables(), 3);
+  EXPECT_EQ(solver.numVariables(), 3);
 
   // linear
-  EXPECT_EQ(engine.numInvariants(), 1);
+  EXPECT_EQ(solver.numInvariants(), 1);
 }
 }  // namespace atlantis::testing

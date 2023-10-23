@@ -62,15 +62,15 @@ ArrayIntElement2dNode::fromModelConstraint(
 }
 
 void ArrayIntElement2dNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void ArrayIntElement2dNode::registerNode(InvariantGraph& invariantGraph,
-                                         propagation::Engine& engine) {
+                                         propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  engine.makeInvariant<propagation::Element2dConst>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::Element2dConst>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), _parMatrix,
       _offset1, _offset2);
 }

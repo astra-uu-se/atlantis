@@ -6,7 +6,7 @@
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/constraints/boolEqual.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -19,8 +19,8 @@ class BoolEqualTest : public InvariantTest {
 
   Int computeViolation(const Timestamp ts,
                        const std::array<const VarId, 2>& inputs) {
-    return computeViolation(engine->value(ts, inputs.at(0)),
-                            engine->value(ts, inputs.at(1)));
+    return computeViolation(solver->value(ts, inputs.at(0)),
+                            solver->value(ts, inputs.at(1)));
   }
 
   Int computeViolation(const std::array<const Int, 2>& inputs) {
@@ -28,7 +28,7 @@ class BoolEqualTest : public InvariantTest {
   }
 
   Int computeViolation(const Timestamp ts, const VarId x, const VarId y) {
-    return computeViolation(engine->value(ts, x), engine->value(ts, y));
+    return computeViolation(solver->value(ts, x), solver->value(ts, y));
   }
 
   Int computeViolation(const Int xVal, const Int yVal) {
@@ -39,33 +39,33 @@ class BoolEqualTest : public InvariantTest {
 TEST_F(BoolEqualTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {0, 0}, {0, 1}, {0, 10}, {1, 10}, {10, 100}};
-  engine->open();
-  const VarId x = engine->makeIntVar(
+  solver->open();
+  const VarId x = solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId y = engine->makeIntVar(
+  const VarId y = solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId violationId = engine->makeIntVar(0, 0, 2);
+  const VarId violationId = solver->makeIntVar(0, 0, 2);
   BoolEqual& invariant =
-      engine->makeConstraint<BoolEqual>(*engine, violationId, x, y);
-  engine->close();
+      solver->makeConstraint<BoolEqual>(*solver, violationId, x, y);
+  solver->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_TRUE(xLb <= xUb);
-    engine->updateBounds(x, xLb, xUb, false);
+    solver->updateBounds(x, xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
-      engine->updateBounds(y, yLb, yUb, false);
+      solver->updateBounds(y, yLb, yUb, false);
       invariant.updateBounds();
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-        engine->setValue(engine->currentTimestamp(), x, xVal);
+        solver->setValue(solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-          engine->setValue(engine->currentTimestamp(), y, yVal);
+          solver->setValue(solver->currentTimestamp(), y, yVal);
           invariant.updateBounds();
-          invariant.recompute(engine->currentTimestamp());
+          invariant.recompute(solver->currentTimestamp());
         }
       }
-      ASSERT_GE(0, engine->lowerBound(violationId));
-      ASSERT_LE(1, engine->upperBound(violationId));
+      ASSERT_GE(0, solver->lowerBound(violationId));
+      ASSERT_LE(1, solver->upperBound(violationId));
     }
   }
 }
@@ -78,24 +78,24 @@ TEST_F(BoolEqualTest, Recompute) {
 
   EXPECT_TRUE(xLb <= xUb);
   EXPECT_TRUE(yLb <= yUb);
-  engine->open();
-  const std::array<const VarId, 2> inputs{engine->makeIntVar(xUb, xLb, xUb),
-                                          engine->makeIntVar(yUb, yLb, yUb)};
+  solver->open();
+  const std::array<const VarId, 2> inputs{solver->makeIntVar(xUb, xLb, xUb),
+                                          solver->makeIntVar(yUb, yLb, yUb)};
   const VarId violationId =
-      engine->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  BoolEqual& invariant = engine->makeConstraint<BoolEqual>(
-      *engine, violationId, inputs.at(0), inputs.at(1));
-  engine->close();
+      solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
+  BoolEqual& invariant = solver->makeConstraint<BoolEqual>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
+  solver->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
     for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      engine->setValue(engine->currentTimestamp(), inputs.at(0), xVal);
-      engine->setValue(engine->currentTimestamp(), inputs.at(1), yVal);
+      solver->setValue(solver->currentTimestamp(), inputs.at(0), xVal);
+      solver->setValue(solver->currentTimestamp(), inputs.at(1), yVal);
 
       const Int expectedViolation = computeViolation(xVal, yVal);
-      invariant.recompute(engine->currentTimestamp());
+      invariant.recompute(solver->currentTimestamp());
       EXPECT_EQ(expectedViolation,
-                engine->value(engine->currentTimestamp(), violationId));
+                solver->value(solver->currentTimestamp(), violationId));
     }
   }
 }
@@ -105,24 +105,24 @@ TEST_F(BoolEqualTest, NotifyInputChanged) {
   const Int ub = 50;
   EXPECT_TRUE(lb <= ub);
 
-  engine->open();
-  const std::array<const VarId, 2> inputs{engine->makeIntVar(ub, lb, ub),
-                                          engine->makeIntVar(ub, lb, ub)};
-  const VarId violationId = engine->makeIntVar(0, 0, ub - lb);
-  BoolEqual& invariant = engine->makeConstraint<BoolEqual>(
-      *engine, violationId, inputs.at(0), inputs.at(1));
-  engine->close();
+  solver->open();
+  const std::array<const VarId, 2> inputs{solver->makeIntVar(ub, lb, ub),
+                                          solver->makeIntVar(ub, lb, ub)};
+  const VarId violationId = solver->makeIntVar(0, 0, ub - lb);
+  BoolEqual& invariant = solver->makeConstraint<BoolEqual>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
+  solver->close();
 
-  Timestamp ts = engine->currentTimestamp();
+  Timestamp ts = solver->currentTimestamp();
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
     for (size_t i = 0; i < inputs.size(); ++i) {
-      engine->setValue(ts, inputs.at(i), val);
+      solver->setValue(ts, inputs.at(i), val);
       const Int expectedViolation = computeViolation(ts, inputs);
 
       invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedViolation, engine->value(ts, violationId));
+      EXPECT_EQ(expectedViolation, solver->value(ts, violationId));
     }
   }
 }
@@ -132,18 +132,18 @@ TEST_F(BoolEqualTest, NextInput) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  engine->open();
-  const std::array<const VarId, 2> inputs = {engine->makeIntVar(0, lb, ub),
-                                             engine->makeIntVar(1, lb, ub)};
-  const VarId violationId = engine->makeIntVar(0, 0, 2);
+  solver->open();
+  const std::array<const VarId, 2> inputs = {solver->makeIntVar(0, lb, ub),
+                                             solver->makeIntVar(1, lb, ub)};
+  const VarId violationId = solver->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  BoolEqual& invariant = engine->makeConstraint<BoolEqual>(
-      *engine, violationId, inputs.at(0), inputs.at(1));
-  engine->close();
+  BoolEqual& invariant = solver->makeConstraint<BoolEqual>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < inputs.size(); ++i) {
       const VarId varId = invariant.nextInput(ts);
@@ -165,26 +165,26 @@ TEST_F(BoolEqualTest, NotifyCurrentInputChanged) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  engine->open();
+  solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   const std::array<const VarId, 2> inputs = {
-      engine->makeIntVar(valueDist(gen), lb, ub),
-      engine->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId violationId = engine->makeIntVar(0, 0, ub - lb);
-  BoolEqual& invariant = engine->makeConstraint<BoolEqual>(
-      *engine, violationId, inputs.at(0), inputs.at(1));
-  engine->close();
+      solver->makeIntVar(valueDist(gen), lb, ub),
+      solver->makeIntVar(valueDist(gen), lb, ub)};
+  const VarId violationId = solver->makeIntVar(0, 0, ub - lb);
+  BoolEqual& invariant = solver->makeConstraint<BoolEqual>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = engine->value(ts, varId);
+      const Int oldVal = solver->value(ts, varId);
       do {
-        engine->setValue(ts, varId, valueDist(gen));
-      } while (engine->value(ts, varId) == oldVal);
+        solver->setValue(ts, varId, valueDist(gen));
+      } while (solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(engine->value(ts, violationId), computeViolation(ts, inputs));
+      EXPECT_EQ(solver->value(ts, violationId), computeViolation(ts, inputs));
     }
   }
 }
@@ -199,47 +199,47 @@ TEST_F(BoolEqualTest, Commit) {
   std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  engine->open();
+  solver->open();
   const std::array<const VarId, 2> inputs{
-      engine->makeIntVar(committedValues.at(0), lb, ub),
-      engine->makeIntVar(committedValues.at(1), lb, ub)};
+      solver->makeIntVar(committedValues.at(0), lb, ub),
+      solver->makeIntVar(committedValues.at(1), lb, ub)};
 
-  const VarId violationId = engine->makeIntVar(0, 0, 2);
-  BoolEqual& invariant = engine->makeConstraint<BoolEqual>(
-      *engine, violationId, inputs.at(0), inputs.at(1));
-  engine->close();
+  const VarId violationId = solver->makeIntVar(0, 0, 2);
+  BoolEqual& invariant = solver->makeConstraint<BoolEqual>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
+  solver->close();
 
-  EXPECT_EQ(engine->value(engine->currentTimestamp(), violationId),
-            computeViolation(engine->currentTimestamp(), inputs));
+  EXPECT_EQ(solver->value(solver->currentTimestamp(), violationId),
+            computeViolation(solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
+    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputs.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      engine->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == engine->value(ts, inputs.at(i)));
+      solver->setValue(ts, inputs.at(i), valueDist(gen));
+    } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedViolation = engine->value(ts, violationId);
+    const Int notifiedViolation = solver->value(ts, violationId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedViolation, engine->value(ts, violationId));
+    ASSERT_EQ(notifiedViolation, solver->value(ts, violationId));
 
-    engine->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = engine->value(ts, inputs.at(i));
-    engine->commitIf(ts, violationId);
+    solver->commitIf(ts, inputs.at(i));
+    committedValues.at(i) = solver->value(ts, inputs.at(i));
+    solver->commitIf(ts, violationId);
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedViolation, engine->value(ts + 1, violationId));
+    ASSERT_EQ(notifiedViolation, solver->value(ts + 1, violationId));
   }
 }
 
@@ -250,8 +250,8 @@ class MockBoolEqual : public BoolEqual {
     registered = true;
     BoolEqual::registerVars();
   }
-  explicit MockBoolEqual(Engine& engine, VarId violationId, VarId x, VarId y)
-      : BoolEqual(engine, violationId, x, y) {
+  explicit MockBoolEqual(SolverBase& solver, VarId violationId, VarId x, VarId y)
+      : BoolEqual(solver, violationId, x, y) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BoolEqual::recompute(timestamp);
     });
@@ -276,16 +276,16 @@ class MockBoolEqual : public BoolEqual {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(BoolEqualTest, EngineIntegration) {
+TEST_F(BoolEqualTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
-    const VarId x = engine->makeIntVar(5, 0, 100);
-    const VarId y = engine->makeIntVar(0, 0, 100);
-    const VarId viol = engine->makeIntVar(0, 0, 200);
+    const VarId x = solver->makeIntVar(5, 0, 100);
+    const VarId y = solver->makeIntVar(0, 0, 100);
+    const VarId viol = solver->makeIntVar(0, 0, 200);
     testNotifications<MockBoolEqual>(
-        &engine->makeConstraint<MockBoolEqual>(*engine, viol, x, y),
+        &solver->makeConstraint<MockBoolEqual>(*solver, viol, x, y),
         {propMode, markingMode, 3, x, 1, viol});
   }
 }

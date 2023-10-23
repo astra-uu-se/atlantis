@@ -71,7 +71,7 @@ std::unique_ptr<IntLinearNode> IntLinearNode::fromModelConstraint(
 }
 
 void IntLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                            propagation::Engine& engine) {
+                                            propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().size() == 1 &&
       invariantGraph.varId(staticInputVarNodeIds().front()) !=
           propagation::NULL_ID) {
@@ -82,40 +82,40 @@ void IntLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
     }
 
     if (_definingCoefficient == -1) {
-      auto scalar = engine.makeIntView<propagation::ScalarView>(
-          engine, invariantGraph.varId(staticInputVarNodeIds().front()),
+      auto scalar = solver.makeIntView<propagation::ScalarView>(
+          solver, invariantGraph.varId(staticInputVarNodeIds().front()),
           _coeffs.front());
       invariantGraph.varNode(outputVarNodeIds().front())
-          .setVarId(engine.makeIntView<propagation::IntOffsetView>(
-              engine, scalar, -_sum));
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, scalar, -_sum));
     } else {
       assert(_definingCoefficient == 1);
-      auto scalar = engine.makeIntView<propagation::ScalarView>(
-          engine, invariantGraph.varId(staticInputVarNodeIds().front()),
+      auto scalar = solver.makeIntView<propagation::ScalarView>(
+          solver, invariantGraph.varId(staticInputVarNodeIds().front()),
           -_coeffs.front());
       invariantGraph.varNode(outputVarNodeIds().front())
-          .setVarId(engine.makeIntView<propagation::IntOffsetView>(
-              engine, scalar, _sum));
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, scalar, _sum));
     }
 
     return;
   }
 
   if (_intermediateVarId == propagation::NULL_ID) {
-    _intermediateVarId = engine.makeIntVar(0, 0, 0);
+    _intermediateVarId = solver.makeIntVar(0, 0, 0);
     assert(invariantGraph.varId(outputVarNodeIds().front()) ==
            propagation::NULL_ID);
 
     auto offsetIntermediate = _intermediateVarId;
     if (_sum != 0) {
-      offsetIntermediate = engine.makeIntView<propagation::IntOffsetView>(
-          engine, _intermediateVarId, -_sum);
+      offsetIntermediate = solver.makeIntView<propagation::IntOffsetView>(
+          solver, _intermediateVarId, -_sum);
     }
 
     auto invertedIntermediate = offsetIntermediate;
     if (_definingCoefficient == 1) {
-      invertedIntermediate = engine.makeIntView<propagation::ScalarView>(
-          engine, offsetIntermediate, -1);
+      invertedIntermediate = solver.makeIntView<propagation::ScalarView>(
+          solver, offsetIntermediate, -1);
     }
 
     invariantGraph.varNode(outputVarNodeIds().front())
@@ -124,7 +124,7 @@ void IntLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
 }
 
 void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
-                                 propagation::Engine& engine) {
+                                 propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
 
@@ -137,7 +137,7 @@ void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
     return;
   }
 
-  engine.makeInvariant<propagation::Linear>(engine, _intermediateVarId, _coeffs,
+  solver.makeInvariant<propagation::Linear>(solver, _intermediateVarId, _coeffs,
                                             variables);
 }
 

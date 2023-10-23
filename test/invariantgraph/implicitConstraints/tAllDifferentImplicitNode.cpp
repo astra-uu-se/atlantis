@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
 namespace atlantis::testing {
@@ -42,25 +42,25 @@ TEST_F(AllDifferentImplicitNodeTest, construction) {
 }
 
 TEST_F(AllDifferentImplicitNodeTest, application) {
-  propagation::PropagationEngine engine;
-  engine.open();
+  propagation::Solver solver;
+  solver.open();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
   // a, b, c and d
-  EXPECT_EQ(engine.searchVariables().size(), 4);
+  EXPECT_EQ(solver.searchVariables().size(), 4);
 
   // a, b, c and d
-  EXPECT_EQ(engine.numVariables(), 4);
+  EXPECT_EQ(solver.numVariables(), 4);
 
-  EXPECT_EQ(engine.numInvariants(), 0);
+  EXPECT_EQ(solver.numInvariants(), 0);
 
   auto neighbourhood = invNode().neighbourhood();
 

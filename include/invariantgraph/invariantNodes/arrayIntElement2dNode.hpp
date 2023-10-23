@@ -28,9 +28,9 @@ class ArrayIntElement2dNode : public InvariantNode {
       const fznparser::Constraint&, InvariantGraph&);
 
   void registerOutputVariables(InvariantGraph&,
-                               propagation::Engine& engine) override;
+                               propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] VarNodeId idx1() const noexcept {
     return staticInputVarNodeIds().front();

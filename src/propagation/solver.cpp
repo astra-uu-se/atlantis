@@ -1,29 +1,29 @@
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::propagation {
 
-PropagationEngine::PropagationEngine()
+Solver::Solver()
     : _propagationMode(PropagationMode::INPUT_TO_OUTPUT),
       _propGraph(_store, ESTIMATED_NUM_OBJECTS),
       _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
       _isEnqueued(ESTIMATED_NUM_OBJECTS),
       _modifiedSearchVariables() {}
 
-PropagationGraph& PropagationEngine::propGraph() { return _propGraph; }
+PropagationGraph& Solver::propGraph() { return _propGraph; }
 
-void PropagationEngine::open() {
+void Solver::open() {
   if (_isOpen) {
-    throw EngineOpenException("Engine already open.");
+    throw SolverOpenException("SolverBase already open.");
   }
-  if (_engineState != EngineState::IDLE) {
-    throw EngineStateException("Engine must be idle before opening.");
+  if (_solverState != SolverState::IDLE) {
+    throw SolverStateException("SolverBase must be idle before opening.");
   }
   _isOpen = true;
 }
 
-void PropagationEngine::close() {
+void Solver::close() {
   if (!_isOpen) {
-    throw EngineClosedException("Engine already closed.");
+    throw SolverClosedException("SolverBase already closed.");
   }
 
   incCurrentTimestamp();
@@ -85,7 +85,7 @@ void PropagationEngine::close() {
 }
 
 //---------------------Registration---------------------
-void PropagationEngine::enqueueComputedVar(VarId id) {
+void Solver::enqueueComputedVar(VarId id) {
   if (_isEnqueued.get(id)) {
     return;
   }
@@ -93,7 +93,7 @@ void PropagationEngine::enqueueComputedVar(VarId id) {
   _isEnqueued.set(id, true);
 }
 
-void PropagationEngine::enqueueComputedVar(VarId id, size_t curLayer) {
+void Solver::enqueueComputedVar(VarId id, size_t curLayer) {
   if (_isEnqueued.get(id)) {
     return;
   }
@@ -107,35 +107,35 @@ void PropagationEngine::enqueueComputedVar(VarId id, size_t curLayer) {
   _isEnqueued.set(id, true);
 }
 
-void PropagationEngine::registerInvariantInput(InvariantId invariantId,
+void Solver::registerInvariantInput(InvariantId invariantId,
                                                VarId inputId, LocalId localId,
                                                bool isDynamicInput) {
   _propGraph.registerInvariantInput(invariantId, sourceId(inputId), localId,
                                     isDynamicInput);
 }
 
-void PropagationEngine::registerDefinedVariable(VarId varId,
+void Solver::registerDefinedVariable(VarId varId,
                                                 InvariantId invariantId) {
   _propGraph.registerDefinedVariable(sourceId(varId), invariantId);
 }
 
-void PropagationEngine::registerVar(VarId id) {
+void Solver::registerVar(VarId id) {
   _numVariables++;
   _propGraph.registerVar(id);
   _outputToInputExplorer.registerVar(id);
   _isEnqueued.register_idx(id, false);
 }
 
-void PropagationEngine::registerInvariant(InvariantId invariantId) {
+void Solver::registerInvariant(InvariantId invariantId) {
   _propGraph.registerInvariant(invariantId);
   _outputToInputExplorer.registerInvariant(invariantId);
 }
 
 //---------------------Propagation---------------------
 
-VarId PropagationEngine::dequeueComputedVar(Timestamp) {
+VarId Solver::dequeueComputedVar(Timestamp) {
   assert(propagationMode() == PropagationMode::INPUT_TO_OUTPUT ||
-         _engineState == EngineState::COMMIT);
+         _solverState == SolverState::COMMIT);
   if (_propGraph.propagationQueueEmpty()) {
     return VarId(NULL_ID);
   }
@@ -145,19 +145,19 @@ VarId PropagationEngine::dequeueComputedVar(Timestamp) {
   return nextVar;
 }
 
-void PropagationEngine::clearPropagationQueue() {
+void Solver::clearPropagationQueue() {
   _propGraph.clearPropagationQueue();
   _isEnqueued.assign_all(false);
 }
 
-void PropagationEngine::closeInvariants() {
+void Solver::closeInvariants() {
   for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
        ++iter) {
     (*iter)->close(_currentTimestamp);
   }
 }
 
-void PropagationEngine::recomputeAndCommit() {
+void Solver::recomputeAndCommit() {
   // TODO: This is a very inefficient way of initialising!
   size_t tries = 0;
   bool done = false;
@@ -188,29 +188,29 @@ void PropagationEngine::recomputeAndCommit() {
 }
 
 //--------------------- Propagation ---------------------
-void PropagationEngine::beginMove() {
+void Solver::beginMove() {
   assert(!_isOpen);
-  assert(_engineState == EngineState::IDLE);
+  assert(_solverState == SolverState::IDLE);
 
   incCurrentTimestamp();
-  _engineState = EngineState::MOVE;
+  _solverState = SolverState::MOVE;
 }
 
-void PropagationEngine::endMove() {
-  assert(_engineState == EngineState::MOVE);
-  _engineState = EngineState::IDLE;
+void Solver::endMove() {
+  assert(_solverState == SolverState::MOVE);
+  _solverState = SolverState::IDLE;
 }
 
-void PropagationEngine::beginProbe() {
+void Solver::beginProbe() {
   assert(!_isOpen);
-  assert(_engineState == EngineState::IDLE);
-  _engineState = EngineState::PROBE;
+  assert(_solverState == SolverState::IDLE);
+  _solverState = SolverState::PROBE;
 }
 
-void PropagationEngine::query(VarId id) {
+void Solver::query(VarId id) {
   assert(!_isOpen);
-  assert(_engineState != EngineState::IDLE &&
-         _engineState != EngineState::PROCESSING);
+  assert(_solverState != SolverState::IDLE &&
+         _solverState != SolverState::PROCESSING);
 
   if (_propagationMode != PropagationMode::INPUT_TO_OUTPUT) {
     _outputToInputExplorer.registerForPropagation(_currentTimestamp,
@@ -218,10 +218,10 @@ void PropagationEngine::query(VarId id) {
   }
 }
 
-void PropagationEngine::endProbe() {
-  assert(_engineState == EngineState::PROBE);
+void Solver::endProbe() {
+  assert(_solverState == SolverState::PROBE);
 
-  _engineState = EngineState::PROCESSING;
+  _solverState = SolverState::PROCESSING;
   try {
     if (_propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
       if (_propGraph.numLayers() == 1) {
@@ -242,26 +242,26 @@ void PropagationEngine::endProbe() {
                          }));
       outputToInputPropagate();
     }
-    _engineState = EngineState::IDLE;
+    _solverState = SolverState::IDLE;
   } catch (std::exception const& e) {
-    _engineState = EngineState::IDLE;
+    _solverState = SolverState::IDLE;
     throw e;
   }
 }
 
-void PropagationEngine::beginCommit() {
+void Solver::beginCommit() {
   assert(!_isOpen);
-  assert(_engineState == EngineState::IDLE);
+  assert(_solverState == SolverState::IDLE);
 
   _outputToInputExplorer.clearRegisteredVariables();
 
-  _engineState = EngineState::COMMIT;
+  _solverState = SolverState::COMMIT;
 }
 
-void PropagationEngine::endCommit() {
-  assert(_engineState == EngineState::COMMIT);
+void Solver::endCommit() {
+  assert(_solverState == SolverState::COMMIT);
 
-  _engineState = EngineState::PROCESSING;
+  _solverState = SolverState::PROCESSING;
 
   try {
     // Assert that if decision variable varId is modified,
@@ -288,14 +288,14 @@ void PropagationEngine::endCommit() {
                          return !_store.intVar(varId).hasChanged(
                              _currentTimestamp);
                        }));
-    _engineState = EngineState::IDLE;
+    _solverState = SolverState::IDLE;
   } catch (std::exception const& e) {
-    _engineState = EngineState::IDLE;
+    _solverState = SolverState::IDLE;
     throw e;
   }
 }
 
-void PropagationEngine::propagateOnClose() {
+void Solver::propagateOnClose() {
   IdMap<InvariantId, bool> committedInvariants(_propGraph.numInvariants());
   committedInvariants.assign(_propGraph.numInvariants(), false);
   for (VarId varId : _propGraph.searchVariables()) {
@@ -323,13 +323,13 @@ void PropagationEngine::propagateOnClose() {
   }
 }
 
-template void PropagationEngine::propagate<CommitMode::NO_COMMIT, false>();
-template void PropagationEngine::propagate<CommitMode::NO_COMMIT, true>();
-template void PropagationEngine::propagate<CommitMode::COMMIT, false>();
-template void PropagationEngine::propagate<CommitMode::COMMIT, true>();
-// Propagates at the current internal timestamp of the engine.
+template void Solver::propagate<CommitMode::NO_COMMIT, false>();
+template void Solver::propagate<CommitMode::NO_COMMIT, true>();
+template void Solver::propagate<CommitMode::COMMIT, false>();
+template void Solver::propagate<CommitMode::COMMIT, true>();
+// Propagates at the current internal timestamp of the solver.
 template <CommitMode Mode, bool SingleLayer>
-void PropagationEngine::propagate() {
+void Solver::propagate() {
   size_t curLayer = 0;
   while (true) {
     for (VarId queuedVar = dequeueComputedVar(_currentTimestamp);
@@ -426,7 +426,7 @@ void PropagationEngine::propagate() {
   }
 }
 
-void PropagationEngine::computeBounds() {
+void Solver::computeBounds() {
   IdMap<InvariantId, Int> inputsToCompute(numInvariants());
 
   for (size_t invariantId = 1u; invariantId <= numInvariants(); ++invariantId) {

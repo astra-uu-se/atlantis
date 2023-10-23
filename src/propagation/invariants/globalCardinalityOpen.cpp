@@ -14,11 +14,11 @@ inline bool all_in_range(Int start, Int stop,
 /**
  * @param violationId id for the violationCount
  */
-GlobalCardinalityOpen::GlobalCardinalityOpen(Engine& engine,
+GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
                                              std::vector<VarId> outputs,
                                              std::vector<VarId> inputs,
                                              std::vector<Int> cover)
-    : Invariant(engine),
+    : Invariant(solver),
       _outputs(std::move(outputs)),
       _inputs(std::move(inputs)),
       _cover(std::move(cover)),
@@ -38,7 +38,7 @@ GlobalCardinalityOpen::GlobalCardinalityOpen(Engine& engine,
 void GlobalCardinalityOpen::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _inputs.size(); ++i) {
-    _engine.registerInvariantInput(_id, _inputs[i], LocalId(i));
+    _solver.registerInvariantInput(_id, _inputs[i], LocalId(i));
   }
   for (const VarId output : _outputs) {
     registerDefinedVariable(output);
@@ -47,7 +47,7 @@ void GlobalCardinalityOpen::registerVars() {
 
 void GlobalCardinalityOpen::updateBounds(bool widenOnly) {
   for (const VarId output : _outputs) {
-    _engine.updateBounds(output, 0, _inputs.size(), widenOnly);
+    _solver.updateBounds(output, 0, _inputs.size(), widenOnly);
   }
 }
 
@@ -69,7 +69,7 @@ void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
   }
 
   for (size_t i = 0; i < _inputs.size(); ++i) {
-    increaseCount(timestamp, _engine.value(timestamp, _inputs[i]));
+    increaseCount(timestamp, _solver.value(timestamp, _inputs[i]));
   }
 
   for (size_t i = 0; i < _outputs.size(); ++i) {
@@ -82,7 +82,7 @@ void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
 void GlobalCardinalityOpen::notifyInputChanged(Timestamp timestamp,
                                                LocalId localId) {
   assert(localId < _committedValues.size());
-  const Int newValue = _engine.value(timestamp, _inputs[localId]);
+  const Int newValue = _solver.value(timestamp, _inputs[localId]);
   if (newValue == _committedValues[localId]) {
     return;
   }
@@ -108,7 +108,7 @@ void GlobalCardinalityOpen::commit(Timestamp timestamp) {
   Invariant::commit(timestamp);
 
   for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _engine.committedValue(_inputs[i]);
+    _committedValues[i] = _solver.committedValue(_inputs[i]);
   }
 
   for (CommittableInt& CommittableInt : _counts) {

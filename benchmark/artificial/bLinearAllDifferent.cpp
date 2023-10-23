@@ -10,13 +10,13 @@
 #include "propagation/constraints/allDifferent.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/linear.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::benchmark {
 
 class LinearAllDifferent : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::unique_ptr<propagation::Solver> solver;
   std::vector<propagation::VarId> decisionVars;
   std::random_device rd;
   std::mt19937 gen;
@@ -27,7 +27,7 @@ class LinearAllDifferent : public ::benchmark::Fixture {
   propagation::VarId violation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<propagation::PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
     bool overlappingLinears = state.range(0) != 0;
     std::vector<propagation::VarId> linearOutputVars;
     size_t increment;
@@ -42,28 +42,28 @@ class LinearAllDifferent : public ::benchmark::Fixture {
       increment = 2;
     }
 
-    engine->open();
-    setEngineModes(*engine, state.range(2));
+    solver->open();
+    setSolverMode(*solver, state.range(2));
 
     decisionVars.reserve(varCount);
 
     for (size_t i = 0; i < varCount; ++i) {
-      decisionVars.push_back(engine->makeIntVar(i, 0, varCount - 1));
+      decisionVars.push_back(solver->makeIntVar(i, 0, varCount - 1));
     }
 
     for (size_t i = 0; i < varCount - 1; i += increment) {
-      linearOutputVars.push_back(engine->makeIntVar(i, 0, 2 * (varCount - 1)));
-      engine->makeInvariant<propagation::Linear>(
-          *engine.get(), linearOutputVars.back(),
+      linearOutputVars.push_back(solver->makeIntVar(i, 0, 2 * (varCount - 1)));
+      solver->makeInvariant<propagation::Linear>(
+          *solver.get(), linearOutputVars.back(),
           std::vector<propagation::VarId>{decisionVars.at(i),
                                           decisionVars.at(i + 1)});
     }
 
-    violation = engine->makeIntVar(0, 0, varCount);
-    engine->makeConstraint<propagation::AllDifferent>(*engine, violation,
+    violation = solver->makeIntVar(0, 0, varCount);
+    solver->makeConstraint<propagation::AllDifferent>(*solver, violation,
                                                       linearOutputVars);
 
-    engine->close();
+    solver->close();
 
     gen = std::mt19937(rd());
 
@@ -81,16 +81,16 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probe_single_swap)
     size_t j = decionVarIndexDist(gen);
 
     // Perform random swap
-    engine->beginMove();
-    engine->setValue(decisionVars.at(i),
-                     engine->committedValue(decisionVars.at(j)));
-    engine->setValue(decisionVars.at(j),
-                     engine->committedValue(decisionVars.at(i)));
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(decisionVars.at(i),
+                     solver->committedValue(decisionVars.at(j)));
+    solver->setValue(decisionVars.at(j),
+                     solver->committedValue(decisionVars.at(i)));
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(violation);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(violation);
+    solver->endProbe();
 
     ++probes;
   }
@@ -105,16 +105,16 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probe_all_swap)
   for (auto _ : st) {
     for (size_t i = 0; i < varCount; ++i) {
       for (size_t j = i + 1; j < varCount; ++j) {
-        engine->beginMove();
-        engine->setValue(decisionVars.at(i),
-                         engine->committedValue(decisionVars.at(j)));
-        engine->setValue(decisionVars.at(j),
-                         engine->committedValue(decisionVars.at(i)));
-        engine->endMove();
+        solver->beginMove();
+        solver->setValue(decisionVars.at(i),
+                         solver->committedValue(decisionVars.at(j)));
+        solver->setValue(decisionVars.at(j),
+                         solver->committedValue(decisionVars.at(i)));
+        solver->endMove();
 
-        engine->beginProbe();
-        engine->query(violation);
-        engine->endProbe();
+        solver->beginProbe();
+        solver->query(violation);
+        solver->endProbe();
 
         ++probes;
       }
@@ -132,16 +132,16 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
     size_t j = decionVarIndexDist(gen);
 
     // Perform random swap
-    engine->beginMove();
-    engine->setValue(decisionVars.at(i),
-                     engine->committedValue(decisionVars.at(j)));
-    engine->setValue(decisionVars.at(j),
-                     engine->committedValue(decisionVars.at(i)));
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(decisionVars.at(i),
+                     solver->committedValue(decisionVars.at(j)));
+    solver->setValue(decisionVars.at(j),
+                     solver->committedValue(decisionVars.at(i)));
+    solver->endMove();
 
-    engine->beginCommit();
-    engine->query(violation);
-    engine->endCommit();
+    solver->beginCommit();
+    solver->query(violation);
+    solver->endCommit();
 
     ++commits;
   }

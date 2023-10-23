@@ -44,22 +44,22 @@ std::unique_ptr<BoolLtNode> BoolLtNode::fromModelConstraint(
 }
 
 void BoolLtNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         propagation::Engine& engine) {
-  registerViolation(invariantGraph, engine);
+                                         propagation::SolverBase& solver) {
+  registerViolation(invariantGraph, solver);
 }
 
-void BoolLtNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+void BoolLtNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
   assert(invariantGraph.varId(a()) != propagation::NULL_ID);
   assert(invariantGraph.varId(b()) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<propagation::BoolLessThan>(engine, violationVarId(invariantGraph),
+    solver.makeConstraint<propagation::BoolLessThan>(solver, violationVarId(invariantGraph),
                                         invariantGraph.varId(a()),
                                         invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<propagation::BoolLessEqual>(engine, violationVarId(invariantGraph),
+    solver.makeConstraint<propagation::BoolLessEqual>(solver, violationVarId(invariantGraph),
                                          invariantGraph.varId(b()),
                                          invariantGraph.varId(a()));
   }

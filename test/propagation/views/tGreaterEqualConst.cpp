@@ -6,7 +6,7 @@
 #include <random>
 #include <vector>
 
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/greaterEqualConst.hpp"
 #include "types.hpp"
 
@@ -18,33 +18,33 @@ static Int computeViolation(Int a, Int b) { return std::max<Int>(0, b - a); }
 
 class GreaterEqualViewConst : public ::testing::Test {
  protected:
-  std::unique_ptr<PropagationEngine> engine;
+  std::unique_ptr<Solver> solver;
 
-  void SetUp() override { engine = std::make_unique<PropagationEngine>(); }
+  void SetUp() override { solver = std::make_unique<Solver>(); }
 };
 
 RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, simple, (int a, int b)) {
-  if (!engine->isOpen()) {
-    engine->open();
+  if (!solver->isOpen()) {
+    solver->open();
   }
-  const VarId varId = engine->makeIntVar(a, a, a);
+  const VarId varId = solver->makeIntVar(a, a, a);
   const VarId violationId =
-      engine->makeIntView<GreaterEqualConst>(*engine, varId, b);
-  RC_ASSERT(engine->committedValue(violationId) == computeViolation(a, b));
+      solver->makeIntView<GreaterEqualConst>(*solver, varId, b);
+  RC_ASSERT(solver->committedValue(violationId) == computeViolation(a, b));
 }
 
 RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, singleton, (int a, int b)) {
-  if (!engine->isOpen()) {
-    engine->open();
+  if (!solver->isOpen()) {
+    solver->open();
   }
-  const VarId varId = engine->makeIntVar(a, a, a);
+  const VarId varId = solver->makeIntVar(a, a, a);
   const VarId violationId =
-      engine->makeIntView<GreaterEqualConst>(*engine, varId, b);
-  RC_ASSERT(engine->committedValue(violationId) == computeViolation(a, b));
-  RC_ASSERT(engine->lowerBound(violationId) ==
-            engine->committedValue(violationId));
-  RC_ASSERT(engine->upperBound(violationId) ==
-            engine->committedValue(violationId));
+      solver->makeIntView<GreaterEqualConst>(*solver, varId, b);
+  RC_ASSERT(solver->committedValue(violationId) == computeViolation(a, b));
+  RC_ASSERT(solver->lowerBound(violationId) ==
+            solver->committedValue(violationId));
+  RC_ASSERT(solver->upperBound(violationId) ==
+            solver->committedValue(violationId));
 }
 
 RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, interval, (int a, int b)) {
@@ -52,30 +52,30 @@ RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, interval, (int a, int b)) {
   Int lb = Int(a) - size;
   Int ub = Int(a) + size;
 
-  engine->open();
-  const VarId varId = engine->makeIntVar(ub, lb, ub);
+  solver->open();
+  const VarId varId = solver->makeIntVar(ub, lb, ub);
   const VarId violationId =
-      engine->makeIntView<GreaterEqualConst>(*engine, varId, b);
-  engine->close();
+      solver->makeIntView<GreaterEqualConst>(*solver, varId, b);
+  solver->close();
 
-  const Int violLb = engine->lowerBound(violationId);
-  const Int violUb = engine->upperBound(violationId);
+  const Int violLb = solver->lowerBound(violationId);
+  const Int violUb = solver->upperBound(violationId);
 
   for (Int val = lb; val <= ub; ++val) {
-    engine->beginMove();
-    engine->setValue(varId, val);
-    engine->endMove();
-    engine->beginProbe();
-    engine->query(violationId);
-    engine->endProbe();
+    solver->beginMove();
+    solver->setValue(varId, val);
+    solver->endMove();
+    solver->beginProbe();
+    solver->query(violationId);
+    solver->endProbe();
 
-    const Int actual = engine->currentValue(violationId);
+    const Int actual = solver->currentValue(violationId);
     const Int expected = computeViolation(val, b);
 
     EXPECT_EQ(val >= Int(b), expected == 0);
 
-    RC_ASSERT(engine->lowerBound(violationId) == violLb);
-    RC_ASSERT(engine->upperBound(violationId) == violUb);
+    RC_ASSERT(solver->lowerBound(violationId) == violLb);
+    RC_ASSERT(solver->upperBound(violationId) == violUb);
     RC_ASSERT(actual == expected);
     RC_ASSERT(violLb <= actual);
     RC_ASSERT(violUb >= actual);

@@ -33,15 +33,15 @@ std::unique_ptr<ArrayIntElementNode> ArrayIntElementNode::fromModelConstraint(
 }
 
 void ArrayIntElementNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     assert(invariantGraph.varId(b()) != propagation::NULL_ID);
     invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(engine.makeIntView<propagation::ElementConst>(
-            engine, invariantGraph.varId(b()), _as, _offset));
+        .setVarId(solver.makeIntView<propagation::ElementConst>(
+            solver, invariantGraph.varId(b()), _as, _offset));
   }
 }
 
-void ArrayIntElementNode::registerNode(InvariantGraph&, propagation::Engine&) {}
+void ArrayIntElementNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
 }  // namespace invariantgraph

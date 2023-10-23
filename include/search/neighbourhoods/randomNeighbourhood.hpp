@@ -9,12 +9,12 @@ namespace atlantis::search::neighbourhoods {
 class RandomNeighbourhood : public Neighbourhood {
  private:
   std::vector<SearchVariable> _variables;
-  const propagation::Engine& _engine;
+  const propagation::SolverBase& _solver;
 
  public:
   RandomNeighbourhood(std::vector<SearchVariable> variables,
-                      const propagation::Engine& engine)
-      : _variables(std::move(variables)), _engine(engine) {}
+                      const propagation::SolverBase& solver)
+      : _variables(std::move(variables)), _solver(solver) {}
 
   ~RandomNeighbourhood() override = default;
 

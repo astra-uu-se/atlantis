@@ -2,7 +2,7 @@
 
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/violationInvariantNodes/globalCardinalityClosedNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -126,56 +126,56 @@ class AbstractGlobalCardinalityClosedNodeTest
   }
 
   void application() {
-    propagation::PropagationEngine engine;
-    engine.open();
-    addInputVarsToEngine(engine);
+    propagation::Solver solver;
+    solver.open();
+    addInputVarsToSolver(solver);
 
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerOutputVariables(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
 
-    invNode().registerNode(*_invariantGraph, engine);
-    engine.close();
+    invNode().registerNode(*_invariantGraph, solver);
+    solver.close();
 
     if constexpr (Type == ConstraintType::NORMAL ||
                   Type == ConstraintType::CONSTANT_TRUE) {
       // x1, x2
-      EXPECT_EQ(engine.searchVariables().size(), 2);
+      EXPECT_EQ(solver.searchVariables().size(), 2);
       // x1, x2, o1, o2
       // violation
-      EXPECT_EQ(engine.numVariables(), 5);
+      EXPECT_EQ(solver.numVariables(), 5);
       // gcc
-      EXPECT_EQ(engine.numInvariants(), 1);
+      EXPECT_EQ(solver.numInvariants(), 1);
     } else {
       // x1, x2, o1, o2
-      EXPECT_EQ(engine.searchVariables().size(), 4);
+      EXPECT_EQ(solver.searchVariables().size(), 4);
       // x1, x2, o1, o2
       // intermediate o1, intermediate o2
       // 3 intermediate violations
       // 1 total violation
-      EXPECT_EQ(engine.numVariables(), 10);
+      EXPECT_EQ(solver.numVariables(), 10);
       // gcc + 2 (non)-equal + 1 total violation
-      EXPECT_EQ(engine.numInvariants(), 4);
+      EXPECT_EQ(solver.numInvariants(), 4);
 
-      EXPECT_EQ(engine.lowerBound(invNode().violationVarId(*_invariantGraph)),
+      EXPECT_EQ(solver.lowerBound(invNode().violationVarId(*_invariantGraph)),
                 0);
-      EXPECT_GT(engine.upperBound(invNode().violationVarId(*_invariantGraph)),
+      EXPECT_GT(solver.upperBound(invNode().violationVarId(*_invariantGraph)),
                 0);
     }
   }
 
   void propagation() {
-    propagation::PropagationEngine engine;
-    engine.open();
-    addInputVarsToEngine(engine);
-    invNode().registerOutputVariables(*_invariantGraph, engine);
-    invNode().registerNode(*_invariantGraph, engine);
+    propagation::Solver solver;
+    solver.open();
+    addInputVarsToSolver(solver);
+    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerNode(*_invariantGraph, solver);
 
     std::vector<propagation::VarId> inputs;
     for (const auto& inputVarNodeId : invNode().inputs()) {
@@ -208,54 +208,54 @@ class AbstractGlobalCardinalityClosedNodeTest
     } else {
       for (const propagation::VarId c : counts) {
         countBounds.emplace_back(
-            std::pair<Int, Int>{engine.lowerBound(c), engine.lowerBound(c)});
+            std::pair<Int, Int>{solver.lowerBound(c), solver.lowerBound(c)});
       }
     }
 
-    engine.close();
+    solver.close();
 
-    for (inputVals.at(0) = engine.lowerBound(inputs.at(0));
-         inputVals.at(0) <= engine.upperBound(inputs.at(0));
+    for (inputVals.at(0) = solver.lowerBound(inputs.at(0));
+         inputVals.at(0) <= solver.upperBound(inputs.at(0));
          ++inputVals.at(0)) {
-      for (inputVals.at(1) = engine.lowerBound(inputs.at(1));
-           inputVals.at(1) <= engine.upperBound(inputs.at(1));
+      for (inputVals.at(1) = solver.lowerBound(inputs.at(1));
+           inputVals.at(1) <= solver.upperBound(inputs.at(1));
            ++inputVals.at(1)) {
         for (countVals.at(0) = countBounds.at(0).first;
              countVals.at(0) <= countBounds.at(0).second; ++countVals.at(0)) {
           for (countVals.at(1) = countBounds.at(1).first;
                countVals.at(1) <= countBounds.at(1).second; ++countVals.at(1)) {
-            engine.beginMove();
+            solver.beginMove();
             for (size_t i = 0; i < inputs.size(); ++i) {
-              engine.setValue(inputs.at(i), inputVals.at(i));
+              solver.setValue(inputs.at(i), inputVals.at(i));
             }
             if constexpr (Type == ConstraintType::CONSTANT_FALSE ||
                           Type == ConstraintType::REIFIED) {
               for (size_t i = 0; i < counts.size(); ++i) {
-                engine.setValue(counts.at(i), countVals.at(i));
+                solver.setValue(counts.at(i), countVals.at(i));
               }
             }
-            engine.endMove();
+            solver.endMove();
 
-            engine.beginProbe();
-            engine.query(violationId);
-            engine.endProbe();
+            solver.beginProbe();
+            solver.query(violationId);
+            solver.endProbe();
 
             if constexpr (Type == ConstraintType::NORMAL ||
                           Type == ConstraintType::CONSTANT_TRUE) {
               const auto& [sat, expectedCounts] = compute(inputVals, cover);
-              EXPECT_EQ(engine.currentValue(violationId) == 0, sat);
+              EXPECT_EQ(solver.currentValue(violationId) == 0, sat);
               EXPECT_EQ(counts.size(), expectedCounts.size());
               for (size_t i = 0; i < countVals.size(); ++i) {
-                EXPECT_EQ(engine.currentValue(counts.at(i)),
+                EXPECT_EQ(solver.currentValue(counts.at(i)),
                           expectedCounts.at(i));
               }
             } else {
               const auto& [sat, expectedCounts] =
                   compute(inputVals, cover, countVals);
               if (Type == ConstraintType::REIFIED) {
-                EXPECT_EQ(engine.currentValue(violationId) == 0, sat);
+                EXPECT_EQ(solver.currentValue(violationId) == 0, sat);
               } else {
-                bool actual = engine.currentValue(violationId) == 0;
+                bool actual = solver.currentValue(violationId) == 0;
                 EXPECT_NE(actual, sat);
               }
             }

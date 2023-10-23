@@ -6,7 +6,7 @@
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/invariantNodes/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariantNodes/intLinearNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -35,8 +35,8 @@ TEST(InvariantGraphTest, apply_result) {
       std::move(std::make_unique<InvariantGraphRoot>(
           std::vector<VarNodeId>{aNode, bNode})));
 
-  propagation::PropagationEngine engine;
-  auto result = invariantGraph.apply(engine);
+  propagation::Solver solver;
+  auto result = invariantGraph.apply(solver);
 
   EXPECT_EQ(result.variableIdentifiers().size(), 3);
   std::unordered_set<std::string> varNames;
@@ -104,13 +104,13 @@ TEST(InvariantGraphTest, ApplyGraph) {
       std::vector<Int>{1, 1}, std::vector<VarNodeId>{c1NodeId, c2NodeId},
       sumNodeId, -1, 0)));
 
-  propagation::PropagationEngine engine;
-  auto result = invariantGraph.apply(engine);
+  propagation::Solver solver;
+  auto result = invariantGraph.apply(solver);
 
   EXPECT_EQ(result.variableIdentifiers().size(), 7);
   // 7 variables + dummy objective
-  EXPECT_EQ(engine.numVariables(), 8);
-  EXPECT_EQ(engine.numInvariants(), 3);
+  EXPECT_EQ(solver.numVariables(), 8);
+  EXPECT_EQ(solver.numInvariants(), 3);
 }
 
 TEST(InvariantGraphTest, SplitSimpleGraph) {
@@ -166,18 +166,18 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
       std::vector<Int>{1, 1}, std::vector<VarNodeId>{cNodeId, dNodeId}, xNodeId,
       -1, 0));
 
-  propagation::PropagationEngine engine;
-  auto result = invariantGraph.apply(engine);
+  propagation::Solver solver;
+  auto result = invariantGraph.apply(solver);
 
   EXPECT_EQ(result.variableIdentifiers().size(), 5);
   // a, b, c, d, x
   // x_copy
   // violation for equal constraint (x == x_copy)
   // dummy objective
-  EXPECT_EQ(engine.numVariables(), 5 + 1 + 1 + 1);
+  EXPECT_EQ(solver.numVariables(), 5 + 1 + 1 + 1);
   // 2 Linear
   // 1 equal
-  EXPECT_EQ(engine.numInvariants(), 3);
+  EXPECT_EQ(solver.numInvariants(), 3);
 }
 
 TEST(InvariantGraphTest, SplitGraph) {
@@ -232,16 +232,16 @@ TEST(InvariantGraphTest, SplitGraph) {
         std::vector<Int>(coeffs), std::move(inputs), xNodeId, -1, 0)));
   }
 
-  propagation::PropagationEngine engine;
-  auto result = invariantGraph.apply(engine);
+  propagation::Solver solver;
+  auto result = invariantGraph.apply(solver);
 
   EXPECT_EQ(result.variableIdentifiers().size(), numInvariants * numInputs + 1);
   // Each invariant has numInputs inputs
   // Each invariant has 1 output
   // There is one violation for the AllDiff
   // One view for the AllDiff
-  EXPECT_EQ(engine.numVariables(), numInvariants * (numInputs + 1) + 2);
-  EXPECT_EQ(engine.numInvariants(), numInvariants + 1);
+  EXPECT_EQ(solver.numVariables(), numInvariants * (numInputs + 1) + 2);
+  EXPECT_EQ(solver.numInvariants(), numInvariants + 1);
 }
 
 TEST(InvariantGraphTest, BreakSimpleCycle) {
@@ -293,8 +293,8 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
       std::vector<Int>{1, 1}, std::vector<VarNodeId>{xNodeId, bNodeId}, yNodeId,
       -1, 0)));
 
-  propagation::PropagationEngine engine;
-  auto result = invariantGraph.apply(engine);
+  propagation::Solver solver;
+  auto result = invariantGraph.apply(solver);
 
   EXPECT_EQ(result.variableIdentifiers().size(), 4);
   // a, b, x, y
@@ -302,11 +302,11 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
   // The Equality (x == pivot) violation
   // total violation
   // Dummy Objective
-  EXPECT_EQ(engine.numVariables(), 4 + 1 + 1 + 1 + 1);
+  EXPECT_EQ(solver.numVariables(), 4 + 1 + 1 + 1 + 1);
   // 2 Linear
   // 1 from breaking the cycle (x == pivot)
   // 1 Total Violation
-  EXPECT_EQ(engine.numInvariants(), 2 + 1 + 1);
+  EXPECT_EQ(solver.numInvariants(), 2 + 1 + 1);
 }
 
 TEST(InvariantGraphTest, BreakElementIndexCycle) {
@@ -367,8 +367,8 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
       std::move(std::make_unique<ArrayVarIntElementNode>(
           xNodeId, std::vector<VarNodeId>{cNodeId, dNodeId}, yNodeId, 1)));
 
-  propagation::PropagationEngine engine;
-  auto result = invariantGraph.apply(engine);
+  propagation::Solver solver;
+  auto result = invariantGraph.apply(solver);
 
   EXPECT_EQ(result.variableIdentifiers().size(), 6);
   // a, b, c, d, x, y
@@ -376,11 +376,11 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   // The Equality violation
   // total violation
   // dummy objective
-  EXPECT_EQ(engine.numVariables(), 6 + 1 + 1 + 1 + 1);
+  EXPECT_EQ(solver.numVariables(), 6 + 1 + 1 + 1 + 1);
   // 2 Element
   // 1 Total Violation
   // 1 from breaking the cycle
-  EXPECT_EQ(engine.numInvariants(), 2 + 1 + 1);
+  EXPECT_EQ(solver.numInvariants(), 2 + 1 + 1);
 }
 
 TEST(InvariantGraphTest, AllowDynamicCycle) {
@@ -442,16 +442,16 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
       std::move(std::make_unique<ArrayVarIntElementNode>(
           cNodeId, std::vector<VarNodeId>{xNodeId, dNodeId}, yNodeId, 1)));
 
-  propagation::PropagationEngine engine;
-  auto result = invariantGraph.apply(engine);
+  propagation::Solver solver;
+  auto result = invariantGraph.apply(solver);
 
   EXPECT_EQ(result.variableIdentifiers().size(), 6);
   // a, b, c, d, x, y
   // dummy objective
   // (no violations)
-  EXPECT_EQ(engine.numVariables(), 6 + 1);
+  EXPECT_EQ(solver.numVariables(), 6 + 1);
   // 2 Element
   // (no violations)
-  EXPECT_EQ(engine.numInvariants(), 2);
+  EXPECT_EQ(solver.numInvariants(), 2);
 }
 }  // namespace atlantis::testing

@@ -19,7 +19,7 @@ class SearchVariable {
   explicit SearchVariable(propagation::VarId varId, const SearchDomain& domain)
       : _domain(domain), _varId(varId) {}
 
-  [[nodiscard]] propagation::VarId engineId() const noexcept { return _varId; }
+  [[nodiscard]] propagation::VarId solverId() const noexcept { return _varId; }
 
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
   [[nodiscard]] bool isFixed() const noexcept { return _domain.isFixed(); }

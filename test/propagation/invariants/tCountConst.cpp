@@ -8,7 +8,7 @@
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/countConst.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -21,7 +21,7 @@ class CountConstTest : public InvariantTest {
                     const std::vector<VarId>& variables) {
     std::vector<Int> values(variables.size(), 0);
     for (size_t i = 0; i < variables.size(); ++i) {
-      values.at(i) = engine->value(ts, variables.at(i));
+      values.at(i) = solver->value(ts, variables.at(i));
     }
     return computeOutput(y, values);
   }
@@ -38,29 +38,29 @@ class CountConstTest : public InvariantTest {
 TEST_F(CountConstTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-10, 0}, {-5, 5}, {0, 10}, {15, 20}};
-  engine->open();
+  solver->open();
 
   const Int y = 10;
-  std::vector<VarId> inputs{engine->makeIntVar(0, 0, 10),
-                            engine->makeIntVar(0, 0, 10),
-                            engine->makeIntVar(0, 0, 10)};
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
+  std::vector<VarId> inputs{solver->makeIntVar(0, 0, 10),
+                            solver->makeIntVar(0, 0, 10),
+                            solver->makeIntVar(0, 0, 10)};
+  const VarId outputId = solver->makeIntVar(0, 0, 2);
   CountConst& invariant =
-      engine->makeInvariant<CountConst>(*engine, outputId, y, inputs);
+      solver->makeInvariant<CountConst>(*solver, outputId, y, inputs);
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
-    engine->updateBounds(inputs.at(0), aLb, aUb, false);
+    solver->updateBounds(inputs.at(0), aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_TRUE(bLb <= bUb);
-      engine->updateBounds(inputs.at(1), bLb, bUb, false);
+      solver->updateBounds(inputs.at(1), bLb, bUb, false);
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_TRUE(cLb <= cUb);
-        engine->updateBounds(inputs.at(2), cLb, cUb, false);
+        solver->updateBounds(inputs.at(2), cLb, cUb, false);
         invariant.updateBounds();
 
-        ASSERT_GE(0, engine->lowerBound(outputId));
-        ASSERT_LE(inputs.size(), engine->upperBound(outputId));
+        ASSERT_GE(0, solver->lowerBound(outputId));
+        ASSERT_LE(inputs.size(), solver->upperBound(outputId));
       }
     }
   }
@@ -75,32 +75,32 @@ TEST_F(CountConstTest, Recompute) {
   std::uniform_int_distribution<Int> dist(lb, ub);
 
   for (Int y = lb; y <= ub; ++y) {
-    engine->open();
+    solver->open();
 
-    const VarId a = engine->makeIntVar(dist(gen), lb, ub);
-    const VarId b = engine->makeIntVar(dist(gen), lb, ub);
-    const VarId c = engine->makeIntVar(dist(gen), lb, ub);
+    const VarId a = solver->makeIntVar(dist(gen), lb, ub);
+    const VarId b = solver->makeIntVar(dist(gen), lb, ub);
+    const VarId c = solver->makeIntVar(dist(gen), lb, ub);
 
     std::vector<VarId> inputs{a, b, c};
 
-    const VarId outputId = engine->makeIntVar(
+    const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
 
     CountConst& invariant =
-        engine->makeInvariant<CountConst>(*engine, outputId, y, inputs);
-    engine->close();
+        solver->makeInvariant<CountConst>(*solver, outputId, y, inputs);
+    solver->close();
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
       for (Int bVal = lb; bVal <= ub; ++bVal) {
         for (Int cVal = lb; cVal <= ub; ++cVal) {
-          engine->setValue(engine->currentTimestamp(), a, aVal);
-          engine->setValue(engine->currentTimestamp(), b, bVal);
-          engine->setValue(engine->currentTimestamp(), c, cVal);
+          solver->setValue(solver->currentTimestamp(), a, aVal);
+          solver->setValue(solver->currentTimestamp(), b, bVal);
+          solver->setValue(solver->currentTimestamp(), c, cVal);
           const Int expectedOutput =
-              computeOutput(engine->currentTimestamp(), y, inputs);
-          invariant.recompute(engine->currentTimestamp());
+              computeOutput(solver->currentTimestamp(), y, inputs);
+          invariant.recompute(solver->currentTimestamp());
           EXPECT_EQ(expectedOutput,
-                    engine->value(engine->currentTimestamp(), outputId));
+                    solver->value(solver->currentTimestamp(), outputId));
         }
       }
     }
@@ -113,32 +113,32 @@ TEST_F(CountConstTest, NotifyInputChanged) {
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
-  const Timestamp ts = engine->currentTimestamp() + (ub - lb) + 2;
+  const Timestamp ts = solver->currentTimestamp() + (ub - lb) + 2;
 
   for (Int y = lb; y <= ub; ++y) {
-    EXPECT_NE(ts, engine->currentTimestamp());
-    engine->open();
+    EXPECT_NE(ts, solver->currentTimestamp());
+    solver->open();
     std::vector<VarId> inputs(numInputs, NULL_ID);
     for (size_t i = 0; i < numInputs; ++i) {
-      inputs.at(i) = engine->makeIntVar(dist(gen), lb, ub);
+      inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
     }
-    const VarId outputId = engine->makeIntVar(
+    const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     CountConst& invariant =
-        engine->makeInvariant<CountConst>(*engine, outputId, y, inputs);
-    engine->close();
-    EXPECT_NE(ts, engine->currentTimestamp());
+        solver->makeInvariant<CountConst>(*solver, outputId, y, inputs);
+    solver->close();
+    EXPECT_NE(ts, solver->currentTimestamp());
 
     for (size_t i = 0; i < inputs.size(); ++i) {
-      const Int oldVal = engine->value(ts, inputs.at(i));
+      const Int oldVal = solver->value(ts, inputs.at(i));
       do {
-        engine->setValue(ts, inputs.at(i), dist(gen));
-      } while (oldVal == engine->value(ts, inputs.at(i)));
+        solver->setValue(ts, inputs.at(i), dist(gen));
+      } while (oldVal == solver->value(ts, inputs.at(i)));
 
       const Int expectedOutput = computeOutput(ts, y, inputs);
 
       invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
+      EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
     }
   }
 }
@@ -152,23 +152,23 @@ TEST_F(CountConstTest, NextInput) {
 
   std::vector<VarId> inputs(numInputs, NULL_ID);
 
-  engine->open();
+  solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = engine->makeIntVar(dist(gen), lb, ub);
+    inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
   }
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
   CountConst& invariant =
-      engine->makeInvariant<CountConst>(*engine, outputId, y, inputs);
-  engine->close();
+      solver->makeInvariant<CountConst>(*solver, outputId, y, inputs);
+  solver->close();
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
       const VarId varId = invariant.nextInput(ts);
@@ -192,31 +192,31 @@ TEST_F(CountConstTest, NotifyCurrentInputChanged) {
   std::uniform_int_distribution<Int> dist(lb, ub);
 
   std::vector<VarId> inputs(numInputs, NULL_ID);
-  engine->open();
+  solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = engine->makeIntVar(dist(gen), lb, ub);
+    inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
   }
 
   for (Int y = lb; y <= ub; ++y) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
-    const VarId outputId = engine->makeIntVar(
+    const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     CountConst& invariant =
-        engine->makeInvariant<CountConst>(*engine, outputId, y, inputs);
-    engine->close();
+        solver->makeInvariant<CountConst>(*solver, outputId, y, inputs);
+    solver->close();
 
-    for (Timestamp ts = engine->currentTimestamp() + 1;
-         ts < engine->currentTimestamp() + 4; ++ts) {
+    for (Timestamp ts = solver->currentTimestamp() + 1;
+         ts < solver->currentTimestamp() + 4; ++ts) {
       for (const VarId varId : inputs) {
         EXPECT_EQ(invariant.nextInput(ts), varId);
-        const Int oldVal = engine->value(ts, varId);
+        const Int oldVal = solver->value(ts, varId);
         do {
-          engine->setValue(ts, varId, dist(gen));
-        } while (engine->value(ts, varId) == oldVal);
+          solver->setValue(ts, varId, dist(gen));
+        } while (solver->value(ts, varId) == oldVal);
         invariant.notifyCurrentInputChanged(ts);
-        EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, y, inputs));
+        EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, y, inputs));
       }
     }
   }
@@ -232,60 +232,60 @@ TEST_F(CountConstTest, Commit) {
   std::vector<size_t> indices(numInputs, 0);
   std::vector<Int> committedValues(numInputs, 0);
 
-  engine->open();
+  solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
     indices.at(i) = i;
-    inputs.at(i) = engine->makeIntVar(dist(gen), lb, ub);
+    inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
   }
 
   for (Int y = lb; y <= ub; ++y) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
-    const VarId outputId = engine->makeIntVar(
+    const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     CountConst& invariant =
-        engine->makeInvariant<CountConst>(*engine, outputId, y, inputs);
+        solver->makeInvariant<CountConst>(*solver, outputId, y, inputs);
 
-    engine->close();
+    solver->close();
 
     for (size_t i = 0; i < numInputs; ++i) {
-      committedValues.at(i) = engine->committedValue(inputs.at(i));
+      committedValues.at(i) = solver->committedValue(inputs.at(i));
     }
 
     std::shuffle(indices.begin(), indices.end(), rng);
 
-    EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
-              computeOutput(engine->currentTimestamp(), y, inputs));
+    EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
+              computeOutput(solver->currentTimestamp(), y, inputs));
 
     for (const size_t i : indices) {
-      Timestamp ts = engine->currentTimestamp() + Timestamp(i);
+      Timestamp ts = solver->currentTimestamp() + Timestamp(i);
       for (size_t j = 0; j < numInputs; ++j) {
         // Check that we do not accidentally commit:
-        ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+        ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
       }
 
       const Int oldVal = committedValues.at(i);
       do {
-        engine->setValue(ts, inputs.at(i), dist(gen));
-      } while (oldVal == engine->value(ts, inputs.at(i)));
+        solver->setValue(ts, inputs.at(i), dist(gen));
+      } while (oldVal == solver->value(ts, inputs.at(i)));
 
       // notify changes
       invariant.notifyInputChanged(ts, LocalId(i));
 
       // incremental value
-      const Int notifiedOutput = engine->value(ts, outputId);
+      const Int notifiedOutput = solver->value(ts, outputId);
       invariant.recompute(ts);
 
-      ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+      ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
 
-      engine->commitIf(ts, inputs.at(i));
-      committedValues.at(i) = engine->value(ts, inputs.at(i));
-      engine->commitIf(ts, outputId);
+      solver->commitIf(ts, inputs.at(i));
+      committedValues.at(i) = solver->value(ts, inputs.at(i));
+      solver->commitIf(ts, outputId);
 
       invariant.commit(ts);
       invariant.recompute(ts + 1);
-      ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+      ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
     }
   }
 }
@@ -297,9 +297,9 @@ class MockCountConst : public CountConst {
     registered = true;
     CountConst::registerVars();
   }
-  explicit MockCountConst(Engine& engine, VarId output, Int y,
+  explicit MockCountConst(SolverBase& solver, VarId output, Int y,
                           const std::vector<VarId>& varArray)
-      : CountConst(engine, output, y, varArray) {
+      : CountConst(solver, output, y, varArray) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return CountConst::recompute(timestamp);
     });
@@ -324,22 +324,22 @@ class MockCountConst : public CountConst {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(CountConstTest, EngineIntegration) {
+TEST_F(CountConstTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
     const size_t numArgs = 10;
     const Int y = 5;
     std::vector<VarId> varArray;
     for (size_t value = 1; value <= numArgs; ++value) {
-      varArray.push_back(engine->makeIntVar(static_cast<Int>(value), 1,
+      varArray.push_back(solver->makeIntVar(static_cast<Int>(value), 1,
                                             static_cast<Int>(numArgs)));
     }
     const VarId modifiedVarId = varArray.front();
-    const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
+    const VarId output = solver->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCountConst>(
-        &engine->makeInvariant<MockCountConst>(*engine, output, y, varArray),
+        &solver->makeInvariant<MockCountConst>(*solver, output, y, varArray),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }

@@ -24,14 +24,14 @@ std::unique_ptr<IntMinNode> IntMinNode::fromModelConstraint(
 }
 
 void IntMinNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+                                         propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void IntMinNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+void IntMinNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  engine.makeInvariant<propagation::BinaryMin>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::BinaryMin>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 

@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "../../testHelper.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/inSparseDomain.hpp"
 #include "types.hpp"
 
@@ -16,14 +16,14 @@ using namespace atlantis::propagation;
 
 class InSparseDomainTest : public ::testing::Test {
  protected:
-  std::unique_ptr<PropagationEngine> engine;
+  std::unique_ptr<Solver> solver;
   std::mt19937 gen;
   std::default_random_engine rng;
 
  public:
   Int computeViolation(Timestamp ts, VarId var,
                        const std::vector<DomainEntry>& domain) {
-    return computeViolation(engine->value(ts, var), domain);
+    return computeViolation(solver->value(ts, var), domain);
   }
   Int computeViolation(Int val, const std::vector<DomainEntry>& domain) {
     Int viol = std::numeric_limits<Int>::max();
@@ -42,15 +42,15 @@ class InSparseDomainTest : public ::testing::Test {
   void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
-    engine = std::make_unique<PropagationEngine>();
+    solver = std::make_unique<Solver>();
   }
 };
 
 TEST_F(InSparseDomainTest, Bounds) {
   std::vector<DomainEntry> domainVec{
       {-20, -15}, {-10, -5}, {0, 0}, {5, 10}, {15, 20}};
-  engine->open();
-  const VarId x = engine->makeIntVar(domainVec.front().lowerBound,
+  solver->open();
+  const VarId x = solver->makeIntVar(domainVec.front().lowerBound,
                                      domainVec.front().lowerBound,
                                      domainVec.front().upperBound);
 
@@ -60,24 +60,24 @@ TEST_F(InSparseDomainTest, Bounds) {
     }
     for (const auto& [xLb, xUb] : domainVec) {
       EXPECT_TRUE(xLb <= xUb);
-      if (!engine->isOpen()) {
-        engine->open();
+      if (!solver->isOpen()) {
+        solver->open();
       }
-      engine->updateBounds(x, xLb, xUb, false);
-      const VarId violationId = engine->makeIntView<InSparseDomain>(
-          *engine, x, std::vector<DomainEntry>(dom));
-      engine->close();
+      solver->updateBounds(x, xLb, xUb, false);
+      const VarId violationId = solver->makeIntView<InSparseDomain>(
+          *solver, x, std::vector<DomainEntry>(dom));
+      solver->close();
 
       std::vector<Int> violations;
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-        engine->setValue(engine->currentTimestamp(), x, xVal);
+        solver->setValue(solver->currentTimestamp(), x, xVal);
         violations.emplace_back(
-            engine->value(engine->currentTimestamp(), violationId));
+            solver->value(solver->currentTimestamp(), violationId));
       }
       const auto& [minViol, maxViol] =
           std::minmax_element(violations.begin(), violations.end());
-      ASSERT_GE(*minViol, engine->lowerBound(violationId));
-      ASSERT_LE(*maxViol, engine->upperBound(violationId));
+      ASSERT_GE(*minViol, solver->lowerBound(violationId));
+      ASSERT_LE(*maxViol, solver->upperBound(violationId));
     }
   }
 }
@@ -90,19 +90,19 @@ TEST_F(InSparseDomainTest, Value) {
     if (dom.size() == 0) {
       continue;
     }
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
     const Int lb = domainVec.front().lowerBound - margin;
     const Int ub = domainVec.back().upperBound + margin;
-    const VarId x = engine->makeIntVar(lb, lb, ub);
-    const VarId violationId = engine->makeIntView<InSparseDomain>(
-        *engine, x, std::vector<DomainEntry>(dom));
-    engine->close();
+    const VarId x = solver->makeIntVar(lb, lb, ub);
+    const VarId violationId = solver->makeIntView<InSparseDomain>(
+        *solver, x, std::vector<DomainEntry>(dom));
+    solver->close();
     for (Int val = lb; val <= ub; ++val) {
-      engine->setValue(engine->currentTimestamp(), x, val);
+      solver->setValue(solver->currentTimestamp(), x, val);
       EXPECT_EQ(computeViolation(val, dom),
-                engine->value(engine->currentTimestamp(), violationId));
+                solver->value(solver->currentTimestamp(), violationId));
     }
   }
 }
@@ -115,8 +115,8 @@ TEST_F(InSparseDomainTest, CommittedValue) {
     if (dom.size() == 0) {
       continue;
     }
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
     const Int lb = domainVec.front().lowerBound - margin;
     const Int ub = domainVec.back().upperBound + margin;
@@ -128,27 +128,27 @@ TEST_F(InSparseDomainTest, CommittedValue) {
 
     std::shuffle(values.begin(), values.end(), rng);
 
-    const VarId x = engine->makeIntVar(lb, lb, ub);
-    const VarId violationId = engine->makeIntView<InSparseDomain>(
-        *engine, x, std::vector<DomainEntry>(dom));
-    engine->close();
+    const VarId x = solver->makeIntVar(lb, lb, ub);
+    const VarId violationId = solver->makeIntView<InSparseDomain>(
+        *solver, x, std::vector<DomainEntry>(dom));
+    solver->close();
 
-    Int committedValue = engine->committedValue(x);
+    Int committedValue = solver->committedValue(x);
 
     for (size_t i = 0; i < values.size(); ++i) {
-      Timestamp ts = engine->currentTimestamp() + Timestamp(1 + i);
-      ASSERT_EQ(engine->committedValue(x), committedValue);
+      Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
+      ASSERT_EQ(solver->committedValue(x), committedValue);
 
-      engine->setValue(ts, x, values[i]);
+      solver->setValue(ts, x, values[i]);
 
       const Int expectedViol = computeViolation(values[i], dom);
 
-      ASSERT_EQ(expectedViol, engine->value(ts, violationId));
+      ASSERT_EQ(expectedViol, solver->value(ts, violationId));
 
-      engine->commitIf(ts, x);
-      committedValue = engine->value(ts, x);
+      solver->commitIf(ts, x);
+      committedValue = solver->value(ts, x);
 
-      ASSERT_EQ(expectedViol, engine->value(ts + 1, violationId));
+      ASSERT_EQ(expectedViol, solver->value(ts + 1, violationId));
     }
   }
 }

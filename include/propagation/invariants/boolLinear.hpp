@@ -4,12 +4,12 @@
 #include <vector>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
 
-class Engine;
+class SolverBase;
 
 /**
  * Invariant for output <- sum(coeffs_i * violArray_i)
@@ -25,9 +25,9 @@ class BoolLinear : public Invariant {
   std::vector<Int> _isSatisfied;
 
  public:
-  explicit BoolLinear(Engine&, VarId output,
+  explicit BoolLinear(SolverBase&, VarId output,
                       const std::vector<VarId>& violArray);
-  explicit BoolLinear(Engine&, VarId output, std::vector<Int> coeffs,
+  explicit BoolLinear(SolverBase&, VarId output, std::vector<Int> coeffs,
                       std::vector<VarId> violArray);
 
   void registerVars() override;

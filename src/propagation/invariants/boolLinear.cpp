@@ -2,14 +2,14 @@
 
 namespace atlantis::propagation {
 
-BoolLinear::BoolLinear(Engine& engine, VarId output,
+BoolLinear::BoolLinear(SolverBase& solver, VarId output,
                        const std::vector<VarId>& violArray)
-    : BoolLinear(engine, output, std::vector<Int>(violArray.size(), 1),
+    : BoolLinear(solver, output, std::vector<Int>(violArray.size(), 1),
                  violArray) {}
 
-BoolLinear::BoolLinear(Engine& engine, VarId output, std::vector<Int> coeffs,
+BoolLinear::BoolLinear(SolverBase& solver, VarId output, std::vector<Int> coeffs,
                        std::vector<VarId> violArray)
-    : Invariant(engine),
+    : Invariant(solver),
       _output(output),
       _coeffs(std::move(coeffs)),
       _violArray(std::move(violArray)),
@@ -18,24 +18,24 @@ BoolLinear::BoolLinear(Engine& engine, VarId output, std::vector<Int> coeffs,
 }
 
 void BoolLinear::registerVars() {
-  // precondition: this invariant must be registered with the engine before it
+  // precondition: this invariant must be registered with the solver before it
   // is initialised.
   assert(_id != NULL_ID);
 
   for (size_t i = 0; i < _violArray.size(); ++i) {
-    _engine.registerInvariantInput(_id, _violArray[i], i);
+    _solver.registerInvariantInput(_id, _violArray[i], i);
   }
   registerDefinedVariable(_output);
 }
 
 void BoolLinear::updateBounds(bool widenOnly) {
-  // precondition: this invariant must be registered with the engine before it
+  // precondition: this invariant must be registered with the solver before it
   // is initialised.
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < _violArray.size(); ++i) {
-    const Int violLb = _engine.lowerBound(_violArray[i]);
-    const Int violUb = _engine.upperBound(_violArray[i]);
+    const Int violLb = _solver.lowerBound(_violArray[i]);
+    const Int violUb = _solver.upperBound(_violArray[i]);
     // violation != 0 <=> false
     const Int boolLb = static_cast<Int>(violLb == 0 && violUb == 0);
     // violation == 0 <=> true
@@ -47,20 +47,20 @@ void BoolLinear::updateBounds(bool widenOnly) {
     lb += _coeffs[i] * (_coeffs[i] < 0 ? boolUb : boolLb);
     ub += _coeffs[i] * (_coeffs[i] < 0 ? boolLb : boolUb);
   }
-  _engine.updateBounds(_output, lb, ub, widenOnly);
+  _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void BoolLinear::recompute(Timestamp ts) {
   Int sum = 0;
   for (size_t i = 0; i < _violArray.size(); ++i) {
-    sum += _coeffs[i] * static_cast<Int>(_engine.value(ts, _violArray[i]) == 0);
+    sum += _coeffs[i] * static_cast<Int>(_solver.value(ts, _violArray[i]) == 0);
   }
   updateValue(ts, _output, sum);
 }
 
 void BoolLinear::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _isSatisfied.size());
-  const Int newValue = static_cast<Int>(_engine.value(ts, _violArray[id]) == 0);
+  const Int newValue = static_cast<Int>(_solver.value(ts, _violArray[id]) == 0);
   if (newValue == _isSatisfied[id]) {
     return;
   }
@@ -85,7 +85,7 @@ void BoolLinear::commit(Timestamp ts) {
   Invariant::commit(ts);
   for (size_t i = 0; i < _isSatisfied.size(); ++i) {
     _isSatisfied[i] =
-        static_cast<Int>(_engine.committedValue(_violArray[i]) == 0);
+        static_cast<Int>(_solver.committedValue(_violArray[i]) == 0);
   }
 }
 }  // namespace atlantis::propagation

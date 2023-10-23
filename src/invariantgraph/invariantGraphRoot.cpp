@@ -8,10 +8,10 @@ namespace atlantis::invariantgraph {
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 InvariantGraphRoot::createNeighbourhood(
-    propagation::Engine& engine,
+    propagation::SolverBase& solver,
     std::vector<search::SearchVariable>&& variables) {
   return std::make_shared<search::neighbourhoods::RandomNeighbourhood>(
-      std::move(variables), engine);
+      std::move(variables), solver);
 }
 
 void InvariantGraphRoot::addSearchVarNode(VarNode& varNode) {

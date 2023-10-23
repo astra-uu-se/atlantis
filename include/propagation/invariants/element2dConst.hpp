@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
@@ -39,7 +39,7 @@ class Element2dConst : public Invariant {
   }
 
  public:
-  explicit Element2dConst(Engine&, VarId output, VarId index1, VarId index2,
+  explicit Element2dConst(SolverBase&, VarId output, VarId index1, VarId index2,
                           std::vector<std::vector<Int>> matrix, Int offset1 = 1,
                           Int offset2 = 1);
   void registerVars() override;

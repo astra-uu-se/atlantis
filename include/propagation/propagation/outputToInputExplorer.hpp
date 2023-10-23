@@ -9,11 +9,11 @@
 
 namespace atlantis::propagation {
 
-// Forward declare PropagationEngine
-class PropagationEngine;
+// Forward declare Solver
+class Solver;
 
 class OutputToInputExplorer {
-  PropagationEngine& _engine;
+  Solver& _solver;
 
   std::vector<VarId> _variableStack;
   size_t _varStackIdx = 0;
@@ -62,7 +62,7 @@ class OutputToInputExplorer {
 
  public:
   OutputToInputExplorer() = delete;
-  OutputToInputExplorer(PropagationEngine& engine, size_t expectedSize);
+  OutputToInputExplorer(Solver& solver, size_t expectedSize);
 
   void registerVar(VarId);
   void registerInvariant(InvariantId);

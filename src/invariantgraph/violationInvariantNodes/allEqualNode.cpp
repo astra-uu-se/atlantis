@@ -51,36 +51,36 @@ std::unique_ptr<AllEqualNode> AllEqualNode::fromModelConstraint(
 }
 
 void AllEqualNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                           propagation::Engine& engine) {
+                                           propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
-    _allDifferentViolationVarId = engine.makeIntVar(0, 0, 0);
+    _allDifferentViolationVarId = solver.makeIntVar(0, 0, 0);
     if (shouldHold()) {
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<propagation::EqualConst>(
-                            engine, _allDifferentViolationVarId,
+                        solver.makeIntView<propagation::EqualConst>(
+                            solver, _allDifferentViolationVarId,
                             staticInputVarNodeIds().size() - 1));
     } else {
       assert(!isReified());
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<propagation::NotEqualConst>(
-                            engine, _allDifferentViolationVarId,
+                        solver.makeIntView<propagation::NotEqualConst>(
+                            solver, _allDifferentViolationVarId,
                             staticInputVarNodeIds().size() - 1));
     }
   }
 }
 
 void AllEqualNode::registerNode(InvariantGraph& invariantGraph,
-                                propagation::Engine& engine) {
+                                propagation::SolverBase& solver) {
   assert(_allDifferentViolationVarId != propagation::NULL_ID);
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  std::vector<propagation::VarId> engineVariables;
+  std::vector<propagation::VarId> solverVariables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(engineVariables),
+                 std::back_inserter(solverVariables),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  engine.makeConstraint<propagation::AllDifferent>(
-      engine, _allDifferentViolationVarId, engineVariables);
+  solver.makeConstraint<propagation::AllDifferent>(
+      solver, _allDifferentViolationVarId, solverVariables);
 }
 
 }  // namespace atlantis::invariantgraph

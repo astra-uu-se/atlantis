@@ -76,7 +76,7 @@ bool VarNode::isFixed() const noexcept { return _domain.isFixed(); }
 
 bool VarNode::isIntVar() const noexcept { return _isIntVar; }
 
-propagation::VarId VarNode::postDomainConstraint(propagation::Engine& engine,
+propagation::VarId VarNode::postDomainConstraint(propagation::SolverBase& solver,
                                     std::vector<DomainEntry>&& domain) {
   if (domain.size() == 0 || _domainViolationId != propagation::NULL_ID) {
     return _domainViolationId;
@@ -87,11 +87,11 @@ propagation::VarId VarNode::postDomainConstraint(propagation::Engine& engine,
   // domain.size() - 1 = number of "holes" in the domain:
   const float denseness = 1.0 - ((float)(domain.size() - 1) / (float)interval);
   if (SPARSE_MIN_DENSENESS <= denseness) {
-    _domainViolationId = engine.makeIntView<propagation::InSparseDomain>(
-        engine, this->varId(), std::move(domain));
+    _domainViolationId = solver.makeIntView<propagation::InSparseDomain>(
+        solver, this->varId(), std::move(domain));
   } else {
     _domainViolationId =
-        engine.makeIntView<propagation::InDomain>(engine, this->varId(), std::move(domain));
+        solver.makeIntView<propagation::InDomain>(solver, this->varId(), std::move(domain));
   }
   return _domainViolationId;
 }
@@ -118,11 +118,11 @@ void VarNode::removeValue(bool val) {
   _domain.fix(val ? 0 : 1);
 }
 
-std::vector<DomainEntry> VarNode::constrainedDomain(const propagation::Engine& engine) {
+std::vector<DomainEntry> VarNode::constrainedDomain(const propagation::SolverBase& solver) {
   assert(this->varId() != propagation::NULL_ID);
   const propagation::VarId varId = this->varId();
-  return _domain.relativeComplementIfIntersects(engine.lowerBound(varId),
-                                                engine.upperBound(varId));
+  return _domain.relativeComplementIfIntersects(solver.lowerBound(varId),
+                                                solver.upperBound(varId));
 }
 
 std::pair<Int, Int> VarNode::bounds() const { return _domain.bounds(); }

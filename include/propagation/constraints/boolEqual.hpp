@@ -2,7 +2,7 @@
 
 #include "constraint.hpp"
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
@@ -12,7 +12,7 @@ class BoolEqual : public Constraint {
   const VarId _x, _y;
 
  public:
-  explicit BoolEqual(Engine&, VarId violationId, VarId x, VarId y);
+  explicit BoolEqual(SolverBase&, VarId violationId, VarId x, VarId y);
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;

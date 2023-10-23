@@ -48,7 +48,7 @@ std::unique_ptr<CircuitImplicitNode> CircuitImplicitNode::fromModelConstraint(
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 CircuitImplicitNode::createNeighbourhood(
-    propagation::Engine&, std::vector<search::SearchVariable>&& variables) {
+    propagation::SolverBase&, std::vector<search::SearchVariable>&& variables) {
   return std::make_shared<search::neighbourhoods::CircuitNeighbourhood>(
       std::move(variables));
 }

@@ -3,7 +3,7 @@
 #include <array>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
@@ -19,7 +19,7 @@ class IfThenElse : public Invariant {
   const std::array<const VarId, 2> _xy;
 
  public:
-  explicit IfThenElse(Engine&, VarId output, VarId b, VarId x, VarId y);
+  explicit IfThenElse(SolverBase&, VarId output, VarId b, VarId x, VarId y);
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;

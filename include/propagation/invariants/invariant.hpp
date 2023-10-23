@@ -3,17 +3,17 @@
 #include <cassert>
 #include <vector>
 
-#include "types.hpp"
 #include "propagation/variables/committable.hpp"
 #include "propagation/variables/committableInt.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
-class Engine;  // Forward declaration
+class SolverBase;  // Forward declaration
 
 class Invariant {
  protected:
-  Engine& _engine;
+  SolverBase& _solver;
   /**
    * A simple queue structure of a fixed length to hold what input
    * variables that have been updated.
@@ -67,11 +67,11 @@ class Invariant {
   InvariantId _id{NULL_ID};
   bool _isPostponed{false};
 
-  explicit Invariant(Engine& engine, Int nullState = -1)
-      : _engine(engine), _state(NULL_TIMESTAMP, nullState) {}
+  explicit Invariant(SolverBase& solver, Int nullState = -1)
+      : _solver(solver), _state(NULL_TIMESTAMP, nullState) {}
 
   /**
-   * Register to the engine that variable is defined by the invariant.
+   * Register to the solver that variable is defined by the invariant.
    * @param id the id of the variable that is defined by the invariant.
    */
   void registerDefinedVariable(VarId id);
@@ -121,9 +121,9 @@ class Invariant {
 
   /**
    * Preconditions for initialisation:
-   * 1) The invariant has been registered in an engine and has a valid ID.
+   * 1) The invariant has been registered in an solver and has a valid ID.
    *
-   * 2) All variables have valid ids (i.engine., they have been
+   * 2) All variables have valid ids (i.solver., they have been
    * registered)
    *
    * Checklist for initialising an invariant:

@@ -41,7 +41,7 @@ bool AllDifferentImplicitNode::prune(InvariantGraph& invariantGraph) {
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 AllDifferentImplicitNode::createNeighbourhood(
-    propagation::Engine& engine, std::vector<search::SearchVariable>&& variables) {
+    propagation::SolverBase& solver, std::vector<search::SearchVariable>&& variables) {
   if (variables.size() <= 1) {
     return nullptr;
   }
@@ -58,7 +58,7 @@ AllDifferentImplicitNode::createNeighbourhood(
   if (hasSameDomain) {
     return std::make_shared<
         search::neighbourhoods::AllDifferentUniformNeighbourhood>(
-        std::move(variables), domain.values(), engine);
+        std::move(variables), domain.values(), solver);
   } else {
     Int domainLb = std::numeric_limits<Int>::max();
     Int domainUb = std::numeric_limits<Int>::min();
@@ -68,7 +68,7 @@ AllDifferentImplicitNode::createNeighbourhood(
     }
     return std::make_shared<
         search::neighbourhoods::AllDifferentNonUniformNeighbourhood>(
-        std::move(variables), domainLb, domainUb, engine);
+        std::move(variables), domainLb, domainUb, solver);
   }
 }
 

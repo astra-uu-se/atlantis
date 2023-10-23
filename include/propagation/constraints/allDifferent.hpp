@@ -6,7 +6,7 @@
 
 #include "constraint.hpp"
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
 
@@ -22,7 +22,7 @@ class AllDifferent : public Constraint {
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  explicit AllDifferent(Engine&, VarId violationId,
+  explicit AllDifferent(SolverBase&, VarId violationId,
                         std::vector<VarId> variables);
 
   void registerVars() override;

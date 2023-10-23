@@ -6,14 +6,14 @@ namespace atlantis::search::neighbourhoods {
 
 AllDifferentNonUniformNeighbourhood::AllDifferentNonUniformNeighbourhood(
     std::vector<SearchVariable>&& variables, Int domainLb, Int domainUb,
-    const propagation::Engine& engine)
+    const propagation::SolverBase& solver)
     : _variables(std::move(variables)),
       _variableIndices(_variables.size()),
       _domainOffset(domainLb),
       _valueIndexToVariableIndex(domainUb - domainLb + 1, _variables.size()),
       _domains(_variables.size()),
       _inDomain(_variables.size()),
-      _engine(engine) {
+      _solver(solver) {
   assert(_variables.size() > 1);
   std::iota(_variableIndices.begin(), _variableIndices.end(), 0u);
   assert(_valueIndexToVariableIndex.size() >= _variables.size());
@@ -98,7 +98,7 @@ void AllDifferentNonUniformNeighbourhood::initialise(
     if (isValueIndexOccupied(valueIndex)) {
       assert(_valueIndexToVariableIndex.at(valueIndex) < _variables.size());
       modifications.set(
-          _variables[_valueIndexToVariableIndex[valueIndex]].engineId(),
+          _variables[_valueIndexToVariableIndex[valueIndex]].solverId(),
           toValue(valueIndex));
     }
   }
@@ -118,7 +118,7 @@ bool AllDifferentNonUniformNeighbourhood::randomMove(RandomProvider& random,
 #ifndef NDEBUG
     {
       const size_t value1Index = toValueIndex(
-          assignment.value(_variables.at(variable1Index).engineId()));
+          assignment.value(_variables.at(variable1Index).solverId()));
       assert(value1Index < _valueIndexToVariableIndex.size());
       assert(variable1Index == _valueIndexToVariableIndex.at(value1Index));
     }
@@ -154,26 +154,26 @@ bool AllDifferentNonUniformNeighbourhood::canSwap(
   // variable 1:
   assert(variable1Index < _variables.size());
   assert(_valueIndexToVariableIndex.at(toValueIndex(assignment.value(
-             _variables[variable1Index].engineId()))) == variable1Index);
+             _variables[variable1Index].solverId()))) == variable1Index);
 
   // variable 2:
   assert(value2Index < _valueIndexToVariableIndex.size());
   assert(isValueIndexOccupied(value2Index));
   assert(toValue(value2Index) ==
          assignment.value(
-             _variables[_valueIndexToVariableIndex[value2Index]].engineId()));
+             _variables[_valueIndexToVariableIndex[value2Index]].solverId()));
 
   // sanity:
   assert(inDomain(variable1Index, value2Index));
   assert(_valueIndexToVariableIndex[value2Index] <= _inDomain.size());
   assert(value2Index <
          _inDomain.at(_valueIndexToVariableIndex[value2Index]).size());
-  assert(toValueIndex(assignment.value(_variables[variable1Index].engineId())) <
+  assert(toValueIndex(assignment.value(_variables[variable1Index].solverId())) <
          _inDomain.at(_valueIndexToVariableIndex[value2Index]).size());
 
   return inDomain(
       _valueIndexToVariableIndex[value2Index],
-      toValueIndex(assignment.value(_variables[variable1Index].engineId())));
+      toValueIndex(assignment.value(_variables[variable1Index].solverId())));
 }
 
 bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
@@ -182,7 +182,7 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
                                                      size_t value2Index) {
   // variable 1:
   assert(variable1Index < _variables.size());
-  const propagation::VarId variable1 = _variables[variable1Index].engineId();
+  const propagation::VarId variable1 = _variables[variable1Index].solverId();
   const Int value1 = assignment.value(variable1);
   assert(isValueIndexOccupied(toValueIndex(value1)));
   assert(_valueIndexToVariableIndex.at(toValueIndex(value1)) == variable1Index);
@@ -191,7 +191,7 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
   assert(isValueIndexOccupied(value2Index));
   const size_t variable2Index = _valueIndexToVariableIndex[value2Index];
   assert(toValue(value2Index) ==
-         assignment.value(_variables.at(variable2Index).engineId()));
+         assignment.value(_variables.at(variable2Index).solverId()));
 
   // sanity:
   assert(variable1Index != variable2Index);
@@ -203,17 +203,17 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
   const size_t value1Index = toValueIndex(value1);
   assert(variable1Index == _valueIndexToVariableIndex.at(value1Index));
   assert(variable1 ==
-         _variables.at(_valueIndexToVariableIndex.at(value1Index)).engineId());
+         _variables.at(_valueIndexToVariableIndex.at(value1Index)).solverId());
   assert(variable2Index == _valueIndexToVariableIndex.at(value2Index));
   const Int value2 = toValue(value2Index);
-  const propagation::VarId variable2 = _variables.at(variable2Index).engineId();
+  const propagation::VarId variable2 = _variables.at(variable2Index).solverId();
   assert(variable2 ==
-         _variables.at(_valueIndexToVariableIndex.at(value2Index)).engineId());
+         _variables.at(_valueIndexToVariableIndex.at(value2Index)).solverId());
 
   assert(assignment.value(variable1) == value1);
   assert(assignment.value(variable2) == value2);
 #endif
-  if (maybeCommit(Move<2>({variable1, _variables[variable2Index].engineId()},
+  if (maybeCommit(Move<2>({variable1, _variables[variable2Index].solverId()},
                           {toValue(value2Index), value1}),
                   assignment, annealer)) {
     _valueIndexToVariableIndex[toValueIndex(value1)] = variable2Index;
@@ -222,13 +222,13 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
     assert(variable2Index == _valueIndexToVariableIndex.at(value1Index));
     assert(
         variable2 ==
-        _variables.at(_valueIndexToVariableIndex.at(value1Index)).engineId());
+        _variables.at(_valueIndexToVariableIndex.at(value1Index)).solverId());
     assert(
         variable1 ==
-        _variables.at(_valueIndexToVariableIndex.at(value2Index)).engineId());
+        _variables.at(_valueIndexToVariableIndex.at(value2Index)).solverId());
     assert(
         variable2 ==
-        _variables.at(_valueIndexToVariableIndex.at(value1Index)).engineId());
+        _variables.at(_valueIndexToVariableIndex.at(value1Index)).solverId());
 
     assert(assignment.value(variable1) == value2);
     assert(assignment.value(variable2) == value1);
@@ -247,7 +247,7 @@ bool AllDifferentNonUniformNeighbourhood::assignValue(Assignment& assignment,
   assert(newValueIndex < _valueIndexToVariableIndex.size());
   assert(_valueIndexToVariableIndex[newValueIndex] == _variables.size());
   assert(variableIndex < _variables.size());
-  const propagation::VarId variable = _variables[variableIndex].engineId();
+  const propagation::VarId variable = _variables[variableIndex].solverId();
   const Int oldValue = assignment.value(variable);
   const size_t oldValueIndex = toValueIndex(oldValue);
 

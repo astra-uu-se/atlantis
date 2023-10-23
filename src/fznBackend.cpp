@@ -43,18 +43,18 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
       "building invariant graph",
       [&] { return invariantGraphBuilder.build(); });
 
-  propagation::PropagationEngine engine;
-  auto applicationResult = graph.apply(engine);
+  propagation::Solver solver;
+  auto applicationResult = graph.apply(solver);
   auto neighbourhood = applicationResult.neighbourhood();
   neighbourhood.printNeighbourhood(logger);
 
-  search::Objective searchObjective(engine, problemType);
-  engine.open();
+  search::Objective searchObjective(solver, problemType);
+  solver.open();
   auto violation = searchObjective.registerNode(
       applicationResult.totalViolationId(), applicationResult.objectiveVarId());
-  engine.close();
+  solver.close();
 
-  search::Assignment assignment(engine, violation,
+  search::Assignment assignment(solver, violation,
                                 applicationResult.objectiveVarId(),
                                 getObjectiveDirection(problemType));
 

@@ -62,18 +62,18 @@ std::unique_ptr<BoolClauseNode> BoolClauseNode::fromModelConstraint(
 }
 
 void BoolClauseNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                             propagation::Engine& engine) {
+                                             propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
-    _sumVarId = engine.makeIntVar(0, 0, 0);
+    _sumVarId = solver.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(invariantGraph, engine.makeIntView<propagation::EqualConst>(
-                                            engine, _sumVarId,
+      setViolationVarId(invariantGraph, solver.makeIntView<propagation::EqualConst>(
+                                            solver, _sumVarId,
                                             static_cast<Int>(_as.size()) +
                                                 static_cast<Int>(_bs.size())));
     } else {
       assert(!isReified());
-      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
-                                            engine, _sumVarId,
+      setViolationVarId(invariantGraph, solver.makeIntView<propagation::NotEqualConst>(
+                                            solver, _sumVarId,
                                             static_cast<Int>(_as.size()) +
                                                 static_cast<Int>(_bs.size())));
     }
@@ -81,21 +81,21 @@ void BoolClauseNode::registerOutputVariables(InvariantGraph& invariantGraph,
 }
 
 void BoolClauseNode::registerNode(InvariantGraph& invariantGraph,
-                                  propagation::Engine& engine) {
-  std::vector<propagation::VarId> engineVariables;
-  engineVariables.reserve(_as.size() + _bs.size());
-  std::transform(_as.begin(), _as.end(), std::back_inserter(engineVariables),
+                                  propagation::SolverBase& solver) {
+  std::vector<propagation::VarId> solverVariables;
+  solverVariables.reserve(_as.size() + _bs.size());
+  std::transform(_as.begin(), _as.end(), std::back_inserter(solverVariables),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  std::transform(_bs.begin(), _bs.end(), std::back_inserter(engineVariables),
+  std::transform(_bs.begin(), _bs.end(), std::back_inserter(solverVariables),
                  [&](const auto& id) {
-                   return engine.makeIntView<propagation::NotEqualConst>(
-                       engine, invariantGraph.varId(id), 0);
+                   return solver.makeIntView<propagation::NotEqualConst>(
+                       solver, invariantGraph.varId(id), 0);
                  });
 
   assert(_sumVarId != propagation::NULL_ID);
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
-  engine.makeInvariant<propagation::BoolLinear>(engine, _sumVarId, engineVariables);
+  solver.makeInvariant<propagation::BoolLinear>(solver, _sumVarId, solverVariables);
 }
 
 }  // namespace invariantgraph

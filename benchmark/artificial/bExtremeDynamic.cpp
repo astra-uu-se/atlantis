@@ -12,13 +12,13 @@
 #include "misc/logging.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/invariants/linear.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::benchmark {
 
 class ExtremeDynamic : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::unique_ptr<propagation::Solver> solver;
   propagation::VarId staticInputVar;
   std::vector<propagation::VarId> dynamicInputVars;
   std::vector<propagation::VarId> outputVars;
@@ -32,34 +32,34 @@ class ExtremeDynamic : public ::benchmark::Fixture {
   int lb, ub;
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<propagation::PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
 
     lb = 0;
     ub = 1000;
 
     numInvariants = state.range(0);
 
-    engine->open();
-    setEngineModes(*engine, state.range(1));
+    solver->open();
+    setSolverMode(*solver, state.range(1));
 
-    staticInputVar = engine->makeIntVar(0, 0, static_cast<Int>(numInvariants));
+    staticInputVar = solver->makeIntVar(0, 0, static_cast<Int>(numInvariants));
     for (size_t i = 0; i < numInvariants; ++i) {
-      dynamicInputVars.emplace_back(engine->makeIntVar(lb, lb, ub));
-      outputVars.emplace_back(engine->makeIntVar(lb, lb, ub));
+      dynamicInputVars.emplace_back(solver->makeIntVar(lb, lb, ub));
+      outputVars.emplace_back(solver->makeIntVar(lb, lb, ub));
     }
 
     for (size_t i = 0; i < numInvariants; ++i) {
-      engine->makeInvariant<propagation::ElementVar>(
-          *engine, outputVars.at(i), staticInputVar, dynamicInputVars, 0);
+      solver->makeInvariant<propagation::ElementVar>(
+          *solver, outputVars.at(i), staticInputVar, dynamicInputVars, 0);
     }
 
-    objective = engine->makeIntVar(lb * static_cast<Int>(numInvariants),
+    objective = solver->makeIntVar(lb * static_cast<Int>(numInvariants),
                                    lb * static_cast<Int>(numInvariants),
                                    ub * static_cast<Int>(numInvariants));
-    engine->makeInvariant<propagation::ElementVar>(
-        *engine, objective, staticInputVar, outputVars, 0);
+    solver->makeInvariant<propagation::ElementVar>(
+        *solver, objective, staticInputVar, outputVars, 0);
 
-    engine->close();
+    solver->close();
     gen = std::mt19937(rd());
     staticVarValueDist = std::uniform_int_distribution<Int>{
         0, static_cast<Int>(numInvariants) - 1};
@@ -81,13 +81,13 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_static_var)
   size_t probes = 0;
   for (auto _ : st) {
     // Perform move
-    engine->beginMove();
-    engine->setValue(staticInputVar, staticVarValueDist(gen));
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(staticInputVar, staticVarValueDist(gen));
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(objective);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(objective);
+    solver->endProbe();
 
     ++probes;
   }
@@ -99,14 +99,14 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_single_dynamic_var)
 (::benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
-    engine->beginMove();
-    engine->setValue(dynamicInputVars.at(staticVarValueDist(gen)),
+    solver->beginMove();
+    solver->setValue(dynamicInputVars.at(staticVarValueDist(gen)),
                      dynamicVarValueDist(gen));
-    engine->endMove();
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(objective);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(objective);
+    solver->endProbe();
 
     ++probes;
   }

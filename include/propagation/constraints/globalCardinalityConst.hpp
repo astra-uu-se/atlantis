@@ -6,7 +6,7 @@
 
 #include "constraint.hpp"
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
 
@@ -27,11 +27,11 @@ class GlobalCardinalityConst : public Constraint {
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  GlobalCardinalityConst(Engine&, VarId violationId,
+  GlobalCardinalityConst(SolverBase&, VarId violationId,
                          std::vector<VarId> variables,
                          const std::vector<Int>& cover,
                          const std::vector<Int>& counts);
-  GlobalCardinalityConst(Engine&, VarId violationId,
+  GlobalCardinalityConst(SolverBase&, VarId violationId,
                          std::vector<VarId> variables,
                          const std::vector<Int>& cover,
                          const std::vector<Int>& lowerBound,

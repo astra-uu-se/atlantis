@@ -2,7 +2,7 @@
 
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/violationInvariantNodes/globalCardinalityLowUpClosedNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -124,40 +124,40 @@ class AbstractGlobalCardinalityLowUpClosedNodeTest
   }
 
   void application() {
-    propagation::PropagationEngine engine;
-    engine.open();
-    addInputVarsToEngine(engine);
+    propagation::Solver solver;
+    solver.open();
+    addInputVarsToSolver(solver);
 
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerOutputVariables(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
 
-    invNode().registerNode(*_invariantGraph, engine);
-    engine.close();
+    invNode().registerNode(*_invariantGraph, solver);
+    solver.close();
 
     // x1, x2
-    EXPECT_EQ(engine.searchVariables().size(), 2);
+    EXPECT_EQ(solver.searchVariables().size(), 2);
     // x1, x2, violation
     // violation
-    EXPECT_EQ(engine.numVariables(), 3);
+    EXPECT_EQ(solver.numVariables(), 3);
     // gcc
-    EXPECT_EQ(engine.numInvariants(), 1);
-    EXPECT_EQ(engine.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
-    EXPECT_GT(engine.upperBound(invNode().violationVarId(*_invariantGraph)), 0);
+    EXPECT_EQ(solver.numInvariants(), 1);
+    EXPECT_EQ(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
+    EXPECT_GT(solver.upperBound(invNode().violationVarId(*_invariantGraph)), 0);
   }
 
   void propagation() {
-    propagation::PropagationEngine engine;
-    engine.open();
-    addInputVarsToEngine(engine);
-    invNode().registerOutputVariables(*_invariantGraph, engine);
-    invNode().registerNode(*_invariantGraph, engine);
+    propagation::Solver solver;
+    solver.open();
+    addInputVarsToSolver(solver);
+    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerNode(*_invariantGraph, solver);
 
     std::vector<propagation::VarId> inputs;
     for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
@@ -172,30 +172,30 @@ class AbstractGlobalCardinalityLowUpClosedNodeTest
 
     std::vector<Int> inputVals(inputs.size());
 
-    engine.close();
+    solver.close();
 
-    for (inputVals.at(0) = engine.lowerBound(inputs.at(0));
-         inputVals.at(0) <= engine.upperBound(inputs.at(0));
+    for (inputVals.at(0) = solver.lowerBound(inputs.at(0));
+         inputVals.at(0) <= solver.upperBound(inputs.at(0));
          ++inputVals.at(0)) {
-      for (inputVals.at(1) = engine.lowerBound(inputs.at(1));
-           inputVals.at(1) <= engine.upperBound(inputs.at(1));
+      for (inputVals.at(1) = solver.lowerBound(inputs.at(1));
+           inputVals.at(1) <= solver.upperBound(inputs.at(1));
            ++inputVals.at(1)) {
-        engine.beginMove();
+        solver.beginMove();
         for (size_t i = 0; i < inputs.size(); ++i) {
-          engine.setValue(inputs.at(i), inputVals.at(i));
+          solver.setValue(inputs.at(i), inputVals.at(i));
         }
-        engine.endMove();
+        solver.endMove();
 
-        engine.beginProbe();
-        engine.query(violationId);
-        engine.endProbe();
+        solver.beginProbe();
+        solver.query(violationId);
+        solver.endProbe();
 
         if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
           bool sat = isSatisfied(inputVals, cover, low, up);
-          EXPECT_EQ(engine.currentValue(violationId) == 0, sat);
+          EXPECT_EQ(solver.currentValue(violationId) == 0, sat);
         } else {
           bool sat = isSatisfied(inputVals, cover, low, up);
-          EXPECT_NE(engine.currentValue(violationId) == 0, sat);
+          EXPECT_NE(solver.currentValue(violationId) == 0, sat);
         }
       }
     }

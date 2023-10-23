@@ -5,9 +5,9 @@ namespace atlantis::propagation {
 /**
  * @param violationId id for the violationCount
  */
-AllDifferent::AllDifferent(Engine& engine, VarId violationId,
+AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
                            std::vector<VarId> variables)
-    : Constraint(engine, violationId),
+    : Constraint(solver, violationId),
       _variables(std::move(variables)),
       _committedValues(_variables.size(), 0),
       _counts(),
@@ -18,13 +18,13 @@ AllDifferent::AllDifferent(Engine& engine, VarId violationId,
 void AllDifferent::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _variables.size(); ++i) {
-    _engine.registerInvariantInput(_id, _variables[i], i);
+    _solver.registerInvariantInput(_id, _variables[i], i);
   }
   registerDefinedVariable(_violationId);
 }
 
 void AllDifferent::updateBounds(bool widenOnly) {
-  _engine.updateBounds(_violationId, 0, _variables.size() - 1, widenOnly);
+  _solver.updateBounds(_violationId, 0, _variables.size() - 1, widenOnly);
 }
 
 void AllDifferent::close(Timestamp ts) {
@@ -32,8 +32,8 @@ void AllDifferent::close(Timestamp ts) {
   Int ub = std::numeric_limits<Int>::min();
 
   for (size_t i = 0; i < _variables.size(); ++i) {
-    lb = std::min(lb, _engine.lowerBound(_variables[i]));
-    ub = std::max(ub, _engine.upperBound(_variables[i]));
+    lb = std::min(lb, _solver.lowerBound(_variables[i]));
+    ub = std::max(ub, _solver.upperBound(_variables[i]));
   }
   assert(ub >= lb);
   _counts.resize(static_cast<unsigned long>(ub - lb + 1),
@@ -48,14 +48,14 @@ void AllDifferent::recompute(Timestamp ts) {
 
   Int violInc = 0;
   for (size_t i = 0; i < _variables.size(); ++i) {
-    violInc += increaseCount(ts, _engine.value(ts, _variables[i]));
+    violInc += increaseCount(ts, _solver.value(ts, _variables[i]));
   }
   updateValue(ts, _violationId, violInc);
 }
 
 void AllDifferent::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _committedValues.size());
-  const Int newValue = _engine.value(ts, _variables[id]);
+  const Int newValue = _solver.value(ts, _variables[id]);
   if (newValue == _committedValues[id]) {
     return;
   }
@@ -81,7 +81,7 @@ void AllDifferent::commit(Timestamp ts) {
   Invariant::commit(ts);
 
   for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _engine.committedValue(_variables[i]);
+    _committedValues[i] = _solver.committedValue(_variables[i]);
   }
 
   for (CommittableInt& committableInt : _counts) {

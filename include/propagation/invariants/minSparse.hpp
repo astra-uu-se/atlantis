@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 #include "propagation/utils/priorityList.hpp"
 #include "types.hpp"
@@ -24,7 +24,7 @@ class MinSparse : public Invariant {
   PriorityList _localPriority;
 
  public:
-  explicit MinSparse(Engine&, VarId output, std::vector<VarId> varArray);
+  explicit MinSparse(SolverBase&, VarId output, std::vector<VarId> varArray);
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;

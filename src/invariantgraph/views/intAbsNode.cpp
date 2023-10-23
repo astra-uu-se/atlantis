@@ -20,14 +20,14 @@ invariantgraph::IntAbsNode::fromModelConstraint(
 }
 
 void invariantgraph::IntAbsNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(engine.makeIntView<propagation::IntAbsView>(
-            engine, invariantGraph.varId(input())));
+        .setVarId(solver.makeIntView<propagation::IntAbsView>(
+            solver, invariantGraph.varId(input())));
   }
 }
 
-void invariantgraph::IntAbsNode::registerNode(InvariantGraph&, propagation::Engine&) {}
+void invariantgraph::IntAbsNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
 }  // namespace invariantgraph

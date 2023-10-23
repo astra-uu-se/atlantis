@@ -52,12 +52,12 @@ ArrayVarIntElement2dNode::fromModelConstraint(
 }
 
 void ArrayVarIntElement2dNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void ArrayVarIntElement2dNode::registerNode(InvariantGraph& invariantGraph,
-                                            propagation::Engine& engine) {
+                                            propagation::SolverBase& solver) {
   const size_t numCols = dynamicInputVarNodeIds().size() / _numRows;
   std::vector<std::vector<propagation::VarId>> varMatrix(_numRows,
                                             std::vector<propagation::VarId>(numCols));
@@ -70,8 +70,8 @@ void ArrayVarIntElement2dNode::registerNode(InvariantGraph& invariantGraph,
   }
 
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  engine.makeInvariant<propagation::Element2dVar>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::Element2dVar>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), varMatrix,
       _offset1, _offset2);
 }

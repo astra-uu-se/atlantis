@@ -23,8 +23,8 @@ class ArrayIntMaximumNode : public InvariantNode {
 
   ~ArrayIntMaximumNode() override = default;
 
-  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
 }  // namespace invariantgraph

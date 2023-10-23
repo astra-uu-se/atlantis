@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
@@ -24,8 +24,8 @@ namespace atlantis::propagation {
  */
 class Bool2IntView : public IntView {
  public:
-  explicit Bool2IntView(Engine& engine, const VarId parentId)
-      : IntView(engine, parentId) {}
+  explicit Bool2IntView(SolverBase& solver, const VarId parentId)
+      : IntView(solver, parentId) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

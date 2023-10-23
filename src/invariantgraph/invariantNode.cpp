@@ -113,11 +113,11 @@ void InvariantNode::replaceDynamicInputVarNode(VarNode& oldInputVarNode,
   newInputVarNode.markAsInputFor(_id, false);
 }
 
-propagation::VarId InvariantNode::makeEngineVar(propagation::Engine& engine, VarNode& varNode,
+propagation::VarId InvariantNode::makeSolverVar(propagation::SolverBase& solver, VarNode& varNode,
                                    Int initialValue) {
   if (varNode.varId() == propagation::NULL_ID) {
     varNode.setVarId(
-        engine.makeIntVar(initialValue, initialValue, initialValue));
+        solver.makeIntVar(initialValue, initialValue, initialValue));
   }
   return varNode.varId();
 }

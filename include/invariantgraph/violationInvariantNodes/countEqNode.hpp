@@ -52,9 +52,9 @@ class CountEqNode : public ViolationInvariantNode {
   static std::unique_ptr<CountEqNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   VarNodeId yVarNode() {
     if (_yIsParameter) {

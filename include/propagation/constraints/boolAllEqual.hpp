@@ -6,7 +6,7 @@
 
 #include "constraint.hpp"
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
 
@@ -19,7 +19,7 @@ class BoolAllEqual : public Constraint {
   CommittableInt _numTrue;
 
  public:
-  explicit BoolAllEqual(Engine&, VarId violationId,
+  explicit BoolAllEqual(SolverBase&, VarId violationId,
                         std::vector<VarId> variables);
 
   void registerVars() override;

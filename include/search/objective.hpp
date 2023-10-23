@@ -5,7 +5,7 @@
 
 #include "fznparser/model.hpp"
 #include "propagation/invariants/linear.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/types.hpp"
 #include "types.hpp"
 
@@ -13,7 +13,7 @@ namespace atlantis::search {
 
 class Objective {
  private:
-  propagation::PropagationEngine& _engine;
+  propagation::Solver& _solver;
   fznparser::ProblemType _problemType;
 
   std::optional<propagation::VarId> _bound{};
@@ -21,7 +21,7 @@ class Objective {
   std::optional<propagation::VarId> _violation{};
 
  public:
-  Objective(propagation::PropagationEngine& engine,
+  Objective(propagation::Solver& solver,
             fznparser::ProblemType problemType);
 
   propagation::VarId registerNode(propagation::VarId totalViolationId,
@@ -38,20 +38,20 @@ class Objective {
   propagation::VarId registerOptimisation(
       propagation::VarId constraintViolation, propagation::VarId objectiveVarId,
       Int initialBound, F constraintFactory) {
-    auto lb = _engine.lowerBound(objectiveVarId);
-    auto ub = _engine.upperBound(objectiveVarId);
+    auto lb = _solver.lowerBound(objectiveVarId);
+    auto ub = _solver.upperBound(objectiveVarId);
 
-    _bound = _engine.makeIntVar(initialBound, lb, ub);
+    _bound = _solver.makeIntVar(initialBound, lb, ub);
     auto boundViolation =
-        _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
+        _solver.makeIntVar(0, 0, std::numeric_limits<Int>::max());
     constraintFactory(boundViolation, *_bound);
 
     if (constraintViolation == propagation::NULL_ID) {
       _violation = boundViolation;
     } else {
-      _violation = _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
-      _engine.makeInvariant<propagation::Linear>(
-          _engine, *_violation,
+      _violation = _solver.makeIntVar(0, 0, std::numeric_limits<Int>::max());
+      _solver.makeInvariant<propagation::Linear>(
+          _solver, *_violation,
           std::vector<propagation::VarId>{boundViolation, constraintViolation});
     }
     return *_violation;

@@ -2,27 +2,27 @@
 
 namespace atlantis::propagation {
 
-BinaryMax::BinaryMax(Engine& engine, VarId output, VarId x, VarId y)
-    : Invariant(engine), _output(output), _x(x), _y(y) {
+BinaryMax::BinaryMax(SolverBase& solver, VarId output, VarId x, VarId y)
+    : Invariant(solver), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void BinaryMax::registerVars() {
   assert(!_id.equals(NULL_ID));
-  _engine.registerInvariantInput(_id, _x, 0);
-  _engine.registerInvariantInput(_id, _y, 0);
+  _solver.registerInvariantInput(_id, _x, 0);
+  _solver.registerInvariantInput(_id, _y, 0);
   registerDefinedVariable(_output);
 }
 
 void BinaryMax::updateBounds(bool widenOnly) {
-  _engine.updateBounds(
-      _output, std::max(_engine.lowerBound(_x), _engine.lowerBound(_y)),
-      std::max(_engine.upperBound(_x), _engine.upperBound(_y)), widenOnly);
+  _solver.updateBounds(
+      _output, std::max(_solver.lowerBound(_x), _solver.lowerBound(_y)),
+      std::max(_solver.upperBound(_x), _solver.upperBound(_y)), widenOnly);
 }
 
 void BinaryMax::recompute(Timestamp ts) {
   updateValue(ts, _output,
-              std::max(_engine.value(ts, _x), _engine.value(ts, _y)));
+              std::max(_solver.value(ts, _x), _solver.value(ts, _y)));
 }
 
 VarId BinaryMax::nextInput(Timestamp ts) {

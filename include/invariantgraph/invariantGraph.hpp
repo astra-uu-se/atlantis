@@ -13,7 +13,7 @@
 #include "invariantgraph/types.hpp"
 #include "invariantgraph/varNode.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
 #include "utils/fznAst.hpp"
@@ -137,7 +137,7 @@ class InvariantGraph {
   void splitMultiDefinedVariables();
   void breakCycles();
 
-  InvariantGraphApplyResult apply(propagation::Engine&);
+  InvariantGraphApplyResult apply(propagation::SolverBase&);
 
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
@@ -162,10 +162,10 @@ class InvariantGraph {
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
   VarNodeId breakCycle(const std::vector<VarNodeId>& cycle);
 
-  void createVariables(propagation::Engine&);
-  void createImplicitConstraints(propagation::Engine&);
-  void createInvariants(propagation::Engine&);
-  propagation::VarId createViolations(propagation::Engine&);
+  void createVariables(propagation::SolverBase&);
+  void createImplicitConstraints(propagation::SolverBase&);
+  void createInvariants(propagation::SolverBase&);
+  propagation::VarId createViolations(propagation::SolverBase&);
 };
 
 }  // namespace atlantis::invariantgraph

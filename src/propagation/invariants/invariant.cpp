@@ -1,6 +1,6 @@
 #include "propagation/invariants/invariant.hpp"
 
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::propagation {
 
@@ -22,14 +22,14 @@ void Invariant::registerDefinedVariable(VarId id) {
   } else {
     _definedVars.push_back(id);
   }
-  _engine.registerDefinedVariable(id, _id);
+  _solver.registerDefinedVariable(id, _id);
 }
 
 void Invariant::updateValue(Timestamp ts, VarId id, Int val) {
-  _engine.updateValue(ts, id, val);
+  _solver.updateValue(ts, id, val);
 }
 
 void Invariant::incValue(Timestamp ts, VarId id, Int val) {
-  _engine.incValue(ts, id, val);
+  _solver.incValue(ts, id, val);
 }
 }  // namespace atlantis::propagation

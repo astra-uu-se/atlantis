@@ -6,32 +6,32 @@ namespace atlantis::propagation {
  * @param violationId id for the violationCount
  */
 template GlobalCardinalityConst<true>::GlobalCardinalityConst(
-    Engine& engine, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& t_counts);
 template GlobalCardinalityConst<false>::GlobalCardinalityConst(
-    Engine& engine, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& t_counts);
 template <bool IsClosed>
 GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
-    Engine& engine, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& t_counts)
-    : GlobalCardinalityConst(engine, violationId, t_variables, cover, t_counts,
+    : GlobalCardinalityConst(solver, violationId, t_variables, cover, t_counts,
                              t_counts) {}
 
 template GlobalCardinalityConst<true>::GlobalCardinalityConst(
-    Engine& engine, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound);
 template GlobalCardinalityConst<false>::GlobalCardinalityConst(
-    Engine& engine, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound);
 template <bool IsClosed>
 GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
-    Engine& engine, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound)
-    : Constraint(engine, violationId),
+    : Constraint(solver, violationId),
       _variables(std::move(t_variables)),
       _lowerBound(),
       _upperBound(),
@@ -70,7 +70,7 @@ template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _variables.size(); ++i) {
-    _engine.registerInvariantInput(_id, _variables[i], LocalId(i));
+    _solver.registerInvariantInput(_id, _variables[i], LocalId(i));
   }
   registerDefinedVariable(_violationId);
 }
@@ -92,7 +92,7 @@ void GlobalCardinalityConst<IsClosed>::updateBounds(bool widenOnly) {
     maxViol =
         std::max(maxViol, maxShortage + static_cast<Int>(_variables.size()));
   }
-  _engine.updateBounds(_violationId, 0, maxViol, widenOnly);
+  _solver.updateBounds(_violationId, 0, maxViol, widenOnly);
 }
 
 template void GlobalCardinalityConst<true>::close(Timestamp);
@@ -111,7 +111,7 @@ void GlobalCardinalityConst<IsClosed>::recompute(Timestamp timestamp) {
   }
 
   for (size_t i = 0; i < _variables.size(); ++i) {
-    increaseCount(timestamp, _engine.value(timestamp, _variables[i]));
+    increaseCount(timestamp, _solver.value(timestamp, _variables[i]));
   }
 
   Int shortage = 0;
@@ -142,7 +142,7 @@ template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::notifyInputChanged(Timestamp timestamp,
                                                           LocalId localId) {
   assert(localId < _committedValues.size());
-  const Int newValue = _engine.value(timestamp, _variables[localId]);
+  const Int newValue = _solver.value(timestamp, _variables[localId]);
   if (newValue == _committedValues[localId]) {
     return;
   }
@@ -188,7 +188,7 @@ void GlobalCardinalityConst<IsClosed>::commit(Timestamp timestamp) {
   _excess.commitIf(timestamp);
 
   for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _engine.committedValue(_variables[i]);
+    _committedValues[i] = _solver.committedValue(_variables[i]);
   }
 
   for (CommittableInt& CommittableInt : _counts) {

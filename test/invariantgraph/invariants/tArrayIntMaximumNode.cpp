@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -49,38 +49,38 @@ TEST_F(ArrayIntMaximumTestNode, construction) {
 }
 
 TEST_F(ArrayIntMaximumTestNode, application) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
-  EXPECT_EQ(engine.lowerBound(varId(o)), 5);
-  EXPECT_EQ(engine.upperBound(varId(o)), 20);
+  EXPECT_EQ(solver.lowerBound(varId(o)), 5);
+  EXPECT_EQ(solver.upperBound(varId(o)), 20);
 
   // x1, x2, and x3
-  EXPECT_EQ(engine.searchVariables().size(), 3);
+  EXPECT_EQ(solver.searchVariables().size(), 3);
 
   // x1, x2 and o
-  EXPECT_EQ(engine.numVariables(), 4);
+  EXPECT_EQ(solver.numVariables(), 4);
 
   // maxSparse
-  EXPECT_EQ(engine.numInvariants(), 1);
+  EXPECT_EQ(solver.numInvariants(), 1);
 }
 
 TEST_F(ArrayIntMaximumTestNode, propagation) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
-  invNode().registerOutputVariables(*_invariantGraph, engine);
-  invNode().registerNode(*_invariantGraph, engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerNode(*_invariantGraph, solver);
 
   std::vector<propagation::VarId> inputs;
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 3);
@@ -94,26 +94,26 @@ TEST_F(ArrayIntMaximumTestNode, propagation) {
   EXPECT_EQ(inputs.size(), 3);
 
   std::vector<Int> values(inputs.size());
-  engine.close();
+  solver.close();
 
-  for (values.at(0) = engine.lowerBound(inputs.at(0));
-       values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
-    for (values.at(1) = engine.lowerBound(inputs.at(1));
-         values.at(2) <= engine.upperBound(inputs.at(2)); ++values.at(2)) {
-      for (values.at(2) = engine.lowerBound(inputs.at(2));
-           values.at(2) <= engine.upperBound(inputs.at(2)); ++values.at(2)) {
-        engine.beginMove();
+  for (values.at(0) = solver.lowerBound(inputs.at(0));
+       values.at(0) <= solver.upperBound(inputs.at(0)); ++values.at(0)) {
+    for (values.at(1) = solver.lowerBound(inputs.at(1));
+         values.at(2) <= solver.upperBound(inputs.at(2)); ++values.at(2)) {
+      for (values.at(2) = solver.lowerBound(inputs.at(2));
+           values.at(2) <= solver.upperBound(inputs.at(2)); ++values.at(2)) {
+        solver.beginMove();
         for (size_t i = 0; i < inputs.size(); ++i) {
-          engine.setValue(inputs.at(i), values.at(i));
+          solver.setValue(inputs.at(i), values.at(i));
         }
-        engine.endMove();
+        solver.endMove();
 
-        engine.beginProbe();
-        engine.query(outputId);
-        engine.endProbe();
+        solver.beginProbe();
+        solver.query(outputId);
+        solver.endProbe();
 
         const Int expected = *std::max_element(values.begin(), values.end());
-        const Int actual = engine.currentValue(outputId);
+        const Int actual = solver.currentValue(outputId);
         EXPECT_EQ(expected, actual);
       }
     }

@@ -91,21 +91,21 @@ std::unique_ptr<BoolLinEqNode> BoolLinEqNode::fromModelConstraint(
 }
 
 void BoolLinEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                            propagation::Engine& engine) {
+                                            propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
-    _sumVarId = engine.makeIntVar(0, 0, 0);
+    _sumVarId = solver.makeIntVar(0, 0, 0);
     if (shouldHold()) {
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<propagation::EqualConst>(engine, _sumVarId, _c));
+                        solver.makeIntView<propagation::EqualConst>(solver, _sumVarId, _c));
     } else {
-      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
-                                            engine, _sumVarId, _c));
+      setViolationVarId(invariantGraph, solver.makeIntView<propagation::NotEqualConst>(
+                                            solver, _sumVarId, _c));
     }
   }
 }
 
 void BoolLinEqNode::registerNode(InvariantGraph& invariantGraph,
-                                 propagation::Engine& engine) {
+                                 propagation::SolverBase& solver) {
   std::vector<propagation::VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
@@ -114,7 +114,7 @@ void BoolLinEqNode::registerNode(InvariantGraph& invariantGraph,
   assert(_sumVarId != propagation::NULL_ID);
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  engine.makeInvariant<propagation::BoolLinear>(engine, _sumVarId, _coeffs, variables);
+  solver.makeInvariant<propagation::BoolLinear>(solver, _sumVarId, _coeffs, variables);
 }
 
 }  // namespace invariantgraph

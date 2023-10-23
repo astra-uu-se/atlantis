@@ -11,7 +11,7 @@
 #include "propagation/constraints/allDifferent.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/elementVar.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::benchmark {
 
@@ -24,7 +24,7 @@ class ElementVarTree : public ::benchmark::Fixture {
 
   void createTree() {
     std::stack<TreeNode> treeNodes;
-    output = engine->makeIntVar(0, 0, elementSize - 1);
+    output = solver->makeIntVar(0, 0, elementSize - 1);
     vars.push_back(output);
 
     treeNodes.push({1, output});
@@ -33,7 +33,7 @@ class ElementVarTree : public ::benchmark::Fixture {
       TreeNode cur = treeNodes.top();
       treeNodes.pop();
 
-      propagation::VarId indexVar = engine->makeIntVar(
+      propagation::VarId indexVar = solver->makeIntVar(
           cur.level < treeHeight - 1 ? 0 : valueDist(gen), 0, elementSize - 1);
 
       if (cur.level < treeHeight - 1) {
@@ -48,7 +48,7 @@ class ElementVarTree : public ::benchmark::Fixture {
                                                     propagation::NULL_ID);
 
       for (size_t i = 0; i < elementInputs.size(); ++i) {
-        elementInputs[i] = engine->makeIntVar(i, 0, elementInputs.size());
+        elementInputs[i] = solver->makeIntVar(i, 0, elementInputs.size());
         if (cur.level < treeHeight - 1) {
           treeNodes.push({cur.level + 1, elementInputs[i]});
         } else {
@@ -57,14 +57,14 @@ class ElementVarTree : public ::benchmark::Fixture {
         }
       }
 
-      engine->makeInvariant<propagation::ElementVar>(*engine, cur.id, indexVar,
+      solver->makeInvariant<propagation::ElementVar>(*solver, cur.id, indexVar,
                                                      elementInputs);
       elementInputs.clear();
     }
   }
 
  public:
-  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::unique_ptr<propagation::Solver> solver;
   propagation::VarId output;
 
   std::vector<propagation::VarId> vars;
@@ -89,7 +89,7 @@ class ElementVarTree : public ::benchmark::Fixture {
   void commitRnd(::benchmark::State& st, size_t numMoves);
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<propagation::PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
 
     treeHeight = state.range(0);
     elementSize = state.range(1);  // number of element inputs
@@ -97,12 +97,12 @@ class ElementVarTree : public ::benchmark::Fixture {
     gen = std::mt19937(rd());
     valueDist = std::uniform_int_distribution<Int>(0, elementSize - 1);
 
-    engine->open();
-    setEngineModes(*engine, state.range(2));
+    solver->open();
+    setSolverMode(*solver, state.range(2));
 
     createTree();
 
-    engine->close();
+    solver->close();
 
     decisionVarIndexDist =
         std::uniform_int_distribution<size_t>(0, decisionVars.size() - 1);
@@ -122,15 +122,15 @@ void ElementVarTree::probe(::benchmark::State& st, size_t numMoves) {
   size_t probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
-      engine->beginMove();
-      engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+      solver->beginMove();
+      solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
                        valueDist(gen));
-      engine->endMove();
+      solver->endMove();
     }
 
-    engine->beginProbe();
-    engine->query(output);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(output);
+    solver->endProbe();
     ++probes;
   }
 
@@ -142,16 +142,16 @@ void ElementVarTree::commit(::benchmark::State& st, size_t numMoves) {
   size_t commits = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
-      engine->beginMove();
-      engine->setValue(indexDecisionVars.at(indexDecisionVarIndexDist(gen)),
+      solver->beginMove();
+      solver->setValue(indexDecisionVars.at(indexDecisionVarIndexDist(gen)),
                        valueDist(gen));
-      engine->endMove();
+      solver->endMove();
     }
 
     // Commit last output var
-    engine->beginCommit();
-    engine->query(output);
-    engine->endCommit();
+    solver->beginCommit();
+    solver->query(output);
+    solver->endCommit();
     ++commits;
   }
 

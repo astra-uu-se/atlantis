@@ -5,16 +5,16 @@
 
 namespace atlantis::propagation {
 
-class Engine;  // Forward declaration
+class SolverBase;  // Forward declaration
 
 class IntView : public View {
  protected:
-  friend class Engine;
+  friend class SolverBase;
   // A raw pointer might be the best option here as views lifetime depend
-  // on engine and not vice-versa:
+  // on solver and not vice-versa:
 
  public:
-  explicit IntView(Engine& engine, VarId parentId) : View(engine, parentId) {}
+  explicit IntView(SolverBase& solver, VarId parentId) : View(solver, parentId) {}
 
   void init(VarId id) { _id = id; }
 

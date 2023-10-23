@@ -2,8 +2,8 @@
 
 namespace atlantis::propagation {
 
-MinSparse::MinSparse(Engine& engine, VarId output, std::vector<VarId> varArray)
-    : Invariant(engine),
+MinSparse::MinSparse(SolverBase& solver, VarId output, std::vector<VarId> varArray)
+    : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
       _localPriority(_varArray.size()) {
@@ -14,7 +14,7 @@ MinSparse::MinSparse(Engine& engine, VarId output, std::vector<VarId> varArray)
 void MinSparse::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    _engine.registerInvariantInput(_id, _varArray[i], i);
+    _solver.registerInvariantInput(_id, _varArray[i], i);
   }
   registerDefinedVariable(_output);
 }
@@ -23,21 +23,21 @@ void MinSparse::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::max();
   for (const VarId input : _varArray) {
-    lb = std::min(lb, _engine.lowerBound(input));
-    ub = std::min(ub, _engine.upperBound(input));
+    lb = std::min(lb, _solver.lowerBound(input));
+    ub = std::min(ub, _solver.upperBound(input));
   }
-  _engine.updateBounds(_output, lb, ub, widenOnly);
+  _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void MinSparse::recompute(Timestamp ts) {
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    _localPriority.updatePriority(ts, i, _engine.value(ts, _varArray[i]));
+    _localPriority.updatePriority(ts, i, _solver.value(ts, _varArray[i]));
   }
   updateValue(ts, _output, _localPriority.minPriority(ts));
 }
 
 void MinSparse::notifyInputChanged(Timestamp ts, LocalId id) {
-  _localPriority.updatePriority(ts, id, _engine.value(ts, _varArray[id]));
+  _localPriority.updatePriority(ts, id, _solver.value(ts, _varArray[id]));
   updateValue(ts, _output, _localPriority.minPriority(ts));
 }
 

@@ -8,7 +8,7 @@
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/globalCardinalityOpen.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -22,7 +22,7 @@ class GlobalCardinalityOpenTest : public InvariantTest {
                                   const std::vector<Int>& cover) {
     std::vector<Int> values(inputs.size(), 0);
     for (size_t i = 0; i < inputs.size(); ++i) {
-      values.at(i) = engine->value(ts, inputs.at(i));
+      values.at(i) = solver->value(ts, inputs.at(i));
     }
     return computeOutputs(values, cover);
   }
@@ -47,32 +47,32 @@ class GlobalCardinalityOpenTest : public InvariantTest {
 TEST_F(GlobalCardinalityOpenTest, UpdateBounds) {
   const Int lb = 0;
   const Int ub = 2;
-  engine->open();
-  std::vector<VarId> inputs{engine->makeIntVar(0, 0, 2),
-                            engine->makeIntVar(0, 0, 2),
-                            engine->makeIntVar(0, 0, 2)};
+  solver->open();
+  std::vector<VarId> inputs{solver->makeIntVar(0, 0, 2),
+                            solver->makeIntVar(0, 0, 2),
+                            solver->makeIntVar(0, 0, 2)};
 
-  std::vector<VarId> outputs{engine->makeIntVar(0, 0, 2),
-                             engine->makeIntVar(0, 0, 2)};
+  std::vector<VarId> outputs{solver->makeIntVar(0, 0, 2),
+                             solver->makeIntVar(0, 0, 2)};
 
   GlobalCardinalityOpen& invariant =
-      engine->makeInvariant<GlobalCardinalityOpen>(*engine, outputs, inputs,
+      solver->makeInvariant<GlobalCardinalityOpen>(*solver, outputs, inputs,
                                                    std::vector<Int>{0, 2});
-  engine->close();
+  solver->close();
   for (const VarId output : outputs) {
-    EXPECT_EQ(engine->lowerBound(output), 0);
+    EXPECT_EQ(solver->lowerBound(output), 0);
   }
 
   for (Int aVal = lb; aVal <= ub; ++aVal) {
-    engine->setValue(engine->currentTimestamp(), inputs.at(0), aVal);
+    solver->setValue(solver->currentTimestamp(), inputs.at(0), aVal);
     for (Int bVal = lb; bVal <= ub; ++bVal) {
-      engine->setValue(engine->currentTimestamp(), inputs.at(1), bVal);
+      solver->setValue(solver->currentTimestamp(), inputs.at(1), bVal);
       for (Int cVal = lb; cVal <= ub; ++cVal) {
-        engine->setValue(engine->currentTimestamp(), inputs.at(2), cVal);
-        invariant.compute(engine->currentTimestamp());
+        solver->setValue(solver->currentTimestamp(), inputs.at(2), cVal);
+        invariant.compute(solver->currentTimestamp());
         for (const VarId output : outputs) {
-          EXPECT_GE(engine->value(engine->currentTimestamp(), output), 0);
-          EXPECT_LE(engine->value(engine->currentTimestamp(), output),
+          EXPECT_GE(solver->value(solver->currentTimestamp(), output), 0);
+          EXPECT_LE(solver->value(solver->currentTimestamp(), output),
                     inputs.size());
         }
       }
@@ -98,35 +98,35 @@ TEST_F(GlobalCardinalityOpenTest, Recompute) {
       coverSet.emplace(c);
     }
 
-    engine->open();
-    const VarId a = engine->makeIntVar(lb, lb, ub);
-    const VarId b = engine->makeIntVar(lb, lb, ub);
-    const VarId c = engine->makeIntVar(lb, lb, ub);
+    solver->open();
+    const VarId a = solver->makeIntVar(lb, lb, ub);
+    const VarId b = solver->makeIntVar(lb, lb, ub);
+    const VarId c = solver->makeIntVar(lb, lb, ub);
     std::vector<VarId> outputs;
     for (size_t j = 0; j < cover.size(); ++j) {
-      outputs.emplace_back(engine->makeIntVar(0, 0, 0));
+      outputs.emplace_back(solver->makeIntVar(0, 0, 0));
     }
 
     const std::vector<VarId> inputs{a, b, c};
 
     GlobalCardinalityOpen& invariant =
-        engine->makeInvariant<GlobalCardinalityOpen>(*engine, outputs, inputs,
+        solver->makeInvariant<GlobalCardinalityOpen>(*solver, outputs, inputs,
                                                      cover);
-    engine->close();
+    solver->close();
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
       for (Int bVal = lb; bVal <= ub; ++bVal) {
         for (Int cVal = lb; cVal <= ub; ++cVal) {
-          engine->setValue(engine->currentTimestamp(), a, aVal);
-          engine->setValue(engine->currentTimestamp(), b, bVal);
-          engine->setValue(engine->currentTimestamp(), c, cVal);
+          solver->setValue(solver->currentTimestamp(), a, aVal);
+          solver->setValue(solver->currentTimestamp(), b, bVal);
+          solver->setValue(solver->currentTimestamp(), c, cVal);
           const auto expectedCounts =
-              computeOutputs(engine->currentTimestamp(), inputs, cover);
+              computeOutputs(solver->currentTimestamp(), inputs, cover);
           EXPECT_EQ(expectedCounts.size(), cover.size());
-          invariant.recompute(engine->currentTimestamp());
+          invariant.recompute(solver->currentTimestamp());
           for (size_t j = 0; j < outputs.size(); ++j) {
             EXPECT_EQ(expectedCounts.at(j),
-                      engine->value(engine->currentTimestamp(), outputs.at(j)));
+                      solver->value(solver->currentTimestamp(), outputs.at(j)));
           }
         }
       }
@@ -147,32 +147,32 @@ TEST_F(GlobalCardinalityOpenTest, NotifyInputChanged) {
     auto const cover = coverVec[i];
     EXPECT_TRUE(lb <= ub);
 
-    engine->open();
-    std::vector<VarId> inputs{engine->makeIntVar(lb, lb, ub),
-                              engine->makeIntVar(lb, lb, ub),
-                              engine->makeIntVar(lb, lb, ub)};
+    solver->open();
+    std::vector<VarId> inputs{solver->makeIntVar(lb, lb, ub),
+                              solver->makeIntVar(lb, lb, ub),
+                              solver->makeIntVar(lb, lb, ub)};
 
     std::vector<VarId> outputs;
     for (size_t j = 0; j < cover.size(); ++j) {
-      outputs.emplace_back(engine->makeIntVar(0, 0, 0));
+      outputs.emplace_back(solver->makeIntVar(0, 0, 0));
     }
 
     GlobalCardinalityOpen& invariant =
-        engine->makeInvariant<GlobalCardinalityOpen>(*engine, outputs, inputs,
+        solver->makeInvariant<GlobalCardinalityOpen>(*solver, outputs, inputs,
                                                      cover);
-    engine->close();
+    solver->close();
 
-    Timestamp ts = engine->currentTimestamp();
+    Timestamp ts = solver->currentTimestamp();
 
     for (Int val = lb; val <= ub; ++val) {
       ++ts;
       for (size_t j = 0; j < inputs.size(); ++j) {
-        engine->setValue(ts, inputs[j], val);
+        solver->setValue(ts, inputs[j], val);
         const auto expectedCounts = computeOutputs(ts, inputs, cover);
 
         invariant.notifyInputChanged(ts, LocalId(j));
         for (size_t k = 0; k < outputs.size(); ++k) {
-          EXPECT_EQ(expectedCounts.at(k), engine->value(ts, outputs.at(k)));
+          EXPECT_EQ(expectedCounts.at(k), solver->value(ts, outputs.at(k)));
         }
       }
     }
@@ -186,18 +186,18 @@ TEST_F(GlobalCardinalityOpenTest, NextInput) {
   const size_t numOutputs = 10;
   EXPECT_TRUE(lb <= ub);
 
-  engine->open();
+  solver->open();
   std::vector<size_t> indices;
   std::vector<Int> committedValues;
   std::vector<VarId> inputs;
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.emplace_back(engine->makeIntVar(i, lb, ub));
+    inputs.emplace_back(solver->makeIntVar(i, lb, ub));
   }
   std::vector<Int> cover;
   std::vector<VarId> outputs;
   for (size_t i = 0; i < numOutputs; ++i) {
     cover.emplace_back(i);
-    outputs.emplace_back(engine->makeIntVar(0, 0, numInputs));
+    outputs.emplace_back(solver->makeIntVar(0, 0, numInputs));
   }
 
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
@@ -206,12 +206,12 @@ TEST_F(GlobalCardinalityOpenTest, NextInput) {
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
   GlobalCardinalityOpen& invariant =
-      engine->makeInvariant<GlobalCardinalityOpen>(*engine, outputs, inputs,
+      solver->makeInvariant<GlobalCardinalityOpen>(*solver, outputs, inputs,
                                                    cover);
-  engine->close();
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
       const VarId varId = invariant.nextInput(ts);
@@ -235,37 +235,37 @@ TEST_F(GlobalCardinalityOpenTest, NotifyCurrentInputChanged) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  engine->open();
+  solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   std::vector<VarId> inputs;
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.emplace_back(engine->makeIntVar(valueDist(gen), lb, ub));
+    inputs.emplace_back(solver->makeIntVar(valueDist(gen), lb, ub));
   }
   std::vector<Int> cover;
   std::vector<VarId> outputs;
   for (size_t i = 0; i < numOutputs; ++i) {
     cover.emplace_back(i);
-    outputs.emplace_back(engine->makeIntVar(0, 0, numInputs));
+    outputs.emplace_back(solver->makeIntVar(0, 0, numInputs));
   }
 
   GlobalCardinalityOpen& invariant =
-      engine->makeInvariant<GlobalCardinalityOpen>(*engine, outputs, inputs,
+      solver->makeInvariant<GlobalCardinalityOpen>(*solver, outputs, inputs,
                                                    cover);
-  engine->close();
+  solver->close();
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = engine->value(ts, varId);
+      const Int oldVal = solver->value(ts, varId);
       do {
-        engine->setValue(ts, varId, valueDist(gen));
-      } while (engine->value(ts, varId) == oldVal);
+        solver->setValue(ts, varId, valueDist(gen));
+      } while (solver->value(ts, varId) == oldVal);
       const auto expectedCounts = computeOutputs(ts, inputs, cover);
 
       invariant.notifyCurrentInputChanged(ts);
       for (size_t i = 0; i < outputs.size(); ++i) {
-        EXPECT_EQ(expectedCounts.at(i), engine->value(ts, outputs.at(i)));
+        EXPECT_EQ(expectedCounts.at(i), solver->value(ts, outputs.at(i)));
       }
     }
   }
@@ -288,63 +288,63 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
   std::vector<Int> committedValues;
   std::vector<VarId> inputs;
 
-  engine->open();
+  solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
     indices.emplace_back(i);
     committedValues.emplace_back(valueDist(gen));
-    inputs.emplace_back(engine->makeIntVar(committedValues.back(), lb, ub));
+    inputs.emplace_back(solver->makeIntVar(committedValues.back(), lb, ub));
   }
 
   std::vector<VarId> outputs;
   for (size_t i = 0; i < numOutputs; ++i) {
-    outputs.emplace_back(engine->makeIntVar(0, 0, 0));
+    outputs.emplace_back(solver->makeIntVar(0, 0, 0));
   }
 
   std::shuffle(indices.begin(), indices.end(), rng);
 
   GlobalCardinalityOpen& invariant =
-      engine->makeInvariant<GlobalCardinalityOpen>(*engine, outputs, inputs,
+      solver->makeInvariant<GlobalCardinalityOpen>(*solver, outputs, inputs,
                                                    cover);
-  engine->close();
+  solver->close();
 
   std::vector<Int> notifiedOutputValues(numOutputs, -1);
 
   for (const size_t i : indices) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(i);
+    Timestamp ts = solver->currentTimestamp() + Timestamp(i);
     for (size_t j = 0; j < numInputs; ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(engine->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      engine->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == engine->value(ts, inputs.at(i)));
+      solver->setValue(ts, inputs.at(i), valueDist(gen));
+    } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
     for (size_t j = 0; j < outputs.size(); ++j) {
-      notifiedOutputValues.at(j) = engine->value(ts, outputs.at(j));
+      notifiedOutputValues.at(j) = solver->value(ts, outputs.at(j));
     }
     invariant.recompute(ts);
 
     for (size_t j = 0; j < outputs.size(); ++j) {
-      ASSERT_EQ(notifiedOutputValues.at(j), engine->value(ts, outputs.at(j)));
+      ASSERT_EQ(notifiedOutputValues.at(j), solver->value(ts, outputs.at(j)));
     }
 
-    engine->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = engine->value(ts, inputs.at(i));
+    solver->commitIf(ts, inputs.at(i));
+    committedValues.at(i) = solver->value(ts, inputs.at(i));
     for (const VarId o : outputs) {
-      engine->commitIf(ts, o);
+      solver->commitIf(ts, o);
     }
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
     for (size_t j = 0; j < outputs.size(); ++j) {
       ASSERT_EQ(notifiedOutputValues.at(j),
-                engine->value(ts + 1, outputs.at(j)));
+                solver->value(ts + 1, outputs.at(j)));
     }
   }
 }
@@ -369,48 +369,48 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityOpenTest, RapidCheck,
   auto valGen = std::mt19937(rd());
 
   std::vector<VarId> inputs;
-  engine->open();
+  solver->open();
 
   for (size_t i = 0; i < numInputs; i++) {
     inputs.emplace_back(
-        engine->makeIntVar(valDistribution(valGen), valLb, valUb));
+        solver->makeIntVar(valDistribution(valGen), valLb, valUb));
   }
 
   std::vector<VarId> outputs;
   for (size_t i = 0; i < numOutputs; ++i) {
-    outputs.emplace_back(engine->makeIntVar(0, 0, inputs.size()));
+    outputs.emplace_back(solver->makeIntVar(0, 0, inputs.size()));
   }
 
   RC_ASSERT(outputs.size() == numOutputs);
 
-  engine->makeInvariant<GlobalCardinalityOpen>(*engine, outputs, inputs, cover);
+  solver->makeInvariant<GlobalCardinalityOpen>(*solver, outputs, inputs, cover);
 
-  engine->close();
+  solver->close();
 
   for (auto [propMode, markMode] : propMarkModes) {
     for (size_t iter = 0; iter < 3; ++iter) {
-      engine->open();
-      engine->setPropagationMode(propMode);
-      engine->setOutputToInputMarkingMode(markMode);
-      engine->close();
+      solver->open();
+      solver->setPropagationMode(propMode);
+      solver->setOutputToInputMarkingMode(markMode);
+      solver->close();
 
-      engine->beginMove();
+      solver->beginMove();
       for (const VarId x : inputs) {
-        engine->setValue(x, valDistribution(valGen));
+        solver->setValue(x, valDistribution(valGen));
       }
-      engine->endMove();
+      solver->endMove();
 
-      engine->beginProbe();
+      solver->beginProbe();
       for (const VarId output : outputs) {
-        engine->query(output);
+        solver->query(output);
       }
-      engine->endProbe();
+      solver->endProbe();
 
       auto actualCounts =
-          computeOutputs(engine->currentTimestamp(), inputs, cover);
+          computeOutputs(solver->currentTimestamp(), inputs, cover);
 
       for (size_t i = 0; i < outputs.size(); ++i) {
-        RC_ASSERT(actualCounts.at(i) == engine->currentValue(outputs.at(i)));
+        RC_ASSERT(actualCounts.at(i) == solver->currentValue(outputs.at(i)));
       }
     }
   }
@@ -423,11 +423,11 @@ class MockGlobalCardinalityOpen : public GlobalCardinalityOpen {
     registered = true;
     GlobalCardinalityOpen::registerVars();
   }
-  explicit MockGlobalCardinalityOpen(Engine& engine,
+  explicit MockGlobalCardinalityOpen(SolverBase& solver,
                                      const std::vector<VarId>& outputs,
                                      const std::vector<VarId>& inputs,
                                      const std::vector<Int>& cover)
-      : GlobalCardinalityOpen(engine, outputs, inputs, cover) {
+      : GlobalCardinalityOpen(solver, outputs, inputs, cover) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return GlobalCardinalityOpen::recompute(timestamp);
     });
@@ -452,25 +452,25 @@ class MockGlobalCardinalityOpen : public GlobalCardinalityOpen {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(GlobalCardinalityOpenTest, EngineIntegration) {
+TEST_F(GlobalCardinalityOpenTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
     const Int numInputs = 10;
 
     std::vector<VarId> inputs;
     for (Int value = 0; value < numInputs; ++value) {
-      inputs.push_back(engine->makeIntVar(0, -100, 100));
+      inputs.push_back(solver->makeIntVar(0, -100, 100));
     }
     std::vector<Int> cover{1, 2, 3};
     std::vector<VarId> outputs;
     for (size_t i = 0; i < cover.size(); ++i) {
-      outputs.push_back(engine->makeIntVar(0, 0, numInputs));
+      outputs.push_back(solver->makeIntVar(0, 0, numInputs));
     }
 
     testNotifications<MockGlobalCardinalityOpen>(
-        &engine->makeInvariant<MockGlobalCardinalityOpen>(*engine, outputs,
+        &solver->makeInvariant<MockGlobalCardinalityOpen>(*solver, outputs,
                                                           inputs, cover),
         {propMode, markingMode, numInputs + 1, inputs.front(), 1,
          outputs.front()});

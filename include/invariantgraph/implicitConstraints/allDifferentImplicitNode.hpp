@@ -28,7 +28,7 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      propagation::Engine& engine,
+      propagation::SolverBase& solver,
       std::vector<search::SearchVariable>&& variables) override;
 };
 

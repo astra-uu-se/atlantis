@@ -3,19 +3,19 @@
 namespace atlantis::propagation {
 
 Int IntMaxView::value(Timestamp ts) {
-  return std::max<Int>(_max, _engine.value(ts, _parentId));
+  return std::max<Int>(_max, _solver.value(ts, _parentId));
 }
 
 Int IntMaxView::committedValue() {
-  return std::max<Int>(_max, _engine.committedValue(_parentId));
+  return std::max<Int>(_max, _solver.committedValue(_parentId));
 }
 
 Int IntMaxView::lowerBound() const {
-  return std::max<Int>(_max, _engine.lowerBound(_parentId));
+  return std::max<Int>(_max, _solver.lowerBound(_parentId));
 }
 
 Int IntMaxView::upperBound() const {
-  return std::max<Int>(_max, _engine.upperBound(_parentId));
+  return std::max<Int>(_max, _solver.upperBound(_parentId));
 }
 
 }  // namespace atlantis::propagation

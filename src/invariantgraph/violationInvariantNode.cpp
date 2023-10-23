@@ -15,7 +15,7 @@ static std::vector<invariantgraph::VarNodeId> combine(
 
 /**
  * Serves as a marker for the invariant graph to start the application to the
- * propagation engine.
+ * propagation solver.
  */
 
 ViolationInvariantNode::ViolationInvariantNode(
@@ -83,12 +83,12 @@ propagation::VarId ViolationInvariantNode::setViolationVarId(InvariantGraph& inv
 }
 
 propagation::VarId ViolationInvariantNode::registerViolation(InvariantGraph& invariantGraph,
-                                                propagation::Engine& engine,
+                                                propagation::SolverBase& solver,
                                                 Int initialValue) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     return setViolationVarId(
         invariantGraph,
-        engine.makeIntVar(initialValue, initialValue, initialValue));
+        solver.makeIntVar(initialValue, initialValue, initialValue));
   }
   return violationVarId(invariantGraph);
 }

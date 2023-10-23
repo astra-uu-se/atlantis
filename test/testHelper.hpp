@@ -7,7 +7,7 @@
 #include <random>
 #include <vector>
 
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/types.hpp"
 #include "types.hpp"
 

@@ -34,13 +34,13 @@ ArrayVarBoolElementNode::fromModelConstraint(
 }
 
 void ArrayVarBoolElementNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   // TODO: offset can be different than 1
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()), 1);
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()), 1);
 }
 
 void ArrayVarBoolElementNode::registerNode(InvariantGraph& invariantGraph,
-                                           propagation::Engine& engine) {
+                                           propagation::SolverBase& solver) {
   std::vector<propagation::VarId> as;
   std::transform(dynamicInputVarNodeIds().begin(),
                  dynamicInputVarNodeIds().end(), std::back_inserter(as),
@@ -48,8 +48,8 @@ void ArrayVarBoolElementNode::registerNode(InvariantGraph& invariantGraph,
 
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
 
-  engine.makeInvariant<propagation::ElementVar>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::ElementVar>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(b()), as);
 }
 

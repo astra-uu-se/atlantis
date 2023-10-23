@@ -9,11 +9,11 @@ static inline Int numCols(const std::vector<std::vector<VarId>>& varMatrix) {
   return varMatrix.empty() ? 0 : varMatrix.front().size();
 }
 
-Element2dVar::Element2dVar(Engine& engine, VarId output, VarId index1,
+Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarId index1,
                            VarId index2,
                            std::vector<std::vector<VarId>> varMatrix,
                            Int offset1, Int offset2)
-    : Invariant(engine),
+    : Invariant(solver),
       _varMatrix(varMatrix),
       _indices{index1, index2},
       _dimensions{static_cast<Int>(_varMatrix.size()), numCols(_varMatrix)},
@@ -24,11 +24,11 @@ Element2dVar::Element2dVar(Engine& engine, VarId output, VarId index1,
 
 void Element2dVar::registerVars() {
   assert(_id != NULL_ID);
-  _engine.registerInvariantInput(_id, _indices[0], LocalId(0));
-  _engine.registerInvariantInput(_id, _indices[1], LocalId(0));
+  _solver.registerInvariantInput(_id, _indices[0], LocalId(0));
+  _solver.registerInvariantInput(_id, _indices[1], LocalId(0));
   for (const auto& varRow : _varMatrix) {
     for (const VarId input : varRow) {
-      _engine.registerInvariantInput(_id, input, LocalId(0), true);
+      _solver.registerInvariantInput(_id, input, LocalId(0), true);
     }
   }
   registerDefinedVariable(_output);
@@ -41,9 +41,9 @@ void Element2dVar::updateBounds(bool widenOnly) {
   std::array<Int, 2> iLb;
   std::array<Int, 2> iUb;
   for (size_t i = 0; i < 2; ++i) {
-    iLb[i] = std::max<Int>(_offsets[i], _engine.lowerBound(_indices[i]));
+    iLb[i] = std::max<Int>(_offsets[i], _solver.lowerBound(_indices[i]));
     iUb[i] = std::min<Int>(_dimensions[i] - 1 + _offsets[i],
-                           _engine.upperBound(_indices[i]));
+                           _solver.upperBound(_indices[i]));
     if (iLb > iUb) {
       iLb[i] = _offsets[i];
       iUb[i] = _dimensions[i] - 1 + _offsets[i];
@@ -57,28 +57,28 @@ void Element2dVar::updateBounds(bool widenOnly) {
       assert(_offsets[1] <= i2);
       assert(i2 - _offsets[1] < _dimensions[1]);
       lb = std::min(
-          lb, _engine.lowerBound(_varMatrix[safeIndex1(i1)][safeIndex2(i2)]));
+          lb, _solver.lowerBound(_varMatrix[safeIndex1(i1)][safeIndex2(i2)]));
       ub = std::max(
-          ub, _engine.upperBound(_varMatrix[safeIndex1(i1)][safeIndex2(i2)]));
+          ub, _solver.upperBound(_varMatrix[safeIndex1(i1)][safeIndex2(i2)]));
     }
   }
-  _engine.updateBounds(_output, lb, ub, widenOnly);
+  _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
 VarId Element2dVar::dynamicInputVar(Timestamp ts) const noexcept {
-  return _varMatrix[safeIndex1(_engine.value(ts, _indices[0]))]
-                   [safeIndex2(_engine.value(ts, _indices[1]))];
+  return _varMatrix[safeIndex1(_solver.value(ts, _indices[0]))]
+                   [safeIndex2(_solver.value(ts, _indices[1]))];
 }
 
 void Element2dVar::recompute(Timestamp ts) {
-  assert(safeIndex1(_engine.value(ts, _indices[0])) <
+  assert(safeIndex1(_solver.value(ts, _indices[0])) <
          static_cast<size_t>(_dimensions[0]));
-  assert(safeIndex2(_engine.value(ts, _indices[1])) <
+  assert(safeIndex2(_solver.value(ts, _indices[1])) <
          static_cast<size_t>(_dimensions[1]));
   updateValue(ts, _output,
-              _engine.value(
-                  ts, _varMatrix[safeIndex1(_engine.value(ts, _indices[0]))]
-                                [safeIndex2(_engine.value(ts, _indices[1]))]));
+              _solver.value(
+                  ts, _varMatrix[safeIndex1(_solver.value(ts, _indices[0]))]
+                                [safeIndex2(_solver.value(ts, _indices[1]))]));
 }
 
 void Element2dVar::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
@@ -90,12 +90,12 @@ VarId Element2dVar::nextInput(Timestamp ts) {
     case 1:
       return _indices[1];
     case 2: {
-      assert(safeIndex1(_engine.value(ts, _indices[0])) <
+      assert(safeIndex1(_solver.value(ts, _indices[0])) <
              static_cast<size_t>(_dimensions[0]));
-      assert(safeIndex2(_engine.value(ts, _indices[1])) <
+      assert(safeIndex2(_solver.value(ts, _indices[1])) <
              static_cast<size_t>(_dimensions[1]));
-      return _varMatrix[safeIndex1(_engine.value(ts, _indices[0]))]
-                       [safeIndex2(_engine.value(ts, _indices[1]))];
+      return _varMatrix[safeIndex1(_solver.value(ts, _indices[0]))]
+                       [safeIndex2(_solver.value(ts, _indices[1]))];
     }
     default:
       return NULL_ID;  // Done

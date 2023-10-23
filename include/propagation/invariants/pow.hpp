@@ -5,12 +5,12 @@
 #include <vector>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
 
-class Engine;
+class SolverBase;
 
 /**
  * Invariant for y <- a ^ b
@@ -22,7 +22,7 @@ class Pow : public Invariant {
   Int _zeroReplacement{1};
 
  public:
-  explicit Pow(Engine&, VarId output, VarId x, VarId y);
+  explicit Pow(SolverBase&, VarId output, VarId x, VarId y);
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
   void recompute(Timestamp) override;

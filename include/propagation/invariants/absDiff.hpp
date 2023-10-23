@@ -3,12 +3,12 @@
 #include <algorithm>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
 
-class Engine;
+class SolverBase;
 
 /**
  * Invariant for output <== |x - y|
@@ -20,7 +20,7 @@ class AbsDiff : public Invariant {
   const VarId _output, _x, _y;
 
  public:
-  explicit AbsDiff(Engine&, VarId output, VarId x, VarId y);
+  explicit AbsDiff(SolverBase&, VarId output, VarId x, VarId y);
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;

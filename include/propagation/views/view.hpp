@@ -4,16 +4,16 @@
 
 namespace atlantis::propagation {
 
-class Engine;
+class SolverBase;
 
 class View : public Var {
  protected:
-  Engine& _engine;
+  SolverBase& _solver;
   const VarId _parentId;
 
  public:
-  explicit View(Engine& engine, VarId parentId)
-      : Var(NULL_ID), _engine(engine), _parentId(parentId) {
+  explicit View(SolverBase& solver, VarId parentId)
+      : Var(NULL_ID), _solver(solver), _parentId(parentId) {
     _id.idType = VarIdType::view;
   }
   virtual ~View() = default;

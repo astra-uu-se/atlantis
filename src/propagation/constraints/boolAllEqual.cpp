@@ -5,9 +5,9 @@ namespace atlantis::propagation {
 /**
  * @param violationId id for the violationCount
  */
-BoolAllEqual::BoolAllEqual(Engine& engine, VarId violationId,
+BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
                            std::vector<VarId> variables)
-    : Constraint(engine, violationId),
+    : Constraint(solver, violationId),
       _variables(std::move(variables)),
       _committedValues(_variables.size(), 0),
       _numTrue(NULL_TIMESTAMP, 0) {
@@ -17,13 +17,13 @@ BoolAllEqual::BoolAllEqual(Engine& engine, VarId violationId,
 void BoolAllEqual::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _variables.size(); ++i) {
-    _engine.registerInvariantInput(_id, _variables[i], i);
+    _solver.registerInvariantInput(_id, _variables[i], i);
   }
   registerDefinedVariable(_violationId);
 }
 
 void BoolAllEqual::updateBounds(bool widenOnly) {
-  _engine.updateBounds(_violationId, 0, _variables.size() / 2, widenOnly);
+  _solver.updateBounds(_violationId, 0, _variables.size() / 2, widenOnly);
 }
 
 void BoolAllEqual::close(Timestamp) {}
@@ -33,7 +33,7 @@ void BoolAllEqual::recompute(Timestamp ts) {
 
   for (size_t i = 0; i < _variables.size(); ++i) {
     _numTrue.incValue(ts,
-                      static_cast<Int>(_engine.value(ts, _variables[i]) == 0));
+                      static_cast<Int>(_solver.value(ts, _variables[i]) == 0));
   }
 
   assert(0 <= _numTrue.value(ts) &&
@@ -46,7 +46,7 @@ void BoolAllEqual::recompute(Timestamp ts) {
 
 void BoolAllEqual::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _committedValues.size());
-  const Int newValue = _engine.value(ts, _variables[id]);
+  const Int newValue = _solver.value(ts, _variables[id]);
   if ((newValue == 0) == (_committedValues[id] == 0)) {
     return;
   }
@@ -79,7 +79,7 @@ void BoolAllEqual::commit(Timestamp ts) {
   Invariant::commit(ts);
 
   for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _engine.committedValue(_variables[i]);
+    _committedValues[i] = _solver.committedValue(_variables[i]);
   }
 
   _numTrue.commitIf(ts);

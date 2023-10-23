@@ -51,22 +51,22 @@ std::unique_ptr<IntLinEqNode> IntLinEqNode::fromModelConstraint(
 }
 
 void IntLinEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                           propagation::Engine& engine) {
+                                           propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
-    _sumVarId = engine.makeIntVar(0, 0, 0);
+    _sumVarId = solver.makeIntVar(0, 0, 0);
     if (shouldHold()) {
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<propagation::EqualConst>(engine, _sumVarId, _c));
+                        solver.makeIntView<propagation::EqualConst>(solver, _sumVarId, _c));
     } else {
       assert(!isReified());
-      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
-                                            engine, _sumVarId, _c));
+      setViolationVarId(invariantGraph, solver.makeIntView<propagation::NotEqualConst>(
+                                            solver, _sumVarId, _c));
     }
   }
 }
 
 void IntLinEqNode::registerNode(InvariantGraph& invariantGraph,
-                                propagation::Engine& engine) {
+                                propagation::SolverBase& solver) {
   std::vector<propagation::VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
@@ -75,7 +75,7 @@ void IntLinEqNode::registerNode(InvariantGraph& invariantGraph,
   assert(_sumVarId != propagation::NULL_ID);
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  engine.makeInvariant<propagation::Linear>(engine, _sumVarId, _coeffs, variables);
+  solver.makeInvariant<propagation::Linear>(solver, _sumVarId, _coeffs, variables);
 }
 
 }  // namespace invariantgraph

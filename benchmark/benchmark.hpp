@@ -1,6 +1,6 @@
 #pragma once
 
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/types.hpp"
 #include "types.hpp"
 
@@ -32,10 +32,10 @@ inline propagation::OutputToInputMarkingMode intToOutputToInputMarkingMode(
   }
 }
 
-inline void setEngineModes(propagation::PropagationEngine& engine,
+inline void setSolverMode(propagation::Solver& solver,
                            const int state) {
-  engine.setPropagationMode(intToPropagationMode(state));
-  engine.setOutputToInputMarkingMode(intToOutputToInputMarkingMode(state));
+  solver.setPropagationMode(intToPropagationMode(state));
+  solver.setOutputToInputMarkingMode(intToOutputToInputMarkingMode(state));
 }
 
 inline size_t rand_in_range(size_t minInclusive, size_t maxInclusive,

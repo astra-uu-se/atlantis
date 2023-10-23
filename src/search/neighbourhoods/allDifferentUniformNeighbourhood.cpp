@@ -6,10 +6,10 @@ namespace atlantis::search::neighbourhoods {
 
 AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
     std::vector<SearchVariable>&& variables, std::vector<Int> domain,
-    const propagation::Engine& engine)
+    const propagation::SolverBase& solver)
     : _variables(std::move(variables)),
       _domain(std::move(domain)),
-      _engine(engine),
+      _solver(solver),
       _freeVariables(_domain.size()) {
   assert(_variables.size() > 1);
   assert(_domain.size() >= _variables.size());
@@ -30,7 +30,7 @@ void AllDifferentUniformNeighbourhood::initialise(
   for (auto const& variable : _variables) {
     auto idx = random.intInRange(0, static_cast<Int>(_freeVariables) - 1);
     auto value = _domain[idx];
-    modifications.set(variable.engineId(), value);
+    modifications.set(variable.solverId(), value);
 
     _domain[idx] = _domain[_freeVariables - 1];
     _domain[_freeVariables - 1] = value;
@@ -56,8 +56,8 @@ bool AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
       (i + random.intInRange(1, static_cast<Int>(_variables.size()) - 1)) %
       _variables.size();
 
-  auto var1 = _variables[i].engineId();
-  auto var2 = _variables[j].engineId();
+  auto var1 = _variables[i].solverId();
+  auto var2 = _variables[j].solverId();
 
   Int value1 = assignment.value(var1);
   Int value2 = assignment.value(var2);
@@ -69,7 +69,7 @@ bool AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
 bool AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
                                                    Assignment& assignment,
                                                    Annealer& annealer) {
-  auto var = random.element(_variables).engineId();
+  auto var = random.element(_variables).solverId();
   Int oldValue = assignment.value(var);
   size_t oldValueIdx = _domIndices[oldValue - _offset];
 

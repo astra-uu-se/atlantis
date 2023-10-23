@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 #include "propagation/utils/priorityList.hpp"
 
@@ -23,7 +23,7 @@ class Exists : public Invariant {
   CommittableInt _min;
 
  public:
-  explicit Exists(Engine&, VarId output, std::vector<VarId> varArray);
+  explicit Exists(SolverBase&, VarId output, std::vector<VarId> varArray);
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
   void recompute(Timestamp) override;

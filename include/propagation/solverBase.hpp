@@ -3,11 +3,11 @@
 #include <cassert>
 #include <vector>
 
-#include "types.hpp"
 #include "exceptions/exceptions.hpp"
 #include "misc/logging.hpp"
-#include "store/store.hpp"
 #include "propagation/utils/idMap.hpp"
+#include "store/store.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
@@ -16,9 +16,9 @@ class IntView;
 class Invariant;
 class Constraint;
 
-class Engine {
+class SolverBase {
  protected:
-  enum class EngineState { IDLE, PROBE, MOVE, COMMIT, PROCESSING };
+  enum class SolverState { IDLE, PROBE, MOVE, COMMIT, PROCESSING };
 
   static const size_t ESTIMATED_NUM_OBJECTS = 1;
 
@@ -26,7 +26,7 @@ class Engine {
 
   bool _isOpen = true;
 
-  EngineState _engineState = EngineState::IDLE;
+  SolverState _solverState = SolverState::IDLE;
 
   Store _store;
 
@@ -56,9 +56,9 @@ class Engine {
   friend class Invariant;
 
  public:
-  Engine(/* args */);
+  SolverBase(/* args */);
 
-  virtual ~Engine() = default;
+  virtual ~SolverBase() = default;
 
   virtual void open() = 0;
   virtual void close() = 0;
@@ -66,7 +66,7 @@ class Engine {
 
   [[nodiscard]] inline bool isOpen() const noexcept { return _isOpen; }
   [[nodiscard]] inline bool isMoving() const noexcept {
-    return _engineState == EngineState::MOVE;
+    return _solverState == SolverState::MOVE;
   }
 
   //--------------------- Variable ---------------------
@@ -133,7 +133,7 @@ class Engine {
 
   //--------------------- Registration ---------------------
   /**
-   * Register an invariant in the engine and return its pointer.
+   * Register an invariant in the solver and return its pointer.
    * This also sets the id of the invariant to the new id.
    * @param args the constructor arguments of the invariant
    * @return the created invariant.
@@ -143,7 +143,7 @@ class Engine {
       Args&&... args);
 
   /**
-   * Register an IntView in the engine and return its pointer.
+   * Register an IntView in the solver and return its pointer.
    * This also sets the id of the IntView to the new id.
    * @param args the constructor arguments of the IntView
    * @return the created IntView.
@@ -153,7 +153,7 @@ class Engine {
       Args&&... args);
 
   /**
-   * Register a constraint in the engine and return its pointer.
+   * Register a constraint in the solver and return its pointer.
    * This also sets the id of the constraint to the new id.
    * @param args the constructor arguments of the constraint
    * @return the created constraint.
@@ -163,7 +163,7 @@ class Engine {
       Args&&... args);
 
   /**
-   * Creates an IntVar and registers it to the engine.
+   * Creates an IntVar and registers it to the solver.
    * @return the created IntVar
    */
   VarId makeIntVar(Int initValue, Int lowerBound, Int upperBound);
@@ -187,9 +187,9 @@ class Engine {
 
 template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<Invariant, T>::value, T&>
-Engine::makeInvariant(Args&&... args) {
+SolverBase::makeInvariant(Args&&... args) {
   if (!_isOpen) {
-    throw EngineClosedException("Cannot make invariant when store is closed.");
+    throw SolverClosedException("Cannot make invariant when store is closed.");
   }
   const InvariantId invariantId = _store.createInvariantFromPtr(
       std::make_unique<T>(std::forward<Args>(args)...));
@@ -203,10 +203,10 @@ Engine::makeInvariant(Args&&... args) {
 }
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<IntView, T>::value, VarId> Engine::makeIntView(
-    Args&&... args) {
+std::enable_if_t<std::is_base_of<IntView, T>::value, VarId>
+SolverBase::makeIntView(Args&&... args) {
   if (!_isOpen) {
-    throw EngineClosedException("Cannot make intView when store is closed.");
+    throw SolverClosedException("Cannot make intView when store is closed.");
   }
   // We don't actually register views as they are invisible to propagation.
 
@@ -218,9 +218,9 @@ std::enable_if_t<std::is_base_of<IntView, T>::value, VarId> Engine::makeIntView(
 
 template <class T, typename... Args>
 std::enable_if_t<std::is_base_of<Constraint, T>::value, T&>
-Engine::makeConstraint(Args&&... args) {
+SolverBase::makeConstraint(Args&&... args) {
   if (!_isOpen) {
-    throw EngineClosedException("Cannot make invariant when store is closed.");
+    throw SolverClosedException("Cannot make invariant when store is closed.");
   }
   const InvariantId constraintId = _store.createInvariantFromPtr(
       std::make_unique<T>(std::forward<Args>(args)...));
@@ -234,69 +234,72 @@ Engine::makeConstraint(Args&&... args) {
 
 //--------------------- Inlined functions ---------------------
 
-inline const Store& Engine::store() { return _store; }
-inline Timestamp Engine::currentTimestamp() const { return _currentTimestamp; }
+inline const Store& SolverBase::store() { return _store; }
+inline Timestamp SolverBase::currentTimestamp() const {
+  return _currentTimestamp;
+}
 
-inline bool Engine::hasChanged(Timestamp ts, VarId id) {
+inline bool SolverBase::hasChanged(Timestamp ts, VarId id) {
   return _store.intVar(id).hasChanged(ts);
 }
 
-inline Int Engine::value(Timestamp ts, VarId id) {
+inline Int SolverBase::value(Timestamp ts, VarId id) {
   if (id.idType == VarIdType::view) {
     return _store.intView(id).value(ts);
   }
   return _store.constIntVar(id).value(ts);
 }
 
-inline Int Engine::committedValue(VarId id) {
+inline Int SolverBase::committedValue(VarId id) {
   if (id.idType == VarIdType::view) {
     return _store.intView(id).committedValue();
   }
   return _store.constIntVar(id).committedValue();
 }
 
-inline Timestamp Engine::tmpTimestamp(VarId id) const {
+inline Timestamp SolverBase::tmpTimestamp(VarId id) const {
   if (id.idType == VarIdType::view) {
     return _store.constIntVar(_store.intViewSourceId(id)).tmpTimestamp();
   }
   return _store.constIntVar(id).tmpTimestamp();
 }
 
-inline bool Engine::isPostponed(InvariantId invariantId) const {
+inline bool SolverBase::isPostponed(InvariantId invariantId) const {
   return _store.constInvariant(invariantId).isPostponed();
 }
 
-inline void Engine::recompute(InvariantId invariantId) {
+inline void SolverBase::recompute(InvariantId invariantId) {
   return _store.invariant(invariantId).recompute(_currentTimestamp);
 }
 
-inline void Engine::recompute(Timestamp ts, InvariantId invariantId) {
+inline void SolverBase::recompute(Timestamp ts, InvariantId invariantId) {
   return _store.invariant(invariantId).recompute(ts);
 }
 
-inline void Engine::updateValue(Timestamp ts, VarId id, Int val) {
+inline void SolverBase::updateValue(Timestamp ts, VarId id, Int val) {
   _store.intVar(id).setValue(ts, val);
 }
 
-inline void Engine::incValue(Timestamp ts, VarId id, Int inc) {
+inline void SolverBase::incValue(Timestamp ts, VarId id, Int inc) {
   _store.intVar(id).incValue(ts, inc);
 }
 
-inline void Engine::commit(VarId id) { _store.intVar(id).commit(); }
+inline void SolverBase::commit(VarId id) { _store.intVar(id).commit(); }
 
-inline void Engine::commitIf(Timestamp ts, VarId id) {
+inline void SolverBase::commitIf(Timestamp ts, VarId id) {
   _store.intVar(id).commitIf(ts);
 }
 
-inline void Engine::commitValue(VarId id, Int val) {
+inline void SolverBase::commitValue(VarId id, Int val) {
   _store.intVar(id).commitValue(val);
 }
 
-inline void Engine::commitInvariantIf(Timestamp ts, InvariantId invariantId) {
+inline void SolverBase::commitInvariantIf(Timestamp ts,
+                                          InvariantId invariantId) {
   _store.invariant(invariantId).commit(ts);
 }
 
-inline void Engine::commitInvariant(InvariantId invariantId) {
+inline void SolverBase::commitInvariant(InvariantId invariantId) {
   _store.invariant(invariantId).commit(_currentTimestamp);
 }
 

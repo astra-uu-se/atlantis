@@ -49,29 +49,29 @@ std::unique_ptr<ArrayBoolAndNode> ArrayBoolAndNode::fromModelConstraint(
 }
 
 void ArrayBoolAndNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                               propagation::Engine& engine) {
+                                               propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (shouldHold()) {
-      registerViolation(invariantGraph, engine);
+      registerViolation(invariantGraph, solver);
     } else {
       assert(!isReified());
-      _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
-                                            engine, _intermediate, 0));
+      _intermediate = solver.makeIntVar(0, 0, 0);
+      setViolationVarId(invariantGraph, solver.makeIntView<propagation::NotEqualConst>(
+                                            solver, _intermediate, 0));
     }
   }
 }
 
 void ArrayBoolAndNode::registerNode(InvariantGraph& invariantGraph,
-                                    propagation::Engine& engine) {
+                                    propagation::SolverBase& solver) {
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
   std::vector<propagation::VarId> inputs;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputs),
                  [&](const auto& node) { return invariantGraph.varId(node); });
 
-  engine.makeInvariant<propagation::ForAll>(
-      engine, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
+  solver.makeInvariant<propagation::ForAll>(
+      solver, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
       inputs);
 }
 

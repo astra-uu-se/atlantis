@@ -20,14 +20,14 @@ std::unique_ptr<Bool2IntNode> Bool2IntNode::fromModelConstraint(
 }
 
 void Bool2IntNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                           propagation::Engine& engine) {
+                                           propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(engine.makeIntView<propagation::Bool2IntView>(
-            engine, invariantGraph.varId(input())));
+        .setVarId(solver.makeIntView<propagation::Bool2IntView>(
+            solver, invariantGraph.varId(input())));
   }
 }
 
-void Bool2IntNode::registerNode(InvariantGraph&, propagation::Engine&) {}
+void Bool2IntNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
 }  // namespace invariantgraph

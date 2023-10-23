@@ -2,7 +2,7 @@
 
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/violationInvariantNodes/countGtNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -192,11 +192,11 @@ class AbstractCountGtNodeTest : public NodeTestBase<CountGtNode> {
   }
 
   void propagation() {
-    propagation::PropagationEngine engine;
-    engine.open();
-    addInputVarsToEngine(engine);
-    invNode().registerOutputVariables(*_invariantGraph, engine);
-    invNode().registerNode(*_invariantGraph, engine);
+    propagation::Solver solver;
+    solver.open();
+    addInputVarsToSolver(solver);
+    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerNode(*_invariantGraph, solver);
 
     std::vector<propagation::VarId> inputs;
     for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
@@ -220,8 +220,8 @@ class AbstractCountGtNodeTest : public NodeTestBase<CountGtNode> {
 
     if constexpr (!YIsParameter) {
       EXPECT_NE(yVar, propagation::NULL_ID);
-      yLb = engine.lowerBound(yVar);
-      yUb = engine.upperBound(yVar);
+      yLb = solver.lowerBound(yVar);
+      yUb = solver.upperBound(yVar);
     }
 
     const propagation::VarId cVar = invNode().cVarNode() == NULL_NODE_ID
@@ -229,47 +229,47 @@ class AbstractCountGtNodeTest : public NodeTestBase<CountGtNode> {
                                         : varId(invNode().cVarNode());
     if constexpr (Type == ConstraintType::NORMAL) {
       EXPECT_NE(cVar, propagation::NULL_ID);
-      cLb = engine.lowerBound(cVar);
-      cUb = engine.upperBound(cVar);
+      cLb = solver.lowerBound(cVar);
+      cUb = solver.upperBound(cVar);
     }
-    engine.close();
+    solver.close();
 
-    for (values.at(0) = engine.lowerBound(inputs.at(0));
-         values.at(0) <= engine.upperBound(inputs.at(0)); ++values.at(0)) {
-      for (values.at(1) = engine.lowerBound(inputs.at(1));
-           values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
-        for (values.at(2) = engine.lowerBound(inputs.at(2));
-             values.at(2) <= engine.upperBound(inputs.at(2)); ++values.at(2)) {
+    for (values.at(0) = solver.lowerBound(inputs.at(0));
+         values.at(0) <= solver.upperBound(inputs.at(0)); ++values.at(0)) {
+      for (values.at(1) = solver.lowerBound(inputs.at(1));
+           values.at(1) <= solver.upperBound(inputs.at(1)); ++values.at(1)) {
+        for (values.at(2) = solver.lowerBound(inputs.at(2));
+             values.at(2) <= solver.upperBound(inputs.at(2)); ++values.at(2)) {
           for (Int yVal = yLb; yVal <= yUb; ++yVal) {
             for (Int cVal = cLb; cVal <= cUb; ++cVal) {
-              engine.beginMove();
+              solver.beginMove();
               for (size_t i = 0; i < values.size(); ++i) {
-                engine.setValue(inputs.at(i), values.at(i));
+                solver.setValue(inputs.at(i), values.at(i));
               }
               if constexpr (!YIsParameter) {
-                engine.setValue(yVar, yVal);
+                solver.setValue(yVar, yVal);
               }
               if constexpr (Type == ConstraintType::NORMAL) {
-                engine.setValue(cVar, cVal);
+                solver.setValue(cVar, cVal);
               }
-              engine.endMove();
+              solver.endMove();
 
-              engine.beginProbe();
-              engine.query(violationId);
-              engine.endProbe();
+              solver.beginProbe();
+              solver.query(violationId);
+              solver.endProbe();
               if constexpr (!YIsParameter) {
-                EXPECT_EQ(engine.currentValue(yVar), yVal);
+                EXPECT_EQ(solver.currentValue(yVar), yVal);
               }
               if constexpr (Type == ConstraintType::NORMAL) {
-                EXPECT_EQ(engine.currentValue(cVar), cVal);
+                EXPECT_EQ(solver.currentValue(cVar), cVal);
               }
 
               if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
-                const bool actual = engine.currentValue(violationId) == 0;
+                const bool actual = solver.currentValue(violationId) == 0;
                 const bool expected = isSatisfied(values, yVal, cVal);
                 EXPECT_EQ(actual, expected);
               } else {
-                EXPECT_NE(engine.currentValue(violationId) == 0,
+                EXPECT_NE(solver.currentValue(violationId) == 0,
                           isSatisfied(values, yVal, cVal));
               }
             }

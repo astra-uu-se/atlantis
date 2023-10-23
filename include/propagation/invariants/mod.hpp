@@ -2,7 +2,7 @@
 #include <cmath>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
@@ -17,7 +17,7 @@ class Mod : public Invariant {
   Int _zeroReplacement{1};
 
  public:
-  explicit Mod(Engine&, VarId output, VarId x, VarId y);
+  explicit Mod(SolverBase&, VarId output, VarId x, VarId y);
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
   void close(Timestamp) override;

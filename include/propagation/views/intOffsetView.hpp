@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
@@ -13,8 +13,8 @@ class IntOffsetView : public IntView {
   const Int _offset;
 
  public:
-  explicit IntOffsetView(Engine& engine, VarId parentId, Int offset)
-      : IntView(engine, parentId), _offset(offset) {}
+  explicit IntOffsetView(SolverBase& solver, VarId parentId, Int offset)
+      : IntView(solver, parentId), _offset(offset) {}
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

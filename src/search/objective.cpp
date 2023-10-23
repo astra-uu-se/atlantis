@@ -5,28 +5,28 @@
 
 namespace atlantis::search {
 
-Objective::Objective(propagation::PropagationEngine& engine,
+Objective::Objective(propagation::Solver& solver,
                      fznparser::ProblemType problemType)
-    : _engine(engine), _problemType(problemType) {}
+    : _solver(solver), _problemType(problemType) {}
 
 propagation::VarId Objective::registerNode(propagation::VarId totalViolationId,
                                            propagation::VarId objectiveVarId) {
-  assert(_engine.isOpen());
+  assert(_solver.isOpen());
 
   _objective = objectiveVarId;
 
   if (_problemType == fznparser::ProblemType::MINIMIZE) {
     return registerOptimisation(
-        totalViolationId, objectiveVarId, _engine.upperBound(objectiveVarId),
+        totalViolationId, objectiveVarId, _solver.upperBound(objectiveVarId),
         [&](propagation::VarId v, propagation::VarId b) {
-          _engine.makeConstraint<propagation::LessEqual>(_engine, v,
+          _solver.makeConstraint<propagation::LessEqual>(_solver, v,
                                                          objectiveVarId, b);
         });
   } else if (_problemType == fznparser::ProblemType::MAXIMIZE) {
     return registerOptimisation(
-        totalViolationId, objectiveVarId, _engine.lowerBound(objectiveVarId),
+        totalViolationId, objectiveVarId, _solver.lowerBound(objectiveVarId),
         [&](propagation::VarId v, propagation::VarId b) {
-          _engine.makeConstraint<propagation::LessEqual>(_engine, v, b,
+          _solver.makeConstraint<propagation::LessEqual>(_solver, v, b,
                                                          objectiveVarId);
         });
   }
@@ -41,17 +41,17 @@ void Objective::tighten() {
 
   const Int newBound =
       _problemType == fznparser::ProblemType::SATISFY
-          ? _engine.committedValue(*_bound)
-          : (_engine.committedValue(*_objective) +
+          ? _solver.committedValue(*_bound)
+          : (_solver.committedValue(*_objective) +
              (_problemType == fznparser::ProblemType::MINIMIZE ? -1 : 1));
 
-  _engine.beginMove();
-  _engine.setValue(*_bound, newBound);
-  _engine.endMove();
+  _solver.beginMove();
+  _solver.setValue(*_bound, newBound);
+  _solver.endMove();
 
-  _engine.beginCommit();
-  _engine.query(*_violation);
-  _engine.endCommit();
+  _solver.beginCommit();
+  _solver.query(*_violation);
+  _solver.endCommit();
 }
 
 }  // namespace atlantis::search

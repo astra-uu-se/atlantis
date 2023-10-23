@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "types.hpp"
-#include "propagation/engine.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/views/intView.hpp"
 
@@ -29,7 +29,7 @@ class ElementConst : public IntView {
   }
 
  public:
-  explicit ElementConst(Engine& engine, VarId parentId, std::vector<Int> array,
+  explicit ElementConst(SolverBase& solver, VarId parentId, std::vector<Int> array,
                         Int offset = 1);
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

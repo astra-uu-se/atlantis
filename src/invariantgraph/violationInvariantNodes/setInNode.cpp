@@ -45,7 +45,7 @@ std::unique_ptr<SetInNode> SetInNode::fromModelConstraint(
 }
 
 void SetInNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                        propagation::Engine& engine) {
+                                        propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     const propagation::VarId input = invariantGraph.varId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
@@ -57,17 +57,17 @@ void SetInNode::registerOutputVariables(InvariantGraph& invariantGraph,
     if (!shouldHold()) {
       assert(!isReified());
       _intermediate =
-          engine.makeIntView<propagation::InDomain>(engine, input, std::move(domainEntries));
-      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
-                                            engine, _intermediate, 0));
+          solver.makeIntView<propagation::InDomain>(solver, input, std::move(domainEntries));
+      setViolationVarId(invariantGraph, solver.makeIntView<propagation::NotEqualConst>(
+                                            solver, _intermediate, 0));
     } else {
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<propagation::InDomain>(engine, input,
+                        solver.makeIntView<propagation::InDomain>(solver, input,
                                                      std::move(domainEntries)));
     }
   }
 }
 
-void SetInNode::registerNode(InvariantGraph&, propagation::Engine&) {}
+void SetInNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
 }  // namespace invariantgraph

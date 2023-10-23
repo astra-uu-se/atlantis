@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/invariantNodes/arrayVarIntElementNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -52,35 +52,35 @@ TEST_F(ArrayVarIntElementNodeTest, construction) {
 }
 
 TEST_F(ArrayVarIntElementNodeTest, application) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
   // a, b, c, idx
-  EXPECT_EQ(engine.searchVariables().size(), 4);
+  EXPECT_EQ(solver.searchVariables().size(), 4);
 
   // a, b, c, idx, y
-  EXPECT_EQ(engine.numVariables(), 5);
+  EXPECT_EQ(solver.numVariables(), 5);
 
   // elementVar
-  EXPECT_EQ(engine.numInvariants(), 1);
+  EXPECT_EQ(solver.numInvariants(), 1);
 }
 
 TEST_F(ArrayVarIntElementNodeTest, propagation) {
-  propagation::PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
-  invNode().registerOutputVariables(*_invariantGraph, engine);
-  invNode().registerNode(*_invariantGraph, engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
+  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerNode(*_invariantGraph, solver);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
   EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
@@ -100,28 +100,28 @@ TEST_F(ArrayVarIntElementNodeTest, propagation) {
   }
 
   const propagation::VarId input = inputs.front();
-  engine.close();
+  solver.close();
   std::vector<Int> values(4, 0);
 
-  for (values.at(0) = std::max(Int(1), engine.lowerBound(input));
-       values.at(0) <= std::min(Int(3), engine.upperBound(input));
+  for (values.at(0) = std::max(Int(1), solver.lowerBound(input));
+       values.at(0) <= std::min(Int(3), solver.upperBound(input));
        ++values.at(0)) {
-    for (values.at(1) = engine.lowerBound(inputs.at(1));
-         values.at(1) <= engine.upperBound(inputs.at(1)); ++values.at(1)) {
-      for (values.at(2) = engine.lowerBound(inputs.at(2));
-           values.at(2) <= engine.upperBound(inputs.at(2)); ++values.at(2)) {
-        for (values.at(3) = engine.lowerBound(inputs.at(3));
-             values.at(3) <= engine.upperBound(inputs.at(3)); ++values.at(3)) {
-          engine.beginMove();
+    for (values.at(1) = solver.lowerBound(inputs.at(1));
+         values.at(1) <= solver.upperBound(inputs.at(1)); ++values.at(1)) {
+      for (values.at(2) = solver.lowerBound(inputs.at(2));
+           values.at(2) <= solver.upperBound(inputs.at(2)); ++values.at(2)) {
+        for (values.at(3) = solver.lowerBound(inputs.at(3));
+             values.at(3) <= solver.upperBound(inputs.at(3)); ++values.at(3)) {
+          solver.beginMove();
           for (size_t i = 0; i < inputs.size(); ++i) {
-            engine.setValue(inputs.at(i), values.at(i));
+            solver.setValue(inputs.at(i), values.at(i));
           }
-          engine.endMove();
+          solver.endMove();
 
-          engine.beginProbe();
-          engine.query(outputId);
-          engine.endProbe();
-          const Int actual = engine.currentValue(outputId);
+          solver.beginProbe();
+          solver.query(outputId);
+          solver.endProbe();
+          const Int actual = solver.currentValue(outputId);
           EXPECT_EQ(actual, values.at(values.at(0)));
         }
       }

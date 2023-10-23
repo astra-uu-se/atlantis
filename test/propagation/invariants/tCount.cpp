@@ -8,7 +8,7 @@
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/count.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -21,9 +21,9 @@ class CountTest : public InvariantTest {
                     const std::vector<VarId>& variables) {
     std::vector<Int> values(variables.size(), 0);
     for (size_t i = 0; i < variables.size(); ++i) {
-      values.at(i) = engine->value(ts, variables.at(i));
+      values.at(i) = solver->value(ts, variables.at(i));
     }
-    return computeOutput(engine->value(ts, y), values);
+    return computeOutput(solver->value(ts, y), values);
   }
 
   Int computeOutput(const Int y, const std::vector<Int>& values) {
@@ -40,31 +40,31 @@ class CountTest : public InvariantTest {
 TEST_F(CountTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-10, 0}, {-5, 5}, {0, 10}, {15, 20}};
-  engine->open();
+  solver->open();
 
-  const VarId y = engine->makeIntVar(0, 0, 10);
-  std::vector<VarId> vars{engine->makeIntVar(0, 0, 10),
-                          engine->makeIntVar(0, 0, 10),
-                          engine->makeIntVar(0, 0, 10)};
-  const VarId outputId = engine->makeIntVar(0, 0, 2);
-  Count& invariant = engine->makeInvariant<Count>(*engine, outputId, y, vars);
+  const VarId y = solver->makeIntVar(0, 0, 10);
+  std::vector<VarId> vars{solver->makeIntVar(0, 0, 10),
+                          solver->makeIntVar(0, 0, 10),
+                          solver->makeIntVar(0, 0, 10)};
+  const VarId outputId = solver->makeIntVar(0, 0, 2);
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, vars);
 
   for (const auto& [yLb, yUb] : boundVec) {
     EXPECT_TRUE(yLb <= yUb);
-    engine->updateBounds(y, yLb, yUb, false);
+    solver->updateBounds(y, yLb, yUb, false);
     for (const auto& [aLb, aUb] : boundVec) {
       EXPECT_TRUE(aLb <= aUb);
-      engine->updateBounds(vars.at(0), aLb, aUb, false);
+      solver->updateBounds(vars.at(0), aLb, aUb, false);
       for (const auto& [bLb, bUb] : boundVec) {
         EXPECT_TRUE(bLb <= bUb);
-        engine->updateBounds(vars.at(1), bLb, bUb, false);
+        solver->updateBounds(vars.at(1), bLb, bUb, false);
         for (const auto& [cLb, cUb] : boundVec) {
           EXPECT_TRUE(cLb <= cUb);
-          engine->updateBounds(vars.at(2), cLb, cUb, false);
+          solver->updateBounds(vars.at(2), cLb, cUb, false);
           invariant.updateBounds();
 
-          ASSERT_GE(0, engine->lowerBound(outputId));
-          ASSERT_LE(vars.size(), engine->upperBound(outputId));
+          ASSERT_GE(0, solver->lowerBound(outputId));
+          ASSERT_LE(vars.size(), solver->upperBound(outputId));
         }
       }
     }
@@ -79,34 +79,34 @@ TEST_F(CountTest, Recompute) {
 
   std::uniform_int_distribution<Int> dist(lb, ub);
 
-  engine->open();
+  solver->open();
 
-  const VarId y = engine->makeIntVar(dist(gen), lb, ub);
-  const VarId a = engine->makeIntVar(dist(gen), lb, ub);
-  const VarId b = engine->makeIntVar(dist(gen), lb, ub);
-  const VarId c = engine->makeIntVar(dist(gen), lb, ub);
+  const VarId y = solver->makeIntVar(dist(gen), lb, ub);
+  const VarId a = solver->makeIntVar(dist(gen), lb, ub);
+  const VarId b = solver->makeIntVar(dist(gen), lb, ub);
+  const VarId c = solver->makeIntVar(dist(gen), lb, ub);
 
   std::vector<VarId> inputs{a, b, c};
 
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
 
-  Count& invariant = engine->makeInvariant<Count>(*engine, outputId, y, inputs);
-  engine->close();
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, inputs);
+  solver->close();
 
   for (Int yVal = lb; yVal <= ub; ++yVal) {
     for (Int aVal = lb; aVal <= ub; ++aVal) {
       for (Int bVal = lb; bVal <= ub; ++bVal) {
         for (Int cVal = lb; cVal <= ub; ++cVal) {
-          engine->setValue(engine->currentTimestamp(), y, yVal);
-          engine->setValue(engine->currentTimestamp(), a, aVal);
-          engine->setValue(engine->currentTimestamp(), b, bVal);
-          engine->setValue(engine->currentTimestamp(), c, cVal);
+          solver->setValue(solver->currentTimestamp(), y, yVal);
+          solver->setValue(solver->currentTimestamp(), a, aVal);
+          solver->setValue(solver->currentTimestamp(), b, bVal);
+          solver->setValue(solver->currentTimestamp(), c, cVal);
           const Int expectedOutput =
-              computeOutput(engine->currentTimestamp(), y, inputs);
-          invariant.recompute(engine->currentTimestamp());
+              computeOutput(solver->currentTimestamp(), y, inputs);
+          invariant.recompute(solver->currentTimestamp());
           EXPECT_EQ(expectedOutput,
-                    engine->value(engine->currentTimestamp(), outputId));
+                    solver->value(solver->currentTimestamp(), outputId));
         }
       }
     }
@@ -114,37 +114,37 @@ TEST_F(CountTest, Recompute) {
 }
 
 TEST_F(CountTest, NotifyInputChanged) {
-  engine->open();
+  solver->open();
   const size_t numInputs = 3;
   const Int lb = -10;
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
   std::vector<VarId> inputs(numInputs, NULL_ID);
-  const VarId y = engine->makeIntVar(dist(gen), lb, ub);
+  const VarId y = solver->makeIntVar(dist(gen), lb, ub);
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = engine->makeIntVar(dist(gen), lb, ub);
+    inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
   }
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant = engine->makeInvariant<Count>(*engine, outputId, y, inputs);
-  engine->close();
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, inputs);
+  solver->close();
 
-  const Timestamp ts = engine->currentTimestamp() + 1;
+  const Timestamp ts = solver->currentTimestamp() + 1;
 
   std::vector<VarId> allInputs(inputs);
   allInputs.emplace_back(y);
 
   for (size_t i = 0; i < allInputs.size(); ++i) {
-    const Int oldVal = engine->value(ts, allInputs.at(i));
+    const Int oldVal = solver->value(ts, allInputs.at(i));
     do {
-      engine->setValue(ts, allInputs.at(i), dist(gen));
-    } while (oldVal == engine->value(ts, allInputs.at(i)));
+      solver->setValue(ts, allInputs.at(i), dist(gen));
+    } while (oldVal == solver->value(ts, allInputs.at(i)));
 
     const Int expectedOutput = computeOutput(ts, y, inputs);
 
     invariant.notifyInputChanged(ts, LocalId(i));
-    EXPECT_EQ(expectedOutput, engine->value(ts, outputId));
+    EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
   }
 }
 
@@ -156,15 +156,15 @@ TEST_F(CountTest, NextInput) {
 
   std::vector<VarId> inputs(numInputs, NULL_ID);
 
-  engine->open();
-  const VarId y = engine->makeIntVar(dist(gen), lb, ub);
+  solver->open();
+  const VarId y = solver->makeIntVar(dist(gen), lb, ub);
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = engine->makeIntVar(dist(gen), lb, ub);
+    inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
   }
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant = engine->makeInvariant<Count>(*engine, outputId, y, inputs);
-  engine->close();
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, inputs);
+  solver->close();
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
@@ -173,8 +173,8 @@ TEST_F(CountTest, NextInput) {
   const VarId maxVarId =
       std::max(y, *std::max_element(inputs.begin(), inputs.end()));
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i <= numInputs; ++i) {
       const VarId varId = invariant.nextInput(ts);
@@ -198,30 +198,30 @@ TEST_F(CountTest, NotifyCurrentInputChanged) {
   std::uniform_int_distribution<Int> dist(lb, ub);
 
   std::vector<VarId> inputs(numInputs, NULL_ID);
-  engine->open();
-  const VarId y = engine->makeIntVar(dist(gen), lb, ub);
+  solver->open();
+  const VarId y = solver->makeIntVar(dist(gen), lb, ub);
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = engine->makeIntVar(dist(gen), lb, ub);
+    inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
   }
 
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant = engine->makeInvariant<Count>(*engine, outputId, y, inputs);
-  engine->close();
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, inputs);
+  solver->close();
 
   std::vector<VarId> allInputs(inputs);
   allInputs.emplace_back(y);
 
-  for (Timestamp ts = engine->currentTimestamp() + 1;
-       ts < engine->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = solver->currentTimestamp() + 1;
+       ts < solver->currentTimestamp() + 4; ++ts) {
     for (const VarId varId : allInputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = engine->value(ts, varId);
+      const Int oldVal = solver->value(ts, varId);
       do {
-        engine->setValue(ts, varId, dist(gen));
-      } while (engine->value(ts, varId) == oldVal);
+        solver->setValue(ts, varId, dist(gen));
+      } while (solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(engine->value(ts, outputId), computeOutput(ts, y, inputs));
+      EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, y, inputs));
     }
   }
 }
@@ -235,57 +235,57 @@ TEST_F(CountTest, Commit) {
   std::vector<size_t> indices(numInputs + 1, 0);
   std::vector<Int> committedValues(numInputs + 1, 0);
 
-  engine->open();
+  solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
     indices.at(i) = i;
     committedValues.at(i) = dist(gen);
-    inputs.at(i) = engine->makeIntVar(committedValues.at(i), lb, ub);
+    inputs.at(i) = solver->makeIntVar(committedValues.at(i), lb, ub);
   }
   indices.back() = numInputs;
   committedValues.back() = dist(gen);
-  const VarId y = engine->makeIntVar(committedValues.back(), lb, ub);
+  const VarId y = solver->makeIntVar(committedValues.back(), lb, ub);
 
-  const VarId outputId = engine->makeIntVar(0, std::numeric_limits<Int>::min(),
+  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant = engine->makeInvariant<Count>(*engine, outputId, y, inputs);
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, inputs);
 
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  engine->close();
+  solver->close();
   std::vector<VarId> allInputs(inputs);
   allInputs.emplace_back(y);
 
-  EXPECT_EQ(engine->value(engine->currentTimestamp(), outputId),
-            computeOutput(engine->currentTimestamp(), y, inputs));
+  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
+            computeOutput(solver->currentTimestamp(), y, inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = engine->currentTimestamp() + Timestamp(i);
+    Timestamp ts = solver->currentTimestamp() + Timestamp(i);
     for (size_t j = 0; j < numInputs; ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(engine->committedValue(allInputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(solver->committedValue(allInputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      engine->setValue(ts, allInputs.at(i), dist(gen));
-    } while (oldVal == engine->value(ts, allInputs.at(i)));
+      solver->setValue(ts, allInputs.at(i), dist(gen));
+    } while (oldVal == solver->value(ts, allInputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = engine->value(ts, outputId);
+    const Int notifiedOutput = solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, engine->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
 
-    engine->commitIf(ts, allInputs.at(i));
-    committedValues.at(i) = engine->value(ts, allInputs.at(i));
-    engine->commitIf(ts, outputId);
+    solver->commitIf(ts, allInputs.at(i));
+    committedValues.at(i) = solver->value(ts, allInputs.at(i));
+    solver->commitIf(ts, outputId);
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, engine->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
   }
 }
 
@@ -296,9 +296,9 @@ class MockCount : public Count {
     registered = true;
     Count::registerVars();
   }
-  explicit MockCount(Engine& engine, VarId output, VarId y,
+  explicit MockCount(SolverBase& solver, VarId output, VarId y,
                      std::vector<VarId> varArray)
-      : Count(engine, output, y, varArray) {
+      : Count(solver, output, y, varArray) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Count::recompute(timestamp);
     });
@@ -323,22 +323,22 @@ class MockCount : public Count {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(CountTest, EngineIntegration) {
+TEST_F(CountTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!engine->isOpen()) {
-      engine->open();
+    if (!solver->isOpen()) {
+      solver->open();
     }
     const size_t numArgs = 10;
-    const VarId y = engine->makeIntVar(0, 0, numArgs);
+    const VarId y = solver->makeIntVar(0, 0, numArgs);
     std::vector<VarId> args;
     for (size_t value = 1; value <= numArgs; ++value) {
-      args.push_back(engine->makeIntVar(static_cast<Int>(value), 1,
+      args.push_back(solver->makeIntVar(static_cast<Int>(value), 1,
                                         static_cast<Int>(numArgs)));
     }
     const VarId modifiedVarId = args.front();
-    const VarId output = engine->makeIntVar(-10, -100, numArgs * numArgs);
+    const VarId output = solver->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCount>(
-        &engine->makeInvariant<MockCount>(*engine, output, y, args),
+        &solver->makeInvariant<MockCount>(*solver, output, y, args),
         {propMode, markingMode, numArgs + 2, modifiedVarId, 5, output});
   }
 }

@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "invariantgraph/violationInvariantNodes/boolClauseNode.hpp"
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -100,51 +100,51 @@ class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
   }
 
   void application() {
-    propagation::PropagationEngine engine;
-    engine.open();
-    addInputVarsToEngine(engine);
+    propagation::Solver solver;
+    solver.open();
+    addInputVarsToSolver(solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVariables(*_invariantGraph, engine);
+    invNode().registerOutputVariables(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerNode(*_invariantGraph, engine);
-    engine.close();
+    invNode().registerNode(*_invariantGraph, solver);
+    solver.close();
 
     // a, b, c and d
-    EXPECT_EQ(engine.searchVariables().size(), 4);
+    EXPECT_EQ(solver.searchVariables().size(), 4);
 
     // a, b, c, d, sum
-    EXPECT_EQ(engine.numVariables(), 5);
+    EXPECT_EQ(solver.numVariables(), 5);
 
     // linear
-    EXPECT_EQ(engine.numInvariants(), 1);
+    EXPECT_EQ(solver.numInvariants(), 1);
   }
 
   void propagation() {
-    propagation::PropagationEngine engine;
-    engine.open();
-    addInputVarsToEngine(engine);
-    invNode().registerOutputVariables(*_invariantGraph, engine);
-    invNode().registerNode(*_invariantGraph, engine);
+    propagation::Solver solver;
+    solver.open();
+    addInputVarsToSolver(solver);
+    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerNode(*_invariantGraph, solver);
 
     EXPECT_EQ(invNode().as().size(), 2);
     std::vector<propagation::VarId> asInputs;
     for (const VarNodeId& inputVarNodeId : invNode().as()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
       asInputs.emplace_back(varId(inputVarNodeId));
-      engine.updateBounds(varId(inputVarNodeId), 0, 5, true);
+      solver.updateBounds(varId(inputVarNodeId), 0, 5, true);
     }
     EXPECT_EQ(invNode().bs().size(), 2);
     std::vector<propagation::VarId> bsInputs;
     for (const VarNodeId& inputVarNodeId : invNode().bs()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
       bsInputs.emplace_back(varId(inputVarNodeId));
-      engine.updateBounds(varId(inputVarNodeId), 0, 5, true);
+      solver.updateBounds(varId(inputVarNodeId), 0, 5, true);
     }
 
     EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
@@ -152,37 +152,37 @@ class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
 
     std::vector<Int> asValues(asInputs.size());
     std::vector<Int> bsValues(bsInputs.size());
-    engine.close();
+    solver.close();
 
-    for (asValues.at(0) = engine.lowerBound(asInputs.at(0));
-         asValues.at(0) <= engine.upperBound(asInputs.at(0));
+    for (asValues.at(0) = solver.lowerBound(asInputs.at(0));
+         asValues.at(0) <= solver.upperBound(asInputs.at(0));
          ++asValues.at(0)) {
-      for (asValues.at(1) = engine.lowerBound(asInputs.at(1));
-           asValues.at(1) <= engine.upperBound(asInputs.at(1));
+      for (asValues.at(1) = solver.lowerBound(asInputs.at(1));
+           asValues.at(1) <= solver.upperBound(asInputs.at(1));
            ++asValues.at(1)) {
-        for (bsValues.at(0) = engine.lowerBound(bsInputs.at(0));
-             bsValues.at(0) <= engine.upperBound(bsInputs.at(0));
+        for (bsValues.at(0) = solver.lowerBound(bsInputs.at(0));
+             bsValues.at(0) <= solver.upperBound(bsInputs.at(0));
              ++bsValues.at(0)) {
-          for (bsValues.at(1) = engine.lowerBound(bsInputs.at(1));
-               bsValues.at(1) <= engine.upperBound(bsInputs.at(1));
+          for (bsValues.at(1) = solver.lowerBound(bsInputs.at(1));
+               bsValues.at(1) <= solver.upperBound(bsInputs.at(1));
                ++bsValues.at(1)) {
-            engine.beginMove();
+            solver.beginMove();
             for (size_t i = 0; i < asInputs.size(); ++i) {
-              engine.setValue(asInputs.at(i), asValues.at(i));
+              solver.setValue(asInputs.at(i), asValues.at(i));
             }
             for (size_t i = 0; i < bsInputs.size(); ++i) {
-              engine.setValue(bsInputs.at(i), bsValues.at(i));
+              solver.setValue(bsInputs.at(i), bsValues.at(i));
             }
-            engine.endMove();
+            solver.endMove();
 
-            engine.beginProbe();
-            engine.query(violationId);
-            engine.endProbe();
+            solver.beginProbe();
+            solver.query(violationId);
+            solver.endProbe();
             if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
-              EXPECT_EQ(engine.currentValue(violationId) > 0,
+              EXPECT_EQ(solver.currentValue(violationId) > 0,
                         isViolating(asValues, bsValues));
             } else {
-              EXPECT_NE(engine.currentValue(violationId) > 0,
+              EXPECT_NE(solver.currentValue(violationId) > 0,
                         isViolating(asValues, bsValues));
             }
           }

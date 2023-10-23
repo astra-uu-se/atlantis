@@ -10,27 +10,27 @@ namespace atlantis::propagation {
  * @param y second violation variable
  * @param output result
  */
-BoolOr::BoolOr(Engine& engine, VarId output, VarId x, VarId y)
-    : Invariant(engine), _output(output), _x(x), _y(y) {
+BoolOr::BoolOr(SolverBase& solver, VarId output, VarId x, VarId y)
+    : Invariant(solver), _output(output), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void BoolOr::registerVars() {
   assert(_id != NULL_ID);
-  _engine.registerInvariantInput(_id, _x, LocalId(0));
-  _engine.registerInvariantInput(_id, _y, LocalId(0));
+  _solver.registerInvariantInput(_id, _x, LocalId(0));
+  _solver.registerInvariantInput(_id, _y, LocalId(0));
   registerDefinedVariable(_output);
 }
 
 void BoolOr::updateBounds(bool widenOnly) {
-  _engine.updateBounds(
-      _output, std::min(_engine.lowerBound(_x), _engine.lowerBound(_y)),
-      std::min(_engine.upperBound(_x), _engine.upperBound(_y)), widenOnly);
+  _solver.updateBounds(
+      _output, std::min(_solver.lowerBound(_x), _solver.lowerBound(_y)),
+      std::min(_solver.upperBound(_x), _solver.upperBound(_y)), widenOnly);
 }
 
 void BoolOr::recompute(Timestamp ts) {
   updateValue(ts, _output,
-              std::min(_engine.value(ts, _x), _engine.value(ts, _y)));
+              std::min(_solver.value(ts, _x), _solver.value(ts, _y)));
 }
 
 void BoolOr::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

@@ -34,13 +34,13 @@ ArrayVarIntElementNode::fromModelConstraint(
 }
 
 void ArrayVarIntElementNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, propagation::Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()),
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()),
                 _offset);
 }
 
 void ArrayVarIntElementNode::registerNode(InvariantGraph& invariantGraph,
-                                          propagation::Engine& engine) {
+                                          propagation::SolverBase& solver) {
   std::vector<propagation::VarId> as;
   std::transform(dynamicInputVarNodeIds().begin(),
                  dynamicInputVarNodeIds().end(), std::back_inserter(as),
@@ -48,8 +48,8 @@ void ArrayVarIntElementNode::registerNode(InvariantGraph& invariantGraph,
 
   assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
 
-  engine.makeInvariant<propagation::ElementVar>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::ElementVar>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(b()), as, _offset);
 }
 

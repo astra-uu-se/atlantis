@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "propagation/propagationEngine.hpp"
+#include "propagation/solver.hpp"
 #include "search/annealing/annealerContainer.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
@@ -10,27 +10,27 @@ using namespace atlantis::search;
 
 class CircuitNeighbourhoodTest : public ::testing::Test {
  public:
-  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::unique_ptr<propagation::Solver> solver;
   std::unique_ptr<search::Assignment> assignment;
   search::RandomProvider random{123456789};
 
   std::vector<search::SearchVariable> next;
 
   void SetUp() override {
-    engine = std::make_unique<propagation::PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
 
-    engine->open();
+    solver->open();
     for (auto i = 0u; i < 4; ++i) {
-      propagation::VarId var = engine->makeIntVar(1, 1, 4);
+      propagation::VarId var = solver->makeIntVar(1, 1, 4);
       next.emplace_back(var, SearchDomain(1, 4));
     }
 
-    propagation::VarId objective = engine->makeIntVar(0, 0, 0);
-    propagation::VarId violation = engine->makeIntVar(0, 0, 0);
-    engine->close();
+    propagation::VarId objective = solver->makeIntVar(0, 0, 0);
+    propagation::VarId violation = solver->makeIntVar(0, 0, 0);
+    solver->close();
 
     assignment = std::make_unique<search::Assignment>(
-        *engine, objective, violation, propagation::ObjectiveDirection::NONE);
+        *solver, objective, violation, propagation::ObjectiveDirection::NONE);
   }
 
   void expectCycle() {
@@ -38,7 +38,7 @@ class CircuitNeighbourhoodTest : public ::testing::Test {
     Int current = 0;
 
     do {
-      current = engine->committedValue(next[current].engineId()) - 1;
+      current = solver->committedValue(next[current].solverId()) - 1;
       count++;
     } while (current != 0 && count <= static_cast<Int>(next.size()));
 
@@ -69,7 +69,7 @@ TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {
 }
 
 TEST_F(CircuitNeighbourhoodTest, fixed_variables_are_considered) {
-  next[1] = search::SearchVariable(next[1].engineId(), SearchDomain({3}));
+  next[1] = search::SearchVariable(next[1].solverId(), SearchDomain({3}));
 
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
       std::move(std::vector<search::SearchVariable>(next)));

@@ -2,12 +2,12 @@
 
 namespace atlantis::propagation {
 
-Linear::Linear(Engine& engine, VarId output, const std::vector<VarId>& varArray)
-    : Linear(engine, output, std::vector<Int>(varArray.size(), 1), varArray) {}
+Linear::Linear(SolverBase& solver, VarId output, const std::vector<VarId>& varArray)
+    : Linear(solver, output, std::vector<Int>(varArray.size(), 1), varArray) {}
 
-Linear::Linear(Engine& engine, VarId output, std::vector<Int> coeffs,
+Linear::Linear(SolverBase& solver, VarId output, std::vector<Int> coeffs,
                std::vector<VarId> varArray)
-    : Invariant(engine),
+    : Invariant(solver),
       _output(output),
       _coeffs(std::move(coeffs)),
       _varArray(std::move(varArray)),
@@ -16,41 +16,41 @@ Linear::Linear(Engine& engine, VarId output, std::vector<Int> coeffs,
 }
 
 void Linear::registerVars() {
-  // precondition: this invariant must be registered with the engine before it
+  // precondition: this invariant must be registered with the solver before it
   // is initialised.
   assert(_id != NULL_ID);
 
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    _engine.registerInvariantInput(_id, _varArray[i], i);
+    _solver.registerInvariantInput(_id, _varArray[i], i);
   }
   registerDefinedVariable(_output);
 }
 
 void Linear::updateBounds(bool widenOnly) {
-  // precondition: this invariant must be registered with the engine before it
+  // precondition: this invariant must be registered with the solver before it
   // is initialised.
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    lb += _coeffs[i] * (_coeffs[i] < 0 ? _engine.upperBound(_varArray[i])
-                                       : _engine.lowerBound(_varArray[i]));
-    ub += _coeffs[i] * (_coeffs[i] < 0 ? _engine.lowerBound(_varArray[i])
-                                       : _engine.upperBound(_varArray[i]));
+    lb += _coeffs[i] * (_coeffs[i] < 0 ? _solver.upperBound(_varArray[i])
+                                       : _solver.lowerBound(_varArray[i]));
+    ub += _coeffs[i] * (_coeffs[i] < 0 ? _solver.lowerBound(_varArray[i])
+                                       : _solver.upperBound(_varArray[i]));
   }
-  _engine.updateBounds(_output, lb, ub, widenOnly);
+  _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void Linear::recompute(Timestamp ts) {
   Int sum = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    sum += _coeffs[i] * _engine.value(ts, _varArray[i]);
+    sum += _coeffs[i] * _solver.value(ts, _varArray[i]);
   }
   updateValue(ts, _output, sum);
 }
 
 void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _committedValues.size());
-  const Int newValue = _engine.value(ts, _varArray[id]);
+  const Int newValue = _solver.value(ts, _varArray[id]);
   incValue(ts, _output, (newValue - _committedValues[id]) * _coeffs[id]);
 }
 
@@ -71,7 +71,7 @@ void Linear::notifyCurrentInputChanged(Timestamp ts) {
 void Linear::commit(Timestamp ts) {
   Invariant::commit(ts);
   for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _engine.committedValue(_varArray[i]);
+    _committedValues[i] = _solver.committedValue(_varArray[i]);
   }
 }
 }  // namespace atlantis::propagation

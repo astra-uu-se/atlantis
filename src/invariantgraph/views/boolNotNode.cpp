@@ -17,14 +17,14 @@ std::unique_ptr<BoolNotNode> BoolNotNode::fromModelConstraint(
 }
 
 void BoolNotNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                          propagation::Engine& engine) {
+                                          propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(engine.makeIntView<propagation::Bool2IntView>(
-            engine, invariantGraph.varId(input())));
+        .setVarId(solver.makeIntView<propagation::Bool2IntView>(
+            solver, invariantGraph.varId(input())));
   }
 }
 
-void BoolNotNode::registerNode(InvariantGraph&, propagation::Engine&) {}
+void BoolNotNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
 }  // namespace invariantgraph
