@@ -1,7 +1,6 @@
-#include "solver.hpp"
-
 #include <iostream>
 
+#include "fznBackend.hpp"
 #include "fznparser/parser.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
 #include "search/objective.hpp"
@@ -9,11 +8,12 @@
 
 namespace atlantis {
 
-Solver::Solver(std::filesystem::path modelFile,
-               search::AnnealingScheduleFactory annealingScheduleFactory,
-               std::chrono::milliseconds timeout)
-    : Solver(std::move(modelFile), std::move(annealingScheduleFactory),
-             std::time(nullptr), timeout) {}
+FznBackend::FznBackend(
+    std::filesystem::path modelFile,
+    search::AnnealingScheduleFactory annealingScheduleFactory,
+    std::chrono::milliseconds timeout)
+    : FznBackend(std::move(modelFile), std::move(annealingScheduleFactory),
+                 std::time(nullptr), timeout) {}
 
 static propagation::ObjectiveDirection getObjectiveDirection(
     fznparser::ProblemType problemType) {
@@ -28,7 +28,7 @@ static propagation::ObjectiveDirection getObjectiveDirection(
   }
 }
 
-search::SearchStatistics Solver::solve(logging::Logger& logger) {
+search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   auto model = logger.timed<fznparser::Model>("parsing FlatZinc", [&] {
     auto m = fznparser::parseFznFile(_modelFile);
     logger.debug("Found {:d} variables", m.variables().size());

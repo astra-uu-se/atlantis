@@ -3,8 +3,8 @@
 #include <filesystem>
 #include <iostream>
 
+#include "fznBackend.hpp"
 #include "logging/logger.hpp"
-#include "solver.hpp"
 
 /**
  * @brief Read a duration in milliseconds from an input stream. Used to allow
@@ -100,8 +100,8 @@ int main(int argc, char* argv[]) {
 
     atlantis::search::AnnealingScheduleFactory scheduleFactory(
         annealingScheduleDefinition);
-    atlantis::Solver solver(modelFilePath, scheduleFactory, seed, timeout);
-    auto statistics = solver.solve(logger);
+    atlantis::FznBackend backend(modelFilePath, scheduleFactory, seed, timeout);
+    auto statistics = backend.solve(logger);
 
     // Don't log to std::cout, since that would interfere with MiniZinc.
     statistics.display(std::cerr);
