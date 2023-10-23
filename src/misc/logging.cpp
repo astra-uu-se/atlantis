@@ -2,5 +2,6 @@
 
 #ifndef NDEBUG
 // Definition for the global log level.
-Logging::LogLevel Logging::globalLogLevel{Logging::LogLevel::warning};
+atlantis::logging::LogLevel atlantis::logging::globalLogLevel{
+    atlantis::logging::LogLevel::warning};
 #endif

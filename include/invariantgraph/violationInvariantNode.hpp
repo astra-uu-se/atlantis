@@ -3,10 +3,10 @@
 #include <cassert>
 #include <vector>
 
-#include "core/engine.hpp"
 #include "invariantgraph/invariantNode.hpp"
+#include "propagation/engine.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 /**
  * The types that can be in an array of search variables.
@@ -20,7 +20,7 @@ using MappableValue = std::variant<Int, bool, std::string>;
 class ViolationInvariantNode : public InvariantNode {
  private:
   // Bounds will be recomputed by the engine.
-  VarId _violationVarId{NULL_ID};
+  propagation::VarId _violationVarId{propagation::NULL_ID};
   VarNodeId _reifiedViolationNodeId;
 
   // If the constraint is not reified, then this boolean indicates if the
@@ -60,14 +60,18 @@ class ViolationInvariantNode : public InvariantNode {
 
   [[nodiscard]] bool isReified() const override;
 
-  [[nodiscard]] VarId violationVarId(const InvariantGraph&) const override;
+  [[nodiscard]] propagation::VarId violationVarId(
+      const InvariantGraph&) const override;
 
   VarNodeId reifiedViolationNodeId();
 
  protected:
-  VarId setViolationVarId(InvariantGraph&, VarId);
+  propagation::VarId setViolationVarId(InvariantGraph&,
+                                          propagation::VarId);
 
-  VarId registerViolation(InvariantGraph&, Engine&, Int initialValue = 0);
+  propagation::VarId registerViolation(InvariantGraph&,
+                                          propagation::Engine&,
+                                          Int initialValue = 0);
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

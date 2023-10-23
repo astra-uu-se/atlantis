@@ -5,11 +5,11 @@
 #include "assignment.hpp"
 #include "fznparser/model.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 class SearchController {
  public:
-  using VariableMap = std::unordered_map<std::string, VarId>;
+  using VariableMap = std::unordered_map<std::string, propagation::VarId>;
 
  private:
   const fznparser::Model& _model;

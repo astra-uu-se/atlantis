@@ -9,14 +9,16 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/linear.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/propagationEngine.hpp"
 
-class ExtremeStatic : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class ExtremeStatic : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<VarId> staticInputVars;
-  VarId objective;
+  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::vector<propagation::VarId> staticInputVars;
+  propagation::VarId objective;
 
   std::random_device rd;
   std::mt19937 gen;
@@ -26,7 +28,7 @@ class ExtremeStatic : public benchmark::Fixture {
   Int lb, ub;
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<PropagationEngine>();
+    engine = std::make_unique<propagation::PropagationEngine>();
 
     lb = 0;
     ub = 16;
@@ -43,7 +45,8 @@ class ExtremeStatic : public benchmark::Fixture {
     objective = engine->makeIntVar(lb * static_cast<Int>(numInputs),
                                    lb * static_cast<Int>(numInputs),
                                    ub * static_cast<Int>(numInputs));
-    engine->makeInvariant<Linear>(*engine, objective, staticInputVars);
+    engine->makeInvariant<propagation::Linear>(*engine, objective,
+                                               staticInputVars);
 
     engine->close();
     gen = std::mt19937(rd());
@@ -60,7 +63,7 @@ class ExtremeStatic : public benchmark::Fixture {
 // probe_single_move_index_input
 
 BENCHMARK_DEFINE_F(ExtremeStatic, probe_single_var)
-(benchmark::State& st) {
+(::benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
     engine->beginMove();
@@ -75,13 +78,14 @@ BENCHMARK_DEFINE_F(ExtremeStatic, probe_single_var)
     ++probes;
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
 //*
 
 BENCHMARK_REGISTER_F(ExtremeStatic, probe_single_var)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
 //*/
+}  // namespace atlantis::benchmark

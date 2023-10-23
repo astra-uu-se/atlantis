@@ -6,7 +6,7 @@
 #include "searchStatistics.hpp"
 #include "logging/logger.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 /**
  * Search procedure based on chapter 12 of:

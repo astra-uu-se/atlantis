@@ -2,21 +2,21 @@
 
 #include <fznparser/model.hpp>
 
-#include "constraints/equal.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/boolLinear.hpp"
-#include "views/equalConst.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/constraints/equal.hpp"
+#include "propagation/invariants/boolLinear.hpp"
+#include "propagation/views/equalConst.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class BoolLinEqNode : public ViolationInvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _c;
-  VarId _cVarId{NULL_ID};
-  VarId _sumVarId{NULL_ID};
+  propagation::VarId _cVarId{propagation::NULL_ID};
+  propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
   BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
@@ -32,13 +32,14 @@ class BoolLinEqNode : public ViolationInvariantNode {
   static std::unique_ptr<BoolLinEqNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&,
+                               propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine&) override;
+  void registerNode(InvariantGraph&, propagation::Engine&) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 
   [[nodiscard]] Int c() const { return _c; }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

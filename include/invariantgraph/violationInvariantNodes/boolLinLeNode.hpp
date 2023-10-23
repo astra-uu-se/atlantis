@@ -3,20 +3,20 @@
 #include <algorithm>
 #include <utility>
 
-#include "constraints/lessEqual.hpp"
+#include "propagation/constraints/lessEqual.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/boolLinear.hpp"
-#include "views/greaterEqualConst.hpp"
-#include "views/lessEqualConst.hpp"
+#include "propagation/invariants/boolLinear.hpp"
+#include "propagation/views/greaterEqualConst.hpp"
+#include "propagation/views/lessEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class BoolLinLeNode : public ViolationInvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _bound;
-  VarId _sumVarId{NULL_ID};
+  propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
   BoolLinLeNode(std::vector<Int> coeffs, std::vector<VarNodeId>&& variables,
@@ -32,9 +32,9 @@ class BoolLinLeNode : public ViolationInvariantNode {
   static std::unique_ptr<BoolLinLeNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 

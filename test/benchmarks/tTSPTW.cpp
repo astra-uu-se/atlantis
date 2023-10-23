@@ -5,34 +5,35 @@
 #include <vector>
 
 #include "../testHelper.hpp"
-#include "constraints/lessEqual.hpp"
-#include "core/propagationEngine.hpp"
-#include "core/types.hpp"
-#include "invariants/elementVar.hpp"
-#include "invariants/linear.hpp"
-#include "views/elementConst.hpp"
+#include "propagation/constraints/lessEqual.hpp"
+#include "propagation/invariants/elementVar.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/propagationEngine.hpp"
+#include "propagation/types.hpp"
+#include "propagation/views/elementConst.hpp"
+#include "types.hpp"
 
-namespace {
+namespace atlantis::testing {
 class TSPTWTest : public ::testing::Test {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<VarId> pred;
-  std::vector<VarId> timeToPrev;
-  std::vector<VarId> arrivalPrev;
-  std::vector<VarId> arrivalTime;
+  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::vector<propagation::VarId> pred;
+  std::vector<propagation::VarId> timeToPrev;
+  std::vector<propagation::VarId> arrivalPrev;
+  std::vector<propagation::VarId> arrivalTime;
   std::vector<std::vector<Int>> dist;
-  VarId totalDist;
+  propagation::VarId totalDist;
 
   std::random_device rd;
 
   Int n;
   const int MAX_TIME = 100000;
 
-  std::vector<VarId> violation;
-  VarId totalViolation;
+  std::vector<propagation::VarId> violation;
+  propagation::VarId totalViolation;
 
   void SetUp() override {
-    engine = std::make_unique<PropagationEngine>();
+    engine = std::make_unique<propagation::PropagationEngine>();
     n = 30;
 
     logInfo(n);
@@ -57,37 +58,38 @@ class TSPTWTest : public ::testing::Test {
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // timeToPrev[i] = dist[i][pred[i]]
-      timeToPrev[i] =
-          engine->makeIntView<ElementConst>(*engine, pred[i], dist[i]);
+      timeToPrev[i] = engine->makeIntView<propagation::ElementConst>(
+          *engine, pred[i], dist[i]);
       // arrivalPrev[i] = arrivalTime[pred[i]]
     }
 
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // arrivalPrev[i] = arrivalTime[pred[i]]
-      engine->makeInvariant<ElementVar>(*engine, arrivalPrev[i], pred[i],
-                                        arrivalTime);
+      engine->makeInvariant<propagation::ElementVar>(*engine, arrivalPrev[i],
+                                                     pred[i], arrivalTime);
       // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
-      engine->makeInvariant<Linear>(
+      engine->makeInvariant<propagation::Linear>(
           *engine, arrivalTime[i],
-          std::vector<VarId>({arrivalPrev[i], timeToPrev[i]}));
+          std::vector<propagation::VarId>({arrivalPrev[i], timeToPrev[i]}));
     }
 
     // totalDist = sum(timeToPrev)
     totalDist = engine->makeIntVar(0, 0, MAX_TIME);
-    engine->makeInvariant<Linear>(*engine, totalDist, timeToPrev);
+    engine->makeInvariant<propagation::Linear>(*engine, totalDist, timeToPrev);
 
-    VarId leqConst = engine->makeIntVar(100, 100, 100);
+    propagation::VarId leqConst = engine->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
-      engine->makeConstraint<LessEqual>(*engine, violation[i], arrivalTime[i],
-                                        leqConst);
+      engine->makeConstraint<propagation::LessEqual>(*engine, violation[i],
+                                                     arrivalTime[i], leqConst);
     }
 
     totalViolation = engine->makeIntVar(0, 0, MAX_TIME * n);
-    engine->makeInvariant<Linear>(*engine, totalViolation, violation);
+    engine->makeInvariant<propagation::Linear>(*engine, totalViolation,
+                                               violation);
 
     engine->close();
-    for (const VarId p : pred) {
+    for (const propagation::VarId p : pred) {
       assert(engine->lowerBound(p) == 1);
       assert(engine->upperBound(p) == n);
       assert(1 <= engine->committedValue(p) && engine->committedValue(p) <= n);
@@ -131,4 +133,4 @@ TEST_F(TSPTWTest, Probing) {
   }
 }
 
-}  // namespace
+}  // namespace atlantis::testing

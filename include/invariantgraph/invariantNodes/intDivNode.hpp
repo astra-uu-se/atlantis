@@ -2,9 +2,9 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
-#include "invariants/intDiv.hpp"
+#include "propagation/invariants/intDiv.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class IntDivNode : public InvariantNode {
  public:
@@ -19,9 +19,9 @@ class IntDivNode : public InvariantNode {
   static std::unique_ptr<IntDivNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   [[nodiscard]] VarNodeId a() const noexcept;
   [[nodiscard]] VarNodeId b() const noexcept;

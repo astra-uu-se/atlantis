@@ -2,20 +2,20 @@
 
 #include <fznparser/model.hpp>
 
-#include "constraints/notEqual.hpp"
+#include "propagation/constraints/notEqual.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/linear.hpp"
-#include "views/equalConst.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/views/equalConst.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class IntLinNeNode : public ViolationInvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _c;
-  VarId _sumVarId{NULL_ID};
+  propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
   IntLinNeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
@@ -32,9 +32,9 @@ class IntLinNeNode : public ViolationInvariantNode {
   static std::unique_ptr<IntLinNeNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 

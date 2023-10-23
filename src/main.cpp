@@ -15,7 +15,7 @@
  * @return std::istream& The modified input stream.
  */
 std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
-logging::Level getLogLevel(cxxopts::ParseResult& result);
+atlantis::logging::Level getLogLevel(cxxopts::ParseResult& result);
 
 int main(int argc, char* argv[]) {
   try {
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    logging::Logger logger(stderr, getLogLevel(result));
+    atlantis::logging::Logger logger(stderr, getLogLevel(result));
 
     auto& modelFilePath = result["modelFile"].as<std::filesystem::path>();
 
@@ -98,9 +98,9 @@ int main(int argc, char* argv[]) {
       }
     }();
 
-    search::AnnealingScheduleFactory scheduleFactory(
+    atlantis::search::AnnealingScheduleFactory scheduleFactory(
         annealingScheduleDefinition);
-    Solver solver(modelFilePath, scheduleFactory, seed, timeout);
+    atlantis::Solver solver(modelFilePath, scheduleFactory, seed, timeout);
     auto statistics = solver.solve(logger);
 
     // Don't log to std::cout, since that would interfere with MiniZinc.
@@ -112,22 +112,22 @@ int main(int argc, char* argv[]) {
   }
 }
 
-logging::Level getLogLevel(cxxopts::ParseResult& result) {
+atlantis::logging::Level getLogLevel(cxxopts::ParseResult& result) {
   if (result.count("log-level") != 1) {
-    return logging::Level::WARN;
+    return atlantis::logging::Level::WARN;
   }
 
   switch (result["log-level"].as<uint8_t>()) {
     case 0:
-      return logging::Level::ERR;
+      return atlantis::logging::Level::ERR;
     case 1:
-      return logging::Level::WARN;
+      return atlantis::logging::Level::WARN;
     case 2:
-      return logging::Level::INFO;
+      return atlantis::logging::Level::INFO;
     case 3:
-      return logging::Level::DEBUG;
+      return atlantis::logging::Level::DEBUG;
     case 4:
-      return logging::Level::TRACE;
+      return atlantis::logging::Level::TRACE;
     default:
       throw cxxopts::OptionException("The log level should be 0, 1, 2 or 3.");
   }

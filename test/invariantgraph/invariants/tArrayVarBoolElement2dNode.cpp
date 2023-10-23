@@ -1,18 +1,22 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/invariantNodes/arrayVarBoolElement2dNode.hpp"
+#include "propagation/propagationEngine.hpp"
+
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
 
 class ArrayVarBoolElement2dNodeTest
-    : public NodeTestBase<invariantgraph::ArrayVarBoolElement2dNode> {
+    : public NodeTestBase<ArrayVarBoolElement2dNode> {
  public:
-  invariantgraph::VarNodeId x00;
-  invariantgraph::VarNodeId x01;
-  invariantgraph::VarNodeId x10;
-  invariantgraph::VarNodeId x11;
+  VarNodeId x00;
+  VarNodeId x01;
+  VarNodeId x10;
+  VarNodeId x11;
 
-  invariantgraph::VarNodeId idx1;
-  invariantgraph::VarNodeId idx2;
-  invariantgraph::VarNodeId y;
+  VarNodeId idx1;
+  VarNodeId idx2;
+  VarNodeId y;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -59,15 +63,15 @@ TEST_F(ArrayVarBoolElement2dNodeTest, construction) {
 }
 
 TEST_F(ArrayVarBoolElement2dNodeTest, application) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVariables(*_invariantGraph, engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode(*_invariantGraph, engine);
   engine.close();
@@ -83,24 +87,24 @@ TEST_F(ArrayVarBoolElement2dNodeTest, application) {
 }
 
 TEST_F(ArrayVarBoolElement2dNodeTest, propagation) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   invNode().registerOutputVariables(*_invariantGraph, engine);
   invNode().registerNode(*_invariantGraph, engine);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), NULL_ID);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
 
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 4);
   for (const auto& inputVarNodeId : invNode().dynamicInputVarNodeIds()) {
-    EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
   }
 
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), NULL_ID);
-  const VarId outputId = varId(invNode().outputVarNodeIds().front());
+  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
+  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
 
-  std::vector<VarId> inputs;
+  std::vector<propagation::VarId> inputs;
   inputs.emplace_back(varId(invNode().idx1()));
   inputs.emplace_back(varId(invNode().idx2()));
   for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
@@ -148,3 +152,5 @@ TEST_F(ArrayVarBoolElement2dNodeTest, propagation) {
     }
   }
 }
+
+}  // namespace atlantis::testing

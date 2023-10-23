@@ -1,15 +1,18 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/implicitConstraints/circuitImplicitNode.hpp"
+#include "propagation/propagationEngine.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
-class CircuitImplicitNodeTest
-    : public NodeTestBase<invariantgraph::CircuitImplicitNode> {
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+class CircuitImplicitNodeTest : public NodeTestBase<CircuitImplicitNode> {
  public:
-  invariantgraph::VarNodeId a;
-  invariantgraph::VarNodeId b;
-  invariantgraph::VarNodeId c;
-  invariantgraph::VarNodeId d;
+  VarNodeId a;
+  VarNodeId b;
+  VarNodeId c;
+  VarNodeId d;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -32,20 +35,20 @@ class CircuitImplicitNodeTest
 };
 
 TEST_F(CircuitImplicitNodeTest, construction) {
-  std::vector<invariantgraph::VarNodeId> expectedVars{a, b, c, d};
+  std::vector<VarNodeId> expectedVars{a, b, c, d};
 
   EXPECT_EQ(invNode().outputVarNodeIds(), expectedVars);
 }
 
 TEST_F(CircuitImplicitNodeTest, application) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVariables(*_invariantGraph, engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode(*_invariantGraph, engine);
   engine.close();
@@ -63,3 +66,5 @@ TEST_F(CircuitImplicitNodeTest, application) {
   EXPECT_TRUE(dynamic_cast<search::neighbourhoods::CircuitNeighbourhood*>(
       neighbourhood.get()));
 }
+
+}  // namespace atlantis::testing

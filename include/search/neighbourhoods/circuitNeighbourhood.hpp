@@ -4,7 +4,7 @@
 #include "search/randomProvider.hpp"
 #include "search/searchVariable.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 class CircuitNeighbourhood : public Neighbourhood {
  private:
@@ -29,4 +29,4 @@ class CircuitNeighbourhood : public Neighbourhood {
   [[nodiscard]] size_t getNodeIdx(Int node) const noexcept;
 };
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

@@ -2,17 +2,17 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 ImplicitConstraintNode::ImplicitConstraintNode(
     std::vector<VarNodeId>&& outputVarNodeIds)
     : InvariantNode(std::move(outputVarNodeIds)) {}
 
 void ImplicitConstraintNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
+    InvariantGraph& invariantGraph, propagation::Engine& engine) {
   for (const auto& varNodeId : outputVarNodeIds()) {
     auto& varNode = invariantGraph.varNode(varNodeId);
-    if (varNode.varId() == NULL_ID) {
+    if (varNode.varId() == propagation::NULL_ID) {
       const auto& [lb, ub] = varNode.bounds();
       varNode.setVarId(engine.makeIntVar(lb, lb, ub));
     }
@@ -25,7 +25,7 @@ ImplicitConstraintNode::neighbourhood() noexcept {
 }
 
 void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
-                                          Engine& engine) {
+                                          propagation::Engine& engine) {
   if (_neighbourhood != nullptr) {
     return;
   }
@@ -34,7 +34,7 @@ void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
 
   for (const auto& id : outputVarNodeIds()) {
     auto& node = invariantGraph.varNode(id);
-    assert(node.varId() != NULL_ID);
+    assert(node.varId() != propagation::NULL_ID);
     varIds.emplace_back(node.varId(), node.domain());
   }
 
@@ -42,4 +42,4 @@ void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
   assert(_neighbourhood);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

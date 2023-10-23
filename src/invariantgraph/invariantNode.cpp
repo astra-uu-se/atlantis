@@ -2,7 +2,7 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 /**
  * A node in the invariant graph which defines a number of variables. This could
  * be an invariant, a soft constraint (which defines a violation), or a view.
@@ -45,8 +45,8 @@ const std::vector<VarNodeId>& InvariantNode::outputVarNodeIds() const noexcept {
  * applicable if the current node is a soft constraint. If this node does not
  * define a violation variable, this method returns @p nullptr.
  */
-VarId InvariantNode::violationVarId(const InvariantGraph&) const {
-  return NULL_ID;
+propagation::VarId InvariantNode::violationVarId(const InvariantGraph&) const {
+  return propagation::NULL_ID;
 }
 
 const std::vector<VarNodeId>& InvariantNode::staticInputVarNodeIds()
@@ -113,9 +113,9 @@ void InvariantNode::replaceDynamicInputVarNode(VarNode& oldInputVarNode,
   newInputVarNode.markAsInputFor(_id, false);
 }
 
-VarId InvariantNode::makeEngineVar(Engine& engine, VarNode& varNode,
+propagation::VarId InvariantNode::makeEngineVar(propagation::Engine& engine, VarNode& varNode,
                                    Int initialValue) {
-  if (varNode.varId() == NULL_ID) {
+  if (varNode.varId() == propagation::NULL_ID) {
     varNode.setVarId(
         engine.makeIntVar(initialValue, initialValue, initialValue));
   }

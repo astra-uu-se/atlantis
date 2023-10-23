@@ -2,17 +2,18 @@
 
 #include <functional>
 
-#include "core/propagationEngine.hpp"
-#include "cost.hpp"
+#include "propagation/propagationEngine.hpp"
+#include "search/cost.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 class AssignmentModifier {
  private:
-  PropagationEngine& _engine;
+  propagation::PropagationEngine& _engine;
 
  public:
-  explicit AssignmentModifier(PropagationEngine& engine) : _engine(engine) {
+  explicit AssignmentModifier(propagation::PropagationEngine& engine)
+      : _engine(engine) {
     assert(engine.isMoving());
   }
 
@@ -23,20 +24,22 @@ class AssignmentModifier {
    * @param var The variable to assign.
    * @param value The value to assign to the variable.
    */
-  void set(VarId var, Int value) { _engine.setValue(var, value); }
+  void set(propagation::VarId var, Int value) { _engine.setValue(var, value); }
 };
 
 class Assignment {
  private:
-  PropagationEngine& _engine;
-  std::vector<VarId> _searchVariables{};
-  VarId _violation;
-  VarId _objective;
-  ObjectiveDirection _objectiveDirection;
+  propagation::PropagationEngine& _engine;
+  std::vector<propagation::VarId> _searchVariables{};
+  propagation::VarId _violation;
+  propagation::VarId _objective;
+  propagation::ObjectiveDirection _objectiveDirection;
 
  public:
-  explicit Assignment(PropagationEngine& engine, VarId violation,
-                      VarId objective, ObjectiveDirection objectiveDirection);
+  explicit Assignment(propagation::PropagationEngine& engine,
+                      propagation::VarId violation,
+                      propagation::VarId objective,
+                      propagation::ObjectiveDirection objectiveDirection);
 
   /**
    * Assign values to the variables in the assignment. This is supplied a
@@ -89,7 +92,7 @@ class Assignment {
    * @param var The variable for which to query the value.
    * @return The value of @p var.
    */
-  [[nodiscard]] Int value(VarId var) const noexcept;
+  [[nodiscard]] Int value(propagation::VarId var) const noexcept;
 
   /**
    * @return True if the current assignment satisfies all the constraints, false
@@ -102,7 +105,8 @@ class Assignment {
    */
   [[nodiscard]] Cost cost() const noexcept;
 
-  [[nodiscard]] const std::vector<VarId>& searchVariables() const noexcept {
+  [[nodiscard]] const std::vector<propagation::VarId>& searchVariables()
+      const noexcept {
     return _searchVariables;
   }
 
@@ -116,4 +120,4 @@ class Assignment {
   }
 };
 
-}  // namespace search
+}  // namespace atlantis::search

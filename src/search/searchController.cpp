@@ -4,7 +4,9 @@
 
 #include "utils/fznAst.hpp"
 
-bool search::SearchController::shouldRun(const search::Assignment&) {
+namespace atlantis::search {
+
+bool SearchController::shouldRun(const Assignment&) {
   if (_foundSolution && _model.isSatisfactionProblem()) {
     return false;
   }
@@ -18,27 +20,26 @@ bool search::SearchController::shouldRun(const search::Assignment&) {
   return true;
 }
 
-static void printSolution(
-    const fznparser::Model& model, const search::Assignment& assignment,
-    const search::SearchController::VariableMap& variableMap);
+static void printSolution(const fznparser::Model& model,
+                          const Assignment& assignment,
+                          const SearchController::VariableMap& variableMap);
 
-void search::SearchController::onSolution(const Assignment& assignment) {
+void SearchController::onSolution(const Assignment& assignment) {
   assert(assignment.satisfiesConstraints());
 
   _foundSolution = true;
   printSolution(_model, assignment, _variableMap);
 }
 
-void search::SearchController::onFinish() const {
+void SearchController::onFinish() const {
   if (!_foundSolution) {
     std::cout << "=====UNKNOWN=====" << std::endl;
   }
 }
 
 static void printSearchVariable(
-    const std::string& searchVariable,
-    const search::Assignment& assignment,
-    const search::SearchController::VariableMap& variableMap) {
+    const std::string& searchVariable, const Assignment& assignment,
+    const SearchController::VariableMap& variableMap) {
   std::cout << searchVariable << " = "
             << assignment.value(variableMap.at(searchVariable)) << ";\n";
 }
@@ -57,9 +58,8 @@ std::string arrayVarPrefix(const std::vector<Int>& indexSetSizes) {
 }
 
 static void printVariableArray(
-    const fznparser::BoolVarArray& variableArray,
-    const search::Assignment& assignment,
-    const search::SearchController::VariableMap& variableMap) {
+    const fznparser::BoolVarArray& variableArray, const Assignment& assignment,
+    const SearchController::VariableMap& variableMap) {
   const std::vector<Int>& outputIndexSetSizes =
       variableArray.outputIndexSetSizes();
 
@@ -94,9 +94,8 @@ static void printVariableArray(
 }
 
 static void printVariableArray(
-    const fznparser::IntVarArray& variableArray,
-    const search::Assignment& assignment,
-    const search::SearchController::VariableMap& variableMap) {
+    const fznparser::IntVarArray& variableArray, const Assignment& assignment,
+    const SearchController::VariableMap& variableMap) {
   const std::vector<Int>& outputIndexSetSizes =
       variableArray.outputIndexSetSizes();
 
@@ -128,9 +127,9 @@ static void printVariableArray(
   std::cout << "]);\n";
 }
 
-static void printSolution(
-    const fznparser::Model& model, const search::Assignment& assignment,
-    const search::SearchController::VariableMap& variableMap) {
+static void printSolution(const fznparser::Model& model,
+                          const Assignment& assignment,
+                          const SearchController::VariableMap& variableMap) {
   for (const auto& [identifier, variable] : model.variables()) {
     if (!variable.isOutput()) {
       continue;
@@ -148,3 +147,5 @@ static void printSolution(
 
   std::cout << "----------" << std::endl;
 }
+
+}  // namespace atlantis::search

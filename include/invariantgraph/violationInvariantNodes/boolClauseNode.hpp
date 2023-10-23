@@ -5,16 +5,16 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/boolLinear.hpp"
-#include "views/equalConst.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/invariants/boolLinear.hpp"
+#include "propagation/views/equalConst.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class BoolClauseNode : public ViolationInvariantNode {
  private:
   std::vector<VarNodeId> _as;
   std::vector<VarNodeId> _bs;
-  VarId _sumVarId{NULL_ID};
+  propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
   explicit BoolClauseNode(std::vector<VarNodeId>&& as,
@@ -31,12 +31,13 @@ class BoolClauseNode : public ViolationInvariantNode {
   static std::unique_ptr<BoolClauseNode> fromModelConstraint(
       const fznparser::Constraint& constraint, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&,
+                               propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   [[nodiscard]] const std::vector<VarNodeId>& as() { return _as; }
 
   [[nodiscard]] const std::vector<VarNodeId>& bs() { return _bs; }
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

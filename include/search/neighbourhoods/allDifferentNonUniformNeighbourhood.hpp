@@ -6,7 +6,7 @@
 #include "search/randomProvider.hpp"
 #include "search/searchVariable.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
  private:
@@ -24,12 +24,12 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
   std::vector<std::vector<Int>> _domains;
   // inDomain[i][j] = the domain of _variables[i] contains value j + _offset
   std::vector<std::vector<bool>> _inDomain;
-  const Engine& _engine;
+  const propagation::Engine& _engine;
 
  public:
   AllDifferentNonUniformNeighbourhood(
       std::vector<search::SearchVariable>&& variables, Int domainLb,
-      Int domainUb, const Engine& engine);
+      Int domainUb, const propagation::Engine& engine);
 
   ~AllDifferentNonUniformNeighbourhood() override = default;
 
@@ -88,4 +88,4 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
 #endif
 };
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

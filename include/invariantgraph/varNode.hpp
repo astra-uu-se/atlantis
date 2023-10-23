@@ -7,16 +7,16 @@
 #include <unordered_map>
 #include <vector>
 
-#include "core/domains.hpp"
-#include "core/engine.hpp"
 #include "invariantgraph/types.hpp"
+#include "propagation/engine.hpp"
+#include "propagation/views/inDomain.hpp"
+#include "propagation/views/inSparseDomain.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 #include "search/searchVariable.hpp"
+#include "utils/domains.hpp"
 #include "utils/variant.hpp"
-#include "views/inDomain.hpp"
-#include "views/inSparseDomain.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 /**
  * The types that can be in an array of search variables.
@@ -34,7 +34,8 @@ class InvariantNode;   // Forward declaration
 class VarNode {
  public:
   using FZNVariable = std::variant<fznparser::BoolVar, fznparser::IntVar>;
-  using VariableMap = std::unordered_map<VarNodeId, VarId, VarNodeIdHash>;
+  using VariableMap =
+      std::unordered_map<VarNodeId, propagation::VarId, VarNodeIdHash>;
   float SPARSE_MIN_DENSENESS{0.6};
 
  private:
@@ -42,8 +43,8 @@ class VarNode {
   std::optional<FZNVariable> _variable;
   SearchDomain _domain;
   const bool _isIntVar;
-  VarId _varId{NULL_ID};
-  VarId _domainViolationId{NULL_ID};
+  propagation::VarId _varId{propagation::NULL_ID};
+  propagation::VarId _domainViolationId{propagation::NULL_ID};
 
   std::vector<InvariantNodeId> _inputTo;
   std::vector<InvariantNodeId> _staticInputTo;
@@ -83,16 +84,18 @@ class VarNode {
   [[nodiscard]] std::string identifier() const;
 
   /**
-   * @return The model VarId this node is associated with, or NULL_ID
-   * if no VarId is associated with this node.
+   * @return The model propagation::VarId this node is associated
+   * with, or propagation::NULL_ID if no propagation::VarId is
+   * associated with this node.
    */
-  [[nodiscard]] VarId varId() const;
+  [[nodiscard]] propagation::VarId varId() const;
 
   /**
-   * @return The model VarId this node is associated with, or NULL_ID
-   * if no VarId is associated with this node.
+   * @return The model propagation::VarId this node is associated
+   * with, or propagation::NULL_ID if no propagation::VarId is
+   * associated with this node.
    */
-  void setVarId(VarId varId);
+  void setVarId(propagation::VarId varId);
 
   [[nodiscard]] const SearchDomain& constDomain() const noexcept;
 
@@ -113,9 +116,11 @@ class VarNode {
    * sub-set of SearchDomain _domain, then returns an empty vector, otherwise
    * the relative complement of varLb..varUb in SearchDomain is returned
    */
-  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(const Engine&);
+  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(
+      const propagation::Engine&);
 
-  VarId postDomainConstraint(Engine&, std::vector<DomainEntry>&&);
+  propagation::VarId postDomainConstraint(propagation::Engine&,
+                                          std::vector<DomainEntry>&&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;
 
@@ -187,4 +192,4 @@ class VarNode {
   [[nodiscard]] std::optional<Int> constantValue() const noexcept;
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

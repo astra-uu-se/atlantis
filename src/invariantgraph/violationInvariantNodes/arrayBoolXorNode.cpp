@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& as,
                                    VarNodeId output)
@@ -50,29 +50,29 @@ std::unique_ptr<ArrayBoolXorNode> ArrayBoolXorNode::fromModelConstraint(
 }
 
 void ArrayBoolXorNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                               Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+                                               propagation::Engine& engine) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     _intermediate = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(invariantGraph, engine.makeIntView<EqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::EqualConst>(
                                             engine, _intermediate, 1));
     } else {
       assert(!isReified());
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
                                             engine, _intermediate, 1));
     }
   }
 }
 
 void ArrayBoolXorNode::registerNode(InvariantGraph& invariantGraph,
-                                    Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
-  std::vector<VarId> inputs;
+                                    propagation::Engine& engine) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  std::vector<propagation::VarId> inputs;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputs),
                  [&](const auto& node) { return invariantGraph.varId(node); });
 
-  engine.makeInvariant<BoolLinear>(engine, _intermediate, inputs);
+  engine.makeInvariant<propagation::BoolLinear>(engine, _intermediate, inputs);
 }
 
 }  // namespace invariantgraph

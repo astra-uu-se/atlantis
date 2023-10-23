@@ -1,12 +1,16 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/invariantNodes/intDivNode.hpp"
+#include "propagation/propagationEngine.hpp"
 
-class IntDivNodeTest : public NodeTestBase<invariantgraph::IntDivNode> {
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+class IntDivNodeTest : public NodeTestBase<IntDivNode> {
  public:
-  invariantgraph::VarNodeId a;
-  invariantgraph::VarNodeId b;
-  invariantgraph::VarNodeId c;
+  VarNodeId a;
+  VarNodeId b;
+  VarNodeId c;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -37,15 +41,15 @@ TEST_F(IntDivNodeTest, construction) {
 }
 
 TEST_F(IntDivNodeTest, application) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVariables(*_invariantGraph, engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode(*_invariantGraph, engine);
   engine.close();
@@ -61,21 +65,21 @@ TEST_F(IntDivNodeTest, application) {
 }
 
 TEST_F(IntDivNodeTest, propagation) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   invNode().registerOutputVariables(*_invariantGraph, engine);
   invNode().registerNode(*_invariantGraph, engine);
 
-  std::vector<VarId> inputs;
+  std::vector<propagation::VarId> inputs;
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
   for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
     inputs.emplace_back(varId(inputVarNodeId));
   }
 
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), NULL_ID);
-  const VarId outputId = varId(invNode().outputVarNodeIds().front());
+  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
+  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
   EXPECT_EQ(inputs.size(), 2);
 
   std::vector<Int> values(inputs.size());
@@ -102,3 +106,5 @@ TEST_F(IntDivNodeTest, propagation) {
     }
   }
 }
+
+}  // namespace atlantis::testing

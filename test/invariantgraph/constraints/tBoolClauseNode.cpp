@@ -1,6 +1,10 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/violationInvariantNodes/boolClauseNode.hpp"
+#include "propagation/propagationEngine.hpp"
+
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
 
 static bool isViolating(const std::vector<Int>& asValues,
                         const std::vector<Int>& bsValues) {
@@ -18,14 +22,13 @@ static bool isViolating(const std::vector<Int>& asValues,
 }
 
 template <ConstraintType Type>
-class AbstractBoolClauseNodeTest
-    : public NodeTestBase<invariantgraph::BoolClauseNode> {
+class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
  public:
-  invariantgraph::VarNodeId a;
-  invariantgraph::VarNodeId b;
-  invariantgraph::VarNodeId c;
-  invariantgraph::VarNodeId d;
-  invariantgraph::VarNodeId r;
+  VarNodeId a;
+  VarNodeId b;
+  VarNodeId c;
+  VarNodeId d;
+  VarNodeId r;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -80,7 +83,7 @@ class AbstractBoolClauseNodeTest
     EXPECT_EQ(invNode().staticInputVarNodeIds().size(),
               invNode().as().size() + invNode().bs().size());
 
-    std::vector<invariantgraph::VarNodeId> expectedVars(invNode().as());
+    std::vector<VarNodeId> expectedVars(invNode().as());
     for (const auto& varNodeId : invNode().bs()) {
       expectedVars.emplace_back(varNodeId);
     }
@@ -88,29 +91,27 @@ class AbstractBoolClauseNodeTest
 
     if constexpr (Type != ConstraintType::REIFIED) {
       EXPECT_FALSE(invNode().isReified());
-      EXPECT_EQ(invNode().reifiedViolationNodeId(),
-                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
     } else {
       EXPECT_TRUE(invNode().isReified());
-      EXPECT_NE(invNode().reifiedViolationNodeId(),
-                invariantgraph::NULL_NODE_ID);
+      EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
       EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     }
   }
 
   void application() {
-    PropagationEngine engine;
+    propagation::PropagationEngine engine;
     engine.open();
     addInputVarsToEngine(engine);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+      EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
-    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
     invNode().registerOutputVariables(*_invariantGraph, engine);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+      EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
     invNode().registerNode(*_invariantGraph, engine);
     engine.close();
 
@@ -125,29 +126,29 @@ class AbstractBoolClauseNodeTest
   }
 
   void propagation() {
-    PropagationEngine engine;
+    propagation::PropagationEngine engine;
     engine.open();
     addInputVarsToEngine(engine);
     invNode().registerOutputVariables(*_invariantGraph, engine);
     invNode().registerNode(*_invariantGraph, engine);
 
     EXPECT_EQ(invNode().as().size(), 2);
-    std::vector<VarId> asInputs;
-    for (const invariantgraph::VarNodeId& inputVarNodeId : invNode().as()) {
-      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+    std::vector<propagation::VarId> asInputs;
+    for (const VarNodeId& inputVarNodeId : invNode().as()) {
+      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
       asInputs.emplace_back(varId(inputVarNodeId));
       engine.updateBounds(varId(inputVarNodeId), 0, 5, true);
     }
     EXPECT_EQ(invNode().bs().size(), 2);
-    std::vector<VarId> bsInputs;
-    for (const invariantgraph::VarNodeId& inputVarNodeId : invNode().bs()) {
-      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+    std::vector<propagation::VarId> bsInputs;
+    for (const VarNodeId& inputVarNodeId : invNode().bs()) {
+      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
       bsInputs.emplace_back(varId(inputVarNodeId));
       engine.updateBounds(varId(inputVarNodeId), 0, 5, true);
     }
 
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
-    const VarId violationId = invNode().violationVarId(*_invariantGraph);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
+    const propagation::VarId violationId = invNode().violationVarId(*_invariantGraph);
 
     std::vector<Int> asValues(asInputs.size());
     std::vector<Int> bsValues(bsInputs.size());
@@ -226,3 +227,5 @@ TEST_F(BoolClauseTrueNodeTest, Construction) { construction(); }
 TEST_F(BoolClauseTrueNodeTest, Application) { application(); }
 
 TEST_F(BoolClauseTrueNodeTest, Propagation) { propagation(); }
+
+}  // namespace atlantis::testing

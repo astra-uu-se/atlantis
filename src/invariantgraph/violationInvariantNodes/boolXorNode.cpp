@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 BoolXorNode::BoolXorNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
@@ -44,20 +44,20 @@ std::unique_ptr<BoolXorNode> BoolXorNode::fromModelConstraint(
 }
 
 void BoolXorNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                          Engine& engine) {
+                                          propagation::Engine& engine) {
   registerViolation(invariantGraph, engine);
 }
 
-void BoolXorNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
+void BoolXorNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    engine.makeInvariant<BoolXor>(engine, violationVarId(invariantGraph),
+    engine.makeInvariant<propagation::BoolXor>(engine, violationVarId(invariantGraph),
                                   invariantGraph.varId(a()),
                                   invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<BoolEqual>(engine, violationVarId(invariantGraph),
+    engine.makeConstraint<propagation::BoolEqual>(engine, violationVarId(invariantGraph),
                                      invariantGraph.varId(a()),
                                      invariantGraph.varId(b()));
   }

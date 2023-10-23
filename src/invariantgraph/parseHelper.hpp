@@ -13,7 +13,7 @@
 #include "utils/fznAst.hpp"
 #include "utils/variant.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 std::vector<invariantgraph::VarNodeId>&& append(
     std::vector<invariantgraph::VarNodeId>&&, invariantgraph::VarNodeId,

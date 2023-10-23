@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-using namespace logging;
+namespace atlantis::logging {
 
 static std::string formatDuration(std::chrono::nanoseconds duration) {
   auto seconds = duration.count() / 1'000'000'000;
@@ -38,8 +38,7 @@ void TimedLogScopeWrapper::end(Logger& logger, Level level) {
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration));
 
   logger.decreaseIndentation();
-  logger.log(level, "Finished {}; it took {}.", _title,
-             formattedDuration);
+  logger.log(level, "Finished {}; it took {}.", _title, formattedDuration);
 }
 
 void IndentedLogScopeWrapper::begin(Logger& logger, Level level) {
@@ -50,3 +49,5 @@ void IndentedLogScopeWrapper::begin(Logger& logger, Level level) {
 void IndentedLogScopeWrapper::end(Logger& logger, Level) {
   logger.decreaseIndentation();
 }
+
+}  // namespace atlantis::logging

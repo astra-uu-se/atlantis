@@ -1,11 +1,15 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
+#include "propagation/propagationEngine.hpp"
 
-class Bool2IntNodeTest : public NodeTestBase<invariantgraph::Bool2IntNode> {
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+class Bool2IntNodeTest : public NodeTestBase<Bool2IntNode> {
  public:
-  invariantgraph::VarNodeId a;
-  invariantgraph::VarNodeId b;
+  VarNodeId a;
+  VarNodeId b;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -34,15 +38,15 @@ TEST_F(Bool2IntNodeTest, construction) {
 }
 
 TEST_F(Bool2IntNodeTest, application) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVariables(*_invariantGraph, engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode(*_invariantGraph, engine);
   engine.close();
@@ -55,7 +59,7 @@ TEST_F(Bool2IntNodeTest, application) {
 }
 
 TEST_F(Bool2IntNodeTest, propagation) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   invNode().registerOutputVariables(*_invariantGraph, engine);
@@ -63,11 +67,11 @@ TEST_F(Bool2IntNodeTest, propagation) {
   engine.close();
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), NULL_ID);
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), NULL_ID);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
+  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
 
-  const VarId input = varId(invNode().staticInputVarNodeIds().front());
-  const VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId input = varId(invNode().staticInputVarNodeIds().front());
+  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
 
   for (Int value = engine.lowerBound(input); value <= engine.upperBound(input);
        ++value) {
@@ -84,3 +88,5 @@ TEST_F(Bool2IntNodeTest, propagation) {
     EXPECT_EQ(expected, actual);
   }
 }
+
+}  // namespace atlantis::testing

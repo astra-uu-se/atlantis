@@ -3,7 +3,7 @@
 #include "../parseHelper.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 CircuitImplicitNode::CircuitImplicitNode(std::vector<VarNodeId>&& variables)
     : ImplicitConstraintNode(std::move(variables)) {
@@ -48,7 +48,7 @@ std::unique_ptr<CircuitImplicitNode> CircuitImplicitNode::fromModelConstraint(
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 CircuitImplicitNode::createNeighbourhood(
-    Engine&, std::vector<search::SearchVariable>&& variables) {
+    propagation::Engine&, std::vector<search::SearchVariable>&& variables) {
   return std::make_shared<search::neighbourhoods::CircuitNeighbourhood>(
       std::move(variables));
 }

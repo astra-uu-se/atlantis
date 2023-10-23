@@ -50,6 +50,8 @@
 #include "invariantgraph/violationInvariantNodes/setInNode.hpp"
 #include "utils/fznAst.hpp"
 
+namespace atlantis {
+
 invariantgraph::InvariantGraphBuilder::InvariantGraphBuilder(
     fznparser::Model& _model)
     : _model(_model), _invariantGraph() {}
@@ -456,3 +458,5 @@ bool argumentsAreFree(const fznparser::Constraint& constraint,
                        return argumentIsFree(arg, definedVars);
                      });
 }
+
+}  // namespace atlantis

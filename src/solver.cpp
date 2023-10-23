@@ -7,22 +7,24 @@
 #include "search/objective.hpp"
 #include "search/searchProcedure.hpp"
 
+namespace atlantis {
+
 Solver::Solver(std::filesystem::path modelFile,
                search::AnnealingScheduleFactory annealingScheduleFactory,
                std::chrono::milliseconds timeout)
     : Solver(std::move(modelFile), std::move(annealingScheduleFactory),
              std::time(nullptr), timeout) {}
 
-static ObjectiveDirection getObjectiveDirection(
+static propagation::ObjectiveDirection getObjectiveDirection(
     fznparser::ProblemType problemType) {
   switch (problemType) {
     case fznparser::ProblemType::MINIMIZE:
-      return ObjectiveDirection::MINIMIZE;
+      return propagation::ObjectiveDirection::MINIMIZE;
     case fznparser::ProblemType::MAXIMIZE:
-      return ObjectiveDirection::MAXIMIZE;
+      return propagation::ObjectiveDirection::MAXIMIZE;
     case fznparser::ProblemType::SATISFY:
     default:
-      return ObjectiveDirection::NONE;
+      return propagation::ObjectiveDirection::NONE;
   }
 }
 
@@ -41,7 +43,7 @@ search::SearchStatistics Solver::solve(logging::Logger& logger) {
       "building invariant graph",
       [&] { return invariantGraphBuilder.build(); });
 
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   auto applicationResult = graph.apply(engine);
   auto neighbourhood = applicationResult.neighbourhood();
   neighbourhood.printNeighbourhood(logger);
@@ -81,3 +83,5 @@ search::SearchStatistics Solver::solve(logging::Logger& logger) {
   return logger.timed<search::SearchStatistics>(
       "search", [&] { return search.run(searchController, annealer, logger); });
 }
+
+}  // namespace atlantis

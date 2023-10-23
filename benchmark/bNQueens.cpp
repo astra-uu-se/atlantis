@@ -6,30 +6,32 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "constraints/allDifferent.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/linear.hpp"
-#include "views/intOffsetView.hpp"
+#include "propagation/constraints/allDifferent.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/propagationEngine.hpp"
+#include "propagation/views/intOffsetView.hpp"
 
-class Queens : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class Queens : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<VarId> queens;
-  std::vector<VarId> q_offset_plus;
-  std::vector<VarId> q_offset_minus;
+  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::vector<propagation::VarId> queens;
+  std::vector<propagation::VarId> q_offset_plus;
+  std::vector<propagation::VarId> q_offset_minus;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   Int n;
 
-  VarId violation1 = NULL_ID;
-  VarId violation2 = NULL_ID;
-  VarId violation3 = NULL_ID;
-  VarId totalViolation = NULL_ID;
+  propagation::VarId violation1 = propagation::NULL_ID;
+  propagation::VarId violation2 = propagation::NULL_ID;
+  propagation::VarId violation3 = propagation::NULL_ID;
+  propagation::VarId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    engine = std::make_unique<PropagationEngine>();
+    engine = std::make_unique<propagation::PropagationEngine>();
     n = state.range(0);
     if (n < 0) {
       throw std::runtime_error("n must be non-negative.");
@@ -38,16 +40,16 @@ class Queens : public benchmark::Fixture {
     engine->open();
     setEngineModes(*engine, state.range(1));
     // the total number of variables is linear in n
-    queens = std::vector<VarId>(n);
-    q_offset_minus = std::vector<VarId>(n);
-    q_offset_plus = std::vector<VarId>(n);
+    queens = std::vector<propagation::VarId>(n);
+    q_offset_minus = std::vector<propagation::VarId>(n);
+    q_offset_plus = std::vector<propagation::VarId>(n);
 
     for (Int i = 0; i < n; ++i) {
       queens.at(i) = engine->makeIntVar(i, 0, n - 1);
-      q_offset_minus.at(i) =
-          engine->makeIntView<IntOffsetView>(*engine, queens.at(i), -i);
-      q_offset_plus.at(i) =
-          engine->makeIntView<IntOffsetView>(*engine, queens.at(i), i);
+      q_offset_minus.at(i) = engine->makeIntView<propagation::IntOffsetView>(
+          *engine, queens.at(i), -i);
+      q_offset_plus.at(i) = engine->makeIntView<propagation::IntOffsetView>(
+          *engine, queens.at(i), i);
     }
 
     violation1 = engine->makeIntVar(0, 0, n);
@@ -55,15 +57,18 @@ class Queens : public benchmark::Fixture {
     violation3 = engine->makeIntVar(0, 0, n);
 
     // 3 invariants, each having taking n static input variables
-    engine->makeConstraint<AllDifferent>(*engine, violation1, queens);
-    engine->makeConstraint<AllDifferent>(*engine, violation2, q_offset_minus);
-    engine->makeConstraint<AllDifferent>(*engine, violation3, q_offset_plus);
+    engine->makeConstraint<propagation::AllDifferent>(*engine, violation1,
+                                                      queens);
+    engine->makeConstraint<propagation::AllDifferent>(*engine, violation2,
+                                                      q_offset_minus);
+    engine->makeConstraint<propagation::AllDifferent>(*engine, violation3,
+                                                      q_offset_plus);
 
     totalViolation = engine->makeIntVar(0, 0, 3 * n);
 
-    engine->makeInvariant<Linear>(
+    engine->makeInvariant<propagation::Linear>(
         *engine, totalViolation,
-        std::vector<VarId>{violation1, violation2, violation3});
+        std::vector<propagation::VarId>{violation1, violation2, violation3});
 
     engine->close();
 
@@ -98,7 +103,7 @@ class Queens : public benchmark::Fixture {
   }
 };
 
-BENCHMARK_DEFINE_F(Queens, probe_single_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(Queens, probe_single_swap)(::benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
     const size_t i = distribution(gen);
@@ -120,10 +125,10 @@ BENCHMARK_DEFINE_F(Queens, probe_single_swap)(benchmark::State& st) {
     assert(sanity());
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(Queens, probe_all_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(Queens, probe_all_swap)(::benchmark::State& st) {
   int probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
@@ -145,10 +150,10 @@ BENCHMARK_DEFINE_F(Queens, probe_all_swap)(benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(Queens, solve)(::benchmark::State& st) {
   Int it = 0;
   Int probes = 0;
 
@@ -210,25 +215,27 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
     }
   }
 
-  st.counters["it"] = benchmark::Counter(it);
+  st.counters["it"] = ::benchmark::Counter(it);
 
-  st.counters["it_per_s"] = benchmark::Counter(it, benchmark::Counter::kIsRate);
+  st.counters["it_per_s"] =
+      ::benchmark::Counter(it, ::benchmark::Counter::kIsRate);
   st.counters["probes_per_s"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
-  st.counters["solved"] = benchmark::Counter(done);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+  st.counters["solved"] = ::benchmark::Counter(done);
   logDebug(instanceToString());
 }
 
 //*
 BENCHMARK_REGISTER_F(Queens, probe_single_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
 /*
 BENCHMARK_REGISTER_F(Queens, probe_all_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
 /*
 BENCHMARK_REGISTER_F(Queens, solve)->Apply(defaultArguments);
 //*/
+}  // namespace atlantis::benchmark

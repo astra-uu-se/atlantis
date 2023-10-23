@@ -1,6 +1,6 @@
 #include "invariantgraph/views/boolNotNode.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 BoolNotNode::BoolNotNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
@@ -17,14 +17,14 @@ std::unique_ptr<BoolNotNode> BoolNotNode::fromModelConstraint(
 }
 
 void BoolNotNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                          Engine& engine) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) == NULL_ID) {
+                                          propagation::Engine& engine) {
+  if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(engine.makeIntView<Bool2IntView>(
+        .setVarId(engine.makeIntView<propagation::Bool2IntView>(
             engine, invariantGraph.varId(input())));
   }
 }
 
-void BoolNotNode::registerNode(InvariantGraph&, Engine&) {}
+void BoolNotNode::registerNode(InvariantGraph&, propagation::Engine&) {}
 
 }  // namespace invariantgraph

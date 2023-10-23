@@ -2,7 +2,7 @@
 
 #include "invariantgraph/implicitConstraintNode.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 /**
  * Given all variable nodes need to be defined by a a InvariantNode, this
@@ -20,7 +20,7 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      Engine& engine, std::vector<search::SearchVariable>&& variables) override;
+      propagation::Engine& engine, std::vector<search::SearchVariable>&& variables) override;
 };
 
 }  // namespace invariantgraph

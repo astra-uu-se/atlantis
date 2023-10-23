@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 ArrayVarBoolElement2dNode::ArrayVarBoolElement2dNode(
     VarNodeId idx1, VarNodeId idx2, std::vector<VarNodeId>&& x,
@@ -52,15 +52,15 @@ ArrayVarBoolElement2dNode::fromModelConstraint(
 }
 
 void ArrayVarBoolElement2dNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
+    InvariantGraph& invariantGraph, propagation::Engine& engine) {
   makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()), 1);
 }
 
 void ArrayVarBoolElement2dNode::registerNode(InvariantGraph& invariantGraph,
-                                             Engine& engine) {
+                                             propagation::Engine& engine) {
   const size_t numCols = dynamicInputVarNodeIds().size() / _numRows;
-  std::vector<std::vector<VarId>> varMatrix(_numRows,
-                                            std::vector<VarId>(numCols));
+  std::vector<std::vector<propagation::VarId>> varMatrix(_numRows,
+                                            std::vector<propagation::VarId>(numCols));
   for (size_t i = 0; i < _numRows; ++i) {
     for (size_t j = 0; j < numCols; ++j) {
       varMatrix.at(i).at(j) =
@@ -69,8 +69,8 @@ void ArrayVarBoolElement2dNode::registerNode(InvariantGraph& invariantGraph,
     }
   }
 
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
-  engine.makeInvariant<Element2dVar>(
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  engine.makeInvariant<propagation::Element2dVar>(
       engine, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), varMatrix,
       _offset1, _offset2);

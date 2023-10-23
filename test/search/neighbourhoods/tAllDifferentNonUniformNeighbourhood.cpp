@@ -5,6 +5,10 @@
 #include "search/annealing/annealerContainer.hpp"
 #include "search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
 
+namespace atlantis::testing {
+
+using namespace atlantis::search;
+
 class AlwaysAcceptingAnnealer : public search::Annealer {
  public:
   AlwaysAcceptingAnnealer(const search::Assignment& assignment,
@@ -19,7 +23,7 @@ class AlwaysAcceptingAnnealer : public search::Annealer {
 
 class AllDifferentNonUniformNeighbourhoodTest : public ::testing::Test {
  public:
-  std::unique_ptr<PropagationEngine> engine;
+  std::unique_ptr<propagation::PropagationEngine> engine;
   std::unique_ptr<search::Assignment> assignment;
   search::RandomProvider random{123456789};
 
@@ -36,16 +40,16 @@ class AllDifferentNonUniformNeighbourhoodTest : public ::testing::Test {
       *std::max_element(domains.front().begin(), domains.front().end())};
 
   void SetUp() override {
-    engine = std::make_unique<PropagationEngine>();
+    engine = std::make_unique<propagation::PropagationEngine>();
     engine->open();
     assignment = std::make_unique<search::Assignment>(
         *engine, engine->makeIntVar(0, 0, 0), engine->makeIntVar(0, 0, 0),
-        ObjectiveDirection::NONE);
+        propagation::ObjectiveDirection::NONE);
     for (auto i = 0u; i < domains.size(); ++i) {
       const auto& [lb, ub] =
           std::minmax_element(domains.at(i).begin(), domains.at(i).end());
 
-      VarId var = engine->makeIntVar(*lb, *lb, *ub);
+      propagation::VarId var = engine->makeIntVar(*lb, *lb, *ub);
       domainLb = std::min(domainLb, *lb);
       domainUb = std::max(domainUb, *ub);
       variables.emplace_back(var, SearchDomain(domains.at(i)));
@@ -234,3 +238,4 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, RandomMove) {
     EXPECT_TRUE(neighbourhood.randomMove(random, *assignment, annealer));
   }
 }
+}  // namespace atlantis::testing

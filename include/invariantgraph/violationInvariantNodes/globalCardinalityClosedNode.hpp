@@ -3,24 +3,24 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "constraints/equal.hpp"
-#include "constraints/globalCardinalityClosed.hpp"
-#include "constraints/notEqual.hpp"
+#include "propagation/constraints/equal.hpp"
+#include "propagation/constraints/globalCardinalityClosed.hpp"
+#include "propagation/constraints/notEqual.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/exists.hpp"
-#include "invariants/linear.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/invariants/exists.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class GlobalCardinalityClosedNode : public ViolationInvariantNode {
  private:
   const std::vector<VarNodeId> _inputs;
   const std::vector<Int> _cover;
   const std::vector<VarNodeId> _counts;
-  std::vector<VarId> _intermediate{};
-  std::vector<VarId> _violations{};
-  VarId _shouldFailViol{NULL_ID};
+  std::vector<propagation::VarId> _intermediate{};
+  std::vector<propagation::VarId> _violations{};
+  propagation::VarId _shouldFailViol{propagation::NULL_ID};
 
  public:
   explicit GlobalCardinalityClosedNode(std::vector<VarNodeId>&& x,
@@ -42,9 +42,9 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
   static std::unique_ptr<GlobalCardinalityClosedNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   [[nodiscard]] inline const std::vector<VarNodeId>& inputs() const {
     return _inputs;

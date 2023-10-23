@@ -1,19 +1,26 @@
 #include <gtest/gtest.h>
 
-#include "core/propagationEngine.hpp"
+#include "propagation/propagationEngine.hpp"
 #include "search/objective.hpp"
 
-class ObjectiveTest : public testing::Test {
+namespace atlantis::testing {
+
+using namespace atlantis::search;
+
+class ObjectiveTest : public ::testing::Test {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  VarId objectiveVarId;
-  VarId totalViolationId;
+  std::unique_ptr<propagation::PropagationEngine> engine;
+  propagation::VarId objectiveVarId;
+  propagation::VarId totalViolationId;
 
-  void SetUp() override { engine = std::make_unique<PropagationEngine>(); }
+  void SetUp() override {
+    engine = std::make_unique<propagation::PropagationEngine>();
+  }
 
-  VarId install(search::Objective& objective,
-                fznparser::IntSet objectiveRange = fznparser::IntSet(0, 0),
-                Int initial = 0) {
+  propagation::VarId install(
+      search::Objective& objective,
+      fznparser::IntSet objectiveRange = fznparser::IntSet(0, 0),
+      Int initial = 0) {
     engine->open();
     objectiveVarId = engine->makeIntVar(initial, objectiveRange.lowerBound(),
                                         objectiveRange.upperBound());
@@ -104,3 +111,5 @@ TEST_F(ObjectiveTest, maximisation_objective) {
   EXPECT_EQ(engine->committedValue(violation), 1);
   EXPECT_EQ(engine->committedValue(*searchObjective.bound()), 8);
 }
+
+}  // namespace atlantis::testing

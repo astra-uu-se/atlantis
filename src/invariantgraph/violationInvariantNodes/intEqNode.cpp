@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntEqNode::IntEqNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode({a, b}, r) {}
@@ -38,22 +38,22 @@ std::unique_ptr<IntEqNode> IntEqNode::fromModelConstraint(
 }
 
 void IntEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                        Engine& engine) {
+                                        propagation::Engine& engine) {
   registerViolation(invariantGraph, engine);
 }
 
-void IntEqNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
-  assert(invariantGraph.varId(a()) != NULL_ID);
-  assert(invariantGraph.varId(b()) != NULL_ID);
+void IntEqNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  assert(invariantGraph.varId(a()) != propagation::NULL_ID);
+  assert(invariantGraph.varId(b()) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<Equal>(engine, violationVarId(invariantGraph),
+    engine.makeConstraint<propagation::Equal>(engine, violationVarId(invariantGraph),
                                  invariantGraph.varId(a()),
                                  invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<NotEqual>(engine, violationVarId(invariantGraph),
+    engine.makeConstraint<propagation::NotEqual>(engine, violationVarId(invariantGraph),
                                     invariantGraph.varId(a()),
                                     invariantGraph.varId(b()));
   }

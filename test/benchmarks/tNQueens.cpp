@@ -1,40 +1,46 @@
 #include <gtest/gtest.h>
 
-#include "constraints/allDifferent.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/linear.hpp"
-#include "views/intOffsetView.hpp"
+#include "propagation/constraints/allDifferent.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/propagationEngine.hpp"
+#include "propagation/views/intOffsetView.hpp"
+
+namespace atlantis::testing {
 
 TEST(NQueens, CommitsInvariant) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
 
-  std::vector<VarId> queens;
-  std::vector<VarId> q_offset_plus;
-  std::vector<VarId> q_offset_minus;
+  std::vector<propagation::VarId> queens;
+  std::vector<propagation::VarId> q_offset_plus;
+  std::vector<propagation::VarId> q_offset_minus;
 
   const int n = 4;
 
   engine.open();
   for (Int i = 0; i < n; ++i) {
-    const VarId q = engine.makeIntVar(1, 1, n);
+    const propagation::VarId q = engine.makeIntVar(1, 1, n);
     queens.push_back(q);
-    q_offset_minus.push_back(engine.makeIntView<IntOffsetView>(engine, q, -i));
-    q_offset_plus.push_back(engine.makeIntView<IntOffsetView>(engine, q, i));
+    q_offset_minus.push_back(
+        engine.makeIntView<propagation::IntOffsetView>(engine, q, -i));
+    q_offset_plus.push_back(
+        engine.makeIntView<propagation::IntOffsetView>(engine, q, i));
   }
 
   auto violation1 = engine.makeIntVar(0, 0, n);
   auto violation2 = engine.makeIntVar(0, 0, n);
   auto violation3 = engine.makeIntVar(0, 0, n);
 
-  engine.makeConstraint<AllDifferent>(engine, violation1, queens);
-  engine.makeConstraint<AllDifferent>(engine, violation2, q_offset_minus);
-  engine.makeConstraint<AllDifferent>(engine, violation3, q_offset_plus);
+  engine.makeConstraint<propagation::AllDifferent>(engine, violation1, queens);
+  engine.makeConstraint<propagation::AllDifferent>(engine, violation2,
+                                                   q_offset_minus);
+  engine.makeConstraint<propagation::AllDifferent>(engine, violation3,
+                                                   q_offset_plus);
 
   auto total_violation = engine.makeIntVar(0, 0, 3 * n);
 
-  engine.makeInvariant<Linear>(
+  engine.makeInvariant<propagation::Linear>(
       engine, total_violation,
-      std::vector<VarId>{violation1, violation2, violation3});
+      std::vector<propagation::VarId>{violation1, violation2, violation3});
 
   engine.close();
 
@@ -67,3 +73,5 @@ TEST(NQueens, CommitsInvariant) {
   EXPECT_EQ(engine.committedValue(total_violation),
             4);  // Fail - Actual value: 2
 }
+
+}  // namespace atlantis::testing

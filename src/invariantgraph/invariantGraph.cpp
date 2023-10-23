@@ -5,7 +5,7 @@
 #include "invariantgraph/violationInvariantNodes/boolEqNode.hpp"
 #include "invariantgraph/violationInvariantNodes/intEqNode.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 InvariantGraphRoot& InvariantGraph::root() {
   return dynamic_cast<InvariantGraphRoot&>(*_implicitConstraintNodes.front());
@@ -176,11 +176,11 @@ VarNode& InvariantGraph::varNode(VarNodeId id) {
   return _varNodes.at(id.id - 1);
 }
 
-VarId InvariantGraph::varId(const std::string& identifier) const {
+propagation::VarId InvariantGraph::varId(const std::string& identifier) const {
   return _varNodes.at(_namedVariableNodeIndices.at(identifier).id - 1).varId();
 }
 
-VarId InvariantGraph::varId(VarNodeId id) const {
+propagation::VarId InvariantGraph::varId(VarNodeId id) const {
   assert(id.id != 0 && id.id <= _varNodes.size());
   return _varNodes.at(id.id - 1).varId();
 }
@@ -485,7 +485,7 @@ void InvariantGraph::breakCycles() {
   }
 }
 
-void InvariantGraph::createVariables(Engine& engine) {
+void InvariantGraph::createVariables(propagation::Engine& engine) {
   std::unordered_set<InvariantNodeId, InvariantNodeIdHash> visitedInvNodes;
   std::unordered_set<VarNodeId, VarNodeIdHash> searchVariables;
 
@@ -499,7 +499,7 @@ void InvariantGraph::createVariables(Engine& engine) {
     }
   }
 
-  std::vector<VarId> violations;
+  std::vector<propagation::VarId> violations;
   std::unordered_set<VarNodeId, VarNodeIdHash> outputVarNodeIds;
 
   while (!unregisteredInvNodes.empty()) {
@@ -510,11 +510,11 @@ void InvariantGraph::createVariables(Engine& engine) {
     assert(!invariantNode(invNodeId).dynamicInputVarNodeIds().empty() ||
            invariantNode(invNodeId).staticInputVarNodeIds().size() != 1 ||
            varId(invariantNode(invNodeId).staticInputVarNodeIds().front()) !=
-               NULL_ID);
+               propagation::NULL_ID);
     assert(std::all_of(invariantNode(invNodeId).outputVarNodeIds().begin(),
                        invariantNode(invNodeId).outputVarNodeIds().end(),
                        [&](VarNodeId outputVarNodeId) {
-                         return varId(outputVarNodeId) == NULL_ID;
+                         return varId(outputVarNodeId) == propagation::NULL_ID;
                        }));
 
     invariantNode(invNodeId).registerOutputVariables(*this, engine);
@@ -527,7 +527,7 @@ void InvariantGraph::createVariables(Engine& engine) {
           [&](InvariantNodeId defNodeId) { return defNodeId == invNodeId; }));
 
       outputVarNodeIds.emplace(outputVarNodeId);
-      assert(varId(outputVarNodeId) != NULL_ID);
+      assert(varId(outputVarNodeId) != propagation::NULL_ID);
       for (const auto nextVarDefNode : vn.inputTo()) {
         if (!visitedInvNodes.contains(nextVarDefNode)) {
           visitedInvNodes.emplace(nextVarDefNode);
@@ -538,20 +538,23 @@ void InvariantGraph::createVariables(Engine& engine) {
   }
 
   for (const auto varNodeId : _boolVariableNodeIndices) {
-    if (varId(varNodeId) == NULL_ID && !varNode(varNodeId).inputTo().empty()) {
+    if (varId(varNodeId) == propagation::NULL_ID &&
+        !varNode(varNodeId).inputTo().empty()) {
       auto constant = varNode(varNodeId).constantValue();
       assert(constant.has_value());
-      VarId varId = engine.makeIntVar(constant.value(), constant.value(),
-                                      constant.value());
+      propagation::VarId varId = engine.makeIntVar(
+          constant.value(), constant.value(), constant.value());
       varNode(varNodeId).setVarId(varId);
     }
   }
 
   for (const auto& [constant, varNodeId] : _intVariableNodeIndices) {
-    if (varId(varNodeId) == NULL_ID && !varNode(varNodeId).inputTo().empty()) {
+    if (varId(varNodeId) == propagation::NULL_ID &&
+        !varNode(varNodeId).inputTo().empty()) {
       assert(varNode(varNodeId).constantValue().has_value() &&
              varNode(varNodeId).constantValue().value() == constant);
-      VarId varId = engine.makeIntVar(constant, constant, constant);
+      propagation::VarId varId =
+          engine.makeIntVar(constant, constant, constant);
       varNode(varNodeId).setVarId(varId);
     }
   }
@@ -562,31 +565,34 @@ void InvariantGraph::createVariables(Engine& engine) {
                      }));
 }
 
-void InvariantGraph::createImplicitConstraints(Engine& engine) {
+void InvariantGraph::createImplicitConstraints(propagation::Engine& engine) {
   for (auto& implicitConstraintNode : _implicitConstraintNodes) {
-    assert(std::all_of(
-        implicitConstraintNode->outputVarNodeIds().begin(),
-        implicitConstraintNode->outputVarNodeIds().end(),
-        [&](VarNodeId varNodeId) { return varId(varNodeId) != NULL_ID; }));
+    assert(std::all_of(implicitConstraintNode->outputVarNodeIds().begin(),
+                       implicitConstraintNode->outputVarNodeIds().end(),
+                       [&](VarNodeId varNodeId) {
+                         return varId(varNodeId) != propagation::NULL_ID;
+                       }));
     implicitConstraintNode->registerNode(*this, engine);
   }
 }
 
-void InvariantGraph::createInvariants(Engine& engine) {
+void InvariantGraph::createInvariants(propagation::Engine& engine) {
   for (auto& invariantNode : _invariantNodes) {
-    assert(std::all_of(
-        invariantNode->outputVarNodeIds().begin(),
-        invariantNode->outputVarNodeIds().end(),
-        [&](VarNodeId varNodeId) { return varId(varNodeId) != NULL_ID; }));
+    assert(std::all_of(invariantNode->outputVarNodeIds().begin(),
+                       invariantNode->outputVarNodeIds().end(),
+                       [&](VarNodeId varNodeId) {
+                         return varId(varNodeId) != propagation::NULL_ID;
+                       }));
     invariantNode->registerNode(*this, engine);
   }
 }
 
-VarId InvariantGraph::createViolations(Engine& engine) {
-  std::vector<VarId> violations;
+propagation::VarId InvariantGraph::createViolations(
+    propagation::Engine& engine) {
+  std::vector<propagation::VarId> violations;
   for (const auto& definingNode : _invariantNodes) {
     if (!definingNode->isReified() &&
-        definingNode->violationVarId(*this) != NULL_ID) {
+        definingNode->violationVarId(*this) != propagation::NULL_ID) {
       violations.emplace_back(definingNode->violationVarId(*this));
     }
   }
@@ -599,25 +605,25 @@ VarId InvariantGraph::createViolations(Engine& engine) {
   }
   for (VarNode& var : _varNodes) {
     if (!searchVariables.contains(var.varNodeId()) && !var.inputTo().empty()) {
-      const VarId violationId =
+      const propagation::VarId violationId =
           var.postDomainConstraint(engine, var.constrainedDomain(engine));
-      if (violationId != NULL_ID) {
+      if (violationId != propagation::NULL_ID) {
         violations.emplace_back(violationId);
       }
     }
   }
   if (violations.empty()) {
-    return NULL_ID;
+    return propagation::NULL_ID;
   }
   if (violations.size() == 1) {
     return violations.front();
   }
-  const VarId totalViolation = engine.makeIntVar(0, 0, 0);
-  engine.makeInvariant<Linear>(engine, totalViolation, violations);
+  const propagation::VarId totalViolation = engine.makeIntVar(0, 0, 0);
+  engine.makeInvariant<propagation::Linear>(engine, totalViolation, violations);
   return totalViolation;
 }
 
-InvariantGraphApplyResult InvariantGraph::apply(Engine& engine) {
+InvariantGraphApplyResult InvariantGraph::apply(propagation::Engine& engine) {
   populateRootNode();
   splitMultiDefinedVariables();
   breakCycles();
@@ -626,11 +632,11 @@ InvariantGraphApplyResult InvariantGraph::apply(Engine& engine) {
   createImplicitConstraints(engine);
   createInvariants(engine);
   engine.computeBounds();
-  const VarId totalViolation = createViolations(engine);
+  const propagation::VarId totalViolation = createViolations(engine);
   // If the model has no variable to optimise, use a dummy variable.
-  VarId objectiveVarId = _objectiveVarNodeId != NULL_NODE_ID
-                             ? varId(_objectiveVarNodeId)
-                             : engine.makeIntVar(0, 0, 0);
+  propagation::VarId objectiveVarId = _objectiveVarNodeId != NULL_NODE_ID
+                                          ? varId(_objectiveVarNodeId)
+                                          : engine.makeIntVar(0, 0, 0);
   engine.close();
 
   InvariantGraphApplyResult::VariableIdentifiers variableIdentifiers;
@@ -655,4 +661,4 @@ InvariantGraphApplyResult InvariantGraph::apply(Engine& engine) {
                                    totalViolation, objectiveVarId);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

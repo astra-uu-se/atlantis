@@ -1,8 +1,14 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/violationInvariantNodes/globalCardinalityClosedNode.hpp"
+#include "propagation/propagationEngine.hpp"
+
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+using ::testing::ContainerEq;
 
 static std::pair<bool, std::vector<Int>> compute(
     const std::vector<Int>& values, const std::vector<Int>& cover,
@@ -28,14 +34,14 @@ static std::pair<bool, std::vector<Int>> compute(
 
 template <ConstraintType Type>
 class AbstractGlobalCardinalityClosedNodeTest
-    : public NodeTestBase<invariantgraph::GlobalCardinalityClosedNode> {
+    : public NodeTestBase<GlobalCardinalityClosedNode> {
  public:
-  invariantgraph::VarNodeId x1;
-  invariantgraph::VarNodeId x2;
+  VarNodeId x1;
+  VarNodeId x2;
   const std::vector<Int> cover{2, 6};
-  invariantgraph::VarNodeId o1;
-  invariantgraph::VarNodeId o2;
-  invariantgraph::VarNodeId r;
+  VarNodeId o1;
+  VarNodeId o2;
+  VarNodeId r;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -89,8 +95,8 @@ class AbstractGlobalCardinalityClosedNodeTest
     expectInputTo(invNode());
     expectOutputOf(invNode());
 
-    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2};
-    std::vector<invariantgraph::VarNodeId> expectedOutputs{o1, o2};
+    std::vector<VarNodeId> expectedInputs{x1, x2};
+    std::vector<VarNodeId> expectedOutputs{o1, o2};
     if constexpr (Type == ConstraintType::REIFIED ||
                   Type == ConstraintType::CONSTANT_FALSE) {
       expectedInputs.emplace_back(o1);
@@ -103,40 +109,36 @@ class AbstractGlobalCardinalityClosedNodeTest
     EXPECT_EQ(invNode().staticInputVarNodeIds().size(), expectedInputs.size());
     EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
 
-    EXPECT_THAT(expectedInputs,
-                testing::ContainerEq(invNode().staticInputVarNodeIds()));
+    EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
     EXPECT_EQ(invNode().outputVarNodeIds().size(), expectedOutputs.size());
     EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
-    EXPECT_THAT(expectedOutputs,
-                testing::ContainerEq(invNode().outputVarNodeIds()));
+    EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
 
     if constexpr (Type == ConstraintType::REIFIED) {
       EXPECT_TRUE(invNode().isReified());
-      EXPECT_NE(invNode().reifiedViolationNodeId(),
-                invariantgraph::NULL_NODE_ID);
+      EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
       EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     } else {
       EXPECT_FALSE(invNode().isReified());
-      EXPECT_EQ(invNode().reifiedViolationNodeId(),
-                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
     }
   }
 
   void application() {
-    PropagationEngine engine;
+    propagation::PropagationEngine engine;
     engine.open();
     addInputVarsToEngine(engine);
 
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+      EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
-    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
     invNode().registerOutputVariables(*_invariantGraph, engine);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+      EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
 
     invNode().registerNode(*_invariantGraph, engine);
     engine.close();
@@ -169,28 +171,29 @@ class AbstractGlobalCardinalityClosedNodeTest
   }
 
   void propagation() {
-    PropagationEngine engine;
+    propagation::PropagationEngine engine;
     engine.open();
     addInputVarsToEngine(engine);
     invNode().registerOutputVariables(*_invariantGraph, engine);
     invNode().registerNode(*_invariantGraph, engine);
 
-    std::vector<VarId> inputs;
+    std::vector<propagation::VarId> inputs;
     for (const auto& inputVarNodeId : invNode().inputs()) {
-      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
       inputs.emplace_back(varId(inputVarNodeId));
     }
     EXPECT_EQ(inputs.size(), 2);
 
-    std::vector<VarId> counts;
+    std::vector<propagation::VarId> counts;
     for (const auto& countVarNodeId : invNode().counts()) {
-      EXPECT_NE(varId(countVarNodeId), NULL_ID);
+      EXPECT_NE(varId(countVarNodeId), propagation::NULL_ID);
       counts.emplace_back(varId(countVarNodeId));
     }
     EXPECT_EQ(counts.size(), 2);
 
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
-    const VarId violationId = invNode().violationVarId(*_invariantGraph);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
+    const propagation::VarId violationId =
+        invNode().violationVarId(*_invariantGraph);
 
     std::vector<Int> inputVals(inputs.size());
     std::vector<Int> countVals(counts.size());
@@ -199,11 +202,11 @@ class AbstractGlobalCardinalityClosedNodeTest
 
     if constexpr (Type == ConstraintType::NORMAL ||
                   Type == ConstraintType::CONSTANT_TRUE) {
-      for (const VarId c : counts) {
+      for (const propagation::VarId c : counts) {
         countBounds.emplace_back(std::pair<Int, Int>{0, 0});
       }
     } else {
-      for (const VarId c : counts) {
+      for (const propagation::VarId c : counts) {
         countBounds.emplace_back(
             std::pair<Int, Int>{engine.lowerBound(c), engine.lowerBound(c)});
       }
@@ -301,3 +304,5 @@ TEST_F(GlobalCardinalityClosedTrueNodeTest, Construction) { construction(); }
 TEST_F(GlobalCardinalityClosedTrueNodeTest, Application) { application(); }
 
 TEST_F(GlobalCardinalityClosedTrueNodeTest, Propagation) { propagation(); }
+
+}  // namespace atlantis::testing

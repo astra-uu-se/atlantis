@@ -2,9 +2,10 @@
 
 #include <string>
 
-#include "core/types.hpp"
+#include "propagation/types.hpp"
+#include "types.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 class Cost {
  private:
@@ -13,7 +14,8 @@ class Cost {
   Int _objectiveWeightSign;
 
  public:
-  Cost(Int violationDegree, Int objective, ObjectiveDirection direction);
+  Cost(Int violationDegree, Int objective,
+       propagation::ObjectiveDirection direction);
 
   /**
    * @return True if this cost has no violated constraints.
@@ -42,4 +44,4 @@ class Cost {
   [[nodiscard]] std::string toString() const;
 };
 
-}  // namespace search
+}  // namespace atlantis::search

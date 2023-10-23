@@ -6,7 +6,7 @@
 #include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/invariantNodes/arrayIntElementNode.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class ArrayBoolElementNode : public InvariantNode {
  public:

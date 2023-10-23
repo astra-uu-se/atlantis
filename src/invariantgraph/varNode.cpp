@@ -3,7 +3,7 @@
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 static SearchDomain convertDomain(const VarNode::FZNVariable& variable) {
   if (std::holds_alternative<fznparser::BoolVar>(variable)) {
@@ -61,10 +61,10 @@ std::string VarNode::identifier() const {
   return std::get<fznparser::IntVar>(*_variable).identifier();
 }
 
-VarId VarNode::varId() const { return _varId; }
+propagation::VarId VarNode::varId() const { return _varId; }
 
-void VarNode::setVarId(VarId varId) {
-  assert(_varId == NULL_ID);
+void VarNode::setVarId(propagation::VarId varId) {
+  assert(_varId == propagation::NULL_ID);
   _varId = varId;
 }
 
@@ -76,9 +76,9 @@ bool VarNode::isFixed() const noexcept { return _domain.isFixed(); }
 
 bool VarNode::isIntVar() const noexcept { return _isIntVar; }
 
-VarId VarNode::postDomainConstraint(Engine& engine,
+propagation::VarId VarNode::postDomainConstraint(propagation::Engine& engine,
                                     std::vector<DomainEntry>&& domain) {
-  if (domain.size() == 0 || _domainViolationId != NULL_ID) {
+  if (domain.size() == 0 || _domainViolationId != propagation::NULL_ID) {
     return _domainViolationId;
   }
   const size_t interval =
@@ -87,11 +87,11 @@ VarId VarNode::postDomainConstraint(Engine& engine,
   // domain.size() - 1 = number of "holes" in the domain:
   const float denseness = 1.0 - ((float)(domain.size() - 1) / (float)interval);
   if (SPARSE_MIN_DENSENESS <= denseness) {
-    _domainViolationId = engine.makeIntView<InSparseDomain>(
+    _domainViolationId = engine.makeIntView<propagation::InSparseDomain>(
         engine, this->varId(), std::move(domain));
   } else {
     _domainViolationId =
-        engine.makeIntView<InDomain>(engine, this->varId(), std::move(domain));
+        engine.makeIntView<propagation::InDomain>(engine, this->varId(), std::move(domain));
   }
   return _domainViolationId;
 }
@@ -118,9 +118,9 @@ void VarNode::removeValue(bool val) {
   _domain.fix(val ? 0 : 1);
 }
 
-std::vector<DomainEntry> VarNode::constrainedDomain(const Engine& engine) {
-  assert(this->varId() != NULL_ID);
-  const VarId varId = this->varId();
+std::vector<DomainEntry> VarNode::constrainedDomain(const propagation::Engine& engine) {
+  assert(this->varId() != propagation::NULL_ID);
+  const propagation::VarId varId = this->varId();
   return _domain.relativeComplementIfIntersects(engine.lowerBound(varId),
                                                 engine.upperBound(varId));
 }

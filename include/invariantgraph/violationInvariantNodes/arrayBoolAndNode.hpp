@@ -3,15 +3,15 @@
 #include "fznparser/model.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/forAll.hpp"
-#include "views/elementConst.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/invariants/forAll.hpp"
+#include "propagation/views/elementConst.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class ArrayBoolAndNode : public ViolationInvariantNode {
  private:
-  VarId _intermediate{NULL_ID};
+  propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
   ArrayBoolAndNode(std::vector<VarNodeId>&& as, VarNodeId output);
@@ -25,9 +25,9 @@ class ArrayBoolAndNode : public ViolationInvariantNode {
   static std::unique_ptr<ArrayBoolAndNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 };
 
 }  // namespace invariantgraph

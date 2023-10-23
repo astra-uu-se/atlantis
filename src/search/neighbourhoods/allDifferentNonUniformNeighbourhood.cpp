@@ -2,11 +2,11 @@
 
 #include <algorithm>
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 AllDifferentNonUniformNeighbourhood::AllDifferentNonUniformNeighbourhood(
     std::vector<SearchVariable>&& variables, Int domainLb, Int domainUb,
-    const Engine& engine)
+    const propagation::Engine& engine)
     : _variables(std::move(variables)),
       _variableIndices(_variables.size()),
       _domainOffset(domainLb),
@@ -182,7 +182,7 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
                                                      size_t value2Index) {
   // variable 1:
   assert(variable1Index < _variables.size());
-  const VarId variable1 = _variables[variable1Index].engineId();
+  const propagation::VarId variable1 = _variables[variable1Index].engineId();
   const Int value1 = assignment.value(variable1);
   assert(isValueIndexOccupied(toValueIndex(value1)));
   assert(_valueIndexToVariableIndex.at(toValueIndex(value1)) == variable1Index);
@@ -206,7 +206,7 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
          _variables.at(_valueIndexToVariableIndex.at(value1Index)).engineId());
   assert(variable2Index == _valueIndexToVariableIndex.at(value2Index));
   const Int value2 = toValue(value2Index);
-  const VarId variable2 = _variables.at(variable2Index).engineId();
+  const propagation::VarId variable2 = _variables.at(variable2Index).engineId();
   assert(variable2 ==
          _variables.at(_valueIndexToVariableIndex.at(value2Index)).engineId());
 
@@ -247,7 +247,7 @@ bool AllDifferentNonUniformNeighbourhood::assignValue(Assignment& assignment,
   assert(newValueIndex < _valueIndexToVariableIndex.size());
   assert(_valueIndexToVariableIndex[newValueIndex] == _variables.size());
   assert(variableIndex < _variables.size());
-  const VarId variable = _variables[variableIndex].engineId();
+  const propagation::VarId variable = _variables[variableIndex].engineId();
   const Int oldValue = assignment.value(variable);
   const size_t oldValueIndex = toValueIndex(oldValue);
 
@@ -264,4 +264,4 @@ bool AllDifferentNonUniformNeighbourhood::assignValue(Assignment& assignment,
   return false;
 }
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

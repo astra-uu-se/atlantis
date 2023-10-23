@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 ArrayIntElementNode::ArrayIntElementNode(std::vector<Int>&& as, VarNodeId b,
                                          VarNodeId output, Int offset)
@@ -33,15 +33,15 @@ std::unique_ptr<ArrayIntElementNode> ArrayIntElementNode::fromModelConstraint(
 }
 
 void ArrayIntElementNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) == NULL_ID) {
-    assert(invariantGraph.varId(b()) != NULL_ID);
+    InvariantGraph& invariantGraph, propagation::Engine& engine) {
+  if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    assert(invariantGraph.varId(b()) != propagation::NULL_ID);
     invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(engine.makeIntView<ElementConst>(
+        .setVarId(engine.makeIntView<propagation::ElementConst>(
             engine, invariantGraph.varId(b()), _as, _offset));
   }
 }
 
-void ArrayIntElementNode::registerNode(InvariantGraph&, Engine&) {}
+void ArrayIntElementNode::registerNode(InvariantGraph&, propagation::Engine&) {}
 
 }  // namespace invariantgraph

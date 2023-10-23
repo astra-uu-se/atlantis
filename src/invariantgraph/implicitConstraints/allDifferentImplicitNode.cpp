@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 std::unique_ptr<AllDifferentImplicitNode>
 AllDifferentImplicitNode::fromModelConstraint(
@@ -41,7 +41,7 @@ bool AllDifferentImplicitNode::prune(InvariantGraph& invariantGraph) {
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 AllDifferentImplicitNode::createNeighbourhood(
-    Engine& engine, std::vector<search::SearchVariable>&& variables) {
+    propagation::Engine& engine, std::vector<search::SearchVariable>&& variables) {
   if (variables.size() <= 1) {
     return nullptr;
   }

@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntLeNode::IntLeNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode({a, b}, r) {}
@@ -38,20 +38,20 @@ std::unique_ptr<IntLeNode> IntLeNode::fromModelConstraint(
 }
 
 void IntLeNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                        Engine& engine) {
+                                        propagation::Engine& engine) {
   registerViolation(invariantGraph, engine);
 }
 
-void IntLeNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
+void IntLeNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<LessEqual>(engine, violationVarId(invariantGraph),
+    engine.makeConstraint<propagation::LessEqual>(engine, violationVarId(invariantGraph),
                                      invariantGraph.varId(a()),
                                      invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<LessThan>(engine, violationVarId(invariantGraph),
+    engine.makeConstraint<propagation::LessThan>(engine, violationVarId(invariantGraph),
                                     invariantGraph.varId(b()),
                                     invariantGraph.varId(a()));
   }

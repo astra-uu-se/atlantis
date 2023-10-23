@@ -8,28 +8,29 @@
 #include <vector>
 
 #include "../testHelper.hpp"
-#include "constraints/equal.hpp"
-#include "core/propagationEngine.hpp"
-#include "core/types.hpp"
-#include "invariants/linear.hpp"
+#include "propagation/constraints/equal.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/propagationEngine.hpp"
+#include "propagation/types.hpp"
+#include "types.hpp"
 
-namespace {
+namespace atlantis::testing {
 class MagicSquareTest : public ::testing::Test {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<std::vector<VarId>> square;
-  std::vector<VarId> flat;
+  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::vector<std::vector<propagation::VarId>> square;
+  std::vector<propagation::VarId> flat;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   Int n;
 
-  VarId totalViolation = NULL_ID;
+  propagation::VarId totalViolation = propagation::NULL_ID;
 
   Int magicSum = 0;
   void SetUp() override {
-    engine = std::make_unique<PropagationEngine>();
+    engine = std::make_unique<propagation::PropagationEngine>();
     n = 3;
     Int n2 = n * n;
     gen = std::mt19937(rd());
@@ -40,7 +41,8 @@ class MagicSquareTest : public ::testing::Test {
 
     engine->open();
 
-    VarId magicSumVar = engine->makeIntVar(magicSum, magicSum, magicSum);
+    propagation::VarId magicSumVar =
+        engine->makeIntVar(magicSum, magicSum, magicSum);
 
     for (int i = 0; i < n; ++i) {
       square.emplace_back();
@@ -51,13 +53,14 @@ class MagicSquareTest : public ::testing::Test {
       }
     }
 
-    std::vector<VarId> violations;
+    std::vector<propagation::VarId> violations;
 
     // All different is implied by initial assignment + swap moves.
     // {
-    //   VarId allDiffViol = engine->makeIntVar(0, 0, n2);
+    //   propagation::VarId allDiffViol = engine->makeIntVar(0, 0, n2);
     //   violations.push_back(allDiffViol);
-    //   engine->makeConstraint<AllDifferent>(*engine, allDiffViol, flat);
+    //   engine->makeConstraint<propagation::AllDifferent>(*engine, allDiffViol,
+    //   flat);
     // }
 
     {
@@ -65,11 +68,13 @@ class MagicSquareTest : public ::testing::Test {
       std::vector<Int> ones{};
       ones.assign(n, 1);
       for (int i = 0; i < n; ++i) {
-        VarId rowSum = engine->makeIntVar(0, 0, n2 * n);
-        VarId rowViol = engine->makeIntVar(0, 0, n2 * n);
+        propagation::VarId rowSum = engine->makeIntVar(0, 0, n2 * n);
+        propagation::VarId rowViol = engine->makeIntVar(0, 0, n2 * n);
 
-        engine->makeInvariant<Linear>(*engine, rowSum, square.at(i));
-        engine->makeConstraint<Equal>(*engine, rowViol, rowSum, magicSumVar);
+        engine->makeInvariant<propagation::Linear>(*engine, rowSum,
+                                                   square.at(i));
+        engine->makeConstraint<propagation::Equal>(*engine, rowViol, rowSum,
+                                                   magicSumVar);
         violations.push_back(rowViol);
       }
     }
@@ -79,15 +84,16 @@ class MagicSquareTest : public ::testing::Test {
       std::vector<Int> ones{};
       ones.assign(n, 1);
       for (int i = 0; i < n; ++i) {
-        VarId colSum = engine->makeIntVar(0, 0, n2 * n);
-        VarId colViol = engine->makeIntVar(0, 0, n2 * n);
-        std::vector<VarId> col{};
+        propagation::VarId colSum = engine->makeIntVar(0, 0, n2 * n);
+        propagation::VarId colViol = engine->makeIntVar(0, 0, n2 * n);
+        std::vector<propagation::VarId> col{};
         col.reserve(n);
         for (int j = 0; j < n; ++j) {
           col.push_back(square.at(j).at(i));
         }
-        engine->makeInvariant<Linear>(*engine, colSum, ones, col);
-        engine->makeConstraint<Equal>(*engine, colViol, colSum, magicSumVar);
+        engine->makeInvariant<propagation::Linear>(*engine, colSum, ones, col);
+        engine->makeConstraint<propagation::Equal>(*engine, colViol, colSum,
+                                                   magicSumVar);
         violations.push_back(colViol);
       }
     }
@@ -96,16 +102,17 @@ class MagicSquareTest : public ::testing::Test {
       // downDiag
       std::vector<Int> ones{};
       ones.assign(n, 1);
-      VarId downDiagSum = engine->makeIntVar(0, 0, n2 * n);
-      VarId downDiagViol = engine->makeIntVar(0, 0, n2 * n);
-      std::vector<VarId> diag{};
+      propagation::VarId downDiagSum = engine->makeIntVar(0, 0, n2 * n);
+      propagation::VarId downDiagViol = engine->makeIntVar(0, 0, n2 * n);
+      std::vector<propagation::VarId> diag{};
       diag.reserve(n);
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(j).at(j));
       }
-      engine->makeInvariant<Linear>(*engine, downDiagSum, ones, diag);
-      engine->makeConstraint<Equal>(*engine, downDiagViol, downDiagSum,
-                                    magicSumVar);
+      engine->makeInvariant<propagation::Linear>(*engine, downDiagSum, ones,
+                                                 diag);
+      engine->makeConstraint<propagation::Equal>(*engine, downDiagViol,
+                                                 downDiagSum, magicSumVar);
       violations.push_back(downDiagViol);
     }
 
@@ -113,23 +120,25 @@ class MagicSquareTest : public ::testing::Test {
       // upDiag
       std::vector<Int> ones{};
       ones.assign(n, 1);
-      VarId upDiagSum = engine->makeIntVar(0, 0, n2 * n);
-      VarId upDiagViol = engine->makeIntVar(0, 0, n2 * n);
-      std::vector<VarId> diag{};
+      propagation::VarId upDiagSum = engine->makeIntVar(0, 0, n2 * n);
+      propagation::VarId upDiagViol = engine->makeIntVar(0, 0, n2 * n);
+      std::vector<propagation::VarId> diag{};
       diag.reserve(n);
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(n - j - 1).at(j));
       }
-      engine->makeInvariant<Linear>(*engine, upDiagSum, ones, diag);
-      engine->makeConstraint<Equal>(*engine, upDiagViol, upDiagSum,
-                                    magicSumVar);
+      engine->makeInvariant<propagation::Linear>(*engine, upDiagSum, ones,
+                                                 diag);
+      engine->makeConstraint<propagation::Equal>(*engine, upDiagViol, upDiagSum,
+                                                 magicSumVar);
       violations.push_back(upDiagViol);
     }
 
     std::vector<Int> ones{};
     ones.assign(violations.size(), 1);
     totalViolation = engine->makeIntVar(0, 0, n2 * n2 * 2 + 2 * n2);
-    engine->makeInvariant<Linear>(*engine, totalViolation, ones, violations);
+    engine->makeInvariant<propagation::Linear>(*engine, totalViolation, ones,
+                                               violations);
     engine->close();
   }
 
@@ -259,4 +268,4 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
   }
 }
 
-}  // namespace
+}  // namespace atlantis::testing

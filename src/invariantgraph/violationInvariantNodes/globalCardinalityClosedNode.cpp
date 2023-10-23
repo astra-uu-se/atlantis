@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
@@ -64,12 +64,12 @@ GlobalCardinalityClosedNode::fromModelConstraint(
 }
 
 void GlobalCardinalityClosedNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+    InvariantGraph& invariantGraph, propagation::Engine& engine) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     registerViolation(invariantGraph, engine);
     if (!isReified() && shouldHold()) {
       for (const auto& countOutput : outputVarNodeIds()) {
-        if (invariantGraph.varId(countOutput) == NULL_ID) {
+        if (invariantGraph.varId(countOutput) == propagation::NULL_ID) {
           invariantGraph.varNode(countOutput)
               .setVarId(engine.makeIntVar(0, 0, _inputs.size()));
         }
@@ -85,7 +85,7 @@ void GlobalCardinalityClosedNode::registerOutputVariables(
       if (!shouldHold()) {
         _shouldFailViol = engine.makeIntVar(0, 0, _inputs.size());
         _violations.emplace_back(
-            engine.makeIntView<NotEqualConst>(engine, _shouldFailViol, 0));
+            engine.makeIntView<propagation::NotEqualConst>(engine, _shouldFailViol, 0));
       } else {
         _violations.emplace_back(engine.makeIntVar(0, 0, _inputs.size()));
       }
@@ -94,53 +94,53 @@ void GlobalCardinalityClosedNode::registerOutputVariables(
 }
 
 void GlobalCardinalityClosedNode::registerNode(InvariantGraph& invariantGraph,
-                                               Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
+                                               propagation::Engine& engine) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  std::vector<VarId> inputs;
+  std::vector<propagation::VarId> inputs;
   std::transform(_inputs.begin(), _inputs.end(), std::back_inserter(inputs),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
   if (!isReified() && shouldHold()) {
     assert(_intermediate.size() == 0);
     assert(_violations.size() == 0);
-    std::vector<VarId> countOutputs;
+    std::vector<propagation::VarId> countOutputs;
     std::transform(_counts.begin(), _counts.end(),
                    std::back_inserter(countOutputs),
                    [&](const auto& id) { return invariantGraph.varId(id); });
 
-    engine.makeInvariant<GlobalCardinalityClosed>(
+    engine.makeInvariant<propagation::GlobalCardinalityClosed>(
         engine, violationVarId(invariantGraph), countOutputs, inputs, _cover);
   } else {
     assert(_intermediate.size() == _counts.size());
     assert(_violations.size() == _counts.size() + 1);
     if (isReified()) {
-      engine.makeInvariant<GlobalCardinalityClosed>(
+      engine.makeInvariant<propagation::GlobalCardinalityClosed>(
           engine, _violations.back(), _intermediate, inputs, _cover);
     } else {
       assert(!shouldHold());
-      engine.makeInvariant<GlobalCardinalityClosed>(
+      engine.makeInvariant<propagation::GlobalCardinalityClosed>(
           engine, _shouldFailViol, _intermediate, inputs, _cover);
     }
     for (size_t i = 0; i < _counts.size(); ++i) {
       if (shouldHold()) {
-        engine.makeConstraint<Equal>(engine, _violations.at(i),
+        engine.makeConstraint<propagation::Equal>(engine, _violations.at(i),
                                      _intermediate.at(i),
                                      invariantGraph.varId(_counts.at(i)));
       } else {
-        engine.makeConstraint<NotEqual>(engine, _violations.at(i),
+        engine.makeConstraint<propagation::NotEqual>(engine, _violations.at(i),
                                         _intermediate.at(i),
                                         invariantGraph.varId(_counts.at(i)));
       }
     }
     if (shouldHold()) {
       // To hold, each count must be equal to its corresponding intermediate:
-      engine.makeInvariant<Linear>(engine, violationVarId(invariantGraph),
+      engine.makeInvariant<propagation::Linear>(engine, violationVarId(invariantGraph),
                                    _violations);
     } else {
       // To hold, only one count must not be equal to its corresponding
       // intermediate:
-      engine.makeInvariant<Exists>(engine, violationVarId(invariantGraph),
+      engine.makeInvariant<propagation::Exists>(engine, violationVarId(invariantGraph),
                                    _violations);
     }
   }

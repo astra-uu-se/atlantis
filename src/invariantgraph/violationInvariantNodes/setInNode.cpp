@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 SetInNode::SetInNode(VarNodeId input, std::vector<Int>&& values, VarNodeId r)
     : ViolationInvariantNode({input}, r), _values(std::move(values)) {}
@@ -45,9 +45,9 @@ std::unique_ptr<SetInNode> SetInNode::fromModelConstraint(
 }
 
 void SetInNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                        Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
-    const VarId input = invariantGraph.varId(staticInputVarNodeIds().front());
+                                        propagation::Engine& engine) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+    const propagation::VarId input = invariantGraph.varId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
     domainEntries.reserve(_values.size());
     std::transform(_values.begin(), _values.end(),
@@ -57,17 +57,17 @@ void SetInNode::registerOutputVariables(InvariantGraph& invariantGraph,
     if (!shouldHold()) {
       assert(!isReified());
       _intermediate =
-          engine.makeIntView<InDomain>(engine, input, std::move(domainEntries));
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+          engine.makeIntView<propagation::InDomain>(engine, input, std::move(domainEntries));
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
                                             engine, _intermediate, 0));
     } else {
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<InDomain>(engine, input,
+                        engine.makeIntView<propagation::InDomain>(engine, input,
                                                      std::move(domainEntries)));
     }
   }
 }
 
-void SetInNode::registerNode(InvariantGraph&, Engine&) {}
+void SetInNode::registerNode(InvariantGraph&, propagation::Engine&) {}
 
 }  // namespace invariantgraph

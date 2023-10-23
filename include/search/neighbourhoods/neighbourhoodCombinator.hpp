@@ -7,7 +7,7 @@
 #include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 class NeighbourhoodCombinator : public Neighbourhood {
  private:
@@ -36,4 +36,4 @@ class NeighbourhoodCombinator : public Neighbourhood {
   Neighbourhood& selectNeighbourhood(RandomProvider& random);
 };
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 BoolLinLeNode::BoolLinLeNode(std::vector<Int> coeffs,
                              std::vector<VarNodeId>&& variables, Int bound,
@@ -93,31 +93,31 @@ std::unique_ptr<BoolLinLeNode> BoolLinLeNode::fromModelConstraint(
 }
 
 void BoolLinLeNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                            Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+                                            propagation::Engine& engine) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(invariantGraph, engine.makeIntView<LessEqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::LessEqualConst>(
                                             engine, _sumVarId, _bound));
     } else {
       assert(!isReified());
-      setViolationVarId(invariantGraph, engine.makeIntView<GreaterEqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::GreaterEqualConst>(
                                             engine, _sumVarId, _bound + 1));
     }
   }
 }
 
 void BoolLinLeNode::registerNode(InvariantGraph& invariantGraph,
-                                 Engine& engine) {
-  std::vector<VarId> variables;
+                                 propagation::Engine& engine) {
+  std::vector<propagation::VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  assert(_sumVarId != NULL_ID);
-  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(_sumVarId != propagation::NULL_ID);
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  engine.makeInvariant<BoolLinear>(engine, _sumVarId, _coeffs, variables);
+  engine.makeInvariant<propagation::BoolLinear>(engine, _sumVarId, _coeffs, variables);
 }
 
 }  // namespace invariantgraph

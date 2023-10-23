@@ -3,12 +3,12 @@
 #include <cassert>
 #include <vector>
 
-#include "core/engine.hpp"
+#include "propagation/engine.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/varNode.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class InvariantGraph;  // Forward declaration
 
@@ -24,9 +24,9 @@ class ImplicitConstraintNode : public InvariantNode {
  public:
   explicit ImplicitConstraintNode(std::vector<VarNodeId>&& outputVarNodeIds);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   /**
    * Take the neighbourhood which is constructed in the registerNode
@@ -49,7 +49,7 @@ class ImplicitConstraintNode : public InvariantNode {
 
  protected:
   virtual std::shared_ptr<search::neighbourhoods::Neighbourhood>
-  createNeighbourhood(Engine& engine,
+  createNeighbourhood(propagation::Engine& engine,
                       std::vector<search::SearchVariable>&& variables) = 0;
 };
 }  // namespace invariantgraph

@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 BoolClauseNode::BoolClauseNode(std::vector<VarNodeId>&& as,
                                std::vector<VarNodeId>&& bs, VarNodeId r)
@@ -62,17 +62,17 @@ std::unique_ptr<BoolClauseNode> BoolClauseNode::fromModelConstraint(
 }
 
 void BoolClauseNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                             Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+                                             propagation::Engine& engine) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(invariantGraph, engine.makeIntView<EqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::EqualConst>(
                                             engine, _sumVarId,
                                             static_cast<Int>(_as.size()) +
                                                 static_cast<Int>(_bs.size())));
     } else {
       assert(!isReified());
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
                                             engine, _sumVarId,
                                             static_cast<Int>(_as.size()) +
                                                 static_cast<Int>(_bs.size())));
@@ -81,21 +81,21 @@ void BoolClauseNode::registerOutputVariables(InvariantGraph& invariantGraph,
 }
 
 void BoolClauseNode::registerNode(InvariantGraph& invariantGraph,
-                                  Engine& engine) {
-  std::vector<VarId> engineVariables;
+                                  propagation::Engine& engine) {
+  std::vector<propagation::VarId> engineVariables;
   engineVariables.reserve(_as.size() + _bs.size());
   std::transform(_as.begin(), _as.end(), std::back_inserter(engineVariables),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
   std::transform(_bs.begin(), _bs.end(), std::back_inserter(engineVariables),
                  [&](const auto& id) {
-                   return engine.makeIntView<NotEqualConst>(
+                   return engine.makeIntView<propagation::NotEqualConst>(
                        engine, invariantGraph.varId(id), 0);
                  });
 
-  assert(_sumVarId != NULL_ID);
-  assert(violationVarId(invariantGraph) != NULL_ID);
-  engine.makeInvariant<BoolLinear>(engine, _sumVarId, engineVariables);
+  assert(_sumVarId != propagation::NULL_ID);
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  engine.makeInvariant<propagation::BoolLinear>(engine, _sumVarId, engineVariables);
 }
 
 }  // namespace invariantgraph

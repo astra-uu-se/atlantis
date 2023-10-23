@@ -4,7 +4,7 @@
 #include "search/move.hpp"
 #include "search/searchVariable.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 class Neighbourhood {
  public:
@@ -49,4 +49,4 @@ class Neighbourhood {
   }
 };
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

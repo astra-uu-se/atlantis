@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntLinNeNode::IntLinNeNode(std::vector<Int>&& coeffs,
                            std::vector<VarNodeId>&& variables, Int c,
@@ -54,31 +54,31 @@ std::unique_ptr<IntLinNeNode> IntLinNeNode::fromModelConstraint(
 }
 
 void IntLinNeNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                           Engine& engine) {
-  if (_sumVarId == NULL_ID) {
+                                           propagation::Engine& engine) {
+  if (_sumVarId == propagation::NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
                                             engine, _sumVarId, _c));
     } else {
       assert(!isReified());
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<EqualConst>(engine, _sumVarId, _c));
+                        engine.makeIntView<propagation::EqualConst>(engine, _sumVarId, _c));
     }
   }
 }
 
 void IntLinNeNode::registerNode(InvariantGraph& invariantGraph,
-                                Engine& engine) {
-  std::vector<VarId> variables;
+                                propagation::Engine& engine) {
+  std::vector<propagation::VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  assert(_sumVarId != NULL_ID);
-  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(_sumVarId != propagation::NULL_ID);
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  engine.makeInvariant<Linear>(engine, _sumVarId, _coeffs, variables);
+  engine.makeInvariant<propagation::Linear>(engine, _sumVarId, _coeffs, variables);
 }
 
 }  // namespace invariantgraph

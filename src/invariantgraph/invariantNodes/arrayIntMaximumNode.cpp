@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 ArrayIntMaximumNode::ArrayIntMaximumNode(std::vector<VarNodeId>&& variables,
                                          VarNodeId output)
@@ -24,20 +24,20 @@ std::unique_ptr<ArrayIntMaximumNode> ArrayIntMaximumNode::fromModelConstraint(
 }
 
 void ArrayIntMaximumNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
+    InvariantGraph& invariantGraph, propagation::Engine& engine) {
   makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void ArrayIntMaximumNode::registerNode(InvariantGraph& invariantGraph,
-                                       Engine& engine) {
-  std::vector<VarId> variables;
+                                       propagation::Engine& engine) {
+  std::vector<propagation::VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables), [&](const auto& node) {
                    return invariantGraph.varId(node);
                  });
 
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
-  engine.makeInvariant<MaxSparse>(
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  engine.makeInvariant<propagation::MaxSparse>(
       engine, invariantGraph.varId(outputVarNodeIds().front()),
       variables);
 }

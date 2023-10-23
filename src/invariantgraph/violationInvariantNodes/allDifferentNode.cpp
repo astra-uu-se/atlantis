@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 AllDifferentNode::AllDifferentNode(std::vector<VarNodeId>&& variables,
                                    VarNodeId r)
@@ -58,17 +58,17 @@ std::unique_ptr<AllDifferentNode> AllDifferentNode::fromModelConstraint(
 }
 
 void AllDifferentNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                               Engine& engine) {
+                                               propagation::Engine& engine) {
   if (staticInputVarNodeIds().empty()) {
     return;
   }
-  if (violationVarId(invariantGraph) == NULL_ID) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (shouldHold()) {
       registerViolation(invariantGraph, engine);
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
                                             engine, _intermediate, 0));
     }
   }
@@ -90,18 +90,18 @@ bool AllDifferentNode::prune(InvariantGraph& invariantGraph) {
 }
 
 void AllDifferentNode::registerNode(InvariantGraph& invariantGraph,
-                                    Engine& engine) {
+                                    propagation::Engine& engine) {
   if (staticInputVarNodeIds().empty()) {
     return;
   }
-  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  std::vector<VarId> engineVariables;
+  std::vector<propagation::VarId> engineVariables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(engineVariables),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  engine.makeConstraint<AllDifferent>(
+  engine.makeConstraint<propagation::AllDifferent>(
       engine, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
       engineVariables);
 }

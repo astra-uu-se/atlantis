@@ -5,14 +5,14 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/boolAnd.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/invariants/boolAnd.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class BoolAndNode : public ViolationInvariantNode {
  private:
-  VarId _intermediate{NULL_ID};
+  propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
   BoolAndNode(VarNodeId a, VarNodeId b, VarNodeId r);
@@ -26,9 +26,9 @@ class BoolAndNode : public ViolationInvariantNode {
   static std::unique_ptr<BoolAndNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

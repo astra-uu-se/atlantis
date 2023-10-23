@@ -4,7 +4,7 @@
 
 #include "utils/type.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 NeighbourhoodCombinator::NeighbourhoodCombinator(
     std::vector<std::shared_ptr<Neighbourhood>>&& neighbourhoods)
@@ -58,4 +58,4 @@ Neighbourhood& NeighbourhoodCombinator::selectNeighbourhood(
   return *_neighbourhoods[idx];
 }
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

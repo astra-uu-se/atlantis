@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 BoolLtNode::BoolLtNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
@@ -44,22 +44,22 @@ std::unique_ptr<BoolLtNode> BoolLtNode::fromModelConstraint(
 }
 
 void BoolLtNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         Engine& engine) {
+                                         propagation::Engine& engine) {
   registerViolation(invariantGraph, engine);
 }
 
-void BoolLtNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
-  assert(invariantGraph.varId(a()) != NULL_ID);
-  assert(invariantGraph.varId(b()) != NULL_ID);
+void BoolLtNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  assert(invariantGraph.varId(a()) != propagation::NULL_ID);
+  assert(invariantGraph.varId(b()) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<BoolLessThan>(engine, violationVarId(invariantGraph),
+    engine.makeConstraint<propagation::BoolLessThan>(engine, violationVarId(invariantGraph),
                                         invariantGraph.varId(a()),
                                         invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    engine.makeConstraint<BoolLessEqual>(engine, violationVarId(invariantGraph),
+    engine.makeConstraint<propagation::BoolLessEqual>(engine, violationVarId(invariantGraph),
                                          invariantGraph.varId(b()),
                                          invariantGraph.varId(a()));
   }

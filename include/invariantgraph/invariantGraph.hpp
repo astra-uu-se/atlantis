@@ -7,36 +7,39 @@
 #include <unordered_set>
 #include <vector>
 
-#include "core/engine.hpp"
 #include "invariantgraph/implicitConstraintNode.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/types.hpp"
 #include "invariantgraph/varNode.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/linear.hpp"
+#include "propagation/engine.hpp"
+#include "propagation/invariants/linear.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
 #include "utils/fznAst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class InvariantGraphApplyResult {
  public:
-  using VariableIdentifiers = std::unordered_map<VarId, std::string, VarIdHash>;
+  using VariableIdentifiers =
+      std::unordered_map<propagation::VarId, std::string,
+                         propagation::VarIdHash>;
 
  private:
   VariableIdentifiers _variableIdentifiers;
 
   std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
-  VarId _totalViolationId;
-  VarId _objectiveVarId;
+  propagation::VarId _totalViolationId;
+  propagation::VarId _objectiveVarId;
 
  public:
   InvariantGraphApplyResult(
       VariableIdentifiers&& variableIdentifiers,
       std::vector<std::unique_ptr<ImplicitConstraintNode>>&&
           implicitConstraints,
-      VarId totalViolationId, VarId objectiveVarId)
+      propagation::VarId totalViolationId,
+      propagation::VarId objectiveVarId)
       : _variableIdentifiers(std::move(variableIdentifiers)),
         _implicitConstraintNodes(std::move(implicitConstraints)),
         _totalViolationId(totalViolationId),
@@ -64,11 +67,11 @@ class InvariantGraphApplyResult {
         std::move(neighbourhoods));
   }
 
-  [[nodiscard]] VarId totalViolationId() const noexcept {
+  [[nodiscard]] propagation::VarId totalViolationId() const noexcept {
     return _totalViolationId;
   }
 
-  [[nodiscard]] VarId objectiveVarId() const noexcept {
+  [[nodiscard]] propagation::VarId objectiveVarId() const noexcept {
     return _objectiveVarId;
   }
 };
@@ -116,8 +119,8 @@ class InvariantGraph {
   VarNode& varNode(const std::string& identifier);
   VarNode& varNode(VarNodeId id);
 
-  VarId varId(const std::string& identifier) const;
-  VarId varId(VarNodeId id) const;
+  propagation::VarId varId(const std::string& identifier) const;
+  propagation::VarId varId(VarNodeId id) const;
 
   InvariantNode& invariantNode(InvariantNodeId);
   InvariantGraphRoot& root();
@@ -134,7 +137,7 @@ class InvariantGraph {
   void splitMultiDefinedVariables();
   void breakCycles();
 
-  InvariantGraphApplyResult apply(Engine&);
+  InvariantGraphApplyResult apply(propagation::Engine&);
 
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
@@ -159,10 +162,10 @@ class InvariantGraph {
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
   VarNodeId breakCycle(const std::vector<VarNodeId>& cycle);
 
-  void createVariables(Engine&);
-  void createImplicitConstraints(Engine&);
-  void createInvariants(Engine&);
-  VarId createViolations(Engine&);
+  void createVariables(propagation::Engine&);
+  void createImplicitConstraints(propagation::Engine&);
+  void createInvariants(propagation::Engine&);
+  propagation::VarId createViolations(propagation::Engine&);
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

@@ -1,12 +1,16 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/invariantNodes/intLinearNode.hpp"
+#include "propagation/propagationEngine.hpp"
 
-class LinearNodeTest : public NodeTestBase<invariantgraph::IntLinearNode> {
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+class LinearNodeTest : public NodeTestBase<IntLinearNode> {
  public:
-  invariantgraph::VarNodeId a;
-  invariantgraph::VarNodeId b;
-  invariantgraph::VarNodeId c;
+  VarNodeId a;
+  VarNodeId b;
+  VarNodeId c;
   Int d{3};
 
   void makeView() {
@@ -89,15 +93,15 @@ TEST_F(LinearNodeTest, construction_should_register_linear) {
 TEST_F(LinearNodeTest, application_should_register_view) {
   makeView();
 
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVariables(*_invariantGraph, engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode(*_invariantGraph, engine);
   engine.close();
@@ -114,15 +118,15 @@ TEST_F(LinearNodeTest, application_should_register_view) {
 
 TEST_F(LinearNodeTest, application_should_register_linear) {
   makeLinear();
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVariables(*_invariantGraph, engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode(*_invariantGraph, engine);
   engine.close();
@@ -139,3 +143,4 @@ TEST_F(LinearNodeTest, application_should_register_linear) {
   // linear
   EXPECT_EQ(engine.numInvariants(), 1);
 }
+}  // namespace atlantis::testing

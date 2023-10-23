@@ -2,11 +2,11 @@
 
 #include <algorithm>
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
     std::vector<SearchVariable>&& variables, std::vector<Int> domain,
-    const Engine& engine)
+    const propagation::Engine& engine)
     : _variables(std::move(variables)),
       _domain(std::move(domain)),
       _engine(engine),
@@ -89,4 +89,4 @@ bool AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
   return false;
 }
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

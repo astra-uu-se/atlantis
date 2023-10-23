@@ -6,9 +6,9 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
-#include "invariants/minSparse.hpp"
+#include "propagation/invariants/minSparse.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class ArrayIntMinimumNode : public InvariantNode {
  public:
   ArrayIntMinimumNode(std::vector<VarNodeId>&& variables, VarNodeId output);
@@ -23,8 +23,8 @@ class ArrayIntMinimumNode : public InvariantNode {
   static std::unique_ptr<ArrayIntMinimumNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 };
 }  // namespace invariantgraph

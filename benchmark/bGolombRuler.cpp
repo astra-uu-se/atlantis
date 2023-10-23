@@ -7,28 +7,30 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "constraints/allDifferent.hpp"
-#include "constraints/equal.hpp"
-#include "constraints/lessThan.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/absDiff.hpp"
-#include "invariants/linear.hpp"
+#include "propagation/constraints/allDifferent.hpp"
+#include "propagation/constraints/equal.hpp"
+#include "propagation/constraints/lessThan.hpp"
+#include "propagation/invariants/absDiff.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/propagationEngine.hpp"
 
-class GolombRuler : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class GolombRuler : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<PropagationEngine> engine;
+  std::unique_ptr<propagation::PropagationEngine> engine;
   std::mt19937 gen;
 
   size_t markCount;
 
-  std::vector<VarId> marks;
-  std::vector<VarId> differences;
+  std::vector<propagation::VarId> marks;
+  std::vector<propagation::VarId> differences;
 
-  std::vector<VarId> violations;
-  VarId totalViolation;
+  std::vector<propagation::VarId> violations;
+  propagation::VarId totalViolation;
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<PropagationEngine>();
+    engine = std::make_unique<propagation::PropagationEngine>();
 
     markCount = state.range(0);
     const size_t ub = markCount * markCount;
@@ -59,7 +61,7 @@ class GolombRuler : public benchmark::Fixture {
     // number of edges quadratic in markCount
     for (size_t i = 0; i < markCount; ++i) {
       for (size_t j = i + 1; j < markCount; ++j) {
-        engine->makeInvariant<AbsDiff>(
+        engine->makeInvariant<propagation::AbsDiff>(
             *engine,
             differences.emplace_back(
                 engine->makeIntVar(0, 0, static_cast<Int>(ub))),
@@ -69,13 +71,14 @@ class GolombRuler : public benchmark::Fixture {
     assert(differences.size() == ((markCount - 1) * (markCount)) / 2);
 
     Int maxViol = 0;
-    for (VarId viol : differences) {
+    for (propagation::VarId viol : differences) {
       maxViol += engine->upperBound(viol);
     }
 
     // differences must be unique
     totalViolation = engine->makeIntVar(0, 0, maxViol);
-    engine->makeConstraint<AllDifferent>(*engine, totalViolation, differences);
+    engine->makeConstraint<propagation::AllDifferent>(*engine, totalViolation,
+                                                      differences);
 
     engine->close();
   }
@@ -86,7 +89,7 @@ class GolombRuler : public benchmark::Fixture {
   }
 };
 
-BENCHMARK_DEFINE_F(GolombRuler, probe_single)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(GolombRuler, probe_single)(::benchmark::State& st) {
   size_t probes = 0;
 
   std::vector<size_t> indices(marks.size());
@@ -153,11 +156,12 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(benchmark::State& st) {
     }));
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
 //*
 BENCHMARK_REGISTER_F(GolombRuler, probe_single)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 //*/
+}  // namespace atlantis::benchmark

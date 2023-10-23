@@ -5,14 +5,14 @@
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "utils/variant.hpp"
-#include "views/inDomain.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/views/inDomain.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class SetInNode : public ViolationInvariantNode {
  private:
   std::vector<Int> _values;
-  VarId _intermediate{NULL_ID};
+  propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
   explicit SetInNode(VarNodeId input, std::vector<Int>&& values, VarNodeId r);
@@ -28,9 +28,9 @@ class SetInNode : public ViolationInvariantNode {
   static std::unique_ptr<SetInNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   [[nodiscard]] const std::vector<Int>& values() { return _values; }
 };

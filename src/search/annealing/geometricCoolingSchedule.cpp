@@ -1,6 +1,8 @@
 #include "search/annealing/geometricCoolingSchedule.hpp"
 
-search::GeometricCoolingSchedule::GeometricCoolingSchedule(
+namespace atlantis::search {
+
+GeometricCoolingSchedule::GeometricCoolingSchedule(
     double coolingRate, UInt successiveFutileRoundsThreshold)
     : _coolingRate(coolingRate),
       _successiveFutileRoundsThreshold(successiveFutileRoundsThreshold) {
@@ -8,14 +10,13 @@ search::GeometricCoolingSchedule::GeometricCoolingSchedule(
   assert(successiveFutileRoundsThreshold > 0);
 }
 
-void search::GeometricCoolingSchedule::start(double initialTemperature) {
+void GeometricCoolingSchedule::start(double initialTemperature) {
   assert(initialTemperature != 0.0);
   _temperature = initialTemperature;
   _successiveFutileRounds = 0;
 }
 
-void search::GeometricCoolingSchedule::nextRound(
-    const search::RoundStatistics& statistics) {
+void GeometricCoolingSchedule::nextRound(const RoundStatistics& statistics) {
   _temperature *= _coolingRate;
 
   if (statistics.roundImprovedOnPrevious()) {
@@ -25,8 +26,10 @@ void search::GeometricCoolingSchedule::nextRound(
   }
 }
 
-double search::GeometricCoolingSchedule::temperature() { return _temperature; }
+double GeometricCoolingSchedule::temperature() { return _temperature; }
 
-bool search::GeometricCoolingSchedule::frozen() {
+bool GeometricCoolingSchedule::frozen() {
   return _successiveFutileRounds >= _successiveFutileRoundsThreshold;
 }
+
+}  // namespace atlantis::search

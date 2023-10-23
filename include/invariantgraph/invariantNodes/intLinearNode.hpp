@@ -5,17 +5,17 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
-#include "invariants/linear.hpp"
-#include "views/intOffsetView.hpp"
-#include "views/scalarView.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/views/intOffsetView.hpp"
+#include "propagation/views/scalarView.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class IntLinearNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _definingCoefficient;
   Int _sum;
-  VarId _intermediateVarId{NULL_ID};
+  propagation::VarId _intermediateVarId{propagation::NULL_ID};
 
  public:
   IntLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
@@ -30,9 +30,9 @@ class IntLinearNode : public InvariantNode {
   static std::unique_ptr<IntLinearNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 };

@@ -4,9 +4,9 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
-#include "invariants/binaryMin.hpp"
+#include "propagation/invariants/binaryMin.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class IntMinNode : public InvariantNode {
  public:
@@ -21,9 +21,9 @@ class IntMinNode : public InvariantNode {
   static std::unique_ptr<IntMinNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

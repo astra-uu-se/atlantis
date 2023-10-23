@@ -4,6 +4,14 @@
 #include "search/annealing/annealerContainer.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
 
+namespace atlantis::testing {
+
+using namespace atlantis::search;
+
+using ::testing::Ref;
+using ::testing::Return;
+using ::testing::ReturnRef;
+
 class MockNeighbourhood : public search::neighbourhoods::Neighbourhood {
  public:
   MOCK_METHOD(void, initialise,
@@ -25,7 +33,7 @@ class NeighbourhoodCombinatorTest : public ::testing::Test {
   MockNeighbourhood* n2{nullptr};
 
   std::vector<search::SearchVariable> variables{
-      search::SearchVariable(NULL_ID, SearchDomain(0, 10))};
+      search::SearchVariable(propagation::NULL_ID, SearchDomain(0, 10))};
 
   void SetUp() override {
     auto unique_n1 = std::make_unique<MockNeighbourhood>();
@@ -40,23 +48,19 @@ class NeighbourhoodCombinatorTest : public ::testing::Test {
 };
 
 TEST_F(NeighbourhoodCombinatorTest, initialise_calls_all_neighbourhoods) {
-  EXPECT_CALL(*n1, coveredVariables())
-      .WillRepeatedly(::testing::ReturnRef(variables));
-  EXPECT_CALL(*n2, coveredVariables())
-      .WillRepeatedly(::testing::ReturnRef(variables));
+  EXPECT_CALL(*n1, coveredVariables()).WillRepeatedly(ReturnRef(variables));
+  EXPECT_CALL(*n2, coveredVariables()).WillRepeatedly(ReturnRef(variables));
 
   search::neighbourhoods::NeighbourhoodCombinator combinator(std::move(ns));
 
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   search::RandomProvider random(123456789);
 
   engine.beginMove();
   search::AssignmentModifier modifier(engine);
 
-  EXPECT_CALL(*n1, initialise(::testing::Ref(random), ::testing::Ref(modifier)))
-      .Times(1);
-  EXPECT_CALL(*n2, initialise(::testing::Ref(random), ::testing::Ref(modifier)))
-      .Times(1);
+  EXPECT_CALL(*n1, initialise(Ref(random), Ref(modifier))).Times(1);
+  EXPECT_CALL(*n2, initialise(Ref(random), Ref(modifier))).Times(1);
 
   combinator.initialise(random, modifier);
   engine.endMove();
@@ -64,31 +68,28 @@ TEST_F(NeighbourhoodCombinatorTest, initialise_calls_all_neighbourhoods) {
 
 TEST_F(NeighbourhoodCombinatorTest,
        randomMove_calls_one_neighbourhood_and_forwards_result) {
-  EXPECT_CALL(*n1, coveredVariables())
-      .WillRepeatedly(::testing::ReturnRef(variables));
-  EXPECT_CALL(*n2, coveredVariables())
-      .WillRepeatedly(::testing::ReturnRef(variables));
+  EXPECT_CALL(*n1, coveredVariables()).WillRepeatedly(ReturnRef(variables));
+  EXPECT_CALL(*n2, coveredVariables()).WillRepeatedly(ReturnRef(variables));
 
   search::neighbourhoods::NeighbourhoodCombinator combinator(std::move(ns));
 
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   search::RandomProvider random(123456789);
-  search::Assignment assignment(engine, NULL_ID, NULL_ID,
-                                ObjectiveDirection::NONE);
+  search::Assignment assignment(engine, propagation::NULL_ID,
+                                propagation::NULL_ID,
+                                propagation::ObjectiveDirection::NONE);
 
   auto schedule = search::AnnealerContainer::cooling(0.95, 4);
   search::Annealer annealer(assignment, random, *schedule);
   annealer.start();
 
-  EXPECT_CALL(*n1,
-              randomMove(::testing::Ref(random), ::testing::Ref(assignment),
-                         ::testing::Ref(annealer)))
+  EXPECT_CALL(*n1, randomMove(Ref(random), Ref(assignment), Ref(annealer)))
       .Times(0);
 
-  EXPECT_CALL(*n2,
-              randomMove(::testing::Ref(random), ::testing::Ref(assignment),
-                         ::testing::Ref(annealer)))
-      .WillOnce(::testing::Return(false));
+  EXPECT_CALL(*n2, randomMove(Ref(random), Ref(assignment), Ref(annealer)))
+      .WillOnce(Return(false));
 
   combinator.randomMove(random, assignment, annealer);
 }
+
+}  // namespace atlantis::testing

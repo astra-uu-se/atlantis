@@ -1,17 +1,20 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/invariantNodes/arrayBoolElement2dNode.hpp"
 #include "invariantgraph/invariantNodes/arrayIntElement2dNode.hpp"
+#include "propagation/propagationEngine.hpp"
 
-class ArrayBoolElement2dNodeTest
-    : public NodeTestBase<invariantgraph::ArrayIntElement2dNode> {
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+class ArrayBoolElement2dNodeTest : public NodeTestBase<ArrayIntElement2dNode> {
  public:
   std::vector<std::vector<bool>> parMatrix{std::vector<bool>{true, false},
                                            std::vector<bool>{false, true}};
 
-  invariantgraph::VarNodeId idx1;
-  invariantgraph::VarNodeId idx2;
-  invariantgraph::VarNodeId y;
+  VarNodeId idx1;
+  VarNodeId idx2;
+  VarNodeId y;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -34,8 +37,7 @@ class ArrayBoolElement2dNodeTest
             fznparser::IntArg{static_cast<Int>(parMatrix.size())},
             fznparser::IntArg{1}, fznparser::IntArg{1}}));
 
-    makeOtherInvNode<invariantgraph::ArrayBoolElement2dNode>(
-        _model->constraints().front());
+    makeOtherInvNode<ArrayBoolElement2dNode>(_model->constraints().front());
   }
 };
 
@@ -53,15 +55,15 @@ TEST_F(ArrayBoolElement2dNodeTest, construction) {
 }
 
 TEST_F(ArrayBoolElement2dNodeTest, application) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVariables(*_invariantGraph, engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode(*_invariantGraph, engine);
   engine.close();
@@ -77,21 +79,21 @@ TEST_F(ArrayBoolElement2dNodeTest, application) {
 }
 
 TEST_F(ArrayBoolElement2dNodeTest, propagation) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   invNode().registerOutputVariables(*_invariantGraph, engine);
   invNode().registerNode(*_invariantGraph, engine);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), NULL_ID);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
 
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 0);
 
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), NULL_ID);
-  const VarId outputId = varId(invNode().outputVarNodeIds().front());
+  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
+  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
 
-  std::vector<VarId> inputs;
+  std::vector<propagation::VarId> inputs;
   inputs.emplace_back(varId(invNode().idx1()));
   inputs.emplace_back(varId(invNode().idx2()));
   engine.close();
@@ -119,3 +121,5 @@ TEST_F(ArrayBoolElement2dNodeTest, propagation) {
     }
   }
 }
+
+}  // namespace atlantis::testing

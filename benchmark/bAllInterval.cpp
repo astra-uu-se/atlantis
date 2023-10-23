@@ -6,30 +6,32 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "constraints/allDifferent.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/absDiff.hpp"
+#include "propagation/constraints/allDifferent.hpp"
+#include "propagation/invariants/absDiff.hpp"
+#include "propagation/propagationEngine.hpp"
 
-class AllInterval : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class AllInterval : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<VarId> inputVars;
+  std::unique_ptr<propagation::PropagationEngine> engine;
+  std::vector<propagation::VarId> inputVars;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   size_t n;
 
-  VarId totalViolation = NULL_ID;
+  propagation::VarId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    engine = std::make_unique<PropagationEngine>();
+    engine = std::make_unique<propagation::PropagationEngine>();
     if (state.range(0) < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
     n = state.range(0);
-    inputVars.resize(n, NULL_ID);
-    std::vector<VarId> violationVars(n - 1, NULL_ID);
+    inputVars.resize(n, propagation::NULL_ID);
+    std::vector<propagation::VarId> violationVars(n - 1, propagation::NULL_ID);
     // number of constraints: n
     // total number of static input variables: 3 * n
     engine->open();
@@ -45,14 +47,14 @@ class AllInterval : public benchmark::Fixture {
       assert(i < violationVars.size());
       violationVars[i] = engine->makeIntVar(static_cast<Int>(i), 0, n - 1);
       assert(i + 1 < inputVars.size());
-      engine->makeInvariant<AbsDiff>(*engine, violationVars[i], inputVars[i],
-                                     inputVars[i + 1]);
+      engine->makeInvariant<propagation::AbsDiff>(
+          *engine, violationVars[i], inputVars[i], inputVars[i + 1]);
     }
 
     totalViolation = engine->makeIntVar(0, 0, n);
     // Creating one invariant, taking n input variables and one output
-    engine->makeConstraint<AllDifferent>(*engine, totalViolation,
-                                         violationVars);
+    engine->makeConstraint<propagation::AllDifferent>(*engine, totalViolation,
+                                                      violationVars);
 
     engine->close();
 
@@ -65,7 +67,7 @@ class AllInterval : public benchmark::Fixture {
   void TearDown(const ::benchmark::State&) override { inputVars.clear(); }
 };
 
-BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(::benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
     const size_t i = distribution(gen);
@@ -94,10 +96,10 @@ BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(benchmark::State& st) {
     }));
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(::benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
@@ -118,10 +120,10 @@ BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(::benchmark::State& st) {
   int commits = 0;
   for (auto _ : st) {
     const size_t i = distribution(gen);
@@ -143,24 +145,24 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
     ++commits;
   }
 
-  st.counters["seconds_per_commit"] = benchmark::Counter(
-      commits, benchmark::Counter::kIsRate | benchmark::Counter::kInvert);
+  st.counters["seconds_per_commit"] = ::benchmark::Counter(
+      commits, ::benchmark::Counter::kIsRate | ::benchmark::Counter::kInvert);
 }
 
 //*
 BENCHMARK_REGISTER_F(AllInterval, probe_single_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 //*/
 /*
 BENCHMARK_REGISTER_F(AllInterval, probe_all_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
 //*/
 /*
 
-static void commitArguments(benchmark::internal::Benchmark* benchmark) {
+static void commitArguments(::benchmark::internal::Benchmark* benchmark) {
   for (int n = 10; n <= 10; n += 10) {
     benchmark->Args({n, 0});
   }
@@ -169,6 +171,7 @@ static void commitArguments(benchmark::internal::Benchmark* benchmark) {
 #endif
 }
 BENCHMARK_REGISTER_F(AllInterval, commit_single_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(commitArguments);
 //*/
+}  // namespace atlantis::benchmark

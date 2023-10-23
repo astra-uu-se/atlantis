@@ -9,6 +9,8 @@
 
 #include "solver.hpp"
 
+namespace atlantis::testing {
+
 static void testModelFile(const char* modelFile) {
   std::filesystem::path modelFilePath(
       (std::string(FZN_DIR) + "/" + modelFile).c_str());
@@ -19,3 +21,5 @@ static void testModelFile(const char* modelFile) {
   // Don't log to std::cout, since that would interfere with MiniZinc.
   statistics.display(std::cerr);
 }
+
+}  // namespace atlantis::testing

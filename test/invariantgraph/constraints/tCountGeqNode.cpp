@@ -1,8 +1,14 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/violationInvariantNodes/countGeqNode.hpp"
+#include "propagation/propagationEngine.hpp"
+
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+using ::testing::ContainerEq;
 
 // Constrains c to be greater than or equal to the number of occurrences of y in
 // values.
@@ -16,15 +22,14 @@ static bool isSatisfied(const std::vector<Int>& values, const Int y,
 }
 
 template <bool YIsParameter, ConstraintType Type>
-class AbstractCountGeqNodeTest
-    : public NodeTestBase<invariantgraph::CountGeqNode> {
+class AbstractCountGeqNodeTest : public NodeTestBase<CountGeqNode> {
  public:
-  invariantgraph::VarNodeId x1;
-  invariantgraph::VarNodeId x2;
-  invariantgraph::VarNodeId x3;
-  invariantgraph::VarNodeId y;
-  invariantgraph::VarNodeId c;
-  invariantgraph::VarNodeId r;
+  VarNodeId x1;
+  VarNodeId x2;
+  VarNodeId x3;
+  VarNodeId y;
+  VarNodeId c;
+  VarNodeId r;
   const Int yParamVal{5};
   const Int cParamVal{2};
 
@@ -114,62 +119,58 @@ class AbstractCountGeqNodeTest
     expectInputTo(invNode());
     expectOutputOf(invNode());
 
-    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2, x3};
+    std::vector<VarNodeId> expectedInputs{x1, x2, x3};
     if constexpr (YIsParameter) {
-      EXPECT_EQ(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().yVarNode(), NULL_NODE_ID);
     } else {
-      EXPECT_NE(invNode().yVarNode(), invariantgraph::NULL_NODE_ID);
+      EXPECT_NE(invNode().yVarNode(), NULL_NODE_ID);
       expectedInputs.emplace_back(y);
     }
     if constexpr (Type != ConstraintType::NORMAL) {
-      EXPECT_EQ(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().cVarNode(), NULL_NODE_ID);
     } else {
-      EXPECT_NE(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+      EXPECT_NE(invNode().cVarNode(), NULL_NODE_ID);
       expectedInputs.emplace_back(c);
     }
     EXPECT_EQ(invNode().staticInputVarNodeIds().size(), expectedInputs.size());
     EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
-    EXPECT_THAT(expectedInputs,
-                testing::ContainerEq(invNode().staticInputVarNodeIds()));
+    EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
-    std::vector<invariantgraph::VarNodeId> expectedOutputs;
+    std::vector<VarNodeId> expectedOutputs;
     if constexpr (Type == ConstraintType::REIFIED) {
       expectedOutputs.emplace_back(r);
     }
 
     EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
-    EXPECT_THAT(expectedOutputs,
-                testing::ContainerEq(invNode().outputVarNodeIds()));
+    EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
 
     if constexpr (Type == ConstraintType::REIFIED) {
       EXPECT_TRUE(invNode().isReified());
-      EXPECT_NE(invNode().reifiedViolationNodeId(),
-                invariantgraph::NULL_NODE_ID);
+      EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
       EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     } else {
       EXPECT_FALSE(invNode().isReified());
-      EXPECT_EQ(invNode().reifiedViolationNodeId(),
-                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
     }
   }
 
   void application() {
-    PropagationEngine engine;
+    propagation::PropagationEngine engine;
     engine.open();
     addInputVarsToEngine(engine);
 
     for (const auto varNodeId : invNode().staticInputVarNodeIds()) {
-      EXPECT_NE(engineVarId(varNodeId), NULL_ID);
+      EXPECT_NE(engineVarId(varNodeId), propagation::NULL_ID);
     }
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+      EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
-    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
     invNode().registerOutputVariables(*_invariantGraph, engine);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+      EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
     invNode().registerNode(*_invariantGraph, engine);
     engine.close();
 
@@ -183,12 +184,12 @@ class AbstractCountGeqNodeTest
       --numVariables;
     }
     if constexpr (Type != ConstraintType::NORMAL) {
-      EXPECT_EQ(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().cVarNode(), NULL_NODE_ID);
       --numSearchVars;
       // violation and c
       numVariables -= 2;
     } else {
-      EXPECT_NE(invNode().cVarNode(), invariantgraph::NULL_NODE_ID);
+      EXPECT_NE(invNode().cVarNode(), NULL_NODE_ID);
     }
     EXPECT_EQ(engine.searchVariables().size(), numSearchVars);
 
@@ -204,21 +205,22 @@ class AbstractCountGeqNodeTest
   }
 
   void propagation() {
-    PropagationEngine engine;
+    propagation::PropagationEngine engine;
     engine.open();
     addInputVarsToEngine(engine);
     invNode().registerOutputVariables(*_invariantGraph, engine);
     invNode().registerNode(*_invariantGraph, engine);
 
-    std::vector<VarId> inputs;
+    std::vector<propagation::VarId> inputs;
 
     for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
-      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
       inputs.emplace_back(varId(inputVarNodeId));
     }
 
-    const VarId violationId = invNode().violationVarId(*_invariantGraph);
-    EXPECT_NE(violationId, NULL_ID);
+    const propagation::VarId violationId =
+        invNode().violationVarId(*_invariantGraph);
+    EXPECT_NE(violationId, propagation::NULL_ID);
     if constexpr (Type == ConstraintType::REIFIED) {
       EXPECT_EQ(violationId, varId(r));
     }
@@ -230,21 +232,21 @@ class AbstractCountGeqNodeTest
     Int cUb = cParamVal;
 
     values.resize(3);
-    const VarId yVar = invNode().yVarNode() == invariantgraph::NULL_NODE_ID
-                           ? NULL_ID
-                           : varId(invNode().yVarNode());
+    const propagation::VarId yVar = invNode().yVarNode() == NULL_NODE_ID
+                                        ? propagation::NULL_ID
+                                        : varId(invNode().yVarNode());
 
     if constexpr (!YIsParameter) {
-      EXPECT_NE(yVar, NULL_ID);
+      EXPECT_NE(yVar, propagation::NULL_ID);
       yLb = engine.lowerBound(yVar);
       yUb = engine.upperBound(yVar);
     }
 
-    const VarId cVar = invNode().cVarNode() == invariantgraph::NULL_NODE_ID
-                           ? NULL_ID
-                           : varId(invNode().cVarNode());
+    const propagation::VarId cVar = invNode().cVarNode() == NULL_NODE_ID
+                                        ? propagation::NULL_ID
+                                        : varId(invNode().cVarNode());
     if constexpr (Type == ConstraintType::NORMAL) {
-      EXPECT_NE(cVar, NULL_ID);
+      EXPECT_NE(cVar, propagation::NULL_ID);
       cLb = engine.lowerBound(cVar);
       cUb = engine.upperBound(cVar);
     }
@@ -252,10 +254,10 @@ class AbstractCountGeqNodeTest
     for (size_t i = 0; i < values.size(); ++i) {
       values.at(i) = engine.committedValue(inputs.at(i));
     }
-    Int cVal = invNode().cVarNode() == invariantgraph::NULL_NODE_ID
+    Int cVal = invNode().cVarNode() == NULL_NODE_ID
                    ? cLb
                    : engine.committedValue(cVar);
-    Int yVal = invNode().yVarNode() == invariantgraph::NULL_NODE_ID
+    Int yVal = invNode().yVarNode() == NULL_NODE_ID
                    ? yLb
                    : engine.committedValue(yVar);
     if constexpr (Type != ConstraintType::CONSTANT_FALSE) {
@@ -382,3 +384,5 @@ TEST_F(CountGeqYParTrueNodeTest, Construction) { construction(); }
 TEST_F(CountGeqYParTrueNodeTest, Application) { application(); }
 
 TEST_F(CountGeqYParTrueNodeTest, Propagation) { propagation(); }
+
+}  // namespace atlantis::testing

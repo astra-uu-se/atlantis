@@ -1,11 +1,15 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
+#include "propagation/propagationEngine.hpp"
 
-class IntAbsNodeTest : public NodeTestBase<invariantgraph::IntAbsNode> {
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+class IntAbsNodeTest : public NodeTestBase<IntAbsNode> {
  public:
-  invariantgraph::VarNodeId a;
-  invariantgraph::VarNodeId b;
+  VarNodeId a;
+  VarNodeId b;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -34,15 +38,15 @@ TEST_F(IntAbsNodeTest, construction) {
 }
 
 TEST_F(IntAbsNodeTest, application) {
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
   engine.open();
   addInputVarsToEngine(engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVariables(*_invariantGraph, engine);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode(*_invariantGraph, engine);
   engine.close();
@@ -53,3 +57,4 @@ TEST_F(IntAbsNodeTest, application) {
   // a
   EXPECT_EQ(engine.numVariables(), 1);
 }
+}  // namespace atlantis::testing

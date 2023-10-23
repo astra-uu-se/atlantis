@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 CountEqNode::CountEqNode(std::vector<VarNodeId>&& x, VarNodeId y,
                          Int yParameter, VarNodeId c, Int cParameter,
@@ -128,30 +128,30 @@ std::unique_ptr<CountEqNode> CountEqNode::fromModelConstraint(
 }
 
 void CountEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                          Engine& engine) {
+                                          propagation::Engine& engine) {
   if (!_cIsParameter) {
-    if (invariantGraph.varId(cVarNode()) == NULL_ID) {
+    if (invariantGraph.varId(cVarNode()) == propagation::NULL_ID) {
       assert(!isReified());
       assert(shouldHold());
       invariantGraph.varNode(cVarNode()).setVarId(engine.makeIntVar(0, 0, 0));
     }
-  } else if (violationVarId(invariantGraph) == NULL_ID) {
+  } else if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     _intermediate = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
       setViolationVarId(
           invariantGraph,
-          engine.makeIntView<EqualConst>(engine, _intermediate, _cParameter));
+          engine.makeIntView<propagation::EqualConst>(engine, _intermediate, _cParameter));
     } else {
       assert(!isReified());
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<NotEqualConst>(engine, _intermediate,
+                        engine.makeIntView<propagation::NotEqualConst>(engine, _intermediate,
                                                           _cParameter));
     }
   }
 }
 
-void CountEqNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  std::vector<VarId> engineInputs;
+void CountEqNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+  std::vector<propagation::VarId> engineInputs;
   const size_t inputSize =
       staticInputVarNodeIds().size() - static_cast<size_t>(!_yIsParameter);
 
@@ -163,12 +163,12 @@ void CountEqNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
 
   if (!_yIsParameter) {
     assert(yVarNode() != NULL_NODE_ID);
-    assert(invariantGraph.varId(yVarNode()) != NULL_ID);
+    assert(invariantGraph.varId(yVarNode()) != propagation::NULL_ID);
     assert(_cIsParameter || (cVarNode() != NULL_NODE_ID));
-    assert(_cIsParameter || (invariantGraph.varId(cVarNode()) != NULL_ID));
-    assert(_cIsParameter == (_intermediate != NULL_ID));
-    assert(_cIsParameter == (violationVarId(invariantGraph) != NULL_ID));
-    engine.makeInvariant<Count>(
+    assert(_cIsParameter || (invariantGraph.varId(cVarNode()) != propagation::NULL_ID));
+    assert(_cIsParameter == (_intermediate != propagation::NULL_ID));
+    assert(_cIsParameter == (violationVarId(invariantGraph) != propagation::NULL_ID));
+    engine.makeInvariant<propagation::Count>(
         engine,
         _cIsParameter ? _intermediate : invariantGraph.varId(cVarNode()),
         invariantGraph.varId(yVarNode()), engineInputs);
@@ -176,20 +176,20 @@ void CountEqNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
   }
   assert(_yIsParameter);
   if (!_cIsParameter) {
-    assert(violationVarId(invariantGraph) == NULL_ID);
+    assert(violationVarId(invariantGraph) == propagation::NULL_ID);
     assert(shouldHold());
     assert(!isReified());
     assert(cVarNode() != NULL_NODE_ID);
-    assert(invariantGraph.varId(cVarNode()) != NULL_ID);
-    engine.makeInvariant<CountConst>(engine, invariantGraph.varId(cVarNode()),
+    assert(invariantGraph.varId(cVarNode()) != propagation::NULL_ID);
+    engine.makeInvariant<propagation::CountConst>(engine, invariantGraph.varId(cVarNode()),
                                      _yParameter, engineInputs);
     return;
   }
   assert(_cIsParameter);
-  assert(violationVarId(invariantGraph) != NULL_ID);
-  assert(_intermediate != NULL_ID);
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  assert(_intermediate != propagation::NULL_ID);
   assert(cVarNode() == NULL_NODE_ID);
-  engine.makeInvariant<CountConst>(engine, _intermediate, _yParameter,
+  engine.makeInvariant<propagation::CountConst>(engine, _intermediate, _yParameter,
                                    engineInputs);
 }
 

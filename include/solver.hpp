@@ -9,6 +9,8 @@
 #include "search/annealing/annealingScheduleFactory.hpp"
 #include "search/searchStatistics.hpp"
 
+namespace atlantis {
+
 class Solver {
  private:
   std::filesystem::path _modelFile;
@@ -31,3 +33,5 @@ class Solver {
 
   search::SearchStatistics solve(logging::Logger& logger);
 };
+
+}  // namespace atlantis

@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 BoolLinEqNode::BoolLinEqNode(std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& variables, Int c,
@@ -91,30 +91,30 @@ std::unique_ptr<BoolLinEqNode> BoolLinEqNode::fromModelConstraint(
 }
 
 void BoolLinEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                            Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+                                            propagation::Engine& engine) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     _sumVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<EqualConst>(engine, _sumVarId, _c));
+                        engine.makeIntView<propagation::EqualConst>(engine, _sumVarId, _c));
     } else {
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
                                             engine, _sumVarId, _c));
     }
   }
 }
 
 void BoolLinEqNode::registerNode(InvariantGraph& invariantGraph,
-                                 Engine& engine) {
-  std::vector<VarId> variables;
+                                 propagation::Engine& engine) {
+  std::vector<propagation::VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  assert(_sumVarId != NULL_ID);
-  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(_sumVarId != propagation::NULL_ID);
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  engine.makeInvariant<BoolLinear>(engine, _sumVarId, _coeffs, variables);
+  engine.makeInvariant<propagation::BoolLinear>(engine, _sumVarId, _coeffs, variables);
 }
 
 }  // namespace invariantgraph

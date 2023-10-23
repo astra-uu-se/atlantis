@@ -6,29 +6,32 @@
 #include <utility>
 #include <vector>
 
-#include "core/propagationEngine.hpp"
 #include "fznparser/model.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/types.hpp"
+#include "propagation/propagationEngine.hpp"
 #include "utils/variant.hpp"
 
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
 template <typename InvNode>
-class NodeTestBase : public testing::Test {
+class NodeTestBase : public ::testing::Test {
  protected:
   std::unique_ptr<fznparser::Model> _model;
-  std::unique_ptr<invariantgraph::InvariantGraph> _invariantGraph;
+  std::unique_ptr<InvariantGraph> _invariantGraph;
 
-  invariantgraph::InvariantNodeId _invNodeId =
-      invariantgraph::InvariantNodeId(invariantgraph::NULL_NODE_ID);
+  InvariantNodeId _invNodeId = InvariantNodeId(NULL_NODE_ID);
 
   void SetUp() override {
     _model = std::make_unique<fznparser::Model>();
-    _invariantGraph = std::make_unique<invariantgraph::InvariantGraph>();
+    _invariantGraph = std::make_unique<InvariantGraph>();
   }
 
   InvNode& invNode() {
-    EXPECT_NE(_invNodeId, invariantgraph::NULL_NODE_ID);
-    if (_invNodeId.type == invariantgraph::InvariantNodeId::Type::INVARIANT) {
+    EXPECT_NE(_invNodeId, NULL_NODE_ID);
+    if (_invNodeId.type == InvariantNodeId::Type::INVARIANT) {
       return dynamic_cast<InvNode&>(_invariantGraph->invariantNode(_invNodeId));
     } else {
       return dynamic_cast<InvNode&>(
@@ -52,8 +55,8 @@ class NodeTestBase : public testing::Test {
         OtherInvNode::fromModelConstraint(constraint, *_invariantGraph)));
   }
 
-  invariantgraph::VarNodeId createIntVar(int64_t lowerBound, int64_t upperBound,
-                                         std::string identifier) {
+  VarNodeId createIntVar(int64_t lowerBound, int64_t upperBound,
+                         std::string identifier) {
     EXPECT_FALSE(_model->hasVariable(identifier));
     const fznparser::IntVar& var =
         std::get<fznparser::IntVar>(_model->addVariable(
@@ -61,18 +64,18 @@ class NodeTestBase : public testing::Test {
     return _invariantGraph->createVarNode(var);
   }
 
-  invariantgraph::VarNodeId createBoolVar(std::string identifier) {
+  VarNodeId createBoolVar(std::string identifier) {
     EXPECT_FALSE(_model->hasVariable(identifier));
     const fznparser::BoolVar& var = std::get<fznparser::BoolVar>(
         _model->addVariable(std::move(fznparser::BoolVar(identifier))));
     return _invariantGraph->createVarNode(var);
   }
 
-  invariantgraph::VarNode& varNode(const std::string& identifier) {
+  VarNode& varNode(const std::string& identifier) {
     return _invariantGraph->varNode(identifier);
   }
 
-  invariantgraph::VarNode& varNode(invariantgraph::VarNodeId varNodeId) {
+  VarNode& varNode(VarNodeId varNodeId) {
     return _invariantGraph->varNode(varNodeId);
   }
 
@@ -80,7 +83,7 @@ class NodeTestBase : public testing::Test {
     return std::get<fznparser::IntVar>(_model->variable(identifier));
   }
 
-  const fznparser::IntVar& intVar(invariantgraph::VarNodeId varNodeId) {
+  const fznparser::IntVar& intVar(VarNodeId varNodeId) {
     return std::get<fznparser::IntVar>(
         _model->variable(varNode(varNodeId).identifier()));
   }
@@ -89,20 +92,20 @@ class NodeTestBase : public testing::Test {
     return std::get<fznparser::BoolVar>(_model->variable(identifier));
   }
 
-  const fznparser::BoolVar& boolVar(invariantgraph::VarNodeId varNodeId) {
+  const fznparser::BoolVar& boolVar(VarNodeId varNodeId) {
     return std::get<fznparser::BoolVar>(
         _model->variable(varNode(varNodeId).identifier()));
   }
 
-  VarId varId(const std::string& identifier) {
+  propagation::VarId varId(const std::string& identifier) {
     return varNode(identifier).varId();
   }
 
-  VarId varId(invariantgraph::VarNodeId varNodeId) {
+  propagation::VarId varId(VarNodeId varNodeId) {
     return varNode(varNodeId).varId();
   }
 
-  std::string identifier(invariantgraph::VarNodeId varNodeId) {
+  std::string identifier(VarNodeId varNodeId) {
     return varNode(varNodeId).identifier();
   }
 
@@ -114,19 +117,19 @@ class NodeTestBase : public testing::Test {
                 fznparser::Annotation(identifier)}});
   }
 
-  void addInputVarsToEngine(PropagationEngine& engine) {
+  void addInputVarsToEngine(propagation::PropagationEngine& engine) {
     EXPECT_EQ(engine.numVariables(), 0);
     for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
-      EXPECT_EQ(varId(varNodeId), NULL_ID);
+      EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
       const auto& [lb, ub] = varNode(varNodeId).bounds();
       varNode(varNodeId).setVarId(engine.makeIntVar(lb, lb, ub));
-      EXPECT_NE(varId(varNodeId), NULL_ID);
+      EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
     for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
-      EXPECT_EQ(varId(varNodeId), NULL_ID);
+      EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
       const auto& [lb, ub] = varNode(varNodeId).bounds();
       varNode(varNodeId).setVarId(engine.makeIntVar(lb, lb, ub));
-      EXPECT_NE(varId(varNodeId), NULL_ID);
+      EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(engine.numVariables(),
               invNode().staticInputVarNodeIds().size() +
@@ -134,12 +137,12 @@ class NodeTestBase : public testing::Test {
     expectInputsRegistered(invNode(), engine);
   }
 
-  [[nodiscard]] inline VarId engineVarId(
-      const invariantgraph::VarNodeId& varNodeId) const {
+  [[nodiscard]] inline propagation::VarId engineVarId(
+      const VarNodeId& varNodeId) const {
     return _invariantGraph->varNode(varNodeId).varId();
   }
 
-  void expectInputTo(const invariantgraph::InvariantNode& invNode) {
+  void expectInputTo(const InvariantNode& invNode) {
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
       bool found = false;
       for (const auto& invNodeId :
@@ -164,25 +167,25 @@ class NodeTestBase : public testing::Test {
     }
   }
 
-  void expectOutputOf(const invariantgraph::InvariantNode& invNode) {
+  void expectOutputOf(const InvariantNode& invNode) {
     for (const auto& varNodeId : invNode.outputVarNodeIds()) {
       EXPECT_EQ(_invariantGraph->varNode(varNodeId).outputOf(), invNode.id());
     }
   }
 
-  void expectInputsRegistered(const invariantgraph::InvariantNode& invNode,
-                              const PropagationEngine& engine) {
+  void expectInputsRegistered(const InvariantNode& invNode,
+                              const propagation::PropagationEngine& engine) {
     EXPECT_EQ(engine.numVariables(),
               invNode.staticInputVarNodeIds().size() +
                   invNode.dynamicInputVarNodeIds().size());
     std::vector<bool> registered(engine.numVariables(), false);
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
-      EXPECT_NE(engineVarId(varNodeId), NULL_ID);
+      EXPECT_NE(engineVarId(varNodeId), propagation::NULL_ID);
       EXPECT_FALSE(registered.at(engineVarId(varNodeId) - 1));
       registered.at(engineVarId(varNodeId) - 1) = true;
     }
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
-      EXPECT_NE(engineVarId(varNodeId), NULL_ID);
+      EXPECT_NE(engineVarId(varNodeId), propagation::NULL_ID);
       EXPECT_FALSE(registered.at(engineVarId(varNodeId) - 1));
       registered.at(engineVarId(varNodeId) - 1) = true;
     }
@@ -198,3 +201,4 @@ enum class ConstraintType : unsigned char {
   CONSTANT_FALSE = 2,
   CONSTANT_TRUE = 3
 };
+}  // namespace atlantis::testing

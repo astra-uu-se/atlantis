@@ -4,10 +4,10 @@
 #include <random>
 #include <vector>
 
-#include "core/domains.hpp"
-#include "core/types.hpp"
+#include "types.hpp"
+#include "utils/domains.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 class RandomProvider {
  private:
@@ -56,7 +56,6 @@ class RandomProvider {
   Int inDomain(SearchDomain& domain) {
     return std::visit<Int>([&](const auto& dom) { return inDomain(dom); },
                            domain.innerDomain());
-  
   }
 
   template <typename T>
@@ -72,4 +71,4 @@ class RandomProvider {
   }
 };
 
-}  // namespace search
+}  // namespace atlantis::search

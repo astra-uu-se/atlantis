@@ -1,6 +1,6 @@
 #include "search/neighbourhoods/randomNeighbourhood.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 void RandomNeighbourhood::initialise(RandomProvider& random,
                                      AssignmentModifier& modifications) {
@@ -19,4 +19,4 @@ bool RandomNeighbourhood::randomMove(RandomProvider& random,
       assignment, annealer);
 }
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

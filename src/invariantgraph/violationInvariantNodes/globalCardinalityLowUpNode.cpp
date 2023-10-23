@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
     std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
@@ -67,11 +67,11 @@ GlobalCardinalityLowUpNode::fromModelConstraint(
 }
 
 void GlobalCardinalityLowUpNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+    InvariantGraph& invariantGraph, propagation::Engine& engine) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (!shouldHold()) {
       _intermediate = engine.makeIntVar(0, 0, staticInputVarNodeIds().size());
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
                                             engine, _intermediate, 0));
     } else {
       registerViolation(invariantGraph, engine);
@@ -80,17 +80,17 @@ void GlobalCardinalityLowUpNode::registerOutputVariables(
 }
 
 void GlobalCardinalityLowUpNode::registerNode(InvariantGraph& invariantGraph,
-                                              Engine& engine) {
-  std::vector<VarId> inputs;
+                                              propagation::Engine& engine) {
+  std::vector<propagation::VarId> inputs;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputs),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
   if (shouldHold()) {
-    engine.makeInvariant<GlobalCardinalityConst<false>>(
+    engine.makeInvariant<propagation::GlobalCardinalityConst<false>>(
         engine, violationVarId(invariantGraph), inputs, _cover, _low, _up);
   } else {
-    engine.makeInvariant<GlobalCardinalityConst<false>>(
+    engine.makeInvariant<propagation::GlobalCardinalityConst<false>>(
         engine, _intermediate, inputs, _cover, _low, _up);
   }
 }

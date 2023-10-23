@@ -3,22 +3,22 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "constraints/equal.hpp"
-#include "constraints/globalCardinalityConst.hpp"
-#include "constraints/notEqual.hpp"
+#include "propagation/constraints/equal.hpp"
+#include "propagation/constraints/globalCardinalityConst.hpp"
+#include "propagation/constraints/notEqual.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/exists.hpp"
-#include "invariants/linear.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/invariants/exists.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
  private:
   const std::vector<Int> _cover;
   const std::vector<Int> _low;
   const std::vector<Int> _up;
-  VarId _intermediate{NULL_ID};
+  propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
   explicit GlobalCardinalityLowUpClosedNode(std::vector<VarNodeId>&& x,
@@ -41,8 +41,8 @@ class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
   static std::unique_ptr<GlobalCardinalityLowUpClosedNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVariables(InvariantGraph&, propagation::Engine& engine) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::Engine& engine) override;
 };
 }  // namespace invariantgraph

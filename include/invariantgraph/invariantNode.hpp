@@ -6,11 +6,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "core/engine.hpp"
 #include "invariantgraph/types.hpp"
 #include "invariantgraph/varNode.hpp"
+#include "propagation/engine.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 /**
  * A node in the invariant graph which defines a number of variables. This could
  * be an invariant, a soft constraint (which defines a violation), or a view.
@@ -26,7 +26,8 @@ class InvariantNode {
   InvariantNodeId _id{NULL_NODE_ID};
 
  public:
-  using VariableMap = std::unordered_map<VarNodeId, VarId, VarNodeIdHash>;
+  using VariableMap =
+      std::unordered_map<VarNodeId, propagation::VarId, VarNodeIdHash>;
 
   explicit InvariantNode(std::vector<VarNodeId>&& outputIds,
                          std::vector<VarNodeId>&& staticInputIds = {},
@@ -48,7 +49,8 @@ class InvariantNode {
    * @param engine The engine with which to register the variables, constraints
    * and views.
    */
-  virtual void registerOutputVariables(InvariantGraph&, Engine&) = 0;
+  virtual void registerOutputVariables(InvariantGraph&,
+                                       propagation::Engine&) = 0;
 
   /**
    * Registers the current node with the engine, as well as all the variables
@@ -60,7 +62,7 @@ class InvariantNode {
    * @param engine The engine with which to register the variables, constraints
    * and views.
    */
-  virtual void registerNode(InvariantGraph&, Engine&) = 0;
+  virtual void registerNode(InvariantGraph&, propagation::Engine&) = 0;
 
   /**
    * @return The variable nodes defined by this node.
@@ -70,9 +72,10 @@ class InvariantNode {
   /**
    * @return The violation variable of this variable defining node. Only
    * applicable if the current node is a violation invariant. If this node does
-   * not define a violation variable, this method returns NULL_ID.
+   * not define a violation variable, this method returns propagation::NULL_ID.
    */
-  [[nodiscard]] virtual VarId violationVarId(const InvariantGraph&) const;
+  [[nodiscard]] virtual propagation::VarId violationVarId(
+      const InvariantGraph&) const;
 
   [[nodiscard]] const std::vector<VarNodeId>& staticInputVarNodeIds()
       const noexcept;
@@ -97,7 +100,8 @@ class InvariantNode {
   friend class ReifiedConstraint;
 
  protected:
-  static VarId makeEngineVar(Engine&, VarNode&, Int initialValue = 0);
+  static propagation::VarId makeEngineVar(
+      propagation::Engine&, VarNode&, Int initialValue = 0);
 
   void markOutputTo(VarNode& node, bool registerHere = true);
 
@@ -105,4 +109,4 @@ class InvariantNode {
 
   void markDynamicInputTo(VarNode& node, bool registerHere = true);
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

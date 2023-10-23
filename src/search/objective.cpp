@@ -1,14 +1,16 @@
 #include "search/objective.hpp"
 
-#include "constraints/lessEqual.hpp"
+#include "propagation/constraints/lessEqual.hpp"
 #include "utils/variant.hpp"
 
-search::Objective::Objective(PropagationEngine& engine,
-                             fznparser::ProblemType problemType)
+namespace atlantis::search {
+
+Objective::Objective(propagation::PropagationEngine& engine,
+                     fznparser::ProblemType problemType)
     : _engine(engine), _problemType(problemType) {}
 
-VarId search::Objective::registerNode(VarId totalViolationId,
-                                      VarId objectiveVarId) {
+propagation::VarId Objective::registerNode(propagation::VarId totalViolationId,
+                                           propagation::VarId objectiveVarId) {
   assert(_engine.isOpen());
 
   _objective = objectiveVarId;
@@ -16,21 +18,23 @@ VarId search::Objective::registerNode(VarId totalViolationId,
   if (_problemType == fznparser::ProblemType::MINIMIZE) {
     return registerOptimisation(
         totalViolationId, objectiveVarId, _engine.upperBound(objectiveVarId),
-        [&](VarId v, VarId b) {
-          _engine.makeConstraint<LessEqual>(_engine, v, objectiveVarId, b);
+        [&](propagation::VarId v, propagation::VarId b) {
+          _engine.makeConstraint<propagation::LessEqual>(_engine, v,
+                                                         objectiveVarId, b);
         });
   } else if (_problemType == fznparser::ProblemType::MAXIMIZE) {
     return registerOptimisation(
         totalViolationId, objectiveVarId, _engine.lowerBound(objectiveVarId),
-        [&](VarId v, VarId b) {
-          _engine.makeConstraint<LessEqual>(_engine, v, b, objectiveVarId);
+        [&](propagation::VarId v, propagation::VarId b) {
+          _engine.makeConstraint<propagation::LessEqual>(_engine, v, b,
+                                                         objectiveVarId);
         });
   }
   assert(_problemType == fznparser::ProblemType::SATISFY);
   return totalViolationId;
 }
 
-void search::Objective::tighten() {
+void Objective::tighten() {
   if (!_bound) {
     return;
   }
@@ -49,3 +53,5 @@ void search::Objective::tighten() {
   _engine.query(*_violation);
   _engine.endCommit();
 }
+
+}  // namespace atlantis::search

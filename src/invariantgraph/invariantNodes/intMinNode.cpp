@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntMinNode::IntMinNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
@@ -24,13 +24,13 @@ std::unique_ptr<IntMinNode> IntMinNode::fromModelConstraint(
 }
 
 void IntMinNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         Engine& engine) {
+                                         propagation::Engine& engine) {
   makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void IntMinNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
-  engine.makeInvariant<BinaryMin>(
+void IntMinNode::registerNode(InvariantGraph& invariantGraph, propagation::Engine& engine) {
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  engine.makeInvariant<propagation::BinaryMin>(
       engine, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(a()), invariantGraph.varId(b()));
 }

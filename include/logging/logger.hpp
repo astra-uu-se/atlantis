@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 
-namespace logging {
+namespace atlantis::logging {
 
 class Logger;
 
@@ -156,4 +156,4 @@ class Logger {
   }
 };
 
-}  // namespace logging
+}  // namespace atlantis::logging

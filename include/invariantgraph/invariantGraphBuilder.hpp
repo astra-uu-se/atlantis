@@ -8,7 +8,7 @@
 #include "invariantGraph.hpp"
 #include "utils/variant.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class InvariantGraphBuilder {
  private:
   fznparser::Model& _model;

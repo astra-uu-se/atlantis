@@ -1,32 +1,36 @@
 #include <gtest/gtest.h>
 
-#include "core/propagationEngine.hpp"
+#include "propagation/propagationEngine.hpp"
 #include "search/annealing/annealerContainer.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
+namespace atlantis::testing {
+
+using namespace atlantis::search;
+
 class CircuitNeighbourhoodTest : public ::testing::Test {
  public:
-  std::unique_ptr<PropagationEngine> engine;
+  std::unique_ptr<propagation::PropagationEngine> engine;
   std::unique_ptr<search::Assignment> assignment;
   search::RandomProvider random{123456789};
 
   std::vector<search::SearchVariable> next;
 
   void SetUp() override {
-    engine = std::make_unique<PropagationEngine>();
+    engine = std::make_unique<propagation::PropagationEngine>();
 
     engine->open();
     for (auto i = 0u; i < 4; ++i) {
-      VarId var = engine->makeIntVar(1, 1, 4);
+      propagation::VarId var = engine->makeIntVar(1, 1, 4);
       next.emplace_back(var, SearchDomain(1, 4));
     }
 
-    VarId objective = engine->makeIntVar(0, 0, 0);
-    VarId violation = engine->makeIntVar(0, 0, 0);
+    propagation::VarId objective = engine->makeIntVar(0, 0, 0);
+    propagation::VarId violation = engine->makeIntVar(0, 0, 0);
     engine->close();
 
     assignment = std::make_unique<search::Assignment>(
-        *engine, objective, violation, ObjectiveDirection::NONE);
+        *engine, objective, violation, propagation::ObjectiveDirection::NONE);
   }
 
   void expectCycle() {
@@ -91,4 +95,6 @@ TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
     random.seed(std::time(nullptr));
     neighbourhood.randomMove(random, *assignment, annealer);
   }
+}
+
 }

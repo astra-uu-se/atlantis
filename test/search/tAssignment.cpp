@@ -1,20 +1,24 @@
 #include <gtest/gtest.h>
 
-#include "constraints/equal.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/linear.hpp"
+#include "propagation/constraints/equal.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/propagationEngine.hpp"
 #include "search/assignment.hpp"
 
-class AssignmentTest : public testing::Test {
+namespace atlantis::testing {
+
+using namespace atlantis::search;
+
+class AssignmentTest : public ::testing::Test {
  public:
-  VarId a;
-  VarId b;
-  VarId c;
-  VarId d;
+  propagation::VarId a;
+  propagation::VarId b;
+  propagation::VarId c;
+  propagation::VarId d;
 
-  VarId violation;
+  propagation::VarId violation;
 
-  PropagationEngine engine;
+  propagation::PropagationEngine engine;
 
   // Models the following simple COP:
   // c <- a + b (a and b have domain 0..10)
@@ -28,23 +32,24 @@ class AssignmentTest : public testing::Test {
     d = engine.makeIntVar(3, 3, 3);
     violation = engine.makeIntVar(0, 0, 10);
 
-    engine.makeInvariant<Linear>(engine, c, std::vector<VarId>{a, b});
-    engine.makeConstraint<Equal>(engine, violation, c, d);
+    engine.makeInvariant<propagation::Linear>(
+        engine, c, std::vector<propagation::VarId>{a, b});
+    engine.makeConstraint<propagation::Equal>(engine, violation, c, d);
     engine.close();
   }
 };
 
 TEST_F(AssignmentTest, search_variables_are_identified) {
   search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE};
 
-  std::vector<VarId> expectedSearchVariables{a, b};
+  std::vector<propagation::VarId> expectedSearchVariables{a, b};
   EXPECT_EQ(assignment.searchVariables(), expectedSearchVariables);
 }
 
 TEST_F(AssignmentTest, cost) {
   search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE};
 
   EXPECT_FALSE(assignment.cost().satisfiesConstraints());
 
@@ -64,7 +69,7 @@ TEST_F(AssignmentTest, cost) {
 
 TEST_F(AssignmentTest, assign_sets_values) {
   search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE};
 
   assignment.assign([&](auto& modifications) {
     modifications.set(a, 1);
@@ -77,7 +82,7 @@ TEST_F(AssignmentTest, assign_sets_values) {
 
 TEST_F(AssignmentTest, probe) {
   search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE};
 
   auto cost = assignment.probe([&](auto& modifications) {
     modifications.set(a, 1);
@@ -93,7 +98,7 @@ TEST_F(AssignmentTest, probe) {
 
 TEST_F(AssignmentTest, satisfies_constraints) {
   search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE};
 
   EXPECT_FALSE(assignment.satisfiesConstraints());
 
@@ -104,3 +109,5 @@ TEST_F(AssignmentTest, satisfies_constraints) {
 
   EXPECT_TRUE(assignment.satisfiesConstraints());
 }
+
+}  // namespace atlantis::testing

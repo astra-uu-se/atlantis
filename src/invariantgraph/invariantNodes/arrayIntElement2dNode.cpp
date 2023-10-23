@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 ArrayIntElement2dNode::ArrayIntElement2dNode(
     VarNodeId idx1, VarNodeId idx2, std::vector<std::vector<Int>>&& parMatrix,
@@ -62,14 +62,14 @@ ArrayIntElement2dNode::fromModelConstraint(
 }
 
 void ArrayIntElement2dNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
+    InvariantGraph& invariantGraph, propagation::Engine& engine) {
   makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void ArrayIntElement2dNode::registerNode(InvariantGraph& invariantGraph,
-                                         Engine& engine) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
-  engine.makeInvariant<Element2dConst>(
+                                         propagation::Engine& engine) {
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  engine.makeInvariant<propagation::Element2dConst>(
       engine, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), _parMatrix,
       _offset1, _offset2);

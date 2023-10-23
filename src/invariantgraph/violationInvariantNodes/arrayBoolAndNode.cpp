@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 ArrayBoolAndNode::ArrayBoolAndNode(std::vector<VarNodeId>&& as,
                                    VarNodeId output)
@@ -49,28 +49,28 @@ std::unique_ptr<ArrayBoolAndNode> ArrayBoolAndNode::fromModelConstraint(
 }
 
 void ArrayBoolAndNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                               Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+                                               propagation::Engine& engine) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (shouldHold()) {
       registerViolation(invariantGraph, engine);
     } else {
       assert(!isReified());
       _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
+      setViolationVarId(invariantGraph, engine.makeIntView<propagation::NotEqualConst>(
                                             engine, _intermediate, 0));
     }
   }
 }
 
 void ArrayBoolAndNode::registerNode(InvariantGraph& invariantGraph,
-                                    Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
-  std::vector<VarId> inputs;
+                                    propagation::Engine& engine) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  std::vector<propagation::VarId> inputs;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputs),
                  [&](const auto& node) { return invariantGraph.varId(node); });
 
-  engine.makeInvariant<ForAll>(
+  engine.makeInvariant<propagation::ForAll>(
       engine, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
       inputs);
 }

@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 CircuitNeighbourhood::CircuitNeighbourhood(
     std::vector<SearchVariable>&& variables)
@@ -121,4 +121,4 @@ size_t CircuitNeighbourhood::getNodeIdx(Int node) const noexcept {
   return static_cast<size_t>(node) - 1;
 }
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

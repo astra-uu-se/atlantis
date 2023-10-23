@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& x,
                                              std::vector<Int>&& cover,
@@ -66,15 +66,15 @@ GlobalCardinalityNode::fromModelConstraint(
 }
 
 void GlobalCardinalityNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
+    InvariantGraph& invariantGraph, propagation::Engine& engine) {
   if (!isReified() && shouldHold()) {
     for (const auto& countOutput : outputVarNodeIds()) {
-      if (invariantGraph.varId(countOutput) == NULL_ID) {
+      if (invariantGraph.varId(countOutput) == propagation::NULL_ID) {
         invariantGraph.varNode(countOutput)
             .setVarId(engine.makeIntVar(0, 0, _inputs.size()));
       }
     }
-  } else if (violationVarId(invariantGraph) == NULL_ID) {
+  } else if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     registerViolation(invariantGraph, engine);
 
     for (size_t i = 0; i < _counts.size(); ++i) {
@@ -91,32 +91,32 @@ void GlobalCardinalityNode::registerOutputVariables(
 }
 
 void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,
-                                         Engine& engine) {
-  std::vector<VarId> inputs;
+                                         propagation::Engine& engine) {
+  std::vector<propagation::VarId> inputs;
   std::transform(_inputs.begin(), _inputs.end(), std::back_inserter(inputs),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
   if (!isReified() && shouldHold()) {
-    std::vector<VarId> countOutputs;
+    std::vector<propagation::VarId> countOutputs;
     std::transform(_counts.begin(), _counts.end(),
                    std::back_inserter(countOutputs),
                    [&](const auto& id) { return invariantGraph.varId(id); });
 
-    engine.makeInvariant<GlobalCardinalityOpen>(engine, countOutputs, inputs,
+    engine.makeInvariant<propagation::GlobalCardinalityOpen>(engine, countOutputs, inputs,
                                                 _cover);
   } else {
-    assert(violationVarId(invariantGraph) != NULL_ID);
+    assert(violationVarId(invariantGraph) != propagation::NULL_ID);
     assert(_intermediate.size() == _counts.size());
     assert(_violations.size() == _counts.size());
-    engine.makeInvariant<GlobalCardinalityOpen>(engine, _intermediate, inputs,
+    engine.makeInvariant<propagation::GlobalCardinalityOpen>(engine, _intermediate, inputs,
                                                 _cover);
     for (size_t i = 0; i < _counts.size(); ++i) {
       if (shouldHold()) {
-        engine.makeConstraint<Equal>(engine, _violations.at(i),
+        engine.makeConstraint<propagation::Equal>(engine, _violations.at(i),
                                      _intermediate.at(i),
                                      invariantGraph.varId(_counts.at(i)));
       } else {
-        engine.makeConstraint<NotEqual>(engine, _violations.at(i),
+        engine.makeConstraint<propagation::NotEqual>(engine, _violations.at(i),
                                         _intermediate.at(i),
                                         invariantGraph.varId(_counts.at(i)));
       }
@@ -124,12 +124,12 @@ void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,
     if (_counts.size() > 1) {
       if (shouldHold()) {
         // To hold, each count must be equal to its corresponding intermediate:
-        engine.makeInvariant<Linear>(engine, violationVarId(invariantGraph),
+        engine.makeInvariant<propagation::Linear>(engine, violationVarId(invariantGraph),
                                      _violations);
       } else {
         // To hold, only one count must not be equal to its corresponding
         // intermediate:
-        engine.makeInvariant<Exists>(engine, violationVarId(invariantGraph),
+        engine.makeInvariant<propagation::Exists>(engine, violationVarId(invariantGraph),
                                      _violations);
       }
     }

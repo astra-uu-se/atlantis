@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 AllEqualNode::AllEqualNode(std::vector<VarNodeId>&& variables, VarNodeId r)
     : ViolationInvariantNode(std::move(variables), r) {}
@@ -51,18 +51,18 @@ std::unique_ptr<AllEqualNode> AllEqualNode::fromModelConstraint(
 }
 
 void AllEqualNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                           Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+                                           propagation::Engine& engine) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     _allDifferentViolationVarId = engine.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(
-          invariantGraph,
-          engine.makeIntView<EqualConst>(engine, _allDifferentViolationVarId,
-                                         staticInputVarNodeIds().size() - 1));
+      setViolationVarId(invariantGraph,
+                        engine.makeIntView<propagation::EqualConst>(
+                            engine, _allDifferentViolationVarId,
+                            staticInputVarNodeIds().size() - 1));
     } else {
       assert(!isReified());
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<NotEqualConst>(
+                        engine.makeIntView<propagation::NotEqualConst>(
                             engine, _allDifferentViolationVarId,
                             staticInputVarNodeIds().size() - 1));
     }
@@ -70,17 +70,17 @@ void AllEqualNode::registerOutputVariables(InvariantGraph& invariantGraph,
 }
 
 void AllEqualNode::registerNode(InvariantGraph& invariantGraph,
-                                Engine& engine) {
-  assert(_allDifferentViolationVarId != NULL_ID);
-  assert(violationVarId(invariantGraph) != NULL_ID);
+                                propagation::Engine& engine) {
+  assert(_allDifferentViolationVarId != propagation::NULL_ID);
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  std::vector<VarId> engineVariables;
+  std::vector<propagation::VarId> engineVariables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(engineVariables),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  engine.makeConstraint<AllDifferent>(engine, _allDifferentViolationVarId,
-                                      engineVariables);
+  engine.makeConstraint<propagation::AllDifferent>(
+      engine, _allDifferentViolationVarId, engineVariables);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

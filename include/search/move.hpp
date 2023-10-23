@@ -1,15 +1,16 @@
 #pragma once
 
 #include "assignment.hpp"
-#include "core/types.hpp"
 #include "cost.hpp"
+#include "propagation/types.hpp"
+#include "types.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 template <unsigned int N>
 class Move {
  public:
-  Move(std::array<VarId, N> variables, std::array<Int, N> values)
+  Move(std::array<propagation::VarId, N> variables, std::array<Int, N> values)
       : _variables(std::move(variables)), _values(std::move(values)) {}
 
   /**
@@ -47,11 +48,11 @@ class Move {
   }
 
  private:
-  std::array<VarId, N> _variables;
+  std::array<propagation::VarId, N> _variables;
   std::array<Int, N> _values;
 
-  Cost _cost{0, 0, ObjectiveDirection::NONE};
+  Cost _cost{0, 0, propagation::ObjectiveDirection::NONE};
   bool _probed{false};
 };
 
-}  // namespace search
+}  // namespace atlantis::search

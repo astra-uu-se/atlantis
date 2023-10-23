@@ -4,13 +4,13 @@
 #include "search/randomProvider.hpp"
 #include "search/searchVariable.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 class AllDifferentUniformNeighbourhood : public Neighbourhood {
  private:
   std::vector<search::SearchVariable> _variables;
   std::vector<Int> _domain;
-  const Engine& _engine;
+  const propagation::Engine& _engine;
 
   std::vector<size_t> _domIndices{};
   Int _offset{0};
@@ -19,7 +19,7 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
  public:
   AllDifferentUniformNeighbourhood(
       std::vector<search::SearchVariable>&& variables, std::vector<Int> domain,
-      const Engine& engine);
+      const propagation::Engine& engine);
 
   ~AllDifferentUniformNeighbourhood() override = default;
 
@@ -39,4 +39,4 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
                    Annealer& annealer);
 };
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

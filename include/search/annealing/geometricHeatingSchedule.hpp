@@ -2,7 +2,7 @@
 
 #include "annealingSchedule.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 class GeometricHeatingSchedule : public AnnealingSchedule {
  private:

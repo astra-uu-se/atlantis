@@ -2,7 +2,7 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 bool hasCorrectSignature(
     const std::vector<std::pair<std::string, size_t>> &nameNumArgPairs,

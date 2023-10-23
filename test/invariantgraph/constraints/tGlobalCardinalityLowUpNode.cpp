@@ -1,8 +1,14 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/violationInvariantNodes/globalCardinalityLowUpNode.hpp"
+#include "propagation/propagationEngine.hpp"
+
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+using ::testing::ContainerEq;
 
 static bool isSatisfied(const std::vector<Int>& values,
                         const std::vector<Int>& cover,
@@ -26,14 +32,14 @@ static bool isSatisfied(const std::vector<Int>& values,
 
 template <ConstraintType Type>
 class AbstractGlobalCardinalityLowUpNodeTest
-    : public NodeTestBase<invariantgraph::GlobalCardinalityLowUpNode> {
+    : public NodeTestBase<GlobalCardinalityLowUpNode> {
  public:
-  invariantgraph::VarNodeId x1;
-  invariantgraph::VarNodeId x2;
+  VarNodeId x1;
+  VarNodeId x2;
   const std::vector<Int> cover{2, 6};
   const std::vector<Int> low{0, 1};
   const std::vector<Int> up{1, 2};
-  invariantgraph::VarNodeId r;
+  VarNodeId r;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -93,10 +99,9 @@ class AbstractGlobalCardinalityLowUpNodeTest
 
     const size_t numInputs = 2;
     EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
-    std::vector<invariantgraph::VarNodeId> expectedInputs{x1, x2};
+    std::vector<VarNodeId> expectedInputs{x1, x2};
     EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
-    EXPECT_THAT(expectedInputs,
-                testing::ContainerEq(invNode().staticInputVarNodeIds()));
+    EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
     if (Type == ConstraintType::REIFIED) {
       EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
@@ -107,30 +112,28 @@ class AbstractGlobalCardinalityLowUpNodeTest
 
     if constexpr (Type == ConstraintType::REIFIED) {
       EXPECT_TRUE(invNode().isReified());
-      EXPECT_NE(invNode().reifiedViolationNodeId(),
-                invariantgraph::NULL_NODE_ID);
+      EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
       EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
     } else {
       EXPECT_FALSE(invNode().isReified());
-      EXPECT_EQ(invNode().reifiedViolationNodeId(),
-                invariantgraph::NULL_NODE_ID);
+      EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
     }
   }
 
   void application() {
-    PropagationEngine engine;
+    propagation::PropagationEngine engine;
     engine.open();
     addInputVarsToEngine(engine);
 
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+      EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
-    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
     invNode().registerOutputVariables(*_invariantGraph, engine);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+      EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
 
     invNode().registerNode(*_invariantGraph, engine);
     engine.close();
@@ -147,21 +150,22 @@ class AbstractGlobalCardinalityLowUpNodeTest
   }
 
   void propagation() {
-    PropagationEngine engine;
+    propagation::PropagationEngine engine;
     engine.open();
     addInputVarsToEngine(engine);
     invNode().registerOutputVariables(*_invariantGraph, engine);
     invNode().registerNode(*_invariantGraph, engine);
 
-    std::vector<VarId> inputs;
+    std::vector<propagation::VarId> inputs;
     for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
-      EXPECT_NE(varId(inputVarNodeId), NULL_ID);
+      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
       inputs.emplace_back(varId(inputVarNodeId));
     }
     EXPECT_EQ(inputs.size(), 2);
 
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), NULL_ID);
-    const VarId violationId = invNode().violationVarId(*_invariantGraph);
+    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
+    const propagation::VarId violationId =
+        invNode().violationVarId(*_invariantGraph);
 
     std::vector<Int> inputVals(inputs.size());
 
@@ -232,3 +236,5 @@ TEST_F(GlobalCardinalityLowUpTrueNodeTest, Construction) { construction(); }
 TEST_F(GlobalCardinalityLowUpTrueNodeTest, Application) { application(); }
 
 TEST_F(GlobalCardinalityLowUpTrueNodeTest, Propagation) { propagation(); }
+
+}  // namespace atlantis::testing

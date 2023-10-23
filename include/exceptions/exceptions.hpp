@@ -1,6 +1,8 @@
 #pragma once
 #include <stdexcept>
 
+namespace atlantis {
+
 class VariableAlreadyDefinedException : public std::runtime_error {
  public:
   /**
@@ -85,3 +87,5 @@ class VariableIsNotSearchVariable : public std::exception {
  public:
   explicit VariableIsNotSearchVariable() = default;
 };
+
+}

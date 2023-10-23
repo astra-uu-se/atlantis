@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntLinearNode::IntLinearNode(std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& variables,
@@ -71,9 +71,10 @@ std::unique_ptr<IntLinearNode> IntLinearNode::fromModelConstraint(
 }
 
 void IntLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                            Engine& engine) {
+                                            propagation::Engine& engine) {
   if (staticInputVarNodeIds().size() == 1 &&
-      invariantGraph.varId(staticInputVarNodeIds().front()) != NULL_ID) {
+      invariantGraph.varId(staticInputVarNodeIds().front()) !=
+          propagation::NULL_ID) {
     if (_coeffs.front() == 1 && _sum == 0) {
       invariantGraph.varNode(outputVarNodeIds().front())
           .setVarId(invariantGraph.varId(staticInputVarNodeIds().front()));
@@ -81,37 +82,40 @@ void IntLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
     }
 
     if (_definingCoefficient == -1) {
-      auto scalar = engine.makeIntView<ScalarView>(
+      auto scalar = engine.makeIntView<propagation::ScalarView>(
           engine, invariantGraph.varId(staticInputVarNodeIds().front()),
           _coeffs.front());
       invariantGraph.varNode(outputVarNodeIds().front())
-          .setVarId(engine.makeIntView<IntOffsetView>(engine, scalar, -_sum));
+          .setVarId(engine.makeIntView<propagation::IntOffsetView>(
+              engine, scalar, -_sum));
     } else {
       assert(_definingCoefficient == 1);
-      auto scalar = engine.makeIntView<ScalarView>(
+      auto scalar = engine.makeIntView<propagation::ScalarView>(
           engine, invariantGraph.varId(staticInputVarNodeIds().front()),
           -_coeffs.front());
       invariantGraph.varNode(outputVarNodeIds().front())
-          .setVarId(engine.makeIntView<IntOffsetView>(engine, scalar, _sum));
+          .setVarId(engine.makeIntView<propagation::IntOffsetView>(
+              engine, scalar, _sum));
     }
 
     return;
   }
 
-  if (_intermediateVarId == NULL_ID) {
+  if (_intermediateVarId == propagation::NULL_ID) {
     _intermediateVarId = engine.makeIntVar(0, 0, 0);
-    assert(invariantGraph.varId(outputVarNodeIds().front()) == NULL_ID);
+    assert(invariantGraph.varId(outputVarNodeIds().front()) ==
+           propagation::NULL_ID);
 
     auto offsetIntermediate = _intermediateVarId;
     if (_sum != 0) {
-      offsetIntermediate =
-          engine.makeIntView<IntOffsetView>(engine, _intermediateVarId, -_sum);
+      offsetIntermediate = engine.makeIntView<propagation::IntOffsetView>(
+          engine, _intermediateVarId, -_sum);
     }
 
     auto invertedIntermediate = offsetIntermediate;
     if (_definingCoefficient == 1) {
-      invertedIntermediate =
-          engine.makeIntView<ScalarView>(engine, offsetIntermediate, -1);
+      invertedIntermediate = engine.makeIntView<propagation::ScalarView>(
+          engine, offsetIntermediate, -1);
     }
 
     invariantGraph.varNode(outputVarNodeIds().front())
@@ -120,19 +124,21 @@ void IntLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
 }
 
 void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
-                                 Engine& engine) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
+                                 propagation::Engine& engine) {
+  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
+         propagation::NULL_ID);
 
-  std::vector<VarId> variables;
+  std::vector<propagation::VarId> variables;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(variables),
                  [&](const auto& node) { return invariantGraph.varId(node); });
-  if (_intermediateVarId == NULL_ID) {
+  if (_intermediateVarId == propagation::NULL_ID) {
     assert(variables.size() == 1);
     return;
   }
 
-  engine.makeInvariant<Linear>(engine, _intermediateVarId, _coeffs, variables);
+  engine.makeInvariant<propagation::Linear>(engine, _intermediateVarId, _coeffs,
+                                            variables);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph
