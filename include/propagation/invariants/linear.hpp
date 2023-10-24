@@ -9,8 +9,6 @@
 
 namespace atlantis::propagation {
 
-class SolverBase;
-
 /**
  * Invariant for output <- sum(coeffs_i * varArray_i)
  *

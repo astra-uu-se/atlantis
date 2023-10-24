@@ -4,13 +4,11 @@
 #include <utility>
 #include <vector>
 
-#include "types.hpp"
 #include "propagation/constraints/constraint.hpp"
 #include "propagation/solver.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
-
-class SolverBase;
 
 /**
  * output <- number of occurrences of y in variables
@@ -30,7 +28,8 @@ class Count : public Invariant {
   signed char count(Timestamp ts, Int value);
 
  public:
-  explicit Count(SolverBase&, VarId output, VarId y, std::vector<VarId> varArray);
+  explicit Count(SolverBase&, VarId output, VarId y,
+                 std::vector<VarId> varArray);
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
   void close(Timestamp) override;

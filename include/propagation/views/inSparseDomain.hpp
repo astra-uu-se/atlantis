@@ -3,14 +3,12 @@
 #include <cassert>
 #include <limits>
 
-#include "types.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/variables/intVar.hpp"
 #include "propagation/views/intView.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
-
-class SolverBase;
 
 class InSparseDomain : public IntView {
  private:

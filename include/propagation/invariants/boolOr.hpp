@@ -1,13 +1,11 @@
 #pragma once
 
-#include "types.hpp"
-#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/variables/intVar.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
-
-class SolverBase;
 
 /**
  * Invariant for output <- x \/ y

@@ -3,13 +3,11 @@
 #include <utility>
 #include <vector>
 
-#include "types.hpp"
-#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
+#include "propagation/solver.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
-
-class SolverBase;
 
 /**
  * Invariant for output <- sum(coeffs_i * violArray_i)

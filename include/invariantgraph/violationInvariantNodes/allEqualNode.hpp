@@ -10,7 +10,6 @@
 #include "propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
-class InvariantGraph;  // Forward declaration
 
 class AllEqualNode : public ViolationInvariantNode {
  private:
@@ -19,8 +18,7 @@ class AllEqualNode : public ViolationInvariantNode {
  public:
   explicit AllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r);
 
-  explicit AllEqualNode(std::vector<VarNodeId>&& vars,
-                        bool shouldHold = true);
+  explicit AllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold = true);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{
@@ -31,7 +29,7 @@ class AllEqualNode : public ViolationInvariantNode {
       const fznparser::Constraint&, InvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
-                               propagation::SolverBase& solver) override;
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
