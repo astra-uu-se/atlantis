@@ -79,7 +79,7 @@ class AbstractIntLtNodeTest : public NodeTestBase<IntLtNode> {
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
@@ -88,10 +88,10 @@ class AbstractIntLtNodeTest : public NodeTestBase<IntLtNode> {
     solver.close();
 
     // a and b
-    EXPECT_EQ(solver.searchVariables().size(), 2);
+    EXPECT_EQ(solver.searchVars().size(), 2);
 
     // a, b and the violation
-    EXPECT_EQ(solver.numVariables(), 3);
+    EXPECT_EQ(solver.numVars(), 3);
 
     // less equal
     EXPECT_EQ(solver.numInvariants(), 1);
@@ -104,7 +104,7 @@ class AbstractIntLtNodeTest : public NodeTestBase<IntLtNode> {
     propagation::Solver solver;
     solver.open();
     addInputVarsToSolver(solver);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     invNode().registerNode(*_invariantGraph, solver);
 
     std::vector<propagation::VarId> inputs;

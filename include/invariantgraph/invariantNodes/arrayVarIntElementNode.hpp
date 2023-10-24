@@ -24,7 +24,7 @@ class ArrayVarIntElementNode : public InvariantNode {
   static std::unique_ptr<ArrayVarIntElementNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 

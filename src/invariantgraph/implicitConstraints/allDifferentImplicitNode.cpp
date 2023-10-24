@@ -12,7 +12,7 @@ AllDifferentImplicitNode::fromModelConstraint(
   auto arg = std::get<fznparser::IntVarArray>(constraint.arguments().at(0));
 
   if (arg.size() < 2) {
-    // Apparently it can happen that variables is an array of length 1. In that
+    // Apparently it can happen that vars is an array of length 1. In that
     // case, there is no benefit by the variable being defined by this implicit
     // node, since any value from its domain would satisfy this constraint.
     return nullptr;
@@ -23,8 +23,8 @@ AllDifferentImplicitNode::fromModelConstraint(
 }
 
 AllDifferentImplicitNode::AllDifferentImplicitNode(
-    std::vector<VarNodeId>&& variables)
-    : ImplicitConstraintNode(std::move(variables)) {
+    std::vector<VarNodeId>&& vars)
+    : ImplicitConstraintNode(std::move(vars)) {
   assert(outputVarNodeIds().size() > 1);
 }
 
@@ -41,16 +41,16 @@ bool AllDifferentImplicitNode::prune(InvariantGraph& invariantGraph) {
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 AllDifferentImplicitNode::createNeighbourhood(
-    propagation::SolverBase& solver, std::vector<search::SearchVariable>&& variables) {
-  if (variables.size() <= 1) {
+    propagation::SolverBase& solver, std::vector<search::SearchVar>&& vars) {
+  if (vars.size() <= 1) {
     return nullptr;
   }
   bool hasSameDomain = true;
-  assert(!variables.empty());
+  assert(!vars.empty());
 
-  auto& domain = variables.front().domain();
-  for (auto& variable : variables) {
-    if (variable.domain() != domain) {
+  auto& domain = vars.front().domain();
+  for (auto& var : vars) {
+    if (var.domain() != domain) {
       hasSameDomain = false;
       break;
     }
@@ -58,18 +58,18 @@ AllDifferentImplicitNode::createNeighbourhood(
   if (hasSameDomain) {
     return std::make_shared<
         search::neighbourhoods::AllDifferentUniformNeighbourhood>(
-        std::move(variables), domain.values(), solver);
+        std::move(vars), domain.values(), solver);
   } else {
     Int domainLb = std::numeric_limits<Int>::max();
     Int domainUb = std::numeric_limits<Int>::min();
-    for (auto& variable : variables) {
-      domainLb = std::min<Int>(domainLb, variable.domain().lowerBound());
-      domainUb = std::max<Int>(domainUb, variable.domain().upperBound());
+    for (auto& var : vars) {
+      domainLb = std::min<Int>(domainLb, var.domain().lowerBound());
+      domainUb = std::max<Int>(domainUb, var.domain().upperBound());
     }
     return std::make_shared<
         search::neighbourhoods::AllDifferentNonUniformNeighbourhood>(
-        std::move(variables), domainLb, domainUb, solver);
+        std::move(vars), domainLb, domainUb, solver);
   }
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

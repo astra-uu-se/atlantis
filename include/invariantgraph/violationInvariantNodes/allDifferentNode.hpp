@@ -3,9 +3,9 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/constraints/allDifferent.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
+#include "propagation/constraints/allDifferent.hpp"
 #include "propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
@@ -14,10 +14,9 @@ class AllDifferentNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit AllDifferentNode(std::vector<VarNodeId>&& variables, VarNodeId r);
+  explicit AllDifferentNode(std::vector<VarNodeId>&& vars, VarNodeId r);
 
-  explicit AllDifferentNode(std::vector<VarNodeId>&& variables,
-                            bool shouldHold);
+  explicit AllDifferentNode(std::vector<VarNodeId>&& vars, bool shouldHold);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{
@@ -29,8 +28,9 @@ class AllDifferentNode : public ViolationInvariantNode {
 
   bool prune(InvariantGraph&) override;
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

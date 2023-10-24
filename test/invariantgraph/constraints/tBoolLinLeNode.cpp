@@ -62,8 +62,8 @@ class BoolLinLeNodeTest : public NodeTestBase<BoolLinLeNode> {
     EXPECT_TRUE(invNode().isReified());
     EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
     EXPECT_EQ(
-        _invariantGraph->varNode(invNode().reifiedViolationNodeId()).variable(),
-        VarNode::FZNVariable(boolVar(r)));
+        _invariantGraph->varNode(invNode().reifiedViolationNodeId()).var(),
+        VarNode::FZNVar(boolVar(r)));
   }
 
   void application() {
@@ -74,7 +74,7 @@ class BoolLinLeNodeTest : public NodeTestBase<BoolLinLeNode> {
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
@@ -83,10 +83,10 @@ class BoolLinLeNodeTest : public NodeTestBase<BoolLinLeNode> {
     solver.close();
 
     // a and b
-    EXPECT_EQ(solver.searchVariables().size(), 2);
+    EXPECT_EQ(solver.searchVars().size(), 2);
 
     // a, b, the linear sum of a and b
-    EXPECT_EQ(solver.numVariables(), 3);
+    EXPECT_EQ(solver.numVars(), 3);
 
     // linear
     EXPECT_EQ(solver.numInvariants(), 1);
@@ -96,7 +96,7 @@ class BoolLinLeNodeTest : public NodeTestBase<BoolLinLeNode> {
     propagation::Solver solver;
     solver.open();
     addInputVarsToSolver(solver);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     invNode().registerNode(*_invariantGraph, solver);
 
     std::vector<propagation::VarId> inputs;

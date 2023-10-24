@@ -15,7 +15,7 @@ class Solver;
 class OutputToInputExplorer {
   Solver& _solver;
 
-  std::vector<VarId> _variableStack;
+  std::vector<VarId> _varStack;
   size_t _varStackIdx = 0;
   std::vector<InvariantId> _invariantStack;
   size_t _invariantStackIdx = 0;
@@ -25,7 +25,7 @@ class OutputToInputExplorer {
   IdMap<InvariantId, Timestamp> _invariantComputedAt;
   IdMap<InvariantId, bool> _invariantIsOnStack;
 
-  IdMap<VarIdBase, std::unordered_set<VarIdBase>> _searchVariableAncestors;
+  IdMap<VarIdBase, std::unordered_set<VarIdBase>> _searchVarAncestors;
   IdMap<VarIdBase, bool> _onPropagationPath;
 
   OutputToInputMarkingMode _outputToInputMarkingMode;
@@ -36,9 +36,9 @@ class OutputToInputExplorer {
   template <OutputToInputMarkingMode MarkingMode>
   bool isMarked([[maybe_unused]] VarIdBase);
 
-  void pushVariableStack(VarId);
-  void popVariableStack();
-  VarId peekVariableStack();
+  void pushVarStack(VarId);
+  void popVarStack();
+  VarId peekVarStack();
   void pushInvariantStack(InvariantId);
   void popInvariantStack();
   InvariantId peekInvariantStack();
@@ -52,7 +52,7 @@ class OutputToInputExplorer {
   void notifyCurrentInvariant();
 
   template <OutputToInputMarkingMode MarkingMode>
-  bool pushNextInputVariable();
+  bool pushNextInputVar();
 
   void outputToInputStaticMarking();
   void inputToOutputExplorationMarking();
@@ -71,7 +71,7 @@ class OutputToInputExplorer {
    */
   void registerForPropagation(Timestamp, VarId);
 
-  void clearRegisteredVariables();
+  void clearRegisteredVars();
 
   void propagate(Timestamp);
 
@@ -83,19 +83,17 @@ class OutputToInputExplorer {
 };
 
 inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
-  pushVariableStack(id);
+  pushVarStack(id);
 }
 
-inline void OutputToInputExplorer::clearRegisteredVariables() {
-  _varStackIdx = 0;
-}
+inline void OutputToInputExplorer::clearRegisteredVars() { _varStackIdx = 0; }
 
-inline void OutputToInputExplorer::pushVariableStack(VarId id) {
-  _variableStack[_varStackIdx++] = id;
+inline void OutputToInputExplorer::pushVarStack(VarId id) {
+  _varStack[_varStackIdx++] = id;
 }
-inline void OutputToInputExplorer::popVariableStack() { --_varStackIdx; }
-inline VarId OutputToInputExplorer::peekVariableStack() {
-  return _variableStack[_varStackIdx - 1];
+inline void OutputToInputExplorer::popVarStack() { --_varStackIdx; }
+inline VarId OutputToInputExplorer::peekVarStack() {
+  return _varStack[_varStackIdx - 1];
 }
 
 inline void OutputToInputExplorer::pushInvariantStack(InvariantId invariantId) {

@@ -8,7 +8,7 @@ ImplicitConstraintNode::ImplicitConstraintNode(
     std::vector<VarNodeId>&& outputVarNodeIds)
     : InvariantNode(std::move(outputVarNodeIds)) {}
 
-void ImplicitConstraintNode::registerOutputVariables(
+void ImplicitConstraintNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   for (const auto& varNodeId : outputVarNodeIds()) {
     auto& varNode = invariantGraph.varNode(varNodeId);
@@ -29,7 +29,7 @@ void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
   if (_neighbourhood != nullptr) {
     return;
   }
-  std::vector<search::SearchVariable> varIds;
+  std::vector<search::SearchVar> varIds;
   varIds.reserve(outputVarNodeIds().size());
 
   for (const auto& id : outputVarNodeIds()) {

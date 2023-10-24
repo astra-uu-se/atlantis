@@ -4,13 +4,12 @@
 
 namespace atlantis::invariantgraph {
 
-BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& variables,
-                                   VarNodeId r)
-    : ViolationInvariantNode(std::move(variables), r) {}
+BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r)
+    : ViolationInvariantNode(std::move(vars), r) {}
 
-BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& variables,
+BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& vars,
                                    bool shouldHold)
-    : ViolationInvariantNode(std::move(variables), shouldHold) {}
+    : ViolationInvariantNode(std::move(vars), shouldHold) {}
 
 std::unique_ptr<BoolAllEqualNode> BoolAllEqualNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
@@ -40,25 +39,25 @@ std::unique_ptr<BoolAllEqualNode> BoolAllEqualNode::fromModelConstraint(
     return nullptr;
   }
 
-  std::vector<VarNodeId> variableNodes = pruneAllDifferentFree(
+  std::vector<VarNodeId> varNodeIds = pruneAllDifferentFree(
       invariantGraph, invariantGraph.createVarNodes(intVarArray));
 
   if (constraint.arguments().size() == 1) {
-    return std::make_unique<BoolAllEqualNode>(std::move(variableNodes), true);
+    return std::make_unique<BoolAllEqualNode>(std::move(varNodeIds), true);
   }
 
   const fznparser::BoolArg& reified =
       get<fznparser::BoolArg>(constraint.arguments().back());
   if (reified.isFixed()) {
-    return std::make_unique<BoolAllEqualNode>(std::move(variableNodes),
+    return std::make_unique<BoolAllEqualNode>(std::move(varNodeIds),
                                               reified.toParameter());
   }
   return std::make_unique<BoolAllEqualNode>(
-      std::move(variableNodes), invariantGraph.createVarNode(reified.var()));
+      std::move(varNodeIds), invariantGraph.createVarNode(reified.var()));
 }
 
-void BoolAllEqualNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                               propagation::SolverBase& solver) {
+void BoolAllEqualNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                          propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().empty()) {
     return;
   }
@@ -68,8 +67,9 @@ void BoolAllEqualNode::registerOutputVariables(InvariantGraph& invariantGraph,
     } else {
       assert(!isReified());
       _intermediate = solver.makeIntVar(0, 0, 0);
-      setViolationVarId(invariantGraph, solver.makeIntView<propagation::NotEqualConst>(
-                                            solver, _intermediate, 0));
+      setViolationVarId(invariantGraph,
+                        solver.makeIntView<propagation::NotEqualConst>(
+                            solver, _intermediate, 0));
     }
   }
 }
@@ -95,14 +95,14 @@ void BoolAllEqualNode::registerNode(InvariantGraph& invariantGraph,
   }
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  std::vector<propagation::VarId> solverVariables;
+  std::vector<propagation::VarId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVariables),
+                 std::back_inserter(solverVars),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
   solver.makeConstraint<propagation::BoolAllEqual>(
       solver, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
-      solverVariables);
+      solverVars);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

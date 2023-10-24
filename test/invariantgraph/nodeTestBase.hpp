@@ -57,17 +57,16 @@ class NodeTestBase : public ::testing::Test {
 
   VarNodeId createIntVar(int64_t lowerBound, int64_t upperBound,
                          std::string identifier) {
-    EXPECT_FALSE(_model->hasVariable(identifier));
-    const fznparser::IntVar& var =
-        std::get<fznparser::IntVar>(_model->addVariable(
-            std::move(fznparser::IntVar(lowerBound, upperBound, identifier))));
+    EXPECT_FALSE(_model->hasVar(identifier));
+    const fznparser::IntVar& var = std::get<fznparser::IntVar>(_model->addVar(
+        std::move(fznparser::IntVar(lowerBound, upperBound, identifier))));
     return _invariantGraph->createVarNode(var);
   }
 
   VarNodeId createBoolVar(std::string identifier) {
-    EXPECT_FALSE(_model->hasVariable(identifier));
+    EXPECT_FALSE(_model->hasVar(identifier));
     const fznparser::BoolVar& var = std::get<fznparser::BoolVar>(
-        _model->addVariable(std::move(fznparser::BoolVar(identifier))));
+        _model->addVar(std::move(fznparser::BoolVar(identifier))));
     return _invariantGraph->createVarNode(var);
   }
 
@@ -80,21 +79,21 @@ class NodeTestBase : public ::testing::Test {
   }
 
   const fznparser::IntVar& intVar(const std::string& identifier) {
-    return std::get<fznparser::IntVar>(_model->variable(identifier));
+    return std::get<fznparser::IntVar>(_model->var(identifier));
   }
 
   const fznparser::IntVar& intVar(VarNodeId varNodeId) {
     return std::get<fznparser::IntVar>(
-        _model->variable(varNode(varNodeId).identifier()));
+        _model->var(varNode(varNodeId).identifier()));
   }
 
   const fznparser::BoolVar& boolVar(const std::string& identifier) {
-    return std::get<fznparser::BoolVar>(_model->variable(identifier));
+    return std::get<fznparser::BoolVar>(_model->var(identifier));
   }
 
   const fznparser::BoolVar& boolVar(VarNodeId varNodeId) {
     return std::get<fznparser::BoolVar>(
-        _model->variable(varNode(varNodeId).identifier()));
+        _model->var(varNode(varNodeId).identifier()));
   }
 
   propagation::VarId varId(const std::string& identifier) {
@@ -118,7 +117,7 @@ class NodeTestBase : public ::testing::Test {
   }
 
   void addInputVarsToSolver(propagation::Solver& solver) {
-    EXPECT_EQ(solver.numVariables(), 0);
+    EXPECT_EQ(solver.numVars(), 0);
     for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
       EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
       const auto& [lb, ub] = varNode(varNodeId).bounds();
@@ -131,9 +130,8 @@ class NodeTestBase : public ::testing::Test {
       varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
-    EXPECT_EQ(solver.numVariables(),
-              invNode().staticInputVarNodeIds().size() +
-                  invNode().dynamicInputVarNodeIds().size());
+    EXPECT_EQ(solver.numVars(), invNode().staticInputVarNodeIds().size() +
+                                    invNode().dynamicInputVarNodeIds().size());
     expectInputsRegistered(invNode(), solver);
   }
 
@@ -175,10 +173,9 @@ class NodeTestBase : public ::testing::Test {
 
   void expectInputsRegistered(const InvariantNode& invNode,
                               const propagation::Solver& solver) {
-    EXPECT_EQ(solver.numVariables(),
-              invNode.staticInputVarNodeIds().size() +
-                  invNode.dynamicInputVarNodeIds().size());
-    std::vector<bool> registered(solver.numVariables(), false);
+    EXPECT_EQ(solver.numVars(), invNode.staticInputVarNodeIds().size() +
+                                    invNode.dynamicInputVarNodeIds().size());
+    std::vector<bool> registered(solver.numVars(), false);
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));

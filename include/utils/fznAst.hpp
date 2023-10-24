@@ -6,5 +6,5 @@
 
 namespace atlantis {
 const std::string& identifier(
-    const std::variant<fznparser::BoolVar, fznparser::IntVar>& variable);
+    const std::variant<fznparser::BoolVar, fznparser::IntVar>&);
 }  // namespace atlantis

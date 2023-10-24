@@ -160,7 +160,7 @@ class AbstractCountEqNodeTest : public NodeTestBase<CountEqNode> {
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
@@ -176,14 +176,14 @@ class AbstractCountEqNodeTest : public NodeTestBase<CountEqNode> {
 
     if constexpr (YIsParameter) {
       // x1, x2, and x3
-      EXPECT_EQ(solver.searchVariables().size(), 3);
+      EXPECT_EQ(solver.searchVars().size(), 3);
       // x1, x2, x3, and the violation
-      EXPECT_EQ(solver.numVariables(), 4);
+      EXPECT_EQ(solver.numVars(), 4);
     } else {
       // x1, x2, x3, and y
-      EXPECT_EQ(solver.searchVariables().size(), 4);
+      EXPECT_EQ(solver.searchVars().size(), 4);
       // x1, x2, x3, y, and (c or intermediate)
-      EXPECT_EQ(solver.numVariables(), 5);
+      EXPECT_EQ(solver.numVars(), 5);
     }
 
     // countEq
@@ -206,7 +206,7 @@ class AbstractCountEqNodeTest : public NodeTestBase<CountEqNode> {
     propagation::Solver solver;
     solver.open();
     addInputVarsToSolver(solver);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     invNode().registerNode(*_invariantGraph, solver);
 
     std::vector<propagation::VarId> inputs;

@@ -43,7 +43,7 @@ std::unique_ptr<BoolXorNode> BoolXorNode::fromModelConstraint(
       a, b, invariantGraph.createVarNode(reified.var()));
 }
 
-void BoolXorNode::registerOutputVariables(InvariantGraph& invariantGraph,
+void BoolXorNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {
   registerViolation(invariantGraph, solver);
 }

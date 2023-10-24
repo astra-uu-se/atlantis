@@ -17,7 +17,7 @@ void LessEqual::registerVars() {
   assert(_id != NULL_ID);
   _solver.registerInvariantInput(_id, _x, LocalId(0));
   _solver.registerInvariantInput(_id, _y, LocalId(0));
-  registerDefinedVariable(_violationId);
+  registerDefinedVar(_violationId);
 }
 
 void LessEqual::updateBounds(bool widenOnly) {

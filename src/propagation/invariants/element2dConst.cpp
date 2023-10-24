@@ -26,7 +26,7 @@ void Element2dConst::registerVars() {
   assert(_id != NULL_ID);
   _solver.registerInvariantInput(_id, _indices[0], LocalId(0));
   _solver.registerInvariantInput(_id, _indices[1], LocalId(0));
-  registerDefinedVariable(_output);
+  registerDefinedVar(_output);
 }
 
 void Element2dConst::updateBounds(bool widenOnly) {

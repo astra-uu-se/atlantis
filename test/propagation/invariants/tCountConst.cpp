@@ -18,10 +18,10 @@ using namespace atlantis::propagation;
 class CountConstTest : public InvariantTest {
  public:
   Int computeOutput(const Timestamp ts, const Int y,
-                    const std::vector<VarId>& variables) {
-    std::vector<Int> values(variables.size(), 0);
-    for (size_t i = 0; i < variables.size(); ++i) {
-      values.at(i) = solver->value(ts, variables.at(i));
+                    const std::vector<VarId>& vars) {
+    std::vector<Int> values(vars.size(), 0);
+    for (size_t i = 0; i < vars.size(); ++i) {
+      values.at(i) = solver->value(ts, vars.at(i));
     }
     return computeOutput(y, values);
   }

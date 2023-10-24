@@ -6,41 +6,41 @@ namespace atlantis::propagation {
  * @param violationId id for the violationCount
  */
 template GlobalCardinalityConst<true>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& t_counts);
 template GlobalCardinalityConst<false>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& t_counts);
 template <bool IsClosed>
 GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& t_counts)
-    : GlobalCardinalityConst(solver, violationId, t_variables, cover, t_counts,
+    : GlobalCardinalityConst(solver, violationId, t_vars, cover, t_counts,
                              t_counts) {}
 
 template GlobalCardinalityConst<true>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound);
 template GlobalCardinalityConst<false>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound);
 template <bool IsClosed>
 GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_variables,
+    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound)
     : Constraint(solver, violationId),
-      _variables(std::move(t_variables)),
+      _vars(std::move(t_vars)),
       _lowerBound(),
       _upperBound(),
-      _committedValues(_variables.size(), 0),
+      _committedValues(_vars.size(), 0),
       _shortage(NULL_TIMESTAMP, 0),
       _excess(NULL_TIMESTAMP, 0),
       _counts(),
       _offset(0) {
-  _modifiedVars.reserve(_variables.size());
+  _modifiedVars.reserve(_vars.size());
   assert(lowerBound.size() == upperBound.size() &&
          lowerBound.size() == cover.size());
 
@@ -69,10 +69,10 @@ template void GlobalCardinalityConst<false>::registerVars();
 template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::registerVars() {
   assert(!_id.equals(NULL_ID));
-  for (size_t i = 0; i < _variables.size(); ++i) {
-    _solver.registerInvariantInput(_id, _variables[i], LocalId(i));
+  for (size_t i = 0; i < _vars.size(); ++i) {
+    _solver.registerInvariantInput(_id, _vars[i], LocalId(i));
   }
-  registerDefinedVariable(_violationId);
+  registerDefinedVar(_violationId);
 }
 
 template void GlobalCardinalityConst<true>::updateBounds(bool widenOnly);
@@ -85,12 +85,11 @@ void GlobalCardinalityConst<IsClosed>::updateBounds(bool widenOnly) {
   }
   Int maxExcess = 0;
   for (const Int ub : _upperBound) {
-    maxExcess = std::max(maxExcess, static_cast<Int>(_variables.size()) - ub);
+    maxExcess = std::max(maxExcess, static_cast<Int>(_vars.size()) - ub);
   }
   Int maxViol = std::max(maxShortage, maxExcess);
   if constexpr (IsClosed) {
-    maxViol =
-        std::max(maxViol, maxShortage + static_cast<Int>(_variables.size()));
+    maxViol = std::max(maxViol, maxShortage + static_cast<Int>(_vars.size()));
   }
   _solver.updateBounds(_violationId, 0, maxViol, widenOnly);
 }
@@ -110,8 +109,8 @@ void GlobalCardinalityConst<IsClosed>::recompute(Timestamp timestamp) {
     c.setValue(timestamp, 0);
   }
 
-  for (size_t i = 0; i < _variables.size(); ++i) {
-    increaseCount(timestamp, _solver.value(timestamp, _variables[i]));
+  for (size_t i = 0; i < _vars.size(); ++i) {
+    increaseCount(timestamp, _solver.value(timestamp, _vars[i]));
   }
 
   Int shortage = 0;
@@ -142,7 +141,7 @@ template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::notifyInputChanged(Timestamp timestamp,
                                                           LocalId localId) {
   assert(localId < _committedValues.size());
-  const Int newValue = _solver.value(timestamp, _variables[localId]);
+  const Int newValue = _solver.value(timestamp, _vars[localId]);
   if (newValue == _committedValues[localId]) {
     return;
   }
@@ -161,8 +160,8 @@ template <bool IsClosed>
 VarId GlobalCardinalityConst<IsClosed>::nextInput(Timestamp timestamp) {
   const auto index = static_cast<size_t>(_state.incValue(timestamp, 1));
   assert(0 <= _state.value(timestamp));
-  if (index < _variables.size()) {
-    return _variables[index];
+  if (index < _vars.size()) {
+    return _vars[index];
   }
   return NULL_ID;
 }
@@ -174,7 +173,7 @@ template void GlobalCardinalityConst<false>::notifyCurrentInputChanged(
 template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::notifyCurrentInputChanged(
     Timestamp timestamp) {
-  assert(static_cast<size_t>(_state.value(timestamp)) < _variables.size());
+  assert(static_cast<size_t>(_state.value(timestamp)) < _vars.size());
   notifyInputChanged(timestamp, _state.value(timestamp));
 }
 
@@ -188,7 +187,7 @@ void GlobalCardinalityConst<IsClosed>::commit(Timestamp timestamp) {
   _excess.commitIf(timestamp);
 
   for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _solver.committedValue(_variables[i]);
+    _committedValues[i] = _solver.committedValue(_vars[i]);
   }
 
   for (CommittableInt& CommittableInt : _counts) {

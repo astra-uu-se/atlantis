@@ -33,7 +33,7 @@ ArrayVarBoolElementNode::fromModelConstraint(
       invariantGraph.createVarNode(c), offset);
 }
 
-void ArrayVarBoolElementNode::registerOutputVariables(
+void ArrayVarBoolElementNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   // TODO: offset can be different than 1
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()), 1);

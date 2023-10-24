@@ -18,7 +18,7 @@ class IntLinearNode : public InvariantNode {
   propagation::VarId _intermediateVarId{propagation::NULL_ID};
 
  public:
-  IntLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  IntLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                 VarNodeId output, Int definingCoefficient, Int sum);
 
   ~IntLinearNode() override = default;
@@ -30,10 +30,11 @@ class IntLinearNode : public InvariantNode {
   static std::unique_ptr<IntLinearNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

@@ -28,7 +28,7 @@ class SetInNode : public ViolationInvariantNode {
   static std::unique_ptr<SetInNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 

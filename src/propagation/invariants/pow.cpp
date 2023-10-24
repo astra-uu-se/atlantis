@@ -12,7 +12,7 @@ void Pow::registerVars() {
 
   _solver.registerInvariantInput(_id, _x, 0);
   _solver.registerInvariantInput(_id, _y, 0);
-  registerDefinedVariable(_output);
+  registerDefinedVar(_output);
 }
 
 void Pow::updateBounds(bool widenOnly) {

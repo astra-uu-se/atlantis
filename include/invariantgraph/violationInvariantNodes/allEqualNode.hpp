@@ -17,9 +17,9 @@ class AllEqualNode : public ViolationInvariantNode {
   propagation::VarId _allDifferentViolationVarId{propagation::NULL_ID};
 
  public:
-  explicit AllEqualNode(std::vector<VarNodeId>&& variables, VarNodeId r);
+  explicit AllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r);
 
-  explicit AllEqualNode(std::vector<VarNodeId>&& variables,
+  explicit AllEqualNode(std::vector<VarNodeId>&& vars,
                         bool shouldHold = true);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
@@ -30,7 +30,7 @@ class AllEqualNode : public ViolationInvariantNode {
   static std::unique_ptr<AllEqualNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&,
+  void registerOutputVars(InvariantGraph&,
                                propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;

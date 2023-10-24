@@ -41,9 +41,9 @@ void GlobalCardinalityClosed::registerVars() {
   for (size_t i = 0; i < _inputs.size(); ++i) {
     _solver.registerInvariantInput(_id, _inputs[i], LocalId(i));
   }
-  registerDefinedVariable(_violationId);
+  registerDefinedVar(_violationId);
   for (const VarId output : _outputs) {
-    registerDefinedVariable(output);
+    registerDefinedVar(output);
   }
 }
 

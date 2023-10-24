@@ -127,7 +127,7 @@ std::unique_ptr<CountLeqNode> CountLeqNode::fromModelConstraint(
                                         yVarNode, cVarNode, shouldHold);
 }
 
-void CountLeqNode::registerOutputVariables(InvariantGraph& invariantGraph,
+void CountLeqNode::registerOutputVars(InvariantGraph& invariantGraph,
                                            propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     _intermediate = solver.makeIntVar(0, 0, 0);

@@ -99,7 +99,7 @@ TEST_F(LinearNodeTest, application_should_register_view) {
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
@@ -110,10 +110,10 @@ TEST_F(LinearNodeTest, application_should_register_view) {
   EXPECT_EQ(solver.upperBound(varId(a)), 0);
 
   // b
-  EXPECT_EQ(solver.searchVariables().size(), 1);
+  EXPECT_EQ(solver.searchVars().size(), 1);
 
   // b
-  EXPECT_EQ(solver.numVariables(), 1);
+  EXPECT_EQ(solver.numVars(), 1);
 }
 
 TEST_F(LinearNodeTest, application_should_register_linear) {
@@ -124,7 +124,7 @@ TEST_F(LinearNodeTest, application_should_register_linear) {
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
@@ -135,10 +135,10 @@ TEST_F(LinearNodeTest, application_should_register_linear) {
   EXPECT_EQ(solver.upperBound(varId(a)), -3);
 
   // b and c
-  EXPECT_EQ(solver.searchVariables().size(), 2);
+  EXPECT_EQ(solver.searchVars().size(), 2);
 
   // b, c, intermediate (a is a view, and is not counted here)
-  EXPECT_EQ(solver.numVariables(), 3);
+  EXPECT_EQ(solver.numVars(), 3);
 
   // linear
   EXPECT_EQ(solver.numInvariants(), 1);

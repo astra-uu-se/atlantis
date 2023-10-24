@@ -18,10 +18,10 @@ class BoolAllEqualTest : public InvariantTest {
  public:
   bool isRegistered = false;
 
-  Int computeViolation(Timestamp ts, const std::vector<VarId>& variables) {
-    std::vector<Int> values(variables.size(), 0);
-    for (size_t i = 0; i < variables.size(); ++i) {
-      values.at(i) = solver->value(ts, variables.at(i));
+  Int computeViolation(Timestamp ts, const std::vector<VarId>& vars) {
+    std::vector<Int> values(vars.size(), 0);
+    for (size_t i = 0; i < vars.size(); ++i) {
+      values.at(i) = solver->value(ts, vars.at(i));
     }
     return computeViolation(values);
   }
@@ -241,8 +241,8 @@ class MockAllDifferent : public BoolAllEqual {
     BoolAllEqual::registerVars();
   }
   explicit MockAllDifferent(SolverBase& solver, VarId violationId,
-                            std::vector<VarId> t_variables)
-      : BoolAllEqual(solver, violationId, t_variables) {
+                            std::vector<VarId> t_vars)
+      : BoolAllEqual(solver, violationId, t_vars) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BoolAllEqual::recompute(timestamp);
     });

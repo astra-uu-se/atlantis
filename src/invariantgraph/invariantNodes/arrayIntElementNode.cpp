@@ -32,7 +32,7 @@ std::unique_ptr<ArrayIntElementNode> ArrayIntElementNode::fromModelConstraint(
       invariantGraph.createVarNode(c), offset);
 }
 
-void ArrayIntElementNode::registerOutputVariables(
+void ArrayIntElementNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     assert(invariantGraph.varId(b()) != propagation::NULL_ID);

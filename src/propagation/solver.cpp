@@ -7,7 +7,7 @@ Solver::Solver()
       _propGraph(_store, ESTIMATED_NUM_OBJECTS),
       _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
       _isEnqueued(ESTIMATED_NUM_OBJECTS),
-      _modifiedSearchVariables() {}
+      _modifiedSearchVars() {}
 
 PropagationGraph& Solver::propGraph() { return _propGraph; }
 
@@ -39,7 +39,7 @@ void Solver::close() {
     _layerQueueIndex.assign(_propGraph.numLayers(), 0);
     _layerQueue.resize(_propGraph.numLayers(), std::vector<VarIdBase>{});
     for (size_t layer = 1; layer < _propGraph.numLayers(); ++layer) {
-      _layerQueue[layer].resize(_propGraph.numVariablesInLayer(layer));
+      _layerQueue[layer].resize(_propGraph.numVarsInLayer(layer));
     }
   } else {
     _layerQueueIndex.clear();
@@ -62,12 +62,11 @@ void Solver::close() {
 
   // Assert that if search variable varId is modified,
   // then it is in the set of modified search variables
-  assert(std::all_of(searchVariables().begin(), searchVariables().end(),
-                     [&](const VarIdBase varId) {
-                       return _store.intVar(varId).hasChanged(
-                                  _currentTimestamp) ==
-                              _modifiedSearchVariables.contains(varId);
-                     }));
+  assert(std::all_of(
+      searchVars().begin(), searchVars().end(), [&](const VarIdBase varId) {
+        return _store.intVar(varId).hasChanged(_currentTimestamp) ==
+               _modifiedSearchVars.contains(varId);
+      }));
 
   // close all invariants
   closeInvariants();
@@ -77,8 +76,8 @@ void Solver::close() {
   assert(_propGraph.propagationQueueEmpty());
 
   // assert that decsion variable varId is no longer modified.
-  assert(std::all_of(_modifiedSearchVariables.begin(),
-                     _modifiedSearchVariables.end(), [&](const size_t varId) {
+  assert(std::all_of(_modifiedSearchVars.begin(), _modifiedSearchVars.end(),
+                     [&](const size_t varId) {
                        return !_store.intVar(varId).hasChanged(
                            _currentTimestamp);
                      }));
@@ -107,20 +106,18 @@ void Solver::enqueueComputedVar(VarId id, size_t curLayer) {
   _isEnqueued.set(id, true);
 }
 
-void Solver::registerInvariantInput(InvariantId invariantId,
-                                               VarId inputId, LocalId localId,
-                                               bool isDynamicInput) {
+void Solver::registerInvariantInput(InvariantId invariantId, VarId inputId,
+                                    LocalId localId, bool isDynamicInput) {
   _propGraph.registerInvariantInput(invariantId, sourceId(inputId), localId,
                                     isDynamicInput);
 }
 
-void Solver::registerDefinedVariable(VarId varId,
-                                                InvariantId invariantId) {
-  _propGraph.registerDefinedVariable(sourceId(varId), invariantId);
+void Solver::registerDefinedVar(VarId varId, InvariantId invariantId) {
+  _propGraph.registerDefinedVar(sourceId(varId), invariantId);
 }
 
 void Solver::registerVar(VarId id) {
-  _numVariables++;
+  _numVars++;
   _propGraph.registerVar(id);
   _outputToInputExplorer.registerVar(id);
   _isEnqueued.register_idx(id, false);
@@ -163,7 +160,7 @@ void Solver::recomputeAndCommit() {
   bool done = false;
   while (!done) {
     done = true;
-    if (tries++ > _store.numVariables()) {
+    if (tries++ > _store.numVars()) {
       throw FailedToInitialise();
     }
     for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
@@ -234,11 +231,11 @@ void Solver::endProbe() {
       // then it is in the set of modified decision variables
       assert(outputToInputMarkingMode() !=
                  OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC ||
-             std::all_of(searchVariables().begin(), searchVariables().end(),
+             std::all_of(searchVars().begin(), searchVars().end(),
                          [&](const VarIdBase varId) {
                            return _store.intVar(varId).hasChanged(
                                       _currentTimestamp) ==
-                                  _modifiedSearchVariables.contains(varId);
+                                  _modifiedSearchVars.contains(varId);
                          }));
       outputToInputPropagate();
     }
@@ -253,7 +250,7 @@ void Solver::beginCommit() {
   assert(!_isOpen);
   assert(_solverState == SolverState::IDLE);
 
-  _outputToInputExplorer.clearRegisteredVariables();
+  _outputToInputExplorer.clearRegisteredVars();
 
   _solverState = SolverState::COMMIT;
 }
@@ -269,11 +266,11 @@ void Solver::endCommit() {
     assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT ||
            outputToInputMarkingMode() !=
                OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC ||
-           std::all_of(searchVariables().begin(), searchVariables().end(),
+           std::all_of(searchVars().begin(), searchVars().end(),
                        [&](const VarIdBase varId) {
                          return _store.intVar(varId).hasChanged(
                                     _currentTimestamp) ==
-                                _modifiedSearchVariables.contains(varId);
+                                _modifiedSearchVars.contains(varId);
                        }));
     if (_propGraph.numLayers() == 1) {
       propagate<CommitMode::COMMIT, true>();
@@ -283,8 +280,8 @@ void Solver::endCommit() {
 
     // assert that decsion variable varId is no longer modified.
     assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT ||
-           std::all_of(_modifiedSearchVariables.begin(),
-                       _modifiedSearchVariables.end(), [&](const size_t varId) {
+           std::all_of(_modifiedSearchVars.begin(), _modifiedSearchVars.end(),
+                       [&](const size_t varId) {
                          return !_store.intVar(varId).hasChanged(
                              _currentTimestamp);
                        }));
@@ -298,14 +295,14 @@ void Solver::endCommit() {
 void Solver::propagateOnClose() {
   IdMap<InvariantId, bool> committedInvariants(_propGraph.numInvariants());
   committedInvariants.assign(_propGraph.numInvariants(), false);
-  for (VarId varId : _propGraph.searchVariables()) {
+  for (VarId varId : _propGraph.searchVars()) {
     commitIf(_currentTimestamp, varId);
   }
   for (size_t layer = 0; layer < _propGraph.numLayers(); ++layer) {
     if (_propGraph.hasDynamicCycle(layer)) {
       _propGraph.topologicallyOrder(_currentTimestamp, layer);
     }
-    std::vector<VarIdBase> vars(_propGraph.variablesInLayer(layer));
+    std::vector<VarIdBase> vars(_propGraph.varsInLayer(layer));
     std::sort(vars.begin(), vars.end(),
               [&](const VarIdBase a, const VarIdBase b) {
                 return _propGraph.position(a) < _propGraph.position(b);
@@ -338,7 +335,7 @@ void Solver::propagate() {
       assert(queuedVar.idType == VarIdType::var);
       assert(_propGraph.layer(queuedVar) == curLayer);
       // queuedVar has been computed under _currentTimestamp
-      const IntVar& variable = _store.intVar(queuedVar);
+      const IntVar& var = _store.intVar(queuedVar);
 
       const InvariantId definingInvariant =
           _propGraph.definingInvariant(queuedVar);
@@ -346,7 +343,7 @@ void Solver::propagate() {
       if (definingInvariant != NULL_ID) {
         Invariant& defInv = _store.invariant(definingInvariant);
         if (queuedVar == defInv.primaryDefinedVar()) {
-          const Int oldValue = variable.value(_currentTimestamp);
+          const Int oldValue = var.value(_currentTimestamp);
           defInv.compute(_currentTimestamp);
           for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
             if (hasChanged(_currentTimestamp, inputId)) {
@@ -358,7 +355,7 @@ void Solver::propagate() {
           if constexpr (Mode == CommitMode::COMMIT) {
             defInv.commit(_currentTimestamp);
           }
-          if (oldValue == variable.value(_currentTimestamp)) {
+          if (oldValue == var.value(_currentTimestamp)) {
             continue;
           }
         }
@@ -430,12 +427,11 @@ void Solver::computeBounds() {
   IdMap<InvariantId, Int> inputsToCompute(numInvariants());
 
   for (size_t invariantId = 1u; invariantId <= numInvariants(); ++invariantId) {
-    inputsToCompute.register_idx(invariantId,
-                                 inputVariables(invariantId).size());
+    inputsToCompute.register_idx(invariantId, inputVars(invariantId).size());
   }
 
   // Search variables might now have been computed yet
-  for (size_t varId = 1u; varId <= numVariables(); ++varId) {
+  for (size_t varId = 1u; varId <= numVars(); ++varId) {
     if (definingInvariant(varId) == NULL_ID) {
       for (const PropagationGraph::ListeningInvariantData&
                listeningInvariantData : listeningInvariantData(varId)) {
@@ -479,8 +475,7 @@ void Solver::computeBounds() {
         }));
     _store.invariant(invariantId).updateBounds(true);
 
-    for (const VarIdBase outputVarId :
-         _propGraph.variablesDefinedBy(invariantId)) {
+    for (const VarIdBase outputVarId : _propGraph.varsDefinedBy(invariantId)) {
       for (const PropagationGraph::ListeningInvariantData&
                listeningInvariantData : listeningInvariantData(outputVarId)) {
         // Remove from the data structure must happen before updating

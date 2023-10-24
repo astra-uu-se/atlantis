@@ -4,29 +4,26 @@
 
 namespace atlantis::search::neighbourhoods {
 
-CircuitNeighbourhood::CircuitNeighbourhood(
-    std::vector<SearchVariable>&& variables)
-    : _variables(std::move(variables)) {}
+CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars)
+    : _vars(std::move(vars)) {}
 
 void CircuitNeighbourhood::initialise(RandomProvider& random,
                                       AssignmentModifier& modifications) {
-  std::vector<Int> availableIndices(_variables.size());
+  std::vector<Int> availableIndices(_vars.size());
   std::iota(availableIndices.begin(), availableIndices.end(), 0);
 
-  auto getValue = [](SearchVariable& variable) {
-    return variable.domain().lowerBound();
-  };
+  auto getValue = [](SearchVar& var) { return var.domain().lowerBound(); };
 
-  for (auto& variable : _variables) {
-    if (variable.isFixed()) {
-      auto nextNode = getValue(variable);
+  for (auto& var : _vars) {
+    if (var.isFixed()) {
+      auto nextNode = getValue(var);
       auto nextNodeIdx = getNodeIdx(nextNode);
 
       auto it = std::find(availableIndices.begin(), availableIndices.end(),
                           nextNodeIdx);
       assert(it != availableIndices.end());
 
-      modifications.set(variable.solverId(), nextNode);
+      modifications.set(var.solverId(), nextNode);
       availableIndices.erase(it);
     }
   }
@@ -38,8 +35,8 @@ void CircuitNeighbourhood::initialise(RandomProvider& random,
 
   size_t currentNodeIdx = firstNodeIdx;
   while (!availableIndices.empty()) {
-    if (_variables[currentNodeIdx].isFixed()) {
-      currentNodeIdx = getNodeIdx(getValue(_variables[currentNodeIdx]));
+    if (_vars[currentNodeIdx].isFixed()) {
+      currentNodeIdx = getNodeIdx(getValue(_vars[currentNodeIdx]));
       continue;
     }
 
@@ -48,30 +45,28 @@ void CircuitNeighbourhood::initialise(RandomProvider& random,
     assert(nextIt < availableIndices.end());
 
     size_t nextNodeIdx = *nextIt;
-    assert(nextNodeIdx < _variables.size());
+    assert(nextNodeIdx < _vars.size());
 
-    modifications.set(_variables[currentNodeIdx].solverId(),
-                      getNode(nextNodeIdx));
+    modifications.set(_vars[currentNodeIdx].solverId(), getNode(nextNodeIdx));
 
     availableIndices.erase(nextIt);
     currentNodeIdx = nextNodeIdx;
   }
 
-  modifications.set(_variables[currentNodeIdx].solverId(),
-                    getNode(firstNodeIdx));
+  modifications.set(_vars[currentNodeIdx].solverId(), getNode(firstNodeIdx));
 }
 
 static size_t determineNewNext(RandomProvider& random, size_t node,
-                               size_t oldNext, size_t numVariables) {
-  assert(numVariables >= 3);
+                               size_t oldNext, size_t numVars) {
+  assert(numVars >= 3);
   // Based on https://stackoverflow.com/a/39631885.
   // Note: Random.next(n) returns an integer between 0..n-1
   std::array<size_t, 2> excluded{std::min(node, oldNext),
                                  std::max(node, oldNext)};
-  // the range is between 0..numVariables-1
+  // the range is between 0..numVars-1
   // excluded.size() = 2
-  auto newNext = static_cast<size_t>(
-      random.intInRange(0, static_cast<Int>(numVariables - 3)));
+  auto newNext =
+      static_cast<size_t>(random.intInRange(0, static_cast<Int>(numVars - 3)));
   for (const auto num : excluded) {
     if (newNext < num) {
       return newNext;
@@ -87,27 +82,23 @@ bool CircuitNeighbourhood::randomMove(RandomProvider& random,
                                       Assignment& assignment,
                                       Annealer& annealer) {
   auto nodeIdx = static_cast<size_t>(
-      random.intInRange(0, static_cast<Int>(_variables.size() - 1)));
-  auto oldNextIdx =
-      getNodeIdx(assignment.value(_variables[nodeIdx].solverId()));
+      random.intInRange(0, static_cast<Int>(_vars.size() - 1)));
+  auto oldNextIdx = getNodeIdx(assignment.value(_vars[nodeIdx].solverId()));
 
-  auto newNextIdx =
-      determineNewNext(random, nodeIdx, oldNextIdx, _variables.size());
-  assert(newNextIdx < _variables.size());
-  auto kIdx = getNodeIdx(assignment.value(_variables[oldNextIdx].solverId()));
-  auto lastIdx =
-      getNodeIdx(assignment.value(_variables[newNextIdx].solverId()));
+  auto newNextIdx = determineNewNext(random, nodeIdx, oldNextIdx, _vars.size());
+  assert(newNextIdx < _vars.size());
+  auto kIdx = getNodeIdx(assignment.value(_vars[oldNextIdx].solverId()));
+  auto lastIdx = getNodeIdx(assignment.value(_vars[newNextIdx].solverId()));
 
   for (auto varIdx : {nodeIdx, oldNextIdx, newNextIdx}) {
-    if (_variables[varIdx].isFixed()) {
+    if (_vars[varIdx].isFixed()) {
       return false;
     }
   }
 
-  Move<3> move(
-      {_variables[nodeIdx].solverId(), _variables[oldNextIdx].solverId(),
-       _variables[newNextIdx].solverId()},
-      {getNode(kIdx), getNode(lastIdx), getNode(oldNextIdx)});
+  Move<3> move({_vars[nodeIdx].solverId(), _vars[oldNextIdx].solverId(),
+                _vars[newNextIdx].solverId()},
+               {getNode(kIdx), getNode(lastIdx), getNode(oldNextIdx)});
   return annealer.acceptMove(move);
 }
 

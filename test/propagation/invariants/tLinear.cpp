@@ -48,11 +48,11 @@ class LinearTest : public InvariantTest {
     inputs.clear();
   }
 
-  Int computeOutput(const Timestamp ts, const std::vector<VarId>& variables,
+  Int computeOutput(const Timestamp ts, const std::vector<VarId>& vars,
                     const std::vector<Int>& coefficients) {
-    std::vector<Int> values(variables.size(), 0);
-    for (size_t i = 0; i < variables.size(); ++i) {
-      values.at(i) = solver->value(ts, variables.at(i));
+    std::vector<Int> values(vars.size(), 0);
+    for (size_t i = 0; i < vars.size(); ++i) {
+      values.at(i) = solver->value(ts, vars.at(i));
     }
     return computeOutput(values, coefficients);
   }
@@ -368,7 +368,8 @@ class MockLinear : public Linear {
     registered = true;
     Linear::registerVars();
   }
-  explicit MockLinear(SolverBase& solver, VarId output, std::vector<VarId> varArray)
+  explicit MockLinear(SolverBase& solver, VarId output,
+                      std::vector<VarId> varArray)
       : Linear(solver, output, varArray) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Linear::recompute(timestamp);

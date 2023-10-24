@@ -5,11 +5,11 @@
 #include <vector>
 
 #include "constraint.hpp"
-#include "types.hpp"
 #include "propagation/constraints/allDifferent.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
@@ -22,7 +22,7 @@ class AllDifferentExcept : public AllDifferent {
 
  public:
   explicit AllDifferentExcept(SolverBase&, VarId violationId,
-                              std::vector<VarId> variables,
+                              std::vector<VarId> vars,
                               const std::vector<Int>& ignored);
 
   void recompute(Timestamp) override;

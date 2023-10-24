@@ -134,7 +134,7 @@ class AbstractGlobalCardinalityClosedNodeTest
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
@@ -146,20 +146,20 @@ class AbstractGlobalCardinalityClosedNodeTest
     if constexpr (Type == ConstraintType::NORMAL ||
                   Type == ConstraintType::CONSTANT_TRUE) {
       // x1, x2
-      EXPECT_EQ(solver.searchVariables().size(), 2);
+      EXPECT_EQ(solver.searchVars().size(), 2);
       // x1, x2, o1, o2
       // violation
-      EXPECT_EQ(solver.numVariables(), 5);
+      EXPECT_EQ(solver.numVars(), 5);
       // gcc
       EXPECT_EQ(solver.numInvariants(), 1);
     } else {
       // x1, x2, o1, o2
-      EXPECT_EQ(solver.searchVariables().size(), 4);
+      EXPECT_EQ(solver.searchVars().size(), 4);
       // x1, x2, o1, o2
       // intermediate o1, intermediate o2
       // 3 intermediate violations
       // 1 total violation
-      EXPECT_EQ(solver.numVariables(), 10);
+      EXPECT_EQ(solver.numVars(), 10);
       // gcc + 2 (non)-equal + 1 total violation
       EXPECT_EQ(solver.numInvariants(), 4);
 
@@ -174,7 +174,7 @@ class AbstractGlobalCardinalityClosedNodeTest
     propagation::Solver solver;
     solver.open();
     addInputVarsToSolver(solver);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     invNode().registerNode(*_invariantGraph, solver);
 
     std::vector<propagation::VarId> inputs;

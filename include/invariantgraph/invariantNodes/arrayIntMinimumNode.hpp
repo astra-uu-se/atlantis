@@ -11,7 +11,7 @@
 namespace atlantis::invariantgraph {
 class ArrayIntMinimumNode : public InvariantNode {
  public:
-  ArrayIntMinimumNode(std::vector<VarNodeId>&& variables, VarNodeId output);
+  ArrayIntMinimumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
 
   ~ArrayIntMinimumNode() override = default;
 
@@ -23,7 +23,7 @@ class ArrayIntMinimumNode : public InvariantNode {
   static std::unique_ptr<ArrayIntMinimumNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };

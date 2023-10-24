@@ -21,7 +21,7 @@ class Count : public Invariant {
  private:
   const VarId _output;
   const VarId _y;
-  const std::vector<VarId> _variables;
+  const std::vector<VarId> _vars;
   std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
@@ -48,7 +48,7 @@ inline void Count::increaseCount(Timestamp ts, Int value) {
   }
   assert(_counts[value - _offset].value(ts) + 1 > 0);
   assert(_counts[value - _offset].value(ts) + 1 <=
-         static_cast<Int>(_variables.size()));
+         static_cast<Int>(_vars.size()));
   _counts[value - _offset].incValue(ts, 1);
 }
 
@@ -59,7 +59,7 @@ inline void Count::decreaseCount(Timestamp ts, Int value) {
   }
   assert(_counts[value - _offset].value(ts) - 1 >= 0);
   assert(_counts[value - _offset].value(ts) - 1 <
-         static_cast<Int>(_variables.size()));
+         static_cast<Int>(_vars.size()));
   _counts[value - _offset].incValue(ts, -1);
 }
 

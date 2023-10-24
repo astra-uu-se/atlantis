@@ -12,7 +12,7 @@ void IfThenElse::registerVars() {
   _solver.registerInvariantInput(_id, _b, 0);
   _solver.registerInvariantInput(_id, _xy[0], 0, true);
   _solver.registerInvariantInput(_id, _xy[1], 0, true);
-  registerDefinedVariable(_output);
+  registerDefinedVar(_output);
 }
 
 VarId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {

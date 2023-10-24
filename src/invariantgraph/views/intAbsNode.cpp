@@ -19,7 +19,7 @@ invariantgraph::IntAbsNode::fromModelConstraint(
       invariantGraph.createVarNode(a), invariantGraph.createVarNode(b));
 }
 
-void invariantgraph::IntAbsNode::registerOutputVariables(
+void invariantgraph::IntAbsNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())

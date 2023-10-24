@@ -10,8 +10,8 @@ namespace atlantis::search {
 template <unsigned int N>
 class Move {
  public:
-  Move(std::array<propagation::VarId, N> variables, std::array<Int, N> values)
-      : _variables(std::move(variables)), _values(std::move(values)) {}
+  Move(std::array<propagation::VarId, N> vars, std::array<Int, N> values)
+      : _vars(std::move(vars)), _values(std::move(values)) {}
 
   /**
    * Probe the cost of this move on the given assignment. Will only probe the
@@ -24,7 +24,7 @@ class Move {
     if (!_probed) {
       _cost = assignment.probe([&](auto& modifier) {
         for (auto i = 0u; i < N; i++) {
-          modifier.set(_variables[i], _values[i]);
+          modifier.set(_vars[i], _values[i]);
         }
       });
 
@@ -42,13 +42,13 @@ class Move {
   void commit(Assignment& assignment) {
     assignment.assign([&](auto& modifier) {
       for (auto i = 0u; i < N; i++) {
-        modifier.set(_variables[i], _values[i]);
+        modifier.set(_vars[i], _values[i]);
       }
     });
   }
 
  private:
-  std::array<propagation::VarId, N> _variables;
+  std::array<propagation::VarId, N> _vars;
   std::array<Int, N> _values;
 
   Cost _cost{0, 0, propagation::ObjectiveDirection::NONE};

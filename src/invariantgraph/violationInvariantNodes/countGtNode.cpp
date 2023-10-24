@@ -128,7 +128,7 @@ std::unique_ptr<CountGtNode> CountGtNode::fromModelConstraint(
                                        shouldHold);
 }
 
-void CountGtNode::registerOutputVariables(InvariantGraph& invariantGraph,
+void CountGtNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     _intermediate = solver.makeIntVar(0, 0, 0);

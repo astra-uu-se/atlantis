@@ -10,7 +10,7 @@ AbsDiff::AbsDiff(SolverBase& solver, VarId output, VarId x, VarId y)
 void AbsDiff::registerVars() {
   assert(!_id.equals(NULL_ID));
 
-  registerDefinedVariable(_output);
+  registerDefinedVar(_output);
   _solver.registerInvariantInput(_id, _x, 0);
   _solver.registerInvariantInput(_id, _y, 0);
 }

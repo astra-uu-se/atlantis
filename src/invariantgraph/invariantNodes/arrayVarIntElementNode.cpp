@@ -33,7 +33,7 @@ ArrayVarIntElementNode::fromModelConstraint(
       invariantGraph.createVarNode(c), offset);
 }
 
-void ArrayVarIntElementNode::registerOutputVariables(
+void ArrayVarIntElementNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()),
                 _offset);

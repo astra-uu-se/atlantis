@@ -10,10 +10,10 @@ Assignment::Assignment(propagation::Solver& solver,
       _violation(violation),
       _objective(objective),
       _objectiveDirection(objectiveDirection) {
-  _searchVariables.reserve(solver.searchVariables().size());
-  for (const propagation::VarId varId : solver.searchVariables()) {
+  _searchVars.reserve(solver.searchVars().size());
+  for (const propagation::VarId varId : solver.searchVars()) {
     if (solver.lowerBound(varId) != solver.upperBound(varId)) {
-      _searchVariables.push_back(varId);
+      _searchVars.push_back(varId);
     }
   }
 }

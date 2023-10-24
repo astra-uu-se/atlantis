@@ -18,7 +18,7 @@ void ElementVar::registerVars() {
   for (const VarId input : _varArray) {
     _solver.registerInvariantInput(_id, input, LocalId(0), true);
   }
-  registerDefinedVariable(_output);
+  registerDefinedVar(_output);
 }
 
 void ElementVar::updateBounds(bool widenOnly) {

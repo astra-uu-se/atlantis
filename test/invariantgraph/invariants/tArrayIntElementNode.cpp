@@ -50,7 +50,7 @@ TEST_F(ArrayIntElementNodeTest, application) {
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
@@ -58,10 +58,10 @@ TEST_F(ArrayIntElementNodeTest, application) {
   solver.close();
 
   // b
-  EXPECT_EQ(solver.searchVariables().size(), 1);
+  EXPECT_EQ(solver.searchVars().size(), 1);
 
   // b (c is a view)
-  EXPECT_EQ(solver.numVariables(), 1);
+  EXPECT_EQ(solver.numVars(), 1);
 
   // elementConst is a view
   EXPECT_EQ(solver.numInvariants(), 0);
@@ -71,7 +71,7 @@ TEST_F(ArrayIntElementNodeTest, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   invNode().registerNode(*_invariantGraph, solver);
 
   std::vector<propagation::VarId> inputs;

@@ -10,26 +10,26 @@ namespace atlantis::search::neighbourhoods {
 
 class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
  private:
-  std::vector<search::SearchVariable> _variables;
-  std::vector<size_t> _variableIndices;
+  std::vector<search::SearchVar> _vars;
+  std::vector<size_t> _varIndices;
   const Int _domainOffset;
-  // _valueIndexToVariableIndex[i]:
-  //  if _valueIndexToVariableIndex[i] < _variables.size(), then
-  //    variables[_valueIndexToVariableIndex[i]] = _offset + i
+  // _valueIndexToVarIndex[i]:
+  //  if _valueIndexToVarIndex[i] < _vars.size(), then
+  //    vars[_valueIndexToVarIndex[i]] = _offset + i
   //  otherwise,
-  //    no variable in _variables take value _offset + i
-  std::vector<size_t> _valueIndexToVariableIndex;
+  //    no variable in _vars take value _offset + i
+  std::vector<size_t> _valueIndexToVarIndex;
 
-  // domains[i] = domain of _variables[i]
+  // domains[i] = domain of _vars[i]
   std::vector<std::vector<Int>> _domains;
-  // inDomain[i][j] = the domain of _variables[i] contains value j + _offset
+  // inDomain[i][j] = the domain of _vars[i] contains value j + _offset
   std::vector<std::vector<bool>> _inDomain;
   const propagation::SolverBase& _solver;
 
  public:
-  AllDifferentNonUniformNeighbourhood(
-      std::vector<search::SearchVariable>&& variables, Int domainLb,
-      Int domainUb, const propagation::SolverBase& solver);
+  AllDifferentNonUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
+                                      Int domainLb, Int domainUb,
+                                      const propagation::SolverBase& solver);
 
   ~AllDifferentNonUniformNeighbourhood() override = default;
 
@@ -38,9 +38,7 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  const std::vector<SearchVariable>& coveredVariables() const override {
-    return _variables;
-  }
+  const std::vector<SearchVar>& coveredVars() const override { return _vars; }
   bool canSwap(const Assignment& assignment, size_t var1Index,
                size_t val2Index) const noexcept;
   bool swapValues(Assignment& assignment, Annealer& annealer, size_t var1Index,
@@ -50,38 +48,36 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
 
  private:
   inline Int toValue(size_t valueIndex) const noexcept {
-    assert(valueIndex < _valueIndexToVariableIndex.size());
-    assert(_valueIndexToVariableIndex.at(valueIndex) <= _variables.size());
+    assert(valueIndex < _valueIndexToVarIndex.size());
+    assert(_valueIndexToVarIndex.at(valueIndex) <= _vars.size());
     return static_cast<Int>(valueIndex) + _domainOffset;
   }
   inline size_t toValueIndex(Int value) const noexcept {
     assert(value >= _domainOffset);
     assert(static_cast<size_t>(value - _domainOffset) <
-           _valueIndexToVariableIndex.size());
-    assert(_valueIndexToVariableIndex.at(static_cast<size_t>(
-               value - _domainOffset)) <= _variables.size());
+           _valueIndexToVarIndex.size());
+    assert(_valueIndexToVarIndex.at(
+               static_cast<size_t>(value - _domainOffset)) <= _vars.size());
     return static_cast<size_t>(value - _domainOffset);
   }
   inline bool isValueIndexOccupied(size_t valueIndex) const noexcept {
-    assert(valueIndex < _valueIndexToVariableIndex.size());
-    assert(_valueIndexToVariableIndex.at(valueIndex) <= _variables.size());
-    return _valueIndexToVariableIndex[valueIndex] < _variables.size();
+    assert(valueIndex < _valueIndexToVarIndex.size());
+    assert(_valueIndexToVarIndex.at(valueIndex) <= _vars.size());
+    return _valueIndexToVarIndex[valueIndex] < _vars.size();
   }
-  inline bool inDomain(size_t variableIndex, size_t valueIndex) const noexcept {
-    assert(variableIndex < _inDomain.size());
-    assert(valueIndex < _inDomain.at(variableIndex).size());
-    return _inDomain[variableIndex][valueIndex];
+  inline bool inDomain(size_t varIndex, size_t valueIndex) const noexcept {
+    assert(varIndex < _inDomain.size());
+    assert(valueIndex < _inDomain.at(varIndex).size());
+    return _inDomain[varIndex][valueIndex];
   }
 
 #ifndef NDEBUG
   bool sanity(Assignment& assignment) {
-    for (size_t variableIndex = 0; variableIndex < _variables.size();
-         ++variableIndex) {
-      const Int value =
-          assignment.value(_variables.at(variableIndex).solverId());
+    for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
+      const Int value = assignment.value(_vars.at(varIndex).solverId());
       const size_t valueIndex = toValueIndex(value);
-      assert(valueIndex < _valueIndexToVariableIndex.size());
-      assert(_valueIndexToVariableIndex.at(valueIndex) == variableIndex);
+      assert(valueIndex < _valueIndexToVarIndex.size());
+      assert(_valueIndexToVarIndex.at(valueIndex) == varIndex);
     }
     return true;
   }

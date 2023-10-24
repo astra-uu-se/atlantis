@@ -127,7 +127,7 @@ std::unique_ptr<CountEqNode> CountEqNode::fromModelConstraint(
   return std::make_unique<CountEqNode>(std::move(x), yVarNode, cVarNode, true);
 }
 
-void CountEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
+void CountEqNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {
   if (!_cIsParameter) {
     if (invariantGraph.varId(cVarNode()) == propagation::NULL_ID) {

@@ -6,33 +6,33 @@ Count::Count(SolverBase& solver, VarId output, VarId y, std::vector<VarId> varAr
     : Invariant(solver),
       _output(output),
       _y(y),
-      _variables(std::move(varArray)),
-      _committedValues(_variables.size(), 0),
+      _vars(std::move(varArray)),
+      _committedValues(_vars.size(), 0),
       _counts(),
       _offset(0) {
-  _modifiedVars.reserve(_variables.size() + 1);
+  _modifiedVars.reserve(_vars.size() + 1);
 }
 
 void Count::registerVars() {
   assert(!_id.equals(NULL_ID));
-  for (size_t i = 0; i < _variables.size(); ++i) {
-    _solver.registerInvariantInput(_id, _variables[i], i);
+  for (size_t i = 0; i < _vars.size(); ++i) {
+    _solver.registerInvariantInput(_id, _vars[i], i);
   }
-  _solver.registerInvariantInput(_id, _y, _variables.size());
-  registerDefinedVariable(_output);
+  _solver.registerInvariantInput(_id, _y, _vars.size());
+  registerDefinedVar(_output);
 }
 
 void Count::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_output, 0, _variables.size(), widenOnly);
+  _solver.updateBounds(_output, 0, _vars.size(), widenOnly);
 }
 
 void Count::close(Timestamp ts) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  for (size_t i = 0; i < _variables.size(); ++i) {
-    lb = std::min(lb, _solver.lowerBound(_variables[i]));
-    ub = std::max(ub, _solver.upperBound(_variables[i]));
+  for (size_t i = 0; i < _vars.size(); ++i) {
+    lb = std::min(lb, _solver.lowerBound(_vars[i]));
+    ub = std::max(ub, _solver.upperBound(_vars[i]));
   }
   assert(ub >= lb);
   lb = std::max(lb, _solver.lowerBound(_y));
@@ -50,8 +50,8 @@ void Count::recompute(Timestamp ts) {
 
   updateValue(ts, _output, 0);
 
-  for (size_t i = 0; i < _variables.size(); ++i) {
-    increaseCount(ts, _solver.value(ts, _variables[i]));
+  for (size_t i = 0; i < _vars.size(); ++i) {
+    increaseCount(ts, _solver.value(ts, _vars[i]));
   }
   updateValue(ts, _output, count(ts, _solver.value(ts, _y)));
 }
@@ -62,7 +62,7 @@ void Count::notifyInputChanged(Timestamp ts, LocalId id) {
     return;
   }
   assert(id < _committedValues.size());
-  const Int newValue = _solver.value(ts, _variables[id]);
+  const Int newValue = _solver.value(ts, _vars[id]);
   if (newValue == _committedValues[id]) {
     return;
   }
@@ -73,16 +73,16 @@ void Count::notifyInputChanged(Timestamp ts, LocalId id) {
 
 VarId Count::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
-  if (index < _variables.size()) {
-    return _variables[index];
-  } else if (index == _variables.size()) {
+  if (index < _vars.size()) {
+    return _vars[index];
+  } else if (index == _vars.size()) {
     return _y;
   }
   return NULL_ID;
 }
 
 void Count::notifyCurrentInputChanged(Timestamp ts) {
-  assert(static_cast<size_t>(_state.value(ts)) <= _variables.size());
+  assert(static_cast<size_t>(_state.value(ts)) <= _vars.size());
   notifyInputChanged(ts, static_cast<size_t>(_state.value(ts)));
 }
 
@@ -90,7 +90,7 @@ void Count::commit(Timestamp ts) {
   Invariant::commit(ts);
 
   for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _solver.committedValue(_variables[i]);
+    _committedValues[i] = _solver.committedValue(_vars[i]);
   }
 
   for (CommittableInt& committableInt : _counts) {

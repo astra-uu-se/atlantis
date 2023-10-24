@@ -5,16 +5,16 @@
 #include <vector>
 
 #include "constraint.hpp"
-#include "types.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
 class AllDifferent : public Constraint {
  protected:
-  std::vector<VarId> _variables;
+  std::vector<VarId> _vars;
   std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
@@ -23,7 +23,7 @@ class AllDifferent : public Constraint {
 
  public:
   explicit AllDifferent(SolverBase&, VarId violationId,
-                        std::vector<VarId> variables);
+                        std::vector<VarId> vars);
 
   void registerVars() override;
   void updateBounds(bool widenOnly = false) override;
@@ -40,7 +40,7 @@ inline signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
          static_cast<size_t>(value - _offset) < _counts.size());
   assert(_counts[value - _offset].value(ts) + 1 >= 0);
   assert(_counts[value - _offset].value(ts) + 1 <=
-         static_cast<Int>(_variables.size()));
+         static_cast<Int>(_vars.size()));
   return _counts[value - _offset].incValue(ts, 1) >= 2 ? 1 : 0;
 }
 
@@ -49,7 +49,7 @@ inline signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
          static_cast<size_t>(value - _offset) < _counts.size());
   assert(_counts[value - _offset].value(ts) - 1 >= 0);
   assert(_counts[value - _offset].value(ts) - 1 <=
-         static_cast<Int>(_variables.size()));
+         static_cast<Int>(_vars.size()));
   return _counts[value - _offset].incValue(ts, -1) >= 1 ? -1 : 0;
 }
 

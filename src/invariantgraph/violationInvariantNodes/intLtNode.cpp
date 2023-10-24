@@ -36,7 +36,7 @@ std::unique_ptr<IntLtNode> IntLtNode::fromModelConstraint(
       a, b, invariantGraph.createVarNode(reified.var()));
 }
 
-void IntLtNode::registerOutputVariables(InvariantGraph& invariantGraph,
+void IntLtNode::registerOutputVars(InvariantGraph& invariantGraph,
                                         propagation::SolverBase& solver) {
   registerViolation(invariantGraph, solver);
 }

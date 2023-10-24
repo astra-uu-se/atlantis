@@ -4,19 +4,19 @@ namespace atlantis::search::neighbourhoods {
 
 void RandomNeighbourhood::initialise(RandomProvider& random,
                                      AssignmentModifier& modifications) {
-  for (auto& variable : _variables) {
-    modifications.set(variable.solverId(), random.inDomain(variable.domain()));
+  for (auto& var : _vars) {
+    modifications.set(var.solverId(), random.inDomain(var.domain()));
   }
 }
 
 bool RandomNeighbourhood::randomMove(RandomProvider& random,
                                      Assignment& assignment,
                                      Annealer& annealer) {
-  auto variable = random.element(_variables);
+  auto var = random.element(_vars);
 
   return maybeCommit(
-      Move<1u>({variable.solverId()}, {random.inDomain(variable.domain())}),
-      assignment, annealer);
+      Move<1u>({var.solverId()}, {random.inDomain(var.domain())}), assignment,
+      annealer);
 }
 
 }  // namespace atlantis::search::neighbourhoods

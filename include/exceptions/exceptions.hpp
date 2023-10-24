@@ -3,12 +3,12 @@
 
 namespace atlantis {
 
-class VariableAlreadyDefinedException : public std::runtime_error {
+class VarAlreadyDefinedException : public std::runtime_error {
  public:
   /**
    * @param msg The error message
    */
-  explicit VariableAlreadyDefinedException(const std::string& msg)
+  explicit VarAlreadyDefinedException(const std::string& msg)
       : std::runtime_error(msg) {}
 };
 
@@ -83,9 +83,9 @@ class OutOfOrderIndexRegistration : public std::exception {
   explicit OutOfOrderIndexRegistration() = default;
 };
 
-class VariableIsNotSearchVariable : public std::exception {
+class VarIsNotSearchVar : public std::exception {
  public:
-  explicit VariableIsNotSearchVariable() = default;
+  explicit VarIsNotSearchVar() = default;
 };
 
 }

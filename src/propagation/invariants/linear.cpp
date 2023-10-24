@@ -23,7 +23,7 @@ void Linear::registerVars() {
   for (size_t i = 0; i < _varArray.size(); ++i) {
     _solver.registerInvariantInput(_id, _varArray[i], i);
   }
-  registerDefinedVariable(_output);
+  registerDefinedVar(_output);
 }
 
 void Linear::updateBounds(bool widenOnly) {

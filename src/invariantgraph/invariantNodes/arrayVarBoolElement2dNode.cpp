@@ -51,7 +51,7 @@ ArrayVarBoolElement2dNode::fromModelConstraint(
       static_cast<size_t>(numRows), offset1, offset2);
 }
 
-void ArrayVarBoolElement2dNode::registerOutputVariables(
+void ArrayVarBoolElement2dNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()), 1);
 }

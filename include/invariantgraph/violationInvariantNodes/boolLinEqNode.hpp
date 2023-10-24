@@ -19,10 +19,10 @@ class BoolLinEqNode : public ViolationInvariantNode {
   propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
-  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                 Int c, VarNodeId r);
 
-  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                 Int c, bool shouldHold);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
@@ -32,7 +32,7 @@ class BoolLinEqNode : public ViolationInvariantNode {
   static std::unique_ptr<BoolLinEqNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&,
+  void registerOutputVars(InvariantGraph&,
                                propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;

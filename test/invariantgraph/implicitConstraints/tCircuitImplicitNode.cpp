@@ -46,7 +46,7 @@ TEST_F(CircuitImplicitNodeTest, application) {
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
@@ -54,10 +54,10 @@ TEST_F(CircuitImplicitNodeTest, application) {
   solver.close();
 
   // a, b, c and d
-  EXPECT_EQ(solver.searchVariables().size(), 4);
+  EXPECT_EQ(solver.searchVars().size(), 4);
 
   // a, b, c and d
-  EXPECT_EQ(solver.numVariables(), 4);
+  EXPECT_EQ(solver.numVars(), 4);
 
   EXPECT_EQ(solver.numInvariants(), 0);
 

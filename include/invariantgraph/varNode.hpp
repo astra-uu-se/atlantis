@@ -33,14 +33,14 @@ class InvariantNode;   // Forward declaration
  */
 class VarNode {
  public:
-  using FZNVariable = std::variant<fznparser::BoolVar, fznparser::IntVar>;
-  using VariableMap =
+  using FZNVar = std::variant<fznparser::BoolVar, fznparser::IntVar>;
+  using VarMap =
       std::unordered_map<VarNodeId, propagation::VarId, VarNodeIdHash>;
   float SPARSE_MIN_DENSENESS{0.6};
 
  private:
   VarNodeId _varNodeId;
-  std::optional<FZNVariable> _variable;
+  std::optional<FZNVar> _var;
   SearchDomain _domain;
   const bool _isIntVar;
   propagation::VarId _varId{propagation::NULL_ID};
@@ -55,9 +55,9 @@ class VarNode {
   /**
    * Construct a variable node which is associated with a model variable.
    *
-   * @param variable The model variable this node is associated with.
+   * @param var The model variable this node is associated with.
    */
-  explicit VarNode(VarNodeId, const FZNVariable& variable);
+  explicit VarNode(VarNodeId, const FZNVar& var);
 
   /**
    * Construct a variable node which is not associated with a model variable.
@@ -79,7 +79,7 @@ class VarNode {
    * @return The model variable this node is associated with, or std::nullopt
    * if no model variable is associated with this node.
    */
-  [[nodiscard]] std::optional<FZNVariable> variable() const;
+  [[nodiscard]] std::optional<FZNVar> var() const;
 
   [[nodiscard]] std::string identifier() const;
 

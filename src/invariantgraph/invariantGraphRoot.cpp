@@ -7,11 +7,10 @@
 namespace atlantis::invariantgraph {
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
-InvariantGraphRoot::createNeighbourhood(
-    propagation::SolverBase& solver,
-    std::vector<search::SearchVariable>&& variables) {
+InvariantGraphRoot::createNeighbourhood(propagation::SolverBase& solver,
+                                        std::vector<search::SearchVar>&& vars) {
   return std::make_shared<search::neighbourhoods::RandomNeighbourhood>(
-      std::move(variables), solver);
+      std::move(vars), solver);
 }
 
 void InvariantGraphRoot::addSearchVarNode(VarNode& varNode) {

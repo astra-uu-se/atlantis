@@ -11,7 +11,7 @@
 namespace atlantis::invariantgraph {
 class ArrayIntMaximumNode : public InvariantNode {
  public:
-  ArrayIntMaximumNode(std::vector<VarNodeId>&& variables, VarNodeId output);
+  ArrayIntMaximumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{
@@ -23,7 +23,7 @@ class ArrayIntMaximumNode : public InvariantNode {
 
   ~ArrayIntMaximumNode() override = default;
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };

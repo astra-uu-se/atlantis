@@ -1,6 +1,7 @@
+#include "fznBackend.hpp"
+
 #include <iostream>
 
-#include "fznBackend.hpp"
 #include "fznparser/parser.hpp"
 #include "invariantgraph/invariantGraphBuilder.hpp"
 #include "search/objective.hpp"
@@ -31,7 +32,7 @@ static propagation::ObjectiveDirection getObjectiveDirection(
 search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   auto model = logger.timed<fznparser::Model>("parsing FlatZinc", [&] {
     auto m = fznparser::parseFznFile(_modelFile);
-    logger.debug("Found {:d} variables", m.variables().size());
+    logger.debug("Found {:d} variables", m.vars().size());
     logger.debug("Found {:d} constraints", m.constraints().size());
     return m;
   });
@@ -64,8 +65,8 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   search::SearchProcedure search(random, assignment, neighbourhood,
                                  searchObjective);
 
-  search::SearchController::VariableMap flippedMap;
-  for (const auto& [varId, fznVar] : applicationResult.variableIdentifiers())
+  search::SearchController::VarMap flippedMap;
+  for (const auto& [varId, fznVar] : applicationResult.varIdentifiers())
     flippedMap.emplace(fznVar, varId);
 
   search::SearchController searchController = [&] {

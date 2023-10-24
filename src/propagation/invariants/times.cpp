@@ -11,7 +11,7 @@ void Times::registerVars() {
   assert(!_id.equals(NULL_ID));
   _solver.registerInvariantInput(_id, _x, 0);
   _solver.registerInvariantInput(_id, _y, 0);
-  registerDefinedVariable(_output);
+  registerDefinedVar(_output);
 }
 
 void Times::updateBounds(bool widenOnly) {

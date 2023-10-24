@@ -5,17 +5,17 @@
 #include <vector>
 
 #include "constraint.hpp"
-#include "types.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
 template <bool IsClosed>
 class GlobalCardinalityConst : public Constraint {
  private:
-  const std::vector<VarId> _variables;
+  const std::vector<VarId> _vars;
   std::vector<Int> _lowerBound;
   std::vector<Int> _upperBound;
   std::vector<Int> _committedValues;
@@ -28,12 +28,10 @@ class GlobalCardinalityConst : public Constraint {
 
  public:
   GlobalCardinalityConst(SolverBase&, VarId violationId,
-                         std::vector<VarId> variables,
-                         const std::vector<Int>& cover,
+                         std::vector<VarId> vars, const std::vector<Int>& cover,
                          const std::vector<Int>& counts);
   GlobalCardinalityConst(SolverBase&, VarId violationId,
-                         std::vector<VarId> variables,
-                         const std::vector<Int>& cover,
+                         std::vector<VarId> vars, const std::vector<Int>& cover,
                          const std::vector<Int>& lowerBound,
                          const std::vector<Int>& upperBound);
 
@@ -59,7 +57,7 @@ inline signed char GlobalCardinalityConst<IsClosed>::increaseCount(Timestamp ts,
   }
   Int newCount = _counts.at(pos).incValue(ts, 1);
   assert(newCount >= 0);
-  assert(newCount <= static_cast<Int>(_variables.size()));
+  assert(newCount <= static_cast<Int>(_vars.size()));
   return newCount > _upperBound.at(pos)
              ? 1
              : (newCount > _lowerBound.at(pos) ? 0 : -1);
@@ -77,7 +75,7 @@ inline signed char GlobalCardinalityConst<IsClosed>::decreaseCount(Timestamp ts,
   }
   Int newCount = _counts.at(pos).incValue(ts, -1);
   assert(newCount >= 0);
-  assert(newCount <= static_cast<Int>(_variables.size()));
+  assert(newCount <= static_cast<Int>(_vars.size()));
   return newCount < _lowerBound.at(pos)
              ? 1
              : (newCount < _upperBound.at(pos) ? 0 : -1);

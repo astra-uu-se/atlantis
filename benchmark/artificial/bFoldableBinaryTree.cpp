@@ -20,9 +20,7 @@ namespace atlantis::benchmark {
 
 class FoldableBinaryTree : public ::benchmark::Fixture {
  private:
-  propagation::VarId randomVariable() {
-    return vars.at(std::rand() % vars.size());
-  }
+  propagation::VarId randomVar() { return vars.at(std::rand() % vars.size()); }
   propagation::VarId createTree() {
     propagation::VarId output = solver->makeIntVar(0, lb, ub);
     vars.push_back(output);
@@ -137,7 +135,7 @@ void FoldableBinaryTree::probeRnd(::benchmark::State& st, size_t moveCount) {
 
     // Random query variable
     solver->beginProbe();
-    solver->query(randomVariable());
+    solver->query(randomVar());
     solver->endProbe();
     ++probes;
   }
@@ -189,7 +187,7 @@ void FoldableBinaryTree::commitRnd(::benchmark::State& st, size_t moveCount) {
 
     // Query random variable
     solver->beginCommit();
-    solver->query(randomVariable());
+    solver->query(randomVar());
     solver->endCommit();
     ++commits;
   }

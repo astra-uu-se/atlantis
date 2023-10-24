@@ -26,13 +26,13 @@ class IntLinEqNode : public ViolationInvariantNode {
                                                        {"int_lin_eq_reif", 4}};
   }
 
-  IntLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  IntLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int c, VarNodeId r);
 
-  IntLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  IntLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int c, bool shouldHold);
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 

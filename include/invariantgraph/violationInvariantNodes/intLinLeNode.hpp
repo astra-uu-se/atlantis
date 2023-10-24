@@ -4,9 +4,9 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/constraints/lessEqual.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
+#include "propagation/constraints/lessEqual.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/views/greaterEqualConst.hpp"
 #include "propagation/views/lessEqualConst.hpp"
@@ -20,10 +20,10 @@ class IntLinLeNode : public ViolationInvariantNode {
   propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
-  IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int bound, VarNodeId r);
 
-  IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int bound, bool shouldHold);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
@@ -34,7 +34,8 @@ class IntLinLeNode : public ViolationInvariantNode {
   static std::unique_ptr<IntLinLeNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -43,4 +44,4 @@ class IntLinLeNode : public ViolationInvariantNode {
   [[nodiscard]] Int bound() const { return _bound; }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

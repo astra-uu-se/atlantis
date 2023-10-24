@@ -11,8 +11,8 @@ namespace atlantis::invariantgraph {
  */
 class InvariantGraphRoot : public ImplicitConstraintNode {
  public:
-  InvariantGraphRoot(std::vector<VarNodeId>&& variables = {})
-      : ImplicitConstraintNode(std::move(variables)) {}
+  InvariantGraphRoot(std::vector<VarNodeId>&& vars = {})
+      : ImplicitConstraintNode(std::move(vars)) {}
 
   ~InvariantGraphRoot() override = default;
 
@@ -20,7 +20,7 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      propagation::SolverBase& solver, std::vector<search::SearchVariable>&& variables) override;
+      propagation::SolverBase& solver, std::vector<search::SearchVar>&& vars) override;
 };
 
 }  // namespace invariantgraph

@@ -19,7 +19,7 @@ std::unique_ptr<Bool2IntNode> Bool2IntNode::fromModelConstraint(
                                         invariantGraph.createVarNode(b));
 }
 
-void Bool2IntNode::registerOutputVariables(InvariantGraph& invariantGraph,
+void Bool2IntNode::registerOutputVars(InvariantGraph& invariantGraph,
                                            propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())

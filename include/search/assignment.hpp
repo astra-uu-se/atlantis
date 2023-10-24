@@ -12,8 +12,7 @@ class AssignmentModifier {
   propagation::Solver& _solver;
 
  public:
-  explicit AssignmentModifier(propagation::Solver& solver)
-      : _solver(solver) {
+  explicit AssignmentModifier(propagation::Solver& solver) : _solver(solver) {
     assert(solver.isMoving());
   }
 
@@ -30,14 +29,13 @@ class AssignmentModifier {
 class Assignment {
  private:
   propagation::Solver& _solver;
-  std::vector<propagation::VarId> _searchVariables{};
+  std::vector<propagation::VarId> _searchVars{};
   propagation::VarId _violation;
   propagation::VarId _objective;
   propagation::ObjectiveDirection _objectiveDirection;
 
  public:
-  explicit Assignment(propagation::Solver& solver,
-                      propagation::VarId violation,
+  explicit Assignment(propagation::Solver& solver, propagation::VarId violation,
                       propagation::VarId objective,
                       propagation::ObjectiveDirection objectiveDirection);
 
@@ -105,9 +103,9 @@ class Assignment {
    */
   [[nodiscard]] Cost cost() const noexcept;
 
-  [[nodiscard]] const std::vector<propagation::VarId>& searchVariables()
+  [[nodiscard]] const std::vector<propagation::VarId>& searchVars()
       const noexcept {
-    return _searchVariables;
+    return _searchVars;
   }
 
  private:

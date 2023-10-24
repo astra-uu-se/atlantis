@@ -29,8 +29,8 @@ class LayeredPropagationQueue {
   LayeredPropagationQueue(const LayeredPropagationQueue&) = delete;
   LayeredPropagationQueue& operator=(const LayeredPropagationQueue&) = delete;
 
-  void init(int numVariables, int numLayers) {
-    _priorities.resize(numVariables + 1);
+  void init(int numVars, int numLayers) {
+    _priorities.resize(numVars + 1);
     _queue.resize(numLayers, &_dummy);
     _currentLayer = _queue.size();
   }

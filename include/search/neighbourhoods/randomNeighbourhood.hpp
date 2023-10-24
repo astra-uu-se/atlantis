@@ -8,13 +8,13 @@ namespace atlantis::search::neighbourhoods {
 
 class RandomNeighbourhood : public Neighbourhood {
  private:
-  std::vector<SearchVariable> _variables;
+  std::vector<SearchVar> _vars;
   const propagation::SolverBase& _solver;
 
  public:
-  RandomNeighbourhood(std::vector<SearchVariable> variables,
+  RandomNeighbourhood(std::vector<SearchVar> vars,
                       const propagation::SolverBase& solver)
-      : _variables(std::move(variables)), _solver(solver) {}
+      : _vars(std::move(vars)), _solver(solver) {}
 
   ~RandomNeighbourhood() override = default;
 
@@ -23,9 +23,7 @@ class RandomNeighbourhood : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  const std::vector<SearchVariable> & coveredVariables() const override {
-    return _variables;
-  }
+  const std::vector<SearchVar>& coveredVars() const override { return _vars; }
 };
 
 }  // namespace atlantis::search::neighbourhoods

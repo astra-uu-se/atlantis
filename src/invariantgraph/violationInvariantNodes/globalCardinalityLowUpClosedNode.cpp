@@ -67,7 +67,7 @@ GlobalCardinalityLowUpClosedNode::fromModelConstraint(
       shouldHold);
 }
 
-void GlobalCardinalityLowUpClosedNode::registerOutputVariables(
+void GlobalCardinalityLowUpClosedNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (!shouldHold()) {

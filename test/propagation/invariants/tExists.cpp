@@ -35,10 +35,10 @@ class ExistsTest : public InvariantTest {
     inputs.clear();
   }
 
-  Int computeOutput(const Timestamp ts, const std::vector<VarId>& variables) {
+  Int computeOutput(const Timestamp ts, const std::vector<VarId>& vars) {
     Int min_val = std::numeric_limits<Int>::max();
-    for (size_t i = 0; i < variables.size(); ++i) {
-      min_val = std::min(min_val, solver->value(ts, variables.at(i)));
+    for (size_t i = 0; i < vars.size(); ++i) {
+      min_val = std::min(min_val, solver->value(ts, vars.at(i)));
     }
     return min_val;
   }

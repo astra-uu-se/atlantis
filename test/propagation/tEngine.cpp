@@ -34,7 +34,7 @@ class MockInvariantSimple : public Invariant {
 
   void registerVars() override {
     _solver.registerInvariantInput(_id, inputVar, LocalId(0));
-    registerDefinedVariable(outputVar);
+    registerDefinedVar(outputVar);
     isRegistered = true;
   }
   void updateBounds(bool) override { boundsUpdated = true; }
@@ -66,7 +66,7 @@ class MockInvariantAdvanced : public Invariant {
     for (size_t i = 0; i < inputs.size(); ++i) {
       _solver.registerInvariantInput(_id, inputs[i], LocalId(i));
     }
-    registerDefinedVariable(output);
+    registerDefinedVar(output);
     isRegistered = true;
   }
 
@@ -110,7 +110,7 @@ class MockSimplePlus : public Invariant {
 
     _solver.registerInvariantInput(_id, x, LocalId(0));
     _solver.registerInvariantInput(_id, y, LocalId(1));
-    registerDefinedVariable(output);
+    registerDefinedVar(output);
     isRegistered = true;
   }
 
@@ -210,8 +210,8 @@ class SolverTest : public ::testing::Test {
 
     solver->beginProbe();
     Timestamp timestamp = solver->currentTimestamp();
-    VarId modifiedDecisionVariable = inputs[2][1];
-    solver->setValue(modifiedDecisionVariable, 1);
+    VarId modifiedDecisionVar = inputs[2][1];
+    solver->setValue(modifiedDecisionVar, 1);
     std::vector<size_t> markedInvariants = {2, 5, 6};
     std::vector<size_t> unmarkedInvariants = {0, 1, 3, 4};
     solver->query(outputs.back());
@@ -235,9 +235,8 @@ class SolverTest : public ::testing::Test {
               .WillRepeatedly(Return(NULL_ID));
         }
       } else {
-        EXPECT_EQ(solver->modifiedSearchVariables().size(), 1);
-        EXPECT_TRUE(solver->modifiedSearchVariables().contains(
-            modifiedDecisionVariable));
+        EXPECT_EQ(solver->modifiedSearchVar().size(), 1);
+        EXPECT_TRUE(solver->modifiedSearchVar().contains(modifiedDecisionVar));
         for (size_t i : markedInvariants) {
           EXPECT_CALL(*invariants[i], nextInput(timestamp))
               .WillOnce(Return(inputs[i][0]))
@@ -261,7 +260,7 @@ class SolverTest : public ::testing::Test {
   }
 };
 
-TEST_F(SolverTest, CreateVariablesAndInvariant) {
+TEST_F(SolverTest, CreateVarsAndInvariant) {
   solver->open();
 
   const VarId inputVar = solver->makeIntVar(0, Int(-100), Int(100));
@@ -278,7 +277,7 @@ TEST_F(SolverTest, CreateVariablesAndInvariant) {
   ASSERT_TRUE(invariant->isRegistered);
 
   solver->close();
-  EXPECT_EQ(solver->store().numVariables(), 2);
+  EXPECT_EQ(solver->store().numVars(), 2);
   EXPECT_EQ(solver->store().numInvariants(), size_t(1));
 }
 
@@ -369,7 +368,7 @@ TEST_F(SolverTest, RecomputeAndCommit) {
 
   solver->close();
 
-  ASSERT_EQ(solver->store().numVariables(), 2);
+  ASSERT_EQ(solver->store().numVars(), 2);
   ASSERT_EQ(solver->store().numInvariants(), size_t(1));
 }
 

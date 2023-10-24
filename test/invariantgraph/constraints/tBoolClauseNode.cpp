@@ -107,7 +107,7 @@ class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
@@ -116,10 +116,10 @@ class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
     solver.close();
 
     // a, b, c and d
-    EXPECT_EQ(solver.searchVariables().size(), 4);
+    EXPECT_EQ(solver.searchVars().size(), 4);
 
     // a, b, c, d, sum
-    EXPECT_EQ(solver.numVariables(), 5);
+    EXPECT_EQ(solver.numVars(), 5);
 
     // linear
     EXPECT_EQ(solver.numInvariants(), 1);
@@ -129,7 +129,7 @@ class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
     propagation::Solver solver;
     solver.open();
     addInputVarsToSolver(solver);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     invNode().registerNode(*_invariantGraph, solver);
 
     EXPECT_EQ(invNode().as().size(), 2);

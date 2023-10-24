@@ -19,7 +19,7 @@ class Solver : public SolverBase {
   PropagationMode _propagationMode;
 
  protected:
-  size_t _numVariables{0};
+  size_t _numVars{0};
 
   PropagationGraph _propGraph;
   OutputToInputExplorer _outputToInputExplorer;
@@ -28,7 +28,7 @@ class Solver : public SolverBase {
   std::vector<std::vector<VarIdBase>> _layerQueue{};
   std::vector<size_t> _layerQueueIndex{};
 
-  std::unordered_set<VarIdBase> _modifiedSearchVariables;
+  std::unordered_set<VarIdBase> _modifiedSearchVars;
 
   void incCurrentTimestamp();
 
@@ -51,8 +51,8 @@ class Solver : public SolverBase {
    * @param invariantId the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  virtual void registerDefinedVariable(VarId definedVarId,
-                                       InvariantId invariantId) final;
+  virtual void registerDefinedVar(VarId definedVarId,
+                                  InvariantId invariantId) final;
 
  public:
   Solver(/* args */);
@@ -94,14 +94,13 @@ class Solver : public SolverBase {
   void beginCommit();
   void endCommit();
 
-  size_t numVariables() const;
+  size_t numVars() const;
   size_t numInvariants() const;
 
-  [[nodiscard]] const std::vector<VarIdBase>& searchVariables() const;
-  [[nodiscard]] const std::unordered_set<VarIdBase>& modifiedSearchVariables()
-      const;
-  [[nodiscard]] const std::vector<VarIdBase>& evaluationVariables() const;
-  [[nodiscard]] const std::vector<std::pair<VarIdBase, bool>>& inputVariables(
+  [[nodiscard]] const std::vector<VarIdBase>& searchVars() const;
+  [[nodiscard]] const std::unordered_set<VarIdBase>& modifiedSearchVar() const;
+  [[nodiscard]] const std::vector<VarIdBase>& evaluationVars() const;
+  [[nodiscard]] const std::vector<std::pair<VarIdBase, bool>>& inputVars(
       InvariantId) const;
 
   /**
@@ -114,8 +113,7 @@ class Solver : public SolverBase {
   // This function is used by propagation, which is unaware of views.
   [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
 
-  [[nodiscard]] const std::vector<VarIdBase>& variablesDefinedBy(
-      InvariantId) const;
+  [[nodiscard]] const std::vector<VarIdBase>& varsDefinedBy(InvariantId) const;
 
   [[nodiscard]] const std::vector<PropagationGraph::ListeningInvariantData>&
       listeningInvariantData(VarId) const;
@@ -145,16 +143,15 @@ inline void Solver::incCurrentTimestamp() {
   if (_propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
     clearPropagationQueue();
   } else {
-    _modifiedSearchVariables.clear();
+    _modifiedSearchVars.clear();
   }
-  assert(std::all_of(searchVariables().begin(), searchVariables().end(),
-                     [&](const VarIdBase varId) {
-                       return !_store.intVar(varId).hasChanged(
-                           _currentTimestamp);
-                     }));
+  assert(std::all_of(
+      searchVars().begin(), searchVars().end(), [&](const VarIdBase varId) {
+        return !_store.intVar(varId).hasChanged(_currentTimestamp);
+      }));
 }
 
-inline size_t Solver::numVariables() const { return _propGraph.numVariables(); }
+inline size_t Solver::numVars() const { return _propGraph.numVars(); }
 
 inline size_t Solver::numInvariants() const {
   return _propGraph.numInvariants();
@@ -165,9 +162,9 @@ inline InvariantId Solver::definingInvariant(VarId id) const {
   return _propGraph.definingInvariant(id);
 }
 
-inline const std::vector<VarIdBase>& Solver::variablesDefinedBy(
+inline const std::vector<VarIdBase>& Solver::varsDefinedBy(
     InvariantId invariantId) const {
-  return _propGraph.variablesDefinedBy(invariantId);
+  return _propGraph.varsDefinedBy(invariantId);
 }
 
 inline const std::vector<PropagationGraph::ListeningInvariantData>&
@@ -189,20 +186,20 @@ inline bool Solver::hasChanged(Timestamp ts, VarId id) const {
 
 inline void Solver::setValue(Timestamp ts, VarId id, Int val) {
   assert(id.idType != VarIdType::view);
-  assert(_propGraph.isSearchVariable(id));
+  assert(_propGraph.isSearchVar(id));
 
   IntVar& var = _store.intVar(id);
   var.setValue(ts, val);
 
   if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
     if (ts != _currentTimestamp) {
-      _modifiedSearchVariables.clear();
+      _modifiedSearchVars.clear();
     }
 
     if (var.hasChanged(ts)) {
-      _modifiedSearchVariables.emplace(id);
+      _modifiedSearchVars.emplace(id);
     } else {
-      _modifiedSearchVariables.erase(id);
+      _modifiedSearchVars.erase(id);
     }
   }
   enqueueComputedVar(id);
@@ -229,22 +226,21 @@ inline void Solver::setOutputToInputMarkingMode(
   _outputToInputExplorer.setOutputToInputMarkingMode(markingMode);
 }
 
-inline const std::vector<VarIdBase>& Solver::searchVariables() const {
-  return _propGraph.searchVariables();
+inline const std::vector<VarIdBase>& Solver::searchVars() const {
+  return _propGraph.searchVars();
 }
 
-inline const std::vector<VarIdBase>& Solver::evaluationVariables() const {
-  return _propGraph.evaluationVariables();
+inline const std::vector<VarIdBase>& Solver::evaluationVars() const {
+  return _propGraph.evaluationVars();
 }
 
-inline const std::vector<std::pair<VarIdBase, bool>>& Solver::inputVariables(
+inline const std::vector<std::pair<VarIdBase, bool>>& Solver::inputVars(
     InvariantId invariantId) const {
-  return _propGraph.inputVariables(invariantId);
+  return _propGraph.inputVars(invariantId);
 }
 
-inline const std::unordered_set<VarIdBase>& Solver::modifiedSearchVariables()
-    const {
-  return _modifiedSearchVariables;
+inline const std::unordered_set<VarIdBase>& Solver::modifiedSearchVar() const {
+  return _modifiedSearchVars;
 }
 
 inline void Solver::outputToInputPropagate() {

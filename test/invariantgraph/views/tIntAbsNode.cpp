@@ -44,7 +44,7 @@ TEST_F(IntAbsNodeTest, application) {
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
@@ -52,9 +52,9 @@ TEST_F(IntAbsNodeTest, application) {
   solver.close();
 
   // a
-  EXPECT_EQ(solver.searchVariables().size(), 1);
+  EXPECT_EQ(solver.searchVars().size(), 1);
 
   // a
-  EXPECT_EQ(solver.numVariables(), 1);
+  EXPECT_EQ(solver.numVars(), 1);
 }
 }  // namespace atlantis::testing

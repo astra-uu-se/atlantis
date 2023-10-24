@@ -46,7 +46,7 @@ std::unique_ptr<BoolEqNode> BoolEqNode::fromModelConstraint(
       a, b, invariantGraph.createVarNode(reified.var()));
 }
 
-void BoolEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
+void BoolEqNode::registerOutputVars(InvariantGraph& invariantGraph,
                                          propagation::SolverBase& solver) {
   registerViolation(invariantGraph, solver);
 }

@@ -43,7 +43,7 @@ std::unique_ptr<BoolAndNode> BoolAndNode::fromModelConstraint(
       a, b, invariantGraph.createVarNode(reified.var()));
 }
 
-void BoolAndNode::registerOutputVariables(InvariantGraph& invariantGraph,
+void BoolAndNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (shouldHold()) {

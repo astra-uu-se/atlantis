@@ -59,7 +59,7 @@ const std::vector<VarNodeId>& InvariantNode::dynamicInputVarNodeIds()
   return _dynamicInputVarNodeIds;
 }
 
-void InvariantNode::replaceDefinedVariable(VarNode& oldOutputVarNode,
+void InvariantNode::replaceDefinedVar(VarNode& oldOutputVarNode,
                                            VarNode& newOutputVarNode) {
   // Replace all occurrences:
   for (size_t i = 0; i < _outputVarNodeIds.size(); ++i) {

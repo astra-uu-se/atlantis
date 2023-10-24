@@ -61,7 +61,7 @@ ArrayIntElement2dNode::fromModelConstraint(
       offset2);
 }
 
-void ArrayIntElement2dNode::registerOutputVariables(
+void ArrayIntElement2dNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }

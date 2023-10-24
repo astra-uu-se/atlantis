@@ -31,7 +31,7 @@ class BoolClauseNode : public ViolationInvariantNode {
   static std::unique_ptr<BoolClauseNode> fromModelConstraint(
       const fznparser::Constraint& constraint, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&,
+  void registerOutputVars(InvariantGraph&,
                                propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;

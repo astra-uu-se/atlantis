@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "types.hpp"
 #include "propagation/constraints/globalCardinalityConst.hpp"
 #include "propagation/solver.hpp"
+#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -19,11 +19,11 @@ template <bool IsClosed>
 class GlobalCardinalityConstTest : public InvariantTest {
  public:
   Int computeViolation(
-      const Timestamp ts, const std::vector<VarId>& variables,
+      const Timestamp ts, const std::vector<VarId>& vars,
       const std::unordered_map<Int, std::pair<Int, Int>>& coverSet) {
-    std::vector<Int> values(variables.size(), 0);
-    for (size_t i = 0; i < variables.size(); ++i) {
-      values.at(i) = solver->value(ts, variables.at(i));
+    std::vector<Int> values(vars.size(), 0);
+    for (size_t i = 0; i < vars.size(); ++i) {
+      values.at(i) = solver->value(ts, vars.at(i));
     }
     return computeViolation(values, coverSet);
   }
@@ -370,23 +370,23 @@ class GlobalCardinalityConstTest : public InvariantTest {
   }
 
   void rapidCheck(size_t nVar, Int valOffset) {
-    size_t numVariables = static_cast<size_t>(nVar) + size_t(2);
+    size_t numVars = static_cast<size_t>(nVar) + size_t(2);
 
-    Int valLb = static_cast<Int>(valOffset - numVariables);
-    Int valUb = static_cast<Int>(valOffset + numVariables);
+    Int valLb = static_cast<Int>(valOffset - numVars);
+    Int valUb = static_cast<Int>(valOffset + numVars);
 
     std::random_device rd;
     auto valDistribution = std::uniform_int_distribution<Int>{valLb, valUb};
     auto valGen = std::mt19937(rd());
 
     std::vector<Int> coverCounts(valUb - valLb + 1, 0);
-    std::vector<VarId> variables;
+    std::vector<VarId> vars;
 
     solver->open();
-    for (size_t i = 0; i < numVariables; i++) {
+    for (size_t i = 0; i < numVars; i++) {
       const Int val = valDistribution(valGen);
       coverCounts[val - valLb] += 1;
-      variables.emplace_back(solver->makeIntVar(valLb, valLb, valUb));
+      vars.emplace_back(solver->makeIntVar(valLb, valLb, valUb));
     }
 
     std::vector<Int> cover;
@@ -400,10 +400,10 @@ class GlobalCardinalityConstTest : public InvariantTest {
       }
     }
 
-    VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numVariables));
+    VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numVars));
 
     solver->makeInvariant<GlobalCardinalityConst<IsClosed>>(
-        *solver, viol, variables, cover, lowerBound, upperBound);
+        *solver, viol, vars, cover, lowerBound, upperBound);
 
     solver->close();
 
@@ -427,7 +427,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
         solver->close();
 
         solver->beginMove();
-        for (const VarId x : variables) {
+        for (const VarId x : vars) {
           solver->setValue(x, valDistribution(valGen));
         }
         solver->endMove();
@@ -445,7 +445,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
           actualCounts.emplace(cover[i], 0);
         }
 
-        for (const VarId varId : variables) {
+        for (const VarId varId : vars) {
           Int val = solver->currentValue(varId);
           if (actualCounts.count(val) <= 0) {
             ++outsideCount;
@@ -531,10 +531,10 @@ class MockGlobalCardinalityConst : public GlobalCardinalityConst<IsClosed> {
     GlobalCardinalityConst<IsClosed>::registerVars();
   }
   explicit MockGlobalCardinalityConst(SolverBase& solver, VarId violationId,
-                                      const std::vector<VarId>& variables,
+                                      const std::vector<VarId>& vars,
                                       const std::vector<Int>& cover,
                                       const std::vector<Int>& counts)
-      : GlobalCardinalityConst<IsClosed>(solver, violationId, variables, cover,
+      : GlobalCardinalityConst<IsClosed>(solver, violationId, vars, cover,
                                          counts) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return GlobalCardinalityConst<IsClosed>::recompute(timestamp);

@@ -69,7 +69,7 @@ TEST_F(ArrayVarBoolElement2dNodeTest, application) {
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
@@ -77,10 +77,10 @@ TEST_F(ArrayVarBoolElement2dNodeTest, application) {
   solver.close();
 
   // x00, x01, x10, x11, idx1, idx2
-  EXPECT_EQ(solver.searchVariables().size(), 6);
+  EXPECT_EQ(solver.searchVars().size(), 6);
 
   // x00, x01, x10, x11, idx1, idx2, and y
-  EXPECT_EQ(solver.numVariables(), 7);
+  EXPECT_EQ(solver.numVars(), 7);
 
   // element2dVar
   EXPECT_EQ(solver.numInvariants(), 1);
@@ -90,7 +90,7 @@ TEST_F(ArrayVarBoolElement2dNodeTest, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   invNode().registerNode(*_invariantGraph, solver);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);

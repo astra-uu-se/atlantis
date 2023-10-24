@@ -12,17 +12,17 @@ NeighbourhoodCombinator::NeighbourhoodCombinator(
   assert(!_neighbourhoods.empty());
   size_t num_vars = 0;
   for (const auto& neighbourhood : _neighbourhoods) {
-    num_vars += neighbourhood->coveredVariables().size();
+    num_vars += neighbourhood->coveredVars().size();
   }
-  _variables.reserve(num_vars);
+  _vars.reserve(num_vars);
 
   std::vector<size_t> weights;
   weights.reserve(_neighbourhoods.size());
   for (const auto& neighbourhood : _neighbourhoods) {
-    weights.push_back(neighbourhood->coveredVariables().size());
+    weights.push_back(neighbourhood->coveredVars().size());
 
-    for (const auto& searchVar : neighbourhood->coveredVariables()) {
-      _variables.emplace_back(searchVar);
+    for (const auto& searchVar : neighbourhood->coveredVars()) {
+      _vars.emplace_back(searchVar);
     }
   }
 
@@ -48,7 +48,7 @@ void NeighbourhoodCombinator::printNeighbourhood(logging::Logger& logger) {
   for (const auto& neighbourhood : _neighbourhoods) {
     logger.debug("Neighbourhood {} covers {} variables.",
                  demangle(typeid(*neighbourhood).name()),
-                 neighbourhood->coveredVariables().size());
+                 neighbourhood->coveredVars().size());
   }
 }
 

@@ -25,7 +25,7 @@ void BoolLinear::registerVars() {
   for (size_t i = 0; i < _violArray.size(); ++i) {
     _solver.registerInvariantInput(_id, _violArray[i], i);
   }
-  registerDefinedVariable(_output);
+  registerDefinedVar(_output);
 }
 
 void BoolLinear::updateBounds(bool widenOnly) {

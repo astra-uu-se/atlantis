@@ -100,7 +100,7 @@ class AbstractAllDifferentNodeTest : public NodeTestBase<AllDifferentNode> {
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
     EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
@@ -109,10 +109,10 @@ class AbstractAllDifferentNodeTest : public NodeTestBase<AllDifferentNode> {
     solver.close();
 
     // a, b, c and d
-    EXPECT_EQ(solver.searchVariables().size(), 4);
+    EXPECT_EQ(solver.searchVars().size(), 4);
 
     // a, b, c, d and the violation
-    EXPECT_EQ(solver.numVariables(), 5);
+    EXPECT_EQ(solver.numVars(), 5);
 
     // alldifferent
     EXPECT_EQ(solver.numInvariants(), 1);
@@ -125,7 +125,7 @@ class AbstractAllDifferentNodeTest : public NodeTestBase<AllDifferentNode> {
     propagation::Solver solver;
     solver.open();
     addInputVarsToSolver(solver);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     invNode().registerNode(*_invariantGraph, solver);
 
     std::vector<propagation::VarId> inputs;

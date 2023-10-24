@@ -16,13 +16,13 @@ void Invariant::compute(Timestamp ts) {
   }
 }
 
-void Invariant::registerDefinedVariable(VarId id) {
+void Invariant::registerDefinedVar(VarId id) {
   if (_primaryDefinedVar == NULL_ID) {
     _primaryDefinedVar = id;
   } else {
     _definedVars.push_back(id);
   }
-  _solver.registerDefinedVariable(id, _id);
+  _solver.registerDefinedVar(id, _id);
 }
 
 void Invariant::updateValue(Timestamp ts, VarId id, Int val) {

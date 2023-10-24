@@ -18,7 +18,7 @@ class BoolLinearNode : public InvariantNode {
   propagation::VarId _intermediateVarId{propagation::NULL_ID};
 
  public:
-  BoolLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  BoolLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                  VarNodeId output, Int definingCoefficient, Int sum);
 
   ~BoolLinearNode() override = default;
@@ -30,7 +30,7 @@ class BoolLinearNode : public InvariantNode {
   static std::unique_ptr<BoolLinearNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 

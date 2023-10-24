@@ -63,7 +63,7 @@ GlobalCardinalityClosedNode::fromModelConstraint(
       std::move(inputs), std::move(cover), std::move(counts), shouldHold);
 }
 
-void GlobalCardinalityClosedNode::registerOutputVariables(
+void GlobalCardinalityClosedNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     registerViolation(invariantGraph, solver);

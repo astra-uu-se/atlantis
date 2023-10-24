@@ -22,7 +22,7 @@ class MockNeighbourhood : public search::neighbourhoods::Neighbourhood {
               (search::RandomProvider&, search::Assignment&, search::Annealer&),
               (override));
 
-  MOCK_METHOD(const std::vector<search::SearchVariable>&, coveredVariables, (),
+  MOCK_METHOD(const std::vector<search::SearchVar>&, coveredVars, (),
               (const override));
 };
 
@@ -32,8 +32,8 @@ class NeighbourhoodCombinatorTest : public ::testing::Test {
   MockNeighbourhood* n1{nullptr};
   MockNeighbourhood* n2{nullptr};
 
-  std::vector<search::SearchVariable> variables{
-      search::SearchVariable(propagation::NULL_ID, SearchDomain(0, 10))};
+  std::vector<search::SearchVar> vars{
+      search::SearchVar(propagation::NULL_ID, SearchDomain(0, 10))};
 
   void SetUp() override {
     auto unique_n1 = std::make_unique<MockNeighbourhood>();
@@ -48,8 +48,8 @@ class NeighbourhoodCombinatorTest : public ::testing::Test {
 };
 
 TEST_F(NeighbourhoodCombinatorTest, initialise_calls_all_neighbourhoods) {
-  EXPECT_CALL(*n1, coveredVariables()).WillRepeatedly(ReturnRef(variables));
-  EXPECT_CALL(*n2, coveredVariables()).WillRepeatedly(ReturnRef(variables));
+  EXPECT_CALL(*n1, coveredVars()).WillRepeatedly(ReturnRef(vars));
+  EXPECT_CALL(*n2, coveredVars()).WillRepeatedly(ReturnRef(vars));
 
   search::neighbourhoods::NeighbourhoodCombinator combinator(std::move(ns));
 
@@ -68,8 +68,8 @@ TEST_F(NeighbourhoodCombinatorTest, initialise_calls_all_neighbourhoods) {
 
 TEST_F(NeighbourhoodCombinatorTest,
        randomMove_calls_one_neighbourhood_and_forwards_result) {
-  EXPECT_CALL(*n1, coveredVariables()).WillRepeatedly(ReturnRef(variables));
-  EXPECT_CALL(*n2, coveredVariables()).WillRepeatedly(ReturnRef(variables));
+  EXPECT_CALL(*n1, coveredVars()).WillRepeatedly(ReturnRef(vars));
+  EXPECT_CALL(*n2, coveredVars()).WillRepeatedly(ReturnRef(vars));
 
   search::neighbourhoods::NeighbourhoodCombinator combinator(std::move(ns));
 

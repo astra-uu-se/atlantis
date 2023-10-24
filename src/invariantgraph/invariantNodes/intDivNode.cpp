@@ -24,7 +24,7 @@ invariantgraph::IntDivNode::fromModelConstraint(
                                       invariantGraph.createVarNode(output));
 }
 
-void invariantgraph::IntDivNode::registerOutputVariables(
+void invariantgraph::IntDivNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }

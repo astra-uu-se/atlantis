@@ -55,7 +55,7 @@ TEST_F(ArrayIntMinimumTestNode, application) {
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
@@ -66,10 +66,10 @@ TEST_F(ArrayIntMinimumTestNode, application) {
   EXPECT_EQ(solver.upperBound(varId(o)), 10);
 
   // x1, x2, and x3
-  EXPECT_EQ(solver.searchVariables().size(), 3);
+  EXPECT_EQ(solver.searchVars().size(), 3);
 
   // x1, x2 and o
-  EXPECT_EQ(solver.numVariables(), 4);
+  EXPECT_EQ(solver.numVars(), 4);
 
   // maxSparse
   EXPECT_EQ(solver.numInvariants(), 1);
@@ -79,7 +79,7 @@ TEST_F(ArrayIntMinimumTestNode, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   invNode().registerNode(*_invariantGraph, solver);
 
   std::vector<propagation::VarId> inputs;

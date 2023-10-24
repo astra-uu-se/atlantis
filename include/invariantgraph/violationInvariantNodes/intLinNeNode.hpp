@@ -18,10 +18,10 @@ class IntLinNeNode : public ViolationInvariantNode {
   propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
-  IntLinNeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  IntLinNeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int c, VarNodeId r);
 
-  IntLinNeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  IntLinNeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int c, bool shouldHold);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
@@ -32,7 +32,7 @@ class IntLinNeNode : public ViolationInvariantNode {
   static std::unique_ptr<IntLinNeNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 

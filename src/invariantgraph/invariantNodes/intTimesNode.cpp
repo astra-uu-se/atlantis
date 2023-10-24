@@ -23,7 +23,7 @@ std::unique_ptr<IntTimesNode> IntTimesNode::fromModelConstraint(
                                         invariantGraph.createVarNode(output));
 }
 
-void IntTimesNode::registerOutputVariables(InvariantGraph& invariantGraph,
+void IntTimesNode::registerOutputVars(InvariantGraph& invariantGraph,
                                            propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }

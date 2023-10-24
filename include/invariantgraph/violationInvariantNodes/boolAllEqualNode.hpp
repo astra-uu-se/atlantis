@@ -14,9 +14,9 @@ class BoolAllEqualNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit BoolAllEqualNode(std::vector<VarNodeId>&& variables, VarNodeId r);
+  explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r);
 
-  explicit BoolAllEqualNode(std::vector<VarNodeId>&& variables,
+  explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars,
                             bool shouldHold = true);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
@@ -29,7 +29,7 @@ class BoolAllEqualNode : public ViolationInvariantNode {
 
   bool prune(InvariantGraph&) override;
 
-  void registerOutputVariables(InvariantGraph&,
+  void registerOutputVars(InvariantGraph&,
                                propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;

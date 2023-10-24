@@ -98,7 +98,7 @@ class Store {
     return _invariants.end();
   }
 
-  [[nodiscard]] inline size_t numVariables() const { return _intVars.size(); }
+  [[nodiscard]] inline size_t numVars() const { return _intVars.size(); }
 
   [[nodiscard]] inline size_t numInvariants() const {
     return _invariants.size();

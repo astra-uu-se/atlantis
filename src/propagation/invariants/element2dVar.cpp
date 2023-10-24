@@ -31,7 +31,7 @@ void Element2dVar::registerVars() {
       _solver.registerInvariantInput(_id, input, LocalId(0), true);
     }
   }
-  registerDefinedVariable(_output);
+  registerDefinedVar(_output);
 }
 
 void Element2dVar::updateBounds(bool widenOnly) {

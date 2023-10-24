@@ -39,12 +39,12 @@ class AssignmentTest : public ::testing::Test {
   }
 };
 
-TEST_F(AssignmentTest, search_variables_are_identified) {
+TEST_F(AssignmentTest, search_vars_are_identified) {
   search::Assignment assignment{solver, violation, a,
                                 propagation::ObjectiveDirection::MINIMIZE};
 
-  std::vector<propagation::VarId> expectedSearchVariables{a, b};
-  EXPECT_EQ(assignment.searchVariables(), expectedSearchVariables);
+  std::vector<propagation::VarId> expectedSearchVars{a, b};
+  EXPECT_EQ(assignment.searchVars(), expectedSearchVars);
 }
 
 TEST_F(AssignmentTest, cost) {

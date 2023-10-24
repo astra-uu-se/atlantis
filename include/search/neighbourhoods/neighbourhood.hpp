@@ -34,7 +34,7 @@ class Neighbourhood {
   /**
    * @return The search variables covered by this neighbourhood.
    */
-  [[nodiscard]] virtual const std::vector<SearchVariable>& coveredVariables()
+  [[nodiscard]] virtual const std::vector<SearchVar>& coveredVars()
       const = 0;
 
  protected:

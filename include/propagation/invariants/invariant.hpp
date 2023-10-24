@@ -74,7 +74,7 @@ class Invariant {
    * Register to the solver that variable is defined by the invariant.
    * @param id the id of the variable that is defined by the invariant.
    */
-  void registerDefinedVariable(VarId id);
+  void registerDefinedVar(VarId id);
 
   /**
    * Used in Input-to-Output propagation to notify that a

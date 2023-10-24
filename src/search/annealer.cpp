@@ -10,10 +10,9 @@ Annealer::Annealer(const Assignment& assignment, RandomProvider& random,
   _statistics.bestCostOfPreviousRound = std::numeric_limits<Int>::max();
   _statistics.bestCostOfThisRound = std::numeric_limits<Int>::max();
 
-  auto numSearchVariables = assignment.searchVariables().size();
-  _requiredMovesPerRound =
-      static_cast<UInt>(static_cast<double>(128 * numSearchVariables) /
-                        std::log2(numSearchVariables));
+  auto numSearchVars = assignment.searchVars().size();
+  _requiredMovesPerRound = static_cast<UInt>(
+      static_cast<double>(128 * numSearchVars) / std::log2(numSearchVars));
 }
 
 bool Annealer::isFinished() const { return _schedule.frozen(); }

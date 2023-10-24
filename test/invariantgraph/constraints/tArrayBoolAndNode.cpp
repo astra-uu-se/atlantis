@@ -86,7 +86,7 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase<ArrayBoolAndNode> {
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
     }
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
       EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
     }
@@ -94,10 +94,10 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase<ArrayBoolAndNode> {
     solver.close();
 
     // a and b
-    EXPECT_EQ(solver.searchVariables().size(), 2);
+    EXPECT_EQ(solver.searchVars().size(), 2);
 
     // a, b and r
-    EXPECT_EQ(solver.numVariables(), 3);
+    EXPECT_EQ(solver.numVars(), 3);
 
     // sum
     EXPECT_EQ(solver.numInvariants(), 1);
@@ -107,7 +107,7 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase<ArrayBoolAndNode> {
     propagation::Solver solver;
     solver.open();
     addInputVarsToSolver(solver);
-    invNode().registerOutputVariables(*_invariantGraph, solver);
+    invNode().registerOutputVars(*_invariantGraph, solver);
     invNode().registerNode(*_invariantGraph, solver);
 
     std::vector<propagation::VarId> inputs;

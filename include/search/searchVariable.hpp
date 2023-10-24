@@ -10,13 +10,13 @@
 
 namespace atlantis::search {
 
-class SearchVariable {
+class SearchVar {
  private:
   SearchDomain _domain;
   propagation::VarId _varId;
 
  public:
-  explicit SearchVariable(propagation::VarId varId, const SearchDomain& domain)
+  explicit SearchVar(propagation::VarId varId, const SearchDomain& domain)
       : _domain(domain), _varId(varId) {}
 
   [[nodiscard]] propagation::VarId solverId() const noexcept { return _varId; }

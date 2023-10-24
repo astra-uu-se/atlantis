@@ -13,9 +13,7 @@ class ObjectiveTest : public ::testing::Test {
   propagation::VarId objectiveVarId;
   propagation::VarId totalViolationId;
 
-  void SetUp() override {
-    solver = std::make_unique<propagation::Solver>();
-  }
+  void SetUp() override { solver = std::make_unique<propagation::Solver>(); }
 
   propagation::VarId install(
       search::Objective& objective,
@@ -37,7 +35,7 @@ TEST_F(ObjectiveTest, satisfaction_objective) {
   auto violation = install(searchObjective);
 
   EXPECT_EQ(violation, totalViolationId);
-  EXPECT_EQ(solver->numVariables(), 2);
+  EXPECT_EQ(solver->numVars(), 2);
   EXPECT_EQ(solver->numInvariants(), 0);
   EXPECT_EQ(solver->committedValue(violation), 0);
 
@@ -57,7 +55,7 @@ TEST_F(ObjectiveTest, minimisation_objective) {
   EXPECT_EQ(solver->upperBound(*searchObjective.bound()), 10);
   EXPECT_EQ(solver->committedValue(*searchObjective.bound()), 10);
 
-  EXPECT_EQ(solver->numVariables(), 5);
+  EXPECT_EQ(solver->numVars(), 5);
   EXPECT_EQ(solver->numInvariants(), 2);
   EXPECT_EQ(solver->committedValue(violation), 0);
 
@@ -91,7 +89,7 @@ TEST_F(ObjectiveTest, maximisation_objective) {
   EXPECT_EQ(solver->upperBound(*searchObjective.bound()), 10);
   EXPECT_EQ(solver->committedValue(*searchObjective.bound()), 1);
 
-  EXPECT_EQ(solver->numVariables(), 5);
+  EXPECT_EQ(solver->numVars(), 5);
   EXPECT_EQ(solver->numInvariants(), 2);
   EXPECT_EQ(solver->committedValue(violation), 0);
 

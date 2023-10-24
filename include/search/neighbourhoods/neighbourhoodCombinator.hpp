@@ -12,7 +12,7 @@ namespace atlantis::search::neighbourhoods {
 class NeighbourhoodCombinator : public Neighbourhood {
  private:
   std::vector<std::shared_ptr<Neighbourhood>> _neighbourhoods;
-  std::vector<SearchVariable> _variables;
+  std::vector<SearchVar> _vars;
   std::discrete_distribution<size_t> _neighbourhoodDistribution;
 
  public:
@@ -26,9 +26,7 @@ class NeighbourhoodCombinator : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  const std::vector<SearchVariable>& coveredVariables() const override {
-    return _variables;
-  }
+  const std::vector<SearchVar>& coveredVars() const override { return _vars; }
 
   void printNeighbourhood(logging::Logger&);
 

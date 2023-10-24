@@ -65,7 +65,7 @@ GlobalCardinalityNode::fromModelConstraint(
       std::move(inputs), std::move(cover), std::move(counts), shouldHold);
 }
 
-void GlobalCardinalityNode::registerOutputVariables(
+void GlobalCardinalityNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   if (!isReified() && shouldHold()) {
     for (const auto& countOutput : outputVarNodeIds()) {

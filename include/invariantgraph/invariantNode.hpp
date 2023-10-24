@@ -26,7 +26,7 @@ class InvariantNode {
   InvariantNodeId _id{NULL_NODE_ID};
 
  public:
-  using VariableMap =
+  using VarMap =
       std::unordered_map<VarNodeId, propagation::VarId, VarNodeIdHash>;
 
   explicit InvariantNode(std::vector<VarNodeId>&& outputIds,
@@ -49,8 +49,8 @@ class InvariantNode {
    * @param solver The solver with which to register the variables, constraints
    * and views.
    */
-  virtual void registerOutputVariables(InvariantGraph&,
-                                       propagation::SolverBase&) = 0;
+  virtual void registerOutputVars(InvariantGraph&,
+                                  propagation::SolverBase&) = 0;
 
   /**
    * Registers the current node with the solver, as well as all the variables
@@ -83,8 +83,7 @@ class InvariantNode {
   [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
       const noexcept;
 
-  void replaceDefinedVariable(VarNode& oldOutputVarNode,
-                              VarNode& newOutputVarNode);
+  void replaceDefinedVar(VarNode& oldOutputVarNode, VarNode& newOutputVarNode);
 
   void removeStaticInputVarNode(VarNode&);
 

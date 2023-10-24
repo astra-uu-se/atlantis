@@ -5,10 +5,9 @@
 namespace atlantis::invariantgraph {
 
 BoolLinearNode::BoolLinearNode(std::vector<Int>&& coeffs,
-                               std::vector<VarNodeId>&& variables,
-                               VarNodeId output, Int definingCoefficient,
-                               Int sum)
-    : InvariantNode({output}, std::move(variables)),
+                               std::vector<VarNodeId>&& vars, VarNodeId output,
+                               Int definingCoefficient, Int sum)
+    : InvariantNode({output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
       _definingCoefficient(definingCoefficient),
       _sum(sum) {}
@@ -28,20 +27,20 @@ std::unique_ptr<BoolLinearNode> BoolLinearNode::fromModelConstraint(
   auto sum =
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).parameter();
 
-  const std::optional<std::reference_wrapper<const fznparser::Variable>>
-      definedVariableRef = constraint.definedVariable();
+  const std::optional<std::reference_wrapper<const fznparser::Var>>
+      definedVarRef = constraint.definedVar();
 
-  assert(definedVariableRef.has_value());
+  assert(definedVarRef.has_value());
 
-  const fznparser::IntVar& definedVariable =
-      std::get<fznparser::IntVar>(definedVariableRef.value().get());
+  const fznparser::IntVar& definedVar =
+      std::get<fznparser::IntVar>(definedVarRef.value().get());
 
   size_t definedVarIndex = vars.size();
   for (size_t i = 0; i < vars.size(); ++i) {
     if (!std::holds_alternative<bool>(vars.at(i)) &&
         std::get<std::reference_wrapper<const fznparser::BoolVar>>(vars.at(i))
                 .get()
-                .identifier() == definedVariable.identifier()) {
+                .identifier() == definedVar.identifier()) {
       definedVarIndex = i;
       break;
     }
@@ -71,10 +70,11 @@ std::unique_ptr<BoolLinearNode> BoolLinearNode::fromModelConstraint(
       std::move(coeffs), std::move(addedVars), output, definedVarCoeff, sum);
 }
 
-void BoolLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                             propagation::SolverBase& solver) {
+void BoolLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                        propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().size() == 1 &&
-      invariantGraph.varId(staticInputVarNodeIds().front()) != propagation::NULL_ID) {
+      invariantGraph.varId(staticInputVarNodeIds().front()) !=
+          propagation::NULL_ID) {
     if (_coeffs.front() == 1 && _sum == 0) {
       invariantGraph.varNode(outputVarNodeIds().front())
           .setVarId(invariantGraph.varId(staticInputVarNodeIds().front()));
@@ -86,14 +86,16 @@ void BoolLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
           solver, invariantGraph.varId(staticInputVarNodeIds().front()),
           _coeffs.front());
       invariantGraph.varNode(outputVarNodeIds().front())
-          .setVarId(solver.makeIntView<propagation::IntOffsetView>(solver, scalar, -_sum));
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, scalar, -_sum));
     } else {
       assert(_definingCoefficient == 1);
       auto scalar = solver.makeIntView<propagation::ScalarView>(
           solver, invariantGraph.varId(staticInputVarNodeIds().front()),
           -_coeffs.front());
       invariantGraph.varNode(outputVarNodeIds().front())
-          .setVarId(solver.makeIntView<propagation::IntOffsetView>(solver, scalar, _sum));
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, scalar, _sum));
     }
 
     return;
@@ -101,18 +103,19 @@ void BoolLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
 
   if (_intermediateVarId == propagation::NULL_ID) {
     _intermediateVarId = solver.makeIntVar(0, 0, 0);
-    assert(invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID);
+    assert(invariantGraph.varId(outputVarNodeIds().front()) ==
+           propagation::NULL_ID);
 
     auto offsetIntermediate = _intermediateVarId;
     if (_sum != 0) {
-      offsetIntermediate =
-          solver.makeIntView<propagation::IntOffsetView>(solver, _intermediateVarId, -_sum);
+      offsetIntermediate = solver.makeIntView<propagation::IntOffsetView>(
+          solver, _intermediateVarId, -_sum);
     }
 
     auto invertedIntermediate = offsetIntermediate;
     if (_definingCoefficient == 1) {
-      invertedIntermediate =
-          solver.makeIntView<propagation::ScalarView>(solver, offsetIntermediate, -1);
+      invertedIntermediate = solver.makeIntView<propagation::ScalarView>(
+          solver, offsetIntermediate, -1);
     }
 
     invariantGraph.varNode(outputVarNodeIds().front())
@@ -122,19 +125,20 @@ void BoolLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
 
 void BoolLinearNode::registerNode(InvariantGraph& invariantGraph,
                                   propagation::SolverBase& solver) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
+         propagation::NULL_ID);
 
-  std::vector<propagation::VarId> variables;
+  std::vector<propagation::VarId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(variables),
+                 std::back_inserter(solverVars),
                  [&](const auto& node) { return invariantGraph.varId(node); });
   if (_intermediateVarId == propagation::NULL_ID) {
-    assert(variables.size() == 1);
+    assert(solverVars.size() == 1);
     return;
   }
 
-  solver.makeInvariant<propagation::BoolLinear>(solver, _intermediateVarId, _coeffs,
-                                   variables);
+  solver.makeInvariant<propagation::BoolLinear>(solver, _intermediateVarId,
+                                                _coeffs, solverVars);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

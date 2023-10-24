@@ -58,7 +58,7 @@ TEST_F(ArrayVarIntElementNodeTest, application) {
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
@@ -66,10 +66,10 @@ TEST_F(ArrayVarIntElementNodeTest, application) {
   solver.close();
 
   // a, b, c, idx
-  EXPECT_EQ(solver.searchVariables().size(), 4);
+  EXPECT_EQ(solver.searchVars().size(), 4);
 
   // a, b, c, idx, y
-  EXPECT_EQ(solver.numVariables(), 5);
+  EXPECT_EQ(solver.numVars(), 5);
 
   // elementVar
   EXPECT_EQ(solver.numInvariants(), 1);
@@ -79,7 +79,7 @@ TEST_F(ArrayVarIntElementNodeTest, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
-  invNode().registerOutputVariables(*_invariantGraph, solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   invNode().registerNode(*_invariantGraph, solver);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);

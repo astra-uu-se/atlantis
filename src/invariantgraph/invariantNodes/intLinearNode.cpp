@@ -5,9 +5,9 @@
 namespace atlantis::invariantgraph {
 
 IntLinearNode::IntLinearNode(std::vector<Int>&& coeffs,
-                             std::vector<VarNodeId>&& variables,
-                             VarNodeId output, Int definingCoefficient, Int sum)
-    : InvariantNode({output}, std::move(variables)),
+                             std::vector<VarNodeId>&& vars, VarNodeId output,
+                             Int definingCoefficient, Int sum)
+    : InvariantNode({output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
       _definingCoefficient(definingCoefficient),
       _sum(sum) {}
@@ -27,20 +27,20 @@ std::unique_ptr<IntLinearNode> IntLinearNode::fromModelConstraint(
   auto sum =
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).parameter();
 
-  const std::optional<std::reference_wrapper<const fznparser::Variable>>
-      definedVariableRef = constraint.definedVariable();
+  const std::optional<std::reference_wrapper<const fznparser::Var>>
+      definedVarRef = constraint.definedVar();
 
-  assert(definedVariableRef.has_value());
+  assert(definedVarRef.has_value());
 
-  const fznparser::IntVar& definedVariable =
-      std::get<fznparser::IntVar>(definedVariableRef.value().get());
+  const fznparser::IntVar& definedVar =
+      std::get<fznparser::IntVar>(definedVarRef.value().get());
 
   size_t definedVarIndex = vars.size();
   for (size_t i = 0; i < vars.size(); ++i) {
     if (!std::holds_alternative<Int>(vars.at(i)) &&
         std::get<std::reference_wrapper<const fznparser::IntVar>>(vars.at(i))
                 .get()
-                .identifier() == definedVariable.identifier()) {
+                .identifier() == definedVar.identifier()) {
       definedVarIndex = i;
       break;
     }
@@ -70,8 +70,8 @@ std::unique_ptr<IntLinearNode> IntLinearNode::fromModelConstraint(
       std::move(coeffs), std::move(addedVars), output, definedVarCoeff, sum);
 }
 
-void IntLinearNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                            propagation::SolverBase& solver) {
+void IntLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                       propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().size() == 1 &&
       invariantGraph.varId(staticInputVarNodeIds().front()) !=
           propagation::NULL_ID) {
@@ -128,17 +128,17 @@ void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
 
-  std::vector<propagation::VarId> variables;
+  std::vector<propagation::VarId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(variables),
+                 std::back_inserter(solverVars),
                  [&](const auto& node) { return invariantGraph.varId(node); });
   if (_intermediateVarId == propagation::NULL_ID) {
-    assert(variables.size() == 1);
+    assert(solverVars.size() == 1);
     return;
   }
 
   solver.makeInvariant<propagation::Linear>(solver, _intermediateVarId, _coeffs,
-                                            variables);
+                                            solverVars);
 }
 
 }  // namespace atlantis::invariantgraph

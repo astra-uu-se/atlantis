@@ -16,11 +16,11 @@ using namespace atlantis::propagation;
 
 class AllDifferentExceptTest : public InvariantTest {
  public:
-  Int computeViolation(const Timestamp ts, const std::vector<VarId>& variables,
+  Int computeViolation(const Timestamp ts, const std::vector<VarId>& vars,
                        const std::unordered_set<Int>& ignoredSet) {
-    std::vector<Int> values(variables.size(), 0);
-    for (size_t i = 0; i < variables.size(); ++i) {
-      values.at(i) = solver->value(ts, variables.at(i));
+    std::vector<Int> values(vars.size(), 0);
+    for (size_t i = 0; i < vars.size(); ++i) {
+      values.at(i) = solver->value(ts, vars.at(i));
     }
     return computeViolation(values, ignoredSet);
   }
@@ -319,9 +319,9 @@ class MockAllDifferentExcept : public AllDifferentExcept {
     AllDifferentExcept::registerVars();
   }
   explicit MockAllDifferentExcept(SolverBase& solver, VarId violationId,
-                                  std::vector<VarId> variables,
+                                  std::vector<VarId> vars,
                                   const std::vector<Int>& ignored)
-      : AllDifferentExcept(solver, violationId, variables, ignored) {
+      : AllDifferentExcept(solver, violationId, vars, ignored) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return AllDifferentExcept::recompute(timestamp);
     });
