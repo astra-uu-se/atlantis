@@ -1,8 +1,5 @@
 #include "search/searchProcedure.hpp"
 
-#include <chrono>
-#include <string>
-
 namespace atlantis::search {
 
 static void logRoundStatistics(logging::Logger& logger,

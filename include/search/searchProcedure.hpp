@@ -1,10 +1,13 @@
 #pragma once
 
+#include <chrono>
+#include <string>
+
+#include "logging/logger.hpp"
 #include "neighbourhoods/neighbourhood.hpp"
 #include "objective.hpp"
 #include "searchController.hpp"
 #include "searchStatistics.hpp"
-#include "logging/logger.hpp"
 
 namespace atlantis::search {
 
@@ -24,7 +27,8 @@ class SearchProcedure {
         _neighbourhood(neighbourhood),
         _objective(std::move(objective)) {}
 
-  SearchStatistics run(SearchController& controller, Annealer& annealer, logging::Logger& logger);
+  SearchStatistics run(SearchController& controller, Annealer& annealer,
+                       logging::Logger& logger);
 
  private:
   RandomProvider& _random;
@@ -33,4 +37,4 @@ class SearchProcedure {
   Objective _objective;
 };
 
-}  // namespace search
+}  // namespace atlantis::search

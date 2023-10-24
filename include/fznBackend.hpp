@@ -2,11 +2,16 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <iostream>
 #include <optional>
 #include <utility>
 
+#include "fznparser/parser.hpp"
+#include "invariantgraph/invariantGraphBuilder.hpp"
 #include "logging/logger.hpp"
 #include "search/annealing/annealingScheduleFactory.hpp"
+#include "search/objective.hpp"
+#include "search/searchProcedure.hpp"
 #include "search/searchStatistics.hpp"
 
 namespace atlantis {

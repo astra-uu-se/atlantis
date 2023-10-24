@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
 #include <functional>
 #include <iostream>
 #include <numeric>
@@ -9,6 +10,7 @@
 
 #include "exceptions/exceptions.hpp"
 #include "layeredPropagationQueue.hpp"
+#include "misc/logging.hpp"
 #include "propagation/store/store.hpp"
 #include "propagation/utils/idMap.hpp"
 #include "propagationQueue.hpp"

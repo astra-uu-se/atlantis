@@ -6,6 +6,7 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
+#include "propagation/views/intAbsView.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -22,7 +23,8 @@ class IntAbsNode : public InvariantNode {
   static std::unique_ptr<IntAbsNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -31,4 +33,4 @@ class IntAbsNode : public InvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

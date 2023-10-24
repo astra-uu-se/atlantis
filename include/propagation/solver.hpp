@@ -10,6 +10,7 @@
 #include "propagation/propagation/propagationGraph.hpp"
 #include "propagation/solverBase.hpp"
 #include "propagation/utils/idMap.hpp"
+#include "propagation/variables/intVar.hpp"
 #include "utils/hashes.hpp"
 
 namespace atlantis::propagation {

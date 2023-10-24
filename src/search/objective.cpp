@@ -1,8 +1,5 @@
 #include "search/objective.hpp"
 
-#include "propagation/constraints/lessEqual.hpp"
-#include "utils/variant.hpp"
-
 namespace atlantis::search {
 
 Objective::Objective(propagation::Solver& solver,

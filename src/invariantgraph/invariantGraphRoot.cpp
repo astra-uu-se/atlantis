@@ -1,9 +1,5 @@
 #include "invariantgraph/invariantGraphRoot.hpp"
 
-#include <utility>
-
-#include "search/neighbourhoods/randomNeighbourhood.hpp"
-
 namespace atlantis::invariantgraph {
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>

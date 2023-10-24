@@ -3,6 +3,7 @@
 #include <cassert>
 #include <vector>
 
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/solver.hpp"
 
@@ -66,12 +67,11 @@ class ViolationInvariantNode : public InvariantNode {
   VarNodeId reifiedViolationNodeId();
 
  protected:
-  propagation::VarId setViolationVarId(InvariantGraph&,
-                                          propagation::VarId);
+  propagation::VarId setViolationVarId(InvariantGraph&, propagation::VarId);
 
   propagation::VarId registerViolation(InvariantGraph&,
-                                          propagation::SolverBase&,
-                                          Int initialValue = 0);
+                                       propagation::SolverBase&,
+                                       Int initialValue = 0);
 };
 
 }  // namespace atlantis::invariantgraph

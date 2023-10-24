@@ -1,9 +1,5 @@
 #include "search/searchController.hpp"
 
-#include <iostream>
-
-#include "utils/fznAst.hpp"
-
 namespace atlantis::search {
 
 bool SearchController::shouldRun(const Assignment&) {

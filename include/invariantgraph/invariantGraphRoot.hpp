@@ -1,6 +1,9 @@
 #pragma once
 
+#include <utility>
+
 #include "invariantgraph/implicitConstraintNode.hpp"
+#include "search/neighbourhoods/randomNeighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -20,7 +23,8 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      propagation::SolverBase& solver, std::vector<search::SearchVar>&& vars) override;
+      propagation::SolverBase& solver,
+      std::vector<search::SearchVar>&& vars) override;
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

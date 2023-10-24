@@ -1,7 +1,5 @@
 #include "parseHelper.hpp"
 
-#include "invariantgraph/invariantGraph.hpp"
-
 namespace atlantis::invariantgraph {
 
 bool hasCorrectSignature(

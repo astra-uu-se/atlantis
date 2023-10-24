@@ -54,4 +54,4 @@ class AnnealingScheduleFactory {
   [[nodiscard]] std::unique_ptr<AnnealingSchedule> create() const;
 };
 
-}  // namespace search
+}  // namespace atlantis::search

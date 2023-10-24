@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cassert>
 #include <iosfwd>
+#include <iostream>
+#include <stdexcept>
 
 #include "propagation/types.hpp"
 #include "propagation/variables/committableInt.hpp"

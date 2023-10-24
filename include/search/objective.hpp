@@ -4,10 +4,12 @@
 #include <utility>
 
 #include "fznparser/model.hpp"
+#include "propagation/constraints/lessEqual.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/types.hpp"
 #include "types.hpp"
+#include "utils/variant.hpp"
 
 namespace atlantis::search {
 
@@ -21,8 +23,7 @@ class Objective {
   std::optional<propagation::VarId> _violation{};
 
  public:
-  Objective(propagation::Solver& solver,
-            fznparser::ProblemType problemType);
+  Objective(propagation::Solver& solver, fznparser::ProblemType problemType);
 
   propagation::VarId registerNode(propagation::VarId totalViolationId,
                                   propagation::VarId objectiveVarId);

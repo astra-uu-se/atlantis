@@ -1,7 +1,5 @@
 #include "invariantgraph/violationInvariantNode.hpp"
 
-#include "invariantgraph/invariantGraph.hpp"
-
 namespace atlantis::invariantgraph {
 
 static std::vector<invariantgraph::VarNodeId> combine(
@@ -71,8 +69,8 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
   return _reifiedViolationNodeId;
 }
 
-propagation::VarId ViolationInvariantNode::setViolationVarId(InvariantGraph& invariantGraph,
-                                                propagation::VarId varId) {
+propagation::VarId ViolationInvariantNode::setViolationVarId(
+    InvariantGraph& invariantGraph, propagation::VarId varId) {
   assert(violationVarId(invariantGraph) == propagation::NULL_ID);
   if (isReified()) {
     invariantGraph.varNode(_reifiedViolationNodeId).setVarId(varId);
@@ -82,9 +80,9 @@ propagation::VarId ViolationInvariantNode::setViolationVarId(InvariantGraph& inv
   return violationVarId(invariantGraph);
 }
 
-propagation::VarId ViolationInvariantNode::registerViolation(InvariantGraph& invariantGraph,
-                                                propagation::SolverBase& solver,
-                                                Int initialValue) {
+propagation::VarId ViolationInvariantNode::registerViolation(
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver,
+    Int initialValue) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     return setViolationVarId(
         invariantGraph,
@@ -93,4 +91,4 @@ propagation::VarId ViolationInvariantNode::registerViolation(InvariantGraph& inv
   return violationVarId(invariantGraph);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

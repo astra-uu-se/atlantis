@@ -1,7 +1,5 @@
 #include "invariantgraph/views/bool2IntNode.hpp"
 
-#include "propagation/views/bool2IntView.hpp"
-
 namespace atlantis::invariantgraph {
 
 Bool2IntNode::Bool2IntNode(VarNodeId staticInput, VarNodeId output)
@@ -20,8 +18,9 @@ std::unique_ptr<Bool2IntNode> Bool2IntNode::fromModelConstraint(
 }
 
 void Bool2IntNode::registerOutputVars(InvariantGraph& invariantGraph,
-                                           propagation::SolverBase& solver) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+                                      propagation::SolverBase& solver) {
+  if (invariantGraph.varId(outputVarNodeIds().front()) ==
+      propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::Bool2IntView>(
             solver, invariantGraph.varId(input())));
@@ -30,4 +29,4 @@ void Bool2IntNode::registerOutputVars(InvariantGraph& invariantGraph,
 
 void Bool2IntNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

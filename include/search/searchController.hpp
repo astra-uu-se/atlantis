@@ -1,9 +1,11 @@
 #pragma once
 
 #include <chrono>
+#include <iostream>
 
 #include "assignment.hpp"
 #include "fznparser/model.hpp"
+#include "utils/fznAst.hpp"
 
 namespace atlantis::search {
 

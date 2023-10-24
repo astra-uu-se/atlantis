@@ -1,7 +1,5 @@
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
-#include <algorithm>
-
 namespace atlantis::search::neighbourhoods {
 
 CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars)

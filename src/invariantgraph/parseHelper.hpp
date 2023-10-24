@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "invariantgraph/implicitConstraintNode.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/varNode.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"

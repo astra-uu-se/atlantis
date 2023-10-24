@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
 #include "search/searchVariable.hpp"

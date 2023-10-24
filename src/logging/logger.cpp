@@ -1,7 +1,5 @@
 #include "logging/logger.hpp"
 
-#include <sstream>
-
 namespace atlantis::logging {
 
 static std::string formatDuration(std::chrono::nanoseconds duration) {

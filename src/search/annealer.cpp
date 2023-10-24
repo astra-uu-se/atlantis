@@ -1,7 +1,5 @@
 #include "search/annealer.hpp"
 
-#include <limits>
-
 namespace atlantis::search {
 
 Annealer::Annealer(const Assignment& assignment, RandomProvider& random,

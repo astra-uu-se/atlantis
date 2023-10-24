@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include "move.hpp"
 #include "randomProvider.hpp"
 #include "search/annealing/annealingSchedule.hpp"
@@ -81,4 +83,4 @@ class Annealer {
   }
 };
 
-}  // namespace search
+}  // namespace atlantis::search

@@ -5,6 +5,7 @@
 
 #include "invariantgraph/implicitConstraintNode.hpp"
 #include "invariantgraph/invariantGraph.hpp"
+#include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 

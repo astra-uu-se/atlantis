@@ -1,7 +1,5 @@
 #include "propagation/solver.hpp"
 
-#include "propagation/variables/intVar.hpp"
-
 namespace atlantis::propagation {
 
 SolverBase::SolverBase()

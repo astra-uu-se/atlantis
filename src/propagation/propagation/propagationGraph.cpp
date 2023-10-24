@@ -1,10 +1,5 @@
 #include "propagation/propagation/propagationGraph.hpp"
 
-#include <chrono>
-#include <iostream>
-
-#include "misc/logging.hpp"
-
 namespace atlantis::propagation {
 
 inline bool all_in_range(size_t start, size_t stop,

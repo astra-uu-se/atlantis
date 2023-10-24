@@ -2,10 +2,12 @@
 
 #include <ostream>
 #include <random>
+#include <typeinfo>
 
 #include "logging/logger.hpp"
 #include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
+#include "utils/type.hpp"
 
 namespace atlantis::search::neighbourhoods {
 
