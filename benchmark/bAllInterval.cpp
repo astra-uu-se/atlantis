@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/constraints/allDifferent.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::benchmark {
 
@@ -53,8 +53,8 @@ class AllInterval : public ::benchmark::Fixture {
 
     totalViolation = solver->makeIntVar(0, 0, n);
     // Creating one invariant, taking n input variables and one output
-    solver->makeConstraint<propagation::AllDifferent>(*solver, totalViolation,
-                                                      violationVars);
+    solver->makeViolationInvariant<propagation::AllDifferent>(
+        *solver, totalViolation, violationVars);
 
     solver->close();
 

@@ -100,7 +100,7 @@ void BoolAllEqualNode::registerNode(InvariantGraph& invariantGraph,
                  std::back_inserter(solverVars),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  solver.makeConstraint<propagation::BoolAllEqual>(
+  solver.makeViolationInvariant<propagation::BoolAllEqual>(
       solver, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
       solverVars);
 }

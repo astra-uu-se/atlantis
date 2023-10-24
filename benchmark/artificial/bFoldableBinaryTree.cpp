@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "propagation/constraints/allDifferent.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"

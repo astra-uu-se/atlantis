@@ -3,8 +3,8 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/constraints/lessEqual.hpp"
-#include "propagation/constraints/lessThan.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
+#include "propagation/violationInvariants/lessThan.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 

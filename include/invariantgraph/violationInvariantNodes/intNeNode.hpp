@@ -3,8 +3,8 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/constraints/equal.hpp"
-#include "propagation/constraints/notEqual.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/violationInvariants/notEqual.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 

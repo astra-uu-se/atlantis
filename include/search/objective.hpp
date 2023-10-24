@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "fznparser/model.hpp"
-#include "propagation/constraints/lessEqual.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/types.hpp"

@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/constraints/lessEqual.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/invariants/exists.hpp"
 #include "propagation/invariants/ifThenElse.hpp"
@@ -189,16 +189,16 @@ class VesselLoading : public ::benchmark::Fixture {
               solver->makeIntVar(0, 0, vesselLength + vesselWidth);
 
           // isRightOf = (right[i] + sep <= left[j]):
-          solver->makeConstraint<propagation::LessEqual>(*solver, isRightOf,
+          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isRightOf,
                                                          rightSep, left[j]);
           // isLeftOf = (right[j] <= left[i] - sep):
-          solver->makeConstraint<propagation::LessEqual>(*solver, isLeftOf,
+          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isLeftOf,
                                                          right[j], leftSep);
           // isAbove = (top[i] + sep <= bottom[j]):
-          solver->makeConstraint<propagation::LessEqual>(*solver, isAbove,
+          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isAbove,
                                                          topSep, bottom[j]);
           // isBelow = (top[j] <= bottom[i] - sep):
-          solver->makeConstraint<propagation::LessEqual>(*solver, isBelow,
+          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isBelow,
                                                          top[j], bottomSep);
 
           solver->makeInvariant<propagation::Exists>(

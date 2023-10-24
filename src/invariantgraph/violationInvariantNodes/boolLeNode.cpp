@@ -55,12 +55,12 @@ void BoolLeNode::registerNode(InvariantGraph& invariantGraph, propagation::Solve
   assert(invariantGraph.varId(b()) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    solver.makeConstraint<propagation::BoolLessEqual>(solver, violationVarId(invariantGraph),
+    solver.makeViolationInvariant<propagation::BoolLessEqual>(solver, violationVarId(invariantGraph),
                                          invariantGraph.varId(a()),
                                          invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    solver.makeConstraint<propagation::BoolLessThan>(solver, violationVarId(invariantGraph),
+    solver.makeViolationInvariant<propagation::BoolLessThan>(solver, violationVarId(invariantGraph),
                                         invariantGraph.varId(b()),
                                         invariantGraph.varId(a()));
   }

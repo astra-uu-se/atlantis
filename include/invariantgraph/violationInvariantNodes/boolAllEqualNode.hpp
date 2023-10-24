@@ -5,7 +5,7 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/constraints/boolAllEqual.hpp"
+#include "propagation/violationInvariants/boolAllEqual.hpp"
 #include "propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {

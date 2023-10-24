@@ -101,7 +101,7 @@ void AllDifferentNode::registerNode(InvariantGraph& invariantGraph,
                  std::back_inserter(solverVars),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  solver.makeConstraint<propagation::AllDifferent>(
+  solver.makeViolationInvariant<propagation::AllDifferent>(
       solver, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
       solverVars);
 }

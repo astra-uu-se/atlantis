@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/constraints/allDifferent.hpp"
-#include "propagation/constraints/equal.hpp"
-#include "propagation/constraints/lessThan.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/violationInvariants/lessThan.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
@@ -77,7 +77,7 @@ class GolombRuler : public ::benchmark::Fixture {
 
     // differences must be unique
     totalViolation = solver->makeIntVar(0, 0, maxViol);
-    solver->makeConstraint<propagation::AllDifferent>(*solver, totalViolation,
+    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, totalViolation,
                                                       differences);
 
     solver->close();

@@ -2,7 +2,7 @@
 
 #include <fznparser/model.hpp>
 
-#include "propagation/constraints/equal.hpp"
+#include "propagation/violationInvariants/equal.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/linear.hpp"

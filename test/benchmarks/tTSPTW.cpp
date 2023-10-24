@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "../testHelper.hpp"
-#include "propagation/constraints/lessEqual.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
@@ -80,7 +80,7 @@ class TSPTWTest : public ::testing::Test {
 
     propagation::VarId leqConst = solver->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
-      solver->makeConstraint<propagation::LessEqual>(*solver, violation[i],
+      solver->makeViolationInvariant<propagation::LessEqual>(*solver, violation[i],
                                                      arrivalTime[i], leqConst);
     }
 

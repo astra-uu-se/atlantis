@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "propagation/constraints/equal.hpp"
+#include "propagation/violationInvariants/equal.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "search/assignment.hpp"
@@ -34,7 +34,7 @@ class AssignmentTest : public ::testing::Test {
 
     solver.makeInvariant<propagation::Linear>(
         solver, c, std::vector<propagation::VarId>{a, b});
-    solver.makeConstraint<propagation::Equal>(solver, violation, c, d);
+    solver.makeViolationInvariant<propagation::Equal>(solver, violation, c, d);
     solver.close();
   }
 };

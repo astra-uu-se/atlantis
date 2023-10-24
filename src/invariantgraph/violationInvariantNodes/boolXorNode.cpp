@@ -57,7 +57,7 @@ void BoolXorNode::registerNode(InvariantGraph& invariantGraph, propagation::Solv
                                   invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    solver.makeConstraint<propagation::BoolEqual>(solver, violationVarId(invariantGraph),
+    solver.makeViolationInvariant<propagation::BoolEqual>(solver, violationVarId(invariantGraph),
                                      invariantGraph.varId(a()),
                                      invariantGraph.varId(b()));
   }

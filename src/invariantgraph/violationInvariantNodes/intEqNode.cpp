@@ -48,12 +48,12 @@ void IntEqNode::registerNode(InvariantGraph& invariantGraph, propagation::Solver
   assert(invariantGraph.varId(b()) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    solver.makeConstraint<propagation::Equal>(solver, violationVarId(invariantGraph),
+    solver.makeViolationInvariant<propagation::Equal>(solver, violationVarId(invariantGraph),
                                  invariantGraph.varId(a()),
                                  invariantGraph.varId(b()));
   } else {
     assert(!isReified());
-    solver.makeConstraint<propagation::NotEqual>(solver, violationVarId(invariantGraph),
+    solver.makeViolationInvariant<propagation::NotEqual>(solver, violationVarId(invariantGraph),
                                     invariantGraph.varId(a()),
                                     invariantGraph.varId(b()));
   }

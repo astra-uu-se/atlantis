@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/constraints/allDifferent.hpp"
-#include "propagation/constraints/equal.hpp"
-#include "propagation/constraints/lessThan.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/violationInvariants/lessThan.hpp"
 #include "propagation/invariants/countConst.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"

@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/constraints/lessEqual.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/element2dConst.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/invariants/plus.hpp"

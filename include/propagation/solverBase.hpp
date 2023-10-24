@@ -14,7 +14,7 @@ namespace atlantis::propagation {
 class IntVar;
 class IntView;
 class Invariant;
-class Constraint;
+class ViolationInvariant;
 
 class SolverBase {
  protected:
@@ -51,7 +51,7 @@ class SolverBase {
    * @throw if the variable is already defined by an invariant.
    */
   virtual void registerDefinedVar(VarId definedVarId,
-                                       InvariantId invariantId) = 0;
+                                  InvariantId invariantId) = 0;
 
   friend class Invariant;
 
@@ -153,14 +153,14 @@ class SolverBase {
       Args&&... args);
 
   /**
-   * Register a constraint in the solver and return its pointer.
-   * This also sets the id of the constraint to the new id.
-   * @param args the constructor arguments of the constraint
-   * @return the created constraint.
+   * Register a violation invariant in the solver and return its pointer.
+   * This also sets the id of the violation invariant to the new id.
+   * @param args the constructor arguments of the violation invariant
+   * @return the created violation invariant.
    */
   template <class T, typename... Args>
-  std::enable_if_t<std::is_base_of<Constraint, T>::value, T&> makeConstraint(
-      Args&&... args);
+  std::enable_if_t<std::is_base_of<ViolationInvariant, T>::value, T&>
+  makeViolationInvariant(Args&&... args);
 
   /**
    * Creates an IntVar and registers it to the solver.
@@ -217,19 +217,20 @@ SolverBase::makeIntView(Args&&... args) {
 }
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<Constraint, T>::value, T&>
-SolverBase::makeConstraint(Args&&... args) {
+std::enable_if_t<std::is_base_of<ViolationInvariant, T>::value, T&>
+SolverBase::makeViolationInvariant(Args&&... args) {
   if (!_isOpen) {
     throw SolverClosedException("Cannot make invariant when store is closed.");
   }
-  const InvariantId constraintId = _store.createInvariantFromPtr(
+  const InvariantId violationInvId = _store.createInvariantFromPtr(
       std::make_unique<T>(std::forward<Args>(args)...));
-  T& constraint = static_cast<T&>(_store.invariant(constraintId));
-  registerInvariant(constraintId);  // A constraint is a type of invariant.
-  logDebug("Created new Constraint with id: " << constraintId);
-  constraint.registerVars();
-  constraint.updateBounds();
-  return constraint;
+  T& violationInvariant = static_cast<T&>(_store.invariant(violationInvId));
+  // A violation invariant is a type of invariant:
+  registerInvariant(violationInvId);
+  logDebug("Created new Violation Invariant with id: " << violationInvId);
+  violationInvariant.registerVars();
+  violationInvariant.updateBounds();
+  return violationInvariant;
 }
 
 //--------------------- Inlined functions ---------------------

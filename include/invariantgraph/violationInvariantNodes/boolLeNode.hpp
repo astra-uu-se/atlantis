@@ -3,8 +3,8 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/constraints/boolLessEqual.hpp"
-#include "propagation/constraints/boolLessThan.hpp"
+#include "propagation/violationInvariants/boolLessEqual.hpp"
+#include "propagation/violationInvariants/boolLessThan.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 

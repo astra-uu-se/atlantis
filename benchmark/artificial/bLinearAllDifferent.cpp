@@ -7,7 +7,7 @@
 
 #include "../benchmark.hpp"
 #include "misc/logging.hpp"
-#include "propagation/constraints/allDifferent.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
@@ -60,7 +60,7 @@ class LinearAllDifferent : public ::benchmark::Fixture {
     }
 
     violation = solver->makeIntVar(0, 0, varCount);
-    solver->makeConstraint<propagation::AllDifferent>(*solver, violation,
+    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation,
                                                       linearOutputVars);
 
     solver->close();

@@ -3,7 +3,7 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/constraints/boolEqual.hpp"
+#include "propagation/violationInvariants/boolEqual.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/boolXor.hpp"

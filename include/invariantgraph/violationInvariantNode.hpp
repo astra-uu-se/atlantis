@@ -24,8 +24,8 @@ class ViolationInvariantNode : public InvariantNode {
   propagation::VarId _violationVarId{propagation::NULL_ID};
   VarNodeId _reifiedViolationNodeId;
 
-  // If the constraint is not reified, then this boolean indicates if the
-  // constraint should hold or not:
+  // If the violation invariant is not reified, then this boolean indicates if
+  // the violation invariant should hold or not:
   const bool _shouldHold;
 
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
@@ -45,10 +45,10 @@ class ViolationInvariantNode : public InvariantNode {
                                   VarNodeId reifiedViolationId);
 
   /**
-   * @brief Construct a new Soft Constraint Node object
+   * @brief Construct a new violation invariant node object
    *
    * @param staticInputVarNodeIds
-   * @param shouldHold true if the constraint should hold, else false
+   * @param shouldHold true if the violation invariant should hold, else false
    */
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,

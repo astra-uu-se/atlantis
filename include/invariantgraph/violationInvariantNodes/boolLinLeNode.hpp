@@ -5,7 +5,7 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/constraints/lessEqual.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/boolLinear.hpp"
 #include "propagation/views/greaterEqualConst.hpp"
 #include "propagation/views/lessEqualConst.hpp"

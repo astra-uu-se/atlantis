@@ -13,7 +13,8 @@
 namespace atlantis::invariantgraph {
 /**
  * A node in the invariant graph which defines a number of variables. This could
- * be an invariant, a soft constraint (which defines a violation), or a view.
+ * be an invariant, a violation invariant (which defines a violation), or a
+ * view.
  */
 
 class InvariantGraph;  // Forward declaration

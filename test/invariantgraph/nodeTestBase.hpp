@@ -192,7 +192,7 @@ class NodeTestBase : public ::testing::Test {
   }
 };
 
-enum class ConstraintType : unsigned char {
+enum class ViolationInvariantType : unsigned char {
   NORMAL = 0,
   REIFIED = 1,
   CONSTANT_FALSE = 2,

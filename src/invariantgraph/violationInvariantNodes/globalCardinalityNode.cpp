@@ -112,11 +112,11 @@ void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,
                                                 _cover);
     for (size_t i = 0; i < _counts.size(); ++i) {
       if (shouldHold()) {
-        solver.makeConstraint<propagation::Equal>(solver, _violations.at(i),
+        solver.makeViolationInvariant<propagation::Equal>(solver, _violations.at(i),
                                      _intermediate.at(i),
                                      invariantGraph.varId(_counts.at(i)));
       } else {
-        solver.makeConstraint<propagation::NotEqual>(solver, _violations.at(i),
+        solver.makeViolationInvariant<propagation::NotEqual>(solver, _violations.at(i),
                                         _intermediate.at(i),
                                         invariantGraph.varId(_counts.at(i)));
       }

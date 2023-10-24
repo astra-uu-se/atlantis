@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "../testHelper.hpp"
-#include "propagation/constraints/equal.hpp"
+#include "propagation/violationInvariants/equal.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/types.hpp"
@@ -59,7 +59,7 @@ class MagicSquareTest : public ::testing::Test {
     // {
     //   propagation::VarId allDiffViol = solver->makeIntVar(0, 0, n2);
     //   violations.push_back(allDiffViol);
-    //   solver->makeConstraint<propagation::AllDifferent>(*solver, allDiffViol,
+    //   solver->makeViolationInvariant<propagation::AllDifferent>(*solver, allDiffViol,
     //   flat);
     // }
 
@@ -73,7 +73,7 @@ class MagicSquareTest : public ::testing::Test {
 
         solver->makeInvariant<propagation::Linear>(*solver, rowSum,
                                                    square.at(i));
-        solver->makeConstraint<propagation::Equal>(*solver, rowViol, rowSum,
+        solver->makeViolationInvariant<propagation::Equal>(*solver, rowViol, rowSum,
                                                    magicSumVar);
         violations.push_back(rowViol);
       }
@@ -92,7 +92,7 @@ class MagicSquareTest : public ::testing::Test {
           col.push_back(square.at(j).at(i));
         }
         solver->makeInvariant<propagation::Linear>(*solver, colSum, ones, col);
-        solver->makeConstraint<propagation::Equal>(*solver, colViol, colSum,
+        solver->makeViolationInvariant<propagation::Equal>(*solver, colViol, colSum,
                                                    magicSumVar);
         violations.push_back(colViol);
       }
@@ -111,7 +111,7 @@ class MagicSquareTest : public ::testing::Test {
       }
       solver->makeInvariant<propagation::Linear>(*solver, downDiagSum, ones,
                                                  diag);
-      solver->makeConstraint<propagation::Equal>(*solver, downDiagViol,
+      solver->makeViolationInvariant<propagation::Equal>(*solver, downDiagViol,
                                                  downDiagSum, magicSumVar);
       violations.push_back(downDiagViol);
     }
@@ -129,7 +129,7 @@ class MagicSquareTest : public ::testing::Test {
       }
       solver->makeInvariant<propagation::Linear>(*solver, upDiagSum, ones,
                                                  diag);
-      solver->makeConstraint<propagation::Equal>(*solver, upDiagViol, upDiagSum,
+      solver->makeViolationInvariant<propagation::Equal>(*solver, upDiagViol, upDiagSum,
                                                  magicSumVar);
       violations.push_back(upDiagViol);
     }

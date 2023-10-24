@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "propagation/constraints/constraint.hpp"
+#include "propagation/violationInvariants/violationInvariant.hpp"
 #include "propagation/solver.hpp"
 #include "types.hpp"
 

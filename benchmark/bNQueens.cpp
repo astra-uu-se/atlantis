@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/constraints/allDifferent.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/views/intOffsetView.hpp"
@@ -57,11 +57,11 @@ class Queens : public ::benchmark::Fixture {
     violation3 = solver->makeIntVar(0, 0, n);
 
     // 3 invariants, each having taking n static input variables
-    solver->makeConstraint<propagation::AllDifferent>(*solver, violation1,
+    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation1,
                                                       queens);
-    solver->makeConstraint<propagation::AllDifferent>(*solver, violation2,
+    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation2,
                                                       q_offset_minus);
-    solver->makeConstraint<propagation::AllDifferent>(*solver, violation3,
+    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation3,
                                                       q_offset_plus);
 
     totalViolation = solver->makeIntVar(0, 0, 3 * n);

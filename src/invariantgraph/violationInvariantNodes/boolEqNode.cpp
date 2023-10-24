@@ -57,7 +57,7 @@ void BoolEqNode::registerNode(InvariantGraph& invariantGraph, propagation::Solve
   assert(invariantGraph.varId(b()) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    solver.makeConstraint<propagation::BoolEqual>(solver, violationVarId(invariantGraph),
+    solver.makeViolationInvariant<propagation::BoolEqual>(solver, violationVarId(invariantGraph),
                                      invariantGraph.varId(a()),
                                      invariantGraph.varId(b()));
   } else {

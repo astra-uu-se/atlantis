@@ -16,14 +16,14 @@ propagation::VarId Objective::registerNode(propagation::VarId totalViolationId,
     return registerOptimisation(
         totalViolationId, objectiveVarId, _solver.upperBound(objectiveVarId),
         [&](propagation::VarId v, propagation::VarId b) {
-          _solver.makeConstraint<propagation::LessEqual>(_solver, v,
+          _solver.makeViolationInvariant<propagation::LessEqual>(_solver, v,
                                                          objectiveVarId, b);
         });
   } else if (_problemType == fznparser::ProblemType::MAXIMIZE) {
     return registerOptimisation(
         totalViolationId, objectiveVarId, _solver.lowerBound(objectiveVarId),
         [&](propagation::VarId v, propagation::VarId b) {
-          _solver.makeConstraint<propagation::LessEqual>(_solver, v, b,
+          _solver.makeViolationInvariant<propagation::LessEqual>(_solver, v, b,
                                                          objectiveVarId);
         });
   }

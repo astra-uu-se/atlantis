@@ -4,7 +4,7 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/constraints/equal.hpp"
+#include "propagation/violationInvariants/equal.hpp"
 #include "propagation/invariants/boolLinear.hpp"
 #include "propagation/views/equalConst.hpp"
 #include "propagation/views/notEqualConst.hpp"
