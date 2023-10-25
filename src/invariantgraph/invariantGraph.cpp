@@ -36,8 +36,21 @@ VarNodeId InvariantGraph::createVarNode(const fznparser::BoolVar& var) {
     return _namedVarNodeIndices.at(var.identifier());
   }
 
+  std::vector<Int> boolDomain;
+  if (var.upperBound() == true) {
+    // 0 indicates there is no violation
+    boolDomain.emplace_back(0);
+  }
+  if (var.lowerBound() == false) {
+    // non-zero indicates there is a violation
+    boolDomain.emplace_back(1);
+  }
+
   auto nodeId =
-      _varNodes.emplace_back(_varNodes.size() + 1, VarNode::FZNVar(var))
+      _varNodes
+          .emplace_back(_varNodes.size() + 1,
+                        std::move(SearchDomain(std::move(boolDomain))), false,
+                        var.identifier())
           .varNodeId();
 
   if (!var.identifier().empty()) {
@@ -80,9 +93,15 @@ VarNodeId InvariantGraph::createVarNode(const fznparser::IntVar& var) {
     return _namedVarNodeIndices.at(var.identifier());
   }
 
+  SearchDomain domain =
+      var.domain().isInterval()
+          ? SearchDomain(var.domain().lowerBound(), var.domain().upperBound())
+          : SearchDomain(var.domain().elements());
+
   const VarNodeId nodeId =
       _varNodes
-          .emplace_back(VarNodeId(_varNodes.size() + 1), VarNode::FZNVar(var))
+          .emplace_back(VarNodeId(_varNodes.size() + 1), std::move(domain),
+                        true, var.identifier())
           .varNodeId();
   if (!var.identifier().empty()) {
     _namedVarNodeIndices.emplace(var.identifier(), nodeId);
@@ -268,7 +287,7 @@ void InvariantGraph::splitMultiDefinedVars() {
           createVarNode(_varNodes[i].constDomain(), _varNodes[i].isIntVar());
       splitNodes.emplace_back(newNodeId);
       invariantNode(invNodeId).replaceDefinedVar(_varNodes[i],
-                                                      varNode(newNodeId));
+                                                 varNode(newNodeId));
     }
 
     if (_varNodes[i].isIntVar()) {
@@ -641,6 +660,7 @@ InvariantGraphApplyResult InvariantGraph::apply(
                                           : solver.makeIntVar(0, 0, 0);
   solver.close();
 
+  /*
   InvariantGraphApplyResult::VarIdentifiers varIdentifiers;
   varIdentifiers.reserve(_varNodes.size() +
                          (_objectiveVarNodeId != NULL_NODE_ID ? 1 : 0));
@@ -661,6 +681,7 @@ InvariantGraphApplyResult InvariantGraph::apply(
   return InvariantGraphApplyResult(std::move(varIdentifiers),
                                    std::move(_implicitConstraintNodes),
                                    totalViolation, objectiveVarId);
+  */
 }
 
 }  // namespace atlantis::invariantgraph

@@ -5,59 +5,23 @@
 
 namespace atlantis::invariantgraph {
 
-static SearchDomain convertDomain(const VarNode::FZNVar& var) {
-  if (std::holds_alternative<fznparser::BoolVar>(var)) {
-    const fznparser::BoolVar& boolVar = std::get<fznparser::BoolVar>(var);
-    std::vector<Int> boolDomain;
-    if (boolVar.upperBound() == true) {
-      // 0 indicates there is no violation
-      boolDomain.emplace_back(0);
-    }
-    if (boolVar.lowerBound() == false) {
-      // non-zero indicates there is a violation
-      boolDomain.emplace_back(1);
-    }
-    return SearchDomain(std::move(boolDomain));
-  }
-  const fznparser::IntSet& intDomain =
-      std::get<fznparser::IntVar>(var).domain();
-  if (intDomain.isInterval()) {
-    return SearchDomain(intDomain.lowerBound(), intDomain.upperBound());
-  }
-  return SearchDomain(intDomain.elements());
-}
-
-VarNode::VarNode(VarNodeId varNodeId, const VarNode::FZNVar& var)
+VarNode::VarNode(VarNodeId varNodeId, SearchDomain&& domain, bool isIntVar,
+                 const std::string& identifier)
     : _varNodeId(varNodeId),
-      _var(var),
-      _domain{std::move(convertDomain(*_var))},
-      _isIntVar(std::holds_alternative<fznparser::IntVar>(var)) {}
-
-VarNode::VarNode(VarNodeId varNodeId, SearchDomain&& domain, bool isIntVar)
-    : _varNodeId(varNodeId),
-      _var(std::nullopt),
       _domain(std::move(domain)),
-      _isIntVar(isIntVar) {}
+      _isIntVar(isIntVar),
+      _identifier(identifier) {}
 
-VarNode::VarNode(VarNodeId varNodeId, const SearchDomain& domain, bool isIntVar)
+VarNode::VarNode(VarNodeId varNodeId, const SearchDomain& domain, bool isIntVar,
+                 const std::string& identifier)
     : _varNodeId(varNodeId),
-      _var(std::nullopt),
       _domain(domain),
-      _isIntVar(isIntVar) {}
+      _isIntVar(isIntVar),
+      _identifier(identifier) {}
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
-std::optional<VarNode::FZNVar> VarNode::var() const { return _var; }
-
-std::string VarNode::identifier() const {
-  if (!_var.has_value()) {
-    return "";
-  }
-  if (std::holds_alternative<fznparser::BoolVar>(*_var)) {
-    return std::get<fznparser::BoolVar>(*_var).identifier();
-  }
-  return std::get<fznparser::IntVar>(*_var).identifier();
-}
+const std::string& VarNode::identifier() const { return _identifier; }
 
 propagation::VarId VarNode::varId() const { return _varId; }
 

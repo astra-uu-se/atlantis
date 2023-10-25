@@ -33,16 +33,13 @@ class InvariantNode;   // Forward declaration
  */
 class VarNode {
  public:
-  using FZNVar = std::variant<fznparser::BoolVar, fznparser::IntVar>;
-  using VarMap =
-      std::unordered_map<VarNodeId, propagation::VarId, VarNodeIdHash>;
   float SPARSE_MIN_DENSENESS{0.6};
 
  private:
   VarNodeId _varNodeId;
-  std::optional<FZNVar> _var;
   SearchDomain _domain;
   const bool _isIntVar;
+  std::string _identifier;
   propagation::VarId _varId{propagation::NULL_ID};
   propagation::VarId _domainViolationId{propagation::NULL_ID};
 
@@ -53,35 +50,24 @@ class VarNode {
 
  public:
   /**
-   * Construct a variable node which is associated with a model variable.
+   * Construct a variable node which is not associated with a model variable.
    *
-   * @param var The model variable this node is associated with.
+   * @param domain The domain of this variable.
    */
-  explicit VarNode(VarNodeId, const FZNVar& var);
+  explicit VarNode(VarNodeId, SearchDomain&& domain, bool isIntVar,
+                   const std::string& identifier = "");
 
   /**
    * Construct a variable node which is not associated with a model variable.
    *
    * @param domain The domain of this variable.
    */
-  explicit VarNode(VarNodeId, SearchDomain&& domain, bool isIntVar);
-
-  /**
-   * Construct a variable node which is not associated with a model variable.
-   *
-   * @param domain The domain of this variable.
-   */
-  explicit VarNode(VarNodeId, const SearchDomain& domain, bool isIntVar);
+  explicit VarNode(VarNodeId, const SearchDomain& domain, bool isIntVar,
+                   const std::string& identifier = "");
 
   VarNodeId varNodeId() const noexcept;
 
-  /**
-   * @return The model variable this node is associated with, or std::nullopt
-   * if no model variable is associated with this node.
-   */
-  [[nodiscard]] std::optional<FZNVar> var() const;
-
-  [[nodiscard]] std::string identifier() const;
+  [[nodiscard]] const std::string& identifier() const;
 
   /**
    * @return The model propagation::VarId this node is associated

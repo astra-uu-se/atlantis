@@ -57,9 +57,7 @@ class BoolLinEqNodeTest : public NodeTestBase<BoolLinEqNode> {
     EXPECT_EQ(invNode().c(), 3);
     EXPECT_TRUE(invNode().isReified());
     EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    EXPECT_EQ(
-        _invariantGraph->varNode(invNode().reifiedViolationNodeId()).var(),
-        VarNode::FZNVar(boolVar(r)));
+    EXPECT_EQ(invNode().reifiedViolationNodeId(), r);
   }
 
   void application() {
@@ -104,7 +102,8 @@ class BoolLinEqNodeTest : public NodeTestBase<BoolLinEqNode> {
     }
 
     EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    const propagation::VarId violationId = invNode().violationVarId(*_invariantGraph);
+    const propagation::VarId violationId =
+        invNode().violationVarId(*_invariantGraph);
     EXPECT_EQ(inputs.size(), 2);
 
     std::vector<Int> values(inputs.size());
