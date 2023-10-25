@@ -4,8 +4,9 @@
 #define JSON_HAS_CPP_17
 #include <nlohmann/json.hpp>
 
+namespace atlantis::search {
+
 using namespace nlohmann;
-using namespace search;
 
 static std::string readFileToString(const std::filesystem::path& path) {
   std::ifstream is{path};
@@ -126,3 +127,5 @@ std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
   auto it = parsedJson.begin();
   return parseSchedule(it.key(), it.value());
 }
+
+}  // namespace atlantis::search

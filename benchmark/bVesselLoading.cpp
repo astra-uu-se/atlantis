@@ -6,18 +6,20 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "constraints/lessEqual.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/elementVar.hpp"
-#include "invariants/exists.hpp"
-#include "invariants/ifThenElse.hpp"
-#include "invariants/linear.hpp"
-#include "views/elementConst.hpp"
-#include "views/intOffsetView.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
+#include "propagation/invariants/elementVar.hpp"
+#include "propagation/invariants/exists.hpp"
+#include "propagation/invariants/ifThenElse.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/solver.hpp"
+#include "propagation/views/elementConst.hpp"
+#include "propagation/views/intOffsetView.hpp"
 
-class VesselLoading : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class VesselLoading : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<PropagationEngine> engine;
+  std::unique_ptr<propagation::Solver> solver;
   std::random_device rd;
   std::mt19937 gen;
 
@@ -38,11 +40,11 @@ class VesselLoading : public benchmark::Fixture {
   std::vector<size_t> conLength;
   // conWidth[i]  = container i vesselWidth:
   std::vector<size_t> conWidth;
-  std::vector<VarId> orientation;
-  std::vector<VarId> left;
-  std::vector<VarId> bottom;
+  std::vector<propagation::VarId> orientation;
+  std::vector<propagation::VarId> left;
+  std::vector<propagation::VarId> bottom;
 
-  VarId totalViolation;
+  propagation::VarId totalViolation;
 
   std::uniform_int_distribution<size_t> indexDistr;
   std::uniform_int_distribution<Int> orientationDistr;
@@ -52,9 +54,9 @@ class VesselLoading : public benchmark::Fixture {
   void SetUp(const ::benchmark::State& state) {
     containerCount = state.range(0);
 
-    engine = std::make_unique<PropagationEngine>();
-    engine->open();
-    setEngineModes(*engine, state.range(1));
+    solver = std::make_unique<propagation::Solver>();
+    solver->open();
+    setSolverMode(*solver, state.range(1));
 
     gen = std::mt19937(rd());
     distClass = std::uniform_int_distribution<size_t>{
@@ -71,9 +73,9 @@ class VesselLoading : public benchmark::Fixture {
 
     orientation.resize(containerCount);
     left.resize(containerCount);
-    std::vector<VarId> right(containerCount);
+    std::vector<propagation::VarId> right(containerCount);
     bottom.resize(containerCount);
-    std::vector<VarId> top(containerCount);
+    std::vector<propagation::VarId> top(containerCount);
 
     // Create containerCount containers
     for (size_t i = 0; i < containerCount; ++i) {
@@ -83,11 +85,11 @@ class VesselLoading : public benchmark::Fixture {
 
       // Create variables
       Int m = std::min(conWidth[i], conLength[i]);
-      orientation[i] = engine->makeIntVar(0, 0, 1);
-      left[i] = engine->makeIntVar(0, 0, vesselWidth - m);
-      right[i] = engine->makeIntVar(m, m, vesselWidth);
-      bottom[i] = engine->makeIntVar(0, 0, vesselLength - m);
-      top[i] = engine->makeIntVar(m, m, vesselLength);
+      orientation[i] = solver->makeIntVar(0, 0, 1);
+      left[i] = solver->makeIntVar(0, 0, vesselWidth - m);
+      right[i] = solver->makeIntVar(m, m, vesselWidth);
+      bottom[i] = solver->makeIntVar(0, 0, vesselLength - m);
+      top[i] = solver->makeIntVar(m, m, vesselLength);
     }
 
     // Create random min separation distance between classes.
@@ -109,30 +111,35 @@ class VesselLoading : public benchmark::Fixture {
     for (size_t i = 0; i < containerCount; ++i) {
       // orientation[i] = 0 <=> container i is positioned horizontally
       // orientation[i] = 1 <=> container i is positioned vertically
-      VarId rightHorizontally =
-          engine->makeIntView<IntOffsetView>(*engine, left[i], conWidth[i]);
-      VarId rightVertically =
-          engine->makeIntView<IntOffsetView>(*engine, left[i], conLength[i]);
-      VarId topHorizontally =
-          engine->makeIntView<IntOffsetView>(*engine, bottom[i], conLength[i]);
-      VarId topVertically =
-          engine->makeIntView<IntOffsetView>(*engine, bottom[i], conWidth[i]);
+      propagation::VarId rightHorizontally =
+          solver->makeIntView<propagation::IntOffsetView>(*solver, left[i],
+                                                          conWidth[i]);
+      propagation::VarId rightVertically =
+          solver->makeIntView<propagation::IntOffsetView>(*solver, left[i],
+                                                          conLength[i]);
+      propagation::VarId topHorizontally =
+          solver->makeIntView<propagation::IntOffsetView>(*solver, bottom[i],
+                                                          conLength[i]);
+      propagation::VarId topVertically =
+          solver->makeIntView<propagation::IntOffsetView>(*solver, bottom[i],
+                                                          conWidth[i]);
 
       // right[i] = left[i] + (if orientation[i] == 0 then conWidth[i] else
       // conLength[i] endif)
-      engine->makeInvariant<IfThenElse>(*engine, right[i], orientation[i],
-                                        rightHorizontally, rightVertically);
+      solver->makeInvariant<propagation::IfThenElse>(
+          *solver, right[i], orientation[i], rightHorizontally,
+          rightVertically);
 
       // top[i] = bottom[i] + (if orientation[i] != 0 then conWidth[i] else
       // conLength[i] endif)
-      engine->makeInvariant<IfThenElse>(*engine, top[i], orientation[i],
-                                        topHorizontally, topVertically);
+      solver->makeInvariant<propagation::IfThenElse>(
+          *solver, top[i], orientation[i], topHorizontally, topVertically);
     }
 
     // Creating a number of static invariants that is quadratic in n, each with
     // a constant number of static input variables, resulting in a number of
     // static input variables that is quadratic in n.
-    std::vector<VarId> violations{};
+    std::vector<propagation::VarId> violations{};
     violations.reserve(containerCount * (containerCount - 1) / 2);
 
     for (size_t i = 0; i < containerCount; ++i) {
@@ -150,48 +157,56 @@ class VesselLoading : public benchmark::Fixture {
 
         Int sep = seperations[conClass[i]][c];
 
-        VarId rightSep = sep == 0 ? right[i]
-                                  : engine->makeIntView<IntOffsetView>(
-                                        *engine, right[i], sep);
-        VarId leftSep = sep == 0 ? left[i]
-                                 : engine->makeIntView<IntOffsetView>(
-                                       *engine, left[i], -sep);
-        VarId topSep =
+        propagation::VarId rightSep =
+            sep == 0 ? right[i]
+                     : solver->makeIntView<propagation::IntOffsetView>(
+                           *solver, right[i], sep);
+        propagation::VarId leftSep =
+            sep == 0 ? left[i]
+                     : solver->makeIntView<propagation::IntOffsetView>(
+                           *solver, left[i], -sep);
+        propagation::VarId topSep =
             sep == 0 ? top[i]
-                     : engine->makeIntView<IntOffsetView>(*engine, top[i], sep);
-        VarId bottomSep = sep == 0 ? bottom[i]
-                                   : engine->makeIntView<IntOffsetView>(
-                                         *engine, bottom[i], -sep);
+                     : solver->makeIntView<propagation::IntOffsetView>(
+                           *solver, top[i], sep);
+        propagation::VarId bottomSep =
+            sep == 0 ? bottom[i]
+                     : solver->makeIntView<propagation::IntOffsetView>(
+                           *solver, bottom[i], -sep);
 
         for (size_t j = i + 1; j < containerCount; ++j) {
           if (conClass[j] != c) {
             continue;
           }
 
-          VarId isRightOf =
-              engine->makeIntVar(0, 0, vesselLength + vesselWidth);
-          VarId isLeftOf = engine->makeIntVar(0, 0, vesselLength + vesselWidth);
-          VarId isBelow = engine->makeIntVar(0, 0, vesselLength + vesselWidth);
-          VarId isAbove = engine->makeIntVar(0, 0, vesselLength + vesselWidth);
+          propagation::VarId isRightOf =
+              solver->makeIntVar(0, 0, vesselLength + vesselWidth);
+          propagation::VarId isLeftOf =
+              solver->makeIntVar(0, 0, vesselLength + vesselWidth);
+          propagation::VarId isBelow =
+              solver->makeIntVar(0, 0, vesselLength + vesselWidth);
+          propagation::VarId isAbove =
+              solver->makeIntVar(0, 0, vesselLength + vesselWidth);
 
           // isRightOf = (right[i] + sep <= left[j]):
-          engine->makeConstraint<LessEqual>(*engine, isRightOf, rightSep,
-                                            left[j]);
+          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isRightOf,
+                                                         rightSep, left[j]);
           // isLeftOf = (right[j] <= left[i] - sep):
-          engine->makeConstraint<LessEqual>(*engine, isLeftOf, right[j],
-                                            leftSep);
+          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isLeftOf,
+                                                         right[j], leftSep);
           // isAbove = (top[i] + sep <= bottom[j]):
-          engine->makeConstraint<LessEqual>(*engine, isAbove, topSep,
-                                            bottom[j]);
+          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isAbove,
+                                                         topSep, bottom[j]);
           // isBelow = (top[j] <= bottom[i] - sep):
-          engine->makeConstraint<LessEqual>(*engine, isBelow, top[j],
-                                            bottomSep);
+          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isBelow,
+                                                         top[j], bottomSep);
 
-          engine->makeInvariant<Exists>(
-              *engine,
+          solver->makeInvariant<propagation::Exists>(
+              *solver,
               violations.emplace_back(
-                  engine->makeIntVar(0, 0, vesselLength + vesselWidth)),
-              std::vector<VarId>{isRightOf, isLeftOf, isAbove, isBelow});
+                  solver->makeIntVar(0, 0, vesselLength + vesselWidth)),
+              std::vector<propagation::VarId>{isRightOf, isLeftOf, isAbove,
+                                              isBelow});
         }
       }
     }
@@ -202,11 +217,12 @@ class VesselLoading : public benchmark::Fixture {
     // Each container pair can bring vesselLength+vesselWidth violations.
     // and there are (containerCount*(containerCount-1)/2) pairs.
     totalViolation =
-        engine->makeIntVar(0, 0,
+        solver->makeIntVar(0, 0,
                            (containerCount * (containerCount - 1) / 2) *
                                (vesselLength + vesselWidth));
-    engine->makeInvariant<Linear>(*engine, totalViolation, violations);
-    engine->close();
+    solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
+                                               violations);
+    solver->close();
 
     indexDistr = std::uniform_int_distribution<size_t>{0u, containerCount - 1};
     orientationDistr = std::uniform_int_distribution<Int>{0, 1};
@@ -235,7 +251,8 @@ class VesselLoading : public benchmark::Fixture {
   }
 };
 
-BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)
+(::benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
     const size_t i = indexDistr(gen);
@@ -244,21 +261,21 @@ BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)(benchmark::State& st) {
     assert(0 <= newOrientation && newOrientation <= 1);
     const Int newLeft = leftDistr[i][newOrientation](gen);
     const Int newBottom = bottomDistr[i][newOrientation](gen);
-    engine->beginMove();
-    engine->setValue(orientation[i], newOrientation);
-    engine->setValue(left[i], newLeft);
-    engine->setValue(bottom[i], newBottom);
-    engine->endMove();
-    engine->beginProbe();
-    engine->query(totalViolation);
-    engine->endProbe();
+    solver->beginMove();
+    solver->setValue(orientation[i], newOrientation);
+    solver->setValue(left[i], newLeft);
+    solver->setValue(bottom[i], newBottom);
+    solver->endMove();
+    solver->beginProbe();
+    solver->query(totalViolation);
+    solver->endProbe();
     ++probes;
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(VesselLoading, solve)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(VesselLoading, solve)(::benchmark::State& st) {
   size_t it = 0;
   Int probes = 0;
   std::vector<size_t> tabu(containerCount, 0);
@@ -287,21 +304,21 @@ BENCHMARK_DEFINE_F(VesselLoading, solve)(benchmark::State& st) {
                    vesselLength - (o == 0 ? conLength[c] : conWidth[c]);
                newSouth >= 0; --newSouth) {
             // Perform move
-            engine->beginMove();
-            engine->setValue(left.at(c), newWest);
-            engine->setValue(bottom.at(c), newSouth);
-            engine->setValue(orientation.at(c), o);
-            engine->endMove();
+            solver->beginMove();
+            solver->setValue(left.at(c), newWest);
+            solver->setValue(bottom.at(c), newSouth);
+            solver->setValue(orientation.at(c), o);
+            solver->endMove();
 
             // Probe
-            engine->beginProbe();
-            engine->query(totalViolation);
-            engine->endProbe();
+            solver->beginProbe();
+            solver->query(totalViolation);
+            solver->endProbe();
 
             ++probes;
 
             // Save improving move
-            Int newValue = engine->currentValue(totalViolation);
+            Int newValue = solver->currentValue(totalViolation);
             if (newValue <= bestViol) {
               bestViol = newValue;
               bestContainer = c;
@@ -315,15 +332,15 @@ BENCHMARK_DEFINE_F(VesselLoading, solve)(benchmark::State& st) {
     }
 
     // Commit move and mark as tabu
-    engine->beginMove();
-    engine->setValue(orientation[bestContainer], bestOrientation);
-    engine->setValue(left[bestContainer], bestWest);
-    engine->setValue(bottom[bestContainer], bestSouth);
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(orientation[bestContainer], bestOrientation);
+    solver->setValue(left[bestContainer], bestWest);
+    solver->setValue(bottom[bestContainer], bestSouth);
+    solver->endMove();
 
-    engine->beginCommit();
-    engine->query(totalViolation);
-    engine->endCommit();
+    solver->beginCommit();
+    solver->query(totalViolation);
+    solver->endCommit();
 
     tabu[bestContainer] = it + tenure;
 
@@ -332,24 +349,24 @@ BENCHMARK_DEFINE_F(VesselLoading, solve)(benchmark::State& st) {
     }
   }
 
-  // st.counters["it"]           = benchmark::Counter(it);
-  // st.counters["it_per_s"]     = benchmark::Counter(it,
-  // benchmark::Counter::kIsRate);
+  // st.counters["it"]           = ::benchmark::Counter(it);
+  // st.counters["it_per_s"]     = ::benchmark::Counter(it,
+  // ::benchmark::Counter::kIsRate);
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
-  st.counters["solved"] = benchmark::Counter(done);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+  st.counters["solved"] = ::benchmark::Counter(done);
 }
 
 //*
 BENCHMARK_REGISTER_F(VesselLoading, probe_single_relocate)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
 //*/
 
 /*
 BENCHMARK_REGISTER_F(VesselLoading, solve)
-    ->Apply([](benchmark::internal::Benchmark* benchmark) {
+    ->Apply([](::benchmark::internal::Benchmark* benchmark) {
       for (Int containerCount = 20; containerCount <= 20; containerCount += 5) {
         for (int mode = 2; mode <= 3; ++mode) {
           benchmark->Args({containerCount, mode});
@@ -358,3 +375,4 @@ BENCHMARK_REGISTER_F(VesselLoading, solve)
     });
 
 //*/
+}  // namespace atlantis::benchmark

@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
@@ -46,22 +46,22 @@ std::unique_ptr<BoolEqNode> BoolEqNode::fromModelConstraint(
       a, b, invariantGraph.createVarNode(reified.var()));
 }
 
-void BoolEqNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         Engine& engine) {
-  registerViolation(invariantGraph, engine);
+void BoolEqNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                         propagation::SolverBase& solver) {
+  registerViolation(invariantGraph, solver);
 }
 
-void BoolEqNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
-  assert(invariantGraph.varId(a()) != NULL_ID);
-  assert(invariantGraph.varId(b()) != NULL_ID);
+void BoolEqNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  assert(invariantGraph.varId(a()) != propagation::NULL_ID);
+  assert(invariantGraph.varId(b()) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    engine.makeConstraint<BoolEqual>(engine, violationVarId(invariantGraph),
+    solver.makeViolationInvariant<propagation::BoolEqual>(solver, violationVarId(invariantGraph),
                                      invariantGraph.varId(a()),
                                      invariantGraph.varId(b()));
   } else {
-    engine.makeInvariant<BoolXor>(engine, violationVarId(invariantGraph),
+    solver.makeInvariant<propagation::BoolXor>(solver, violationVarId(invariantGraph),
                                   invariantGraph.varId(a()),
                                   invariantGraph.varId(b()));
   }

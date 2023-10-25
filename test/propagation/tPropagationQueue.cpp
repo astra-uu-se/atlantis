@@ -5,9 +5,12 @@
 #include <vector>
 
 #include "../testHelper.hpp"
-#include "propagation/propagationQueue.hpp"
+#include "propagation/propagation/propagationQueue.hpp"
 
-namespace {
+namespace atlantis::testing {
+
+using namespace atlantis::propagation;
+
 class PropagationQueueTest : public ::testing::Test {
  protected:
   void SetUp() override {
@@ -74,4 +77,4 @@ TEST_F(PropagationQueueTest, ignoreDuplicates) {
   EXPECT_EQ(queue.empty(), true);
 }
 
-}  // namespace
+}  // namespace atlantis::testing

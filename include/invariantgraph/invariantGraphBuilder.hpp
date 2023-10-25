@@ -8,7 +8,7 @@
 #include "invariantGraph.hpp"
 #include "utils/variant.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class InvariantGraphBuilder {
  private:
   fznparser::Model& _model;
@@ -20,19 +20,18 @@ class InvariantGraphBuilder {
   InvariantGraph build();
 
  private:
-  void initVariableNodes();
+  void initVarNodes();
   void createNodes();
 
   void markOutputTo(const invariantgraph::InvariantNode& invNodeId,
                     std::unordered_set<std::string>& definedVars);
 
   std::unique_ptr<InvariantNode> makeInvariantNode(
-      const fznparser::Constraint& constraint,
-      bool guessDefinedVariable = false);
+      const fznparser::Constraint& constraint, bool guessDefinedVar = false);
   std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraintNode(
       const fznparser::Constraint& constraint);
   std::unique_ptr<ViolationInvariantNode> makeViolationInvariantNode(
       const fznparser::Constraint& constraint);
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

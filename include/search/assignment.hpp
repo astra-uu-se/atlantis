@@ -2,18 +2,18 @@
 
 #include <functional>
 
-#include "core/propagationEngine.hpp"
-#include "cost.hpp"
+#include "propagation/solver.hpp"
+#include "search/cost.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 class AssignmentModifier {
  private:
-  PropagationEngine& _engine;
+  propagation::Solver& _solver;
 
  public:
-  explicit AssignmentModifier(PropagationEngine& engine) : _engine(engine) {
-    assert(engine.isMoving());
+  explicit AssignmentModifier(propagation::Solver& solver) : _solver(solver) {
+    assert(solver.isMoving());
   }
 
   /**
@@ -23,20 +23,21 @@ class AssignmentModifier {
    * @param var The variable to assign.
    * @param value The value to assign to the variable.
    */
-  void set(VarId var, Int value) { _engine.setValue(var, value); }
+  void set(propagation::VarId var, Int value) { _solver.setValue(var, value); }
 };
 
 class Assignment {
  private:
-  PropagationEngine& _engine;
-  std::vector<VarId> _searchVariables{};
-  VarId _violation;
-  VarId _objective;
-  ObjectiveDirection _objectiveDirection;
+  propagation::Solver& _solver;
+  std::vector<propagation::VarId> _searchVars{};
+  propagation::VarId _violation;
+  propagation::VarId _objective;
+  propagation::ObjectiveDirection _objectiveDirection;
 
  public:
-  explicit Assignment(PropagationEngine& engine, VarId violation,
-                      VarId objective, ObjectiveDirection objectiveDirection);
+  explicit Assignment(propagation::Solver& solver, propagation::VarId violation,
+                      propagation::VarId objective,
+                      propagation::ObjectiveDirection objectiveDirection);
 
   /**
    * Assign values to the variables in the assignment. This is supplied a
@@ -56,10 +57,10 @@ class Assignment {
   void assign(Callback modificationFunc) {
     move(modificationFunc);
 
-    _engine.beginCommit();
-    _engine.query(_violation);
-    _engine.query(_objective);
-    _engine.endCommit();
+    _solver.beginCommit();
+    _solver.query(_violation);
+    _solver.query(_objective);
+    _solver.endCommit();
   }
 
   /**
@@ -74,12 +75,12 @@ class Assignment {
   Cost probe(Callback modificationFunc) const {
     move(modificationFunc);
 
-    _engine.beginProbe();
-    _engine.query(_objective);
-    _engine.query(_violation);
-    _engine.endProbe();
+    _solver.beginProbe();
+    _solver.query(_objective);
+    _solver.query(_violation);
+    _solver.endProbe();
 
-    return {_engine.currentValue(_violation), _engine.currentValue(_objective),
+    return {_solver.currentValue(_violation), _solver.currentValue(_objective),
             _objectiveDirection};
   }
 
@@ -89,7 +90,7 @@ class Assignment {
    * @param var The variable for which to query the value.
    * @return The value of @p var.
    */
-  [[nodiscard]] Int value(VarId var) const noexcept;
+  [[nodiscard]] Int value(propagation::VarId var) const noexcept;
 
   /**
    * @return True if the current assignment satisfies all the constraints, false
@@ -102,18 +103,19 @@ class Assignment {
    */
   [[nodiscard]] Cost cost() const noexcept;
 
-  [[nodiscard]] const std::vector<VarId>& searchVariables() const noexcept {
-    return _searchVariables;
+  [[nodiscard]] const std::vector<propagation::VarId>& searchVars()
+      const noexcept {
+    return _searchVars;
   }
 
  private:
   template <typename Callback>
   void move(Callback modificationFunc) const {
-    _engine.beginMove();
-    AssignmentModifier modifications(_engine);
+    _solver.beginMove();
+    AssignmentModifier modifications(_solver);
     modificationFunc(modifications);
-    _engine.endMove();
+    _solver.endMove();
   }
 };
 
-}  // namespace search
+}  // namespace atlantis::search

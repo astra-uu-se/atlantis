@@ -1,19 +1,21 @@
 #include "search/annealing/scheduleLoop.hpp"
 
-void search::ScheduleLoop::start(double initialTemperature) {
+namespace atlantis::search {
+
+void ScheduleLoop::start(double initialTemperature) {
   _schedule->start(initialTemperature);
   _consecutiveFutileIterations = 0;
 }
 
-void search::ScheduleLoop::nextRound(
-    const search::RoundStatistics& statistics) {
+void ScheduleLoop::nextRound(const RoundStatistics& statistics) {
   assert(!frozen());
 
   auto temp = temperature();
   _schedule->nextRound(statistics);
 
   if (_schedule->frozen()) {
-    if (_lastRoundStatistics && _lastRoundStatistics->bestCostOfThisRound <= statistics.bestCostOfThisRound) {
+    if (_lastRoundStatistics && _lastRoundStatistics->bestCostOfThisRound <=
+                                    statistics.bestCostOfThisRound) {
       _consecutiveFutileIterations++;
     } else {
       _consecutiveFutileIterations = 1;
@@ -24,8 +26,10 @@ void search::ScheduleLoop::nextRound(
   }
 }
 
-double search::ScheduleLoop::temperature() { return _schedule->temperature(); }
+double ScheduleLoop::temperature() { return _schedule->temperature(); }
 
-bool search::ScheduleLoop::frozen() {
+bool ScheduleLoop::frozen() {
   return _consecutiveFutileIterations >= _maximumConsecutiveFutileRounds;
 }
+
+}  // namespace atlantis::search

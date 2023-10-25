@@ -3,53 +3,60 @@
 #include <limits>
 #include <utility>
 
-#include "core/propagationEngine.hpp"
-#include "core/types.hpp"
 #include "fznparser/model.hpp"
-#include "invariants/linear.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/solver.hpp"
+#include "propagation/types.hpp"
+#include "types.hpp"
+#include "utils/variant.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 class Objective {
  private:
-  PropagationEngine& _engine;
+  propagation::Solver& _solver;
   fznparser::ProblemType _problemType;
 
-  std::optional<VarId> _bound{};
-  std::optional<VarId> _objective{};
-  std::optional<VarId> _violation{};
+  std::optional<propagation::VarId> _bound{};
+  std::optional<propagation::VarId> _objective{};
+  std::optional<propagation::VarId> _violation{};
 
  public:
-  Objective(PropagationEngine& engine, fznparser::ProblemType problemType);
+  Objective(propagation::Solver& solver, fznparser::ProblemType problemType);
 
-  VarId registerNode(VarId totalViolationId, VarId objectiveVarId);
+  propagation::VarId registerNode(propagation::VarId totalViolationId,
+                                  propagation::VarId objectiveVarId);
 
   void tighten();
 
-  [[nodiscard]] std::optional<VarId> bound() const noexcept { return _bound; }
+  [[nodiscard]] std::optional<propagation::VarId> bound() const noexcept {
+    return _bound;
+  }
 
  private:
   template <typename F>
-  VarId registerOptimisation(VarId constraintViolation, VarId objectiveVarId,
-                             Int initialBound, F constraintFactory) {
-    auto lb = _engine.lowerBound(objectiveVarId);
-    auto ub = _engine.upperBound(objectiveVarId);
+  propagation::VarId registerOptimisation(
+      propagation::VarId constraintViolation, propagation::VarId objectiveVarId,
+      Int initialBound, F constraintFactory) {
+    auto lb = _solver.lowerBound(objectiveVarId);
+    auto ub = _solver.upperBound(objectiveVarId);
 
-    _bound = _engine.makeIntVar(initialBound, lb, ub);
+    _bound = _solver.makeIntVar(initialBound, lb, ub);
     auto boundViolation =
-        _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
+        _solver.makeIntVar(0, 0, std::numeric_limits<Int>::max());
     constraintFactory(boundViolation, *_bound);
 
-    if (constraintViolation == NULL_ID) {
+    if (constraintViolation == propagation::NULL_ID) {
       _violation = boundViolation;
     } else {
-      _violation = _engine.makeIntVar(0, 0, std::numeric_limits<Int>::max());
-      _engine.makeInvariant<Linear>(
-          _engine, *_violation,
-          std::vector<VarId>{boundViolation, constraintViolation});
+      _violation = _solver.makeIntVar(0, 0, std::numeric_limits<Int>::max());
+      _solver.makeInvariant<propagation::Linear>(
+          _solver, *_violation,
+          std::vector<propagation::VarId>{boundViolation, constraintViolation});
     }
     return *_violation;
   }
 };
 
-}  // namespace search
+}  // namespace atlantis::search

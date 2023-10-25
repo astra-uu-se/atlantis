@@ -3,12 +3,12 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "constraints/boolLessEqual.hpp"
-#include "constraints/boolLessThan.hpp"
+#include "propagation/violationInvariants/boolLessEqual.hpp"
+#include "propagation/violationInvariants/boolLessThan.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class BoolLeNode : public ViolationInvariantNode {
  public:
@@ -24,9 +24,9 @@ class BoolLeNode : public ViolationInvariantNode {
   static std::unique_ptr<BoolLeNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

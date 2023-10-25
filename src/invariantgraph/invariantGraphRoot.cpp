@@ -1,17 +1,17 @@
 #include "invariantgraph/invariantGraphRoot.hpp"
 
-#include <utility>
-
-#include "search/neighbourhoods/randomNeighbourhood.hpp"
+namespace atlantis::invariantgraph {
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
-invariantgraph::InvariantGraphRoot::createNeighbourhood(
-    Engine& engine, std::vector<search::SearchVariable>&& variables) {
+InvariantGraphRoot::createNeighbourhood(propagation::SolverBase& solver,
+                                        std::vector<search::SearchVar>&& vars) {
   return std::make_shared<search::neighbourhoods::RandomNeighbourhood>(
-      std::move(variables), engine);
+      std::move(vars), solver);
 }
 
-void invariantgraph::InvariantGraphRoot::addSearchVarNode(VarNode& varNode) {
+void InvariantGraphRoot::addSearchVarNode(VarNode& varNode) {
   markOutputTo(varNode);
   assert(outputVarNodeIds().back() == varNode.varNodeId());
 }
+
+}  // namespace atlantis::invariantgraph

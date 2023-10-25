@@ -4,7 +4,7 @@
 #include "search/move.hpp"
 #include "search/searchVariable.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 class Neighbourhood {
  public:
@@ -34,7 +34,7 @@ class Neighbourhood {
   /**
    * @return The search variables covered by this neighbourhood.
    */
-  [[nodiscard]] virtual const std::vector<SearchVariable>& coveredVariables()
+  [[nodiscard]] virtual const std::vector<SearchVar>& coveredVars()
       const = 0;
 
  protected:
@@ -49,4 +49,4 @@ class Neighbourhood {
   }
 };
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

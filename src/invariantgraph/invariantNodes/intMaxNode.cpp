@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntMaxNode::IntMaxNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
@@ -23,15 +23,15 @@ std::unique_ptr<IntMaxNode> IntMaxNode::fromModelConstraint(
                                       invariantGraph.createVarNode(output));
 }
 
-void IntMaxNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+void IntMaxNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                         propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void IntMaxNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
-  engine.makeInvariant<BinaryMax>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+void IntMaxNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  solver.makeInvariant<propagation::BinaryMax>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 

@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntTimesNode::IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
@@ -23,16 +23,16 @@ std::unique_ptr<IntTimesNode> IntTimesNode::fromModelConstraint(
                                         invariantGraph.createVarNode(output));
 }
 
-void IntTimesNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                           Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+void IntTimesNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                           propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void IntTimesNode::registerNode(InvariantGraph& invariantGraph,
-                                Engine& engine) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
-  engine.makeInvariant<Times>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+                                propagation::SolverBase& solver) {
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  solver.makeInvariant<propagation::Times>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 

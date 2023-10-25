@@ -3,11 +3,11 @@
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
-static SearchDomain convertDomain(const VarNode::FZNVariable& variable) {
-  if (std::holds_alternative<fznparser::BoolVar>(variable)) {
-    const fznparser::BoolVar& boolVar = std::get<fznparser::BoolVar>(variable);
+static SearchDomain convertDomain(const VarNode::FZNVar& var) {
+  if (std::holds_alternative<fznparser::BoolVar>(var)) {
+    const fznparser::BoolVar& boolVar = std::get<fznparser::BoolVar>(var);
     std::vector<Int> boolDomain;
     if (boolVar.upperBound() == true) {
       // 0 indicates there is no violation
@@ -20,51 +20,49 @@ static SearchDomain convertDomain(const VarNode::FZNVariable& variable) {
     return SearchDomain(std::move(boolDomain));
   }
   const fznparser::IntSet& intDomain =
-      std::get<fznparser::IntVar>(variable).domain();
+      std::get<fznparser::IntVar>(var).domain();
   if (intDomain.isInterval()) {
     return SearchDomain(intDomain.lowerBound(), intDomain.upperBound());
   }
   return SearchDomain(intDomain.elements());
 }
 
-VarNode::VarNode(VarNodeId varNodeId, const VarNode::FZNVariable& variable)
+VarNode::VarNode(VarNodeId varNodeId, const VarNode::FZNVar& var)
     : _varNodeId(varNodeId),
-      _variable(variable),
-      _domain{std::move(convertDomain(*_variable))},
-      _isIntVar(std::holds_alternative<fznparser::IntVar>(variable)) {}
+      _var(var),
+      _domain{std::move(convertDomain(*_var))},
+      _isIntVar(std::holds_alternative<fznparser::IntVar>(var)) {}
 
 VarNode::VarNode(VarNodeId varNodeId, SearchDomain&& domain, bool isIntVar)
     : _varNodeId(varNodeId),
-      _variable(std::nullopt),
+      _var(std::nullopt),
       _domain(std::move(domain)),
       _isIntVar(isIntVar) {}
 
 VarNode::VarNode(VarNodeId varNodeId, const SearchDomain& domain, bool isIntVar)
     : _varNodeId(varNodeId),
-      _variable(std::nullopt),
+      _var(std::nullopt),
       _domain(domain),
       _isIntVar(isIntVar) {}
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
-std::optional<VarNode::FZNVariable> VarNode::variable() const {
-  return _variable;
-}
+std::optional<VarNode::FZNVar> VarNode::var() const { return _var; }
 
 std::string VarNode::identifier() const {
-  if (!_variable.has_value()) {
+  if (!_var.has_value()) {
     return "";
   }
-  if (std::holds_alternative<fznparser::BoolVar>(*_variable)) {
-    return std::get<fznparser::BoolVar>(*_variable).identifier();
+  if (std::holds_alternative<fznparser::BoolVar>(*_var)) {
+    return std::get<fznparser::BoolVar>(*_var).identifier();
   }
-  return std::get<fznparser::IntVar>(*_variable).identifier();
+  return std::get<fznparser::IntVar>(*_var).identifier();
 }
 
-VarId VarNode::varId() const { return _varId; }
+propagation::VarId VarNode::varId() const { return _varId; }
 
-void VarNode::setVarId(VarId varId) {
-  assert(_varId == NULL_ID);
+void VarNode::setVarId(propagation::VarId varId) {
+  assert(_varId == propagation::NULL_ID);
   _varId = varId;
 }
 
@@ -76,9 +74,9 @@ bool VarNode::isFixed() const noexcept { return _domain.isFixed(); }
 
 bool VarNode::isIntVar() const noexcept { return _isIntVar; }
 
-VarId VarNode::postDomainConstraint(Engine& engine,
-                                    std::vector<DomainEntry>&& domain) {
-  if (domain.size() == 0 || _domainViolationId != NULL_ID) {
+propagation::VarId VarNode::postDomainConstraint(
+    propagation::SolverBase& solver, std::vector<DomainEntry>&& domain) {
+  if (domain.size() == 0 || _domainViolationId != propagation::NULL_ID) {
     return _domainViolationId;
   }
   const size_t interval =
@@ -87,11 +85,11 @@ VarId VarNode::postDomainConstraint(Engine& engine,
   // domain.size() - 1 = number of "holes" in the domain:
   const float denseness = 1.0 - ((float)(domain.size() - 1) / (float)interval);
   if (SPARSE_MIN_DENSENESS <= denseness) {
-    _domainViolationId = engine.makeIntView<InSparseDomain>(
-        engine, this->varId(), std::move(domain));
+    _domainViolationId = solver.makeIntView<propagation::InSparseDomain>(
+        solver, this->varId(), std::move(domain));
   } else {
-    _domainViolationId =
-        engine.makeIntView<InDomain>(engine, this->varId(), std::move(domain));
+    _domainViolationId = solver.makeIntView<propagation::InDomain>(
+        solver, this->varId(), std::move(domain));
   }
   return _domainViolationId;
 }
@@ -100,7 +98,7 @@ Int VarNode::val() const {
   if (_domain.isFixed()) {
     return _domain.lowerBound();
   } else {
-    throw std::runtime_error("val() called on non-fixed variable");
+    throw std::runtime_error("val() called on non-fixed var");
   }
 }
 
@@ -118,11 +116,12 @@ void VarNode::removeValue(bool val) {
   _domain.fix(val ? 0 : 1);
 }
 
-std::vector<DomainEntry> VarNode::constrainedDomain(const Engine& engine) {
-  assert(this->varId() != NULL_ID);
-  const VarId varId = this->varId();
-  return _domain.relativeComplementIfIntersects(engine.lowerBound(varId),
-                                                engine.upperBound(varId));
+std::vector<DomainEntry> VarNode::constrainedDomain(
+    const propagation::SolverBase& solver) {
+  assert(this->varId() != propagation::NULL_ID);
+  const propagation::VarId varId = this->varId();
+  return _domain.relativeComplementIfIntersects(solver.lowerBound(varId),
+                                                solver.upperBound(varId));
 }
 
 std::pair<Int, Int> VarNode::bounds() const { return _domain.bounds(); }
@@ -148,7 +147,7 @@ InvariantNodeId VarNode::outputOf() const noexcept {
   if (_outputOf.size() == 0) {
     return InvariantNodeId(NULL_NODE_ID);
   } else if (_outputOf.size() != 1) {
-    throw std::runtime_error("VarNode is not an output variable");
+    throw std::runtime_error("VarNode is not an output var");
   }
   return *_outputOf.begin();
 }
@@ -200,4 +199,4 @@ std::optional<Int> VarNode::constantValue() const noexcept {
   return lb == ub ? std::optional<Int>{lb} : std::optional<Int>{};
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

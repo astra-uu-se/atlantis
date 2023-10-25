@@ -1,19 +1,21 @@
 #pragma once
 
 #include <chrono>
+#include <iostream>
 
 #include "assignment.hpp"
 #include "fznparser/model.hpp"
+#include "utils/fznAst.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 class SearchController {
  public:
-  using VariableMap = std::unordered_map<std::string, VarId>;
+  using VarMap = std::unordered_map<std::string, propagation::VarId>;
 
  private:
   const fznparser::Model& _model;
-  VariableMap _variableMap;
+  VarMap _varMap;
   std::optional<std::chrono::milliseconds> _timeout;
 
   std::chrono::steady_clock::time_point _startTime;
@@ -21,14 +23,14 @@ class SearchController {
   Int _foundSolution{false};
 
  public:
-  SearchController(const fznparser::Model& model, VariableMap variableMap)
-      : _model(model), _variableMap(std::move(variableMap)), _timeout({}) {}
+  SearchController(const fznparser::Model& model, VarMap varMap)
+      : _model(model), _varMap(std::move(varMap)), _timeout({}) {}
 
   template <typename Rep, typename Period>
-  SearchController(const fznparser::Model& model, VariableMap variableMap,
+  SearchController(const fznparser::Model& model, VarMap varMap,
                    std::chrono::duration<Rep, Period> timeout)
       : _model(model),
-        _variableMap(std::move(variableMap)),
+        _varMap(std::move(varMap)),
         _timeout(
             std::chrono::duration_cast<std::chrono::milliseconds>(timeout)) {}
 
@@ -37,4 +39,4 @@ class SearchController {
   void onFinish() const;
 };
 
-}  // namespace search
+}  // namespace atlantis::search

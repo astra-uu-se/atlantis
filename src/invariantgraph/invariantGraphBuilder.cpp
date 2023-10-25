@@ -50,21 +50,22 @@
 #include "invariantgraph/violationInvariantNodes/setInNode.hpp"
 #include "utils/fznAst.hpp"
 
+namespace atlantis {
+
 invariantgraph::InvariantGraphBuilder::InvariantGraphBuilder(
     fznparser::Model& _model)
     : _model(_model), _invariantGraph() {}
 
 invariantgraph::InvariantGraph invariantgraph::InvariantGraphBuilder::build() {
-  initVariableNodes();
+  initVarNodes();
 
   createNodes();
 
-  const std::optional<fznparser::Variable> objectiveVariable =
-      _model.objective();
+  const std::optional<fznparser::Var> objectiveVar = _model.objective();
   return std::move(_invariantGraph);
 }
 
-using FZNSearchVariable = std::variant<fznparser::IntVar, fznparser::BoolVar>;
+using FznSearchVar = std::variant<fznparser::IntVar, fznparser::BoolVar>;
 
 bool argumentIsFree(const fznparser::Arg& arg,
                     const std::unordered_set<std::string>& definedVars);
@@ -86,12 +87,12 @@ void invariantgraph::InvariantGraphBuilder::markOutputTo(
   }
 }
 
-void invariantgraph::InvariantGraphBuilder::initVariableNodes() {
-  for (const auto& [identifier, variable] : _model.variables()) {
-    if (std::holds_alternative<fznparser::BoolVar>(variable)) {
-      _invariantGraph.createVarNode(std::get<fznparser::BoolVar>(variable));
-    } else if (std::holds_alternative<fznparser::IntVar>(variable)) {
-      _invariantGraph.createVarNode(std::get<fznparser::IntVar>(variable));
+void invariantgraph::InvariantGraphBuilder::initVarNodes() {
+  for (const auto& [identifier, var] : _model.vars()) {
+    if (std::holds_alternative<fznparser::BoolVar>(var)) {
+      _invariantGraph.createVarNode(std::get<fznparser::BoolVar>(var));
+    } else if (std::holds_alternative<fznparser::IntVar>(var)) {
+      _invariantGraph.createVarNode(std::get<fznparser::IntVar>(var));
     }
   }
 }
@@ -104,21 +105,21 @@ void invariantgraph::InvariantGraphBuilder::createNodes() {
   for (size_t idx = 0; idx < _model.constraints().size(); ++idx) {
     auto& constraint = _model.constraints().at(idx);
 
-    std::optional<std::reference_wrapper<const fznparser::Variable>>
-        definedVar = constraint.definedVariable();
+    std::optional<std::reference_wrapper<const fznparser::Var>> definedVar =
+        constraint.definedVar();
 
     if (!definedVar.has_value()) {
       continue;
     }
 
-    const fznparser::Variable& variable = definedVar.value().get();
+    const fznparser::Var& var = definedVar.value().get();
 
-    if (!std::holds_alternative<fznparser::BoolVar>(variable) ||
-        std::holds_alternative<fznparser::IntVar>(variable)) {
+    if (!std::holds_alternative<fznparser::BoolVar>(var) ||
+        std::holds_alternative<fznparser::IntVar>(var)) {
       continue;
     }
 
-    if (definedVars.count(variable.identifier())) {
+    if (definedVars.count(var.identifier())) {
       continue;
     }
 
@@ -185,7 +186,7 @@ void invariantgraph::InvariantGraphBuilder::createNodes() {
     bool canBeInvariant = std::all_of(
         invNode->outputVarNodeIds().begin(), invNode->outputVarNodeIds().end(),
         [&](const auto& varNodeId) {
-          return _invariantGraph.varNode(varNodeId).variable().has_value() &&
+          return _invariantGraph.varNode(varNodeId).var().has_value() &&
                  definedVars.contains(
                      _invariantGraph.varNode(varNodeId).identifier());
         });
@@ -232,19 +233,18 @@ void invariantgraph::InvariantGraphBuilder::createNodes() {
                      [](bool b) { return b; }));
 
   // Finally, define all free variables by the InvariantGraphRoot
-  for (const auto& [identifier, variable] : _model.variables()) {
+  for (const auto& [identifier, var] : _model.vars()) {
     assert(!identifier.empty());
-    if (std::holds_alternative<fznparser::IntVar>(variable)) {
-      const fznparser::IntVar& intVar = std::get<fznparser::IntVar>(variable);
+    if (std::holds_alternative<fznparser::IntVar>(var)) {
+      const fznparser::IntVar& intVar = std::get<fznparser::IntVar>(var);
       if (intVar.isFixed()) {
         continue;
       }
       assert(_invariantGraph.varNode(identifier).varNodeId() !=
              invariantgraph::NULL_NODE_ID);
       assert(_invariantGraph.varNode(identifier).isIntVar());
-    } else if (std::holds_alternative<fznparser::BoolVar>(variable)) {
-      const fznparser::BoolVar& boolVar =
-          std::get<fznparser::BoolVar>(variable);
+    } else if (std::holds_alternative<fznparser::BoolVar>(var)) {
+      const fznparser::BoolVar& boolVar = std::get<fznparser::BoolVar>(var);
       if (boolVar.isFixed()) {
         continue;
       }
@@ -257,7 +257,7 @@ void invariantgraph::InvariantGraphBuilder::createNodes() {
 
 std::unique_ptr<invariantgraph::InvariantNode>
 invariantgraph::InvariantGraphBuilder::makeInvariantNode(
-    const fznparser::Constraint& constraint, bool guessDefinedVariable) {
+    const fznparser::Constraint& constraint, bool guessDefinedVar) {
   std::string name = constraint.identifier();
 
 #define NODE_REGISTRATION(nodeType)                                          \
@@ -269,7 +269,7 @@ invariantgraph::InvariantGraphBuilder::makeInvariantNode(
     }                                                                        \
   }
 
-  if (!guessDefinedVariable) {
+  if (!guessDefinedVar) {
     // For the linear node, we need to know up front what variable is defined.
     NODE_REGISTRATION(IntLinearNode);
     NODE_REGISTRATION(BoolLinearNode);
@@ -456,3 +456,5 @@ bool argumentsAreFree(const fznparser::Constraint& constraint,
                        return argumentIsFree(arg, definedVars);
                      });
 }
+
+}  // namespace atlantis

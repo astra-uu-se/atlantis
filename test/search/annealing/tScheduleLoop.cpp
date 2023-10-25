@@ -3,7 +3,11 @@
 
 #include "search/annealing/annealerContainer.hpp"
 
-using namespace search;
+namespace atlantis::testing {
+
+using namespace atlantis::search;
+
+using ::testing::Return;
 
 class DummyAnnealingSchedule : public AnnealingSchedule {
  public:
@@ -16,7 +20,7 @@ class DummyAnnealingSchedule : public AnnealingSchedule {
   MOCK_METHOD(bool, frozen, (), (override));
 };
 
-class ScheduleLoopTest : public testing::Test {
+class ScheduleLoopTest : public ::testing::Test {
  protected:
   UInt maximumConsecutiveFutileIterations = 2;
 
@@ -36,7 +40,7 @@ class ScheduleLoopTest : public testing::Test {
 TEST_F(ScheduleLoopTest, nested_schedule_is_active) {
   auto temperature = 1.0;
 
-  EXPECT_CALL(*inner, temperature()).WillOnce(testing::Return(temperature));
+  EXPECT_CALL(*inner, temperature()).WillOnce(Return(temperature));
 
   EXPECT_EQ(schedule->temperature(), temperature);
   EXPECT_FALSE(schedule->frozen());
@@ -45,9 +49,8 @@ TEST_F(ScheduleLoopTest, nested_schedule_is_active) {
 TEST_F(ScheduleLoopTest,
        first_freeze_restarts_the_schedule_with_the_old_temperature) {
   auto restartTemp = 10.0;
-  EXPECT_CALL(*inner, frozen()).WillOnce(testing::Return(true));
-  EXPECT_CALL(*inner, temperature())
-      .WillRepeatedly(testing::Return(restartTemp));
+  EXPECT_CALL(*inner, frozen()).WillOnce(Return(true));
+  EXPECT_CALL(*inner, temperature()).WillRepeatedly(Return(restartTemp));
 
   schedule->nextRound({});
   EXPECT_FALSE(schedule->frozen());
@@ -55,9 +58,7 @@ TEST_F(ScheduleLoopTest,
 }
 
 TEST_F(ScheduleLoopTest, frozen_if_consecutive_rounds_do_not_improve) {
-  EXPECT_CALL(*inner, frozen())
-      .WillOnce(testing::Return(true))
-      .WillOnce(testing::Return(true));
+  EXPECT_CALL(*inner, frozen()).WillOnce(Return(true)).WillOnce(Return(true));
 
   schedule->nextRound({});
   schedule->nextRound({});
@@ -68,8 +69,8 @@ TEST_F(ScheduleLoopTest, frozen_if_consecutive_rounds_do_not_improve) {
 TEST_F(ScheduleLoopTest,
        not_frozen_if_futile_rounds_are_broken_up_by_improving_rounds) {
   EXPECT_CALL(*inner, frozen())
-      .WillOnce(testing::Return(false))
-      .WillRepeatedly(testing::Return(true));
+      .WillOnce(Return(false))
+      .WillRepeatedly(Return(true));
 
   schedule->nextRound({});
 
@@ -83,3 +84,5 @@ TEST_F(ScheduleLoopTest,
   schedule->nextRound({});
   EXPECT_TRUE(schedule->frozen());
 }
+
+}  // namespace atlantis::testing

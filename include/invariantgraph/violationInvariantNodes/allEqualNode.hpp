@@ -3,24 +3,22 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "constraints/allDifferent.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "views/equalConst.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
+#include "propagation/views/equalConst.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
-class InvariantGraph;  // Forward declaration
+namespace atlantis::invariantgraph {
 
 class AllEqualNode : public ViolationInvariantNode {
  private:
-  VarId _allDifferentViolationVarId{NULL_ID};
+  propagation::VarId _allDifferentViolationVarId{propagation::NULL_ID};
 
  public:
-  explicit AllEqualNode(std::vector<VarNodeId>&& variables, VarNodeId r);
+  explicit AllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r);
 
-  explicit AllEqualNode(std::vector<VarNodeId>&& variables,
-                        bool shouldHold = true);
+  explicit AllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold = true);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{
@@ -30,8 +28,9 @@ class AllEqualNode : public ViolationInvariantNode {
   static std::unique_ptr<AllEqualNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

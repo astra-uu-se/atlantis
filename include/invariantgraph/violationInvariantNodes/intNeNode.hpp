@@ -3,12 +3,12 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "constraints/equal.hpp"
-#include "constraints/notEqual.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/violationInvariants/notEqual.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class IntNeNode : public ViolationInvariantNode {
  public:
@@ -24,9 +24,9 @@ class IntNeNode : public ViolationInvariantNode {
                                                        {"int_ne_reif", 3}};
   }
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

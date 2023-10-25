@@ -9,14 +9,16 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/linear.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/solver.hpp"
 
-class ExtremeStatic : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class ExtremeStatic : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<VarId> staticInputVars;
-  VarId objective;
+  std::unique_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarId> staticInputVars;
+  propagation::VarId objective;
 
   std::random_device rd;
   std::mt19937 gen;
@@ -26,26 +28,27 @@ class ExtremeStatic : public benchmark::Fixture {
   Int lb, ub;
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
 
     lb = 0;
     ub = 16;
 
     numInputs = state.range(0);
 
-    engine->open();
-    setEngineModes(*engine, state.range(1));
+    solver->open();
+    setSolverMode(*solver, state.range(1));
 
     for (size_t i = 0; i < numInputs; ++i) {
-      staticInputVars.emplace_back(engine->makeIntVar(lb, lb, ub));
+      staticInputVars.emplace_back(solver->makeIntVar(lb, lb, ub));
     }
 
-    objective = engine->makeIntVar(lb * static_cast<Int>(numInputs),
+    objective = solver->makeIntVar(lb * static_cast<Int>(numInputs),
                                    lb * static_cast<Int>(numInputs),
                                    ub * static_cast<Int>(numInputs));
-    engine->makeInvariant<Linear>(*engine, objective, staticInputVars);
+    solver->makeInvariant<propagation::Linear>(*solver, objective,
+                                               staticInputVars);
 
-    engine->close();
+    solver->close();
     gen = std::mt19937(rd());
     staticVarIndexDist =
         std::uniform_int_distribution<Int>{0, static_cast<Int>(numInputs) - 1};
@@ -60,28 +63,29 @@ class ExtremeStatic : public benchmark::Fixture {
 // probe_single_move_index_input
 
 BENCHMARK_DEFINE_F(ExtremeStatic, probe_single_var)
-(benchmark::State& st) {
+(::benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
-    engine->beginMove();
-    engine->setValue(staticInputVars.at(staticVarIndexDist(gen)),
+    solver->beginMove();
+    solver->setValue(staticInputVars.at(staticVarIndexDist(gen)),
                      staticVarValueDist(gen));
-    engine->endMove();
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(objective);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(objective);
+    solver->endProbe();
 
     ++probes;
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
 //*
 
 BENCHMARK_REGISTER_F(ExtremeStatic, probe_single_var)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
 //*/
+}  // namespace atlantis::benchmark

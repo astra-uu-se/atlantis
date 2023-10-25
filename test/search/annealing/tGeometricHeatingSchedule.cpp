@@ -3,9 +3,11 @@
 #include "search/annealing/annealerContainer.hpp"
 #include "search/annealing/geometricHeatingSchedule.hpp"
 
-using namespace search;
+namespace atlantis::testing {
 
-class GeometricHeatingScheduleTest : public testing::Test {
+using namespace atlantis::search;
+
+class GeometricHeatingScheduleTest : public ::testing::Test {
  protected:
   double heatingRate = 1.2;
   double initialTemp = 0.1;
@@ -67,3 +69,4 @@ TEST_F(GeometricHeatingScheduleTest, restarting_frozen_schedule_is_unfrozen) {
   schedule->start(initialTemp);
   EXPECT_FALSE(schedule->frozen());
 }
+}  // namespace atlantis::testing

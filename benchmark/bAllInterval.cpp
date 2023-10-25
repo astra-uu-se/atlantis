@@ -6,55 +6,57 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "constraints/allDifferent.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/absDiff.hpp"
+#include "propagation/invariants/absDiff.hpp"
+#include "propagation/solver.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 
-class AllInterval : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class AllInterval : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<VarId> inputVars;
+  std::unique_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarId> inputVars;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   size_t n;
 
-  VarId totalViolation = NULL_ID;
+  propagation::VarId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    engine = std::make_unique<PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
     if (state.range(0) < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
     n = state.range(0);
-    inputVars.resize(n, NULL_ID);
-    std::vector<VarId> violationVars(n - 1, NULL_ID);
+    inputVars.resize(n, propagation::NULL_ID);
+    std::vector<propagation::VarId> violationVars(n - 1, propagation::NULL_ID);
     // number of constraints: n
     // total number of static input variables: 3 * n
-    engine->open();
+    solver->open();
 
-    setEngineModes(*engine, state.range(1));
+    setSolverMode(*solver, state.range(1));
 
     for (size_t i = 0; i < n; ++i) {
       assert(i < inputVars.size());
-      inputVars[i] = engine->makeIntVar(static_cast<Int>(i), 0, n - 1);
+      inputVars[i] = solver->makeIntVar(static_cast<Int>(i), 0, n - 1);
     }
     // Creating n - 1 invariants, each having two inputs and one output
     for (size_t i = 0; i < n - 1; ++i) {
       assert(i < violationVars.size());
-      violationVars[i] = engine->makeIntVar(static_cast<Int>(i), 0, n - 1);
+      violationVars[i] = solver->makeIntVar(static_cast<Int>(i), 0, n - 1);
       assert(i + 1 < inputVars.size());
-      engine->makeInvariant<AbsDiff>(*engine, violationVars[i], inputVars[i],
-                                     inputVars[i + 1]);
+      solver->makeInvariant<propagation::AbsDiff>(
+          *solver, violationVars[i], inputVars[i], inputVars[i + 1]);
     }
 
-    totalViolation = engine->makeIntVar(0, 0, n);
+    totalViolation = solver->makeIntVar(0, 0, n);
     // Creating one invariant, taking n input variables and one output
-    engine->makeConstraint<AllDifferent>(*engine, totalViolation,
-                                         violationVars);
+    solver->makeViolationInvariant<propagation::AllDifferent>(
+        *solver, totalViolation, violationVars);
 
-    engine->close();
+    solver->close();
 
     gen = std::mt19937(rd());
 
@@ -65,102 +67,102 @@ class AllInterval : public benchmark::Fixture {
   void TearDown(const ::benchmark::State&) override { inputVars.clear(); }
 };
 
-BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(::benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
     const size_t i = distribution(gen);
     assert(i < inputVars.size());
     const size_t j = distribution(gen);
     assert(j < inputVars.size());
-    const Int oldI = engine->committedValue(inputVars[i]);
-    const Int oldJ = engine->committedValue(inputVars[j]);
+    const Int oldI = solver->committedValue(inputVars[i]);
+    const Int oldJ = solver->committedValue(inputVars[j]);
     // Perform random swap
-    engine->beginMove();
-    engine->setValue(inputVars[i], oldJ);
-    engine->setValue(inputVars[j], oldI);
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(inputVars[i], oldJ);
+    solver->setValue(inputVars[j], oldI);
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(totalViolation);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(totalViolation);
+    solver->endProbe();
     ++probes;
     assert(all_in_range(0, n - 1, [&](const size_t a) {
       return all_in_range(a + 1, n, [&](const size_t b) {
-        return engine->committedValue(inputVars.at(a)) !=
-                   engine->committedValue(inputVars.at(b)) &&
-               engine->currentValue(inputVars.at(a)) !=
-                   engine->currentValue(inputVars.at(b));
+        return solver->committedValue(inputVars.at(a)) !=
+                   solver->committedValue(inputVars.at(b)) &&
+               solver->currentValue(inputVars.at(a)) !=
+                   solver->currentValue(inputVars.at(b));
       });
     }));
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(::benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
-        const Int oldI = engine->committedValue(inputVars[i]);
-        const Int oldJ = engine->committedValue(inputVars[j]);
-        engine->beginMove();
-        engine->setValue(inputVars[i], oldJ);
-        engine->setValue(inputVars[j], oldI);
-        engine->endMove();
+        const Int oldI = solver->committedValue(inputVars[i]);
+        const Int oldJ = solver->committedValue(inputVars[j]);
+        solver->beginMove();
+        solver->setValue(inputVars[i], oldJ);
+        solver->setValue(inputVars[j], oldI);
+        solver->endMove();
 
-        engine->beginProbe();
-        engine->query(totalViolation);
-        engine->endProbe();
+        solver->beginProbe();
+        solver->query(totalViolation);
+        solver->endProbe();
 
         ++probes;
       }
     }
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(::benchmark::State& st) {
   int commits = 0;
   for (auto _ : st) {
     const size_t i = distribution(gen);
     assert(i < inputVars.size());
     const size_t j = distribution(gen);
     assert(j < inputVars.size());
-    const Int oldI = engine->committedValue(inputVars[i]);
-    const Int oldJ = engine->committedValue(inputVars[j]);
+    const Int oldI = solver->committedValue(inputVars[i]);
+    const Int oldJ = solver->committedValue(inputVars[j]);
     // Perform random swap
-    engine->beginMove();
-    engine->setValue(inputVars[i], oldJ);
-    engine->setValue(inputVars[j], oldI);
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(inputVars[i], oldJ);
+    solver->setValue(inputVars[j], oldI);
+    solver->endMove();
 
-    engine->beginCommit();
-    engine->query(totalViolation);
-    engine->endCommit();
+    solver->beginCommit();
+    solver->query(totalViolation);
+    solver->endCommit();
 
     ++commits;
   }
 
-  st.counters["seconds_per_commit"] = benchmark::Counter(
-      commits, benchmark::Counter::kIsRate | benchmark::Counter::kInvert);
+  st.counters["seconds_per_commit"] = ::benchmark::Counter(
+      commits, ::benchmark::Counter::kIsRate | ::benchmark::Counter::kInvert);
 }
 
 //*
 BENCHMARK_REGISTER_F(AllInterval, probe_single_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 //*/
 /*
 BENCHMARK_REGISTER_F(AllInterval, probe_all_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
 //*/
 /*
 
-static void commitArguments(benchmark::internal::Benchmark* benchmark) {
+static void commitArguments(::benchmark::internal::Benchmark* benchmark) {
   for (int n = 10; n <= 10; n += 10) {
     benchmark->Args({n, 0});
   }
@@ -169,6 +171,7 @@ static void commitArguments(benchmark::internal::Benchmark* benchmark) {
 #endif
 }
 BENCHMARK_REGISTER_F(AllInterval, commit_single_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(commitArguments);
 //*/
+}  // namespace atlantis::benchmark

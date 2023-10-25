@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 ArrayVarIntElementNode::ArrayVarIntElementNode(VarNodeId b,
                                                std::vector<VarNodeId>&& as,
@@ -33,23 +33,23 @@ ArrayVarIntElementNode::fromModelConstraint(
       invariantGraph.createVarNode(c), offset);
 }
 
-void ArrayVarIntElementNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()),
+void ArrayVarIntElementNode::registerOutputVars(
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()),
                 _offset);
 }
 
 void ArrayVarIntElementNode::registerNode(InvariantGraph& invariantGraph,
-                                          Engine& engine) {
-  std::vector<VarId> as;
+                                          propagation::SolverBase& solver) {
+  std::vector<propagation::VarId> as;
   std::transform(dynamicInputVarNodeIds().begin(),
                  dynamicInputVarNodeIds().end(), std::back_inserter(as),
                  [&](auto node) { return invariantGraph.varId(node); });
 
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
 
-  engine.makeInvariant<ElementVar>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  solver.makeInvariant<propagation::ElementVar>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(b()), as, _offset);
 }
 

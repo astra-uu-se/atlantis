@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntModNode::IntModNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
@@ -23,15 +23,15 @@ std::unique_ptr<IntModNode> IntModNode::fromModelConstraint(
                                       invariantGraph.createVarNode(output));
 }
 
-void IntModNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                         Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+void IntModNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                         propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void IntModNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
-  engine.makeInvariant<Mod>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+void IntModNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  solver.makeInvariant<propagation::Mod>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(a()), invariantGraph.varId(b()));
 }
 

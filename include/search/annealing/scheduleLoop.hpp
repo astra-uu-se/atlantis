@@ -5,7 +5,7 @@
 
 #include "annealingSchedule.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 /**
  * Executes an inner schedule until a maximum number of consecutive rounds were

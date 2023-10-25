@@ -1,14 +1,15 @@
 #include "search/annealing/scheduleSequence.hpp"
 
-void search::ScheduleSequence::start(double initialTemperature) {
+namespace atlantis::search {
+
+void ScheduleSequence::start(double initialTemperature) {
   assert(initialTemperature != 0.0);
 
   _currentSchedule = 0;
   currentSchedule().start(initialTemperature);
 }
 
-void search::ScheduleSequence::nextRound(
-    const search::RoundStatistics& statistics) {
+void ScheduleSequence::nextRound(const RoundStatistics& statistics) {
   assert(!frozen());
 
   auto temp = temperature();
@@ -23,14 +24,16 @@ void search::ScheduleSequence::nextRound(
   }
 }
 
-double search::ScheduleSequence::temperature() {
+double ScheduleSequence::temperature() {
   return currentSchedule().temperature();
 }
 
-bool search::ScheduleSequence::frozen() {
+bool ScheduleSequence::frozen() {
   return _currentSchedule >= _schedules.size();
 }
 
-search::AnnealingSchedule& search::ScheduleSequence::currentSchedule() {
+AnnealingSchedule& ScheduleSequence::currentSchedule() {
   return *_schedules[_currentSchedule];
 }
+
+}  // namespace atlantis::search

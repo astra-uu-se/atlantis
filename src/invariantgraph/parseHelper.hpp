@@ -7,13 +7,14 @@
 #include <vector>
 
 #include "invariantgraph/implicitConstraintNode.hpp"
+#include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/varNode.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "utils/fznAst.hpp"
 #include "utils/variant.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 std::vector<invariantgraph::VarNodeId>&& append(
     std::vector<invariantgraph::VarNodeId>&&, invariantgraph::VarNodeId,
@@ -39,15 +40,15 @@ std::vector<VarNodeId> pruneAllDifferentFixed(
 std::vector<Int> toIntVector(const std::vector<bool>& argument);
 
 /*
-std::vector<:VarNodeId> mappedVariableVector(
+std::vector<:VarNodeId> mappedVarVector(
     const fznparser::Model& model, const FZNConstraint::Argument& argument,
     const std::function<:VarNodeId(
-        :MappableValue&)>& variableMap);
+        :MappableValue&)>& varMap);
 
-:VarNodeId mappedVariable(
+:VarNodeId mappedVar(
     const FZNConstraint::Argument& argument,
     const std::function<:VarNodeId(
-        :MappableValue&)>& variableMap);
+        :MappableValue&)>& varMap);
 
 std::vector<Int> integerVector(const fznparser::Model& model,
                                const FZNConstraint::Argument& argument);
@@ -64,9 +65,9 @@ bool booleanValue(const fznparser::Model& model,
 fznparser::Set<Int> integerSet(const fznparser::Model& model,
                                const FZNConstraint::Argument& argument);
 
-bool definesVariable(const fznparser::Constraint& constraint,
-                     const FZNSearchVariable& variable);
+bool definesVar(const fznparser::Constraint& constraint,
+                     const FznSearchVar& var);
 
 */
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

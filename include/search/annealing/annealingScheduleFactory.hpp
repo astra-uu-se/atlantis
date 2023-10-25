@@ -9,7 +9,7 @@
 #include "annealingSchedule.hpp"
 #include "search/annealing/annealerContainer.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 class AnnealingScheduleCreationError : public std::exception {
  private:
@@ -54,4 +54,4 @@ class AnnealingScheduleFactory {
   [[nodiscard]] std::unique_ptr<AnnealingSchedule> create() const;
 };
 
-}  // namespace search
+}  // namespace atlantis::search

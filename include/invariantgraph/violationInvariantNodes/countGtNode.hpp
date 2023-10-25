@@ -3,25 +3,25 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "constraints/lessEqual.hpp"
-#include "constraints/lessThan.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
+#include "propagation/violationInvariants/lessThan.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/count.hpp"
-#include "invariants/countConst.hpp"
-#include "views/equalConst.hpp"
-#include "views/greaterEqualConst.hpp"
-#include "views/lessEqualConst.hpp"
-#include "views/notEqualConst.hpp"
+#include "propagation/invariants/count.hpp"
+#include "propagation/invariants/countConst.hpp"
+#include "propagation/views/equalConst.hpp"
+#include "propagation/views/greaterEqualConst.hpp"
+#include "propagation/views/lessEqualConst.hpp"
+#include "propagation/views/notEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class CountGtNode : public ViolationInvariantNode {
  private:
   const bool _yIsParameter;
   const Int _yParameter;
   const bool _cIsParameter;
   const Int _cParameter;
-  VarId _intermediate{NULL_ID};
+  propagation::VarId _intermediate{propagation::NULL_ID};
 
   explicit CountGtNode(std::vector<VarNodeId>&& x, VarNodeId y, Int yParameter,
                        VarNodeId c, Int cParameter, VarNodeId r);
@@ -62,9 +62,9 @@ class CountGtNode : public ViolationInvariantNode {
   static std::unique_ptr<CountGtNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] VarNodeId yVarNode() const;
 

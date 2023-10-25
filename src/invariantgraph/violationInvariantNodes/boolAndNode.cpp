@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 BoolAndNode::BoolAndNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
@@ -43,26 +43,26 @@ std::unique_ptr<BoolAndNode> BoolAndNode::fromModelConstraint(
       a, b, invariantGraph.createVarNode(reified.var()));
 }
 
-void BoolAndNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                          Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+void BoolAndNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                          propagation::SolverBase& solver) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (shouldHold()) {
-      registerViolation(invariantGraph, engine);
+      registerViolation(invariantGraph, solver);
     } else {
       assert(!isReified());
-      _intermediate = engine.makeIntVar(0, 0, 0);
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
-                                            engine, _intermediate, 0));
+      _intermediate = solver.makeIntVar(0, 0, 0);
+      setViolationVarId(invariantGraph, solver.makeIntView<propagation::NotEqualConst>(
+                                            solver, _intermediate, 0));
     }
   }
 }
 
-void BoolAndNode::registerNode(InvariantGraph& invariantGraph, Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
-  assert(invariantGraph.varId(a()) != NULL_ID);
-  assert(invariantGraph.varId(b()) != NULL_ID);
+void BoolAndNode::registerNode(InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  assert(invariantGraph.varId(a()) != propagation::NULL_ID);
+  assert(invariantGraph.varId(b()) != propagation::NULL_ID);
 
-  engine.makeInvariant<BoolAnd>(engine, violationVarId(invariantGraph),
+  solver.makeInvariant<propagation::BoolAnd>(solver, violationVarId(invariantGraph),
                                 invariantGraph.varId(a()),
                                 invariantGraph.varId(b()));
 }

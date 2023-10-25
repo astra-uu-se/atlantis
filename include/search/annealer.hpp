@@ -1,10 +1,12 @@
 #pragma once
 
+#include <limits>
+
 #include "move.hpp"
 #include "randomProvider.hpp"
 #include "search/annealing/annealingSchedule.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 /**
  * Annealing based on chapter 12 of:
@@ -81,4 +83,4 @@ class Annealer {
   }
 };
 
-}  // namespace search
+}  // namespace atlantis::search

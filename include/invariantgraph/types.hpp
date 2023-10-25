@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <functional>
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 struct NodeId {
   size_t id;

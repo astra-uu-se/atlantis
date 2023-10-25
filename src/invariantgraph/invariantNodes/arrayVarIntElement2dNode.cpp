@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 ArrayVarIntElement2dNode::ArrayVarIntElement2dNode(
     VarNodeId idx1, VarNodeId idx2, std::vector<VarNodeId>&& as,
@@ -51,16 +51,16 @@ ArrayVarIntElement2dNode::fromModelConstraint(
       static_cast<size_t>(numRows), offset1, offset2);
 }
 
-void ArrayVarIntElement2dNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+void ArrayVarIntElement2dNode::registerOutputVars(
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void ArrayVarIntElement2dNode::registerNode(InvariantGraph& invariantGraph,
-                                            Engine& engine) {
+                                            propagation::SolverBase& solver) {
   const size_t numCols = dynamicInputVarNodeIds().size() / _numRows;
-  std::vector<std::vector<VarId>> varMatrix(_numRows,
-                                            std::vector<VarId>(numCols));
+  std::vector<std::vector<propagation::VarId>> varMatrix(_numRows,
+                                            std::vector<propagation::VarId>(numCols));
   for (size_t i = 0; i < _numRows; ++i) {
     for (size_t j = 0; j < numCols; ++j) {
       varMatrix.at(i).at(j) =
@@ -69,9 +69,9 @@ void ArrayVarIntElement2dNode::registerNode(InvariantGraph& invariantGraph,
     }
   }
 
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
-  engine.makeInvariant<Element2dVar>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()),
+  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  solver.makeInvariant<propagation::Element2dVar>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
       invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), varMatrix,
       _offset1, _offset2);
 }

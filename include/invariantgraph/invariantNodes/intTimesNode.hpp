@@ -2,9 +2,9 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
-#include "invariants/times.hpp"
+#include "propagation/invariants/times.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class IntTimesNode : public InvariantNode {
  public:
@@ -19,9 +19,9 @@ class IntTimesNode : public InvariantNode {
   static std::unique_ptr<IntTimesNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

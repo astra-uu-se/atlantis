@@ -5,9 +5,9 @@
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/invariantNodes/arrayIntElement2dNode.hpp"
-#include "invariants/element2dVar.hpp"
+#include "propagation/invariants/element2dVar.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class ArrayBoolElement2dNode : public InvariantNode {
  public:

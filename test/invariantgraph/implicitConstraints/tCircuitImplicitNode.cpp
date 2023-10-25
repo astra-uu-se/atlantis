@@ -1,15 +1,18 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/implicitConstraints/circuitImplicitNode.hpp"
+#include "propagation/solver.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
-class CircuitImplicitNodeTest
-    : public NodeTestBase<invariantgraph::CircuitImplicitNode> {
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+class CircuitImplicitNodeTest : public NodeTestBase<CircuitImplicitNode> {
  public:
-  invariantgraph::VarNodeId a;
-  invariantgraph::VarNodeId b;
-  invariantgraph::VarNodeId c;
-  invariantgraph::VarNodeId d;
+  VarNodeId a;
+  VarNodeId b;
+  VarNodeId c;
+  VarNodeId d;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -32,34 +35,36 @@ class CircuitImplicitNodeTest
 };
 
 TEST_F(CircuitImplicitNodeTest, construction) {
-  std::vector<invariantgraph::VarNodeId> expectedVars{a, b, c, d};
+  std::vector<VarNodeId> expectedVars{a, b, c, d};
 
   EXPECT_EQ(invNode().outputVarNodeIds(), expectedVars);
 }
 
 TEST_F(CircuitImplicitNodeTest, application) {
-  PropagationEngine engine;
-  engine.open();
+  propagation::Solver solver;
+  solver.open();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
   // a, b, c and d
-  EXPECT_EQ(engine.searchVariables().size(), 4);
+  EXPECT_EQ(solver.searchVars().size(), 4);
 
   // a, b, c and d
-  EXPECT_EQ(engine.numVariables(), 4);
+  EXPECT_EQ(solver.numVars(), 4);
 
-  EXPECT_EQ(engine.numInvariants(), 0);
+  EXPECT_EQ(solver.numInvariants(), 0);
 
   auto neighbourhood = invNode().neighbourhood();
 
   EXPECT_TRUE(dynamic_cast<search::neighbourhoods::CircuitNeighbourhood*>(
       neighbourhood.get()));
 }
+
+}  // namespace atlantis::testing

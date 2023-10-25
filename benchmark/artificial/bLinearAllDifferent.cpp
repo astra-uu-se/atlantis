@@ -6,28 +6,30 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "constraints/allDifferent.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/absDiff.hpp"
-#include "invariants/linear.hpp"
 #include "misc/logging.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
+#include "propagation/invariants/absDiff.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/solver.hpp"
 
-class LinearAllDifferent : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class LinearAllDifferent : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<VarId> decisionVars;
+  std::unique_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarId> decisionVars;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<size_t> decionVarIndexDist;
   size_t varCount;
 
-  VarId violation = NULL_ID;
+  propagation::VarId violation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
     bool overlappingLinears = state.range(0) != 0;
-    std::vector<VarId> linearOutputVars;
+    std::vector<propagation::VarId> linearOutputVars;
     size_t increment;
 
     if (overlappingLinears) {
@@ -40,26 +42,28 @@ class LinearAllDifferent : public benchmark::Fixture {
       increment = 2;
     }
 
-    engine->open();
-    setEngineModes(*engine, state.range(2));
+    solver->open();
+    setSolverMode(*solver, state.range(2));
 
     decisionVars.reserve(varCount);
 
     for (size_t i = 0; i < varCount; ++i) {
-      decisionVars.push_back(engine->makeIntVar(i, 0, varCount - 1));
+      decisionVars.push_back(solver->makeIntVar(i, 0, varCount - 1));
     }
 
     for (size_t i = 0; i < varCount - 1; i += increment) {
-      linearOutputVars.push_back(engine->makeIntVar(i, 0, 2 * (varCount - 1)));
-      engine->makeInvariant<Linear>(
-          *engine.get(), linearOutputVars.back(),
-          std::vector<VarId>{decisionVars.at(i), decisionVars.at(i + 1)});
+      linearOutputVars.push_back(solver->makeIntVar(i, 0, 2 * (varCount - 1)));
+      solver->makeInvariant<propagation::Linear>(
+          *solver.get(), linearOutputVars.back(),
+          std::vector<propagation::VarId>{decisionVars.at(i),
+                                          decisionVars.at(i + 1)});
     }
 
-    violation = engine->makeIntVar(0, 0, varCount);
-    engine->makeConstraint<AllDifferent>(*engine, violation, linearOutputVars);
+    violation = solver->makeIntVar(0, 0, varCount);
+    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation,
+                                                      linearOutputVars);
 
-    engine->close();
+    solver->close();
 
     gen = std::mt19937(rd());
 
@@ -70,85 +74,85 @@ class LinearAllDifferent : public benchmark::Fixture {
 };
 
 BENCHMARK_DEFINE_F(LinearAllDifferent, probe_single_swap)
-(benchmark::State& st) {
+(::benchmark::State& st) {
   Int probes = 0;
   for (auto _ : st) {
     size_t i = decionVarIndexDist(gen);
     size_t j = decionVarIndexDist(gen);
 
     // Perform random swap
-    engine->beginMove();
-    engine->setValue(decisionVars.at(i),
-                     engine->committedValue(decisionVars.at(j)));
-    engine->setValue(decisionVars.at(j),
-                     engine->committedValue(decisionVars.at(i)));
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(decisionVars.at(i),
+                     solver->committedValue(decisionVars.at(j)));
+    solver->setValue(decisionVars.at(j),
+                     solver->committedValue(decisionVars.at(i)));
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(violation);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(violation);
+    solver->endProbe();
 
     ++probes;
   }
 
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(LinearAllDifferent, probe_all_swap)
-(benchmark::State& st) {
+(::benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < varCount; ++i) {
       for (size_t j = i + 1; j < varCount; ++j) {
-        engine->beginMove();
-        engine->setValue(decisionVars.at(i),
-                         engine->committedValue(decisionVars.at(j)));
-        engine->setValue(decisionVars.at(j),
-                         engine->committedValue(decisionVars.at(i)));
-        engine->endMove();
+        solver->beginMove();
+        solver->setValue(decisionVars.at(i),
+                         solver->committedValue(decisionVars.at(j)));
+        solver->setValue(decisionVars.at(j),
+                         solver->committedValue(decisionVars.at(i)));
+        solver->endMove();
 
-        engine->beginProbe();
-        engine->query(violation);
-        engine->endProbe();
+        solver->beginProbe();
+        solver->query(violation);
+        solver->endProbe();
 
         ++probes;
       }
     }
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
-(benchmark::State& st) {
+(::benchmark::State& st) {
   size_t commits = 0;
   for (auto _ : st) {
     size_t i = decionVarIndexDist(gen);
     size_t j = decionVarIndexDist(gen);
 
     // Perform random swap
-    engine->beginMove();
-    engine->setValue(decisionVars.at(i),
-                     engine->committedValue(decisionVars.at(j)));
-    engine->setValue(decisionVars.at(j),
-                     engine->committedValue(decisionVars.at(i)));
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(decisionVars.at(i),
+                     solver->committedValue(decisionVars.at(j)));
+    solver->setValue(decisionVars.at(j),
+                     solver->committedValue(decisionVars.at(i)));
+    solver->endMove();
 
-    engine->beginCommit();
-    engine->query(violation);
-    engine->endCommit();
+    solver->beginCommit();
+    solver->query(violation);
+    solver->endCommit();
 
     ++commits;
   }
 
   st.counters["commits_per_second"] =
-      benchmark::Counter(commits, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(commits, ::benchmark::Counter::kIsRate);
 }
 
 /*
 
-static void arguments(benchmark::internal::Benchmark* benchmark) {
+static void arguments(::benchmark::internal::Benchmark* benchmark) {
   for (int overlapping = 0; overlapping <= 1; ++overlapping) {
     for (int varCount = 2; varCount <= 16; varCount *= 2) {
       for (Int mode = 0; mode <= 3; ++mode) {
@@ -162,13 +166,14 @@ static void arguments(benchmark::internal::Benchmark* benchmark) {
 }
 
 BENCHMARK_REGISTER_F(LinearAllDifferent, probe_single_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(arguments);
 
 /*
 BENCHMARK_REGISTER_F(LinearAllDifferent, probe_all_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(arguments);
 /*
 BENCHMARK_REGISTER_F(LinearAllDifferent, commit_single_swap)->Apply(arguments);
 //*/
+}  // namespace atlantis::benchmark

@@ -9,21 +9,23 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/elementVar.hpp"
-#include "invariants/linear.hpp"
 #include "misc/logging.hpp"
+#include "propagation/invariants/elementVar.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/solver.hpp"
 
-class ElementLinearTree : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class ElementLinearTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    VarId id;
+    propagation::VarId id;
   };
 
   void createTree() {
     std::stack<TreeNode> treeNodes;
-    VarId output = engine->makeIntVar(0, lb, ub);
+    propagation::VarId output = solver->makeIntVar(0, lb, ub);
     elementInputVars.push_back(output);
 
     treeNodes.push({1, output});
@@ -33,9 +35,9 @@ class ElementLinearTree : public benchmark::Fixture {
 #endif
 
     while (!treeNodes.empty()) {
-      std::vector<VarId> linearInputs(linearArgumentCount);
+      std::vector<propagation::VarId> linearInputs(linearArgumentCount);
       for (size_t i = 0; i < linearArgumentCount; ++i) {
-        linearInputs[i] = engine->makeIntVar(0, lb, ub);
+        linearInputs[i] = solver->makeIntVar(0, lb, ub);
       }
       TreeNode cur = treeNodes.top();
 #ifndef NDEBUG
@@ -43,16 +45,16 @@ class ElementLinearTree : public benchmark::Fixture {
 #endif
       treeNodes.pop();
       if (cur.level < treeHeight - 1) {
-        for (VarId var : linearInputs) {
+        for (propagation::VarId var : linearInputs) {
           treeNodes.push({cur.level + 1, var});
         }
       } else {
         assert(cur.level == treeHeight - 1);
-        for (VarId var : linearInputs) {
+        for (propagation::VarId var : linearInputs) {
           decisionVars.push_back(var);
         }
       }
-      engine->makeInvariant<Linear>(*engine, cur.id, linearInputs);
+      solver->makeInvariant<propagation::Linear>(*solver, cur.id, linearInputs);
       linearInputs.clear();
     }
 #ifndef NDEBUG
@@ -63,13 +65,13 @@ class ElementLinearTree : public benchmark::Fixture {
   }
 
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<VarId>
-      elementInputVars;             // Ouput of each tree is input to Element.
-  std::vector<VarId> decisionVars;  // Shared input vars to trees.
+  std::unique_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarId>
+      elementInputVars;  // Ouput of each tree is input to Element.
+  std::vector<propagation::VarId> decisionVars;  // Shared input vars to trees.
 
-  VarId elementIndexVar = NULL_ID;
-  VarId elementOutputVar = NULL_ID;
+  propagation::VarId elementIndexVar = propagation::NULL_ID;
+  propagation::VarId elementOutputVar = propagation::NULL_ID;
 
   std::random_device rd;
   std::mt19937 gen;
@@ -82,7 +84,7 @@ class ElementLinearTree : public benchmark::Fixture {
   int lb, ub;
 
   void SetUp(const ::benchmark::State& state) {
-    engine = std::make_unique<PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
 
     lb = 0;
     ub = 1000;
@@ -91,11 +93,11 @@ class ElementLinearTree : public benchmark::Fixture {
     treeCount = state.range(0);
     treeHeight = state.range(1);
 
-    engine->open();
-    setEngineModes(*engine, state.range(2));
+    solver->open();
+    setSolverMode(*solver, state.range(2));
 
-    elementIndexVar = engine->makeIntVar(0, 0, treeCount - 1);
-    elementOutputVar = engine->makeIntVar(0, lb, ub);
+    elementIndexVar = solver->makeIntVar(0, 0, treeCount - 1);
+    elementOutputVar = solver->makeIntVar(0, lb, ub);
 
     // Create the trees
     for (Int i = 0; i < treeCount; ++i) {
@@ -105,9 +107,9 @@ class ElementLinearTree : public benchmark::Fixture {
                         << ", each non-leaf node having " << linearArgumentCount
                         << " children");
 
-    engine->makeInvariant<ElementVar>(*engine, elementOutputVar,
-                                      elementIndexVar, elementInputVars);
-    engine->close();
+    solver->makeInvariant<propagation::ElementVar>(
+        *solver, elementOutputVar, elementIndexVar, elementInputVars);
+    solver->close();
     gen = std::mt19937(rd());
     decisionVarIndexDist =
         std::uniform_int_distribution<size_t>{0, decisionVars.size() - 1};
@@ -126,46 +128,46 @@ class ElementLinearTree : public benchmark::Fixture {
 // probe_single_move_index_input
 
 BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_non_index_var)
-(benchmark::State& st) {
+(::benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
     // Perform move
-    engine->beginMove();
-    engine->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+    solver->beginMove();
+    solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
                      decisionVarValueDist(gen));
-    engine->endMove();
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(elementOutputVar);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(elementOutputVar);
+    solver->endProbe();
 
     ++probes;
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
-(benchmark::State& st) {
+(::benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
-    engine->beginMove();
-    engine->setValue(elementIndexVar, elementVarValueDist(gen));
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(elementIndexVar, elementVarValueDist(gen));
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(elementOutputVar);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(elementOutputVar);
+    solver->endProbe();
 
     ++probes;
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
 /*
 
-static void arguments(benchmark::internal::Benchmark* benchmark) {
+static void arguments(::benchmark::internal::Benchmark* benchmark) {
   for (int treeCount = 2; treeCount <= 10; treeCount += 2) {
     for (int treeHeight = 2;
          treeHeight <= 10 && std::pow(treeHeight, 2) <= 2048; treeHeight += 2) {
@@ -180,11 +182,12 @@ static void arguments(benchmark::internal::Benchmark* benchmark) {
 }
 
 BENCHMARK_REGISTER_F(ElementLinearTree, probe_single_non_index_var)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(arguments);
 
 BENCHMARK_REGISTER_F(ElementLinearTree, probe_single_index_var)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(arguments);
 
 //*/
+}  // namespace atlantis::benchmark

@@ -2,11 +2,11 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
-ArrayIntMinimumNode::ArrayIntMinimumNode(std::vector<VarNodeId>&& variables,
+ArrayIntMinimumNode::ArrayIntMinimumNode(std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
-    : InvariantNode({output}, std::move(variables)) {}
+    : InvariantNode({output}, std::move(vars)) {}
 
 std::unique_ptr<ArrayIntMinimumNode> ArrayIntMinimumNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
@@ -23,21 +23,22 @@ std::unique_ptr<ArrayIntMinimumNode> ArrayIntMinimumNode::fromModelConstraint(
       invariantGraph.createVarNode(output));
 }
 
-void ArrayIntMinimumNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  makeEngineVar(engine, invariantGraph.varNode(outputVarNodeIds().front()));
+void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                             propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void ArrayIntMinimumNode::registerNode(InvariantGraph& invariantGraph,
-                                       Engine& engine) {
-  std::vector<VarId> variables;
+                                       propagation::SolverBase& solver) {
+  std::vector<propagation::VarId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(variables),
+                 std::back_inserter(solverVars),
                  [&](const auto& node) { return invariantGraph.varId(node); });
 
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != NULL_ID);
-  engine.makeInvariant<MinSparse>(
-      engine, invariantGraph.varId(outputVarNodeIds().front()), variables);
+  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
+         propagation::NULL_ID);
+  solver.makeInvariant<propagation::MinSparse>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()), solverVars);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

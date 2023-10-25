@@ -1,23 +1,21 @@
 #include "search/annealer.hpp"
 
-#include <limits>
+namespace atlantis::search {
 
-search::Annealer::Annealer(const search::Assignment& assignment,
-                           search::RandomProvider& random,
-                           search::AnnealingSchedule& schedule)
+Annealer::Annealer(const Assignment& assignment, RandomProvider& random,
+                   AnnealingSchedule& schedule)
     : _assignment(assignment), _random(random), _schedule(schedule) {
   _statistics.bestCostOfPreviousRound = std::numeric_limits<Int>::max();
   _statistics.bestCostOfThisRound = std::numeric_limits<Int>::max();
 
-  auto numSearchVariables = assignment.searchVariables().size();
-  _requiredMovesPerRound =
-      static_cast<UInt>(static_cast<double>(128 * numSearchVariables) /
-                        std::log2(numSearchVariables));
+  auto numSearchVars = assignment.searchVars().size();
+  _requiredMovesPerRound = static_cast<UInt>(
+      static_cast<double>(128 * numSearchVars) / std::log2(numSearchVars));
 }
 
-bool search::Annealer::isFinished() const { return _schedule.frozen(); }
+bool Annealer::isFinished() const { return _schedule.frozen(); }
 
-void search::Annealer::nextRound() {
+void Annealer::nextRound() {
   _schedule.nextRound(_statistics);
 
   auto previousBest = _statistics.bestCostOfThisRound;
@@ -29,11 +27,11 @@ void search::Annealer::nextRound() {
   _attemptedMovesPerRound = 0;
 }
 
-bool search::Annealer::runMonteCarloSimulation() {
+bool Annealer::runMonteCarloSimulation() {
   return _attemptedMovesPerRound < _requiredMovesPerRound;
 }
 
-bool search::Annealer::accept(Int moveCost) {
+bool Annealer::accept(Int moveCost) {
   Int assignmentCost = evaluate(_assignment.cost());
   Int delta = moveCost - assignmentCost;
 
@@ -64,8 +62,10 @@ bool search::Annealer::accept(Int moveCost) {
   return false;
 }
 
-void search::Annealer::start() {
+void Annealer::start() {
   _schedule.start(INITIAL_TEMPERATURE);
   _violationWeight = 1;
   _objectiveWeight = 0;
 }
+
+}  // namespace atlantis::search

@@ -1,8 +1,6 @@
 #include "parseHelper.hpp"
 
-#include "invariantgraph/invariantGraph.hpp"
-
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 bool hasCorrectSignature(
     const std::vector<std::pair<std::string, size_t>> &nameNumArgPairs,
@@ -139,17 +137,17 @@ std::vector<Int> toIntVector(const std::vector<bool> &argument) {
 using namespace fznparser;
 
 template <typename T>
-static invariantgraph::VarNode *createVariableNode(
+static invariantgraph::VarNode *createVarNode(
     T element, const std::function<invariantgraph::VarNode *(
-                   invariantgraph::MappableValue &)> &variableFactory) {
+                   invariantgraph::MappableValue &)> &varFactory) {
   invariantgraph::MappableValue value(element);
-  return variableFactory(value);
+  return varFactory(value);
 }
 
-static std::vector<invariantgraph::VarNode *> variableNodesFromLiteral(
+static std::vector<invariantgraph::VarNode *> varNodesFromLiteral(
     const FZNConstraint::ArrayArgument &argument,
     const std::function<invariantgraph::VarNode *(
-        invariantgraph::MappableValue &)> &variableMap) {
+        invariantgraph::MappableValue &)> &varMap) {
   std::vector<invariantgraph::VarNode *> nodes;
   nodes.reserve(argument.size());
 
@@ -161,10 +159,10 @@ static std::vector<invariantgraph::VarNode *> variableNodesFromLiteral(
                            Set<Int>, invariantgraph::VarNode *,
                            "Cannot parse Set<Int> as a variable node."),
                        [&](const Identifier &identifier) {
-                         return createVariableNode(identifier, variableMap);
+                         return createVarNode(identifier, varMap);
                        },
                        [&](const auto &value) {
-                         return createVariableNode(value, variableMap);
+                         return createVarNode(value, varMap);
                        }},
             element);
       });
@@ -174,12 +172,12 @@ static std::vector<invariantgraph::VarNode *> variableNodesFromLiteral(
 
 template <typename T>
 static std::vector<invariantgraph::VarNode *>
-variableNodesFromVariableArray(const fznparser::VariableArray<T> &argument,
+varNodesFromVarArray(const fznparser::VarArray<T> &argument,
                                InvariantGraph &invariantGraph) {
   for (const auto &element : argument) {
     std::visit(
         [&](const auto &elem) {
-          nodes.push_back(createVariableNode(elem, variableMap));
+          nodes.push_back(createVarNode(elem, varMap));
         },
         element);
   }
@@ -188,15 +186,15 @@ variableNodesFromVariableArray(const fznparser::VariableArray<T> &argument,
 }
 
 std::vector<std::reference_wrapper<invariantgraph::VarNode>>
-mappedVariableVector(
+mappedVarVector(
     const fznparser::Model &model, const fznparser::Arg &argument,
-    std::unordered_map<std::string, VarNode> &variableMap) {
+    std::unordered_map<std::string, VarNode> &varMap) {
   if (std::holds_alternative<fznparser::BoolVarArray>(argument)) {
     const auto &array = std::get<fznparser::BoolVarArray>(argument);
-    return variableNodesFromVariableArray<bool>(array, variableMap);
+    return varNodesFromVarArray<bool>(array, varMap);
   } else if (std::holds_alternative<fznparser::IntVarArray>(argument)) {
     const auto &array = std::get<fznparser::IntVarArray>(argument);
-    return variableNodesFromVariableArray<Int>(array, variableMap);
+    return varNodesFromVarArray<Int>(array, varMap);
   }
 
   throw std::runtime_error(
@@ -204,15 +202,15 @@ mappedVariableVector(
       "array.");
 }
 
-invariantgraph::VarNode *mappedVariable(
+invariantgraph::VarNode *mappedVar(
     const fznparser::Constraint::Argument &argument,
     const std::function<invariantgraph::VarNode *(
-        invariantgraph::MappableValue &)> &variableMap) {
+        invariantgraph::MappableValue &)> &varMap) {
   return std::visit<invariantgraph::VarNode *>(
-      overloaded{[&](bool b) { return createVariableNode(b, variableMap); },
-                 [&](Int i) { return createVariableNode(i, variableMap); },
+      overloaded{[&](bool b) { return createVarNode(b, varMap); },
+                 [&](Int i) { return createVarNode(i, varMap); },
                  [&](const std::string &ident) {
-                   return createVariableNode(ident, variableMap);
+                   return createVarNode(ident, varMap);
                  },
                  DEFAULT_EMPTY_VARIANT_BRANCH(
                      invariantgraph::VarNode *,
@@ -277,16 +275,16 @@ Int integerValue(const Model &model, const FZNConstraint::Argument &argument)
       argument);
 }
 
-bool definesVariable(const FZNConstraint &constraint,
-                     const FZNSearchVariable &variable) {
-  auto definedVariableId = definedVariable(constraint);
-  if (!definedVariableId) {
+bool definesVar(const FZNConstraint &constraint,
+                     const FznSearchVar &var) {
+  auto definedVarId = definedVar(constraint);
+  if (!definedVarId) {
     return false;
   }
 
   return std::visit<bool>(
-      [&](const auto &var) { return definedVariableId == var.name; },
-variable);
+      [&](const auto &var) { return definedVarId == var.name; },
+var);
 }
 
 fznparser::Set<Int> integerSet(const Model &model,
@@ -341,4 +339,4 @@ bool booleanValue(const Model &model, const FZNConstraint::Argument &argument)
 }
 */
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph
