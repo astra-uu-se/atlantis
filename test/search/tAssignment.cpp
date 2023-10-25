@@ -1,50 +1,55 @@
 #include <gtest/gtest.h>
 
-#include "constraints/equal.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/linear.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/solver.hpp"
 #include "search/assignment.hpp"
 
-class AssignmentTest : public testing::Test {
+namespace atlantis::testing {
+
+using namespace atlantis::search;
+
+class AssignmentTest : public ::testing::Test {
  public:
-  VarId a;
-  VarId b;
-  VarId c;
-  VarId d;
+  propagation::VarId a;
+  propagation::VarId b;
+  propagation::VarId c;
+  propagation::VarId d;
 
-  VarId violation;
+  propagation::VarId violation;
 
-  PropagationEngine engine;
+  propagation::Solver solver;
 
   // Models the following simple COP:
   // c <- a + b (a and b have domain 0..10)
   // violation = v(c == 3)
   // obj: minimise(a)
   void SetUp() override {
-    engine.open();
-    a = engine.makeIntVar(0, 0, 10);
-    b = engine.makeIntVar(0, 0, 10);
-    c = engine.makeIntVar(0, 0, 10);
-    d = engine.makeIntVar(3, 3, 3);
-    violation = engine.makeIntVar(0, 0, 10);
+    solver.open();
+    a = solver.makeIntVar(0, 0, 10);
+    b = solver.makeIntVar(0, 0, 10);
+    c = solver.makeIntVar(0, 0, 10);
+    d = solver.makeIntVar(3, 3, 3);
+    violation = solver.makeIntVar(0, 0, 10);
 
-    engine.makeInvariant<Linear>(engine, c, std::vector<VarId>{a, b});
-    engine.makeConstraint<Equal>(engine, violation, c, d);
-    engine.close();
+    solver.makeInvariant<propagation::Linear>(
+        solver, c, std::vector<propagation::VarId>{a, b});
+    solver.makeViolationInvariant<propagation::Equal>(solver, violation, c, d);
+    solver.close();
   }
 };
 
-TEST_F(AssignmentTest, search_variables_are_identified) {
-  search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+TEST_F(AssignmentTest, search_vars_are_identified) {
+  search::Assignment assignment{solver, violation, a,
+                                propagation::ObjectiveDirection::MINIMIZE};
 
-  std::vector<VarId> expectedSearchVariables{a, b};
-  EXPECT_EQ(assignment.searchVariables(), expectedSearchVariables);
+  std::vector<propagation::VarId> expectedSearchVars{a, b};
+  EXPECT_EQ(assignment.searchVars(), expectedSearchVars);
 }
 
 TEST_F(AssignmentTest, cost) {
-  search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+  search::Assignment assignment{solver, violation, a,
+                                propagation::ObjectiveDirection::MINIMIZE};
 
   EXPECT_FALSE(assignment.cost().satisfiesConstraints());
 
@@ -63,8 +68,8 @@ TEST_F(AssignmentTest, cost) {
 }
 
 TEST_F(AssignmentTest, assign_sets_values) {
-  search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+  search::Assignment assignment{solver, violation, a,
+                                propagation::ObjectiveDirection::MINIMIZE};
 
   assignment.assign([&](auto& modifications) {
     modifications.set(a, 1);
@@ -76,8 +81,8 @@ TEST_F(AssignmentTest, assign_sets_values) {
 }
 
 TEST_F(AssignmentTest, probe) {
-  search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+  search::Assignment assignment{solver, violation, a,
+                                propagation::ObjectiveDirection::MINIMIZE};
 
   auto cost = assignment.probe([&](auto& modifications) {
     modifications.set(a, 1);
@@ -92,8 +97,8 @@ TEST_F(AssignmentTest, probe) {
 }
 
 TEST_F(AssignmentTest, satisfies_constraints) {
-  search::Assignment assignment{engine, violation, a,
-                                ObjectiveDirection::MINIMIZE};
+  search::Assignment assignment{solver, violation, a,
+                                propagation::ObjectiveDirection::MINIMIZE};
 
   EXPECT_FALSE(assignment.satisfiesConstraints());
 
@@ -104,3 +109,5 @@ TEST_F(AssignmentTest, satisfies_constraints) {
 
   EXPECT_TRUE(assignment.satisfiesConstraints());
 }
+
+}  // namespace atlantis::testing

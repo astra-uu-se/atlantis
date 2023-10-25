@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
@@ -63,84 +63,84 @@ GlobalCardinalityClosedNode::fromModelConstraint(
       std::move(inputs), std::move(cover), std::move(counts), shouldHold);
 }
 
-void GlobalCardinalityClosedNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
-    registerViolation(invariantGraph, engine);
+void GlobalCardinalityClosedNode::registerOutputVars(
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+    registerViolation(invariantGraph, solver);
     if (!isReified() && shouldHold()) {
       for (const auto& countOutput : outputVarNodeIds()) {
-        if (invariantGraph.varId(countOutput) == NULL_ID) {
+        if (invariantGraph.varId(countOutput) == propagation::NULL_ID) {
           invariantGraph.varNode(countOutput)
-              .setVarId(engine.makeIntVar(0, 0, _inputs.size()));
+              .setVarId(solver.makeIntVar(0, 0, _inputs.size()));
         }
       }
     } else {
       for (size_t i = 0; i < _counts.size(); ++i) {
-        _intermediate.emplace_back(engine.makeIntVar(0, 0, _inputs.size()));
+        _intermediate.emplace_back(solver.makeIntVar(0, 0, _inputs.size()));
       }
       for (size_t i = 0; i < _counts.size(); ++i) {
-        _violations.emplace_back(engine.makeIntVar(0, 0, _inputs.size()));
+        _violations.emplace_back(solver.makeIntVar(0, 0, _inputs.size()));
       }
       // intermediate viol for GCC closed constraint
       if (!shouldHold()) {
-        _shouldFailViol = engine.makeIntVar(0, 0, _inputs.size());
+        _shouldFailViol = solver.makeIntVar(0, 0, _inputs.size());
         _violations.emplace_back(
-            engine.makeIntView<NotEqualConst>(engine, _shouldFailViol, 0));
+            solver.makeIntView<propagation::NotEqualConst>(solver, _shouldFailViol, 0));
       } else {
-        _violations.emplace_back(engine.makeIntVar(0, 0, _inputs.size()));
+        _violations.emplace_back(solver.makeIntVar(0, 0, _inputs.size()));
       }
     }
   }
 }
 
 void GlobalCardinalityClosedNode::registerNode(InvariantGraph& invariantGraph,
-                                               Engine& engine) {
-  assert(violationVarId(invariantGraph) != NULL_ID);
+                                               propagation::SolverBase& solver) {
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  std::vector<VarId> inputs;
+  std::vector<propagation::VarId> inputs;
   std::transform(_inputs.begin(), _inputs.end(), std::back_inserter(inputs),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
   if (!isReified() && shouldHold()) {
     assert(_intermediate.size() == 0);
     assert(_violations.size() == 0);
-    std::vector<VarId> countOutputs;
+    std::vector<propagation::VarId> countOutputs;
     std::transform(_counts.begin(), _counts.end(),
                    std::back_inserter(countOutputs),
                    [&](const auto& id) { return invariantGraph.varId(id); });
 
-    engine.makeInvariant<GlobalCardinalityClosed>(
-        engine, violationVarId(invariantGraph), countOutputs, inputs, _cover);
+    solver.makeInvariant<propagation::GlobalCardinalityClosed>(
+        solver, violationVarId(invariantGraph), countOutputs, inputs, _cover);
   } else {
     assert(_intermediate.size() == _counts.size());
     assert(_violations.size() == _counts.size() + 1);
     if (isReified()) {
-      engine.makeInvariant<GlobalCardinalityClosed>(
-          engine, _violations.back(), _intermediate, inputs, _cover);
+      solver.makeInvariant<propagation::GlobalCardinalityClosed>(
+          solver, _violations.back(), _intermediate, inputs, _cover);
     } else {
       assert(!shouldHold());
-      engine.makeInvariant<GlobalCardinalityClosed>(
-          engine, _shouldFailViol, _intermediate, inputs, _cover);
+      solver.makeInvariant<propagation::GlobalCardinalityClosed>(
+          solver, _shouldFailViol, _intermediate, inputs, _cover);
     }
     for (size_t i = 0; i < _counts.size(); ++i) {
       if (shouldHold()) {
-        engine.makeConstraint<Equal>(engine, _violations.at(i),
+        solver.makeViolationInvariant<propagation::Equal>(solver, _violations.at(i),
                                      _intermediate.at(i),
                                      invariantGraph.varId(_counts.at(i)));
       } else {
-        engine.makeConstraint<NotEqual>(engine, _violations.at(i),
+        solver.makeViolationInvariant<propagation::NotEqual>(solver, _violations.at(i),
                                         _intermediate.at(i),
                                         invariantGraph.varId(_counts.at(i)));
       }
     }
     if (shouldHold()) {
       // To hold, each count must be equal to its corresponding intermediate:
-      engine.makeInvariant<Linear>(engine, violationVarId(invariantGraph),
+      solver.makeInvariant<propagation::Linear>(solver, violationVarId(invariantGraph),
                                    _violations);
     } else {
       // To hold, only one count must not be equal to its corresponding
       // intermediate:
-      engine.makeInvariant<Exists>(engine, violationVarId(invariantGraph),
+      solver.makeInvariant<propagation::Exists>(solver, violationVarId(invariantGraph),
                                    _violations);
     }
   }

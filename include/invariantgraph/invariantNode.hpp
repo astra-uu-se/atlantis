@@ -6,14 +6,15 @@
 #include <unordered_map>
 #include <vector>
 
-#include "core/engine.hpp"
 #include "invariantgraph/types.hpp"
 #include "invariantgraph/varNode.hpp"
+#include "propagation/solver.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 /**
  * A node in the invariant graph which defines a number of variables. This could
- * be an invariant, a soft constraint (which defines a violation), or a view.
+ * be an invariant, a violation invariant (which defines a violation), or a
+ * view.
  */
 
 class InvariantGraph;  // Forward declaration
@@ -26,7 +27,8 @@ class InvariantNode {
   InvariantNodeId _id{NULL_NODE_ID};
 
  public:
-  using VariableMap = std::unordered_map<VarNodeId, VarId, VarNodeIdHash>;
+  using VarMap =
+      std::unordered_map<VarNodeId, propagation::VarId, VarNodeIdHash>;
 
   explicit InvariantNode(std::vector<VarNodeId>&& outputIds,
                          std::vector<VarNodeId>&& staticInputIds = {},
@@ -43,24 +45,25 @@ class InvariantNode {
   virtual bool prune(InvariantGraph&);
 
   /**
-   * Creates as all the variables the node defines in @p engine.
+   * Creates as all the variables the node defines in @p solver.
    *
-   * @param engine The engine with which to register the variables, constraints
+   * @param solver The solver with which to register the variables, constraints
    * and views.
    */
-  virtual void registerOutputVariables(InvariantGraph&, Engine&) = 0;
+  virtual void registerOutputVars(InvariantGraph&,
+                                  propagation::SolverBase&) = 0;
 
   /**
-   * Registers the current node with the engine, as well as all the variables
+   * Registers the current node with the solver, as well as all the variables
    * it defines.
    *
    * Note: This method assumes it is called after all the inputs to this node
-   * are already registered with the engine.
+   * are already registered with the solver.
    *
-   * @param engine The engine with which to register the variables, constraints
+   * @param solver The solver with which to register the variables, constraints
    * and views.
    */
-  virtual void registerNode(InvariantGraph&, Engine&) = 0;
+  virtual void registerNode(InvariantGraph&, propagation::SolverBase&) = 0;
 
   /**
    * @return The variable nodes defined by this node.
@@ -70,9 +73,10 @@ class InvariantNode {
   /**
    * @return The violation variable of this variable defining node. Only
    * applicable if the current node is a violation invariant. If this node does
-   * not define a violation variable, this method returns NULL_ID.
+   * not define a violation variable, this method returns propagation::NULL_ID.
    */
-  [[nodiscard]] virtual VarId violationVarId(const InvariantGraph&) const;
+  [[nodiscard]] virtual propagation::VarId violationVarId(
+      const InvariantGraph&) const;
 
   [[nodiscard]] const std::vector<VarNodeId>& staticInputVarNodeIds()
       const noexcept;
@@ -80,8 +84,7 @@ class InvariantNode {
   [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
       const noexcept;
 
-  void replaceDefinedVariable(VarNode& oldOutputVarNode,
-                              VarNode& newOutputVarNode);
+  void replaceDefinedVar(VarNode& oldOutputVarNode, VarNode& newOutputVarNode);
 
   void removeStaticInputVarNode(VarNode&);
 
@@ -97,7 +100,8 @@ class InvariantNode {
   friend class ReifiedConstraint;
 
  protected:
-  static VarId makeEngineVar(Engine&, VarNode&, Int initialValue = 0);
+  static propagation::VarId makeSolverVar(propagation::SolverBase&, VarNode&,
+                                          Int initialValue = 0);
 
   void markOutputTo(VarNode& node, bool registerHere = true);
 
@@ -105,4 +109,4 @@ class InvariantNode {
 
   void markDynamicInputTo(VarNode& node, bool registerHere = true);
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

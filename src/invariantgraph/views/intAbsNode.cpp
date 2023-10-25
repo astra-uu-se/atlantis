@@ -1,8 +1,6 @@
 #include "invariantgraph/views/intAbsNode.hpp"
 
-#include "views/intAbsView.hpp"
-
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntAbsNode::IntAbsNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
@@ -19,15 +17,17 @@ invariantgraph::IntAbsNode::fromModelConstraint(
       invariantGraph.createVarNode(a), invariantGraph.createVarNode(b));
 }
 
-void invariantgraph::IntAbsNode::registerOutputVariables(
-    InvariantGraph& invariantGraph, Engine& engine) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) == NULL_ID) {
+void invariantgraph::IntAbsNode::registerOutputVars(
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  if (invariantGraph.varId(outputVarNodeIds().front()) ==
+      propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(engine.makeIntView<IntAbsView>(
-            engine, invariantGraph.varId(input())));
+        .setVarId(solver.makeIntView<propagation::IntAbsView>(
+            solver, invariantGraph.varId(input())));
   }
 }
 
-void invariantgraph::IntAbsNode::registerNode(InvariantGraph&, Engine&) {}
+void invariantgraph::IntAbsNode::registerNode(InvariantGraph&,
+                                              propagation::SolverBase&) {}
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

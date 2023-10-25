@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 std::unique_ptr<ArrayIntElement2dNode>
 ArrayBoolElement2dNode::fromModelConstraint(

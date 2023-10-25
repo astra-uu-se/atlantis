@@ -4,26 +4,26 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "constraints/lessEqual.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "invariants/linear.hpp"
-#include "views/greaterEqualConst.hpp"
-#include "views/lessEqualConst.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/views/greaterEqualConst.hpp"
+#include "propagation/views/lessEqualConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class IntLinLeNode : public ViolationInvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _bound;
-  VarId _sumVarId{NULL_ID};
+  propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
-  IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int bound, VarNodeId r);
 
-  IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& variables,
+  IntLinLeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int bound, bool shouldHold);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
@@ -34,13 +34,14 @@ class IntLinLeNode : public ViolationInvariantNode {
   static std::unique_ptr<IntLinLeNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
 
   [[nodiscard]] Int bound() const { return _bound; }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

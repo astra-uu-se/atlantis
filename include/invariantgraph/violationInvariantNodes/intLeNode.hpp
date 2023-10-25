@@ -3,12 +3,12 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "constraints/lessEqual.hpp"
-#include "constraints/lessThan.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
+#include "propagation/violationInvariants/lessThan.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class IntLeNode : public ViolationInvariantNode {
  public:
@@ -24,9 +24,9 @@ class IntLeNode : public ViolationInvariantNode {
   static std::unique_ptr<IntLeNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

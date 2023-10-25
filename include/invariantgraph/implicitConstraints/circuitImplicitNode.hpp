@@ -5,8 +5,9 @@
 
 #include "invariantgraph/implicitConstraintNode.hpp"
 #include "invariantgraph/invariantGraph.hpp"
+#include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class CircuitImplicitNode : public ImplicitConstraintNode {
  public:
@@ -24,7 +25,8 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      Engine& engine, std::vector<search::SearchVariable>&& variables) override;
+      propagation::SolverBase& solver,
+      std::vector<search::SearchVar>&&) override;
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

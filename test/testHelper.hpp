@@ -7,12 +7,11 @@
 #include <random>
 #include <vector>
 
-#include "core/propagationEngine.hpp"
-#include "core/types.hpp"
+#include "propagation/solver.hpp"
+#include "propagation/types.hpp"
+#include "types.hpp"
 
-using ::testing::AtLeast;
-using ::testing::AtMost;
-using ::testing::Return;
+namespace atlantis::testing {
 
 // below function returns the subsets of vector origin.
 template <class T>
@@ -54,70 +53,4 @@ std::vector<std::pair<T, T>> cartesianProduct(const std::vector<T>& t) {
   return cartesianProduct(t, t);
 }
 
-struct NotificationData {
-  PropagationMode propMode;
-  OutputToInputMarkingMode markingMode;
-  size_t numNextInputCalls;
-  VarId modifiedVarId;
-  Int modifiedVal;
-  VarId queryVarId;
-};
-
-class InvariantTest : public ::testing::Test {
- protected:
-  std::unique_ptr<PropagationEngine> engine;
-  std::mt19937 gen;
-  std::default_random_engine rng;
-  std::vector<std::pair<PropagationMode, OutputToInputMarkingMode>>
-      propMarkModes{
-          {PropagationMode::INPUT_TO_OUTPUT, OutputToInputMarkingMode::NONE},
-          {PropagationMode::OUTPUT_TO_INPUT, OutputToInputMarkingMode::NONE},
-          {PropagationMode::OUTPUT_TO_INPUT,
-           OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC},
-          {PropagationMode::OUTPUT_TO_INPUT,
-           OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}};
-
-  template <class T>
-  void testNotifications(T* invariant, NotificationData data) {
-    EXPECT_CALL(*invariant, recompute(testing::_)).Times(AtLeast(1));
-    EXPECT_CALL(*invariant, commit(testing::_)).Times(AtLeast(1));
-
-    if (!engine->isOpen()) {
-      engine->open();
-    }
-    engine->setPropagationMode(data.propMode);
-    engine->setOutputToInputMarkingMode(data.markingMode);
-    engine->close();
-
-    if (engine->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, nextInput(testing::_)).Times(0);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_))
-          .Times(AtMost(1));
-      EXPECT_CALL(*invariant, notifyInputChanged(testing::_, testing::_))
-          .Times(1);
-    } else {
-      EXPECT_CALL(*invariant, nextInput(testing::_))
-          .Times(data.numNextInputCalls);
-      EXPECT_CALL(*invariant, notifyCurrentInputChanged(testing::_)).Times(1);
-
-      EXPECT_CALL(*invariant, notifyInputChanged(testing::_, testing::_))
-          .Times(AtMost(1));
-    }
-
-    engine->beginMove();
-    engine->setValue(data.modifiedVarId, data.modifiedVal);
-    engine->endMove();
-
-    engine->beginProbe();
-    engine->query(data.queryVarId);
-    engine->endProbe();
-    engine->open();
-  }
-
- public:
-  void SetUp() override {
-    std::random_device rd;
-    gen = std::mt19937(rd());
-    engine = std::make_unique<PropagationEngine>();
-  }
-};
+}  // namespace atlantis::testing

@@ -5,8 +5,9 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <sstream>
 
-namespace logging {
+namespace atlantis::logging {
 
 class Logger;
 
@@ -156,4 +157,4 @@ class Logger {
   }
 };
 
-}  // namespace logging
+}  // namespace atlantis::logging

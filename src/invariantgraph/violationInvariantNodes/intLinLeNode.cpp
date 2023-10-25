@@ -2,19 +2,19 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 IntLinLeNode::IntLinLeNode(std::vector<Int>&& coeffs,
-                           std::vector<VarNodeId>&& variables, Int bound,
+                           std::vector<VarNodeId>&& vars, Int bound,
                            VarNodeId r)
-    : ViolationInvariantNode(std::move(variables), r),
+    : ViolationInvariantNode(std::move(vars), r),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
 IntLinLeNode::IntLinLeNode(std::vector<Int>&& coeffs,
-                           std::vector<VarNodeId>&& variables, Int bound,
+                           std::vector<VarNodeId>&& vars, Int bound,
                            bool shouldHold)
-    : ViolationInvariantNode(std::move(variables), shouldHold),
+    : ViolationInvariantNode(std::move(vars), shouldHold),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
@@ -26,7 +26,7 @@ std::unique_ptr<IntLinLeNode> IntLinLeNode::fromModelConstraint(
       std::get<fznparser::IntVarArray>(constraint.arguments().at(0))
           .toParVector();
 
-  std::vector<VarNodeId> variables = invariantGraph.createVarNodes(
+  std::vector<VarNodeId> vars = invariantGraph.createVarNodes(
       std::get<fznparser::IntVarArray>(constraint.arguments().at(1)));
 
   Int bound =
@@ -37,45 +37,47 @@ std::unique_ptr<IntLinLeNode> IntLinLeNode::fromModelConstraint(
         std::get<fznparser::BoolArg>(constraint.arguments().back());
 
     if (reified.isFixed()) {
-      return std::make_unique<IntLinLeNode>(std::move(coeffs),
-                                            std::move(variables), bound,
-                                            reified.toParameter());
+      return std::make_unique<IntLinLeNode>(std::move(coeffs), std::move(vars),
+                                            bound, reified.toParameter());
     } else {
       return std::make_unique<IntLinLeNode>(
-          std::move(coeffs), std::move(variables), bound,
+          std::move(coeffs), std::move(vars), bound,
           invariantGraph.createVarNode(reified.var()));
     }
   }
-  return std::make_unique<IntLinLeNode>(std::move(coeffs), std::move(variables),
+  return std::make_unique<IntLinLeNode>(std::move(coeffs), std::move(vars),
                                         bound, true);
 }
 
-void IntLinLeNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                           Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
-    _sumVarId = engine.makeIntVar(0, 0, 0);
+void IntLinLeNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                      propagation::SolverBase& solver) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+    _sumVarId = solver.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(invariantGraph, engine.makeIntView<LessEqualConst>(
-                                            engine, _sumVarId, _bound));
+      setViolationVarId(invariantGraph,
+                        solver.makeIntView<propagation::LessEqualConst>(
+                            solver, _sumVarId, _bound));
     } else {
       assert(!isReified());
-      setViolationVarId(invariantGraph, engine.makeIntView<GreaterEqualConst>(
-                                            engine, _sumVarId, _bound + 1));
+      setViolationVarId(invariantGraph,
+                        solver.makeIntView<propagation::GreaterEqualConst>(
+                            solver, _sumVarId, _bound + 1));
     }
   }
 }
 
 void IntLinLeNode::registerNode(InvariantGraph& invariantGraph,
-                                Engine& engine) {
-  std::vector<VarId> variables;
+                                propagation::SolverBase& solver) {
+  std::vector<propagation::VarId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(variables),
+                 std::back_inserter(solverVars),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  assert(_sumVarId != NULL_ID);
-  assert(violationVarId(invariantGraph) != NULL_ID);
+  assert(_sumVarId != propagation::NULL_ID);
+  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  engine.makeInvariant<Linear>(engine, _sumVarId, _coeffs, variables);
+  solver.makeInvariant<propagation::Linear>(solver, _sumVarId, _coeffs,
+                                            solverVars);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

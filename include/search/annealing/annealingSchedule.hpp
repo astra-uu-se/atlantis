@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/types.hpp"
+#include "types.hpp"
 
-namespace search {
+namespace atlantis::search {
 
 struct RoundStatistics {
   UInt uphillAttemptedMoves;

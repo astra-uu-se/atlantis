@@ -6,66 +6,71 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "constraints/allDifferent.hpp"
-#include "core/propagationEngine.hpp"
-#include "invariants/linear.hpp"
-#include "views/intOffsetView.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
+#include "propagation/invariants/linear.hpp"
+#include "propagation/solver.hpp"
+#include "propagation/views/intOffsetView.hpp"
 
-class Queens : public benchmark::Fixture {
+namespace atlantis::benchmark {
+
+class Queens : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<PropagationEngine> engine;
-  std::vector<VarId> queens;
-  std::vector<VarId> q_offset_plus;
-  std::vector<VarId> q_offset_minus;
+  std::unique_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarId> queens;
+  std::vector<propagation::VarId> q_offset_plus;
+  std::vector<propagation::VarId> q_offset_minus;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   Int n;
 
-  VarId violation1 = NULL_ID;
-  VarId violation2 = NULL_ID;
-  VarId violation3 = NULL_ID;
-  VarId totalViolation = NULL_ID;
+  propagation::VarId violation1 = propagation::NULL_ID;
+  propagation::VarId violation2 = propagation::NULL_ID;
+  propagation::VarId violation3 = propagation::NULL_ID;
+  propagation::VarId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    engine = std::make_unique<PropagationEngine>();
+    solver = std::make_unique<propagation::Solver>();
     n = state.range(0);
     if (n < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
 
-    engine->open();
-    setEngineModes(*engine, state.range(1));
+    solver->open();
+    setSolverMode(*solver, state.range(1));
     // the total number of variables is linear in n
-    queens = std::vector<VarId>(n);
-    q_offset_minus = std::vector<VarId>(n);
-    q_offset_plus = std::vector<VarId>(n);
+    queens = std::vector<propagation::VarId>(n);
+    q_offset_minus = std::vector<propagation::VarId>(n);
+    q_offset_plus = std::vector<propagation::VarId>(n);
 
     for (Int i = 0; i < n; ++i) {
-      queens.at(i) = engine->makeIntVar(i, 0, n - 1);
-      q_offset_minus.at(i) =
-          engine->makeIntView<IntOffsetView>(*engine, queens.at(i), -i);
-      q_offset_plus.at(i) =
-          engine->makeIntView<IntOffsetView>(*engine, queens.at(i), i);
+      queens.at(i) = solver->makeIntVar(i, 0, n - 1);
+      q_offset_minus.at(i) = solver->makeIntView<propagation::IntOffsetView>(
+          *solver, queens.at(i), -i);
+      q_offset_plus.at(i) = solver->makeIntView<propagation::IntOffsetView>(
+          *solver, queens.at(i), i);
     }
 
-    violation1 = engine->makeIntVar(0, 0, n);
-    violation2 = engine->makeIntVar(0, 0, n);
-    violation3 = engine->makeIntVar(0, 0, n);
+    violation1 = solver->makeIntVar(0, 0, n);
+    violation2 = solver->makeIntVar(0, 0, n);
+    violation3 = solver->makeIntVar(0, 0, n);
 
     // 3 invariants, each having taking n static input variables
-    engine->makeConstraint<AllDifferent>(*engine, violation1, queens);
-    engine->makeConstraint<AllDifferent>(*engine, violation2, q_offset_minus);
-    engine->makeConstraint<AllDifferent>(*engine, violation3, q_offset_plus);
+    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation1,
+                                                      queens);
+    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation2,
+                                                      q_offset_minus);
+    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation3,
+                                                      q_offset_plus);
 
-    totalViolation = engine->makeIntVar(0, 0, 3 * n);
+    totalViolation = solver->makeIntVar(0, 0, 3 * n);
 
-    engine->makeInvariant<Linear>(
-        *engine, totalViolation,
-        std::vector<VarId>{violation1, violation2, violation3});
+    solver->makeInvariant<propagation::Linear>(
+        *solver, totalViolation,
+        std::vector<propagation::VarId>{violation1, violation2, violation3});
 
-    engine->close();
+    solver->close();
 
     gen = std::mt19937(rd());
 
@@ -81,7 +86,7 @@ class Queens : public benchmark::Fixture {
   std::string instanceToString() {
     std::string str = "Queens: ";
     for (auto q : queens) {
-      str += std::to_string(engine->committedValue(q)) + ", ";
+      str += std::to_string(solver->committedValue(q)) + ", ";
     }
     return str;
   }
@@ -89,55 +94,55 @@ class Queens : public benchmark::Fixture {
   inline bool sanity() const {
     return all_in_range(0, n - 1, [&](const size_t i) {
       return all_in_range(i + 1, n, [&](const size_t j) {
-        return engine->committedValue(queens.at(i)) !=
-                   engine->committedValue(queens.at(j)) &&
-               engine->currentValue(queens.at(i)) !=
-                   engine->currentValue(queens.at(j));
+        return solver->committedValue(queens.at(i)) !=
+                   solver->committedValue(queens.at(j)) &&
+               solver->currentValue(queens.at(i)) !=
+                   solver->currentValue(queens.at(j));
       });
     });
   }
 };
 
-BENCHMARK_DEFINE_F(Queens, probe_single_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(Queens, probe_single_swap)(::benchmark::State& st) {
   size_t probes = 0;
   for (auto _ : st) {
     const size_t i = distribution(gen);
     assert(i < queens.size());
     const size_t j = distribution(gen);
     assert(j < queens.size());
-    const Int oldI = engine->committedValue(queens[i]);
-    const Int oldJ = engine->committedValue(queens[j]);
+    const Int oldI = solver->committedValue(queens[i]);
+    const Int oldJ = solver->committedValue(queens[j]);
     // Perform random swap
-    engine->beginMove();
-    engine->setValue(queens[i], oldJ);
-    engine->setValue(queens[j], oldI);
-    engine->endMove();
+    solver->beginMove();
+    solver->setValue(queens[i], oldJ);
+    solver->setValue(queens[j], oldI);
+    solver->endMove();
 
-    engine->beginProbe();
-    engine->query(totalViolation);
-    engine->endProbe();
+    solver->beginProbe();
+    solver->query(totalViolation);
+    solver->endProbe();
     ++probes;
     assert(sanity());
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(Queens, probe_all_swap)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(Queens, probe_all_swap)(::benchmark::State& st) {
   int probes = 0;
   for (auto _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
-        const Int oldI = engine->committedValue(queens[i]);
-        const Int oldJ = engine->committedValue(queens[j]);
-        engine->beginMove();
-        engine->setValue(queens[i], oldJ);
-        engine->setValue(queens[j], oldI);
-        engine->endMove();
+        const Int oldI = solver->committedValue(queens[i]);
+        const Int oldJ = solver->committedValue(queens[j]);
+        solver->beginMove();
+        solver->setValue(queens[i], oldJ);
+        solver->setValue(queens[j], oldI);
+        solver->endMove();
 
-        engine->beginProbe();
-        engine->query(totalViolation);
-        engine->endProbe();
+        solver->beginProbe();
+        solver->query(totalViolation);
+        solver->endProbe();
 
         ++probes;
         assert(sanity());
@@ -145,10 +150,10 @@ BENCHMARK_DEFINE_F(Queens, probe_all_swap)(benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(Queens, solve)(::benchmark::State& st) {
   Int it = 0;
   Int probes = 0;
 
@@ -167,21 +172,21 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
           if (tabu[i] > it && tabu[j] > it) {
             continue;
           }
-          const Int oldI = engine->committedValue(queens[i]);
-          const Int oldJ = engine->committedValue(queens[j]);
-          engine->beginMove();
-          engine->setValue(queens[i], oldJ);
-          engine->setValue(queens[j], oldI);
-          engine->endMove();
+          const Int oldI = solver->committedValue(queens[i]);
+          const Int oldJ = solver->committedValue(queens[j]);
+          solver->beginMove();
+          solver->setValue(queens[i], oldJ);
+          solver->setValue(queens[j], oldI);
+          solver->endMove();
 
-          engine->beginProbe();
-          engine->query(totalViolation);
-          engine->endProbe();
+          solver->beginProbe();
+          solver->query(totalViolation);
+          solver->endProbe();
 
           ++probes;
           assert(sanity());
 
-          Int newValue = engine->currentValue(totalViolation);
+          Int newValue = solver->currentValue(totalViolation);
           if (newValue <= bestViol) {
             bestViol = newValue;
             bestI = i;
@@ -190,16 +195,16 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
         }
       }
 
-      const Int oldI = engine->committedValue(queens[bestI]);
-      const Int oldJ = engine->committedValue(queens[bestJ]);
-      engine->beginMove();
-      engine->setValue(queens[bestI], oldJ);
-      engine->setValue(queens[bestJ], oldI);
-      engine->endMove();
+      const Int oldI = solver->committedValue(queens[bestI]);
+      const Int oldJ = solver->committedValue(queens[bestJ]);
+      solver->beginMove();
+      solver->setValue(queens[bestI], oldJ);
+      solver->setValue(queens[bestJ], oldI);
+      solver->endMove();
 
-      engine->beginCommit();
-      engine->query(totalViolation);
-      engine->endCommit();
+      solver->beginCommit();
+      solver->query(totalViolation);
+      solver->endCommit();
 
       tabu[bestI] = it + tenure;
       tabu[bestJ] = it + tenure;
@@ -210,25 +215,27 @@ BENCHMARK_DEFINE_F(Queens, solve)(benchmark::State& st) {
     }
   }
 
-  st.counters["it"] = benchmark::Counter(it);
+  st.counters["it"] = ::benchmark::Counter(it);
 
-  st.counters["it_per_s"] = benchmark::Counter(it, benchmark::Counter::kIsRate);
+  st.counters["it_per_s"] =
+      ::benchmark::Counter(it, ::benchmark::Counter::kIsRate);
   st.counters["probes_per_s"] =
-      benchmark::Counter(probes, benchmark::Counter::kIsRate);
-  st.counters["solved"] = benchmark::Counter(done);
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+  st.counters["solved"] = ::benchmark::Counter(done);
   logDebug(instanceToString());
 }
 
 //*
 BENCHMARK_REGISTER_F(Queens, probe_single_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
 /*
 BENCHMARK_REGISTER_F(Queens, probe_all_swap)
-    ->Unit(benchmark::kMillisecond)
+    ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
 /*
 BENCHMARK_REGISTER_F(Queens, solve)->Apply(defaultArguments);
 //*/
+}  // namespace atlantis::benchmark

@@ -1,11 +1,15 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
+#include "propagation/solver.hpp"
 
-class IntAbsNodeTest : public NodeTestBase<invariantgraph::IntAbsNode> {
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+class IntAbsNodeTest : public NodeTestBase<IntAbsNode> {
  public:
-  invariantgraph::VarNodeId a;
-  invariantgraph::VarNodeId b;
+  VarNodeId a;
+  VarNodeId b;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -34,22 +38,23 @@ TEST_F(IntAbsNodeTest, construction) {
 }
 
 TEST_F(IntAbsNodeTest, application) {
-  PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
   // a
-  EXPECT_EQ(engine.searchVariables().size(), 1);
+  EXPECT_EQ(solver.searchVars().size(), 1);
 
   // a
-  EXPECT_EQ(engine.numVariables(), 1);
+  EXPECT_EQ(solver.numVars(), 1);
 }
+}  // namespace atlantis::testing

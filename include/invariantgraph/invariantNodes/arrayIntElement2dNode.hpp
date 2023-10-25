@@ -4,9 +4,9 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
-#include "invariants/element2dConst.hpp"
+#include "propagation/invariants/element2dConst.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class ArrayIntElement2dNode : public InvariantNode {
  private:
@@ -27,9 +27,10 @@ class ArrayIntElement2dNode : public InvariantNode {
   static std::unique_ptr<ArrayIntElement2dNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&,
+                               propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] VarNodeId idx1() const noexcept {
     return staticInputVarNodeIds().front();
@@ -40,4 +41,4 @@ class ArrayIntElement2dNode : public InvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

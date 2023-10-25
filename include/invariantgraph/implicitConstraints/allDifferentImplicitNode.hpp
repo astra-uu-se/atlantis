@@ -8,7 +8,7 @@
 #include "search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
 #include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class AllDifferentImplicitNode : public ImplicitConstraintNode {
  public:
@@ -28,7 +28,7 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      Engine& engine, std::vector<search::SearchVariable>&& variables) override;
+      propagation::SolverBase&, std::vector<search::SearchVar>&&) override;
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

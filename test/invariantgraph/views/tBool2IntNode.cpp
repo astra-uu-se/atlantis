@@ -1,11 +1,15 @@
 #include "../nodeTestBase.hpp"
-#include "core/propagationEngine.hpp"
 #include "invariantgraph/views/bool2IntNode.hpp"
+#include "propagation/solver.hpp"
 
-class Bool2IntNodeTest : public NodeTestBase<invariantgraph::Bool2IntNode> {
+namespace atlantis::testing {
+
+using namespace atlantis::invariantgraph;
+
+class Bool2IntNodeTest : public NodeTestBase<Bool2IntNode> {
  public:
-  invariantgraph::VarNodeId a;
-  invariantgraph::VarNodeId b;
+  VarNodeId a;
+  VarNodeId b;
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -34,53 +38,55 @@ TEST_F(Bool2IntNodeTest, construction) {
 }
 
 TEST_F(Bool2IntNodeTest, application) {
-  PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), NULL_ID);
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVariables(*_invariantGraph, engine);
+  invNode().registerOutputVars(*_invariantGraph, solver);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), NULL_ID);
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
   // a
-  EXPECT_EQ(engine.searchVariables().size(), 1);
+  EXPECT_EQ(solver.searchVars().size(), 1);
 
   // a
-  EXPECT_EQ(engine.numVariables(), 1);
+  EXPECT_EQ(solver.numVars(), 1);
 }
 
 TEST_F(Bool2IntNodeTest, propagation) {
-  PropagationEngine engine;
-  engine.open();
-  addInputVarsToEngine(engine);
-  invNode().registerOutputVariables(*_invariantGraph, engine);
-  invNode().registerNode(*_invariantGraph, engine);
-  engine.close();
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), NULL_ID);
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), NULL_ID);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
+  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
 
-  const VarId input = varId(invNode().staticInputVarNodeIds().front());
-  const VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId input = varId(invNode().staticInputVarNodeIds().front());
+  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
 
-  for (Int value = engine.lowerBound(input); value <= engine.upperBound(input);
+  for (Int value = solver.lowerBound(input); value <= solver.upperBound(input);
        ++value) {
-    engine.beginMove();
-    engine.setValue(input, value);
-    engine.endMove();
+    solver.beginMove();
+    solver.setValue(input, value);
+    solver.endMove();
 
-    engine.beginProbe();
-    engine.query(outputId);
-    engine.endProbe();
+    solver.beginProbe();
+    solver.query(outputId);
+    solver.endProbe();
 
     const Int expected = (value == 0);
-    const Int actual = engine.currentValue(outputId);
+    const Int actual = solver.currentValue(outputId);
     EXPECT_EQ(expected, actual);
   }
 }
+
+}  // namespace atlantis::testing

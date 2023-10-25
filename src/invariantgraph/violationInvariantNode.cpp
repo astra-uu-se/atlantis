@@ -1,8 +1,6 @@
 #include "invariantgraph/violationInvariantNode.hpp"
 
-#include "invariantgraph/invariantGraph.hpp"
-
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 static std::vector<invariantgraph::VarNodeId> combine(
     VarNodeId reifiedId, std::vector<VarNodeId>&& outputIds) {
@@ -15,7 +13,7 @@ static std::vector<invariantgraph::VarNodeId> combine(
 
 /**
  * Serves as a marker for the invariant graph to start the application to the
- * propagation engine.
+ * propagation solver.
  */
 
 ViolationInvariantNode::ViolationInvariantNode(
@@ -59,7 +57,7 @@ bool ViolationInvariantNode::isReified() const {
   return _reifiedViolationNodeId != NULL_NODE_ID;
 }
 
-VarId ViolationInvariantNode::violationVarId(
+propagation::VarId ViolationInvariantNode::violationVarId(
     const InvariantGraph& invariantGraph) const {
   if (isReified()) {
     return invariantGraph.varId(_reifiedViolationNodeId);
@@ -71,9 +69,9 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
   return _reifiedViolationNodeId;
 }
 
-VarId ViolationInvariantNode::setViolationVarId(InvariantGraph& invariantGraph,
-                                                VarId varId) {
-  assert(violationVarId(invariantGraph) == NULL_ID);
+propagation::VarId ViolationInvariantNode::setViolationVarId(
+    InvariantGraph& invariantGraph, propagation::VarId varId) {
+  assert(violationVarId(invariantGraph) == propagation::NULL_ID);
   if (isReified()) {
     invariantGraph.varNode(_reifiedViolationNodeId).setVarId(varId);
   } else {
@@ -82,15 +80,15 @@ VarId ViolationInvariantNode::setViolationVarId(InvariantGraph& invariantGraph,
   return violationVarId(invariantGraph);
 }
 
-VarId ViolationInvariantNode::registerViolation(InvariantGraph& invariantGraph,
-                                                Engine& engine,
-                                                Int initialValue) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
+propagation::VarId ViolationInvariantNode::registerViolation(
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver,
+    Int initialValue) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     return setViolationVarId(
         invariantGraph,
-        engine.makeIntVar(initialValue, initialValue, initialValue));
+        solver.makeIntVar(initialValue, initialValue, initialValue));
   }
   return violationVarId(invariantGraph);
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

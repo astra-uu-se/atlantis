@@ -6,7 +6,8 @@
 #endif
 #ifndef NDEBUG
 #include <iostream>
-namespace Logging {
+
+namespace atlantis::logging {
 
 enum LogLevel { debug = 0, info = 1, warning = 2, error = 3 };
 extern LogLevel globalLogLevel;
@@ -71,20 +72,25 @@ void log(LogLevel logLevel, const char *file, int line,
   printList(std::cerr, data.list);
   std::cerr << '\n';
 }
-}  // namespace Logging
-#define setLogLevel(x) (Logging::setLogLevel(Logging::LogLevel::x))
+}  // namespace atlantis::logging
+#define setLogLevel(x) \
+  (atlantis::logging::setLogLevel(atlantis::logging::LogLevel::x))
 #define logDebug(x)                                           \
-  (Logging::log(Logging::LogLevel::debug, __FILE__, __LINE__, \
-                Logging::LogData<Logging::None>() << x))
+  (atlantis::logging::log(                                    \
+      atlantis::logging::LogLevel::debug, __FILE__, __LINE__, \
+      atlantis::logging::LogData<atlantis::logging::None>() << x))
 #define logInfo(x)                                           \
-  (Logging::log(Logging::LogLevel::info, __FILE__, __LINE__, \
-                Logging::LogData<Logging::None>() << x))
+  (atlantis::logging::log(                                   \
+      atlantis::logging::LogLevel::info, __FILE__, __LINE__, \
+      atlantis::logging::LogData<atlantis::logging::None>() << x))
 #define logWarning(x)                                           \
-  (Logging::log(Logging::LogLevel::warning, __FILE__, __LINE__, \
-                Logging::LogData<Logging::None>() << x))
+  (atlantis::logging::log(                                      \
+      atlantis::logging::LogLevel::warning, __FILE__, __LINE__, \
+      atlantis::logging::LogData<atlantis::logging::None>() << x))
 #define logError(x)                                           \
-  (Logging::log(Logging::LogLevel::error, __FILE__, __LINE__, \
-                Logging::LogData<Logging::None>() << x))
+  (atlantis::logging::log(                                    \
+      atlantis::logging::LogLevel::error, __FILE__, __LINE__, \
+      atlantis::logging::LogData<atlantis::logging::None>() << x))
 #else
 #define setLogLevel(x) \
   do {                 \

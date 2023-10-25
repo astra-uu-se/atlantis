@@ -1,10 +1,9 @@
 #include "search/searchProcedure.hpp"
 
-#include <chrono>
-#include <string>
+namespace atlantis::search {
 
 static void logRoundStatistics(logging::Logger& logger,
-                               const search::RoundStatistics& statistics) {
+                               const RoundStatistics& statistics) {
   logger.trace("Accepted over attempted moves: {:d} / {:d} = {:.3f}",
                statistics.acceptedMoves, statistics.attemptedMoves,
                statistics.moveAcceptanceRatio());
@@ -18,9 +17,9 @@ static void logRoundStatistics(logging::Logger& logger,
   logger.trace("Temperature: {:.3f}", statistics.temperature);
 }
 
-search::SearchStatistics search::SearchProcedure::run(
-    SearchController& controller, search::Annealer& annealer,
-    logging::Logger& logger) {
+SearchStatistics SearchProcedure::run(SearchController& controller,
+                                      Annealer& annealer,
+                                      logging::Logger& logger) {
   auto rounds = std::make_unique<CounterStatistic>("Rounds");
   auto initialisations = std::make_unique<CounterStatistic>("Initialisations");
   auto moves = std::make_unique<CounterStatistic>("Moves");
@@ -71,3 +70,5 @@ search::SearchStatistics search::SearchProcedure::run(
 
   return SearchStatistics{std::move(statistics)};
 }
+
+}  // namespace atlantis::search

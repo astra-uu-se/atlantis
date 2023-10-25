@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-namespace search {
+namespace atlantis::search {
 
 class Statistic {
  public:

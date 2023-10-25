@@ -1,39 +1,41 @@
 #pragma once
 #include <stdexcept>
 
-class VariableAlreadyDefinedException : public std::runtime_error {
+namespace atlantis {
+
+class VarAlreadyDefinedException : public std::runtime_error {
  public:
   /**
    * @param msg The error message
    */
-  explicit VariableAlreadyDefinedException(const std::string& msg)
+  explicit VarAlreadyDefinedException(const std::string& msg)
       : std::runtime_error(msg) {}
 };
 
-class EngineOpenException : public std::runtime_error {
+class SolverOpenException : public std::runtime_error {
  public:
   /**
    * @param msg The error message
    */
-  explicit EngineOpenException(const std::string& msg)
+  explicit SolverOpenException(const std::string& msg)
       : std::runtime_error(msg) {}
 };
 
-class EngineClosedException : public std::runtime_error {
+class SolverClosedException : public std::runtime_error {
  public:
   /**
    * @param msg The error message
    */
-  explicit EngineClosedException(const std::string& msg)
+  explicit SolverClosedException(const std::string& msg)
       : std::runtime_error(msg) {}
 };
 
-class EngineStateException : public std::runtime_error {
+class SolverStateException : public std::runtime_error {
  public:
   /**
    * @param msg The error message
    */
-  explicit EngineStateException(const std::string& msg)
+  explicit SolverStateException(const std::string& msg)
       : std::runtime_error(msg) {}
 };
 
@@ -46,12 +48,12 @@ class PropagationGraphHasCycles : public std::runtime_error {
       : std::runtime_error(msg) {}
 };
 
-class BadEngineState : public std::runtime_error {
+class BadSolverState : public std::runtime_error {
  public:
   /**
    * @param msg The error message
    */
-  explicit BadEngineState(const std::string& msg) : std::runtime_error(msg) {}
+  explicit BadSolverState(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 class FailedToInitialise : public std::runtime_error {
@@ -81,7 +83,9 @@ class OutOfOrderIndexRegistration : public std::exception {
   explicit OutOfOrderIndexRegistration() = default;
 };
 
-class VariableIsNotSearchVariable : public std::exception {
+class VarIsNotSearchVar : public std::exception {
  public:
-  explicit VariableIsNotSearchVariable() = default;
+  explicit VarIsNotSearchVar() = default;
 };
+
+}

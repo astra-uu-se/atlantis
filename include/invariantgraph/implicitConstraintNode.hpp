@@ -3,18 +3,18 @@
 #include <cassert>
 #include <vector>
 
-#include "core/engine.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/varNode.hpp"
+#include "propagation/solver.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class InvariantGraph;  // Forward declaration
 
 /**
  * Serves as a marker for the invariant graph to start the application to the
- * propagation engine.
+ * propagation solver.
  */
 class ImplicitConstraintNode : public InvariantNode {
  private:
@@ -24,9 +24,10 @@ class ImplicitConstraintNode : public InvariantNode {
  public:
   explicit ImplicitConstraintNode(std::vector<VarNodeId>&& outputVarNodeIds);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   /**
    * Take the neighbourhood which is constructed in the registerNode
@@ -39,7 +40,7 @@ class ImplicitConstraintNode : public InvariantNode {
    *
    * The reason this does not return a reference, is because we want to be
    * able to delete the entire invariant graph after it has been applied to
-   * the propagation engine. If a reference was returned here, that would
+   * the propagation solver. If a reference was returned here, that would
    * leave the reference dangling.
    *
    * @return The neighbourhood corresponding to this implicit constraint.
@@ -49,7 +50,7 @@ class ImplicitConstraintNode : public InvariantNode {
 
  protected:
   virtual std::shared_ptr<search::neighbourhoods::Neighbourhood>
-  createNeighbourhood(Engine& engine,
-                      std::vector<search::SearchVariable>&& variables) = 0;
+  createNeighbourhood(propagation::SolverBase& solver,
+                      std::vector<search::SearchVar>&& vars) = 0;
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

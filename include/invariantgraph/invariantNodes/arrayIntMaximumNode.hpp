@@ -6,12 +6,12 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
-#include "invariants/maxSparse.hpp"
+#include "propagation/invariants/maxSparse.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 class ArrayIntMaximumNode : public InvariantNode {
  public:
-  ArrayIntMaximumNode(std::vector<VarNodeId>&& variables, VarNodeId output);
+  ArrayIntMaximumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{
@@ -23,8 +23,8 @@ class ArrayIntMaximumNode : public InvariantNode {
 
   ~ArrayIntMaximumNode() override = default;
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
 }  // namespace invariantgraph

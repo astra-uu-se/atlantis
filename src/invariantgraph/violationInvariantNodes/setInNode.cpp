@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 SetInNode::SetInNode(VarNodeId input, std::vector<Int>&& values, VarNodeId r)
     : ViolationInvariantNode({input}, r), _values(std::move(values)) {}
@@ -15,7 +15,7 @@ std::unique_ptr<SetInNode> SetInNode::fromModelConstraint(
     const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
-  auto variable = invariantGraph.createVarNode(
+  const VarNodeId varNodeId = invariantGraph.createVarNode(
       std::get<fznparser::IntArg>(constraint.arguments().at(0)));
 
   fznparser::IntSet valueSet =
@@ -29,25 +29,26 @@ std::unique_ptr<SetInNode> SetInNode::fromModelConstraint(
   std::vector<Int> values = valueSet.populateElements();
 
   if (constraint.arguments().size() == 2) {
-    return std::make_unique<SetInNode>(std::move(variable), std::move(values),
+    return std::make_unique<SetInNode>(std::move(varNodeId), std::move(values),
                                        true);
   }
   const fznparser::BoolArg reified =
       std::get<fznparser::BoolArg>(constraint.arguments().at(2));
 
   if (reified.isFixed()) {
-    return std::make_unique<SetInNode>(std::move(variable), std::move(values),
+    return std::make_unique<SetInNode>(std::move(varNodeId), std::move(values),
                                        reified.toParameter());
   }
   return std::make_unique<SetInNode>(
-      std::move(variable), std::move(values),
+      std::move(varNodeId), std::move(values),
       invariantGraph.createVarNode(reified.var()));
 }
 
-void SetInNode::registerOutputVariables(InvariantGraph& invariantGraph,
-                                        Engine& engine) {
-  if (violationVarId(invariantGraph) == NULL_ID) {
-    const VarId input = invariantGraph.varId(staticInputVarNodeIds().front());
+void SetInNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                   propagation::SolverBase& solver) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+    const propagation::VarId input =
+        invariantGraph.varId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
     domainEntries.reserve(_values.size());
     std::transform(_values.begin(), _values.end(),
@@ -56,18 +57,19 @@ void SetInNode::registerOutputVariables(InvariantGraph& invariantGraph,
 
     if (!shouldHold()) {
       assert(!isReified());
-      _intermediate =
-          engine.makeIntView<InDomain>(engine, input, std::move(domainEntries));
-      setViolationVarId(invariantGraph, engine.makeIntView<NotEqualConst>(
-                                            engine, _intermediate, 0));
+      _intermediate = solver.makeIntView<propagation::InDomain>(
+          solver, input, std::move(domainEntries));
+      setViolationVarId(invariantGraph,
+                        solver.makeIntView<propagation::NotEqualConst>(
+                            solver, _intermediate, 0));
     } else {
       setViolationVarId(invariantGraph,
-                        engine.makeIntView<InDomain>(engine, input,
-                                                     std::move(domainEntries)));
+                        solver.makeIntView<propagation::InDomain>(
+                            solver, input, std::move(domainEntries)));
     }
   }
 }
 
-void SetInNode::registerNode(InvariantGraph&, Engine&) {}
+void SetInNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

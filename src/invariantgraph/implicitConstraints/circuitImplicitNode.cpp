@@ -1,12 +1,11 @@
 #include "invariantgraph/implicitConstraints/circuitImplicitNode.hpp"
 
 #include "../parseHelper.hpp"
-#include "search/neighbourhoods/circuitNeighbourhood.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
-CircuitImplicitNode::CircuitImplicitNode(std::vector<VarNodeId>&& variables)
-    : ImplicitConstraintNode(std::move(variables)) {
+CircuitImplicitNode::CircuitImplicitNode(std::vector<VarNodeId>&& vars)
+    : ImplicitConstraintNode(std::move(vars)) {
   assert(outputVarNodeIds().size() > 1);
 }
 
@@ -27,7 +26,7 @@ std::unique_ptr<CircuitImplicitNode> CircuitImplicitNode::fromModelConstraint(
     }
   }
 
-  // For now, this only works when all the variables have the same domain.
+  // For now, this only works when all the vars have the same domain.
   const fznparser::IntSet& domain =
       std::get<std::reference_wrapper<const fznparser::IntVar>>(arg.at(0))
           .get()
@@ -48,9 +47,9 @@ std::unique_ptr<CircuitImplicitNode> CircuitImplicitNode::fromModelConstraint(
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 CircuitImplicitNode::createNeighbourhood(
-    Engine&, std::vector<search::SearchVariable>&& variables) {
+    propagation::SolverBase&, std::vector<search::SearchVar>&& vars) {
   return std::make_shared<search::neighbourhoods::CircuitNeighbourhood>(
-      std::move(variables));
+      std::move(vars));
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

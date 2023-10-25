@@ -4,17 +4,17 @@
 #include "search/randomProvider.hpp"
 #include "search/searchVariable.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 class RandomNeighbourhood : public Neighbourhood {
  private:
-  std::vector<SearchVariable> _variables;
-  const Engine& _engine;
+  std::vector<SearchVar> _vars;
+  const propagation::SolverBase& _solver;
 
  public:
-  RandomNeighbourhood(std::vector<SearchVariable> variables,
-                      const Engine& engine)
-      : _variables(std::move(variables)), _engine(engine) {}
+  RandomNeighbourhood(std::vector<SearchVar> vars,
+                      const propagation::SolverBase& solver)
+      : _vars(std::move(vars)), _solver(solver) {}
 
   ~RandomNeighbourhood() override = default;
 
@@ -23,9 +23,7 @@ class RandomNeighbourhood : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  const std::vector<SearchVariable> & coveredVariables() const override {
-    return _variables;
-  }
+  const std::vector<SearchVar>& coveredVars() const override { return _vars; }
 };
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods

@@ -6,8 +6,9 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
+#include "propagation/views/bool2IntView.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 class Bool2IntNode : public InvariantNode {
  public:
@@ -22,13 +23,14 @@ class Bool2IntNode : public InvariantNode {
   static std::unique_ptr<Bool2IntNode> fromModelConstraint(
       const fznparser::Constraint&, InvariantGraph&);
 
-  void registerOutputVariables(InvariantGraph&, Engine& engine) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
-  void registerNode(InvariantGraph&, Engine& engine) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] VarNodeId input() const noexcept {
     return staticInputVarNodeIds().front();
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

@@ -7,16 +7,16 @@
 #include <unordered_map>
 #include <vector>
 
-#include "core/domains.hpp"
-#include "core/engine.hpp"
 #include "invariantgraph/types.hpp"
+#include "propagation/solver.hpp"
+#include "propagation/views/inDomain.hpp"
+#include "propagation/views/inSparseDomain.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 #include "search/searchVariable.hpp"
+#include "utils/domains.hpp"
 #include "utils/variant.hpp"
-#include "views/inDomain.hpp"
-#include "views/inSparseDomain.hpp"
 
-namespace invariantgraph {
+namespace atlantis::invariantgraph {
 
 /**
  * The types that can be in an array of search variables.
@@ -33,17 +33,18 @@ class InvariantNode;   // Forward declaration
  */
 class VarNode {
  public:
-  using FZNVariable = std::variant<fznparser::BoolVar, fznparser::IntVar>;
-  using VariableMap = std::unordered_map<VarNodeId, VarId, VarNodeIdHash>;
+  using FZNVar = std::variant<fznparser::BoolVar, fznparser::IntVar>;
+  using VarMap =
+      std::unordered_map<VarNodeId, propagation::VarId, VarNodeIdHash>;
   float SPARSE_MIN_DENSENESS{0.6};
 
  private:
   VarNodeId _varNodeId;
-  std::optional<FZNVariable> _variable;
+  std::optional<FZNVar> _var;
   SearchDomain _domain;
   const bool _isIntVar;
-  VarId _varId{NULL_ID};
-  VarId _domainViolationId{NULL_ID};
+  propagation::VarId _varId{propagation::NULL_ID};
+  propagation::VarId _domainViolationId{propagation::NULL_ID};
 
   std::vector<InvariantNodeId> _inputTo;
   std::vector<InvariantNodeId> _staticInputTo;
@@ -54,9 +55,9 @@ class VarNode {
   /**
    * Construct a variable node which is associated with a model variable.
    *
-   * @param variable The model variable this node is associated with.
+   * @param var The model variable this node is associated with.
    */
-  explicit VarNode(VarNodeId, const FZNVariable& variable);
+  explicit VarNode(VarNodeId, const FZNVar& var);
 
   /**
    * Construct a variable node which is not associated with a model variable.
@@ -78,21 +79,23 @@ class VarNode {
    * @return The model variable this node is associated with, or std::nullopt
    * if no model variable is associated with this node.
    */
-  [[nodiscard]] std::optional<FZNVariable> variable() const;
+  [[nodiscard]] std::optional<FZNVar> var() const;
 
   [[nodiscard]] std::string identifier() const;
 
   /**
-   * @return The model VarId this node is associated with, or NULL_ID
-   * if no VarId is associated with this node.
+   * @return The model propagation::VarId this node is associated
+   * with, or propagation::NULL_ID if no propagation::VarId is
+   * associated with this node.
    */
-  [[nodiscard]] VarId varId() const;
+  [[nodiscard]] propagation::VarId varId() const;
 
   /**
-   * @return The model VarId this node is associated with, or NULL_ID
-   * if no VarId is associated with this node.
+   * @return The model propagation::VarId this node is associated
+   * with, or propagation::NULL_ID if no propagation::VarId is
+   * associated with this node.
    */
-  void setVarId(VarId varId);
+  void setVarId(propagation::VarId varId);
 
   [[nodiscard]] const SearchDomain& constDomain() const noexcept;
 
@@ -109,13 +112,15 @@ class VarNode {
   [[nodiscard]] bool isIntVar() const noexcept;
 
   /**
-   * @return if the bound range of the corresponding IntVar in engine is a
+   * @return if the bound range of the corresponding IntVar in solver is a
    * sub-set of SearchDomain _domain, then returns an empty vector, otherwise
    * the relative complement of varLb..varUb in SearchDomain is returned
    */
-  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(const Engine&);
+  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(
+      const propagation::SolverBase&);
 
-  VarId postDomainConstraint(Engine&, std::vector<DomainEntry>&&);
+  propagation::VarId postDomainConstraint(propagation::SolverBase&,
+                                          std::vector<DomainEntry>&&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;
 
@@ -187,4 +192,4 @@ class VarNode {
   [[nodiscard]] std::optional<Int> constantValue() const noexcept;
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

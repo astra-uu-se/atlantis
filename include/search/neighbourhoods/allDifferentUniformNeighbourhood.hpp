@@ -1,25 +1,27 @@
 #pragma once
 
+#include <algorithm>
+
 #include "neighbourhood.hpp"
 #include "search/randomProvider.hpp"
 #include "search/searchVariable.hpp"
 
-namespace search::neighbourhoods {
+namespace atlantis::search::neighbourhoods {
 
 class AllDifferentUniformNeighbourhood : public Neighbourhood {
  private:
-  std::vector<search::SearchVariable> _variables;
+  std::vector<search::SearchVar> _vars;
   std::vector<Int> _domain;
-  const Engine& _engine;
+  const propagation::SolverBase& _solver;
 
   std::vector<size_t> _domIndices{};
   Int _offset{0};
-  size_t _freeVariables{0};
+  size_t _freeVars{0};
 
  public:
-  AllDifferentUniformNeighbourhood(
-      std::vector<search::SearchVariable>&& variables, std::vector<Int> domain,
-      const Engine& engine);
+  AllDifferentUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
+                                   std::vector<Int> domain,
+                                   const propagation::SolverBase& solver);
 
   ~AllDifferentUniformNeighbourhood() override = default;
 
@@ -28,9 +30,7 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  const std::vector<SearchVariable>& coveredVariables() const override {
-    return _variables;
-  }
+  const std::vector<SearchVar>& coveredVars() const override { return _vars; }
 
  private:
   bool swapValues(RandomProvider& random, Assignment& assignment,
@@ -39,4 +39,4 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
                    Annealer& annealer);
 };
 
-}  // namespace search::neighbourhoods
+}  // namespace atlantis::search::neighbourhoods
