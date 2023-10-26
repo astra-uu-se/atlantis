@@ -16,7 +16,7 @@ BoolClauseNode::BoolClauseNode(std::vector<VarNodeId>&& as,
       _bs(std::move(bs)) {}
 
 std::unique_ptr<BoolClauseNode> BoolClauseNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   if (constraint.arguments().size() != 2 &&

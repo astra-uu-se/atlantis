@@ -1,7 +1,7 @@
 #pragma once
 
 #include <fznparser/model.hpp>
-
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/invariantNodes/arrayIntElementNode.hpp"
@@ -16,7 +16,7 @@ class ArrayBoolElementNode : public InvariantNode {
   }
 
   static std::unique_ptr<ArrayIntElementNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 };
 
 }  // namespace invariantgraph

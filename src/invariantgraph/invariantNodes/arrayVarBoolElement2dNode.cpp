@@ -14,7 +14,7 @@ ArrayVarBoolElement2dNode::ArrayVarBoolElement2dNode(
 
 std::unique_ptr<ArrayVarBoolElement2dNode>
 ArrayVarBoolElement2dNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   const fznparser::IntArg& idx1 =

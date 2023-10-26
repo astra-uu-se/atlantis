@@ -18,7 +18,7 @@ BoolLinEqNode::BoolLinEqNode(std::vector<Int>&& coeffs,
       _c(c) {}
 
 std::unique_ptr<BoolLinEqNode> BoolLinEqNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   if (constraint.arguments().size() != 3 &&

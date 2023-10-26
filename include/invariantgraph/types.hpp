@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <functional>
 
+#include "../types.hpp"
+
 namespace atlantis::invariantgraph {
 
 struct NodeId {
@@ -71,4 +73,10 @@ struct InvariantNodeIdHash {
   }
 };
 
-}  // namespace invariantgraph
+struct InvariantGraphOutputVarArray {
+  std::string identifier;
+  std::vector<Int> indexSetSizes;
+  std::vector<invariantgraph::VarNodeId> varNodeIds;
+};
+
+}  // namespace atlantis::invariantgraph

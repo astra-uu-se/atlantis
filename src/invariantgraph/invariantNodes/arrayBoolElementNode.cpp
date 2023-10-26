@@ -5,7 +5,7 @@
 namespace atlantis::invariantgraph {
 
 std::unique_ptr<ArrayIntElementNode> ArrayBoolElementNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   const fznparser::IntArg& idx =

@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/pow.hpp"
@@ -20,9 +21,10 @@ class IntPowNode : public InvariantNode {
   }
 
   static std::unique_ptr<IntPowNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -34,4 +36,4 @@ class IntPowNode : public InvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

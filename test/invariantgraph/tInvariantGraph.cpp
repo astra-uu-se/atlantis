@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "invariantgraph/invariantGraph.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
 #include "invariantgraph/invariantNodes/arrayVarIntElementNode.hpp"
 #include "invariantgraph/invariantNodes/intLinearNode.hpp"
@@ -14,7 +14,7 @@ using namespace atlantis::invariantgraph;
 
 TEST(InvariantGraphTest, apply_result) {
   fznparser::Model model;
-  InvariantGraph invariantGraph;
+  FznInvariantGraph invariantGraph;
 
   const fznparser::IntVar& a =
       std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "a")));
@@ -23,9 +23,15 @@ TEST(InvariantGraphTest, apply_result) {
   const fznparser::IntVar& c =
       std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "c")));
 
+  EXPECT_FALSE(invariantGraph.containsVarNode(a.identifier()));
   auto aNode = invariantGraph.createVarNode(a);
+  EXPECT_TRUE(invariantGraph.containsVarNode(a.identifier()));
+  EXPECT_FALSE(invariantGraph.containsVarNode(b.identifier()));
   auto bNode = invariantGraph.createVarNode(b);
+  EXPECT_TRUE(invariantGraph.containsVarNode(b.identifier()));
+  EXPECT_FALSE(invariantGraph.containsVarNode(c.identifier()));
   auto cNode = invariantGraph.createVarNode(c);
+  EXPECT_TRUE(invariantGraph.containsVarNode(c.identifier()));
 
   invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
       std::vector<Int>{1, 1}, std::vector<VarNodeId>{aNode, bNode}, cNode, -1,
@@ -36,16 +42,14 @@ TEST(InvariantGraphTest, apply_result) {
           std::vector<VarNodeId>{aNode, bNode})));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 3);
-  std::unordered_set<std::string> varNames;
-  for (const auto& [varId, var] : result.varIdentifiers()) {
-    varNames.emplace(var);
-  }
-  EXPECT_TRUE(varNames.contains(a.identifier()));
-  EXPECT_TRUE(varNames.contains(b.identifier()));
-  EXPECT_TRUE(varNames.contains(c.identifier()));
+  EXPECT_NE(invariantGraph.varNode(a.identifier()).varId(),
+            propagation::NULL_ID);
+  EXPECT_NE(invariantGraph.varNode(b.identifier()).varId(),
+            propagation::NULL_ID);
+  EXPECT_NE(invariantGraph.varNode(c.identifier()).varId(),
+            propagation::NULL_ID);
 }
 
 TEST(InvariantGraphTest, ApplyGraph) {
@@ -74,7 +78,7 @@ TEST(InvariantGraphTest, ApplyGraph) {
       std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 40, "sum")))
           .identifier();
 
-  InvariantGraph invariantGraph;
+  FznInvariantGraph invariantGraph;
   const VarNodeId a1NodeId =
       invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(a1)));
   const VarNodeId a2NodeId =
@@ -104,9 +108,8 @@ TEST(InvariantGraphTest, ApplyGraph) {
       sumNodeId, -1, 0)));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 7);
   // 7 variables + dummy objective
   EXPECT_EQ(solver.numVars(), 8);
   EXPECT_EQ(solver.numInvariants(), 3);
@@ -146,7 +149,7 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
       std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 20, "x")))
           .identifier();
 
-  InvariantGraph invariantGraph;
+  FznInvariantGraph invariantGraph;
   const VarNodeId aNodeId =
       invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(a)));
   const VarNodeId bNodeId =
@@ -166,9 +169,8 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
       -1, 0));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 5);
   // a, b, c, d, x
   // x_copy
   // violation for equal constraint (x == x_copy)
@@ -181,7 +183,7 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
 
 TEST(InvariantGraphTest, SplitGraph) {
   fznparser::Model model;
-  InvariantGraph invariantGraph;
+  FznInvariantGraph invariantGraph;
   /* Graph:
    *
    * 0_0 0_1   0_0 0_1      n_0 n_1
@@ -232,9 +234,8 @@ TEST(InvariantGraphTest, SplitGraph) {
   }
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), numInvariants * numInputs + 1);
   // Each invariant has numInputs inputs
   // Each invariant has 1 output
   // There is one violation for the AllDiff
@@ -245,7 +246,7 @@ TEST(InvariantGraphTest, SplitGraph) {
 
 TEST(InvariantGraphTest, BreakSimpleCycle) {
   fznparser::Model model;
-  InvariantGraph invariantGraph;
+  FznInvariantGraph invariantGraph;
   /* Graph:
    *
    *      +---------------+
@@ -293,9 +294,8 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
       -1, 0)));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 4);
   // a, b, x, y
   // the pivot
   // The Equality (x == pivot) violation
@@ -310,7 +310,7 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
 
 TEST(InvariantGraphTest, BreakElementIndexCycle) {
   fznparser::Model model;
-  InvariantGraph invariantGraph;
+  FznInvariantGraph invariantGraph;
   /* Graph:
    *
    *       a   b        c   d
@@ -367,9 +367,8 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
           xNodeId, std::vector<VarNodeId>{cNodeId, dNodeId}, yNodeId, 1)));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 6);
   // a, b, c, d, x, y
   // the pivot
   // The Equality violation
@@ -384,7 +383,7 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
 
 TEST(InvariantGraphTest, AllowDynamicCycle) {
   fznparser::Model model;
-  InvariantGraph invariantGraph;
+  FznInvariantGraph invariantGraph;
   /* Graph:
    *
    *          +-------------------+
@@ -442,9 +441,8 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
           cNodeId, std::vector<VarNodeId>{xNodeId, dNodeId}, yNodeId, 1)));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 6);
   // a, b, c, d, x, y
   // dummy objective
   // (no violations)

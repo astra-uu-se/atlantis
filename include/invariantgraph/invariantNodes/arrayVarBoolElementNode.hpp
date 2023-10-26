@@ -2,6 +2,7 @@
 
 #include <fznparser/model.hpp>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/elementVar.hpp"
@@ -23,9 +24,10 @@ class ArrayVarBoolElementNode : public InvariantNode {
   }
 
   static std::unique_ptr<ArrayVarBoolElementNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -34,4 +36,4 @@ class ArrayVarBoolElementNode : public InvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

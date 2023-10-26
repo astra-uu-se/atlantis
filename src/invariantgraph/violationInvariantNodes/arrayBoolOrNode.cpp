@@ -11,7 +11,7 @@ ArrayBoolOrNode::ArrayBoolOrNode(std::vector<VarNodeId>&& as, bool shouldHold)
     : ViolationInvariantNode(std::move(as), shouldHold) {}
 
 std::unique_ptr<ArrayBoolOrNode> ArrayBoolOrNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   if (constraint.arguments().size() != 2) {

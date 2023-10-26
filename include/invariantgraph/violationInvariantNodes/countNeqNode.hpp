@@ -3,14 +3,15 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/violationInvariants/equal.hpp"
-#include "propagation/violationInvariants/notEqual.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/count.hpp"
 #include "propagation/invariants/countConst.hpp"
 #include "propagation/views/equalConst.hpp"
 #include "propagation/views/notEqualConst.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::invariantgraph {
 class CountNeqNode : public ViolationInvariantNode {
@@ -58,9 +59,10 @@ class CountNeqNode : public ViolationInvariantNode {
   }
 
   static std::unique_ptr<CountNeqNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -68,4 +70,4 @@ class CountNeqNode : public ViolationInvariantNode {
 
   [[nodiscard]] VarNodeId cVarNode() const;
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

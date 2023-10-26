@@ -12,7 +12,7 @@ SetInNode::SetInNode(VarNodeId input, std::vector<Int>&& values,
     : ViolationInvariantNode({input}, shouldHold), _values(std::move(values)) {}
 
 std::unique_ptr<SetInNode> SetInNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   const VarNodeId varNodeId = invariantGraph.createVarNode(

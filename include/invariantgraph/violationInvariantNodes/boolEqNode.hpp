@@ -3,10 +3,11 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/violationInvariants/boolEqual.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/boolXor.hpp"
+#include "propagation/violationInvariants/boolEqual.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -22,9 +23,10 @@ class BoolEqNode : public ViolationInvariantNode {
   }
 
   static std::unique_ptr<BoolEqNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -36,4 +38,4 @@ class BoolEqNode : public ViolationInvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

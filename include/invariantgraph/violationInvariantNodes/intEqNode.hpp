@@ -3,10 +3,11 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/violationInvariants/equal.hpp"
-#include "propagation/violationInvariants/notEqual.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -22,9 +23,10 @@ class IntEqNode : public ViolationInvariantNode {
   }
 
   static std::unique_ptr<IntEqNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -36,4 +38,4 @@ class IntEqNode : public ViolationInvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

@@ -11,7 +11,7 @@ AllEqualNode::AllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold)
     : ViolationInvariantNode(std::move(vars), shouldHold) {}
 
 std::unique_ptr<AllEqualNode> AllEqualNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   if (constraint.arguments().empty() || constraint.arguments().size() > 2) {
     throw std::runtime_error("AllEqual constraint takes one or two arguments");
   }

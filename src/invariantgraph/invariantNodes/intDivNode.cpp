@@ -9,7 +9,7 @@ IntDivNode::IntDivNode(VarNodeId a, VarNodeId b, VarNodeId output)
 
 std::unique_ptr<invariantgraph::IntDivNode>
 invariantgraph::IntDivNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   const fznparser::IntArg& a =

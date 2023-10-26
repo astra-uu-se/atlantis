@@ -4,6 +4,7 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/minSparse.hpp"
@@ -21,10 +22,11 @@ class ArrayIntMinimumNode : public InvariantNode {
   }
 
   static std::unique_ptr<ArrayIntMinimumNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

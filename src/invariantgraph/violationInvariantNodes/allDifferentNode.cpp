@@ -12,7 +12,7 @@ AllDifferentNode::AllDifferentNode(std::vector<VarNodeId>&& vars,
     : ViolationInvariantNode(std::move(vars), shouldHold) {}
 
 std::unique_ptr<AllDifferentNode> AllDifferentNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   if (constraint.arguments().empty() || constraint.arguments().size() > 2) {

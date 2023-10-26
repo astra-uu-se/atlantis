@@ -14,7 +14,7 @@ ArrayVarIntElement2dNode::ArrayVarIntElement2dNode(
 
 std::unique_ptr<ArrayVarIntElement2dNode>
 ArrayVarIntElement2dNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   const fznparser::IntArg& idx1 =

@@ -13,7 +13,7 @@ IntLinearNode::IntLinearNode(std::vector<Int>&& coeffs,
       _sum(sum) {}
 
 std::unique_ptr<IntLinearNode> IntLinearNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   std::vector<Int> coeffs =

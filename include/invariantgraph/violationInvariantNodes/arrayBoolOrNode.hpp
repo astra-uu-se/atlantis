@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "fznparser/model.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/exists.hpp"
@@ -24,11 +25,12 @@ class ArrayBoolOrNode : public ViolationInvariantNode {
   }
 
   static std::unique_ptr<ArrayBoolOrNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

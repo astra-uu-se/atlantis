@@ -18,7 +18,7 @@ IntLinEqNode::IntLinEqNode(std::vector<Int>&& coeffs,
       _c(c) {}
 
 std::unique_ptr<IntLinEqNode> IntLinEqNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   std::vector<Int> coeffs =

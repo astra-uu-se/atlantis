@@ -3,8 +3,7 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/violationInvariants/lessEqual.hpp"
-#include "propagation/violationInvariants/lessThan.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/count.hpp"
@@ -13,6 +12,8 @@
 #include "propagation/views/greaterEqualConst.hpp"
 #include "propagation/views/lessEqualConst.hpp"
 #include "propagation/views/notEqualConst.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
+#include "propagation/violationInvariants/lessThan.hpp"
 
 namespace atlantis::invariantgraph {
 class CountGeqNode : public ViolationInvariantNode {
@@ -54,16 +55,16 @@ class CountGeqNode : public ViolationInvariantNode {
   explicit CountGeqNode(std::vector<VarNodeId>&& x, Int yParameter,
                         Int cParameter, bool shouldHold);
 
-  static std::vector<std::pair<std::string, size_t>>
-  acceptedNameNumArgPairs() {
+  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{
         {"fzn_count_geq", 3}, {"fzn_count_geq_reif", 4}};
   }
 
   static std::unique_ptr<CountGeqNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -71,4 +72,4 @@ class CountGeqNode : public ViolationInvariantNode {
 
   [[nodiscard]] VarNodeId cVarNode() const;
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

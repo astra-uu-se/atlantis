@@ -3,6 +3,7 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/boolLinear.hpp"
@@ -29,10 +30,10 @@ class BoolClauseNode : public ViolationInvariantNode {
   }
 
   static std::unique_ptr<BoolClauseNode> fromModelConstraint(
-      const fznparser::Constraint& constraint, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
-                               propagation::SolverBase& solver) override;
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 

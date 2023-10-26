@@ -12,7 +12,7 @@ BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold)
                              shouldHold) {}
 
 std::unique_ptr<BoolEqNode> BoolEqNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   if (constraint.arguments().size() != 2 &&

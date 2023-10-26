@@ -3,6 +3,7 @@
 #include <fznparser/model.hpp>
 #include <numeric>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/implicitConstraintNode.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
@@ -21,7 +22,7 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
   }
 
   static std::unique_ptr<CircuitImplicitNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(

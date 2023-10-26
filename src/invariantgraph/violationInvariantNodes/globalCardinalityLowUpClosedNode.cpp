@@ -23,7 +23,7 @@ GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
 
 std::unique_ptr<GlobalCardinalityLowUpClosedNode>
 GlobalCardinalityLowUpClosedNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   std::vector<VarNodeId> inputs = invariantGraph.createVarNodes(

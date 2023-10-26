@@ -2,6 +2,7 @@
 
 #include <fznparser/model.hpp>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "invariantgraph/invariantNodes/arrayIntElement2dNode.hpp"
@@ -17,7 +18,7 @@ class ArrayBoolElement2dNode : public InvariantNode {
   }
 
   static std::unique_ptr<ArrayIntElement2dNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

@@ -4,10 +4,10 @@
 #include <utility>
 
 #include "fznparser/model.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/types.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 #include "types.hpp"
 #include "utils/variant.hpp"
 
@@ -25,7 +25,7 @@ class Objective {
  public:
   Objective(propagation::Solver& solver, fznparser::ProblemType problemType);
 
-  propagation::VarId registerNode(propagation::VarId totalViolationId,
+  propagation::VarId registerNode(propagation::VarId totalViolationVarId,
                                   propagation::VarId objectiveVarId);
 
   void tighten();

@@ -3,12 +3,13 @@
 #include <algorithm>
 #include <utility>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/boolLinear.hpp"
 #include "propagation/views/greaterEqualConst.hpp"
 #include "propagation/views/lessEqualConst.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -30,7 +31,7 @@ class BoolLinLeNode : public ViolationInvariantNode {
   }
 
   static std::unique_ptr<BoolLinLeNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

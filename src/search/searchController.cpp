@@ -3,7 +3,7 @@
 namespace atlantis::search {
 
 bool SearchController::shouldRun(const Assignment&) {
-  if (_foundSolution && _model.isSatisfactionProblem()) {
+  if (_foundSolution && _isSatisfactionProblem) {
     return false;
   }
 
@@ -16,15 +16,10 @@ bool SearchController::shouldRun(const Assignment&) {
   return true;
 }
 
-static void printSolution(const fznparser::Model& model,
-                          const Assignment& assignment,
-                          const SearchController::VarMap& varMap);
-
 void SearchController::onSolution(const Assignment& assignment) {
   assert(assignment.satisfiesConstraints());
-
   _foundSolution = true;
-  printSolution(_model, assignment, _varMap);
+  printSolution(assignment);
 }
 
 void SearchController::onFinish() const {
@@ -33,15 +28,34 @@ void SearchController::onFinish() const {
   }
 }
 
-static void printSearchVar(const std::string& searchVar,
-                           const Assignment& assignment,
-                           const SearchController::VarMap& varMap) {
-  std::cout << searchVar << " = " << assignment.value(varMap.at(searchVar))
-            << ";\n";
+std::string toIntString(const Assignment& assignment,
+                        const std::variant<propagation::VarId, Int>& var) {
+  return std::to_string(
+      std::holds_alternative<Int>(var)
+          ? std::get<Int>(var)
+          : assignment.value(std::get<propagation::VarId>(var)));
 }
 
-std::string toString(bool b) { return b ? "true" : "false"; }
-std::string toString(Int i) { return std::to_string(i); }
+std::string toBoolString(const Assignment& assignment,
+                         const std::variant<propagation::VarId, Int>& var) {
+  return ((std::holds_alternative<Int>(var)
+               ? std::get<Int>(var)
+               : assignment.value(std::get<propagation::VarId>(var))) == 0)
+             ? "true"
+             : "false";
+}
+
+void SearchController::printBoolVar(const Assignment& assignment,
+                                    const FznOutputVar& outputVar) const {
+  std::cout << outputVar.identifier << " = "
+            << toBoolString(assignment, outputVar.var) << ";\n";
+}
+
+void SearchController::printIntVar(const Assignment& assignment,
+                                   const FznOutputVar& outputVar) const {
+  std::cout << outputVar.identifier << " = "
+            << toIntString(assignment, outputVar.var) << ";\n";
+}
 
 std::string arrayVarPrefix(const std::vector<Int>& indexSetSizes) {
   std::string s = " = array" + std::to_string(indexSetSizes.size()) + "d(";
@@ -53,89 +67,50 @@ std::string arrayVarPrefix(const std::vector<Int>& indexSetSizes) {
   return s;
 }
 
-static void printVarArray(const fznparser::BoolVarArray& varArray,
-                          const Assignment& assignment,
-                          const SearchController::VarMap& varMap) {
-  const std::vector<Int>& outputIndexSetSizes = varArray.outputIndexSetSizes();
-
-  std::cout << varArray.identifier() << arrayVarPrefix(outputIndexSetSizes)
+void SearchController::printBoolVarArray(
+    const Assignment& assignment, const FznOutputVarArray& varArray) const {
+  std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
             << '[';
 
-  for (auto i = 0u; i < varArray.size(); ++i) {
+  for (size_t i = 0; i < varArray.vars.size(); ++i) {
     if (i != 0) {
       std::cout << ", ";
     }
-    if (std::holds_alternative<bool>(varArray[i])) {
-      std::cout << toString(std::get<bool>(varArray[i]));
-    } else {
-      const fznparser::BoolVar& var =
-          std::get<std::reference_wrapper<const fznparser::BoolVar>>(
-              varArray[i])
-              .get();
-
-      if (var.isFixed()) {
-        std::cout << toString(var.lowerBound());
-        continue;
-      }
-
-      assert(varMap.contains(var.identifier()));
-
-      std::cout << toString(assignment.value(varMap.at(var.identifier())) == 0);
-    }
+    std::cout << toBoolString(assignment, varArray.vars[i]);
   }
 
   std::cout << "]);\n";
 }
 
-static void printVarArray(const fznparser::IntVarArray& varArray,
-                          const Assignment& assignment,
-                          const SearchController::VarMap& varMap) {
-  const std::vector<Int>& outputIndexSetSizes = varArray.outputIndexSetSizes();
-
-  std::cout << varArray.identifier() << arrayVarPrefix(outputIndexSetSizes)
+void SearchController::printIntVarArray(
+    const Assignment& assignment, const FznOutputVarArray& varArray) const {
+  std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
             << '[';
 
-  for (auto i = 0u; i < varArray.size(); ++i) {
+  for (size_t i = 0; i < varArray.vars.size(); ++i) {
     if (i != 0) {
       std::cout << ", ";
     }
-    if (std::holds_alternative<Int>(varArray[i])) {
-      std::cout << std::get<Int>(varArray[i]);
-    } else {
-      const fznparser::IntVar& var =
-          std::get<std::reference_wrapper<const fznparser::IntVar>>(varArray[i])
-              .get();
-      if (var.isFixed()) {
-        std::cout << var.lowerBound();
-        continue;
-      }
-
-      assert(varMap.contains(var.identifier()));
-
-      std::cout << assignment.value(varMap.at(var.identifier()));
-    }
+    std::cout << toIntString(assignment, varArray.vars[i]);
   }
 
   std::cout << "]);\n";
 }
-
-static void printSolution(const fznparser::Model& model,
-                          const Assignment& assignment,
-                          const SearchController::VarMap& varMap) {
-  for (const auto& [identifier, var] : model.vars()) {
-    if (!var.isOutput()) {
-      continue;
-    }
-    if (std::holds_alternative<fznparser::BoolVarArray>(var)) {
-      printVarArray(std::get<fznparser::BoolVarArray>(var), assignment, varMap);
-    } else if (std::holds_alternative<fznparser::IntVarArray>(var)) {
-      printVarArray(std::get<fznparser::IntVarArray>(var), assignment, varMap);
-    } else {
-      printSearchVar(identifier, assignment, varMap);
-    }
+void SearchController::printSolution(const Assignment& assignment) const {
+  for (const auto& outputVar : _outputBoolVars) {
+    printBoolVar(assignment, outputVar);
+  }
+  for (const auto& outputVar : _outputIntVars) {
+    printIntVar(assignment, outputVar);
+  }
+  for (const auto& outputVarArray : _outputBoolVarArrays) {
+    printBoolVarArray(assignment, outputVarArray);
+  }
+  for (const auto& outputVarArray : _outputIntVarArrays) {
+    printIntVarArray(assignment, outputVarArray);
   }
 
-  std::cout << "----------" << std::endl;
+  std::cout << "----------\n";
 }
 
 }  // namespace atlantis::search

@@ -3,14 +3,15 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/violationInvariants/equal.hpp"
-#include "propagation/violationInvariants/globalCardinalityConst.hpp"
-#include "propagation/violationInvariants/notEqual.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/exists.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/views/notEqualConst.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/violationInvariants/globalCardinalityConst.hpp"
+#include "propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::invariantgraph {
 class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
@@ -39,10 +40,11 @@ class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
   }
 
   static std::unique_ptr<GlobalCardinalityLowUpClosedNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

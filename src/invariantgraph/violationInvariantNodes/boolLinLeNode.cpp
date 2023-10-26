@@ -19,7 +19,7 @@ BoolLinLeNode::BoolLinLeNode(std::vector<Int> coeffs,
       _bound(bound) {}
 
 std::unique_ptr<BoolLinLeNode> BoolLinLeNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));

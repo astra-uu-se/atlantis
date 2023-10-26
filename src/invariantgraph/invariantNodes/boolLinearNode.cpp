@@ -13,7 +13,7 @@ BoolLinearNode::BoolLinearNode(std::vector<Int>&& coeffs,
       _sum(sum) {}
 
 std::unique_ptr<BoolLinearNode> BoolLinearNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   std::vector<Int> coeffs =

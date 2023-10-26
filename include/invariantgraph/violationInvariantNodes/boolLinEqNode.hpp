@@ -2,12 +2,13 @@
 
 #include <fznparser/model.hpp>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/violationInvariants/equal.hpp"
 #include "propagation/invariants/boolLinear.hpp"
 #include "propagation/views/equalConst.hpp"
 #include "propagation/views/notEqualConst.hpp"
+#include "propagation/violationInvariants/equal.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -19,21 +20,21 @@ class BoolLinEqNode : public ViolationInvariantNode {
   propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
-  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                Int c, VarNodeId r);
+  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars, Int c,
+                VarNodeId r);
 
-  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                Int c, bool shouldHold);
+  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars, Int c,
+                bool shouldHold);
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{{"bool_lin_eq", 3}};
   }
 
   static std::unique_ptr<BoolLinEqNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
-                               propagation::SolverBase& solver) override;
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 

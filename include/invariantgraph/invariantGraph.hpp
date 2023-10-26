@@ -15,63 +15,11 @@
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/types.hpp"
 #include "search/neighbourhoods/neighbourhoodCombinator.hpp"
 #include "utils/fznAst.hpp"
 
 namespace atlantis::invariantgraph {
-
-class InvariantGraphApplyResult {
- public:
-  using VarIdentifiers = std::unordered_map<propagation::VarId, std::string,
-                                            propagation::VarIdHash>;
-
- private:
-  VarIdentifiers _varIdentifiers;
-
-  std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
-  propagation::VarId _totalViolationId;
-  propagation::VarId _objectiveVarId;
-
- public:
-  InvariantGraphApplyResult(
-      VarIdentifiers&& varIdentifiers,
-      std::vector<std::unique_ptr<ImplicitConstraintNode>>&&
-          implicitConstraints,
-      propagation::VarId totalViolationId, propagation::VarId objectiveVarId)
-      : _varIdentifiers(std::move(varIdentifiers)),
-        _implicitConstraintNodes(std::move(implicitConstraints)),
-        _totalViolationId(totalViolationId),
-        _objectiveVarId(objectiveVarId) {}
-
-  [[nodiscard]] const VarIdentifiers& varIdentifiers() const noexcept {
-    return _varIdentifiers;
-  }
-
-  [[nodiscard]] search::neighbourhoods::NeighbourhoodCombinator neighbourhood()
-      const noexcept {
-    std::vector<std::shared_ptr<search::neighbourhoods::Neighbourhood>>
-        neighbourhoods;
-
-    for (auto const& implicitContraint : _implicitConstraintNodes) {
-      std::shared_ptr<search::neighbourhoods::Neighbourhood> neighbourhood =
-          implicitContraint->neighbourhood();
-      if (neighbourhood != nullptr) {
-        neighbourhoods.push_back(std::move(neighbourhood));
-      }
-    }
-
-    return search::neighbourhoods::NeighbourhoodCombinator(
-        std::move(neighbourhoods));
-  }
-
-  [[nodiscard]] propagation::VarId totalViolationId() const noexcept {
-    return _totalViolationId;
-  }
-
-  [[nodiscard]] propagation::VarId objectiveVarId() const noexcept {
-    return _objectiveVarId;
-  }
-};
 
 class InvariantGraph {
  private:
@@ -82,12 +30,12 @@ class InvariantGraph {
 
   std::vector<std::unique_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
-  VarNodeId _objectiveVarNodeId;
-
-  std::unordered_map<std::string, VarNodeId> _outputVars;
-  std::unordered_map<std::string, std::vector<VarNodeId>> _outputArrays;
 
   void populateRootNode();
+
+ protected:
+  propagation::VarId _totalViolationVarId;
+  VarNodeId _objectiveVarNodeId;
 
  public:
   InvariantGraph();
@@ -95,46 +43,54 @@ class InvariantGraph {
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
 
-  // TODO: This should be changed to be references and wrapped_reference
-  // vectors!
-  VarNodeId createVarNode(bool);
-  VarNodeId createVarNode(const fznparser::BoolVar&);
-  VarNodeId createVarNode(std::reference_wrapper<const fznparser::BoolVar>);
-  VarNodeId createVarNode(const fznparser::BoolArg&);
+  [[nodiscard]] bool containsVarNode(
+      const std::string& identifier) const noexcept;
+  [[nodiscard]] bool containsVarNode(Int) const noexcept;
+  [[nodiscard]] bool containsVarNode(bool) const noexcept;
 
+  VarNodeId createVarNode(bool);
+  VarNodeId createVarNode(bool, const std::string&);
   VarNodeId createVarNode(Int);
-  VarNodeId createVarNode(const fznparser::IntVar&);
-  VarNodeId createVarNode(const fznparser::IntArg&);
-  VarNodeId createVarNode(std::reference_wrapper<const fznparser::IntVar>);
+  VarNodeId createVarNode(Int, const std::string&);
 
   VarNodeId createVarNode(const SearchDomain&, bool isIntVar);
+  VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
+                          const std::string&);
   VarNodeId createVarNode(const VarNode&);
 
-  std::vector<VarNodeId> createVarNodes(const fznparser::BoolVarArray&);
-  std::vector<VarNodeId> createVarNodes(const fznparser::IntVarArray&);
+  [[nodiscard]] VarNode& varNode(const std::string& identifier);
+  [[nodiscard]] VarNode& varNode(VarNodeId id);
 
-  VarNode& varNode(const std::string& identifier);
-  VarNode& varNode(VarNodeId id);
+  [[nodiscard]] const VarNode& varNodeConst(
+      const std::string& identifier) const;
+  [[nodiscard]] const VarNode& varNodeConst(VarNodeId id) const;
 
-  propagation::VarId varId(const std::string& identifier) const;
-  propagation::VarId varId(VarNodeId id) const;
+  [[nodiscard]] propagation::VarId varId(const std::string& identifier) const;
+  [[nodiscard]] propagation::VarId varId(VarNodeId id) const;
 
-  InvariantNode& invariantNode(InvariantNodeId);
-  InvariantGraphRoot& root();
-  ImplicitConstraintNode& implicitConstraintNode(InvariantNodeId);
+  [[nodiscard]] InvariantNode& invariantNode(InvariantNodeId);
+  [[nodiscard]] InvariantGraphRoot& root();
+  [[nodiscard]] ImplicitConstraintNode& implicitConstraintNode(InvariantNodeId);
 
-  InvariantNodeId nextInvariantNodeId() const noexcept;
-  InvariantNodeId nextImplicitNodeId() const noexcept;
+  [[nodiscard]] InvariantNodeId nextInvariantNodeId() const noexcept;
+  [[nodiscard]] InvariantNodeId nextImplicitNodeId() const noexcept;
 
   InvariantNodeId addInvariantNode(std::unique_ptr<InvariantNode>&&);
 
   InvariantNodeId addImplicitConstraintNode(
       std::unique_ptr<ImplicitConstraintNode>&&);
 
+  [[nodiscard]] search::neighbourhoods::NeighbourhoodCombinator neighbourhood()
+      const noexcept;
+
+  [[nodiscard]] propagation::VarId totalViolationVarId() const noexcept;
+
+  [[nodiscard]] propagation::VarId objectiveVarId() const noexcept;
+
   void splitMultiDefinedVars();
   void breakCycles();
 
-  InvariantGraphApplyResult apply(propagation::SolverBase&);
+  void apply(propagation::SolverBase&);
 
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(

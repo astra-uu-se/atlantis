@@ -57,7 +57,7 @@ CountLtNode::CountLtNode(std::vector<VarNodeId>&& x, Int yParameter,
                   cParameter, shouldHold) {}
 
 std::unique_ptr<CountLtNode> CountLtNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   const fznparser::IntVarArray& xArg =

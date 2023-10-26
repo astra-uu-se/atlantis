@@ -9,7 +9,7 @@ ArrayIntMaximumNode::ArrayIntMaximumNode(std::vector<VarNodeId>&& vars,
     : InvariantNode({output}, std::move(vars)) {}
 
 std::unique_ptr<ArrayIntMaximumNode> ArrayIntMaximumNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   const fznparser::IntArg& output =

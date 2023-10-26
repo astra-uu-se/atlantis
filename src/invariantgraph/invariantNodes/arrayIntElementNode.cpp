@@ -9,7 +9,7 @@ ArrayIntElementNode::ArrayIntElementNode(std::vector<Int>&& as, VarNodeId b,
     : InvariantNode({output}, {b}), _as(std::move(as)), _offset(offset) {}
 
 std::unique_ptr<ArrayIntElementNode> ArrayIntElementNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   const fznparser::IntArg& idx =

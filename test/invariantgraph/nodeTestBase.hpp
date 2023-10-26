@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "fznparser/model.hpp"
-#include "invariantgraph/invariantGraph.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/types.hpp"
 #include "propagation/solver.hpp"
 #include "utils/variant.hpp"
@@ -20,13 +20,13 @@ template <typename InvNode>
 class NodeTestBase : public ::testing::Test {
  protected:
   std::unique_ptr<fznparser::Model> _model;
-  std::unique_ptr<InvariantGraph> _invariantGraph;
+  std::unique_ptr<FznInvariantGraph> _invariantGraph;
 
   InvariantNodeId _invNodeId = InvariantNodeId(NULL_NODE_ID);
 
   void SetUp() override {
     _model = std::make_unique<fznparser::Model>();
-    _invariantGraph = std::make_unique<InvariantGraph>();
+    _invariantGraph = std::make_unique<FznInvariantGraph>();
   }
 
   InvNode& invNode() {

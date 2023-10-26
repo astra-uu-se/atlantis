@@ -3,11 +3,12 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/views/equalConst.hpp"
 #include "propagation/views/notEqualConst.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -26,7 +27,7 @@ class AllEqualNode : public ViolationInvariantNode {
   }
 
   static std::unique_ptr<AllEqualNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

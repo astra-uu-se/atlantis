@@ -7,7 +7,7 @@ IntAbsNode::IntAbsNode(VarNodeId staticInput, VarNodeId output)
 
 std::unique_ptr<invariantgraph::IntAbsNode>
 invariantgraph::IntAbsNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   const fznparser::IntArg a =
       std::get<fznparser::IntArg>(constraint.arguments().at(0));
   const fznparser::IntArg b =

@@ -3,6 +3,7 @@
 #include <fznparser/model.hpp>
 #include <utility>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/count.hpp"
@@ -50,9 +51,10 @@ class CountEqNode : public ViolationInvariantNode {
   }
 
   static std::unique_ptr<CountEqNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -70,4 +72,4 @@ class CountEqNode : public ViolationInvariantNode {
     return outputVarNodeIds().back();
   }
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

@@ -6,7 +6,7 @@ Bool2IntNode::Bool2IntNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
 
 std::unique_ptr<Bool2IntNode> Bool2IntNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   const fznparser::BoolArg a =
       std::get<fznparser::BoolArg>(constraint.arguments().at(0));
 

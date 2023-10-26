@@ -10,7 +10,8 @@ CircuitImplicitNode::CircuitImplicitNode(std::vector<VarNodeId>&& vars)
 }
 
 std::unique_ptr<CircuitImplicitNode> CircuitImplicitNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint,
+    FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
 
   const fznparser::IntVarArray& arg =

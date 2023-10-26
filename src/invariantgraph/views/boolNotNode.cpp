@@ -6,7 +6,7 @@ BoolNotNode::BoolNotNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
 
 std::unique_ptr<BoolNotNode> BoolNotNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   const fznparser::BoolArg a =
       std::get<fznparser::BoolArg>(constraint.arguments().at(0));
   const fznparser::BoolArg b =

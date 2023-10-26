@@ -1,8 +1,8 @@
 #pragma once
-
 #include <algorithm>
 #include <utility>
 
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/linear.hpp"
@@ -28,7 +28,7 @@ class IntLinearNode : public InvariantNode {
   }
 
   static std::unique_ptr<IntLinearNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
+      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

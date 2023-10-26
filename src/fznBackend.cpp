@@ -5,6 +5,15 @@ namespace atlantis {
 FznBackend::FznBackend(
     std::filesystem::path modelFile,
     search::AnnealingScheduleFactory annealingScheduleFactory,
+    std::uint_fast32_t seed, std::optional<std::chrono::milliseconds> timeout)
+    : _modelFile(std::move(modelFile)),
+      _annealingScheduleFactory(std::move(annealingScheduleFactory)),
+      _timeout(timeout),
+      _seed(seed) {}
+
+FznBackend::FznBackend(
+    std::filesystem::path modelFile,
+    search::AnnealingScheduleFactory annealingScheduleFactory,
     std::chrono::milliseconds timeout)
     : FznBackend(std::move(modelFile), std::move(annealingScheduleFactory),
                  std::time(nullptr), timeout) {}
@@ -32,24 +41,23 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
 
   fznparser::ProblemType problemType = model.solveType().problemType();
 
-  invariantgraph::InvariantGraphBuilder invariantGraphBuilder(model);
-  auto graph = logger.timed<invariantgraph::InvariantGraph>(
-      "building invariant graph",
-      [&] { return invariantGraphBuilder.build(); });
+  invariantgraph::FznInvariantGraph invariantGraph;
+  logger.timed<void>("building invariant graph",
+                     [&] { return invariantGraph.build(model); });
 
   propagation::Solver solver;
-  auto applicationResult = graph.apply(solver);
-  auto neighbourhood = applicationResult.neighbourhood();
+  invariantGraph.apply(solver);
+  auto neighbourhood = invariantGraph.neighbourhood();
   neighbourhood.printNeighbourhood(logger);
 
   search::Objective searchObjective(solver, problemType);
   solver.open();
   auto violation = searchObjective.registerNode(
-      applicationResult.totalViolationId(), applicationResult.objectiveVarId());
+      invariantGraph.totalViolationVarId(), invariantGraph.objectiveVarId());
   solver.close();
 
   search::Assignment assignment(solver, violation,
-                                applicationResult.objectiveVarId(),
+                                invariantGraph.objectiveVarId(),
                                 getObjectiveDirection(problemType));
 
   logger.debug("Using seed {}.", _seed);
@@ -58,16 +66,17 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   search::SearchProcedure search(random, assignment, neighbourhood,
                                  searchObjective);
 
-  search::SearchController::VarMap flippedMap;
-  for (const auto& [varId, fznVar] : applicationResult.varIdentifiers())
-    flippedMap.emplace(fznVar, varId);
+  const auto& outputBoolVars = invariantGraph.outputBoolVars();
+  const auto& outputIntVars = invariantGraph.outputIntVars();
+  const auto& outputBoolVarArrays = invariantGraph.outputBoolVarArrays();
+  const auto& outputIntVarArrays = invariantGraph.outputIntVarArrays();
 
   search::SearchController searchController = [&] {
     if (_timeout) {
-      return search::SearchController(model, flippedMap, *_timeout);
+      return search::SearchController(model, invariantGraph, *_timeout);
     } else {
       logger.info("Running without timeout.");
-      return search::SearchController(model, flippedMap);
+      return search::SearchController(model, invariantGraph);
     }
   }();
 

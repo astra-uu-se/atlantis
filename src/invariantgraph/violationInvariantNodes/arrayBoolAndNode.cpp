@@ -12,7 +12,7 @@ ArrayBoolAndNode::ArrayBoolAndNode(std::vector<VarNodeId>&& as, bool shouldHold)
     : ViolationInvariantNode(std::move(as), shouldHold) {}
 
 std::unique_ptr<ArrayBoolAndNode> ArrayBoolAndNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
+    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
   assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
   if (constraint.arguments().size() != 2) {
     throw std::runtime_error("ArrayBoolAnd constraint takes two arguments");

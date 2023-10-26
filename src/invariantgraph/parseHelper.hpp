@@ -40,6 +40,8 @@ std::vector<VarNodeId> pruneAllDifferentFixed(
 std::vector<Int> toIntVector(const std::vector<bool>& argument);
 
 /*
+using FznSearchVar = std::variant<fznparser::IntVar, fznparser::BoolVar>;
+
 std::vector<:VarNodeId> mappedVarVector(
     const fznparser::Model& model, const FZNConstraint::Argument& argument,
     const std::function<:VarNodeId(
