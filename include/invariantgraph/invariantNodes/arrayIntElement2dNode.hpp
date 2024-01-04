@@ -1,8 +1,8 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/element2dConst.hpp"
@@ -24,9 +24,6 @@ class ArrayIntElement2dNode : public InvariantNode {
     return std::vector<std::pair<std::string, size_t>>{
         {"array_int_element2d_nonshifted_flat", 7}};
   }
-
-  static std::unique_ptr<ArrayIntElement2dNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

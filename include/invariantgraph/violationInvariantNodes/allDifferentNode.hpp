@@ -1,13 +1,12 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/views/notEqualConst.hpp"
 #include "propagation/violationInvariants/allDifferent.hpp"
+#include "propagation/violationInvariants/int_ne.hpp"
 
 namespace atlantis::invariantgraph {
 class AllDifferentNode : public ViolationInvariantNode {
@@ -19,13 +18,13 @@ class AllDifferentNode : public ViolationInvariantNode {
 
   explicit AllDifferentNode(std::vector<VarNodeId>&& vars, bool shouldHold);
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{
-        {"fzn_all_different_int", 1}, {"fzn_all_different_int_reif", 2}};
-  }
+  bool canBeReplaced() const override;
 
-  static std::unique_ptr<AllDifferentNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  void replace(InvariantGraph&) override;
+
+  bool canBeRemoved() const override;
+
+  void remove() override;
 
   bool prune(InvariantGraph&) override;
 

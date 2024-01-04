@@ -7,6 +7,52 @@
 #include <vector>
 
 #include "invariantGraph.hpp"
+#include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
+#include "invariantgraph/implicitConstraints/circuitImplicitNode.hpp"
+#include "invariantgraph/invariantGraphRoot.hpp"
+#include "invariantgraph/invariantNodes/arrayBoolElement2dNode.hpp"
+#include "invariantgraph/invariantNodes/arrayBoolElementNode.hpp"
+#include "invariantgraph/invariantNodes/arrayIntElement2dNode.hpp"
+#include "invariantgraph/invariantNodes/arrayIntElementNode.hpp"
+#include "invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
+#include "invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
+#include "invariantgraph/invariantNodes/arrayVarBoolElement2dNode.hpp"
+#include "invariantgraph/invariantNodes/arrayVarBoolElementNode.hpp"
+#include "invariantgraph/invariantNodes/arrayVarIntElement2dNode.hpp"
+#include "invariantgraph/invariantNodes/arrayVarIntElementNode.hpp"
+#include "invariantgraph/invariantNodes/boolLinearNode.hpp"
+#include "invariantgraph/invariantNodes/intDivNode.hpp"
+#include "invariantgraph/invariantNodes/intLinearNode.hpp"
+#include "invariantgraph/invariantNodes/intMaxNode.hpp"
+#include "invariantgraph/invariantNodes/intMinNode.hpp"
+#include "invariantgraph/invariantNodes/intModNode.hpp"
+#include "invariantgraph/invariantNodes/intPlusNode.hpp"
+#include "invariantgraph/invariantNodes/intPowNode.hpp"
+#include "invariantgraph/invariantNodes/intTimesNode.hpp"
+#include "invariantgraph/views/bool2IntNode.hpp"
+#include "invariantgraph/views/boolNotNode.hpp"
+#include "invariantgraph/views/intAbsNode.hpp"
+#include "invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
+#include "invariantgraph/violationInvariantNodes/allEqualNode.hpp"
+#include "invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
+#include "invariantgraph/violationInvariantNodes/arrayBoolOrNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolAndNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolClauseNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolEqNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolLeNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolLinEqNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolLinLeNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolLtNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolOrNode.hpp"
+#include "invariantgraph/violationInvariantNodes/boolXorNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intEqNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intLeNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intLinEqNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intLinLeNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intLinNeNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intLtNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intNeNode.hpp"
+#include "invariantgraph/violationInvariantNodes/setInNode.hpp"
 #include "utils/fznAst.hpp"
 #include "utils/fznOutput.hpp"
 #include "utils/variant.hpp"
@@ -22,15 +68,29 @@ class FznInvariantGraph : public InvariantGraph {
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
-  VarNodeId createVarNode(const fznparser::BoolVar&);
-  VarNodeId createVarNode(std::reference_wrapper<const fznparser::BoolVar>);
-  VarNodeId createVarNode(const fznparser::BoolArg&);
-  VarNodeId createVarNode(const fznparser::IntVar&);
-  VarNodeId createVarNode(const fznparser::IntArg&);
-  VarNodeId createVarNode(std::reference_wrapper<const fznparser::IntVar>);
+  VarNodeId createVarNode(bool, bool isDefinedVar);
+  VarNodeId createVarNode(bool, const std::string&, bool isDefinedVar);
+  VarNodeId createVarNode(Int, bool isDefinedVar);
+  VarNodeId createVarNode(Int, const std::string&, bool isDefinedVar);
+  VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
+                          bool isDefinedVar);
+  VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
+                          const std::string&, bool isDefinedVar);
+  VarNodeId createVarNode(const VarNode&, bool isDefinedVar);
 
-  std::vector<VarNodeId> createVarNodes(const fznparser::BoolVarArray&);
-  std::vector<VarNodeId> createVarNodes(const fznparser::IntVarArray&);
+  VarNodeId createVarNode(const fznparser::BoolVar&, bool isDefinedVar);
+  VarNodeId createVarNode(std::reference_wrapper<const fznparser::BoolVar>,
+                          bool isDefinedVar);
+  VarNodeId createVarNode(const fznparser::BoolArg&, bool isDefinedVar);
+  VarNodeId createVarNode(const fznparser::IntVar&, bool isDefinedVar);
+  VarNodeId createVarNode(const fznparser::IntArg&, bool isDefinedVar);
+  VarNodeId createVarNode(std::reference_wrapper<const fznparser::IntVar>,
+                          bool isDefinedVar);
+
+  std::vector<VarNodeId> createVarNodes(const fznparser::BoolVarArray&,
+                                        bool areDefinedVars);
+  std::vector<VarNodeId> createVarNodes(const fznparser::IntVarArray&,
+                                        bool areDefinedVars);
 
   [[nodiscard]] std::vector<FznOutputVar> outputBoolVars() const noexcept;
   [[nodiscard]] std::vector<FznOutputVar> outputIntVars() const noexcept;
@@ -50,12 +110,10 @@ class FznInvariantGraph : public InvariantGraph {
   void markOutputTo(const invariantgraph::InvariantNode& invNodeId,
                     std::unordered_set<std::string>& definedVars);
 
-  std::unique_ptr<InvariantNode> makeInvariantNode(
-      const fznparser::Constraint& constraint, bool guessDefinedVar = false);
-  std::unique_ptr<ImplicitConstraintNode> makeImplicitConstraintNode(
-      const fznparser::Constraint& constraint);
-  std::unique_ptr<ViolationInvariantNode> makeViolationInvariantNode(
-      const fznparser::Constraint& constraint);
+  bool makeInvariantNode(const fznparser::Constraint& constraint,
+                         bool guessDefinedVar = false);
+  bool makeImplicitConstraintNode(const fznparser::Constraint& constraint);
+  bool makeViolationInvariantNode(const fznparser::Constraint& constraint);
 };
 
 }  // namespace atlantis::invariantgraph

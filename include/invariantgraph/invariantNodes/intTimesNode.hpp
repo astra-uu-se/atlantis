@@ -1,5 +1,5 @@
 #pragma once
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/times.hpp"
@@ -16,8 +16,7 @@ class IntTimesNode : public InvariantNode {
     return std::vector<std::pair<std::string, size_t>>{{"int_times", 3}};
   }
 
-  static std::unique_ptr<IntTimesNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

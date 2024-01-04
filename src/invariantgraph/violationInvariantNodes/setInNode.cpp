@@ -11,39 +11,6 @@ SetInNode::SetInNode(VarNodeId input, std::vector<Int>&& values,
                      bool shouldHold)
     : ViolationInvariantNode({input}, shouldHold), _values(std::move(values)) {}
 
-std::unique_ptr<SetInNode> SetInNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  const VarNodeId varNodeId = invariantGraph.createVarNode(
-      std::get<fznparser::IntArg>(constraint.arguments().at(0)));
-
-  fznparser::IntSet valueSet =
-      std::get<fznparser::IntSetArg>(constraint.arguments().at(1))
-          .toParameter();
-
-  // Note: if the valueSet is an IntRange, here all the values are collected
-  // into a vector. If it turns out memory usage is an issue, this should be
-  // mitigated.
-
-  std::vector<Int> values = valueSet.populateElements();
-
-  if (constraint.arguments().size() == 2) {
-    return std::make_unique<SetInNode>(std::move(varNodeId), std::move(values),
-                                       true);
-  }
-  const fznparser::BoolArg reified =
-      std::get<fznparser::BoolArg>(constraint.arguments().at(2));
-
-  if (reified.isFixed()) {
-    return std::make_unique<SetInNode>(std::move(varNodeId), std::move(values),
-                                       reified.toParameter());
-  }
-  return std::make_unique<SetInNode>(
-      std::move(varNodeId), std::move(values),
-      invariantGraph.createVarNode(reified.var()));
-}
-
 void SetInNode::registerOutputVars(InvariantGraph& invariantGraph,
                                    propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {

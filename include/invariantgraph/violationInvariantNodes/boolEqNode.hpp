@@ -1,9 +1,7 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/boolXor.hpp"
@@ -17,13 +15,7 @@ class BoolEqNode : public ViolationInvariantNode {
 
   explicit BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"bool_eq", 2},
-                                                       {"bool_eq_reif", 3}};
-  }
-
-  static std::unique_ptr<BoolEqNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  bool prune(InvariantGraph&) override;
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

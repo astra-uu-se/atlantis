@@ -36,48 +36,63 @@ bool InvariantGraph::containsVarNode(Int i) const noexcept {
 
 bool InvariantGraph::containsVarNode(bool) const noexcept { return true; }
 
-VarNodeId InvariantGraph::createVarNode(bool b) {
-  return VarNodeId(_boolVarNodeIndices.at(b ? 0 : 1));
+VarNodeId InvariantGraph::createVarNode(bool b, bool isDefinedVar) {
+  if (!isDefinedVar && containsVarNode(b)) {
+    return _boolVarNodeIndices.at(b ? 0 : 1);
+  }
+  return _varNodes
+      .emplace_back(VarNodeId(_varNodes.size() + 1), SearchDomain({b ? 0 : 1}),
+                    false)
+      .varNodeId();
 }
 
-VarNodeId InvariantGraph::createVarNode(bool b, const std::string& identifier) {
-  if (containsVarNode(identifier)) {
+VarNodeId InvariantGraph::createVarNode(bool b, const std::string& identifier,
+                                        bool isDefinedVar) {
+  if (!isDefinedVar && containsVarNode(identifier)) {
     return _namedVarNodeIndices.at(identifier);
   }
-  const VarNodeId nodeId = createVarNode(b);
-  _namedVarNodeIndices.emplace(identifier, nodeId);
+  const VarNodeId nodeId = createVarNode(b, isDefinedVar);
+  if (!containsVarNode(identifier)) {
+    _namedVarNodeIndices.emplace(identifier, nodeId);
+  }
   return nodeId;
 }
 
-VarNodeId InvariantGraph::createVarNode(Int i) {
-  if (containsVarNode(i)) {
+VarNodeId InvariantGraph::createVarNode(Int i, bool isDefinedVar) {
+  if (!isDefinedVar && containsVarNode(i)) {
     return _intVarNodeIndices.at(i);
   }
-
   const VarNodeId nodeId = _varNodes
                                .emplace_back(VarNodeId(_varNodes.size() + 1),
                                              SearchDomain({i}), true)
                                .varNodeId();
-  _intVarNodeIndices.emplace(i, nodeId);
+  if (!isDefinedVar) {
+    _intVarNodeIndices.emplace(i, nodeId);
+  }
   return nodeId;
 }
 
-VarNodeId InvariantGraph::createVarNode(Int i, const std::string& identifier) {
-  if (containsVarNode(identifier)) {
+VarNodeId InvariantGraph::createVarNode(Int i, const std::string& identifier,
+                                        bool isDefinedVar) {
+  if (!containsVarNode(identifier)) {
+    const VarNodeId inputVarNodeId = createVarNode(i, false);
+    _namedVarNodeIndices.emplace(identifier, inputVarNodeId);
+    if (!isDefinedVar) {
+      return inputVarNodeId;
+    }
+  } else if (!isDefinedVar) {
     return _namedVarNodeIndices.at(identifier);
   }
-  const VarNodeId nodeId = createVarNode(i);
-  _namedVarNodeIndices.emplace(identifier, nodeId);
-  return nodeId;
+  return createVarNode(i, isDefinedVar);
 }
 
 VarNodeId InvariantGraph::createVarNode(const SearchDomain& domain,
-                                        bool isIntVar) {
-  if (domain.isFixed()) {
+                                        bool isIntVar, bool isDefinedVar) {
+  if (!isDefinedVar && domain.isFixed()) {
     if (isIntVar) {
-      return createVarNode(domain.lowerBound());
+      return createVarNode(domain.lowerBound(), isDefinedVar);
     } else {
-      return createVarNode(domain.lowerBound() == 0);
+      return createVarNode(domain.lowerBound() == 0, isDefinedVar);
     }
   }
   return _varNodes
@@ -87,11 +102,19 @@ VarNodeId InvariantGraph::createVarNode(const SearchDomain& domain,
 
 VarNodeId InvariantGraph::createVarNode(const SearchDomain& domain,
                                         bool isIntVar,
-                                        const std::string& identifier) {
+                                        const std::string& identifier,
+                                        bool isDefinedVar) {
+  if (domain.isFixed()) {
+    if (isIntVar) {
+      return createVarNode(domain.lowerBound(), identifier, isDefinedVar);
+    } else {
+      return createVarNode(domain.lowerBound() == 0, identifier, isDefinedVar);
+    }
+  }
   if (containsVarNode(identifier)) {
     return _namedVarNodeIndices.at(identifier);
   }
-  const VarNodeId nodeId = createVarNode(domain, isIntVar);
+  const VarNodeId nodeId = createVarNode(domain, isIntVar, isDefinedVar);
   _namedVarNodeIndices.emplace(identifier, nodeId);
   return nodeId;
 }

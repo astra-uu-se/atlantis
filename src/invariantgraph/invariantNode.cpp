@@ -60,7 +60,7 @@ const std::vector<VarNodeId>& InvariantNode::dynamicInputVarNodeIds()
 }
 
 void InvariantNode::replaceDefinedVar(VarNode& oldOutputVarNode,
-                                           VarNode& newOutputVarNode) {
+                                      VarNode& newOutputVarNode) {
   // Replace all occurrences:
   for (size_t i = 0; i < _outputVarNodeIds.size(); ++i) {
     if (_outputVarNodeIds[i] == oldOutputVarNode.varNodeId()) {
@@ -113,8 +113,21 @@ void InvariantNode::replaceDynamicInputVarNode(VarNode& oldInputVarNode,
   newInputVarNode.markAsInputFor(_id, false);
 }
 
-propagation::VarId InvariantNode::makeSolverVar(propagation::SolverBase& solver, VarNode& varNode,
-                                   Int initialValue) {
+bool InvariantNode::canBeReplaced() const { return false; }
+
+void InvariantNode::replace(InvariantGraph&) {
+  throw InvariantGraphException("InvariantNode::replace() not implemented");
+}
+
+bool canBeRemoved() const { return false; }
+
+bool remove(InvariantGraph&) {
+  throw InvariantGraphException("InvariantNode::remove() not implemented");
+}
+
+propagation::VarId InvariantNode::makeSolverVar(propagation::SolverBase& solver,
+                                                VarNode& varNode,
+                                                Int initialValue) {
   if (varNode.varId() == propagation::NULL_ID) {
     varNode.setVarId(
         solver.makeIntVar(initialValue, initialValue, initialValue));
@@ -145,4 +158,4 @@ void InvariantNode::markDynamicInputTo(VarNode& varNode, bool registerHere) {
     _dynamicInputVarNodeIds.push_back(varNode.varNodeId());
   }
 }
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

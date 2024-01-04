@@ -11,44 +11,6 @@ ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& as,
 ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& as, bool shouldHold)
     : ViolationInvariantNode(std::move(as), shouldHold) {}
 
-std::unique_ptr<ArrayBoolXorNode> ArrayBoolXorNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  if (constraint.arguments().size() != 2) {
-    throw std::runtime_error("ArrayBoolXOr constraint takes two arguments");
-  }
-  if (!std::holds_alternative<fznparser::IntVarArray>(
-          constraint.arguments().front())) {
-    throw std::runtime_error(
-        "ArrayBoolXOr constraint first argument must be a bool var array");
-  }
-  if (!std::holds_alternative<fznparser::BoolArg>(
-          constraint.arguments().back())) {
-    throw std::runtime_error(
-        "ArrayBoolXOr constraint optional second argument must be a bool "
-        "var");
-  }
-  const auto& boolVarArray =
-      get<fznparser::IntVarArray>(constraint.arguments().front());
-
-  if (boolVarArray.size() == 0 || boolVarArray.isParArray()) {
-    return nullptr;
-  }
-
-  std::vector<VarNodeId> varNodeIds =
-      invariantGraph.createVarNodes(boolVarArray);
-
-  const fznparser::BoolArg& reified =
-      get<fznparser::BoolArg>(constraint.arguments().back());
-  if (reified.isFixed()) {
-    return std::make_unique<ArrayBoolXorNode>(std::move(varNodeIds),
-                                              reified.toParameter());
-  }
-  return std::make_unique<ArrayBoolXorNode>(
-      std::move(varNodeIds), invariantGraph.createVarNode(reified.var()));
-}
-
 void ArrayBoolXorNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {

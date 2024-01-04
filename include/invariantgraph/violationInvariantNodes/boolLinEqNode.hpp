@@ -1,8 +1,8 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/boolLinear.hpp"
@@ -30,8 +30,7 @@ class BoolLinEqNode : public ViolationInvariantNode {
     return std::vector<std::pair<std::string, size_t>>{{"bool_lin_eq", 3}};
   }
 
-  static std::unique_ptr<BoolLinEqNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

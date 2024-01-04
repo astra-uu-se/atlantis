@@ -1,8 +1,8 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/linear.hpp"
@@ -19,8 +19,7 @@ class IntLinEqNode : public ViolationInvariantNode {
   propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
-  static std::unique_ptr<IntLinEqNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{{"int_lin_eq", 3},

@@ -2,8 +2,8 @@
 
 #include <utility>
 
-#include "fznparser/model.hpp"
-#include "invariantgraph/fznInvariantGraph.hpp"
+
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/boolLinear.hpp"
@@ -25,8 +25,7 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
     return std::vector<std::pair<std::string, size_t>>{{"array_bool_xor", 1}};
   }
 
-  static std::unique_ptr<ArrayBoolXorNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

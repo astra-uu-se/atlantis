@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/plus.hpp"
@@ -19,8 +19,7 @@ class IntPlusNode : public InvariantNode {
     return std::vector<std::pair<std::string, size_t>>{{"int_plus", 3}};
   }
 
-  static std::unique_ptr<IntPlusNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "fznparser/model.hpp"
-#include "invariantgraph/fznInvariantGraph.hpp"
+
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/forAll.hpp"
@@ -23,8 +23,7 @@ class ArrayBoolAndNode : public ViolationInvariantNode {
     return std::vector<std::pair<std::string, size_t>>{{"array_bool_and", 2}};
   }
 
-  static std::unique_ptr<ArrayBoolAndNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

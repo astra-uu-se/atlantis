@@ -1,9 +1,9 @@
 #pragma once
 
-#include <fznparser/model.hpp>
+
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/views/notEqualConst.hpp"
@@ -25,8 +25,7 @@ class BoolAllEqualNode : public ViolationInvariantNode {
         {"fzn_all_equal_bool", 1}, {"fzn_all_equal_bool_reif", 2}};
   }
 
-  static std::unique_ptr<BoolAllEqualNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   bool prune(InvariantGraph&) override;
 

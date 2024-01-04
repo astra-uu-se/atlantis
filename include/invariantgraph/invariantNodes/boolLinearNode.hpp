@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/boolLinear.hpp"
@@ -14,22 +13,12 @@ namespace atlantis::invariantgraph {
 class BoolLinearNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
-  Int _definingCoefficient;
-  Int _sum;
-  propagation::VarId _intermediateVarId{propagation::NULL_ID};
 
  public:
   BoolLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                 VarNodeId output, Int definingCoefficient, Int sum);
+                 VarNodeId output);
 
   ~BoolLinearNode() override = default;
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"bool_lin_eq", 3}};
-  }
-
-  static std::unique_ptr<BoolLinearNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

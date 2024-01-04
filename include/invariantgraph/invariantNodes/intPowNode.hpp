@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/pow.hpp"
@@ -20,8 +20,7 @@ class IntPowNode : public InvariantNode {
                                                        {"int_pow_fixed", 3}};
   }
 
-  static std::unique_ptr<IntPowNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

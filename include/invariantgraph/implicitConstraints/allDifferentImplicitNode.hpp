@@ -1,9 +1,9 @@
 #pragma once
 
-#include <fznparser/model.hpp>
+
 #include <numeric>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/implicitConstraintNode.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
@@ -21,9 +21,6 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
     return std::vector<std::pair<std::string, size_t>>{
         {"fzn_all_different_int", 1}};
   }
-
-  static std::unique_ptr<AllDifferentImplicitNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
 
   bool prune(InvariantGraph&) override;
 

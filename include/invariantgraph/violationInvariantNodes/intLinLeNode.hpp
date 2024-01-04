@@ -1,10 +1,10 @@
 #pragma once
 
 #include <algorithm>
-#include <fznparser/model.hpp>
+
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/linear.hpp"
@@ -32,8 +32,7 @@ class IntLinLeNode : public ViolationInvariantNode {
                                                        {"int_lin_le_reif", 4}};
   }
 
-  static std::unique_ptr<IntLinLeNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

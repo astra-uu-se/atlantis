@@ -1,9 +1,9 @@
 #pragma once
 
-#include <fznparser/model.hpp>
+
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/exists.hpp"
@@ -39,8 +39,7 @@ class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
         {"fzn_global_cardinality_low_up_closed_reif", 5}};
   }
 
-  static std::unique_ptr<GlobalCardinalityLowUpClosedNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

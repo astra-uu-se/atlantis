@@ -18,37 +18,6 @@ IntLinLeNode::IntLinLeNode(std::vector<Int>&& coeffs,
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
-std::unique_ptr<IntLinLeNode> IntLinLeNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  std::vector<Int> coeffs =
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0))
-          .toParVector();
-
-  std::vector<VarNodeId> vars = invariantGraph.createVarNodes(
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(1)));
-
-  Int bound =
-      std::get<Int>(std::get<fznparser::IntArg>(constraint.arguments().at(2)));
-
-  if (constraint.arguments().size() == 4) {
-    const fznparser::BoolArg& reified =
-        std::get<fznparser::BoolArg>(constraint.arguments().back());
-
-    if (reified.isFixed()) {
-      return std::make_unique<IntLinLeNode>(std::move(coeffs), std::move(vars),
-                                            bound, reified.toParameter());
-    } else {
-      return std::make_unique<IntLinLeNode>(
-          std::move(coeffs), std::move(vars), bound,
-          invariantGraph.createVarNode(reified.var()));
-    }
-  }
-  return std::make_unique<IntLinLeNode>(std::move(coeffs), std::move(vars),
-                                        bound, true);
-}
-
 void IntLinLeNode::registerOutputVars(InvariantGraph& invariantGraph,
                                       propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {

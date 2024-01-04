@@ -39,6 +39,7 @@ class VarNode {
   VarNodeId _varNodeId;
   SearchDomain _domain;
   const bool _isIntVar;
+  bool _shouldEnforceDomain{false};
   std::string _identifier;
   propagation::VarId _varId{propagation::NULL_ID};
   propagation::VarId _domainViolationId{propagation::NULL_ID};
@@ -89,18 +90,49 @@ class VarNode {
 
   [[nodiscard]] bool isFixed() const noexcept;
 
+  [[nodiscard]] bool isIntVar() const noexcept;
+
   [[nodiscard]] Int val() const;
 
+  [[nodiscard]] bool inDomain(Int) const;
+  [[nodiscard]] bool inDomain(bool) const;
+
   void removeValue(Int);
+  void fixValue(Int);
+
+  /**
+   * @brief removes all values that are strictly less than the given value from
+   * the domain of the variable.
+   */
+  void removeValuesBelow(Int);
+
+  /**
+   * @brief removes all values that are strictly greater than the given value
+   * from the domain of the variable.
+   */
+  void removeValuesAbove(Int);
+
+  /**
+   * @brief removes all values that are not in the given vector from the domain
+   * from the domain of the variable.
+   */
+  void removeValues(const std::vector<Int>&);
 
   void removeValue(bool);
+  void fixValue(bool);
 
-  [[nodiscard]] bool isIntVar() const noexcept;
+  /**
+   * @brief if the variable has a domain and the given boolean is true, then a
+   * domain violation invariant will be added to the invariant graph for the
+   * variable.
+   */
+  void shouldEnforceDomain(bool) noexcept;
 
   /**
    * @return if the bound range of the corresponding IntVar in solver is a
-   * sub-set of SearchDomain _domain, then returns an empty vector, otherwise
-   * the relative complement of varLb..varUb in SearchDomain is returned
+   * sub-set of SearchDomain _domain, then returns an empty vector,
+   * otherwise the relative complement of varLb..varUb in SearchDomain is
+   * returned
    */
   [[nodiscard]] std::vector<DomainEntry> constrainedDomain(
       const propagation::SolverBase&);

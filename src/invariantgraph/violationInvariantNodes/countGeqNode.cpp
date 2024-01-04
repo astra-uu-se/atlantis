@@ -56,80 +56,8 @@ CountGeqNode::CountGeqNode(std::vector<VarNodeId>&& x, Int yParameter,
     : CountGeqNode(std::move(x), NULL_NODE_ID, yParameter, NULL_NODE_ID,
                    cParameter, shouldHold) {}
 
-std::unique_ptr<CountGeqNode> CountGeqNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  const fznparser::IntVarArray& xArg =
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0));
-
-  const fznparser::IntArg& yArg =
-      std::get<fznparser::IntArg>(constraint.arguments().at(1));
-
-  VarNodeId yVarNode = yArg.isParameter()
-                           ? NULL_NODE_ID
-                           : invariantGraph.createVarNode(yArg.var());
-
-  const Int yParameter = yArg.isParameter() ? std::get<Int>(yArg) : -1;
-
-  const fznparser::IntArg& cArg =
-      std::get<fznparser::IntArg>(constraint.arguments().at(2));
-
-  VarNodeId cVarNode = cArg.isParameter()
-                           ? NULL_NODE_ID
-                           : invariantGraph.createVarNode(cArg.var());
-
-  const Int cParameter = cArg.isParameter() ? std::get<Int>(cArg) : -1;
-
-  bool shouldHold = true;
-  VarNodeId r = NULL_NODE_ID;
-
-  if (constraint.arguments().size() == 4) {
-    const fznparser::BoolArg& reified =
-        std::get<fznparser::BoolArg>(constraint.arguments().back());
-
-    if (reified.isFixed()) {
-      shouldHold = reified.toParameter();
-    } else {
-      r = invariantGraph.createVarNode(reified.var());
-    }
-  }
-
-  std::vector<VarNodeId> x = invariantGraph.createVarNodes(xArg);
-
-  if (yArg.isParameter()) {
-    if (cArg.isParameter()) {
-      if (r != NULL_NODE_ID) {
-        return std::make_unique<CountGeqNode>(std::move(x), yParameter,
-                                              cParameter, r);
-      }
-      return std::make_unique<CountGeqNode>(std::move(x), yParameter,
-                                            cParameter, shouldHold);
-    }
-    if (r != NULL_NODE_ID) {
-      return std::make_unique<CountGeqNode>(std::move(x), yParameter, cVarNode,
-                                            r);
-    }
-    return std::make_unique<CountGeqNode>(std::move(x), yParameter, cVarNode,
-                                          shouldHold);
-  }
-  if (cArg.isParameter()) {
-    if (r != NULL_NODE_ID) {
-      return std::make_unique<CountGeqNode>(std::move(x), yVarNode, cParameter,
-                                            r);
-    }
-    return std::make_unique<CountGeqNode>(std::move(x), yVarNode, cParameter,
-                                          shouldHold);
-  }
-  if (r != NULL_NODE_ID) {
-    return std::make_unique<CountGeqNode>(std::move(x), yVarNode, cVarNode, r);
-  }
-  return std::make_unique<CountGeqNode>(std::move(x), yVarNode, cVarNode,
-                                        shouldHold);
-}
-
 void CountGeqNode::registerOutputVars(InvariantGraph& invariantGraph,
-                                           propagation::SolverBase& solver) {
+                                      propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     _intermediate = solver.makeIntVar(0, 0, 1);
     if (!_cIsParameter) {
@@ -176,25 +104,25 @@ void CountGeqNode::registerNode(InvariantGraph& invariantGraph,
   if (!_yIsParameter) {
     assert(yVarNode() != NULL_NODE_ID);
     assert(invariantGraph.varId(yVarNode()) != propagation::NULL_ID);
-    solver.makeInvariant<propagation::Count>(solver, _intermediate,
-                                invariantGraph.varId(yVarNode()), solverInputs);
+    solver.makeInvariant<propagation::Count>(
+        solver, _intermediate, invariantGraph.varId(yVarNode()), solverInputs);
   } else {
     assert(yVarNode() == NULL_NODE_ID);
-    solver.makeInvariant<propagation::CountConst>(solver, _intermediate, _yParameter,
-                                     solverInputs);
+    solver.makeInvariant<propagation::CountConst>(solver, _intermediate,
+                                                  _yParameter, solverInputs);
   }
   if (!_cIsParameter) {
     assert(cVarNode() != NULL_NODE_ID);
     assert(invariantGraph.varId(cVarNode()) != propagation::NULL_ID);
     if (shouldHold()) {
       // c >= count(inputs, y) -> count(inputs, y) <= c
-      solver.makeInvariant<propagation::LessEqual>(solver, violationVarId(invariantGraph),
-                                      _intermediate,
-                                      invariantGraph.varId(cVarNode()));
+      solver.makeInvariant<propagation::LessEqual>(
+          solver, violationVarId(invariantGraph), _intermediate,
+          invariantGraph.varId(cVarNode()));
     } else {
-      solver.makeInvariant<propagation::LessThan>(solver, violationVarId(invariantGraph),
-                                     invariantGraph.varId(cVarNode()),
-                                     _intermediate);
+      solver.makeInvariant<propagation::LessThan>(
+          solver, violationVarId(invariantGraph),
+          invariantGraph.varId(cVarNode()), _intermediate);
     }
   }
 }
@@ -211,4 +139,4 @@ VarNodeId CountGeqNode::cVarNode() const {
                        : staticInputVarNodeIds().back();
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

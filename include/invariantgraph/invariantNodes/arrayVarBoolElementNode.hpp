@@ -1,8 +1,8 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/elementVar.hpp"
@@ -22,9 +22,6 @@ class ArrayVarBoolElementNode : public InvariantNode {
         {"array_var_bool_element", 3},
         {"array_var_bool_element_nonshifted", 3}};
   }
-
-  static std::unique_ptr<ArrayVarBoolElementNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

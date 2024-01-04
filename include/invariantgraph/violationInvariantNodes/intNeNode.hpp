@@ -1,9 +1,9 @@
 #pragma once
 
-#include <fznparser/model.hpp>
+
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/violationInvariants/equal.hpp"
@@ -17,8 +17,7 @@ class IntNeNode : public ViolationInvariantNode {
 
   IntNeNode(VarNodeId a, VarNodeId b, bool shouldHold);
 
-  static std::unique_ptr<IntNeNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{{"int_ne", 2},

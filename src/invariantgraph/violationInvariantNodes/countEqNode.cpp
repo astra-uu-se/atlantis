@@ -52,83 +52,8 @@ CountEqNode::CountEqNode(std::vector<VarNodeId>&& x, Int yParameter,
     : CountEqNode(std::move(x), NULL_NODE_ID, yParameter, NULL_NODE_ID,
                   cParameter, shouldHold) {}
 
-std::unique_ptr<CountEqNode> CountEqNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  const fznparser::IntVarArray& xArg =
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0));
-
-  const fznparser::IntArg& yArg =
-      std::get<fznparser::IntArg>(constraint.arguments().at(1));
-
-  VarNodeId yVarNode =
-      yArg.isFixed() ? NULL_NODE_ID : invariantGraph.createVarNode(yArg.var());
-
-  const Int yParameter = yArg.isFixed() ? yArg.toParameter() : -1;
-
-  const fznparser::IntArg& cArg =
-      std::get<fznparser::IntArg>(constraint.arguments().at(2));
-
-  VarNodeId cVarNode =
-      cArg.isFixed() ? NULL_NODE_ID : invariantGraph.createVarNode(cArg.var());
-
-  const Int cParameter = cArg.isParameter() ? cArg.parameter() : -1;
-
-  bool shouldHold = true;
-  VarNodeId r = NULL_NODE_ID;
-
-  if (constraint.arguments().size() == 4) {
-    const fznparser::BoolArg& reified =
-        std::get<fznparser::BoolArg>(constraint.arguments().back());
-
-    if (reified.isFixed()) {
-      shouldHold = reified.toParameter();
-    } else {
-      r = invariantGraph.createVarNode(reified.var());
-    }
-  }
-
-  if (r != NULL_NODE_ID && !cArg.isParameter()) {
-    throw std::runtime_error(
-        "count_eq_reif(x, y, c, r): c must be a parameter, var given");
-  }
-  if (!shouldHold && !cArg.isParameter()) {
-    throw std::runtime_error(
-        "count_eq_reif(x, y, c, false): c must be a parameter, var given");
-  }
-
-  std::vector<VarNodeId> x = invariantGraph.createVarNodes(xArg);
-
-  if (yArg.isFixed()) {
-    if (cArg.isFixed()) {
-      if (r != NULL_NODE_ID) {
-        return std::make_unique<CountEqNode>(std::move(x), yParameter,
-                                             cParameter, r);
-      }
-      return std::make_unique<CountEqNode>(std::move(x), yParameter, cParameter,
-                                           shouldHold);
-    }
-    assert(r == NULL_NODE_ID);
-    assert(shouldHold);
-    return std::make_unique<CountEqNode>(std::move(x), yParameter, cVarNode,
-                                         true);
-  }
-  if (cArg.isFixed()) {
-    if (r != NULL_NODE_ID) {
-      return std::make_unique<CountEqNode>(std::move(x), yVarNode, cParameter,
-                                           r);
-    }
-    return std::make_unique<CountEqNode>(std::move(x), yVarNode, cParameter,
-                                         shouldHold);
-  }
-  assert(r == NULL_NODE_ID);
-  assert(shouldHold);
-  return std::make_unique<CountEqNode>(std::move(x), yVarNode, cVarNode, true);
-}
-
 void CountEqNode::registerOutputVars(InvariantGraph& invariantGraph,
-                                          propagation::SolverBase& solver) {
+                                     propagation::SolverBase& solver) {
   if (!_cIsParameter) {
     if (invariantGraph.varId(cVarNode()) == propagation::NULL_ID) {
       assert(!isReified());

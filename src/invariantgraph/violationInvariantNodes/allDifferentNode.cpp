@@ -11,51 +11,6 @@ AllDifferentNode::AllDifferentNode(std::vector<VarNodeId>&& vars,
                                    bool shouldHold)
     : ViolationInvariantNode(std::move(vars), shouldHold) {}
 
-std::unique_ptr<AllDifferentNode> AllDifferentNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  if (constraint.arguments().empty() || constraint.arguments().size() > 2) {
-    throw std::runtime_error(
-        "AllDifferent constraint takes one or two arguments");
-  }
-  if (!std::holds_alternative<fznparser::IntVarArray>(
-          constraint.arguments().front())) {
-    throw std::runtime_error(
-        "AllDifferent constraint first argument must be an int var array");
-  }
-  if (constraint.arguments().size() == 2) {
-    if (!std::holds_alternative<fznparser::BoolArg>(
-            constraint.arguments().back())) {
-      throw std::runtime_error(
-          "AllDifferent constraint optional second argument must be a bool "
-          "var");
-    }
-  }
-  const auto& intVarArray =
-      get<fznparser::IntVarArray>(constraint.arguments().front());
-
-  if (intVarArray.size() == 0 || intVarArray.isParArray()) {
-    return nullptr;
-  }
-
-  std::vector<VarNodeId> varNodeIds = pruneAllDifferentFree(
-      invariantGraph, invariantGraph.createVarNodes(intVarArray));
-
-  if (constraint.arguments().size() == 1) {
-    return std::make_unique<AllDifferentNode>(std::move(varNodeIds), true);
-  }
-
-  const fznparser::BoolArg& reified =
-      get<fznparser::BoolArg>(constraint.arguments().back());
-  if (reified.isFixed()) {
-    return std::make_unique<AllDifferentNode>(std::move(varNodeIds),
-                                              reified.toParameter());
-  }
-  return std::make_unique<AllDifferentNode>(
-      std::move(varNodeIds), invariantGraph.createVarNode(reified.var()));
-}
-
 void AllDifferentNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().empty()) {
@@ -87,6 +42,35 @@ bool AllDifferentNode::prune(InvariantGraph& invariantGraph) {
   }
 
   return !fixedInputs.empty();
+}
+
+bool AllDifferentNode::canBeReplaced() const {
+  return staticInputVarNodeIds().size() == 2;
+}
+
+bool AllDifferentNode::replace(InvariantGraph& invariantGraph) {
+  if (!canBeReplaced()) {
+    throw InvariantGraphException(
+        "AllDifferentNode::replace() called on node that cannot be replaced");
+  }
+  const std::vector<VarNodeId> inputs = staticInputVarNodeIds();
+  for (const VarNodeId input : inputs) {
+    removeStaticInputVarNode(invariantGraph.varNode(input));
+  }
+  if (isReified()) {
+    const VarNodeId reifNodeId = reifiedViolationNodeId();
+    removeOutputVarNode(invariantGraph.varNode(reifNodeId));
+    invariantGraph.addInvariantNode(
+        std::make_unique<IntNeNode>(inputs.at(0), inputs.at(1), reifNodeId));
+  } else {
+    assert(outputVarNodeIds().empty());
+    invariantGraph.addInvariantNode(
+        std::make_unique<IntNeNode>(inputs.at(0), inputs.at(1), shouldHold()));
+  }
+}
+
+bool AllDifferentNode::canBeRemoved() const {
+  return staticInputVarNodeIds().size() == 1;
 }
 
 void AllDifferentNode::registerNode(InvariantGraph& invariantGraph,

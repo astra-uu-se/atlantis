@@ -4,25 +4,9 @@
 
 namespace atlantis::invariantgraph {
 
-IntDivNode::IntDivNode(VarNodeId a, VarNodeId b, VarNodeId output)
-    : InvariantNode({output}, {a, b}) {}
-
-std::unique_ptr<invariantgraph::IntDivNode>
-invariantgraph::IntDivNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, FznInvariantGraph& invariantGraph) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  const fznparser::IntArg& a =
-      std::get<fznparser::IntArg>(constraint.arguments().at(0));
-  const fznparser::IntArg& b =
-      std::get<fznparser::IntArg>(constraint.arguments().at(1));
-  const fznparser::IntArg& output =
-      std::get<fznparser::IntArg>(constraint.arguments().at(2));
-
-  return std::make_unique<IntDivNode>(invariantGraph.createVarNode(a),
-                                      invariantGraph.createVarNode(b),
-                                      invariantGraph.createVarNode(output));
-}
+IntDivNode::IntDivNode(VarNodeId _nominator, VarNodeId _denominator,
+                       VarNodeId quotient)
+    : InvariantNode({quotient}, {_nominator, _denominator}) {}
 
 void invariantgraph::IntDivNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
@@ -31,17 +15,18 @@ void invariantgraph::IntDivNode::registerOutputVars(
 
 void invariantgraph::IntDivNode::registerNode(InvariantGraph& invariantGraph,
                                               propagation::SolverBase& solver) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
+         propagation::NULL_ID);
   solver.makeInvariant<propagation::IntDiv>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(a()), invariantGraph.varId(b()));
+      invariantGraph.varId(nominator()), invariantGraph.varId(denominator()));
 }
 
-VarNodeId IntDivNode::a() const noexcept {
+VarNodeId IntDivNode::nominator() const noexcept {
   return staticInputVarNodeIds().front();
 }
-VarNodeId IntDivNode::b() const noexcept {
+VarNodeId IntDivNode::denominator() const noexcept {
   return staticInputVarNodeIds().back();
 }
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

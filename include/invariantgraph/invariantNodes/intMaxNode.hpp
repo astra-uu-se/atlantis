@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/binaryMax.hpp"
@@ -18,9 +18,6 @@ class IntMaxNode : public InvariantNode {
   static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
     return std::vector<std::pair<std::string, size_t>>{{"int_max", 3}};
   }
-
-  static std::unique_ptr<IntMaxNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

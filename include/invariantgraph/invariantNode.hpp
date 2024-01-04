@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "exceptions/exceptions.hpp"
 #include "invariantgraph/types.hpp"
 #include "invariantgraph/varNode.hpp"
 #include "propagation/solver.hpp"
@@ -27,9 +28,6 @@ class InvariantNode {
   InvariantNodeId _id{NULL_NODE_ID};
 
  public:
-  using VarMap =
-      std::unordered_map<VarNodeId, propagation::VarId, VarNodeIdHash>;
-
   explicit InvariantNode(std::vector<VarNodeId>&& outputIds,
                          std::vector<VarNodeId>&& staticInputIds = {},
                          std::vector<VarNodeId>&& dynamicInputIds = {});
@@ -95,6 +93,12 @@ class InvariantNode {
 
   void replaceDynamicInputVarNode(VarNode& oldInputVarNode,
                                   VarNode& newInputVarNode);
+
+  virtual bool canBeReplaced(const InvariantGraph&) const;
+
+  virtual void replace(InvariantGraph&);
+
+  virtual bool canBeRemoved(const InvariantGraph&) const;
 
   // A hack in order to steal the _inputs from the nested constraint.
   friend class ReifiedConstraint;

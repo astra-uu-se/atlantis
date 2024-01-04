@@ -1,9 +1,9 @@
 #pragma once
 
-#include <fznparser/model.hpp>
+
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/boolOr.hpp"
@@ -24,8 +24,7 @@ class BoolOrNode : public ViolationInvariantNode {
     return std::vector<std::pair<std::string, size_t>>{{"bool_or", 3}};
   }
 
-  static std::unique_ptr<BoolOrNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

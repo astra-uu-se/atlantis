@@ -1,9 +1,7 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/violationInvariants/lessEqual.hpp"
@@ -21,9 +19,6 @@ class IntLeNode : public ViolationInvariantNode {
     return std::vector<std::pair<std::string, size_t>>{{"int_le", 2},
                                                        {"int_le_reif", 3}};
   }
-
-  static std::unique_ptr<IntLeNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

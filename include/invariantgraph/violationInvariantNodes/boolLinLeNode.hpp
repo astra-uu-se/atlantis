@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/boolLinear.hpp"
@@ -30,8 +30,7 @@ class BoolLinLeNode : public ViolationInvariantNode {
     return std::vector<std::pair<std::string, size_t>>{{"bool_lin_le", 3}};
   }
 
-  static std::unique_ptr<BoolLinLeNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

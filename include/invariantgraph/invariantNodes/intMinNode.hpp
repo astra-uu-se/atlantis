@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/binaryMin.hpp"
@@ -19,10 +19,7 @@ class IntMinNode : public InvariantNode {
     return std::vector<std::pair<std::string, size_t>>{{"int_min", 3}};
   }
 
-  static std::unique_ptr<IntMinNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
-
-  void registerOutputVars(InvariantGraph&,
+    void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;

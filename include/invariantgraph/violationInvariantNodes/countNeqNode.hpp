@@ -1,9 +1,9 @@
 #pragma once
 
-#include <fznparser/model.hpp>
+
 #include <utility>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
+
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/count.hpp"
@@ -58,8 +58,7 @@ class CountNeqNode : public ViolationInvariantNode {
         {"fzn_count_neq", 3}, {"fzn_count_neq_reif", 4}};
   }
 
-  static std::unique_ptr<CountNeqNode> fromModelConstraint(
-      const fznparser::Constraint&, FznInvariantGraph&);
+  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
