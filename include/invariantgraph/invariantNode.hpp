@@ -94,12 +94,6 @@ class InvariantNode {
   void replaceDynamicInputVarNode(VarNode& oldInputVarNode,
                                   VarNode& newInputVarNode);
 
-  virtual bool canBeReplaced(const InvariantGraph&) const;
-
-  virtual void replace(InvariantGraph&);
-
-  virtual bool canBeRemoved(const InvariantGraph&) const;
-
   // A hack in order to steal the _inputs from the nested constraint.
   friend class ReifiedConstraint;
 

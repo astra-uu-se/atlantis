@@ -4,11 +4,11 @@
 #include <fznparser/variables.hpp>
 
 #include "invariantgraph/fznInvariantGraph.hpp"
+#include "invariantgraph/invariantNodes/intLinearNode.hpp"
 #include "invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
-static bool int_linear(FznInvariantGraph& invariantGraph,
-                       const fznparser::Constraint& constraint);
+bool int_linear(FznInvariantGraph&, const fznparser::Constraint& constraint);
 
 }  // namespace atlantis::invariantgraph::fzn

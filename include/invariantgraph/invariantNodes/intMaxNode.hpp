@@ -2,7 +2,6 @@
 
 #include <cmath>
 
-
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/binaryMax.hpp"
@@ -14,10 +13,6 @@ class IntMaxNode : public InvariantNode {
   IntMaxNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
   ~IntMaxNode() override = default;
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_max", 3}};
-  }
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

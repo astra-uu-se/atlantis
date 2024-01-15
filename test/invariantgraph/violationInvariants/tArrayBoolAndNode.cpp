@@ -28,9 +28,9 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase<ArrayBoolAndNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createBoolVar("a");
-    b = createBoolVar("b");
-    r = createBoolVar("r");
+    addFznVar("a");
+    addFznVar("b");
+    addFznVar("r");
 
     fznparser::BoolVarArray inputs{""};
     inputs.append(boolVar(a));

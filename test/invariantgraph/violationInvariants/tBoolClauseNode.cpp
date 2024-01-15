@@ -32,11 +32,11 @@ class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createBoolVar("a");
-    b = createBoolVar("b");
-    c = createBoolVar("c");
-    d = createBoolVar("d");
-    r = createBoolVar("r");
+    addFznVar("a");
+    addFznVar("b");
+    addFznVar("c");
+    addFznVar("d");
+    addFznVar("r");
 
     fznparser::BoolVarArray as("");
     as.append(boolVar(a));

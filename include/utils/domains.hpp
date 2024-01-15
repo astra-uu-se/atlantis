@@ -109,6 +109,7 @@ class SetDomain : public Domain {
       const Int lb, const Int ub) const override;
 
   void remove(Int value);
+  void remove(const std::vector<Int>& values);
 
   /**
    * @brief removes all values that are strictly less than the given value.

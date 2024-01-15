@@ -21,7 +21,7 @@ class AbstractIntLtNodeTest : public NodeTestBase<IntLtNode> {
     NodeTestBase::SetUp();
     a = createIntVar(5, 10, "a");
     b = createIntVar(2, 7, "b");
-    r = createBoolVar("r");
+    addFznVar("r");
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
       _model->addConstraint(std::move(fznparser::Constraint(

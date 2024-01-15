@@ -39,6 +39,7 @@ class InvariantGraph {
 
  public:
   InvariantGraph();
+  virtual ~InvariantGraph() = default;
 
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
@@ -48,15 +49,15 @@ class InvariantGraph {
   [[nodiscard]] bool containsVarNode(Int) const noexcept;
   [[nodiscard]] bool containsVarNode(bool) const noexcept;
 
-  VarNodeId createVarNode(bool, bool isDefinedVar);
-  VarNodeId createVarNode(bool, const std::string&, bool isDefinedVar);
-  VarNodeId createVarNode(Int, bool isDefinedVar);
-  VarNodeId createVarNode(Int, const std::string&, bool isDefinedVar);
-  VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
-                          bool isDefinedVar);
-  VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
-                          const std::string&, bool isDefinedVar);
-  VarNodeId createVarNode(const VarNode&, bool isDefinedVar);
+  virtual VarNodeId createVarNode(bool, bool isDefinedVar);
+  virtual VarNodeId createVarNode(bool, const std::string&, bool isDefinedVar);
+  virtual VarNodeId createVarNode(Int, bool isDefinedVar);
+  virtual VarNodeId createVarNode(Int, const std::string&, bool isDefinedVar);
+  virtual VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
+                                  bool isDefinedVar);
+  virtual VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
+                                  const std::string&, bool isDefinedVar);
+  virtual VarNodeId createVarNode(const VarNode&, bool isDefinedVar);
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier);
   [[nodiscard]] VarNode& varNode(VarNodeId id);
@@ -64,6 +65,10 @@ class InvariantGraph {
   [[nodiscard]] const VarNode& varNodeConst(
       const std::string& identifier) const;
   [[nodiscard]] const VarNode& varNodeConst(VarNodeId id) const;
+
+  [[nodiscard]] VarNodeId varNodeId(bool val) const;
+  [[nodiscard]] VarNodeId varNodeId(Int val) const;
+  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const;
 
   [[nodiscard]] propagation::VarId varId(const std::string& identifier) const;
   [[nodiscard]] propagation::VarId varId(VarNodeId id) const;

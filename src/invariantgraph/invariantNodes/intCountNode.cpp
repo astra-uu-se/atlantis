@@ -6,9 +6,10 @@ namespace atlantis::invariantgraph {
 
 IntCountNode::IntCountNode(std::vector<VarNodeId>&& vars, VarNodeId needle,
                            VarNodeId count)
-    : InvariantNode(append(vars, needle), std::move(vars)) {}
+    : InvariantNode(std::move(std::vector<VarNodeId>{count}),
+                    append(std::move(vars), needle)) {}
 
-std::vector<VarNodeId> haystack() const {
+std::vector<VarNodeId> IntCountNode::haystack() const {
   std::vector<VarNodeId> inputs;
   inputs.reserve(staticInputVarNodeIds().size() - 1);
   std::copy(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end() - 1,
@@ -16,7 +17,9 @@ std::vector<VarNodeId> haystack() const {
   return inputs;
 }
 
-VarNodeId needle() const { return staticInputVarNodeIds().back(); }
+VarNodeId IntCountNode::needle() const {
+  return staticInputVarNodeIds().back();
+}
 
 void IntCountNode::registerOutputVars(InvariantGraph& invariantGraph,
                                       propagation::SolverBase& solver) {
@@ -38,7 +41,7 @@ void IntCountNode::registerNode(InvariantGraph& invariantGraph,
 
   solver.makeInvariant<propagation::Count>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      needle().varId(), solverVars);
+      invariantGraph.varId(needle()), solverVars);
 }
 
 }  // namespace atlantis::invariantgraph

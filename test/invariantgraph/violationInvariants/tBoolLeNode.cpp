@@ -19,9 +19,9 @@ class AbstractBoolLeNodeTest : public NodeTestBase<BoolLeNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createBoolVar("a");
-    b = createBoolVar("b");
-    r = createBoolVar("r");
+    addFznVar("a");
+    addFznVar("b");
+    addFznVar("r");
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
       _model->addConstraint(std::move(fznparser::Constraint(

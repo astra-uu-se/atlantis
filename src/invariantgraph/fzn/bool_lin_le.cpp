@@ -22,29 +22,22 @@ bool bool_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
         "bool_lin_le constraint with empty arrays must have a total sum of 0");
   }
 
-  Int lb = 0;
-  for (const Int c : coeffs) {
-    if (c < 0) {
-      lb += c;
-    }
-  }
+  const auto& [lb, ub] = linBounds(coeffs, inputs);
 
   if (lb > bound) {
     throw FznArgumentException(
         "bool_lin_le constraint, no subset can be less than " +
         std::to_string(bound) + ".");
   }
+  if (ub <= bound) {
+    return true;
+  }
 
-  const VarNodeId outputVarNodeId =
-      invariantGraph.createVarNode(SearchDomain(lb, bound), true, true);
-
-  invariantGraph.varNode(outputVarNodeId).shouldEnforceDomain(true);
-
-  std::make_unique<BoolLinearNode>(std::move(coeffs),
-                                   invariantGraph.createVarNodes(inputs, false),
-                                   outputVarNodeId);
-
-  return true;
+  return bool_lin_eq(
+      invariantGraph, std::move(coeffs),
+      std::move(invariantGraph.createVarNodes(inputs, false)),
+      invariantGraph.createVarNode(
+          SearchDomain(std::numeric_limits<Int>::min(), bound), true, true));
 }
 
 bool bool_lin_le(FznInvariantGraph& invariantGraph,

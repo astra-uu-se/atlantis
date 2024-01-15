@@ -29,7 +29,7 @@ class AbstractIntLinLeNodeTest : public NodeTestBase<IntLinLeNode> {
     NodeTestBase::SetUp();
     a = createIntVar(0, 10, "a");
     b = createIntVar(0, 10, "b");
-    r = createBoolVar("r");
+    addFznVar("r");
 
     fznparser::IntVarArray coeffArg("");
     for (const Int coeff : coeffs) {

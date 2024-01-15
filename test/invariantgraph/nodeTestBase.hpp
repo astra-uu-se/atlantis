@@ -39,35 +39,26 @@ class NodeTestBase : public ::testing::Test {
     }
   }
 
-  void makeInvNode(const fznparser::Constraint& constraint) {
-    _invNodeId = _invariantGraph->addInvariantNode(
-        std::move(InvNode::fromModelConstraint(constraint, *_invariantGraph)));
-  }
-
-  void makeImplicitNode(const fznparser::Constraint& constraint) {
-    _invNodeId = _invariantGraph->addImplicitConstraintNode(
-        std::move(InvNode::fromModelConstraint(constraint, *_invariantGraph)));
-  }
-
   template <typename OtherInvNode>
   void makeOtherInvNode(const fznparser::Constraint& constraint) {
     _invNodeId = _invariantGraph->addInvariantNode(std::move(
         OtherInvNode::fromModelConstraint(constraint, *_invariantGraph)));
   }
 
-  VarNodeId createIntVar(int64_t lowerBound, int64_t upperBound,
-                         std::string identifier) {
+  void addFznVar(int64_t lowerBound, int64_t upperBound,
+                 std::string identifier) {
     EXPECT_FALSE(_model->hasVar(identifier));
-    const fznparser::IntVar& var = std::get<fznparser::IntVar>(_model->addVar(
-        std::move(fznparser::IntVar(lowerBound, upperBound, identifier))));
-    return _invariantGraph->createVarNode(var);
+    _model->addVar(
+        std::move(fznparser::IntVar(lowerBound, upperBound, identifier)));
   }
 
-  VarNodeId createBoolVar(std::string identifier) {
+  void addFznVar(std::string identifier) {
     EXPECT_FALSE(_model->hasVar(identifier));
-    const fznparser::BoolVar& var = std::get<fznparser::BoolVar>(
-        _model->addVar(std::move(fznparser::BoolVar(identifier))));
-    return _invariantGraph->createVarNode(var);
+    _model->addVar(std::move(fznparser::BoolVar(identifier)));
+  }
+
+  VarNodeId varNodeId(const std::string& identifier) {
+    return _invariantGraph->varNodeId(identifier);
   }
 
   VarNode& varNode(const std::string& identifier) {

@@ -40,7 +40,7 @@ class AbstractAllDifferentNodeTest : public NodeTestBase<AllDifferentNode> {
     b = createIntVar(2, 7, "b");
     c = createIntVar(2, 7, "c");
     d = createIntVar(2, 7, "d");
-    r = createBoolVar("r");
+    addFznVar("r");
 
     fznparser::IntVarArray inputs("");
     inputs.append(intVar(a));
@@ -193,8 +193,9 @@ TEST_F(AllDifferentReifNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentReifNodeTest, Propagation) { propagation(); }
 
-class AllDifferentFalseNodeTest
-    : public AbstractAllDifferentNodeTest<ViolationInvariantType::CONSTANT_FALSE> {};
+class AllDifferentFalseNodeTest : public AbstractAllDifferentNodeTest<
+                                      ViolationInvariantType::CONSTANT_FALSE> {
+};
 
 TEST_F(AllDifferentFalseNodeTest, Construction) { construction(); }
 
@@ -202,8 +203,8 @@ TEST_F(AllDifferentFalseNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentFalseNodeTest, Propagation) { propagation(); }
 
-class AllDifferentTrueNodeTest
-    : public AbstractAllDifferentNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
+class AllDifferentTrueNodeTest : public AbstractAllDifferentNodeTest<
+                                     ViolationInvariantType::CONSTANT_TRUE> {};
 
 TEST_F(AllDifferentTrueNodeTest, Construction) { construction(); }
 
@@ -228,7 +229,7 @@ TEST_F(AllDifferentNodeTest, pruneParameters) {
 
   makeInvNode(_model->constraints().back());
 
-  varNode(b).domain().fix(2);
+  varNode(b).fixValue(2);
 
   EXPECT_TRUE(invNode().prune(*_invariantGraph));
 

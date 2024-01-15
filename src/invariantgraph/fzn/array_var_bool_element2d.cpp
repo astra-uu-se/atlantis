@@ -34,11 +34,11 @@ bool array_var_bool_element2d(FznInvariantGraph& invariantGraph,
   }
 
   invariantGraph.addInvariantNode(std::make_unique<ArrayVarBoolElement2dNode>(
-      invariantGraph.createVarNode(idx1, false),
-      invariantGraph.createVarNode(idx2, false),
-      invariantGraph.createVarNodes(inputs, false),
-      invariantGraph.createVarNode(output, true), static_cast<size_t>(numRows),
-      offset1, offset2));
+      invariantGraph.createVarNodeFromFzn(idx1, false),
+      invariantGraph.createVarNodeFromFzn(idx2, false),
+      std::move(invariantGraph.createVarNodes(inputs, false)),
+      invariantGraph.createVarNodeFromFzn(output, true),
+      static_cast<size_t>(numRows), offset1, offset2));
   return true;
 }
 

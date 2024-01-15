@@ -1,4 +1,5 @@
 #include "../nodeTestBase.hpp"
+#include "invariantgraph/fzn/array_var_bool_element.hpp"
 #include "invariantgraph/invariantNodes/arrayVarBoolElementNode.hpp"
 #include "propagation/solver.hpp"
 
@@ -14,15 +15,15 @@ class ArrayVarBoolElementNodeTest
   VarNodeId c;
 
   VarNodeId idx;
-  VarNodeId y;
+  VarNodeId output;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createBoolVar("a");
-    b = createBoolVar("b");
-    c = createBoolVar("c");
-    idx = createIntVar(0, 10, "idx");
-    y = createBoolVar("y");
+    addFznVar("a");
+    addFznVar("b");
+    addFznVar("c");
+    addFznVar(0, 10, "idx");
+    addFznVar("output");
 
     fznparser::BoolVarArray inputs("");
     inputs.append(boolVar(a));
@@ -32,9 +33,15 @@ class ArrayVarBoolElementNodeTest
     _model->addConstraint(fznparser::Constraint(
         "array_var_bool_element",
         std::vector<fznparser::Arg>{fznparser::IntArg{intVar(idx)}, inputs,
-                                    fznparser::BoolArg{boolVar(y)}}));
+                                    fznparser::BoolArg{boolVar(output)}}));
 
-    makeInvNode(_model->constraints().front());
+    fzn::array_var_bool_element(*_invariantGraph, ->constraints().front());
+
+    a = varNodeId("a");
+    b = varNodeId("b");
+    c = varNodeId("c");
+    idx = varNodeId("idx");
+    output = varNodeId("output");
   }
 };
 
@@ -44,7 +51,7 @@ TEST_F(ArrayVarBoolElementNodeTest, construction) {
 
   EXPECT_EQ(invNode().b(), idx);
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), y);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 3);
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(0), a);
@@ -69,7 +76,7 @@ TEST_F(ArrayVarBoolElementNodeTest, application) {
   // a, b, c, idx
   EXPECT_EQ(solver.searchVars().size(), 4);
 
-  // a, b, c, idx, y
+  // a, b, c, idx, output
   EXPECT_EQ(solver.numVars(), 5);
 
   // elementVar
@@ -84,7 +91,8 @@ TEST_F(ArrayVarBoolElementNodeTest, propagation) {
   invNode().registerNode(*_invariantGraph, solver);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()),
+            propagation::NULL_ID);
 
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 3);
   for (const auto& inputVarNodeId : invNode().dynamicInputVarNodeIds()) {
@@ -92,7 +100,8 @@ TEST_F(ArrayVarBoolElementNodeTest, propagation) {
   }
 
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId =
+      varId(invNode().outputVarNodeIds().front());
 
   std::vector<propagation::VarId> inputs;
   inputs.emplace_back(varId(invNode().staticInputVarNodeIds().front()));

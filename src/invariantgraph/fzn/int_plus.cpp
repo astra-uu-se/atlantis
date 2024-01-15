@@ -10,9 +10,9 @@ namespace atlantis::invariantgraph::fzn {
 bool int_plus(FznInvariantGraph& invariantGraph, const fznparser::IntArg a,
               const fznparser::IntArg b, const fznparser::IntArg sum) {
   invariantGraph.addInvariantNode(std::move(std::make_unique<IntPlusNode>(
-                                      invariantGraph.createVarNode(a, false),
-                                      invariantGraph.createVarNode(b, false))),
-                                  invariantGraph.createVarNode(sum, true));
+      invariantGraph.createVarNodeFromFzn(a, false),
+      invariantGraph.createVarNodeFromFzn(b, false),
+      invariantGraph.createVarNodeFromFzn(sum, true))));
   return true;
   return true;
 }

@@ -113,18 +113,6 @@ void InvariantNode::replaceDynamicInputVarNode(VarNode& oldInputVarNode,
   newInputVarNode.markAsInputFor(_id, false);
 }
 
-bool InvariantNode::canBeReplaced() const { return false; }
-
-void InvariantNode::replace(InvariantGraph&) {
-  throw InvariantGraphException("InvariantNode::replace() not implemented");
-}
-
-bool canBeRemoved() const { return false; }
-
-bool remove(InvariantGraph&) {
-  throw InvariantGraphException("InvariantNode::remove() not implemented");
-}
-
 propagation::VarId InvariantNode::makeSolverVar(propagation::SolverBase& solver,
                                                 VarNode& varNode,
                                                 Int initialValue) {

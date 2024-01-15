@@ -1,4 +1,5 @@
 #include "../nodeTestBase.hpp"
+#include "invariantgraph/fzn/array_var_int_element2d.hpp"
 #include "invariantgraph/invariantNodes/arrayVarIntElement2dNode.hpp"
 #include "propagation/solver.hpp"
 
@@ -9,39 +10,48 @@ using namespace atlantis::invariantgraph;
 class ArrayVarIntElement2dNodeTest
     : public NodeTestBase<ArrayVarIntElement2dNode> {
  public:
-  VarNodeId x00;
-  VarNodeId x01;
-  VarNodeId x10;
-  VarNodeId x11;
+  VarNodeId x00 = NULL_NODE_ID;
+  VarNodeId x01 = NULL_NODE_ID;
+  VarNodeId x10 = NULL_NODE_ID;
+  VarNodeId x11 = NULL_NODE_ID;
 
-  VarNodeId idx1;
-  VarNodeId idx2;
-  VarNodeId y;
+  VarNodeId idx1 = NULL_NODE_ID;
+  VarNodeId idx2 = NULL_NODE_ID;
+  VarNodeId output = NULL_NODE_ID;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x00 = createIntVar(3, 10, "x00");
-    x01 = createIntVar(2, 11, "x01");
-    x10 = createIntVar(1, 9, "x10");
-    x11 = createIntVar(3, 5, "x11");
-    idx1 = createIntVar(1, 2, "idx1");
-    idx2 = createIntVar(1, 2, "idx2");
-    y = createIntVar(0, 10, "y");
+    addFznVar(3, 10, "x00");
+    addFznVar(2, 11, "x01");
+    addFznVar(1, 9, "x10");
+    addFznVar(3, 5, "x11");
+    addFznVar(1, 2, "idx1");
+    addFznVar(1, 2, "idx2");
+    addFznVar(0, 10, "output");
 
     fznparser::IntVarArray argMatrix("");
-    argMatrix.append(intVar(x00));
-    argMatrix.append(intVar(x01));
-    argMatrix.append(intVar(x10));
-    argMatrix.append(intVar(x11));
+    argMatrix.append(intVar("x00"));
+    argMatrix.append(intVar("x01"));
+    argMatrix.append(intVar("x10"));
+    argMatrix.append(intVar("x11"));
 
     _model->addConstraint(fznparser::Constraint(
         "array_var_int_element2d_nonshifted_flat",
         std::vector<fznparser::Arg>{
             fznparser::IntArg{intVar(idx1)}, fznparser::IntArg{intVar(idx2)},
-            argMatrix, fznparser::IntArg{intVar(y)}, fznparser::IntArg{2},
+            argMatrix, fznparser::IntArg{intVar(output)}, fznparser::IntArg{2},
             fznparser::IntArg{1}, fznparser::IntArg{1}}));
 
-    makeInvNode(_model->constraints().front());
+    fzn::array_var_int_element2d(*_invariantGraph,
+                                 _model->constraints().front());
+
+    x00 = varNodeId("x00");
+    x01 = varNodeId("x01");
+    x10 = varNodeId("x10");
+    x11 = varNodeId("x11");
+    idx1 = varNodeId("idx1");
+    idx2 = varNodeId("idx2");
+    output = varNodeId("output");
   }
 };
 
@@ -53,7 +63,7 @@ TEST_F(ArrayVarIntElement2dNodeTest, construction) {
   EXPECT_EQ(invNode().idx2(), idx2);
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), y);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 4);
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(0), x00);
@@ -80,7 +90,7 @@ TEST_F(ArrayVarIntElement2dNodeTest, application) {
   // x00, x01, x10, x11, idx1, idx2
   EXPECT_EQ(solver.searchVars().size(), 6);
 
-  // x00, x01, x10, x11, idx1, idx2, and y
+  // x00, x01, x10, x11, idx1, idx2, and output
   EXPECT_EQ(solver.numVars(), 7);
 
   // element2dVar
@@ -105,7 +115,8 @@ TEST_F(ArrayVarIntElement2dNodeTest, propagation) {
   }
 
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId =
+      varId(invNode().outputVarNodeIds().front());
 
   std::vector<propagation::VarId> inputs;
   inputs.emplace_back(varId(invNode().idx1()));

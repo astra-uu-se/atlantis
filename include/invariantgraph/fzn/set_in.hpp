@@ -5,10 +5,14 @@
 
 #include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/types.hpp"
+#include "invariantgraph/violationInvariantNodes/setInNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
-static bool set_in(FznInvariantGraph& invariantGraph,
-                   const fznparser::Constraint& constraint);
+bool set_in(FznInvariantGraph&, const fznparser::IntArg&,
+            const fznparser::IntSetArg&);
+
+bool set_in(FznInvariantGraph& invariantGraph,
+            const fznparser::Constraint& constraint);
 
 }  // namespace atlantis::invariantgraph::fzn

@@ -29,15 +29,16 @@ bool int_le(FznInvariantGraph& invariantGraph, VarNodeId a, Int b,
   }
 
   if (invariantGraph.varNode(a).domain().upperBound() <= b ||
-      b < invariantGraph.varNode(a).domain(a).lowerBound()) {
+      b < invariantGraph.varNode(a).domain().lowerBound()) {
     const VarNodeId reifiedVarNodeId =
-        invariantGraph.createVarNode(reified, true);
+        invariantGraph.createVarNodeFromFzn(reified, true);
     invariantGraph.varNode(reifiedVarNodeId)
         .fixValue(invariantGraph.varNode(a).domain().upperBound() <= b);
     return true;
   }
-  invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntLeNode>(a, b, reified)));
+  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLeNode>(
+      a, invariantGraph.createVarNodeFromFzn(b, false),
+      invariantGraph.createVarNodeFromFzn(reified, true))));
   return true;
 }
 
@@ -51,15 +52,17 @@ bool int_le(FznInvariantGraph& invariantGraph, Int a, VarNodeId b,
   }
 
   if (a <= invariantGraph.varNode(b).domain().lowerBound() ||
-      invariantGraph.varNode(a).domain(a).upperBound() < b) {
+      a > invariantGraph.varNode(b).domain().upperBound()) {
+    // constraint is always satisfied or unsatisfied
     const VarNodeId reifiedVarNodeId =
-        invariantGraph.createVarNode(reified, true);
+        invariantGraph.createVarNodeFromFzn(reified, true);
     invariantGraph.varNode(reifiedVarNodeId)
         .fixValue(a <= invariantGraph.varNode(b).domain().lowerBound());
     return true;
   }
-  invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntLeNode>(a, b, reified)));
+  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLeNode>(
+      invariantGraph.createVarNodeFromFzn(a, false), b,
+      invariantGraph.createVarNodeFromFzn(reified, true))));
   return true;
 }
 
@@ -84,23 +87,23 @@ bool int_le(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
 
 bool int_le(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
             const fznparser::IntArg& b) {
-  Int aLb = a.isFixed() ? a.toParameter() : a.toVar().lowerBound();
-  Int bUb = b.isFixed() ? b.toParameter() : b.toVar().upperBound();
+  Int aLb = a.isFixed() ? a.toParameter() : a.var().lowerBound();
+  Int bUb = b.isFixed() ? b.toParameter() : b.var().upperBound();
   if (aLb > bUb) {
     throw FznArgumentException(
         "int_le: fixed variables or parameters a and b must be equal");
     return true;
   }
   if (a.isFixed()) {
-    return int_le(invariantGraph, invariantGraph.createVarNode(b, false),
+    return int_le(invariantGraph, invariantGraph.createVarNodeFromFzn(b, false),
                   a.toParameter());
   }
   if (b.isFixed()) {
-    return int_le(invariantGraph, invariantGraph.createVarNode(a, false),
+    return int_le(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
                   b.toParameter());
   }
-  return int_le(invariantGraph, invariantGraph.createVarNode(a, false),
-                invariantGraph.createVarNode(b, false));
+  return int_le(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
+                invariantGraph.createVarNodeFromFzn(b, false));
 }
 
 bool int_le(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
@@ -113,21 +116,21 @@ bool int_le(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
   }
   if (a.isFixed() && b.isFixed()) {
     const VarNodeId reifiedVarNodeId =
-        invariantGraph.createVarNode(reified, true);
+        invariantGraph.createVarNodeFromFzn(reified, true);
     invariantGraph.varNode(reifiedVarNodeId)
         .fixValue(a.toParameter() == b.toParameter());
     invariantGraph.varNode(reifiedVarNodeId).shouldEnforceDomain(true);
   }
   if (a.isFixed()) {
-    return int_le(invariantGraph, invariantGraph.createVarNode(b, false),
+    return int_le(invariantGraph, invariantGraph.createVarNodeFromFzn(b, false),
                   a.toParameter(), reified);
   }
   if (b.isFixed()) {
-    return int_le(invariantGraph, invariantGraph.createVarNode(a, false),
+    return int_le(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
                   b.toParameter(), reified);
   }
-  return int_le(invariantGraph, invariantGraph.createVarNode(a, false),
-                invariantGraph.createVarNode(b, false), reified);
+  return int_le(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
+                invariantGraph.createVarNodeFromFzn(b, false), reified);
 }
 
 bool int_le(FznInvariantGraph& invariantGraph,

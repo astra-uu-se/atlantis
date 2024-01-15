@@ -10,6 +10,6 @@ namespace atlantis::invariantgraph::fzn {
 
 bool makeCircuitImplicitNode(FznInvariantGraph&, const fznparser::IntVarArray&);
 
-bool makeCircuitImplicitNode(const fznparser::Constraint&, FznInvariantGraph&);
+bool makeCircuitImplicitNode(FznInvariantGraph&, const fznparser::Constraint&);
 
 }  // namespace atlantis::invariantgraph::fzn

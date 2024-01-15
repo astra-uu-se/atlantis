@@ -13,7 +13,7 @@ class Bool2IntNodeTest : public NodeTestBase<Bool2IntNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createBoolVar("a");
+    addFznVar("a");
     b = createIntVar(0, 1, "b");
 
     _model->addConstraint(fznparser::Constraint(

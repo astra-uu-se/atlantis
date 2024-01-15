@@ -4,11 +4,14 @@
 #include <fznparser/variables.hpp>
 
 #include "invariantgraph/fznInvariantGraph.hpp"
+#include "invariantgraph/invariantNodes/intPlusNode.hpp"
 #include "invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
-static bool int_plus(FznInvariantGraph& invariantGraph,
-                     const fznparser::Constraint& constraint);
+bool int_plus(FznInvariantGraph&, const fznparser::IntArg a,
+              const fznparser::IntArg b, const fznparser::IntArg sum);
+
+bool int_plus(FznInvariantGraph&, const fznparser::Constraint& constraint);
 
 }  // namespace atlantis::invariantgraph::fzn

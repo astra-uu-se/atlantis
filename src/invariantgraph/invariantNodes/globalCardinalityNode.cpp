@@ -1,4 +1,4 @@
-#include "invariantgraph/violationInvariantNodes/globalCardinalityNode.hpp"
+#include "invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 
 #include "../parseHelper.hpp"
 

@@ -98,6 +98,7 @@ class VarNode {
   [[nodiscard]] bool inDomain(bool) const;
 
   void removeValue(Int);
+
   void fixValue(Int);
 
   /**

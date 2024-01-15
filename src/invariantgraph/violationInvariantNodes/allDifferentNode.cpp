@@ -44,35 +44,6 @@ bool AllDifferentNode::prune(InvariantGraph& invariantGraph) {
   return !fixedInputs.empty();
 }
 
-bool AllDifferentNode::canBeReplaced() const {
-  return staticInputVarNodeIds().size() == 2;
-}
-
-bool AllDifferentNode::replace(InvariantGraph& invariantGraph) {
-  if (!canBeReplaced()) {
-    throw InvariantGraphException(
-        "AllDifferentNode::replace() called on node that cannot be replaced");
-  }
-  const std::vector<VarNodeId> inputs = staticInputVarNodeIds();
-  for (const VarNodeId input : inputs) {
-    removeStaticInputVarNode(invariantGraph.varNode(input));
-  }
-  if (isReified()) {
-    const VarNodeId reifNodeId = reifiedViolationNodeId();
-    removeOutputVarNode(invariantGraph.varNode(reifNodeId));
-    invariantGraph.addInvariantNode(
-        std::make_unique<IntNeNode>(inputs.at(0), inputs.at(1), reifNodeId));
-  } else {
-    assert(outputVarNodeIds().empty());
-    invariantGraph.addInvariantNode(
-        std::make_unique<IntNeNode>(inputs.at(0), inputs.at(1), shouldHold()));
-  }
-}
-
-bool AllDifferentNode::canBeRemoved() const {
-  return staticInputVarNodeIds().size() == 1;
-}
-
 void AllDifferentNode::registerNode(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().empty()) {

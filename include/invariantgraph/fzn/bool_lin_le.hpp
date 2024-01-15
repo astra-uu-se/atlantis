@@ -5,6 +5,7 @@
 #include <numeric>
 #include <vector>
 
+#include "invariantgraph/fzn/bool_lin_eq.hpp"
 #include "invariantgraph/fzn/int_le.hpp"
 #include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/types.hpp"

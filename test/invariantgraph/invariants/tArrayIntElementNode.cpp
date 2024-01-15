@@ -8,14 +8,14 @@ using namespace atlantis::invariantgraph;
 
 class ArrayIntElementNodeTest : public NodeTestBase<ArrayIntElementNode> {
  public:
-  VarNodeId b;
-  VarNodeId c;
+  VarNodeId idx = NULL_NODE_ID;
+  VarNodeId outputVar = NULL_NODE_ID;
   std::vector<Int> elementValues{1, 2, 3};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    b = createIntVar(0, 10, "b");
-    c = createIntVar(0, 10, "c");
+    addFznVar(0, 10, "idx");
+    addFznVar(0, 10, "outputVar");
 
     fznparser::IntVarArray elements("");
     for (const auto& elem : elementValues) {
@@ -24,10 +24,13 @@ class ArrayIntElementNodeTest : public NodeTestBase<ArrayIntElementNode> {
 
     _model->addConstraint(fznparser::Constraint(
         "array_int_element",
-        std::vector<fznparser::Arg>{fznparser::IntArg{intVar(b)}, elements,
-                                    fznparser::IntArg{intVar(c)}}));
+        std::vector<fznparser::Arg>{fznparser::IntArg{intVar("idx")}, elements,
+                                    fznparser::IntArg{intVar("outputVar")}}));
 
-    makeInvNode(_model->constraints().front());
+    fzn::array_int_element(*_invariantGraph, _model->constraints.front());
+
+    idx = varNodeId("idx");
+    outputVar = varNodeId("outputVar");
   }
 };
 
@@ -35,9 +38,9 @@ TEST_F(ArrayIntElementNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().b(), b);
+  EXPECT_EQ(invNode().idx(), idx);
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), c);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVar);
 
   std::vector<Int> expectedAs{1, 2, 3};
   EXPECT_EQ(invNode().as(), expectedAs);
@@ -57,10 +60,10 @@ TEST_F(ArrayIntElementNodeTest, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // b
+  // idx
   EXPECT_EQ(solver.searchVars().size(), 1);
 
-  // b (c is a view)
+  // idx (outputVar is a view)
   EXPECT_EQ(solver.numVars(), 1);
 
   // elementConst is a view
@@ -82,7 +85,8 @@ TEST_F(ArrayIntElementNodeTest, propagation) {
   }
 
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId =
+      varId(invNode().outputVarNodeIds().front());
   EXPECT_EQ(inputs.size(), 1);
 
   const propagation::VarId input = inputs.front();

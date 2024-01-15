@@ -12,8 +12,8 @@ bool bool_clause(FznInvariantGraph& invariantGraph,
                  const fznparser::BoolVarArray& bs) {
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::BoolClauseNode>(
-          invariantGraph.createVarNodes(as, false),
-          invariantGraph.createVarNodes(bs, false), true));
+          std::move(invariantGraph.createVarNodes(as, false)),
+          std::move(invariantGraph.createVarNodes(bs, false)), true));
   return true;
 }
 

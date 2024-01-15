@@ -153,24 +153,17 @@ void SetDomain::remove(const std::vector<Int>& values) {
   std::vector<Int> cpy(values);
   std::sort(cpy.begin(), cpy.end());
 
-  std::vector<size_t> indicesToRemove;
-  indicesToRemove.reserve(values.size());
-
   size_t i = 0;
   size_t j = 0;
   while (i < cpy.size() && j < _values.size()) {
-    if (cpy[i] < _values[j]) {
-      ++i;
-    } else if (cpy[i] > _values[j]) {
+    if (cpy[i] > _values[j]) {
       ++j;
     } else {
-      indicesToRemove.emplace_back(j);
+      if (cpy[i] == _values[j]) {
+        _values.erase(_values.begin() + j);
+      }
       ++i;
-      ++j;
     }
-  }
-  for (size_t k = indicesToRemove.size(); k > 0; --k) {
-    _values.erase(_values.begin() + indicesToRemove[k - 1]);
   }
 }
 
@@ -232,8 +225,8 @@ bool SearchDomain::isFixed() const noexcept {
 }
 
 bool SearchDomain::contains(Int value) const noexcept {
-  return std::visit<std::vector<DomainEntry>>(
-      [&](const auto& dom) { return dom.contains(value); }, _domain);
+  return std::visit<bool>([&](const auto& dom) { return dom.contains(value); },
+                          _domain);
 }
 
 std::vector<DomainEntry> SearchDomain::relativeComplementIfIntersects(

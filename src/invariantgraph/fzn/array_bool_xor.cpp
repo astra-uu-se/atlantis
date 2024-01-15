@@ -13,14 +13,14 @@ bool array_bool_xor(FznInvariantGraph& invariantGraph,
   if (reified.isFixed()) {
     invariantGraph.addInvariantNode(
         std::make_unique<invariantgraph::ArrayBoolXorNode>(
-            invariantGraph.createVarNodes(varNodeIds, false),
+            std::move(invariantGraph.createVarNodes(varNodeIds, false)),
             reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolXorNode>(
-          invariantGraph.createVarNodes(varNodeIds, false),
-          invariantGraph.createVarNode(reified.var(), true)));
+          std::move(invariantGraph.createVarNodes(varNodeIds, false)),
+          invariantGraph.createVarNodeFromFzn(reified.var(), true)));
   return true;
 }
 

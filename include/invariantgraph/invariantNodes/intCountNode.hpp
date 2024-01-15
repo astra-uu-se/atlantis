@@ -4,7 +4,7 @@
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
-#include "propagation/invariants/linear.hpp"
+#include "propagation/invariants/count.hpp"
 #include "propagation/views/intOffsetView.hpp"
 #include "propagation/views/scalarView.hpp"
 

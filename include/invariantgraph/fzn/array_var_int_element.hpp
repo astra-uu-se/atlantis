@@ -12,6 +12,6 @@ bool array_var_int_element(FznInvariantGraph&, const fznparser::IntArg index,
                            const fznparser::IntVarArray& inputs,
                            const fznparser::IntArg& output, Int offset);
 
-bool array_var_int_element(const fznparser::Constraint&, FznInvariantGraph&);
+bool array_var_int_element(FznInvariantGraph&, const fznparser::Constraint&);
 
 }  // namespace atlantis::invariantgraph::fzn

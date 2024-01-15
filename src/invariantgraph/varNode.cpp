@@ -71,18 +71,16 @@ Int VarNode::val() const {
   }
 }
 
-void VarNode::shouldEnforceDomain(bool b) noexcept {
-  _shouldPostDomainConstraint = b;
-}
+void VarNode::shouldEnforceDomain(bool b) noexcept { _shouldEnforceDomain = b; }
 
-bool VarNode::inDomain(Int val) {
+bool VarNode::inDomain(Int val) const {
   if (!isIntVar()) {
     throw std::runtime_error("inDomain(Int) called on BoolVar");
   }
   return _domain.contains(val);
 }
 
-bool VarNode::inDomain(bool val) {
+bool VarNode::inDomain(bool val) const {
   if (!isIntVar()) {
     throw std::runtime_error("inDomain(Int) called on BoolVar");
   }

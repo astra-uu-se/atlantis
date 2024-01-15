@@ -1,4 +1,5 @@
 #include "../nodeTestBase.hpp"
+#include "invariantgraph/fzn/array_int_minimum.hpp"
 #include "invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
 #include "propagation/solver.hpp"
 
@@ -11,14 +12,14 @@ class ArrayIntMinimumTestNode : public NodeTestBase<ArrayIntMinimumNode> {
   VarNodeId x1;
   VarNodeId x2;
   VarNodeId x3;
-  VarNodeId o;
+  VarNodeId output;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = createIntVar(5, 10, "x1");
-    x2 = createIntVar(0, 20, "x2");
-    x3 = createIntVar(0, 20, "x3");
-    o = createIntVar(-10, 100, "o");
+    addFznVar(5, 10, "x1");
+    addFznVar(0, 20, "x2");
+    addFznVar(0, 20, "x3");
+    addFznVar(-10, 100, "output");
 
     fznparser::IntVarArray inputs("");
     inputs.append(intVar(x1));
@@ -27,11 +28,16 @@ class ArrayIntMinimumTestNode : public NodeTestBase<ArrayIntMinimumNode> {
 
     _model->addConstraint(fznparser::Constraint(
         "array_int_minimum",
-        std::vector<fznparser::Arg>{fznparser::IntArg{intVar(o)}, inputs},
+        std::vector<fznparser::Arg>{fznparser::IntArg{intVar(output)}, inputs},
         std::vector<fznparser::Annotation>{
-            definesVarAnnotation(identifier(o))}));
+            definesVarAnnotation(identifier(output))}));
 
-    makeInvNode(_model->constraints().front());
+    fzn::array_int_minimum(*_invariantGraph, _model->constraints().front());
+
+    x1 = varNodeId("x1");
+    x2 = varNodeId("x2");
+    x3 = varNodeId("x3");
+    output = varNodeId("output");
   }
 };
 
@@ -45,7 +51,7 @@ TEST_F(ArrayIntMinimumTestNode, construction) {
   EXPECT_EQ(invNode().staticInputVarNodeIds().at(2), x3);
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), o);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
 TEST_F(ArrayIntMinimumTestNode, application) {
@@ -62,13 +68,13 @@ TEST_F(ArrayIntMinimumTestNode, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  EXPECT_EQ(solver.lowerBound(varId(o)), 0);
-  EXPECT_EQ(solver.upperBound(varId(o)), 10);
+  EXPECT_EQ(solver.lowerBound(varId(output)), 0);
+  EXPECT_EQ(solver.upperBound(varId(output)), 10);
 
   // x1, x2, and x3
   EXPECT_EQ(solver.searchVars().size(), 3);
 
-  // x1, x2 and o
+  // x1, x2 and output
   EXPECT_EQ(solver.numVars(), 4);
 
   // maxSparse
@@ -90,7 +96,8 @@ TEST_F(ArrayIntMinimumTestNode, propagation) {
   }
 
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId =
+      varId(invNode().outputVarNodeIds().front());
   EXPECT_EQ(inputs.size(), 3);
 
   std::vector<Int> values(inputs.size());

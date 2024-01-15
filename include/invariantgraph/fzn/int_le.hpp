@@ -3,6 +3,8 @@
 #include <fznparser/constraint.hpp>
 #include <fznparser/variables.hpp>
 
+#include "invariantgraph/fzn/int_lt.hpp"
+#include "invariantgraph/fzn/int_ne.hpp"
 #include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/types.hpp"
 

@@ -56,7 +56,7 @@ bool array_bool_or(FznInvariantGraph& invariantGraph,
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolOrNode>(
           std::move(varNodeIds),
-          invariantGraph.createVarNode(reified.var(), true)));
+          invariantGraph.createVarNodeFromFzn(reified.var(), true)));
   return true;
 }
 

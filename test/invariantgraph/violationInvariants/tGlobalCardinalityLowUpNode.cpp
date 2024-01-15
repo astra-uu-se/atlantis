@@ -45,7 +45,7 @@ class AbstractGlobalCardinalityLowUpNodeTest
     NodeTestBase::SetUp();
     x1 = createIntVar(5, 10, "x1");
     x2 = createIntVar(2, 7, "x2");
-    r = createBoolVar("r");
+    addFznVar("r");
 
     fznparser::IntVarArray inputArg("");
     inputArg.append(intVar(x1));

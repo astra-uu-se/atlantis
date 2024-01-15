@@ -15,8 +15,6 @@ class BoolEqNode : public ViolationInvariantNode {
 
   explicit BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
-  bool prune(InvariantGraph&) override;
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

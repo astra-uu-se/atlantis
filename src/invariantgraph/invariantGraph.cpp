@@ -1,8 +1,8 @@
 #include "invariantgraph/invariantGraph.hpp"
 
-#include "invariantgraph/violationInvariantNodes/allEqualNode.hpp"
 #include "invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 #include "invariantgraph/violationInvariantNodes/boolEqNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "invariantgraph/violationInvariantNodes/intEqNode.hpp"
 
 namespace atlantis::invariantgraph {
@@ -144,6 +144,27 @@ const VarNode& InvariantGraph::varNodeConst(VarNodeId id) const {
   return _varNodes.at(id.id - 1);
 }
 
+VarNodeId InvariantGraph::varNodeId(const std::string& identifier) const {
+  if (!containsVarNode(identifier)) {
+    return NULL_NODE_ID;
+  }
+  return _namedVarNodeIndices.at(identifier);
+}
+
+VarNodeId InvariantGraph::varNodeId(bool val) const {
+  if (!containsVarNode(val)) {
+    return NULL_NODE_ID;
+  }
+  return _boolVarNodeIndices.at(val);
+}
+
+VarNodeId InvariantGraph::varNodeId(Int val) const {
+  if (!containsVarNode(val)) {
+    return NULL_NODE_ID;
+  }
+  return _intVarNodeIndices.at(val);
+}
+
 propagation::VarId InvariantGraph::varId(const std::string& identifier) const {
   return _varNodes.at(_namedVarNodeIndices.at(identifier).id - 1).varId();
 }
@@ -258,8 +279,8 @@ void InvariantGraph::splitMultiDefinedVars() {
     }
 
     for (const auto invNodeId : replacedDefiningNodes) {
-      const VarNodeId newNodeId =
-          createVarNode(_varNodes[i].constDomain(), _varNodes[i].isIntVar());
+      const VarNodeId newNodeId = createVarNode(_varNodes[i].constDomain(),
+                                                _varNodes[i].isIntVar(), true);
       splitNodes.emplace_back(newNodeId);
       invariantNode(invNodeId).replaceDefinedVar(_varNodes[i],
                                                  varNode(newNodeId));
@@ -270,8 +291,8 @@ void InvariantGraph::splitMultiDefinedVars() {
         addInvariantNode(std::move(std::make_unique<IntEqNode>(
             splitNodes.front(), splitNodes.back())));
       } else {
-        addInvariantNode(
-            std::move(std::make_unique<AllEqualNode>(std::move(splitNodes))));
+        addInvariantNode(std::move(
+            std::make_unique<IntAllEqualNode>(std::move(splitNodes))));
       }
     } else if (splitNodes.size() == 2) {
       addInvariantNode(std::move(
@@ -332,7 +353,7 @@ VarNodeId InvariantGraph::breakCycle(const std::vector<VarNodeId>& cycle) {
   assert(!varNode(pivot).isFixed());
 
   VarNodeId newInputNode =
-      createVarNode(varNode(pivot).domain(), varNode(pivot).isIntVar());
+      createVarNode(varNode(pivot).domain(), varNode(pivot).isIntVar(), false);
 
   invariantNode(listeningInvariant)
       .replaceStaticInputVarNode(varNode(pivot), varNode(newInputNode));

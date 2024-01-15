@@ -11,11 +11,6 @@ BoolLeNode::BoolLeNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
                              shouldHold) {}
 
-bool BoolLeNode::canBeRemoved(cibst InvariantGraph& invariantGraph) const {
-  return invariantGraph.varNodeConst(a()).isFixed() &&
-         invariantGraph.varNodeConst(b()).isFixed();
-}
-
 void BoolLeNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
   registerViolation(invariantGraph, solver);

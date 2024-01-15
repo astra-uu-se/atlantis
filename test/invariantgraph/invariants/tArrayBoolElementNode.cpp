@@ -1,4 +1,5 @@
 #include "../nodeTestBase.hpp"
+#include "invariantgraph/fzn/array_bool_element.hpp"
 #include "invariantgraph/invariantNodes/arrayBoolElementNode.hpp"
 #include "invariantgraph/invariantNodes/arrayIntElementNode.hpp"
 #include "propagation/solver.hpp"
@@ -9,14 +10,15 @@ using namespace atlantis::invariantgraph;
 
 class ArrayBoolElementNodeTest : public NodeTestBase<ArrayIntElementNode> {
  public:
-  VarNodeId b;
-  VarNodeId y;
+  VarNodeId outputVar = NULL_NODE_ID;
+  VarNodeId idx = NULL_NODE_ID;
+
   std::vector<bool> elementValues{true, false, false, true};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    b = createIntVar(1, 4, "b");
-    y = createBoolVar("y");
+    addFznVar(1, 4, "outputVar");
+    addFznVar("idx");
 
     fznparser::BoolVarArray elements("");
     for (const auto& elem : elementValues) {
@@ -25,10 +27,14 @@ class ArrayBoolElementNodeTest : public NodeTestBase<ArrayIntElementNode> {
 
     _model->addConstraint(fznparser::Constraint(
         "array_bool_element",
-        std::vector<fznparser::Arg>{fznparser::IntArg{intVar(b)}, elements,
-                                    fznparser::BoolArg{boolVar(y)}}));
+        std::vector<fznparser::Arg>{fznparser::IntArg{intVar("outputVar")},
+                                    elements,
+                                    fznparser::BoolArg{boolVar("idx")}}));
 
-    makeOtherInvNode<ArrayBoolElementNode>(_model->constraints().front());
+    fzn::array_bool_element(*_invariantGraph, _model->constraints().front());
+
+    outputVar = varNodeId("outputVar");
+    idx = varNodeId("idx");
   }
 };
 
@@ -36,9 +42,9 @@ TEST_F(ArrayBoolElementNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().b(), b);
+  EXPECT_EQ(invNode().outputVar(), outputVar);
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), y);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), idx);
 
   std::vector<Int> expectedAs{0, 1, 1, 0};
   EXPECT_EQ(invNode().as(), expectedAs);
@@ -59,17 +65,17 @@ TEST_F(ArrayBoolElementNodeTest, application) {
   solver.close();
 
   // The index ranges over the as array (first index is 1).
-  EXPECT_EQ(solver.lowerBound(varId(b)), 1);
-  EXPECT_EQ(solver.upperBound(varId(b)), invNode().as().size());
+  EXPECT_EQ(solver.lowerBound(varId(outputVar)), 1);
+  EXPECT_EQ(solver.upperBound(varId(outputVar)), invNode().as().size());
 
   // The output domain should contain all elements in as.
-  EXPECT_EQ(solver.lowerBound(varId(y)), 0);
-  EXPECT_EQ(solver.upperBound(varId(y)), 1);
+  EXPECT_EQ(solver.lowerBound(varId(idx)), 0);
+  EXPECT_EQ(solver.upperBound(varId(idx)), 1);
 
-  // b
+  // outputVar
   EXPECT_EQ(solver.searchVars().size(), 1);
 
-  // b (y is a view)
+  // outputVar (idx is a view)
   EXPECT_EQ(solver.numVars(), 1);
 
   // elementConst is a view
@@ -91,7 +97,8 @@ TEST_F(ArrayBoolElementNodeTest, propagation) {
   }
 
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId =
+      varId(invNode().outputVarNodeIds().front());
   EXPECT_EQ(inputs.size(), 1);
 
   const propagation::VarId input = inputs.front();

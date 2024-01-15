@@ -14,9 +14,9 @@ class IntDivNodeTest : public NodeTestBase<IntDivNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVar(0, 10, "a");
-    b = createIntVar(1, 10, "b");
-    c = createIntVar(3, 5, "c");
+    addFznVar(0, 10, "a");
+    addFznVar(1, 10, "b");
+    addFznVar(3, 5, "c");
 
     _model->addConstraint(fznparser::Constraint(
         "int_div",
@@ -79,7 +79,8 @@ TEST_F(IntDivNodeTest, propagation) {
   }
 
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId =
+      varId(invNode().outputVarNodeIds().front());
   EXPECT_EQ(inputs.size(), 2);
 
   std::vector<Int> values(inputs.size());

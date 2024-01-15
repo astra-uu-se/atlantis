@@ -11,11 +11,10 @@ bool int_mod(FznInvariantGraph& invariantGraph,
              const fznparser::IntArg nominator,
              const fznparser::IntArg denominator,
              const fznparser::IntArg remainder) {
-  invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntModNode>(
-          invariantGraph.createVarNode(nominator, false),
-          invariantGraph.createVarNode(denominator, false))),
-      invariantGraph.createVarNode(remainder, true));
+  invariantGraph.addInvariantNode(std::move(std::make_unique<IntModNode>(
+      invariantGraph.createVarNodeFromFzn(nominator, false),
+      invariantGraph.createVarNodeFromFzn(denominator, false),
+      invariantGraph.createVarNodeFromFzn(remainder, true))));
   return true;
   return true;
 }

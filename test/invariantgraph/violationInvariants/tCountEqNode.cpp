@@ -42,7 +42,7 @@ class AbstractCountEqNodeTest : public NodeTestBase<CountEqNode> {
     x3 = createIntVar(4, 5, "x3");
     y = createIntVar(2, 5, "y");
     c = createIntVar(0, 2, "c");
-    r = createBoolVar("r");
+    addFznVar("r");
 
     fznparser::IntVarArray inputs("");
     inputs.append(intVar(x1));

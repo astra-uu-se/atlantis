@@ -11,7 +11,7 @@ bool set_in(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
             const fznparser::IntSetArg& b) {
   std::vector<Int> values = b.toParameter().elements();
   invariantGraph.addInvariantNode(std::make_unique<SetInNode>(
-      invariantGraph.createVarNode(a, false), std::move(values), true));
+      invariantGraph.createVarNodeFromFzn(a, false), std::move(values), true));
   return true;
 }
 
@@ -21,7 +21,6 @@ bool set_in(FznInvariantGraph& invariantGraph,
     return false;
   }
 
-  verifyNumArguments(constraint, isReified ? 2);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntSetArg, true);
 

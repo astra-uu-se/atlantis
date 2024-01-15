@@ -11,8 +11,8 @@ bool bool_not(FznInvariantGraph& invariantGraph,
               const fznparser::BoolArg& boolVar,
               const fznparser::BoolArg& negatedBoolVar) {
   invariantGraph.addInvariantNode(std::move(std::make_unique<BoolNotNode>(
-      invariantGraph.createVarNode(boolVar, false),
-      invariantGraph.createVarNode(negatedBoolVar, true))));
+      invariantGraph.createVarNodeFromFzn(boolVar, false),
+      invariantGraph.createVarNodeFromFzn(negatedBoolVar, true))));
   return true;
 }
 

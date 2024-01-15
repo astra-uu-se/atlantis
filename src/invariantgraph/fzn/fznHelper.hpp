@@ -142,12 +142,13 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
 
   if (needle.isFixed()) {
     invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false), needle.toParameter(),
-        countVarNodeId));
+        std::move(invariantGraph.createVarNodes(inputs, false)),
+        needle.toParameter(), countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        invariantGraph.createVarNode(needle.var(), false), countVarNodeId));
+        std::move(invariantGraph.createVarNodes(inputs, false)),
+        invariantGraph.createVarNodeFromFzn(needle.var(), false),
+        countVarNodeId));
   }
   return countVarNodeId;
 }
@@ -156,18 +157,65 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
                           const fznparser::IntVarArray& inputs,
                           const fznparser::IntArg& needle,
                           const fznparser::IntArg& count) {
-  VarNodeId countVarNodeId = invariantGraph.createVarNode(count, true);
+  VarNodeId countVarNodeId = invariantGraph.createVarNodeFromFzn(count, true);
 
   if (needle.isFixed()) {
     invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false), needle.toParameter(),
-        countVarNodeId));
+        std::move(invariantGraph.createVarNodes(inputs, false)),
+        needle.toParameter(), countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        invariantGraph.createVarNode(needle.var(), false), countVarNodeId));
+        std::move(invariantGraph.createVarNodes(inputs, false)),
+        invariantGraph.createVarNodeFromFzn(needle.var(), false),
+        countVarNodeId));
   }
   return countVarNodeId;
+}
+
+std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
+                              const fznparser::BoolVarArray& vars) {
+  Int lb = 0;
+  Int ub = 0;
+  for (size_t i = 0; i < coeffs.size(); ++i) {
+    const auto& var = vars.at(i);
+    Int v1, v2;
+    if (std::holds_alternative<bool>(var)) {
+      const Int val = std::get<bool>(var) ? 1 : 0;
+      v1 += val * coeffs[i];
+      v2 += val * coeffs[i];
+    } else {
+      const auto& varRef =
+          std::get<std::reference_wrapper<const fznparser::BoolVar>>(var).get();
+      v1 += (varRef.lowerBound() ? 1 : 0) * coeffs[i];
+      v2 += (varRef.upperBound() ? 1 : 0) * coeffs[i];
+    }
+    lb += std::min(v1, v2);
+    ub += std::max(v1, v2);
+  }
+  return {lb, ub};
+}
+
+std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
+                              const fznparser::IntVarArray& vars) {
+  Int lb = 0;
+  Int ub = 0;
+  for (size_t i = 0; i < coeffs.size(); ++i) {
+    const auto& var = vars.at(i);
+    Int v1, v2;
+    if (std::holds_alternative<Int>(var)) {
+      const Int val = std::get<Int>(var);
+      v1 += val * coeffs[i];
+      v2 += val * coeffs[i];
+    } else {
+      const auto& varRef =
+          std::get<std::reference_wrapper<const fznparser::IntVar>>(var).get();
+      v1 += varRef.lowerBound() * coeffs[i];
+      v2 += varRef.upperBound() * coeffs[i];
+    }
+    lb += std::min(v1, v2);
+    ub += std::max(v1, v2);
+  }
+  return {lb, ub};
 }
 
 }  // namespace atlantis::invariantgraph::fzn

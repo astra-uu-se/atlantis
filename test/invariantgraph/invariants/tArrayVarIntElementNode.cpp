@@ -17,11 +17,11 @@ class ArrayVarIntElementNodeTest : public NodeTestBase<ArrayVarIntElementNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVar(3, 10, "a");
-    b = createIntVar(2, 11, "b");
-    c = createIntVar(1, 9, "c");
-    idx = createIntVar(0, 10, "idx");
-    y = createIntVar(0, 10, "y");
+    addFznVar(3, 10, "a");
+    addFznVar(2, 11, "b");
+    addFznVar(1, 9, "c");
+    addFznVar(0, 10, "idx");
+    addFznVar(0, 10, "y");
 
     fznparser::IntVarArray inputs("");
     inputs.append(intVar(a));
@@ -83,7 +83,8 @@ TEST_F(ArrayVarIntElementNodeTest, propagation) {
   invNode().registerNode(*_invariantGraph, solver);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()),
+            propagation::NULL_ID);
 
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 3);
   for (const auto& inputVarNodeId : invNode().dynamicInputVarNodeIds()) {
@@ -91,7 +92,8 @@ TEST_F(ArrayVarIntElementNodeTest, propagation) {
   }
 
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId =
+      varId(invNode().outputVarNodeIds().front());
 
   std::vector<propagation::VarId> inputs;
   inputs.emplace_back(varId(invNode().staticInputVarNodeIds().front()));

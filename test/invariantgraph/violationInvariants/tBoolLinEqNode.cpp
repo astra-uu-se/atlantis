@@ -26,9 +26,9 @@ class BoolLinEqNodeTest : public NodeTestBase<BoolLinEqNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createBoolVar("a");
-    b = createBoolVar("b");
-    r = createBoolVar("r");
+    addFznVar("a");
+    addFznVar("b");
+    addFznVar("r");
 
     fznparser::IntVarArray coeffsArg("");
     for (int64_t c : coeffs) {

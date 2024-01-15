@@ -12,9 +12,9 @@ bool array_var_int_element(FznInvariantGraph& invariantGraph,
                            const fznparser::IntVarArray& inputs,
                            const fznparser::IntArg& output, Int offset) {
   invariantGraph.addInvariantNode(std::make_unique<ArrayVarIntElementNode>(
-      invariantGraph.createVarNode(index, false),
-      invariantGraph.createVarNodes(inputs, false),
-      invariantGraph.createVarNode(output, true), offset));
+      invariantGraph.createVarNodeFromFzn(index, false),
+      std::move(invariantGraph.createVarNodes(inputs, false)),
+      invariantGraph.createVarNodeFromFzn(output, true), offset));
   return true;
 }
 

@@ -2,7 +2,6 @@
 
 #include <cmath>
 
-
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/binaryMin.hpp"
@@ -15,11 +14,7 @@ class IntMinNode : public InvariantNode {
 
   ~IntMinNode() override = default;
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_min", 3}};
-  }
-
-    void registerOutputVars(InvariantGraph&,
+  void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;

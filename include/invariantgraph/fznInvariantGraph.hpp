@@ -33,7 +33,6 @@
 #include "invariantgraph/views/boolNotNode.hpp"
 #include "invariantgraph/views/intAbsNode.hpp"
 #include "invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
-#include "invariantgraph/violationInvariantNodes/allEqualNode.hpp"
 #include "invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "invariantgraph/violationInvariantNodes/arrayBoolOrNode.hpp"
 #include "invariantgraph/violationInvariantNodes/boolAndNode.hpp"
@@ -45,6 +44,7 @@
 #include "invariantgraph/violationInvariantNodes/boolLtNode.hpp"
 #include "invariantgraph/violationInvariantNodes/boolOrNode.hpp"
 #include "invariantgraph/violationInvariantNodes/boolXorNode.hpp"
+#include "invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "invariantgraph/violationInvariantNodes/intEqNode.hpp"
 #include "invariantgraph/violationInvariantNodes/intLeNode.hpp"
 #include "invariantgraph/violationInvariantNodes/intLinEqNode.hpp"
@@ -68,24 +68,14 @@ class FznInvariantGraph : public InvariantGraph {
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
-  VarNodeId createVarNode(bool, bool isDefinedVar);
-  VarNodeId createVarNode(bool, const std::string&, bool isDefinedVar);
-  VarNodeId createVarNode(Int, bool isDefinedVar);
-  VarNodeId createVarNode(Int, const std::string&, bool isDefinedVar);
-  VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
-                          bool isDefinedVar);
-  VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
-                          const std::string&, bool isDefinedVar);
-  VarNodeId createVarNode(const VarNode&, bool isDefinedVar);
-
-  VarNodeId createVarNode(const fznparser::BoolVar&, bool isDefinedVar);
-  VarNodeId createVarNode(std::reference_wrapper<const fznparser::BoolVar>,
-                          bool isDefinedVar);
-  VarNodeId createVarNode(const fznparser::BoolArg&, bool isDefinedVar);
-  VarNodeId createVarNode(const fznparser::IntVar&, bool isDefinedVar);
-  VarNodeId createVarNode(const fznparser::IntArg&, bool isDefinedVar);
-  VarNodeId createVarNode(std::reference_wrapper<const fznparser::IntVar>,
-                          bool isDefinedVar);
+  VarNodeId createVarNodeFromFzn(const fznparser::BoolVar&, bool isDefinedVar);
+  VarNodeId createVarNodeFromFzn(
+      std::reference_wrapper<const fznparser::BoolVar>, bool isDefinedVar);
+  VarNodeId createVarNodeFromFzn(const fznparser::BoolArg&, bool isDefinedVar);
+  VarNodeId createVarNodeFromFzn(const fznparser::IntVar&, bool isDefinedVar);
+  VarNodeId createVarNodeFromFzn(const fznparser::IntArg&, bool isDefinedVar);
+  VarNodeId createVarNodeFromFzn(
+      std::reference_wrapper<const fznparser::IntVar>, bool isDefinedVar);
 
   std::vector<VarNodeId> createVarNodes(const fznparser::BoolVarArray&,
                                         bool areDefinedVars);
@@ -104,11 +94,7 @@ class FznInvariantGraph : public InvariantGraph {
   void build(const fznparser::Model&);
 
  private:
-  void initVarNodes(const fznparser::Model&);
   void createNodes(const fznparser::Model&);
-
-  void markOutputTo(const invariantgraph::InvariantNode& invNodeId,
-                    std::unordered_set<std::string>& definedVars);
 
   bool makeInvariantNode(const fznparser::Constraint& constraint,
                          bool guessDefinedVar = false);

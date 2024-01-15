@@ -11,8 +11,8 @@ bool array_int_maximum(FznInvariantGraph& invariantGraph,
                        const fznparser::IntArg& output,
                        const fznparser::IntVarArray& inputs) {
   invariantGraph.addInvariantNode(std::make_unique<ArrayIntMaximumNode>(
-      invariantGraph.createVarNodes(inputs, false),
-      invariantGraph.createVarNode(output, true)));
+      std::move(invariantGraph.createVarNodes(inputs, false)),
+      invariantGraph.createVarNodeFromFzn(output, true)));
   return true;
 }
 

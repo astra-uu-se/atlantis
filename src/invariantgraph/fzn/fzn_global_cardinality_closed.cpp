@@ -24,8 +24,9 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
 
   invariantGraph.addInvariantNode(
       std::move(std::make_unique<GlobalCardinalityClosedNode>(
-          invariantGraph.createVarNodes(inputs, false), std::move(cover),
-          invariantGraph.createVarNodes(counts, true), true)));
+          std::move(invariantGraph.createVarNodes(inputs, false)),
+          std::move(cover),
+          std::move(invariantGraph.createVarNodes(counts, true)), true)));
   return true;
 }
 
@@ -42,16 +43,18 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
     }
     invariantGraph.addInvariantNode(
         std::move(std::make_unique<GlobalCardinalityClosedNode>(
-            invariantGraph.createVarNodes(inputs, false), std::move(cover),
-            invariantGraph.createVarNodes(counts, true),
+            std::move(invariantGraph.createVarNodes(inputs, false)),
+            std::move(cover),
+            std::move(invariantGraph.createVarNodes(counts, true)),
             reified.toParameter())));
     return true;
   }
   invariantGraph.addInvariantNode(
       std::move(std::make_unique<GlobalCardinalityClosedNode>(
-          invariantGraph.createVarNodes(inputs, false), std::move(cover),
-          invariantGraph.createVarNodes(counts, true),
-          invariantGraph.createVarNode(reified, true))));
+          std::move(invariantGraph.createVarNodes(inputs, false)),
+          std::move(cover),
+          std::move(invariantGraph.createVarNodes(counts, true)),
+          invariantGraph.createVarNodeFromFzn(reified, true))));
   return true;
 }
 

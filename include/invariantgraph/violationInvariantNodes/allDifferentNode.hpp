@@ -6,7 +6,7 @@
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/views/notEqualConst.hpp"
 #include "propagation/violationInvariants/allDifferent.hpp"
-#include "propagation/violationInvariants/int_ne.hpp"
+#include "propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::invariantgraph {
 class AllDifferentNode : public ViolationInvariantNode {
@@ -17,14 +17,6 @@ class AllDifferentNode : public ViolationInvariantNode {
   explicit AllDifferentNode(std::vector<VarNodeId>&& vars, VarNodeId r);
 
   explicit AllDifferentNode(std::vector<VarNodeId>&& vars, bool shouldHold);
-
-  bool canBeReplaced() const override;
-
-  void replace(InvariantGraph&) override;
-
-  bool canBeRemoved() const override;
-
-  void remove() override;
 
   bool prune(InvariantGraph&) override;
 

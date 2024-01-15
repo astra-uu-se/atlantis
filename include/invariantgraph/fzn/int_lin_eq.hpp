@@ -11,10 +11,10 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool int_lin_eq(FznInvariantGraph&, std::vector<Int>&& coeffs,
-                const fznparser::BoolVarArray inputs, Int bound);
+                const fznparser::IntVarArray& inputs, Int bound);
 
 bool int_lin_eq(FznInvariantGraph&, std::vector<Int>&& coeffs,
-                const fznparser::BoolVarArray inputs, Int bound,
+                const fznparser::IntVarArray& inputs, Int bound,
                 fznparser::BoolArg reified);
 
 bool int_lin_eq(FznInvariantGraph&, const fznparser::Constraint&);

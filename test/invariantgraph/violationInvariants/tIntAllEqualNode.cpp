@@ -22,7 +22,7 @@ static bool isViolating(const std::vector<Int>& values) {
 }
 
 template <ViolationInvariantType Type>
-class AbstractAllEqualNodeTest : public NodeTestBase<AllEqualNode> {
+class AbstractAllEqualNodeTest : public NodeTestBase<IntAllEqualNode> {
  public:
   VarNodeId a;
   VarNodeId b;
@@ -36,7 +36,7 @@ class AbstractAllEqualNodeTest : public NodeTestBase<AllEqualNode> {
     b = createIntVar(2, 7, "b");
     c = createIntVar(2, 7, "c");
     d = createIntVar(2, 7, "d");
-    r = createBoolVar("r");
+    addFznVar("r");
 
     fznparser::IntVarArray inputs{""};
     inputs.append(intVar(a));
@@ -187,7 +187,8 @@ TEST_F(AllEqualReifNodeTest, Application) { application(); }
 TEST_F(AllEqualReifNodeTest, Propagation) { propagation(); }
 
 class AllEqualFalseNodeTest
-    : public AbstractAllEqualNodeTest<ViolationInvariantType::CONSTANT_FALSE> {};
+    : public AbstractAllEqualNodeTest<ViolationInvariantType::CONSTANT_FALSE> {
+};
 
 TEST_F(AllEqualFalseNodeTest, Construction) { construction(); }
 

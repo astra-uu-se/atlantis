@@ -1,4 +1,5 @@
 #include "../nodeTestBase.hpp"
+#include "invariantgraph/fzn/array_bool_element2d.hpp"
 #include "invariantgraph/invariantNodes/arrayBoolElement2dNode.hpp"
 #include "invariantgraph/invariantNodes/arrayIntElement2dNode.hpp"
 #include "propagation/solver.hpp"
@@ -12,15 +13,15 @@ class ArrayBoolElement2dNodeTest : public NodeTestBase<ArrayIntElement2dNode> {
   std::vector<std::vector<bool>> parMatrix{std::vector<bool>{true, false},
                                            std::vector<bool>{false, true}};
 
-  VarNodeId idx1;
-  VarNodeId idx2;
-  VarNodeId y;
+  VarNodeId idx1 = NULL_NODE_ID;
+  VarNodeId idx2 = NULL_NODE_ID;
+  VarNodeId outputVar = NULL_NODE_ID;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    idx1 = createIntVar(1, 2, "idx1");
-    idx2 = createIntVar(1, 2, "idx2");
-    y = createBoolVar("y");
+    addFznVar(1, 2, "idx1");
+    addFznVar(1, 2, "idx2");
+    addFznVar("outputVar");
 
     fznparser::BoolVarArray argMatrix("");
     for (const auto& row : parMatrix) {
@@ -32,12 +33,17 @@ class ArrayBoolElement2dNodeTest : public NodeTestBase<ArrayIntElement2dNode> {
     _model->addConstraint(fznparser::Constraint(
         "array_bool_element2d_nonshifted_flat",
         std::vector<fznparser::Arg>{
-            fznparser::IntArg{intVar(idx1)}, fznparser::IntArg{intVar(idx2)},
-            argMatrix, fznparser::BoolArg{boolVar(y)},
+            fznparser::IntArg{intVar("idx1")},
+            fznparser::IntArg{intVar("idx2")}, argMatrix,
+            fznparser::BoolArg{boolVar("outputVar")},
             fznparser::IntArg{static_cast<Int>(parMatrix.size())},
             fznparser::IntArg{1}, fznparser::IntArg{1}}));
 
-    makeOtherInvNode<ArrayBoolElement2dNode>(_model->constraints().front());
+    fzn::array_bool_element2d(*_invariantGraph, _model->constraints().front());
+
+    idx1 = varNodeId("idx1");
+    idx2 = varNodeId("idx2");
+    outputVar = varNodeId("outputVar");
   }
 };
 
@@ -49,7 +55,7 @@ TEST_F(ArrayBoolElement2dNodeTest, construction) {
   EXPECT_EQ(invNode().idx2(), idx2);
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), y);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVar);
 
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 0);
 }
@@ -71,7 +77,7 @@ TEST_F(ArrayBoolElement2dNodeTest, application) {
   // idx1, idx2
   EXPECT_EQ(solver.searchVars().size(), 2);
 
-  // idx1, idx2, and y
+  // idx1, idx2, and outputVar
   EXPECT_EQ(solver.numVars(), 3);
 
   // element2dVar
@@ -86,12 +92,14 @@ TEST_F(ArrayBoolElement2dNodeTest, propagation) {
   invNode().registerNode(*_invariantGraph, solver);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()),
+            propagation::NULL_ID);
 
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 0);
 
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId =
+      varId(invNode().outputVarNodeIds().front());
 
   std::vector<propagation::VarId> inputs;
   inputs.emplace_back(varId(invNode().idx1()));

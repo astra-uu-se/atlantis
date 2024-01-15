@@ -49,7 +49,7 @@ class AbstractGlobalCardinalityClosedNodeTest
     x2 = createIntVar(2, 7, "x2");
     o1 = createIntVar(1, 2, "o1");
     o2 = createIntVar(1, 2, "o2");
-    r = createBoolVar("r");
+    addFznVar("r");
 
     fznparser::IntVarArray inputsArg("");
     inputsArg.append(intVar(x1));

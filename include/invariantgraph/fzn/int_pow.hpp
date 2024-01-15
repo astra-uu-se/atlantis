@@ -4,11 +4,15 @@
 #include <fznparser/variables.hpp>
 
 #include "invariantgraph/fznInvariantGraph.hpp"
+#include "invariantgraph/invariantNodes/intPowNode.hpp"
 #include "invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
-static bool int_pow(FznInvariantGraph& invariantGraph,
-                    const fznparser::Constraint& constraint);
+bool int_pow(FznInvariantGraph&, const fznparser::IntArg base,
+             const fznparser::IntArg exponent, const fznparser::IntArg power);
+
+bool int_pow(FznInvariantGraph& invariantGraph,
+             const fznparser::Constraint& constraint);
 
 }  // namespace atlantis::invariantgraph::fzn

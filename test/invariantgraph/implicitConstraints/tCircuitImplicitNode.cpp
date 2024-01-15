@@ -1,4 +1,5 @@
 #include "../nodeTestBase.hpp"
+#include "invariantgraph/fzn/circuitImplicitNode.hpp"
 #include "invariantgraph/implicitConstraints/circuitImplicitNode.hpp"
 #include "propagation/solver.hpp"
 #include "search/neighbourhoods/circuitNeighbourhood.hpp"
@@ -9,28 +10,34 @@ using namespace atlantis::invariantgraph;
 
 class CircuitImplicitNodeTest : public NodeTestBase<CircuitImplicitNode> {
  public:
-  VarNodeId a;
-  VarNodeId b;
-  VarNodeId c;
-  VarNodeId d;
+  VarNodeId a = NULL_NODE_ID;
+  VarNodeId b = NULL_NODE_ID;
+  VarNodeId c = NULL_NODE_ID;
+  VarNodeId d = NULL_NODE_ID;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVar(1, 4, "a");
-    b = createIntVar(1, 4, "b");
-    c = createIntVar(1, 4, "c");
-    d = createIntVar(1, 4, "d");
+    addFznVar(1, 4, "a");
+    addFznVar(1, 4, "b");
+    addFznVar(1, 4, "c");
+    addFznVar(1, 4, "d");
 
-    fznparser::IntVarArray inputs("");
-    inputs.append(intVar(a));
-    inputs.append(intVar(b));
-    inputs.append(intVar(c));
-    inputs.append(intVar(d));
+    fznparser::IntVarArray fznInputs("");
+    fznInputs.append(intVar("a"));
+    fznInputs.append(intVar("b"));
+    fznInputs.append(intVar("c"));
+    fznInputs.append(intVar("d"));
 
     _model->addConstraint(fznparser::Constraint(
-        "circuit_no_offset", std::vector<fznparser::Arg>{inputs}));
+        "circuit_no_offset", std::vector<fznparser::Arg>{fznInputs}));
 
-    makeImplicitNode(_model->constraints().front());
+    fzn::makeCircuitImplicitNode(*_invariantGraph,
+                                 _model->constraints().front());
+
+    a = varNodeId("a");
+    b = varNodeId("b");
+    c = varNodeId("c");
+    d = varNodeId("d");
   }
 };
 

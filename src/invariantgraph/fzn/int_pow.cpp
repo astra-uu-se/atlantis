@@ -9,11 +9,10 @@ namespace atlantis::invariantgraph::fzn {
 
 bool int_pow(FznInvariantGraph& invariantGraph, const fznparser::IntArg base,
              const fznparser::IntArg exponent, const fznparser::IntArg power) {
-  invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntPowNode>(
-          invariantGraph.createVarNode(base, false),
-          invariantGraph.createVarNode(exponent, false))),
-      invariantGraph.createVarNode(power, true));
+  invariantGraph.addInvariantNode(std::move(std::make_unique<IntPowNode>(
+      invariantGraph.createVarNodeFromFzn(base, false),
+      invariantGraph.createVarNodeFromFzn(exponent, false),
+      invariantGraph.createVarNodeFromFzn(power, true))));
   return true;
   return true;
 }

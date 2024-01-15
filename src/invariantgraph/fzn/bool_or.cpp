@@ -11,14 +11,14 @@ bool bool_or(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
   if (reified.isFixed()) {
     invariantGraph.addInvariantNode(std::make_unique<BoolOrNode>(
-        invariantGraph.createVarNode(a, false),
-        invariantGraph.createVarNode(b, false), reified.toParameter()));
+        invariantGraph.createVarNodeFromFzn(a, false),
+        invariantGraph.createVarNodeFromFzn(b, false), reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<BoolOrNode>(
-      invariantGraph.createVarNode(a, false),
-      invariantGraph.createVarNode(b, false),
-      invariantGraph.createVarNode(reified.var(), true)));
+      invariantGraph.createVarNodeFromFzn(a, false),
+      invariantGraph.createVarNodeFromFzn(b, false),
+      invariantGraph.createVarNodeFromFzn(reified.var(), true)));
   return true;
 }
 
