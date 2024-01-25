@@ -1,8 +1,6 @@
 #pragma once
 
-
 #include <utility>
-
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
@@ -16,13 +14,6 @@ class BoolXorNode : public ViolationInvariantNode {
   BoolXorNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
   BoolXorNode(VarNodeId a, VarNodeId b, bool shouldHold);
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{
-        {"bool_not", 2}, {"bool_xor", 3}, {"bool_xor", 2}};
-  }
-
-  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

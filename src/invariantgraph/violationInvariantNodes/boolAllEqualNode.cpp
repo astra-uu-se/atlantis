@@ -25,6 +25,21 @@ bool BoolAllEqualNode::prune(InvariantGraph& invariantGraph) {
   return !fixedInputs.empty();
 }
 
+void BoolAllEqualNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                          propagation::SolverBase& solver) {
+  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+    if (shouldHold()) {
+      registerViolation(invariantGraph, solver);
+    } else {
+      assert(!isReified());
+      _intermediate = solver.makeIntVar(0, 0, 0);
+      setViolationVarId(invariantGraph,
+                        solver.makeIntView<propagation::NotEqualConst>(
+                            solver, _intermediate, 0));
+    }
+  }
+}
+
 void BoolAllEqualNode::registerNode(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().empty()) {

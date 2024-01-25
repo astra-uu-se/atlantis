@@ -17,12 +17,6 @@ class Bool2IntNode : public InvariantNode {
 
   ~Bool2IntNode() override = default;
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"bool2int", 2}};
-  }
-
-  
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

@@ -1,8 +1,6 @@
 #pragma once
 
-
 #include <utility>
-
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
@@ -21,13 +19,6 @@ class SetInNode : public ViolationInvariantNode {
 
   explicit SetInNode(VarNodeId input, std::vector<Int>&& values,
                      bool shouldHold);
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"set_in", 2},
-                                                       {"set_in_reif", 3}};
-  }
-
-  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

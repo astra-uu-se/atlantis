@@ -30,7 +30,7 @@ bool array_var_int_element2d(FznInvariantGraph& invariantGraph,
         "Constraint array_var_int_element2d the second offset must be smaller "
         "than the lower bound of the second index var.");
   }
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarIntElement2dNode>(
+  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElement2dNode>(
       invariantGraph.createVarNodeFromFzn(idx1, false),
       invariantGraph.createVarNodeFromFzn(idx2, false),
       std::move(invariantGraph.createVarNodes(inputs, false)),

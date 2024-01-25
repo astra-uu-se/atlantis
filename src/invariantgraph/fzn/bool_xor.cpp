@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/bool_xor.hpp"
 
 #include "../parseHelper.hpp"
@@ -8,11 +6,30 @@
 
 namespace atlantis::invariantgraph::fzn {
 
+bool bool_xor(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
+  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(a, b, true));
+  return true;
+}
+
 bool bool_xor(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
-      invariantGraph.createVarNodeFromFzn(a, false),
-      invariantGraph.createVarNodeFromFzn(b, false), true));
+  return bool_xor(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
+                  invariantGraph.createVarNodeFromFzn(b, false));
+}
+
+bool bool_xor(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
+              VarNodeId reified) {
+  const auto& reifiedVarNode = invariantGraph.varNode(reified);
+  if (reifiedVarNode.isFixed()) {
+    if (reifiedVarNode.lowerBound() == 0) {
+      return bool_xor(invariantGraph, a, b);
+    }
+    // !(a xor b) == (x == b)
+    return bool_eq(invariantGraph, a, b);
+  }
+
+  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(a, b, reified));
+
   return true;
 }
 

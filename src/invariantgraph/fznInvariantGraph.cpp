@@ -68,8 +68,8 @@ FznInvariantGraph::FznInvariantGraph()
 void FznInvariantGraph::build(const fznparser::Model& model) {
   createNodes(model);
 
-  if (model.objective().has_value()) {
-    const fznparser::Var& modelObjective = model.objective().value();
+  if (model.hasObjective()) {
+    const fznparser::Var& modelObjective = model.objective();
     _objectiveVarNodeId = varNodeId(modelObjective.identifier());
     if (_objectiveVarNodeId == NULL_NODE_ID) {
       if (std::holds_alternative<fznparser::BoolVar>(modelObjective)) {
@@ -78,6 +78,8 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
       } else if (std::holds_alternative<fznparser::IntVar>(modelObjective)) {
         _objectiveVarNodeId = createVarNodeFromFzn(
             std::get<fznparser::IntVar>(modelObjective), true);
+      } else {
+        throw FznException("Objective variable is not a BoolVar or IntVar: ");
       }
     }
   }
@@ -301,12 +303,20 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
 
   for (const auto& invNodeCreator : invariantNodeCreators) {
     for (size_t idx = 0; idx < model.constraints().size(); ++idx) {
+      const fznparser::Constraint& constraint = model.constraints().at(idx);
       if (constraintIsProcessed.at(idx)) {
         continue;
       }
-      if (invNodeCreator(model.constraints().at(idx))) {
+      if (invNodeCreator(constraint)) {
         constraintIsProcessed.at(idx) = true;
       }
+    }
+  }
+  for (size_t i = 0; i < constraintIsProcessed.size(); ++i) {
+    if (!constraintIsProcessed.at(i)) {
+      throw FznException(
+          std::string("Failed to create invariant node for constraint: ")
+              .append(model.constraints().at(i).identifier()));
     }
   }
 

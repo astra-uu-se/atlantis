@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/int_eq.hpp"
 
 #include "../parseHelper.hpp"
@@ -41,6 +39,20 @@ bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
 }
 
 bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
+            VarNodeId reifiedVarNodeId) {
+  const VarNode& reifiedVarNode = invariantGraph.varNode(reifiedVarNodeId);
+  if (reifiedVarNode.isFixed()) {
+    if (reifiedVarNode.lowerBound() == 0) {
+      return int_eq(invariantGraph, a, b);
+    }
+    return int_ne(invariantGraph, a, b);
+  }
+  invariantGraph.addInvariantNode(
+      std::move(std::make_unique<IntEqNode>(a, b, reifiedVarNodeId)));
+  return true;
+}
+
+bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
             const fznparser::BoolArg& reified) {
   if (reified.isFixed()) {
     if (reified.toParameter()) {
@@ -48,8 +60,8 @@ bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
     }
     return int_ne(invariantGraph, a, b);
   }
-  invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntEqNode>(a, b, true)));
+  invariantGraph.addInvariantNode(std::move(std::make_unique<IntEqNode>(
+      a, b, invariantGraph.createVarNodeFromFzn(reified.var(), true))));
   return true;
 }
 

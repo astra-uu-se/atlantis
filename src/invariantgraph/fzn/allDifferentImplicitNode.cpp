@@ -33,7 +33,7 @@ bool makeAllDifferentImplicitNode(FznInvariantGraph& invariantGraph,
   }
 
   verifyNumArguments(constraint, 1);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
   return makeAllDifferentImplicitNode(
       invariantGraph,
       std::get<fznparser::IntVarArray>(constraint.arguments().at(0)));

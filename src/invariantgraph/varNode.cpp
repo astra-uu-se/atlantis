@@ -63,6 +63,9 @@ propagation::VarId VarNode::postDomainConstraint(
   return _domainViolationId;
 }
 
+Int VarNode::lowerBound() const { return _domain.lowerBound(); }
+Int VarNode::upperBound() const { return _domain.upperBound(); }
+
 Int VarNode::val() const {
   if (_domain.isFixed()) {
     return _domain.lowerBound();
@@ -71,7 +74,11 @@ Int VarNode::val() const {
   }
 }
 
-void VarNode::shouldEnforceDomain(bool b) noexcept { _shouldEnforceDomain = b; }
+bool VarNode::shouldEnforceDomain() noexcept { return _shouldEnforceDomain; }
+bool VarNode::shouldEnforceDomain(bool b) noexcept {
+  _shouldEnforceDomain = b;
+  return _shouldEnforceDomain;
+}
 
 bool VarNode::inDomain(Int val) const {
   if (!isIntVar()) {
@@ -114,6 +121,14 @@ void VarNode::removeValues(const std::vector<Int>& values) {
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
   _domain.remove(values);
+}
+
+void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
+  if (!isIntVar()) {
+    throw std::runtime_error(
+        "removeValues(const std::vector<Int>&) called on BoolVar");
+  }
+  _domain.intersectWith(values);
 }
 
 void VarNode::fixValue(Int val) {
@@ -164,7 +179,7 @@ VarNode::definingNodes() const noexcept {
   return _outputOf;
 }
 
-InvariantNodeId VarNode::outputOf() const noexcept {
+InvariantNodeId VarNode::outputOf() const {
   if (_outputOf.size() == 0) {
     return InvariantNodeId(NULL_NODE_ID);
   } else if (_outputOf.size() != 1) {

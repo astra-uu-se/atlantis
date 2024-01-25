@@ -44,6 +44,8 @@ class InvariantGraph {
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
 
+  [[nodiscard]] VarNodeId nextVarNodeId() const noexcept;
+
   [[nodiscard]] bool containsVarNode(
       const std::string& identifier) const noexcept;
   [[nodiscard]] bool containsVarNode(Int) const noexcept;
@@ -57,7 +59,6 @@ class InvariantGraph {
                                   bool isDefinedVar);
   virtual VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
                                   const std::string&, bool isDefinedVar);
-  virtual VarNodeId createVarNode(const VarNode&, bool isDefinedVar);
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier);
   [[nodiscard]] VarNode& varNode(VarNodeId id);
@@ -72,6 +73,10 @@ class InvariantGraph {
 
   [[nodiscard]] propagation::VarId varId(const std::string& identifier) const;
   [[nodiscard]] propagation::VarId varId(VarNodeId id) const;
+
+  [[nodiscard]] bool containsInvariantNode(InvariantNodeId) const noexcept;
+  [[nodiscard]] bool containsImplicitConstraintNode(
+      InvariantNodeId) const noexcept;
 
   [[nodiscard]] InvariantNode& invariantNode(InvariantNodeId);
   [[nodiscard]] InvariantGraphRoot& root();

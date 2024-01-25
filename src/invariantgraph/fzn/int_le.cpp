@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/int_le.hpp"
 
 #include "../parseHelper.hpp"
@@ -136,7 +134,7 @@ bool int_le(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
 bool int_le(FznInvariantGraph& invariantGraph,
             const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "int_le" &&
-      constraint.identifier() != "int_eq_reif") {
+      constraint.identifier() != "int_le_reif") {
     return false;
   }
   const bool isReified = constraintIdentifierIsReified(constraint);

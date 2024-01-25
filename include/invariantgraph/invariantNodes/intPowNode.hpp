@@ -2,7 +2,6 @@
 
 #include <cmath>
 
-
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/pow.hpp"
@@ -11,26 +10,19 @@ namespace atlantis::invariantgraph {
 
 class IntPowNode : public InvariantNode {
  public:
-  IntPowNode(VarNodeId a, VarNodeId b, VarNodeId output);
+  IntPowNode(VarNodeId base, VarNodeId exponent, VarNodeId power);
 
   ~IntPowNode() override = default;
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_pow", 3},
-                                                       {"int_pow_fixed", 3}};
-  }
-
-  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  [[nodiscard]] VarNodeId a() const noexcept {
+  [[nodiscard]] VarNodeId base() const noexcept {
     return staticInputVarNodeIds().front();
   }
-  [[nodiscard]] VarNodeId b() const noexcept {
+  [[nodiscard]] VarNodeId exponent() const noexcept {
     return staticInputVarNodeIds().back();
   }
 };

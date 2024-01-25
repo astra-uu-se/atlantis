@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/int_lin_ne.hpp"
 
 #include "../parseHelper.hpp"
@@ -8,8 +6,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-void verifyInputs(const std::vector<Int>& coeffs,
-                  const fznparser::IntVarArray inputs) {
+static void verifyInputs(const std::vector<Int>& coeffs,
+                         const fznparser::IntVarArray inputs) {
   if (coeffs.size() != inputs.size()) {
     throw FznArgumentException(
         "int_lin_ne constraint first and second array arguments must have the "

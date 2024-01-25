@@ -2,8 +2,6 @@
 
 #include <utility>
 
-
-
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
 #include "propagation/invariants/exists.hpp"
@@ -16,15 +14,9 @@ class ArrayBoolOrNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  ArrayBoolOrNode(std::vector<VarNodeId>&& as, VarNodeId output);
+  ArrayBoolOrNode(std::vector<VarNodeId>&& inputs, VarNodeId output);
 
-  ArrayBoolOrNode(std::vector<VarNodeId>&& as, bool shouldHold);
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"array_bool_or", 2}};
-  }
-
-  
+  ArrayBoolOrNode(std::vector<VarNodeId>&& inputs, bool shouldHold);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

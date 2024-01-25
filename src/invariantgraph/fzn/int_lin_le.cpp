@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/int_lin_le.hpp"
 
 #include "../parseHelper.hpp"
@@ -7,8 +5,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-void verifyInputs(const std::vector<Int>& coeffs,
-                  const fznparser::IntVarArray inputs) {
+static void verifyInputs(const std::vector<Int>& coeffs,
+                         const fznparser::IntVarArray inputs) {
   if (coeffs.size() != inputs.size()) {
     throw FznArgumentException(
         "int_lin_le constraint first and second array arguments must have the "
@@ -20,15 +18,24 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
                 const fznparser::IntVarArray inputs, Int bound) {
   verifyInputs(coeffs, inputs);
   if (coeffs.empty()) {
-    if (bound > 0) {
+    if (bound >= 0) {
       return true;
     }
     throw FznArgumentException(
-        "int_lin_le constraint with empty arrays must have a total sum of 0 or "
-        "more");
+        "int_lin_le constraint: total of empty arrays is always greater than " +
+        std::to_string(bound));
   }
 
-  const auto& [lb, ub] = linBounds(coeffs, inputs);
+  const auto [lb, ub] = linBounds(coeffs, inputs);
+
+  if (lb > bound) {
+    throw FznArgumentException(
+        "int_lin_le constraint: total is always greater than " +
+        std::to_string(bound));
+  }
+  if (ub <= bound) {
+    return true;
+  }
 
   const VarNodeId outputVarNodeId =
       invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
@@ -102,8 +109,8 @@ bool int_lin_le(FznInvariantGraph& invariantGraph,
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
 
   std::vector<Int> coeffs =

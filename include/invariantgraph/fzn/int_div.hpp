@@ -9,7 +9,7 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_div(FznInvariantGraph&, const fznparser::IntArg nominator,
+bool int_div(FznInvariantGraph&, const fznparser::IntArg numerator,
              const fznparser::IntArg denominator,
              const fznparser::IntArg quotient);
 

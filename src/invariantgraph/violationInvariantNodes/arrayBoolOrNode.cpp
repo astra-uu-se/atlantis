@@ -4,11 +4,13 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayBoolOrNode::ArrayBoolOrNode(std::vector<VarNodeId>&& as, VarNodeId output)
-    : ViolationInvariantNode(std::move(as), output) {}
+ArrayBoolOrNode::ArrayBoolOrNode(std::vector<VarNodeId>&& inputs,
+                                 VarNodeId output)
+    : ViolationInvariantNode(std::move(inputs), output) {}
 
-ArrayBoolOrNode::ArrayBoolOrNode(std::vector<VarNodeId>&& as, bool shouldHold)
-    : ViolationInvariantNode(std::move(as), shouldHold) {}
+ArrayBoolOrNode::ArrayBoolOrNode(std::vector<VarNodeId>&& inputs,
+                                 bool shouldHold)
+    : ViolationInvariantNode(std::move(inputs), shouldHold) {}
 
 void ArrayBoolOrNode::registerOutputVars(InvariantGraph& invariantGraph,
                                          propagation::SolverBase& solver) {

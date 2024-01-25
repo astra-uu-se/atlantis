@@ -1,6 +1,7 @@
 #pragma once
 
 #include <numeric>
+#include <stdexcept>
 #include <variant>
 #include <vector>
 
@@ -84,6 +85,8 @@ class IntervalDomain : public Domain {
 
   void fix(Int value) override;
 
+  void intersectWith(Int lb, Int ub);
+
   bool operator==(const IntervalDomain& other) const;
 
   bool operator!=(const IntervalDomain& other) const;
@@ -125,6 +128,14 @@ class SetDomain : public Domain {
    * @param val the maximum value that is allowed in the domain.
    */
   void removeAbove(Int val);
+
+  /**
+   * @brief removes all values in the domain, except the values in the given
+   * vector.
+   *
+   * @param values the values that are to be kept in the domain.
+   */
+  void intersectWith(const std::vector<Int>&);
 
   void fix(Int value) override;
 
@@ -177,6 +188,14 @@ class SearchDomain : public Domain {
    * @param values the values to remove from the domain.
    */
   void remove(const std::vector<Int>& values);
+
+  /**
+   * @brief removes all values in the domain, except the values in the given
+   * vector.
+   *
+   * @param values the values that are to be kept in the domain.
+   */
+  void intersectWith(const std::vector<Int>&);
 
   void fix(Int value);
 

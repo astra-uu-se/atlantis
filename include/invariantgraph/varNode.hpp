@@ -92,6 +92,8 @@ class VarNode {
 
   [[nodiscard]] bool isIntVar() const noexcept;
 
+  [[nodiscard]] Int lowerBound() const;
+  [[nodiscard]] Int upperBound() const;
   [[nodiscard]] Int val() const;
 
   [[nodiscard]] bool inDomain(Int) const;
@@ -119,6 +121,8 @@ class VarNode {
    */
   void removeValues(const std::vector<Int>&);
 
+  void removeAllValuesExcept(const std::vector<Int>&);
+
   void removeValue(bool);
   void fixValue(bool);
 
@@ -127,7 +131,8 @@ class VarNode {
    * domain violation invariant will be added to the invariant graph for the
    * variable.
    */
-  void shouldEnforceDomain(bool) noexcept;
+  bool shouldEnforceDomain() noexcept;
+  bool shouldEnforceDomain(bool) noexcept;
 
   /**
    * @return if the bound range of the corresponding IntVar in solver is a
@@ -169,7 +174,7 @@ class VarNode {
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] InvariantNodeId outputOf() const noexcept;
+  [[nodiscard]] InvariantNodeId outputOf() const;
 
   /**
    * Indicate this variable node serves as an input to the given variable

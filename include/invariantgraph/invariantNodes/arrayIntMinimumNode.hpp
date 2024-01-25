@@ -16,11 +16,6 @@ class ArrayIntMinimumNode : public InvariantNode {
 
   ~ArrayIntMinimumNode() override = default;
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{
-        {"array_int_minimum", 2}};
-  }
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

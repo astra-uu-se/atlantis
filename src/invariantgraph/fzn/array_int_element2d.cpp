@@ -13,7 +13,7 @@ bool array_int_element2d(FznInvariantGraph& invariantGraph,
                          std::vector<Int>&& parVector,
                          const fznparser::IntArg& output, const Int numRows,
                          const Int offset1, const Int offset2) {
-  if (0 <= numRows || parVector.size() % numRows != 0) {
+  if (numRows <= 0 || parVector.size() % numRows != 0) {
     throw FznArgumentException(
         "Constraint array_int_element2d the number of rows must be strictly "
         "positive and a divide the number of elements in the array.");
@@ -26,7 +26,7 @@ bool array_int_element2d(FznInvariantGraph& invariantGraph,
         "the lower bound of the first index var.");
   }
 
-  if (offset2 <=
+  if (offset2 >
       (idx2.isParameter() ? idx2.toParameter() : idx2.var().lowerBound())) {
     throw FznArgumentException(
         "Constraint array_int_element2d the second offset must be smaller than "
@@ -42,7 +42,7 @@ bool array_int_element2d(FznInvariantGraph& invariantGraph,
     }
   }
 
-  invariantGraph.addInvariantNode(std::make_unique<ArrayIntElement2dNode>(
+  invariantGraph.addInvariantNode(std::make_unique<ArrayElement2dNode>(
       invariantGraph.createVarNodeFromFzn(idx1, false),
       invariantGraph.createVarNodeFromFzn(idx2, false), std::move(parMatrix),
       invariantGraph.createVarNodeFromFzn(output, true), offset1, offset2));
@@ -51,6 +51,10 @@ bool array_int_element2d(FznInvariantGraph& invariantGraph,
 
 bool array_int_element2d(FznInvariantGraph& invariantGraph,
                          const fznparser::Constraint& constraint) {
+  if (constraint.identifier() != "array_int_element2d" &&
+      constraint.identifier() != "array_int_element2d_nonshifted_flat") {
+    return false;
+  }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, false);

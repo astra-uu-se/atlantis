@@ -15,11 +15,6 @@ class IntLeNode : public ViolationInvariantNode {
 
   IntLeNode(VarNodeId a, VarNodeId b, bool shouldHold);
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_le", 2},
-                                                       {"int_le_reif", 3}};
-  }
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

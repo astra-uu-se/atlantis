@@ -4,8 +4,9 @@
 
 namespace atlantis::invariantgraph {
 
-IntModNode::IntModNode(VarNodeId a, VarNodeId b, VarNodeId output)
-    : InvariantNode({output}, {a, b}) {}
+IntModNode::IntModNode(VarNodeId numerator, VarNodeId denominator,
+                       VarNodeId remainder)
+    : InvariantNode({remainder}, {numerator, denominator}) {}
 
 void IntModNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
@@ -18,7 +19,7 @@ void IntModNode::registerNode(InvariantGraph& invariantGraph,
          propagation::NULL_ID);
   solver.makeInvariant<propagation::Mod>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(a()), invariantGraph.varId(b()));
+      invariantGraph.varId(numerator()), invariantGraph.varId(denominator()));
 }
 
 }  // namespace atlantis::invariantgraph

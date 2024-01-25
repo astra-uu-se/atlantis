@@ -1,8 +1,12 @@
-#include "invariantgraph/implicitConstraints/allDifferentImplicitNode.hpp"
+#include "invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
 
 #include "../parseHelper.hpp"
 
 namespace atlantis::invariantgraph {
+
+AllDifferentImplicitNode::AllDifferentImplicitNode(
+    std::vector<VarNodeId>&& inputVars)
+    : ImplicitConstraintNode(std::move(inputVars)) {}
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 AllDifferentImplicitNode::createNeighbourhood(

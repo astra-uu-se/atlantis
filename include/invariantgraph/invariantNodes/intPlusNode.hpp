@@ -2,7 +2,6 @@
 
 #include <cmath>
 
-
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
 #include "propagation/invariants/plus.hpp"
@@ -14,12 +13,6 @@ class IntPlusNode : public InvariantNode {
   IntPlusNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
   ~IntPlusNode() override = default;
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_plus", 3}};
-  }
-
-  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

@@ -26,7 +26,7 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
       std::move(std::make_unique<GlobalCardinalityNode>(
           std::move(invariantGraph.createVarNodes(inputs, false)),
           std::move(cover),
-          std::move(invariantGraph.createVarNodes(counts, true)), true)));
+          std::move(invariantGraph.createVarNodes(counts, true)))));
   return true;
 }
 
@@ -36,25 +36,32 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
                             const fznparser::IntVarArray& counts,
                             const fznparser::BoolArg& reified) {
   checkInputs(cover, counts);
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return fzn_global_cardinality(invariantGraph, inputs, std::move(cover),
-                                    counts);
-    }
-    invariantGraph.addInvariantNode(
-        std::move(std::make_unique<GlobalCardinalityNode>(
-            std::move(invariantGraph.createVarNodes(inputs, false)),
-            std::move(cover),
-            std::move(invariantGraph.createVarNodes(counts, true)),
-            reified.toParameter())));
-    return true;
+  if (reified.isFixed() && reified.toParameter()) {
+    return fzn_global_cardinality(invariantGraph, inputs, std::move(cover),
+                                  counts);
   }
+
+  std::vector<VarNodeId> countVarNodeIds =
+      invariantGraph.createVarNodes(counts, false);
+  std::vector<VarNodeId> outputVarNodeIds;
+  std::vector<VarNodeId> binaryOutputVarNodeIds;
+  outputVarNodeIds.reserve(counts.size());
+  binaryOutputVarNodeIds.reserve(counts.size());
+  for (size_t i = 0; i < counts.size(); ++i) {
+    outputVarNodeIds.push_back(invariantGraph.createVarNode(
+        SearchDomain(0, inputs.size()), true, true));
+    binaryOutputVarNodeIds.push_back(
+        invariantGraph.createVarNode(SearchDomain(0, 1), false, true));
+    bool_eq(invariantGraph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
+            binaryOutputVarNodeIds.at(i));
+  }
+
   invariantGraph.addInvariantNode(
       std::move(std::make_unique<GlobalCardinalityNode>(
           std::move(invariantGraph.createVarNodes(inputs, false)),
-          std::move(cover),
-          std::move(invariantGraph.createVarNodes(counts, true)),
-          invariantGraph.createVarNodeFromFzn(reified, true))));
+          std::move(cover), std::move(outputVarNodeIds))));
+
+  array_bool_and(invariantGraph, std::move(binaryOutputVarNodeIds), reified);
   return true;
 }
 

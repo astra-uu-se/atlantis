@@ -1,8 +1,6 @@
 #pragma once
 
-
 #include <utility>
-
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
@@ -16,43 +14,23 @@
 namespace atlantis::invariantgraph {
 class GlobalCardinalityClosedNode : public ViolationInvariantNode {
  private:
-  const std::vector<VarNodeId> _inputs;
-  const std::vector<Int> _cover;
-  const std::vector<VarNodeId> _counts;
-  std::vector<propagation::VarId> _intermediate{};
-  std::vector<propagation::VarId> _violations{};
-  propagation::VarId _shouldFailViol{propagation::NULL_ID};
+  std::vector<Int> _cover;
+  propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit GlobalCardinalityClosedNode(std::vector<VarNodeId>&& x,
+  explicit GlobalCardinalityClosedNode(std::vector<VarNodeId>&& inputs,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,
                                        VarNodeId r);
 
-  explicit GlobalCardinalityClosedNode(std::vector<VarNodeId>&& x,
+  explicit GlobalCardinalityClosedNode(std::vector<VarNodeId>&& inputs,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,
                                        bool shouldHold);
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{
-        {"fzn_global_cardinality_closed", 3},
-        {"fzn_global_cardinality_closed_reif", 4}};
-  }
-
-  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
-
-  [[nodiscard]] inline const std::vector<VarNodeId>& inputs() const {
-    return _inputs;
-  }
-
-  [[nodiscard]] inline const std::vector<VarNodeId>& counts() const {
-    return _counts;
-  }
 };
 }  // namespace atlantis::invariantgraph

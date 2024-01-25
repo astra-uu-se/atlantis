@@ -1,9 +1,7 @@
 #pragma once
 
-
 #include <map>
 #include <utility>
-
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
@@ -16,12 +14,6 @@ class IntAbsNode : public InvariantNode {
   IntAbsNode(VarNodeId staticInput, VarNodeId output);
 
   ~IntAbsNode() override = default;
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_abs", 2}};
-  }
-
-  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

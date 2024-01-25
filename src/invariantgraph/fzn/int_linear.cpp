@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/int_linear.hpp"
 
 #include "../parseHelper.hpp"
@@ -7,25 +5,25 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_linear(FznInvariantGraph& invariantGraph,
-                const fznparser::Constraint& constraint) {
-  // assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
+bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
+                std::vector<VarNodeId>&& inputVarNodeIds,
+                VarNodeId outputVarNodeId, Int sum) {
+  if (sum != 0) {
+    // The negative sum is the sum of the defined variable:
+    coeffs.emplace_back(1);
+    inputVarNodeIds.emplace_back(
+        invariantGraph.createVarNodeFromFzn(-sum, false));
+  }
 
-  std::vector<Int> coeffs =
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0))
-          .toParVector();
+  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
+      std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId)));
 
-  const fznparser::IntVarArray& vars =
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(1));
+  return true;
+}
 
-  const std::optional<std::reference_wrapper<const fznparser::Var>>
-      definedVarRef = constraint.definedVar();
-
-  assert(definedVarRef.has_value());
-
-  const fznparser::IntVar& definedVar =
-      std::get<fznparser::IntVar>(definedVarRef.value().get());
-
+bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
+                const fznparser::IntVarArray& vars,
+                const fznparser::Var& definedVar, const Int sum) {
   size_t definedVarIndex = vars.size();
   for (size_t i = 0; i < vars.size(); ++i) {
     if (!std::holds_alternative<Int>(vars.at(i)) &&
@@ -37,12 +35,14 @@ bool int_linear(FznInvariantGraph& invariantGraph,
     }
   }
 
-  assert(definedVarIndex < vars.size());
+  if (definedVarIndex == vars.size()) {
+    return false;
+  }
+
   Int outputCoeff = coeffs.at(definedVarIndex);
   // TODO: add a violation that is definedVar % coeffs[definedVarIndex]
   if (std::abs(outputCoeff) != 1) {
-    throw std::runtime_error(
-        "Cannot define variable with coefficient which is not +/-1");
+    return false;
   }
 
   coeffs.erase(coeffs.begin() + definedVarIndex);
@@ -55,34 +55,67 @@ bool int_linear(FznInvariantGraph& invariantGraph,
 
   std::vector<VarNodeId> inputVarNodeIds;
   inputVarNodeIds.reserve(vars.size());
+  VarNodeId outputVarNodeId = NULL_NODE_ID;
   for (size_t i = 0; i < vars.size(); ++i) {
+    const VarNodeId varNodeId =
+        std::holds_alternative<Int>(vars.at(i))
+            ? invariantGraph.createVarNodeFromFzn(std::get<Int>(vars.at(i)),
+                                                  i == definedVarIndex)
+            : invariantGraph.createVarNodeFromFzn(
+                  std::get<std::reference_wrapper<const fznparser::IntVar>>(
+                      vars.at(i)),
+                  i == definedVarIndex);
+
     if (i == definedVarIndex) {
-      continue;
-    }
-    if (std::holds_alternative<Int>(vars.at(i))) {
-      inputVarNodeIds.emplace_back(invariantGraph.createVarNodeFromFzn(
-          std::get<Int>(vars.at(i)), false));
+      outputVarNodeId = varNodeId;
     } else {
-      inputVarNodeIds.emplace_back(invariantGraph.createVarNodeFromFzn(
-          std::get<std::reference_wrapper<const fznparser::IntVar>>(vars.at(i)),
-          false));
+      inputVarNodeIds.emplace_back(varNodeId);
     }
   }
-  auto sum =
-      std::get<fznparser::IntArg>(constraint.arguments().at(2)).parameter();
-  if (sum != 0) {
-    // The negative sum is the offset of the defined variable:
-    coeffs.emplace_back(1);
-    inputVarNodeIds.emplace_back(
-        invariantGraph.createVarNodeFromFzn(-sum, false));
+
+  return int_linear(invariantGraph, std::move(coeffs),
+                    std::move(inputVarNodeIds), outputVarNodeId, sum);
+}
+
+bool int_linear(FznInvariantGraph& invariantGraph,
+                const fznparser::Constraint& constraint) {
+  if (constraint.identifier() != "int_lin_eq" &&
+      constraint.identifier() != "int_lin_eq_reif") {
+    return false;
+  }
+  const bool isReified = constraintIdentifierIsReified(constraint);
+  verifyNumArguments(constraint, isReified ? 4 : 3);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
+
+  if (isReified) {
+    FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true);
+    const fznparser::BoolArg& reified =
+        std::get<fznparser::BoolArg>(constraint.arguments().at(3));
+    if (!reified.isFixed()) {
+      return false;
+    }
+    if (!reified.toParameter()) {
+      return false;
+    }
   }
 
-  VarNodeId outputVarNodeId =
-      invariantGraph.createVarNodeFromFzn(definedVar, true);
+  if (!constraint.definedVar().has_value()) {
+    return false;
+  }
 
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-      std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId)));
-  return true;
+  const fznparser::Var& definedVar = constraint.definedVar().value();
+
+  std::vector<Int> coeffs =
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(0))
+          .toParVector();
+
+  return int_linear(
+      invariantGraph, std::move(coeffs),
+      std::get<fznparser::IntVarArray>(constraint.arguments().at(1)),
+      definedVar,
+      std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter());
 }
 
 }  // namespace atlantis::invariantgraph::fzn

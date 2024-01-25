@@ -4,22 +4,16 @@
 
 namespace atlantis::invariantgraph {
 
-IntCountNode::IntCountNode(std::vector<VarNodeId>&& vars, VarNodeId needle,
+IntCountNode::IntCountNode(std::vector<VarNodeId>&& vars, Int needle,
                            VarNodeId count)
-    : InvariantNode(std::move(std::vector<VarNodeId>{count}),
-                    append(std::move(vars), needle)) {}
+    : InvariantNode(std::vector<VarNodeId>{count}, std::move(vars)),
+      _needle(needle) {}
 
-std::vector<VarNodeId> IntCountNode::haystack() const {
-  std::vector<VarNodeId> inputs;
-  inputs.reserve(staticInputVarNodeIds().size() - 1);
-  std::copy(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end() - 1,
-            std::back_inserter(inputs));
-  return inputs;
+const std::vector<VarNodeId>& IntCountNode::haystack() const {
+  return staticInputVarNodeIds();
 }
 
-VarNodeId IntCountNode::needle() const {
-  return staticInputVarNodeIds().back();
-}
+Int IntCountNode::needle() const { return _needle; }
 
 void IntCountNode::registerOutputVars(InvariantGraph& invariantGraph,
                                       propagation::SolverBase& solver) {
@@ -31,17 +25,17 @@ void IntCountNode::registerNode(InvariantGraph& invariantGraph,
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
 
-  std::vector<VarNodeId> h = haystack();
   std::vector<propagation::VarId> solverVars;
-  solverVars.reserve(h.size());
+  solverVars.reserve(staticInputVarNodeIds().size());
 
-  std::transform(
-      h.begin(), h.end(), std::back_inserter(solverVars),
-      [&](const VarNodeId node) { return invariantGraph.varId(node); });
+  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+                 std::back_inserter(solverVars), [&](const VarNodeId node) {
+                   return invariantGraph.varId(node);
+                 });
 
-  solver.makeInvariant<propagation::Count>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(needle()), solverVars);
+  solver.makeInvariant<propagation::CountConst>(
+      solver, invariantGraph.varId(outputVarNodeIds().front()), needle(),
+      solverVars);
 }
 
 }  // namespace atlantis::invariantgraph

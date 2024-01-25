@@ -8,22 +8,15 @@ using namespace atlantis::invariantgraph;
 
 class Bool2IntNodeTest : public NodeTestBase<Bool2IntNode> {
  public:
-  VarNodeId a;
-  VarNodeId b;
+  VarNodeId input = NULL_NODE_ID;
+  VarNodeId output = NULL_NODE_ID;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    addFznVar("a");
-    b = createIntVar(0, 1, "b");
+    input = createBoolVarNode("input");
+    output = createIntVarNode(0, 1, "output", true);
 
-    _model->addConstraint(fznparser::Constraint(
-        "bool2int",
-        std::vector<fznparser::Arg>{fznparser::BoolArg{boolVar(a)},
-                                    fznparser::IntArg{intVar(b)}},
-        std::vector<fznparser::Annotation>{
-            definesVarAnnotation(identifier(b))}));
-
-    makeInvNode(_model->constraints().front());
+    createInvariantNode(input, output);
   }
 };
 
@@ -31,10 +24,10 @@ TEST_F(Bool2IntNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().input(), a);
+  EXPECT_EQ(invNode().input(), input);
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), b);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
 TEST_F(Bool2IntNodeTest, application) {
@@ -51,10 +44,10 @@ TEST_F(Bool2IntNodeTest, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // a
+  // input
   EXPECT_EQ(solver.searchVars().size(), 1);
 
-  // a
+  // input
   EXPECT_EQ(solver.numVars(), 1);
 }
 
@@ -67,23 +60,26 @@ TEST_F(Bool2IntNodeTest, propagation) {
   solver.close();
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()), propagation::NULL_ID);
+  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()),
+            propagation::NULL_ID);
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
 
-  const propagation::VarId input = varId(invNode().staticInputVarNodeIds().front());
-  const propagation::VarId outputId = varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId inputVar =
+      varId(invNode().staticInputVarNodeIds().front());
+  const propagation::VarId outputId =
+      varId(invNode().outputVarNodeIds().front());
 
-  for (Int value = solver.lowerBound(input); value <= solver.upperBound(input);
-       ++value) {
+  for (Int inputVal = solver.lowerBound(inputVar);
+       inputVal <= solver.upperBound(inputVar); ++inputVal) {
     solver.beginMove();
-    solver.setValue(input, value);
+    solver.setValue(inputVar, inputVal);
     solver.endMove();
 
     solver.beginProbe();
     solver.query(outputId);
     solver.endProbe();
 
-    const Int expected = (value == 0);
+    const Int expected = (inputVal == 0);
     const Int actual = solver.currentValue(outputId);
     EXPECT_EQ(expected, actual);
   }

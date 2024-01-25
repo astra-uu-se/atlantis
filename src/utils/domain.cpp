@@ -2,6 +2,12 @@
 
 namespace atlantis {
 
+static bool isInterval(const std::vector<Int>& sortedVals) {
+  return sortedVals.size() > 0 &&
+         sortedVals.front() + static_cast<Int>(sortedVals.size()) - 1 ==
+             sortedVals.back();
+}
+
 IntervalDomain::IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {}
 
 Int IntervalDomain::lowerBound() const { return _lb; }
@@ -36,6 +42,14 @@ void IntervalDomain::setLowerBound(Int lb) {
 void IntervalDomain::setUpperBound(Int ub) {
   assert(_lb <= ub);
   _ub = ub;
+}
+
+void IntervalDomain::intersectWith(Int lb, Int ub) {
+  _lb = std::max(lb, _lb);
+  _ub = std::min(ub, _ub);
+  if (_lb > _ub) {
+    throw std::runtime_error("Empty domain");
+  }
 }
 
 void IntervalDomain::fix(Int value) {
@@ -165,6 +179,28 @@ void SetDomain::remove(const std::vector<Int>& values) {
       ++i;
     }
   }
+}
+
+void SetDomain::intersectWith(const std::vector<Int>& otherVals) {
+  std::vector<Int> cpy(otherVals);
+  std::sort(cpy.begin(), cpy.end());
+  std::vector<Int> newValues;
+  newValues.reserve(std::min(_values.size(), otherVals.size()));
+
+  size_t i = 0;
+  size_t j = 0;
+  while (j < otherVals.size()) {
+    while (i < _values.size() && _values[i] < otherVals[j]) {
+      ++i;
+    }
+    if (_values[i] == otherVals[j]) {
+      newValues.emplace_back(_values[i]);
+    }
+    while (j < otherVals.size() && otherVals[j] < _values[i]) {
+      ++j;
+    }
+  }
+  _values = std::move(newValues);
 }
 
 void SetDomain::fix(Int value) {
@@ -307,6 +343,38 @@ void SearchDomain::remove(const std::vector<Int>& values) {
   for (const Int value : cpy) {
     remove(value);
   }
+}
+
+void SearchDomain::intersectWith(const std::vector<Int>& values) {
+  if (std::holds_alternative<SetDomain>(_domain)) {
+    // Remove the value from the set domain:
+    std::get<SetDomain>(_domain).intersectWith(values);
+    return;
+  }
+  assert(std::holds_alternative<IntervalDomain>(_domain));
+  std::vector<Int> cpy(values);
+  std::sort(cpy.begin(), cpy.end());
+  if (isInterval(cpy)) {
+    std::get<IntervalDomain>(_domain).intersectWith(cpy.front(), cpy.back());
+    return;
+  }
+  Int begin = 0;
+  Int end = cpy.size() - 1;
+  while (begin < end && cpy[begin] < lowerBound()) {
+    ++begin;
+  }
+  while (end >= 0 && upperBound() < cpy[end]) {
+    --end;
+  }
+  if (begin > end) {
+    _domain = SetDomain(std::vector<Int>());
+    return;
+  }
+  std::vector<Int> newDomain;
+  newDomain.reserve(end - begin + 1);
+  std::copy(cpy.begin() + begin, cpy.begin() + end + 1,
+            std::back_inserter(newDomain));
+  _domain = SetDomain(newDomain);
 }
 
 void SearchDomain::fix(Int value) {

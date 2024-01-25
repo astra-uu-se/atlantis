@@ -8,7 +8,7 @@ namespace atlantis::invariantgraph {
 
 class IntDivNode : public InvariantNode {
  public:
-  IntDivNode(VarNodeId nominator, VarNodeId denominator, VarNodeId quotient);
+  IntDivNode(VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
 
   ~IntDivNode() override = default;
 
@@ -17,7 +17,7 @@ class IntDivNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  [[nodiscard]] VarNodeId nominator() const noexcept;
+  [[nodiscard]] VarNodeId numerator() const noexcept;
   [[nodiscard]] VarNodeId denominator() const noexcept;
 };
 

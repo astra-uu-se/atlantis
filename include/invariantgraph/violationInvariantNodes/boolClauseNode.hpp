@@ -1,8 +1,6 @@
 #pragma once
 
-
 #include <utility>
-
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
@@ -23,13 +21,6 @@ class BoolClauseNode : public ViolationInvariantNode {
 
   explicit BoolClauseNode(std::vector<VarNodeId>&& as,
                           std::vector<VarNodeId>&& bs, bool shouldHold);
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"bool_clause", 2},
-                                                       {"bool_clause_reif", 3}};
-  }
-
-  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

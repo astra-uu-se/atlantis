@@ -14,11 +14,6 @@ class ArrayIntMaximumNode : public InvariantNode {
  public:
   ArrayIntMaximumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{
-        {"array_int_maximum", 2}};
-  }
-
   ~ArrayIntMaximumNode() override = default;
 
   void registerOutputVars(InvariantGraph&,

@@ -27,7 +27,10 @@ struct VarNodeId : public NodeId {
   inline bool operator==(const VarNodeId& other) const {
     return id == other.id;
   }
-  inline bool operator==(const NodeId& other) const { return id == other.id; }
+
+  inline bool operator==(const NodeId& other) const {
+    return other.id == NULL_NODE_ID.id && NULL_NODE_ID.id == id;
+  }
 
   bool operator!=(const VarNodeId& other) const { return !(operator==(other)); }
   bool operator!=(const NodeId& other) const { return !(operator==(other)); }
@@ -50,7 +53,9 @@ struct InvariantNodeId : public NodeId {
   bool operator==(const InvariantNodeId& other) const {
     return type == other.type && id == other.id;
   }
-  inline bool operator==(const NodeId& other) const { return id == other.id; }
+  inline bool operator==(const NodeId& other) const {
+    return other.id == NULL_NODE_ID.id && NULL_NODE_ID.id == id;
+  }
 
   bool operator!=(const InvariantNodeId& other) const {
     return !(operator==(other));

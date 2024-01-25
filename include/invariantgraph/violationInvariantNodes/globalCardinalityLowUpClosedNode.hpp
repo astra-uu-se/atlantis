@@ -1,8 +1,6 @@
 #pragma once
 
-
 #include <utility>
-
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
@@ -32,14 +30,6 @@ class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
                                             std::vector<Int>&& low,
                                             std::vector<Int>&& up,
                                             bool shouldHold);
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{
-        {"fzn_global_cardinality_low_up_closed", 4},
-        {"fzn_global_cardinality_low_up_closed_reif", 5}};
-  }
-
-  
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

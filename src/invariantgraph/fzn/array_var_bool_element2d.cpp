@@ -33,7 +33,7 @@ bool array_var_bool_element2d(FznInvariantGraph& invariantGraph,
         "than the lower bound of the second index var.");
   }
 
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarBoolElement2dNode>(
+  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElement2dNode>(
       invariantGraph.createVarNodeFromFzn(idx1, false),
       invariantGraph.createVarNodeFromFzn(idx2, false),
       std::move(invariantGraph.createVarNodes(inputs, false)),

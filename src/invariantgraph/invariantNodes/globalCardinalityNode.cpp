@@ -4,97 +4,35 @@
 
 namespace atlantis::invariantgraph {
 
-GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& x,
+GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& inputs,
                                              std::vector<Int>&& cover,
-                                             std::vector<VarNodeId>&& counts,
-                                             VarNodeId r)
-    : ViolationInvariantNode({}, std::move(concat(x, counts)), r),
-      _inputs(std::move(x)),
-      _cover(std::move(cover)),
-      _counts(std::move(counts)) {}
-
-GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& x,
-                                             std::vector<Int>&& cover,
-                                             std::vector<VarNodeId>&& counts,
-                                             bool shouldHold)
-    : ViolationInvariantNode(
-          shouldHold ? std::vector<VarNodeId>(counts)
-                     : std::vector<VarNodeId>{},
-          shouldHold ? std::vector<VarNodeId>(x) : std::move(concat(x, counts)),
-          shouldHold),
-      _inputs(std::move(x)),
-      _cover(std::move(cover)),
-      _counts(std::move(counts)) {}
+                                             std::vector<VarNodeId>&& counts)
+    : InvariantNode(std::move(counts), std::move(inputs)),
+      _cover(std::move(cover)) {}
 
 void GlobalCardinalityNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
-  if (!isReified() && shouldHold()) {
-    for (const auto& countOutput : outputVarNodeIds()) {
-      if (invariantGraph.varId(countOutput) == propagation::NULL_ID) {
-        invariantGraph.varNode(countOutput)
-            .setVarId(solver.makeIntVar(0, 0, _inputs.size()));
-      }
-    }
-  } else if (violationVarId(invariantGraph) == propagation::NULL_ID) {
-    registerViolation(invariantGraph, solver);
-
-    for (size_t i = 0; i < _counts.size(); ++i) {
-      _intermediate.emplace_back(solver.makeIntVar(0, 0, _inputs.size()));
-    }
-    if (_counts.size() == 1) {
-      _violations.emplace_back(violationVarId(invariantGraph));
-    } else {
-      for (size_t i = 0; i < _counts.size(); ++i) {
-        _violations.emplace_back(solver.makeIntVar(0, 0, _inputs.size()));
-      }
+  for (const VarNodeId countOutput : outputVarNodeIds()) {
+    if (invariantGraph.varId(countOutput) == propagation::NULL_ID) {
+      makeSolverVar(solver, invariantGraph.varNode(countOutput));
     }
   }
 }
 
 void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,
                                          propagation::SolverBase& solver) {
-  std::vector<propagation::VarId> inputs;
-  std::transform(_inputs.begin(), _inputs.end(), std::back_inserter(inputs),
+  std::vector<propagation::VarId> inputVarIds;
+  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+                 std::back_inserter(inputVarIds),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  if (!isReified() && shouldHold()) {
-    std::vector<propagation::VarId> countOutputs;
-    std::transform(_counts.begin(), _counts.end(),
-                   std::back_inserter(countOutputs),
-                   [&](const auto& id) { return invariantGraph.varId(id); });
+  std::vector<propagation::VarId> outputVarIds;
+  std::transform(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                 std::back_inserter(outputVarIds),
+                 [&](const auto& id) { return invariantGraph.varId(id); });
 
-    solver.makeInvariant<propagation::GlobalCardinalityOpen>(
-        solver, countOutputs, inputs, _cover);
-  } else {
-    assert(violationVarId(invariantGraph) != propagation::NULL_ID);
-    assert(_intermediate.size() == _counts.size());
-    assert(_violations.size() == _counts.size());
-    solver.makeInvariant<propagation::GlobalCardinalityOpen>(
-        solver, _intermediate, inputs, _cover);
-    for (size_t i = 0; i < _counts.size(); ++i) {
-      if (shouldHold()) {
-        solver.makeViolationInvariant<propagation::Equal>(
-            solver, _violations.at(i), _intermediate.at(i),
-            invariantGraph.varId(_counts.at(i)));
-      } else {
-        solver.makeViolationInvariant<propagation::NotEqual>(
-            solver, _violations.at(i), _intermediate.at(i),
-            invariantGraph.varId(_counts.at(i)));
-      }
-    }
-    if (_counts.size() > 1) {
-      if (shouldHold()) {
-        // To hold, each count must be equal to its corresponding intermediate:
-        solver.makeInvariant<propagation::Linear>(
-            solver, violationVarId(invariantGraph), _violations);
-      } else {
-        // To hold, only one count must not be equal to its corresponding
-        // intermediate:
-        solver.makeInvariant<propagation::Exists>(
-            solver, violationVarId(invariantGraph), _violations);
-      }
-    }
-  }
+  solver.makeInvariant<propagation::GlobalCardinalityOpen>(solver, outputVarIds,
+                                                           inputVarIds, _cover);
 }
 
 }  // namespace atlantis::invariantgraph

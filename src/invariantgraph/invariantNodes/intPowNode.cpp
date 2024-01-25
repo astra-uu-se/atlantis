@@ -4,8 +4,8 @@
 
 namespace atlantis::invariantgraph {
 
-IntPowNode::IntPowNode(VarNodeId a, VarNodeId b, VarNodeId output)
-    : InvariantNode({output}, {a, b}) {}
+IntPowNode::IntPowNode(VarNodeId base, VarNodeId exponent, VarNodeId power)
+    : InvariantNode({power}, {base, exponent}) {}
 
 void IntPowNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
@@ -18,7 +18,7 @@ void IntPowNode::registerNode(InvariantGraph& invariantGraph,
          propagation::NULL_ID);
   solver.makeInvariant<propagation::Pow>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(a()), invariantGraph.varId(b()));
+      invariantGraph.varId(base()), invariantGraph.varId(exponent()));
 }
 
 }  // namespace atlantis::invariantgraph

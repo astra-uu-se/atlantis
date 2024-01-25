@@ -4,9 +4,9 @@
 
 namespace atlantis::invariantgraph {
 
-IntDivNode::IntDivNode(VarNodeId _nominator, VarNodeId _denominator,
+IntDivNode::IntDivNode(VarNodeId nominator, VarNodeId denominator,
                        VarNodeId quotient)
-    : InvariantNode({quotient}, {_nominator, _denominator}) {}
+    : InvariantNode({quotient}, {nominator, denominator}) {}
 
 void invariantgraph::IntDivNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
@@ -19,10 +19,10 @@ void invariantgraph::IntDivNode::registerNode(InvariantGraph& invariantGraph,
          propagation::NULL_ID);
   solver.makeInvariant<propagation::IntDiv>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(nominator()), invariantGraph.varId(denominator()));
+      invariantGraph.varId(numerator()), invariantGraph.varId(denominator()));
 }
 
-VarNodeId IntDivNode::nominator() const noexcept {
+VarNodeId IntDivNode::numerator() const noexcept {
   return staticInputVarNodeIds().front();
 }
 VarNodeId IntDivNode::denominator() const noexcept {

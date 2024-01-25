@@ -39,8 +39,8 @@ bool makeCircuitImplicitNode(FznInvariantGraph& invariantGraph,
   return true;
 }
 
-bool makeCircuitImplicitNode(const fznparser::Constraint& constraint,
-                             FznInvariantGraph& invariantGraph) {
+bool makeCircuitImplicitNode(FznInvariantGraph& invariantGraph,
+                             const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "fzn_circuit") {
     return false;
   }

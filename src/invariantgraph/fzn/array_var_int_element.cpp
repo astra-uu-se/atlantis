@@ -11,15 +11,15 @@ bool array_var_int_element(FznInvariantGraph& invariantGraph,
                            const fznparser::IntArg index,
                            const fznparser::IntVarArray& inputs,
                            const fznparser::IntArg& output, Int offset) {
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarIntElementNode>(
+  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
       invariantGraph.createVarNodeFromFzn(index, false),
       std::move(invariantGraph.createVarNodes(inputs, false)),
       invariantGraph.createVarNodeFromFzn(output, true), offset));
   return true;
 }
 
-bool array_var_int_element(const fznparser::Constraint& constraint,
-                           FznInvariantGraph& invariantGraph) {
+bool array_var_int_element(FznInvariantGraph& invariantGraph,
+                           const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "array_var_int_element" &&
       constraint.identifier() != "array_var_int_element_nonshifted") {
     return false;

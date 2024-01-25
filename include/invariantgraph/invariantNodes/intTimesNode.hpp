@@ -12,12 +12,6 @@ class IntTimesNode : public InvariantNode {
 
   ~IntTimesNode() override = default;
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_times", 3}};
-  }
-
-  
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

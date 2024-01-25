@@ -3,6 +3,8 @@
 #include <fznparser/constraint.hpp>
 #include <fznparser/variables.hpp>
 
+#include "invariantgraph/fzn/array_bool_and.hpp"
+#include "invariantgraph/fzn/bool_eq.hpp"
 #include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 #include "invariantgraph/types.hpp"

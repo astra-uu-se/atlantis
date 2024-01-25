@@ -38,6 +38,8 @@ bool int_eq(FznInvariantGraph&, VarNodeId, Int,
 
 bool int_eq(FznInvariantGraph&, VarNodeId, VarNodeId);
 
+bool int_eq(FznInvariantGraph&, VarNodeId, VarNodeId, VarNodeId reified);
+
 bool int_eq(FznInvariantGraph&, VarNodeId, VarNodeId,
             const fznparser::BoolArg& reified);
 
