@@ -52,8 +52,7 @@ propagation::VarId VarNode::postDomainConstraint(
       domain.back().upperBound - domain.front().lowerBound + 1;
 
   // domain.size() - 1 = number of "holes" in the domain:
-  const float denseness = 1.0 - ((float)(domain.size() - 1) / (float)interval);
-  if (SPARSE_MIN_DENSENESS <= denseness) {
+  if (domain.size() > 2 && interval < 1000) {
     _domainViolationId = solver.makeIntView<propagation::InSparseDomain>(
         solver, this->varId(), std::move(domain));
   } else {
