@@ -9,8 +9,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_abs(FznInvariantGraph&, const fznparser::IntArg var,
-             const fznparser::IntArg absVar);
+bool int_abs(FznInvariantGraph&, const fznparser::IntArg& var,
+             const fznparser::IntArg& absVar);
 
 bool int_abs(FznInvariantGraph&, const fznparser::Constraint&);
 

@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/fzn_global_cardinality_low_up_closed.hpp"
 
 #include "../parseHelper.hpp"
@@ -7,8 +5,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-void checkParams(const std::vector<Int>& cover, const std::vector<Int>& low,
-                 const std::vector<Int> up) {
+static void checkParams(const std::vector<Int>& cover, const std::vector<Int>& low,
+                 const std::vector<Int>& up) {
   if (cover.size() != low.size() || cover.size() != up.size()) {
     throw FznArgumentException(
         "fzn_global_cardinality_low_up_closed: cover, low and up must have the "
@@ -38,9 +36,9 @@ bool fzn_global_cardinality_low_up_closed(FznInvariantGraph& invariantGraph,
   }
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<GlobalCardinalityLowUpClosedNode>(
+      std::make_unique<GlobalCardinalityLowUpClosedNode>(
           invariantGraph.createVarNodes(inputs, false), std::move(cover),
-          std::move(low), std::move(up), true)));
+          std::move(low), std::move(up), true));
   return true;
 }
 
@@ -58,17 +56,17 @@ bool fzn_global_cardinality_low_up_closed(FznInvariantGraph& invariantGraph,
           std::move(up));
     }
     invariantGraph.addInvariantNode(
-        std::move(std::make_unique<GlobalCardinalityLowUpClosedNode>(
-            std::move(invariantGraph.createVarNodes(inputs, false)),
+        std::make_unique<GlobalCardinalityLowUpClosedNode>(
+            invariantGraph.createVarNodes(inputs, false),
             std::move(cover), std::move(low), std::move(up),
-            reified.toParameter())));
+            reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<GlobalCardinalityLowUpClosedNode>(
-          std::move(invariantGraph.createVarNodes(inputs, false)),
+      std::make_unique<GlobalCardinalityLowUpClosedNode>(
+          invariantGraph.createVarNodes(inputs, false),
           std::move(cover), std::move(low), std::move(up),
-          invariantGraph.createVarNodeFromFzn(reified, true))));
+          invariantGraph.createVarNodeFromFzn(reified, true)));
   return true;
 }
 
@@ -82,10 +80,10 @@ bool fzn_global_cardinality_low_up_closed(
 
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 3, fznparser::IntVarArray, false);
   std::vector<Int> cover =
       std::get<fznparser::IntVarArray>(constraint.arguments().at(1))
           .toParVector();

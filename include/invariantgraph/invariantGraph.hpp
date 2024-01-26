@@ -104,18 +104,18 @@ class InvariantGraph {
 
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
-      const VarNodeId node,
+      VarNodeId node,
       const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
 
   VarNodeId findCycleUtil(
-      const VarNodeId varNodeId,
+      VarNodeId varNodeId,
       const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
       std::unordered_map<VarNodeId, VarNodeId, VarNodeIdHash>& path);
 
   std::vector<VarNodeId> findCycle(
       const std::unordered_map<VarNodeId, VarNodeId, VarNodeIdHash>& childOf,
-      VarNodeId const node, VarNodeId const parent);
+      VarNodeId node, VarNodeId parent);
 
   std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
       const std::vector<VarNodeId>& cycle);

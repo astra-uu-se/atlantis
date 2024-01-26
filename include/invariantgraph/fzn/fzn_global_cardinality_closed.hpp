@@ -23,7 +23,7 @@ bool fzn_global_cardinality_closed(FznInvariantGraph&,
                                    const fznparser::IntVarArray& counts,
                                    const fznparser::BoolArg& reified);
 
-bool global_cardinality_closed(FznInvariantGraph&,
+bool fzn_global_cardinality_closed(FznInvariantGraph&,
                                const fznparser::Constraint&);
 
 }  // namespace atlantis::invariantgraph::fzn

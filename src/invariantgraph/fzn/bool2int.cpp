@@ -8,8 +8,8 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool bool2int(FznInvariantGraph& invariantGraph,
-              const fznparser::BoolArg boolArg,
-              const fznparser::IntArg intArg) {
+              const fznparser::BoolArg& boolArg,
+              const fznparser::IntArg& intArg) {
   invariantGraph.addInvariantNode(std::make_unique<Bool2IntNode>(
       invariantGraph.createVarNodeFromFzn(boolArg, false),
       invariantGraph.createVarNodeFromFzn(intArg, true)));

@@ -8,8 +8,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool2int(FznInvariantGraph&, const fznparser::BoolArg boolArg,
-              const fznparser::IntArg intArg);
+bool bool2int(FznInvariantGraph&, const fznparser::BoolArg& boolArg,
+              const fznparser::IntArg& intArg);
 
 bool bool2int(FznInvariantGraph&, const fznparser::Constraint&);
 

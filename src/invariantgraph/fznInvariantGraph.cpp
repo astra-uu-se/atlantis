@@ -284,9 +284,6 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
   return outputVarArrays;
 }
 
-bool argumentIsFree(const fznparser::Arg& arg,
-                    const std::unordered_set<std::string>& definedVars);
-
 void FznInvariantGraph::createNodes(const fznparser::Model& model) {
   std::unordered_set<std::string> definedVars;
   std::vector<bool> constraintIsProcessed(model.constraints().size(), false);
@@ -326,14 +323,14 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
   for (const auto& [identifier, var] : model.vars()) {
     assert(!identifier.empty());
     if (std::holds_alternative<fznparser::IntVar>(var)) {
-      const fznparser::IntVar& intVar = std::get<fznparser::IntVar>(var);
+      const auto& intVar = std::get<fznparser::IntVar>(var);
       if (intVar.isFixed()) {
         continue;
       }
       assert(varNode(identifier).varNodeId() != NULL_NODE_ID);
       assert(varNode(identifier).isIntVar());
     } else if (std::holds_alternative<fznparser::BoolVar>(var)) {
-      const fznparser::BoolVar& boolVar = std::get<fznparser::BoolVar>(var);
+      const auto& boolVar = std::get<fznparser::BoolVar>(var);
       if (boolVar.isFixed()) {
         continue;
       }
@@ -345,8 +342,6 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
 
 bool FznInvariantGraph::makeInvariantNode(
     const fznparser::Constraint& constraint, bool guessDefinedVar) {
-  std::string name = constraint.identifier();
-
 #define MAKE_INVARIANT(fznConstraintName)     \
   if (fznConstraintName(*this, constraint)) { \
     return true;                              \
@@ -362,6 +357,7 @@ bool FznInvariantGraph::makeInvariantNode(
   MAKE_INVARIANT(fzn::array_bool_element2d);
   MAKE_INVARIANT(fzn::array_bool_element);
   MAKE_INVARIANT(fzn::array_bool_or);
+  MAKE_INVARIANT(fzn::array_bool_xor);
   MAKE_INVARIANT(fzn::array_int_element2d);
   MAKE_INVARIANT(fzn::array_int_element);
   MAKE_INVARIANT(fzn::array_int_maximum);
@@ -371,11 +367,16 @@ bool FznInvariantGraph::makeInvariantNode(
   MAKE_INVARIANT(fzn::array_var_int_element2d);
   MAKE_INVARIANT(fzn::array_var_int_element);
   MAKE_INVARIANT(fzn::bool2int);
+  MAKE_INVARIANT(fzn::bool_and);
   MAKE_INVARIANT(fzn::bool_eq);
   MAKE_INVARIANT(fzn::bool_le);
   MAKE_INVARIANT(fzn::bool_lt);
   MAKE_INVARIANT(fzn::bool_not);
+  MAKE_INVARIANT(fzn::bool_or);
   MAKE_INVARIANT(fzn::bool_xor);
+  MAKE_INVARIANT(fzn::fzn_count_eq);
+  MAKE_INVARIANT(fzn::fzn_global_cardinality);
+  MAKE_INVARIANT(fzn::fzn_global_cardinality_closed);
   MAKE_INVARIANT(fzn::int_abs);
   MAKE_INVARIANT(fzn::int_div);
   MAKE_INVARIANT(fzn::int_eq);
@@ -393,14 +394,14 @@ bool FznInvariantGraph::makeInvariantNode(
   MAKE_INVARIANT(fzn::int_times);
   MAKE_INVARIANT(fzn::set_in);
 
+
+
   return false;
 #undef MAKE_INVARIANT
 }
 
 bool FznInvariantGraph::makeImplicitConstraintNode(
     const fznparser::Constraint& constraint) {
-  std::string name = constraint.identifier();
-
 #define MAKE_IMPLICIT_CONSTRAINT(fznConstraintName) \
   if (fznConstraintName(*this, constraint)) {       \
     return true;                                    \
@@ -415,8 +416,6 @@ bool FznInvariantGraph::makeImplicitConstraintNode(
 
 bool FznInvariantGraph::makeViolationInvariantNode(
     const fznparser::Constraint& constraint) {
-  std::string name = constraint.identifier();
-
 #define MAKE_VIOLATION_INVARIANT(fznConstraintName) \
   if (fznConstraintName(*this, constraint)) {       \
     return true;                                    \
@@ -431,6 +430,16 @@ bool FznInvariantGraph::makeViolationInvariantNode(
   MAKE_VIOLATION_INVARIANT(fzn::bool_lin_le);
   MAKE_VIOLATION_INVARIANT(fzn::bool_or);
   MAKE_VIOLATION_INVARIANT(fzn::fzn_all_different_int);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_all_equal_int);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_geq);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_gt);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_leq);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_lt);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_neq);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_closed);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_low_up);
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_low_up_closed);
   MAKE_VIOLATION_INVARIANT(fzn::int_eq);
   MAKE_VIOLATION_INVARIANT(fzn::int_le);
   MAKE_VIOLATION_INVARIANT(fzn::int_lin_eq);
@@ -442,81 +451,8 @@ bool FznInvariantGraph::makeViolationInvariantNode(
 
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint.identifier()));
+  return false;
 #undef MAKE_VIOLATION_INVARIANT
-}
-
-bool varIsFree(const fznparser::BoolVar& var,
-               const std::unordered_set<std::string>& definedVars) {
-  return var.isFixed() || !definedVars.contains(var.identifier());
-}
-bool varIsFree(const fznparser::IntVar& var,
-               const std::unordered_set<std::string>& definedVars) {
-  return var.isFixed() || !definedVars.contains(var.identifier());
-}
-bool varIsFree(const fznparser::FloatVar& var,
-               const std::unordered_set<std::string>&) {
-  return var.isFixed();
-}
-bool varIsFree(const fznparser::SetVar&,
-               const std::unordered_set<std::string>&) {
-  return false;
-}
-bool argIsFree(const fznparser::BoolArg& arg,
-               const std::unordered_set<std::string>& definedVars) {
-  return arg.isParameter() || varIsFree(arg.var(), definedVars);
-}
-bool argIsFree(const fznparser::IntArg& arg,
-               const std::unordered_set<std::string>& definedVars) {
-  return arg.isParameter() || varIsFree(arg.var(), definedVars);
-}
-bool argIsFree(const fznparser::FloatArg& arg,
-               const std::unordered_set<std::string>& definedVars) {
-  return arg.isParameter() || varIsFree(arg.var(), definedVars);
-}
-bool argIsFree(const fznparser::IntSetArg& arg,
-               const std::unordered_set<std::string>& definedVars) {
-  return arg.isParameter() || varIsFree(arg.var(), definedVars);
-}
-
-template <typename ArrayType, typename VarType, typename ParType>
-bool arrayIsFree(const ArrayType& var,
-                 const std::unordered_set<std::string>& definedVars) {
-  for (size_t i = 0; i < var.size(); ++i) {
-    if (!std::holds_alternative<ParType>(var.at(i)) &&
-        !argIsFree(
-            std::get<std::reference_wrapper<const VarType>>(var.at(i)).get(),
-            definedVars)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool argumentIsFree(const fznparser::Arg& arg,
-                    const std::unordered_set<std::string>& definedVars) {
-  if (std::holds_alternative<fznparser::BoolArg>(arg)) {
-    return argIsFree(std::get<fznparser::BoolArg>(arg), definedVars);
-  } else if (std::holds_alternative<fznparser::IntArg>(arg)) {
-    return argIsFree(std::get<fznparser::IntArg>(arg), definedVars);
-  } else if (std::holds_alternative<fznparser::FloatArg>(arg)) {
-    return argIsFree(std::get<fznparser::FloatArg>(arg), definedVars);
-  } else if (std::holds_alternative<fznparser::IntSetArg>(arg)) {
-    return argIsFree(std::get<fznparser::IntSetArg>(arg), definedVars);
-  } else if (std::holds_alternative<fznparser::BoolVarArray>(arg)) {
-    return arrayIsFree<fznparser::BoolVarArray, fznparser::BoolVar, bool>(
-        std::get<fznparser::BoolVarArray>(arg), definedVars);
-  } else if (std::holds_alternative<fznparser::IntVarArray>(arg)) {
-    return arrayIsFree<fznparser::IntVarArray, fznparser::IntVar, Int>(
-        std::get<fznparser::IntVarArray>(arg), definedVars);
-  } else if (std::holds_alternative<fznparser::FloatVarArray>(arg)) {
-    return arrayIsFree<fznparser::FloatVarArray, fznparser::FloatVar, double>(
-        std::get<fznparser::FloatVarArray>(arg), definedVars);
-  } else if (std::holds_alternative<fznparser::SetVarArray>(arg)) {
-    return arrayIsFree<fznparser::SetVarArray, fznparser::SetVar,
-                       fznparser::IntSet>(std::get<fznparser::SetVarArray>(arg),
-                                          definedVars);
-  }
-  return false;
 }
 
 }  // namespace atlantis::invariantgraph

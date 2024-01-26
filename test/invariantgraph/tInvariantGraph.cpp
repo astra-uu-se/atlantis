@@ -30,7 +30,7 @@ TEST(InvariantGraphTest, apply_result) {
   EXPECT_TRUE(invariantGraph.containsVarNode("output"));
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntPlusNode>(a, b, output)));
+      std::make_unique<IntPlusNode>(a, b, output));
 
   invariantGraph.addImplicitConstraintNode(std::move(
       std::make_unique<InvariantGraphRoot>(std::vector<VarNodeId>{a, b})));
@@ -64,11 +64,11 @@ TEST(InvariantGraphTest, ApplyGraph) {
       invariantGraph.createVarNode(SearchDomain(0, 40), true, "output3", true);
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntPlusNode>(a1, a2, output1)));
+      std::make_unique<IntPlusNode>(a1, a2, output1));
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntPlusNode>(b1, b2, output2)));
+      std::make_unique<IntPlusNode>(b1, b2, output2));
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntPlusNode>(output1, output2, output3)));
+      std::make_unique<IntPlusNode>(output1, output2, output3));
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
@@ -164,8 +164,8 @@ TEST(InvariantGraphTest, SplitGraph) {
   std::vector<Int> coeffs(numInputs, 1);
   for (const auto& identifierArray : varNodeIdMatrix) {
     std::vector<VarNodeId> inputs(identifierArray);
-    invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-        std::vector<Int>(coeffs), std::move(inputs), output)));
+    invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
+        std::vector<Int>(coeffs), std::move(inputs), output));
   }
 
   propagation::Solver solver;
@@ -208,10 +208,10 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
       invariantGraph.createVarNode(SearchDomain(0, 10), true, "output2", true);
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntPlusNode>(x1, output2, output1)));
+      std::make_unique<IntPlusNode>(x1, output2, output1));
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntPlusNode>(output1, x2, output2)));
+      std::make_unique<IntPlusNode>(output1, x2, output2));
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
@@ -258,12 +258,12 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
       invariantGraph.createVarNode(SearchDomain(0, 1), true, "output2", true);
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<ArrayVarElementNode>(
-          output2, std::vector<VarNodeId>{x11, x12}, output1, 0)));
+      std::make_unique<ArrayVarElementNode>(
+          output2, std::vector<VarNodeId>{x11, x12}, output1, 0));
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<ArrayVarElementNode>(
-          output1, std::vector<VarNodeId>{x21, x22}, output2, 0)));
+      std::make_unique<ArrayVarElementNode>(
+          output1, std::vector<VarNodeId>{x21, x22}, output2, 0));
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
@@ -312,12 +312,12 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
       invariantGraph.createVarNode(SearchDomain(0, 10), true, "output2", true);
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<ArrayVarElementNode>(
-          idx1, std::vector<VarNodeId>{x1, output2}, output1, 1)));
+      std::make_unique<ArrayVarElementNode>(
+          idx1, std::vector<VarNodeId>{x1, output2}, output1, 1));
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<ArrayVarElementNode>(
-          idx2, std::vector<VarNodeId>{output1, x2}, output2, 1)));
+      std::make_unique<ArrayVarElementNode>(
+          idx2, std::vector<VarNodeId>{output1, x2}, output2, 1));
 
   propagation::Solver solver;
   invariantGraph.apply(solver);

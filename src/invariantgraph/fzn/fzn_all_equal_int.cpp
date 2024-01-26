@@ -24,10 +24,10 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
   }
 
   const VarNodeId allDiffViolVarNodeId = invariantGraph.createVarNode(
-      SearchDomain(1, inputs.size() - 1), true, true);
+      SearchDomain(1, static_cast<Int>(inputs.size()) - 1), true, true);
 
   invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      std::move(invariantGraph.createVarNodes(inputs, false)),
+      invariantGraph.createVarNodes(inputs, false),
       allDiffViolVarNodeId));
 
   invariantGraph.varNode(allDiffViolVarNodeId).shouldEnforceDomain(true);
@@ -37,17 +37,17 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
 
 bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
                        const fznparser::IntVarArray& inputs,
-                       const fznparser::BoolArg reified) {
+                       const fznparser::BoolArg& reified) {
   if (reified.isFixed()) {
     if (reified.toParameter()) {
       return fzn_all_equal_int(invariantGraph, inputs);
     }
     // At least two variables must take different values
     const VarNodeId allDiffViolVarNodeId = invariantGraph.createVarNode(
-        SearchDomain(0, inputs.size() - 2), false, true);
+        SearchDomain(0, static_cast<Int>(inputs.size()) - 2), false, true);
 
     invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-        std::move(invariantGraph.createVarNodes(inputs, false)),
+        invariantGraph.createVarNodes(inputs, false),
         allDiffViolVarNodeId));
 
     invariantGraph.varNode(allDiffViolVarNodeId).shouldEnforceDomain(true);
@@ -56,7 +56,7 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
   }
 
   const VarNodeId allDiffViolVarNodeId = invariantGraph.createVarNode(
-      SearchDomain(0, inputs.size() - 1), false, true);
+      SearchDomain(0, static_cast<Int>(inputs.size()) - 1), false, true);
 
   invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
       std::move(invariantGraph.createVarNodes(inputs, false)),
@@ -78,7 +78,7 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
 
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 2 : 1);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
 
   if (!isReified) {
     return fzn_all_equal_int(invariantGraph, std::get<fznparser::IntVarArray>(

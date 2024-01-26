@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/int_ne.hpp"
 
 #include "../parseHelper.hpp"
@@ -28,15 +26,14 @@ bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId, Int value,
     invariantGraph.varNode(reifiedVarNodeId).fixValue(false);
     return true;
   }
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntNeNode>(
+  invariantGraph.addInvariantNode(std::make_unique<IntNeNode>(
       varNodeId, invariantGraph.createVarNodeFromFzn(value, false),
-      invariantGraph.createVarNodeFromFzn(reified, true))));
+      invariantGraph.createVarNodeFromFzn(reified, true)));
   return true;
 }
 
 bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
-  invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntNeNode>(a, b, true)));
+  invariantGraph.addInvariantNode(std::make_unique<IntNeNode>(a, b, true));
   return true;
 }
 
@@ -48,8 +45,7 @@ bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
     }
     return int_eq(invariantGraph, a, b);
   }
-  invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntNeNode>(a, b, true)));
+  invariantGraph.addInvariantNode(std::make_unique<IntNeNode>(a, b, true));
   return true;
 }
 

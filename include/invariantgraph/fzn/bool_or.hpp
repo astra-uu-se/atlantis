@@ -13,6 +13,4 @@ bool bool_or(FznInvariantGraph&, const fznparser::BoolArg& a,
 
 bool bool_or(FznInvariantGraph&, const fznparser::Constraint&);
 
-bool bool_or(FznInvariantGraph&, const fznparser::Constraint&);
-
 }  // namespace atlantis::invariantgraph::fzn

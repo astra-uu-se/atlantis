@@ -5,7 +5,7 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-static void sanityCheck(Int inputCount, std::vector<bool> fixedValues,
+static void sanityCheck(size_t inputCount, std::vector<bool> fixedValues,
                         const fznparser::BoolArg& reified) {
   if (!reified.isFixed()) {
     return;
@@ -18,7 +18,7 @@ static void sanityCheck(Int inputCount, std::vector<bool> fixedValues,
           "argument is fixed to true "
           "but the array contains at least one element that is not true.");
     }
-  } else if (fixedValues.size() == static_cast<size_t>(inputCount) &&
+  } else if (fixedValues.size() == inputCount &&
              std::all_of(fixedValues.begin(), fixedValues.end(),
                          [](bool b) { return b; })) {
     throw FznArgumentException(
@@ -53,13 +53,13 @@ bool array_bool_and(FznInvariantGraph& invariantGraph,
   if (reified.isFixed()) {
     invariantGraph.addInvariantNode(
         std::make_unique<invariantgraph::ArrayBoolAndNode>(
-            std::move(invariantGraph.createVarNodes(boolVarArray, false)),
+            invariantGraph.createVarNodes(boolVarArray, false),
             reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolAndNode>(
-          std::move(invariantGraph.createVarNodes(boolVarArray, false)),
+          invariantGraph.createVarNodes(boolVarArray, false),
           invariantGraph.createVarNodeFromFzn(reified.var(), true)));
   return true;
 }
@@ -69,7 +69,7 @@ bool array_bool_and(FznInvariantGraph& invariantGraph,
   if (constraint.identifier() != "array_bool_and") {
     return false;
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true);
   return array_bool_and(
       invariantGraph,

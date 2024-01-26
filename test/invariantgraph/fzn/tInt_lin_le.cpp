@@ -25,7 +25,7 @@ class int_lin_leTest : public FznTestBase {
   std::vector<std::string> inputIdentifiers{};
   std::vector<Int> coeffs{};
   std::vector<std::pair<Int, Int>> varBounds{};
-  Int bound = 20;
+  Int bound = 10;
 
   Int isViolated(const std::vector<Int>& inputVals) {
     Int sum = 0;
@@ -65,7 +65,7 @@ class int_lin_leTest : public FznTestBase {
     varBounds.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? 1 : -1));
-      varBounds.emplace_back(std::pair<Int, Int>(-2, 2));
+      varBounds.emplace_back(-2, 2);
     }
     generate();
   }

@@ -30,14 +30,14 @@ class NodeTestBase : public ::testing::Test {
   void createInvariantNode(Args&&... args) {
     EXPECT_TRUE(_invNodeId == NULL_NODE_ID);
     _invNodeId = _invariantGraph->addInvariantNode(
-        std::move(std::make_unique<InvNode>(std::forward<Args>(args)...)));
+        std::make_unique<InvNode>(std::forward<Args>(args)...));
   }
 
   template <typename... Args>
   void createImplicitConstraintNode(Args&&... args) {
     EXPECT_TRUE(_invNodeId == NULL_NODE_ID);
     _invNodeId = _invariantGraph->addImplicitConstraintNode(
-        std::move(std::make_unique<InvNode>(std::forward<Args>(args)...)));
+        std::make_unique<InvNode>(std::forward<Args>(args)...));
   }
 
   InvNode& invNode() {

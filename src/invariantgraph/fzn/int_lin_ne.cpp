@@ -7,7 +7,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 static void verifyInputs(const std::vector<Int>& coeffs,
-                         const fznparser::IntVarArray inputs) {
+                         const fznparser::IntVarArray& inputs) {
   if (coeffs.size() != inputs.size()) {
     throw FznArgumentException(
         "int_lin_ne constraint first and second array arguments must have the "
@@ -16,7 +16,7 @@ static void verifyInputs(const std::vector<Int>& coeffs,
 }
 
 bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
-                const fznparser::IntVarArray inputs, Int bound) {
+                const fznparser::IntVarArray& inputs, Int bound) {
   verifyInputs(coeffs, inputs);
   if (coeffs.empty()) {
     if (bound != 0) {
@@ -32,10 +32,10 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
   const VarNodeId outputVarNodeId =
       invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
 
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
+  invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs),
-      std::move(invariantGraph.createVarNodes(inputs, false)),
-      outputVarNodeId)));
+      invariantGraph.createVarNodes(inputs, false),
+      outputVarNodeId));
 
   int_ne(invariantGraph, outputVarNodeId, bound);
 
@@ -43,8 +43,8 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 }
 
 bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
-                const fznparser::IntVarArray inputs, Int bound,
-                fznparser::BoolArg reified) {
+                const fznparser::IntVarArray& inputs, Int bound,
+                const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
   if (reified.isFixed()) {
     if (reified.toParameter()) {
@@ -64,10 +64,10 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
   const VarNodeId outputVarNodeId =
       invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
 
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
+  invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs),
-      std::move(invariantGraph.createVarNodes(inputs, false)),
-      outputVarNodeId)));
+      invariantGraph.createVarNodes(inputs, false),
+      outputVarNodeId));
 
   int_ne(invariantGraph, outputVarNodeId, bound);
 
@@ -82,8 +82,8 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph,
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
 
   std::vector<Int> coeffs =

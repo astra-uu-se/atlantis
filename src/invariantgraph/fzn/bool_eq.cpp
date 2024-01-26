@@ -31,7 +31,7 @@ bool bool_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
   }
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<BoolEqNode>(a, b, reifiedVarNodeId)));
+      std::make_unique<BoolEqNode>(a, b, reifiedVarNodeId));
 
   return true;
 }

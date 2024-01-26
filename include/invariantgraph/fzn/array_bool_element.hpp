@@ -10,7 +10,7 @@ namespace atlantis::invariantgraph::fzn {
 
 bool array_bool_element(FznInvariantGraph&, const fznparser::IntArg& idx,
                         std::vector<bool>&& parVector,
-                        const fznparser::BoolArg& output, const Int offset);
+                        const fznparser::BoolArg& output, Int offset);
 
 bool array_bool_element(FznInvariantGraph&, const fznparser::Constraint&);
 

@@ -5,11 +5,11 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_abs(FznInvariantGraph& invariantGraph, const fznparser::IntArg var,
-             const fznparser::IntArg absVar) {
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntAbsNode>(
+bool int_abs(FznInvariantGraph& invariantGraph, const fznparser::IntArg& var,
+             const fznparser::IntArg& absVar) {
+  invariantGraph.addInvariantNode(std::make_unique<IntAbsNode>(
       invariantGraph.createVarNodeFromFzn(var, false),
-      invariantGraph.createVarNodeFromFzn(absVar, true))));
+      invariantGraph.createVarNodeFromFzn(absVar, true)));
   return true;
 }
 

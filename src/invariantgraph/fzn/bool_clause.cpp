@@ -12,8 +12,8 @@ bool bool_clause(FznInvariantGraph& invariantGraph,
                  const fznparser::BoolVarArray& bs) {
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::BoolClauseNode>(
-          std::move(invariantGraph.createVarNodes(as, false)),
-          std::move(invariantGraph.createVarNodes(bs, false)), true));
+          invariantGraph.createVarNodes(as, false),
+          invariantGraph.createVarNodes(bs, false), true));
   return true;
 }
 
@@ -23,8 +23,8 @@ bool bool_clause(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 2);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
 
   return bool_clause(
       invariantGraph,

@@ -27,8 +27,8 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
       invariantGraph.createVarNode(SearchDomain(sum, sum), true, true);
   invariantGraph.varNode(outputVarNodeId).shouldEnforceDomain(true);
 
-  invariantGraph.addInvariantNode(std::move(std::make_unique<BoolLinearNode>(
-      std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId)));
+  invariantGraph.addInvariantNode(std::make_unique<BoolLinearNode>(
+      std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId));
 
   return true;
 }
@@ -53,14 +53,14 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
   invariantGraph.varNode(outputVarNodeId).shouldEnforceDomain(true);
 
-  invariantGraph.addInvariantNode(std::move(std::make_unique<BoolLinearNode>(
-      std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId)));
+  invariantGraph.addInvariantNode(std::make_unique<BoolLinearNode>(
+      std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId));
 
   return true;
 }
 
 bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
-                 const fznparser::BoolVarArray inputs,
+                 const fznparser::BoolVarArray& inputs,
                  const fznparser::IntArg& outputVar) {
   if (outputVar.isFixed()) {
     return bool_lin_eq(invariantGraph, std::move(coeffs),
@@ -78,8 +78,8 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
 
   std::vector<Int> coeffs =

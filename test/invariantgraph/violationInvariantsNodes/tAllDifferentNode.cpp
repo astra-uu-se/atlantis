@@ -191,7 +191,7 @@ TEST_F(AllDifferentNodeTest, pruneParameters) {
                                 createIntVarNode(5)};
 
   const InvariantNodeId invNodeId = _invariantGraph->addInvariantNode(
-      std::move(std::make_unique<AllDifferentNode>(std::move(inputs), true)));
+      std::make_unique<AllDifferentNode>(std::move(inputs), true));
 
   AllDifferentNode& allDiffNode = dynamic_cast<AllDifferentNode&>(
       _invariantGraph->invariantNode(invNodeId));

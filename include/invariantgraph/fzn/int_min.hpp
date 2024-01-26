@@ -9,8 +9,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_min(FznInvariantGraph&, const fznparser::IntArg a,
-             const fznparser::IntArg b, const fznparser::IntArg maximum);
+bool int_min(FznInvariantGraph&, const fznparser::IntArg& a,
+             const fznparser::IntArg& b, const fznparser::IntArg& maximum);
 
 bool int_min(FznInvariantGraph& invariantGraph,
              const fznparser::Constraint& constraint);

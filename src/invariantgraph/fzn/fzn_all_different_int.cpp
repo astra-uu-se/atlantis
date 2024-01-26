@@ -33,12 +33,12 @@ bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
       return fzn_all_different_int(invariantGraph, inputs);
     }
     invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-        std::move(invariantGraph.createVarNodes(inputs, false)),
+        invariantGraph.createVarNodes(inputs, false),
         reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      std::move(invariantGraph.createVarNodes(inputs, false)),
+      invariantGraph.createVarNodes(inputs, false),
       invariantGraph.createVarNodeFromFzn(reified, true)));
   return true;
 }
@@ -52,7 +52,7 @@ bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
 
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 2 : 1);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
 
   if (!isReified) {
     return fzn_all_different_int(

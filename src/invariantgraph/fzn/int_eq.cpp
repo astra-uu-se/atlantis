@@ -27,14 +27,14 @@ bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId varNodeId, Int value,
     invariantGraph.varNode(reifiedVarNodeId).fixValue(false);
     return true;
   }
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntEqNode>(
-      varNodeId, value, invariantGraph.createVarNodeFromFzn(reified, true))));
+  invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(
+      varNodeId, value, invariantGraph.createVarNodeFromFzn(reified, true)));
   return true;
 }
 
 bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntEqNode>(a, b, false)));
+      std::make_unique<IntEqNode>(a, b, false));
   return true;
 }
 
@@ -48,7 +48,7 @@ bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
     return int_ne(invariantGraph, a, b);
   }
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntEqNode>(a, b, reifiedVarNodeId)));
+      std::make_unique<IntEqNode>(a, b, reifiedVarNodeId));
   return true;
 }
 
@@ -60,8 +60,8 @@ bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
     }
     return int_ne(invariantGraph, a, b);
   }
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntEqNode>(
-      a, b, invariantGraph.createVarNodeFromFzn(reified.var(), true))));
+  invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(
+      a, b, invariantGraph.createVarNodeFromFzn(reified.var(), true)));
   return true;
 }
 

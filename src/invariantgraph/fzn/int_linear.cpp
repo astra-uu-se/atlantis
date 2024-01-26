@@ -15,8 +15,8 @@ bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
         invariantGraph.createVarNodeFromFzn(-sum, false));
   }
 
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-      std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId)));
+  invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
+      std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId));
 
   return true;
 }
@@ -85,8 +85,8 @@ bool int_linear(FznInvariantGraph& invariantGraph,
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
 
   if (isReified) {

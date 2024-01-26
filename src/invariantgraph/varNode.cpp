@@ -1,8 +1,5 @@
 #include "invariantgraph/varNode.hpp"
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/invariantNode.hpp"
-
 namespace atlantis::invariantgraph {
 
 VarNode::VarNode(VarNodeId varNodeId, SearchDomain&& domain, bool isIntVar,

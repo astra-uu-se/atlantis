@@ -8,10 +8,10 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_var_bool_element2d(FznInvariantGraph& invariantGraph,
-                              const fznparser::IntArg idx1,
-                              const fznparser::IntArg idx2,
-                              const fznparser::BoolVarArray inputs,
-                              const fznparser::BoolArg output, Int numRows,
+                              const fznparser::IntArg& idx1,
+                              const fznparser::IntArg& idx2,
+                              const fznparser::BoolVarArray& inputs,
+                              const fznparser::BoolArg& output, Int numRows,
                               Int offset1, Int offset2) {
   if (0 <= numRows || inputs.size() % numRows != 0) {
     throw FznArgumentException(
@@ -36,7 +36,7 @@ bool array_var_bool_element2d(FznInvariantGraph& invariantGraph,
   invariantGraph.addInvariantNode(std::make_unique<ArrayVarElement2dNode>(
       invariantGraph.createVarNodeFromFzn(idx1, false),
       invariantGraph.createVarNodeFromFzn(idx2, false),
-      std::move(invariantGraph.createVarNodes(inputs, false)),
+      invariantGraph.createVarNodes(inputs, false),
       invariantGraph.createVarNodeFromFzn(output, true),
       static_cast<size_t>(numRows), offset1, offset2));
   return true;
@@ -51,7 +51,7 @@ bool array_var_bool_element2d(FznInvariantGraph& invariantGraph,
   verifyNumArguments(constraint, 7);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::BoolVarArray, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 4, fznparser::IntArg, false);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 5, fznparser::IntArg, false);

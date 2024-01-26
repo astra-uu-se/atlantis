@@ -8,7 +8,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
-                 const fznparser::BoolVarArray inputs, Int bound) {
+                 const fznparser::BoolVarArray& inputs, Int bound) {
   if (coeffs.size() != inputs.size()) {
     throw FznArgumentException(
         "bool_lin_le constraint first and second array arguments must have the "
@@ -35,7 +35,7 @@ bool bool_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
   return bool_lin_eq(
       invariantGraph, std::move(coeffs),
-      std::move(invariantGraph.createVarNodes(inputs, false)),
+      invariantGraph.createVarNodes(inputs, false),
       invariantGraph.createVarNode(
           SearchDomain(std::numeric_limits<Int>::min(), bound), true, true));
 }
@@ -46,8 +46,8 @@ bool bool_lin_le(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
 
   std::vector<Int> coeffs =

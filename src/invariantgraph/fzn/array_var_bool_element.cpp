@@ -13,7 +13,7 @@ bool array_var_bool_element(FznInvariantGraph& invariantGraph,
                             const fznparser::BoolArg& output, Int offset) {
   invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
       invariantGraph.createVarNodeFromFzn(index, false),
-      std::move(invariantGraph.createVarNodes(inputs, false)),
+      invariantGraph.createVarNodes(inputs, false),
       invariantGraph.createVarNodeFromFzn(output, true), offset));
   return true;
 }
@@ -26,11 +26,10 @@ bool array_var_bool_element(FznInvariantGraph& invariantGraph,
   }
 
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true);
 
-  const fznparser::IntArg& index =
-      std::get<fznparser::IntArg>(constraint.arguments().at(0));
+  const auto& index = std::get<fznparser::IntArg>(constraint.arguments().at(0));
 
   // Compute offset if nonshifted variant:
   Int offset = constraint.identifier() != "array_var_bool_element_nonshifted"

@@ -7,8 +7,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_max(FznInvariantGraph& invariantGraph, const fznparser::IntArg a,
-             const fznparser::IntArg b, const fznparser::IntArg maximum) {
+bool int_max(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
+             const fznparser::IntArg& b, const fznparser::IntArg& maximum) {
   const VarNodeId outputVarNodeId =
       invariantGraph.createVarNodeFromFzn(maximum, true);
 
@@ -17,9 +17,9 @@ bool int_max(FznInvariantGraph& invariantGraph, const fznparser::IntArg a,
         .fixValue(std::max(a.toParameter(), b.toParameter()));
     return true;
   }
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntMaxNode>(
+  invariantGraph.addInvariantNode(std::make_unique<IntMaxNode>(
       invariantGraph.createVarNodeFromFzn(a, false),
-      invariantGraph.createVarNodeFromFzn(b, false), outputVarNodeId)));
+      invariantGraph.createVarNodeFromFzn(b, false), outputVarNodeId));
   return true;
 }
 

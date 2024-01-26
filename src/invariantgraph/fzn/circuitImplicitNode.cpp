@@ -34,8 +34,8 @@ bool makeCircuitImplicitNode(FznInvariantGraph& invariantGraph,
     }
   }
   invariantGraph.addImplicitConstraintNode(
-      std::move(std::make_unique<CircuitImplicitNode>(
-          std::move(invariantGraph.createVarNodes(inputs, true)))));
+      std::make_unique<CircuitImplicitNode>(
+          invariantGraph.createVarNodes(inputs, true)));
   return true;
 }
 
@@ -46,7 +46,7 @@ bool makeCircuitImplicitNode(FznInvariantGraph& invariantGraph,
   }
 
   verifyNumArguments(constraint, 1);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
 
   return makeCircuitImplicitNode(
       invariantGraph,

@@ -21,11 +21,11 @@ InvariantGraph::InvariantGraph()
       _implicitConstraintNodes{},
       _totalViolationVarId(propagation::NULL_ID),
       _objectiveVarNodeId(NULL_NODE_ID) {
-  addImplicitConstraintNode(std::move(std::make_unique<InvariantGraphRoot>()));
+  addImplicitConstraintNode(std::make_unique<InvariantGraphRoot>());
 }
 
 VarNodeId InvariantGraph::nextVarNodeId() const noexcept {
-  return VarNodeId(_varNodes.size() + 1);
+  return {_varNodes.size() + 1};
 }
 
 bool InvariantGraph::containsVarNode(
@@ -199,11 +199,11 @@ ImplicitConstraintNode& InvariantGraph::implicitConstraintNode(
 }
 
 InvariantNodeId InvariantGraph::nextInvariantNodeId() const noexcept {
-  return InvariantNodeId(_invariantNodes.size() + 1, false);
+  return {_invariantNodes.size() + 1, false};
 }
 
 InvariantNodeId InvariantGraph::nextImplicitNodeId() const noexcept {
-  return InvariantNodeId(_implicitConstraintNodes.size() + 1, true);
+  return {_implicitConstraintNodes.size() + 1, true};
 }
 
 InvariantNodeId InvariantGraph::addInvariantNode(
@@ -298,18 +298,18 @@ void InvariantGraph::splitMultiDefinedVars() {
 
     if (_varNodes[i].isIntVar()) {
       if (splitNodes.size() == 2) {
-        addInvariantNode(std::move(std::make_unique<IntEqNode>(
-            splitNodes.front(), splitNodes.back())));
+        addInvariantNode(std::make_unique<IntEqNode>(
+            splitNodes.front(), splitNodes.back()));
       } else {
-        addInvariantNode(std::move(
-            std::make_unique<IntAllEqualNode>(std::move(splitNodes))));
+        addInvariantNode(
+            std::make_unique<IntAllEqualNode>(std::move(splitNodes)));
       }
     } else if (splitNodes.size() == 2) {
-      addInvariantNode(std::move(
-          std::make_unique<BoolEqNode>(splitNodes.front(), splitNodes.back())));
+      addInvariantNode(
+          std::make_unique<BoolEqNode>(splitNodes.front(), splitNodes.back()));
     } else {
       addInvariantNode(
-          std::move(std::make_unique<BoolAllEqualNode>(std::move(splitNodes))));
+          std::make_unique<BoolAllEqualNode>(std::move(splitNodes)));
     }
   }
   assert(_varNodes.size() == newSize);
@@ -317,7 +317,7 @@ void InvariantGraph::splitMultiDefinedVars() {
 
 std::pair<VarNodeId, InvariantNodeId> InvariantGraph::findPivotInCycle(
     const std::vector<VarNodeId>& cycle) {
-  assert(cycle.size() >= 1);
+  assert(!cycle.empty());
   VarNodeId pivot{NULL_NODE_ID};
   InvariantNodeId listeningInvariant{NULL_NODE_ID};
   size_t maxDomainSize = 0;
@@ -348,7 +348,7 @@ std::vector<VarNodeId> InvariantGraph::findCycle(
     }
     cycle.push_back(cur);
   }
-  assert(cycle.size() >= 1);
+  assert(!cycle.empty());
   assert(cycle.front() == parent);
   assert(cycle.back() != node);
   cycle.emplace_back(node);
@@ -367,7 +367,7 @@ VarNodeId InvariantGraph::breakCycle(const std::vector<VarNodeId>& cycle) {
 
   invariantNode(listeningInvariant)
       .replaceStaticInputVarNode(varNode(pivot), varNode(newInputNode));
-  addInvariantNode(std::move(std::make_unique<IntEqNode>(pivot, newInputNode)));
+  addInvariantNode(std::make_unique<IntEqNode>(pivot, newInputNode));
   root().addSearchVarNode(varNode(newInputNode));
   return newInputNode;
 }
@@ -415,7 +415,7 @@ VarNodeId InvariantGraph::findCycleUtil(
     std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
     std::unordered_map<VarNodeId, VarNodeId, VarNodeIdHash>& path) {
   if (visitedGlobal.contains(varNodeId)) {
-    return VarNodeId(NULL_NODE_ID);
+    return {NULL_NODE_ID};
   }
 
   visitedLocal.emplace(varNodeId);
@@ -437,7 +437,7 @@ VarNodeId InvariantGraph::findCycleUtil(
     }
   }
   path.erase(varNodeId);
-  return VarNodeId(NULL_NODE_ID);
+  return {NULL_NODE_ID};
 }
 
 std::vector<VarNodeId> InvariantGraph::breakCycles(

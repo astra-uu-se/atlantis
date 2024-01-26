@@ -8,14 +8,13 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool int_mod(FznInvariantGraph& invariantGraph,
-             const fznparser::IntArg numerator,
-             const fznparser::IntArg denominator,
-             const fznparser::IntArg remainder) {
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntModNode>(
+             const fznparser::IntArg& numerator,
+             const fznparser::IntArg& denominator,
+             const fznparser::IntArg& remainder) {
+  invariantGraph.addInvariantNode(std::make_unique<IntModNode>(
       invariantGraph.createVarNodeFromFzn(numerator, false),
       invariantGraph.createVarNodeFromFzn(denominator, false),
-      invariantGraph.createVarNodeFromFzn(remainder, true))));
-  return true;
+      invariantGraph.createVarNodeFromFzn(remainder, true)));
   return true;
 }
 

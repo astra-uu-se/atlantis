@@ -11,11 +11,11 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool int_lin_ne(FznInvariantGraph&, std::vector<Int>&& coeffs,
-                const fznparser::IntVarArray inputs, Int bound);
+                const fznparser::IntVarArray& inputs, Int bound);
 
 bool int_lin_ne(FznInvariantGraph&, std::vector<Int>&& coeffs,
-                const fznparser::IntVarArray inputs, Int bound,
-                fznparser::BoolArg reified);
+                const fznparser::IntVarArray& inputs, Int bound,
+                const fznparser::BoolArg& reified);
 
 bool int_lin_ne(FznInvariantGraph&, const fznparser::Constraint& constraint);
 

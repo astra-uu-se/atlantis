@@ -35,9 +35,9 @@ bool int_lt(FznInvariantGraph& invariantGraph, VarNodeId a, Int b,
         .fixValue(invariantGraph.varNode(a).domain().upperBound() < b);
     return true;
   }
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLtNode>(
+  invariantGraph.addInvariantNode(std::make_unique<IntLtNode>(
       a, invariantGraph.createVarNodeFromFzn(b, false),
-      invariantGraph.createVarNodeFromFzn(reified, true))));
+      invariantGraph.createVarNodeFromFzn(reified, true)));
   return true;
 }
 
@@ -59,15 +59,14 @@ bool int_lt(FznInvariantGraph& invariantGraph, Int a, VarNodeId b,
         .fixValue(a <= invariantGraph.varNode(b).domain().lowerBound());
     return true;
   }
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLtNode>(
+  invariantGraph.addInvariantNode(std::make_unique<IntLtNode>(
       invariantGraph.createVarNodeFromFzn(a, false), b,
-      invariantGraph.createVarNodeFromFzn(reified, true))));
+      invariantGraph.createVarNodeFromFzn(reified, true)));
   return true;
 }
 
 bool int_lt(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
-  invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntLtNode>(a, b, true)));
+  invariantGraph.addInvariantNode(std::make_unique<IntLtNode>(a, b, true));
   return true;
 }
 
@@ -79,8 +78,7 @@ bool int_lt(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
     }
     return int_lt(invariantGraph, b, a);
   }
-  invariantGraph.addInvariantNode(
-      std::move(std::make_unique<IntLtNode>(a, b, true)));
+  invariantGraph.addInvariantNode(std::make_unique<IntLtNode>(a, b, true));
   return true;
 }
 

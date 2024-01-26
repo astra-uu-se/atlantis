@@ -67,7 +67,7 @@ std::vector<bool> getFixedBoolValues(const InvariantGraph& invariantGraph,
   std::vector<bool> values;
   values.reserve(varNodeIds.size());
   for (VarNodeId varNodeId : varNodeIds) {
-    const VarNode varNode = invariantGraph.varNodeConst(varNodeId);
+    const VarNode& varNode = invariantGraph.varNodeConst(varNodeId);
     if (varNode.isFixed()) {
       values.emplace_back(varNode.lowerBound() == 0);
     }
@@ -128,11 +128,11 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
 
   if (needle.isFixed()) {
     invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        std::move(invariantGraph.createVarNodes(inputs, false)),
+        invariantGraph.createVarNodes(inputs, false),
         needle.toParameter(), countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        std::move(invariantGraph.createVarNodes(inputs, false)),
+        invariantGraph.createVarNodes(inputs, false),
         invariantGraph.createVarNodeFromFzn(needle.var(), false),
         countVarNodeId));
   }
@@ -147,11 +147,11 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
 
   if (needle.isFixed()) {
     invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        std::move(invariantGraph.createVarNodes(inputs, false)),
+        invariantGraph.createVarNodes(inputs, false),
         needle.toParameter(), countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        std::move(invariantGraph.createVarNodes(inputs, false)),
+        invariantGraph.createVarNodes(inputs, false),
         invariantGraph.createVarNodeFromFzn(needle.var(), false),
         countVarNodeId));
   }

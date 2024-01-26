@@ -11,8 +11,8 @@ namespace atlantis::invariantgraph::fzn {
 bool array_int_element2d(FznInvariantGraph&, const fznparser::IntArg& idx1,
                          const fznparser::IntArg& idx2,
                          std::vector<Int>&& parVector,
-                         const fznparser::IntArg& output, const Int numRows,
-                         const Int offset1, const Int offset2);
+                         const fznparser::IntArg& output, Int numRows,
+                         Int offset1, Int offset2);
 
 bool array_int_element2d(FznInvariantGraph&, const fznparser::Constraint&);
 

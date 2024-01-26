@@ -12,7 +12,7 @@ bool array_bool_element(FznInvariantGraph& invariantGraph,
                         std::vector<bool>&& parVector,
                         const fznparser::BoolArg& output, const Int offset) {
   invariantGraph.addInvariantNode(std::make_unique<ArrayElementNode>(
-      std::move(toIntVector(parVector)),
+      toIntVector(parVector),
       invariantGraph.createVarNodeFromFzn(idx, false),
       invariantGraph.createVarNodeFromFzn(output, true), offset));
   return true;
@@ -26,10 +26,10 @@ bool array_bool_element(FznInvariantGraph& invariantGraph,
   }
 
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, false);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true);
 
-  const fznparser::IntArg& idx =
+  const auto& idx =
       std::get<fznparser::IntArg>(constraint.arguments().at(0));
 
   const Int offset =
@@ -39,8 +39,8 @@ bool array_bool_element(FznInvariantGraph& invariantGraph,
 
   return array_bool_element(
       invariantGraph, idx,
-      std::move(std::get<fznparser::BoolVarArray>(constraint.arguments().at(1))
-                    .toParVector()),
+      std::get<fznparser::BoolVarArray>(constraint.arguments().at(1))
+                    .toParVector(),
       std::get<fznparser::BoolArg>(constraint.arguments().at(2)), offset);
 }
 

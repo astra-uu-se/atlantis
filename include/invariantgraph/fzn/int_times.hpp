@@ -9,8 +9,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_times(FznInvariantGraph&, const fznparser::IntArg base,
-               const fznparser::IntArg power, const fznparser::IntArg product);
+bool int_times(FznInvariantGraph&, const fznparser::IntArg& a,
+               const fznparser::IntArg& b, const fznparser::IntArg& product);
 
 bool int_times(FznInvariantGraph& invariantGraph,
                const fznparser::Constraint& constraint);

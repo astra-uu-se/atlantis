@@ -7,7 +7,7 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-void checkInputs(const std::vector<Int>& cover,
+static void checkInputs(const std::vector<Int>& cover,
                  const fznparser::IntVarArray& counts) {
   if (cover.size() != counts.size()) {
     throw FznArgumentException(
@@ -23,10 +23,10 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
   checkInputs(cover, counts);
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<GlobalCardinalityNode>(
-          std::move(invariantGraph.createVarNodes(inputs, false)),
+      std::make_unique<GlobalCardinalityNode>(
+          invariantGraph.createVarNodes(inputs, false),
           std::move(cover),
-          std::move(invariantGraph.createVarNodes(counts, true)))));
+          invariantGraph.createVarNodes(counts, true)));
   return true;
 }
 
@@ -49,7 +49,7 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
   binaryOutputVarNodeIds.reserve(counts.size());
   for (size_t i = 0; i < counts.size(); ++i) {
     outputVarNodeIds.push_back(invariantGraph.createVarNode(
-        SearchDomain(0, inputs.size()), true, true));
+        SearchDomain(0, static_cast<Int>(inputs.size())), true, true));
     binaryOutputVarNodeIds.push_back(
         invariantGraph.createVarNode(SearchDomain(0, 1), false, true));
     bool_eq(invariantGraph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
@@ -57,9 +57,9 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
   }
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<GlobalCardinalityNode>(
-          std::move(invariantGraph.createVarNodes(inputs, false)),
-          std::move(cover), std::move(outputVarNodeIds))));
+      std::make_unique<GlobalCardinalityNode>(
+          invariantGraph.createVarNodes(inputs, false),
+          std::move(cover), std::move(outputVarNodeIds)));
 
   array_bool_and(invariantGraph, std::move(binaryOutputVarNodeIds), reified);
   return true;
@@ -74,9 +74,9 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
 
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, true);
   std::vector<Int> cover =
       std::get<fznparser::IntVarArray>(constraint.arguments().at(1))
           .toParVector();

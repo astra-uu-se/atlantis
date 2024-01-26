@@ -85,7 +85,7 @@ std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
           to_string(typeid(constraint.arguments().at(index)), isVarArray) +  \
           '.');                                                              \
     }                                                                        \
-    const arrayType& array =                                                 \
+    const auto& array =                                                 \
         std::get<arrayType>(constraint.arguments().at(index));               \
     if (!isVarArray && !array.isParArray()) {                                \
       throw FznArgumentException(                                            \

@@ -44,7 +44,7 @@ bool fzn_count_gt(FznInvariantGraph& invariantGraph,
   const bool isReified = constraintIdentifierIsReified(constraint);
 
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true);
   if (!isReified) {

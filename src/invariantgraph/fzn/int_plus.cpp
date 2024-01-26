@@ -7,13 +7,12 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_plus(FznInvariantGraph& invariantGraph, const fznparser::IntArg a,
-              const fznparser::IntArg b, const fznparser::IntArg sum) {
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntPlusNode>(
+bool int_plus(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
+              const fznparser::IntArg& b, const fznparser::IntArg& sum) {
+  invariantGraph.addInvariantNode(std::make_unique<IntPlusNode>(
       invariantGraph.createVarNodeFromFzn(a, false),
       invariantGraph.createVarNodeFromFzn(b, false),
-      invariantGraph.createVarNodeFromFzn(sum, true))));
-  return true;
+      invariantGraph.createVarNodeFromFzn(sum, true)));
   return true;
 }
 

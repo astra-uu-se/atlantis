@@ -19,10 +19,10 @@ bool makeAllDifferentImplicitNode(FznInvariantGraph& invariantGraph,
 
   std::vector<VarNodeId> varNodeIds = pruneAllDifferentFree(
       invariantGraph,
-      std::move(invariantGraph.createVarNodes(intVarArray, true)));
+      invariantGraph.createVarNodes(intVarArray, true));
 
-  invariantGraph.addImplicitConstraintNode(std::move(
-      std::make_unique<AllDifferentImplicitNode>(std::move(varNodeIds))));
+  invariantGraph.addImplicitConstraintNode(
+      std::make_unique<AllDifferentImplicitNode>(std::move(varNodeIds)));
   return true;
 }
 
