@@ -8,22 +8,15 @@ using namespace atlantis::invariantgraph;
 
 class IntAbsNodeTest : public NodeTestBase<IntAbsNode> {
  public:
-  VarNodeId a;
-  VarNodeId b;
+  VarNodeId input = NULL_NODE_ID;
+  VarNodeId output = NULL_NODE_ID;
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVar(5, 10, "a");
-    b = createIntVar(2, 7, "b");
+    input = createIntVarNode(5, 10, "input");
+    output = createIntVarNode(2, 7, "output", true);
 
-    _model->addConstraint(fznparser::Constraint(
-        "int_abs",
-        std::vector<fznparser::Arg>{fznparser::IntArg{intVar(a)},
-                                    fznparser::IntArg{intVar(b)}},
-        std::vector<fznparser::Annotation>{
-            definesVarAnnotation(identifier(b))}));
-
-    makeInvNode(_model->constraints().front());
+    createInvariantNode(input, output);
   }
 };
 
@@ -31,10 +24,10 @@ TEST_F(IntAbsNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().input(), a);
+  EXPECT_EQ(invNode().input(), input);
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), b);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
 TEST_F(IntAbsNodeTest, application) {
@@ -51,10 +44,10 @@ TEST_F(IntAbsNodeTest, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // a
+  // input
   EXPECT_EQ(solver.searchVars().size(), 1);
 
-  // a
+  // input
   EXPECT_EQ(solver.numVars(), 1);
 }
 }  // namespace atlantis::testing

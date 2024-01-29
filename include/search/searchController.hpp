@@ -5,37 +5,55 @@
 
 #include "assignment.hpp"
 #include "fznparser/model.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
+#include "propagation/types.hpp"
 #include "utils/fznAst.hpp"
+#include "utils/fznOutput.hpp"
 
 namespace atlantis::search {
 
 class SearchController {
- public:
-  using VarMap = std::unordered_map<std::string, propagation::VarId>;
-
  private:
-  const fznparser::Model& _model;
-  VarMap _varMap;
   std::optional<std::chrono::milliseconds> _timeout;
+  std::vector<FznOutputVar> _outputBoolVars;
+  std::vector<FznOutputVar> _outputIntVars;
+  std::vector<FznOutputVarArray> _outputBoolVarArrays;
+  std::vector<FznOutputVarArray> _outputIntVarArrays;
 
   std::chrono::steady_clock::time_point _startTime;
+  bool _isSatisfactionProblem;
   bool _started{false};
   Int _foundSolution{false};
 
  public:
-  SearchController(const fznparser::Model& model, VarMap varMap)
-      : _model(model), _varMap(std::move(varMap)), _timeout({}) {}
+  SearchController(const fznparser::Model& model,
+                   const invariantgraph::FznInvariantGraph& invariantGraph)
+      : _timeout({}),
+        _outputBoolVars(invariantGraph.outputBoolVars()),
+        _outputIntVars(invariantGraph.outputIntVars()),
+        _outputBoolVarArrays(invariantGraph.outputBoolVarArrays()),
+        _outputIntVarArrays(invariantGraph.outputIntVarArrays()),
+        _isSatisfactionProblem(model.isSatisfactionProblem()) {}
 
   template <typename Rep, typename Period>
-  SearchController(const fznparser::Model& model, VarMap varMap,
+  SearchController(const fznparser::Model& model,
+                   const invariantgraph::FznInvariantGraph& invariantGraph,
                    std::chrono::duration<Rep, Period> timeout)
-      : _model(model),
-        _varMap(std::move(varMap)),
-        _timeout(
-            std::chrono::duration_cast<std::chrono::milliseconds>(timeout)) {}
+      : _timeout(
+            std::chrono::duration_cast<std::chrono::milliseconds>(timeout)),
+        _outputBoolVars(invariantGraph.outputBoolVars()),
+        _outputIntVars(invariantGraph.outputIntVars()),
+        _outputBoolVarArrays(invariantGraph.outputBoolVarArrays()),
+        _outputIntVarArrays(invariantGraph.outputIntVarArrays()),
+        _isSatisfactionProblem(model.isSatisfactionProblem()) {}
 
-  bool shouldRun(const Assignment& assignment);
-  void onSolution(const Assignment& assignment);
+  bool shouldRun(const Assignment&);
+  void printBoolVar(const Assignment&, const FznOutputVar&) const;
+  void printIntVar(const Assignment&, const FznOutputVar&) const;
+  void printBoolVarArray(const Assignment&, const FznOutputVarArray&) const;
+  void printIntVarArray(const Assignment&, const FznOutputVarArray&) const;
+  void printSolution(const Assignment&) const;
+  void onSolution(const Assignment&);
   void onFinish() const;
 };
 

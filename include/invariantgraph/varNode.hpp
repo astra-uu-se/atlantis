@@ -33,16 +33,14 @@ class InvariantNode;   // Forward declaration
  */
 class VarNode {
  public:
-  using FZNVar = std::variant<fznparser::BoolVar, fznparser::IntVar>;
-  using VarMap =
-      std::unordered_map<VarNodeId, propagation::VarId, VarNodeIdHash>;
   float SPARSE_MIN_DENSENESS{0.6};
 
  private:
   VarNodeId _varNodeId;
-  std::optional<FZNVar> _var;
   SearchDomain _domain;
   const bool _isIntVar;
+  bool _shouldEnforceDomain{false};
+  std::string _identifier;
   propagation::VarId _varId{propagation::NULL_ID};
   propagation::VarId _domainViolationId{propagation::NULL_ID};
 
@@ -53,35 +51,24 @@ class VarNode {
 
  public:
   /**
-   * Construct a variable node which is associated with a model variable.
+   * Construct a variable node which is not associated with a model variable.
    *
-   * @param var The model variable this node is associated with.
+   * @param domain The domain of this variable.
    */
-  explicit VarNode(VarNodeId, const FZNVar& var);
+  explicit VarNode(VarNodeId, SearchDomain&& domain, bool isIntVar,
+                   const std::string& identifier = "");
 
   /**
    * Construct a variable node which is not associated with a model variable.
    *
    * @param domain The domain of this variable.
    */
-  explicit VarNode(VarNodeId, SearchDomain&& domain, bool isIntVar);
-
-  /**
-   * Construct a variable node which is not associated with a model variable.
-   *
-   * @param domain The domain of this variable.
-   */
-  explicit VarNode(VarNodeId, const SearchDomain& domain, bool isIntVar);
+  explicit VarNode(VarNodeId, const SearchDomain& domain, bool isIntVar,
+                   const std::string& identifier = "");
 
   VarNodeId varNodeId() const noexcept;
 
-  /**
-   * @return The model variable this node is associated with, or std::nullopt
-   * if no model variable is associated with this node.
-   */
-  [[nodiscard]] std::optional<FZNVar> var() const;
-
-  [[nodiscard]] std::string identifier() const;
+  [[nodiscard]] const std::string& identifier() const;
 
   /**
    * @return The model propagation::VarId this node is associated
@@ -103,18 +90,55 @@ class VarNode {
 
   [[nodiscard]] bool isFixed() const noexcept;
 
+  [[nodiscard]] bool isIntVar() const noexcept;
+
+  [[nodiscard]] Int lowerBound() const;
+  [[nodiscard]] Int upperBound() const;
   [[nodiscard]] Int val() const;
+
+  [[nodiscard]] bool inDomain(Int) const;
+  [[nodiscard]] bool inDomain(bool) const;
 
   void removeValue(Int);
 
-  void removeValue(bool);
+  void fixValue(Int);
 
-  [[nodiscard]] bool isIntVar() const noexcept;
+  /**
+   * @brief removes all values that are strictly less than the given value from
+   * the domain of the variable.
+   */
+  void removeValuesBelow(Int);
+
+  /**
+   * @brief removes all values that are strictly greater than the given value
+   * from the domain of the variable.
+   */
+  void removeValuesAbove(Int);
+
+  /**
+   * @brief removes all values that are not in the given vector from the domain
+   * from the domain of the variable.
+   */
+  void removeValues(const std::vector<Int>&);
+
+  void removeAllValuesExcept(const std::vector<Int>&);
+
+  void removeValue(bool);
+  void fixValue(bool);
+
+  /**
+   * @brief if the variable has a domain and the given boolean is true, then a
+   * domain violation invariant will be added to the invariant graph for the
+   * variable.
+   */
+  bool shouldEnforceDomain() noexcept;
+  bool shouldEnforceDomain(bool) noexcept;
 
   /**
    * @return if the bound range of the corresponding IntVar in solver is a
-   * sub-set of SearchDomain _domain, then returns an empty vector, otherwise
-   * the relative complement of varLb..varUb in SearchDomain is returned
+   * sub-set of SearchDomain _domain, then returns an empty vector,
+   * otherwise the relative complement of varLb..varUb in SearchDomain is
+   * returned
    */
   [[nodiscard]] std::vector<DomainEntry> constrainedDomain(
       const propagation::SolverBase&);
@@ -150,7 +174,7 @@ class VarNode {
   /**
    * @return The variable defining nodes for which this node is an input.
    */
-  [[nodiscard]] InvariantNodeId outputOf() const noexcept;
+  [[nodiscard]] InvariantNodeId outputOf() const;
 
   /**
    * Indicate this variable node serves as an input to the given variable

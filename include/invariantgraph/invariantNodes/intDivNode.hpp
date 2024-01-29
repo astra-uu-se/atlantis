@@ -8,23 +8,17 @@ namespace atlantis::invariantgraph {
 
 class IntDivNode : public InvariantNode {
  public:
-  IntDivNode(VarNodeId a, VarNodeId b, VarNodeId output);
+  IntDivNode(VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
 
   ~IntDivNode() override = default;
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_div", 3}};
-  }
-
-  static std::unique_ptr<IntDivNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
-
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  [[nodiscard]] VarNodeId a() const noexcept;
-  [[nodiscard]] VarNodeId b() const noexcept;
+  [[nodiscard]] VarNodeId numerator() const noexcept;
+  [[nodiscard]] VarNodeId denominator() const noexcept;
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

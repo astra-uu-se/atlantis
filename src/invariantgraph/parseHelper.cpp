@@ -56,9 +56,9 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
     for (const auto &[index, value] : fixed) {
       // remove all fixed values from the current variable:
       assert(index < i);
-      invariantGraph.varNode(inputs[i]).domain().removeValue(value);
+      invariantGraph.varNode(inputs[i]).removeValue(value);
     }
-    if (!invariantGraph.varNode(inputs[i]).domain().isFixed()) {
+    if (!invariantGraph.varNode(inputs[i]).isFixed()) {
       continue;
     }
     // the variable has a singleton domain
@@ -68,11 +68,9 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
     for (size_t p = fixed.size() - 1; p < fixed.size(); ++p) {
       const auto &[index, value] = fixed.at(p);
       for (size_t j = 0; j < index; j++) {
-        const bool wasConstant =
-            invariantGraph.varNode(inputs[j]).domain().isFixed();
-        invariantGraph.varNode(inputs[j]).domain().removeValue(value);
-        if (!wasConstant &&
-            invariantGraph.varNode(inputs[j]).domain().isFixed()) {
+        const bool wasConstant = invariantGraph.varNode(inputs[j]).isFixed();
+        invariantGraph.varNode(inputs[j]).removeValue(value);
+        if (!wasConstant && invariantGraph.varNode(inputs[j]).isFixed()) {
           fixed.emplace_back(j, invariantGraph.varNode(inputs[j]).val());
         }
       }
