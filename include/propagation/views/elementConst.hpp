@@ -4,10 +4,10 @@
 #include <limits>
 #include <vector>
 
-#include "types.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/views/intView.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
@@ -29,8 +29,8 @@ class ElementConst : public IntView {
   }
 
  public:
-  explicit ElementConst(SolverBase& solver, VarId parentId, std::vector<Int> array,
-                        Int offset = 1);
+  explicit ElementConst(SolverBase& solver, VarId parentId,
+                        std::vector<Int> array, Int offset = 1);
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;
   [[nodiscard]] Int lowerBound() const override;

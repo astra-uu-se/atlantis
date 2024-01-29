@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 #include <map>
 #include <utility>
 
@@ -15,13 +14,6 @@ class IntAbsNode : public InvariantNode {
   IntAbsNode(VarNodeId staticInput, VarNodeId output);
 
   ~IntAbsNode() override = default;
-
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_abs", 2}};
-  }
-
-  static std::unique_ptr<IntAbsNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

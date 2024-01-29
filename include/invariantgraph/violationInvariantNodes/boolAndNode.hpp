@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 #include <utility>
 
 #include "invariantgraph/invariantGraph.hpp"
@@ -19,14 +18,8 @@ class BoolAndNode : public ViolationInvariantNode {
 
   BoolAndNode(VarNodeId a, VarNodeId b, bool shouldHold);
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"bool_and", 3}};
-  }
-
-  static std::unique_ptr<BoolAndNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
-
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -38,4 +31,4 @@ class BoolAndNode : public ViolationInvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

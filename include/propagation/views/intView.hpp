@@ -1,7 +1,7 @@
 #pragma once
 
-#include "types.hpp"
 #include "propagation/views/view.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
@@ -14,7 +14,8 @@ class IntView : public View {
   // on solver and not vice-versa:
 
  public:
-  explicit IntView(SolverBase& solver, VarId parentId) : View(solver, parentId) {}
+  explicit IntView(SolverBase& solver, VarId parentId)
+      : View(solver, parentId) {}
 
   void init(VarId id) { _id = id; }
 

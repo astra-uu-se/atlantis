@@ -14,14 +14,8 @@ class IntPlusNode : public InvariantNode {
 
   ~IntPlusNode() override = default;
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_plus", 3}};
-  }
-
-  static std::unique_ptr<IntPlusNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
-
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -33,4 +27,4 @@ class IntPlusNode : public InvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

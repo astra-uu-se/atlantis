@@ -8,21 +8,6 @@ ArrayIntMaximumNode::ArrayIntMaximumNode(std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
     : InvariantNode({output}, std::move(vars)) {}
 
-std::unique_ptr<ArrayIntMaximumNode> ArrayIntMaximumNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  const fznparser::IntArg& output =
-      std::get<fznparser::IntArg>(constraint.arguments().at(0));
-
-  const fznparser::IntVarArray& inputs =
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(1));
-
-  return std::make_unique<ArrayIntMaximumNode>(
-      invariantGraph.createVarNodes(inputs),
-      invariantGraph.createVarNode(output));
-}
-
 void ArrayIntMaximumNode::registerOutputVars(InvariantGraph& invariantGraph,
                                              propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));

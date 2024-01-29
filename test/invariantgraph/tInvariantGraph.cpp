@@ -2,11 +2,13 @@
 
 #include <string>
 
-#include "invariantgraph/invariantGraph.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/invariantGraphRoot.hpp"
-#include "invariantgraph/invariantNodes/arrayVarIntElementNode.hpp"
+#include "invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 #include "invariantgraph/invariantNodes/intLinearNode.hpp"
+#include "invariantgraph/invariantNodes/intPlusNode.hpp"
 #include "propagation/solver.hpp"
+#include "utils/domains.hpp"
 
 namespace atlantis::testing {
 
@@ -16,97 +18,61 @@ TEST(InvariantGraphTest, apply_result) {
   fznparser::Model model;
   InvariantGraph invariantGraph;
 
-  const fznparser::IntVar& a =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "a")));
-  const fznparser::IntVar& b =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "b")));
-  const fznparser::IntVar& c =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "c")));
+  const VarNodeId a =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "a", false);
+  const VarNodeId b =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "b", false);
+  const VarNodeId output =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "output", true);
 
-  auto aNode = invariantGraph.createVarNode(a);
-  auto bNode = invariantGraph.createVarNode(b);
-  auto cNode = invariantGraph.createVarNode(c);
+  EXPECT_TRUE(invariantGraph.containsVarNode("a"));
+  EXPECT_TRUE(invariantGraph.containsVarNode("b"));
+  EXPECT_TRUE(invariantGraph.containsVarNode("output"));
 
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-      std::vector<Int>{1, 1}, std::vector<VarNodeId>{aNode, bNode}, cNode, -1,
-      0)));
+  invariantGraph.addInvariantNode(
+      std::make_unique<IntPlusNode>(a, b, output));
 
-  invariantGraph.addImplicitConstraintNode(
-      std::move(std::make_unique<InvariantGraphRoot>(
-          std::vector<VarNodeId>{aNode, bNode})));
+  invariantGraph.addImplicitConstraintNode(std::move(
+      std::make_unique<InvariantGraphRoot>(std::vector<VarNodeId>{a, b})));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 3);
-  std::unordered_set<std::string> varNames;
-  for (const auto& [varId, var] : result.varIdentifiers()) {
-    varNames.emplace(var);
-  }
-  EXPECT_TRUE(varNames.contains(a.identifier()));
-  EXPECT_TRUE(varNames.contains(b.identifier()));
-  EXPECT_TRUE(varNames.contains(c.identifier()));
+  EXPECT_NE(invariantGraph.varNode(a).varId(), propagation::NULL_ID);
+  EXPECT_NE(invariantGraph.varNode(b).varId(), propagation::NULL_ID);
+  EXPECT_NE(invariantGraph.varNode(output).varId(), propagation::NULL_ID);
 }
 
 TEST(InvariantGraphTest, ApplyGraph) {
-  fznparser::Model model;
-  const std::string a1 =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "a1")))
-          .identifier();
-  const std::string a2 =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "a2")))
-          .identifier();
-  const std::string b1 =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "b1")))
-          .identifier();
-  const std::string b2 =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "b2")))
-          .identifier();
-
-  const std::string c1 =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 20, "c1")))
-          .identifier();
-  const std::string c2 =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 20, "c2")))
-          .identifier();
-
-  const std::string sum =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 40, "sum")))
-          .identifier();
-
   InvariantGraph invariantGraph;
-  const VarNodeId a1NodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(a1)));
-  const VarNodeId a2NodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(a2)));
 
-  const VarNodeId b1NodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(b1)));
-  const VarNodeId b2NodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(b2)));
+  const VarNodeId a1 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "a1", false);
+  const VarNodeId a2 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "a2", false);
+  const VarNodeId b1 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "b1", false);
+  const VarNodeId b2 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "b2", false);
 
-  const VarNodeId c1NodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(c1)));
-  const VarNodeId c2NodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(c2)));
+  const VarNodeId output1 =
+      invariantGraph.createVarNode(SearchDomain(0, 20), true, "output1", true);
+  const VarNodeId output2 =
+      invariantGraph.createVarNode(SearchDomain(0, 20), true, "output2", true);
 
-  const VarNodeId sumNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(sum)));
+  const VarNodeId output3 =
+      invariantGraph.createVarNode(SearchDomain(0, 40), true, "output3", true);
 
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-      std::vector<Int>{1, 1}, std::vector<VarNodeId>{a1NodeId, a2NodeId},
-      c1NodeId, -1, 0)));
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-      std::vector<Int>{1, 1}, std::vector<VarNodeId>{b1NodeId, b2NodeId},
-      c2NodeId, -1, 0)));
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-      std::vector<Int>{1, 1}, std::vector<VarNodeId>{c1NodeId, c2NodeId},
-      sumNodeId, -1, 0)));
+  invariantGraph.addInvariantNode(
+      std::make_unique<IntPlusNode>(a1, a2, output1));
+  invariantGraph.addInvariantNode(
+      std::make_unique<IntPlusNode>(b1, b2, output2));
+  invariantGraph.addInvariantNode(
+      std::make_unique<IntPlusNode>(output1, output2, output3));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 7);
   // 7 variables + dummy objective
   EXPECT_EQ(solver.numVars(), 8);
   EXPECT_EQ(solver.numInvariants(), 3);
@@ -126,50 +92,30 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
    *    +----+----+
    *         |
    *         v
-   *         x
+   *       output
    *
    */
-
-  const std::string a =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "a")))
-          .identifier();
-  const std::string b =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "b")))
-          .identifier();
-  const std::string c =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "c")))
-          .identifier();
-  const std::string d =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "d")))
-          .identifier();
-  const std::string x =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 20, "x")))
-          .identifier();
-
   InvariantGraph invariantGraph;
-  const VarNodeId aNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(a)));
-  const VarNodeId bNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(b)));
-  const VarNodeId cNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(c)));
-  const VarNodeId dNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(d)));
-  const VarNodeId xNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(x)));
 
-  invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::vector<Int>{1, 1}, std::vector<VarNodeId>{aNodeId, bNodeId}, xNodeId,
-      -1, 0));
-  invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::vector<Int>{1, 1}, std::vector<VarNodeId>{cNodeId, dNodeId}, xNodeId,
-      -1, 0));
+  const VarNodeId a =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "a", false);
+  const VarNodeId b =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "b", false);
+  const VarNodeId c =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "c", false);
+  const VarNodeId d =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "d", false);
+  const VarNodeId output =
+      invariantGraph.createVarNode(SearchDomain(0, 20), true, "output", true);
+
+  invariantGraph.addInvariantNode(std::make_unique<IntPlusNode>(a, b, output));
+
+  invariantGraph.addInvariantNode(std::make_unique<IntPlusNode>(c, d, output));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 5);
-  // a, b, c, d, x
+  // a, b, c, d, output
   // x_copy
   // violation for equal constraint (x == x_copy)
   // dummy objective
@@ -194,7 +140,7 @@ TEST(InvariantGraphTest, SplitGraph) {
    *    +----+----+---- ... ----+
    *         |
    *         v
-   *         x
+   *       output
    *
    */
 
@@ -202,39 +148,29 @@ TEST(InvariantGraphTest, SplitGraph) {
   const size_t numInputs = 5;
   const Int lb = 0;
   const Int ub = 10;
-  const std::string x =
-      model.addVar(fznparser::IntVar(lb * numInputs, ub * numInputs, "x"))
-          .identifier();
+  const VarNodeId output = invariantGraph.createVarNode(
+      SearchDomain(lb * numInputs, ub * numInputs), true, "output", true);
 
-  std::vector<std::vector<std::string>> identifierMatrix(
-      numInvariants, std::vector<std::string>{});
+  std::vector<std::vector<VarNodeId>> varNodeIdMatrix(numInvariants,
+                                                      std::vector<VarNodeId>{});
   for (size_t i = 0; i < numInvariants; ++i) {
     for (size_t j = 0; j < numInputs; ++j) {
       const std::string identifier(std::to_string(i) + "_" + std::to_string(j));
-      identifierMatrix.at(i).emplace_back(std::string(identifier));
-      model.addVar(
-          std::move(fznparser::IntVar(lb, ub, std::string(identifier))));
+      varNodeIdMatrix.at(i).emplace_back(invariantGraph.createVarNode(
+          SearchDomain(lb, ub), true, std::string(identifier), false));
     }
   }
 
-  const VarNodeId xNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(x)));
-
   std::vector<Int> coeffs(numInputs, 1);
-  for (const auto& identifierArray : identifierMatrix) {
-    std::vector<VarNodeId> inputs;
-    for (const auto& identifier : identifierArray) {
-      inputs.emplace_back(invariantGraph.createVarNode(
-          std::get<fznparser::IntVar>(model.var(identifier))));
-    }
-    invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-        std::vector<Int>(coeffs), std::move(inputs), xNodeId, -1, 0)));
+  for (const auto& identifierArray : varNodeIdMatrix) {
+    std::vector<VarNodeId> inputs(identifierArray);
+    invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
+        std::vector<Int>(coeffs), std::move(inputs), output));
   }
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), numInvariants * numInputs + 1);
   // Each invariant has numInputs inputs
   // Each invariant has 1 output
   // There is one violation for the AllDiff
@@ -250,7 +186,7 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
    *
    *      +---------------+
    *      |               |
-   *  a   |   +---+   b   |
+   * x1   |   +---+   x2  |
    *  |   |   |   |   |   |
    *  v   v   |   v   v   |
    * +-----+  |  +-----+  |
@@ -258,54 +194,36 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
    * +-----+  |  +-----+  |
    *    |     |     |     |
    *    v     |     v     |
-   *    x-----+     y-----+
+   * output1--+  output2--+
    *
    */
 
-  const std::string a =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "a")))
-          .identifier();
-  const std::string b =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "b")))
-          .identifier();
-  const std::string x =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "x")))
-          .identifier();
-  const std::string y =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "y")))
-          .identifier();
+  const VarNodeId x1 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "x1", false);
+  const VarNodeId x2 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "x2", false);
+  const VarNodeId output1 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "output1", true);
+  const VarNodeId output2 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "output2", true);
 
-  const VarNodeId aNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(a)));
-  const VarNodeId bNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(b)));
-  const VarNodeId xNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(x)));
-  const VarNodeId yNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(y)));
+  invariantGraph.addInvariantNode(
+      std::make_unique<IntPlusNode>(x1, output2, output1));
 
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-      std::vector<Int>{1, 1}, std::vector<VarNodeId>{aNodeId, yNodeId}, xNodeId,
-      -1, 0)));
-
-  invariantGraph.addInvariantNode(std::move(std::make_unique<IntLinearNode>(
-      std::vector<Int>{1, 1}, std::vector<VarNodeId>{xNodeId, bNodeId}, yNodeId,
-      -1, 0)));
+  invariantGraph.addInvariantNode(
+      std::make_unique<IntPlusNode>(output1, x2, output2));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 4);
-  // a, b, x, y
+  // x1, x2, output1, output2
   // the pivot
-  // The Equality (x == pivot) violation
-  // total violation
+  // The Equality (output1 == pivot) violation
   // Dummy Objective
-  EXPECT_EQ(solver.numVars(), 4 + 1 + 1 + 1 + 1);
+  EXPECT_EQ(solver.numVars(), 4 + 1 + 1 + 1);
   // 2 Linear
-  // 1 from breaking the cycle (x == pivot)
-  // 1 Total Violation
-  EXPECT_EQ(solver.numInvariants(), 2 + 1 + 1);
+  // 1 from breaking the cycle (output1 == pivot)
+  EXPECT_EQ(solver.numInvariants(), 2 + 1);
 }
 
 TEST(InvariantGraphTest, BreakElementIndexCycle) {
@@ -313,7 +231,7 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   InvariantGraph invariantGraph;
   /* Graph:
    *
-   *       a   b        c   d
+   *     x11   x12    x21   x22
    *       |   |        |   |
    *       v   v        v   v
    *      +-----+      +-----+
@@ -321,65 +239,44 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
    *  |   +-----+  |   +-----+
    *  |      |     |      |
    *  |      v     |      v
-   *  |      x-----+      y
+   *  |   output1--+   output2
    *  |                   |
    *  +-------------------+
    */
 
-  const std::string a =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "a")))
-          .identifier();
-  const std::string b =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "b")))
-          .identifier();
-  const std::string c =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "c")))
-          .identifier();
-  const std::string d =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "d")))
-          .identifier();
-  const std::string x =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(1, 2, "x")))
-          .identifier();
-  const std::string y =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(1, 2, "y")))
-          .identifier();
-
-  const VarNodeId aNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(a)));
-  const VarNodeId bNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(b)));
-  const VarNodeId cNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(c)));
-  const VarNodeId dNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(d)));
-  const VarNodeId xNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(x)));
-  const VarNodeId yNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(y)));
+  const VarNodeId x11 =
+      invariantGraph.createVarNode(SearchDomain(0, 1), true, "x11", false);
+  const VarNodeId x12 =
+      invariantGraph.createVarNode(SearchDomain(0, 1), true, "x12", false);
+  const VarNodeId x21 =
+      invariantGraph.createVarNode(SearchDomain(0, 1), true, "x21", false);
+  const VarNodeId x22 =
+      invariantGraph.createVarNode(SearchDomain(0, 1), true, "x22", false);
+  const VarNodeId output1 =
+      invariantGraph.createVarNode(SearchDomain(0, 1), true, "output1", true);
+  const VarNodeId output2 =
+      invariantGraph.createVarNode(SearchDomain(0, 1), true, "output2", true);
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<ArrayVarIntElementNode>(
-          yNodeId, std::vector<VarNodeId>{aNodeId, bNodeId}, xNodeId, 1)));
+      std::make_unique<ArrayVarElementNode>(
+          output2, std::vector<VarNodeId>{x11, x12}, output1, 0));
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<ArrayVarIntElementNode>(
-          xNodeId, std::vector<VarNodeId>{cNodeId, dNodeId}, yNodeId, 1)));
+      std::make_unique<ArrayVarElementNode>(
+          output1, std::vector<VarNodeId>{x21, x22}, output2, 0));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 6);
-  // a, b, c, d, x, y
+  // x11, x12, x21, x22, output1, output1
   // the pivot
   // The Equality violation
-  // total violation
   // dummy objective
-  EXPECT_EQ(solver.numVars(), 6 + 1 + 1 + 1 + 1);
+  EXPECT_EQ(solver.numVars(), 6 + 1 + 1 + 1);
   // 2 Element
   // 1 Total Violation
   // 1 from breaking the cycle
-  EXPECT_EQ(solver.numInvariants(), 2 + 1 + 1);
+  EXPECT_EQ(solver.numInvariants(), 2 + 1);
 }
 
 TEST(InvariantGraphTest, AllowDynamicCycle) {
@@ -387,65 +284,45 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
   InvariantGraph invariantGraph;
   /* Graph:
    *
-   *          +-------------------+
-   *          |                   |
-   *      b   |   +--------+   d  |
-   *      |   |   |        |   |  |
-   *      v   v   |        v   v  |
-   *     +-----+  |      +-----+  |
-   * a-->| el1 |  |  c-->| el2 |  |
-   *     +-----+  |      +-----+  |
-   *        |     |         |     |
-   *        v     |         v     |
-   *        x-----+         y-----+
+   *             +---------------------+
+   *             |                     |
+   *         x1  |   +----------+   x2 |
+   *         |   |   |          |   |  |
+   *         v   v   |          v   v  |
+   *        +-----+  |        +-----+  |
+   * idx1-->| el1 |  | idx2-->| el2 |  |
+   *        +-----+  |        +-----+  |
+   *           |     |           |     |
+   *           v     |           v     |
+   *        output1--+        output2--+
    *
    */
 
-  const std::string a =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(1, 2, "a")))
-          .identifier();
-  const std::string b =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "b")))
-          .identifier();
-  const std::string c =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(1, 2, "c")))
-          .identifier();
-  const std::string d =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "d")))
-          .identifier();
-  const std::string x =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "x")))
-          .identifier();
-  const std::string y =
-      std::get<fznparser::IntVar>(model.addVar(fznparser::IntVar(0, 10, "y")))
-          .identifier();
-
-  const VarNodeId aNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(a)));
-  const VarNodeId bNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(b)));
-  const VarNodeId cNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(c)));
-  const VarNodeId dNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(d)));
-  const VarNodeId xNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(x)));
-  const VarNodeId yNodeId =
-      invariantGraph.createVarNode(std::get<fznparser::IntVar>(model.var(y)));
+  const VarNodeId idx1 =
+      invariantGraph.createVarNode(SearchDomain(1, 2), true, "idx1", false);
+  const VarNodeId x1 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "x1", false);
+  const VarNodeId idx2 =
+      invariantGraph.createVarNode(SearchDomain(1, 2), true, "idx2", false);
+  const VarNodeId x2 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "x2", false);
+  const VarNodeId output1 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "output1", true);
+  const VarNodeId output2 =
+      invariantGraph.createVarNode(SearchDomain(0, 10), true, "output2", true);
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<ArrayVarIntElementNode>(
-          aNodeId, std::vector<VarNodeId>{bNodeId, yNodeId}, xNodeId, 1)));
+      std::make_unique<ArrayVarElementNode>(
+          idx1, std::vector<VarNodeId>{x1, output2}, output1, 1));
 
   invariantGraph.addInvariantNode(
-      std::move(std::make_unique<ArrayVarIntElementNode>(
-          cNodeId, std::vector<VarNodeId>{xNodeId, dNodeId}, yNodeId, 1)));
+      std::make_unique<ArrayVarElementNode>(
+          idx2, std::vector<VarNodeId>{output1, x2}, output2, 1));
 
   propagation::Solver solver;
-  auto result = invariantGraph.apply(solver);
+  invariantGraph.apply(solver);
 
-  EXPECT_EQ(result.varIdentifiers().size(), 6);
-  // a, b, c, d, x, y
+  // idx1, x1, idx2, x2, output1, output2
   // dummy objective
   // (no violations)
   EXPECT_EQ(solver.numVars(), 6 + 1);

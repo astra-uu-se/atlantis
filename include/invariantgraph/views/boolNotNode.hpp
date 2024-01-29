@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 #include <map>
 #include <utility>
 
@@ -16,14 +15,8 @@ class BoolNotNode : public InvariantNode {
 
   ~BoolNotNode() override = default;
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{};
-  }
-
-  static std::unique_ptr<BoolNotNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
-
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -32,4 +25,4 @@ class BoolNotNode : public InvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

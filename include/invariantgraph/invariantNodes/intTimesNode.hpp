@@ -12,14 +12,8 @@ class IntTimesNode : public InvariantNode {
 
   ~IntTimesNode() override = default;
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"int_times", 3}};
-  }
-
-  static std::unique_ptr<IntTimesNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
-
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -31,4 +25,4 @@ class IntTimesNode : public InvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

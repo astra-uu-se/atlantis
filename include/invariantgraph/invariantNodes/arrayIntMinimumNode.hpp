@@ -1,8 +1,9 @@
 #pragma once
 
 #include <algorithm>
-#include <fznparser/model.hpp>
+
 #include <utility>
+
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"
@@ -15,16 +16,9 @@ class ArrayIntMinimumNode : public InvariantNode {
 
   ~ArrayIntMinimumNode() override = default;
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{
-        {"array_int_minimum", 2}};
-  }
-
-  static std::unique_ptr<ArrayIntMinimumNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
-
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

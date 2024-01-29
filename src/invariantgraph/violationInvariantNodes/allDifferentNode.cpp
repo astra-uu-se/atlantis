@@ -11,51 +11,6 @@ AllDifferentNode::AllDifferentNode(std::vector<VarNodeId>&& vars,
                                    bool shouldHold)
     : ViolationInvariantNode(std::move(vars), shouldHold) {}
 
-std::unique_ptr<AllDifferentNode> AllDifferentNode::fromModelConstraint(
-    const fznparser::Constraint& constraint, InvariantGraph& invariantGraph) {
-  assert(hasCorrectSignature(acceptedNameNumArgPairs(), constraint));
-
-  if (constraint.arguments().empty() || constraint.arguments().size() > 2) {
-    throw std::runtime_error(
-        "AllDifferent constraint takes one or two arguments");
-  }
-  if (!std::holds_alternative<fznparser::IntVarArray>(
-          constraint.arguments().front())) {
-    throw std::runtime_error(
-        "AllDifferent constraint first argument must be an int var array");
-  }
-  if (constraint.arguments().size() == 2) {
-    if (!std::holds_alternative<fznparser::BoolArg>(
-            constraint.arguments().back())) {
-      throw std::runtime_error(
-          "AllDifferent constraint optional second argument must be a bool "
-          "var");
-    }
-  }
-  const auto& intVarArray =
-      get<fznparser::IntVarArray>(constraint.arguments().front());
-
-  if (intVarArray.size() == 0 || intVarArray.isParArray()) {
-    return nullptr;
-  }
-
-  std::vector<VarNodeId> varNodeIds = pruneAllDifferentFree(
-      invariantGraph, invariantGraph.createVarNodes(intVarArray));
-
-  if (constraint.arguments().size() == 1) {
-    return std::make_unique<AllDifferentNode>(std::move(varNodeIds), true);
-  }
-
-  const fznparser::BoolArg& reified =
-      get<fznparser::BoolArg>(constraint.arguments().back());
-  if (reified.isFixed()) {
-    return std::make_unique<AllDifferentNode>(std::move(varNodeIds),
-                                              reified.toParameter());
-  }
-  return std::make_unique<AllDifferentNode>(
-      std::move(varNodeIds), invariantGraph.createVarNode(reified.var()));
-}
-
 void AllDifferentNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().empty()) {

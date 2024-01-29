@@ -11,7 +11,7 @@ class ObjectiveTest : public ::testing::Test {
  public:
   std::unique_ptr<propagation::Solver> solver;
   propagation::VarId objectiveVarId;
-  propagation::VarId totalViolationId;
+  propagation::VarId totalViolationVarId;
 
   void SetUp() override { solver = std::make_unique<propagation::Solver>(); }
 
@@ -22,8 +22,9 @@ class ObjectiveTest : public ::testing::Test {
     solver->open();
     objectiveVarId = solver->makeIntVar(initial, objectiveRange.lowerBound(),
                                         objectiveRange.upperBound());
-    totalViolationId = solver->makeIntVar(0, 0, 0);
-    auto violation = objective.registerNode(totalViolationId, objectiveVarId);
+    totalViolationVarId = solver->makeIntVar(0, 0, 0);
+    auto violation =
+        objective.registerNode(totalViolationVarId, objectiveVarId);
     solver->close();
     return violation;
   }
@@ -34,7 +35,7 @@ TEST_F(ObjectiveTest, satisfaction_objective) {
 
   auto violation = install(searchObjective);
 
-  EXPECT_EQ(violation, totalViolationId);
+  EXPECT_EQ(violation, totalViolationVarId);
   EXPECT_EQ(solver->numVars(), 2);
   EXPECT_EQ(solver->numInvariants(), 0);
   EXPECT_EQ(solver->committedValue(violation), 0);

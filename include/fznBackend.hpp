@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "fznparser/parser.hpp"
-#include "invariantgraph/invariantGraphBuilder.hpp"
+#include "invariantgraph/fznInvariantGraph.hpp"
 #include "logging/logger.hpp"
 #include "search/annealing/annealingScheduleFactory.hpp"
 #include "search/objective.hpp"
@@ -30,11 +30,7 @@ class FznBackend {
   FznBackend(std::filesystem::path modelFile,
              search::AnnealingScheduleFactory annealingScheduleFactory,
              std::uint_fast32_t seed,
-             std::optional<std::chrono::milliseconds> timeout)
-      : _modelFile(std::move(modelFile)),
-        _annealingScheduleFactory(std::move(annealingScheduleFactory)),
-        _timeout(timeout),
-        _seed(seed) {}
+             std::optional<std::chrono::milliseconds> timeout);
 
   search::SearchStatistics solve(logging::Logger& logger);
 };

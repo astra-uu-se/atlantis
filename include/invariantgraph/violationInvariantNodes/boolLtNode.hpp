@@ -1,12 +1,11 @@
 #pragma once
 
-#include <fznparser/model.hpp>
 #include <utility>
 
-#include "propagation/violationInvariants/boolLessEqual.hpp"
-#include "propagation/violationInvariants/boolLessThan.hpp"
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/violationInvariantNode.hpp"
+#include "propagation/violationInvariants/boolLessEqual.hpp"
+#include "propagation/violationInvariants/boolLessThan.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -16,15 +15,8 @@ class BoolLtNode : public ViolationInvariantNode {
 
   BoolLtNode(VarNodeId a, VarNodeId b, bool shouldHold);
 
-  static std::vector<std::pair<std::string, size_t>> acceptedNameNumArgPairs() {
-    return std::vector<std::pair<std::string, size_t>>{{"bool_lt", 2},
-                                                       {"bool_lt_reif", 3}};
-  }
-
-  static std::unique_ptr<BoolLtNode> fromModelConstraint(
-      const fznparser::Constraint&, InvariantGraph&);
-
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
@@ -36,4 +28,4 @@ class BoolLtNode : public ViolationInvariantNode {
   }
 };
 
-}  // namespace invariantgraph
+}  // namespace atlantis::invariantgraph

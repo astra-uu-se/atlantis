@@ -1,63 +1,24 @@
 #include "invariantgraph/varNode.hpp"
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/invariantNode.hpp"
-
 namespace atlantis::invariantgraph {
 
-static SearchDomain convertDomain(const VarNode::FZNVar& var) {
-  if (std::holds_alternative<fznparser::BoolVar>(var)) {
-    const fznparser::BoolVar& boolVar = std::get<fznparser::BoolVar>(var);
-    std::vector<Int> boolDomain;
-    if (boolVar.upperBound() == true) {
-      // 0 indicates there is no violation
-      boolDomain.emplace_back(0);
-    }
-    if (boolVar.lowerBound() == false) {
-      // non-zero indicates there is a violation
-      boolDomain.emplace_back(1);
-    }
-    return SearchDomain(std::move(boolDomain));
-  }
-  const fznparser::IntSet& intDomain =
-      std::get<fznparser::IntVar>(var).domain();
-  if (intDomain.isInterval()) {
-    return SearchDomain(intDomain.lowerBound(), intDomain.upperBound());
-  }
-  return SearchDomain(intDomain.elements());
-}
-
-VarNode::VarNode(VarNodeId varNodeId, const VarNode::FZNVar& var)
+VarNode::VarNode(VarNodeId varNodeId, SearchDomain&& domain, bool isIntVar,
+                 const std::string& identifier)
     : _varNodeId(varNodeId),
-      _var(var),
-      _domain{std::move(convertDomain(*_var))},
-      _isIntVar(std::holds_alternative<fznparser::IntVar>(var)) {}
-
-VarNode::VarNode(VarNodeId varNodeId, SearchDomain&& domain, bool isIntVar)
-    : _varNodeId(varNodeId),
-      _var(std::nullopt),
       _domain(std::move(domain)),
-      _isIntVar(isIntVar) {}
+      _isIntVar(isIntVar),
+      _identifier(identifier) {}
 
-VarNode::VarNode(VarNodeId varNodeId, const SearchDomain& domain, bool isIntVar)
+VarNode::VarNode(VarNodeId varNodeId, const SearchDomain& domain, bool isIntVar,
+                 const std::string& identifier)
     : _varNodeId(varNodeId),
-      _var(std::nullopt),
       _domain(domain),
-      _isIntVar(isIntVar) {}
+      _isIntVar(isIntVar),
+      _identifier(identifier) {}
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
-std::optional<VarNode::FZNVar> VarNode::var() const { return _var; }
-
-std::string VarNode::identifier() const {
-  if (!_var.has_value()) {
-    return "";
-  }
-  if (std::holds_alternative<fznparser::BoolVar>(*_var)) {
-    return std::get<fznparser::BoolVar>(*_var).identifier();
-  }
-  return std::get<fznparser::IntVar>(*_var).identifier();
-}
+const std::string& VarNode::identifier() const { return _identifier; }
 
 propagation::VarId VarNode::varId() const { return _varId; }
 
@@ -70,7 +31,12 @@ const SearchDomain& VarNode::constDomain() const noexcept { return _domain; }
 
 SearchDomain& VarNode::domain() noexcept { return _domain; }
 
-bool VarNode::isFixed() const noexcept { return _domain.isFixed(); }
+bool VarNode::isFixed() const noexcept {
+  if (isIntVar()) {
+    return _domain.isFixed();
+  }
+  return (_domain.lowerBound() == 0) == (_domain.upperBound() == 0);
+}
 
 bool VarNode::isIntVar() const noexcept { return _isIntVar; }
 
@@ -83,8 +49,7 @@ propagation::VarId VarNode::postDomainConstraint(
       domain.back().upperBound - domain.front().lowerBound + 1;
 
   // domain.size() - 1 = number of "holes" in the domain:
-  const float denseness = 1.0 - ((float)(domain.size() - 1) / (float)interval);
-  if (SPARSE_MIN_DENSENESS <= denseness) {
+  if (domain.size() > 2 && interval < 1000) {
     _domainViolationId = solver.makeIntView<propagation::InSparseDomain>(
         solver, this->varId(), std::move(domain));
   } else {
@@ -94,6 +59,9 @@ propagation::VarId VarNode::postDomainConstraint(
   return _domainViolationId;
 }
 
+Int VarNode::lowerBound() const { return _domain.lowerBound(); }
+Int VarNode::upperBound() const { return _domain.upperBound(); }
+
 Int VarNode::val() const {
   if (_domain.isFixed()) {
     return _domain.lowerBound();
@@ -102,11 +70,68 @@ Int VarNode::val() const {
   }
 }
 
+bool VarNode::shouldEnforceDomain() noexcept { return _shouldEnforceDomain; }
+bool VarNode::shouldEnforceDomain(bool b) noexcept {
+  _shouldEnforceDomain = b;
+  return _shouldEnforceDomain;
+}
+
+bool VarNode::inDomain(Int val) const {
+  if (!isIntVar()) {
+    throw std::runtime_error("inDomain(Int) called on BoolVar");
+  }
+  return _domain.contains(val);
+}
+
+bool VarNode::inDomain(bool val) const {
+  if (!isIntVar()) {
+    throw std::runtime_error("inDomain(Int) called on BoolVar");
+  }
+  return val ? _domain.lowerBound() == 0 : _domain.upperBound() > 0;
+}
+
 void VarNode::removeValue(Int val) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValue(Int) called on BoolVar");
   }
-  _domain.removeValue(val);
+  _domain.remove(val);
+}
+
+void VarNode::removeValuesBelow(Int newLowerBound) {
+  if (!isIntVar()) {
+    throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
+  }
+  _domain.removeBelow(newLowerBound);
+}
+
+void VarNode::removeValuesAbove(Int newUpperBound) {
+  if (!isIntVar()) {
+    throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
+  }
+  _domain.removeAbove(newUpperBound);
+}
+
+void VarNode::removeValues(const std::vector<Int>& values) {
+  if (!isIntVar()) {
+    throw std::runtime_error(
+        "removeValues(const std::vector<Int>&) called on BoolVar");
+  }
+  _domain.remove(values);
+}
+
+void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
+  if (!isIntVar()) {
+    throw std::runtime_error(
+        "removeValues(const std::vector<Int>&) called on BoolVar");
+  }
+  _domain.intersectWith(values);
+}
+
+void VarNode::fixValue(Int val) {
+  if (!isIntVar()) {
+    throw std::runtime_error("fixValue(Int) called on BoolVar");
+  }
+  _domain.fix(val);
 }
 
 void VarNode::removeValue(bool val) {
@@ -114,6 +139,13 @@ void VarNode::removeValue(bool val) {
     throw std::runtime_error("removeValue(bool) called on IntVar");
   }
   _domain.fix(val ? 0 : 1);
+}
+
+void VarNode::fixValue(bool val) {
+  if (!isIntVar()) {
+    throw std::runtime_error("fixValue(bool) called on IntVar");
+  }
+  _domain.fix(val ? 1 : 0);
 }
 
 std::vector<DomainEntry> VarNode::constrainedDomain(
@@ -143,7 +175,7 @@ VarNode::definingNodes() const noexcept {
   return _outputOf;
 }
 
-InvariantNodeId VarNode::outputOf() const noexcept {
+InvariantNodeId VarNode::outputOf() const {
   if (_outputOf.size() == 0) {
     return InvariantNodeId(NULL_NODE_ID);
   } else if (_outputOf.size() != 1) {
