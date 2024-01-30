@@ -23,7 +23,7 @@ class RandomNeighbourhood : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  const std::vector<SearchVar>& coveredVars() const override { return _vars; }
+  [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override { return _vars; }
 };
 
 }  // namespace atlantis::search::neighbourhoods

@@ -5,7 +5,6 @@
 
 #include "propagation/solver.hpp"
 #include "propagation/views/violation2BoolView.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 

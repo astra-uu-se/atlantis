@@ -129,12 +129,9 @@ template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::isMarked(VarIdBase id) {
   if constexpr (MarkingMode ==
                 OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-    for (const size_t ancestor : _solver.modifiedSearchVar()) {
-      if (_searchVarAncestors.at(id).contains(ancestor)) {
-        return true;
-      }
-    }
-    return false;
+    return std::any_of(_solver.modifiedSearchVar().begin(), _solver.modifiedSearchVar().end(), [&](size_t ancestor) {
+      return _searchVarAncestors.at(id).contains(ancestor);
+    });
   } else if constexpr (MarkingMode ==
                        OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION) {
     return _onPropagationPath.get(id);
@@ -193,7 +190,7 @@ void OutputToInputExplorer::expandInvariant(InvariantId invariantId) {
   }
   VarId nextVar = _solver.nextInput(invariantId);
   if constexpr (MarkingMode != OutputToInputMarkingMode::NONE) {
-    while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar)) {
+    while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar.id)) {
       nextVar = _solver.nextInput(invariantId);
     }
   }
@@ -219,7 +216,7 @@ template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::pushNextInputVar() {
   VarId nextVar = _solver.nextInput(peekInvariantStack());
   if constexpr (MarkingMode != OutputToInputMarkingMode::NONE) {
-    while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar)) {
+    while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar.id)) {
       nextVar = _solver.nextInput(peekInvariantStack());
     }
   }
@@ -232,7 +229,7 @@ bool OutputToInputExplorer::pushNextInputVar() {
 
 void OutputToInputExplorer::registerVar(VarId id) {
   _varStack.emplace_back(NULL_ID);  // push back just to resize the stack!
-  _varComputedAt.register_idx(id);
+  _varComputedAt.register_idx(id.id);
 }
 
 void OutputToInputExplorer::registerInvariant(InvariantId invariantId) {
@@ -258,13 +255,13 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
     const VarId currentVarId = peekVarStack();
 
     // If the variable is not computed, then expand it.
-    if (!isComputed(currentTimestamp, currentVarId)) {
+    if (!isComputed(currentTimestamp, currentVarId.id)) {
       // Variable will become computed as it is either not defined or we now
       // expand its invariant. Note that expandInvariant may sometimes not
       // push a new invariant nor a new variable on the stack, so we must mark
       // the variable as computed before we expand it as this otherwise
       // results in an infinite loop.
-      setComputed(currentTimestamp, currentVarId);
+      setComputed(currentTimestamp, currentVarId.id);
       // The variable is marked and computed: expand its defining invariant.
       expandInvariant<MarkingMode>(_solver.definingInvariant(currentVarId));
       continue;

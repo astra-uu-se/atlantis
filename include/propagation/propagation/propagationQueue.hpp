@@ -37,7 +37,7 @@ class PropagationQueue {
     _priorityNodes[id]->priority = newPriority;
   }
 
-  bool empty() const { return head == nullptr; }
+  [[nodiscard]] bool empty() const { return head == nullptr; }
 
   void push(VarIdBase id) {
     ListNode* toInsert = _priorityNodes[id].get();

@@ -16,13 +16,13 @@ namespace atlantis::propagation {
  */
 class Pow : public Invariant {
  private:
-  const VarId _output, _x, _y;
+  VarId _output, _base, _exponent;
   Int _zeroReplacement{1};
 
  public:
-  explicit Pow(SolverBase&, VarId output, VarId x, VarId y);
+  explicit Pow(SolverBase&, VarId output, VarId base, VarId exponent);
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
+  void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;

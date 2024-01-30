@@ -1,5 +1,3 @@
-
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <random>
@@ -7,7 +5,6 @@
 
 #include "propagation/solver.hpp"
 #include "propagation/views/elementConst.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -23,7 +20,7 @@ class ElementConstTest : public ::testing::Test {
   const Int valueLb = std::numeric_limits<Int>::min();
   const Int valueUb = std::numeric_limits<Int>::max();
   Int indexLb = 1;
-  Int indexUb = numValues;
+  Int indexUb = static_cast<Int>(numValues);
   std::vector<Int> values;
   std::uniform_int_distribution<Int> valueDist;
   std::uniform_int_distribution<Int> indexDist;
@@ -37,8 +34,8 @@ class ElementConstTest : public ::testing::Test {
     values.resize(numValues, 0);
     valueDist = std::uniform_int_distribution<Int>(valueLb, valueUb);
     indexDist = std::uniform_int_distribution<Int>(indexLb, indexUb);
-    for (size_t i = 0; i < values.size(); ++i) {
-      values.at(i) = valueDist(gen);
+    for (long & value : values) {
+      value = valueDist(gen);
     }
   }
 
@@ -62,7 +59,7 @@ TEST_F(ElementConstTest, Bounds) {
   solver->open();
   const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
   const VarId outputId =
-      solver->makeIntView<ElementConst>(*solver, index, values);
+      solver->makeIntView<ElementConst>(*solver, index, std::vector<Int>(values));
   solver->close();
 
   const Int ub = 100;
@@ -89,7 +86,7 @@ TEST_F(ElementConstTest, Value) {
   solver->open();
   const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
   const VarId outputId =
-      solver->makeIntView<ElementConst>(*solver, index, values);
+      solver->makeIntView<ElementConst>(*solver, index, std::vector<Int>(values));
   solver->close();
 
   for (Int val = indexLb; val <= indexUb; ++val) {
@@ -113,7 +110,7 @@ TEST_F(ElementConstTest, CommittedValue) {
   solver->open();
   const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
   const VarId outputId =
-      solver->makeIntView<ElementConst>(*solver, index, values);
+      solver->makeIntView<ElementConst>(*solver, index, std::vector<Int>(values));
   solver->close();
 
   Int committedValue = solver->committedValue(index);

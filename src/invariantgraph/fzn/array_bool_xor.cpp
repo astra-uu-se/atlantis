@@ -29,8 +29,8 @@ bool array_bool_xor(FznInvariantGraph& invariantGraph,
   if (constraint.identifier() != "array_bool_xor") {
     return false;
   }
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   return array_bool_xor(
       invariantGraph,
       std::get<fznparser::BoolVarArray>(constraint.arguments().at(0)),

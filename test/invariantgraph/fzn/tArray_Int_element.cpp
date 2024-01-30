@@ -2,14 +2,12 @@
 #include <gtest/gtest.h>
 
 #include <deque>
-#include <random>
 #include <string>
 #include <vector>
 
 #include "./fznTestBase.hpp"
 #include "invariantgraph/fzn/array_int_element.hpp"
 #include "invariantgraph/fznInvariantGraph.hpp"
-#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -34,12 +32,11 @@ class array_int_elementTest : public FznTestBase {
     constraintIdentifier = "array_int_element_offset";
 
     idxIdentifier = "idx";
-    _model->addVar(
-        std::move(IntVar(offsetIdx, numInputs + offsetIdx, idxIdentifier)));
+    _model->addVar(IntVar(offsetIdx, numInputs + offsetIdx, idxIdentifier));
     outputIdentifier = "output";
-    _model->addVar(std::move(
+    _model->addVar(
         IntVar(-2, 2, outputIdentifier,
-               std::vector<Annotation>{Annotation("is_defined_var")})));
+               std::vector<Annotation>{Annotation("is_defined_var")}));
 
     std::vector<Arg> args;
     args.reserve(3);

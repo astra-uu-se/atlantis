@@ -24,8 +24,8 @@ bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
                 const fznparser::IntVarArray& vars,
                 const fznparser::Var& definedVar, const Int sum) {
-  size_t definedVarIndex = vars.size();
-  for (size_t i = 0; i < vars.size(); ++i) {
+  Int definedVarIndex = -1;
+  for (Int i = 0; i < static_cast<Int>(vars.size()); ++i) {
     if (!std::holds_alternative<Int>(vars.at(i)) &&
         std::get<std::reference_wrapper<const fznparser::IntVar>>(vars.at(i))
                 .get()
@@ -35,7 +35,7 @@ bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     }
   }
 
-  if (definedVarIndex == vars.size()) {
+  if (definedVarIndex < 0) {
     return false;
   }
 
@@ -55,8 +55,8 @@ bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
   std::vector<VarNodeId> inputVarNodeIds;
   inputVarNodeIds.reserve(vars.size());
-  VarNodeId outputVarNodeId = NULL_NODE_ID;
-  for (size_t i = 0; i < vars.size(); ++i) {
+  VarNodeId outputVarNodeId(NULL_NODE_ID);
+  for (Int i = 0; i < static_cast<Int>(vars.size()); ++i) {
     const VarNodeId varNodeId =
         std::holds_alternative<Int>(vars.at(i))
             ? invariantGraph.createVarNodeFromFzn(std::get<Int>(vars.at(i)),
@@ -85,13 +85,13 @@ bool int_linear(FznInvariantGraph& invariantGraph,
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false)
 
   if (isReified) {
-    FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true);
-    const fznparser::BoolArg& reified =
+    FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
+    const auto& reified =
         std::get<fznparser::BoolArg>(constraint.arguments().at(3));
     if (!reified.isFixed()) {
       return false;

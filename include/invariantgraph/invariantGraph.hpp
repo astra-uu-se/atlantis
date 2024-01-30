@@ -49,15 +49,15 @@ class InvariantGraph {
   [[nodiscard]] bool containsVarNode(
       const std::string& identifier) const noexcept;
   [[nodiscard]] bool containsVarNode(Int) const noexcept;
-  [[nodiscard]] bool containsVarNode(bool) const noexcept;
+  [[nodiscard]] static bool containsVarNode(bool) noexcept;
 
   virtual VarNodeId createVarNode(bool, bool isDefinedVar);
   virtual VarNodeId createVarNode(bool, const std::string&, bool isDefinedVar);
   virtual VarNodeId createVarNode(Int, bool isDefinedVar);
   virtual VarNodeId createVarNode(Int, const std::string&, bool isDefinedVar);
-  virtual VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
+  virtual VarNodeId createVarNode(SearchDomain&&, bool isIntVar,
                                   bool isDefinedVar);
-  virtual VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
+  virtual VarNodeId createVarNode(SearchDomain&&, bool isIntVar,
                                   const std::string&, bool isDefinedVar);
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier);

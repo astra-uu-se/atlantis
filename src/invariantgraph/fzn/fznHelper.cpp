@@ -122,9 +122,9 @@ void verifyAllDifferent(const fznparser::IntVarArray& intVarArray) {
 VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
                           const fznparser::IntVarArray& inputs,
                           const fznparser::IntArg& needle) {
-  const SearchDomain domain(0, static_cast<Int>(inputs.size()));
+  SearchDomain domain(0, static_cast<Int>(inputs.size()));
 
-  VarNodeId countVarNodeId = invariantGraph.createVarNode(domain, true, true);
+  VarNodeId countVarNodeId = invariantGraph.createVarNode(std::move(domain), true, true);
 
   if (needle.isFixed()) {
     invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(

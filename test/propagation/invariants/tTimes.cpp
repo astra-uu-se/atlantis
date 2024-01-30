@@ -6,7 +6,6 @@
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/times.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -19,7 +18,7 @@ class TimesTest : public InvariantTest {
                          solver->value(ts, inputs.at(1)));
   }
 
-  Int computeOutput(std::array<Int, 2> inputs) {
+  static Int computeOutput(std::array<Int, 2> inputs) {
     return computeOutput(inputs.at(0), inputs.at(1));
   }
 
@@ -27,7 +26,7 @@ class TimesTest : public InvariantTest {
     return computeOutput(solver->value(ts, x), solver->value(ts, y));
   }
 
-  Int computeOutput(const Int xVal, const Int yVal) { return xVal * yVal; }
+  static Int computeOutput(const Int xVal, const Int yVal) { return xVal * yVal; }
 };
 
 TEST_F(TimesTest, UpdateBounds) {
@@ -49,7 +48,7 @@ TEST_F(TimesTest, UpdateBounds) {
       EXPECT_TRUE(yLb <= yUb);
       solver->updateBounds(y, yLb, yUb, false);
       solver->open();
-      invariant.updateBounds();
+      invariant.updateBounds(false);
       solver->close();
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         solver->setValue(solver->currentTimestamp(), x, xVal);

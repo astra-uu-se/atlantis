@@ -19,16 +19,11 @@ static std::vector<invariantgraph::VarNodeId> combine(
 ViolationInvariantNode::ViolationInvariantNode(
     std::vector<VarNodeId>&& outputIds, std::vector<VarNodeId>&& staticInputIds,
     VarNodeId reifiedId, bool shouldHold)
-    : InvariantNode(std::move(combine(reifiedId, std::move(outputIds))),
+    : InvariantNode(combine(reifiedId, std::move(outputIds)),
                     std::move(staticInputIds)),
       _reifiedViolationNodeId(reifiedId),
       _shouldHold(shouldHold) {
-  if (!isReified()) {
-    assert(_reifiedViolationNodeId == NULL_NODE_ID);
-  } else {
-    assert(_reifiedViolationNodeId != NULL_NODE_ID);
-    assert(outputVarNodeIds().front() == _reifiedViolationNodeId);
-  }
+  assert((!isReified() && _reifiedViolationNodeId == NULL_NODE_ID) || (_reifiedViolationNodeId != NULL_NODE_ID && outputVarNodeIds().front() == _reifiedViolationNodeId));
 }
 
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
@@ -47,11 +42,11 @@ ViolationInvariantNode::ViolationInvariantNode(
     std::vector<VarNodeId>&& outputIds, std::vector<VarNodeId>&& staticInputIds,
     bool shouldHold)
     : ViolationInvariantNode(std::move(outputIds), std::move(staticInputIds),
-                             NULL_NODE_ID, shouldHold) {}
+                             VarNodeId(NULL_NODE_ID), shouldHold) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
     std::vector<VarNodeId>&& staticInputIds, bool shouldHold)
-    : ViolationInvariantNode({}, std::move(staticInputIds), NULL_NODE_ID,
+    : ViolationInvariantNode({}, std::move(staticInputIds), VarNodeId(NULL_NODE_ID),
                              shouldHold) {}
 bool ViolationInvariantNode::isReified() const {
   return _reifiedViolationNodeId != NULL_NODE_ID;

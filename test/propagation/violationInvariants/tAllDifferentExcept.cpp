@@ -2,13 +2,11 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <random>
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/violationInvariants/allDifferentExcept.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -25,7 +23,7 @@ class AllDifferentExceptTest : public InvariantTest {
     return computeViolation(values, ignoredSet);
   }
 
-  Int computeViolation(const std::vector<Int>& values,
+  static Int computeViolation(const std::vector<Int>& values,
                        const std::unordered_set<Int>& ignoredSet) {
     std::vector<bool> checked(values.size(), false);
     Int expectedViolation = 0;
@@ -69,7 +67,7 @@ TEST_F(AllDifferentExceptTest, UpdateBounds) {
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_TRUE(cLb <= cUb);
         solver->updateBounds(inputs.at(2), cLb, cUb, false);
-        invariant.updateBounds();
+        invariant.updateBounds(false);
         ASSERT_EQ(0, solver->lowerBound(violationId));
         ASSERT_EQ(inputs.size() - 1, solver->upperBound(violationId));
       }
@@ -172,7 +170,7 @@ TEST_F(AllDifferentExceptTest, NextInput) {
   std::vector<Int> committedValues;
   std::vector<VarId> inputs;
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.emplace_back(solver->makeIntVar(i, lb, ub));
+    inputs.emplace_back(solver->makeIntVar(static_cast<Int>(i), lb, ub));
   }
 
   std::vector<Int> ignored;
@@ -319,9 +317,9 @@ class MockAllDifferentExcept : public AllDifferentExcept {
     AllDifferentExcept::registerVars();
   }
   explicit MockAllDifferentExcept(SolverBase& solver, VarId violationId,
-                                  std::vector<VarId> vars,
+                                  std::vector<VarId>&& vars,
                                   const std::vector<Int>& ignored)
-      : AllDifferentExcept(solver, violationId, vars, ignored) {
+      : AllDifferentExcept(solver, violationId, std::move(vars), ignored) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return AllDifferentExcept::recompute(timestamp);
     });
@@ -365,10 +363,11 @@ TEST_F(AllDifferentExceptTest, SolverIntegration) {
     }
     std::shuffle(ignored.begin(), ignored.end(), rng);
     const VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    const VarId modifiedVarId = args.front();
     testNotifications<MockAllDifferentExcept>(
-        &solver->makeViolationInvariant<MockAllDifferentExcept>(*solver, viol, args,
+        &solver->makeViolationInvariant<MockAllDifferentExcept>(*solver, viol, std::move(args),
                                                         ignored),
-        {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
+        {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});
   }
 }
 

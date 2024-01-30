@@ -54,7 +54,7 @@ class Annealer {
    * @return True whilst more Monte-Carlo simulations need to be run for this
    * round.
    */
-  bool runMonteCarloSimulation();
+  bool runMonteCarloSimulation() const;
 
   /**
    * Determine whether @p move should be committed to the assignment.
@@ -78,7 +78,7 @@ class Annealer {
  protected:
   virtual bool accept(Int moveCost);
 
-  inline Int evaluate(Cost cost) {
+  [[nodiscard]] inline Int evaluate(Cost cost) const {
     return cost.evaluate(_violationWeight, _objectiveWeight);
   }
 };

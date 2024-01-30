@@ -9,14 +9,14 @@ using namespace atlantis::invariantgraph;
 
 class ArrayVarElement2dNodeTest : public NodeTestBase<ArrayVarElement2dNode> {
  public:
-  VarNodeId x00 = NULL_NODE_ID;
-  VarNodeId x01 = NULL_NODE_ID;
-  VarNodeId x10 = NULL_NODE_ID;
-  VarNodeId x11 = NULL_NODE_ID;
+  VarNodeId x00{NULL_NODE_ID};
+  VarNodeId x01{NULL_NODE_ID};
+  VarNodeId x10{NULL_NODE_ID};
+  VarNodeId x11{NULL_NODE_ID};
 
-  VarNodeId idx1 = NULL_NODE_ID;
-  VarNodeId idx2 = NULL_NODE_ID;
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId idx1{NULL_NODE_ID};
+  VarNodeId idx2{NULL_NODE_ID};
+  VarNodeId output{NULL_NODE_ID};
 
   Int offsetIdx1 = 1;
   Int offsetIdx2 = 1;

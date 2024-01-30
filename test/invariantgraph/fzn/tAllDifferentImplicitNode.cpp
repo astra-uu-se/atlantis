@@ -2,14 +2,12 @@
 #include <gtest/gtest.h>
 
 #include <deque>
-#include <random>
 #include <string>
 #include <vector>
 
 #include "./fznTestBase.hpp"
 #include "invariantgraph/fzn/allDifferentImplicitNode.hpp"
 #include "invariantgraph/fznInvariantGraph.hpp"
-#include "propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -23,17 +21,6 @@ class FznAllDifferentImplicitNodeTest : public FznTestBase {
  public:
   Int numInputs = 4;
   std::vector<std::string> inputIdentifiers{};
-
-  Int isViolated(const std::vector<Int>& inputVals) {
-    for (size_t i = 0; i < inputVals.size() - 1; ++i) {
-      for (size_t j = i + 1; j < inputVals.size(); ++j) {
-        if (inputVals.at(i) == inputVals.at(j)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
 
   void SetUp() override {
     FznTestBase::SetUp();
@@ -49,7 +36,7 @@ class FznAllDifferentImplicitNodeTest : public FznTestBase {
     const Int lb = -ub;
     for (Int i = 0; i < numInputs; ++i) {
       inputIdentifiers.emplace_back("input" + std::to_string(i));
-      _model->addVar(std::move(IntVar(lb, ub, inputIdentifiers.back())));
+      _model->addVar(IntVar(lb, ub, inputIdentifiers.back()));
       inputsArg.append(std::get<IntVar>(_model->var(inputIdentifiers.back())));
     }
     args.emplace_back(inputsArg);

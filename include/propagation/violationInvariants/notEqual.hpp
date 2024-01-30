@@ -18,7 +18,7 @@ class NotEqual : public ViolationInvariant {
   explicit NotEqual(SolverBase&, VarId violationId, VarId x, VarId y);
 
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
+  void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   VarId nextInput(Timestamp) override;

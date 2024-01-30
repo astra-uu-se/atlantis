@@ -15,11 +15,11 @@ class SolverBase;
 
 class InDomain : public IntView {
  private:
-  const std::vector<DomainEntry> _domain;
-  const VarId _x;
+  std::vector<DomainEntry> _domain;
+  VarId _x;
   Committable<std::pair<Int, Int>> _cache;
 
-  Int compute(const Int val) const;
+  [[nodiscard]] Int compute(Int val) const;
 
  public:
   explicit InDomain(SolverBase& solver, VarId parentId,

@@ -22,8 +22,8 @@ bool bool_not(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 2);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::BoolArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
 
   return bool_not(invariantGraph,
                   std::get<fznparser::BoolArg>(constraint.arguments().at(0)),

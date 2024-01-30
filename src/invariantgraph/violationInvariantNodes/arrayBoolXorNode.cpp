@@ -31,12 +31,13 @@ void ArrayBoolXorNode::registerOutputVars(InvariantGraph& invariantGraph,
 void ArrayBoolXorNode::registerNode(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
-  std::vector<propagation::VarId> inputs;
+  std::vector<propagation::VarId> inputNodeIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(inputs),
+                 std::back_inserter(inputNodeIds),
                  [&](const auto& node) { return invariantGraph.varId(node); });
 
-  solver.makeInvariant<propagation::BoolLinear>(solver, _intermediate, inputs);
+  solver.makeInvariant<propagation::BoolLinear>(solver, _intermediate,
+                                                std::move(inputNodeIds));
 }
 
 }  // namespace atlantis::invariantgraph

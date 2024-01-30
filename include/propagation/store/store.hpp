@@ -28,7 +28,7 @@ class Store {
   [[nodiscard]] inline VarId createIntVar(Timestamp ts, Int initValue,
                                           Int lowerBound, Int upperBound) {
     const VarId newId = VarId(_intVars.size() + 1, VarIdType::var);
-    _intVars.register_idx(newId,
+    _intVars.register_idx(newId.id,
                           IntVar(ts, newId, initValue, lowerBound, upperBound));
     return newId;
   }
@@ -47,16 +47,16 @@ class Store {
     const VarId parentId = ptr->parentId();
     const VarId source = parentId.idType == VarIdType::var
                              ? parentId
-                             : _intViewSourceId[parentId];
-    _intViews.register_idx_move(newId, std::move(ptr));
-    _intViewSourceId.register_idx(newId, source);
+                             : _intViewSourceId[parentId.id];
+    _intViews.register_idx_move(newId.id, std::move(ptr));
+    _intViewSourceId.register_idx(newId.id, source);
     return newId;
   }
 
-  inline IntVar& intVar(VarId id) { return _intVars[id]; }
+  inline IntVar& intVar(VarId id) { return _intVars[id.id]; }
 
   [[nodiscard]] inline const IntVar& constIntVar(VarId id) const {
-    return _intVars.at(id);
+    return _intVars.at(id.id);
   }
 
   inline IntView& intView(VarId id) {
@@ -75,7 +75,7 @@ class Store {
 
   [[nodiscard]] inline VarId intViewSourceId(VarId id) const {
     assert(id.idType == VarIdType::view);
-    return _intViewSourceId.at(id);
+    return _intViewSourceId.at(id.id);
   }
 
   inline Invariant& invariant(InvariantId invariantId) {

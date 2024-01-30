@@ -45,13 +45,13 @@ bool array_var_int_element2d(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 7);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 4, fznparser::IntArg, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 5, fznparser::IntArg, false);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 6, fznparser::IntArg, false);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 4, fznparser::IntArg, false)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 5, fznparser::IntArg, false)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 6, fznparser::IntArg, false)
 
   return array_var_int_element2d(
       invariantGraph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),

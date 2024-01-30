@@ -21,8 +21,8 @@ bool set_in(FznInvariantGraph& invariantGraph,
     return false;
   }
 
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntSetArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntSetArg, true)
 
   return set_in(invariantGraph,
                 std::get<fznparser::IntArg>(constraint.arguments().at(0)),

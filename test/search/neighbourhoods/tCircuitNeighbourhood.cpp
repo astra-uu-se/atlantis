@@ -52,15 +52,14 @@ class AlwaysAcceptingAnnealer : public search::Annealer {
                           search::RandomProvider& random,
                           search::AnnealingSchedule& schedule)
       : Annealer(assignment, random, schedule) {}
-  virtual ~AlwaysAcceptingAnnealer() = default;
+  ~AlwaysAcceptingAnnealer() override = default;
 
  protected:
   [[nodiscard]] bool accept(Int) override { return true; }
 };
 
 TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {
-  search::neighbourhoods::CircuitNeighbourhood neighbourhood(
-      std::move(std::vector<search::SearchVar>(next)));
+  search::neighbourhoods::CircuitNeighbourhood neighbourhood((std::vector<search::SearchVar>(next)));
 
   assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
@@ -71,8 +70,7 @@ TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {
 TEST_F(CircuitNeighbourhoodTest, fixed_vars_are_considered) {
   next[1] = search::SearchVar(next[1].solverId(), SearchDomain({3}));
 
-  search::neighbourhoods::CircuitNeighbourhood neighbourhood(
-      std::move(std::vector<search::SearchVar>(next)));
+  search::neighbourhoods::CircuitNeighbourhood neighbourhood((std::vector<search::SearchVar>(next)));
 
   assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
@@ -83,8 +81,7 @@ TEST_F(CircuitNeighbourhoodTest, fixed_vars_are_considered) {
 TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
   static int CONFIDENCE = 1000;
 
-  search::neighbourhoods::CircuitNeighbourhood neighbourhood(
-      std::move(std::vector<search::SearchVar>(next)));
+  search::neighbourhoods::CircuitNeighbourhood neighbourhood((std::vector<search::SearchVar>(next)));
   assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
 

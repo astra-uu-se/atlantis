@@ -10,11 +10,6 @@
 namespace atlantis::invariantgraph {
 
 /**
- * The types that can be in an array of search variables.
- */
-using MappableValue = std::variant<Int, bool, std::string>;
-
-/**
  * Serves as a marker for the invariant graph to start the application to the
  * propagation solver.
  */

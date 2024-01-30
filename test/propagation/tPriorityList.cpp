@@ -4,10 +4,7 @@
 #include <random>
 #include <vector>
 
-#include "../testHelper.hpp"
-#include "misc/logging.hpp"
 #include "propagation/utils/priorityList.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -27,7 +24,7 @@ class PriorityListTest : public ::testing::Test {
   static void updateForward(Timestamp ts, PriorityList &priorityList,
                             Int offset) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
-      priorityList.updatePriority(ts, idx, idx + 1 + offset);
+      priorityList.updatePriority(ts, idx, static_cast<Int>(idx) + 1 + offset);
     }
   }
 
@@ -37,7 +34,7 @@ class PriorityListTest : public ::testing::Test {
   static void updateBackwards(Timestamp ts, PriorityList &priorityList,
                               Int offset) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
-      priorityList.updatePriority(ts, idx, priorityList.size() - idx + offset);
+      priorityList.updatePriority(ts, idx, static_cast<Int>(priorityList.size() - idx) + offset);
     }
   }
 

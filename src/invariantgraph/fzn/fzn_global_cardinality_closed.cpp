@@ -88,9 +88,9 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
 
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, true)
   std::vector<Int> cover =
       std::get<fznparser::IntVarArray>(constraint.arguments().at(1))
           .toParVector();
@@ -101,7 +101,7 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
         std::move(cover),
         std::get<fznparser::IntVarArray>(constraint.arguments().at(2)));
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return fzn_global_cardinality_closed(
       invariantGraph,
       std::get<fznparser::IntVarArray>(constraint.arguments().at(0)),

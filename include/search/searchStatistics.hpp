@@ -26,21 +26,6 @@ class CounterStatistic : public Statistic {
   }
 };
 
-template <typename Value>
-class ValueStatistic : public Statistic {
- private:
-  const std::string _name;
-  Value _value;
-
- public:
-  ValueStatistic(std::string name, Value value)
-      : _name(std::move(name)), _value(std::move(value)) {}
-
-  void display(std::ostream& output) const noexcept override {
-    output << _name << ": " << _value;
-  }
-};
-
 class SearchStatistics : public Statistic {
  private:
   std::vector<std::unique_ptr<Statistic>> _statistics;

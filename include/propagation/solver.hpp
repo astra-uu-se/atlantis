@@ -131,7 +131,7 @@ class Solver : public SolverBase {
    * @param localId the id of the variable in the invariant
    */
   void registerInvariantInput(InvariantId invariantId, VarId inputId,
-                              LocalId localId, bool isDynamic = false) final;
+                              LocalId localId, bool isDynamic) final;
 
   void registerVar(VarId) final;
   void registerInvariant(InvariantId) final;

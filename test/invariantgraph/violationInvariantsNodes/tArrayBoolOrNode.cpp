@@ -11,21 +11,18 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
 static bool isViolating(const std::vector<Int>& values) {
-  for (const Int val : values) {
-    if (val == 0) {
-      return false;
-    }
-  }
-  return true;
+  return std::all_of(values.begin(), values.end(), [&](const Int val) {
+    return val > 0;
+  });
 }
 
 template <ViolationInvariantType Type>
 class AbstractArrayBoolOrNodeTest : public NodeTestBase<ArrayBoolOrNode> {
  public:
-  VarNodeId x1 = NULL_NODE_ID;
-  VarNodeId x2 = NULL_NODE_ID;
-  VarNodeId x3 = NULL_NODE_ID;
-  VarNodeId reified = NULL_NODE_ID;
+  VarNodeId x1{NULL_NODE_ID};
+  VarNodeId x2{NULL_NODE_ID};
+  VarNodeId x3{NULL_NODE_ID};
+  VarNodeId reified{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();

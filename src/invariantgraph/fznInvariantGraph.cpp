@@ -87,7 +87,7 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
 
 VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::BoolVar& var,
                                                   bool isDefinedVar) {
-  VarNodeId nId = NULL_NODE_ID;
+  VarNodeId nId(NULL_NODE_ID);
   if (var.isFixed()) {
     if (var.identifier().empty()) {
       nId = createVarNode(var.lowerBound(), isDefinedVar);
@@ -124,7 +124,7 @@ VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::BoolArg& arg,
 
 VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::IntVar& var,
                                                   bool isDefinedVar) {
-  VarNodeId nId = NULL_NODE_ID;
+  VarNodeId nId(NULL_NODE_ID);
   if (var.isFixed()) {
     if (var.identifier().empty())
       nId = createVarNode(var.lowerBound(), isDefinedVar);
@@ -135,11 +135,11 @@ VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::IntVar& var,
     SearchDomain domain =
         var.domain().isInterval()
             ? SearchDomain(var.domain().lowerBound(), var.domain().upperBound())
-            : SearchDomain(var.domain().elements());
+            : SearchDomain(std::vector<Int>(var.domain().elements()));
     if (var.identifier().empty()) {
-      nId = createVarNode(domain, true, isDefinedVar);
+      nId = createVarNode(std::move(domain), true, isDefinedVar);
     } else {
-      nId = createVarNode(domain, true, var.identifier(), isDefinedVar);
+      nId = createVarNode(std::move(domain), true, var.identifier(), isDefinedVar);
     }
   }
 
@@ -243,14 +243,14 @@ std::vector<FznOutputVar> FznInvariantGraph::outputIntVars() const noexcept {
   }
   return outputVars;
 }
+
 std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
     const noexcept {
   std::vector<FznOutputVarArray> outputVarArrays;
   outputVarArrays.reserve(_outputBoolVarArrays.size());
   for (const InvariantGraphOutputVarArray& outputArray : _outputBoolVarArrays) {
     FznOutputVarArray& fznArray =
-        outputVarArrays.emplace_back(FznOutputVarArray{
-            outputArray.identifier, outputArray.indexSetSizes, {}});
+        outputVarArrays.emplace_back(std::string(outputArray.identifier), std::vector<Int>(outputArray.indexSetSizes));
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId& nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
@@ -263,14 +263,15 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
   }
   return outputVarArrays;
 }
+
 std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
     const noexcept {
   std::vector<FznOutputVarArray> outputVarArrays;
   outputVarArrays.reserve(_outputIntVarArrays.size());
   for (const InvariantGraphOutputVarArray& outputArray : _outputIntVarArrays) {
     FznOutputVarArray& fznArray =
-        outputVarArrays.emplace_back(FznOutputVarArray{
-            outputArray.identifier, outputArray.indexSetSizes, {}});
+        outputVarArrays.emplace_back(std::string(
+            outputArray.identifier), std::vector<Int>(outputArray.indexSetSizes));
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId& nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
@@ -350,49 +351,49 @@ bool FznInvariantGraph::makeInvariantNode(
   if (!guessDefinedVar) {
     // For the linear node, we need to know up front what variable is
     // defined.
-    MAKE_INVARIANT(fzn::int_linear);
+    MAKE_INVARIANT(fzn::int_linear)
   }
 
-  MAKE_INVARIANT(fzn::array_bool_and);
-  MAKE_INVARIANT(fzn::array_bool_element2d);
-  MAKE_INVARIANT(fzn::array_bool_element);
-  MAKE_INVARIANT(fzn::array_bool_or);
-  MAKE_INVARIANT(fzn::array_bool_xor);
-  MAKE_INVARIANT(fzn::array_int_element2d);
-  MAKE_INVARIANT(fzn::array_int_element);
-  MAKE_INVARIANT(fzn::array_int_maximum);
-  MAKE_INVARIANT(fzn::array_int_minimum);
-  MAKE_INVARIANT(fzn::array_var_bool_element2d);
-  MAKE_INVARIANT(fzn::array_var_bool_element);
-  MAKE_INVARIANT(fzn::array_var_int_element2d);
-  MAKE_INVARIANT(fzn::array_var_int_element);
-  MAKE_INVARIANT(fzn::bool2int);
-  MAKE_INVARIANT(fzn::bool_and);
-  MAKE_INVARIANT(fzn::bool_eq);
-  MAKE_INVARIANT(fzn::bool_le);
-  MAKE_INVARIANT(fzn::bool_lt);
-  MAKE_INVARIANT(fzn::bool_not);
-  MAKE_INVARIANT(fzn::bool_or);
-  MAKE_INVARIANT(fzn::bool_xor);
-  MAKE_INVARIANT(fzn::fzn_count_eq);
-  MAKE_INVARIANT(fzn::fzn_global_cardinality);
-  MAKE_INVARIANT(fzn::fzn_global_cardinality_closed);
-  MAKE_INVARIANT(fzn::int_abs);
-  MAKE_INVARIANT(fzn::int_div);
-  MAKE_INVARIANT(fzn::int_eq);
-  MAKE_INVARIANT(fzn::int_le);
-  MAKE_INVARIANT(fzn::int_lin_eq);
-  MAKE_INVARIANT(fzn::int_lin_le);
-  MAKE_INVARIANT(fzn::int_lin_ne);
-  MAKE_INVARIANT(fzn::int_lt);
-  MAKE_INVARIANT(fzn::int_max);
-  MAKE_INVARIANT(fzn::int_min);
-  MAKE_INVARIANT(fzn::int_mod);
-  MAKE_INVARIANT(fzn::int_ne);
-  MAKE_INVARIANT(fzn::int_plus);
-  MAKE_INVARIANT(fzn::int_pow);
-  MAKE_INVARIANT(fzn::int_times);
-  MAKE_INVARIANT(fzn::set_in);
+  MAKE_INVARIANT(fzn::array_bool_and)
+  MAKE_INVARIANT(fzn::array_bool_element2d)
+  MAKE_INVARIANT(fzn::array_bool_element)
+  MAKE_INVARIANT(fzn::array_bool_or)
+  MAKE_INVARIANT(fzn::array_bool_xor)
+  MAKE_INVARIANT(fzn::array_int_element2d)
+  MAKE_INVARIANT(fzn::array_int_element)
+  MAKE_INVARIANT(fzn::array_int_maximum)
+  MAKE_INVARIANT(fzn::array_int_minimum)
+  MAKE_INVARIANT(fzn::array_var_bool_element2d)
+  MAKE_INVARIANT(fzn::array_var_bool_element)
+  MAKE_INVARIANT(fzn::array_var_int_element2d)
+  MAKE_INVARIANT(fzn::array_var_int_element)
+  MAKE_INVARIANT(fzn::bool2int)
+  MAKE_INVARIANT(fzn::bool_and)
+  MAKE_INVARIANT(fzn::bool_eq)
+  MAKE_INVARIANT(fzn::bool_le)
+  MAKE_INVARIANT(fzn::bool_lt)
+  MAKE_INVARIANT(fzn::bool_not)
+  MAKE_INVARIANT(fzn::bool_or)
+  MAKE_INVARIANT(fzn::bool_xor)
+  MAKE_INVARIANT(fzn::fzn_count_eq)
+  MAKE_INVARIANT(fzn::fzn_global_cardinality)
+  MAKE_INVARIANT(fzn::fzn_global_cardinality_closed)
+  MAKE_INVARIANT(fzn::int_abs)
+  MAKE_INVARIANT(fzn::int_div)
+  MAKE_INVARIANT(fzn::int_eq)
+  MAKE_INVARIANT(fzn::int_le)
+  MAKE_INVARIANT(fzn::int_lin_eq)
+  MAKE_INVARIANT(fzn::int_lin_le)
+  MAKE_INVARIANT(fzn::int_lin_ne)
+  MAKE_INVARIANT(fzn::int_lt)
+  MAKE_INVARIANT(fzn::int_max)
+  MAKE_INVARIANT(fzn::int_min)
+  MAKE_INVARIANT(fzn::int_mod)
+  MAKE_INVARIANT(fzn::int_ne)
+  MAKE_INVARIANT(fzn::int_plus)
+  MAKE_INVARIANT(fzn::int_pow)
+  MAKE_INVARIANT(fzn::int_times)
+  MAKE_INVARIANT(fzn::set_in)
 
 
 
@@ -421,38 +422,36 @@ bool FznInvariantGraph::makeViolationInvariantNode(
     return true;                                    \
   }
 
-  MAKE_VIOLATION_INVARIANT(fzn::bool_and);
-  MAKE_VIOLATION_INVARIANT(fzn::bool_clause);
-  MAKE_VIOLATION_INVARIANT(fzn::bool_eq);
-  MAKE_VIOLATION_INVARIANT(fzn::bool_le);
-  MAKE_VIOLATION_INVARIANT(fzn::bool_le);
-  MAKE_VIOLATION_INVARIANT(fzn::bool_lin_eq);
-  MAKE_VIOLATION_INVARIANT(fzn::bool_lin_le);
-  MAKE_VIOLATION_INVARIANT(fzn::bool_or);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_all_different_int);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_all_equal_int);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_geq);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_gt);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_leq);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_lt);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_neq);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_closed);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_low_up);
-  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_low_up_closed);
-  MAKE_VIOLATION_INVARIANT(fzn::int_eq);
-  MAKE_VIOLATION_INVARIANT(fzn::int_le);
-  MAKE_VIOLATION_INVARIANT(fzn::int_lin_eq);
-  MAKE_VIOLATION_INVARIANT(fzn::int_lin_le);
-  MAKE_VIOLATION_INVARIANT(fzn::int_lin_ne);
-  MAKE_VIOLATION_INVARIANT(fzn::int_lt);
-  MAKE_VIOLATION_INVARIANT(fzn::int_ne);
-  MAKE_VIOLATION_INVARIANT(fzn::set_in);
-
+  MAKE_VIOLATION_INVARIANT(fzn::bool_and)
+  MAKE_VIOLATION_INVARIANT(fzn::bool_clause)
+  MAKE_VIOLATION_INVARIANT(fzn::bool_eq)
+  MAKE_VIOLATION_INVARIANT(fzn::bool_le)
+  MAKE_VIOLATION_INVARIANT(fzn::bool_le)
+  MAKE_VIOLATION_INVARIANT(fzn::bool_lin_eq)
+  MAKE_VIOLATION_INVARIANT(fzn::bool_lin_le)
+  MAKE_VIOLATION_INVARIANT(fzn::bool_or)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_all_different_int)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_all_equal_int)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_geq)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_gt)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_leq)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_lt)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_count_neq)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_closed)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_low_up)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_low_up_closed)
+  MAKE_VIOLATION_INVARIANT(fzn::int_eq)
+  MAKE_VIOLATION_INVARIANT(fzn::int_le)
+  MAKE_VIOLATION_INVARIANT(fzn::int_lin_eq)
+  MAKE_VIOLATION_INVARIANT(fzn::int_lin_le)
+  MAKE_VIOLATION_INVARIANT(fzn::int_lin_ne)
+  MAKE_VIOLATION_INVARIANT(fzn::int_lt)
+  MAKE_VIOLATION_INVARIANT(fzn::int_ne)
+  MAKE_VIOLATION_INVARIANT(fzn::set_in)
+#undef MAKE_VIOLATION_INVARIANT
   throw std::runtime_error(std::string("Failed to create soft constraint: ")
                                .append(constraint.identifier()));
-  return false;
-#undef MAKE_VIOLATION_INVARIANT
 }
 
 }  // namespace atlantis::invariantgraph

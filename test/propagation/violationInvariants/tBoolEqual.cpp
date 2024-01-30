@@ -1,13 +1,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <random>
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/violationInvariants/boolEqual.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -15,15 +13,13 @@ using namespace atlantis::propagation;
 
 class BoolEqualTest : public InvariantTest {
  public:
-  bool isRegistered = false;
-
   Int computeViolation(const Timestamp ts,
                        const std::array<const VarId, 2>& inputs) {
     return computeViolation(solver->value(ts, inputs.at(0)),
                             solver->value(ts, inputs.at(1)));
   }
 
-  Int computeViolation(const std::array<const Int, 2>& inputs) {
+  static Int computeViolation(const std::array<const Int, 2>& inputs) {
     return computeViolation(inputs.at(0), inputs.at(1));
   }
 
@@ -31,7 +27,7 @@ class BoolEqualTest : public InvariantTest {
     return computeViolation(solver->value(ts, x), solver->value(ts, y));
   }
 
-  Int computeViolation(const Int xVal, const Int yVal) {
+  static Int computeViolation(const Int xVal, const Int yVal) {
     return static_cast<Int>((xVal == 0) != (yVal == 0));
   }
 };
@@ -55,12 +51,12 @@ TEST_F(BoolEqualTest, UpdateBounds) {
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
       solver->updateBounds(y, yLb, yUb, false);
-      invariant.updateBounds();
+      invariant.updateBounds(false);
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         solver->setValue(solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
           solver->setValue(solver->currentTimestamp(), y, yVal);
-          invariant.updateBounds();
+          invariant.updateBounds(false);
           invariant.recompute(solver->currentTimestamp());
         }
       }

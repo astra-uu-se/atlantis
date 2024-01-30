@@ -2,7 +2,7 @@
 
 namespace atlantis::propagation {
 
-MinSparse::MinSparse(SolverBase& solver, VarId output, std::vector<VarId> varArray)
+MinSparse::MinSparse(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
     : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
@@ -14,7 +14,7 @@ MinSparse::MinSparse(SolverBase& solver, VarId output, std::vector<VarId> varArr
 void MinSparse::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    _solver.registerInvariantInput(_id, _varArray[i], i);
+    _solver.registerInvariantInput(_id, _varArray[i], i, false);
   }
   registerDefinedVar(_output);
 }

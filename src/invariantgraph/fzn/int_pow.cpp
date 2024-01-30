@@ -22,9 +22,9 @@ bool int_pow(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true)
 
   return int_pow(invariantGraph,
                  std::get<fznparser::IntArg>(constraint.arguments().at(0)),

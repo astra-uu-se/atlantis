@@ -6,9 +6,9 @@ namespace atlantis::propagation {
  * @param violationId id for the violationCount
  */
 AllDifferentExcept::AllDifferentExcept(SolverBase& solver, VarId violationId,
-                                       std::vector<VarId> vars,
+                                       std::vector<VarId>&& vars,
                                        const std::vector<Int>& ignored)
-    : AllDifferent(solver, violationId, vars) {
+    : AllDifferent(solver, violationId, std::move(vars)) {
   _modifiedVars.reserve(_vars.size());
   const auto [lb, ub] =
       std::minmax_element(std::begin(ignored), std::end(ignored));
@@ -42,10 +42,9 @@ void AllDifferentExcept::notifyInputChanged(Timestamp ts, LocalId id) {
     return;
   }
   incValue(ts, _violationId,
-           static_cast<Int>(
                (isIgnored(_committedValues[id])
                     ? 0
                     : decreaseCount(ts, _committedValues[id])) +
-               (isIgnored(newValue) ? 0 : increaseCount(ts, newValue))));
+               (isIgnored(newValue) ? 0 : increaseCount(ts, newValue)));
 }
 }  // namespace atlantis::propagation

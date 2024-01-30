@@ -3,12 +3,12 @@
 namespace atlantis::propagation {
 
 inline bool all_in_range(Int start, Int stop,
-                         std::function<bool(Int)> predicate) {
+                         std::function<bool(Int)>&& predicate) {
   std::vector<Int> vec(stop - start);
   for (Int i = 0; i < stop - start; ++i) {
     vec.at(i) = start + i;
   }
-  return std::all_of(vec.begin(), vec.end(), predicate);
+  return std::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
 /**
@@ -16,9 +16,9 @@ inline bool all_in_range(Int start, Int stop,
  */
 GlobalCardinalityClosed::GlobalCardinalityClosed(SolverBase& solver,
                                                  VarId violationId,
-                                                 std::vector<VarId> outputs,
-                                                 std::vector<VarId> inputs,
-                                                 std::vector<Int> cover)
+                                                 std::vector<VarId>&& outputs,
+                                                 std::vector<VarId>&& inputs,
+                                                 std::vector<Int>&& cover)
     : ViolationInvariant(solver, violationId),
       _outputs(std::move(outputs)),
       _inputs(std::move(inputs)),
@@ -39,7 +39,7 @@ GlobalCardinalityClosed::GlobalCardinalityClosed(SolverBase& solver,
 void GlobalCardinalityClosed::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _inputs.size(); ++i) {
-    _solver.registerInvariantInput(_id, _inputs[i], LocalId(i));
+    _solver.registerInvariantInput(_id, _inputs[i], LocalId(i), false);
   }
   registerDefinedVar(_violationId);
   for (const VarId output : _outputs) {
@@ -48,9 +48,9 @@ void GlobalCardinalityClosed::registerVars() {
 }
 
 void GlobalCardinalityClosed::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_violationId, 0, _inputs.size(), widenOnly);
+  _solver.updateBounds(_violationId, 0, static_cast<Int>(_inputs.size()), widenOnly);
   for (const VarId output : _outputs) {
-    _solver.updateBounds(output, 0, _inputs.size(), widenOnly);
+    _solver.updateBounds(output, 0, static_cast<Int>(_inputs.size()), widenOnly);
   }
 }
 
@@ -61,7 +61,7 @@ void GlobalCardinalityClosed::close(Timestamp timestamp) {
   for (size_t i = 0; i < _cover.size(); ++i) {
     assert(0 <= _cover[i] - _offset);
     assert(_cover[i] - _offset < static_cast<Int>(_coverVarIndex.size()));
-    _coverVarIndex[_cover[i] - _offset] = i;
+    _coverVarIndex[_cover[i] - _offset] = static_cast<Int>(i);
   }
   _counts.resize(_outputs.size(), CommittableInt(timestamp, 0));
 }

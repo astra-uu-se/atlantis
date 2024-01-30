@@ -1,10 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <random>
 #include <vector>
 
-#include "../testHelper.hpp"
 #include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/invariants/linear.hpp"
@@ -26,7 +24,7 @@ class TSPTWTest : public ::testing::Test {
 
   std::random_device rd;
 
-  Int n;
+  Int n{30};
   const int MAX_TIME = 100000;
 
   std::vector<propagation::VarId> violation;
@@ -40,7 +38,7 @@ class TSPTWTest : public ::testing::Test {
     solver->open();
 
     for (int i = 0; i < n; ++i) {
-      dist.emplace_back(std::vector<Int>());
+      dist.emplace_back();
       for (int j = 0; j < n; ++j) {
         dist[i].push_back(1);
       }
@@ -59,7 +57,7 @@ class TSPTWTest : public ::testing::Test {
     for (int i = 1; i < n; ++i) {
       // timeToPrev[i] = dist[i][pred[i]]
       timeToPrev[i] = solver->makeIntView<propagation::ElementConst>(
-          *solver, pred[i], dist[i]);
+          *solver, pred[i], std::vector<Int>(dist[i]));
       // arrivalPrev[i] = arrivalTime[pred[i]]
     }
 
@@ -67,7 +65,7 @@ class TSPTWTest : public ::testing::Test {
     for (int i = 1; i < n; ++i) {
       // arrivalPrev[i] = arrivalTime[pred[i]]
       solver->makeInvariant<propagation::ElementVar>(*solver, arrivalPrev[i],
-                                                     pred[i], arrivalTime);
+                                                     pred[i], std::vector<propagation::VarId>(arrivalTime));
       // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
       solver->makeInvariant<propagation::Linear>(
           *solver, arrivalTime[i],
@@ -76,7 +74,7 @@ class TSPTWTest : public ::testing::Test {
 
     // totalDist = sum(timeToPrev)
     totalDist = solver->makeIntVar(0, 0, MAX_TIME);
-    solver->makeInvariant<propagation::Linear>(*solver, totalDist, timeToPrev);
+    solver->makeInvariant<propagation::Linear>(*solver, totalDist, std::vector<propagation::VarId>(timeToPrev));
 
     propagation::VarId leqConst = solver->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
@@ -86,7 +84,7 @@ class TSPTWTest : public ::testing::Test {
 
     totalViolation = solver->makeIntVar(0, 0, MAX_TIME * n);
     solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
-                                               violation);
+                                               std::vector<propagation::VarId>(violation));
 
     solver->close();
     for (const propagation::VarId p : pred) {

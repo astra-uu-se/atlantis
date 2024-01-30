@@ -27,11 +27,11 @@ class GlobalCardinalityClosed : public ViolationInvariant {
 
  public:
   GlobalCardinalityClosed(SolverBase&, VarId violationId,
-                          std::vector<VarId> outputs, std::vector<VarId> inputs,
-                          std::vector<Int> cover);
+                          std::vector<VarId>&& outputs, std::vector<VarId>&& inputs,
+                          std::vector<Int>&& cover);
 
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
+  void updateBounds(bool widenOnly) override;
   void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;

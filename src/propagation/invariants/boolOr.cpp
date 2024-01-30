@@ -17,8 +17,8 @@ BoolOr::BoolOr(SolverBase& solver, VarId output, VarId x, VarId y)
 
 void BoolOr::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0));
-  _solver.registerInvariantInput(_id, _y, LocalId(0));
+  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
   registerDefinedVar(_output);
 }
 

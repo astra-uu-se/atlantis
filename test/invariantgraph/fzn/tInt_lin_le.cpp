@@ -42,8 +42,8 @@ class int_lin_leTest : public FznTestBase {
 
     for (size_t i = 0; i < coeffs.size(); ++i) {
       inputIdentifiers.emplace_back("i_" + std::to_string(i));
-      _model->addVar(std::move(IntVar(varBounds[i].first, varBounds[i].second,
-                                      inputIdentifiers.back())));
+      _model->addVar(IntVar(varBounds[i].first, varBounds[i].second,
+                                      inputIdentifiers.back()));
     }
 
     IntVarArray coeffsArg("coeffs");
@@ -125,7 +125,7 @@ static std::pair<Int, Int> computeLinearBounds(
     lb += std::min(v1, v2);
     ub += std::max(v1, v2);
   }
-  return std::pair<Int, Int>(lb, ub);
+  return {lb, ub};
 }
 
 RC_GTEST_FIXTURE_PROP(int_lin_leTest, rapidcheck,
@@ -145,22 +145,24 @@ RC_GTEST_FIXTURE_PROP(int_lin_leTest, rapidcheck,
   varBounds.reserve(numInputs);
   for (size_t i = 0; i < numInputs; ++i) {
     Int v1, v2;
-    coeffs[i] = clamp(coeffs[i], numInputs);
+    coeffs[i] = clamp(coeffs[i], static_cast<Int>(numInputs));
     if (coeffs[i] == 0) {
       v1 = 0;
       v2 = 0;
+    } else if (std::abs(coeffs[i]) == 1) {
+      v1 = std::numeric_limits<Int>::min();
+      v2 = std::numeric_limits<Int>::max();
     } else {
-      v1 = std::numeric_limits<Int>::min() / (-std::abs(coeffs[i]) * numInputs);
-      v2 = std::numeric_limits<Int>::max() / (std::abs(coeffs[i]) * numInputs);
+      v1 = std::numeric_limits<Int>::min() / (-std::abs(coeffs[i]) * static_cast<Int>(numInputs));
+      v2 = std::numeric_limits<Int>::max() / (std::abs(coeffs[i]) * static_cast<Int>(numInputs));
     }
     if (v1 == v2) {
-      varBounds.emplace_back(std::pair<Int, Int>(v1, v2));
+      varBounds.emplace_back(v1, v2);
     } else {
       std::uniform_int_distribution<Int> distr(v1, v2);
       const Int b1 = distr(gen);
       const Int b2 = distr(gen);
-      varBounds.emplace_back(
-          std::pair<Int, Int>(std::min(b1, b2), std::max(b1, b2)));
+      varBounds.emplace_back(std::min(b1, b2), std::max(b1, b2));
     }
   }
 

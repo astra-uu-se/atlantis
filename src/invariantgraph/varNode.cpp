@@ -3,18 +3,11 @@
 namespace atlantis::invariantgraph {
 
 VarNode::VarNode(VarNodeId varNodeId, SearchDomain&& domain, bool isIntVar,
-                 const std::string& identifier)
+                 std::string&& identifier)
     : _varNodeId(varNodeId),
       _domain(std::move(domain)),
       _isIntVar(isIntVar),
-      _identifier(identifier) {}
-
-VarNode::VarNode(VarNodeId varNodeId, const SearchDomain& domain, bool isIntVar,
-                 const std::string& identifier)
-    : _varNodeId(varNodeId),
-      _domain(domain),
-      _isIntVar(isIntVar),
-      _identifier(identifier) {}
+      _identifier(std::move(identifier)) {}
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
@@ -42,7 +35,7 @@ bool VarNode::isIntVar() const noexcept { return _isIntVar; }
 
 propagation::VarId VarNode::postDomainConstraint(
     propagation::SolverBase& solver, std::vector<DomainEntry>&& domain) {
-  if (domain.size() == 0 || _domainViolationId != propagation::NULL_ID) {
+  if (domain.empty() || _domainViolationId != propagation::NULL_ID) {
     return _domainViolationId;
   }
   const size_t interval =
@@ -70,7 +63,7 @@ Int VarNode::val() const {
   }
 }
 
-bool VarNode::shouldEnforceDomain() noexcept { return _shouldEnforceDomain; }
+bool VarNode::shouldEnforceDomain() const noexcept { return _shouldEnforceDomain; }
 bool VarNode::shouldEnforceDomain(bool b) noexcept {
   _shouldEnforceDomain = b;
   return _shouldEnforceDomain;
@@ -176,7 +169,7 @@ VarNode::definingNodes() const noexcept {
 }
 
 InvariantNodeId VarNode::outputOf() const {
-  if (_outputOf.size() == 0) {
+  if (_outputOf.empty()) {
     return InvariantNodeId(NULL_NODE_ID);
   } else if (_outputOf.size() != 1) {
     throw std::runtime_error("VarNode is not an output var");

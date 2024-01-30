@@ -44,7 +44,7 @@ void ArrayElement2dNode::registerNode(InvariantGraph& invariantGraph,
          propagation::NULL_ID);
   solver.makeInvariant<propagation::Element2dConst>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), _parMatrix,
+      invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), std::vector<std::vector<Int>>(_parMatrix),
       _offset1, _offset2);
 }
 

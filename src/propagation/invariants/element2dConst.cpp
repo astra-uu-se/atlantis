@@ -11,10 +11,10 @@ static inline Int numCols(const std::vector<std::vector<Int>>& matrix) {
 
 Element2dConst::Element2dConst(SolverBase& solver, VarId output, VarId index1,
                                VarId index2,
-                               std::vector<std::vector<Int>> matrix,
+                               std::vector<std::vector<Int>>&& matrix,
                                Int offset1, Int offset2)
     : Invariant(solver),
-      _matrix(matrix),
+      _matrix(std::move(matrix)),
       _indices{index1, index2},
       _dimensions{static_cast<Int>(_matrix.size()), numCols(_matrix)},
       _offsets{offset1, offset2},
@@ -24,8 +24,8 @@ Element2dConst::Element2dConst(SolverBase& solver, VarId output, VarId index1,
 
 void Element2dConst::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _indices[0], LocalId(0));
-  _solver.registerInvariantInput(_id, _indices[1], LocalId(0));
+  _solver.registerInvariantInput(_id, _indices[0], LocalId(0), false);
+  _solver.registerInvariantInput(_id, _indices[1], LocalId(0), false);
   registerDefinedVar(_output);
 }
 
@@ -33,8 +33,8 @@ void Element2dConst::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  std::array<Int, 2> iLb;
-  std::array<Int, 2> iUb;
+  std::array<Int, 2> iLb{0,0};
+  std::array<Int, 2> iUb{0,0};
   for (size_t i = 0; i < 2; ++i) {
     iLb[i] = std::max<Int>(_offsets[i], _solver.lowerBound(_indices[i]));
     iUb[i] = std::min<Int>(_dimensions[i] - 1 + _offsets[i],

@@ -15,15 +15,15 @@ namespace atlantis::propagation {
 
 class IfThenElse : public Invariant {
  private:
-  const VarId _output, _b;
-  const std::array<const VarId, 2> _xy;
+  VarId _output, _b;
+  std::array<const VarId, 2> _xy;
 
  public:
   explicit IfThenElse(SolverBase&, VarId output, VarId b, VarId x, VarId y);
 
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
-  VarId dynamicInputVar(Timestamp) const noexcept override;
+  void updateBounds(bool widenOnly) override;
+  [[nodiscard]] VarId dynamicInputVar(Timestamp) const noexcept override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   VarId nextInput(Timestamp) override;

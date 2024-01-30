@@ -23,66 +23,76 @@ class DummyAnnealingSchedule : public AnnealingSchedule {
 class ScheduleLoopTest : public ::testing::Test {
  protected:
   UInt maximumConsecutiveFutileIterations = 2;
-
-  std::unique_ptr<AnnealingSchedule> schedule;
-  DummyAnnealingSchedule* inner;
-
-  void SetUp() override {
-    auto innerSchedule = std::make_unique<DummyAnnealingSchedule>();
-    inner = innerSchedule.get();
-
-    schedule = AnnealerContainer::loop(std::move(innerSchedule),
-                                       maximumConsecutiveFutileIterations);
-    schedule->start(5.0);
-  }
+  double initialTemperature{0.5};
 };
 
 TEST_F(ScheduleLoopTest, nested_schedule_is_active) {
   auto temperature = 1.0;
 
-  EXPECT_CALL(*inner, temperature()).WillOnce(Return(temperature));
+  auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
 
-  EXPECT_EQ(schedule->temperature(), temperature);
-  EXPECT_FALSE(schedule->frozen());
+  EXPECT_CALL(*dummySchedule, temperature()).WillOnce(Return(temperature));
+
+  auto loopSchedule = AnnealerContainer::loop(std::move(dummySchedule), maximumConsecutiveFutileIterations);
+  loopSchedule->start(initialTemperature);
+
+  EXPECT_EQ(loopSchedule->temperature(), temperature);
+  EXPECT_FALSE(loopSchedule->frozen());
 }
 
 TEST_F(ScheduleLoopTest,
        first_freeze_restarts_the_schedule_with_the_old_temperature) {
   auto restartTemp = 10.0;
-  EXPECT_CALL(*inner, frozen()).WillOnce(Return(true));
-  EXPECT_CALL(*inner, temperature()).WillRepeatedly(Return(restartTemp));
 
-  schedule->nextRound({});
-  EXPECT_FALSE(schedule->frozen());
-  EXPECT_EQ(schedule->temperature(), restartTemp);
+  auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
+
+  EXPECT_CALL(*dummySchedule, frozen()).WillOnce(Return(true));
+  EXPECT_CALL(*dummySchedule, temperature()).WillRepeatedly(Return(restartTemp));
+
+  auto loopSchedule = AnnealerContainer::loop(std::move(dummySchedule), maximumConsecutiveFutileIterations);
+  loopSchedule->start(initialTemperature);
+
+  loopSchedule->nextRound({});
+  EXPECT_FALSE(loopSchedule->frozen());
+  EXPECT_EQ(loopSchedule->temperature(), restartTemp);
 }
 
 TEST_F(ScheduleLoopTest, frozen_if_consecutive_rounds_do_not_improve) {
-  EXPECT_CALL(*inner, frozen()).WillOnce(Return(true)).WillOnce(Return(true));
+  auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
 
-  schedule->nextRound({});
-  schedule->nextRound({});
+  EXPECT_CALL(*dummySchedule, frozen()).WillOnce(Return(true)).WillOnce(Return(true));
 
-  EXPECT_TRUE(schedule->frozen());
+  auto loopSchedule = AnnealerContainer::loop(std::move(dummySchedule), maximumConsecutiveFutileIterations);
+  loopSchedule->start(initialTemperature);
+
+  loopSchedule->nextRound({});
+  loopSchedule->nextRound({});
+
+  EXPECT_TRUE(loopSchedule->frozen());
 }
 
 TEST_F(ScheduleLoopTest,
        not_frozen_if_futile_rounds_are_broken_up_by_improving_rounds) {
-  EXPECT_CALL(*inner, frozen())
+  auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
+
+  EXPECT_CALL(*dummySchedule, frozen())
       .WillOnce(Return(false))
       .WillRepeatedly(Return(true));
 
-  schedule->nextRound({});
+  auto loopSchedule = AnnealerContainer::loop(std::move(dummySchedule), maximumConsecutiveFutileIterations);
+  loopSchedule->start(initialTemperature);
+
+  loopSchedule->nextRound({});
 
   RoundStatistics improvingRoundStats{};
   improvingRoundStats.bestCostOfPreviousRound = 10;
   improvingRoundStats.bestCostOfThisRound = 5;
-  schedule->nextRound(improvingRoundStats);
-  EXPECT_FALSE(schedule->frozen());
-  schedule->nextRound({});
-  EXPECT_FALSE(schedule->frozen());
-  schedule->nextRound({});
-  EXPECT_TRUE(schedule->frozen());
+  loopSchedule->nextRound(improvingRoundStats);
+  EXPECT_FALSE(loopSchedule->frozen());
+  loopSchedule->nextRound({});
+  EXPECT_FALSE(loopSchedule->frozen());
+  loopSchedule->nextRound({});
+  EXPECT_TRUE(loopSchedule->frozen());
 }
 
 }  // namespace atlantis::testing

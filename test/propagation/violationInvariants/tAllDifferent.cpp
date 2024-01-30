@@ -16,7 +16,6 @@ using namespace atlantis::propagation;
 
 class AllDifferentTest : public InvariantTest {
  public:
-  bool isRegistered = false;
 
   Int computeViolation(Timestamp ts, const std::vector<VarId>& vars) {
     std::vector<Int> values(vars.size(), 0);
@@ -26,7 +25,7 @@ class AllDifferentTest : public InvariantTest {
     return computeViolation(values);
   }
 
-  Int computeViolation(const std::vector<Int>& values) {
+  static Int computeViolation(const std::vector<Int>& values) {
     std::vector<bool> checked(values.size(), false);
     Int expectedViolation = 0;
     for (size_t i = 0; i < values.size(); ++i) {
@@ -68,7 +67,7 @@ TEST_F(AllDifferentTest, UpdateBounds) {
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_TRUE(cLb <= cUb);
         solver->updateBounds(inputs.at(2), cLb, cUb, false);
-        invariant.updateBounds();
+        invariant.updateBounds(false);
         ASSERT_EQ(0, solver->lowerBound(violationId));
         ASSERT_EQ(inputs.size() - 1, solver->upperBound(violationId));
       }
@@ -150,7 +149,7 @@ TEST_F(AllDifferentTest, NextInput) {
   std::vector<Int> committedValues;
   std::vector<VarId> inputs;
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.emplace_back(solver->makeIntVar(i, lb, ub));
+    inputs.emplace_back(solver->makeIntVar(static_cast<Int>(i), lb, ub));
   }
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
@@ -277,8 +276,8 @@ class MockAllDifferent : public AllDifferent {
     AllDifferent::registerVars();
   }
   explicit MockAllDifferent(SolverBase& solver, VarId violationId,
-                            std::vector<VarId> t_vars)
-      : AllDifferent(solver, violationId, t_vars) {
+                            std::vector<VarId>&& t_vars)
+      : AllDifferent(solver, violationId, std::move(t_vars)) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return AllDifferent::recompute(timestamp);
     });
@@ -315,9 +314,10 @@ TEST_F(AllDifferentTest, SolverIntegration) {
       args.emplace_back(solver->makeIntVar(0, -100, 100));
     }
     const VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    const VarId modifiedVarId = args.front();
     testNotifications<MockAllDifferent>(
-        &solver->makeViolationInvariant<MockAllDifferent>(*solver, viol, args),
-        {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
+        &solver->makeViolationInvariant<MockAllDifferent>(*solver, viol, std::move(args)),
+        {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});
   }
 }
 

@@ -9,8 +9,8 @@ using namespace atlantis::invariantgraph;
 
 class ArrayBoolElementNodeTest : public NodeTestBase<ArrayElementNode> {
  public:
-  VarNodeId output = NULL_NODE_ID;
-  VarNodeId idx = NULL_NODE_ID;
+  VarNodeId output{NULL_NODE_ID};
+  VarNodeId idx{NULL_NODE_ID};
 
   Int offsetIdx = 1;
 
@@ -21,7 +21,7 @@ class ArrayBoolElementNodeTest : public NodeTestBase<ArrayElementNode> {
     idx = createIntVarNode(1, 4, "idx");
     output = createIntVarNode(1, 4, "output", true);
 
-    createInvariantNode(std::move(std::vector<bool>(elementValues)), idx,
+    createInvariantNode(std::vector<bool>(elementValues), idx,
                         output, offsetIdx);
   }
 };

@@ -5,9 +5,9 @@
 namespace atlantis::invariantgraph {
 
 BoolXorNode::BoolXorNode(VarNodeId a, VarNodeId b, VarNodeId r)
-    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
+    : ViolationInvariantNode({a, b}, r) {}
 BoolXorNode::BoolXorNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
+    : ViolationInvariantNode({a, b},
                              shouldHold) {}
 
 void BoolXorNode::registerOutputVars(InvariantGraph& invariantGraph,

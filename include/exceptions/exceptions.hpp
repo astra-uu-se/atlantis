@@ -83,53 +83,9 @@ class OutOfOrderIndexRegistration : public std::exception {
   explicit OutOfOrderIndexRegistration() = default;
 };
 
-class VarIsNotSearchVar : public std::exception {
+class FznArgumentException : public std::runtime_error {
  public:
-  explicit VarIsNotSearchVar() = default;
-};
-
-class Exception : public std::exception {
- protected:
-  /** Error message.
-   */
-  std::string _msg;
-
- public:
-  /** Constructor (C strings).
-   *  @param message C-style string error message.
-   *                 The string contents are copied upon construction.
-   *                 Hence, responsibility for deleting the char* lies
-   *                 with the caller.
-   */
-  explicit Exception(const char* msg) : _msg(msg) {}
-
-  /** Constructor (C++ STL strings).
-   *  @param message The error message.
-   */
-  explicit Exception(const std::string& msg) : _msg(msg) {}
-
-  /** Destructor.
-   * Virtual to allow for subclassing.
-   */
-  virtual ~Exception() noexcept {}
-
-  /** Returns a reference to the (constant) error description.
-   *  @return the exception message.
-   */
-
-  virtual const std::string& msg() const noexcept { return _msg; }
-};
-
-class FznArgumentException : public Exception {
- public:
-  explicit FznArgumentException(const char* msg) : Exception(msg) {}
-  explicit FznArgumentException(const std::string& msg) : Exception(msg) {}
-};
-
-class InvariantGraphException : public Exception {
- public:
-  explicit InvariantGraphException(const char* msg) : Exception(msg) {}
-  explicit InvariantGraphException(const std::string& msg) : Exception(msg) {}
+  explicit FznArgumentException(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 }  // namespace atlantis

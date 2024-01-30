@@ -23,10 +23,10 @@ class AllDifferent : public ViolationInvariant {
 
  public:
   explicit AllDifferent(SolverBase&, VarId violationId,
-                        std::vector<VarId> vars);
+                        std::vector<VarId>&& vars);
 
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
+  void updateBounds(bool widenOnly) override;
   void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;

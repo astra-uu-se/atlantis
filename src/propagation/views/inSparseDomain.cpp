@@ -3,18 +3,18 @@
 namespace atlantis::propagation {
 
 inline bool all_in_range(size_t start, size_t stop,
-                         std::function<bool(size_t)> predicate) {
+                         std::function<bool(size_t)>&& predicate) {
   std::vector<size_t> vec(stop - start);
   for (size_t i = 0; i < stop - start; ++i) {
     vec.at(i) = start + i;
   }
-  return std::all_of(vec.begin(), vec.end(), predicate);
+  return std::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
 InSparseDomain::InSparseDomain(SolverBase& solver, VarId parentId,
                                const std::vector<DomainEntry>& domain)
     : IntView(solver, parentId), _offset(domain.front().lowerBound) {
-  assert(domain.size() > 0);
+  assert(!domain.empty());
   assert(std::all_of(domain.begin(), domain.end(), [&](const auto& domEntry) {
     return domEntry.lowerBound <= domEntry.upperBound;
   }));
@@ -37,7 +37,7 @@ Int InSparseDomain::value(Timestamp ts) {
     return _offset - val;
   }
   if (val >= _offset + static_cast<Int>(_valueViolation.size())) {
-    return val - _offset - _valueViolation.size() + 1;
+    return val - _offset - static_cast<Int>(_valueViolation.size()) + 1;
   }
   return _valueViolation[val - _offset];
 }
@@ -48,7 +48,7 @@ Int InSparseDomain::committedValue() {
     return _offset - val;
   }
   if (val >= _offset + static_cast<Int>(_valueViolation.size())) {
-    return val - _offset - _valueViolation.size() + 1;
+    return val - _offset - static_cast<Int>(_valueViolation.size()) + 1;
   }
   return _valueViolation[val - _offset];
 }
@@ -57,7 +57,7 @@ Int InSparseDomain::lowerBound() const {
   const Int parentLb = _solver.lowerBound(_parentId);
   const Int parentUb = _solver.upperBound(_parentId);
   const Int dLb = _offset;
-  const Int dUb = _offset + _valueViolation.size() - 1;
+  const Int dUb = _offset + static_cast<Int>(_valueViolation.size()) - 1;
 
   if (parentUb < _offset) {
     return dLb - parentUb;
@@ -76,7 +76,7 @@ Int InSparseDomain::upperBound() const {
   const Int parentLb = _solver.lowerBound(_parentId);
   const Int parentUb = _solver.upperBound(_parentId);
   const Int dLb = _offset;
-  const Int dUb = _offset + _valueViolation.size() - 1;
+  const Int dUb = _offset + static_cast<Int>(_valueViolation.size()) - 1;
 
   if (parentUb < dLb) {
     return dLb - parentLb;

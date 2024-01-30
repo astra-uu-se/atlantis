@@ -13,9 +13,9 @@ using ::testing::ContainerEq;
 static std::vector<Int> computeOutputs(const std::vector<Int>& values,
                                        const std::vector<Int>& cover) {
   std::vector<Int> outputs(cover.size(), 0);
-  for (size_t i = 0; i < values.size(); ++i) {
+  for (Int value : values) {
     for (size_t j = 0; j < cover.size(); ++j) {
-      if (values.at(i) == cover.at(j)) {
+      if (value == cover.at(j)) {
         outputs.at(j)++;
       }
     }
@@ -25,11 +25,11 @@ static std::vector<Int> computeOutputs(const std::vector<Int>& values,
 
 class GlobalCardinalityNodeTest : public NodeTestBase<GlobalCardinalityNode> {
  public:
-  VarNodeId input1 = NULL_NODE_ID;
-  VarNodeId input2 = NULL_NODE_ID;
+  VarNodeId input1{NULL_NODE_ID};
+  VarNodeId input2{NULL_NODE_ID};
   const std::vector<Int> cover{2, 6};
-  VarNodeId output1 = NULL_NODE_ID;
-  VarNodeId output2 = NULL_NODE_ID;
+  VarNodeId output1{NULL_NODE_ID};
+  VarNodeId output2{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -117,10 +117,10 @@ TEST_F(GlobalCardinalityNodeTest, propagation) {
   std::vector<Int> countVals(outputVars.size());
 
   std::vector<std::pair<Int, Int>> countBounds;
-
+  countBounds.reserve(outputVars.size());
   for (const propagation::VarId c : outputVars) {
     countBounds.emplace_back(
-        std::pair<Int, Int>{solver.lowerBound(c), solver.lowerBound(c)});
+        solver.lowerBound(c), solver.lowerBound(c));
   }
 
   solver.close();

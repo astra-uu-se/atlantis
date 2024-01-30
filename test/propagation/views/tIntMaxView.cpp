@@ -1,15 +1,12 @@
 #include <gtest/gtest.h>
 #include <rapidcheck/gtest.h>
 
-#include <limits>
 #include <memory>
-#include <random>
 #include <vector>
 
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/views/intMaxView.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 

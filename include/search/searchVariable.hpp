@@ -16,8 +16,8 @@ class SearchVar {
   propagation::VarId _varId;
 
  public:
-  explicit SearchVar(propagation::VarId varId, const SearchDomain& domain)
-      : _domain(domain), _varId(varId) {}
+  explicit SearchVar(propagation::VarId varId, SearchDomain&& domain)
+      : _domain(std::move(domain)), _varId(varId) {}
 
   [[nodiscard]] propagation::VarId solverId() const noexcept { return _varId; }
 

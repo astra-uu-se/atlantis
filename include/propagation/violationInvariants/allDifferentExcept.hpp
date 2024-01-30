@@ -22,7 +22,7 @@ class AllDifferentExcept : public AllDifferent {
 
  public:
   explicit AllDifferentExcept(SolverBase&, VarId violationId,
-                              std::vector<VarId> vars,
+                              std::vector<VarId>&& vars,
                               const std::vector<Int>& ignored);
 
   void recompute(Timestamp) override;

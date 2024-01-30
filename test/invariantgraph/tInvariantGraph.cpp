@@ -32,8 +32,8 @@ TEST(InvariantGraphTest, apply_result) {
   invariantGraph.addInvariantNode(
       std::make_unique<IntPlusNode>(a, b, output));
 
-  invariantGraph.addImplicitConstraintNode(std::move(
-      std::make_unique<InvariantGraphRoot>(std::vector<VarNodeId>{a, b})));
+  invariantGraph.addImplicitConstraintNode(
+      std::make_unique<InvariantGraphRoot>(std::vector<VarNodeId>{a, b}));
 
   propagation::Solver solver;
   invariantGraph.apply(solver);

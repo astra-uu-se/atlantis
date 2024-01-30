@@ -2,7 +2,7 @@
 
 namespace atlantis::propagation {
 
-Count::Count(SolverBase& solver, VarId output, VarId y, std::vector<VarId> varArray)
+Count::Count(SolverBase& solver, VarId output, VarId y, std::vector<VarId>&& varArray)
     : Invariant(solver),
       _output(output),
       _y(y),
@@ -16,9 +16,9 @@ Count::Count(SolverBase& solver, VarId output, VarId y, std::vector<VarId> varAr
 void Count::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _vars.size(); ++i) {
-    _solver.registerInvariantInput(_id, _vars[i], i);
+    _solver.registerInvariantInput(_id, _vars[i], i, false);
   }
-  _solver.registerInvariantInput(_id, _y, _vars.size());
+  _solver.registerInvariantInput(_id, _y, _vars.size(), false);
   registerDefinedVar(_output);
 }
 

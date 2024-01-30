@@ -23,7 +23,7 @@ void ArrayIntMaximumNode::registerNode(InvariantGraph& invariantGraph,
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
   solver.makeInvariant<propagation::MaxSparse>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()), solverVars);
+      solver, invariantGraph.varId(outputVarNodeIds().front()), std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

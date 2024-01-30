@@ -14,7 +14,7 @@ class BoolLinearNodeTest : public NodeTestBase<BoolLinearNode> {
   Int numInputs = 3;
   std::vector<VarNodeId> inputs{};
   std::vector<Int> coeffs{};
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId output{NULL_NODE_ID};
 
   Int computeOutput(const std::vector<Int>& inputVals) {
     Int sum = 0;

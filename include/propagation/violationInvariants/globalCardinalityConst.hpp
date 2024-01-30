@@ -15,9 +15,9 @@ namespace atlantis::propagation {
 template <bool IsClosed>
 class GlobalCardinalityConst : public ViolationInvariant {
  private:
-  const std::vector<VarId> _vars;
-  std::vector<Int> _lowerBound;
-  std::vector<Int> _upperBound;
+  std::vector<VarId> _vars;
+  std::vector<Int> _lowerBounds;
+  std::vector<Int> _upperBounds;
   std::vector<Int> _committedValues;
   CommittableInt _shortage;
   CommittableInt _excess;
@@ -28,15 +28,16 @@ class GlobalCardinalityConst : public ViolationInvariant {
 
  public:
   GlobalCardinalityConst(SolverBase&, VarId violationId,
-                         std::vector<VarId> vars, const std::vector<Int>& cover,
-                         const std::vector<Int>& counts);
+                         std::vector<VarId>&& vars, const std::vector<Int>& cover,
+                         const std::vector<Int>& bounds);
+
   GlobalCardinalityConst(SolverBase&, VarId violationId,
-                         std::vector<VarId> vars, const std::vector<Int>& cover,
-                         const std::vector<Int>& lowerBound,
-                         const std::vector<Int>& upperBound);
+                         std::vector<VarId>&& vars, const std::vector<Int>& cover,
+                         const std::vector<Int>& lowerBounds,
+                         const std::vector<Int>& upperBounds);
 
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
+  void updateBounds(bool widenOnly) override;
   void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
@@ -49,36 +50,36 @@ template <bool IsClosed>
 inline signed char GlobalCardinalityConst<IsClosed>::increaseCount(Timestamp ts,
                                                                    Int value) {
   size_t pos = static_cast<size_t>(
-      std::max<Int>(0, std::min(Int(_lowerBound.size()) - 1, value - _offset)));
+      std::max<Int>(0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
   if constexpr (!IsClosed) {
-    if (_lowerBound.at(pos) < 0) {
+    if (_lowerBounds.at(pos) < 0) {
       return 0;
     }
   }
   Int newCount = _counts.at(pos).incValue(ts, 1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(_vars.size()));
-  return newCount > _upperBound.at(pos)
+  return newCount > _upperBounds.at(pos)
              ? 1
-             : (newCount > _lowerBound.at(pos) ? 0 : -1);
+             : (newCount > _lowerBounds.at(pos) ? 0 : -1);
 }
 
 template <bool IsClosed>
 inline signed char GlobalCardinalityConst<IsClosed>::decreaseCount(Timestamp ts,
                                                                    Int value) {
   size_t pos = static_cast<size_t>(
-      std::max<Int>(0, std::min(Int(_lowerBound.size()) - 1, value - _offset)));
+      std::max<Int>(0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
   if constexpr (!IsClosed) {
-    if (_lowerBound.at(pos) < 0) {
+    if (_lowerBounds.at(pos) < 0) {
       return 0;
     }
   }
   Int newCount = _counts.at(pos).incValue(ts, -1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(_vars.size()));
-  return newCount < _lowerBound.at(pos)
+  return newCount < _lowerBounds.at(pos)
              ? 1
-             : (newCount < _upperBound.at(pos) ? 0 : -1);
+             : (newCount < _upperBounds.at(pos) ? 0 : -1);
 }
 
 }  // namespace atlantis::propagation

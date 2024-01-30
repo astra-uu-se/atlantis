@@ -1,4 +1,3 @@
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -9,7 +8,6 @@
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/element2dConst.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -43,13 +41,13 @@ class Element2dConstTest : public InvariantTest {
     matrix.clear();
   }
 
-  size_t zeroBasedRowIndex(const Int rowIndexVal, const Int rowOffset) {
+  [[nodiscard]] size_t zeroBasedRowIndex(const Int rowIndexVal, const Int rowOffset) const {
     EXPECT_LE(rowOffset, rowIndexVal);
     EXPECT_LT(rowIndexVal - rowOffset, static_cast<Int>(numRows));
     return rowIndexVal - rowOffset;
   }
 
-  size_t zeroBasedColIndex(const Int colIndexVal, const Int colOffset) {
+  [[nodiscard]] size_t zeroBasedColIndex(const Int colIndexVal, const Int colOffset) const {
     EXPECT_LE(colOffset, colIndexVal);
     EXPECT_LT(colIndexVal - colOffset, static_cast<Int>(numCols));
     return colIndexVal - colOffset;
@@ -72,13 +70,13 @@ class Element2dConstTest : public InvariantTest {
 TEST_F(Element2dConstTest, UpdateBounds) {
   for (const auto& [rowOffset, colOffset] : offsets) {
     const Int rowIndexLb = rowOffset;
-    const Int rowIndexUb = numRows - 1 + rowOffset;
+    const Int rowIndexUb = static_cast<Int>(numRows) - 1 + rowOffset;
     EXPECT_TRUE(rowIndexLb <= rowIndexUb);
 
     std::uniform_int_distribution<Int> rowIndexDist(rowIndexLb, rowIndexUb);
 
     const Int colIndexLb = colOffset;
-    const Int colIndexUb = numCols - 1 + colOffset;
+    const Int colIndexUb = static_cast<Int>(numCols) - 1 + colOffset;
     EXPECT_TRUE(colIndexLb <= colIndexUb);
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
@@ -93,7 +91,7 @@ TEST_F(Element2dConstTest, UpdateBounds) {
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = solver->makeInvariant<Element2dConst>(
-        *solver, outputId, rowIndex, colIndex, matrix, rowOffset, colOffset);
+        *solver, outputId, rowIndex, colIndex, std::vector<std::vector<Int>>(matrix), rowOffset, colOffset);
     solver->close();
 
     for (Int minRowIndex = rowIndexLb; minRowIndex <= rowIndexUb;
@@ -106,7 +104,7 @@ TEST_F(Element2dConstTest, UpdateBounds) {
           for (Int maxColIndex = colIndexUb; maxColIndex >= minColIndex;
                --maxColIndex) {
             solver->updateBounds(colIndex, minColIndex, maxColIndex, false);
-            invariant.updateBounds();
+            invariant.updateBounds(false);
             Int minVal = std::numeric_limits<Int>::max();
             Int maxVal = std::numeric_limits<Int>::min();
             for (Int rowIndexVal = minRowIndex; rowIndexVal <= maxRowIndex;
@@ -133,13 +131,13 @@ TEST_F(Element2dConstTest, UpdateBounds) {
 TEST_F(Element2dConstTest, Recompute) {
   for (const auto& [rowOffset, colOffset] : offsets) {
     const Int rowIndexLb = rowOffset;
-    const Int rowIndexUb = numRows - 1 + rowOffset;
+    const Int rowIndexUb = static_cast<Int>(numRows) - 1 + rowOffset;
     EXPECT_TRUE(rowIndexLb <= rowIndexUb);
 
     std::uniform_int_distribution<Int> rowIndexDist(rowIndexLb, rowIndexUb);
 
     const Int colIndexLb = colOffset;
-    const Int colIndexUb = numCols - 1 + colOffset;
+    const Int colIndexUb = static_cast<Int>(numCols) - 1 + colOffset;
     EXPECT_TRUE(colIndexLb <= colIndexUb);
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
@@ -154,7 +152,7 @@ TEST_F(Element2dConstTest, Recompute) {
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = solver->makeInvariant<Element2dConst>(
-        *solver, outputId, rowIndex, colIndex, matrix, rowOffset, colOffset);
+        *solver, outputId, rowIndex, colIndex, std::vector<std::vector<Int>>(matrix), rowOffset, colOffset);
     solver->close();
 
     for (Int rowIndexVal = rowIndexLb; rowIndexVal <= rowIndexUb;
@@ -185,13 +183,13 @@ TEST_F(Element2dConstTest, Recompute) {
 TEST_F(Element2dConstTest, NotifyInputChanged) {
   for (const auto& [rowOffset, colOffset] : offsets) {
     const Int rowIndexLb = rowOffset;
-    const Int rowIndexUb = numRows - 1 + rowOffset;
+    const Int rowIndexUb = static_cast<Int>(numRows) - 1 + rowOffset;
     EXPECT_TRUE(rowIndexLb <= rowIndexUb);
 
     std::uniform_int_distribution<Int> rowIndexDist(rowIndexLb, rowIndexUb);
 
     const Int colIndexLb = colOffset;
-    const Int colIndexUb = numCols - 1 + colOffset;
+    const Int colIndexUb = static_cast<Int>(numCols) - 1 + colOffset;
     EXPECT_TRUE(colIndexLb <= colIndexUb);
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
@@ -206,7 +204,7 @@ TEST_F(Element2dConstTest, NotifyInputChanged) {
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = solver->makeInvariant<Element2dConst>(
-        *solver, outputId, rowIndex, colIndex, matrix, rowOffset, colOffset);
+        *solver, outputId, rowIndex, colIndex, std::vector<std::vector<Int>>(matrix), rowOffset, colOffset);
     solver->close();
 
     Timestamp ts = solver->currentTimestamp();
@@ -232,13 +230,13 @@ TEST_F(Element2dConstTest, NotifyInputChanged) {
 TEST_F(Element2dConstTest, NextInput) {
   for (const auto& [rowOffset, colOffset] : offsets) {
     const Int rowIndexLb = rowOffset;
-    const Int rowIndexUb = numRows - 1 + rowOffset;
+    const Int rowIndexUb = static_cast<Int>(numRows) - 1 + rowOffset;
     EXPECT_TRUE(rowIndexLb <= rowIndexUb);
 
     std::uniform_int_distribution<Int> rowIndexDist(rowIndexLb, rowIndexUb);
 
     const Int colIndexLb = colOffset;
-    const Int colIndexUb = numCols - 1 + colOffset;
+    const Int colIndexUb = static_cast<Int>(numCols) - 1 + colOffset;
     EXPECT_TRUE(colIndexLb <= colIndexUb);
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
@@ -253,7 +251,7 @@ TEST_F(Element2dConstTest, NextInput) {
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = solver->makeInvariant<Element2dConst>(
-        *solver, outputId, rowIndex, colIndex, matrix, rowOffset, colOffset);
+        *solver, outputId, rowIndex, colIndex, std::vector<std::vector<Int>>(matrix), rowOffset, colOffset);
     solver->close();
 
     for (Timestamp ts = solver->currentTimestamp() + 1;
@@ -270,7 +268,7 @@ TEST_F(Element2dConstTest, NotifyCurrentInputChanged) {
                  (numRows * numCols * static_cast<Int>(offsets.size())) + 1;
   for (const auto& [rowOffset, colOffset] : offsets) {
     const Int rowIndexLb = rowOffset;
-    const Int rowIndexUb = numRows - 1 + rowOffset;
+    const Int rowIndexUb = static_cast<Int>(numRows) - 1 + rowOffset;
     EXPECT_TRUE(rowIndexLb <= rowIndexUb);
 
     std::vector<Int> rowIndexValues(numRows, 0);
@@ -280,7 +278,7 @@ TEST_F(Element2dConstTest, NotifyCurrentInputChanged) {
     std::uniform_int_distribution<Int> rowIndexDist(rowIndexLb, rowIndexUb);
 
     const Int colIndexLb = colOffset;
-    const Int colIndexUb = numCols - 1 + colOffset;
+    const Int colIndexUb = static_cast<Int>(numCols) - 1 + colOffset;
     EXPECT_TRUE(colIndexLb <= colIndexUb);
 
     std::vector<Int> colIndexValues(numCols, 0);
@@ -299,7 +297,7 @@ TEST_F(Element2dConstTest, NotifyCurrentInputChanged) {
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = solver->makeInvariant<Element2dConst>(
-        *solver, outputId, rowIndex, colIndex, matrix, rowOffset, colOffset);
+        *solver, outputId, rowIndex, colIndex, std::vector<std::vector<Int>>(matrix), rowOffset, colOffset);
     solver->close();
 
     for (size_t i = 0; i < rowIndexValues.size(); ++i) {
@@ -326,7 +324,7 @@ TEST_F(Element2dConstTest, NotifyCurrentInputChanged) {
 TEST_F(Element2dConstTest, Commit) {
   for (const auto& [rowOffset, colOffset] : offsets) {
     const Int rowIndexLb = rowOffset;
-    const Int rowIndexUb = numRows - 1 + rowOffset;
+    const Int rowIndexUb = static_cast<Int>(numRows) - 1 + rowOffset;
     EXPECT_TRUE(rowIndexLb <= rowIndexUb);
 
     std::vector<Int> rowIndexValues(numRows);
@@ -336,7 +334,7 @@ TEST_F(Element2dConstTest, Commit) {
     std::uniform_int_distribution<Int> rowIndexDist(rowIndexLb, rowIndexUb);
 
     const Int colIndexLb = colOffset;
-    const Int colIndexUb = numCols - 1 + colOffset;
+    const Int colIndexUb = static_cast<Int>(numCols) - 1 + colOffset;
     EXPECT_TRUE(colIndexLb <= colIndexUb);
 
     std::vector<Int> colIndexValues(numCols, 0);
@@ -355,7 +353,7 @@ TEST_F(Element2dConstTest, Commit) {
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = solver->makeInvariant<Element2dConst>(
-        *solver, outputId, rowIndex, colIndex, matrix, rowOffset, colOffset);
+        *solver, outputId, rowIndex, colIndex, std::vector<std::vector<Int>>(matrix), rowOffset, colOffset);
     solver->close();
 
     Int committedRowIndexValue = solver->committedValue(rowIndex);
@@ -419,9 +417,9 @@ class MockElement2dVar : public Element2dConst {
   }
   explicit MockElement2dVar(SolverBase& solver, VarId output, VarId index1,
                             VarId index2,
-                            const std::vector<std::vector<Int>>& matrix,
+                            std::vector<std::vector<Int>>&& matrix,
                             Int offset1, Int offset2)
-      : Element2dConst(solver, output, index1, index2, matrix, offset1,
+      : Element2dConst(solver, output, index1, index2, std::move(matrix), offset1,
                        offset2) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Element2dConst::recompute(timestamp);
@@ -455,15 +453,15 @@ TEST_F(Element2dConstTest, SolverIntegration) {
     std::vector<std::vector<Int>> parMatrix(numRows, std::vector<Int>(numCols));
     for (size_t i = 0; i < numRows; ++i) {
       for (size_t j = 0; j < numCols; ++j) {
-        parMatrix.at(i).at(j) = i * numCols + j;
+        parMatrix.at(i).at(j) = static_cast<Int>(i * numCols + j);
       }
     }
-    VarId index1 = solver->makeIntVar(1, 1, numRows);
-    VarId index2 = solver->makeIntVar(1, 1, numCols);
+    VarId index1 = solver->makeIntVar(1, 1, static_cast<Int>(numRows));
+    VarId index2 = solver->makeIntVar(1, 1, static_cast<Int>(numCols));
     VarId output = solver->makeIntVar(-10, -100, 100);
     testNotifications<MockElement2dVar>(
         &solver->makeInvariant<MockElement2dVar>(*solver, output, index1,
-                                                 index2, parMatrix, 1, 1),
+                                                 index2, std::move(parMatrix), 1, 1),
         {propMode, markingMode, 3, index1, 5, output});
   }
 }

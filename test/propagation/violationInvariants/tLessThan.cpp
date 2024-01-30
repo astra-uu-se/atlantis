@@ -1,14 +1,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <limits>
-#include <random>
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/violationInvariants/lessThan.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -21,7 +18,7 @@ class LessThanTest : public InvariantTest {
                             solver->value(ts, inputs.at(1)));
   }
 
-  Int computeViolation(std::array<Int, 2> inputs) {
+  static Int computeViolation(std::array<Int, 2> inputs) {
     return computeViolation(inputs.at(0), inputs.at(1));
   }
 
@@ -29,7 +26,7 @@ class LessThanTest : public InvariantTest {
     return computeViolation(solver->value(ts, x), solver->value(ts, y));
   }
 
-  Int computeViolation(const Int xVal, const Int yVal) {
+  static Int computeViolation(const Int xVal, const Int yVal) {
     if (xVal < yVal) {
       return 0;
     }
@@ -56,13 +53,13 @@ TEST_F(LessThanTest, UpdateBounds) {
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
       solver->updateBounds(y, yLb, yUb, false);
-      invariant.updateBounds();
+      invariant.updateBounds(false);
       std::vector<Int> violations;
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         solver->setValue(solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
           solver->setValue(solver->currentTimestamp(), y, yVal);
-          invariant.updateBounds();
+          invariant.updateBounds(false);
           invariant.recompute(solver->currentTimestamp());
           violations.emplace_back(
               solver->value(solver->currentTimestamp(), violationId));

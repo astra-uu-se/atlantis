@@ -30,7 +30,7 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  const std::vector<SearchVar>& coveredVars() const override { return _vars; }
+  [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override { return _vars; }
 
  private:
   bool swapValues(RandomProvider& random, Assignment& assignment,

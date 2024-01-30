@@ -3,6 +3,7 @@
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
 #include "invariantgraph/fzn/int_lin_eq.hpp"
+#include "invariantgraph/fzn/int_ne.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -82,9 +83,9 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph,
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false)
 
   std::vector<Int> coeffs =
       std::get<fznparser::IntVarArray>(constraint.arguments().at(0))
@@ -97,7 +98,7 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph,
         std::get<fznparser::IntArg>(constraint.arguments().at(2))
             .toParameter());
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return int_lin_ne(
       invariantGraph, std::move(coeffs),
       std::get<fznparser::IntVarArray>(constraint.arguments().at(1)),

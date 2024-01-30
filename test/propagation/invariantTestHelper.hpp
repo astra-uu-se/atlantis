@@ -25,7 +25,7 @@ std::vector<std::vector<T>> subsets(std::vector<T>& origin) {
   std::vector<std::vector<T>> res;
   std::deque<std::pair<size_t, size_t>> q;
   res.emplace_back(std::vector<T>{});
-  q.emplace_back(std::pair<size_t, size_t>{size_t(0), 0 + 1});
+  q.emplace_back(size_t(0), 0 + 1);
   q.emplace_back(std::pair<size_t, size_t>{res.size(), 0 + 1});
   res.emplace_back(std::vector<T>{origin.at(0)});
 

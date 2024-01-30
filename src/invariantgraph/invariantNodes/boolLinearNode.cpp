@@ -25,8 +25,8 @@ void BoolLinearNode::registerNode(InvariantGraph& invariantGraph,
                    return invariantGraph.varId(varNodeId);
                  });
   solver.makeInvariant<propagation::BoolLinear>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()), _coeffs,
-      solverVars);
+      solver, invariantGraph.varId(outputVarNodeIds().front()), std::vector<Int>(_coeffs),
+      std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

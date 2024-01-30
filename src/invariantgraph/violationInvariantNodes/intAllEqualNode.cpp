@@ -34,13 +34,13 @@ void IntAllEqualNode::registerNode(InvariantGraph& invariantGraph,
   assert(_allDifferentViolationVarId != propagation::NULL_ID);
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
 
-  std::vector<propagation::VarId> solverVars;
+  std::vector<propagation::VarId> inputVarIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars),
+                 std::back_inserter(inputVarIds),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
   solver.makeViolationInvariant<propagation::AllDifferent>(
-      solver, _allDifferentViolationVarId, solverVars);
+      solver, _allDifferentViolationVarId, std::move(inputVarIds));
 }
 
 }  // namespace atlantis::invariantgraph

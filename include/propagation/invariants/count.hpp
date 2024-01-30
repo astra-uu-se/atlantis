@@ -17,9 +17,9 @@ namespace atlantis::propagation {
 
 class Count : public Invariant {
  private:
-  const VarId _output;
-  const VarId _y;
-  const std::vector<VarId> _vars;
+  VarId _output;
+  VarId _y;
+  std::vector<VarId> _vars;
   std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
@@ -29,9 +29,9 @@ class Count : public Invariant {
 
  public:
   explicit Count(SolverBase&, VarId output, VarId y,
-                 std::vector<VarId> varArray);
+                 std::vector<VarId>&& varArray);
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
+  void updateBounds(bool widenOnly) override;
   void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;

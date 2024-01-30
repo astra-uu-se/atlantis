@@ -27,7 +27,7 @@ ArrayVarElement2dNode::ArrayVarElement2dNode(
     VarNodeId idx1, VarNodeId idx2,
     std::vector<std::vector<VarNodeId>>&& varMatrix, VarNodeId output,
     Int offset1, Int offset2)
-    : ArrayVarElement2dNode(idx1, idx2, std::move(flatten(varMatrix)), output,
+    : ArrayVarElement2dNode(idx1, idx2, flatten(varMatrix), output,
                             varMatrix.size(), offset1, offset2) {}
 
 void ArrayVarElement2dNode::registerOutputVars(
@@ -52,7 +52,7 @@ void ArrayVarElement2dNode::registerNode(InvariantGraph& invariantGraph,
          propagation::NULL_ID);
   solver.makeInvariant<propagation::Element2dVar>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), varMatrix,
+      invariantGraph.varId(idx1()), invariantGraph.varId(idx2()), std::move(varMatrix),
       _offset1, _offset2);
 }
 

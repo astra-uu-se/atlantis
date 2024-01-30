@@ -9,7 +9,7 @@ IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarId b, VarId x, VarId
 
 void IfThenElse::registerVars() {
   assert(!_id.equals(NULL_ID));
-  _solver.registerInvariantInput(_id, _b, 0);
+  _solver.registerInvariantInput(_id, _b, 0, false);
   _solver.registerInvariantInput(_id, _xy[0], 0, true);
   _solver.registerInvariantInput(_id, _xy[1], 0, true);
   registerDefinedVar(_output);

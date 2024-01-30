@@ -6,15 +6,15 @@ static inline Int numCols(const std::vector<std::vector<VarId>>& varMatrix) {
   assert(std::all_of(varMatrix.begin(), varMatrix.end(), [&](const auto& col) {
     return col.size() == varMatrix.front().size();
   }));
-  return varMatrix.empty() ? 0 : varMatrix.front().size();
+  return varMatrix.empty() ? 0 : static_cast<Int>(varMatrix.front().size());
 }
 
 Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarId index1,
                            VarId index2,
-                           std::vector<std::vector<VarId>> varMatrix,
+                           std::vector<std::vector<VarId>>&& varMatrix,
                            Int offset1, Int offset2)
     : Invariant(solver),
-      _varMatrix(varMatrix),
+      _varMatrix(std::move(varMatrix)),
       _indices{index1, index2},
       _dimensions{static_cast<Int>(_varMatrix.size()), numCols(_varMatrix)},
       _offsets{offset1, offset2},
@@ -24,8 +24,8 @@ Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarId index1,
 
 void Element2dVar::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _indices[0], LocalId(0));
-  _solver.registerInvariantInput(_id, _indices[1], LocalId(0));
+  _solver.registerInvariantInput(_id, _indices[0], LocalId(0), false);
+  _solver.registerInvariantInput(_id, _indices[1], LocalId(0), false);
   for (const auto& varRow : _varMatrix) {
     for (const VarId input : varRow) {
       _solver.registerInvariantInput(_id, input, LocalId(0), true);
@@ -38,8 +38,8 @@ void Element2dVar::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  std::array<Int, 2> iLb;
-  std::array<Int, 2> iUb;
+  std::array<Int, 2> iLb{0,0};
+  std::array<Int, 2> iUb{0,0};
   for (size_t i = 0; i < 2; ++i) {
     iLb[i] = std::max<Int>(_offsets[i], _solver.lowerBound(_indices[i]));
     iUb[i] = std::min<Int>(_dimensions[i] - 1 + _offsets[i],

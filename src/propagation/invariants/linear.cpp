@@ -2,11 +2,11 @@
 
 namespace atlantis::propagation {
 
-Linear::Linear(SolverBase& solver, VarId output, const std::vector<VarId>& varArray)
-    : Linear(solver, output, std::vector<Int>(varArray.size(), 1), varArray) {}
+Linear::Linear(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
+    : Linear(solver, output, std::vector<Int>(varArray.size(), 1), std::move(varArray)) {}
 
-Linear::Linear(SolverBase& solver, VarId output, std::vector<Int> coeffs,
-               std::vector<VarId> varArray)
+Linear::Linear(SolverBase& solver, VarId output, std::vector<Int>&& coeffs,
+               std::vector<VarId>&& varArray)
     : Invariant(solver),
       _output(output),
       _coeffs(std::move(coeffs)),
@@ -21,7 +21,7 @@ void Linear::registerVars() {
   assert(_id != NULL_ID);
 
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    _solver.registerInvariantInput(_id, _varArray[i], i);
+    _solver.registerInvariantInput(_id, _varArray[i], i, false);
   }
   registerDefinedVar(_output);
 }

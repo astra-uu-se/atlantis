@@ -14,7 +14,7 @@ namespace atlantis::invariantgraph {
  */
 class InvariantGraphRoot : public ImplicitConstraintNode {
  public:
-  InvariantGraphRoot(std::vector<VarNodeId>&& vars = {})
+  explicit InvariantGraphRoot(std::vector<VarNodeId>&& vars = {})
       : ImplicitConstraintNode(std::move(vars)) {}
 
   ~InvariantGraphRoot() override = default;

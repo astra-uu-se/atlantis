@@ -3,12 +3,12 @@
 namespace atlantis::propagation {
 
 inline bool all_in_range(size_t start, size_t stop,
-                         std::function<bool(size_t)> predicate) {
+                         std::function<bool(size_t)>&& predicate) {
   std::vector<size_t> vec(stop - start);
   for (size_t i = 0; i < stop - start; ++i) {
     vec.at(i) = start + i;
   }
-  return std::all_of(vec.begin(), vec.end(), predicate);
+  return std::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
 PropagationGraph::PropagationGraph(const Store& store, size_t expectedSize)
@@ -50,10 +50,10 @@ void PropagationGraph::registerInvariantInput(InvariantId invariantId,
   }
   _isDynamicInvariant.set(
       invariantId, _isDynamicInvariant.get(invariantId) || isDynamicInput);
-  _listeningInvariantData[varId].push_back(
-      ListeningInvariantData(invariantId, localId));
-  _inputVars[invariantId].push_back(
-      std::pair<VarIdBase, bool>{varId, isDynamicInput});
+  _listeningInvariantData[varId].emplace_back(
+      invariantId, localId);
+  _inputVars[invariantId].emplace_back(
+      varId, isDynamicInput);
 }
 
 void PropagationGraph::registerDefinedVar(VarIdBase varId,
@@ -74,7 +74,7 @@ void PropagationGraph::registerDefinedVar(VarIdBase varId,
   }
   if (index < _listeningInvariantData[varId].size()) {
     _listeningInvariantData[varId].erase(
-        _listeningInvariantData[varId].begin() + index);
+        _listeningInvariantData[varId].begin() + static_cast<Int>(index));
     logWarning("The (self-cyclic) dependency that the invariant "
                << "(" << invariantId << ") depends on the input "
                << "variable (" << invariantId << ") was removed.");
@@ -149,7 +149,7 @@ bool PropagationGraph::containsStaticCycle() {
   for (size_t varId = 1u; varId <= numVars(); ++varId) {
     assert(all_in_range(1u, numVars() + 1,
                         [&](const size_t i) { return !inFrontier.at(i); }));
-    if (listeningInvariantData(varId).size() == 0) {
+    if (listeningInvariantData(varId).empty()) {
       if (containsStaticCycle(visited, inFrontier, VarIdBase(varId))) {
         return true;
       }
@@ -186,7 +186,7 @@ void PropagationGraph::partitionIntoLayers(std::vector<bool>& visited,
   }
   _varLayerIndex[varId].layer = layer;
   for (size_t i = _varsInLayer.size(); i <= layer; ++i) {
-    _varsInLayer.emplace_back(std::vector<VarIdBase>{});
+    _varsInLayer.emplace_back();
   }
   _varLayerIndex[varId].index = _varsInLayer[layer].size();
   _varsInLayer[layer].emplace_back(varId);
@@ -340,8 +340,8 @@ void PropagationGraph::mergeLayersWithoutDynamicCycles() {
       }
     }
     // remove the layer
-    _varsInLayer.erase(_varsInLayer.begin() + layer);
-    _layerHasDynamicCycle.erase(_layerHasDynamicCycle.begin() + layer);
+    _varsInLayer.erase(_varsInLayer.begin() + static_cast<Int>(layer));
+    _layerHasDynamicCycle.erase(_layerHasDynamicCycle.begin() + static_cast<Int>(layer));
   }
 }
 
@@ -400,9 +400,9 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
                          return false;
                        }
                        if (isDynInv && !p.second) {
-                         return _varLayerIndex[p.first].layer < layer;
+                         return _varLayerIndex[p.first.id].layer < layer;
                        }
-                       return _varLayerIndex[p.first].layer <= layer;
+                       return _varLayerIndex[p.first.id].layer <= layer;
                      }));
 
   for (const auto& [inputId, isDynamicInput] : _inputVars[defInv]) {
@@ -420,13 +420,13 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
     const VarId dynamicInputId = dynamicInputVar(ts, defInv);
     assert(dynamicInputId != NULL_ID);
     // we should have no dependencies to subsequent layers:
-    assert(_varLayerIndex[dynamicInputId].layer <= layer);
-    if (_varLayerIndex[dynamicInputId].layer == layer &&
-        _varPosition[dynamicInputId] == numVars()) {
-      topologicallyOrder(ts, inFrontier, dynamicInputId);
+    assert(_varLayerIndex[dynamicInputId.id].layer <= layer);
+    if (_varLayerIndex[dynamicInputId.id].layer == layer &&
+        _varPosition[dynamicInputId.id] == numVars()) {
+      topologicallyOrder(ts, inFrontier, dynamicInputId.id);
     }
     _varPosition[varId] =
-        std::max(_varPosition[varId], _varPosition[dynamicInputId] + 1);
+        std::max(_varPosition[varId], _varPosition[dynamicInputId.id] + 1);
   }
   assert(std::all_of(inputVars(defInv).begin(), inputVars(defInv).end(),
                      [&](const std::pair<VarId, bool> p) {
@@ -435,9 +435,9 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
                        }
                        if (isDynInv && p.second) {
                          return _store.dynamicInputVar(ts, defInv) != p.first ||
-                                _varPosition[p.first] < _varPosition[varId];
+                                _varPosition[p.first.id] < _varPosition[varId];
                        }
-                       return _varPosition[p.first] < _varPosition[varId];
+                       return _varPosition[p.first.id] < _varPosition[varId];
                      }));
 
   inFrontier[index] = false;

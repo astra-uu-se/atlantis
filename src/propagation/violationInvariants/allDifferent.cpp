@@ -6,7 +6,7 @@ namespace atlantis::propagation {
  * @param violationId id for the violationCount
  */
 AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
-                           std::vector<VarId> vars)
+                           std::vector<VarId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
       _committedValues(_vars.size(), 0),
@@ -18,13 +18,13 @@ AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
 void AllDifferent::registerVars() {
   assert(!_id.equals(NULL_ID));
   for (size_t i = 0; i < _vars.size(); ++i) {
-    _solver.registerInvariantInput(_id, _vars[i], i);
+    _solver.registerInvariantInput(_id, _vars[i], i, false);
   }
   registerDefinedVar(_violationId);
 }
 
 void AllDifferent::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_violationId, 0, _vars.size() - 1, widenOnly);
+  _solver.updateBounds(_violationId, 0, static_cast<Int>(_vars.size() - 1), widenOnly);
 }
 
 void AllDifferent::close(Timestamp ts) {

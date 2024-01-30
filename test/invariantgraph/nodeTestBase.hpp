@@ -129,8 +129,8 @@ class NodeTestBase : public ::testing::Test {
       EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
       registered.at(solverVarId(varNodeId) - 1) = true;
     }
-    for (size_t i = 0; i < registered.size(); ++i) {
-      EXPECT_TRUE(registered.at(i));
+    for (const bool r : registered) {
+      EXPECT_TRUE(r);
     }
   }
 
@@ -180,7 +180,7 @@ class NodeTestBase : public ::testing::Test {
                        const std::vector<propagation::VarId>& inputVars,
                        std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
-    for (Int i = inputVals.size() - 1; i >= 0; --i) {
+    for (Int i = static_cast<Int>(inputVals.size()) - 1; i >= 0; --i) {
       if (inputVals.at(i) < solver.upperBound(inputVars.at(i))) {
         ++inputVals.at(i);
         return true;

@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <limits>
 #include <random>
-#include <stdexcept>
 #include <vector>
 
 #include "types.hpp"
@@ -12,23 +10,17 @@ namespace atlantis::testing {
 
 static bool domainCoversInterval(const std::vector<DomainEntry>& domain,
                                  Int intervalLb, Int intervalUb) {
-  for (const DomainEntry& entry : domain) {
-    if (entry.lowerBound <= intervalLb && intervalUb <= entry.upperBound) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(domain.begin(), domain.end(), [&](const DomainEntry& entry) {
+    return entry.lowerBound <= intervalLb && intervalUb <= entry.upperBound;
+  });
 }
 
 static bool intersects(const std::vector<DomainEntry>& domain, Int intervalLb,
                        Int intervalUb) {
-  for (const DomainEntry& entry : domain) {
-    if ((entry.lowerBound <= intervalLb && intervalLb <= entry.upperBound) ||
-        (intervalLb <= entry.lowerBound && entry.lowerBound <= intervalUb)) {
-      return true;
-    }
-  }
-  return false;
+  return std::any_of(domain.begin(), domain.end(), [&](const DomainEntry& entry) {
+    return (entry.lowerBound <= intervalLb && intervalLb <= entry.upperBound) ||
+           (intervalLb <= entry.lowerBound && entry.lowerBound <= intervalUb);
+  });
 }
 
 class DomainTest : public ::testing::Test {
