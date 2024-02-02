@@ -95,11 +95,10 @@ VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::BoolVar& var,
       nId = createVarNode(var.lowerBound(), var.identifier(), isDefinedVar);
     }
   } else if (var.identifier().empty()) {
-    nId = createVarNode(SearchDomain(std::vector<Int>{0, 1}), false,
-                        isDefinedVar);
+    nId = createVarNode(SearchDomain(0, 1), false, isDefinedVar);
   } else {
-    nId = createVarNode(SearchDomain(std::vector<Int>{0, 1}), false,
-                        var.identifier(), isDefinedVar);
+    nId = createVarNode(SearchDomain(0, 1), false, var.identifier(),
+                        isDefinedVar);
   }
 
   if (var.isOutput() && !var.identifier().empty() &&
@@ -135,7 +134,7 @@ VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::IntVar& var,
     SearchDomain domain =
         var.domain().isInterval()
             ? SearchDomain(var.domain().lowerBound(), var.domain().upperBound())
-            : SearchDomain(std::vector<Int>(var.domain().elements()));
+            : SearchDomain(var.domain().elements());
     if (var.identifier().empty()) {
       nId = createVarNode(std::move(domain), true, isDefinedVar);
     } else {

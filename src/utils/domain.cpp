@@ -8,7 +8,9 @@ static bool isInterval(const std::vector<Int>& sortedVals) {
              sortedVals.back();
 }
 
-IntervalDomain::IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {}
+IntervalDomain::IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {
+  assert(lb <= ub);
+}
 
 Int IntervalDomain::lowerBound() const { return _lb; }
 
@@ -66,9 +68,13 @@ bool IntervalDomain::operator!=(const IntervalDomain& other) const {
   return !(*this == other);
 }
 
-SetDomain::SetDomain(std::vector<Int> values) : _values(std::move(values)) {
+SetDomain::SetDomain(std::vector<Int>&& values) : _values(std::move(values)) {
   std::sort(_values.begin(), _values.end());
+  assert(_values.empty() || _values.front() <= _values.back());
 }
+
+SetDomain::SetDomain(const std::vector<Int>& values)
+    : SetDomain(std::vector<Int>(values)) {}
 
 const std::vector<Int>& SetDomain::values() const { return _values; }
 
@@ -220,6 +226,9 @@ bool SetDomain::operator!=(const SetDomain& other) const {
 SearchDomain::SearchDomain(std::vector<Int>&& values)
     : _domain(SetDomain(std::move(values))) {}
 
+SearchDomain::SearchDomain(const std::vector<Int>& values)
+    : _domain(SetDomain(values)) {}
+
 SearchDomain::SearchDomain(Int lb, Int ub) : _domain(IntervalDomain(lb, ub)) {}
 
 const std::variant<IntervalDomain, SetDomain>& SearchDomain::innerDomain()
@@ -231,7 +240,7 @@ const std::vector<Int>& SearchDomain::values() {
   if (std::holds_alternative<IntervalDomain>(_domain)) {
     std::vector<Int> values(upperBound() - lowerBound() + 1);
     std::iota(values.begin(), values.end(), lowerBound());
-    _domain = SetDomain(values);
+    _domain = SetDomain(std::move(values));
   }
   assert(std::holds_alternative<SetDomain>(_domain));
   return std::get<SetDomain>(_domain).values();
@@ -303,7 +312,7 @@ void SearchDomain::remove(Int value) {
       ++i;
     }
   }
-  _domain = SetDomain(newDomain);
+  _domain = SetDomain(std::move(newDomain));
 }
 
 void SearchDomain::removeBelow(Int value) {
@@ -375,7 +384,7 @@ void SearchDomain::intersectWith(const std::vector<Int>& values) {
   newDomain.reserve(end - begin + 1);
   std::copy(cpy.begin() + begin, cpy.begin() + end + 1,
             std::back_inserter(newDomain));
-  _domain = SetDomain(newDomain);
+  _domain = SetDomain(std::move(newDomain));
 }
 
 void SearchDomain::fix(Int value) {

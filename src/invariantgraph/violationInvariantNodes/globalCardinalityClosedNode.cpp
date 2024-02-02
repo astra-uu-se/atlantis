@@ -46,7 +46,6 @@ void GlobalCardinalityClosedNode::registerNode(
                  std::back_inserter(outputVarIds),
                  [&](VarNodeId id) { return invariantGraph.varId(id); });
 
-  assert(_intermediate == isReified() && shouldHold());
   solver.makeInvariant<propagation::GlobalCardinalityClosed>(
       solver,
       _intermediate != propagation::NULL_ID ? violationVarId(invariantGraph)

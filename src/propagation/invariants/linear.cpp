@@ -30,15 +30,15 @@ void Linear::registerVars() {
 void Linear::updateBounds(bool widenOnly) {
   // precondition: this invariant must be registered with the solver before it
   // is initialised.
-  Int lb = 0;
-  Int ub = 0;
+  Int sumLb = 0;
+  Int sumUb = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    lb += _coeffs[i] * (_coeffs[i] < 0 ? _solver.upperBound(_varArray[i])
-                                       : _solver.lowerBound(_varArray[i]));
-    ub += _coeffs[i] * (_coeffs[i] < 0 ? _solver.lowerBound(_varArray[i])
-                                       : _solver.upperBound(_varArray[i]));
+    const Int v1 = _coeffs[i] * _solver.lowerBound(_varArray[i]);
+    const Int v2 = _coeffs[i] * _solver.upperBound(_varArray[i]);
+    sumLb += std::min(v1, v2);
+    sumUb += std::max(v1, v2);
   }
-  _solver.updateBounds(_output, lb, ub, widenOnly);
+  _solver.updateBounds(_output, sumLb, sumUb, widenOnly);
 }
 
 void Linear::recompute(Timestamp ts) {

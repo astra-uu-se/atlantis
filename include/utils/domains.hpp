@@ -96,7 +96,8 @@ class SetDomain : public Domain {
   std::vector<Int> _values;
 
  public:
-  explicit SetDomain(std::vector<Int> values);
+  explicit SetDomain(std::vector<Int>&&);
+  explicit SetDomain(const std::vector<Int>&);
 
   [[nodiscard]] const std::vector<Int>& values() const;
 
@@ -148,7 +149,8 @@ class SearchDomain : public Domain {
   std::variant<IntervalDomain, SetDomain> _domain;
 
  public:
-  explicit SearchDomain(std::vector<Int>&& values);
+  explicit SearchDomain(std::vector<Int>&&);
+  explicit SearchDomain(const std::vector<Int>&);
   explicit SearchDomain(Int lb, Int ub);
 
   [[nodiscard]] const std::variant<IntervalDomain, SetDomain>& innerDomain()

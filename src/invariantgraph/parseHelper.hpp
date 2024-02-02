@@ -27,10 +27,6 @@ std::vector<invariantgraph::VarNodeId> concat(
     const std::vector<invariantgraph::VarNodeId>&,
     const std::vector<invariantgraph::VarNodeId>&);
 
-bool hasCorrectSignature(
-    const std::vector<std::pair<std::string, size_t>>& nameNumArgPairs,
-    const fznparser::Constraint& constraint);
-
 std::vector<VarNodeId> pruneAllDifferentFree(
     InvariantGraph&, std::vector<VarNodeId> staticInputVarNodeIds);
 

@@ -10,17 +10,21 @@ namespace atlantis::testing {
 
 static bool domainCoversInterval(const std::vector<DomainEntry>& domain,
                                  Int intervalLb, Int intervalUb) {
-  return std::any_of(domain.begin(), domain.end(), [&](const DomainEntry& entry) {
-    return entry.lowerBound <= intervalLb && intervalUb <= entry.upperBound;
-  });
+  return std::any_of(
+      domain.begin(), domain.end(), [&](const DomainEntry& entry) {
+        return entry.lowerBound <= intervalLb && intervalUb <= entry.upperBound;
+      });
 }
 
 static bool intersects(const std::vector<DomainEntry>& domain, Int intervalLb,
                        Int intervalUb) {
-  return std::any_of(domain.begin(), domain.end(), [&](const DomainEntry& entry) {
-    return (entry.lowerBound <= intervalLb && intervalLb <= entry.upperBound) ||
-           (intervalLb <= entry.lowerBound && entry.lowerBound <= intervalUb);
-  });
+  return std::any_of(domain.begin(), domain.end(),
+                     [&](const DomainEntry& entry) {
+                       return (entry.lowerBound <= intervalLb &&
+                               intervalLb <= entry.upperBound) ||
+                              (intervalLb <= entry.lowerBound &&
+                               entry.lowerBound <= intervalUb);
+                     });
 }
 
 class DomainTest : public ::testing::Test {

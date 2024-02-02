@@ -345,8 +345,9 @@ VarNodeId InvariantGraph::breakCycle(const std::vector<VarNodeId>& cycle) {
   assert(pivot != NULL_NODE_ID);
   assert(!varNode(pivot).isFixed());
 
-  VarNodeId newInputNode = createVarNode(SearchDomain(varNode(pivot).domain()),
-                                         varNode(pivot).isIntVar(), false);
+  VarNodeId newInputNode =
+      createVarNode(SearchDomain(varNode(pivot).constDomain()),
+                    varNode(pivot).isIntVar(), false);
 
   invariantNode(listeningInvariant)
       .replaceStaticInputVarNode(varNode(pivot), varNode(newInputNode));

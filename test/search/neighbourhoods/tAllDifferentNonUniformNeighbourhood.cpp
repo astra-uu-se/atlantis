@@ -45,14 +45,13 @@ class AllDifferentNonUniformNeighbourhoodTest : public ::testing::Test {
     assignment = std::make_unique<search::Assignment>(
         *solver, solver->makeIntVar(0, 0, 0), solver->makeIntVar(0, 0, 0),
         propagation::ObjectiveDirection::NONE);
-    for (auto & domain : domains) {
-      const auto& [lb, ub] =
-          std::minmax_element(domain.begin(), domain.end());
+    for (const auto& domain : domains) {
+      const auto& [lb, ub] = std::minmax_element(domain.begin(), domain.end());
 
       propagation::VarId var = solver->makeIntVar(*lb, *lb, *ub);
       domainLb = std::min(domainLb, *lb);
       domainUb = std::max(domainUb, *ub);
-      vars.emplace_back(var, SearchDomain(std::vector<Int>(domain)));
+      vars.emplace_back(var, SearchDomain(domain));
     }
     solver->close();
   }
@@ -87,8 +86,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, Initialize) {
 
 TEST_F(AllDifferentNonUniformNeighbourhoodTest, CanSwap) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
-      std::vector<search::SearchVar>(vars), domainLb, domainUb,
-      *solver);
+      std::vector<search::SearchVar>(vars), domainLb, domainUb, *solver);
 
   std::vector<std::unordered_set<Int>> setDomains(domains.size());
   for (size_t i = 0u; i < vars.size(); ++i) {
@@ -125,8 +123,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, CanSwap) {
 
 TEST_F(AllDifferentNonUniformNeighbourhoodTest, Swap) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
-      std::vector<search::SearchVar>(vars), domainLb, domainUb,
-      *solver);
+      std::vector<search::SearchVar>(vars), domainLb, domainUb, *solver);
 
   auto schedule = search::AnnealerContainer::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
@@ -166,8 +163,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, Swap) {
 
 TEST_F(AllDifferentNonUniformNeighbourhoodTest, AssignValue) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
-      std::vector<search::SearchVar>(vars), domainLb, domainUb,
-      *solver);
+      std::vector<search::SearchVar>(vars), domainLb, domainUb, *solver);
 
   auto schedule = search::AnnealerContainer::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
@@ -210,8 +206,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, AssignValue) {
 
 TEST_F(AllDifferentNonUniformNeighbourhoodTest, RandomMove) {
   search::neighbourhoods::AllDifferentNonUniformNeighbourhood neighbourhood(
-      std::vector<search::SearchVar>(vars), domainLb, domainUb,
-      *solver);
+      std::vector<search::SearchVar>(vars), domainLb, domainUb, *solver);
 
   auto schedule = search::AnnealerContainer::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
