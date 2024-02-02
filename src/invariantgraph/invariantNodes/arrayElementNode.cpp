@@ -32,7 +32,8 @@ void ArrayElementNode::registerOutputVars(InvariantGraph& invariantGraph,
     assert(invariantGraph.varId(idx()) != propagation::NULL_ID);
     invariantGraph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::ElementConst>(
-            solver, invariantGraph.varId(idx()), std::vector<Int>(_parVector), _offset));
+            solver, invariantGraph.varId(idx()), std::vector<Int>(_parVector),
+            _offset));
   }
 }
 

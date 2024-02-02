@@ -85,7 +85,8 @@ class OutOfOrderIndexRegistration : public std::exception {
 
 class FznArgumentException : public std::runtime_error {
  public:
-  explicit FznArgumentException(const std::string& msg) : std::runtime_error(msg) {}
+  explicit FznArgumentException(const std::string& msg)
+      : std::runtime_error(msg) {}
 };
 
 }  // namespace atlantis

@@ -8,9 +8,8 @@ namespace atlantis::propagation {
 class SolverBase;  // Forward declaration
 
 class ViolationInvariant : public Invariant {
- private:
  protected:
-  const VarId _violationId;
+  VarId _violationId;
   explicit ViolationInvariant(SolverBase& solver, VarId violationId,
                               Int nullState = -1)
       : Invariant(solver, nullState), _violationId(violationId) {}

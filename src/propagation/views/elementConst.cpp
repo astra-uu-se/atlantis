@@ -20,7 +20,8 @@ Int ElementConst::lowerBound() const {
   const Int indexBegin =
       std::max<Int>(0, _solver.lowerBound(_parentId) - _offset);
   const Int indexEnd =
-      std::min<Int>(static_cast<Int>(_array.size()), _solver.upperBound(_parentId) - _offset + 1);
+      std::min<Int>(static_cast<Int>(_array.size()),
+                    _solver.upperBound(_parentId) - _offset + 1);
   if (indexBegin >= static_cast<Int>(_array.size())) {
     return _array.back();
   } else if (indexEnd < 0) {
@@ -34,7 +35,8 @@ Int ElementConst::upperBound() const {
   const Int indexBegin =
       std::max<Int>(0, _solver.lowerBound(_parentId) - _offset);
   const Int indexEnd =
-      std::min<Int>(static_cast<Int>(_array.size()), _solver.upperBound(_parentId) - _offset + 1);
+      std::min<Int>(static_cast<Int>(_array.size()),
+                    _solver.upperBound(_parentId) - _offset + 1);
 
   if (indexBegin >= static_cast<Int>(_array.size())) {
     return _array.back();

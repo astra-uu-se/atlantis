@@ -7,13 +7,13 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
-#include "propagation/violationInvariants/equal.hpp"
-#include "propagation/violationInvariants/lessThan.hpp"
 #include "propagation/invariants/countConst.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/views/lessEqualConst.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/violationInvariants/lessThan.hpp"
 
 namespace atlantis::benchmark {
 
@@ -151,7 +151,7 @@ class CarSequencing : public ::benchmark::Fixture {
         featureElemSum.emplace_back(solver->makeIntVar(0, 0, blockSize.at(o)));
         // Introducing up to n invariants each with up to n static edges
         solver->makeInvariant<propagation::CountConst>(
-            *solver, featureElemSum.back(), o, featureElemRun);
+            *solver, featureElemSum.back(), o, std::move(featureElemRun));
         // Introducing up to n invariants each with 2 static edges
         violations.emplace_back(
             solver->makeIntView<propagation::LessEqualConst>(
@@ -169,7 +169,7 @@ class CarSequencing : public ::benchmark::Fixture {
     totalViolation = solver->makeIntVar(0, 0, maxViol);
     // introducing one invariant with up to n edges
     solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
-                                               violations);
+                                               std::move(violations));
 
     solver->close();
   }

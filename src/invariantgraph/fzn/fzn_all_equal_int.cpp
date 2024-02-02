@@ -27,8 +27,7 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
       SearchDomain(1, static_cast<Int>(inputs.size()) - 1), true, true);
 
   invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      invariantGraph.createVarNodes(inputs, false),
-      allDiffViolVarNodeId));
+      invariantGraph.createVarNodes(inputs, false), allDiffViolVarNodeId));
 
   invariantGraph.varNode(allDiffViolVarNodeId).shouldEnforceDomain(true);
 
@@ -47,8 +46,7 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
         SearchDomain(0, static_cast<Int>(inputs.size()) - 2), false, true);
 
     invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        allDiffViolVarNodeId));
+        invariantGraph.createVarNodes(inputs, false), allDiffViolVarNodeId));
 
     invariantGraph.varNode(allDiffViolVarNodeId).shouldEnforceDomain(true);
 
@@ -59,8 +57,7 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
       SearchDomain(0, static_cast<Int>(inputs.size()) - 1), false, true);
 
   invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      invariantGraph.createVarNodes(inputs, false),
-      allDiffViolVarNodeId));
+      invariantGraph.createVarNodes(inputs, false), allDiffViolVarNodeId));
 
   // If all variables take the same value (violation equals inputs.size() -
   // 1), then all_equal holds and the reified variable is true:

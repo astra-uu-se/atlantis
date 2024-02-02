@@ -4,9 +4,9 @@
 #include <limits>
 #include <vector>
 
-#include "types.hpp"
-#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
+#include "propagation/solver.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 

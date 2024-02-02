@@ -129,9 +129,10 @@ template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::isMarked(VarIdBase id) {
   if constexpr (MarkingMode ==
                 OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
-    return std::any_of(_solver.modifiedSearchVar().begin(), _solver.modifiedSearchVar().end(), [&](size_t ancestor) {
-      return _searchVarAncestors.at(id).contains(ancestor);
-    });
+    return std::any_of(_solver.modifiedSearchVar().begin(),
+                       _solver.modifiedSearchVar().end(), [&](size_t ancestor) {
+                         return _searchVarAncestors.at(id).contains(ancestor);
+                       });
   } else if constexpr (MarkingMode ==
                        OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION) {
     return _onPropagationPath.get(id);

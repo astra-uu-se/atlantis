@@ -31,8 +31,9 @@ void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,
                  std::back_inserter(outputVarIds),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
-  solver.makeInvariant<propagation::GlobalCardinalityOpen>(solver, std::move(outputVarIds),
-                                                           std::move(inputVarIds), std::vector<Int>(_cover));
+  solver.makeInvariant<propagation::GlobalCardinalityOpen>(
+      solver, std::move(outputVarIds), std::move(inputVarIds),
+      std::vector<Int>(_cover));
 }
 
 }  // namespace atlantis::invariantgraph

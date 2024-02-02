@@ -51,7 +51,8 @@ void BoolClauseNode::registerNode(InvariantGraph& invariantGraph,
 
   assert(_sumVarId != propagation::NULL_ID);
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
-  solver.makeInvariant<propagation::BoolLinear>(solver, _sumVarId, std::move(solverVars));
+  solver.makeInvariant<propagation::BoolLinear>(solver, _sumVarId,
+                                                std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

@@ -7,12 +7,12 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
-#include "propagation/violationInvariants/equal.hpp"
-#include "propagation/violationInvariants/lessThan.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
+#include "propagation/violationInvariants/equal.hpp"
+#include "propagation/violationInvariants/lessThan.hpp"
 
 namespace atlantis::benchmark {
 
@@ -77,8 +77,8 @@ class GolombRuler : public ::benchmark::Fixture {
 
     // differences must be unique
     totalViolation = solver->makeIntVar(0, 0, maxViol);
-    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, totalViolation,
-                                                      differences);
+    solver->makeViolationInvariant<propagation::AllDifferent>(
+        *solver, totalViolation, std::vector<propagation::VarId>(differences));
 
     solver->close();
   }

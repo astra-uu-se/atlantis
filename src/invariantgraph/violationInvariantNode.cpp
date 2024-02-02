@@ -23,7 +23,9 @@ ViolationInvariantNode::ViolationInvariantNode(
                     std::move(staticInputIds)),
       _reifiedViolationNodeId(reifiedId),
       _shouldHold(shouldHold) {
-  assert((!isReified() && _reifiedViolationNodeId == NULL_NODE_ID) || (_reifiedViolationNodeId != NULL_NODE_ID && outputVarNodeIds().front() == _reifiedViolationNodeId));
+  assert((!isReified() && _reifiedViolationNodeId == NULL_NODE_ID) ||
+         (_reifiedViolationNodeId != NULL_NODE_ID &&
+          outputVarNodeIds().front() == _reifiedViolationNodeId));
 }
 
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
@@ -46,8 +48,8 @@ ViolationInvariantNode::ViolationInvariantNode(
 
 ViolationInvariantNode::ViolationInvariantNode(
     std::vector<VarNodeId>&& staticInputIds, bool shouldHold)
-    : ViolationInvariantNode({}, std::move(staticInputIds), VarNodeId(NULL_NODE_ID),
-                             shouldHold) {}
+    : ViolationInvariantNode({}, std::move(staticInputIds),
+                             VarNodeId(NULL_NODE_ID), shouldHold) {}
 bool ViolationInvariantNode::isReified() const {
   return _reifiedViolationNodeId != NULL_NODE_ID;
 }

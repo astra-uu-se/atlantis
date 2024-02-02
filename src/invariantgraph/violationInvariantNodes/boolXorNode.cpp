@@ -7,8 +7,7 @@ namespace atlantis::invariantgraph {
 BoolXorNode::BoolXorNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode({a, b}, r) {}
 BoolXorNode::BoolXorNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode({a, b},
-                             shouldHold) {}
+    : ViolationInvariantNode({a, b}, shouldHold) {}
 
 void BoolXorNode::registerOutputVars(InvariantGraph& invariantGraph,
                                      propagation::SolverBase& solver) {

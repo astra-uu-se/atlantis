@@ -6,8 +6,7 @@ namespace atlantis::invariantgraph {
 
 VarIntCountNode::VarIntCountNode(std::vector<VarNodeId>&& vars,
                                  VarNodeId needle, VarNodeId count)
-    : InvariantNode({count},
-                    append(std::move(vars), needle)) {}
+    : InvariantNode({count}, append(std::move(vars), needle)) {}
 
 std::vector<VarNodeId> VarIntCountNode::haystack() const {
   std::vector<VarNodeId> inputs;

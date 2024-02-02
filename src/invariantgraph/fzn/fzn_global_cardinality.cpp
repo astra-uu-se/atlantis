@@ -8,7 +8,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 static void checkInputs(const std::vector<Int>& cover,
-                 const fznparser::IntVarArray& counts) {
+                        const fznparser::IntVarArray& counts) {
   if (cover.size() != counts.size()) {
     throw FznArgumentException(
         "fzn_global_cardinality: cover and counts must have the same "
@@ -22,11 +22,9 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
                             const fznparser::IntVarArray& counts) {
   checkInputs(cover, counts);
 
-  invariantGraph.addInvariantNode(
-      std::make_unique<GlobalCardinalityNode>(
-          invariantGraph.createVarNodes(inputs, false),
-          std::move(cover),
-          invariantGraph.createVarNodes(counts, true)));
+  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
+      invariantGraph.createVarNodes(inputs, false), std::move(cover),
+      invariantGraph.createVarNodes(counts, true)));
   return true;
 }
 
@@ -56,10 +54,9 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
             binaryOutputVarNodeIds.at(i));
   }
 
-  invariantGraph.addInvariantNode(
-      std::make_unique<GlobalCardinalityNode>(
-          invariantGraph.createVarNodes(inputs, false),
-          std::move(cover), std::move(outputVarNodeIds)));
+  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
+      invariantGraph.createVarNodes(inputs, false), std::move(cover),
+      std::move(outputVarNodeIds)));
 
   array_bool_and(invariantGraph, std::move(binaryOutputVarNodeIds), reified);
   return true;

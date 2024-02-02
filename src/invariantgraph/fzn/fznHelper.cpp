@@ -124,12 +124,13 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
                           const fznparser::IntArg& needle) {
   SearchDomain domain(0, static_cast<Int>(inputs.size()));
 
-  VarNodeId countVarNodeId = invariantGraph.createVarNode(std::move(domain), true, true);
+  VarNodeId countVarNodeId =
+      invariantGraph.createVarNode(std::move(domain), true, true);
 
   if (needle.isFixed()) {
     invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        needle.toParameter(), countVarNodeId));
+        invariantGraph.createVarNodes(inputs, false), needle.toParameter(),
+        countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
         invariantGraph.createVarNodes(inputs, false),
@@ -147,8 +148,8 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
 
   if (needle.isFixed()) {
     invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        needle.toParameter(), countVarNodeId));
+        invariantGraph.createVarNodes(inputs, false), needle.toParameter(),
+        countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
         invariantGraph.createVarNodes(inputs, false),

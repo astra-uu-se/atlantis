@@ -29,8 +29,7 @@ bool array_int_element(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true)
 
-  const auto& idx =
-      std::get<fznparser::IntArg>(constraint.arguments().at(0));
+  const auto& idx = std::get<fznparser::IntArg>(constraint.arguments().at(0));
 
   Int offset = 1;
   if (hasOffsetSuffix) {
@@ -44,7 +43,7 @@ bool array_int_element(FznInvariantGraph& invariantGraph,
   return array_int_element(
       invariantGraph, idx,
       std::get<fznparser::IntVarArray>(constraint.arguments().at(1))
-                    .toParVector(),
+          .toParVector(),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)), offset);
 }
 

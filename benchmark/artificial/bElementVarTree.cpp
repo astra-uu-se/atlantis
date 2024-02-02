@@ -8,10 +8,10 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::benchmark {
 
@@ -58,8 +58,7 @@ class ElementVarTree : public ::benchmark::Fixture {
       }
 
       solver->makeInvariant<propagation::ElementVar>(*solver, cur.id, indexVar,
-                                                     elementInputs);
-      elementInputs.clear();
+                                                     std::move(elementInputs));
     }
   }
 

@@ -42,9 +42,9 @@ void AllDifferentExcept::notifyInputChanged(Timestamp ts, LocalId id) {
     return;
   }
   incValue(ts, _violationId,
-               (isIgnored(_committedValues[id])
-                    ? 0
-                    : decreaseCount(ts, _committedValues[id])) +
+           (isIgnored(_committedValues[id])
+                ? 0
+                : decreaseCount(ts, _committedValues[id])) +
                (isIgnored(newValue) ? 0 : increaseCount(ts, newValue)));
 }
 }  // namespace atlantis::propagation

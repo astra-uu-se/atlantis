@@ -28,13 +28,13 @@ bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId varNodeId, Int value,
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(
-      varNodeId, invariantGraph.createVarNode(value, false), invariantGraph.createVarNodeFromFzn(reified, true)));
+      varNodeId, invariantGraph.createVarNode(value, false),
+      invariantGraph.createVarNodeFromFzn(reified, true)));
   return true;
 }
 
 bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntEqNode>(a, b, false));
+  invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(a, b, false));
   return true;
 }
 

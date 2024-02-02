@@ -5,8 +5,9 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-static void checkParams(const std::vector<Int>& cover, const std::vector<Int>& low,
-                 const std::vector<Int>& up) {
+static void checkParams(const std::vector<Int>& cover,
+                        const std::vector<Int>& low,
+                        const std::vector<Int>& up) {
   if (cover.size() != low.size() || cover.size() != up.size()) {
     throw FznArgumentException(
         "fzn_global_cardinality_low_up: cover, low and up must have the "
@@ -35,10 +36,9 @@ bool fzn_global_cardinality_low_up(FznInvariantGraph& invariantGraph,
     }
   }
 
-  invariantGraph.addInvariantNode(
-      std::make_unique<GlobalCardinalityLowUpNode>(
-          invariantGraph.createVarNodes(inputs, false),
-          std::move(cover), std::move(low), std::move(up), true));
+  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
+      invariantGraph.createVarNodes(inputs, false), std::move(cover),
+      std::move(low), std::move(up), true));
   return true;
 }
 
@@ -57,15 +57,13 @@ bool fzn_global_cardinality_low_up(FznInvariantGraph& invariantGraph,
     }
     invariantGraph.addInvariantNode(
         std::make_unique<GlobalCardinalityLowUpNode>(
-            invariantGraph.createVarNodes(inputs, false),
-            std::move(cover), std::move(low), std::move(up),
-            reified.toParameter()));
+            invariantGraph.createVarNodes(inputs, false), std::move(cover),
+            std::move(low), std::move(up), reified.toParameter()));
     return true;
   }
-  invariantGraph.addInvariantNode(
-      std::make_unique<GlobalCardinalityLowUpNode>(
-          invariantGraph.createVarNodes(inputs, false),
-          std::move(cover), std::move(low), std::move(up), true));
+  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
+      invariantGraph.createVarNodes(inputs, false), std::move(cover),
+      std::move(low), std::move(up), true));
   return true;
 }
 

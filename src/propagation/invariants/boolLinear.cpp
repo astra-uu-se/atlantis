@@ -7,7 +7,8 @@ BoolLinear::BoolLinear(SolverBase& solver, VarId output,
     : BoolLinear(solver, output, std::vector<Int>(violArray.size(), 1),
                  std::move(violArray)) {}
 
-BoolLinear::BoolLinear(SolverBase& solver, VarId output, std::vector<Int>&& coeffs,
+BoolLinear::BoolLinear(SolverBase& solver, VarId output,
+                       std::vector<Int>&& coeffs,
                        std::vector<VarId>&& violArray)
     : Invariant(solver),
       _output(output),

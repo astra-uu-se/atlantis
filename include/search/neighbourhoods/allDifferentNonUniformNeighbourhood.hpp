@@ -39,9 +39,11 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override { return _vars; }
+  [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
+    return _vars;
+  }
   [[nodiscard]] bool canSwap(const Assignment& assignment, size_t var1Index,
-               size_t val2Index) const noexcept;
+                             size_t val2Index) const noexcept;
   bool swapValues(Assignment& assignment, Annealer& annealer, size_t var1Index,
                   size_t val2Index);
   bool assignValue(Assignment& assignment, Annealer& annealer, size_t varIndex,
@@ -61,12 +63,14 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
                static_cast<size_t>(value - _domainOffset)) <= _vars.size());
     return static_cast<size_t>(value - _domainOffset);
   }
-  [[nodiscard]] inline bool isValueIndexOccupied(size_t valueIndex) const noexcept {
+  [[nodiscard]] inline bool isValueIndexOccupied(
+      size_t valueIndex) const noexcept {
     assert(valueIndex < _valueIndexToVarIndex.size());
     assert(_valueIndexToVarIndex.at(valueIndex) <= _vars.size());
     return _valueIndexToVarIndex[valueIndex] < _vars.size();
   }
-  [[nodiscard]] inline bool inDomain(size_t varIndex, size_t valueIndex) const noexcept {
+  [[nodiscard]] inline bool inDomain(size_t varIndex,
+                                     size_t valueIndex) const noexcept {
     assert(varIndex < _inDomain.size());
     assert(valueIndex < _inDomain.at(varIndex).size());
     return _inDomain[varIndex][valueIndex];

@@ -23,7 +23,8 @@ void ArrayIntMinimumNode::registerNode(InvariantGraph& invariantGraph,
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
   solver.makeInvariant<propagation::MinSparse>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()), std::move(solverVars));
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
+      std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

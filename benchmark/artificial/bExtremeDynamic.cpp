@@ -50,14 +50,16 @@ class ExtremeDynamic : public ::benchmark::Fixture {
 
     for (size_t i = 0; i < numInvariants; ++i) {
       solver->makeInvariant<propagation::ElementVar>(
-          *solver, outputVars.at(i), staticInputVar, dynamicInputVars, 0);
+          *solver, outputVars.at(i), staticInputVar,
+          std::vector<propagation::VarId>(dynamicInputVars), 0);
     }
 
     objective = solver->makeIntVar(lb * static_cast<Int>(numInvariants),
                                    lb * static_cast<Int>(numInvariants),
                                    ub * static_cast<Int>(numInvariants));
     solver->makeInvariant<propagation::ElementVar>(
-        *solver, objective, staticInputVar, outputVars, 0);
+        *solver, objective, staticInputVar,
+        std::vector<propagation::VarId>(outputVars), 0);
 
     solver->close();
     gen = std::mt19937(rd());

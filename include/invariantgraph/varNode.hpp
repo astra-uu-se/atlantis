@@ -55,7 +55,6 @@ class VarNode {
   explicit VarNode(VarNodeId, SearchDomain&& domain, bool isIntVar,
                    std::string&& identifier = "");
 
-
   VarNodeId varNodeId() const noexcept;
 
   [[nodiscard]] const std::string& identifier() const;

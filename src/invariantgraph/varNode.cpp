@@ -63,7 +63,9 @@ Int VarNode::val() const {
   }
 }
 
-bool VarNode::shouldEnforceDomain() const noexcept { return _shouldEnforceDomain; }
+bool VarNode::shouldEnforceDomain() const noexcept {
+  return _shouldEnforceDomain;
+}
 bool VarNode::shouldEnforceDomain(bool b) noexcept {
   _shouldEnforceDomain = b;
   return _shouldEnforceDomain;

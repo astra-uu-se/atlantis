@@ -24,8 +24,14 @@ struct VarNodeId : public NodeId {
   explicit VarNodeId(size_t i) : NodeId(i) {}
   explicit VarNodeId(NodeId nodeId) : NodeId(nodeId) {}
 
-  inline VarNodeId& operator=(const VarNodeId& other) {id = other.id; return *this; }
-  inline VarNodeId& operator=(const NodeId& other) {id = other.id; return *this; }
+  inline VarNodeId& operator=(const VarNodeId& other) {
+    id = other.id;
+    return *this;
+  }
+  inline VarNodeId& operator=(const NodeId& other) {
+    id = other.id;
+    return *this;
+  }
 
   inline bool operator==(const VarNodeId& other) const {
     return id == other.id;
@@ -51,10 +57,18 @@ struct InvariantNodeId : public NodeId {
       : NodeId(i),
         type(isImplicitConstraint ? Type::IMPLICIT_CONSTRAINT
                                   : Type::INVARIANT) {}
-  explicit InvariantNodeId(NodeId nodeId) : NodeId(nodeId), type(Type::INVARIANT) {}
+  explicit InvariantNodeId(NodeId nodeId)
+      : NodeId(nodeId), type(Type::INVARIANT) {}
 
-  inline InvariantNodeId& operator=(const InvariantNodeId& other) {id = other.id; type = other.type; return *this; }
-  inline InvariantNodeId& operator=(const NodeId& other) {id = other.id; return *this; }
+  inline InvariantNodeId& operator=(const InvariantNodeId& other) {
+    id = other.id;
+    type = other.type;
+    return *this;
+  }
+  inline InvariantNodeId& operator=(const NodeId& other) {
+    id = other.id;
+    return *this;
+  }
 
   bool operator==(const InvariantNodeId& other) const {
     return type == other.type && id == other.id;

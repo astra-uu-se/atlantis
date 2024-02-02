@@ -34,7 +34,6 @@ class Solver : public SolverBase {
   void incCurrentTimestamp();
 
   void closeInvariants();
-  void recomputeAndCommit();
 
   void clearPropagationQueue();
 
@@ -52,8 +51,7 @@ class Solver : public SolverBase {
    * @param invariantId the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  virtual void registerDefinedVar(VarId definedVarId,
-                                  InvariantId invariantId) final;
+  void registerDefinedVar(VarId definedVarId, InvariantId invariantId) final;
 
  public:
   Solver(/* args */);
@@ -66,7 +64,7 @@ class Solver : public SolverBase {
   OutputToInputMarkingMode outputToInputMarkingMode() const;
   void setOutputToInputMarkingMode(OutputToInputMarkingMode);
 
-  //--------------------- Notificaion ---------------------
+  //--------------------- Notification ---------------------
   /***
    * @param id the id of the changed variable
    */
@@ -100,7 +98,6 @@ class Solver : public SolverBase {
 
   [[nodiscard]] const std::vector<VarIdBase>& searchVars() const;
   [[nodiscard]] const std::unordered_set<VarIdBase>& modifiedSearchVar() const;
-  [[nodiscard]] const std::vector<VarIdBase>& evaluationVars() const;
   [[nodiscard]] const std::vector<std::pair<VarIdBase, bool>>& inputVars(
       InvariantId) const;
 
@@ -135,8 +132,6 @@ class Solver : public SolverBase {
 
   void registerVar(VarId) final;
   void registerInvariant(InvariantId) final;
-
-  PropagationGraph& propGraph();
 };
 
 inline void Solver::incCurrentTimestamp() {
@@ -187,7 +182,7 @@ inline bool Solver::hasChanged(Timestamp ts, VarId id) const {
 
 inline void Solver::setValue(Timestamp ts, VarId id, Int val) {
   assert(id.idType != VarIdType::view);
-  assert(_propGraph.isSearchVar(id));
+  assert(_propGraph.isSearchVar(id.id));
 
   IntVar& var = _store.intVar(id);
   var.setValue(ts, val);
@@ -198,9 +193,9 @@ inline void Solver::setValue(Timestamp ts, VarId id, Int val) {
     }
 
     if (var.hasChanged(ts)) {
-      _modifiedSearchVars.emplace(id);
+      _modifiedSearchVars.emplace(id.id);
     } else {
-      _modifiedSearchVars.erase(id);
+      _modifiedSearchVars.erase(id.id);
     }
   }
   enqueueComputedVar(id);
@@ -229,10 +224,6 @@ inline void Solver::setOutputToInputMarkingMode(
 
 inline const std::vector<VarIdBase>& Solver::searchVars() const {
   return _propGraph.searchVars();
-}
-
-inline const std::vector<VarIdBase>& Solver::evaluationVars() const {
-  return _propGraph.evaluationVars();
 }
 
 inline const std::vector<std::pair<VarIdBase, bool>>& Solver::inputVars(

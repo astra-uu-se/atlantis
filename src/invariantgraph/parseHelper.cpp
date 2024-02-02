@@ -5,11 +5,11 @@ namespace atlantis::invariantgraph {
 bool hasCorrectSignature(
     const std::vector<std::pair<std::string, size_t>> &nameNumArgPairs,
     const fznparser::Constraint &constraint) {
-  std::any_of(
-      nameNumArgPairs.begin(), nameNumArgPairs.end(),
-      [&](const std::pair<std::string, size_t>& p) {
-        return p.first == constraint.identifier() && p.second == constraint.arguments().size();
-      });
+  std::any_of(nameNumArgPairs.begin(), nameNumArgPairs.end(),
+              [&](const std::pair<std::string, size_t> &p) {
+                return p.first == constraint.identifier() &&
+                       p.second == constraint.arguments().size();
+              });
 }
 
 std::vector<invariantgraph::VarNodeId> &&append(

@@ -139,7 +139,8 @@ VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::IntVar& var,
     if (var.identifier().empty()) {
       nId = createVarNode(std::move(domain), true, isDefinedVar);
     } else {
-      nId = createVarNode(std::move(domain), true, var.identifier(), isDefinedVar);
+      nId = createVarNode(std::move(domain), true, var.identifier(),
+                          isDefinedVar);
     }
   }
 
@@ -249,8 +250,9 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
   std::vector<FznOutputVarArray> outputVarArrays;
   outputVarArrays.reserve(_outputBoolVarArrays.size());
   for (const InvariantGraphOutputVarArray& outputArray : _outputBoolVarArrays) {
-    FznOutputVarArray& fznArray =
-        outputVarArrays.emplace_back(std::string(outputArray.identifier), std::vector<Int>(outputArray.indexSetSizes));
+    FznOutputVarArray& fznArray = outputVarArrays.emplace_back(
+        std::string(outputArray.identifier),
+        std::vector<Int>(outputArray.indexSetSizes));
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId& nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
@@ -269,9 +271,9 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
   std::vector<FznOutputVarArray> outputVarArrays;
   outputVarArrays.reserve(_outputIntVarArrays.size());
   for (const InvariantGraphOutputVarArray& outputArray : _outputIntVarArrays) {
-    FznOutputVarArray& fznArray =
-        outputVarArrays.emplace_back(std::string(
-            outputArray.identifier), std::vector<Int>(outputArray.indexSetSizes));
+    FznOutputVarArray& fznArray = outputVarArrays.emplace_back(
+        std::string(outputArray.identifier),
+        std::vector<Int>(outputArray.indexSetSizes));
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId& nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
@@ -394,8 +396,6 @@ bool FznInvariantGraph::makeInvariantNode(
   MAKE_INVARIANT(fzn::int_pow)
   MAKE_INVARIANT(fzn::int_times)
   MAKE_INVARIANT(fzn::set_in)
-
-
 
   return false;
 #undef MAKE_INVARIANT

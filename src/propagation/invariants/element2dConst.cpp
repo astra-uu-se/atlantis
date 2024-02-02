@@ -33,8 +33,8 @@ void Element2dConst::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  std::array<Int, 2> iLb{0,0};
-  std::array<Int, 2> iUb{0,0};
+  std::array<Int, 2> iLb{0, 0};
+  std::array<Int, 2> iUb{0, 0};
   for (size_t i = 0; i < 2; ++i) {
     iLb[i] = std::max<Int>(_offsets[i], _solver.lowerBound(_indices[i]));
     iUb[i] = std::min<Int>(_dimensions[i] - 1 + _offsets[i],

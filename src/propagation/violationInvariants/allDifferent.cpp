@@ -16,7 +16,7 @@ AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
 }
 
 void AllDifferent::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   for (size_t i = 0; i < _vars.size(); ++i) {
     _solver.registerInvariantInput(_id, _vars[i], i, false);
   }
@@ -24,7 +24,8 @@ void AllDifferent::registerVars() {
 }
 
 void AllDifferent::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_violationId, 0, static_cast<Int>(_vars.size() - 1), widenOnly);
+  _solver.updateBounds(_violationId, 0, static_cast<Int>(_vars.size() - 1),
+                       widenOnly);
 }
 
 void AllDifferent::close(Timestamp ts) {

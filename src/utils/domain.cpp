@@ -157,7 +157,8 @@ void SetDomain::removeAbove(Int newMax) {
     return;
   }
   Int offset = static_cast<Int>(_values.size()) - 1;
-  for (Int i = static_cast<Int>(_values.size()) - 1; 0 <= i && newMax < _values[i]; --i) {
+  for (Int i = static_cast<Int>(_values.size()) - 1;
+       0 <= i && newMax < _values[i]; --i) {
     --offset;
   }
   _values.erase(_values.begin() + offset, _values.end());

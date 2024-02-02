@@ -11,7 +11,7 @@ ForAll::ForAll(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
 }
 
 void ForAll::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   for (size_t i = 0; i < _varArray.size(); ++i) {
     _solver.registerInvariantInput(_id, _varArray[i], i, false);
   }

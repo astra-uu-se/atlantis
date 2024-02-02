@@ -41,8 +41,7 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
       invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs),
-      invariantGraph.createVarNodes(inputs, false),
+      std::move(coeffs), invariantGraph.createVarNodes(inputs, false),
       outputVarNodeId));
 
   int_le(invariantGraph, outputVarNodeId, bound);
@@ -74,8 +73,7 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
         invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
 
     invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-        std::move(coeffs),
-        invariantGraph.createVarNodes(inputs, false),
+        std::move(coeffs), invariantGraph.createVarNodes(inputs, false),
         outputVarNodeId));
 
     int_le(invariantGraph, outputVarNodeId, bound);

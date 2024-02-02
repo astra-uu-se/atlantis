@@ -40,7 +40,7 @@ void PropagationGraph::registerVar(VarIdBase id) {
 void PropagationGraph::registerInvariantInput(InvariantId invariantId,
                                               VarIdBase varId, LocalId localId,
                                               bool isDynamicInput) {
-  assert(!invariantId.equals(NULL_ID) && !varId.equals(NULL_ID));
+  assert(invariantId != NULL_ID && varId != NULL_ID);
   if (_definingInvariant[varId] == invariantId) {
     logWarning("The invariant (" << invariantId << ") already "
                                  << "defines the varId variable (" << varId
@@ -50,15 +50,13 @@ void PropagationGraph::registerInvariantInput(InvariantId invariantId,
   }
   _isDynamicInvariant.set(
       invariantId, _isDynamicInvariant.get(invariantId) || isDynamicInput);
-  _listeningInvariantData[varId].emplace_back(
-      invariantId, localId);
-  _inputVars[invariantId].emplace_back(
-      varId, isDynamicInput);
+  _listeningInvariantData[varId].emplace_back(invariantId, localId);
+  _inputVars[invariantId].emplace_back(varId, isDynamicInput);
 }
 
 void PropagationGraph::registerDefinedVar(VarIdBase varId,
                                           InvariantId invariantId) {
-  assert(!varId.equals(NULL_ID) && !invariantId.equals(NULL_ID));
+  assert(varId != NULL_ID && invariantId != NULL_ID);
   if (_definingInvariant.at(varId).id != NULL_ID.id) {
     throw VarAlreadyDefinedException(
         "Variable " + std::to_string(varId.id) +
@@ -341,7 +339,8 @@ void PropagationGraph::mergeLayersWithoutDynamicCycles() {
     }
     // remove the layer
     _varsInLayer.erase(_varsInLayer.begin() + static_cast<Int>(layer));
-    _layerHasDynamicCycle.erase(_layerHasDynamicCycle.begin() + static_cast<Int>(layer));
+    _layerHasDynamicCycle.erase(_layerHasDynamicCycle.begin() +
+                                static_cast<Int>(layer));
   }
 }
 

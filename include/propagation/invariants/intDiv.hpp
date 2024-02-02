@@ -22,7 +22,8 @@ class IntDiv : public Invariant {
   Int _zeroReplacement{1};
 
  public:
-  explicit IntDiv(SolverBase&, VarId output, VarId nominator, VarId denominator);
+  explicit IntDiv(SolverBase&, VarId output, VarId nominator,
+                  VarId denominator);
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void close(Timestamp) override;

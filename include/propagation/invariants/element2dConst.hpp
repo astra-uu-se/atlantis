@@ -4,9 +4,9 @@
 #include <limits>
 #include <vector>
 
-#include "types.hpp"
-#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
+#include "propagation/solver.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
@@ -40,8 +40,8 @@ class Element2dConst : public Invariant {
 
  public:
   explicit Element2dConst(SolverBase&, VarId output, VarId index1, VarId index2,
-                          std::vector<std::vector<Int>>&& matrix, Int offset1 = 1,
-                          Int offset2 = 1);
+                          std::vector<std::vector<Int>>&& matrix,
+                          Int offset1 = 1, Int offset2 = 1);
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;

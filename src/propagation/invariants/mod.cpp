@@ -3,25 +3,31 @@
 namespace atlantis::propagation {
 
 Mod::Mod(SolverBase& solver, VarId output, VarId nominator, VarId denominator)
-    : Invariant(solver), _output(output), _nominator(nominator), _denominator(denominator) {
+    : Invariant(solver),
+      _output(output),
+      _nominator(nominator),
+      _denominator(denominator) {
   _modifiedVars.reserve(1);
 }
 
 void Mod::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   _solver.registerInvariantInput(_id, _nominator, 0, false);
   _solver.registerInvariantInput(_id, _denominator, 0, false);
   registerDefinedVar(_output);
 }
 
 void Mod::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_output, std::min(Int(0), _solver.lowerBound(_nominator)),
-                       std::max(Int(0), _solver.upperBound(_nominator)), widenOnly);
+  _solver.updateBounds(
+      _output, std::min(Int(0), _solver.lowerBound(_nominator)),
+      std::max(Int(0), _solver.upperBound(_nominator)), widenOnly);
 }
 
 void Mod::close(Timestamp) {
-  assert(_solver.lowerBound(_denominator) != 0 || _solver.upperBound(_denominator) != 0);
-  if (_solver.lowerBound(_denominator) <= 0 && 0 <= _solver.upperBound(_denominator)) {
+  assert(_solver.lowerBound(_denominator) != 0 ||
+         _solver.upperBound(_denominator) != 0);
+  if (_solver.lowerBound(_denominator) <= 0 &&
+      0 <= _solver.upperBound(_denominator)) {
     _zeroReplacement = _solver.upperBound(_denominator) >= 1 ? 1 : -1;
   }
 }

@@ -6,10 +6,10 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/views/intOffsetView.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::benchmark {
 
@@ -57,12 +57,12 @@ class Queens : public ::benchmark::Fixture {
     violation3 = solver->makeIntVar(0, 0, n);
 
     // 3 invariants, each having taking n static input variables
-    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation1,
-                                                      queens);
-    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation2,
-                                                      q_offset_minus);
-    solver->makeViolationInvariant<propagation::AllDifferent>(*solver, violation3,
-                                                      q_offset_plus);
+    solver->makeViolationInvariant<propagation::AllDifferent>(
+        *solver, violation1, std::vector<propagation::VarId>(queens));
+    solver->makeViolationInvariant<propagation::AllDifferent>(
+        *solver, violation2, std::vector<propagation::VarId>(q_offset_minus));
+    solver->makeViolationInvariant<propagation::AllDifferent>(
+        *solver, violation3, std::vector<propagation::VarId>(q_offset_plus));
 
     totalViolation = solver->makeIntVar(0, 0, 3 * n);
 

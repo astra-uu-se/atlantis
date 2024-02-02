@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/invariants/exists.hpp"
 #include "propagation/invariants/ifThenElse.hpp"
@@ -14,6 +13,7 @@
 #include "propagation/solver.hpp"
 #include "propagation/views/elementConst.hpp"
 #include "propagation/views/intOffsetView.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 
 namespace atlantis::benchmark {
 
@@ -189,17 +189,17 @@ class VesselLoading : public ::benchmark::Fixture {
               solver->makeIntVar(0, 0, vesselLength + vesselWidth);
 
           // isRightOf = (right[i] + sep <= left[j]):
-          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isRightOf,
-                                                         rightSep, left[j]);
+          solver->makeViolationInvariant<propagation::LessEqual>(
+              *solver, isRightOf, rightSep, left[j]);
           // isLeftOf = (right[j] <= left[i] - sep):
-          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isLeftOf,
-                                                         right[j], leftSep);
+          solver->makeViolationInvariant<propagation::LessEqual>(
+              *solver, isLeftOf, right[j], leftSep);
           // isAbove = (top[i] + sep <= bottom[j]):
-          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isAbove,
-                                                         topSep, bottom[j]);
+          solver->makeViolationInvariant<propagation::LessEqual>(
+              *solver, isAbove, topSep, bottom[j]);
           // isBelow = (top[j] <= bottom[i] - sep):
-          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isBelow,
-                                                         top[j], bottomSep);
+          solver->makeViolationInvariant<propagation::LessEqual>(
+              *solver, isBelow, top[j], bottomSep);
 
           solver->makeInvariant<propagation::Exists>(
               *solver,
@@ -221,7 +221,7 @@ class VesselLoading : public ::benchmark::Fixture {
                            (containerCount * (containerCount - 1) / 2) *
                                (vesselLength + vesselWidth));
     solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
-                                               violations);
+                                               std::move(violations));
     solver->close();
 
     indexDistr = std::uniform_int_distribution<size_t>{0u, containerCount - 1};

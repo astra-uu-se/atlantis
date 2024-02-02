@@ -37,7 +37,7 @@ GlobalCardinalityClosed::GlobalCardinalityClosed(SolverBase& solver,
 }
 
 void GlobalCardinalityClosed::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   for (size_t i = 0; i < _inputs.size(); ++i) {
     _solver.registerInvariantInput(_id, _inputs[i], LocalId(i), false);
   }
@@ -48,9 +48,11 @@ void GlobalCardinalityClosed::registerVars() {
 }
 
 void GlobalCardinalityClosed::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_violationId, 0, static_cast<Int>(_inputs.size()), widenOnly);
+  _solver.updateBounds(_violationId, 0, static_cast<Int>(_inputs.size()),
+                       widenOnly);
   for (const VarId output : _outputs) {
-    _solver.updateBounds(output, 0, static_cast<Int>(_inputs.size()), widenOnly);
+    _solver.updateBounds(output, 0, static_cast<Int>(_inputs.size()),
+                         widenOnly);
   }
 }
 

@@ -33,8 +33,7 @@ bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
       return fzn_all_different_int(invariantGraph, inputs);
     }
     invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        reified.toParameter()));
+        invariantGraph.createVarNodes(inputs, false), reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(

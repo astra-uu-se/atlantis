@@ -9,10 +9,10 @@
 
 #include "../benchmark.hpp"
 #include "misc/logging.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::benchmark {
 
@@ -54,8 +54,8 @@ class LinearTree : public ::benchmark::Fixture {
           decisionVars.push_back(var);
         }
       }
-      solver->makeInvariant<propagation::Linear>(*solver, cur.id, linearInputs);
-      linearInputs.clear();
+      solver->makeInvariant<propagation::Linear>(*solver, cur.id,
+                                                 std::move(linearInputs));
     }
 #ifndef NDEBUG
     if (linearArgumentCount == 2) {

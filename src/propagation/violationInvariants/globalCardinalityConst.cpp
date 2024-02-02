@@ -15,8 +15,9 @@ template GlobalCardinalityConst<false>::GlobalCardinalityConst(
 template <bool IsClosed>
 GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
     SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
-    const std::vector<Int>& cover, const std::vector<Int>& bounds) :
-      GlobalCardinalityConst(solver, violationId, std::move(t_vars), cover, bounds, bounds) {}
+    const std::vector<Int>& cover, const std::vector<Int>& bounds)
+    : GlobalCardinalityConst(solver, violationId, std::move(t_vars), cover,
+                             bounds, bounds) {}
 
 template GlobalCardinalityConst<true>::GlobalCardinalityConst(
     SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
@@ -68,7 +69,7 @@ template void GlobalCardinalityConst<true>::registerVars();
 template void GlobalCardinalityConst<false>::registerVars();
 template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   for (size_t i = 0; i < _vars.size(); ++i) {
     _solver.registerInvariantInput(_id, _vars[i], LocalId(i), false);
   }

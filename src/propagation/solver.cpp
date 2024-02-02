@@ -9,8 +9,6 @@ Solver::Solver()
       _isEnqueued(ESTIMATED_NUM_OBJECTS),
       _modifiedSearchVars() {}
 
-PropagationGraph& Solver::propGraph() { return _propGraph; }
-
 void Solver::open() {
   if (_isOpen) {
     throw SolverOpenException("SolverBase already open.");
@@ -152,36 +150,6 @@ void Solver::closeInvariants() {
        ++iter) {
     (*iter)->close(_currentTimestamp);
   }
-}
-
-void Solver::recomputeAndCommit() {
-  // TODO: This is a very inefficient way of initialising!
-  size_t tries = 0;
-  bool done = false;
-  while (!done) {
-    done = true;
-    if (tries++ > _store.numVars()) {
-      throw FailedToInitialise();
-    }
-    for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
-         ++iter) {
-      assert((*iter) != nullptr);
-      (*iter)->recompute(_currentTimestamp);
-    }
-    for (auto iter = _store.intVarBegin(); iter != _store.intVarEnd(); ++iter) {
-      if (iter->hasChanged(_currentTimestamp)) {
-        done = false;
-        iter->commit();
-      }
-    }
-  }
-  // We must commit all invariants once everything is stable.
-  // Commiting an invariant will commit any internal datastructure.
-  for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
-       ++iter) {
-    (*iter)->commit(_currentTimestamp);
-  }
-  clearPropagationQueue();
 }
 
 //--------------------- Propagation ---------------------
@@ -427,7 +395,8 @@ void Solver::computeBounds() {
   IdMap<InvariantId, Int> inputsToCompute(numInvariants());
 
   for (size_t invariantId = 1u; invariantId <= numInvariants(); ++invariantId) {
-    inputsToCompute.register_idx(invariantId, static_cast<Int>(inputVars(invariantId).size()));
+    inputsToCompute.register_idx(
+        invariantId, static_cast<Int>(inputVars(invariantId).size()));
   }
 
   // Search variables might now have been computed yet

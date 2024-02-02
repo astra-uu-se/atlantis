@@ -54,8 +54,8 @@ class ElementLinearTree : public ::benchmark::Fixture {
           decisionVars.push_back(var);
         }
       }
-      solver->makeInvariant<propagation::Linear>(*solver, cur.id, linearInputs);
-      linearInputs.clear();
+      solver->makeInvariant<propagation::Linear>(*solver, cur.id,
+                                                 std::move(linearInputs));
     }
 #ifndef NDEBUG
     if (linearArgumentCount == 2) {
@@ -108,7 +108,8 @@ class ElementLinearTree : public ::benchmark::Fixture {
                         << " children");
 
     solver->makeInvariant<propagation::ElementVar>(
-        *solver, elementOutputVar, elementIndexVar, elementInputVars);
+        *solver, elementOutputVar, elementIndexVar,
+        std::vector<propagation::VarId>(elementInputVars));
     solver->close();
     gen = std::mt19937(rd());
     decisionVarIndexDist =

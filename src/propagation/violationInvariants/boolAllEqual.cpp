@@ -15,7 +15,7 @@ BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
 }
 
 void BoolAllEqual::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   for (size_t i = 0; i < _vars.size(); ++i) {
     _solver.registerInvariantInput(_id, _vars[i], i, false);
   }
@@ -23,7 +23,8 @@ void BoolAllEqual::registerVars() {
 }
 
 void BoolAllEqual::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_violationId, 0, static_cast<Int>(_vars.size()) / 2, widenOnly);
+  _solver.updateBounds(_violationId, 0, static_cast<Int>(_vars.size()) / 2,
+                       widenOnly);
 }
 
 void BoolAllEqual::close(Timestamp) {}

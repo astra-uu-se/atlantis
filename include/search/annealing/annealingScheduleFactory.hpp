@@ -29,7 +29,8 @@ class AnnealingScheduleFactory {
  private:
   std::optional<std::filesystem::path> _scheduleDefinition;
 
-  [[nodiscard]] static inline std::unique_ptr<AnnealingSchedule> defaultAnnealingSchedule() {
+  [[nodiscard]] static inline std::unique_ptr<AnnealingSchedule>
+  defaultAnnealingSchedule() {
     std::vector<std::unique_ptr<AnnealingSchedule>> inner;
     inner.push_back(AnnealerContainer::heating(1.2, 0.75));
     inner.push_back(AnnealerContainer::cooling(0.99, 4));

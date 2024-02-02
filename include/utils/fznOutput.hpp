@@ -19,8 +19,8 @@ struct FznOutputVarArray {
   std::string identifier;
   std::vector<Int> indexSetSizes;
   std::vector<std::variant<propagation::VarId, Int>> vars;
-  FznOutputVarArray(std::string id, std::vector<Int>&& setSizes) :
-  identifier(std::move(id)), indexSetSizes(std::move(setSizes)), vars() {};
+  FznOutputVarArray(std::string id, std::vector<Int>&& setSizes)
+      : identifier(std::move(id)), indexSetSizes(std::move(setSizes)), vars(){};
 };
 
 }  // namespace atlantis

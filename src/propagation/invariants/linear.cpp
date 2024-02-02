@@ -3,7 +3,8 @@
 namespace atlantis::propagation {
 
 Linear::Linear(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
-    : Linear(solver, output, std::vector<Int>(varArray.size(), 1), std::move(varArray)) {}
+    : Linear(solver, output, std::vector<Int>(varArray.size(), 1),
+             std::move(varArray)) {}
 
 Linear::Linear(SolverBase& solver, VarId output, std::vector<Int>&& coeffs,
                std::vector<VarId>&& varArray)

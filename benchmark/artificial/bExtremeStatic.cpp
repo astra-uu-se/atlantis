@@ -45,8 +45,8 @@ class ExtremeStatic : public ::benchmark::Fixture {
     objective = solver->makeIntVar(lb * static_cast<Int>(numInputs),
                                    lb * static_cast<Int>(numInputs),
                                    ub * static_cast<Int>(numInputs));
-    solver->makeInvariant<propagation::Linear>(*solver, objective,
-                                               staticInputVars);
+    solver->makeInvariant<propagation::Linear>(
+        *solver, objective, std::vector<propagation::VarId>(staticInputVars));
 
     solver->close();
     gen = std::mt19937(rd());

@@ -66,8 +66,7 @@ bool int_le(FznInvariantGraph& invariantGraph, Int a, VarNodeId b,
 }
 
 bool int_le(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntLeNode>(a, b, true));
+  invariantGraph.addInvariantNode(std::make_unique<IntLeNode>(a, b, true));
   return true;
 }
 
@@ -79,8 +78,7 @@ bool int_le(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
     }
     return int_lt(invariantGraph, b, a);
   }
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntLeNode>(a, b, true));
+  invariantGraph.addInvariantNode(std::make_unique<IntLeNode>(a, b, true));
   return true;
 }
 

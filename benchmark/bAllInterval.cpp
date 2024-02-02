@@ -54,7 +54,8 @@ class AllInterval : public ::benchmark::Fixture {
     totalViolation = solver->makeIntVar(0, 0, n);
     // Creating one invariant, taking n input variables and one output
     solver->makeViolationInvariant<propagation::AllDifferent>(
-        *solver, totalViolation, violationVars);
+        *solver, totalViolation,
+        std::vector<propagation::VarId>(violationVars));
 
     solver->close();
 

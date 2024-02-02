@@ -3,8 +3,8 @@
 #include <limits>
 #include <vector>
 
-#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
+#include "propagation/solver.hpp"
 #include "propagation/utils/priorityList.hpp"
 #include "types.hpp"
 

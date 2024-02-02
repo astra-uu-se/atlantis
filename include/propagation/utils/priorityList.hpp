@@ -29,4 +29,4 @@ class PriorityList {
   void computeMinimum(Timestamp ts);
 };
 
-}
+}  // namespace atlantis::propagation

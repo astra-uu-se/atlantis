@@ -4,10 +4,10 @@
 #include <cassert>
 #include <vector>
 
-#include "propagation/violationInvariants/violationInvariant.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
+#include "propagation/violationInvariants/violationInvariant.hpp"
 #include "types.hpp"
 
 namespace atlantis::propagation {
@@ -28,11 +28,13 @@ class GlobalCardinalityConst : public ViolationInvariant {
 
  public:
   GlobalCardinalityConst(SolverBase&, VarId violationId,
-                         std::vector<VarId>&& vars, const std::vector<Int>& cover,
+                         std::vector<VarId>&& vars,
+                         const std::vector<Int>& cover,
                          const std::vector<Int>& bounds);
 
   GlobalCardinalityConst(SolverBase&, VarId violationId,
-                         std::vector<VarId>&& vars, const std::vector<Int>& cover,
+                         std::vector<VarId>&& vars,
+                         const std::vector<Int>& cover,
                          const std::vector<Int>& lowerBounds,
                          const std::vector<Int>& upperBounds);
 
@@ -49,8 +51,8 @@ class GlobalCardinalityConst : public ViolationInvariant {
 template <bool IsClosed>
 inline signed char GlobalCardinalityConst<IsClosed>::increaseCount(Timestamp ts,
                                                                    Int value) {
-  size_t pos = static_cast<size_t>(
-      std::max<Int>(0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
+  size_t pos = static_cast<size_t>(std::max<Int>(
+      0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
   if constexpr (!IsClosed) {
     if (_lowerBounds.at(pos) < 0) {
       return 0;
@@ -67,8 +69,8 @@ inline signed char GlobalCardinalityConst<IsClosed>::increaseCount(Timestamp ts,
 template <bool IsClosed>
 inline signed char GlobalCardinalityConst<IsClosed>::decreaseCount(Timestamp ts,
                                                                    Int value) {
-  size_t pos = static_cast<size_t>(
-      std::max<Int>(0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
+  size_t pos = static_cast<size_t>(std::max<Int>(
+      0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
   if constexpr (!IsClosed) {
     if (_lowerBounds.at(pos) < 0) {
       return 0;

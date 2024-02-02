@@ -2,13 +2,17 @@
 
 namespace atlantis::propagation {
 
-IntDiv::IntDiv(SolverBase& solver, VarId output, VarId nominator, VarId denominator)
-    : Invariant(solver), _output(output), _nominator(nominator), _denominator(denominator) {
+IntDiv::IntDiv(SolverBase& solver, VarId output, VarId nominator,
+               VarId denominator)
+    : Invariant(solver),
+      _output(output),
+      _nominator(nominator),
+      _denominator(denominator) {
   _modifiedVars.reserve(1);
 }
 
 void IntDiv::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   _solver.registerInvariantInput(_id, _nominator, 0, false);
   _solver.registerInvariantInput(_id, _denominator, 0, false);
   registerDefinedVar(_output);
@@ -50,7 +54,7 @@ void IntDiv::updateBounds(bool widenOnly) {
 }
 
 void IntDiv::close(Timestamp) {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   _solver.registerInvariantInput(_id, _nominator, 0, false);
   _solver.registerInvariantInput(_id, _denominator, 0, false);
 

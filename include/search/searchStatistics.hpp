@@ -42,4 +42,4 @@ class SearchStatistics : public Statistic {
   }
 };
 
-}  // namespace search
+}  // namespace atlantis::search

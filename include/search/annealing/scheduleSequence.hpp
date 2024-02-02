@@ -33,4 +33,4 @@ class ScheduleSequence : public AnnealingSchedule {
   AnnealingSchedule& currentSchedule();
 };
 
-}  // namespace search
+}  // namespace atlantis::search

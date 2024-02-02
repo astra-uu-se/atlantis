@@ -20,14 +20,18 @@ struct Id {
   Id() : id(0) {}
   explicit Id(size_t i) : id(i) {}
   operator size_t() const { return id; }
-  inline bool equals(const Id& other) const { return id == other.id; }
+  [[nodiscard]] inline bool operator==(const Id& other) const {
+    return id == other.id;
+  }
 };
 
 static Id NULL_ID = Id();
 
 struct InvariantId;  // forward declare
+struct VarId;
 struct VarIdBase : public Id {
   VarIdBase() : Id() {}
+  VarIdBase(const VarIdBase&) = default;
   VarIdBase(size_t i) : Id(i) {}
   VarIdBase(const Id& t_id) : Id(t_id.id) {}
   VarIdBase(const InvariantId&) = delete;

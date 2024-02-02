@@ -8,7 +8,7 @@ Pow::Pow(SolverBase& solver, VarId output, VarId base, VarId exponent)
 }
 
 void Pow::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
 
   _solver.registerInvariantInput(_id, _base, 0, false);
   _solver.registerInvariantInput(_id, _exponent, 0, false);
@@ -28,12 +28,16 @@ void Pow::updateBounds(bool widenOnly) {
   for (const Int baseBound : std::array<Int, 2>{baseLb, baseUb}) {
     for (const Int expBound : std::array<Int, 2>{expLb, expUb}) {
       if (baseBound != 0 || expBound >= 0) {
-        outLb = std::min<Int>(outLb, static_cast<Int>(std::pow(baseBound, expBound)));
-        outUb = std::max<Int>(outUb, static_cast<Int>(std::pow(baseBound, expBound)));
+        outLb = std::min<Int>(outLb,
+                              static_cast<Int>(std::pow(baseBound, expBound)));
+        outUb = std::max<Int>(outUb,
+                              static_cast<Int>(std::pow(baseBound, expBound)));
       } else {
         if (baseLb < 0) {
-          outLb = std::min<Int>(outLb, static_cast<Int>(std::pow(-1, expBound)));
-          outUb = std::max<Int>(outUb, static_cast<Int>(std::pow(-1, expBound)));
+          outLb =
+              std::min<Int>(outLb, static_cast<Int>(std::pow(-1, expBound)));
+          outUb =
+              std::max<Int>(outUb, static_cast<Int>(std::pow(-1, expBound)));
         }
         if (baseUb > 0) {
           outLb = std::min<Int>(outLb, static_cast<Int>(std::pow(1, expBound)));
@@ -79,7 +83,8 @@ void Pow::recompute(Timestamp ts) {
   const Int baseVal = _solver.value(ts, _base);
   const Int expVal = _solver.value(ts, _exponent);
   if (baseVal == 0 && expVal < 0) {
-    updateValue(ts, _output, static_cast<Int>(std::pow(_zeroReplacement, expVal)));
+    updateValue(ts, _output,
+                static_cast<Int>(std::pow(_zeroReplacement, expVal)));
     return;
   }
   updateValue(ts, _output, static_cast<Int>(std::pow(baseVal, expVal)));
