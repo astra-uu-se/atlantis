@@ -30,7 +30,7 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
     _searchVarAncestors[idx].clear();
   }
 
-  for (const VarIdBase searchVar : _solver.searchVars()) {
+  for (const VarIdBase& searchVar : _solver.searchVars()) {
     std::fill(varVisited.begin(), varVisited.end(), false);
     std::vector<IdBase> stack;
     stack.reserve(_solver.numVars());
@@ -45,7 +45,7 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
 
       for (const PropagationGraph::ListeningInvariantData& invariantData :
            _solver.listeningInvariantData(IdBase(id))) {
-        for (const VarIdBase outputVar :
+        for (const VarIdBase& outputVar :
              _solver.varsDefinedBy(invariantData.invariantId)) {
           if (!varVisited[outputVar]) {
             varVisited[outputVar] = true;
@@ -63,7 +63,7 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
 
   _onPropagationPath.assign(_solver.numVars(), false);
 
-  for (const VarIdBase modifiedDecisionVar : _solver.modifiedSearchVar()) {
+  for (const VarIdBase& modifiedDecisionVar : _solver.modifiedSearchVar()) {
     stack.emplace_back(modifiedDecisionVar);
     assert(!_onPropagationPath.get(modifiedDecisionVar));
     _onPropagationPath.set(modifiedDecisionVar, true);
@@ -73,7 +73,7 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
       stack.pop_back();
       for (const PropagationGraph::ListeningInvariantData& invariantData :
            _solver.listeningInvariantData(id)) {
-        for (const VarIdBase outputVar :
+        for (const VarIdBase& outputVar :
              _solver.varsDefinedBy(invariantData.invariantId)) {
           if (!_onPropagationPath.get(outputVar)) {
             _onPropagationPath.set(outputVar, true);
@@ -284,7 +284,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
     if (pushNextInputVar<MarkingMode>()) {
       // The top invariant has finished propagating, so all defined vars can
       // be marked as compte at the current time.
-      for (const auto defVar : _solver.varsDefinedBy(peekInvariantStack())) {
+      for (const auto& defVar : _solver.varsDefinedBy(peekInvariantStack())) {
         setComputed(currentTimestamp, defVar);
       }
       popInvariantStack();

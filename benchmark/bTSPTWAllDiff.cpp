@@ -29,7 +29,7 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
-  Int n;
+  Int n{0};
   const int MAX_TIME = 100000;
 
   std::vector<propagation::VarId> violations;
@@ -46,7 +46,7 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
 
     solver->open();
 
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     for (int i = 1; i <= n; ++i) {
       dist.emplace_back();
@@ -157,7 +157,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
     });
   }));
 
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     const size_t b = rand_in_range(0, n - 2, gen);
     const size_t d = rand_in_range(b + 1, n - 1, gen);
     const size_t e = rand_in_range(d, n - 1, gen);
@@ -199,12 +199,12 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
     ++probes;
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (int i = 0; i < n; ++i) {
       for (int j = i + 1; j < n; ++j) {
         solver->beginMove();
@@ -221,7 +221,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

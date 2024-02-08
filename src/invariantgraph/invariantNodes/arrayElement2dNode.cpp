@@ -30,7 +30,7 @@ ArrayElement2dNode::ArrayElement2dNode(
     VarNodeId idx1, VarNodeId idx2, std::vector<std::vector<bool>>&& parMatrix,
     VarNodeId output, Int offset1, Int offset2)
     : ArrayElement2dNode(idx1, idx2,
-                         std::move(toIntMatrix(std::move(parMatrix))), output,
+                         toIntMatrix(std::move(parMatrix)), output,
                          offset1, offset2) {}
 
 void ArrayElement2dNode::registerOutputVars(InvariantGraph& invariantGraph,

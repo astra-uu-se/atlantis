@@ -87,7 +87,7 @@ class TSPTWTest : public ::testing::Test {
                                                std::vector<propagation::VarId>(violation));
 
     solver->close();
-    for (const propagation::VarId p : pred) {
+    for (const propagation::VarId& p : pred) {
       assert(solver->lowerBound(p) == 1);
       assert(solver->upperBound(p) == n);
       assert(1 <= solver->committedValue(p) && solver->committedValue(p) <= n);

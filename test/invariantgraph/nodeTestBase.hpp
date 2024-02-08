@@ -170,7 +170,7 @@ class NodeTestBase : public ::testing::Test {
       const std::vector<propagation::VarId>& inputVars) {
     std::vector<Int> inputVals;
     inputVals.reserve(inputVars.size());
-    for (const propagation::VarId varId : inputVars) {
+    for (const propagation::VarId& varId : inputVars) {
       inputVals.emplace_back(solver.lowerBound(varId));
     }
     return inputVals;

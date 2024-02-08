@@ -89,7 +89,6 @@ bool int_lt(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
   if (aLb > bUb) {
     throw FznArgumentException(
         "int_lt: fixed variables or parameters a and b must be equal");
-    return true;
   }
   if (a.isFixed()) {
     return int_lt(invariantGraph, invariantGraph.createVarNodeFromFzn(b, false),

@@ -29,8 +29,8 @@ void CountConst::updateBounds(bool widenOnly) {
 
 void CountConst::recompute(Timestamp ts) {
   Int count = 0;
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    count += static_cast<Int>(_solver.value(ts, _vars[i]) == _y);
+  for (const auto & var : _vars) {
+    count += static_cast<Int>(_solver.value(ts, var) == _y);
   }
   updateValue(ts, _output, count);
 }

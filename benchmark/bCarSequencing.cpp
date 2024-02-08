@@ -21,7 +21,7 @@ class CarSequencing : public ::benchmark::Fixture {
  public:
   std::unique_ptr<propagation::Solver> solver;
 
-  size_t numCars;
+  size_t numCars{0};
   const size_t numFeatures = 5;
 
   std::vector<size_t> classCount;
@@ -39,7 +39,7 @@ class CarSequencing : public ::benchmark::Fixture {
   std::uniform_int_distribution<size_t> carDistribution;
   std::uniform_int_distribution<size_t> classDistribution;
 
-  inline size_t numClasses() const noexcept {
+  [[nodiscard]] inline size_t numClasses() const noexcept {
     return numCars == 0 ? 0 : numCars / 2;
   }
 
@@ -101,12 +101,12 @@ class CarSequencing : public ::benchmark::Fixture {
     }
   }
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
     solver->open();
 
     numCars = state.range(0);
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     gen = std::mt19937(rd());
     carDistribution = std::uniform_int_distribution<size_t>{0, numCars - 1};
@@ -137,18 +137,18 @@ class CarSequencing : public ::benchmark::Fixture {
           std::vector<propagation::VarId>(numCars, propagation::NULL_ID);
     }
 
-    for (size_t i = 0; i < numCars; ++i) {
-      sequence.at(i) = solver->makeIntVar(i, 0, numCars - 1);
+    for (Int i = 0; i < static_cast<Int>(numCars); ++i) {
+      sequence.at(i) = solver->makeIntVar(i, 0, static_cast<Int>(numCars) - 1);
     }
 
     for (size_t o = 0; o < numFeatures; ++o) {
       const size_t end = numCars - blockSize.at(o) + 1;
       for (size_t start = 0; start < end; ++start) {
         std::vector<propagation::VarId> featureElemRun(
-            sequence.begin() + start,
-            sequence.begin() + start + blockSize.at(o));
+            sequence.begin() + static_cast<Int>(start),
+            sequence.begin() + static_cast<Int>(start + blockSize.at(o)));
         assert(featureElemRun.size() == blockSize.at(o));
-        featureElemSum.emplace_back(solver->makeIntVar(0, 0, blockSize.at(o)));
+        featureElemSum.emplace_back(solver->makeIntVar(0, 0, static_cast<Int>(blockSize.at(o))));
         // Introducing up to n invariants each with up to n static edges
         solver->makeInvariant<propagation::CountConst>(
             *solver, featureElemSum.back(), o, std::move(featureElemRun));
@@ -163,7 +163,7 @@ class CarSequencing : public ::benchmark::Fixture {
     assert(featureElemSum.size() <= numFeatures * numCars);
 
     Int maxViol = 0;
-    for (const propagation::VarId viol : violations) {
+    for (const propagation::VarId& viol : violations) {
       maxViol += solver->upperBound(viol);
     }
     totalViolation = solver->makeIntVar(0, 0, maxViol);
@@ -176,7 +176,7 @@ class CarSequencing : public ::benchmark::Fixture {
 
   void sanity() const {}
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     sequence.clear();
     classCount.clear();
     maxCarsInBlock.clear();
@@ -194,7 +194,7 @@ class CarSequencing : public ::benchmark::Fixture {
 
 BENCHMARK_DEFINE_F(CarSequencing, probe_single_swap)(::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     const size_t i = carDistribution(gen);
     assert(i < sequence.size());
     const size_t j = carDistribution(gen);
@@ -221,12 +221,12 @@ BENCHMARK_DEFINE_F(CarSequencing, probe_single_swap)(::benchmark::State& st) {
     }));
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(CarSequencing, probe_all_swap)(::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(numCars); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(numCars); ++j) {
         const Int oldI = solver->committedValue(sequence[i]);
@@ -245,7 +245,7 @@ BENCHMARK_DEFINE_F(CarSequencing, probe_all_swap)(::benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

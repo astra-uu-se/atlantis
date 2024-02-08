@@ -21,7 +21,7 @@ void Exists::registerVars() {
 void Exists::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::max();
-  for (const VarId input : _varArray) {
+  for (const VarId& input : _varArray) {
     lb = std::min(lb, _solver.lowerBound(input));
     ub = std::min(ub, _solver.upperBound(input));
   }
@@ -33,7 +33,7 @@ void Exists::recompute(Timestamp ts) {
   Int min_val = _solver.value(ts, _varArray[0]);
   for (size_t i = 1; i < _varArray.size(); ++i) {
     if (_solver.value(ts, _varArray[i]) < min_val) {
-      min_i = i;
+      min_i = static_cast<Int>(i);
       min_val = _solver.value(ts, _varArray[i]);
     }
     assert(min_val >= 0);
@@ -52,7 +52,7 @@ void Exists::notifyInputChanged(Timestamp ts, LocalId id) {
     recompute(ts);
   } else if (_solver.value(ts, _varArray[id]) <=
              _solver.value(ts, _varArray[_min.value(ts)])) {
-    _min.setValue(ts, id);
+    _min.setValue(ts, static_cast<Int>(id));
     updateValue(ts, _output, _solver.value(ts, _varArray[_min.value(ts)]));
   }
 }
@@ -60,10 +60,8 @@ void Exists::notifyInputChanged(Timestamp ts, LocalId id) {
 VarId Exists::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
-  if (index == 0) {
-    return _varArray[index];
-  } else if (index < _varArray.size() &&
-             _solver.value(ts, _varArray[index - 1]) > 0) {
+  if (index == 0 || (index < _varArray.size() &&
+             _solver.value(ts, _varArray[index - 1]) > 0)) {
     return _varArray[index];
   } else {
     return NULL_ID;  // Done

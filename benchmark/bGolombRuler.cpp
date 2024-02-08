@@ -21,7 +21,7 @@ class GolombRuler : public ::benchmark::Fixture {
   std::unique_ptr<propagation::Solver> solver;
   std::mt19937 gen;
 
-  size_t markCount;
+  size_t markCount{0};
 
   std::vector<propagation::VarId> marks;
   std::vector<propagation::VarId> differences;
@@ -29,7 +29,7 @@ class GolombRuler : public ::benchmark::Fixture {
   std::vector<propagation::VarId> violations;
   propagation::VarId totalViolation;
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
 
     markCount = state.range(0);
@@ -38,16 +38,16 @@ class GolombRuler : public ::benchmark::Fixture {
     gen = std::mt19937(rd());
 
     solver->open();
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     // Let first mark equal 0
     marks.emplace_back(solver->makeIntVar(0, 0, 0));
     Int prevVal = 0;
-    for (size_t i = 1; i < markCount; ++i) {
+    for (Int i = 1; i < static_cast<Int>(markCount); ++i) {
       const Int markLb = i;
-      const Int markUb = static_cast<Int>(ub) - (markCount - i + 1);
+      const Int markUb = static_cast<Int>(ub) - (static_cast<Int>(markCount) - i + 1);
 
-      const Int markVal = std::uniform_int_distribution<size_t>(
+      const Int markVal = std::uniform_int_distribution<Int>(
           std::max<Int>(prevVal + 1, markLb), markUb)(gen);
 
       marks.emplace_back(solver->makeIntVar(markVal, markLb, markUb));
@@ -83,7 +83,7 @@ class GolombRuler : public ::benchmark::Fixture {
     solver->close();
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     marks.clear();
     differences.clear();
   }
@@ -96,7 +96,7 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(::benchmark::State& st) {
   std::iota(indices.begin(), indices.end(), 0);
   const size_t lastIndex = marks.size() - 1;
 
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (size_t i = 0; i <= lastIndex; ++i) {
       assert(i <= lastIndex);
 
@@ -133,7 +133,7 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(::benchmark::State& st) {
         continue;
       }
 
-      const Int newVal = rand_in_range(markLb, markUb - 1, gen);
+      const Int newVal = static_cast<Int>(rand_in_range(markLb, markUb - 1, gen));
 
       solver->beginMove();
       solver->setValue(
@@ -156,7 +156,7 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(::benchmark::State& st) {
     }));
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

@@ -25,9 +25,10 @@ class ExtremeStatic : public ::benchmark::Fixture {
   std::uniform_int_distribution<Int> staticVarValueDist;
   std::uniform_int_distribution<Int> staticVarIndexDist;
   size_t numInputs;
-  Int lb, ub;
+  Int lb{0};
+  Int ub{0};
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
 
     lb = 0;
@@ -36,7 +37,7 @@ class ExtremeStatic : public ::benchmark::Fixture {
     numInputs = state.range(0);
 
     solver->open();
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     for (size_t i = 0; i < numInputs; ++i) {
       staticInputVars.emplace_back(solver->makeIntVar(lb, lb, ub));
@@ -55,7 +56,7 @@ class ExtremeStatic : public ::benchmark::Fixture {
     staticVarValueDist = std::uniform_int_distribution<Int>{lb, ub};
   }
 
-  void TearDown(const ::benchmark::State&) { staticInputVars.clear(); }
+  void TearDown(const ::benchmark::State&) override { staticInputVars.clear(); }
 };
 
 // probe_single_non_index_var
@@ -65,7 +66,7 @@ class ExtremeStatic : public ::benchmark::Fixture {
 BENCHMARK_DEFINE_F(ExtremeStatic, probe_single_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     solver->beginMove();
     solver->setValue(staticInputVars.at(staticVarIndexDist(gen)),
                      staticVarValueDist(gen));
@@ -78,7 +79,7 @@ BENCHMARK_DEFINE_F(ExtremeStatic, probe_single_var)
     ++probes;
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

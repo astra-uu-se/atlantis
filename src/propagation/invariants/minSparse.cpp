@@ -23,7 +23,7 @@ void MinSparse::registerVars() {
 void MinSparse::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::max();
-  for (const VarId input : _varArray) {
+  for (const VarId& input : _varArray) {
     lb = std::min(lb, _solver.lowerBound(input));
     ub = std::min(ub, _solver.upperBound(input));
   }

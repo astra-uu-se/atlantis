@@ -31,7 +31,7 @@ bool array_int_element(FznInvariantGraph& invariantGraph,
 
   const auto& idx = std::get<fznparser::IntArg>(constraint.arguments().at(0));
 
-  Int offset = 1;
+  Int offset;
   if (hasOffsetSuffix) {
     FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true)
     offset =

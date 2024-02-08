@@ -38,7 +38,7 @@ class Queens : public ::benchmark::Fixture {
     }
 
     solver->open();
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
     // the total number of variables is linear in n
     queens = std::vector<propagation::VarId>(n);
     q_offset_minus = std::vector<propagation::VarId>(n);
@@ -105,7 +105,7 @@ class Queens : public ::benchmark::Fixture {
 
 BENCHMARK_DEFINE_F(Queens, probe_single_swap)(::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     const size_t i = distribution(gen);
     assert(i < queens.size());
     const size_t j = distribution(gen);
@@ -125,12 +125,12 @@ BENCHMARK_DEFINE_F(Queens, probe_single_swap)(::benchmark::State& st) {
     assert(sanity());
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(Queens, probe_all_swap)(::benchmark::State& st) {
   int probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
         const Int oldI = solver->committedValue(queens[i]);
@@ -150,7 +150,7 @@ BENCHMARK_DEFINE_F(Queens, probe_all_swap)(::benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(Queens, solve)(::benchmark::State& st) {
@@ -162,7 +162,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(::benchmark::State& st) {
   const Int tenure = 10;
   bool done = false;
 
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     while (it < 100000 && !done) {
       size_t bestI = 0;
       size_t bestJ = 0;
@@ -220,7 +220,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(::benchmark::State& st) {
   st.counters["it_per_s"] =
       ::benchmark::Counter(it, ::benchmark::Counter::kIsRate);
   st.counters["probes_per_s"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
   st.counters["solved"] = ::benchmark::Counter(done);
   logDebug(instanceToString());
 }

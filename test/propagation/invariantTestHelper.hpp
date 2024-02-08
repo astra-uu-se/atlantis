@@ -59,12 +59,12 @@ std::vector<std::pair<T, T>> cartesianProduct(const std::vector<T>& t) {
 }
 
 struct NotificationData {
-  PropagationMode propMode;
-  OutputToInputMarkingMode markingMode;
-  size_t numNextInputCalls;
-  propagation::VarId modifiedVarId;
-  Int modifiedVal;
-  propagation::VarId queryVarId;
+  PropagationMode propMode{PropagationMode::INPUT_TO_OUTPUT};
+  OutputToInputMarkingMode markingMode{OutputToInputMarkingMode::NONE};
+  size_t numNextInputCalls{0};
+  propagation::VarId modifiedVarId{NULL_ID};
+  Int modifiedVal{0};
+  propagation::VarId queryVarId{NULL_ID};
 };
 
 class InvariantTest : public ::testing::Test {

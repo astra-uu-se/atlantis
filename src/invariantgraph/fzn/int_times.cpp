@@ -14,7 +14,6 @@ bool int_times(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
       invariantGraph.createVarNodeFromFzn(b, false),
       invariantGraph.createVarNodeFromFzn(product, true)));
   return true;
-  return true;
 }
 
 bool int_times(FznInvariantGraph& invariantGraph,

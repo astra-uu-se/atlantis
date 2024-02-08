@@ -113,10 +113,6 @@ class InvariantGraph {
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
       std::unordered_map<VarNodeId, VarNodeId, VarNodeIdHash>& path);
 
-  std::vector<VarNodeId> findCycle(
-      const std::unordered_map<VarNodeId, VarNodeId, VarNodeIdHash>& childOf,
-      VarNodeId node, VarNodeId parent);
-
   std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
       const std::vector<VarNodeId>& cycle);
 

@@ -64,7 +64,7 @@ TEST_F(GlobalCardinalityClosedTest, UpdateBounds) {
           *solver, violationId, std::vector<VarId>(outputs), std::vector<VarId>(inputs), std::vector<Int>{0, 2});
   solver->close();
   EXPECT_EQ(solver->lowerBound(violationId), 0);
-  for (const VarId output : outputs) {
+  for (const VarId& output : outputs) {
     EXPECT_EQ(solver->lowerBound(output), 0);
   }
 
@@ -78,7 +78,7 @@ TEST_F(GlobalCardinalityClosedTest, UpdateBounds) {
         EXPECT_GE(solver->value(solver->currentTimestamp(), violationId), 0);
         EXPECT_LE(solver->value(solver->currentTimestamp(), violationId),
                   inputs.size());
-        for (const VarId output : outputs) {
+        for (const VarId& output : outputs) {
           EXPECT_GE(solver->value(solver->currentTimestamp(), output), 0);
           EXPECT_LE(solver->value(solver->currentTimestamp(), output),
                     inputs.size());
@@ -277,7 +277,7 @@ TEST_F(GlobalCardinalityClosedTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {
@@ -366,7 +366,7 @@ TEST_F(GlobalCardinalityClosedTest, Commit) {
     solver->commitIf(ts, inputs.at(i));
     committedValues.at(i) = solver->value(ts, inputs.at(i));
     solver->commitIf(ts, violationId);
-    for (const VarId o : outputs) {
+    for (const VarId& o : outputs) {
       solver->commitIf(ts, o);
     }
 
@@ -429,14 +429,14 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityClosedTest, RapidCheck,
       solver->close();
 
       solver->beginMove();
-      for (const VarId x : inputs) {
+      for (const VarId& x : inputs) {
         solver->setValue(x, valDistribution(valGen));
       }
       solver->endMove();
 
       solver->beginProbe();
       solver->query(viol);
-      for (const VarId output : outputs) {
+      for (const VarId& output : outputs) {
         solver->query(output);
       }
       solver->endProbe();

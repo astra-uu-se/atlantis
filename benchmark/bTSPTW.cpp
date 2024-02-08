@@ -31,7 +31,7 @@ class TSPTW : public ::benchmark::Fixture {
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
-  Int n;
+  Int n{0};
   const int MAX_TIME = 100000;
 
   std::vector<propagation::VarId> violations;
@@ -48,7 +48,7 @@ class TSPTW : public ::benchmark::Fixture {
 
     solver->open();
 
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     // The first row and column hold dummy values:
     for (int i = 0; i < n; ++i) {
@@ -149,7 +149,7 @@ class TSPTW : public ::benchmark::Fixture {
     violations.clear();
   }
 
-  bool isTourValid(bool committedValue) const {
+  [[nodiscard]] bool isTourValid(bool committedValue) const {
     std::vector<bool> visited(n, false);
     Int cur = 0;
     Int numVisited = 0;
@@ -185,7 +185,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_three_opt)(::benchmark::State& st) {
   std::iota(indexVec2.begin(), indexVec2.end(), 0);
 
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     Int i = static_cast<Int>(n);
     Int j = static_cast<Int>(n);
     for (size_t index1 = 0; i == n && index1 < static_cast<size_t>(n);
@@ -222,12 +222,12 @@ BENCHMARK_DEFINE_F(TSPTW, probe_three_opt)(::benchmark::State& st) {
     assert(isTourValid(false));
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(::benchmark::State& st) {
   Int probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (int i = 0; i < n; ++i) {
       for (int j = 0; j < n; ++j) {
         if (i == j || solver->committedValue(pred[i]) == j + 1) {
@@ -254,7 +254,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(::benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

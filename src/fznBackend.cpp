@@ -3,8 +3,8 @@
 namespace atlantis {
 
 FznBackend::FznBackend(
-    std::filesystem::path modelFile,
-    search::AnnealingScheduleFactory annealingScheduleFactory,
+    std::filesystem::path&& modelFile,
+    search::AnnealingScheduleFactory&& annealingScheduleFactory,
     std::uint_fast32_t seed, std::optional<std::chrono::milliseconds> timeout)
     : _modelFile(std::move(modelFile)),
       _annealingScheduleFactory(std::move(annealingScheduleFactory)),
@@ -12,8 +12,8 @@ FznBackend::FznBackend(
       _seed(seed) {}
 
 FznBackend::FznBackend(
-    std::filesystem::path modelFile,
-    search::AnnealingScheduleFactory annealingScheduleFactory,
+    std::filesystem::path&& modelFile,
+    search::AnnealingScheduleFactory&& annealingScheduleFactory,
     std::chrono::milliseconds timeout)
     : FznBackend(std::move(modelFile), std::move(annealingScheduleFactory),
                  std::time(nullptr), timeout) {}

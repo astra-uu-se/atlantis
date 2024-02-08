@@ -29,9 +29,10 @@ class ExtremeDynamic : public ::benchmark::Fixture {
   std::uniform_int_distribution<Int> staticVarValueDist;
   std::uniform_int_distribution<Int> dynamicVarValueDist;
   size_t numInvariants;
-  int lb, ub;
+  int lb{0};
+  int ub{0};
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
 
     lb = 0;
@@ -40,7 +41,7 @@ class ExtremeDynamic : public ::benchmark::Fixture {
     numInvariants = state.range(0);
 
     solver->open();
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     staticInputVar = solver->makeIntVar(0, 0, static_cast<Int>(numInvariants));
     for (size_t i = 0; i < numInvariants; ++i) {
@@ -68,7 +69,7 @@ class ExtremeDynamic : public ::benchmark::Fixture {
     dynamicVarValueDist = std::uniform_int_distribution<Int>{lb, ub};
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     dynamicInputVars.clear();
     outputVars.clear();
   }
@@ -81,7 +82,7 @@ class ExtremeDynamic : public ::benchmark::Fixture {
 BENCHMARK_DEFINE_F(ExtremeDynamic, probe_static_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     // Perform move
     solver->beginMove();
     solver->setValue(staticInputVar, staticVarValueDist(gen));
@@ -94,13 +95,13 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_static_var)
     ++probes;
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(ExtremeDynamic, probe_single_dynamic_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     solver->beginMove();
     solver->setValue(dynamicInputVars.at(staticVarValueDist(gen)),
                      dynamicVarValueDist(gen));
@@ -113,7 +114,7 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_single_dynamic_var)
     ++probes;
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

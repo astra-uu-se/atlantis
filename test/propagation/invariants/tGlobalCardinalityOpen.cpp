@@ -58,7 +58,7 @@ TEST_F(GlobalCardinalityOpenTest, UpdateBounds) {
       solver->makeInvariant<GlobalCardinalityOpen>(*solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
                                                    std::vector<Int>{0, 2});
   solver->close();
-  for (const VarId output : outputs) {
+  for (const VarId& output : outputs) {
     EXPECT_EQ(solver->lowerBound(output), 0);
   }
 
@@ -69,7 +69,7 @@ TEST_F(GlobalCardinalityOpenTest, UpdateBounds) {
       for (Int cVal = lb; cVal <= ub; ++cVal) {
         solver->setValue(solver->currentTimestamp(), inputs.at(2), cVal);
         invariant.compute(solver->currentTimestamp());
-        for (const VarId output : outputs) {
+        for (const VarId& output : outputs) {
           EXPECT_GE(solver->value(solver->currentTimestamp(), output), 0);
           EXPECT_LE(solver->value(solver->currentTimestamp(), output),
                     inputs.size());
@@ -254,7 +254,7 @@ TEST_F(GlobalCardinalityOpenTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {
@@ -335,7 +335,7 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
 
     solver->commitIf(ts, inputs.at(i));
     committedValues.at(i) = solver->value(ts, inputs.at(i));
-    for (const VarId o : outputs) {
+    for (const VarId& o : outputs) {
       solver->commitIf(ts, o);
     }
 
@@ -394,13 +394,13 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityOpenTest, RapidCheck,
       solver->close();
 
       solver->beginMove();
-      for (const VarId x : inputs) {
+      for (const VarId& x : inputs) {
         solver->setValue(x, valDistribution(valGen));
       }
       solver->endMove();
 
       solver->beginProbe();
-      for (const VarId output : outputs) {
+      for (const VarId& output : outputs) {
         solver->query(output);
       }
       solver->endProbe();

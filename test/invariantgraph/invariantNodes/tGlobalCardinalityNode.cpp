@@ -118,7 +118,7 @@ TEST_F(GlobalCardinalityNodeTest, propagation) {
 
   std::vector<std::pair<Int, Int>> countBounds;
   countBounds.reserve(outputVars.size());
-  for (const propagation::VarId c : outputVars) {
+  for (const propagation::VarId& c : outputVars) {
     countBounds.emplace_back(
         solver.lowerBound(c), solver.lowerBound(c));
   }

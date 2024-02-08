@@ -69,7 +69,7 @@ inline signed char Count::count(Timestamp ts, Int value) {
   }
   assert(0 <= value - _offset &&
          static_cast<size_t>(value - _offset) <= _counts.size());
-  return _counts[value - _offset].value(ts);
+  return static_cast<signed char>(_counts[value - _offset].value(ts));
 }
 
 }  // namespace atlantis::propagation

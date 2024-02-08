@@ -24,16 +24,16 @@ void Count::registerVars() {
 }
 
 void Count::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_output, 0, _vars.size(), widenOnly);
+  _solver.updateBounds(_output, 0, static_cast<Int>(_vars.size()), widenOnly);
 }
 
 void Count::close(Timestamp ts) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    lb = std::min(lb, _solver.lowerBound(_vars[i]));
-    ub = std::max(ub, _solver.upperBound(_vars[i]));
+  for (const auto & var : _vars) {
+    lb = std::min(lb, _solver.lowerBound(var));
+    ub = std::max(ub, _solver.upperBound(var));
   }
   assert(ub >= lb);
   lb = std::max(lb, _solver.lowerBound(_y));
@@ -51,8 +51,8 @@ void Count::recompute(Timestamp ts) {
 
   updateValue(ts, _output, 0);
 
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    increaseCount(ts, _solver.value(ts, _vars[i]));
+  for (const auto & var : _vars) {
+    increaseCount(ts, _solver.value(ts, var));
   }
   updateValue(ts, _output, count(ts, _solver.value(ts, _y)));
 }

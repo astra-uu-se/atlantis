@@ -54,7 +54,7 @@ class Annealer {
    * @return True whilst more Monte-Carlo simulations need to be run for this
    * round.
    */
-  bool runMonteCarloSimulation() const;
+  [[nodiscard]] bool runMonteCarloSimulation() const;
 
   /**
    * Determine whether @p move should be committed to the assignment.

@@ -233,7 +233,7 @@ TEST_F(AllDifferentExceptTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {
@@ -359,7 +359,7 @@ TEST_F(AllDifferentExceptTest, SolverIntegration) {
     }
     std::vector<Int> ignored(ub - lb, 0);
     for (size_t i = 0; i < ignored.size(); ++i) {
-      ignored[i] = i - lb;
+      ignored[i] = static_cast<Int>(i) - lb;
     }
     std::shuffle(ignored.begin(), ignored.end(), rng);
     const VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));

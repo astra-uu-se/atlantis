@@ -42,7 +42,7 @@ void GlobalCardinalityClosed::registerVars() {
     _solver.registerInvariantInput(_id, _inputs[i], LocalId(i), false);
   }
   registerDefinedVar(_violationId);
-  for (const VarId output : _outputs) {
+  for (const VarId& output : _outputs) {
     registerDefinedVar(output);
   }
 }
@@ -50,7 +50,7 @@ void GlobalCardinalityClosed::registerVars() {
 void GlobalCardinalityClosed::updateBounds(bool widenOnly) {
   _solver.updateBounds(_violationId, 0, static_cast<Int>(_inputs.size()),
                        widenOnly);
-  for (const VarId output : _outputs) {
+  for (const VarId& output : _outputs) {
     _solver.updateBounds(output, 0, static_cast<Int>(_inputs.size()),
                          widenOnly);
   }
@@ -74,8 +74,8 @@ void GlobalCardinalityClosed::recompute(Timestamp timestamp) {
   }
 
   Int excess = 0;
-  for (size_t i = 0; i < _inputs.size(); ++i) {
-    excess += increaseCount(timestamp, _solver.value(timestamp, _inputs[i]));
+  for (const auto& var : _inputs) {
+    excess += increaseCount(timestamp, _solver.value(timestamp, var));
   }
 
   updateValue(timestamp, _violationId, excess);

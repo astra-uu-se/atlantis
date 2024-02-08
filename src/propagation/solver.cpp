@@ -275,7 +275,7 @@ void Solver::propagateOnClose() {
               [&](const VarIdBase a, const VarIdBase b) {
                 return _propGraph.position(a) < _propGraph.position(b);
               });
-    for (const VarIdBase varId : vars) {
+    for (const VarIdBase& varId : vars) {
       const InvariantId defInv = _propGraph.definingInvariant(varId);
       if (defInv != NULL_ID && !committedInvariants.get(defInv)) {
         committedInvariants.set(defInv, true);
@@ -313,7 +313,7 @@ void Solver::propagate() {
         if (queuedVar == defInv.primaryDefinedVar()) {
           const Int oldValue = var.value(_currentTimestamp);
           defInv.compute(_currentTimestamp);
-          for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
+          for (const VarId& inputId : defInv.nonPrimaryDefinedVars()) {
             if (hasChanged(_currentTimestamp, inputId)) {
               assert(!_isEnqueued.get(inputId.id));
               _propGraph.enqueuePropagationQueue(inputId.id);
@@ -444,7 +444,7 @@ void Solver::computeBounds() {
         }));
     _store.invariant(invariantId).updateBounds(true);
 
-    for (const VarIdBase outputVarId : _propGraph.varsDefinedBy(invariantId)) {
+    for (const VarIdBase& outputVarId : _propGraph.varsDefinedBy(invariantId)) {
       for (const PropagationGraph::ListeningInvariantData&
                listeningInvariantData : listeningInvariantData(outputVarId)) {
         // Remove from the data structure must happen before updating

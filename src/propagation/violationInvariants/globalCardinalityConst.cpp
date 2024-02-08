@@ -110,8 +110,8 @@ void GlobalCardinalityConst<IsClosed>::recompute(Timestamp timestamp) {
     c.setValue(timestamp, 0);
   }
 
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    increaseCount(timestamp, _solver.value(timestamp, _vars[i]));
+  for (const auto& var : _vars) {
+    increaseCount(timestamp, _solver.value(timestamp, var));
   }
 
   Int shortage = 0;

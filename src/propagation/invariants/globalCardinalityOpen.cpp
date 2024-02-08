@@ -3,12 +3,12 @@
 namespace atlantis::propagation {
 
 inline bool all_in_range(Int start, Int stop,
-                         std::function<bool(Int)> predicate) {
+                         std::function<bool(Int)>&& predicate) {
   std::vector<Int> vec(stop - start);
   for (Int i = 0; i < stop - start; ++i) {
     vec.at(i) = start + i;
   }
-  return std::all_of(vec.begin(), vec.end(), predicate);
+  return std::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
 /**
@@ -40,13 +40,13 @@ void GlobalCardinalityOpen::registerVars() {
   for (size_t i = 0; i < _inputs.size(); ++i) {
     _solver.registerInvariantInput(_id, _inputs[i], LocalId(i), false);
   }
-  for (const VarId output : _outputs) {
+  for (const VarId& output : _outputs) {
     registerDefinedVar(output);
   }
 }
 
 void GlobalCardinalityOpen::updateBounds(bool widenOnly) {
-  for (const VarId output : _outputs) {
+  for (const VarId& output : _outputs) {
     _solver.updateBounds(output, 0, static_cast<Int>(_inputs.size()),
                          widenOnly);
   }
@@ -69,8 +69,8 @@ void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
     c.setValue(timestamp, 0);
   }
 
-  for (size_t i = 0; i < _inputs.size(); ++i) {
-    increaseCount(timestamp, _solver.value(timestamp, _inputs[i]));
+  for (const auto& var : _inputs) {
+    increaseCount(timestamp, _solver.value(timestamp, var));
   }
 
   for (size_t i = 0; i < _outputs.size(); ++i) {

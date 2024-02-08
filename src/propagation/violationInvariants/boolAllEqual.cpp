@@ -32,8 +32,8 @@ void BoolAllEqual::close(Timestamp) {}
 void BoolAllEqual::recompute(Timestamp ts) {
   _numTrue.setValue(ts, 0);
 
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    _numTrue.incValue(ts, static_cast<Int>(_solver.value(ts, _vars[i]) == 0));
+  for (const auto& var : _vars) {
+    _numTrue.incValue(ts, static_cast<Int>(_solver.value(ts, var) == 0));
   }
 
   assert(0 <= _numTrue.value(ts) &&

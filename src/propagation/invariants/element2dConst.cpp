@@ -6,7 +6,7 @@ static inline Int numCols(const std::vector<std::vector<Int>>& matrix) {
   assert(std::all_of(matrix.begin(), matrix.end(), [&](const auto& col) {
     return col.size() == matrix.front().size();
   }));
-  return matrix.empty() ? 0 : matrix.front().size();
+  return matrix.empty() ? 0 : static_cast<Int>(matrix.front().size());
 }
 
 Element2dConst::Element2dConst(SolverBase& solver, VarId output, VarId index1,

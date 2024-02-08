@@ -22,8 +22,8 @@ class DummyAnnealingSchedule : public AnnealingSchedule {
 
 class ScheduleSequenceTest : public ::testing::Test {
  protected:
-  DummyAnnealingSchedule* inner1;
-  DummyAnnealingSchedule* inner2;
+  DummyAnnealingSchedule* inner1{nullptr};
+  DummyAnnealingSchedule* inner2{nullptr};
   std::unique_ptr<AnnealingSchedule> schedule;
 
   void SetUp() override {

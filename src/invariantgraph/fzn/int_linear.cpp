@@ -49,8 +49,6 @@ bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
   if (outputCoeff > 1) {
     std::for_each(coeffs.begin(), coeffs.end(),
                   [](Int& coeff) { coeff *= -1; });
-  } else {
-    outputCoeff = -outputCoeff;
   }
 
   std::vector<VarNodeId> inputVarNodeIds;

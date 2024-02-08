@@ -112,8 +112,8 @@ TEST_F(ArrayVarElement2dNodeTest, propagation) {
   std::vector<Int> inputVals;
   inputVals.reserve(inputVars.size());
 
-  for (size_t i = 0; i < inputVars.size(); ++i) {
-    inputVals.emplace_back(solver.lowerBound(inputVars.at(i)));
+  for (const auto& var : inputVars) {
+    inputVals.emplace_back(solver.lowerBound(var));
   }
 
   while (increaseNextVal(solver, inputVars, inputVals)) {

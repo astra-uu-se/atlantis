@@ -21,7 +21,7 @@ void ForAll::registerVars() {
 void ForAll::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::min();
   Int ub = std::numeric_limits<Int>::min();
-  for (const VarId input : _varArray) {
+  for (const VarId& input : _varArray) {
     lb = std::max(lb, _solver.lowerBound(input));
     ub = std::max(ub, _solver.upperBound(input));
   }

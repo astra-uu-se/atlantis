@@ -27,7 +27,7 @@ void Element2dVar::registerVars() {
   _solver.registerInvariantInput(_id, _indices[0], LocalId(0), false);
   _solver.registerInvariantInput(_id, _indices[1], LocalId(0), false);
   for (const auto& varRow : _varMatrix) {
-    for (const VarId input : varRow) {
+    for (const VarId& input : varRow) {
       _solver.registerInvariantInput(_id, input, LocalId(0), true);
     }
   }

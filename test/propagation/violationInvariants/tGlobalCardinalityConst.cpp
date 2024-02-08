@@ -284,7 +284,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
 
     for (Timestamp ts = solver->currentTimestamp() + 1;
          ts < solver->currentTimestamp() + 4; ++ts) {
-      for (const VarId varId : inputs) {
+      for (const VarId& varId : inputs) {
         EXPECT_EQ(invariant.nextInput(ts), varId);
         const Int oldVal = solver->value(ts, varId);
         do {
@@ -426,7 +426,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
         solver->close();
 
         solver->beginMove();
-        for (const VarId x : vars) {
+        for (const VarId& x : vars) {
           solver->setValue(x, valDistribution(valGen));
         }
         solver->endMove();
@@ -444,7 +444,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
           actualCounts.emplace(cover[i], 0);
         }
 
-        for (const VarId varId : vars) {
+        for (const VarId& varId : vars) {
           Int val = solver->currentValue(varId);
           if (actualCounts.count(val) <= 0) {
             ++outsideCount;
