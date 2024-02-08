@@ -23,11 +23,11 @@ static bool isViolating(const std::vector<Int>& inputVals, size_t asSize) {
 template <ViolationInvariantType Type>
 class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
  public:
-  VarNodeId a1 = NULL_NODE_ID;
-  VarNodeId a2 = NULL_NODE_ID;
-  VarNodeId b1 = NULL_NODE_ID;
-  VarNodeId b2 = NULL_NODE_ID;
-  VarNodeId reified = NULL_NODE_ID;
+  VarNodeId a1{NULL_NODE_ID};
+  VarNodeId a2{NULL_NODE_ID};
+  VarNodeId b1{NULL_NODE_ID};
+  VarNodeId b2{NULL_NODE_ID};
+  VarNodeId reified{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();

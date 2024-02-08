@@ -19,8 +19,8 @@ bool int_abs(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 2);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
 
   return int_abs(invariantGraph,
                  std::get<fznparser::IntArg>(constraint.arguments().at(0)),

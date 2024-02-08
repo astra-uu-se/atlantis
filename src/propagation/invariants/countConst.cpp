@@ -3,7 +3,7 @@
 namespace atlantis::propagation {
 
 CountConst::CountConst(SolverBase& solver, VarId output, Int y,
-                       std::vector<VarId> vars)
+                       std::vector<VarId>&& vars)
     : Invariant(solver),
       _output(output),
       _y(y),
@@ -18,19 +18,19 @@ void CountConst::registerVars() {
   assert(_id != NULL_ID);
 
   for (size_t i = 0; i < _vars.size(); ++i) {
-    _solver.registerInvariantInput(_id, _vars[i], i);
+    _solver.registerInvariantInput(_id, _vars[i], i, false);
   }
   registerDefinedVar(_output);
 }
 
 void CountConst::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_output, 0, _vars.size(), widenOnly);
+  _solver.updateBounds(_output, 0, static_cast<Int>(_vars.size()), widenOnly);
 }
 
 void CountConst::recompute(Timestamp ts) {
   Int count = 0;
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    count += static_cast<Int>(_solver.value(ts, _vars[i]) == _y);
+  for (const auto& var : _vars) {
+    count += static_cast<Int>(_solver.value(ts, var) == _y);
   }
   updateValue(ts, _output, count);
 }

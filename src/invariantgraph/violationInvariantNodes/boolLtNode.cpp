@@ -5,10 +5,9 @@
 namespace atlantis::invariantgraph {
 
 BoolLtNode::BoolLtNode(VarNodeId a, VarNodeId b, VarNodeId r)
-    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}), r) {}
+    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, r) {}
 BoolLtNode::BoolLtNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode(std::move(std::vector<VarNodeId>{a, b}),
-                             shouldHold) {}
+    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
 
 void BoolLtNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {

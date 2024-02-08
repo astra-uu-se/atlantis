@@ -32,9 +32,6 @@ class InvariantNode;   // Forward declaration
  * variable.
  */
 class VarNode {
- public:
-  float SPARSE_MIN_DENSENESS{0.6};
-
  private:
   VarNodeId _varNodeId;
   SearchDomain _domain;
@@ -56,15 +53,7 @@ class VarNode {
    * @param domain The domain of this variable.
    */
   explicit VarNode(VarNodeId, SearchDomain&& domain, bool isIntVar,
-                   const std::string& identifier = "");
-
-  /**
-   * Construct a variable node which is not associated with a model variable.
-   *
-   * @param domain The domain of this variable.
-   */
-  explicit VarNode(VarNodeId, const SearchDomain& domain, bool isIntVar,
-                   const std::string& identifier = "");
+                   std::string&& identifier = "");
 
   VarNodeId varNodeId() const noexcept;
 
@@ -131,7 +120,7 @@ class VarNode {
    * domain violation invariant will be added to the invariant graph for the
    * variable.
    */
-  bool shouldEnforceDomain() noexcept;
+  bool shouldEnforceDomain() const noexcept;
   bool shouldEnforceDomain(bool) noexcept;
 
   /**

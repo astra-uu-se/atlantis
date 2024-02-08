@@ -7,9 +7,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/globalCardinalityConst.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
+#include "propagation/violationInvariants/globalCardinalityConst.hpp"
 
 namespace atlantis::testing {
 
@@ -200,7 +199,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
     }
   }
   void nextInput() {
-    const size_t numInputs = 1000;
+    const Int numInputs = 1000;
     const Int lb = 0;
     const Int ub = numInputs - 1;
     EXPECT_TRUE(lb <= ub);
@@ -212,7 +211,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
     std::vector<Int> cover;
     std::vector<Int> low;
     std::vector<Int> up;
-    for (size_t i = 0; i < numInputs; ++i) {
+    for (Int i = 0; i < numInputs; ++i) {
       inputs.emplace_back(solver->makeIntVar(i, lb, ub));
       cover.emplace_back(i);
       low.emplace_back(1);
@@ -285,7 +284,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
 
     for (Timestamp ts = solver->currentTimestamp() + 1;
          ts < solver->currentTimestamp() + 4; ++ts) {
-      for (const VarId varId : inputs) {
+      for (const VarId& varId : inputs) {
         EXPECT_EQ(invariant.nextInput(ts), varId);
         const Int oldVal = solver->value(ts, varId);
         do {
@@ -403,7 +402,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
     VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numVars));
 
     solver->makeInvariant<GlobalCardinalityConst<IsClosed>>(
-        *solver, viol, vars, cover, lowerBound, upperBound);
+        *solver, viol, std::vector<VarId>(vars), cover, lowerBound, upperBound);
 
     solver->close();
 
@@ -427,7 +426,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
         solver->close();
 
         solver->beginMove();
-        for (const VarId x : vars) {
+        for (const VarId& x : vars) {
           solver->setValue(x, valDistribution(valGen));
         }
         solver->endMove();
@@ -445,7 +444,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
           actualCounts.emplace(cover[i], 0);
         }
 
-        for (const VarId varId : vars) {
+        for (const VarId& varId : vars) {
           Int val = solver->currentValue(varId);
           if (actualCounts.count(val) <= 0) {
             ++outsideCount;
@@ -531,11 +530,11 @@ class MockGlobalCardinalityConst : public GlobalCardinalityConst<IsClosed> {
     GlobalCardinalityConst<IsClosed>::registerVars();
   }
   explicit MockGlobalCardinalityConst(SolverBase& solver, VarId violationId,
-                                      const std::vector<VarId>& vars,
+                                      std::vector<VarId>&& vars,
                                       const std::vector<Int>& cover,
                                       const std::vector<Int>& counts)
-      : GlobalCardinalityConst<IsClosed>(solver, violationId, vars, cover,
-                                         counts) {
+      : GlobalCardinalityConst<IsClosed>(solver, violationId, std::move(vars),
+                                         cover, counts) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return GlobalCardinalityConst<IsClosed>::recompute(timestamp);
     });
@@ -574,12 +573,12 @@ TEST_F(GlobalCardinalityTestClosed, SolverIntegration) {
     }
 
     VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
-
+    VarId modifiedVarId = args.front();
     testNotifications<MockGlobalCardinalityConst<false>>(
         &solver->makeInvariant<MockGlobalCardinalityConst<false>>(
             *solver, viol, std::vector<VarId>{args}, std::vector<Int>{1, 2, 3},
             std::vector<Int>{1, 2, 3}),
-        {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
+        {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});
   }
 }
 TEST_F(GlobalCardinalityTestOpen, SolverIntegration) {
@@ -594,12 +593,13 @@ TEST_F(GlobalCardinalityTestOpen, SolverIntegration) {
     }
 
     VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    const VarId modifiedVarId = args.front();
 
     testNotifications<MockGlobalCardinalityConst<true>>(
         &solver->makeInvariant<MockGlobalCardinalityConst<true>>(
-            *solver, viol, std::vector<VarId>{args}, std::vector<Int>{1, 2, 3},
+            *solver, viol, std::move(args), std::vector<Int>{1, 2, 3},
             std::vector<Int>{1, 2, 3}),
-        {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
+        {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});
   }
 }
 

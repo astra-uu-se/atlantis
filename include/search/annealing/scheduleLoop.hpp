@@ -33,4 +33,4 @@ class ScheduleLoop : public AnnealingSchedule {
   bool frozen() override;
 };
 
-}  // namespace search
+}  // namespace atlantis::search

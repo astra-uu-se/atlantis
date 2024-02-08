@@ -5,36 +5,37 @@ namespace atlantis::propagation {
 /**
  * @param violationId id for the violationCount
  */
-template GlobalCardinalityConst<true>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
-    const std::vector<Int>& cover, const std::vector<Int>& t_counts);
-template GlobalCardinalityConst<false>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
-    const std::vector<Int>& cover, const std::vector<Int>& t_counts);
-template <bool IsClosed>
-GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
-    const std::vector<Int>& cover, const std::vector<Int>& t_counts)
-    : GlobalCardinalityConst(solver, violationId, t_vars, cover, t_counts,
-                             t_counts) {}
 
 template GlobalCardinalityConst<true>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
+    SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
+    const std::vector<Int>& cover, const std::vector<Int>& bounds);
+template GlobalCardinalityConst<false>::GlobalCardinalityConst(
+    SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
+    const std::vector<Int>& cover, const std::vector<Int>& bounds);
+template <bool IsClosed>
+GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
+    SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
+    const std::vector<Int>& cover, const std::vector<Int>& bounds)
+    : GlobalCardinalityConst(solver, violationId, std::move(t_vars), cover,
+                             bounds, bounds) {}
+
+template GlobalCardinalityConst<true>::GlobalCardinalityConst(
+    SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound);
 template GlobalCardinalityConst<false>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
+    SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound);
 template <bool IsClosed>
 GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
-    SolverBase& solver, VarId violationId, std::vector<VarId> t_vars,
+    SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(t_vars)),
-      _lowerBound(),
-      _upperBound(),
+      _lowerBounds(),
+      _upperBounds(),
       _committedValues(_vars.size(), 0),
       _shortage(NULL_TIMESTAMP, 0),
       _excess(NULL_TIMESTAMP, 0),
@@ -47,20 +48,20 @@ GlobalCardinalityConst<IsClosed>::GlobalCardinalityConst(
   const auto [lb, ub] = std::minmax_element(cover.begin(), cover.end());
 
   if constexpr (IsClosed) {
-    _lowerBound.assign(static_cast<Int>(*ub - *lb + 3), 0);
-    _upperBound.assign(static_cast<Int>(*ub - *lb + 3), 0);
+    _lowerBounds.assign(static_cast<Int>(*ub - *lb + 3), 0);
+    _upperBounds.assign(static_cast<Int>(*ub - *lb + 3), 0);
   } else {
     // a bound of -1 means that the count of a value is not restricted:
-    _lowerBound.assign(static_cast<Int>(*ub - *lb + 3), -1);
-    _upperBound.assign(static_cast<Int>(*ub - *lb + 3), -1);
+    _lowerBounds.assign(static_cast<Int>(*ub - *lb + 3), -1);
+    _upperBounds.assign(static_cast<Int>(*ub - *lb + 3), -1);
   }
   _offset = *lb - 1;
 
   for (size_t i = 0; i < cover.size(); ++i) {
     assert(lowerBound[i] >= 0);
     assert(lowerBound[i] <= upperBound[i]);
-    _lowerBound[cover[i] - _offset] = lowerBound[i];
-    _upperBound[cover[i] - _offset] = upperBound[i];
+    _lowerBounds[cover[i] - _offset] = lowerBound[i];
+    _upperBounds[cover[i] - _offset] = upperBound[i];
   }
 }
 
@@ -68,9 +69,9 @@ template void GlobalCardinalityConst<true>::registerVars();
 template void GlobalCardinalityConst<false>::registerVars();
 template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   for (size_t i = 0; i < _vars.size(); ++i) {
-    _solver.registerInvariantInput(_id, _vars[i], LocalId(i));
+    _solver.registerInvariantInput(_id, _vars[i], LocalId(i), false);
   }
   registerDefinedVar(_violationId);
 }
@@ -80,11 +81,11 @@ template void GlobalCardinalityConst<false>::updateBounds(bool widenOnly);
 template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::updateBounds(bool widenOnly) {
   Int maxShortage = 0;
-  for (const Int lb : _lowerBound) {
+  for (const Int lb : _lowerBounds) {
     maxShortage += lb;
   }
   Int maxExcess = 0;
-  for (const Int ub : _upperBound) {
+  for (const Int ub : _upperBounds) {
     maxExcess = std::max(maxExcess, static_cast<Int>(_vars.size()) - ub);
   }
   Int maxViol = std::max(maxShortage, maxExcess);
@@ -98,7 +99,7 @@ template void GlobalCardinalityConst<true>::close(Timestamp);
 template void GlobalCardinalityConst<false>::close(Timestamp);
 template <bool IsClosed>
 void GlobalCardinalityConst<IsClosed>::close(Timestamp timestamp) {
-  _counts.resize(_lowerBound.size(), CommittableInt(timestamp, 0));
+  _counts.resize(_lowerBounds.size(), CommittableInt(timestamp, 0));
 }
 
 template void GlobalCardinalityConst<true>::recompute(Timestamp);
@@ -109,22 +110,22 @@ void GlobalCardinalityConst<IsClosed>::recompute(Timestamp timestamp) {
     c.setValue(timestamp, 0);
   }
 
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    increaseCount(timestamp, _solver.value(timestamp, _vars[i]));
+  for (const auto& var : _vars) {
+    increaseCount(timestamp, _solver.value(timestamp, var));
   }
 
   Int shortage = 0;
   Int excess = 0;
 
-  assert(_counts.size() == _lowerBound.size());
-  for (size_t i = 0; i < _lowerBound.size(); ++i) {
-    if (_lowerBound.at(i) < 0) {
+  assert(_counts.size() == _lowerBounds.size());
+  for (size_t i = 0; i < _lowerBounds.size(); ++i) {
+    if (_lowerBounds.at(i) < 0) {
       continue;
     }
     shortage +=
-        std::max(Int(0), _lowerBound.at(i) - _counts.at(i).value(timestamp));
+        std::max(Int(0), _lowerBounds.at(i) - _counts.at(i).value(timestamp));
     excess +=
-        std::max(Int(0), _counts.at(i).value(timestamp) - _upperBound.at(i));
+        std::max(Int(0), _counts.at(i).value(timestamp) - _upperBounds.at(i));
   }
 
   _shortage.setValue(timestamp, shortage);

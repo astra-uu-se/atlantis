@@ -8,7 +8,7 @@ namespace atlantis::invariantgraph {
 
 class ArrayVarElementNode : public InvariantNode {
  private:
-  const Int _offset;
+  Int _offset;
 
  public:
   ArrayVarElementNode(VarNodeId idx, std::vector<VarNodeId>&& varVector,

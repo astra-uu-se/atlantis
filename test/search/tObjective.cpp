@@ -17,7 +17,7 @@ class ObjectiveTest : public ::testing::Test {
 
   propagation::VarId install(
       search::Objective& objective,
-      fznparser::IntSet objectiveRange = fznparser::IntSet(0, 0),
+      const fznparser::IntSet& objectiveRange = fznparser::IntSet(0, 0),
       Int initial = 0) {
     solver->open();
     objectiveVarId = solver->makeIntVar(initial, objectiveRange.lowerBound(),

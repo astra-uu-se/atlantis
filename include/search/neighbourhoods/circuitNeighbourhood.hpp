@@ -13,7 +13,7 @@ class CircuitNeighbourhood : public Neighbourhood {
   std::vector<search::SearchVar> _vars;
 
  public:
-  CircuitNeighbourhood(std::vector<search::SearchVar>&&);
+  explicit CircuitNeighbourhood(std::vector<search::SearchVar>&&);
 
   ~CircuitNeighbourhood() override = default;
 
@@ -22,11 +22,13 @@ class CircuitNeighbourhood : public Neighbourhood {
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
-  const std::vector<SearchVar>& coveredVars() const override { return _vars; }
+  [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
+    return _vars;
+  }
 
  private:
-  [[nodiscard]] Int getNode(size_t nodeIdx) const noexcept;
-  [[nodiscard]] size_t getNodeIdx(Int node) const noexcept;
+  [[nodiscard]] static Int getNode(size_t nodeIdx) noexcept;
+  [[nodiscard]] static size_t getNodeIdx(Int node) noexcept;
 };
 
 }  // namespace atlantis::search::neighbourhoods

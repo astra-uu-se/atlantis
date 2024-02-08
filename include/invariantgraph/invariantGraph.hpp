@@ -49,15 +49,15 @@ class InvariantGraph {
   [[nodiscard]] bool containsVarNode(
       const std::string& identifier) const noexcept;
   [[nodiscard]] bool containsVarNode(Int) const noexcept;
-  [[nodiscard]] bool containsVarNode(bool) const noexcept;
+  [[nodiscard]] static bool containsVarNode(bool) noexcept;
 
   virtual VarNodeId createVarNode(bool, bool isDefinedVar);
   virtual VarNodeId createVarNode(bool, const std::string&, bool isDefinedVar);
   virtual VarNodeId createVarNode(Int, bool isDefinedVar);
   virtual VarNodeId createVarNode(Int, const std::string&, bool isDefinedVar);
-  virtual VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
+  virtual VarNodeId createVarNode(SearchDomain&&, bool isIntVar,
                                   bool isDefinedVar);
-  virtual VarNodeId createVarNode(const SearchDomain&, bool isIntVar,
+  virtual VarNodeId createVarNode(SearchDomain&&, bool isIntVar,
                                   const std::string&, bool isDefinedVar);
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier);
@@ -112,10 +112,6 @@ class InvariantGraph {
       const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
       std::unordered_map<VarNodeId, VarNodeId, VarNodeIdHash>& path);
-
-  std::vector<VarNodeId> findCycle(
-      const std::unordered_map<VarNodeId, VarNodeId, VarNodeIdHash>& childOf,
-      VarNodeId node, VarNodeId parent);
 
   std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
       const std::vector<VarNodeId>& cycle);

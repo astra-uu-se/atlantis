@@ -35,12 +35,6 @@ class Cost {
   [[nodiscard]] Int evaluate(UInt violationWeight,
                              UInt objectiveWeight) const noexcept;
 
-  [[nodiscard]] Int violationDegree() const noexcept {
-    return _violationDegree;
-  }
-
-  [[nodiscard]] Int objectiveValue() const noexcept { return _objective; }
-
   [[nodiscard]] std::string toString() const;
 };
 

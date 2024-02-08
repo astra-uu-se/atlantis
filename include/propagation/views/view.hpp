@@ -1,6 +1,6 @@
 #pragma once
-#include "types.hpp"
 #include "propagation/variables/var.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
@@ -9,7 +9,7 @@ class SolverBase;
 class View : public Var {
  protected:
   SolverBase& _solver;
-  const VarId _parentId;
+  VarId _parentId;
 
  public:
   explicit View(SolverBase& solver, VarId parentId)

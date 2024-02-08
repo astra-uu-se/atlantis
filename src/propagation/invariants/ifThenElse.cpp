@@ -2,14 +2,15 @@
 
 namespace atlantis::propagation {
 
-IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarId b, VarId x, VarId y)
+IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarId b, VarId x,
+                       VarId y)
     : Invariant(solver), _output(output), _b(b), _xy({x, y}) {
   _modifiedVars.reserve(1);
 }
 
 void IfThenElse::registerVars() {
-  assert(!_id.equals(NULL_ID));
-  _solver.registerInvariantInput(_id, _b, 0);
+  assert(_id != NULL_ID);
+  _solver.registerInvariantInput(_id, _b, 0, false);
   _solver.registerInvariantInput(_id, _xy[0], 0, true);
   _solver.registerInvariantInput(_id, _xy[1], 0, true);
   registerDefinedVar(_output);

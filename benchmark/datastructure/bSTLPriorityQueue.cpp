@@ -15,7 +15,7 @@ class PrioQueue : public ::benchmark::Fixture {
   std::mt19937 gen;
 
   std::uniform_int_distribution<> distribution;
-  size_t queueSize;
+  size_t queueSize{0};
   std::vector<size_t> order;
 
   struct PriorityCmp {
@@ -37,7 +37,7 @@ class PrioQueue : public ::benchmark::Fixture {
 
 BENCHMARK_DEFINE_F(PrioQueue, initVar)(::benchmark::State& st) {
   size_t inits = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
     for (size_t i = 1; i <= queueSize; ++i) {
@@ -46,12 +46,12 @@ BENCHMARK_DEFINE_F(PrioQueue, initVar)(::benchmark::State& st) {
     }
   }
   st.counters["inits_per_second"] =
-      ::benchmark::Counter(inits, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(inits), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PrioQueue, push_min)(::benchmark::State& st) {
   size_t pushes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
@@ -66,12 +66,12 @@ BENCHMARK_DEFINE_F(PrioQueue, push_min)(::benchmark::State& st) {
     }
   }
   st.counters["pushes_per_second"] =
-      ::benchmark::Counter(pushes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(pushes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PrioQueue, push_max)(::benchmark::State& st) {
   size_t pushes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
@@ -86,12 +86,12 @@ BENCHMARK_DEFINE_F(PrioQueue, push_max)(::benchmark::State& st) {
     }
   }
   st.counters["pushes_per_second"] =
-      ::benchmark::Counter(pushes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(pushes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PrioQueue, push_random)(::benchmark::State& st) {
   size_t pushes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
@@ -106,12 +106,12 @@ BENCHMARK_DEFINE_F(PrioQueue, push_random)(::benchmark::State& st) {
     }
   }
   st.counters["pushes_per_second"] =
-      ::benchmark::Counter(pushes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(pushes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PrioQueue, pop_min)(::benchmark::State& st) {
   size_t pops = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
@@ -129,12 +129,12 @@ BENCHMARK_DEFINE_F(PrioQueue, pop_min)(::benchmark::State& st) {
     }
   }
   st.counters["pops_per_second"] =
-      ::benchmark::Counter(pops, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(pops), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PrioQueue, pop_max)(::benchmark::State& st) {
   size_t pops = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
@@ -152,12 +152,12 @@ BENCHMARK_DEFINE_F(PrioQueue, pop_max)(::benchmark::State& st) {
     }
   }
   st.counters["pops_per_second"] =
-      ::benchmark::Counter(pops, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(pops), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PrioQueue, pop_random)(::benchmark::State& st) {
   size_t pops = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
@@ -176,7 +176,7 @@ BENCHMARK_DEFINE_F(PrioQueue, pop_random)(::benchmark::State& st) {
     }
   }
   st.counters["pops_per_second"] =
-      ::benchmark::Counter(pops, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(pops), ::benchmark::Counter::kIsRate);
 }
 
 // This benchmark is not a model, but mainly to test the performance

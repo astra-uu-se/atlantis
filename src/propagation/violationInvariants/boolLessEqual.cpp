@@ -16,8 +16,8 @@ BoolLessEqual::BoolLessEqual(SolverBase& solver, VarId violationId, VarId x,
 
 void BoolLessEqual::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0));
-  _solver.registerInvariantInput(_id, _y, LocalId(0));
+  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
   registerDefinedVar(_violationId);
 }
 

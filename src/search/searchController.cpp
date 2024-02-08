@@ -46,13 +46,13 @@ std::string toBoolString(const Assignment& assignment,
 }
 
 void SearchController::printBoolVar(const Assignment& assignment,
-                                    const FznOutputVar& outputVar) const {
+                                    const FznOutputVar& outputVar) {
   std::cout << outputVar.identifier << " = "
             << toBoolString(assignment, outputVar.var) << ";\n";
 }
 
 void SearchController::printIntVar(const Assignment& assignment,
-                                   const FznOutputVar& outputVar) const {
+                                   const FznOutputVar& outputVar) {
   std::cout << outputVar.identifier << " = "
             << toIntString(assignment, outputVar.var) << ";\n";
 }
@@ -67,8 +67,8 @@ std::string arrayVarPrefix(const std::vector<Int>& indexSetSizes) {
   return s;
 }
 
-void SearchController::printBoolVarArray(
-    const Assignment& assignment, const FznOutputVarArray& varArray) const {
+void SearchController::printBoolVarArray(const Assignment& assignment,
+                                         const FznOutputVarArray& varArray) {
   std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
             << '[';
 
@@ -82,8 +82,8 @@ void SearchController::printBoolVarArray(
   std::cout << "]);\n";
 }
 
-void SearchController::printIntVarArray(
-    const Assignment& assignment, const FznOutputVarArray& varArray) const {
+void SearchController::printIntVarArray(const Assignment& assignment,
+                                        const FznOutputVarArray& varArray) {
   std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
             << '[';
 

@@ -1,18 +1,13 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <iostream>
-#include <limits>
 #include <random>
-#include <utility>
 #include <vector>
 
-#include "../testHelper.hpp"
-#include "propagation/violationInvariants/equal.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/types.hpp"
-#include "types.hpp"
+#include "propagation/violationInvariants/equal.hpp"
 
 namespace atlantis::testing {
 class MagicSquareTest : public ::testing::Test {
@@ -24,7 +19,7 @@ class MagicSquareTest : public ::testing::Test {
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
-  Int n;
+  Int n{3};
 
   propagation::VarId totalViolation = propagation::NULL_ID;
 
@@ -59,30 +54,26 @@ class MagicSquareTest : public ::testing::Test {
     // {
     //   propagation::VarId allDiffViol = solver->makeIntVar(0, 0, n2);
     //   violations.push_back(allDiffViol);
-    //   solver->makeViolationInvariant<propagation::AllDifferent>(*solver, allDiffViol,
-    //   flat);
+    //   solver->makeViolationInvariant<propagation::AllDifferent>(*solver,
+    //   allDiffViol, flat);
     // }
 
     {
       // Row
-      std::vector<Int> ones{};
-      ones.assign(n, 1);
       for (int i = 0; i < n; ++i) {
         propagation::VarId rowSum = solver->makeIntVar(0, 0, n2 * n);
         propagation::VarId rowViol = solver->makeIntVar(0, 0, n2 * n);
 
-        solver->makeInvariant<propagation::Linear>(*solver, rowSum,
-                                                   square.at(i));
-        solver->makeViolationInvariant<propagation::Equal>(*solver, rowViol, rowSum,
-                                                   magicSumVar);
+        solver->makeInvariant<propagation::Linear>(
+            *solver, rowSum, std::vector<propagation::VarId>(square.at(i)));
+        solver->makeViolationInvariant<propagation::Equal>(*solver, rowViol,
+                                                           rowSum, magicSumVar);
         violations.push_back(rowViol);
       }
     }
 
     {
       // Column
-      std::vector<Int> ones{};
-      ones.assign(n, 1);
       for (int i = 0; i < n; ++i) {
         propagation::VarId colSum = solver->makeIntVar(0, 0, n2 * n);
         propagation::VarId colViol = solver->makeIntVar(0, 0, n2 * n);
@@ -91,17 +82,16 @@ class MagicSquareTest : public ::testing::Test {
         for (int j = 0; j < n; ++j) {
           col.push_back(square.at(j).at(i));
         }
-        solver->makeInvariant<propagation::Linear>(*solver, colSum, ones, col);
-        solver->makeViolationInvariant<propagation::Equal>(*solver, colViol, colSum,
-                                                   magicSumVar);
+        solver->makeInvariant<propagation::Linear>(
+            *solver, colSum, std::vector<propagation::VarId>(col));
+        solver->makeViolationInvariant<propagation::Equal>(*solver, colViol,
+                                                           colSum, magicSumVar);
         violations.push_back(colViol);
       }
     }
 
     {
       // downDiag
-      std::vector<Int> ones{};
-      ones.assign(n, 1);
       propagation::VarId downDiagSum = solver->makeIntVar(0, 0, n2 * n);
       propagation::VarId downDiagViol = solver->makeIntVar(0, 0, n2 * n);
       std::vector<propagation::VarId> diag{};
@@ -109,17 +99,15 @@ class MagicSquareTest : public ::testing::Test {
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(j).at(j));
       }
-      solver->makeInvariant<propagation::Linear>(*solver, downDiagSum, ones,
-                                                 diag);
-      solver->makeViolationInvariant<propagation::Equal>(*solver, downDiagViol,
-                                                 downDiagSum, magicSumVar);
+      solver->makeInvariant<propagation::Linear>(
+          *solver, downDiagSum, std::vector<propagation::VarId>(diag));
+      solver->makeViolationInvariant<propagation::Equal>(
+          *solver, downDiagViol, downDiagSum, magicSumVar);
       violations.push_back(downDiagViol);
     }
 
     {
       // upDiag
-      std::vector<Int> ones{};
-      ones.assign(n, 1);
       propagation::VarId upDiagSum = solver->makeIntVar(0, 0, n2 * n);
       propagation::VarId upDiagViol = solver->makeIntVar(0, 0, n2 * n);
       std::vector<propagation::VarId> diag{};
@@ -127,18 +115,16 @@ class MagicSquareTest : public ::testing::Test {
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(n - j - 1).at(j));
       }
-      solver->makeInvariant<propagation::Linear>(*solver, upDiagSum, ones,
-                                                 diag);
-      solver->makeViolationInvariant<propagation::Equal>(*solver, upDiagViol, upDiagSum,
-                                                 magicSumVar);
+      solver->makeInvariant<propagation::Linear>(
+          *solver, upDiagSum, std::vector<propagation::VarId>(diag));
+      solver->makeViolationInvariant<propagation::Equal>(
+          *solver, upDiagViol, upDiagSum, magicSumVar);
       violations.push_back(upDiagViol);
     }
 
-    std::vector<Int> ones{};
-    ones.assign(violations.size(), 1);
     totalViolation = solver->makeIntVar(0, 0, n2 * n2 * 2 + 2 * n2);
-    solver->makeInvariant<propagation::Linear>(*solver, totalViolation, ones,
-                                               violations);
+    solver->makeInvariant<propagation::Linear>(
+        *solver, totalViolation, std::vector<propagation::VarId>(violations));
     solver->close();
   }
 

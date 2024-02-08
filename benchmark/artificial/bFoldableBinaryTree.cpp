@@ -56,18 +56,16 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
 
   std::uniform_int_distribution<Int> decisionVarValueDist;
 
-  size_t treeHeight;
-  Int lb;
-  Int ub;
+  size_t treeHeight{0};
+  Int lb{0};
+  Int ub{0};
 
   void probe(::benchmark::State& st, size_t moveCount);
   void probeRnd(::benchmark::State& st, size_t moveCount);
   void commit(::benchmark::State& st, size_t moveCount);
   void commitRnd(::benchmark::State& st, size_t moveCount);
 
-  void SetUp(const ::benchmark::State& state) {
-    std::srand(std::time(0));
-
+  void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
 
     treeHeight = state.range(0);  // Tree height
@@ -75,7 +73,7 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
     ub = 1000;
 
     solver->open();
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     queryVar = createTree();
 
@@ -85,7 +83,7 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
     decisionVarValueDist = std::uniform_int_distribution<Int>(lb, ub);
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     decisionVars.clear();
     vars.clear();
   }
@@ -94,9 +92,9 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
 void FoldableBinaryTree::probe(::benchmark::State& st, size_t moveCount) {
   size_t probes = 0;
   moveCount = std::min(moveCount, decisionVars.size());
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
-    std::random_shuffle(decisionVars.begin(), decisionVars.end());
+    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
     st.ResumeTiming();
 
     solver->beginMove();
@@ -113,15 +111,15 @@ void FoldableBinaryTree::probe(::benchmark::State& st, size_t moveCount) {
   }
 
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 void FoldableBinaryTree::probeRnd(::benchmark::State& st, size_t moveCount) {
   size_t probes = 0;
   moveCount = std::min(moveCount, decisionVars.size());
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
-    std::random_shuffle(decisionVars.begin(), decisionVars.end());
+    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
     st.ResumeTiming();
 
     solver->beginMove();
@@ -141,15 +139,15 @@ void FoldableBinaryTree::probeRnd(::benchmark::State& st, size_t moveCount) {
   }
 
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 void FoldableBinaryTree::commit(::benchmark::State& st, size_t moveCount) {
   size_t commits = 0;
   moveCount = std::min(moveCount, decisionVars.size());
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
-    std::random_shuffle(decisionVars.begin(), decisionVars.end());
+    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
 
     solver->beginMove();
     for (size_t i = 0; i < moveCount; ++i) {
@@ -167,15 +165,15 @@ void FoldableBinaryTree::commit(::benchmark::State& st, size_t moveCount) {
   }
 
   st.counters["seconds_per_commit"] = ::benchmark::Counter(
-      commits, ::benchmark::Counter::kIsRate | ::benchmark::Counter::kInvert);
+      static_cast<double>(commits), ::benchmark::Counter::kIsRate | ::benchmark::Counter::kInvert);
 }
 
 void FoldableBinaryTree::commitRnd(::benchmark::State& st, size_t moveCount) {
   size_t commits = 0;
   moveCount = std::min(moveCount, decisionVars.size());
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     st.PauseTiming();
-    std::random_shuffle(decisionVars.begin(), decisionVars.end());
+    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
 
     solver->beginMove();
     for (size_t i = 0; i < moveCount; ++i) {
@@ -193,7 +191,7 @@ void FoldableBinaryTree::commitRnd(::benchmark::State& st, size_t moveCount) {
   }
 
   st.counters["seconds_per_commit"] = ::benchmark::Counter(
-      commits, ::benchmark::Counter::kIsRate | ::benchmark::Counter::kInvert);
+      static_cast<double>(commits), ::benchmark::Counter::kIsRate | ::benchmark::Counter::kInvert);
 }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_single)

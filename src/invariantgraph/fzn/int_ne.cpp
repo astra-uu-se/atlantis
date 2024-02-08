@@ -69,7 +69,7 @@ bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId,
 }
 
 bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId,
-            fznparser::IntVar modelVar) {
+            const fznparser::IntVar& modelVar) {
   if (modelVar.isFixed()) {
     return int_ne(invariantGraph, varNodeId, modelVar.lowerBound());
   }
@@ -132,15 +132,15 @@ bool int_ne(FznInvariantGraph& invariantGraph,
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 3 : 2);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
 
   if (!isReified) {
     return int_ne(invariantGraph,
                   std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                   std::get<fznparser::IntArg>(constraint.arguments().at(1)));
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
   return int_ne(invariantGraph,
                 std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                 std::get<fznparser::IntArg>(constraint.arguments().at(1)),

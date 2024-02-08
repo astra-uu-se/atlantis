@@ -20,7 +20,7 @@ class AllInterval : public ::benchmark::Fixture {
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
-  size_t n;
+  size_t n{0};
 
   propagation::VarId totalViolation = propagation::NULL_ID;
 
@@ -36,25 +36,26 @@ class AllInterval : public ::benchmark::Fixture {
     // total number of static input variables: 3 * n
     solver->open();
 
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     for (size_t i = 0; i < n; ++i) {
       assert(i < inputVars.size());
-      inputVars[i] = solver->makeIntVar(static_cast<Int>(i), 0, n - 1);
+      inputVars[i] = solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1);
     }
     // Creating n - 1 invariants, each having two inputs and one output
     for (size_t i = 0; i < n - 1; ++i) {
       assert(i < violationVars.size());
-      violationVars[i] = solver->makeIntVar(static_cast<Int>(i), 0, n - 1);
+      violationVars[i] = solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1);
       assert(i + 1 < inputVars.size());
       solver->makeInvariant<propagation::AbsDiff>(
           *solver, violationVars[i], inputVars[i], inputVars[i + 1]);
     }
 
-    totalViolation = solver->makeIntVar(0, 0, n);
+    totalViolation = solver->makeIntVar(0, 0, static_cast<Int>(n));
     // Creating one invariant, taking n input variables and one output
     solver->makeViolationInvariant<propagation::AllDifferent>(
-        *solver, totalViolation, violationVars);
+        *solver, totalViolation,
+        std::vector<propagation::VarId>(violationVars));
 
     solver->close();
 
@@ -68,8 +69,8 @@ class AllInterval : public ::benchmark::Fixture {
 };
 
 BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(::benchmark::State& st) {
-  Int probes = 0;
-  for (auto _ : st) {
+  size_t probes = 0;
+  for (const auto& _ : st) {
     const size_t i = distribution(gen);
     assert(i < inputVars.size());
     const size_t j = distribution(gen);
@@ -96,12 +97,12 @@ BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(::benchmark::State& st) {
     }));
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(::benchmark::State& st) {
-  Int probes = 0;
-  for (auto _ : st) {
+  size_t probes = 0;
+  for (const auto& _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
         const Int oldI = solver->committedValue(inputVars[i]);
@@ -120,12 +121,12 @@ BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(::benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(::benchmark::State& st) {
   int commits = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     const size_t i = distribution(gen);
     assert(i < inputVars.size());
     const size_t j = distribution(gen);

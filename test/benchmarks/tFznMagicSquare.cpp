@@ -6,4 +6,4 @@ namespace atlantis::testing {
 
 TEST(FznMagicSquare, Solve) { testModelFile("magic_square.fzn"); }
 
-}
+}  // namespace atlantis::testing

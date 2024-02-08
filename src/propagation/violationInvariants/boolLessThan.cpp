@@ -8,15 +8,16 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-BoolLessThan::BoolLessThan(SolverBase& solver, VarId violationId, VarId x, VarId y)
+BoolLessThan::BoolLessThan(SolverBase& solver, VarId violationId, VarId x,
+                           VarId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {
   _modifiedVars.reserve(1);
 }
 
 void BoolLessThan::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0));
-  _solver.registerInvariantInput(_id, _y, LocalId(0));
+  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
   registerDefinedVar(_violationId);
 }
 

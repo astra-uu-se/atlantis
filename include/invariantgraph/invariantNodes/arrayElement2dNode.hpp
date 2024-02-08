@@ -8,9 +8,9 @@ namespace atlantis::invariantgraph {
 
 class ArrayElement2dNode : public InvariantNode {
  private:
-  const std::vector<std::vector<Int>> _parMatrix;
-  const Int _offset1;
-  const Int _offset2;
+  std::vector<std::vector<Int>> _parMatrix;
+  Int _offset1;
+  Int _offset2;
 
  public:
   ArrayElement2dNode(VarNodeId idx1, VarNodeId idx2,

@@ -54,8 +54,8 @@ class ElementLinearTree : public ::benchmark::Fixture {
           decisionVars.push_back(var);
         }
       }
-      solver->makeInvariant<propagation::Linear>(*solver, cur.id, linearInputs);
-      linearInputs.clear();
+      solver->makeInvariant<propagation::Linear>(*solver, cur.id,
+                                                 std::move(linearInputs));
     }
 #ifndef NDEBUG
     if (linearArgumentCount == 2) {
@@ -78,12 +78,13 @@ class ElementLinearTree : public ::benchmark::Fixture {
   std::uniform_int_distribution<size_t> decisionVarIndexDist;
   std::uniform_int_distribution<Int> decisionVarValueDist;
   std::uniform_int_distribution<Int> elementVarValueDist;
-  Int treeCount;      // number of trees and width of element
-  size_t treeHeight;  // height of each tree
-  size_t linearArgumentCount;
-  int lb, ub;
+  Int treeCount{0};      // number of trees and width of element
+  size_t treeHeight{0};  // height of each tree
+  size_t linearArgumentCount{0};
+  int lb{0};
+  int ub{0};
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
 
     lb = 0;
@@ -94,7 +95,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
     treeHeight = state.range(1);
 
     solver->open();
-    setSolverMode(*solver, state.range(2));
+    setSolverMode(*solver, static_cast<int>(state.range(2)));
 
     elementIndexVar = solver->makeIntVar(0, 0, treeCount - 1);
     elementOutputVar = solver->makeIntVar(0, lb, ub);
@@ -108,7 +109,8 @@ class ElementLinearTree : public ::benchmark::Fixture {
                         << " children");
 
     solver->makeInvariant<propagation::ElementVar>(
-        *solver, elementOutputVar, elementIndexVar, elementInputVars);
+        *solver, elementOutputVar, elementIndexVar,
+        std::vector<propagation::VarId>(elementInputVars));
     solver->close();
     gen = std::mt19937(rd());
     decisionVarIndexDist =
@@ -117,7 +119,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
     elementVarValueDist = std::uniform_int_distribution<Int>{0, treeCount - 1};
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     elementInputVars.clear();
     decisionVars.clear();
   }
@@ -130,7 +132,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
 BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_non_index_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     // Perform move
     solver->beginMove();
     solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
@@ -144,13 +146,13 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_non_index_var)
     ++probes;
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     solver->beginMove();
     solver->setValue(elementIndexVar, elementVarValueDist(gen));
     solver->endMove();
@@ -162,7 +164,7 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
     ++probes;
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 /*

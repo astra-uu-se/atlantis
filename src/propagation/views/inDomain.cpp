@@ -3,12 +3,12 @@
 namespace atlantis::propagation {
 
 inline bool all_in_range(size_t start, size_t stop,
-                         std::function<bool(size_t)> predicate) {
+                         std::function<bool(size_t)>&& predicate) {
   std::vector<size_t> vec(stop - start);
   for (size_t i = 0; i < stop - start; ++i) {
     vec.at(i) = start + i;
   }
-  return std::all_of(vec.begin(), vec.end(), predicate);
+  return std::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
 InDomain::InDomain(SolverBase& solver, VarId parentId,
@@ -16,7 +16,7 @@ InDomain::InDomain(SolverBase& solver, VarId parentId,
     : IntView(solver, parentId),
       _domain(std::move(domain)),
       _cache(NULL_TIMESTAMP, std::pair<Int, Int>(0, compute(0))) {
-  assert(_domain.size() >= 1);
+  assert(!_domain.empty());
   assert(std::all_of(_domain.begin(), _domain.end(), [&](const auto& domEntry) {
     return domEntry.lowerBound <= domEntry.upperBound;
   }));

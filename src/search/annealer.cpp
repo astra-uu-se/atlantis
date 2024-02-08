@@ -27,7 +27,7 @@ void Annealer::nextRound() {
   _attemptedMovesPerRound = 0;
 }
 
-bool Annealer::runMonteCarloSimulation() {
+bool Annealer::runMonteCarloSimulation() const {
   return _attemptedMovesPerRound < _requiredMovesPerRound;
 }
 

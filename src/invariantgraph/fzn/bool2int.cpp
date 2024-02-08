@@ -23,8 +23,8 @@ bool bool2int(FznInvariantGraph& invariantGraph,
   }
 
   verifyNumArguments(constraint, 2);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::BoolArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
 
   return bool2int(invariantGraph,
                   std::get<fznparser::BoolArg>(constraint.arguments().at(0)),

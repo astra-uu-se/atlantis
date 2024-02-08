@@ -18,19 +18,45 @@ enum class VarIdType : bool { var, view };
 struct Id {
   IdBase id;
   Id() : id(0) {}
+  virtual ~Id() = default;
   explicit Id(size_t i) : id(i) {}
   operator size_t() const { return id; }
-  inline bool equals(const Id& other) const { return id == other.id; }
+  [[nodiscard]] inline bool operator==(const Id& other) const {
+    return id == other.id;
+  }
+  [[nodiscard]] inline bool operator!=(const Id& other) const {
+    return !operator==(other);
+  }
 };
 
 static Id NULL_ID = Id();
 
 struct InvariantId;  // forward declare
+struct VarId;
 struct VarIdBase : public Id {
   VarIdBase() : Id() {}
+  VarIdBase(const VarIdBase&) = default;
   VarIdBase(size_t i) : Id(i) {}
   VarIdBase(const Id& t_id) : Id(t_id.id) {}
   VarIdBase(const InvariantId&) = delete;
+  [[nodiscard]] inline bool operator==(const IdBase& other) const {
+    return id == other;
+  }
+  [[nodiscard]] inline bool operator==(const Id& other) const {
+    return id == other.id;
+  }
+  [[nodiscard]] inline bool operator==(const VarIdBase& other) const {
+    return id == other.id;
+  }
+  [[nodiscard]] bool operator!=(const IdBase& other) const {
+    return !operator==(other);
+  }
+  [[nodiscard]] bool operator!=(const Id& other) const {
+    return !operator==(other);
+  }
+  [[nodiscard]] bool operator!=(const VarIdBase& other) const {
+    return !operator==(other);
+  }
 };
 struct VarId : public VarIdBase {
   VarIdType idType;
@@ -40,6 +66,30 @@ struct VarId : public VarIdBase {
   VarId(const Id& t_id, VarIdType type) : VarIdBase(t_id.id), idType(type) {}
   VarId(const Id& t_id) : VarId(t_id, VarIdType::var) {}
   VarId(const InvariantId&) = delete;
+  [[nodiscard]] inline bool operator==(const IdBase& other) const {
+    return id == other;
+  }
+  [[nodiscard]] inline bool operator==(const Id& other) const {
+    return id == other.id;
+  }
+  [[nodiscard]] inline bool operator==(const VarIdBase& other) const {
+    return id == other.id;
+  }
+  [[nodiscard]] inline bool operator==(const VarId& other) const {
+    return idType == other.idType && id == other.id;
+  }
+  [[nodiscard]] inline bool operator!=(const IdBase& other) const {
+    return !operator==(other);
+  }
+  [[nodiscard]] inline bool operator!=(const Id& other) const {
+    return !operator==(other);
+  }
+  [[nodiscard]] inline bool operator!=(const VarIdBase& other) const {
+    return !operator==(other);
+  }
+  [[nodiscard]] inline bool operator!=(const VarId& other) const {
+    return !operator==(other);
+  }
 };
 struct LocalId : public Id {
   LocalId() : Id() {}
@@ -47,6 +97,24 @@ struct LocalId : public Id {
   LocalId(const Id& t_id) : Id(t_id.id) {}
   LocalId(const VarId& t_id) : Id(t_id.id) {}
   LocalId(const InvariantId&) = delete;
+  [[nodiscard]] virtual bool operator==(const IdBase& other) const {
+    return id == other;
+  }
+  [[nodiscard]] virtual bool operator==(const Id& other) const {
+    return id == other.id;
+  }
+  [[nodiscard]] virtual bool operator==(const LocalId& other) const {
+    return id == other.id;
+  }
+  [[nodiscard]] virtual bool operator!=(const IdBase& other) const {
+    return !operator==(other);
+  }
+  [[nodiscard]] virtual bool operator!=(const Id& other) const {
+    return !operator==(other);
+  }
+  [[nodiscard]] virtual bool operator!=(const LocalId& other) const {
+    return !operator==(other);
+  }
 };
 struct InvariantId : public Id {
   InvariantId() : Id() {}
@@ -55,6 +123,24 @@ struct InvariantId : public Id {
   InvariantId(const VarIdBase&) = delete;
   InvariantId(const VarId&) = delete;
   InvariantId(const LocalId&) = delete;
+  [[nodiscard]] bool operator==(const IdBase& other) const {
+    return id == other;
+  }
+  [[nodiscard]] bool operator==(const Id& other) const {
+    return id == other.id;
+  }
+  [[nodiscard]] bool operator==(const InvariantId& other) const {
+    return id == other.id;
+  }
+  [[nodiscard]] bool operator!=(const IdBase& other) const {
+    return !operator==(other);
+  }
+  [[nodiscard]] bool operator!=(const Id& other) const {
+    return !operator==(other);
+  }
+  [[nodiscard]] bool operator!=(const InvariantId& other) const {
+    return !operator==(other);
+  }
 };
 
 enum class CommitMode : bool { NO_COMMIT, COMMIT };

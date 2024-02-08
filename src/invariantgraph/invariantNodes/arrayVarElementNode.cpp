@@ -27,7 +27,7 @@ void ArrayVarElementNode::registerNode(InvariantGraph& invariantGraph,
 
   solver.makeInvariant<propagation::ElementVar>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(idx()), varVector, _offset);
+      invariantGraph.varId(idx()), std::move(varVector), _offset);
 }
 
 }  // namespace atlantis::invariantgraph

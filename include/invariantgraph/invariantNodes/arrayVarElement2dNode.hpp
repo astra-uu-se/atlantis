@@ -8,9 +8,9 @@ namespace atlantis::invariantgraph {
 
 class ArrayVarElement2dNode : public InvariantNode {
  private:
-  const size_t _numRows;
-  const Int _offset1;
-  const Int _offset2;
+  size_t _numRows;
+  Int _offset1;
+  Int _offset2;
 
  public:
   ArrayVarElement2dNode(VarNodeId idx1, VarNodeId idx2,

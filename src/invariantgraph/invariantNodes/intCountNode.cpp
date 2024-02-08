@@ -35,7 +35,7 @@ void IntCountNode::registerNode(InvariantGraph& invariantGraph,
 
   solver.makeInvariant<propagation::CountConst>(
       solver, invariantGraph.varId(outputVarNodeIds().front()), needle(),
-      solverVars);
+      std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

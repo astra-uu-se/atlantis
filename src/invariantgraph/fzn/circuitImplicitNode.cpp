@@ -46,7 +46,7 @@ bool makeCircuitImplicitNode(FznInvariantGraph& invariantGraph,
   }
 
   verifyNumArguments(constraint, 1);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
 
   return makeCircuitImplicitNode(
       invariantGraph,

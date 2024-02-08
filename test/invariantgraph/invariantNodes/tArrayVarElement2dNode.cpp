@@ -9,14 +9,14 @@ using namespace atlantis::invariantgraph;
 
 class ArrayVarElement2dNodeTest : public NodeTestBase<ArrayVarElement2dNode> {
  public:
-  VarNodeId x00 = NULL_NODE_ID;
-  VarNodeId x01 = NULL_NODE_ID;
-  VarNodeId x10 = NULL_NODE_ID;
-  VarNodeId x11 = NULL_NODE_ID;
+  VarNodeId x00{NULL_NODE_ID};
+  VarNodeId x01{NULL_NODE_ID};
+  VarNodeId x10{NULL_NODE_ID};
+  VarNodeId x11{NULL_NODE_ID};
 
-  VarNodeId idx1 = NULL_NODE_ID;
-  VarNodeId idx2 = NULL_NODE_ID;
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId idx1{NULL_NODE_ID};
+  VarNodeId idx2{NULL_NODE_ID};
+  VarNodeId output{NULL_NODE_ID};
 
   Int offsetIdx1 = 1;
   Int offsetIdx2 = 1;
@@ -112,8 +112,8 @@ TEST_F(ArrayVarElement2dNodeTest, propagation) {
   std::vector<Int> inputVals;
   inputVals.reserve(inputVars.size());
 
-  for (size_t i = 0; i < inputVars.size(); ++i) {
-    inputVals.emplace_back(solver.lowerBound(inputVars.at(i)));
+  for (const auto& var : inputVars) {
+    inputVals.emplace_back(solver.lowerBound(var));
   }
 
   while (increaseNextVal(solver, inputVars, inputVals)) {

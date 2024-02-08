@@ -4,9 +4,9 @@
 #include <limits>
 #include <vector>
 
-#include "types.hpp"
-#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
+#include "propagation/solver.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
@@ -19,11 +19,11 @@ namespace atlantis::propagation {
 
 class Element2dVar : public Invariant {
  private:
-  const std::vector<std::vector<VarId>> _varMatrix;
-  const std::array<const VarId, 2> _indices;
-  const std::array<const Int, 2> _dimensions;
-  const std::array<const Int, 2> _offsets;
-  const VarId _output;
+  std::vector<std::vector<VarId>> _varMatrix;
+  std::array<const VarId, 2> _indices;
+  std::array<const Int, 2> _dimensions;
+  std::array<const Int, 2> _offsets;
+  VarId _output;
 
   [[nodiscard]] inline size_t safeIndex(Int index, size_t pos) const noexcept {
     return std::max<Int>(0,
@@ -40,14 +40,14 @@ class Element2dVar : public Invariant {
 
  public:
   explicit Element2dVar(SolverBase&, VarId output, VarId index1, VarId index2,
-                        std::vector<std::vector<VarId>> varMatrix,
+                        std::vector<std::vector<VarId>>&& varMatrix,
                         Int offset1 = 1, Int offset2 = 1);
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
-  VarId dynamicInputVar(Timestamp) const noexcept override;
+  void updateBounds(bool widenOnly) override;
+  [[nodiscard]] VarId dynamicInputVar(Timestamp) const noexcept override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  VarId nextInput(Timestamp) override;
+  [[nodiscard]] VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

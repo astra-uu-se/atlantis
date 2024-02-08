@@ -7,7 +7,6 @@
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/pow.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -24,33 +23,35 @@ class PowTest : public InvariantTest {
                          solver->value(ts, inputs.at(1)), zeroReplacement);
   }
 
-  Int computeOutput(const std::array<Int, 2>& inputs) {
+  static Int computeOutput(const std::array<Int, 2>& inputs) {
     return computeOutput(inputs.at(0), inputs.at(1), 1);
   }
 
-  Int computeOutput(const std::array<Int, 2>& inputs, Int zeroReplacement) {
+  static Int computeOutput(const std::array<Int, 2>& inputs,
+                           Int zeroReplacement) {
     return computeOutput(inputs.at(0), inputs.at(1), zeroReplacement);
   }
 
-  Int computeOutput(Timestamp ts, const VarId x, const VarId y) {
-    return computeOutput(ts, x, y, 1);
+  Int computeOutput(Timestamp ts, const VarId base, const VarId exponent) {
+    return computeOutput(ts, base, exponent, 1);
   }
 
-  Int computeOutput(Timestamp ts, const VarId x, const VarId y,
+  Int computeOutput(Timestamp ts, const VarId base, const VarId exponent,
                     Int zeroReplacement) {
-    return computeOutput(solver->value(ts, x), solver->value(ts, y),
+    return computeOutput(solver->value(ts, base), solver->value(ts, exponent),
                          zeroReplacement);
   }
 
-  Int computeOutput(const Int xVal, const Int yVal) {
-    return computeOutput(xVal, yVal, 1);
+  static Int computeOutput(const Int baseVal, const Int expVal) {
+    return computeOutput(baseVal, expVal, 1);
   }
 
-  Int computeOutput(const Int xVal, const Int yVal, Int zeroReplacement) {
-    if (xVal == 0 && yVal < 0) {
-      return std::pow(zeroReplacement, yVal);
+  static Int computeOutput(const Int baseVal, const Int expVal,
+                           Int zeroReplacement) {
+    if (baseVal == 0 && expVal < 0) {
+      return static_cast<Int>(std::pow(zeroReplacement, expVal));
     }
-    return std::pow(xVal, yVal);
+    return static_cast<Int>(std::pow(baseVal, expVal));
   }
 };
 
@@ -58,32 +59,33 @@ TEST_F(PowTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-8, -5}, {-3, 0}, {-2, 2}, {0, 3}, {5, 8}};
   solver->open();
-  const VarId x = solver->makeIntVar(
+  const VarId base = solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId y = solver->makeIntVar(
+  const VarId exponent = solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Pow& invariant = solver->makeInvariant<Pow>(*solver, outputId, x, y);
+  Pow& invariant =
+      solver->makeInvariant<Pow>(*solver, outputId, base, exponent);
   solver->close();
 
-  for (const auto& [xLb, xUb] : boundVec) {
-    EXPECT_TRUE(xLb <= xUb);
-    solver->updateBounds(x, xLb, xUb, false);
-    for (const auto& [yLb, yUb] : boundVec) {
-      EXPECT_TRUE(yLb <= yUb);
-      solver->updateBounds(y, yLb, yUb, false);
+  for (const auto& [baseLb, baseUb] : boundVec) {
+    EXPECT_TRUE(baseLb <= baseUb);
+    solver->updateBounds(base, baseLb, baseUb, false);
+    for (const auto& [expLb, expUb] : boundVec) {
+      EXPECT_TRUE(expLb <= expUb);
+      solver->updateBounds(exponent, expLb, expUb, false);
       solver->open();
       solver->close();
-      for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-        solver->setValue(solver->currentTimestamp(), x, xVal);
-        for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-          solver->setValue(solver->currentTimestamp(), y, yVal);
+      for (Int baseVal = baseLb; baseVal <= baseUb; ++baseVal) {
+        solver->setValue(solver->currentTimestamp(), base, baseVal);
+        for (Int expVal = expLb; expVal <= expUb; ++expVal) {
+          solver->setValue(solver->currentTimestamp(), exponent, expVal);
           invariant.recompute(solver->currentTimestamp());
           const Int o = solver->value(solver->currentTimestamp(), outputId);
           if (o < solver->lowerBound(outputId) ||
               solver->upperBound(outputId) < o) {
-            invariant.updateBounds();
+            invariant.updateBounds(false);
             ASSERT_GE(o, solver->lowerBound(outputId));
             ASSERT_LE(o, solver->upperBound(outputId));
           }
@@ -94,27 +96,28 @@ TEST_F(PowTest, UpdateBounds) {
 }
 
 TEST_F(PowTest, Recompute) {
-  const Int xLb = 0;
-  const Int xUb = 10;
-  const Int yLb = 0;
-  const Int yUb = 5;
-  EXPECT_TRUE(xLb <= xUb);
-  EXPECT_TRUE(yLb <= yUb);
+  const Int baseLb = 0;
+  const Int baseUb = 10;
+  const Int expLb = 0;
+  const Int expUb = 5;
+  EXPECT_TRUE(baseLb <= baseUb);
+  EXPECT_TRUE(expLb <= expUb);
 
   solver->open();
-  const VarId x = solver->makeIntVar(xUb, xLb, xUb);
-  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
+  const VarId base = solver->makeIntVar(baseUb, baseLb, baseUb);
+  const VarId exponent = solver->makeIntVar(expUb, expLb, expUb);
   const VarId outputId =
-      solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  Pow& invariant = solver->makeInvariant<Pow>(*solver, outputId, x, y);
+      solver->makeIntVar(0, 0, std::max(baseUb - expLb, expUb - baseLb));
+  Pow& invariant =
+      solver->makeInvariant<Pow>(*solver, outputId, base, exponent);
   solver->close();
 
-  for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-    for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      solver->setValue(solver->currentTimestamp(), x, xVal);
-      solver->setValue(solver->currentTimestamp(), y, yVal);
+  for (Int baseVal = baseLb; baseVal <= baseUb; ++baseVal) {
+    for (Int expVal = expLb; expVal <= expUb; ++expVal) {
+      solver->setValue(solver->currentTimestamp(), base, baseVal);
+      solver->setValue(solver->currentTimestamp(), exponent, expVal);
 
-      const Int expectedOutput = computeOutput(xVal, yVal);
+      const Int expectedOutput = computeOutput(baseVal, expVal);
       invariant.recompute(solver->currentTimestamp());
       EXPECT_EQ(expectedOutput,
                 solver->value(solver->currentTimestamp(), outputId));
@@ -199,7 +202,7 @@ TEST_F(PowTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {
@@ -271,8 +274,8 @@ class MockPow : public Pow {
     registered = true;
     Pow::registerVars();
   }
-  explicit MockPow(SolverBase& solver, VarId output, VarId x, VarId y)
-      : Pow(solver, output, x, y) {
+  explicit MockPow(SolverBase& solver, VarId output, VarId base, VarId exponent)
+      : Pow(solver, output, base, exponent) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Pow::recompute(timestamp);
     });
@@ -302,12 +305,12 @@ TEST_F(PowTest, SolverIntegration) {
     if (!solver->isOpen()) {
       solver->open();
     }
-    const VarId x = solver->makeIntVar(-10, -100, 100);
-    const VarId y = solver->makeIntVar(10, -100, 100);
+    const VarId base = solver->makeIntVar(-10, -100, 100);
+    const VarId exponent = solver->makeIntVar(10, -100, 100);
     const VarId output = solver->makeIntVar(0, 0, 200);
     testNotifications<MockPow>(
-        &solver->makeInvariant<MockPow>(*solver, output, x, y),
-        {propMode, markingMode, 3, x, 0, output});
+        &solver->makeInvariant<MockPow>(*solver, output, base, exponent),
+        {propMode, markingMode, 3, base, 0, output});
   }
 }
 

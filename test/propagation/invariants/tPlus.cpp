@@ -6,7 +6,6 @@
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/plus.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -19,7 +18,7 @@ class PlusTest : public InvariantTest {
                          solver->value(ts, inputs.at(1)));
   }
 
-  Int computeOutput(std::array<Int, 2> inputs) {
+  static Int computeOutput(std::array<Int, 2> inputs) {
     return computeOutput(inputs.at(0), inputs.at(1));
   }
 
@@ -27,7 +26,9 @@ class PlusTest : public InvariantTest {
     return computeOutput(solver->value(ts, x), solver->value(ts, y));
   }
 
-  Int computeOutput(const Int xVal, const Int yVal) { return xVal + yVal; }
+  static Int computeOutput(const Int xVal, const Int yVal) {
+    return xVal + yVal;
+  }
 };
 
 TEST_F(PlusTest, UpdateBounds) {
@@ -49,7 +50,7 @@ TEST_F(PlusTest, UpdateBounds) {
       EXPECT_TRUE(yLb <= yUb);
       solver->updateBounds(y, yLb, yUb, false);
       solver->open();
-      invariant.updateBounds();
+      invariant.updateBounds(false);
       solver->close();
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         solver->setValue(solver->currentTimestamp(), x, xVal);
@@ -174,7 +175,7 @@ TEST_F(PlusTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {

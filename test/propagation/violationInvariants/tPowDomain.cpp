@@ -1,13 +1,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <random>
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/powDomain.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
+#include "propagation/violationInvariants/powDomain.hpp"
 
 namespace atlantis::testing {
 
@@ -19,7 +17,7 @@ class PowDomainTest : public InvariantTest {
     return computeViolation(solver->value(ts, x), solver->value(ts, y));
   }
 
-  Int computeViolation(const Int xVal, const Int yVal) {
+  static Int computeViolation(const Int xVal, const Int yVal) {
     return xVal == 0 && yVal < 0 ? 1 : 0;
   }
 };
@@ -43,13 +41,13 @@ TEST_F(PowDomainTest, UpdateBounds) {
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
       solver->updateBounds(y, yLb, yUb, false);
-      invariant.updateBounds();
+      invariant.updateBounds(false);
       std::vector<Int> violations;
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         solver->setValue(solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
           solver->setValue(solver->currentTimestamp(), y, yVal);
-          invariant.updateBounds();
+          invariant.updateBounds(false);
           invariant.recompute(solver->currentTimestamp());
           violations.emplace_back(
               solver->value(solver->currentTimestamp(), violationId));
@@ -172,7 +170,7 @@ TEST_F(PowDomainTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {
@@ -246,7 +244,8 @@ class MockPowDomain : public PowDomain {
     registered = true;
     PowDomain::registerVars();
   }
-  explicit MockPowDomain(SolverBase& solver, VarId violationId, VarId x, VarId y)
+  explicit MockPowDomain(SolverBase& solver, VarId violationId, VarId x,
+                         VarId y)
       : PowDomain(solver, violationId, x, y) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return PowDomain::recompute(timestamp);

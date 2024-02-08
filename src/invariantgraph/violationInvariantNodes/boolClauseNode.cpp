@@ -6,12 +6,12 @@ namespace atlantis::invariantgraph {
 
 BoolClauseNode::BoolClauseNode(std::vector<VarNodeId>&& as,
                                std::vector<VarNodeId>&& bs, VarNodeId r)
-    : ViolationInvariantNode(std::move(concat(as, bs)), r),
+    : ViolationInvariantNode(concat(as, bs), r),
       _as(std::move(as)),
       _bs(std::move(bs)) {}
 BoolClauseNode::BoolClauseNode(std::vector<VarNodeId>&& as,
                                std::vector<VarNodeId>&& bs, bool shouldHold)
-    : ViolationInvariantNode(std::move(concat(as, bs)), shouldHold),
+    : ViolationInvariantNode(concat(as, bs), shouldHold),
       _as(std::move(as)),
       _bs(std::move(bs)) {}
 
@@ -51,7 +51,8 @@ void BoolClauseNode::registerNode(InvariantGraph& invariantGraph,
 
   assert(_sumVarId != propagation::NULL_ID);
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);
-  solver.makeInvariant<propagation::BoolLinear>(solver, _sumVarId, solverVars);
+  solver.makeInvariant<propagation::BoolLinear>(solver, _sumVarId,
+                                                std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

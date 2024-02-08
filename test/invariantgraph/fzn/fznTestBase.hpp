@@ -25,7 +25,7 @@ class FznTestBase : public ::testing::Test {
   std::unique_ptr<Model> _model;
   std::unique_ptr<FznInvariantGraph> _invariantGraph;
   std::unique_ptr<propagation::Solver> _solver;
-  std::string constraintIdentifier{""};
+  std::string constraintIdentifier;
 
   void SetUp() override {
     _model = std::make_unique<Model>();
@@ -33,32 +33,32 @@ class FznTestBase : public ::testing::Test {
     _solver = std::make_unique<propagation::Solver>();
   }
 
-  Var fznVar(const std::string& identifier) { return _model->var(identifier); }
-
-  VarNodeId varNodeId(const std::string& identifier) {
+  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const {
     return _invariantGraph->varNodeId(identifier);
   }
 
-  propagation::VarId varId(const std::string& identifier) {
+  [[nodiscard]] propagation::VarId varId(const std::string& identifier) const {
     return _invariantGraph->varId(identifier);
   }
 
-  void setValue(const std::string& identifier, Int val) {
+  void setValue(const std::string& identifier, Int val) const {
     _solver->setValue(varId(identifier), val);
   }
 
-  Int currentValue(const std::string& identifier) {
+  [[nodiscard]] Int currentValue(const std::string& identifier) const {
     return _solver->currentValue(varId(identifier));
   }
 
-  propagation::VarId totalViolationVarId() {
+  [[nodiscard]] propagation::VarId totalViolationVarId() const {
     return _invariantGraph->totalViolationVarId();
   }
 
-  Int violation() { return _solver->currentValue(totalViolationVarId()); }
+  [[nodiscard]] Int violation() const {
+    return _solver->currentValue(totalViolationVarId());
+  }
 
-  std::vector<Int> makeInputVals(
-      const std::vector<std::string>& inputIdentifiers) {
+  [[nodiscard]] std::vector<Int> makeInputVals(
+      const std::vector<std::string>& inputIdentifiers) const {
     std::vector<Int> inputVals;
     inputVals.reserve(inputIdentifiers.size());
     for (const std::string& identifier : inputIdentifiers) {
@@ -68,9 +68,9 @@ class FznTestBase : public ::testing::Test {
   }
 
   bool increaseNextVal(const std::vector<std::string>& inputIdentifiers,
-                       std::vector<Int>& inputVals) {
+                       std::vector<Int>& inputVals) const {
     EXPECT_EQ(inputIdentifiers.size(), inputVals.size());
-    for (Int i = inputVals.size() - 1; i >= 0; --i) {
+    for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
       if (inputVals.at(i) <
           _solver->upperBound(varId(inputIdentifiers.at(i)))) {
         ++inputVals.at(i);
@@ -82,36 +82,11 @@ class FznTestBase : public ::testing::Test {
   }
 
   void setVarVals(const std::vector<std::string>& inputIdentifiers,
-                  const std::vector<Int>& vals) {
+                  const std::vector<Int>& vals) const {
     EXPECT_EQ(inputIdentifiers.size(), vals.size());
     for (size_t i = 0; i < inputIdentifiers.size(); ++i) {
       _solver->setValue(varId(inputIdentifiers.at(i)), vals.at(i));
     }
-  }
-
-  std::vector<propagation::VarId> outputVarIds(
-      const std::vector<std::string>& inputIdentifiers) {
-    for (const std::string& inputIdentifier : inputIdentifiers) {
-      EXPECT_NE(varId(inputIdentifier), propagation::NULL_ID);
-      const std::vector<InvariantNodeId>& listeningInvNodeIds =
-          _invariantGraph->varNode(inputIdentifier).inputTo();
-
-      EXPECT_GE(listeningInvNodeIds.size(), 1);
-      if (listeningInvNodeIds.size() > 1) {
-        continue;
-      }
-      const std::vector<VarNodeId> outputVarNodeIds =
-          _invariantGraph->invariantNode(listeningInvNodeIds.front())
-              .outputVarNodeIds();
-      std::vector<propagation::VarId> outputVarIds;
-      outputVarIds.reserve(outputVarNodeIds.size());
-      for (const VarNodeId& outputVarNodeId : outputVarNodeIds) {
-        outputVarIds.emplace_back(
-            _invariantGraph->varNode(outputVarNodeId).varId());
-      }
-      return outputVarIds;
-    }
-    return std::vector<propagation::VarId>{};
   }
 };
 

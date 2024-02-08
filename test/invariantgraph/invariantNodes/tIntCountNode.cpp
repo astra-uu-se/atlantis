@@ -20,10 +20,10 @@ static Int computeOutput(const std::vector<Int>& values, const Int needle) {
 
 class IntCountNodeTest : public NodeTestBase<IntCountNode> {
  public:
-  VarNodeId x1 = NULL_NODE_ID;
-  VarNodeId x2 = NULL_NODE_ID;
-  VarNodeId x3 = NULL_NODE_ID;
-  VarNodeId count = NULL_NODE_ID;
+  VarNodeId x1{NULL_NODE_ID};
+  VarNodeId x2{NULL_NODE_ID};
+  VarNodeId x3{NULL_NODE_ID};
+  VarNodeId count{NULL_NODE_ID};
   Int needle{2};
 
   void SetUp() override {

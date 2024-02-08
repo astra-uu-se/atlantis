@@ -9,12 +9,12 @@ using namespace atlantis::invariantgraph;
 
 class ArrayVarBoolElementNodeTest : public NodeTestBase<ArrayVarElementNode> {
  public:
-  VarNodeId x1 = NULL_NODE_ID;
-  VarNodeId x2 = NULL_NODE_ID;
-  VarNodeId x3 = NULL_NODE_ID;
+  VarNodeId x1{NULL_NODE_ID};
+  VarNodeId x2{NULL_NODE_ID};
+  VarNodeId x3{NULL_NODE_ID};
 
-  VarNodeId idx = NULL_NODE_ID;
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId idx{NULL_NODE_ID};
+  VarNodeId output{NULL_NODE_ID};
 
   Int offsetIdx = 1;
 

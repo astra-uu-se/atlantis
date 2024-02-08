@@ -36,7 +36,7 @@ class InvariantNode {
 
   void init(InvariantGraph&, const InvariantNodeId&);
 
-  InvariantNodeId id() const { return _id; }
+  [[nodiscard]] InvariantNodeId id() const { return _id; }
 
   [[nodiscard]] virtual bool isReified() const;
 

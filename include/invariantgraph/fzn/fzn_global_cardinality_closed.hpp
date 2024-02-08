@@ -24,6 +24,6 @@ bool fzn_global_cardinality_closed(FznInvariantGraph&,
                                    const fznparser::BoolArg& reified);
 
 bool fzn_global_cardinality_closed(FznInvariantGraph&,
-                               const fznparser::Constraint&);
+                                   const fznparser::Constraint&);
 
 }  // namespace atlantis::invariantgraph::fzn

@@ -69,32 +69,31 @@ std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
     }                                                                        \
   } while (false);
 
-#define FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, index, arrayType,        \
-                                        isVarArray)                          \
-  do {                                                                       \
-    if (constraint.arguments().size() <= index) {                            \
-      throw FznArgumentException("Constraint " + constraint.identifier() +   \
-                                 " has too few arguments.");                 \
-    }                                                                        \
-    if (!std::holds_alternative<arrayType>(                                  \
-            constraint.arguments().at(index))) {                             \
-      throw FznArgumentException(                                            \
-          "Invalid argument for constraint " + constraint.identifier() +     \
-          " at position" + std::to_string(index) + ": expected \"" +         \
-          to_string(typeid(arrayType), isVarArray) + "\" but got \"" +       \
-          to_string(typeid(constraint.arguments().at(index)), isVarArray) +  \
-          '.');                                                              \
-    }                                                                        \
-    const auto& array =                                                 \
-        std::get<arrayType>(constraint.arguments().at(index));               \
-    if (!isVarArray && !array.isParArray()) {                                \
-      throw FznArgumentException(                                            \
-          "Invalid argument for constraint " + constraint.identifier() +     \
-          " at position" + std::to_string(index) + ": expected \"" +         \
-          to_string(typeid(arrayType), isVarArray) + "\" but got \"" +       \
-          to_string(typeid(constraint.arguments().at(index)), !isVarArray) + \
-          '.');                                                              \
-    }                                                                        \
+#define FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, index, arrayType,          \
+                                        isVarArray)                            \
+  do {                                                                         \
+    if (constraint.arguments().size() <= index) {                              \
+      throw FznArgumentException("Constraint " + constraint.identifier() +     \
+                                 " has too few arguments.");                   \
+    }                                                                          \
+    if (!std::holds_alternative<arrayType>(                                    \
+            constraint.arguments().at(index))) {                               \
+      throw FznArgumentException(                                              \
+          "Invalid argument for constraint " + constraint.identifier() +       \
+          " at position" + std::to_string(index) + ": expected \"" +           \
+          to_string(typeid(arrayType), isVarArray) + "\" but got \"" +         \
+          to_string(typeid(constraint.arguments().at(index)), isVarArray) +    \
+          '.');                                                                \
+    }                                                                          \
+    const auto& array = std::get<arrayType>(constraint.arguments().at(index)); \
+    if (!isVarArray && !array.isParArray()) {                                  \
+      throw FznArgumentException(                                              \
+          "Invalid argument for constraint " + constraint.identifier() +       \
+          " at position" + std::to_string(index) + ": expected \"" +           \
+          to_string(typeid(arrayType), isVarArray) + "\" but got \"" +         \
+          to_string(typeid(constraint.arguments().at(index)), !isVarArray) +   \
+          '.');                                                                \
+    }                                                                          \
   } while (false);
 
 }  // namespace atlantis::invariantgraph::fzn

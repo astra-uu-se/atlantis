@@ -1,12 +1,9 @@
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <limits>
 #include <random>
 #include <vector>
 
-#include "../testHelper.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/invariants/minSparse.hpp"
@@ -33,7 +30,7 @@ class MockInvariantSimple : public Invariant {
       : Invariant(solver), outputVar(t_outputVar), inputVar(t_inputVar) {}
 
   void registerVars() override {
-    _solver.registerInvariantInput(_id, inputVar, LocalId(0));
+    _solver.registerInvariantInput(_id, inputVar, LocalId(0), false);
     registerDefinedVar(outputVar);
     isRegistered = true;
   }
@@ -64,7 +61,7 @@ class MockInvariantAdvanced : public Invariant {
   void registerVars() override {
     assert(_id != NULL_ID);
     for (size_t i = 0; i < inputs.size(); ++i) {
-      _solver.registerInvariantInput(_id, inputs[i], LocalId(i));
+      _solver.registerInvariantInput(_id, inputs[i], LocalId(i), false);
     }
     registerDefinedVar(output);
     isRegistered = true;
@@ -108,13 +105,13 @@ class MockSimplePlus : public Invariant {
   void registerVars() override {
     assert(_id != NULL_ID);
 
-    _solver.registerInvariantInput(_id, x, LocalId(0));
-    _solver.registerInvariantInput(_id, y, LocalId(1));
+    _solver.registerInvariantInput(_id, x, LocalId(0), false);
+    _solver.registerInvariantInput(_id, y, LocalId(1), false);
     registerDefinedVar(output);
     isRegistered = true;
   }
 
-  void updateBounds(bool widenOnly = false) override {
+  void updateBounds(bool widenOnly) override {
     _solver.updateBounds(output, _solver.lowerBound(x) + _solver.lowerBound(y),
                          _solver.upperBound(x) + _solver.upperBound(y),
                          widenOnly);
@@ -136,7 +133,7 @@ class SolverTest : public ::testing::Test {
 
   std::unique_ptr<Solver> solver;
 
-  virtual void SetUp() {
+  void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     solver = std::make_unique<Solver>();
@@ -184,9 +181,9 @@ class SolverTest : public ::testing::Test {
      *                            +----------+
      */
     inputs.resize(7);
-    for (size_t i = 0; i < inputs.size(); ++i) {
+    for (auto& input : inputs) {
       for (size_t j = 0; j < 2; j++) {
-        inputs[i].emplace_back(solver->makeIntVar(0, 0, 10));
+        input.emplace_back(solver->makeIntVar(0, 0, 10));
       }
     }
     for (size_t i = 4; i < inputs.size(); ++i) {
@@ -294,7 +291,7 @@ TEST_F(SolverTest, ThisTestShouldNotBeHere) {
 
   VarId min = solver->makeIntVar(100, Int(-100), Int(100));
   // TODO: use some other invariants...
-  solver->makeInvariant<MinSparse>(*solver, min, X);
+  solver->makeInvariant<MinSparse>(*solver, min, std::vector<VarId>{X});
 
   solver->close();
   EXPECT_EQ(solver->committedValue(min), 0);

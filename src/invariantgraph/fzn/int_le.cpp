@@ -2,6 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "invariantgraph/fzn/int_lt.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -65,8 +66,7 @@ bool int_le(FznInvariantGraph& invariantGraph, Int a, VarNodeId b,
 }
 
 bool int_le(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntLeNode>(a, b, true));
+  invariantGraph.addInvariantNode(std::make_unique<IntLeNode>(a, b, true));
   return true;
 }
 
@@ -78,8 +78,7 @@ bool int_le(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
     }
     return int_lt(invariantGraph, b, a);
   }
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntLeNode>(a, b, true));
+  invariantGraph.addInvariantNode(std::make_unique<IntLeNode>(a, b, true));
   return true;
 }
 
@@ -90,7 +89,6 @@ bool int_le(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
   if (aLb > bUb) {
     throw FznArgumentException(
         "int_le: fixed variables or parameters a and b must be equal");
-    return true;
   }
   if (a.isFixed()) {
     return int_le(invariantGraph, invariantGraph.createVarNodeFromFzn(b, false),
@@ -139,15 +137,15 @@ bool int_le(FznInvariantGraph& invariantGraph,
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 3 : 2);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
 
   if (!isReified) {
     return int_le(invariantGraph,
                   std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                   std::get<fznparser::IntArg>(constraint.arguments().at(1)));
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
   return int_le(invariantGraph,
                 std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                 std::get<fznparser::IntArg>(constraint.arguments().at(1)),

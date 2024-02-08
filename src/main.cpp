@@ -73,8 +73,6 @@ int main(int argc, char* argv[]) {
 
     atlantis::logging::Logger logger(stderr, getLogLevel(result));
 
-    auto& modelFilePath = result["modelFile"].as<std::filesystem::path>();
-
     auto givenSeed = result["seed"].as<long>();
     std::uint_fast32_t seed = givenSeed >= 0
                                   ? static_cast<std::uint_fast32_t>(givenSeed)
@@ -98,9 +96,12 @@ int main(int argc, char* argv[]) {
       }
     }();
 
-    atlantis::search::AnnealingScheduleFactory scheduleFactory(
-        annealingScheduleDefinition);
-    atlantis::FznBackend backend(modelFilePath, scheduleFactory, seed, timeout);
+    auto modelFilePath = result["modelFile"].as<std::filesystem::path>();
+
+    atlantis::FznBackend backend(
+        std::move(modelFilePath),
+        atlantis::search::AnnealingScheduleFactory(annealingScheduleDefinition),
+        seed, timeout);
     auto statistics = backend.solve(logger);
 
     // Don't log to std::cout, since that would interfere with MiniZinc.

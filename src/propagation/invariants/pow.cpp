@@ -2,42 +2,46 @@
 
 namespace atlantis::propagation {
 
-Pow::Pow(SolverBase& solver, VarId output, VarId x, VarId y)
-    : Invariant(solver), _output(output), _x(x), _y(y) {
+Pow::Pow(SolverBase& solver, VarId output, VarId base, VarId exponent)
+    : Invariant(solver), _output(output), _base(base), _exponent(exponent) {
   _modifiedVars.reserve(1);
 }
 
 void Pow::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
 
-  _solver.registerInvariantInput(_id, _x, 0);
-  _solver.registerInvariantInput(_id, _y, 0);
+  _solver.registerInvariantInput(_id, _base, 0, false);
+  _solver.registerInvariantInput(_id, _exponent, 0, false);
   registerDefinedVar(_output);
 }
 
 void Pow::updateBounds(bool widenOnly) {
-  const Int xLb = _solver.lowerBound(_x);
-  const Int xUb = _solver.upperBound(_x);
+  const Int baseLb = _solver.lowerBound(_base);
+  const Int baseUb = _solver.upperBound(_base);
 
-  const Int yLb = _solver.lowerBound(_y);
-  const Int yUb = _solver.upperBound(_y);
+  const Int expLb = _solver.lowerBound(_exponent);
+  const Int expUb = _solver.upperBound(_exponent);
 
-  Int lb = std::numeric_limits<Int>::max();
-  Int ub = std::numeric_limits<Int>::min();
+  Int outLb = std::numeric_limits<Int>::max();
+  Int outUb = std::numeric_limits<Int>::min();
 
-  for (const Int aBound : std::array<Int, 2>{xLb, xUb}) {
-    for (const Int bBound : std::array<Int, 2>{yLb, yUb}) {
-      if (aBound != 0 || bBound >= 0) {
-        lb = std::min<Int>(lb, std::pow(aBound, bBound));
-        ub = std::max<Int>(ub, std::pow(aBound, bBound));
+  for (const Int baseBound : std::array<Int, 2>{baseLb, baseUb}) {
+    for (const Int expBound : std::array<Int, 2>{expLb, expUb}) {
+      if (baseBound != 0 || expBound >= 0) {
+        outLb = std::min<Int>(outLb,
+                              static_cast<Int>(std::pow(baseBound, expBound)));
+        outUb = std::max<Int>(outUb,
+                              static_cast<Int>(std::pow(baseBound, expBound)));
       } else {
-        if (xLb < 0) {
-          lb = std::min<Int>(lb, std::pow(-1, bBound));
-          ub = std::max<Int>(ub, std::pow(-1, bBound));
+        if (baseLb < 0) {
+          outLb =
+              std::min<Int>(outLb, static_cast<Int>(std::pow(-1, expBound)));
+          outUb =
+              std::max<Int>(outUb, static_cast<Int>(std::pow(-1, expBound)));
         }
-        if (xUb > 0) {
-          lb = std::min<Int>(lb, std::pow(1, bBound));
-          ub = std::max<Int>(ub, std::pow(1, bBound));
+        if (baseUb > 0) {
+          outLb = std::min<Int>(outLb, static_cast<Int>(std::pow(1, expBound)));
+          outUb = std::max<Int>(outUb, static_cast<Int>(std::pow(1, expBound)));
         }
       }
     }
@@ -45,50 +49,53 @@ void Pow::updateBounds(bool widenOnly) {
 
   _zeroReplacement = 1;
   // If base can be 0:
-  if (xLb <= 0 && 0 <= xUb) {
-    lb = std::min<Int>(lb, 0);
-    ub = std::max<Int>(ub, 0);
+  if (baseLb <= 0 && 0 <= baseUb) {
+    outLb = std::min<Int>(outLb, 0);
+    outUb = std::max<Int>(outUb, 0);
 
     // If base can be 0 and exponent can be negative:
-    if (yLb < 0) {
+    if (expLb < 0) {
       // x^-1 is in {-1, 0, 1}
-      lb = std::min<Int>(lb, 1);
-      ub = std::max<Int>(ub, 1);
+      outLb = std::min<Int>(outLb, 1);
+      outUb = std::max<Int>(outUb, 1);
       // can be -1 if base is negative
-      if (xLb < 0) {
-        lb = std::min<Int>(lb, -1);
-        ub = std::max<Int>(ub, -1);
+      if (baseLb < 0) {
+        outLb = std::min<Int>(outLb, -1);
+        outUb = std::max<Int>(outUb, -1);
       }
-      if (xUb < 0) {
+      if (baseUb < 0) {
         _zeroReplacement = -1;
       }
     }
   }
 
-  if (xLb < 0 && yUb >= 2) {
-    lb = std::min<Int>(lb, std::pow(xLb, yUb - (yUb % 2 == 0)));
-    ub = std::max<Int>(ub, std::pow(xLb, yUb - (yUb % 2 == 1)));
+  if (baseLb < 0 && expUb >= 2) {
+    outLb = std::min<Int>(
+        outLb, static_cast<Int>(std::pow(baseLb, expUb - (expUb % 2 == 0))));
+    outUb = std::max<Int>(
+        outUb, static_cast<Int>(std::pow(baseLb, expUb - (expUb % 2 == 1))));
   }
 
-  _solver.updateBounds(_output, lb, ub, widenOnly);
+  _solver.updateBounds(_output, outLb, outUb, widenOnly);
 }
 
 void Pow::recompute(Timestamp ts) {
-  const Int xVal = _solver.value(ts, _x);
-  const Int yVal = _solver.value(ts, _y);
-  if (xVal == 0 && yVal < 0) {
-    updateValue(ts, _output, std::pow(_zeroReplacement, yVal));
+  const Int baseVal = _solver.value(ts, _base);
+  const Int expVal = _solver.value(ts, _exponent);
+  if (baseVal == 0 && expVal < 0) {
+    updateValue(ts, _output,
+                static_cast<Int>(std::pow(_zeroReplacement, expVal)));
     return;
   }
-  updateValue(ts, _output, std::pow(xVal, yVal));
+  updateValue(ts, _output, static_cast<Int>(std::pow(baseVal, expVal)));
 }
 
 VarId Pow::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
-      return _x;
+      return _base;
     case 1:
-      return _y;
+      return _exponent;
     default:
       return NULL_ID;
   }

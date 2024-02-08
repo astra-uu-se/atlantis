@@ -1,15 +1,11 @@
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <limits>
-#include <random>
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/ifThenElse.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -23,7 +19,7 @@ class IfThenElseTest : public InvariantTest {
                          solver->value(ts, inputs.at(2)));
   }
 
-  Int computeOutput(std::array<Int, 3> inputs) {
+  static Int computeOutput(std::array<Int, 3> inputs) {
     return computeOutput(inputs.at(0), inputs.at(1), inputs.at(2));
   }
 
@@ -32,7 +28,7 @@ class IfThenElseTest : public InvariantTest {
                          solver->value(ts, y));
   }
 
-  Int computeOutput(const Int bVal, const Int xVal, const Int yVal) {
+  static Int computeOutput(const Int bVal, const Int xVal, const Int yVal) {
     return bVal == 0 ? xVal : yVal;
   }
 };
@@ -59,7 +55,7 @@ TEST_F(IfThenElseTest, UpdateBounds) {
   for (const auto& [bLb, bUb] : bBounds) {
     EXPECT_TRUE(bLb <= bUb);
     solver->updateBounds(b, bLb, bUb, false);
-    invariant.updateBounds();
+    invariant.updateBounds(false);
     if (bLb == 0 && bUb == 0) {
       EXPECT_EQ(solver->lowerBound(outputId), solver->lowerBound(x));
       EXPECT_EQ(solver->upperBound(outputId), solver->upperBound(x));

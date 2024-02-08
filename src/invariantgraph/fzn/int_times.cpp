@@ -14,7 +14,6 @@ bool int_times(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
       invariantGraph.createVarNodeFromFzn(b, false),
       invariantGraph.createVarNodeFromFzn(product, true)));
   return true;
-  return true;
 }
 
 bool int_times(FznInvariantGraph& invariantGraph,
@@ -23,9 +22,9 @@ bool int_times(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true)
 
   return int_times(invariantGraph,
                    std::get<fznparser::IntArg>(constraint.arguments().at(0)),

@@ -48,10 +48,10 @@ class SearchController {
         _isSatisfactionProblem(model.isSatisfactionProblem()) {}
 
   bool shouldRun(const Assignment&);
-  void printBoolVar(const Assignment&, const FznOutputVar&) const;
-  void printIntVar(const Assignment&, const FznOutputVar&) const;
-  void printBoolVarArray(const Assignment&, const FznOutputVarArray&) const;
-  void printIntVarArray(const Assignment&, const FznOutputVarArray&) const;
+  static void printBoolVar(const Assignment&, const FznOutputVar&);
+  static void printIntVar(const Assignment&, const FznOutputVar&);
+  static void printBoolVarArray(const Assignment&, const FznOutputVarArray&);
+  static void printIntVarArray(const Assignment&, const FznOutputVarArray&);
   void printSolution(const Assignment&) const;
   void onSolution(const Assignment&);
   void onFinish() const;

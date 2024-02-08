@@ -4,19 +4,19 @@
 #include <cassert>
 #include <vector>
 
-#include "propagation/violationInvariants/violationInvariant.hpp"
-#include "types.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/variables/committableInt.hpp"
 #include "propagation/variables/intVar.hpp"
+#include "propagation/violationInvariants/violationInvariant.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
 class GlobalCardinalityClosed : public ViolationInvariant {
  private:
-  const std::vector<VarId> _outputs;
-  const std::vector<VarId> _inputs;
-  const std::vector<Int> _cover;
+  std::vector<VarId> _outputs;
+  std::vector<VarId> _inputs;
+  std::vector<Int> _cover;
   std::vector<Int> _coverVarIndex;
   std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
@@ -27,11 +27,12 @@ class GlobalCardinalityClosed : public ViolationInvariant {
 
  public:
   GlobalCardinalityClosed(SolverBase&, VarId violationId,
-                          std::vector<VarId> outputs, std::vector<VarId> inputs,
-                          std::vector<Int> cover);
+                          std::vector<VarId>&& outputs,
+                          std::vector<VarId>&& inputs,
+                          std::vector<Int>&& cover);
 
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
+  void updateBounds(bool widenOnly) override;
   void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;

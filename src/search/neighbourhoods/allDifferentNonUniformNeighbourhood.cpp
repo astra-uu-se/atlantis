@@ -83,9 +83,9 @@ void AllDifferentNonUniformNeighbourhood::initialise(
         assert(inDomain(varIndex, valueIndex));
       }
     }
-    for (size_t varIndex = 0; varIndex < varVisited.size(); ++varIndex) {
-      assert(varVisited.at(varIndex));
-    }
+    assert(
+        std::all_of(varVisited.begin(), varVisited.end(),
+                    [&](size_t varIndex) { return varVisited.at(varIndex); }));
   }
 #endif
   for (size_t valueIndex = 0; valueIndex < _valueIndexToVarIndex.size();
@@ -104,9 +104,10 @@ bool AllDifferentNonUniformNeighbourhood::randomMove(RandomProvider& random,
   assert(sanity(assignment));
   bool didMove = false;
 
-  for (size_t i = 0; i < _varIndices.size(); ++i) {
+  for (Int i = 0; i < static_cast<Int>(_varIndices.size()); ++i) {
     std::swap(_varIndices[i],
-              _varIndices[random.intInRange(i, _varIndices.size() - 1)]);
+              _varIndices[random.intInRange(
+                  i, static_cast<Int>(_varIndices.size()) - 1)]);
     const size_t var1Index = _varIndices[i];
 #ifndef NDEBUG
     {
@@ -116,10 +117,10 @@ bool AllDifferentNonUniformNeighbourhood::randomMove(RandomProvider& random,
       assert(var1Index == _valueIndexToVarIndex.at(value1Index));
     }
 #endif
-    for (size_t j = 0; j < _domains[var1Index].size(); ++j) {
+    for (Int j = 0; j < static_cast<Int>(_domains[var1Index].size()); ++j) {
       std::swap(_domains[var1Index][j],
-                _domains[var1Index]
-                        [random.intInRange(j, _domains[var1Index].size() - 1)]);
+                _domains[var1Index][random.intInRange(
+                    j, static_cast<Int>(_domains[var1Index].size()) - 1)]);
       const size_t value2Index = toValueIndex(_domains[var1Index][j]);
       assert(inDomain(var1Index, value2Index));
 

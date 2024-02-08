@@ -13,9 +13,9 @@ static bool isViolating(const std::vector<Int>& values) {
 template <ViolationInvariantType Type>
 class AbstractBoolLtNodeTest : public NodeTestBase<BoolLtNode> {
  public:
-  VarNodeId a = NULL_NODE_ID;
-  VarNodeId b = NULL_NODE_ID;
-  VarNodeId reified = NULL_NODE_ID;
+  VarNodeId a{NULL_NODE_ID};
+  VarNodeId b{NULL_NODE_ID};
+  VarNodeId reified{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();

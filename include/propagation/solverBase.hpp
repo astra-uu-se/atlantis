@@ -175,8 +175,7 @@ class SolverBase {
    * @param localId the id of the input in the invariant
    */
   virtual void registerInvariantInput(InvariantId invariantId, VarId varId,
-                                      LocalId localId,
-                                      bool isDynamic = false) = 0;
+                                      LocalId localId, bool isDynamic) = 0;
 
   virtual void registerVar(VarId) = 0;
   virtual void registerInvariant(InvariantId) = 0;
@@ -229,7 +228,7 @@ SolverBase::makeViolationInvariant(Args&&... args) {
   registerInvariant(violationInvId);
   logDebug("Created new Violation Invariant with id: " << violationInvId);
   violationInvariant.registerVars();
-  violationInvariant.updateBounds();
+  violationInvariant.updateBounds(false);
   return violationInvariant;
 }
 

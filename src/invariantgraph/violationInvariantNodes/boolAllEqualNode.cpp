@@ -54,7 +54,7 @@ void BoolAllEqualNode::registerNode(InvariantGraph& invariantGraph,
 
   solver.makeViolationInvariant<propagation::BoolAllEqual>(
       solver, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
-      solverVars);
+      std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

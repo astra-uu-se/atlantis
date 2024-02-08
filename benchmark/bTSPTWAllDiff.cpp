@@ -6,13 +6,13 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/element2dConst.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/invariants/plus.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/views/intOffsetView.hpp"
 #include "propagation/views/lessEqualConst.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 
 namespace atlantis::benchmark {
 
@@ -29,10 +29,10 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
-  Int n;
+  Int n{0};
   const int MAX_TIME = 100000;
 
-  std::vector<propagation::VarId> violation;
+  std::vector<propagation::VarId> violations;
   propagation::VarId totalViolation;
 
   void SetUp(const ::benchmark::State& state) override {
@@ -46,7 +46,7 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
 
     solver->open();
 
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     for (int i = 1; i <= n; ++i) {
       dist.emplace_back();
@@ -81,7 +81,8 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
     for (int i = 1; i < n; ++i) {
       // timeTo[i] = dist[tour[i - 1]][tour[i]]
       solver->makeInvariant<propagation::Element2dConst>(
-          *solver, timeTo[i], tour[i - 1], tour[i], dist, 0, 0);
+          *solver, timeTo[i], tour[i - 1], tour[i],
+          std::vector<std::vector<Int>>(dist), 0, 0);
       // arrivalTime[i] = arrivalTime[i - 1] + timeTo[i];
       solver->makeInvariant<propagation::Plus>(*solver, arrivalTime[i],
                                                arrivalTime[i - 1], timeTo[i]);
@@ -91,16 +92,17 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
     timeTo.erase(timeTo.begin());
     // totalDist = sum(timeTo)
     totalDist = solver->makeIntVar(0, 0, MAX_TIME);
-    solver->makeInvariant<propagation::Linear>(*solver, totalDist, timeTo);
+    solver->makeInvariant<propagation::Linear>(
+        *solver, totalDist, std::vector<propagation::VarId>(timeTo));
 
     for (int i = 1; i < n; ++i) {
-      violation.emplace_back(solver->makeIntView<propagation::LessEqualConst>(
+      violations.emplace_back(solver->makeIntView<propagation::LessEqualConst>(
           *solver, arrivalTime[i], 100));
     }
 
     totalViolation = solver->makeIntVar(0, 0, MAX_TIME * n);
-    solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
-                                               violation);
+    solver->makeInvariant<propagation::Linear>(
+        *solver, totalViolation, std::vector<propagation::VarId>(violations));
 
     solver->close();
     assert(
@@ -127,7 +129,7 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
     timeTo.clear();
     arrivalTime.clear();
     dist.clear();
-    violation.clear();
+    violations.clear();
   }
 
   Int computeDistance() {
@@ -155,7 +157,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
     });
   }));
 
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     const size_t b = rand_in_range(0, n - 2, gen);
     const size_t d = rand_in_range(b + 1, n - 1, gen);
     const size_t e = rand_in_range(d, n - 1, gen);
@@ -197,12 +199,12 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
     ++probes;
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (int i = 0; i < n; ++i) {
       for (int j = i + 1; j < n; ++j) {
         solver->beginMove();
@@ -219,7 +221,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

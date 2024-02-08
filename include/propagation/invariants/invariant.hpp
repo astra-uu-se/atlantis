@@ -139,7 +139,7 @@ class Invariant {
    */
   virtual void registerVars() = 0;
 
-  virtual void updateBounds(bool widenOnly = false) = 0;
+  virtual void updateBounds(bool widenOnly) = 0;
 
   virtual void close(Timestamp){};
 
@@ -180,7 +180,7 @@ class Invariant {
   [[nodiscard]] inline VarId primaryDefinedVar() const {
     return _primaryDefinedVar;
   }
-  const inline std::vector<VarId>& nonPrimaryDefinedVars() const {
+  [[nodiscard]] const inline std::vector<VarId>& nonPrimaryDefinedVars() const {
     return _definedVars;
   }
 };

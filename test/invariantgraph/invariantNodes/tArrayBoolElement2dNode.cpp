@@ -11,9 +11,9 @@ class ArrayBoolElement2dNodeTest : public NodeTestBase<ArrayElement2dNode> {
   std::vector<std::vector<bool>> parMatrix{std::vector<bool>{true, false},
                                            std::vector<bool>{false, true}};
 
-  VarNodeId idx1 = NULL_NODE_ID;
-  VarNodeId idx2 = NULL_NODE_ID;
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId idx1{NULL_NODE_ID};
+  VarNodeId idx2{NULL_NODE_ID};
+  VarNodeId output{NULL_NODE_ID};
 
   Int offsetIdx1 = 1;
   Int offsetIdx2 = 1;

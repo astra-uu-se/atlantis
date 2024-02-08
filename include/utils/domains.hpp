@@ -55,7 +55,7 @@ class Domain {
    * otherwise an empty vector is returned.
    */
   [[nodiscard]] virtual std::vector<DomainEntry> relativeComplementIfIntersects(
-      const Int lb, const Int ub) const = 0;
+      Int lb, Int ub) const = 0;
 };
 
 class IntervalDomain : public Domain {
@@ -64,7 +64,6 @@ class IntervalDomain : public Domain {
   Int _ub;
 
   std::vector<Int> _values;
-  bool _valuesCollected{false};
 
  public:
   IntervalDomain(Int lb, Int ub);
@@ -77,7 +76,7 @@ class IntervalDomain : public Domain {
   [[nodiscard]] bool contains(Int) const noexcept override;
 
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
-      const Int lb, const Int ub) const override;
+      Int lb, Int ub) const override;
 
   void setLowerBound(Int lb);
 
@@ -97,7 +96,8 @@ class SetDomain : public Domain {
   std::vector<Int> _values;
 
  public:
-  explicit SetDomain(std::vector<Int> values);
+  explicit SetDomain(std::vector<Int>&&);
+  explicit SetDomain(const std::vector<Int>&);
 
   [[nodiscard]] const std::vector<Int>& values() const;
 
@@ -108,8 +108,8 @@ class SetDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
 
-  std::vector<DomainEntry> relativeComplementIfIntersects(
-      const Int lb, const Int ub) const override;
+  [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
+      Int lb, Int ub) const override;
 
   void remove(Int value);
   void remove(const std::vector<Int>& values);
@@ -149,7 +149,8 @@ class SearchDomain : public Domain {
   std::variant<IntervalDomain, SetDomain> _domain;
 
  public:
-  explicit SearchDomain(std::vector<Int> values);
+  explicit SearchDomain(std::vector<Int>&&);
+  explicit SearchDomain(const std::vector<Int>&);
   explicit SearchDomain(Int lb, Int ub);
 
   [[nodiscard]] const std::variant<IntervalDomain, SetDomain>& innerDomain()
@@ -163,8 +164,8 @@ class SearchDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
 
-  std::vector<DomainEntry> relativeComplementIfIntersects(
-      const Int lb, const Int ub) const override;
+  [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
+      Int lb, Int ub) const override;
 
   void remove(Int value);
 
@@ -197,7 +198,7 @@ class SearchDomain : public Domain {
    */
   void intersectWith(const std::vector<Int>&);
 
-  void fix(Int value);
+  void fix(Int value) override;
 
   bool operator==(const SearchDomain& other) const;
 

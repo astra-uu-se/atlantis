@@ -9,7 +9,7 @@ namespace atlantis::invariantgraph {
 class ArrayElementNode : public InvariantNode {
  private:
   std::vector<Int> _parVector;
-  const Int _offset;
+  Int _offset;
 
  public:
   ArrayElementNode(std::vector<Int>&& parVector, VarNodeId idx,

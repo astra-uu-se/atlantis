@@ -12,9 +12,9 @@ class ArrayIntElement2dNodeTest : public NodeTestBase<ArrayElement2dNode> {
   std::vector<std::vector<Int>> parMatrix{std::vector<Int>{0, 1},
                                           std::vector<Int>{2, 3}};
 
-  VarNodeId idx1 = NULL_NODE_ID;
-  VarNodeId idx2 = NULL_NODE_ID;
-  VarNodeId outputVar = NULL_NODE_ID;
+  VarNodeId idx1{NULL_NODE_ID};
+  VarNodeId idx2{NULL_NODE_ID};
+  VarNodeId outputVar{NULL_NODE_ID};
 
   Int offsetIdx1 = 1;
   Int offsetIdx2 = 1;

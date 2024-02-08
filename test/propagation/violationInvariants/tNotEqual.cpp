@@ -1,13 +1,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <random>
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/notEqual.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
+#include "propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::testing {
 
@@ -20,7 +18,7 @@ class NotEqualTest : public InvariantTest {
                             solver->value(ts, inputs.at(1)));
   }
 
-  Int computeViolation(std::array<Int, 2> inputs) {
+  static Int computeViolation(std::array<Int, 2> inputs) {
     return computeViolation(inputs.at(0), inputs.at(1));
   }
 
@@ -28,7 +26,7 @@ class NotEqualTest : public InvariantTest {
     return computeViolation(solver->value(ts, x), solver->value(ts, y));
   }
 
-  Int computeViolation(const Int xVal, const Int yVal) {
+  static Int computeViolation(const Int xVal, const Int yVal) {
     return xVal == yVal ? 1 : 0;
   }
 };
@@ -52,13 +50,13 @@ TEST_F(NotEqualTest, UpdateBounds) {
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
       solver->updateBounds(y, yLb, yUb, false);
-      invariant.updateBounds();
+      invariant.updateBounds(false);
       std::vector<Int> violations;
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         solver->setValue(solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
           solver->setValue(solver->currentTimestamp(), y, yVal);
-          invariant.updateBounds();
+          invariant.updateBounds(false);
           invariant.recompute(solver->currentTimestamp());
           violations.emplace_back(
               solver->value(solver->currentTimestamp(), violationId));
@@ -181,7 +179,7 @@ TEST_F(NotEqualTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {

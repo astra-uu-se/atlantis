@@ -25,12 +25,11 @@ bool array_var_int_element(FznInvariantGraph& invariantGraph,
     return false;
   }
 
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true)
 
-  const auto& index =
-      std::get<fznparser::IntArg>(constraint.arguments().at(0));
+  const auto& index = std::get<fznparser::IntArg>(constraint.arguments().at(0));
 
   // Compute offset if nonshifted variant:
   Int offset = constraint.identifier() != "array_var_bool_element_nonshifted"

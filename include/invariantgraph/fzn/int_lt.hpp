@@ -33,7 +33,8 @@ bool int_lt(FznInvariantGraph&, const fznparser::IntArg&,
 bool int_lt(FznInvariantGraph&, const fznparser::IntArg&,
             const fznparser::IntArg&, const fznparser::IntArg& reified);
 */
-
+bool int_lt(FznInvariantGraph&, Int, VarNodeId);
+bool int_lt(FznInvariantGraph&, VarNodeId, Int);
 bool int_lt(FznInvariantGraph&, VarNodeId, VarNodeId);
 bool int_lt(FznInvariantGraph&, VarNodeId, VarNodeId,
             const fznparser::BoolArg& reified);

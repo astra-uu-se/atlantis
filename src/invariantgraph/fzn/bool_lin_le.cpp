@@ -46,9 +46,9 @@ bool bool_lin_le(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 3);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false)
 
   std::vector<Int> coeffs =
       std::get<fznparser::IntVarArray>(constraint.arguments().at(0))

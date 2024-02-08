@@ -62,9 +62,9 @@ const std::vector<VarNodeId>& InvariantNode::dynamicInputVarNodeIds()
 void InvariantNode::replaceDefinedVar(VarNode& oldOutputVarNode,
                                       VarNode& newOutputVarNode) {
   // Replace all occurrences:
-  for (size_t i = 0; i < _outputVarNodeIds.size(); ++i) {
-    if (_outputVarNodeIds[i] == oldOutputVarNode.varNodeId()) {
-      _outputVarNodeIds[i] = newOutputVarNode.varNodeId();
+  for (auto& _outputVarNodeId : _outputVarNodeIds) {
+    if (_outputVarNodeId == oldOutputVarNode.varNodeId()) {
+      _outputVarNodeId = newOutputVarNode.varNodeId();
     }
   }
   oldOutputVarNode.unmarkOutputTo(_id);
@@ -92,9 +92,9 @@ void InvariantNode::removeOutputVarNode(VarNode& outputVarNode) {
 void InvariantNode::replaceStaticInputVarNode(VarNode& oldInputVarNode,
                                               VarNode& newInputVarNode) {
   // Replace all occurrences:
-  for (size_t i = 0; i < _staticInputVarNodeIds.size(); ++i) {
-    if (_staticInputVarNodeIds[i] == oldInputVarNode.varNodeId()) {
-      _staticInputVarNodeIds[i] = newInputVarNode.varNodeId();
+  for (auto& _staticInputVarNodeId : _staticInputVarNodeIds) {
+    if (_staticInputVarNodeId == oldInputVarNode.varNodeId()) {
+      _staticInputVarNodeId = newInputVarNode.varNodeId();
     }
   }
   oldInputVarNode.unmarkAsInputFor(_id, true);
@@ -104,9 +104,9 @@ void InvariantNode::replaceStaticInputVarNode(VarNode& oldInputVarNode,
 void InvariantNode::replaceDynamicInputVarNode(VarNode& oldInputVarNode,
                                                VarNode& newInputVarNode) {
   // Replace all occurrences:
-  for (size_t i = 0; i < _dynamicInputVarNodeIds.size(); ++i) {
-    if (_dynamicInputVarNodeIds[i] == oldInputVarNode.varNodeId()) {
-      _dynamicInputVarNodeIds[i] = newInputVarNode.varNodeId();
+  for (auto& _dynamicInputVarNodeId : _dynamicInputVarNodeIds) {
+    if (_dynamicInputVarNodeId == oldInputVarNode.varNodeId()) {
+      _dynamicInputVarNodeId = newInputVarNode.varNodeId();
     }
   }
   oldInputVarNode.unmarkAsInputFor(_id, false);

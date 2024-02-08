@@ -25,7 +25,7 @@ class SearchProcedure {
       : _random(random),
         _assignment(assignment),
         _neighbourhood(neighbourhood),
-        _objective(std::move(objective)) {}
+        _objective(objective) {}
 
   SearchStatistics run(SearchController& controller, Annealer& annealer,
                        logging::Logger& logger);

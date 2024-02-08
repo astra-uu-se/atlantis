@@ -7,12 +7,12 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
-#include "propagation/violationInvariants/equal.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/views/equalConst.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
+#include "propagation/violationInvariants/equal.hpp"
 
 namespace atlantis::benchmark {
 
@@ -25,7 +25,7 @@ class MagicSquare : public ::benchmark::Fixture {
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
-  Int n;
+  Int n{0};
 
   propagation::VarId totalViolation = propagation::NULL_ID;
 
@@ -45,13 +45,13 @@ class MagicSquare : public ::benchmark::Fixture {
 
     solver->open();
 
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     square.reserve(n);
     flat.reserve(n * n);
 
     for (Int i = 0; i < n; ++i) {
-      square.push_back(std::vector<propagation::VarId>(n));
+      square.emplace_back(n);
       for (Int j = 0; j < n; ++j) {
         const auto var = solver->makeIntVar(i * n + j + 1, 1, n2);
         square[i].at(j) = var;
@@ -66,7 +66,8 @@ class MagicSquare : public ::benchmark::Fixture {
     // Row
     for (Int i = 0; i < n; ++i) {
       const propagation::VarId rowSum = solver->makeIntVar(0, 0, n2 * n);
-      solver->makeInvariant<propagation::Linear>(*solver, rowSum, square[i]);
+      solver->makeInvariant<propagation::Linear>(
+          *solver, rowSum, std::vector<propagation::VarId>(square[i]));
       violations.push_back(solver->makeIntView<propagation::EqualConst>(
           *solver, rowSum, magicSum));
     }
@@ -79,7 +80,8 @@ class MagicSquare : public ::benchmark::Fixture {
         assert(square[j].size() == static_cast<size_t>(n));
         col.at(j) = square[j][i];
       }
-      solver->makeInvariant<propagation::Linear>(*solver, colSum, col);
+      solver->makeInvariant<propagation::Linear>(*solver, colSum,
+                                                 std::move(col));
       violations.push_back(solver->makeIntView<propagation::EqualConst>(
           *solver, colSum, magicSum));
     }
@@ -91,7 +93,8 @@ class MagicSquare : public ::benchmark::Fixture {
       assert(square[j].size() == static_cast<size_t>(n));
       downDiag.at(j) = square[j][j];
     }
-    solver->makeInvariant<propagation::Linear>(*solver, downDiagSum, downDiag);
+    solver->makeInvariant<propagation::Linear>(*solver, downDiagSum,
+                                               std::move(downDiag));
     violations.push_back(solver->makeIntView<propagation::EqualConst>(
         *solver, downDiagSum, magicSum));
 
@@ -102,7 +105,8 @@ class MagicSquare : public ::benchmark::Fixture {
       assert(square[n - j - 1].size() == static_cast<size_t>(n));
       upDiag.at(j) = square[n - j - 1][j];
     }
-    solver->makeInvariant<propagation::Linear>(*solver, upDiagSum, upDiag);
+    solver->makeInvariant<propagation::Linear>(*solver, upDiagSum,
+                                               std::move(upDiag));
     violations.push_back(solver->makeIntView<propagation::EqualConst>(
         *solver, upDiagSum, magicSum));
 
@@ -115,7 +119,7 @@ class MagicSquare : public ::benchmark::Fixture {
 
     totalViolation = solver->makeIntVar(0, 0, maxViol);
     solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
-                                               violations);
+                                               std::move(violations));
     solver->close();
   }
 
@@ -124,7 +128,7 @@ class MagicSquare : public ::benchmark::Fixture {
     flat.clear();
   }
 
-  inline bool sanity() const {
+  [[nodiscard]] inline bool sanity() const {
     return all_in_range(0, flat.size() - 1, [&](const size_t i) {
       return all_in_range(i + 1, flat.size(), [&](const size_t j) {
         return solver->committedValue(flat.at(i)) !=
@@ -138,7 +142,7 @@ class MagicSquare : public ::benchmark::Fixture {
 
 BENCHMARK_DEFINE_F(MagicSquare, probe_single_swap)(::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     const size_t i = distribution(gen);
     assert(i < flat.size());
     const size_t j = distribution(gen);
@@ -158,12 +162,12 @@ BENCHMARK_DEFINE_F(MagicSquare, probe_single_swap)(::benchmark::State& st) {
     ++probes;
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(::benchmark::State& st) {
   int probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
         const Int oldI = solver->committedValue(flat[i]);
@@ -183,7 +187,7 @@ BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(::benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

@@ -6,7 +6,7 @@ namespace atlantis::propagation {
  * @param violationId id for the violationCount
  */
 BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
-                           std::vector<VarId> vars)
+                           std::vector<VarId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
       _committedValues(_vars.size(), 0),
@@ -15,15 +15,16 @@ BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
 }
 
 void BoolAllEqual::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   for (size_t i = 0; i < _vars.size(); ++i) {
-    _solver.registerInvariantInput(_id, _vars[i], i);
+    _solver.registerInvariantInput(_id, _vars[i], i, false);
   }
   registerDefinedVar(_violationId);
 }
 
 void BoolAllEqual::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_violationId, 0, _vars.size() / 2, widenOnly);
+  _solver.updateBounds(_violationId, 0, static_cast<Int>(_vars.size()) / 2,
+                       widenOnly);
 }
 
 void BoolAllEqual::close(Timestamp) {}
@@ -31,8 +32,8 @@ void BoolAllEqual::close(Timestamp) {}
 void BoolAllEqual::recompute(Timestamp ts) {
   _numTrue.setValue(ts, 0);
 
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    _numTrue.incValue(ts, static_cast<Int>(_solver.value(ts, _vars[i]) == 0));
+  for (const auto& var : _vars) {
+    _numTrue.incValue(ts, static_cast<Int>(_solver.value(ts, var) == 0));
   }
 
   assert(0 <= _numTrue.value(ts) &&

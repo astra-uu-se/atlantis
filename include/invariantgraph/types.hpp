@@ -12,7 +12,7 @@ namespace atlantis::invariantgraph {
 struct NodeId {
   size_t id;
   NodeId() : id(0) {}
-  NodeId(size_t i) : id(i) {}
+  explicit NodeId(size_t i) : id(i) {}
   NodeId(const NodeId&) = default;
 };
 
@@ -21,8 +21,17 @@ static NodeId NULL_NODE_ID = NodeId();
 struct VarNodeId : public NodeId {
   VarNodeId() : NodeId() {}
   VarNodeId(const VarNodeId&) = default;
-  VarNodeId(size_t i) : NodeId(i) {}
-  VarNodeId(const NodeId& nodeId) : NodeId(nodeId) {}
+  explicit VarNodeId(size_t i) : NodeId(i) {}
+  explicit VarNodeId(NodeId nodeId) : NodeId(nodeId) {}
+
+  inline VarNodeId& operator=(const VarNodeId& other) {
+    id = other.id;
+    return *this;
+  }
+  inline VarNodeId& operator=(const NodeId& other) {
+    id = other.id;
+    return *this;
+  }
 
   inline bool operator==(const VarNodeId& other) const {
     return id == other.id;
@@ -43,12 +52,23 @@ struct InvariantNodeId : public NodeId {
   InvariantNodeId(const InvariantNodeId&) = default;
 
   InvariantNodeId() : NodeId(), type(Type::INVARIANT) {}
-  InvariantNodeId(size_t i) : NodeId(i), type(Type::INVARIANT) {}
+  explicit InvariantNodeId(size_t i) : NodeId(i), type(Type::INVARIANT) {}
   InvariantNodeId(size_t i, bool isImplicitConstraint)
       : NodeId(i),
         type(isImplicitConstraint ? Type::IMPLICIT_CONSTRAINT
                                   : Type::INVARIANT) {}
-  InvariantNodeId(NodeId nodeId) : NodeId(nodeId), type(Type::INVARIANT) {}
+  explicit InvariantNodeId(NodeId nodeId)
+      : NodeId(nodeId), type(Type::INVARIANT) {}
+
+  inline InvariantNodeId& operator=(const InvariantNodeId& other) {
+    id = other.id;
+    type = other.type;
+    return *this;
+  }
+  inline InvariantNodeId& operator=(const NodeId& other) {
+    id = other.id;
+    return *this;
+  }
 
   bool operator==(const InvariantNodeId& other) const {
     return type == other.type && id == other.id;

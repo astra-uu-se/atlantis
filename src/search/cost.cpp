@@ -9,8 +9,8 @@ Cost::Cost(Int violationDegree, Int objective,
       _objectiveWeightSign(static_cast<int>(direction)) {}
 
 Int Cost::evaluate(UInt violationWeight, UInt objectiveWeight) const noexcept {
-  return violationWeight * _violationDegree +
-         objectiveWeight * _objectiveWeightSign * _objective;
+  return static_cast<Int>(violationWeight) * _violationDegree +
+         static_cast<Int>(objectiveWeight) * _objectiveWeightSign * _objective;
 }
 
 std::string Cost::toString() const {
