@@ -1,4 +1,3 @@
-
 #include <gtest/gtest.h>
 #include <rapidcheck/gtest.h>
 
@@ -6,9 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "../invariantTestHelper.hpp"
 #include "propagation/variables/committableInt.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 

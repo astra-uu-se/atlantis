@@ -75,7 +75,7 @@ class OutputToInputExplorer {
 
   void propagate(Timestamp);
 
-  OutputToInputMarkingMode outputToInputMarkingMode() const;
+  [[nodiscard]] OutputToInputMarkingMode outputToInputMarkingMode() const;
   void setOutputToInputMarkingMode(OutputToInputMarkingMode);
 
   template <OutputToInputMarkingMode MarkingMode>

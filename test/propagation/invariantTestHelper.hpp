@@ -25,7 +25,7 @@ std::vector<std::vector<T>> subsets(std::vector<T>& origin) {
   std::vector<std::vector<T>> res;
   std::deque<std::pair<size_t, size_t>> q;
   res.emplace_back(std::vector<T>{});
-  q.emplace_back(std::pair<size_t, size_t>{size_t(0), 0 + 1});
+  q.emplace_back(size_t(0), 0 + 1);
   q.emplace_back(std::pair<size_t, size_t>{res.size(), 0 + 1});
   res.emplace_back(std::vector<T>{origin.at(0)});
 
@@ -59,12 +59,12 @@ std::vector<std::pair<T, T>> cartesianProduct(const std::vector<T>& t) {
 }
 
 struct NotificationData {
-  PropagationMode propMode;
-  OutputToInputMarkingMode markingMode;
-  size_t numNextInputCalls;
-  propagation::VarId modifiedVarId;
-  Int modifiedVal;
-  propagation::VarId queryVarId;
+  PropagationMode propMode{PropagationMode::INPUT_TO_OUTPUT};
+  OutputToInputMarkingMode markingMode{OutputToInputMarkingMode::NONE};
+  size_t numNextInputCalls{0};
+  propagation::VarId modifiedVarId{NULL_ID};
+  Int modifiedVal{0};
+  propagation::VarId queryVarId{NULL_ID};
 };
 
 class InvariantTest : public ::testing::Test {

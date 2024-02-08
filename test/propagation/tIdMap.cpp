@@ -1,10 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <limits>
-#include <random>
 #include <vector>
 
-#include "../testHelper.hpp"
 #include "propagation/utils/idMap.hpp"
 
 namespace atlantis::testing {
@@ -51,8 +48,6 @@ TEST_F(IdMapTest, ID2Vectortest) {
 
   VarId id1(1);
   VarId id2(2);
-  VarId id3(3);
-  VarId id4(4);
   // values to store
   varToVector.register_idx(id1);
   varToVector.register_idx(id2);

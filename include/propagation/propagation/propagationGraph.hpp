@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "exceptions/exceptions.hpp"
-#include "layeredPropagationQueue.hpp"
 #include "misc/logging.hpp"
 #include "propagation/store/store.hpp"
 #include "propagation/utils/idMap.hpp"
@@ -24,12 +23,11 @@ class PropagationGraph {
    public:
     InvariantId invariantId;
     LocalId localId;
-    ListeningInvariantData(const ListeningInvariantData& other)
-        : invariantId(other.invariantId), localId(other.localId) {}
+    ListeningInvariantData(const ListeningInvariantData& other) = default;
     ListeningInvariantData(const InvariantId t_invariantId,
                            const LocalId t_localId)
         : invariantId(t_invariantId), localId(t_localId) {}
-    ListeningInvariantData& operator=(ListeningInvariantData&& other) {
+    ListeningInvariantData& operator=(ListeningInvariantData&& other) noexcept {
       invariantId = other.invariantId;
       localId = other.localId;
       return *this;
@@ -180,11 +178,11 @@ class PropagationGraph {
     return _isSearchVar.at(id);
   }
 
-  inline bool isDynamicInvariant(InvariantId id) const {
+  [[nodiscard]] inline bool isDynamicInvariant(InvariantId id) const {
     return _isDynamicInvariant.get(id);
   }
 
-  inline InvariantId definingInvariant(VarIdBase id) const {
+  [[nodiscard]] inline InvariantId definingInvariant(VarIdBase id) const {
     // Returns NULL_ID if id is a search variable (not defined by an invariant)
     return _definingInvariant.at(id);
   }
@@ -196,7 +194,7 @@ class PropagationGraph {
 
   [[nodiscard]] inline const std::vector<ListeningInvariantData>&
   listeningInvariantData(VarId id) const {
-    return _listeningInvariantData.at(id);
+    return _listeningInvariantData.at(id.id);
   }
 
   [[nodiscard]] inline const std::vector<std::pair<VarIdBase, bool>>& inputVars(

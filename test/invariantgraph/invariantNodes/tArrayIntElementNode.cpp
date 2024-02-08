@@ -8,8 +8,8 @@ using namespace atlantis::invariantgraph;
 
 class ArrayIntElementNodeTest : public NodeTestBase<ArrayElementNode> {
  public:
-  VarNodeId idx = NULL_NODE_ID;
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId idx{NULL_NODE_ID};
+  VarNodeId output{NULL_NODE_ID};
   std::vector<Int> elementValues{1, 2, 3};
 
   Int offsetIdx = 1;

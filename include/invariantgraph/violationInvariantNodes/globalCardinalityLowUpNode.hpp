@@ -14,10 +14,10 @@
 namespace atlantis::invariantgraph {
 class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
  private:
-  const std::vector<VarNodeId> _inputs;
-  const std::vector<Int> _cover;
-  const std::vector<Int> _low;
-  const std::vector<Int> _up;
+  std::vector<VarNodeId> _inputs;
+  std::vector<Int> _cover;
+  std::vector<Int> _low;
+  std::vector<Int> _up;
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:

@@ -3,19 +3,19 @@
 namespace atlantis::propagation {
 
 ElementVar::ElementVar(SolverBase& solver, VarId output, VarId index,
-                       std::vector<VarId> varArray, Int offset)
+                       std::vector<VarId>&& varArray, Int offset)
     : Invariant(solver),
       _output(output),
       _index(index),
-      _varArray(varArray),
+      _varArray(std::move(varArray)),
       _offset(offset) {
   _modifiedVars.reserve(1);
 }
 
 void ElementVar::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _index, LocalId(0));
-  for (const VarId input : _varArray) {
+  _solver.registerInvariantInput(_id, _index, LocalId(0), false);
+  for (const VarId& input : _varArray) {
     _solver.registerInvariantInput(_id, input, LocalId(0), true);
   }
   registerDefinedVar(_output);

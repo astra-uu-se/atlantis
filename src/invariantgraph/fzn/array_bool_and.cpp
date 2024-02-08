@@ -47,7 +47,7 @@ bool array_bool_and(FznInvariantGraph& invariantGraph,
 }
 
 bool array_bool_and(FznInvariantGraph& invariantGraph,
-                    const fznparser::BoolVarArray boolVarArray,
+                    const fznparser::BoolVarArray& boolVarArray,
                     const fznparser::BoolArg reified) {
   sanityCheck(boolVarArray.size(), getFixedValues(boolVarArray), reified);
   if (reified.isFixed()) {
@@ -69,8 +69,8 @@ bool array_bool_and(FznInvariantGraph& invariantGraph,
   if (constraint.identifier() != "array_bool_and") {
     return false;
   }
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   return array_bool_and(
       invariantGraph,
       std::get<fznparser::BoolVarArray>(constraint.arguments().at(0)),

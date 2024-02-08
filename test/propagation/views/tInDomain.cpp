@@ -1,7 +1,5 @@
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <random>
 #include <vector>
 
@@ -25,7 +23,7 @@ class InDomainTest : public ::testing::Test {
                        const std::vector<DomainEntry>& domain) {
     return computeViolation(solver->value(ts, var), domain);
   }
-  Int computeViolation(Int val, const std::vector<DomainEntry>& domain) {
+  static Int computeViolation(Int val, const std::vector<DomainEntry>& domain) {
     Int viol = std::numeric_limits<Int>::max();
     for (const auto& [lb, ub] : domain) {
       if (lb <= val && val <= ub) {
@@ -55,7 +53,7 @@ TEST_F(InDomainTest, Bounds) {
                                      domainVec.front().upperBound);
 
   for (const std::vector<DomainEntry>& dom : subsets(domainVec)) {
-    if (dom.size() == 0) {
+    if (dom.empty()) {
       continue;
     }
     for (const auto& [xLb, xUb] : domainVec) {
@@ -87,7 +85,7 @@ TEST_F(InDomainTest, Value) {
   std::vector<DomainEntry> domainVec{
       {-20, -15}, {-10, -5}, {0, 0}, {5, 10}, {15, 20}};
   for (const std::vector<DomainEntry>& dom : subsets(domainVec)) {
-    if (dom.size() == 0) {
+    if (dom.empty()) {
       continue;
     }
     if (!solver->isOpen()) {
@@ -112,7 +110,7 @@ TEST_F(InDomainTest, CommittedValue) {
   std::vector<DomainEntry> domainVec{
       {-20, -15}, {-10, -5}, {0, 0}, {5, 10}, {15, 20}};
   for (const std::vector<DomainEntry>& dom : subsets(domainVec)) {
-    if (dom.size() == 0) {
+    if (dom.empty()) {
       continue;
     }
     if (!solver->isOpen()) {

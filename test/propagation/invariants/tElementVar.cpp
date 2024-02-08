@@ -1,4 +1,3 @@
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -9,7 +8,6 @@
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -36,7 +34,8 @@ class ElementVarTest : public InvariantTest {
     inputs.clear();
   }
 
-  size_t zeroBasedIndex(const Int indexVal, const Int offset) {
+  [[nodiscard]] size_t zeroBasedIndex(const Int indexVal,
+                                      const Int offset) const {
     EXPECT_LE(offset, indexVal);
     EXPECT_LT(indexVal - offset, static_cast<Int>(numValues));
     return indexVal - offset;
@@ -59,25 +58,25 @@ TEST_F(ElementVarTest, UpdateBounds) {
   EXPECT_TRUE(inputLb <= inputUb);
   for (const Int offset : offsets) {
     const Int indexLb = offset;
-    const Int indexUb = numValues - 1 + offset;
+    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
     EXPECT_TRUE(indexLb <= indexUb);
 
     std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
     solver->open();
     const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      inputs.at(i) = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+    for (auto& input : inputs) {
+      input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = solver->makeInvariant<ElementVar>(
-        *solver, outputId, index, inputs, offset);
+        *solver, outputId, index, std::vector<VarId>(inputs), offset);
     solver->close();
 
     for (Int minIndex = indexLb; minIndex <= indexUb; ++minIndex) {
       for (Int maxIndex = indexUb; maxIndex >= minIndex; --maxIndex) {
         solver->updateBounds(index, minIndex, maxIndex, false);
-        invariant.updateBounds();
+        invariant.updateBounds(false);
         Int minVal = std::numeric_limits<Int>::max();
         Int maxVal = std::numeric_limits<Int>::min();
         for (Int indexVal = minIndex; indexVal <= maxIndex; ++indexVal) {
@@ -97,19 +96,19 @@ TEST_F(ElementVarTest, Recompute) {
   EXPECT_TRUE(inputLb <= inputUb);
   for (const Int offset : offsets) {
     const Int indexLb = offset;
-    const Int indexUb = numValues - 1 + offset;
+    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
     EXPECT_TRUE(indexLb <= indexUb);
 
     std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
     solver->open();
     const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      inputs.at(i) = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+    for (auto& input : inputs) {
+      input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = solver->makeInvariant<ElementVar>(
-        *solver, outputId, index, inputs, offset);
+        *solver, outputId, index, std::vector<VarId>(inputs), offset);
     solver->close();
 
     for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
@@ -131,19 +130,19 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
   EXPECT_TRUE(inputLb <= inputUb);
   for (const Int offset : offsets) {
     const Int indexLb = offset;
-    const Int indexUb = numValues - 1 + offset;
+    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
     EXPECT_TRUE(indexLb <= indexUb);
 
     std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
     solver->open();
     const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      inputs.at(i) = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+    for (auto& input : inputs) {
+      input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = solver->makeInvariant<ElementVar>(
-        *solver, outputId, index, inputs, offset);
+        *solver, outputId, index, std::vector<VarId>(inputs), offset);
     solver->close();
 
     Timestamp ts = solver->currentTimestamp();
@@ -163,19 +162,19 @@ TEST_F(ElementVarTest, NextInput) {
   EXPECT_TRUE(inputLb <= inputUb);
   for (const Int offset : offsets) {
     const Int indexLb = offset;
-    const Int indexUb = numValues - 1 + offset;
+    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
     EXPECT_TRUE(indexLb <= indexUb);
 
     std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
     solver->open();
     const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      inputs.at(i) = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+    for (auto& input : inputs) {
+      input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = solver->makeInvariant<ElementVar>(
-        *solver, outputId, index, inputs, offset);
+        *solver, outputId, index, std::vector<VarId>(inputs), offset);
     solver->close();
 
     for (Timestamp ts = solver->currentTimestamp() + 1;
@@ -194,7 +193,7 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
                  (numValues * static_cast<Int>(offsets.size())) + 1;
   for (const Int offset : offsets) {
     const Int indexLb = offset;
-    const Int indexUb = numValues - 1 + offset;
+    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
     EXPECT_TRUE(indexLb <= indexUb);
 
     std::vector<Int> indexValues(numValues, 0);
@@ -204,12 +203,12 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
     solver->open();
     const VarId index =
         solver->makeIntVar(indexValues.back(), indexLb, indexUb);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      inputs.at(i) = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+    for (auto& input : inputs) {
+      input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = solver->makeInvariant<ElementVar>(
-        *solver, outputId, index, inputs, offset);
+        *solver, outputId, index, std::vector<VarId>(inputs), offset);
     solver->close();
 
     for (size_t i = 0; i < indexValues.size(); ++i) {
@@ -238,7 +237,7 @@ TEST_F(ElementVarTest, Commit) {
   EXPECT_TRUE(inputLb <= inputUb);
   for (const Int offset : offsets) {
     const Int indexLb = offset;
-    const Int indexUb = numValues - 1 + offset;
+    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
     EXPECT_TRUE(indexLb <= indexUb);
 
     std::vector<Int> indexValues(numValues);
@@ -248,12 +247,12 @@ TEST_F(ElementVarTest, Commit) {
     solver->open();
     const VarId index =
         solver->makeIntVar(indexValues.back(), indexLb, indexUb);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      inputs.at(i) = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+    for (auto& input : inputs) {
+      input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = solver->makeInvariant<ElementVar>(
-        *solver, outputId, index, inputs, offset);
+        *solver, outputId, index, std::vector<VarId>(inputs), offset);
     solver->close();
 
     Int committedIndexValue = solver->committedValue(index);
@@ -322,8 +321,8 @@ class MockElementVar : public ElementVar {
     ElementVar::registerVars();
   }
   explicit MockElementVar(SolverBase& solver, VarId output, VarId index,
-                          std::vector<VarId> varArray, Int offset)
-      : ElementVar(solver, output, index, varArray, offset) {
+                          std::vector<VarId>&& varArray, Int offset)
+      : ElementVar(solver, output, index, std::move(varArray), offset) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return ElementVar::recompute(timestamp);
     });
@@ -362,7 +361,8 @@ TEST_F(ElementVarTest, SolverIntegration) {
     VarId idx = solver->makeIntVar(0, 0, static_cast<Int>(numArgs) - 1);
     VarId output = solver->makeIntVar(-10, -100, 100);
     testNotifications<MockElementVar>(
-        &solver->makeInvariant<MockElementVar>(*solver, output, idx, args, 1),
+        &solver->makeInvariant<MockElementVar>(*solver, output, idx,
+                                               std::move(args), 1),
         {propMode, markingMode, 3, idx, 5, output});
   }
 }

@@ -1,9 +1,7 @@
 #pragma once
 
-
 #include <map>
 #include <utility>
-
 
 #include "invariantgraph/invariantGraph.hpp"
 #include "invariantgraph/invariantNode.hpp"

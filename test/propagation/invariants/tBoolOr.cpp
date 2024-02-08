@@ -1,13 +1,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <random>
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/boolOr.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -15,15 +13,13 @@ using namespace atlantis::propagation;
 
 class BoolOrTest : public InvariantTest {
  public:
-  bool isRegistered = false;
-
   Int computeViolation(const Timestamp ts,
                        const std::array<const VarId, 2>& inputs) {
     return computeViolation(solver->value(ts, inputs.at(0)),
                             solver->value(ts, inputs.at(1)));
   }
 
-  Int computeViolation(const std::array<const Int, 2>& inputs) {
+  static Int computeViolation(const std::array<const Int, 2>& inputs) {
     return computeViolation(inputs.at(0), inputs.at(1));
   }
 
@@ -31,7 +27,7 @@ class BoolOrTest : public InvariantTest {
     return computeViolation(solver->value(ts, x), solver->value(ts, y));
   }
 
-  Int computeViolation(const Int xVal, const Int yVal) {
+  static Int computeViolation(const Int xVal, const Int yVal) {
     return std::min(xVal, yVal);
   }
 };
@@ -54,12 +50,12 @@ TEST_F(BoolOrTest, UpdateBounds) {
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
       solver->updateBounds(y, yLb, yUb, false);
-      invariant.updateBounds();
+      invariant.updateBounds(false);
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         solver->setValue(solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
           solver->setValue(solver->currentTimestamp(), y, yVal);
-          invariant.updateBounds();
+          invariant.updateBounds(false);
           invariant.recompute(solver->currentTimestamp());
         }
       }
@@ -176,7 +172,7 @@ TEST_F(BoolOrTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {

@@ -22,7 +22,7 @@ ArrayElementNode::ArrayElementNode(std::vector<Int>&& parVector, VarNodeId idx,
 ArrayElementNode::ArrayElementNode(std::vector<bool>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset)
     : InvariantNode({output}, {idx}),
-      _parVector(std::move(toIntVec(std::move(parVector)))),
+      _parVector(toIntVec(std::move(parVector))),
       _offset(offset) {}
 
 void ArrayElementNode::registerOutputVars(InvariantGraph& invariantGraph,
@@ -32,7 +32,8 @@ void ArrayElementNode::registerOutputVars(InvariantGraph& invariantGraph,
     assert(invariantGraph.varId(idx()) != propagation::NULL_ID);
     invariantGraph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::ElementConst>(
-            solver, invariantGraph.varId(idx()), _parVector, _offset));
+            solver, invariantGraph.varId(idx()), std::vector<Int>(_parVector),
+            _offset));
   }
 }
 

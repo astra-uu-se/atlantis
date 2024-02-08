@@ -15,7 +15,7 @@
 namespace atlantis::invariantgraph {
 class GlobalCardinalityNode : public InvariantNode {
  private:
-  const std::vector<Int> _cover;
+  std::vector<Int> _cover;
   std::vector<propagation::VarId> _intermediate{};
 
  public:

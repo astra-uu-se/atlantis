@@ -24,4 +24,4 @@ class GeometricCoolingSchedule : public AnnealingSchedule {
   bool frozen() override;
 };
 
-}  // namespace search
+}  // namespace atlantis::search

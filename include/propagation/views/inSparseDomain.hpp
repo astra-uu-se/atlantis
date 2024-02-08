@@ -12,8 +12,8 @@ namespace atlantis::propagation {
 
 class InSparseDomain : public IntView {
  private:
-  const Int _offset;
-  std::vector<int> _valueViolation;
+  Int _offset;
+  std::vector<Int> _valueViolation;
 
  public:
   explicit InSparseDomain(SolverBase& solver, VarId parentId,

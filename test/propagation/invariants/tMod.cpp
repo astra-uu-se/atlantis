@@ -92,7 +92,7 @@ TEST_F(ModTest, UpdateBounds) {
       EXPECT_TRUE(yLb <= yUb);
       solver->updateBounds(y, yLb, yUb, false);
       solver->open();
-      invariant.updateBounds();
+      invariant.updateBounds(false);
       solver->close();
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         solver->setValue(solver->currentTimestamp(), x, xVal);
@@ -226,7 +226,7 @@ TEST_F(ModTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {

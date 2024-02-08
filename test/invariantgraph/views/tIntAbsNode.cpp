@@ -8,8 +8,8 @@ using namespace atlantis::invariantgraph;
 
 class IntAbsNodeTest : public NodeTestBase<IntAbsNode> {
  public:
-  VarNodeId input = NULL_NODE_ID;
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId input{NULL_NODE_ID};
+  VarNodeId output{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();

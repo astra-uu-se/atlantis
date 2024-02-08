@@ -26,11 +26,11 @@ static bool isViolating(const std::vector<Int>& values) {
 template <ViolationInvariantType Type>
 class AbstractAllDifferentNodeTest : public NodeTestBase<AllDifferentNode> {
  public:
-  VarNodeId a = NULL_NODE_ID;
-  VarNodeId b = NULL_NODE_ID;
-  VarNodeId c = NULL_NODE_ID;
-  VarNodeId d = NULL_NODE_ID;
-  VarNodeId reified = NULL_NODE_ID;
+  VarNodeId a{NULL_NODE_ID};
+  VarNodeId b{NULL_NODE_ID};
+  VarNodeId c{NULL_NODE_ID};
+  VarNodeId d{NULL_NODE_ID};
+  VarNodeId reified{NULL_NODE_ID};
 
   InvariantNodeId invNodeId;
 
@@ -193,7 +193,7 @@ TEST_F(AllDifferentNodeTest, pruneParameters) {
   const InvariantNodeId invNodeId = _invariantGraph->addInvariantNode(
       std::make_unique<AllDifferentNode>(std::move(inputs), true));
 
-  AllDifferentNode& allDiffNode = dynamic_cast<AllDifferentNode&>(
+  auto& allDiffNode = dynamic_cast<AllDifferentNode&>(
       _invariantGraph->invariantNode(invNodeId));
 
   varNode(b).fixValue(Int(2));

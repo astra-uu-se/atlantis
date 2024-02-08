@@ -43,7 +43,7 @@ bool NeighbourhoodCombinator::randomMove(RandomProvider& random,
 void NeighbourhoodCombinator::printNeighbourhood(logging::Logger& logger) {
   for (const auto& neighbourhood : _neighbourhoods) {
     logger.debug("Neighbourhood {} covers {} variables.",
-                 demangle(typeid(*neighbourhood).name()),
+                 demangle(typeid(neighbourhood.get()).name()),
                  neighbourhood->coveredVars().size());
   }
 }

@@ -11,7 +11,7 @@ Assignment::Assignment(propagation::Solver& solver,
       _objective(objective),
       _objectiveDirection(objectiveDirection) {
   _searchVars.reserve(solver.searchVars().size());
-  for (const propagation::VarId varId : solver.searchVars()) {
+  for (propagation::VarId varId : solver.searchVars()) {
     if (solver.lowerBound(varId) != solver.upperBound(varId)) {
       _searchVars.push_back(varId);
     }

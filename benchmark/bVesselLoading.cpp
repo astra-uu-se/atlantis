@@ -1,19 +1,16 @@
 #include <benchmark/benchmark.h>
 
-#include <iostream>
 #include <random>
 #include <utility>
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
-#include "propagation/invariants/elementVar.hpp"
 #include "propagation/invariants/exists.hpp"
 #include "propagation/invariants/ifThenElse.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
-#include "propagation/views/elementConst.hpp"
 #include "propagation/views/intOffsetView.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 
 namespace atlantis::benchmark {
 
@@ -27,7 +24,7 @@ class VesselLoading : public ::benchmark::Fixture {
   const size_t vesselLength = 50;  // Vessel vesselLength
   const size_t classCount = 4;     // Num classes
 
-  size_t containerCount;  // Num containers
+  size_t containerCount{0};  // Num containers
 
   std::uniform_int_distribution<size_t>
       distClass;  // dist for container classes
@@ -51,16 +48,16 @@ class VesselLoading : public ::benchmark::Fixture {
   std::vector<std::array<std::uniform_int_distribution<Int>, 2>> leftDistr;
   std::vector<std::array<std::uniform_int_distribution<Int>, 2>> bottomDistr;
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     containerCount = state.range(0);
 
     solver = std::make_unique<propagation::Solver>();
     solver->open();
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     gen = std::mt19937(rd());
     distClass = std::uniform_int_distribution<size_t>{
-        0, static_cast<size_t>(classCount - 1)};
+        0, classCount - 1};
     distDim = std::uniform_int_distribution<size_t>{2, 10};
     distSep = std::uniform_int_distribution<size_t>{0, 4};
 
@@ -84,19 +81,19 @@ class VesselLoading : public ::benchmark::Fixture {
       conClass[distClass(gen)];
 
       // Create variables
-      Int m = std::min(conWidth[i], conLength[i]);
+      Int m = std::min(static_cast<Int>(conWidth[i]), static_cast<Int>(conLength[i]));
       orientation[i] = solver->makeIntVar(0, 0, 1);
-      left[i] = solver->makeIntVar(0, 0, vesselWidth - m);
-      right[i] = solver->makeIntVar(m, m, vesselWidth);
-      bottom[i] = solver->makeIntVar(0, 0, vesselLength - m);
-      top[i] = solver->makeIntVar(m, m, vesselLength);
+      left[i] = solver->makeIntVar(0, 0, static_cast<Int>(vesselWidth) - m);
+      right[i] = solver->makeIntVar(m, m, static_cast<Int>(vesselWidth));
+      bottom[i] = solver->makeIntVar(0, 0, static_cast<Int>(vesselLength) - m);
+      top[i] = solver->makeIntVar(m, m, static_cast<Int>(vesselLength));
     }
 
     // Create random min separation distance between classes.
 
     // seperations[c1][c2] = min distance between container class c1 and c2
-    std::vector<std::vector<int>> seperations(classCount,
-                                              std::vector<int>(classCount));
+    std::vector<std::vector<Int>> seperations(classCount,
+                                              std::vector<Int>(classCount));
     for (size_t c1 = 0; c1 < classCount; ++c1) {
       seperations[c1][c1] = 0;
       for (size_t c2 = c1 + 1; c2 < classCount; ++c2) {
@@ -180,31 +177,31 @@ class VesselLoading : public ::benchmark::Fixture {
           }
 
           propagation::VarId isRightOf =
-              solver->makeIntVar(0, 0, vesselLength + vesselWidth);
+              solver->makeIntVar(0, 0, static_cast<Int>(vesselLength + vesselWidth));
           propagation::VarId isLeftOf =
-              solver->makeIntVar(0, 0, vesselLength + vesselWidth);
+              solver->makeIntVar(0, 0, static_cast<Int>(vesselLength + vesselWidth));
           propagation::VarId isBelow =
-              solver->makeIntVar(0, 0, vesselLength + vesselWidth);
+              solver->makeIntVar(0, 0, static_cast<Int>(vesselLength + vesselWidth));
           propagation::VarId isAbove =
-              solver->makeIntVar(0, 0, vesselLength + vesselWidth);
+              solver->makeIntVar(0, 0, static_cast<Int>(vesselLength + vesselWidth));
 
           // isRightOf = (right[i] + sep <= left[j]):
-          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isRightOf,
-                                                         rightSep, left[j]);
+          solver->makeViolationInvariant<propagation::LessEqual>(
+              *solver, isRightOf, rightSep, left[j]);
           // isLeftOf = (right[j] <= left[i] - sep):
-          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isLeftOf,
-                                                         right[j], leftSep);
+          solver->makeViolationInvariant<propagation::LessEqual>(
+              *solver, isLeftOf, right[j], leftSep);
           // isAbove = (top[i] + sep <= bottom[j]):
-          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isAbove,
-                                                         topSep, bottom[j]);
+          solver->makeViolationInvariant<propagation::LessEqual>(
+              *solver, isAbove, topSep, bottom[j]);
           // isBelow = (top[j] <= bottom[i] - sep):
-          solver->makeViolationInvariant<propagation::LessEqual>(*solver, isBelow,
-                                                         top[j], bottomSep);
+          solver->makeViolationInvariant<propagation::LessEqual>(
+              *solver, isBelow, top[j], bottomSep);
 
           solver->makeInvariant<propagation::Exists>(
               *solver,
               violations.emplace_back(
-                  solver->makeIntVar(0, 0, vesselLength + vesselWidth)),
+                  solver->makeIntVar(0, 0, static_cast<Int>(vesselLength + vesselWidth))),
               std::vector<propagation::VarId>{isRightOf, isLeftOf, isAbove,
                                               isBelow});
         }
@@ -218,10 +215,10 @@ class VesselLoading : public ::benchmark::Fixture {
     // and there are (containerCount*(containerCount-1)/2) pairs.
     totalViolation =
         solver->makeIntVar(0, 0,
-                           (containerCount * (containerCount - 1) / 2) *
+                           (static_cast<Int>(containerCount) * (static_cast<Int>(containerCount) - 1) / 2) *
                                (vesselLength + vesselWidth));
     solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
-                                               violations);
+                                               std::move(violations));
     solver->close();
 
     indexDistr = std::uniform_int_distribution<size_t>{0u, containerCount - 1};
@@ -231,18 +228,18 @@ class VesselLoading : public ::benchmark::Fixture {
     for (size_t i = 0; i < containerCount; ++i) {
       leftDistr.at(i) = std::array<std::uniform_int_distribution<Int>, 2>{
           std::uniform_int_distribution<Int>{
-              0, std::max<Int>(0, vesselWidth - conWidth.at(i))},
+              0, std::max<Int>(0, static_cast<Int>(vesselWidth) - static_cast<Int>(conWidth.at(i)))},
           std::uniform_int_distribution<Int>{
-              0, std::max<Int>(0, vesselWidth - conLength.at(i))}};
+              0, std::max<Int>(0, static_cast<Int>(vesselWidth) - conLength.at(i))}};
       bottomDistr.at(i) = std::array<std::uniform_int_distribution<Int>, 2>{
           std::uniform_int_distribution<Int>{
-              0, std::max<Int>(0, vesselLength - conLength.at(i))},
+              0, std::max<Int>(0, static_cast<Int>(vesselLength) - static_cast<Int>(conLength.at(i)))},
           std::uniform_int_distribution<Int>{
-              0, std::max<Int>(0, vesselLength - conWidth.at(i))}};
+              0, std::max<Int>(0, static_cast<Int>(vesselLength) - static_cast<Int>(conWidth.at(i)))}};
     }
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     conLength.clear();
     conWidth.clear();
     orientation.clear();
@@ -254,7 +251,7 @@ class VesselLoading : public ::benchmark::Fixture {
 BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     const size_t i = indexDistr(gen);
     assert(i < containerCount);
     const Int newOrientation = orientationDistr(gen);
@@ -272,7 +269,7 @@ BENCHMARK_DEFINE_F(VesselLoading, probe_single_relocate)
     ++probes;
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(VesselLoading, solve)(::benchmark::State& st) {
@@ -282,9 +279,9 @@ BENCHMARK_DEFINE_F(VesselLoading, solve)(::benchmark::State& st) {
   Int tenure = 10;
   bool done = false;
 
-  for (auto _ : st) {
-    Int bestViol = (containerCount * (containerCount - 1) / 2) *
-                   (vesselLength + vesselWidth);
+  for (const auto& _ : st) {
+    Int bestViol = static_cast<Int>((containerCount * (containerCount - 1) / 2) *
+                   (vesselLength + vesselWidth));
 
     size_t bestContainer = 0;
     Int bestWest = 0;
@@ -298,10 +295,10 @@ BENCHMARK_DEFINE_F(VesselLoading, solve)(::benchmark::State& st) {
       }
 
       for (Int o = 0; o <= 1; ++o) {
-        for (Int newWest = vesselWidth - (o == 0 ? conWidth[c] : conLength[c]);
+        for (Int newWest = static_cast<Int>(vesselWidth) - static_cast<Int>(o == 0 ? conWidth[c] : conLength[c]);
              newWest >= 0; --newWest) {
           for (Int newSouth =
-                   vesselLength - (o == 0 ? conLength[c] : conWidth[c]);
+                   static_cast<Int>(vesselLength) - static_cast<Int>(o == 0 ? conLength[c] : conWidth[c]);
                newSouth >= 0; --newSouth) {
             // Perform move
             solver->beginMove();
@@ -353,7 +350,7 @@ BENCHMARK_DEFINE_F(VesselLoading, solve)(::benchmark::State& st) {
   // st.counters["it_per_s"]     = ::benchmark::Counter(it,
   // ::benchmark::Counter::kIsRate);
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
   st.counters["solved"] = ::benchmark::Counter(done);
 }
 

@@ -9,8 +9,6 @@ Solver::Solver()
       _isEnqueued(ESTIMATED_NUM_OBJECTS),
       _modifiedSearchVars() {}
 
-PropagationGraph& Solver::propGraph() { return _propGraph; }
-
 void Solver::open() {
   if (_isOpen) {
     throw SolverOpenException("SolverBase already open.");
@@ -85,42 +83,42 @@ void Solver::close() {
 
 //---------------------Registration---------------------
 void Solver::enqueueComputedVar(VarId id) {
-  if (_isEnqueued.get(id)) {
+  if (_isEnqueued.get(id.id)) {
     return;
   }
-  _propGraph.enqueuePropagationQueue(id);
-  _isEnqueued.set(id, true);
+  _propGraph.enqueuePropagationQueue(id.id);
+  _isEnqueued.set(id.id, true);
 }
 
 void Solver::enqueueComputedVar(VarId id, size_t curLayer) {
-  if (_isEnqueued.get(id)) {
+  if (_isEnqueued.get(id.id)) {
     return;
   }
   const size_t varLayer = _propGraph.layer(id);
   if (varLayer == curLayer) {
-    _propGraph.enqueuePropagationQueue(id);
+    _propGraph.enqueuePropagationQueue(id.id);
   } else {
-    _layerQueue[varLayer][_layerQueueIndex[varLayer]] = id;
+    _layerQueue[varLayer][_layerQueueIndex[varLayer]] = id.id;
     ++_layerQueueIndex[varLayer];
   }
-  _isEnqueued.set(id, true);
+  _isEnqueued.set(id.id, true);
 }
 
 void Solver::registerInvariantInput(InvariantId invariantId, VarId inputId,
                                     LocalId localId, bool isDynamicInput) {
-  _propGraph.registerInvariantInput(invariantId, sourceId(inputId), localId,
+  _propGraph.registerInvariantInput(invariantId, sourceId(inputId).id, localId,
                                     isDynamicInput);
 }
 
 void Solver::registerDefinedVar(VarId varId, InvariantId invariantId) {
-  _propGraph.registerDefinedVar(sourceId(varId), invariantId);
+  _propGraph.registerDefinedVar(sourceId(varId).id, invariantId);
 }
 
 void Solver::registerVar(VarId id) {
   _numVars++;
-  _propGraph.registerVar(id);
+  _propGraph.registerVar(id.id);
   _outputToInputExplorer.registerVar(id);
-  _isEnqueued.register_idx(id, false);
+  _isEnqueued.register_idx(id.id, false);
 }
 
 void Solver::registerInvariant(InvariantId invariantId) {
@@ -134,10 +132,10 @@ VarId Solver::dequeueComputedVar(Timestamp) {
   assert(propagationMode() == PropagationMode::INPUT_TO_OUTPUT ||
          _solverState == SolverState::COMMIT);
   if (_propGraph.propagationQueueEmpty()) {
-    return VarId(NULL_ID);
+    return {NULL_ID};
   }
   VarId nextVar(_propGraph.dequeuePropagationQueue());
-  _isEnqueued.set(nextVar, false);
+  _isEnqueued.set(nextVar.id, false);
   // Due to enqueueComputedVar, all variables in the queue are "active".
   return nextVar;
 }
@@ -152,36 +150,6 @@ void Solver::closeInvariants() {
        ++iter) {
     (*iter)->close(_currentTimestamp);
   }
-}
-
-void Solver::recomputeAndCommit() {
-  // TODO: This is a very inefficient way of initialising!
-  size_t tries = 0;
-  bool done = false;
-  while (!done) {
-    done = true;
-    if (tries++ > _store.numVars()) {
-      throw FailedToInitialise();
-    }
-    for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
-         ++iter) {
-      assert((*iter) != nullptr);
-      (*iter)->recompute(_currentTimestamp);
-    }
-    for (auto iter = _store.intVarBegin(); iter != _store.intVarEnd(); ++iter) {
-      if (iter->hasChanged(_currentTimestamp)) {
-        done = false;
-        iter->commit();
-      }
-    }
-  }
-  // We must commit all invariants once everything is stable.
-  // Commiting an invariant will commit any internal datastructure.
-  for (auto iter = _store.invariantBegin(); iter != _store.invariantEnd();
-       ++iter) {
-    (*iter)->commit(_currentTimestamp);
-  }
-  clearPropagationQueue();
 }
 
 //--------------------- Propagation ---------------------
@@ -307,7 +275,7 @@ void Solver::propagateOnClose() {
               [&](const VarIdBase a, const VarIdBase b) {
                 return _propGraph.position(a) < _propGraph.position(b);
               });
-    for (const VarIdBase varId : vars) {
+    for (const VarIdBase& varId : vars) {
       const InvariantId defInv = _propGraph.definingInvariant(varId);
       if (defInv != NULL_ID && !committedInvariants.get(defInv)) {
         committedInvariants.set(defInv, true);
@@ -338,18 +306,18 @@ void Solver::propagate() {
       const IntVar& var = _store.intVar(queuedVar);
 
       const InvariantId definingInvariant =
-          _propGraph.definingInvariant(queuedVar);
+          _propGraph.definingInvariant(queuedVar.id);
 
       if (definingInvariant != NULL_ID) {
         Invariant& defInv = _store.invariant(definingInvariant);
         if (queuedVar == defInv.primaryDefinedVar()) {
           const Int oldValue = var.value(_currentTimestamp);
           defInv.compute(_currentTimestamp);
-          for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
+          for (const VarId& inputId : defInv.nonPrimaryDefinedVars()) {
             if (hasChanged(_currentTimestamp, inputId)) {
-              assert(!_isEnqueued.get(inputId));
-              _propGraph.enqueuePropagationQueue(inputId);
-              _isEnqueued.set(inputId, true);
+              assert(!_isEnqueued.get(inputId.id));
+              _propGraph.enqueuePropagationQueue(inputId.id);
+              _isEnqueued.set(inputId.id, true);
             }
           }
           if constexpr (Mode == CommitMode::COMMIT) {
@@ -427,7 +395,8 @@ void Solver::computeBounds() {
   IdMap<InvariantId, Int> inputsToCompute(numInvariants());
 
   for (size_t invariantId = 1u; invariantId <= numInvariants(); ++invariantId) {
-    inputsToCompute.register_idx(invariantId, inputVars(invariantId).size());
+    inputsToCompute.register_idx(
+        invariantId, static_cast<Int>(inputVars(invariantId).size()));
   }
 
   // Search variables might now have been computed yet
@@ -475,7 +444,7 @@ void Solver::computeBounds() {
         }));
     _store.invariant(invariantId).updateBounds(true);
 
-    for (const VarIdBase outputVarId : _propGraph.varsDefinedBy(invariantId)) {
+    for (const VarIdBase& outputVarId : _propGraph.varsDefinedBy(invariantId)) {
       for (const PropagationGraph::ListeningInvariantData&
                listeningInvariantData : listeningInvariantData(outputVarId)) {
         // Remove from the data structure must happen before updating

@@ -19,8 +19,8 @@ namespace atlantis::propagation {
 
 class ElementConst : public IntView {
  private:
-  const std::vector<Int> _array;
-  const Int _offset;
+  std::vector<Int> _array;
+  Int _offset;
 
   [[nodiscard]] inline size_t safeIndex(Int index) noexcept {
     return std::max<Int>(Int(0),
@@ -30,7 +30,7 @@ class ElementConst : public IntView {
 
  public:
   explicit ElementConst(SolverBase& solver, VarId parentId,
-                        std::vector<Int> array, Int offset = 1);
+                        std::vector<Int>&& array, Int offset = 1);
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;
   [[nodiscard]] Int lowerBound() const override;

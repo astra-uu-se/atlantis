@@ -4,9 +4,9 @@
 #include <limits>
 #include <vector>
 
-#include "types.hpp"
-#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
+#include "propagation/solver.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
@@ -19,10 +19,10 @@ namespace atlantis::propagation {
 
 class Element2dConst : public Invariant {
  private:
-  const std::vector<std::vector<Int>> _matrix;
-  const std::array<const VarId, 2> _indices;
-  const std::array<const Int, 2> _dimensions;
-  const std::array<const Int, 2> _offsets;
+  std::vector<std::vector<Int>> _matrix;
+  std::array<const VarId, 2> _indices;
+  std::array<const Int, 2> _dimensions;
+  std::array<const Int, 2> _offsets;
   const VarId _output;
 
   [[nodiscard]] inline size_t safeIndex(Int index, size_t pos) const noexcept {
@@ -40,10 +40,10 @@ class Element2dConst : public Invariant {
 
  public:
   explicit Element2dConst(SolverBase&, VarId output, VarId index1, VarId index2,
-                          std::vector<std::vector<Int>> matrix, Int offset1 = 1,
-                          Int offset2 = 1);
+                          std::vector<std::vector<Int>>&& matrix,
+                          Int offset1 = 1, Int offset2 = 1);
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
+  void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   VarId nextInput(Timestamp) override;

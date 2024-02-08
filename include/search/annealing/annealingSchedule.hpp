@@ -69,4 +69,4 @@ class AnnealingSchedule {
   virtual bool frozen() = 0;
 };
 
-}  // namespace search
+}  // namespace atlantis::search

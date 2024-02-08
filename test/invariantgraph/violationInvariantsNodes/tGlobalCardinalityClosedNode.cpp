@@ -39,12 +39,12 @@ template <ViolationInvariantType Type>
 class DISABLED_AbstractGlobalCardinalityClosedNodeTest
     : public NodeTestBase<GlobalCardinalityClosedNode> {
  public:
-  VarNodeId x1 = NULL_NODE_ID;
-  VarNodeId x2 = NULL_NODE_ID;
+  VarNodeId x1{NULL_NODE_ID};
+  VarNodeId x2{NULL_NODE_ID};
   const std::vector<Int> cover{2, 6};
-  VarNodeId o1 = NULL_NODE_ID;
-  VarNodeId o2 = NULL_NODE_ID;
-  VarNodeId reified = NULL_NODE_ID;
+  VarNodeId o1{NULL_NODE_ID};
+  VarNodeId o2{NULL_NODE_ID};
+  VarNodeId reified{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -123,8 +123,7 @@ class DISABLED_AbstractGlobalCardinalityClosedNodeTest
     invNode().registerNode(*_invariantGraph, solver);
     solver.close();
 
-    if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE ||
-                  Type == ViolationInvariantType::CONSTANT_TRUE) {
+    if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
       // x1, x2
       EXPECT_EQ(solver.searchVars().size(), 2);
       // x1, x2, o1, o2

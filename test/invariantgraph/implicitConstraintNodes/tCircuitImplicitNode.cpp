@@ -10,10 +10,10 @@ using namespace atlantis::invariantgraph;
 
 class CircuitImplicitNodeTest : public NodeTestBase<CircuitImplicitNode> {
  public:
-  VarNodeId a = NULL_NODE_ID;
-  VarNodeId b = NULL_NODE_ID;
-  VarNodeId c = NULL_NODE_ID;
-  VarNodeId d = NULL_NODE_ID;
+  VarNodeId a{NULL_NODE_ID};
+  VarNodeId b{NULL_NODE_ID};
+  VarNodeId c{NULL_NODE_ID};
+  VarNodeId d{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();

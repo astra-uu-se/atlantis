@@ -14,7 +14,7 @@ class IntLinearNodeTest : public NodeTestBase<IntLinearNode> {
   Int numInputs = 3;
   std::vector<VarNodeId> inputs{};
   std::vector<Int> coeffs{};
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId output{NULL_NODE_ID};
 
   Int computeOutput(const std::vector<Int>& inputVals) {
     Int sum = 0;
@@ -28,8 +28,8 @@ class IntLinearNodeTest : public NodeTestBase<IntLinearNode> {
     NodeTestBase::SetUp();
     inputs.reserve(numInputs);
     coeffs.reserve(numInputs);
-    Int minSum = std::numeric_limits<Int>::max();
-    Int maxSum = std::numeric_limits<Int>::min();
+    Int minSum = 0;
+    Int maxSum = 0;
     const Int lb = -2;
     const Int ub = 2;
     for (Int i = 0; i < numInputs; ++i) {

@@ -3,12 +3,13 @@
 namespace atlantis::propagation {
 
 BoolLinear::BoolLinear(SolverBase& solver, VarId output,
-                       const std::vector<VarId>& violArray)
+                       std::vector<VarId>&& violArray)
     : BoolLinear(solver, output, std::vector<Int>(violArray.size(), 1),
-                 violArray) {}
+                 std::move(violArray)) {}
 
-BoolLinear::BoolLinear(SolverBase& solver, VarId output, std::vector<Int> coeffs,
-                       std::vector<VarId> violArray)
+BoolLinear::BoolLinear(SolverBase& solver, VarId output,
+                       std::vector<Int>&& coeffs,
+                       std::vector<VarId>&& violArray)
     : Invariant(solver),
       _output(output),
       _coeffs(std::move(coeffs)),
@@ -23,7 +24,7 @@ void BoolLinear::registerVars() {
   assert(_id != NULL_ID);
 
   for (size_t i = 0; i < _violArray.size(); ++i) {
-    _solver.registerInvariantInput(_id, _violArray[i], i);
+    _solver.registerInvariantInput(_id, _violArray[i], i, false);
   }
   registerDefinedVar(_output);
 }

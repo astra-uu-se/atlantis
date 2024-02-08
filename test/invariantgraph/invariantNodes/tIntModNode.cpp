@@ -8,9 +8,9 @@ using namespace atlantis::invariantgraph;
 
 class IntModNodeTest : public NodeTestBase<IntModNode> {
  public:
-  VarNodeId numerator = NULL_NODE_ID;
-  VarNodeId denominator = NULL_NODE_ID;
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId numerator{NULL_NODE_ID};
+  VarNodeId denominator{NULL_NODE_ID};
+  VarNodeId output{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();

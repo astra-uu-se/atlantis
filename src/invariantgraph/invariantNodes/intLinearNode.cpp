@@ -25,8 +25,8 @@ void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
                    return invariantGraph.varId(varNodeId);
                  });
   solver.makeInvariant<propagation::Linear>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()), _coeffs,
-      solverVars);
+      solver, invariantGraph.varId(outputVarNodeIds().front()),
+      std::vector<Int>(_coeffs), std::move(solverVars));
 }
 
 const std::vector<Int>& IntLinearNode::coeffs() const { return _coeffs; }

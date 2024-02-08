@@ -4,9 +4,9 @@
 #include <limits>
 #include <vector>
 
-#include "types.hpp"
-#include "propagation/solver.hpp"
 #include "propagation/invariants/invariant.hpp"
+#include "propagation/solver.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
@@ -19,9 +19,9 @@ namespace atlantis::propagation {
 
 class ElementVar : public Invariant {
  private:
-  const VarId _output, _index;
-  const std::vector<VarId> _varArray;
-  const Int _offset;
+  VarId _output, _index;
+  std::vector<VarId> _varArray;
+  Int _offset;
 
   [[nodiscard]] inline size_t safeIndex(Int index) const noexcept {
     return std::max<Int>(
@@ -30,10 +30,10 @@ class ElementVar : public Invariant {
 
  public:
   explicit ElementVar(SolverBase&, VarId output, VarId index,
-                      std::vector<VarId> varArray, Int offset = 1);
+                      std::vector<VarId>&& varArray, Int offset = 1);
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
-  VarId dynamicInputVar(Timestamp) const noexcept override;
+  void updateBounds(bool widenOnly) override;
+  [[nodiscard]] VarId dynamicInputVar(Timestamp) const noexcept override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   VarId nextInput(Timestamp) override;

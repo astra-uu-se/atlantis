@@ -100,12 +100,12 @@ bool CircuitNeighbourhood::randomMove(RandomProvider& random,
   return annealer.acceptMove(move);
 }
 
-Int CircuitNeighbourhood::getNode(size_t nodeIdx) const noexcept {
+Int CircuitNeighbourhood::getNode(size_t nodeIdx) noexcept {
   // Account for index sets starting at 1 instead of 0.
   return static_cast<Int>(nodeIdx) + 1;
 }
 
-size_t CircuitNeighbourhood::getNodeIdx(Int node) const noexcept {
+size_t CircuitNeighbourhood::getNodeIdx(Int node) noexcept {
   // Account for index sets starting at 1 instead of 0.
   return static_cast<size_t>(node) - 1;
 }

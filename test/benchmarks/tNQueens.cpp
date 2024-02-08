@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
-#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/views/intOffsetView.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::testing {
 
@@ -30,11 +30,12 @@ TEST(NQueens, CommitsInvariant) {
   auto violation2 = solver.makeIntVar(0, 0, n);
   auto violation3 = solver.makeIntVar(0, 0, n);
 
-  solver.makeViolationInvariant<propagation::AllDifferent>(solver, violation1, queens);
-  solver.makeViolationInvariant<propagation::AllDifferent>(solver, violation2,
-                                                   q_offset_minus);
-  solver.makeViolationInvariant<propagation::AllDifferent>(solver, violation3,
-                                                   q_offset_plus);
+  solver.makeViolationInvariant<propagation::AllDifferent>(
+      solver, violation1, std::vector<propagation::VarId>(queens));
+  solver.makeViolationInvariant<propagation::AllDifferent>(
+      solver, violation2, std::vector<propagation::VarId>(q_offset_minus));
+  solver.makeViolationInvariant<propagation::AllDifferent>(
+      solver, violation3, std::vector<propagation::VarId>(q_offset_plus));
 
   auto total_violation = solver.makeIntVar(0, 0, 3 * n);
 

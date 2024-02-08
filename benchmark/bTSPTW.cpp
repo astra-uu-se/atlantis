@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "benchmark.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/invariants/plus.hpp"
@@ -14,6 +13,7 @@
 #include "propagation/views/elementConst.hpp"
 #include "propagation/views/intOffsetView.hpp"
 #include "propagation/views/lessEqualConst.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 
 namespace atlantis::benchmark {
 
@@ -31,10 +31,10 @@ class TSPTW : public ::benchmark::Fixture {
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
-  Int n;
+  Int n{0};
   const int MAX_TIME = 100000;
 
-  std::vector<propagation::VarId> violation;
+  std::vector<propagation::VarId> violations;
   propagation::VarId totalViolation;
 
   void SetUp(const ::benchmark::State& state) override {
@@ -48,7 +48,7 @@ class TSPTW : public ::benchmark::Fixture {
 
     solver->open();
 
-    setSolverMode(*solver, state.range(1));
+    setSolverMode(*solver, static_cast<int>(state.range(1)));
 
     // The first row and column hold dummy values:
     for (int i = 0; i < n; ++i) {
@@ -78,7 +78,7 @@ class TSPTW : public ::benchmark::Fixture {
     for (int i = 1; i < n; ++i) {
       // timeToPred[i] = durations[i][pred[i]]
       timeToPred[i] = solver->makeIntView<propagation::ElementConst>(
-          *solver, pred[i], durations[i], 0);
+          *solver, pred[i], std::vector<Int>(durations[i]), 0);
       arrivalTimePred.at(i) = solver->makeIntVar(0, 0, MAX_TIME);
       arrivalTime.at(i) = solver->makeIntVar(0, 0, MAX_TIME);
     }
@@ -92,7 +92,8 @@ class TSPTW : public ::benchmark::Fixture {
     for (int i = 1; i < n; ++i) {
       // arrivalTimePred[i] = arrivalTime[pred[i]]
       solver->makeInvariant<propagation::ElementVar>(
-          *solver, arrivalTimePred[i], pred[i], arrivalTime, 0);
+          *solver, arrivalTimePred[i], pred[i],
+          std::vector<propagation::VarId>(arrivalTime), 0);
       // arrivalTime[i] = arrivalTimePred[i] + timeToPred[i]
       solver->makeInvariant<propagation::Plus>(
           *solver, arrivalTime[i], arrivalTimePred[i], timeToPred[i]);
@@ -104,17 +105,18 @@ class TSPTW : public ::benchmark::Fixture {
     assert(timeToPred.front() == propagation::NULL_ID);
     timeToPred.erase(timeToPred.begin());
     assert(timeToPred.front() != propagation::NULL_ID);
-    solver->makeInvariant<propagation::Linear>(*solver, totalDist, timeToPred);
+    solver->makeInvariant<propagation::Linear>(
+        *solver, totalDist, std::vector<propagation::VarId>(timeToPred));
 
-    violation = std::vector<propagation::VarId>{};
+    violations = std::vector<propagation::VarId>{};
     for (int i = 1; i < n; ++i) {
-      violation.emplace_back(solver->makeIntView<propagation::LessEqualConst>(
+      violations.emplace_back(solver->makeIntView<propagation::LessEqualConst>(
           *solver, arrivalTime[i], 100));
     }
 
     totalViolation = solver->makeIntVar(0, 0, MAX_TIME * n);
-    solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
-                                               violation);
+    solver->makeInvariant<propagation::Linear>(
+        *solver, totalViolation, std::vector<propagation::VarId>(violations));
 
     solver->close();
     assert(solver->lowerBound(pred.front()) == 1);
@@ -144,10 +146,10 @@ class TSPTW : public ::benchmark::Fixture {
     arrivalTimePred.clear();
     arrivalTime.clear();
     durations.clear();
-    violation.clear();
+    violations.clear();
   }
 
-  bool isTourValid(bool committedValue) const {
+  [[nodiscard]] bool isTourValid(bool committedValue) const {
     std::vector<bool> visited(n, false);
     Int cur = 0;
     Int numVisited = 0;
@@ -183,7 +185,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_three_opt)(::benchmark::State& st) {
   std::iota(indexVec2.begin(), indexVec2.end(), 0);
 
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     Int i = static_cast<Int>(n);
     Int j = static_cast<Int>(n);
     for (size_t index1 = 0; i == n && index1 < static_cast<size_t>(n);
@@ -220,12 +222,12 @@ BENCHMARK_DEFINE_F(TSPTW, probe_three_opt)(::benchmark::State& st) {
     assert(isTourValid(false));
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(::benchmark::State& st) {
   Int probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (int i = 0; i < n; ++i) {
       for (int j = 0; j < n; ++j) {
         if (i == j || solver->committedValue(pred[i]) == j + 1) {
@@ -252,7 +254,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(::benchmark::State& st) {
     }
   }
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

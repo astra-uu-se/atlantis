@@ -6,7 +6,7 @@ namespace atlantis::propagation {
  * @param violationId id for the violationCount
  */
 AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
-                           std::vector<VarId> vars)
+                           std::vector<VarId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
       _committedValues(_vars.size(), 0),
@@ -16,24 +16,25 @@ AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
 }
 
 void AllDifferent::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   for (size_t i = 0; i < _vars.size(); ++i) {
-    _solver.registerInvariantInput(_id, _vars[i], i);
+    _solver.registerInvariantInput(_id, _vars[i], i, false);
   }
   registerDefinedVar(_violationId);
 }
 
 void AllDifferent::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_violationId, 0, _vars.size() - 1, widenOnly);
+  _solver.updateBounds(_violationId, 0, static_cast<Int>(_vars.size() - 1),
+                       widenOnly);
 }
 
 void AllDifferent::close(Timestamp ts) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    lb = std::min(lb, _solver.lowerBound(_vars[i]));
-    ub = std::max(ub, _solver.upperBound(_vars[i]));
+  for (const auto& var : _vars) {
+    lb = std::min(lb, _solver.lowerBound(var));
+    ub = std::max(ub, _solver.upperBound(var));
   }
   assert(ub >= lb);
   _counts.resize(static_cast<unsigned long>(ub - lb + 1),
@@ -47,8 +48,8 @@ void AllDifferent::recompute(Timestamp ts) {
   }
 
   Int violInc = 0;
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    violInc += increaseCount(ts, _solver.value(ts, _vars[i]));
+  for (const auto& var : _vars) {
+    violInc += increaseCount(ts, _solver.value(ts, var));
   }
   updateValue(ts, _violationId, violInc);
 }

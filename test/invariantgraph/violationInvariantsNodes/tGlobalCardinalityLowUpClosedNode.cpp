@@ -37,12 +37,12 @@ template <ViolationInvariantType Type>
 class DISABLED_AbstractGlobalCardinalityLowUpClosedNodeTest
     : public NodeTestBase<GlobalCardinalityLowUpClosedNode> {
  public:
-  VarNodeId x1 = NULL_NODE_ID;
-  VarNodeId x2 = NULL_NODE_ID;
+  VarNodeId x1{NULL_NODE_ID};
+  VarNodeId x2{NULL_NODE_ID};
   const std::vector<Int> cover{2, 6};
   const std::vector<Int> low{0, 1};
   const std::vector<Int> up{1, 2};
-  VarNodeId reified = NULL_NODE_ID;
+  VarNodeId reified{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();

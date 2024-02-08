@@ -2,7 +2,7 @@
 
 namespace atlantis::propagation {
 
-ForAll::ForAll(SolverBase& solver, VarId output, std::vector<VarId> varArray)
+ForAll::ForAll(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
     : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
@@ -11,9 +11,9 @@ ForAll::ForAll(SolverBase& solver, VarId output, std::vector<VarId> varArray)
 }
 
 void ForAll::registerVars() {
-  assert(!_id.equals(NULL_ID));
+  assert(_id != NULL_ID);
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    _solver.registerInvariantInput(_id, _varArray[i], i);
+    _solver.registerInvariantInput(_id, _varArray[i], i, false);
   }
   registerDefinedVar(_output);
 }
@@ -21,7 +21,7 @@ void ForAll::registerVars() {
 void ForAll::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::min();
   Int ub = std::numeric_limits<Int>::min();
-  for (const VarId input : _varArray) {
+  for (const VarId& input : _varArray) {
     lb = std::max(lb, _solver.lowerBound(input));
     ub = std::max(ub, _solver.upperBound(input));
   }

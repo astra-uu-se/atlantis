@@ -7,7 +7,7 @@ namespace atlantis::propagation {
 
 class ScalarView : public IntView {
  private:
-  const Int _scalar;
+  Int _scalar;
 
  public:
   explicit ScalarView(SolverBase& solver, VarId parentId, Int scalar)

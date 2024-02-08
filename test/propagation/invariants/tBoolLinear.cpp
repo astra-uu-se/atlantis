@@ -3,13 +3,11 @@
 #include <rapidcheck/gtest.h>
 
 #include <limits>
-#include <random>
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/boolLinear.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -57,8 +55,8 @@ class BoolLinearTest : public InvariantTest {
     return computeOutput(values, coefficients);
   }
 
-  Int computeOutput(const std::vector<Int>& violations,
-                    const std::vector<Int>& coefficients) {
+  static Int computeOutput(const std::vector<Int>& violations,
+                           const std::vector<Int>& coefficients) {
     Int sum = 0;
     for (size_t i = 0; i < violations.size(); ++i) {
       sum += static_cast<Int>(violations.at(i) == 0) * coefficients.at(i);
@@ -92,7 +90,7 @@ TEST_F(BoolLinearTest, UpdateBounds) {
             for (const auto& [cLb, cUb] : boundVec) {
               EXPECT_TRUE(cLb <= cUb);
               solver->updateBounds(vars.at(2), cLb, cUb, false);
-              invariant.updateBounds();
+              invariant.updateBounds(false);
 
               const Int aMin = std::min(static_cast<Int>(aLb == 0) * aCoef,
                                         static_cast<Int>(aUb == 0) * aCoef);
@@ -237,7 +235,7 @@ TEST_F(BoolLinearTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {
@@ -360,8 +358,8 @@ class MockBoolLinear : public BoolLinear {
     BoolLinear::registerVars();
   }
   explicit MockBoolLinear(SolverBase& solver, VarId output,
-                          std::vector<VarId> varArray)
-      : BoolLinear(solver, output, varArray) {
+                          std::vector<VarId>&& varArray)
+      : BoolLinear(solver, output, std::move(varArray)) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BoolLinear::recompute(timestamp);
     });
@@ -401,7 +399,8 @@ TEST_F(BoolLinearTest, SolverIntegration) {
     const VarId output =
         solver->makeIntVar(-10, -100, static_cast<Int>(numArgs * numArgs));
     testNotifications<MockBoolLinear>(
-        &solver->makeInvariant<MockBoolLinear>(*solver, output, args),
+        &solver->makeInvariant<MockBoolLinear>(*solver, output,
+                                               std::move(args)),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }

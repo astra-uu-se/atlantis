@@ -1,21 +1,21 @@
 #pragma once
 
-#include "propagation/violationInvariants/violationInvariant.hpp"
-#include "types.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/variables/intVar.hpp"
+#include "propagation/violationInvariants/violationInvariant.hpp"
+#include "types.hpp"
 
 namespace atlantis::propagation {
 
 class BoolLessThan : public ViolationInvariant {
  private:
-  const VarId _x, _y;
+  VarId _x, _y;
 
  public:
   explicit BoolLessThan(SolverBase&, VarId violationId, VarId x, VarId y);
 
   void registerVars() override;
-  void updateBounds(bool widenOnly = false) override;
+  void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   VarId nextInput(Timestamp) override;

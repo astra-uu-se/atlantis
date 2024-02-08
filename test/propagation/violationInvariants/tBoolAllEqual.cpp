@@ -2,13 +2,11 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <random>
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/boolAllEqual.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
+#include "propagation/violationInvariants/boolAllEqual.hpp"
 
 namespace atlantis::testing {
 
@@ -16,8 +14,6 @@ using namespace atlantis::propagation;
 
 class BoolAllEqualTest : public InvariantTest {
  public:
-  bool isRegistered = false;
-
   Int computeViolation(Timestamp ts, const std::vector<VarId>& vars) {
     std::vector<Int> values(vars.size(), 0);
     for (size_t i = 0; i < vars.size(); ++i) {
@@ -26,7 +22,7 @@ class BoolAllEqualTest : public InvariantTest {
     return computeViolation(values);
   }
 
-  Int computeViolation(const std::vector<Int>& values) {
+  static Int computeViolation(const std::vector<Int>& values) {
     size_t numFalse = 0;
     size_t numTrue = 0;
     for (const Int val : values) {
@@ -36,7 +32,8 @@ class BoolAllEqualTest : public InvariantTest {
         ++numFalse;
       }
     }
-    return std::min(values.size() - numTrue, values.size() - numFalse);
+    return static_cast<Int>(
+        std::min(values.size() - numTrue, values.size() - numFalse));
   }
 };
 
@@ -104,7 +101,7 @@ TEST_F(BoolAllEqualTest, NotifyInputChanged) {
 }
 
 TEST_F(BoolAllEqualTest, NextInput) {
-  const size_t numInputs = 1000;
+  const Int numInputs = 1000;
   const Int lb = 0;
   const Int ub = numInputs - 1;
   EXPECT_TRUE(lb <= ub);
@@ -113,7 +110,7 @@ TEST_F(BoolAllEqualTest, NextInput) {
   std::vector<size_t> indices;
   std::vector<Int> committedValues;
   std::vector<VarId> inputs;
-  for (size_t i = 0; i < numInputs; ++i) {
+  for (Int i = 0; i < numInputs; ++i) {
     inputs.emplace_back(solver->makeIntVar(i, lb, ub));
   }
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
@@ -163,7 +160,7 @@ TEST_F(BoolAllEqualTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {
@@ -241,8 +238,8 @@ class MockAllDifferent : public BoolAllEqual {
     BoolAllEqual::registerVars();
   }
   explicit MockAllDifferent(SolverBase& solver, VarId violationId,
-                            std::vector<VarId> t_vars)
-      : BoolAllEqual(solver, violationId, t_vars) {
+                            std::vector<VarId>&& t_vars)
+      : BoolAllEqual(solver, violationId, std::move(t_vars)) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BoolAllEqual::recompute(timestamp);
     });
@@ -279,9 +276,11 @@ TEST_F(BoolAllEqualTest, SolverIntegration) {
       args.emplace_back(solver->makeIntVar(0, -100, 100));
     }
     const VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    const VarId modifiedVarId = args.front();
     testNotifications<MockAllDifferent>(
-        &solver->makeViolationInvariant<MockAllDifferent>(*solver, viol, args),
-        {propMode, markingMode, numArgs + 1, args.front(), 1, viol});
+        &solver->makeViolationInvariant<MockAllDifferent>(*solver, viol,
+                                                          std::move(args)),
+        {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});
   }
 }
 

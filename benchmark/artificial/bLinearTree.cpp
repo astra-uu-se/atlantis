@@ -9,10 +9,10 @@
 
 #include "../benchmark.hpp"
 #include "misc/logging.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/invariants/absDiff.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::benchmark {
 
@@ -54,8 +54,8 @@ class LinearTree : public ::benchmark::Fixture {
           decisionVars.push_back(var);
         }
       }
-      solver->makeInvariant<propagation::Linear>(*solver, cur.id, linearInputs);
-      linearInputs.clear();
+      solver->makeInvariant<propagation::Linear>(*solver, cur.id,
+                                                 std::move(linearInputs));
     }
 #ifndef NDEBUG
     if (linearArgumentCount == 2) {
@@ -79,17 +79,17 @@ class LinearTree : public ::benchmark::Fixture {
   std::uniform_int_distribution<size_t> varIndexDist;
   std::uniform_int_distribution<Int> decisionVarValueDist;
 
-  size_t linearArgumentCount;
-  size_t treeHeight;
-  Int lb;
-  Int ub;
+  size_t linearArgumentCount{0};
+  size_t treeHeight{0};
+  Int lb{0};
+  Int ub{0};
 
   void probe(::benchmark::State& st, size_t numMoves);
   void probeRnd(::benchmark::State& st, size_t numMoves);
   void commit(::benchmark::State& st, size_t numMoves);
   void commitRnd(::benchmark::State& st, size_t numMoves);
 
-  void SetUp(const ::benchmark::State& state) {
+  void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
 
     linearArgumentCount = state.range(0);
@@ -98,7 +98,7 @@ class LinearTree : public ::benchmark::Fixture {
     ub = 1000;
 
     solver->open();
-    setSolverMode(*solver, state.range(2));
+    setSolverMode(*solver, static_cast<int>(state.range(2)));
 
     createTree();
 
@@ -114,7 +114,7 @@ class LinearTree : public ::benchmark::Fixture {
     decisionVarValueDist = std::uniform_int_distribution<Int>(lb, ub);
   }
 
-  void TearDown(const ::benchmark::State&) {
+  void TearDown(const ::benchmark::State&) override {
     vars.clear();
     decisionVars.clear();
   }
@@ -122,7 +122,7 @@ class LinearTree : public ::benchmark::Fixture {
 
 void LinearTree::probe(::benchmark::State& st, size_t numMoves) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       solver->beginMove();
       solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
@@ -137,12 +137,12 @@ void LinearTree::probe(::benchmark::State& st, size_t numMoves) {
   }
 
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 void LinearTree::probeRnd(::benchmark::State& st, size_t numMoves) {
   size_t probes = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       solver->beginMove();
       solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
@@ -158,12 +158,12 @@ void LinearTree::probeRnd(::benchmark::State& st, size_t numMoves) {
   }
 
   st.counters["probes_per_second"] =
-      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 void LinearTree::commit(::benchmark::State& st, size_t numMoves) {
   Int commits = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       solver->beginMove();
       solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
@@ -179,12 +179,12 @@ void LinearTree::commit(::benchmark::State& st, size_t numMoves) {
   }
 
   st.counters["commits_per_second"] =
-      ::benchmark::Counter(commits, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(commits), ::benchmark::Counter::kIsRate);
 }
 
 void LinearTree::commitRnd(::benchmark::State& st, size_t numMoves) {
   Int commits = 0;
-  for (auto _ : st) {
+  for (const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       solver->beginMove();
       solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
@@ -199,7 +199,7 @@ void LinearTree::commitRnd(::benchmark::State& st, size_t numMoves) {
   }
 
   st.counters["commits_per_second"] =
-      ::benchmark::Counter(commits, ::benchmark::Counter::kIsRate);
+      ::benchmark::Counter(static_cast<double>(commits), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(LinearTree, probe_single)

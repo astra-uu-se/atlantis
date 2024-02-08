@@ -25,7 +25,8 @@ void GlobalCardinalityLowUpClosedNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {
     if (!shouldHold()) {
-      _intermediate = solver.makeIntVar(0, 0, staticInputVarNodeIds().size());
+      _intermediate = solver.makeIntVar(
+          0, 0, static_cast<Int>(staticInputVarNodeIds().size()));
       setViolationVarId(invariantGraph,
                         solver.makeIntView<propagation::NotEqualConst>(
                             solver, _intermediate, 0));
@@ -37,17 +38,20 @@ void GlobalCardinalityLowUpClosedNode::registerOutputVars(
 
 void GlobalCardinalityLowUpClosedNode::registerNode(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
-  std::vector<propagation::VarId> inputs;
+  std::vector<propagation::VarId> inputVarIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(inputs),
+                 std::back_inserter(inputVarIds),
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
   if (shouldHold()) {
     solver.makeInvariant<propagation::GlobalCardinalityConst<true>>(
-        solver, violationVarId(invariantGraph), inputs, _cover, _low, _up);
+        solver, violationVarId(invariantGraph), std::move(inputVarIds),
+        std::vector<Int>(_cover), std::vector<Int>(_low),
+        std::vector<Int>(_up));
   } else {
     solver.makeInvariant<propagation::GlobalCardinalityConst<true>>(
-        solver, _intermediate, inputs, _cover, _low, _up);
+        solver, _intermediate, std::move(inputVarIds), std::vector<Int>(_cover),
+        std::vector<Int>(_low), std::vector<Int>(_up));
   }
 }
 

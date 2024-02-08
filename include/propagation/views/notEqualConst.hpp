@@ -10,7 +10,7 @@ namespace atlantis::propagation {
 
 class NotEqualConst : public IntView {
  private:
-  const Int _val;
+  Int _val;
 
  public:
   explicit NotEqualConst(SolverBase& solver, VarId parentId, Int val)

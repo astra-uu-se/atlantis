@@ -10,7 +10,7 @@ namespace atlantis::propagation {
 
 class LessEqualConst : public IntView {
  private:
-  const Int _val;
+  Int _val;
 
  public:
   explicit LessEqualConst(SolverBase& solver, VarId parentId, Int val)

@@ -6,7 +6,6 @@
 #include "../invariantTestHelper.hpp"
 #include "propagation/invariants/binaryMax.hpp"
 #include "propagation/solver.hpp"
-#include "types.hpp"
 
 namespace atlantis::testing {
 
@@ -19,7 +18,7 @@ class BinaryMaxTest : public InvariantTest {
                          solver->value(ts, inputs.at(1)));
   }
 
-  Int computeOutput(std::array<Int, 2> inputs) {
+  static Int computeOutput(std::array<Int, 2> inputs) {
     return computeOutput(inputs.at(0), inputs.at(1));
   }
 
@@ -27,7 +26,7 @@ class BinaryMaxTest : public InvariantTest {
     return computeOutput(solver->value(ts, x), solver->value(ts, y));
   }
 
-  Int computeOutput(const Int xVal, const Int yVal) {
+  static Int computeOutput(const Int xVal, const Int yVal) {
     return std::max(xVal, yVal);
   }
 };
@@ -52,7 +51,7 @@ TEST_F(BinaryMaxTest, UpdateBounds) {
       EXPECT_TRUE(yLb <= yUb);
       solver->updateBounds(y, yLb, yUb, false);
       solver->open();
-      invariant.updateBounds();
+      invariant.updateBounds(false);
       solver->close();
       EXPECT_EQ(solver->lowerBound(outputId), std::max(xLb, yLb));
       EXPECT_EQ(solver->upperBound(outputId), std::max(xUb, yUb));
@@ -167,7 +166,7 @@ TEST_F(BinaryMaxTest, NotifyCurrentInputChanged) {
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId varId : inputs) {
+    for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = solver->value(ts, varId);
       do {

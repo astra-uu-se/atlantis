@@ -8,7 +8,8 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool int_pow(FznInvariantGraph& invariantGraph, const fznparser::IntArg& base,
-             const fznparser::IntArg& exponent, const fznparser::IntArg& power) {
+             const fznparser::IntArg& exponent,
+             const fznparser::IntArg& power) {
   invariantGraph.addInvariantNode(std::make_unique<IntPowNode>(
       invariantGraph.createVarNodeFromFzn(base, false),
       invariantGraph.createVarNodeFromFzn(exponent, false),
@@ -22,9 +23,9 @@ bool int_pow(FznInvariantGraph& invariantGraph,
     return false;
   }
   verifyNumArguments(constraint, 3);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true)
 
   return int_pow(invariantGraph,
                  std::get<fznparser::IntArg>(constraint.arguments().at(0)),

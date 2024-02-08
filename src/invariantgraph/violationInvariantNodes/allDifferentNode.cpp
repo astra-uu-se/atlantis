@@ -58,7 +58,7 @@ void AllDifferentNode::registerNode(InvariantGraph& invariantGraph,
 
   solver.makeViolationInvariant<propagation::AllDifferent>(
       solver, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
-      solverVars);
+      std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

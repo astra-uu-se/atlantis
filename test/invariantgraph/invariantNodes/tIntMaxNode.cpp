@@ -8,9 +8,9 @@ using namespace atlantis::invariantgraph;
 
 class IntMaxNodeTest : public NodeTestBase<IntMaxNode> {
  public:
-  VarNodeId a = NULL_NODE_ID;
-  VarNodeId b = NULL_NODE_ID;
-  VarNodeId output = NULL_NODE_ID;
+  VarNodeId a{NULL_NODE_ID};
+  VarNodeId b{NULL_NODE_ID};
+  VarNodeId output{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();
