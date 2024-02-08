@@ -21,8 +21,8 @@ class ArrayBoolElementNodeTest : public NodeTestBase<ArrayElementNode> {
     idx = createIntVarNode(1, 4, "idx");
     output = createIntVarNode(1, 4, "output", true);
 
-    createInvariantNode(std::vector<bool>(elementValues), idx,
-                        output, offsetIdx);
+    createInvariantNode(std::vector<bool>(elementValues), idx, output,
+                        offsetIdx);
   }
 };
 

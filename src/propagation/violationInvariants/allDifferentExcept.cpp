@@ -26,7 +26,7 @@ void AllDifferentExcept::recompute(Timestamp ts) {
   }
 
   Int violInc = 0;
-  for (const auto & var : _vars) {
+  for (const auto& var : _vars) {
     const Int val = _solver.value(ts, var);
     if (!isIgnored(val)) {
       violInc += increaseCount(ts, val);

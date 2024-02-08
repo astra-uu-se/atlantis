@@ -13,7 +13,6 @@ using namespace atlantis::propagation;
 
 class BoolXorTest : public InvariantTest {
  public:
-
   Int computeViolation(const Timestamp ts,
                        const std::array<const VarId, 2>& inputs) {
     return computeViolation(solver->value(ts, inputs.at(0)),

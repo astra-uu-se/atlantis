@@ -8,8 +8,7 @@ BoolLeNode::BoolLeNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, r) {}
 
 BoolLeNode::BoolLeNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode(std::vector<VarNodeId>{a, b},
-                             shouldHold) {}
+    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
 
 void BoolLeNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {

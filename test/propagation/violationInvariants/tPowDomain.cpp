@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/powDomain.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/powDomain.hpp"
 
 namespace atlantis::testing {
 
@@ -244,7 +244,8 @@ class MockPowDomain : public PowDomain {
     registered = true;
     PowDomain::registerVars();
   }
-  explicit MockPowDomain(SolverBase& solver, VarId violationId, VarId x, VarId y)
+  explicit MockPowDomain(SolverBase& solver, VarId violationId, VarId x,
+                         VarId y)
       : PowDomain(solver, violationId, x, y) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return PowDomain::recompute(timestamp);

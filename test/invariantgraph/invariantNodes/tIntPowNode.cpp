@@ -90,7 +90,8 @@ TEST_F(IntPowNodeTest, propagation) {
 
     if (inputVals.at(0) != 0 || inputVals.at(1) > 0) {
       const Int actual = solver.currentValue(outputId);
-      const Int expected = static_cast<Int>(std::pow(inputVals.at(0), inputVals.at(1)));
+      const Int expected =
+          static_cast<Int>(std::pow(inputVals.at(0), inputVals.at(1)));
       EXPECT_EQ(actual, expected);
     }
   }

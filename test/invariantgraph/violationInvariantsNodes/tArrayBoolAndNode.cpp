@@ -11,9 +11,8 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
 static bool isViolating(const std::vector<Int>& values) {
-  return std::any_of(values.begin(), values.end(), [&](const Int val) {
-    return val > 0;
-  });
+  return std::any_of(values.begin(), values.end(),
+                     [&](const Int val) { return val > 0; });
 }
 
 template <ViolationInvariantType Type>

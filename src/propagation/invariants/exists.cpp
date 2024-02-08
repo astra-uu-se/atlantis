@@ -61,7 +61,7 @@ VarId Exists::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index == 0 || (index < _varArray.size() &&
-             _solver.value(ts, _varArray[index - 1]) > 0)) {
+                     _solver.value(ts, _varArray[index - 1]) > 0)) {
     return _varArray[index];
   } else {
     return NULL_ID;  // Done

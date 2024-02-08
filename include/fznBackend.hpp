@@ -24,9 +24,10 @@ class FznBackend {
   std::uint_fast32_t _seed;
 
  public:
-  explicit FznBackend(std::filesystem::path&& modelFile,
-                      search::AnnealingScheduleFactory&& annealingScheduleFactory,
-                      std::chrono::milliseconds timeout);
+  explicit FznBackend(
+      std::filesystem::path&& modelFile,
+      search::AnnealingScheduleFactory&& annealingScheduleFactory,
+      std::chrono::milliseconds timeout);
   FznBackend(std::filesystem::path&& modelFile,
              search::AnnealingScheduleFactory&& annealingScheduleFactory,
              std::uint_fast32_t seed,

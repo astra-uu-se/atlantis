@@ -32,7 +32,7 @@ void AllDifferent::close(Timestamp ts) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  for (const auto & var : _vars) {
+  for (const auto& var : _vars) {
     lb = std::min(lb, _solver.lowerBound(var));
     ub = std::max(ub, _solver.upperBound(var));
   }
@@ -48,7 +48,7 @@ void AllDifferent::recompute(Timestamp ts) {
   }
 
   Int violInc = 0;
-  for (const auto & var : _vars) {
+  for (const auto& var : _vars) {
     violInc += increaseCount(ts, _solver.value(ts, var));
   }
   updateValue(ts, _violationId, violInc);

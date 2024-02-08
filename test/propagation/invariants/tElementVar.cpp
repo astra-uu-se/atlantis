@@ -34,7 +34,8 @@ class ElementVarTest : public InvariantTest {
     inputs.clear();
   }
 
-  [[nodiscard]] size_t zeroBasedIndex(const Int indexVal, const Int offset) const {
+  [[nodiscard]] size_t zeroBasedIndex(const Int indexVal,
+                                      const Int offset) const {
     EXPECT_LE(offset, indexVal);
     EXPECT_LT(indexVal - offset, static_cast<Int>(numValues));
     return indexVal - offset;
@@ -64,7 +65,7 @@ TEST_F(ElementVarTest, UpdateBounds) {
 
     solver->open();
     const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (auto & input : inputs) {
+    for (auto& input : inputs) {
       input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
@@ -102,7 +103,7 @@ TEST_F(ElementVarTest, Recompute) {
 
     solver->open();
     const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (auto & input : inputs) {
+    for (auto& input : inputs) {
       input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
@@ -136,7 +137,7 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
 
     solver->open();
     const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (auto & input : inputs) {
+    for (auto& input : inputs) {
       input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
@@ -168,7 +169,7 @@ TEST_F(ElementVarTest, NextInput) {
 
     solver->open();
     const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (auto & input : inputs) {
+    for (auto& input : inputs) {
       input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
@@ -202,7 +203,7 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
     solver->open();
     const VarId index =
         solver->makeIntVar(indexValues.back(), indexLb, indexUb);
-    for (auto & input : inputs) {
+    for (auto& input : inputs) {
       input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
@@ -246,7 +247,7 @@ TEST_F(ElementVarTest, Commit) {
     solver->open();
     const VarId index =
         solver->makeIntVar(indexValues.back(), indexLb, indexUb);
-    for (auto & input : inputs) {
+    for (auto& input : inputs) {
       input = solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
     const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
@@ -360,7 +361,8 @@ TEST_F(ElementVarTest, SolverIntegration) {
     VarId idx = solver->makeIntVar(0, 0, static_cast<Int>(numArgs) - 1);
     VarId output = solver->makeIntVar(-10, -100, 100);
     testNotifications<MockElementVar>(
-        &solver->makeInvariant<MockElementVar>(*solver, output, idx, std::move(args), 1),
+        &solver->makeInvariant<MockElementVar>(*solver, output, idx,
+                                               std::move(args), 1),
         {propMode, markingMode, 3, idx, 5, output});
   }
 }

@@ -34,7 +34,7 @@ class ElementConstTest : public ::testing::Test {
     values.resize(numValues, 0);
     valueDist = std::uniform_int_distribution<Int>(valueLb, valueUb);
     indexDist = std::uniform_int_distribution<Int>(indexLb, indexUb);
-    for (long & value : values) {
+    for (long& value : values) {
       value = valueDist(gen);
     }
   }
@@ -58,8 +58,8 @@ TEST_F(ElementConstTest, Bounds) {
 
   solver->open();
   const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarId outputId =
-      solver->makeIntView<ElementConst>(*solver, index, std::vector<Int>(values));
+  const VarId outputId = solver->makeIntView<ElementConst>(
+      *solver, index, std::vector<Int>(values));
   solver->close();
 
   const Int ub = 100;
@@ -85,8 +85,8 @@ TEST_F(ElementConstTest, Value) {
 
   solver->open();
   const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarId outputId =
-      solver->makeIntView<ElementConst>(*solver, index, std::vector<Int>(values));
+  const VarId outputId = solver->makeIntView<ElementConst>(
+      *solver, index, std::vector<Int>(values));
   solver->close();
 
   for (Int val = indexLb; val <= indexUb; ++val) {
@@ -109,8 +109,8 @@ TEST_F(ElementConstTest, CommittedValue) {
 
   solver->open();
   const VarId index = solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarId outputId =
-      solver->makeIntView<ElementConst>(*solver, index, std::vector<Int>(values));
+  const VarId outputId = solver->makeIntView<ElementConst>(
+      *solver, index, std::vector<Int>(values));
   solver->close();
 
   Int committedValue = solver->committedValue(index);

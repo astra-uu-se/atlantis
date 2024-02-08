@@ -56,7 +56,7 @@ class LinearTest : public InvariantTest {
   }
 
   static Int computeOutput(const std::vector<Int>& values,
-                    const std::vector<Int>& coefficients) {
+                           const std::vector<Int>& coefficients) {
     Int sum = 0;
     for (size_t i = 0; i < values.size(); ++i) {
       sum += values.at(i) * coefficients.at(i);
@@ -133,8 +133,8 @@ TEST_F(LinearTest, Recompute) {
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
 
-  Linear& invariant =
-      solver->makeInvariant<Linear>(*solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+  Linear& invariant = solver->makeInvariant<Linear>(
+      *solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
   solver->close();
 
   for (Int aVal = iLb; aVal <= iUb; ++aVal) {
@@ -161,8 +161,8 @@ TEST_F(LinearTest, NotifyInputChanged) {
   }
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Linear& invariant =
-      solver->makeInvariant<Linear>(*solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+  Linear& invariant = solver->makeInvariant<Linear>(
+      *solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
   solver->close();
 
   const Timestamp ts = solver->currentTimestamp() + 1;
@@ -194,8 +194,8 @@ TEST_F(LinearTest, NextInput) {
 
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Linear& invariant =
-      solver->makeInvariant<Linear>(*solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+  Linear& invariant = solver->makeInvariant<Linear>(
+      *solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
@@ -223,8 +223,8 @@ TEST_F(LinearTest, NotifyCurrentInputChanged) {
   }
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Linear& invariant =
-      solver->makeInvariant<Linear>(*solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+  Linear& invariant = solver->makeInvariant<Linear>(
+      *solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
   solver->close();
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
@@ -257,8 +257,8 @@ TEST_F(LinearTest, Commit) {
 
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Linear& invariant =
-      solver->makeInvariant<Linear>(*solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+  Linear& invariant = solver->makeInvariant<Linear>(
+      *solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
   solver->close();
 
   EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
@@ -312,13 +312,11 @@ RC_GTEST_FIXTURE_PROP(LinearTest, ShouldAlwaysBeSum,
       bounds.emplace_back(0, 0);
     } else {
       if (co == -1 || co == 1) {
-        bounds.emplace_back(
-            std::numeric_limits<Int>::min() / 3,
-                                std::numeric_limits<Int>::max() / 3);
+        bounds.emplace_back(std::numeric_limits<Int>::min() / 3,
+                            std::numeric_limits<Int>::max() / 3);
       } else {
-        bounds.emplace_back(
-            (std::numeric_limits<Int>::min() / co) / 3,
-                                (std::numeric_limits<Int>::min() / co) / 3);
+        bounds.emplace_back((std::numeric_limits<Int>::min() / co) / 3,
+                            (std::numeric_limits<Int>::min() / co) / 3);
       }
     }
   }

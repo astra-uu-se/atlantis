@@ -29,8 +29,7 @@ TEST(InvariantGraphTest, apply_result) {
   EXPECT_TRUE(invariantGraph.containsVarNode("b"));
   EXPECT_TRUE(invariantGraph.containsVarNode("output"));
 
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntPlusNode>(a, b, output));
+  invariantGraph.addInvariantNode(std::make_unique<IntPlusNode>(a, b, output));
 
   invariantGraph.addImplicitConstraintNode(
       std::make_unique<InvariantGraphRoot>(std::vector<VarNodeId>{a, b}));
@@ -257,13 +256,11 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   const VarNodeId output2 =
       invariantGraph.createVarNode(SearchDomain(0, 1), true, "output2", true);
 
-  invariantGraph.addInvariantNode(
-      std::make_unique<ArrayVarElementNode>(
-          output2, std::vector<VarNodeId>{x11, x12}, output1, 0));
+  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
+      output2, std::vector<VarNodeId>{x11, x12}, output1, 0));
 
-  invariantGraph.addInvariantNode(
-      std::make_unique<ArrayVarElementNode>(
-          output1, std::vector<VarNodeId>{x21, x22}, output2, 0));
+  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
+      output1, std::vector<VarNodeId>{x21, x22}, output2, 0));
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
@@ -311,13 +308,11 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
   const VarNodeId output2 =
       invariantGraph.createVarNode(SearchDomain(0, 10), true, "output2", true);
 
-  invariantGraph.addInvariantNode(
-      std::make_unique<ArrayVarElementNode>(
-          idx1, std::vector<VarNodeId>{x1, output2}, output1, 1));
+  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
+      idx1, std::vector<VarNodeId>{x1, output2}, output1, 1));
 
-  invariantGraph.addInvariantNode(
-      std::make_unique<ArrayVarElementNode>(
-          idx2, std::vector<VarNodeId>{output1, x2}, output2, 1));
+  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
+      idx2, std::vector<VarNodeId>{output1, x2}, output2, 1));
 
   propagation::Solver solver;
   invariantGraph.apply(solver);

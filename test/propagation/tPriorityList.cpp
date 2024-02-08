@@ -34,7 +34,8 @@ class PriorityListTest : public ::testing::Test {
   static void updateBackwards(Timestamp ts, PriorityList &priorityList,
                               Int offset) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
-      priorityList.updatePriority(ts, idx, static_cast<Int>(priorityList.size() - idx) + offset);
+      priorityList.updatePriority(
+          ts, idx, static_cast<Int>(priorityList.size() - idx) + offset);
     }
   }
 

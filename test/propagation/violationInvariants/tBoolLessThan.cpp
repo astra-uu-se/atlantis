@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/boolLessThan.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/boolLessThan.hpp"
 
 namespace atlantis::testing {
 
@@ -269,7 +269,8 @@ class MockBoolLessThan : public BoolLessThan {
     registered = true;
     BoolLessThan::registerVars();
   }
-  explicit MockBoolLessThan(SolverBase& solver, VarId violationId, VarId x, VarId y)
+  explicit MockBoolLessThan(SolverBase& solver, VarId violationId, VarId x,
+                            VarId y)
       : BoolLessThan(solver, violationId, x, y) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BoolLessThan::recompute(timestamp);

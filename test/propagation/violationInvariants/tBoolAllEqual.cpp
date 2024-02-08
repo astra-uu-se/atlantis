@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/boolAllEqual.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/boolAllEqual.hpp"
 
 namespace atlantis::testing {
 
@@ -32,7 +32,8 @@ class BoolAllEqualTest : public InvariantTest {
         ++numFalse;
       }
     }
-    return static_cast<Int>(std::min(values.size() - numTrue, values.size() - numFalse));
+    return static_cast<Int>(
+        std::min(values.size() - numTrue, values.size() - numFalse));
   }
 };
 
@@ -277,7 +278,8 @@ TEST_F(BoolAllEqualTest, SolverIntegration) {
     const VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
     const VarId modifiedVarId = args.front();
     testNotifications<MockAllDifferent>(
-        &solver->makeViolationInvariant<MockAllDifferent>(*solver, viol, std::move(args)),
+        &solver->makeViolationInvariant<MockAllDifferent>(*solver, viol,
+                                                          std::move(args)),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});
   }
 }

@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/globalCardinalityConst.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/globalCardinalityConst.hpp"
 
 namespace atlantis::testing {
 
@@ -533,8 +533,8 @@ class MockGlobalCardinalityConst : public GlobalCardinalityConst<IsClosed> {
                                       std::vector<VarId>&& vars,
                                       const std::vector<Int>& cover,
                                       const std::vector<Int>& counts)
-      : GlobalCardinalityConst<IsClosed>(solver, violationId, std::move(vars), cover,
-                                         counts) {
+      : GlobalCardinalityConst<IsClosed>(solver, violationId, std::move(vars),
+                                         cover, counts) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return GlobalCardinalityConst<IsClosed>::recompute(timestamp);
     });

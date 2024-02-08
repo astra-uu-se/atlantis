@@ -53,7 +53,9 @@ class FznTestBase : public ::testing::Test {
     return _invariantGraph->totalViolationVarId();
   }
 
-  [[nodiscard]] Int violation() const { return _solver->currentValue(totalViolationVarId()); }
+  [[nodiscard]] Int violation() const {
+    return _solver->currentValue(totalViolationVarId());
+  }
 
   [[nodiscard]] std::vector<Int> makeInputVals(
       const std::vector<std::string>& inputIdentifiers) const {

@@ -27,7 +27,8 @@ class PowTest : public InvariantTest {
     return computeOutput(inputs.at(0), inputs.at(1), 1);
   }
 
-  static Int computeOutput(const std::array<Int, 2>& inputs, Int zeroReplacement) {
+  static Int computeOutput(const std::array<Int, 2>& inputs,
+                           Int zeroReplacement) {
     return computeOutput(inputs.at(0), inputs.at(1), zeroReplacement);
   }
 
@@ -45,7 +46,8 @@ class PowTest : public InvariantTest {
     return computeOutput(baseVal, expVal, 1);
   }
 
-  static Int computeOutput(const Int baseVal, const Int expVal, Int zeroReplacement) {
+  static Int computeOutput(const Int baseVal, const Int expVal,
+                           Int zeroReplacement) {
     if (baseVal == 0 && expVal < 0) {
       return static_cast<Int>(std::pow(zeroReplacement, expVal));
     }
@@ -63,7 +65,8 @@ TEST_F(PowTest, UpdateBounds) {
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Pow& invariant = solver->makeInvariant<Pow>(*solver, outputId, base, exponent);
+  Pow& invariant =
+      solver->makeInvariant<Pow>(*solver, outputId, base, exponent);
   solver->close();
 
   for (const auto& [baseLb, baseUb] : boundVec) {
@@ -105,7 +108,8 @@ TEST_F(PowTest, Recompute) {
   const VarId exponent = solver->makeIntVar(expUb, expLb, expUb);
   const VarId outputId =
       solver->makeIntVar(0, 0, std::max(baseUb - expLb, expUb - baseLb));
-  Pow& invariant = solver->makeInvariant<Pow>(*solver, outputId, base, exponent);
+  Pow& invariant =
+      solver->makeInvariant<Pow>(*solver, outputId, base, exponent);
   solver->close();
 
   for (Int baseVal = baseLb; baseVal <= baseUb; ++baseVal) {

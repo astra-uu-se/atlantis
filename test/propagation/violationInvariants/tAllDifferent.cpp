@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/allDifferent.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -16,7 +16,6 @@ using namespace atlantis::propagation;
 
 class AllDifferentTest : public InvariantTest {
  public:
-
   Int computeViolation(Timestamp ts, const std::vector<VarId>& vars) {
     std::vector<Int> values(vars.size(), 0);
     for (size_t i = 0; i < vars.size(); ++i) {
@@ -316,7 +315,8 @@ TEST_F(AllDifferentTest, SolverIntegration) {
     const VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
     const VarId modifiedVarId = args.front();
     testNotifications<MockAllDifferent>(
-        &solver->makeViolationInvariant<MockAllDifferent>(*solver, viol, std::move(args)),
+        &solver->makeViolationInvariant<MockAllDifferent>(*solver, viol,
+                                                          std::move(args)),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});
   }
 }

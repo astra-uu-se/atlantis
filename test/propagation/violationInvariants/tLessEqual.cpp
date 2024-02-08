@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 
 namespace atlantis::testing {
 
@@ -252,7 +252,8 @@ class MockLessEqual : public LessEqual {
     registered = true;
     LessEqual::registerVars();
   }
-  explicit MockLessEqual(SolverBase& solver, VarId violationId, VarId x, VarId y)
+  explicit MockLessEqual(SolverBase& solver, VarId violationId, VarId x,
+                         VarId y)
       : LessEqual(solver, violationId, x, y) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return LessEqual::recompute(timestamp);

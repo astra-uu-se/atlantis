@@ -56,7 +56,7 @@ class BoolLinearTest : public InvariantTest {
   }
 
   static Int computeOutput(const std::vector<Int>& violations,
-                    const std::vector<Int>& coefficients) {
+                           const std::vector<Int>& coefficients) {
     Int sum = 0;
     for (size_t i = 0; i < violations.size(); ++i) {
       sum += static_cast<Int>(violations.at(i) == 0) * coefficients.at(i);
@@ -399,7 +399,8 @@ TEST_F(BoolLinearTest, SolverIntegration) {
     const VarId output =
         solver->makeIntVar(-10, -100, static_cast<Int>(numArgs * numArgs));
     testNotifications<MockBoolLinear>(
-        &solver->makeInvariant<MockBoolLinear>(*solver, output, std::move(args)),
+        &solver->makeInvariant<MockBoolLinear>(*solver, output,
+                                               std::move(args)),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }

@@ -27,7 +27,7 @@ class GlobalCardinalityOpenTest : public InvariantTest {
   }
 
   static std::vector<Int> computeOutputs(const std::vector<Int>& values,
-                                  const std::vector<Int>& cover) {
+                                         const std::vector<Int>& cover) {
     std::unordered_map<Int, size_t> coverToIndex;
     for (size_t i = 0; i < cover.size(); ++i) {
       coverToIndex.emplace(cover.at(i), i);
@@ -55,8 +55,9 @@ TEST_F(GlobalCardinalityOpenTest, UpdateBounds) {
                              solver->makeIntVar(0, 0, 2)};
 
   GlobalCardinalityOpen& invariant =
-      solver->makeInvariant<GlobalCardinalityOpen>(*solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
-                                                   std::vector<Int>{0, 2});
+      solver->makeInvariant<GlobalCardinalityOpen>(
+          *solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
+          std::vector<Int>{0, 2});
   solver->close();
   for (const VarId& output : outputs) {
     EXPECT_EQ(solver->lowerBound(output), 0);
@@ -109,8 +110,9 @@ TEST_F(GlobalCardinalityOpenTest, Recompute) {
     const std::vector<VarId> inputs{a, b, c};
 
     GlobalCardinalityOpen& invariant =
-        solver->makeInvariant<GlobalCardinalityOpen>(*solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
-                                                     std::vector<Int>(cover));
+        solver->makeInvariant<GlobalCardinalityOpen>(
+            *solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
+            std::vector<Int>(cover));
     solver->close();
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
@@ -157,8 +159,9 @@ TEST_F(GlobalCardinalityOpenTest, NotifyInputChanged) {
     }
 
     GlobalCardinalityOpen& invariant =
-        solver->makeInvariant<GlobalCardinalityOpen>(*solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
-                                                     std::vector<Int>(cover));
+        solver->makeInvariant<GlobalCardinalityOpen>(
+            *solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
+            std::vector<Int>(cover));
     solver->close();
 
     Timestamp ts = solver->currentTimestamp();
@@ -205,8 +208,9 @@ TEST_F(GlobalCardinalityOpenTest, NextInput) {
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
   GlobalCardinalityOpen& invariant =
-      solver->makeInvariant<GlobalCardinalityOpen>(*solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
-                                                   std::vector<Int>(cover));
+      solver->makeInvariant<GlobalCardinalityOpen>(
+          *solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
+          std::vector<Int>(cover));
   solver->close();
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
@@ -248,8 +252,9 @@ TEST_F(GlobalCardinalityOpenTest, NotifyCurrentInputChanged) {
   }
 
   GlobalCardinalityOpen& invariant =
-      solver->makeInvariant<GlobalCardinalityOpen>(*solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
-                                                   std::vector<Int>(cover));
+      solver->makeInvariant<GlobalCardinalityOpen>(
+          *solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
+          std::vector<Int>(cover));
   solver->close();
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
@@ -302,8 +307,9 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
   std::shuffle(indices.begin(), indices.end(), rng);
 
   GlobalCardinalityOpen& invariant =
-      solver->makeInvariant<GlobalCardinalityOpen>(*solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
-                                                   std::vector<Int>(cover));
+      solver->makeInvariant<GlobalCardinalityOpen>(
+          *solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
+          std::vector<Int>(cover));
   solver->close();
 
   std::vector<Int> notifiedOutputValues(numOutputs, -1);
@@ -377,12 +383,15 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityOpenTest, RapidCheck,
 
   std::vector<VarId> outputs;
   for (size_t i = 0; i < numOutputs; ++i) {
-    outputs.emplace_back(solver->makeIntVar(0, 0, static_cast<Int>(inputs.size())));
+    outputs.emplace_back(
+        solver->makeIntVar(0, 0, static_cast<Int>(inputs.size())));
   }
 
   RC_ASSERT(outputs.size() == numOutputs);
 
-  solver->makeInvariant<GlobalCardinalityOpen>(*solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs), std::vector<Int>(cover));
+  solver->makeInvariant<GlobalCardinalityOpen>(
+      *solver, std::vector<VarId>(outputs), std::vector<VarId>(inputs),
+      std::vector<Int>(cover));
 
   solver->close();
 
@@ -426,7 +435,8 @@ class MockGlobalCardinalityOpen : public GlobalCardinalityOpen {
                                      std::vector<VarId>&& outputs,
                                      std::vector<VarId>&& inputs,
                                      std::vector<Int>&& cover)
-      : GlobalCardinalityOpen(solver, std::move(outputs), std::move(inputs), std::move(cover)) {
+      : GlobalCardinalityOpen(solver, std::move(outputs), std::move(inputs),
+                              std::move(cover)) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return GlobalCardinalityOpen::recompute(timestamp);
     });
@@ -470,10 +480,9 @@ TEST_F(GlobalCardinalityOpenTest, SolverIntegration) {
     const VarId modifiedVarId = inputs.front();
     const VarId queryVarId = outputs.front();
     testNotifications<MockGlobalCardinalityOpen>(
-        &solver->makeInvariant<MockGlobalCardinalityOpen>(*solver, std::move(outputs),
-                                                          std::move(inputs), std::move(cover)),
-        {propMode, markingMode, numInputs + 1, modifiedVarId, 1,
-         queryVarId});
+        &solver->makeInvariant<MockGlobalCardinalityOpen>(
+            *solver, std::move(outputs), std::move(inputs), std::move(cover)),
+        {propMode, markingMode, numInputs + 1, modifiedVarId, 1, queryVarId});
   }
 }
 

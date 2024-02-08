@@ -95,7 +95,8 @@ TEST_F(ExistsTest, Recompute) {
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
 
-  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, std::vector<VarId>(inputs));
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId,
+                                                    std::vector<VarId>(inputs));
   solver->close();
 
   for (Int aVal = iLb; aVal <= iUb; ++aVal) {
@@ -121,7 +122,8 @@ TEST_F(ExistsTest, NotifyInputChanged) {
   }
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, std::vector<VarId>(inputs));
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId,
+                                                    std::vector<VarId>(inputs));
   solver->close();
 
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -153,7 +155,8 @@ TEST_F(ExistsTest, NextInput) {
 
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, std::vector<VarId>(inputs));
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId,
+                                                    std::vector<VarId>(inputs));
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
        ts < solver->currentTimestamp() + 4; ++ts) {
@@ -180,7 +183,8 @@ TEST_F(ExistsTest, NotifyCurrentInputChanged) {
   }
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, std::vector<VarId>(inputs));
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId,
+                                                    std::vector<VarId>(inputs));
   solver->close();
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
@@ -212,7 +216,8 @@ TEST_F(ExistsTest, Commit) {
 
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId, std::vector<VarId>(inputs));
+  Exists& invariant = solver->makeInvariant<Exists>(*solver, outputId,
+                                                    std::vector<VarId>(inputs));
   solver->close();
 
   EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
@@ -282,7 +287,8 @@ class MockExists : public Exists {
     registered = true;
     Exists::registerVars();
   }
-  explicit MockExists(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
+  explicit MockExists(SolverBase& solver, VarId output,
+                      std::vector<VarId>&& varArray)
       : Exists(solver, output, std::move(varArray)) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Exists::recompute(timestamp);

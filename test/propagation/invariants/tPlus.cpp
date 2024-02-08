@@ -26,7 +26,9 @@ class PlusTest : public InvariantTest {
     return computeOutput(solver->value(ts, x), solver->value(ts, y));
   }
 
-  static Int computeOutput(const Int xVal, const Int yVal) { return xVal + yVal; }
+  static Int computeOutput(const Int xVal, const Int yVal) {
+    return xVal + yVal;
+  }
 };
 
 TEST_F(PlusTest, UpdateBounds) {

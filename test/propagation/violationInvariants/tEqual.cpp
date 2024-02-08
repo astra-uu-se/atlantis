@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/equal.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/equal.hpp"
 
 namespace atlantis::testing {
 
@@ -13,7 +13,6 @@ using namespace atlantis::propagation;
 
 class EqualTest : public InvariantTest {
  public:
-
   Int computeViolation(const Timestamp ts,
                        const std::array<const VarId, 2>& inputs) {
     return computeViolation(solver->value(ts, inputs.at(0)),
@@ -42,7 +41,8 @@ TEST_F(EqualTest, UpdateBounds) {
   const VarId y = solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
   const VarId violationId = solver->makeIntVar(0, 0, 2);
-  Equal& invariant = solver->makeViolationInvariant<Equal>(*solver, violationId, x, y);
+  Equal& invariant =
+      solver->makeViolationInvariant<Equal>(*solver, violationId, x, y);
   solver->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
@@ -84,8 +84,8 @@ TEST_F(EqualTest, Recompute) {
                                           solver->makeIntVar(yUb, yLb, yUb)};
   const VarId violationId =
       solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  Equal& invariant = solver->makeViolationInvariant<Equal>(*solver, violationId,
-                                                   inputs.at(0), inputs.at(1));
+  Equal& invariant = solver->makeViolationInvariant<Equal>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
   solver->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
@@ -110,8 +110,8 @@ TEST_F(EqualTest, NotifyInputChanged) {
   const std::array<const VarId, 2> inputs{solver->makeIntVar(ub, lb, ub),
                                           solver->makeIntVar(ub, lb, ub)};
   const VarId violationId = solver->makeIntVar(0, 0, ub - lb);
-  Equal& invariant = solver->makeViolationInvariant<Equal>(*solver, violationId,
-                                                   inputs.at(0), inputs.at(1));
+  Equal& invariant = solver->makeViolationInvariant<Equal>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
   solver->close();
 
   Timestamp ts = solver->currentTimestamp();
@@ -139,8 +139,8 @@ TEST_F(EqualTest, NextInput) {
   const VarId violationId = solver->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  Equal& invariant = solver->makeViolationInvariant<Equal>(*solver, violationId,
-                                                   inputs.at(0), inputs.at(1));
+  Equal& invariant = solver->makeViolationInvariant<Equal>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
   solver->close();
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
@@ -172,8 +172,8 @@ TEST_F(EqualTest, NotifyCurrentInputChanged) {
       solver->makeIntVar(valueDist(gen), lb, ub),
       solver->makeIntVar(valueDist(gen), lb, ub)};
   const VarId violationId = solver->makeIntVar(0, 0, ub - lb);
-  Equal& invariant = solver->makeViolationInvariant<Equal>(*solver, violationId,
-                                                   inputs.at(0), inputs.at(1));
+  Equal& invariant = solver->makeViolationInvariant<Equal>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
   solver->close();
 
   for (Timestamp ts = solver->currentTimestamp() + 1;
@@ -206,8 +206,8 @@ TEST_F(EqualTest, Commit) {
       solver->makeIntVar(committedValues.at(1), lb, ub)};
 
   const VarId violationId = solver->makeIntVar(0, 0, 2);
-  Equal& invariant = solver->makeViolationInvariant<Equal>(*solver, violationId,
-                                                   inputs.at(0), inputs.at(1));
+  Equal& invariant = solver->makeViolationInvariant<Equal>(
+      *solver, violationId, inputs.at(0), inputs.at(1));
   solver->close();
 
   EXPECT_EQ(solver->value(solver->currentTimestamp(), violationId),

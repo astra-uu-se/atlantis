@@ -3,12 +3,12 @@
 #include <random>
 #include <vector>
 
-#include "propagation/violationInvariants/lessEqual.hpp"
 #include "propagation/invariants/elementVar.hpp"
 #include "propagation/invariants/linear.hpp"
 #include "propagation/solver.hpp"
 #include "propagation/types.hpp"
 #include "propagation/views/elementConst.hpp"
+#include "propagation/violationInvariants/lessEqual.hpp"
 #include "types.hpp"
 
 namespace atlantis::testing {
@@ -64,8 +64,9 @@ class TSPTWTest : public ::testing::Test {
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // arrivalPrev[i] = arrivalTime[pred[i]]
-      solver->makeInvariant<propagation::ElementVar>(*solver, arrivalPrev[i],
-                                                     pred[i], std::vector<propagation::VarId>(arrivalTime));
+      solver->makeInvariant<propagation::ElementVar>(
+          *solver, arrivalPrev[i], pred[i],
+          std::vector<propagation::VarId>(arrivalTime));
       // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
       solver->makeInvariant<propagation::Linear>(
           *solver, arrivalTime[i],
@@ -74,17 +75,18 @@ class TSPTWTest : public ::testing::Test {
 
     // totalDist = sum(timeToPrev)
     totalDist = solver->makeIntVar(0, 0, MAX_TIME);
-    solver->makeInvariant<propagation::Linear>(*solver, totalDist, std::vector<propagation::VarId>(timeToPrev));
+    solver->makeInvariant<propagation::Linear>(
+        *solver, totalDist, std::vector<propagation::VarId>(timeToPrev));
 
     propagation::VarId leqConst = solver->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
-      solver->makeViolationInvariant<propagation::LessEqual>(*solver, violation[i],
-                                                     arrivalTime[i], leqConst);
+      solver->makeViolationInvariant<propagation::LessEqual>(
+          *solver, violation[i], arrivalTime[i], leqConst);
     }
 
     totalViolation = solver->makeIntVar(0, 0, MAX_TIME * n);
-    solver->makeInvariant<propagation::Linear>(*solver, totalViolation,
-                                               std::vector<propagation::VarId>(violation));
+    solver->makeInvariant<propagation::Linear>(
+        *solver, totalViolation, std::vector<propagation::VarId>(violation));
 
     solver->close();
     for (const propagation::VarId& p : pred) {

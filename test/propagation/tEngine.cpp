@@ -181,7 +181,7 @@ class SolverTest : public ::testing::Test {
      *                            +----------+
      */
     inputs.resize(7);
-    for (auto & input : inputs) {
+    for (auto& input : inputs) {
       for (size_t j = 0; j < 2; j++) {
         input.emplace_back(solver->makeIntVar(0, 0, 10));
       }

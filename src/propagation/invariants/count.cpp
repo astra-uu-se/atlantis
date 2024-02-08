@@ -31,7 +31,7 @@ void Count::close(Timestamp ts) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
-  for (const auto & var : _vars) {
+  for (const auto& var : _vars) {
     lb = std::min(lb, _solver.lowerBound(var));
     ub = std::max(ub, _solver.upperBound(var));
   }
@@ -51,7 +51,7 @@ void Count::recompute(Timestamp ts) {
 
   updateValue(ts, _output, 0);
 
-  for (const auto & var : _vars) {
+  for (const auto& var : _vars) {
     increaseCount(ts, _solver.value(ts, var));
   }
   updateValue(ts, _output, count(ts, _solver.value(ts, _y)));

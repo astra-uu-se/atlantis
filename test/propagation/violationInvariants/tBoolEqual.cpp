@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/violationInvariants/boolEqual.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/violationInvariants/boolEqual.hpp"
 
 namespace atlantis::testing {
 
@@ -246,7 +246,8 @@ class MockBoolEqual : public BoolEqual {
     registered = true;
     BoolEqual::registerVars();
   }
-  explicit MockBoolEqual(SolverBase& solver, VarId violationId, VarId x, VarId y)
+  explicit MockBoolEqual(SolverBase& solver, VarId violationId, VarId x,
+                         VarId y)
       : BoolEqual(solver, violationId, x, y) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BoolEqual::recompute(timestamp);

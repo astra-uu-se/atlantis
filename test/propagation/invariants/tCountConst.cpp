@@ -45,8 +45,8 @@ TEST_F(CountConstTest, UpdateBounds) {
                             solver->makeIntVar(0, 0, 10),
                             solver->makeIntVar(0, 0, 10)};
   const VarId outputId = solver->makeIntVar(0, 0, 2);
-  CountConst& invariant =
-      solver->makeInvariant<CountConst>(*solver, outputId, y, std::vector<VarId>(inputs));
+  CountConst& invariant = solver->makeInvariant<CountConst>(
+      *solver, outputId, y, std::vector<VarId>(inputs));
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
@@ -86,8 +86,8 @@ TEST_F(CountConstTest, Recompute) {
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
 
-    CountConst& invariant =
-        solver->makeInvariant<CountConst>(*solver, outputId, y, std::vector<VarId>(inputs));
+    CountConst& invariant = solver->makeInvariant<CountConst>(
+        *solver, outputId, y, std::vector<VarId>(inputs));
     solver->close();
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
@@ -124,8 +124,8 @@ TEST_F(CountConstTest, NotifyInputChanged) {
     }
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-    CountConst& invariant =
-        solver->makeInvariant<CountConst>(*solver, outputId, y, std::vector<VarId>(inputs));
+    CountConst& invariant = solver->makeInvariant<CountConst>(
+        *solver, outputId, y, std::vector<VarId>(inputs));
     solver->close();
     EXPECT_NE(ts, solver->currentTimestamp());
 
@@ -158,8 +158,8 @@ TEST_F(CountConstTest, NextInput) {
   }
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  CountConst& invariant =
-      solver->makeInvariant<CountConst>(*solver, outputId, y, std::vector<VarId>(inputs));
+  CountConst& invariant = solver->makeInvariant<CountConst>(
+      *solver, outputId, y, std::vector<VarId>(inputs));
   solver->close();
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
@@ -203,8 +203,8 @@ TEST_F(CountConstTest, NotifyCurrentInputChanged) {
     }
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-    CountConst& invariant =
-        solver->makeInvariant<CountConst>(*solver, outputId, y, std::vector<VarId>(inputs));
+    CountConst& invariant = solver->makeInvariant<CountConst>(
+        *solver, outputId, y, std::vector<VarId>(inputs));
     solver->close();
 
     for (Timestamp ts = solver->currentTimestamp() + 1;
@@ -244,8 +244,8 @@ TEST_F(CountConstTest, Commit) {
     }
     const VarId outputId = solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-    CountConst& invariant =
-        solver->makeInvariant<CountConst>(*solver, outputId, y, std::vector<VarId>(inputs));
+    CountConst& invariant = solver->makeInvariant<CountConst>(
+        *solver, outputId, y, std::vector<VarId>(inputs));
 
     solver->close();
 
@@ -339,7 +339,8 @@ TEST_F(CountConstTest, SolverIntegration) {
     const VarId modifiedVarId = varArray.front();
     const VarId output = solver->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCountConst>(
-        &solver->makeInvariant<MockCountConst>(*solver, output, y, std::move(varArray)),
+        &solver->makeInvariant<MockCountConst>(*solver, output, y,
+                                               std::move(varArray)),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }

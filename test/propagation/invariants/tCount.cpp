@@ -44,7 +44,8 @@ TEST_F(CountTest, UpdateBounds) {
                           solver->makeIntVar(0, 0, 10),
                           solver->makeIntVar(0, 0, 10)};
   const VarId outputId = solver->makeIntVar(0, 0, 2);
-  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, std::vector<VarId>(vars));
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y,
+                                                  std::vector<VarId>(vars));
 
   for (const auto& [yLb, yUb] : boundVec) {
     EXPECT_TRUE(yLb <= yUb);
@@ -88,7 +89,8 @@ TEST_F(CountTest, Recompute) {
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
 
-  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, std::vector<VarId>(inputs));
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y,
+                                                  std::vector<VarId>(inputs));
   solver->close();
 
   for (Int yVal = lb; yVal <= ub; ++yVal) {
@@ -124,7 +126,8 @@ TEST_F(CountTest, NotifyInputChanged) {
   }
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, std::vector<VarId>(inputs));
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y,
+                                                  std::vector<VarId>(inputs));
   solver->close();
 
   const Timestamp ts = solver->currentTimestamp() + 1;
@@ -160,7 +163,8 @@ TEST_F(CountTest, NextInput) {
   }
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, std::vector<VarId>(inputs));
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y,
+                                                  std::vector<VarId>(inputs));
   solver->close();
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
@@ -203,7 +207,8 @@ TEST_F(CountTest, NotifyCurrentInputChanged) {
 
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, std::vector<VarId>(inputs));
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y,
+                                                  std::vector<VarId>(inputs));
   solver->close();
 
   std::vector<VarId> allInputs(inputs);
@@ -244,7 +249,8 @@ TEST_F(CountTest, Commit) {
 
   const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
                                             std::numeric_limits<Int>::max());
-  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y, std::vector<VarId>(inputs));
+  Count& invariant = solver->makeInvariant<Count>(*solver, outputId, y,
+                                                  std::vector<VarId>(inputs));
 
   std::shuffle(indices.begin(), indices.end(), rng);
 
