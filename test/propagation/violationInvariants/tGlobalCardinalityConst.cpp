@@ -14,7 +14,6 @@ namespace atlantis::testing {
 
 using namespace atlantis::propagation;
 
-template <bool IsClosed>
 class GlobalCardinalityConstTest : public InvariantTest {
  public:
   Int computeViolation(
@@ -47,13 +46,6 @@ class GlobalCardinalityConstTest : public InvariantTest {
           std::max(Int(0), l - (actual.count(val) > 0 ? actual[val] : 0));
       excess += std::max(Int(0), (actual.count(val) > 0 ? actual[val] : 0) - u);
     }
-    if constexpr (IsClosed) {
-      for (const auto& [val, count] : actual) {
-        if (coverSet.count(val) <= 0) {
-          excess += count;
-        }
-      }
-    }
     return std::max(shortage, excess);
   }
 
@@ -73,8 +65,8 @@ class GlobalCardinalityConstTest : public InvariantTest {
         solver->open();
       }
       const VarId violationId = solver->makeIntVar(0, 0, 2);
-      GlobalCardinalityConst<IsClosed>& invariant =
-          solver->makeViolationInvariant<GlobalCardinalityConst<IsClosed>>(
+      GlobalCardinalityConst& invariant =
+          solver->makeViolationInvariant<GlobalCardinalityConst>(
               *solver, violationId, std::vector<VarId>(inputs),
               std::vector<Int>{1}, std::vector<Int>{low}, std::vector<Int>{up});
       solver->close();
@@ -124,8 +116,8 @@ class GlobalCardinalityConstTest : public InvariantTest {
       const VarId b = solver->makeIntVar(lb, lb, ub);
       const VarId c = solver->makeIntVar(lb, lb, ub);
       const VarId violationId = solver->makeIntVar(0, 0, 2);
-      GlobalCardinalityConst<IsClosed>& invariant =
-          solver->makeViolationInvariant<GlobalCardinalityConst<IsClosed>>(
+      GlobalCardinalityConst& invariant =
+          solver->makeViolationInvariant<GlobalCardinalityConst>(
               *solver, violationId, std::vector<VarId>{a, b, c}, cover, low,
               up);
       solver->close();
@@ -179,8 +171,8 @@ class GlobalCardinalityConstTest : public InvariantTest {
                                 solver->makeIntVar(lb, lb, ub),
                                 solver->makeIntVar(lb, lb, ub)};
       const VarId violationId = solver->makeIntVar(0, 0, 2);
-      GlobalCardinalityConst<IsClosed>& invariant =
-          solver->makeViolationInvariant<GlobalCardinalityConst<IsClosed>>(
+      GlobalCardinalityConst& invariant =
+          solver->makeViolationInvariant<GlobalCardinalityConst>(
               *solver, violationId, std::vector<VarId>(inputs), cover, low, up);
       solver->close();
 
@@ -229,8 +221,8 @@ class GlobalCardinalityConstTest : public InvariantTest {
     std::shuffle(inputs.begin(), inputs.end(), rng);
 
     const VarId violationId = solver->makeIntVar(0, 0, 2);
-    GlobalCardinalityConst<IsClosed>& invariant =
-        solver->makeViolationInvariant<GlobalCardinalityConst<IsClosed>>(
+    GlobalCardinalityConst& invariant =
+        solver->makeViolationInvariant<GlobalCardinalityConst>(
             *solver, violationId, std::vector<VarId>(inputs), cover, low, up);
     solver->close();
 
@@ -277,8 +269,8 @@ class GlobalCardinalityConstTest : public InvariantTest {
     }
 
     const VarId violationId = solver->makeIntVar(0, 0, numInputs - 1);
-    GlobalCardinalityConst<IsClosed>& invariant =
-        solver->makeViolationInvariant<GlobalCardinalityConst<IsClosed>>(
+    GlobalCardinalityConst& invariant =
+        solver->makeViolationInvariant<GlobalCardinalityConst>(
             *solver, violationId, std::vector<VarId>(inputs), cover, low, up);
     solver->close();
 
@@ -329,8 +321,8 @@ class GlobalCardinalityConstTest : public InvariantTest {
     std::shuffle(indices.begin(), indices.end(), rng);
 
     const VarId violationId = solver->makeIntVar(0, 0, 2);
-    GlobalCardinalityConst<IsClosed>& invariant =
-        solver->makeViolationInvariant<GlobalCardinalityConst<IsClosed>>(
+    GlobalCardinalityConst& invariant =
+        solver->makeViolationInvariant<GlobalCardinalityConst>(
             *solver, violationId, std::vector<VarId>(inputs), cover, low, up);
     solver->close();
 
@@ -401,7 +393,7 @@ class GlobalCardinalityConstTest : public InvariantTest {
 
     VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numVars));
 
-    solver->makeInvariant<GlobalCardinalityConst<IsClosed>>(
+    solver->makeInvariant<GlobalCardinalityConst>(
         *solver, viol, std::vector<VarId>(vars), cover, lowerBound, upperBound);
 
     solver->close();
@@ -455,9 +447,6 @@ class GlobalCardinalityConstTest : public InvariantTest {
 
         Int shortage = 0;
         Int excess = 0;
-        if constexpr (IsClosed) {
-          excess = outsideCount;
-        }
 
         for (const Int val : cover) {
           RC_ASSERT(actualCounts.count(val) > size_t(0) &&
@@ -478,81 +467,54 @@ class GlobalCardinalityConstTest : public InvariantTest {
   }
 };
 
-class GlobalCardinalityTestClosed : public GlobalCardinalityConstTest<true> {};
-class GlobalCardinalityTestOpen : public GlobalCardinalityConstTest<false> {};
+TEST_F(GlobalCardinalityConstTest, UpdateBounds) { updateBounds(); }
 
-TEST_F(GlobalCardinalityTestClosed, UpdateBounds) { updateBounds(); }
+TEST_F(GlobalCardinalityConstTest, Recompute) { recompute(); }
 
-TEST_F(GlobalCardinalityTestOpen, UpdateBounds) { updateBounds(); }
+TEST_F(GlobalCardinalityConstTest, NotifyInputChanged) { notifyInputChanged(); }
 
-TEST_F(GlobalCardinalityTestClosed, Recompute) { recompute(); }
+TEST_F(GlobalCardinalityConstTest, NextInput) { nextInput(); }
 
-TEST_F(GlobalCardinalityTestOpen, Recompute) { recompute(); }
-
-TEST_F(GlobalCardinalityTestClosed, NotifyInputChanged) {
-  notifyInputChanged();
-}
-
-TEST_F(GlobalCardinalityTestOpen, NotifyInputChanged) { notifyInputChanged(); }
-
-TEST_F(GlobalCardinalityTestClosed, NextInput) { nextInput(); }
-
-TEST_F(GlobalCardinalityTestOpen, NextInput) { nextInput(); }
-
-TEST_F(GlobalCardinalityTestClosed, NotifyCurrentInputChanged) {
+TEST_F(GlobalCardinalityConstTest, NotifyCurrentInputChanged) {
   notifyCurrentInputChanged();
 }
 
-TEST_F(GlobalCardinalityTestOpen, NotifyCurrentInputChanged) {
-  notifyCurrentInputChanged();
-}
+TEST_F(GlobalCardinalityConstTest, Commit) { commit(); }
 
-TEST_F(GlobalCardinalityTestClosed, Commit) { commit(); }
-
-TEST_F(GlobalCardinalityTestOpen, Commit) { commit(); }
-
-RC_GTEST_FIXTURE_PROP(GlobalCardinalityTestOpen, RapidCheck,
+RC_GTEST_FIXTURE_PROP(GlobalCardinalityConstTest, RapidCheck,
                       (unsigned char nVar, int valOffset)) {
   rapidCheck(static_cast<size_t>(nVar), static_cast<Int>(valOffset));
 }
 
-RC_GTEST_FIXTURE_PROP(GlobalCardinalityTestClosed, RapidCheck,
-                      (unsigned char nVar, int valOffset)) {
-  rapidCheck(static_cast<size_t>(nVar), static_cast<Int>(valOffset));
-}
-
-template <bool IsClosed>
-class MockGlobalCardinalityConst : public GlobalCardinalityConst<IsClosed> {
+class MockGlobalCardinalityConst : public GlobalCardinalityConst {
  public:
   bool registered = false;
   void registerVars() override {
     registered = true;
-    GlobalCardinalityConst<IsClosed>::registerVars();
+    GlobalCardinalityConst::registerVars();
   }
   explicit MockGlobalCardinalityConst(SolverBase& solver, VarId violationId,
                                       std::vector<VarId>&& vars,
                                       const std::vector<Int>& cover,
                                       const std::vector<Int>& counts)
-      : GlobalCardinalityConst<IsClosed>(solver, violationId, std::move(vars),
-                                         cover, counts) {
+      : GlobalCardinalityConst(solver, violationId, std::move(vars), cover,
+                               counts) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
-      return GlobalCardinalityConst<IsClosed>::recompute(timestamp);
+      return GlobalCardinalityConst::recompute(timestamp);
     });
     ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
-      return GlobalCardinalityConst<IsClosed>::nextInput(timestamp);
+      return GlobalCardinalityConst::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp timestamp) {
-          GlobalCardinalityConst<IsClosed>::notifyCurrentInputChanged(
-              timestamp);
+          GlobalCardinalityConst::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp timestamp, LocalId localId) {
-          GlobalCardinalityConst<IsClosed>::notifyInputChanged(timestamp,
-                                                               localId);
+          GlobalCardinalityConst::notifyInputChanged(timestamp, localId);
         });
     ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
-      GlobalCardinalityConst<IsClosed>::commit(timestamp);
+      GlobalCardinalityConst::commit(timestamp);
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
@@ -561,27 +523,8 @@ class MockGlobalCardinalityConst : public GlobalCardinalityConst<IsClosed> {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(GlobalCardinalityTestClosed, SolverIntegration) {
-  for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!solver->isOpen()) {
-      solver->open();
-    }
-    std::vector<VarId> args;
-    size_t numArgs = 10;
-    for (size_t value = 0; value < numArgs; ++value) {
-      args.push_back(solver->makeIntVar(0, -100, 100));
-    }
 
-    VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
-    VarId modifiedVarId = args.front();
-    testNotifications<MockGlobalCardinalityConst<false>>(
-        &solver->makeInvariant<MockGlobalCardinalityConst<false>>(
-            *solver, viol, std::vector<VarId>{args}, std::vector<Int>{1, 2, 3},
-            std::vector<Int>{1, 2, 3}),
-        {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});
-  }
-}
-TEST_F(GlobalCardinalityTestOpen, SolverIntegration) {
+TEST_F(GlobalCardinalityConstTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!solver->isOpen()) {
       solver->open();
@@ -595,8 +538,8 @@ TEST_F(GlobalCardinalityTestOpen, SolverIntegration) {
     VarId viol = solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
     const VarId modifiedVarId = args.front();
 
-    testNotifications<MockGlobalCardinalityConst<true>>(
-        &solver->makeInvariant<MockGlobalCardinalityConst<true>>(
+    testNotifications<MockGlobalCardinalityConst>(
+        &solver->makeInvariant<MockGlobalCardinalityConst>(
             *solver, viol, std::move(args), std::vector<Int>{1, 2, 3},
             std::vector<Int>{1, 2, 3}),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});

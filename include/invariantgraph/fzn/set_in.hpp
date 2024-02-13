@@ -9,6 +9,9 @@
 
 namespace atlantis::invariantgraph::fzn {
 
+bool set_in(FznInvariantGraph&, VarNodeId varNodeId, std::vector<Int>&& values,
+            VarNodeId reified);
+
 bool set_in(FznInvariantGraph&, const fznparser::IntArg&,
             const fznparser::IntSetArg&);
 
