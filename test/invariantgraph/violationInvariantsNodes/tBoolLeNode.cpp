@@ -122,15 +122,6 @@ class AbstractBoolLeNodeTest : public NodeTestBase<BoolLeNode> {
   }
 };
 
-class BoolLeNodeTest
-    : public AbstractBoolLeNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(BoolLeNodeTest, Construction) { construction(); }
-
-TEST_F(BoolLeNodeTest, Application) { application(); }
-
-TEST_F(BoolLeNodeTest, Propagation) { propagation(); }
-
 class BoolLeReifNodeTest
     : public AbstractBoolLeNodeTest<ViolationInvariantType::REIFIED> {};
 

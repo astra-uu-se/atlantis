@@ -159,16 +159,6 @@ class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
   }
 };
 
-class BoolClauseNodeTest
-    : public AbstractBoolClauseNodeTest<ViolationInvariantType::CONSTANT_TRUE> {
-};
-
-TEST_F(BoolClauseNodeTest, Construction) { construction(); }
-
-TEST_F(BoolClauseNodeTest, Application) { application(); }
-
-TEST_F(BoolClauseNodeTest, Propagation) { propagation(); }
-
 class BoolClauseReifNodeTest
     : public AbstractBoolClauseNodeTest<ViolationInvariantType::REIFIED> {};
 

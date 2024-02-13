@@ -12,7 +12,7 @@
 
 namespace atlantis::propagation {
 
-class GlobalCardinalityConst : public ViolationInvariant {
+class GlobalCardinalityLowUp : public ViolationInvariant {
  private:
   std::vector<VarId> _vars;
   std::vector<Int> _lowerBounds;
@@ -26,12 +26,12 @@ class GlobalCardinalityConst : public ViolationInvariant {
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  GlobalCardinalityConst(SolverBase&, VarId violationId,
+  GlobalCardinalityLowUp(SolverBase&, VarId violationId,
                          std::vector<VarId>&& vars,
                          const std::vector<Int>& cover,
                          const std::vector<Int>& bounds);
 
-  GlobalCardinalityConst(SolverBase&, VarId violationId,
+  GlobalCardinalityLowUp(SolverBase&, VarId violationId,
                          std::vector<VarId>&& vars,
                          const std::vector<Int>& cover,
                          const std::vector<Int>& lowerBounds,
@@ -47,7 +47,7 @@ class GlobalCardinalityConst : public ViolationInvariant {
   void notifyCurrentInputChanged(Timestamp) override;
 };
 
-inline signed char GlobalCardinalityConst::increaseCount(Timestamp ts,
+inline signed char GlobalCardinalityLowUp::increaseCount(Timestamp ts,
                                                          Int value) {
   size_t pos = static_cast<size_t>(std::max<Int>(
       0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
@@ -62,7 +62,7 @@ inline signed char GlobalCardinalityConst::increaseCount(Timestamp ts,
              : (newCount > _lowerBounds.at(pos) ? 0 : -1);
 }
 
-inline signed char GlobalCardinalityConst::decreaseCount(Timestamp ts,
+inline signed char GlobalCardinalityLowUp::decreaseCount(Timestamp ts,
                                                          Int value) {
   size_t pos = static_cast<size_t>(std::max<Int>(
       0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));

@@ -32,7 +32,7 @@ static bool isViolating(const std::vector<Int>& values,
 }
 
 template <ViolationInvariantType Type>
-class DISABLED_AbstractGlobalCardinalityLowUpNodeTest
+class AbstractGlobalCardinalityLowUpNodeTest
     : public NodeTestBase<GlobalCardinalityLowUpNode> {
  public:
   VarNodeId x1{NULL_NODE_ID};
@@ -168,64 +168,34 @@ class DISABLED_AbstractGlobalCardinalityLowUpNodeTest
   }
 };
 
-class DISABLED_GlobalCardinalityLowUpNodeTest
-    : public DISABLED_AbstractGlobalCardinalityLowUpNodeTest<
-          ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(DISABLED_GlobalCardinalityLowUpNodeTest, Construction) {
-  construction();
-}
-
-TEST_F(DISABLED_GlobalCardinalityLowUpNodeTest, Application) { application(); }
-
-TEST_F(DISABLED_GlobalCardinalityLowUpNodeTest, Propagation) { propagation(); }
-
-class DISABLED_GlobalCardinalityLowUpReifNodeTest
-    : public DISABLED_AbstractGlobalCardinalityLowUpNodeTest<
+class GlobalCardinalityLowUpReifNodeTest
+    : public AbstractGlobalCardinalityLowUpNodeTest<
           ViolationInvariantType::REIFIED> {};
 
-TEST_F(DISABLED_GlobalCardinalityLowUpReifNodeTest, Construction) {
-  construction();
-}
+TEST_F(GlobalCardinalityLowUpReifNodeTest, Construction) { construction(); }
 
-TEST_F(DISABLED_GlobalCardinalityLowUpReifNodeTest, Application) {
-  application();
-}
+TEST_F(GlobalCardinalityLowUpReifNodeTest, Application) { application(); }
 
-TEST_F(DISABLED_GlobalCardinalityLowUpReifNodeTest, Propagation) {
-  propagation();
-}
+TEST_F(GlobalCardinalityLowUpReifNodeTest, Propagation) { propagation(); }
 
-class DISABLED_GlobalCardinalityLowUpFalseNodeTest
-    : public DISABLED_AbstractGlobalCardinalityLowUpNodeTest<
+class GlobalCardinalityLowUpFalseNodeTest
+    : public AbstractGlobalCardinalityLowUpNodeTest<
           ViolationInvariantType::CONSTANT_FALSE> {};
 
-TEST_F(DISABLED_GlobalCardinalityLowUpFalseNodeTest, Construction) {
-  construction();
-}
+TEST_F(GlobalCardinalityLowUpFalseNodeTest, Construction) { construction(); }
 
-TEST_F(DISABLED_GlobalCardinalityLowUpFalseNodeTest, Application) {
-  application();
-}
+TEST_F(GlobalCardinalityLowUpFalseNodeTest, Application) { application(); }
 
-TEST_F(DISABLED_GlobalCardinalityLowUpFalseNodeTest, Propagation) {
-  propagation();
-}
+TEST_F(GlobalCardinalityLowUpFalseNodeTest, Propagation) { propagation(); }
 
-class DISABLED_GlobalCardinalityLowUpTrueNodeTest
-    : public DISABLED_AbstractGlobalCardinalityLowUpNodeTest<
+class GlobalCardinalityLowUpTrueNodeTest
+    : public AbstractGlobalCardinalityLowUpNodeTest<
           ViolationInvariantType::CONSTANT_TRUE> {};
 
-TEST_F(DISABLED_GlobalCardinalityLowUpTrueNodeTest, Construction) {
-  construction();
-}
+TEST_F(GlobalCardinalityLowUpTrueNodeTest, Construction) { construction(); }
 
-TEST_F(DISABLED_GlobalCardinalityLowUpTrueNodeTest, Application) {
-  application();
-}
+TEST_F(GlobalCardinalityLowUpTrueNodeTest, Application) { application(); }
 
-TEST_F(DISABLED_GlobalCardinalityLowUpTrueNodeTest, Propagation) {
-  propagation();
-}
+TEST_F(GlobalCardinalityLowUpTrueNodeTest, Propagation) { propagation(); }
 
 }  // namespace atlantis::testing

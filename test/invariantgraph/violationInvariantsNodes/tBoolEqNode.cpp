@@ -129,15 +129,6 @@ class AbstractBoolEqNodeTest : public NodeTestBase<BoolEqNode> {
   }
 };
 
-class BoolEqNodeTest
-    : public AbstractBoolEqNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(BoolEqNodeTest, Construction) { construction(); }
-
-TEST_F(BoolEqNodeTest, Application) { application(); }
-
-TEST_F(BoolEqNodeTest, Propagation) { propagation(); }
-
 class BoolEqReifNodeTest
     : public AbstractBoolEqNodeTest<ViolationInvariantType::REIFIED> {};
 

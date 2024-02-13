@@ -1,4 +1,4 @@
-#include "propagation/violationInvariants/globalCardinalityConst.hpp"
+#include "propagation/violationInvariants/globalCardinalityLowUp.hpp"
 
 namespace atlantis::propagation {
 
@@ -6,15 +6,15 @@ namespace atlantis::propagation {
  * @param violationId id for the violationCount
  */
 
-GlobalCardinalityConst::GlobalCardinalityConst(SolverBase& solver,
+GlobalCardinalityLowUp::GlobalCardinalityLowUp(SolverBase& solver,
                                                VarId violationId,
                                                std::vector<VarId>&& t_vars,
                                                const std::vector<Int>& cover,
                                                const std::vector<Int>& bounds)
-    : GlobalCardinalityConst(solver, violationId, std::move(t_vars), cover,
+    : GlobalCardinalityLowUp(solver, violationId, std::move(t_vars), cover,
                              bounds, bounds) {}
 
-GlobalCardinalityConst::GlobalCardinalityConst(
+GlobalCardinalityLowUp::GlobalCardinalityLowUp(
     SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound)
@@ -46,7 +46,7 @@ GlobalCardinalityConst::GlobalCardinalityConst(
   }
 }
 
-void GlobalCardinalityConst::registerVars() {
+void GlobalCardinalityLowUp::registerVars() {
   assert(_id != NULL_ID);
   for (size_t i = 0; i < _vars.size(); ++i) {
     _solver.registerInvariantInput(_id, _vars[i], LocalId(i), false);
@@ -54,7 +54,7 @@ void GlobalCardinalityConst::registerVars() {
   registerDefinedVar(_violationId);
 }
 
-void GlobalCardinalityConst::updateBounds(bool widenOnly) {
+void GlobalCardinalityLowUp::updateBounds(bool widenOnly) {
   Int shortage = 0;
   for (const Int lb : _lowerBounds) {
     shortage += lb;
@@ -66,11 +66,11 @@ void GlobalCardinalityConst::updateBounds(bool widenOnly) {
   _solver.updateBounds(_violationId, 0, std::max(shortage, excess), widenOnly);
 }
 
-void GlobalCardinalityConst::close(Timestamp timestamp) {
+void GlobalCardinalityLowUp::close(Timestamp timestamp) {
   _counts.resize(_lowerBounds.size(), CommittableInt(timestamp, 0));
 }
 
-void GlobalCardinalityConst::recompute(Timestamp timestamp) {
+void GlobalCardinalityLowUp::recompute(Timestamp timestamp) {
   for (CommittableInt& c : _counts) {
     c.setValue(timestamp, 0);
   }
@@ -99,7 +99,7 @@ void GlobalCardinalityConst::recompute(Timestamp timestamp) {
   updateValue(timestamp, _violationId, std::max(shortage, excess));
 }
 
-void GlobalCardinalityConst::notifyInputChanged(Timestamp timestamp,
+void GlobalCardinalityLowUp::notifyInputChanged(Timestamp timestamp,
                                                 LocalId localId) {
   assert(localId < _committedValues.size());
   const Int newValue = _solver.value(timestamp, _vars[localId]);
@@ -115,7 +115,7 @@ void GlobalCardinalityConst::notifyInputChanged(Timestamp timestamp,
                                                        (inc > 0 ? inc : 0))));
 }
 
-VarId GlobalCardinalityConst::nextInput(Timestamp timestamp) {
+VarId GlobalCardinalityLowUp::nextInput(Timestamp timestamp) {
   const auto index = static_cast<size_t>(_state.incValue(timestamp, 1));
   assert(0 <= _state.value(timestamp));
   if (index < _vars.size()) {
@@ -124,12 +124,12 @@ VarId GlobalCardinalityConst::nextInput(Timestamp timestamp) {
   return NULL_ID;
 }
 
-void GlobalCardinalityConst::notifyCurrentInputChanged(Timestamp timestamp) {
+void GlobalCardinalityLowUp::notifyCurrentInputChanged(Timestamp timestamp) {
   assert(static_cast<size_t>(_state.value(timestamp)) < _vars.size());
   notifyInputChanged(timestamp, _state.value(timestamp));
 }
 
-void GlobalCardinalityConst::commit(Timestamp timestamp) {
+void GlobalCardinalityLowUp::commit(Timestamp timestamp) {
   Invariant::commit(timestamp);
 
   _shortage.commitIf(timestamp);

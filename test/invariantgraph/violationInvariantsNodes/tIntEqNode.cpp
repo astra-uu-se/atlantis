@@ -129,15 +129,6 @@ class AbstractIntEqNodeTest : public NodeTestBase<IntEqNode> {
   }
 };
 
-class IntEqNodeTest
-    : public AbstractIntEqNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(IntEqNodeTest, Construction) { construction(); }
-
-TEST_F(IntEqNodeTest, Application) { application(); }
-
-TEST_F(IntEqNodeTest, Propagation) { propagation(); }
-
 class IntEqReifNodeTest
     : public AbstractIntEqNodeTest<ViolationInvariantType::REIFIED> {};
 

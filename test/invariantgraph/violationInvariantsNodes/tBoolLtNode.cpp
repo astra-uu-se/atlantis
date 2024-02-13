@@ -123,15 +123,6 @@ class AbstractBoolLtNodeTest : public NodeTestBase<BoolLtNode> {
   }
 };
 
-class BoolLtNodeTest
-    : public AbstractBoolLtNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(BoolLtNodeTest, Construction) { construction(); }
-
-TEST_F(BoolLtNodeTest, Application) { application(); }
-
-TEST_F(BoolLtNodeTest, Propagation) { propagation(); }
-
 class BoolLtReifNodeTest
     : public AbstractBoolLtNodeTest<ViolationInvariantType::REIFIED> {};
 
