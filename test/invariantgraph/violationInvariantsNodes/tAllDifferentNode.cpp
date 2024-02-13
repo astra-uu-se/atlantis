@@ -148,15 +148,6 @@ class AbstractAllDifferentNodeTest : public NodeTestBase<AllDifferentNode> {
   }
 };
 
-class AllDifferentNodeTest : public AbstractAllDifferentNodeTest<
-                                 ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(AllDifferentNodeTest, Construction) { construction(); }
-
-TEST_F(AllDifferentNodeTest, Application) { application(); }
-
-TEST_F(AllDifferentNodeTest, Propagation) { propagation(); }
-
 class AllDifferentReifNodeTest
     : public AbstractAllDifferentNodeTest<ViolationInvariantType::REIFIED> {};
 
@@ -185,7 +176,7 @@ TEST_F(AllDifferentTrueNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentTrueNodeTest, Propagation) { propagation(); }
 
-TEST_F(AllDifferentNodeTest, pruneParameters) {
+TEST_F(AllDifferentTrueNodeTest, pruneParameters) {
   std::vector<VarNodeId> inputs{createIntVarNode(7), a, createIntVarNode(10), b,
                                 createIntVarNode(6), c, createIntVarNode(9),  d,
                                 createIntVarNode(5)};

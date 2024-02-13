@@ -43,12 +43,12 @@ void GlobalCardinalityLowUpNode::registerNode(InvariantGraph& invariantGraph,
                  [&](const auto& id) { return invariantGraph.varId(id); });
 
   if (shouldHold()) {
-    solver.makeInvariant<propagation::GlobalCardinalityConst<false>>(
+    solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
         solver, violationVarId(invariantGraph), std::move(inputVarIds),
         std::vector<Int>(_cover), std::vector<Int>(_low),
         std::vector<Int>(_up));
   } else {
-    solver.makeInvariant<propagation::GlobalCardinalityConst<false>>(
+    solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
         solver, _intermediate, std::move(inputVarIds), std::vector<Int>(_cover),
         std::vector<Int>(_low), std::vector<Int>(_up));
   }

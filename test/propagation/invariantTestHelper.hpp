@@ -81,6 +81,54 @@ class InvariantTest : public ::testing::Test {
           {PropagationMode::OUTPUT_TO_INPUT,
            OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}};
 
+  std::vector<Int> createInputVals(const std::vector<VarId>& inputVars) {
+    std::vector<Int> inputVals(inputVars.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      inputVals.at(i) = solver->lowerBound(inputVars.at(i));
+    }
+    return inputVals;
+  }
+
+  size_t trySetNextInputVarVal(const std::vector<VarId>& inputVars,
+                               std::vector<Int>& inputVals) {
+    EXPECT_EQ(inputVars.size(), inputVals.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      if (inputVals.at(i) < solver->upperBound(inputVars.at(i))) {
+        inputVals.at(i) += 1;
+        solver->setValue(inputVars.at(i), inputVals.at(i));
+        return i;
+      } else {
+        EXPECT_EQ(inputVals.at(i), solver->upperBound(inputVars.at(i)));
+        inputVals.at(i) = solver->lowerBound(inputVars.at(i));
+      }
+    }
+    return inputVars.size();
+  }
+
+  size_t trySetMinDiffInputVarVal(const std::vector<VarId>& inputVars,
+                                  std::vector<Int>& inputVals) {
+    EXPECT_EQ(inputVars.size(), inputVals.size());
+    Int minDiff = std::numeric_limits<Int>::max();
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      EXPECT_LE(solver->lowerBound(inputVars.at(i)), inputVals.at(i));
+      EXPECT_LE(inputVals.at(i), solver->upperBound(inputVars.at(i)));
+      if (inputVals.at(i) < solver->upperBound(inputVars.at(i))) {
+        minDiff = std::min(
+            minDiff, inputVals.at(i) - solver->lowerBound(inputVars.at(i)));
+      }
+    }
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      const Int diff = inputVals.at(i) - solver->lowerBound(inputVars.at(i));
+      if (diff == minDiff &&
+          inputVals.at(i) < solver->upperBound(inputVars.at(i))) {
+        inputVals.at(i) += 1;
+        solver->setValue(inputVars.at(i), inputVals.at(i));
+        return i;
+      }
+    }
+    return inputVars.size();
+  }
+
   template <class T>
   void testNotifications(T* invariant, NotificationData data) {
     EXPECT_CALL(*invariant, recompute(::testing::_)).Times(AtLeast(1));

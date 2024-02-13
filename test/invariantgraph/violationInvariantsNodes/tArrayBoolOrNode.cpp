@@ -128,15 +128,6 @@ class AbstractArrayBoolOrNodeTest : public NodeTestBase<ArrayBoolOrNode> {
   }
 };
 
-class ArrayBoolOrNodeTest : public AbstractArrayBoolOrNodeTest<
-                                ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(ArrayBoolOrNodeTest, Construction) { construction(); }
-
-TEST_F(ArrayBoolOrNodeTest, Application) { application(); }
-
-TEST_F(ArrayBoolOrNodeTest, Propagation) { propagation(); }
-
 class ArrayBoolOrReifNodeTest
     : public AbstractArrayBoolOrNodeTest<ViolationInvariantType::REIFIED> {};
 
