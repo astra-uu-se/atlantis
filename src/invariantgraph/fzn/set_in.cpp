@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/set_in.hpp"
 
 #include "../parseHelper.hpp"
@@ -7,11 +5,19 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool set_in(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
+bool set_in(FznInvariantGraph& invariantGraph, VarNodeId varNodeId,
+            std::vector<Int>&& values, VarNodeId reified) {
+  invariantGraph.addInvariantNode(
+      std::make_unique<SetInNode>(varNodeId, std::move(values), reified));
+  return true;
+}
+
+bool set_in(FznInvariantGraph& invariantGraph, const fznparser::IntArg& var,
             const fznparser::IntSetArg& b) {
   std::vector<Int> values = b.toParameter().elements();
   invariantGraph.addInvariantNode(std::make_unique<SetInNode>(
-      invariantGraph.createVarNodeFromFzn(a, false), std::move(values), true));
+      invariantGraph.createVarNodeFromFzn(var, false), std::move(values),
+      true));
   return true;
 }
 

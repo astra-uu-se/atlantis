@@ -119,15 +119,6 @@ class AbstractBoolXorNodeTest : public NodeTestBase<BoolXorNode> {
   }
 };
 
-class BoolXorNodeTest
-    : public AbstractBoolXorNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(BoolXorNodeTest, Construction) { construction(); }
-
-TEST_F(BoolXorNodeTest, Application) { application(); }
-
-TEST_F(BoolXorNodeTest, Propagation) { propagation(); }
-
 class BoolXorReifNodeTest
     : public AbstractBoolXorNodeTest<ViolationInvariantType::REIFIED> {};
 

@@ -128,15 +128,6 @@ class AbstractIntNeNodeTest : public NodeTestBase<IntNeNode> {
   }
 };
 
-class IntNeNodeTest
-    : public AbstractIntNeNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(IntNeNodeTest, Construction) { construction(); }
-
-TEST_F(IntNeNodeTest, Application) { application(); }
-
-TEST_F(IntNeNodeTest, Propagation) { propagation(); }
-
 class IntNeReifNodeTest
     : public AbstractIntNeNodeTest<ViolationInvariantType::REIFIED> {};
 

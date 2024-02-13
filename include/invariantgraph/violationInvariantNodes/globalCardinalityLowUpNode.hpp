@@ -8,7 +8,7 @@
 #include "propagation/invariants/linear.hpp"
 #include "propagation/views/notEqualConst.hpp"
 #include "propagation/violationInvariants/equal.hpp"
-#include "propagation/violationInvariants/globalCardinalityConst.hpp"
+#include "propagation/violationInvariants/globalCardinalityLowUp.hpp"
 #include "propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::invariantgraph {

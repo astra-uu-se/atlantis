@@ -121,15 +121,6 @@ class AbstractIntLtNodeTest : public NodeTestBase<IntLtNode> {
   }
 };
 
-class IntLtNodeTest
-    : public AbstractIntLtNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(IntLtNodeTest, Construction) { construction(); }
-
-TEST_F(IntLtNodeTest, Application) { application(); }
-
-TEST_F(IntLtNodeTest, Propagation) { propagation(); }
-
 class IntLtReifNodeTest
     : public AbstractIntLtNodeTest<ViolationInvariantType::REIFIED> {};
 

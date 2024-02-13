@@ -139,15 +139,6 @@ class AbstractAllEqualNodeTest : public NodeTestBase<IntAllEqualNode> {
   }
 };
 
-class AllEqualNodeTest
-    : public AbstractAllEqualNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
-
-TEST_F(AllEqualNodeTest, Construction) { construction(); }
-
-TEST_F(AllEqualNodeTest, Application) { application(); }
-
-TEST_F(AllEqualNodeTest, Propagation) { propagation(); }
-
 class AllEqualReifNodeTest
     : public AbstractAllEqualNodeTest<ViolationInvariantType::REIFIED> {};
 

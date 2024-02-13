@@ -47,30 +47,36 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
       invariantGraph.createVarNodes(inputs, false);
 
   std::vector<VarNodeId> countVarNodeIds =
-      invariantGraph.createVarNodes(counts, false);
+      invariantGraph.createVarNodes(counts, true);
 
   std::vector<VarNodeId> outputVarNodeIds;
   outputVarNodeIds.reserve(counts.size());
-  for (size_t i = 0; i < counts.size(); ++i) {
-    outputVarNodeIds.push_back(invariantGraph.createVarNode(
-        SearchDomain(0, static_cast<Int>(counts.size())), true, true));
-  }
 
   std::vector<VarNodeId> violationVarNodeIds;
-  violationVarNodeIds.reserve(counts.size() + 1);
-  for (size_t i = 0; i <= counts.size(); ++i) {
-    violationVarNodeIds.push_back(
+  violationVarNodeIds.reserve(inputs.size() + counts.size() + 1);
+
+  for (VarNodeId countId : countVarNodeIds) {
+    outputVarNodeIds.emplace_back(invariantGraph.createVarNode(
+        SearchDomain(0, static_cast<Int>(counts.size())), true, true));
+
+    violationVarNodeIds.emplace_back(
         invariantGraph.createVarNode(SearchDomain(0, 1), false, true));
+
+    int_eq(invariantGraph, countId, outputVarNodeIds.back(),
+           violationVarNodeIds.back());
   }
 
-  for (size_t i = 0; i < counts.size(); ++i) {
-    int_eq(invariantGraph, countVarNodeIds.at(i), outputVarNodeIds.at(i),
-           violationVarNodeIds.at(i));
+  for (VarNodeId inputId : inputVarNodeIds) {
+    violationVarNodeIds.emplace_back(
+        invariantGraph.createVarNode(SearchDomain(0, 1), false, true));
+
+    set_in(invariantGraph, inputId, std::vector<Int>(cover),
+           violationVarNodeIds.back());
   }
 
-  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityClosedNode>(
-      std::move(inputVarNodeIds), std::move(cover), std::move(outputVarNodeIds),
-      violationVarNodeIds.back()));
+  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
+      std::move(inputVarNodeIds), std::move(cover),
+      std::move(outputVarNodeIds)));
 
   return array_bool_and(invariantGraph, std::move(violationVarNodeIds),
                         reified);
