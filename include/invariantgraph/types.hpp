@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <string>
 
 #include "../types.hpp"
 
@@ -102,6 +103,13 @@ struct InvariantGraphOutputVarArray {
   std::string identifier;
   std::vector<Int> indexSetSizes;
   std::vector<invariantgraph::VarNodeId> varNodeIds;
+
+  InvariantGraphOutputVarArray(
+      std::string identifier, std::vector<Int> indexSetSizes,
+      std::vector<invariantgraph::VarNodeId> varNodeIds)
+      : identifier(identifier),
+        indexSetSizes(indexSetSizes),
+        varNodeIds(varNodeIds) {}
 };
 
 }  // namespace atlantis::invariantgraph

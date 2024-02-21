@@ -35,7 +35,6 @@ struct InvariantId;  // forward declare
 struct VarId;
 struct VarIdBase : public Id {
   VarIdBase() : Id() {}
-  VarIdBase(const VarIdBase&) = default;
   VarIdBase(size_t i) : Id(i) {}
   VarIdBase(const Id& t_id) : Id(t_id.id) {}
   VarIdBase(const InvariantId&) = delete;

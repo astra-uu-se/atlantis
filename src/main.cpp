@@ -14,7 +14,6 @@
  * @param duration The reference to the value that holds the duration.
  * @return std::istream& The modified input stream.
  */
-std::istream& operator>>(std::istream& is, std::chrono::milliseconds& duration);
 atlantis::logging::Level getLogLevel(cxxopts::ParseResult& result);
 
 int main(int argc, char* argv[]) {
@@ -35,7 +34,7 @@ int main(int argc, char* argv[]) {
       (
         "t,time-limit",
         "Wall time limit in milliseconds.",
-        cxxopts::value<std::chrono::milliseconds>()->default_value("30000") // 30 seconds
+        cxxopts::value<long>()->default_value("30000") // 30 seconds
       )
       (
         "r,seed",
@@ -81,7 +80,7 @@ int main(int argc, char* argv[]) {
     std::optional<std::chrono::milliseconds> timeout = [&] {
       if (result.count("time-limit") == 1) {
         return std::optional<std::chrono::milliseconds>{
-            result["time-limit"].as<std::chrono::milliseconds>()};
+            std::chrono::milliseconds(result["time-limit"].as<long>())};
       } else {
         return std::optional<std::chrono::milliseconds>{};
       }
@@ -132,14 +131,4 @@ atlantis::logging::Level getLogLevel(cxxopts::ParseResult& result) {
     default:
       throw cxxopts::OptionException("The log level should be 0, 1, 2 or 3.");
   }
-}
-
-std::istream& operator>>(std::istream& is,
-                         std::chrono::milliseconds& duration) {
-  long x;
-  auto& is2 = is >> x;
-
-  duration = std::chrono::milliseconds(x);
-
-  return is2;
 }
