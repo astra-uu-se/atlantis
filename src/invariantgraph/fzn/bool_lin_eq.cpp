@@ -23,9 +23,7 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     return true;
   }
 
-  const VarNodeId outputVarNodeId =
-      invariantGraph.createVarNode(SearchDomain(sum, sum), true, true);
-  invariantGraph.varNode(outputVarNodeId).shouldEnforceDomain(true);
+  const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
 
   invariantGraph.addInvariantNode(std::make_unique<BoolLinearNode>(
       std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId));
@@ -51,8 +49,6 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     return true;
   }
 
-  invariantGraph.varNode(outputVarNodeId).shouldEnforceDomain(true);
-
   invariantGraph.addInvariantNode(std::make_unique<BoolLinearNode>(
       std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId));
 
@@ -64,12 +60,12 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
                  const fznparser::IntArg& outputVar) {
   if (outputVar.isFixed()) {
     return bool_lin_eq(invariantGraph, std::move(coeffs),
-                       invariantGraph.createVarNodes(inputs, false),
+                       invariantGraph.inputVarNodes(inputs),
                        outputVar.toParameter());
   }
   return bool_lin_eq(invariantGraph, std::move(coeffs),
-                     invariantGraph.createVarNodes(inputs, false),
-                     invariantGraph.createVarNodeFromFzn(outputVar, true));
+                     invariantGraph.inputVarNodes(inputs),
+                     invariantGraph.defineVarNode(outputVar));
 }
 
 bool bool_lin_eq(FznInvariantGraph& invariantGraph,

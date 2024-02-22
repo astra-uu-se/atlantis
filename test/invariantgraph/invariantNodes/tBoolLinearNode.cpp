@@ -29,11 +29,11 @@ class BoolLinearNodeTest : public NodeTestBase<BoolLinearNode> {
     inputs.reserve(numInputs);
     coeffs.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
-      inputs.push_back(createBoolVarNode("input" + std::to_string(i)));
+      inputs.push_back(defineBoolVarNode("input" + std::to_string(i)));
       coeffs.push_back((i + 1) * (i % 2 == 0 ? -1 : 1));
     }
 
-    output = createIntVarNode(-numInputs, numInputs, "output", true);
+    output = defineIntVarNode(-numInputs, numInputs, "output");
 
     createInvariantNode(std::vector<Int>(coeffs),
                         std::vector<VarNodeId>(inputs), output);

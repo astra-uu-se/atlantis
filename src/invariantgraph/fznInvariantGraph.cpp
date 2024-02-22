@@ -73,32 +73,27 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
     _objectiveVarNodeId = varNodeId(modelObjective.identifier());
     if (_objectiveVarNodeId == NULL_NODE_ID) {
       if (std::holds_alternative<fznparser::BoolVar>(modelObjective)) {
-        _objectiveVarNodeId = createVarNodeFromFzn(
-            std::get<fznparser::BoolVar>(modelObjective), true);
+        _objectiveVarNodeId =
+            defineVarNode(std::get<fznparser::BoolVar>(modelObjective));
       } else if (std::holds_alternative<fznparser::IntVar>(modelObjective)) {
-        _objectiveVarNodeId = createVarNodeFromFzn(
-            std::get<fznparser::IntVar>(modelObjective), true);
+        _objectiveVarNodeId =
+            defineVarNode(std::get<fznparser::IntVar>(modelObjective));
       } else {
-        throw FznException("Objective variable is not a BoolVar or IntVar: ");
+        throw FznException("Objective variable is not a BoolVar or IntVar");
       }
     }
   }
 }
 
-VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::BoolVar& var,
-                                                  bool isDefinedVar) {
+VarNodeId FznInvariantGraph::inputVarNode(const fznparser::BoolVar& var) {
   VarNodeId nId(NULL_NODE_ID);
   if (var.isFixed()) {
-    if (var.identifier().empty()) {
-      nId = createVarNode(var.lowerBound(), isDefinedVar);
-    } else {
-      nId = createVarNode(var.lowerBound(), var.identifier(), isDefinedVar);
-    }
-  } else if (var.identifier().empty()) {
-    nId = createVarNode(SearchDomain(0, 1), false, isDefinedVar);
+    nId = inputBoolVarNode(var.lowerBound());
+  } else if (!var.identifier().empty()) {
+    nId = inputBoolVarNode(var.identifier());
   } else {
-    nId = createVarNode(SearchDomain(0, 1), false, var.identifier(),
-                        isDefinedVar);
+    throw FznException(
+        "Input BoolVar must be a parameter or have an identifier");
   }
 
   if (var.isOutput() && !var.identifier().empty() &&
@@ -110,37 +105,56 @@ VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::BoolVar& var,
   return nId;
 }
 
-VarNodeId FznInvariantGraph::createVarNodeFromFzn(
-    std::reference_wrapper<const fznparser::BoolVar> ref, bool isDefinedVar) {
-  return createVarNodeFromFzn(ref.get(), isDefinedVar);
+VarNodeId FznInvariantGraph::inputVarNode(
+    std::reference_wrapper<const fznparser::BoolVar> ref) {
+  return inputVarNode(ref.get());
 }
 
-VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::BoolArg& arg,
-                                                  bool isDefinedVar) {
-  return arg.isParameter() ? createVarNode(arg.parameter(), isDefinedVar)
-                           : createVarNodeFromFzn(arg.var(), isDefinedVar);
+VarNodeId FznInvariantGraph::inputVarNode(const fznparser::BoolArg& arg) {
+  return arg.isParameter() ? inputBoolVarNode(arg.parameter())
+                           : inputVarNode(arg.var());
 }
 
-VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::IntVar& var,
-                                                  bool isDefinedVar) {
+VarNodeId FznInvariantGraph::defineVarNode(const fznparser::BoolVar& var) {
   VarNodeId nId(NULL_NODE_ID);
   if (var.isFixed()) {
-    if (var.identifier().empty())
-      nId = createVarNode(var.lowerBound(), isDefinedVar);
-    else {
-      nId = createVarNode(var.lowerBound(), var.identifier(), isDefinedVar);
-    }
+    nId = var.identifier().empty()
+              ? defineBoolVarNode(var.lowerBound())
+              : defineBoolVarNode(var.lowerBound(), var.identifier());
+  } else if (!var.identifier().empty()) {
+    nId = defineBoolVarNode(var.identifier());
   } else {
-    SearchDomain domain =
-        var.domain().isInterval()
-            ? SearchDomain(var.domain().lowerBound(), var.domain().upperBound())
-            : SearchDomain(var.domain().elements());
-    if (var.identifier().empty()) {
-      nId = createVarNode(std::move(domain), true, isDefinedVar);
-    } else {
-      nId = createVarNode(std::move(domain), true, var.identifier(),
-                          isDefinedVar);
-    }
+    throw FznException(
+        "Input BoolVar must be a parameter or have an identifier");
+  }
+
+  if (var.isOutput() && !var.identifier().empty() &&
+      !_outputIdentifiers.contains(var.identifier())) {
+    _outputIdentifiers.emplace(var.identifier());
+    _outputBoolVarNodeIds.emplace_back(nId);
+  }
+  return nId;
+}
+
+VarNodeId FznInvariantGraph::defineVarNode(
+    std::reference_wrapper<const fznparser::BoolVar> ref) {
+  return defineVarNode(ref.get());
+}
+
+VarNodeId FznInvariantGraph::defineVarNode(const fznparser::BoolArg& arg) {
+  return arg.isParameter() ? defineBoolVarNode(arg.parameter())
+                           : defineVarNode(arg.var());
+}
+
+VarNodeId FznInvariantGraph::inputVarNode(const fznparser::IntVar& var) {
+  VarNodeId nId(NULL_NODE_ID);
+  if (var.isFixed()) {
+    nId = inputIntVarNode(var.lowerBound());
+  } else if (!var.identifier().empty()) {
+    nId = inputIntVarNode(var.identifier());
+  } else {
+    throw FznException(
+        "Input IntVar must be a parameter or have an identifier");
   }
 
   if (var.isOutput() && !var.identifier().empty() &&
@@ -152,32 +166,65 @@ VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::IntVar& var,
   return nId;
 }
 
-VarNodeId FznInvariantGraph::createVarNodeFromFzn(
-    std::reference_wrapper<const fznparser::IntVar> ref, bool isDefinedVar) {
-  return createVarNodeFromFzn(ref.get(), isDefinedVar);
+VarNodeId FznInvariantGraph::inputVarNode(
+    std::reference_wrapper<const fznparser::IntVar> ref) {
+  return inputVarNode(ref.get());
 }
 
-VarNodeId FznInvariantGraph::createVarNodeFromFzn(const fznparser::IntArg& arg,
-                                                  bool isDefinedVar) {
-  return arg.isParameter()
-             ? createVarNode(static_cast<Int>(arg.parameter()), isDefinedVar)
-             : createVarNodeFromFzn(arg.var(), isDefinedVar);
+VarNodeId FznInvariantGraph::inputVarNode(const fznparser::IntArg& arg) {
+  return arg.isParameter() ? inputIntVarNode(arg.parameter())
+                           : inputVarNode(arg.var());
 }
 
-std::vector<VarNodeId> FznInvariantGraph::createVarNodes(
-    const fznparser::BoolVarArray& array, bool areDefinedVars) {
+VarNodeId FznInvariantGraph::defineVarNode(const fznparser::IntVar& var) {
+  VarNodeId nId(NULL_NODE_ID);
+  if (var.isFixed()) {
+    nId = var.identifier().empty()
+              ? defineIntVarNode(var.lowerBound())
+              : defineIntVarNode(var.lowerBound(), var.identifier());
+  } else if (!var.identifier().empty()) {
+    nId = defineIntVarNode(
+        var.domain().isInterval()
+            ? SearchDomain(var.domain().lowerBound(), var.domain().upperBound())
+            : SearchDomain(var.domain().elements()),
+        var.identifier());
+  } else {
+    throw FznException(
+        "Input IntVar must be a parameter or have an identifier");
+  }
+
+  if (var.isOutput() && !var.identifier().empty() &&
+      !_outputIdentifiers.contains(var.identifier())) {
+    _outputIdentifiers.emplace(var.identifier());
+    _outputIntVarNodeIds.emplace_back(nId);
+  }
+
+  return nId;
+}
+
+VarNodeId FznInvariantGraph::defineVarNode(
+    std::reference_wrapper<const fznparser::IntVar> ref) {
+  return defineVarNode(ref.get());
+}
+
+VarNodeId FznInvariantGraph::defineVarNode(const fznparser::IntArg& arg) {
+  return arg.isParameter() ? defineIntVarNode(static_cast<Int>(arg.parameter()))
+                           : defineVarNode(arg.var());
+}
+
+std::vector<VarNodeId> FznInvariantGraph::inputVarNodes(
+    const fznparser::BoolVarArray& array) {
   std::vector<VarNodeId> varNodeIds;
   varNodeIds.reserve(array.size());
 
   for (size_t i = 0; i < array.size(); ++i) {
     varNodeIds.emplace_back(
         std::holds_alternative<bool>(array.at(i))
-            ? createVarNode(std::get<bool>(array.at(i)), areDefinedVars)
-            : createVarNodeFromFzn(
+            ? inputBoolVarNode(std::get<bool>(array.at(i)))
+            : defineVarNode(
                   std::get<std::reference_wrapper<const fznparser::BoolVar>>(
                       array.at(i))
-                      .get(),
-                  areDefinedVars));
+                      .get()));
   }
 
   if (array.isOutput() && !array.identifier().empty() &&
@@ -190,20 +237,69 @@ std::vector<VarNodeId> FznInvariantGraph::createVarNodes(
   return varNodeIds;
 }
 
-std::vector<VarNodeId> FznInvariantGraph::createVarNodes(
-    const fznparser::IntVarArray& array, bool areDefinedVars) {
+std::vector<VarNodeId> FznInvariantGraph::defineVarNodes(
+    const fznparser::BoolVarArray& array) {
+  std::vector<VarNodeId> varNodeIds;
+  varNodeIds.reserve(array.size());
+
+  for (size_t i = 0; i < array.size(); ++i) {
+    varNodeIds.emplace_back(
+        std::holds_alternative<bool>(array.at(i))
+            ? defineBoolVarNode(std::get<bool>(array.at(i)))
+            : defineVarNode(
+                  std::get<std::reference_wrapper<const fznparser::BoolVar>>(
+                      array.at(i))
+                      .get()));
+  }
+
+  if (array.isOutput() && !array.identifier().empty() &&
+      !_outputIdentifiers.contains(array.identifier())) {
+    _outputIdentifiers.emplace(array.identifier());
+    _outputBoolVarArrays.emplace_back(array.identifier(),
+                                      array.outputIndexSetSizes(), varNodeIds);
+  }
+
+  return varNodeIds;
+}
+
+std::vector<VarNodeId> FznInvariantGraph::inputVarNodes(
+    const fznparser::IntVarArray& array) {
   std::vector<VarNodeId> varNodeIds;
   varNodeIds.reserve(array.size());
 
   for (size_t i = 0; i < array.size(); ++i) {
     varNodeIds.emplace_back(
         std::holds_alternative<Int>(array.at(i))
-            ? createVarNode(std::get<Int>(array.at(i)), areDefinedVars)
-            : createVarNodeFromFzn(
+            ? inputIntVarNode(std::get<Int>(array.at(i)))
+            : defineVarNode(
                   std::get<std::reference_wrapper<const fznparser::IntVar>>(
                       array.at(i))
-                      .get(),
-                  areDefinedVars));
+                      .get()));
+  }
+
+  if (array.isOutput() && !array.identifier().empty() &&
+      !_outputIdentifiers.contains(array.identifier())) {
+    _outputIdentifiers.emplace(array.identifier());
+    _outputIntVarArrays.emplace_back(array.identifier(),
+                                     array.outputIndexSetSizes(), varNodeIds);
+  }
+
+  return varNodeIds;
+}
+
+std::vector<VarNodeId> FznInvariantGraph::defineVarNodes(
+    const fznparser::IntVarArray& array) {
+  std::vector<VarNodeId> varNodeIds;
+  varNodeIds.reserve(array.size());
+
+  for (size_t i = 0; i < array.size(); ++i) {
+    varNodeIds.emplace_back(
+        std::holds_alternative<Int>(array.at(i))
+            ? defineIntVarNode(std::get<Int>(array.at(i)))
+            : defineVarNode(
+                  std::get<std::reference_wrapper<const fznparser::IntVar>>(
+                      array.at(i))
+                      .get()));
   }
 
   if (array.isOutput() && !array.identifier().empty() &&
@@ -280,7 +376,7 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId& nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed()) {
+      if (node.hasDomain() && node.isFixed()) {
         fznArray.vars.emplace_back(node.constantValue().value());
       } else {
         fznArray.vars.emplace_back(node.varId());

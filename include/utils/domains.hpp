@@ -63,8 +63,6 @@ class IntervalDomain : public Domain {
   Int _lb;
   Int _ub;
 
-  std::vector<Int> _values;
-
  public:
   IntervalDomain(Int lb, Int ub);
 

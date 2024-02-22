@@ -33,13 +33,13 @@ class IntLinearNodeTest : public NodeTestBase<IntLinearNode> {
     const Int lb = -2;
     const Int ub = 2;
     for (Int i = 0; i < numInputs; ++i) {
-      inputs.push_back(createIntVarNode(lb, ub, "input" + std::to_string(i)));
+      inputs.push_back(defineIntVarNode(lb, ub, "input" + std::to_string(i)));
       coeffs.push_back((i + 1) * (i % 2 == 0 ? -1 : 1));
       minSum += std::min(lb * coeffs.back(), ub * coeffs.back());
       maxSum += std::max(lb * coeffs.back(), ub * coeffs.back());
     }
 
-    output = createIntVarNode(minSum, maxSum, "output", true);
+    output = defineIntVarNode(minSum, maxSum, "output");
 
     createInvariantNode(std::vector<Int>(coeffs),
                         std::vector<VarNodeId>(inputs), output);

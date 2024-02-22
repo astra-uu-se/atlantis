@@ -32,14 +32,14 @@ class AbstractAllEqualNodeTest : public NodeTestBase<IntAllEqualNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVarNode(5, 10, "a");
-    b = createIntVarNode(2, 7, "b");
-    c = createIntVarNode(2, 7, "c");
-    d = createIntVarNode(2, 7, "d");
+    a = defineIntVarNode(5, 10, "a");
+    b = defineIntVarNode(2, 7, "b");
+    c = defineIntVarNode(2, 7, "c");
+    d = defineIntVarNode(2, 7, "d");
 
     std::vector<VarNodeId> inputVec{a, b, c, d};
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = createBoolVarNode("reified", true);
+      reified = defineBoolVarNode("reified");
       createInvariantNode(std::move(inputVec), reified);
     } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
       createInvariantNode(std::move(inputVec), true);

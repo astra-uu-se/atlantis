@@ -31,18 +31,18 @@ bool array_bool_or(FznInvariantGraph& invariantGraph,
     }
   }
 
-  std::vector<VarNodeId> varNodeIds =
-      invariantGraph.createVarNodes(boolVarArray, false);
+  std::vector<VarNodeId> inputVarNodeIds =
+      invariantGraph.inputVarNodes(boolVarArray);
 
-  std::vector<VarNodeId> prunedVars;
-  prunedVars.reserve(varNodeIds.size() - fixedValues.size());
-  for (const VarNodeId& varNodeId : varNodeIds) {
+  std::vector<VarNodeId> prunedInputVarNodeIds;
+  prunedInputVarNodeIds.reserve(inputVarNodeIds.size() - fixedValues.size());
+  for (const VarNodeId& varNodeId : inputVarNodeIds) {
     if (!invariantGraph.varNode(varNodeId).isFixed()) {
-      prunedVars.emplace_back(varNodeId);
+      prunedInputVarNodeIds.emplace_back(varNodeId);
     }
   }
 
-  if (prunedVars.empty()) {
+  if (prunedInputVarNodeIds.empty()) {
     // TODO: throw exception?
     return true;
   }
@@ -50,13 +50,13 @@ bool array_bool_or(FznInvariantGraph& invariantGraph,
   if (reified.isFixed()) {
     invariantGraph.addInvariantNode(
         std::make_unique<invariantgraph::ArrayBoolOrNode>(
-            std::move(varNodeIds), reified.toParameter()));
+            std::move(inputVarNodeIds), reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolOrNode>(
-          std::move(varNodeIds),
-          invariantGraph.createVarNodeFromFzn(reified.var(), true)));
+          std::move(inputVarNodeIds),
+          invariantGraph.defineVarNode(reified.var())));
   return true;
 }
 

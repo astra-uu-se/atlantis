@@ -35,7 +35,7 @@ bool makeCircuitImplicitNode(FznInvariantGraph& invariantGraph,
   }
   invariantGraph.addImplicitConstraintNode(
       std::make_unique<CircuitImplicitNode>(
-          invariantGraph.createVarNodes(inputs, true)));
+          invariantGraph.defineVarNodes(inputs)));
   return true;
 }
 

@@ -36,15 +36,15 @@ class AbstractAllDifferentNodeTest : public NodeTestBase<AllDifferentNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVarNode(5, 10, "a");
-    b = createIntVarNode(2, 7, "b");
-    c = createIntVarNode(2, 7, "c");
-    d = createIntVarNode(2, 7, "d");
+    a = defineIntVarNode(5, 10, "a");
+    b = defineIntVarNode(2, 7, "b");
+    c = defineIntVarNode(2, 7, "c");
+    d = defineIntVarNode(2, 7, "d");
 
     std::vector<VarNodeId> inputVec{a, b, c, d};
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = createBoolVarNode("reified", true);
+      reified = defineBoolVarNode("reified");
       createInvariantNode(std::move(inputVec), reified);
     } else {
       if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
@@ -176,10 +176,10 @@ TEST_F(AllDifferentTrueNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentTrueNodeTest, Propagation) { propagation(); }
 
-TEST_F(AllDifferentTrueNodeTest, pruneParameters) {
-  std::vector<VarNodeId> inputs{createIntVarNode(7), a, createIntVarNode(10), b,
-                                createIntVarNode(6), c, createIntVarNode(9),  d,
-                                createIntVarNode(5)};
+TEST_F(AllDifferentNodeTest, pruneParameters) {
+  std::vector<VarNodeId> inputs{defineIntVarNode(7), a, defineIntVarNode(10), b,
+                                defineIntVarNode(6), c, defineIntVarNode(9),  d,
+                                defineIntVarNode(5)};
 
   const InvariantNodeId invNodeId = _invariantGraph->addInvariantNode(
       std::make_unique<AllDifferentNode>(std::move(inputs), true));
@@ -198,9 +198,9 @@ TEST_F(AllDifferentTrueNodeTest, pruneParameters) {
   EXPECT_EQ(allDiffNode.staticInputVarNodeIds(), expectedVars);
 
   for (const auto& varNodeId : allDiffNode.staticInputVarNodeIds()) {
-    EXPECT_EQ(varNode(varNodeId).domain().lowerBound(), 3);
-    EXPECT_EQ(varNode(varNodeId).domain().upperBound(), 4);
-    EXPECT_EQ(varNode(varNodeId).domain().size(), 2);
+    EXPECT_EQ(varNode(varNodeId).lowerBound(), 3);
+    EXPECT_EQ(varNode(varNodeId).upperBound(), 4);
+    EXPECT_EQ(varNode(varNodeId).constDomain().size(), 2);
   }
 }
 }  // namespace atlantis::testing

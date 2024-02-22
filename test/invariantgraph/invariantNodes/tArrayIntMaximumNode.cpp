@@ -16,10 +16,10 @@ class ArrayIntMaximumTestNode : public NodeTestBase<ArrayIntMaximumNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = createIntVarNode(-5, 0, "x1");
-    x2 = createIntVarNode(-2, 2, "x2");
-    x3 = createIntVarNode(0, 5, "x3");
-    output = createIntVarNode(0, 10, "output", true);
+    x1 = defineIntVarNode(-5, 0, "x1");
+    x2 = defineIntVarNode(-2, 2, "x2");
+    x3 = defineIntVarNode(0, 5, "x3");
+    output = defineIntVarNode(0, 10, "output");
 
     std::vector<VarNodeId> inputs{x1, x2, x3};
 

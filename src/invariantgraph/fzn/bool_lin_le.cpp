@@ -33,11 +33,10 @@ bool bool_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     return true;
   }
 
-  return bool_lin_eq(
-      invariantGraph, std::move(coeffs),
-      invariantGraph.createVarNodes(inputs, false),
-      invariantGraph.createVarNode(
-          SearchDomain(std::numeric_limits<Int>::min(), bound), true, true));
+  return bool_lin_eq(invariantGraph, std::move(coeffs),
+                     invariantGraph.inputVarNodes(inputs),
+                     invariantGraph.defineIntVarNode(
+                         SearchDomain(std::numeric_limits<Int>::min(), bound)));
 }
 
 bool bool_lin_le(FznInvariantGraph& invariantGraph,

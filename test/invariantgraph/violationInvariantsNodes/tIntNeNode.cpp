@@ -26,10 +26,10 @@ class AbstractIntNeNodeTest : public NodeTestBase<IntNeNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVarNode(5, 10, "a");
-    b = createIntVarNode(2, 7, "b");
+    a = defineIntVarNode(5, 10, "a");
+    b = defineIntVarNode(2, 7, "b");
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = createBoolVarNode("reified", true);
+      reified = defineBoolVarNode("reified");
       createInvariantNode(a, b, reified);
     } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
       createInvariantNode(a, b, true);

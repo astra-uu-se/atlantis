@@ -14,9 +14,9 @@ class IntModNodeTest : public NodeTestBase<IntModNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    numerator = createIntVarNode(0, 6, "numerator");
-    denominator = createIntVarNode(1, 10, "denominator");
-    output = createIntVarNode(0, 10, "output", true);
+    numerator = defineIntVarNode(0, 6, "numerator");
+    denominator = defineIntVarNode(1, 10, "denominator");
+    output = defineIntVarNode(0, 10, "output");
 
     createInvariantNode(numerator, denominator, output);
   }

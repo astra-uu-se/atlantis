@@ -124,8 +124,8 @@ BENCHMARK_DEFINE_F(Queens, probe_single_swap)(::benchmark::State& st) {
     ++probes;
     assert(sanity());
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(Queens, probe_all_swap)(::benchmark::State& st) {
@@ -149,8 +149,8 @@ BENCHMARK_DEFINE_F(Queens, probe_all_swap)(::benchmark::State& st) {
       }
     }
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(Queens, solve)(::benchmark::State& st) {
@@ -174,6 +174,7 @@ BENCHMARK_DEFINE_F(Queens, solve)(::benchmark::State& st) {
           }
           const Int oldI = solver->committedValue(queens[i]);
           const Int oldJ = solver->committedValue(queens[j]);
+
           solver->beginMove();
           solver->setValue(queens[i], oldJ);
           solver->setValue(queens[j], oldI);
@@ -219,8 +220,8 @@ BENCHMARK_DEFINE_F(Queens, solve)(::benchmark::State& st) {
 
   st.counters["it_per_s"] =
       ::benchmark::Counter(it, ::benchmark::Counter::kIsRate);
-  st.counters["probes_per_s"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_s"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
   st.counters["solved"] = ::benchmark::Counter(done);
   logDebug(instanceToString());
 }

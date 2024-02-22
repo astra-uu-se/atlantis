@@ -20,15 +20,14 @@ bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId, Int value,
     return int_eq(invariantGraph, varNodeId, value);
   }
 
-  if (!invariantGraph.varNode(varNodeId).domain().contains(value)) {
-    const VarNodeId reifiedVarNodeId =
-        invariantGraph.createVarNodeFromFzn(reified, true);
+  if (!invariantGraph.varNode(varNodeId).inDomain(value)) {
+    const VarNodeId reifiedVarNodeId = invariantGraph.defineVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId).fixValue(false);
     return true;
   }
-  invariantGraph.addInvariantNode(std::make_unique<IntNeNode>(
-      varNodeId, invariantGraph.createVarNodeFromFzn(value, false),
-      invariantGraph.createVarNodeFromFzn(reified, true)));
+  invariantGraph.addInvariantNode(
+      std::make_unique<IntNeNode>(varNodeId, invariantGraph.inputVarNode(value),
+                                  invariantGraph.defineVarNode(reified)));
   return true;
 }
 
@@ -55,7 +54,7 @@ bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId,
     return int_ne(invariantGraph, varNodeId, modelArg.toParameter());
   }
   return int_ne(invariantGraph, varNodeId,
-                invariantGraph.createVarNodeFromFzn(modelArg, false));
+                invariantGraph.inputVarNode(modelArg));
 }
 
 bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId,
@@ -65,7 +64,7 @@ bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId,
     return int_ne(invariantGraph, varNodeId, modelVar.toParameter(), reified);
   }
   return int_ne(invariantGraph, varNodeId,
-                invariantGraph.createVarNodeFromFzn(modelVar, false), reified);
+                invariantGraph.inputVarNode(modelVar), reified);
 }
 
 bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId,
@@ -74,7 +73,7 @@ bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId,
     return int_ne(invariantGraph, varNodeId, modelVar.lowerBound());
   }
   return int_ne(invariantGraph, varNodeId,
-                invariantGraph.createVarNodeFromFzn(modelVar, false));
+                invariantGraph.inputVarNode(modelVar));
 }
 
 bool int_ne(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
@@ -87,15 +86,15 @@ bool int_ne(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
     return true;
   }
   if (a.isFixed()) {
-    return int_ne(invariantGraph, invariantGraph.createVarNodeFromFzn(b, false),
+    return int_ne(invariantGraph, invariantGraph.inputVarNode(b),
                   a.toParameter());
   }
   if (b.isFixed()) {
-    return int_ne(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
+    return int_ne(invariantGraph, invariantGraph.inputVarNode(a),
                   b.toParameter());
   }
-  return int_ne(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
-                invariantGraph.createVarNodeFromFzn(b, false));
+  return int_ne(invariantGraph, invariantGraph.inputVarNode(a),
+                invariantGraph.inputVarNode(b));
 }
 
 bool int_ne(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
@@ -107,21 +106,20 @@ bool int_ne(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
     return int_eq(invariantGraph, a, b);
   }
   if (a.isFixed() && b.isFixed()) {
-    const VarNodeId reifiedVarNodeId =
-        invariantGraph.createVarNodeFromFzn(reified, true);
+    const VarNodeId reifiedVarNodeId = invariantGraph.defineVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId)
         .fixValue(a.toParameter() == b.toParameter());
   }
   if (a.isFixed()) {
-    return int_ne(invariantGraph, invariantGraph.createVarNodeFromFzn(b, false),
+    return int_ne(invariantGraph, invariantGraph.inputVarNode(b),
                   a.toParameter(), reified);
   }
   if (b.isFixed()) {
-    return int_ne(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
+    return int_ne(invariantGraph, invariantGraph.inputVarNode(a),
                   b.toParameter(), reified);
   }
-  return int_ne(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
-                invariantGraph.createVarNodeFromFzn(b, false), reified);
+  return int_ne(invariantGraph, invariantGraph.inputVarNode(a),
+                invariantGraph.inputVarNode(b), reified);
 }
 
 bool int_ne(FznInvariantGraph& invariantGraph,

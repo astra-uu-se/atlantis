@@ -13,8 +13,7 @@ bool fzn_count_geq(FznInvariantGraph& invariantGraph,
                    const fznparser::IntArg& needle,
                    const fznparser::IntArg& count) {
   VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  return int_le(invariantGraph,
-                invariantGraph.createVarNodeFromFzn(count, false), output);
+  return int_le(invariantGraph, invariantGraph.inputVarNode(count), output);
 }
 
 bool fzn_count_geq(FznInvariantGraph& invariantGraph,
@@ -29,8 +28,7 @@ bool fzn_count_geq(FznInvariantGraph& invariantGraph,
     return fzn_count_lt(invariantGraph, inputs, needle, count);
   }
   VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  return int_le(invariantGraph,
-                invariantGraph.createVarNodeFromFzn(count, false), output,
+  return int_le(invariantGraph, invariantGraph.inputVarNode(count), output,
                 reified);
 }
 

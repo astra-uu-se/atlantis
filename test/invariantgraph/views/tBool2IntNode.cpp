@@ -13,8 +13,8 @@ class Bool2IntNodeTest : public NodeTestBase<Bool2IntNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    input = createBoolVarNode("input");
-    output = createIntVarNode(0, 1, "output", true);
+    input = defineBoolVarNode("input");
+    output = defineIntVarNode(0, 1, "output");
 
     createInvariantNode(input, output);
   }

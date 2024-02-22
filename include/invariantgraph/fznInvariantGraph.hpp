@@ -59,19 +59,29 @@ class FznInvariantGraph : public InvariantGraph {
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
-  VarNodeId createVarNodeFromFzn(const fznparser::BoolVar&, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(
-      std::reference_wrapper<const fznparser::BoolVar>, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(const fznparser::BoolArg&, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(const fznparser::IntVar&, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(const fznparser::IntArg&, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(
-      std::reference_wrapper<const fznparser::IntVar>, bool isDefinedVar);
+  VarNodeId inputVarNode(const fznparser::BoolVar&);
+  VarNodeId inputVarNode(std::reference_wrapper<const fznparser::BoolVar>);
+  VarNodeId inputVarNode(const fznparser::BoolArg&);
 
-  std::vector<VarNodeId> createVarNodes(const fznparser::BoolVarArray&,
-                                        bool areDefinedVars);
-  std::vector<VarNodeId> createVarNodes(const fznparser::IntVarArray&,
-                                        bool areDefinedVars);
+  VarNodeId defineVarNode(const fznparser::BoolVar&);
+  VarNodeId defineVarNode(std::reference_wrapper<const fznparser::BoolVar>);
+  VarNodeId defineVarNode(const fznparser::BoolArg&);
+
+  std::vector<VarNodeId> inputVarNodes(const fznparser::BoolVarArray&);
+
+  std::vector<VarNodeId> defineVarNodes(const fznparser::BoolVarArray&);
+
+  VarNodeId inputVarNode(const fznparser::IntVar&);
+  VarNodeId inputVarNode(const fznparser::IntArg&);
+  VarNodeId inputVarNode(std::reference_wrapper<const fznparser::IntVar>);
+
+  VarNodeId defineVarNode(const fznparser::IntVar&);
+  VarNodeId defineVarNode(const fznparser::IntArg&);
+  VarNodeId defineVarNode(std::reference_wrapper<const fznparser::IntVar>);
+
+  std::vector<VarNodeId> inputVarNodes(const fznparser::IntVarArray&);
+
+  std::vector<VarNodeId> defineVarNodes(const fznparser::IntVarArray&);
 
   [[nodiscard]] std::vector<FznOutputVar> outputBoolVars() const noexcept;
   [[nodiscard]] std::vector<FznOutputVar> outputIntVars() const noexcept;

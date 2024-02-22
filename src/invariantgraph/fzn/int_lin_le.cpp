@@ -37,11 +37,10 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     return true;
   }
 
-  const VarNodeId outputVarNodeId =
-      invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
+  const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), invariantGraph.createVarNodes(inputs, false),
+      std::move(coeffs), invariantGraph.inputVarNodes(inputs),
       outputVarNodeId));
 
   int_le(invariantGraph, outputVarNodeId, bound);
@@ -67,13 +66,10 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
           "must have a total sum less than 0");
     }
 
-    const auto& [lb, ub] = linBounds(coeffs, inputs);
-
-    const VarNodeId outputVarNodeId =
-        invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
+    const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
 
     invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-        std::move(coeffs), invariantGraph.createVarNodes(inputs, false),
+        std::move(coeffs), invariantGraph.inputVarNodes(inputs),
         outputVarNodeId));
 
     int_le(invariantGraph, outputVarNodeId, bound);
@@ -81,17 +77,15 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     return true;
   }
   if (coeffs.empty()) {
-    const VarNodeId reifiedVarNodeId =
-        invariantGraph.createVarNodeFromFzn(reified, true);
+    const VarNodeId reifiedVarNodeId = invariantGraph.defineVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId).fixValue(bound >= 0);
     return true;
   }
 
-  const VarNodeId outputVarNodeId =
-      invariantGraph.createVarNode(SearchDomain(0, 0), true, true);
+  const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), invariantGraph.createVarNodes(inputs, false),
+      std::move(coeffs), invariantGraph.inputVarNodes(inputs),
       outputVarNodeId));
 
   int_le(invariantGraph, outputVarNodeId, bound);

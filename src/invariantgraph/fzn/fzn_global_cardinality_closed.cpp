@@ -20,15 +20,14 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
                                    const fznparser::IntVarArray& counts) {
   checkInputs(cover, counts);
 
-  std::vector<VarNodeId> inputVarNodeIds =
-      invariantGraph.createVarNodes(inputs, false);
+  std::vector<VarNodeId> inputVarNodeIds = invariantGraph.inputVarNodes(inputs);
   for (VarNodeId varNodeId : inputVarNodeIds) {
     invariantGraph.varNode(varNodeId).removeAllValuesExcept(cover);
   }
 
   invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
-      invariantGraph.createVarNodes(inputs, false), std::move(cover),
-      invariantGraph.createVarNodes(counts, true)));
+      invariantGraph.inputVarNodes(inputs), std::move(cover),
+      invariantGraph.defineVarNodes(counts)));
   return true;
 }
 
@@ -43,9 +42,9 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
                                          std::move(cover), counts);
   }
 
-  std::vector<VarNodeId> inputVarNodeIds =
-      invariantGraph.createVarNodes(inputs, false);
+  std::vector<VarNodeId> inputVarNodeIds = invariantGraph.inputVarNodes(inputs);
 
+  std::vector<VarNodeId> countVarNodeIds = invariantGraph.inputVarNodes(counts);
   std::vector<VarNodeId> countVarNodeIds =
       invariantGraph.createVarNodes(counts, true);
 

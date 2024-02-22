@@ -37,8 +37,8 @@ bool fzn_global_cardinality_low_up(FznInvariantGraph& invariantGraph,
   }
 
   invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
-      invariantGraph.createVarNodes(inputs, false), std::move(cover),
-      std::move(low), std::move(up), true));
+      invariantGraph.inputVarNodes(inputs), std::move(cover), std::move(low),
+      std::move(up), true));
   return true;
 }
 
@@ -57,13 +57,13 @@ bool fzn_global_cardinality_low_up(FznInvariantGraph& invariantGraph,
     }
     invariantGraph.addInvariantNode(
         std::make_unique<GlobalCardinalityLowUpNode>(
-            invariantGraph.createVarNodes(inputs, false), std::move(cover),
+            invariantGraph.inputVarNodes(inputs), std::move(cover),
             std::move(low), std::move(up), reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
-      invariantGraph.createVarNodes(inputs, false), std::move(cover),
-      std::move(low), std::move(up), true));
+      invariantGraph.inputVarNodes(inputs), std::move(cover), std::move(low),
+      std::move(up), true));
   return true;
 }
 

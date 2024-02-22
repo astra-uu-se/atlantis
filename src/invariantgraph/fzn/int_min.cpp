@@ -9,8 +9,7 @@ namespace atlantis::invariantgraph::fzn {
 
 bool int_min(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
              const fznparser::IntArg& b, const fznparser::IntArg& minimum) {
-  const VarNodeId outputVarNodeId =
-      invariantGraph.createVarNodeFromFzn(minimum, true);
+  const VarNodeId outputVarNodeId = invariantGraph.defineVarNode(minimum);
 
   if (a.isFixed() && b.isFixed()) {
     invariantGraph.varNode(outputVarNodeId)
@@ -18,8 +17,8 @@ bool int_min(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<IntMinNode>(
-      invariantGraph.createVarNodeFromFzn(a, false),
-      invariantGraph.createVarNodeFromFzn(b, false), outputVarNodeId));
+      invariantGraph.inputVarNode(a), invariantGraph.inputVarNode(b),
+      outputVarNodeId));
   return true;
 }
 

@@ -11,8 +11,7 @@ namespace atlantis::invariantgraph::fzn {
 bool bool_lt(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b) {
   invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
-      invariantGraph.createVarNodeFromFzn(a, false),
-      invariantGraph.createVarNodeFromFzn(b, false), true));
+      invariantGraph.inputVarNode(a), invariantGraph.inputVarNode(b), true));
   return true;
 }
 
@@ -26,9 +25,8 @@ bool bool_lt(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
   }
 
   invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
-      invariantGraph.createVarNodeFromFzn(a, false),
-      invariantGraph.createVarNodeFromFzn(b, false),
-      invariantGraph.createVarNodeFromFzn(reified.var(), true)));
+      invariantGraph.inputVarNode(a), invariantGraph.inputVarNode(b),
+      invariantGraph.defineVarNode(reified.var())));
 
   return true;
 }

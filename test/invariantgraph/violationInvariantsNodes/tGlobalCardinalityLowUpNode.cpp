@@ -44,9 +44,9 @@ class AbstractGlobalCardinalityLowUpNodeTest
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = createIntVarNode(5, 10, "x1");
-    x2 = createIntVarNode(2, 7, "x2");
-    reified = createBoolVarNode("reified", true);
+    x1 = defineIntVarNode(5, 10, "x1");
+    x2 = defineIntVarNode(2, 7, "x2");
+    reified = defineBoolVarNode("reified");
 
     std::vector<VarNodeId> inputVec{x1, x2};
 
@@ -57,7 +57,7 @@ class AbstractGlobalCardinalityLowUpNodeTest
     std::vector<Int> upVec(up);
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = createBoolVarNode("reified", true);
+      reified = defineBoolVarNode("reified");
       createInvariantNode(std::move(inputVec), std::move(coverVec),
                           std::move(lowVec), std::move(upVec), reified);
     } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {

@@ -43,9 +43,9 @@ bool array_int_element2d(FznInvariantGraph& invariantGraph,
   }
 
   invariantGraph.addInvariantNode(std::make_unique<ArrayElement2dNode>(
-      invariantGraph.createVarNodeFromFzn(idx1, false),
-      invariantGraph.createVarNodeFromFzn(idx2, false), std::move(parMatrix),
-      invariantGraph.createVarNodeFromFzn(output, true), offset1, offset2));
+      invariantGraph.inputVarNode(idx1), invariantGraph.inputVarNode(idx2),
+      std::move(parMatrix), invariantGraph.defineVarNode(output), offset1,
+      offset2));
   return true;
 }
 

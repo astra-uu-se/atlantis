@@ -122,20 +122,16 @@ void verifyAllDifferent(const fznparser::IntVarArray& intVarArray) {
 VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
                           const fznparser::IntVarArray& inputs,
                           const fznparser::IntArg& needle) {
-  SearchDomain domain(0, static_cast<Int>(inputs.size()));
-
-  VarNodeId countVarNodeId =
-      invariantGraph.createVarNode(std::move(domain), true, true);
+  VarNodeId countVarNodeId = invariantGraph.defineIntVarNode();
 
   if (needle.isFixed()) {
-    invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false), needle.toParameter(),
-        countVarNodeId));
+    invariantGraph.addInvariantNode(
+        std::make_unique<IntCountNode>(invariantGraph.inputVarNodes(inputs),
+                                       needle.toParameter(), countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        invariantGraph.createVarNodeFromFzn(needle.var(), false),
-        countVarNodeId));
+        invariantGraph.inputVarNodes(inputs),
+        invariantGraph.inputVarNode(needle.var()), countVarNodeId));
   }
   return countVarNodeId;
 }
@@ -144,17 +140,16 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
                           const fznparser::IntVarArray& inputs,
                           const fznparser::IntArg& needle,
                           const fznparser::IntArg& count) {
-  VarNodeId countVarNodeId = invariantGraph.createVarNodeFromFzn(count, true);
+  VarNodeId countVarNodeId = invariantGraph.defineVarNode(count);
 
   if (needle.isFixed()) {
-    invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false), needle.toParameter(),
-        countVarNodeId));
+    invariantGraph.addInvariantNode(
+        std::make_unique<IntCountNode>(invariantGraph.inputVarNodes(inputs),
+                                       needle.toParameter(), countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        invariantGraph.createVarNodeFromFzn(needle.var(), false),
-        countVarNodeId));
+        invariantGraph.inputVarNodes(inputs),
+        invariantGraph.inputVarNode(needle.var()), countVarNodeId));
   }
   return countVarNodeId;
 }

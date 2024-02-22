@@ -31,16 +31,16 @@ class AbstractBoolClauseNodeTest : public NodeTestBase<BoolClauseNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a1 = createBoolVarNode("a1");
-    a2 = createBoolVarNode("a2");
-    b1 = createBoolVarNode("b1");
-    b2 = createBoolVarNode("b2");
+    a1 = defineBoolVarNode("a1");
+    a2 = defineBoolVarNode("a2");
+    b1 = defineBoolVarNode("b1");
+    b2 = defineBoolVarNode("b2");
 
     std::vector<VarNodeId> as{a1, a2};
     std::vector<VarNodeId> bs{b1, b2};
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = createBoolVarNode("reified", true);
+      reified = defineBoolVarNode("reified");
       createInvariantNode(std::move(as), std::move(bs), reified);
     } else {
       if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {

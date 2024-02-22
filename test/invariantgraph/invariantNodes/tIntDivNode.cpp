@@ -14,9 +14,9 @@ class IntDivNodeTest : public NodeTestBase<IntDivNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    numerator = createIntVarNode(0, 10, "numerator");
-    denominator = createIntVarNode(1, 10, "denominator");
-    output = createIntVarNode(3, 5, "output", true);
+    numerator = defineIntVarNode(0, 10, "numerator");
+    denominator = defineIntVarNode(1, 10, "denominator");
+    output = defineIntVarNode(3, 5, "output");
 
     createInvariantNode(numerator, denominator, output);
   }

@@ -20,15 +20,15 @@ class ArrayVarBoolElementNodeTest : public NodeTestBase<ArrayVarElementNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = createBoolVarNode("x1");
-    x2 = createBoolVarNode("x2");
-    x3 = createBoolVarNode("x3");
+    x1 = defineBoolVarNode("x1");
+    x2 = defineBoolVarNode("x2");
+    x3 = defineBoolVarNode("x3");
 
     std::vector<VarNodeId> varVector{x1, x2, x3};
 
-    idx = createIntVarNode(
+    idx = defineIntVarNode(
         offsetIdx, static_cast<Int>(varVector.size()) - 1 + offsetIdx, "idx");
-    output = createBoolVarNode("output", true);
+    output = defineBoolVarNode("output");
 
     createInvariantNode(idx, std::move(varVector), output, offsetIdx);
   }

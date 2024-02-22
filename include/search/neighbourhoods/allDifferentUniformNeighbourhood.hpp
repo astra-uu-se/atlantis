@@ -20,7 +20,7 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
 
  public:
   AllDifferentUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
-                                   std::vector<Int> domain,
+                                   std::vector<Int>&& domain,
                                    const propagation::SolverBase& solver);
 
   ~AllDifferentUniformNeighbourhood() override = default;

@@ -24,13 +24,13 @@ class AbstractArrayBoolAndNodeTest : public NodeTestBase<ArrayBoolAndNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createBoolVarNode("a");
-    b = createBoolVarNode("b");
+    a = defineBoolVarNode("a");
+    b = defineBoolVarNode("b");
 
     std::vector<VarNodeId> inputs{a, b};
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = createBoolVarNode("reified", true);
+      reified = defineBoolVarNode("reified");
       createInvariantNode(std::move(inputs), reified);
     } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
       createInvariantNode(std::move(inputs), reified);

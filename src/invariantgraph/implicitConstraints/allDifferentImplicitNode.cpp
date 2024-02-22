@@ -27,7 +27,7 @@ AllDifferentImplicitNode::createNeighbourhood(
   if (hasSameDomain) {
     return std::make_shared<
         search::neighbourhoods::AllDifferentUniformNeighbourhood>(
-        std::move(vars), domain.values(), solver);
+        std::move(vars), std::vector<Int>(domain.values()), solver);
   } else {
     Int domainLb = std::numeric_limits<Int>::max();
     Int domainUb = std::numeric_limits<Int>::min();

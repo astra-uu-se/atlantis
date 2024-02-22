@@ -34,9 +34,8 @@ class InvariantNode;   // Forward declaration
 class VarNode {
  private:
   VarNodeId _varNodeId;
-  SearchDomain _domain;
-  const bool _isIntVar;
-  bool _shouldEnforceDomain{false};
+  bool _isIntVar;
+  std::optional<SearchDomain> _domain;
   std::string _identifier;
   propagation::VarId _varId{propagation::NULL_ID};
   propagation::VarId _domainViolationId{propagation::NULL_ID};
@@ -52,7 +51,13 @@ class VarNode {
    *
    * @param domain The domain of this variable.
    */
-  explicit VarNode(VarNodeId, SearchDomain&& domain, bool isIntVar,
+  explicit VarNode(VarNodeId, bool isIntVar, std::string&& identifier = "");
+  /**
+   * Construct a variable node which is not associated with a model variable.
+   *
+   * @param domain The domain of this variable.
+   */
+  explicit VarNode(VarNodeId, bool isIntVar, SearchDomain&& domain,
                    std::string&& identifier = "");
 
   VarNodeId varNodeId() const noexcept;
@@ -88,6 +93,8 @@ class VarNode {
   [[nodiscard]] bool inDomain(Int) const;
   [[nodiscard]] bool inDomain(bool) const;
 
+  void clearDomain() noexcept;
+
   void removeValue(Int);
 
   void fixValue(Int);
@@ -120,8 +127,7 @@ class VarNode {
    * domain violation invariant will be added to the invariant graph for the
    * variable.
    */
-  bool shouldEnforceDomain() const noexcept;
-  bool shouldEnforceDomain(bool) noexcept;
+  bool hasDomain() const noexcept;
 
   /**
    * @return if the bound range of the corresponding IntVar in solver is a

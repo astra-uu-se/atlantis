@@ -13,8 +13,8 @@ class IntAbsNodeTest : public NodeTestBase<IntAbsNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    input = createIntVarNode(5, 10, "input");
-    output = createIntVarNode(2, 7, "output", true);
+    input = defineIntVarNode(5, 10, "input");
+    output = defineIntVarNode(2, 7, "output");
 
     createInvariantNode(input, output);
   }

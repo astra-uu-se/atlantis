@@ -117,8 +117,13 @@ propagation::VarId InvariantNode::makeSolverVar(propagation::SolverBase& solver,
                                                 VarNode& varNode,
                                                 Int initialValue) {
   if (varNode.varId() == propagation::NULL_ID) {
-    varNode.setVarId(
-        solver.makeIntVar(initialValue, initialValue, initialValue));
+    const Int lowerBound =
+        varNode.hasDomain() ? varNode.lowerBound() : initialValue;
+    const Int upperBound =
+        varNode.hasDomain() ? varNode.upperBound() : initialValue;
+    varNode.setVarId(solver.makeIntVar(
+        std::max(lowerBound, std::min(upperBound, initialValue)), lowerBound,
+        upperBound));
   }
   return varNode.varId();
 }

@@ -9,7 +9,10 @@ static bool isInterval(const std::vector<Int>& sortedVals) {
 }
 
 IntervalDomain::IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {
-  assert(lb <= ub);
+  if (lb > ub) {
+    throw std::runtime_error("InterValDomain::InterValDomain: " + std::to_string(lb) + " > " +
+                             std::to_string(ub));
+  }
 }
 
 Int IntervalDomain::lowerBound() const { return _lb; }
@@ -37,12 +40,18 @@ std::vector<DomainEntry> IntervalDomain::relativeComplementIfIntersects(
 }
 
 void IntervalDomain::setLowerBound(Int lb) {
-  assert(lb <= _ub);
+  if (lb > _ub) {
+    throw std::runtime_error("IntervalDomain::setLowerBound: " +
+                             std::to_string(lb) + " > " + std::to_string(_ub));
+  }
   _lb = lb;
 }
 
 void IntervalDomain::setUpperBound(Int ub) {
-  assert(_lb <= ub);
+  if (_lb > ub) {
+    throw std::runtime_error("InterValDomain::setUpperBound: " + std::to_string(_lb) + " > " +
+                             std::to_string(ub));
+  }
   _ub = ub;
 }
 
@@ -50,12 +59,15 @@ void IntervalDomain::intersectWith(Int lb, Int ub) {
   _lb = std::max(lb, _lb);
   _ub = std::min(ub, _ub);
   if (_lb > _ub) {
-    throw std::runtime_error("Empty domain");
+    throw std::runtime_error("IntervalDomain::intersectWith: Empty domain");
   }
 }
 
 void IntervalDomain::fix(Int value) {
-  assert(_lb <= value && value <= _ub);
+  if (value < _lb || _ub < value) {
+    throw std::runtime_error("InterValDomain::fix: value " + std::to_string(value) + " is not in range " +
+                             std::to_string(_lb) + ".." + std::to_string(_ub));
+  }
   _lb = value;
   _ub = value;
 }
@@ -69,8 +81,14 @@ bool IntervalDomain::operator!=(const IntervalDomain& other) const {
 }
 
 SetDomain::SetDomain(std::vector<Int>&& values) : _values(std::move(values)) {
+  if (_values.empty()) {
+    throw std::runtime_error("SetDomain::SetDomain: empty domain");
+  }
   std::sort(_values.begin(), _values.end());
-  assert(_values.empty() || _values.front() <= _values.back());
+  _values.erase(std::unique(_values.begin(), _values.end()), _values.end());
+  if (_values.empty()) {
+    throw std::runtime_error("SetDomain::SetDomain: empty domain");
+  }
 }
 
 SetDomain::SetDomain(const std::vector<Int>& values)
@@ -145,6 +163,9 @@ void SetDomain::remove(Int value) {
   if (it != _values.end()) {
     _values.erase(it);
   }
+  if (_values.empty()) {
+    throw std::runtime_error("SetDomain::remove: Empty domain");
+  }
 }
 
 void SetDomain::removeBelow(Int newMin) {
@@ -156,6 +177,9 @@ void SetDomain::removeBelow(Int newMin) {
     ++offset;
   }
   _values.erase(_values.begin(), _values.begin() + offset);
+  if (_values.empty()) {
+    throw std::runtime_error("SetDomain::removeBelow: Empty domain");
+  }
 }
 
 void SetDomain::removeAbove(Int newMax) {
@@ -168,6 +192,9 @@ void SetDomain::removeAbove(Int newMax) {
     --offset;
   }
   _values.erase(_values.begin() + offset, _values.end());
+  if (_values.empty()) {
+    throw std::runtime_error("SetDomain::removeAbove: Empty domain");
+  }
 }
 
 void SetDomain::remove(const std::vector<Int>& values) {
@@ -185,6 +212,9 @@ void SetDomain::remove(const std::vector<Int>& values) {
       }
       ++i;
     }
+  }
+  if (_values.empty()) {
+    throw std::runtime_error("SetDomain::remove: Empty domain");
   }
 }
 
@@ -208,10 +238,15 @@ void SetDomain::intersectWith(const std::vector<Int>& otherVals) {
     }
   }
   _values = std::move(newValues);
+  if (_values.empty()) {
+    throw std::runtime_error("SetDomain::intersectWith: Empty domain");
+  }
 }
 
 void SetDomain::fix(Int value) {
-  assert(lowerBound() <= value && value <= upperBound());
+  if (!contains(value)) {
+    throw std::runtime_error("SetDomain::fix: value " + std::to_string(value) + " is not in domain");
+  }
   _values = std::vector<Int>{value};
 }
 

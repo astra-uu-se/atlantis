@@ -28,13 +28,10 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
         "than 0");
   }
 
-  const auto& [lb, ub] = linBounds(coeffs, inputs);
-
-  const VarNodeId outputVarNodeId =
-      invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
+  const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), invariantGraph.createVarNodes(inputs, false),
+      std::move(coeffs), invariantGraph.inputVarNodes(inputs),
       outputVarNodeId));
 
   int_ne(invariantGraph, outputVarNodeId, bound);
@@ -53,19 +50,15 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     return int_lin_eq(invariantGraph, std::move(coeffs), inputs, bound);
   }
   if (coeffs.empty()) {
-    const VarNodeId reifiedVarNodeId =
-        invariantGraph.createVarNodeFromFzn(reified, true);
+    const VarNodeId reifiedVarNodeId = invariantGraph.defineVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId).fixValue(bound >= 0);
     return true;
   }
 
-  const auto& [lb, ub] = linBounds(coeffs, inputs);
-
-  const VarNodeId outputVarNodeId =
-      invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
+  const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), invariantGraph.createVarNodes(inputs, false),
+      std::move(coeffs), invariantGraph.inputVarNodes(inputs),
       outputVarNodeId));
 
   int_ne(invariantGraph, outputVarNodeId, bound);

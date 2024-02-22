@@ -14,9 +14,9 @@ class IntMinNodeTest : public NodeTestBase<IntMinNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVarNode(0, 10, "a");
-    b = createIntVarNode(0, 10, "b");
-    output = createIntVarNode(0, 10, "output", true);
+    a = defineIntVarNode(0, 10, "a");
+    b = defineIntVarNode(0, 10, "b");
+    output = defineIntVarNode(0, 10, "output");
 
     createInvariantNode(a, b, output);
   }
