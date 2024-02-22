@@ -224,7 +224,9 @@ std::vector<FznOutputVar> FznInvariantGraph::outputBoolVars() const noexcept {
     if (node.isFixed()) {
       outputVars.emplace_back(node.identifier(), node.constantValue().value());
     } else {
-      outputVars.emplace_back(node.identifier(), node.varId());
+      outputVars.emplace_back(
+          node.identifier(),
+          node.varId());
     }
   }
   return outputVars;
@@ -238,7 +240,9 @@ std::vector<FznOutputVar> FznInvariantGraph::outputIntVars() const noexcept {
     if (node.isFixed()) {
       outputVars.emplace_back(node.identifier(), node.constantValue().value());
     } else {
-      outputVars.emplace_back(node.identifier(), node.varId());
+      outputVars.emplace_back(
+          node.identifier(),
+          node.varId());
     }
   }
   return outputVars;
