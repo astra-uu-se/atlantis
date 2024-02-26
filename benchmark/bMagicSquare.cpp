@@ -142,7 +142,7 @@ class MagicSquare : public ::benchmark::Fixture {
 
 BENCHMARK_DEFINE_F(MagicSquare, probe_single_swap)(::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     const size_t i = distribution(gen);
     assert(i < flat.size());
     const size_t j = distribution(gen);
@@ -161,13 +161,13 @@ BENCHMARK_DEFINE_F(MagicSquare, probe_single_swap)(::benchmark::State& st) {
     assert(sanity());
     ++probes;
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(::benchmark::State& st) {
   int probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
         const Int oldI = solver->committedValue(flat[i]);
@@ -186,8 +186,8 @@ BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(::benchmark::State& st) {
       }
     }
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

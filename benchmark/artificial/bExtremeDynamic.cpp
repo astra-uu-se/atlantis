@@ -82,7 +82,7 @@ class ExtremeDynamic : public ::benchmark::Fixture {
 BENCHMARK_DEFINE_F(ExtremeDynamic, probe_static_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     // Perform move
     solver->beginMove();
     solver->setValue(staticInputVar, staticVarValueDist(gen));
@@ -94,14 +94,14 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_static_var)
 
     ++probes;
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(ExtremeDynamic, probe_single_dynamic_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     solver->beginMove();
     solver->setValue(dynamicInputVars.at(staticVarValueDist(gen)),
                      dynamicVarValueDist(gen));
@@ -113,8 +113,8 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_single_dynamic_var)
 
     ++probes;
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

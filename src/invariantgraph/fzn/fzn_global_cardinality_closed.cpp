@@ -46,9 +46,8 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
   std::vector<VarNodeId> inputVarNodeIds =
       invariantGraph.retrieveVarNodes(inputs);
 
-  std::vector<VarNodeId> countVarNodeIds = invariantGraph.inputVarNodes(counts);
   std::vector<VarNodeId> countVarNodeIds =
-      invariantGraph.createVarNodes(counts, true);
+      invariantGraph.retrieveVarNodes(counts);
 
   std::vector<VarNodeId> outputVarNodeIds;
   outputVarNodeIds.reserve(counts.size());
@@ -57,19 +56,18 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
   violationVarNodeIds.reserve(inputs.size() + counts.size() + 1);
 
   for (VarNodeId countId : countVarNodeIds) {
-    outputVarNodeIds.emplace_back(invariantGraph.createVarNode(
-        SearchDomain(0, static_cast<Int>(counts.size())), true, true));
+    outputVarNodeIds.emplace_back(invariantGraph.retrieveIntVarNode(
+        SearchDomain(0, static_cast<Int>(counts.size())),
+        VarNode::DomainType::NONE));
 
-    violationVarNodeIds.emplace_back(
-        invariantGraph.createVarNode(SearchDomain(0, 1), false, true));
+    violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
 
     int_eq(invariantGraph, countId, outputVarNodeIds.back(),
            violationVarNodeIds.back());
   }
 
   for (VarNodeId inputId : inputVarNodeIds) {
-    violationVarNodeIds.emplace_back(
-        invariantGraph.createVarNode(SearchDomain(0, 1), false, true));
+    violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
 
     set_in(invariantGraph, inputId, std::vector<Int>(cover),
            violationVarNodeIds.back());

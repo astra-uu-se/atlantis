@@ -176,7 +176,7 @@ TEST_F(AllDifferentTrueNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentTrueNodeTest, Propagation) { propagation(); }
 
-TEST_F(AllDifferentNodeTest, pruneParameters) {
+TEST_F(AllDifferentTrueNodeTest, pruneParameters) {
   std::vector<VarNodeId> inputs{
       retrieveIntVarNode(7), a, retrieveIntVarNode(10), b,
       retrieveIntVarNode(6), c, retrieveIntVarNode(9),  d,
