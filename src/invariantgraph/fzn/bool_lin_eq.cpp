@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/bool_lin_eq.hpp"
 
 #include "../parseHelper.hpp"
@@ -23,7 +21,16 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     return true;
   }
 
-  const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
+  const auto& [lb, ub] = linBounds(invariantGraph, coeffs, inputVarNodeIds);
+
+  if (sum < lb || ub < sum) {
+    throw FznArgumentException(
+        "bool_lin_eq constraint, no subset can be equal to " +
+        std::to_string(sum) + ".");
+  }
+
+  const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
+      SearchDomain(sum, sum), VarNode::DomainType::FIXED);
 
   invariantGraph.addInvariantNode(std::make_unique<BoolLinearNode>(
       std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId));
@@ -46,6 +53,8 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
           "0");
     }
     invariantGraph.varNode(outputVarNodeId).fixValue(Int(0));
+    invariantGraph.varNode(outputVarNodeId)
+        .setDomainType(VarNode::DomainType::FIXED);
     return true;
   }
 
@@ -60,12 +69,12 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
                  const fznparser::IntArg& outputVar) {
   if (outputVar.isFixed()) {
     return bool_lin_eq(invariantGraph, std::move(coeffs),
-                       invariantGraph.inputVarNodes(inputs),
+                       invariantGraph.retrieveVarNodes(inputs),
                        outputVar.toParameter());
   }
   return bool_lin_eq(invariantGraph, std::move(coeffs),
-                     invariantGraph.inputVarNodes(inputs),
-                     invariantGraph.defineVarNode(outputVar));
+                     invariantGraph.retrieveVarNodes(inputs),
+                     invariantGraph.retrieveVarNode(outputVar));
 }
 
 bool bool_lin_eq(FznInvariantGraph& invariantGraph,

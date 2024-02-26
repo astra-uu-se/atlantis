@@ -2,7 +2,7 @@
 
 namespace atlantis {
 
-static bool isInterval(const std::vector<Int>& sortedVals) {
+static bool sortedVectorIsInterval(const std::vector<Int>& sortedVals) {
   return !sortedVals.empty() &&
          sortedVals.front() + static_cast<Int>(sortedVals.size()) - 1 ==
              sortedVals.back();
@@ -10,8 +10,8 @@ static bool isInterval(const std::vector<Int>& sortedVals) {
 
 IntervalDomain::IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {
   if (lb > ub) {
-    throw std::runtime_error("InterValDomain::InterValDomain: " + std::to_string(lb) + " > " +
-                             std::to_string(ub));
+    throw std::runtime_error("InterValDomain::InterValDomain: " +
+                             std::to_string(lb) + " > " + std::to_string(ub));
   }
 }
 
@@ -31,6 +31,8 @@ bool IntervalDomain::contains(Int value) const noexcept {
   return _lb <= value && value <= _ub;
 }
 
+bool IntervalDomain::isInterval() const noexcept { return true; }
+
 std::vector<DomainEntry> IntervalDomain::relativeComplementIfIntersects(
     const Int lb, const Int ub) const {
   if (_lb <= lb && ub <= _ub) {
@@ -49,8 +51,8 @@ void IntervalDomain::setLowerBound(Int lb) {
 
 void IntervalDomain::setUpperBound(Int ub) {
   if (_lb > ub) {
-    throw std::runtime_error("InterValDomain::setUpperBound: " + std::to_string(_lb) + " > " +
-                             std::to_string(ub));
+    throw std::runtime_error("InterValDomain::setUpperBound: " +
+                             std::to_string(_lb) + " > " + std::to_string(ub));
   }
   _ub = ub;
 }
@@ -65,7 +67,8 @@ void IntervalDomain::intersectWith(Int lb, Int ub) {
 
 void IntervalDomain::fix(Int value) {
   if (value < _lb || _ub < value) {
-    throw std::runtime_error("InterValDomain::fix: value " + std::to_string(value) + " is not in range " +
+    throw std::runtime_error("InterValDomain::fix: value " +
+                             std::to_string(value) + " is not in range " +
                              std::to_string(_lb) + ".." + std::to_string(_ub));
   }
   _lb = value;
@@ -109,6 +112,10 @@ bool SetDomain::isFixed() const noexcept { return _values.size() == 1; }
 
 bool SetDomain::contains(Int value) const noexcept {
   return std::binary_search(_values.begin(), _values.end(), value);
+}
+
+bool SetDomain::isInterval() const noexcept {
+  return sortedVectorIsInterval(_values);
 }
 
 std::vector<DomainEntry> SetDomain::relativeComplementIfIntersects(
@@ -245,7 +252,8 @@ void SetDomain::intersectWith(const std::vector<Int>& otherVals) {
 
 void SetDomain::fix(Int value) {
   if (!contains(value)) {
-    throw std::runtime_error("SetDomain::fix: value " + std::to_string(value) + " is not in domain");
+    throw std::runtime_error("SetDomain::fix: value " + std::to_string(value) +
+                             " is not in domain");
   }
   _values = std::vector<Int>{value};
 }
@@ -307,6 +315,11 @@ bool SearchDomain::isFixed() const noexcept {
 
 bool SearchDomain::contains(Int value) const noexcept {
   return std::visit<bool>([&](const auto& dom) { return dom.contains(value); },
+                          _domain);
+}
+
+bool SearchDomain::isInterval() const noexcept {
+  return std::visit<bool>([&](const auto& dom) { return dom.isInterval(); },
                           _domain);
 }
 
@@ -399,7 +412,8 @@ void SearchDomain::intersectWith(const std::vector<Int>& values) {
   assert(std::holds_alternative<IntervalDomain>(_domain));
   std::vector<Int> cpy(values);
   std::sort(cpy.begin(), cpy.end());
-  if (isInterval(cpy)) {
+  cpy.erase(std::unique(cpy.begin(), cpy.end()), cpy.end());
+  if (sortedVectorIsInterval(cpy)) {
     std::get<IntervalDomain>(_domain).intersectWith(cpy.front(), cpy.back());
     return;
   }

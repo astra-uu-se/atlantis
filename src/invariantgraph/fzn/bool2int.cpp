@@ -11,8 +11,8 @@ bool bool2int(FznInvariantGraph& invariantGraph,
               const fznparser::BoolArg& boolArg,
               const fznparser::IntArg& intArg) {
   invariantGraph.addInvariantNode(
-      std::make_unique<Bool2IntNode>(invariantGraph.inputVarNode(boolArg),
-                                     invariantGraph.defineVarNode(intArg)));
+      std::make_unique<Bool2IntNode>(invariantGraph.retrieveVarNode(boolArg),
+                                     invariantGraph.retrieveVarNode(intArg)));
   return true;
 }
 

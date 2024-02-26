@@ -26,11 +26,11 @@ class AbstractBoolEqNodeTest : public NodeTestBase<BoolEqNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = defineBoolVarNode("a");
-    b = defineBoolVarNode("b");
+    a = retrieveBoolVarNode("a");
+    b = retrieveBoolVarNode("b");
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = defineBoolVarNode("reified");
+      reified = retrieveBoolVarNode("reified");
       createInvariantNode(a, b, reified);
     } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
       createInvariantNode(a, b, true);

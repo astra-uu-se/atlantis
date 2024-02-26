@@ -1,5 +1,3 @@
-
-
 #include "invariantgraph/fzn/bool_le.hpp"
 
 #include "../parseHelper.hpp"
@@ -10,8 +8,9 @@ namespace atlantis::invariantgraph::fzn {
 
 bool bool_le(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
-      invariantGraph.inputVarNode(a), invariantGraph.inputVarNode(b), true));
+  invariantGraph.addInvariantNode(
+      std::make_unique<BoolLeNode>(invariantGraph.retrieveVarNode(a),
+                                   invariantGraph.retrieveVarNode(b), true));
   return true;
 }
 
@@ -24,9 +23,9 @@ bool bool_le(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
     return bool_lt(invariantGraph, b, a);
   }
 
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
-      invariantGraph.inputVarNode(a), invariantGraph.inputVarNode(b),
-      invariantGraph.defineVarNode(reified.var())));
+  invariantGraph.addInvariantNode(std::make_unique<BoolLeNode>(
+      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
+      invariantGraph.retrieveVarNode(reified.var())));
 
   return true;
 }

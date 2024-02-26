@@ -36,7 +36,7 @@ void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
     auto& node = invariantGraph.varNode(id);
     assert(node.varId() != propagation::NULL_ID);
     varIds.emplace_back(node.varId(), std::move(node.domain()));
-    node.clearDomain();
+    node.setDomainType(VarNode::DomainType::NONE);
   }
 
   _neighbourhood = createNeighbourhood(solver, std::move(varIds));

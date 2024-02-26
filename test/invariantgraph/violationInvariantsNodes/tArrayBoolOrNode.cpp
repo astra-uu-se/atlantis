@@ -25,14 +25,14 @@ class AbstractArrayBoolOrNodeTest : public NodeTestBase<ArrayBoolOrNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = defineBoolVarNode("x1");
-    x2 = defineBoolVarNode("x2");
-    x3 = defineBoolVarNode("x3");
+    x1 = retrieveBoolVarNode("x1");
+    x2 = retrieveBoolVarNode("x2");
+    x3 = retrieveBoolVarNode("x3");
 
     std::vector<VarNodeId> inputs{x1, x2, x3};
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = defineBoolVarNode("reified");
+      reified = retrieveBoolVarNode("reified");
       createInvariantNode(std::move(inputs), reified);
     } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
       createInvariantNode(std::move(inputs), true);

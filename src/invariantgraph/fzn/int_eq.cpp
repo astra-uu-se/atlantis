@@ -8,6 +8,7 @@ namespace atlantis::invariantgraph::fzn {
 
 bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId varNodeId, Int value) {
   invariantGraph.varNode(varNodeId).fixValue(value);
+  invariantGraph.varNode(varNodeId).setDomainType(VarNode::DomainType::FIXED);
   return true;
 }
 
@@ -21,13 +22,13 @@ bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId varNodeId, Int value,
   }
 
   if (!invariantGraph.varNode(varNodeId).inDomain(value)) {
-    const VarNodeId reifiedVarNodeId = invariantGraph.defineVarNode(reified);
+    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId).fixValue(false);
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(
-      varNodeId, invariantGraph.defineIntVarNode(value),
-      invariantGraph.defineVarNode(reified)));
+      varNodeId, invariantGraph.retrieveIntVarNode(value),
+      invariantGraph.retrieveVarNode(reified)));
   return true;
 }
 
@@ -59,7 +60,7 @@ bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
     return int_ne(invariantGraph, a, b);
   }
   invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(
-      a, b, invariantGraph.defineVarNode(reified.var())));
+      a, b, invariantGraph.retrieveVarNode(reified.var())));
   return true;
 }
 
@@ -73,15 +74,15 @@ bool int_eq(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
     return true;
   }
   if (a.isFixed()) {
-    return int_eq(invariantGraph, invariantGraph.inputVarNode(b),
+    return int_eq(invariantGraph, invariantGraph.retrieveVarNode(b),
                   a.toParameter());
   }
   if (b.isFixed()) {
-    return int_eq(invariantGraph, invariantGraph.inputVarNode(a),
+    return int_eq(invariantGraph, invariantGraph.retrieveVarNode(a),
                   b.toParameter());
   }
-  return int_eq(invariantGraph, invariantGraph.inputVarNode(a),
-                invariantGraph.inputVarNode(b));
+  return int_eq(invariantGraph, invariantGraph.retrieveVarNode(a),
+                invariantGraph.retrieveVarNode(b));
 }
 
 bool int_eq(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
@@ -93,20 +94,20 @@ bool int_eq(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
     return int_ne(invariantGraph, a, b);
   }
   if (a.isFixed() && b.isFixed()) {
-    const VarNodeId reifiedVarNodeId = invariantGraph.defineVarNode(reified);
+    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId)
         .fixValue(a.toParameter() == b.toParameter());
   }
   if (a.isFixed()) {
-    return int_eq(invariantGraph, invariantGraph.inputVarNode(b),
+    return int_eq(invariantGraph, invariantGraph.retrieveVarNode(b),
                   a.toParameter(), reified);
   }
   if (b.isFixed()) {
-    return int_eq(invariantGraph, invariantGraph.inputVarNode(a),
+    return int_eq(invariantGraph, invariantGraph.retrieveVarNode(a),
                   b.toParameter(), reified);
   }
-  return int_eq(invariantGraph, invariantGraph.inputVarNode(a),
-                invariantGraph.inputVarNode(b), reified);
+  return int_eq(invariantGraph, invariantGraph.retrieveVarNode(a),
+                invariantGraph.retrieveVarNode(b), reified);
 }
 
 bool int_eq(FznInvariantGraph& invariantGraph,

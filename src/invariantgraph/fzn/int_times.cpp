@@ -10,8 +10,8 @@ namespace atlantis::invariantgraph::fzn {
 bool int_times(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
                const fznparser::IntArg& b, const fznparser::IntArg& product) {
   invariantGraph.addInvariantNode(std::make_unique<IntTimesNode>(
-      invariantGraph.inputVarNode(a), invariantGraph.inputVarNode(b),
-      invariantGraph.defineVarNode(product)));
+      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
+      invariantGraph.retrieveVarNode(product)));
   return true;
 }
 

@@ -53,35 +53,23 @@ namespace atlantis::invariantgraph {
 class FznInvariantGraph : public InvariantGraph {
  private:
   std::unordered_set<std::string> _outputIdentifiers;
-  std::vector<VarNodeId> _outputBoolVarNodeIds;
-  std::vector<VarNodeId> _outputIntVarNodeIds;
+  std::vector<std::pair<std::string, VarNodeId>> _outputBoolVars;
+  std::vector<std::pair<std::string, VarNodeId>> _outputIntVars;
   std::vector<InvariantGraphOutputVarArray> _outputBoolVarArrays;
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
-  VarNodeId inputVarNode(const fznparser::BoolVar&);
-  VarNodeId inputVarNode(std::reference_wrapper<const fznparser::BoolVar>);
-  VarNodeId inputVarNode(const fznparser::BoolArg&);
+  VarNodeId retrieveVarNode(const fznparser::BoolVar&);
+  VarNodeId retrieveVarNode(std::reference_wrapper<const fznparser::BoolVar>);
+  VarNodeId retrieveVarNode(const fznparser::BoolArg&);
 
-  VarNodeId defineVarNode(const fznparser::BoolVar&);
-  VarNodeId defineVarNode(std::reference_wrapper<const fznparser::BoolVar>);
-  VarNodeId defineVarNode(const fznparser::BoolArg&);
+  std::vector<VarNodeId> retrieveVarNodes(const fznparser::BoolVarArray&);
 
-  std::vector<VarNodeId> inputVarNodes(const fznparser::BoolVarArray&);
+  VarNodeId retrieveVarNode(const fznparser::IntVar&);
+  VarNodeId retrieveVarNode(const fznparser::IntArg&);
+  VarNodeId retrieveVarNode(std::reference_wrapper<const fznparser::IntVar>);
 
-  std::vector<VarNodeId> defineVarNodes(const fznparser::BoolVarArray&);
-
-  VarNodeId inputVarNode(const fznparser::IntVar&);
-  VarNodeId inputVarNode(const fznparser::IntArg&);
-  VarNodeId inputVarNode(std::reference_wrapper<const fznparser::IntVar>);
-
-  VarNodeId defineVarNode(const fznparser::IntVar&);
-  VarNodeId defineVarNode(const fznparser::IntArg&);
-  VarNodeId defineVarNode(std::reference_wrapper<const fznparser::IntVar>);
-
-  std::vector<VarNodeId> inputVarNodes(const fznparser::IntVarArray&);
-
-  std::vector<VarNodeId> defineVarNodes(const fznparser::IntVarArray&);
+  std::vector<VarNodeId> retrieveVarNodes(const fznparser::IntVarArray&);
 
   [[nodiscard]] std::vector<FznOutputVar> outputBoolVars() const noexcept;
   [[nodiscard]] std::vector<FznOutputVar> outputIntVars() const noexcept;

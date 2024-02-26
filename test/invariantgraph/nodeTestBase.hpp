@@ -50,16 +50,17 @@ class NodeTestBase : public ::testing::Test {
     }
   }
 
-  VarNodeId defineIntVarNode(Int lb, Int ub, const std::string& identifier) {
-    return _invariantGraph->defineIntVarNode(SearchDomain(lb, ub), identifier);
+  VarNodeId retrieveIntVarNode(Int lb, Int ub, const std::string& identifier) {
+    return _invariantGraph->retrieveIntVarNode(SearchDomain(lb, ub),
+                                               identifier);
   }
 
-  VarNodeId defineIntVarNode(Int val) {
-    return _invariantGraph->defineIntVarNode(val);
+  VarNodeId retrieveIntVarNode(Int val) {
+    return _invariantGraph->retrieveIntVarNode(val);
   }
 
-  VarNodeId defineBoolVarNode(const std::string& identifier) {
-    return _invariantGraph->defineBoolVarNode(identifier);
+  VarNodeId retrieveBoolVarNode(const std::string& identifier) {
+    return _invariantGraph->retrieveBoolVarNode(identifier);
   }
 
   VarNodeId varNodeId(const std::string& identifier) {

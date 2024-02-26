@@ -14,9 +14,9 @@ class IntPlusNodeTest : public NodeTestBase<IntPlusNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = defineIntVarNode(0, 10, "a");
-    b = defineIntVarNode(0, 10, "b");
-    output = defineIntVarNode(0, 10, "output");
+    a = retrieveIntVarNode(0, 10, "a");
+    b = retrieveIntVarNode(0, 10, "b");
+    output = retrieveIntVarNode(0, 10, "output");
 
     createInvariantNode(a, b, output);
   }

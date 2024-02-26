@@ -16,8 +16,7 @@ bool set_in(FznInvariantGraph& invariantGraph, const fznparser::IntArg& var,
             const fznparser::IntSetArg& b) {
   std::vector<Int> values = b.toParameter().elements();
   invariantGraph.addInvariantNode(std::make_unique<SetInNode>(
-      invariantGraph.createVarNodeFromFzn(var, false), std::move(values),
-      true));
+      invariantGraph.retrieveVarNode(a), std::move(values), true));
   return true;
 }
 

@@ -26,11 +26,11 @@ class AbstractIntEqNodeTest : public NodeTestBase<IntEqNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = defineIntVarNode(5, 10, "a");
-    b = defineIntVarNode(2, 7, "b");
+    a = retrieveIntVarNode(5, 10, "a");
+    b = retrieveIntVarNode(2, 7, "b");
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = defineBoolVarNode("reified");
+      reified = retrieveBoolVarNode("reified");
       createInvariantNode(a, b, reified);
     } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
       createInvariantNode(a, b, true);

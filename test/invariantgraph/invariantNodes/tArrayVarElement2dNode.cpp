@@ -23,13 +23,13 @@ class ArrayVarElement2dNodeTest : public NodeTestBase<ArrayVarElement2dNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x00 = defineIntVarNode(3, 10, "x00");
-    x01 = defineIntVarNode(2, 11, "x01");
-    x10 = defineIntVarNode(1, 9, "x10");
-    x11 = defineIntVarNode(3, 5, "x11");
-    idx1 = defineIntVarNode(1, 2, "idx1");
-    idx2 = defineIntVarNode(1, 2, "idx2");
-    output = defineIntVarNode(0, 10, "output");
+    x00 = retrieveIntVarNode(3, 10, "x00");
+    x01 = retrieveIntVarNode(2, 11, "x01");
+    x10 = retrieveIntVarNode(1, 9, "x10");
+    x11 = retrieveIntVarNode(3, 5, "x11");
+    idx1 = retrieveIntVarNode(1, 2, "idx1");
+    idx2 = retrieveIntVarNode(1, 2, "idx2");
+    output = retrieveIntVarNode(0, 10, "output");
 
     std::vector<std::vector<VarNodeId>> argMatrix{{x00, x01}, {x10, x11}};
 

@@ -18,8 +18,8 @@ class ArrayBoolElementNodeTest : public NodeTestBase<ArrayElementNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    idx = defineIntVarNode(1, 4, "idx");
-    output = defineIntVarNode(1, 4, "output");
+    idx = retrieveIntVarNode(1, 4, "idx");
+    output = retrieveIntVarNode(1, 4, "output");
 
     createInvariantNode(std::vector<bool>(elementValues), idx, output,
                         offsetIdx);

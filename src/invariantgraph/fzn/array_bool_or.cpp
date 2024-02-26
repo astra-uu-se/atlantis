@@ -32,7 +32,7 @@ bool array_bool_or(FznInvariantGraph& invariantGraph,
   }
 
   std::vector<VarNodeId> inputVarNodeIds =
-      invariantGraph.inputVarNodes(boolVarArray);
+      invariantGraph.retrieveVarNodes(boolVarArray);
 
   std::vector<VarNodeId> prunedInputVarNodeIds;
   prunedInputVarNodeIds.reserve(inputVarNodeIds.size() - fixedValues.size());
@@ -56,7 +56,7 @@ bool array_bool_or(FznInvariantGraph& invariantGraph,
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolOrNode>(
           std::move(inputVarNodeIds),
-          invariantGraph.defineVarNode(reified.var())));
+          invariantGraph.retrieveVarNode(reified.var())));
   return true;
 }
 

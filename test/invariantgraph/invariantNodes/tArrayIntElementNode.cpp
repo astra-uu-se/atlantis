@@ -16,10 +16,10 @@ class ArrayIntElementNodeTest : public NodeTestBase<ArrayElementNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    idx = defineIntVarNode(
+    idx = retrieveIntVarNode(
         offsetIdx, static_cast<Int>(elementValues.size()) - 1 + offsetIdx,
         "idx");
-    output = defineIntVarNode(0, 10, "output");
+    output = retrieveIntVarNode(0, 10, "output");
 
     std::vector<Int> parVector(elementValues);
 

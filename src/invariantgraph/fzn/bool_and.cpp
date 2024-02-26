@@ -11,13 +11,13 @@ bool bool_and(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
   if (reified.isFixed()) {
     invariantGraph.addInvariantNode(std::make_unique<BoolAndNode>(
-        invariantGraph.inputVarNode(a), invariantGraph.inputVarNode(b),
+        invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
         reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<BoolAndNode>(
-      invariantGraph.inputVarNode(a), invariantGraph.inputVarNode(b),
-      invariantGraph.defineVarNode(reified.var())));
+      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
+      invariantGraph.retrieveVarNode(reified.var())));
   return true;
 }
 

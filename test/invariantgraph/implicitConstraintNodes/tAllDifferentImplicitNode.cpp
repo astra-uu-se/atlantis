@@ -17,10 +17,10 @@ class AllDifferentImplicitNodeTest
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = defineIntVarNode(2, 7, "a");
-    b = defineIntVarNode(2, 7, "b");
-    c = defineIntVarNode(2, 7, "c");
-    d = defineIntVarNode(2, 7, "d");
+    a = retrieveIntVarNode(2, 7, "a");
+    b = retrieveIntVarNode(2, 7, "b");
+    c = retrieveIntVarNode(2, 7, "c");
+    d = retrieveIntVarNode(2, 7, "d");
 
     std::vector<VarNodeId> vars{a, b, c, d};
 

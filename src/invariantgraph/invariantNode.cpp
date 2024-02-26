@@ -71,13 +71,13 @@ void InvariantNode::replaceDefinedVar(VarNode& oldOutputVarNode,
   newOutputVarNode.markOutputTo(_id);
 }
 
-void InvariantNode::removeStaticInputVarNode(VarNode& inputVarNode) {
+void InvariantNode::removeStaticInputVarNode(VarNode& retrieveVarNode) {
   // remove all occurrences:
   _staticInputVarNodeIds.erase(
       std::remove(_staticInputVarNodeIds.begin(), _staticInputVarNodeIds.end(),
-                  inputVarNode.varNodeId()),
+                  retrieveVarNode.varNodeId()),
       _staticInputVarNodeIds.end());
-  inputVarNode.unmarkAsInputFor(_id, true);
+  retrieveVarNode.unmarkAsInputFor(_id, true);
 }
 
 void InvariantNode::removeOutputVarNode(VarNode& outputVarNode) {
@@ -117,13 +117,10 @@ propagation::VarId InvariantNode::makeSolverVar(propagation::SolverBase& solver,
                                                 VarNode& varNode,
                                                 Int initialValue) {
   if (varNode.varId() == propagation::NULL_ID) {
-    const Int lowerBound =
-        varNode.hasDomain() ? varNode.lowerBound() : initialValue;
-    const Int upperBound =
-        varNode.hasDomain() ? varNode.upperBound() : initialValue;
     varNode.setVarId(solver.makeIntVar(
-        std::max(lowerBound, std::min(upperBound, initialValue)), lowerBound,
-        upperBound));
+        std::max(varNode.lowerBound(),
+                 std::min(varNode.upperBound(), initialValue)),
+        varNode.lowerBound(), varNode.upperBound()));
   }
   return varNode.varId();
 }

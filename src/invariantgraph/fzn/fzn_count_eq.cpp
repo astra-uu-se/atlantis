@@ -26,7 +26,7 @@ bool fzn_count_eq(FznInvariantGraph& invariantGraph,
     return fzn_count_neq(invariantGraph, inputs, needle, count);
   }
   const VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  return int_eq(invariantGraph, output, invariantGraph.inputVarNode(count),
+  return int_eq(invariantGraph, output, invariantGraph.retrieveVarNode(count),
                 reified);
 }
 

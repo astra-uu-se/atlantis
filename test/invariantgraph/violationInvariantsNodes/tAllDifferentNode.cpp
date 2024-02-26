@@ -36,15 +36,15 @@ class AbstractAllDifferentNodeTest : public NodeTestBase<AllDifferentNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = defineIntVarNode(5, 10, "a");
-    b = defineIntVarNode(2, 7, "b");
-    c = defineIntVarNode(2, 7, "c");
-    d = defineIntVarNode(2, 7, "d");
+    a = retrieveIntVarNode(5, 10, "a");
+    b = retrieveIntVarNode(2, 7, "b");
+    c = retrieveIntVarNode(2, 7, "c");
+    d = retrieveIntVarNode(2, 7, "d");
 
     std::vector<VarNodeId> inputVec{a, b, c, d};
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = defineBoolVarNode("reified");
+      reified = retrieveBoolVarNode("reified");
       createInvariantNode(std::move(inputVec), reified);
     } else {
       if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
@@ -177,9 +177,10 @@ TEST_F(AllDifferentTrueNodeTest, Application) { application(); }
 TEST_F(AllDifferentTrueNodeTest, Propagation) { propagation(); }
 
 TEST_F(AllDifferentNodeTest, pruneParameters) {
-  std::vector<VarNodeId> inputs{defineIntVarNode(7), a, defineIntVarNode(10), b,
-                                defineIntVarNode(6), c, defineIntVarNode(9),  d,
-                                defineIntVarNode(5)};
+  std::vector<VarNodeId> inputs{
+      retrieveIntVarNode(7), a, retrieveIntVarNode(10), b,
+      retrieveIntVarNode(6), c, retrieveIntVarNode(9),  d,
+      retrieveIntVarNode(5)};
 
   const InvariantNodeId invNodeId = _invariantGraph->addInvariantNode(
       std::make_unique<AllDifferentNode>(std::move(inputs), true));

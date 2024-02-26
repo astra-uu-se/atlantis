@@ -33,10 +33,10 @@ class GlobalCardinalityNodeTest : public NodeTestBase<GlobalCardinalityNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    input1 = defineIntVarNode(5, 10, "input1");
-    input2 = defineIntVarNode(2, 7, "input2");
-    output1 = defineIntVarNode(1, 2, "output1");
-    output2 = defineIntVarNode(1, 2, "output2");
+    input1 = retrieveIntVarNode(5, 10, "input1");
+    input2 = retrieveIntVarNode(2, 7, "input2");
+    output1 = retrieveIntVarNode(1, 2, "output1");
+    output2 = retrieveIntVarNode(1, 2, "output2");
 
     std::vector<VarNodeId> inputVec{input1, input2};
 

@@ -19,15 +19,15 @@ class ArrayVarElementNodeTest : public NodeTestBase<ArrayVarElementNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = defineIntVarNode(3, 10, "x1");
-    x2 = defineIntVarNode(2, 11, "x2");
-    x3 = defineIntVarNode(1, 9, "x3");
+    x1 = retrieveIntVarNode(3, 10, "x1");
+    x2 = retrieveIntVarNode(2, 11, "x2");
+    x3 = retrieveIntVarNode(1, 9, "x3");
 
     std::vector<VarNodeId> varVector{x1, x2, x3};
 
-    idx = defineIntVarNode(
+    idx = retrieveIntVarNode(
         offsetIdx, static_cast<Int>(varVector.size()) - 1 + offsetIdx, "idx");
-    output = defineIntVarNode(0, 10, "output");
+    output = retrieveIntVarNode(0, 10, "output");
 
     createInvariantNode(idx, std::move(varVector), output, offsetIdx);
   }

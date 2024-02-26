@@ -24,13 +24,13 @@ class ArrayVarBoolElement2dNodeTest
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x00 = defineBoolVarNode("x00");
-    x01 = defineBoolVarNode("x01");
-    x10 = defineBoolVarNode("x10");
-    x11 = defineBoolVarNode("x11");
-    idx1 = defineIntVarNode(1, 2, "idx1");
-    idx2 = defineIntVarNode(1, 2, "idx2");
-    output = defineBoolVarNode("output");
+    x00 = retrieveBoolVarNode("x00");
+    x01 = retrieveBoolVarNode("x01");
+    x10 = retrieveBoolVarNode("x10");
+    x11 = retrieveBoolVarNode("x11");
+    idx1 = retrieveIntVarNode(1, 2, "idx1");
+    idx2 = retrieveIntVarNode(1, 2, "idx2");
+    output = retrieveBoolVarNode("output");
 
     std::vector<std::vector<VarNodeId>> argMatrix{{x00, x01}, {x10, x11}};
 

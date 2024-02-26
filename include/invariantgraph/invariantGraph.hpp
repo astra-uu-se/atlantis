@@ -23,14 +23,7 @@ namespace atlantis::invariantgraph {
 
 class InvariantGraph {
  private:
-  struct VarNodeData {
-    VarNode varNode;
-    // If a variable is defined by muktiple invariants, then this is
-    // the index in the _duplicateVarNodes vector with all the duplicates.
-    // Otherwise, it is -1.
-    Int duplicationIndex;
-  };
-  std::vector<VarNodeData> _varNodes;
+  std::vector<VarNode> _varNodes;
   std::unordered_map<std::string, VarNodeId> _namedVarNodeIndices;
   std::unordered_map<Int, VarNodeId> _intVarNodeIndices;
   std::array<VarNodeId, 2> _boolVarNodeIndices;
@@ -38,17 +31,11 @@ class InvariantGraph {
   std::vector<std::unique_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
 
-  std::vector<std::vector<VarNodeId>> _duplicateVarNodes;
-
   void populateRootNode();
-
-  VarNodeData& varNodeData(VarNodeId id);
-  VarNodeData& varNodeData(const std::string& identifier);
 
  protected:
   propagation::VarId _totalViolationVarId;
   VarNodeId _objectiveVarNodeId;
-  Int markDuplicate(VarNodeId, const std::string&);
 
  public:
   InvariantGraph();
@@ -64,26 +51,27 @@ class InvariantGraph {
   [[nodiscard]] bool containsVarNode(Int) const noexcept;
   [[nodiscard]] static bool containsVarNode(bool) noexcept;
 
-  VarNodeId inputBoolVarNode(bool);
-  VarNodeId inputBoolVarNode(const std::string&);
+  VarNodeId retrieveBoolVarNode(
+      VarNode::DomainType = VarNode::DomainType::RANGE);
+  VarNodeId retrieveBoolVarNode(
+      const std::string&, VarNode::DomainType = VarNode::DomainType::RANGE);
+  VarNodeId retrieveBoolVarNode(bool);
+  VarNodeId retrieveBoolVarNode(bool, const std::string&);
+  VarNodeId retrieveBoolVarNode(
+      SearchDomain&&, VarNode::DomainType = VarNode::DomainType::RANGE);
 
-  VarNodeId defineBoolVarNode();
-  VarNodeId defineBoolVarNode(const std::string&);
-  VarNodeId defineBoolVarNode(bool);
-  VarNodeId defineBoolVarNode(bool, const std::string&);
-  VarNodeId defineBoolVarNode(SearchDomain&&);
-
-  VarNodeId inputIntVarNode(Int);
-  VarNodeId inputIntVarNode(const std::string&);
-
-  VarNodeId defineIntVarNode();
-  VarNodeId defineIntVarNode(Int);
-  VarNodeId defineIntVarNode(Int, const std::string&);
-  VarNodeId defineIntVarNode(SearchDomain&&);
-  VarNodeId defineIntVarNode(SearchDomain&&, const std::string&);
+  VarNodeId retrieveIntVarNode(const std::string&);
+  VarNodeId retrieveIntVarNode(Int);
+  VarNodeId retrieveIntVarNode(Int, const std::string&);
+  VarNodeId retrieveIntVarNode(
+      SearchDomain&&, VarNode::DomainType = VarNode::DomainType::DOMAIN);
+  VarNodeId retrieveIntVarNode(
+      SearchDomain&&, const std::string&,
+      VarNode::DomainType = VarNode::DomainType::DOMAIN);
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier);
   [[nodiscard]] VarNode& varNode(VarNodeId id);
+  [[nodiscard]] VarNode& varNode(Int value);
 
   [[nodiscard]] const VarNode& varNodeConst(
       const std::string& identifier) const;

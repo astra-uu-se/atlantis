@@ -11,7 +11,7 @@ bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
   if (sum != 0) {
     // The negative sum is the sum of the defined variable:
     coeffs.emplace_back(1);
-    inputVarNodeIds.emplace_back(invariantGraph.inputVarNode(-sum));
+    inputVarNodeIds.emplace_back(invariantGraph.retrieveVarNode(-sum));
   }
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
@@ -58,14 +58,14 @@ bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
         std::holds_alternative<Int>(vars.at(i))
             ? (i == definedVarIndex
-                   ? invariantGraph.defineVarNode(std::get<Int>(vars.at(i)))
-                   : invariantGraph.inputVarNode(std::get<Int>(vars.at(i))))
+                   ? invariantGraph.retrieveVarNode(std::get<Int>(vars.at(i)))
+                   : invariantGraph.retrieveVarNode(std::get<Int>(vars.at(i))))
             : (i == definedVarIndex
-                   ? invariantGraph.defineVarNode(
+                   ? invariantGraph.retrieveVarNode(
                          std::get<
                              std::reference_wrapper<const fznparser::IntVar>>(
                              vars.at(i)))
-                   : invariantGraph.inputVarNode(
+                   : invariantGraph.retrieveVarNode(
                          std::get<
                              std::reference_wrapper<const fznparser::IntVar>>(
                              vars.at(i))));

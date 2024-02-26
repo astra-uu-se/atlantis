@@ -23,10 +23,10 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
     return true;
   }
 
-  const VarNodeId allDiffViolVarNodeId = invariantGraph.defineBoolVarNode();
+  const VarNodeId allDiffViolVarNodeId = invariantGraph.retrieveBoolVarNode();
 
   invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      invariantGraph.inputVarNodes(inputs), allDiffViolVarNodeId));
+      invariantGraph.retrieveVarNodes(inputs), allDiffViolVarNodeId));
 
   return true;
 }
@@ -39,18 +39,18 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
       return fzn_all_equal_int(invariantGraph, inputs);
     }
     // At least two variables must take different values
-    const VarNodeId allDiffViolVarNodeId = invariantGraph.defineBoolVarNode();
+    const VarNodeId allDiffViolVarNodeId = invariantGraph.retrieveBoolVarNode();
 
     invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-        invariantGraph.inputVarNodes(inputs), allDiffViolVarNodeId));
+        invariantGraph.retrieveVarNodes(inputs), allDiffViolVarNodeId));
 
     return true;
   }
 
-  const VarNodeId allDiffViolVarNodeId = invariantGraph.defineBoolVarNode();
+  const VarNodeId allDiffViolVarNodeId = invariantGraph.retrieveBoolVarNode();
 
   invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      invariantGraph.inputVarNodes(inputs), allDiffViolVarNodeId));
+      invariantGraph.retrieveVarNodes(inputs), allDiffViolVarNodeId));
 
   // If all variables take the same value (violation equals inputs.size() -
   // 1), then all_equal holds and the reified variable is true:

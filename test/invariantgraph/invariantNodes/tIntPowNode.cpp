@@ -14,9 +14,9 @@ class IntPowNodeTest : public NodeTestBase<IntPowNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    base = defineIntVarNode(0, 10, "base");
-    exponent = defineIntVarNode(0, 10, "exponent");
-    output = defineIntVarNode(0, 10, "output");
+    base = retrieveIntVarNode(0, 10, "base");
+    exponent = retrieveIntVarNode(0, 10, "exponent");
+    output = retrieveIntVarNode(0, 10, "output");
 
     createInvariantNode(base, exponent, output);
   }

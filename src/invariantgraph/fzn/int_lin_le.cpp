@@ -37,10 +37,11 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     return true;
   }
 
-  const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
+  const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
+      SearchDomain(lb, ub), VarNode::DomainType::UPPER_BOUND);
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), invariantGraph.inputVarNodes(inputs),
+      std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
 
   int_le(invariantGraph, outputVarNodeId, bound);
@@ -56,39 +57,38 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     if (reified.toParameter()) {
       return int_lin_le(invariantGraph, std::move(coeffs), inputs, bound);
     }
-    verifyInputs(coeffs, inputs);
-    if (coeffs.empty()) {
-      if (bound < 0) {
-        return true;
-      }
-      throw FznArgumentException(
-          "int_lin_le_reif constraint that must not hold with empty arrays "
-          "must have a total sum less than 0");
-    }
-
-    const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
-
-    invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-        std::move(coeffs), invariantGraph.inputVarNodes(inputs),
-        outputVarNodeId));
-
-    int_le(invariantGraph, outputVarNodeId, bound);
-
-    return true;
+    invertCoeffs(coeffs);
+    return int_lin_le(invariantGraph, std::move(coeffs), inputs, -bound);
   }
+
   if (coeffs.empty()) {
-    const VarNodeId reifiedVarNodeId = invariantGraph.defineVarNode(reified);
+    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId).fixValue(bound >= 0);
     return true;
   }
 
-  const VarNodeId outputVarNodeId = invariantGraph.defineIntVarNode();
+  const auto& [lb, ub] = linBounds(coeffs, inputs);
+
+  if (ub <= bound) {
+    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
+    invariantGraph.varNode(reifiedVarNodeId).fixValue(true);
+    return true;
+  }
+
+  if (bound < lb) {
+    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
+    invariantGraph.varNode(reifiedVarNodeId).fixValue(false);
+    return true;
+  }
+
+  const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
+      SearchDomain(lb, ub), VarNode::DomainType::NONE);
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), invariantGraph.inputVarNodes(inputs),
+      std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
 
-  int_le(invariantGraph, outputVarNodeId, bound);
+  int_le(invariantGraph, outputVarNodeId, bound, reified);
 
   return true;
 }

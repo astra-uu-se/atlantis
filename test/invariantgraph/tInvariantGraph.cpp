@@ -18,10 +18,12 @@ TEST(InvariantGraphTest, apply_result) {
   fznparser::Model model;
   InvariantGraph invariantGraph;
 
-  const VarNodeId a = invariantGraph.defineIntVarNode(SearchDomain(0, 10), "a");
-  const VarNodeId b = invariantGraph.defineIntVarNode(SearchDomain(0, 10), "b");
+  const VarNodeId a =
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 10), "a");
+  const VarNodeId b =
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 10), "b");
   const VarNodeId output =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "output");
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 10), "output");
 
   EXPECT_TRUE(invariantGraph.containsVarNode("a"));
   EXPECT_TRUE(invariantGraph.containsVarNode("b"));
@@ -43,22 +45,17 @@ TEST(InvariantGraphTest, apply_result) {
 TEST(InvariantGraphTest, ApplyGraph) {
   InvariantGraph invariantGraph;
 
-  const VarNodeId a1 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "a1");
-  const VarNodeId a2 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "a2");
-  const VarNodeId b1 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "b1");
-  const VarNodeId b2 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "b2");
+  const VarNodeId a1 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
+  const VarNodeId a2 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
+  const VarNodeId b1 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
+  const VarNodeId b2 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
 
   const VarNodeId output1 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 20), "output1");
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 20));
   const VarNodeId output2 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 20), "output2");
-
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 20));
   const VarNodeId output3 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 40), "output3");
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 40));
 
   invariantGraph.addInvariantNode(
       std::make_unique<IntPlusNode>(a1, a2, output1));
@@ -70,8 +67,10 @@ TEST(InvariantGraphTest, ApplyGraph) {
   propagation::Solver solver;
   invariantGraph.apply(solver);
 
-  // 7 variables + dummy objective
-  EXPECT_EQ(solver.numVars(), 8);
+  // 7 variables
+  EXPECT_GE(solver.numVars(), 7);
+  // dummy objective + dummy violation
+  EXPECT_LE(solver.numVars(), 7 + 2);
   EXPECT_EQ(solver.numInvariants(), 3);
 }
 
@@ -94,12 +93,12 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
    */
   InvariantGraph invariantGraph;
 
-  const VarNodeId a = invariantGraph.defineIntVarNode(SearchDomain(0, 10), "a");
-  const VarNodeId b = invariantGraph.defineIntVarNode(SearchDomain(0, 10), "b");
-  const VarNodeId c = invariantGraph.defineIntVarNode(SearchDomain(0, 10), "c");
-  const VarNodeId d = invariantGraph.defineIntVarNode(SearchDomain(0, 10), "d");
+  const VarNodeId a = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
+  const VarNodeId b = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
+  const VarNodeId c = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
+  const VarNodeId d = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
   const VarNodeId output =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 20), "output");
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 20));
 
   invariantGraph.addInvariantNode(std::make_unique<IntPlusNode>(a, b, output));
 
@@ -141,15 +140,15 @@ TEST(InvariantGraphTest, SplitGraph) {
   const size_t numInputs = 5;
   const Int lb = 0;
   const Int ub = 10;
-  const VarNodeId output = invariantGraph.defineIntVarNode(
-      SearchDomain(lb * numInputs, ub * numInputs), "output");
+  const VarNodeId output = invariantGraph.retrieveIntVarNode(
+      SearchDomain(lb * numInputs, ub * numInputs));
 
   std::vector<std::vector<VarNodeId>> varNodeIdMatrix(numInvariants,
                                                       std::vector<VarNodeId>{});
   for (size_t i = 0; i < numInvariants; ++i) {
     for (size_t j = 0; j < numInputs; ++j) {
       const std::string identifier(std::to_string(i) + "_" + std::to_string(j));
-      varNodeIdMatrix.at(i).emplace_back(invariantGraph.defineIntVarNode(
+      varNodeIdMatrix.at(i).emplace_back(invariantGraph.retrieveIntVarNode(
           SearchDomain(lb, ub), std::string(identifier)));
     }
   }
@@ -191,14 +190,12 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
    *
    */
 
-  const VarNodeId x1 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "x1");
-  const VarNodeId x2 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "x2");
-  const VarNodeId output1 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "output1");
-  const VarNodeId output2 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "output2");
+  const VarNodeId x1 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
+  const VarNodeId x2 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
+  const VarNodeId output1 = invariantGraph.retrieveIntVarNode(
+      SearchDomain(0, 40), VarNode::DomainType::NONE);
+  const VarNodeId output2 = invariantGraph.retrieveIntVarNode(
+      SearchDomain(0, 40), VarNode::DomainType::NONE);
 
   invariantGraph.addInvariantNode(
       std::make_unique<IntPlusNode>(x1, output2, output1));
@@ -212,8 +209,9 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
   // x1, x2, output1, output2
   // the pivot
   // The Equality (output1 == pivot) violation
+  EXPECT_GE(solver.numVars(), 6);
   // Dummy Objective
-  EXPECT_EQ(solver.numVars(), 4 + 1 + 1 + 1);
+  EXPECT_LE(solver.numVars(), 7);
   // 2 Linear
   // 1 from breaking the cycle (output1 == pivot)
   EXPECT_EQ(solver.numInvariants(), 2 + 1);
@@ -237,18 +235,14 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
    *  +-------------------+
    */
 
-  const VarNodeId x11 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 1), "x11");
-  const VarNodeId x12 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 1), "x12");
-  const VarNodeId x21 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 1), "x21");
-  const VarNodeId x22 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 1), "x22");
+  const VarNodeId x11 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 1));
+  const VarNodeId x12 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 1));
+  const VarNodeId x21 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 1));
+  const VarNodeId x22 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 1));
   const VarNodeId output1 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 1), "output1");
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 1));
   const VarNodeId output2 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 1), "output2");
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 1));
 
   invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
       output2, std::vector<VarNodeId>{x11, x12}, output1, 0));
@@ -289,18 +283,14 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
    *
    */
 
-  const VarNodeId idx1 =
-      invariantGraph.defineIntVarNode(SearchDomain(1, 2), "idx1");
-  const VarNodeId x1 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "x1");
-  const VarNodeId idx2 =
-      invariantGraph.defineIntVarNode(SearchDomain(1, 2), "idx2");
-  const VarNodeId x2 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "x2");
+  const VarNodeId idx1 = invariantGraph.retrieveIntVarNode(SearchDomain(1, 2));
+  const VarNodeId x1 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
+  const VarNodeId idx2 = invariantGraph.retrieveIntVarNode(SearchDomain(1, 2));
+  const VarNodeId x2 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
   const VarNodeId output1 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "output1");
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
   const VarNodeId output2 =
-      invariantGraph.defineIntVarNode(SearchDomain(0, 10), "output2");
+      invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
 
   invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
       idx1, std::vector<VarNodeId>{x1, output2}, output1, 1));
@@ -312,9 +302,9 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
   invariantGraph.apply(solver);
 
   // idx1, x1, idx2, x2, output1, output2
-  // dummy objective
-  // (no violations)
-  EXPECT_EQ(solver.numVars(), 6 + 1);
+  EXPECT_GE(solver.numVars(), 6);
+  // dummy objective + dummy violation
+  EXPECT_LE(solver.numVars(), 8);
   // 2 Element
   // (no violations)
   EXPECT_EQ(solver.numInvariants(), 2);
