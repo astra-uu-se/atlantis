@@ -20,6 +20,9 @@
 #include "utils/domains.hpp"
 #include "utils/variant.hpp"
 
+// Undefine the DOMAIN macro that is defined in math.h on MacOS
+#undef DOMAIN
+
 namespace atlantis::invariantgraph {
 
 /**

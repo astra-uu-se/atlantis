@@ -1,3 +1,5 @@
+#include <string>
+
 #include "utils/domains.hpp"
 
 namespace atlantis {
