@@ -23,8 +23,8 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
   checkInputs(cover, counts);
 
   invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
-      invariantGraph.createVarNodes(inputs, false), std::move(cover),
-      invariantGraph.createVarNodes(counts, true)));
+      invariantGraph.retrieveVarNodes(inputs), std::move(cover),
+      invariantGraph.retrieveVarNodes(counts)));
   return true;
 }
 
@@ -40,22 +40,22 @@ bool fzn_global_cardinality(FznInvariantGraph& invariantGraph,
   }
 
   std::vector<VarNodeId> countVarNodeIds =
-      invariantGraph.createVarNodes(counts, false);
+      invariantGraph.retrieveVarNodes(counts);
   std::vector<VarNodeId> outputVarNodeIds;
   std::vector<VarNodeId> binaryOutputVarNodeIds;
   outputVarNodeIds.reserve(counts.size());
   binaryOutputVarNodeIds.reserve(counts.size());
   for (size_t i = 0; i < counts.size(); ++i) {
-    outputVarNodeIds.push_back(invariantGraph.createVarNode(
-        SearchDomain(0, static_cast<Int>(inputs.size())), true, true));
-    binaryOutputVarNodeIds.push_back(
-        invariantGraph.createVarNode(SearchDomain(0, 1), false, true));
+    outputVarNodeIds.push_back(invariantGraph.retrieveIntVarNode(
+        SearchDomain(0, static_cast<Int>(inputs.size())),
+        VarNode::DomainType::NONE));
+    binaryOutputVarNodeIds.push_back(invariantGraph.retrieveBoolVarNode());
     bool_eq(invariantGraph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
             binaryOutputVarNodeIds.at(i));
   }
 
   invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
-      invariantGraph.createVarNodes(inputs, false), std::move(cover),
+      invariantGraph.retrieveVarNodes(inputs), std::move(cover),
       std::move(outputVarNodeIds)));
 
   array_bool_and(invariantGraph, std::move(binaryOutputVarNodeIds), reified);

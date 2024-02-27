@@ -47,6 +47,11 @@ class Domain {
    */
   [[nodiscard]] virtual bool contains(Int value) const noexcept = 0;
 
+  /**
+   * @return true if the domain is an interval, else false.
+   */
+  [[nodiscard]] virtual bool isInterval() const noexcept = 0;
+
   virtual void fix(Int) = 0;
 
   /**
@@ -63,8 +68,6 @@ class IntervalDomain : public Domain {
   Int _lb;
   Int _ub;
 
-  std::vector<Int> _values;
-
  public:
   IntervalDomain(Int lb, Int ub);
 
@@ -74,6 +77,7 @@ class IntervalDomain : public Domain {
   [[nodiscard]] size_t size() const noexcept override;
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
+  [[nodiscard]] bool isInterval() const noexcept override;
 
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;
@@ -107,6 +111,7 @@ class SetDomain : public Domain {
   [[nodiscard]] size_t size() const noexcept override;
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
+  [[nodiscard]] bool isInterval() const noexcept override;
 
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;
@@ -163,6 +168,7 @@ class SearchDomain : public Domain {
   [[nodiscard]] size_t size() const noexcept override;
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
+  [[nodiscard]] bool isInterval() const noexcept override;
 
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;

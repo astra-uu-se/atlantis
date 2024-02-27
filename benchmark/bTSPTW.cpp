@@ -185,7 +185,7 @@ BENCHMARK_DEFINE_F(TSPTW, probe_three_opt)(::benchmark::State& st) {
   std::iota(indexVec2.begin(), indexVec2.end(), 0);
 
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     Int i = static_cast<Int>(n);
     Int j = static_cast<Int>(n);
     for (size_t index1 = 0; i == n && index1 < static_cast<size_t>(n);
@@ -221,13 +221,13 @@ BENCHMARK_DEFINE_F(TSPTW, probe_three_opt)(::benchmark::State& st) {
     assert(isTourValid(true));
     assert(isTourValid(false));
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(::benchmark::State& st) {
   Int probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     for (int i = 0; i < n; ++i) {
       for (int j = 0; j < n; ++j) {
         if (i == j || solver->committedValue(pred[i]) == j + 1) {
@@ -253,8 +253,8 @@ BENCHMARK_DEFINE_F(TSPTW, probe_all_relocate)(::benchmark::State& st) {
       }
     }
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

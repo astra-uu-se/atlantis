@@ -9,10 +9,10 @@ bool int_div(FznInvariantGraph& invariantGraph,
              const fznparser::IntArg& numerator,
              const fznparser::IntArg& denominator,
              const fznparser::IntArg& quotient) {
-  invariantGraph.addInvariantNode(std::make_unique<IntDivNode>(
-      invariantGraph.createVarNodeFromFzn(numerator, false),
-      invariantGraph.createVarNodeFromFzn(denominator, false),
-      invariantGraph.createVarNodeFromFzn(quotient, true)));
+  invariantGraph.addInvariantNode(
+      std::make_unique<IntDivNode>(invariantGraph.retrieveVarNode(numerator),
+                                   invariantGraph.retrieveVarNode(denominator),
+                                   invariantGraph.retrieveVarNode(quotient)));
   return true;
 }
 

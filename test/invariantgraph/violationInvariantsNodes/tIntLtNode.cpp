@@ -19,10 +19,10 @@ class AbstractIntLtNodeTest : public NodeTestBase<IntLtNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVarNode(5, 10, "a");
-    b = createIntVarNode(2, 7, "b");
+    a = retrieveIntVarNode(5, 10, "a");
+    b = retrieveIntVarNode(2, 7, "b");
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = createBoolVarNode("reified", true);
+      reified = retrieveBoolVarNode("reified");
       createInvariantNode(a, b, reified);
     } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
       createInvariantNode(a, b, true);

@@ -19,11 +19,11 @@ class AbstractBoolXorNodeTest : public NodeTestBase<BoolXorNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createBoolVarNode("a");
-    b = createBoolVarNode("b");
+    a = retrieveBoolVarNode("a");
+    b = retrieveBoolVarNode("b");
 
     if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = createBoolVarNode("reified", true);
+      reified = retrieveBoolVarNode("reified");
       createInvariantNode(a, b, reified);
     } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
       createInvariantNode(a, b, true);

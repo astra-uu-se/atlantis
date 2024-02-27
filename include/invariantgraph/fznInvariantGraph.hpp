@@ -53,25 +53,23 @@ namespace atlantis::invariantgraph {
 class FznInvariantGraph : public InvariantGraph {
  private:
   std::unordered_set<std::string> _outputIdentifiers;
-  std::vector<VarNodeId> _outputBoolVarNodeIds;
-  std::vector<VarNodeId> _outputIntVarNodeIds;
+  std::vector<std::pair<std::string, VarNodeId>> _outputBoolVars;
+  std::vector<std::pair<std::string, VarNodeId>> _outputIntVars;
   std::vector<InvariantGraphOutputVarArray> _outputBoolVarArrays;
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
-  VarNodeId createVarNodeFromFzn(const fznparser::BoolVar&, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(
-      std::reference_wrapper<const fznparser::BoolVar>, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(const fznparser::BoolArg&, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(const fznparser::IntVar&, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(const fznparser::IntArg&, bool isDefinedVar);
-  VarNodeId createVarNodeFromFzn(
-      std::reference_wrapper<const fznparser::IntVar>, bool isDefinedVar);
+  VarNodeId retrieveVarNode(const fznparser::BoolVar&);
+  VarNodeId retrieveVarNode(std::reference_wrapper<const fznparser::BoolVar>);
+  VarNodeId retrieveVarNode(const fznparser::BoolArg&);
 
-  std::vector<VarNodeId> createVarNodes(const fznparser::BoolVarArray&,
-                                        bool areDefinedVars);
-  std::vector<VarNodeId> createVarNodes(const fznparser::IntVarArray&,
-                                        bool areDefinedVars);
+  std::vector<VarNodeId> retrieveVarNodes(const fznparser::BoolVarArray&);
+
+  VarNodeId retrieveVarNode(const fznparser::IntVar&);
+  VarNodeId retrieveVarNode(const fznparser::IntArg&);
+  VarNodeId retrieveVarNode(std::reference_wrapper<const fznparser::IntVar>);
+
+  std::vector<VarNodeId> retrieveVarNodes(const fznparser::IntVarArray&);
 
   [[nodiscard]] std::vector<FznOutputVar> outputBoolVars() const noexcept;
   [[nodiscard]] std::vector<FznOutputVar> outputIntVars() const noexcept;

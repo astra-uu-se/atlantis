@@ -3,7 +3,7 @@
 namespace atlantis::search::neighbourhoods {
 
 AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
-    std::vector<SearchVar>&& vars, std::vector<Int> domain,
+    std::vector<SearchVar>&& vars, std::vector<Int>&& domain,
     const propagation::SolverBase& solver)
     : _vars(std::move(vars)),
       _domain(std::move(domain)),

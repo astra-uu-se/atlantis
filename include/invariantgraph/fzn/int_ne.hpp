@@ -30,6 +30,9 @@ bool int_ne(FznInvariantGraph&, const fznparser::IntArg&,
 
 bool int_ne(FznInvariantGraph&, VarNodeId, Int);
 
+bool int_ne(FznInvariantGraph&, VarNodeId, Int,
+            const fznparser::BoolArg& reified);
+
 bool int_ne(FznInvariantGraph&, VarNodeId, VarNodeId);
 
 bool int_ne(FznInvariantGraph&, VarNodeId, VarNodeId,

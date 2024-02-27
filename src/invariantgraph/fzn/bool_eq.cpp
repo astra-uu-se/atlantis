@@ -15,8 +15,8 @@ bool bool_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
 
 bool bool_eq(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b) {
-  return bool_eq(invariantGraph, invariantGraph.createVarNodeFromFzn(a, false),
-                 invariantGraph.createVarNodeFromFzn(b, false));
+  return bool_eq(invariantGraph, invariantGraph.retrieveVarNode(a),
+                 invariantGraph.retrieveVarNode(b));
 }
 
 bool bool_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
@@ -47,9 +47,8 @@ bool bool_eq(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
   }
 
   invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
-      invariantGraph.createVarNodeFromFzn(a, false),
-      invariantGraph.createVarNodeFromFzn(b, false),
-      invariantGraph.createVarNodeFromFzn(reified.var(), true)));
+      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
+      invariantGraph.retrieveVarNode(reified.var())));
 
   return true;
 }

@@ -157,7 +157,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
     });
   }));
 
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     const size_t b = rand_in_range(0, n - 2, gen);
     const size_t d = rand_in_range(b + 1, n - 1, gen);
     const size_t e = rand_in_range(d, n - 1, gen);
@@ -198,13 +198,13 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
     assert(solver->currentValue(totalDist) == computeDistance());
     ++probes;
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     for (int i = 0; i < n; ++i) {
       for (int j = i + 1; j < n; ++j) {
         solver->beginMove();
@@ -220,8 +220,8 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
       }
     }
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

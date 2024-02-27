@@ -15,7 +15,6 @@ class AllDifferentUniformNeighbourhoodTest : public ::testing::Test {
   search::RandomProvider random{123456789};
 
   std::vector<search::SearchVar> vars;
-  std::vector<Int> domain{1, 2, 3, 4};
 
   void SetUp() override {
     solver.open();
@@ -29,7 +28,8 @@ class AllDifferentUniformNeighbourhoodTest : public ::testing::Test {
 
 TEST_F(AllDifferentUniformNeighbourhoodTest, all_values_are_initialised) {
   search::neighbourhoods::AllDifferentUniformNeighbourhood neighbourhood(
-      std::vector<search::SearchVar>(vars), domain, solver);
+      std::vector<search::SearchVar>(vars), std::vector<Int>{1, 2, 3, 4},
+      solver);
 
   assignment.assign(
       [&](auto& modifier) { neighbourhood.initialise(random, modifier); });

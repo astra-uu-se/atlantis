@@ -51,17 +51,27 @@ class InvariantGraph {
   [[nodiscard]] bool containsVarNode(Int) const noexcept;
   [[nodiscard]] static bool containsVarNode(bool) noexcept;
 
-  virtual VarNodeId createVarNode(bool, bool isDefinedVar);
-  virtual VarNodeId createVarNode(bool, const std::string&, bool isDefinedVar);
-  virtual VarNodeId createVarNode(Int, bool isDefinedVar);
-  virtual VarNodeId createVarNode(Int, const std::string&, bool isDefinedVar);
-  virtual VarNodeId createVarNode(SearchDomain&&, bool isIntVar,
-                                  bool isDefinedVar);
-  virtual VarNodeId createVarNode(SearchDomain&&, bool isIntVar,
-                                  const std::string&, bool isDefinedVar);
+  VarNodeId retrieveBoolVarNode(
+      VarNode::DomainType = VarNode::DomainType::RANGE);
+  VarNodeId retrieveBoolVarNode(
+      const std::string&, VarNode::DomainType = VarNode::DomainType::RANGE);
+  VarNodeId retrieveBoolVarNode(bool);
+  VarNodeId retrieveBoolVarNode(bool, const std::string&);
+  VarNodeId retrieveBoolVarNode(
+      SearchDomain&&, VarNode::DomainType = VarNode::DomainType::RANGE);
+
+  VarNodeId retrieveIntVarNode(const std::string&);
+  VarNodeId retrieveIntVarNode(Int);
+  VarNodeId retrieveIntVarNode(Int, const std::string&);
+  VarNodeId retrieveIntVarNode(
+      SearchDomain&&, VarNode::DomainType = VarNode::DomainType::DOMAIN);
+  VarNodeId retrieveIntVarNode(
+      SearchDomain&&, const std::string&,
+      VarNode::DomainType = VarNode::DomainType::DOMAIN);
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier);
   [[nodiscard]] VarNode& varNode(VarNodeId id);
+  [[nodiscard]] VarNode& varNode(Int value);
 
   [[nodiscard]] const VarNode& varNodeConst(
       const std::string& identifier) const;

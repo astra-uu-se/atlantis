@@ -48,11 +48,16 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
                           const fznparser::IntArg& needle,
                           const fznparser::IntArg& count);
 
-std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
-                              const fznparser::BoolVarArray& vars);
+void invertCoeffs(std::vector<Int>&);
 
-std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
-                              const fznparser::IntVarArray& vars);
+std::pair<Int, Int> linBounds(const std::vector<Int>&,
+                              const fznparser::BoolVarArray&);
+
+std::pair<Int, Int> linBounds(const std::vector<Int>&,
+                              const fznparser::IntVarArray&);
+
+std::pair<Int, Int> linBounds(FznInvariantGraph&, const std::vector<Int>&,
+                              const std::vector<VarNodeId>&);
 
 #define FZN_CONSTRAINT_TYPE_CHECK(constraint, index, type, isVar)            \
   do {                                                                       \

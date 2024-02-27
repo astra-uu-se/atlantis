@@ -30,11 +30,11 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
   const auto& [lb, ub] = linBounds(coeffs, inputs);
 
-  const VarNodeId outputVarNodeId =
-      invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
+  const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
+      SearchDomain(lb, ub), VarNode::DomainType::NONE);
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), invariantGraph.createVarNodes(inputs, false),
+      std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
 
   int_ne(invariantGraph, outputVarNodeId, bound);
@@ -52,23 +52,35 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     }
     return int_lin_eq(invariantGraph, std::move(coeffs), inputs, bound);
   }
+
   if (coeffs.empty()) {
-    const VarNodeId reifiedVarNodeId =
-        invariantGraph.createVarNodeFromFzn(reified, true);
+    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId).fixValue(bound >= 0);
     return true;
   }
 
   const auto& [lb, ub] = linBounds(coeffs, inputs);
 
-  const VarNodeId outputVarNodeId =
-      invariantGraph.createVarNode(SearchDomain(lb, ub), true, true);
+  if (bound < lb || ub < bound) {
+    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
+    invariantGraph.varNode(reifiedVarNodeId).fixValue(true);
+    return true;
+  }
+
+  if (lb == ub && lb == bound) {
+    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
+    invariantGraph.varNode(reifiedVarNodeId).fixValue(false);
+    return true;
+  }
+
+  const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
+      SearchDomain(lb, ub), VarNode::DomainType::NONE);
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), invariantGraph.createVarNodes(inputs, false),
+      std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
 
-  int_ne(invariantGraph, outputVarNodeId, bound);
+  int_ne(invariantGraph, outputVarNodeId, bound, reified);
 
   return true;
 }

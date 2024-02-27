@@ -5,6 +5,7 @@
 
 #include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/types.hpp"
+#include "invariantgraph/violationInvariantNodes/boolLeNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

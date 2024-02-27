@@ -122,20 +122,17 @@ void verifyAllDifferent(const fznparser::IntVarArray& intVarArray) {
 VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
                           const fznparser::IntVarArray& inputs,
                           const fznparser::IntArg& needle) {
-  SearchDomain domain(0, static_cast<Int>(inputs.size()));
-
-  VarNodeId countVarNodeId =
-      invariantGraph.createVarNode(std::move(domain), true, true);
+  VarNodeId countVarNodeId = invariantGraph.retrieveIntVarNode(
+      SearchDomain(0, static_cast<Int>(inputs.size())));
 
   if (needle.isFixed()) {
-    invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false), needle.toParameter(),
-        countVarNodeId));
+    invariantGraph.addInvariantNode(
+        std::make_unique<IntCountNode>(invariantGraph.retrieveVarNodes(inputs),
+                                       needle.toParameter(), countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        invariantGraph.createVarNodeFromFzn(needle.var(), false),
-        countVarNodeId));
+        invariantGraph.retrieveVarNodes(inputs),
+        invariantGraph.retrieveVarNode(needle.var()), countVarNodeId));
   }
   return countVarNodeId;
 }
@@ -144,19 +141,24 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
                           const fznparser::IntVarArray& inputs,
                           const fznparser::IntArg& needle,
                           const fznparser::IntArg& count) {
-  VarNodeId countVarNodeId = invariantGraph.createVarNodeFromFzn(count, true);
+  VarNodeId countVarNodeId = invariantGraph.retrieveVarNode(count);
 
   if (needle.isFixed()) {
-    invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
-        invariantGraph.createVarNodes(inputs, false), needle.toParameter(),
-        countVarNodeId));
+    invariantGraph.addInvariantNode(
+        std::make_unique<IntCountNode>(invariantGraph.retrieveVarNodes(inputs),
+                                       needle.toParameter(), countVarNodeId));
   } else {
     invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        invariantGraph.createVarNodes(inputs, false),
-        invariantGraph.createVarNodeFromFzn(needle.var(), false),
-        countVarNodeId));
+        invariantGraph.retrieveVarNodes(inputs),
+        invariantGraph.retrieveVarNode(needle.var()), countVarNodeId));
   }
   return countVarNodeId;
+}
+
+void invertCoeffs(std::vector<Int>& coeffs) {
+  for (size_t i = 0; i < coeffs.size(); ++i) {
+    coeffs[i] = -coeffs[i];
+  }
 }
 
 std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
@@ -199,6 +201,25 @@ std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
       v1 = varRef.lowerBound() * coeffs[i];
       v2 = varRef.upperBound() * coeffs[i];
     }
+    lb += std::min(v1, v2);
+    ub += std::max(v1, v2);
+  }
+  return {lb, ub};
+}
+
+std::pair<Int, Int> linBounds(FznInvariantGraph& invariantgraph,
+                              const std::vector<Int>& coeffs,
+                              const std::vector<VarNodeId>& varNodeIds) {
+  Int lb = 0;
+  Int ub = 0;
+  for (size_t i = 0; i < coeffs.size(); ++i) {
+    const auto& varNode = invariantgraph.varNode(varNodeIds.at(i));
+    int v1 = coeffs.at(i) * (varNode.isIntVar()
+                                 ? varNode.lowerBound()
+                                 : static_cast<Int>(!varNode.inDomain(false)));
+    int v2 = coeffs.at(i) * (varNode.isIntVar()
+                                 ? varNode.upperBound()
+                                 : static_cast<Int>(varNode.inDomain(true)));
     lb += std::min(v1, v2);
     ub += std::max(v1, v2);
   }
