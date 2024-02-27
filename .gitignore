@@ -55,3 +55,7 @@ benchmark-data.json
 /tmp-*.json
 /plots/*
 /benchmark-json/*
+
+# Ignore the solver binary
+atlantis
+!atlantis/
