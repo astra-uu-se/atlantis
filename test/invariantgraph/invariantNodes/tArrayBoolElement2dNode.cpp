@@ -20,9 +20,9 @@ class ArrayBoolElement2dNodeTest : public NodeTestBase<ArrayElement2dNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    idx1 = createIntVarNode(1, 2, "idx1");
-    idx2 = createIntVarNode(1, 2, "idx2");
-    output = createBoolVarNode("output", true);
+    idx1 = retrieveIntVarNode(1, 2, "idx1");
+    idx2 = retrieveIntVarNode(1, 2, "idx2");
+    output = retrieveBoolVarNode("output");
 
     std::vector<std::vector<bool>> inputMatrix;
     inputMatrix.reserve(parMatrix.size());

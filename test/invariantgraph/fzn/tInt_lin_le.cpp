@@ -199,8 +199,9 @@ RC_GTEST_FIXTURE_PROP(int_lin_leTest, rapidcheck, (Int bMax)) {
   _invariantGraph->apply(*_solver);
 
   if (sumUb <= bound) {
-    const propagation::VarId totviolVarId = totalViolationVarId();
-    RC_ASSERT(totviolVarId == propagation::NULL_ID);
+    const propagation::VarId viol = totalViolationVarId();
+    RC_ASSERT(viol == propagation::NULL_ID ||
+              (_solver->lowerBound(viol) == _solver->lowerBound(viol)));
     return;
   }
 

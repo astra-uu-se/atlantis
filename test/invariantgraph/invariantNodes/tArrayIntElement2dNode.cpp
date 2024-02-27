@@ -21,15 +21,15 @@ class ArrayIntElement2dNodeTest : public NodeTestBase<ArrayElement2dNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    idx1 = createIntVarNode(1, 2, "idx1");
-    idx2 = createIntVarNode(1, 2, "idx2");
+    idx1 = retrieveIntVarNode(1, 2, "idx1");
+    idx2 = retrieveIntVarNode(1, 2, "idx2");
 
     std::vector<std::vector<Int>> inputMatrix;
     inputMatrix.reserve(parMatrix.size());
     std::copy(parMatrix.begin(), parMatrix.end(),
               std::back_inserter(inputMatrix));
 
-    outputVar = createIntVarNode(0, 3, "outputVar", true);
+    outputVar = retrieveIntVarNode(0, 3, "outputVar");
 
     createInvariantNode(idx1, idx2, std::move(inputMatrix), outputVar,
                         offsetIdx1, offsetIdx2);

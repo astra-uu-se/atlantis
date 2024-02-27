@@ -17,10 +17,10 @@ class CircuitImplicitNodeTest : public NodeTestBase<CircuitImplicitNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVarNode(1, 4, "a", true);
-    b = createIntVarNode(1, 4, "b", true);
-    c = createIntVarNode(1, 4, "c", true);
-    d = createIntVarNode(1, 4, "d", true);
+    a = retrieveIntVarNode(1, 4, "a");
+    b = retrieveIntVarNode(1, 4, "b");
+    c = retrieveIntVarNode(1, 4, "c");
+    d = retrieveIntVarNode(1, 4, "d");
 
     std::vector<VarNodeId> vars{a, b, c, d};
 

@@ -28,12 +28,12 @@ class IntCountNodeTest : public NodeTestBase<IntCountNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = createIntVarNode(2, 5, "x1");
-    x2 = createIntVarNode(3, 5, "x2");
-    x3 = createIntVarNode(4, 5, "x3");
+    x1 = retrieveIntVarNode(2, 5, "x1");
+    x2 = retrieveIntVarNode(3, 5, "x2");
+    x3 = retrieveIntVarNode(4, 5, "x3");
     std::vector<VarNodeId> inputVec{x1, x2, x3};
 
-    count = createIntVarNode(0, 2, "count");
+    count = retrieveIntVarNode(0, 2, "count");
 
     createInvariantNode(std::move(inputVec), needle, count);
   }

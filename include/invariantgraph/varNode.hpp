@@ -9,8 +9,12 @@
 
 #include "invariantgraph/types.hpp"
 #include "propagation/solver.hpp"
+#include "propagation/views/equalConst.hpp"
+#include "propagation/views/greaterEqualConst.hpp"
 #include "propagation/views/inDomain.hpp"
+#include "propagation/views/inIntervalConst.hpp"
 #include "propagation/views/inSparseDomain.hpp"
+#include "propagation/views/lessEqualConst.hpp"
 #include "search/neighbourhoods/neighbourhood.hpp"
 #include "search/searchVariable.hpp"
 #include "utils/domains.hpp"
@@ -32,12 +36,21 @@ class InvariantNode;   // Forward declaration
  * variable.
  */
 class VarNode {
+ public:
+  enum struct DomainType : unsigned char {
+    NONE = 0,
+    FIXED = 1,
+    LOWER_BOUND = 2,
+    UPPER_BOUND = 3,
+    RANGE = 4,
+    DOMAIN = 5
+  };
+
  private:
   VarNodeId _varNodeId;
+  bool _isIntVar;
+  DomainType _domainType{DomainType::DOMAIN};
   SearchDomain _domain;
-  const bool _isIntVar;
-  bool _shouldEnforceDomain{false};
-  std::string _identifier;
   propagation::VarId _varId{propagation::NULL_ID};
   propagation::VarId _domainViolationId{propagation::NULL_ID};
 
@@ -52,12 +65,17 @@ class VarNode {
    *
    * @param domain The domain of this variable.
    */
-  explicit VarNode(VarNodeId, SearchDomain&& domain, bool isIntVar,
-                   std::string&& identifier = "");
+  explicit VarNode(VarNodeId, bool isIntVar,
+                   VarNode::DomainType = DomainType::RANGE);
+  /**
+   * Construct a variable node which is not associated with a model variable.
+   *
+   * @param domain The domain of this variable.
+   */
+  explicit VarNode(VarNodeId, bool isIntVar, SearchDomain&& domain,
+                   VarNode::DomainType = DomainType::DOMAIN);
 
   VarNodeId varNodeId() const noexcept;
-
-  [[nodiscard]] const std::string& identifier() const;
 
   /**
    * @return The model propagation::VarId this node is associated
@@ -115,13 +133,10 @@ class VarNode {
   void removeValue(bool);
   void fixValue(bool);
 
-  /**
-   * @brief if the variable has a domain and the given boolean is true, then a
-   * domain violation invariant will be added to the invariant graph for the
-   * variable.
-   */
-  bool shouldEnforceDomain() const noexcept;
-  bool shouldEnforceDomain(bool) noexcept;
+  DomainType domainType() const noexcept;
+
+  void tightenDomainType(DomainType);
+  void setDomainType(DomainType);
 
   /**
    * @return if the bound range of the corresponding IntVar in solver is a
@@ -129,11 +144,9 @@ class VarNode {
    * otherwise the relative complement of varLb..varUb in SearchDomain is
    * returned
    */
-  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(
-      const propagation::SolverBase&);
+  [[nodiscard]] std::vector<DomainEntry> constrainedDomain(Int lb, Int ub);
 
-  propagation::VarId postDomainConstraint(propagation::SolverBase&,
-                                          std::vector<DomainEntry>&&);
+  propagation::VarId postDomainConstraint(propagation::SolverBase&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;
 

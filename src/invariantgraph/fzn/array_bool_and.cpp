@@ -42,7 +42,7 @@ bool array_bool_and(FznInvariantGraph& invariantGraph,
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolAndNode>(
           std::move(boolVarNodeIds),
-          invariantGraph.createVarNodeFromFzn(reified.var(), true)));
+          invariantGraph.retrieveVarNode(reified.var())));
   return true;
 }
 
@@ -53,14 +53,14 @@ bool array_bool_and(FznInvariantGraph& invariantGraph,
   if (reified.isFixed()) {
     invariantGraph.addInvariantNode(
         std::make_unique<invariantgraph::ArrayBoolAndNode>(
-            invariantGraph.createVarNodes(boolVarArray, false),
+            invariantGraph.retrieveVarNodes(boolVarArray),
             reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolAndNode>(
-          invariantGraph.createVarNodes(boolVarArray, false),
-          invariantGraph.createVarNodeFromFzn(reified.var(), true)));
+          invariantGraph.retrieveVarNodes(boolVarArray),
+          invariantGraph.retrieveVarNode(reified.var())));
   return true;
 }
 

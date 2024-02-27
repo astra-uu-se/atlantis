@@ -11,8 +11,8 @@ bool array_int_minimum(FznInvariantGraph& invariantGraph,
                        const fznparser::IntArg& output,
                        const fznparser::IntVarArray& inputs) {
   invariantGraph.addInvariantNode(std::make_unique<ArrayIntMinimumNode>(
-      invariantGraph.createVarNodes(inputs, false),
-      invariantGraph.createVarNodeFromFzn(output, true)));
+      invariantGraph.retrieveVarNodes(inputs),
+      invariantGraph.retrieveVarNode(output)));
   return true;
 }
 

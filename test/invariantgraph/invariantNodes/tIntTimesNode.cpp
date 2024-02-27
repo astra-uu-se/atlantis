@@ -14,9 +14,9 @@ class IntTimesNodeTest : public NodeTestBase<IntTimesNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = createIntVarNode(0, 10, "a");
-    b = createIntVarNode(0, 10, "b");
-    output = createIntVarNode(0, 10, "output");
+    a = retrieveIntVarNode(0, 10, "a");
+    b = retrieveIntVarNode(0, 10, "b");
+    output = retrieveIntVarNode(0, 10, "output");
 
     createInvariantNode(a, b, output);
   }

@@ -66,7 +66,7 @@ class ExtremeStatic : public ::benchmark::Fixture {
 BENCHMARK_DEFINE_F(ExtremeStatic, probe_single_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     solver->beginMove();
     solver->setValue(staticInputVars.at(staticVarIndexDist(gen)),
                      staticVarValueDist(gen));
@@ -78,8 +78,8 @@ BENCHMARK_DEFINE_F(ExtremeStatic, probe_single_var)
 
     ++probes;
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*
