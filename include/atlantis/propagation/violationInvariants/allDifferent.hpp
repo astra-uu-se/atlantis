@@ -4,11 +4,11 @@
 #include <limits>
 #include <vector>
 
-#include "propagation/solver.hpp"
-#include "propagation/variables/committableInt.hpp"
-#include "propagation/variables/intVar.hpp"
-#include "propagation/violationInvariants/violationInvariant.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/variables/committableInt.hpp"
+#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

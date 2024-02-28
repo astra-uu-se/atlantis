@@ -3,9 +3,9 @@
 #include <cassert>
 #include <vector>
 
-#include "propagation/variables/committable.hpp"
-#include "propagation/variables/committableInt.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/variables/committable.hpp"
+#include "atlantis/propagation/variables/committableInt.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

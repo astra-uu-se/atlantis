@@ -1,4 +1,4 @@
-#include "invariantgraph/violationInvariantNodes/intNeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intNeNode.hpp"
 
 #include "../parseHelper.hpp"
 

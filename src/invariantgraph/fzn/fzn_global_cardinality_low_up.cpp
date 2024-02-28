@@ -1,4 +1,4 @@
-#include "invariantgraph/fzn/fzn_global_cardinality_low_up.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_global_cardinality_low_up.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

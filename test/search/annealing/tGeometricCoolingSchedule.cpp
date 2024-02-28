@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "search/annealing/annealerContainer.hpp"
-#include "search/annealing/geometricCoolingSchedule.hpp"
+#include "atlantis/search/annealing/annealerContainer.hpp"
+#include "atlantis/search/annealing/geometricCoolingSchedule.hpp"
 
 namespace atlantis::testing {
 

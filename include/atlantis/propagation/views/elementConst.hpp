@@ -4,10 +4,10 @@
 #include <limits>
 #include <vector>
 
-#include "propagation/solver.hpp"
-#include "propagation/variables/committableInt.hpp"
-#include "propagation/views/intView.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/variables/committableInt.hpp"
+#include "atlantis/propagation/views/intView.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

@@ -1,4 +1,4 @@
-#include "search/annealer.hpp"
+#include "atlantis/search/annealer.hpp"
 
 namespace atlantis::search {
 

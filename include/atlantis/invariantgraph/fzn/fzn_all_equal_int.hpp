@@ -3,11 +3,11 @@
 #include <fznparser/constraint.hpp>
 #include <fznparser/variables.hpp>
 
-#include "invariantgraph/fzn/int_eq.hpp"
-#include "invariantgraph/fznInvariantGraph.hpp"
-#include "invariantgraph/types.hpp"
-#include "invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
-#include "invariantgraph/violationInvariantNodes/boolXorNode.hpp"
+#include "atlantis/invariantgraph/fzn/int_eq.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolXorNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

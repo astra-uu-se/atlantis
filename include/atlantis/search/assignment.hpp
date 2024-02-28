@@ -2,8 +2,8 @@
 
 #include <functional>
 
-#include "propagation/solver.hpp"
-#include "search/cost.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/search/cost.hpp"
 
 namespace atlantis::search {
 

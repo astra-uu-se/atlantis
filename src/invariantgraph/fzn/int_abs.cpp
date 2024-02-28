@@ -1,4 +1,4 @@
-#include "invariantgraph/fzn/int_abs.hpp"
+#include "atlantis/invariantgraph/fzn/int_abs.hpp"
 
 #include "../parseHelper.hpp"
 #include "fznHelper.hpp"

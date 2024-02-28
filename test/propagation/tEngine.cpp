@@ -4,12 +4,12 @@
 #include <random>
 #include <vector>
 
-#include "propagation/invariants/elementVar.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/invariants/minSparse.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/views/intOffsetView.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/invariants/elementVar.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/invariants/minSparse.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::testing {
 

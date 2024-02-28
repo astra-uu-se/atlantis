@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::search {
 

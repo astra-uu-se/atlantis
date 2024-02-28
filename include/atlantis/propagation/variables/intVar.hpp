@@ -5,9 +5,9 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "propagation/types.hpp"
-#include "propagation/variables/committableInt.hpp"
-#include "propagation/variables/var.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/propagation/variables/committableInt.hpp"
+#include "atlantis/propagation/variables/var.hpp"
 
 namespace atlantis::propagation {
 

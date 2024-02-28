@@ -6,10 +6,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "exceptions/exceptions.hpp"
-#include "invariantgraph/types.hpp"
-#include "invariantgraph/varNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::invariantgraph {
 /**

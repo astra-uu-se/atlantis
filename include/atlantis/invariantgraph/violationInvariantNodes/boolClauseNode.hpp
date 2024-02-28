@@ -2,11 +2,11 @@
 
 #include <utility>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/invariants/boolLinear.hpp"
-#include "propagation/views/equalConst.hpp"
-#include "propagation/views/notEqualConst.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
+#include "atlantis/propagation/invariants/boolLinear.hpp"
+#include "atlantis/propagation/views/equalConst.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
 class BoolClauseNode : public ViolationInvariantNode {

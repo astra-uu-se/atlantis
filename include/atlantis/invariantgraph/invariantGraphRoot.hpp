@@ -2,8 +2,8 @@
 
 #include <utility>
 
-#include "invariantgraph/implicitConstraintNode.hpp"
-#include "search/neighbourhoods/randomNeighbourhood.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
+#include "atlantis/search/neighbourhoods/randomNeighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 

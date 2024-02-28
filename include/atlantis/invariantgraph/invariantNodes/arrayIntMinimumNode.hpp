@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <utility>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/invariantNode.hpp"
-#include "propagation/invariants/minSparse.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/propagation/invariants/minSparse.hpp"
 
 namespace atlantis::invariantgraph {
 class ArrayIntMinimumNode : public InvariantNode {

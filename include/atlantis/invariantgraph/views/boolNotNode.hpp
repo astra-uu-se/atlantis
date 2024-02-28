@@ -3,9 +3,9 @@
 #include <map>
 #include <utility>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/invariantNode.hpp"
-#include "propagation/views/bool2IntView.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/propagation/views/bool2IntView.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "invariantgraph/fzn/int_mod.hpp"
+#include "atlantis/invariantgraph/fzn/int_mod.hpp"
 
 namespace atlantis::testing {
 

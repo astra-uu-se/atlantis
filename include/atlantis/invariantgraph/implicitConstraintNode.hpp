@@ -3,10 +3,10 @@
 #include <cassert>
 #include <vector>
 
-#include "invariantgraph/invariantNode.hpp"
-#include "invariantgraph/varNode.hpp"
-#include "propagation/solver.hpp"
-#include "search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 

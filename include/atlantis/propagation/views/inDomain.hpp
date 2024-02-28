@@ -3,11 +3,11 @@
 #include <cassert>
 #include <limits>
 
-#include "propagation/solver.hpp"
-#include "propagation/variables/committable.hpp"
-#include "propagation/variables/intVar.hpp"
-#include "propagation/views/intView.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/variables/committable.hpp"
+#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/propagation/views/intView.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

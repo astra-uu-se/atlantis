@@ -1,4 +1,4 @@
-#include "invariantgraph/violationInvariantNodes/boolLeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolLeNode.hpp"
 
 #include "../parseHelper.hpp"
 

@@ -2,12 +2,12 @@
 
 #include <utility>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/views/equalConst.hpp"
-#include "propagation/views/notEqualConst.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
-#include "propagation/violationInvariants/equal.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
+#include "atlantis/propagation/views/equalConst.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
+#include "atlantis/propagation/violationInvariants/equal.hpp"
 
 namespace atlantis::invariantgraph {
 

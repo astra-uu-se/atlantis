@@ -2,11 +2,11 @@
 
 #include <utility>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/views/notEqualConst.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
-#include "propagation/violationInvariants/notEqual.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
+#include "atlantis/propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::invariantgraph {
 class AllDifferentNode : public ViolationInvariantNode {

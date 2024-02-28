@@ -1,7 +1,7 @@
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/fzn/array_int_maximum.hpp"
-#include "invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/invariantgraph/fzn/array_int_maximum.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "propagation/types.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::search {
 

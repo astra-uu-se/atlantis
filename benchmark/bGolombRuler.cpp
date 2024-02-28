@@ -6,13 +6,13 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/propagation/invariants/absDiff.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
+#include "atlantis/propagation/violationInvariants/equal.hpp"
+#include "atlantis/propagation/violationInvariants/lessThan.hpp"
 #include "benchmark.hpp"
-#include "propagation/invariants/absDiff.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
-#include "propagation/violationInvariants/equal.hpp"
-#include "propagation/violationInvariants/lessThan.hpp"
 
 namespace atlantis::benchmark {
 
@@ -45,7 +45,8 @@ class GolombRuler : public ::benchmark::Fixture {
     Int prevVal = 0;
     for (Int i = 1; i < static_cast<Int>(markCount); ++i) {
       const Int markLb = i;
-      const Int markUb = static_cast<Int>(ub) - (static_cast<Int>(markCount) - i + 1);
+      const Int markUb =
+          static_cast<Int>(ub) - (static_cast<Int>(markCount) - i + 1);
 
       const Int markVal = std::uniform_int_distribution<Int>(
           std::max<Int>(prevVal + 1, markLb), markUb)(gen);
@@ -133,7 +134,8 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(::benchmark::State& st) {
         continue;
       }
 
-      const Int newVal = static_cast<Int>(rand_in_range(markLb, markUb - 1, gen));
+      const Int newVal =
+          static_cast<Int>(rand_in_range(markLb, markUb - 1, gen));
 
       solver->beginMove();
       solver->setValue(
@@ -155,8 +157,8 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(::benchmark::State& st) {
                  solver->currentValue(marks.at(i));
     }));
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

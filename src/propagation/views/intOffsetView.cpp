@@ -1,4 +1,4 @@
-#include "propagation/views/intOffsetView.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::propagation {
 

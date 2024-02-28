@@ -1,4 +1,4 @@
-#include "search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
+#include "atlantis/search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
 
 namespace atlantis::search::neighbourhoods {
 

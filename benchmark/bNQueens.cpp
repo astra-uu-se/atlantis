@@ -5,11 +5,11 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "benchmark.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/views/intOffsetView.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::benchmark {
 

@@ -1,9 +1,9 @@
-#include "invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 
-#include "invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
-#include "invariantgraph/violationInvariantNodes/boolEqNode.hpp"
-#include "invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
-#include "invariantgraph/violationInvariantNodes/intEqNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intEqNode.hpp"
 
 namespace atlantis::invariantgraph {
 

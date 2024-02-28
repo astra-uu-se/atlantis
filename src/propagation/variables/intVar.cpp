@@ -1,4 +1,4 @@
-#include "propagation/variables/intVar.hpp"
+#include "atlantis/propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
 

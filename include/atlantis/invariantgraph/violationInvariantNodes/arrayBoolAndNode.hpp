@@ -1,10 +1,10 @@
 #pragma once
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/invariants/forAll.hpp"
-#include "propagation/views/elementConst.hpp"
-#include "propagation/views/notEqualConst.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
+#include "atlantis/propagation/invariants/forAll.hpp"
+#include "atlantis/propagation/views/elementConst.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
 

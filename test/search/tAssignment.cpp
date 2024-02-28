@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/violationInvariants/equal.hpp"
-#include "search/assignment.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/violationInvariants/equal.hpp"
+#include "atlantis/search/assignment.hpp"
 
 namespace atlantis::testing {
 

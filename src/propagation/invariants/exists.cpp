@@ -1,4 +1,4 @@
-#include "propagation/invariants/exists.hpp"
+#include "atlantis/propagation/invariants/exists.hpp"
 
 namespace atlantis::propagation {
 

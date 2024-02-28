@@ -3,11 +3,11 @@
 #include <algorithm>
 #include <utility>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/invariantNode.hpp"
-#include "propagation/invariants/boolLinear.hpp"
-#include "propagation/views/intOffsetView.hpp"
-#include "propagation/views/scalarView.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/propagation/invariants/boolLinear.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/propagation/views/scalarView.hpp"
 
 namespace atlantis::invariantgraph {
 class BoolLinearNode : public InvariantNode {

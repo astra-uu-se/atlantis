@@ -3,10 +3,10 @@
 #include <memory>
 #include <vector>
 
-#include "propagation/invariants/invariant.hpp"
-#include "propagation/utils/idMap.hpp"
-#include "propagation/variables/intVar.hpp"
-#include "propagation/views/intView.hpp"
+#include "atlantis/propagation/invariants/invariant.hpp"
+#include "atlantis/propagation/utils/idMap.hpp"
+#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
 

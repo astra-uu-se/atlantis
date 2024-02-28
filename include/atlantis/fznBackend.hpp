@@ -6,13 +6,13 @@
 #include <optional>
 #include <utility>
 
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/logging/logger.hpp"
+#include "atlantis/search/annealing/annealingScheduleFactory.hpp"
+#include "atlantis/search/objective.hpp"
+#include "atlantis/search/searchProcedure.hpp"
+#include "atlantis/search/searchStatistics.hpp"
 #include "fznparser/parser.hpp"
-#include "invariantgraph/fznInvariantGraph.hpp"
-#include "logging/logger.hpp"
-#include "search/annealing/annealingScheduleFactory.hpp"
-#include "search/objective.hpp"
-#include "search/searchProcedure.hpp"
-#include "search/searchStatistics.hpp"
 
 namespace atlantis {
 

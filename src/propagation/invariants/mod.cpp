@@ -1,4 +1,4 @@
-#include "propagation/invariants/mod.hpp"
+#include "atlantis/propagation/invariants/mod.hpp"
 
 namespace atlantis::propagation {
 

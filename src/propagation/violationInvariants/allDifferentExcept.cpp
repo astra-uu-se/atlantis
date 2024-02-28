@@ -1,4 +1,4 @@
-#include "propagation/violationInvariants/allDifferentExcept.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferentExcept.hpp"
 
 namespace atlantis::propagation {
 

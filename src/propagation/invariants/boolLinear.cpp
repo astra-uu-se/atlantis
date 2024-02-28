@@ -1,4 +1,4 @@
-#include "propagation/invariants/boolLinear.hpp"
+#include "atlantis/propagation/invariants/boolLinear.hpp"
 
 namespace atlantis::propagation {
 

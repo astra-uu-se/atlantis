@@ -1,4 +1,4 @@
-#include "invariantgraph/invariantNodes/intTimesNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intTimesNode.hpp"
 
 #include "../parseHelper.hpp"
 

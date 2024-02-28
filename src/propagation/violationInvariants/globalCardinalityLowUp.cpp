@@ -1,4 +1,4 @@
-#include "propagation/violationInvariants/globalCardinalityLowUp.hpp"
+#include "atlantis/propagation/violationInvariants/globalCardinalityLowUp.hpp"
 
 namespace atlantis::propagation {
 

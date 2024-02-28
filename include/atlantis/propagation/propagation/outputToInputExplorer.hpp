@@ -3,9 +3,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include "exceptions/exceptions.hpp"
-#include "propagation/types.hpp"
-#include "propagation/utils/idMap.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/propagation/utils/idMap.hpp"
 
 namespace atlantis::propagation {
 

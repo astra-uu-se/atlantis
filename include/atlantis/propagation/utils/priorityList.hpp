@@ -3,7 +3,7 @@
 #include <cassert>
 #include <vector>
 
-#include "propagation/variables/committable.hpp"
+#include "atlantis/propagation/variables/committable.hpp"
 
 namespace atlantis::propagation {
 

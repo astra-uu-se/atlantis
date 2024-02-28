@@ -2,10 +2,10 @@
 
 #include <utility>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/violationInvariants/boolLessEqual.hpp"
-#include "propagation/violationInvariants/boolLessThan.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
+#include "atlantis/propagation/violationInvariants/boolLessEqual.hpp"
+#include "atlantis/propagation/violationInvariants/boolLessThan.hpp"
 
 namespace atlantis::invariantgraph {
 

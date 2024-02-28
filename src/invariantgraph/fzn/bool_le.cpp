@@ -1,8 +1,8 @@
-#include "invariantgraph/fzn/bool_le.hpp"
+#include "atlantis/invariantgraph/fzn/bool_le.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "invariantgraph/fzn/bool_lt.hpp"
+#include "atlantis/invariantgraph/fzn/bool_lt.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

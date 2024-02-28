@@ -2,9 +2,9 @@
 
 #include <array>
 
-#include "propagation/invariants/invariant.hpp"
-#include "propagation/solver.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/invariants/invariant.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

@@ -1,7 +1,7 @@
 
-#include "propagation/propagation/outputToInputExplorer.hpp"
+#include "atlantis/propagation/propagation/outputToInputExplorer.hpp"
 
-#include "propagation/solver.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::propagation {
 

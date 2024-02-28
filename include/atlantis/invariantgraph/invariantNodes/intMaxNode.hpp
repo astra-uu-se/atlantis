@@ -2,9 +2,9 @@
 
 #include <cmath>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/invariantNode.hpp"
-#include "propagation/invariants/binaryMax.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/propagation/invariants/binaryMax.hpp"
 
 namespace atlantis::invariantgraph {
 

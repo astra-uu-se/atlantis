@@ -2,9 +2,9 @@
 
 #include <algorithm>
 
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/searchVariable.hpp"
 #include "neighbourhood.hpp"
-#include "search/randomProvider.hpp"
-#include "search/searchVariable.hpp"
 
 namespace atlantis::search::neighbourhoods {
 

@@ -1,4 +1,4 @@
-#include "propagation/invariants/boolOr.hpp"
+#include "atlantis/propagation/invariants/boolOr.hpp"
 
 namespace atlantis::propagation {
 

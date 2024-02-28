@@ -1,4 +1,4 @@
-#include "invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
 
 #include "../parseHelper.hpp"
 

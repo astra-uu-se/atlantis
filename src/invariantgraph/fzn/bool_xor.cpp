@@ -1,8 +1,8 @@
-#include "invariantgraph/fzn/bool_xor.hpp"
+#include "atlantis/invariantgraph/fzn/bool_xor.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "invariantgraph/fzn/bool_eq.hpp"
+#include "atlantis/invariantgraph/fzn/bool_eq.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

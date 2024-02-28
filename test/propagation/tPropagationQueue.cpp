@@ -3,7 +3,7 @@
 #include <random>
 #include <vector>
 
-#include "propagation/propagation/propagationQueue.hpp"
+#include "atlantis/propagation/propagation/propagationQueue.hpp"
 
 namespace atlantis::testing {
 

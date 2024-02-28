@@ -5,12 +5,12 @@
 #include <queue>
 #include <set>
 
-#include "exceptions/exceptions.hpp"
-#include "propagation/propagation/outputToInputExplorer.hpp"
-#include "propagation/propagation/propagationGraph.hpp"
-#include "propagation/solverBase.hpp"
-#include "propagation/utils/idMap.hpp"
-#include "propagation/variables/intVar.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/propagation/propagation/outputToInputExplorer.hpp"
+#include "atlantis/propagation/propagation/propagationGraph.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/utils/idMap.hpp"
+#include "atlantis/propagation/variables/intVar.hpp"
 #include "utils/hashes.hpp"
 
 namespace atlantis::propagation {

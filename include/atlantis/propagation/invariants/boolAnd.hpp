@@ -1,9 +1,9 @@
 #pragma once
 
-#include "propagation/invariants/invariant.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/variables/intVar.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/invariants/invariant.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

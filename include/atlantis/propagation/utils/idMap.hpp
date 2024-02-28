@@ -2,8 +2,8 @@
 #include <cassert>
 #include <vector>
 
-#include "exceptions/exceptions.hpp"
-#include "propagation/types.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::propagation {
 

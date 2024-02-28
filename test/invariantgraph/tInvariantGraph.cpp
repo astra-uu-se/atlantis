@@ -2,13 +2,13 @@
 
 #include <string>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
-#include "invariantgraph/invariantGraphRoot.hpp"
-#include "invariantgraph/invariantNodes/arrayVarElementNode.hpp"
-#include "invariantgraph/invariantNodes/intLinearNode.hpp"
-#include "invariantgraph/invariantNodes/intPlusNode.hpp"
-#include "propagation/solver.hpp"
-#include "utils/domains.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intPlusNode.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 

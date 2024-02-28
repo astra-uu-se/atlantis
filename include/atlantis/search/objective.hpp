@@ -3,13 +3,13 @@
 #include <limits>
 #include <utility>
 
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
+#include "atlantis/types.hpp"
+#include "atlantis/utils/variant.hpp"
 #include "fznparser/model.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/types.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
-#include "types.hpp"
-#include "utils/variant.hpp"
 
 namespace atlantis::search {
 

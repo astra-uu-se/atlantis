@@ -3,10 +3,10 @@
 #include <utility>
 #include <variant>
 
-#include "propagation/types.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/types.hpp"
+#include "atlantis/utils/domains.hpp"
 #include "randomProvider.hpp"
-#include "types.hpp"
-#include "utils/domains.hpp"
 
 namespace atlantis::search {
 

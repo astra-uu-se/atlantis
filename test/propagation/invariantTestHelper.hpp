@@ -7,9 +7,9 @@
 #include <random>
 #include <vector>
 
-#include "propagation/solver.hpp"
-#include "propagation/types.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::testing {
 

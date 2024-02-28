@@ -1,4 +1,4 @@
-#include "misc/logging.hpp"
+#include "atlantis/misc/logging.hpp"
 
 #ifndef NDEBUG
 // Definition for the global log level.

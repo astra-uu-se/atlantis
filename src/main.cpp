@@ -3,8 +3,8 @@
 #include <filesystem>
 #include <iostream>
 
-#include "fznBackend.hpp"
-#include "logging/logger.hpp"
+#include "atlantis/fznBackend.hpp"
+#include "atlantis/logging/logger.hpp"
 
 /**
  * @brief Read a duration in milliseconds from an input stream. Used to allow

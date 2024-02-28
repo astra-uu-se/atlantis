@@ -4,10 +4,10 @@
 #include <vector>
 
 #include "annealingSchedule.hpp"
-#include "search/annealing/geometricCoolingSchedule.hpp"
-#include "search/annealing/geometricHeatingSchedule.hpp"
-#include "search/annealing/scheduleLoop.hpp"
-#include "search/annealing/scheduleSequence.hpp"
+#include "atlantis/search/annealing/geometricCoolingSchedule.hpp"
+#include "atlantis/search/annealing/geometricHeatingSchedule.hpp"
+#include "atlantis/search/annealing/scheduleLoop.hpp"
+#include "atlantis/search/annealing/scheduleSequence.hpp"
 
 namespace atlantis::search {
 

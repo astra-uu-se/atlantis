@@ -7,17 +7,17 @@
 #include <unordered_set>
 #include <vector>
 
-#include "invariantgraph/implicitConstraintNode.hpp"
-#include "invariantgraph/invariantGraphRoot.hpp"
-#include "invariantgraph/invariantNode.hpp"
-#include "invariantgraph/types.hpp"
-#include "invariantgraph/varNode.hpp"
-#include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/types.hpp"
-#include "search/neighbourhoods/neighbourhoodCombinator.hpp"
-#include "utils/fznAst.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/search/neighbourhoods/neighbourhoodCombinator.hpp"
+#include "atlantis/utils/fznAst.hpp"
 
 namespace atlantis::invariantgraph {
 

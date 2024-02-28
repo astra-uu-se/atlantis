@@ -1,4 +1,4 @@
-#include "propagation/violationInvariants/powDomain.hpp"
+#include "atlantis/propagation/violationInvariants/powDomain.hpp"
 
 namespace atlantis::propagation {
 

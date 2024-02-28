@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include "propagation/propagation/propagationQueue.hpp"
+#include "atlantis/propagation/propagation/propagationQueue.hpp"
 
 namespace atlantis::benchmark {
 
@@ -36,8 +36,8 @@ BENCHMARK_DEFINE_F(PropQueue, initVar)(::benchmark::State& st) {
       ++inits;
     }
   }
-  st.counters["inits_per_second"] =
-      ::benchmark::Counter(static_cast<double>(inits), ::benchmark::Counter::kIsRate);
+  st.counters["inits_per_second"] = ::benchmark::Counter(
+      static_cast<double>(inits), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PropQueue, push_min)(::benchmark::State& st) {
@@ -55,8 +55,8 @@ BENCHMARK_DEFINE_F(PropQueue, push_min)(::benchmark::State& st) {
       ++pushes;
     }
   }
-  st.counters["pushes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(pushes), ::benchmark::Counter::kIsRate);
+  st.counters["pushes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(pushes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PropQueue, push_max)(::benchmark::State& st) {
@@ -74,8 +74,8 @@ BENCHMARK_DEFINE_F(PropQueue, push_max)(::benchmark::State& st) {
       ++pushes;
     }
   }
-  st.counters["pushes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(pushes), ::benchmark::Counter::kIsRate);
+  st.counters["pushes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(pushes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PropQueue, push_random)(::benchmark::State& st) {
@@ -93,8 +93,8 @@ BENCHMARK_DEFINE_F(PropQueue, push_random)(::benchmark::State& st) {
       ++pushes;
     }
   }
-  st.counters["pushes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(pushes), ::benchmark::Counter::kIsRate);
+  st.counters["pushes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(pushes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PropQueue, pop_min)(::benchmark::State& st) {
@@ -115,8 +115,8 @@ BENCHMARK_DEFINE_F(PropQueue, pop_min)(::benchmark::State& st) {
       ++pops;
     }
   }
-  st.counters["pops_per_second"] =
-      ::benchmark::Counter(static_cast<double>(pops), ::benchmark::Counter::kIsRate);
+  st.counters["pops_per_second"] = ::benchmark::Counter(
+      static_cast<double>(pops), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PropQueue, pop_max)(::benchmark::State& st) {
@@ -137,8 +137,8 @@ BENCHMARK_DEFINE_F(PropQueue, pop_max)(::benchmark::State& st) {
       ++pops;
     }
   }
-  st.counters["pops_per_second"] =
-      ::benchmark::Counter(static_cast<double>(pops), ::benchmark::Counter::kIsRate);
+  st.counters["pops_per_second"] = ::benchmark::Counter(
+      static_cast<double>(pops), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(PropQueue, pop_random)(::benchmark::State& st) {
@@ -160,13 +160,13 @@ BENCHMARK_DEFINE_F(PropQueue, pop_random)(::benchmark::State& st) {
       ++pops;
     }
   }
-  st.counters["pops_per_second"] =
-      ::benchmark::Counter(static_cast<double>(pops), ::benchmark::Counter::kIsRate);
+  st.counters["pops_per_second"] = ::benchmark::Counter(
+      static_cast<double>(pops), ::benchmark::Counter::kIsRate);
 }
 
 // This benchmark is not a model, but mainly to test the performance
-// of the propagation::PropagationQueue data structure (it typically does not need
-// to be benchmarked)
+// of the propagation::PropagationQueue data structure (it typically does not
+// need to be benchmarked)
 
 /*
 static void arguments(::benchmark::internal::Benchmark* b) {

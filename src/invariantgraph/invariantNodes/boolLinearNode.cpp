@@ -1,4 +1,4 @@
-#include "invariantgraph/invariantNodes/boolLinearNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/boolLinearNode.hpp"
 
 #include "../parseHelper.hpp"
 

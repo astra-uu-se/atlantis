@@ -4,8 +4,8 @@
 #include <fznparser/variables.hpp>
 #include <unordered_set>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
-#include "invariantgraph/types.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

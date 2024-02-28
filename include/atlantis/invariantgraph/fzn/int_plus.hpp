@@ -3,9 +3,9 @@
 #include <fznparser/constraint.hpp>
 #include <fznparser/variables.hpp>
 
-#include "invariantgraph/fznInvariantGraph.hpp"
-#include "invariantgraph/invariantNodes/intPlusNode.hpp"
-#include "invariantgraph/types.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intPlusNode.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

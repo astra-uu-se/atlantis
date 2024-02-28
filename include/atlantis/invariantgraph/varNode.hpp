@@ -7,18 +7,18 @@
 #include <unordered_map>
 #include <vector>
 
-#include "invariantgraph/types.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/views/equalConst.hpp"
-#include "propagation/views/greaterEqualConst.hpp"
-#include "propagation/views/inDomain.hpp"
-#include "propagation/views/inIntervalConst.hpp"
-#include "propagation/views/inSparseDomain.hpp"
-#include "propagation/views/lessEqualConst.hpp"
-#include "search/neighbourhoods/neighbourhood.hpp"
-#include "search/searchVariable.hpp"
-#include "utils/domains.hpp"
-#include "utils/variant.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/equalConst.hpp"
+#include "atlantis/propagation/views/greaterEqualConst.hpp"
+#include "atlantis/propagation/views/inDomain.hpp"
+#include "atlantis/propagation/views/inIntervalConst.hpp"
+#include "atlantis/propagation/views/inSparseDomain.hpp"
+#include "atlantis/propagation/views/lessEqualConst.hpp"
+#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/searchVariable.hpp"
+#include "atlantis/utils/domains.hpp"
+#include "atlantis/utils/variant.hpp"
 
 // Undefine the DOMAIN macro that is defined in math.h on MacOS
 #undef DOMAIN

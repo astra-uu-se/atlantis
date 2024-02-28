@@ -1,7 +1,7 @@
 #pragma once
 
-#include "propagation/views/view.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/views/view.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

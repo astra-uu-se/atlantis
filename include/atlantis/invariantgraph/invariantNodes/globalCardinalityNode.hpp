@@ -2,15 +2,15 @@
 
 #include <utility>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/violationInvariantNode.hpp"
-#include "propagation/invariants/exists.hpp"
-#include "propagation/invariants/globalCardinalityOpen.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/views/equalConst.hpp"
-#include "propagation/views/notEqualConst.hpp"
-#include "propagation/violationInvariants/equal.hpp"
-#include "propagation/violationInvariants/notEqual.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
+#include "atlantis/propagation/invariants/exists.hpp"
+#include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/views/equalConst.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/propagation/violationInvariants/equal.hpp"
+#include "atlantis/propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::invariantgraph {
 class GlobalCardinalityNode : public InvariantNode {

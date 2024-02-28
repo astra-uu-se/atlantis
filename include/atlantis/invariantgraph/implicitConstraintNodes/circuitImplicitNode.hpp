@@ -2,9 +2,9 @@
 
 #include <numeric>
 
-#include "invariantgraph/implicitConstraintNode.hpp"
-#include "invariantgraph/invariantGraph.hpp"
-#include "search/neighbourhoods/circuitNeighbourhood.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 

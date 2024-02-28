@@ -3,9 +3,9 @@
 #include <cassert>
 #include <vector>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/invariantNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -2,10 +2,10 @@
 
 #include <numeric>
 
-#include "invariantgraph/implicitConstraintNode.hpp"
-#include "invariantgraph/invariantGraph.hpp"
-#include "search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
-#include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
+#include "atlantis/search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -8,12 +8,12 @@
 #include <queue>
 #include <vector>
 
-#include "exceptions/exceptions.hpp"
-#include "misc/logging.hpp"
-#include "propagation/store/store.hpp"
-#include "propagation/utils/idMap.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/misc/logging.hpp"
+#include "atlantis/propagation/store/store.hpp"
+#include "atlantis/propagation/utils/idMap.hpp"
+#include "atlantis/types.hpp"
 #include "propagationQueue.hpp"
-#include "types.hpp"
 
 namespace atlantis::propagation {
 

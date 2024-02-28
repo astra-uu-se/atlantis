@@ -1,6 +1,6 @@
 
 
-#include "invariantgraph/fzn/circuitImplicitNode.hpp"
+#include "atlantis/invariantgraph/fzn/circuitImplicitNode.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

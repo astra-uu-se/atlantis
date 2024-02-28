@@ -1,4 +1,4 @@
-#include "invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 
 namespace atlantis::invariantgraph {
 

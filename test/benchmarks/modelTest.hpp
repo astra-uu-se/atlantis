@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 
-#include "fznBackend.hpp"
+#include "atlantis/fznBackend.hpp"
 
 namespace atlantis::testing {
 

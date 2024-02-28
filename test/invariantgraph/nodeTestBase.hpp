@@ -6,10 +6,10 @@
 #include <utility>
 #include <vector>
 
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/types.hpp"
-#include "propagation/solver.hpp"
-#include "utils/variant.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/utils/variant.hpp"
 
 namespace atlantis::testing {
 

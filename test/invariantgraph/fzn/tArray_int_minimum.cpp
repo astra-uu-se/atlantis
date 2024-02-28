@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "invariantgraph/fzn/array_int_minimum.hpp"
+#include "atlantis/invariantgraph/fzn/array_int_minimum.hpp"
 
 namespace atlantis::testing {
 

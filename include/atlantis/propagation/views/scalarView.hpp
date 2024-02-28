@@ -1,7 +1,7 @@
 #pragma once
 
-#include "propagation/solver.hpp"
-#include "propagation/views/intView.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
 

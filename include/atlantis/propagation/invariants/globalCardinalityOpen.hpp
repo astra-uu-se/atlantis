@@ -4,11 +4,11 @@
 #include <cassert>
 #include <vector>
 
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/variables/committableInt.hpp"
+#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/types.hpp"
 #include "invariant.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/variables/committableInt.hpp"
-#include "propagation/variables/intVar.hpp"
-#include "types.hpp"
 
 namespace atlantis::propagation {
 

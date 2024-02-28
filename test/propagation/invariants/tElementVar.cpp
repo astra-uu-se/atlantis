@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/invariants/elementVar.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/propagation/invariants/elementVar.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

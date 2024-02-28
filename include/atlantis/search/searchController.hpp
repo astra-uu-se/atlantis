@@ -4,11 +4,11 @@
 #include <iostream>
 
 #include "assignment.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/utils/fznAst.hpp"
+#include "atlantis/utils/fznOutput.hpp"
 #include "fznparser/model.hpp"
-#include "invariantgraph/fznInvariantGraph.hpp"
-#include "propagation/types.hpp"
-#include "utils/fznAst.hpp"
-#include "utils/fznOutput.hpp"
 
 namespace atlantis::search {
 

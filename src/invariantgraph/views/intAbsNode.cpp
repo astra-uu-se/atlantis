@@ -1,4 +1,4 @@
-#include "invariantgraph/views/intAbsNode.hpp"
+#include "atlantis/invariantgraph/views/intAbsNode.hpp"
 
 namespace atlantis::invariantgraph {
 

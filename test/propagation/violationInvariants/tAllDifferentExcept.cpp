@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/violationInvariants/allDifferentExcept.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferentExcept.hpp"
 
 namespace atlantis::testing {
 

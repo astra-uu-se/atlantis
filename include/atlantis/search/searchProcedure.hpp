@@ -3,7 +3,7 @@
 #include <chrono>
 #include <string>
 
-#include "logging/logger.hpp"
+#include "atlantis/logging/logger.hpp"
 #include "neighbourhoods/neighbourhood.hpp"
 #include "objective.hpp"
 #include "searchController.hpp"

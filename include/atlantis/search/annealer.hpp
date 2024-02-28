@@ -2,9 +2,9 @@
 
 #include <limits>
 
+#include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "move.hpp"
 #include "randomProvider.hpp"
-#include "search/annealing/annealingSchedule.hpp"
 
 namespace atlantis::search {
 

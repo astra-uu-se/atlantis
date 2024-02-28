@@ -1,4 +1,4 @@
-#include "propagation/invariants/intDiv.hpp"
+#include "atlantis/propagation/invariants/intDiv.hpp"
 
 namespace atlantis::propagation {
 

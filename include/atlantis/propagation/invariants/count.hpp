@@ -4,9 +4,9 @@
 #include <utility>
 #include <vector>
 
-#include "propagation/solver.hpp"
-#include "propagation/violationInvariants/violationInvariant.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

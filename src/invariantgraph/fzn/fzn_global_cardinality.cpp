@@ -1,6 +1,6 @@
 
 
-#include "invariantgraph/fzn/fzn_global_cardinality.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_global_cardinality.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

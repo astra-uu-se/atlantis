@@ -4,8 +4,8 @@
 #include <random>
 #include <vector>
 
-#include "types.hpp"
-#include "utils/domains.hpp"
+#include "atlantis/types.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::search {
 

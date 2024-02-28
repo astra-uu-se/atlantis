@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "invariantgraph/fzn/bool_clause.hpp"
+#include "atlantis/invariantgraph/fzn/bool_clause.hpp"
 
 namespace atlantis::testing {
 

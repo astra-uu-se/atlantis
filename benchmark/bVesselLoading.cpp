@@ -4,13 +4,13 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/propagation/invariants/exists.hpp"
+#include "atlantis/propagation/invariants/ifThenElse.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "benchmark.hpp"
-#include "propagation/invariants/exists.hpp"
-#include "propagation/invariants/ifThenElse.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/views/intOffsetView.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
 
 namespace atlantis::benchmark {
 

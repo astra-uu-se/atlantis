@@ -3,12 +3,12 @@
 #include <fznparser/constraint.hpp>
 #include <fznparser/variables.hpp>
 
-#include "invariantgraph/fzn/array_bool_and.hpp"
-#include "invariantgraph/fzn/int_eq.hpp"
-#include "invariantgraph/fzn/set_in.hpp"
-#include "invariantgraph/fznInvariantGraph.hpp"
-#include "invariantgraph/invariantNodes/globalCardinalityNode.hpp"
-#include "invariantgraph/types.hpp"
+#include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
+#include "atlantis/invariantgraph/fzn/int_eq.hpp"
+#include "atlantis/invariantgraph/fzn/set_in.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

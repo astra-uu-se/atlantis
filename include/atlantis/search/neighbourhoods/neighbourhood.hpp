@@ -1,8 +1,8 @@
 #pragma once
 
-#include "search/annealer.hpp"
-#include "search/move.hpp"
-#include "search/searchVariable.hpp"
+#include "atlantis/search/annealer.hpp"
+#include "atlantis/search/move.hpp"
+#include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::search::neighbourhoods {
 

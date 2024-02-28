@@ -2,9 +2,9 @@
 #include <cassert>
 #include <memory>
 
-#include "propagation/propagation/propagationListNode.hpp"
-#include "propagation/types.hpp"
-#include "propagation/utils/idMap.hpp"
+#include "atlantis/propagation/propagation/propagationListNode.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/propagation/utils/idMap.hpp"
 
 namespace atlantis::propagation {
 

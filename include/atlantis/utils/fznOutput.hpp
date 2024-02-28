@@ -4,9 +4,9 @@
 #include <variant>
 #include <vector>
 
-#include "invariantgraph/types.hpp"
-#include "propagation/types.hpp"
-#include "types.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis {
 
