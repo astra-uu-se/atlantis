@@ -4,6 +4,8 @@
   "id": "se.uu.it.atlantis",
   "executable": "${EXEC_LOC}",
   "mznlib": "${MZN_LOC}",
+  "tags": ["int", "cbls", "local"],
+  "stdFlags": ["-i", "-r", "-t"],
   "extraFlags": [
     ["--annealing-schedule", "Path to the annealing schedule definition file to use.", "string"],
     ["--log-level", "Configures the log level. 0 = ERROR, 1 = WARNING, 2 = INFO, 3 = DEBUG, 4 = TRACE. If not specified, the WARNING level is used.", "opt:0:1:2:3:4"]

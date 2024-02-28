@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     // clang-format off
     options.add_options()
       (
-        "a,intermediate-solutions",
+        "i,intermediate-solutions",
         "Ignored, but present because used in the MiniZinc challenge."
       )
       (
