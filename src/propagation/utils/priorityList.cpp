@@ -1,4 +1,4 @@
-#include "propagation/utils/priorityList.hpp"
+#include "atlantis/propagation/utils/priorityList.hpp"
 
 namespace atlantis::propagation {
 

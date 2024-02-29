@@ -1,7 +1,7 @@
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/fzn/array_var_bool_element2d.hpp"
-#include "invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/invariantgraph/fzn/array_var_bool_element2d.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

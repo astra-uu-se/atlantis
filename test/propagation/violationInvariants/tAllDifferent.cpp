@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::testing {
 

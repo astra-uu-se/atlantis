@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "invariantgraph/fzn/int_max.hpp"
+#include "atlantis/invariantgraph/fzn/int_max.hpp"
 
 namespace atlantis::testing {
 

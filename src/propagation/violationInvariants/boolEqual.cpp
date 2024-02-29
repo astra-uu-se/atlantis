@@ -1,4 +1,4 @@
-#include "propagation/violationInvariants/boolEqual.hpp"
+#include "atlantis/propagation/violationInvariants/boolEqual.hpp"
 
 namespace atlantis::propagation {
 

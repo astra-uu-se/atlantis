@@ -1,4 +1,4 @@
-#include "invariantgraph/fzn/array_bool_and.hpp"
+#include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "invariantgraph/fzn/circuitImplicitNode.hpp"
+#include "atlantis/invariantgraph/fzn/circuitImplicitNode.hpp"
 
 namespace atlantis::testing {
 

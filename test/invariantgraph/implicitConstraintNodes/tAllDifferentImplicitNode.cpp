@@ -1,7 +1,7 @@
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
-#include "propagation/solver.hpp"
-#include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
 namespace atlantis::testing {
 

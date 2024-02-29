@@ -1,9 +1,9 @@
-#include "invariantgraph/fzn/int_lin_ne.hpp"
+#include "atlantis/invariantgraph/fzn/int_lin_ne.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "invariantgraph/fzn/int_lin_eq.hpp"
-#include "invariantgraph/fzn/int_ne.hpp"
+#include "atlantis/invariantgraph/fzn/int_lin_eq.hpp"
+#include "atlantis/invariantgraph/fzn/int_ne.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

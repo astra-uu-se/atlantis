@@ -1,4 +1,4 @@
-#include "invariantgraph/fzn/allDifferentImplicitNode.hpp"
+#include "atlantis/invariantgraph/fzn/allDifferentImplicitNode.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

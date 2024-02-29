@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "invariantgraph/fzn/array_var_int_element2d.hpp"
+#include "atlantis/invariantgraph/fzn/array_var_int_element2d.hpp"
 
 namespace atlantis::testing {
 

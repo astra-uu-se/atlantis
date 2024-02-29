@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/violationInvariantNodes/boolLeNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolLeNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

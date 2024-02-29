@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "invariantgraph/fzn/fzn_global_cardinality_low_up.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_global_cardinality_low_up.hpp"
 
 namespace atlantis::testing {
 

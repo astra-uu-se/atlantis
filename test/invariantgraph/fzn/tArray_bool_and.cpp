@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "invariantgraph/fzn/array_bool_and.hpp"
+#include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
 
 namespace atlantis::testing {
 

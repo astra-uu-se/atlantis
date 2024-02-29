@@ -4,8 +4,8 @@
 #include <memory>
 #include <vector>
 
-#include "propagation/solver.hpp"
-#include "propagation/views/greaterEqualConst.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/greaterEqualConst.hpp"
 
 namespace atlantis::testing {
 

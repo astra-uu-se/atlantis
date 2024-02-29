@@ -1,4 +1,4 @@
-#include "propagation/invariants/binaryMin.hpp"
+#include "atlantis/propagation/invariants/binaryMin.hpp"
 
 namespace atlantis::propagation {
 

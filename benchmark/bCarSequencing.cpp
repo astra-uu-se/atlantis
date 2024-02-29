@@ -6,14 +6,14 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/propagation/invariants/countConst.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/lessEqualConst.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
+#include "atlantis/propagation/violationInvariants/equal.hpp"
+#include "atlantis/propagation/violationInvariants/lessThan.hpp"
 #include "benchmark.hpp"
-#include "propagation/invariants/countConst.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/views/lessEqualConst.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
-#include "propagation/violationInvariants/equal.hpp"
-#include "propagation/violationInvariants/lessThan.hpp"
 
 namespace atlantis::benchmark {
 
@@ -148,7 +148,8 @@ class CarSequencing : public ::benchmark::Fixture {
             sequence.begin() + static_cast<Int>(start),
             sequence.begin() + static_cast<Int>(start + blockSize.at(o)));
         assert(featureElemRun.size() == blockSize.at(o));
-        featureElemSum.emplace_back(solver->makeIntVar(0, 0, static_cast<Int>(blockSize.at(o))));
+        featureElemSum.emplace_back(
+            solver->makeIntVar(0, 0, static_cast<Int>(blockSize.at(o))));
         // Introducing up to n invariants each with up to n static edges
         solver->makeInvariant<propagation::CountConst>(
             *solver, featureElemSum.back(), o, std::move(featureElemRun));
@@ -220,8 +221,8 @@ BENCHMARK_DEFINE_F(CarSequencing, probe_single_swap)(::benchmark::State& st) {
       });
     }));
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(CarSequencing, probe_all_swap)(::benchmark::State& st) {
@@ -244,8 +245,8 @@ BENCHMARK_DEFINE_F(CarSequencing, probe_all_swap)(::benchmark::State& st) {
       }
     }
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 //*

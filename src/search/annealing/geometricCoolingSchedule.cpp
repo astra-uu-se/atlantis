@@ -1,4 +1,4 @@
-#include "search/annealing/geometricCoolingSchedule.hpp"
+#include "atlantis/search/annealing/geometricCoolingSchedule.hpp"
 
 namespace atlantis::search {
 

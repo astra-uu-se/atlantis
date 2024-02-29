@@ -1,4 +1,4 @@
-#include "search/objective.hpp"
+#include "atlantis/search/objective.hpp"
 
 namespace atlantis::search {
 

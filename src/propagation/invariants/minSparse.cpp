@@ -1,4 +1,4 @@
-#include "propagation/invariants/minSparse.hpp"
+#include "atlantis/propagation/invariants/minSparse.hpp"
 
 namespace atlantis::propagation {
 

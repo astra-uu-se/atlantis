@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "invariantgraph/fzn/array_bool_xor.hpp"
+#include "atlantis/invariantgraph/fzn/array_bool_xor.hpp"
 
 namespace atlantis::testing {
 

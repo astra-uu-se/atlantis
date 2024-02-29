@@ -1,4 +1,4 @@
-#include "propagation/views/intMaxView.hpp"
+#include "atlantis/propagation/views/intMaxView.hpp"
 
 namespace atlantis::propagation {
 

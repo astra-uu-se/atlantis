@@ -1,8 +1,8 @@
 #pragma once
 
-#include "propagation/solver.hpp"
-#include "propagation/types.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::benchmark {
 
@@ -32,8 +32,7 @@ inline propagation::OutputToInputMarkingMode intToOutputToInputMarkingMode(
   }
 }
 
-inline void setSolverMode(propagation::Solver& solver,
-                           const int state) {
+inline void setSolverMode(propagation::Solver& solver, const int state) {
   solver.setPropagationMode(intToPropagationMode(state));
   solver.setOutputToInputMarkingMode(intToOutputToInputMarkingMode(state));
 }

@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/invariants/boolOr.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/propagation/invariants/boolOr.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

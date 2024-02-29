@@ -1,4 +1,4 @@
-#include "invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
 
 #include "../parseHelper.hpp"
 

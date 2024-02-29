@@ -6,13 +6,13 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/propagation/invariants/absDiff.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/equalConst.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
+#include "atlantis/propagation/violationInvariants/equal.hpp"
 #include "benchmark.hpp"
-#include "propagation/invariants/absDiff.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/views/equalConst.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
-#include "propagation/violationInvariants/equal.hpp"
 
 namespace atlantis::benchmark {
 

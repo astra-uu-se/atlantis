@@ -1,4 +1,4 @@
-#include "propagation/views/intAbsView.hpp"
+#include "atlantis/propagation/views/intAbsView.hpp"
 
 namespace atlantis::propagation {
 

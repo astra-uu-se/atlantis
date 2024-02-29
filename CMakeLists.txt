@@ -2,10 +2,20 @@ cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PROJECT_NAME atlantis)
-project(${PROJECT_NAME} LANGUAGES CXX)
+project(${PROJECT_NAME} VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+include(GNUInstallDirs)
+include(cmake/CPM.cmake)
+
+CPMAddPackage(
+  NAME PackageProject.cmake
+  VERSION 1.10.0
+  GITHUB_REPOSITORY "TheLartians/PackageProject.cmake"
+  GIT_TAG "v1.10.0"
+)
 
 # Check if microsoft visual code. I have no idea if this works
 if(MSVC)
@@ -28,7 +38,10 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 
 # Set the 'library' name. The library consists of all cpp, hpp, and h files except
 # main in ./src
-set(PROJECT_LIB ${PROJECT_NAME}_lib)
+set(PROJECT_LIB ${PROJECT_NAME})
+# Set the 'executable' name. The executable consists of the library together with
+# main.cpp in ./src
+set(PROJECT_EXEC fzn-${PROJECT_NAME})
 
 # Retrieve all cpp, hpp, and h files in ./src
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/include/*.h ${PROJECT_SOURCE_DIR}/include/*.hpp)
@@ -43,8 +56,45 @@ list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/src/main.cpp)
 add_library(${PROJECT_LIB} ${SRC_FILES})
 
 # The executable is the main file
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/main.cpp)
+add_executable(${PROJECT_EXEC} ${PROJECT_SOURCE_DIR}/src/main.cpp)
+# Add executable to --target install
+install(
+  TARGETS ${PROJECT_EXEC}
+  EXPORT ${PROJECT_NAME}Targets
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+# Add minizinc library to --target install
+install(
+  DIRECTORY share/minizinc/atlantis
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/minizinc/
+)
+# Create a `atlantis.msc` in the build directory (for each config)
+set(MZN_LOC ${CMAKE_SOURCE_DIR}/share/minizinc/atlantis)
+if(CMAKE_CONFIGURATION_TYPES)
+  foreach(CNF IN LISTS CMAKE_CONFIGURATION_TYPES)
+    set(EXEC_LOC ${CMAKE_BINARY_DIR}/${CNF}/${PROJECT_EXEC})
+    string(TOLOWER "${CNF}" CNFL)
+    configure_file(share/minizinc/solvers/atlantis.msc.in atlantis-${CNFL}.msc)
+  endforeach()
+else()
+  set(EXEC_LOC ${CMAKE_BINARY_DIR}/${PROJECT_EXEC})
+  configure_file(share/minizinc/solvers/atlantis.msc.in atlantis.msc)
+endif()
+# Create a `atlantis.msc` that is added to --target install
+set(MZN_LOC ../atlantis)
+file(RELATIVE_PATH EXEC_LOC ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATAROOTDIR}/minizinc/solvers ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_EXEC})
+configure_file(share/minizinc/solvers/atlantis.msc.in share/minizinc/solvers/atlantis.msc)
+install(
+  FILES ${CMAKE_BINARY_DIR}/share/minizinc/solvers/atlantis.msc
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/minizinc/solvers/
+)
+unset(EXEC_LOC)
+unset(MZN_LOC)
 
+
+option(FMT_INSTALL "Enable install for fmt project" ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
@@ -52,7 +102,7 @@ include(FetchContent)
 FetchContent_Declare(
   fznparser
   GIT_REPOSITORY git@github.com:astra-uu-se/fznparser.git
-  GIT_TAG b824c2ac6a18096d8a04c1e30511b258aed4f12e
+  GIT_TAG 4cb9332e6f987137e621f68546b4302a7eba49ad
 )
 FetchContent_Declare(
   cxxopts
@@ -77,10 +127,10 @@ target_include_directories(${PROJECT_LIB}
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
 
-target_link_libraries(${PROJECT_LIB} PUBLIC fznparser::fznparser PRIVATE fmt::fmt)
+target_link_libraries(${PROJECT_LIB} fznparser::fznparser fmt::fmt)
 
 # Link the src library with the project
-target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_LIB} cxxopts::cxxopts fmt::fmt)
+target_link_libraries(${PROJECT_EXEC} ${PROJECT_LIB} cxxopts::cxxopts fmt::fmt)
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
@@ -89,7 +139,7 @@ else()
 
   if(lto_supported)
     message(STATUS "IPO / LTO enabled")
-    set_property(TARGET ${PROJECT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    set_property(TARGET ${PROJECT_EXEC} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
   else()
     message(STATUS "IPO / LTO not supported: <${error}>")
   endif()
@@ -153,7 +203,6 @@ if(BUILD_TESTS)
     Threads::Threads
     -lm
     ${PROJECT_LIB}
-    fmt::fmt
   )
 
   # This is so you can do 'make test' to see all your tests run, instead of
@@ -187,3 +236,21 @@ if(BUILD_BENCHMARKS)
     ${PROJECT_LIB}
   )
 endif()
+
+# ---- Create an installable target ----
+# this allows users to install and find the library via `find_package()`.
+
+# the location where the project's version header will be placed should match
+# the project's regular header paths
+string(TOLOWER ${PROJECT_NAME}/version.h VERSION_HEADER_LOCATION)
+
+packageProject(
+  NAME ${PROJECT_LIB}
+  VERSION ${PROJECT_VERSION}
+  NAMESPACE ${PROJECT_NAME}
+  BINARY_DIR ${PROJECT_BINARY_DIR}
+  INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include
+  INCLUDE_DESTINATION include/
+  VERSION_HEADER "${VERSION_HEADER_LOCATION}"
+  DEPENDENCIES "fmt 8.1.1;fznparser 0.2"
+)

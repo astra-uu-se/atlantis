@@ -1,8 +1,8 @@
-#include "invariantgraph/fzn/int_lt.hpp"
+#include "atlantis/invariantgraph/fzn/int_lt.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "invariantgraph/fzn/int_le.hpp"
+#include "atlantis/invariantgraph/fzn/int_le.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

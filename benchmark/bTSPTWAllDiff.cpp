@@ -5,14 +5,14 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/propagation/invariants/element2dConst.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/invariants/plus.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/propagation/views/lessEqualConst.hpp"
+#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "benchmark.hpp"
-#include "propagation/invariants/element2dConst.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/invariants/plus.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/views/intOffsetView.hpp"
-#include "propagation/views/lessEqualConst.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
 
 namespace atlantis::benchmark {
 

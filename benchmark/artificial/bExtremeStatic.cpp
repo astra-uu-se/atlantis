@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::benchmark {
 

@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "../../testHelper.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/views/inSparseDomain.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/inSparseDomain.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::testing {
 

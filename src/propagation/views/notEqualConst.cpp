@@ -1,4 +1,4 @@
-#include "propagation/views/notEqualConst.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::propagation {
 

@@ -1,4 +1,6 @@
-#include "utils/domains.hpp"
+#include <string>
+
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis {
 

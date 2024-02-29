@@ -1,4 +1,4 @@
-#include "invariantgraph/invariantGraphRoot.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -1,4 +1,4 @@
-#include "logging/logger.hpp"
+#include "atlantis/logging/logger.hpp"
 
 namespace atlantis::logging {
 

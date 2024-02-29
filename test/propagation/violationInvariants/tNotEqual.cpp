@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/violationInvariants/notEqual.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::testing {
 

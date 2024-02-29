@@ -1,4 +1,4 @@
-#include "propagation/invariants/binaryMax.hpp"
+#include "atlantis/propagation/invariants/binaryMax.hpp"
 
 namespace atlantis::propagation {
 

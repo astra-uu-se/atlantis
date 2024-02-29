@@ -1,4 +1,4 @@
-#include "invariantgraph/views/bool2IntNode.hpp"
+#include "atlantis/invariantgraph/views/bool2IntNode.hpp"
 
 namespace atlantis::invariantgraph {
 

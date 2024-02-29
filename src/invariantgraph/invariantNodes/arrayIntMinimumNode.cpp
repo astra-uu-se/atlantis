@@ -1,4 +1,4 @@
-#include "invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
 
 #include "../parseHelper.hpp"
 

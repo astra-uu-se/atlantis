@@ -1,6 +1,6 @@
-#include "propagation/violationInvariants/violationInvariant.hpp"
+#include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
 
-#include "propagation/solver.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::propagation {
 

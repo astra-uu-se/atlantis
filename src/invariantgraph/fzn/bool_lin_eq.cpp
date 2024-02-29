@@ -1,4 +1,4 @@
-#include "invariantgraph/fzn/bool_lin_eq.hpp"
+#include "atlantis/invariantgraph/fzn/bool_lin_eq.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

@@ -1,4 +1,4 @@
-#include "search/neighbourhoods/randomNeighbourhood.hpp"
+#include "atlantis/search/neighbourhoods/randomNeighbourhood.hpp"
 
 namespace atlantis::search::neighbourhoods {
 

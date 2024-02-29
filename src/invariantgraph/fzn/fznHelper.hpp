@@ -9,13 +9,13 @@
 #include <unordered_set>
 #include <variant>
 
-#include "exceptions/exceptions.hpp"
-#include "invariantgraph/fznInvariantGraph.hpp"
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/invariantNodes/intCountNode.hpp"
-#include "invariantgraph/invariantNodes/varIntCountNode.hpp"
-#include "types.hpp"
-#include "utils/domains.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/varIntCountNode.hpp"
+#include "atlantis/types.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

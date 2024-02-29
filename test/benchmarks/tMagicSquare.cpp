@@ -4,10 +4,10 @@
 #include <random>
 #include <vector>
 
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/types.hpp"
-#include "propagation/violationInvariants/equal.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/propagation/violationInvariants/equal.hpp"
 
 namespace atlantis::testing {
 class MagicSquareTest : public ::testing::Test {

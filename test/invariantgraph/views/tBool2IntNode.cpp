@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/views/bool2IntNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/invariantgraph/views/bool2IntNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

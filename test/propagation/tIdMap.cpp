@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "propagation/utils/idMap.hpp"
+#include "atlantis/propagation/utils/idMap.hpp"
 
 namespace atlantis::testing {
 

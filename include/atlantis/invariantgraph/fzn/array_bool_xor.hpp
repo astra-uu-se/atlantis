@@ -1,0 +1,18 @@
+#pragma once
+
+#include <fznparser/constraint.hpp>
+#include <fznparser/variables.hpp>
+
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
+
+namespace atlantis::invariantgraph::fzn {
+
+bool array_bool_xor(FznInvariantGraph&,
+                    const fznparser::BoolVarArray& boolVarArray,
+                    const fznparser::BoolArg& reified);
+
+bool array_bool_xor(FznInvariantGraph&, const fznparser::Constraint&);
+
+}  // namespace atlantis::invariantgraph::fzn

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "propagation/solver.hpp"
-#include "search/objective.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/search/objective.hpp"
 
 namespace atlantis::testing {
 

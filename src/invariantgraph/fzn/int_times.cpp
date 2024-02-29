@@ -1,6 +1,6 @@
 
 
-#include "invariantgraph/fzn/int_times.hpp"
+#include "atlantis/invariantgraph/fzn/int_times.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

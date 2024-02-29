@@ -1,4 +1,4 @@
-#include "propagation/invariants/pow.hpp"
+#include "atlantis/propagation/invariants/pow.hpp"
 
 namespace atlantis::propagation {
 

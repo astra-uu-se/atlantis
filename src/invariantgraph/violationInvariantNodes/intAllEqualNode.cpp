@@ -1,4 +1,4 @@
-#include "invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 
 #include "../parseHelper.hpp"
 

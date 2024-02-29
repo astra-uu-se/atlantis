@@ -1,6 +1,6 @@
-#include "invariantgraph/invariantNode.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
 
-#include "invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 
 namespace atlantis::invariantgraph {
 /**

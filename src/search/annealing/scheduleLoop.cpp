@@ -1,4 +1,4 @@
-#include "search/annealing/scheduleLoop.hpp"
+#include "atlantis/search/annealing/scheduleLoop.hpp"
 
 namespace atlantis::search {
 

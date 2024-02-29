@@ -1,4 +1,4 @@
-#include "invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
 
 #include "../parseHelper.hpp"
 

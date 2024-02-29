@@ -1,4 +1,4 @@
-#include "propagation/invariants/ifThenElse.hpp"
+#include "atlantis/propagation/invariants/ifThenElse.hpp"
 
 namespace atlantis::propagation {
 

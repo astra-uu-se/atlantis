@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <rapidcheck/gtest.h>
 
-#include "propagation/solver.hpp"
-#include "propagation/views/scalarView.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/scalarView.hpp"
 
 namespace atlantis::testing {
 

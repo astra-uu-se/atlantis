@@ -1,7 +1,7 @@
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/fzn/array_int_minimum.hpp"
-#include "invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/invariantgraph/fzn/array_int_minimum.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
