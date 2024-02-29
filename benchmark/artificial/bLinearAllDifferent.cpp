@@ -78,7 +78,7 @@ class LinearAllDifferent : public ::benchmark::Fixture {
 BENCHMARK_DEFINE_F(LinearAllDifferent, probe_single_swap)
 (::benchmark::State& st) {
   Int probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     size_t i = decionVarIndexDist(gen);
     size_t j = decionVarIndexDist(gen);
 
@@ -104,7 +104,7 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probe_single_swap)
 BENCHMARK_DEFINE_F(LinearAllDifferent, probe_all_swap)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < varCount; ++i) {
       for (size_t j = i + 1; j < varCount; ++j) {
         solver->beginMove();
@@ -129,7 +129,7 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probe_all_swap)
 BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
 (::benchmark::State& st) {
   size_t commits = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     size_t i = decionVarIndexDist(gen);
     size_t j = decionVarIndexDist(gen);
 

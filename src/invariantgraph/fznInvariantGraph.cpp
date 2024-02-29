@@ -58,6 +58,24 @@
 
 namespace atlantis::invariantgraph {
 
+VarNode::DomainType domainType(
+    const std::vector<fznparser::Annotation>& annotations) {
+  for (const auto& annotation : annotations) {
+    if (annotation.identifier() == "computed_domain") {
+      return VarNode::DomainType::NONE;
+    }
+  }
+  return VarNode::DomainType::DOMAIN;
+}
+
+VarNode::DomainType domainType(const fznparser::BoolVar& var) {
+  return domainType(var.annotations());
+}
+
+VarNode::DomainType domainType(const fznparser::IntVar& var) {
+  return domainType(var.annotations());
+}
+
 FznInvariantGraph::FznInvariantGraph()
     : InvariantGraph(),
       _outputIdentifiers(),
@@ -93,7 +111,7 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolVar& var) {
               ? retrieveBoolVarNode(var.lowerBound())
               : retrieveBoolVarNode(var.lowerBound(), var.identifier());
   } else if (!var.identifier().empty()) {
-    nId = retrieveBoolVarNode(var.identifier());
+    nId = retrieveBoolVarNode(var.identifier(), domainType(var));
   } else {
     throw FznException(
         "Input IntVar must be a parameter or have an identifier");
@@ -129,7 +147,7 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
         var.domain().isInterval()
             ? SearchDomain(var.domain().lowerBound(), var.domain().upperBound())
             : SearchDomain(var.domain().elements()),
-        var.identifier());
+        var.identifier(), domainType(var));
   } else {
     throw FznException(
         "Input IntVar must be a parameter or have an identifier");

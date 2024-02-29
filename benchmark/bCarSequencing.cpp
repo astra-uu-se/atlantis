@@ -195,7 +195,7 @@ class CarSequencing : public ::benchmark::Fixture {
 
 BENCHMARK_DEFINE_F(CarSequencing, probe_single_swap)(::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     const size_t i = carDistribution(gen);
     assert(i < sequence.size());
     const size_t j = carDistribution(gen);
@@ -227,7 +227,7 @@ BENCHMARK_DEFINE_F(CarSequencing, probe_single_swap)(::benchmark::State& st) {
 
 BENCHMARK_DEFINE_F(CarSequencing, probe_all_swap)(::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(numCars); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(numCars); ++j) {
         const Int oldI = solver->committedValue(sequence[i]);

@@ -1,17 +1,26 @@
 C_COMPILER=$(shell which gcc-11)
 CXX_COMPILER=$(shell which g++-11)
 export CMAKE_OPTIONS+= ${ENV_CMAKE_OPTIONS} -DCMAKE_C_COMPILER=${C_COMPILER} -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
-CMAKE=$(shell which cmake)
 MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR=${MKFILE_PATH}build
-MZN_MODEL_DIR=${MKFILE_PATH}mzn-models
-FZN_MODEL_DIR=${MKFILE_PATH}fzn-models
+
+CMAKE=$(shell which cmake)
+
 BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
-BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 NUM_BENCHMARK_REPETITIONS=5
 BENCHMARK_FILTER="^(GolombRuler|ExtremeDynamic|ExtremeStatic|MagicSquare|NQueens|TSPTW|VesselLoading)"
+BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
-export MZN_SOLVER_PATH=${MKFILE_PATH}minizinc
+MZN_MODEL_DIR=${MKFILE_PATH}mzn-models
+FZN_MODEL_DIR=${MKFILE_PATH}fzn-models
+MZN_PATH=~/minizinc/MiniZincIDE-build1187512964-bundle-linux-x86_64/bin/minizinc
+ifeq ($(shell test -e ${MZN_PATH} && echo yes),yes)
+	MZN=$(shell realpath ${MZN_PATH})
+else
+	MZN=$(shell which minizinc)
+endif
+
+export MZN_SOLVER_PATH=${BUILD_DIR}
 
 .PHONY: clean
 clean:
@@ -20,23 +29,26 @@ clean:
 .PHONY: build
 build:
 	mkdir -p ${BUILD_DIR}
-	cd ${BUILD_DIR}; \
-	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=OFF ..; \
-	$(MAKE)
+	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
+	                                           -DBUILD_TESTS:BOOL=OFF \
+														                 -DBUILD_BENCHMARKS:BOOL=OFF ..
+	cd ${BUILD_DIR}; $(MAKE)
 
 .PHONY: build-tests
 build-tests:
 	mkdir -p ${BUILD_DIR}
-	cd ${BUILD_DIR}; \
-	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS:BOOL=ON -DBUILD_BENCHMARKS:BOOL=OFF ..; \
-	$(MAKE)
+	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
+	                                           -DBUILD_TESTS:BOOL=ON \
+	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
+	cd ${BUILD_DIR}; $(MAKE)
 
 .PHONY: build-benchmarks
 build-benchmarks:
 	mkdir -p ${BUILD_DIR}
-	cd ${BUILD_DIR}; \
-	$(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS:BOOL=OFF -DBUILD_BENCHMARKS:BOOL=ON ..; \
-	$(MAKE)
+	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
+	                                           -DBUILD_TESTS:BOOL=OFF \
+	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
+	cd ${BUILD_DIR}; $(MAKE)
 
 .PHONY: run
 run: build
@@ -44,8 +56,7 @@ run: build
 
 .PHONY: run-tests
 run-tests: build-tests
-	cd ${BUILD_DIR}; \
-	exec ./runUnitTests
+	exec ${BUILD_DIR}/runUnitTests
 
 .PHONY: run-benchmarks
 run-benchmarks: build-benchmarks
@@ -65,27 +76,28 @@ benchmark: build-benchmarks
 all: clean build build-tests build-benchmarks
 
 .PHONY: fzn
-fzn: #build
-	cp build/atlantis minizinc/atlantis
-	minizinc ${MZN_SOLVER_PATH}/atlantis.mpc -c \
-					 ${MZN_MODEL_DIR}/car_sequencing.mzn \
-					 ${MZN_MODEL_DIR}/car_sequencing.dzn \
-					 --fzn ${FZN_MODEL_DIR}/car_sequencing.fzn
-	rm -f ${MZN_MODEL_DIR}/car_sequencing.ozn
-	minizinc ${MZN_SOLVER_PATH}/atlantis.mpc -c \
-					 ${MZN_MODEL_DIR}/magic_square.mzn \
-					 -D n=3 \
-					 --fzn ${FZN_MODEL_DIR}/magic_square.fzn
-	rm -f ${MZN_MODEL_DIR}/magic_square.ozn
-	minizinc ${MZN_SOLVER_PATH}/atlantis.mpc -c \
-					 ${MZN_MODEL_DIR}/tsp_alldiff.mzn \
-					 ${MZN_MODEL_DIR}/tsp_17.dzn \
-					 --fzn ${FZN_MODEL_DIR}/tsp_alldiff.fzn
-	rm -f ${MZN_MODEL_DIR}/tsp_alldiff.ozn
-	minizinc ${MZN_SOLVER_PATH}/atlantis.mpc -c \
-					 ${MZN_MODEL_DIR}/n_queens.mzn \
-					 -D n=32 \
-					 --fzn ${FZN_MODEL_DIR}/n_queens.fzn
-	rm -f ${MZN_MODEL_DIR}/n_queens.ozn
-	
-	
+fzn:
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+		${MZN_MODEL_DIR}/car_sequencing.mzn \
+		${MZN_MODEL_DIR}/car_sequencing.dzn \
+		--fzn ${FZN_MODEL_DIR}/car_sequencing.fzn \
+		--no-output-ozn
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+		${MZN_MODEL_DIR}/magic_square.mzn \
+		-D n=3 \
+		--fzn ${FZN_MODEL_DIR}/magic_square.fzn \
+		--no-output-ozn
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+		${MZN_MODEL_DIR}/tsp_alldiff.mzn \
+		${MZN_MODEL_DIR}/tsp_17.dzn \
+		--fzn ${FZN_MODEL_DIR}/tsp_alldiff.fzn \
+		--no-output-ozn
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+		${MZN_MODEL_DIR}/n_queens.mzn \
+		-D n=32 \
+		--fzn ${FZN_MODEL_DIR}/n_queens.fzn \
+		--no-output-ozn
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+		${MZN_MODEL_DIR}/comp_domain_ann.mzn \
+		--fzn ${FZN_MODEL_DIR}/comp_domain_ann.fzn \
+		--no-output-ozn

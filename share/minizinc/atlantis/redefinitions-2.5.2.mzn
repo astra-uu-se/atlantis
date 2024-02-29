@@ -55,3 +55,7 @@ predicate array_var_int_element2d_nonshifted_flat(var int: idx1,
                                                   int: numRows,
                                                   int: offset1,
                                                   int: offset2);
+
+predicate array_var_float_element2d_nonshifted(var int: idx1, var int: idx2, array[int,int] of var float: x, var float: c) = abort("float not supported");
+predicate array_var_set_element2d_nonshifted(var int: idx1, var int: idx2, array[int,int] of var set of int: x, var set of int: c) = abort("set not supported");
+
