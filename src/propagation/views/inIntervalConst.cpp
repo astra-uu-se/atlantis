@@ -1,4 +1,4 @@
-#include "propagation/views/inIntervalConst.hpp"
+#include "atlantis/propagation/views/inIntervalConst.hpp"
 
 namespace atlantis::propagation {
 

@@ -1,4 +1,4 @@
-#include "propagation/views/scalarView.hpp"
+#include "atlantis/propagation/views/scalarView.hpp"
 
 namespace atlantis::propagation {
 

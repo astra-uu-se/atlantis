@@ -9,10 +9,10 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "misc/logging.hpp"
-#include "propagation/invariants/elementVar.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/misc/logging.hpp"
+#include "atlantis/propagation/invariants/elementVar.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::benchmark {
 

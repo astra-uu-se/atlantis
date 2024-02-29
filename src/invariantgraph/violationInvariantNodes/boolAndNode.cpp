@@ -1,4 +1,4 @@
-#include "invariantgraph/violationInvariantNodes/boolAndNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolAndNode.hpp"
 
 #include "../parseHelper.hpp"
 

@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "propagation/solver.hpp"
-#include "search/annealing/annealerContainer.hpp"
-#include "search/neighbourhoods/circuitNeighbourhood.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/search/annealing/annealerContainer.hpp"
+#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
 
 namespace atlantis::testing {
 

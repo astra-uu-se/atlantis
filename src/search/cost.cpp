@@ -1,4 +1,4 @@
-#include "search/cost.hpp"
+#include "atlantis/search/cost.hpp"
 
 namespace atlantis::search {
 

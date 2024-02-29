@@ -1,4 +1,4 @@
-#include "propagation/invariants/maxSparse.hpp"
+#include "atlantis/propagation/invariants/maxSparse.hpp"
 
 namespace atlantis::propagation {
 

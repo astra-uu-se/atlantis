@@ -3,8 +3,8 @@
 #include <random>
 #include <vector>
 
-#include "propagation/solver.hpp"
-#include "propagation/views/elementConst.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/elementConst.hpp"
 
 namespace atlantis::testing {
 

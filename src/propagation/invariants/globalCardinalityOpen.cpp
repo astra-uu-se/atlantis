@@ -1,4 +1,4 @@
-#include "propagation/invariants/globalCardinalityOpen.hpp"
+#include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
 
 namespace atlantis::propagation {
 

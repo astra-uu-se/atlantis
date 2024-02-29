@@ -1,4 +1,4 @@
-#include "propagation/violationInvariants/boolLessEqual.hpp"
+#include "atlantis/propagation/violationInvariants/boolLessEqual.hpp"
 
 namespace atlantis::propagation {
 

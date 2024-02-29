@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
+#include "atlantis/search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
 namespace atlantis::testing {
 

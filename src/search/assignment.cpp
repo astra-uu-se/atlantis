@@ -1,4 +1,4 @@
-#include "search/assignment.hpp"
+#include "atlantis/search/assignment.hpp"
 
 namespace atlantis::search {
 

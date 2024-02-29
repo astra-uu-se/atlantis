@@ -2,7 +2,7 @@
  * Courtesy of
  * https://stackoverflow.com/questions/281818/unmangling-the-result-of-stdtype-infoname
  */
-#include "utils/type.hpp"
+#include "atlantis/utils/type.hpp"
 
 #ifdef __GNUG__
 #include <cxxabi.h>

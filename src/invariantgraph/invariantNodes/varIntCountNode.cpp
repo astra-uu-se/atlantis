@@ -1,4 +1,4 @@
-#include "invariantgraph/invariantNodes/varIntCountNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/varIntCountNode.hpp"
 
 #include "../parseHelper.hpp"
 

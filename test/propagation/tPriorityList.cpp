@@ -4,7 +4,7 @@
 #include <random>
 #include <vector>
 
-#include "propagation/utils/priorityList.hpp"
+#include "atlantis/propagation/utils/priorityList.hpp"
 
 namespace atlantis::testing {
 

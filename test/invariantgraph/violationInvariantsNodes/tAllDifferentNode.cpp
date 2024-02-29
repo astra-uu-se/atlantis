@@ -3,8 +3,8 @@
 #include <iostream>
 
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

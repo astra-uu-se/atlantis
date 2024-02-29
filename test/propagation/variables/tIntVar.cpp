@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/variables/intVar.hpp"
+#include "atlantis/propagation/variables/intVar.hpp"
 
 namespace atlantis::testing {
 

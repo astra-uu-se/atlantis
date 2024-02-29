@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "search/annealing/annealerContainer.hpp"
+#include "atlantis/search/annealing/annealerContainer.hpp"
 
 namespace atlantis::testing {
 

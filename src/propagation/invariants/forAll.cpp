@@ -1,4 +1,4 @@
-#include "propagation/invariants/forAll.hpp"
+#include "atlantis/propagation/invariants/forAll.hpp"
 
 namespace atlantis::propagation {
 

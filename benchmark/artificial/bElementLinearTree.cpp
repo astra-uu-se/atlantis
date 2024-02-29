@@ -9,10 +9,10 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "misc/logging.hpp"
-#include "propagation/invariants/elementVar.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/misc/logging.hpp"
+#include "atlantis/propagation/invariants/elementVar.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::benchmark {
 
@@ -145,8 +145,8 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_non_index_var)
 
     ++probes;
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
@@ -163,8 +163,8 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
 
     ++probes;
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 /*

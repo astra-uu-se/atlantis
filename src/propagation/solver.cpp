@@ -1,4 +1,4 @@
-#include "propagation/solver.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::propagation {
 

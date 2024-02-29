@@ -1,8 +1,8 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/invariantNodes/intLinearNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

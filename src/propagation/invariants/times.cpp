@@ -1,4 +1,4 @@
-#include "propagation/invariants/times.hpp"
+#include "atlantis/propagation/invariants/times.hpp"
 
 namespace atlantis::propagation {
 

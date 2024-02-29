@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/violationInvariantNodes/intNeNode.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intNeNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

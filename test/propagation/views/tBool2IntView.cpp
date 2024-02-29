@@ -3,8 +3,8 @@
 #include <memory>
 #include <vector>
 
-#include "propagation/solver.hpp"
-#include "propagation/views/bool2IntView.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/bool2IntView.hpp"
 
 namespace atlantis::testing {
 

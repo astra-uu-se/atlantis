@@ -3,13 +3,13 @@
 #include <random>
 #include <vector>
 
-#include "propagation/invariants/elementVar.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/types.hpp"
-#include "propagation/views/elementConst.hpp"
-#include "propagation/violationInvariants/lessEqual.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/invariants/elementVar.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/propagation/views/elementConst.hpp"
+#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::testing {
 class TSPTWTest : public ::testing::Test {

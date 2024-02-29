@@ -4,9 +4,9 @@
 #include <memory>
 #include <vector>
 
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/views/intMaxView.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/intMaxView.hpp"
 
 namespace atlantis::testing {
 

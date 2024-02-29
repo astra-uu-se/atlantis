@@ -1,4 +1,4 @@
-#include "propagation/views/greaterEqualConst.hpp"
+#include "atlantis/propagation/views/greaterEqualConst.hpp"
 
 namespace atlantis::propagation {
 

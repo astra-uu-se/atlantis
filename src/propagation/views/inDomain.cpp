@@ -1,4 +1,4 @@
-#include "propagation/views/inDomain.hpp"
+#include "atlantis/propagation/views/inDomain.hpp"
 
 namespace atlantis::propagation {
 

@@ -1,4 +1,4 @@
-#include "invariantgraph/violationInvariantNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
 
 namespace atlantis::invariantgraph {
 

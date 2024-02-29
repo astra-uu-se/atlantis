@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/invariants/globalCardinalityOpen.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

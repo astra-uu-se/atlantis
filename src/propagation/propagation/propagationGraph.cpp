@@ -1,4 +1,4 @@
-#include "propagation/propagation/propagationGraph.hpp"
+#include "atlantis/propagation/propagation/propagationGraph.hpp"
 
 namespace atlantis::propagation {
 

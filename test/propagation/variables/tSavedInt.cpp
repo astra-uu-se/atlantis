@@ -5,7 +5,7 @@
 #include <random>
 #include <vector>
 
-#include "propagation/variables/committableInt.hpp"
+#include "atlantis/propagation/variables/committableInt.hpp"
 
 namespace atlantis::testing {
 

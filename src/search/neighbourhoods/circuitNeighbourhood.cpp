@@ -1,4 +1,4 @@
-#include "search/neighbourhoods/circuitNeighbourhood.hpp"
+#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
 
 namespace atlantis::search::neighbourhoods {
 

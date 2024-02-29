@@ -1,6 +1,6 @@
-#include "invariantgraph/implicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 
-#include "invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 
 namespace atlantis::invariantgraph {
 

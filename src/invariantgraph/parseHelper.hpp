@@ -6,13 +6,13 @@
 #include <variant>
 #include <vector>
 
-#include "invariantgraph/implicitConstraintNode.hpp"
-#include "invariantgraph/invariantGraph.hpp"
-#include "invariantgraph/invariantNode.hpp"
-#include "invariantgraph/varNode.hpp"
-#include "invariantgraph/violationInvariantNode.hpp"
-#include "utils/fznAst.hpp"
-#include "utils/variant.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
+#include "atlantis/utils/fznAst.hpp"
+#include "atlantis/utils/variant.hpp"
 
 namespace atlantis::invariantgraph {
 

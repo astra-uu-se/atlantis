@@ -2,8 +2,8 @@
 
 #include <unordered_set>
 
-#include "search/annealing/annealerContainer.hpp"
-#include "search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
+#include "atlantis/search/annealing/annealerContainer.hpp"
+#include "atlantis/search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
 
 namespace atlantis::testing {
 

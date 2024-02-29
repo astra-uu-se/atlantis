@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "./fznTestBase.hpp"
-#include "invariantgraph/fzn/array_int_element.hpp"
-#include "invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/fzn/array_int_element.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 
 namespace atlantis::testing {
 

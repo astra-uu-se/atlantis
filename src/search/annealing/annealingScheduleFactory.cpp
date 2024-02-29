@@ -1,4 +1,4 @@
-#include "search/annealing/annealingScheduleFactory.hpp"
+#include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 
 #define JSON_NO_IO
 #define JSON_HAS_CPP_17

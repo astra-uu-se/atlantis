@@ -1,4 +1,4 @@
-#include "propagation/invariants/absDiff.hpp"
+#include "atlantis/propagation/invariants/absDiff.hpp"
 
 namespace atlantis::propagation {
 

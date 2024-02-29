@@ -1,4 +1,4 @@
-#include "propagation/views/bool2IntView.hpp"
+#include "atlantis/propagation/views/bool2IntView.hpp"
 
 namespace atlantis::propagation {
 

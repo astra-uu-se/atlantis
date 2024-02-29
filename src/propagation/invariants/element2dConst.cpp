@@ -1,4 +1,4 @@
-#include "propagation/invariants/element2dConst.hpp"
+#include "atlantis/propagation/invariants/element2dConst.hpp"
 
 namespace atlantis::propagation {
 

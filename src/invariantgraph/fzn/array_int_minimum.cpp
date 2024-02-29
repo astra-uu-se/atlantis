@@ -1,6 +1,6 @@
 
 
-#include "invariantgraph/fzn/array_int_minimum.hpp"
+#include "atlantis/invariantgraph/fzn/array_int_minimum.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

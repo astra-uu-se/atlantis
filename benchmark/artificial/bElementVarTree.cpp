@@ -8,10 +8,10 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "propagation/invariants/absDiff.hpp"
-#include "propagation/invariants/elementVar.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
+#include "atlantis/propagation/invariants/absDiff.hpp"
+#include "atlantis/propagation/invariants/elementVar.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::benchmark {
 
@@ -33,8 +33,9 @@ class ElementVarTree : public ::benchmark::Fixture {
       TreeNode cur = treeNodes.top();
       treeNodes.pop();
 
-      propagation::VarId indexVar = solver->makeIntVar(
-          cur.level < treeHeight - 1 ? 0 : valueDist(gen), 0, static_cast<Int>(elementSize) - 1);
+      propagation::VarId indexVar =
+          solver->makeIntVar(cur.level < treeHeight - 1 ? 0 : valueDist(gen), 0,
+                             static_cast<Int>(elementSize) - 1);
 
       if (cur.level < treeHeight - 1) {
         treeNodes.push({cur.level + 1, indexVar});
@@ -48,7 +49,8 @@ class ElementVarTree : public ::benchmark::Fixture {
                                                     propagation::NULL_ID);
 
       for (size_t i = 0; i < elementInputs.size(); ++i) {
-        elementInputs[i] = solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(elementInputs.size()));
+        elementInputs[i] = solver->makeIntVar(
+            static_cast<Int>(i), 0, static_cast<Int>(elementInputs.size()));
         if (cur.level < treeHeight - 1) {
           treeNodes.push({cur.level + 1, elementInputs[i]});
         } else {
@@ -92,7 +94,8 @@ class ElementVarTree : public ::benchmark::Fixture {
     elementSize = state.range(1);  // number of element inputs
 
     gen = std::mt19937(rd());
-    valueDist = std::uniform_int_distribution<Int>(0, static_cast<Int>(elementSize) - 1);
+    valueDist = std::uniform_int_distribution<Int>(
+        0, static_cast<Int>(elementSize) - 1);
 
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(2)));
@@ -131,8 +134,8 @@ void ElementVarTree::probe(::benchmark::State& st, size_t numMoves) {
     ++probes;
   }
 
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 void ElementVarTree::commit(::benchmark::State& st, size_t numMoves) {
@@ -152,8 +155,8 @@ void ElementVarTree::commit(::benchmark::State& st, size_t numMoves) {
     ++commits;
   }
 
-  st.counters["commits_per_second"] =
-      ::benchmark::Counter(static_cast<double>(commits), ::benchmark::Counter::kIsRate);
+  st.counters["commits_per_second"] = ::benchmark::Counter(
+      static_cast<double>(commits), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(ElementVarTree, probe_single)

@@ -1,6 +1,6 @@
 
 
-#include "invariantgraph/fzn/array_int_maximum.hpp"
+#include "atlantis/invariantgraph/fzn/array_int_maximum.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

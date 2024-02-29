@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/invariants/times.hpp"
-#include "propagation/solver.hpp"
+#include "atlantis/propagation/invariants/times.hpp"
+#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 

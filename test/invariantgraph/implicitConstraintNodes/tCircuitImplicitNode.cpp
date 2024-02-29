@@ -1,8 +1,8 @@
 #include "../nodeTestBase.hpp"
-#include "invariantgraph/fzn/circuitImplicitNode.hpp"
-#include "invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
-#include "propagation/solver.hpp"
-#include "search/neighbourhoods/circuitNeighbourhood.hpp"
+#include "atlantis/invariantgraph/fzn/circuitImplicitNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
 
 namespace atlantis::testing {
 

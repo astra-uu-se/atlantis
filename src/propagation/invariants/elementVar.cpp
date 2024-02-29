@@ -1,4 +1,4 @@
-#include "propagation/invariants/elementVar.hpp"
+#include "atlantis/propagation/invariants/elementVar.hpp"
 
 namespace atlantis::propagation {
 

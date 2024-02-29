@@ -1,4 +1,4 @@
-#include "propagation/views/violation2BoolView.hpp"
+#include "atlantis/propagation/views/violation2BoolView.hpp"
 
 namespace atlantis::propagation {
 

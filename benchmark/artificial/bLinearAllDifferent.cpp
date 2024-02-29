@@ -6,11 +6,11 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "misc/logging.hpp"
-#include "propagation/invariants/absDiff.hpp"
-#include "propagation/invariants/linear.hpp"
-#include "propagation/solver.hpp"
-#include "propagation/violationInvariants/allDifferent.hpp"
+#include "atlantis/misc/logging.hpp"
+#include "atlantis/propagation/invariants/absDiff.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 
 namespace atlantis::benchmark {
 
@@ -48,11 +48,13 @@ class LinearAllDifferent : public ::benchmark::Fixture {
     decisionVars.reserve(varCount);
 
     for (size_t i = 0; i < varCount; ++i) {
-      decisionVars.push_back(solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(varCount) - 1));
+      decisionVars.push_back(solver->makeIntVar(
+          static_cast<Int>(i), 0, static_cast<Int>(varCount) - 1));
     }
 
     for (size_t i = 0; i < varCount - 1; i += increment) {
-      linearOutputVars.push_back(solver->makeIntVar(static_cast<Int>(i), 0, 2 * (static_cast<Int>(varCount) - 1)));
+      linearOutputVars.push_back(solver->makeIntVar(
+          static_cast<Int>(i), 0, 2 * (static_cast<Int>(varCount) - 1)));
       solver->makeInvariant<propagation::Linear>(
           *solver, linearOutputVars.back(),
           std::vector<propagation::VarId>{decisionVars.at(i),
@@ -95,8 +97,8 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probe_single_swap)
     ++probes;
   }
 
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(LinearAllDifferent, probe_all_swap)
@@ -120,8 +122,8 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probe_all_swap)
       }
     }
   }
-  st.counters["probes_per_second"] =
-      ::benchmark::Counter(static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
 BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
@@ -146,8 +148,8 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
     ++commits;
   }
 
-  st.counters["commits_per_second"] =
-      ::benchmark::Counter(static_cast<double>(commits), ::benchmark::Counter::kIsRate);
+  st.counters["commits_per_second"] = ::benchmark::Counter(
+      static_cast<double>(commits), ::benchmark::Counter::kIsRate);
 }
 
 /*

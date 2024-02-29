@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "../invariantTestHelper.hpp"
-#include "propagation/invariants/mod.hpp"
-#include "propagation/solver.hpp"
-#include "types.hpp"
+#include "atlantis/propagation/invariants/mod.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::testing {
 

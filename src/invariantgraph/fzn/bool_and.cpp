@@ -1,6 +1,6 @@
 
 
-#include "invariantgraph/fzn/bool_and.hpp"
+#include "atlantis/invariantgraph/fzn/bool_and.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

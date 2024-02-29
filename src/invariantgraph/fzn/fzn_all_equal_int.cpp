@@ -1,6 +1,6 @@
 
 
-#include "invariantgraph/fzn/fzn_all_equal_int.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_all_equal_int.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"

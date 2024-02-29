@@ -1,4 +1,4 @@
-#include "invariantgraph/invariantNodes/arrayElementNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 
 #include "../parseHelper.hpp"
 

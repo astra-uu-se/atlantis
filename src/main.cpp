@@ -3,8 +3,8 @@
 #include <filesystem>
 #include <iostream>
 
-#include "fznBackend.hpp"
-#include "logging/logger.hpp"
+#include "atlantis/fznBackend.hpp"
+#include "atlantis/logging/logger.hpp"
 
 /**
  * @brief Read a duration in milliseconds from an input stream. Used to allow
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     // clang-format off
     options.add_options()
       (
-        "a,intermediate-solutions",
+        "i,intermediate-solutions",
         "Ignored, but present because used in the MiniZinc challenge."
       )
       (
