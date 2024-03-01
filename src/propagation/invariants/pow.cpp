@@ -1,5 +1,9 @@
 #include "atlantis/propagation/invariants/pow.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
 namespace atlantis::propagation {
 
 Pow::Pow(SolverBase& solver, VarId output, VarId base, VarId exponent)

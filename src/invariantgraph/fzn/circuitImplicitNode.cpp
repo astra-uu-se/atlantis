@@ -1,9 +1,8 @@
-
-
 #include "atlantis/invariantgraph/fzn/circuitImplicitNode.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

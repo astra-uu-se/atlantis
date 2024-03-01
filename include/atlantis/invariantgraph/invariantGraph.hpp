@@ -1,8 +1,7 @@
 #pragma once
 
-#include <deque>
-#include <queue>
-#include <stack>
+#include <array>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -12,12 +11,9 @@
 #include "atlantis/invariantgraph/invariantNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/invariants/linear.hpp"
-#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/neighbourhoods/neighbourhoodCombinator.hpp"
-#include "atlantis/utils/fznAst.hpp"
 
 namespace atlantis::invariantgraph {
 

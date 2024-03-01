@@ -1,6 +1,10 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
 
+#include <algorithm>
+#include <utility>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/maxSparse.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -1,10 +1,9 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
-#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/views/intView.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -14,8 +13,7 @@ class InIntervalConst : public IntView {
   Int _ub;
 
  public:
-  explicit InIntervalConst(SolverBase& solver, VarId parentId, Int lb, Int ub)
-      : IntView(solver, parentId), _lb(lb), _ub(ub) {}
+  explicit InIntervalConst(SolverBase& solver, VarId parentId, Int lb, Int ub);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

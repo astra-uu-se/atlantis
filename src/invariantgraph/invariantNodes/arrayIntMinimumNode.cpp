@@ -1,6 +1,10 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
 
+#include <algorithm>
+#include <utility>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/minSparse.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -1,10 +1,9 @@
-
-
 #include "atlantis/invariantgraph/fzn/fzn_count_gt.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_leq.hpp"
+#include "atlantis/invariantgraph/fzn/int_lt.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

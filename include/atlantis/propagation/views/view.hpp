@@ -1,4 +1,6 @@
 #pragma once
+
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/variables/var.hpp"
 #include "atlantis/types.hpp"
 

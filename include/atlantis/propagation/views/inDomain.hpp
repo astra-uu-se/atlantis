@@ -1,11 +1,8 @@
 #pragma once
 
-#include <cassert>
-#include <limits>
-
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/variables/committable.hpp"
-#include "atlantis/propagation/variables/intVar.hpp"
 #include "atlantis/propagation/views/intView.hpp"
 #include "atlantis/types.hpp"
 

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <algorithm>
-#include <utility>
+#include <vector>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/propagation/invariants/maxSparse.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 class ArrayIntMaximumNode : public InvariantNode {

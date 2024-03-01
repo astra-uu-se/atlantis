@@ -1,6 +1,9 @@
 #include "atlantis/invariantgraph/invariantNodes/intMaxNode.hpp"
 
+#include <cmath>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/binaryMax.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -1,5 +1,8 @@
 #include "atlantis/propagation/views/elementConst.hpp"
 
+#include <algorithm>
+#include <limits>
+
 namespace atlantis::propagation {
 
 ElementConst::ElementConst(SolverBase& solver, VarId parentId,

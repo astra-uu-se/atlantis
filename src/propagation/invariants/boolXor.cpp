@@ -1,5 +1,10 @@
 #include "atlantis/propagation/invariants/boolXor.hpp"
 
+#include <algorithm>
+#include <functional>
+
+#include "atlantis/propagation/variables/intVar.hpp"
+
 namespace atlantis::propagation {
 
 /**

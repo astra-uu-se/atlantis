@@ -3,11 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "annealingSchedule.hpp"
-#include "atlantis/search/annealing/geometricCoolingSchedule.hpp"
-#include "atlantis/search/annealing/geometricHeatingSchedule.hpp"
-#include "atlantis/search/annealing/scheduleLoop.hpp"
-#include "atlantis/search/annealing/scheduleSequence.hpp"
+#include "atlantis/search/annealing/annealingSchedule.hpp"
 
 namespace atlantis::search {
 

@@ -1,5 +1,10 @@
 #include "atlantis/invariantgraph/views/intAbsNode.hpp"
 
+#include <map>
+#include <utility>
+
+#include "atlantis/propagation/views/intAbsView.hpp"
+
 namespace atlantis::invariantgraph {
 
 IntAbsNode::IntAbsNode(VarNodeId staticInput, VarNodeId output)

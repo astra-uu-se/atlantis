@@ -1,12 +1,11 @@
 #pragma once
 
-#include <limits>
-#include <utility>
 #include <vector>
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solver.hpp"
-#include "atlantis/propagation/utils/priorityList.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/propagation/variables/committableInt.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis::propagation {

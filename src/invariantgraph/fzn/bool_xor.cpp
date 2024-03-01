@@ -3,11 +3,12 @@
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/fzn/bool_eq.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolXorNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_xor(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(a, b, true));
+  invariantGraph.addInvariantNode(std::make_unique<BoolXorNode>(a, b, true));
   return true;
 }
 
@@ -28,7 +29,7 @@ bool bool_xor(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
     return bool_eq(invariantGraph, a, b);
   }
 
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(a, b, reified));
+  invariantGraph.addInvariantNode(std::make_unique<BoolXorNode>(a, b, reified));
 
   return true;
 }
@@ -43,7 +44,7 @@ bool bool_xor(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
     return bool_eq(invariantGraph, a, b);
   }
 
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
+  invariantGraph.addInvariantNode(std::make_unique<BoolXorNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
       invariantGraph.retrieveVarNode(reified.var())));
 

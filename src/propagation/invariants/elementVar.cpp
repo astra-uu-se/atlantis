@@ -1,5 +1,9 @@
 #include "atlantis/propagation/invariants/elementVar.hpp"
 
+#include <algorithm>
+#include <limits>
+#include <vector>
+
 namespace atlantis::propagation {
 
 ElementVar::ElementVar(SolverBase& solver, VarId output, VarId index,

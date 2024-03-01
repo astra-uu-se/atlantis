@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/invariantNodes/intModNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/mod.hpp"
 
 namespace atlantis::invariantgraph {
 

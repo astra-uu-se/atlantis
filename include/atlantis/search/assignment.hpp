@@ -1,8 +1,9 @@
 #pragma once
 
-#include <functional>
+#include <vector>
 
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/search/cost.hpp"
 
 namespace atlantis::search {

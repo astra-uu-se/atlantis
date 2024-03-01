@@ -1,10 +1,9 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/views/intView.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -13,8 +12,7 @@ class IntMaxView : public IntView {
   Int _max;
 
  public:
-  explicit IntMaxView(SolverBase& solver, VarId parentId, Int max)
-      : IntView(solver, parentId), _max(max) {}
+  explicit IntMaxView(SolverBase& solver, VarId parentId, Int max);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

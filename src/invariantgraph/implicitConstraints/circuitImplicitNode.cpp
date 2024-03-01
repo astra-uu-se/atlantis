@@ -1,6 +1,10 @@
 #include "atlantis/invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
 
+#include <numeric>
+
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 

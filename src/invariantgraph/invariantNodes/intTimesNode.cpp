@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/invariantNodes/intTimesNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/times.hpp"
 
 namespace atlantis::invariantgraph {
 

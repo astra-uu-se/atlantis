@@ -1,5 +1,7 @@
 #include "atlantis/propagation/invariants/binaryMax.hpp"
 
+#include <cmath>
+
 namespace atlantis::propagation {
 
 BinaryMax::BinaryMax(SolverBase& solver, VarId output, VarId x, VarId y)

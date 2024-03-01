@@ -1,10 +1,9 @@
 #pragma once
 
-#include <limits>
-
 #include "atlantis/search/annealing/annealingSchedule.hpp"
-#include "move.hpp"
-#include "randomProvider.hpp"
+#include "atlantis/search/cost.hpp"
+#include "atlantis/search/move.hpp"
+#include "atlantis/search/randomProvider.hpp"
 
 namespace atlantis::search {
 

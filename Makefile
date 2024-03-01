@@ -101,3 +101,8 @@ fzn:
 		${MZN_MODEL_DIR}/comp_domain_ann.mzn \
 		--fzn ${FZN_MODEL_DIR}/comp_domain_ann.fzn \
 		--no-output-ozn
+
+.PHONY: clang-format
+clang-format:
+	find ${MKFILE_PATH}/benchmark/ ${MKFILE_PATH}/include/ ${MKFILE_PATH}/src/ ${MKFILE_PATH}/test/ \
+	  -iname *.[ch]pp | xargs clang-format -i -style=Google

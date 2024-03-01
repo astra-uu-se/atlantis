@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/element2dVar.hpp"
 
 namespace atlantis::invariantgraph {
 

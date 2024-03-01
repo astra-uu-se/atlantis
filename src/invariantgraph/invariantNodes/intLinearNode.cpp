@@ -1,6 +1,12 @@
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 
+#include <algorithm>
+#include <utility>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/propagation/views/scalarView.hpp"
 
 namespace atlantis::invariantgraph {
 

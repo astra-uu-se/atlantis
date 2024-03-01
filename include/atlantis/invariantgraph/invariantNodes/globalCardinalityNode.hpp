@@ -1,16 +1,12 @@
 #pragma once
 
-#include <utility>
+#include <vector>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/invariants/exists.hpp"
-#include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
-#include "atlantis/propagation/invariants/linear.hpp"
-#include "atlantis/propagation/views/equalConst.hpp"
-#include "atlantis/propagation/views/notEqualConst.hpp"
-#include "atlantis/propagation/violationInvariants/equal.hpp"
-#include "atlantis/propagation/violationInvariants/notEqual.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 class GlobalCardinalityNode : public InvariantNode {

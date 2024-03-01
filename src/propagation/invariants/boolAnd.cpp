@@ -1,5 +1,7 @@
 #include "atlantis/propagation/invariants/boolAnd.hpp"
 
+#include "atlantis/propagation/variables/intVar.hpp"
+
 namespace atlantis::propagation {
 
 /**

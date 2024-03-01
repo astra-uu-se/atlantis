@@ -6,6 +6,10 @@ static inline Int isViolating(Int val, Int lb, int ub) {
   return static_cast<Int>(val < lb || ub < val);
 }
 
+InIntervalConst::InIntervalConst(SolverBase& solver, VarId parentId, Int lb,
+                                 Int ub)
+    : IntView(solver, parentId), _lb(lb), _ub(ub) {}
+
 Int InIntervalConst::value(Timestamp ts) {
   return isViolating(_solver.value(ts, _parentId), _lb, _ub);
 }

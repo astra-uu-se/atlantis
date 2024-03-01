@@ -1,10 +1,8 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
-#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intView.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -24,13 +22,12 @@ namespace atlantis::propagation {
  */
 class Bool2IntView : public IntView {
  public:
-  explicit Bool2IntView(SolverBase& solver, const VarId parentId)
-      : IntView(solver, parentId) {}
+  explicit Bool2IntView(SolverBase& solver, const VarId parentId);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;
-  [[nodiscard]] Int lowerBound() const override { return 0; }
-  [[nodiscard]] Int upperBound() const override { return 1; }
+  [[nodiscard]] Int lowerBound() const override;
+  [[nodiscard]] Int upperBound() const override;
 };
 
 }  // namespace atlantis::propagation

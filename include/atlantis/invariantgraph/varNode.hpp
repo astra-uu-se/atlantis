@@ -1,43 +1,18 @@
 #pragma once
 
-#include <cassert>
-#include <fznparser/variables.hpp>
-#include <limits>
 #include <optional>
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solver.hpp"
-#include "atlantis/propagation/views/equalConst.hpp"
-#include "atlantis/propagation/views/greaterEqualConst.hpp"
-#include "atlantis/propagation/views/inDomain.hpp"
-#include "atlantis/propagation/views/inIntervalConst.hpp"
-#include "atlantis/propagation/views/inSparseDomain.hpp"
-#include "atlantis/propagation/views/lessEqualConst.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
-#include "atlantis/search/searchVariable.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/domains.hpp"
-#include "atlantis/utils/variant.hpp"
 
 // Undefine the DOMAIN macro that is defined in math.h on MacOS
 #undef DOMAIN
 
 namespace atlantis::invariantgraph {
 
-/**
- * The types that can be in an array of search variables.
- */
-using MappableValue = std::variant<Int, bool, std::string>;
-
-class InvariantGraph;  // Forward declaration
-class InvariantNode;   // Forward declaration
-
-/**
- * A variable in the invariant graph. Every variable is defined by a
- * InvariantNode. The variable is possibly associated with a model
- * variable.
- */
 class VarNode {
  public:
   enum struct DomainType : unsigned char {

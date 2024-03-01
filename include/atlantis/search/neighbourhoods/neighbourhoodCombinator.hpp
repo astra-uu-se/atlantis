@@ -1,13 +1,11 @@
 #pragma once
 
-#include <ostream>
-#include <random>
-#include <typeinfo>
+#include <memory>
+#include <vector>
 
 #include "atlantis/logging/logger.hpp"
+#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
-#include "atlantis/utils/type.hpp"
-#include "neighbourhood.hpp"
 
 namespace atlantis::search::neighbourhoods {
 

@@ -1,5 +1,17 @@
 #include "atlantis/propagation/propagation/propagationGraph.hpp"
 
+#include <algorithm>
+#include <chrono>
+#include <functional>
+#include <iostream>
+#include <numeric>
+#include <queue>
+
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/misc/logging.hpp"
+#include "atlantis/propagation/store/store.hpp"
+#include "atlantis/propagation/utils/idMap.hpp"
+
 namespace atlantis::propagation {
 
 inline bool all_in_range(size_t start, size_t stop,

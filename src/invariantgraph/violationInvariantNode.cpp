@@ -1,5 +1,7 @@
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
 
+#include <cassert>
+
 namespace atlantis::invariantgraph {
 
 static std::vector<invariantgraph::VarNodeId> combine(

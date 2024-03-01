@@ -2,10 +2,8 @@
 
 #include <fznparser/constraint.hpp>
 #include <fznparser/variables.hpp>
-#include <unordered_set>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

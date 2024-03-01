@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/views/elementConst.hpp"
 
 namespace atlantis::invariantgraph {
 

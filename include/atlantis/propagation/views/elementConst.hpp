@@ -1,11 +1,9 @@
 #pragma once
 
-#include <algorithm>
-#include <limits>
 #include <vector>
 
-#include "atlantis/propagation/solver.hpp"
-#include "atlantis/propagation/variables/committableInt.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/views/intView.hpp"
 #include "atlantis/types.hpp"
 

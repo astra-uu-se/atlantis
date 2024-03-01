@@ -1,14 +1,12 @@
 #pragma once
 
 #include <chrono>
-#include <iostream>
+#include <fznparser/model.hpp>
+#include <vector>
 
-#include "assignment.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/utils/fznAst.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/utils/fznOutput.hpp"
-#include "fznparser/model.hpp"
 
 namespace atlantis::search {
 

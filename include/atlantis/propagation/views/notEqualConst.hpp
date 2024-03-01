@@ -1,10 +1,9 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/views/intView.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

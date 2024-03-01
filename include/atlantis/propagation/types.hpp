@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <functional>
 
-#include "../types.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

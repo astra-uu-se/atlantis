@@ -1,9 +1,8 @@
-
-
 #include "atlantis/invariantgraph/fzn/bool_clause.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolClauseNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

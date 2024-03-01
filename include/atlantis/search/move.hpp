@@ -1,9 +1,9 @@
 #pragma once
 
-#include "assignment.hpp"
 #include "atlantis/propagation/types.hpp"
+#include "atlantis/search/assignment.hpp"
+#include "atlantis/search/cost.hpp"
 #include "atlantis/types.hpp"
-#include "cost.hpp"
 
 namespace atlantis::search {
 

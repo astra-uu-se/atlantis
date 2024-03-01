@@ -1,6 +1,10 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/intLeNode.hpp"
 
+#include <utility>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
+#include "atlantis/propagation/violationInvariants/lessThan.hpp"
 
 namespace atlantis::invariantgraph {
 

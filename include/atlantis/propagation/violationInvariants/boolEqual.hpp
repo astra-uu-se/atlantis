@@ -1,7 +1,7 @@
 #pragma once
 
-#include "atlantis/propagation/solver.hpp"
-#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
 #include "atlantis/types.hpp"
 

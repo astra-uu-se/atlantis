@@ -1,5 +1,8 @@
 #include "atlantis/propagation/views/inSparseDomain.hpp"
 
+#include <cassert>
+#include <limits>
+
 namespace atlantis::propagation {
 
 inline bool all_in_range(size_t start, size_t stop,

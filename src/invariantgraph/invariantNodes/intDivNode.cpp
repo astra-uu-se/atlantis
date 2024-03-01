@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/invariantNodes/intDivNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/intDiv.hpp"
 
 namespace atlantis::invariantgraph {
 
