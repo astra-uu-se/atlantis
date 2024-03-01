@@ -3,7 +3,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/utils/idMap.hpp"
 

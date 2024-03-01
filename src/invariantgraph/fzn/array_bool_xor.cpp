@@ -4,6 +4,8 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

@@ -1,5 +1,7 @@
 #include "atlantis/propagation/invariants/linear.hpp"
 
+#include <utility>
+
 namespace atlantis::propagation {
 
 Linear::Linear(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)

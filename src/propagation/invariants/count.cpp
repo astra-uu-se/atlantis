@@ -1,5 +1,8 @@
 #include "atlantis/propagation/invariants/count.hpp"
 
+#include <limits>
+#include <utility>
+
 namespace atlantis::propagation {
 
 Count::Count(SolverBase& solver, VarId output, VarId y,

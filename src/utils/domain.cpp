@@ -1,3 +1,5 @@
+#include <numeric>
+#include <stdexcept>
 #include <string>
 
 #include "atlantis/utils/domains.hpp"

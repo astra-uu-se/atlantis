@@ -1,5 +1,9 @@
 #include "atlantis/propagation/invariants/exists.hpp"
 
+#include <limits>
+#include <utility>
+#include <vector>
+
 namespace atlantis::propagation {
 
 Exists::Exists(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)

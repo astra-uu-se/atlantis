@@ -4,8 +4,6 @@
 #include <fznparser/variables.hpp>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intPowNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

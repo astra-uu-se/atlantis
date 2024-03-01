@@ -1,6 +1,9 @@
 #include "atlantis/invariantgraph/invariantNodes/intMinNode.hpp"
 
+#include <cmath>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/binaryMin.hpp"
 
 namespace atlantis::invariantgraph {
 

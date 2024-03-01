@@ -1,6 +1,11 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
 
+#include <utility>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/boolLinear.hpp"
+#include "atlantis/propagation/views/equalConst.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
 

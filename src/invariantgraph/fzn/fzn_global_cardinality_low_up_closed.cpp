@@ -2,6 +2,9 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
+#include "atlantis/invariantgraph/fzn/set_in.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityLowUpNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

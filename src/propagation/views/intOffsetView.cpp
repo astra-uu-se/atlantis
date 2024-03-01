@@ -2,6 +2,9 @@
 
 namespace atlantis::propagation {
 
+IntOffsetView::IntOffsetView(SolverBase& solver, VarId parentId, Int offset)
+    : IntView(solver, parentId), _offset(offset) {}
+
 Int IntOffsetView::value(Timestamp ts) {
   return _offset + _solver.value(ts, _parentId);
 }

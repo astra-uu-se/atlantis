@@ -1,5 +1,7 @@
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 
+#include "atlantis/propagation/views/bool2IntView.hpp"
+
 namespace atlantis::invariantgraph {
 
 BoolNotNode::BoolNotNode(VarNodeId staticInput, VarNodeId output)

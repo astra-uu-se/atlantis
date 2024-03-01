@@ -3,6 +3,8 @@
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/fzn/int_lt.hpp"
+#include "atlantis/invariantgraph/fzn/int_ne.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLeNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

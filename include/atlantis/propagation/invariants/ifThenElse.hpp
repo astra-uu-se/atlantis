@@ -3,7 +3,8 @@
 #include <array>
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis::propagation {

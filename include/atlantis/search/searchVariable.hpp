@@ -1,12 +1,9 @@
 #pragma once
 
-#include <utility>
-#include <variant>
-
 #include "atlantis/propagation/types.hpp"
+#include "atlantis/search/randomProvider.hpp"
 #include "atlantis/types.hpp"
 #include "atlantis/utils/domains.hpp"
-#include "randomProvider.hpp"
 
 namespace atlantis::search {
 

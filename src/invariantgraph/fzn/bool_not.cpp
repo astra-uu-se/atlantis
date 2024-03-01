@@ -1,9 +1,8 @@
-
-
 #include "atlantis/invariantgraph/fzn/bool_not.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/views/boolNotNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

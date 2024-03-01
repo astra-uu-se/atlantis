@@ -1,6 +1,6 @@
-
 #include "atlantis/propagation/propagation/outputToInputExplorer.hpp"
 
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::propagation {

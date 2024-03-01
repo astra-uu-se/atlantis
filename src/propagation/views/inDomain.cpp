@@ -1,5 +1,12 @@
 #include "atlantis/propagation/views/inDomain.hpp"
 
+#include <cassert>
+#include <limits>
+
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/variables/committable.hpp"
+#include "atlantis/types.hpp"
+
 namespace atlantis::propagation {
 
 inline bool all_in_range(size_t start, size_t stop,

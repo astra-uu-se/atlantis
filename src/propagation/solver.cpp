@@ -1,5 +1,10 @@
 #include "atlantis/propagation/solver.hpp"
 
+#include <deque>
+#include <iostream>
+#include <queue>
+#include <set>
+
 namespace atlantis::propagation {
 
 Solver::Solver()

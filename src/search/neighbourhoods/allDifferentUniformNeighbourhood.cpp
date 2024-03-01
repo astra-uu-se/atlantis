@@ -1,5 +1,8 @@
 #include "atlantis/search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
 
+#include <algorithm>
+#include <cassert>
+
 namespace atlantis::search::neighbourhoods {
 
 AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(

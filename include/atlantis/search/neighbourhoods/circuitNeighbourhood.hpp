@@ -1,10 +1,9 @@
 #pragma once
 
-#include <algorithm>
-
+#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
-#include "neighbourhood.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::search::neighbourhoods {
 

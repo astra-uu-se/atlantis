@@ -1,5 +1,11 @@
 #include "atlantis/search/neighbourhoods/neighbourhoodCombinator.hpp"
 
+#include <ostream>
+#include <random>
+#include <typeinfo>
+
+#include "atlantis/utils/type.hpp"
+
 namespace atlantis::search::neighbourhoods {
 
 NeighbourhoodCombinator::NeighbourhoodCombinator(

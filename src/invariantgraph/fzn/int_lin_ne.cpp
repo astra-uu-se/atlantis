@@ -4,6 +4,7 @@
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/fzn/int_lin_eq.hpp"
 #include "atlantis/invariantgraph/fzn/int_ne.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

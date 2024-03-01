@@ -3,6 +3,7 @@
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/fzn/int_le.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLtNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -106,7 +107,7 @@ bool int_lt(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
     if (reified.toParameter()) {
       return int_lt(invariantGraph, a, b);
     }
-    return int_ne(invariantGraph, a, b);
+    return int_le(invariantGraph, a, b);
   }
   if (a.isFixed() && b.isFixed()) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);

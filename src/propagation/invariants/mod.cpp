@@ -1,5 +1,7 @@
 #include "atlantis/propagation/invariants/mod.hpp"
 
+#include <cmath>
+
 namespace atlantis::propagation {
 
 Mod::Mod(SolverBase& solver, VarId output, VarId nominator, VarId denominator)

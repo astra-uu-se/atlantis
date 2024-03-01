@@ -1,9 +1,10 @@
 #pragma once
 
-#include <utility>
+#include <vector>
 
 #include "atlantis/invariantgraph/implicitConstraintNode.hpp"
-#include "atlantis/search/neighbourhoods/randomNeighbourhood.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -14,8 +15,7 @@ namespace atlantis::invariantgraph {
  */
 class InvariantGraphRoot : public ImplicitConstraintNode {
  public:
-  explicit InvariantGraphRoot(std::vector<VarNodeId>&& vars = {})
-      : ImplicitConstraintNode(std::move(vars)) {}
+  explicit InvariantGraphRoot(std::vector<VarNodeId>&& vars = {});
 
   ~InvariantGraphRoot() override = default;
 

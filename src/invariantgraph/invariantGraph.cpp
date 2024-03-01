@@ -1,9 +1,19 @@
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 
+#include <deque>
+#include <queue>
+#include <stack>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intEqNode.hpp"
+#include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/utils/fznAst.hpp"
 
 namespace atlantis::invariantgraph {
 

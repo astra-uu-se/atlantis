@@ -1,6 +1,13 @@
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 
+#include <utility>
+
+#include "atlantis/search/neighbourhoods/randomNeighbourhood.hpp"
+
 namespace atlantis::invariantgraph {
+
+InvariantGraphRoot::InvariantGraphRoot(std::vector<VarNodeId>&& vars)
+    : ImplicitConstraintNode(std::move(vars)) {}
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 InvariantGraphRoot::createNeighbourhood(propagation::SolverBase& solver,

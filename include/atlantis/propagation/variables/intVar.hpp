@@ -1,9 +1,6 @@
 #pragma once
 
-#include <cassert>
-#include <iosfwd>
 #include <iostream>
-#include <stdexcept>
 
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/variables/committableInt.hpp"

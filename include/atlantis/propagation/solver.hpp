@@ -1,17 +1,15 @@
 #pragma once
 
-#include <deque>
-#include <iostream>
-#include <queue>
-#include <set>
+#include <unordered_set>
+#include <vector>
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/propagation/outputToInputExplorer.hpp"
 #include "atlantis/propagation/propagation/propagationGraph.hpp"
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/utils/hashes.hpp"
 #include "atlantis/propagation/utils/idMap.hpp"
 #include "atlantis/propagation/variables/intVar.hpp"
-#include "utils/hashes.hpp"
 
 namespace atlantis::propagation {
 

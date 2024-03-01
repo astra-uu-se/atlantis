@@ -2,6 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intDivNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

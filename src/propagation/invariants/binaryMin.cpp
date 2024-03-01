@@ -1,5 +1,7 @@
 #include "atlantis/propagation/invariants/binaryMin.hpp"
 
+#include <cmath>
+
 namespace atlantis::propagation {
 
 BinaryMin::BinaryMin(SolverBase& solver, VarId output, VarId x, VarId y)

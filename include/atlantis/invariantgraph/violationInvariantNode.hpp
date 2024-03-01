@@ -1,11 +1,10 @@
 #pragma once
 
-#include <cassert>
 #include <vector>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 

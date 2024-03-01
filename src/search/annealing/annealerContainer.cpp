@@ -1,5 +1,10 @@
 #include "atlantis/search/annealing/annealerContainer.hpp"
 
+#include "atlantis/search/annealing/geometricCoolingSchedule.hpp"
+#include "atlantis/search/annealing/geometricHeatingSchedule.hpp"
+#include "atlantis/search/annealing/scheduleLoop.hpp"
+#include "atlantis/search/annealing/scheduleSequence.hpp"
+
 namespace atlantis::search {
 
 std::unique_ptr<AnnealingSchedule> AnnealerContainer::sequence(

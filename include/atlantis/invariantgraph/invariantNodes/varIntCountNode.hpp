@@ -1,12 +1,11 @@
 #pragma once
-#include <algorithm>
-#include <utility>
+
+#include <vector>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/propagation/invariants/count.hpp"
-#include "atlantis/propagation/views/intOffsetView.hpp"
-#include "atlantis/propagation/views/scalarView.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 class VarIntCountNode : public InvariantNode {

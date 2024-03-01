@@ -1,7 +1,11 @@
 #pragma once
 
+#include <vector>
+
 #include "atlantis/search/annealer.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/move.hpp"
+#include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::search::neighbourhoods {

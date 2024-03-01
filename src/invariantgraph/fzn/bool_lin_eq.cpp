@@ -2,6 +2,8 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/fzn/int_eq.hpp"
+#include "atlantis/invariantgraph/invariantNodes/boolLinearNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

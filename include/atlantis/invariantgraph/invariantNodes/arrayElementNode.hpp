@@ -1,8 +1,12 @@
 #pragma once
 
+#include <vector>
+
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/propagation/views/elementConst.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 

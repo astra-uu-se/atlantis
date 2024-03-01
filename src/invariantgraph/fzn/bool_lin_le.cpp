@@ -2,8 +2,13 @@
 
 #include "atlantis/invariantgraph/fzn/bool_lin_le.hpp"
 
+#include <numeric>
+#include <vector>
+
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/fzn/bool_lin_eq.hpp"
+#include "atlantis/invariantgraph/fzn/int_le.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

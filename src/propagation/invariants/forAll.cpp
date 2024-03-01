@@ -1,5 +1,8 @@
 #include "atlantis/propagation/invariants/forAll.hpp"
 
+#include <limits>
+#include <vector>
+
 namespace atlantis::propagation {
 
 ForAll::ForAll(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)

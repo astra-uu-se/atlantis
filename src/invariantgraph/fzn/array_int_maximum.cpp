@@ -1,9 +1,9 @@
-
-
 #include "atlantis/invariantgraph/fzn/array_int_maximum.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

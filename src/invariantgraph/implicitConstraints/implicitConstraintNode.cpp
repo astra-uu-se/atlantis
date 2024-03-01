@@ -1,6 +1,11 @@
 #include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 
+#include <cassert>
+#include <vector>
+
 #include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 

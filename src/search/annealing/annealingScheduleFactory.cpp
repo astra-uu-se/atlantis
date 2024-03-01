@@ -1,5 +1,10 @@
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 
+#include <fstream>
+#include <utility>
+
+#include "atlantis/search/annealing/annealerContainer.hpp"
+
 #define JSON_NO_IO
 #define JSON_HAS_CPP_17
 #include <nlohmann/json.hpp>
@@ -108,6 +113,15 @@ static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
     throw AnnealingScheduleCreationError(
         std::string("Unknown schedule key: ").append(name));
   }
+}
+
+std::unique_ptr<AnnealingSchedule>
+AnnealingScheduleFactory::defaultAnnealingSchedule() {
+  std::vector<std::unique_ptr<AnnealingSchedule>> inner;
+  inner.push_back(AnnealerContainer::heating(1.2, 0.75));
+  inner.push_back(AnnealerContainer::cooling(0.99, 4));
+  return AnnealerContainer::loop(AnnealerContainer::sequence(std::move(inner)),
+                                 5);
 }
 
 std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
