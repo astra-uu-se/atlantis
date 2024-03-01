@@ -1,9 +1,9 @@
 #pragma once
 
 #include <chrono>
-#include <vector>
 #include <functional>
 #include <optional>
+#include <vector>
 
 #include "atlantis/search/assignment.hpp"
 
