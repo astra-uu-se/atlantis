@@ -1,5 +1,7 @@
 #include "atlantis/propagation/invariants/maxSparse.hpp"
 
+#include <limits>
+
 namespace atlantis::propagation {
 
 MaxSparse::MaxSparse(SolverBase& solver, VarId output,

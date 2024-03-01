@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/fzn/int_abs.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/views/intAbsNode.hpp"
 #include "fznHelper.hpp"
 
 namespace atlantis::invariantgraph::fzn {

@@ -1,12 +1,9 @@
 #pragma once
 
-#include <cassert>
-#include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <string>
 
-#include "../types.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 

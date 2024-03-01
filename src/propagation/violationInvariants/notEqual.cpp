@@ -1,5 +1,7 @@
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
 
+#include <array>
+
 namespace atlantis::propagation {
 
 /**

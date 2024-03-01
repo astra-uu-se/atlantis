@@ -1,15 +1,12 @@
 #pragma once
 
-#include <limits>
-#include <utility>
+#include <fznparser/solveType.hpp>
 
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "atlantis/types.hpp"
 #include "atlantis/utils/variant.hpp"
-#include "fznparser/model.hpp"
 
 namespace atlantis::search {
 

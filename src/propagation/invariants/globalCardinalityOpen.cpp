@@ -1,5 +1,11 @@
 #include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <vector>
+
+#include "atlantis/propagation/variables/intVar.hpp"
+
 namespace atlantis::propagation {
 
 inline bool all_in_range(Int start, Int stop,

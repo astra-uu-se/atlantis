@@ -1,5 +1,9 @@
 #include "atlantis/propagation/invariants/intDiv.hpp"
 
+#include <algorithm>
+#include <limits>
+#include <vector>
+
 namespace atlantis::propagation {
 
 IntDiv::IntDiv(SolverBase& solver, VarId output, VarId nominator,

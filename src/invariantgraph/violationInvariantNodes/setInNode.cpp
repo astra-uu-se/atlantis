@@ -1,6 +1,11 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/setInNode.hpp"
 
+#include <utility>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/views/inDomain.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/utils/variant.hpp"
 
 namespace atlantis::invariantgraph {
 

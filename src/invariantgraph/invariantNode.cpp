@@ -1,5 +1,10 @@
 #include "atlantis/invariantgraph/invariantNode.hpp"
 
+#include <cassert>
+#include <fznparser/model.hpp>
+#include <unordered_map>
+
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 
 namespace atlantis::invariantgraph {

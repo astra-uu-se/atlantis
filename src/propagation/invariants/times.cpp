@@ -1,5 +1,8 @@
 #include "atlantis/propagation/invariants/times.hpp"
 
+#include <algorithm>
+#include <vector>
+
 namespace atlantis::propagation {
 
 Times::Times(SolverBase& solver, VarId output, VarId x, VarId y)

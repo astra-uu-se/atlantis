@@ -1,5 +1,7 @@
 #include "atlantis/search/assignment.hpp"
 
+#include <functional>
+
 namespace atlantis::search {
 
 Assignment::Assignment(propagation::Solver& solver,

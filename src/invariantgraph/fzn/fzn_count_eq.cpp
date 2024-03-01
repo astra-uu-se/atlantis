@@ -3,6 +3,7 @@
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_neq.hpp"
+#include "atlantis/invariantgraph/fzn/int_eq.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

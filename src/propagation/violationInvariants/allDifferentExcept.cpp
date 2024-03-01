@@ -1,5 +1,8 @@
 #include "atlantis/propagation/violationInvariants/allDifferentExcept.hpp"
 
+#include <algorithm>
+#include <cassert>
+
 namespace atlantis::propagation {
 
 /**

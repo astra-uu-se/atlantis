@@ -1,10 +1,9 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/views/intView.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -13,8 +12,7 @@ class IntOffsetView : public IntView {
   const Int _offset;
 
  public:
-  explicit IntOffsetView(SolverBase& solver, VarId parentId, Int offset)
-      : IntView(solver, parentId), _offset(offset) {}
+  explicit IntOffsetView(SolverBase& solver, VarId parentId, Int offset);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

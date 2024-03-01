@@ -1,5 +1,8 @@
 #include "atlantis/propagation/invariants/boolLinear.hpp"
 
+#include <utility>
+#include <vector>
+
 namespace atlantis::propagation {
 
 BoolLinear::BoolLinear(SolverBase& solver, VarId output,

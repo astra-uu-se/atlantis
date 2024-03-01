@@ -1,13 +1,10 @@
 #pragma once
 
-#include <chrono>
-#include <string>
-
-#include "atlantis/logging/logger.hpp"
-#include "neighbourhoods/neighbourhood.hpp"
-#include "objective.hpp"
-#include "searchController.hpp"
-#include "searchStatistics.hpp"
+#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/objective.hpp"
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/searchController.hpp"
+#include "atlantis/search/searchStatistics.hpp"
 
 namespace atlantis::search {
 

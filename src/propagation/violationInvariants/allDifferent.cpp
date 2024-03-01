@@ -1,5 +1,10 @@
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 
+#include <cassert>
+#include <limits>
+
+#include "atlantis/propagation/variables/intVar.hpp"
+
 namespace atlantis::propagation {
 
 /**

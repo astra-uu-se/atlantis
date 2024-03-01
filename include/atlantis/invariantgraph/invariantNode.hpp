@@ -1,15 +1,12 @@
 #pragma once
 
-#include <cassert>
-#include <fznparser/model.hpp>
-#include <limits>
-#include <unordered_map>
 #include <vector>
 
-#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 /**

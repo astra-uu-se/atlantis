@@ -1,5 +1,8 @@
 #include "atlantis/propagation/invariants/countConst.hpp"
 
+#include <utility>
+#include <vector>
+
 namespace atlantis::propagation {
 
 CountConst::CountConst(SolverBase& solver, VarId output, Int y,

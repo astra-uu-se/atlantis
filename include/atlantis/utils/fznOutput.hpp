@@ -4,7 +4,6 @@
 #include <variant>
 #include <vector>
 
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
 

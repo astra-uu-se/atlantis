@@ -1,6 +1,9 @@
 #include "atlantis/invariantgraph/invariantNodes/intPlusNode.hpp"
 
+#include <cmath>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/plus.hpp"
 
 namespace atlantis::invariantgraph {
 

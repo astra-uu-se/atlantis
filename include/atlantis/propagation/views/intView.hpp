@@ -1,5 +1,6 @@
 #pragma once
 
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/views/view.hpp"
 #include "atlantis/types.hpp"
 
@@ -10,8 +11,6 @@ class SolverBase;  // Forward declaration
 class IntView : public View {
  protected:
   friend class SolverBase;
-  // A raw pointer might be the best option here as views lifetime depend
-  // on solver and not vice-versa:
 
  public:
   explicit IntView(SolverBase& solver, VarId parentId)

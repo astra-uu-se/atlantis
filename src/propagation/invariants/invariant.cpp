@@ -1,6 +1,6 @@
 #include "atlantis/propagation/invariants/invariant.hpp"
 
-#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
 

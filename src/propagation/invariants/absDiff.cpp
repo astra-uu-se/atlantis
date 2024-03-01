@@ -1,5 +1,7 @@
 #include "atlantis/propagation/invariants/absDiff.hpp"
 
+#include <algorithm>
+
 namespace atlantis::propagation {
 
 AbsDiff::AbsDiff(SolverBase& solver, VarId output, VarId x, VarId y)

@@ -1,7 +1,11 @@
 #include "atlantis/invariantgraph/fzn/allDifferentImplicitNode.hpp"
 
+#include <unordered_set>
+
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

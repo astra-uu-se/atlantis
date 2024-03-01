@@ -1,19 +1,10 @@
 #pragma once
 
-#include <algorithm>
-#include <chrono>
-#include <functional>
-#include <iostream>
-#include <numeric>
-#include <queue>
 #include <vector>
 
-#include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/misc/logging.hpp"
+#include "atlantis/propagation/propagation/propagationQueue.hpp"
 #include "atlantis/propagation/store/store.hpp"
-#include "atlantis/propagation/utils/idMap.hpp"
 #include "atlantis/types.hpp"
-#include "propagationQueue.hpp"
 
 namespace atlantis::propagation {
 

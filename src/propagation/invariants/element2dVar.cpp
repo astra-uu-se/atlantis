@@ -1,5 +1,9 @@
 #include "atlantis/propagation/invariants/element2dVar.hpp"
 
+#include <algorithm>
+#include <limits>
+#include <vector>
+
 namespace atlantis::propagation {
 
 static inline Int numCols(const std::vector<std::vector<VarId>>& varMatrix) {

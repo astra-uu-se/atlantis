@@ -2,7 +2,9 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/fzn/int_eq.hpp"
 #include "atlantis/invariantgraph/fzn/int_lin_ne.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

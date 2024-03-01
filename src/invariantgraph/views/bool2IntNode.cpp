@@ -1,5 +1,10 @@
 #include "atlantis/invariantgraph/views/bool2IntNode.hpp"
 
+#include <map>
+#include <utility>
+
+#include "atlantis/propagation/views/bool2IntView.hpp"
+
 namespace atlantis::invariantgraph {
 
 Bool2IntNode::Bool2IntNode(VarNodeId staticInput, VarNodeId output)

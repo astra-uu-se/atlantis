@@ -1,5 +1,19 @@
 #include "atlantis/invariantgraph/varNode.hpp"
 
+#include <cassert>
+#include <fznparser/variables.hpp>
+#include <limits>
+
+#include "atlantis/propagation/views/equalConst.hpp"
+#include "atlantis/propagation/views/greaterEqualConst.hpp"
+#include "atlantis/propagation/views/inDomain.hpp"
+#include "atlantis/propagation/views/inIntervalConst.hpp"
+#include "atlantis/propagation/views/inSparseDomain.hpp"
+#include "atlantis/propagation/views/lessEqualConst.hpp"
+#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/searchVariable.hpp"
+#include "atlantis/utils/variant.hpp"
+
 namespace atlantis::invariantgraph {
 
 VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,

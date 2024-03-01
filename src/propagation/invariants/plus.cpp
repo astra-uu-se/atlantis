@@ -1,5 +1,7 @@
 #include "atlantis/propagation/invariants/plus.hpp"
 
+#include <cmath>
+
 namespace atlantis::propagation {
 
 Plus::Plus(SolverBase& solver, VarId output, VarId x, VarId y)

@@ -1,10 +1,8 @@
 #pragma once
 
-#include <algorithm>
-
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solver.hpp"
-#include "atlantis/types.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::propagation {
 

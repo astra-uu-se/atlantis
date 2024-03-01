@@ -1,5 +1,9 @@
 #include "atlantis/propagation/variables/intVar.hpp"
 
+#include <cassert>
+#include <iosfwd>
+#include <stdexcept>
+
 namespace atlantis::propagation {
 
 IntVar::IntVar(Int lowerBound, Int upperBound)

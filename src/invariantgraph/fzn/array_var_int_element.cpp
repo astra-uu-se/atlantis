@@ -1,9 +1,9 @@
-
-
 #include "atlantis/invariantgraph/fzn/array_var_int_element.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

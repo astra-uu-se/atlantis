@@ -1,6 +1,12 @@
 #include "atlantis/invariantgraph/invariantNodes/varIntCountNode.hpp"
 
+#include <algorithm>
+#include <utility>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/count.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/propagation/views/scalarView.hpp"
 
 namespace atlantis::invariantgraph {
 

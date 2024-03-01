@@ -2,6 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

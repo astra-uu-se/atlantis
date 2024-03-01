@@ -1,14 +1,10 @@
 #pragma once
 
-#include <algorithm>
-#include <cassert>
 #include <vector>
 
-#include "atlantis/propagation/solver.hpp"
-#include "atlantis/propagation/variables/committableInt.hpp"
-#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
-#include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis::propagation {

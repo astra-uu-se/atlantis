@@ -1,6 +1,10 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 
+#include <utility>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/propagation/violationInvariants/boolAllEqual.hpp"
 
 namespace atlantis::invariantgraph {
 

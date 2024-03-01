@@ -1,5 +1,8 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 
+#include <unordered_set>
+#include <vector>
+
 #include "atlantis/invariantgraph/fzn/allDifferentImplicitNode.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_element.hpp"
@@ -55,6 +58,9 @@
 #include "atlantis/invariantgraph/fzn/int_pow.hpp"
 #include "atlantis/invariantgraph/fzn/int_times.hpp"
 #include "atlantis/invariantgraph/fzn/set_in.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intNeNode.hpp"
+#include "atlantis/utils/fznAst.hpp"
 
 namespace atlantis::invariantgraph {
 

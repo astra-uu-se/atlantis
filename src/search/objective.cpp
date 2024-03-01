@@ -1,5 +1,11 @@
 #include "atlantis/search/objective.hpp"
 
+#include <limits>
+#include <utility>
+
+#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
+#include <fznparser/model.hpp>
+
 namespace atlantis::search {
 
 Objective::Objective(propagation::Solver& solver,

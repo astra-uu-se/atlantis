@@ -1,5 +1,12 @@
 #include "atlantis/fznBackend.hpp"
 
+#include <utility>
+
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/search/objective.hpp"
+#include "atlantis/search/searchProcedure.hpp"
+#include <fznparser/parser.hpp>
+
 namespace atlantis {
 
 FznBackend::FznBackend(

@@ -1,5 +1,8 @@
 #include "atlantis/propagation/invariants/minSparse.hpp"
 
+#include <limits>
+#include <utility>
+
 namespace atlantis::propagation {
 
 MinSparse::MinSparse(SolverBase& solver, VarId output,

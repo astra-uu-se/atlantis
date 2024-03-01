@@ -10,13 +10,12 @@ namespace atlantis::propagation {
 
 class Violation2BoolView : public IntView {
  public:
-  explicit Violation2BoolView(SolverBase& solver, const VarId parentId)
-      : IntView(solver, parentId) {}
+  explicit Violation2BoolView(SolverBase& solver, VarId parentId);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;
-  [[nodiscard]] Int lowerBound() const override { return 0; }
-  [[nodiscard]] Int upperBound() const override { return 1; }
+  [[nodiscard]] Int lowerBound() const override;
+  [[nodiscard]] Int upperBound() const override;
 };
 
 }  // namespace atlantis::propagation

@@ -1,6 +1,9 @@
 #include "atlantis/invariantgraph/invariantNodes/intPowNode.hpp"
 
+#include <cmath>
+
 #include "../parseHelper.hpp"
+#include "atlantis/propagation/invariants/pow.hpp"
 
 namespace atlantis::invariantgraph {
 
