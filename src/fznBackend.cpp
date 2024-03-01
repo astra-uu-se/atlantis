@@ -1,13 +1,12 @@
 #include "atlantis/fznBackend.hpp"
 
+#include <fznparser/parser.hpp>
 #include <utility>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/searchProcedure.hpp"
-#include <fznparser/parser.hpp>
-
-#include "atlantis/search/assignment.hpp"
 #include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis {
@@ -165,8 +164,8 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
       };
 
   std::function<void(bool)> onFinish = [&](bool foundSolution) {
-    if (foundSolution) {
-      std::cout << "=====UNKNOWN=====" << std::endl;
+    if (!foundSolution) {
+      std::cout << "=====UNKNOWN=====\n";
     }
   };
 

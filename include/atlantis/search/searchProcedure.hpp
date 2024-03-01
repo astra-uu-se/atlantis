@@ -1,5 +1,6 @@
 #pragma once
 
+#include "atlantis/logging/logger.hpp"
 #include "atlantis/search/neighbourhoods/neighbourhood.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/randomProvider.hpp"
