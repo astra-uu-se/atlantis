@@ -1,22 +1,19 @@
 #pragma once
 
 #include <chrono>
-#include <fznparser/model.hpp>
+#include <functional>
+#include <optional>
 #include <vector>
 
-#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/search/assignment.hpp"
-#include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis::search {
 
 class SearchController {
  private:
+  std::function<void(const Assignment&)> _onSolution;
+  std::function<void(bool)> _onFinish;
   std::optional<std::chrono::milliseconds> _timeout;
-  std::vector<FznOutputVar> _outputBoolVars;
-  std::vector<FznOutputVar> _outputIntVars;
-  std::vector<FznOutputVarArray> _outputBoolVarArrays;
-  std::vector<FznOutputVarArray> _outputIntVarArrays;
 
   std::chrono::steady_clock::time_point _startTime;
   bool _isSatisfactionProblem;
@@ -24,33 +21,23 @@ class SearchController {
   Int _foundSolution{false};
 
  public:
-  SearchController(const fznparser::Model& model,
-                   const invariantgraph::FznInvariantGraph& invariantGraph)
-      : _timeout({}),
-        _outputBoolVars(invariantGraph.outputBoolVars()),
-        _outputIntVars(invariantGraph.outputIntVars()),
-        _outputBoolVarArrays(invariantGraph.outputBoolVarArrays()),
-        _outputIntVarArrays(invariantGraph.outputIntVarArrays()),
-        _isSatisfactionProblem(model.isSatisfactionProblem()) {}
-
   template <typename Rep, typename Period>
-  SearchController(const fznparser::Model& model,
-                   const invariantgraph::FznInvariantGraph& invariantGraph,
-                   std::chrono::duration<Rep, Period> timeout)
-      : _timeout(
-            std::chrono::duration_cast<std::chrono::milliseconds>(timeout)),
-        _outputBoolVars(invariantGraph.outputBoolVars()),
-        _outputIntVars(invariantGraph.outputIntVars()),
-        _outputBoolVarArrays(invariantGraph.outputBoolVarArrays()),
-        _outputIntVarArrays(invariantGraph.outputIntVarArrays()),
-        _isSatisfactionProblem(model.isSatisfactionProblem()) {}
+  SearchController(
+      bool isSatisfactionProblem,
+      std::function<void(const Assignment&)>&& onSolution,
+      std::function<void(bool)>&& onFinish,
+      std::optional<std::chrono::duration<Rep, Period>> timeout = {})
+      : _onSolution(std::move(onSolution)),
+        _onFinish(std::move(onFinish)),
+        _timeout(
+            timeout.has_value()
+                ? std::optional<std::chrono::milliseconds>(
+                      std::chrono::duration_cast<std::chrono::milliseconds>(
+                          *timeout))
+                : std::nullopt),
+        _isSatisfactionProblem(isSatisfactionProblem) {}
 
   bool shouldRun(const Assignment&);
-  static void printBoolVar(const Assignment&, const FznOutputVar&);
-  static void printIntVar(const Assignment&, const FznOutputVar&);
-  static void printBoolVarArray(const Assignment&, const FznOutputVarArray&);
-  static void printIntVarArray(const Assignment&, const FznOutputVarArray&);
-  void printSolution(const Assignment&) const;
   void onSolution(const Assignment&);
   void onFinish() const;
 };

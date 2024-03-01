@@ -1,13 +1,84 @@
 #include "atlantis/fznBackend.hpp"
 
+#include <fznparser/parser.hpp>
 #include <utility>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/searchProcedure.hpp"
-#include <fznparser/parser.hpp>
+#include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis {
+
+std::string toIntString(const search::Assignment& assignment,
+                        const std::variant<propagation::VarId, Int>& var) {
+  return std::to_string(
+      std::holds_alternative<Int>(var)
+          ? std::get<Int>(var)
+          : assignment.value(std::get<propagation::VarId>(var)));
+}
+
+std::string toBoolString(const search::Assignment& assignment,
+                         const std::variant<propagation::VarId, Int>& var) {
+  return ((std::holds_alternative<Int>(var)
+               ? std::get<Int>(var)
+               : assignment.value(std::get<propagation::VarId>(var))) == 0)
+             ? "true"
+             : "false";
+}
+
+void printBoolVar(const search::Assignment& assignment,
+                  const FznOutputVar& outputVar) {
+  std::cout << outputVar.identifier << " = "
+            << toBoolString(assignment, outputVar.var) << ";\n";
+}
+
+void printIntVar(const search::Assignment& assignment,
+                 const FznOutputVar& outputVar) {
+  std::cout << outputVar.identifier << " = "
+            << toIntString(assignment, outputVar.var) << ";\n";
+}
+
+std::string arrayVarPrefix(const std::vector<Int>& indexSetSizes) {
+  std::string s = " = array" + std::to_string(indexSetSizes.size()) + "d(";
+
+  for (Int size : indexSetSizes) {
+    s += "1.." + std::to_string(size) + ", ";
+  }
+
+  return s;
+}
+
+void printBoolVarArray(const search::Assignment& assignment,
+                       const FznOutputVarArray& varArray) {
+  std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
+            << '[';
+
+  for (size_t i = 0; i < varArray.vars.size(); ++i) {
+    if (i != 0) {
+      std::cout << ", ";
+    }
+    std::cout << toBoolString(assignment, varArray.vars[i]);
+  }
+
+  std::cout << "]);\n";
+}
+
+void printIntVarArray(const search::Assignment& assignment,
+                      const FznOutputVarArray& varArray) {
+  std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
+            << '[';
+
+  for (size_t i = 0; i < varArray.vars.size(); ++i) {
+    if (i != 0) {
+      std::cout << ", ";
+    }
+    std::cout << toIntString(assignment, varArray.vars[i]);
+  }
+
+  std::cout << "]);\n";
+}
 
 FznBackend::FznBackend(
     std::filesystem::path&& modelFile,
@@ -73,19 +144,34 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   search::SearchProcedure search(random, assignment, neighbourhood,
                                  searchObjective);
 
-  const auto& outputBoolVars = invariantGraph.outputBoolVars();
-  const auto& outputIntVars = invariantGraph.outputIntVars();
-  const auto& outputBoolVarArrays = invariantGraph.outputBoolVarArrays();
-  const auto& outputIntVarArrays = invariantGraph.outputIntVarArrays();
+  std::function<void(const search::Assignment&)> onSolution =
+      [&](const search::Assignment& assignment) {
+        for (const auto& outputVar : invariantGraph.outputBoolVars()) {
+          printBoolVar(assignment, outputVar);
+        }
+        for (const auto& outputVar : invariantGraph.outputIntVars()) {
+          printIntVar(assignment, outputVar);
+        }
+        for (const auto& outputVarArray :
+             invariantGraph.outputBoolVarArrays()) {
+          printBoolVarArray(assignment, outputVarArray);
+        }
+        for (const auto& outputVarArray : invariantGraph.outputIntVarArrays()) {
+          printIntVarArray(assignment, outputVarArray);
+        }
 
-  search::SearchController searchController = [&] {
-    if (_timeout) {
-      return search::SearchController(model, invariantGraph, *_timeout);
-    } else {
-      logger.info("Running without timeout.");
-      return search::SearchController(model, invariantGraph);
+        std::cout << "----------\n";
+      };
+
+  std::function<void(bool)> onFinish = [&](bool foundSolution) {
+    if (!foundSolution) {
+      std::cout << "=====UNKNOWN=====\n";
     }
-  }();
+  };
+
+  search::SearchController searchController(model.isSatisfactionProblem(),
+                                            std::move(onSolution),
+                                            std::move(onFinish), _timeout);
 
   auto schedule = _annealingScheduleFactory.create();
   search::Annealer annealer(assignment, random, *schedule);

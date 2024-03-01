@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <fznparser/parser.hpp>
 #include <iostream>
 #include <optional>
 
