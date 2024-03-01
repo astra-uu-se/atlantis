@@ -81,20 +81,27 @@ void printIntVarArray(const search::Assignment& assignment,
 }
 
 FznBackend::FznBackend(
-    std::filesystem::path&& modelFile,
+    logging::Logger& logger, std::filesystem::path&& modelFile,
     search::AnnealingScheduleFactory&& annealingScheduleFactory,
     std::uint_fast32_t seed, std::optional<std::chrono::milliseconds> timeout)
-    : _modelFile(std::move(modelFile)),
-      _annealingScheduleFactory(std::move(annealingScheduleFactory)),
-      _timeout(timeout),
-      _seed(seed) {}
+    : FznBackend(logger.timed<fznparser::Model>(
+                     "parsing FlatZinc",
+                     [&] {
+                       auto m = fznparser::parseFznFile(modelFile);
+                       logger.debug("Found {:d} variables", m.vars().size());
+                       logger.debug("Found {:d} constraints",
+                                    m.constraints().size());
+                       return m;
+                     }),
+                 std::move(annealingScheduleFactory), seed, timeout) {}
 
 FznBackend::FznBackend(
-    std::filesystem::path&& modelFile,
+    logging::Logger& logger, std::filesystem::path&& modelFile,
     search::AnnealingScheduleFactory&& annealingScheduleFactory,
     std::chrono::milliseconds timeout)
-    : FznBackend(std::move(modelFile), std::move(annealingScheduleFactory),
-                 std::time(nullptr), timeout) {}
+    : FznBackend(logger, std::move(modelFile),
+                 std::move(annealingScheduleFactory), std::time(nullptr),
+                 timeout) {}
 
 static propagation::ObjectiveDirection getObjectiveDirection(
     fznparser::ProblemType problemType) {
@@ -110,18 +117,11 @@ static propagation::ObjectiveDirection getObjectiveDirection(
 }
 
 search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
-  auto model = logger.timed<fznparser::Model>("parsing FlatZinc", [&] {
-    auto m = fznparser::parseFznFile(_modelFile);
-    logger.debug("Found {:d} variables", m.vars().size());
-    logger.debug("Found {:d} constraints", m.constraints().size());
-    return m;
-  });
-
-  fznparser::ProblemType problemType = model.solveType().problemType();
+  fznparser::ProblemType problemType = _model.solveType().problemType();
 
   invariantgraph::FznInvariantGraph invariantGraph;
   logger.timed<void>("building invariant graph",
-                     [&] { return invariantGraph.build(model); });
+                     [&] { return invariantGraph.build(_model); });
 
   propagation::Solver solver;
   invariantGraph.apply(solver);

@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
     auto modelFilePath = result["modelFile"].as<std::filesystem::path>();
 
     atlantis::FznBackend backend(
-        std::move(modelFilePath),
+        logger, std::move(modelFilePath),
         atlantis::search::AnnealingScheduleFactory(annealingScheduleDefinition),
         seed, timeout);
     auto statistics = backend.solve(logger);
