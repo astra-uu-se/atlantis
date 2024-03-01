@@ -5,6 +5,7 @@
 
 #include "atlantis/fznBackend.hpp"
 #include "atlantis/logging/logger.hpp"
+#include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 
 /**
  * @brief Read a duration in milliseconds from an input stream. Used to allow
@@ -72,35 +73,26 @@ int main(int argc, char* argv[]) {
 
     atlantis::logging::Logger logger(stderr, getLogLevel(result));
 
-    auto givenSeed = result["seed"].as<long>();
-    std::uint_fast32_t seed = givenSeed >= 0
-                                  ? static_cast<std::uint_fast32_t>(givenSeed)
-                                  : std::time(nullptr);
-
-    std::optional<std::chrono::milliseconds> timeout = [&] {
-      if (result.count("time-limit") == 1) {
-        return std::optional<std::chrono::milliseconds>{
-            std::chrono::milliseconds(result["time-limit"].as<long>())};
-      } else {
-        return std::optional<std::chrono::milliseconds>{};
-      }
-    }();
-
-    std::optional<std::filesystem::path> annealingScheduleDefinition = [&] {
-      if (result.count("annealing-schedule") == 1) {
-        return std::optional<std::filesystem::path>{
-            result["annealing-schedule"].as<std::filesystem::path>()};
-      } else {
-        return std::optional<std::filesystem::path>{};
-      }
-    }();
-
     auto modelFilePath = result["modelFile"].as<std::filesystem::path>();
 
-    atlantis::FznBackend backend(
-        logger, std::move(modelFilePath),
-        atlantis::search::AnnealingScheduleFactory(annealingScheduleDefinition),
-        seed, timeout);
+    atlantis::FznBackend backend(logger, std::move(modelFilePath));
+
+    auto givenSeed = result["seed"].as<long>();
+    if (givenSeed >= 0) {
+      backend.setRandomSeed(static_cast<std::uint_fast32_t>(givenSeed));
+    }
+
+    if (result.count("time-limit") == 1) {
+      backend.setTimelimit(std::optional<std::chrono::milliseconds>{
+          std::chrono::milliseconds(result["time-limit"].as<long>())});
+    }
+
+    if (result.count("annealing-schedule") == 1) {
+      backend.setAnnealingScheduleFactory(
+          atlantis::search::AnnealingScheduleFactory(
+              result["annealing-schedule"].as<std::filesystem::path>()));
+    }
+
     auto statistics = backend.solve(logger);
 
     // Don't log to std::cout, since that would interfere with MiniZinc.
