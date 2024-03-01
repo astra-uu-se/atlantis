@@ -39,6 +39,7 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 # Set the 'library' name. The library consists of all cpp, hpp, and h files except
 # main in ./src
 set(PROJECT_LIB ${PROJECT_NAME})
+
 # Set the 'executable' name. The executable consists of the library together with
 # main.cpp in ./src
 set(PROJECT_EXEC fzn-${PROJECT_NAME})
@@ -57,6 +58,7 @@ add_library(${PROJECT_LIB} ${SRC_FILES})
 
 # The executable is the main file
 add_executable(${PROJECT_EXEC} ${PROJECT_SOURCE_DIR}/src/main.cpp)
+
 # Add executable to --target install
 install(
   TARGETS ${PROJECT_EXEC}
@@ -65,13 +67,16 @@ install(
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
 # Add minizinc library to --target install
 install(
   DIRECTORY share/minizinc/atlantis
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/minizinc/
 )
+
 # Create a `atlantis.msc` in the build directory (for each config)
 set(MZN_LOC ${CMAKE_SOURCE_DIR}/share/minizinc/atlantis)
+
 if(CMAKE_CONFIGURATION_TYPES)
   foreach(CNF IN LISTS CMAKE_CONFIGURATION_TYPES)
     set(EXEC_LOC ${CMAKE_BINARY_DIR}/${CNF}/${PROJECT_EXEC})
@@ -82,6 +87,7 @@ else()
   set(EXEC_LOC ${CMAKE_BINARY_DIR}/${PROJECT_EXEC})
   configure_file(share/minizinc/solvers/atlantis.msc.in atlantis.msc)
 endif()
+
 # Create a `atlantis.msc` that is added to --target install
 set(MZN_LOC ../atlantis)
 file(RELATIVE_PATH EXEC_LOC ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATAROOTDIR}/minizinc/solvers ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_EXEC})
@@ -92,7 +98,6 @@ install(
 )
 unset(EXEC_LOC)
 unset(MZN_LOC)
-
 
 option(FMT_INSTALL "Enable install for fmt project" ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)

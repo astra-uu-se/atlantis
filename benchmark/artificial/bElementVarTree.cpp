@@ -120,7 +120,7 @@ class ElementVarTree : public ::benchmark::Fixture {
 
 void ElementVarTree::probe(::benchmark::State& st, size_t numMoves) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       solver->beginMove();
       solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
@@ -140,7 +140,7 @@ void ElementVarTree::probe(::benchmark::State& st, size_t numMoves) {
 
 void ElementVarTree::commit(::benchmark::State& st, size_t numMoves) {
   size_t commits = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       solver->beginMove();
       solver->setValue(indexDecisionVars.at(indexDecisionVarIndexDist(gen)),

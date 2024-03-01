@@ -97,7 +97,7 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(::benchmark::State& st) {
   std::iota(indices.begin(), indices.end(), 0);
   const size_t lastIndex = marks.size() - 1;
 
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i <= lastIndex; ++i) {
       assert(i <= lastIndex);
 

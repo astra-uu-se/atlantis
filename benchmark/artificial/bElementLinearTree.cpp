@@ -132,7 +132,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
 BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_non_index_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     // Perform move
     solver->beginMove();
     solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
@@ -152,7 +152,7 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_non_index_var)
 BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
 (::benchmark::State& st) {
   size_t probes = 0;
-  for (const auto& _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     solver->beginMove();
     solver->setValue(elementIndexVar, elementVarValueDist(gen));
     solver->endMove();
