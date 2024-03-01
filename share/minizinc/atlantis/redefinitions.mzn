@@ -1,69 +1,12 @@
-%%%%%%%%%%%%%%%%%%%
-% Set constraints %
-%%%%%%%%%%%%%%%%%%%
-predicate array_set_element(var int: b, array [int] of set of int: as, var set of int: c)
-    = abort("Set variables are unsupported");
-
-predicate array_var_set_element(var int: b, array [int] of var set of int: as, var set of int: c)
-    = abort("Set variables are unsupported");
-
-predicate set_card(var set of int: S, var int: x)
-    = abort("Set variables are unsupported");
-
-predicate set_diff(var set of int: x, var set of int: y, var set of int: r)
-    = abort("Set variables are unsupported");
-
-predicate set_eq(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_eq_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_in(var int: x, var set of int: S)
-    = abort("Set variables are unsupported");
-
-predicate set_in_reif(var int: x, var set of int: S, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_intersect(var set of int: x, var set of int: y, var set of int: r)
-    = abort("Set variables are unsupported");
-
-predicate set_le(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_le_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_lt(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_lt_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_ne(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_ne_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_subset(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_subset_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_superset(var set of int: x, var set of int: y)
-    = abort("Set variables are unsupported");
-
-predicate set_superset_reif(var set of int: x, var set of int: y, var bool: r)
-    = abort("Set variables are unsupported");
-
-predicate set_symdiff(var set of int: x, var set of int: y, var set of int: r)
-    = abort("Set variables are unsupported");
-
-predicate set_union(var set of int: x, var set of int: y, var set of int: r)
-    = abort("Set variables are unsupported");
-
+% We don't support set variables:
+include "nosets.mzn";
+% add the annotation for computed domains. The domain constraint for a variable 
+% with the computed domain annotation can be ignored (no domain violation 
+% invariant has to be added to the invariant graph):
+mzn_opt_annotate_computed_domains = true;
+% Ignore symmetry breaking constraints: 
+mzn_ignore_symmetry_breaking_constraints=true;
+%
 %%%%%%%%%%%%%%%%%%%%%
 % Float constraints %
 %%%%%%%%%%%%%%%%%%%%%
