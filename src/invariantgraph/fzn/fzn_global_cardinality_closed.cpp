@@ -10,18 +10,19 @@
 namespace atlantis::invariantgraph::fzn {
 
 static void checkInputs(const std::vector<Int>& cover,
-                        const fznparser::IntVarArray& counts) {
-  if (cover.size() != counts.size()) {
+                        const std::shared_ptr<fznparser::IntVarArray>& counts) {
+  if (cover.size() != counts->size()) {
     throw FznArgumentException(
         "fzn_global_cardinality_closed: cover and counts must have the same "
         "size");
   }
 }
 
-bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
-                                   const fznparser::IntVarArray& inputs,
-                                   std::vector<Int>&& cover,
-                                   const fznparser::IntVarArray& counts) {
+bool fzn_global_cardinality_closed(
+    FznInvariantGraph& invariantGraph,
+    const std::shared_ptr<fznparser::IntVarArray>& inputs,
+    std::vector<Int>&& cover,
+    const std::shared_ptr<fznparser::IntVarArray>& counts) {
   checkInputs(cover, counts);
 
   std::vector<VarNodeId> inputVarNodeIds =
@@ -36,11 +37,12 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
   return true;
 }
 
-bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
-                                   const fznparser::IntVarArray& inputs,
-                                   std::vector<Int>&& cover,
-                                   const fznparser::IntVarArray& counts,
-                                   const fznparser::BoolArg& reified) {
+bool fzn_global_cardinality_closed(
+    FznInvariantGraph& invariantGraph,
+    const std::shared_ptr<fznparser::IntVarArray>& inputs,
+    std::vector<Int>&& cover,
+    const std::shared_ptr<fznparser::IntVarArray>& counts,
+    const fznparser::BoolArg& reified) {
   checkInputs(cover, counts);
   if (reified.isFixed() && reified.toParameter()) {
     return fzn_global_cardinality_closed(invariantGraph, inputs,
@@ -54,14 +56,14 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
       invariantGraph.retrieveVarNodes(counts);
 
   std::vector<VarNodeId> outputVarNodeIds;
-  outputVarNodeIds.reserve(counts.size());
+  outputVarNodeIds.reserve(counts->size());
 
   std::vector<VarNodeId> violationVarNodeIds;
-  violationVarNodeIds.reserve(inputs.size() + counts.size() + 1);
+  violationVarNodeIds.reserve(inputs->size() + counts->size() + 1);
 
   for (VarNodeId countId : countVarNodeIds) {
     outputVarNodeIds.emplace_back(invariantGraph.retrieveIntVarNode(
-        SearchDomain(0, static_cast<Int>(counts.size())),
+        SearchDomain(0, static_cast<Int>(counts->size())),
         VarNode::DomainType::NONE));
 
     violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
@@ -97,22 +99,26 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false)
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, true)
-  std::vector<Int> cover =
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(1))
-          .toParVector();
+  std::vector<Int> cover = std::get<std::shared_ptr<fznparser::IntVarArray>>(
+                               constraint.arguments().at(1))
+                               ->toParVector();
   if (!isReified) {
     return fzn_global_cardinality_closed(
         invariantGraph,
-        std::get<fznparser::IntVarArray>(constraint.arguments().at(0)),
+        std::get<std::shared_ptr<fznparser::IntVarArray>>(
+            constraint.arguments().at(0)),
         std::move(cover),
-        std::get<fznparser::IntVarArray>(constraint.arguments().at(2)));
+        std::get<std::shared_ptr<fznparser::IntVarArray>>(
+            constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return fzn_global_cardinality_closed(
       invariantGraph,
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0)),
+      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+          constraint.arguments().at(0)),
       std::move(cover),
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(2)),
+      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+          constraint.arguments().at(2)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
 }
 

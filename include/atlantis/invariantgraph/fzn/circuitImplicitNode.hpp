@@ -7,7 +7,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool makeCircuitImplicitNode(FznInvariantGraph&, const fznparser::IntVarArray&);
+bool makeCircuitImplicitNode(FznInvariantGraph&,
+                             const std::shared_ptr<fznparser::IntVarArray>&);
 
 bool makeCircuitImplicitNode(FznInvariantGraph&, const fznparser::Constraint&);
 

@@ -7,9 +7,10 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool array_var_int_element(FznInvariantGraph&, const fznparser::IntArg& index,
-                           const fznparser::IntVarArray& inputs,
-                           const fznparser::IntArg& output, Int offset);
+bool array_var_int_element(
+    FznInvariantGraph&, const fznparser::IntArg& index,
+    const std::shared_ptr<fznparser::IntVarArray>& inputs,
+    const fznparser::IntArg& output, Int offset);
 
 bool array_var_int_element(FznInvariantGraph&, const fznparser::Constraint&);
 

@@ -8,7 +8,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_bool_or(FznInvariantGraph&,
-                   const fznparser::BoolVarArray& boolVarArray,
+                   const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray,
                    const fznparser::BoolArg& reified);
 
 bool array_bool_or(FznInvariantGraph&, const fznparser::Constraint&);

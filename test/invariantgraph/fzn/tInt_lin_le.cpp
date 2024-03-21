@@ -45,15 +45,16 @@ class int_lin_leTest : public FznTestBase {
 
     for (size_t i = 0; i < coeffs.size(); ++i) {
       inputIdentifiers.emplace_back("i_" + std::to_string(i));
-      _model->addVar(IntVar(varBounds[i].first, varBounds[i].second,
-                            inputIdentifiers.back()));
+      _model->addVar(std::make_shared<IntVar>(
+          varBounds[i].first, varBounds[i].second, inputIdentifiers.back()));
     }
 
-    IntVarArray coeffsArg("coeffs");
-    IntVarArray inputsArg("inputs");
+    auto coeffsArg = std::make_shared<IntVarArray>("coeffs");
+    auto inputsArg = std::make_shared<IntVarArray>("inputs");
     for (size_t i = 0; i < coeffs.size(); ++i) {
-      coeffsArg.append(coeffs[i]);
-      inputsArg.append(std::get<IntVar>(_model->var(inputIdentifiers.at(i))));
+      coeffsArg->append(coeffs[i]);
+      inputsArg->append(std::get<std::shared_ptr<IntVar>>(
+          _model->var(inputIdentifiers.at(i))));
     }
     args.emplace_back(coeffsArg);
     args.emplace_back(inputsArg);
@@ -179,12 +180,12 @@ RC_GTEST_FIXTURE_PROP(int_lin_leTest, rapidcheck, (Int bMax)) {
 
   for (size_t i = 0; i < numInputs; ++i) {
     RC_ASSERT(_model->hasVar(inputIdentifiers[i]));
-    RC_ASSERT(std::holds_alternative<fznparser::IntVar>(
+    RC_ASSERT(std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(
         _model->var(inputIdentifiers[i])));
-    const auto& var =
-        std::get<fznparser::IntVar>(_model->var(inputIdentifiers[i]));
-    RC_ASSERT(var.lowerBound() == varBounds[i].first);
-    RC_ASSERT(var.upperBound() == varBounds[i].second);
+    auto var = std::get<std::shared_ptr<fznparser::IntVar>>(
+        _model->var(inputIdentifiers[i]));
+    RC_ASSERT(var->lowerBound() == varBounds[i].first);
+    RC_ASSERT(var->upperBound() == varBounds[i].second);
   }
 
   if (sumLb > bound) {

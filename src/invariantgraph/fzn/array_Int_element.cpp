@@ -39,13 +39,14 @@ bool array_int_element(FznInvariantGraph& invariantGraph,
     offset =
         std::get<fznparser::IntArg>(constraint.arguments().at(3)).toParameter();
   } else {
-    offset = idx.isParameter() ? idx.parameter() : idx.var().lowerBound();
+    offset = idx.isParameter() ? idx.parameter() : idx.var()->lowerBound();
   }
 
   return array_int_element(
       invariantGraph, idx,
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(1))
-          .toParVector(),
+      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+          constraint.arguments().at(1))
+          ->toParVector(),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)), offset);
 }
 

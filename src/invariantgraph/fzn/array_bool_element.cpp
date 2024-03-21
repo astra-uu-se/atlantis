@@ -33,12 +33,13 @@ bool array_bool_element(FznInvariantGraph& invariantGraph,
   const Int offset =
       constraint.identifier() != "array_bool_element_offset"
           ? 1
-          : (idx.isParameter() ? idx.parameter() : idx.var().lowerBound());
+          : (idx.isParameter() ? idx.parameter() : idx.var()->lowerBound());
 
   return array_bool_element(
       invariantGraph, idx,
-      std::get<fznparser::BoolVarArray>(constraint.arguments().at(1))
-          .toParVector(),
+      std::get<std::shared_ptr<fznparser::BoolVarArray>>(
+          constraint.arguments().at(1))
+          ->toParVector(),
       std::get<fznparser::BoolArg>(constraint.arguments().at(2)), offset);
 }
 

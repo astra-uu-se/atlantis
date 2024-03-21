@@ -9,7 +9,7 @@ namespace atlantis::invariantgraph::fzn {
 
 bool array_int_minimum(FznInvariantGraph& invariantGraph,
                        const fznparser::IntArg& output,
-                       const fznparser::IntVarArray& inputs) {
+                       const std::shared_ptr<fznparser::IntVarArray>& inputs) {
   invariantGraph.addInvariantNode(std::make_unique<ArrayIntMinimumNode>(
       invariantGraph.retrieveVarNodes(inputs),
       invariantGraph.retrieveVarNode(output)));
@@ -26,7 +26,8 @@ bool array_int_minimum(FznInvariantGraph& invariantGraph,
 
   return array_int_minimum(
       invariantGraph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(1)));
+      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+          constraint.arguments().at(1)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn
