@@ -80,21 +80,39 @@ void printIntVarArray(const search::Assignment& assignment,
   std::cout << "]);\n";
 }
 
-FznBackend::FznBackend(
-    std::filesystem::path&& modelFile,
-    search::AnnealingScheduleFactory&& annealingScheduleFactory,
-    std::uint_fast32_t seed, std::optional<std::chrono::milliseconds> timeout)
-    : _modelFile(std::move(modelFile)),
-      _annealingScheduleFactory(std::move(annealingScheduleFactory)),
-      _timeout(timeout),
-      _seed(seed) {}
+void FznBackend::onSolutionDefault(
+    const invariantgraph::FznInvariantGraph& invariantGraph,
+    const search::Assignment& assignment) {
+  for (const auto& outputVar : invariantGraph.outputBoolVars()) {
+    printBoolVar(assignment, outputVar);
+  }
+  for (const auto& outputVar : invariantGraph.outputIntVars()) {
+    printIntVar(assignment, outputVar);
+  }
+  for (const auto& outputVarArray : invariantGraph.outputBoolVarArrays()) {
+    printBoolVarArray(assignment, outputVarArray);
+  }
+  for (const auto& outputVarArray : invariantGraph.outputIntVarArrays()) {
+    printIntVarArray(assignment, outputVarArray);
+  }
 
-FznBackend::FznBackend(
-    std::filesystem::path&& modelFile,
-    search::AnnealingScheduleFactory&& annealingScheduleFactory,
-    std::chrono::milliseconds timeout)
-    : FznBackend(std::move(modelFile), std::move(annealingScheduleFactory),
-                 std::time(nullptr), timeout) {}
+  std::cout << "----------\n";
+}
+
+void FznBackend::onFinishDefault(bool hadSol) {
+  if (!hadSol) {
+    std::cout << "=====UNKNOWN=====\n";
+  }
+}
+
+FznBackend::FznBackend(logging::Logger& logger,
+                       std::filesystem::path&& modelFile)
+    : FznBackend(logger.timed<fznparser::Model>("parsing FlatZinc", [&] {
+        auto m = fznparser::parseFznFile(modelFile);
+        logger.debug("Found {:d} variables", m.vars().size());
+        logger.debug("Found {:d} constraints", m.constraints().size());
+        return m;
+      })) {}
 
 static propagation::ObjectiveDirection getObjectiveDirection(
     fznparser::ProblemType problemType) {
@@ -110,18 +128,11 @@ static propagation::ObjectiveDirection getObjectiveDirection(
 }
 
 search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
-  auto model = logger.timed<fznparser::Model>("parsing FlatZinc", [&] {
-    auto m = fznparser::parseFznFile(_modelFile);
-    logger.debug("Found {:d} variables", m.vars().size());
-    logger.debug("Found {:d} constraints", m.constraints().size());
-    return m;
-  });
-
-  fznparser::ProblemType problemType = model.solveType().problemType();
+  fznparser::ProblemType problemType = _model.solveType().problemType();
 
   invariantgraph::FznInvariantGraph invariantGraph;
   logger.timed<void>("building invariant graph",
-                     [&] { return invariantGraph.build(model); });
+                     [&] { return invariantGraph.build(_model); });
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
@@ -146,32 +157,13 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
 
   std::function<void(const search::Assignment&)> onSolution =
       [&](const search::Assignment& assignment) {
-        for (const auto& outputVar : invariantGraph.outputBoolVars()) {
-          printBoolVar(assignment, outputVar);
-        }
-        for (const auto& outputVar : invariantGraph.outputIntVars()) {
-          printIntVar(assignment, outputVar);
-        }
-        for (const auto& outputVarArray :
-             invariantGraph.outputBoolVarArrays()) {
-          printBoolVarArray(assignment, outputVarArray);
-        }
-        for (const auto& outputVarArray : invariantGraph.outputIntVarArrays()) {
-          printIntVarArray(assignment, outputVarArray);
-        }
-
-        std::cout << "----------\n";
+        _onSolution(invariantGraph, assignment);
       };
+  std::function<void(bool)> onFinish = [&](bool hadSol) { _onFinish(hadSol); };
 
-  std::function<void(bool)> onFinish = [&](bool foundSolution) {
-    if (!foundSolution) {
-      std::cout << "=====UNKNOWN=====\n";
-    }
-  };
-
-  search::SearchController searchController(model.isSatisfactionProblem(),
+  search::SearchController searchController(_model.isSatisfactionProblem(),
                                             std::move(onSolution),
-                                            std::move(onFinish), _timeout);
+                                            std::move(onFinish), _timelimit);
 
   auto schedule = _annealingScheduleFactory.create();
   search::Annealer annealer(assignment, random, *schedule);
