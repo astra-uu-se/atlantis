@@ -9,6 +9,13 @@ The project is built using cmake, but a `Makefile` is used to simplify the execu
 - `make` to build
 - `make run` to see if things are working.
 
+
+### Building Queens
+
+```sh
+cmake --build build --config Release --target queens
+```
+
 ### Setup dev environment
 The project should now be importable as a cmake project.
 
