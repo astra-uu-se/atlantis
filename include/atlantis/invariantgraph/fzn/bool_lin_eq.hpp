@@ -15,7 +15,7 @@ bool bool_lin_eq(FznInvariantGraph&, std::vector<Int>&& coeffs,
                  VarNodeId outputVarNodeId);
 
 bool bool_lin_eq(FznInvariantGraph&, std::vector<Int>&& coeffs,
-                 const fznparser::BoolVarArray& inputs,
+                 const std::shared_ptr<fznparser::BoolVarArray>& inputs,
                  const fznparser::IntArg& outputVar);
 
 bool bool_lin_eq(FznInvariantGraph&, const fznparser::Constraint&);

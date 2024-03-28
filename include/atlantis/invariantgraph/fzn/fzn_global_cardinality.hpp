@@ -7,16 +7,16 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool fzn_global_cardinality(FznInvariantGraph&,
-                            const fznparser::IntVarArray& inputs,
-                            std::vector<Int>&& cover,
-                            const fznparser::IntVarArray& counts);
+bool fzn_global_cardinality(
+    FznInvariantGraph&, const std::shared_ptr<fznparser::IntVarArray>& inputs,
+    std::vector<Int>&& cover,
+    const std::shared_ptr<fznparser::IntVarArray>& counts);
 
-bool fzn_global_cardinality(FznInvariantGraph&,
-                            const fznparser::IntVarArray& inputs,
-                            std::vector<Int>&& cover,
-                            const fznparser::IntVarArray& counts,
-                            const fznparser::BoolArg& reified);
+bool fzn_global_cardinality(
+    FznInvariantGraph&, const std::shared_ptr<fznparser::IntVarArray>& inputs,
+    std::vector<Int>&& cover,
+    const std::shared_ptr<fznparser::IntVarArray>& counts,
+    const fznparser::BoolArg& reified);
 
 bool fzn_global_cardinality(FznInvariantGraph&, const fznparser::Constraint&);
 

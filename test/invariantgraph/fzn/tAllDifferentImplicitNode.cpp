@@ -30,14 +30,15 @@ class FznAllDifferentImplicitNodeTest : public FznTestBase {
     args.reserve(1);
 
     inputIdentifiers.reserve(numInputs);
-    IntVarArray inputsArg("inputs");
+    auto inputsArg = std::make_shared<IntVarArray>("inputs");
     EXPECT_TRUE(numInputs % 2 == 0);
     const Int ub = numInputs / 2;
     const Int lb = -ub;
     for (Int i = 0; i < numInputs; ++i) {
       inputIdentifiers.emplace_back("input" + std::to_string(i));
-      _model->addVar(IntVar(lb, ub, inputIdentifiers.back()));
-      inputsArg.append(std::get<IntVar>(_model->var(inputIdentifiers.back())));
+      _model->addVar(std::make_shared<IntVar>(lb, ub, inputIdentifiers.back()));
+      inputsArg->append(std::get<std::shared_ptr<IntVar>>(
+          _model->var(inputIdentifiers.back())));
     }
     args.emplace_back(inputsArg);
 

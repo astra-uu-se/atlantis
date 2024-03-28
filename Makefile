@@ -64,12 +64,14 @@ run-benchmarks: build-benchmarks
 
 .PHONY: benchmark
 benchmark: build-benchmarks
+	mkdir -p ${BENCHMARK_JSON_DIR}
+	mkdir -p ${BENCHMARK_PLOT_DIR}
 	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))
 	$(eval $@_JSON_FILE := ${BENCHMARK_JSON_DIR}/${$@_TIMESTAMP}.json)
 	exec ${BUILD_DIR}/runBenchmarks --benchmark_format=json \
 	                                --benchmark_out=${$@_JSON_FILE} \
-																	--benchmark_repetitions=${NUM_BENCHMARK_REPETITIONS} \
-																	--benchmark_filter=${BENCHMARK_FILTER}
+									--benchmark_repetitions=${NUM_BENCHMARK_REPETITIONS} \
+									--benchmark_filter=${BENCHMARK_FILTER}
 	python3 ${MKFILE_PATH}plot-formatter.py -v --input=${$@_JSON_FILE} --file-suffix=${$@_TIMESTAMP} --output-dir=${BENCHMARK_PLOT_DIR}
 
 .PHONY: all

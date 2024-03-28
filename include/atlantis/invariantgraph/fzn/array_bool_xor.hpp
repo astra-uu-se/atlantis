@@ -7,9 +7,10 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool array_bool_xor(FznInvariantGraph&,
-                    const fznparser::BoolVarArray& boolVarArray,
-                    const fznparser::BoolArg& reified);
+bool array_bool_xor(
+    FznInvariantGraph&,
+    const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray,
+    const fznparser::BoolArg& reified);
 
 bool array_bool_xor(FznInvariantGraph&, const fznparser::Constraint&);
 

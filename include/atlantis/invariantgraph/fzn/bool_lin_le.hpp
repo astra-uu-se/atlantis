@@ -8,7 +8,8 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_lin_le(FznInvariantGraph&, std::vector<Int>&& coeffs,
-                 const fznparser::BoolVarArray& inputs, Int bound);
+                 const std::shared_ptr<fznparser::BoolVarArray>& inputs,
+                 Int bound);
 
 bool bool_lin_le(FznInvariantGraph&, const fznparser::Constraint&);
 

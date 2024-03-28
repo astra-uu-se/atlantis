@@ -8,7 +8,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool fzn_count_gt(FznInvariantGraph& invariantGraph,
-                  const fznparser::IntVarArray& inputs,
+                  const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count) {
   const VarNodeId output = createCountNode(invariantGraph, inputs, needle);
@@ -16,7 +16,7 @@ bool fzn_count_gt(FznInvariantGraph& invariantGraph,
 }
 
 bool fzn_count_gt(FznInvariantGraph& invariantGraph,
-                  const fznparser::IntVarArray& inputs,
+                  const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count,
                   const fznparser::BoolArg& reified) {
@@ -47,14 +47,16 @@ bool fzn_count_gt(FznInvariantGraph& invariantGraph,
   if (!isReified) {
     return fzn_count_gt(
         invariantGraph,
-        std::get<fznparser::IntVarArray>(constraint.arguments().at(0)),
+        std::get<std::shared_ptr<fznparser::IntVarArray>>(
+            constraint.arguments().at(0)),
         std::get<fznparser::IntArg>(constraint.arguments().at(1)),
         std::get<fznparser::IntArg>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return fzn_count_gt(
       invariantGraph,
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0)),
+      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+          constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)));
 }

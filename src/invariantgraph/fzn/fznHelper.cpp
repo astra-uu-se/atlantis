@@ -43,20 +43,20 @@ void verifyNumArguments(const fznparser::Constraint& constraint, size_t size) {
   }
 }
 
-std::vector<Int> getFixedValues(const fznparser::IntVarArray& intVarArray) {
+std::vector<Int> getFixedValues(
+    const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
   std::vector<Int> values;
-  values.reserve(intVarArray.size());
-  for (size_t i = 0; i < intVarArray.size(); ++i) {
-    if (std::holds_alternative<Int>(intVarArray.at(i))) {
-      values.emplace_back(std::get<Int>(intVarArray.at(i)));
+  values.reserve(intVarArray->size());
+  for (size_t i = 0; i < intVarArray->size(); ++i) {
+    if (std::holds_alternative<Int>(intVarArray->at(i))) {
+      values.emplace_back(std::get<Int>(intVarArray->at(i)));
       continue;
     }
-    const auto& var = std::get<std::reference_wrapper<const fznparser::IntVar>>(
-                          intVarArray.at(i))
-                          .get();
+    const auto& var =
+        std::get<std::shared_ptr<const fznparser::IntVar>>(intVarArray->at(i));
 
-    if (var.isFixed()) {
-      values.emplace_back(var.lowerBound());
+    if (var->isFixed()) {
+      values.emplace_back(var->lowerBound());
     }
   }
   return values;
@@ -75,27 +75,27 @@ std::vector<bool> getFixedBoolValues(const InvariantGraph& invariantGraph,
   return values;
 }
 
-std::vector<bool> getFixedValues(const fznparser::BoolVarArray& boolVarArray) {
+std::vector<bool> getFixedValues(
+    const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray) {
   std::vector<bool> values;
-  values.reserve(boolVarArray.size());
-  for (size_t i = 0; i < boolVarArray.size(); ++i) {
-    if (std::holds_alternative<bool>(boolVarArray.at(i))) {
-      values.emplace_back(std::get<bool>(boolVarArray.at(i)));
+  values.reserve(boolVarArray->size());
+  for (size_t i = 0; i < boolVarArray->size(); ++i) {
+    if (std::holds_alternative<bool>(boolVarArray->at(i))) {
+      values.emplace_back(std::get<bool>(boolVarArray->at(i)));
       continue;
     }
-    const auto& var =
-        std::get<std::reference_wrapper<const fznparser::BoolVar>>(
-            boolVarArray.at(i))
-            .get();
+    const auto& var = std::get<std::shared_ptr<const fznparser::BoolVar>>(
+        boolVarArray->at(i));
 
-    if (var.isFixed()) {
-      values.emplace_back(var.lowerBound());
+    if (var->isFixed()) {
+      values.emplace_back(var->lowerBound());
     }
   }
   return values;
 }
 
-void verifyAllDifferent(const fznparser::IntVarArray& intVarArray) {
+void verifyAllDifferent(
+    const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
   std::vector<Int> values = getFixedValues(intVarArray);
   std::unordered_set<Int> seenValues;
   seenValues.reserve(values.size());
@@ -109,7 +109,8 @@ void verifyAllDifferent(const fznparser::IntVarArray& intVarArray) {
   }
 }
 
-[[nodiscard]] bool violatesAllEqual(const fznparser::IntVarArray& intVarArray) {
+[[nodiscard]] bool violatesAllEqual(
+    const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
   std::vector<Int> values = getFixedValues(intVarArray);
   for (size_t i = 1; i < values.size(); ++i) {
     if (values[i] != values[0]) {
@@ -120,10 +121,10 @@ void verifyAllDifferent(const fznparser::IntVarArray& intVarArray) {
 }
 
 VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
-                          const fznparser::IntVarArray& inputs,
+                          const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle) {
   VarNodeId countVarNodeId = invariantGraph.retrieveIntVarNode(
-      SearchDomain(0, static_cast<Int>(inputs.size())));
+      SearchDomain(0, static_cast<Int>(inputs->size())));
 
   if (needle.isFixed()) {
     invariantGraph.addInvariantNode(
@@ -138,7 +139,7 @@ VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
 }
 
 VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
-                          const fznparser::IntVarArray& inputs,
+                          const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle,
                           const fznparser::IntArg& count) {
   VarNodeId countVarNodeId = invariantGraph.retrieveVarNode(count);
@@ -161,22 +162,23 @@ void invertCoeffs(std::vector<Int>& coeffs) {
   }
 }
 
-std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
-                              const fznparser::BoolVarArray& vars) {
+std::pair<Int, Int> linBounds(
+    const std::vector<Int>& coeffs,
+    const std::shared_ptr<fznparser::BoolVarArray>& vars) {
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < coeffs.size(); ++i) {
-    const auto& var = vars.at(i);
+    const auto& var = vars->at(i);
     Int v1, v2;
     if (std::holds_alternative<bool>(var)) {
       const Int val = std::get<bool>(var) ? 1 : 0;
       v1 = val * coeffs[i];
       v2 = val * coeffs[i];
     } else {
-      const auto& varRef =
-          std::get<std::reference_wrapper<const fznparser::BoolVar>>(var).get();
-      v1 = (varRef.lowerBound() ? 1 : 0) * coeffs[i];
-      v2 = (varRef.upperBound() ? 1 : 0) * coeffs[i];
+      const auto& varPtr =
+          std::get<std::shared_ptr<const fznparser::BoolVar>>(var);
+      v1 = (varPtr->lowerBound() ? 1 : 0) * coeffs[i];
+      v2 = (varPtr->upperBound() ? 1 : 0) * coeffs[i];
     }
     lb += std::min(v1, v2);
     ub += std::max(v1, v2);
@@ -184,22 +186,23 @@ std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
   return {lb, ub};
 }
 
-std::pair<Int, Int> linBounds(const std::vector<Int>& coeffs,
-                              const fznparser::IntVarArray& vars) {
+std::pair<Int, Int> linBounds(
+    const std::vector<Int>& coeffs,
+    const std::shared_ptr<fznparser::IntVarArray>& vars) {
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < coeffs.size(); ++i) {
-    const auto& var = vars.at(i);
+    const auto& var = vars->at(i);
     Int v1, v2;
     if (std::holds_alternative<Int>(var)) {
       const Int val = std::get<Int>(var);
       v1 = val * coeffs[i];
       v2 = val * coeffs[i];
     } else {
-      const auto& varRef =
-          std::get<std::reference_wrapper<const fznparser::IntVar>>(var).get();
-      v1 = varRef.lowerBound() * coeffs[i];
-      v2 = varRef.upperBound() * coeffs[i];
+      const auto& varPtr =
+          std::get<std::shared_ptr<const fznparser::IntVar>>(var);
+      v1 = varPtr->lowerBound() * coeffs[i];
+      v2 = varPtr->upperBound() * coeffs[i];
     }
     lb += std::min(v1, v2);
     ub += std::max(v1, v2);

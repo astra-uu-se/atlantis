@@ -32,25 +32,28 @@ class array_int_elementTest : public FznTestBase {
     constraintIdentifier = "array_int_element_offset";
 
     idxIdentifier = "idx";
-    _model->addVar(IntVar(offsetIdx, numInputs + offsetIdx, idxIdentifier));
+    _model->addVar(std::make_shared<IntVar>(offsetIdx, numInputs + offsetIdx,
+                                            idxIdentifier));
     outputIdentifier = "output";
-    _model->addVar(
-        IntVar(-2, 2, outputIdentifier,
-               std::vector<Annotation>{Annotation("is_defined_var")}));
+    _model->addVar(std::make_shared<IntVar>(
+        -2, 2, outputIdentifier,
+        std::vector<Annotation>{Annotation("is_defined_var")}));
 
     std::vector<Arg> args;
     args.reserve(3);
-    args.emplace_back(std::get<IntVar>(_model->var(idxIdentifier)));
+    args.emplace_back(
+        std::get<std::shared_ptr<IntVar>>(_model->var(idxIdentifier)));
 
     inputVals.reserve(numInputs);
-    IntVarArray inputsArg("inputs");
+    auto inputsArg = std::make_shared<IntVarArray>("inputs");
     for (Int i = 0; i < numInputs; ++i) {
       inputVals.emplace_back(i - 2);
-      inputsArg.append(inputVals.back());
+      inputsArg->append(inputVals.back());
     }
     args.emplace_back(inputsArg);
 
-    args.emplace_back(std::get<IntVar>(_model->var(outputIdentifier)));
+    args.emplace_back(
+        std::get<std::shared_ptr<IntVar>>(_model->var(outputIdentifier)));
     args.emplace_back(IntArg(offsetIdx));
 
     _model->addConstraint(Constraint(constraintIdentifier, std::move(args)));

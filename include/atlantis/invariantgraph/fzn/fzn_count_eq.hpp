@@ -7,11 +7,13 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool fzn_count_eq(FznInvariantGraph&, const fznparser::IntVarArray& inputs,
+bool fzn_count_eq(FznInvariantGraph&,
+                  const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count);
 
-bool fzn_count_eq(FznInvariantGraph&, const fznparser::IntVarArray& inputs,
+bool fzn_count_eq(FznInvariantGraph&,
+                  const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count,
                   const fznparser::BoolArg& reified);

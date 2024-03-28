@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fznparser/solveType.hpp>
+#include <limits>
 
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solver.hpp"
