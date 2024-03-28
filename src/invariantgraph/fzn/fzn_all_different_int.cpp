@@ -6,15 +6,16 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
-                           const fznparser::IntVarArray& inputs) {
-  if (inputs.size() <= 1) {
+bool fzn_all_different_int(
+    FznInvariantGraph& invariantGraph,
+    const std::shared_ptr<fznparser::IntVarArray>& inputs) {
+  if (inputs->size() <= 1) {
     return true;
   }
 
   verifyAllDifferent(inputs);
 
-  if (inputs.isParArray()) {
+  if (inputs->isParArray()) {
     return true;
   }
 
@@ -26,9 +27,10 @@ bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
   return true;
 }
 
-bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
-                           const fznparser::IntVarArray& inputs,
-                           const fznparser::BoolArg& reified) {
+bool fzn_all_different_int(
+    FznInvariantGraph& invariantGraph,
+    const std::shared_ptr<fznparser::IntVarArray>& inputs,
+    const fznparser::BoolArg& reified) {
   if (reified.isFixed()) {
     if (reified.toParameter()) {
       return fzn_all_different_int(invariantGraph, inputs);
@@ -56,13 +58,14 @@ bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
 
   if (!isReified) {
     return fzn_all_different_int(
-        invariantGraph,
-        std::get<fznparser::IntVarArray>(constraint.arguments().at(0)));
+        invariantGraph, std::get<std::shared_ptr<fznparser::IntVarArray>>(
+                            constraint.arguments().at(0)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   return fzn_all_different_int(
       invariantGraph,
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0)),
+      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+          constraint.arguments().at(0)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
 }
 

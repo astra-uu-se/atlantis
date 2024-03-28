@@ -13,8 +13,9 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
-                 const fznparser::BoolVarArray& inputs, Int bound) {
-  if (coeffs.size() != inputs.size()) {
+                 const std::shared_ptr<fznparser::BoolVarArray>& inputs,
+                 Int bound) {
+  if (coeffs.size() != inputs->size()) {
     throw FznArgumentException(
         "bool_lin_le constraint first and second array arguments must have the "
         "same length");
@@ -55,13 +56,14 @@ bool bool_lin_le(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false)
 
-  std::vector<Int> coeffs =
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0))
-          .toParVector();
+  std::vector<Int> coeffs = std::get<std::shared_ptr<fznparser::IntVarArray>>(
+                                constraint.arguments().at(0))
+                                ->toParVector();
 
   return bool_lin_le(
       invariantGraph, std::move(coeffs),
-      std::get<fznparser::BoolVarArray>(constraint.arguments().at(1)),
+      std::get<std::shared_ptr<fznparser::BoolVarArray>>(
+          constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter());
 }
 

@@ -7,10 +7,10 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool array_var_int_element(FznInvariantGraph& invariantGraph,
-                           const fznparser::IntArg& index,
-                           const fznparser::IntVarArray& inputs,
-                           const fznparser::IntArg& output, Int offset) {
+bool array_var_int_element(
+    FznInvariantGraph& invariantGraph, const fznparser::IntArg& index,
+    const std::shared_ptr<fznparser::IntVarArray>& inputs,
+    const fznparser::IntArg& output, Int offset) {
   invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
       invariantGraph.retrieveVarNode(index),
       invariantGraph.retrieveVarNodes(inputs),
@@ -35,11 +35,12 @@ bool array_var_int_element(FznInvariantGraph& invariantGraph,
   Int offset = constraint.identifier() != "array_var_bool_element_nonshifted"
                    ? 1
                    : (index.isParameter() ? index.parameter()
-                                          : index.var().lowerBound());
+                                          : index.var()->lowerBound());
 
   return array_var_int_element(
       invariantGraph, index,
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(1)),
+      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+          constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)), offset);
 }
 

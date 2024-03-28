@@ -7,8 +7,9 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool_clause(FznInvariantGraph&, const fznparser::BoolVarArray& as,
-                 const fznparser::BoolVarArray& bs);
+bool bool_clause(FznInvariantGraph&,
+                 const std::shared_ptr<fznparser::BoolVarArray>& as,
+                 const std::shared_ptr<fznparser::BoolVarArray>& bs);
 
 bool bool_clause(FznInvariantGraph&, const fznparser::Constraint&);
 

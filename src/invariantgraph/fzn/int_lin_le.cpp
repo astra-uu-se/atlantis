@@ -7,9 +7,10 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-static void verifyInputs(const std::vector<Int>& coeffs,
-                         const fznparser::IntVarArray& inputs) {
-  if (coeffs.size() != inputs.size()) {
+static void verifyInputs(
+    const std::vector<Int>& coeffs,
+    const std::shared_ptr<fznparser::IntVarArray>& inputs) {
+  if (coeffs.size() != inputs->size()) {
     throw FznArgumentException(
         "int_lin_le constraint first and second array arguments must have the "
         "same length");
@@ -17,7 +18,8 @@ static void verifyInputs(const std::vector<Int>& coeffs,
 }
 
 bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
-                const fznparser::IntVarArray& inputs, Int bound) {
+                const std::shared_ptr<fznparser::IntVarArray>& inputs,
+                Int bound) {
   verifyInputs(coeffs, inputs);
   if (coeffs.empty()) {
     if (bound >= 0) {
@@ -52,8 +54,8 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 }
 
 bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
-                const fznparser::IntVarArray& inputs, Int bound,
-                const fznparser::BoolArg& reified) {
+                const std::shared_ptr<fznparser::IntVarArray>& inputs,
+                Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
   if (reified.isFixed()) {
     if (reified.toParameter()) {
@@ -107,21 +109,22 @@ bool int_lin_le(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false)
 
-  std::vector<Int> coeffs =
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0))
-          .toParVector();
+  std::vector<Int> coeffs = std::get<std::shared_ptr<fznparser::IntVarArray>>(
+                                constraint.arguments().at(0))
+                                ->toParVector();
 
   if (!isReified) {
-    return int_lin_le(
-        invariantGraph, std::move(coeffs),
-        std::get<fznparser::IntVarArray>(constraint.arguments().at(1)),
-        std::get<fznparser::IntArg>(constraint.arguments().at(2))
-            .toParameter());
+    return int_lin_le(invariantGraph, std::move(coeffs),
+                      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+                          constraint.arguments().at(1)),
+                      std::get<fznparser::IntArg>(constraint.arguments().at(2))
+                          .toParameter());
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return int_lin_le(
       invariantGraph, std::move(coeffs),
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(1)),
+      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+          constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter(),
       std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
 }

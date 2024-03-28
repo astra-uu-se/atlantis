@@ -9,15 +9,16 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool makeAllDifferentImplicitNode(FznInvariantGraph& invariantGraph,
-                                  const fznparser::IntVarArray& intVarArray) {
-  if (intVarArray.size() <= 1) {
+bool makeAllDifferentImplicitNode(
+    FznInvariantGraph& invariantGraph,
+    const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
+  if (intVarArray->size() <= 1) {
     return true;
   }
 
   verifyAllDifferent(intVarArray);
 
-  if (intVarArray.isParArray()) {
+  if (intVarArray->isParArray()) {
     return true;
   }
 
@@ -38,8 +39,8 @@ bool makeAllDifferentImplicitNode(FznInvariantGraph& invariantGraph,
   verifyNumArguments(constraint, 1);
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
   return makeAllDifferentImplicitNode(
-      invariantGraph,
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(0)));
+      invariantGraph, std::get<std::shared_ptr<fznparser::IntVarArray>>(
+                          constraint.arguments().at(0)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

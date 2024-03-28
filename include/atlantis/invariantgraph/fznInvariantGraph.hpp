@@ -19,16 +19,18 @@ class FznInvariantGraph : public InvariantGraph {
 
  public:
   VarNodeId retrieveVarNode(const fznparser::BoolVar&);
-  VarNodeId retrieveVarNode(std::reference_wrapper<const fznparser::BoolVar>);
+  VarNodeId retrieveVarNode(const std::shared_ptr<const fznparser::BoolVar>&);
   VarNodeId retrieveVarNode(const fznparser::BoolArg&);
 
-  std::vector<VarNodeId> retrieveVarNodes(const fznparser::BoolVarArray&);
+  std::vector<VarNodeId> retrieveVarNodes(
+      const std::shared_ptr<fznparser::BoolVarArray>&);
 
   VarNodeId retrieveVarNode(const fznparser::IntVar&);
   VarNodeId retrieveVarNode(const fznparser::IntArg&);
-  VarNodeId retrieveVarNode(std::reference_wrapper<const fznparser::IntVar>);
+  VarNodeId retrieveVarNode(const std::shared_ptr<const fznparser::IntVar>&);
 
-  std::vector<VarNodeId> retrieveVarNodes(const fznparser::IntVarArray&);
+  std::vector<VarNodeId> retrieveVarNodes(
+      const std::shared_ptr<fznparser::IntVarArray>&);
 
   [[nodiscard]] std::vector<FznOutputVar> outputBoolVars() const noexcept;
   [[nodiscard]] std::vector<FznOutputVar> outputIntVars() const noexcept;

@@ -8,7 +8,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_int_minimum(FznInvariantGraph&, const fznparser::IntArg& output,
-                       const fznparser::IntVarArray& inputs);
+                       const std::shared_ptr<fznparser::IntVarArray>& inputs);
 
 bool array_int_minimum(FznInvariantGraph&, const fznparser::Constraint&);
 

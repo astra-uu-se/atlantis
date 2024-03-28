@@ -97,12 +97,14 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
     const fznparser::Var& modelObjective = model.objective();
     _objectiveVarNodeId = varNodeId(modelObjective.identifier());
     if (_objectiveVarNodeId == NULL_NODE_ID) {
-      if (std::holds_alternative<fznparser::BoolVar>(modelObjective)) {
-        _objectiveVarNodeId =
-            retrieveVarNode(std::get<fznparser::BoolVar>(modelObjective));
-      } else if (std::holds_alternative<fznparser::IntVar>(modelObjective)) {
-        _objectiveVarNodeId =
-            retrieveVarNode(std::get<fznparser::IntVar>(modelObjective));
+      if (std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(
+              modelObjective)) {
+        _objectiveVarNodeId = retrieveVarNode(
+            *std::get<std::shared_ptr<fznparser::BoolVar>>(modelObjective));
+      } else if (std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(
+                     modelObjective)) {
+        _objectiveVarNodeId = retrieveVarNode(
+            *std::get<std::shared_ptr<fznparser::IntVar>>(modelObjective));
       } else {
         throw FznException("Objective variable is not a BoolVar or IntVar");
       }
@@ -133,8 +135,8 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolVar& var) {
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(
-    std::reference_wrapper<const fznparser::BoolVar> ref) {
-  return retrieveVarNode(ref.get());
+    const std::shared_ptr<const fznparser::BoolVar>& ptr) {
+  return retrieveVarNode(*ptr);
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolArg& arg) {
@@ -169,8 +171,8 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(
-    std::reference_wrapper<const fznparser::IntVar> ref) {
-  return retrieveVarNode(ref.get());
+    const std::shared_ptr<const fznparser::IntVar>& ptr) {
+  return retrieveVarNode(*ptr);
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntArg& arg) {
@@ -180,50 +182,48 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntArg& arg) {
 }
 
 std::vector<VarNodeId> FznInvariantGraph::retrieveVarNodes(
-    const fznparser::BoolVarArray& array) {
+    const std::shared_ptr<fznparser::BoolVarArray>& array) {
   std::vector<VarNodeId> varNodeIds;
-  varNodeIds.reserve(array.size());
+  varNodeIds.reserve(array->size());
 
-  for (size_t i = 0; i < array.size(); ++i) {
+  for (size_t i = 0; i < array->size(); ++i) {
     varNodeIds.emplace_back(
-        std::holds_alternative<bool>(array.at(i))
-            ? retrieveBoolVarNode(std::get<bool>(array.at(i)))
+        std::holds_alternative<bool>(array->at(i))
+            ? retrieveBoolVarNode(std::get<bool>(array->at(i)))
             : retrieveVarNode(
-                  std::get<std::reference_wrapper<const fznparser::BoolVar>>(
-                      array.at(i))
-                      .get()));
+                  std::get<std::shared_ptr<const fznparser::BoolVar>>(
+                      array->at(i))));
   }
 
-  if (array.isOutput() && !array.identifier().empty() &&
-      !_outputIdentifiers.contains(array.identifier())) {
-    _outputIdentifiers.emplace(array.identifier());
-    _outputBoolVarArrays.emplace_back(array.identifier(),
-                                      array.outputIndexSetSizes(), varNodeIds);
+  if (array->isOutput() && !array->identifier().empty() &&
+      !_outputIdentifiers.contains(array->identifier())) {
+    _outputIdentifiers.emplace(array->identifier());
+    _outputBoolVarArrays.emplace_back(array->identifier(),
+                                      array->outputIndexSetSizes(), varNodeIds);
   }
 
   return varNodeIds;
 }
 
 std::vector<VarNodeId> FznInvariantGraph::retrieveVarNodes(
-    const fznparser::IntVarArray& array) {
+    const std::shared_ptr<fznparser::IntVarArray>& array) {
   std::vector<VarNodeId> varNodeIds;
-  varNodeIds.reserve(array.size());
+  varNodeIds.reserve(array->size());
 
-  for (size_t i = 0; i < array.size(); ++i) {
+  for (size_t i = 0; i < array->size(); ++i) {
     varNodeIds.emplace_back(
-        std::holds_alternative<Int>(array.at(i))
-            ? retrieveIntVarNode(std::get<Int>(array.at(i)))
+        std::holds_alternative<Int>(array->at(i))
+            ? retrieveIntVarNode(std::get<Int>(array->at(i)))
             : retrieveVarNode(
-                  std::get<std::reference_wrapper<const fznparser::IntVar>>(
-                      array.at(i))
-                      .get()));
+                  std::get<std::shared_ptr<const fznparser::IntVar>>(
+                      array->at(i))));
   }
 
-  if (array.isOutput() && !array.identifier().empty() &&
-      !_outputIdentifiers.contains(array.identifier())) {
-    _outputIdentifiers.emplace(array.identifier());
-    _outputIntVarArrays.emplace_back(array.identifier(),
-                                     array.outputIndexSetSizes(), varNodeIds);
+  if (array->isOutput() && !array->identifier().empty() &&
+      !_outputIdentifiers.contains(array->identifier())) {
+    _outputIdentifiers.emplace(array->identifier());
+    _outputIntVarArrays.emplace_back(array->identifier(),
+                                     array->outputIndexSetSizes(), varNodeIds);
   }
 
   return varNodeIds;
@@ -337,16 +337,17 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
 
   for (const auto& [identifier, var] : model.vars()) {
     assert(!identifier.empty());
-    if (std::holds_alternative<fznparser::IntVar>(var)) {
-      const auto& intVar = std::get<fznparser::IntVar>(var);
-      if (intVar.isFixed()) {
+    if (std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(var)) {
+      const auto& intVar = std::get<std::shared_ptr<fznparser::IntVar>>(var);
+      if (intVar->isFixed()) {
         continue;
       }
       assert(varNode(identifier).varNodeId() != NULL_NODE_ID);
       assert(varNode(identifier).isIntVar());
-    } else if (std::holds_alternative<fznparser::BoolVar>(var)) {
-      const auto& boolVar = std::get<fznparser::BoolVar>(var);
-      if (boolVar.isFixed()) {
+    } else if (std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(
+                   var)) {
+      const auto& boolVar = std::get<std::shared_ptr<fznparser::BoolVar>>(var);
+      if (boolVar->isFixed()) {
         continue;
       }
       assert(varNode(identifier).varNodeId() != NULL_NODE_ID);

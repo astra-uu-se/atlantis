@@ -10,13 +10,13 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_bool_or(FznInvariantGraph& invariantGraph,
-                   const fznparser::BoolVarArray& boolVarArray,
+                   const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray,
                    const fznparser::BoolArg& reified) {
   std::vector<bool> fixedValues = getFixedValues(boolVarArray);
 
   if (reified.isFixed()) {
     if (reified.toParameter()) {
-      if (fixedValues.size() == boolVarArray.size() &&
+      if (fixedValues.size() == boolVarArray->size() &&
           std::all_of(fixedValues.begin(), fixedValues.end(),
                       [](bool b) { return !b; })) {
         throw FznArgumentException(
@@ -71,7 +71,8 @@ bool array_bool_or(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   return array_bool_or(
       invariantGraph,
-      std::get<fznparser::BoolVarArray>(constraint.arguments().at(0)),
+      std::get<std::shared_ptr<fznparser::BoolVarArray>>(
+          constraint.arguments().at(0)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
 }
 

@@ -20,14 +20,14 @@ bool array_int_element2d(FznInvariantGraph& invariantGraph,
   }
 
   if (offset1 >
-      (idx1.isParameter() ? idx1.toParameter() : idx1.var().lowerBound())) {
+      (idx1.isParameter() ? idx1.toParameter() : idx1.var()->lowerBound())) {
     throw FznArgumentException(
         "Constraint array_int_element2d the first offset must be smaller than "
         "the lower bound of the first index var.");
   }
 
   if (offset2 >
-      (idx2.isParameter() ? idx2.toParameter() : idx2.var().lowerBound())) {
+      (idx2.isParameter() ? idx2.toParameter() : idx2.var()->lowerBound())) {
     throw FznArgumentException(
         "Constraint array_int_element2d the second offset must be smaller than "
         "the lower bound of the second index var.");
@@ -66,8 +66,9 @@ bool array_int_element2d(FznInvariantGraph& invariantGraph,
   return array_int_element2d(
       invariantGraph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
-      std::get<fznparser::IntVarArray>(constraint.arguments().at(2))
-          .toParVector(),
+      std::get<std::shared_ptr<fznparser::IntVarArray>>(
+          constraint.arguments().at(2))
+          ->toParVector(),
       std::get<fznparser::IntArg>(constraint.arguments().at(3)),
       std::get<fznparser::IntArg>(constraint.arguments().at(4)).toParameter(),
       std::get<fznparser::IntArg>(constraint.arguments().at(5)).toParameter(),
