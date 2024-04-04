@@ -23,6 +23,7 @@ class Element2dVar : public Invariant {
   std::array<const VarId, 2> _indices;
   std::array<const Int, 2> _dimensions;
   std::array<const Int, 2> _offsets;
+  std::array<Int, 2> _committedIndices;
   VarId _output;
 
   [[nodiscard]] inline size_t safeIndex(Int index, size_t pos) const noexcept {
@@ -49,6 +50,7 @@ class Element2dVar : public Invariant {
   void notifyInputChanged(Timestamp, LocalId) override;
   [[nodiscard]] VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
+  void commit(Timestamp) override;
 };
 
 }  // namespace atlantis::propagation

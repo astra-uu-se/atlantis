@@ -15,8 +15,8 @@ IntDiv::IntDiv(SolverBase& solver, VarId output, VarId nominator,
 
 void IntDiv::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _nominator, 0, false);
-  _solver.registerInvariantInput(_id, _denominator, 0, false);
+  _solver.registerInvariantInput(_id, _nominator, false);
+  _solver.registerInvariantInput(_id, _denominator, false);
   registerDefinedVar(_output);
 }
 

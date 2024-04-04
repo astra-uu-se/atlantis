@@ -12,8 +12,8 @@ Pow::Pow(SolverBase& solver, VarId output, VarId base, VarId exponent)
 void Pow::registerVars() {
   assert(_id != NULL_ID);
 
-  _solver.registerInvariantInput(_id, _base, 0, false);
-  _solver.registerInvariantInput(_id, _exponent, 0, false);
+  _solver.registerInvariantInput(_id, _base, false);
+  _solver.registerInvariantInput(_id, _exponent, false);
   registerDefinedVar(_output);
 }
 

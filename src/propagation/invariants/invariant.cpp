@@ -20,4 +20,13 @@ void Invariant::updateValue(Timestamp ts, VarId id, Int val) {
 void Invariant::incValue(Timestamp ts, VarId id, Int val) {
   _solver.incValue(ts, id, val);
 }
+
+void Invariant::makeDynamicInputActive(Timestamp ts, LocalId localId) {
+  _solver.makeDynamicInputActive(ts, _id, localId);
+}
+
+void Invariant::makeDynamicInputInactive(Timestamp ts, LocalId localId) {
+  _solver.makeDynamicInputInactive(ts, _id, localId);
+}
+
 }  // namespace atlantis::propagation

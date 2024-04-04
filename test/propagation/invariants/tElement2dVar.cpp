@@ -564,6 +564,10 @@ TEST_F(Element2dVarTest, SolverIntegration) {
     VarId index1 = solver->makeIntVar(1, 1, static_cast<Int>(numRows));
     VarId index2 = solver->makeIntVar(1, 1, static_cast<Int>(numCols));
     VarId output = solver->makeIntVar(-10, -100, 100);
+    MockElement2dVar invariant =
+        MockElement2dVar(*solver, output, index1, index2,
+                         std::vector<std::vector<VarId>>(varMatrix), 1, 1);
+
     testNotifications<MockElement2dVar>(
         &solver->makeInvariant<MockElement2dVar>(
             *solver, output, index1, index2, std::move(varMatrix), 1, 1),

@@ -5,8 +5,9 @@
 
 namespace atlantis::propagation {
 
-OutputToInputExplorer::OutputToInputExplorer(Solver& e, size_t expectedSize)
-    : _solver(e),
+OutputToInputExplorer::OutputToInputExplorer(Solver& solver,
+                                             size_t expectedSize)
+    : _solver(solver),
       _varStackIdx(0),
       _invariantStackIdx(0),
       _varComputedAt(expectedSize),
@@ -39,14 +40,14 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
     varVisited[searchVar] = true;
 
     while (!stack.empty()) {
-      const VarIdBase id = stack.back();
+      const VarIdBase varId = stack.back();
       stack.pop_back();
-      _searchVarAncestors[id].emplace(searchVar);
+      _searchVarAncestors[varId].emplace(searchVar);
 
-      for (const PropagationGraph::ListeningInvariantData& invariantData :
-           _solver.listeningInvariantData(IdBase(id))) {
+      for (const auto& invariantData :
+           _solver.outgoingArcs(varId).outgoingStatic()) {
         for (const VarIdBase& outputVar :
-             _solver.varsDefinedBy(invariantData.invariantId)) {
+             _solver.varsDefinedBy(invariantData.invariantId())) {
           if (!varVisited[outputVar]) {
             varVisited[outputVar] = true;
             stack.push_back(outputVar);
@@ -69,12 +70,12 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
     _onPropagationPath.set(modifiedDecisionVar, true);
 
     while (!stack.empty()) {
-      const IdBase id = stack.back();
+      const IdBase varId = stack.back();
       stack.pop_back();
-      for (const PropagationGraph::ListeningInvariantData& invariantData :
-           _solver.listeningInvariantData(id)) {
+      for (const auto& invariantData :
+           _solver.outgoingArcs(varId).outgoingStatic()) {
         for (const VarIdBase& outputVar :
-             _solver.varsDefinedBy(invariantData.invariantId)) {
+             _solver.varsDefinedBy(invariantData.invariantId())) {
           if (!_onPropagationPath.get(outputVar)) {
             _onPropagationPath.set(outputVar, true);
             stack.emplace_back(outputVar);

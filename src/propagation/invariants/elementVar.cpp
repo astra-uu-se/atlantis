@@ -16,10 +16,10 @@ ElementVar::ElementVar(SolverBase& solver, VarId output, VarId index,
 
 void ElementVar::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _index, LocalId(0), false);
   for (const VarId& input : _varArray) {
-    _solver.registerInvariantInput(_id, input, LocalId(0), true);
+    _solver.registerInvariantInput(_id, input, true);
   }
+  _solver.registerInvariantInput(_id, _index, false);
   registerDefinedVar(_output);
 }
 
@@ -43,17 +43,30 @@ void ElementVar::updateBounds(bool widenOnly) {
 }
 
 void ElementVar::recompute(Timestamp ts) {
-  assert(safeIndex(_solver.value(ts, _index)) < _varArray.size());
-  updateValue(
-      ts, _output,
-      _solver.value(ts, _varArray[safeIndex(_solver.value(ts, _index))]));
+  const size_t index = safeIndex(_solver.value(ts, _index));
+  assert(index < _varArray.size());
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    if (i != index) {
+      makeDynamicInputInactive(ts, LocalId(i));
+    }
+  }
+  makeDynamicInputActive(ts, LocalId(index));
+  updateValue(ts, _output, _solver.value(ts, _varArray[index]));
 }
 
 VarId ElementVar::dynamicInputVar(Timestamp ts) const noexcept {
   return _varArray[safeIndex(_solver.value(ts, _index))];
 }
 
-void ElementVar::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void ElementVar::notifyInputChanged(Timestamp ts, LocalId localId) {
+  const size_t index = safeIndex(_solver.value(ts, _index));
+  assert(index < _varArray.size());
+  if (localId == _varArray.size()) {
+    makeDynamicInputInactive(ts, LocalId{safeIndex(_committedIndex)});
+    makeDynamicInputActive(ts, LocalId{index});
+  }
+  updateValue(ts, _output, _solver.value(ts, _varArray[index]));
+}
 
 VarId ElementVar::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
@@ -68,5 +81,16 @@ VarId ElementVar::nextInput(Timestamp ts) {
   }
 }
 
-void ElementVar::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void ElementVar::notifyCurrentInputChanged(Timestamp ts) {
+  assert(safeIndex(_solver.value(ts, _index)) < _varArray.size());
+  updateValue(
+      ts, _output,
+      _solver.value(ts, _varArray[safeIndex(_solver.value(ts, _index))]));
+}
+
+void ElementVar::commit(Timestamp ts) {
+  Invariant::commit(ts);
+  _committedIndex = _solver.committedValue(_index);
+}
+
 }  // namespace atlantis::propagation

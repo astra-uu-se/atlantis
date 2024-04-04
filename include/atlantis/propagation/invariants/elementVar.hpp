@@ -21,6 +21,7 @@ class ElementVar : public Invariant {
   VarId _output, _index;
   std::vector<VarId> _varArray;
   Int _offset;
+  Int _committedIndex;
 
   [[nodiscard]] inline size_t safeIndex(Int index) const noexcept {
     return std::max<Int>(
@@ -37,6 +38,7 @@ class ElementVar : public Invariant {
   void notifyInputChanged(Timestamp, LocalId) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
+  void commit(Timestamp) override;
 };
 
 }  // namespace atlantis::propagation

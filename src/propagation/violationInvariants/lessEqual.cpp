@@ -13,8 +13,8 @@ LessEqual::LessEqual(SolverBase& solver, VarId violationId, VarId x, VarId y)
 
 void LessEqual::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
-  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _x, false);
+  _solver.registerInvariantInput(_id, _y, false);
   registerDefinedVar(_violationId);
 }
 

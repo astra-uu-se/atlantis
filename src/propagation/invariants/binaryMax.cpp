@@ -9,8 +9,8 @@ BinaryMax::BinaryMax(SolverBase& solver, VarId output, VarId x, VarId y)
 
 void BinaryMax::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, 0, false);
-  _solver.registerInvariantInput(_id, _y, 0, false);
+  _solver.registerInvariantInput(_id, _x, false);
+  _solver.registerInvariantInput(_id, _y, false);
   registerDefinedVar(_output);
 }
 
