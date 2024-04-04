@@ -20,13 +20,13 @@ IfThenElse::IfThenElse(SolverBase& solver, VarViewId output,
 
 void IfThenElse::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _branches[1], 0, true);
-  _solver.registerInvariantInput(_id, _condition, 0, false);
-  _solver.registerInvariantInput(_id, _branches[0], 0, true);
+  _solver.registerInvariantInput(_id, _branches[1], true);
+  _solver.registerInvariantInput(_id, _condition, false);
+  _solver.registerInvariantInput(_id, _branches[0], true);
   registerDefinedVar(_output);
 }
 
-VarViewId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
+VarId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
   return _solver.value(ts, _xy[toIndex(_solver.value(ts, _b))]);
 }
 
@@ -41,21 +41,17 @@ void IfThenElse::updateBounds(bool widenOnly) {
 
 void IfThenElse::recompute(Timestamp ts) {
   const size_t index = toIndex(_solver.value(ts, _b));
-
-  makeAllDynamicInputsInactive(ts);
-  makeDynamicInputActive(ts, LocalId{index});
+  makeDynamicInputInactive(ts, LocalId(toIndex(_solver.value(ts, _b) == 0)));
+  makeDynamicInputActive(ts, LocalId(index));
 
   updateValue(ts, _output, _solver.value(ts, _xy[index]));
 }
 
 void IfThenElse::notifyInputChanged(Timestamp ts, LocalId localId) {
   const size_t index = toIndex(_solver.value(ts, _b));
-  if (localId == size_t{2}) {
-    if (_activeIndex != index) {
-      assert(_activeIndex < 2);
-      makeDynamicInputInactive(ts, LocalId(_activeIndex));
-      makeDynamicInputActive(ts, LocalId(index));
-    }
+  if (localId == size_t(2)) {
+    makeDynamicInputInactive(ts, LocalId(_committedViolation));
+    makeDynamicInputActive(ts, LocalId(index));
   }
   updateValue(ts, _output, _solver.value(ts, _xy[index]));
 }
@@ -78,7 +74,7 @@ void IfThenElse::notifyCurrentInputChanged(Timestamp ts) {
 
 void IfThenElse::commit(Timestamp ts) {
   Invariant::commit(ts);
-  _activeIndex = toIndex(_solver.committedValue(_b));
+  _committedViolation = toIndex(_solver.committedValue(_b));
 }
 
 }  // namespace atlantis::propagation

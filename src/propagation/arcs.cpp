@@ -1,12 +1,13 @@
 #include "atlantis/propagation/arcs.hpp"
 
-#include <cassert>
-
 #include "atlantis/exceptions/exceptions.hpp"
 
 namespace atlantis::propagation {
 
 namespace invariant {
+
+IncomingArcContainer::IncomingArcContainer()
+    : _incomingStatic(), _incomingDynamic() {}
 
 size_t IncomingArcContainer::numArcs() const {
   return _incomingStatic.size() + _incomingDynamic.size();
@@ -27,13 +28,13 @@ LocalId IncomingArcContainer::emplaceStatic(VarIdBase varId) {
 }
 
 LocalId IncomingArcContainer::emplaceDynamic(VarIdBase varId,
-                                             size_t outgoingDynamicArcIndex) {
+                                             size_t localInvariantIndex) {
   if (!_incomingStatic.empty()) {
     // All dynamic input variables must be registered before registering
     // static input variables.
     throw OutOfOrderIndexRegistration();
   }
-  _incomingDynamic.emplace_back(varId, outgoingDynamicArcIndex);
+  _incomingDynamic.emplace_back(varId, localInvariantIndex);
   return static_cast<LocalId>(_incomingDynamic.size() - 1);
 }
 
@@ -48,40 +49,38 @@ InvariantId OutgoingArc::invariantId() const { return _invariantId; }
 
 void OutgoingArc::setInvariantNullId() { _invariantId = NULL_ID; }
 
-void OutgoingDynamicArcContainer::swap(Timestamp ts, size_t index1) {
-  // move val1 at index1 to the end of the active indices
+void OutgoingDynamicArcContainer::swap(Timestamp ts, size_t index) {
   // sanity:
-  assert(index1 < _sparseValues.size());
+  assert(index < _metaIndices.size());
   assert(0 <= _numActiveArcs.value(ts));
-  assert(static_cast<size_t>(_numActiveArcs.value(ts)) < _sparseIndices.size());
-  // get the value at index1:
-  const Int val1 = _sparseValues[index1].value(ts);
-  assert(0 <= val1);
-  assert(static_cast<size_t>(val1) < _sparseIndices.size());
-  // get the last active value:
-  const Int val2 = _numActiveArcs.value(ts);
-  assert(0 <= val2);
-  assert(static_cast<size_t>(val2) < _sparseIndices.size());
-  if (val1 == val2) {
-    return;
-  }
-  // get the index of the last active value:
-  const size_t index2 = static_cast<size_t>(_sparseIndices[val2].value(ts));
-  assert(index2 < _sparseIndices.size());
+  assert(static_cast<size_t>(_numActiveArcs.value(ts)) < _indices.size());
+  // get meta index:
+  const Int metaIndex = _metaIndices[index].value(ts);
+  assert(0 <= metaIndex);
+  assert(static_cast<size_t>(metaIndex) < _indices.size());
+  // get the last active index and meta index:
+  const size_t index2 = static_cast<size_t>(_numActiveArcs.value(ts));
+  assert(index2 < _indices.size());
+  const Int metaIndex2 = static_cast<size_t>(_metaIndices[index2].value(ts));
+  assert(0 <= metaIndex2);
+  assert(static_cast<size_t>(metaIndex2) < _indices.size());
   // perform index swap:
-  _sparseIndices[val1].setValue(ts, index2);
-  _sparseIndices[val2].setValue(ts, index1);
+  _indices[metaIndex].setValue(ts, index2);
+  _indices[metaIndex2].setValue(ts, index);
   // perform meta index swap:
-  _sparseValues[index1].setValue(ts, val2);
-  _sparseValues[index2].setValue(ts, val1);
+  _metaIndices[index].setValue(ts, metaIndex2);
+  _metaIndices[index2].setValue(ts, metaIndex);
 }
+
+OutgoingDynamicArcContainer::OutgoingDynamicArcContainer()
+    : _arcs(), _indices(), _metaIndices(), _numActiveArcs(NULL_TIMESTAMP, 0) {}
 
 const std::vector<CommittableInt>& OutgoingDynamicArcContainer::indices()
     const {
-  return _sparseIndices;
+  return _indices;
 }
 
-const std::vector<OutgoingArc>& OutgoingDynamicArcContainer::arcs() const {
+const std::vector<OutgoingArc> OutgoingDynamicArcContainer::arcs() const {
   return _arcs;
 }
 
@@ -104,25 +103,24 @@ OutgoingArc& OutgoingDynamicArcContainer::operator[](size_t index) {
 
 void OutgoingDynamicArcContainer::emplaceBack(LocalId localId,
                                               InvariantId invariantId) {
-  assert(invariantId != NULL_ID);
   _arcs.emplace_back(localId, invariantId);
-  _sparseIndices.push_back(
+  _indices.push_back(
       CommittableInt(NULL_TIMESTAMP, static_cast<Int>(_arcs.size()) - 1));
-  _sparseValues.push_back(
+  _metaIndices.push_back(
       CommittableInt(NULL_TIMESTAMP, static_cast<Int>(_arcs.size()) - 1));
 }
 
 bool OutgoingDynamicArcContainer::isActive(Timestamp ts, size_t index) const {
-  assert(index < _sparseValues.size());
-  return _sparseValues[index].value(ts) < _numActiveArcs.value(ts);
+  assert(index < _metaIndices.size());
+  return static_cast<Int>(index) < _numActiveArcs.value(ts);
 }
 
 void OutgoingDynamicArcContainer::makeActive(Timestamp ts, size_t index) {
-  assert(index < _sparseValues.size());
-  const Int val = static_cast<size_t>(_sparseValues[index].value(ts));
-  assert(0 <= val);
-  assert(static_cast<size_t>(val) < _sparseIndices.size());
-  if (val < _numActiveArcs.value(ts)) {
+  assert(index < _metaIndices.size());
+  const Int metaIndex = static_cast<size_t>(_metaIndices[index].value(ts));
+  assert(0 <= metaIndex);
+  assert(static_cast<size_t>(metaIndex) < _indices.size());
+  if (metaIndex < _numActiveArcs.value(ts)) {
     return;
   }
   // swap with inactive last index:
@@ -132,9 +130,9 @@ void OutgoingDynamicArcContainer::makeActive(Timestamp ts, size_t index) {
 }
 
 void OutgoingDynamicArcContainer::makeInactive(Timestamp ts, size_t index) {
-  assert(index < _sparseValues.size());
-  const Int metaIndex = _sparseValues[index].value(ts);
-  assert(static_cast<size_t>(metaIndex) < _sparseIndices.size());
+  assert(index < _metaIndices.size());
+  const Int metaIndex = _metaIndices[index].value(ts);
+  assert(static_cast<size_t>(metaIndex) < _indices.size());
   if (metaIndex >= _numActiveArcs.value(ts)) {
     return;
   }
@@ -149,16 +147,15 @@ void OutgoingDynamicArcContainer::makeAllInactive(Timestamp ts) {
 }
 
 bool OutgoingDynamicArcContainer::sanity(Timestamp ts) const {
-  if (_arcs.size() != _sparseIndices.size() ||
-      _arcs.size() != _sparseValues.size()) {
+  if (_arcs.size() != _indices.size() || _arcs.size() != _metaIndices.size()) {
     return false;
   }
-  for (Int index = 0; index < static_cast<Int>(_arcs.size()); ++index) {
-    const Int val = _sparseValues[index].value(ts);
-    if (val < 0 || static_cast<Int>(_arcs.size()) <= val) {
+  for (Int i = 0; i < static_cast<Int>(_arcs.size()); ++i) {
+    const Int metaIndex = _metaIndices[i].value(ts);
+    if (metaIndex < 0 || static_cast<Int>(_arcs.size()) <= metaIndex) {
       return false;
     }
-    if (_sparseIndices[val].value(ts) != index) {
+    if (_indices[metaIndex].value(ts) != i) {
       return false;
     }
   }
@@ -169,26 +166,11 @@ void OutgoingDynamicArcContainer::setNullId(size_t index) {
   _arcs[index].setInvariantNullId();
 }
 
-bool OutgoingDynamicArcContainer::isNullId(size_t index) const {
-  return _arcs[index].invariantId() == NULL_ID;
-}
-
 void OutgoingDynamicArcContainer::commitIf(Timestamp ts) {
-  assert(static_cast<int>(_numActiveArcs.tmpTimestamp() == ts) >=
-         std::max<int>(static_cast<int>(std::any_of(
-                           _sparseIndices.begin(), _sparseIndices.end(),
-                           [ts](const CommittableInt& index) {
-                             return index.tmpTimestamp() == ts;
-                           })),
-                       static_cast<int>(std::any_of(
-                           _sparseValues.begin(), _sparseValues.end(),
-                           [ts](const CommittableInt& index) {
-                             return index.tmpTimestamp() == ts;
-                           }))));
-  for (auto& inputIndex : _sparseIndices) {
+  for (auto& inputIndex : _indices) {
     inputIndex.commitIf(ts);
   }
-  for (auto& metaIndex : _sparseValues) {
+  for (auto& metaIndex : _metaIndices) {
     metaIndex.commitIf(ts);
   }
   _numActiveArcs.commitIf(ts);
@@ -214,7 +196,6 @@ bool OutgoingArcContainer::empty() const {
 
 void OutgoingArcContainer::emplaceStatic(LocalId localId,
                                          InvariantId invariantId) {
-  assert(invariantId != NULL_ID);
   _outgoingStatic.emplace_back(localId, invariantId);
   ++_numArcs;
 }

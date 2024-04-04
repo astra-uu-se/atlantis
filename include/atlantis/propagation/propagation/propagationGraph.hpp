@@ -128,6 +128,11 @@ class PropagationGraph {
   void makeAllDynamicInactive(Timestamp, VarIdBase);
   void commitOutgoingArcs(Timestamp, VarIdBase);
 
+  void makeDynamicInputActive(Timestamp, InvariantId, LocalId);
+  void makeDynamicInputInactive(Timestamp, InvariantId, LocalId);
+  void makeAllDynamicInactive(Timestamp, VarIdBase);
+  void commitOutgoingArcs(Timestamp, VarIdBase);
+
   /**
    * @brief topologically orders the layer
    *

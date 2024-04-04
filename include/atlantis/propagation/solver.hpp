@@ -36,13 +36,8 @@ class Solver : public SolverBase {
 
   void propagateOnClose();
 
-  void enforceInvariant(const var::OutgoingArc&);
-  void enforceInvariant(const var::OutgoingArc&, size_t curLayer);
-
-  template <CommitMode Mode>
-  void propagateDefiningInvariant(VarIdBase);
   template <bool SingleLayer>
-  void enforceOutgoingArcs(const VarId&);
+  void enforceInvariant(VarIdBase, const var::OutgoingArc&, size_t curLayer);
 
   template <CommitMode Mode, bool SingleLayer>
   void propagate();

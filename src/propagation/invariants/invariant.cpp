@@ -29,8 +29,4 @@ void Invariant::makeDynamicInputInactive(Timestamp ts, LocalId localId) {
   _solver.makeDynamicInputInactive(ts, _id, localId);
 }
 
-void Invariant::makeAllDynamicInputsInactive(Timestamp ts) {
-  _solver.makeAllDynamicInputsInactive(ts, _id);
-}
-
 }  // namespace atlantis::propagation

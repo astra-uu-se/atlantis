@@ -25,7 +25,7 @@ void Count::registerVars() {
   for (size_t i = 0; i < _vars.size(); ++i) {
     _solver.registerInvariantInput(_id, _vars[i], false);
   }
-  _solver.registerInvariantInput(_id, _needle, _vars.size(), false);
+  _solver.registerInvariantInput(_id, _needle, false);
   registerDefinedVar(_output);
 }
 

@@ -67,24 +67,13 @@ LocalId PropagationGraph::registerInvariantInput(InvariantId invariantId,
   const bool selfCycle = _definingInvariant[varId] == invariantId;
   if (selfCycle) {
   }
+  }
   if (isDynamicInput) {
     LocalId localId = _incomingArcs[invariantId].emplaceDynamic(
         selfCycle ? NULL_ID : varId,
         selfCycle ? 0 : _outgoingArcs[varId].outgoingDynamic().size());
     if (!selfCycle) {
       _outgoingArcs[varId].emplaceDynamic(localId, invariantId);
-      assert(
-          _outgoingArcs[varId].outgoingDynamic().arcs().back().invariantId() ==
-          invariantId);
-      assert(_outgoingArcs[varId].outgoingDynamic().arcs().back().localId() ==
-             localId);
-      assert(_incomingArcs[invariantId].incomingDynamic().at(localId).varId ==
-             varId);
-      assert(_incomingArcs[invariantId]
-                 .incomingDynamic()
-                 .at(localId)
-                 .outgoingDynamicArcIndex ==
-             _outgoingArcs[varId].numArcs() - 1);
     }
     return localId;
   } else if (!selfCycle) {
@@ -103,29 +92,7 @@ void PropagationGraph::makeDynamicInputActive(Timestamp ts,
   const auto& inputVarData =
       _incomingArcs[invariantId].incomingDynamic().at(localId);
   _outgoingArcs[inputVarData.varId].makeDynamicActive(
-      ts, inputVarData.outgoingDynamicArcIndex);
-}
-
-void PropagationGraph::makeAllDynamicInputsInactive(Timestamp ts,
-                                                    InvariantId invariantId) {
-  for (const auto& inputVarData :
-       _incomingArcs[invariantId].incomingDynamic()) {
-    if (inputVarData.varId == NULL_ID) {
-      continue;
-    }
-    assert(_outgoingArcs.has_idx(inputVarData.varId));
-    if (_outgoingArcs[inputVarData.varId].outgoingDynamic().isNullId(
-            inputVarData.outgoingDynamicArcIndex)) {
-      continue;
-    }
-    assert(_outgoingArcs[inputVarData.varId]
-               .outgoingDynamic()
-               .arcs()
-               .at(inputVarData.outgoingDynamicArcIndex)
-               .invariantId() == invariantId);
-    _outgoingArcs[inputVarData.varId].makeDynamicInactive(
-        ts, inputVarData.outgoingDynamicArcIndex);
-  }
+      ts, inputVarData.localInvariantIndex);
 }
 
 void PropagationGraph::makeDynamicInputInactive(Timestamp ts,
@@ -134,22 +101,9 @@ void PropagationGraph::makeDynamicInputInactive(Timestamp ts,
   assert(invariantId != NULL_ID);
   assert(localId < _incomingArcs[invariantId].incomingDynamic().size());
   const auto& inputVarData =
-      _incomingArcs[invariantId].incomingDynamic()[localId];
-  if (inputVarData.varId == NULL_ID) {
-    return;
-  }
-  assert(_outgoingArcs.has_idx(inputVarData.varId));
-  if (_outgoingArcs[inputVarData.varId].outgoingDynamic().isNullId(
-          inputVarData.outgoingDynamicArcIndex)) {
-    return;
-  }
-  assert(_outgoingArcs[inputVarData.varId]
-             .outgoingDynamic()
-             .arcs()
-             .at(inputVarData.outgoingDynamicArcIndex)
-             .invariantId() == invariantId);
+      _incomingArcs[invariantId].incomingDynamic().at(localId);
   _outgoingArcs[inputVarData.varId].makeDynamicInactive(
-      ts, inputVarData.outgoingDynamicArcIndex);
+      ts, inputVarData.localInvariantIndex);
 }
 
 void PropagationGraph::makeAllDynamicInactive(Timestamp ts, VarIdBase varId) {
@@ -162,7 +116,7 @@ void PropagationGraph::commitOutgoingArcs(Timestamp ts, VarIdBase varId) {
   _outgoingArcs[varId].commitIf(ts);
 }
 
-void PropagationGraph::registerDefinedVar(VarId varId,
+void PropagationGraph::registerDefinedVar(VarIdBase varId,
                                           InvariantId invariantId) {
   assert(varId != NULL_ID && invariantId != NULL_ID);
   if (_definingInvariant.at(varId) != NULL_ID) {
@@ -181,8 +135,8 @@ void PropagationGraph::registerDefinedVar(VarId varId,
   }
   indicesToRemove.clear();
   size_t i = 0;
-  for (const auto& outArc : _outgoingArcs[varId].outgoingDynamic().arcs()) {
-    if (outArc.invariantId() == invariantId) {
+  for (const auto& inputData : _outgoingArcs[varId].outgoingDynamic().arcs()) {
+    if (inputData.invariantId() == invariantId) {
       indicesToRemove.emplace_back(i);
     }
     ++i;
@@ -255,7 +209,7 @@ bool PropagationGraph::containsStaticCycle() {
     assert(all_in_range(0, numVars(),
                         [&](const size_t i) { return !inFrontier.at(i); }));
     if (_outgoingArcs[varId].outgoingStatic().empty()) {
-      if (containsStaticCycle(visited, inFrontier, VarId(varId))) {
+      if (containsStaticCycle(visited, inFrontier, varId)) {
         return true;
       }
     }
@@ -631,14 +585,16 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
   // add the current variable to the frontier:
   inFrontier[index] = true;
 
-  assert(std::all_of(
-      staticInputVars(defInv).begin(), staticInputVars(defInv).end(),
-      [&](const VarId& staticInputId) {
-        return staticInputId != NULL_ID &&
-               _varLayerIndex[staticInputId].layer <=
-                   layer - static_cast<size_t>(_layerHasDynamicCycle[layer] &&
-                                               isDynamicInvariant(defInv));
-      }));
+  const bool isDynInv =
+      _layerHasDynamicCycle[layer] && isDynamicInvariant(defInv);
+
+  assert(std::all_of(staticInputVars(defInv).begin(),
+                     staticInputVars(defInv).end(),
+                     [&](const VarId& staticInputId) {
+                       return staticInputId != NULL_ID &&
+                              _varLayerIndex[staticInputId].layer <=
+                                  layer - static_cast<size_t>(isDynInv);
+                     }));
   assert(std::all_of(dynamicInputVars(defInv).begin(),
                      dynamicInputVars(defInv).end(),
                      [&](const auto& dynIncArc) {
@@ -647,49 +603,30 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
                      }));
 
   for (const auto& staticInputId : staticInputVars(defInv)) {
-    assert(staticInputId != NULL_ID);
-    if (_varLayerIndex[staticInputId.id].layer < layer) {
-      continue;
+    if (_varLayerIndex[staticInputId].layer == layer &&
+        _varPosition[staticInputId] == numVars()) {
+      topologicallyOrder(ts, inFrontier, staticInputId);
     }
+
+    _varPosition[varId] =
+        std::max(_varPosition[varId], _varPosition[staticInputId] + 1);
+  }
+
+  if (isDynInv) {
+    const VarId dynamicInputId = dynamicInputVar(ts, defInv);
+    assert(dynamicInputId != NULL_ID);
     // we should have no dependencies to subsequent layers:
     assert(_varLayerIndex[staticInputId.id].layer == layer);
     topologicallyOrder(ts, inFrontier, staticInputId);
     _varPosition[varId] =
         std::max(_varPosition[varId], _varPosition[staticInputId] + 1);
   }
-
-  if (isDynamicInvariant(defInv)) {
-    if (_layerHasDynamicCycle[layer]) {
-      const VarId dynamicInputId = dynamicInputVar(ts, defInv);
-      assert(dynamicInputId != NULL_ID);
-      if (_varLayerIndex[dynamicInputId].layer == layer) {
-        // we should have no dependencies to subsequent layers:
-        assert(_varLayerIndex[dynamicInputId.id].layer == layer);
-        topologicallyOrder(ts, inFrontier, dynamicInputId);
-        assert(_varPosition[dynamicInputId] < numVars());
-        _varPosition[varId] =
-            std::max(_varPosition[varId], _varPosition[dynamicInputId.id] + 1);
-      }
-    }
-  } else {
-    for (const auto& dynamicInput : dynamicInputVars(defInv)) {
-      assert(dynamicInput.varId != NULL_ID);
-      if (_varLayerIndex[dynamicInput.varId.id].layer < layer) {
-        continue;
-      }
-      // we should have no dependencies to subsequent layers:
-      assert(_varLayerIndex[dynamicInput.varId.id].layer == layer);
-      topologicallyOrder(ts, inFrontier, dynamicInput.varId);
-      _varPosition[varId] = std::max(_varPosition[varId],
-                                     _varPosition[dynamicInput.varId.id] + 1);
-    }
-  }
-  assert(std::all_of(staticInputVars(defInv).begin(),
-                     staticInputVars(defInv).end(),
-                     [&](const VarId& staticInputId) {
-                       return _varLayerIndex[staticInputId.id].layer < layer ||
-                              _varPosition[staticInputId] < _varPosition[varId];
-                     }));
+  assert(std::all_of(
+      staticInputVars(defInv).begin(), staticInputVars(defInv).end(),
+      [&](const VarId& staticInputId) {
+        return staticInputId != NULL_ID &&
+               _varPosition[staticInputId.id] < _varPosition[varId];
+      }));
   assert(std::all_of(
       dynamicInputVars(defInv).begin(), dynamicInputVars(defInv).end(),
       [&](const invariant::IncomingDynamicArc& dynIncArc) {
@@ -739,8 +676,12 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
       continue;
     }
     for (const auto& staticInputId : staticInputVars(defInv)) {
-      assert(_varLayerIndex[staticInputId].layer < layer ||
-             _varPosition[staticInputId] < _varPosition[varId]);
+      assert(_varPosition[staticInputId] < _varPosition[varId]);
+    }
+    for (const auto& dynIncArc : dynamicInputVars(defInv)) {
+      if (dynamicInputVar(ts, defInv) == dynIncArc.varId) {
+        assert(_varPosition[dynIncArc.varId] < _varPosition[varId]);
+      }
     }
     for (const auto& dynIncArc : dynamicInputVars(defInv)) {
       assert(dynamicInputVar(ts, defInv) != dynIncArc.varId ||

@@ -161,7 +161,6 @@ class SolverBase {
   virtual void registerInvariant(InvariantId) = 0;
   virtual void makeDynamicInputActive(Timestamp, InvariantId, LocalId) = 0;
   virtual void makeDynamicInputInactive(Timestamp, InvariantId, LocalId) = 0;
-  virtual void makeAllDynamicInputsInactive(Timestamp, InvariantId) = 0;
 
   const Store& store();
   [[nodiscard]] Timestamp currentTimestamp() const;
