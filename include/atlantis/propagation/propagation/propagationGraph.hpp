@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "atlantis/propagation/arcs.hpp"
 #include "atlantis/propagation/propagation/propagationQueue.hpp"
 #include "atlantis/propagation/store/store.hpp"
 #include "atlantis/types.hpp"
@@ -9,22 +10,6 @@
 namespace atlantis::propagation {
 
 class PropagationGraph {
- public:
-  struct ListeningInvariantData {
-   public:
-    InvariantId invariantId;
-    LocalId localId;
-    ListeningInvariantData(const ListeningInvariantData& other) = default;
-    ListeningInvariantData(const InvariantId t_invariantId,
-                           const LocalId t_localId)
-        : invariantId(t_invariantId), localId(t_localId) {}
-    ListeningInvariantData& operator=(ListeningInvariantData&& other) noexcept {
-      invariantId = other.invariantId;
-      localId = other.localId;
-      return *this;
-    }
-  };
-
  private:
   std::vector<bool> _isEvaluationVar{};
   std::vector<bool> _isSearchVar{};
@@ -51,16 +36,13 @@ class PropagationGraph {
    *
    * Maps an invariant to all its variable inputs.
    */
-  // Given input variable with VarViewId x and invariant with InvariantId i,
-  // then _inputVars[i] = <x, b>, where b = true iff x is a dynamic input to i.
-  std::vector<std::vector<std::pair<VarId, bool>>> _inputVars;
-
-  // Given invariant with InvariantId i, _isDynamicInvairiant[i] = true iff i
-  // has one or more dynamic input variables.
-  std::vector<bool> _isDynamicInvariant;
+  // Given input variable with VarId x and invariant with InvariantId i, then
+  // _staticInputVars[i] = <x, b>, where b = true iff x is a dynamic input
+  // to i.
+  IdMap<InvariantId, invariant::IncomingArcContainer> _incomingArcs;
 
   // Map from VarID -> vector of InvariantID
-  std::vector<std::vector<ListeningInvariantData>> _listeningInvariantData;
+  IdMap<VarIdBase, var::OutgoingArcContainer> _outgoingArcs;
 
   std::vector<std::vector<VarId>> _varsInLayer;
   struct LayerIndex {
@@ -129,8 +111,8 @@ class PropagationGraph {
    * @param inputId the variable input
    * @param isDynamic true if the variable is a dynamic input to the invariant.
    */
-  void registerInvariantInput(InvariantId invariantId, VarId inputId,
-                              LocalId localId, bool isDynamic);
+  LocalId registerInvariantInput(InvariantId invariantId, VarIdBase inputId,
+                                 bool isDynamic);
 
   /**
    * Register that source functionally defines varId
@@ -139,6 +121,11 @@ class PropagationGraph {
    * @throw if the variable is already defined by an invariant.
    */
   void registerDefinedVar(VarId varId, InvariantId invariant);
+
+  void makeDynamicInputActive(Timestamp, InvariantId, LocalId);
+  void makeDynamicInputInactive(Timestamp, InvariantId, LocalId);
+  void makeAllDynamicInactive(Timestamp, VarIdBase);
+  void commitOutgoingArcs(Timestamp, VarIdBase);
 
   /**
    * @brief topologically orders the layer
@@ -169,11 +156,14 @@ class PropagationGraph {
   }
 
   [[nodiscard]] inline bool isDynamicInvariant(InvariantId id) const {
-    assert(id < _isDynamicInvariant.size());
-    return _isDynamicInvariant[id];
+    return !_incomingArcs.at(id).incomingDynamic().empty();
   }
 
-  [[nodiscard]] inline InvariantId definingInvariant(VarId id) const {
+  [[nodiscard]] inline size_t numInputVars(InvariantId id) const {
+    return _incomingArcs.at(id).numArcs();
+  }
+
+  [[nodiscard]] inline InvariantId definingInvariant(VarIdBase id) const {
     // Returns NULL_ID if id is a search variable (not defined by an invariant)
     return _definingInvariant.at(id);
   }
@@ -183,17 +173,22 @@ class PropagationGraph {
     return _varsDefinedByInvariant.at(invariantId);
   }
 
-  [[nodiscard]] inline const std::vector<ListeningInvariantData>&
-  listeningInvariantData(VarId id) const {
-    return _listeningInvariantData.at(id);
+  [[nodiscard]] inline const var::OutgoingArcContainer& outgoingArcs(
+      VarId id) const {
+    return _outgoingArcs.at(id.id);
   }
 
-  [[nodiscard]] inline const std::vector<std::pair<VarId, bool>>& inputVars(
+  [[nodiscard]] inline const std::vector<VarIdBase>& staticInputVars(
       InvariantId invariantId) const {
-    return _inputVars.at(invariantId);
+    return _incomingArcs.at(invariantId).incomingStatic();
   }
 
-  [[nodiscard]] inline const std::vector<VarId>& searchVars() const {
+  [[nodiscard]] inline const std::vector<invariant::IncomingDynamicArc>&
+  dynamicInputVars(InvariantId invariantId) const {
+    return _incomingArcs.at(invariantId).incomingDynamic();
+  }
+
+  [[nodiscard]] inline const std::vector<VarIdBase>& searchVars() const {
     return _searchVars;
   }
 

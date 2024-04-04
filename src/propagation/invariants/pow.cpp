@@ -18,8 +18,8 @@ Pow::Pow(SolverBase& solver, VarViewId output, VarViewId base,
 void Pow::registerVars() {
   assert(_id != NULL_ID);
 
-  _solver.registerInvariantInput(_id, _base, 0, false);
-  _solver.registerInvariantInput(_id, _exponent, 0, false);
+  _solver.registerInvariantInput(_id, _base, false);
+  _solver.registerInvariantInput(_id, _exponent, false);
   registerDefinedVar(_output);
 }
 

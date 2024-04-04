@@ -36,6 +36,9 @@ class Solver : public SolverBase {
 
   void propagateOnClose();
 
+  template <bool SingleLayer>
+  void enforceInvariant(VarIdBase, const var::OutgoingArc&, size_t curLayer);
+
   template <CommitMode Mode, bool SingleLayer>
   void propagate();
 
@@ -101,7 +104,7 @@ class Solver : public SolverBase {
 
   [[nodiscard]] const std::vector<VarId>& searchVars() const;
   [[nodiscard]] const std::unordered_set<VarId>& modifiedSearchVar() const;
-  [[nodiscard]] const std::vector<std::pair<VarId, bool>>& inputVars(
+  [[nodiscard]] const std::vector<VarIdBase>& staticInputVars(
       InvariantId) const;
 
   /**
@@ -111,13 +114,26 @@ class Solver : public SolverBase {
 
   InvariantId definingInvariant(VarViewId) const;
 
+  [[nodiscard]] size_t numInputVars(InvariantId) const;
+
   // This function is used by propagation, which is unaware of views.
   [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
 
   [[nodiscard]] const std::vector<VarId>& varsDefinedBy(InvariantId) const;
 
-  [[nodiscard]] const std::vector<PropagationGraph::ListeningInvariantData>&
-      listeningInvariantData(VarId) const;
+  [[nodiscard]] const var::OutgoingArcContainer& outgoingArcs(VarId) const;
+
+  void commitOutgoingArcs(Timestamp, VarIdBase) const;
+
+  void makeDynamicInputActive(Timestamp ts, InvariantId invId,
+                              LocalId localId) override {
+    _propGraph.makeDynamicInputActive(ts, invId, localId);
+  }
+
+  void makeDynamicInputInactive(Timestamp ts, InvariantId invId,
+                                LocalId localId) override {
+    _propGraph.makeDynamicInputInactive(ts, invId, localId);
+  }
 
   /**
    * Notify an invariant that its current input has changed
@@ -130,8 +146,8 @@ class Solver : public SolverBase {
    * @param inputId the id of the variable
    * @param localId the id of the variable in the invariant
    */
-  void registerInvariantInput(InvariantId invariantId, VarViewId inputId,
-                              LocalId localId, bool isDynamic) final;
+  LocalId registerInvariantInput(InvariantId invariantId, VarId inputId,
+                                 bool isDynamic) final;
 
   void registerVar(VarId) final;
   void registerInvariant(InvariantId) final;
@@ -165,9 +181,12 @@ inline const std::vector<VarId>& Solver::varsDefinedBy(
   return _propGraph.varsDefinedBy(invariantId);
 }
 
-inline const std::vector<PropagationGraph::ListeningInvariantData>&
-Solver::listeningInvariantData(VarId id) const {
-  return _propGraph.listeningInvariantData(id);
+inline const var::OutgoingArcContainer& Solver::outgoingArcs(VarId id) const {
+  return _propGraph.outgoingArcs(id);
+}
+
+inline size_t Solver::numInputVars(InvariantId invId) const {
+  return _propGraph.numInputVars(invId);
 }
 
 inline VarId Solver::nextInput(InvariantId invariantId) {
@@ -231,9 +250,9 @@ inline const std::vector<VarId>& Solver::searchVars() const {
   return _propGraph.searchVars();
 }
 
-inline const std::vector<std::pair<VarId, bool>>& Solver::inputVars(
+inline const std::vector<VarIdBase>& Solver::staticInputVars(
     InvariantId invariantId) const {
-  return _propGraph.inputVars(invariantId);
+  return _propGraph.staticInputVars(invariantId);
 }
 
 inline const std::unordered_set<VarId>& Solver::modifiedSearchVar() const {

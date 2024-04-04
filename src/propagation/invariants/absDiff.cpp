@@ -16,8 +16,8 @@ void AbsDiff::registerVars() {
   assert(_id != NULL_ID);
 
   registerDefinedVar(_output);
-  _solver.registerInvariantInput(_id, _x, 0, false);
-  _solver.registerInvariantInput(_id, _y, 0, false);
+  _solver.registerInvariantInput(_id, _x, false);
+  _solver.registerInvariantInput(_id, _y, false);
 }
 
 void AbsDiff::updateBounds(bool widenOnly) {

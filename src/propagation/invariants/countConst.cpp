@@ -24,7 +24,7 @@ void CountConst::registerVars() {
   assert(_id != NULL_ID);
 
   for (size_t i = 0; i < _vars.size(); ++i) {
-    _solver.registerInvariantInput(_id, _vars[i], i, false);
+    _solver.registerInvariantInput(_id, _vars[i], false);
   }
   registerDefinedVar(_output);
 }

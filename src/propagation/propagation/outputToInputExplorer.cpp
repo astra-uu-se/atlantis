@@ -5,8 +5,9 @@
 
 namespace atlantis::propagation {
 
-OutputToInputExplorer::OutputToInputExplorer(Solver& e, size_t expectedSize)
-    : _solver(e),
+OutputToInputExplorer::OutputToInputExplorer(Solver& solver,
+                                             size_t expectedSize)
+    : _solver(solver),
       _varStackIdx(0),
       _invariantStackIdx(0),
       _varStack(),
@@ -50,10 +51,10 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
     while (!stack.empty()) {
       const VarId id = stack.back();
       stack.pop_back();
-      _searchVarAncestors[id].emplace(searchVar);
+      _searchVarAncestors[varId].emplace(searchVar);
 
-      for (const PropagationGraph::ListeningInvariantData& invariantData :
-           _solver.listeningInvariantData(id)) {
+      for (const auto& invariantData :
+           _solver.outgoingArcs(varId).outgoingStatic()) {
         for (const VarId outputVar :
              _solver.varsDefinedBy(invariantData.invariantId)) {
           if (!varVisited[outputVar]) {
@@ -82,8 +83,8 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
     while (!stack.empty()) {
       const VarId id = stack.back();
       stack.pop_back();
-      for (const PropagationGraph::ListeningInvariantData& invariantData :
-           _solver.listeningInvariantData(id)) {
+      for (const auto& invariantData :
+           _solver.outgoingArcs(varId).outgoingStatic()) {
         for (const VarId outputVar :
              _solver.varsDefinedBy(invariantData.invariantId)) {
           assert(outputVar < _onPropagationPath.size());

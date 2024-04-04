@@ -39,7 +39,7 @@ void BoolLinear::registerVars() {
   assert(_id != NULL_ID);
 
   for (size_t i = 0; i < _violArray.size(); ++i) {
-    _solver.registerInvariantInput(_id, _violArray[i], i, false);
+    _solver.registerInvariantInput(_id, _violArray[i], false);
   }
   registerDefinedVar(_output);
 }

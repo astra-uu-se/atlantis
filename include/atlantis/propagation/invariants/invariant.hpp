@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <vector>
 
 #include "atlantis/propagation/types.hpp"
@@ -40,6 +39,10 @@ class Invariant {
    * Increases the value of variable without queueing it for propagation
    */
   void incValue(Timestamp ts, VarId id, Int val);
+
+  void makeDynamicInputActive(Timestamp, LocalId);
+
+  void makeDynamicInputInactive(Timestamp, LocalId);
 
  public:
   virtual ~Invariant() = default;
