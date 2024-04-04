@@ -18,7 +18,7 @@ class ElementVar : public Invariant {
   VarViewId _index;
   std::vector<VarViewId> _varArray;
   Int _offset;
-  size_t _activeIndex;
+  Int _committedIndex;
 
   [[nodiscard]] size_t safeIndex(Int index) const noexcept;
 

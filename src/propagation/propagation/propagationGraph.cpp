@@ -107,8 +107,8 @@ static void partitionIntoLayersUtil(
   }
   indicesToRemove.clear();
   size_t i = 0;
-  for (const auto& outArc : _outgoingArcs[varId].outgoingDynamic().arcs()) {
-    if (outArc.invariantId() == invariantId) {
+  for (const auto& inputData : _outgoingArcs[varId].outgoingDynamic().arcs()) {
+    if (inputData.invariantId() == invariantId) {
       indicesToRemove.emplace_back(i);
     }
     ++i;

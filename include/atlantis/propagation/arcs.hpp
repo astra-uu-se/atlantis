@@ -12,14 +12,16 @@ namespace invariant {
 
 struct IncomingDynamicArc {
   VarIdBase varId;
-  size_t outgoingDynamicArcIndex;
+  size_t localInvariantIndex;
 };
 
 class IncomingArcContainer {
-  std::vector<VarIdBase> _incomingStatic{};
-  std::vector<IncomingDynamicArc> _incomingDynamic{};
+  std::vector<VarIdBase> _incomingStatic;
+  std::vector<IncomingDynamicArc> _incomingDynamic;
 
  public:
+  IncomingArcContainer();
+
   [[nodiscard]] size_t numArcs() const;
 
   [[nodiscard]] const std::vector<VarIdBase>& incomingStatic() const;
@@ -28,7 +30,7 @@ class IncomingArcContainer {
 
   LocalId emplaceStatic(VarIdBase varId);
 
-  LocalId emplaceDynamic(VarIdBase varId, size_t outgoingDynamicArcIndex);
+  LocalId emplaceDynamic(VarIdBase varId, size_t localInvariantIndex);
 };
 
 }  // namespace invariant
@@ -50,23 +52,19 @@ class OutgoingArc {
 
 class OutgoingDynamicArcContainer {
  private:
-  std::vector<OutgoingArc> _arcs{};
-  /*
-   * _sparseIndices[val] = index of val in _sparseValues
-   */
-  std::vector<CommittableInt> _sparseIndices{};
-  /*
-   * _sparseValues[i] = index of i in _sparseIndices
-   */
-  std::vector<CommittableInt> _sparseValues{};
-  CommittableInt _numActiveArcs{NULL_TIMESTAMP, 0};
+  std::vector<OutgoingArc> _arcs;
+  std::vector<CommittableInt> _indices;
+  std::vector<CommittableInt> _metaIndices;
+  CommittableInt _numActiveArcs;
 
   inline void swap(Timestamp ts, size_t index);
 
  public:
+  OutgoingDynamicArcContainer();
+
   [[nodiscard]] const std::vector<CommittableInt>& indices() const;
 
-  [[nodiscard]] const std::vector<OutgoingArc>& arcs() const;
+  [[nodiscard]] const std::vector<OutgoingArc> arcs() const;
 
   [[nodiscard]] size_t size() const;
 
@@ -91,8 +89,6 @@ class OutgoingDynamicArcContainer {
   bool sanity(Timestamp ts) const;
 
   void setNullId(size_t index);
-
-  bool isNullId(size_t index) const;
 
   void commitIf(Timestamp);
 };

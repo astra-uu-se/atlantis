@@ -533,31 +533,14 @@ TEST_F(Element2dVarTest, SolverIntegration) {
     VarViewId index1 = _solver->makeIntVar(1, 1, numRows);
     VarViewId index2 = _solver->makeIntVar(1, 1, numCols);
     VarViewId output = _solver->makeIntVar(-10, -100, 100);
-    const VarViewId selectedInput = varMatrix.at(1).at(2);
-    _solver->makeInvariant<Element2dVar>(*_solver, output, index1, index2,
-                                         std::move(varMatrix), 1, 1);
-    _solver->close();
+    MockElement2dVar invariant =
+        MockElement2dVar(*solver, output, index1, index2,
+                         std::vector<std::vector<VarId>>(varMatrix), 1, 1);
 
-    _solver->beginMove();
-    _solver->setValue(index1, 2);
-    _solver->setValue(index2, 3);
-    _solver->endMove();
-
-    _solver->beginProbe();
-    _solver->query(output);
-    EXPECT_LE(_solver->lowerBound(output), _solver->currentValue(output));
-    EXPECT_GE(_solver->upperBound(output), _solver->currentValue(output));
-    _solver->endProbe();
-
-    _solver->beginMove();
-    _solver->setValue(selectedInput, 42);
-    _solver->endMove();
-
-    _solver->beginProbe();
-    _solver->query(output);
-    EXPECT_LE(_solver->lowerBound(output), _solver->currentValue(output));
-    EXPECT_GE(_solver->upperBound(output), _solver->currentValue(output));
-    _solver->endProbe();
+    testNotifications<MockElement2dVar>(
+        &_solver->makeInvariant<MockElement2dVar>(
+            *_solver, output, index1, index2, std::move(varMatrix), 1, 1),
+        {propMode, markingMode, 4, index1, 5, output});
   }
 }
 

@@ -60,8 +60,12 @@ void ElementVar::updateBounds(const bool widenOnly) {
 void ElementVar::recompute(Timestamp ts) {
   const size_t index = safeIndex(_solver.value(ts, _index));
   assert(index < _varArray.size());
-  makeAllDynamicInputsInactive(ts);
-  makeDynamicInputActive(ts, LocalId{index});
+  for (size_t i = 0; i < _varArray.size(); ++i) {
+    if (i != index) {
+      makeDynamicInputInactive(ts, LocalId(i));
+    }
+  }
+  makeDynamicInputActive(ts, LocalId(index));
   updateValue(ts, _output, _solver.value(ts, _varArray[index]));
 }
 
@@ -72,12 +76,8 @@ VarViewId ElementVar::dynamicInputVar(const Timestamp ts) const noexcept {
 void ElementVar::notifyInputChanged(Timestamp ts, LocalId localId) {
   const size_t index = safeIndex(_solver.value(ts, _index));
   assert(index < _varArray.size());
-  if (localId != _varArray.size() && localId != index) {
-    return;
-  }
-  if (localId == _varArray.size() && _activeIndex != index) {
-    assert(_activeIndex < _varArray.size());
-    makeDynamicInputInactive(ts, LocalId{_activeIndex});
+  if (localId == _varArray.size()) {
+    makeDynamicInputInactive(ts, LocalId{safeIndex(_committedIndex)});
     makeDynamicInputActive(ts, LocalId{index});
   }
   updateValue(ts, _output, _solver.value(ts, _varArray[index]));
@@ -105,7 +105,7 @@ void ElementVar::notifyCurrentInputChanged(Timestamp ts) {
 
 void ElementVar::commit(Timestamp ts) {
   Invariant::commit(ts);
-  _activeIndex = safeIndex(_solver.committedValue(_index));
+  _committedIndex = _solver.committedValue(_index);
 }
 
 }  // namespace atlantis::propagation
