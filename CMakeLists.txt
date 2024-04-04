@@ -242,7 +242,7 @@ if(BUILD_BENCHMARKS)
   )
 endif()
 
-add_executable(queens EXCLUDE_FROM_ALL ${PROJECT_SOURCE_DIR}/test/examples/queens.cpp)
+add_executable(queens EXCLUDE_FROM_ALL ${PROJECT_SOURCE_DIR}/examples/queens.cpp)
 target_link_libraries(queens ${PROJECT_LIB})
 
 # ---- Create an installable target ----
