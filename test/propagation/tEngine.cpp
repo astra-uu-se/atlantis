@@ -30,7 +30,7 @@ class MockInvariantSimple : public Invariant {
       : Invariant(solver), outputVar(t_outputVar), inputVar(t_inputVar) {}
 
   void registerVars() override {
-    _solver.registerInvariantInput(_id, inputVar, LocalId(0), false);
+    _solver.registerInvariantInput(_id, inputVar, false);
     registerDefinedVar(outputVar);
     isRegistered = true;
   }
@@ -59,7 +59,7 @@ class MockInvariantAdvanced : public Invariant {
   void registerVars() override {
     assert(_id != NULL_ID);
     for (size_t i = 0; i < inputs.size(); ++i) {
-      _solver.registerInvariantInput(_id, inputs[i], LocalId(i), false);
+      _solver.registerInvariantInput(_id, inputs[i], false);
     }
     registerDefinedVar(output);
     isRegistered = true;
@@ -102,8 +102,8 @@ class MockSimplePlus : public Invariant {
   void registerVars() override {
     assert(_id != NULL_ID);
 
-    _solver.registerInvariantInput(_id, x, LocalId(0), false);
-    _solver.registerInvariantInput(_id, y, LocalId(1), false);
+    _solver.registerInvariantInput(_id, x, false);
+    _solver.registerInvariantInput(_id, y, false);
     registerDefinedVar(output);
     isRegistered = true;
   }

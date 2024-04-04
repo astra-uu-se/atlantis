@@ -18,6 +18,7 @@ class IfThenElse : public Invariant {
  private:
   VarId _output, _b;
   std::array<const VarId, 2> _xy;
+  Int _committedViolation;
 
  public:
   explicit IfThenElse(SolverBase&, VarId output, VarId b, VarId x, VarId y);
@@ -29,6 +30,7 @@ class IfThenElse : public Invariant {
   void notifyInputChanged(Timestamp, LocalId) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
+  void commit(Timestamp) override;
 };
 
 }  // namespace atlantis::propagation
