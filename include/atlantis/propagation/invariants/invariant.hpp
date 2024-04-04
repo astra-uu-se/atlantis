@@ -37,6 +37,10 @@ class Invariant {
    */
   void incValue(Timestamp ts, VarId id, Int val) const;
 
+  void makeDynamicInputActive(Timestamp, LocalId);
+
+  void makeDynamicInputInactive(Timestamp, LocalId);
+
  public:
   virtual ~Invariant() = default;
 

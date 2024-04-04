@@ -26,8 +26,8 @@ BoolOr::BoolOr(SolverBase& solver, const VarViewId output, const VarViewId x,
 
 void BoolOr::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, 0, false);
-  _solver.registerInvariantInput(_id, _y, 0, false);
+  _solver.registerInvariantInput(_id, _x, false);
+  _solver.registerInvariantInput(_id, _y, false);
   registerDefinedVar(_output);
 }
 

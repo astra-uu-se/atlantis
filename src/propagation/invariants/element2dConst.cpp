@@ -50,8 +50,8 @@ Element2dConst::Element2dConst(SolverBase& solver, const VarViewId output,
 
 void Element2dConst::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _indices[0], LocalId{0}, false);
-  _solver.registerInvariantInput(_id, _indices[1], LocalId{1}, false);
+  _solver.registerInvariantInput(_id, _indices[0], false);
+  _solver.registerInvariantInput(_id, _indices[1], false);
   registerDefinedVar(_output);
 }
 

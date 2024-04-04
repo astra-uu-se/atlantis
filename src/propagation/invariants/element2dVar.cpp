@@ -15,22 +15,21 @@ static Int numCols(const std::vector<std::vector<VarViewId>>& varMatrix) {
   return varMatrix.empty() ? 0 : static_cast<Int>(varMatrix.front().size());
 }
 
-inline size_t Element2dVar::safeIndex(const Int index,
-                                      const size_t pos) const noexcept {
-  return std::max<Int>(0,
-                       std::min(_dimensions[pos] - 1, index - _offsets[pos]));
+static inline size_t size(const std::vector<std::vector<VarId>>& varMatrix) {
+  return varMatrix.empty() ? 0 : (varMatrix.front().size() * varMatrix.size());
 }
 
-inline size_t Element2dVar::safeIndex1(const Int index) const noexcept {
-  return safeIndex(index, 0);
+static inline LocalId toLocalId(
+    const std::vector<std::vector<VarId>>& varMatrix, size_t index1,
+    size_t index2) {
+  assert(index1 < varMatrix.size());
+  assert(index2 < static_cast<size_t>(numCols(varMatrix)));
+  return LocalId(
+      varMatrix.empty() ? 0 : (varMatrix.front().size() * index1 + index2));
 }
 
-inline size_t Element2dVar::safeIndex2(const Int index) const noexcept {
-  return safeIndex(index, 1);
-}
-
-Element2dVar::Element2dVar(SolverBase& solver, const VarId output,
-                           const VarViewId index1, const VarViewId index2,
+Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarViewId index1,
+                           VarViewId index2,
                            std::vector<std::vector<VarViewId>>&& varMatrix,
                            const Int offset1, const Int offset2)
     : Invariant(solver),
@@ -51,13 +50,13 @@ Element2dVar::Element2dVar(SolverBase& solver, const VarViewId output,
 
 void Element2dVar::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _indices[0], 0, false);
-  _solver.registerInvariantInput(_id, _indices[1], 0, false);
   for (const auto& varRow : _varMatrix) {
     for (const VarViewId& input : varRow) {
-      _solver.registerInvariantInput(_id, input, 0, true);
+      _solver.registerInvariantInput(_id, input, true);
     }
   }
+  _solver.registerInvariantInput(_id, _indices[0], false);
+  _solver.registerInvariantInput(_id, _indices[1], false);
   registerDefinedVar(_output);
 }
 
@@ -97,19 +96,39 @@ VarViewId Element2dVar::dynamicInputVar(const Timestamp ts) const noexcept {
                    [safeIndex2(_solver.value(ts, _indices[1]))];
 }
 
-void Element2dVar::recompute(const Timestamp ts) {
-  assert(safeIndex1(_solver.value(ts, _indices[0])) <
-         static_cast<size_t>(_dimensions[0]));
-  assert(safeIndex2(_solver.value(ts, _indices[1])) <
-         static_cast<size_t>(_dimensions[1]));
-  updateValue(ts, _output,
-              _solver.value(
-                  ts, _varMatrix[safeIndex1(_solver.value(ts, _indices[0]))]
-                                [safeIndex2(_solver.value(ts, _indices[1]))]));
+void Element2dVar::recompute(Timestamp ts) {
+  const size_t index1 = safeIndex1(_solver.value(ts, _indices[0]));
+  assert(index1 < static_cast<size_t>(_dimensions[0]));
+
+  const size_t index2 = safeIndex2(_solver.value(ts, _indices[1]));
+  assert(index2 < static_cast<size_t>(_dimensions[1]));
+
+  for (size_t i = 0; i < _varMatrix.size(); ++i) {
+    for (size_t j = 0; j < _varMatrix[i].size(); ++j) {
+      if (i != index1 || j != index2) {
+        makeDynamicInputInactive(ts, toLocalId(_varMatrix, i, j));
+      }
+    }
+    makeDynamicInputActive(ts, toLocalId(_varMatrix, index1, index2));
+  }
+
+  updateValue(ts, _output, _solver.value(ts, _varMatrix[index1][index2]));
 }
 
-void Element2dVar::notifyInputChanged(const Timestamp ts, LocalId) {
-  recompute(ts);
+void Element2dVar::notifyInputChanged(Timestamp ts, LocalId localId) {
+  const size_t index1 = safeIndex1(_solver.value(ts, _indices[0]));
+  const size_t index2 = safeIndex2(_solver.value(ts, _indices[1]));
+  if (localId >= size(_varMatrix)) {
+    if (localId == size(_varMatrix)) {
+      makeDynamicInputInactive(
+          ts, toLocalId(_varMatrix, safeIndex1(_committedIndices[0]), index2));
+    } else {
+      makeDynamicInputInactive(
+          ts, toLocalId(_varMatrix, index1, safeIndex2(_committedIndices[1])));
+    }
+    makeDynamicInputActive(ts, toLocalId(_varMatrix, index1, index2));
+  }
+  updateValue(ts, _output, _solver.value(ts, _varMatrix[index1][index2]));
 }
 
 VarViewId Element2dVar::nextInput(const Timestamp ts) {
@@ -131,7 +150,21 @@ VarViewId Element2dVar::nextInput(const Timestamp ts) {
   }
 }
 
-void Element2dVar::notifyCurrentInputChanged(const Timestamp ts) {
-  recompute(ts);
+void Element2dVar::notifyCurrentInputChanged(Timestamp ts) {
+  assert(safeIndex1(_solver.value(ts, _indices[0])) <
+         static_cast<size_t>(_dimensions[0]));
+  assert(safeIndex2(_solver.value(ts, _indices[1])) <
+         static_cast<size_t>(_dimensions[1]));
+  updateValue(ts, _output,
+              _solver.value(
+                  ts, _varMatrix[safeIndex1(_solver.value(ts, _indices[0]))]
+                                [safeIndex2(_solver.value(ts, _indices[1]))]));
 }
+
+void Element2dVar::commit(Timestamp ts) {
+  Invariant::commit(ts);
+  _committedIndices[0] = safeIndex1(_solver.committedValue(_indices[0]));
+  _committedIndices[1] = safeIndex2(_solver.committedValue(_indices[1]));
+}
+
 }  // namespace atlantis::propagation

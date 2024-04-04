@@ -18,6 +18,7 @@ class ElementVar : public Invariant {
   VarViewId _index;
   std::vector<VarViewId> _varArray;
   Int _offset;
+  Int _committedIndex;
 
   [[nodiscard]] size_t safeIndex(Int index) const noexcept;
 
@@ -35,6 +36,7 @@ class ElementVar : public Invariant {
   void notifyInputChanged(Timestamp, LocalId) override;
   VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
+  void commit(Timestamp) override;
 };
 
 }  // namespace atlantis::propagation

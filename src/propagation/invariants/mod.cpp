@@ -21,8 +21,8 @@ Mod::Mod(SolverBase& solver, const VarViewId output, const VarViewId numerator,
 
 void Mod::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _numerator, 0, false);
-  _solver.registerInvariantInput(_id, _denominator, 0, false);
+  _solver.registerInvariantInput(_id, _nominator, false);
+  _solver.registerInvariantInput(_id, _denominator, false);
   registerDefinedVar(_output);
 }
 

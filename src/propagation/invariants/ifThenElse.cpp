@@ -4,9 +4,12 @@
 
 namespace atlantis::propagation {
 
-IfThenElse::IfThenElse(SolverBase& solver, const VarId output,
-                       const VarViewId condition, const VarViewId thenVar,
-                       const VarViewId elseVar)
+static inline size_t toIndex(Int violation) {
+  return static_cast<size_t>(violation != 0);
+}
+
+IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarViewId condition,
+                       VarViewId thenBranch, VarViewId elseBranch)
     : Invariant(solver),
       _output(output),
       _condition(condition),
@@ -21,14 +24,14 @@ IfThenElse::IfThenElse(SolverBase& solver, const VarViewId output,
 
 void IfThenElse::registerVars() {
   assert(_id != NULL_ID);
+  _solver.registerInvariantInput(_id, _branches[1], 0, true);
   _solver.registerInvariantInput(_id, _condition, 0, false);
   _solver.registerInvariantInput(_id, _branches[0], 0, true);
-  _solver.registerInvariantInput(_id, _branches[1], 0, true);
   registerDefinedVar(_output);
 }
 
-VarViewId IfThenElse::dynamicInputVar(const Timestamp ts) const noexcept {
-  return _branches[_solver.value(ts, _condition) != 0];
+VarViewId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
+  return _solver.value(ts, _xy[toIndex(_solver.value(ts, _b))]);
 }
 
 void IfThenElse::updateBounds(const bool widenOnly) {
@@ -49,16 +52,21 @@ void IfThenElse::updateBounds(const bool widenOnly) {
   }
 }
 
-void IfThenElse::recompute(const Timestamp ts) {
-  updateValue(
-      ts, _output,
-      _solver.value(
-          ts,
-          _branches[static_cast<size_t>(_solver.value(ts, _condition) != 0)]));
+void IfThenElse::recompute(Timestamp ts) {
+  const size_t index = toIndex(_solver.value(ts, _b));
+  makeDynamicInputInactive(ts, LocalId(toIndex(_solver.value(ts, _b) == 0)));
+  makeDynamicInputActive(ts, LocalId(index));
+
+  updateValue(ts, _output, _solver.value(ts, _xy[index]));
 }
 
-void IfThenElse::notifyInputChanged(const Timestamp ts, LocalId) {
-  recompute(ts);
+void IfThenElse::notifyInputChanged(Timestamp ts, LocalId localId) {
+  const size_t index = toIndex(_solver.value(ts, _b));
+  if (localId == size_t(2)) {
+    makeDynamicInputInactive(ts, LocalId(_committedViolation));
+    makeDynamicInputActive(ts, LocalId(index));
+  }
+  updateValue(ts, _output, _solver.value(ts, _xy[index]));
 }
 
 VarViewId IfThenElse::nextInput(const Timestamp ts) {
@@ -66,13 +74,20 @@ VarViewId IfThenElse::nextInput(const Timestamp ts) {
     case 0:
       return _condition;
     case 1:
-      return _branches[1 - (_solver.value(ts, _condition) == 0)];
+      return _xy[toIndex(_solver.value(ts, _b))];
     default:
       return VAR_VIEW_NULL_ID;  // Done
   }
 }
 
-void IfThenElse::notifyCurrentInputChanged(const Timestamp ts) {
-  recompute(ts);
+void IfThenElse::notifyCurrentInputChanged(Timestamp ts) {
+  updateValue(ts, _output,
+              _solver.value(ts, _xy[toIndex(_solver.value(ts, _b))]));
 }
+
+void IfThenElse::commit(Timestamp ts) {
+  Invariant::commit(ts);
+  _committedViolation = toIndex(_solver.committedValue(_b));
+}
+
 }  // namespace atlantis::propagation

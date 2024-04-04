@@ -8,6 +8,7 @@
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/invariants/invariant.hpp"
+#include "atlantis/propagation/arcs.hpp"
 #include "atlantis/propagation/store/store.hpp"
 
 namespace atlantis::propagation {
@@ -184,6 +185,15 @@ static std::vector<bool> partitionIntoLayersUsingSCC(
     for (const VarId varId : components[c]) {
       componentOfVar[varId] = c;
     }
+    for (const auto& dynamicInputData : dynamicInputVars(defInv)) {
+      // visit the input if unvisited:
+      if (!visited[dynamicInputData.varId]) {
+        partitionIntoLayers(visited, dynamicInputData.varId);
+      }
+      // update layer for varId:
+      assert(isDynamicInvariant(defInv));
+      layer = std::max(layer, _varLayerIndex[dynamicInputData.varId].layer);
+    }
   }
   std::vector<bool> visited(graph.numVars(), false);
   std::vector<bool> layerHasSCC;
@@ -238,6 +248,12 @@ static bool hasStaticCycle(const PropagationGraph& graph,
         if (discoverTime[inputId] < 0) {
           stack.emplace_back(inputId);
         }
+      }
+    }
+    for (const auto& dynamicInputData : dynamicInputVars(defInv)) {
+      assert(_varLayerIndex[dynamicInputData.varId].layer <= layer);
+      if (_varLayerIndex[dynamicInputData.varId].layer == layer) {
+        stack.emplace_back(dynamicInputData.varId);
       }
     }
   }

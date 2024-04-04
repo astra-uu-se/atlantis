@@ -26,19 +26,12 @@ void Invariant::incValue(const Timestamp ts, const VarId id,
   _solver.incValue(ts, id, val);
 }
 
-void Invariant::setLevel(const size_t newLevel) noexcept { _level = newLevel; }
-
-VarViewId Invariant::dynamicInputVar(Timestamp) const noexcept {
-  return VAR_VIEW_NULL_ID;
+void Invariant::makeDynamicInputActive(Timestamp ts, LocalId localId) {
+  _solver.makeDynamicInputActive(ts, _id, localId);
 }
 
-InvariantId Invariant::id() const noexcept { return _id; }
-
-void Invariant::setId(const InvariantId id) { _id = id; }
-
-VarId Invariant::primaryDefinedVar() const { return _primaryDefinedVar; }
-
-const std::vector<VarId>& Invariant::nonPrimaryDefinedVars() const {
-  return _definedVars;
+void Invariant::makeDynamicInputInactive(Timestamp ts, LocalId localId) {
+  _solver.makeDynamicInputInactive(ts, _id, localId);
 }
+
 }  // namespace atlantis::propagation

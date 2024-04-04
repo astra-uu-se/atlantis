@@ -30,6 +30,7 @@ class IfThenElse : public Invariant {
   void notifyInputChanged(Timestamp, LocalId) override;
   VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
+  void commit(Timestamp) override;
 };
 
 }  // namespace atlantis::propagation
