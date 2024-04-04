@@ -31,7 +31,7 @@ build:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
 	                                           -DBUILD_TESTS:BOOL=OFF \
-														                 -DBUILD_BENCHMARKS:BOOL=OFF ..
+	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
 	cd ${BUILD_DIR}; $(MAKE)
 
 .PHONY: build-tests
