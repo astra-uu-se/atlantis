@@ -13,9 +13,7 @@ namespace atlantis::propagation {
  * @param output result
  */
 BoolOr::BoolOr(SolverBase& solver, VarId output, VarId x, VarId y)
-    : Invariant(solver), _output(output), _x(x), _y(y) {
-  _modifiedVars.reserve(1);
-}
+    : Invariant(solver), _output(output), _x(x), _y(y) {}
 
 void BoolOr::registerVars() {
   assert(_id != NULL_ID);

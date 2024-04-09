@@ -5,9 +5,7 @@
 namespace atlantis::propagation {
 
 Plus::Plus(SolverBase& solver, VarId output, VarId x, VarId y)
-    : Invariant(solver), _output(output), _x(x), _y(y) {
-  _modifiedVars.reserve(1);
-}
+    : Invariant(solver), _output(output), _x(x), _y(y) {}
 
 void Plus::registerVars() {
   assert(_id != NULL_ID);

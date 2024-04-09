@@ -19,7 +19,6 @@ class Linear : public Invariant {
   VarId _output;
   std::vector<Int> _coeffs;
   std::vector<VarId> _varArray;
-  std::vector<Int> _committedValues;
 
  public:
   explicit Linear(SolverBase&, VarId output, std::vector<VarId>&& varArray);
@@ -30,7 +29,6 @@ class Linear : public Invariant {
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  void commit(Timestamp) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };

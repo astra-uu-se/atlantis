@@ -13,10 +13,7 @@ Linear::Linear(SolverBase& solver, VarId output, std::vector<Int>&& coeffs,
     : Invariant(solver),
       _output(output),
       _coeffs(std::move(coeffs)),
-      _varArray(std::move(varArray)),
-      _committedValues(_varArray.size(), 0) {
-  _modifiedVars.reserve(_varArray.size());
-}
+      _varArray(std::move(varArray)) {}
 
 void Linear::registerVars() {
   // precondition: this invariant must be registered with the solver before it
@@ -52,9 +49,11 @@ void Linear::recompute(Timestamp ts) {
 }
 
 void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(id < _committedValues.size());
-  const Int newValue = _solver.value(ts, _varArray[id]);
-  incValue(ts, _output, (newValue - _committedValues[id]) * _coeffs[id]);
+  assert(id < _varArray.size());
+  incValue(ts, _output,
+           (_solver.value(ts, _varArray[id]) -
+            _solver.committedValue(_varArray[id])) *
+               _coeffs[id]);
 }
 
 VarId Linear::nextInput(Timestamp ts) {
@@ -71,10 +70,4 @@ void Linear::notifyCurrentInputChanged(Timestamp ts) {
   notifyInputChanged(ts, _state.value(ts));
 }
 
-void Linear::commit(Timestamp ts) {
-  Invariant::commit(ts);
-  for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _solver.committedValue(_varArray[i]);
-  }
-}
 }  // namespace atlantis::propagation

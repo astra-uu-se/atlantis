@@ -14,51 +14,7 @@ class SolverBase;  // Forward declaration
 class Invariant {
  protected:
   SolverBase& _solver;
-  /**
-   * A simple queue structure of a fixed length to hold what input
-   * variables that have been updated.
-   */
-  class NotificationQueue {
-   public:
-    void reserve(size_t size) {
-      // This function should only be called during setup and need not be
-      // efficient
-      queue.resize(size);
-      init();
-    }
 
-    void push(LocalId id) {
-      assert(id < queue.size());
-      if (queue[id] == id.id) {
-        std::swap(queue[id], head);
-      }
-    }
-
-    LocalId pop() {
-      LocalId current(head);
-      std::swap(head, queue[head]);
-      return current;
-    }
-
-    [[nodiscard]] size_t size() const { return queue.size(); }
-
-    [[nodiscard]] bool hasNext() const { return head < queue.size(); }
-
-    NotificationQueue() : head(0), queue() { queue.push_back(0); }
-
-   private:
-    size_t head;
-    std::vector<size_t> queue;
-
-    void init() {
-      for (size_t i = 0; i < queue.size(); ++i) {
-        queue[i] = i;
-      }
-      head = queue.size();
-    }
-  };
-
-  NotificationQueue _modifiedVars{};
   std::vector<VarId> _definedVars{};
   // State used for returning next input. Null state is -1 by default
   CommittableInt _state;
@@ -77,16 +33,6 @@ class Invariant {
   void registerDefinedVar(VarId id);
 
   /**
-   * Used in Input-to-Output propagation to notify that a
-   * variable local to the invariant has had its value changed. This
-   * method is called for each variable that was marked as modified
-   * in notify.
-   * @param ts the current timestamp
-   * @param localId the local id of the variable.
-   */
-  virtual void notifyInputChanged(Timestamp ts, LocalId localId) = 0;
-
-  /**
    * Updates the value of variable without queueing it for propagation
    */
   void updateValue(Timestamp ts, VarId id, Int val);
@@ -97,13 +43,6 @@ class Invariant {
 
  public:
   virtual ~Invariant() = default;
-
-  /**
-   * The total number of notifiable variables.
-   */
-  [[nodiscard]] size_t notifiableVarsSize() const {
-    return _modifiedVars.size();
-  }
 
   /**
    * @brief The level of the invariant in the invariant graph
@@ -159,18 +98,14 @@ class Invariant {
   virtual void notifyCurrentInputChanged(Timestamp) = 0;
 
   /**
-   * Used in the Input-to-Output propagation to notify that an
-   * input variable has had its value changed.
+   * Used in Input-to-Output propagation to notify that a
+   * variable local to the invariant has had its value changed. This
+   * method is called for each variable that was marked as modified
+   * in notify.
+   * @param ts the current timestamp
+   * @param localId the local id of the variable.
    */
-  void notify(LocalId);
-
-  /**
-   * Used in the Input-to-Output propagation when the invariant
-   * has been notified of all modified input variables and
-   * the primary and non-primary defined variables are to be
-   * computed.
-   */
-  void compute(Timestamp);
+  virtual void notifyInputChanged(Timestamp ts, LocalId localId) = 0;
 
   virtual void commit(Timestamp) { _isPostponed = false; };
 

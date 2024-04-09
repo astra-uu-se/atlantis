@@ -69,7 +69,8 @@ TEST_F(GlobalCardinalityOpenTest, UpdateBounds) {
       solver->setValue(solver->currentTimestamp(), inputs.at(1), bVal);
       for (Int cVal = lb; cVal <= ub; ++cVal) {
         solver->setValue(solver->currentTimestamp(), inputs.at(2), cVal);
-        invariant.compute(solver->currentTimestamp());
+        invariant.updateBounds(false);
+        invariant.recompute(solver->currentTimestamp());
         for (const VarId& output : outputs) {
           EXPECT_GE(solver->value(solver->currentTimestamp(), output), 0);
           EXPECT_LE(solver->value(solver->currentTimestamp(), output),

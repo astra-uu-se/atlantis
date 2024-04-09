@@ -54,9 +54,7 @@ class MockInvariantAdvanced : public Invariant {
 
   explicit MockInvariantAdvanced(SolverBase& solver, VarId t_output,
                                  std::vector<VarId>&& t_inputs)
-      : Invariant(solver), output(t_output), inputs(std::move(t_inputs)) {
-    _modifiedVars.reserve(inputs.size());
-  }
+      : Invariant(solver), output(t_output), inputs(std::move(t_inputs)) {}
 
   void registerVars() override {
     assert(_id != NULL_ID);
@@ -90,7 +88,6 @@ class MockSimplePlus : public Invariant {
         x(t_x),
         y(t_y),
         position(t_position) {
-    _modifiedVars.reserve(2);
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp ts) {
           updateValue(ts, output, _solver.value(ts, x) + _solver.value(ts, y));

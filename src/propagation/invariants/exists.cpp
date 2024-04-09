@@ -10,9 +10,7 @@ Exists::Exists(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
     : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
-      _min(NULL_TIMESTAMP, 0) {
-  _modifiedVars.reserve(_varArray.size());
-}
+      _minIndex(NULL_TIMESTAMP, 0) {}
 
 void Exists::registerVars() {
   assert(_id != NULL_ID);
@@ -29,35 +27,44 @@ void Exists::updateBounds(bool widenOnly) {
     lb = std::min(lb, _solver.lowerBound(input));
     ub = std::min(ub, _solver.upperBound(input));
   }
-  _solver.updateBounds(_output, std::max(Int(0), lb), ub, widenOnly);
+  _solver.updateBounds(_output, std::max(Int(0), lb), std::max(Int(0), ub),
+                       widenOnly);
 }
 
 void Exists::recompute(Timestamp ts) {
-  Int min_i = 0;
-  Int min_val = _solver.value(ts, _varArray[0]);
+  Int minIndex = 0;
+  Int minVal = _solver.value(ts, _varArray[0]);
   for (size_t i = 1; i < _varArray.size(); ++i) {
-    if (_solver.value(ts, _varArray[i]) < min_val) {
-      min_i = static_cast<Int>(i);
-      min_val = _solver.value(ts, _varArray[i]);
+    if (_solver.value(ts, _varArray[i]) < minVal) {
+      minIndex = static_cast<Int>(i);
+      minVal = _solver.value(ts, _varArray[i]);
     }
-    assert(min_val >= 0);
-    if (min_val == 0) {
+    assert(minVal >= 0);
+    if (minVal == 0) {
       break;
     }
   }
-  _min.setValue(ts, min_i);
-  updateValue(ts, _output, min_val);
+  _minIndex.setValue(ts, minIndex);
+  updateValue(ts, _output, minVal);
 }
 
 void Exists::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(0 <= _min.value(ts) &&
-         _min.value(ts) < static_cast<Int>(_varArray.size()));
-  if (static_cast<size_t>(_min.value(ts)) == id) {
-    recompute(ts);
+  assert(0 <= _minIndex.value(ts) &&
+         _minIndex.value(ts) < static_cast<Int>(_varArray.size()));
+  assert(size_t(id) < _varArray.size());
+  if (static_cast<size_t>(_minIndex.value(ts)) == id) {
+    if (_solver.value(ts, _varArray[id]) >
+        _solver.committedValue(_varArray[id])) {
+      recompute(ts);
+    }
   } else if (_solver.value(ts, _varArray[id]) <=
-             _solver.value(ts, _varArray[_min.value(ts)])) {
-    _min.setValue(ts, static_cast<Int>(id));
-    updateValue(ts, _output, _solver.value(ts, _varArray[_min.value(ts)]));
+             _solver.value(ts, _varArray[_minIndex.value(ts)])) {
+    if (_solver.value(ts, _output) < _solver.value(ts, _varArray[id])) {
+      recompute(ts);
+    } else {
+      _minIndex.setValue(ts, static_cast<Int>(id));
+      updateValue(ts, _output, _solver.value(ts, _varArray[id]));
+    }
   }
 }
 
@@ -78,6 +85,6 @@ void Exists::notifyCurrentInputChanged(Timestamp ts) {
 
 void Exists::commit(Timestamp ts) {
   Invariant::commit(ts);
-  _min.commitIf(ts);
+  _minIndex.commitIf(ts);
 }
 }  // namespace atlantis::propagation

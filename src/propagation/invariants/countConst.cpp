@@ -7,13 +7,7 @@ namespace atlantis::propagation {
 
 CountConst::CountConst(SolverBase& solver, VarId output, Int y,
                        std::vector<VarId>&& vars)
-    : Invariant(solver),
-      _output(output),
-      _y(y),
-      _vars(std::move(vars)),
-      _hasCountValue(_vars.size(), 0) {
-  _modifiedVars.reserve(_vars.size());
-}
+    : Invariant(solver), _output(output), _y(y), _vars(std::move(vars)) {}
 
 void CountConst::registerVars() {
   // precondition: this invariant must be registered with the solver before it
@@ -39,12 +33,14 @@ void CountConst::recompute(Timestamp ts) {
 }
 
 void CountConst::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(id < _hasCountValue.size());
+  assert(id < _vars.size());
   const Int newValue = static_cast<Int>(_solver.value(ts, _vars[id]) == _y);
-  if (_hasCountValue[id] == newValue) {
+  const Int committedValue =
+      static_cast<Int>(_solver.committedValue(_vars[id]) == _y);
+  if (newValue == committedValue) {
     return;
   }
-  incValue(ts, _output, newValue - _hasCountValue[id]);
+  incValue(ts, _output, newValue - committedValue);
 }
 
 VarId CountConst::nextInput(Timestamp ts) {
@@ -61,11 +57,4 @@ void CountConst::notifyCurrentInputChanged(Timestamp ts) {
   notifyInputChanged(ts, _state.value(ts));
 }
 
-void CountConst::commit(Timestamp ts) {
-  Invariant::commit(ts);
-  for (size_t i = 0; i < _hasCountValue.size(); ++i) {
-    _hasCountValue[i] =
-        static_cast<Int>(_solver.committedValue(_vars[i]) == _y);
-  }
-}
 }  // namespace atlantis::propagation

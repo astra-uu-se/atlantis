@@ -13,7 +13,6 @@ namespace atlantis::propagation {
 class AllDifferent : public ViolationInvariant {
  protected:
   std::vector<VarId> _vars;
-  std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
   signed char increaseCount(Timestamp ts, Int value);

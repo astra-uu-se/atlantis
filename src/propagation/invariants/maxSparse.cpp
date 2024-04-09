@@ -11,7 +11,6 @@ MaxSparse::MaxSparse(SolverBase& solver, VarId output,
       _varArray(std::move(varArray)),
       _localPriority(_varArray.size()) {
   assert(!_varArray.empty());
-  _modifiedVars.reserve(_varArray.size());
 }
 
 void MaxSparse::registerVars() {

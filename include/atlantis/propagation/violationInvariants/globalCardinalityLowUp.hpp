@@ -17,7 +17,6 @@ class GlobalCardinalityLowUp : public ViolationInvariant {
   std::vector<VarId> _vars;
   std::vector<Int> _lowerBounds;
   std::vector<Int> _upperBounds;
-  std::vector<Int> _committedValues;
   CommittableInt _shortage;
   CommittableInt _excess;
   std::vector<CommittableInt> _counts;

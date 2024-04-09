@@ -19,7 +19,6 @@ class CountConst : public Invariant {
   VarId _output;
   Int _y;
   std::vector<VarId> _vars;
-  std::vector<Int> _hasCountValue;
 
  public:
   explicit CountConst(SolverBase&, VarId output, Int y,
@@ -29,7 +28,6 @@ class CountConst : public Invariant {
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  void commit(Timestamp) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };

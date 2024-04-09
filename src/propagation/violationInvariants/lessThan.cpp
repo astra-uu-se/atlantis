@@ -9,9 +9,7 @@ namespace atlantis::propagation {
  * @param y variable of rhs
  */
 LessThan::LessThan(SolverBase& solver, VarId violationId, VarId x, VarId y)
-    : ViolationInvariant(solver, violationId), _x(x), _y(y) {
-  _modifiedVars.reserve(1);
-}
+    : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
 void LessThan::registerVars() {
   assert(_id != NULL_ID);
