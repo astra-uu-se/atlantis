@@ -12,9 +12,7 @@ ElementVar::ElementVar(SolverBase& solver, VarId output, VarId index,
       _output(output),
       _index(index),
       _varArray(std::move(varArray)),
-      _offset(offset) {
-  _modifiedVars.reserve(1);
-}
+      _offset(offset) {}
 
 void ElementVar::registerVars() {
   assert(_id != NULL_ID);

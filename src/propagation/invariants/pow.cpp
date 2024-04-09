@@ -7,9 +7,7 @@
 namespace atlantis::propagation {
 
 Pow::Pow(SolverBase& solver, VarId output, VarId base, VarId exponent)
-    : Invariant(solver), _output(output), _base(base), _exponent(exponent) {
-  _modifiedVars.reserve(1);
-}
+    : Invariant(solver), _output(output), _base(base), _exponent(exponent) {}
 
 void Pow::registerVars() {
   assert(_id != NULL_ID);

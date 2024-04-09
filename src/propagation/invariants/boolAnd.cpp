@@ -13,9 +13,7 @@ namespace atlantis::propagation {
  * @param output the result
  */
 BoolAnd::BoolAnd(SolverBase& solver, VarId output, VarId x, VarId y)
-    : Invariant(solver), _output(output), _x(x), _y(y) {
-  _modifiedVars.reserve(1);
-}
+    : Invariant(solver), _output(output), _x(x), _y(y) {}
 
 void BoolAnd::registerVars() {
   assert(_id != NULL_ID);

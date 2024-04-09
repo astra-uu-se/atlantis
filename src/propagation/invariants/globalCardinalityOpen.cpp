@@ -29,10 +29,8 @@ GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
       _inputs(std::move(inputs)),
       _cover(std::move(cover)),
       _coverVarIndex(),
-      _committedValues(_inputs.size(), 0),
       _counts(),
       _offset(0) {
-  _modifiedVars.reserve(_inputs.size());
   assert(_cover.size() == _outputs.size());
   assert(all_in_range(0, _cover.size(), [&](const Int i) {
     return all_in_range(i + 1, _cover.size(), [&](const Int j) {
@@ -88,12 +86,13 @@ void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
 
 void GlobalCardinalityOpen::notifyInputChanged(Timestamp timestamp,
                                                LocalId localId) {
-  assert(localId < _committedValues.size());
+  assert(localId < _inputs.size());
   const Int newValue = _solver.value(timestamp, _inputs[localId]);
-  if (newValue == _committedValues[localId]) {
+  const Int committedValue = _solver.committedValue(_inputs[localId]);
+  if (newValue == committedValue) {
     return;
   }
-  decreaseCountAndUpdateOutput(timestamp, _committedValues[localId]);
+  decreaseCountAndUpdateOutput(timestamp, committedValue);
   increaseCountAndUpdateOutput(timestamp, newValue);
 }
 
@@ -113,10 +112,6 @@ void GlobalCardinalityOpen::notifyCurrentInputChanged(Timestamp timestamp) {
 
 void GlobalCardinalityOpen::commit(Timestamp timestamp) {
   Invariant::commit(timestamp);
-
-  for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _solver.committedValue(_inputs[i]);
-  }
 
   for (CommittableInt& CommittableInt : _counts) {
     CommittableInt.commitIf(timestamp);

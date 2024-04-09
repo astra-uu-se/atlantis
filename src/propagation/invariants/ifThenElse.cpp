@@ -4,9 +4,7 @@ namespace atlantis::propagation {
 
 IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarId b, VarId x,
                        VarId y)
-    : Invariant(solver), _output(output), _b(b), _xy({x, y}) {
-  _modifiedVars.reserve(1);
-}
+    : Invariant(solver), _output(output), _b(b), _xy({x, y}) {}
 
 void IfThenElse::registerVars() {
   assert(_id != NULL_ID);

@@ -21,7 +21,6 @@ class Count : public Invariant {
   VarId _output;
   VarId _y;
   std::vector<VarId> _vars;
-  std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
   void increaseCount(Timestamp ts, Int value);

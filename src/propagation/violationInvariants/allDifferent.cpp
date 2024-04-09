@@ -14,11 +14,8 @@ AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
                            std::vector<VarId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
-      _committedValues(_vars.size(), 0),
       _counts(),
-      _offset(0) {
-  _modifiedVars.reserve(_vars.size());
-}
+      _offset(0) {}
 
 void AllDifferent::registerVars() {
   assert(_id != NULL_ID);
@@ -60,13 +57,14 @@ void AllDifferent::recompute(Timestamp ts) {
 }
 
 void AllDifferent::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(id < _committedValues.size());
+  assert(id < _vars.size());
   const Int newValue = _solver.value(ts, _vars[id]);
-  if (newValue == _committedValues[id]) {
+  const Int committedValue = _solver.committedValue(_vars[id]);
+  if (newValue == committedValue) {
     return;
   }
   incValue(ts, _violationId,
-           static_cast<Int>(decreaseCount(ts, _committedValues[id]) +
+           static_cast<Int>(decreaseCount(ts, committedValue) +
                             increaseCount(ts, newValue)));
 }
 
@@ -85,10 +83,6 @@ void AllDifferent::notifyCurrentInputChanged(Timestamp ts) {
 
 void AllDifferent::commit(Timestamp ts) {
   Invariant::commit(ts);
-
-  for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _solver.committedValue(_vars[i]);
-  }
 
   for (CommittableInt& committableInt : _counts) {
     committableInt.commitIf(ts);

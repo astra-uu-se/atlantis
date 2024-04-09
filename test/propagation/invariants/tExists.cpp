@@ -1,5 +1,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rapidcheck/gen/Numeric.h>
 #include <rapidcheck/gtest.h>
 
 #include <limits>
@@ -10,6 +11,7 @@
 #include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
+using ::rc::gen::inRange;
 
 using namespace atlantis::propagation;
 
@@ -254,8 +256,7 @@ TEST_F(ExistsTest, Commit) {
   }
 }
 
-RC_GTEST_FIXTURE_PROP(ExistsTest, ShouldAlwaysBeMin,
-                      (uint aVal, uint bVal, uint cVal)) {
+RC_GTEST_FIXTURE_PROP(ExistsTest, ShouldAlwaysBeMin, ()) {
   solver->open();
 
   const VarId a = solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
@@ -266,10 +267,14 @@ RC_GTEST_FIXTURE_PROP(ExistsTest, ShouldAlwaysBeMin,
   solver->makeInvariant<Exists>(*solver, output, std::vector<VarId>{a, b, c});
   solver->close();
 
+  const Int aVal = *inRange<Int>(solver->lowerBound(a), solver->upperBound(a));
+  const Int bVal = *inRange<Int>(solver->lowerBound(b), solver->upperBound(b));
+  const Int cVal = *inRange<Int>(solver->lowerBound(c), solver->upperBound(c));
+
   solver->beginMove();
-  solver->setValue(a, static_cast<Int>(aVal));
-  solver->setValue(b, static_cast<Int>(bVal));
-  solver->setValue(c, static_cast<Int>(cVal));
+  solver->setValue(a, aVal);
+  solver->setValue(b, bVal);
+  solver->setValue(c, cVal);
   solver->endMove();
 
   solver->beginCommit();

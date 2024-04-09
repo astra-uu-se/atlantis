@@ -66,8 +66,8 @@ class Solver : public SolverBase {
   /***
    * @param id the id of the changed variable
    */
-  void enqueueComputedVar(VarId) final;
-  void enqueueComputedVar(VarId, size_t layer);
+  void enqueueDefinedVar(VarId) final;
+  void enqueueDefinedVar(VarId, size_t layer);
 
   [[nodiscard]] inline PropagationMode propagationMode() const {
     return _propagationMode;
@@ -196,7 +196,7 @@ inline void Solver::setValue(Timestamp ts, VarId id, Int val) {
       _modifiedSearchVars.erase(id.id);
     }
   }
-  enqueueComputedVar(id);
+  enqueueDefinedVar(id);
 }
 
 inline void Solver::setPropagationMode(PropagationMode propMode) {

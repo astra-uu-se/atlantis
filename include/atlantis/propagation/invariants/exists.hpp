@@ -19,7 +19,7 @@ class Exists : public Invariant {
  private:
   VarId _output;
   std::vector<VarId> _varArray;
-  CommittableInt _min;
+  CommittableInt _minIndex;
 
  public:
   explicit Exists(SolverBase&, VarId output, std::vector<VarId>&& varArray);

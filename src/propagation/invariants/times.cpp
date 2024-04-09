@@ -6,9 +6,7 @@
 namespace atlantis::propagation {
 
 Times::Times(SolverBase& solver, VarId output, VarId x, VarId y)
-    : Invariant(solver), _output(output), _x(x), _y(y) {
-  _modifiedVars.reserve(1);
-}
+    : Invariant(solver), _output(output), _x(x), _y(y) {}
 
 void Times::registerVars() {
   assert(_id != NULL_ID);

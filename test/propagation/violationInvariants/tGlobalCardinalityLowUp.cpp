@@ -78,7 +78,8 @@ TEST_F(GlobalCardinalityLowUpTest, UpdateBounds) {
         solver->setValue(solver->currentTimestamp(), inputs.at(1), bVal);
         for (Int cVal = lb; cVal <= ub; ++cVal) {
           solver->setValue(solver->currentTimestamp(), inputs.at(2), cVal);
-          invariant.compute(solver->currentTimestamp());
+          invariant.updateBounds(false);
+          invariant.recompute(solver->currentTimestamp());
           const Int viol =
               solver->value(solver->currentTimestamp(), violationId);
           EXPECT_TRUE(viol <= solver->upperBound(violationId));

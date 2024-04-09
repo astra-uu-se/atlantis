@@ -13,7 +13,6 @@ namespace atlantis::propagation {
 class BoolAllEqual : public ViolationInvariant {
  protected:
   std::vector<VarId> _vars;
-  std::vector<Int> _committedValues;
   CommittableInt _numTrue;
 
  public:

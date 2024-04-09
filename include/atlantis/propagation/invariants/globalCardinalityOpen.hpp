@@ -16,7 +16,6 @@ class GlobalCardinalityOpen : public Invariant {
   std::vector<VarId> _inputs;
   std::vector<Int> _cover;
   std::vector<Int> _coverVarIndex;
-  std::vector<Int> _committedValues;
   std::vector<CommittableInt> _counts;
   Int _offset;
   void increaseCount(Timestamp ts, Int value);

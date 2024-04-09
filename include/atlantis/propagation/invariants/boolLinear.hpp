@@ -19,8 +19,6 @@ class BoolLinear : public Invariant {
   VarId _output;
   std::vector<Int> _coeffs;
   std::vector<VarId> _violArray;
-  // (_isSatisfied[i] == 1) <=> (_violArray[i] == 0)
-  std::vector<Int> _isSatisfied;
 
  public:
   explicit BoolLinear(SolverBase&, VarId output,
@@ -32,7 +30,6 @@ class BoolLinear : public Invariant {
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  void commit(Timestamp) override;
   VarId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };

@@ -75,7 +75,7 @@ class SolverBase {
     return _store.sourceId(id);
   }
 
-  virtual void enqueueComputedVar(VarId) = 0;
+  virtual void enqueueDefinedVar(VarId) = 0;
 
   [[nodiscard]] Int value(Timestamp, VarId);
   [[nodiscard]] inline Int currentValue(VarId id) {

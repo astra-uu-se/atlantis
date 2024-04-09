@@ -4,18 +4,6 @@
 
 namespace atlantis::propagation {
 
-void Invariant::notify(LocalId id) { _modifiedVars.push(id); }
-
-void Invariant::compute(Timestamp ts) {
-  assert(_modifiedVars.size() > 0);
-  assert(_primaryDefinedVar != NULL_ID);
-
-  while (_modifiedVars.hasNext()) {
-    // don't turn this into a for loop...
-    this->notifyInputChanged(ts, _modifiedVars.pop());
-  }
-}
-
 void Invariant::registerDefinedVar(VarId id) {
   if (_primaryDefinedVar == NULL_ID) {
     _primaryDefinedVar = id;
