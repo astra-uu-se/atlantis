@@ -22,9 +22,7 @@ Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarId index1,
       _indices{index1, index2},
       _dimensions{static_cast<Int>(_varMatrix.size()), numCols(_varMatrix)},
       _offsets{offset1, offset2},
-      _output(output) {
-  _modifiedVars.reserve(1);
-}
+      _output(output) {}
 
 void Element2dVar::registerVars() {
   assert(_id != NULL_ID);

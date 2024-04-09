@@ -8,9 +8,7 @@ Mod::Mod(SolverBase& solver, VarId output, VarId nominator, VarId denominator)
     : Invariant(solver),
       _output(output),
       _nominator(nominator),
-      _denominator(denominator) {
-  _modifiedVars.reserve(1);
-}
+      _denominator(denominator) {}
 
 void Mod::registerVars() {
   assert(_id != NULL_ID);

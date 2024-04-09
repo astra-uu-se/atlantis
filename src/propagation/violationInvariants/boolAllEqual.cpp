@@ -12,10 +12,7 @@ BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
                            std::vector<VarId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
-      _committedValues(_vars.size(), 0),
-      _numTrue(NULL_TIMESTAMP, 0) {
-  _modifiedVars.reserve(_vars.size());
-}
+      _numTrue(NULL_TIMESTAMP, 0) {}
 
 void BoolAllEqual::registerVars() {
   assert(_id != NULL_ID);
@@ -48,14 +45,15 @@ void BoolAllEqual::recompute(Timestamp ts) {
 }
 
 void BoolAllEqual::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(id < _committedValues.size());
+  assert(id < _vars.size());
   const Int newValue = _solver.value(ts, _vars[id]);
-  if ((newValue == 0) == (_committedValues[id] == 0)) {
+  const Int committedValue = _solver.committedValue(_vars[id]);
+  if ((newValue == 0) == (committedValue == 0)) {
     return;
   }
 
   _numTrue.incValue(ts, static_cast<Int>(newValue == 0) -
-                            static_cast<Int>(_committedValues[id] == 0));
+                            static_cast<Int>(committedValue == 0));
 
   assert(0 <= _numTrue.value(ts) &&
          _numTrue.value(ts) <= static_cast<Int>(_vars.size()));
@@ -80,10 +78,6 @@ void BoolAllEqual::notifyCurrentInputChanged(Timestamp ts) {
 
 void BoolAllEqual::commit(Timestamp ts) {
   Invariant::commit(ts);
-
-  for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _solver.committedValue(_vars[i]);
-  }
 
   _numTrue.commitIf(ts);
 }

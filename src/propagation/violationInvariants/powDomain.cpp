@@ -10,9 +10,7 @@ namespace atlantis::propagation {
  * @param y parameter of rhs
  */
 PowDomain::PowDomain(SolverBase& solver, VarId violationId, VarId x, VarId y)
-    : ViolationInvariant(solver, violationId), _x(x), _y(y) {
-  _modifiedVars.reserve(1);
-}
+    : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
 void PowDomain::registerVars() {
   assert(_id != NULL_ID);

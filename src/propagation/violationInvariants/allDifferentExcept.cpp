@@ -12,7 +12,6 @@ AllDifferentExcept::AllDifferentExcept(SolverBase& solver, VarId violationId,
                                        std::vector<VarId>&& vars,
                                        const std::vector<Int>& ignored)
     : AllDifferent(solver, violationId, std::move(vars)) {
-  _modifiedVars.reserve(_vars.size());
   const auto [lb, ub] =
       std::minmax_element(std::begin(ignored), std::end(ignored));
   assert(*lb <= *ub);
@@ -39,15 +38,14 @@ void AllDifferentExcept::recompute(Timestamp ts) {
 }
 
 void AllDifferentExcept::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(id < _committedValues.size());
+  assert(id < _vars.size());
   const Int newValue = _solver.value(ts, _vars[id]);
-  if (newValue == _committedValues[id]) {
+  const Int committedValue = _solver.committedValue(_vars[id]);
+  if (newValue == committedValue) {
     return;
   }
   incValue(ts, _violationId,
-           (isIgnored(_committedValues[id])
-                ? 0
-                : decreaseCount(ts, _committedValues[id])) +
+           (isIgnored(committedValue) ? 0 : decreaseCount(ts, committedValue)) +
                (isIgnored(newValue) ? 0 : increaseCount(ts, newValue)));
 }
 }  // namespace atlantis::propagation

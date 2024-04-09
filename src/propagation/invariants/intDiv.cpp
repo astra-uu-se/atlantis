@@ -11,9 +11,7 @@ IntDiv::IntDiv(SolverBase& solver, VarId output, VarId nominator,
     : Invariant(solver),
       _output(output),
       _nominator(nominator),
-      _denominator(denominator) {
-  _modifiedVars.reserve(1);
-}
+      _denominator(denominator) {}
 
 void IntDiv::registerVars() {
   assert(_id != NULL_ID);
@@ -59,8 +57,6 @@ void IntDiv::updateBounds(bool widenOnly) {
 
 void IntDiv::close(Timestamp) {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _nominator, 0, false);
-  _solver.registerInvariantInput(_id, _denominator, 0, false);
 
   const Int denLb = _solver.lowerBound(_denominator);
   const Int denUb = _solver.upperBound(_denominator);

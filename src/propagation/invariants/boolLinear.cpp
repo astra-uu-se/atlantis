@@ -16,10 +16,7 @@ BoolLinear::BoolLinear(SolverBase& solver, VarId output,
     : Invariant(solver),
       _output(output),
       _coeffs(std::move(coeffs)),
-      _violArray(std::move(violArray)),
-      _isSatisfied(_violArray.size(), 0) {
-  _modifiedVars.reserve(_violArray.size());
-}
+      _violArray(std::move(violArray)) {}
 
 void BoolLinear::registerVars() {
   // precondition: this invariant must be registered with the solver before it
@@ -63,12 +60,14 @@ void BoolLinear::recompute(Timestamp ts) {
 }
 
 void BoolLinear::notifyInputChanged(Timestamp ts, LocalId id) {
-  assert(id < _isSatisfied.size());
+  assert(id < _violArray.size());
   const Int newValue = static_cast<Int>(_solver.value(ts, _violArray[id]) == 0);
-  if (newValue == _isSatisfied[id]) {
+  const Int committedValue =
+      static_cast<Int>(_solver.committedValue(_violArray[id]) == 0);
+  if (newValue == committedValue) {
     return;
   }
-  incValue(ts, _output, (newValue - _isSatisfied[id]) * _coeffs[id]);
+  incValue(ts, _output, (newValue - committedValue) * _coeffs[id]);
 }
 
 VarId BoolLinear::nextInput(Timestamp ts) {
@@ -85,11 +84,4 @@ void BoolLinear::notifyCurrentInputChanged(Timestamp ts) {
   notifyInputChanged(ts, _state.value(ts));
 }
 
-void BoolLinear::commit(Timestamp ts) {
-  Invariant::commit(ts);
-  for (size_t i = 0; i < _isSatisfied.size(); ++i) {
-    _isSatisfied[i] =
-        static_cast<Int>(_solver.committedValue(_violArray[i]) == 0);
-  }
-}
 }  // namespace atlantis::propagation

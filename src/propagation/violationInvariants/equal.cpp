@@ -9,9 +9,7 @@ namespace atlantis::propagation {
  * @param y variable of rhs
  */
 Equal::Equal(SolverBase& solver, VarId violationId, VarId x, VarId y)
-    : ViolationInvariant(solver, violationId), _x(x), _y(y) {
-  _modifiedVars.reserve(1);
-}
+    : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
 void Equal::registerVars() {
   assert(_id != NULL_ID);

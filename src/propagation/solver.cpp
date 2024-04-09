@@ -87,7 +87,7 @@ void Solver::close() {
 }
 
 //---------------------Registration---------------------
-void Solver::enqueueComputedVar(VarId id) {
+void Solver::enqueueDefinedVar(VarId id) {
   if (_isEnqueued.get(id.id)) {
     return;
   }
@@ -95,7 +95,7 @@ void Solver::enqueueComputedVar(VarId id) {
   _isEnqueued.set(id.id, true);
 }
 
-void Solver::enqueueComputedVar(VarId id, size_t curLayer) {
+void Solver::enqueueDefinedVar(VarId id, size_t curLayer) {
   if (_isEnqueued.get(id.id)) {
     return;
   }
@@ -141,7 +141,7 @@ VarId Solver::dequeueComputedVar(Timestamp) {
   }
   VarId nextVar(_propGraph.dequeuePropagationQueue());
   _isEnqueued.set(nextVar.id, false);
-  // Due to enqueueComputedVar, all variables in the queue are "active".
+  // Due to enqueueDefineddVar, all variables in the queue are "active".
   return nextVar;
 }
 
@@ -308,16 +308,16 @@ void Solver::propagate() {
       assert(queuedVar.idType == VarIdType::var);
       assert(_propGraph.layer(queuedVar) == curLayer);
       // queuedVar has been computed under _currentTimestamp
-      const IntVar& var = _store.intVar(queuedVar);
-
       const InvariantId definingInvariant =
           _propGraph.definingInvariant(queuedVar.id);
 
       if (definingInvariant != NULL_ID) {
+        // If the variable is a defined var
         Invariant& defInv = _store.invariant(definingInvariant);
+        // The usage of primary defined var ensures the following if statement
+        // is entered only once per invariant:
         if (queuedVar == defInv.primaryDefinedVar()) {
-          const Int oldValue = var.value(_currentTimestamp);
-          defInv.compute(_currentTimestamp);
+          // enqueue all modified defined vars:
           for (const VarId& inputId : defInv.nonPrimaryDefinedVars()) {
             if (hasChanged(_currentTimestamp, inputId)) {
               assert(!_isEnqueued.get(inputId.id));
@@ -326,23 +326,23 @@ void Solver::propagate() {
             }
           }
           if constexpr (Mode == CommitMode::COMMIT) {
+            // Commit
             defInv.commit(_currentTimestamp);
-          }
-          if (oldValue == var.value(_currentTimestamp)) {
-            continue;
           }
         }
       }
 
-      if constexpr (Mode == CommitMode::COMMIT) {
-        commitIf(_currentTimestamp, queuedVar);
+      if (!hasChanged(_currentTimestamp, queuedVar)) {
+        continue;
       }
 
+      // For each invariant queuedVar is an input to:
       for (const auto& toNotify : listeningInvariantData(queuedVar)) {
         Invariant& invariant = _store.invariant(toNotify.invariantId);
         assert(invariant.primaryDefinedVar() != NULL_ID);
         assert(toNotify.invariantId != definingInvariant);
         assert(invariant.primaryDefinedVar().idType == VarIdType::var);
+        invariant.notifyInputChanged(_currentTimestamp, toNotify.localId);
         if constexpr (SingleLayer) {
           assert(_propGraph.position(queuedVar) <
                  _propGraph.position(invariant.primaryDefinedVar()));
@@ -355,13 +355,16 @@ void Solver::propagate() {
             continue;
           }
         }
-        invariant.notify(toNotify.localId);
         if constexpr (SingleLayer) {
           assert(_propGraph.layer(invariant.primaryDefinedVar()) == 0);
-          enqueueComputedVar(invariant.primaryDefinedVar());
+          enqueueDefinedVar(invariant.primaryDefinedVar());
         } else {
-          enqueueComputedVar(invariant.primaryDefinedVar(), curLayer);
+          enqueueDefinedVar(invariant.primaryDefinedVar(), curLayer);
         }
+      }
+
+      if constexpr (Mode == CommitMode::COMMIT) {
+        commitIf(_currentTimestamp, queuedVar);
       }
     }
     // Done with propagating current layer.

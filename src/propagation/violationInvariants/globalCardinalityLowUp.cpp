@@ -22,12 +22,10 @@ GlobalCardinalityLowUp::GlobalCardinalityLowUp(
       _vars(std::move(t_vars)),
       _lowerBounds(),
       _upperBounds(),
-      _committedValues(_vars.size(), 0),
       _shortage(NULL_TIMESTAMP, 0),
       _excess(NULL_TIMESTAMP, 0),
       _counts(),
       _offset(0) {
-  _modifiedVars.reserve(_vars.size());
   assert(lowerBound.size() == upperBound.size() &&
          lowerBound.size() == cover.size());
 
@@ -101,12 +99,13 @@ void GlobalCardinalityLowUp::recompute(Timestamp timestamp) {
 
 void GlobalCardinalityLowUp::notifyInputChanged(Timestamp timestamp,
                                                 LocalId localId) {
-  assert(localId < _committedValues.size());
+  assert(localId < _vars.size());
   const Int newValue = _solver.value(timestamp, _vars[localId]);
-  if (newValue == _committedValues[localId]) {
+  const Int committedValue = _solver.committedValue(_vars[localId]);
+  if (newValue == committedValue) {
     return;
   }
-  const signed char dec = decreaseCount(timestamp, _committedValues[localId]);
+  const signed char dec = decreaseCount(timestamp, committedValue);
   const signed char inc = increaseCount(timestamp, newValue);
   updateValue(timestamp, _violationId,
               std::max(_shortage.incValue(timestamp, (dec > 0 ? dec : 0) +
@@ -134,10 +133,6 @@ void GlobalCardinalityLowUp::commit(Timestamp timestamp) {
 
   _shortage.commitIf(timestamp);
   _excess.commitIf(timestamp);
-
-  for (size_t i = 0; i < _committedValues.size(); ++i) {
-    _committedValues[i] = _solver.committedValue(_vars[i]);
-  }
 
   for (CommittableInt& CommittableInt : _counts) {
     CommittableInt.commitIf(timestamp);

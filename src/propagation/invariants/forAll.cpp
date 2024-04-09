@@ -9,9 +9,7 @@ ForAll::ForAll(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
     : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
-      _localPriority(_varArray.size()) {
-  _modifiedVars.reserve(_varArray.size());
-}
+      _localPriority(_varArray.size()) {}
 
 void ForAll::registerVars() {
   assert(_id != NULL_ID);
