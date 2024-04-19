@@ -167,7 +167,7 @@ TEST_F(ModTest, NotifyInputChanged) {
       const Int expectedOutput =
           computeOutput(solver->currentTimestamp(), inputs);
 
-      invariant.notifyInputChanged(solver->currentTimestamp(), LocalId(i));
+      invariant.notifyInputChanged(solver->currentTimestamp(), LocalId{i});
       EXPECT_EQ(expectedOutput,
                 solver->value(solver->currentTimestamp(), outputId));
     }
@@ -274,7 +274,7 @@ TEST_F(ModTest, Commit) {
     } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
 
     // incremental value
     const Int notifiedOutput = solver->value(ts, outputId);
@@ -313,7 +313,7 @@ TEST_F(ModTest, ZeroDenominator) {
       if (method == 0) {
         invariant.recompute(solver->currentTimestamp());
       } else {
-        invariant.notifyInputChanged(solver->currentTimestamp(), LocalId(1));
+        invariant.notifyInputChanged(solver->currentTimestamp(), LocalId{1});
       }
       EXPECT_EQ(expected, solver->value(solver->currentTimestamp(), outputId));
     }

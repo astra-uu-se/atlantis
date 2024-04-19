@@ -122,7 +122,7 @@ TEST_F(LessEqualTest, NotifyInputChanged) {
       const Int expectedViolation =
           computeViolation(solver->currentTimestamp(), inputs);
 
-      invariant.notifyInputChanged(solver->currentTimestamp(), LocalId(i));
+      invariant.notifyInputChanged(solver->currentTimestamp(), LocalId{i});
       EXPECT_EQ(expectedViolation,
                 solver->value(solver->currentTimestamp(), violationId));
     }
@@ -227,7 +227,7 @@ TEST_F(LessEqualTest, Commit) {
     } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
 
     // incremental value
     const Int notifiedViolation = solver->value(ts, violationId);

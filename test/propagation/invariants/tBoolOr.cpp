@@ -116,7 +116,7 @@ TEST_F(BoolOrTest, NotifyInputChanged) {
       solver->setValue(ts, inputs.at(i), val);
       const Int expectedViolation = computeViolation(ts, inputs);
 
-      invariant.notifyInputChanged(ts, LocalId(i));
+      invariant.notifyInputChanged(ts, LocalId{i});
       EXPECT_EQ(expectedViolation, solver->value(ts, outputId));
     }
   }
@@ -220,7 +220,7 @@ TEST_F(BoolOrTest, Commit) {
     } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
 
     // incremental value
     const Int notifiedViolation = solver->value(ts, outputId);

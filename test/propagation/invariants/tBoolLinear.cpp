@@ -181,7 +181,7 @@ TEST_F(BoolLinearTest, NotifyInputChanged) {
 
     const Int expectedOutput = computeOutput(ts, inputs, coeffs);
 
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
     EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
   }
 }
@@ -283,7 +283,7 @@ TEST_F(BoolLinearTest, Commit) {
     } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
 
     // incremental value
     const Int notifiedOutput = solver->value(ts, outputId);

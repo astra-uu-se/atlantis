@@ -81,7 +81,7 @@ class InvariantTest : public ::testing::Test {
           {PropagationMode::OUTPUT_TO_INPUT,
            OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}};
 
-  std::vector<Int> createInputVals(const std::vector<VarId>& inputVars) {
+  std::vector<Int> makeInputVals(const std::vector<VarId>& inputVars) {
     std::vector<Int> inputVals(inputVars.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       inputVals.at(i) = solver->lowerBound(inputVars.at(i));
@@ -89,20 +89,25 @@ class InvariantTest : public ::testing::Test {
     return inputVals;
   }
 
-  size_t trySetNextInputVarVal(const std::vector<VarId>& inputVars,
-                               std::vector<Int>& inputVals) {
+  bool increaseNextVal(const std::vector<VarId>& inputVars,
+                       std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVals.at(i) < solver->upperBound(inputVars.at(i))) {
-        inputVals.at(i) += 1;
-        solver->setValue(inputVars.at(i), inputVals.at(i));
-        return i;
-      } else {
-        EXPECT_EQ(inputVals.at(i), solver->upperBound(inputVars.at(i)));
-        inputVals.at(i) = solver->lowerBound(inputVars.at(i));
+        ++inputVals.at(i);
+        return true;
       }
+      inputVals.at(i) = solver->lowerBound(inputVars.at(i));
     }
-    return inputVars.size();
+    return false;
+  }
+
+  void setVarVals(const std::vector<propagation::VarId>& inputVars,
+                  const std::vector<Int>& vals) {
+    EXPECT_EQ(inputVars.size(), vals.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      solver->setValue(inputVars.at(i), vals.at(i));
+    }
   }
 
   size_t trySetMinDiffInputVarVal(const std::vector<VarId>& inputVars,

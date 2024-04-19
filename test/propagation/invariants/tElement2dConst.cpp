@@ -225,7 +225,8 @@ TEST_F(Element2dConstTest, NotifyInputChanged) {
         const Int expectedOutput =
             computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset);
 
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId{0});
+        invariant.notifyInputChanged(ts, LocalId{1});
         EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
       }
     }
@@ -382,7 +383,8 @@ TEST_F(Element2dConstTest, Commit) {
         solver->setValue(ts, rowIndex, rowIndexVal);
 
         // notify row index change
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId{0});
+        invariant.notifyInputChanged(ts, LocalId{1});
 
         // incremental value from row index
         Int notifiedOutput = solver->value(ts, outputId);
@@ -416,17 +418,17 @@ TEST_F(Element2dConstTest, Commit) {
   }
 }
 
-class MockElement2dVar : public Element2dConst {
+class MockElement2dConst : public Element2dConst {
  public:
   bool registered = false;
   void registerVars() override {
     registered = true;
     Element2dConst::registerVars();
   }
-  explicit MockElement2dVar(SolverBase& solver, VarId output, VarId index1,
-                            VarId index2,
-                            std::vector<std::vector<Int>>&& matrix, Int offset1,
-                            Int offset2)
+  explicit MockElement2dConst(SolverBase& solver, VarId output, VarId index1,
+                              VarId index2,
+                              std::vector<std::vector<Int>>&& matrix,
+                              Int offset1, Int offset2)
       : Element2dConst(solver, output, index1, index2, std::move(matrix),
                        offset1, offset2) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
@@ -467,8 +469,8 @@ TEST_F(Element2dConstTest, SolverIntegration) {
     VarId index1 = solver->makeIntVar(1, 1, static_cast<Int>(numRows));
     VarId index2 = solver->makeIntVar(1, 1, static_cast<Int>(numCols));
     VarId output = solver->makeIntVar(-10, -100, 100);
-    testNotifications<MockElement2dVar>(
-        &solver->makeInvariant<MockElement2dVar>(
+    testNotifications<MockElement2dConst>(
+        &solver->makeInvariant<MockElement2dConst>(
             *solver, output, index1, index2, std::move(parMatrix), 1, 1),
         {propMode, markingMode, 3, index1, 5, output});
   }

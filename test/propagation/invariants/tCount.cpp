@@ -143,7 +143,7 @@ TEST_F(CountTest, NotifyInputChanged) {
 
     const Int expectedOutput = computeOutput(ts, y, inputs);
 
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
     EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
   }
 }
@@ -274,7 +274,7 @@ TEST_F(CountTest, Commit) {
     } while (oldVal == solver->value(ts, allInputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
 
     // incremental value
     const Int notifiedOutput = solver->value(ts, outputId);

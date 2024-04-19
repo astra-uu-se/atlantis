@@ -21,7 +21,7 @@ class ElementVar : public Invariant {
   VarId _output, _index;
   std::vector<VarId> _varArray;
   Int _offset;
-  Int _committedIndex;
+  size_t _activeIndex;
 
   [[nodiscard]] inline size_t safeIndex(Int index) const noexcept {
     return std::max<Int>(
