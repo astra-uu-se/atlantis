@@ -152,7 +152,7 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
       solver->setValue(ts, index, indexVal);
       const Int expectedOutput = computeOutput(ts, index, offset);
 
-      invariant.notifyInputChanged(ts, LocalId(0));
+      invariant.notifyInputChanged(ts, LocalId{inputs.size()});
       EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
     }
   }
@@ -275,7 +275,7 @@ TEST_F(ElementVarTest, Commit) {
       solver->setValue(ts, index, indexVal);
 
       // notify index change
-      invariant.notifyInputChanged(ts, LocalId(0));
+      invariant.notifyInputChanged(ts, LocalId{inputs.size()});
 
       // incremental value from index
       Int notifiedOutput = solver->value(ts, outputId);
@@ -291,7 +291,8 @@ TEST_F(ElementVarTest, Commit) {
       } while (solver->value(ts, curInput) == oldInputVal);
 
       // notify input change
-      invariant.notifyInputChanged(ts, LocalId(indexVal));
+      invariant.notifyInputChanged(ts,
+                                   LocalId{zeroBasedIndex(indexVal, offset)});
 
       // incremental value from input
       notifiedOutput = solver->value(ts, outputId);

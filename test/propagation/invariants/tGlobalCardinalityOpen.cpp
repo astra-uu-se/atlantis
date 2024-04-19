@@ -173,7 +173,7 @@ TEST_F(GlobalCardinalityOpenTest, NotifyInputChanged) {
         solver->setValue(ts, inputs[j], val);
         const auto expectedCounts = computeOutputs(ts, inputs, cover);
 
-        invariant.notifyInputChanged(ts, LocalId(j));
+        invariant.notifyInputChanged(ts, LocalId{j});
         for (size_t k = 0; k < outputs.size(); ++k) {
           EXPECT_EQ(expectedCounts.at(k), solver->value(ts, outputs.at(k)));
         }
@@ -328,7 +328,7 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
     } while (oldVal == solver->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
 
     // incremental value
     for (size_t j = 0; j < outputs.size(); ++j) {

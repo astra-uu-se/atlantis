@@ -12,7 +12,8 @@ ElementVar::ElementVar(SolverBase& solver, VarId output, VarId index,
       _output(output),
       _index(index),
       _varArray(std::move(varArray)),
-      _offset(offset) {}
+      _offset(offset),
+      _activeIndex(_varArray.size()) {}
 
 void ElementVar::registerVars() {
   assert(_id != NULL_ID);
@@ -45,12 +46,8 @@ void ElementVar::updateBounds(bool widenOnly) {
 void ElementVar::recompute(Timestamp ts) {
   const size_t index = safeIndex(_solver.value(ts, _index));
   assert(index < _varArray.size());
-  for (size_t i = 0; i < _varArray.size(); ++i) {
-    if (i != index) {
-      makeDynamicInputInactive(ts, LocalId(i));
-    }
-  }
-  makeDynamicInputActive(ts, LocalId(index));
+  makeAllDynamicInputsInactive(ts);
+  makeDynamicInputActive(ts, LocalId{index});
   updateValue(ts, _output, _solver.value(ts, _varArray[index]));
 }
 
@@ -61,10 +58,12 @@ VarId ElementVar::dynamicInputVar(Timestamp ts) const noexcept {
 void ElementVar::notifyInputChanged(Timestamp ts, LocalId localId) {
   const size_t index = safeIndex(_solver.value(ts, _index));
   assert(index < _varArray.size());
-  if (localId == _varArray.size()) {
-    makeDynamicInputInactive(ts, LocalId{safeIndex(_committedIndex)});
+  if (localId == _varArray.size() && _activeIndex != index) {
+    assert(_activeIndex < _varArray.size());
+    makeDynamicInputInactive(ts, LocalId{_activeIndex});
     makeDynamicInputActive(ts, LocalId{index});
   }
+
   updateValue(ts, _output, _solver.value(ts, _varArray[index]));
 }
 
@@ -90,7 +89,7 @@ void ElementVar::notifyCurrentInputChanged(Timestamp ts) {
 
 void ElementVar::commit(Timestamp ts) {
   Invariant::commit(ts);
-  _committedIndex = _solver.committedValue(_index);
+  _activeIndex = safeIndex(_solver.committedValue(_index));
 }
 
 }  // namespace atlantis::propagation

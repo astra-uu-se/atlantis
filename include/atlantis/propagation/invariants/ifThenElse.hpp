@@ -18,7 +18,7 @@ class IfThenElse : public Invariant {
  private:
   VarId _output, _b;
   std::array<const VarId, 2> _xy;
-  Int _committedViolation;
+  size_t _activeIndex;
 
  public:
   explicit IfThenElse(SolverBase&, VarId output, VarId b, VarId x, VarId y);

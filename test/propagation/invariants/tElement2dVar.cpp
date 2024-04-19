@@ -1,5 +1,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rapidcheck/gtest.h>
 
 #include <limits>
 #include <random>
@@ -248,7 +249,8 @@ TEST_F(Element2dVarTest, NotifyInputChanged) {
         const Int expectedOutput =
             computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset);
 
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId{numRows * numCols});
+        invariant.notifyInputChanged(ts, LocalId{numRows * numCols + 1});
         EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
       }
     }
@@ -456,7 +458,7 @@ TEST_F(Element2dVarTest, Commit) {
         solver->setValue(ts, rowIndex, rowIndexVal);
 
         // notify row index change
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId{numRows * numCols});
 
         // incremental value from row index
         Int notifiedOutput = solver->value(ts, outputId);
@@ -468,7 +470,7 @@ TEST_F(Element2dVarTest, Commit) {
         solver->setValue(ts, colIndex, colIndexVal);
 
         // notify col index change
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId{numRows * numCols + 1});
 
         // incremental value from col index
         notifiedOutput = solver->value(ts, outputId);
@@ -485,7 +487,9 @@ TEST_F(Element2dVarTest, Commit) {
         } while (solver->value(ts, curInput) == oldInputVal);
 
         // notify input change
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(
+            ts, LocalId{zeroBasedRowIndex(rowIndexVal, rowOffset) * numCols +
+                        zeroBasedColIndex(colIndexVal, colOffset)});
 
         // incremental value from input
         notifiedOutput = solver->value(ts, outputId);
@@ -507,6 +511,65 @@ TEST_F(Element2dVarTest, Commit) {
         invariant.recompute(ts + 1);
         ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
       }
+    }
+  }
+}
+
+TEST_F(Element2dVarTest, Prop) {
+  solver->open();
+  const size_t numRows = 2;
+  const size_t numCols = 2;
+  std::vector<std::vector<VarId>> varMatrix(
+      numRows, std::vector<VarId>(numCols, NULL_ID));
+
+  for (size_t i = 0; i < numRows; ++i) {
+    for (size_t j = 0; j < numCols; ++j) {
+      varMatrix.at(i).at(j) = solver->makeIntVar(0, 0, 5);
+    }
+  }
+
+  const VarId index1 = solver->makeIntVar(1, 1, 2);
+  const VarId index2 = solver->makeIntVar(1, 1, 2);
+
+  const Int offset1 = 1;
+  const Int offset2 = 1;
+
+  const VarId output = solver->makeIntVar(0, 0, 100);
+
+  auto& inv = solver->makeInvariant<Element2dVar>(
+      *solver, output, index1, index2,
+      std::vector<std::vector<VarId>>{varMatrix}, offset1, offset2);
+  solver->close();
+
+  std::vector<VarId> inputVars;
+  inputVars.reserve(numRows * numCols + 2);
+  for (size_t i = 0; i < numRows; ++i) {
+    for (size_t j = 0; j < numCols; ++j) {
+      inputVars.push_back(varMatrix.at(i).at(j));
+    }
+  }
+  inputVars.push_back(index1);
+  inputVars.push_back(index2);
+
+  std::vector<Int> inputVals = makeInputVals(inputVars);
+
+  while (increaseNextVal(inputVars, inputVals)) {
+    solver->beginMove();
+    setVarVals(inputVars, inputVals);
+    solver->endMove();
+
+    solver->beginCommit();
+    solver->query(output);
+    solver->endCommit();
+
+    const Int actual = solver->committedValue(output);
+    const Int index1Val = inputVals.at(inputVals.size() - 2) - offset1;
+    const Int index2Val = inputVals.back() - offset2;
+    RC_ASSERT(inv.dynamicInputVar(solver->currentTimestamp()) ==
+              varMatrix.at(index1Val).at(index2Val));
+    const Int expected = inputVals.at(index1Val * numCols + index2Val);
+    if (expected != actual) {
+      RC_ASSERT(expected == actual);
     }
   }
 }

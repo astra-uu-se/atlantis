@@ -175,7 +175,7 @@ TEST_F(LinearTest, NotifyInputChanged) {
 
     const Int expectedOutput = computeOutput(ts, inputs, coeffs);
 
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
     EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
   }
 }
@@ -282,7 +282,7 @@ TEST_F(LinearTest, Commit) {
     solver->setValue(ts, inputs.at(i), newVal);
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
 
     // incremental value
     const Int notifiedOutput = solver->value(ts, outputId);

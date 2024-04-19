@@ -545,30 +545,56 @@ TEST_F(SolverTest, DelayedCommit) {
 TEST_F(SolverTest, TestSimpleDynamicCycleQuery) {
   solver->open();
 
-  VarId x1 = solver->makeIntVar(1, -100, 100);
-  VarId x2 = solver->makeIntVar(1, -100, 100);
-  VarId x3 = solver->makeIntVar(1, -100, 100);
-  VarId base = solver->makeIntVar(1, -10, 10);
-  VarId i1 = solver->makeIntVar(1, 1, 4);
-  VarId i2 = solver->makeIntVar(2, 1, 4);
-  VarId i3 = solver->makeIntVar(3, 1, 4);
-  VarId output = solver->makeIntVar(2, -300, 300);
+  const VarId x1 = solver->makeIntVar(1, -100, 100);      // VarId: 1
+  const VarId x2 = solver->makeIntVar(1, -100, 100);      // VarId: 2
+  const VarId x3 = solver->makeIntVar(1, -100, 100);      // VarId: 4
+  const VarId base = solver->makeIntVar(1, -10, 10);      // VarId: 5
+  const VarId i1 = solver->makeIntVar(1, 1, 4);           // VarId: 6
+  const VarId i2 = solver->makeIntVar(2, 1, 4);           // VarId: 7
+  const VarId i3 = solver->makeIntVar(3, 1, 4);           // VarId: 8
+  const VarId output = solver->makeIntVar(2, -300, 300);  // VarId: 9
 
-  VarId x1Plus1 = solver->makeIntView<IntOffsetView>(*solver, x1, 1);
-  VarId x2Plus2 = solver->makeIntView<IntOffsetView>(*solver, x2, 2);
-  VarId x3Plus3 = solver->makeIntView<IntOffsetView>(*solver, x3, 3);
+  const VarId x1Plus1 = solver->makeIntView<IntOffsetView>(*solver, x1, 1);
+  const VarId x2Plus2 = solver->makeIntView<IntOffsetView>(*solver, x2, 2);
+  const VarId x3Plus3 = solver->makeIntView<IntOffsetView>(*solver, x3, 3);
 
-  solver->makeInvariant<ElementVar>(
+  // x1 = [base, x1 + 1, x2 + 2, x3 + 3][i1]:
+  // InvariantId: 1
+  // VarIds:
+  // 1 <- [4, 1, 2, 3][6]
+  auto& inv1 = solver->makeInvariant<ElementVar>(
       *solver, x1, i1, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}));
-  solver->makeInvariant<ElementVar>(
+
+  // x2 = [base, x1 + 1, x2 + 2, x3 + 3][i2]:
+  // InvariantId: 2
+  // VarIds:
+  // 2 <- [4, 1, 2, 3][6]
+  auto inv2 = solver->makeInvariant<ElementVar>(
       *solver, x2, i2, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}));
-  solver->makeInvariant<ElementVar>(
+
+  // x3 = [base, x1 + 1, x2 + 2, x3 + 3][i3]:
+  // InvariantId: 3
+  // VarIds:
+  // 3 <- [4, 1, 2, 3][6]
+  auto inv3 = solver->makeInvariant<ElementVar>(
       *solver, x3, i3, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}));
 
-  solver->makeInvariant<Linear>(*solver, output, std::vector<Int>({1, 1, 1}),
-                                std::vector<VarId>({x1, x2, x3}));
+  // output = x1 + x2 + x3
+  // InvariantId: 4
+  // VarIds:
+  // 8 <- sum([1, 2, 3])
+  auto inv4 = solver->makeInvariant<Linear>(*solver, output,
+                                            std::vector<Int>({1, 1, 1}),
+                                            std::vector<VarId>({x1, x2, x3}));
 
   solver->close();
+
+  EXPECT_EQ(solver->sourceId(inv1.dynamicInputVar(solver->currentTimestamp())),
+            base);
+  EXPECT_EQ(solver->sourceId(inv2.dynamicInputVar(solver->currentTimestamp())),
+            x1);
+  EXPECT_EQ(solver->sourceId(inv3.dynamicInputVar(solver->currentTimestamp())),
+            x2);
 
   EXPECT_EQ(solver->committedValue(output), 7);
 
@@ -581,6 +607,14 @@ TEST_F(SolverTest, TestSimpleDynamicCycleQuery) {
     solver->beginProbe();
     solver->query(output);
     solver->endProbe();
+
+    EXPECT_EQ(
+        solver->sourceId(inv1.dynamicInputVar(solver->currentTimestamp())), x3);
+    EXPECT_EQ(
+        solver->sourceId(inv2.dynamicInputVar(solver->currentTimestamp())),
+        base);
+    EXPECT_EQ(
+        solver->sourceId(inv3.dynamicInputVar(solver->currentTimestamp())), x2);
 
     EXPECT_EQ(solver->currentValue(base), 1);
     EXPECT_EQ(solver->currentValue(i1), 4);
