@@ -18,13 +18,21 @@ static inline size_t size(const std::vector<std::vector<VarId>>& varMatrix) {
   return varMatrix.empty() ? 0 : (varMatrix.front().size() * varMatrix.size());
 }
 
-static inline LocalId toLocalId(
-    const std::vector<std::vector<VarId>>& varMatrix, size_t index1,
-    size_t index2) {
-  assert(index1 < varMatrix.size());
-  assert(index2 < static_cast<size_t>(numCols(varMatrix)));
-  return LocalId(
-      varMatrix.empty() ? 0 : (varMatrix.front().size() * index1 + index2));
+static inline size_t toLocalId(const std::array<const Int, 2>& dimensions,
+                               size_t index1, size_t index2) {
+  assert(index1 < static_cast<size_t>(dimensions[0]));
+  assert(index2 < static_cast<size_t>(dimensions[1]));
+  return dimensions[0] == 0
+             ? 0
+             : (static_cast<size_t>(dimensions[1]) * index1 + index2);
+}
+
+static inline std::pair<size_t, size_t> fromLocalId(
+    const std::array<const Int, 2>& dimensions, LocalId localId) {
+  assert(localId < static_cast<size_t>(dimensions[0] * dimensions[1]));
+  const size_t col = localId % dimensions[1];
+  const size_t row = (localId - col) / dimensions[1];
+  return {row, col};
 }
 
 Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarViewId index1,
@@ -57,6 +65,19 @@ void Element2dVar::registerVars() {
   }
   _solver.registerInvariantInput(_id, _indices[0], false);
   _solver.registerInvariantInput(_id, _indices[1], false);
+#ifndef NDEBUG
+  size_t iter = 0;
+  for (size_t i = 0; i < _varMatrix.size(); ++i) {
+    for (size_t j = 0; j < _varMatrix[i].size(); ++j) {
+      const size_t localId = toLocalId(_dimensions, i, j);
+      assert(localId == iter);
+      const auto pair = fromLocalId(_dimensions, LocalId{localId});
+      assert(pair.first == i);
+      assert(pair.second == j);
+      ++iter;
+    }
+  }
+#endif
   registerDefinedVar(_output);
 }
 
@@ -103,14 +124,10 @@ void Element2dVar::recompute(Timestamp ts) {
   const size_t index2 = safeIndex2(_solver.value(ts, _indices[1]));
   assert(index2 < static_cast<size_t>(_dimensions[1]));
 
-  for (size_t i = 0; i < _varMatrix.size(); ++i) {
-    for (size_t j = 0; j < _varMatrix[i].size(); ++j) {
-      if (i != index1 || j != index2) {
-        makeDynamicInputInactive(ts, toLocalId(_varMatrix, i, j));
-      }
-    }
-    makeDynamicInputActive(ts, toLocalId(_varMatrix, index1, index2));
-  }
+  makeAllDynamicInputsInactive(ts);
+  const LocalId active = toLocalId(_dimensions, index1, index2);
+  makeDynamicInputActive(ts, active);
+  _activeLocalId.setValue(ts, active);
 
   updateValue(ts, _output, _solver.value(ts, _varMatrix[index1][index2]));
 }
@@ -119,14 +136,14 @@ void Element2dVar::notifyInputChanged(Timestamp ts, LocalId localId) {
   const size_t index1 = safeIndex1(_solver.value(ts, _indices[0]));
   const size_t index2 = safeIndex2(_solver.value(ts, _indices[1]));
   if (localId >= size(_varMatrix)) {
-    if (localId == size(_varMatrix)) {
-      makeDynamicInputInactive(
-          ts, toLocalId(_varMatrix, safeIndex1(_committedIndices[0]), index2));
-    } else {
-      makeDynamicInputInactive(
-          ts, toLocalId(_varMatrix, index1, safeIndex2(_committedIndices[1])));
+    const size_t active = toLocalId(_dimensions, index1, index2);
+    if (static_cast<Int>(active) != _activeLocalId.value(ts)) {
+      assert(0 <= _activeLocalId.value(ts) &&
+             _activeLocalId.value(ts) < _dimensions[0] * _dimensions[1]);
+      makeDynamicInputInactive(ts, _activeLocalId.value(ts));
+      makeDynamicInputActive(ts, active);
+      _activeLocalId.setValue(ts, active);
     }
-    makeDynamicInputActive(ts, toLocalId(_varMatrix, index1, index2));
   }
   updateValue(ts, _output, _solver.value(ts, _varMatrix[index1][index2]));
 }
@@ -163,8 +180,7 @@ void Element2dVar::notifyCurrentInputChanged(Timestamp ts) {
 
 void Element2dVar::commit(Timestamp ts) {
   Invariant::commit(ts);
-  _committedIndices[0] = safeIndex1(_solver.committedValue(_indices[0]));
-  _committedIndices[1] = safeIndex2(_solver.committedValue(_indices[1]));
+  _activeLocalId.commitIf(ts);
 }
 
 }  // namespace atlantis::propagation

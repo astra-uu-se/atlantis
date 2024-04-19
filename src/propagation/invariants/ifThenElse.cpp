@@ -27,7 +27,7 @@ void IfThenElse::registerVars() {
 }
 
 VarId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
-  return _solver.value(ts, _xy[toIndex(_solver.value(ts, _b))]);
+  return _xy[toIndex(_solver.value(ts, _b))];
 }
 
 void IfThenElse::updateBounds(bool widenOnly) {
@@ -41,17 +41,21 @@ void IfThenElse::updateBounds(bool widenOnly) {
 
 void IfThenElse::recompute(Timestamp ts) {
   const size_t index = toIndex(_solver.value(ts, _b));
-  makeDynamicInputInactive(ts, LocalId(toIndex(_solver.value(ts, _b) == 0)));
-  makeDynamicInputActive(ts, LocalId(index));
+
+  makeAllDynamicInputsInactive(ts);
+  makeDynamicInputActive(ts, LocalId{index});
 
   updateValue(ts, _output, _solver.value(ts, _xy[index]));
 }
 
 void IfThenElse::notifyInputChanged(Timestamp ts, LocalId localId) {
   const size_t index = toIndex(_solver.value(ts, _b));
-  if (localId == size_t(2)) {
-    makeDynamicInputInactive(ts, LocalId(_committedViolation));
-    makeDynamicInputActive(ts, LocalId(index));
+  if (localId == size_t{2}) {
+    if (_activeIndex != index) {
+      assert(_activeIndex < 2);
+      makeDynamicInputInactive(ts, LocalId(_activeIndex));
+      makeDynamicInputActive(ts, LocalId(index));
+    }
   }
   updateValue(ts, _output, _solver.value(ts, _xy[index]));
 }
@@ -74,7 +78,7 @@ void IfThenElse::notifyCurrentInputChanged(Timestamp ts) {
 
 void IfThenElse::commit(Timestamp ts) {
   Invariant::commit(ts);
-  _committedViolation = toIndex(_solver.committedValue(_b));
+  _activeIndex = toIndex(_solver.committedValue(_b));
 }
 
 }  // namespace atlantis::propagation

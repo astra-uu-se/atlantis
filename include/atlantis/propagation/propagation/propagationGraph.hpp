@@ -129,6 +129,7 @@ class PropagationGraph {
   void commitOutgoingArcs(Timestamp, VarIdBase);
 
   void makeDynamicInputActive(Timestamp, InvariantId, LocalId);
+  void makeAllDynamicInputsInactive(Timestamp, InvariantId);
   void makeDynamicInputInactive(Timestamp, InvariantId, LocalId);
   void makeAllDynamicInactive(Timestamp, VarIdBase);
   void commitOutgoingArcs(Timestamp, VarIdBase);

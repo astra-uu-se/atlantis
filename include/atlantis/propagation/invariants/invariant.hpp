@@ -44,6 +44,8 @@ class Invariant {
 
   void makeDynamicInputInactive(Timestamp, LocalId);
 
+  void makeAllDynamicInputsInactive(Timestamp);
+
  public:
   virtual ~Invariant() = default;
 

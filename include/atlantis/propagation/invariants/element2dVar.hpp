@@ -23,7 +23,6 @@ class Element2dVar : public Invariant {
   std::array<const VarViewId, 2> _indices;
   std::array<const Int, 2> _dimensions;
   std::array<const Int, 2> _offsets;
-  std::array<Int, 2> _committedIndices;
   VarId _output;
   CommittableInt _activeLocalId;
 
