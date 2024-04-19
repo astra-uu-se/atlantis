@@ -126,14 +126,12 @@ class Solver : public SolverBase {
   void commitOutgoingArcs(Timestamp, VarIdBase) const;
 
   void makeDynamicInputActive(Timestamp ts, InvariantId invId,
-                              LocalId localId) override {
-    _propGraph.makeDynamicInputActive(ts, invId, localId);
-  }
+                              LocalId localId) override;
 
   void makeDynamicInputInactive(Timestamp ts, InvariantId invId,
-                                LocalId localId) override {
-    _propGraph.makeDynamicInputInactive(ts, invId, localId);
-  }
+                                LocalId localId) override;
+
+  void makeAllDynamicInputsInactive(Timestamp, InvariantId) override;
 
   /**
    * Notify an invariant that its current input has changed

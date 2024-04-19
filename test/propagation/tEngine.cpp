@@ -568,20 +568,31 @@ TEST_F(SolverTest, TestSimpleDynamicCycleQuery) {
   VarViewId x2Plus2 = solver->makeIntView<IntOffsetView>(*solver, x2, 2);
   VarViewId x3Plus3 = solver->makeIntView<IntOffsetView>(*solver, x3, 3);
 
+  // x1 = [base, x1 + 1, x2 + 2, x3 + 3][i1]:
   solver->makeInvariant<ElementVar>(
       *solver, x1, i1,
       std::vector<VarViewId>({base, x1Plus1, x2Plus2, x3Plus3}));
+  // x2 = [base, x1 + 1, x2 + 2, x3 + 3][i2]:
   solver->makeInvariant<ElementVar>(
       *solver, x2, i2,
       std::vector<VarViewId>({base, x1Plus1, x2Plus2, x3Plus3}));
+  // x3 = [base, x1 + 1, x2 + 2, x3 + 3][i3]:
   solver->makeInvariant<ElementVar>(
       *solver, x3, i3,
       std::vector<VarViewId>({base, x1Plus1, x2Plus2, x3Plus3}));
 
+  // output = x1 + x2 + x3
   solver->makeInvariant<Linear>(*solver, output, std::vector<Int>({1, 1, 1}),
                                 std::vector<VarViewId>({x1, x2, x3}));
 
   solver->close();
+
+  EXPECT_EQ(solver->sourceId(inv1.dynamicInputVar(solver->currentTimestamp())),
+            base);
+  EXPECT_EQ(solver->sourceId(inv2.dynamicInputVar(solver->currentTimestamp())),
+            x1);
+  EXPECT_EQ(solver->sourceId(inv3.dynamicInputVar(solver->currentTimestamp())),
+            x2);
 
   EXPECT_EQ(solver->committedValue(output), 7);
 
@@ -594,6 +605,14 @@ TEST_F(SolverTest, TestSimpleDynamicCycleQuery) {
     solver->beginProbe();
     solver->query(output);
     solver->endProbe();
+
+    EXPECT_EQ(
+        solver->sourceId(inv1.dynamicInputVar(solver->currentTimestamp())), x3);
+    EXPECT_EQ(
+        solver->sourceId(inv2.dynamicInputVar(solver->currentTimestamp())),
+        base);
+    EXPECT_EQ(
+        solver->sourceId(inv3.dynamicInputVar(solver->currentTimestamp())), x2);
 
     EXPECT_EQ(solver->currentValue(base), 1);
     EXPECT_EQ(solver->currentValue(i1), 4);

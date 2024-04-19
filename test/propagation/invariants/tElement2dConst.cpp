@@ -375,7 +375,8 @@ TEST_F(Element2dConstTest, Commit) {
         _solver->setValue(ts, rowIndex, rowIndexVal);
 
         // notify row index change
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId{0});
+        invariant.notifyInputChanged(ts, LocalId{1});
 
         // incremental value from row index
         Int notifiedOutput = _solver->value(ts, outputId);
@@ -409,7 +410,7 @@ TEST_F(Element2dConstTest, Commit) {
   }
 }
 
-class MockElement2dVar : public Element2dConst {
+class MockElement2dConst : public Element2dConst {
  public:
   bool registered = false;
   void registerVars() override {

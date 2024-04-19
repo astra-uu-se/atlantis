@@ -292,7 +292,7 @@ TEST_F(LinearTest, Commit) {
     _solver->setValue(ts, inputs.at(i), newVal);
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputId);

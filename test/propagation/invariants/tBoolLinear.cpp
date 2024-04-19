@@ -293,7 +293,7 @@ TEST_F(BoolLinearTest, Commit) {
     } while (oldVal == _solver->value(ts, inputs.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, LocalId{i});
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputId);

@@ -101,8 +101,9 @@ class InvariantTest : public ::testing::Test {
         EXPECT_EQ(inputVals.at(i), _solver->upperBound(inputVars.at(i)));
         inputVals.at(i) = _solver->lowerBound(inputVars.at(i));
       }
+      inputVals.at(i) = solver->lowerBound(inputVars.at(i));
     }
-    return inputVars.size();
+    return false;
   }
 
   size_t trySetMinDiffInputVarVal(const std::vector<VarViewId>& inputVars,
