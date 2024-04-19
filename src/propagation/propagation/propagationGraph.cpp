@@ -83,8 +83,85 @@ static std::vector<std::vector<VarId>> SCC(const PropagationGraph& graph) {
   assert(
       std::ranges::all_of(discoverTime, [&](const Int i) { return i >= 0; }));
   return components;
+void PropagationGraph::makeDynamicInputActive(Timestamp ts,
+                                              InvariantId invariantId,
+                                              LocalId localId) {
+  assert(invariantId != NULL_ID);
+  assert(localId < _incomingArcs[invariantId].incomingDynamic().size());
+  const auto& inputVarData =
+      _incomingArcs[invariantId].incomingDynamic().at(localId);
+  _outgoingArcs[inputVarData.varId].makeDynamicActive(
+      ts, inputVarData.outgoingDynamicArcIndex);
 }
 
+void PropagationGraph::makeAllDynamicInputsInactive(Timestamp ts,
+                                                    InvariantId invariantId) {
+  for (const auto& inputVarData :
+       _incomingArcs[invariantId].incomingDynamic()) {
+    if (inputVarData.varId == NULL_ID) {
+      continue;
+    }
+    assert(_outgoingArcs.has_idx(inputVarData.varId));
+    if (_outgoingArcs[inputVarData.varId].outgoingDynamic().isNullId(
+            inputVarData.outgoingDynamicArcIndex)) {
+      continue;
+    }
+    assert(_outgoingArcs[inputVarData.varId]
+               .outgoingDynamic()
+               .arcs()
+               .at(inputVarData.outgoingDynamicArcIndex)
+               .invariantId() == invariantId);
+    _outgoingArcs[inputVarData.varId].makeDynamicInactive(
+        ts, inputVarData.outgoingDynamicArcIndex);
+  }
+}
+
+void PropagationGraph::makeDynamicInputInactive(Timestamp ts,
+                                                InvariantId invariantId,
+                                                LocalId localId) {
+  assert(invariantId != NULL_ID);
+  assert(localId < _incomingArcs[invariantId].incomingDynamic().size());
+  const auto& inputVarData =
+      _incomingArcs[invariantId].incomingDynamic()[localId];
+  if (inputVarData.varId == NULL_ID) {
+    return;
+  }
+  assert(_outgoingArcs.has_idx(inputVarData.varId));
+  if (_outgoingArcs[inputVarData.varId].outgoingDynamic().isNullId(
+          inputVarData.outgoingDynamicArcIndex)) {
+    return;
+  }
+  assert(_outgoingArcs[inputVarData.varId]
+             .outgoingDynamic()
+             .arcs()
+             .at(inputVarData.outgoingDynamicArcIndex)
+             .invariantId() == invariantId);
+  _outgoingArcs[inputVarData.varId].makeDynamicInactive(
+      ts, inputVarData.outgoingDynamicArcIndex);
+}
+
+void PropagationGraph::makeAllDynamicInactive(Timestamp ts, VarIdBase varId) {
+  assert(varId != NULL_ID);
+  _outgoingArcs[varId].makeAllDynamicInactive(ts);
+}
+
+void PropagationGraph::commitOutgoingArcs(Timestamp ts, VarIdBase varId) {
+  assert(varId != NULL_ID);
+  _outgoingArcs[varId].commitIf(ts);
+}
+
+void PropagationGraph::registerDefinedVar(VarIdBase varId,
+                                          InvariantId invariantId) {
+  assert(varId != NULL_ID && invariantId != NULL_ID);
+  if (_definingInvariant.at(varId) != NULL_ID) {
+    throw VarAlreadyDefinedException(
+        "Variable " + std::to_string(varId) + " already defined by invariant " +
+        std::to_string(_definingInvariant.at(varId)));
+  }
+  std::vector<size_t> indicesToRemove;
+  for (size_t i = 0; i < _outgoingArcs[varId].outgoingStatic().size(); ++i) {
+    if (_outgoingArcs[varId].outgoingStatic()[i].invariantId() == invariantId) {
+      indicesToRemove.emplace_back(i);
 static void partitionIntoLayersUtil(
     const PropagationGraph& graph,
     const std::vector<std::vector<VarId>>& components, const VarId varId,
@@ -387,6 +464,34 @@ void topologicallyOrderUtil(
 
   // reset the topological number:
   _varPosition[varId] = 0;
+
+  for (const auto& outDynArcs : _outgoingArcs[varId].outgoingDynamic().arcs()) {
+    if (outDynArcs.invariantId() == NULL_ID) {
+      // varId is both defined and a dynamic input to the invariant:
+      continue;
+    }
+    // For each dynamic invariant varId is a dynamic input to
+    assert(outDynArcs.invariantId() != NULL_ID);
+    // For each static input variable of the dynamic invariant:
+    for (const auto& staticInputVar :
+         staticInputVars(outDynArcs.invariantId())) {
+      assert(staticInputVar != NULL_ID);
+      // If the level of the static input and varId equals:
+      if (_varLayerIndex[staticInputVar].layer == layer) {
+        if (staticInputVar == varId) {
+          // self-cycle
+          continue;
+        }
+        if (_varPosition[staticInputVar] == numVars()) {
+          topologicallyOrder(ts, inFrontier, staticInputVar);
+        }
+        // The topological number of varId must be greater than that of the
+        // static input variable:
+        _varPosition[varId] =
+            std::max(_varPosition[varId], _varPosition[staticInputVar] + 1);
+      }
+    }
+  }
 
   // Get defining invariant:
   const InvariantId defInv = graph.definingInvariant(varId);
