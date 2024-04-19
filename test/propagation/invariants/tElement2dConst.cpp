@@ -283,7 +283,8 @@ TEST_F(Element2dConstTest, Commit) {
         _solver->setValue(ts, rowIndexVar, rowIndexVal);
 
         // notify row index change
-        invariant.notifyInputChanged(ts, 0);
+        invariant.notifyInputChanged(ts, LocalId{0});
+        invariant.notifyInputChanged(ts, LocalId{1});
 
         // incremental value from row index
         Int notifiedOutput = _solver->value(ts, outputVar);

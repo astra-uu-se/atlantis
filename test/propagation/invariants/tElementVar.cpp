@@ -234,8 +234,8 @@ TEST_F(ElementVarTest, Commit) {
       // Change Index
       _solver->setValue(ts, indexVar, indexVal);
 
-      // notify indexVar change
-      invariant.notifyInputChanged(ts, 0);
+      // notify index change
+      invariant.notifyInputChanged(ts, LocalId{inputs.size()});
 
       // incremental value from indexVar
       Int notifiedOutput = _solver->value(ts, outputVar);
@@ -251,7 +251,8 @@ TEST_F(ElementVarTest, Commit) {
       } while (_solver->value(ts, curInput) == oldInputVal);
 
       // notify input change
-      invariant.notifyInputChanged(ts, indexVal);
+      invariant.notifyInputChanged(ts,
+                                   LocalId{zeroBasedIndex(indexVal, offset)});
 
       // incremental value from input
       notifiedOutput = _solver->value(ts, outputVar);

@@ -314,6 +314,37 @@ void topologicallyOrderUtil(
     return;
   }
 
+  // reset the topological number:
+  _varPosition[varId] = 0;
+
+  for (const auto& outDynArcs : _outgoingArcs[varId].outgoingDynamic().arcs()) {
+    if (outDynArcs.invariantId() == NULL_ID) {
+      // varId is both defined and a dynamic input to the invariant:
+      continue;
+    }
+    // For each dynamic invariant varId is a dynamic input to
+    assert(outDynArcs.invariantId() != NULL_ID);
+    // For each static input variable of the dynamic invariant:
+    for (const auto& staticInputVar :
+         staticInputVars(outDynArcs.invariantId())) {
+      assert(staticInputVar != NULL_ID);
+      // If the level of the static input and varId equals:
+      if (_varLayerIndex[staticInputVar].layer == layer) {
+        if (staticInputVar == varId) {
+          // self-cycle
+          continue;
+        }
+        if (_varPosition[staticInputVar] == numVars()) {
+          topologicallyOrder(ts, inFrontier, staticInputVar);
+        }
+        // The topological number of varId must be greater than that of the
+        // static input variable:
+        _varPosition[varId] =
+            std::max(_varPosition[varId], _varPosition[staticInputVar] + 1);
+      }
+    }
+  }
+
   // Get defining invariant:
   const InvariantId defInv = graph.definingInvariant(varId);
 
