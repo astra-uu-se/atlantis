@@ -50,6 +50,14 @@ build-benchmarks:
 	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
 	cd ${BUILD_DIR}; $(MAKE)
 
+.PHONY: build-debug-benchmarks
+build-debug-benchmarks:
+	mkdir -p ${BUILD_DIR}
+	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
+	                                           -DBUILD_TESTS:BOOL=OFF \
+	                                           -DBUILD_BENCHMARKS:BOOL=ON ..
+	cd ${BUILD_DIR}; $(MAKE)
+
 .PHONY: run
 run: build
 	exec ${BUILD_DIR}/atlantis
@@ -60,6 +68,10 @@ run-tests: build-tests
 
 .PHONY: run-benchmarks
 run-benchmarks: build-benchmarks
+	exec ${BUILD_DIR}/runBenchmarks
+
+.PHONY: run-debug-benchmarks
+run-debug-benchmarks: build-debug-benchmarks
 	exec ${BUILD_DIR}/runBenchmarks
 
 .PHONY: benchmark
