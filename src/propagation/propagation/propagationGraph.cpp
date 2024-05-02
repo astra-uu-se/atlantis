@@ -537,16 +537,14 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
   // add the current variable to the frontier:
   inFrontier[index] = true;
 
-  const bool isDynInv =
-      _layerHasDynamicCycle[layer] && isDynamicInvariant(defInv);
-
-  assert(std::all_of(staticInputVars(defInv).begin(),
-                     staticInputVars(defInv).end(),
-                     [&](const VarId& staticInputId) {
-                       return staticInputId != NULL_ID &&
-                              _varLayerIndex[staticInputId].layer <=
-                                  layer - static_cast<size_t>(isDynInv);
-                     }));
+  assert(std::all_of(
+      staticInputVars(defInv).begin(), staticInputVars(defInv).end(),
+      [&](const VarId& staticInputId) {
+        return staticInputId != NULL_ID &&
+               _varLayerIndex[staticInputId].layer <=
+                   layer - static_cast<size_t>(_layerHasDynamicCycle[layer] &&
+                                               isDynamicInvariant(defInv));
+      }));
   assert(std::all_of(dynamicInputVars(defInv).begin(),
                      dynamicInputVars(defInv).end(),
                      [&](const auto& dynIncArc) {
