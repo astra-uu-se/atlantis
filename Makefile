@@ -190,6 +190,10 @@ run-tests-tsan: build-tests-tsan
 run-benchmarks: build-benchmarks
 	exec ${BUILD_DIR}/runBenchmarks
 
+.PHONY: run-debug-benchmarks
+run-debug-benchmarks: build-debug-benchmarks
+	exec ${BUILD_DIR}/runBenchmarks
+
 .PHONY: benchmark
 benchmark: build-benchmarks
 	mkdir -p ${BENCHMARK_JSON_DIR}
