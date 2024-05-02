@@ -94,6 +94,16 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
           }
         }
       }
+      for (const auto& invariantData :
+           _solver.outgoingArcs(varId).outgoingDynamic().arcs()) {
+        for (const VarIdBase& outputVar :
+             _solver.varsDefinedBy(invariantData.invariantId())) {
+          if (!_onPropagationPath.get(outputVar)) {
+            _onPropagationPath.set(outputVar, true);
+            stack.emplace_back(outputVar);
+          }
+        }
+      }
     }
   }
 }
