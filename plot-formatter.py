@@ -1,4 +1,3 @@
-from fileinput import filename
 import logging
 from os import path, access, R_OK
 import re
@@ -6,23 +5,22 @@ import matplotlib
 import matplotlib.pyplot as plt
 import json
 import argparse
-from typing import *
+from typing import List, Dict, Any, Tuple, Union, Iterable, Set
 from math import ceil
-from pprint import pprint
 matplotlib.use('tkagg')
 
 
-def int_to_propagation_mode(value: int, short: bool = True) -> str:
+def int_to_propagation_mode(value: int, verbose: bool = True) -> str:
     assert 0 <= value and value <= 3
     if value == 0:
-        return 'i2o' if short else 'input-to-output'
-    prop_mode = ('o2i' if short else 'output-to-input') + ' –⁠ '  # en dash
+        return 'input-to-output' if verbose else 'i2o'
+    prop_mode = ('output-to-input' if verbose else 'o2i') + ' –⁠ '  # en dash
     if value == 1:
-        return prop_mode + 'without marking'
+        return prop_mode + 'total'
     elif value == 2:
         return prop_mode + 'prepared'
     elif value == 3:
-        return prop_mode + 'dfs'
+        return prop_mode + 'ad-hoc'
     return ''
 
 
@@ -49,8 +47,9 @@ def int_to_marker(value: int) -> str:
     return ''
 
 
-def flatten(l: List[List[Any]]) -> List[Any]:
-    return [item for sublist in l for item in sublist]
+def flatten(lst: List[List[Any]]) -> List[Any]:
+    return [item for sublist in lst for item in sublist]
+
 
 class Plot:
     x_vals: List[int]
@@ -349,8 +348,7 @@ class PropagationModeCollection:
         for ic in self:
             x_vals, y_vals = ic.results()
             label = ' - '.join(
-              label_parts + [int_to_propagation_mode(ic.propagation_mode,
-                                                     True)])
+              label_parts + [int_to_propagation_mode(ic.propagation_mode)])
 
             plots.append(Plot(
                 x_vals,
@@ -474,7 +472,7 @@ class Model:
             return self.settings.get('abbreviation', self.name)
         if 'abbreviation' not in self.settings:
             return self.settings.get('model_name', self.name)
-        
+
         model_name = self.settings['model_name']
         if len(model_name) > 20:
             return self.settings['abbreviation']
@@ -640,6 +638,7 @@ class PlotFormatter:
     inputs: List[str] = list()
     output_dir: Union[str, None]
     save_plots: bool
+    plt_settings: Dict[str, Any]
     settings: Dict[str, Any]
     file_prefix: str
     file_suffix: str
@@ -648,12 +647,15 @@ class PlotFormatter:
 
     def __init__(self, inputs: List[str],
                  save_plots: bool, output_dir: str, settings: str,
-                 file_prefix: str = '', file_suffix: str = '.*', 
+                 file_prefix: str = '', file_suffix: str = '.*',
                  models_re: str = ''):
         self.inputs: List[str] = inputs
         self.output_dir: Union[str, None] = output_dir
         self.save_plots: bool = save_plots
-        self.settings: Dict[str, Any] = self.process_settings(settings)
+        settings: Dict[str, Any] = self.process_settings(settings)
+        self.plt_settings: Dict[str, Any] = settings.get('plt', dict())
+        self.settings: Dict[str, Any] = settings.get('benchmarks', dict())
+        logging.info(f'Loaded plt settings: {self.plt_settings}')
         self.file_prefix: str = (
           f'{file_prefix}-' if len(file_prefix) > 0 else '')
         self.file_suffix: str = (
@@ -704,8 +706,7 @@ class PlotFormatter:
           'Parsed: ' +
           str.join('; ',
                    [f'{c} {l}(s)' for c, l in [
-                     (model_collection_count,
-                      'model collection'),
+                     (model_collection_count, 'model collection'),
                      (model_count,
                       'model'),
                      (method_count,
@@ -825,10 +826,20 @@ class PlotFormatter:
 
     def plot_comparing_models(self, models_to_compare: Set[Model]) -> None:
         figure = self.plot_compare_models(models_to_compare)
-        plt.rcParams["figure.figsize"] = (10, 4)
+        
+        def_figsize = (10, 4)
+        figsize = self.plt_settings.get("figsize", def_figsize)
+        logging.info(f"figsize: {figsize}")
+        figsize = (tuple(figsize)
+                   if isinstance(figsize, list) and len(figsize) == 2
+                   else def_figsize)
+        
+        plt.rcParams["figure.figsize"] = figsize
         plt.title(figure.title)
-        plt.xlabel(figure.xlabel, fontsize=10)
-        plt.ylabel(figure.ylabel, fontsize=10)
+        plt.xlabel(figure.xlabel,
+                   fontsize=self.plt_settings.get("fontsize", 10.5))
+        plt.ylabel(figure.ylabel,
+                   fontsize=self.plt_settings.get("fontsize", 10.5))
         plt.yscale(figure.yscale)
         for plot in figure:
             plt.plot(
@@ -845,14 +856,26 @@ class PlotFormatter:
         cols = 1 if len(subplots) < 2 else 2
         rows = int(ceil(len(subplots) / 2))
 
-        fig, axes = plt.subplots(rows, cols, figsize=(8, 3.8))
+        def_figsize = (8, 3.8)
+        figsize = self.plt_settings.get(
+            "subplot", dict()).get("figsize", def_figsize)
+        logging.info(f"figsize: {figsize}")
+        figsize = (tuple(figsize)
+                   if isinstance(figsize, list) and len(figsize) == 2
+                   else def_figsize)
+
+        fig, axes = plt.subplots(rows, cols, figsize=figsize)
 
         flat = [axes] if len(subplots) == 1 else axes.flat
 
         for i, figure in enumerate(subplots):
             flat[i].set_title(figure.title)
-            flat[i].set_xlabel(figure.xlabel, fontsize=10.5)
-            flat[i].set_ylabel(figure.ylabel, fontsize=10.5)
+            flat[i].set_xlabel(
+                figure.xlabel,
+                fontsize=self.plt_settings.get("fontsize", 10.5))
+            flat[i].set_ylabel(
+                figure.ylabel,
+                fontsize=self.plt_settings.get("fontsize", 10.5))
             flat[i].set_yscale(figure.yscale)
             for plot in figure:
                 flat[i].plot(
@@ -871,13 +894,32 @@ class PlotFormatter:
 
             flat[i].set_xticks(figure.pretty_xticks)
 
+        left = self.plt_settings.get(
+            "subplots_adjust", dict()).get("left", 0.07)
+        right = self.plt_settings.get(
+            "subplots_adjust", dict()).get("right", 0.999)
+        bottom = self.plt_settings.get(
+            "subplots_adjust", dict()).get("bottom", 0.06)
+        top = self.plt_settings.get(
+            "subplots_adjust", dict()).get("top", 0.84)
+        wspace = self.plt_settings.get(
+            "subplots_adjust", dict()).get("wspace", 0.22)
+        hspace = self.plt_settings.get(
+            "subplots_adjust", dict()).get("hspace", 0.43)
+        logging.info(f"left: {left}")
+        logging.info(f"right: {right}")
+        logging.info(f"bottom: {bottom}")
+        logging.info(f"top: {top}")
+        logging.info(f"wspace: {wspace}")
+        logging.info(f"hspace: {hspace}")
+
         plt.subplots_adjust(
-          left=0.06,
-          right=0.999,
-          bottom=0.06,
-          top=0.92,
-          wspace=0.15,
-          hspace=0.43)
+          left=left,
+          right=right,
+          bottom=bottom,
+          top=top,
+          wspace=wspace,
+          hspace=hspace)
 
         seen_labels = set()
         handles_labels = []
@@ -902,7 +944,16 @@ class PlotFormatter:
         plt.show()
 
     def plot_model_collection(self) -> None:
-        plt.rcParams["figure.figsize"] = (10, 8)
+        def_figsize = (10, 4)
+        figsize = self.plt_settings.get("figsize", def_figsize)
+        logging.info(f"figsize: {figsize}")
+        figsize = (tuple(figsize)
+                   if isinstance(figsize, list) and len(figsize) == 2
+                   else def_figsize)
+        logging.info(f"figsize: {figsize}")
+        
+        plt.rcParams["figure.figsize"] = figsize
+        
         # plt.tight_layout(pad=0, h_pad=0, w_pad=0)
         subplots: List[Tuple[Tuple[int, str], Figure]] = []
         for model_collection in self.problem_collection:
@@ -967,7 +1018,7 @@ class PlotFormatter:
         if len(models_to_compare) == 0:
             return
         initial_model = next(iter(models_to_compare))
-        logging.info(f"comparing models")
+        logging.info("comparing models")
         logging.info(initial_model.methods)
         for method in initial_model:
             logging.info(method.name)
@@ -1034,17 +1085,17 @@ class PlotFormatter:
 
             instance_collections = sorted(
               instance_collections, key=lambda ic: ic.propagation_mode)
-            
-            s = next((ic.smallest_instance.problem_instance
-                      for ic in instance_collections))
-            assert smallest is None or smallest == s
-            smallest = s
 
-            l = next((ic.largest_instance.problem_instance
-                      for ic in instance_collections))
-            assert largest is None or largest == l
-            largest = l
-            
+            sml = next((ic.smallest_instance.problem_instance
+                        for ic in instance_collections))
+            assert smallest is None or smallest == sml
+            smallest = sml
+
+            lrg = next((ic.largest_instance.problem_instance
+                        for ic in instance_collections))
+            assert largest is None or largest == lrg
+            largest = lrg
+
             best_s = max((ic.smallest_instance.probes_per_second
                           for ic in instance_collections))
 
@@ -1053,7 +1104,7 @@ class PlotFormatter:
             p_modes = [ic.propagation_mode for ic in instance_collections]
             assert len(propagation_modes) == 0 or propagation_modes == p_modes
             propagation_modes = p_modes
-            
+
             latex[model] = (
               [ic.smallest_instance.probes_per_second / best_s
                for ic in instance_collections] +
@@ -1064,9 +1115,9 @@ class PlotFormatter:
         print('\\textbf{Instance size} & '
               f'\\multicolumn{{3}}{{c}}{{smallest ($n$={smallest})}} & '
               f'\\multicolumn{{3}}{{c}}{{largest ($n$={largest})}} \\\\')
-        
+
         print('\\cmidrule(lr){1-1} \\cmidrule(lr){2-4} \\cmidrule(lr){5-7}')
-        
+
         print('\\textbf{Propagation} & \\multicolumn{1}{c}{input-to-output} & '
               '\\multicolumn{2}{c}{output-to-input} & '
               '\\multicolumn{1}{c}{input-to-output} & '
@@ -1081,7 +1132,7 @@ class PlotFormatter:
               '\\multicolumn{1}{c}{yes} \\\\')
 
         print('\\midrule')
-        
+
         latex = sorted(latex.items(), key=lambda kvp: kvp[0].latex_name)
         for model, data in latex:
             def to_str(val: float) -> str:
@@ -1089,7 +1140,7 @@ class PlotFormatter:
                 if val >= 1.0:
                     return f'$\\mathbf{{{str_val}}}$'
                 return f'${str_val}$'
-            
+
             print(model.latex_name + ' & ' +
                   ' & '.join(map(to_str, data)) +
                   ' \\\\')
