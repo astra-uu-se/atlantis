@@ -53,13 +53,16 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
       stack.pop_back();
       _searchVarAncestors[varId].emplace(searchVar);
 
-      for (const auto& invariantData :
-           _solver.outgoingArcs(varId).outgoingStatic()) {
-        for (const VarId outputVar :
-             _solver.varsDefinedBy(invariantData.invariantId)) {
-          if (!varVisited[outputVar]) {
-            varVisited[outputVar] = true;
-            stack.push_back(outputVar);
+      for (signed char i = 0; i < 2; ++i) {
+        for (const auto& invariantData :
+             i == 0 ? _solver.outgoingArcs(varId).outgoingStatic()
+                    : _solver.outgoingArcs(varId).outgoingDynamic().arcs()) {
+          for (const VarIdBase& outputVar :
+               _solver.varsDefinedBy(invariantData.invariantId())) {
+            if (!varVisited[outputVar]) {
+              varVisited[outputVar] = true;
+              stack.push_back(outputVar);
+            }
           }
         }
       }
@@ -83,24 +86,16 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
     while (!stack.empty()) {
       const VarId id = stack.back();
       stack.pop_back();
-      for (const auto& invariantData :
-           _solver.outgoingArcs(varId).outgoingStatic()) {
-        for (const VarId outputVar :
-             _solver.varsDefinedBy(invariantData.invariantId)) {
-          assert(outputVar < _onPropagationPath.size());
-          if (!_onPropagationPath[outputVar]) {
-            _onPropagationPath[outputVar] = true;
-            stack.emplace_back(outputVar);
-          }
-        }
-      }
-      for (const auto& invariantData :
-           _solver.outgoingArcs(varId).outgoingDynamic().arcs()) {
-        for (const VarIdBase& outputVar :
-             _solver.varsDefinedBy(invariantData.invariantId())) {
-          if (!_onPropagationPath.get(outputVar)) {
-            _onPropagationPath.set(outputVar, true);
-            stack.emplace_back(outputVar);
+      for (signed char i = 0; i < 2; ++i) {
+        for (const auto& invariantData :
+             i == 0 ? _solver.outgoingArcs(varId).outgoingStatic()
+                    : _solver.outgoingArcs(varId).outgoingDynamic().arcs()) {
+          for (const VarIdBase& outputVar :
+               _solver.varsDefinedBy(invariantData.invariantId())) {
+            if (!_onPropagationPath.get(outputVar)) {
+              _onPropagationPath.set(outputVar, true);
+              stack.emplace_back(outputVar);
+            }
           }
         }
       }
@@ -322,4 +317,5 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
   }
   clearRegisteredVars();
 }
+
 }  // namespace atlantis::propagation
