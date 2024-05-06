@@ -119,9 +119,9 @@ BENCHMARK_DEFINE_F(ExtremeDynamic, probe_single_dynamic_var)
 
 //*
 
-BENCHMARK_REGISTER_F(ExtremeDynamic, probe_static_var)
-    ->Unit(::benchmark::kMillisecond)
-    ->Apply(defaultArguments);
+// BENCHMARK_REGISTER_F(ExtremeDynamic, probe_static_var)
+//     ->Unit(::benchmark::kMillisecond)
+//     ->Apply(defaultArguments);
 
 BENCHMARK_REGISTER_F(ExtremeDynamic, probe_single_dynamic_var)
     ->Unit(::benchmark::kMillisecond)
