@@ -640,6 +640,12 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
                        return isDynamicInvariant(defInv) &&
                               _varLayerIndex[dynIncArc.varId.id].layer <= layer;
                      }));
+  assert(std::all_of(dynamicInputVars(defInv).begin(),
+                     dynamicInputVars(defInv).end(),
+                     [&](const auto& dynIncArc) {
+                       return isDynamicInvariant(defInv) &&
+                              _varLayerIndex[dynIncArc.varId.id].layer <= layer;
+                     }));
 
   for (const auto& staticInputId : staticInputVars(defInv)) {
     assert(staticInputId != NULL_ID);

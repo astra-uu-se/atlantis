@@ -514,6 +514,10 @@ void Solver::computeBounds() {
           }
         }
       }
+      for (const auto& invariantData :
+           listeningInvData.outgoingDynamic().arcs()) {
+        --inputsToCompute[invariantData.invariantId()];
+      }
     }
   }
 

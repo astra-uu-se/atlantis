@@ -69,6 +69,9 @@ void ElementVar::notifyInputChanged(Timestamp ts, LocalId localId) {
   updateValue(ts, _output, _solver.value(ts, _varArray[index]));
 }
 
+  updateValue(ts, _output, _solver.value(ts, _varArray[index]));
+}
+
 VarId ElementVar::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
