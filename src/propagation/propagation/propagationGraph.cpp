@@ -6,6 +6,7 @@
 #include <iostream>
 #include <numeric>
 #include <queue>
+#include <stack>
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/arcs.hpp"
@@ -180,8 +181,8 @@ void PropagationGraph::registerDefinedVar(VarId varId,
   }
   indicesToRemove.clear();
   size_t i = 0;
-  for (const auto& inputData : _outgoingArcs[varId].outgoingDynamic().arcs()) {
-    if (inputData.invariantId() == invariantId) {
+  for (const auto& outArc : _outgoingArcs[varId].outgoingDynamic().arcs()) {
+    if (outArc.invariantId() == invariantId) {
       indicesToRemove.emplace_back(i);
     }
     ++i;
@@ -316,27 +317,148 @@ void PropagationGraph::partitionIntoLayers(std::vector<bool>& visited,
  * share key-value.
  */
 void PropagationGraph::partitionIntoLayers() {
-  std::vector<bool> visited(numVars(), false);
-  _layerHasDynamicCycle.assign(1, false);
-  _varsInLayer.assign(1, std::vector<VarId>{});
-  assert(_varLayerIndex.size() == numVars());
-  // Call visit on all output variables
-  for (const VarId evalVar : _evaluationVars) {
-    partitionIntoLayers(visited, evalVar);
-  }
-  // Visit any unvisited nodes (this should not happen):
-  for (VarId varId = 0; varId < numVars(); ++varId) {
-    if (!visited[varId]) {
-      partitionIntoLayers(visited, VarId(varId));
+  // Step 1, find all strongly connected components:
+  Int unusedIndex = 0;
+  Int unusedComponent = 0;
+
+  std::stack<VarIdBase> stack;
+
+  std::vector<bool> onStack(numVars() + 1, false);
+  std::vector<Int> lowlink(numVars() + 1, -1);
+  std::vector<Int> index(numVars() + 1, -1);
+  std::vector<Int> componentIndex(numVars() + 1, -1);
+  std::vector<std::vector<size_t>> components;
+
+  const std::function<void(size_t)> strongconnect = [&](const size_t v) {
+    assert(0 < v && v < numVars() + 1);
+    assert(index[v] == -1);
+    index[v] = unusedIndex;
+    lowlink[v] = unusedIndex;
+    ++unusedIndex;
+    stack.push(v);
+    onStack[v] = true;
+
+    for (char c = 0; c < 2; ++c) {
+      for (const auto& outArc :
+           c == 0 ? outgoingArcs(v).outgoingStatic()
+                  : outgoingArcs(v).outgoingDynamic().arcs()) {
+        if (outArc.invariantId() == NULL_ID) {
+          // self cycle
+          continue;
+        }
+        for (const auto& w : varsDefinedBy(outArc.invariantId())) {
+          if (index[size_t{w}] == -1) {
+            strongconnect(size_t{w});
+            lowlink[v] = std::min(lowlink[v], lowlink[size_t{w}]);
+          } else if (onStack[size_t{w}]) {
+            lowlink[v] = std::min(lowlink[v], index[size_t{w}]);
+          }
+        }
+      }
+    }
+    if (lowlink[v] == index[v]) {
+      if (stack.top() == v) {
+        onStack[v] = false;
+        stack.pop();
+        return;
+      }
+      components.emplace_back();
+      size_t w;
+      do {
+        w = stack.top();
+        onStack[w] = false;
+        componentIndex[w] = unusedComponent;
+        components.back().emplace_back(w);
+        stack.pop();
+      } while (w != v);
+      ++unusedComponent;
+    }
+  };
+
+  for (size_t v = 1; v <= numVars(); ++v) {
+    if (index[v] == -1) {
+      strongconnect(v);
     }
   }
-  assert(all_in_range(0, numVars(), [&](const VarId varId) {
-    const size_t layer = _varLayerIndex.at(varId).layer;
-    const size_t index = _varLayerIndex.at(varId).index;
-    return varId < _varLayerIndex.size() && layer < _varsInLayer.size() &&
-           index < _varsInLayer.at(layer).size() &&
-           varId == _varsInLayer.at(layer).at(index);
-  }));
+
+  std::vector<bool> visited(numVars() + 1, false);
+
+  // Step 2, partition into layers:
+  const std::function<void(size_t)> partition = [&](const VarIdBase v) {
+    if (definingInvariant(v) == NULL_ID) {
+      _varLayerIndex[v].layer = 0;
+      return;
+    }
+    if (visited[v]) {
+      return;
+    }
+    visited[v] = true;
+    if (componentIndex[v] >= 0) {
+      for (const size_t w : components[componentIndex[v]]) {
+        visited[w] = true;
+      }
+      size_t sccLayer = 0;
+      for (const size_t w : components[componentIndex[v]]) {
+        const InvariantId defInv = definingInvariant(VarIdBase{w});
+        assert(defInv != NULL_ID);
+        for (const auto& staticInputId : staticInputVars(defInv)) {
+          if (componentIndex[staticInputId] != componentIndex[v]) {
+            partition(staticInputId);
+            sccLayer =
+                std::max(sccLayer, _varLayerIndex[staticInputId].layer + 1);
+          }
+        }
+        for (const auto& dynamicInput : dynamicInputVars(defInv)) {
+          if (componentIndex[dynamicInput.varId] != componentIndex[v]) {
+            partition(dynamicInput.varId);
+            sccLayer = std::max(sccLayer,
+                                _varLayerIndex[dynamicInput.varId].layer + 1);
+          }
+        }
+      }
+      assert(sccLayer > 0);
+      for (const size_t w : components[componentIndex[v]]) {
+        _varLayerIndex[VarIdBase{w}].layer = sccLayer;
+      }
+    } else {
+      for (const auto& staticInputId : staticInputVars(definingInvariant(v))) {
+        partition(staticInputId);
+        _varLayerIndex[v].layer = std::max(
+            _varLayerIndex[v].layer,
+            _varLayerIndex[staticInputId].layer +
+                static_cast<size_t>(componentIndex[staticInputId] >= 0));
+      }
+      for (const auto& dynamicInput : dynamicInputVars(definingInvariant(v))) {
+        partition(dynamicInput.varId);
+        _varLayerIndex[v].layer = std::max(
+            _varLayerIndex[v].layer,
+            _varLayerIndex[dynamicInput.varId].layer +
+                static_cast<size_t>(componentIndex[dynamicInput.varId] >= 0));
+      }
+    }
+  };
+
+  for (size_t v = 1; v <= numVars(); ++v) {
+    if (!visited[v]) {
+      partition(v);
+    }
+  }
+
+  _varsInLayer.clear();
+  for (size_t v = 1; v <= numVars(); ++v) {
+    while (_varLayerIndex[v].layer >= _varsInLayer.size()) {
+      _varsInLayer.emplace_back();
+    }
+    _varLayerIndex[v].index = _varsInLayer[_varLayerIndex[v].layer].size();
+    _varsInLayer[_varLayerIndex[v].layer].emplace_back(v);
+  }
+
+  _layerHasDynamicCycle.assign(numLayers(), false);
+  for (size_t layer = 0; layer < numLayers(); ++layer) {
+    assert(!_varsInLayer[layer].empty());
+    _layerHasDynamicCycle[layer] =
+        componentIndex[size_t{_varsInLayer[layer].front()}] >= 0;
+  }
 }
 
 bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
@@ -489,42 +611,14 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
   if (inFrontier[index]) {
     throw TopologicalOrderError();
   }
-  assert(_varPosition[varId] == numVars());
-  if (_varPosition[varId] != numVars()) {
+  if (_varPosition[varId] < numVars()) {
     // already visited:
     return;
   }
+  assert(_varPosition[varId] == numVars());
 
   // reset the topological number:
   _varPosition[varId] = 0;
-
-  for (const auto& outDynArcs : _outgoingArcs[varId].outgoingDynamic().arcs()) {
-    if (outDynArcs.invariantId() == NULL_ID) {
-      // varId is both defined and a dynamic input to the invariant:
-      continue;
-    }
-    // For each dynamic invariant varId is a dynamic input to
-    assert(outDynArcs.invariantId() != NULL_ID);
-    // For each static input variable of the dynamic invariant:
-    for (const auto& staticInputVar :
-         staticInputVars(outDynArcs.invariantId())) {
-      assert(staticInputVar != NULL_ID);
-      // If the level of the static input and varId equals:
-      if (_varLayerIndex[staticInputVar].layer == layer) {
-        if (staticInputVar == varId) {
-          // self-cycle
-          continue;
-        }
-        if (_varPosition[staticInputVar] == numVars()) {
-          topologicallyOrder(ts, inFrontier, staticInputVar);
-        }
-        // The topological number of varId must be greater than that of the
-        // static input variable:
-        _varPosition[varId] =
-            std::max(_varPosition[varId], _varPosition[staticInputVar] + 1);
-      }
-    }
-  }
 
   // Get defining invariant:
   const InvariantId defInv = definingInvariant(varId);
@@ -554,29 +648,40 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
 
   for (const auto& staticInputId : staticInputVars(defInv)) {
     assert(staticInputId != NULL_ID);
-    // we should have no dependencies to subsequent layers:
-    assert(_varLayerIndex[staticInputId.id].layer <= layer);
-    if (_varLayerIndex[staticInputId].layer == layer) {
-      if (_varPosition[staticInputId] == numVars()) {
-        topologicallyOrder(ts, inFrontier, staticInputId);
-      }
-      _varPosition[varId] =
-          std::max(_varPosition[varId], _varPosition[staticInputId] + 1);
+    if (_varLayerIndex[staticInputId.id].layer < layer) {
+      continue;
     }
+    // we should have no dependencies to subsequent layers:
+    assert(_varLayerIndex[staticInputId.id].layer == layer);
+    topologicallyOrder(ts, inFrontier, staticInputId);
+    _varPosition[varId] =
+        std::max(_varPosition[varId], _varPosition[staticInputId] + 1);
   }
 
   if (isDynamicInvariant(defInv)) {
-    const VarId dynamicInputId = dynamicInputVar(ts, defInv);
-    assert(dynamicInputId != NULL_ID);
-    // we should have no dependencies to subsequent layers:
-    assert(_varLayerIndex[dynamicInputId.id].layer <= layer);
-    if (_varLayerIndex[dynamicInputId.id].layer == layer) {
-      if (_varPosition[dynamicInputId] == numVars()) {
+    if (_layerHasDynamicCycle[layer]) {
+      const VarId dynamicInputId = dynamicInputVar(ts, defInv);
+      assert(dynamicInputId != NULL_ID);
+      if (_varLayerIndex[dynamicInputId].layer == layer) {
+        // we should have no dependencies to subsequent layers:
+        assert(_varLayerIndex[dynamicInputId.id].layer == layer);
         topologicallyOrder(ts, inFrontier, dynamicInputId);
+        assert(_varPosition[dynamicInputId] < numVars());
+        _varPosition[varId] =
+            std::max(_varPosition[varId], _varPosition[dynamicInputId.id] + 1);
       }
-      assert(_varPosition[dynamicInputId] < numVars());
-      _varPosition[varId] =
-          std::max(_varPosition[varId], _varPosition[dynamicInputId.id] + 1);
+    }
+  } else {
+    for (const auto& dynamicInput : dynamicInputVars(defInv)) {
+      assert(dynamicInput.varId != NULL_ID);
+      if (_varLayerIndex[dynamicInput.varId.id].layer < layer) {
+        continue;
+      }
+      // we should have no dependencies to subsequent layers:
+      assert(_varLayerIndex[dynamicInput.varId.id].layer == layer);
+      topologicallyOrder(ts, inFrontier, dynamicInput.varId);
+      _varPosition[varId] = std::max(_varPosition[varId],
+                                     _varPosition[dynamicInput.varId.id] + 1);
     }
   }
   assert(std::all_of(staticInputVars(defInv).begin(),

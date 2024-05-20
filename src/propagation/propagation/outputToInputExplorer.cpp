@@ -54,11 +54,15 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
       _searchVarAncestors[varId].emplace(searchVar);
 
       for (signed char i = 0; i < 2; ++i) {
-        for (const auto& invariantData :
+        for (const auto& outArc :
              i == 0 ? _solver.outgoingArcs(varId).outgoingStatic()
                     : _solver.outgoingArcs(varId).outgoingDynamic().arcs()) {
+          if (outArc.invariantId() == NULL_ID) {
+            // self cycle: skip
+            continue;
+          }
           for (const VarIdBase& outputVar :
-               _solver.varsDefinedBy(invariantData.invariantId())) {
+               _solver.varsDefinedBy(outArc.invariantId())) {
             if (!varVisited[outputVar]) {
               varVisited[outputVar] = true;
               stack.push_back(outputVar);
@@ -87,11 +91,15 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
       const VarId id = stack.back();
       stack.pop_back();
       for (signed char i = 0; i < 2; ++i) {
-        for (const auto& invariantData :
+        for (const auto& outArc :
              i == 0 ? _solver.outgoingArcs(varId).outgoingStatic()
                     : _solver.outgoingArcs(varId).outgoingDynamic().arcs()) {
+          if (outArc.invariantId() == NULL_ID) {
+            // self cycle: skip
+            continue;
+          }
           for (const VarIdBase& outputVar :
-               _solver.varsDefinedBy(invariantData.invariantId())) {
+               _solver.varsDefinedBy(outArc.invariantId())) {
             if (!_onPropagationPath.get(outputVar)) {
               _onPropagationPath.set(outputVar, true);
               stack.emplace_back(outputVar);

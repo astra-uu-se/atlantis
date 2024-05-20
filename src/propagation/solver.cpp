@@ -415,8 +415,6 @@ void Solver::enforceOutgoingArcs(const VarId& queuedVar) {
     assert(index < arcs.outgoingDynamic().size());
     const auto& outgoingArc = arcs.outgoingDynamic().arcs()[index];
     assert(outgoingArc.invariantId() != NULL_ID);
-    assert(queuedVar == _store.dynamicInputVar(_currentTimestamp,
-                                               outgoingArc.invariantId()));
 
     assert(_propGraph.layer(queuedVar) <
                _propGraph.layer(outgoingArc.invariantId()) ||
@@ -509,13 +507,14 @@ void Solver::computeBounds() {
   // Search variables might now have been computed yet
   for (VarId varId = 0; varId < numVars(); ++varId) {
     if (definingInvariant(varId) == NULL_ID) {
-      auto& listeningInvData = outgoingArcs(varId);
-      for (const auto& invariantData : listeningInvData.outgoingStatic()) {
-        --inputsToCompute[invariantData.invariantId()];
-      }
-      for (const auto& invariantData :
-           listeningInvData.outgoingDynamic().arcs()) {
-        --inputsToCompute[invariantData.invariantId()];
+      auto& outArcs = outgoingArcs(varId);
+      for (char c = 0; c < 2; ++c) {
+        for (const auto& outArc : c == 0 ? outArcs.outgoingStatic()
+                                         : outArcs.outgoingDynamic().arcs()) {
+          if (outArc.invariantId() != NULL_ID) {
+            --inputsToCompute[outArc.invariantId()];
+          }
+        }
       }
     }
   }
