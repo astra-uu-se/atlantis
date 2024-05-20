@@ -72,7 +72,9 @@ VarViewId ElementVar::dynamicInputVar(const Timestamp ts) const noexcept {
 void ElementVar::notifyInputChanged(Timestamp ts, LocalId localId) {
   const size_t index = safeIndex(_solver.value(ts, _index));
   assert(index < _varArray.size());
-  assert(localId == _varArray.size() || localId == index);
+  if (localId != _varArray.size() && localId != index) {
+    return;
+  }
   if (localId == _varArray.size() && _activeIndex != index) {
     assert(_activeIndex < _varArray.size());
     makeDynamicInputInactive(ts, LocalId{_activeIndex});

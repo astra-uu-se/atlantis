@@ -102,6 +102,23 @@ static void partitionIntoLayersUtil(
     assert(!layerHasSCC[0]);
     return;
   }
+  for (Int i = static_cast<Int>(indicesToRemove.size()) - 1; i >= 0; --i) {
+    _outgoingArcs[varId].eraseStatic(indicesToRemove[i]);
+  }
+  indicesToRemove.clear();
+  size_t i = 0;
+  for (const auto& outArc : _outgoingArcs[varId].outgoingDynamic().arcs()) {
+    if (outArc.invariantId() == invariantId) {
+      indicesToRemove.emplace_back(i);
+    }
+    ++i;
+  }
+  for (size_t index : indicesToRemove) {
+    _outgoingArcs[varId].setDynamicNullId(index);
+  }
+  _definingInvariant[varId] = invariantId;
+  _varsDefinedByInvariant[invariantId].emplace_back(varId);
+}
 
   if (componentOfVar[varId] >= components.size()) {
     // varId is not in an SCC:
@@ -210,6 +227,59 @@ static std::vector<bool> partitionIntoLayersUsingSCC(
                                 visited, layerOfVar, layerHasSCC);
       }
     }
+    if (visited[v]) {
+      return;
+    }
+    visited[v] = true;
+    if (componentIndex[v] >= 0) {
+      for (const size_t w : components[componentIndex[v]]) {
+        visited[w] = true;
+      }
+      size_t sccLayer = 0;
+      for (const size_t w : components[componentIndex[v]]) {
+        const InvariantId defInv = definingInvariant(VarIdBase{w});
+        assert(defInv != NULL_ID);
+        for (const auto& staticInputId : staticInputVars(defInv)) {
+          if (componentIndex[staticInputId] != componentIndex[v]) {
+            partition(staticInputId);
+            sccLayer =
+                std::max(sccLayer, _varLayerIndex[staticInputId].layer + 1);
+          }
+        }
+        for (const auto& dynamicInput : dynamicInputVars(defInv)) {
+          if (componentIndex[dynamicInput.varId] != componentIndex[v]) {
+            partition(dynamicInput.varId);
+            sccLayer = std::max(sccLayer,
+                                _varLayerIndex[dynamicInput.varId].layer + 1);
+          }
+        }
+      }
+      assert(sccLayer > 0);
+      for (const size_t w : components[componentIndex[v]]) {
+        _varLayerIndex[VarIdBase{w}].layer = sccLayer;
+      }
+    } else {
+      for (const auto& staticInputId : staticInputVars(definingInvariant(v))) {
+        partition(staticInputId);
+        _varLayerIndex[v].layer = std::max(
+            _varLayerIndex[v].layer,
+            _varLayerIndex[staticInputId].layer +
+                static_cast<size_t>(componentIndex[staticInputId] >= 0));
+      }
+      for (const auto& dynamicInput : dynamicInputVars(definingInvariant(v))) {
+        partition(dynamicInput.varId);
+        _varLayerIndex[v].layer = std::max(
+            _varLayerIndex[v].layer,
+            _varLayerIndex[dynamicInput.varId].layer +
+                static_cast<size_t>(componentIndex[dynamicInput.varId] >= 0));
+      }
+    }
+  };
+
+  for (size_t v = 1; v <= numVars(); ++v) {
+    if (!visited[v]) {
+      partition(v);
+    }
   }
   return layerHasSCC;
 }
@@ -313,37 +383,10 @@ void topologicallyOrderUtil(
     // already visited:
     return;
   }
+  assert(_varPosition[varId] == numVars());
 
   // reset the topological number:
   _varPosition[varId] = 0;
-
-  for (const auto& outDynArcs : _outgoingArcs[varId].outgoingDynamic().arcs()) {
-    if (outDynArcs.invariantId() == NULL_ID) {
-      // varId is both defined and a dynamic input to the invariant:
-      continue;
-    }
-    // For each dynamic invariant varId is a dynamic input to
-    assert(outDynArcs.invariantId() != NULL_ID);
-    // For each static input variable of the dynamic invariant:
-    for (const auto& staticInputVar :
-         staticInputVars(outDynArcs.invariantId())) {
-      assert(staticInputVar != NULL_ID);
-      // If the level of the static input and varId equals:
-      if (_varLayerIndex[staticInputVar].layer == layer) {
-        if (staticInputVar == varId) {
-          // self-cycle
-          continue;
-        }
-        if (_varPosition[staticInputVar] == numVars()) {
-          topologicallyOrder(ts, inFrontier, staticInputVar);
-        }
-        // The topological number of varId must be greater than that of the
-        // static input variable:
-        _varPosition[varId] =
-            std::max(_varPosition[varId], _varPosition[staticInputVar] + 1);
-      }
-    }
-  }
 
   // Get defining invariant:
   const InvariantId defInv = graph.definingInvariant(varId);
@@ -541,6 +584,18 @@ void PropagationGraph::partitionIntoLayers() {
         }
       }
       assert(allStaticInPrevLayer || allDynInPrevLayer);
+    }
+  } else {
+    for (const auto& dynamicInput : dynamicInputVars(defInv)) {
+      assert(dynamicInput.varId != NULL_ID);
+      if (_varLayerIndex[dynamicInput.varId.id].layer < layer) {
+        continue;
+      }
+      // we should have no dependencies to subsequent layers:
+      assert(_varLayerIndex[dynamicInput.varId.id].layer == layer);
+      topologicallyOrder(ts, inFrontier, dynamicInput.varId);
+      _varPosition[varId] = std::max(_varPosition[varId],
+                                     _varPosition[dynamicInput.varId.id] + 1);
     }
   }
 

@@ -214,6 +214,7 @@ bool OutgoingArcContainer::empty() const {
 
 void OutgoingArcContainer::emplaceStatic(LocalId localId,
                                          InvariantId invariantId) {
+  assert(invariantId != NULL_ID);
   _outgoingStatic.emplace_back(localId, invariantId);
   ++_numArcs;
 }
