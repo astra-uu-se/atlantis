@@ -94,6 +94,57 @@ std::vector<bool> getFixedValues(
   return values;
 }
 
+std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+    FznInvariantGraph& invariantGraph,
+    const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
+  std::vector<VarNodeId> vars;
+  vars.reserve(intVarArray->size());
+  for (size_t i = 0; i < intVarArray->size(); ++i) {
+    if (std::holds_alternative<Int>(intVarArray->at(i))) {
+      continue;
+    }
+    const auto& var =
+        std::get<std::shared_ptr<const fznparser::IntVar>>(intVarArray->at(i));
+
+    if (!var->isFixed()) {
+      vars.emplace_back(invariantGraph.retrieveVarNode(var));
+    }
+  }
+  return vars;
+}
+
+std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+    FznInvariantGraph& invariantGraph,
+    const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray) {
+  std::vector<VarNodeId> vars;
+  vars.reserve(boolVarArray->size());
+  for (size_t i = 0; i < boolVarArray->size(); ++i) {
+    if (std::holds_alternative<bool>(boolVarArray->at(i))) {
+      continue;
+    }
+    const auto& var = std::get<std::shared_ptr<const fznparser::BoolVar>>(
+        boolVarArray->at(i));
+
+    if (!var->isFixed()) {
+      vars.emplace_back(invariantGraph.retrieveVarNode(var));
+    }
+  }
+  return vars;
+}
+
+std::vector<VarNodeId> getUnfixedVarNodeIds(
+    const InvariantGraph& invariantGraph,
+    const std::vector<VarNodeId>& varNodeIds) {
+  std::vector<VarNodeId> unfixed;
+  unfixed.reserve(varNodeIds.size());
+  for (VarNodeId varNodeId : varNodeIds) {
+    if (!invariantGraph.varNodeConst(varNodeId).isFixed()) {
+      unfixed.emplace_back(varNodeId);
+    }
+  }
+  return unfixed;
+}
+
 void verifyAllDifferent(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
   std::vector<Int> values = getFixedValues(intVarArray);

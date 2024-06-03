@@ -14,7 +14,7 @@ bool int_max(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
 
   if (a.isFixed() && b.isFixed()) {
     invariantGraph.varNode(outputVarNodeId)
-        .fixValue(std::max(a.toParameter(), b.toParameter()));
+        .fixToValue(std::max(a.toParameter(), b.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<IntMaxNode>(

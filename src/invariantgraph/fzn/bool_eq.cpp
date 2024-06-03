@@ -7,6 +7,13 @@
 
 namespace atlantis::invariantgraph::fzn {
 
+bool bool_eq(FznInvariantGraph& invariantGraph, VarNodeId varNodeId,
+             bool value) {
+  invariantGraph.varNode(varNodeId).fixToValue(value);
+  invariantGraph.varNode(varNodeId).setDomainType(VarNode::DomainType::FIXED);
+  return true;
+}
+
 bool bool_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
   invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(a, b, true));
   return true;

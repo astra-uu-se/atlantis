@@ -25,7 +25,7 @@ bool int_ne(FznInvariantGraph& invariantGraph, VarNodeId varNodeId, Int value,
 
   if (!invariantGraph.varNode(varNodeId).inDomain(value)) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixValue(false);
+    invariantGraph.varNode(reifiedVarNodeId).fixToValue(false);
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<IntNeNode>(
@@ -111,7 +111,7 @@ bool int_ne(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
   if (a.isFixed() && b.isFixed()) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId)
-        .fixValue(a.toParameter() == b.toParameter());
+        .fixToValue(a.toParameter() == b.toParameter());
   }
   if (a.isFixed()) {
     return int_ne(invariantGraph, invariantGraph.retrieveVarNode(b),

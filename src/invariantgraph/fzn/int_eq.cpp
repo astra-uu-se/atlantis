@@ -8,7 +8,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId varNodeId, Int value) {
-  invariantGraph.varNode(varNodeId).fixValue(value);
+  invariantGraph.varNode(varNodeId).fixToValue(value);
   invariantGraph.varNode(varNodeId).setDomainType(VarNode::DomainType::FIXED);
   return true;
 }
@@ -24,7 +24,7 @@ bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId varNodeId, Int value,
 
   if (!invariantGraph.varNode(varNodeId).inDomain(value)) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixValue(false);
+    invariantGraph.varNode(reifiedVarNodeId).fixToValue(false);
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(
@@ -97,7 +97,7 @@ bool int_eq(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
   if (a.isFixed() && b.isFixed()) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId)
-        .fixValue(a.toParameter() == b.toParameter());
+        .fixToValue(a.toParameter() == b.toParameter());
   }
   if (a.isFixed()) {
     return int_eq(invariantGraph, invariantGraph.retrieveVarNode(b),

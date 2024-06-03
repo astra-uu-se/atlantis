@@ -37,6 +37,15 @@ std::vector<bool> getFixedBoolValues(const InvariantGraph&,
 std::vector<bool> getFixedValues(
     const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray);
 
+std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+    FznInvariantGraph&, const std::shared_ptr<fznparser::IntVarArray>&);
+
+std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+    FznInvariantGraph&, const std::shared_ptr<fznparser::BoolVarArray>&);
+
+std::vector<VarNodeId> getUnfixedVarNodeIds(const InvariantGraph&,
+                                            const std::vector<VarNodeId>&);
+
 void verifyAllDifferent(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray);
 

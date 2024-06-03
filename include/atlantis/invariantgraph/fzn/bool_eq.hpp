@@ -7,6 +7,8 @@
 
 namespace atlantis::invariantgraph::fzn {
 
+bool bool_eq(FznInvariantGraph&, VarNodeId a, bool);
+
 bool bool_eq(FznInvariantGraph&, VarNodeId a, VarNodeId b);
 
 bool bool_eq(FznInvariantGraph&, const fznparser::BoolArg& a,

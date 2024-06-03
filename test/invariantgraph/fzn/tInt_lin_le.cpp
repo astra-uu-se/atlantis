@@ -192,7 +192,7 @@ RC_GTEST_FIXTURE_PROP(int_lin_leTest, rapidcheck, (Int bMax)) {
     RC_ASSERT_THROWS_AS(
         int_lin_le(*_invariantGraph, _model->constraints().back()),
         FznArgumentException);
-    RC_SUCCEED("Always holds");
+    RC_SUCCEED("Never holds");
   }
 
   RC_ASSERT(int_lin_le(*_invariantGraph, _model->constraints().back()));
@@ -201,8 +201,7 @@ RC_GTEST_FIXTURE_PROP(int_lin_leTest, rapidcheck, (Int bMax)) {
 
   if (sumUb <= bound) {
     const propagation::VarId viol = totalViolationVarId();
-    RC_ASSERT(viol == propagation::NULL_ID ||
-              (_solver->lowerBound(viol) == _solver->lowerBound(viol)));
+    RC_ASSERT(viol == propagation::NULL_ID || (_solver->upperBound(viol) == 0));
     return;
   }
 
