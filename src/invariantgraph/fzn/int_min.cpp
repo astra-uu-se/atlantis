@@ -14,7 +14,7 @@ bool int_min(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
 
   if (a.isFixed() && b.isFixed()) {
     invariantGraph.varNode(outputVarNodeId)
-        .fixValue(std::min(a.toParameter(), b.toParameter()));
+        .fixToValue(std::min(a.toParameter(), b.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(std::make_unique<IntMinNode>(

@@ -54,7 +54,7 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
           "bool_lin_eq constraint with empty arrays must have a total sum of "
           "0");
     }
-    invariantGraph.varNode(outputVarNodeId).fixValue(Int(0));
+    invariantGraph.varNode(outputVarNodeId).fixToValue(Int(0));
     invariantGraph.varNode(outputVarNodeId)
         .setDomainType(VarNode::DomainType::FIXED);
     return true;

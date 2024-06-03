@@ -2,6 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/fzn/bool_eq.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 
@@ -33,17 +34,33 @@ static void sanityCheck(size_t inputCount, std::vector<bool> fixedValues,
 bool array_bool_and(FznInvariantGraph& invariantGraph,
                     std::vector<VarNodeId>&& boolVarNodeIds,
                     const fznparser::BoolArg& reified) {
-  sanityCheck(boolVarNodeIds.size(),
-              getFixedBoolValues(invariantGraph, boolVarNodeIds), reified);
+  std::vector<bool> fixedValues =
+      getFixedBoolValues(invariantGraph, boolVarNodeIds);
+
+  sanityCheck(boolVarNodeIds.size(), fixedValues, reified);
+
+  if (fixedValues.size() == boolVarNodeIds.size()) {
+    const bool allTrue = boolVarNodeIds.empty() ||
+                         std::all_of(fixedValues.begin(), fixedValues.end(),
+                                     [](bool b) { return b; });
+    if (!reified.isFixed()) {
+      return bool_eq(invariantGraph,
+                     invariantGraph.retrieveVarNode(reified.var()), allTrue);
+    }
+    assert(allTrue == reified.toParameter());
+    return true;
+  }
+
   if (reified.isFixed()) {
     invariantGraph.addInvariantNode(
         std::make_unique<invariantgraph::ArrayBoolAndNode>(
-            std::move(boolVarNodeIds), reified.toParameter()));
+            getUnfixedVarNodeIds(invariantGraph, boolVarNodeIds),
+            reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolAndNode>(
-          std::move(boolVarNodeIds),
+          getUnfixedVarNodeIds(invariantGraph, boolVarNodeIds),
           invariantGraph.retrieveVarNode(reified.var())));
   return true;
 }
@@ -51,18 +68,32 @@ bool array_bool_and(FznInvariantGraph& invariantGraph,
 bool array_bool_and(
     FznInvariantGraph& invariantGraph,
     const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray,
-    const fznparser::BoolArg reified) {
-  sanityCheck(boolVarArray->size(), getFixedValues(boolVarArray), reified);
+    const fznparser::BoolArg& reified) {
+  std::vector<bool> fixedValues = getFixedValues(boolVarArray);
+
+  sanityCheck(boolVarArray->size(), fixedValues, reified);
+
+  if (fixedValues.size() == boolVarArray->size()) {
+    const bool allTrue = std::all_of(fixedValues.begin(), fixedValues.end(),
+                                     [](bool b) { return b; });
+    if (!reified.isFixed()) {
+      return bool_eq(invariantGraph,
+                     invariantGraph.retrieveVarNode(reified.var()), allTrue);
+    }
+    assert(allTrue == reified.toParameter());
+    return true;
+  }
+
   if (reified.isFixed()) {
     invariantGraph.addInvariantNode(
         std::make_unique<invariantgraph::ArrayBoolAndNode>(
-            invariantGraph.retrieveVarNodes(boolVarArray),
+            retrieveUnfixedVarNodeIds(invariantGraph, boolVarArray),
             reified.toParameter()));
     return true;
   }
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolAndNode>(
-          invariantGraph.retrieveVarNodes(boolVarArray),
+          retrieveUnfixedVarNodeIds(invariantGraph, boolVarArray),
           invariantGraph.retrieveVarNode(reified.var())));
   return true;
 }

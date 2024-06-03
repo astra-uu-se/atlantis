@@ -58,7 +58,7 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
   if (coeffs.empty()) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixValue(bound >= 0);
+    invariantGraph.varNode(reifiedVarNodeId).fixToValue(bound >= 0);
     return true;
   }
 
@@ -66,13 +66,13 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
   if (bound < lb || ub < bound) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixValue(true);
+    invariantGraph.varNode(reifiedVarNodeId).fixToValue(true);
     return true;
   }
 
   if (lb == ub && lb == bound) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixValue(false);
+    invariantGraph.varNode(reifiedVarNodeId).fixToValue(false);
     return true;
   }
 

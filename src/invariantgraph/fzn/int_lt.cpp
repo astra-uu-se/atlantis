@@ -32,7 +32,7 @@ bool int_lt(FznInvariantGraph& invariantGraph, VarNodeId a, Int b,
       b >= invariantGraph.varNode(a).lowerBound()) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId)
-        .fixValue(invariantGraph.varNode(a).upperBound() < b);
+        .fixToValue(invariantGraph.varNode(a).upperBound() < b);
     return true;
   }
   invariantGraph.addInvariantNode(
@@ -55,7 +55,7 @@ bool int_lt(FznInvariantGraph& invariantGraph, Int a, VarNodeId b,
     // constraint is always satisfied or unsatisfied
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId)
-        .fixValue(a <= invariantGraph.varNode(b).lowerBound());
+        .fixToValue(a <= invariantGraph.varNode(b).lowerBound());
     return true;
   }
   invariantGraph.addInvariantNode(
@@ -112,7 +112,7 @@ bool int_lt(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
   if (a.isFixed() && b.isFixed()) {
     const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
     invariantGraph.varNode(reifiedVarNodeId)
-        .fixValue(a.toParameter() == b.toParameter());
+        .fixToValue(a.toParameter() == b.toParameter());
   }
   if (a.isFixed()) {
     return int_lt(invariantGraph, invariantGraph.retrieveVarNode(b),
