@@ -17,6 +17,10 @@ class ArrayIntMaximumNode : public InvariantNode {
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
+  void propagate(InvariantGraph& graph) override;
+
+  [[nodiscard]] bool replace(InvariantGraph& graph) override;
+
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 };
 }  // namespace atlantis::invariantgraph

@@ -21,10 +21,14 @@ InvariantNode::InvariantNode(std::vector<VarNodeId>&& outputIds,
 
 bool InvariantNode::isReified() const { return false; }
 
-bool InvariantNode::prune(InvariantGraph&) { return false; }
+void InvariantNode::propagate(InvariantGraph&) {}
+bool InvariantNode::replace(InvariantGraph&) { return false; }
 
 void InvariantNode::init(InvariantGraph& invariantGraph,
                          const InvariantNodeId& id) {
+  if (_state != InvariantNodeState::UNINITIALIZED) {
+    return;
+  }
   assert(_id == NULL_NODE_ID);
   _id = id;
   for (VarNodeId varNodeId : _outputVarNodeIds) {
@@ -36,6 +40,23 @@ void InvariantNode::init(InvariantGraph& invariantGraph,
   for (VarNodeId varNodeId : _dynamicInputVarNodeIds) {
     markDynamicInputTo(invariantGraph.varNode(varNodeId), false);
   }
+  _state = InvariantNodeState::ACTIVE;
+}
+
+void InvariantNode::deactivate(InvariantGraph& invariantGraph) {
+  while (!staticInputVarNodeIds().empty()) {
+    removeStaticInputVarNode(
+        invariantGraph.varNode(staticInputVarNodeIds().front()));
+  }
+  while (!dynamicInputVarNodeIds().empty()) {
+    removeDynamicInputVarNode(
+        invariantGraph.varNode(dynamicInputVarNodeIds().front()));
+  }
+  while (!outputVarNodeIds().empty()) {
+    removeOutputVarNode(invariantGraph.varNode(outputVarNodeIds().front()));
+  }
+
+  _state = InvariantNodeState::INACTIVE;
 }
 
 /**
@@ -83,6 +104,15 @@ void InvariantNode::removeStaticInputVarNode(VarNode& retrieveVarNode) {
                   retrieveVarNode.varNodeId()),
       _staticInputVarNodeIds.end());
   retrieveVarNode.unmarkAsInputFor(_id, true);
+}
+
+void InvariantNode::removeDynamicInputVarNode(VarNode& retrieveVarNode) {
+  // remove all occurrences:
+  _dynamicInputVarNodeIds.erase(
+      std::remove(_dynamicInputVarNodeIds.begin(),
+                  _dynamicInputVarNodeIds.end(), retrieveVarNode.varNodeId()),
+      _dynamicInputVarNodeIds.end());
+  retrieveVarNode.unmarkAsInputFor(_id, false);
 }
 
 void InvariantNode::removeOutputVarNode(VarNode& outputVarNode) {

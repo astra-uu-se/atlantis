@@ -72,6 +72,7 @@ class VarNode {
   [[nodiscard]] const SearchDomain& constDomain() const noexcept;
 
   [[nodiscard]] SearchDomain& domain() noexcept;
+  [[nodiscard]] const SearchDomain& domainConst() const noexcept;
 
   [[nodiscard]] bool isFixed() const noexcept;
 
@@ -84,32 +85,56 @@ class VarNode {
   [[nodiscard]] bool inDomain(Int) const;
   [[nodiscard]] bool inDomain(bool) const;
 
-  void removeValue(Int);
+  /**
+   * @brief removes the given value from the domain of the variable.
+   * @return the number of values removed from the domain.
+   */
+  size_t removeValue(Int);
 
-  void fixValue(Int);
+  /**
+   * @brief fixes the variable to the given value.
+   * @return the number of values removed from the domain.
+   */
+  size_t fixToValue(Int);
 
   /**
    * @brief removes all values that are strictly less than the given value from
    * the domain of the variable.
+   * @return the number of values removed from the domain.
    */
-  void removeValuesBelow(Int);
+  size_t removeValuesBelow(Int);
 
   /**
    * @brief removes all values that are strictly greater than the given value
    * from the domain of the variable.
+   * @return the number of values removed from the domain.
    */
-  void removeValuesAbove(Int);
+  size_t removeValuesAbove(Int);
+
+  /**
+   * @brief removes all values that are not in the given vector from the domain
+   * from the domain of the variable.
+   * @return the number of values removed from the domain.
+   */
+  size_t removeValues(const std::vector<Int>&);
 
   /**
    * @brief removes all values that are not in the given vector from the domain
    * from the domain of the variable.
    */
-  void removeValues(const std::vector<Int>&);
+  size_t removeAllValuesExcept(const std::vector<Int>&);
 
-  void removeAllValuesExcept(const std::vector<Int>&);
+  /**
+   * @brief fixes the variable to the given value.
+   * @return the number of values removed from the domain.
+   */
+  size_t removeValue(bool);
 
-  void removeValue(bool);
-  void fixValue(bool);
+  /**
+   * @brief fixes the variable to the given value.
+   * @return the number of values removed from the domain.
+   */
+  size_t fixToValue(bool);
 
   DomainType domainType() const noexcept;
 

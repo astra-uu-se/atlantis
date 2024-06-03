@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayElement2dNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 #include "atlantis/propagation/invariants/element2dConst.hpp"
 
 namespace atlantis::invariantgraph {
@@ -32,6 +33,50 @@ ArrayElement2dNode::ArrayElement2dNode(
     VarNodeId output, Int offset1, Int offset2)
     : ArrayElement2dNode(idx1, idx2, toIntMatrix(std::move(parMatrix)), output,
                          offset1, offset2) {}
+
+void ArrayElement2dNode::propagate(InvariantGraph& graph) {
+  if (!graph.isFixed(idx1()) && !graph.isFixed(idx2())) {
+    return;
+  }
+  if (graph.isFixed(idx2()) && graph.isFixed(idx2())) {
+    removeStaticInputVarNode(graph.varNode(idx1()));
+    removeStaticInputVarNode(graph.varNode(idx2()));
+    const Int val = _parMatrix[graph.lowerBound(idx1()) + _offset1]
+                              [graph.lowerBound(idx2()) + _offset2];
+    graph.fixToValue(outputVarNodeIds().front(), val);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  setState(InvariantNodeState::REPLACABLE);
+}
+
+bool ArrayElement2dNode::replace(InvariantGraph& invariantGraph) {
+  if (state() != InvariantNodeState::REPLACABLE) {
+    return false;
+  }
+  assert(invariantGraph.varNode(idx1()).isFixed() !=
+         invariantGraph.varNode(idx2()).isFixed());
+  if (invariantGraph.varNode(idx1()).isFixed()) {
+    invariantGraph.replaceInvariantNode(
+        id(),
+        std::make_unique<ArrayElementNode>(
+            std::move(_parMatrix[invariantGraph.varNode(idx1()).lowerBound() +
+                                 _offset1]),
+            idx2(), outputVarNodeIds().front(), _offset2));
+    return true;
+  }
+  std::vector<Int> parMatrixRow;
+  const Int col = invariantGraph.varNode(idx2()).lowerBound() + _offset2;
+  parMatrixRow.reserve(_parMatrix.size());
+  for (const std::vector<Int>& row : _parMatrix) {
+    parMatrixRow.emplace_back(row[col]);
+  }
+  invariantGraph.replaceInvariantNode(
+      id(),
+      std::make_unique<ArrayElementNode>(std::move(parMatrixRow), idx1(),
+                                         outputVarNodeIds().front(), _offset1));
+  return true;
+}
 
 void ArrayElement2dNode::registerOutputVars(InvariantGraph& invariantGraph,
                                             propagation::SolverBase& solver) {

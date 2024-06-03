@@ -23,5 +23,10 @@ class GlobalCardinalityNode : public InvariantNode {
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+
+  void propagate(InvariantGraph& graph) override;
+
+  bool replace(InvariantGraph& graph) override;
 };
+
 }  // namespace atlantis::invariantgraph

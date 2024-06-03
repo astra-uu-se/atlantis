@@ -20,12 +20,11 @@ class IntModNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  [[nodiscard]] VarNodeId numerator() const noexcept {
-    return staticInputVarNodeIds().front();
-  }
-  [[nodiscard]] VarNodeId denominator() const noexcept {
-    return staticInputVarNodeIds().back();
-  }
+  void propagate(InvariantGraph& graph) override;
+
+  [[nodiscard]] VarNodeId numerator() const;
+  [[nodiscard]] VarNodeId denominator() const;
+  [[nodiscard]] VarNodeId remainder() const;
 };
 
 }  // namespace atlantis::invariantgraph

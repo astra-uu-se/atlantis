@@ -6,11 +6,11 @@
 
 namespace atlantis::propagation {
 
-IntDiv::IntDiv(SolverBase& solver, VarId output, VarId nominator,
+IntDiv::IntDiv(SolverBase& solver, VarId output, VarId numerator,
                VarId denominator)
     : Invariant(solver),
       _output(output),
-      _nominator(nominator),
+      _nominator(numerator),
       _denominator(denominator) {}
 
 void IntDiv::registerVars() {

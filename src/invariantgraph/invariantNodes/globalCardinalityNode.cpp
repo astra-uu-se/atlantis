@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/propagation/invariants/exists.hpp"
 #include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
@@ -26,6 +27,59 @@ void GlobalCardinalityNode::registerOutputVars(
       makeSolverVar(solver, invariantGraph.varNode(countOutput));
     }
   }
+}
+
+void GlobalCardinalityNode::propagate(InvariantGraph& graph) {
+  if (_cover.size() == 1) {
+    setState(InvariantNodeState::REPLACABLE);
+    return;
+  }
+  std::vector<VarNodeId> removedVars;
+  removedVars.reserve(staticInputVarNodeIds().size());
+
+  std::vector<size_t> minCounts(_cover.size(), 0);
+  std::vector<size_t> maxCounts(_cover.size(), 0);
+  for (const VarNodeId& input : staticInputVarNodeIds()) {
+    bool relevant = false;
+    for (size_t valIndex = 0; valIndex < _cover.size(); ++valIndex) {
+      if (!graph.inDomain(input, _cover[valIndex])) {
+        continue;
+      }
+      relevant = true;
+      if (graph.isFixed(input)) {
+        ++minCounts[valIndex];
+      }
+      ++maxCounts[valIndex];
+    }
+    if (!relevant) {
+      removedVars.emplace_back(input);
+    }
+  }
+
+  bool inputsFixed = true;
+
+  for (size_t valIndex = 0; valIndex < _cover.size(); ++valIndex) {
+    graph.removeValuesBelow(outputVarNodeIds().at(valIndex),
+                            minCounts[valIndex]);
+    graph.removeValuesAbove(outputVarNodeIds().at(valIndex),
+                            maxCounts[valIndex]);
+    inputsFixed = inputsFixed && minCounts[valIndex] == maxCounts[valIndex];
+  }
+  if (inputsFixed) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
+bool GlobalCardinalityNode::replace(InvariantGraph& invariantGraph) {
+  if (state() != InvariantNodeState::REPLACABLE) {
+    return false;
+  }
+  assert(_cover.size() == 1);
+  invariantGraph.replaceInvariantNode(
+      id(), std::make_unique<IntCountNode>(
+                std::vector<VarNodeId>(staticInputVarNodeIds()), _cover.front(),
+                outputVarNodeIds().front()));
+  return true;
 }
 
 void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,

@@ -15,12 +15,13 @@ class ScalarViewTest : public ::testing::Test {
   void SetUp() override { solver = std::make_unique<Solver>(); }
 };
 
-RC_GTEST_FIXTURE_PROP(ScalarViewTest, simple, (Int a, Int b)) {
+RC_GTEST_FIXTURE_PROP(ScalarViewTest, simple,
+                      (Int val, Int scalar, Int offset)) {
   solver->open();
-  auto varId = solver->makeIntVar(a, a, a);
-  auto viewId = solver->makeIntView<ScalarView>(*solver, varId, b);
+  auto varId = solver->makeIntVar(val, val, val);
+  auto viewId = solver->makeIntView<ScalarView>(*solver, varId, scalar, offset);
   solver->close();
 
-  RC_ASSERT(solver->committedValue(viewId) == a * b);
+  RC_ASSERT(solver->committedValue(viewId) == val * scalar + offset);
 }
 }  // namespace atlantis::testing

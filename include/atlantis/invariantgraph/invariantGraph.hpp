@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <stack>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -26,12 +27,20 @@ class InvariantGraph {
 
   std::vector<std::unique_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
+  std::stack<InvariantNodeId> _propagationStack{};
+  std::vector<bool> _invIsOnPropStack{};
+  std::vector<bool> _impIsOnPropStack{};
 
   void populateRootNode();
+
+  bool isOnPropStack(InvariantNodeId);
+  void pushToPropStack(InvariantNodeId);
+  void pushInvariantsToPropStack(VarNodeId);
 
  protected:
   propagation::VarId _totalViolationVarId;
   VarNodeId _objectiveVarNodeId;
+  void fixpoint();
 
  public:
   InvariantGraph();
@@ -46,6 +55,18 @@ class InvariantGraph {
       const std::string& identifier) const noexcept;
   [[nodiscard]] bool containsVarNode(Int) const noexcept;
   [[nodiscard]] static bool containsVarNode(bool) noexcept;
+
+  bool isFixed(VarNodeId);
+  Int lowerBound(VarNodeId);
+  Int upperBound(VarNodeId);
+  bool inDomain(VarNodeId, Int);
+  bool inDomain(VarNodeId, bool);
+
+  void removeValue(VarNodeId, Int);
+  void removeValuesBelow(VarNodeId, Int);
+  void removeValuesAbove(VarNodeId, Int);
+  void fixToValue(VarNodeId, Int);
+  void fixToValue(VarNodeId, bool);
 
   VarNodeId retrieveBoolVarNode(
       VarNode::DomainType = VarNode::DomainType::RANGE);
@@ -92,6 +113,14 @@ class InvariantGraph {
   [[nodiscard]] InvariantNodeId nextImplicitNodeId() const noexcept;
 
   InvariantNodeId addInvariantNode(std::unique_ptr<InvariantNode>&&);
+
+  /**
+   * @brief replaces the given old VarNode with the new VarNode in
+   * all Invariants.
+   */
+  void replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId);
+  InvariantNodeId replaceInvariantNode(InvariantNodeId,
+                                       std::unique_ptr<InvariantNode>&&);
 
   InvariantNodeId addImplicitConstraintNode(
       std::unique_ptr<ImplicitConstraintNode>&&);

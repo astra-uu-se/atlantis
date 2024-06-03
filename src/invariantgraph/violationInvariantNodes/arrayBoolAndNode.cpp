@@ -29,6 +29,51 @@ void ArrayBoolAndNode::registerOutputVars(InvariantGraph& invariantGraph,
   }
 }
 
+void ArrayBoolAndNode::propagate(InvariantGraph& invariantGraph) {
+  ViolationInvariantNode::propagate(invariantGraph);
+  std::vector<VarNodeId> fixedInputs;
+  fixedInputs.reserve(staticInputVarNodeIds().size());
+  bool any_false = false;
+  bool all_true = true;
+  for (const auto& id : staticInputVarNodeIds()) {
+    if (invariantGraph.isFixed(id)) {
+      fixedInputs.emplace_back(id);
+      any_false = any_false || invariantGraph.lowerBound(id) == 0;
+      all_true = all_true && invariantGraph.lowerBound(id) > 0;
+    }
+  }
+  for (const auto& fixedVarNodeId : fixedInputs) {
+    removeStaticInputVarNode(invariantGraph.varNode(fixedVarNodeId));
+  }
+  if (any_false) {
+    if (isReified()) {
+      invariantGraph.fixToValue(_reifiedViolationNodeId, false);
+      ViolationInvariantNode::propagate(invariantGraph);
+    }
+    setState(shouldHold() ? InvariantNodeState::INFEASIBLE
+                          : InvariantNodeState::SUBSUMED);
+  } else if (all_true) {
+    if (isReified()) {
+      invariantGraph.fixToValue(_reifiedViolationNodeId, true);
+      ViolationInvariantNode::propagate(invariantGraph);
+    }
+    setState(shouldHold() ? InvariantNodeState::SUBSUMED
+                          : InvariantNodeState::INFEASIBLE);
+  }
+}
+
+std::vector<VarNodeId> fixedInputs =
+    pruneAllDifferentFixed(invariantGraph, staticInputVarNodeIds());
+
+for (const auto& fixedVarNodeId : fixedInputs) {
+  removeStaticInputVarNode(invariantGraph.varNode(fixedVarNodeId));
+}
+
+if (staticInputVarNodeIds().size() < 2) {
+  setState(InvariantNodeState::SUBSUMED);
+}
+}
+
 void ArrayBoolAndNode::registerNode(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);

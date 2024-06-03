@@ -16,6 +16,25 @@ void ArrayVarElementNode::registerOutputVars(InvariantGraph& invariantGraph,
                 _offset);
 }
 
+void ArrayVarElementNode::propagate(InvariantGraph& graph) {
+  if (graph.varNode(idx()).isFixed()) {
+    setState(InvariantNodeState::REPLACABLE);
+  }
+}
+
+bool ArrayVarElementNode::replace(InvariantGraph& invariantGraph) {
+  if (state() != InvariantNodeState::REPLACABLE) {
+    return false;
+  }
+  auto& idxNode = invariantGraph.varNode(idx());
+  const VarNodeId input =
+      staticInputVarNodeIds().at(idxNode.lowerBound() + _offset);
+
+  invariantGraph.replaceVarNode(outputVarNodeIds().front(), input);
+  deactivate(invariantGraph);
+  return true;
+}
+
 void ArrayVarElementNode::registerNode(InvariantGraph& invariantGraph,
                                        propagation::SolverBase& solver) {
   std::vector<propagation::VarId> varVector;

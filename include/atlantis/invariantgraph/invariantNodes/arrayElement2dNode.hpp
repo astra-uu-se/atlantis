@@ -30,6 +30,10 @@ class ArrayElement2dNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
+  void propagate(InvariantGraph& graph) override;
+
+  [[nodiscard]] bool replace(InvariantGraph& graph) override;
+
   [[nodiscard]] VarNodeId idx1() const noexcept {
     return staticInputVarNodeIds().front();
   }

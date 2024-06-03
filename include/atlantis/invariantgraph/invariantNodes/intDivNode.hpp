@@ -20,8 +20,13 @@ class IntDivNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
+  void propagate(InvariantGraph& graph) override;
+
+  [[nodiscard]] bool replace(InvariantGraph& graph) override;
+
   [[nodiscard]] VarNodeId numerator() const noexcept;
   [[nodiscard]] VarNodeId denominator() const noexcept;
+  [[nodiscard]] VarNodeId quotient() const noexcept;
 };
 
 }  // namespace atlantis::invariantgraph

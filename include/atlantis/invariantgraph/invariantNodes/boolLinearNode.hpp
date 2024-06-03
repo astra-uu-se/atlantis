@@ -24,6 +24,8 @@ class BoolLinearNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
+  void propagate(InvariantGraph& graph) override;
+
+  [[nodiscard]] const std::vector<Int>& coeffs() const;
 };
 }  // namespace atlantis::invariantgraph

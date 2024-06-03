@@ -23,6 +23,7 @@ class InvariantNode {
   std::vector<VarNodeId> _staticInputVarNodeIds;
   std::vector<VarNodeId> _dynamicInputVarNodeIds;
   InvariantNodeId _id{NULL_NODE_ID};
+  InvariantNodeState _state{InvariantNodeState::UNINITIALIZED};
 
  public:
   explicit InvariantNode(std::vector<VarNodeId>&& outputIds,
@@ -37,7 +38,13 @@ class InvariantNode {
 
   [[nodiscard]] virtual bool isReified() const;
 
-  virtual bool prune(InvariantGraph&);
+  virtual void propagate(InvariantGraph&);
+
+  [[nodiscard]] virtual bool replace(InvariantGraph&);
+
+  [[nodiscard]] InvariantNodeState state() const { return _state; }
+
+  void deactivate(InvariantGraph&);
 
   /**
    * Creates as all the variables the node defines in @p solver.
@@ -83,6 +90,8 @@ class InvariantNode {
 
   void removeStaticInputVarNode(VarNode&);
 
+  void removeDynamicInputVarNode(VarNode&);
+
   void removeOutputVarNode(VarNode&);
 
   void replaceStaticInputVarNode(VarNode& oldInputVarNode,
@@ -103,5 +112,7 @@ class InvariantNode {
   void markStaticInputTo(VarNode& node, bool registerHere = true);
 
   void markDynamicInputTo(VarNode& node, bool registerHere = true);
+
+  void setState(InvariantNodeState state) { _state = state; }
 };
 }  // namespace atlantis::invariantgraph

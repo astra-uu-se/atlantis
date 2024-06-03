@@ -17,6 +17,61 @@ void ArrayIntMaximumNode::registerOutputVars(InvariantGraph& invariantGraph,
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
+void ArrayIntMaximumNode::propagate(InvariantGraph& invariantGraph) {
+  Int lb = invariantGraph.lowerBound(outputVarNodeIds().front());
+  const Int ub = invariantGraph.upperBound(outputVarNodeIds().front());
+
+  for (const VarNodeId& nodeId : staticInputVarNodeIds()) {
+    if (invariantGraph.lowerBound(nodeId) > ub) {
+      setState(InvariantNodeState::INFEASIBLE);
+      return;
+    }
+    lb = std::max(lb, invariantGraph.lowerBound(nodeId));
+    invariantGraph.removeValuesAbove(nodeId, ub);
+  }
+
+  if (lb > ub) {
+    setState(InvariantNodeState::INFEASIBLE);
+    return;
+  }
+
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+
+  for (const VarNodeId& nodeId : staticInputVarNodeIds()) {
+    if (invariantGraph.varNode(nodeId).lowerBound() <= lb) {
+      varsToRemove.emplace_back(nodeId);
+    }
+  }
+
+  for (const VarNodeId& nodeId : varsToRemove) {
+    removeStaticInputVarNode(invariantGraph.varNode(nodeId));
+  }
+
+  if (staticInputVarNodeIds().empty()) {
+    invariantGraph.fixToValue(outputVarNodeIds().front(), lb);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
+  invariantGraph.removeValuesBelow(outputVarNodeIds().front(), lb);
+
+  if (staticInputVarNodeIds().size() == 1) {
+    setState(InvariantNodeState::REPLACABLE);
+  }
+}
+
+bool ArrayIntMaximumNode::replace(InvariantGraph& invariantGraph) {
+  if (state() != InvariantNodeState::REPLACABLE) {
+    return false;
+  }
+  assert(staticInputVarNodeIds().size() == 1);
+  invariantGraph.replaceVarNode(staticInputVarNodeIds().front(),
+                                outputVarNodeIds().front());
+  deactivate(invariantGraph);
+  return true;
+}
+
 void ArrayIntMaximumNode::registerNode(InvariantGraph& invariantGraph,
                                        propagation::SolverBase& solver) {
   std::vector<propagation::VarId> solverVars;

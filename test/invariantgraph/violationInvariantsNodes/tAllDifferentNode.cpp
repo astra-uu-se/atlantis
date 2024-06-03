@@ -188,7 +188,7 @@ TEST_F(AllDifferentTrueNodeTest, pruneParameters) {
   auto& allDiffNode = dynamic_cast<AllDifferentNode&>(
       _invariantGraph->invariantNode(invNodeId));
 
-  varNode(b).fixValue(Int(2));
+  varNode(b).fixToValue(Int(2));
 
   EXPECT_TRUE(allDiffNode.prune(*_invariantGraph));
 

@@ -18,7 +18,7 @@ class BoolAllEqualNode : public ViolationInvariantNode {
 
   explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars,
                             bool shouldHold = true);
-  bool prune(InvariantGraph&) override;
+  void propagate(InvariantGraph&) override;
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

@@ -9,11 +9,12 @@ namespace atlantis::propagation {
 
 class ScalarView : public IntView {
  private:
-  Int _scalar;
+  Int _factor;
+  Int _offset;
 
  public:
-  explicit ScalarView(SolverBase& solver, VarId parentId, Int scalar)
-      : IntView(solver, parentId), _scalar(scalar) {}
+  explicit ScalarView(SolverBase& solver, VarId parentId, Int factor,
+                      Int offset = 0);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

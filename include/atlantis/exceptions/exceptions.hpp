@@ -89,4 +89,10 @@ class FznArgumentException : public std::runtime_error {
       : std::runtime_error(msg) {}
 };
 
+class InfeasibleException : public std::runtime_error {
+ public:
+  explicit InfeasibleException(const std::string& msg)
+      : std::runtime_error(msg) {}
+};
+
 }  // namespace atlantis
