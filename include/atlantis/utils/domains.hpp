@@ -7,6 +7,9 @@
 
 namespace atlantis {
 
+class SetDomain;
+class IntervalDomain;
+
 /**
  * Models the domain of a variable. Since this might be a large object managing
  * heap memory, the copy constructor is deleted.
@@ -50,7 +53,7 @@ class Domain {
    */
   [[nodiscard]] virtual bool isInterval() const noexcept = 0;
 
-  virtual void fix(Int) = 0;
+  virtual size_t fix(Int) = 0;
 
   /**
    * @return if the domain is not a superset of lb..ub,
@@ -84,9 +87,12 @@ class IntervalDomain : public Domain {
 
   void setUpperBound(Int ub);
 
-  void fix(Int value) override;
+  size_t fix(Int value) override;
 
-  void intersectWith(Int lb, Int ub);
+  size_t intersectWith(Int lb, Int ub);
+
+  [[nodiscard]] bool intersects(const SetDomain& other) const;
+  [[nodiscard]] bool intersects(const IntervalDomain& other) const;
 
   bool operator==(const IntervalDomain& other) const;
 
@@ -114,33 +120,42 @@ class SetDomain : public Domain {
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;
 
-  void remove(Int value);
-  void remove(const std::vector<Int>& values);
+  size_t remove(Int value);
+  size_t remove(const std::vector<Int>& values);
 
   /**
    * @brief removes all values that are strictly less than the given value.
    *
    * @param val the minimum value that is allowed in the domain.
+   *
+   * @return the number of values removed.
    */
 
-  void removeBelow(Int val);
+  size_t removeBelow(Int val);
 
   /**
    * @brief removes all values that are strictly greater than the given value.
    *
    * @param val the maximum value that is allowed in the domain.
+   *
+   * @return the number of values removed.
    */
-  void removeAbove(Int val);
+  size_t removeAbove(Int val);
 
   /**
    * @brief removes all values in the domain, except the values in the given
    * vector.
    *
    * @param values the values that are to be kept in the domain.
+   *
+   * @return the number of values removed.
    */
-  void intersectWith(const std::vector<Int>&);
+  size_t intersectWith(const std::vector<Int>&);
 
-  void fix(Int value) override;
+  [[nodiscard]] bool intersects(const SetDomain& other) const;
+  [[nodiscard]] bool intersects(const IntervalDomain& other) const;
+
+  size_t fix(Int value) override;
 
   bool operator==(const SetDomain& other) const;
 
@@ -171,28 +186,28 @@ class SearchDomain : public Domain {
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;
 
-  void remove(Int value);
+  size_t remove(Int value);
 
   /**
    * @brief removes all values that are strictly less than the given value.
    *
    * @param val the minimum value that is allowed in the domain.
    */
-  void removeBelow(Int val);
+  size_t removeBelow(Int val);
 
   /**
    * @brief removes all values that are strictly greater than the given value.
    *
    * @param val the maximum value that is allowed in the domain.
    */
-  void removeAbove(Int newUpperBound);
+  size_t removeAbove(Int newUpperBound);
 
   /**
    * @brief removes all values in the given vector from the domain.
    *
    * @param values the values to remove from the domain.
    */
-  void remove(const std::vector<Int>& values);
+  size_t remove(const std::vector<Int>& values);
 
   /**
    * @brief removes all values in the domain, except the values in the given
@@ -200,9 +215,13 @@ class SearchDomain : public Domain {
    *
    * @param values the values that are to be kept in the domain.
    */
-  void intersectWith(const std::vector<Int>&);
+  size_t intersectWith(const std::vector<Int>&);
 
-  void fix(Int value) override;
+  [[nodiscard]] bool intersects(const SetDomain& other) const;
+  [[nodiscard]] bool intersects(const IntervalDomain& other) const;
+  [[nodiscard]] bool intersects(const SearchDomain& other) const;
+
+  size_t fix(Int value) override;
 
   bool operator==(const SearchDomain& other) const;
 

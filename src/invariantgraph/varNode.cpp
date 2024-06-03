@@ -44,6 +44,7 @@ void VarNode::setVarId(propagation::VarId varId) {
 const SearchDomain& VarNode::constDomain() const noexcept { return _domain; }
 
 SearchDomain& VarNode::domain() noexcept { return _domain; }
+const SearchDomain& VarNode::domainConst() const noexcept { return _domain; }
 
 bool VarNode::isFixed() const noexcept {
   if (isIntVar()) {
@@ -196,39 +197,39 @@ bool VarNode::inDomain(bool val) const {
   return val ? lowerBound() == 0 : upperBound() > 0;
 }
 
-void VarNode::removeValue(Int val) {
+size_t VarNode::removeValue(Int val) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValue(Int) called on BoolVar");
   }
-  _domain.remove(val);
+  return _domain.remove(val);
 }
 
-void VarNode::removeValuesBelow(Int newLowerBound) {
+size_t VarNode::removeValuesBelow(Int newLowerBound) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
   }
-  _domain.removeBelow(newLowerBound);
+  return _domain.removeBelow(newLowerBound);
 }
 
-void VarNode::removeValuesAbove(Int newUpperBound) {
+size_t VarNode::removeValuesAbove(Int newUpperBound) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
   }
-  _domain.removeAbove(newUpperBound);
+  return _domain.removeAbove(newUpperBound);
 }
 
-void VarNode::removeValues(const std::vector<Int>& values) {
+size_t VarNode::removeValues(const std::vector<Int>& values) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
   if (values.empty()) {
-    return;
+    return 0;
   }
-  _domain.remove(values);
+  return _domain.remove(values);
 }
 
-void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
+size_t VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
@@ -236,28 +237,28 @@ void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
   if (values.empty()) {
     throw std::runtime_error("removeAllValuesExcept called with empty values");
   }
-  _domain.intersectWith(values);
+  return _domain.intersectWith(values);
 }
 
-void VarNode::fixValue(Int val) {
+size_t VarNode::fixToValue(Int val) {
   if (!isIntVar()) {
-    throw std::runtime_error("fixValue(Int) called on BoolVar");
+    throw std::runtime_error("fixToValue(Int) called on BoolVar");
   }
-  _domain.fix(val);
+  return _domain.fix(val);
 }
 
-void VarNode::removeValue(bool val) {
+size_t VarNode::removeValue(bool val) {
   if (isIntVar()) {
     throw std::runtime_error("removeValue(bool) called on IntVar");
   }
-  _domain.fix(val ? 0 : 1);
+  return _domain.fix(val ? 0 : 1);
 }
 
-void VarNode::fixValue(bool val) {
-  if (!isIntVar()) {
-    throw std::runtime_error("fixValue(bool) called on IntVar");
+size_t VarNode::fixToValue(bool val) {
+  if (isIntVar()) {
+    throw std::runtime_error("fixToValue(bool) called on IntVar");
   }
-  _domain.fix(val ? 0 : 1);
+  return _domain.fix(val ? 0 : 1);
 }
 
 std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) {

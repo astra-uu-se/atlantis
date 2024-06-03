@@ -23,6 +23,8 @@ class IntCountNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
+  void propagate(InvariantGraph&);
+
   [[nodiscard]] const std::vector<VarNodeId>& haystack() const;
 
   [[nodiscard]] Int needle() const;

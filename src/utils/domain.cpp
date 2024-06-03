@@ -61,6 +61,14 @@ void IntervalDomain::setUpperBound(Int ub) {
   _ub = ub;
 }
 
+bool IntervalDomain::intersects(const SetDomain& other) const {
+  return other.lowerBound() <= _ub && _lb <= other.upperBound();
+}
+
+bool IntervalDomain::intersects(const IntervalDomain& other) const {
+  return other.lowerBound() <= _ub && _lb <= other.upperBound();
+}
+
 void IntervalDomain::intersectWith(Int lb, Int ub) {
   _lb = std::max(lb, _lb);
   _ub = std::min(ub, _ub);
@@ -69,14 +77,18 @@ void IntervalDomain::intersectWith(Int lb, Int ub) {
   }
 }
 
-void IntervalDomain::fix(Int value) {
-  if (value < _lb || _ub < value) {
-    throw std::runtime_error("InterValDomain::fix: value " +
-                             std::to_string(value) + " is not in range " +
-                             std::to_string(_lb) + ".." + std::to_string(_ub));
+size_t IntervalDomain::fix(Int value) {
+  if (contains(value)) {
+    const size_t numRemoved = size() - 1;
+    _lb = value;
+    _ub = value;
+    return numRemoved;
+  } else {
+    const size_t numRemoved = size();
+    _lb = 0;
+    _ub = -1;
+    return numRemoved;
   }
-  _lb = value;
-  _ub = value;
 }
 
 bool IntervalDomain::operator==(const IntervalDomain& other) const {
@@ -166,67 +178,83 @@ std::vector<DomainEntry> SetDomain::relativeComplementIfIntersects(
   return ret;
 }
 
-void SetDomain::remove(Int value) {
+size_t SetDomain::remove(Int value) {
   if (value < lowerBound() || upperBound() < value) {
-    return;
+    return 0;
   }
   auto it = std::find(_values.begin(), _values.end(), value);
   if (it != _values.end()) {
     _values.erase(it);
+    return 1;
   }
-  if (_values.empty()) {
-    throw std::runtime_error("SetDomain::remove: Empty domain");
-  }
+  return 0
 }
 
-void SetDomain::removeBelow(Int newMin) {
+size_t SetDomain::removeBelow(Int newMin) {
   if (newMin <= lowerBound()) {
-    return;
+    return 0;
   }
   Int offset = 0;
   for (size_t i = 0; i < _values.size() && _values[i] < newMin; ++i) {
     ++offset;
   }
   _values.erase(_values.begin(), _values.begin() + offset);
-  if (_values.empty()) {
-    throw std::runtime_error("SetDomain::removeBelow: Empty domain");
-  }
+  return static_cast<size_t>(offset);
 }
 
-void SetDomain::removeAbove(Int newMax) {
+size_t SetDomain::removeAbove(Int newMax) {
   if (upperBound() <= newMax) {
-    return;
+    return 0;
   }
   Int offset = static_cast<Int>(_values.size()) - 1;
   for (Int i = static_cast<Int>(_values.size()) - 1;
        0 <= i && newMax < _values[i]; --i) {
     --offset;
   }
+  const size_t numRemoved = _values.size() - offset - 1;
   _values.erase(_values.begin() + offset, _values.end());
-  if (_values.empty()) {
-    throw std::runtime_error("SetDomain::removeAbove: Empty domain");
-  }
+  return numRemoved;
 }
 
-void SetDomain::remove(const std::vector<Int>& values) {
+size_t SetDomain::remove(const std::vector<Int>& values) {
   std::vector<Int> cpy(values);
   std::sort(cpy.begin(), cpy.end());
 
   size_t i = 0;
   Int j = 0;
+  size_t numRemoved = 0;
   while (i < cpy.size() && j < static_cast<Int>(_values.size())) {
     if (cpy[i] > _values[j]) {
       ++j;
     } else {
       if (cpy[i] == _values[j]) {
         _values.erase(_values.begin() + j);
+        ++numRemoved;
       }
       ++i;
     }
   }
-  if (_values.empty()) {
-    throw std::runtime_error("SetDomain::remove: Empty domain");
+  return numRemoved;
+}
+
+bool SetDomain::intersects(const IntervalDomain& other) {
+  return other.lowerBound() <= upperBound() &&
+         lowerBound() <= other.upperBound();
+}
+
+bool SetDomain::intersects(const SetDomain& other) {
+  size_t i = 0;
+  size_t j = 0;
+  while (i < _values.size() && j < other._values.size()) {
+    if (_values[i] < other._values[j]) {
+      ++i;
+    } else if (_values[i] > other._values[j]) {
+      ++j;
+    } else {
+      return true;
+    }
   }
+  return false;
 }
 
 void SetDomain::intersectWith(const std::vector<Int>& otherVals) {
@@ -254,12 +282,16 @@ void SetDomain::intersectWith(const std::vector<Int>& otherVals) {
   }
 }
 
-void SetDomain::fix(Int value) {
-  if (!contains(value)) {
-    throw std::runtime_error("SetDomain::fix: value " + std::to_string(value) +
-                             " is not in domain");
+size_t SetDomain::fix(Int value) {
+  if (contains(value)) {
+    const size_t numRemoved = _values.size() - 1;
+    _values = std::vector<Int>{value};
+    return numRemoved;
+  } else {
+    const size_t numRemoved = _values.size();
+    _values = std::vector<Int>();
+    return numRemoved;
   }
-  _values = std::vector<Int>{value};
 }
 
 bool SetDomain::operator==(const SetDomain& other) const {
@@ -336,90 +368,83 @@ std::vector<DomainEntry> SearchDomain::relativeComplementIfIntersects(
       _domain);
 }
 
-void SearchDomain::remove(Int value) {
+size_t SearchDomain::remove(Int value) {
   // do nothing if the value is not in the domain:
   if (value < lowerBound() || upperBound() < value) {
-    return;
+    return 0;
   }
   if (std::holds_alternative<SetDomain>(_domain)) {
     // Remove the value from the set domain:
-    std::get<SetDomain>(_domain).remove(value);
-    return;
+    return std::get<SetDomain>(_domain).remove(value);
   }
   assert(std::holds_alternative<IntervalDomain>(_domain));
   if (value == lowerBound()) {
     // change lb
     std::get<IntervalDomain>(_domain).setLowerBound(value + 1);
-    return;
+    return 1;
   } else if (value == upperBound()) {
     // change ub
     std::get<IntervalDomain>(_domain).setUpperBound(value - 1);
-    return;
+    return 1;
   }
   std::vector<Int> newDomain(upperBound() - lowerBound());
-  Int i = 0;
-  for (Int val = lowerBound(); val <= upperBound(); ++val) {
-    if (val != value) {
-      newDomain.at(i) = val;
-      ++i;
-    }
-  }
+  std::iota(newDomain.begin(), newDomain.begin() + value - lowerBound(),
+            lowerBound());
+  std::iota(newDomain.begin() + value - lowerBound, newDomain.end(), value + 1);
   _domain = SetDomain(std::move(newDomain));
 }
 
-void SearchDomain::removeBelow(Int value) {
+size_t SearchDomain::removeBelow(Int value) {
   if (value <= lowerBound()) {
-    return;
+    return 0;
   }
   if (std::holds_alternative<SetDomain>(_domain)) {
     // Remove the value from the set domain:
-    std::get<SetDomain>(_domain).removeBelow(value);
-    return;
+    return std::get<SetDomain>(_domain).removeBelow(value);
   }
   assert(std::holds_alternative<IntervalDomain>(_domain));
-  std::get<IntervalDomain>(_domain).setLowerBound(value);
+  return std::get<IntervalDomain>(_domain).setLowerBound(value);
 }
 
-void SearchDomain::removeAbove(Int value) {
+size_t SearchDomain::removeAbove(Int value) {
   if (value >= upperBound()) {
-    return;
+    return 0;
   }
   if (std::holds_alternative<SetDomain>(_domain)) {
     // Remove the value from the set domain:
-    std::get<SetDomain>(_domain).removeAbove(value);
-    return;
+    return std::get<SetDomain>(_domain).removeAbove(value);
   }
   assert(std::holds_alternative<IntervalDomain>(_domain));
-  std::get<IntervalDomain>(_domain).setUpperBound(value);
+  return std::get<IntervalDomain>(_domain).setUpperBound(value);
 }
 
-void SearchDomain::remove(const std::vector<Int>& values) {
+size_t SearchDomain::remove(const std::vector<Int>& values) {
   if (std::holds_alternative<SetDomain>(_domain)) {
     // Remove the value from the set domain:
-    std::get<SetDomain>(_domain).remove(values);
-    return;
+    return std::get<SetDomain>(_domain).remove(values);
   }
   assert(std::holds_alternative<IntervalDomain>(_domain));
   std::vector<Int> cpy(values);
   std::sort(cpy.begin(), cpy.end());
+  size_t numRemoved = 0;
   for (const Int value : cpy) {
-    remove(value);
+    numRemoved += remove(value);
   }
+  return numRemoved;
 }
 
-void SearchDomain::intersectWith(const std::vector<Int>& values) {
+size_t SearchDomain::intersectWith(const std::vector<Int>& values) {
   if (std::holds_alternative<SetDomain>(_domain)) {
-    // Remove the value from the set domain:
-    std::get<SetDomain>(_domain).intersectWith(values);
-    return;
+    // Remove the values from the set domain:
+    return std::get<SetDomain>(_domain).intersectWith(values);
   }
   assert(std::holds_alternative<IntervalDomain>(_domain));
   std::vector<Int> cpy(values);
   std::sort(cpy.begin(), cpy.end());
   cpy.erase(std::unique(cpy.begin(), cpy.end()), cpy.end());
   if (sortedVectorIsInterval(cpy)) {
-    std::get<IntervalDomain>(_domain).intersectWith(cpy.front(), cpy.back());
-    return;
+    return std::get<IntervalDomain>(_domain).intersectWith(cpy.front(),
+                                                           cpy.back());
   }
   Int begin = 0;
   Int end = static_cast<Int>(cpy.size()) - 1;
@@ -437,17 +462,35 @@ void SearchDomain::intersectWith(const std::vector<Int>& values) {
   newDomain.reserve(end - begin + 1);
   std::copy(cpy.begin() + begin, cpy.begin() + end + 1,
             std::back_inserter(newDomain));
+  const size_t numRemoved = size() - newDomain.size();
   _domain = SetDomain(std::move(newDomain));
+  return numRemoved;
 }
 
-void SearchDomain::fix(Int value) {
+bool SearchDomain::intersects(const IntervalDomain& other) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom.intersects(other); }, _domain);
+}
+
+bool SearchDomain::intersects(const SetDomain& other) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom.intersects(other); }, _domain);
+}
+
+bool SearchDomain::intersects(const SearchDomain& other) const {
+  if (std::holds_alternative<IntervalDomain>(other._domain)) {
+    return intersects(std::get<IntervalDomain>(other._domain));
+  }
+  return intersects(std::get<SetDomain>(other._domain));
+}
+
+size_t SearchDomain::fix(Int value) {
   if (std::holds_alternative<SetDomain>(_domain)) {
     // Remove the value from the set domain:
-    std::get<SetDomain>(_domain).fix(value);
-    return;
+    return std::get<SetDomain>(_domain).fix(value);
   }
   assert(std::holds_alternative<IntervalDomain>(_domain));
-  std::get<IntervalDomain>(_domain).fix(value);
+  return std::get<IntervalDomain>(_domain).fix(value);
 }
 
 bool SearchDomain::operator==(const SearchDomain& other) const {

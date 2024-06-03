@@ -15,18 +15,27 @@ BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& vars,
                                    bool shouldHold)
     : ViolationInvariantNode(std::move(vars), shouldHold) {}
 
-bool BoolAllEqualNode::prune(InvariantGraph& invariantGraph) {
+void BoolAllEqualNode::propagate(InvariantGraph& invariantGraph) {
+  ViolationInvariantNode::propagate(invariantGraph);
   if (isReified() || !shouldHold()) {
     return false;
   }
-  std::vector<VarNodeId> fixedInputs =
-      pruneAllDifferentFixed(invariantGraph, staticInputVarNodeIds());
 
-  for (const auto& fixedVarNodeId : fixedInputs) {
-    removeStaticInputVarNode(invariantGraph.varNode(fixedVarNodeId));
+  bool fixedValue = false;
+  bool anyFixed = false;
+  for (const auto& id : staticInputVarNodeIds()) {
+    if (invariantGraph.isFixed(id)) {
+      fixedValue = invariantGraph.lowerBound(id) == 0;
+      anyFixed = true;
+      break;
+    }
   }
-
-  return !fixedInputs.empty();
+  if (anyFixed) {
+    for (const auto& id : staticInputVarNodeIds()) {
+      invariantGraph.fixToValue(id, fixedValue);
+    }
+    setState(InvariantNodeState::SUBSUMED);
+  }
 }
 
 void BoolAllEqualNode::registerOutputVars(InvariantGraph& invariantGraph,

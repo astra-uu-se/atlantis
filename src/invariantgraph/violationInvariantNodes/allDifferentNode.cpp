@@ -34,9 +34,10 @@ void AllDifferentNode::registerOutputVars(InvariantGraph& invariantGraph,
   }
 }
 
-bool AllDifferentNode::prune(InvariantGraph& invariantGraph) {
+void AllDifferentNode::propagate(InvariantGraph& invariantGraph) {
+  ViolationInvariantNode::propagate(invariantGraph);
   if (isReified() || !shouldHold()) {
-    return false;
+    return;
   }
 
   std::vector<VarNodeId> fixedInputs =
@@ -46,7 +47,9 @@ bool AllDifferentNode::prune(InvariantGraph& invariantGraph) {
     removeStaticInputVarNode(invariantGraph.varNode(fixedVarNodeId));
   }
 
-  return !fixedInputs.empty();
+  if (staticInputVarNodeIds().size() < 2) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
 }
 
 void AllDifferentNode::registerNode(InvariantGraph& invariantGraph,

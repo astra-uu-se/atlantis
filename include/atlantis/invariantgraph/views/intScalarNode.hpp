@@ -1,34 +1,31 @@
 #pragma once
 
-#include <vector>
-
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
-class IntLinearNode : public InvariantNode {
+
+class IntScalarNode : public InvariantNode {
  private:
-  std::vector<Int> _coeffs;
-  Int _offset{0};
+  Int _factor;
+  Int _offset;
 
  public:
-  IntLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                VarNodeId output);
+  IntScalarNode(VarNodeId staticInput, VarNodeId output, Int factor,
+                Int offset);
 
-  ~IntLinearNode() override = default;
+  ~IntScalarNode() override = default;
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void propagate(InvariantGraph& graph) override;
-
-  bool replace(InvariantGraph& graph) override;
-
-  [[nodiscard]] const std::vector<Int>& coeffs() const;
+  [[nodiscard]] VarNodeId input() const noexcept {
+    return staticInputVarNodeIds().front();
+  }
 };
+
 }  // namespace atlantis::invariantgraph

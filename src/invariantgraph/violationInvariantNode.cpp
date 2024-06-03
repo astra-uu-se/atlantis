@@ -30,6 +30,13 @@ ViolationInvariantNode::ViolationInvariantNode(
           outputVarNodeIds().front() == _reifiedViolationNodeId));
 }
 
+void ViolationInvariantNode::propagate(InvariantGraph& invariantGraph) {
+  if (isReified() && invariantGraph.isFixed(_reifiedViolationNodeId)) {
+    _reifiedViolationNodeId = NULL_NODE_ID;
+    _shouldHold = (invariantGraph.lowerBound(_reifiedViolationNodeId) == 0);
+  }
+}
+
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
 
 ViolationInvariantNode::ViolationInvariantNode(
@@ -52,6 +59,7 @@ ViolationInvariantNode::ViolationInvariantNode(
     std::vector<VarNodeId>&& staticInputIds, bool shouldHold)
     : ViolationInvariantNode({}, std::move(staticInputIds),
                              VarNodeId(NULL_NODE_ID), shouldHold) {}
+
 bool ViolationInvariantNode::isReified() const {
   return _reifiedViolationNodeId != NULL_NODE_ID;
 }

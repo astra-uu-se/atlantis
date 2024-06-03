@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
@@ -94,7 +95,7 @@ VarNodeId InvariantGraph::retrieveBoolVarNode(SearchDomain&& domain,
     return retrieveBoolVarNode(domain.lowerBound() == 0);
   }
   return _varNodes
-      .emplace_back(nextVarNodeId(), true, std::move(domain), domainType)
+      .emplace_back(nextVarNodeId(), false, std::move(domain), domainType)
       .varNodeId();
 }
 
@@ -188,6 +189,136 @@ VarNode& InvariantGraph::varNode(Int value) {
   return _varNodes.at(_intVarNodeIndices.at(value).id - 1);
 }
 
+bool InvariantGraph::isOnPropStack(InvariantNodeId id) {
+  if (id == NULL_NODE_ID) {
+    return false;
+  }
+  if (id.type == InvariantNodeId::Type::INVARIANT) {
+    if (id.id > _invIsOnPropStack.size()) {
+      _invIsOnPropStack.resize(_invariantNodes.size(), false);
+    }
+    return _invIsOnPropStack.at(id.id - 1);
+  }
+  if (id.id > _impIsOnPropStack.size()) {
+    _impIsOnPropStack.resize(_invariantNodes.size(), false);
+  }
+  return _impIsOnPropStack.at(id.id - 1);
+}
+
+void InvariantGraph::pushToPropStack(InvariantNodeId id) {
+  if (id != NULL_NODE_ID &&
+      invariantNode(id).state() == InvariantNodeState::ACTIVE &&
+      !isOnPropStack(id)) {
+    _propagationStack.emplace(id);
+  }
+}
+
+void InvariantGraph::pushInvariantsToPropStack(VarNodeId id) {
+  const auto& var = varNode(id);
+  for (char c = 0; c < 2; ++c) {
+    for (const auto& invNodeId :
+         c == 0 ? var.staticInputTo() : var.dynamicInputTo()) {
+      if (!isOnPropStack(invNodeId) &&
+          invariantNode(invNodeId).state() == InvariantNodeState::ACTIVE) {
+        pushToPropStack(invNodeId);
+      }
+    }
+  }
+  for (const auto& invNodeId : var.definingNodes()) {
+    if (!isOnPropStack(invNodeId) &&
+        invariantNode(invNodeId).state() == InvariantNodeState::ACTIVE) {
+      pushToPropStack(invNodeId);
+    }
+  }
+}
+
+void InvariantGraph::fixpoint() {
+  for (auto& invNode : _invariantNodes) {
+    if (invNode->state() == InvariantNodeState::ACTIVE) {
+      _propagationStack.emplace(invNode->id());
+      _invIsOnPropStack.at(invNode->id().id - 1) = true;
+    }
+  }
+  for (auto& invNode : _implicitConstraintNodes) {
+    if (invNode->state() == InvariantNodeState::ACTIVE) {
+      _propagationStack.emplace(invNode->id());
+      _impIsOnPropStack.at(invNode->id().id - 1) = true;
+    }
+  }
+  while (!_propagationStack.empty()) {
+    const InvariantNodeId invNodeId = _propagationStack.top();
+    _propagationStack.pop();
+    if (invNodeId == NULL_NODE_ID) {
+      continue;
+    }
+    InvariantNode& invNode = invNodeId.type == InvariantNodeId::Type::INVARIANT
+                                 ? invariantNode(invNodeId)
+                                 : implicitConstraintNode(invNodeId);
+    try {
+      if (invNode.state() == InvariantNodeState::ACTIVE) {
+        invNode.propagate(*this);
+      }
+      if (invNode.state() == InvariantNodeState::INFEASIBLE) {
+        throw InfeasibleException("Infeasible constraint");
+      } else if (invNode.state() == InvariantNodeState::REPLACABLE) {
+        invNode.replace(*this);
+        pushToPropStack(invNodeId);
+      }
+    } catch (InfeasibleException& e) {
+      throw e;
+    }
+  }
+}
+
+bool InvariantGraph::inDomain(VarNodeId id, Int val) {
+  return varNode(id).inDomain(val);
+}
+bool InvariantGraph::inDomain(VarNodeId id, bool val) {
+  return varNode(id).inDomain(val);
+}
+bool InvariantGraph::isFixed(VarNodeId id) { return varNode(id).isFixed(); }
+Int InvariantGraph::lowerBound(VarNodeId id) {
+  return varNode(id).lowerBound();
+}
+Int InvariantGraph::upperBound(VarNodeId id) {
+  return varNode(id).lowerBound();
+}
+
+void InvariantGraph::removeValue(VarNodeId id, Int value) {
+  VarNode& var = varNode(id);
+  if (var.removeValue(value) > 0) {
+    pushInvariantsToPropStack(id);
+  }
+}
+
+void InvariantGraph::removeValuesBelow(VarNodeId id, Int value) {
+  VarNode& var = varNode(id);
+  if (var.removeValuesBelow(value) > 0) {
+    pushInvariantsToPropStack(id);
+  }
+}
+
+void InvariantGraph::removeValuesAbove(VarNodeId id, Int value) {
+  VarNode& var = varNode(id);
+  if (var.removeValuesAbove(value) > 0) {
+    pushInvariantsToPropStack(id);
+  }
+}
+
+void InvariantGraph::fixToValue(VarNodeId id, Int value) {
+  VarNode& var = varNode(id);
+  if (var.fixToValue(value) > 0) {
+    pushInvariantsToPropStack(id);
+  }
+}
+
+void InvariantGraph::fixToValue(VarNodeId id, bool value) {
+  VarNode& var = varNode(id);
+  if (var.fixToValue(value) > 0) {
+    pushInvariantsToPropStack(id);
+  }
+}
+
 const VarNode& InvariantGraph::varNodeConst(
     const std::string& identifier) const {
   assert(_namedVarNodeIndices.contains(identifier));
@@ -270,6 +401,36 @@ InvariantNodeId InvariantGraph::addInvariantNode(
   auto& invNode = _invariantNodes.emplace_back(std::move(node));
   invNode->init(*this, id);
   return invNode->id();
+}
+
+void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
+  if (oldNodeId == newNodeId) {
+    return;
+  }
+  VarNode& oldNode = varNode(oldNodeId);
+  VarNode& newNode = varNode(newNodeId);
+  while (!oldNode.definingNodes().empty()) {
+    invariantNode(*(oldNode.definingNodes().begin()))
+        .replaceDefinedVar(oldNode, newNode);
+  }
+  while (!oldNode.staticInputTo().empty()) {
+    invariantNode(oldNode.staticInputTo().front())
+        .replaceStaticInputVarNode(oldNode, newNode);
+  }
+  while (!oldNode.dynamicInputTo().empty()) {
+    invariantNode(oldNode.dynamicInputTo().front())
+        .replaceDynamicInputVarNode(oldNode, newNode);
+  }
+}
+
+InvariantNodeId InvariantGraph::replaceInvariantNode(
+    InvariantNodeId id, std::unique_ptr<InvariantNode>&& node) {
+  assert(containsInvariantNode(id));
+  auto& invNode = _invariantNodes.at(id.id - 1);
+  invNode->deactivate(*this);
+  _invariantNodes.at(id.id - 1) = std::move(node);
+  _invariantNodes.at(id.id - 1)->init(*this, id);
+  return id;
 }
 
 InvariantNodeId InvariantGraph::addImplicitConstraintNode(

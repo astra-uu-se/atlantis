@@ -53,6 +53,8 @@ class ViolationInvariantNode : public InvariantNode {
 
   ~ViolationInvariantNode() override = default;
 
+  virtual void propagate(InvariantGraph&) override;
+
   [[nodiscard]] bool isReified() const override;
 
   [[nodiscard]] propagation::VarId violationVarId(

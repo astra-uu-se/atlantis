@@ -33,6 +33,48 @@ void ArrayBoolXorNode::registerOutputVars(InvariantGraph& invariantGraph,
   }
 }
 
+void ArrayBoolXorNode::propagate(InvariantGraph& invariantGraph) {
+  ViolationInvariantNode::propagate(invariantGraph);
+  std::vector<VarNodeId> fixedInputs;
+  fixedInputs.reserve(staticInputVarNodeIds().size());
+  VarNodeId trueNodeId = -1;
+  size_t numTrue = 0;
+  for (const auto& input : staticInputVarNodeIds()) {
+    if (invariantGraph.isFixed(input)) {
+      fixedInputs.emplace_back(input);
+      if (invariantGraph.lowerBound(input) > 0) {
+        trueNodeId = input;
+        ++numTrue;
+      }
+    }
+  }
+  for (const auto& fixedVarNodeId : fixedInputs) {
+    removeStaticInputVarNode(invariantGraph.varNode(fixedVarNodeId));
+  }
+  if (numTrue == 1) {
+    if (isReified()) {
+      invariantGraph.fixToValue(_reifiedViolationNodeId, true);
+      ViolationInvariantNode::propagate(invariantGraph);
+    }
+    if (shouldHold()) {
+      for (const auto& input : staticInputVarNodeIds()) {
+        if (input != trueNodeId) {
+          invariantGraph.fixToValue(input, false);
+        }
+      }
+      setState(shouldHold() ? InvariantNodeState::SUBSUMED
+                            : InvariantNodeState::INFEASIBLE);
+    }
+  } else if (staticInputVarNodeIds().empty()) {
+    if (isReified()) {
+      invariantGraph.fixToValue(_reifiedViolationNodeId, false);
+      ViolationInvariantNode::propagate(invariantGraph);
+    }
+    setState(shouldHold() ? InvariantNodeState::INFEASIBLE
+                          : InvariantNodeState::SUBSUMED);
+  }
+}
+
 void ArrayBoolXorNode::registerNode(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);

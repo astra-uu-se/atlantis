@@ -4,10 +4,10 @@
 
 namespace atlantis::propagation {
 
-Mod::Mod(SolverBase& solver, VarId output, VarId nominator, VarId denominator)
+Mod::Mod(SolverBase& solver, VarId output, VarId numerator, VarId denominator)
     : Invariant(solver),
       _output(output),
-      _nominator(nominator),
+      _nominator(numerator),
       _denominator(denominator) {}
 
 void Mod::registerVars() {
