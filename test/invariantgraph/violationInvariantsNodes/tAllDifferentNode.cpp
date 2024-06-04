@@ -176,32 +176,4 @@ TEST_F(AllDifferentTrueNodeTest, Application) { application(); }
 
 TEST_F(AllDifferentTrueNodeTest, Propagation) { propagation(); }
 
-TEST_F(AllDifferentTrueNodeTest, pruneParameters) {
-  std::vector<VarNodeId> inputs{
-      retrieveIntVarNode(7), a, retrieveIntVarNode(10), b,
-      retrieveIntVarNode(6), c, retrieveIntVarNode(9),  d,
-      retrieveIntVarNode(5)};
-
-  const InvariantNodeId invNodeId = _invariantGraph->addInvariantNode(
-      std::make_unique<AllDifferentNode>(std::move(inputs), true));
-
-  auto& allDiffNode = dynamic_cast<AllDifferentNode&>(
-      _invariantGraph->invariantNode(invNodeId));
-
-  varNode(b).fixToValue(Int(2));
-
-  EXPECT_TRUE(allDiffNode.prune(*_invariantGraph));
-
-  std::vector<VarNodeId> expectedVars{c, d};
-
-  EXPECT_THAT(expectedVars, ContainerEq(allDiffNode.staticInputVarNodeIds()));
-
-  EXPECT_EQ(allDiffNode.staticInputVarNodeIds(), expectedVars);
-
-  for (const auto& varNodeId : allDiffNode.staticInputVarNodeIds()) {
-    EXPECT_EQ(varNode(varNodeId).lowerBound(), 3);
-    EXPECT_EQ(varNode(varNodeId).upperBound(), 4);
-    EXPECT_EQ(varNode(varNodeId).constDomain().size(), 2);
-  }
-}
 }  // namespace atlantis::testing

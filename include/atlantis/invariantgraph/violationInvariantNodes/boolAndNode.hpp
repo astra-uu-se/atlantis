@@ -17,7 +17,7 @@ class BoolAndNode : public ViolationInvariantNode {
  public:
   BoolAndNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
-  BoolAndNode(VarNodeId a, VarNodeId b, bool shouldHold);
+  BoolAndNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

@@ -26,7 +26,8 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
   explicit GlobalCardinalityLowUpNode(std::vector<VarNodeId>&& x,
                                       std::vector<Int>&& cover,
                                       std::vector<Int>&& low,
-                                      std::vector<Int>&& up, bool shouldHold);
+                                      std::vector<Int>&& up,
+                                      bool shouldHold = true);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

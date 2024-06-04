@@ -10,10 +10,19 @@
 namespace atlantis::invariantgraph {
 
 class BoolEqNode : public ViolationInvariantNode {
- public:
-  explicit BoolEqNode(VarNodeId a, VarNodeId b, VarNodeId r);
+ private:
+  bool _breaksCycle{false};
 
-  explicit BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+ public:
+  explicit BoolEqNode(VarNodeId a, VarNodeId b, VarNodeId r,
+                      bool breaksCycle = false);
+
+  explicit BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold = true,
+                      bool breaksCycle = false);
+
+  bool canBeReplaced(const InvariantGraph&) const override;
+
+  bool replace(InvariantGraph& graph) override;
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
@@ -26,6 +35,7 @@ class BoolEqNode : public ViolationInvariantNode {
   [[nodiscard]] VarNodeId b() const noexcept {
     return staticInputVarNodeIds().back();
   }
+  [[nodiscard]] bool breaksCycle() const noexcept { return _breaksCycle; }
 };
 
 }  // namespace atlantis::invariantgraph

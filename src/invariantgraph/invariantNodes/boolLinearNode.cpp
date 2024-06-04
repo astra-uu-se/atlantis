@@ -19,41 +19,6 @@ void BoolLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void BoolLinearNode::propagate(InvariantGraph& graph) {
-  std::vector<bool> removedVars(staticInputVarNodeIds().size(), false);
-  Int minSum = 0;
-  Int maxSum = 0;
-  for (size_t i = 0; i < _coeffs.size(); ++i) {
-    assert(_coeffs[i] != 0);
-    if (graph.isFixed(staticInputVarNodeIds().at(i))) {
-      removedVars[i] = true;
-      if (graph.inDomain(staticInputVarNodeIds().at(i), false)) {
-        continue;
-      }
-    }
-    if (_coeffs[i] > 0) {
-      maxSum += _coeffs[i];
-    } else {
-      minSum += _coeffs[i];
-    }
-  }
-  if (minSum > maxSum) {
-    setState(InvariantNodeState::INFEASIBLE);
-    return;
-  }
-  for (Int i = static_cast<Int>(_coeffs.size()) - 1; i >= 0; --i) {
-    if (removedVars[i]) {
-      removeStaticInputVarNode(graph.varNode(staticInputVarNodeIds().at(i)));
-      _coeffs.erase(_coeffs.begin() + i);
-    }
-  }
-  graph.removeValuesBelow(outputVarNodeIds().front(), minSum);
-  graph.removeValuesAbove(outputVarNodeIds().front(), maxSum);
-  if (minSum == maxSum) {
-    setState(InvariantNodeState::SUBSUMED);
-  }
-}
-
 void BoolLinearNode::registerNode(InvariantGraph& invariantGraph,
                                   propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=

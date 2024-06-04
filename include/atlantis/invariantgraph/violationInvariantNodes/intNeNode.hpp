@@ -11,7 +11,11 @@ class IntNeNode : public ViolationInvariantNode {
  public:
   IntNeNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
-  IntNeNode(VarNodeId a, VarNodeId b, bool shouldHold);
+  IntNeNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+
+  bool canBeReplaced(const InvariantGraph& invariantGraph) const override;
+
+  bool replace(InvariantGraph& invariantGraph) override;
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

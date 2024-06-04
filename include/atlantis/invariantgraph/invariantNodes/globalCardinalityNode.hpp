@@ -24,7 +24,7 @@ class GlobalCardinalityNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void propagate(InvariantGraph& graph) override;
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
   bool replace(InvariantGraph& graph) override;
 };

@@ -26,29 +26,8 @@ VarNodeId VarIntCountNode::needle() const {
   return staticInputVarNodeIds().back();
 }
 
-void VarIntCountNode::propagate(InvariantGraph& graph) {
-  size_t haystackSize = staticInputVarNodeIds().size() - 1;
-  std::vector<VarNodeId> removedVars;
-  removedVars.reserve(haystackSize);
-
-  if (graph.isFixed(outputVarNodeIds().front())) {
-    setState(InvariantNodeState::REPLACABLE);
-    return;
-  }
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size() - 1);
-  for (size_t i = 0; i < haystackSize; ++i) {
-    if (!graph.varNode(staticInputVarNodeIds().at(i))
-             .domainConst()
-             .intersects(graph.varNode(needle()).domainConst())) {
-      varsToRemove.emplace_back(staticInputVarNodeIds().at(i));
-    }
-  }
-  for (const VarNodeId& input : varsToRemove) {
-    removeStaticInputVarNode(graph.varNode(input));
-  }
-  haystackSize = staticInputVarNodeIds().size() - 1;
-  graph.removeValuesBelow(outputVarNodeIds().front(), haystackSize);
+bool VarIntCountNode::canBeReplaced(const InvariantGraph& graph) const {
+  return graph.varNodeConst(outputVarNodeIds().front()).isFixed();
 }
 
 void VarIntCountNode::registerOutputVars(InvariantGraph& invariantGraph,

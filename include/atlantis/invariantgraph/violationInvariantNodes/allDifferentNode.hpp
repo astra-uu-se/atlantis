@@ -16,9 +16,14 @@ class AllDifferentNode : public ViolationInvariantNode {
  public:
   explicit AllDifferentNode(std::vector<VarNodeId>&& vars, VarNodeId r);
 
-  explicit AllDifferentNode(std::vector<VarNodeId>&& vars, bool shouldHold);
+  explicit AllDifferentNode(std::vector<VarNodeId>&& vars,
+                            bool shouldHold = true);
 
-  void propagate(InvariantGraph&) override;
+  virtual void updateVariableNodes(InvariantGraph& graph) override;
+
+  bool canBeReplaced(const InvariantGraph&) const override;
+
+  bool replace(InvariantGraph& graph) override;
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

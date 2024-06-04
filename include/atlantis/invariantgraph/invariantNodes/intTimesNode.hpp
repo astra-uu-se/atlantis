@@ -11,14 +11,10 @@ class IntTimesNode : public InvariantNode {
  public:
   IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
-  ~IntTimesNode() override = default;
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
-
-  void propagate(InvariantGraph& graph) override;
 
   [[nodiscard]] VarNodeId a() const;
   [[nodiscard]] VarNodeId b() const;

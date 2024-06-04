@@ -12,13 +12,19 @@ namespace atlantis::invariantgraph {
 
 class IntAllEqualNode : public ViolationInvariantNode {
  private:
+  bool _breaksCycle{false};
   propagation::VarId _allDifferentViolationVarId{propagation::NULL_ID};
 
  public:
-  explicit IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r);
+  explicit IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
+                           bool breaksCycle = false);
 
   explicit IntAllEqualNode(std::vector<VarNodeId>&& vars,
-                           bool shouldHold = true);
+                           bool shouldHold = true, bool breaksCycle = false);
+
+  bool canBeReplaced(const InvariantGraph&) const override;
+
+  bool replace(InvariantGraph& graph) override;
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

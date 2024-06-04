@@ -1,5 +1,3 @@
-
-
 #include "atlantis/invariantgraph/fzn/bool_lin_le.hpp"
 
 #include <numeric>
@@ -7,43 +5,22 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/bool_lin_eq.hpp"
-#include "atlantis/invariantgraph/fzn/int_le.hpp"
+#include "atlantis/invariantgraph/invariantNodes/boolLinearNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
                  const std::shared_ptr<fznparser::BoolVarArray>& inputs,
                  Int bound) {
-  if (coeffs.size() != inputs->size()) {
-    throw FznArgumentException(
-        "bool_lin_le constraint first and second array arguments must have the "
-        "same length");
-  }
-  if (coeffs.empty()) {
-    if (bound == 0) {
-      return true;
-    }
-    throw FznArgumentException(
-        "bool_lin_le constraint with empty arrays must have a total sum of 0");
-  }
-
-  const auto& [lb, ub] = linBounds(coeffs, inputs);
-
-  if (lb > bound) {
-    throw FznArgumentException(
-        "bool_lin_le constraint, no subset can be less than " +
-        std::to_string(bound) + ".");
-  }
-  if (ub <= bound) {
-    return true;
-  }
+  const auto [lb, ub] = linBounds(coeffs, inputs);
 
   const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
-      SearchDomain(lb, ub), VarNode::DomainType::UPPER_BOUND);
+      SearchDomain(lb, bound), VarNode::DomainType::UPPER_BOUND);
 
-  return bool_lin_eq(invariantGraph, std::move(coeffs),
-                     invariantGraph.retrieveVarNodes(inputs), outputVarNodeId);
+  invariantGraph.addInvariantNode(std::make_unique<BoolLinearNode>(
+      std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
+      outputVarNodeId));
+  return true;
 }
 
 bool bool_lin_le(FznInvariantGraph& invariantGraph,

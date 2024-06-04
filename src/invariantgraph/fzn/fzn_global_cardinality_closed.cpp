@@ -2,36 +2,16 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
-#include "atlantis/invariantgraph/fzn/int_eq.hpp"
-#include "atlantis/invariantgraph/fzn/set_in.hpp"
-#include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityClosedNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
-
-static void checkInputs(const std::vector<Int>& cover,
-                        const std::shared_ptr<fznparser::IntVarArray>& counts) {
-  if (cover.size() != counts->size()) {
-    throw FznArgumentException(
-        "fzn_global_cardinality_closed: cover and counts must have the same "
-        "size");
-  }
-}
 
 bool fzn_global_cardinality_closed(
     FznInvariantGraph& invariantGraph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover,
     const std::shared_ptr<fznparser::IntVarArray>& counts) {
-  checkInputs(cover, counts);
-
-  std::vector<VarNodeId> inputVarNodeIds =
-      invariantGraph.retrieveVarNodes(inputs);
-  for (VarNodeId varNodeId : inputVarNodeIds) {
-    invariantGraph.varNode(varNodeId).removeAllValuesExcept(cover);
-  }
-
-  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
+  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityClosedNode>(
       invariantGraph.retrieveVarNodes(inputs), std::move(cover),
       invariantGraph.retrieveVarNodes(counts)));
   return true;
@@ -43,48 +23,11 @@ bool fzn_global_cardinality_closed(
     std::vector<Int>&& cover,
     const std::shared_ptr<fznparser::IntVarArray>& counts,
     const fznparser::BoolArg& reified) {
-  checkInputs(cover, counts);
-  if (reified.isFixed() && reified.toParameter()) {
-    return fzn_global_cardinality_closed(invariantGraph, inputs,
-                                         std::move(cover), counts);
-  }
-
-  std::vector<VarNodeId> inputVarNodeIds =
-      invariantGraph.retrieveVarNodes(inputs);
-
-  std::vector<VarNodeId> countVarNodeIds =
-      invariantGraph.retrieveVarNodes(counts);
-
-  std::vector<VarNodeId> outputVarNodeIds;
-  outputVarNodeIds.reserve(counts->size());
-
-  std::vector<VarNodeId> violationVarNodeIds;
-  violationVarNodeIds.reserve(inputs->size() + counts->size() + 1);
-
-  for (VarNodeId countId : countVarNodeIds) {
-    outputVarNodeIds.emplace_back(invariantGraph.retrieveIntVarNode(
-        SearchDomain(0, static_cast<Int>(counts->size())),
-        VarNode::DomainType::NONE));
-
-    violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
-
-    int_eq(invariantGraph, countId, outputVarNodeIds.back(),
-           violationVarNodeIds.back());
-  }
-
-  for (VarNodeId inputId : inputVarNodeIds) {
-    violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
-
-    set_in(invariantGraph, inputId, std::vector<Int>(cover),
-           violationVarNodeIds.back());
-  }
-
-  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
-      std::move(inputVarNodeIds), std::move(cover),
-      std::move(outputVarNodeIds)));
-
-  return array_bool_and(invariantGraph, std::move(violationVarNodeIds),
-                        reified);
+  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityClosedNode>(
+      invariantGraph.retrieveVarNodes(inputs), std::move(cover),
+      invariantGraph.retrieveVarNodes(counts),
+      invariantGraph.retrieveVarNode(reified)));
+  return true;
 }
 
 bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,

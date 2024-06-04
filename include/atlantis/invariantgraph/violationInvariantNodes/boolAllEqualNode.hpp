@@ -11,14 +11,15 @@
 namespace atlantis::invariantgraph {
 class BoolAllEqualNode : public ViolationInvariantNode {
  private:
+  bool _breaksCycle{false};
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r);
+  explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
+                            bool breaksCycle = false);
 
   explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars,
-                            bool shouldHold = true);
-  void propagate(InvariantGraph&) override;
+                            bool shouldHold = true, bool breaksCycle = false);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

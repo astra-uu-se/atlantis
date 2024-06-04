@@ -197,68 +197,64 @@ bool VarNode::inDomain(bool val) const {
   return val ? lowerBound() == 0 : upperBound() > 0;
 }
 
-size_t VarNode::removeValue(Int val) {
+void VarNode::removeValue(Int val) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValue(Int) called on BoolVar");
   }
-  return _domain.remove(val);
+  _domain.remove(val);
 }
 
-size_t VarNode::removeValuesBelow(Int newLowerBound) {
+void VarNode::removeValuesBelow(Int newLowerBound) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
   }
   return _domain.removeBelow(newLowerBound);
 }
 
-size_t VarNode::removeValuesAbove(Int newUpperBound) {
+void VarNode::removeValuesAbove(Int newUpperBound) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
   }
   return _domain.removeAbove(newUpperBound);
 }
 
-size_t VarNode::removeValues(const std::vector<Int>& values) {
+void VarNode::removeValues(const std::vector<Int>& values) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if (values.empty()) {
-    return 0;
+  if (!values.empty()) {
+    return _domain.remove(values);
   }
-  return _domain.remove(values);
 }
 
-size_t VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
+void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if (values.empty()) {
-    throw std::runtime_error("removeAllValuesExcept called with empty values");
-  }
-  return _domain.intersectWith(values);
+  _domain.intersect(values);
 }
 
-size_t VarNode::fixToValue(Int val) {
+void VarNode::fixToValue(Int val) {
   if (!isIntVar()) {
     throw std::runtime_error("fixToValue(Int) called on BoolVar");
   }
-  return _domain.fix(val);
+  _domain.fix(val);
 }
 
-size_t VarNode::removeValue(bool val) {
+void VarNode::removeValue(bool val) {
   if (isIntVar()) {
     throw std::runtime_error("removeValue(bool) called on IntVar");
   }
-  return _domain.fix(val ? 0 : 1);
+  _domain.fix(val ? 0 : 1);
 }
 
-size_t VarNode::fixToValue(bool val) {
+void VarNode::fixToValue(bool val) {
   if (isIntVar()) {
     throw std::runtime_error("fixToValue(bool) called on IntVar");
   }
-  return _domain.fix(val ? 0 : 1);
+  _domain.fix(val ? 0 : 1);
 }
 
 std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) {

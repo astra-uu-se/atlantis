@@ -21,29 +21,6 @@ const std::vector<VarNodeId>& IntCountNode::haystack() const {
 
 Int IntCountNode::needle() const { return _needle; }
 
-void IntCountNode::propagate(InvariantGraph& graph) {
-  std::vector<VarNodeId> removedVars;
-  removedVars.reserve(staticInputVarNodeIds().size());
-
-  size_t minCount = 0;
-  size_t maxCount = 0;
-  for (const VarNodeId& input : staticInputVarNodeIds()) {
-    if (!graph.inDomain(input, _needle)) {
-      continue;
-    }
-    if (graph.isFixed(input)) {
-      ++minCount;
-    }
-    ++maxCount;
-  }
-
-  graph.removeValuesBelow(outputVarNodeIds().front(), minCount);
-  graph.removeValuesAbove(outputVarNodeIds().front(), maxCount);
-  if (minCount == maxCount) {
-    setState(InvariantNodeState::SUBSUMED);
-  }
-}
-
 void IntCountNode::registerOutputVars(InvariantGraph& invariantGraph,
                                       propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));

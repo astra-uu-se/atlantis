@@ -16,8 +16,6 @@ class GeometricCoolingSchedule : public AnnealingSchedule {
   GeometricCoolingSchedule(double coolingRate,
                            UInt successiveFutileRoundsThreshold);
 
-  ~GeometricCoolingSchedule() override = default;
-
   void start(double initialTemperature) override;
   void nextRound(const RoundStatistics& statistics) override;
   double temperature() override;

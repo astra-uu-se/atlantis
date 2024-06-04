@@ -13,14 +13,10 @@ class IntPowNode : public InvariantNode {
  public:
   IntPowNode(VarNodeId base, VarNodeId exponent, VarNodeId power);
 
-  ~IntPowNode() override = default;
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
-
-  void propagate(InvariantGraph& graph) override;
 
   [[nodiscard]] VarNodeId base() const;
   [[nodiscard]] VarNodeId exponent() const;

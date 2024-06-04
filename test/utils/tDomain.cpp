@@ -16,15 +16,12 @@ static bool domainCoversInterval(const std::vector<DomainEntry>& domain,
       });
 }
 
-static bool intersects(const std::vector<DomainEntry>& domain, Int intervalLb,
+static bool isDisjoint(const std::vector<DomainEntry>& domain, Int intervalLb,
                        Int intervalUb) {
-  return std::any_of(domain.begin(), domain.end(),
-                     [&](const DomainEntry& entry) {
-                       return (entry.lowerBound <= intervalLb &&
-                               intervalLb <= entry.upperBound) ||
-                              (intervalLb <= entry.lowerBound &&
-                               entry.lowerBound <= intervalUb);
-                     });
+  return std::all_of(
+      domain.begin(), domain.end(), [&](const DomainEntry& entry) {
+        return intervalUb < entry.lowerBound || entry.upperBound < intervalLb;
+      });
 }
 
 class DomainTest : public ::testing::Test {
@@ -82,7 +79,7 @@ TEST_F(DomainTest, relativeComplementIfIntersects) {
         const std::vector<DomainEntry> setComplement =
             setDomain.relativeComplementIfIntersects(intervalLb, intervalUb);
 
-        if (intersects(dom, intervalLb, intervalUb)) {
+        if (!isDisjoint(dom, intervalLb, intervalUb)) {
           EXPECT_EQ(setComplement.empty(),
                     domainCoversInterval(dom, intervalLb, intervalUb));
         }
@@ -109,7 +106,7 @@ TEST_F(DomainTest, relativeComplementIfIntersects) {
         const std::vector<DomainEntry> intervalComplement =
             intervalDomain.relativeComplementIfIntersects(intervalLb,
                                                           intervalUb);
-        if (intersects(dom, intervalLb, intervalUb)) {
+        if (!isDisjoint(dom, intervalLb, intervalUb)) {
           EXPECT_EQ(intervalComplement.empty(),
                     domainCoversInterval(dom, intervalLb, intervalUb));
         }

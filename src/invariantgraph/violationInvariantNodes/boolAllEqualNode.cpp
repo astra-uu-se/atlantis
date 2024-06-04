@@ -8,35 +8,14 @@
 
 namespace atlantis::invariantgraph {
 
-BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r)
-    : ViolationInvariantNode(std::move(vars), r) {}
+BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
+                                   bool breaksCycle)
+    : ViolationInvariantNode(std::move(vars), r), _breaksCycle(breaksCycle) {}
 
 BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& vars,
-                                   bool shouldHold)
-    : ViolationInvariantNode(std::move(vars), shouldHold) {}
-
-void BoolAllEqualNode::propagate(InvariantGraph& invariantGraph) {
-  ViolationInvariantNode::propagate(invariantGraph);
-  if (isReified() || !shouldHold()) {
-    return false;
-  }
-
-  bool fixedValue = false;
-  bool anyFixed = false;
-  for (const auto& id : staticInputVarNodeIds()) {
-    if (invariantGraph.isFixed(id)) {
-      fixedValue = invariantGraph.lowerBound(id) == 0;
-      anyFixed = true;
-      break;
-    }
-  }
-  if (anyFixed) {
-    for (const auto& id : staticInputVarNodeIds()) {
-      invariantGraph.fixToValue(id, fixedValue);
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  }
-}
+                                   bool shouldHold, bool breaksCycle)
+    : ViolationInvariantNode(std::move(vars), shouldHold),
+      _breaksCycle(breaksCycle) {}
 
 void BoolAllEqualNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {

@@ -29,56 +29,27 @@ void GlobalCardinalityNode::registerOutputVars(
   }
 }
 
-void GlobalCardinalityNode::propagate(InvariantGraph& graph) {
-  if (_cover.size() == 1) {
-    setState(InvariantNodeState::REPLACABLE);
-    return;
-  }
-  std::vector<VarNodeId> removedVars;
-  removedVars.reserve(staticInputVarNodeIds().size());
-
-  std::vector<size_t> minCounts(_cover.size(), 0);
-  std::vector<size_t> maxCounts(_cover.size(), 0);
-  for (const VarNodeId& input : staticInputVarNodeIds()) {
-    bool relevant = false;
-    for (size_t valIndex = 0; valIndex < _cover.size(); ++valIndex) {
-      if (!graph.inDomain(input, _cover[valIndex])) {
-        continue;
-      }
-      relevant = true;
-      if (graph.isFixed(input)) {
-        ++minCounts[valIndex];
-      }
-      ++maxCounts[valIndex];
-    }
-    if (!relevant) {
-      removedVars.emplace_back(input);
+bool GlobalCardinalityNode::canBeReplaced(
+    const InvariantGraph& invariantGraph) const {
+  size_t numFixed = 0;
+  for (const auto& input : staticInputVarNodeIds()) {
+    numFixed +=
+        static_cast<size_t>(invariantGraph.varNodeConst(input).isFixed());
+    if (numFixed > 1) {
+      return false;
     }
   }
-
-  bool inputsFixed = true;
-
-  for (size_t valIndex = 0; valIndex < _cover.size(); ++valIndex) {
-    graph.removeValuesBelow(outputVarNodeIds().at(valIndex),
-                            minCounts[valIndex]);
-    graph.removeValuesAbove(outputVarNodeIds().at(valIndex),
-                            maxCounts[valIndex]);
-    inputsFixed = inputsFixed && minCounts[valIndex] == maxCounts[valIndex];
-  }
-  if (inputsFixed) {
-    setState(InvariantNodeState::SUBSUMED);
-  }
+  return true;
 }
 
 bool GlobalCardinalityNode::replace(InvariantGraph& invariantGraph) {
-  if (state() != InvariantNodeState::REPLACABLE) {
+  if (!canBeReplaced(invariantGraph)) {
     return false;
   }
   assert(_cover.size() == 1);
-  invariantGraph.replaceInvariantNode(
-      id(), std::make_unique<IntCountNode>(
-                std::vector<VarNodeId>(staticInputVarNodeIds()), _cover.front(),
-                outputVarNodeIds().front()));
+  invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
+      std::vector<VarNodeId>(staticInputVarNodeIds()), _cover.front(),
+      outputVarNodeIds().front()));
   return true;
 }
 

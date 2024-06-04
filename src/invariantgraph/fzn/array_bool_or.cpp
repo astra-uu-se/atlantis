@@ -14,51 +14,10 @@ bool array_bool_or(FznInvariantGraph& invariantGraph,
                    const fznparser::BoolArg& reified) {
   std::vector<bool> fixedValues = getFixedValues(boolVarArray);
 
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      if (fixedValues.size() == boolVarArray->size() &&
-          std::all_of(fixedValues.begin(), fixedValues.end(),
-                      [](bool b) { return !b; })) {
-        throw FznArgumentException(
-            "Constraint array_bool_or is unsatisfiable because the reified "
-            "argument is fixed to true "
-            "but the array contains only elements that are true.");
-      }
-    } else if (std::any_of(fixedValues.begin(), fixedValues.end(),
-                           [](bool b) { return b; })) {
-      throw FznArgumentException(
-          "Constraint array_bool_or is unsatisfiable because the reified "
-          "argument is fixed to false "
-          "but the array contains an element that is true.");
-    }
-  }
-
-  std::vector<VarNodeId> inputVarNodeIds =
-      invariantGraph.retrieveVarNodes(boolVarArray);
-
-  std::vector<VarNodeId> prunedInputVarNodeIds;
-  prunedInputVarNodeIds.reserve(inputVarNodeIds.size() - fixedValues.size());
-  for (const VarNodeId& varNodeId : inputVarNodeIds) {
-    if (!invariantGraph.varNode(varNodeId).isFixed()) {
-      prunedInputVarNodeIds.emplace_back(varNodeId);
-    }
-  }
-
-  if (prunedInputVarNodeIds.empty()) {
-    // TODO: throw exception?
-    return true;
-  }
-
-  if (reified.isFixed()) {
-    invariantGraph.addInvariantNode(
-        std::make_unique<invariantgraph::ArrayBoolOrNode>(
-            std::move(inputVarNodeIds), reified.toParameter()));
-    return true;
-  }
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolOrNode>(
-          std::move(inputVarNodeIds),
-          invariantGraph.retrieveVarNode(reified.var())));
+          invariantGraph.retrieveVarNodes(boolVarArray),
+          invariantGraph.retrieveVarNode(reified)));
   return true;
 }
 

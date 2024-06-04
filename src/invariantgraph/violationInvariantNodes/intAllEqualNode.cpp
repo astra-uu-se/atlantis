@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intEqNode.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
@@ -10,11 +11,44 @@
 
 namespace atlantis::invariantgraph {
 
-IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r)
-    : ViolationInvariantNode(std::move(vars), r) {}
+IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
+                                 bool breaksCycle)
+    : ViolationInvariantNode(std::move(vars), r), _breaksCycle(breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold)
-    : ViolationInvariantNode(std::move(vars), shouldHold) {}
+IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold,
+                                 bool breaksCycle)
+    : ViolationInvariantNode(std::move(vars), shouldHold),
+      _breaksCycle(breaksCycle) {}
+
+bool IntAllEqualNode::canBeReplaced(const InvariantGraph&) const {
+  if (staticInputVarNodeIds().size() <= 2) {
+    return true;
+  }
+  return false;
+}
+
+bool IntAllEqualNode::replace(InvariantGraph& invariantGraph) {
+  if (!canBeReplaced(invariantGraph)) {
+    return false;
+  }
+  if (staticInputVarNodeIds().size() <= 1) {
+    deactivate(invariantGraph);
+    return true;
+  }
+  if (staticInputVarNodeIds().size() == 2) {
+    if (isReified()) {
+      invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(
+          staticInputVarNodeIds().front(), staticInputVarNodeIds().back(),
+          outputVarNodeIds().front(), _breaksCycle));
+    } else {
+      invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(
+          staticInputVarNodeIds().front(), staticInputVarNodeIds().back(),
+          shouldHold(), _breaksCycle));
+    }
+  }
+
+  return false;
+}
 
 void IntAllEqualNode::registerOutputVars(InvariantGraph& invariantGraph,
                                          propagation::SolverBase& solver) {

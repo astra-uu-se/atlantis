@@ -1,5 +1,3 @@
-
-
 #include "atlantis/invariantgraph/fzn/fzn_all_equal_int.hpp"
 
 #include "../parseHelper.hpp"
@@ -7,58 +5,23 @@
 #include "atlantis/invariantgraph/fzn/int_eq.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolXorNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
                        const std::shared_ptr<fznparser::IntVarArray>& inputs) {
-  if (inputs->size() <= 1) {
-    return true;
-  }
-
-  if (violatesAllEqual(inputs)) {
-    throw FznArgumentException(
-        "fzn_all_equal_int: All fixed variables and parameters must take the "
-        "same value");
-  }
-
-  if (inputs->isParArray()) {
-    return true;
-  }
-
-  const VarNodeId allDiffViolVarNodeId = invariantGraph.retrieveBoolVarNode();
-
-  invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      invariantGraph.retrieveVarNodes(inputs), allDiffViolVarNodeId));
-
+  invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
+      invariantGraph.retrieveVarNodes(inputs)));
   return true;
 }
 
 bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
                        const std::shared_ptr<fznparser::IntVarArray>& inputs,
                        const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return fzn_all_equal_int(invariantGraph, inputs);
-    }
-    // At least two variables must take different values
-    const VarNodeId allDiffViolVarNodeId = invariantGraph.retrieveBoolVarNode();
-
-    invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-        invariantGraph.retrieveVarNodes(inputs), allDiffViolVarNodeId));
-
-    return true;
-  }
-
-  const VarNodeId allDiffViolVarNodeId = invariantGraph.retrieveBoolVarNode();
-
-  invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      invariantGraph.retrieveVarNodes(inputs), allDiffViolVarNodeId));
-
-  // If all variables take the same value (violation equals inputs->size() -
-  // 1), then all_equal holds and the reified variable is true:
-  int_eq(invariantGraph, allDiffViolVarNodeId,
-         static_cast<Int>(inputs->size()) - 1, reified);
+  invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
+      invariantGraph.retrieveVarNodes(inputs),
+      invariantGraph.retrieveVarNode(reified)));
   return true;
 }
 

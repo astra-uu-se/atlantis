@@ -11,8 +11,6 @@ using ::testing::Return;
 
 class DummyAnnealingSchedule : public AnnealingSchedule {
  public:
-  ~DummyAnnealingSchedule() override = default;
-
   MOCK_METHOD(void, start, (double initialTemperature), (override));
   MOCK_METHOD(void, nextRound, (const RoundStatistics& initialTemperature),
               (override));

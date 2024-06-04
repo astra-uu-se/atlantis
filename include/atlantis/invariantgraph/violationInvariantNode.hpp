@@ -20,7 +20,7 @@ class ViolationInvariantNode : public InvariantNode {
 
   // If the violation invariant is not reified, then this boolean indicates if
   // the violation invariant should hold or not:
-  const bool _shouldHold;
+  bool _shouldHold;
 
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
@@ -51,16 +51,14 @@ class ViolationInvariantNode : public InvariantNode {
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
 
-  ~ViolationInvariantNode() override = default;
-
-  virtual void propagate(InvariantGraph&) override;
-
   [[nodiscard]] bool isReified() const override;
 
   [[nodiscard]] propagation::VarId violationVarId(
       const InvariantGraph&) const override;
 
   VarNodeId reifiedViolationNodeId();
+
+  virtual void updateVariableNodes(InvariantGraph&) override;
 
  protected:
   propagation::VarId setViolationVarId(InvariantGraph&, propagation::VarId);

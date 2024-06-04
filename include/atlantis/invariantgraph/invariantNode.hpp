@@ -38,7 +38,7 @@ class InvariantNode {
 
   [[nodiscard]] virtual bool isReified() const;
 
-  virtual void propagate(InvariantGraph&);
+  [[nodiscard]] virtual bool canBeReplaced(const InvariantGraph&) const;
 
   [[nodiscard]] virtual bool replace(InvariantGraph&);
 
@@ -85,6 +85,8 @@ class InvariantNode {
 
   [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
       const noexcept;
+
+  virtual void updateVariableNodes(InvariantGraph&){};
 
   void replaceDefinedVar(VarNode& oldOutputVarNode, VarNode& newOutputVarNode);
 

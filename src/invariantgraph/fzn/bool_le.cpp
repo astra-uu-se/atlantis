@@ -17,13 +17,6 @@ bool bool_le(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
 
 bool bool_le(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return bool_le(invariantGraph, a, b);
-    }
-    return bool_lt(invariantGraph, b, a);
-  }
-
   invariantGraph.addInvariantNode(std::make_unique<BoolLeNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
       invariantGraph.retrieveVarNode(reified.var())));

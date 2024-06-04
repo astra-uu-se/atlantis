@@ -3,20 +3,63 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intNeNode.hpp"
 #include "atlantis/propagation/violationInvariants/equal.hpp"
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntEqNode::IntEqNode(VarNodeId a, VarNodeId b, VarNodeId r)
-    : ViolationInvariantNode({a, b}, r) {}
+IntEqNode::IntEqNode(VarNodeId a, VarNodeId b, VarNodeId r, bool breaksCycle)
+    : ViolationInvariantNode({a, b}, r), _breaksCycle(breaksCycle) {}
 
-IntEqNode::IntEqNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode({a, b}, shouldHold) {}
+IntEqNode::IntEqNode(VarNodeId a, VarNodeId b, bool shouldHold,
+                     bool breaksCycle)
+    : ViolationInvariantNode({a, b}, shouldHold), _breaksCycle(breaksCycle) {}
 
 void IntEqNode::registerOutputVars(InvariantGraph& invariantGraph,
                                    propagation::SolverBase& solver) {
   registerViolation(invariantGraph, solver);
+}
+
+bool IntEqNode::canBeReplaced(const InvariantGraph& invariantGraph) const {
+  if (isReified()) {
+    return false;
+  }
+  if (!shouldHold()) {
+    return true;
+  }
+  if (!_breaksCycle) {
+    for (const auto& input : staticInputVarNodeIds()) {
+      if (invariantGraph.varNodeConst(input).definingNodes().empty()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool IntEqNode::replace(InvariantGraph& invariantGraph) {
+  if (!canBeReplaced(invariantGraph)) {
+    return false;
+  }
+  if (!shouldHold()) {
+    invariantGraph.addInvariantNode(std::make_unique<IntNeNode>(a(), b()));
+    return true;
+  }
+  if (a() == b()) {
+    return true;
+  }
+  if (invariantGraph.varNodeConst(a()).definingNodes().empty()) {
+    invariantGraph.replaceVarNode(a(), b());
+    deactivate(invariantGraph);
+    return true;
+  }
+  if (invariantGraph.varNodeConst(b()).definingNodes().empty()) {
+    invariantGraph.replaceVarNode(b(), a());
+    deactivate(invariantGraph);
+    return true;
+  }
+  return false;
 }
 
 void IntEqNode::registerNode(InvariantGraph& invariantGraph,

@@ -22,8 +22,6 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
                                    std::vector<Int>&& domain,
                                    const propagation::SolverBase& solver);
 
-  ~AllDifferentUniformNeighbourhood() override = default;
-
   void initialise(RandomProvider& random,
                   AssignmentModifier& modifications) override;
   bool randomMove(RandomProvider& random, Assignment& assignment,

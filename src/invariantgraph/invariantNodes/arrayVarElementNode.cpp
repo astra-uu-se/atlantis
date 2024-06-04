@@ -16,14 +16,12 @@ void ArrayVarElementNode::registerOutputVars(InvariantGraph& invariantGraph,
                 _offset);
 }
 
-void ArrayVarElementNode::propagate(InvariantGraph& graph) {
-  if (graph.varNode(idx()).isFixed()) {
-    setState(InvariantNodeState::REPLACABLE);
-  }
+bool ArrayVarElementNode::canBeReplaced(const InvariantGraph& graph) const {
+  return graph.varNodeConst(idx()).isFixed();
 }
 
 bool ArrayVarElementNode::replace(InvariantGraph& invariantGraph) {
-  if (state() != InvariantNodeState::REPLACABLE) {
+  if (!canBeReplaced(invariantGraph)) {
     return false;
   }
   auto& idxNode = invariantGraph.varNode(idx());

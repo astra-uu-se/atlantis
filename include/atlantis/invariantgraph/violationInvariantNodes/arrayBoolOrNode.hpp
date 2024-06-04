@@ -17,7 +17,7 @@ class ArrayBoolOrNode : public ViolationInvariantNode {
  public:
   ArrayBoolOrNode(std::vector<VarNodeId>&& inputs, VarNodeId output);
 
-  ArrayBoolOrNode(std::vector<VarNodeId>&& inputs, bool shouldHold);
+  ArrayBoolOrNode(std::vector<VarNodeId>&& inputs, bool shouldHold = true);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

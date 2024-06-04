@@ -13,8 +13,6 @@ class IntPlusNode : public InvariantNode {
  public:
   IntPlusNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
-  ~IntPlusNode() override = default;
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

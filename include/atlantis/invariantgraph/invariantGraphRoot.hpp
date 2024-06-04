@@ -17,8 +17,6 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
  public:
   explicit InvariantGraphRoot(std::vector<VarNodeId>&& vars = {});
 
-  ~InvariantGraphRoot() override = default;
-
   void addSearchVarNode(VarNode&);
 
  protected:

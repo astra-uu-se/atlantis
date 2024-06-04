@@ -30,13 +30,6 @@ ViolationInvariantNode::ViolationInvariantNode(
           outputVarNodeIds().front() == _reifiedViolationNodeId));
 }
 
-void ViolationInvariantNode::propagate(InvariantGraph& invariantGraph) {
-  if (isReified() && invariantGraph.isFixed(_reifiedViolationNodeId)) {
-    _reifiedViolationNodeId = NULL_NODE_ID;
-    _shouldHold = (invariantGraph.lowerBound(_reifiedViolationNodeId) == 0);
-  }
-}
-
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
 
 ViolationInvariantNode::ViolationInvariantNode(
@@ -74,6 +67,14 @@ propagation::VarId ViolationInvariantNode::violationVarId(
 
 VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
   return _reifiedViolationNodeId;
+}
+
+void ViolationInvariantNode::updateVariableNodes(InvariantGraph& graph) {
+  if (isReified() && graph.varNodeConst(_reifiedViolationNodeId).isFixed()) {
+    _shouldHold = graph.varNodeConst(_reifiedViolationNodeId).lowerBound() == 0;
+    _reifiedViolationNodeId = NULL_NODE_ID;
+  }
+  InvariantNode::updateVariableNodes(graph);
 }
 
 propagation::VarId ViolationInvariantNode::setViolationVarId(

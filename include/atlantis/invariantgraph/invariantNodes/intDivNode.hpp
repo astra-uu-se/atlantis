@@ -13,14 +13,12 @@ class IntDivNode : public InvariantNode {
  public:
   IntDivNode(VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
 
-  ~IntDivNode() override = default;
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void propagate(InvariantGraph& graph) override;
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
   [[nodiscard]] bool replace(InvariantGraph& graph) override;
 

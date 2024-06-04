@@ -3,16 +3,61 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolXorNode.hpp"
 #include "atlantis/propagation/invariants/boolXor.hpp"
 #include "atlantis/propagation/violationInvariants/boolEqual.hpp"
 
 namespace atlantis::invariantgraph {
 
-BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, VarNodeId r)
-    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, r) {}
+BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, VarNodeId r, bool breaksCycle)
+    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, r),
+      _breaksCycle(breaksCycle) {}
 
-BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
+BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold,
+                       bool breaksCycle)
+    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, shouldHold),
+      _breaksCycle(breaksCycle) {}
+
+bool BoolEqNode::canBeReplaced(const InvariantGraph& invariantGraph) const {
+  if (isReified()) {
+    return false;
+  }
+  if (!shouldHold()) {
+    return true;
+  }
+  if (!_breaksCycle) {
+    for (const auto& input : staticInputVarNodeIds()) {
+      if (invariantGraph.varNodeConst(input).definingNodes().empty()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool BoolEqNode::replace(InvariantGraph& invariantGraph) {
+  if (!canBeReplaced(invariantGraph)) {
+    return false;
+  }
+  if (!shouldHold()) {
+    invariantGraph.addInvariantNode(std::make_unique<BoolXorNode>(a(), b()));
+    return true;
+  }
+  if (a() == b()) {
+    return true;
+  }
+  if (invariantGraph.varNodeConst(a()).definingNodes().empty()) {
+    invariantGraph.replaceVarNode(a(), b());
+    deactivate(invariantGraph);
+    return true;
+  }
+  if (invariantGraph.varNodeConst(b()).definingNodes().empty()) {
+    invariantGraph.replaceVarNode(b(), a());
+    deactivate(invariantGraph);
+    return true;
+  }
+  return false;
+}
 
 void BoolEqNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {

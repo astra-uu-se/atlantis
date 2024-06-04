@@ -52,7 +52,6 @@ class AlwaysAcceptingAnnealer : public search::Annealer {
                           search::RandomProvider& random,
                           search::AnnealingSchedule& schedule)
       : Annealer(assignment, random, schedule) {}
-  ~AlwaysAcceptingAnnealer() override = default;
 
  protected:
   [[nodiscard]] bool accept(Int) override { return true; }

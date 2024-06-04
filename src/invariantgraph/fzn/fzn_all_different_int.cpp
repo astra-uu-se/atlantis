@@ -9,21 +9,8 @@ namespace atlantis::invariantgraph::fzn {
 bool fzn_all_different_int(
     FznInvariantGraph& invariantGraph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs) {
-  if (inputs->size() <= 1) {
-    return true;
-  }
-
-  verifyAllDifferent(inputs);
-
-  if (inputs->isParArray()) {
-    return true;
-  }
-
-  std::vector<VarNodeId> varNodeIds = pruneAllDifferentFree(
-      invariantGraph, invariantGraph.retrieveVarNodes(inputs));
-
-  invariantGraph.addInvariantNode(
-      std::make_unique<AllDifferentNode>(std::move(varNodeIds), true));
+  invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
+      invariantGraph.retrieveVarNodes(inputs), true));
   return true;
 }
 
@@ -31,14 +18,6 @@ bool fzn_all_different_int(
     FznInvariantGraph& invariantGraph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return fzn_all_different_int(invariantGraph, inputs);
-    }
-    invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-        invariantGraph.retrieveVarNodes(inputs), reified.toParameter()));
-    return true;
-  }
   invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
       invariantGraph.retrieveVarNodes(inputs),
       invariantGraph.retrieveVarNode(reified)));

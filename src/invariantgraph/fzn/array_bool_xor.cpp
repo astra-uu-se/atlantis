@@ -12,16 +12,10 @@ namespace atlantis::invariantgraph::fzn {
 bool array_bool_xor(FznInvariantGraph& invariantGraph,
                     const std::shared_ptr<fznparser::BoolVarArray>& vars,
                     const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    invariantGraph.addInvariantNode(
-        std::make_unique<invariantgraph::ArrayBoolXorNode>(
-            invariantGraph.retrieveVarNodes(vars), reified.toParameter()));
-    return true;
-  }
   invariantGraph.addInvariantNode(
       std::make_unique<invariantgraph::ArrayBoolXorNode>(
           invariantGraph.retrieveVarNodes(vars),
-          invariantGraph.retrieveVarNode(reified.var())));
+          invariantGraph.retrieveVarNode(reified)));
   return true;
 }
 
