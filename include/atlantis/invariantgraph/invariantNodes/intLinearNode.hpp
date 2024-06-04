@@ -18,14 +18,12 @@ class IntLinearNode : public InvariantNode {
   IntLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                 VarNodeId output);
 
-  ~IntLinearNode() override = default;
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void propagate(InvariantGraph& graph) override;
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
   bool replace(InvariantGraph& graph) override;
 

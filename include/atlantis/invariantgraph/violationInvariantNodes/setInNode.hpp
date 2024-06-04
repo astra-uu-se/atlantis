@@ -18,7 +18,7 @@ class SetInNode : public ViolationInvariantNode {
   explicit SetInNode(VarNodeId input, std::vector<Int>&& values, VarNodeId r);
 
   explicit SetInNode(VarNodeId input, std::vector<Int>&& values,
-                     bool shouldHold);
+                     bool shouldHold = true);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

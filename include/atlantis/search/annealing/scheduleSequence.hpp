@@ -22,8 +22,6 @@ class ScheduleSequence : public AnnealingSchedule {
     assert(!_schedules.empty());
   }
 
-  ~ScheduleSequence() override = default;
-
   void start(double initialTemperature) override;
   void nextRound(const RoundStatistics& statistics) override;
   double temperature() override;

@@ -9,63 +9,13 @@ IntDivNode::IntDivNode(VarNodeId numerator, VarNodeId denominator,
                        VarNodeId quotient)
     : InvariantNode({quotient}, {numerator, denominator}) {}
 
-void IntDivNode::propagate(InvariantGraph& graph) {
-  if (graph.isFixed(denominator()) && graph.lowerBound(denominator()) == 0) {
-    setState(InvariantNodeState::INFEASIBLE);
-    return;
-  }
-  if (graph.isFixed(numerator()) && graph.isFixed(denominator())) {
-    if (graph.lowerBound(numerator()) % graph.lowerBound(denominator()) != 0) {
-      setState(InvariantNodeState::INFEASIBLE);
-      return;
-    }
-    if (graph.isFixed(quotient())) {
-      if (graph.lowerBound(numerator()) / graph.lowerBound(denominator()) !=
-          graph.lowerBound(quotient())) {
-        setState(InvariantNodeState::INFEASIBLE);
-        return;
-      }
-      setState(InvariantNodeState::SUBSUMED);
-      return;
-    }
-  }
-
-  if (graph.isFixed(quotient()) && graph.lowerBound(quotient()) == 0) {
-    graph.fixToValue(numerator(), 0);
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-
-  if (graph.isFixed(numerator()) && graph.isFixed(quotient())) {
-    const Int numVal = graph.lowerBound(numerator());
-    const Int quoVal = graph.lowerBound(quotient());
-    if (numVal % quoVal != 0) {
-      setState(InvariantNodeState::INFEASIBLE);
-      return;
-    }
-
-    assert(quoVal != 0);
-    const int denVal = numVal / quoVal;
-    graph.fixToValue(denominator(), denVal);
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  } else if (graph.isFixed(denominator()) && graph.isFixed(quotient())) {
-    const Int denVal = graph.lowerBound(denominator());
-    const Int quoVal = graph.lowerBound(quotient());
-    const Int numVal = denVal * quoVal;
-    graph.fixToValue(numerator(), numVal);
-    setState(InvariantNodeState::SUBSUMED);
-  }
-
-  if (graph.isFixed(denominator()) && graph.lowerBound(denominator()) == 1) {
-    setState(InvariantNodeState::REPLACABLE);
-  }
-
-  return;
+bool IntDivNode::canBeReplaced(const InvariantGraph& graph) const {
+  return graph.varNodeConst(denominator()).isFixed() &&
+         graph.varNodeConst(denominator()).lowerBound() == 1;
 }
 
 bool IntDivNode::replace(InvariantGraph& invariantGraph) {
-  if (state() != InvariantNodeState::REPLACABLE) {
+  if (!canBeReplaced(invariantGraph)) {
     return false;
   }
   assert(invariantGraph.varNode(denominator()).isFixed() &&

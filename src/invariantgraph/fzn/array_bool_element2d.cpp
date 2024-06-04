@@ -1,5 +1,3 @@
-
-
 #include "atlantis/invariantgraph/fzn/array_bool_element2d.hpp"
 
 #include "../parseHelper.hpp"

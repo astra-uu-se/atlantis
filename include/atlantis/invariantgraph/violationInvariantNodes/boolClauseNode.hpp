@@ -20,7 +20,7 @@ class BoolClauseNode : public ViolationInvariantNode {
                           std::vector<VarNodeId>&& bs, VarNodeId r);
 
   explicit BoolClauseNode(std::vector<VarNodeId>&& as,
-                          std::vector<VarNodeId>&& bs, bool shouldHold);
+                          std::vector<VarNodeId>&& bs, bool shouldHold = true);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

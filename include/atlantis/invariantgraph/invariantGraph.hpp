@@ -40,7 +40,6 @@ class InvariantGraph {
  protected:
   propagation::VarId _totalViolationVarId;
   VarNodeId _objectiveVarNodeId;
-  void fixpoint();
 
  public:
   InvariantGraph();
@@ -55,18 +54,6 @@ class InvariantGraph {
       const std::string& identifier) const noexcept;
   [[nodiscard]] bool containsVarNode(Int) const noexcept;
   [[nodiscard]] static bool containsVarNode(bool) noexcept;
-
-  bool isFixed(VarNodeId);
-  Int lowerBound(VarNodeId);
-  Int upperBound(VarNodeId);
-  bool inDomain(VarNodeId, Int);
-  bool inDomain(VarNodeId, bool);
-
-  void removeValue(VarNodeId, Int);
-  void removeValuesBelow(VarNodeId, Int);
-  void removeValuesAbove(VarNodeId, Int);
-  void fixToValue(VarNodeId, Int);
-  void fixToValue(VarNodeId, bool);
 
   VarNodeId retrieveBoolVarNode(
       VarNode::DomainType = VarNode::DomainType::RANGE);
@@ -119,8 +106,9 @@ class InvariantGraph {
    * all Invariants.
    */
   void replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId);
-  InvariantNodeId replaceInvariantNode(InvariantNodeId,
-                                       std::unique_ptr<InvariantNode>&&);
+
+  void fixpoint();
+  void replaceInvariantNodes();
 
   InvariantNodeId addImplicitConstraintNode(
       std::unique_ptr<ImplicitConstraintNode>&&);

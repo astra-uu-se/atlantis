@@ -11,7 +11,7 @@ class IntLeNode : public ViolationInvariantNode {
  public:
   IntLeNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
-  IntLeNode(VarNodeId a, VarNodeId b, bool shouldHold);
+  IntLeNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

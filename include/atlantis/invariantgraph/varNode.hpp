@@ -87,54 +87,47 @@ class VarNode {
 
   /**
    * @brief removes the given value from the domain of the variable.
-   * @return the number of values removed from the domain.
    */
-  size_t removeValue(Int);
+  void removeValue(Int);
 
   /**
    * @brief fixes the variable to the given value.
-   * @return the number of values removed from the domain.
    */
-  size_t fixToValue(Int);
+  void fixToValue(Int);
 
   /**
    * @brief removes all values that are strictly less than the given value from
    * the domain of the variable.
-   * @return the number of values removed from the domain.
    */
-  size_t removeValuesBelow(Int);
+  void removeValuesBelow(Int);
 
   /**
    * @brief removes all values that are strictly greater than the given value
    * from the domain of the variable.
-   * @return the number of values removed from the domain.
    */
-  size_t removeValuesAbove(Int);
-
-  /**
-   * @brief removes all values that are not in the given vector from the domain
-   * from the domain of the variable.
-   * @return the number of values removed from the domain.
-   */
-  size_t removeValues(const std::vector<Int>&);
+  void removeValuesAbove(Int);
 
   /**
    * @brief removes all values that are not in the given vector from the domain
    * from the domain of the variable.
    */
-  size_t removeAllValuesExcept(const std::vector<Int>&);
+  void removeValues(const std::vector<Int>&);
+
+  /**
+   * @brief removes all values that are not in the given vector from the domain
+   * from the domain of the variable.
+   */
+  void removeAllValuesExcept(const std::vector<Int>&);
 
   /**
    * @brief fixes the variable to the given value.
-   * @return the number of values removed from the domain.
    */
-  size_t removeValue(bool);
+  void removeValue(bool);
 
   /**
    * @brief fixes the variable to the given value.
-   * @return the number of values removed from the domain.
    */
-  size_t fixToValue(bool);
+  void fixToValue(bool);
 
   DomainType domainType() const noexcept;
 

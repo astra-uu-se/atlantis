@@ -14,19 +14,6 @@ void IntModNode::registerOutputVars(InvariantGraph& invariantGraph,
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void IntModNode::propagate(InvariantGraph& graph) {
-  if (graph.isFixed(denominator()) && graph.lowerBound(denominator()) == 0) {
-    setState(InvariantNodeState::INFEASIBLE);
-    return;
-  }
-  if (graph.isFixed(numerator()) && graph.isFixed(denominator())) {
-    Int remVal =
-        graph.lowerBound(numerator()) % graph.lowerBound(denominator());
-    graph.fixToValue(remainder(), remVal);
-    setState(InvariantNodeState::SUBSUMED);
-  }
-}
-
 void IntModNode::registerNode(InvariantGraph& invariantGraph,
                               propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=

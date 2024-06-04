@@ -31,8 +31,6 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
                                       Int domainLb, Int domainUb,
                                       const propagation::SolverBase& solver);
 
-  ~AllDifferentNonUniformNeighbourhood() override = default;
-
   void initialise(RandomProvider& random,
                   AssignmentModifier& modifications) override;
   bool randomMove(RandomProvider& random, Assignment& assignment,

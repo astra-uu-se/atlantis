@@ -12,12 +12,10 @@ class ArrayIntMinimumNode : public InvariantNode {
  public:
   ArrayIntMinimumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
 
-  ~ArrayIntMinimumNode() override = default;
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
-  void propagate(InvariantGraph& graph) override;
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
   [[nodiscard]] bool replace(InvariantGraph& graph) override;
 

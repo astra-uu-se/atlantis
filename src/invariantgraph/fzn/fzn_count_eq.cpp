@@ -20,12 +20,6 @@ bool fzn_count_eq(FznInvariantGraph& invariantGraph,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count,
                   const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return fzn_count_eq(invariantGraph, inputs, needle, count);
-    }
-    return fzn_count_neq(invariantGraph, inputs, needle, count);
-  }
   const VarNodeId output = createCountNode(invariantGraph, inputs, needle);
   return int_eq(invariantGraph, output, invariantGraph.retrieveVarNode(count),
                 reified);

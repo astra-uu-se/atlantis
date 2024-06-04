@@ -26,16 +26,6 @@ ArrayElementNode::ArrayElementNode(std::vector<bool>&& parVector, VarNodeId idx,
       _parVector(toIntVec(std::move(parVector))),
       _offset(offset) {}
 
-void ArrayElementNode::propagate(InvariantGraph& graph) {
-  if (!graph.isFixed(idx())) {
-    return;
-  }
-  removeStaticInputVarNode(graph.varNode(idx()));
-  const Int val = _parVector[graph.lowerBound(idx()) + _offset];
-  graph.fixToValue(outputVarNodeIds().front(), val);
-  setState(InvariantNodeState::SUBSUMED);
-}
-
 void ArrayElementNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) ==

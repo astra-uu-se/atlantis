@@ -41,23 +41,6 @@ void IntPowNode::registerOutputVars(InvariantGraph& invariantGraph,
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void IntPowNode::propagate(InvariantGraph& graph) {
-  if (graph.isFixed(base()) == (graph.lowerBound(base()) == 0)) {
-    graph.removeValuesBelow(exponent(), 0);
-  }
-  if (graph.isFixed(power())) {
-    if (graph.upperBound(power()) < 0) {
-      graph.removeValue(base(), 0);
-    }
-  }
-  if (graph.isFixed(base()) && graph.isFixed(exponent())) {
-    Int powVal =
-        int_pow(graph.lowerBound(base()), graph.lowerBound(exponent()));
-    graph.fixToValue(power(), powVal);
-    setState(InvariantNodeState::SUBSUMED);
-  }
-}
-
 void IntPowNode::registerNode(InvariantGraph& invariantGraph,
                               propagation::SolverBase& solver) {
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=

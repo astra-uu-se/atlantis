@@ -21,7 +21,7 @@ InvariantNode::InvariantNode(std::vector<VarNodeId>&& outputIds,
 
 bool InvariantNode::isReified() const { return false; }
 
-void InvariantNode::propagate(InvariantGraph&) {}
+bool InvariantNode::canBeReplaced(const InvariantGraph&) const { return false; }
 bool InvariantNode::replace(InvariantGraph&) { return false; }
 
 void InvariantNode::init(InvariantGraph& invariantGraph,

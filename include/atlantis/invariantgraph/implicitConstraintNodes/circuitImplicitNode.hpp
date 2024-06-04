@@ -12,8 +12,6 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
  public:
   explicit CircuitImplicitNode(std::vector<VarNodeId>&&);
 
-  ~CircuitImplicitNode() override = default;
-
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
       propagation::SolverBase& solver,

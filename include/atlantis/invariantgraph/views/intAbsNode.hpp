@@ -11,8 +11,6 @@ class IntAbsNode : public InvariantNode {
  public:
   IntAbsNode(VarNodeId staticInput, VarNodeId output);
 
-  ~IntAbsNode() override = default;
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

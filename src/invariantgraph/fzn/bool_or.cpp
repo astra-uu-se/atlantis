@@ -10,15 +10,9 @@ namespace atlantis::invariantgraph::fzn {
 
 bool bool_or(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    invariantGraph.addInvariantNode(std::make_unique<BoolOrNode>(
-        invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
-        reified.toParameter()));
-    return true;
-  }
   invariantGraph.addInvariantNode(std::make_unique<BoolOrNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
-      invariantGraph.retrieveVarNode(reified.var())));
+      invariantGraph.retrieveVarNode(reified)));
   return true;
 }
 

@@ -134,6 +134,9 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   logger.timed<void>("building invariant graph",
                      [&] { return invariantGraph.build(_model); });
 
+  logger.timed<void>("Using Gecode to compute fixpoint",
+                     [&] { return invariantGraph.fixpoint(); });
+
   propagation::Solver solver;
   invariantGraph.apply(solver);
   auto neighbourhood = invariantGraph.neighbourhood();

@@ -16,8 +16,6 @@ class GeometricHeatingSchedule : public AnnealingSchedule {
   GeometricHeatingSchedule(double heatingRate,
                            double minimumUphillAcceptanceRatio);
 
-  ~GeometricHeatingSchedule() override = default;
-
   void start(double initialTemperature) override;
   void nextRound(const RoundStatistics& statistics) override;
   double temperature() override;

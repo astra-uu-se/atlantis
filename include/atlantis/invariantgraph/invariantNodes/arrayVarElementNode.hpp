@@ -23,7 +23,7 @@ class ArrayVarElementNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void propagate(InvariantGraph& graph) override;
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
   [[nodiscard]] bool replace(InvariantGraph& graph) override;
 

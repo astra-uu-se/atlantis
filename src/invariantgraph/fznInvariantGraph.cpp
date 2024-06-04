@@ -3,7 +3,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "atlantis/invariantgraph/fzn/allDifferentImplicitNode.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_element.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_element2d.hpp"
@@ -28,7 +27,6 @@
 #include "atlantis/invariantgraph/fzn/bool_not.hpp"
 #include "atlantis/invariantgraph/fzn/bool_or.hpp"
 #include "atlantis/invariantgraph/fzn/bool_xor.hpp"
-#include "atlantis/invariantgraph/fzn/circuitImplicitNode.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_equal_int.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_eq.hpp"
@@ -58,8 +56,6 @@
 #include "atlantis/invariantgraph/fzn/int_pow.hpp"
 #include "atlantis/invariantgraph/fzn/int_times.hpp"
 #include "atlantis/invariantgraph/fzn/set_in.hpp"
-#include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intNeNode.hpp"
 #include "atlantis/utils/fznAst.hpp"
 
 namespace atlantis::invariantgraph {
@@ -305,9 +301,6 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
 
   std::vector<std::function<bool(const fznparser::Constraint&)>>
       invariantNodeCreators{
-          [&](const fznparser::Constraint& c) {
-            return makeImplicitConstraintNode(c);
-          },
           [&](const fznparser::Constraint& c) { return makeInvariantNode(c); },
           [&](const fznparser::Constraint& c) {
             return makeViolationInvariantNode(c);
@@ -412,20 +405,6 @@ bool FznInvariantGraph::makeInvariantNode(
 
   return false;
 #undef MAKE_INVARIANT
-}
-
-bool FznInvariantGraph::makeImplicitConstraintNode(
-    const fznparser::Constraint& constraint) {
-#define MAKE_IMPLICIT_CONSTRAINT(fznConstraintName) \
-  if (fznConstraintName(*this, constraint)) {       \
-    return true;                                    \
-  }
-
-  MAKE_IMPLICIT_CONSTRAINT(fzn::makeAllDifferentImplicitNode);
-  MAKE_IMPLICIT_CONSTRAINT(fzn::makeCircuitImplicitNode);
-
-  return false;
-#undef MAKE_IMPLICIT_CONSTRAINT
 }
 
 bool FznInvariantGraph::makeViolationInvariantNode(

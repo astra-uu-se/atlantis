@@ -6,39 +6,13 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-static void checkParams(const std::vector<Int>& cover,
-                        const std::vector<Int>& low,
-                        const std::vector<Int>& up) {
-  if (cover.size() != low.size() || cover.size() != up.size()) {
-    throw FznArgumentException(
-        "fzn_global_cardinality_low_up: cover, low and up must have the "
-        "same size");
-  }
-  for (size_t i = 0; i < cover.size(); ++i) {
-    if (low[i] > up[i]) {
-      throw FznArgumentException(
-          "fzn_global_cardinality_low_up: low[" + std::to_string(i) +
-          "] must be less than or equal to up[" + std::to_string(i) + "].");
-    }
-  }
-}
-
 bool fzn_global_cardinality_low_up(
     FznInvariantGraph& invariantGraph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up) {
-  checkParams(cover, low, up);
-  for (size_t i = 0; i < cover.size(); ++i) {
-    if (low[i] > up[i]) {
-      throw FznArgumentException(
-          "fzn_global_cardinality_low_up: low[" + std::to_string(i) +
-          "] must be less than or equal to up[" + std::to_string(i) + "].");
-    }
-  }
-
   invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
       invariantGraph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
-      std::move(up), true));
+      std::move(up)));
   return true;
 }
 
@@ -47,22 +21,9 @@ bool fzn_global_cardinality_low_up(
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
     const fznparser::BoolArg& reified) {
-  checkParams(cover, low, up);
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return fzn_global_cardinality_low_up(invariantGraph, inputs,
-                                           std::move(cover), std::move(low),
-                                           std::move(up));
-    }
-    invariantGraph.addInvariantNode(
-        std::make_unique<GlobalCardinalityLowUpNode>(
-            invariantGraph.retrieveVarNodes(inputs), std::move(cover),
-            std::move(low), std::move(up), reified.toParameter()));
-    return true;
-  }
   invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
       invariantGraph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
-      std::move(up), true));
+      std::move(up), invariantGraph.retrieveVarNode(reified)));
   return true;
 }
 

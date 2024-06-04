@@ -2,9 +2,9 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
-#include "atlantis/invariantgraph/fzn/bool_eq.hpp"
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -53,15 +53,18 @@ bool fzn_global_cardinality(
         SearchDomain(0, static_cast<Int>(inputs->size())),
         VarNode::DomainType::NONE));
     binaryOutputVarNodeIds.push_back(invariantGraph.retrieveBoolVarNode());
-    bool_eq(invariantGraph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
-            binaryOutputVarNodeIds.at(i));
+    invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
+        outputVarNodeIds.at(i), countVarNodeIds.at(i),
+        binaryOutputVarNodeIds.at(i)));
   }
 
   invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
       invariantGraph.retrieveVarNodes(inputs), std::move(cover),
       std::move(outputVarNodeIds)));
 
-  array_bool_and(invariantGraph, std::move(binaryOutputVarNodeIds), reified);
+  invariantGraph.addInvariantNode(std::make_unique<ArrayBoolAndNode>(
+      std::move(binaryOutputVarNodeIds),
+      invariantGraph.retrieveVarNode(reified)));
   return true;
 }
 

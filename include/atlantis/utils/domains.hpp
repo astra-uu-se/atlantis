@@ -53,7 +53,7 @@ class Domain {
    */
   [[nodiscard]] virtual bool isInterval() const noexcept = 0;
 
-  virtual size_t fix(Int) = 0;
+  virtual void fix(Int) = 0;
 
   /**
    * @return if the domain is not a superset of lb..ub,
@@ -87,16 +87,16 @@ class IntervalDomain : public Domain {
 
   void setUpperBound(Int ub);
 
-  size_t fix(Int value) override;
+  void fix(Int value) override;
 
-  size_t intersectWith(Int lb, Int ub);
+  void intersect(Int lb, Int ub);
 
-  [[nodiscard]] bool intersects(const SetDomain& other) const;
-  [[nodiscard]] bool intersects(const IntervalDomain& other) const;
+  [[nodiscard]] bool isDisjoint(const SetDomain&) const;
+  [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
 
-  bool operator==(const IntervalDomain& other) const;
+  bool operator==(const IntervalDomain&) const;
 
-  bool operator!=(const IntervalDomain& other) const;
+  bool operator!=(const IntervalDomain&) const;
 };
 
 class SetDomain : public Domain {
@@ -120,46 +120,40 @@ class SetDomain : public Domain {
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;
 
-  size_t remove(Int value);
-  size_t remove(const std::vector<Int>& values);
+  void remove(Int value);
+  void remove(const std::vector<Int>& values);
 
   /**
    * @brief removes all values that are strictly less than the given value.
    *
    * @param val the minimum value that is allowed in the domain.
-   *
-   * @return the number of values removed.
    */
 
-  size_t removeBelow(Int val);
+  void removeBelow(Int val);
 
   /**
    * @brief removes all values that are strictly greater than the given value.
    *
    * @param val the maximum value that is allowed in the domain.
-   *
-   * @return the number of values removed.
    */
-  size_t removeAbove(Int val);
+  void removeAbove(Int val);
 
   /**
    * @brief removes all values in the domain, except the values in the given
    * vector.
    *
    * @param values the values that are to be kept in the domain.
-   *
-   * @return the number of values removed.
    */
-  size_t intersectWith(const std::vector<Int>&);
+  void intersect(const std::vector<Int>&);
 
-  [[nodiscard]] bool intersects(const SetDomain& other) const;
-  [[nodiscard]] bool intersects(const IntervalDomain& other) const;
+  [[nodiscard]] bool isDisjoint(const SetDomain&) const;
+  [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
 
-  size_t fix(Int value) override;
+  void fix(Int value) override;
 
-  bool operator==(const SetDomain& other) const;
+  bool operator==(const SetDomain&) const;
 
-  bool operator!=(const SetDomain& other) const;
+  bool operator!=(const SetDomain&) const;
 };
 
 class SearchDomain : public Domain {
@@ -186,28 +180,28 @@ class SearchDomain : public Domain {
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;
 
-  size_t remove(Int value);
+  void remove(Int value);
 
   /**
    * @brief removes all values that are strictly less than the given value.
    *
    * @param val the minimum value that is allowed in the domain.
    */
-  size_t removeBelow(Int val);
+  void removeBelow(Int val);
 
   /**
    * @brief removes all values that are strictly greater than the given value.
    *
    * @param val the maximum value that is allowed in the domain.
    */
-  size_t removeAbove(Int newUpperBound);
+  void removeAbove(Int newUpperBound);
 
   /**
    * @brief removes all values in the given vector from the domain.
    *
    * @param values the values to remove from the domain.
    */
-  size_t remove(const std::vector<Int>& values);
+  void remove(const std::vector<Int>& values);
 
   /**
    * @brief removes all values in the domain, except the values in the given
@@ -215,17 +209,17 @@ class SearchDomain : public Domain {
    *
    * @param values the values that are to be kept in the domain.
    */
-  size_t intersectWith(const std::vector<Int>&);
+  void intersect(const std::vector<Int>&);
 
-  [[nodiscard]] bool intersects(const SetDomain& other) const;
-  [[nodiscard]] bool intersects(const IntervalDomain& other) const;
-  [[nodiscard]] bool intersects(const SearchDomain& other) const;
+  [[nodiscard]] bool isDisjoint(const SetDomain&) const;
+  [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
+  [[nodiscard]] bool isDisjoint(const SearchDomain&) const;
 
-  size_t fix(Int value) override;
+  void fix(Int value) override;
 
-  bool operator==(const SearchDomain& other) const;
+  bool operator==(const SearchDomain&) const;
 
-  bool operator!=(const SearchDomain& other) const;
+  bool operator!=(const SearchDomain&) const;
 };
 
 }  // namespace atlantis

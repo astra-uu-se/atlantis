@@ -17,52 +17,21 @@ void ArrayIntMaximumNode::registerOutputVars(InvariantGraph& invariantGraph,
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void ArrayIntMaximumNode::propagate(InvariantGraph& invariantGraph) {
-  Int lb = invariantGraph.lowerBound(outputVarNodeIds().front());
-  const Int ub = invariantGraph.upperBound(outputVarNodeIds().front());
-
-  for (const VarNodeId& nodeId : staticInputVarNodeIds()) {
-    if (invariantGraph.lowerBound(nodeId) > ub) {
-      setState(InvariantNodeState::INFEASIBLE);
-      return;
-    }
-    lb = std::max(lb, invariantGraph.lowerBound(nodeId));
-    invariantGraph.removeValuesAbove(nodeId, ub);
-  }
-
-  if (lb > ub) {
-    setState(InvariantNodeState::INFEASIBLE);
-    return;
-  }
-
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-
-  for (const VarNodeId& nodeId : staticInputVarNodeIds()) {
-    if (invariantGraph.varNode(nodeId).lowerBound() <= lb) {
-      varsToRemove.emplace_back(nodeId);
+bool ArrayIntMaximumNode::canBeReplaced(
+    const InvariantGraph& invariantGraph) const {
+  size_t numFixed = 0;
+  for (const auto& input : staticInputVarNodeIds()) {
+    numFixed +=
+        static_cast<size_t>(invariantGraph.varNodeConst(input).isFixed());
+    if (numFixed > 1) {
+      return false;
     }
   }
-
-  for (const VarNodeId& nodeId : varsToRemove) {
-    removeStaticInputVarNode(invariantGraph.varNode(nodeId));
-  }
-
-  if (staticInputVarNodeIds().empty()) {
-    invariantGraph.fixToValue(outputVarNodeIds().front(), lb);
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-
-  invariantGraph.removeValuesBelow(outputVarNodeIds().front(), lb);
-
-  if (staticInputVarNodeIds().size() == 1) {
-    setState(InvariantNodeState::REPLACABLE);
-  }
+  return true;
 }
 
 bool ArrayIntMaximumNode::replace(InvariantGraph& invariantGraph) {
-  if (state() != InvariantNodeState::REPLACABLE) {
+  if (!canBeReplaced(invariantGraph)) {
     return false;
   }
   assert(staticInputVarNodeIds().size() == 1);

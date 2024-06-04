@@ -27,8 +27,6 @@ class ArrayElementNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
-  void propagate(InvariantGraph& graph) override;
-
   [[nodiscard]] const std::vector<Int>& as() const noexcept {
     return _parVector;
   }

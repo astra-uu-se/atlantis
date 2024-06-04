@@ -17,14 +17,10 @@ class BoolLinearNode : public InvariantNode {
   BoolLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                  VarNodeId output);
 
-  ~BoolLinearNode() override = default;
-
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
-
-  void propagate(InvariantGraph& graph) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 };

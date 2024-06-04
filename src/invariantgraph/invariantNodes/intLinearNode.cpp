@@ -19,57 +19,30 @@ void IntLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void IntLinearNode::propagate(InvariantGraph& graph) {
-  std::vector<bool> removedVars(staticInputVarNodeIds().size(), false);
-  Int newOffset = _offset;
-
-  Int minSum = _offset;
-  Int maxSum = _offset;
-
-  for (size_t i = 0; i < _coeffs.size(); ++i) {
-    assert(_coeffs[i] != 0);
-    Int v1 = graph.lowerBound(staticInputVarNodeIds().at(i)) * _coeffs[i];
-    Int v2 = graph.upperBound(staticInputVarNodeIds().at(i)) * _coeffs[i];
-    minSum += std::min(v1, v2);
-    maxSum += std::max(v1, v2);
-    if (graph.isFixed(staticInputVarNodeIds().at(i))) {
-      removedVars[i] = true;
-      newOffset += graph.lowerBound(staticInputVarNodeIds().at(i)) * _coeffs[i];
+bool IntLinearNode::canBeReplaced(const InvariantGraph& invariantGraph) const {
+  size_t numFixed = 0;
+  for (const auto& input : staticInputVarNodeIds()) {
+    numFixed +=
+        static_cast<size_t>(invariantGraph.varNodeConst(input).isFixed());
+    if (numFixed > 1) {
+      return false;
     }
   }
-  _offset = newOffset;
-
-  for (Int i = static_cast<Int>(_coeffs.size()) - 1; i >= 0; --i) {
-    if (removedVars[i]) {
-      removeStaticInputVarNode(graph.varNode(staticInputVarNodeIds().at(i)));
-      _coeffs.erase(_coeffs.begin() + i);
-    }
-  }
-
-  graph.removeValuesBelow(outputVarNodeIds().front(), minSum);
-  graph.removeValuesAbove(outputVarNodeIds().front(), maxSum);
-  if (minSum == maxSum) {
-    assert(staticInputVarNodeIds().empty());
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (staticInputVarNodeIds().size() == 1) {
-    setState(InvariantNodeState::REPLACABLE);
-  }
+  return true;
 }
 
 bool IntLinearNode::replace(InvariantGraph& invariantGraph) {
-  if (state() != InvariantNodeState::REPLACABLE) {
+  if (!canBeReplaced(invariantGraph)) {
     return false;
   }
-  assert(staticInputVarNodeIds().size() == 1);
   if (_coeffs.front() == 1 && _offset == 0) {
     invariantGraph.replaceVarNode(outputVarNodeIds().front(),
                                   staticInputVarNodeIds().front());
     deactivate(invariantGraph);
   } else {
-    invariantGraph.replaceInvariantNode(
-        id(), std::make_unique<IntScalarNode>(staticInputVarNodeIds().front(),
-                                              outputVarNodeIds().front(),
-                                              _coeffs.front(), _offset));
+    invariantGraph.addInvariantNode(std::make_unique<IntScalarNode>(
+        staticInputVarNodeIds().front(), outputVarNodeIds().front(),
+        _coeffs.front(), _offset));
   }
   return true;
 }

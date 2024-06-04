@@ -233,89 +233,29 @@ void InvariantGraph::pushInvariantsToPropStack(VarNodeId id) {
 }
 
 void InvariantGraph::fixpoint() {
-  for (auto& invNode : _invariantNodes) {
-    if (invNode->state() == InvariantNodeState::ACTIVE) {
-      _propagationStack.emplace(invNode->id());
-      _invIsOnPropStack.at(invNode->id().id - 1) = true;
-    }
-  }
-  for (auto& invNode : _implicitConstraintNodes) {
-    if (invNode->state() == InvariantNodeState::ACTIVE) {
-      _propagationStack.emplace(invNode->id());
-      _impIsOnPropStack.at(invNode->id().id - 1) = true;
-    }
-  }
-  while (!_propagationStack.empty()) {
-    const InvariantNodeId invNodeId = _propagationStack.top();
-    _propagationStack.pop();
-    if (invNodeId == NULL_NODE_ID) {
-      continue;
-    }
-    InvariantNode& invNode = invNodeId.type == InvariantNodeId::Type::INVARIANT
-                                 ? invariantNode(invNodeId)
-                                 : implicitConstraintNode(invNodeId);
-    try {
-      if (invNode.state() == InvariantNodeState::ACTIVE) {
-        invNode.propagate(*this);
-      }
-      if (invNode.state() == InvariantNodeState::INFEASIBLE) {
-        throw InfeasibleException("Infeasible constraint");
-      } else if (invNode.state() == InvariantNodeState::REPLACABLE) {
+  // TODO: 1. Use gecode to compute fixpoint
+  // TODO: 2. Update domains of all variables
+}
+
+void InvariantGraph::replaceInvariantNodes() {
+  size_t invIndex = 0;
+  size_t implIndex = 0;
+  while (invIndex < _invariantNodes.size() &&
+         implIndex < _implicitConstraintNodes.size()) {
+    while (invIndex < _invariantNodes.size()) {
+      auto& invNode = *_invariantNodes.at(invIndex);
+      if (invNode.canBeReplaced(*this)) {
         invNode.replace(*this);
-        pushToPropStack(invNodeId);
       }
-    } catch (InfeasibleException& e) {
-      throw e;
+      ++invIndex;
     }
-  }
-}
-
-bool InvariantGraph::inDomain(VarNodeId id, Int val) {
-  return varNode(id).inDomain(val);
-}
-bool InvariantGraph::inDomain(VarNodeId id, bool val) {
-  return varNode(id).inDomain(val);
-}
-bool InvariantGraph::isFixed(VarNodeId id) { return varNode(id).isFixed(); }
-Int InvariantGraph::lowerBound(VarNodeId id) {
-  return varNode(id).lowerBound();
-}
-Int InvariantGraph::upperBound(VarNodeId id) {
-  return varNode(id).lowerBound();
-}
-
-void InvariantGraph::removeValue(VarNodeId id, Int value) {
-  VarNode& var = varNode(id);
-  if (var.removeValue(value) > 0) {
-    pushInvariantsToPropStack(id);
-  }
-}
-
-void InvariantGraph::removeValuesBelow(VarNodeId id, Int value) {
-  VarNode& var = varNode(id);
-  if (var.removeValuesBelow(value) > 0) {
-    pushInvariantsToPropStack(id);
-  }
-}
-
-void InvariantGraph::removeValuesAbove(VarNodeId id, Int value) {
-  VarNode& var = varNode(id);
-  if (var.removeValuesAbove(value) > 0) {
-    pushInvariantsToPropStack(id);
-  }
-}
-
-void InvariantGraph::fixToValue(VarNodeId id, Int value) {
-  VarNode& var = varNode(id);
-  if (var.fixToValue(value) > 0) {
-    pushInvariantsToPropStack(id);
-  }
-}
-
-void InvariantGraph::fixToValue(VarNodeId id, bool value) {
-  VarNode& var = varNode(id);
-  if (var.fixToValue(value) > 0) {
-    pushInvariantsToPropStack(id);
+    while (implIndex < _implicitConstraintNodes.size()) {
+      auto& implNode = *_implicitConstraintNodes.at(implIndex);
+      if (implNode.canBeReplaced(*this)) {
+        implNode.replace(*this);
+      }
+      ++implIndex;
+    }
   }
 }
 
@@ -423,16 +363,6 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
   }
 }
 
-InvariantNodeId InvariantGraph::replaceInvariantNode(
-    InvariantNodeId id, std::unique_ptr<InvariantNode>&& node) {
-  assert(containsInvariantNode(id));
-  auto& invNode = _invariantNodes.at(id.id - 1);
-  invNode->deactivate(*this);
-  _invariantNodes.at(id.id - 1) = std::move(node);
-  _invariantNodes.at(id.id - 1)->init(*this, id);
-  return id;
-}
-
 InvariantNodeId InvariantGraph::addImplicitConstraintNode(
     std::unique_ptr<ImplicitConstraintNode>&& node) {
   const InvariantNodeId id = nextImplicitNodeId();
@@ -526,18 +456,18 @@ void InvariantGraph::splitMultiDefinedVars() {
 
     if (_varNodes[i].isIntVar()) {
       if (splitNodes.size() == 2) {
-        addInvariantNode(
-            std::make_unique<IntEqNode>(splitNodes.front(), splitNodes.back()));
+        addInvariantNode(std::make_unique<IntEqNode>(
+            splitNodes.front(), splitNodes.back(), true, true));
       } else {
-        addInvariantNode(
-            std::make_unique<IntAllEqualNode>(std::move(splitNodes)));
+        addInvariantNode(std::make_unique<IntAllEqualNode>(
+            std::move(splitNodes), true, true));
       }
     } else if (splitNodes.size() == 2) {
-      addInvariantNode(
-          std::make_unique<BoolEqNode>(splitNodes.front(), splitNodes.back()));
+      addInvariantNode(std::make_unique<BoolEqNode>(
+          splitNodes.front(), splitNodes.back(), true, true));
     } else {
-      addInvariantNode(
-          std::make_unique<BoolAllEqualNode>(std::move(splitNodes)));
+      addInvariantNode(std::make_unique<BoolAllEqualNode>(std::move(splitNodes),
+                                                          true, true));
     }
   }
   assert(_varNodes.size() == newSize);
@@ -860,6 +790,7 @@ propagation::VarId InvariantGraph::createViolations(
 }
 
 void InvariantGraph::apply(propagation::SolverBase& solver) {
+  replaceInvariantNodes();
   populateRootNode();
   splitMultiDefinedVars();
   breakCycles();

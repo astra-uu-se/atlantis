@@ -17,51 +17,21 @@ void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& invariantGraph,
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-void ArrayIntMinimumNode::propagate(InvariantGraph& invariantGraph) {
-  const Int lb = invariantGraph.lowerBound(outputVarNodeIds().front());
-  Int ub = invariantGraph.upperBound(outputVarNodeIds().front());
-
-  for (const VarNodeId& nodeId : staticInputVarNodeIds()) {
-    if (invariantGraph.upperBound(nodeId) < lb) {
-      setState(InvariantNodeState::INFEASIBLE);
-      return;
-    }
-    ub = std::min(ub, invariantGraph.upperBound(nodeId));
-    invariantGraph.removeValuesBelow(nodeId, lb);
-  }
-
-  if (lb > ub) {
-    setState(InvariantNodeState::INFEASIBLE);
-    return;
-  }
-
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-
-  for (const VarNodeId& nodeId : staticInputVarNodeIds()) {
-    if (invariantGraph.upperBound(nodeId) >= ub) {
-      varsToRemove.emplace_back(nodeId);
+bool ArrayIntMinimumNode::canBeReplaced(
+    const InvariantGraph& invariantGraph) const {
+  size_t numFixed = 0;
+  for (const auto& input : staticInputVarNodeIds()) {
+    numFixed +=
+        static_cast<size_t>(invariantGraph.varNodeConst(input).isFixed());
+    if (numFixed > 1) {
+      return false;
     }
   }
-
-  for (const VarNodeId& nodeId : varsToRemove) {
-    removeStaticInputVarNode(invariantGraph.varNode(nodeId));
-  }
-
-  if (staticInputVarNodeIds().empty()) {
-    invariantGraph.fixToValue(outputVarNodeIds().front(), ub);
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-
-  invariantGraph.removeValuesAbove(outputVarNodeIds().front(), ub);
-  if (staticInputVarNodeIds().size() == 1) {
-    setState(InvariantNodeState::REPLACABLE);
-  }
+  return numFixed == 1;
 }
 
 bool ArrayIntMinimumNode::replace(InvariantGraph& invariantGraph) {
-  if (state() != InvariantNodeState::REPLACABLE) {
+  if (!canBeReplaced(invariantGraph)) {
     return false;
   }
   assert(staticInputVarNodeIds().size() == 1);
