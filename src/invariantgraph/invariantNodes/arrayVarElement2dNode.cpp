@@ -63,7 +63,6 @@ bool ArrayVarElement2dNode::replace(InvariantGraph& invariantGraph) {
   if (idx1Node.isFixed() && idx2Node.isFixed()) {
     const VarNodeId input = at(idx1Node.lowerBound(), idx2Node.lowerBound());
     invariantGraph.replaceVarNode(outputVarNodeIds().front(), input);
-    deactivate(invariantGraph);
     return true;
   } else if (idx1Node.isFixed()) {
     std::vector<VarNodeId> column;

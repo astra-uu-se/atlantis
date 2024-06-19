@@ -10,21 +10,65 @@
 
 namespace atlantis::invariantgraph {
 
+static std::pair<std::vector<Int>, std::vector<VarNodeId>> fixInputs(
+    std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars) {
+  for (size_t i = 0; i < coeffs.size() - 1; ++i) {
+    if (coeffs.at(i) == 0) {
+      continue;
+    }
+    for (size_t j = i + 1; j < coeffs.size(); ++j) {
+      if (vars.at(i) == vars.at(j)) {
+        coeffs.at(i) += coeffs.at(j);
+        coeffs.at(j) = 0;
+      }
+    }
+  }
+  for (Int i = 0; i >= 0; --i) {
+    if (coeffs.at(i) == 0) {
+      coeffs.erase(coeffs.begin() + i);
+      vars.erase(vars.begin() + i);
+    }
+  }
+  return {std::move(coeffs), std::move(vars)};
+}
+
+IntLinearNode::IntLinearNode(
+    std::pair<std::vector<Int>, std::vector<VarNodeId>>&& coeffsAndVars,
+    VarNodeId output)
+    : InvariantNode({output}, std::move(coeffsAndVars.second)),
+      _coeffs(std::move(coeffsAndVars.first)) {}
+
 IntLinearNode::IntLinearNode(std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars, VarNodeId output)
-    : InvariantNode({output}, std::move(vars)), _coeffs(std::move(coeffs)) {}
+    : IntLinearNode(fixInputs(std::move(coeffs), std::move(vars)), output) {}
 
-void IntLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
-                                       propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+void IntLinearNode::updateState(InvariantGraph& graph) {
+  std::vector<Int> indicesToRemove;
+  indicesToRemove.reserve(staticInputVarNodeIds().size());
+
+  for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
+    const auto& inputNode = graph.varNodeConst(staticInputVarNodeIds().at(i));
+    if (inputNode.isFixed()) {
+      _offset += _coeffs.at(i) * inputNode.lowerBound();
+      indicesToRemove.emplace_back(i);
+    }
+  }
+  for (Int i = indicesToRemove.size() - 1; i >= 0; --i) {
+    removeStaticInputVarNode(
+        graph.varNode(staticInputVarNodeIds().at(indicesToRemove.at(i))));
+    _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
+  }
+  if (staticInputVarNodeIds().size() == 0) {
+    graph.varNode(outputVarNodeIds().front()).fixToValue(_offset);
+    setState(InvariantNodeState::SUBSUMED);
+  }
 }
 
 bool IntLinearNode::canBeReplaced(const InvariantGraph& invariantGraph) const {
-  size_t numFixed = 0;
+  size_t numFree = 0;
   for (const auto& input : staticInputVarNodeIds()) {
-    numFixed +=
-        static_cast<size_t>(invariantGraph.varNodeConst(input).isFixed());
-    if (numFixed > 1) {
+    numFree += invariantGraph.varNodeConst(input).isFixed() ? 0 : 1;
+    if (numFree > 1) {
       return false;
     }
   }
@@ -38,13 +82,26 @@ bool IntLinearNode::replace(InvariantGraph& invariantGraph) {
   if (_coeffs.front() == 1 && _offset == 0) {
     invariantGraph.replaceVarNode(outputVarNodeIds().front(),
                                   staticInputVarNodeIds().front());
-    deactivate(invariantGraph);
   } else {
     invariantGraph.addInvariantNode(std::make_unique<IntScalarNode>(
         staticInputVarNodeIds().front(), outputVarNodeIds().front(),
         _coeffs.front(), _offset));
   }
   return true;
+}
+
+void IntLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                       propagation::SolverBase& solver) {
+  if (_offset != 0) {
+    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+    assert(invariantGraph.varId(outputVarNodeIds().front()).idType ==
+           propagation::VarIdType::var);
+  } else if (_intermediate == propagation::NULL_ID) {
+    _intermediate = solver.makeIntVar(0, 0, 0);
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+            solver, _intermediate, _offset));
+  }
 }
 
 void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
@@ -59,7 +116,10 @@ void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
                    return invariantGraph.varId(varNodeId);
                  });
   solver.makeInvariant<propagation::Linear>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()),
+      solver,
+      _intermediate == propagation::NULL_ID
+          ? invariantGraph.varId(outputVarNodeIds().front())
+          : _intermediate,
       std::vector<Int>(_coeffs), std::move(solverVars));
 }
 

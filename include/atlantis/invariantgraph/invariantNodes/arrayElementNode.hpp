@@ -22,6 +22,8 @@ class ArrayElementNode : public InvariantNode {
   ArrayElementNode(std::vector<bool>&& parVector, VarNodeId idx,
                    VarNodeId output, Int offset);
 
+  void updateState(InvariantGraph& graph) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

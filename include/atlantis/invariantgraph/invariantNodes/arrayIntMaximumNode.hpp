@@ -10,10 +10,14 @@
 namespace atlantis::invariantgraph {
 class ArrayIntMaximumNode : public InvariantNode {
  public:
-  ArrayIntMaximumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
+  explicit ArrayIntMaximumNode(VarNodeId a, VarNodeId b, VarNodeId output);
+
+  explicit ArrayIntMaximumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
+
+  void updateState(InvariantGraph&) override;
 
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 

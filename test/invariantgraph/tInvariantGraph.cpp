@@ -157,7 +157,7 @@ TEST(InvariantGraphTest, SplitGraph) {
   for (const auto& identifierArray : varNodeIdMatrix) {
     std::vector<VarNodeId> inputs(identifierArray);
     invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-        std::vector<Int>(coeffs), std::move(inputs), output));
+        std::vector<Int>{coeffs}, std::move(inputs), output));
   }
 
   propagation::Solver solver;

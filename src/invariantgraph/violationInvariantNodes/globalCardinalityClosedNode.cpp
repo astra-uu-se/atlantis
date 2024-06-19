@@ -6,7 +6,7 @@
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intEqNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/setInNode.hpp"
 
 namespace atlantis::invariantgraph {
@@ -54,7 +54,7 @@ bool GlobalCardinalityClosedNode::replace(InvariantGraph& invariantGraph) {
 
     violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
 
-    invariantGraph.addInvariantNode(std::make_unique<IntEqNode>(
+    invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
         countId, intermediateOutputNodeIds.back(), violationVarNodeIds.back()));
   }
 

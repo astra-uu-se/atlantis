@@ -1,11 +1,8 @@
-
-
 #include "atlantis/invariantgraph/fzn/fzn_count_geq.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/fzn_count_lt.hpp"
-#include "atlantis/invariantgraph/fzn/int_le.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLeNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -14,7 +11,9 @@ bool fzn_count_geq(FznInvariantGraph& invariantGraph,
                    const fznparser::IntArg& needle,
                    const fznparser::IntArg& count) {
   VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  return int_le(invariantGraph, invariantGraph.retrieveVarNode(count), output);
+  invariantGraph.addInvariantNode(std::make_unique<IntLeNode>(
+      invariantGraph.retrieveVarNode(count), output));
+  return true;
 }
 
 bool fzn_count_geq(FznInvariantGraph& invariantGraph,
@@ -23,8 +22,10 @@ bool fzn_count_geq(FznInvariantGraph& invariantGraph,
                    const fznparser::IntArg& count,
                    const fznparser::BoolArg& reified) {
   VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  return int_le(invariantGraph, invariantGraph.retrieveVarNode(count), output,
-                reified);
+  invariantGraph.addInvariantNode(
+      std::make_unique<IntLeNode>(invariantGraph.retrieveVarNode(count), output,
+                                  invariantGraph.retrieveVarNode(reified)));
+  return true;
 }
 
 bool fzn_count_geq(FznInvariantGraph& invariantGraph,

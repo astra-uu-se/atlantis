@@ -116,7 +116,10 @@ void Solver::registerInvariantInput(InvariantId invariantId, VarId inputId,
 }
 
 void Solver::registerDefinedVar(VarId varId, InvariantId invariantId) {
-  _propGraph.registerDefinedVar(sourceId(varId).id, invariantId);
+  if (varId.idType != VarIdType::var) {
+    throw VarException("Cannot register a view as a defined variable.");
+  }
+  _propGraph.registerDefinedVar(varId.id, invariantId);
 }
 
 void Solver::registerVar(VarId id) {

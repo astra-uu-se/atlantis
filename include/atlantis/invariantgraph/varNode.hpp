@@ -36,6 +36,7 @@ class VarNode {
   std::vector<InvariantNodeId> _staticInputTo;
   std::vector<InvariantNodeId> _dynamicInputTo;
   std::unordered_set<InvariantNodeId, InvariantNodeIdHash> _outputOf;
+  bool _isViolationVar{false};
 
  public:
   /**
@@ -77,6 +78,7 @@ class VarNode {
   [[nodiscard]] bool isFixed() const noexcept;
 
   [[nodiscard]] bool isIntVar() const noexcept;
+  [[nodiscard]] bool isViolationVar() const noexcept;
 
   [[nodiscard]] Int lowerBound() const;
   [[nodiscard]] Int upperBound() const;
@@ -84,6 +86,8 @@ class VarNode {
 
   [[nodiscard]] bool inDomain(Int) const;
   [[nodiscard]] bool inDomain(bool) const;
+
+  void setIsViolationVar(bool isViolVar);
 
   /**
    * @brief removes the given value from the domain of the variable.

@@ -86,7 +86,7 @@ class InvariantNode {
   [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
       const noexcept;
 
-  virtual void updateVariableNodes(InvariantGraph&){};
+  virtual void updateState(InvariantGraph&){};
 
   void replaceDefinedVar(VarNode& oldOutputVarNode, VarNode& newOutputVarNode);
 

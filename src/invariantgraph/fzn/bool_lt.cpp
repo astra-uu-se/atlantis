@@ -4,7 +4,6 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/bool_le.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolLtNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {

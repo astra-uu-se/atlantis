@@ -11,6 +11,12 @@ class IntTimesNode : public InvariantNode {
  public:
   IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
+  void updateState(InvariantGraph&) override;
+
+  bool canBeReplaced(const InvariantGraph&) const override;
+
+  bool replace(InvariantGraph&) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

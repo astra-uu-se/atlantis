@@ -5,6 +5,12 @@
 
 namespace atlantis::invariantgraph {
 
+static Int getVal(const std::vector<Int>& parVector, Int idx, Int offset) {
+  assert(0 <= idx + offset &&
+         idx + offset < static_cast<Int>(parVector.size()));
+  return parVector.at(idx + offset);
+}
+
 static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
   std::vector<Int> intVec;
   intVec.reserve(boolVec.size());
@@ -25,6 +31,15 @@ ArrayElementNode::ArrayElementNode(std::vector<bool>&& parVector, VarNodeId idx,
     : InvariantNode({output}, {idx}),
       _parVector(toIntVec(std::move(parVector))),
       _offset(offset) {}
+
+void ArrayElementNode::updateState(InvariantGraph& graph) {
+  const auto& idxNode = graph.varNodeConst(idx());
+  if (idxNode.isFixed()) {
+    graph.varNode(outputVarNodeIds().front())
+        .fixToValue(getVal(_parVector, idxNode.lowerBound(), _offset));
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
 
 void ArrayElementNode::registerOutputVars(InvariantGraph& invariantGraph,
                                           propagation::SolverBase& solver) {

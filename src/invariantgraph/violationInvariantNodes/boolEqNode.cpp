@@ -48,12 +48,10 @@ bool BoolEqNode::replace(InvariantGraph& invariantGraph) {
   }
   if (invariantGraph.varNodeConst(a()).definingNodes().empty()) {
     invariantGraph.replaceVarNode(a(), b());
-    deactivate(invariantGraph);
     return true;
   }
   if (invariantGraph.varNodeConst(b()).definingNodes().empty()) {
     invariantGraph.replaceVarNode(b(), a());
-    deactivate(invariantGraph);
     return true;
   }
   return false;

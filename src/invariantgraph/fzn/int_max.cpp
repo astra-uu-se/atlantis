@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intMaxNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -17,7 +17,7 @@ bool int_max(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
         .fixToValue(std::max(a.toParameter(), b.toParameter()));
     return true;
   }
-  invariantGraph.addInvariantNode(std::make_unique<IntMaxNode>(
+  invariantGraph.addInvariantNode(std::make_unique<ArrayIntMaximumNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
       outputVarNodeId));
   return true;

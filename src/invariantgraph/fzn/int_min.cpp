@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intMinNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -17,7 +17,7 @@ bool int_min(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
         .fixToValue(std::min(a.toParameter(), b.toParameter()));
     return true;
   }
-  invariantGraph.addInvariantNode(std::make_unique<IntMinNode>(
+  invariantGraph.addInvariantNode(std::make_unique<ArrayIntMinimumNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
       outputVarNodeId));
   return true;

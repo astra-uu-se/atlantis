@@ -2,8 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/int_ne.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intNeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -12,7 +11,7 @@ bool fzn_count_neq(FznInvariantGraph& invariantGraph,
                    const fznparser::IntArg& needle,
                    const fznparser::IntArg& count) {
   const VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  invariantGraph.addInvariantNode(std::make_unique<IntNeNode>(
+  invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
       output, invariantGraph.retrieveVarNode(count)));
   return true;
 }
@@ -23,8 +22,9 @@ bool fzn_count_neq(FznInvariantGraph& invariantGraph,
                    const fznparser::IntArg& count,
                    const fznparser::BoolArg& reified) {
   const VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  invariantGraph.addInvariantNode(std::make_unique<IntNeNode>(
-      output, invariantGraph.retrieveVarNode(count)));
+  invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
+      output, invariantGraph.retrieveVarNode(count),
+      invariantGraph.retrieveVarNode(reified)));
   return true;
 }
 

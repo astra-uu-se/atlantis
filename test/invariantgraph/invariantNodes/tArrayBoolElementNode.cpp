@@ -70,6 +70,15 @@ TEST_F(ArrayBoolElementNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 0);
 }
 
+TEST_F(ArrayBoolElementNodeTest, updateState) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->varNode(idx).fixToValue(Int{1});
+  invNode().updateState(*_invariantGraph);
+  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
+  EXPECT_TRUE(_invariantGraph->varNode(output).inDomain(elementValues.front()));
+}
+
 TEST_F(ArrayBoolElementNodeTest, propagation) {
   propagation::Solver solver;
   solver.open();

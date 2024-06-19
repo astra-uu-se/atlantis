@@ -10,6 +10,26 @@ namespace atlantis::invariantgraph {
 IntMaxNode::IntMaxNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
 
+void IntMaxNode::updateState(InvariantGraph& graph) {
+  const Int min = graph.varNodeConst(outputVarNodeIds().front()).lowerBound();
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+
+  for (const auto& input : staticInputVarNodeIds()) {
+    if (graph.varNodeConst(input).upperBound() < min) {
+      varsToRemove.emplace_back(input);
+    }
+  }
+  for (const auto& input : varsToRemove) {
+    removeStaticInputVarNode(graph.varNode(input));
+  }
+  if (staticInputVarNodeIds().size() == 1) {
+    graph.replaceVarNode(outputVarNodeIds().front(),
+                         staticInputVarNodeIds().front());
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
 void IntMaxNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));

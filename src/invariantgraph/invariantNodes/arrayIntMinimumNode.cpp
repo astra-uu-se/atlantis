@@ -8,6 +8,10 @@
 
 namespace atlantis::invariantgraph {
 
+ArrayIntMinimumNode::ArrayIntMinimumNode(VarNodeId a, VarNodeId b,
+                                         VarNodeId output)
+    : ArrayIntMinimumNode(std::vector<VarNodeId>{a, b}, output) {}
+
 ArrayIntMinimumNode::ArrayIntMinimumNode(std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
     : InvariantNode({output}, std::move(vars)) {}
@@ -17,27 +21,40 @@ void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& invariantGraph,
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
-bool ArrayIntMinimumNode::canBeReplaced(
-    const InvariantGraph& invariantGraph) const {
-  size_t numFixed = 0;
+void ArrayIntMinimumNode::updateState(InvariantGraph& graph) {
+  Int max = graph.varNodeConst(outputVarNodeIds().front()).upperBound();
   for (const auto& input : staticInputVarNodeIds()) {
-    numFixed +=
-        static_cast<size_t>(invariantGraph.varNodeConst(input).isFixed());
-    if (numFixed > 1) {
-      return false;
+    max = std::max(max, graph.varNodeConst(input).lowerBound());
+  }
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+
+  for (const auto& input : staticInputVarNodeIds()) {
+    if (graph.varNodeConst(input).lowerBound() > max) {
+      varsToRemove.emplace_back(input);
     }
   }
-  return numFixed == 1;
+  for (const auto& input : varsToRemove) {
+    removeStaticInputVarNode(graph.varNode(input));
+  }
+  if (staticInputVarNodeIds().size() == 0) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
+  graph.varNode(outputVarNodeIds().front()).removeValuesAbove(max);
+}
+
+bool ArrayIntMinimumNode::canBeReplaced(const InvariantGraph&) const {
+  return staticInputVarNodeIds().size() <= 1;
 }
 
 bool ArrayIntMinimumNode::replace(InvariantGraph& invariantGraph) {
   if (!canBeReplaced(invariantGraph)) {
     return false;
   }
-  assert(staticInputVarNodeIds().size() == 1);
-  invariantGraph.replaceVarNode(outputVarNodeIds().front(),
-                                staticInputVarNodeIds().front());
-  deactivate(invariantGraph);
+  if (staticInputVarNodeIds().size() == 1) {
+    invariantGraph.replaceVarNode(outputVarNodeIds().front(),
+                                  staticInputVarNodeIds().front());
+  }
   return true;
 }
 

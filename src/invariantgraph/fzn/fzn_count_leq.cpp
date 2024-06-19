@@ -1,5 +1,3 @@
-
-
 #include "atlantis/invariantgraph/fzn/fzn_count_leq.hpp"
 
 #include "../parseHelper.hpp"

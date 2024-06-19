@@ -55,6 +55,15 @@ bool VarNode::isFixed() const noexcept {
 
 bool VarNode::isIntVar() const noexcept { return _isIntVar; }
 
+bool VarNode::isViolationVar() const noexcept { return _isViolationVar; }
+
+void VarNode::setIsViolationVar(bool isViolVar) {
+  if (_isIntVar && isViolVar) {
+    throw std::runtime_error("Cannot set violation var on IntVar");
+  }
+  _isViolationVar = isViolVar;
+}
+
 propagation::VarId VarNode::postDomainConstraint(
     propagation::SolverBase& solver) {
   if (_domainViolationId != propagation::NULL_ID) {

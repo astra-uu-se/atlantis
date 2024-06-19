@@ -4,13 +4,13 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolOrNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolOrNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_or(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolOrNode>(
+  invariantGraph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
       invariantGraph.retrieveVarNode(reified)));
   return true;

@@ -58,7 +58,7 @@ class ViolationInvariantNode : public InvariantNode {
 
   VarNodeId reifiedViolationNodeId();
 
-  virtual void updateVariableNodes(InvariantGraph&) override;
+  virtual void updateState(InvariantGraph&) override;
 
  protected:
   propagation::VarId setViolationVarId(InvariantGraph&, propagation::VarId);
