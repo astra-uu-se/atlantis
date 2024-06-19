@@ -2,8 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/fzn_count_neq.hpp"
-#include "atlantis/invariantgraph/fzn/int_eq.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -21,8 +20,10 @@ bool fzn_count_eq(FznInvariantGraph& invariantGraph,
                   const fznparser::IntArg& count,
                   const fznparser::BoolArg& reified) {
   const VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  return int_eq(invariantGraph, output, invariantGraph.retrieveVarNode(count),
-                reified);
+  invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
+      output, invariantGraph.retrieveVarNode(count),
+      invariantGraph.retrieveVarNode(reified)));
+  return true;
 }
 
 bool fzn_count_eq(FznInvariantGraph& invariantGraph,

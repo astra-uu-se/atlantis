@@ -56,6 +56,29 @@ TEST_F(IntPowNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
+TEST_F(IntPowNodeTest, updateState) {
+  for (const auto& input : inputs) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    _invariantGraph->varNode(input).fixToValue(Int{0});
+    invNode().updateState(*_invariantGraph);
+  }
+  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
+}
+
+TEST_F(IntPowNodeTest, replace) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  for (Int i = 0; i < numInputs - 1; ++i) {
+    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+    _invariantGraph->varNode(inputs.at(i)).fixToValue(Int{0});
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  }
+  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
+  EXPECT_TRUE(invNode().replace(*_invariantGraph));
+  invNode().deactivate(*_invariantGraph);
+  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+}
+
 TEST_F(IntPowNodeTest, propagation) {
   propagation::Solver solver;
   solver.open();

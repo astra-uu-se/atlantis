@@ -13,6 +13,8 @@ class IntMinNode : public InvariantNode {
  public:
   IntMinNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
+  void updateState(InvariantGraph& graph) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

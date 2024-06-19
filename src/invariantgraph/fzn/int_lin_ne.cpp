@@ -2,9 +2,8 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/int_lin_eq.hpp"
-#include "atlantis/invariantgraph/fzn/int_ne.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -40,7 +39,8 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
       std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
 
-  int_ne(invariantGraph, outputVarNodeId, bound);
+  invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
+      outputVarNodeId, invariantGraph.retrieveIntVarNode(bound)));
 
   return true;
 }
@@ -49,32 +49,8 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return int_lin_ne(invariantGraph, std::move(coeffs), inputs, bound);
-    }
-    return int_lin_eq(invariantGraph, std::move(coeffs), inputs, bound);
-  }
-
-  if (coeffs.empty()) {
-    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixToValue(bound >= 0);
-    return true;
-  }
 
   const auto& [lb, ub] = linBounds(coeffs, inputs);
-
-  if (bound < lb || ub < bound) {
-    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixToValue(true);
-    return true;
-  }
-
-  if (lb == ub && lb == bound) {
-    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixToValue(false);
-    return true;
-  }
 
   const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
       SearchDomain(lb, ub), VarNode::DomainType::NONE);
@@ -83,7 +59,9 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
       std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
 
-  int_ne(invariantGraph, outputVarNodeId, bound, reified);
+  invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
+      outputVarNodeId, invariantGraph.retrieveIntVarNode(bound),
+      invariantGraph.retrieveVarNode(reified)));
 
   return true;
 }

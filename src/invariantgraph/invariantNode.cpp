@@ -55,8 +55,7 @@ void InvariantNode::deactivate(InvariantGraph& invariantGraph) {
   while (!outputVarNodeIds().empty()) {
     removeOutputVarNode(invariantGraph.varNode(outputVarNodeIds().front()));
   }
-
-  _state = InvariantNodeState::INACTIVE;
+  _state = InvariantNodeState::SUBSUMED;
 }
 
 /**

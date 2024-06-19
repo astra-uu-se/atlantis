@@ -29,7 +29,6 @@ bool ArrayVarElementNode::replace(InvariantGraph& invariantGraph) {
       staticInputVarNodeIds().at(idxNode.lowerBound() + _offset);
 
   invariantGraph.replaceVarNode(outputVarNodeIds().front(), input);
-  deactivate(invariantGraph);
   return true;
 }
 

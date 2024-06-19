@@ -72,6 +72,17 @@ TEST_F(ArrayVarBoolElementNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
+TEST_F(ArrayVarBoolElementNodeTest, replace) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+  _invariantGraph->varNode(idx).fixToValue(Int{1});
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
+  EXPECT_TRUE(invNode().replace(*_invariantGraph));
+  invNode().deactivate(*_invariantGraph);
+  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+}
+
 TEST_F(ArrayVarBoolElementNodeTest, propagation) {
   propagation::Solver solver;
   solver.open();

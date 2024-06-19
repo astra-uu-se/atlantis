@@ -69,12 +69,12 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
   return _reifiedViolationNodeId;
 }
 
-void ViolationInvariantNode::updateVariableNodes(InvariantGraph& graph) {
+void ViolationInvariantNode::updateState(InvariantGraph& graph) {
   if (isReified() && graph.varNodeConst(_reifiedViolationNodeId).isFixed()) {
-    _shouldHold = graph.varNodeConst(_reifiedViolationNodeId).lowerBound() == 0;
+    _shouldHold = graph.varNodeConst(_reifiedViolationNodeId).inDomain(true);
     _reifiedViolationNodeId = NULL_NODE_ID;
   }
-  InvariantNode::updateVariableNodes(graph);
+  InvariantNode::updateState(graph);
 }
 
 propagation::VarId ViolationInvariantNode::setViolationVarId(

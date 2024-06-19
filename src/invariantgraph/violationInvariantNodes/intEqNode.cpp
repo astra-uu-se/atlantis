@@ -3,7 +3,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intNeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 #include "atlantis/propagation/violationInvariants/equal.hpp"
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
 
@@ -43,7 +43,8 @@ bool IntEqNode::replace(InvariantGraph& invariantGraph) {
     return false;
   }
   if (!shouldHold()) {
-    invariantGraph.addInvariantNode(std::make_unique<IntNeNode>(a(), b()));
+    invariantGraph.addInvariantNode(
+        std::make_unique<AllDifferentNode>(a(), b()));
     return true;
   }
   if (a() == b()) {
@@ -51,12 +52,10 @@ bool IntEqNode::replace(InvariantGraph& invariantGraph) {
   }
   if (invariantGraph.varNodeConst(a()).definingNodes().empty()) {
     invariantGraph.replaceVarNode(a(), b());
-    deactivate(invariantGraph);
     return true;
   }
   if (invariantGraph.varNodeConst(b()).definingNodes().empty()) {
     invariantGraph.replaceVarNode(b(), a());
-    deactivate(invariantGraph);
     return true;
   }
   return false;

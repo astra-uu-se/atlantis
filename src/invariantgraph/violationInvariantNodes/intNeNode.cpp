@@ -14,7 +14,7 @@ IntNeNode::IntNeNode(VarNodeId a, VarNodeId b, VarNodeId r)
 IntNeNode::IntNeNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ViolationInvariantNode({a, b}, shouldHold) {}
 
-bool IntNeNode::canBeReplaced(const InvariantGraph& invariantGraph) const {
+bool IntNeNode::canBeReplaced(const InvariantGraph&) const {
   if (isReified()) {
     return false;
   }

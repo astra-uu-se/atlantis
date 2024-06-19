@@ -9,21 +9,20 @@ using namespace atlantis::invariantgraph;
 
 class ArrayIntMaximumTestNode : public NodeTestBase<ArrayIntMaximumNode> {
  public:
-  VarNodeId x1{NULL_NODE_ID};
-  VarNodeId x2{NULL_NODE_ID};
-  VarNodeId x3{NULL_NODE_ID};
+  std::vector<VarNodeId> inputs;
+  size_t numInputs{0};
   VarNodeId output{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = retrieveIntVarNode(-5, 0, "x1");
-    x2 = retrieveIntVarNode(-2, 2, "x2");
-    x3 = retrieveIntVarNode(0, 5, "x3");
+    inputs.emplace_back(retrieveIntVarNode(-5, 0, "x1"));
+    inputs.emplace_back(retrieveIntVarNode(-2, 2, "x2"));
+    inputs.emplace_back(retrieveIntVarNode(0, 5, "x3"));
+    numInputs = inputs.size();
+
     output = retrieveIntVarNode(0, 10, "output");
 
-    std::vector<VarNodeId> inputs{x1, x2, x3};
-
-    createInvariantNode(std::move(inputs), output);
+    createInvariantNode(std::vector<VarNodeId>{inputs}, output);
   }
 };
 
@@ -31,10 +30,10 @@ TEST_F(ArrayIntMaximumTestNode, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 3);
-  EXPECT_EQ(invNode().staticInputVarNodeIds().at(0), x1);
-  EXPECT_EQ(invNode().staticInputVarNodeIds().at(1), x2);
-  EXPECT_EQ(invNode().staticInputVarNodeIds().at(2), x3);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
+  for (size_t i = 0; i < numInputs; ++i) {
+    EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), inputs.at(i));
+  }
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
@@ -73,6 +72,39 @@ TEST_F(ArrayIntMaximumTestNode, application) {
 
   // maxSparse
   EXPECT_EQ(solver.numInvariants(), 1);
+}
+
+TEST_F(ArrayIntMaximumTestNode, updateState) {
+  for (const auto& input : inputs) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    _invariantGraph->varNode(input).fixToValue(
+        _invariantGraph->varNode(output).lowerBound());
+    invNode().updateState(*_invariantGraph);
+    Int minVal = std::numeric_limits<Int>::max();
+    Int maxVal = std::numeric_limits<Int>::min();
+    for (const auto& var : inputs) {
+      minVal = std::min(minVal, _invariantGraph->varNode(var).lowerBound());
+      maxVal = std::max(maxVal, _invariantGraph->varNode(var).upperBound());
+    }
+    EXPECT_LE(minVal, _invariantGraph->varNode(output).lowerBound());
+    EXPECT_GE(maxVal, _invariantGraph->varNode(output).upperBound());
+  }
+  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
+}
+
+TEST_F(ArrayIntMaximumTestNode, replace) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+    _invariantGraph->varNode(inputs.at(i))
+        .fixToValue(_invariantGraph->varNode(output).lowerBound());
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  }
+  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
+  EXPECT_TRUE(invNode().replace(*_invariantGraph));
+  invNode().deactivate(*_invariantGraph);
+  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
 }
 
 TEST_F(ArrayIntMaximumTestNode, propagation) {

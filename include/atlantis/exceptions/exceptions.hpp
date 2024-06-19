@@ -3,6 +3,14 @@
 
 namespace atlantis {
 
+class VarException : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit VarException(const std::string& msg) : std::runtime_error(msg) {}
+};
+
 class VarAlreadyDefinedException : public std::runtime_error {
  public:
   /**

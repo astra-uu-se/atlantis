@@ -16,6 +16,12 @@ class IntAllEqualNode : public ViolationInvariantNode {
   propagation::VarId _allDifferentViolationVarId{propagation::NULL_ID};
 
  public:
+  explicit IntAllEqualNode(VarNodeId a, VarNodeId b, VarNodeId r,
+                           bool breaksCycle = false);
+
+  explicit IntAllEqualNode(VarNodeId a, VarNodeId b, bool shouldHold = true,
+                           bool breaksCycle = false);
+
   explicit IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
                            bool breaksCycle = false);
 

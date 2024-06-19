@@ -15,11 +15,23 @@ class BoolAllEqualNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
+  explicit BoolAllEqualNode(VarNodeId a, VarNodeId b, VarNodeId r,
+                            bool breaksCycle = false);
+
+  explicit BoolAllEqualNode(VarNodeId a, VarNodeId b, bool shouldHold = true,
+                            bool breaksCycle = false);
+
   explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
                             bool breaksCycle = false);
 
   explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars,
                             bool shouldHold = true, bool breaksCycle = false);
+
+  void updateState(InvariantGraph&) override;
+
+  bool canBeReplaced(const InvariantGraph&) const override;
+
+  bool replace(InvariantGraph&) override;
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

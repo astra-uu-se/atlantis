@@ -10,15 +10,18 @@
 namespace atlantis::invariantgraph {
 class ArrayIntMinimumNode : public InvariantNode {
  public:
-  ArrayIntMinimumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
+  explicit ArrayIntMinimumNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  explicit ArrayIntMinimumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
+
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void updateState(InvariantGraph&) override;
 
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
-  [[nodiscard]] bool replace(InvariantGraph& graph) override;
+  [[nodiscard]] bool replace(InvariantGraph&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 }  // namespace atlantis::invariantgraph

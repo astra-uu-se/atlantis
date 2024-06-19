@@ -205,33 +205,6 @@ bool InvariantGraph::isOnPropStack(InvariantNodeId id) {
   return _impIsOnPropStack.at(id.id - 1);
 }
 
-void InvariantGraph::pushToPropStack(InvariantNodeId id) {
-  if (id != NULL_NODE_ID &&
-      invariantNode(id).state() == InvariantNodeState::ACTIVE &&
-      !isOnPropStack(id)) {
-    _propagationStack.emplace(id);
-  }
-}
-
-void InvariantGraph::pushInvariantsToPropStack(VarNodeId id) {
-  const auto& var = varNode(id);
-  for (char c = 0; c < 2; ++c) {
-    for (const auto& invNodeId :
-         c == 0 ? var.staticInputTo() : var.dynamicInputTo()) {
-      if (!isOnPropStack(invNodeId) &&
-          invariantNode(invNodeId).state() == InvariantNodeState::ACTIVE) {
-        pushToPropStack(invNodeId);
-      }
-    }
-  }
-  for (const auto& invNodeId : var.definingNodes()) {
-    if (!isOnPropStack(invNodeId) &&
-        invariantNode(invNodeId).state() == InvariantNodeState::ACTIVE) {
-      pushToPropStack(invNodeId);
-    }
-  }
-}
-
 void InvariantGraph::fixpoint() {
   // TODO: 1. Use gecode to compute fixpoint
   // TODO: 2. Update domains of all variables
@@ -244,15 +217,29 @@ void InvariantGraph::replaceInvariantNodes() {
          implIndex < _implicitConstraintNodes.size()) {
     while (invIndex < _invariantNodes.size()) {
       auto& invNode = *_invariantNodes.at(invIndex);
-      if (invNode.canBeReplaced(*this)) {
-        invNode.replace(*this);
+      invNode.updateState(*this);
+      if (invNode.state() == InvariantNodeState::SUBSUMED) {
+        invNode.deactivate(*this);
+      } else {
+        if (invNode.canBeReplaced(*this)) {
+          if (invNode.replace(*this)) {
+            invNode.deactivate(*this);
+          }
+        }
       }
       ++invIndex;
     }
     while (implIndex < _implicitConstraintNodes.size()) {
       auto& implNode = *_implicitConstraintNodes.at(implIndex);
-      if (implNode.canBeReplaced(*this)) {
-        implNode.replace(*this);
+      implNode.updateState(*this);
+      if (implNode.state() == InvariantNodeState::SUBSUMED) {
+        implNode.deactivate(*this);
+      } else {
+        if (implNode.canBeReplaced(*this)) {
+          if (implNode.replace(*this)) {
+            implNode.deactivate(*this);
+          }
+        }
       }
       ++implIndex;
     }
@@ -455,16 +442,8 @@ void InvariantGraph::splitMultiDefinedVars() {
     }
 
     if (_varNodes[i].isIntVar()) {
-      if (splitNodes.size() == 2) {
-        addInvariantNode(std::make_unique<IntEqNode>(
-            splitNodes.front(), splitNodes.back(), true, true));
-      } else {
-        addInvariantNode(std::make_unique<IntAllEqualNode>(
-            std::move(splitNodes), true, true));
-      }
-    } else if (splitNodes.size() == 2) {
-      addInvariantNode(std::make_unique<BoolEqNode>(
-          splitNodes.front(), splitNodes.back(), true, true));
+      addInvariantNode(
+          std::make_unique<IntAllEqualNode>(std::move(splitNodes), true, true));
     } else {
       addInvariantNode(std::make_unique<BoolAllEqualNode>(std::move(splitNodes),
                                                           true, true));
@@ -516,8 +495,13 @@ VarNodeId InvariantGraph::breakCycle(const std::vector<VarNodeId>& cycle) {
 
   invariantNode(listeningInvariant)
       .replaceStaticInputVarNode(varNode(pivot), newInputNode);
-  addInvariantNode(
-      std::make_unique<IntEqNode>(pivot, newInputNode.varNodeId()));
+  if (varNode(pivot).isIntVar()) {
+    addInvariantNode(
+        std::make_unique<IntAllEqualNode>(pivot, newInputNode.varNodeId()));
+  } else {
+    addInvariantNode(
+        std::make_unique<BoolAllEqualNode>(pivot, newInputNode.varNodeId()));
+  }
   root().addSearchVarNode(newInputNode);
   return newInputNode.varNodeId();
 }
@@ -670,8 +654,11 @@ void InvariantGraph::createVars(propagation::SolverBase& solver) {
   for (auto const& implicitConstraint : _implicitConstraintNodes) {
     visitedInvNodes.emplace(implicitConstraint->id());
     unregisteredInvNodes.emplace(implicitConstraint->id());
-    for (const auto& searchVarNodeId : implicitConstraint->outputVarNodeIds()) {
-      searchVars.emplace(searchVarNodeId);
+    if (implicitConstraint->state() == InvariantNodeState::ACTIVE) {
+      for (const auto& searchVarNodeId :
+           implicitConstraint->outputVarNodeIds()) {
+        searchVars.emplace(searchVarNodeId);
+      }
     }
   }
 
@@ -691,6 +678,9 @@ void InvariantGraph::createVars(propagation::SolverBase& solver) {
                        [&](VarNodeId outputVarNodeId) {
                          return varId(outputVarNodeId) == propagation::NULL_ID;
                        }));
+    if (invariantNode(invNodeId).state() != InvariantNodeState::ACTIVE) {
+      continue;
+    }
 
     invariantNode(invNodeId).registerOutputVars(*this, solver);
     for (const auto& outputVarNodeId :

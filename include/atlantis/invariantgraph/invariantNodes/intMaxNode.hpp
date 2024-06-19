@@ -13,6 +13,8 @@ class IntMaxNode : public InvariantNode {
  public:
   IntMaxNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
+  void updateState(InvariantGraph& graph) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

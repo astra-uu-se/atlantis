@@ -2,8 +2,8 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/int_le.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLeNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -48,7 +48,8 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
       std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
 
-  int_le(invariantGraph, outputVarNodeId, bound);
+  invariantGraph.addInvariantNode(std::make_unique<IntLeNode>(
+      outputVarNodeId, invariantGraph.retrieveIntVarNode(bound)));
 
   return true;
 }
@@ -57,33 +58,8 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return int_lin_le(invariantGraph, std::move(coeffs), inputs, bound);
-    }
-    invertCoeffs(coeffs);
-    return int_lin_le(invariantGraph, std::move(coeffs), inputs, -bound);
-  }
-
-  if (coeffs.empty()) {
-    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixToValue(bound >= 0);
-    return true;
-  }
 
   const auto& [lb, ub] = linBounds(coeffs, inputs);
-
-  if (ub <= bound) {
-    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixToValue(true);
-    return true;
-  }
-
-  if (bound < lb) {
-    const VarNodeId reifiedVarNodeId = invariantGraph.retrieveVarNode(reified);
-    invariantGraph.varNode(reifiedVarNodeId).fixToValue(false);
-    return true;
-  }
 
   const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
       SearchDomain(lb, ub), VarNode::DomainType::NONE);
@@ -92,7 +68,9 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
       std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
 
-  int_le(invariantGraph, outputVarNodeId, bound, reified);
+  invariantGraph.addInvariantNode(std::make_unique<IntLeNode>(
+      outputVarNodeId, invariantGraph.retrieveIntVarNode(bound),
+      invariantGraph.retrieveVarNode(reified)));
 
   return true;
 }
