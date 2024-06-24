@@ -76,7 +76,7 @@ TEST_F(BoolLinearNodeTest, application) {
 TEST_F(BoolLinearNodeTest, updateState) {
   for (const auto& input : inputs) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    _invariantGraph->varNode(input).fixToValue(Int{0});
+    _invariantGraph->varNode(input).fixToValue(bool{false});
     invNode().updateState(*_invariantGraph);
   }
   EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -87,7 +87,7 @@ TEST_F(BoolLinearNodeTest, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   for (Int i = 0; i < numInputs - 1; ++i) {
     EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-    _invariantGraph->varNode(inputs.at(i)).fixToValue(Int{0});
+    _invariantGraph->varNode(inputs.at(i)).fixToValue(bool{false});
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   }
   EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));

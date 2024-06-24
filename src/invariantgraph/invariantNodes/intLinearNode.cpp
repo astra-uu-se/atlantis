@@ -34,13 +34,16 @@ static std::pair<std::vector<Int>, std::vector<VarNodeId>> fixInputs(
 
 IntLinearNode::IntLinearNode(
     std::pair<std::vector<Int>, std::vector<VarNodeId>>&& coeffsAndVars,
-    VarNodeId output)
+    VarNodeId output, Int offset)
     : InvariantNode({output}, std::move(coeffsAndVars.second)),
-      _coeffs(std::move(coeffsAndVars.first)) {}
+      _coeffs(std::move(coeffsAndVars.first)),
+      _offset(offset) {}
 
 IntLinearNode::IntLinearNode(std::vector<Int>&& coeffs,
-                             std::vector<VarNodeId>&& vars, VarNodeId output)
-    : IntLinearNode(fixInputs(std::move(coeffs), std::move(vars)), output) {}
+                             std::vector<VarNodeId>&& vars, VarNodeId output,
+                             Int offset)
+    : IntLinearNode(fixInputs(std::move(coeffs), std::move(vars)), output,
+                    offset) {}
 
 void IntLinearNode::updateState(InvariantGraph& graph) {
   std::vector<Int> indicesToRemove;

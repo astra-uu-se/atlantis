@@ -20,25 +20,20 @@ static Int computeOutput(const std::vector<Int>& inputVals) {
 
 class VarIntCountNodeTest : public NodeTestBase<VarIntCountNode> {
  public:
-  VarNodeId x1{NULL_NODE_ID};
-  VarNodeId x2{NULL_NODE_ID};
-  VarNodeId x3{NULL_NODE_ID};
+  std::vector<VarNodeId> inputs;
   VarNodeId count{NULL_NODE_ID};
   VarNodeId needle{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = retrieveIntVarNode(2, 5, "x1");
-    x2 = retrieveIntVarNode(3, 5, "x2");
-    x3 = retrieveIntVarNode(4, 5, "x3");
+    inputs = {retrieveIntVarNode(2, 5, "x1"), retrieveIntVarNode(3, 5, "x2"),
+              retrieveIntVarNode(4, 5, "x3")};
 
     needle = retrieveIntVarNode(2, 5, "needle");
 
     count = retrieveIntVarNode(0, 2, "count");
 
-    std::vector<VarNodeId> inputVec{x1, x2, x3};
-
-    createInvariantNode(std::move(inputVec), needle, count);
+    createInvariantNode(std::vector<VarNodeId>{inputs}, needle, count);
   }
 };
 
@@ -46,7 +41,8 @@ TEST_F(VarIntCountNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  std::vector<VarNodeId> expectedInputs{x1, x2, x3, needle};
+  std::vector<VarNodeId> expectedInputs{inputs};
+  expectedInputs.emplace_back(needle);
   EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
   std::vector<VarNodeId> expectedOutputs{count};
@@ -84,19 +80,9 @@ TEST_F(VarIntCountNodeTest, application) {
   }
 }
 
-TEST_F(VarIntCountNodeTest, updateState) {
-  for (const auto& input : inputs) {
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    _invariantGraph->varNode(input).fixToValue(Int{0});
-    invNode().updateState(*_invariantGraph);
-  }
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-  EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
-}
-
 TEST_F(VarIntCountNodeTest, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  for (Int i = 0; i < numInputs - 1; ++i) {
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
     EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
     _invariantGraph->varNode(inputs.at(i)).fixToValue(Int{0});
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
