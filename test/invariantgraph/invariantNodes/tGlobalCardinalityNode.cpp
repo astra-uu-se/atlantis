@@ -25,27 +25,21 @@ static std::vector<Int> computeOutputs(const std::vector<Int>& values,
 
 class GlobalCardinalityNodeTest : public NodeTestBase<GlobalCardinalityNode> {
  public:
-  VarNodeId input1{NULL_NODE_ID};
-  VarNodeId input2{NULL_NODE_ID};
+  std::vector<VarNodeId> inputs{};
   const std::vector<Int> cover{2, 6};
-  VarNodeId output1{NULL_NODE_ID};
-  VarNodeId output2{NULL_NODE_ID};
+  std::vector<VarNodeId> outputs{};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    input1 = retrieveIntVarNode(5, 10, "input1");
-    input2 = retrieveIntVarNode(2, 7, "input2");
-    output1 = retrieveIntVarNode(1, 2, "output1");
-    output2 = retrieveIntVarNode(1, 2, "output2");
-
-    std::vector<VarNodeId> inputVec{input1, input2};
+    inputs = {retrieveIntVarNode(1, 10, "input1"),
+              retrieveIntVarNode(1, 10, "input2")};
+    outputs = {retrieveIntVarNode(1, 10, "output1"),
+               retrieveIntVarNode(1, 10, "output2")};
 
     std::vector<Int> coverVec(cover);
 
-    std::vector<VarNodeId> outputVec{output1, output2};
-
-    createInvariantNode(std::move(inputVec), std::move(coverVec),
-                        std::move(outputVec));
+    createInvariantNode(std::vector<VarNodeId>{inputs}, std::move(coverVec),
+                        std::vector<VarNodeId>{outputs});
   }
 };
 
@@ -53,15 +47,13 @@ TEST_F(GlobalCardinalityNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  std::vector<VarNodeId> expectedInputs{input1, input2};
-  std::vector<VarNodeId> expectedOutputs{output1, output2};
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), expectedInputs.size());
-  EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
-  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputs.size());
+  EXPECT_EQ(invNode().staticInputVarNodeIds(), inputs);
+  EXPECT_THAT(inputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), expectedOutputs.size());
-  EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
-  EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
+  EXPECT_EQ(invNode().outputVarNodeIds().size(), outputs.size());
+  EXPECT_EQ(invNode().outputVarNodeIds(), outputs);
+  EXPECT_THAT(outputs, ContainerEq(invNode().outputVarNodeIds()));
 }
 
 TEST_F(GlobalCardinalityNodeTest, application) {
@@ -89,19 +81,9 @@ TEST_F(GlobalCardinalityNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
-TEST_F(GlobalCardinalityNodeTest, updateState) {
-  for (const auto& input : inputs) {
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    _invariantGraph->varNode(input).fixToValue(Int{0});
-    invNode().updateState(*_invariantGraph);
-  }
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-  EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
-}
-
 TEST_F(GlobalCardinalityNodeTest, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  for (Int i = 0; i < numInputs - 1; ++i) {
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
     EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
     _invariantGraph->varNode(inputs.at(i)).fixToValue(Int{0});
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);

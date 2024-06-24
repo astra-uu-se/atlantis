@@ -1,26 +1,26 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/views/intAbsNode.hpp"
+#include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntAbsNodeTest : public NodeTestBase<IntAbsNode> {
+class BoolNotNodeTest : public NodeTestBase<BoolNotNode> {
  public:
   VarNodeId input{NULL_NODE_ID};
   VarNodeId output{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    input = retrieveIntVarNode(-10, 10, "input");
-    output = retrieveIntVarNode(0, 10, "output");
+    input = retrieveBoolVarNode("input");
+    output = retrieveBoolVarNode("output");
 
     createInvariantNode(input, output);
   }
 };
 
-TEST_F(IntAbsNodeTest, construction) {
+TEST_F(BoolNotNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -30,7 +30,7 @@ TEST_F(IntAbsNodeTest, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
-TEST_F(IntAbsNodeTest, application) {
+TEST_F(BoolNotNodeTest, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -51,7 +51,7 @@ TEST_F(IntAbsNodeTest, application) {
   EXPECT_EQ(solver.numVars(), 1);
 }
 
-TEST_F(IntAbsNodeTest, propagation) {
+TEST_F(BoolNotNodeTest, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -79,7 +79,7 @@ TEST_F(IntAbsNodeTest, propagation) {
     solver.query(outputId);
     solver.endProbe();
 
-    const Int expected = std::abs(inputVal);
+    const Int expected = (inputVal == 0);
     const Int actual = solver.currentValue(outputId);
     EXPECT_EQ(expected, actual);
   }

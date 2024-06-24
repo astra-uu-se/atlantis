@@ -20,22 +20,19 @@ static Int computeOutput(const std::vector<Int>& values, const Int needle) {
 
 class IntCountNodeTest : public NodeTestBase<IntCountNode> {
  public:
-  VarNodeId x1{NULL_NODE_ID};
-  VarNodeId x2{NULL_NODE_ID};
-  VarNodeId x3{NULL_NODE_ID};
-  VarNodeId count{NULL_NODE_ID};
+  std::vector<VarNodeId> inputs;
+  VarNodeId output{NULL_NODE_ID};
   Int needle{2};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = retrieveIntVarNode(2, 5, "x1");
-    x2 = retrieveIntVarNode(3, 5, "x2");
-    x3 = retrieveIntVarNode(4, 5, "x3");
-    std::vector<VarNodeId> inputVec{x1, x2, x3};
+    inputs = {retrieveIntVarNode(1, 10, "input1"),
+              retrieveIntVarNode(1, 10, "input2"),
+              retrieveIntVarNode(1, 10, "input3")};
 
-    count = retrieveIntVarNode(0, 2, "count");
+    output = retrieveIntVarNode(0, 2, "output");
 
-    createInvariantNode(std::move(inputVec), needle, count);
+    createInvariantNode(std::vector<VarNodeId>{inputs}, needle, output);
   }
 };
 
@@ -43,14 +40,12 @@ TEST_F(IntCountNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  std::vector<VarNodeId> expectedInputs{x1, x2, x3};
-  size_t inputSize = 3;
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputSize);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputs.size());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
-  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_EQ(invNode().staticInputVarNodeIds(), inputs);
+  EXPECT_THAT(inputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
-  std::vector<VarNodeId> expectedOutputs{count};
+  std::vector<VarNodeId> expectedOutputs{output};
 
   EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
   EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
@@ -71,9 +66,9 @@ TEST_F(IntCountNodeTest, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // x1, x2, and x3
+  // inputs.at(0), inputs.at(1), and inputs.at(2)
   EXPECT_EQ(solver.searchVars().size(), 3);
-  // x1, x2, x3, and the violation
+  // inputs.at(0), inputs.at(1), inputs.at(2), and the violation
   EXPECT_EQ(solver.numVars(), 4);
 
   // countEq
@@ -93,19 +88,6 @@ TEST_F(IntCountNodeTest, updateState) {
   }
   EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
   EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
-}
-
-TEST_F(IntCountNodeTest, replace) {
-  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  for (Int i = 0; i < numInputs - 1; ++i) {
-    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-    _invariantGraph->varNode(inputs.at(i)).fixToValue(Int{0});
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  }
-  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-  EXPECT_TRUE(invNode().replace(*_invariantGraph));
-  invNode().deactivate(*_invariantGraph);
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
 }
 
 TEST_F(IntCountNodeTest, propagation) {
