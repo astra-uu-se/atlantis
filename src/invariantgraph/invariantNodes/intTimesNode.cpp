@@ -9,56 +9,55 @@ namespace atlantis::invariantgraph {
 IntTimesNode::IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
 
-void IntTimesNode::registerOutputVars(InvariantGraph& invariantGraph,
-                                      propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
-}
-
 void IntTimesNode::updateState(InvariantGraph& graph) {
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-  Int product = 1;
+  std::vector<Int> indicesToRemove;
+  indicesToRemove.reserve(staticInputVarNodeIds().size());
 
-  for (const auto& input : staticInputVarNodeIds()) {
-    if (graph.varNodeConst(input).isFixed()) {
-      varsToRemove.emplace_back(input);
-      product *= graph.varNodeConst(input).lowerBound();
+  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()); i >= 0; --i) {
+    if (graph.varNodeConst(staticInputVarNodeIds().at(i)).isFixed()) {
+      indicesToRemove.emplace_back(i);
+      _scalar *= graph.varNodeConst(staticInputVarNodeIds().at(i)).lowerBound();
     }
   }
-  if (varsToRemove.size() == staticInputVarNodeIds().size()) {
-    graph.varNode(outputVarNodeIds().front()).fixToValue(product);
+
+  if (_scalar == 0) {
+    graph.varNode(outputVarNodeIds().front()).fixToValue(Int{0});
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
+  for (const Int index : indicesToRemove) {
+    removeStaticInputVarNode(graph.varNode(staticInputVarNodeIds().at(index)));
+  }
+
+  if (staticInputVarNodeIds().empty()) {
+    graph.varNode(outputVarNodeIds().front()).fixToValue(_scalar);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool IntTimesNode::canBeReplaced(const InvariantGraph& graph) const {
-  return std::any_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const auto& input) { return graph.varNodeConst(input).isFixed(); });
+  return staticInputVarNodeIds().size() <= 1;
 }
 
 bool IntTimesNode::replace(InvariantGraph& graph) {
   if (!canBeReplaced(graph)) {
     return false;
   }
-  Int product = 1;
-  VarNodeId unfixedVar{NULL_NODE_ID};
-  for (const auto& input : staticInputVarNodeIds()) {
-    if (graph.varNodeConst(input).isFixed()) {
-      product *= graph.varNodeConst(input).lowerBound();
-    } else {
-      unfixedVar = input;
-    }
+
+  if (staticInputVarNodeIds().empty()) {
+    graph.varNode(outputVarNodeIds().front()).fixToValue(_scalar);
+    setState(InvariantNodeState::SUBSUMED);
+    return true;
   }
-  if (unfixedVar != NULL_NODE_ID) {
-    if (product == 1) {
-      graph.replaceVarNode(outputVarNodeIds().front(), unfixedVar);
-    } else {
-      graph.addInvariantNode(std::make_unique<IntScalarNode>(
-          unfixedVar, outputVarNodeIds().front(), product, 0));
-    }
-  }
-  return true;
+
+  graph.addInvariantNode(std::make_unique<IntScalarNode>(
+      staticInputVarNodeIds().front(), outputVarNodeIds().front(), _scalar, 0));
+}
+
+void IntTimesNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                      propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
 }
 
 void IntTimesNode::registerNode(InvariantGraph& invariantGraph,
@@ -67,10 +66,8 @@ void IntTimesNode::registerNode(InvariantGraph& invariantGraph,
          propagation::NULL_ID);
   solver.makeInvariant<propagation::Times>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(a()), invariantGraph.varId(b()));
+      invariantGraph.varId(staticInputVarNodeIds().front()),
+      invariantGraph.varId(staticInputVarNodeIds().back()));
 }
-
-VarNodeId IntTimesNode::a() const { return staticInputVarNodeIds().front(); }
-VarNodeId IntTimesNode::b() const { return staticInputVarNodeIds().back(); }
 
 }  // namespace atlantis::invariantgraph

@@ -8,6 +8,9 @@
 namespace atlantis::invariantgraph {
 
 class IntTimesNode : public InvariantNode {
+ private:
+  Int _scalar{1};
+
  public:
   IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
@@ -21,9 +24,6 @@ class IntTimesNode : public InvariantNode {
                           propagation::SolverBase& solver) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
-
-  [[nodiscard]] VarNodeId a() const;
-  [[nodiscard]] VarNodeId b() const;
 };
 
 }  // namespace atlantis::invariantgraph
