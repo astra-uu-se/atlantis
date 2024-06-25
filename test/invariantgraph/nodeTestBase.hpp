@@ -16,14 +16,17 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 template <class InvNode>
-class NodeTestBase : public ::testing::Test {
+class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
  protected:
+  unsgined char _mode{0};
+
   std::unique_ptr<InvariantGraph> _invariantGraph;
 
   InvariantNodeId _invNodeId = InvariantNodeId(NULL_NODE_ID);
 
   void SetUp() override {
     _invariantGraph = std::make_unique<InvariantGraph>();
+    mode = GetParam();
   }
 
   template <typename... Args>
