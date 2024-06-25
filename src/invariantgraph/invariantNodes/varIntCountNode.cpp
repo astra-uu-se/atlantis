@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/propagation/invariants/count.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/views/scalarView.hpp"
@@ -27,7 +28,19 @@ VarNodeId VarIntCountNode::needle() const {
 }
 
 bool VarIntCountNode::canBeReplaced(const InvariantGraph& graph) const {
-  return graph.varNodeConst(outputVarNodeIds().front()).isFixed();
+  return graph.varNodeConst(needle()).isFixed();
+}
+
+bool VarIntCountNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
+    return false;
+  }
+
+  graph.addInvariantNode(std::make_unique<IntCountNode>(
+      haystack(), graph.varNodeConst(needle()).lowerBound(),
+      outputVarNodeIds().front()));
+
+  return true;
 }
 
 void VarIntCountNode::registerOutputVars(InvariantGraph& invariantGraph,

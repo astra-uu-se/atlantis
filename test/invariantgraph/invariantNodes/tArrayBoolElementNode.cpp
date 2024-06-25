@@ -19,7 +19,7 @@ class ArrayBoolElementNodeTest : public NodeTestBase<ArrayElementNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
     idx = retrieveIntVarNode(1, 4, "idx");
-    output = retrieveIntVarNode(1, 4, "output");
+    output = retrieveBoolVarNode("output");
 
     createInvariantNode(std::vector<bool>(elementValues), idx, output,
                         offsetIdx);
@@ -72,11 +72,14 @@ TEST_F(ArrayBoolElementNodeTest, application) {
 
 TEST_F(ArrayBoolElementNodeTest, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  _invariantGraph->varNode(idx).fixToValue(Int{1});
+  const Int idxValue = 1;
+  _invariantGraph->varNode(idx).fixToValue(idxValue);
   invNode().updateState(*_invariantGraph);
   EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
   EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
-  EXPECT_TRUE(_invariantGraph->varNode(output).inDomain(elementValues.front()));
+  const bool expected = elementValues.at(idxValue - offsetIdx);
+  const bool actual = _invariantGraph->varNode(output).lowerBound() == 0;
+  EXPECT_EQ(expected, actual);
 }
 
 TEST_F(ArrayBoolElementNodeTest, propagation) {

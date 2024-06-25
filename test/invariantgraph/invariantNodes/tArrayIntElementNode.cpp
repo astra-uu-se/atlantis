@@ -21,9 +21,8 @@ class ArrayIntElementNodeTest : public NodeTestBase<ArrayElementNode> {
         "idx");
     output = retrieveIntVarNode(0, 10, "output");
 
-    std::vector<Int> parVector(elementValues);
-
-    createInvariantNode(std::move(parVector), idx, output, offsetIdx);
+    createInvariantNode(std::vector<Int>{elementValues}, idx, output,
+                        offsetIdx);
   }
 };
 
@@ -65,11 +64,14 @@ TEST_F(ArrayIntElementNodeTest, application) {
 
 TEST_F(ArrayIntElementNodeTest, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  _invariantGraph->varNode(idx).fixToValue(Int{1});
+  const Int idxValue = 1;
+  _invariantGraph->varNode(idx).fixToValue(idxValue);
   invNode().updateState(*_invariantGraph);
   EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
   EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
-  EXPECT_TRUE(_invariantGraph->varNode(output).inDomain(elementValues.front()));
+  const Int expected = elementValues.at(idxValue - offsetIdx);
+  const Int actual = _invariantGraph->varNode(output).lowerBound();
+  EXPECT_EQ(expected, actual);
 }
 
 TEST_F(ArrayIntElementNodeTest, propagation) {

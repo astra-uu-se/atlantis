@@ -9,6 +9,9 @@
 
 namespace atlantis::invariantgraph {
 class ArrayIntMaximumNode : public InvariantNode {
+ private:
+  Int _lb;
+
  public:
   explicit ArrayIntMaximumNode(VarNodeId a, VarNodeId b, VarNodeId output);
 

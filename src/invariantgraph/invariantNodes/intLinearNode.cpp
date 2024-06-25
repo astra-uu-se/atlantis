@@ -12,6 +12,9 @@ namespace atlantis::invariantgraph {
 
 static std::pair<std::vector<Int>, std::vector<VarNodeId>> fixInputs(
     std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars) {
+  if (coeffs.size() != vars.size()) {
+    throw std::runtime_error("Number of coefficients and variables must match");
+  }
   for (size_t i = 0; i < coeffs.size() - 1; ++i) {
     if (coeffs.at(i) == 0) {
       continue;
@@ -23,7 +26,7 @@ static std::pair<std::vector<Int>, std::vector<VarNodeId>> fixInputs(
       }
     }
   }
-  for (Int i = 0; i >= 0; --i) {
+  for (Int i = static_cast<Int>(coeffs.size()) - 1; i >= 0; --i) {
     if (coeffs.at(i) == 0) {
       coeffs.erase(coeffs.begin() + i);
       vars.erase(vars.begin() + i);

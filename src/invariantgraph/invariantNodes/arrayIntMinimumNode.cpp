@@ -14,7 +14,8 @@ ArrayIntMinimumNode::ArrayIntMinimumNode(VarNodeId a, VarNodeId b,
 
 ArrayIntMinimumNode::ArrayIntMinimumNode(std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
-    : InvariantNode({output}, std::move(vars)) {}
+    : InvariantNode({output}, std::move(vars)),
+      _ub(std::numeric_limits<Int>::max()) {}
 
 void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& invariantGraph,
                                              propagation::SolverBase& solver) {
@@ -22,25 +23,28 @@ void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& invariantGraph,
 }
 
 void ArrayIntMinimumNode::updateState(InvariantGraph& graph) {
-  Int max = graph.varNodeConst(outputVarNodeIds().front()).upperBound();
+  Int lb = _ub;
   for (const auto& input : staticInputVarNodeIds()) {
-    max = std::max(max, graph.varNodeConst(input).lowerBound());
+    lb = std::min(lb, graph.varNodeConst(input).lowerBound());
+    _ub = std::min(_ub, graph.varNodeConst(input).upperBound());
   }
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
 
   for (const auto& input : staticInputVarNodeIds()) {
-    if (graph.varNodeConst(input).lowerBound() > max) {
+    if (graph.varNodeConst(input).upperBound() <= _ub) {
       varsToRemove.emplace_back(input);
     }
   }
   for (const auto& input : varsToRemove) {
     removeStaticInputVarNode(graph.varNode(input));
   }
-  if (staticInputVarNodeIds().size() == 0) {
+  auto& outputVar = graph.varNode(outputVarNodeIds().front());
+  outputVar.removeValuesBelow(lb);
+  outputVar.removeValuesAbove(_ub);
+  if (staticInputVarNodeIds().size() == 0 || outputVar.isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
-  graph.varNode(outputVarNodeIds().front()).removeValuesAbove(max);
 }
 
 bool ArrayIntMinimumNode::canBeReplaced(const InvariantGraph&) const {
