@@ -7,7 +7,7 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class ArrayBoolElementNodeTest : public NodeTestBase<ArrayElementNode> {
+class ArrayBoolElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
  public:
   VarNodeId output{NULL_NODE_ID};
   VarNodeId idx{NULL_NODE_ID};
@@ -18,7 +18,12 @@ class ArrayBoolElementNodeTest : public NodeTestBase<ArrayElementNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    idx = retrieveIntVarNode(1, 4, "idx");
+
+    idx = retrieveIntVarNode(
+        offsetIdx,
+        offsetIdx +
+            (_mode == 0 ? (static_cast<Int>(elementValues.size()) - 1) : 0),
+        "idx");
     output = retrieveBoolVarNode("output");
 
     createInvariantNode(std::vector<bool>(elementValues), idx, output,
@@ -26,7 +31,7 @@ class ArrayBoolElementNodeTest : public NodeTestBase<ArrayElementNode> {
   }
 };
 
-TEST_F(ArrayBoolElementNodeTest, construction) {
+TEST_F(ArrayBoolElementNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -38,7 +43,7 @@ TEST_F(ArrayBoolElementNodeTest, construction) {
   EXPECT_EQ(invNode().as(), expectedAs);
 }
 
-TEST_F(ArrayBoolElementNodeTest, application) {
+TEST_F(ArrayBoolElementNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -70,19 +75,24 @@ TEST_F(ArrayBoolElementNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 0);
 }
 
-TEST_F(ArrayBoolElementNodeTest, updateState) {
+TEST_F(ArrayBoolElementNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  const Int idxValue = 1;
-  _invariantGraph->varNode(idx).fixToValue(idxValue);
   invNode().updateState(*_invariantGraph);
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-  EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
-  const bool expected = elementValues.at(idxValue - offsetIdx);
-  const bool actual = _invariantGraph->varNode(output).lowerBound() == 0;
-  EXPECT_EQ(expected, actual);
+  if (_mode == 0) {
+    // Invariant should not be subsumed
+    EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_FALSE(_invariantGraph->varNode(output).isFixed());
+  } else {
+    // Invariant should be subsumed
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
+    const bool expected = elementValues.at(idxValue - offsetIdx);
+    const bool actual = _invariantGraph->varNode(output).lowerBound() == 0;
+    EXPECT_EQ(expected, actual);
+  }
 }
 
-TEST_F(ArrayBoolElementNodeTest, propagation) {
+TEST_F(ArrayBoolElementNodeTestFixture, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -119,5 +129,9 @@ TEST_F(ArrayBoolElementNodeTest, propagation) {
     EXPECT_EQ(actual == 0, elementValues.at(inputVal - offsetIdx));
   }
 }
+
+INSTANTIATE_TEST_CASE_P(ArrayBoolElementNodeTest,
+                        ArrayBoolElementNodeTestFixture,
+                        ::testing::Values(0, 1));
 
 }  // namespace atlantis::testing
