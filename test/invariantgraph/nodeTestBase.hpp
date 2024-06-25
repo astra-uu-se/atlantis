@@ -55,6 +55,13 @@ class NodeTestBase : public ::testing::Test {
                                                identifier);
   }
 
+  VarNodeId retrieveIntVarNode(std::vector<Int>&& vals,
+                               const std::string& identifier) {
+    assert(!vals.empty());
+    return _invariantGraph->retrieveIntVarNode(SearchDomain(std::move(vals)),
+                                               identifier);
+  }
+
   VarNodeId retrieveIntVarNode(Int val) {
     return _invariantGraph->retrieveIntVarNode(val);
   }

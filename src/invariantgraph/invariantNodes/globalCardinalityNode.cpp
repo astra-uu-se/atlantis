@@ -18,7 +18,8 @@ GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& inputs,
                                              std::vector<Int>&& cover,
                                              std::vector<VarNodeId>&& counts)
     : InvariantNode(std::move(counts), std::move(inputs)),
-      _cover(std::move(cover)) {}
+      _cover(std::move(cover)),
+      _countOffsets(_cover.size(), 0) {}
 
 void GlobalCardinalityNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
@@ -29,17 +30,42 @@ void GlobalCardinalityNode::registerOutputVars(
   }
 }
 
-bool GlobalCardinalityNode::canBeReplaced(
-    const InvariantGraph& invariantGraph) const {
-  size_t numFixed = 0;
+void GlobalCardinalityNode::updateState(InvariantGraph& graph) {
+  std::vector<bool> coverIsFixed(_cover.size(), true);
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
   for (const auto& input : staticInputVarNodeIds()) {
-    numFixed +=
-        static_cast<size_t>(invariantGraph.varNodeConst(input).isFixed());
-    if (numFixed > 1) {
-      return false;
+    const auto& var = graph.varNodeConst(input);
+    if (var.isFixed()) {
+      for (size_t i = 0; i < _cover.size(); ++i) {
+        if (var.lowerBound() == _cover[i]) {
+          ++_countOffsets[i];
+        }
+      }
+      varsToRemove.emplace_back(input);
+    } else {
+      for (size_t i = 0; i < _cover.size(); ++i) {
+        coverIsFixed[i] = coverIsFixed[i] && !var.inDomain(_cover[i]);
+      }
     }
   }
-  return true;
+  for (const auto& input : varsToRemove) {
+    removeStaticInputVarNode(graph.varNode(input));
+  }
+  for (Int i = static_cast<Int>(_cover.size()) - 1; i >= 0; --i) {
+    if (coverIsFixed[i]) {
+      graph.varNode(outputVarNodeIds()[i]).fixToValue(_countOffsets[i]);
+      _countOffsets.erase(_countOffsets.begin() + i);
+      _cover.erase(_cover.begin() + i);
+    }
+  }
+  if (_cover.empty()) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
+bool GlobalCardinalityNode::canBeReplaced(const InvariantGraph&) const {
+  return _cover.size() <= 1;
 }
 
 bool GlobalCardinalityNode::replace(InvariantGraph& invariantGraph) {

@@ -10,16 +10,13 @@ using namespace atlantis::invariantgraph;
 class ArrayIntMinimumNodeTest : public NodeTestBase<ArrayIntMinimumNode> {
  public:
   std::vector<VarNodeId> inputs;
-  size_t numInputs{0};
   VarNodeId output{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputs.emplace_back(retrieveIntVarNode(-5, 0, "x1"));
-    inputs.emplace_back(retrieveIntVarNode(-2, 2, "x2"));
-    inputs.emplace_back(retrieveIntVarNode(0, 5, "x3"));
-    numInputs = inputs.size();
-    output = retrieveIntVarNode(0, 10, "output");
+    inputs = {retrieveIntVarNode(-5, 2, "x1"), retrieveIntVarNode(-3, 3, "x2"),
+              retrieveIntVarNode(-2, 5, "x3")};
+    output = retrieveIntVarNode(-5, 5, "output");
 
     createInvariantNode(std::vector<VarNodeId>{inputs}, output);
   }
@@ -29,8 +26,8 @@ TEST_F(ArrayIntMinimumNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
-  for (size_t i = 0; i < numInputs; ++i) {
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputs.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
     EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), inputs.at(i));
   }
 
@@ -74,10 +71,10 @@ TEST_F(ArrayIntMinimumNodeTest, application) {
 }
 
 TEST_F(ArrayIntMinimumNodeTest, updateState) {
-  for (const auto& input : inputs) {
+  for (size_t i = 0; i < inputs.size(); ++i) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    _invariantGraph->varNode(input).fixToValue(
-        _invariantGraph->varNode(output).lowerBound());
+    _invariantGraph->varNode(inputs.at(i))
+        .fixToValue(_invariantGraph->varNode(inputs.at(i)).upperBound());
     invNode().updateState(*_invariantGraph);
     Int minVal = std::numeric_limits<Int>::max();
     Int maxVal = std::numeric_limits<Int>::min();
@@ -96,7 +93,9 @@ TEST_F(ArrayIntMinimumNodeTest, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-    _invariantGraph->varNode(inputs.at(i)).fixToValue(Int{0});
+    _invariantGraph->varNode(inputs.at(i))
+        .fixToValue(_invariantGraph->varNode(inputs.at(i)).upperBound());
+    invNode().updateState(*_invariantGraph);
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   }
   EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));

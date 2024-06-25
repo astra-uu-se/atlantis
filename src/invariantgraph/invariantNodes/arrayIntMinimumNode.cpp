@@ -32,7 +32,7 @@ void ArrayIntMinimumNode::updateState(InvariantGraph& graph) {
   varsToRemove.reserve(staticInputVarNodeIds().size());
 
   for (const auto& input : staticInputVarNodeIds()) {
-    if (graph.varNodeConst(input).upperBound() <= _ub) {
+    if (graph.varNodeConst(input).lowerBound() >= _ub) {
       varsToRemove.emplace_back(input);
     }
   }

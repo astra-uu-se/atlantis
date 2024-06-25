@@ -12,6 +12,7 @@ namespace atlantis::invariantgraph {
 class GlobalCardinalityNode : public InvariantNode {
  private:
   std::vector<Int> _cover;
+  std::vector<Int> _countOffsets;
   std::vector<propagation::VarId> _intermediate{};
 
  public:
@@ -24,9 +25,11 @@ class GlobalCardinalityNode : public InvariantNode {
 
   void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
+  void updateState(InvariantGraph&) override;
+
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
-  bool replace(InvariantGraph& graph) override;
+  [[nodiscard]] bool replace(InvariantGraph& graph) override;
 };
 
 }  // namespace atlantis::invariantgraph

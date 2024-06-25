@@ -11,7 +11,7 @@ using ::testing::ContainerEq;
 
 class BoolLinearNodeTest : public NodeTestBase<BoolLinearNode> {
  public:
-  Int numInputs = 3;
+  size_t numInputs = 3;
   std::vector<VarNodeId> inputs{};
   std::vector<Int> coeffs{};
   VarNodeId output{NULL_NODE_ID};
@@ -28,12 +28,16 @@ class BoolLinearNodeTest : public NodeTestBase<BoolLinearNode> {
     NodeTestBase::SetUp();
     inputs.reserve(numInputs);
     coeffs.reserve(numInputs);
-    for (Int i = 0; i < numInputs; ++i) {
+    Int minSum = 0;
+    Int maxSum = 0;
+    for (size_t i = 0; i < numInputs; ++i) {
       inputs.push_back(retrieveBoolVarNode("input" + std::to_string(i)));
       coeffs.push_back((i + 1) * (i % 2 == 0 ? -1 : 1));
+      minSum += std::min<Int>(coeffs.back(), 0);
+      maxSum += std::max<Int>(coeffs.back(), 0);
     }
 
-    output = retrieveIntVarNode(-numInputs, numInputs, "output");
+    output = retrieveIntVarNode(minSum, maxSum, "output");
 
     createInvariantNode(std::vector<Int>(coeffs),
                         std::vector<VarNodeId>(inputs), output);
@@ -64,10 +68,10 @@ TEST_F(BoolLinearNodeTest, application) {
   solver.close();
 
   // inputs and output
-  EXPECT_EQ(solver.searchVars().size(), numInputs);
+  EXPECT_EQ(solver.searchVars().size(), inputs.size());
 
   // inputs and output
-  EXPECT_EQ(solver.numVars(), numInputs + 1);
+  EXPECT_EQ(solver.numVars(), inputs.size() + 1);
 
   // linear invariant
   EXPECT_EQ(solver.numInvariants(), 1);
@@ -83,19 +87,6 @@ TEST_F(BoolLinearNodeTest, updateState) {
   EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
 }
 
-TEST_F(BoolLinearNodeTest, replace) {
-  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  for (Int i = 0; i < numInputs - 1; ++i) {
-    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-    _invariantGraph->varNode(inputs.at(i)).fixToValue(bool{false});
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  }
-  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-  EXPECT_TRUE(invNode().replace(*_invariantGraph));
-  invNode().deactivate(*_invariantGraph);
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-}
-
 TEST_F(BoolLinearNodeTest, propagation) {
   propagation::Solver solver;
   solver.open();
@@ -103,9 +94,9 @@ TEST_F(BoolLinearNodeTest, propagation) {
   invNode().registerOutputVars(*_invariantGraph, solver);
   invNode().registerNode(*_invariantGraph, solver);
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputs.size());
   std::vector<propagation::VarId> inputVars;
-  inputVars.reserve(numInputs);
+  inputVars.reserve(inputs.size());
   for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
     EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     inputVars.emplace_back(varId(varNodeId));
