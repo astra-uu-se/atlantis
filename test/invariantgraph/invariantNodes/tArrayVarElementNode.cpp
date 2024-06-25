@@ -8,9 +8,7 @@ using namespace atlantis::invariantgraph;
 
 class ArrayVarElementNodeTest : public NodeTestBase<ArrayVarElementNode> {
  public:
-  VarNodeId x1{NULL_NODE_ID};
-  VarNodeId x2{NULL_NODE_ID};
-  VarNodeId x3{NULL_NODE_ID};
+  std::vector<VarNodeId> inputs;
 
   VarNodeId idx{NULL_NODE_ID};
   VarNodeId output{NULL_NODE_ID};
@@ -19,17 +17,14 @@ class ArrayVarElementNodeTest : public NodeTestBase<ArrayVarElementNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    x1 = retrieveIntVarNode(3, 10, "x1");
-    x2 = retrieveIntVarNode(2, 11, "x2");
-    x3 = retrieveIntVarNode(1, 9, "x3");
-
-    std::vector<VarNodeId> varVector{x1, x2, x3};
+    inputs = {retrieveIntVarNode(3, 10, "x1"), retrieveIntVarNode(2, 11, "x2"),
+              retrieveIntVarNode(1, 9, "x3")};
 
     idx = retrieveIntVarNode(
-        offsetIdx, static_cast<Int>(varVector.size()) - 1 + offsetIdx, "idx");
+        offsetIdx, static_cast<Int>(inputs.size()) - 1 + offsetIdx, "idx");
     output = retrieveIntVarNode(0, 10, "output");
 
-    createInvariantNode(idx, std::move(varVector), output, offsetIdx);
+    createInvariantNode(idx, std::vector<VarNodeId>{inputs}, output, offsetIdx);
   }
 };
 
@@ -41,10 +36,10 @@ TEST_F(ArrayVarElementNodeTest, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 3);
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(0), x1);
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(1), x2);
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(2), x3);
+  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), inputs.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(i), inputs.at(i));
+  }
 }
 
 TEST_F(ArrayVarElementNodeTest, application) {
@@ -93,7 +88,7 @@ TEST_F(ArrayVarElementNodeTest, propagation) {
   EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()),
             propagation::NULL_ID);
 
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 3);
+  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), inputs.size());
   for (const auto& inputVarNodeId : invNode().dynamicInputVarNodeIds()) {
     EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
   }

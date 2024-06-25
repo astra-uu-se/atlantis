@@ -8,17 +8,16 @@ using namespace atlantis::invariantgraph;
 
 class IntPlusNodeTest : public NodeTestBase<IntPlusNode> {
  public:
-  VarNodeId a{NULL_NODE_ID};
-  VarNodeId b{NULL_NODE_ID};
+  std::vector<VarNodeId> inputs;
   VarNodeId output{NULL_NODE_ID};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = retrieveIntVarNode(0, 10, "a");
-    b = retrieveIntVarNode(0, 10, "b");
+    inputs = std::vector<VarNodeId>{retrieveIntVarNode(0, 10, "a"),
+                                    retrieveIntVarNode(0, 10, "b")};
     output = retrieveIntVarNode(0, 10, "output");
 
-    createInvariantNode(a, b, output);
+    createInvariantNode(inputs.front(), inputs.back(), output);
   }
 };
 
@@ -26,8 +25,11 @@ TEST_F(IntPlusNodeTest, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().a(), a);
-  EXPECT_EQ(invNode().b(), b);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputs.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), inputs.at(i));
+  }
+
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
@@ -57,17 +59,24 @@ TEST_F(IntPlusNodeTest, application) {
 }
 
 TEST_F(IntPlusNodeTest, updateState) {
-  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  _invariantGraph->varNode(a).fixToValue(Int{0});
-  invNode().updateState(*_invariantGraph);
+  const Int fixedValue = 5;
+  const Int expected = static_cast<Int>(inputs.size()) * fixedValue;
+  for (const auto& input : inputs) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    _invariantGraph->varNode(input).fixToValue(fixedValue);
+    invNode().updateState(*_invariantGraph);
+  }
   EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
   EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
+  const Int actual = _invariantGraph->varNode(output).lowerBound();
+  EXPECT_EQ(actual, expected);
 }
 
 TEST_F(IntPlusNodeTest, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-  _invariantGraph->varNode(a).fixToValue(Int{0});
+  _invariantGraph->varNode(inputs.front()).fixToValue(Int{0});
+  invNode().updateState(*_invariantGraph);
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
   EXPECT_TRUE(invNode().replace(*_invariantGraph));

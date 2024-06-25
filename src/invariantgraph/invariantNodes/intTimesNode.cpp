@@ -10,13 +10,13 @@ IntTimesNode::IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
 
 void IntTimesNode::updateState(InvariantGraph& graph) {
-  std::vector<Int> indicesToRemove;
-  indicesToRemove.reserve(staticInputVarNodeIds().size());
+  std::vector<VarNodeId> varNodeIdsToRemove;
+  varNodeIdsToRemove.reserve(staticInputVarNodeIds().size());
 
-  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()); i >= 0; --i) {
-    if (graph.varNodeConst(staticInputVarNodeIds().at(i)).isFixed()) {
-      indicesToRemove.emplace_back(i);
-      _scalar *= graph.varNodeConst(staticInputVarNodeIds().at(i)).lowerBound();
+  for (const auto& varNodeId : staticInputVarNodeIds()) {
+    if (graph.varNodeConst(varNodeId).isFixed()) {
+      varNodeIdsToRemove.emplace_back(varNodeId);
+      _scalar *= graph.varNodeConst(varNodeId).lowerBound();
     }
   }
 
@@ -26,8 +26,8 @@ void IntTimesNode::updateState(InvariantGraph& graph) {
     return;
   }
 
-  for (const Int index : indicesToRemove) {
-    removeStaticInputVarNode(graph.varNode(staticInputVarNodeIds().at(index)));
+  for (const auto& varNodeId : varNodeIdsToRemove) {
+    removeStaticInputVarNode(graph.varNode(varNodeId));
   }
 
   if (staticInputVarNodeIds().empty()) {
@@ -36,7 +36,7 @@ void IntTimesNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool IntTimesNode::canBeReplaced(const InvariantGraph& graph) const {
+bool IntTimesNode::canBeReplaced(const InvariantGraph&) const {
   return staticInputVarNodeIds().size() <= 1;
 }
 
@@ -53,6 +53,7 @@ bool IntTimesNode::replace(InvariantGraph& graph) {
 
   graph.addInvariantNode(std::make_unique<IntScalarNode>(
       staticInputVarNodeIds().front(), outputVarNodeIds().front(), _scalar, 0));
+  return true;
 }
 
 void IntTimesNode::registerOutputVars(InvariantGraph& invariantGraph,

@@ -26,7 +26,7 @@ bool ArrayVarElementNode::replace(InvariantGraph& invariantGraph) {
   }
   auto& idxNode = invariantGraph.varNode(idx());
   const VarNodeId input =
-      staticInputVarNodeIds().at(idxNode.lowerBound() + _offset);
+      staticInputVarNodeIds().at(idxNode.lowerBound() - _offset);
 
   invariantGraph.replaceVarNode(outputVarNodeIds().front(), input);
   return true;

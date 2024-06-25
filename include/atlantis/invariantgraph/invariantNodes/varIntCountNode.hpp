@@ -20,6 +20,8 @@ class VarIntCountNode : public InvariantNode {
 
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
+  [[nodiscard]] bool replace(InvariantGraph&) override;
+
   [[nodiscard]] std::vector<VarNodeId> haystack() const;
 
   [[nodiscard]] VarNodeId needle() const;

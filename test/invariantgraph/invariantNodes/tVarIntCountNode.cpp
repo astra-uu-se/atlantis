@@ -82,11 +82,9 @@ TEST_F(VarIntCountNodeTest, application) {
 
 TEST_F(VarIntCountNodeTest, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  for (size_t i = 0; i < inputs.size() - 1; ++i) {
-    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-    _invariantGraph->varNode(inputs.at(i)).fixToValue(Int{0});
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  }
+  EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+  _invariantGraph->varNode(needle).fixToValue(Int{2});
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
   EXPECT_TRUE(invNode().replace(*_invariantGraph));
   invNode().deactivate(*_invariantGraph);

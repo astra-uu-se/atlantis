@@ -10,9 +10,43 @@
 
 namespace atlantis::invariantgraph {
 
+static std::pair<std::vector<Int>, std::vector<VarNodeId>> fixInputs(
+    std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars) {
+  if (coeffs.size() != vars.size()) {
+    throw std::runtime_error("Number of coefficients and variables must match");
+  }
+  for (size_t i = 0; i < coeffs.size() - 1; ++i) {
+    if (coeffs.at(i) == 0) {
+      continue;
+    }
+    for (size_t j = i + 1; j < coeffs.size(); ++j) {
+      if (vars.at(i) == vars.at(j)) {
+        coeffs.at(i) += coeffs.at(j);
+        coeffs.at(j) = 0;
+      }
+    }
+  }
+  for (Int i = static_cast<Int>(coeffs.size()) - 1; i >= 0; --i) {
+    if (coeffs.at(i) == 0) {
+      coeffs.erase(coeffs.begin() + i);
+      vars.erase(vars.begin() + i);
+    }
+  }
+  return {std::move(coeffs), std::move(vars)};
+}
+
+BoolLinearNode::BoolLinearNode(
+    std::pair<std::vector<Int>, std::vector<VarNodeId>>&& coeffsAndVars,
+    VarNodeId output, Int offset)
+    : InvariantNode({output}, std::move(coeffsAndVars.second)),
+      _coeffs(std::move(coeffsAndVars.first)),
+      _offset(offset) {}
+
 BoolLinearNode::BoolLinearNode(std::vector<Int>&& coeffs,
-                               std::vector<VarNodeId>&& vars, VarNodeId output)
-    : InvariantNode({output}, std::move(vars)), _coeffs(std::move(coeffs)) {}
+                               std::vector<VarNodeId>&& vars, VarNodeId output,
+                               Int offset)
+    : BoolLinearNode(fixInputs(std::move(coeffs), std::move(vars)), output,
+                     offset) {}
 
 void BoolLinearNode::updateState(InvariantGraph& graph) {
   std::vector<Int> indicesToRemove;
@@ -21,12 +55,13 @@ void BoolLinearNode::updateState(InvariantGraph& graph) {
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
     const auto& inputNode = graph.varNodeConst(staticInputVarNodeIds().at(i));
     if (inputNode.isFixed()) {
-      _offset += _coeffs.at(i) * (inputNode.inDomain(true) ? 1 : 0);
+      _offset += inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
       indicesToRemove.emplace_back(i);
     }
   }
-  for (Int i = indicesToRemove.size() - 1; i >= 0; --i) {
-    removeStaticInputVarNode(graph.varNode(indicesToRemove.at(i)));
+  for (Int i = static_cast<Int>(indicesToRemove.size()) - 1; i >= 0; --i) {
+    removeStaticInputVarNode(
+        graph.varNode(staticInputVarNodeIds().at(indicesToRemove.at(i))));
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
   if (staticInputVarNodeIds().size() == 0) {
