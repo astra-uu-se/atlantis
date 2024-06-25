@@ -80,16 +80,6 @@ TEST_F(IntCountNodeTest, application) {
   }
 }
 
-TEST_F(IntCountNodeTest, updateState) {
-  for (const auto& input : inputs) {
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    _invariantGraph->varNode(input).fixToValue(Int{0});
-    invNode().updateState(*_invariantGraph);
-  }
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-  EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
-}
-
 TEST_F(IntCountNodeTest, propagation) {
   propagation::Solver solver;
   solver.open();

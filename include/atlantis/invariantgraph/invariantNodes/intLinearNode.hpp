@@ -30,10 +30,6 @@ class IntLinearNode : public InvariantNode {
 
   void updateState(InvariantGraph&) override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
-
-  bool replace(InvariantGraph& graph) override;
-
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 };
 }  // namespace atlantis::invariantgraph

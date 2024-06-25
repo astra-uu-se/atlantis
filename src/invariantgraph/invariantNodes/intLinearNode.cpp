@@ -7,6 +7,7 @@
 #include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/propagation/views/scalarView.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -70,35 +71,17 @@ void IntLinearNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool IntLinearNode::canBeReplaced(const InvariantGraph& invariantGraph) const {
-  size_t numFree = 0;
-  for (const auto& input : staticInputVarNodeIds()) {
-    numFree += invariantGraph.varNodeConst(input).isFixed() ? 0 : 1;
-    if (numFree > 1) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool IntLinearNode::replace(InvariantGraph& invariantGraph) {
-  if (!canBeReplaced(invariantGraph)) {
-    return false;
-  }
-  if (_coeffs.front() == 1 && _offset == 0) {
-    invariantGraph.replaceVarNode(outputVarNodeIds().front(),
-                                  staticInputVarNodeIds().front());
-  } else {
-    invariantGraph.addInvariantNode(std::make_unique<IntScalarNode>(
-        staticInputVarNodeIds().front(), outputVarNodeIds().front(),
-        _coeffs.front(), _offset));
-  }
-  return true;
-}
-
 void IntLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
                                        propagation::SolverBase& solver) {
-  if (_offset != 0) {
+  if (staticInputVarNodeIds().empty()) {
+    return;
+  } else if (staticInputVarNodeIds().size() == 1) {
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(solver.makeIntView<propagation::ScalarView>(
+            solver, invariantGraph.varId(staticInputVarNodeIds().front()),
+            _coeffs.front(), _offset));
+    return;
+  } else if (_offset == 0) {
     makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
     assert(invariantGraph.varId(outputVarNodeIds().front()).idType ==
            propagation::VarIdType::var);
@@ -112,6 +95,9 @@ void IntLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
 
 void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
                                  propagation::SolverBase& solver) {
+  if (staticInputVarNodeIds().size() <= 1) {
+    return;
+  }
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
 

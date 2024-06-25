@@ -5,6 +5,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/propagation/invariants/boolLinear.hpp"
+#include "atlantis/propagation/views/ifThenElseConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/views/scalarView.hpp"
 
@@ -72,7 +73,15 @@ void BoolLinearNode::updateState(InvariantGraph& graph) {
 
 void BoolLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
                                         propagation::SolverBase& solver) {
-  if (_offset != 0) {
+  if (staticInputVarNodeIds().empty()) {
+    return;
+  }
+  if (staticInputVarNodeIds().size() == 1) {
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(solver.makeIntView<propagation::IfThenElseConst>(
+            solver, invariantGraph.varId(staticInputVarNodeIds().front()),
+            _offset + _coeffs.front(), _offset));
+  } else if (_offset != 0) {
     makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
   } else if (_intermediate == propagation::NULL_ID) {
     _intermediate = solver.makeIntVar(0, 0, 0);
@@ -84,6 +93,9 @@ void BoolLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
 
 void BoolLinearNode::registerNode(InvariantGraph& invariantGraph,
                                   propagation::SolverBase& solver) {
+  if (staticInputVarNodeIds().size() <= 1) {
+    return;
+  }
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
 

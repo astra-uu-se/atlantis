@@ -59,7 +59,7 @@ TEST_F(IntDivNodeTest, application) {
 TEST_F(IntDivNodeTest, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-  _invariantGraph->varNode(denominator).fixToValue(Int{0});
+  _invariantGraph->varNode(denominator).fixToValue(Int{1});
   EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
   EXPECT_TRUE(invNode().replace(*_invariantGraph));
   invNode().deactivate(*_invariantGraph);
