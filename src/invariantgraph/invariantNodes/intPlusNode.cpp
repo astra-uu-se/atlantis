@@ -29,9 +29,11 @@ void IntPlusNode::updateState(InvariantGraph& graph) {
 }
 
 bool IntPlusNode::canBeReplaced(const InvariantGraph& graph) const {
-  return std::any_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const auto& input) { return graph.varNodeConst(input).isFixed(); });
+  return state() == InvariantNodeState::ACTIVE &&
+         std::any_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const auto& input) {
+                       return graph.varNodeConst(input).isFixed();
+                     });
 }
 
 bool IntPlusNode::replace(InvariantGraph& graph) {

@@ -37,7 +37,8 @@ void IntTimesNode::updateState(InvariantGraph& graph) {
 }
 
 bool IntTimesNode::canBeReplaced(const InvariantGraph&) const {
-  return staticInputVarNodeIds().size() <= 1;
+  return state() == InvariantNodeState::ACTIVE &&
+         staticInputVarNodeIds().size() <= 1;
 }
 
 bool IntTimesNode::replace(InvariantGraph& graph) {

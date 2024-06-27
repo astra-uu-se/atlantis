@@ -27,15 +27,8 @@ class InvariantGraph {
 
   std::vector<std::unique_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
-  std::stack<InvariantNodeId> _propagationStack{};
-  std::vector<bool> _invIsOnPropStack{};
-  std::vector<bool> _impIsOnPropStack{};
 
   void populateRootNode();
-
-  bool isOnPropStack(InvariantNodeId);
-  void pushToPropStack(InvariantNodeId);
-  void pushInvariantsToPropStack(VarNodeId);
 
  protected:
   propagation::VarId _totalViolationVarId;
@@ -107,7 +100,6 @@ class InvariantGraph {
    */
   void replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId);
 
-  void fixpoint();
   void replaceInvariantNodes();
 
   InvariantNodeId addImplicitConstraintNode(

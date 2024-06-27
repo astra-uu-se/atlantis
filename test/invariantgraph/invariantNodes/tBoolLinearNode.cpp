@@ -9,17 +9,24 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
-class BoolLinearNodeTest : public NodeTestBase<BoolLinearNode> {
+class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
  public:
   size_t numInputs = 3;
   std::vector<VarNodeId> inputs{};
   std::vector<Int> coeffs{};
-  VarNodeId output{NULL_NODE_ID};
+  VarNodeId outputVar{NULL_NODE_ID};
+  std::string outputIdentifier{"output"};
 
-  Int computeOutput(const std::vector<Int>& inputVals) {
+  bool shouldBeSubsumed() const { return _mode == 1; }
+
+  Int computeOutput(propagation::Solver& solver) {
     Int sum = 0;
-    for (size_t i = 0; i < inputVals.size(); ++i) {
-      sum += inputVals.at(i) == 0 ? coeffs.at(i) : 0;
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      if (varNode(inputs.at(i)).isFixed()) {
+        sum += varNode(inputs.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
+      } else {
+        sum += solver.currentValue(varId(inputs.at(i))) == 0 ? coeffs.at(i) : 0;
+      }
     }
     return sum;
   }
@@ -32,28 +39,31 @@ class BoolLinearNodeTest : public NodeTestBase<BoolLinearNode> {
     Int maxSum = 0;
     for (size_t i = 0; i < numInputs; ++i) {
       inputs.push_back(retrieveBoolVarNode("input" + std::to_string(i)));
+      if (shouldBeSubsumed()) {
+        _invariantGraph->varNode(inputs.back()).fixToValue(bool{i % 2 == 0});
+      }
       coeffs.push_back((i + 1) * (i % 2 == 0 ? -1 : 1));
       minSum += std::min<Int>(coeffs.back(), 0);
       maxSum += std::max<Int>(coeffs.back(), 0);
     }
 
-    output = retrieveIntVarNode(minSum, maxSum, "output");
+    outputVar = retrieveIntVarNode(minSum, maxSum, outputIdentifier);
 
     createInvariantNode(std::vector<Int>(coeffs),
-                        std::vector<VarNodeId>(inputs), output);
+                        std::vector<VarNodeId>(inputs), outputVar);
   }
 };
 
-TEST_F(BoolLinearNodeTest, construction) {
+TEST_P(BoolLinearNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
   EXPECT_THAT(invNode().coeffs(), ContainerEq(coeffs));
   EXPECT_THAT(invNode().staticInputVarNodeIds(), ContainerEq(inputs));
-  EXPECT_THAT(invNode().outputVarNodeIds(), std::vector<VarNodeId>{output});
+  EXPECT_THAT(invNode().outputVarNodeIds(), std::vector<VarNodeId>{outputVar});
 }
 
-TEST_F(BoolLinearNodeTest, application) {
+TEST_P(BoolLinearNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -67,47 +77,62 @@ TEST_F(BoolLinearNodeTest, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // inputs and output
+  // inputs and outputVar
   EXPECT_EQ(solver.searchVars().size(), inputs.size());
 
-  // inputs and output
+  // inputs and outputVar
   EXPECT_EQ(solver.numVars(), inputs.size() + 1);
 
   // linear invariant
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
-TEST_F(BoolLinearNodeTest, updateState) {
-  for (const auto& input : inputs) {
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    _invariantGraph->varNode(input).fixToValue(bool{false});
-    invNode().updateState(*_invariantGraph);
+TEST_P(BoolLinearNodeTestFixture, updateState) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeSubsumed()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_TRUE(varNode(outputVar).isFixed());
+    Int expected = 0;
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      expected += varNode(inputs.at(i)).lowerBound() == 0 ? coeffs.at(i) : 0;
+    }
+    const Int actual = varNode(outputVar).lowerBound();
+    EXPECT_EQ(expected, actual);
+  } else {
+    EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_FALSE(varNode(outputVar).isFixed());
   }
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-  EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
 }
 
-TEST_F(BoolLinearNodeTest, propagation) {
+TEST_P(BoolLinearNodeTestFixture, propagation) {
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
+  _invariantGraph->apply(solver);
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputs.size());
-  std::vector<propagation::VarId> inputVars;
-  inputVars.reserve(inputs.size());
-  for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
-    inputVars.emplace_back(varId(varNodeId));
+  VarNode& outputNode = varNode(outputIdentifier);
+  if (outputNode.isFixed()) {
+    Int expected = 0;
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      expected += varNode(inputs.at(i)).lowerBound() == 0 ? coeffs.at(i) : 0;
+    }
+    const Int actual = varNode(outputVar).lowerBound();
+    EXPECT_EQ(expected, actual);
+    return;
   }
 
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId =
-      varId(invNode().outputVarNodeIds().front());
+  std::vector<propagation::VarId> inputVars;
+  for (const auto& nId : inputs) {
+    if (!varNode(nId).isFixed()) {
+      EXPECT_NE(varId(nId), propagation::NULL_ID);
+      inputVars.emplace_back(varId(nId));
+    }
+  }
 
-  solver.close();
+  EXPECT_FALSE(inputVars.empty());
+
+  const propagation::VarId outputId = varId(outputIdentifier);
+  EXPECT_NE(outputId, propagation::NULL_ID);
+
   std::vector<Int> inputVals = makeInputVals(solver, inputVars);
 
   while (increaseNextVal(solver, inputVars, inputVals)) {
@@ -120,9 +145,13 @@ TEST_F(BoolLinearNodeTest, propagation) {
     solver.endProbe();
 
     const Int actual = solver.currentValue(outputId);
-    const Int expected = computeOutput(inputVals);
+    const Int expected = computeOutput(solver);
 
     EXPECT_EQ(actual, expected);
   }
 }
+
+INSTANTIATE_TEST_CASE_P(BoolLinearNodeTest, BoolLinearNodeTestFixture,
+                        ::testing::Values(0, 1, 2, 3));
+
 }  // namespace atlantis::testing

@@ -83,12 +83,15 @@ class FznTestBase : public ::testing::Test {
                        std::vector<Int>& inputVals) const {
     EXPECT_EQ(inputIdentifiers.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
-      if (inputVals.at(i) <
-          _solver->upperBound(varId(inputIdentifiers.at(i)))) {
+      const propagation::VarId vId = varId(inputIdentifiers.at(i));
+      if (vId == propagation::NULL_ID) {
+        continue;
+      }
+      if (inputVals.at(i) < _solver->upperBound(vId)) {
         ++inputVals.at(i);
         return true;
       }
-      inputVals.at(i) = _solver->lowerBound(varId(inputIdentifiers.at(i)));
+      inputVals.at(i) = _solver->lowerBound(vId);
     }
     return false;
   }
@@ -97,7 +100,9 @@ class FznTestBase : public ::testing::Test {
                   const std::vector<Int>& vals) const {
     EXPECT_EQ(inputIdentifiers.size(), vals.size());
     for (size_t i = 0; i < inputIdentifiers.size(); ++i) {
-      _solver->setValue(varId(inputIdentifiers.at(i)), vals.at(i));
+      if (varId(inputIdentifiers.at(i)) != propagation::NULL_ID) {
+        _solver->setValue(varId(inputIdentifiers.at(i)), vals.at(i));
+      }
     }
   }
 

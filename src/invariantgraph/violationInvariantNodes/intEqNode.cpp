@@ -22,7 +22,7 @@ void IntEqNode::registerOutputVars(InvariantGraph& invariantGraph,
 }
 
 bool IntEqNode::canBeReplaced(const InvariantGraph& invariantGraph) const {
-  if (isReified()) {
+  if (state() != InvariantNodeState::ACTIVE || isReified()) {
     return false;
   }
   if (!shouldHold()) {

@@ -7,38 +7,60 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class ArrayVarElement2dNodeTest : public NodeTestBase<ArrayVarElement2dNode> {
+class ArrayVarElement2dNodeTestFixture
+    : public NodeTestBase<ArrayVarElement2dNode> {
  public:
-  VarNodeId x00{NULL_NODE_ID};
-  VarNodeId x01{NULL_NODE_ID};
-  VarNodeId x10{NULL_NODE_ID};
-  VarNodeId x11{NULL_NODE_ID};
+  std::vector<std::vector<VarNodeId>> varMatrix;
 
   VarNodeId idx1{NULL_NODE_ID};
   VarNodeId idx2{NULL_NODE_ID};
   VarNodeId output{NULL_NODE_ID};
+  std::string outputIdentifier{"output"};
 
   Int offsetIdx1 = 1;
   Int offsetIdx2 = 1;
 
+  bool isIntElement() const { return _mode <= 2; }
+  bool idx1ShouldBeReplaced() const { return _mode == 1 || _mode == 4; }
+  bool idx2ShouldBeReplaced() const { return _mode == 2 || _mode == 5; }
+  bool shouldBeReplaced() const {
+    return idx1ShouldBeReplaced() || idx2ShouldBeReplaced();
+  }
+
   void SetUp() override {
     NodeTestBase::SetUp();
-    x00 = retrieveIntVarNode(3, 10, "x00");
-    x01 = retrieveIntVarNode(2, 11, "x01");
-    x10 = retrieveIntVarNode(1, 9, "x10");
-    x11 = retrieveIntVarNode(3, 5, "x11");
-    idx1 = retrieveIntVarNode(1, 2, "idx1");
-    idx2 = retrieveIntVarNode(1, 2, "idx2");
-    output = retrieveIntVarNode(0, 10, "output");
 
-    std::vector<std::vector<VarNodeId>> argMatrix{{x00, x01}, {x10, x11}};
+    if (isIntElement()) {
+      varMatrix = {
+          {retrieveIntVarNode(-2, -1, "x00"), retrieveIntVarNode(-1, 0, "x01")},
+          {retrieveIntVarNode(0, 1, "x10"), retrieveIntVarNode(1, 2, "x11")}};
+      output = retrieveIntVarNode(-2, 2, "output");
+    } else {
+      varMatrix = {{retrieveBoolVarNode("x00"), retrieveBoolVarNode("x01")},
+                   {retrieveBoolVarNode("x10"), retrieveBoolVarNode("x11")}};
+      output = retrieveBoolVarNode("output");
+    }
 
-    createInvariantNode(idx1, idx2, std::move(argMatrix), output, offsetIdx1,
-                        offsetIdx2);
+    idx1 = retrieveIntVarNode(
+        offsetIdx1,
+        idx1ShouldBeReplaced()
+            ? offsetIdx1
+            : (offsetIdx1 + static_cast<Int>(varMatrix.size()) - 1),
+        "idx1");
+    idx2 = retrieveIntVarNode(
+        offsetIdx2,
+        idx2ShouldBeReplaced()
+            ? offsetIdx2
+            : (offsetIdx2 + static_cast<Int>(varMatrix.front().size()) - 1),
+        "idx2");
+
+    createInvariantNode(idx1, idx2,
+                        std::vector<std::vector<VarNodeId>>{varMatrix}, output,
+                        offsetIdx1, offsetIdx2);
   }
 };
 
-TEST_F(ArrayVarElement2dNodeTest, construction) {
+TEST_P(ArrayVarElement2dNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -48,14 +70,17 @@ TEST_F(ArrayVarElement2dNodeTest, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 4);
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(0), x00);
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(1), x01);
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(2), x10);
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(3), x11);
+  size_t i = 0;
+  for (const auto& row : varMatrix) {
+    for (const auto& varNodeId : row) {
+      EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(i), varNodeId);
+      ++i;
+    }
+  }
+  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), i);
 }
 
-TEST_F(ArrayVarElement2dNodeTest, application) {
+TEST_P(ArrayVarElement2dNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -80,63 +105,48 @@ TEST_F(ArrayVarElement2dNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
-TEST_F(ArrayVarElement2dNodeTest, replace1) {
+TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-  _invariantGraph->varNode(idx1).fixToValue(Int{1});
-  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-  EXPECT_TRUE(invNode().replace(*_invariantGraph));
-  invNode().deactivate(*_invariantGraph);
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeReplaced()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_TRUE(invNode().replace(*_invariantGraph));
+    invNode().deactivate(*_invariantGraph);
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  } else {
+    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+  }
 }
 
-TEST_F(ArrayVarElement2dNodeTest, replace2) {
-  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-  _invariantGraph->varNode(idx2).fixToValue(Int{1});
-  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-  EXPECT_TRUE(invNode().replace(*_invariantGraph));
-  invNode().deactivate(*_invariantGraph);
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-}
-
-TEST_F(ArrayVarElement2dNodeTest, propagation) {
+TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
+  _invariantGraph->apply(solver);
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
-  for (const auto& staticInputVarNodeId : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(staticInputVarNodeId), propagation::NULL_ID);
-  }
-
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 4);
-  for (const auto& dynamicInputVarNodeId : invNode().dynamicInputVarNodeIds()) {
-    EXPECT_NE(varId(dynamicInputVarNodeId), propagation::NULL_ID);
-  }
-
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId =
-      varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId = varId(outputIdentifier);
+  EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<propagation::VarId> inputVars;
-  inputVars.emplace_back(varId(invNode().idx1()));
-  inputVars.emplace_back(varId(invNode().idx2()));
-  for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
-    inputVars.emplace_back(varId(varNodeId));
-  }
-
-  solver.close();
   std::vector<Int> inputVals;
-  inputVals.reserve(inputVars.size());
 
-  for (const auto& var : inputVars) {
-    inputVals.emplace_back(solver.lowerBound(var));
+  for (const auto& nId : std::array<VarNodeId, 2>{idx1, idx2}) {
+    inputVars.emplace_back(varNode(nId).isFixed() ? propagation::NULL_ID
+                                                  : varId(nId));
+    inputVals.emplace_back(inputVars.back() == propagation::NULL_ID
+                               ? varNode(nId).lowerBound()
+                               : solver.lowerBound(inputVars.back()));
   }
+  for (const auto& row : varMatrix) {
+    for (const auto& nId : row) {
+      inputVars.emplace_back(varNode(nId).isFixed() ? propagation::NULL_ID
+                                                    : varId(nId));
+      inputVals.emplace_back(inputVars.back() == propagation::NULL_ID
+                                 ? varNode(nId).lowerBound()
+                                 : solver.lowerBound(inputVars.back()));
+    }
+  }
+
+  EXPECT_EQ(inputVars.size(), inputVals.size());
 
   while (increaseNextVal(solver, inputVars, inputVals)) {
     solver.beginMove();
@@ -151,9 +161,15 @@ TEST_F(ArrayVarElement2dNodeTest, propagation) {
     const Int row = inputVals.at(0) - offsetIdx1;
     const Int col = inputVals.at(1) - offsetIdx2;
 
-    const Int index = 2 + (row * 2 + col);
+    const Int index =
+        2 + (row * static_cast<Int>(varMatrix.front().size()) + col);
 
     EXPECT_EQ(actual, inputVals.at(index));
   }
 }
+
+INSTANTIATE_TEST_CASE_P(ArrayVarElement2dNodeTest,
+                        ArrayVarElement2dNodeTestFixture,
+                        ::testing::Values(0, 1, 2, 3, 4, 5));
+
 }  // namespace atlantis::testing

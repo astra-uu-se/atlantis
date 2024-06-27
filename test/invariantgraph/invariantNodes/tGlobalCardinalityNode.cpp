@@ -10,40 +10,57 @@ using namespace atlantis::invariantgraph;
 
 using ::testing::ContainerEq;
 
-static std::vector<Int> computeOutputs(const std::vector<Int>& values,
-                                       const std::vector<Int>& cover) {
-  std::vector<Int> outputs(cover.size(), 0);
-  for (Int value : values) {
-    for (size_t j = 0; j < cover.size(); ++j) {
-      if (value == cover.at(j)) {
-        outputs.at(j)++;
-      }
-    }
-  }
-  return outputs;
-}
-
-class GlobalCardinalityNodeTest : public NodeTestBase<GlobalCardinalityNode> {
+class GlobalCardinalityNodeTestFixture
+    : public NodeTestBase<GlobalCardinalityNode> {
  public:
   std::vector<VarNodeId> inputs{};
-  const std::vector<Int> cover{2, 4, 6};
+  const std::vector<Int> cover{2, 4};
   std::vector<VarNodeId> outputs{};
+  std::vector<std::string> outputIdentifiers;
+
+  std::vector<Int> computeOutputs(propagation::Solver& solver) {
+    std::vector<Int> outputs(cover.size(), 0);
+    for (const auto& nId : inputs) {
+      const Int value = varNode(nId).isFixed()
+                            ? varNode(nId).lowerBound()
+                            : solver.currentValue(varId(nId));
+      for (size_t j = 0; j < cover.size(); ++j) {
+        if (value == cover.at(j)) {
+          outputs.at(j)++;
+        }
+      }
+    }
+    return outputs;
+  }
+
+  bool shouldBeSubsumed() const { return _mode == 1; }
+  bool shouldBeReplaced() const { return _mode == 2; }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputs = {retrieveIntVarNode(2, 6, "input1"),
-              retrieveIntVarNode(2, 6, "input2")};
-    outputs = {
-        retrieveIntVarNode(0, static_cast<Int>(inputs.size()), "output1"),
-        retrieveIntVarNode(0, static_cast<Int>(inputs.size()), "output2"),
-        retrieveIntVarNode(0, static_cast<Int>(inputs.size()), "output3")};
+    if (shouldBeSubsumed()) {
+      inputs = {retrieveIntVarNode(2, 2, "input1"),
+                retrieveIntVarNode(std::vector<Int>{1, 3, 5}, "input2")};
+    } else if (shouldBeReplaced()) {
+      inputs = {retrieveIntVarNode(1, 3, "input1"),
+                retrieveIntVarNode(1, 3, "input2")};
+    } else {
+      inputs = {retrieveIntVarNode(1, 5, "input1"),
+                retrieveIntVarNode(1, 5, "input2")};
+    }
+
+    for (size_t i = 0; i < cover.size(); ++i) {
+      outputIdentifiers.emplace_back("output" + std::to_string(i + 1));
+      outputs.emplace_back(retrieveIntVarNode(
+          0, static_cast<Int>(inputs.size()), outputIdentifiers.back()));
+    }
 
     createInvariantNode(std::vector<VarNodeId>{inputs}, std::vector<Int>{cover},
                         std::vector<VarNodeId>{outputs});
   }
 };
 
-TEST_F(GlobalCardinalityNodeTest, construction) {
+TEST_P(GlobalCardinalityNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -56,7 +73,7 @@ TEST_F(GlobalCardinalityNodeTest, construction) {
   EXPECT_THAT(outputs, ContainerEq(invNode().outputVarNodeIds()));
 }
 
-TEST_F(GlobalCardinalityNodeTest, application) {
+TEST_P(GlobalCardinalityNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -81,67 +98,91 @@ TEST_F(GlobalCardinalityNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
-TEST_F(GlobalCardinalityNodeTest, updateState) {
-  for (const auto& input : inputs) {
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    for (const Int c : cover) {
-      _invariantGraph->varNode(input).removeValue(c);
-    }
-    invNode().updateState(*_invariantGraph);
-  }
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-}
-
-TEST_F(GlobalCardinalityNodeTest, replace) {
+TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-  for (const auto& input : inputs) {
-    for (size_t j = 0; j < cover.size() - 1; ++j) {
-      _invariantGraph->varNode(input).removeValue(cover.at(j));
-    }
-  }
   invNode().updateState(*_invariantGraph);
-  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-  EXPECT_TRUE(invNode().replace(*_invariantGraph));
-  invNode().deactivate(*_invariantGraph);
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  if (shouldBeSubsumed()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    for (size_t i = 0; i < cover.size(); ++i) {
+      Int expected = 0;
+      for (const auto& input : inputs) {
+        expected +=
+            varNode(input).isFixed() && varNode(input).inDomain(cover.at(i))
+                ? 1
+                : 0;
+      }
+      const Int actual = varNode(outputs.at(i)).lowerBound();
+      EXPECT_EQ(expected, actual);
+    }
+  } else {
+    EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
+    size_t numFixed = 0;
+    for (const auto& outputVar : outputs) {
+      numFixed += varNode(outputVar).isFixed() ? 1 : 0;
+    }
+    EXPECT_LT(numFixed, outputs.size());
+  }
 }
 
-TEST_F(GlobalCardinalityNodeTest, propagation) {
+TEST_P(GlobalCardinalityNodeTestFixture, replace) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeReplaced()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_TRUE(invNode().replace(*_invariantGraph));
+    invNode().deactivate(*_invariantGraph);
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  } else {
+    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+  }
+}
+
+TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
+  _invariantGraph->apply(solver);
+
+  for (size_t i = 0; i < cover.size(); ++i) {
+    if (varNode(outputIdentifiers.at(i)).isFixed()) {
+      const Int actual = varNode(outputIdentifiers.at(i)).lowerBound();
+      Int expected = 0;
+      for (const auto& input : inputs) {
+        expected +=
+            varNode(input).isFixed() && varNode(input).inDomain(cover.at(i))
+                ? 1
+                : 0;
+      }
+      EXPECT_EQ(expected, actual);
+    }
+  }
+
+  std::vector<propagation::VarId> outputIds;
+  for (const auto& identifier : outputIdentifiers) {
+    outputIds.emplace_back(varNode(identifier).isFixed() ? propagation::NULL_ID
+                                                         : varId(identifier));
+  }
+  bool allNull = true;
+  for (const auto& outputId : outputIds) {
+    allNull = allNull && outputId == propagation::NULL_ID;
+  }
+
+  EXPECT_EQ(allNull, shouldBeSubsumed());
+  if (shouldBeSubsumed()) {
+    return;
+  }
 
   std::vector<propagation::VarId> inputVars;
-  for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    inputVars.emplace_back(varId(inputVarNodeId));
-  }
-  EXPECT_EQ(inputVars.size(), 2);
+  std::vector<Int> inputVals;
 
-  std::vector<propagation::VarId> outputVars;
-  for (const auto& countVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(countVarNodeId), propagation::NULL_ID);
-    outputVars.emplace_back(varId(countVarNodeId));
-  }
-  EXPECT_EQ(outputVars.size(), outputs.size());
-
-  const propagation::VarId violationId =
-      invNode().violationVarId(*_invariantGraph);
-
-  std::vector<Int> inputVals = makeInputVals(solver, inputVars);
-  std::vector<Int> countVals(outputVars.size());
-
-  std::vector<std::pair<Int, Int>> countBounds;
-  countBounds.reserve(outputVars.size());
-  for (const propagation::VarId& c : outputVars) {
-    countBounds.emplace_back(solver.lowerBound(c), solver.lowerBound(c));
+  for (const auto& nId : inputs) {
+    inputVars.emplace_back(varNode(nId).isFixed() ? propagation::NULL_ID
+                                                  : varId(nId));
+    inputVals.emplace_back(inputVars.back() == propagation::NULL_ID
+                               ? varNode(nId).lowerBound()
+                               : solver.lowerBound(inputVars.back()));
   }
 
-  solver.close();
+  EXPECT_EQ(inputVars.size(), inputVals.size());
 
   while (increaseNextVal(solver, inputVars, inputVals)) {
     solver.beginMove();
@@ -149,16 +190,27 @@ TEST_F(GlobalCardinalityNodeTest, propagation) {
     solver.endMove();
 
     solver.beginProbe();
-    solver.query(violationId);
+    for (const auto& outputId : outputIds) {
+      if (outputId != propagation::NULL_ID) {
+        solver.query(outputId);
+      }
+    }
     solver.endProbe();
 
-    const std::vector<Int> actual = computeOutputs(inputVals, cover);
+    const std::vector<Int> expected = computeOutputs(solver);
 
-    EXPECT_EQ(countVals.size(), outputVars.size());
-    for (size_t i = 0; i < countVals.size(); ++i) {
-      EXPECT_EQ(solver.currentValue(outputVars.at(i)), actual.at(i));
+    EXPECT_EQ(expected.size(), outputIds.size());
+    for (size_t i = 0; i < expected.size(); ++i) {
+      const Int actual = outputIds.at(i) == propagation::NULL_ID
+                             ? varNode(outputIdentifiers.at(i)).lowerBound()
+                             : solver.currentValue(outputIds.at(i));
+      EXPECT_EQ(actual, expected.at(i));
     }
   }
 }
+
+INSTANTIATE_TEST_CASE_P(GlobalCardinalityNodeTest,
+                        GlobalCardinalityNodeTestFixture,
+                        ::testing::Values(0, 1, 2));
 
 }  // namespace atlantis::testing

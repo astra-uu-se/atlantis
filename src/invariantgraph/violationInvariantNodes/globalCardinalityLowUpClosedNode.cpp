@@ -33,7 +33,7 @@ void GlobalCardinalityLowUpClosedNode::registerOutputVars(
 
 bool GlobalCardinalityLowUpClosedNode::canBeReplaced(
     const InvariantGraph&) const {
-  return true;
+  return state() == InvariantNodeState::ACTIVE;
 }
 
 bool GlobalCardinalityLowUpClosedNode::replace(InvariantGraph& invariantGraph) {

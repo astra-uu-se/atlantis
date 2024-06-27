@@ -28,7 +28,8 @@ VarNodeId VarIntCountNode::needle() const {
 }
 
 bool VarIntCountNode::canBeReplaced(const InvariantGraph& graph) const {
-  return graph.varNodeConst(needle()).isFixed();
+  return state() == InvariantNodeState::ACTIVE &&
+         graph.varNodeConst(needle()).isFixed();
 }
 
 bool VarIntCountNode::replace(InvariantGraph& graph) {

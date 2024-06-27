@@ -5,6 +5,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/propagation/invariants/minSparse.hpp"
+#include "atlantis/propagation/views/intMinView.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -16,11 +17,6 @@ ArrayIntMinimumNode::ArrayIntMinimumNode(std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
     : InvariantNode({output}, std::move(vars)),
       _ub(std::numeric_limits<Int>::max()) {}
-
-void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& invariantGraph,
-                                             propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
-}
 
 void ArrayIntMinimumNode::updateState(InvariantGraph& graph) {
   Int lb = _ub;
@@ -47,8 +43,16 @@ void ArrayIntMinimumNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool ArrayIntMinimumNode::canBeReplaced(const InvariantGraph&) const {
-  return staticInputVarNodeIds().size() <= 1;
+bool ArrayIntMinimumNode::canBeReplaced(const InvariantGraph& graph) const {
+  if (state() != InvariantNodeState::ACTIVE ||
+      staticInputVarNodeIds().size() > 1) {
+    return false;
+  }
+  if (staticInputVarNodeIds().empty()) {
+    return true;
+  }
+  return _ub >=
+         graph.varNodeConst(staticInputVarNodeIds().front()).upperBound();
 }
 
 bool ArrayIntMinimumNode::replace(InvariantGraph& invariantGraph) {
@@ -62,8 +66,25 @@ bool ArrayIntMinimumNode::replace(InvariantGraph& invariantGraph) {
   return true;
 }
 
+void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                             propagation::SolverBase& solver) {
+  if (staticInputVarNodeIds().empty()) {
+    return;
+  } else if (staticInputVarNodeIds().size() == 1) {
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(solver.makeIntView<propagation::IntMinView>(
+            solver, invariantGraph.varId(staticInputVarNodeIds().front()),
+            _ub));
+  } else {
+    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+  }
+}
+
 void ArrayIntMinimumNode::registerNode(InvariantGraph& invariantGraph,
                                        propagation::SolverBase& solver) {
+  if (staticInputVarNodeIds().size() <= 1) {
+    return;
+  }
   std::vector<propagation::VarId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(solverVars),

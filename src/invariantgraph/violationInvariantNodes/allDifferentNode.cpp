@@ -48,6 +48,9 @@ void AllDifferentNode::updateState(InvariantGraph& invariantGraph) {
 
 bool AllDifferentNode::canBeReplaced(
     const InvariantGraph& invariantGraph) const {
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
   if (staticInputVarNodeIds().size() <= 1) {
     return true;
   }

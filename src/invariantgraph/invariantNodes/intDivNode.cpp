@@ -10,7 +10,8 @@ IntDivNode::IntDivNode(VarNodeId numerator, VarNodeId denominator,
     : InvariantNode({quotient}, {numerator, denominator}) {}
 
 bool IntDivNode::canBeReplaced(const InvariantGraph& graph) const {
-  return graph.varNodeConst(denominator()).isFixed() &&
+  return state() == InvariantNodeState::ACTIVE &&
+         graph.varNodeConst(denominator()).isFixed() &&
          graph.varNodeConst(denominator()).lowerBound() == 1;
 }
 
