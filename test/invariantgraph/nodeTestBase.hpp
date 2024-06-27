@@ -18,7 +18,7 @@ using namespace atlantis::invariantgraph;
 template <class InvNode>
 class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
  protected:
-  unsgined char _mode{0};
+  unsigned char _mode{0};
 
   std::unique_ptr<InvariantGraph> _invariantGraph;
 
@@ -26,7 +26,7 @@ class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
 
   void SetUp() override {
     _invariantGraph = std::make_unique<InvariantGraph>();
-    mode = GetParam();
+    _mode = GetParam();
   }
 
   template <typename... Args>
@@ -100,19 +100,25 @@ class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
   void addInputVarsToSolver(propagation::Solver& solver) {
     EXPECT_EQ(solver.numVars(), 0);
     for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
-      EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
       const auto& [lb, ub] = varNode(varNodeId).bounds();
-      varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+      if (lb != ub) {
+        EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
+        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+      } else if (varId(varNodeId) == propagation::NULL_ID) {
+        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+      }
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
     for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
-      EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
       const auto& [lb, ub] = varNode(varNodeId).bounds();
-      varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+      if (lb != ub) {
+        EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
+        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+      } else if (varId(varNodeId) == propagation::NULL_ID) {
+        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+      }
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
-    EXPECT_EQ(solver.numVars(), invNode().staticInputVarNodeIds().size() +
-                                    invNode().dynamicInputVarNodeIds().size());
     expectInputsRegistered(invNode(), solver);
   }
 
@@ -123,17 +129,19 @@ class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
 
   void expectInputsRegistered(const InvariantNode& invNode,
                               const propagation::Solver& solver) {
-    EXPECT_EQ(solver.numVars(), invNode.staticInputVarNodeIds().size() +
-                                    invNode.dynamicInputVarNodeIds().size());
     std::vector<bool> registered(solver.numVars(), false);
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
-      EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      if (!varNode(varNodeId).isFixed()) {
+        EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      }
       registered.at(solverVarId(varNodeId) - 1) = true;
     }
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
-      EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      if (!varNode(varNodeId).isFixed()) {
+        EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      }
       registered.at(solverVarId(varNodeId) - 1) = true;
     }
     for (const bool r : registered) {
@@ -188,6 +196,9 @@ class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
                        std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size()) - 1; i >= 0; --i) {
+      if (inputVars.at(i) == propagation::NULL_ID) {
+        continue;
+      }
       if (inputVals.at(i) < solver.upperBound(inputVars.at(i))) {
         ++inputVals.at(i);
         return true;
@@ -202,7 +213,9 @@ class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
                   const std::vector<Int>& vals) {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
-      solver.setValue(inputVars.at(i), vals.at(i));
+      if (inputVars.at(i) != propagation::NULL_ID) {
+        solver.setValue(inputVars.at(i), vals.at(i));
+      }
     }
   }
 

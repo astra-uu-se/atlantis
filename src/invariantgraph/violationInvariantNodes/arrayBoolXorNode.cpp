@@ -43,7 +43,7 @@ void ArrayBoolXorNode::updateState(InvariantGraph& invariantGraph) {
 }
 
 bool ArrayBoolXorNode::canBeReplaced(const InvariantGraph&) const {
-  if (isReified() || !shouldHold()) {
+  if (state() != InvariantNodeState::ACTIVE || isReified() || !shouldHold()) {
     return false;
   }
   return staticInputVarNodeIds().size() <= 2;

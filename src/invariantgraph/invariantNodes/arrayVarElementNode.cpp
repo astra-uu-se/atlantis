@@ -17,7 +17,8 @@ void ArrayVarElementNode::registerOutputVars(InvariantGraph& invariantGraph,
 }
 
 bool ArrayVarElementNode::canBeReplaced(const InvariantGraph& graph) const {
-  return graph.varNodeConst(idx()).isFixed();
+  return state() == InvariantNodeState::ACTIVE &&
+         graph.varNodeConst(idx()).isFixed();
 }
 
 bool ArrayVarElementNode::replace(InvariantGraph& invariantGraph) {
@@ -26,7 +27,7 @@ bool ArrayVarElementNode::replace(InvariantGraph& invariantGraph) {
   }
   auto& idxNode = invariantGraph.varNode(idx());
   const VarNodeId input =
-      staticInputVarNodeIds().at(idxNode.lowerBound() - _offset);
+      dynamicInputVarNodeIds().at(idxNode.lowerBound() - _offset);
 
   invariantGraph.replaceVarNode(outputVarNodeIds().front(), input);
   return true;

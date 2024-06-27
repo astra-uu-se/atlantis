@@ -19,7 +19,7 @@ BoolEqNode::BoolEqNode(VarNodeId a, VarNodeId b, bool shouldHold,
       _breaksCycle(breaksCycle) {}
 
 bool BoolEqNode::canBeReplaced(const InvariantGraph& invariantGraph) const {
-  if (isReified()) {
+  if (state() != InvariantNodeState::ACTIVE || isReified()) {
     return false;
   }
   if (!shouldHold()) {

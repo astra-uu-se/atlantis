@@ -52,7 +52,8 @@ void BoolAllEqualNode::updateState(InvariantGraph& graph) {
 }
 
 bool BoolAllEqualNode::canBeReplaced(const InvariantGraph&) const {
-  return staticInputVarNodeIds().size() <= 2;
+  return state() == InvariantNodeState::ACTIVE &&
+         staticInputVarNodeIds().size() <= 2;
 }
 
 bool BoolAllEqualNode::replace(InvariantGraph& graph) {

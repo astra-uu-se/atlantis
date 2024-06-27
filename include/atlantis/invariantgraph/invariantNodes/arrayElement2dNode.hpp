@@ -25,14 +25,16 @@ class ArrayElement2dNode : public InvariantNode {
                      std::vector<std::vector<bool>>&& parMatrix,
                      VarNodeId output, Int offset1, Int offset2);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
-
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
 
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
   [[nodiscard]] bool replace(InvariantGraph& graph) override;
+
+  void registerOutputVars(InvariantGraph&,
+                          propagation::SolverBase& solver) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
 
   [[nodiscard]] VarNodeId idx1() const noexcept {
     return staticInputVarNodeIds().front();

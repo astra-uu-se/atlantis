@@ -29,10 +29,8 @@ IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold,
       _breaksCycle(breaksCycle) {}
 
 bool IntAllEqualNode::canBeReplaced(const InvariantGraph&) const {
-  if (staticInputVarNodeIds().size() <= 1) {
-    return true;
-  }
-  return false;
+  return state() == InvariantNodeState::ACTIVE &&
+         staticInputVarNodeIds().size() <= 1;
 }
 
 bool IntAllEqualNode::replace(InvariantGraph& invariantGraph) {

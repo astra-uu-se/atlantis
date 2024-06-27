@@ -32,8 +32,8 @@ void GlobalCardinalityNode::registerOutputVars(
 
 void GlobalCardinalityNode::updateState(InvariantGraph& graph) {
   std::vector<bool> coverIsFixed(_cover.size(), true);
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
+  std::vector<VarNodeId> inputsToRemove;
+  inputsToRemove.reserve(staticInputVarNodeIds().size());
   for (const auto& input : staticInputVarNodeIds()) {
     const auto& var = graph.varNodeConst(input);
     if (var.isFixed()) {
@@ -42,22 +42,28 @@ void GlobalCardinalityNode::updateState(InvariantGraph& graph) {
           ++_countOffsets[i];
         }
       }
-      varsToRemove.emplace_back(input);
+      inputsToRemove.emplace_back(input);
     } else {
       for (size_t i = 0; i < _cover.size(); ++i) {
         coverIsFixed[i] = coverIsFixed[i] && !var.inDomain(_cover[i]);
       }
     }
   }
-  for (const auto& input : varsToRemove) {
+  for (const auto& input : inputsToRemove) {
     removeStaticInputVarNode(graph.varNode(input));
   }
+  std::vector<VarNodeId> outputsToRemove;
+  outputsToRemove.reserve(outputVarNodeIds().size());
   for (Int i = static_cast<Int>(_cover.size()) - 1; i >= 0; --i) {
     if (coverIsFixed[i]) {
       graph.varNode(outputVarNodeIds()[i]).fixToValue(_countOffsets[i]);
       _countOffsets.erase(_countOffsets.begin() + i);
       _cover.erase(_cover.begin() + i);
+      outputsToRemove.emplace_back(outputVarNodeIds()[i]);
     }
+  }
+  for (const auto& output : outputsToRemove) {
+    removeOutputVarNode(graph.varNode(output));
   }
   if (_cover.empty()) {
     setState(InvariantNodeState::SUBSUMED);
@@ -65,7 +71,7 @@ void GlobalCardinalityNode::updateState(InvariantGraph& graph) {
 }
 
 bool GlobalCardinalityNode::canBeReplaced(const InvariantGraph&) const {
-  return _cover.size() <= 1;
+  return state() == InvariantNodeState::ACTIVE && _cover.size() <= 1;
 }
 
 bool GlobalCardinalityNode::replace(InvariantGraph& invariantGraph) {

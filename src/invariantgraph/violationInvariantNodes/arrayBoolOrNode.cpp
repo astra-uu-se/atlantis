@@ -63,7 +63,8 @@ void ArrayBoolOrNode::updateState(InvariantGraph& invariantGraph) {
 }
 
 bool ArrayBoolOrNode::canBeReplaced(const InvariantGraph&) const {
-  return staticInputVarNodeIds().size() <= 2;
+  return state() == InvariantNodeState::ACTIVE &&
+         staticInputVarNodeIds().size() <= 2;
 }
 
 bool ArrayBoolOrNode::replace(InvariantGraph& graph) {

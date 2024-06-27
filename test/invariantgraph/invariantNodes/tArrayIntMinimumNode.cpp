@@ -7,35 +7,65 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class ArrayIntMinimumNodeTest : public NodeTestBase<ArrayIntMinimumNode> {
+class ArrayIntMinimumNodeTestFixture
+    : public NodeTestBase<ArrayIntMinimumNode> {
  public:
-  std::vector<VarNodeId> inputs;
-  VarNodeId output{NULL_NODE_ID};
+  std::vector<VarNodeId> inputVars;
+  VarNodeId outputVar{NULL_NODE_ID};
+  std::string outputIdentifier{"output"};
+
+  bool shouldBeSubsumed() const { return _mode == 1; }
+  bool shouldBeReplaced() const { return _mode == 2; }
+
+  Int computeOutput(propagation::Solver& solver) {
+    Int val = std::numeric_limits<Int>::max();
+    for (const auto& input : inputVars) {
+      if (varId(input) == propagation::NULL_ID) {
+        val = std::min(val, varNode(input).upperBound());
+      } else {
+        val = std::min(val, solver.currentValue(varId(input)));
+      }
+    }
+    return val;
+  }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputs = {retrieveIntVarNode(-5, 2, "x1"), retrieveIntVarNode(-3, 3, "x2"),
-              retrieveIntVarNode(-2, 5, "x3")};
-    output = retrieveIntVarNode(-5, 5, "output");
 
-    createInvariantNode(std::vector<VarNodeId>{inputs}, output);
+    if (shouldBeSubsumed()) {
+      inputVars = {retrieveIntVarNode(-2, 5, "x1"),
+                   retrieveIntVarNode(-5, 2, "x2"),
+                   retrieveIntVarNode(-5, -5, "x3")};
+
+    } else if (shouldBeReplaced()) {
+      inputVars = {retrieveIntVarNode(-5, 2, "x1"),
+                   retrieveIntVarNode(2, 5, "x2"),
+                   retrieveIntVarNode(2, 2, "x3")};
+    } else {
+      inputVars = {retrieveIntVarNode(-5, 0, "x1"),
+                   retrieveIntVarNode(-2, -2, "x2"),
+                   retrieveIntVarNode(0, 5, "x3")};
+    }
+    outputVar = retrieveIntVarNode(-5, 5, outputIdentifier);
+
+    createInvariantNode(std::vector<VarNodeId>{inputVars}, outputVar);
   }
 };
 
-TEST_F(ArrayIntMinimumNodeTest, construction) {
+TEST_P(ArrayIntMinimumNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputs.size());
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), inputs.at(i));
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputVars.size());
+  for (size_t i = 0; i < inputVars.size(); ++i) {
+    EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), inputVars.at(i));
   }
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVar);
 }
 
-TEST_F(ArrayIntMinimumNodeTest, application) {
+TEST_P(ArrayIntMinimumNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -57,72 +87,73 @@ TEST_F(ArrayIntMinimumNodeTest, application) {
     ub = std::min(ub, solver.upperBound(varId(inputVarNodeId)));
   }
 
-  EXPECT_EQ(solver.lowerBound(varId(output)), lb);
-  EXPECT_EQ(solver.upperBound(varId(output)), ub);
+  EXPECT_EQ(solver.lowerBound(varId(outputVar)), lb);
+  EXPECT_EQ(solver.upperBound(varId(outputVar)), ub);
 
   // x1, x2, and x3
   EXPECT_EQ(solver.searchVars().size(), 3);
 
-  // x1, x2 and output
+  // x1, x2 and outputVar
   EXPECT_EQ(solver.numVars(), 4);
 
   // maxSparse
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
-TEST_F(ArrayIntMinimumNodeTest, updateState) {
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    _invariantGraph->varNode(inputs.at(i))
-        .fixToValue(_invariantGraph->varNode(inputs.at(i)).upperBound());
-    invNode().updateState(*_invariantGraph);
-    Int minVal = std::numeric_limits<Int>::max();
-    Int maxVal = std::numeric_limits<Int>::min();
-    for (const auto& var : inputs) {
-      minVal = std::min(minVal, _invariantGraph->varNode(var).lowerBound());
-      maxVal = std::max(maxVal, _invariantGraph->varNode(var).upperBound());
-    }
-    EXPECT_LE(minVal, _invariantGraph->varNode(output).lowerBound());
-    EXPECT_GE(maxVal, _invariantGraph->varNode(output).upperBound());
+TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
+  Int minVal = std::numeric_limits<Int>::min();
+  Int maxVal = std::numeric_limits<Int>::max();
+  for (const auto& var : inputVars) {
+    minVal = std::min(minVal, _invariantGraph->varNode(var).lowerBound());
+    maxVal = std::max(maxVal, _invariantGraph->varNode(var).upperBound());
   }
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-  EXPECT_TRUE(_invariantGraph->varNode(output).isFixed());
-}
-
-TEST_F(ArrayIntMinimumNodeTest, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  for (size_t i = 0; i < inputs.size() - 1; ++i) {
-    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-    _invariantGraph->varNode(inputs.at(i))
-        .fixToValue(_invariantGraph->varNode(inputs.at(i)).upperBound());
-    invNode().updateState(*_invariantGraph);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeSubsumed()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_TRUE(_invariantGraph->varNode(outputVar).isFixed());
+  } else {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   }
-  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-  EXPECT_TRUE(invNode().replace(*_invariantGraph));
-  invNode().deactivate(*_invariantGraph);
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  EXPECT_LE(minVal, _invariantGraph->varNode(outputVar).lowerBound());
+  EXPECT_GE(maxVal, _invariantGraph->varNode(outputVar).upperBound());
 }
 
-TEST_F(ArrayIntMinimumNodeTest, propagation) {
+TEST_P(ArrayIntMinimumNodeTestFixture, replace) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeReplaced()) {
+    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_TRUE(invNode().replace(*_invariantGraph));
+    invNode().deactivate(*_invariantGraph);
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  } else if (invNode().state() == InvariantNodeState::ACTIVE) {
+    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_FALSE(invNode().replace(*_invariantGraph));
+  }
+}
+
+TEST_P(ArrayIntMinimumNodeTestFixture, propagation) {
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
+  _invariantGraph->apply(solver);
 
   std::vector<propagation::VarId> inputVars;
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 3);
   for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
     EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
     inputVars.emplace_back(varId(inputVarNodeId));
   }
 
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId =
-      varId(invNode().outputVarNodeIds().front());
-  EXPECT_EQ(inputVars.size(), 3);
-  solver.close();
+  VarNode& outputNode = varNode(outputIdentifier);
+
+  if (outputNode.isFixed()) {
+    const Int expected = outputNode.lowerBound();
+    const Int actual = computeOutput(solver);
+    EXPECT_EQ(expected, actual);
+    return;
+  }
+  EXPECT_NE(varId(outputIdentifier), propagation::NULL_ID);
+
+  const propagation::VarId outputId = varId(outputIdentifier);
 
   std::vector<Int> inputVals = makeInputVals(solver, inputVars);
 
@@ -135,10 +166,13 @@ TEST_F(ArrayIntMinimumNodeTest, propagation) {
     solver.query(outputId);
     solver.endProbe();
 
-    const Int expected = *std::min_element(inputVals.begin(), inputVals.end());
+    const Int expected = computeOutput(solver);
     const Int actual = solver.currentValue(outputId);
     EXPECT_EQ(expected, actual);
   }
 }
+
+INSTANTIATE_TEST_CASE_P(ArrayIntMinimumNodeTest, ArrayIntMinimumNodeTestFixture,
+                        ::testing::Values(0, 1, 2, 3));
 
 }  // namespace atlantis::testing
