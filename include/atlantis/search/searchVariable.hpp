@@ -19,6 +19,9 @@ class SearchVar {
   [[nodiscard]] propagation::VarId solverId() const noexcept { return _varId; }
 
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
+  [[nodiscard]] const SearchDomain& constDomain() const noexcept {
+    return _domain;
+  }
   [[nodiscard]] bool isFixed() const noexcept { return _domain.isFixed(); }
 };
 

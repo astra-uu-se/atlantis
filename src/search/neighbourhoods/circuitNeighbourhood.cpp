@@ -9,51 +9,63 @@ CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars)
 
 void CircuitNeighbourhood::initialise(RandomProvider& random,
                                       AssignmentModifier& modifications) {
-  std::vector<Int> availableIndices(_vars.size());
-  std::iota(availableIndices.begin(), availableIndices.end(), 0);
-
-  auto getValue = [](SearchVar& var) { return var.domain().lowerBound(); };
+  Int numAvailable = _vars.size();
+  std::vector<bool> idxIsAvailable(_vars.size(), true);
 
   for (auto& var : _vars) {
     if (var.isFixed()) {
-      auto nextNode = getValue(var);
-      auto nextNodeIdx = getNodeIdx(nextNode);
+      auto nextNode = var.constDomain().lowerBound();
+      auto nextNodeIdx = node2Idx(nextNode);
 
-      auto it = std::find(availableIndices.begin(), availableIndices.end(),
-                          nextNodeIdx);
-      assert(it != availableIndices.end());
+      assert(idxIsAvailable.at(nextNodeIdx));
 
       modifications.set(var.solverId(), nextNode);
-      availableIndices.erase(it);
+      idxIsAvailable[nextNodeIdx] = false;
+      --numAvailable;
     }
   }
 
-  auto firstIt =
-      random.iterator(availableIndices.begin(), availableIndices.end());
-  size_t firstNodeIdx = *firstIt;
-  availableIndices.erase(firstIt);
+  if (numAvailable == 0) {
+    return;
+  }
 
-  size_t currentNodeIdx = firstNodeIdx;
-  while (!availableIndices.empty()) {
-    if (_vars[currentNodeIdx].isFixed()) {
-      currentNodeIdx = getNodeIdx(getValue(_vars[currentNodeIdx]));
-      continue;
+  std::vector<size_t> availableIndices;
+  availableIndices.reserve(numAvailable);
+  for (size_t i = 0; i < idxIsAvailable.size(); ++i) {
+    if (idxIsAvailable[i]) {
+      availableIndices.emplace_back(i);
+    }
+  }
+
+  const size_t j = static_cast<size_t>(
+      random.intInRange(0, static_cast<Int>(availableIndices.size() - 1)));
+  assert(j < availableIndices.size());
+  std::swap(availableIndices[0], availableIndices[j]);
+  size_t curNodeIdx = availableIndices[0];
+
+  for (size_t i = 1; i < availableIndices.size(); ++i) {
+    assert(curNodeIdx < _vars.size());
+    while (_vars[curNodeIdx].isFixed()) {
+      curNodeIdx = node2Idx(_vars[curNodeIdx].constDomain().lowerBound());
+      assert(std::none_of(availableIndices.begin(), availableIndices.end(),
+                          [&](const size_t idx) { return idx == curNodeIdx; }));
     }
 
-    auto nextIt =
-        random.iterator(availableIndices.begin(), availableIndices.end());
-    assert(nextIt < availableIndices.end());
+    const size_t j = static_cast<size_t>(
+        random.intInRange(i, static_cast<Int>(availableIndices.size() - 1)));
+    assert(j < availableIndices.size());
+    std::swap(availableIndices[i], availableIndices[j]);
+    const size_t nextNodeIdx = availableIndices[i];
 
-    size_t nextNodeIdx = *nextIt;
     assert(nextNodeIdx < _vars.size());
 
-    modifications.set(_vars[currentNodeIdx].solverId(), getNode(nextNodeIdx));
+    modifications.set(_vars[curNodeIdx].solverId(), idx2Node(nextNodeIdx));
 
-    availableIndices.erase(nextIt);
-    currentNodeIdx = nextNodeIdx;
+    curNodeIdx = nextNodeIdx;
   }
 
-  modifications.set(_vars[currentNodeIdx].solverId(), getNode(firstNodeIdx));
+  modifications.set(_vars[curNodeIdx].solverId(),
+                    idx2Node(availableIndices[0]));
 }
 
 static size_t determineNewNext(RandomProvider& random, size_t node,
@@ -65,7 +77,7 @@ static size_t determineNewNext(RandomProvider& random, size_t node,
                                  std::max(node, oldNext)};
   // the range is between 0..numVars-1
   // excluded.size() = 2
-  auto newNext =
+  size_t newNext =
       static_cast<size_t>(random.intInRange(0, static_cast<Int>(numVars - 3)));
   for (const auto num : excluded) {
     if (newNext < num) {
@@ -83,12 +95,12 @@ bool CircuitNeighbourhood::randomMove(RandomProvider& random,
                                       Annealer& annealer) {
   auto nodeIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_vars.size() - 1)));
-  auto oldNextIdx = getNodeIdx(assignment.value(_vars[nodeIdx].solverId()));
+  auto oldNextIdx = node2Idx(assignment.value(_vars[nodeIdx].solverId()));
 
   auto newNextIdx = determineNewNext(random, nodeIdx, oldNextIdx, _vars.size());
   assert(newNextIdx < _vars.size());
-  auto kIdx = getNodeIdx(assignment.value(_vars[oldNextIdx].solverId()));
-  auto lastIdx = getNodeIdx(assignment.value(_vars[newNextIdx].solverId()));
+  auto kIdx = node2Idx(assignment.value(_vars[oldNextIdx].solverId()));
+  auto lastIdx = node2Idx(assignment.value(_vars[newNextIdx].solverId()));
 
   for (auto varIdx : {nodeIdx, oldNextIdx, newNextIdx}) {
     if (_vars[varIdx].isFixed()) {
@@ -98,16 +110,16 @@ bool CircuitNeighbourhood::randomMove(RandomProvider& random,
 
   Move<3> move({_vars[nodeIdx].solverId(), _vars[oldNextIdx].solverId(),
                 _vars[newNextIdx].solverId()},
-               {getNode(kIdx), getNode(lastIdx), getNode(oldNextIdx)});
+               {idx2Node(kIdx), idx2Node(lastIdx), idx2Node(oldNextIdx)});
   return annealer.acceptMove(move);
 }
 
-Int CircuitNeighbourhood::getNode(size_t nodeIdx) noexcept {
+Int CircuitNeighbourhood::idx2Node(size_t nodeIdx) noexcept {
   // Account for index sets starting at 1 instead of 0.
   return static_cast<Int>(nodeIdx) + 1;
 }
 
-size_t CircuitNeighbourhood::getNodeIdx(Int node) noexcept {
+size_t CircuitNeighbourhood::node2Idx(Int node) noexcept {
   // Account for index sets starting at 1 instead of 0.
   return static_cast<size_t>(node) - 1;
 }

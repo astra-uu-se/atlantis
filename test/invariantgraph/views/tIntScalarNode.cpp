@@ -6,7 +6,7 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntScalarNodeTest : public NodeTestBase<IntScalarNode> {
+class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
  public:
   VarNodeId input{NULL_NODE_ID};
   VarNodeId output{NULL_NODE_ID};
@@ -25,7 +25,7 @@ class IntScalarNodeTest : public NodeTestBase<IntScalarNode> {
   }
 };
 
-TEST_F(IntScalarNodeTest, construction) {
+TEST_P(IntScalarNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -35,7 +35,7 @@ TEST_F(IntScalarNodeTest, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
-TEST_F(IntScalarNodeTest, application) {
+TEST_P(IntScalarNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -56,7 +56,7 @@ TEST_F(IntScalarNodeTest, application) {
   EXPECT_EQ(solver.numVars(), 1);
 }
 
-TEST_F(IntScalarNodeTest, propagation) {
+TEST_P(IntScalarNodeTestFixture, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -89,5 +89,9 @@ TEST_F(IntScalarNodeTest, propagation) {
     EXPECT_EQ(expected, actual);
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(IntScalarNodeTest, IntScalarNodeTestFixture,
+                         ::testing::Values(ParamData{
+                             InvariantNodeAction::NONE}));
 
 }  // namespace atlantis::testing

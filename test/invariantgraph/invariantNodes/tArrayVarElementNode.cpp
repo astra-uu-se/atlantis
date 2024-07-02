@@ -17,8 +17,7 @@ class ArrayVarElementNodeTestFixture
 
   Int offsetIdx = 1;
 
-  bool isIntElement() const { return _mode <= 1; }
-  bool shouldBeReplaced() const { return _mode == 1 || _mode == 3; }
+  bool isIntElement() const { return _paramData.data == 0; }
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -141,7 +140,13 @@ TEST_P(ArrayVarElementNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ArrayVarElementNodeTest, ArrayVarElementNodeTestFixture,
-                        ::testing::Values(0, 1, 2, 3));
+INSTANTIATE_TEST_CASE_P(
+    ArrayVarElementNodeTest, ArrayVarElementNodeTestFixture,
+    ::testing::Values(ParamData{InvariantNodeAction::NONE, 0},
+                      ParamData{InvariantNodeAction::SUBSUME, 0},
+                      ParamData{InvariantNodeAction::REPLACE, 0},
+                      ParamData{InvariantNodeAction::NONE, 1},
+                      ParamData{InvariantNodeAction::SUBSUME, 1},
+                      ParamData{InvariantNodeAction::REPLACE, 1}));
 
 }  // namespace atlantis::testing

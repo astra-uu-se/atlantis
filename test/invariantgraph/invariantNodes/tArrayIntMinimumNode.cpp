@@ -14,9 +14,6 @@ class ArrayIntMinimumNodeTestFixture
   VarNodeId outputVar{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
-  bool shouldBeSubsumed() const { return _mode == 1; }
-  bool shouldBeReplaced() const { return _mode == 2; }
-
   Int computeOutput(propagation::Solver& solver) {
     Int val = std::numeric_limits<Int>::max();
     for (const auto& input : inputVars) {
@@ -172,7 +169,10 @@ TEST_P(ArrayIntMinimumNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ArrayIntMinimumNodeTest, ArrayIntMinimumNodeTestFixture,
-                        ::testing::Values(0, 1, 2, 3));
+INSTANTIATE_TEST_CASE_P(
+    ArrayIntMinimumNodeTest, ArrayIntMinimumNodeTestFixture,
+    ::testing::Values(ParamData{InvariantNodeAction::NONE},
+                      ParamData{InvariantNodeAction::SUBSUME},
+                      ParamData{InvariantNodeAction::REPLACE}));
 
 }  // namespace atlantis::testing

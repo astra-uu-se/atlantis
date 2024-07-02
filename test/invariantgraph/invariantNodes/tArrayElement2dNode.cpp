@@ -26,12 +26,12 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
     return isIntElement() ? val : intParToBool(val) ? 0 : 1;
   }
 
-  bool isIntElement() const { return _mode <= 3; }
-  bool shouldBeSubsumed() const { return _mode == 1 || _mode == 5; }
-  bool idx1ShouldBeReplaced() const { return _mode == 2 || _mode == 6; }
-  bool idx2ShouldBeReplaced() const { return _mode == 3 || _mode == 7; }
-  bool shouldBeReplaced() const {
-    return idx1ShouldBeReplaced() || idx2ShouldBeReplaced();
+  bool isIntElement() const { return _paramData.data <= 1; }
+  bool idx1ShouldBeReplaced() const {
+    return shouldBeReplaced() && (_paramData.data == 0 || _paramData.data == 2);
+  }
+  bool idx2ShouldBeReplaced() const {
+    return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 
   void SetUp() override {
@@ -184,7 +184,15 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ArrayElement2dNodeTest, ArrayElement2dNodeTestFixture,
-                        ::testing::Values(0, 1, 2, 3, 4, 5, 6, 7));
+INSTANTIATE_TEST_CASE_P(
+    ArrayElement2dNodeTest, ArrayElement2dNodeTestFixture,
+    ::testing::Values(ParamData{InvariantNodeAction::NONE, 0},
+                      ParamData{InvariantNodeAction::SUBSUME, 0},
+                      ParamData{InvariantNodeAction::REPLACE, 0},
+                      ParamData{InvariantNodeAction::REPLACE, 1},
+                      ParamData{InvariantNodeAction::NONE, 2},
+                      ParamData{InvariantNodeAction::SUBSUME, 2},
+                      ParamData{InvariantNodeAction::REPLACE, 2},
+                      ParamData{InvariantNodeAction::REPLACE, 3}));
 
 }  // namespace atlantis::testing

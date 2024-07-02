@@ -7,14 +7,12 @@
 
 namespace atlantis::propagation {
 
-class IfThenElseConst : public IntView {
+class ModView : public IntView {
  private:
-  std::array<Int, 2> _values;
-  Int _condVal;
+  Int _denominator;
 
  public:
-  explicit IfThenElseConst(SolverBase& solver, VarId parentId, Int thenVal,
-                           Int elseVal, Int condVal = 0);
+  explicit ModView(SolverBase& solver, VarId parentId, Int denominator);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

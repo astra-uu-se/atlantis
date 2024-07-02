@@ -25,8 +25,7 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
     return isIntElement() ? val : intParToBool(val) ? 0 : 1;
   }
 
-  bool isIntElement() const { return _mode <= 1; }
-  bool shouldBeSubsumed() const { return _mode == 1 || _mode == 3; }
+  bool isIntElement() const { return _paramData.data == 0; }
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -168,7 +167,13 @@ TEST_P(ArrayElementNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(ArrayElementNodeTest, ArrayElementNodeTestFixture,
-                        ::testing::Values(0, 1, 2, 3));
+INSTANTIATE_TEST_CASE_P(
+    ArrayElementNodeTest, ArrayElementNodeTestFixture,
+    ::testing::Values(ParamData{InvariantNodeAction::NONE, 0},
+                      ParamData{InvariantNodeAction::SUBSUME, 0},
+                      ParamData{InvariantNodeAction::REPLACE, 0},
+                      ParamData{InvariantNodeAction::NONE, 1},
+                      ParamData{InvariantNodeAction::SUBSUME, 1},
+                      ParamData{InvariantNodeAction::REPLACE, 1}));
 
 }  // namespace atlantis::testing

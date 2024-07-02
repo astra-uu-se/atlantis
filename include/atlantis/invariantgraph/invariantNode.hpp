@@ -42,6 +42,10 @@ class InvariantNode {
 
   [[nodiscard]] virtual bool replace(InvariantGraph&);
 
+  [[nodiscard]] virtual bool canBeMadeImplicit(const InvariantGraph&) const;
+
+  [[nodiscard]] virtual bool makeImplicit(InvariantGraph&);
+
   [[nodiscard]] InvariantNodeState state() const { return _state; }
 
   void deactivate(InvariantGraph&);
@@ -106,6 +110,10 @@ class InvariantNode {
   friend class ReifiedConstraint;
 
  protected:
+  void eraseStaticInputVarNode(size_t index);
+
+  void eraseDynamicInputVarNode(size_t index);
+
   static propagation::VarId makeSolverVar(propagation::SolverBase&, VarNode&,
                                           Int initialValue = 0);
 

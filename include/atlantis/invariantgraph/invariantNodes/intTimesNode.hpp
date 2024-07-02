@@ -10,6 +10,7 @@ namespace atlantis::invariantgraph {
 class IntTimesNode : public InvariantNode {
  private:
   Int _scalar{1};
+  propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
   IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output);

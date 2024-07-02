@@ -5,6 +5,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/propagation/invariants/countConst.hpp"
+#include "atlantis/propagation/views/ifThenElseConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/views/scalarView.hpp"
 
@@ -19,15 +20,60 @@ const std::vector<VarNodeId>& IntCountNode::haystack() const {
   return staticInputVarNodeIds();
 }
 
+void IntCountNode::updateState(InvariantGraph& graph) {
+  std::vector<VarNodeId> inputsToRemove;
+  inputsToRemove.reserve(staticInputVarNodeIds().size());
+  for (const auto& input : staticInputVarNodeIds()) {
+    const auto& inputNode = graph.varNodeConst(input);
+    if (inputNode.isFixed() || !inputNode.inDomain(needle())) {
+      _offset += inputNode.lowerBound() == needle() ? 1 : 0;
+      inputsToRemove.emplace_back(input);
+    }
+  }
+  for (const auto& input : inputsToRemove) {
+    removeStaticInputVarNode(graph.varNode(input));
+  }
+  auto& outputNode = graph.varNode(outputVarNodeIds().front());
+  const Int lb = _offset;
+  const Int ub = _offset + static_cast<Int>(staticInputVarNodeIds().size());
+  outputNode.removeValuesBelow(lb);
+  outputNode.removeValuesAbove(ub);
+  if (outputNode.isFixed()) {
+    for (const auto& input : staticInputVarNodeIds()) {
+      graph.varNode(input).removeValue(_needle);
+    }
+  }
+  if (staticInputVarNodeIds().empty() || outputNode.isFixed()) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
 Int IntCountNode::needle() const { return _needle; }
 
 void IntCountNode::registerOutputVars(InvariantGraph& invariantGraph,
                                       propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+  if (staticInputVarNodeIds().empty()) {
+    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+  } else if (staticInputVarNodeIds().size() == 1) {
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(solver.makeIntView<propagation::IfThenElseConst>(
+            solver, invariantGraph.varId(staticInputVarNodeIds().front()),
+            _offset, _offset + 1, needle()));
+  } else if (_offset == 0) {
+    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+  } else if (_intermediate != propagation::NULL_ID) {
+    _intermediate = solver.makeIntVar(0, 0, 0);
+    invariantGraph.varNode(outputVarNodeIds().front())
+        .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+            solver, _intermediate, _offset));
+  }
 }
 
 void IntCountNode::registerNode(InvariantGraph& invariantGraph,
                                 propagation::SolverBase& solver) {
+  if (staticInputVarNodeIds().size() <= 1) {
+    return;
+  }
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
 
@@ -40,8 +86,11 @@ void IntCountNode::registerNode(InvariantGraph& invariantGraph,
                  });
 
   solver.makeInvariant<propagation::CountConst>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()), needle(),
-      std::move(solverVars));
+      solver,
+      _intermediate == propagation::NULL_ID
+          ? invariantGraph.varId(outputVarNodeIds().front())
+          : _intermediate,
+      needle(), std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

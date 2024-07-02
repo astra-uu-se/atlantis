@@ -22,7 +22,14 @@ InvariantNode::InvariantNode(std::vector<VarNodeId>&& outputIds,
 bool InvariantNode::isReified() const { return false; }
 
 bool InvariantNode::canBeReplaced(const InvariantGraph&) const { return false; }
+
 bool InvariantNode::replace(InvariantGraph&) { return false; }
+
+bool InvariantNode::canBeMadeImplicit(const InvariantGraph&) const {
+  return false;
+}
+
+bool InvariantNode::makeImplicit(InvariantGraph&) { return false; }
 
 void InvariantNode::init(InvariantGraph& invariantGraph,
                          const InvariantNodeId& id) {
@@ -145,6 +152,21 @@ void InvariantNode::replaceDynamicInputVarNode(VarNode& oldInputVarNode,
   }
   oldInputVarNode.unmarkAsInputFor(_id, false);
   newInputVarNode.markAsInputFor(_id, false);
+}
+
+void InvariantNode::eraseStaticInputVarNode(size_t index) {
+  if (index >= _staticInputVarNodeIds.size()) {
+    throw InvariantGraphException(
+        "InvariantNode::eraseStaticInputVarNode: index out of bounds");
+  }
+  _staticInputVarNodeIds.erase(_staticInputVarNodeIds.begin() + index);
+}
+void InvariantNode::eraseDynamicInputVarNode(size_t index) {
+  if (index >= _dynamicInputVarNodeIds.size()) {
+    throw InvariantGraphException(
+        "InvariantNode::eraseDynamicInputVarNode: index out of bounds");
+  }
+  _dynamicInputVarNodeIds.erase(_dynamicInputVarNodeIds.begin() + index);
 }
 
 propagation::VarId InvariantNode::makeSolverVar(propagation::SolverBase& solver,

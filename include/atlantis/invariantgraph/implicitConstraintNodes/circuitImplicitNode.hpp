@@ -14,8 +14,7 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      propagation::SolverBase& solver,
-      std::vector<search::SearchVar>&&) override;
+      InvariantGraph& invariantGraph, propagation::SolverBase& solver) override;
 };
 
 }  // namespace atlantis::invariantgraph

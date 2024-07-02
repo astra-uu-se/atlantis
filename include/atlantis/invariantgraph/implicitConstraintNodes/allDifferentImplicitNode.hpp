@@ -14,7 +14,7 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      propagation::SolverBase&, std::vector<search::SearchVar>&&) override;
+      InvariantGraph& invariantGraph, propagation::SolverBase&) override;
 };
 
 }  // namespace atlantis::invariantgraph

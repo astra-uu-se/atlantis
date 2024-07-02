@@ -3,8 +3,8 @@
 #include <cmath>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/propagation/invariants/plus.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -14,64 +14,73 @@ IntPlusNode::IntPlusNode(VarNodeId a, VarNodeId b, VarNodeId output)
 void IntPlusNode::updateState(InvariantGraph& graph) {
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
-  Int sum = 0;
 
   for (const auto& input : staticInputVarNodeIds()) {
     if (graph.varNodeConst(input).isFixed()) {
       varsToRemove.emplace_back(input);
-      sum += graph.varNodeConst(input).lowerBound();
+      _offset += graph.varNodeConst(input).lowerBound();
     }
   }
-  if (varsToRemove.size() == staticInputVarNodeIds().size()) {
-    graph.varNode(outputVarNodeIds().front()).fixToValue(sum);
+
+  for (const auto& input : varsToRemove) {
+    removeStaticInputVarNode(graph.varNode(input));
+  }
+
+  if (staticInputVarNodeIds().empty()) {
+    graph.varNode(outputVarNodeIds().front()).fixToValue(_offset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool IntPlusNode::canBeReplaced(const InvariantGraph& graph) const {
+bool IntPlusNode::canBeReplaced(const InvariantGraph&) const {
   return state() == InvariantNodeState::ACTIVE &&
-         std::any_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const auto& input) {
-                       return graph.varNodeConst(input).isFixed();
-                     });
+         staticInputVarNodeIds().size() <= 1 && _offset == 0;
 }
 
 bool IntPlusNode::replace(InvariantGraph& graph) {
   if (!canBeReplaced(graph)) {
     return false;
   }
-  Int sum = 0;
-  VarNodeId unfixedVar{NULL_NODE_ID};
-  for (const auto& input : staticInputVarNodeIds()) {
-    if (graph.varNodeConst(input).isFixed()) {
-      sum += graph.varNodeConst(input).lowerBound();
-    } else {
-      unfixedVar = input;
-    }
-  }
-  if (unfixedVar != NULL_NODE_ID) {
-    if (sum == 0) {
-      graph.replaceVarNode(outputVarNodeIds().front(), unfixedVar);
-    } else {
-      graph.addInvariantNode(std::make_unique<IntScalarNode>(
-          unfixedVar, outputVarNodeIds().front(), 1, sum));
-    }
+  if (staticInputVarNodeIds().size() == 1) {
+    graph.replaceVarNode(outputVarNodeIds().front(),
+                         staticInputVarNodeIds().front());
   }
   return true;
 }
 
 void IntPlusNode::registerOutputVars(InvariantGraph& invariantGraph,
                                      propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+  if (staticInputVarNodeIds().empty()) {
+    return;
+  } else if (_offset != 0) {
+    if (staticInputVarNodeIds().size() == 1) {
+      invariantGraph.varNode(outputVarNodeIds().front())
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, invariantGraph.varId(staticInputVarNodeIds().front()),
+              _offset));
+    } else {
+      _intermediate = solver.makeIntVar(0, 0, 0);
+      invariantGraph.varNode(outputVarNodeIds().front())
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, _intermediate, _offset));
+    }
+  } else {
+    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+  }
 }
 
 void IntPlusNode::registerNode(InvariantGraph& invariantGraph,
                                propagation::SolverBase& solver) {
+  if (staticInputVarNodeIds().size() <= 1) {
+    return;
+  }
   assert(invariantGraph.varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+
   solver.makeInvariant<propagation::Plus>(
       solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(a()), invariantGraph.varId(b()));
+      invariantGraph.varId(staticInputVarNodeIds().front()),
+      invariantGraph.varId(staticInputVarNodeIds().back()));
 }
 
 }  // namespace atlantis::invariantgraph

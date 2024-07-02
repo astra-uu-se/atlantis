@@ -15,10 +15,6 @@ class IntLinearNode : public InvariantNode {
   Int _offset;
   propagation::VarId _intermediate{propagation::NULL_ID};
 
-  IntLinearNode(
-      std::pair<std::vector<Int>, std::vector<VarNodeId>>&& coeffsAndVars,
-      VarNodeId output, Int offset = 0);
-
  public:
   IntLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                 VarNodeId output, Int offset = 0);

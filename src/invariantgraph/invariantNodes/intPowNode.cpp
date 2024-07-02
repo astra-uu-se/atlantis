@@ -7,32 +7,6 @@
 
 namespace atlantis::invariantgraph {
 
-Int int_pow(Int base, Int power) {
-  if (power == 0) {
-    return 1;
-  }
-  if (power == 1) {
-    return base;
-  }
-  if (power < 0) {
-    if (base == 0) {
-      throw std::runtime_error("negative power of zero");
-    }
-    if (base == 1) {
-      return 1;
-    }
-    if (base == -1) {
-      return power % 2 == 0 ? 1 : -1;
-    }
-    return 0;
-  }
-  Int result = 1;
-  for (int i = 0; i < power; i++) {
-    result *= base;
-  }
-  return result;
-}
-
 IntPowNode::IntPowNode(VarNodeId base, VarNodeId exponent, VarNodeId power)
     : InvariantNode({power}, {base, exponent}) {}
 

@@ -6,11 +6,42 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntPowNodeTest : public NodeTestBase<IntPowNode> {
+class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
  public:
   VarNodeId base{NULL_NODE_ID};
   VarNodeId exponent{NULL_NODE_ID};
   VarNodeId output{NULL_NODE_ID};
+  std::string outputIdentifier{"output"};
+
+  Int computeOutput(propagation::Solver& solver) {
+    const Int baseVal = varNode(base).isFixed()
+                            ? varNode(base).lowerBound()
+                            : solver.currentValue(varId(base));
+    const Int exponentVal = varNode(exponent).isFixed()
+                                ? varNode(exponent).lowerBound()
+                                : solver.currentValue(varId(exponent));
+    if (exponentVal == 0) {
+      return 1;
+    }
+    if (exponentVal == 1) {
+      return baseVal;
+    }
+    if (exponentVal < 0) {
+      EXPECT_NE(baseVal, 0);
+      if (baseVal == 1) {
+        return 1;
+      }
+      if (baseVal == -1) {
+        return exponentVal % 2 == 0 ? 1 : -1;
+      }
+      return 0;
+    }
+    Int result = 1;
+    for (int i = 0; i < exponentVal; i++) {
+      result *= baseVal;
+    }
+    return result;
+  }
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -22,7 +53,7 @@ class IntPowNodeTest : public NodeTestBase<IntPowNode> {
   }
 };
 
-TEST_F(IntPowNodeTest, construction) {
+TEST_P(IntPowNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -32,7 +63,7 @@ TEST_F(IntPowNodeTest, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
-TEST_F(IntPowNodeTest, application) {
+TEST_P(IntPowNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -56,26 +87,18 @@ TEST_F(IntPowNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
-TEST_F(IntPowNodeTest, propagation) {
+TEST_P(IntPowNodeTestFixture, propagation) {
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
+  _invariantGraph->apply(solver);
 
   std::vector<propagation::VarId> inputVars;
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
   for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
     EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
     inputVars.emplace_back(varId(inputVarNodeId));
   }
 
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId =
-      varId(invNode().outputVarNodeIds().front());
-  EXPECT_EQ(inputVars.size(), 2);
-
-  solver.close();
+  const propagation::VarId outputId = varId(outputIdentifier);
+  EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(solver, inputVars);
 
@@ -90,10 +113,14 @@ TEST_F(IntPowNodeTest, propagation) {
 
     if (inputVals.at(0) != 0 || inputVals.at(1) > 0) {
       const Int actual = solver.currentValue(outputId);
-      const Int expected =
-          static_cast<Int>(std::pow(inputVals.at(0), inputVals.at(1)));
+      const Int expected = computeOutput(solver);
       EXPECT_EQ(actual, expected);
     }
   }
 }
+
+INSTANTIATE_TEST_CASE_P(IntPowNodeTest, IntPowNodeTestFixture,
+                        ::testing::Values(ParamData{
+                            InvariantNodeAction::NONE}));
+
 }  // namespace atlantis::testing

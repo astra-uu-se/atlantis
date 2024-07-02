@@ -9,25 +9,17 @@
 #include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
-class AllDifferentNode : public ViolationInvariantNode {
- private:
-  propagation::VarId _intermediate{propagation::NULL_ID};
-
+class CircuitNode : public ViolationInvariantNode {
  public:
-  explicit AllDifferentNode(VarNodeId a, VarNodeId b, VarNodeId r);
-
-  explicit AllDifferentNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
-
-  explicit AllDifferentNode(std::vector<VarNodeId>&& vars, VarNodeId r);
-
-  explicit AllDifferentNode(std::vector<VarNodeId>&& vars,
-                            bool shouldHold = true);
-
-  virtual void updateState(InvariantGraph& graph) override;
+  explicit CircuitNode(std::vector<VarNodeId>&&);
 
   [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
 
   [[nodiscard]] bool makeImplicit(InvariantGraph& graph) override;
+
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+
+  [[nodiscard]] bool replace(InvariantGraph&) override;
 
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;

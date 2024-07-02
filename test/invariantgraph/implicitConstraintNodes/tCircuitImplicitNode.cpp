@@ -8,7 +8,8 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class CircuitImplicitNodeTest : public NodeTestBase<CircuitImplicitNode> {
+class CircuitImplicitNodeTestFixture
+    : public NodeTestBase<CircuitImplicitNode> {
  public:
   VarNodeId a{NULL_NODE_ID};
   VarNodeId b{NULL_NODE_ID};
@@ -28,13 +29,13 @@ class CircuitImplicitNodeTest : public NodeTestBase<CircuitImplicitNode> {
   }
 };
 
-TEST_F(CircuitImplicitNodeTest, construction) {
+TEST_P(CircuitImplicitNodeTestFixture, construction) {
   std::vector<VarNodeId> expectedVars{a, b, c, d};
 
   EXPECT_EQ(invNode().outputVarNodeIds(), expectedVars);
 }
 
-TEST_F(CircuitImplicitNodeTest, application) {
+TEST_P(CircuitImplicitNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   for (VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
@@ -60,5 +61,8 @@ TEST_F(CircuitImplicitNodeTest, application) {
   EXPECT_TRUE(dynamic_cast<search::neighbourhoods::CircuitNeighbourhood*>(
       neighbourhood.get()));
 }
+
+INSTANTIATE_TEST_CASE_P(CircuitImplicitNodeTest, CircuitImplicitNodeTestFixture,
+                        ::testing::Values(ParamData{}));
 
 }  // namespace atlantis::testing

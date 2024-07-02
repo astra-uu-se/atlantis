@@ -31,8 +31,7 @@ static bool isViolating(const std::vector<Int>& values,
   return false;
 }
 
-template <ViolationInvariantType Type>
-class AbstractGlobalCardinalityLowUpNodeTest
+class GlobalCardinalityLowUpNodeTestFixture
     : public NodeTestBase<GlobalCardinalityLowUpNode> {
  public:
   VarNodeId x1{NULL_NODE_ID};
@@ -56,11 +55,11 @@ class AbstractGlobalCardinalityLowUpNodeTest
 
     std::vector<Int> upVec(up);
 
-    if constexpr (Type == ViolationInvariantType::REIFIED) {
+    if (isReified()) {
       reified = retrieveBoolVarNode("reified");
       createInvariantNode(std::move(inputVec), std::move(coverVec),
                           std::move(lowVec), std::move(upVec), reified);
-    } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
+    } else if (shouldHold()) {
       createInvariantNode(std::move(inputVec), std::move(coverVec),
                           std::move(lowVec), std::move(upVec), true);
     } else {
@@ -68,134 +67,115 @@ class AbstractGlobalCardinalityLowUpNodeTest
                           std::move(lowVec), std::move(upVec), false);
     }
   }
-
-  void construction() {
-    expectInputTo(invNode());
-    expectOutputOf(invNode());
-
-    const size_t numInputs = 2;
-    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
-    std::vector<VarNodeId> expectedInputs{x1, x2};
-    EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
-    EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
-
-    if (Type == ViolationInvariantType::REIFIED) {
-      EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-      EXPECT_EQ(invNode().outputVarNodeIds().front(), reified);
-    } else {
-      EXPECT_EQ(invNode().outputVarNodeIds().size(), 0);
-    }
-
-    if constexpr (Type == ViolationInvariantType::REIFIED) {
-      EXPECT_TRUE(invNode().isReified());
-      EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-      EXPECT_EQ(invNode().reifiedViolationNodeId(), reified);
-    } else {
-      EXPECT_FALSE(invNode().isReified());
-      EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    }
-  }
-
-  void application() {
-    propagation::Solver solver;
-    solver.open();
-    addInputVarsToSolver(solver);
-
-    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-    }
-    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVars(*_invariantGraph, solver);
-    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-    }
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-
-    invNode().registerNode(*_invariantGraph, solver);
-    solver.close();
-
-    // x1, x2
-    EXPECT_EQ(solver.searchVars().size(), 2);
-    // x1, x2, violation
-    // violation
-    EXPECT_EQ(solver.numVars(), 3);
-    // gcc
-    EXPECT_EQ(solver.numInvariants(), 1);
-    EXPECT_EQ(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
-    EXPECT_GT(solver.upperBound(invNode().violationVarId(*_invariantGraph)), 0);
-  }
-
-  void propagation() {
-    propagation::Solver solver;
-    solver.open();
-    addInputVarsToSolver(solver);
-    invNode().registerOutputVars(*_invariantGraph, solver);
-    invNode().registerNode(*_invariantGraph, solver);
-
-    std::vector<propagation::VarId> inputVars;
-    for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVars.emplace_back(varId(inputVarNodeId));
-    }
-    EXPECT_EQ(inputVars.size(), 2);
-
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    const propagation::VarId violationId =
-        invNode().violationVarId(*_invariantGraph);
-
-    solver.close();
-
-    std::vector<Int> inputVals = makeInputVals(solver, inputVars);
-
-    while (increaseNextVal(solver, inputVars, inputVals)) {
-      solver.beginMove();
-      setVarVals(solver, inputVars, inputVals);
-      solver.endMove();
-
-      solver.beginProbe();
-      solver.query(violationId);
-      solver.endProbe();
-
-      const Int actual = solver.currentValue(violationId) > 0;
-      const Int expected = isViolating(inputVals, cover, low, up);
-
-      if constexpr (Type != ViolationInvariantType::CONSTANT_FALSE) {
-        EXPECT_EQ(actual, expected);
-      } else {
-        EXPECT_NE(actual, expected);
-      }
-    }
-  }
 };
 
-class GlobalCardinalityLowUpReifNodeTest
-    : public AbstractGlobalCardinalityLowUpNodeTest<
-          ViolationInvariantType::REIFIED> {};
+TEST_P(GlobalCardinalityLowUpNodeTestFixture, construction) {
+  expectInputTo(invNode());
+  expectOutputOf(invNode());
 
-TEST_F(GlobalCardinalityLowUpReifNodeTest, Construction) { construction(); }
+  const size_t numInputs = 2;
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
+  std::vector<VarNodeId> expectedInputs{x1, x2};
+  EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
-TEST_F(GlobalCardinalityLowUpReifNodeTest, Application) { application(); }
+  if (isReified()) {
+    EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
+    EXPECT_EQ(invNode().outputVarNodeIds().front(), reified);
+  } else {
+    EXPECT_EQ(invNode().outputVarNodeIds().size(), 0);
+  }
 
-TEST_F(GlobalCardinalityLowUpReifNodeTest, Propagation) { propagation(); }
+  if (isReified()) {
+    EXPECT_TRUE(invNode().isReified());
+    EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
+    EXPECT_EQ(invNode().reifiedViolationNodeId(), reified);
+  } else {
+    EXPECT_FALSE(invNode().isReified());
+    EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
+  }
+}
 
-class GlobalCardinalityLowUpFalseNodeTest
-    : public AbstractGlobalCardinalityLowUpNodeTest<
-          ViolationInvariantType::CONSTANT_FALSE> {};
+TEST_P(GlobalCardinalityLowUpNodeTestFixture, application) {
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
 
-TEST_F(GlobalCardinalityLowUpFalseNodeTest, Construction) { construction(); }
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
+  }
+  EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
+  invNode().registerOutputVars(*_invariantGraph, solver);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
+  }
+  EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
 
-TEST_F(GlobalCardinalityLowUpFalseNodeTest, Application) { application(); }
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
-TEST_F(GlobalCardinalityLowUpFalseNodeTest, Propagation) { propagation(); }
+  // x1, x2
+  EXPECT_EQ(solver.searchVars().size(), 2);
+  // x1, x2, violation
+  // violation
+  EXPECT_EQ(solver.numVars(), 3);
+  // gcc
+  EXPECT_EQ(solver.numInvariants(), 1);
+  EXPECT_EQ(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
+  EXPECT_GT(solver.upperBound(invNode().violationVarId(*_invariantGraph)), 0);
+}
 
-class GlobalCardinalityLowUpTrueNodeTest
-    : public AbstractGlobalCardinalityLowUpNodeTest<
-          ViolationInvariantType::CONSTANT_TRUE> {};
+TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
+  invNode().registerOutputVars(*_invariantGraph, solver);
+  invNode().registerNode(*_invariantGraph, solver);
 
-TEST_F(GlobalCardinalityLowUpTrueNodeTest, Construction) { construction(); }
+  std::vector<propagation::VarId> inputVars;
+  for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
+    inputVars.emplace_back(varId(inputVarNodeId));
+  }
+  EXPECT_EQ(inputVars.size(), 2);
 
-TEST_F(GlobalCardinalityLowUpTrueNodeTest, Application) { application(); }
+  EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
+  const propagation::VarId violationId =
+      invNode().violationVarId(*_invariantGraph);
 
-TEST_F(GlobalCardinalityLowUpTrueNodeTest, Propagation) { propagation(); }
+  solver.close();
+
+  std::vector<Int> inputVals = makeInputVals(solver, inputVars);
+
+  while (increaseNextVal(solver, inputVars, inputVals)) {
+    solver.beginMove();
+    setVarVals(solver, inputVars, inputVals);
+    solver.endMove();
+
+    solver.beginProbe();
+    solver.query(violationId);
+    solver.endProbe();
+
+    const Int actual = solver.currentValue(violationId) > 0;
+    const Int expected = isViolating(inputVals, cover, low, up);
+
+    if (!shouldFail()) {
+      EXPECT_EQ(actual, expected);
+    } else {
+      EXPECT_NE(actual, expected);
+    }
+  }
+}
+
+INSTANTIATE_TEST_CASE_P(
+    GlobalCardinalityLowUpNodeTest, GlobalCardinalityLowUpNodeTestFixture,
+    ::testing::Values(ParamData{InvariantNodeAction::NONE,
+                                ViolationInvariantType::CONSTANT_TRUE},
+                      ParamData{InvariantNodeAction::REPLACE,
+                                ViolationInvariantType::CONSTANT_TRUE},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE},
+                      ParamData{ViolationInvariantType::CONSTANT_FALSE},
+                      ParamData{ViolationInvariantType::REIFIED}));
 
 }  // namespace atlantis::testing

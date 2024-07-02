@@ -11,61 +11,58 @@
 
 namespace atlantis::invariantgraph {
 
-static std::pair<std::vector<Int>, std::vector<VarNodeId>> fixInputs(
-    std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars) {
-  if (coeffs.size() != vars.size()) {
-    throw std::runtime_error("Number of coefficients and variables must match");
-  }
-  for (size_t i = 0; i < coeffs.size() - 1; ++i) {
-    if (coeffs.at(i) == 0) {
-      continue;
-    }
-    for (size_t j = i + 1; j < coeffs.size(); ++j) {
-      if (vars.at(i) == vars.at(j)) {
-        coeffs.at(i) += coeffs.at(j);
-        coeffs.at(j) = 0;
-      }
-    }
-  }
-  for (Int i = static_cast<Int>(coeffs.size()) - 1; i >= 0; --i) {
-    if (coeffs.at(i) == 0) {
-      coeffs.erase(coeffs.begin() + i);
-      vars.erase(vars.begin() + i);
-    }
-  }
-  return {std::move(coeffs), std::move(vars)};
-}
-
-IntLinearNode::IntLinearNode(
-    std::pair<std::vector<Int>, std::vector<VarNodeId>>&& coeffsAndVars,
-    VarNodeId output, Int offset)
-    : InvariantNode({output}, std::move(coeffsAndVars.second)),
-      _coeffs(std::move(coeffsAndVars.first)),
-      _offset(offset) {}
-
 IntLinearNode::IntLinearNode(std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars, VarNodeId output,
                              Int offset)
-    : IntLinearNode(fixInputs(std::move(coeffs), std::move(vars)), output,
-                    offset) {}
+    : InvariantNode({output}, std::move(vars)),
+      _coeffs(std::move(coeffs)),
+      _offset(offset) {}
 
 void IntLinearNode::updateState(InvariantGraph& graph) {
+  // Remove duplicates:
+  for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
+    for (Int j = static_cast<Int>(staticInputVarNodeIds().size()) - 1; j > i;
+         --j) {
+      if (staticInputVarNodeIds().at(i) == staticInputVarNodeIds().at(j)) {
+        _coeffs.at(i) += _coeffs.at(j);
+        _coeffs.erase(_coeffs.begin() + j);
+        eraseStaticInputVarNode(j);
+      }
+    }
+  }
+
   std::vector<Int> indicesToRemove;
   indicesToRemove.reserve(staticInputVarNodeIds().size());
 
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
     const auto& inputNode = graph.varNodeConst(staticInputVarNodeIds().at(i));
-    if (inputNode.isFixed()) {
+    if (inputNode.isFixed() || _coeffs.at(i) == 0) {
       _offset += _coeffs.at(i) * inputNode.lowerBound();
       indicesToRemove.emplace_back(i);
     }
   }
+
   for (Int i = indicesToRemove.size() - 1; i >= 0; --i) {
     removeStaticInputVarNode(
         graph.varNode(staticInputVarNodeIds().at(indicesToRemove.at(i))));
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
-  if (staticInputVarNodeIds().size() == 0) {
+
+  Int lb = _offset;
+  Int ub = _offset;
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+    const Int v1 = _coeffs.at(i) *
+                   graph.varNode(staticInputVarNodeIds().at(i)).lowerBound();
+    const Int v2 = _coeffs.at(i) *
+                   graph.varNode(staticInputVarNodeIds().at(i)).upperBound();
+    lb += std::min(v1, v2);
+    ub += std::max(v1, v2);
+  }
+
+  graph.varNode(outputVarNodeIds().front()).removeValuesBelow(lb);
+  graph.varNode(outputVarNodeIds().front()).removeValuesAbove(ub);
+
+  if (staticInputVarNodeIds().empty()) {
     graph.varNode(outputVarNodeIds().front()).fixToValue(_offset);
     setState(InvariantNodeState::SUBSUMED);
   }

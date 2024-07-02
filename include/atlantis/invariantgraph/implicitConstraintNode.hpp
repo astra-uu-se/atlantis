@@ -50,7 +50,7 @@ class ImplicitConstraintNode : public InvariantNode {
 
  protected:
   virtual std::shared_ptr<search::neighbourhoods::Neighbourhood>
-  createNeighbourhood(propagation::SolverBase& solver,
-                      std::vector<search::SearchVar>&& vars) = 0;
+  createNeighbourhood(InvariantGraph& invariantGraph,
+                      propagation::SolverBase& solver) = 0;
 };
 }  // namespace atlantis::invariantgraph
