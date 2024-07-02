@@ -6,7 +6,7 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntModNodeTest : public NodeTestBase<IntModNode> {
+class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
  public:
   VarNodeId numerator{NULL_NODE_ID};
   VarNodeId denominator{NULL_NODE_ID};
@@ -22,7 +22,7 @@ class IntModNodeTest : public NodeTestBase<IntModNode> {
   }
 };
 
-TEST_F(IntModNodeTest, construction) {
+TEST_P(IntModNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -32,7 +32,7 @@ TEST_F(IntModNodeTest, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
-TEST_F(IntModNodeTest, application) {
+TEST_P(IntModNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -56,7 +56,7 @@ TEST_F(IntModNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
-TEST_F(IntModNodeTest, propagation) {
+TEST_P(IntModNodeTestFixture, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -95,5 +95,9 @@ TEST_F(IntModNodeTest, propagation) {
     }
   }
 }
+
+INSTANTIATE_TEST_CASE_P(IntModNodeTest, IntModNodeTestFixture,
+                        ::testing::Values(ParamData{
+                            InvariantNodeAction::NONE}));
 
 }  // namespace atlantis::testing

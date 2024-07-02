@@ -10,33 +10,53 @@ using namespace atlantis::invariantgraph;
 
 using ::testing::ContainerEq;
 
-static Int computeOutput(const std::vector<Int>& values, const Int needle) {
-  Int occurrences = 0;
-  for (const Int val : values) {
-    occurrences += (val == needle ? 1 : 0);
-  }
-  return occurrences;
-}
-
-class IntCountNodeTest : public NodeTestBase<IntCountNode> {
+class IntCountNodeTestFixture : public NodeTestBase<IntCountNode> {
  public:
   std::vector<VarNodeId> inputs;
   VarNodeId output{NULL_NODE_ID};
+  std::string outputIdentifier{"output"};
   Int needle{2};
+
+  Int computeOutput(propagation::Solver& solver) {
+    Int occurrences = 0;
+    for (const auto& input : inputs) {
+      if (varNode(input).isFixed() || varId(input) == propagation::NULL_ID) {
+        occurrences +=
+            varNode(input).isFixed() && varNode(input).inDomain(needle) ? 1 : 0;
+      } else {
+        occurrences += solver.currentValue(varId(input)) == needle ? 1 : 0;
+      }
+    }
+    return occurrences;
+  }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputs = {retrieveIntVarNode(1, 10, "input1"),
-              retrieveIntVarNode(1, 10, "input2"),
-              retrieveIntVarNode(1, 10, "input3")};
-
-    output = retrieveIntVarNode(0, 2, "output");
+    if (shouldBeSubsumed()) {
+      if (_paramData.data == 0) {
+        inputs = {retrieveIntVarNode(0, 1, "input1"),
+                  retrieveIntVarNode(
+                      std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10}, "input2"),
+                  retrieveIntVarNode(std::vector<Int>{2}, "input3")};
+        output = retrieveIntVarNode(0, 3, outputIdentifier);
+      } else {
+        inputs = {retrieveIntVarNode(2, 2, "input1"),
+                  retrieveIntVarNode(1, 10, "input2"),
+                  retrieveIntVarNode(1, 10, "input3")};
+        output = retrieveIntVarNode(0, 1, outputIdentifier);
+      }
+    } else {
+      inputs = {retrieveIntVarNode(1, 10, "input1"),
+                retrieveIntVarNode(1, 10, "input2"),
+                retrieveIntVarNode(1, 10, "input3")};
+      output = retrieveIntVarNode(0, 3, outputIdentifier);
+    }
 
     createInvariantNode(std::vector<VarNodeId>{inputs}, needle, output);
   }
 };
 
-TEST_F(IntCountNodeTest, construction) {
+TEST_P(IntCountNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -51,7 +71,7 @@ TEST_F(IntCountNodeTest, construction) {
   EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
 }
 
-TEST_F(IntCountNodeTest, application) {
+TEST_P(IntCountNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -80,28 +100,46 @@ TEST_F(IntCountNodeTest, application) {
   }
 }
 
-TEST_F(IntCountNodeTest, propagation) {
+TEST_P(IntCountNodeTestFixture, updateState) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeSubsumed()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+
+    Int expected = 0;
+    for (const auto& input : inputs) {
+      expected +=
+          varNode(input).isFixed() && varNode(input).inDomain(needle) ? 1 : 0;
+    }
+    const Int actual = varNode(output).lowerBound();
+    EXPECT_EQ(expected, actual);
+  } else {
+    EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_FALSE(varNode(output).isFixed());
+  }
+}
+
+TEST_P(IntCountNodeTestFixture, propagation) {
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
+  _invariantGraph->apply(solver);
 
   std::vector<propagation::VarId> inputVars;
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 3);
   for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
     EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
     inputVars.emplace_back(varId(inputVarNodeId));
   }
-  EXPECT_EQ(inputVars.size(), 3);
 
-  EXPECT_EQ(invNode().needle(), needle);
-  EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
+  VarNode& outputNode = varNode(outputIdentifier);
 
-  const propagation::VarId outputId =
-      varId(invNode().outputVarNodeIds().front());
+  if (outputNode.isFixed()) {
+    const Int expected = outputNode.lowerBound();
+    const Int actual = computeOutput(solver);
+    EXPECT_EQ(expected, actual);
+    return;
+  }
 
-  solver.close();
+  const propagation::VarId outputId = varId(outputIdentifier);
+  EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(solver, inputVars);
 
@@ -115,10 +153,16 @@ TEST_F(IntCountNodeTest, propagation) {
     solver.endProbe();
 
     const Int actual = solver.currentValue(outputId);
-    const Int expected = computeOutput(inputVals, needle);
+    const Int expected = computeOutput(solver);
 
     EXPECT_EQ(actual, expected);
   }
 }
+
+INSTANTIATE_TEST_CASE_P(
+    IntCountNodeTest, IntCountNodeTestFixture,
+    ::testing::Values(ParamData{InvariantNodeAction::NONE},
+                      ParamData{InvariantNodeAction::SUBSUME, 0},
+                      ParamData{InvariantNodeAction::SUBSUME, 1}));
 
 }  // namespace atlantis::testing

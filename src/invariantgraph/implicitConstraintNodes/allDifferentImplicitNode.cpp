@@ -14,35 +14,59 @@ AllDifferentImplicitNode::AllDifferentImplicitNode(
     : ImplicitConstraintNode(std::move(inputVars)) {}
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
-AllDifferentImplicitNode::createNeighbourhood(
-    propagation::SolverBase& solver, std::vector<search::SearchVar>&& vars) {
-  if (vars.size() <= 1) {
+AllDifferentImplicitNode::createNeighbourhood(InvariantGraph& graph,
+                                              propagation::SolverBase& solver) {
+  if (outputVarNodeIds().size() <= 1) {
     return nullptr;
   }
   bool hasSameDomain = true;
-  assert(!vars.empty());
+  assert(!outputVarNodeIds().empty());
 
-  auto& domain = vars.front().domain();
-  for (auto& var : vars) {
-    if (var.domain() != domain) {
+  const auto& domain =
+      graph.varNodeConst(outputVarNodeIds().front()).constDomain();
+
+  for (size_t i = 1; i < outputVarNodeIds().size(); ++i) {
+    if (graph.varNodeConst(outputVarNodeIds().at(i)).constDomain() != domain) {
       hasSameDomain = false;
       break;
     }
   }
+
+  std::vector<search::SearchVar> searchVars;
+  searchVars.reserve(outputVarNodeIds().size());
+
   if (hasSameDomain) {
+    for (const auto& nId : outputVarNodeIds()) {
+      auto& varNode = graph.varNode(nId);
+      assert(varNode.varId() != propagation::NULL_ID);
+      searchVars.emplace_back(varNode.varId(),
+                              SearchDomain{varNode.constDomain().lowerBound(),
+                                           varNode.constDomain().upperBound()});
+      varNode.setDomainType(VarNode::DomainType::NONE);
+    }
+    const auto& vals =
+        graph.varNode(outputVarNodeIds().front()).domain().values();
+    std::vector<Int> domainValues;
+    domainValues.reserve(vals.size());
+    std::copy(vals.begin(), vals.end(), std::back_inserter(domainValues));
+
     return std::make_shared<
         search::neighbourhoods::AllDifferentUniformNeighbourhood>(
-        std::move(vars), std::vector<Int>(domain.values()), solver);
+        std::move(searchVars), std::move(domainValues), solver);
   } else {
     Int domainLb = std::numeric_limits<Int>::max();
     Int domainUb = std::numeric_limits<Int>::min();
-    for (auto& var : vars) {
-      domainLb = std::min<Int>(domainLb, var.domain().lowerBound());
-      domainUb = std::max<Int>(domainUb, var.domain().upperBound());
+    for (const auto& nId : outputVarNodeIds()) {
+      auto& varNode = graph.varNode(nId);
+      searchVars.emplace_back(varNode.varId(),
+                              SearchDomain{varNode.constDomain().lowerBound(),
+                                           varNode.constDomain().upperBound()});
+      domainLb = std::min<Int>(domainLb, varNode.constDomain().lowerBound());
+      domainUb = std::max<Int>(domainUb, varNode.constDomain().upperBound());
     }
     return std::make_shared<
         search::neighbourhoods::AllDifferentNonUniformNeighbourhood>(
-        std::move(vars), domainLb, domainUb, solver);
+        std::move(std::move(searchVars)), domainLb, domainUb, solver);
   }
 }
 

@@ -147,7 +147,8 @@ propagation::VarId VarNode::postDomainConstraint(
       _domain.relativeComplementIfIntersects(solverLb, solverUb);
 
   if (domain.empty()) {
-    assert(solverLb <= lowerBound() && solverUb <= upperBound());
+    // The node domain contains the solver domain:
+    assert(lowerBound() <= solverLb && solverUb <= upperBound());
     return _domainViolationId;
   }
 

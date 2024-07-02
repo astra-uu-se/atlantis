@@ -17,8 +17,6 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
   VarNodeId outputVar{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
-  bool shouldBeSubsumed() const { return _mode == 1; }
-
   Int computeOutput(propagation::Solver& solver) {
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
@@ -152,6 +150,8 @@ TEST_P(BoolLinearNodeTestFixture, propagation) {
 }
 
 INSTANTIATE_TEST_CASE_P(BoolLinearNodeTest, BoolLinearNodeTestFixture,
-                        ::testing::Values(0, 1, 2, 3));
+                        ::testing::Values(ParamData{InvariantNodeAction::NONE},
+                                          ParamData{
+                                              InvariantNodeAction::SUBSUME}));
 
 }  // namespace atlantis::testing

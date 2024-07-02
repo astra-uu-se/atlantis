@@ -1,26 +1,29 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/views/boolNotNode.hpp"
+#include "atlantis/invariantgraph/views/intModViewNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class BoolNotNodeTestFixture : public NodeTestBase<BoolNotNode> {
+class IntModViewNodeTestFixture : public NodeTestBase<IntModViewNode> {
  public:
   VarNodeId input{NULL_NODE_ID};
   VarNodeId output{NULL_NODE_ID};
+  Int denominator{5};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    input = retrieveBoolVarNode("input");
-    output = retrieveBoolVarNode("output");
+    const Int lb = -10;
+    const Int ub = 10;
+    input = retrieveIntVarNode(lb, ub, "input");
+    output = retrieveIntVarNode(0, 5, "output");
 
-    createInvariantNode(input, output);
+    createInvariantNode(input, output, denominator);
   }
 };
 
-TEST_P(BoolNotNodeTestFixture, construction) {
+TEST_P(IntModViewNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -30,7 +33,7 @@ TEST_P(BoolNotNodeTestFixture, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
-TEST_P(BoolNotNodeTestFixture, application) {
+TEST_P(IntModViewNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -51,7 +54,7 @@ TEST_P(BoolNotNodeTestFixture, application) {
   EXPECT_EQ(solver.numVars(), 1);
 }
 
-TEST_P(BoolNotNodeTestFixture, propagation) {
+TEST_P(IntModViewNodeTestFixture, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -79,13 +82,13 @@ TEST_P(BoolNotNodeTestFixture, propagation) {
     solver.query(outputId);
     solver.endProbe();
 
-    const Int expected = (inputVal == 0);
+    const Int expected = inputVal % std::abs(denominator);
     const Int actual = solver.currentValue(outputId);
     EXPECT_EQ(expected, actual);
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(BoolNotNodeTest, BoolNotNodeTestFixture,
+INSTANTIATE_TEST_SUITE_P(IntModViewNodeTest, IntModViewNodeTestFixture,
                          ::testing::Values(ParamData{
                              InvariantNodeAction::NONE}));
 

@@ -15,10 +15,71 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
+enum class InvariantNodeAction : unsigned char {
+  NONE = 0,
+  SUBSUME = 1,
+  REPLACE = 2,
+  MAKE_IMPLICIT = 3
+};
+
+enum class ViolationInvariantType : unsigned char {
+  CONSTANT_TRUE = 0,
+  CONSTANT_FALSE = 1,
+  REIFIED = 2
+};
+
+struct ParamData {
+  InvariantNodeAction action;
+  ViolationInvariantType violType;
+  int data;
+  explicit ParamData(InvariantNodeAction a, ViolationInvariantType vt, int d)
+      : action(a), violType(vt), data(d) {}
+  explicit ParamData(InvariantNodeAction a, ViolationInvariantType vt)
+      : action(a), violType(vt), data(0) {}
+  explicit ParamData(InvariantNodeAction a, int d)
+      : action(a), violType(ViolationInvariantType::CONSTANT_TRUE), data(d) {}
+  explicit ParamData(InvariantNodeAction a)
+      : action(a), violType(ViolationInvariantType::CONSTANT_TRUE), data(0) {}
+
+  explicit ParamData(ViolationInvariantType vt, int d)
+      : action(InvariantNodeAction::NONE), violType(vt), data(d) {}
+  explicit ParamData(ViolationInvariantType vt)
+      : action(InvariantNodeAction::NONE), violType(vt) {}
+
+  explicit ParamData(int d)
+      : action(InvariantNodeAction::NONE),
+        violType(ViolationInvariantType::CONSTANT_TRUE),
+        data(d) {}
+
+  explicit ParamData()
+      : action(InvariantNodeAction::NONE),
+        violType(ViolationInvariantType::CONSTANT_TRUE),
+        data(0) {}
+};
+
 template <class InvNode>
-class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
+class NodeTestBase : public ::testing::TestWithParam<ParamData> {
  protected:
-  unsigned char _mode{0};
+  ParamData _paramData{0};
+
+  bool shouldBeSubsumed() const {
+    return _paramData.action == InvariantNodeAction::SUBSUME;
+  }
+  bool shouldBeReplaced() const {
+    return _paramData.action == InvariantNodeAction::REPLACE;
+  }
+  bool shouldBeMadeImplicit() const {
+    return _paramData.action == InvariantNodeAction::MAKE_IMPLICIT;
+  }
+  bool shouldHold() const {
+    return _paramData.violType == ViolationInvariantType::CONSTANT_TRUE;
+  }
+  bool shouldFail() const {
+    return _paramData.violType == ViolationInvariantType::CONSTANT_FALSE;
+  }
+  bool isReified() const {
+    return _paramData.violType == ViolationInvariantType::REIFIED;
+  }
 
   std::unique_ptr<InvariantGraph> _invariantGraph;
 
@@ -26,7 +87,7 @@ class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
 
   void SetUp() override {
     _invariantGraph = std::make_unique<InvariantGraph>();
-    _mode = GetParam();
+    _paramData = GetParam();
   }
 
   template <typename... Args>
@@ -229,9 +290,4 @@ class NodeTestBase : public ::testing::TestWithParam<unsigned char> {
   }
 };
 
-enum class ViolationInvariantType : unsigned char {
-  REIFIED = 0,
-  CONSTANT_FALSE = 1,
-  CONSTANT_TRUE = 2
-};
 }  // namespace atlantis::testing

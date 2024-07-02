@@ -33,9 +33,6 @@ class GlobalCardinalityNodeTestFixture
     return outputs;
   }
 
-  bool shouldBeSubsumed() const { return _mode == 1; }
-  bool shouldBeReplaced() const { return _mode == 2; }
-
   void SetUp() override {
     NodeTestBase::SetUp();
     if (shouldBeSubsumed()) {
@@ -209,8 +206,10 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(GlobalCardinalityNodeTest,
-                        GlobalCardinalityNodeTestFixture,
-                        ::testing::Values(0, 1, 2));
+INSTANTIATE_TEST_CASE_P(
+    GlobalCardinalityNodeTest, GlobalCardinalityNodeTestFixture,
+    ::testing::Values(ParamData{InvariantNodeAction::NONE},
+                      ParamData{InvariantNodeAction::SUBSUME},
+                      ParamData{InvariantNodeAction::REPLACE}));
 
 }  // namespace atlantis::testing

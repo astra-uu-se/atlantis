@@ -204,6 +204,10 @@ void InvariantGraph::replaceInvariantNodes() {
           if (invNode.replace(*this)) {
             invNode.deactivate(*this);
           }
+        } else if (invNode.canBeMadeImplicit(*this)) {
+          if (invNode.makeImplicit(*this)) {
+            invNode.deactivate(*this);
+          }
         }
       }
       ++invIndex;
@@ -315,6 +319,7 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
   }
   VarNode& oldNode = varNode(oldNodeId);
   VarNode& newNode = varNode(newNodeId);
+  newNode.domain().intersect(oldNode.constDomain());
   while (!oldNode.definingNodes().empty()) {
     invariantNode(*(oldNode.definingNodes().begin()))
         .replaceDefinedVar(oldNode, newNode);

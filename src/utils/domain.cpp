@@ -447,6 +447,21 @@ void SearchDomain::intersect(const std::vector<Int>& values) {
   _domain = SetDomain(std::move(newDomain));
 }
 
+void SearchDomain::intersect(Int lb, Int ub) {
+  removeBelow(lb);
+  removeAbove(ub);
+}
+
+void SearchDomain::intersect(const SearchDomain& other) {
+  if (std::holds_alternative<SetDomain>(other._domain)) {
+    intersect(std::get<SetDomain>(other._domain).values());
+    return;
+  }
+  assert(std::holds_alternative<IntervalDomain>(other._domain));
+  intersect(std::get<IntervalDomain>(other._domain).lowerBound(),
+            std::get<IntervalDomain>(other._domain).upperBound());
+}
+
 bool SearchDomain::isDisjoint(const IntervalDomain& other) const {
   return std::visit<bool>(
       [&](const auto& dom) { return dom.isDisjoint(other); }, _domain);

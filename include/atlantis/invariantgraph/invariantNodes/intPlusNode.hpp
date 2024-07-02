@@ -10,6 +10,10 @@
 namespace atlantis::invariantgraph {
 
 class IntPlusNode : public InvariantNode {
+ private:
+  Int _offset{0};
+  propagation::VarId _intermediate{propagation::NULL_ID};
+
  public:
   IntPlusNode(VarNodeId a, VarNodeId b, VarNodeId output);
 

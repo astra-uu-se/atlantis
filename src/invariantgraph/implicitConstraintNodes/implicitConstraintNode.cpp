@@ -34,17 +34,7 @@ void ImplicitConstraintNode::registerNode(InvariantGraph& invariantGraph,
   if (_neighbourhood != nullptr) {
     return;
   }
-  std::vector<search::SearchVar> varIds;
-  varIds.reserve(outputVarNodeIds().size());
-
-  for (const auto& id : outputVarNodeIds()) {
-    auto& node = invariantGraph.varNode(id);
-    assert(node.varId() != propagation::NULL_ID);
-    varIds.emplace_back(node.varId(), std::move(node.domain()));
-    node.setDomainType(VarNode::DomainType::NONE);
-  }
-
-  _neighbourhood = createNeighbourhood(solver, std::move(varIds));
+  _neighbourhood = createNeighbourhood(invariantGraph, solver);
   assert(_neighbourhood);
 }
 

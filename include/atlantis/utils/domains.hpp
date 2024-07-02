@@ -211,6 +211,10 @@ class SearchDomain : public Domain {
    */
   void intersect(const std::vector<Int>&);
 
+  void intersect(Int lb, Int ub);
+
+  void intersect(const SearchDomain& other);
+
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
   [[nodiscard]] bool isDisjoint(const SearchDomain&) const;

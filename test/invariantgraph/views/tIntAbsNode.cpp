@@ -6,7 +6,7 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntAbsNodeTest : public NodeTestBase<IntAbsNode> {
+class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
  public:
   VarNodeId input{NULL_NODE_ID};
   VarNodeId output{NULL_NODE_ID};
@@ -20,7 +20,7 @@ class IntAbsNodeTest : public NodeTestBase<IntAbsNode> {
   }
 };
 
-TEST_F(IntAbsNodeTest, construction) {
+TEST_P(IntAbsNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -30,7 +30,7 @@ TEST_F(IntAbsNodeTest, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
-TEST_F(IntAbsNodeTest, application) {
+TEST_P(IntAbsNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -51,7 +51,7 @@ TEST_F(IntAbsNodeTest, application) {
   EXPECT_EQ(solver.numVars(), 1);
 }
 
-TEST_F(IntAbsNodeTest, propagation) {
+TEST_P(IntAbsNodeTestFixture, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -84,5 +84,9 @@ TEST_F(IntAbsNodeTest, propagation) {
     EXPECT_EQ(expected, actual);
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(IntAbsNodeTestTest, IntAbsNodeTestFixture,
+                         ::testing::Values(ParamData{
+                             InvariantNodeAction::NONE}));
 
 }  // namespace atlantis::testing

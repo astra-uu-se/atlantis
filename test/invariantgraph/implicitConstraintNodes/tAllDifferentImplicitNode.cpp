@@ -7,7 +7,7 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class AllDifferentImplicitNodeTest
+class AllDifferentImplicitNodeTestFixture
     : public NodeTestBase<AllDifferentImplicitNode> {
  public:
   VarNodeId a{NULL_NODE_ID};
@@ -28,13 +28,13 @@ class AllDifferentImplicitNodeTest
   }
 };
 
-TEST_F(AllDifferentImplicitNodeTest, construction) {
+TEST_P(AllDifferentImplicitNodeTestFixture, construction) {
   std::vector<VarNodeId> expectedVars{a, b, c, d};
 
   EXPECT_EQ(invNode().outputVarNodeIds(), expectedVars);
 }
 
-TEST_F(AllDifferentImplicitNodeTest, application) {
+TEST_P(AllDifferentImplicitNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   for (VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
@@ -61,5 +61,9 @@ TEST_F(AllDifferentImplicitNodeTest, application) {
       dynamic_cast<search::neighbourhoods::AllDifferentUniformNeighbourhood*>(
           neighbourhood.get()));
 }
+
+INSTANTIATE_TEST_SUITE_P(AllDifferentImplicitNodeTest,
+                         AllDifferentImplicitNodeTestFixture,
+                         ::testing::Values(ParamData{}));
 
 }  // namespace atlantis::testing

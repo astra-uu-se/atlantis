@@ -39,46 +39,25 @@ void AllDifferentNode::updateState(InvariantGraph& invariantGraph) {
     removeStaticInputVarNode(invariantGraph.varNode(id));
   }
   if (staticInputVarNodeIds().size() <= 1) {
-    if (isReified()) {
-      invariantGraph.varNode(reifiedViolationNodeId()).fixToValue(true);
-    }
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool AllDifferentNode::canBeReplaced(
-    const InvariantGraph& invariantGraph) const {
-  if (state() != InvariantNodeState::ACTIVE) {
-    return false;
-  }
-  if (staticInputVarNodeIds().size() <= 1) {
-    return true;
-  }
-  if (isReified() || !shouldHold()) {
-    return false;
-  }
-  return std::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const auto& id) {
-        return invariantGraph.varNodeConst(id).definingNodes().empty();
-      });
+bool AllDifferentNode::canBeMadeImplicit(const InvariantGraph& graph) const {
+  return state() == InvariantNodeState::ACTIVE && !isReified() &&
+         shouldHold() &&
+         std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const auto& id) {
+                       return graph.varNodeConst(id).definingNodes().empty();
+                     });
 }
 
-bool AllDifferentNode::replace(InvariantGraph& invariantGraph) {
-  if (!canBeReplaced(invariantGraph)) {
+bool AllDifferentNode::makeImplicit(InvariantGraph& graph) {
+  if (!canBeMadeImplicit(graph)) {
     return false;
   }
-  if (staticInputVarNodeIds().size() <= 1) {
-    return true;
-  }
-  assert(std::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const auto& id) {
-        return invariantGraph.varNodeConst(id).definingNodes().empty();
-      }));
-  invariantGraph.addImplicitConstraintNode(
-      std::make_unique<AllDifferentImplicitNode>(
-          std::vector<VarNodeId>{staticInputVarNodeIds()}));
+  graph.addImplicitConstraintNode(std::make_unique<AllDifferentImplicitNode>(
+      std::vector<VarNodeId>{staticInputVarNodeIds()}));
   return true;
 }
 

@@ -6,23 +6,28 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntDivNodeTest : public NodeTestBase<IntDivNode> {
+class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
  public:
   VarNodeId numerator{NULL_NODE_ID};
   VarNodeId denominator{NULL_NODE_ID};
   VarNodeId output{NULL_NODE_ID};
+  std::string outputIdentifier{"output"};
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    numerator = retrieveIntVarNode(0, 10, "numerator");
-    denominator = retrieveIntVarNode(1, 10, "denominator");
-    output = retrieveIntVarNode(3, 5, "output");
+    numerator = retrieveIntVarNode(-2, 2, "numerator");
+    if (shouldBeReplaced()) {
+      denominator = retrieveIntVarNode(1, 1, "denominator");
+    } else {
+      denominator = retrieveIntVarNode(-2, 2, "denominator");
+    }
+    output = retrieveIntVarNode(-2, 2, outputIdentifier);
 
     createInvariantNode(numerator, denominator, output);
   }
 };
 
-TEST_F(IntDivNodeTest, construction) {
+TEST_P(IntDivNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -32,7 +37,7 @@ TEST_F(IntDivNodeTest, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
-TEST_F(IntDivNodeTest, application) {
+TEST_P(IntDivNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -56,36 +61,32 @@ TEST_F(IntDivNodeTest, application) {
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
-TEST_F(IntDivNodeTest, replace) {
+TEST_P(IntDivNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
-  _invariantGraph->varNode(denominator).fixToValue(Int{1});
-  EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-  EXPECT_TRUE(invNode().replace(*_invariantGraph));
-  invNode().deactivate(*_invariantGraph);
-  EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeReplaced()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_TRUE(invNode().replace(*_invariantGraph));
+    invNode().deactivate(*_invariantGraph);
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  } else {
+    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+  }
 }
 
-TEST_F(IntDivNodeTest, propagation) {
+TEST_P(IntDivNodeTestFixture, propagation) {
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
+  _invariantGraph->apply(solver);
 
   std::vector<propagation::VarId> inputVars;
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
   for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
     EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
     inputVars.emplace_back(varId(inputVarNodeId));
   }
 
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId =
-      varId(invNode().outputVarNodeIds().front());
-  EXPECT_EQ(inputVars.size(), 2);
-
-  solver.close();
+  const propagation::VarId outputId = varId(outputIdentifier);
+  EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(solver, inputVars);
 
@@ -105,5 +106,10 @@ TEST_F(IntDivNodeTest, propagation) {
     }
   }
 }
+
+INSTANTIATE_TEST_CASE_P(IntDivNodeTest, IntDivNodeTestFixture,
+                        ::testing::Values(ParamData{InvariantNodeAction::NONE},
+                                          ParamData{
+                                              InvariantNodeAction::REPLACE}));
 
 }  // namespace atlantis::testing

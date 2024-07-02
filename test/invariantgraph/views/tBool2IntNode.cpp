@@ -6,7 +6,7 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class Bool2IntNodeTest : public NodeTestBase<Bool2IntNode> {
+class Bool2IntNodeTestFixture : public NodeTestBase<Bool2IntNode> {
  public:
   VarNodeId input{NULL_NODE_ID};
   VarNodeId output{NULL_NODE_ID};
@@ -20,7 +20,7 @@ class Bool2IntNodeTest : public NodeTestBase<Bool2IntNode> {
   }
 };
 
-TEST_F(Bool2IntNodeTest, construction) {
+TEST_P(Bool2IntNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -30,7 +30,7 @@ TEST_F(Bool2IntNodeTest, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
 }
 
-TEST_F(Bool2IntNodeTest, application) {
+TEST_P(Bool2IntNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -51,7 +51,7 @@ TEST_F(Bool2IntNodeTest, application) {
   EXPECT_EQ(solver.numVars(), 1);
 }
 
-TEST_F(Bool2IntNodeTest, propagation) {
+TEST_P(Bool2IntNodeTestFixture, propagation) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -84,5 +84,9 @@ TEST_F(Bool2IntNodeTest, propagation) {
     EXPECT_EQ(expected, actual);
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(Bool2IntNodeTest, Bool2IntNodeTestFixture,
+                         ::testing::Values(ParamData{
+                             InvariantNodeAction::NONE}));
 
 }  // namespace atlantis::testing
