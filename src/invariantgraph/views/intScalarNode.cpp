@@ -10,8 +10,22 @@ IntScalarNode::IntScalarNode(VarNodeId staticInput, VarNodeId output,
       _factor(factor),
       _offset(offset) {}
 
-void invariantgraph::IntScalarNode::registerOutputVars(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+void IntScalarNode::updateState(InvariantGraph& graph) {
+  if (_factor == 0) {
+    graph.varNode(outputVarNodeIds().front()).fixToValue(_offset);
+    setState(InvariantNodeState::SUBSUMED);
+  } else if (graph.varNodeConst(staticInputVarNodeIds().front()).isFixed()) {
+    graph.varNode(outputVarNodeIds().front())
+        .fixToValue(_factor *
+                        graph.varNodeConst(staticInputVarNodeIds().front())
+                            .lowerBound() +
+                    _offset);
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
+void IntScalarNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                       propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) ==
       propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())
@@ -20,7 +34,6 @@ void invariantgraph::IntScalarNode::registerOutputVars(
   }
 }
 
-void invariantgraph::IntScalarNode::registerNode(InvariantGraph&,
-                                                 propagation::SolverBase&) {}
+void IntScalarNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
 }  // namespace atlantis::invariantgraph

@@ -11,6 +11,8 @@ class Bool2IntNode : public InvariantNode {
  public:
   Bool2IntNode(VarNodeId staticInput, VarNodeId output);
 
+  void updateState(InvariantGraph&) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

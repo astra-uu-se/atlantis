@@ -7,6 +7,14 @@ namespace atlantis::invariantgraph {
 BoolNotNode::BoolNotNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
 
+void BoolNotNode::updateState(InvariantGraph& graph) {
+  if (graph.varNodeConst(input()).isFixed()) {
+    graph.varNode(outputVarNodeIds().front())
+        .fixToValue(!graph.varNodeConst(input()).inDomain(bool{true}));
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
 void BoolNotNode::registerOutputVars(InvariantGraph& invariantGraph,
                                      propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) ==

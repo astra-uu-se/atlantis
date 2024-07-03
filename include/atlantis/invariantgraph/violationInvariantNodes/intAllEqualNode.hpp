@@ -28,6 +28,8 @@ class IntAllEqualNode : public ViolationInvariantNode {
   explicit IntAllEqualNode(std::vector<VarNodeId>&& vars,
                            bool shouldHold = true, bool breaksCycle = false);
 
+  void updateState(InvariantGraph&) override;
+
   bool canBeReplaced(const InvariantGraph&) const override;
 
   bool replace(InvariantGraph& graph) override;

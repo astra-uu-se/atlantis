@@ -10,31 +10,53 @@ using namespace atlantis::invariantgraph;
 
 using ::testing::ContainerEq;
 
-static bool isViolating(const std::vector<Int>& values) {
-  return std::any_of(values.begin(), values.end(),
-                     [&](const Int val) { return val > 0; });
-}
-
 class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
  public:
-  VarNodeId a{NULL_NODE_ID};
-  VarNodeId b{NULL_NODE_ID};
+  std::vector<VarNodeId> inputs;
   VarNodeId reified{NULL_NODE_ID};
+  std::string reifiedIdentifier{"reified"};
+  Int numInputs = 4;
+
+  bool isViolating(propagation::Solver& solver) {
+    for (const auto& input : inputs) {
+      if (varNode(input).isFixed()) {
+        if (varNode(input).inDomain(bool{false})) {
+          return true;
+        }
+      } else {
+        if (solver.currentValue(varId(input)) > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = retrieveBoolVarNode("a");
-    b = retrieveBoolVarNode("b");
+    inputs.clear();
+    inputs.reserve(numInputs);
+    for (Int i = 0; i < numInputs; ++i) {
+      inputs.emplace_back(retrieveBoolVarNode("input_" + std::to_string(i)));
+    }
 
-    std::vector<VarNodeId> inputs{a, b};
+    if (shouldBeSubsumed()) {
+      for (const auto& input : inputs) {
+        varNode(input).fixToValue(!shouldFail());
+      }
+    } else if (shouldBeReplaced()) {
+      for (size_t i = 1; i < inputs.size(); ++i) {
+        varNode(inputs.at(i)).fixToValue(!shouldFail());
+      }
+    }
 
     if (isReified()) {
-      reified = retrieveBoolVarNode("reified");
-      createInvariantNode(std::move(inputs), reified);
+      reified = retrieveBoolVarNode(reifiedIdentifier);
+      createInvariantNode(std::vector<VarNodeId>{inputs}, reified);
     } else if (shouldHold()) {
-      createInvariantNode(std::move(inputs), reified);
+      createInvariantNode(std::vector<VarNodeId>{inputs}, reified);
     } else {
-      createInvariantNode(std::move(inputs), false);
+      createInvariantNode(std::vector<VarNodeId>{inputs}, false);
     }
   }
 };
@@ -43,11 +65,10 @@ TEST_P(ArrayBoolAndNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
   EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 0);
-  std::vector<VarNodeId> expectedVars{a, b};
-  EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedVars);
-  EXPECT_THAT(expectedVars, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_EQ(invNode().staticInputVarNodeIds(), inputs);
+  EXPECT_THAT(inputs, ContainerEq(invNode().staticInputVarNodeIds()));
   if (!isReified()) {
     EXPECT_FALSE(invNode().isReified());
     EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
@@ -72,36 +93,75 @@ TEST_P(ArrayBoolAndNodeTestFixture, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // a and b
-  EXPECT_EQ(solver.searchVars().size(), 2);
+  EXPECT_EQ(solver.searchVars().size(), numInputs);
 
-  // a, b and reified
-  EXPECT_EQ(solver.numVars(), 3);
+  EXPECT_EQ(solver.numVars(), numInputs + 1);
 
-  // sum
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
+TEST_P(ArrayBoolAndNodeTestFixture, updateState) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeSubsumed()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    if (isReified()) {
+      EXPECT_TRUE(varNode(reified).isFixed());
+      bool expected = false;
+      for (const auto& input : inputs) {
+        expected = expected || varNode(input).inDomain(bool{false});
+      }
+      const bool actual = varNode(reified).inDomain(bool{false});
+      EXPECT_EQ(expected, actual);
+    }
+  } else {
+    EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
+    if (isReified()) {
+      EXPECT_FALSE(varNode(reified).isFixed());
+    }
+  }
+}
+
+TEST_P(ArrayBoolAndNodeTestFixture, replace) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeReplaced()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_TRUE(invNode().replace(*_invariantGraph));
+    invNode().deactivate(*_invariantGraph);
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  } else {
+    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+  }
+}
+
 TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
+  if (shouldBeMadeImplicit()) {
+    return;
+  }
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
+  _invariantGraph->apply(solver);
 
   std::vector<propagation::VarId> inputVars;
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
-  for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    inputVars.emplace_back(varId(inputVarNodeId));
-    solver.updateBounds(varId(inputVarNodeId), 0, 10, true);
+  for (const auto& inputVarNodeId : inputs) {
+    if (!varNode(inputVarNodeId).isFixed()) {
+      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
+      inputVars.emplace_back(varId(inputVarNodeId));
+    }
   }
 
-  EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-  const propagation::VarId violationId =
-      invNode().violationVarId(*_invariantGraph);
+  EXPECT_EQ(inputVars.empty(), shouldBeSubsumed());
+  if (shouldBeSubsumed()) {
+    EXPECT_EQ(isViolating(solver), shouldFail());
+    return;
+  }
 
-  solver.close();
+  const propagation::VarId violVarId =
+      isReified() ? varId(reifiedIdentifier)
+                  : _invariantGraph->totalViolationVarId();
+
+  EXPECT_NE(violVarId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(solver, inputVars);
 
@@ -111,11 +171,11 @@ TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
     solver.endMove();
 
     solver.beginProbe();
-    solver.query(violationId);
+    solver.query(violVarId);
     solver.endProbe();
 
-    const Int actual = solver.currentValue(violationId) > 0;
-    const Int expected = isViolating(inputVals);
+    const bool actual = solver.currentValue(violVarId) > 0;
+    const bool expected = isViolating(solver);
 
     if (!shouldFail()) {
       EXPECT_EQ(actual, expected);
@@ -130,7 +190,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(ParamData{InvariantNodeAction::NONE,
                                 ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::CONSTANT_TRUE},
+                                ViolationInvariantType::REIFIED},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},

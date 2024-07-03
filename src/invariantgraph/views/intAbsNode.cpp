@@ -10,8 +10,31 @@ namespace atlantis::invariantgraph {
 IntAbsNode::IntAbsNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
 
-void invariantgraph::IntAbsNode::registerOutputVars(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+void IntAbsNode::updateState(InvariantGraph& graph) {
+  if (graph.varNodeConst(staticInputVarNodeIds().front()).isFixed()) {
+    graph.varNode(outputVarNodeIds().front())
+        .fixToValue(std::abs(
+            graph.varNodeConst(staticInputVarNodeIds().front()).lowerBound()));
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
+bool IntAbsNode::canBeReplaced(const InvariantGraph& graph) const {
+  return state() == InvariantNodeState::ACTIVE &&
+         graph.varNodeConst(staticInputVarNodeIds().front()).lowerBound() >= 0;
+}
+
+bool IntAbsNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
+    return false;
+  }
+  graph.replaceVarNode(outputVarNodeIds().front(),
+                       staticInputVarNodeIds().front());
+  return true;
+}
+
+void IntAbsNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                    propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) ==
       propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())
@@ -20,7 +43,6 @@ void invariantgraph::IntAbsNode::registerOutputVars(
   }
 }
 
-void invariantgraph::IntAbsNode::registerNode(InvariantGraph&,
-                                              propagation::SolverBase&) {}
+void IntAbsNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
 }  // namespace atlantis::invariantgraph

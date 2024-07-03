@@ -3,7 +3,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
@@ -28,16 +28,58 @@ IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold,
     : ViolationInvariantNode(std::move(vars), shouldHold),
       _breaksCycle(breaksCycle) {}
 
+void IntAllEqualNode::updateState(InvariantGraph& graph) {
+  ViolationInvariantNode::updateState(graph);
+  size_t numFixed = 0;
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+    const VarNode& iNode = graph.varNodeConst(staticInputVarNodeIds().at(i));
+    if (!iNode.isFixed()) {
+      continue;
+    }
+    ++numFixed;
+    const Int iVal = iNode.lowerBound();
+    for (size_t j = i + 1; j < staticInputVarNodeIds().size(); ++j) {
+      const VarNode& jNode = graph.varNodeConst(staticInputVarNodeIds().at(j));
+      if (!jNode.isFixed()) {
+        continue;
+      }
+      const Int jVal = jNode.lowerBound();
+      if (iVal != jVal) {
+        if (isReified()) {
+          graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+        } else if (shouldHold()) {
+          throw InconsistencyException(
+              "IntAllEqualNode::updateState constraint is violated");
+        }
+      }
+    }
+  }
+  if (numFixed == staticInputVarNodeIds().size()) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
 bool IntAllEqualNode::canBeReplaced(const InvariantGraph&) const {
-  return state() == InvariantNodeState::ACTIVE &&
-         staticInputVarNodeIds().size() <= 1;
+  return state() == InvariantNodeState::ACTIVE && !_breaksCycle &&
+         (!isReified() &&
+          (shouldHold() || staticInputVarNodeIds().size() == 2));
 }
 
 bool IntAllEqualNode::replace(InvariantGraph& invariantGraph) {
   if (!canBeReplaced(invariantGraph)) {
     return false;
   }
-  return staticInputVarNodeIds().size() <= 1;
+  if (!shouldHold()) {
+    assert(staticInputVarNodeIds().size() == 2);
+    invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
+        std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
+  } else if (!staticInputVarNodeIds().empty()) {
+    const VarNodeId firstVar = staticInputVarNodeIds().front();
+    for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
+      invariantGraph.replaceVarNode(staticInputVarNodeIds().at(i), firstVar);
+    }
+  }
+  return true;
 }
 
 void IntAllEqualNode::registerOutputVars(InvariantGraph& invariantGraph,
