@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis {
@@ -14,8 +15,8 @@ static bool sortedVectorIsInterval(const std::vector<Int>& sortedVals) {
 
 IntervalDomain::IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {
   if (lb > ub) {
-    throw std::runtime_error("InterValDomain::InterValDomain: " +
-                             std::to_string(lb) + " > " + std::to_string(ub));
+    throw DomainException("InterValDomain::InterValDomain: " +
+                          std::to_string(lb) + " > " + std::to_string(ub));
   }
 }
 
@@ -47,16 +48,16 @@ std::vector<DomainEntry> IntervalDomain::relativeComplementIfIntersects(
 
 void IntervalDomain::setLowerBound(Int lb) {
   if (lb > _ub) {
-    throw std::runtime_error("IntervalDomain::setLowerBound: " +
-                             std::to_string(lb) + " > " + std::to_string(_ub));
+    throw DomainException("IntervalDomain::setLowerBound: " +
+                          std::to_string(lb) + " > " + std::to_string(_ub));
   }
   _lb = lb;
 }
 
 void IntervalDomain::setUpperBound(Int ub) {
   if (_lb > ub) {
-    throw std::runtime_error("InterValDomain::setUpperBound: " +
-                             std::to_string(_lb) + " > " + std::to_string(ub));
+    throw DomainException("InterValDomain::setUpperBound: " +
+                          std::to_string(_lb) + " > " + std::to_string(ub));
   }
   _ub = ub;
 }
@@ -73,13 +74,13 @@ void IntervalDomain::intersect(Int lb, Int ub) {
   _lb = std::max(lb, _lb);
   _ub = std::min(ub, _ub);
   if (_lb > _ub) {
-    throw std::runtime_error("IntervalDomain::intersect: Empty domain");
+    throw DomainException("IntervalDomain::intersect: Empty domain");
   }
 }
 
 void IntervalDomain::fix(Int value) {
   if (!contains(value)) {
-    throw std::runtime_error("IntervalDomain::fix: Empty domain");
+    throw DomainException("IntervalDomain::fix: Empty domain");
   }
   _lb = value;
   _ub = value;
@@ -95,13 +96,10 @@ bool IntervalDomain::operator!=(const IntervalDomain& other) const {
 
 SetDomain::SetDomain(std::vector<Int>&& values) : _values(std::move(values)) {
   if (_values.empty()) {
-    throw std::runtime_error("SetDomain::SetDomain: empty domain");
+    throw DomainException("SetDomain::SetDomain: empty domain");
   }
   std::sort(_values.begin(), _values.end());
   _values.erase(std::unique(_values.begin(), _values.end()), _values.end());
-  if (_values.empty()) {
-    throw std::runtime_error("SetDomain::SetDomain: empty domain");
-  }
 }
 
 SetDomain::SetDomain(const std::vector<Int>& values)
@@ -175,6 +173,8 @@ std::vector<DomainEntry> SetDomain::relativeComplementIfIntersects(
 void SetDomain::remove(Int value) {
   if (value < lowerBound() || upperBound() < value) {
     return;
+  } else if (isFixed()) {
+    throw DomainException("SetDomain::remove: Empty domain");
   }
   auto it = std::find(_values.begin(), _values.end(), value);
   if (it != _values.end()) {
@@ -185,6 +185,8 @@ void SetDomain::remove(Int value) {
 void SetDomain::removeBelow(Int newMin) {
   if (newMin <= lowerBound()) {
     return;
+  } else if (upperBound() < newMin) {
+    throw DomainException("SetDomain::removeBelow: Empty domain");
   }
   Int offset = 0;
   for (size_t i = 0; i < _values.size() && _values[i] < newMin; ++i) {
@@ -196,6 +198,8 @@ void SetDomain::removeBelow(Int newMin) {
 void SetDomain::removeAbove(Int newMax) {
   if (upperBound() <= newMax) {
     return;
+  } else if (newMax < lowerBound()) {
+    throw DomainException("SetDomain::removeAbove: Empty domain");
   }
   Int offset = static_cast<Int>(_values.size()) - 1;
   for (Int i = static_cast<Int>(_values.size()) - 1;
@@ -220,6 +224,9 @@ void SetDomain::remove(const std::vector<Int>& values) {
       }
       ++i;
     }
+  }
+  if (_values.empty()) {
+    throw DomainException("SetDomain::remove: Empty domain");
   }
 }
 
@@ -263,13 +270,13 @@ void SetDomain::intersect(const std::vector<Int>& otherVals) {
   }
   _values = std::move(newValues);
   if (_values.empty()) {
-    throw std::runtime_error("SetDomain::intersect: Empty domain");
+    throw DomainException("SetDomain::intersect: Empty domain");
   }
 }
 
 void SetDomain::fix(Int value) {
   if (!contains(value)) {
-    throw std::runtime_error("SetDomain::fix: Empty domain");
+    throw DomainException("SetDomain::fix: Empty domain");
   }
   _values = std::vector<Int>{value};
 }

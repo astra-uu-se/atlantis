@@ -88,6 +88,7 @@ void Solver::close() {
 
 //---------------------Registration---------------------
 void Solver::enqueueDefinedVar(VarId id) {
+  assert(id.idType == VarIdType::var);
   if (_isEnqueued.get(id.id)) {
     return;
   }
@@ -96,6 +97,7 @@ void Solver::enqueueDefinedVar(VarId id) {
 }
 
 void Solver::enqueueDefinedVar(VarId id, size_t curLayer) {
+  assert(id.idType == VarIdType::var);
   if (_isEnqueued.get(id.id)) {
     return;
   }
@@ -103,6 +105,10 @@ void Solver::enqueueDefinedVar(VarId id, size_t curLayer) {
   if (varLayer == curLayer) {
     _propGraph.enqueuePropagationQueue(id.id);
   } else {
+    assert(std::all_of(
+        _layerQueue[varLayer].begin(),
+        _layerQueue[varLayer].begin() + _layerQueueIndex[varLayer],
+        [&](const VarIdBase& vid) { return _isEnqueued.get(vid.id); }));
     _layerQueue[varLayer][_layerQueueIndex[varLayer]] = id.id;
     ++_layerQueueIndex[varLayer];
   }
@@ -143,7 +149,8 @@ VarId Solver::dequeueComputedVar(Timestamp) {
     return {NULL_ID};
   }
   VarId nextVar(_propGraph.dequeuePropagationQueue());
-  _isEnqueued.set(nextVar.id, false);
+  assert(nextVar.idType == VarIdType::var);
+  // _isEnqueued.set(nextVar.id, false);
   // Due to enqueueDefineddVar, all variables in the queue are "active".
   return nextVar;
 }
@@ -321,11 +328,12 @@ void Solver::propagate() {
         // is entered only once per invariant:
         if (queuedVar == defInv.primaryDefinedVar()) {
           // enqueue all modified defined vars:
-          for (const VarId& inputId : defInv.nonPrimaryDefinedVars()) {
-            if (hasChanged(_currentTimestamp, inputId)) {
-              assert(!_isEnqueued.get(inputId.id));
-              _propGraph.enqueuePropagationQueue(inputId.id);
-              _isEnqueued.set(inputId.id, true);
+          for (const VarId& defVarId : defInv.nonPrimaryDefinedVars()) {
+            assert(defVarId.idType == VarIdType::var);
+            if (hasChanged(_currentTimestamp, defVarId)) {
+              assert(!_isEnqueued.get(defVarId.id));
+              _propGraph.enqueuePropagationQueue(defVarId.id);
+              _isEnqueued.set(defVarId.id, true);
             }
           }
           if constexpr (Mode == CommitMode::COMMIT) {
@@ -342,16 +350,17 @@ void Solver::propagate() {
       // For each invariant queuedVar is an input to:
       for (const auto& toNotify : listeningInvariantData(queuedVar)) {
         Invariant& invariant = _store.invariant(toNotify.invariantId);
-        assert(invariant.primaryDefinedVar() != NULL_ID);
+        const VarId& primaryDefinedVar = invariant.primaryDefinedVar();
+        assert(primaryDefinedVar != NULL_ID);
         assert(toNotify.invariantId != definingInvariant);
-        assert(invariant.primaryDefinedVar().idType == VarIdType::var);
+        assert(primaryDefinedVar.idType == VarIdType::var);
         invariant.notifyInputChanged(_currentTimestamp, toNotify.localId);
         if constexpr (SingleLayer) {
           assert(_propGraph.position(queuedVar) <
-                 _propGraph.position(invariant.primaryDefinedVar()));
+                 _propGraph.position(primaryDefinedVar));
         } else {
           if (_propGraph.position(queuedVar) >
-              _propGraph.position(invariant.primaryDefinedVar())) {
+              _propGraph.position(primaryDefinedVar)) {
             assert(_propGraph.isDynamicInvariant(toNotify.invariantId) &&
                    _store.dynamicInputVar(_currentTimestamp,
                                           toNotify.invariantId) != queuedVar);
@@ -359,10 +368,10 @@ void Solver::propagate() {
           }
         }
         if constexpr (SingleLayer) {
-          assert(_propGraph.layer(invariant.primaryDefinedVar()) == 0);
-          enqueueDefinedVar(invariant.primaryDefinedVar());
+          assert(_propGraph.layer(primaryDefinedVar) == 0);
+          enqueueDefinedVar(primaryDefinedVar);
         } else {
-          enqueueDefinedVar(invariant.primaryDefinedVar(), curLayer);
+          enqueueDefinedVar(primaryDefinedVar, curLayer);
         }
       }
 
@@ -374,16 +383,18 @@ void Solver::propagate() {
     if constexpr (SingleLayer) {
       return;
     } else {
+      assert(_layerQueueIndex.size() == _propGraph.numLayers());
+
       // Find next layer that has queued variables:
-      while (++curLayer < _propGraph.numLayers() &&
-             _layerQueueIndex[curLayer] == 0) {
-      }
+      do {
+        ++curLayer;
+      } while (curLayer < _propGraph.numLayers() &&
+               _layerQueueIndex[curLayer] == 0);
 
       if (curLayer >= _propGraph.numLayers()) {
         // All layers have been propogated
-        assert(_layerQueueIndex.size() == _propGraph.numLayers());
         assert(std::all_of(_layerQueueIndex.begin(), _layerQueueIndex.end(),
-                           [&](const Timestamp lqi) { return lqi == 0; }));
+                           [&](const size_t lqi) { return lqi == 0; }));
         return;
       }
       // There are variables to enqueue for the new layer:
@@ -393,11 +404,11 @@ void Solver::propagate() {
         _propGraph.topologicallyOrder(_currentTimestamp, curLayer);
       }
       // Add all queued variables to the propagation queue:
-      while (_layerQueueIndex[curLayer] > 0) {
-        _propGraph.enqueuePropagationQueue(
-            _layerQueue[curLayer][--_layerQueueIndex[curLayer]]);
+      for (size_t i = 0; i < _layerQueueIndex[curLayer]; ++i) {
+        assert(_isEnqueued.get(_layerQueue[curLayer][i]));
+        _propGraph.enqueuePropagationQueue(_layerQueue[curLayer][i]);
       }
-      assert(_layerQueueIndex[curLayer] == 0);
+      _layerQueueIndex[curLayer] = 0;
     }
   }
 }

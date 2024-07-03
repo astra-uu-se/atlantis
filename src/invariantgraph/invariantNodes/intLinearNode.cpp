@@ -59,11 +59,13 @@ void IntLinearNode::updateState(InvariantGraph& graph) {
     ub += std::max(v1, v2);
   }
 
-  graph.varNode(outputVarNodeIds().front()).removeValuesBelow(lb);
-  graph.varNode(outputVarNodeIds().front()).removeValuesAbove(ub);
+  auto& outputNode = graph.varNode(outputVarNodeIds().front());
+
+  outputNode.removeValuesBelow(lb);
+  outputNode.removeValuesAbove(ub);
 
   if (staticInputVarNodeIds().empty()) {
-    graph.varNode(outputVarNodeIds().front()).fixToValue(_offset);
+    outputNode.fixToValue(_offset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }

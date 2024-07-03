@@ -15,6 +15,21 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
+class UnitInvariantNode : public InvariantNode {
+ public:
+  explicit UnitInvariantNode(std::vector<VarNodeId>&& defVarNodes)
+      : InvariantNode(std::move(defVarNodes)) {}
+
+  void registerOutputVars(InvariantGraph& graph,
+                          propagation::SolverBase& solver) override {
+    for (const auto& varNodeId : outputVarNodeIds()) {
+      makeSolverVar(solver, graph.varNode(varNodeId));
+    }
+  }
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override {}
+};
+
 enum class InvariantNodeAction : unsigned char {
   NONE = 0,
   SUBSUME = 1,
