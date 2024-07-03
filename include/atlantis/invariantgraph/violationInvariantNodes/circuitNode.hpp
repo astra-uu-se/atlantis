@@ -13,6 +13,8 @@ class CircuitNode : public ViolationInvariantNode {
  public:
   explicit CircuitNode(std::vector<VarNodeId>&&);
 
+  void updateState(InvariantGraph&) override;
+
   [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
 
   [[nodiscard]] bool makeImplicit(InvariantGraph& graph) override;

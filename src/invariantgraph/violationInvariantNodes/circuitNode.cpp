@@ -14,9 +14,21 @@ namespace atlantis::invariantgraph {
 CircuitNode::CircuitNode(std::vector<VarNodeId>&& vars)
     : ViolationInvariantNode(std::move(vars), true) {}
 
+void CircuitNode::updateState(InvariantGraph& graph) {
+  if (staticInputVarNodeIds().size() == 1) {
+    graph.varNode(staticInputVarNodeIds().front()).fixToValue(Int{1});
+  } else if (staticInputVarNodeIds().size() == 2) {
+    graph.varNode(staticInputVarNodeIds().front()).fixToValue(Int{2});
+    graph.varNode(staticInputVarNodeIds().back()).fixToValue(Int{1});
+  }
+  if (staticInputVarNodeIds().size() <= 2) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
 bool CircuitNode::canBeMadeImplicit(const InvariantGraph& graph) const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
-         shouldHold() &&
+         shouldHold() && staticInputVarNodeIds().size() > 2 &&
          std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& nId) {
                        return graph.varNodeConst(nId).isFixed() ||
@@ -79,8 +91,9 @@ bool CircuitNode::replace(InvariantGraph& graph) {
   orderVars.emplace_back(graph.retrieveIntVarNode(1));
   // order[l] == 1 -> offset[0] = 2
   offsetVars.emplace_back(graph.retrieveIntVarNode(2));
-  // order[l] == 1 -> modulo[0] = 2
-  modoluVars.emplace_back(graph.retrieveIntVarNode(2));
+  // order[l] == 1 -> modulo[0] = 2 mod n
+  modoluVars.emplace_back(graph.retrieveIntVarNode(
+      2 % static_cast<Int>(staticInputVarNodeIds().size())));
 
   for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
     orderVars.emplace_back(graph.retrieveIntVarNode(

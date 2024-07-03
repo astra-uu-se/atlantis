@@ -36,7 +36,7 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     }
   }
   if (definedVarCoeff == 0) {
-    return int_lin_eq(invariantGraph, std::move(coeffs), inputs, bound);
+    return int_lin_eq(invariantGraph, std::move(coeffs), inputs, -bound);
   }
   if (std::abs(definedVarCoeff) != 1) {
     throw FznArgumentException(
@@ -54,9 +54,10 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     inputVarNodes.erase(inputVarNodes.begin() + index);
     coeffs.erase(coeffs.begin() + index);
   }
+  const Int lhsOffset = -bound;
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs), std::move(inputVarNodes),
-      invariantGraph.retrieveVarNode(definedVar), bound));
+      invariantGraph.retrieveVarNode(definedVar), lhsOffset));
   return true;
 }
 
@@ -99,14 +100,15 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     inputVarNodes.erase(inputVarNodes.begin() + index);
     coeffs.erase(coeffs.begin() + index);
   }
+  const Int lhsOffset = -bound;
   auto [lb, ub] = linBounds(coeffs, inputs);
-  lb += bound;
-  ub += bound;
+  lb += lhsOffset;
+  ub += lhsOffset;
   const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
       SearchDomain(lb, ub), VarNode::DomainType::NONE);
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), std::move(inputVarNodes), outputVarNodeId, bound));
+      std::move(coeffs), std::move(inputVarNodes), outputVarNodeId, lhsOffset));
   invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
       outputVarNodeId, invariantGraph.retrieveVarNode(definedVar),
       invariantGraph.retrieveVarNode(reified)));
@@ -127,9 +129,11 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
   const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(Int{0});
 
+  const Int lhsOffset = -bound;
+
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
-      outputVarNodeId, bound));
+      outputVarNodeId, lhsOffset));
 
   return true;
 }
@@ -138,16 +142,19 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound, fznparser::BoolArg reified) {
   verifyInputs(coeffs, inputs);
+
+  const Int lhsOffset = -bound;
+
   auto [lb, ub] = linBounds(coeffs, inputs);
-  lb += bound;
-  ub += bound;
+  lb += lhsOffset;
+  ub += lhsOffset;
 
   const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
       SearchDomain(lb, ub), VarNode::DomainType::NONE);
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
-      outputVarNodeId, bound));
+      outputVarNodeId, lhsOffset));
 
   invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
       outputVarNodeId, invariantGraph.retrieveIntVarNode(Int{0}),

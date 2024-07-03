@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <rapidcheck/gen/Numeric.h>
 #include <rapidcheck/gtest.h>
 
 #include "atlantis/propagation/solver.hpp"
@@ -15,7 +16,9 @@ class ModViewTest : public ::testing::Test {
   void SetUp() override { solver = std::make_unique<Solver>(); }
 };
 
-RC_GTEST_FIXTURE_PROP(ModViewTest, simple, (Int val, Int denominator)) {
+RC_GTEST_FIXTURE_PROP(ModViewTest, simple, (Int val)) {
+  const Int denominator = *rc::gen::suchThat(rc::gen::arbitrary<Int>(),
+                                             [](Int v) { return v != 0; });
   solver->open();
   auto varId = solver->makeIntVar(val, val, val);
   auto viewId = solver->makeIntView<ModView>(*solver, varId, denominator);
