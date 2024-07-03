@@ -11,6 +11,8 @@ class BoolNotNode : public InvariantNode {
  public:
   BoolNotNode(VarNodeId staticInput, VarNodeId output);
 
+  void updateState(InvariantGraph&) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

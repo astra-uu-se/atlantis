@@ -6,10 +6,21 @@ namespace atlantis::invariantgraph {
 
 IntModViewNode::IntModViewNode(VarNodeId staticInput, VarNodeId output,
                                Int denominator)
-    : InvariantNode({output}, {staticInput}), _denominator(denominator) {}
+    : InvariantNode({output}, {staticInput}),
+      _denominator(std::abs(denominator)) {}
 
-void invariantgraph::IntModViewNode::registerOutputVars(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+void IntModViewNode::updateState(InvariantGraph& graph) {
+  if (graph.varNodeConst(staticInputVarNodeIds().front()).isFixed()) {
+    graph.varNode(outputVarNodeIds().front())
+        .fixToValue(
+            graph.varNodeConst(staticInputVarNodeIds().front()).lowerBound() %
+            _denominator);
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
+
+void IntModViewNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                        propagation::SolverBase& solver) {
   if (invariantGraph.varId(outputVarNodeIds().front()) ==
       propagation::NULL_ID) {
     invariantGraph.varNode(outputVarNodeIds().front())
@@ -18,7 +29,6 @@ void invariantgraph::IntModViewNode::registerOutputVars(
   }
 }
 
-void invariantgraph::IntModViewNode::registerNode(InvariantGraph&,
-                                                  propagation::SolverBase&) {}
+void IntModViewNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
 }  // namespace atlantis::invariantgraph

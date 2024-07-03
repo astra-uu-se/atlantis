@@ -16,6 +16,8 @@ class IntScalarNode : public InvariantNode {
   IntScalarNode(VarNodeId staticInput, VarNodeId output, Int factor,
                 Int offset);
 
+  void updateState(InvariantGraph&) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

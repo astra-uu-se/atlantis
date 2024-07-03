@@ -14,6 +14,8 @@ class IntModViewNode : public InvariantNode {
  public:
   IntModViewNode(VarNodeId staticInput, VarNodeId output, Int denominator);
 
+  void updateState(InvariantGraph&) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

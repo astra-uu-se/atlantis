@@ -11,6 +11,12 @@ class IntAbsNode : public InvariantNode {
  public:
   IntAbsNode(VarNodeId staticInput, VarNodeId output);
 
+  void updateState(InvariantGraph&) override;
+
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+
+  [[nodiscard]] bool replace(InvariantGraph&) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

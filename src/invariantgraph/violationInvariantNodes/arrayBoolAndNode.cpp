@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
 #include "atlantis/propagation/invariants/boolAnd.hpp"
@@ -22,39 +23,41 @@ ArrayBoolAndNode::ArrayBoolAndNode(std::vector<VarNodeId>&& as,
 ArrayBoolAndNode::ArrayBoolAndNode(std::vector<VarNodeId>&& as, bool shouldHold)
     : ViolationInvariantNode(std::move(as), shouldHold) {}
 
-void ArrayBoolAndNode::updateState(InvariantGraph& invariantGraph) {
-  ViolationInvariantNode::updateState(invariantGraph);
-  if (isReified()) {
-    return;
-  }
-  if (!shouldHold()) {
-    for (const auto& id : staticInputVarNodeIds()) {
-      if (invariantGraph.varNodeConst(id).isFixed() &&
-          !invariantGraph.varNodeConst(id).inDomain(false)) {
-        if (isReified()) {
-          invariantGraph.varNode(reifiedViolationNodeId()).fixToValue(false);
-        }
+void ArrayBoolAndNode::updateState(InvariantGraph& graph) {
+  ViolationInvariantNode::updateState(graph);
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+  // remove fixed inputs that are true:
+  for (const auto& id : staticInputVarNodeIds()) {
+    if (graph.varNodeConst(id).isFixed()) {
+      if (graph.varNodeConst(id).inDomain(bool{true})) {
+        varsToRemove.emplace_back(id);
+      } else if (shouldHold()) {
+        throw InconsistencyException(
+            "ArrayBoolAndNode::updateState constraint is violated");
+      } else {
         setState(InvariantNodeState::SUBSUMED);
         return;
       }
     }
-    return;
   }
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-  for (const auto& id : staticInputVarNodeIds()) {
-    if (invariantGraph.varNodeConst(id).isFixed() &&
-        invariantGraph.varNodeConst(id).inDomain(true)) {
-      varsToRemove.push_back(id);
-    }
-  }
+
   for (const auto& id : varsToRemove) {
-    removeStaticInputVarNode(invariantGraph.varNode(id));
+    removeStaticInputVarNode(graph.varNode(id));
   }
+
   if (staticInputVarNodeIds().size() == 0) {
     if (isReified()) {
-      invariantGraph.varNode(reifiedViolationNodeId()).fixToValue(true);
+      graph.varNode(reifiedViolationNodeId()).fixToValue(true);
+    } else if (!shouldHold()) {
+      throw InconsistencyException(
+          "ArrayBoolAndNode::updateState constraint is violated");
     }
+    setState(InvariantNodeState::SUBSUMED);
+  } else if (staticInputVarNodeIds().size() == 1 && !isReified()) {
+    auto& inputNode = graph.varNode(staticInputVarNodeIds().front());
+    inputNode.fixToValue(shouldHold());
+    removeStaticInputVarNode(inputNode);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -68,53 +71,50 @@ bool ArrayBoolAndNode::replace(InvariantGraph& graph) {
   if (!canBeReplaced(graph)) {
     return false;
   }
-  assert(staticInputVarNodeIds().size() <= 1);
   if (staticInputVarNodeIds().size() == 1) {
     if (isReified()) {
-      graph.addInvariantNode(std::make_unique<BoolEqNode>(
-          staticInputVarNodeIds().front(), reifiedViolationNodeId()));
-    } else if (shouldHold()) {
-      graph.varNode(staticInputVarNodeIds().front()).setIsViolationVar(true);
-    } else {
-      const VarNodeId neg = graph.retrieveBoolVarNode();
-      graph.varNode(neg).setIsViolationVar(true);
-      graph.addInvariantNode(
-          std::make_unique<BoolNotNode>(staticInputVarNodeIds().front(), neg));
+      graph.replaceVarNode(reifiedViolationNodeId(),
+                           staticInputVarNodeIds().front());
     }
   }
   return true;
 }
 
-void ArrayBoolAndNode::registerOutputVars(InvariantGraph& invariantGraph,
+void ArrayBoolAndNode::registerOutputVars(InvariantGraph& graph,
                                           propagation::SolverBase& solver) {
-  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+  if (staticInputVarNodeIds().size() <= 1) {
+    return;
+  }
+  if (violationVarId(graph) == propagation::NULL_ID) {
     if (shouldHold()) {
-      registerViolation(invariantGraph, solver);
+      registerViolation(graph, solver);
     } else {
       assert(!isReified());
       _intermediate = solver.makeIntVar(0, 0, 0);
-      setViolationVarId(invariantGraph,
-                        solver.makeIntView<propagation::NotEqualConst>(
-                            solver, _intermediate, 0));
+      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
+                                   solver, _intermediate, 0));
     }
   }
 }
 
-void ArrayBoolAndNode::registerNode(InvariantGraph& invariantGraph,
+void ArrayBoolAndNode::registerNode(InvariantGraph& graph,
                                     propagation::SolverBase& solver) {
-  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  if (staticInputVarNodeIds().size() <= 1) {
+    return;
+  }
+  assert(violationVarId(graph) != propagation::NULL_ID);
   std::vector<propagation::VarId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(solverVars),
-                 [&](const auto& node) { return invariantGraph.varId(node); });
+                 [&](const auto& node) { return graph.varId(node); });
   if (solverVars.size() == 2) {
     solver.makeInvariant<propagation::BoolAnd>(
-        solver, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
+        solver, !shouldHold() ? _intermediate : violationVarId(graph),
         solverVars.front(), solverVars.back());
   } else {
     solver.makeInvariant<propagation::ForAll>(
-        solver, !shouldHold() ? _intermediate : violationVarId(invariantGraph),
+        solver, !shouldHold() ? _intermediate : violationVarId(graph),
         std::move(solverVars));
   }
 }
