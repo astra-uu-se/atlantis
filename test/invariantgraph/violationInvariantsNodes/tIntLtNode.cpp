@@ -128,8 +128,6 @@ TEST_P(IntLtNodeTestFixture, propagation) {
   EXPECT_NE(violVarId, propagation::NULL_ID);
   EXPECT_EQ(inputVarIds.size(), 2);
 
-  solver.close();
-
   std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
 
   while (increaseNextVal(solver, inputVarIds, inputVals)) {

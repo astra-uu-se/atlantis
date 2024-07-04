@@ -13,9 +13,17 @@ class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
+  Int denominatorVal() { return varNode(denominatorVarNodeId).lowerBound(); }
+
+  Int denominatorVal(propagation::Solver& solver) {
+    return varNode(denominatorVarNodeId).isFixed()
+               ? varNode(denominatorVarNodeId).lowerBound()
+               : solver.currentValue(varId(denominatorVarNodeId));
+  }
+
   Int computeOutput() {
     const Int numerator = varNode(numeratorVarNodeId).lowerBound();
-    const Int denominator = varNode(denominatorVarNodeId).lowerBound();
+    const Int denominator = denominatorVal();
     return denominator != 0 ? numerator / denominator : 0;
   }
 
@@ -23,10 +31,7 @@ class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
     const Int numerator = varNode(numeratorVarNodeId).isFixed()
                               ? varNode(numeratorVarNodeId).lowerBound()
                               : solver.currentValue(varId(numeratorVarNodeId));
-    const Int denominator =
-        varNode(denominatorVarNodeId).isFixed()
-            ? varNode(denominatorVarNodeId).lowerBound()
-            : solver.currentValue(varId(denominatorVarNodeId));
+    const Int denominator = denominatorVal(solver);
     return denominator != 0 ? numerator / denominator : 0;
   }
 
@@ -129,7 +134,7 @@ TEST_P(IntDivNodeTestFixture, propagation) {
 
     expectVarVals(solver, inputVarIds, inputVals);
 
-    if (inputVals.at(1) != 0) {
+    if (denominatorVal(solver) != 0) {
       const Int actual = solver.currentValue(outputId);
       const Int expected = computeOutput(solver);
       EXPECT_EQ(actual, expected);

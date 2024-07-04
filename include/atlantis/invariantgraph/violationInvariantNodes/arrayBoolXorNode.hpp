@@ -15,6 +15,10 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
+  ArrayBoolXorNode(VarNodeId a, VarNodeId b, VarNodeId output);
+
+  ArrayBoolXorNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+
   ArrayBoolXorNode(std::vector<VarNodeId>&& as, VarNodeId output);
 
   ArrayBoolXorNode(std::vector<VarNodeId>&& as, bool shouldHold = true);

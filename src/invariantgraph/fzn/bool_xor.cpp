@@ -2,20 +2,20 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolXorNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_xor(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolXorNode>(
+  invariantGraph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b)));
   return true;
 }
 
 bool bool_xor(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolXorNode>(
+  invariantGraph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
       invariantGraph.retrieveVarNode(reified.var())));
 

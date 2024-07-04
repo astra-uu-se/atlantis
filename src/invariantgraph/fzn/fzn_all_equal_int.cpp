@@ -3,8 +3,6 @@
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/fzn/int_eq.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolXorNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {

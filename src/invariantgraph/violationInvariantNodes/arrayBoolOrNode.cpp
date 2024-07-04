@@ -4,7 +4,6 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
 #include "atlantis/propagation/invariants/boolOr.hpp"
 #include "atlantis/propagation/invariants/exists.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
