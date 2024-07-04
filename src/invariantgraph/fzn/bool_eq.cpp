@@ -2,20 +2,20 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_eq(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
+  invariantGraph.addInvariantNode(std::make_unique<BoolAllEqualNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b)));
   return true;
 }
 
 bool bool_eq(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
+  invariantGraph.addInvariantNode(std::make_unique<BoolAllEqualNode>(
       invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
       invariantGraph.retrieveVarNode(reified)));
 

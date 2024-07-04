@@ -53,12 +53,13 @@ Int IntCountNode::needle() const { return _needle; }
 void IntCountNode::registerOutputVars(InvariantGraph& invariantGraph,
                                       propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().empty()) {
-    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
-  } else if (staticInputVarNodeIds().size() == 1) {
+    return;
+  }
+  if (staticInputVarNodeIds().size() == 1) {
     invariantGraph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::IfThenElseConst>(
             solver, invariantGraph.varId(staticInputVarNodeIds().front()),
-            _offset, _offset + 1, needle()));
+            _offset + 1, _offset, needle()));
   } else if (_offset == 0) {
     makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
   } else if (_intermediate != propagation::NULL_ID) {

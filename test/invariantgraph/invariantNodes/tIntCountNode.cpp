@@ -31,12 +31,13 @@ class IntCountNodeTestFixture : public NodeTestBase<IntCountNode> {
   Int computeOutput(propagation::Solver& solver) {
     Int occurrences = 0;
     for (const auto& inputVarNodeId : inputVarNodeIds) {
+      if (!varNode(inputVarNodeId).inDomain(needle)) {
+        continue;
+      }
       if (varNode(inputVarNodeId).isFixed() ||
           varId(inputVarNodeId) == propagation::NULL_ID) {
-        occurrences += varNode(inputVarNodeId).isFixed() &&
-                               varNode(inputVarNodeId).inDomain(needle)
-                           ? 1
-                           : 0;
+        EXPECT_TRUE(varNode(inputVarNodeId).inDomain(needle));
+        ++occurrences;
       } else {
         occurrences +=
             solver.currentValue(varId(inputVarNodeId)) == needle ? 1 : 0;
@@ -62,10 +63,19 @@ class IntCountNodeTestFixture : public NodeTestBase<IntCountNode> {
         outputVarNodeId = retrieveIntVarNode(0, 1, outputIdentifier);
       }
     } else {
-      inputVarNodeIds = {retrieveIntVarNode(1, 10, "input1"),
-                         retrieveIntVarNode(1, 10, "input2"),
-                         retrieveIntVarNode(1, 10, "input3")};
-      outputVarNodeId = retrieveIntVarNode(0, 3, outputIdentifier);
+      if (_paramData.data == 0) {
+        inputVarNodeIds = {
+            retrieveIntVarNode(1, 3, "input1"),
+            retrieveIntVarNode(std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10},
+                               "input2"),
+            retrieveIntVarNode(std::vector<Int>{2}, "input3")};
+        outputVarNodeId = retrieveIntVarNode(1, 2, outputIdentifier);
+      } else {
+        inputVarNodeIds = {retrieveIntVarNode(1, 10, "input1"),
+                           retrieveIntVarNode(1, 10, "input2"),
+                           retrieveIntVarNode(1, 10, "input3")};
+        outputVarNodeId = retrieveIntVarNode(0, 3, outputIdentifier);
+      }
     }
 
     createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds}, needle,
@@ -186,7 +196,7 @@ TEST_P(IntCountNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     IntCountNodeTest, IntCountNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE},
+    ::testing::Values(ParamData{int{0}}, ParamData{int{1}},
                       ParamData{InvariantNodeAction::SUBSUME, 0},
                       ParamData{InvariantNodeAction::SUBSUME, 1}));
 

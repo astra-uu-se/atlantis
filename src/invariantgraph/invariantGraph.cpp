@@ -10,9 +10,7 @@
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intEqNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/utils/fznAst.hpp"
 

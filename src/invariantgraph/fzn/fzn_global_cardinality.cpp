@@ -4,7 +4,7 @@
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -53,7 +53,7 @@ bool fzn_global_cardinality(
         SearchDomain(0, static_cast<Int>(inputs->size())),
         VarNode::DomainType::NONE));
     binaryOutputVarNodeIds.push_back(invariantGraph.retrieveBoolVarNode());
-    invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
+    invariantGraph.addInvariantNode(std::make_unique<BoolAllEqualNode>(
         outputVarNodeIds.at(i), countVarNodeIds.at(i),
         binaryOutputVarNodeIds.at(i)));
   }

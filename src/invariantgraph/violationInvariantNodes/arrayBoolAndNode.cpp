@@ -3,7 +3,6 @@
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
 #include "atlantis/propagation/invariants/boolAnd.hpp"
 #include "atlantis/propagation/invariants/forAll.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"

@@ -39,12 +39,15 @@ class VarIntCountNodeTestFixture : public NodeTestBase<VarIntCountNode> {
                               : solver.currentValue(varId(needleVarNodeId));
     Int occurrences = 0;
     for (const auto& inputVarNodeId : inputVarNodeIds) {
-      if (varNode(inputVarNodeId).isFixed() ||
+      const VarNode& inputVarNode = varNode(inputVarNodeId);
+      if (!inputVarNode.inDomain(needleVal)) {
+        continue;
+      }
+      if (inputVarNode.isFixed() ||
           varId(inputVarNodeId) == propagation::NULL_ID) {
-        occurrences += varNode(inputVarNodeId).isFixed() &&
-                               varNode(inputVarNodeId).inDomain(needleVal)
-                           ? 1
-                           : 0;
+        EXPECT_TRUE(inputVarNode.isFixed());
+        EXPECT_TRUE(varNode(inputVarNodeId).inDomain(needleVal));
+        ++occurrences;
       } else {
         occurrences +=
             solver.currentValue(varId(inputVarNodeId)) == needleVal ? 1 : 0;

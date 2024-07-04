@@ -126,7 +126,6 @@ TEST_P(IntLeNodeTestFixture, propagation) {
                   : _invariantGraph->totalViolationVarId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
-  solver.close();
 
   std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
 
