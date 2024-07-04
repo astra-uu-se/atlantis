@@ -30,6 +30,16 @@ IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold,
 
 void IntAllEqualNode::updateState(InvariantGraph& graph) {
   ViolationInvariantNode::updateState(graph);
+  if (staticInputVarNodeIds().size() < 2) {
+    if (!shouldHold()) {
+      throw InconsistencyException(
+          "IntAllEqualNode::updateState constraint is violated");
+    }
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+    }
+    setState(InvariantNodeState::SUBSUMED);
+  }
   size_t numFixed = 0;
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
     const VarNode& iNode = graph.varNodeConst(staticInputVarNodeIds().at(i));
@@ -62,7 +72,7 @@ void IntAllEqualNode::updateState(InvariantGraph& graph) {
 bool IntAllEqualNode::canBeReplaced(const InvariantGraph&) const {
   return state() == InvariantNodeState::ACTIVE && !_breaksCycle &&
          (!isReified() &&
-          (shouldHold() || staticInputVarNodeIds().size() == 2));
+          (shouldHold() || staticInputVarNodeIds().size() <= 2));
 }
 
 bool IntAllEqualNode::replace(InvariantGraph& invariantGraph) {

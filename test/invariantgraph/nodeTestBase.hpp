@@ -295,6 +295,17 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     }
   }
 
+  void expectVarVals(propagation::Solver& solver,
+                     const std::vector<propagation::VarId>& inputVars,
+                     const std::vector<Int>& vals) {
+    EXPECT_EQ(inputVars.size(), vals.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      if (inputVars.at(i) != propagation::NULL_ID) {
+        EXPECT_EQ(solver.currentValue(inputVars.at(i)), vals.at(i));
+      }
+    }
+  }
+
   void updateOutputVals(propagation::Solver& solver,
                         const std::vector<propagation::VarId>& outputVars,
                         std::vector<Int>& outputVals) {

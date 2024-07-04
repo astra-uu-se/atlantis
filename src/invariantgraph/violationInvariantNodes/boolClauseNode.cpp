@@ -132,23 +132,23 @@ bool BoolClauseNode::replace(InvariantGraph& graph) {
           std::vector<VarNodeId>{staticInputVarNodeIds()}, !shouldHold()));
     }
   } else {
-    std::vector<VarNodeId> inputs;
-    inputs.reserve(staticInputVarNodeIds().size());
+    std::vector<VarNodeId> boolOrInputs;
+    boolOrInputs.reserve(staticInputVarNodeIds().size());
     for (size_t i = 0; i < _numAs; ++i) {
-      inputs.emplace_back(staticInputVarNodeIds().at(i));
+      boolOrInputs.emplace_back(staticInputVarNodeIds().at(i));
     }
     for (size_t i = _numAs; i < staticInputVarNodeIds().size(); ++i) {
-      inputs.emplace_back(graph.retrieveBoolVarNode());
+      boolOrInputs.emplace_back(graph.retrieveBoolVarNode());
       graph.addInvariantNode(std::make_unique<BoolNotNode>(
-          staticInputVarNodeIds().at(i), inputs.back()));
+          staticInputVarNodeIds().at(i), boolOrInputs.back()));
     }
 
     if (isReified()) {
       graph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
-          std::move(inputs), reifiedViolationNodeId()));
+          std::move(boolOrInputs), reifiedViolationNodeId()));
     } else {
-      graph.addInvariantNode(
-          std::make_unique<ArrayBoolOrNode>(std::move(inputs), shouldHold()));
+      graph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
+          std::move(boolOrInputs), shouldHold()));
     }
   }
   return true;

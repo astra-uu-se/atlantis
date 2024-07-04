@@ -11,8 +11,8 @@ using namespace atlantis::invariantgraph;
 
 class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
  public:
-  VarNodeId idx{NULL_NODE_ID};
-  VarNodeId outputVar{NULL_NODE_ID};
+  VarNodeId idxVarNodeId{NULL_NODE_ID};
+  VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
   Int offsetIdx = 1;
@@ -27,10 +27,24 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
 
   bool isIntElement() const { return _paramData.data == 0; }
 
+  Int computeOutput() {
+    EXPECT_TRUE(varNode(idxVarNodeId).isFixed());
+    return parVal(parArray.at(varNode(idxVarNodeId).lowerBound() - offsetIdx));
+  }
+
+  Int computeOutput(propagation::Solver& solver) {
+    EXPECT_TRUE(varNode(idxVarNodeId).isFixed() ||
+                varId(idxVarNodeId) != propagation::NULL_ID);
+    return parVal(parArray.at((varNode(idxVarNodeId).isFixed()
+                                   ? varNode(idxVarNodeId).lowerBound()
+                                   : solver.currentValue(varId(idxVarNodeId))) -
+                              offsetIdx));
+  }
+
   void SetUp() override {
     NodeTestBase::SetUp();
 
-    idx = retrieveIntVarNode(
+    idxVarNodeId = retrieveIntVarNode(
         offsetIdx,
         shouldBeSubsumed()
             ? offsetIdx
@@ -39,18 +53,19 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
 
     if (isIntElement()) {
       // int version of element
-      outputVar = retrieveIntVarNode(-2, 1, outputIdentifier);
-      createInvariantNode(std::vector<Int>{parArray}, idx, outputVar,
-                          offsetIdx);
+      outputVarNodeId = retrieveIntVarNode(-2, 1, outputIdentifier);
+      createInvariantNode(std::vector<Int>{parArray}, idxVarNodeId,
+                          outputVarNodeId, offsetIdx);
     } else {
       // bool version of element
-      outputVar = retrieveBoolVarNode(outputIdentifier);
+      outputVarNodeId = retrieveBoolVarNode(outputIdentifier);
       std::vector<bool> boolArray(parArray.size());
       boolArray.reserve(parArray.size());
       for (size_t i = 0; i < parArray.size(); ++i) {
         boolArray.at(i) = intParToBool(parArray.at(i));
       }
-      createInvariantNode(std::move(boolArray), idx, outputVar, offsetIdx);
+      createInvariantNode(std::move(boolArray), idxVarNodeId, outputVarNodeId,
+                          offsetIdx);
     }
   }
 };
@@ -59,9 +74,9 @@ TEST_P(ArrayElementNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().idx(), idx);
+  EXPECT_EQ(invNode().idx(), idxVarNodeId);
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVar);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
 
   std::vector<Int> expectedAs(parArray.size());
   for (size_t i = 0; i < parArray.size(); ++i) {
@@ -85,25 +100,25 @@ TEST_P(ArrayElementNodeTestFixture, application) {
   solver.close();
 
   // The index ranges over the as array (first index is 1).
-  EXPECT_GE(solver.lowerBound(varId(idx)), offsetIdx);
-  EXPECT_LE(solver.upperBound(varId(idx)),
+  EXPECT_GE(solver.lowerBound(varId(idxVarNodeId)), offsetIdx);
+  EXPECT_LE(solver.upperBound(varId(idxVarNodeId)),
             offsetIdx + static_cast<Int>(invNode().as().size()) - 1);
 
-  // The outputVar domain should contain all elements in as.
+  // The outputVarNodeId domain should contain all elements in as.
   if (isIntElement()) {
-    EXPECT_GE(solver.lowerBound(varId(outputVar)),
+    EXPECT_GE(solver.lowerBound(varId(outputVarNodeId)),
               *std::min_element(parArray.begin(), parArray.end()));
-    EXPECT_LE(solver.upperBound(varId(outputVar)),
+    EXPECT_LE(solver.upperBound(varId(outputVarNodeId)),
               *std::max_element(parArray.begin(), parArray.end()));
   } else {
-    EXPECT_GE(solver.lowerBound(varId(outputVar)), 0);
-    EXPECT_LE(solver.upperBound(varId(outputVar)), 1);
+    EXPECT_GE(solver.lowerBound(varId(outputVarNodeId)), 0);
+    EXPECT_LE(solver.upperBound(varId(outputVarNodeId)), 1);
   }
 
-  // outputVar
+  // outputVarNodeId
   EXPECT_EQ(solver.searchVars().size(), 1);
 
-  // outputVar (outputVar is a view)
+  // outputVarNodeId (outputVarNodeId is a view)
   EXPECT_EQ(solver.numVars(), 1);
 
   // elementConst is a view
@@ -115,14 +130,13 @@ TEST_P(ArrayElementNodeTestFixture, updateState) {
   invNode().updateState(*_invariantGraph);
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(outputVar).isFixed());
-    const Int idxValue = varNode(idx).lowerBound();
-    const Int expected = parVal(parArray.at(idxValue - offsetIdx));
-    const Int actual = varNode(outputVar).lowerBound();
+    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    const Int expected = computeOutput();
+    const Int actual = varNode(outputVarNodeId).lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVar).isFixed());
+    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
   }
 }
 
@@ -130,31 +144,25 @@ TEST_P(ArrayElementNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
-  std::vector<propagation::VarId> inputs;
-  for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    inputs.emplace_back(varId(inputVarNodeId));
-  }
-
   VarNode& outputNode = varNode(outputIdentifier);
   if (outputNode.isFixed()) {
-    const Int expected = outputNode.lowerBound();
-    const Int actual =
-        parVal(parArray.at(varNode(idx).lowerBound() - offsetIdx));
+    const Int actual = varNode(outputVarNodeId).lowerBound();
+    const Int expected = computeOutput(solver);
+
     EXPECT_EQ(expected, actual);
     return;
   }
 
+  const propagation::VarId inputVarId = varId(idxVarNodeId);
+  EXPECT_NE(inputVarId, propagation::NULL_ID);
+
   const propagation::VarId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
-  EXPECT_EQ(inputs.size(), 1);
 
-  const propagation::VarId inputVar = inputs.front();
-
-  for (Int inputVal = solver.lowerBound(inputVar);
-       inputVal <= solver.upperBound(inputVar); ++inputVal) {
+  for (Int inputVal = solver.lowerBound(inputVarId);
+       inputVal <= solver.upperBound(inputVarId); ++inputVal) {
     solver.beginMove();
-    solver.setValue(inputVar, inputVal);
+    solver.setValue(inputVarId, inputVal);
     solver.endMove();
 
     solver.beginProbe();
@@ -162,8 +170,9 @@ TEST_P(ArrayElementNodeTestFixture, propagation) {
     solver.endProbe();
 
     const Int actual = solver.currentValue(outputId);
+    const Int expected = computeOutput(solver);
 
-    EXPECT_EQ(actual, parVal(parArray.at(inputVal - offsetIdx)));
+    EXPECT_EQ(actual, expected);
   }
 }
 

@@ -13,47 +13,63 @@ using ::testing::ContainerEq;
 class GlobalCardinalityNodeTestFixture
     : public NodeTestBase<GlobalCardinalityNode> {
  public:
-  std::vector<VarNodeId> inputs{};
+  std::vector<VarNodeId> inputVarNodeIds;
   const std::vector<Int> cover{2, 4};
-  std::vector<VarNodeId> outputs{};
+  std::vector<VarNodeId> outputVarNodeIds;
   std::vector<std::string> outputIdentifiers;
 
-  std::vector<Int> computeOutputs(propagation::Solver& solver) {
-    std::vector<Int> outputs(cover.size(), 0);
-    for (const auto& nId : inputs) {
-      const Int value = varNode(nId).isFixed()
-                            ? varNode(nId).lowerBound()
-                            : solver.currentValue(varId(nId));
+  std::vector<Int> computeOutputs() {
+    std::vector<Int> outputVarNodeIds(cover.size(), 0);
+    for (const auto& inputVarNodeId : inputVarNodeIds) {
+      const Int value = varNode(inputVarNodeId).lowerBound();
       for (size_t j = 0; j < cover.size(); ++j) {
         if (value == cover.at(j)) {
-          outputs.at(j)++;
+          outputVarNodeIds.at(j)++;
         }
       }
     }
-    return outputs;
+    return outputVarNodeIds;
+  }
+
+  std::vector<Int> computeOutputs(propagation::Solver& solver) {
+    std::vector<Int> outputVarNodeIds(cover.size(), 0);
+    for (const auto& inputVarNodeId : inputVarNodeIds) {
+      const Int value = varNode(inputVarNodeId).isFixed()
+                            ? varNode(inputVarNodeId).lowerBound()
+                            : solver.currentValue(varId(inputVarNodeId));
+      for (size_t j = 0; j < cover.size(); ++j) {
+        if (value == cover.at(j)) {
+          outputVarNodeIds.at(j)++;
+        }
+      }
+    }
+    return outputVarNodeIds;
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
     if (shouldBeSubsumed()) {
-      inputs = {retrieveIntVarNode(2, 2, "input1"),
-                retrieveIntVarNode(std::vector<Int>{1, 3, 5}, "input2")};
+      inputVarNodeIds = {
+          retrieveIntVarNode(2, 2, "input1"),
+          retrieveIntVarNode(std::vector<Int>{1, 3, 5}, "input2")};
     } else if (shouldBeReplaced()) {
-      inputs = {retrieveIntVarNode(1, 3, "input1"),
-                retrieveIntVarNode(1, 3, "input2")};
+      inputVarNodeIds = {retrieveIntVarNode(1, 3, "input1"),
+                         retrieveIntVarNode(1, 3, "input2")};
     } else {
-      inputs = {retrieveIntVarNode(1, 5, "input1"),
-                retrieveIntVarNode(1, 5, "input2")};
+      inputVarNodeIds = {retrieveIntVarNode(1, 5, "input1"),
+                         retrieveIntVarNode(1, 5, "input2")};
     }
 
     for (size_t i = 0; i < cover.size(); ++i) {
       outputIdentifiers.emplace_back("output" + std::to_string(i + 1));
-      outputs.emplace_back(retrieveIntVarNode(
-          0, static_cast<Int>(inputs.size()), outputIdentifiers.back()));
+      outputVarNodeIds.emplace_back(
+          retrieveIntVarNode(0, static_cast<Int>(inputVarNodeIds.size()),
+                             outputIdentifiers.back()));
     }
 
-    createInvariantNode(std::vector<VarNodeId>{inputs}, std::vector<Int>{cover},
-                        std::vector<VarNodeId>{outputs});
+    createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds},
+                        std::vector<Int>{cover},
+                        std::vector<VarNodeId>{outputVarNodeIds});
   }
 };
 
@@ -61,13 +77,13 @@ TEST_P(GlobalCardinalityNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputs.size());
-  EXPECT_EQ(invNode().staticInputVarNodeIds(), inputs);
-  EXPECT_THAT(inputs, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputVarNodeIds.size());
+  EXPECT_EQ(invNode().staticInputVarNodeIds(), inputVarNodeIds);
+  EXPECT_THAT(inputVarNodeIds, ContainerEq(invNode().staticInputVarNodeIds()));
 
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), outputs.size());
-  EXPECT_EQ(invNode().outputVarNodeIds(), outputs);
-  EXPECT_THAT(outputs, ContainerEq(invNode().outputVarNodeIds()));
+  EXPECT_EQ(invNode().outputVarNodeIds().size(), outputVarNodeIds.size());
+  EXPECT_EQ(invNode().outputVarNodeIds(), outputVarNodeIds);
+  EXPECT_THAT(outputVarNodeIds, ContainerEq(invNode().outputVarNodeIds()));
 }
 
 TEST_P(GlobalCardinalityNodeTestFixture, application) {
@@ -88,9 +104,9 @@ TEST_P(GlobalCardinalityNodeTestFixture, application) {
   solver.close();
 
   // input1, input2
-  EXPECT_EQ(solver.searchVars().size(), inputs.size());
+  EXPECT_EQ(solver.searchVars().size(), inputVarNodeIds.size());
   // input1, input2, output1, output2
-  EXPECT_EQ(solver.numVars(), inputs.size() + outputs.size());
+  EXPECT_EQ(solver.numVars(), inputVarNodeIds.size() + outputVarNodeIds.size());
   // gcc
   EXPECT_EQ(solver.numInvariants(), 1);
 }
@@ -100,24 +116,19 @@ TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
   invNode().updateState(*_invariantGraph);
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    for (size_t i = 0; i < cover.size(); ++i) {
-      Int expected = 0;
-      for (const auto& input : inputs) {
-        expected +=
-            varNode(input).isFixed() && varNode(input).inDomain(cover.at(i))
-                ? 1
-                : 0;
-      }
-      const Int actual = varNode(outputs.at(i)).lowerBound();
-      EXPECT_EQ(expected, actual);
+    const std::vector<Int> expected = computeOutputs();
+    std::vector<Int> actual;
+    for (const auto& outputVarNodeId : outputVarNodeIds) {
+      actual.emplace_back(varNode(outputVarNodeId).lowerBound());
     }
+    EXPECT_THAT(expected, ContainerEq(actual));
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
     size_t numFixed = 0;
-    for (const auto& outputVar : outputs) {
+    for (const auto& outputVar : outputVarNodeIds) {
       numFixed += varNode(outputVar).isFixed() ? 1 : 0;
     }
-    EXPECT_LT(numFixed, outputs.size());
+    EXPECT_LT(numFixed, outputVarNodeIds.size());
   }
 }
 
@@ -143,11 +154,11 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
     if (varNode(outputIdentifiers.at(i)).isFixed()) {
       const Int actual = varNode(outputIdentifiers.at(i)).lowerBound();
       Int expected = 0;
-      for (const auto& input : inputs) {
-        expected +=
-            varNode(input).isFixed() && varNode(input).inDomain(cover.at(i))
-                ? 1
-                : 0;
+      for (const auto& inputVarNodeId : inputVarNodeIds) {
+        expected += varNode(inputVarNodeId).isFixed() &&
+                            varNode(inputVarNodeId).inDomain(cover.at(i))
+                        ? 1
+                        : 0;
       }
       EXPECT_EQ(expected, actual);
     }
@@ -168,22 +179,23 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVars;
+  std::vector<propagation::VarId> inputVarIds;
   std::vector<Int> inputVals;
 
-  for (const auto& nId : inputs) {
-    inputVars.emplace_back(varNode(nId).isFixed() ? propagation::NULL_ID
-                                                  : varId(nId));
-    inputVals.emplace_back(inputVars.back() == propagation::NULL_ID
-                               ? varNode(nId).lowerBound()
-                               : solver.lowerBound(inputVars.back()));
+  for (const auto& inputVarNodeId : inputVarNodeIds) {
+    inputVarIds.emplace_back(varNode(inputVarNodeId).isFixed()
+                                 ? propagation::NULL_ID
+                                 : varId(inputVarNodeId));
+    inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
+                               ? varNode(inputVarNodeId).lowerBound()
+                               : solver.lowerBound(inputVarIds.back()));
   }
 
-  EXPECT_EQ(inputVars.size(), inputVals.size());
+  EXPECT_EQ(inputVarIds.size(), inputVals.size());
 
-  while (increaseNextVal(solver, inputVars, inputVals)) {
+  while (increaseNextVal(solver, inputVarIds, inputVals)) {
     solver.beginMove();
-    setVarVals(solver, inputVars, inputVals);
+    setVarVals(solver, inputVarIds, inputVals);
     solver.endMove();
 
     solver.beginProbe();
@@ -193,6 +205,8 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
       }
     }
     solver.endProbe();
+
+    expectVarVals(solver, inputVarIds, inputVals);
 
     const std::vector<Int> expected = computeOutputs(solver);
 

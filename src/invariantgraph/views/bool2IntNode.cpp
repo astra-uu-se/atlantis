@@ -11,10 +11,17 @@ Bool2IntNode::Bool2IntNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
 
 void Bool2IntNode::updateState(InvariantGraph& graph) {
+  graph.varNode(input()).domain().removeBelow(Int{0});
+  graph.varNode(input()).domain().removeAbove(Int{1});
+
   if (graph.varNodeConst(input()).isFixed()) {
     graph.varNode(outputVarNodeIds().front())
         .fixToValue(graph.varNodeConst(input()).inDomain(bool{true}) ? Int{1}
                                                                      : Int{0});
+    setState(InvariantNodeState::SUBSUMED);
+  } else if (graph.varNodeConst(outputVarNodeIds().front()).isFixed()) {
+    graph.varNode(input()).fixToValue(
+        graph.varNodeConst(outputVarNodeIds().front()).inDomain(Int{1}));
     setState(InvariantNodeState::SUBSUMED);
   }
 }

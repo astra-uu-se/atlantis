@@ -34,32 +34,35 @@ std::vector<invariantgraph::VarNodeId> concat(
 }
 
 static std::vector<std::pair<size_t, Int>> allDifferent(
-    InvariantGraph &invariantGraph, std::vector<VarNodeId> inputs) {
+    InvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
   // pruned[i] = <index, value> where index is the index of the static
   // variable with singleton domain {value}.
   std::vector<std::pair<size_t, Int>> fixed;
-  fixed.reserve(inputs.size());
+  fixed.reserve(inputVarNodeIds.size());
 
-  for (size_t i = 0; i < inputs.size(); ++i) {
+  for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
     for (const auto &[index, value] : fixed) {
       // remove all fixed values from the current variable:
       assert(index < i);
-      invariantGraph.varNode(inputs[i]).removeValue(value);
+      invariantGraph.varNode(inputVarNodeIds[i]).removeValue(value);
     }
-    if (!invariantGraph.varNode(inputs[i]).isFixed()) {
+    if (!invariantGraph.varNode(inputVarNodeIds[i]).isFixed()) {
       continue;
     }
     // the variable has a singleton domain
     // Remove all occurrences of the value from previous static variables. Any
     // variable that gets a singleton domain is added to the fixed list.
-    fixed.emplace_back(i, invariantGraph.varNode(inputs[i]).val());
+    fixed.emplace_back(i, invariantGraph.varNode(inputVarNodeIds[i]).val());
     for (size_t p = fixed.size() - 1; p < fixed.size(); ++p) {
       const auto &[index, value] = fixed.at(p);
       for (size_t j = 0; j < index; j++) {
-        const bool wasConstant = invariantGraph.varNode(inputs[j]).isFixed();
-        invariantGraph.varNode(inputs[j]).removeValue(value);
-        if (!wasConstant && invariantGraph.varNode(inputs[j]).isFixed()) {
-          fixed.emplace_back(j, invariantGraph.varNode(inputs[j]).val());
+        const bool wasConstant =
+            invariantGraph.varNode(inputVarNodeIds[j]).isFixed();
+        invariantGraph.varNode(inputVarNodeIds[j]).removeValue(value);
+        if (!wasConstant &&
+            invariantGraph.varNode(inputVarNodeIds[j]).isFixed()) {
+          fixed.emplace_back(j,
+                             invariantGraph.varNode(inputVarNodeIds[j]).val());
         }
       }
     }
@@ -67,35 +70,35 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
   return fixed;
 }
 
-std::vector<VarNodeId> pruneAllDifferentFree(InvariantGraph &invariantGraph,
-                                             std::vector<VarNodeId> inputs) {
-  const auto fixed = allDifferent(invariantGraph, inputs);
-  std::vector<bool> isFree(inputs.size(), true);
+std::vector<VarNodeId> pruneAllDifferentFree(
+    InvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
+  const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
+  std::vector<bool> isFree(inputVarNodeIds.size(), true);
   for (const auto &[index, _] : fixed) {
     isFree[index] = false;
   }
   std::vector<VarNodeId> freeVars;
-  freeVars.reserve(inputs.size() - fixed.size());
-  for (size_t i = 0; i < inputs.size(); ++i) {
+  freeVars.reserve(inputVarNodeIds.size() - fixed.size());
+  for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
     if (isFree[i]) {
-      freeVars.push_back(inputs[i]);
+      freeVars.push_back(inputVarNodeIds[i]);
     }
   }
   return freeVars;
 }
 
-std::vector<VarNodeId> pruneAllDifferentFixed(InvariantGraph &invariantGraph,
-                                              std::vector<VarNodeId> inputs) {
-  const auto fixed = allDifferent(invariantGraph, inputs);
-  std::vector<bool> isFree(inputs.size(), true);
+std::vector<VarNodeId> pruneAllDifferentFixed(
+    InvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
+  const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
+  std::vector<bool> isFree(inputVarNodeIds.size(), true);
   for (const auto &[index, _] : fixed) {
     isFree[index] = false;
   }
   std::vector<VarNodeId> freeVars;
-  freeVars.reserve(inputs.size() - fixed.size());
-  for (size_t i = 0; i < inputs.size(); ++i) {
+  freeVars.reserve(inputVarNodeIds.size() - fixed.size());
+  for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
     if (!isFree[i]) {
-      freeVars.push_back(inputs[i]);
+      freeVars.push_back(inputVarNodeIds[i]);
     }
   }
   return freeVars;

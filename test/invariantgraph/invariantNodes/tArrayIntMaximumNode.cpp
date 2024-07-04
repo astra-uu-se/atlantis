@@ -10,17 +10,26 @@ using namespace atlantis::invariantgraph;
 class ArrayIntMaximumNodeTestFixture
     : public NodeTestBase<ArrayIntMaximumNode> {
  public:
-  std::vector<VarNodeId> inputVars;
-  VarNodeId outputVar{NULL_NODE_ID};
+  std::vector<VarNodeId> inputVarNodeIds;
+  VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
+
+  Int computeOutput() {
+    Int val = std::numeric_limits<Int>::min();
+    for (const auto& inputVarNodeId : inputVarNodeIds) {
+      val = std::max(val, varNode(inputVarNodeId).upperBound());
+    }
+    return val;
+  }
 
   Int computeOutput(propagation::Solver& solver) {
     Int val = std::numeric_limits<Int>::min();
-    for (const auto& input : inputVars) {
-      if (varId(input) == propagation::NULL_ID) {
-        val = std::max(val, varNode(input).upperBound());
+    for (const auto& inputVarNodeId : inputVarNodeIds) {
+      if (varNode(inputVarNodeId).isFixed() ||
+          varId(inputVarNodeId) == propagation::NULL_ID) {
+        val = std::max(val, varNode(inputVarNodeId).upperBound());
       } else {
-        val = std::max(val, solver.currentValue(varId(input)));
+        val = std::max(val, solver.currentValue(varId(inputVarNodeId)));
       }
     }
     return val;
@@ -30,22 +39,23 @@ class ArrayIntMaximumNodeTestFixture
     NodeTestBase::SetUp();
 
     if (shouldBeSubsumed()) {
-      inputVars = {retrieveIntVarNode(-5, 2, "x1"),
-                   retrieveIntVarNode(-2, 5, "x2"),
-                   retrieveIntVarNode(5, 5, "x3")};
+      inputVarNodeIds = {retrieveIntVarNode(-5, 2, "x1"),
+                         retrieveIntVarNode(-2, 5, "x2"),
+                         retrieveIntVarNode(5, 5, "x3")};
 
     } else if (shouldBeReplaced()) {
-      inputVars = {retrieveIntVarNode(-2, 5, "x1"),
-                   retrieveIntVarNode(-5, -2, "x2"),
-                   retrieveIntVarNode(-2, -2, "x3")};
+      inputVarNodeIds = {retrieveIntVarNode(-2, 5, "x1"),
+                         retrieveIntVarNode(-5, -2, "x2"),
+                         retrieveIntVarNode(-2, -2, "x3")};
     } else {
-      inputVars = {retrieveIntVarNode(0, 5, "x1"),
-                   retrieveIntVarNode(2, 2, "x2"),
-                   retrieveIntVarNode(-5, 0, "x3")};
+      inputVarNodeIds = {retrieveIntVarNode(0, 5, "x1"),
+                         retrieveIntVarNode(2, 2, "x2"),
+                         retrieveIntVarNode(-5, 0, "x3")};
     }
-    outputVar = retrieveIntVarNode(-5, 5, outputIdentifier);
+    outputVarNodeId = retrieveIntVarNode(-5, 5, outputIdentifier);
 
-    createInvariantNode(std::vector<VarNodeId>{inputVars}, outputVar);
+    createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds},
+                        outputVarNodeId);
   }
 };
 
@@ -53,13 +63,13 @@ TEST_P(ArrayIntMaximumNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputVars.size());
-  for (size_t i = 0; i < inputVars.size(); ++i) {
-    EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), inputVars.at(i));
+  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputVarNodeIds.size());
+  for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
+    EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), inputVarNodeIds.at(i));
   }
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVar);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
 }
 
 TEST_P(ArrayIntMaximumNodeTestFixture, application) {
@@ -84,13 +94,13 @@ TEST_P(ArrayIntMaximumNodeTestFixture, application) {
     ub = std::max(ub, solver.upperBound(varId(inputVarNodeId)));
   }
 
-  EXPECT_EQ(solver.lowerBound(varId(outputVar)), lb);
-  EXPECT_EQ(solver.upperBound(varId(outputVar)), ub);
+  EXPECT_EQ(solver.lowerBound(varId(outputVarNodeId)), lb);
+  EXPECT_EQ(solver.upperBound(varId(outputVarNodeId)), ub);
 
   // x1, x2, and x3
   EXPECT_EQ(solver.searchVars().size(), 3);
 
-  // x1, x2 and outputVar
+  // x1, x2 and outputVarNodeId
   EXPECT_EQ(solver.numVars(), 4);
 
   // maxSparse
@@ -100,20 +110,25 @@ TEST_P(ArrayIntMaximumNodeTestFixture, application) {
 TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
   Int minVal = std::numeric_limits<Int>::max();
   Int maxVal = std::numeric_limits<Int>::min();
-  for (const auto& var : inputVars) {
-    minVal = std::min(minVal, _invariantGraph->varNode(var).lowerBound());
-    maxVal = std::max(maxVal, _invariantGraph->varNode(var).upperBound());
+  for (const auto& inputVarNodeId : inputVarNodeIds) {
+    minVal =
+        std::min(minVal, _invariantGraph->varNode(inputVarNodeId).lowerBound());
+    maxVal =
+        std::max(maxVal, _invariantGraph->varNode(inputVarNodeId).upperBound());
   }
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState(*_invariantGraph);
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(_invariantGraph->varNode(outputVar).isFixed());
+    EXPECT_TRUE(_invariantGraph->varNode(outputVarNodeId).isFixed());
+    const Int expected = computeOutput();
+    const Int actual = _invariantGraph->varNode(outputVarNodeId).lowerBound();
+    EXPECT_EQ(expected, actual);
   } else {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   }
-  EXPECT_LE(minVal, _invariantGraph->varNode(outputVar).lowerBound());
-  EXPECT_GE(maxVal, _invariantGraph->varNode(outputVar).upperBound());
+  EXPECT_LE(minVal, _invariantGraph->varNode(outputVarNodeId).lowerBound());
+  EXPECT_GE(maxVal, _invariantGraph->varNode(outputVarNodeId).upperBound());
 }
 
 TEST_P(ArrayIntMaximumNodeTestFixture, replace) {
@@ -134,10 +149,19 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
-  std::vector<propagation::VarId> inputVars;
-  for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    inputVars.emplace_back(varId(inputVarNodeId));
+  if (shouldBeSubsumed()) {
+    const Int expected = computeOutput(solver);
+    const Int actual = varNode(outputVarNodeId).lowerBound();
+    EXPECT_EQ(expected, actual);
+    return;
+  }
+
+  std::vector<propagation::VarId> inputVarIds;
+  for (const auto& inputVarNodeId : inputVarNodeIds) {
+    if (!varNode(inputVarNodeId).isFixed()) {
+      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(inputVarNodeId));
+    }
   }
 
   VarNode& outputNode = varNode(outputIdentifier);
@@ -152,16 +176,18 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
 
   const propagation::VarId outputId = varId(outputIdentifier);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVars);
+  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
 
-  while (increaseNextVal(solver, inputVars, inputVals)) {
+  while (increaseNextVal(solver, inputVarIds, inputVals)) {
     solver.beginMove();
-    setVarVals(solver, inputVars, inputVals);
+    setVarVals(solver, inputVarIds, inputVals);
     solver.endMove();
 
     solver.beginProbe();
     solver.query(outputId);
     solver.endProbe();
+
+    expectVarVals(solver, inputVarIds, inputVals);
 
     const Int expected = computeOutput(solver);
     const Int actual = solver.currentValue(outputId);

@@ -408,8 +408,8 @@ void InvariantGraph::splitMultiDefinedVars() {
   const size_t end = _varNodes.size();
 
   for (size_t i = 0; i < end; i++) {
-    if (_varNodes[i].definingNodes().size() +
-            static_cast<size_t>(_varNodes[i].isFixed()) <=
+    const bool isFixed = _varNodes[i].isFixed();
+    if (_varNodes[i].definingNodes().size() + static_cast<size_t>(isFixed) <=
         1) {
       continue;
     }
@@ -417,7 +417,7 @@ void InvariantGraph::splitMultiDefinedVars() {
     std::vector<InvariantNodeId> replacedDefiningNodes;
     replacedDefiningNodes.reserve(_varNodes[i].definingNodes().size());
 
-    bool isFirstInvNodeId = !(_varNodes[i].isFixed());
+    bool isFirstInvNodeId = !isFixed;
     for (const InvariantNodeId& defInvNodeId : _varNodes[i].definingNodes()) {
       if (isFirstInvNodeId) {
         isFirstInvNodeId = false;
@@ -441,14 +441,23 @@ void InvariantGraph::splitMultiDefinedVars() {
                                        VarNode::DomainType::NONE);
       splitNodes.emplace_back(newVarNode.varNodeId());
       invariantNode(invNodeId).replaceDefinedVar(_varNodes[i], newVarNode);
+      if (isFixed) {
+        if (!_varNodes[i].isIntVar()) {
+          newVarNode.fixToValue(_varNodes[i].inDomain(bool{true}));
+        }
+        assert(newVarNode.isFixed());
+        newVarNode.setDomainType(VarNode::DomainType::FIXED);
+      }
     }
 
-    if (_varNodes[i].isIntVar()) {
-      addInvariantNode(
-          std::make_unique<IntAllEqualNode>(std::move(splitNodes), true, true));
-    } else {
-      addInvariantNode(std::make_unique<BoolAllEqualNode>(std::move(splitNodes),
-                                                          true, true));
+    if (!isFixed) {
+      if (_varNodes[i].isIntVar()) {
+        addInvariantNode(std::make_unique<IntAllEqualNode>(
+            std::move(splitNodes), true, true));
+      } else {
+        addInvariantNode(std::make_unique<BoolAllEqualNode>(
+            std::move(splitNodes), true, true));
+      }
     }
   }
   assert(_varNodes.size() == newSize);
