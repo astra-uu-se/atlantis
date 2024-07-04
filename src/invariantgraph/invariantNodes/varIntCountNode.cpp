@@ -16,11 +16,11 @@ VarIntCountNode::VarIntCountNode(std::vector<VarNodeId>&& vars,
     : InvariantNode({count}, append(std::move(vars), needle)) {}
 
 std::vector<VarNodeId> VarIntCountNode::haystack() const {
-  std::vector<VarNodeId> inputs;
-  inputs.reserve(staticInputVarNodeIds().size() - 1);
+  std::vector<VarNodeId> inputVarNodeIds;
+  inputVarNodeIds.reserve(staticInputVarNodeIds().size() - 1);
   std::copy(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end() - 1,
-            std::back_inserter(inputs));
-  return inputs;
+            std::back_inserter(inputVarNodeIds));
+  return inputVarNodeIds;
 }
 
 VarNodeId VarIntCountNode::needle() const {

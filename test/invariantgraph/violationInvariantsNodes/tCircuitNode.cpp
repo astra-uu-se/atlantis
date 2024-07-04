@@ -15,17 +15,16 @@ using ::testing::ContainerEq;
 class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
  public:
   Int numInputs = 4;
-  std::vector<VarNodeId> inputs;
-  VarNodeId reified{NULL_NODE_ID};
+  std::vector<VarNodeId> inputVarNodeIds;
 
   InvariantNodeId invNodeId;
 
   bool isViolating(propagation::Solver& solver) {
     std::vector<Int> values(numInputs, -1);
-    for (size_t i = 0; i < inputs.size(); i++) {
-      values.at(i) = varNode(inputs.at(i)).isFixed()
-                         ? varNode(inputs.at(i)).lowerBound()
-                         : solver.currentValue(varId(inputs.at(i)));
+    for (size_t i = 0; i < inputVarNodeIds.size(); i++) {
+      values.at(i) = varNode(inputVarNodeIds.at(i)).isFixed()
+                         ? varNode(inputVarNodeIds.at(i)).lowerBound()
+                         : solver.currentValue(varId(inputVarNodeIds.at(i)));
     }
     std::vector<bool> visited(numInputs, false);
     Int curNode = 1;
@@ -48,15 +47,15 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
           domain.emplace_back(j + 1);
         }
       }
-      inputs.emplace_back(
+      inputVarNodeIds.emplace_back(
           retrieveIntVarNode(std::move(domain), "input_" + std::to_string(i)));
     }
     if (shouldBeReplaced()) {
-      for (const auto& input : inputs) {
-        _invariantGraph->root().addSearchVarNode(varNode(input));
+      for (const auto& inputVarNodeId : inputVarNodeIds) {
+        _invariantGraph->root().addSearchVarNode(varNode(inputVarNodeId));
       }
     }
-    createInvariantNode(std::vector<VarNodeId>{inputs});
+    createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds});
   }
 };
 
@@ -78,28 +77,33 @@ TEST_P(CircuitNodeTestFixture, propagation) {
   // exception should be thrown, and the corresponding probe/move should be
   // ignored/skipped.
   return;
+  if (shouldBeMadeImplicit()) {
+    return;
+  }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
-  std::vector<propagation::VarId> inputVars;
-  for (const auto& inputVarNodeId : inputs) {
+  std::vector<propagation::VarId> inputVarIds;
+  for (const auto& inputVarNodeId : inputVarNodeIds) {
     EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    inputVars.emplace_back(varId(inputVarNodeId));
+    inputVarIds.emplace_back(varId(inputVarNodeId));
   }
 
   const propagation::VarId violVarId = _invariantGraph->totalViolationVarId();
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVars);
+  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
 
-  while (increaseNextVal(solver, inputVars, inputVals)) {
+  while (increaseNextVal(solver, inputVarIds, inputVals)) {
     solver.beginMove();
-    setVarVals(solver, inputVars, inputVals);
+    setVarVals(solver, inputVarIds, inputVals);
     solver.endMove();
 
     solver.beginProbe();
     solver.query(violVarId);
     solver.endProbe();
+
+    expectVarVals(solver, inputVarIds, inputVals);
 
     const bool actual = solver.currentValue(violVarId) > 0;
     const bool expected = isViolating(solver);

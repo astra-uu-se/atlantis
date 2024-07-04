@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
@@ -10,7 +10,7 @@ using namespace atlantis::invariantgraph;
 
 using ::testing::ContainerEq;
 
-class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
+class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
  public:
   Int numInputs{4};
   std::vector<VarNodeId> inputVarNodeIds;
@@ -37,8 +37,8 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     }
     for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
       for (size_t j = i + 1; j < inputVarNodeIds.size(); ++j) {
-        if (varNode(inputVarNodeIds.at(i)).lowerBound() !=
-            varNode(inputVarNodeIds.at(j)).lowerBound()) {
+        if (varNode(inputVarNodeIds.at(i)).inDomain(bool{true}) !=
+            varNode(inputVarNodeIds.at(j)).inDomain(bool{true})) {
           return true;
         }
       }
@@ -64,14 +64,15 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
       return false;
     }
     for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
-      const Int iVal = varNode(inputVarNodeIds.at(i)).isFixed()
-                           ? varNode(inputVarNodeIds.at(i)).lowerBound()
-                           : solver.currentValue(varId(inputVarNodeIds.at(i)));
+      const bool iVal =
+          varNode(inputVarNodeIds.at(i)).isFixed()
+              ? varNode(inputVarNodeIds.at(i)).inDomain(bool{true})
+              : solver.currentValue(varId(inputVarNodeIds.at(i))) == 0;
       for (size_t j = i + 1; j < inputVarNodeIds.size(); ++j) {
-        const Int jVal =
+        const bool jVal =
             varNode(inputVarNodeIds.at(j)).isFixed()
-                ? varNode(inputVarNodeIds.at(j)).lowerBound()
-                : solver.currentValue(varId(inputVarNodeIds.at(j)));
+                ? varNode(inputVarNodeIds.at(j)).inDomain(bool{true})
+                : solver.currentValue(varId(inputVarNodeIds.at(j))) == 0;
         if (iVal != jVal) {
           return true;
         }
@@ -86,13 +87,11 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
 
     for (Int i = 0; i < numInputs; ++i) {
       inputIdentifiers.emplace_back("input_" + std::to_string(i));
+      inputVarNodeIds.emplace_back(
+          retrieveBoolVarNode(inputIdentifiers.back()));
       if (shouldBeSubsumed()) {
-        const Int val = shouldHold() ? 0 : i;
-        inputVarNodeIds.emplace_back(
-            retrieveIntVarNode(val, val, inputIdentifiers.back()));
-      } else {
-        inputVarNodeIds.emplace_back(
-            retrieveIntVarNode(-2, 2, inputIdentifiers.back()));
+        const bool val = shouldHold() || i == 0;
+        varNode(inputIdentifiers.back()).fixToValue(val);
       }
     }
     if (!shouldBeMadeImplicit()) {
@@ -114,7 +113,7 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
   }
 };
 
-TEST_P(IntAllEqualNodeTestFixture, construction) {
+TEST_P(BoolAllEqualNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -130,7 +129,7 @@ TEST_P(IntAllEqualNodeTestFixture, construction) {
   }
 }
 
-TEST_P(IntAllEqualNodeTestFixture, application) {
+TEST_P(BoolAllEqualNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -156,7 +155,7 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
   EXPECT_EQ(solver.numInvariants(), 1);
 }
 
-TEST_P(IntAllEqualNodeTestFixture, updateState) {
+TEST_P(BoolAllEqualNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState(*_invariantGraph);
   if (shouldBeSubsumed()) {
@@ -175,7 +174,7 @@ TEST_P(IntAllEqualNodeTestFixture, updateState) {
   }
 }
 
-TEST_P(IntAllEqualNodeTestFixture, replace) {
+TEST_P(BoolAllEqualNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState(*_invariantGraph);
   if (shouldBeReplaced()) {
@@ -189,7 +188,7 @@ TEST_P(IntAllEqualNodeTestFixture, replace) {
   }
 }
 
-TEST_P(IntAllEqualNodeTestFixture, propagation) {
+TEST_P(BoolAllEqualNodeTestFixture, propagation) {
   if (shouldBeMadeImplicit()) {
     return;
   }
@@ -257,7 +256,7 @@ TEST_P(IntAllEqualNodeTestFixture, propagation) {
 }
 
 INSTANTIATE_TEST_CASE_P(
-    IntAllEqualNodeTest, IntAllEqualNodeTestFixture,
+    BoolAllEqualNodeTest, BoolAllEqualNodeTestFixture,
     ::testing::Values(ParamData{InvariantNodeAction::NONE,
                                 ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,

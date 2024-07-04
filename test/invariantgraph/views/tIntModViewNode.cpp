@@ -8,18 +8,30 @@ using namespace atlantis::invariantgraph;
 
 class IntModViewNodeTestFixture : public NodeTestBase<IntModViewNode> {
  public:
-  VarNodeId input{NULL_NODE_ID};
-  VarNodeId output{NULL_NODE_ID};
+  VarNodeId inputVarNodeId{NULL_NODE_ID};
+  VarNodeId outputVarNodeId{NULL_NODE_ID};
+  std::string inputIdentifier{"input"};
+  std::string outputIdentifier{"output"};
+
   Int denominator{5};
+
+  Int computeOutput() {
+    return varNode(inputVarNodeId).domain().lowerBound() %
+           std::abs(denominator);
+  }
+
+  Int computeOutput(propagation::Solver& solver) {
+    return solver.currentValue(varId(inputVarNodeId)) % std::abs(denominator);
+  }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    const Int lb = -10;
-    const Int ub = 10;
-    input = retrieveIntVarNode(lb, ub, "input");
-    output = retrieveIntVarNode(0, 5, "output");
+    const Int lb = shouldBeSubsumed() ? 5 : -10;
+    const Int ub = shouldBeSubsumed() ? 5 : 10;
+    inputVarNodeId = retrieveIntVarNode(lb, ub, inputIdentifier);
+    outputVarNodeId = retrieveIntVarNode(0, 5, outputIdentifier);
 
-    createInvariantNode(input, output, denominator);
+    createInvariantNode(inputVarNodeId, outputVarNodeId, denominator);
   }
 };
 
@@ -27,10 +39,10 @@ TEST_P(IntModViewNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().input(), input);
+  EXPECT_EQ(invNode().input(), inputVarNodeId);
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
 }
 
 TEST_P(IntModViewNodeTestFixture, application) {
@@ -47,49 +59,63 @@ TEST_P(IntModViewNodeTestFixture, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // input
+  // inputVarNodeId
   EXPECT_EQ(solver.searchVars().size(), 1);
 
-  // input
+  // inputVarNodeId
   EXPECT_EQ(solver.numVars(), 1);
 }
 
+TEST_P(IntModViewNodeTestFixture, updateState) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeSubsumed()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    const Int expected = computeOutput();
+    const Int actual = varNode(outputVarNodeId).domain().lowerBound();
+    EXPECT_EQ(expected, actual);
+  } else {
+    EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+  }
+}
+
 TEST_P(IntModViewNodeTestFixture, propagation) {
+  if (shouldBeSubsumed()) {
+    return;
+  }
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  _invariantGraph->apply(solver);
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()),
-            propagation::NULL_ID);
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
+  const propagation::VarId inputId = varId(inputIdentifier);
+  EXPECT_NE(inputId, propagation::NULL_ID);
 
-  const propagation::VarId inputVar =
-      varId(invNode().staticInputVarNodeIds().front());
-  const propagation::VarId outputId =
-      varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId = varId(outputIdentifier);
+  EXPECT_NE(outputId, propagation::NULL_ID);
 
-  for (Int inputVal = solver.lowerBound(inputVar);
-       inputVal <= solver.upperBound(inputVar); ++inputVal) {
+  for (Int inputVal = solver.lowerBound(inputId);
+       inputVal <= solver.upperBound(inputId); ++inputVal) {
     solver.beginMove();
-    solver.setValue(inputVar, inputVal);
+    solver.setValue(inputId, inputVal);
     solver.endMove();
 
     solver.beginProbe();
     solver.query(outputId);
     solver.endProbe();
 
-    const Int expected = inputVal % std::abs(denominator);
+    expectVarVals(solver, {inputId}, {inputVal});
+
+    const Int expected = computeOutput(solver);
     const Int actual = solver.currentValue(outputId);
     EXPECT_EQ(expected, actual);
   }
 }
 
 INSTANTIATE_TEST_SUITE_P(IntModViewNodeTest, IntModViewNodeTestFixture,
-                         ::testing::Values(ParamData{
-                             InvariantNodeAction::NONE}));
+                         ::testing::Values(ParamData{InvariantNodeAction::NONE},
+                                           ParamData{
+                                               InvariantNodeAction::SUBSUME}));
 
 }  // namespace atlantis::testing

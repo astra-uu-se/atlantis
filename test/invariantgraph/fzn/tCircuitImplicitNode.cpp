@@ -17,7 +17,7 @@ using namespace atlantis::invariantgraph::fzn;
 
 class circuitImplicitNodeTest : public ::testing::Test {
  public:
-  std::vector<VarNodeId> inputs{};
+  std::vector<VarNodeId> inputVarNodeIds{};
   Int numInputs = 3;
 
   void SetUp() override {}

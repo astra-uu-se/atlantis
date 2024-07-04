@@ -12,6 +12,10 @@ void BoolNotNode::updateState(InvariantGraph& graph) {
     graph.varNode(outputVarNodeIds().front())
         .fixToValue(!graph.varNodeConst(input()).inDomain(bool{true}));
     setState(InvariantNodeState::SUBSUMED);
+  } else if (graph.varNodeConst(outputVarNodeIds().front()).isFixed()) {
+    graph.varNode(input()).fixToValue(
+        !graph.varNodeConst(outputVarNodeIds().front()).inDomain(bool{true}));
+    setState(InvariantNodeState::SUBSUMED);
   }
 }
 

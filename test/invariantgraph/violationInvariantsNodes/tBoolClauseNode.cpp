@@ -8,44 +8,68 @@ using namespace atlantis::invariantgraph;
 
 class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
  public:
-  std::vector<VarNodeId> asInputs;
-  std::vector<VarNodeId> bsInputs;
-  VarNodeId reified{NULL_NODE_ID};
+  std::vector<VarNodeId> asInputVarNodeIds;
+  std::vector<VarNodeId> bsInputVarNodeIds;
+  VarNodeId reifiedVarNodeId{NULL_NODE_ID};
   std::string reifiedIdentifier{"reified"};
 
   Int numAs{2};
   Int numBs{2};
 
+  bool isViolating() {
+    for (const auto& a : asInputVarNodeIds) {
+      for (const auto& b : bsInputVarNodeIds) {
+        if (a == b) {
+          return false;
+        }
+      }
+    }
+    for (const auto& a : asInputVarNodeIds) {
+      if (varNode(a).inDomain(bool{true})) {
+        return false;
+      }
+    }
+    for (const auto& b : bsInputVarNodeIds) {
+      if (varNode(b).inDomain(bool{false})) {
+        return false;
+      }
+    }
+    return false;
+  }
+
   bool isViolating(propagation::Solver& solver) {
-    std::vector<bool> asVals;
-    asVals.reserve(asInputs.size());
-    for (const auto& a : asInputs) {
+    for (const auto& a : asInputVarNodeIds) {
+      for (const auto& b : bsInputVarNodeIds) {
+        if (a == b) {
+          return false;
+        }
+      }
+    }
+    for (const auto& a : asInputVarNodeIds) {
       if (varNode(a).isFixed()) {
-        asVals.emplace_back(varNode(a).inDomain(bool{true}));
-      } else {
-        asVals.emplace_back(solver.currentValue(varId(a)) == 0);
+        if (varNode(a).inDomain(bool{true})) {
+          return false;
+        }
+      } else if (solver.currentValue(varId(a)) == 0) {
+        return false;
       }
     }
-    std::vector<bool> bsVals;
-    bsVals.reserve(bsInputs.size());
-    for (const auto& b : bsInputs) {
+    for (const auto& b : bsInputVarNodeIds) {
       if (varNode(b).isFixed()) {
-        bsVals.emplace_back(varNode(b).inDomain(bool{true}));
-      } else {
-        bsVals.emplace_back(solver.currentValue(varId(b)) == 0);
+        if (varNode(b).inDomain(bool{false})) {
+          return false;
+        }
+      } else if (solver.currentValue(varId(b)) > 0) {
+        return false;
       }
     }
-    const bool aClause =
-        std::any_of(asVals.begin(), asVals.end(), [](bool v) { return v; });
-    const bool bClause =
-        std::any_of(bsVals.begin(), bsVals.end(), [](bool v) { return !v; });
-    return !aClause && !bClause;
+    return true;
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    asInputs.clear();
-    bsInputs.clear();
+    asInputVarNodeIds.clear();
+    bsInputVarNodeIds.clear();
     numAs = 2;
     numBs = 2;
     if (shouldBeReplaced()) {
@@ -55,33 +79,36 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
         numBs = 0;
       }
     }
-    asInputs.reserve(numAs);
-    bsInputs.reserve(numBs);
+    asInputVarNodeIds.reserve(numAs);
+    bsInputVarNodeIds.reserve(numBs);
 
     for (Int i = 0; i < numAs; ++i) {
-      asInputs.emplace_back(retrieveBoolVarNode("a_" + std::to_string(i)));
+      asInputVarNodeIds.emplace_back(
+          retrieveBoolVarNode("a_" + std::to_string(i)));
       if (shouldBeSubsumed() && (_paramData.data != 0 || i != 0)) {
-        varNode(asInputs.at(i)).fixToValue(!shouldFail());
+        varNode(asInputVarNodeIds.at(i)).fixToValue(!shouldFail());
       }
     }
     for (Int i = 0; i < numBs; ++i) {
-      bsInputs.emplace_back(retrieveBoolVarNode("b_" + std::to_string(i)));
+      bsInputVarNodeIds.emplace_back(
+          retrieveBoolVarNode("b_" + std::to_string(i)));
       if (shouldBeSubsumed() && (_paramData.data != 1 || i != 0)) {
-        varNode(bsInputs.at(i)).fixToValue(shouldFail());
+        varNode(bsInputVarNodeIds.at(i)).fixToValue(shouldFail());
       }
     }
 
     if (isReified()) {
-      reified = retrieveBoolVarNode(reifiedIdentifier);
-      createInvariantNode(std::vector<VarNodeId>(asInputs),
-                          std::vector<VarNodeId>(bsInputs), reified);
+      reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
+      createInvariantNode(std::vector<VarNodeId>(asInputVarNodeIds),
+                          std::vector<VarNodeId>(bsInputVarNodeIds),
+                          reifiedVarNodeId);
     } else {
       if (shouldHold()) {
-        createInvariantNode(std::vector<VarNodeId>(asInputs),
-                            std::vector<VarNodeId>(bsInputs), true);
+        createInvariantNode(std::vector<VarNodeId>(asInputVarNodeIds),
+                            std::vector<VarNodeId>(bsInputVarNodeIds), true);
       } else {
-        createInvariantNode(std::vector<VarNodeId>(asInputs),
-                            std::vector<VarNodeId>(bsInputs), false);
+        createInvariantNode(std::vector<VarNodeId>(asInputVarNodeIds),
+                            std::vector<VarNodeId>(bsInputVarNodeIds), false);
       }
     }
   }
@@ -93,10 +120,11 @@ TEST_P(BoolClauseNodeTestFixture, construction) {
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numAs + numBs);
   for (Int i = 0; i < numAs; ++i) {
-    EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), asInputs.at(i));
+    EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), asInputVarNodeIds.at(i));
   }
   for (Int i = 0; i < numBs; ++i) {
-    EXPECT_EQ(invNode().staticInputVarNodeIds().at(numAs + i), bsInputs.at(i));
+    EXPECT_EQ(invNode().staticInputVarNodeIds().at(numAs + i),
+              bsInputVarNodeIds.at(i));
   }
 
   if (!isReified()) {
@@ -105,7 +133,7 @@ TEST_P(BoolClauseNodeTestFixture, construction) {
   } else {
     EXPECT_TRUE(invNode().isReified());
     EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), reified);
+    EXPECT_EQ(invNode().reifiedViolationNodeId(), reifiedVarNodeId);
   }
 }
 
@@ -116,13 +144,7 @@ TEST_P(BoolClauseNodeTestFixture, updateState) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
-      bool expected = false;
-      for (const auto& a : asInputs) {
-        expected = expected && varNode(a).inDomain(bool{false});
-      }
-      for (const auto& b : bsInputs) {
-        expected = expected && varNode(b).inDomain(bool{true});
-      }
+      const bool expected = isViolating();
       const bool actual = varNode(reifiedIdentifier).inDomain(bool{false});
       EXPECT_EQ(expected, actual);
     }
@@ -155,21 +177,37 @@ TEST_P(BoolClauseNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
-  std::vector<propagation::VarId> inputVars;
-  for (const auto& inputVarNodeId : asInputs) {
+  if (shouldBeSubsumed()) {
+    const bool expected = isViolating(solver);
+    if (isReified()) {
+      EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
+      const bool actual = varNode(reifiedIdentifier).inDomain({false});
+      EXPECT_EQ(expected, actual);
+    }
+    if (shouldHold()) {
+      EXPECT_FALSE(expected);
+    }
+    if (shouldFail()) {
+      EXPECT_TRUE(expected);
+    }
+    return;
+  }
+
+  std::vector<propagation::VarId> inputVarIds;
+  for (const auto& inputVarNodeId : asInputVarNodeIds) {
     if (!varNode(inputVarNodeId).isFixed()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVars.emplace_back(varId(inputVarNodeId));
+      inputVarIds.emplace_back(varId(inputVarNodeId));
     }
   }
-  for (const auto& inputVarNodeId : bsInputs) {
+  for (const auto& inputVarNodeId : bsInputVarNodeIds) {
     if (!varNode(inputVarNodeId).isFixed()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVars.emplace_back(varId(inputVarNodeId));
+      inputVarIds.emplace_back(varId(inputVarNodeId));
     }
   }
 
-  EXPECT_EQ(inputVars.size() <= 1, shouldBeSubsumed());
+  EXPECT_EQ(inputVarIds.size() <= 1, shouldBeSubsumed());
   if (shouldBeSubsumed()) {
     EXPECT_EQ(isViolating(solver), shouldFail());
     return;
@@ -181,16 +219,18 @@ TEST_P(BoolClauseNodeTestFixture, propagation) {
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVars);
+  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
 
-  while (increaseNextVal(solver, inputVars, inputVals)) {
+  while (increaseNextVal(solver, inputVarIds, inputVals)) {
     solver.beginMove();
-    setVarVals(solver, inputVars, inputVals);
+    setVarVals(solver, inputVarIds, inputVals);
     solver.endMove();
 
     solver.beginProbe();
     solver.query(violVarId);
     solver.endProbe();
+
+    expectVarVals(solver, inputVarIds, inputVals);
 
     const bool actual = solver.currentValue(violVarId) > 0;
     const bool expected = isViolating(solver);
