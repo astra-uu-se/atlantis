@@ -62,6 +62,10 @@ bool ArrayElement2dNode::replace(InvariantGraph& invariantGraph) {
     return false;
   }
   if (invariantGraph.varNode(idx1()).isFixed()) {
+    assert(invariantGraph.varNode(idx1()).lowerBound() >= _offset1);
+    assert(invariantGraph.varNode(idx1()).lowerBound() <
+           static_cast<Int>(_parMatrix.size()) - _offset1);
+
     invariantGraph.addInvariantNode(std::make_unique<ArrayElementNode>(
         std::move(_parMatrix.at(invariantGraph.varNode(idx1()).lowerBound() -
                                 _offset1)),
@@ -71,6 +75,8 @@ bool ArrayElement2dNode::replace(InvariantGraph& invariantGraph) {
   }
   std::vector<Int> parMatrixRow;
   const Int col = invariantGraph.varNode(idx2()).lowerBound() - _offset2;
+  assert(col >= 0);
+  assert(col < static_cast<Int>(_parMatrix.front().size()));
   parMatrixRow.reserve(_parMatrix.size());
   for (const std::vector<Int>& row : _parMatrix) {
     parMatrixRow.emplace_back(row.at(col));

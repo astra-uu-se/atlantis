@@ -101,11 +101,12 @@ void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
          propagation::NULL_ID);
 
   std::vector<propagation::VarId> solverVars;
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars),
-                 [&](const VarNodeId varNodeId) {
-                   return invariantGraph.varId(varNodeId);
-                 });
+  std::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {
+        assert(invariantGraph.varId(varNodeId) != propagation::NULL_ID);
+        return invariantGraph.varId(varNodeId);
+      });
   solver.makeInvariant<propagation::Linear>(
       solver,
       _intermediate == propagation::NULL_ID

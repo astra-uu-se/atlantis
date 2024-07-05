@@ -389,6 +389,7 @@ void InvariantGraph::populateRootNode() {
     if (vNode.definingNodes().empty() && !vNode.inputTo().empty() &&
         !vNode.isFixed()) {
       root().addSearchVarNode(vNode);
+      assert(vNode.definingNodes().contains(root().id()));
     }
   }
 }
@@ -660,6 +661,26 @@ void InvariantGraph::createVars(propagation::SolverBase& solver) {
 
   std::queue<InvariantNodeId> unregisteredInvNodes;
 
+  for (const auto& varNodeId : _boolVarNodeIndices) {
+    if (varId(varNodeId) == propagation::NULL_ID &&
+        !varNode(varNodeId).inputTo().empty()) {
+      auto constant = varNode(varNodeId).constantValue();
+      assert(constant.has_value());
+      varNode(varNodeId).setVarId(solver.makeIntVar(
+          constant.value(), constant.value(), constant.value()));
+    }
+  }
+
+  for (const auto& [constant, varNodeId] : _intVarNodeIndices) {
+    if (varId(varNodeId) == propagation::NULL_ID &&
+        !varNode(varNodeId).inputTo().empty()) {
+      assert(varNode(varNodeId).constantValue().has_value() &&
+             varNode(varNodeId).constantValue().value() == constant);
+      varNode(varNodeId).setVarId(
+          solver.makeIntVar(constant, constant, constant));
+    }
+  }
+
   for (auto const& implicitConstraint : _implicitConstraintNodes) {
     visitedInvNodes.emplace(implicitConstraint->id());
     unregisteredInvNodes.emplace(implicitConstraint->id());
@@ -667,6 +688,22 @@ void InvariantGraph::createVars(propagation::SolverBase& solver) {
       for (const auto& searchVarNodeId :
            implicitConstraint->outputVarNodeIds()) {
         searchVars.emplace(searchVarNodeId);
+      }
+    }
+  }
+
+  for (VarNode& varNode : _varNodes) {
+    if (varNode.definingNodes().empty() && !varNode.inputTo().empty()) {
+      assert(varNode.isFixed());
+      if (varNode.varId() == propagation::NULL_ID) {
+        varNode.setVarId(solver.makeIntVar(
+            varNode.lowerBound(), varNode.upperBound(), varNode.lowerBound()));
+        for (const auto& invNodeId : varNode.inputTo()) {
+          if (!visitedInvNodes.contains(invNodeId)) {
+            visitedInvNodes.emplace(invNodeId);
+            unregisteredInvNodes.emplace(invNodeId);
+          }
+        }
       }
     }
   }
@@ -711,31 +748,13 @@ void InvariantGraph::createVars(propagation::SolverBase& solver) {
     }
   }
 
-  for (const auto& varNodeId : _boolVarNodeIndices) {
-    if (varId(varNodeId) == propagation::NULL_ID &&
-        !varNode(varNodeId).inputTo().empty()) {
-      auto constant = varNode(varNodeId).constantValue();
-      assert(constant.has_value());
-      varNode(varNodeId).setVarId(solver.makeIntVar(
-          constant.value(), constant.value(), constant.value()));
+#ifndef NDEBUG
+  for (const auto& invNode : _invariantNodes) {
+    if (invNode->state() != InvariantNodeState::SUBSUMED) {
+      assert(visitedInvNodes.contains(invNode->id()));
     }
   }
-
-  for (const auto& [constant, varNodeId] : _intVarNodeIndices) {
-    if (varId(varNodeId) == propagation::NULL_ID &&
-        !varNode(varNodeId).inputTo().empty()) {
-      assert(varNode(varNodeId).constantValue().has_value() &&
-             varNode(varNodeId).constantValue().value() == constant);
-      varNode(varNodeId).setVarId(
-          solver.makeIntVar(constant, constant, constant));
-    }
-  }
-
-  assert(std::all_of(
-      _invariantNodes.begin(), _invariantNodes.end(), [&](const auto& invNode) {
-        return invNode->state() == InvariantNodeState::SUBSUMED ||
-               visitedInvNodes.contains(invNode->id());
-      }));
+#endif
 }
 
 void InvariantGraph::createImplicitConstraints(
