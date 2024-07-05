@@ -15,6 +15,12 @@
 
 namespace atlantis::testing {
 
+std::string ltrim(std::string s) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+                                  [](unsigned char ch) { return ch != '/'; }));
+  return s;
+}
+
 void logModelName(const std::string& modelPath, bool skipping, size_t index,
                   size_t total) {
   size_t padding = std::to_string(total).size();
@@ -29,7 +35,7 @@ void logModelName(const std::string& modelPath, bool skipping, size_t index,
 }
 
 static void testChallange(const std::string& fznFilePath) {
-  std::filesystem::path modelFilePath(fznFilePath).c_str();
+  std::filesystem::path modelFilePath(fznFilePath);
   logging::Logger logger(stdout, logging::Level::ERR);
   FznBackend backend(logger, std::move(modelFilePath));
   backend.setTimelimit(std::chrono::milliseconds(1000));
