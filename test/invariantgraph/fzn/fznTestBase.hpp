@@ -69,39 +69,54 @@ class FznTestBase : public ::testing::Test {
     return _solver->currentValue(totalViolationVarId());
   }
 
+  [[nodiscard]] std::vector<propagation::VarId> getVarIds(
+      const std::vector<std::string>& varIdentifiers) const {
+    std::vector<propagation::VarId> varIds;
+    varIds.reserve(varIdentifiers.size());
+    for (const std::string& identifier : varIdentifiers) {
+      EXPECT_TRUE(_invariantGraph->containsVarNode(identifier));
+      const VarNode& vNode = _invariantGraph->varNode(identifier);
+      const propagation::VarId vId = vNode.varId();
+      if (!vNode.isFixed() && vId != propagation::NULL_ID) {
+        varIds.emplace_back(vId);
+      }
+    }
+    return varIds;
+  }
+
   [[nodiscard]] std::vector<Int> makeInputVals(
-      const std::vector<std::string>& inputIdentifiers) const {
+      const std::vector<propagation::VarId>& varIds) const {
     std::vector<Int> inputVals;
-    inputVals.reserve(inputIdentifiers.size());
-    for (const std::string& identifier : inputIdentifiers) {
-      inputVals.emplace_back(_solver->lowerBound(varId(identifier)));
+    inputVals.reserve(varIds.size());
+    for (const propagation::VarId& vId : varIds) {
+      EXPECT_NE(vId, propagation::NULL_ID);
+      inputVals.emplace_back(_solver->lowerBound(vId));
     }
     return inputVals;
   }
 
-  bool increaseNextVal(const std::vector<std::string>& inputIdentifiers,
+  bool increaseNextVal(const std::vector<propagation::VarId>& varIds,
                        std::vector<Int>& inputVals) const {
-    EXPECT_EQ(inputIdentifiers.size(), inputVals.size());
+    EXPECT_EQ(varIds.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
-      const propagation::VarId vId = varId(inputIdentifiers.at(i));
-      if (vId == propagation::NULL_ID) {
+      if (varIds.at(i) == propagation::NULL_ID) {
         continue;
       }
-      if (inputVals.at(i) < _solver->upperBound(vId)) {
+      if (inputVals.at(i) < _solver->upperBound(varIds.at(i))) {
         ++inputVals.at(i);
         return true;
       }
-      inputVals.at(i) = _solver->lowerBound(vId);
+      inputVals.at(i) = _solver->lowerBound(varIds.at(i));
     }
     return false;
   }
 
-  void setVarVals(const std::vector<std::string>& inputIdentifiers,
+  void setVarVals(const std::vector<propagation::VarId>& varIds,
                   const std::vector<Int>& vals) const {
-    EXPECT_EQ(inputIdentifiers.size(), vals.size());
-    for (size_t i = 0; i < inputIdentifiers.size(); ++i) {
-      if (varId(inputIdentifiers.at(i)) != propagation::NULL_ID) {
-        _solver->setValue(varId(inputIdentifiers.at(i)), vals.at(i));
+    EXPECT_EQ(varIds.size(), vals.size());
+    for (size_t i = 0; i < varIds.size(); ++i) {
+      if (varIds.at(i) != propagation::NULL_ID) {
+        _solver->setValue(varIds.at(i), vals.at(i));
       }
     }
   }

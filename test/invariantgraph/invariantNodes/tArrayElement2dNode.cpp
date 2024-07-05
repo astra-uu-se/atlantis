@@ -204,11 +204,9 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     ArrayElement2dNodeTest, ArrayElement2dNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE, 0},
-                      ParamData{InvariantNodeAction::SUBSUME, 0},
+    ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::SUBSUME, 0},
                       ParamData{InvariantNodeAction::REPLACE, 0},
-                      ParamData{InvariantNodeAction::REPLACE, 1},
-                      ParamData{InvariantNodeAction::NONE, 2},
+                      ParamData{InvariantNodeAction::REPLACE, 1}, ParamData{2},
                       ParamData{InvariantNodeAction::SUBSUME, 2},
                       ParamData{InvariantNodeAction::REPLACE, 2},
                       ParamData{InvariantNodeAction::REPLACE, 3}));

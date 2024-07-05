@@ -1,5 +1,3 @@
-
-
 #include "atlantis/invariantgraph/fzn/int_min.hpp"
 
 #include "../parseHelper.hpp"

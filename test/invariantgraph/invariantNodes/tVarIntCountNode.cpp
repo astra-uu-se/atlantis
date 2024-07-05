@@ -172,9 +172,8 @@ TEST_P(VarIntCountNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(VarIntCountNodeTest, VarIntCountNodeTestFixture,
-                        ::testing::Values(ParamData{InvariantNodeAction::NONE},
-                                          ParamData{
-                                              InvariantNodeAction::REPLACE}));
+INSTANTIATE_TEST_CASE_P(
+    VarIntCountNodeTest, VarIntCountNodeTestFixture,
+    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::REPLACE}));
 
 }  // namespace atlantis::testing

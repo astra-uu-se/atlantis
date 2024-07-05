@@ -19,6 +19,58 @@ void IntLeNode::registerOutputVars(InvariantGraph& invariantGraph,
   registerViolation(invariantGraph, solver);
 }
 
+void IntLeNode::updateState(InvariantGraph& graph) {
+  ViolationInvariantNode::updateState(graph);
+  if (staticInputVarNodeIds().size() < 2) {
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  VarNode aNode = graph.varNode(a());
+  VarNode bNode = graph.varNode(b());
+  if (a() == b()) {
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+      ViolationInvariantNode::updateState(graph);
+    } else if (!shouldHold()) {
+      throw InconsistencyException("IntLeNode neg: a == b");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (!isReified()) {
+    if (shouldHold()) {
+      // a <= b
+      aNode.removeValuesAbove(bNode.upperBound());
+      bNode.removeValuesBelow(aNode.lowerBound());
+    } else {
+      // a > b
+      aNode.removeValuesBelow(bNode.lowerBound() + 1);
+      bNode.removeValuesAbove(aNode.upperBound() - 1);
+    }
+  }
+  if (aNode.upperBound() <= bNode.lowerBound()) {
+    // always true
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+      ViolationInvariantNode::updateState(graph);
+    } else if (!shouldHold()) {
+      throw InconsistencyException("IntLeNode neg: a <= b");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  } else if (aNode.lowerBound() > bNode.upperBound()) {
+    // always false
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+      ViolationInvariantNode::updateState(graph);
+    } else if (shouldHold()) {
+      throw InconsistencyException("IntLeNode: a > b");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+}
+
 void IntLeNode::registerNode(InvariantGraph& invariantGraph,
                              propagation::SolverBase& solver) {
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);

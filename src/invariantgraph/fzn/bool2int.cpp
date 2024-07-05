@@ -2,7 +2,6 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/views/bool2IntNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {

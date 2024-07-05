@@ -126,9 +126,8 @@ TEST_P(IntAbsNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(IntAbsNodeTestTest, IntAbsNodeTestFixture,
-                         ::testing::Values(ParamData{InvariantNodeAction::NONE},
-                                           ParamData{
-                                               InvariantNodeAction::REPLACE}));
+INSTANTIATE_TEST_SUITE_P(
+    IntAbsNodeTestTest, IntAbsNodeTestFixture,
+    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::REPLACE}));
 
 }  // namespace atlantis::testing

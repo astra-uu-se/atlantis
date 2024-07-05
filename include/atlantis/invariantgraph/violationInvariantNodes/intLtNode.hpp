@@ -13,6 +13,8 @@ class IntLtNode : public ViolationInvariantNode {
 
   IntLtNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
+  void updateState(InvariantGraph& graph) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

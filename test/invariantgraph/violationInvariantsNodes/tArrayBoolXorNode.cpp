@@ -61,13 +61,12 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
           retrieveBoolVarNode("input_" + std::to_string(i)));
     }
 
-    if (shouldBeSubsumed()) {
-      for (const auto& inputVarNodeId : inputVarNodeIds) {
-        varNode(inputVarNodeId).fixToValue(!shouldFail());
+    if (shouldBeSubsumed() || shouldBeReplaced()) {
+      if (shouldBeSubsumed()) {
+        varNode(inputVarNodeIds.front()).fixToValue(shouldHold());
       }
-    } else if (shouldBeReplaced()) {
       for (size_t i = 1; i < inputVarNodeIds.size(); ++i) {
-        varNode(inputVarNodeIds.at(i)).fixToValue(!shouldFail());
+        varNode(inputVarNodeIds.at(i)).fixToValue(shouldFail());
       }
     }
 
@@ -220,8 +219,7 @@ TEST_P(ArrayBoolXorNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     ArrayBoolXorNodeTest, ArrayBoolXorNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE,
-                                ViolationInvariantType::CONSTANT_TRUE},
+    ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::REIFIED},
                       ParamData{InvariantNodeAction::SUBSUME,

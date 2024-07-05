@@ -30,15 +30,22 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    aVarNodeId = retrieveIntVarNode(5, 10, "a");
-    bVarNodeId = retrieveIntVarNode(2, 7, "b");
+    aVarNodeId = retrieveIntVarNode(-5, 5, "a");
+    bVarNodeId = retrieveIntVarNode(-5, 5, "b");
+    if (shouldBeSubsumed()) {
+      if (shouldHold() || _paramData.data > 0) {
+        varNode(aVarNodeId).removeValuesAbove(0);
+        varNode(bVarNodeId).removeValuesBelow(1);
+      } else {
+        varNode(aVarNodeId).removeValuesBelow(0);
+        varNode(bVarNodeId).removeValuesAbove(0);
+      }
+    }
     if (isReified()) {
       reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
       createInvariantNode(aVarNodeId, bVarNodeId, reifiedVarNodeId);
-    } else if (shouldHold()) {
-      createInvariantNode(aVarNodeId, bVarNodeId, true);
     } else {
-      createInvariantNode(aVarNodeId, bVarNodeId, false);
+      createInvariantNode(aVarNodeId, bVarNodeId, shouldHold());
     }
   }
 };
@@ -85,8 +92,7 @@ TEST_P(IntLtNodeTestFixture, application) {
   // less equal
   EXPECT_EQ(solver.numInvariants(), 1);
 
-  EXPECT_EQ(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
-  EXPECT_GT(solver.upperBound(invNode().violationVarId(*_invariantGraph)), 0);
+  EXPECT_GE(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
 }
 
 TEST_P(IntLtNodeTestFixture, propagation) {
@@ -154,12 +160,15 @@ TEST_P(IntLtNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     IntLtNodeTest, IntLtNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE,
-                                ViolationInvariantType::CONSTANT_TRUE},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::CONSTANT_TRUE},
+    ::testing::Values(ParamData{},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_FALSE},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::REIFIED, 0},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::REIFIED, 1},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED}));
 

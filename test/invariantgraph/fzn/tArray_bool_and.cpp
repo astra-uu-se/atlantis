@@ -89,11 +89,13 @@ TEST_F(array_bool_andTest, propagation) {
   array_bool_and(*_invariantGraph, _model->constraints().front());
   _invariantGraph->apply(*_solver);
 
-  std::vector<Int> inputVals = makeInputVals(inputIdentifiers);
+  std::vector<propagation::VarId> inputVarIds = getVarIds(inputIdentifiers);
 
-  while (increaseNextVal(inputIdentifiers, inputVals)) {
+  std::vector<Int> inputVals = makeInputVals(inputVarIds);
+
+  while (increaseNextVal(inputVarIds, inputVals)) {
     _solver->beginMove();
-    setVarVals(inputIdentifiers, inputVals);
+    setVarVals(inputVarIds, inputVals);
     _solver->endMove();
 
     _solver->beginProbe();

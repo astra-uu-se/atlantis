@@ -14,6 +14,11 @@ bool bool_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
                  Int bound) {
   const auto [lb, ub] = linBounds(coeffs, inputs);
 
+  if (ub <= bound) {
+    // always holds:
+    return true;
+  }
+
   const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
       SearchDomain(lb, bound), VarNode::DomainType::UPPER_BOUND);
 

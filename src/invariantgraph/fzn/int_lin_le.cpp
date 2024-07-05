@@ -38,18 +38,16 @@ bool int_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
         std::to_string(bound));
   }
   if (ub <= bound) {
+    // always holds:
     return true;
   }
 
   const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
-      SearchDomain(lb, ub), VarNode::DomainType::UPPER_BOUND);
+      SearchDomain(lb, bound), VarNode::DomainType::UPPER_BOUND);
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
-
-  invariantGraph.addInvariantNode(std::make_unique<IntLeNode>(
-      outputVarNodeId, invariantGraph.retrieveIntVarNode(bound)));
 
   return true;
 }

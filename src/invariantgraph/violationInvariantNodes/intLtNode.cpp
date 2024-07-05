@@ -13,6 +13,58 @@ IntLtNode::IntLtNode(VarNodeId a, VarNodeId b, VarNodeId r)
 IntLtNode::IntLtNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ViolationInvariantNode({a, b}, shouldHold) {}
 
+void IntLtNode::updateState(InvariantGraph& graph) {
+  ViolationInvariantNode::updateState(graph);
+  if (staticInputVarNodeIds().size() < 2) {
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  VarNode aNode = graph.varNode(a());
+  VarNode bNode = graph.varNode(b());
+  if (a() == b()) {
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+      ViolationInvariantNode::updateState(graph);
+    } else if (shouldHold()) {
+      throw InconsistencyException("IntLtNode: a == b");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (!isReified()) {
+    if (shouldHold()) {
+      // a < b
+      aNode.removeValuesAbove(bNode.upperBound() - 1);
+      bNode.removeValuesBelow(aNode.lowerBound() + 1);
+    } else {
+      // a >= b
+      aNode.removeValuesBelow(bNode.lowerBound());
+      bNode.removeValuesAbove(aNode.upperBound());
+    }
+  }
+  if (aNode.upperBound() < bNode.lowerBound()) {
+    // always true
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+      ViolationInvariantNode::updateState(graph);
+    } else if (!shouldHold()) {
+      throw InconsistencyException("IntLtNode neg: a < b");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  } else if (aNode.lowerBound() >= bNode.upperBound()) {
+    // always false
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+      ViolationInvariantNode::updateState(graph);
+    } else if (shouldHold()) {
+      throw InconsistencyException("IntLtNode: a >= b");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+}
+
 void IntLtNode::registerOutputVars(InvariantGraph& invariantGraph,
                                    propagation::SolverBase& solver) {
   registerViolation(invariantGraph, solver);

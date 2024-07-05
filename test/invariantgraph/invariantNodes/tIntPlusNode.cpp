@@ -179,8 +179,7 @@ TEST_P(IntPlusNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     IntPlusNodeTest, IntPlusNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE},
-                      ParamData{InvariantNodeAction::SUBSUME},
+    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME},
                       ParamData{InvariantNodeAction::REPLACE}));
 
 }  // namespace atlantis::testing

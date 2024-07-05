@@ -113,9 +113,8 @@ TEST_P(IntModViewNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(IntModViewNodeTest, IntModViewNodeTestFixture,
-                         ::testing::Values(ParamData{InvariantNodeAction::NONE},
-                                           ParamData{
-                                               InvariantNodeAction::SUBSUME}));
+INSTANTIATE_TEST_SUITE_P(
+    IntModViewNodeTest, IntModViewNodeTestFixture,
+    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME}));
 
 }  // namespace atlantis::testing
