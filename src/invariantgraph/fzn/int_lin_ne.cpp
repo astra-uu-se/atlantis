@@ -32,15 +32,25 @@ bool int_lin_ne(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
   const auto& [lb, ub] = linBounds(coeffs, inputs);
 
-  const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
-      SearchDomain(lb, ub), VarNode::DomainType::NONE);
+  if (bound < lb || ub < bound) {
+    // always holds:
+    return true;
+  }
+
+  SearchDomain dom(lb, ub);
+  dom.remove(bound);
+
+  const VarNode::DomainType dt =
+      (lb == bound ? VarNode::DomainType::LOWER_BOUND
+                   : (ub == bound ? VarNode::DomainType::UPPER_BOUND
+                                  : VarNode::DomainType::DOMAIN));
+
+  const VarNodeId outputVarNodeId =
+      invariantGraph.retrieveIntVarNode(std::move(dom), dt);
 
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
       outputVarNodeId));
-
-  invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      outputVarNodeId, invariantGraph.retrieveIntVarNode(bound)));
 
   return true;
 }

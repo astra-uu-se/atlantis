@@ -173,8 +173,7 @@ TEST_P(IntTimesNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     IntTimesNodeTest, IntTimesNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE},
-                      ParamData{InvariantNodeAction::SUBSUME, 0},
+    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME, 0},
                       ParamData{InvariantNodeAction::SUBSUME, 1},
                       ParamData{InvariantNodeAction::REPLACE}));
 

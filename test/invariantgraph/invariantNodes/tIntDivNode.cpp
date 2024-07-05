@@ -142,9 +142,8 @@ TEST_P(IntDivNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(IntDivNodeTest, IntDivNodeTestFixture,
-                        ::testing::Values(ParamData{InvariantNodeAction::NONE},
-                                          ParamData{
-                                              InvariantNodeAction::REPLACE}));
+INSTANTIATE_TEST_CASE_P(
+    IntDivNodeTest, IntDivNodeTestFixture,
+    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::REPLACE}));
 
 }  // namespace atlantis::testing

@@ -677,23 +677,23 @@ void InvariantGraph::createVars(propagation::SolverBase& solver) {
     const auto invNodeId = unregisteredInvNodes.front();
     unregisteredInvNodes.pop();
     assert(visitedInvNodes.contains(invNodeId));
+    auto& invNode = invariantNode(invNodeId);
     // If the invNodeId only defines a single variable, then it is a view:
-    assert(!invariantNode(invNodeId).dynamicInputVarNodeIds().empty() ||
-           invariantNode(invNodeId).staticInputVarNodeIds().size() != 1 ||
-           varId(invariantNode(invNodeId).staticInputVarNodeIds().front()) !=
+    assert(!invNode.dynamicInputVarNodeIds().empty() ||
+           invNode.staticInputVarNodeIds().size() != 1 ||
+           varId(invNode.staticInputVarNodeIds().front()) !=
                propagation::NULL_ID);
-    assert(std::all_of(invariantNode(invNodeId).outputVarNodeIds().begin(),
-                       invariantNode(invNodeId).outputVarNodeIds().end(),
+    assert(std::all_of(invNode.outputVarNodeIds().begin(),
+                       invNode.outputVarNodeIds().end(),
                        [&](VarNodeId outputVarNodeId) {
                          return varId(outputVarNodeId) == propagation::NULL_ID;
                        }));
-    if (invariantNode(invNodeId).state() != InvariantNodeState::ACTIVE) {
+    if (invNode.state() != InvariantNodeState::ACTIVE) {
       continue;
     }
 
-    invariantNode(invNodeId).registerOutputVars(*this, solver);
-    for (const auto& outputVarNodeId :
-         invariantNode(invNodeId).outputVarNodeIds()) {
+    invNode.registerOutputVars(*this, solver);
+    for (const auto& outputVarNodeId : invNode.outputVarNodeIds()) {
       assert(outputVarNodeId != NULL_NODE_ID);
       const auto& vn = varNode(outputVarNodeId);
       assert(std::any_of(
@@ -701,7 +701,7 @@ void InvariantGraph::createVars(propagation::SolverBase& solver) {
           [&](InvariantNodeId defNodeId) { return defNodeId == invNodeId; }));
 
       outputVarNodeIds.emplace(outputVarNodeId);
-      assert(varId(outputVarNodeId) != propagation::NULL_ID);
+      assert(vn.varId() != propagation::NULL_ID);
       for (const auto& nextVarDefNode : vn.inputTo()) {
         if (!visitedInvNodes.contains(nextVarDefNode)) {
           visitedInvNodes.emplace(nextVarDefNode);

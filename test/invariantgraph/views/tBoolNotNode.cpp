@@ -114,7 +114,7 @@ TEST_P(BoolNotNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_SUITE_P(
     BoolNotNodeTest, BoolNotNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE},
+    ::testing::Values(ParamData{},
                       ParamData{InvariantNodeAction::REPLACE, int{0}},
                       ParamData{InvariantNodeAction::REPLACE, int{1}}));
 

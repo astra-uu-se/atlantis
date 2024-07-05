@@ -34,7 +34,30 @@ class BoolLeNodeTestFixture : public NodeTestBase<BoolLeNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
     aVarNodeId = retrieveBoolVarNode("a");
-    bVarNodeId = retrieveBoolVarNode("b");
+    if (shouldBeSubsumed() && _paramData.data == 2) {
+      bVarNodeId = aVarNodeId;
+    } else {
+      bVarNodeId = retrieveBoolVarNode("b");
+    }
+
+    if (shouldBeReplaced()) {
+      if (isReified()) {
+        if (_paramData.data == 0) {
+          varNode(aVarNodeId).fixToValue(bool{true});
+        } else {
+          varNode(bVarNodeId).fixToValue(bool{false});
+        }
+      }
+    }
+    if (shouldBeSubsumed()) {
+      if (isReified() || shouldHold()) {
+        if (_paramData.data == 0) {
+          varNode(aVarNodeId).fixToValue(bool{false});
+        } else {
+          varNode(bVarNodeId).fixToValue(bool{true});
+        }
+      }
+    }
 
     if (isReified()) {
       reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
@@ -80,16 +103,46 @@ TEST_P(BoolLeNodeTestFixture, application) {
   solver.close();
 
   // aVarNodeId and bVarNodeId
-  EXPECT_EQ(solver.searchVars().size(), 2);
+  EXPECT_LE(solver.searchVars().size(), 2);
 
   // aVarNodeId, bVarNodeId and the violation
-  EXPECT_EQ(solver.numVars(), 3);
+  EXPECT_LE(solver.numVars(), 3);
 
   // equal
   EXPECT_EQ(solver.numInvariants(), 1);
 
   EXPECT_EQ(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
   EXPECT_EQ(solver.upperBound(invNode().violationVarId(*_invariantGraph)), 1);
+}
+
+TEST_P(BoolLeNodeTestFixture, updateState) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeSubsumed()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    if (isReified()) {
+      EXPECT_TRUE(varNode(reifiedVarNodeId).isFixed());
+      const bool expected = isViolating();
+      const bool actual = varNode(reifiedVarNodeId).inDomain(bool{false});
+      EXPECT_EQ(expected, actual);
+    }
+  } else {
+    EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
+  }
+}
+
+TEST_P(BoolLeNodeTestFixture, replace) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeReplaced()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_TRUE(invNode().replace(*_invariantGraph));
+    invNode().deactivate(*_invariantGraph);
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  } else {
+    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+  }
 }
 
 TEST_P(BoolLeNodeTestFixture, propagation) {
@@ -129,7 +182,6 @@ TEST_P(BoolLeNodeTestFixture, propagation) {
                   : _invariantGraph->totalViolationVarId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
-  EXPECT_EQ(inputVarIds.size(), 2);
 
   std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
 
@@ -157,13 +209,23 @@ TEST_P(BoolLeNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     BoolLeNodeTest, BoolLeNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE,
-                                ViolationInvariantType::CONSTANT_TRUE},
+    ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
+                      ParamData{ViolationInvariantType::REIFIED},
                       ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::CONSTANT_TRUE},
+                                ViolationInvariantType::REIFIED, 0},
+                      ParamData{InvariantNodeAction::REPLACE,
+                                ViolationInvariantType::REIFIED, 1},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE},
-                      ParamData{ViolationInvariantType::CONSTANT_FALSE},
-                      ParamData{ViolationInvariantType::REIFIED}));
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_FALSE},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE, 2},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::REIFIED, 0},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::REIFIED, 1},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::REIFIED, 2}));
 
 }  // namespace atlantis::testing

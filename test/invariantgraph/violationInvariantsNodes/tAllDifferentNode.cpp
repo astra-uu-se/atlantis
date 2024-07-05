@@ -205,8 +205,7 @@ TEST_P(AllDifferentNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     AllDifferentNodeTest, AllDifferentNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE,
-                                ViolationInvariantType::CONSTANT_TRUE},
+    ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::SUBSUME,

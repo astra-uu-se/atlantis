@@ -141,7 +141,8 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
   _invariantGraph->apply(solver);
 
   if (shouldBeSubsumed()) {
-    const bool expected = isViolating(solver);
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
       const bool actual = varNode(reifiedIdentifier).inDomain({false});
@@ -196,12 +197,7 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     GlobalCardinalityLowUpNodeTest, GlobalCardinalityLowUpNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE,
-                                ViolationInvariantType::CONSTANT_TRUE},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::CONSTANT_TRUE},
-                      ParamData{InvariantNodeAction::SUBSUME,
-                                ViolationInvariantType::CONSTANT_TRUE},
+    ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED}));
 

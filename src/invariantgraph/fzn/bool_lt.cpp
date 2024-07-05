@@ -1,5 +1,3 @@
-
-
 #include "atlantis/invariantgraph/fzn/bool_lt.hpp"
 
 #include "../parseHelper.hpp"

@@ -72,6 +72,16 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
 void ViolationInvariantNode::updateState(InvariantGraph& graph) {
   if (isReified() && graph.varNodeConst(_reifiedViolationNodeId).isFixed()) {
     _shouldHold = graph.varNodeConst(_reifiedViolationNodeId).inDomain(true);
+    assert(_reifiedViolationNodeId != NULL_NODE_ID);
+    if (!outputVarNodeIds().empty()) {
+      assert(_reifiedViolationNodeId == outputVarNodeIds().front());
+      const bool isAlsoOutput = std::any_of(
+          outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+          [this](VarNodeId oId) { return oId == _reifiedViolationNodeId; });
+      if (!isAlsoOutput) {
+        removeOutputVarNode(graph.varNode(_reifiedViolationNodeId));
+      }
+    }
     _reifiedViolationNodeId = NULL_NODE_ID;
   }
   InvariantNode::updateState(graph);

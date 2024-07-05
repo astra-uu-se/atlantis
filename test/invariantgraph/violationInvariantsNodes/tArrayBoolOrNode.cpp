@@ -213,8 +213,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     ArrayBoolOrNodeTest, ArrayBoolOrNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE,
-                                ViolationInvariantType::CONSTANT_TRUE},
+    ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::REIFIED},
                       ParamData{InvariantNodeAction::SUBSUME,

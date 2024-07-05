@@ -1,5 +1,3 @@
-
-
 #include "atlantis/invariantgraph/fzn/int_max.hpp"
 
 #include "../parseHelper.hpp"

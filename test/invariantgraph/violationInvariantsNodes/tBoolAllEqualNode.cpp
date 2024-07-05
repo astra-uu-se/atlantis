@@ -257,20 +257,17 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     BoolAllEqualNodeTest, BoolAllEqualNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE,
-                                ViolationInvariantType::CONSTANT_TRUE},
+    ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE},
-                      ParamData{InvariantNodeAction::NONE,
-                                ViolationInvariantType::CONSTANT_FALSE},
+                      ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_FALSE},
-                      ParamData{InvariantNodeAction::NONE,
-                                ViolationInvariantType::REIFIED},
+                      ParamData{ViolationInvariantType::REIFIED},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::REIFIED}));
 

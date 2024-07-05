@@ -17,12 +17,13 @@ ArrayBoolXorNode::ArrayBoolXorNode(VarNodeId a, VarNodeId b, VarNodeId reified)
 ArrayBoolXorNode::ArrayBoolXorNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ArrayBoolXorNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& as,
+ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& inputs,
                                    VarNodeId reified)
-    : ViolationInvariantNode(std::move(as), reified) {}
+    : ViolationInvariantNode(std::move(inputs), reified) {}
 
-ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& as, bool shouldHold)
-    : ViolationInvariantNode(std::move(as), shouldHold) {}
+ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& inputs,
+                                   bool shouldHold)
+    : ViolationInvariantNode(std::move(inputs), shouldHold) {}
 
 void ArrayBoolXorNode::updateState(InvariantGraph& graph) {
   ViolationInvariantNode::updateState(graph);
@@ -50,9 +51,9 @@ void ArrayBoolXorNode::updateState(InvariantGraph& graph) {
       } else if (shouldHold()) {
         throw InconsistencyException(
             "ArrayBoolOrNode::updateState constraint is violated");
-        setState(InvariantNodeState::SUBSUMED);
-        return;
       }
+      setState(InvariantNodeState::SUBSUMED);
+      return;
     }
   }
   if (trueIndex < staticInputVarNodeIds().size() && !isReified() &&

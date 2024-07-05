@@ -197,8 +197,7 @@ TEST_P(ArrayIntMinimumNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     ArrayIntMinimumNodeTest, ArrayIntMinimumNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE},
-                      ParamData{InvariantNodeAction::SUBSUME},
+    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME},
                       ParamData{InvariantNodeAction::REPLACE}));
 
 }  // namespace atlantis::testing

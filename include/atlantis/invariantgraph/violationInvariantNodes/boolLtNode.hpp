@@ -15,6 +15,12 @@ class BoolLtNode : public ViolationInvariantNode {
 
   BoolLtNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
+  void updateState(InvariantGraph& graph) override;
+
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+
+  [[nodiscard]] bool replace(InvariantGraph&) override;
+
   void registerOutputVars(InvariantGraph&,
                           propagation::SolverBase& solver) override;
 

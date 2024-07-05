@@ -116,7 +116,7 @@ TEST_P(Bool2IntNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_SUITE_P(
     Bool2IntNodeTest, Bool2IntNodeTestFixture,
-    ::testing::Values(ParamData{InvariantNodeAction::NONE},
+    ::testing::Values(ParamData{},
                       ParamData{InvariantNodeAction::REPLACE, int{0}},
                       ParamData{InvariantNodeAction::REPLACE, int{1}}));
 

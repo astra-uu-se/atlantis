@@ -169,9 +169,8 @@ TEST_P(BoolLinearNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(BoolLinearNodeTest, BoolLinearNodeTestFixture,
-                        ::testing::Values(ParamData{InvariantNodeAction::NONE},
-                                          ParamData{
-                                              InvariantNodeAction::SUBSUME}));
+INSTANTIATE_TEST_CASE_P(
+    BoolLinearNodeTest, BoolLinearNodeTestFixture,
+    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME}));
 
 }  // namespace atlantis::testing

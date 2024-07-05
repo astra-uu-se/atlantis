@@ -175,22 +175,35 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
 
   void addInputVarsToSolver(propagation::Solver& solver) {
     EXPECT_EQ(solver.numVars(), 0);
-    for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
-      const auto& [lb, ub] = varNode(varNodeId).bounds();
-      if (lb != ub) {
-        EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
-        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
-      } else if (varId(varNodeId) == propagation::NULL_ID) {
+    std::unordered_set<size_t> visited;
+    visited.reserve(invNode().staticInputVarNodeIds().size() +
+                    invNode().dynamicInputVarNodeIds().size());
+    for (const VarNodeId& varNodeId : invNode().staticInputVarNodeIds()) {
+      if (visited.contains(varNodeId.id)) {
+        EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
+      } else {
+        if (!varNode(varNodeId).isFixed()) {
+          EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
+        }
+        visited.emplace(varNodeId.id);
+      }
+      if (varId(varNodeId) == propagation::NULL_ID) {
+        const auto& [lb, ub] = varNode(varNodeId).bounds();
         varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
       }
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
-    for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
-      const auto& [lb, ub] = varNode(varNodeId).bounds();
-      if (lb != ub) {
-        EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
-        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
-      } else if (varId(varNodeId) == propagation::NULL_ID) {
+    for (const VarNodeId& varNodeId : invNode().dynamicInputVarNodeIds()) {
+      if (visited.contains(varNodeId.id)) {
+        EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
+      } else {
+        if (!varNode(varNodeId).isFixed()) {
+          EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
+        }
+        visited.emplace(varNodeId.id);
+      }
+      if (varId(varNodeId) == propagation::NULL_ID) {
+        const auto& [lb, ub] = varNode(varNodeId).bounds();
         varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
       }
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);

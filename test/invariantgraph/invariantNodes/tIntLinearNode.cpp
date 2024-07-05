@@ -170,9 +170,8 @@ TEST_P(IntLinearNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(IntLinearNodeTest, IntLinearNodeTestFixture,
-                        ::testing::Values(ParamData{InvariantNodeAction::NONE},
-                                          ParamData{
-                                              InvariantNodeAction::SUBSUME}));
+INSTANTIATE_TEST_CASE_P(
+    IntLinearNodeTest, IntLinearNodeTestFixture,
+    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME}));
 
 }  // namespace atlantis::testing

@@ -30,10 +30,21 @@ class int_lin_leTest : public FznTestBase {
   std::vector<std::pair<Int, Int>> varBounds{};
   Int bound = 10;
 
-  Int isViolated(const std::vector<Int>& inputVals) {
+  Int isViolated() {
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
-      sum += coeffs.at(i) * inputVals.at(i);
+      EXPECT_TRUE(_invariantGraph->containsVarNode(inputIdentifiers.at(i)));
+      const VarNode& vNode = _invariantGraph->varNode(inputIdentifiers.at(i));
+      if (vNode.isFixed()) {
+        sum += coeffs.at(i) * vNode.lowerBound();
+      } else {
+        EXPECT_NE(vNode.varId(), propagation::NULL_ID);
+        Int curValue = _solver->currentValue(vNode.varId());
+        if (!vNode.inDomain(curValue)) {
+          return true;
+        }
+        sum += coeffs.at(i) * curValue;
+      }
     }
     return sum > bound;
   }
@@ -95,11 +106,13 @@ TEST_F(int_lin_leTest, propagation) {
   int_lin_le(*_invariantGraph, _model->constraints().front());
   _invariantGraph->apply(*_solver);
 
-  std::vector<Int> inputVals = makeInputVals(inputIdentifiers);
+  std::vector<propagation::VarId> inputVarIds = getVarIds(inputIdentifiers);
 
-  while (increaseNextVal(inputIdentifiers, inputVals)) {
+  std::vector<Int> inputVals = makeInputVals(inputVarIds);
+
+  while (increaseNextVal(inputVarIds, inputVals)) {
     _solver->beginMove();
-    setVarVals(inputIdentifiers, inputVals);
+    setVarVals(inputVarIds, inputVals);
     _solver->endMove();
 
     _solver->beginProbe();
@@ -107,7 +120,7 @@ TEST_F(int_lin_leTest, propagation) {
     _solver->endProbe();
 
     const bool actual = violation() > 0;
-    const bool expected = isViolated(inputVals);
+    const bool expected = isViolated();
 
     EXPECT_EQ(actual, expected);
   }
