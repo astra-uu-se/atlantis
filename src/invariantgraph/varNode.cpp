@@ -86,7 +86,7 @@ propagation::VarId VarNode::postDomainConstraint(
 
   if (_domainType == DomainType::FIXED || _domain.isFixed()) {
     if (lowerBound() < solverLb || solverUb < lowerBound()) {
-      throw std::runtime_error("Solver var domain range is" +
+      throw std::runtime_error("Solver var domain range is " +
                                std::to_string(solverLb) + ".." +
                                std::to_string(solverUb) +
                                " but invariant graph var node is fixed to " +
@@ -130,7 +130,7 @@ propagation::VarId VarNode::postDomainConstraint(
   if (_domainType == DomainType::RANGE) {
     if (solverUb < lowerBound() || solverLb > upperBound()) {
       throw std::runtime_error(
-          "Solver var domain range is" + std::to_string(solverLb) + ".." +
+          "Solver var domain range is " + std::to_string(solverLb) + ".." +
           std::to_string(solverUb) +
           " but invariant graph var node domain range is " +
           std::to_string(lowerBound()) + ".." + std::to_string(upperBound()));
