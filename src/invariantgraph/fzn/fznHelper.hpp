@@ -98,10 +98,10 @@ std::pair<Int, Int> linBounds(FznInvariantGraph&, const std::vector<Int>&,
             constraint.arguments().at(index))) {                             \
       throw FznArgumentException(                                            \
           "Invalid argument for constraint " + constraint.identifier() +     \
-          " at position" + std::to_string(index) + ": expected \"" +         \
+          " at position " + std::to_string(index) + ": expected \"" +        \
           to_string(typeid(arrayType), isVarArray) + "\" but got \"" +       \
           to_string(typeid(constraint.arguments().at(index)), isVarArray) +  \
-          '.');                                                              \
+          "\".");                                                            \
     }                                                                        \
     const auto& array = std::get<std::shared_ptr<arrayType>>(                \
         constraint.arguments().at(index));                                   \
@@ -111,7 +111,7 @@ std::pair<Int, Int> linBounds(FznInvariantGraph&, const std::vector<Int>&,
           " at position" + std::to_string(index) + ": expected \"" +         \
           to_string(typeid(arrayType), isVarArray) + "\" but got \"" +       \
           to_string(typeid(constraint.arguments().at(index)), !isVarArray) + \
-          '.');                                                              \
+          "\".");                                                            \
     }                                                                        \
   } while (false);
 

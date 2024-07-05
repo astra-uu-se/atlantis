@@ -29,6 +29,7 @@
 #include "atlantis/invariantgraph/fzn/bool_xor.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_equal_int.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_circuit.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_eq.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_geq.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_gt.hpp"
@@ -384,6 +385,7 @@ bool FznInvariantGraph::makeInvariantNode(
   MAKE_INVARIANT(fzn::bool_or)
   MAKE_INVARIANT(fzn::bool_xor)
   MAKE_INVARIANT(fzn::fzn_count_eq)
+  MAKE_INVARIANT(fzn::fzn_circuit)
   MAKE_INVARIANT(fzn::fzn_global_cardinality)
   MAKE_INVARIANT(fzn::fzn_global_cardinality_closed)
   MAKE_INVARIANT(fzn::int_abs)
