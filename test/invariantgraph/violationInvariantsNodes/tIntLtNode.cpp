@@ -9,29 +9,32 @@ using namespace atlantis::invariantgraph;
 class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
  public:
   VarNodeId aVarNodeId{NULL_NODE_ID};
+  std::string aIdentifier{"a"};
   VarNodeId bVarNodeId{NULL_NODE_ID};
+  std::string bIdentifier{"b"};
   VarNodeId reifiedVarNodeId{NULL_NODE_ID};
   std::string reifiedIdentifier{"reified"};
 
   bool isViolating() {
-    return varNode(aVarNodeId).lowerBound() >= varNode(bVarNodeId).lowerBound();
+    return varNode(aIdentifier).lowerBound() >=
+           varNode(bIdentifier).lowerBound();
   }
 
   bool isViolating(propagation::Solver& solver) {
-    const Int aVal = varNode(aVarNodeId).isFixed()
-                         ? varNode(aVarNodeId).lowerBound()
-                         : solver.currentValue(varId(aVarNodeId));
-    const Int bVal = varNode(bVarNodeId).isFixed()
-                         ? varNode(bVarNodeId).lowerBound()
-                         : solver.currentValue(varId(bVarNodeId));
+    const Int aVal = varNode(aIdentifier).isFixed()
+                         ? varNode(aIdentifier).lowerBound()
+                         : solver.currentValue(varId(aIdentifier));
+    const Int bVal = varNode(bIdentifier).isFixed()
+                         ? varNode(bIdentifier).lowerBound()
+                         : solver.currentValue(varId(bIdentifier));
 
     return aVal >= bVal;
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    aVarNodeId = retrieveIntVarNode(-5, 5, "a");
-    bVarNodeId = retrieveIntVarNode(-5, 5, "b");
+    aVarNodeId = retrieveIntVarNode(-5, 5, aIdentifier);
+    bVarNodeId = retrieveIntVarNode(-5, 5, bIdentifier);
     if (shouldBeSubsumed()) {
       if (shouldHold() || _paramData.data > 0) {
         varNode(aVarNodeId).removeValuesAbove(0);
@@ -83,13 +86,10 @@ TEST_P(IntLtNodeTestFixture, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // aVarNodeId and bVarNodeId
   EXPECT_EQ(solver.searchVars().size(), 2);
 
-  // aVarNodeId, bVarNodeId and the violation
   EXPECT_EQ(solver.numVars(), 3);
 
-  // less equal
   EXPECT_EQ(solver.numInvariants(), 1);
 
   EXPECT_GE(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
@@ -103,7 +103,7 @@ TEST_P(IntLtNodeTestFixture, propagation) {
   _invariantGraph->apply(solver);
 
   if (shouldBeSubsumed()) {
-    const bool expected = isViolating(solver);
+    const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
       const bool actual = varNode(reifiedIdentifier).inDomain({false});
@@ -120,7 +120,7 @@ TEST_P(IntLtNodeTestFixture, propagation) {
 
   std::vector<propagation::VarId> inputVarIds;
   for (const auto& inputVarNodeId :
-       std::array<VarNodeId, 2>{aVarNodeId, bVarNodeId}) {
+       std::array<std::string, 2>{aIdentifier, bIdentifier}) {
     if (!varNode(inputVarNodeId).isFixed()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(inputVarNodeId));

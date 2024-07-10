@@ -32,7 +32,6 @@ class VarNode {
   propagation::VarId _varId{propagation::NULL_ID};
   propagation::VarId _domainViolationId{propagation::NULL_ID};
 
-  std::vector<InvariantNodeId> _inputTo;
   std::vector<InvariantNodeId> _staticInputTo;
   std::vector<InvariantNodeId> _dynamicInputTo;
   std::unordered_set<InvariantNodeId, InvariantNodeIdHash> _outputOf;
@@ -149,11 +148,6 @@ class VarNode {
   propagation::VarId postDomainConstraint(propagation::SolverBase&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;
-
-  /**
-   * @return The variable defining nodes for which this node is an input.
-   */
-  [[nodiscard]] const std::vector<InvariantNodeId>& inputTo() const noexcept;
 
   /**
    * @return The variable defining nodes for which this node is an input.

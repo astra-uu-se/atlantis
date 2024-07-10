@@ -9,39 +9,41 @@ using namespace atlantis::invariantgraph;
 class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
  public:
   VarNodeId numeratorVarNodeId{NULL_NODE_ID};
+  std::string numeratorIdentifier{"numerator"};
   VarNodeId denominatorVarNodeId{NULL_NODE_ID};
+  std::string denominatorIdentifier{"denominator"};
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
   Int denominatorVal() { return varNode(denominatorVarNodeId).lowerBound(); }
 
   Int denominatorVal(propagation::Solver& solver) {
-    return varNode(denominatorVarNodeId).isFixed()
-               ? varNode(denominatorVarNodeId).lowerBound()
-               : solver.currentValue(varId(denominatorVarNodeId));
+    return varNode(denominatorIdentifier).isFixed()
+               ? varNode(denominatorIdentifier).lowerBound()
+               : solver.currentValue(varId(denominatorIdentifier));
   }
 
   Int computeOutput() {
-    const Int numerator = varNode(numeratorVarNodeId).lowerBound();
+    const Int numerator = varNode(numeratorIdentifier).lowerBound();
     const Int denominator = denominatorVal();
     return denominator != 0 ? numerator / denominator : 0;
   }
 
   Int computeOutput(propagation::Solver& solver) {
-    const Int numerator = varNode(numeratorVarNodeId).isFixed()
-                              ? varNode(numeratorVarNodeId).lowerBound()
-                              : solver.currentValue(varId(numeratorVarNodeId));
+    const Int numerator = varNode(numeratorIdentifier).isFixed()
+                              ? varNode(numeratorIdentifier).lowerBound()
+                              : solver.currentValue(varId(numeratorIdentifier));
     const Int denominator = denominatorVal(solver);
     return denominator != 0 ? numerator / denominator : 0;
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    numeratorVarNodeId = retrieveIntVarNode(-2, 2, "numeratorVarNodeId");
+    numeratorVarNodeId = retrieveIntVarNode(-2, 2, numeratorIdentifier);
     if (shouldBeReplaced()) {
-      denominatorVarNodeId = retrieveIntVarNode(1, 1, "denominatorVarNodeId");
+      denominatorVarNodeId = retrieveIntVarNode(1, 1, denominatorIdentifier);
     } else {
-      denominatorVarNodeId = retrieveIntVarNode(-2, 2, "denominatorVarNodeId");
+      denominatorVarNodeId = retrieveIntVarNode(-2, 2, denominatorIdentifier);
     }
     outputVarNodeId = retrieveIntVarNode(-2, 2, outputIdentifier);
 
@@ -74,10 +76,8 @@ TEST_P(IntDivNodeTestFixture, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // numeratorVarNodeId and denominatorVarNodeId
   EXPECT_EQ(solver.searchVars().size(), 2);
 
-  // numeratorVarNodeId, denominatorVarNodeId and outputVarNodeId
   EXPECT_EQ(solver.numVars(), 3);
 
   // intDiv
@@ -102,19 +102,18 @@ TEST_P(IntDivNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
-  if (shouldBeSubsumed()) {
-    const Int expected = computeOutput(solver);
-    const Int actual = varNode(outputVarNodeId).lowerBound();
-    EXPECT_EQ(expected, actual);
+  if (shouldBeReplaced()) {
+    EXPECT_EQ(varNode(outputIdentifier).varNodeId(),
+              varNode(numeratorIdentifier).varNodeId());
     return;
   }
 
   std::vector<propagation::VarId> inputVarIds;
-  for (const auto& inputVarNodeId :
-       std::array<VarNodeId, 2>{numeratorVarNodeId, denominatorVarNodeId}) {
-    if (!varNode(inputVarNodeId).isFixed()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& identifier :
+       std::array<std::string, 2>{numeratorIdentifier, denominatorIdentifier}) {
+    if (!varNode(identifier).isFixed()) {
+      EXPECT_NE(varId(identifier), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(identifier));
     }
   }
 

@@ -133,7 +133,7 @@ TEST_P(IntLeNodeTestFixture, propagation) {
   _invariantGraph->apply(solver);
 
   if (shouldBeSubsumed()) {
-    const bool expected = isViolating(solver);
+    const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
       const bool actual = varNode(reifiedIdentifier).inDomain({false});

@@ -10,12 +10,6 @@ ArrayVarElementNode::ArrayVarElementNode(VarNodeId idx,
                                          VarNodeId output, Int offset)
     : InvariantNode({output}, {idx}, std::move(varVector)), _offset(offset) {}
 
-void ArrayVarElementNode::registerOutputVars(InvariantGraph& invariantGraph,
-                                             propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()),
-                _offset);
-}
-
 bool ArrayVarElementNode::canBeReplaced(const InvariantGraph& graph) const {
   return state() == InvariantNodeState::ACTIVE &&
          graph.varNodeConst(idx()).isFixed();
@@ -31,6 +25,12 @@ bool ArrayVarElementNode::replace(InvariantGraph& invariantGraph) {
 
   invariantGraph.replaceVarNode(outputVarNodeIds().front(), input);
   return true;
+}
+
+void ArrayVarElementNode::registerOutputVars(InvariantGraph& invariantGraph,
+                                             propagation::SolverBase& solver) {
+  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()),
+                _offset);
 }
 
 void ArrayVarElementNode::registerNode(InvariantGraph& invariantGraph,

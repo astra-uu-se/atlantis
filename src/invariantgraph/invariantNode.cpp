@@ -105,37 +105,42 @@ void InvariantNode::replaceDefinedVar(VarNode& oldOutputVarNode,
 
 void InvariantNode::removeStaticInputVarNode(VarNode& retrieveVarNode) {
   // remove all occurrences:
-  _staticInputVarNodeIds.erase(
-      std::remove(_staticInputVarNodeIds.begin(), _staticInputVarNodeIds.end(),
-                  retrieveVarNode.varNodeId()),
-      _staticInputVarNodeIds.end());
+  for (Int i = static_cast<Int>(_staticInputVarNodeIds.size()) - 1; i >= 0;
+       --i) {
+    if (_staticInputVarNodeIds[i] == retrieveVarNode.varNodeId()) {
+      _staticInputVarNodeIds.erase(_staticInputVarNodeIds.begin() + i);
+    }
+  }
   retrieveVarNode.unmarkAsInputFor(_id, true);
 }
 
 void InvariantNode::removeDynamicInputVarNode(VarNode& retrieveVarNode) {
   // remove all occurrences:
-  _dynamicInputVarNodeIds.erase(
-      std::remove(_dynamicInputVarNodeIds.begin(),
-                  _dynamicInputVarNodeIds.end(), retrieveVarNode.varNodeId()),
-      _dynamicInputVarNodeIds.end());
+  for (Int i = static_cast<Int>(_dynamicInputVarNodeIds.size()) - 1; i >= 0;
+       --i) {
+    if (_dynamicInputVarNodeIds[i] == retrieveVarNode.varNodeId()) {
+      _dynamicInputVarNodeIds.erase(_dynamicInputVarNodeIds.begin() + i);
+    }
+  }
   retrieveVarNode.unmarkAsInputFor(_id, false);
 }
 
 void InvariantNode::removeOutputVarNode(VarNode& outputVarNode) {
   // remove all occurrences:
-  _outputVarNodeIds.erase(
-      std::remove(_outputVarNodeIds.begin(), _outputVarNodeIds.end(),
-                  outputVarNode.varNodeId()),
-      _outputVarNodeIds.end());
+  for (Int i = static_cast<Int>(_outputVarNodeIds.size()) - 1; i >= 0; --i) {
+    if (_outputVarNodeIds[i] == outputVarNode.varNodeId()) {
+      _outputVarNodeIds.erase(_outputVarNodeIds.begin() + i);
+    }
+  }
   outputVarNode.unmarkOutputTo(_id);
 }
 
 void InvariantNode::replaceStaticInputVarNode(VarNode& oldInputVarNode,
                                               VarNode& newInputVarNode) {
   // Replace all occurrences:
-  for (auto& _staticInputVarNodeId : _staticInputVarNodeIds) {
-    if (_staticInputVarNodeId == oldInputVarNode.varNodeId()) {
-      _staticInputVarNodeId = newInputVarNode.varNodeId();
+  for (size_t i = 0; i < _staticInputVarNodeIds.size(); ++i) {
+    if (_staticInputVarNodeIds[i] == oldInputVarNode.varNodeId()) {
+      _staticInputVarNodeIds[i] = newInputVarNode.varNodeId();
     }
   }
   oldInputVarNode.unmarkAsInputFor(_id, true);
@@ -145,9 +150,9 @@ void InvariantNode::replaceStaticInputVarNode(VarNode& oldInputVarNode,
 void InvariantNode::replaceDynamicInputVarNode(VarNode& oldInputVarNode,
                                                VarNode& newInputVarNode) {
   // Replace all occurrences:
-  for (auto& _dynamicInputVarNodeId : _dynamicInputVarNodeIds) {
-    if (_dynamicInputVarNodeId == oldInputVarNode.varNodeId()) {
-      _dynamicInputVarNodeId = newInputVarNode.varNodeId();
+  for (size_t i = 0; i < _dynamicInputVarNodeIds.size(); ++i) {
+    if (_dynamicInputVarNodeIds[i] == oldInputVarNode.varNodeId()) {
+      _dynamicInputVarNodeIds[i] = newInputVarNode.varNodeId();
     }
   }
   oldInputVarNode.unmarkAsInputFor(_id, false);

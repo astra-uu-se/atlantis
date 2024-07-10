@@ -70,7 +70,8 @@ propagation::VarId VarNode::postDomainConstraint(
     return _domainViolationId;
   }
   if (_domainType == DomainType::NONE ||
-      (inputTo().empty() && definingNodes().empty())) {
+      ((staticInputTo().empty() || dynamicInputTo().empty()) &&
+       definingNodes().empty())) {
     return propagation::NULL_ID;
   }
   if (_domainType == DomainType::FIXED && !isFixed()) {
@@ -273,10 +274,6 @@ std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) {
 
 std::pair<Int, Int> VarNode::bounds() const { return _domain.bounds(); }
 
-const std::vector<InvariantNodeId>& VarNode::inputTo() const noexcept {
-  return _inputTo;
-}
-
 const std::vector<InvariantNodeId>& VarNode::staticInputTo() const noexcept {
   return _staticInputTo;
 }
@@ -301,11 +298,10 @@ InvariantNodeId VarNode::outputOf() const {
 
 void VarNode::markAsInputFor(InvariantNodeId listeningInvNodeId,
                              bool isStaticInput) {
-  _inputTo.push_back(listeningInvNodeId);
   if (isStaticInput) {
-    _staticInputTo.push_back(listeningInvNodeId);
+    _staticInputTo.emplace_back(listeningInvNodeId);
   } else {
-    _dynamicInputTo.push_back(listeningInvNodeId);
+    _dynamicInputTo.emplace_back(listeningInvNodeId);
   }
 }
 
@@ -316,21 +312,15 @@ void VarNode::unmarkOutputTo(InvariantNodeId definingInvNodeId) {
 void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvNodeId,
                                bool isStaticInput) {
   if (isStaticInput) {
-    auto it = _staticInputTo.begin();
-    while (it != _staticInputTo.end()) {
-      if (*it == listeningInvNodeId) {
-        it = _staticInputTo.erase(it);
-      } else {
-        it++;
+    for (Int i = static_cast<Int>(_staticInputTo.size()) - 1; i >= 0; --i) {
+      if (_staticInputTo[i] == listeningInvNodeId) {
+        _staticInputTo.erase(_staticInputTo.begin() + i);
       }
     }
   } else {
-    auto it = _dynamicInputTo.begin();
-    while (it != _dynamicInputTo.end()) {
-      if (*it == listeningInvNodeId) {
-        it = _dynamicInputTo.erase(it);
-      } else {
-        it++;
+    for (Int i = static_cast<Int>(_dynamicInputTo.size()) - 1; i >= 0; --i) {
+      if (_dynamicInputTo[i] == listeningInvNodeId) {
+        _dynamicInputTo.erase(_dynamicInputTo.begin() + i);
       }
     }
   }

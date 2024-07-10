@@ -103,6 +103,13 @@ TEST_P(IntAbsNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  if (shouldBeReplaced()) {
+    EXPECT_FALSE(varNode(outputIdentifier).isFixed());
+    EXPECT_FALSE(varNode(inputIdentifier).isFixed());
+    EXPECT_EQ(varNode(outputIdentifier).varNodeId(),
+              varNode(inputIdentifier).varNodeId());
+    return;
+  }
 
   const propagation::VarId inputId = varId(inputIdentifier);
   EXPECT_NE(inputId, propagation::NULL_ID);
