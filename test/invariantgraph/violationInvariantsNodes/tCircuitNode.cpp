@@ -16,15 +16,16 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
  public:
   Int numInputs = 4;
   std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<std::string> inputIdentifiers;
 
   InvariantNodeId invNodeId;
 
   bool isViolating(propagation::Solver& solver) {
     std::vector<Int> values(numInputs, -1);
-    for (size_t i = 0; i < inputVarNodeIds.size(); i++) {
-      values.at(i) = varNode(inputVarNodeIds.at(i)).isFixed()
-                         ? varNode(inputVarNodeIds.at(i)).lowerBound()
-                         : solver.currentValue(varId(inputVarNodeIds.at(i)));
+    for (size_t i = 0; i < inputIdentifiers.size(); i++) {
+      values.at(i) = varNode(inputIdentifiers.at(i)).isFixed()
+                         ? varNode(inputIdentifiers.at(i)).lowerBound()
+                         : solver.currentValue(varId(inputIdentifiers.at(i)));
     }
     std::vector<bool> visited(numInputs, false);
     Int curNode = 1;
@@ -47,8 +48,9 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
           domain.emplace_back(j + 1);
         }
       }
+      inputIdentifiers.emplace_back("input_" + std::to_string(i));
       inputVarNodeIds.emplace_back(
-          retrieveIntVarNode(std::move(domain), "input_" + std::to_string(i)));
+          retrieveIntVarNode(std::move(domain), inputIdentifiers.back()));
     }
     if (shouldBeReplaced()) {
       for (const auto& inputVarNodeId : inputVarNodeIds) {
@@ -76,10 +78,10 @@ TEST_P(CircuitNodeTestFixture, propagation) {
   // dynamic cycles. When the invariant graph is topologically sorted, then an
   // exception should be thrown, and the corresponding probe/move should be
   // ignored/skipped.
-  return;
   if (shouldBeMadeImplicit()) {
     return;
   }
+  return;
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
@@ -99,9 +101,14 @@ TEST_P(CircuitNodeTestFixture, propagation) {
     setVarVals(solver, inputVarIds, inputVals);
     solver.endMove();
 
-    solver.beginProbe();
-    solver.query(violVarId);
-    solver.endProbe();
+    try {
+      solver.beginProbe();
+      solver.query(violVarId);
+      solver.endProbe();
+    } catch (TopologicalOrderError& e) {
+      EXPECT_TRUE(isViolating(solver));
+      continue;
+    }
 
     expectVarVals(solver, inputVarIds, inputVals);
 
