@@ -13,14 +13,15 @@ using ::testing::ContainerEq;
 class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
  public:
   std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<std::string> inputIdentifiers;
   VarNodeId reifiedVarNodeId{NULL_NODE_ID};
   std::string reifiedIdentifier{"reified"};
   Int numInputs = 4;
 
   bool isViolating() {
     bool trueFound = false;
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      if (varNode(inputVarNodeId).inDomain(bool{true})) {
+    for (const auto& identifier : inputIdentifiers) {
+      if (varNode(identifier).inDomain(bool{true})) {
         if (trueFound) {
           return true;
         }
@@ -32,16 +33,16 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
 
   bool isViolating(propagation::Solver& solver) {
     bool trueFound = false;
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      if (varNode(inputVarNodeId).isFixed()) {
-        if (varNode(inputVarNodeId).inDomain(bool{true})) {
+    for (const auto& identifier : inputIdentifiers) {
+      if (varNode(identifier).isFixed()) {
+        if (varNode(identifier).inDomain(bool{true})) {
           if (trueFound) {
             return true;
           }
           trueFound = true;
         }
       } else {
-        if (solver.currentValue(varId(inputVarNodeId)) == 0) {
+        if (solver.currentValue(varId(identifier)) == 0) {
           if (trueFound) {
             return true;
           }
@@ -57,8 +58,9 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
     inputVarNodeIds.clear();
     inputVarNodeIds.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
+      inputIdentifiers.emplace_back("input_" + std::to_string(i));
       inputVarNodeIds.emplace_back(
-          retrieveBoolVarNode("input_" + std::to_string(i)));
+          retrieveBoolVarNode(inputIdentifiers.back()));
     }
 
     if (shouldBeSubsumed() || shouldBeReplaced()) {
@@ -162,17 +164,23 @@ TEST_P(ArrayBoolXorNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
-  std::vector<propagation::VarId> inputVarIds;
-  for (const auto& inputNodeId : inputVarNodeIds) {
-    if (!varNode(inputNodeId).isFixed()) {
-      EXPECT_NE(varId(inputNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputNodeId));
-    }
+  if (shouldBeReplaced()) {
+    EXPECT_TRUE(isReified());
+    EXPECT_FALSE(varNode(reifiedIdentifier).isFixed());
+    return;
   }
 
+  std::vector<propagation::VarId> inputVarIds;
+  for (const auto& identifier : inputIdentifiers) {
+    if (!varNode(identifier).isFixed()) {
+      EXPECT_NE(varId(identifier), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(identifier));
+    }
+  }
   EXPECT_EQ(inputVarIds.empty(), shouldBeSubsumed());
+
   if (shouldBeSubsumed()) {
-    const bool expected = isViolating(solver);
+    const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
       const bool actual = varNode(reifiedIdentifier).inDomain({false});

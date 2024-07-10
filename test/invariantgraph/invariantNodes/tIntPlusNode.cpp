@@ -12,25 +12,26 @@ using ::testing::Contains;
 class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
  public:
   std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<std::string> inputIdentifiers{"input_1", "input_2"};
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
   Int computeOutput() {
     Int sum = 0;
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
-      sum += varNode(inputVarNodeId).lowerBound();
+    for (const auto& identifier : inputIdentifiers) {
+      EXPECT_TRUE(varNode(identifier).isFixed());
+      sum += varNode(identifier).lowerBound();
     }
     return sum;
   }
 
   Int computeOutput(propagation::Solver& solver) {
     Int sum = 0;
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      if (varNode(inputVarNodeId).isFixed()) {
-        sum += varNode(inputVarNodeId).lowerBound();
+    for (const auto& identifier : inputIdentifiers) {
+      if (varNode(identifier).isFixed()) {
+        sum += varNode(identifier).lowerBound();
       } else {
-        sum += solver.currentValue(varId(inputVarNodeId));
+        sum += solver.currentValue(varId(identifier));
       }
     }
     return sum;
@@ -39,14 +40,17 @@ class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
     if (shouldBeSubsumed()) {
-      inputVarNodeIds = std::vector<VarNodeId>{retrieveIntVarNode(1, 1, "a"),
-                                               retrieveIntVarNode(1, 1, "b")};
+      inputVarNodeIds = std::vector<VarNodeId>{
+          retrieveIntVarNode(1, 1, inputIdentifiers.front()),
+          retrieveIntVarNode(1, 1, inputIdentifiers.back())};
     } else if (shouldBeReplaced()) {
-      inputVarNodeIds = std::vector<VarNodeId>{retrieveIntVarNode(0, 0, "a"),
-                                               retrieveIntVarNode(-2, 2, "b")};
+      inputVarNodeIds = std::vector<VarNodeId>{
+          retrieveIntVarNode(0, 0, inputIdentifiers.front()),
+          retrieveIntVarNode(-2, 2, inputIdentifiers.back())};
     } else {
-      inputVarNodeIds = std::vector<VarNodeId>{retrieveIntVarNode(-2, 2, "a"),
-                                               retrieveIntVarNode(-2, 2, "b")};
+      inputVarNodeIds = std::vector<VarNodeId>{
+          retrieveIntVarNode(-2, 2, inputIdentifiers.front()),
+          retrieveIntVarNode(-2, 2, inputIdentifiers.back())};
     }
     outputVarNodeId = retrieveIntVarNode(0, 10, outputIdentifier);
 
@@ -83,15 +87,15 @@ TEST_P(IntPlusNodeTestFixture, application) {
   solver.close();
 
   // a and b
-  for (const auto& inputVarNodeIds : inputVarNodeIds) {
-    const VarNode& inputNode = varNode(inputVarNodeIds);
+  for (const auto& identifier : inputIdentifiers) {
+    const VarNode& inputNode = varNode(identifier);
     if (shouldBeSubsumed()) {
       EXPECT_TRUE(inputNode.isFixed());
     } else if (!shouldBeReplaced()) {
       EXPECT_FALSE(inputNode.isFixed());
     }
     if (!inputNode.isFixed()) {
-      EXPECT_THAT(solver.searchVars(), Contains(varId(inputVarNodeIds)));
+      EXPECT_THAT(solver.searchVars(), Contains(varId(identifier)));
     }
   }
   EXPECT_LE(solver.searchVars().size(), 2);
@@ -140,19 +144,32 @@ TEST_P(IntPlusNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
-  std::vector<propagation::VarId> inputVarIds;
-  for (const auto& inputVarNodeIds : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(inputVarNodeIds), propagation::NULL_ID);
-    inputVarIds.emplace_back(varId(inputVarNodeIds));
-  }
-
   if (shouldBeSubsumed()) {
-    VarNode& outputNode = varNode(outputVarNodeId);
+    VarNode& outputNode = varNode(outputIdentifier);
     EXPECT_TRUE(outputNode.isFixed());
     const Int actual = outputNode.lowerBound();
     const Int expected = computeOutput(solver);
     EXPECT_EQ(actual, expected);
     return;
+  }
+
+  if (shouldBeReplaced()) {
+    EXPECT_FALSE(varNode(outputIdentifier).isFixed());
+    const VarNodeId addantVarNodeId =
+        varNode(varNode(inputIdentifiers.front()).isFixed()
+                    ? inputIdentifiers.back()
+                    : inputIdentifiers.front())
+            .varNodeId();
+    EXPECT_EQ(varNode(outputIdentifier).varNodeId(), addantVarNodeId);
+    return;
+  }
+
+  std::vector<propagation::VarId> inputVarIds;
+  for (const auto& identifiers : inputIdentifiers) {
+    if (!varNode(identifiers).isFixed()) {
+      EXPECT_NE(varId(identifiers), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(identifiers));
+    }
   }
 
   const propagation::VarId outputId = varId(outputIdentifier);

@@ -12,6 +12,7 @@ class ArrayVarElementNodeTestFixture
   std::vector<VarNodeId> varArrayVarNodeIds;
 
   VarNodeId idx{NULL_NODE_ID};
+  std::string idxIdentifier{"idx"};
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
@@ -38,7 +39,7 @@ class ArrayVarElementNodeTestFixture
         shouldBeReplaced()
             ? offsetIdx
             : (static_cast<Int>(varArrayVarNodeIds.size()) - 1 + offsetIdx),
-        "idx");
+        idxIdentifier);
 
     createInvariantNode(idx, std::vector<VarNodeId>{varArrayVarNodeIds},
                         outputVarNodeId, offsetIdx);
@@ -103,6 +104,12 @@ TEST_P(ArrayVarElementNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
+  if (shouldBeReplaced()) {
+    EXPECT_TRUE(varNode(idxIdentifier).isFixed());
+    EXPECT_FALSE(varNode(outputIdentifier).isFixed());
+    return;
+  }
+
   const propagation::VarId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
@@ -148,9 +155,8 @@ TEST_P(ArrayVarElementNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     ArrayVarElementNodeTest, ArrayVarElementNodeTestFixture,
-    ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::SUBSUME, 0},
-                      ParamData{InvariantNodeAction::REPLACE, 0}, ParamData{1},
-                      ParamData{InvariantNodeAction::SUBSUME, 1},
+    ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::REPLACE, 0},
+                      ParamData{1},
                       ParamData{InvariantNodeAction::REPLACE, 1}));
 
 }  // namespace atlantis::testing

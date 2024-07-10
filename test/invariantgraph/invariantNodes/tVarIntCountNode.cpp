@@ -13,20 +13,21 @@ using ::testing::ContainerEq;
 class VarIntCountNodeTestFixture : public NodeTestBase<VarIntCountNode> {
  public:
   std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<std::string> inputIdentifiers{"input_1", "input_2", "input_3"};
   VarNodeId needleVarNodeId{NULL_NODE_ID};
+  std::string needleIdentifier{"needle"};
   VarNodeId outputVarNodeId{NULL_NODE_ID};
-
   std::string outputIdentifier{"output"};
 
   Int computeOutput() {
-    const Int needleVal = varNode(needleVarNodeId).lowerBound();
+    const Int needleVal = varNode(needleIdentifier).lowerBound();
     Int occurrences = 0;
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      EXPECT_TRUE(varNode(inputVarNodeId).isFixed() ||
-                  !varNode(inputVarNodeId).inDomain(needleVal));
+    for (const auto& identifier : inputIdentifiers) {
+      EXPECT_TRUE(varNode(identifier).isFixed() ||
+                  !varNode(identifier).inDomain(needleVal));
 
-      occurrences += varNode(inputVarNodeId).isFixed() &&
-                             varNode(inputVarNodeId).inDomain(needleVal)
+      occurrences += varNode(identifier).isFixed() &&
+                             varNode(identifier).inDomain(needleVal)
                          ? 1
                          : 0;
     }
@@ -34,23 +35,22 @@ class VarIntCountNodeTestFixture : public NodeTestBase<VarIntCountNode> {
   }
 
   Int computeOutput(propagation::Solver& solver) {
-    const Int needleVal = varNode(needleVarNodeId).isFixed()
-                              ? varNode(needleVarNodeId).lowerBound()
-                              : solver.currentValue(varId(needleVarNodeId));
+    const Int needleVal = varNode(needleIdentifier).isFixed()
+                              ? varNode(needleIdentifier).lowerBound()
+                              : solver.currentValue(varId(needleIdentifier));
     Int occurrences = 0;
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      const VarNode& inputVarNode = varNode(inputVarNodeId);
+    for (const auto& identifier : inputIdentifiers) {
+      const VarNode& inputVarNode = varNode(identifier);
       if (!inputVarNode.inDomain(needleVal)) {
         continue;
       }
-      if (inputVarNode.isFixed() ||
-          varId(inputVarNodeId) == propagation::NULL_ID) {
+      if (inputVarNode.isFixed() || varId(identifier) == propagation::NULL_ID) {
         EXPECT_TRUE(inputVarNode.isFixed());
-        EXPECT_TRUE(varNode(inputVarNodeId).inDomain(needleVal));
+        EXPECT_TRUE(varNode(identifier).inDomain(needleVal));
         ++occurrences;
       } else {
         occurrences +=
-            solver.currentValue(varId(inputVarNodeId)) == needleVal ? 1 : 0;
+            solver.currentValue(varId(identifier)) == needleVal ? 1 : 0;
       }
     }
     return occurrences;
@@ -58,13 +58,13 @@ class VarIntCountNodeTestFixture : public NodeTestBase<VarIntCountNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputVarNodeIds = {retrieveIntVarNode(2, 5, "input_1"),
-                       retrieveIntVarNode(3, 5, "input_2"),
-                       retrieveIntVarNode(4, 5, "input_3")};
+    inputVarNodeIds = {retrieveIntVarNode(2, 5, inputIdentifiers.at(0)),
+                       retrieveIntVarNode(3, 5, inputIdentifiers.at(1)),
+                       retrieveIntVarNode(4, 5, inputIdentifiers.at(2))};
     if (shouldBeReplaced()) {
-      needleVarNodeId = retrieveIntVarNode(2, 2, "needle");
+      needleVarNodeId = retrieveIntVarNode(2, 2, needleIdentifier);
     } else {
-      needleVarNodeId = retrieveIntVarNode(2, 5, "needle");
+      needleVarNodeId = retrieveIntVarNode(2, 5, needleIdentifier);
     }
 
     outputVarNodeId = retrieveIntVarNode(0, 2, outputIdentifier);
@@ -135,19 +135,23 @@ TEST_P(VarIntCountNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
 
-  if (shouldBeSubsumed()) {
-    const Int expected = computeOutput(solver);
-    const Int actual = varNode(outputVarNodeId).lowerBound();
-    EXPECT_EQ(expected, actual);
-    return;
+  if (shouldBeReplaced()) {
+    EXPECT_TRUE(varNode(needleIdentifier).isFixed());
   }
 
   std::vector<propagation::VarId> inputVarIds;
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    if (!varNode(inputVarNodeId).isFixed()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& identifier : inputIdentifiers) {
+    if (varNode(identifier).isFixed()) {
+      continue;
     }
+    if (varNode(needleIdentifier).isFixed()) {
+      const Int needleVar = varNode(needleIdentifier).lowerBound();
+      if (!varNode(identifier).inDomain(needleVar)) {
+        continue;
+      }
+    }
+    EXPECT_NE(varId(identifier), propagation::NULL_ID);
+    inputVarIds.emplace_back(varId(identifier));
   }
 
   const propagation::VarId outputId = varId(outputIdentifier);

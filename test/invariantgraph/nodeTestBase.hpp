@@ -242,7 +242,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
       bool found = false;
       for (const auto& invNodeId :
-           _invariantGraph->varNode(varNodeId).inputTo()) {
+           _invariantGraph->varNode(varNodeId).staticInputTo()) {
         if (invNodeId == invNode.id()) {
           found = true;
           break;
@@ -253,7 +253,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
       bool found = false;
       for (const auto& invNodeId :
-           _invariantGraph->varNode(varNodeId).inputTo()) {
+           _invariantGraph->varNode(varNodeId).dynamicInputTo()) {
         if (invNodeId == invNode.id()) {
           found = true;
           break;
