@@ -482,7 +482,6 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
   assert(all_in_range(0u, inFrontier.size(), [&](const size_t index) {
     return !inFrontier.at(index);
   }));
-#ifndef NDEBUG
   for (const VarIdBase& varId : _varsInLayer.at(layer)) {
     const InvariantId defInv = definingInvariant(varId);
     if (defInv == NULL_ID) {
@@ -492,16 +491,12 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
     const bool isDynInv =
         _layerHasDynamicCycle.at(layer) && isDynamicInvariant(defInv);
     for (const auto& [inputId, isDynamicInput] : inputVars(defInv)) {
-      if (!isDynInv) {
-        assert(_varPosition[inputId] < _varPosition[varId]);
-      } else if (!isDynamicInput) {
-        assert(_varPosition[inputId] < _varPosition[varId]);
-      } else if (dynamicInputVar(ts, defInv) == inputId) {
-        assert(_varPosition[inputId] < _varPosition[varId]);
+      if (!isDynInv || !isDynamicInput ||
+          dynamicInputVar(ts, defInv) == inputId) {
+        throw TopologicalOrderError();
       }
     }
   }
-#endif
 
   if (updatePriorityQueue) {
     for (const VarIdBase& varId : _varsInLayer[layer]) {

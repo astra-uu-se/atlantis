@@ -43,9 +43,14 @@ class Neighbourhood {
  protected:
   template <unsigned int N>
   bool maybeCommit(Move<N> move, Assignment& assignment, Annealer& annealer) {
-    if (annealer.acceptMove(move)) {
-      move.commit(assignment);
-      return true;
+    try {
+      if (annealer.acceptMove(move)) {
+        move.commit(assignment);
+        return true;
+      }
+    } catch (TopologicalOrderError&) {
+      // The probe contains one or more undeterminable dynamic cycles
+      return false;
     }
 
     return false;
