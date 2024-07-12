@@ -182,12 +182,9 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph,
                                 constraint.arguments().at(0))
                                 ->toParVector();
 
-  if (constraint.definedVar().has_value()) {
-    if (!std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(
-            constraint.definedVar().value())) {
-      throw FznArgumentException(
-          "int_lin_eq constraint defined variable must be an integer variable");
-    }
+  if (constraint.definedVar().has_value() &&
+      std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(
+          constraint.definedVar().value())) {
     const std::shared_ptr<const fznparser::IntVar> definedVar =
         std::get<std::shared_ptr<fznparser::IntVar>>(
             constraint.definedVar().value());
