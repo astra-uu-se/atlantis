@@ -231,7 +231,7 @@ std::vector<FznOutputVar> FznInvariantGraph::outputBoolVars() const noexcept {
   outputVars.reserve(_outputBoolVars.size());
   for (const auto& [identifier, nId] : _outputBoolVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed()) {
+    if (node.isFixed() || node.varId() == propagation::NULL_ID) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
       outputVars.emplace_back(identifier, node.varId());
@@ -245,7 +245,7 @@ std::vector<FznOutputVar> FznInvariantGraph::outputIntVars() const noexcept {
   outputVars.reserve(_outputIntVars.size());
   for (const auto& [identifier, nId] : _outputIntVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed()) {
+    if (node.isFixed() || node.varId() == propagation::NULL_ID) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
       outputVars.emplace_back(identifier, node.varId());
@@ -265,8 +265,8 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId& nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed()) {
-        fznArray.vars.emplace_back(node.constantValue().value());
+      if (node.isFixed() || node.varId() == propagation::NULL_ID) {
+        fznArray.vars.emplace_back(node.lowerBound());
       } else {
         fznArray.vars.emplace_back(node.varId());
       }
@@ -286,8 +286,8 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId& nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed()) {
-        fznArray.vars.emplace_back(node.constantValue().value());
+      if (node.isFixed() || node.varId() == propagation::NULL_ID) {
+        fznArray.vars.emplace_back(node.lowerBound());
       } else {
         fznArray.vars.emplace_back(node.varId());
       }
