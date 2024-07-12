@@ -20,7 +20,7 @@ InvariantGraphRoot& InvariantGraph::root() {
   return dynamic_cast<InvariantGraphRoot&>(*_implicitConstraintNodes.front());
 }
 
-InvariantGraph::InvariantGraph()
+InvariantGraph::InvariantGraph(bool breakDynamicCycles)
     : _varNodes{VarNode{VarNodeId{1}, false, SearchDomain({1})},
                 VarNode{VarNodeId{2}, false, SearchDomain({0})}},
       _namedVarNodeIndices(),
@@ -28,6 +28,7 @@ InvariantGraph::InvariantGraph()
       _boolVarNodeIndices{VarNodeId{1}, VarNodeId{2}},
       _invariantNodes(),
       _implicitConstraintNodes{},
+      _breakDynamicCycles(breakDynamicCycles),
       _totalViolationVarId(propagation::NULL_ID),
       _objectiveVarNodeId(NULL_NODE_ID) {
   addImplicitConstraintNode(std::make_unique<InvariantGraphRoot>());
@@ -610,28 +611,34 @@ VarNodeId InvariantGraph::findCycleUtil(
 
   visitedLocal.emplace(varNodeId);
   // iterate over all invariants that the variable is a static input to:
-  for (const InvariantNodeId& listeningInvNodeId :
-       varNode(varNodeId).staticInputTo()) {
-    // iterate over all variables that the invariant defines:
-    for (const VarNodeId& definedVarId :
-         invariantNode(listeningInvNodeId).outputVarNodeIds()) {
-      if (!visitedGlobal.contains(definedVarId) &&
-          !visitedLocal.contains(definedVarId)) {
-        // we have not visited this variable yet, add it to the path:
-        // each edge is from a defining invariant i to a variable i defines:
-        path.emplace(varNodeId, Edge{listeningInvNodeId, definedVarId});
-        const VarNodeId cycleRoot =
-            findCycleUtil(definedVarId, visitedGlobal, visitedLocal, path);
-        if (cycleRoot != NULL_NODE_ID) {
-          return cycleRoot;
+  // TODO: we now also break dynamic cycles. this should be fixed by having a
+  // better implicit constraint/neighbourhood initialisation process when
+  // closing the propagation solver.
+  for (size_t i = 0; i < (_breakDynamicCycles ? 2 : 1); ++i) {
+    for (const InvariantNodeId& listeningInvNodeId :
+         i == 0 ? varNode(varNodeId).staticInputTo()
+                : varNode(varNodeId).dynamicInputTo()) {
+      // iterate over all variables that the invariant defines:
+      for (const VarNodeId& definedVarId :
+           invariantNode(listeningInvNodeId).outputVarNodeIds()) {
+        if (!visitedGlobal.contains(definedVarId) &&
+            !visitedLocal.contains(definedVarId)) {
+          // we have not visited this variable yet, add it to the path:
+          // each edge is from a defining invariant i to a variable i defines:
+          path.emplace(varNodeId, Edge{listeningInvNodeId, definedVarId});
+          const VarNodeId cycleRoot =
+              findCycleUtil(definedVarId, visitedGlobal, visitedLocal, path);
+          if (cycleRoot != NULL_NODE_ID) {
+            return cycleRoot;
+          }
+        } else if (path.contains(definedVarId)) {
+          // this is the first variable that is in the cycle
+          // add the last edge to the path (each edge is from a defining
+          // invariant i to a variable i defines):
+          path.emplace(varNodeId, Edge{listeningInvNodeId, definedVarId});
+          // return the root node of the cycle:
+          return definedVarId;
         }
-      } else if (path.contains(definedVarId)) {
-        // this is the first variable that is in the cycle
-        // add the last edge to the path (each edge is from a defining invariant
-        // i to a variable i defines):
-        path.emplace(varNodeId, Edge{listeningInvNodeId, definedVarId});
-        // return the root node of the cycle:
-        return definedVarId;
       }
     }
   }

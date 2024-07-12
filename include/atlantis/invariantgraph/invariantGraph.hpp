@@ -31,6 +31,7 @@ class InvariantGraph {
 
   std::vector<std::unique_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
+  bool _breakDynamicCycles;
 
   void populateRootNode();
 
@@ -39,7 +40,7 @@ class InvariantGraph {
   VarNodeId _objectiveVarNodeId;
 
  public:
-  InvariantGraph();
+  InvariantGraph(bool breakDynamicCycles = false);
   virtual ~InvariantGraph() = default;
 
   InvariantGraph(const InvariantGraph&) = delete;

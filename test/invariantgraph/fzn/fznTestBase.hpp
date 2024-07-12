@@ -41,7 +41,7 @@ class FznTestBase : public ::testing::Test {
 
   void SetUp() override {
     _model = std::make_unique<Model>();
-    _invariantGraph = std::make_unique<FznInvariantGraph>();
+    _invariantGraph = std::make_unique<FznInvariantGraph>(true);
     _solver = std::make_unique<propagation::Solver>();
   }
 
