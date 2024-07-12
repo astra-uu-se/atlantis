@@ -140,10 +140,10 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   neighbourhood.printNeighbourhood(logger);
 
   search::Objective searchObjective(solver, problemType);
-  solver.open();
   auto violation = searchObjective.registerNode(
       invariantGraph.totalViolationVarId(), invariantGraph.objectiveVarId());
-  solver.close();
+
+  invariantGraph.close(solver);
 
   search::Assignment assignment(solver, violation,
                                 invariantGraph.objectiveVarId(),

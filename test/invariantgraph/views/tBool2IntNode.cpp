@@ -91,6 +91,7 @@ TEST_P(Bool2IntNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   const propagation::VarId inputId = varId(inputIdentifier);
   EXPECT_NE(inputId, propagation::NULL_ID);

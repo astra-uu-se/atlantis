@@ -134,6 +134,7 @@ TEST_P(VarIntCountNodeTestFixture, replace) {
 TEST_P(VarIntCountNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeReplaced()) {
     EXPECT_TRUE(varNode(needleIdentifier).isFixed());

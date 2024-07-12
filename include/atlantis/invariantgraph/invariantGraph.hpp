@@ -121,6 +121,8 @@ class InvariantGraph {
 
   void apply(propagation::SolverBase&);
 
+  void close(propagation::SolverBase&);
+
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
       VarNodeId node,

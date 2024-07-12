@@ -163,6 +163,7 @@ TEST_P(ArrayBoolXorNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeReplaced()) {
     EXPECT_TRUE(isReified());

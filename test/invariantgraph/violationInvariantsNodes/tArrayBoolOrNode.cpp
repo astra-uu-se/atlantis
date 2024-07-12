@@ -152,6 +152,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating(solver);

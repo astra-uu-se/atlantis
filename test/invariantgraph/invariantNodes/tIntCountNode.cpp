@@ -142,6 +142,7 @@ TEST_P(IntCountNodeTestFixture, updateState) {
 TEST_P(IntCountNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   std::vector<propagation::VarId> inputVarIds;
   for (const auto& identifier : inputIdentifiers) {

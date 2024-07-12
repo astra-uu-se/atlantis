@@ -151,6 +151,7 @@ TEST_P(BoolLeNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeReplaced() && varId(reifiedIdentifier) == propagation::NULL_ID) {
     EXPECT_TRUE(isReified());

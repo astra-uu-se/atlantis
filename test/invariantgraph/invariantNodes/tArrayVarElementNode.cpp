@@ -103,6 +103,7 @@ TEST_P(ArrayVarElementNodeTestFixture, replace) {
 TEST_P(ArrayVarElementNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeReplaced()) {
     EXPECT_TRUE(varNode(idxIdentifier).isFixed());

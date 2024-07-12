@@ -148,6 +148,7 @@ TEST_P(AllDifferentNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating(solver);
