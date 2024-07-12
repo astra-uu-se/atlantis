@@ -101,6 +101,7 @@ TEST_P(IntDivNodeTestFixture, replace) {
 TEST_P(IntDivNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeReplaced()) {
     EXPECT_EQ(varNode(outputIdentifier).varNodeId(),

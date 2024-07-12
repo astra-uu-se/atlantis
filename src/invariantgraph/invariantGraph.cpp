@@ -958,8 +958,9 @@ void InvariantGraph::apply(propagation::SolverBase& solver) {
   }
   assert(_objectiveVarNodeId != NULL_NODE_ID);
   assert(varId(_objectiveVarNodeId) != propagation::NULL_ID);
-  solver.close();
 }
+
+void InvariantGraph::close(propagation::SolverBase& solver) { solver.close(); }
 
 void InvariantGraph::sanity(bool oneDefInv) {
 #ifndef NDEBUG

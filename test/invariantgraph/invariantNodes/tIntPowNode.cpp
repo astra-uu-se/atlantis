@@ -100,6 +100,7 @@ TEST_P(IntPowNodeTestFixture, application) {
 TEST_P(IntPowNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeSubsumed()) {
     const Int expected = computeOutput(solver);

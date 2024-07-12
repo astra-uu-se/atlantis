@@ -88,6 +88,7 @@ TEST_F(array_bool_andTest, propagation) {
   generateSimple();
   array_bool_and(*_invariantGraph, _model->constraints().front());
   _invariantGraph->apply(*_solver);
+  _invariantGraph->close(*_solver);
 
   std::vector<propagation::VarId> inputVarIds = getVarIds(inputIdentifiers);
 

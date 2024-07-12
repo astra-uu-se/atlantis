@@ -149,6 +149,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, replace) {
 TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   for (size_t i = 0; i < cover.size(); ++i) {
     if (varNode(outputIdentifiers.at(i)).isFixed()) {

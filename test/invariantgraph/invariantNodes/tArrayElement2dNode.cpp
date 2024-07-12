@@ -159,6 +159,7 @@ TEST_P(ArrayElement2dNodeTestFixture, replace) {
 TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   VarNode outputNode = varNode(outputIdentifier);
 

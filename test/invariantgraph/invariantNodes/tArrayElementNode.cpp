@@ -143,6 +143,7 @@ TEST_P(ArrayElementNodeTestFixture, updateState) {
 TEST_P(ArrayElementNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   VarNode& outputNode = varNode(outputIdentifier);
   if (outputNode.isFixed()) {

@@ -156,6 +156,7 @@ TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeReplaced() && isReified()) {
     EXPECT_EQ(varId(reifiedIdentifier), propagation::NULL_ID);

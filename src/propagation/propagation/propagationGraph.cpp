@@ -490,9 +490,11 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
     }
     const bool isDynInv =
         _layerHasDynamicCycle.at(layer) && isDynamicInvariant(defInv);
+
     for (const auto& [inputId, isDynamicInput] : inputVars(defInv)) {
-      if (!isDynInv || !isDynamicInput ||
-          dynamicInputVar(ts, defInv) == inputId) {
+      if ((!isDynInv || !isDynamicInput ||
+           dynamicInputVar(ts, defInv) == inputId) &&
+          _varPosition[inputId] >= _varPosition[varId]) {
         throw TopologicalOrderError();
       }
     }
