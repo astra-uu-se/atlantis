@@ -33,6 +33,17 @@ ArrayVarElement2dNode::ArrayVarElement2dNode(
     : ArrayVarElement2dNode(idx1, idx2, flatten(varMatrix), output,
                             varMatrix.size(), offset1, offset2) {}
 
+void ArrayVarElement2dNode::init(InvariantGraph& graph,
+                                 const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(std::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId& node) {
+        return graph.varNodeConst(outputVarNodeIds().front()).isIntVar() ==
+               graph.varNodeConst(node).isIntVar();
+      }));
+}
+
 VarNodeId ArrayVarElement2dNode::at(Int row, Int col) {
   assert(row >= _offset1 && col >= _offset2);
   const size_t r = static_cast<size_t>(row - _offset1);

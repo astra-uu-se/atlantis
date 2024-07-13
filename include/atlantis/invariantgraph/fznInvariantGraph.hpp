@@ -46,8 +46,7 @@ class FznInvariantGraph : public InvariantGraph {
  private:
   void createNodes(const fznparser::Model&);
 
-  bool makeInvariantNode(const fznparser::Constraint& constraint,
-                         bool guessDefinedVar = false);
+  bool makeInvariantNode(const fznparser::Constraint& constraint);
   bool makeImplicitConstraintNode(const fznparser::Constraint& constraint);
   bool makeViolationInvariantNode(const fznparser::Constraint& constraint);
 };

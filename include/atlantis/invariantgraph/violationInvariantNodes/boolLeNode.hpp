@@ -15,16 +15,17 @@ class BoolLeNode : public ViolationInvariantNode {
 
   BoolLeNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
-  void updateState(InvariantGraph& graph) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
+  void updateState(InvariantGraph&) override;
 
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
   [[nodiscard]] bool replace(InvariantGraph&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

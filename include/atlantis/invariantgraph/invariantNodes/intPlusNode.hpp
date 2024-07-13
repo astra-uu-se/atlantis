@@ -17,12 +17,13 @@ class IntPlusNode : public InvariantNode {
  public:
   IntPlusNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
   void updateState(InvariantGraph&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   bool canBeReplaced(const InvariantGraph&) const override;
 

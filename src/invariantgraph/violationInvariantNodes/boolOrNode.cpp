@@ -10,8 +10,19 @@ namespace atlantis::invariantgraph {
 
 BoolOrNode::BoolOrNode(VarNodeId a, VarNodeId b, VarNodeId r)
     : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, r) {}
+
 BoolOrNode::BoolOrNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
+
+void BoolOrNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::none_of(staticInputVarNodeIds().begin(),
+                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                        return graph.varNodeConst(vId).isIntVar();
+                      }));
+}
 
 void BoolOrNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {

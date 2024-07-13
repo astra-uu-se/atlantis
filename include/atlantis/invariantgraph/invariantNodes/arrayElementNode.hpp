@@ -14,6 +14,7 @@ class ArrayElementNode : public InvariantNode {
  private:
   std::vector<Int> _parVector;
   Int _offset;
+  bool _isIntVector;
 
  public:
   ArrayElementNode(std::vector<Int>&& parVector, VarNodeId idx,
@@ -22,12 +23,13 @@ class ArrayElementNode : public InvariantNode {
   ArrayElementNode(std::vector<bool>&& parVector, VarNodeId idx,
                    VarNodeId output, Int offset);
 
-  void updateState(InvariantGraph& graph) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] const std::vector<Int>& as() const noexcept {
     return _parVector;

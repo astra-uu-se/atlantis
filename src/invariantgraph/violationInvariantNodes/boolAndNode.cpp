@@ -28,6 +28,16 @@ void BoolAndNode::registerOutputVars(InvariantGraph& invariantGraph,
   }
 }
 
+void BoolAndNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::none_of(staticInputVarNodeIds().begin(),
+                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                        return graph.varNodeConst(vId).isIntVar();
+                      }));
+}
+
 void BoolAndNode::registerNode(InvariantGraph& invariantGraph,
                                propagation::SolverBase& solver) {
   assert(violationVarId(invariantGraph) != propagation::NULL_ID);

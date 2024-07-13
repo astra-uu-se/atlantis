@@ -26,6 +26,16 @@ BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& vars,
     : ViolationInvariantNode(std::move(vars), shouldHold),
       _breaksCycle(breaksCycle) {}
 
+void BoolAllEqualNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::none_of(staticInputVarNodeIds().begin(),
+                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                        return graph.varNodeConst(vId).isIntVar();
+                      }));
+}
+
 void BoolAllEqualNode::updateState(InvariantGraph& graph) {
   ViolationInvariantNode::updateState(graph);
   if (staticInputVarNodeIds().size() < 2) {

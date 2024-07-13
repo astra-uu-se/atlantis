@@ -4,6 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/propagation/invariants/exists.hpp"
 #include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
@@ -21,16 +22,31 @@ GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& inputs,
       _cover(std::move(cover)),
       _countOffsets(_cover.size(), 0) {}
 
-void GlobalCardinalityNode::registerOutputVars(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
-  for (const VarNodeId& countOutput : outputVarNodeIds()) {
-    if (invariantGraph.varId(countOutput) == propagation::NULL_ID) {
-      makeSolverVar(solver, invariantGraph.varNode(countOutput));
-    }
-  }
+void GlobalCardinalityNode::init(InvariantGraph& graph,
+                                 const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
 }
 
 void GlobalCardinalityNode::updateState(InvariantGraph& graph) {
+  // GCC can define the same output multiple times. Therefore, split all outputs
+  // that are defined multiple times:
+  std::vector<std::pair<VarNodeId, VarNodeId>> replacedOutputs =
+      splitOutputVarNodes(graph);
+  for (const auto& [oldVarNodeId, newVarNodeId] : replacedOutputs) {
+    assert(graph.varNodeConst(oldVarNodeId).definingNodes().contains(id()));
+    assert(graph.varNodeConst(newVarNodeId).definingNodes().contains(id()));
+    graph.addInvariantNode(std::make_unique<IntAllEqualNode>(
+        oldVarNodeId, newVarNodeId, true, true));
+  }
+
   std::vector<bool> coverIsFixed(_cover.size(), true);
   std::vector<VarNodeId> inputsToRemove;
   inputsToRemove.reserve(staticInputVarNodeIds().size());
@@ -83,6 +99,15 @@ bool GlobalCardinalityNode::replace(InvariantGraph& invariantGraph) {
       std::vector<VarNodeId>(staticInputVarNodeIds()), _cover.front(),
       outputVarNodeIds().front()));
   return true;
+}
+
+void GlobalCardinalityNode::registerOutputVars(
+    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
+  for (const VarNodeId& countOutput : outputVarNodeIds()) {
+    if (invariantGraph.varId(countOutput) == propagation::NULL_ID) {
+      makeSolverVar(solver, invariantGraph.varNode(countOutput));
+    }
+  }
 }
 
 void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,

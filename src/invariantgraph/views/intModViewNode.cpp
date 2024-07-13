@@ -9,6 +9,12 @@ IntModViewNode::IntModViewNode(VarNodeId staticInput, VarNodeId output,
     : InvariantNode({output}, {staticInput}),
       _denominator(std::abs(denominator)) {}
 
+void IntModViewNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
+}
+
 void IntModViewNode::updateState(InvariantGraph& graph) {
   if (graph.varNodeConst(staticInputVarNodeIds().front()).isFixed()) {
     graph.varNode(outputVarNodeIds().front())

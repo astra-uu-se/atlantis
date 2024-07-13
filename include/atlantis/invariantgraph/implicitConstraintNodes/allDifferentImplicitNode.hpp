@@ -12,6 +12,8 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
  public:
   explicit AllDifferentImplicitNode(std::vector<VarNodeId>&&);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
       InvariantGraph& invariantGraph, propagation::SolverBase&) override;

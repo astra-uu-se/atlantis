@@ -10,6 +10,12 @@ IntScalarNode::IntScalarNode(VarNodeId staticInput, VarNodeId output,
       _factor(factor),
       _offset(offset) {}
 
+void IntScalarNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
+}
+
 void IntScalarNode::updateState(InvariantGraph& graph) {
   if (_factor == 0) {
     graph.varNode(outputVarNodeIds().front()).fixToValue(_offset);

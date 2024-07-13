@@ -7,6 +7,12 @@ namespace atlantis::invariantgraph {
 BoolNotNode::BoolNotNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
 
+void BoolNotNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(!graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(!graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
+}
+
 void BoolNotNode::updateState(InvariantGraph& graph) {
   if (graph.varNodeConst(input()).isFixed()) {
     graph.varNode(outputVarNodeIds().front())

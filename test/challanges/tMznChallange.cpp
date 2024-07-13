@@ -70,8 +70,24 @@ TEST(MznChallange, run) {
   }
 
   std::sort(fznModels.begin(), fznModels.end());
-  for (size_t i = 1; i < fznModels.size(); ++i) {
-    bool skipping = false;
+
+  std::vector<bool> modelsToSkip(fznModels.size(), false);
+  visited.clear();
+
+  for (size_t i = 0; i < fznModels.size(); ++i) {
+    std::filesystem::path modelPath(fznModels.at(i));
+    EXPECT_TRUE(modelPath.has_parent_path());
+    std::filesystem::path parentPath = modelPath.parent_path();
+    std::string dirPath = parentPath.string();
+    if (visited.contains(dirPath)) {
+      modelsToSkip.at(i) = true;
+    } else {
+      visited.insert(dirPath);
+    }
+  }
+
+  for (size_t i = 0; i < fznModels.size(); ++i) {
+    const bool skipping = modelsToSkip.at(i);
     logModelName(fznModels.at(i), skipping, i, fznModels.size());
     if (!skipping) {
       testChallange(fznModels.at(i));

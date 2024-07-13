@@ -18,14 +18,15 @@ class ArrayVarElementNode : public InvariantNode {
   ArrayVarElementNode(VarNodeId idx, std::vector<VarNodeId>&& varVector,
                       VarNodeId output, Int offset);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
-  [[nodiscard]] bool replace(InvariantGraph& graph) override;
+  [[nodiscard]] bool replace(InvariantGraph&) override;
 
   [[nodiscard]] VarNodeId idx() const noexcept {
     return staticInputVarNodeIds().front();

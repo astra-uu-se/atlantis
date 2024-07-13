@@ -10,6 +10,15 @@ namespace atlantis::invariantgraph {
 IntPowNode::IntPowNode(VarNodeId base, VarNodeId exponent, VarNodeId power)
     : InvariantNode({power}, {base, exponent}) {}
 
+void IntPowNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 void IntPowNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));

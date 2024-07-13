@@ -19,6 +19,16 @@ BoolClauseNode::BoolClauseNode(std::vector<VarNodeId>&& as,
                                std::vector<VarNodeId>&& bs, bool shouldHold)
     : ViolationInvariantNode(concat(as, bs), shouldHold), _numAs(as.size()) {}
 
+void BoolClauseNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::none_of(staticInputVarNodeIds().begin(),
+                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                        return graph.varNodeConst(vId).isIntVar();
+                      }));
+}
+
 void BoolClauseNode::updateState(InvariantGraph& graph) {
   ViolationInvariantNode::updateState(graph);
   for (size_t i = 0; i < _numAs; ++i) {

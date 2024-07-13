@@ -26,8 +26,7 @@ bool array_bool_xor(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   return array_bool_xor(
       invariantGraph,
-      std::get<std::shared_ptr<fznparser::BoolVarArray>>(
-          constraint.arguments().at(0)),
+      getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
 }
 

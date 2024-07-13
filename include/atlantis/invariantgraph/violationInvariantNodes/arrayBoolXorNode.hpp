@@ -27,6 +27,8 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
   ArrayBoolXorNode(std::vector<VarNodeId>&& inputVarNodeIds,
                    bool shouldHold = true);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
   void updateState(InvariantGraph&) override;
 
   bool canBeReplaced(const InvariantGraph&) const override;
@@ -35,7 +37,7 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
 
   void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 
 }  // namespace atlantis::invariantgraph

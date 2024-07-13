@@ -37,14 +37,13 @@ bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
 
   if (!isReified) {
     return fzn_all_different_int(
-        invariantGraph, std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                            constraint.arguments().at(0)));
+        invariantGraph,
+        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   return fzn_all_different_int(
       invariantGraph,
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(0)),
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
 }
 

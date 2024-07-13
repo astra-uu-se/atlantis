@@ -13,6 +13,15 @@ AllDifferentImplicitNode::AllDifferentImplicitNode(
     std::vector<VarNodeId>&& inputVars)
     : ImplicitConstraintNode(std::move(inputVars)) {}
 
+void AllDifferentImplicitNode::init(InvariantGraph& graph,
+                                    const InvariantNodeId& id) {
+  ImplicitConstraintNode::init(graph, id);
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 AllDifferentImplicitNode::createNeighbourhood(InvariantGraph& graph,
                                               propagation::SolverBase& solver) {

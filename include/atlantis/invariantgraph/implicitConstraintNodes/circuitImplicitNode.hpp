@@ -12,9 +12,11 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
  public:
   explicit CircuitImplicitNode(std::vector<VarNodeId>&&);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      InvariantGraph& invariantGraph, propagation::SolverBase& solver) override;
+      InvariantGraph& invariantGraph, propagation::SolverBase&) override;
 };
 
 }  // namespace atlantis::invariantgraph

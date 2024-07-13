@@ -100,6 +100,8 @@ class InvariantGraph {
    */
   void replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId);
 
+  void replaceFixedVars();
+
   void replaceInvariantNodes();
 
   InvariantNodeId addImplicitConstraintNode(
@@ -126,15 +128,17 @@ class InvariantGraph {
       VarNodeId varNodeId,
       const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
-      std::unordered_map<VarNodeId, VarNodeId, VarNodeIdHash>& path);
+      std::unordered_map<VarNodeId, std::pair<InvariantNodeId, VarNodeId>,
+                         VarNodeIdHash>& path);
 
   std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
-      const std::vector<VarNodeId>& cycle);
+      const std::vector<std::pair<VarNodeId, InvariantNodeId>>& cycle);
 
   std::vector<VarNodeId> breakCycles(
       VarNodeId node,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
-  VarNodeId breakCycle(const std::vector<VarNodeId>& cycle);
+  VarNodeId breakCycle(
+      const std::vector<std::pair<VarNodeId, InvariantNodeId>>& cycle);
 
   void createVars(propagation::SolverBase&);
   void createImplicitConstraints(propagation::SolverBase&);

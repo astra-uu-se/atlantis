@@ -32,7 +32,7 @@ class InvariantNode {
 
   virtual ~InvariantNode() = default;
 
-  void init(InvariantGraph&, const InvariantNodeId&);
+  virtual void init(InvariantGraph&, const InvariantNodeId&);
 
   [[nodiscard]] InvariantNodeId id() const { return _id; }
 
@@ -113,6 +113,15 @@ class InvariantNode {
   void eraseStaticInputVarNode(size_t index);
 
   void eraseDynamicInputVarNode(size_t index);
+
+  /**
+   * Splits the unfixed output variable nodes of the current node into multiple
+   * nodes.
+   * @return A vector where an element (i, j) means that VarNode with VarNodeId
+   * i has been replaced by the VarNode with VarNodeId j.
+   */
+  std::vector<std::pair<VarNodeId, VarNodeId>> splitOutputVarNodes(
+      InvariantGraph&);
 
   static propagation::VarId makeSolverVar(propagation::SolverBase&, VarNode&,
                                           Int initialValue = 0);

@@ -44,8 +44,7 @@ bool array_int_element(FznInvariantGraph& invariantGraph,
 
   return array_int_element(
       invariantGraph, idx,
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(1))
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1))
           ->toParVector(),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)), offset);
 }

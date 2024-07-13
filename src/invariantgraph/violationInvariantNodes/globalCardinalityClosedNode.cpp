@@ -17,6 +17,21 @@ GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     : ViolationInvariantNode(std::move(counts), std::move(inputs), shouldHold),
       _cover(std::move(cover)) {}
 
+void GlobalCardinalityClosedNode::init(InvariantGraph& graph,
+                                       const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     std::vector<VarNodeId>&& inputs, std::vector<Int>&& cover,
     std::vector<VarNodeId>&& counts, VarNodeId r)

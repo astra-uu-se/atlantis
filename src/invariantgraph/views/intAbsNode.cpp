@@ -10,6 +10,12 @@ namespace atlantis::invariantgraph {
 IntAbsNode::IntAbsNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
 
+void IntAbsNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
+}
+
 void IntAbsNode::updateState(InvariantGraph& graph) {
   if (graph.varNodeConst(staticInputVarNodeIds().front()).isFixed()) {
     graph.varNode(outputVarNodeIds().front())

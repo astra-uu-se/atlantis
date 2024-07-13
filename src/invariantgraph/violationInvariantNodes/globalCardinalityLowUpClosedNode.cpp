@@ -26,6 +26,21 @@ GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
       _low(std::move(low)),
       _up(std::move(up)) {}
 
+void GlobalCardinalityLowUpClosedNode::init(InvariantGraph& graph,
+                                            const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 void GlobalCardinalityLowUpClosedNode::registerOutputVars(
     InvariantGraph&, propagation::SolverBase&) {
   throw std::runtime_error("Not implemented");

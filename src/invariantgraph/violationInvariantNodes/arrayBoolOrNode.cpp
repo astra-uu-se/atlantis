@@ -24,6 +24,16 @@ ArrayBoolOrNode::ArrayBoolOrNode(std::vector<VarNodeId>&& inputs,
                                  bool shouldHold)
     : ViolationInvariantNode(std::move(inputs), shouldHold) {}
 
+void ArrayBoolOrNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::none_of(staticInputVarNodeIds().begin(),
+                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                        return graph.varNodeConst(vId).isIntVar();
+                      }));
+}
+
 void ArrayBoolOrNode::updateState(InvariantGraph& graph) {
   ViolationInvariantNode::updateState(graph);
   std::vector<VarNodeId> varsToRemove;

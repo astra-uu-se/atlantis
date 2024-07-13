@@ -16,12 +16,13 @@ class IntScalarNode : public InvariantNode {
   IntScalarNode(VarNodeId staticInput, VarNodeId output, Int factor,
                 Int offset);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
   void updateState(InvariantGraph&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] VarNodeId input() const noexcept {
     return staticInputVarNodeIds().front();

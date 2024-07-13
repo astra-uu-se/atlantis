@@ -15,6 +15,15 @@ VarIntCountNode::VarIntCountNode(std::vector<VarNodeId>&& vars,
                                  VarNodeId needle, VarNodeId count)
     : InvariantNode({count}, append(std::move(vars), needle)) {}
 
+void VarIntCountNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 std::vector<VarNodeId> VarIntCountNode::haystack() const {
   std::vector<VarNodeId> inputVarNodeIds;
   inputVarNodeIds.reserve(staticInputVarNodeIds().size() - 1);

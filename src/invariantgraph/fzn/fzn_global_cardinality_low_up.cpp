@@ -40,27 +40,25 @@ bool fzn_global_cardinality_low_up(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false)
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, false)
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 3, fznparser::IntVarArray, false)
-  std::vector<Int> cover = std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                               constraint.arguments().at(1))
-                               ->toParVector();
-  std::vector<Int> low = std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                             constraint.arguments().at(2))
-                             ->toParVector();
-  std::vector<Int> up = std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                            constraint.arguments().at(3))
-                            ->toParVector();
+  std::vector<Int> cover =
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1))
+          ->toParVector();
+  std::vector<Int> low =
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2))
+          ->toParVector();
+  std::vector<Int> up =
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(3))
+          ->toParVector();
   if (!isReified) {
     return fzn_global_cardinality_low_up(
         invariantGraph,
-        std::get<std::shared_ptr<fznparser::IntVarArray>>(
-            constraint.arguments().at(0)),
+        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
         std::move(cover), std::move(low), std::move(up));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return fzn_global_cardinality_low_up(
       invariantGraph,
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(0)),
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::move(cover), std::move(low), std::move(up),
       std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
 }

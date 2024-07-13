@@ -26,13 +26,24 @@ ArrayElement2dNode::ArrayElement2dNode(
     : InvariantNode({output}, {idx1, idx2}),
       _parMatrix(std::move(parMatrix)),
       _offset1(offset1),
-      _offset2(offset2) {}
+      _offset2(offset2),
+      _isIntMatrix(true) {}
 
 ArrayElement2dNode::ArrayElement2dNode(
     VarNodeId idx1, VarNodeId idx2, std::vector<std::vector<bool>>&& parMatrix,
     VarNodeId output, Int offset1, Int offset2)
-    : ArrayElement2dNode(idx1, idx2, toIntMatrix(std::move(parMatrix)), output,
-                         offset1, offset2) {}
+    : InvariantNode({output}, {idx1, idx2}),
+      _parMatrix(toIntMatrix(std::move(parMatrix))),
+      _offset1(offset1),
+      _offset2(offset2),
+      _isIntMatrix(false) {}
+
+void ArrayElement2dNode::init(InvariantGraph& graph,
+                              const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(_isIntMatrix ==
+         graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+}
 
 void ArrayElement2dNode::updateState(InvariantGraph& graph) {
   const auto& idx1Node = graph.varNodeConst(idx1());
@@ -62,6 +73,10 @@ bool ArrayElement2dNode::replace(InvariantGraph& invariantGraph) {
     return false;
   }
   if (invariantGraph.varNode(idx1()).isFixed()) {
+    assert(invariantGraph.varNode(idx1()).lowerBound() >= _offset1);
+    assert(invariantGraph.varNode(idx1()).lowerBound() <
+           static_cast<Int>(_parMatrix.size()) - _offset1);
+
     invariantGraph.addInvariantNode(std::make_unique<ArrayElementNode>(
         std::move(_parMatrix.at(invariantGraph.varNode(idx1()).lowerBound() -
                                 _offset1)),
@@ -71,6 +86,8 @@ bool ArrayElement2dNode::replace(InvariantGraph& invariantGraph) {
   }
   std::vector<Int> parMatrixRow;
   const Int col = invariantGraph.varNode(idx2()).lowerBound() - _offset2;
+  assert(col >= 0);
+  assert(col < static_cast<Int>(_parMatrix.front().size()));
   parMatrixRow.reserve(_parMatrix.size());
   for (const std::vector<Int>& row : _parMatrix) {
     parMatrixRow.emplace_back(row.at(col));

@@ -38,6 +38,8 @@ class ViolationInvariantNode : public InvariantNode {
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
   /**
    * @brief Construct a new violation invariant node object
    *

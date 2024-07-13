@@ -18,6 +18,15 @@ BoolLinearNode::BoolLinearNode(std::vector<Int>&& coeffs,
       _coeffs(std::move(coeffs)),
       _offset(offset) {}
 
+void BoolLinearNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(!graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(std::none_of(staticInputVarNodeIds().begin(),
+                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                        return graph.varNodeConst(vId).isIntVar();
+                      }));
+}
+
 void BoolLinearNode::updateState(InvariantGraph& graph) {
   // Remove duplicates:
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {

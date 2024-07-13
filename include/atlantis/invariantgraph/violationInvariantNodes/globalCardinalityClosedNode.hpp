@@ -24,6 +24,8 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
                                        std::vector<VarNodeId>&& counts,
                                        bool shouldHold = true);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
   void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;

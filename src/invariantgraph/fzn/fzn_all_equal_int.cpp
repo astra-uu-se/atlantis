@@ -34,15 +34,14 @@ bool fzn_all_equal_int(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
 
   if (!isReified) {
-    return fzn_all_equal_int(invariantGraph,
-                             std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                                 constraint.arguments().at(0)));
+    return fzn_all_equal_int(
+        invariantGraph,
+        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   return fzn_all_equal_int(
       invariantGraph,
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(0)),
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
 }
 

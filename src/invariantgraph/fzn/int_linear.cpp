@@ -107,14 +107,13 @@ bool int_linear(FznInvariantGraph& invariantGraph,
     return false;
   }
 
-  std::vector<Int> coeffs = std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                                constraint.arguments().at(0))
-                                ->toParVector();
+  std::vector<Int> coeffs =
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0))
+          ->toParVector();
 
   return int_linear(
       invariantGraph, std::move(coeffs),
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(1)),
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
       constraint.definedVar().value(),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter());
 }

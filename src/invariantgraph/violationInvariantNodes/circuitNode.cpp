@@ -14,6 +14,16 @@ namespace atlantis::invariantgraph {
 CircuitNode::CircuitNode(std::vector<VarNodeId>&& vars)
     : ViolationInvariantNode(std::move(vars), true) {}
 
+void CircuitNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 void CircuitNode::updateState(InvariantGraph& graph) {
   if (staticInputVarNodeIds().size() == 1) {
     graph.varNode(staticInputVarNodeIds().front()).fixToValue(Int{1});

@@ -9,6 +9,13 @@ IntDivNode::IntDivNode(VarNodeId numerator, VarNodeId denominator,
                        VarNodeId quotient)
     : InvariantNode({quotient}, {numerator, denominator}) {}
 
+void IntDivNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(quotient()).isIntVar());
+  assert(graph.varNodeConst(numerator()).isIntVar());
+  assert(graph.varNodeConst(denominator()).isIntVar());
+}
+
 bool IntDivNode::canBeReplaced(const InvariantGraph& graph) const {
   return state() == InvariantNodeState::ACTIVE &&
          graph.varNodeConst(denominator()).isFixed() &&

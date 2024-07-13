@@ -23,15 +23,16 @@ class AllDifferentNode : public ViolationInvariantNode {
   explicit AllDifferentNode(std::vector<VarNodeId>&& vars,
                             bool shouldHold = true);
 
-  virtual void updateState(InvariantGraph& graph) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
+  virtual void updateState(InvariantGraph&) override;
 
   [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
 
-  [[nodiscard]] bool makeImplicit(InvariantGraph& graph) override;
+  [[nodiscard]] bool makeImplicit(InvariantGraph&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 }  // namespace atlantis::invariantgraph

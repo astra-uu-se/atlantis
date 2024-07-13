@@ -66,8 +66,7 @@ bool array_int_element2d(FznInvariantGraph& invariantGraph,
   return array_int_element2d(
       invariantGraph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(2))
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2))
           ->toParVector(),
       std::get<fznparser::IntArg>(constraint.arguments().at(3)),
       std::get<fznparser::IntArg>(constraint.arguments().at(4)).toParameter(),

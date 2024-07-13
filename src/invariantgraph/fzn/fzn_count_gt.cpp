@@ -44,16 +44,14 @@ bool fzn_count_gt(FznInvariantGraph& invariantGraph,
   if (!isReified) {
     return fzn_count_gt(
         invariantGraph,
-        std::get<std::shared_ptr<fznparser::IntVarArray>>(
-            constraint.arguments().at(0)),
+        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
         std::get<fznparser::IntArg>(constraint.arguments().at(1)),
         std::get<fznparser::IntArg>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return fzn_count_gt(
       invariantGraph,
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(0)),
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)));
 }

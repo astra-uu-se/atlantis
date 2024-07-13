@@ -47,7 +47,6 @@
 #include "atlantis/invariantgraph/fzn/int_lin_eq.hpp"
 #include "atlantis/invariantgraph/fzn/int_lin_le.hpp"
 #include "atlantis/invariantgraph/fzn/int_lin_ne.hpp"
-#include "atlantis/invariantgraph/fzn/int_linear.hpp"
 #include "atlantis/invariantgraph/fzn/int_lt.hpp"
 #include "atlantis/invariantgraph/fzn/int_max.hpp"
 #include "atlantis/invariantgraph/fzn/int_min.hpp"
@@ -351,16 +350,10 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
 }
 
 bool FznInvariantGraph::makeInvariantNode(
-    const fznparser::Constraint& constraint, bool guessDefinedVar) {
+    const fznparser::Constraint& constraint) {
 #define MAKE_INVARIANT(fznConstraintName)     \
   if (fznConstraintName(*this, constraint)) { \
     return true;                              \
-  }
-
-  if (!guessDefinedVar) {
-    // For the linear node, we need to know up front what variable is
-    // defined.
-    MAKE_INVARIANT(fzn::int_linear)
   }
 
   MAKE_INVARIANT(fzn::array_bool_and)

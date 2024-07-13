@@ -31,36 +31,36 @@ bool InvariantNode::canBeMadeImplicit(const InvariantGraph&) const {
 
 bool InvariantNode::makeImplicit(InvariantGraph&) { return false; }
 
-void InvariantNode::init(InvariantGraph& invariantGraph,
-                         const InvariantNodeId& id) {
+void InvariantNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
   if (_state != InvariantNodeState::UNINITIALIZED) {
     return;
   }
   assert(_id == NULL_NODE_ID);
   _id = id;
+  for (size_t i = 0; i < _outputVarNodeIds.size(); ++i) {
+    markOutputTo(graph.varNode(_outputVarNodeIds[i]), false);
+  }
   for (VarNodeId varNodeId : _outputVarNodeIds) {
-    markOutputTo(invariantGraph.varNode(varNodeId), false);
+    markOutputTo(graph.varNode(varNodeId), false);
   }
   for (VarNodeId varNodeId : _staticInputVarNodeIds) {
-    markStaticInputTo(invariantGraph.varNode(varNodeId), false);
+    markStaticInputTo(graph.varNode(varNodeId), false);
   }
   for (VarNodeId varNodeId : _dynamicInputVarNodeIds) {
-    markDynamicInputTo(invariantGraph.varNode(varNodeId), false);
+    markDynamicInputTo(graph.varNode(varNodeId), false);
   }
   _state = InvariantNodeState::ACTIVE;
 }
 
-void InvariantNode::deactivate(InvariantGraph& invariantGraph) {
+void InvariantNode::deactivate(InvariantGraph& graph) {
   while (!staticInputVarNodeIds().empty()) {
-    removeStaticInputVarNode(
-        invariantGraph.varNode(staticInputVarNodeIds().front()));
+    removeStaticInputVarNode(graph.varNode(staticInputVarNodeIds().front()));
   }
   while (!dynamicInputVarNodeIds().empty()) {
-    removeDynamicInputVarNode(
-        invariantGraph.varNode(dynamicInputVarNodeIds().front()));
+    removeDynamicInputVarNode(graph.varNode(dynamicInputVarNodeIds().front()));
   }
   while (!outputVarNodeIds().empty()) {
-    removeOutputVarNode(invariantGraph.varNode(outputVarNodeIds().front()));
+    removeOutputVarNode(graph.varNode(outputVarNodeIds().front()));
   }
   _state = InvariantNodeState::SUBSUMED;
 }
@@ -161,12 +161,38 @@ void InvariantNode::eraseStaticInputVarNode(size_t index) {
   }
   _staticInputVarNodeIds.erase(_staticInputVarNodeIds.begin() + index);
 }
+
 void InvariantNode::eraseDynamicInputVarNode(size_t index) {
   if (index >= _dynamicInputVarNodeIds.size()) {
     throw InvariantGraphException(
         "InvariantNode::eraseDynamicInputVarNode: index out of bounds");
   }
   _dynamicInputVarNodeIds.erase(_dynamicInputVarNodeIds.begin() + index);
+}
+
+std::vector<std::pair<VarNodeId, VarNodeId>> InvariantNode::splitOutputVarNodes(
+    InvariantGraph& graph) {
+  std::vector<std::pair<VarNodeId, VarNodeId>> replaced;
+  replaced.reserve(_outputVarNodeIds.size());
+  for (size_t i = 0; i < _outputVarNodeIds.size(); ++i) {
+    const VarNode& iNode = graph.varNodeConst(_outputVarNodeIds[i]);
+    if (iNode.isFixed()) {
+      continue;
+    }
+    for (size_t j = i + 1; j < _outputVarNodeIds.size(); ++j) {
+      const VarNode& jNode = graph.varNodeConst(_outputVarNodeIds[j]);
+      if (jNode.isFixed()) {
+        continue;
+      }
+      if (_outputVarNodeIds[i] == _outputVarNodeIds[j]) {
+        _outputVarNodeIds[j] = graph.retrieveIntVarNode(
+            SearchDomain{iNode.constDomain()}, iNode.domainType());
+        graph.varNode(_outputVarNodeIds[j]).markOutputTo(_id);
+        replaced.emplace_back(_outputVarNodeIds[i], _outputVarNodeIds[j]);
+      }
+    }
+  }
+  return replaced;
 }
 
 propagation::VarId InvariantNode::makeSolverVar(propagation::SolverBase& solver,

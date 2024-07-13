@@ -24,7 +24,7 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
   verifyInputs(coeffs, inputs);
   Int definedVarCoeff = 0;
   std::vector<Int> definedVarIndices;
-  for (Int i = coeffs.size(); i >= 0; --i) {
+  for (Int i = static_cast<Int>(coeffs.size()) - 1; i >= 0; --i) {
     if (std::holds_alternative<std::shared_ptr<const fznparser::IntVar>>(
             inputs->at(i))) {
       const auto& inputVar =
@@ -35,29 +35,40 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
       }
     }
   }
+
   if (definedVarCoeff == 0) {
-    return int_lin_eq(invariantGraph, std::move(coeffs), inputs, -bound);
+    return int_lin_eq(invariantGraph, std::move(coeffs), inputs, bound);
   }
+
   if (std::abs(definedVarCoeff) != 1) {
     throw FznArgumentException(
         "int_lin_eq constraint defined variable must have a coefficient of 1 "
         "or -1");
   }
-  if (definedVarCoeff == 1) {
-    for (size_t i : definedVarIndices) {
-      coeffs.at(i) = -coeffs.at(i);
-    }
-  }
+
   std::vector<VarNodeId> inputVarNodes =
       invariantGraph.retrieveVarNodes(inputs);
+
+  const VarNodeId definedVarNodeId =
+      inputVarNodes.at(definedVarIndices.front());
+
   for (const Int index : definedVarIndices) {
     inputVarNodes.erase(inputVarNodes.begin() + index);
     coeffs.erase(coeffs.begin() + index);
   }
+
+  if (definedVarCoeff == 1) {
+    // reducing both sides by the defined var (its coeficient is 1), then
+    // multiplying both sides by -1:
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      coeffs.at(i) = -coeffs.at(i);
+    }
+  }
+
   const Int lhsOffset = -bound;
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), std::move(inputVarNodes),
-      invariantGraph.retrieveVarNode(definedVar), lhsOffset));
+      std::move(coeffs), std::move(inputVarNodes), definedVarNodeId,
+      lhsOffset));
   return true;
 }
 
@@ -69,7 +80,7 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
   verifyInputs(coeffs, inputs);
   Int definedVarCoeff = 0;
   std::vector<Int> definedVarIndices;
-  for (Int i = coeffs.size(); i >= 0; --i) {
+  for (Int i = static_cast<Int>(coeffs.size()) - 1; i >= 0; --i) {
     if (std::holds_alternative<std::shared_ptr<const fznparser::IntVar>>(
             inputs->at(i))) {
       const auto& inputVar =
@@ -89,17 +100,23 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
         "int_lin_eq constraint defined variable must have a coefficient of 1 "
         "or -1");
   }
-  if (definedVarCoeff == 1) {
-    for (size_t i : definedVarIndices) {
-      coeffs.at(i) = -coeffs.at(i);
-    }
-  }
   std::vector<VarNodeId> inputVarNodes =
       invariantGraph.retrieveVarNodes(inputs);
+
+  const VarNodeId definedVarNodeId =
+      inputVarNodes.at(definedVarIndices.front());
+
   for (const Int index : definedVarIndices) {
     inputVarNodes.erase(inputVarNodes.begin() + index);
     coeffs.erase(coeffs.begin() + index);
   }
+
+  if (definedVarCoeff == 1) {
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      coeffs.at(i) = -coeffs.at(i);
+    }
+  }
+
   const Int lhsOffset = -bound;
   auto [lb, ub] = linBounds(coeffs, inputs);
   lb += lhsOffset;
@@ -110,7 +127,7 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
   invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs), std::move(inputVarNodes), outputVarNodeId, lhsOffset));
   invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-      outputVarNodeId, invariantGraph.retrieveVarNode(definedVar),
+      outputVarNodeId, definedVarNodeId,
       invariantGraph.retrieveVarNode(reified)));
   return true;
 }
@@ -178,48 +195,42 @@ bool int_lin_eq(FznInvariantGraph& invariantGraph,
     FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   }
 
-  std::vector<Int> coeffs = std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                                constraint.arguments().at(0))
-                                ->toParVector();
+  std::vector<Int> coeffs =
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0))
+          ->toParVector();
 
-  if (constraint.definedVar().has_value()) {
-    if (!std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(
-            constraint.definedVar().value())) {
-      throw FznArgumentException(
-          "int_lin_eq constraint defined variable must be an integer variable");
-    }
+  if (constraint.definedVar().has_value() &&
+      std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(
+          constraint.definedVar().value())) {
     const std::shared_ptr<const fznparser::IntVar> definedVar =
         std::get<std::shared_ptr<fznparser::IntVar>>(
             constraint.definedVar().value());
     if (!isReified) {
       return int_lin_eq(
           invariantGraph, std::move(coeffs),
-          std::get<std::shared_ptr<fznparser::IntVarArray>>(
-              constraint.arguments().at(1)),
+          getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
           std::get<fznparser::IntArg>(constraint.arguments().at(2))
               .toParameter(),
           definedVar);
     } else {
       return int_lin_eq(
           invariantGraph, std::move(coeffs),
-          std::get<std::shared_ptr<fznparser::IntVarArray>>(
-              constraint.arguments().at(1)),
+          getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
           std::get<fznparser::IntArg>(constraint.arguments().at(2))
               .toParameter(),
           definedVar,
           std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
     }
   } else if (!isReified) {
-    return int_lin_eq(invariantGraph, std::move(coeffs),
-                      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                          constraint.arguments().at(1)),
-                      std::get<fznparser::IntArg>(constraint.arguments().at(2))
-                          .toParameter());
+    return int_lin_eq(
+        invariantGraph, std::move(coeffs),
+        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
+        std::get<fznparser::IntArg>(constraint.arguments().at(2))
+            .toParameter());
   } else {
     return int_lin_eq(
         invariantGraph, std::move(coeffs),
-        std::get<std::shared_ptr<fznparser::IntVarArray>>(
-            constraint.arguments().at(1)),
+        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
         std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter(),
         std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
   }

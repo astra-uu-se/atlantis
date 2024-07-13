@@ -18,6 +18,16 @@ ArrayIntMaximumNode::ArrayIntMaximumNode(std::vector<VarNodeId>&& vars,
     : InvariantNode({output}, std::move(vars)),
       _lb{std::numeric_limits<Int>::min()} {}
 
+void ArrayIntMaximumNode::init(InvariantGraph& graph,
+                               const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 void ArrayIntMaximumNode::updateState(InvariantGraph& graph) {
   Int ub = _lb;
   for (const auto& input : staticInputVarNodeIds()) {

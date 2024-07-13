@@ -20,6 +20,15 @@ const std::vector<VarNodeId>& IntCountNode::haystack() const {
   return staticInputVarNodeIds();
 }
 
+void IntCountNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 void IntCountNode::updateState(InvariantGraph& graph) {
   std::vector<VarNodeId> inputsToRemove;
   inputsToRemove.reserve(staticInputVarNodeIds().size());

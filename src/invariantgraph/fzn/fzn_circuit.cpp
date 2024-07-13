@@ -22,9 +22,8 @@ bool fzn_circuit(FznInvariantGraph& invariantGraph,
   verifyNumArguments(constraint, 1);
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
 
-  return fzn_circuit(invariantGraph,
-                     std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                         constraint.arguments().at(0)));
+  return fzn_circuit(invariantGraph, getArgArray<fznparser::IntVarArray>(
+                                         constraint.arguments().at(0)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

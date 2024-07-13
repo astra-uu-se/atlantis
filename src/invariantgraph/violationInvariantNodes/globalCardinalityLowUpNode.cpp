@@ -28,6 +28,21 @@ GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
       _low(std::move(low)),
       _up(std::move(up)) {}
 
+void GlobalCardinalityLowUpNode::init(InvariantGraph& graph,
+                                      const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 void GlobalCardinalityLowUpNode::registerOutputVars(
     InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
   if (violationVarId(invariantGraph) == propagation::NULL_ID) {

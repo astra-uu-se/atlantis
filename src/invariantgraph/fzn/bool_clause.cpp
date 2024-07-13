@@ -25,11 +25,10 @@ bool bool_clause(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true)
 
-  return bool_clause(invariantGraph,
-                     std::get<std::shared_ptr<fznparser::BoolVarArray>>(
-                         constraint.arguments().at(0)),
-                     std::get<std::shared_ptr<fznparser::BoolVarArray>>(
-                         constraint.arguments().at(1)));
+  return bool_clause(
+      invariantGraph,
+      getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
+      getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

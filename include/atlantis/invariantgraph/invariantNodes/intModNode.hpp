@@ -13,10 +13,11 @@ class IntModNode : public InvariantNode {
  public:
   IntModNode(VarNodeId numerator, VarNodeId denominator, VarNodeId remainder);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] VarNodeId numerator() const;
   [[nodiscard]] VarNodeId denominator() const;

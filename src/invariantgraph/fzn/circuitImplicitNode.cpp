@@ -47,8 +47,8 @@ bool makeCircuitImplicitNode(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
 
   return makeCircuitImplicitNode(
-      invariantGraph, std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                          constraint.arguments().at(0)));
+      invariantGraph,
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

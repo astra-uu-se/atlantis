@@ -24,6 +24,11 @@ void ImplicitConstraintNode::registerOutputVars(
   }
 }
 
+void ImplicitConstraintNode::init(InvariantGraph& invariantGraph,
+                                  const InvariantNodeId& id) {
+  InvariantNode::init(invariantGraph, id);
+}
+
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 ImplicitConstraintNode::neighbourhood() noexcept {
   return _neighbourhood;

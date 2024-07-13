@@ -72,6 +72,14 @@ std::pair<Int, Int> linBounds(const std::vector<Int>&,
 std::pair<Int, Int> linBounds(FznInvariantGraph&, const std::vector<Int>&,
                               const std::vector<VarNodeId>&);
 
+template <typename T>
+std::shared_ptr<T> getArgArray(const fznparser::Arg& argArray) {
+  if (argArray.isEmptyArray()) {
+    return std::make_shared<T>(std::string(""));
+  }
+  return std::get<std::shared_ptr<T>>(argArray);
+}
+
 #define FZN_CONSTRAINT_TYPE_CHECK(constraint, index, type, isVar)            \
   do {                                                                       \
     if (constraint.arguments().size() <= index) {                            \
@@ -93,6 +101,9 @@ std::pair<Int, Int> linBounds(FznInvariantGraph&, const std::vector<Int>&,
     if (constraint.arguments().size() <= index) {                            \
       throw FznArgumentException("Constraint " + constraint.identifier() +   \
                                  " has too few arguments.");                 \
+    }                                                                        \
+    if (constraint.arguments().at(index).isEmptyArray()) {                   \
+      return true;                                                           \
     }                                                                        \
     if (!std::holds_alternative<std::shared_ptr<arrayType>>(                 \
             constraint.arguments().at(index))) {                             \

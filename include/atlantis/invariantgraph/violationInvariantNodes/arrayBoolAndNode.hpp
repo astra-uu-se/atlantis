@@ -23,16 +23,17 @@ class ArrayBoolAndNode : public ViolationInvariantNode {
 
   ArrayBoolAndNode(std::vector<VarNodeId>&& as, bool shouldHold = true);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
   void updateState(InvariantGraph&) override;
 
   bool canBeReplaced(const InvariantGraph&) const override;
 
   bool replace(InvariantGraph&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 
 }  // namespace atlantis::invariantgraph

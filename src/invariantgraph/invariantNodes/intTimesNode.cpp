@@ -9,6 +9,15 @@ namespace atlantis::invariantgraph {
 IntTimesNode::IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
 
+void IntTimesNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 void IntTimesNode::updateState(InvariantGraph& graph) {
   std::vector<VarNodeId> varNodeIdsToRemove;
   varNodeIdsToRemove.reserve(staticInputVarNodeIds().size());

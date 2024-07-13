@@ -9,6 +9,13 @@ IntModNode::IntModNode(VarNodeId numerator, VarNodeId denominator,
                        VarNodeId remainder)
     : InvariantNode({remainder}, {numerator, denominator}) {}
 
+void IntModNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(remainder()).isIntVar());
+  assert(graph.varNodeConst(numerator()).isIntVar());
+  assert(graph.varNodeConst(denominator()).isIntVar());
+}
+
 void IntModNode::registerOutputVars(InvariantGraph& invariantGraph,
                                     propagation::SolverBase& solver) {
   makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));

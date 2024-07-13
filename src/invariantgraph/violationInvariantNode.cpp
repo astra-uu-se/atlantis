@@ -30,6 +30,11 @@ ViolationInvariantNode::ViolationInvariantNode(
           outputVarNodeIds().front() == _reifiedViolationNodeId));
 }
 
+void ViolationInvariantNode::init(InvariantGraph& graph,
+                                  const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+}
+
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
 
 ViolationInvariantNode::ViolationInvariantNode(

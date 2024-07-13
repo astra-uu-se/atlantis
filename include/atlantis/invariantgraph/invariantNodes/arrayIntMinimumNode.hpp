@@ -17,6 +17,8 @@ class ArrayIntMinimumNode : public InvariantNode {
 
   explicit ArrayIntMinimumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
   void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
   void updateState(InvariantGraph&) override;

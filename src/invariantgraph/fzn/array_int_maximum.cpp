@@ -27,8 +27,7 @@ bool array_int_maximum(FznInvariantGraph& invariantGraph,
 
   return array_int_maximum(
       invariantGraph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(1)));
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

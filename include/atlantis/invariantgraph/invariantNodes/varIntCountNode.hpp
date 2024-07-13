@@ -13,10 +13,11 @@ class VarIntCountNode : public InvariantNode {
   VarIntCountNode(std::vector<VarNodeId>&& vars, VarNodeId needle,
                   VarNodeId count);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 

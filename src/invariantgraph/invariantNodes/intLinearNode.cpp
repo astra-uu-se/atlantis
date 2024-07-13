@@ -18,6 +18,15 @@ IntLinearNode::IntLinearNode(std::vector<Int>&& coeffs,
       _coeffs(std::move(coeffs)),
       _offset(offset) {}
 
+void IntLinearNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 void IntLinearNode::updateState(InvariantGraph& graph) {
   // Remove duplicates:
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
@@ -101,11 +110,12 @@ void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
          propagation::NULL_ID);
 
   std::vector<propagation::VarId> solverVars;
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars),
-                 [&](const VarNodeId varNodeId) {
-                   return invariantGraph.varId(varNodeId);
-                 });
+  std::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {
+        assert(invariantGraph.varId(varNodeId) != propagation::NULL_ID);
+        return invariantGraph.varId(varNodeId);
+      });
   solver.makeInvariant<propagation::Linear>(
       solver,
       _intermediate == propagation::NULL_ID

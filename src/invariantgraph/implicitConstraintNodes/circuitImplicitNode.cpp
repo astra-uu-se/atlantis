@@ -13,6 +13,15 @@ CircuitImplicitNode::CircuitImplicitNode(std::vector<VarNodeId>&& vars)
   assert(outputVarNodeIds().size() > 1);
 }
 
+void CircuitImplicitNode::init(InvariantGraph& graph,
+                               const InvariantNodeId& id) {
+  ImplicitConstraintNode::init(graph, id);
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 CircuitImplicitNode::createNeighbourhood(InvariantGraph& invariantGraph,
                                          propagation::SolverBase&) {
