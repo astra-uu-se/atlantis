@@ -6,18 +6,16 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_div(FznInvariantGraph& invariantGraph,
-             const fznparser::IntArg& numerator,
+bool int_div(FznInvariantGraph& graph, const fznparser::IntArg& numerator,
              const fznparser::IntArg& denominator,
              const fznparser::IntArg& quotient) {
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntDivNode>(invariantGraph.retrieveVarNode(numerator),
-                                   invariantGraph.retrieveVarNode(denominator),
-                                   invariantGraph.retrieveVarNode(quotient)));
+  graph.addInvariantNode(std::make_unique<IntDivNode>(
+      graph.retrieveVarNode(numerator), graph.retrieveVarNode(denominator),
+      graph.retrieveVarNode(quotient)));
   return true;
 }
 
-bool int_div(FznInvariantGraph& invariantGraph,
+bool int_div(FznInvariantGraph& graph,
              const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "int_div") {
     return false;
@@ -27,7 +25,7 @@ bool int_div(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true)
 
-  return int_div(invariantGraph,
+  return int_div(graph,
                  std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                  std::get<fznparser::IntArg>(constraint.arguments().at(1)),
                  std::get<fznparser::IntArg>(constraint.arguments().at(2)));

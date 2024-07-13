@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
 #include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
@@ -79,47 +80,78 @@ void IntLinearNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void IntLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
-                                       propagation::SolverBase& solver) {
-  if (staticInputVarNodeIds().empty()) {
-    return;
-  } else if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(solver.makeIntView<propagation::ScalarView>(
-            solver, invariantGraph.varId(staticInputVarNodeIds().front()),
-            _coeffs.front(), _offset));
-    return;
-  } else if (_offset == 0) {
-    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
-    assert(invariantGraph.varId(outputVarNodeIds().front()).idType ==
-           propagation::VarIdType::var);
-  } else if (_intermediate == propagation::NULL_ID) {
-    _intermediate = solver.makeIntVar(0, 0, 0);
-    invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(solver.makeIntView<propagation::IntOffsetView>(
-            solver, _intermediate, _offset));
-  }
+bool IntLinearNode::canBeMadeImplicit(const InvariantGraph& graph) const {
+  return std::all_of(_coeffs.begin(), _coeffs.end(),
+                     [](const Int& coeff) { return std::abs(coeff) == 1; }) &&
+         std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).definingNodes().empty();
+                     }) &&
+         graph.varNodeConst(outputVarNodeIds().front()).definingNodes().empty();
 }
 
-void IntLinearNode::registerNode(InvariantGraph& invariantGraph,
+bool IntLinearNode::makeImplicit(InvariantGraph& graph) {
+  if (!canBeMadeImplicit(graph)) {
+    return false;
+  }
+
+  _coeffs.emplace_back(-1);
+
+  std::vector<VarNodeId> inputVarNodeIds(staticInputVarNodeIds());
+  inputVarNodeIds.emplace_back(outputVarNodeIds().front());
+
+  graph.addImplicitConstraintNode(std::make_unique<IntLinEqImplicitNode>(
+      std::move(_coeffs), std::move(inputVarNodeIds), _offset));
+
+  return true;
+}
+
+void IntLinearNode::registerOutputVars(InvariantGraph& graph,
+                                       propagation::SolverBase& solver) {
+  if (staticInputVarNodeIds().size() == 1) {
+    graph.varNode(outputVarNodeIds().front())
+        .setVarId(solver.makeIntView<propagation::ScalarView>(
+            solver, graph.varId(staticInputVarNodeIds().front()),
+            _coeffs.front(), _offset));
+    return;
+  } else if (!staticInputVarNodeIds().empty()) {
+    if (_offset == 0) {
+      makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+      assert(graph.varId(outputVarNodeIds().front()).idType ==
+             propagation::VarIdType::var);
+    } else if (_intermediate == propagation::NULL_ID) {
+      _intermediate = solver.makeIntVar(0, 0, 0);
+      graph.varNode(outputVarNodeIds().front())
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, _intermediate, _offset));
+    }
+  }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
+}
+
+void IntLinearNode::registerNode(InvariantGraph& graph,
                                  propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
 
   std::vector<propagation::VarId> solverVars;
-  std::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {
-        assert(invariantGraph.varId(varNodeId) != propagation::NULL_ID);
-        return invariantGraph.varId(varNodeId);
-      });
+  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+                 std::back_inserter(solverVars),
+                 [&](const VarNodeId varNodeId) {
+                   assert(graph.varId(varNodeId) != propagation::NULL_ID);
+                   return graph.varId(varNodeId);
+                 });
   solver.makeInvariant<propagation::Linear>(
       solver,
       _intermediate == propagation::NULL_ID
-          ? invariantGraph.varId(outputVarNodeIds().front())
+          ? graph.varId(outputVarNodeIds().front())
           : _intermediate,
       std::vector<Int>(_coeffs), std::move(solverVars));
 }

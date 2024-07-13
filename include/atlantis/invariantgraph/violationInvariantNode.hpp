@@ -16,7 +16,7 @@ class ViolationInvariantNode : public InvariantNode {
  private:
   // Bounds will be recomputed by the solver.
   propagation::VarId _violationVarId{propagation::NULL_ID};
-  VarNodeId _reifiedViolationNodeId;
+  bool _isReified;
 
   // If the violation invariant is not reified, then this boolean indicates if
   // the violation invariant should hold or not:

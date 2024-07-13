@@ -11,13 +11,13 @@ class IntLinEqNeighbourhood : public Neighbourhood {
  private:
   std::vector<Int> _coeffs;
   std::vector<search::SearchVar> _vars;
-  Int _bound;
+  Int _offset;
   const propagation::SolverBase& _solver;
   std::vector<size_t> _indices;
 
  public:
   IntLinEqNeighbourhood(std::vector<Int>&& coeffs,
-                        std::vector<search::SearchVar>&& vars, Int bound,
+                        std::vector<search::SearchVar>&& vars, Int offset,
                         const propagation::SolverBase& solver);
 
   void initialise(RandomProvider& random,

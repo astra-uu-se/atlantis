@@ -6,14 +6,14 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool fzn_circuit(FznInvariantGraph& invariantGraph,
+bool fzn_circuit(FznInvariantGraph& graph,
                  const std::shared_ptr<fznparser::IntVarArray>& inputs) {
-  invariantGraph.addInvariantNode(
-      std::make_unique<CircuitNode>(invariantGraph.retrieveVarNodes(inputs)));
+  graph.addInvariantNode(
+      std::make_unique<CircuitNode>(graph.retrieveVarNodes(inputs)));
   return true;
 }
 
-bool fzn_circuit(FznInvariantGraph& invariantGraph,
+bool fzn_circuit(FznInvariantGraph& graph,
                  const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "circuit_no_offset") {
     return false;
@@ -22,8 +22,8 @@ bool fzn_circuit(FznInvariantGraph& invariantGraph,
   verifyNumArguments(constraint, 1);
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
 
-  return fzn_circuit(invariantGraph, getArgArray<fznparser::IntVarArray>(
-                                         constraint.arguments().at(0)));
+  return fzn_circuit(
+      graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

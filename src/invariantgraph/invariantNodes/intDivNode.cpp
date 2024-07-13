@@ -22,27 +22,32 @@ bool IntDivNode::canBeReplaced(const InvariantGraph& graph) const {
          graph.varNodeConst(denominator()).lowerBound() == 1;
 }
 
-bool IntDivNode::replace(InvariantGraph& invariantGraph) {
-  if (!canBeReplaced(invariantGraph)) {
+bool IntDivNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
     return false;
   }
-  assert(invariantGraph.varNode(denominator()).isFixed() &&
-         invariantGraph.varNode(denominator()).lowerBound() == 1);
-  invariantGraph.replaceVarNode(quotient(), numerator());
+  assert(graph.varNode(denominator()).isFixed() &&
+         graph.varNode(denominator()).lowerBound() == 1);
+  graph.replaceVarNode(quotient(), numerator());
   return true;
 }
 
 void invariantgraph::IntDivNode::registerOutputVars(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(quotient()));
+    InvariantGraph& graph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, graph.varNode(quotient()));
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void invariantgraph::IntDivNode::registerNode(InvariantGraph& invariantGraph,
+void invariantgraph::IntDivNode::registerNode(InvariantGraph& graph,
                                               propagation::SolverBase& solver) {
-  assert(invariantGraph.varId(quotient()) != propagation::NULL_ID);
-  solver.makeInvariant<propagation::IntDiv>(
-      solver, invariantGraph.varId(quotient()),
-      invariantGraph.varId(numerator()), invariantGraph.varId(denominator()));
+  assert(graph.varId(quotient()) != propagation::NULL_ID);
+  solver.makeInvariant<propagation::IntDiv>(solver, graph.varId(quotient()),
+                                            graph.varId(numerator()),
+                                            graph.varId(denominator()));
 }
 
 VarNodeId IntDivNode::numerator() const noexcept {

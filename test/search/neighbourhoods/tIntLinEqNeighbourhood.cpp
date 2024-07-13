@@ -18,7 +18,7 @@ class IntLinEqNeighbourhoodTest : public ::testing::Test {
 
   std::vector<Int> coeffs;
   std::vector<search::SearchVar> vars;
-  Int bound = 7;
+  Int offset = 7;
 
   void SetUp() override {
     solver.open();
@@ -35,7 +35,7 @@ class IntLinEqNeighbourhoodTest : public ::testing::Test {
 
 TEST_F(IntLinEqNeighbourhoodTest, all_values_are_initialised) {
   search::neighbourhoods::IntLinEqNeighbourhood neighbourhood(
-      std::vector<Int>{coeffs}, std::vector<search::SearchVar>{vars}, bound,
+      std::vector<Int>{coeffs}, std::vector<search::SearchVar>{vars}, offset,
       solver);
   for (size_t m = 0; m < 100; ++m) {
     assignment->assign(
@@ -48,13 +48,13 @@ TEST_F(IntLinEqNeighbourhoodTest, all_values_are_initialised) {
       EXPECT_TRUE(solver.currentValue(vars.at(i).solverId()) <= 10);
       sum += coeffs[i] * solver.currentValue(vars.at(i).solverId());
     }
-    EXPECT_EQ(sum, bound);
+    EXPECT_EQ(sum, -offset);
   }
 }
 
 TEST_F(IntLinEqNeighbourhoodTest, randomMove) {
   search::neighbourhoods::IntLinEqNeighbourhood neighbourhood(
-      std::vector<Int>{coeffs}, std::vector<search::SearchVar>{vars}, bound,
+      std::vector<Int>{coeffs}, std::vector<search::SearchVar>{vars}, offset,
       solver);
 
   assignment->assign(
@@ -67,7 +67,7 @@ TEST_F(IntLinEqNeighbourhoodTest, randomMove) {
     EXPECT_TRUE(solver.currentValue(vars.at(i).solverId()) <= 10);
     sum += coeffs[i] * solver.currentValue(vars.at(i).solverId());
   }
-  EXPECT_EQ(sum, bound);
+  EXPECT_EQ(sum, -offset);
 
   auto schedule = search::AnnealerContainer::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
@@ -82,7 +82,7 @@ TEST_F(IntLinEqNeighbourhoodTest, randomMove) {
       EXPECT_TRUE(solver.committedValue(vars.at(i).solverId()) <= 10);
       sum += coeffs[i] * solver.committedValue(vars.at(i).solverId());
     }
-    EXPECT_EQ(sum, bound);
+    EXPECT_EQ(sum, -offset);
   }
 }
 

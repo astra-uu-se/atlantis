@@ -8,17 +8,16 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_var_bool_element(
-    FznInvariantGraph& invariantGraph, const fznparser::IntArg& index,
+    FznInvariantGraph& graph, const fznparser::IntArg& index,
     const std::shared_ptr<fznparser::BoolVarArray>& inputs,
     const fznparser::BoolArg& output, Int offset) {
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-      invariantGraph.retrieveVarNode(index),
-      invariantGraph.retrieveVarNodes(inputs),
-      invariantGraph.retrieveVarNode(output), offset));
+  graph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
+      graph.retrieveVarNode(index), graph.retrieveVarNodes(inputs),
+      graph.retrieveVarNode(output), offset));
   return true;
 }
 
-bool array_var_bool_element(FznInvariantGraph& invariantGraph,
+bool array_var_bool_element(FznInvariantGraph& graph,
                             const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "array_var_bool_element" &&
       constraint.identifier() != "array_var_bool_element_nonshifted") {
@@ -42,7 +41,7 @@ bool array_var_bool_element(FznInvariantGraph& invariantGraph,
   }
 
   return array_var_bool_element(
-      invariantGraph, index,
+      graph, index,
       getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(2)), offset);
 }

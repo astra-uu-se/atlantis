@@ -73,10 +73,10 @@ bool AllDifferentNode::makeImplicit(InvariantGraph& graph) {
 
 void AllDifferentNode::registerOutputVars(InvariantGraph& graph,
                                           propagation::SolverBase& solver) {
-  if (staticInputVarNodeIds().empty()) {
-    return;
-  }
-  if (violationVarId(graph) == propagation::NULL_ID) {
+  assert(state() == InvariantNodeState::ACTIVE);
+  assert(!staticInputVarNodeIds().empty());
+  if (!staticInputVarNodeIds().empty() &&
+      violationVarId(graph) == propagation::NULL_ID) {
     if (shouldHold()) {
       registerViolation(graph, solver);
     } else {
@@ -86,6 +86,13 @@ void AllDifferentNode::registerOutputVars(InvariantGraph& graph,
                                    solver, _intermediate, 0));
     }
   }
+  assert(outputVarNodeIds().size() <= 1);
+  assert(outputVarNodeIds().empty() ||
+         std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void AllDifferentNode::registerNode(InvariantGraph& graph,

@@ -39,14 +39,18 @@ bool IntAbsNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void IntAbsNode::registerOutputVars(InvariantGraph& invariantGraph,
+void IntAbsNode::registerOutputVars(InvariantGraph& graph,
                                     propagation::SolverBase& solver) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    invariantGraph.varNode(outputVarNodeIds().front())
+  if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::IntAbsView>(
-            solver, invariantGraph.varId(input())));
+            solver, graph.varId(input())));
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void IntAbsNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}

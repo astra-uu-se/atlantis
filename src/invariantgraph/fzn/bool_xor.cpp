@@ -6,23 +6,23 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool_xor(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
+bool bool_xor(FznInvariantGraph& graph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b) {
-  invariantGraph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
-      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b)));
+  graph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
   return true;
 }
 
-bool bool_xor(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
+bool bool_xor(FznInvariantGraph& graph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  invariantGraph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
-      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
-      invariantGraph.retrieveVarNode(reified.var())));
+  graph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+      graph.retrieveVarNode(reified.var())));
 
   return true;
 }
 
-bool bool_xor(FznInvariantGraph& invariantGraph,
+bool bool_xor(FznInvariantGraph& graph,
               const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "bool_xor") {
     return false;
@@ -34,12 +34,12 @@ bool bool_xor(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
 
   if (!isReified) {
-    return bool_xor(invariantGraph,
+    return bool_xor(graph,
                     std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                     std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
-  return bool_xor(invariantGraph,
+  return bool_xor(graph,
                   std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                   std::get<fznparser::BoolArg>(constraint.arguments().at(1)),
                   std::get<fznparser::BoolArg>(constraint.arguments().at(2)));

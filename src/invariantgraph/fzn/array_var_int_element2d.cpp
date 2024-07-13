@@ -8,7 +8,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_var_int_element2d(
-    FznInvariantGraph& invariantGraph, const fznparser::IntArg& idx1,
+    FznInvariantGraph& graph, const fznparser::IntArg& idx1,
     const fznparser::IntArg& idx2,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     const fznparser::IntArg& output, Int numRows, Int offset1, Int offset2) {
@@ -29,16 +29,14 @@ bool array_var_int_element2d(
         "Constraint array_var_int_element2d the second offset must be smaller "
         "than the lower bound of the second index var.");
   }
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElement2dNode>(
-      invariantGraph.retrieveVarNode(idx1),
-      invariantGraph.retrieveVarNode(idx2),
-      invariantGraph.retrieveVarNodes(inputs),
-      invariantGraph.retrieveVarNode(output), static_cast<size_t>(numRows),
-      offset1, offset2));
+  graph.addInvariantNode(std::make_unique<ArrayVarElement2dNode>(
+      graph.retrieveVarNode(idx1), graph.retrieveVarNode(idx2),
+      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(output),
+      static_cast<size_t>(numRows), offset1, offset2));
   return true;
 }
 
-bool array_var_int_element2d(FznInvariantGraph& invariantGraph,
+bool array_var_int_element2d(FznInvariantGraph& graph,
                              const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "array_var_int_element2d_nonshifted_flat") {
     return false;
@@ -53,7 +51,7 @@ bool array_var_int_element2d(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 6, fznparser::IntArg, false)
 
   return array_var_int_element2d(
-      invariantGraph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
+      graph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2)),
       std::get<fznparser::IntArg>(constraint.arguments().at(3)),

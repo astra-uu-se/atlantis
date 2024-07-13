@@ -65,32 +65,34 @@ bool ArrayIntMinimumNode::canBeReplaced(const InvariantGraph& graph) const {
          graph.varNodeConst(staticInputVarNodeIds().front()).upperBound();
 }
 
-bool ArrayIntMinimumNode::replace(InvariantGraph& invariantGraph) {
-  if (!canBeReplaced(invariantGraph)) {
+bool ArrayIntMinimumNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
     return false;
   }
   if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph.replaceVarNode(outputVarNodeIds().front(),
-                                  staticInputVarNodeIds().front());
+    graph.replaceVarNode(outputVarNodeIds().front(),
+                         staticInputVarNodeIds().front());
   }
   return true;
 }
 
-void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& invariantGraph,
+void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& graph,
                                              propagation::SolverBase& solver) {
-  if (staticInputVarNodeIds().empty()) {
-    return;
-  } else if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph.varNode(outputVarNodeIds().front())
+  if (staticInputVarNodeIds().size() == 1) {
+    graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::IntMinView>(
-            solver, invariantGraph.varId(staticInputVarNodeIds().front()),
-            _ub));
-  } else {
-    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+            solver, graph.varId(staticInputVarNodeIds().front()), _ub));
+  } else if (!staticInputVarNodeIds().empty()) {
+    makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void ArrayIntMinimumNode::registerNode(InvariantGraph& invariantGraph,
+void ArrayIntMinimumNode::registerNode(InvariantGraph& graph,
                                        propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
@@ -98,13 +100,11 @@ void ArrayIntMinimumNode::registerNode(InvariantGraph& invariantGraph,
   std::vector<propagation::VarId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(solverVars),
-                 [&](const auto& node) { return invariantGraph.varId(node); });
+                 [&](const auto& node) { return graph.varId(node); });
 
-  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
   solver.makeInvariant<propagation::MinSparse>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()),
-      std::move(solverVars));
+      solver, graph.varId(outputVarNodeIds().front()), std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

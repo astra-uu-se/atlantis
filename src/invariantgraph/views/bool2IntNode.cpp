@@ -35,14 +35,18 @@ void Bool2IntNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void Bool2IntNode::registerOutputVars(InvariantGraph& invariantGraph,
+void Bool2IntNode::registerOutputVars(InvariantGraph& graph,
                                       propagation::SolverBase& solver) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    invariantGraph.varNode(outputVarNodeIds().front())
+  if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::Bool2IntView>(
-            solver, invariantGraph.varId(input())));
+            solver, graph.varId(input())));
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void Bool2IntNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}

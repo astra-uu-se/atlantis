@@ -112,6 +112,11 @@ void BoolAllEqualNode::registerOutputVars(InvariantGraph& graph,
                                    solver, _intermediate, 0));
     }
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void BoolAllEqualNode::registerNode(InvariantGraph& graph,

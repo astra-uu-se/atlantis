@@ -101,26 +101,29 @@ bool BoolLtNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void BoolLtNode::registerOutputVars(InvariantGraph& invariantGraph,
+void BoolLtNode::registerOutputVars(InvariantGraph& graph,
                                     propagation::SolverBase& solver) {
-  registerViolation(invariantGraph, solver);
+  registerViolation(graph, solver);
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void BoolLtNode::registerNode(InvariantGraph& invariantGraph,
+void BoolLtNode::registerNode(InvariantGraph& graph,
                               propagation::SolverBase& solver) {
-  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
-  assert(invariantGraph.varId(a()) != propagation::NULL_ID);
-  assert(invariantGraph.varId(b()) != propagation::NULL_ID);
+  assert(violationVarId(graph) != propagation::NULL_ID);
+  assert(graph.varId(a()) != propagation::NULL_ID);
+  assert(graph.varId(b()) != propagation::NULL_ID);
 
   if (shouldHold()) {
     solver.makeViolationInvariant<propagation::BoolLessThan>(
-        solver, violationVarId(invariantGraph), invariantGraph.varId(a()),
-        invariantGraph.varId(b()));
+        solver, violationVarId(graph), graph.varId(a()), graph.varId(b()));
   } else {
     assert(!isReified());
     solver.makeViolationInvariant<propagation::BoolLessEqual>(
-        solver, violationVarId(invariantGraph), invariantGraph.varId(b()),
-        invariantGraph.varId(a()));
+        solver, violationVarId(graph), graph.varId(b()), graph.varId(a()));
   }
 }
 

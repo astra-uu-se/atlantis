@@ -9,7 +9,7 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
+bool bool_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                  const std::shared_ptr<fznparser::BoolVarArray>& inputs,
                  Int bound) {
   const auto [lb, ub] = linBounds(coeffs, inputs);
@@ -19,16 +19,15 @@ bool bool_lin_le(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     return true;
   }
 
-  const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(
+  const VarNodeId outputVarNodeId = graph.retrieveIntVarNode(
       SearchDomain(lb, bound), VarNode::DomainType::UPPER_BOUND);
 
-  invariantGraph.addInvariantNode(std::make_unique<BoolLinearNode>(
-      std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
-      outputVarNodeId));
+  graph.addInvariantNode(std::make_unique<BoolLinearNode>(
+      std::move(coeffs), graph.retrieveVarNodes(inputs), outputVarNodeId));
   return true;
 }
 
-bool bool_lin_le(FznInvariantGraph& invariantGraph,
+bool bool_lin_le(FznInvariantGraph& graph,
                  const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "bool_lin_le") {
     return false;
@@ -43,7 +42,7 @@ bool bool_lin_le(FznInvariantGraph& invariantGraph,
           ->toParVector();
 
   return bool_lin_le(
-      invariantGraph, std::move(coeffs),
+      graph, std::move(coeffs),
       getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter());
 }

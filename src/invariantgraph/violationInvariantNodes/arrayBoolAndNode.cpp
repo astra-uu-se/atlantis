@@ -91,10 +91,8 @@ bool ArrayBoolAndNode::replace(InvariantGraph& graph) {
 
 void ArrayBoolAndNode::registerOutputVars(InvariantGraph& graph,
                                           propagation::SolverBase& solver) {
-  if (staticInputVarNodeIds().size() <= 1) {
-    return;
-  }
-  if (violationVarId(graph) == propagation::NULL_ID) {
+  if (staticInputVarNodeIds().size() > 1 &&
+      violationVarId(graph) == propagation::NULL_ID) {
     if (shouldHold()) {
       registerViolation(graph, solver);
     } else {
@@ -104,6 +102,11 @@ void ArrayBoolAndNode::registerOutputVars(InvariantGraph& graph,
                                    solver, _intermediate, 0));
     }
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void ArrayBoolAndNode::registerNode(InvariantGraph& graph,

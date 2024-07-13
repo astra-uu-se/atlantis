@@ -13,7 +13,7 @@ class GlobalCardinalityNode : public InvariantNode {
  private:
   std::vector<Int> _cover;
   std::vector<Int> _countOffsets;
-  std::vector<propagation::VarId> _intermediate{};
+  std::vector<propagation::VarId> _intermediate;
 
  public:
   explicit GlobalCardinalityNode(std::vector<VarNodeId>&& inputs,

@@ -6,22 +6,21 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_max(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
+bool int_max(FznInvariantGraph& graph, const fznparser::IntArg& a,
              const fznparser::IntArg& b, const fznparser::IntArg& maximum) {
-  const VarNodeId outputVarNodeId = invariantGraph.retrieveVarNode(maximum);
+  const VarNodeId outputVarNodeId = graph.retrieveVarNode(maximum);
 
   if (a.isFixed() && b.isFixed()) {
-    invariantGraph.varNode(outputVarNodeId)
+    graph.varNode(outputVarNodeId)
         .fixToValue(std::max(a.toParameter(), b.toParameter()));
     return true;
   }
-  invariantGraph.addInvariantNode(std::make_unique<ArrayIntMaximumNode>(
-      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
-      outputVarNodeId));
+  graph.addInvariantNode(std::make_unique<ArrayIntMaximumNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b), outputVarNodeId));
   return true;
 }
 
-bool int_max(FznInvariantGraph& invariantGraph,
+bool int_max(FznInvariantGraph& graph,
              const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "int_max") {
     return false;
@@ -31,7 +30,7 @@ bool int_max(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true)
 
-  return int_max(invariantGraph,
+  return int_max(graph,
                  std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                  std::get<fznparser::IntArg>(constraint.arguments().at(1)),
                  std::get<fznparser::IntArg>(constraint.arguments().at(2)));

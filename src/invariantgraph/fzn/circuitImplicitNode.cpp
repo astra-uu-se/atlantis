@@ -7,7 +7,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool makeCircuitImplicitNode(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs) {
   if (inputs->size() < 2) {
     return true;
@@ -31,13 +31,12 @@ bool makeCircuitImplicitNode(
       return false;
     }
   }
-  invariantGraph.addImplicitConstraintNode(
-      std::make_unique<CircuitImplicitNode>(
-          invariantGraph.retrieveVarNodes(inputs)));
+  graph.addImplicitConstraintNode(
+      std::make_unique<CircuitImplicitNode>(graph.retrieveVarNodes(inputs)));
   return true;
 }
 
-bool makeCircuitImplicitNode(FznInvariantGraph& invariantGraph,
+bool makeCircuitImplicitNode(FznInvariantGraph& graph,
                              const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "fzn_circuit") {
     return false;
@@ -47,8 +46,7 @@ bool makeCircuitImplicitNode(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
 
   return makeCircuitImplicitNode(
-      invariantGraph,
-      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)));
+      graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

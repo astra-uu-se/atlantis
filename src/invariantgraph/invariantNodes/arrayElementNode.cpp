@@ -21,11 +21,12 @@ static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
 }
 
 ArrayElementNode::ArrayElementNode(std::vector<Int>&& parVector, VarNodeId idx,
-                                   VarNodeId output, Int offset)
+                                   VarNodeId output, Int offset,
+                                   bool isIntVector)
     : InvariantNode({output}, {idx}),
       _parVector(std::move(parVector)),
       _offset(offset),
-      _isIntVector(true) {}
+      _isIntVector(isIntVector) {}
 
 ArrayElementNode::ArrayElementNode(std::vector<bool>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset)
@@ -54,16 +55,19 @@ void ArrayElementNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void ArrayElementNode::registerOutputVars(InvariantGraph& invariantGraph,
+void ArrayElementNode::registerOutputVars(InvariantGraph& graph,
                                           propagation::SolverBase& solver) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    assert(invariantGraph.varId(idx()) != propagation::NULL_ID);
-    invariantGraph.varNode(outputVarNodeIds().front())
+  if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    assert(graph.varId(idx()) != propagation::NULL_ID);
+    graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::ElementConst>(
-            solver, invariantGraph.varId(idx()), std::vector<Int>(_parVector),
-            _offset));
+            solver, graph.varId(idx()), std::vector<Int>(_parVector), _offset));
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void ArrayElementNode::registerNode(InvariantGraph&, propagation::SolverBase&) {

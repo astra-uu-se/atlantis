@@ -61,31 +61,29 @@ void ArrayElement2dNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool ArrayElement2dNode::canBeReplaced(
-    const InvariantGraph& invariantGraph) const {
+bool ArrayElement2dNode::canBeReplaced(const InvariantGraph& graph) const {
   return state() == InvariantNodeState::ACTIVE &&
-         (invariantGraph.varNodeConst(idx1()).isFixed() ||
-          invariantGraph.varNodeConst(idx2()).isFixed());
+         (graph.varNodeConst(idx1()).isFixed() ||
+          graph.varNodeConst(idx2()).isFixed());
 }
 
-bool ArrayElement2dNode::replace(InvariantGraph& invariantGraph) {
-  if (!canBeReplaced(invariantGraph)) {
+bool ArrayElement2dNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
     return false;
   }
-  if (invariantGraph.varNode(idx1()).isFixed()) {
-    assert(invariantGraph.varNode(idx1()).lowerBound() >= _offset1);
-    assert(invariantGraph.varNode(idx1()).lowerBound() <=
-           static_cast<Int>(_parMatrix.size()) - _offset1);
+  if (graph.varNode(idx1()).isFixed()) {
+    const Int row = graph.varNode(idx1()).lowerBound() - _offset1;
+    assert(row >= 0);
+    assert(row <= static_cast<Int>(_parMatrix.size()));
 
-    invariantGraph.addInvariantNode(std::make_unique<ArrayElementNode>(
-        std::move(_parMatrix.at(invariantGraph.varNode(idx1()).lowerBound() -
-                                _offset1)),
-        idx2(), outputVarNodeIds().front(), _offset2));
+    graph.addInvariantNode(std::make_unique<ArrayElementNode>(
+        std::move(_parMatrix.at(row)), idx2(), outputVarNodeIds().front(),
+        _offset2, _isIntMatrix));
     _parMatrix.clear();
     return true;
   }
   std::vector<Int> parMatrixRow;
-  const Int col = invariantGraph.varNode(idx2()).lowerBound() - _offset2;
+  const Int col = graph.varNode(idx2()).lowerBound() - _offset2;
   assert(col >= 0);
   assert(col < static_cast<Int>(_parMatrix.front().size()));
   parMatrixRow.reserve(_parMatrix.size());
@@ -93,30 +91,34 @@ bool ArrayElement2dNode::replace(InvariantGraph& invariantGraph) {
     parMatrixRow.emplace_back(row.at(col));
   }
   _parMatrix.clear();
-  invariantGraph.addInvariantNode(std::make_unique<ArrayElementNode>(
-      std::move(parMatrixRow), idx1(), outputVarNodeIds().front(), _offset1));
+  graph.addInvariantNode(std::make_unique<ArrayElementNode>(
+      std::move(parMatrixRow), idx1(), outputVarNodeIds().front(), _offset1,
+      _isIntMatrix));
   return true;
 }
 
-void ArrayElement2dNode::registerOutputVars(InvariantGraph& invariantGraph,
+void ArrayElement2dNode::registerOutputVars(InvariantGraph& graph,
                                             propagation::SolverBase& solver) {
-  if (staticInputVarNodeIds().empty()) {
-    return;
+  if (!staticInputVarNodeIds().empty()) {
+    makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
   }
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void ArrayElement2dNode::registerNode(InvariantGraph& invariantGraph,
+void ArrayElement2dNode::registerNode(InvariantGraph& graph,
                                       propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().empty()) {
     return;
   }
-  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
   solver.makeInvariant<propagation::Element2dConst>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(idx1()), invariantGraph.varId(idx2()),
-      std::vector<std::vector<Int>>(_parMatrix), _offset1, _offset2);
+      solver, graph.varId(outputVarNodeIds().front()), graph.varId(idx1()),
+      graph.varId(idx2()), std::vector<std::vector<Int>>(_parMatrix), _offset1,
+      _offset2);
 }
 
 }  // namespace atlantis::invariantgraph

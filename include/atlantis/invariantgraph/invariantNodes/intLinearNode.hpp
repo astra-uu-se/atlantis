@@ -21,11 +21,15 @@ class IntLinearNode : public InvariantNode {
 
   void init(InvariantGraph&, const InvariantNodeId&) override;
 
+  void updateState(InvariantGraph&) override;
+
+  [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
+
+  [[nodiscard]] bool makeImplicit(InvariantGraph&) override;
+
   void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;
-
-  void updateState(InvariantGraph&) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 };

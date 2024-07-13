@@ -7,27 +7,27 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool fzn_global_cardinality_low_up(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up) {
-  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
-      invariantGraph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
+  graph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
+      graph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
       std::move(up)));
   return true;
 }
 
 bool fzn_global_cardinality_low_up(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
     const fznparser::BoolArg& reified) {
-  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
-      invariantGraph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
-      std::move(up), invariantGraph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpNode>(
+      graph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
+      std::move(up), graph.retrieveVarNode(reified)));
   return true;
 }
 
-bool fzn_global_cardinality_low_up(FznInvariantGraph& invariantGraph,
+bool fzn_global_cardinality_low_up(FznInvariantGraph& graph,
                                    const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "fzn_global_cardinality_low_up" &&
       constraint.identifier() != "fzn_global_cardinality_low_up_reif") {
@@ -51,14 +51,13 @@ bool fzn_global_cardinality_low_up(FznInvariantGraph& invariantGraph,
           ->toParVector();
   if (!isReified) {
     return fzn_global_cardinality_low_up(
-        invariantGraph,
+        graph,
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
         std::move(cover), std::move(low), std::move(up));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return fzn_global_cardinality_low_up(
-      invariantGraph,
-      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
+      graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::move(cover), std::move(low), std::move(up),
       std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
 }

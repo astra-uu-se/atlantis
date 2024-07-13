@@ -149,12 +149,12 @@ std::vector<Int> getFixedValues(
   return values;
 }
 
-std::vector<bool> getFixedBoolValues(const InvariantGraph& invariantGraph,
+std::vector<bool> getFixedBoolValues(const InvariantGraph& graph,
                                      const std::vector<VarNodeId>& varNodeIds) {
   std::vector<bool> values;
   values.reserve(varNodeIds.size());
   for (VarNodeId varNodeId : varNodeIds) {
-    const VarNode& varNode = invariantGraph.varNodeConst(varNodeId);
+    const VarNode& varNode = graph.varNodeConst(varNodeId);
     if (varNode.isFixed()) {
       values.emplace_back(varNode.lowerBound() == 0);
     }
@@ -182,7 +182,7 @@ std::vector<bool> getFixedValues(
 }
 
 std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
   std::vector<VarNodeId> vars;
   vars.reserve(intVarArray->size());
@@ -194,14 +194,14 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
         std::get<std::shared_ptr<const fznparser::IntVar>>(intVarArray->at(i));
 
     if (!var->isFixed()) {
-      vars.emplace_back(invariantGraph.retrieveVarNode(var));
+      vars.emplace_back(graph.retrieveVarNode(var));
     }
   }
   return vars;
 }
 
 std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray) {
   std::vector<VarNodeId> vars;
   vars.reserve(boolVarArray->size());
@@ -213,19 +213,18 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
         boolVarArray->at(i));
 
     if (!var->isFixed()) {
-      vars.emplace_back(invariantGraph.retrieveVarNode(var));
+      vars.emplace_back(graph.retrieveVarNode(var));
     }
   }
   return vars;
 }
 
 std::vector<VarNodeId> getUnfixedVarNodeIds(
-    const InvariantGraph& invariantGraph,
-    const std::vector<VarNodeId>& varNodeIds) {
+    const InvariantGraph& graph, const std::vector<VarNodeId>& varNodeIds) {
   std::vector<VarNodeId> unfixed;
   unfixed.reserve(varNodeIds.size());
   for (VarNodeId varNodeId : varNodeIds) {
-    if (!invariantGraph.varNodeConst(varNodeId).isFixed()) {
+    if (!graph.varNodeConst(varNodeId).isFixed()) {
       unfixed.emplace_back(varNodeId);
     }
   }
@@ -258,38 +257,36 @@ void verifyAllDifferent(
   return false;
 }
 
-VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
+VarNodeId createCountNode(FznInvariantGraph& graph,
                           const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle) {
-  VarNodeId countVarNodeId = invariantGraph.retrieveIntVarNode(
+  VarNodeId countVarNodeId = graph.retrieveIntVarNode(
       SearchDomain(0, static_cast<Int>(inputs->size())));
 
   if (needle.isFixed()) {
-    invariantGraph.addInvariantNode(
-        std::make_unique<IntCountNode>(invariantGraph.retrieveVarNodes(inputs),
-                                       needle.toParameter(), countVarNodeId));
+    graph.addInvariantNode(std::make_unique<IntCountNode>(
+        graph.retrieveVarNodes(inputs), needle.toParameter(), countVarNodeId));
   } else {
-    invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        invariantGraph.retrieveVarNodes(inputs),
-        invariantGraph.retrieveVarNode(needle.var()), countVarNodeId));
+    graph.addInvariantNode(std::make_unique<VarIntCountNode>(
+        graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle.var()),
+        countVarNodeId));
   }
   return countVarNodeId;
 }
 
-VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
+VarNodeId createCountNode(FznInvariantGraph& graph,
                           const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle,
                           const fznparser::IntArg& count) {
-  VarNodeId countVarNodeId = invariantGraph.retrieveVarNode(count);
+  VarNodeId countVarNodeId = graph.retrieveVarNode(count);
 
   if (needle.isFixed()) {
-    invariantGraph.addInvariantNode(
-        std::make_unique<IntCountNode>(invariantGraph.retrieveVarNodes(inputs),
-                                       needle.toParameter(), countVarNodeId));
+    graph.addInvariantNode(std::make_unique<IntCountNode>(
+        graph.retrieveVarNodes(inputs), needle.toParameter(), countVarNodeId));
   } else {
-    invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        invariantGraph.retrieveVarNodes(inputs),
-        invariantGraph.retrieveVarNode(needle.var()), countVarNodeId));
+    graph.addInvariantNode(std::make_unique<VarIntCountNode>(
+        graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle.var()),
+        countVarNodeId));
   }
   return countVarNodeId;
 }

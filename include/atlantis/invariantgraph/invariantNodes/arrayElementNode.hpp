@@ -18,7 +18,7 @@ class ArrayElementNode : public InvariantNode {
 
  public:
   ArrayElementNode(std::vector<Int>&& parVector, VarNodeId idx,
-                   VarNodeId output, Int offset);
+                   VarNodeId output, Int offset, bool isIntVector = true);
 
   ArrayElementNode(std::vector<bool>&& parVector, VarNodeId idx,
                    VarNodeId output, Int offset);

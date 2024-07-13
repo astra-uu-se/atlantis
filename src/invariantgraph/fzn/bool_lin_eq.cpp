@@ -6,18 +6,17 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool_lin_eq(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
+bool bool_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                  const std::shared_ptr<fznparser::BoolVarArray>& inputs,
                  Int sum) {
-  const VarNodeId outputVarNodeId = invariantGraph.retrieveIntVarNode(sum);
+  const VarNodeId outputVarNodeId = graph.retrieveIntVarNode(sum);
 
-  invariantGraph.addInvariantNode(std::make_unique<BoolLinearNode>(
-      std::move(coeffs), invariantGraph.retrieveVarNodes(inputs),
-      outputVarNodeId));
+  graph.addInvariantNode(std::make_unique<BoolLinearNode>(
+      std::move(coeffs), graph.retrieveVarNodes(inputs), outputVarNodeId));
   return true;
 }
 
-bool bool_lin_eq(FznInvariantGraph& invariantGraph,
+bool bool_lin_eq(FznInvariantGraph& graph,
                  const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "bool_lin_eq") {
     return false;
@@ -32,7 +31,7 @@ bool bool_lin_eq(FznInvariantGraph& invariantGraph,
           ->toParVector();
 
   return bool_lin_eq(
-      invariantGraph, std::move(coeffs),
+      graph, std::move(coeffs),
       getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter());
 }

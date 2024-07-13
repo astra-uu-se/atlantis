@@ -23,11 +23,11 @@ ViolationInvariantNode::ViolationInvariantNode(
     VarNodeId reifiedId, bool shouldHold)
     : InvariantNode(combine(reifiedId, std::move(outputIds)),
                     std::move(staticInputIds)),
-      _reifiedViolationNodeId(reifiedId),
+      _isReified(reifiedId != NULL_NODE_ID),
       _shouldHold(shouldHold) {
-  assert((!isReified() && _reifiedViolationNodeId == NULL_NODE_ID) ||
-         (_reifiedViolationNodeId != NULL_NODE_ID &&
-          outputVarNodeIds().front() == _reifiedViolationNodeId));
+  assert(
+      (!isReified() && reifiedId == NULL_NODE_ID) ||
+      (reifiedId != NULL_NODE_ID && outputVarNodeIds().front() == reifiedId));
 }
 
 void ViolationInvariantNode::init(InvariantGraph& graph,
@@ -58,60 +58,56 @@ ViolationInvariantNode::ViolationInvariantNode(
     : ViolationInvariantNode({}, std::move(staticInputIds),
                              VarNodeId(NULL_NODE_ID), shouldHold) {}
 
-bool ViolationInvariantNode::isReified() const {
-  return _reifiedViolationNodeId != NULL_NODE_ID;
-}
+bool ViolationInvariantNode::isReified() const { return _isReified; }
 
 propagation::VarId ViolationInvariantNode::violationVarId(
-    const InvariantGraph& invariantGraph) const {
+    const InvariantGraph& graph) const {
   if (isReified()) {
-    return invariantGraph.varId(_reifiedViolationNodeId);
+    return graph.varId(outputVarNodeIds().front());
   }
   return _violationVarId;
 }
 
 VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
-  return _reifiedViolationNodeId;
+  return isReified() ? outputVarNodeIds().front() : VarNodeId{NULL_NODE_ID};
 }
 
 void ViolationInvariantNode::updateState(InvariantGraph& graph) {
-  if (isReified() && graph.varNodeConst(_reifiedViolationNodeId).isFixed()) {
-    _shouldHold = graph.varNodeConst(_reifiedViolationNodeId).inDomain(true);
-    assert(_reifiedViolationNodeId != NULL_NODE_ID);
+  if (isReified() && graph.varNodeConst(outputVarNodeIds().front()).isFixed()) {
+    _shouldHold = graph.varNodeConst(outputVarNodeIds().front()).inDomain(true);
+    _isReified = false;
+    assert(outputVarNodeIds().front() != NULL_NODE_ID);
     if (!outputVarNodeIds().empty()) {
-      assert(_reifiedViolationNodeId == outputVarNodeIds().front());
+      assert(outputVarNodeIds().front() == outputVarNodeIds().front());
       const bool isAlsoOutput = std::any_of(
           outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-          [this](VarNodeId oId) { return oId == _reifiedViolationNodeId; });
+          [this](VarNodeId oId) { return oId == outputVarNodeIds().front(); });
       if (!isAlsoOutput) {
-        removeOutputVarNode(graph.varNode(_reifiedViolationNodeId));
+        removeOutputVarNode(graph.varNode(outputVarNodeIds().front()));
       }
     }
-    _reifiedViolationNodeId = NULL_NODE_ID;
   }
   InvariantNode::updateState(graph);
 }
 
 propagation::VarId ViolationInvariantNode::setViolationVarId(
-    InvariantGraph& invariantGraph, propagation::VarId varId) {
-  assert(violationVarId(invariantGraph) == propagation::NULL_ID);
+    InvariantGraph& graph, propagation::VarId varId) {
+  assert(violationVarId(graph) == propagation::NULL_ID);
   if (isReified()) {
-    invariantGraph.varNode(_reifiedViolationNodeId).setVarId(varId);
+    graph.varNode(outputVarNodeIds().front()).setVarId(varId);
   } else {
     _violationVarId = varId;
   }
-  return violationVarId(invariantGraph);
+  return violationVarId(graph);
 }
 
 propagation::VarId ViolationInvariantNode::registerViolation(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver,
-    Int initialValue) {
-  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+    InvariantGraph& graph, propagation::SolverBase& solver, Int initialValue) {
+  if (violationVarId(graph) == propagation::NULL_ID) {
     return setViolationVarId(
-        invariantGraph,
-        solver.makeIntVar(initialValue, initialValue, initialValue));
+        graph, solver.makeIntVar(initialValue, initialValue, initialValue));
   }
-  return violationVarId(invariantGraph);
+  return violationVarId(graph);
 }
 
 }  // namespace atlantis::invariantgraph

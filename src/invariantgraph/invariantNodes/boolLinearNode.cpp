@@ -20,7 +20,7 @@ BoolLinearNode::BoolLinearNode(std::vector<Int>&& coeffs,
 
 void BoolLinearNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
   InvariantNode::init(graph, id);
-  assert(!graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::none_of(staticInputVarNodeIds().begin(),
                       staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
                         return graph.varNodeConst(vId).isIntVar();
@@ -76,44 +76,46 @@ void BoolLinearNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void BoolLinearNode::registerOutputVars(InvariantGraph& invariantGraph,
+void BoolLinearNode::registerOutputVars(InvariantGraph& graph,
                                         propagation::SolverBase& solver) {
-  if (staticInputVarNodeIds().empty()) {
-    return;
-  }
   if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph.varNode(outputVarNodeIds().front())
+    graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::IfThenElseConst>(
-            solver, invariantGraph.varId(staticInputVarNodeIds().front()),
+            solver, graph.varId(staticInputVarNodeIds().front()),
             _offset + _coeffs.front(), _offset));
-  } else if (_offset != 0) {
-    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
-  } else if (_intermediate == propagation::NULL_ID) {
-    _intermediate = solver.makeIntVar(0, 0, 0);
-    invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(solver.makeIntView<propagation::IntOffsetView>(
-            solver, _intermediate, _offset));
+  } else if (!staticInputVarNodeIds().empty()) {
+    if (_offset != 0) {
+      makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+    } else if (_intermediate == propagation::NULL_ID) {
+      _intermediate = solver.makeIntVar(0, 0, 0);
+      graph.varNode(outputVarNodeIds().front())
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, _intermediate, _offset));
+    }
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void BoolLinearNode::registerNode(InvariantGraph& invariantGraph,
+void BoolLinearNode::registerNode(InvariantGraph& graph,
                                   propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
 
   std::vector<propagation::VarId> solverVars;
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars),
-                 [&](const VarNodeId varNodeId) {
-                   return invariantGraph.varId(varNodeId);
-                 });
+  std::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(solverVars),
+      [&](const VarNodeId varNodeId) { return graph.varId(varNodeId); });
   solver.makeInvariant<propagation::BoolLinear>(
       solver,
       _intermediate == propagation::NULL_ID
-          ? invariantGraph.varId(outputVarNodeIds().front())
+          ? graph.varId(outputVarNodeIds().front())
           : _intermediate,
       std::vector<Int>(_coeffs), std::move(solverVars));
 }

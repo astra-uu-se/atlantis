@@ -6,15 +6,14 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_abs(FznInvariantGraph& invariantGraph, const fznparser::IntArg& var,
+bool int_abs(FznInvariantGraph& graph, const fznparser::IntArg& var,
              const fznparser::IntArg& absVar) {
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntAbsNode>(invariantGraph.retrieveVarNode(var),
-                                   invariantGraph.retrieveVarNode(absVar)));
+  graph.addInvariantNode(std::make_unique<IntAbsNode>(
+      graph.retrieveVarNode(var), graph.retrieveVarNode(absVar)));
   return true;
 }
 
-bool int_abs(FznInvariantGraph& invariantGraph,
+bool int_abs(FznInvariantGraph& graph,
              const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "int_abs") {
     return false;
@@ -23,7 +22,7 @@ bool int_abs(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
 
-  return int_abs(invariantGraph,
+  return int_abs(graph,
                  std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                  std::get<fznparser::IntArg>(constraint.arguments().at(1)));
 }

@@ -52,11 +52,11 @@ void verifyAllDifferent(
 [[nodiscard]] bool violatesAllEqual(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray);
 
-VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
+VarNodeId createCountNode(FznInvariantGraph& graph,
                           const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle);
 
-VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
+VarNodeId createCountNode(FznInvariantGraph& graph,
                           const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle,
                           const fznparser::IntArg& count);

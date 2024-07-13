@@ -23,20 +23,20 @@ void CircuitImplicitNode::init(InvariantGraph& graph,
 }
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
-CircuitImplicitNode::createNeighbourhood(InvariantGraph& invariantGraph,
+CircuitImplicitNode::createNeighbourhood(InvariantGraph& graph,
                                          propagation::SolverBase&) {
   std::vector<search::SearchVar> searchVars;
   searchVars.reserve(outputVarNodeIds().size());
   SearchDomain freeIndices(1, static_cast<Int>(outputVarNodeIds().size()));
   for (const auto& nId : outputVarNodeIds()) {
-    const auto& varNode = invariantGraph.varNodeConst(nId);
+    const auto& varNode = graph.varNodeConst(nId);
     if (varNode.isFixed()) {
       freeIndices.remove(varNode.constDomain().lowerBound());
     }
   }
 
   for (const auto& nId : outputVarNodeIds()) {
-    auto& varNode = invariantGraph.varNode(nId);
+    auto& varNode = graph.varNode(nId);
     assert(varNode.varId() != propagation::NULL_ID);
     if (varNode.constDomain().isFixed()) {
       const Int val = varNode.constDomain().lowerBound();

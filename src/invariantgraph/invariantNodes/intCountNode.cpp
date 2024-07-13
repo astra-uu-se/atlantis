@@ -59,46 +59,48 @@ void IntCountNode::updateState(InvariantGraph& graph) {
 
 Int IntCountNode::needle() const { return _needle; }
 
-void IntCountNode::registerOutputVars(InvariantGraph& invariantGraph,
+void IntCountNode::registerOutputVars(InvariantGraph& graph,
                                       propagation::SolverBase& solver) {
-  if (staticInputVarNodeIds().empty()) {
-    return;
-  }
   if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph.varNode(outputVarNodeIds().front())
+    graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::IfThenElseConst>(
-            solver, invariantGraph.varId(staticInputVarNodeIds().front()),
-            _offset + 1, _offset, needle()));
-  } else if (_offset == 0) {
-    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
-  } else if (_intermediate != propagation::NULL_ID) {
-    _intermediate = solver.makeIntVar(0, 0, 0);
-    invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(solver.makeIntView<propagation::IntOffsetView>(
-            solver, _intermediate, _offset));
+            solver, graph.varId(staticInputVarNodeIds().front()), _offset + 1,
+            _offset, needle()));
+  } else if (!staticInputVarNodeIds().empty()) {
+    if (_offset == 0) {
+      makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+    } else if (_intermediate != propagation::NULL_ID) {
+      _intermediate = solver.makeIntVar(0, 0, 0);
+      graph.varNode(outputVarNodeIds().front())
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, _intermediate, _offset));
+    }
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void IntCountNode::registerNode(InvariantGraph& invariantGraph,
+void IntCountNode::registerNode(InvariantGraph& graph,
                                 propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
 
   std::vector<propagation::VarId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
 
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars), [&](const VarNodeId node) {
-                   return invariantGraph.varId(node);
-                 });
+                 std::back_inserter(solverVars),
+                 [&](const VarNodeId node) { return graph.varId(node); });
 
   solver.makeInvariant<propagation::CountConst>(
       solver,
       _intermediate == propagation::NULL_ID
-          ? invariantGraph.varId(outputVarNodeIds().front())
+          ? graph.varId(outputVarNodeIds().front())
           : _intermediate,
       needle(), std::move(solverVars));
 }

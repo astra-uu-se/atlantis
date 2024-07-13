@@ -26,11 +26,11 @@ void SetInNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void SetInNode::registerOutputVars(InvariantGraph& invariantGraph,
+void SetInNode::registerOutputVars(InvariantGraph& graph,
                                    propagation::SolverBase& solver) {
-  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+  if (violationVarId(graph) == propagation::NULL_ID) {
     const propagation::VarId input =
-        invariantGraph.varId(staticInputVarNodeIds().front());
+        graph.varId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
     domainEntries.reserve(_values.size());
     std::transform(_values.begin(), _values.end(),
@@ -41,15 +41,18 @@ void SetInNode::registerOutputVars(InvariantGraph& invariantGraph,
       assert(!isReified());
       _intermediate = solver.makeIntView<propagation::InDomain>(
           solver, input, std::move(domainEntries));
-      setViolationVarId(invariantGraph,
-                        solver.makeIntView<propagation::NotEqualConst>(
-                            solver, _intermediate, 0));
+      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
+                                   solver, _intermediate, 0));
     } else {
-      setViolationVarId(invariantGraph,
-                        solver.makeIntView<propagation::InDomain>(
-                            solver, input, std::move(domainEntries)));
+      setViolationVarId(graph, solver.makeIntView<propagation::InDomain>(
+                                   solver, input, std::move(domainEntries)));
     }
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void SetInNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}

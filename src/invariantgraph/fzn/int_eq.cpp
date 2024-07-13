@@ -6,29 +6,27 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntAllEqualNode>(a, b, false));
+bool int_eq(FznInvariantGraph& graph, VarNodeId a, VarNodeId b) {
+  graph.addInvariantNode(std::make_unique<IntAllEqualNode>(a, b, false));
   return true;
 }
 
-bool int_eq(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
+bool int_eq(FznInvariantGraph& graph, const fznparser::IntArg& a,
             const fznparser::IntArg& b) {
-  invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b)));
+  graph.addInvariantNode(std::make_unique<IntAllEqualNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
   return true;
 }
 
-bool int_eq(FznInvariantGraph& invariantGraph, const fznparser::IntArg& a,
+bool int_eq(FznInvariantGraph& graph, const fznparser::IntArg& a,
             const fznparser::IntArg& b, const fznparser::BoolArg& reified) {
-  invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
-      invariantGraph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_unique<IntAllEqualNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+      graph.retrieveVarNode(reified)));
   return true;
 }
 
-bool int_eq(FznInvariantGraph& invariantGraph,
-            const fznparser::Constraint& constraint) {
+bool int_eq(FznInvariantGraph& graph, const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "int_eq" &&
       constraint.identifier() != "int_eq_reif") {
     return false;
@@ -39,12 +37,12 @@ bool int_eq(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
 
   if (!isReified) {
-    return int_eq(invariantGraph,
+    return int_eq(graph,
                   std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                   std::get<fznparser::IntArg>(constraint.arguments().at(1)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
-  return int_eq(invariantGraph,
+  return int_eq(graph,
                 std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                 std::get<fznparser::IntArg>(constraint.arguments().at(1)),
                 std::get<fznparser::BoolArg>(constraint.arguments().at(2)));

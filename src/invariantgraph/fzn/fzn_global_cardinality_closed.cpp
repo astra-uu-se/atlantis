@@ -7,30 +7,29 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool fzn_global_cardinality_closed(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover,
     const std::shared_ptr<fznparser::IntVarArray>& counts) {
-  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityClosedNode>(
-      invariantGraph.retrieveVarNodes(inputs), std::move(cover),
-      invariantGraph.retrieveVarNodes(counts)));
+  graph.addInvariantNode(std::make_unique<GlobalCardinalityClosedNode>(
+      graph.retrieveVarNodes(inputs), std::move(cover),
+      graph.retrieveVarNodes(counts)));
   return true;
 }
 
 bool fzn_global_cardinality_closed(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover,
     const std::shared_ptr<fznparser::IntVarArray>& counts,
     const fznparser::BoolArg& reified) {
-  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityClosedNode>(
-      invariantGraph.retrieveVarNodes(inputs), std::move(cover),
-      invariantGraph.retrieveVarNodes(counts),
-      invariantGraph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_unique<GlobalCardinalityClosedNode>(
+      graph.retrieveVarNodes(inputs), std::move(cover),
+      graph.retrieveVarNodes(counts), graph.retrieveVarNode(reified)));
   return true;
 }
 
-bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
+bool fzn_global_cardinality_closed(FznInvariantGraph& graph,
                                    const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "fzn_global_cardinality_closed" &&
       constraint.identifier() != "fzn_global_cardinality_closed_reif") {
@@ -47,15 +46,14 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& invariantGraph,
           ->toParVector();
   if (!isReified) {
     return fzn_global_cardinality_closed(
-        invariantGraph,
+        graph,
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
         std::move(cover),
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return fzn_global_cardinality_closed(
-      invariantGraph,
-      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
+      graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::move(cover),
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(3)));

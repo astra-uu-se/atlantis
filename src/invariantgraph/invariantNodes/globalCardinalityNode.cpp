@@ -5,13 +5,8 @@
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
-#include "atlantis/propagation/invariants/exists.hpp"
 #include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
-#include "atlantis/propagation/invariants/linear.hpp"
-#include "atlantis/propagation/views/equalConst.hpp"
-#include "atlantis/propagation/views/notEqualConst.hpp"
-#include "atlantis/propagation/violationInvariants/equal.hpp"
-#include "atlantis/propagation/violationInvariants/notEqual.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -20,7 +15,8 @@ GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& inputs,
                                              std::vector<VarNodeId>&& counts)
     : InvariantNode(std::move(counts), std::move(inputs)),
       _cover(std::move(cover)),
-      _countOffsets(_cover.size(), 0) {}
+      _countOffsets(_cover.size(), 0),
+      _intermediate(_cover.size(), propagation::NULL_ID) {}
 
 void GlobalCardinalityNode::init(InvariantGraph& graph,
                                  const InvariantNodeId& id) {
@@ -75,6 +71,7 @@ void GlobalCardinalityNode::updateState(InvariantGraph& graph) {
       graph.varNode(outputVarNodeIds()[i]).fixToValue(_countOffsets[i]);
       _countOffsets.erase(_countOffsets.begin() + i);
       _cover.erase(_cover.begin() + i);
+      _intermediate.erase(_intermediate.begin() + i);
       outputsToRemove.emplace_back(outputVarNodeIds()[i]);
     }
   }
@@ -90,37 +87,54 @@ bool GlobalCardinalityNode::canBeReplaced(const InvariantGraph&) const {
   return state() == InvariantNodeState::ACTIVE && _cover.size() <= 1;
 }
 
-bool GlobalCardinalityNode::replace(InvariantGraph& invariantGraph) {
-  if (!canBeReplaced(invariantGraph)) {
+bool GlobalCardinalityNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
     return false;
   }
   assert(_cover.size() == 1);
-  invariantGraph.addInvariantNode(std::make_unique<IntCountNode>(
+  graph.addInvariantNode(std::make_unique<IntCountNode>(
       std::vector<VarNodeId>(staticInputVarNodeIds()), _cover.front(),
       outputVarNodeIds().front()));
   return true;
 }
 
 void GlobalCardinalityNode::registerOutputVars(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
-  for (const VarNodeId& countOutput : outputVarNodeIds()) {
-    if (invariantGraph.varId(countOutput) == propagation::NULL_ID) {
-      makeSolverVar(solver, invariantGraph.varNode(countOutput));
+    InvariantGraph& graph, propagation::SolverBase& solver) {
+  for (size_t i = 0; i < _cover.size(); ++i) {
+    if (graph.varNodeConst(outputVarNodeIds().at(i)).varId() !=
+        propagation::NULL_ID) {
+      continue;
+    }
+    if (_countOffsets[i] == 0) {
+      makeSolverVar(solver, graph.varNode(outputVarNodeIds().at(i)));
+    } else {
+      _intermediate.at(i) = solver.makeIntVar(0, 0, 0);
+      graph.varNode(outputVarNodeIds().at(i))
+          .setVarId(solver.makeIntView<propagation::IntOffsetView>(
+              solver, _intermediate.at(i), _countOffsets[i]));
     }
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void GlobalCardinalityNode::registerNode(InvariantGraph& invariantGraph,
+void GlobalCardinalityNode::registerNode(InvariantGraph& graph,
                                          propagation::SolverBase& solver) {
   std::vector<propagation::VarId> inputVarIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputVarIds),
-                 [&](const auto& id) { return invariantGraph.varId(id); });
+                 [&](const auto& id) { return graph.varId(id); });
 
   std::vector<propagation::VarId> outputVarIds;
-  std::transform(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                 std::back_inserter(outputVarIds),
-                 [&](const auto& id) { return invariantGraph.varId(id); });
+  outputVarIds.reserve(outputVarNodeIds().size());
+  for (size_t i = 0; i < _cover.size(); ++i) {
+    outputVarIds.emplace_back(_intermediate.at(i) == propagation::NULL_ID
+                                  ? graph.varId(outputVarNodeIds().at(i))
+                                  : _intermediate.at(i));
+  }
 
   solver.makeInvariant<propagation::GlobalCardinalityOpen>(
       solver, std::move(outputVarIds), std::move(inputVarIds),

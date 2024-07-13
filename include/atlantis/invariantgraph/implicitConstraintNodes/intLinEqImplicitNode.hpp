@@ -11,11 +11,13 @@ namespace atlantis::invariantgraph {
 class IntLinEqImplicitNode : public ImplicitConstraintNode {
  private:
   std::vector<Int> _coeffs;
-  Int _bound;
+  Int _offset;
 
  public:
   explicit IntLinEqImplicitNode(std::vector<Int>&& coeffs,
-                                std::vector<VarNodeId>&&, Int bound);
+                                std::vector<VarNodeId>&&, Int offset);
+
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(

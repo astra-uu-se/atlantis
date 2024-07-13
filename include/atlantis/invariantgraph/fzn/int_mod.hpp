@@ -10,7 +10,6 @@ namespace atlantis::invariantgraph::fzn {
 bool int_mod(FznInvariantGraph&, const fznparser::IntArg& a,
              const fznparser::IntArg& b, const fznparser::IntArg& output);
 
-bool int_mod(FznInvariantGraph& invariantGraph,
-             const fznparser::Constraint& constraint);
+bool int_mod(FznInvariantGraph&, const fznparser::Constraint&);
 
 }  // namespace atlantis::invariantgraph::fzn

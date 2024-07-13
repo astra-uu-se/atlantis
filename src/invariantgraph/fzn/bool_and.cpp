@@ -7,15 +7,15 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool_and(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
+bool bool_and(FznInvariantGraph& graph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  invariantGraph.addInvariantNode(std::make_unique<ArrayBoolAndNode>(
-      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
-      invariantGraph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_unique<ArrayBoolAndNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+      graph.retrieveVarNode(reified)));
   return true;
 }
 
-bool bool_and(FznInvariantGraph& invariantGraph,
+bool bool_and(FznInvariantGraph& graph,
               const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "bool_and") {
     return false;
@@ -25,7 +25,7 @@ bool bool_and(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
 
-  return bool_and(invariantGraph,
+  return bool_and(graph,
                   std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                   std::get<fznparser::BoolArg>(constraint.arguments().at(1)),
                   std::get<fznparser::BoolArg>(constraint.arguments().at(2)));

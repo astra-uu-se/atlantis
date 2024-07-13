@@ -25,14 +25,18 @@ void IntModViewNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void IntModViewNode::registerOutputVars(InvariantGraph& invariantGraph,
+void IntModViewNode::registerOutputVars(InvariantGraph& graph,
                                         propagation::SolverBase& solver) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    invariantGraph.varNode(outputVarNodeIds().front())
+  if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::ModView>(
-            solver, invariantGraph.varId(input()), _denominator));
+            solver, graph.varId(input()), _denominator));
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void IntModViewNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}

@@ -36,8 +36,12 @@ ArrayVarElement2dNode::ArrayVarElement2dNode(
 void ArrayVarElement2dNode::init(InvariantGraph& graph,
                                  const InvariantNodeId& id) {
   InvariantNode::init(graph, id);
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& node) {
+                       return graph.varNodeConst(node).isIntVar();
+                     }));
   assert(std::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      dynamicInputVarNodeIds().begin(), dynamicInputVarNodeIds().end(),
       [&](const VarNodeId& node) {
         return graph.varNodeConst(outputVarNodeIds().front()).isIntVar() ==
                graph.varNodeConst(node).isIntVar();
@@ -55,8 +59,13 @@ VarNodeId ArrayVarElement2dNode::at(Int row, Int col) {
 }
 
 void ArrayVarElement2dNode::registerOutputVars(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+    InvariantGraph& graph, propagation::SolverBase& solver) {
+  makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 bool ArrayVarElement2dNode::canBeReplaced(const InvariantGraph& graph) const {
@@ -65,23 +74,23 @@ bool ArrayVarElement2dNode::canBeReplaced(const InvariantGraph& graph) const {
           graph.varNodeConst(idx2()).isFixed());
 }
 
-bool ArrayVarElement2dNode::replace(InvariantGraph& invariantGraph) {
-  if (!canBeReplaced(invariantGraph)) {
+bool ArrayVarElement2dNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
     return false;
   }
-  auto& idx1Node = invariantGraph.varNode(idx1());
-  auto& idx2Node = invariantGraph.varNode(idx2());
+  auto& idx1Node = graph.varNode(idx1());
+  auto& idx2Node = graph.varNode(idx2());
   assert(idx1Node.isFixed() || idx2Node.isFixed());
   if (idx1Node.isFixed() && idx2Node.isFixed()) {
     const VarNodeId input = at(idx1Node.lowerBound(), idx2Node.lowerBound());
-    invariantGraph.replaceVarNode(outputVarNodeIds().front(), input);
+    graph.replaceVarNode(outputVarNodeIds().front(), input);
   } else if (idx1Node.isFixed()) {
     std::vector<VarNodeId> column;
     column.reserve(_numRows);
     for (Int i = 0; i < static_cast<Int>(_numRows); ++i) {
       column.emplace_back(at(idx1Node.lowerBound(), i + _offset2));
     }
-    invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
+    graph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
         idx2(), std::move(column), outputVarNodeIds().front(), _offset2));
   } else {
     assert(idx2Node.isFixed());
@@ -91,13 +100,13 @@ bool ArrayVarElement2dNode::replace(InvariantGraph& invariantGraph) {
     for (Int i = 0; i < numCols; ++i) {
       row.emplace_back(at(i + _offset1, idx2Node.lowerBound()));
     }
-    invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
+    graph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
         idx1(), std::move(row), outputVarNodeIds().front(), _offset1));
   }
   return true;
 }
 
-void ArrayVarElement2dNode::registerNode(InvariantGraph& invariantGraph,
+void ArrayVarElement2dNode::registerNode(InvariantGraph& graph,
                                          propagation::SolverBase& solver) {
   const size_t numCols = dynamicInputVarNodeIds().size() / _numRows;
   std::vector<std::vector<propagation::VarId>> varMatrix(
@@ -105,17 +114,14 @@ void ArrayVarElement2dNode::registerNode(InvariantGraph& invariantGraph,
   for (size_t i = 0; i < _numRows; ++i) {
     for (size_t j = 0; j < numCols; ++j) {
       varMatrix.at(i).at(j) =
-          invariantGraph.varNode(dynamicInputVarNodeIds().at(i * numCols + j))
-              .varId();
+          graph.varNode(dynamicInputVarNodeIds().at(i * numCols + j)).varId();
     }
   }
 
-  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
   solver.makeInvariant<propagation::Element2dVar>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(idx1()), invariantGraph.varId(idx2()),
-      std::move(varMatrix), _offset1, _offset2);
+      solver, graph.varId(outputVarNodeIds().front()), graph.varId(idx1()),
+      graph.varId(idx2()), std::move(varMatrix), _offset1, _offset2);
 }
 
 }  // namespace atlantis::invariantgraph

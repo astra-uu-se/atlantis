@@ -21,7 +21,7 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
-      InvariantGraph& invariantGraph, propagation::SolverBase&) override;
+      InvariantGraph&, propagation::SolverBase&) override;
 };
 
 }  // namespace atlantis::invariantgraph

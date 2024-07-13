@@ -10,7 +10,7 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool makeAllDifferentImplicitNode(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
   if (intVarArray->size() <= 1) {
     return true;
@@ -22,15 +22,15 @@ bool makeAllDifferentImplicitNode(
     return true;
   }
 
-  std::vector<VarNodeId> varNodeIds = pruneAllDifferentFree(
-      invariantGraph, invariantGraph.retrieveVarNodes(intVarArray));
+  std::vector<VarNodeId> varNodeIds =
+      pruneAllDifferentFree(graph, graph.retrieveVarNodes(intVarArray));
 
-  invariantGraph.addImplicitConstraintNode(
+  graph.addImplicitConstraintNode(
       std::make_unique<AllDifferentImplicitNode>(std::move(varNodeIds)));
   return true;
 }
 
-bool makeAllDifferentImplicitNode(FznInvariantGraph& invariantGraph,
+bool makeAllDifferentImplicitNode(FznInvariantGraph& graph,
                                   const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "fzn_all_different_int") {
     return false;
@@ -40,8 +40,7 @@ bool makeAllDifferentImplicitNode(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
 
   return makeAllDifferentImplicitNode(
-      invariantGraph,
-      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)));
+      graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

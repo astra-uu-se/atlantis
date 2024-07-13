@@ -125,25 +125,28 @@ bool ArrayBoolXorNode::replace(InvariantGraph& graph) {
 
 void ArrayBoolXorNode::registerOutputVars(InvariantGraph& graph,
                                           propagation::SolverBase& solver) {
-  if (staticInputVarNodeIds().size() <= 1 ||
-      violationVarId(graph) != propagation::NULL_ID) {
-    return;
+  if (staticInputVarNodeIds().size() > 1 &&
+      violationVarId(graph) == propagation::NULL_ID) {
+    if (staticInputVarNodeIds().size() == 2) {
+      assert(isReified() || shouldHold());
+      registerViolation(graph, solver);
+      return;
+    }
+    _intermediate = solver.makeIntVar(0, 0, 0);
+    if (shouldHold()) {
+      setViolationVarId(graph, solver.makeIntView<propagation::EqualConst>(
+                                   solver, _intermediate, 1));
+    } else {
+      assert(!isReified() && staticInputVarNodeIds().size() > 2);
+      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
+                                   solver, _intermediate, 1));
+    }
   }
-
-  if (staticInputVarNodeIds().size() == 2) {
-    assert(isReified() || shouldHold());
-    registerViolation(graph, solver);
-    return;
-  }
-  _intermediate = solver.makeIntVar(0, 0, 0);
-  if (shouldHold()) {
-    setViolationVarId(graph, solver.makeIntView<propagation::EqualConst>(
-                                 solver, _intermediate, 1));
-  } else {
-    assert(!isReified() && staticInputVarNodeIds().size() > 2);
-    setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
-                                 solver, _intermediate, 1));
-  }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void ArrayBoolXorNode::registerNode(InvariantGraph& graph,

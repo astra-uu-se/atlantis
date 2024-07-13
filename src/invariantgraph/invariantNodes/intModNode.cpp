@@ -16,18 +16,22 @@ void IntModNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
   assert(graph.varNodeConst(denominator()).isIntVar());
 }
 
-void IntModNode::registerOutputVars(InvariantGraph& invariantGraph,
+void IntModNode::registerOutputVars(InvariantGraph& graph,
                                     propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+  makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void IntModNode::registerNode(InvariantGraph& invariantGraph,
+void IntModNode::registerNode(InvariantGraph& graph,
                               propagation::SolverBase& solver) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
   solver.makeInvariant<propagation::Mod>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(numerator()), invariantGraph.varId(denominator()));
+      solver, graph.varId(outputVarNodeIds().front()), graph.varId(numerator()),
+      graph.varId(denominator()));
 }
 
 VarNodeId IntModNode::numerator() const {

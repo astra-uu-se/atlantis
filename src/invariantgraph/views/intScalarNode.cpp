@@ -30,14 +30,18 @@ void IntScalarNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void IntScalarNode::registerOutputVars(InvariantGraph& invariantGraph,
+void IntScalarNode::registerOutputVars(InvariantGraph& graph,
                                        propagation::SolverBase& solver) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    invariantGraph.varNode(outputVarNodeIds().front())
+  if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::ScalarView>(
-            solver, invariantGraph.varId(input()), _factor, _offset));
+            solver, graph.varId(input()), _factor, _offset));
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
 void IntScalarNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}

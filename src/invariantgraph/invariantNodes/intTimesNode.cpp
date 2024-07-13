@@ -75,39 +75,42 @@ bool IntTimesNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void IntTimesNode::registerOutputVars(InvariantGraph& invariantGraph,
+void IntTimesNode::registerOutputVars(InvariantGraph& graph,
                                       propagation::SolverBase& solver) {
-  if (staticInputVarNodeIds().empty()) {
-    return;
-  } else if (_scalar != 1) {
-    if (staticInputVarNodeIds().size() == 1) {
-      invariantGraph.varNode(outputVarNodeIds().front())
-          .setVarId(solver.makeIntView<propagation::ScalarView>(
-              solver, invariantGraph.varId(staticInputVarNodeIds().front()),
-              _scalar));
+  if (!staticInputVarNodeIds().empty()) {
+    if (_scalar != 1) {
+      if (staticInputVarNodeIds().size() == 1) {
+        graph.varNode(outputVarNodeIds().front())
+            .setVarId(solver.makeIntView<propagation::ScalarView>(
+                solver, graph.varId(staticInputVarNodeIds().front()), _scalar));
+      } else {
+        _intermediate = solver.makeIntVar(0, 0, 0);
+        graph.varNode(outputVarNodeIds().front())
+            .setVarId(solver.makeIntView<propagation::ScalarView>(
+                solver, _intermediate, _scalar));
+      }
     } else {
-      _intermediate = solver.makeIntVar(0, 0, 0);
-      invariantGraph.varNode(outputVarNodeIds().front())
-          .setVarId(solver.makeIntView<propagation::ScalarView>(
-              solver, _intermediate, _scalar));
+      makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
     }
-  } else {
-    makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void IntTimesNode::registerNode(InvariantGraph& invariantGraph,
+void IntTimesNode::registerNode(InvariantGraph& graph,
                                 propagation::SolverBase& solver) {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
 
   solver.makeInvariant<propagation::Times>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(staticInputVarNodeIds().front()),
-      invariantGraph.varId(staticInputVarNodeIds().back()));
+      solver, graph.varId(outputVarNodeIds().front()),
+      graph.varId(staticInputVarNodeIds().front()),
+      graph.varId(staticInputVarNodeIds().back()));
 }
 
 }  // namespace atlantis::invariantgraph

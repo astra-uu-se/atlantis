@@ -7,25 +7,21 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool2int(FznInvariantGraph& invariantGraph,
-              const fznparser::BoolArg& boolArg,
+bool bool2int(FznInvariantGraph& graph, const fznparser::BoolArg& boolArg,
               const fznparser::IntArg& intArg) {
-  invariantGraph.addInvariantNode(
-      std::make_unique<Bool2IntNode>(invariantGraph.retrieveVarNode(boolArg),
-                                     invariantGraph.retrieveVarNode(intArg)));
+  graph.addInvariantNode(std::make_unique<Bool2IntNode>(
+      graph.retrieveVarNode(boolArg), graph.retrieveVarNode(intArg)));
   return true;
 }
 
-bool int2bool(FznInvariantGraph& invariantGraph,
-              const fznparser::BoolArg& boolArg,
+bool int2bool(FznInvariantGraph& graph, const fznparser::BoolArg& boolArg,
               const fznparser::IntArg& intArg) {
-  invariantGraph.addInvariantNode(
-      std::make_unique<Int2BoolNode>(invariantGraph.retrieveVarNode(intArg),
-                                     invariantGraph.retrieveVarNode(boolArg)));
+  graph.addInvariantNode(std::make_unique<Int2BoolNode>(
+      graph.retrieveVarNode(intArg), graph.retrieveVarNode(boolArg)));
   return true;
 }
 
-bool bool2int(FznInvariantGraph& invariantGraph,
+bool bool2int(FznInvariantGraph& graph,
               const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "bool2int") {
     return false;
@@ -38,12 +34,12 @@ bool bool2int(FznInvariantGraph& invariantGraph,
   if (constraint.definedVar().has_value() &&
       std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(
           constraint.definedVar().value())) {
-    return int2bool(invariantGraph,
+    return int2bool(graph,
                     std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                     std::get<fznparser::IntArg>(constraint.arguments().at(1)));
   }
 
-  return bool2int(invariantGraph,
+  return bool2int(graph,
                   std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                   std::get<fznparser::IntArg>(constraint.arguments().at(1)));
 }

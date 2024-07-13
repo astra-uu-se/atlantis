@@ -231,7 +231,9 @@ void InvariantGraph::replaceInvariantNodes() {
 void InvariantGraph::replaceFixedVars() {
   // replace all fixed input variables:
   for (VarNode& varNode : _varNodes) {
-    if (varNode.definingNodes().empty() && !varNode.inputTo().empty() &&
+    if (varNode.definingNodes().empty() &&
+        (!varNode.staticInputTo().empty() ||
+         !varNode.dynamicInputTo().empty()) &&
         varNode.isFixed()) {
       const VarNodeId vId = varNode.varNodeId();
       if (varNode.isIntVar()) {
@@ -380,7 +382,7 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
   while (!oldNode.dynamicInputTo().empty()) {
     const InvariantNodeId invNodeId = oldNode.dynamicInputTo().front();
     invariantNode(oldNode.dynamicInputTo().front())
-        .replaceStaticInputVarNode(oldNode, newNode);
+        .replaceDynamicInputVarNode(oldNode, newNode);
     assert(std::none_of(
         oldNode.dynamicInputTo().begin(), oldNode.dynamicInputTo().end(),
         [&](const InvariantNodeId& id) { return id == invNodeId; }));
@@ -397,7 +399,7 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
                     [&](const VarNodeId& id) { return id == newNodeId; }));
   }
   assert(oldNode.dynamicInputTo().empty());
-  assert(oldNode.inputTo().empty());
+  assert(oldNode.staticInputTo().empty());
 
   if (oldNode.isFixed()) {
     if (oldNode.isIntVar() &&
@@ -535,23 +537,37 @@ void InvariantGraph::splitMultiDefinedVars() {
 
 InvariantGraph::Edge InvariantGraph::findPivotInCycle(
     const std::vector<Edge>& cycle) {
-// Each edge (v, i) is from a variable v to an invariant that v is a static
-// input variable to
+  // Each edge (i, v) is from invariant i to variable v that i defines
+  // For each subsequent edges (i1, v1), (i2, v2) in the cycle (wrapped around)
+  // v1 is a static input to i2
+  assert(cycle.size() > 1);
 #ifndef NDEBUG
   for (size_t i = 0; i < cycle.size(); ++i) {
-    const VarNode& input =
-        varNode(cycle.at((i + cycle.size() - 1) % cycle.size()).varNodeId);
+    const size_t inputIndex = (i + cycle.size() - 1) % cycle.size();
+    const VarNode& input = varNode(cycle.at(inputIndex).varNodeId);
     InvariantNode& invNode = invariantNode(cycle.at(i).invariantNodeId);
     const VarNode& output = varNode(cycle.at(i).varNodeId);
 
-    assert(std::any_of(
-        invNode.staticInputVarNodeIds().begin(),
-        invNode.staticInputVarNodeIds().end(),
-        [&](const VarNodeId& vId) { return vId == input.varNodeId(); }));
+    assert(std::any_of(invNode.staticInputVarNodeIds().begin(),
+                       invNode.staticInputVarNodeIds().end(),
+                       [&](const VarNodeId& vId) {
+                         return vId == input.varNodeId();
+                       }) ||
+           std::any_of(
+               invNode.dynamicInputVarNodeIds().begin(),
+               invNode.dynamicInputVarNodeIds().end(),
+               [&](const VarNodeId& vId) { return vId == input.varNodeId(); }));
 
-    assert(std::any_of(
-        input.staticInputTo().begin(), input.staticInputTo().end(),
-        [&](const InvariantNodeId& invId) { return invId == invNode.id(); }));
+    assert(std::any_of(input.staticInputTo().begin(),
+                       input.staticInputTo().end(),
+                       [&](const InvariantNodeId& invId) {
+                         return invId == invNode.id();
+                       }) ||
+           std::any_of(input.dynamicInputTo().begin(),
+                       input.dynamicInputTo().end(),
+                       [&](const InvariantNodeId& invId) {
+                         return invId == invNode.id();
+                       }));
 
     assert(std::any_of(
         output.definingNodes().begin(), output.definingNodes().end(),
@@ -562,19 +578,26 @@ InvariantGraph::Edge InvariantGraph::findPivotInCycle(
         [&](const VarNodeId& vId) { return vId == output.varNodeId(); }));
   }
 #endif
-  assert(!cycle.empty());
-  VarNodeId pivot = cycle.front().varNodeId;
-  InvariantNodeId listeningInvariant = cycle.back().invariantNodeId;
+  VarNodeId pivot = cycle[0].varNodeId;
+  InvariantNodeId listeningInvNodeId = cycle[1].invariantNodeId;
 
   assert(std::any_of(
-      invariantNode(listeningInvariant).staticInputVarNodeIds().begin(),
-      invariantNode(listeningInvariant).staticInputVarNodeIds().end(),
-      [&](VarNodeId input) { return input == pivot; }));
+             invariantNode(listeningInvNodeId).staticInputVarNodeIds().begin(),
+             invariantNode(listeningInvNodeId).staticInputVarNodeIds().end(),
+             [&](VarNodeId input) { return input == pivot; }) ||
+         std::any_of(
+             invariantNode(listeningInvNodeId).dynamicInputVarNodeIds().begin(),
+             invariantNode(listeningInvNodeId).dynamicInputVarNodeIds().end(),
+             [&](VarNodeId input) { return input == pivot; }));
 
   assert(std::any_of(
-      varNodeConst(pivot).staticInputTo().begin(),
-      varNodeConst(pivot).staticInputTo().end(),
-      [&](InvariantNodeId inv) { return inv == listeningInvariant; }));
+             varNodeConst(pivot).staticInputTo().begin(),
+             varNodeConst(pivot).staticInputTo().end(),
+             [&](InvariantNodeId inv) { return inv == listeningInvNodeId; }) ||
+         std::any_of(
+             varNodeConst(pivot).dynamicInputTo().begin(),
+             varNodeConst(pivot).dynamicInputTo().end(),
+             [&](InvariantNodeId inv) { return inv == listeningInvNodeId; }));
 
   size_t minDomainSize = varNodeConst(pivot).isIntVar()
                              ? varNodeConst(pivot).constDomain().size()
@@ -585,16 +608,24 @@ InvariantGraph::Edge InvariantGraph::findPivotInCycle(
     if (!vNode.isIntVar() || vNode.constDomain().size() < minDomainSize) {
       minDomainSize = !vNode.isIntVar() ? 2 : vNode.constDomain().size();
       pivot = vNode.varNodeId();
-      listeningInvariant = cycle.at(i - 1).invariantNodeId;
-      assert(std::any_of(
-          invariantNode(listeningInvNodeId).staticInputVarNodeIds().begin(),
-          invariantNode(listeningInvNodeId).staticInputVarNodeIds().end(),
-          [&](const VarNodeId& input) { return input == pivot; }));
+      const size_t inputIndex = (i + cycle.size() - 1) % cycle.size();
+      listeningInvNodeId = cycle[inputIndex].invariantNodeId;
+      assert(
+          std::any_of(
+              invariantNode(listeningInvNodeId).staticInputVarNodeIds().begin(),
+              invariantNode(listeningInvNodeId).staticInputVarNodeIds().end(),
+              [&](const VarNodeId& input) { return input == pivot; }) ||
+          std::any_of(
+              invariantNode(listeningInvNodeId)
+                  .dynamicInputVarNodeIds()
+                  .begin(),
+              invariantNode(listeningInvNodeId).dynamicInputVarNodeIds().end(),
+              [&](const VarNodeId& input) { return input == pivot; }));
     }
   }
   assert(pivot != NULL_NODE_ID);
   assert(minDomainSize > 0);
-  return Edge{listeningInvariant, pivot};
+  return Edge{listeningInvNodeId, pivot};
 }
 
 VarNodeId InvariantGraph::breakCycle(const std::vector<Edge>& cycle) {
@@ -670,12 +701,20 @@ VarNodeId InvariantGraph::findCycleUtil(
     const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal,
     std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
     std::unordered_map<VarNodeId, Edge, VarNodeIdHash>& path) {
+  assert(!path.contains(varNodeId));
   // The path here is a map (x, (i, y)), where the variable x is a static input
   // to invariant i and y is an output variable of i.
   // Note therefore that each Edge is from an invariant i to a variable y that i
   // defines.
   if (visitedGlobal.contains(varNodeId)) {
+    assert(!path.contains(varNodeId));
     return VarNodeId(NULL_NODE_ID);
+  }
+
+  if (visitedLocal.contains(varNodeId)) {
+    // this variable is part of a cycle, return the root node of the cycle:
+    assert(path.contains(varNodeId));
+    return path.at(varNodeId).varNodeId;
   }
 
   visitedLocal.emplace(varNodeId);
@@ -690,23 +729,36 @@ VarNodeId InvariantGraph::findCycleUtil(
       // iterate over all variables that the invariant defines:
       for (const VarNodeId& definedVarId :
            invariantNode(listeningInvNodeId).outputVarNodeIds()) {
-        if (!visitedGlobal.contains(definedVarId) &&
-            !visitedLocal.contains(definedVarId)) {
+        if (path.contains(definedVarId)) {
+          assert(visitedLocal.contains(definedVarId));
+          // this is the first variable that is in the cycle
+          // add the last edge to the path (each edge is from a defining
+          // invariant i to a variable i defines):
+          auto iter = path.find(varNodeId);
+          if (iter == path.end()) {
+            path.emplace(varNodeId, Edge{listeningInvNodeId, definedVarId});
+          } else {
+            iter->second.invariantNodeId = listeningInvNodeId;
+            iter->second.varNodeId = definedVarId;
+          }
+          // return the root node of the cycle:
+          return definedVarId;
+        } else if (!visitedGlobal.contains(definedVarId) &&
+                   !visitedLocal.contains(definedVarId)) {
           // we have not visited this variable yet, add it to the path:
           // each edge is from a defining invariant i to a variable i defines:
-          path.emplace(varNodeId, Edge{listeningInvNodeId, definedVarId});
+          auto iter = path.find(varNodeId);
+          if (iter == path.end()) {
+            path.emplace(varNodeId, Edge{listeningInvNodeId, definedVarId});
+          } else {
+            iter->second.invariantNodeId = listeningInvNodeId;
+            iter->second.varNodeId = definedVarId;
+          }
           const VarNodeId cycleRoot =
               findCycleUtil(definedVarId, visitedGlobal, visitedLocal, path);
           if (cycleRoot != NULL_NODE_ID) {
             return cycleRoot;
           }
-        } else if (path.contains(definedVarId)) {
-          // this is the first variable that is in the cycle
-          // add the last edge to the path (each edge is from a defining
-          // invariant i to a variable i defines):
-          path.emplace(varNodeId, Edge{listeningInvNodeId, definedVarId});
-          // return the root node of the cycle:
-          return definedVarId;
         }
       }
     }
@@ -800,7 +852,8 @@ void InvariantGraph::breakCycles() {
   }
 
   for (const VarNode& vNode : _varNodes) {
-    if (vNode.definingNodes().empty() && !vNode.inputTo().empty()) {
+    if (vNode.definingNodes().empty() &&
+        (!vNode.staticInputTo().empty() || !vNode.dynamicInputTo().empty())) {
       assert(vNode.isFixed());
       assert((vNode.isIntVar() &&
               varNodeId(vNode.lowerBound()) == vNode.varNodeId()) ||

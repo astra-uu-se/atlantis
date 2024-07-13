@@ -6,29 +6,28 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool fzn_count_lt(FznInvariantGraph& invariantGraph,
+bool fzn_count_lt(FznInvariantGraph& graph,
                   const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count) {
-  const VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  invariantGraph.addInvariantNode(std::make_unique<IntLtNode>(
-      output, invariantGraph.retrieveVarNode(count)));
+  const VarNodeId output = createCountNode(graph, inputs, needle);
+  graph.addInvariantNode(
+      std::make_unique<IntLtNode>(output, graph.retrieveVarNode(count)));
   return true;
 }
 
-bool fzn_count_lt(FznInvariantGraph& invariantGraph,
+bool fzn_count_lt(FznInvariantGraph& graph,
                   const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count,
                   const fznparser::BoolArg& reified) {
-  const VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  invariantGraph.addInvariantNode(
-      std::make_unique<IntLtNode>(output, invariantGraph.retrieveVarNode(count),
-                                  invariantGraph.retrieveVarNode(reified)));
+  const VarNodeId output = createCountNode(graph, inputs, needle);
+  graph.addInvariantNode(std::make_unique<IntLtNode>(
+      output, graph.retrieveVarNode(count), graph.retrieveVarNode(reified)));
   return true;
 }
 
-bool fzn_count_lt(FznInvariantGraph& invariantGraph,
+bool fzn_count_lt(FznInvariantGraph& graph,
                   const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "fzn_count_lt" &&
       constraint.identifier() != "fzn_count_lt_reif") {
@@ -43,15 +42,14 @@ bool fzn_count_lt(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true)
   if (!isReified) {
     return fzn_count_lt(
-        invariantGraph,
+        graph,
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
         std::get<fznparser::IntArg>(constraint.arguments().at(1)),
         std::get<fznparser::IntArg>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return fzn_count_lt(
-      invariantGraph,
-      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
+      graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)));
 }

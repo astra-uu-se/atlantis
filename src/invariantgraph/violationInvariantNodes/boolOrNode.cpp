@@ -24,28 +24,31 @@ void BoolOrNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                       }));
 }
 
-void BoolOrNode::registerOutputVars(InvariantGraph& invariantGraph,
+void BoolOrNode::registerOutputVars(InvariantGraph& graph,
                                     propagation::SolverBase& solver) {
-  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+  if (violationVarId(graph) == propagation::NULL_ID) {
     if (shouldHold()) {
-      registerViolation(invariantGraph, solver);
+      registerViolation(graph, solver);
     } else {
       assert(!isReified());
       _intermediate = solver.makeIntVar(0, 0, 0);
-      setViolationVarId(invariantGraph,
-                        solver.makeIntView<propagation::NotEqualConst>(
-                            solver, _intermediate, 0));
+      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
+                                   solver, _intermediate, 0));
     }
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void BoolOrNode::registerNode(InvariantGraph& invariantGraph,
+void BoolOrNode::registerNode(InvariantGraph& graph,
                               propagation::SolverBase& solver) {
-  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  assert(violationVarId(graph) != propagation::NULL_ID);
 
-  solver.makeInvariant<propagation::BoolOr>(
-      solver, violationVarId(invariantGraph), invariantGraph.varId(a()),
-      invariantGraph.varId(b()));
+  solver.makeInvariant<propagation::BoolOr>(solver, violationVarId(graph),
+                                            graph.varId(a()), graph.varId(b()));
 }
 
 }  // namespace atlantis::invariantgraph

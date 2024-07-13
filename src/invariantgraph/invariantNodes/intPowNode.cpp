@@ -19,18 +19,22 @@ void IntPowNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void IntPowNode::registerOutputVars(InvariantGraph& invariantGraph,
+void IntPowNode::registerOutputVars(InvariantGraph& graph,
                                     propagation::SolverBase& solver) {
-  makeSolverVar(solver, invariantGraph.varNode(outputVarNodeIds().front()));
+  makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void IntPowNode::registerNode(InvariantGraph& invariantGraph,
+void IntPowNode::registerNode(InvariantGraph& graph,
                               propagation::SolverBase& solver) {
-  assert(invariantGraph.varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
   solver.makeInvariant<propagation::Pow>(
-      solver, invariantGraph.varId(outputVarNodeIds().front()),
-      invariantGraph.varId(base()), invariantGraph.varId(exponent()));
+      solver, graph.varId(outputVarNodeIds().front()), graph.varId(base()),
+      graph.varId(exponent()));
 }
 
 VarNodeId IntPowNode::base() const { return staticInputVarNodeIds().front(); }
