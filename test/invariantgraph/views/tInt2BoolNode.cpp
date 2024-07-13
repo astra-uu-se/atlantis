@@ -1,42 +1,42 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/views/intScalarNode.hpp"
+#include "atlantis/invariantgraph/views/int2BoolNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
+class Int2BoolNodeTestFixture : public NodeTestBase<Int2BoolNode> {
  public:
   VarNodeId inputVarNodeId{NULL_NODE_ID};
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string inputIdentifier{"input"};
   std::string outputIdentifier{"output"};
 
-  Int factor{2};
-  Int offset{5};
+  bool computeOutput() { return varNode(inputIdentifier).inDomain(Int{1}); }
 
-  Int computeOutput() {
-    return varNode(inputVarNodeId).domain().lowerBound() * factor + offset;
-  }
-
-  Int computeOutput(propagation::Solver& solver) {
-    return solver.currentValue(varId(inputVarNodeId)) * factor + offset;
+  bool computeOutput(propagation::Solver& solver) {
+    return solver.currentValue(varId(inputIdentifier)) == 1;
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    const Int lb = -10;
-    const Int ub = 10;
-    inputVarNodeId = retrieveIntVarNode(lb, ub, inputIdentifier);
-    outputVarNodeId = retrieveIntVarNode(
-        lb * factor + offset, ub * factor + offset, outputIdentifier);
+    inputVarNodeId = retrieveIntVarNode(0, 1, inputIdentifier);
+    outputVarNodeId = retrieveBoolVarNode(outputIdentifier);
 
-    createInvariantNode(inputVarNodeId, outputVarNodeId, factor, offset);
+    if (shouldBeSubsumed()) {
+      if (_paramData.data == 0) {
+        varNode(inputVarNodeId).fixToValue(Int{0});
+      } else {
+        varNode(outputVarNodeId).fixToValue(bool{true});
+      }
+    }
+
+    createInvariantNode(inputVarNodeId, outputVarNodeId);
   }
 };
 
-TEST_P(IntScalarNodeTestFixture, construction) {
+TEST_P(Int2BoolNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
@@ -46,7 +46,7 @@ TEST_P(IntScalarNodeTestFixture, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
 }
 
-TEST_P(IntScalarNodeTestFixture, application) {
+TEST_P(Int2BoolNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -67,15 +67,15 @@ TEST_P(IntScalarNodeTestFixture, application) {
   EXPECT_EQ(solver.numVars(), 1);
 }
 
-TEST_P(IntScalarNodeTestFixture, updateState) {
+TEST_P(Int2BoolNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState(*_invariantGraph);
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
     EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
-    const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).domain().lowerBound();
+    const bool expected = computeOutput();
+    const bool actual = varNode(outputVarNodeId).inDomain(bool{true});
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -83,7 +83,7 @@ TEST_P(IntScalarNodeTestFixture, updateState) {
   }
 }
 
-TEST_P(IntScalarNodeTestFixture, propagation) {
+TEST_P(Int2BoolNodeTestFixture, propagation) {
   if (shouldBeSubsumed()) {
     return;
   }
@@ -107,14 +107,16 @@ TEST_P(IntScalarNodeTestFixture, propagation) {
     solver.query(outputId);
     solver.endProbe();
 
-    const Int expected = computeOutput(solver);
-    const Int actual = solver.currentValue(outputId);
+    const bool expected = computeOutput(solver);
+    const bool actual = solver.currentValue(outputId) == 0;
     EXPECT_EQ(expected, actual);
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(IntScalarNodeTest, IntScalarNodeTestFixture,
-                         ::testing::Values(ParamData{
-                             InvariantNodeAction::NONE}));
+INSTANTIATE_TEST_SUITE_P(
+    Int2BoolNodeTest, Int2BoolNodeTestFixture,
+    ::testing::Values(ParamData{},
+                      ParamData{InvariantNodeAction::REPLACE, int{0}},
+                      ParamData{InvariantNodeAction::REPLACE, int{1}}));
 
 }  // namespace atlantis::testing

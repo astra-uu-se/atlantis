@@ -74,7 +74,7 @@ bool ArrayElement2dNode::replace(InvariantGraph& invariantGraph) {
   }
   if (invariantGraph.varNode(idx1()).isFixed()) {
     assert(invariantGraph.varNode(idx1()).lowerBound() >= _offset1);
-    assert(invariantGraph.varNode(idx1()).lowerBound() <
+    assert(invariantGraph.varNode(idx1()).lowerBound() <=
            static_cast<Int>(_parMatrix.size()) - _offset1);
 
     invariantGraph.addInvariantNode(std::make_unique<ArrayElementNode>(

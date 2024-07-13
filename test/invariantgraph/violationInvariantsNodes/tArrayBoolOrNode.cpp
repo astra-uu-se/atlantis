@@ -13,13 +13,14 @@ using ::testing::ContainerEq;
 class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
  public:
   std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<std::string> inputIdentifiers;
   VarNodeId reifiedVarNodeId{NULL_NODE_ID};
   std::string reifiedIdentifier{"reified"};
   Int numInputs = 4;
 
   bool isViolating() {
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      if (varNode(inputVarNodeId).inDomain(bool{true})) {
+    for (const auto& identifier : inputIdentifiers) {
+      if (varNode(identifier).inDomain(bool{true})) {
         return false;
       }
     }
@@ -27,13 +28,13 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
   }
 
   bool isViolating(propagation::Solver& solver) {
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      if (varNode(inputVarNodeId).isFixed()) {
-        if (varNode(inputVarNodeId).inDomain(bool{true})) {
+    for (const auto& identifier : inputIdentifiers) {
+      if (varNode(identifier).isFixed()) {
+        if (varNode(identifier).inDomain(bool{true})) {
           return false;
         }
       } else {
-        if (solver.currentValue(varId(inputVarNodeId)) == 0) {
+        if (solver.currentValue(varId(identifier)) == 0) {
           return false;
         }
       }
@@ -46,8 +47,9 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
     inputVarNodeIds.clear();
     inputVarNodeIds.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
+      inputIdentifiers.emplace_back("input_" + std::to_string(i));
       inputVarNodeIds.emplace_back(
-          retrieveBoolVarNode("input_" + std::to_string(i)));
+          retrieveBoolVarNode(inputIdentifiers.back()));
     }
 
     if (shouldBeSubsumed()) {
@@ -150,6 +152,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating(solver);
@@ -166,12 +169,17 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
     }
     return;
   }
+  if (shouldBeReplaced()) {
+    EXPECT_TRUE(isReified());
+    EXPECT_FALSE(varNode(reifiedIdentifier).isFixed());
+    return;
+  }
 
   std::vector<propagation::VarId> inputVarIds;
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    if (!varNode(inputVarNodeId).isFixed()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& identifier : inputIdentifiers) {
+    if (!varNode(identifier).isFixed()) {
+      EXPECT_NE(varId(identifier), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(identifier));
     }
   }
 

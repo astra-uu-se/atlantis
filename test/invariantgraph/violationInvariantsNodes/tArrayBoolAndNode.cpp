@@ -13,13 +13,14 @@ using ::testing::ContainerEq;
 class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
  public:
   std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<std::string> inputIdentifiers;
   VarNodeId reifiedVarNodeId{NULL_NODE_ID};
   std::string reifiedIdentifier{"reified"};
   Int numInputs = 4;
 
   bool isViolating() {
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      if (varNode(inputVarNodeId).inDomain(bool{false})) {
+    for (const auto& identifier : inputIdentifiers) {
+      if (varNode(identifier).inDomain(bool{false})) {
         return true;
       }
     }
@@ -27,13 +28,14 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
   }
 
   bool isViolating(propagation::Solver& solver) {
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      if (varNode(inputVarNodeId).isFixed()) {
-        if (varNode(inputVarNodeId).inDomain(bool{false})) {
+    for (const auto& identifier : inputIdentifiers) {
+      if (varNode(identifier).isFixed()) {
+        if (varNode(identifier).inDomain(bool{false})) {
           return true;
         }
       } else {
-        if (solver.currentValue(varId(inputVarNodeId)) > 0) {
+        EXPECT_NE(varId(identifier), propagation::NULL_ID);
+        if (solver.currentValue(varId(identifier)) > 0) {
           return true;
         }
       }
@@ -45,18 +47,21 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
     NodeTestBase::SetUp();
     inputVarNodeIds.clear();
     inputVarNodeIds.reserve(numInputs);
+    inputIdentifiers.clear();
+    inputIdentifiers.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
+      inputIdentifiers.emplace_back("input_" + std::to_string(i));
       inputVarNodeIds.emplace_back(
-          retrieveBoolVarNode("input_" + std::to_string(i)));
+          retrieveBoolVarNode(inputIdentifiers.back()));
     }
 
     if (shouldBeSubsumed()) {
-      for (const auto& inputVarNodeId : inputVarNodeIds) {
-        varNode(inputVarNodeId).fixToValue(!shouldFail());
+      for (const auto& identifier : inputIdentifiers) {
+        varNode(identifier).fixToValue(!shouldFail());
       }
     } else if (shouldBeReplaced()) {
-      for (size_t i = 1; i < inputVarNodeIds.size(); ++i) {
-        varNode(inputVarNodeIds.at(i)).fixToValue(!shouldFail());
+      for (size_t i = 1; i < inputIdentifiers.size(); ++i) {
+        varNode(inputIdentifiers.at(i)).fixToValue(!shouldFail());
       }
     }
 
@@ -151,17 +156,20 @@ TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
-  std::vector<propagation::VarId> inputVarIds;
-  for (const auto& inputNodeId : inputVarNodeIds) {
-    if (!varNode(inputNodeId).isFixed()) {
-      EXPECT_NE(varId(inputNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputNodeId));
-    }
+  if (shouldBeReplaced() && isReified()) {
+    EXPECT_EQ(varId(reifiedIdentifier), propagation::NULL_ID);
+    EXPECT_FALSE(varNode(reifiedIdentifier).isFixed());
+    return;
   }
 
-  EXPECT_EQ(inputVarIds.empty(), shouldBeSubsumed());
+  const propagation::VarId violVarId =
+      isReified() ? varId(reifiedIdentifier)
+                  : _invariantGraph->totalViolationVarId();
+
   if (shouldBeSubsumed()) {
+    EXPECT_TRUE(shouldBeSubsumed() || shouldBeReplaced());
     const bool expected = isViolating(solver);
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
@@ -177,9 +185,15 @@ TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
     return;
   }
 
-  const propagation::VarId violVarId =
-      isReified() ? varId(reifiedIdentifier)
-                  : _invariantGraph->totalViolationVarId();
+  std::vector<propagation::VarId> inputVarIds;
+  for (const auto& identifier : inputIdentifiers) {
+    if (!varNode(identifier).isFixed()) {
+      EXPECT_NE(varId(identifier), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(identifier));
+    }
+  }
+
+  EXPECT_EQ(inputVarIds.empty(), shouldBeSubsumed());
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 

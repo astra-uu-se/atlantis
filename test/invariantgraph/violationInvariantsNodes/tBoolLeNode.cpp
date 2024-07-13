@@ -151,9 +151,17 @@ TEST_P(BoolLeNodeTestFixture, propagation) {
   }
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
+
+  if (shouldBeReplaced() && varId(reifiedIdentifier) == propagation::NULL_ID) {
+    EXPECT_TRUE(isReified());
+    EXPECT_EQ(varId(reifiedIdentifier), propagation::NULL_ID);
+    EXPECT_FALSE(varNode(reifiedIdentifier).isFixed());
+    return;
+  }
 
   if (shouldBeSubsumed()) {
-    const bool expected = isViolating(solver);
+    const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
       const bool actual = varNode(reifiedIdentifier).inDomain({false});

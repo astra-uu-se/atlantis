@@ -20,6 +20,10 @@ namespace atlantis::invariantgraph {
 
 class InvariantGraph {
  private:
+  struct Edge {
+    InvariantNodeId invariantNodeId;
+    VarNodeId varNodeId;
+  };
   std::vector<VarNode> _varNodes;
   std::unordered_map<std::string, VarNodeId> _namedVarNodeIndices;
   std::unordered_map<Int, VarNodeId> _intVarNodeIndices;
@@ -27,6 +31,7 @@ class InvariantGraph {
 
   std::vector<std::unique_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
+  bool _breakDynamicCycles;
 
   void populateRootNode();
 
@@ -35,7 +40,7 @@ class InvariantGraph {
   VarNodeId _objectiveVarNodeId;
 
  public:
-  InvariantGraph();
+  InvariantGraph(bool breakDynamicCycles = false);
   virtual ~InvariantGraph() = default;
 
   InvariantGraph(const InvariantGraph&) = delete;
@@ -119,6 +124,8 @@ class InvariantGraph {
 
   void apply(propagation::SolverBase&);
 
+  void close(propagation::SolverBase&);
+
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
       VarNodeId node,
@@ -128,22 +135,20 @@ class InvariantGraph {
       VarNodeId varNodeId,
       const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
-      std::unordered_map<VarNodeId, std::pair<InvariantNodeId, VarNodeId>,
-                         VarNodeIdHash>& path);
+      std::unordered_map<VarNodeId, Edge, VarNodeIdHash>& path);
 
-  std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
-      const std::vector<std::pair<VarNodeId, InvariantNodeId>>& cycle);
+  Edge findPivotInCycle(const std::vector<Edge>& cycle);
 
   std::vector<VarNodeId> breakCycles(
       VarNodeId node,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
-  VarNodeId breakCycle(
-      const std::vector<std::pair<VarNodeId, InvariantNodeId>>& cycle);
+  VarNodeId breakCycle(const std::vector<Edge>& cycle);
 
   void createVars(propagation::SolverBase&);
   void createImplicitConstraints(propagation::SolverBase&);
   void createInvariants(propagation::SolverBase&);
   propagation::VarId createViolations(propagation::SolverBase&);
+  void sanity(bool);
 };
 
 }  // namespace atlantis::invariantgraph

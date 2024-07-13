@@ -3,7 +3,7 @@ include "nosets.mzn";
 % add the annotation for computed domains. The domain constraint for a variable 
 % with the computed domain annotation can be ignored (no domain violation 
 % invariant has to be added to the invariant graph):
-mzn_opt_annotate_computed_domains = true;
+% mzn_opt_annotate_computed_domains = true;
 % Ignore symmetry breaking constraints: 
 mzn_ignore_symmetry_breaking_constraints=true;
 %

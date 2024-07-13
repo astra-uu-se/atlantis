@@ -11,25 +11,26 @@ class ArrayIntMinimumNodeTestFixture
     : public NodeTestBase<ArrayIntMinimumNode> {
  public:
   std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<std::string> inputIdentifiers;
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
   Int computeOutput() {
     Int val = std::numeric_limits<Int>::max();
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      val = std::min(val, varNode(inputVarNodeId).upperBound());
+    for (const auto& identifier : inputIdentifiers) {
+      val = std::min(val, varNode(identifier).upperBound());
     }
     return val;
   }
 
   Int computeOutput(propagation::Solver& solver) {
     Int val = std::numeric_limits<Int>::max();
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      if (varNode(inputVarNodeId).isFixed() ||
-          varId(inputVarNodeId) == propagation::NULL_ID) {
-        val = std::min(val, varNode(inputVarNodeId).upperBound());
+    for (const auto& identifier : inputIdentifiers) {
+      if (varNode(identifier).isFixed() ||
+          varId(identifier) == propagation::NULL_ID) {
+        val = std::min(val, varNode(identifier).upperBound());
       } else {
-        val = std::min(val, solver.currentValue(varId(inputVarNodeId)));
+        val = std::min(val, solver.currentValue(varId(identifier)));
       }
     }
     return val;
@@ -38,19 +39,21 @@ class ArrayIntMinimumNodeTestFixture
   void SetUp() override {
     NodeTestBase::SetUp();
 
+    std::vector<std::pair<Int, Int>> bounds;
+
     if (shouldBeSubsumed()) {
-      inputVarNodeIds = {retrieveIntVarNode(-2, 5, "x1"),
-                         retrieveIntVarNode(-5, 2, "x2"),
-                         retrieveIntVarNode(-5, -5, "x3")};
+      bounds = {{-2, 5}, {-5, 2}, {-5, -5}};
 
     } else if (shouldBeReplaced()) {
-      inputVarNodeIds = {retrieveIntVarNode(-5, 2, "x1"),
-                         retrieveIntVarNode(2, 5, "x2"),
-                         retrieveIntVarNode(2, 2, "x3")};
+      bounds = {{-5, 2}, {2, 5}, {2, 2}};
     } else {
-      inputVarNodeIds = {retrieveIntVarNode(-5, 0, "x1"),
-                         retrieveIntVarNode(-2, -2, "x2"),
-                         retrieveIntVarNode(0, 5, "x3")};
+      bounds = {{-5, 0}, {-2, -2}, {0, 5}};
+    }
+    for (const auto& [lb, ub] : bounds) {
+      inputIdentifiers.emplace_back("input_" +
+                                    std::to_string(inputIdentifiers.size()));
+      inputVarNodeIds.emplace_back(
+          retrieveIntVarNode(lb, ub, inputIdentifiers.back()));
     }
     outputVarNodeId = retrieveIntVarNode(-5, 5, outputIdentifier);
 
@@ -110,11 +113,11 @@ TEST_P(ArrayIntMinimumNodeTestFixture, application) {
 TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
   Int minVal = std::numeric_limits<Int>::min();
   Int maxVal = std::numeric_limits<Int>::max();
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
+  for (const auto& identifier : inputIdentifiers) {
     minVal =
-        std::min(minVal, _invariantGraph->varNode(inputVarNodeId).lowerBound());
+        std::min(minVal, _invariantGraph->varNode(identifier).lowerBound());
     maxVal =
-        std::max(maxVal, _invariantGraph->varNode(inputVarNodeId).upperBound());
+        std::max(maxVal, _invariantGraph->varNode(identifier).upperBound());
   }
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState(*_invariantGraph);
@@ -146,8 +149,14 @@ TEST_P(ArrayIntMinimumNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayIntMinimumNodeTestFixture, propagation) {
+  Int ub = std::numeric_limits<Int>::max();
+  for (const auto& identifier : inputIdentifiers) {
+    ub = std::min(ub, varNode(identifier).upperBound());
+  }
+
   propagation::Solver solver;
   _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
   if (shouldBeSubsumed()) {
     const Int expected = computeOutput(solver);
@@ -155,12 +164,17 @@ TEST_P(ArrayIntMinimumNodeTestFixture, propagation) {
     EXPECT_EQ(expected, actual);
     return;
   }
+  if (shouldBeReplaced()) {
+    EXPECT_FALSE(varNode(outputIdentifier).isFixed());
+    EXPECT_EQ(varId(outputIdentifier), propagation::NULL_ID);
+    return;
+  }
 
   std::vector<propagation::VarId> inputVarIds;
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    if (!varNode(inputVarNodeId).isFixed()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& identifier : inputIdentifiers) {
+    if (varNode(identifier).lowerBound() < ub) {
+      EXPECT_NE(varId(identifier), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(identifier));
     }
   }
 

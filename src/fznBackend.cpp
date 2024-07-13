@@ -130,7 +130,9 @@ static propagation::ObjectiveDirection getObjectiveDirection(
 search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   fznparser::ProblemType problemType = _model.solveType().problemType();
 
-  invariantgraph::FznInvariantGraph invariantGraph;
+  // TODO: we should improve the initialisation in order to avoid the need for
+  // breaking the dynamic cycles
+  invariantgraph::FznInvariantGraph invariantGraph(true);
   logger.timed<void>("building invariant graph",
                      [&] { return invariantGraph.build(_model); });
 
@@ -140,10 +142,10 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   neighbourhood.printNeighbourhood(logger);
 
   search::Objective searchObjective(solver, problemType);
-  solver.open();
   auto violation = searchObjective.registerNode(
       invariantGraph.totalViolationVarId(), invariantGraph.objectiveVarId());
-  solver.close();
+
+  invariantGraph.close(solver);
 
   search::Assignment assignment(solver, violation,
                                 invariantGraph.objectiveVarId(),
