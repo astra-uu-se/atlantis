@@ -810,30 +810,23 @@ void InvariantGraph::createVars(propagation::SolverBase& solver) {
     }
   }
 
-  for (const auto& varNodeId : _boolVarNodeIndices) {
-    const auto& vNode = varNodeConst(varNodeId);
-    if (!vNode.inputTo().empty()) {
-      assert(vNode.varId() != propagation::NULL_ID);
-      for (const auto& invNodeId : vNode.inputTo()) {
-        if (!visitedInvNodes.contains(invNodeId)) {
-          visitedInvNodes.emplace(invNodeId);
-          unregisteredInvNodes.emplace(invNodeId);
+  for (VarNode& varNode : _varNodes) {
+    if (varNode.definingNodes().empty() && !varNode.inputTo().empty()) {
+      assert(varNode.isFixed());
+      if (varNode.varId() == propagation::NULL_ID) {
+        varNode.setVarId(solver.makeIntVar(
+            varNode.lowerBound(), varNode.upperBound(), varNode.lowerBound()));
+        for (const auto& invNodeId : varNode.inputTo()) {
+          if (!visitedInvNodes.contains(invNodeId)) {
+            visitedInvNodes.emplace(invNodeId);
+            unregisteredInvNodes.emplace(invNodeId);
+          }
         }
       }
     }
   }
-  for (const auto& [_, varNodeId] : _intVarNodeIndices) {
-    const auto& vNode = varNodeConst(varNodeId);
-    if (!vNode.inputTo().empty()) {
-      assert(vNode.varId() != propagation::NULL_ID);
-      for (const auto& invNodeId : vNode.inputTo()) {
-        if (!visitedInvNodes.contains(invNodeId)) {
-          visitedInvNodes.emplace(invNodeId);
-          unregisteredInvNodes.emplace(invNodeId);
-        }
-      }
-    }
-  }
+
+  std::unordered_set<VarNodeId, VarNodeIdHash> outputVarNodeIds;
 
   while (!unregisteredInvNodes.empty()) {
     const auto invNodeId = unregisteredInvNodes.front();
