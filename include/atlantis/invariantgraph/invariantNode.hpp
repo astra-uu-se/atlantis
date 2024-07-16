@@ -19,9 +19,6 @@ class InvariantGraph;  // Forward declaration
 
 class InvariantNode {
  private:
-  std::vector<VarNodeId> _outputVarNodeIds;
-  std::vector<VarNodeId> _staticInputVarNodeIds;
-  std::vector<VarNodeId> _dynamicInputVarNodeIds;
   InvariantNodeId _id{NULL_NODE_ID};
   InvariantNodeState _state{InvariantNodeState::UNINITIALIZED};
 
@@ -90,7 +87,7 @@ class InvariantNode {
   [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
       const noexcept;
 
-  virtual void updateState(InvariantGraph&){};
+  virtual void updateState(InvariantGraph&) {};
 
   void replaceDefinedVar(VarNode& oldOutputVarNode, VarNode& newOutputVarNode);
 
@@ -110,6 +107,10 @@ class InvariantNode {
   friend class ReifiedConstraint;
 
  protected:
+  std::vector<VarNodeId> _outputVarNodeIds;
+  std::vector<VarNodeId> _staticInputVarNodeIds;
+  std::vector<VarNodeId> _dynamicInputVarNodeIds;
+
   void eraseStaticInputVarNode(size_t index);
 
   void eraseDynamicInputVarNode(size_t index);

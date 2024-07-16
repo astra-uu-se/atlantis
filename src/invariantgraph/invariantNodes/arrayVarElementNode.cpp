@@ -25,6 +25,54 @@ void ArrayVarElementNode::init(InvariantGraph& graph,
       }));
 }
 
+void ArrayVarElementNode::updateState(InvariantGraph& graph) {
+  VarNode& idxNode = graph.varNode(idx());
+  idxNode.removeValuesBelow(_offset);
+  idxNode.removeValuesAbove(
+      _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
+
+  std::vector<VarNodeId> varNodeIdsToRemove;
+  varNodeIdsToRemove.reserve(dynamicInputVarNodeIds().size());
+
+  VarNodeId placeholder{NULL_NODE_ID};
+
+  for (Int val = _offset;
+       val < static_cast<Int>(_dynamicInputVarNodeIds.size()) + _offset;
+       ++val) {
+    assert(val - _offset < static_cast<Int>(dynamicInputVarNodeIds().size()));
+    if (idxNode.inDomain(val) ||
+        graph.varNodeConst(dynamicInputVarNodeIds().at(val - _offset))
+            .isFixed()) {
+      continue;
+    }
+
+    varNodeIdsToRemove.emplace_back(_dynamicInputVarNodeIds.at(val - _offset));
+
+    if (placeholder == NULL_NODE_ID) {
+      placeholder = graph.varNodeConst(outputVarNodeIds().front()).isIntVar()
+                        ? graph.retrieveIntVarNode(0)
+                        : graph.retrieveBoolVarNode(false);
+    }
+    _dynamicInputVarNodeIds.at(val - _offset) = placeholder;
+  }
+
+  if (placeholder != NULL_NODE_ID &&
+      std::any_of(
+          graph.varNodeConst(placeholder).dynamicInputTo().begin(),
+          graph.varNodeConst(placeholder).dynamicInputTo().end(),
+          [&](const InvariantNodeId& invId) { return invId == id(); })) {
+    graph.varNode(placeholder).markAsInputFor(id(), false);
+  }
+
+  for (const auto& vId : varNodeIdsToRemove) {
+    if (std::none_of(dynamicInputVarNodeIds().begin(),
+                     dynamicInputVarNodeIds().end(),
+                     [&](const VarNodeId& dId) { return dId == vId; })) {
+      removeDynamicInputVarNode(graph.varNode(vId));
+    }
+  }
+}
+
 bool ArrayVarElementNode::canBeReplaced(const InvariantGraph& graph) const {
   return state() == InvariantNodeState::ACTIVE &&
          graph.varNodeConst(idx()).isFixed();

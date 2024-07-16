@@ -139,6 +139,8 @@ class InvariantGraph {
 
   Edge findPivotInCycle(const std::vector<Edge>& cycle);
 
+  void breakSelfCycles();
+
   std::vector<VarNodeId> breakCycles(
       VarNodeId node,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);

@@ -58,6 +58,65 @@ VarNodeId ArrayVarElement2dNode::at(Int row, Int col) {
   return dynamicInputVarNodeIds().at(pos);
 }
 
+void ArrayVarElement2dNode::updateState(InvariantGraph& graph) {
+  VarNode& idx1Node = graph.varNode(idx1());
+  idx1Node.removeValuesBelow(_offset1);
+  idx1Node.removeValuesAbove(_offset1 + static_cast<Int>(_numRows) - 1);
+
+  VarNode& idx2Node = graph.varNode(idx2());
+  idx2Node.removeValuesBelow(_offset2);
+  idx2Node.removeValuesAbove(_offset2 + static_cast<Int>(numCols()) - 1);
+
+  std::vector<VarNodeId> varNodeIdsToRemove;
+  varNodeIdsToRemove.reserve(dynamicInputVarNodeIds().size());
+
+  VarNodeId placeholder{NULL_NODE_ID};
+
+  for (Int row = _offset1; row < _offset1 + static_cast<Int>(_numRows); ++row) {
+    const bool inDom1 = idx1Node.inDomain(row);
+    for (Int col = _offset2; col < _offset2 + static_cast<Int>(numCols());
+         ++col) {
+      if (inDom1 && idx2Node.inDomain(col)) {
+        continue;
+      }
+      assert(row >= _offset1 && col >= _offset2);
+      const size_t r = static_cast<size_t>(row - _offset1);
+      assert(r < _numRows);
+      const size_t c = static_cast<size_t>(col - _offset2);
+      assert(col >= 0);
+      const size_t pos = r * _numRows + c;
+      if (graph.varNodeConst(_dynamicInputVarNodeIds.at(pos)).isFixed()) {
+        continue;
+      }
+
+      varNodeIdsToRemove.emplace_back(_dynamicInputVarNodeIds.at(pos));
+
+      if (placeholder == NULL_NODE_ID) {
+        placeholder = graph.varNodeConst(outputVarNodeIds().front()).isIntVar()
+                          ? graph.retrieveIntVarNode(0)
+                          : graph.retrieveBoolVarNode(false);
+      }
+      _dynamicInputVarNodeIds.at(pos) = placeholder;
+    }
+  }
+
+  if (placeholder != NULL_NODE_ID &&
+      std::any_of(
+          graph.varNodeConst(placeholder).dynamicInputTo().begin(),
+          graph.varNodeConst(placeholder).dynamicInputTo().end(),
+          [&](const InvariantNodeId& invId) { return invId == id(); })) {
+    graph.varNode(placeholder).markAsInputFor(id(), false);
+  }
+
+  for (const auto& vId : varNodeIdsToRemove) {
+    if (std::none_of(dynamicInputVarNodeIds().begin(),
+                     dynamicInputVarNodeIds().end(),
+                     [&](const VarNodeId& dId) { return dId == vId; })) {
+      removeDynamicInputVarNode(graph.varNode(vId));
+    }
+  }
+}
+
 void ArrayVarElement2dNode::registerOutputVars(
     InvariantGraph& graph, propagation::SolverBase& solver) {
   makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));

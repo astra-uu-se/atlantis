@@ -28,13 +28,15 @@ class ArrayVarElement2dNode : public InvariantNode {
 
   void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
-
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void updateState(InvariantGraph&) override;
 
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
   [[nodiscard]] bool replace(InvariantGraph&) override;
+
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] VarNodeId at(Int row, Int col);
 
@@ -44,6 +46,10 @@ class ArrayVarElement2dNode : public InvariantNode {
 
   [[nodiscard]] VarNodeId idx2() const noexcept {
     return staticInputVarNodeIds().back();
+  }
+
+  size_t numCols() const noexcept {
+    return dynamicInputVarNodeIds().size() / _numRows;
   }
 };
 
