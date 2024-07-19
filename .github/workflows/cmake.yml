@@ -16,13 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup SSH Keys and known_hosts
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.9
         with:
@@ -51,7 +44,6 @@ jobs:
       - name: Build
         working-directory: ${{github.workspace}}/build
         env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           CMAKE_FLAGS: >
             -DBUILD_TESTS:BOOL=ON
             -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}}
