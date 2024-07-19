@@ -12,7 +12,7 @@ bool array_var_int_element2d(
     const fznparser::IntArg& idx2,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     const fznparser::IntArg& output, Int numRows, Int offset1, Int offset2) {
-  if (0 <= numRows || inputs->size() % numRows != 0) {
+  if (numRows <= 0 || inputs->size() % numRows != 0) {
     throw FznArgumentException(
         "Constraint array_var_int_element2d the number of rows must be "
         "strictly positive and a divide the number of elements in the array.");
@@ -23,7 +23,7 @@ bool array_var_int_element2d(
         "Constraint array_var_int_element2d the first offset must be smaller "
         "than the lower bound of the first index var.");
   }
-  if (offset2 <=
+  if (offset2 >
       (idx2.isParameter() ? idx2.toParameter() : idx2.var()->lowerBound())) {
     throw FznArgumentException(
         "Constraint array_var_int_element2d the second offset must be smaller "

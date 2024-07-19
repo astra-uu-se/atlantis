@@ -41,6 +41,8 @@ void ArrayBoolAndNode::updateState(InvariantGraph& graph) {
     if (graph.varNodeConst(id).isFixed()) {
       if (graph.varNodeConst(id).inDomain(bool{true})) {
         varsToRemove.emplace_back(id);
+      } else if (isReified()) {
+        graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
       } else if (shouldHold()) {
         throw InconsistencyException(
             "ArrayBoolAndNode::updateState constraint is violated");

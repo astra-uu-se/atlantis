@@ -9,29 +9,21 @@
 #include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
-
-class IntLinNeNode : public ViolationInvariantNode {
+class InIntervalNode : public ViolationInvariantNode {
  private:
-  std::vector<Int> _coeffs;
-  Int _bound;
+  Int _lb, _ub;
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  IntLinNeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-               Int bound, bool shouldHold = true);
+  explicit InIntervalNode(VarNodeId input, Int lb, Int ub, VarNodeId r);
 
-  IntLinNeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-               Int bound, VarNodeId reified);
+  explicit InIntervalNode(VarNodeId input, Int lb, Int ub,
+                          bool shouldHold = true);
 
   void init(InvariantGraph&, const InvariantNodeId&) override;
-
-  void updateState(InvariantGraph&) override;
 
   void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;
-
-  [[nodiscard]] const std::vector<Int>& coeffs() const;
 };
-
 }  // namespace atlantis::invariantgraph

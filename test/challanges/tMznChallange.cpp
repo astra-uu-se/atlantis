@@ -74,12 +74,6 @@ TEST(MznChallange, run) {
   std::vector<bool> modelsToSkip(fznModels.size(), false);
   visited.clear();
 
-  visited.emplace(std::string(FZN_CHALLENGE_DIR + std::string{"/cargo"}));
-  visited.emplace(
-      std::string(FZN_CHALLENGE_DIR + std::string{"/carpet-cutting"}));
-  visited.emplace(
-      std::string(FZN_CHALLENGE_DIR + std::string{"/cryptanalysis"}));
-
   for (size_t i = 0; i < fznModels.size(); ++i) {
     std::filesystem::path modelPath(fznModels.at(i));
     EXPECT_TRUE(modelPath.has_parent_path());

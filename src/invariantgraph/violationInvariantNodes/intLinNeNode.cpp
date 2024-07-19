@@ -75,17 +75,6 @@ void IntLinNeNode::updateState(InvariantGraph& graph) {
     ub += std::max(v1, v2);
   }
 
-  if (lb == ub && lb == _bound) {
-    if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
-      ViolationInvariantNode::updateState(graph);
-    }
-    if (shouldHold()) {
-      throw InconsistencyException("IntLinNeNode: Invariant is always false");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
   if (_bound < lb || ub < _bound) {
     if (isReified()) {
       graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
@@ -98,6 +87,17 @@ void IntLinNeNode::updateState(InvariantGraph& graph) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
+  if (lb == ub && lb == _bound) {
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+      ViolationInvariantNode::updateState(graph);
+    }
+    if (shouldHold()) {
+      throw InconsistencyException("IntLinNeNode: Invariant is always false");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
 }
 
 void IntLinNeNode::registerOutputVars(InvariantGraph& graph,
@@ -105,11 +105,11 @@ void IntLinNeNode::registerOutputVars(InvariantGraph& graph,
   if (violationVarId(graph) == propagation::NULL_ID) {
     _intermediate = solver.makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(graph, solver.makeIntView<propagation::EqualConst>(
+      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
                                    solver, _intermediate, _bound));
     } else {
       assert(!isReified());
-      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
+      setViolationVarId(graph, solver.makeIntView<propagation::EqualConst>(
                                    solver, _intermediate, _bound));
     }
   }
@@ -134,5 +134,7 @@ void IntLinNeNode::registerNode(InvariantGraph& graph,
   solver.makeInvariant<propagation::Linear>(
       solver, _intermediate, std::vector<Int>(_coeffs), std::move(solverVars));
 }
+
+const std::vector<Int>& IntLinNeNode::coeffs() const { return _coeffs; }
 
 }  // namespace atlantis::invariantgraph

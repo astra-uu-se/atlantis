@@ -39,9 +39,11 @@ void BoolAllEqualNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
 void BoolAllEqualNode::updateState(InvariantGraph& graph) {
   ViolationInvariantNode::updateState(graph);
   if (staticInputVarNodeIds().size() < 2) {
-    if (!shouldHold()) {
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+    } else if (!shouldHold()) {
       throw InconsistencyException(
-          "IntAllEqualNode::updateState constraint is violated");
+          "BoolAllEqualNode::updateState constraint is violated");
     }
     if (isReified()) {
       graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
@@ -67,7 +69,7 @@ void BoolAllEqualNode::updateState(InvariantGraph& graph) {
           graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
         } else if (shouldHold()) {
           throw InconsistencyException(
-              "IntAllEqualNode::updateState constraint is violated");
+              "BoolAllEqualNode::updateState constraint is violated");
         }
       }
     }

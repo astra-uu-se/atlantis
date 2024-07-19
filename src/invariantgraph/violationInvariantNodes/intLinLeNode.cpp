@@ -136,4 +136,6 @@ void IntLinLeNode::registerNode(InvariantGraph& graph,
       solver, _intermediate, std::vector<Int>(_coeffs), std::move(solverVars));
 }
 
+const std::vector<Int>& IntLinLeNode::coeffs() const { return _coeffs; }
+
 }  // namespace atlantis::invariantgraph

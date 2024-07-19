@@ -74,7 +74,8 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
 
 void ViolationInvariantNode::updateState(InvariantGraph& graph) {
   if (isReified() && graph.varNodeConst(outputVarNodeIds().front()).isFixed()) {
-    _shouldHold = graph.varNodeConst(outputVarNodeIds().front()).inDomain(true);
+    _shouldHold =
+        graph.varNodeConst(outputVarNodeIds().front()).inDomain(bool{true});
     _isReified = false;
     assert(outputVarNodeIds().front() != NULL_NODE_ID);
     if (!outputVarNodeIds().empty()) {

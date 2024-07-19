@@ -6,6 +6,7 @@
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
+#include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::invariantgraph {
@@ -101,13 +102,28 @@ bool GlobalCardinalityNode::replace(InvariantGraph& graph) {
 void GlobalCardinalityNode::registerOutputVars(
     InvariantGraph& graph, propagation::SolverBase& solver) {
   for (size_t i = 0; i < _cover.size(); ++i) {
-    if (graph.varNodeConst(outputVarNodeIds().at(i)).varId() !=
-        propagation::NULL_ID) {
-      continue;
-    }
-    if (_countOffsets[i] == 0) {
+    const bool isDuplicate = std::any_of(
+        outputVarNodeIds().begin(), outputVarNodeIds().begin() + i,
+        [&](const VarNodeId& vId) { return vId == outputVarNodeIds().at(i); });
+
+    assert(!isDuplicate ||
+           graph.varNodeConst(outputVarNodeIds().at(i)).isFixed());
+
+    if (isDuplicate) {
+      assert(graph.varNodeConst(outputVarNodeIds().at(i)).varId() !=
+             propagation::NULL_ID);
+      _intermediate.at(i) = solver.makeIntVar(0, 0, 0);
+      solver.makeIntView<propagation::EqualConst>(
+          solver, _intermediate.at(i),
+          graph.varNodeConst(outputVarNodeIds().at(i)).lowerBound() -
+              _countOffsets[i]);
+    } else if (_countOffsets[i] == 0) {
+      assert(graph.varNodeConst(outputVarNodeIds().at(i)).varId() ==
+             propagation::NULL_ID);
       makeSolverVar(solver, graph.varNode(outputVarNodeIds().at(i)));
     } else {
+      assert(graph.varNodeConst(outputVarNodeIds().at(i)).varId() ==
+             propagation::NULL_ID);
       _intermediate.at(i) = solver.makeIntVar(0, 0, 0);
       graph.varNode(outputVarNodeIds().at(i))
           .setVarId(solver.makeIntView<propagation::IntOffsetView>(

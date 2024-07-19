@@ -4,6 +4,7 @@
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinEqNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -57,14 +58,13 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   }
 
   if (definedVarCoeff == 1) {
-    // reducing both sides by the defined var (its coeficient is 1), then
-    // multiplying both sides by -1:
+    // moving each non-defined variable to the other side of the equation
     for (size_t i = 0; i < coeffs.size(); ++i) {
       coeffs.at(i) = -coeffs.at(i);
     }
   }
 
-  const Int lhsOffset = -bound;
+  const Int lhsOffset = definedVarCoeff == 1 ? bound : -bound;
   graph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs), std::move(inputVarNodes), definedVarNodeId,
       lhsOffset));
@@ -140,13 +140,8 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
         "int_lin_eq constraint with empty arrays must have a total sum of 0");
   }
 
-  const VarNodeId outputVarNodeId = graph.retrieveIntVarNode(Int{0});
-
-  const Int lhsOffset = -bound;
-
-  graph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), outputVarNodeId,
-      lhsOffset));
+  graph.addInvariantNode(std::make_unique<IntLinEqNode>(
+      std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
 
   return true;
 }
@@ -156,21 +151,8 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound, fznparser::BoolArg reified) {
   verifyInputs(coeffs, inputs);
 
-  const Int lhsOffset = -bound;
-
-  auto [lb, ub] = linBounds(coeffs, inputs);
-  lb += lhsOffset;
-  ub += lhsOffset;
-
-  const VarNodeId outputVarNodeId =
-      graph.retrieveIntVarNode(SearchDomain(lb, ub), VarNode::DomainType::NONE);
-
-  graph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), outputVarNodeId,
-      lhsOffset));
-
-  graph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-      outputVarNodeId, graph.retrieveIntVarNode(Int{0}),
+  graph.addInvariantNode(std::make_unique<IntLinEqNode>(
+      std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
       graph.retrieveVarNode(reified)));
 
   return true;

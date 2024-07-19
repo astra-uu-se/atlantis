@@ -1,8 +1,5 @@
 #include "atlantis/invariantgraph/fzn/bool_lin_le.hpp"
 
-#include <numeric>
-#include <vector>
-
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolLinLeNode.hpp"

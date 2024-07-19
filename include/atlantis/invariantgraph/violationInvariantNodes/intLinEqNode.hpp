@@ -10,17 +10,17 @@
 
 namespace atlantis::invariantgraph {
 
-class IntLinNeNode : public ViolationInvariantNode {
+class IntLinEqNode : public ViolationInvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _bound;
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  IntLinNeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
+  IntLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int bound, bool shouldHold = true);
 
-  IntLinNeNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
+  IntLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                Int bound, VarNodeId reified);
 
   void init(InvariantGraph&, const InvariantNodeId&) override;

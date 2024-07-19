@@ -42,6 +42,7 @@ AllDifferentImplicitNode::createNeighbourhood(InvariantGraph& graph,
   }
 
   std::vector<search::SearchVar> searchVars;
+  // "malloc(): invalid size (unsorted)" exception: don't reserve
   searchVars.reserve(outputVarNodeIds().size());
 
   if (hasSameDomain) {

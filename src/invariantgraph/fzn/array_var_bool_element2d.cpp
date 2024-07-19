@@ -12,7 +12,7 @@ bool array_var_bool_element2d(
     const fznparser::IntArg& idx2,
     const std::shared_ptr<fznparser::BoolVarArray>& inputs,
     const fznparser::BoolArg& output, Int numRows, Int offset1, Int offset2) {
-  if (0 <= numRows || inputs->size() % numRows != 0) {
+  if (numRows <= 0 || inputs->size() % numRows != 0) {
     throw FznArgumentException(
         "Constraint array_var_bool_element2d the number of rows must be "
         "strictly positive and a divide the number of elements in the array.");
@@ -21,15 +21,15 @@ bool array_var_bool_element2d(
   if (offset1 >
       (idx1.isParameter() ? idx1.toParameter() : idx1.var()->lowerBound())) {
     throw FznArgumentException(
-        "Constraint array_var_bool_element2d the first offset must be smaller "
-        "than the lower bound of the first index var.");
+        "Constraint array_var_bool_element2d the first offset cannot be "
+        "greater than the lower bound of the first index var.");
   }
 
-  if (offset2 <=
+  if (offset2 >
       (idx2.isParameter() ? idx2.toParameter() : idx2.var()->lowerBound())) {
     throw FznArgumentException(
-        "Constraint array_var_bool_element2d the second offset must be smaller "
-        "than the lower bound of the second index var.");
+        "Constraint array_var_bool_element2d the second offset cannot be "
+        "greater than the lower bound of the second index var.");
   }
 
   graph.addInvariantNode(std::make_unique<ArrayVarElement2dNode>(

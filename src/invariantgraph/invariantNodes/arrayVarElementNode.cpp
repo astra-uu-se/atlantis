@@ -57,7 +57,7 @@ void ArrayVarElementNode::updateState(InvariantGraph& graph) {
   }
 
   if (placeholder != NULL_NODE_ID &&
-      std::any_of(
+      std::none_of(
           graph.varNodeConst(placeholder).dynamicInputTo().begin(),
           graph.varNodeConst(placeholder).dynamicInputTo().end(),
           [&](const InvariantNodeId& invId) { return invId == id(); })) {

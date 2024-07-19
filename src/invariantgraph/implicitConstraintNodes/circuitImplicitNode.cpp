@@ -27,20 +27,22 @@ CircuitImplicitNode::createNeighbourhood(InvariantGraph& graph,
                                          propagation::SolverBase&) {
   std::vector<search::SearchVar> searchVars;
   searchVars.reserve(outputVarNodeIds().size());
-  SearchDomain freeIndices(1, static_cast<Int>(outputVarNodeIds().size()));
+  std::vector<Int> freeIndices;
+  freeIndices.reserve(outputVarNodeIds().size());
   for (const auto& nId : outputVarNodeIds()) {
     const auto& varNode = graph.varNodeConst(nId);
     if (varNode.isFixed()) {
-      freeIndices.remove(varNode.constDomain().lowerBound());
+      freeIndices.emplace_back(varNode.constDomain().lowerBound());
     }
   }
 
-  for (const auto& nId : outputVarNodeIds()) {
-    auto& varNode = graph.varNode(nId);
+  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
+    auto& varNode = graph.varNode(outputVarNodeIds().at(i));
     assert(varNode.varId() != propagation::NULL_ID);
     if (varNode.constDomain().isFixed()) {
       const Int val = varNode.constDomain().lowerBound();
       searchVars.emplace_back(varNode.varId(), SearchDomain{val, val});
+      varNode.setDomainType(VarNode::DomainType::NONE);
       continue;
     }
 
@@ -48,11 +50,21 @@ CircuitImplicitNode::createNeighbourhood(InvariantGraph& graph,
         varNode.varId(),
         SearchDomain{1, static_cast<Int>(outputVarNodeIds().size())});
 
-    if (varNode.constDomain() == freeIndices) {
-      varNode.setDomainType(VarNode::DomainType::NONE);
-    } else {
-      varNode.setDomainType(VarNode::DomainType::DOMAIN);
+    bool enforceDomain = false;
+    for (Int val = 1; val <= static_cast<Int>(outputVarNodeIds().size());
+         ++val) {
+      if (val == (static_cast<Int>(i) - 1) ||
+          std::any_of(freeIndices.begin(), freeIndices.end(),
+                      [&](const Int& i) { return i == val; })) {
+        continue;
+      }
+      if (!varNode.constDomain().contains(val)) {
+        enforceDomain = true;
+        break;
+      }
     }
+    varNode.setDomainType(enforceDomain ? VarNode::DomainType::DOMAIN
+                                        : VarNode::DomainType::NONE);
   }
   return std::make_shared<search::neighbourhoods::CircuitNeighbourhood>(
       std::move(searchVars));

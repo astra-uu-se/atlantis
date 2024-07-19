@@ -51,7 +51,9 @@ bool InvariantGraph::containsVarNode(Int i) const noexcept {
 bool InvariantGraph::containsVarNode(bool) noexcept { return true; }
 
 VarNodeId InvariantGraph::retrieveBoolVarNode(bool b) {
-  return _boolVarNodeIndices.at(b ? 0 : 1);
+  assert(varNode(_boolVarNodeIndices.at(0)).inDomain(bool{false}));
+  assert(varNode(_boolVarNodeIndices.at(1)).inDomain(bool{true}));
+  return _boolVarNodeIndices.at(b ? 1 : 0);
 }
 
 VarNodeId InvariantGraph::retrieveBoolVarNode(const std::string& identifier,
@@ -278,7 +280,7 @@ VarNodeId InvariantGraph::varNodeId(bool val) const {
   if (!containsVarNode(val)) {
     return VarNodeId(NULL_NODE_ID);
   }
-  return _boolVarNodeIndices.at(val);
+  return _boolVarNodeIndices.at(val ? 1 : 0);
 }
 
 VarNodeId InvariantGraph::varNodeId(Int val) const {
@@ -1181,6 +1183,16 @@ void InvariantGraph::close(propagation::SolverBase& solver) { solver.close(); }
 
 void InvariantGraph::sanity(bool oneDefInv) {
 #ifndef NDEBUG
+  assert(varNodeConst(_boolVarNodeIndices.at(0)).isFixed());
+  assert(varNodeConst(_boolVarNodeIndices.at(0)).inDomain(bool{false}));
+  assert(varNodeConst(_boolVarNodeIndices.at(1)).isFixed());
+  assert(varNodeConst(_boolVarNodeIndices.at(1)).inDomain(bool{true}));
+  for (const auto& [constant, vId] : _intVarNodeIndices) {
+    const VarNode& vNode = varNodeConst(vId);
+    assert(vNode.isIntVar());
+    assert(vNode.isFixed());
+    assert(vNode.inDomain(constant));
+  }
   for (const VarNode& vNode : _varNodes) {
     for (const InvariantNodeId& invNodeId : vNode.definingNodes()) {
       InvariantNode& invNode = invariantNode(invNodeId);

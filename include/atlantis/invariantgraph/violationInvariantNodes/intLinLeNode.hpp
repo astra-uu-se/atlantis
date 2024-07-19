@@ -30,6 +30,8 @@ class IntLinLeNode : public ViolationInvariantNode {
   void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+
+  [[nodiscard]] const std::vector<Int>& coeffs() const;
 };
 
 }  // namespace atlantis::invariantgraph
