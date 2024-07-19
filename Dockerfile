@@ -29,6 +29,15 @@ FROM minizinc/mznc2024:latest
 COPY --from=builder /install /atlantis
 COPY atlantis.mpc /minizinc/base.mpc
 
+# atlantis uses Gecode in order to compute the bounds of variables.
+# This 'hack' creates a bash file that prepends the '--use-gecode' flag
+# to the minzinc command:
+RUN MZN_PATH=`which minizinc` && \
+    mv ${MZN_PATH} ${MZN_PATH}_orig && \
+    echo '#!'"`which bash`" > ${MZN_PATH} && \
+    echo "${MZN_PATH}_orig --use-gecode "'${@}' >> ${MZN_PATH} && \
+    chmod a+x ${MZN_PATH}
+
 # Add Atlanstis to the MiniZinc search path and set it as the default solver
 RUN echo '{"mzn_solver_path": ["/atlantis/share/minizinc/solvers"],' > $HOME/.minizinc/Preferences.json && \
     echo '"tagDefaults": [["", "se.uu.it.atlantis"]]}'              >> $HOME/.minizinc/Preferences.json
