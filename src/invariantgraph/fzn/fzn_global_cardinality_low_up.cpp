@@ -35,7 +35,7 @@ bool fzn_global_cardinality_low_up(FznInvariantGraph& graph,
   }
 
   const bool isReified = constraintIdentifierIsReified(constraint);
-  verifyNumArguments(constraint, isReified ? 4 : 3);
+  verifyNumArguments(constraint, isReified ? 5 : 4);
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false)
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, false)
@@ -55,7 +55,7 @@ bool fzn_global_cardinality_low_up(FznInvariantGraph& graph,
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
         std::move(cover), std::move(low), std::move(up));
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 4, fznparser::BoolArg, true)
   return fzn_global_cardinality_low_up(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::move(cover), std::move(low), std::move(up),

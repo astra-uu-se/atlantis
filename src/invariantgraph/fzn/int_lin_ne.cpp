@@ -2,8 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinNeNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -30,26 +29,8 @@ bool int_lin_ne(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
         "than 0");
   }
 
-  const auto& [lb, ub] = linBounds(coeffs, inputs);
-
-  if (bound < lb || ub < bound) {
-    // always holds:
-    return true;
-  }
-
-  SearchDomain dom(lb, ub);
-  dom.remove(bound);
-
-  const VarNode::DomainType dt =
-      (lb == bound ? VarNode::DomainType::LOWER_BOUND
-                   : (ub == bound ? VarNode::DomainType::UPPER_BOUND
-                                  : VarNode::DomainType::DOMAIN));
-
-  const VarNodeId outputVarNodeId =
-      graph.retrieveIntVarNode(std::move(dom), dt);
-
-  graph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), outputVarNodeId));
+  graph.addInvariantNode(std::make_unique<IntLinNeNode>(
+      std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
 
   return true;
 }
@@ -59,16 +40,8 @@ bool int_lin_ne(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
 
-  const auto& [lb, ub] = linBounds(coeffs, inputs);
-
-  const VarNodeId outputVarNodeId =
-      graph.retrieveIntVarNode(SearchDomain(lb, ub), VarNode::DomainType::NONE);
-
-  graph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), outputVarNodeId));
-
-  graph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      outputVarNodeId, graph.retrieveIntVarNode(bound),
+  graph.addInvariantNode(std::make_unique<IntLinNeNode>(
+      std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
       graph.retrieveVarNode(reified)));
 
   return true;

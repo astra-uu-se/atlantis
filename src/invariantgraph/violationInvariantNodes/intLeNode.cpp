@@ -55,12 +55,12 @@ void IntLeNode::updateState(InvariantGraph& graph) {
   if (!isReified()) {
     if (shouldHold()) {
       // a <= b
-      aNode.removeValuesAbove(bNode.upperBound());
-      bNode.removeValuesBelow(aNode.lowerBound());
+      // aNode.removeValuesAbove(bNode.upperBound());
+      // bNode.removeValuesBelow(aNode.lowerBound());
     } else {
       // a > b
-      aNode.removeValuesBelow(bNode.lowerBound() + 1);
-      bNode.removeValuesAbove(aNode.upperBound() - 1);
+      // aNode.removeValuesBelow(bNode.lowerBound() + 1);
+      // bNode.removeValuesAbove(aNode.upperBound() - 1);
     }
   }
   if (aNode.upperBound() <= bNode.lowerBound()) {

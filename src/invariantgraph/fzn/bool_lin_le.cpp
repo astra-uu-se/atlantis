@@ -5,25 +5,15 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/invariantNodes/boolLinearNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolLinLeNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                  const std::shared_ptr<fznparser::BoolVarArray>& inputs,
                  Int bound) {
-  const auto [lb, ub] = linBounds(coeffs, inputs);
-
-  if (ub <= bound) {
-    // always holds:
-    return true;
-  }
-
-  const VarNodeId outputVarNodeId = graph.retrieveIntVarNode(
-      SearchDomain(lb, bound), VarNode::DomainType::UPPER_BOUND);
-
-  graph.addInvariantNode(std::make_unique<BoolLinearNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), outputVarNodeId));
+  graph.addInvariantNode(std::make_unique<BoolLinLeNode>(
+      std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
   return true;
 }
 

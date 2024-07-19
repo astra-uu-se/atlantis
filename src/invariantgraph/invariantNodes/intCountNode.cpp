@@ -45,13 +45,13 @@ void IntCountNode::updateState(InvariantGraph& graph) {
   auto& outputNode = graph.varNode(outputVarNodeIds().front());
   const Int lb = _offset;
   const Int ub = _offset + static_cast<Int>(staticInputVarNodeIds().size());
-  outputNode.removeValuesBelow(lb);
-  outputNode.removeValuesAbove(ub);
-  if (outputNode.isFixed()) {
-    for (const auto& input : staticInputVarNodeIds()) {
-      graph.varNode(input).removeValue(_needle);
-    }
-  }
+  // outputNode.removeValuesBelow(lb);
+  // outputNode.removeValuesAbove(ub);
+  // if (outputNode.isFixed()) {
+  //  for (const auto& input : staticInputVarNodeIds()) {
+  //    graph.varNode(input).removeValue(_needle);
+  //  }
+  //}
   if (staticInputVarNodeIds().empty() || outputNode.isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
@@ -69,7 +69,7 @@ void IntCountNode::registerOutputVars(InvariantGraph& graph,
   } else if (!staticInputVarNodeIds().empty()) {
     if (_offset == 0) {
       makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
-    } else if (_intermediate != propagation::NULL_ID) {
+    } else if (_intermediate == propagation::NULL_ID) {
       _intermediate = solver.makeIntVar(0, 0, 0);
       graph.varNode(outputVarNodeIds().front())
           .setVarId(solver.makeIntView<propagation::IntOffsetView>(

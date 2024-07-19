@@ -46,8 +46,8 @@ void ArrayIntMaximumNode::updateState(InvariantGraph& graph) {
     removeStaticInputVarNode(graph.varNode(input));
   }
   auto& outputVar = graph.varNode(outputVarNodeIds().front());
-  outputVar.removeValuesBelow(_lb);
-  outputVar.removeValuesAbove(ub);
+  // outputVar.removeValuesBelow(_lb);
+  // outputVar.removeValuesAbove(ub);
   if (staticInputVarNodeIds().size() == 0 || outputVar.isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }

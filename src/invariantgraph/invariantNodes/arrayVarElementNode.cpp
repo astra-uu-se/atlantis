@@ -27,9 +27,9 @@ void ArrayVarElementNode::init(InvariantGraph& graph,
 
 void ArrayVarElementNode::updateState(InvariantGraph& graph) {
   VarNode& idxNode = graph.varNode(idx());
-  idxNode.removeValuesBelow(_offset);
-  idxNode.removeValuesAbove(
-      _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
+  // idxNode.removeValuesBelow(_offset);
+  // idxNode.removeValuesAbove(
+  //     _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
 
   std::vector<VarNodeId> varNodeIdsToRemove;
   varNodeIdsToRemove.reserve(dynamicInputVarNodeIds().size());

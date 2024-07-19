@@ -46,8 +46,8 @@ void ArrayIntMinimumNode::updateState(InvariantGraph& graph) {
     removeStaticInputVarNode(graph.varNode(input));
   }
   auto& outputVar = graph.varNode(outputVarNodeIds().front());
-  outputVar.removeValuesBelow(lb);
-  outputVar.removeValuesAbove(_ub);
+  // outputVar.removeValuesBelow(lb);
+  // outputVar.removeValuesAbove(_ub);
   if (staticInputVarNodeIds().size() == 0 || outputVar.isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }

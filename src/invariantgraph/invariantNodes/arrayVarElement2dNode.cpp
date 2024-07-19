@@ -60,12 +60,12 @@ VarNodeId ArrayVarElement2dNode::at(Int row, Int col) {
 
 void ArrayVarElement2dNode::updateState(InvariantGraph& graph) {
   VarNode& idx1Node = graph.varNode(idx1());
-  idx1Node.removeValuesBelow(_offset1);
-  idx1Node.removeValuesAbove(_offset1 + static_cast<Int>(_numRows) - 1);
+  // idx1Node.removeValuesBelow(_offset1);
+  // idx1Node.removeValuesAbove(_offset1 + static_cast<Int>(_numRows) - 1);
 
   VarNode& idx2Node = graph.varNode(idx2());
-  idx2Node.removeValuesBelow(_offset2);
-  idx2Node.removeValuesAbove(_offset2 + static_cast<Int>(numCols()) - 1);
+  // idx2Node.removeValuesBelow(_offset2);
+  // idx2Node.removeValuesAbove(_offset2 + static_cast<Int>(numCols()) - 1);
 
   std::vector<VarNodeId> varNodeIdsToRemove;
   varNodeIdsToRemove.reserve(dynamicInputVarNodeIds().size());

@@ -2,8 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinLeNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -30,23 +29,8 @@ bool int_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
         std::to_string(bound));
   }
 
-  const auto [lb, ub] = linBounds(coeffs, inputs);
-
-  if (lb > bound) {
-    throw FznArgumentException(
-        "int_lin_le constraint: total is always greater than " +
-        std::to_string(bound));
-  }
-  if (ub <= bound) {
-    // always holds:
-    return true;
-  }
-
-  const VarNodeId outputVarNodeId = graph.retrieveIntVarNode(
-      SearchDomain(lb, bound), VarNode::DomainType::UPPER_BOUND);
-
-  graph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), outputVarNodeId));
+  graph.addInvariantNode(std::make_unique<IntLinLeNode>(
+      std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
 
   return true;
 }
@@ -56,16 +40,8 @@ bool int_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
 
-  const auto& [lb, ub] = linBounds(coeffs, inputs);
-
-  const VarNodeId outputVarNodeId =
-      graph.retrieveIntVarNode(SearchDomain(lb, ub), VarNode::DomainType::NONE);
-
-  graph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), outputVarNodeId));
-
-  graph.addInvariantNode(std::make_unique<IntLeNode>(
-      outputVarNodeId, graph.retrieveIntVarNode(bound),
+  graph.addInvariantNode(std::make_unique<IntLinLeNode>(
+      std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
       graph.retrieveVarNode(reified)));
 
   return true;

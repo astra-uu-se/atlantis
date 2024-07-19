@@ -71,8 +71,8 @@ void IntLinearNode::updateState(InvariantGraph& graph) {
 
   auto& outputNode = graph.varNode(outputVarNodeIds().front());
 
-  outputNode.removeValuesBelow(lb);
-  outputNode.removeValuesAbove(ub);
+  // outputNode.removeValuesBelow(lb);
+  // outputNode.removeValuesAbove(ub);
 
   if (staticInputVarNodeIds().empty()) {
     outputNode.fixToValue(_offset);

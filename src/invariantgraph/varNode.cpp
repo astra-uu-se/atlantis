@@ -203,7 +203,7 @@ bool VarNode::inDomain(Int val) const {
 
 bool VarNode::inDomain(bool val) const {
   if (isIntVar()) {
-    throw std::runtime_error("inDomain(Int) called on BoolVar");
+    throw std::runtime_error("inDomain(bool) called on IntVar");
   }
   return val ? lowerBound() == 0 : upperBound() > 0;
 }

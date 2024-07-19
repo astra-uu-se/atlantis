@@ -402,11 +402,12 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
   assert(oldNode.staticInputTo().empty());
 
   if (oldNode.isFixed()) {
-    if (oldNode.isIntVar() &&
-        _intVarNodeIndices.contains(oldNode.lowerBound()) &&
-        _intVarNodeIndices.at(oldNode.lowerBound()) == oldNodeId) {
-      _intVarNodeIndices.erase(oldNode.lowerBound());
-      _intVarNodeIndices.emplace(oldNode.lowerBound(), newNodeId);
+    if (oldNode.isIntVar()) {
+      if (_intVarNodeIndices.contains(oldNode.lowerBound()) &&
+          _intVarNodeIndices.at(oldNode.lowerBound()) == oldNodeId) {
+        _intVarNodeIndices.erase(oldNode.lowerBound());
+        _intVarNodeIndices.emplace(oldNode.lowerBound(), newNodeId);
+      }
     } else {
       const bool val = oldNode.inDomain(bool{true});
       const size_t index = val ? 1 : 0;
@@ -1007,17 +1008,17 @@ void InvariantGraph::createVars(propagation::SolverBase& solver) {
       if (varNode.varId() == propagation::NULL_ID) {
         varNode.setVarId(solver.makeIntVar(
             varNode.lowerBound(), varNode.upperBound(), varNode.lowerBound()));
-        for (const auto& invNodeId : varNode.staticInputTo()) {
-          if (!visitedInvNodes.contains(invNodeId)) {
-            visitedInvNodes.emplace(invNodeId);
-            unregisteredInvNodes.emplace(invNodeId);
-          }
+      }
+      for (const auto& invNodeId : varNode.staticInputTo()) {
+        if (!visitedInvNodes.contains(invNodeId)) {
+          visitedInvNodes.emplace(invNodeId);
+          unregisteredInvNodes.emplace(invNodeId);
         }
-        for (const auto& invNodeId : varNode.dynamicInputTo()) {
-          if (!visitedInvNodes.contains(invNodeId)) {
-            visitedInvNodes.emplace(invNodeId);
-            unregisteredInvNodes.emplace(invNodeId);
-          }
+      }
+      for (const auto& invNodeId : varNode.dynamicInputTo()) {
+        if (!visitedInvNodes.contains(invNodeId)) {
+          visitedInvNodes.emplace(invNodeId);
+          unregisteredInvNodes.emplace(invNodeId);
         }
       }
     }
